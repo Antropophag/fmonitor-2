@@ -1,0 +1,7 @@
+.idea/
+.vscode/
+.env
+*.log
+.phpunit.cache/
+vendor/
+node_modules/
