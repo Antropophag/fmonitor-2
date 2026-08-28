@@ -19,7 +19,7 @@ CREATE TABLE fm2_import_batches (
 CREATE TABLE fm2_objects (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     legacy_order_id BIGINT UNSIGNED NOT NULL,
-    order_number VARCHAR(120) NOT NULL,
+    object_number VARCHAR(120) NOT NULL,
     unom VARCHAR(40) NULL,
     address_text VARCHAR(500) NOT NULL,
     entrance VARCHAR(80) NULL,
@@ -30,7 +30,7 @@ CREATE TABLE fm2_objects (
     imported_at DATETIME NOT NULL,
     import_batch_id BIGINT UNSIGNED NOT NULL,
     UNIQUE KEY uq_fm2_objects_legacy (legacy_order_id),
-    UNIQUE KEY uq_fm2_objects_order_number (order_number),
+    UNIQUE KEY uq_fm2_objects_object_number (object_number),
     CONSTRAINT fk_fm2_objects_import_batch
         FOREIGN KEY (import_batch_id) REFERENCES fm2_import_batches(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -95,13 +95,13 @@ CREATE TABLE fm2_installation_cases (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     object_id BIGINT UNSIGNED NOT NULL,
     process_state ENUM(
-        'needs_order',
-        'order_prepared',
+        'needs_assignment_order',
+        'assignment_order_prepared',
         'ready_to_open',
         'working_pending_number',
         'working',
         'completed'
-    ) NOT NULL DEFAULT 'needs_order',
+    ) NOT NULL DEFAULT 'needs_assignment_order',
     planned_start_date DATE NULL,
     planned_finish_date DATE NULL,
     adjusted_finish_date DATE NULL,
@@ -223,7 +223,7 @@ CREATE TABLE fm2_inspection_workers (
 CREATE TABLE fm2_process_tasks (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     installation_case_id BIGINT UNSIGNED NOT NULL,
-    task_type ENUM('prepare_order', 'register_number', 'open_order', 'inspect', 'resolve_data_issue') NOT NULL,
+    task_type ENUM('prepare_assignment_order', 'register_number', 'open_installation', 'inspect', 'resolve_data_issue') NOT NULL,
     assignee_person_id BIGINT UNSIGNED NULL,
     assignee_role ENUM('fkr', 'control_engineer', 'otiz', 'manager') NULL,
     due_date DATE NULL,

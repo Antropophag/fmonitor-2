@@ -10,7 +10,7 @@
 
 Из одного репозитория нельзя было достоверно восстановить все колонки, однако production metadata закрыли этот пробел. Все физические имена, типы и пользовательские названия теперь известны; неизвестными остаются бизнес-смысл и нормативный владелец отдельных полей, а не их существование.
 
-Для FMonitor 2.0 из `fm_maintable` следует канонически принять лишь legacy-ID и устойчивые идентификаторы заказа/лифта. Состав, ответственные, сроки, статус, прогресс, документы и выплаты должны либо мигрировать в соответствующие процессные модели, либо остаться временной совместимой проекцией. Перенос всей широкой строки в новую карточку воспроизведёт прежнюю ошибку модели.
+Для FMonitor 2.0 из `fm_maintable` следует канонически принять лишь legacy-ID и устойчивые идентификаторы объекта монтажа/лифта. Состав, ответственные, сроки, статус, прогресс, документы и выплаты должны либо мигрировать в соответствующие процессные модели, либо остаться временной совместимой проекцией. Перенос всей широкой строки в новую карточку воспроизведёт прежнюю ошибку модели.
 
 ## Production-проверка и полнота
 
@@ -58,7 +58,7 @@ Metadata дополнительно содержит семь формульны
 | 5 | Акты | 12 |
 | 6 | Монтажники | 15 |
 | 7 | Декларации | 11 |
-| 8 | Заказы (моб.) | 8 |
+| 8 | Объекты монтажа (моб.) | 8 |
 
 Даже самое широкое представление показывает лишь 55 полей, а заметная часть поздних колонок вообще не включена ни в одно представление. Поэтому частота показа в legacy — полезный сигнал, но не доказательство необходимости поля в карточке 2.0.
 
@@ -85,10 +85,10 @@ Metadata дополнительно содержит семь формульны
 
 | Поле | DB / metadata | Человекочитаемый смысл | Чтение / запись | Качество и риски | Судьба в 2.0 |
 |---|---|---|---|---|---|
-| `id` | Точный DDL недоступен; целочисленный PK предполагается, уверенность высокая | Внутренний ID legacy-строки | Повсеместный lookup; новый ID берётся после insert: [`Tables.php:1028`](../application/controllers/Tables.php#L1028), [`Tables.php:1135`](../application/controllers/Tables.php#L1135) | Не является номером заказа, хотя checklist UI называет его «заказ №»: [`show.php:12`](../application/views/checklists/show.php#L12) | **canonical legacy identity input** как `legacy_order_id` |
-| `regnumber` | Metadata неизвестны | Регистрационный номер лифта/объекта, высокая | Глобальный поиск и CSV lookup: [`Tables.php:265`](../application/controllers/Tables.php#L265), [`Integration.php:743`](../application/controllers/Integration.php#L743); отчёт ОТиЗ: [`Integration.php:2103`](../application/controllers/Integration.php#L2103) | В коде иногда назван «рег. номер заказа»; требуется уникальность и очистка дублей | **canonical legacy identity input** |
-| `zavnumber` | Metadata неизвестны | Номер заводского заказа, высокая | Поиск, шапка чек-листа и join с ERP: [`Tables.php:265`](../application/controllers/Tables.php#L265), [`Checklists.php:56`](../application/controllers/Checklists.php#L56), [`Tables.php:334`](../application/controllers/Tables.php#L334) | Join по строке без показанной FK; смешение термина «заказ» с `id` и `regnumber` | **canonical legacy identity input** |
-| `orderlink` | Metadata неизвестны, вероятно строка | Ссылка на заказ во внешней системе, высокая | Делает `zavnumber` ссылкой: [`showcell.php:95`](../application/views/tables/helper/showcell.php#L95) | URL хранится без показанной валидации; может устаревать | **compatibility projection**, затем внешняя ссылка/интеграционный атрибут |
+| `id` | Точный DDL недоступен; целочисленный PK предполагается, уверенность высокая | Внутренний ID legacy-строки | Повсеместный lookup; новый ID берётся после insert: [`Tables.php:1028`](../application/controllers/Tables.php#L1028), [`Tables.php:1135`](../application/controllers/Tables.php#L1135) | Не является номером объекта монтажа, хотя checklist UI называет его «объект монтажа №»: [`show.php:12`](../application/views/checklists/show.php#L12) | **canonical legacy identity input** как `legacy_installation_object_id` |
+| `regnumber` | Metadata неизвестны | Регистрационный номер лифта/объекта, высокая | Глобальный поиск и CSV lookup: [`Tables.php:265`](../application/controllers/Tables.php#L265), [`Integration.php:743`](../application/controllers/Integration.php#L743); отчёт ОТиЗ: [`Integration.php:2103`](../application/controllers/Integration.php#L2103) | В коде иногда назван «рег. номер объекта монтажа»; требуется уникальность и очистка дублей | **canonical legacy identity input** |
+| `zavnumber` | Metadata неизвестны | Заводской номер лифта, высокая | Поиск, шапка чек-листа и join с ERP: [`Tables.php:265`](../application/controllers/Tables.php#L265), [`Checklists.php:56`](../application/controllers/Checklists.php#L56), [`Tables.php:334`](../application/controllers/Tables.php#L334) | Join по строке без показанной FK; смешение идентификатора с `id` и `regnumber` | **canonical legacy identity input** |
+| `orderlink` | Metadata неизвестны, вероятно строка | Ссылка на объект монтажа во внешней системе, высокая | Делает `zavnumber` ссылкой: [`showcell.php:95`](../application/views/tables/helper/showcell.php#L95) | URL хранится без показанной валидации; может устаревать | **compatibility projection**, затем внешняя ссылка/интеграционный атрибут |
 | `ordadr` | Для UI-типа 6: `VARCHAR(255) NOT NULL`; metadata name неизвестно | FIAS ID адреса объекта, высокая | Импорт ищет/получает FIAS ID: [`Integration.php:1184`](../application/controllers/Integration.php#L1184); общий address editor пишет пару: [`Tables.php:859`](../application/controllers/Tables.php#L859) | Идентификатор и снимок адреса могут расходиться | **canonical legacy identity input** с последующей нормализацией адреса |
 | `ordadr_address` | Для пары типа 6: `TEXT NOT NULL` | Отображаемый адрес объекта, высокая | Поиск и шапки чек-листа: [`Tables.php:265`](../application/controllers/Tables.php#L265), [`Checklists.php:57`](../application/controllers/Checklists.php#L57) | Денормализованный mutable snapshot, возможны дубли/варианты написания | **canonical legacy identity input** как исходный снимок; далее нормализованная сущность Location |
 | `entrance` | Metadata неизвестны | Подъезд/секция установки, средняя | Передаётся в checklist: [`Checklists.php:58`](../application/controllers/Checklists.php#L58) | Семантика и формат не проверяются | **canonical legacy identity input** после уточнения термина |

@@ -67,7 +67,7 @@ try {
          (source_system, source_cutoff_at, started_at, status, notes)
          VALUES ('legacy_fmonitor', ?, NOW(), 'running', ?)"
     );
-    $notes = "Unopened orders with planned start from {$cutoff}";
+    $notes = "Unopened installation objects with planned start from {$cutoff}";
     $batch->bind_param('ss', $sourceCutoff, $notes);
     $batch->execute();
     $batchId = $target->insert_id;
@@ -87,11 +87,11 @@ try {
 
     $objectUpsert = $target->prepare(
         "INSERT INTO fm2_objects
-         (legacy_order_id, order_number, unom, address_text, entrance, district,
+         (legacy_order_id, object_number, unom, address_text, entrance, district,
           administrative_okrug, source_updated_at, imported_at, import_batch_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, NULLIF(?, '0000-00-00 00:00:00'), NOW(), ?)
          ON DUPLICATE KEY UPDATE
-           order_number=VALUES(order_number), unom=VALUES(unom),
+           object_number=VALUES(object_number), unom=VALUES(unom),
            address_text=VALUES(address_text), entrance=VALUES(entrance),
            district=VALUES(district), administrative_okrug=VALUES(administrative_okrug),
            source_updated_at=VALUES(source_updated_at), imported_at=NOW(),
@@ -110,17 +110,17 @@ try {
     $caseUpsert = $target->prepare(
         "INSERT INTO fm2_installation_cases
          (object_id, process_state, planned_start_date, planned_finish_date, created_at, updated_at)
-         VALUES (?, 'needs_order', DATE(?), DATE(?), NOW(), NOW())
+         VALUES (?, 'needs_assignment_order', DATE(?), DATE(?), NOW(), NOW())
          ON DUPLICATE KEY UPDATE planned_start_date=VALUES(planned_start_date),
            planned_finish_date=VALUES(planned_finish_date), updated_at=NOW(), id=LAST_INSERT_ID(id)"
     );
     $taskInsert = $target->prepare(
         "INSERT INTO fm2_process_tasks
          (installation_case_id, task_type, assignee_role, due_date, task_status, created_at)
-         SELECT ?, 'prepare_order', 'fkr', DATE_SUB(?, INTERVAL 14 DAY), 'open', NOW()
+         SELECT ?, 'prepare_assignment_order', 'fkr', DATE_SUB(?, INTERVAL 14 DAY), 'open', NOW()
          WHERE NOT EXISTS (
            SELECT 1 FROM fm2_process_tasks
-           WHERE installation_case_id=? AND task_type='prepare_order' AND task_status='open'
+           WHERE installation_case_id=? AND task_type='prepare_assignment_order' AND task_status='open'
          )"
     );
     $auditInsert = $target->prepare(
@@ -132,10 +132,10 @@ try {
     $imported = 0;
     while ($row = $rows->fetch_assoc()) {
         $legacyId = (int) $row['id'];
-        $orderNumber = trim((string) $row['regnumber']);
+        $objectNumber = trim((string) $row['regnumber']);
         $address = trim((string) $row['ordadr_address']);
-        if ($orderNumber === '' || $address === '') {
-            throw new RuntimeException("Legacy order {$legacyId} has no registration number or address");
+        if ($objectNumber === '' || $address === '') {
+            throw new RuntimeException("Legacy source row {$legacyId} has no registration number or address");
         }
 
         $unom = nullableText($row['unom']);
@@ -145,7 +145,7 @@ try {
         $updatedAt = (string) $row['last_ctime'];
         $objectUpsert->bind_param(
             'isssssssi',
-            $legacyId, $orderNumber, $unom, $address, $entrance, $district,
+            $legacyId, $objectNumber, $unom, $address, $entrance, $district,
             $okrug, $updatedAt, $batchId
         );
         $objectUpsert->execute();
@@ -187,7 +187,7 @@ try {
     $finish->bind_param('ii', $imported, $batchId);
     $finish->execute();
     $target->commit();
-    fwrite(STDOUT, "Imported {$imported} unopened orders into batch {$batchId}.\n");
+    fwrite(STDOUT, "Imported {$imported} unopened installation objects into batch {$batchId}.\n");
 } catch (Throwable $error) {
     $target->rollback();
     fwrite(STDERR, $error->getMessage() . "\n");

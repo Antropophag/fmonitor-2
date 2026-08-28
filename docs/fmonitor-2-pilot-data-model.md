@@ -2,7 +2,7 @@
 
 ## 1. Решение
 
-Первый инкремент добавляет процессные таблицы рядом с legacy `fm_maintable`. Старые поля заказа остаются источником идентификационных данных, но перестают быть источником истины для распоряжений, состава и открытия чек-листа.
+Первый инкремент добавляет процессные таблицы рядом с legacy `fm_maintable`. Старые поля объекта монтажа остаются источником идентификационных данных, но перестают быть источником истины для распоряжений, состава и открытия чек-листа.
 
 Все изменения проходят через один глубокий модуль **InstallationProcess**. Контроллер, cron, импорт или будущая интеграция не обновляют его таблицы напрямую.
 
@@ -11,17 +11,19 @@
 Интерфейс выражает намерения пользователя, а не CRUD:
 
 ```text
-prepareOrder(orderId, installerTabIds[], controlEngineerUserId, actorId)
-registerOrderNumber(orderId, orderVersion, registrationNumber, actorId)
-openInstallation(orderId, actualStartDate, actorId)
-prepareAssignmentChange(orderId, installerTabIds[], controlEngineerUserId, effectiveDate, actorId)
-getOrderProcess(orderId)
+prepareAssignmentOrder(installationObjectId, installerTabIds[], controlEngineerUserId, actorId)
+confirmOrderRegistration(installationObjectId, assignmentOrderVersion, registrationNumber, source, actorId)
+openInstallation(installationObjectId, actualStartDate, actorId)
+prepareAssignmentChange(installationObjectId, installerTabIds[], controlEngineerUserId, effectiveDate, actorId)
+getInstallationObjectProcess(installationObjectId)
 getWorkQueue(actorId, filters)
 ```
 
+`confirmOrderRegistration` — общий прикладной контракт для временного ручного ввода (`source = manual`) и будущей интеграции с 1С ДО (`source = one_c_do`). Команда переводит точную версию из `prepared` в `registered`, сохраняет реквизиты и аудит источника, но не создаёт отдельный этап или процессную задачу.
+
 Каждая команда:
 
-1. блокирует процессную запись заказа;
+1. блокирует процессную запись объекта монтажа;
 2. загружает актуальные факты через внутренние адаптеры;
 3. проверяет все инварианты;
 4. одной транзакцией записывает новую версию и аудит;
@@ -36,16 +38,16 @@ getWorkQueue(actorId, filters)
 
 ### `fm2_installation_cases`
 
-Одна запись на legacy-заказ.
+Одна запись на legacy-объект монтажа.
 
 | Поле | Назначение |
 |---|---|
 | `id` | внутренний идентификатор дела |
-| `legacy_order_id` | уникальная ссылка на `fm_maintable.id` |
+| `legacy_installation_object_id` | уникальная ссылка на `fm_maintable.id` |
 | `process_state` | вычисляемое/кэшированное состояние процесса |
 | `actual_start_date` | фактическая дата начала, указанная ФКР |
 | `opened_at` | точное системное время открытия |
-| `opened_by_user_id` | кто открыл заказ |
+| `opened_by_user_id` | кто открыл работы |
 | `created_at`, `updated_at` | технический аудит |
 | `lock_version` | защита от одновременного изменения |
 
@@ -53,7 +55,7 @@ getWorkQueue(actorId, filters)
 
 ### `fm2_assignment_orders`
 
-Версии распоряжений по одному заказу.
+Версии распоряжений по одному объекту монтажа.
 
 | Поле | Назначение |
 |---|---|
@@ -65,11 +67,16 @@ getWorkQueue(actorId, filters)
 | `order_date` | дата, которую FMonitor неизменно фиксирует при формировании |
 | `registration_number` | номер, возвращённый из 1С ДО |
 | `registered_at` | системное время внесения номера в FMonitor, не дата документа |
-| `registered_by_user_id` | кто внёс номер |
+| `registration_actor_type` | `user` или `integration` |
+| `registration_actor_id` | идентификатор пользователя или интеграционного принципала |
+| `registration_source` | `manual` или `one_c_do`; источник подтверждения статуса |
+| `external_registration_id` | идентификатор события/документа 1С ДО для идемпотентной интеграции, nullable в ручном режиме |
 | `control_engineer_user_id` | выбранный инженер строительного контроля |
+| `control_engineer_fio_snapshot`, `control_engineer_position_snapshot` | снимок данных инженера на момент формирования |
 | `organization_form` | сохранённая производная `individual`/`brigade` для воспроизводимости документа |
-| `previous_order_id` | предыдущая версия при изменении |
-| `document_path`, `document_hash` | сформированный файл и контроль неизменности |
+| `previous_assignment_order_id` | предыдущая версия распоряжения при изменении |
+| `object_address_snapshot`, `entrance_snapshot`, `object_registration_number_snapshot` | неизменяемые реквизиты объекта, использованные документом |
+| `planned_start_date_snapshot`, `planned_finish_date_snapshot`, `pto_act_date_snapshot` | неизменяемый снимок дат объекта на момент формирования |
 | `prepared_at`, `prepared_by_user_id` | аудит формирования |
 
 Один документ относится к одному монтажному делу. Номер обязателен только для статуса `registered`.
@@ -84,10 +91,25 @@ getWorkQueue(actorId, filters)
 | `installer_tab_id` | устойчивый табельный идентификатор |
 | `fio_snapshot` | ФИО на момент формирования |
 | `position_snapshot` | должность на момент формирования |
+| `employment_status_snapshot`, `employed_from_snapshot`, `employed_to_snapshot` | кадровые факты, на которых основана проверка |
+| `workforce_source_snapshot`, `workforce_source_updated_at_snapshot` | источник и свежесть кадрового снимка |
 | `valid_from`, `valid_to` | интервал назначения |
 | `change_action` | `assign`, `retain`, `release` для изменяющего документа |
 
 Снимки нужны для воспроизводимости подписанного документа. Актуальный справочник не переписывает старое ФИО или должность в документе.
+
+### `fm2_order_artifacts`
+
+Метаданные сформированных файлов конкретной версии. Байты и файловая стратегия остаются за `DocumentRenderer`/хранилищем документов.
+
+| Поле | Назначение |
+|---|---|
+| `assignment_order_id` | версия распоряжения |
+| `artifact_type` | `order` или `appendix` |
+| `filename`, `media_type`, `byte_size` | воспроизводимые метаданные файла |
+| `sha256` | контроль неизменности содержимого |
+
+Уникальность `(assignment_order_id, artifact_type)` не допускает два файла одного типа в одной версии.
 
 ### `fm2_process_tasks`
 
@@ -97,7 +119,7 @@ getWorkQueue(actorId, filters)
 |---|---|
 | `id` | задача |
 | `installation_case_id` | связанное дело |
-| `task_type` | `prepare_order`, `register_number`, `open_order`, `prepare_change` |
+| `task_type` | `prepare_assignment_order`, `open_order`, `prepare_change` |
 | `assignee_user_id` / `assignee_role` | конкретный исполнитель или роль |
 | `due_date` | срок |
 | `status` | `open`, `completed`, `cancelled` |
@@ -120,13 +142,39 @@ getWorkQueue(actorId, filters)
 
 Это аудит, а не попытка сделать полное event sourcing. Текущее состояние хранится в нормализованных таблицах.
 
+### `fm2_workforce_catalog`
+
+Production-owned текущая проекция интеграционного кадрового каталога `1С ЗУП → Битрикс → FMonitor`. Она добавляется additive migration v2 и не является историей распоряжений.
+
+| Поле | Назначение |
+|---|---|
+| `installer_tab_id` | числовая pilot-идентичность монтажника, primary key |
+| `fio`, `position` | актуальные кадровые реквизиты |
+| `employment_status` | `employed` или `dismissed` |
+| `employed_from`, `employed_to` | известный включительный период трудовых отношений |
+| `workforce_source`, `workforce_source_updated_at` | provenance и свежесть текущего снимка |
+
+Process-команды читают каталог, но не изменяют его. Будущая интеграция заменяет/upsert-ит текущие строки; уже сохранённые снимки `fm2_order_installers` от этого не меняются. Legacy `fm_installators` не является источником отсутствующих кадровых периодов и provenance.
+
+### `fm2_process_user_capabilities`
+
+Production-owned явное соответствие пользователя process capability, добавляемое additive migration v3.
+
+| Поле | Назначение |
+|---|---|
+| `user_id` | ссылка по значению на legacy `users.id` без cross-schema FK |
+| `capability` | `assignment_order.prepare`, `assignment_order.confirm_registration`, `installation.open` или `construction_control_engineer`; вместе с `user_id` образует primary key |
+| `position_snapshot` | обязательная настроенная должность инженера; nullable для capability подготовки |
+
+Активность пользователя и его legacy-роли проверяется по `users.status = 1` и `users_roles.status = 1`. Каждая process-команда требует свою exact capability; prepare/confirm/open не наследуют права друг друга. `users_rights2roles` не является источником process capabilities. Process-команды читают эту конфигурацию, но не изменяют её; уже сохранённый снимок инженера в распоряжении остаётся неизменным. Расширение command capability enum применяется forward migration v4 без пересоздания таблицы.
+
 ## 4. Читаемые проекции
 
-### Очередь заказов ФКР
+### Очередь объектов ФКР
 
 Проекция возвращает только нужное экрану:
 
-- заказ, адрес, регномер;
+- объект монтажа, адрес, регномер;
 - плановую дату и количество дней до неё;
 - процессное состояние;
 - следующее действие и срок;
@@ -136,11 +184,11 @@ getWorkQueue(actorId, filters)
 
 ### Справочник монтажников
 
-Соединяет каталог `fm_installators` с действующими интервалами `fm2_order_installers` и возвращает:
+Соединяет текущий интеграционный каталог `fm2_workforce_catalog` с действующими интервалами `fm2_order_installers` и возвращает:
 
 - кадровый статус и свежесть синхронизации;
 - текущие и будущие назначения;
-- заказы и даты;
+- объекты монтажа и даты;
 - конфликт доступности;
 - ссылку на документ-основание.
 
@@ -155,9 +203,9 @@ getWorkQueue(actorId, filters)
 
 ## 5. Адаптеры на внутренних швах
 
-### LegacyOrder adapter
+### LegacyInstallationObject adapter
 
-Читает адрес, подъезд, регномер, плановые даты, завершение/Акт ПТО из существующей схемы.
+Читает адрес, подъезд, регномер, плановые даты, завершение и дату Акта ПТО (`ptoactdate`) из существующей схемы. Наличие даты означает наличие факта Акта ПТО и блокирует обычную подготовку, изменение назначения и открытие работ. Файл акта является необязательным вложением и не участвует в этой проверке.
 
 ### Workforce adapter
 
@@ -165,7 +213,7 @@ getWorkQueue(actorId, filters)
 
 ### UserDirectory adapter
 
-Читает активных пользователей FMonitor с ролью инженера строительного контроля.
+Composite ProcessUserDirectory читает активность и ФИО из legacy `users`/`users_roles`, а явные полномочия и настроенную должность — из `fm2_process_user_capabilities`. Один adapter обслуживает authorization подготовки и поиск инженера, не связываясь с `users_rights2roles`.
 
 ### DocumentRenderer adapter
 
@@ -177,12 +225,12 @@ getWorkQueue(actorId, filters)
 
 ## 6. Транзакционные инварианты
 
-1. Одновременно по заказу формируется только одна новая версия.
-2. Подготовленная версия имеет дату распоряжения, состав, инженера и хэш документа.
+1. Одновременно по объекту монтажа формируется только одна новая версия.
+2. Подготовленная версия имеет дату распоряжения, состав и хэш документа.
 3. После подготовки содержимое версии не изменяется.
-4. Регистрация добавляет номер к той же версии, не пересобирая документ.
+4. Подтверждение регистрации атомарно добавляет реквизиты к той же версии и переводит её из `prepared` в `registered`, не пересобирая документ и не изменяя этап монтажного дела.
 5. Фактическая дата начала не раньше даты актуального распоряжения и не позже текущей даты.
-6. Открытие возможно только при наличии минимум одного монтажника и одного инженера.
+6. Открытие возможно только по актуальному распоряжению в статусе `registered`, при наличии минимум одного монтажника и одного инженера.
 7. Монтажник должен существовать в актуальном кадровом каталоге на дату распоряжения.
 8. Инженер должен быть активным пользователем допустимой роли.
 9. После Акта ПТО обычные команды формирования и открытия запрещены.
@@ -192,10 +240,10 @@ getWorkQueue(actorId, filters)
 ## 7. Минимальный набор миграций
 
 1. Создать пять процессных таблиц и индексы.
-2. Создать `fm2_installation_cases` для заказов пилота без изменения `fm_maintable`.
+2. Создать `fm2_installation_cases` для объектов пилота без изменения `fm_maintable`.
 3. Не переносить текущие четыре слота монтажников как доказанные назначения; считать их неподтверждёнными legacy-данными до первого сформированного распоряжения.
-4. После формирования первого распоряжения процессная модель становится владельцем состава этого заказа.
-5. Заблокировать прямую запись `installator*` для заказов, перешедших под управление FMonitor 2.0.
+4. После формирования первого распоряжения процессная модель становится владельцем состава этого объекта монтажа.
+5. Заблокировать прямую запись `installator*` для объектов, перешедших под управление FMonitor 2.0.
 6. Оставить чтение старых отчётов через совместимую проекцию на период пилота.
 
 ## 8. Тестовая поверхность
@@ -207,9 +255,9 @@ getWorkQueue(actorId, filters)
 - нельзя выбрать уволенного монтажника;
 - дата распоряжения фиксируется системной датой и не меняется при регистрации номера;
 - нельзя открыть с датой раньше распоряжения;
-- можно открыть подготовленный документ без номера;
-- открытый без номера заказ получает задачу регистрации;
+- нельзя открыть дело по распоряжению в статусе `prepared`, даже если регистрационный номер оказался заполнен в обход команды;
+- можно открыть дело после перехода актуального распоряжения в `registered` как из ручного, так и из интеграционного источника;
+- отсутствие номера не создаёт отдельную процессную задачу или состояние дела;
 - нельзя открыть второй раз;
 - изменение состава не меняет предыдущую версию и исторический чек-лист;
 - параллельные команды не создают две актуальные версии.
-

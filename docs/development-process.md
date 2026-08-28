@@ -22,6 +22,8 @@ Write or amend the normative specification before code. Each behavior must state
 
 The gate passes when ambiguities affecting behavior are resolved and every acceptance statement is observable at the confirmed seam.
 
+Approved cross-cutting invariants are inherited by every slice and are not resubmitted to the product owner as separate behavior for each command. A slice specification cites the inherited invariant and asks for a new decision only when it introduces an exception or a user-visible outcome not already covered by the shared contract.
+
 ## Gate 2: red test
 
 Write the smallest test that proves one acceptance statement. Run it before implementation and retain the command and relevant failure output in the test-review record.
@@ -59,4 +61,3 @@ The slice is complete only with an `APPROVED` code review and green relevant tes
 ## Independence
 
 An independent review is performed by a different human or separately tasked agent that did not author the reviewed artifact. The reviewer receives the normative specification and the artifact under review, forms findings independently, and records a verdict. Self-review and a second pass by the same author are useful preparation but do not satisfy either review gate.
-
