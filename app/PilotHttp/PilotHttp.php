@@ -48,14 +48,14 @@ final class RemoteUserIdentity implements TrustedServerIdentity
     }
 }
 
-final class ShlzCssAsset implements CssAsset
+abstract class NamedCssAsset implements CssAsset
 {
     private ?CssDescriptor $descriptor=null;private ?string $bytes=null;private bool $closeAttempted=false;
-    public function __construct(private readonly string $path,private readonly CssDescriptorOpener $descriptors){}
+    protected function __construct(private readonly string $path,private readonly CssDescriptorOpener $descriptors,private readonly string $basename){}
     public function readBytes():string
     {
         if($this->bytes!==null)return $this->bytes;
-        if($this->path===''||$this->path[0]!=='/'||\preg_match('/^(?:shlz|pilot)\.css$/D',\basename($this->path))!==1)throw new CssAssetUnavailable();
+        if($this->path===''||$this->path[0]!=='/'||\basename($this->path)!==$this->basename)throw new CssAssetUnavailable();
         $this->descriptor=$this->descriptors->open($this->path);return $this->bytes=$this->descriptor->readBytes();
     }
     public function close():void
@@ -63,6 +63,16 @@ final class ShlzCssAsset implements CssAsset
         if($this->closeAttempted)return;$this->closeAttempted=true;$descriptor=$this->descriptor;
         try{if($descriptor!==null)$descriptor->close();}finally{$this->descriptor=null;$this->bytes=null;}
     }
+}
+
+final class ShlzCssAsset extends NamedCssAsset
+{
+    public function __construct(string $path,CssDescriptorOpener $descriptors){parent::__construct($path,$descriptors,'shlz.css');}
+}
+
+final class PilotCssAsset extends NamedCssAsset
+{
+    public function __construct(string $path,CssDescriptorOpener $descriptors){parent::__construct($path,$descriptors,'pilot.css');}
 }
 
 final class PhpCssDescriptor implements CssDescriptor
@@ -225,7 +235,7 @@ class PilotHttpCoordinator
         if($r->path==='/pilot/assets/pilot.css'){$assetConfigured=$this->dependencies instanceof PilotUiConfiguration&&$this->dependencies->pilotUiConfigured();if(!$assetConfigured)return $this->response(404,"Not found.\n",[],$r->method);try{$body=$this->dependencies->pilotCss()->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
         $configured=$this->dependencies instanceof PilotUiConfiguration&&$this->dependencies->pilotUiConfigured();
-        try{$this->dependencies->css()->readBytes();if($configured)$this->dependencies->pilotCss()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);if($prepareId!==null){if($this->prepareReaders===null||$this->prepareForms===null)throw new PilotHttpInfrastructureUnavailable();if(!$this->prepareReaders->hasCapability($user->id,'assignment_order.prepare'))return $this->response(403,"Access denied.\n",[],$r->method);$form=$this->prepareReaders->prepareForms()->read($prepareId,$this->prepareReaders->businessDate());if($form===null)return $this->response(404,"Not found.\n",[],$r->method);$html=!$configured&&$this->prepareForms instanceof CompatibilityPrepareFormRenderer?$this->prepareForms->renderCompatibility($user,$form):$this->prepareForms->render($user,$form);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($r->path==='/pilot/objects'){if($this->listReaders===null||$this->lists===null)throw new PilotHttpInfrastructureUnavailable();$objects=$this->listReaders->objectList()->read();$html=!$configured&&$this->lists instanceof CompatibilityObjectListRenderer?$this->lists->renderCompatibility($user,$objects):$this->lists->render($user,$objects);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($cardId!==null){if($this->cardReaders===null||$this->cards===null)throw new PilotHttpInfrastructureUnavailable();$card=$this->cardReaders->objectCards()->read($cardId);if($card===null)return $this->response(404,"Not found.\n",[],$r->method);$prepareConfigured=!($this->dependencies instanceof PilotUiConfiguration)||$this->dependencies->prepareCommandConfigured();$card['canPrepare']=$prepareConfigured&&$this->prepareReaders!==null&&$this->prepareReaders->hasCapability($user->id,'assignment_order.prepare');$html=!$configured&&$this->cards instanceof CompatibilityObjectCardRenderer?$this->cards->renderCompatibility($user,$card):$this->cards->render($user,$card);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}$html=!$configured&&$this->shell instanceof CompatibilityPilotShellRenderer?$this->shell->renderCompatibility($user):$this->shell->render($user);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}catch(PrepareFormUnavailable){return $this->response(409,"Формирование распоряжения недоступно для текущего состояния объекта монтажа.\n",[],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
+        try{$this->dependencies->css()->readBytes();if($configured)$this->dependencies->pilotCss()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);if($prepareId!==null){if($this->prepareReaders===null||$this->prepareForms===null)throw new PilotHttpInfrastructureUnavailable();if(!$this->prepareReaders->hasCapability($user->id,'assignment_order.prepare'))return $this->response(403,"Access denied.\n",[],$r->method);$form=$this->prepareReaders->prepareForms()->read($prepareId,$this->prepareReaders->businessDate());if($form===null)return $this->response(404,"Not found.\n",[],$r->method);$html=!$configured&&$this->prepareForms instanceof CompatibilityPrepareFormRenderer?$this->prepareForms->renderCompatibility($user,$form):$this->prepareForms->render($user,$form);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($r->path==='/pilot/objects'){if($this->listReaders===null||$this->lists===null)throw new PilotHttpInfrastructureUnavailable();$objects=$this->listReaders->objectList()->read();$html=!$configured&&$this->lists instanceof CompatibilityObjectListRenderer?$this->lists->renderCompatibility($user,$objects):$this->lists->render($user,$objects);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($cardId!==null){if($this->cardReaders===null||$this->cards===null)throw new PilotHttpInfrastructureUnavailable();$card=$this->cardReaders->objectCards()->read($cardId);if($card===null)return $this->response(404,"Not found.\n",[],$r->method);$prepareConfigured=!($this->dependencies instanceof PilotUiConfiguration)||$this->dependencies->prepareCommandConfigured();$compatibility=$this->dependencies instanceof PilotUiConfiguration&&!$configured&&!$prepareConfigured;$hasPrepareCapability=false;if(!$compatibility){if($this->prepareReaders===null)throw new PilotHttpInfrastructureUnavailable();$hasPrepareCapability=$this->prepareReaders->hasCapability($user->id,'assignment_order.prepare');}$card['canPrepare']=$prepareConfigured&&$hasPrepareCapability;$html=!$configured&&$this->cards instanceof CompatibilityObjectCardRenderer?$this->cards->renderCompatibility($user,$card):$this->cards->render($user,$card);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}$html=!$configured&&$this->shell instanceof CompatibilityPilotShellRenderer?$this->shell->renderCompatibility($user):$this->shell->render($user);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}catch(PrepareFormUnavailable){return $this->response(409,"Формирование распоряжения недоступно для текущего состояния объекта монтажа.\n",[],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
     }
     private static function cardId(string $path):?int
     {
@@ -310,7 +320,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     {
         if($this->pilotCssAsset!==null)return $this->pilotCssAsset;
         $configured=$this->environment->read('FMONITOR_PILOT_CSS_PATH');if(!\is_string($configured))throw new CssAssetUnavailable();
-        return $this->pilotCssAsset=new ShlzCssAsset($configured,$this->cssDescriptors);
+        return $this->pilotCssAsset=new PilotCssAsset($configured,$this->cssDescriptors);
     }
     public function users():HttpUserDirectory
     {
@@ -340,7 +350,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     }
     public function hasCapability(int $userId,string $capability):bool
     {
-        $this->users();try{$s=$this->connection->prepare('SELECT user_id FROM fm2_process_user_capabilities WHERE user_id=? AND capability=? LIMIT 2');$s->bind_param('is',$userId,$capability);$s->execute();return \count($s->get_result()->fetch_all(MYSQLI_ASSOC))===1;}catch(\mysqli_sql_exception $e){if($e->getCode()===1146&&!$this->pilotUiConfigured())return false;throw new PilotHttpInfrastructureUnavailable('',0,$e);}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
+        $this->users();try{$s=$this->connection->prepare('SELECT user_id FROM fm2_process_user_capabilities WHERE user_id=? AND capability=? LIMIT 2');$s->bind_param('is',$userId,$capability);$s->execute();return \count($s->get_result()->fetch_all(MYSQLI_ASSOC))===1;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
     public function businessDate():string{$v=$this->environment->read('FMONITOR_BUSINESS_DATE');if(!\is_string($v))throw new PilotHttpInfrastructureUnavailable();return $v;}
     public function pilotUiConfigured():bool{return $this->environment instanceof ProcessEnvironmentSource&&\is_string($this->environment->read('FMONITOR_PILOT_CSS_PATH'));}
