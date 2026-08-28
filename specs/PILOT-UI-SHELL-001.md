@@ -1,7 +1,7 @@
 # PILOT-UI-SHELL-001 — цельный read-only UI-shell пилотного пути ФКР
 
 - Статус: `APPROVED`
-- Версия: `0.3`
+- Версия: `0.4`
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью, аутентифицированный доверенным HTTP-сервером
 - Публичный seam: HTTP `GET|HEAD /pilot/`, `/pilot/objects`, `/pilot/objects/{positive-id}`, `/pilot/objects/{positive-id}/assignment-order/prepare` и их CSS assets
@@ -33,14 +33,20 @@
 
 Эта версия заменяет только запреты successor contracts на application CSS и общую shell/navigation/layout composition. Она не заменяет утверждённые route-specific headings, copy, collection membership/fields, form controls, link labels или failure outcomes. Exact generic `400/401/403/404/405/409/503` plaintext outcomes не брендируются: они остаются security/error states предшествующих контрактов, включая `Retry-After: 60` для `503`. Ошибка не маскируется пустым состоянием и не раскрывает внутреннюю причину.
 
-## 3. Публичные assets и композиционная граница
+## 3. Configured production composition, compatibility и public assets
 
-Каждая успешная HTML-страница подключает в указанном порядке ровно два local stylesheet:
+Новый shared UI-shell включается только явной production-конфигурацией `FMONITOR_PILOT_CSS_PATH`. Значение считается configured, если environment key присутствует. Оно обязано быть nonempty absolute path к readable non-symlink regular file с basename `pilot.css` и проходит тот же descriptor/open/revalidation/attempt-all cleanup contract, что public `shlz.css`. Empty, non-string, relative, wrong-basename, unreadable, symlink, changed или missing configured value — infrastructure failure, а не выключение UI.
+
+В configured production composition каждая успешная HTML-страница подключает в указанном порядке ровно два local stylesheet:
 
 1. `/pilot/assets/shlz.css` — байты валидированного public `@shlz/styles/shlz.css` export;
 2. `/pilot/assets/pilot.css` — application-owned layout/composition stylesheet FMonitor 2.0.
 
-`GET|HEAD /pilot/assets/pilot.css` наследует unauthenticated asset semantics, headers, HEAD parity и fail-closed filesystem handling CSS route из `PILOT-HTTP-AUTH-001`. Имя фиксировано; filename/path parameter отсутствует. CSS не копирует исходники, component rules или token literals `shlz-ui`, не переопределяет `.shlz-*` family classes и не использует `!important`. Он вправе задавать только `.fm2-*` layout/composition classes и media queries, используя публичные CSS custom properties `shlz-ui` с безопасным fallback там, где export их документирует.
+В configured composition `GET|HEAD /pilot/assets/pilot.css` наследует unauthenticated asset semantics, headers, HEAD parity и fail-closed filesystem handling CSS route из `PILOT-HTTP-AUTH-001`. Имя фиксировано; filename/path parameter отсутствует. CSS не копирует исходники, component rules или token literals `shlz-ui`, не переопределяет `.shlz-*` family classes и не использует `!important`. Он вправе задавать только `.fm2-*` layout/composition classes и media queries, используя публичные CSS custom properties `shlz-ui` с безопасным fallback там, где export их документирует.
+
+Если `FMONITOR_PILOT_CSS_PATH` отсутствует, включается compatibility composition: каждый predecessor route возвращает своё последнее approved successful HTML ровно с одним `/pilot/assets/shlz.css` и без новых shared-shell DOM/classes/copy; `/pilot/assets/pilot.css` является unknown route и возвращает inherited exact `404` до identity/config/DB reads. Приложение не подставляет bundled/default `pilot.css`, не меняет predecessor link set и не читает application CSS descriptor. Это обязательная совместимость существующих approved HTTP tests, а не production fallback: демонстрационный pilot запускается с явной configured composition.
+
+Malformed route/method всегда разрешается раньше проверки наличия configuration. На matched configured successful HTML route application CSS descriptor проверяется после valid identity и predecessor public `shlz.css`, но до user/object/catalog DB reads; его fault даёт redacted `503`. Asset route читает только свой configured descriptor.
 
 Production PHP source разделён минимум на:
 
@@ -54,9 +60,9 @@ Production PHP source разделён минимум на:
 
 JavaScript и `@shlz/behaviors` в этом срезе не подключаются. Все переходы — обычные ссылки; все controls формы — native HTML.
 
-## 4. Общий shell, навигация и доступность — `PILOT-UI-SHELL-001-A`
+## 4. Configured shared shell, навигация и доступность — `PILOT-UI-SHELL-001-A`
 
-Каждая успешная страница содержит:
+Каждая успешная страница configured composition содержит:
 
 - `<!doctype html>`, `<html lang="ru">`, UTF-8, responsive viewport и title вида `{Название страницы} · FMonitor`;
 - `body.shlz-scope` и первую focusable ссылку `Перейти к содержанию` на `#main-content`;
@@ -69,7 +75,7 @@ JavaScript и `@shlz/behaviors` в этом срезе не подключают
 
 Shell не содержит role switcher, fake notification count, burger button без поведения, icon-only control без accessible name, row-level click handler, inline `style`, inline script или remote font/CDN request. Fira Sans/Golos и иконки могут использоваться только как локальные публичные exports `shlz-ui`; отсутствие декоративной иконки не меняет смысл.
 
-Desktop (`viewport >= 960 CSS px`): navigation занимает устойчивую левую колонку, content — fluid main column с readable maximum width. Narrow (`viewport <= 767 CSS px`): identity и actor не перекрываются, navigation становится горизонтальным wrapping/scroll-free списком доступных разделов, недоступные разделы скрываются как вторичный контекст, main остаётся одноколоночным. При ширине `320 CSS px`, 200% text zoom и длинных фиксированных примерах нет horizontal page overflow, clipped text или hover-only action.
+Desktop (`viewport >= 960 CSS px`): navigation занимает устойчивую левую колонку, content — fluid main column с readable maximum width. Narrow (`viewport <= 767 CSS px`): identity и actor не перекрываются, navigation становится горизонтальным wrapping/scroll-free списком доступных разделов, недоступные разделы скрываются как вторичный контекст, main остаётся одноколоночным. При ширине `320 CSS px` и отдельно при 200% root text size на supported viewport нет horizontal page overflow, clipped/overlapping text или hover-only action.
 
 Heading contract детерминирован: в `main` ровно один `h1`; прямые именованные content sections используют `h2`; подразделы внутри них — только `h3`; `h4..h6` отсутствуют, и никакой heading level не пропускается. Product identity, navigation, breadcrumb, eyebrow, status и empty-state description не изображаются headings. Root сохраняет exact `h1` `Моя работа`, status `Пилот подключён` и explanation `Объекты монтажа появятся после подключения карточки.` Queue сохраняет exact `h1` `Объекты монтажа` и не имеет breadcrumb. Card breadcrumb: link `Объекты монтажа` → `/pilot/objects`, затем current `Объект монтажа № {ID}`. Prepare breadcrumb exact: link `Объекты монтажа` → `/pilot/objects`, link `Объект монтажа № {ID}` → canonical card URL, затем current `Состав распоряжения`.
 
@@ -106,6 +112,8 @@ Narrow item order exact: `identity → address/entrance → planned dates → ca
 
 При отсутствии актуального распоряжения и доступном preparation gate primary link сохраняет predecessor exact text `Сформировать распоряжение` и href `/pilot/objects/{ID}/assignment-order/prepare`. Если gate запрещён, control/link/text/URL не рендерится disabled: сохраняются predecessor explanatory process facts, без ложного action.
 
+Capability lookup является integrity/security dependency, а не optional feature detection. Если capability table существует, zero exact rows означает honest `false`, one row — `true`, duplicate identity — redacted `503`. В configured production composition отсутствие `fm2_process_user_capabilities`, denial, prepare/execute/result fault или любое иное capability SQL failure всегда даёт inherited redacted `503`; оно никогда не преобразуется в `false` и не скрывает action как будто у пользователя нет права. В unconfigured compatibility composition только exact missing-table error может сохранять ранний card-only predecessor outcome `false`, необходимый для старой card fixture до появления capability schema; prepare route всё равно наследует собственный fail-closed dependency contract. Любой иной SQL fault в любом composition — `503`.
+
 Факты current order остаются в predecessor definition content без artifact/download URL; состав — text/person-tag presentation без remove controls; status всегда имеет visible text и не полагается на цвет. История не вытесняет next action и не изображает интерактивный stepper.
 
 Desktop content grid may place `Сроки` in a summary column, while DOM/reading order remains predecessor exact. Narrow order exact: identity/status → identification → deadlines → order/team/action → works → events. Links wrap, no sticky/fixed CTA appears.
@@ -118,7 +126,7 @@ Desktop content grid may place `Сроки` in a summary column, while DOM/readi
 2. sole exact `h1` `Состав распоряжения` и immutable object summary;
 3. predecessor exact explanation `Выберите состав. Распоряжение будет сформировано только после отдельного подтверждения.`;
 4. section `1. Монтажники` с source/freshness рядом с heading и native checkbox candidates с predecessor exact labels;
-5. section `2. Инженер строительного контроля` с native radio candidates; prefill is visually marked `Предложено по объекту` but remains unchecked until explicitly confirmed in a future command form;
+5. section `2. Инженер строительного контроля` с native radio candidates; eligible prefill выражен только predecessor `checked` radio, без добавления текста к exact candidate label, а отдельный confirmation checkbox остаётся unchecked;
 6. neutral predecessor exact link `Вернуться к объекту монтажа` to canonical card.
 
 Поскольку этот срез не вводит POST, primary `Сформировать распоряжение` на самой форме отсутствует. Native checkbox/radio controls остаются enabled, keyboard-operable GET-form controls exactly as predecessor contract requires, но submit control отсутствует и состояние не сохраняется. Approved eligible prefill radio остаётся `checked`, а отдельный checkbox подтверждения — unchecked: предложение не считается подтверждением. Empty installer/engineer catalog uses `shlz-empty-state` with predecessor exact reason and card return link. Infrastructure, integrity и malformed view-model failures remain inherited plaintext `503`; новый recoverable validation outcome не вводится.
@@ -157,15 +165,25 @@ Queue contains none of `process_state`, `Следующее действие`, `
 installer 00017 — Иванов Иван Иванович — Трудоустроен
 installer 00021 — Петров Пётр Петрович — Трудоустроен — занят до 2026-10-03
 engineer user 31 — Смирнова Анна Олеговна — Инженер строительного контроля
-prefill engineer user 31 — radio checked and visibly marked as a suggestion; confirmation checkbox unchecked
+prefill engineer user 31 — radio checked; exact candidate label unchanged; confirmation checkbox unchecked
 catalog provenance — Bitrix24 / 1С ЗУП; synchronized 2026-08-29 06:30 +03:00
 ```
 
-For each of the three successful routes, raw HTTP + parsed DOM assertions prove common shell/nav landmarks, exact heading sequence, route-appropriate breadcrumb absence/ordered links, paired unavailable-item labels, no mutation form/action and no inline style/script. CSS asset assertions prove byte-stable GET/HEAD, local-only stylesheets and the exact responsive/focus declarations from section 4.
+Configured examples set `FMONITOR_PILOT_CSS_PATH` to the validated task-owned `pilot.css`. For each of the three successful routes, raw HTTP + parsed DOM assertions prove common shell/nav landmarks, exact heading sequence, route-appropriate breadcrumb absence/ordered links, paired unavailable-item labels, no mutation form/action and no inline style/script. CSS asset assertions prove byte-stable GET/HEAD, local-only stylesheets and the exact responsive/focus declarations from section 4. Separate compatibility examples omit the key and run the approved predecessor HTTP tests unchanged: one shlz stylesheet, predecessor DOM/copy/links and `404` for `/pilot/assets/pilot.css`.
 
 The hostile fixture belongs only to the prepare candidate list: engineer user `32` has DB-derived full name literal `<script>не имя</script>`. The successful prepare DOM contains exactly one eligible engineer label whose `textContent` contains that exact literal, contains no `script` element, and whose serialized HTML contains escaped text (`&lt;script&gt;не имя&lt;/script&gt;`, accepting an HTML parser's semantically equivalent entity serialization). User `32` is not silently dropped or substituted. Queue/card continue to prove escaping for every DB-derived value under inherited contracts but do not need to expose this engineer.
 
-Responsive visual acceptance remains P0, but it is mandatory delivery/manual smoke evidence rather than Gate 2 browser automation. Before Gate 5 can be `APPROVED`, the implementation author records inspection of real served pages at `1440×900`, `768×1024`, `320×568`, and 200% browser text zoom in the Gate 5 evidence handed to the independent reviewer. Evidence covers exact section order, no viewport horizontal overflow/clipping, visible keyboard focus, readable long Cyrillic/hostile-literal text, and keyboard reachability of every link/control. Any failure returns the implementation to Gate 4. No Playwright/browser dependency, screenshot framework or other harness improvement is introduced by this slice.
+Responsive visual acceptance remains P0, but it is mandatory delivery/manual smoke evidence rather than Gate 2 browser automation. Before Gate 5 can be `APPROVED`, the implementation author records inspection of real configured served pages in a real browser at `1440×900`, `768×1024` and `320×568`. Отдельный text-resize/reflow case выполняется не page zoom: на `320×568` после загрузки устанавливается root text size `document.documentElement.style.fontSize = '200%'`, layout reflows, а viewport/device scale остаются неизменными.
+
+Exact smoke oracle для каждого viewport и text-resize case:
+
+1. `document.documentElement.scrollWidth <= document.documentElement.clientWidth` и `document.body.scrollWidth <= document.body.clientWidth`; отсутствует горизонтальная прокрутка page/queue/form regions;
+2. каждый visible block/container, владеющий heading, navigation label, breadcrumb, status, DB-derived `.fm2-db-text`, choice label или action, имеет nonzero bounding box, его текст полностью доступен (`scrollWidth <= clientWidth` и `scrollHeight <= clientHeight`) и computed `overflow` не `hidden`/`clip` там, где текст переносится;
+3. на narrow/text-resize DOM sections визуально идут в exact section 4–7 reading order: `getBoundingClientRect().top` не убывает для последовательных primary regions; разные peer identity/actor/label/control regions, не являющиеся ancestor/descendant, не имеют пересечения площадью больше нуля;
+4. последовательный `Tab` достигает каждую visible link и enabled form control ровно в DOM order; focused rect после browser scroll находится внутри viewport, а computed outline имеет style не `none` и width минимум `1px`;
+5. long Cyrillic names и hostile literal `<script>не имя</script>` видимы целиком как text, native checkbox/radio сохраняют nonzero geometry, а ни одно действие не требует hover.
+
+Evidence records browser/version, route, viewport, root computed font size before/after, each boolean oracle result and a screenshot per case. Any failure returns implementation to Gate 4. No Playwright/headless dependency, page-zoom claim, screenshot framework or other harness improvement is introduced by this slice.
 
 Empty queue independently returns `200`, the exact section 5 empty state and no table/item link. Broken list DB independently returns predecessor exact plaintext `503` with `Retry-After: 60`, never empty/product HTML. A prepare view with no eligible installers returns its approved empty reason and no candidate controls.
 
@@ -173,7 +191,7 @@ Empty queue independently returns `200`, the exact section 5 empty state and no 
 
 Before/after fingerprints are byte-equivalent for all `fm2_*`, selected/nonselected legacy rows, auto-increment/catalog state, artifact storage and `../shlz-ui`. Repeated/concurrent GET/HEAD produce the same committed representation; no cookie/session/read marker/event/file is created.
 
-Rejected route, method, Host, identity, authorization, missing object, predecessor CSS, DB and integrity cases retain exact predecessor status/body/header priority. They are inherited regression obligations, not newly duplicated Gate 2 examples: Gate 3 evidence must run the focused new RED plus the existing approved HTTP auth/list/card/prepare tests (or the complete existing sequential suite) and record their green/red state as applicable. The new asset alone adds focused exact cases: `GET|HEAD /pilot/assets/pilot.css`; trailing slash/path suffix/parameter gives inherited `404` before identity/config/DB reads; any non-GET/HEAD method gives inherited `405` with `Allow: GET, HEAD` before identity/config/DB reads; missing configured asset gives inherited redacted `503` with `Retry-After: 60`. No error response includes object values, actor, SQL/schema/path, exception or internal reason.
+Rejected route, method, Host, identity, authorization, missing object, predecessor CSS, DB and integrity cases retain exact predecessor status/body/header priority. They are inherited regression obligations, not newly duplicated Gate 2 examples: Gate 3 evidence must run the focused new RED plus the existing approved HTTP auth/list/card/prepare tests (or the complete existing sequential suite) and record their green/red state as applicable. Configured asset cases: `GET|HEAD /pilot/assets/pilot.css`; trailing slash/path suffix/parameter gives inherited `404` before identity/config/DB reads; any non-GET/HEAD method gives inherited `405` with `Allow: GET, HEAD` before identity/config/DB reads; invalid/missing configured file gives inherited redacted `503` with `Retry-After: 60`. Unconfigured exact asset route is `404`. Configured card capability-table absence/SQL fault is `503`, while exact zero-row success merely hides the launch link. No error response includes object values, actor, SQL/schema/path, exception or internal reason.
 
 ## 10. Out of scope
 
@@ -194,6 +212,6 @@ Gate 2 writes the smallest RED test set proving acceptance IDs A–E through the
 - Approved by: separately tasked Gate 1 revision agent `/root/ui_spec`
 - Date: `2026-08-29`
 - Decision: `APPROVED`
-- Comment: пользователь прямо поручил автономно довести пилот до цельного продуктового интерфейса без ослабления SSD/TDD и predecessor contracts. Version `0.3` сохраняет UI hierarchy/responsive layer, но возвращает exact утверждённые headings/copy/link labels/form semantics, narrow semantic queue и read privilege boundary. Queue не получает скрытой schema dependency или process claim; доступный следующий переход выражен canonical card link, а полная process hierarchy начинается в карточке.
+- Comment: пользователь прямо поручил автономно довести пилот до цельного продуктового интерфейса без ослабления SSD/TDD и predecessor contracts. Version `0.4` явно отделяет configured production UI от unconfigured predecessor compatibility, делает capability faults fail-closed в production и заменяет недоказуемый page-zoom пункт точным real-browser 200% root-text reflow oracle, сохраняя P0 responsive evidence без расширения harness.
 
-Gate 2 разрешён только для version `0.3` и должен быть написан новым отдельно поставленным агентом. Gate 3 и Gate 5 требуют собственных новых независимых reviewers.
+Gate 2 разрешён только для version `0.4` и должен быть написан новым отдельно поставленным агентом. Gate 3 и Gate 5 требуют собственных новых независимых reviewers.
