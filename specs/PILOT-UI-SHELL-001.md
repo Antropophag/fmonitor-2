@@ -1,7 +1,7 @@
 # PILOT-UI-SHELL-001 — цельный read-only UI-shell пилотного пути ФКР
 
 - Статус: `APPROVED`
-- Версия: `0.1`
+- Версия: `0.2`
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью, аутентифицированный доверенным HTTP-сервером
 - Публичный seam: HTTP `GET|HEAD /pilot/`, `/pilot/objects`, `/pilot/objects/{positive-id}`, `/pilot/objects/{positive-id}/assignment-order/prepare` и их CSS assets
@@ -62,14 +62,18 @@ JavaScript и `@shlz/behaviors` в этом срезе не подключают
 - `body.shlz-scope` и первую focusable ссылку `Перейти к содержанию` на `#main-content`;
 - landmark header с product identity `АО «ЩЛЗ»` и `FMonitor 2.0`, затем actor name;
 - primary navigation с доступными ссылками `Моя работа` → `/pilot/` и `Объекты монтажа` → `/pilot/objects`;
-- пункты `Распоряжения`, `Инспекции`, `Монтажники`, `Расчёты`, `Нарушения` как неинтерактивный текст с ближайшей подписью `Не входит в пилот`, без `href`, button semantics и tab stop;
+- каждый из пунктов `Распоряжения`, `Инспекции`, `Монтажники`, `Расчёты`, `Нарушения` — отдельный `span.fm2-nav__unavailable[aria-disabled="true"]`, внутри которого ровно два дочерних `span`: `.fm2-nav__label` с названием и `.fm2-nav__hint` с exact text `Не входит в пилот`; wrapper и children не имеют `href`, `role`, `tabindex` или button semantics;
 - ровно один текущий navigation item с `aria-current="page"`;
 - `<main id="main-content" tabindex="-1">`, один `h1`, логическую последовательность heading levels и visible keyboard focus;
-- breadcrumb из обычных ссылок, кроме текущего последнего элемента.
+- breadcrumb — `nav[aria-label="Хлебные крошки"]` с ordered list; каждый предшествующий item содержит ровно одну ordinary canonical link, последний item содержит `span[aria-current="page"]` и не содержит link.
 
 Shell не содержит role switcher, fake notification count, burger button без поведения, icon-only control без accessible name, row-level click handler, inline `style`, inline script или remote font/CDN request. Fira Sans/Golos и иконки могут использоваться только как локальные публичные exports `shlz-ui`; отсутствие декоративной иконки не меняет смысл.
 
 Desktop (`viewport >= 960 CSS px`): navigation занимает устойчивую левую колонку, content — fluid main column с readable maximum width. Narrow (`viewport <= 767 CSS px`): identity и actor не перекрываются, navigation становится горизонтальным wrapping/scroll-free списком доступных разделов, недоступные разделы скрываются как вторичный контекст, main остаётся одноколоночным. При ширине `320 CSS px`, 200% text zoom и длинных фиксированных примерах нет horizontal page overflow, clipped text или hover-only action.
+
+Heading contract детерминирован: в `main` ровно один `h1`; прямые именованные content sections используют `h2`; подразделы внутри них — только `h3`; `h4..h6` отсутствуют, и никакой heading level не пропускается. Product identity, navigation, breadcrumb, eyebrow, status и empty-state description не изображаются headings. Для обычной queue page breadcrumb exact: link `Моя работа` → `/pilot/`, затем current `Объекты монтажа`. Для card: link `Объекты монтажа` → `/pilot/objects`, затем current registration number. Для prepare: link `Объекты монтажа` → `/pilot/objects`, link registration number → canonical card URL, затем current `Подготовка распоряжения`.
+
+Automated responsive oracle ограничен существующим raw HTTP/CSS seam. Отданный `/pilot/assets/pilot.css` обязан содержать активный `@media (max-width: 767px)` contract, который для application classes переводит `.fm2-shell` и `.fm2-object-layout` в `grid-template-columns: minmax(0, 1fr)`, скрывает `.fm2-nav__unavailable`, разрешает `.fm2-primary-nav` переносом `flex-wrap: wrap` и переводит `.fm2-queue-table`/её row/cell composition в вертикальный flow без fixed/min-width. Base application rules обязаны задавать `max-width: 100%`, `min-width: 0` для fluid content owners, `overflow-wrap: anywhere` для DB-derived long text и visible `:focus-visible` outline для `.fm2-shell a`/native controls. Gate 2 наблюдает эти exact served-CSS contracts как text/parsed declarations и DOM order; он не заявляет pixel/layout/browser proof.
 
 ## 5. Очередь — `PILOT-UI-SHELL-001-B`
 
@@ -168,7 +172,11 @@ prefill engineer user 31 — radio checked and visibly marked as a suggestion; c
 catalog provenance — Bitrix24 / 1С ЗУП; synchronized 2026-08-29 06:30 +03:00
 ```
 
-For each of the three successful routes, DOM assertions prove common shell/nav landmarks, exactly one `h1`, canonical breadcrumbs/links, no mutation form/action, no inline style/script and escaped hostile fixture `<script>не имя</script>`. CSS/browser assertions at `1440×900`, `768×1024` and `320×568` plus 200% text zoom prove the section order, absence of viewport overflow/clipping, visible focus and reachability of every link. CSS assets are byte-stable under GET/HEAD and local only.
+For each of the three successful routes, raw HTTP + parsed DOM assertions prove common shell/nav landmarks, exact heading sequence, exact breadcrumb list/links, paired unavailable-item labels, no mutation form/action and no inline style/script. CSS asset assertions prove byte-stable GET/HEAD, local-only stylesheets and the exact responsive/focus declarations from section 4.
+
+The hostile fixture belongs only to the prepare candidate list: engineer user `32` has DB-derived full name literal `<script>не имя</script>`. The successful prepare DOM contains exactly one eligible engineer label whose `textContent` contains that exact literal, contains no `script` element, and whose serialized HTML contains escaped text (`&lt;script&gt;не имя&lt;/script&gt;`, accepting an HTML parser's semantically equivalent entity serialization). User `32` is not silently dropped or substituted. Queue/card continue to prove escaping for every DB-derived value under inherited contracts but do not need to expose this engineer.
+
+Responsive visual acceptance remains P0, but it is mandatory delivery/manual smoke evidence rather than Gate 2 browser automation. Before Gate 5 can be `APPROVED`, the implementation author records inspection of real served pages at `1440×900`, `768×1024`, `320×568`, and 200% browser text zoom in the Gate 5 evidence handed to the independent reviewer. Evidence covers exact section order, no viewport horizontal overflow/clipping, visible keyboard focus, readable long Cyrillic/hostile-literal text, and keyboard reachability of every link/control. Any failure returns the implementation to Gate 4. No Playwright/browser dependency, screenshot framework or other harness improvement is introduced by this slice.
 
 Empty queue independently returns `200`, the exact section 5 empty state and no table/item link. Broken list DB independently returns predecessor exact plaintext `503` with `Retry-After: 60`, never empty/product HTML. A prepare view with no eligible installers returns its approved empty reason and no candidate controls.
 
@@ -176,7 +184,7 @@ Empty queue independently returns `200`, the exact section 5 empty state and no 
 
 Before/after fingerprints are byte-equivalent for all `fm2_*`, selected/nonselected legacy rows, auto-increment/catalog state, artifact storage and `../shlz-ui`. Repeated/concurrent GET/HEAD produce the same committed representation; no cookie/session/read marker/event/file is created.
 
-Rejected route, method, identity, authorization, missing object, CSS, DB and integrity cases retain exact predecessor status/body/header priority. No error response includes object values, actor, SQL/schema/path, exception or internal reason. `/pilot/assets/pilot.css/`, path parameters and non-GET/HEAD methods are rejected with inherited grammar.
+Rejected route, method, Host, identity, authorization, missing object, predecessor CSS, DB and integrity cases retain exact predecessor status/body/header priority. They are inherited regression obligations, not newly duplicated Gate 2 examples: Gate 3 evidence must run the focused new RED plus the existing approved HTTP auth/list/card/prepare tests (or the complete existing sequential suite) and record their green/red state as applicable. The new asset alone adds focused exact cases: `GET|HEAD /pilot/assets/pilot.css`; trailing slash/path suffix/parameter gives inherited `404` before identity/config/DB reads; any non-GET/HEAD method gives inherited `405` with `Allow: GET, HEAD` before identity/config/DB reads; missing configured asset gives inherited redacted `503` with `Retry-After: 60`. No error response includes object values, actor, SQL/schema/path, exception or internal reason.
 
 ## 10. Out of scope
 
@@ -189,14 +197,14 @@ Rejected route, method, identity, authorization, missing object, CSS, DB and int
 
 ## 11. Gate 2 boundary
 
-Gate 2 writes the smallest RED test set proving acceptance IDs A–E through real HTTP plus source manifest/browser-visible CSS behavior. Expected text, URLs, order, fixture states and viewport outcomes come only from this version. It may require separated focused tests for shell architecture and each page, but they form one reviewed vertical UI slice. Tests do not invoke private view methods, inspect SQL as their assertion seam or weaken predecessor failure/security assertions.
+Gate 2 writes the smallest RED test set proving acceptance IDs A–E through the existing real raw HTTP, parsed HTML DOM, served CSS bytes/declarations and source-manifest seam. Expected text, URLs, order, structure, fixture states and CSS contracts come only from this version. Gate 2 does not execute a browser or claim pixel/layout proof; section 8 assigns that mandatory evidence to delivery/manual smoke before Gate 5. It may use separated focused assertions for shell architecture and each page, but they form one reviewed vertical UI slice. Tests do not invoke private view methods, inspect SQL as their assertion seam, add browser/harness infrastructure or weaken predecessor failure/security assertions.
 
 ## 12. Gate 1 approval
 
 - Product owner: project user
-- Approved by: separately tasked Gate 1 specification agent `/root/ui_spec`
+- Approved by: separately tasked Gate 1 revision agent `/root/ui_spec`
 - Date: `2026-08-29`
 - Decision: `APPROVED`
-- Comment: пользователь прямо поручил автономно довести пилот до цельного продуктового интерфейса, выделить поддерживаемый UI-layer, использовать публичный `shlz-ui` и объединять близкие acceptance statements в разумные вертикальные срезы без ослабления SSD/TDD. Version `0.1` фиксирует только reversible read-only shell journey, точно ограничивает successor changes успешным HTML/CSS, сохраняет все security/domain outcomes и даёт независимые desktop/narrow/empty/error examples.
+- Comment: пользователь прямо поручил автономно довести пилот до цельного продуктового интерфейса, выделить поддерживаемый UI-layer, использовать публичный `shlz-ui` и не улучшать harness. Version `0.2` сохраняет P0 responsive intent, но делает Gate 2 полностью наблюдаемым через существующий raw HTTP/HTML/CSS seam; реальную viewport/zoom проверку фиксирует как обязательный manual delivery smoke до Gate 5. Также однозначно закреплены hostile escaping, heading/breadcrumb/unavailable-label DOM и способ наследования rejected-case regression evidence.
 
-Gate 2 разрешён только для version `0.1` и должен быть написан новым отдельно поставленным агентом. Gate 3 и Gate 5 требуют собственных новых независимых reviewers.
+Gate 2 разрешён только для version `0.2` и должен быть написан новым отдельно поставленным агентом. Gate 3 и Gate 5 требуют собственных новых независимых reviewers.
