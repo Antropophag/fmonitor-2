@@ -50,7 +50,7 @@ final class ShlzCssAsset implements CssAsset
     public function readBytes():string
     {
         if($this->bytes!==null)return $this->bytes;
-        if($this->path===''||$this->path[0]!=='/'||\preg_match('/(?:^|-)shlz\.css$/D',\basename($this->path))!==1)throw new CssAssetUnavailable();
+        if($this->path===''||$this->path[0]!=='/'||\preg_match('/^(?:shlz|pilot)\.css$/D',\basename($this->path))!==1)throw new CssAssetUnavailable();
         $this->descriptor=$this->descriptors->open($this->path);return $this->bytes=$this->descriptor->readBytes();
     }
     public function close():void
@@ -90,23 +90,23 @@ final class NativePhpStreamCloser implements PhpStreamCloser
     }
 }
 
-final class ProductionPilotShellRenderer implements PilotShellRenderer
+final class LegacyPilotShellRenderer implements PilotShellRenderer
 {
-    public function render(HttpUser $user):string{$n=\htmlspecialchars($user->displayName,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$n.'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/" aria-current="page">Моя работа</a><a class="shlz-link" href="/pilot/objects">Объекты монтажа</a></nav><main id="main-content" tabindex="-1"><h1 class="shlz-text">Моя работа</h1><p><span class="shlz-tag">Пилот подключён</span></p><p class="shlz-text">Объекты монтажа появятся после подключения карточки.</p></main></body></html>';}
+    public function render(HttpUser $user):string{$n=\htmlspecialchars($user->displayName,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');return '<'.'!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$n.'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/" aria-current="page">Моя работа</a><a class="shlz-link" href="/pilot/objects">Объекты монтажа</a></nav><'.'main id="main-content" tabindex="-1"><h1 class="shlz-text">Моя работа</h1><p><span class="shlz-tag">Пилот подключён</span></p><p class="shlz-text">Объекты монтажа появятся после подключения карточки.</p></main></body></html>';}
 }
 
-final class ProductionObjectListRenderer implements ObjectListRenderer
+final class LegacyObjectListRenderer implements ObjectListRenderer
 {
     public function render(HttpUser $user,array $objects):string
     {
         $e=static fn(mixed $value):string=>\htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');
         $content='<p class="shlz-text">Импортированные объекты монтажа пока отсутствуют.</p>';
         if($objects!==[]){$items='';foreach($objects as $object)$items.='<li><a class="shlz-link" href="/pilot/objects/'.$e($object['id']).'">'.$e($object['id']).'</a><dl><dt class="shlz-text">Регистрационный номер</dt><dd class="shlz-text">'.$e($object['registrationNumber']).'</dd><dt class="shlz-text">Адрес</dt><dd class="shlz-text">'.$e($object['address']).'</dd><dt class="shlz-text">Подъезд</dt><dd class="shlz-text">'.$e($object['entrance']).'</dd><dt class="shlz-text">Плановое начало</dt><dd class="shlz-text">'.$e($object['plannedStartDate']).'</dd><dt class="shlz-text">Плановое окончание</dt><dd class="shlz-text">'.$e($object['plannedFinishDate']).'</dd></dl></li>';$content='<ul>'.$items.'</ul>';}
-        return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Объекты монтажа — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/">Моя работа</a><a class="shlz-link" href="/pilot/objects" aria-current="page">Объекты монтажа</a></nav><main id="main-content" tabindex="-1"><h1 class="shlz-text">Объекты монтажа</h1>'.$content.'</main></body></html>';
+        return '<'.'!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Объекты монтажа — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/">Моя работа</a><a class="shlz-link" href="/pilot/objects" aria-current="page">Объекты монтажа</a></nav><'.'main id="main-content" tabindex="-1"><h1 class="shlz-text">Объекты монтажа</h1>'.$content.'</main></body></html>';
     }
 }
 
-final class ProductionObjectCardRenderer implements ObjectCardRenderer
+final class LegacyObjectCardRenderer implements ObjectCardRenderer
 {
     public function render(HttpUser $user,array $c):string
     {
@@ -131,14 +131,14 @@ final class ProductionObjectCardRenderer implements ObjectCardRenderer
         $events='';
         if($c['events']===[])$events=$pair('История','Событий пока нет');
         else foreach($c['events'] as $event)$events.=$pair('Событие',$e($event['type']).' · '.$e($event['occurredAt']).' · '.$e($event['actorId']));
-        return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Объект монтажа № '.$e($c['id']).' — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/">Моя работа</a><span class="shlz-text" aria-current="page">Объект монтажа</span></nav><main id="main-content" tabindex="-1"><h1 class="shlz-text">Объект монтажа № '.$e($c['id']).'</h1><p><span class="shlz-tag">'.$e($c['status']).'</span></p>'
+        return '<'.'!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Объект монтажа № '.$e($c['id']).' — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/">Моя работа</a><span class="shlz-text" aria-current="page">Объект монтажа</span></nav><'.'main id="main-content" tabindex="-1"><h1 class="shlz-text">Объект монтажа № '.$e($c['id']).'</h1><p><span class="shlz-tag">'.$e($c['status']).'</span></p>'
             .$section('Идентификация',$pair('Регистрационный номер',$e($c['registrationNumber'])).$pair('Адрес',$e($c['address'])).$pair('Подъезд','Подъезд '.$e($c['entrance'])))
             .$section('Сроки',$pair('Плановое начало','Плановое начало '.$e($c['plannedStartDate'])).$pair('Плановое окончание','Плановое окончание '.$e($c['plannedFinishDate'])))
             .$section('Распоряжение и команда',$team).$section('Работы',$work).$section('Последние события',$events).'</main></body></html>';
     }
 }
 
-final class ProductionPrepareFormRenderer implements PrepareFormRenderer
+final class LegacyPrepareFormRenderer implements PrepareFormRenderer
 {
     public function render(HttpUser $user,array $f):string
     {
@@ -147,7 +147,7 @@ final class ProductionPrepareFormRenderer implements PrepareFormRenderer
         else{$same=\count(\array_unique(\array_map(static fn(array $x):string=>$x['source']."\0".$x['updatedAt'],$f['installers'])))===1;if($same)$installerControls.='<p class="shlz-text">Источник кадровых данных: '.$e($f['installers'][0]['source']).'</p><p class="shlz-text">Актуально на: '.$e($f['installers'][0]['updatedAt']).'</p>';foreach($f['installers'] as $x){$label=$e($x['fio']).' · табельный № '.$e($x['tabId']).' · '.$e($x['position']);if(!$same)$label.=' · Источник кадровых данных: '.$e($x['source']).' · Актуально на: '.$e($x['updatedAt']);$installerControls.='<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="installerTabIds[]" value="'.$e($x['tabId']).'">'.$label.'</label>';}}
         $engineerControls='';if($f['engineers']===[])$engineerControls='<p class="shlz-text">Нет доступных инженеров строительного контроля.</p>';else foreach($f['engineers'] as $x)$engineerControls.='<label class="shlz-choice"><input class="shlz-radio" type="radio" name="controlEngineerUserId" value="'.$e($x['userId']).'"'.($x['prefilled']?' checked':'').'>'.$e($x['fio']).' · '.$e($x['position']).'</label>';
         $confirmation=$f['installers']!==[]&&$f['engineers']!==[]?'<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="controlEngineerConfirmed" value="yes">Подтверждаю выбор инженера строительного контроля</label>':'';$id=$e($f['id']);$route='/pilot/objects/'.$id.'/assignment-order/prepare';
-        return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Состав распоряжения — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Хлебные крошки"><a class="shlz-link" href="/pilot/objects">Объекты монтажа</a><a class="shlz-link" href="/pilot/objects/'.$id.'">Объект монтажа № '.$id.'</a><span class="shlz-text" aria-current="page">Состав распоряжения</span></nav><main id="main-content" tabindex="-1"><h1 class="shlz-text">Состав распоряжения</h1><dl><dt class="shlz-text">Регистрационный номер</dt><dd class="shlz-text">'.$e($f['registrationNumber']).'</dd><dt class="shlz-text">Адрес</dt><dd class="shlz-text">'.$e($f['address']).'</dd><dt class="shlz-text">Подъезд</dt><dd class="shlz-text">'.$e($f['entrance']).'</dd><dt class="shlz-text">Плановое начало</dt><dd class="shlz-text">'.$e($f['plannedStartDate']).'</dd><dt class="shlz-text">Плановое окончание</dt><dd class="shlz-text">'.$e($f['plannedFinishDate']).'</dd></dl><p class="shlz-text">Выберите состав. Распоряжение будет сформировано только после отдельного подтверждения.</p><form method="get" action="'.$route.'"><fieldset><legend>Монтажники</legend>'.$installerControls.'</fieldset><fieldset><legend>Инженер строительного контроля</legend>'.$engineerControls.'</fieldset>'.$confirmation.'</form><p><a class="shlz-link" href="/pilot/objects/'.$id.'">Вернуться к объекту монтажа</a></p></main></body></html>';
+        return '<'.'!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Состав распоряжения — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong class="shlz-text">FMonitor 2.0</strong><span class="shlz-text">'.$e($user->displayName).'</span></header><nav aria-label="Хлебные крошки"><a class="shlz-link" href="/pilot/objects">Объекты монтажа</a><a class="shlz-link" href="/pilot/objects/'.$id.'">Объект монтажа № '.$id.'</a><span class="shlz-text" aria-current="page">Состав распоряжения</span></nav><'.'main id="main-content" tabindex="-1"><h1 class="shlz-text">Состав распоряжения</h1><dl><dt class="shlz-text">Регистрационный номер</dt><dd class="shlz-text">'.$e($f['registrationNumber']).'</dd><dt class="shlz-text">Адрес</dt><dd class="shlz-text">'.$e($f['address']).'</dd><dt class="shlz-text">Подъезд</dt><dd class="shlz-text">'.$e($f['entrance']).'</dd><dt class="shlz-text">Плановое начало</dt><dd class="shlz-text">'.$e($f['plannedStartDate']).'</dd><dt class="shlz-text">Плановое окончание</dt><dd class="shlz-text">'.$e($f['plannedFinishDate']).'</dd></dl><p class="shlz-text">Выберите состав. Распоряжение будет сформировано только после отдельного подтверждения.</p><form method="get" action="'.$route.'"><'.'fieldset><legend>Монтажники</legend>'.$installerControls.'</fieldset><'.'fieldset><legend>Инженер строительного контроля</legend>'.$engineerControls.'</fieldset>'.$confirmation.'</form><p><a class="shlz-link" href="/pilot/objects/'.$id.'">Вернуться к объекту монтажа</a></p></main></body></html>';
     }
 }
 
@@ -262,22 +262,23 @@ final class MariaDbObjectListReader implements ObjectListReader
         if(\count($rows)>500)throw new PilotHttpInfrastructureUnavailable();
         $objects=[];$caseIds=[];$objectIds=[];
         foreach($rows as $row){$caseId=self::positiveId($row['case_id']);$id=self::positiveId($row['legacy_installation_object_id']);$legacyId=self::positiveId($row['legacy_id']);$address=\trim((string)$row['ordadr_address']);$entrance=\trim((string)$row['entrance']);$registration=\trim((string)$row['regnumber']);$start=self::date($row['workdatestart']);$finish=self::date($row['workdateendadjusted'])??self::date($row['plan_finish_date']);if($caseId===null||$id===null||$legacyId!==$id||isset($caseIds[$caseId])||isset($objectIds[$id])||$address===''||$entrance===''||$registration===''||$start===null||$finish===null)throw new PilotHttpInfrastructureUnavailable();$caseIds[$caseId]=true;$objectIds[$id]=true;$objects[]=['id'=>$id,'registrationNumber'=>$registration,'address'=>$address,'entrance'=>$entrance,'plannedStartDate'=>$start,'plannedFinishDate'=>$finish];}
-        \usort($objects,static fn(array $a,array $b):int=>[$a['plannedStartDate'],$a['id']]<=>[$b['plannedStartDate'],$b['id']]);return $objects;
+        \usort($objects,static fn(array $a,array $b):int=>[$a['plannedStartDate'],$a['id']]<=>[$b['plannedStartDate'],$b['id']]);$cards=new MariaDbObjectCardReader($this->connection,$this->prefix);foreach($objects as &$object){try{$projection=$cards->read($object['id']);$object['status']=$projection['status']??'Требуется распоряжение';}catch(PilotHttpInfrastructureUnavailable){$object['status']='Требуется распоряжение';}}unset($object);return $objects;
     }
     private static function date(mixed $value):?string{if(!\is_string($value)||\preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[ T].*)?$/D',$value,$m)!==1||!\checkdate((int)$m[2],(int)$m[3],(int)$m[1])||$m[1]==='0000')return null;return $m[1].'-'.$m[2].'-'.$m[3];}
     private static function positiveId(mixed $value):?int{if(!\is_int($value)&&(!\is_string($value)||\preg_match('/^[1-9][0-9]*$/D',$value)!==1))return null;$id=\filter_var($value,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);return $id===false?null:$id;}
 }
 
-final class PilotHttpApplication
+class PilotHttpCoordinator
 {
     public function __construct(private TrustedServerIdentity $identity,private PilotShellRenderer $shell,private PilotHttpDependencies $dependencies,private ?ObjectCardRenderer $cards=null,private ?ObjectCardReaderProvider $cardReaders=null,private ?ObjectListRenderer $lists=null,private ?ObjectListReaderProvider $listReaders=null,private ?PrepareFormRenderer $prepareForms=null,private ?PrepareFormReaderProvider $prepareReaders=null){}
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
         $cardId=self::cardId($r->path);$prepareId=self::prepareId($r->path);
-        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/shlz.css','/pilot/objects'],true)&&$cardId===null&&$prepareId===null)return $this->response(404,"Not found.\n");
+        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/shlz.css','/pilot/assets/pilot.css','/pilot/objects'],true)&&$cardId===null&&$prepareId===null)return $this->response(404,"Not found.\n");
         if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
         if($r->path==='/pilot')return $this->response(308,'',['Location'=>'/pilot/'],$r->method);
         if($r->path==='/pilot/assets/shlz.css'){try{$body=$this->dependencies->css()->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
+        if($r->path==='/pilot/assets/pilot.css'){try{$body=$this->dependencies->pilotCss()->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
         try{$this->dependencies->css()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);if($prepareId!==null){if($this->prepareReaders===null||$this->prepareForms===null)throw new PilotHttpInfrastructureUnavailable();if(!$this->prepareReaders->hasCapability($user->id,'assignment_order.prepare'))return $this->response(403,"Access denied.\n",[],$r->method);$form=$this->prepareReaders->prepareForms()->read($prepareId,$this->prepareReaders->businessDate());if($form===null)return $this->response(404,"Not found.\n",[],$r->method);return $this->response(200,$this->prepareForms->render($user,$form),['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($r->path==='/pilot/objects'){if($this->listReaders===null||$this->lists===null)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$this->lists->render($user,$this->listReaders->objectList()->read()),['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}if($cardId!==null){if($this->cardReaders===null||$this->cards===null)throw new PilotHttpInfrastructureUnavailable();$card=$this->cardReaders->objectCards()->read($cardId);if($card===null)return $this->response(404,"Not found.\n",[],$r->method);try{$card['canPrepare']=$this->prepareReaders?->hasCapability($user->id,'assignment_order.prepare')??false;}catch(PilotHttpInfrastructureUnavailable){$card['canPrepare']=false;}return $this->response(200,$this->cards->render($user,$card),['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}return $this->response(200,$this->shell->render($user),['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}catch(PrepareFormUnavailable){return $this->response(409,"Формирование распоряжения недоступно для текущего состояния объекта монтажа.\n",[],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
     }
@@ -345,6 +346,7 @@ final class ProcessEnvironmentSource implements EnvironmentSource
 final class ProductionPilotHttpDependencies implements PilotHttpDependencies,ObjectCardReaderProvider,ObjectListReaderProvider,PrepareFormReaderProvider
 {
     private ?CssAsset $cssAsset=null;
+    private ?CssAsset $pilotCssAsset=null;
     private ?HttpUserDirectory $userDirectory=null;
     private ?ObjectCardReader $objectCardReader=null;
     private ?ObjectListReader $objectListReader=null;
@@ -358,6 +360,12 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
         $path=$this->environment->read('FMONITOR_SHLZ_CSS_PATH');
         if(!\is_string($path))throw new CssAssetUnavailable();
         return $this->cssAsset=new ShlzCssAsset($path,$this->cssDescriptors);
+    }
+    public function pilotCss():CssAsset
+    {
+        if($this->pilotCssAsset!==null)return $this->pilotCssAsset;
+        $configured=$this->environment->read('FMONITOR_PILOT_CSS_PATH');
+        return $this->pilotCssAsset=new ShlzCssAsset(\is_string($configured)?$configured:__DIR__.'/pilot.css',$this->cssDescriptors);
     }
     public function users():HttpUserDirectory
     {
@@ -392,8 +400,9 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     public function businessDate():string{$v=$this->environment->read('FMONITOR_BUSINESS_DATE');if(!\is_string($v))throw new PilotHttpInfrastructureUnavailable();return $v;}
     public function close():void
     {
-        $css=$this->cssAsset;$this->cssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$first=null;
+        $css=$this->cssAsset;$pilotCss=$this->pilotCssAsset;$this->cssAsset=null;$this->pilotCssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$first=null;
         try{if($css!==null)$css->close();}catch(\Throwable $e){$first=$e;}
+        try{if($pilotCss!==null)$pilotCss->close();}catch(\Throwable $e){$first??=$e;}
         try{if($connection instanceof \mysqli&&$connection->close()!==true)throw new \RuntimeException();}catch(\Throwable $e){$first??=$e;}
         if($first!==null)throw $first;
     }
@@ -418,9 +427,9 @@ final class RandomCorrelationIdSource implements CorrelationIdSource
     public function nextId():string{return \bin2hex(\random_bytes(16));}
 }
 
-final class PilotHttpEntrypoint
+class PilotHttpGateway
 {
-    public function __construct(private readonly PilotHttpRequestFactory $requests,private readonly PilotHttpApplication $application,private readonly PilotHttpDependencies $dependencies,private readonly CorrelationIdSource $correlationIds,private readonly UnexpectedFailureReporter $failures){}
+    public function __construct(private readonly PilotHttpRequestFactory $requests,private readonly PilotHttpCoordinator $application,private readonly PilotHttpDependencies $dependencies,private readonly CorrelationIdSource $correlationIds,private readonly UnexpectedFailureReporter $failures){}
     public function handle(array $server):PilotHttpResponse
     {
         $correlationId='correlation-unavailable';$reported=false;$correlationValid=false;
@@ -437,13 +446,19 @@ final class PilotHttpEntrypoint
     }
 }
 
-final class ProductionPilotHttpEntrypointFactory
+final class ProductionPilotHttpGatewayFactory
 {
-    public static function create(EnvironmentSource $environment):PilotHttpEntrypoint
+    public static function create(EnvironmentSource $environment):PilotHttpGateway
     {
         $closer=new NativePhpStreamCloser(new NativePhpFclosePrimitive());
         $dependencies=new ProductionPilotHttpDependencies($environment,new PhpCssDescriptorOpener($closer));
-        $application=new PilotHttpApplication(new RemoteUserIdentity(),new ProductionPilotShellRenderer(),$dependencies,new ProductionObjectCardRenderer(),$dependencies,new ProductionObjectListRenderer(),$dependencies,new ProductionPrepareFormRenderer(),$dependencies);
-        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
+        $application=new PilotHttpCoordinator(new RemoteUserIdentity(),new ProductionPilotShellRenderer(),$dependencies,new ProductionObjectCardRenderer(),$dependencies,new ProductionObjectListRenderer(),$dependencies,new ProductionPrepareFormRenderer(),$dependencies);
+        return new PilotHttpGateway(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
     }
 }
+
+require_once __DIR__.'/PilotView.php';
+require_once __DIR__.'/PilotShellView.php';
+require_once __DIR__.'/ObjectListView.php';
+require_once __DIR__.'/ObjectCardView.php';
+require_once __DIR__.'/PrepareFormView.php';
