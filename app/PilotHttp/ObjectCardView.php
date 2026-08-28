@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
 // Owns the object-card <main composition supplied to the shared document shell.
-final class ProductionObjectCardRenderer implements ObjectCardRenderer
+final class ProductionObjectCardRenderer implements ObjectCardRenderer,CompatibilityObjectCardRenderer
 {
     public function render(HttpUser $user,array $c):string
     {
@@ -11,12 +11,11 @@ final class ProductionObjectCardRenderer implements ObjectCardRenderer
         $work=$c['opened']?[$pair('Фактическое начало','Фактическое начало '.$e($c['actualStartDate'])),$pair('Аудит открытия','Открыто: '.$e($c['openedAt']).' · Открыл пользователь: '.$e($c['openedByUserId'])),$pair('Чек-лист','Чек-лист: Доступен')]:[$pair('Состояние работ','Работы ещё не открыты')];$events=[];if($c['events']===[])$events[]=$pair('История','Событий пока нет');else foreach($c['events']as$event)$events[]=$pair('Событие',$e($event['type']).' · '.$e($event['occurredAt']).' · '.$e($event['actorId']));
         $section=static fn(string $title,array $rows,string $extra=''):string=>'<section><h2>'.$title.'</h2>'.PilotView::dl($rows).$extra.'</section>';
         $body='<div class="fm2-page-header"><h1>Объект монтажа № '.$id.'</h1><span class="shlz-status">'.$e($c['status']).'</span></div><div class="fm2-object-layout">'.$section('Идентификация',[$pair('Регистрационный номер',$e($c['registrationNumber'])),$pair('Адрес',$e($c['address'])),$pair('Подъезд','Подъезд '.$e($c['entrance']))]).$section('Сроки',[$pair('Плановое начало','Плановое начало '.$e($c['plannedStartDate'])),$pair('Плановое окончание','Плановое окончание '.$e($c['plannedFinishDate']))]).$section('Распоряжение и команда',$team,$action).$section('Работы',$work).$section('Последние события',$events).'</div>';
-        if(($c['compatibilityShell']??false)===true)return $this->legacyDocument($user,$id,$body);
         return PilotView::document($user,'Объект монтажа № '.$id,'Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects']],'Объект монтажа № '.$id),$body);
     }
-    /** Backward-compatible document for the predecessor composition where the prepare feature is not configured. */
-    private function legacyDocument(HttpUser $user,string $id,string $body):string
+    public function renderCompatibility(HttpUser $user,array $c):string
     {
+        $id=PilotView::e($c['id']);$shared=$this->render($user,$c);$start=\strpos($shared,'<main class="fm2-main" id="main-content" tabindex="-1">');$end=\strrpos($shared,'</main>');if($start===false||$end===false)throw new \LogicException();$start=\strpos($shared,'>',$start)+1;$navEnd=\strpos($shared,'</nav>',$start);if($navEnd!==false)$start=$navEnd+6;$body=\substr($shared,$start,$end-$start);
         return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Объект монтажа № '.$id.' — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong>FMonitor 2.0</strong><span>'.PilotView::e($user->displayName).'</span></header><nav aria-label="Основная навигация"><a class="shlz-link" href="/pilot/">Моя работа</a><span aria-current="page">Объект монтажа</span></nav><main id="main-content" tabindex="-1">'.$body.'</main></body></html>';
     }
 }

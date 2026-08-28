@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
-final class ProductionPrepareFormRenderer implements PrepareFormRenderer
+final class ProductionPrepareFormRenderer implements PrepareFormRenderer,CompatibilityPrepareFormRenderer
 {
     public function render(HttpUser $user,array $f):string
     {
@@ -12,5 +12,9 @@ final class ProductionPrepareFormRenderer implements PrepareFormRenderer
         $summary=PilotView::dl([['Регистрационный номер',$e($f['registrationNumber'])],['Адрес',$e($f['address'])],['Подъезд',$e($f['entrance'])],['Плановое начало',$e($f['plannedStartDate'])],['Плановое окончание',$e($f['plannedFinishDate'])]]);
         $confirmation=$f['installers']!==[]&&$f['engineers']!==[]?'<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="controlEngineerConfirmed" value="yes">Подтверждаю выбор инженера строительного контроля</label>':'';$body='<div class="fm2-page-header"><h1>Состав распоряжения</h1></div>'.$summary.'<p>Выберите состав. Распоряжение будет сформировано только после отдельного подтверждения.</p><form class="fm2-form" method="get" action="'.$route.'"><h2>1. Монтажники</h2>'.$source.'<fieldset><legend>Монтажники</legend>'.$installers.'</fieldset><h2>2. Инженер строительного контроля</h2><fieldset><legend>Инженер строительного контроля</legend>'.$engineers.'</fieldset>'.$confirmation.'</form><p><a class="shlz-link" href="/pilot/objects/'.$id.'">Вернуться к объекту монтажа</a></p>';
         return PilotView::document($user,'Состав распоряжения','Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects'],['Объект монтажа № '.$id,'/pilot/objects/'.$id]],'Состав распоряжения'),$body);
+    }
+    public function renderCompatibility(HttpUser $user,array $f):string
+    {
+        $id=PilotView::e($f['id']);$shared=$this->render($user,$f);$start=\strpos($shared,'<main class="fm2-main" id="main-content" tabindex="-1">');$end=\strrpos($shared,'</main>');if($start===false||$end===false)throw new \LogicException();$start=\strpos($shared,'>',$start)+1;$navEnd=\strpos($shared,'</nav>',$start);if($navEnd!==false)$start=$navEnd+6;$body=\substr($shared,$start,$end-$start);return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Состав распоряжения — FMonitor 2.0</title><link rel="stylesheet" href="/pilot/assets/shlz.css"></head><body class="shlz-scope"><a class="shlz-link" href="#main-content">Перейти к содержанию</a><header><strong>FMonitor 2.0</strong><span>'.PilotView::e($user->displayName).'</span></header><nav aria-label="Хлебные крошки"><a class="shlz-link" href="/pilot/objects">Объекты монтажа</a><a class="shlz-link" href="/pilot/objects/'.$id.'">Объект монтажа № '.$id.'</a><span aria-current="page">Состав распоряжения</span></nav><main id="main-content" tabindex="-1">'.$body.'</main></body></html>';
     }
 }
