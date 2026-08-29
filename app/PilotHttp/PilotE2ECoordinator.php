@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
 
 use FMonitor2\InstallationProcess\ArtifactUnavailableException;
-use FMonitor2\InstallationProcess\BusinessDateClock;
 use FMonitor2\InstallationProcess\Clock;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessConfig;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessFactory;
@@ -63,7 +62,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
 
     private function preparePage(PilotHttpRequest $r,int $id,HttpUser $user):PilotHttpResponse
     {
-        try{$form=$this->dependencies->prepareForms()->read($id,$this->dependencies->businessDate());}catch(PrepareFormUnavailable){return $this->redirect('/pilot/objects/'.$id);}
+        try{$form=$this->dependencies->prepareForms()->read($id,$this->dependencies->processDate());}catch(PrepareFormUnavailable){return $this->redirect('/pilot/objects/'.$id);}
         if($form===null)return $this->response(404,"Not found.\n",[],$r->method);[$session,$headers]=$this->session($r,$user,true);$form['csrfToken']=$this->token($session,$user,$id);$form['processRevision']=$this->revision($session,$id);$form['flash']=$this->pullFlash($session,$r->path);$form['selected']=$form['flash']['selected']??[];return $this->response(200,$this->forms->render($user,$form),['Content-Type'=>'text/html; charset=UTF-8']+$headers,$r->method);
     }
 
@@ -76,9 +75,9 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         if(!$this->consume($session,$fields['csrfToken'][0]??'', $user,$route['id']))return $this->response(403,"Invalid request.\n");
         $card=$this->dependencies->objectCards()->read($route['id']);if($card===null)return $this->response(404,"Not found.\n");
         if(($fields['processRevision'][0]??'')!==$this->revision($session,$route['id']))return $this->flashRedirect($session,'/pilot/objects/'.$route['id'],'Данные объекта монтажа изменились. Проверьте актуальное состояние и повторите действие.');
-        [$connection,$processPrefix,$legacyPrefix,$root,$now]=$this->dependencies->commandResources();$businessDate=$this->dependencies->businessDate();$clock=new class($now,$businessDate) implements BusinessDateClock{public function __construct(private string $value,private string $date){}public function now():string{return $this->value;}public function businessDate():string{return $this->date;}};$config=new ProductionInstallationProcessConfig($processPrefix,$legacyPrefix,$root);$process=ProductionInstallationProcessFactory::create($connection,$config,$clock);
+        [$connection,$processPrefix,$legacyPrefix,$root,$now]=$this->dependencies->commandResources();$clock=new class($now) implements Clock{public function __construct(private string $value){}public function now():string{return $this->value;}};$config=new ProductionInstallationProcessConfig($processPrefix,$legacyPrefix,$root);$process=ProductionInstallationProcessFactory::create($connection,$config,$clock);
         if($route['kind']==='prepare'){
-            $path=$r->path;$error=null;$installers=$fields['installerTabIds[]']??[];$engineers=$fields['controlEngineerUserId']??[];$confirm=$fields['controlEngineerConfirmed']??[];$eligible=$this->dependencies->prepareForms()->read($route['id'],$this->dependencies->businessDate());$installerIds=\array_map(static fn(array $x):string=>(string)$x['tabId'],$eligible['installers']);$engineerIds=\array_map(static fn(array $x):string=>(string)$x['userId'],$eligible['engineers']);
+            $path=$r->path;$error=null;$installers=$fields['installerTabIds[]']??[];$engineers=$fields['controlEngineerUserId']??[];$confirm=$fields['controlEngineerConfirmed']??[];$eligible=$this->dependencies->prepareForms()->read($route['id'],$this->dependencies->processDate());$installerIds=\array_map(static fn(array $x):string=>(string)$x['tabId'],$eligible['installers']);$engineerIds=\array_map(static fn(array $x):string=>(string)$x['userId'],$eligible['engineers']);
             if($installers===[]||\count($installers)!==\count(\array_unique($installers))||\count(\array_filter($installers,[self::class,'positive']))!==\count($installers))$error=['installers','Выберите хотя бы одного монтажника.'];
             elseif(\count($engineers)!==1||!self::positive($engineers[0]))$error=['engineer','Выберите одного инженера строительного контроля.'];elseif($confirm!==['yes'])$error=['confirmation','Подтвердите выбор инженера строительного контроля.'];
             if($error===null){foreach($installers as$value)if(!\in_array($value,$installerIds,true)){$error=['installers','Состав монтажников изменился. Проверьте доступных сотрудников.'];break;}if($error===null&&!\in_array($engineers[0],$engineerIds,true))$error=['engineer','Выбранный инженер больше недоступен. Выберите другого.'];}

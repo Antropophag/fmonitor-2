@@ -23,5 +23,4 @@ final class ProductionInstallationProcessFacts
     public function findEngineerSnapshot(int $id): ?array { return $this->users->findEngineerSnapshot($id); }
     public function renderAssignmentOrder(array $input): array { return $this->renderer->renderAssignmentOrder($input); }
     public function now(): string { return $this->clock->now(); }
-    public function assignmentOrderDate(string $occurredAt):string { return $this->clock instanceof BusinessDateClock?$this->clock->businessDate():(new \DateTimeImmutable($occurredAt))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d'); }
 }
