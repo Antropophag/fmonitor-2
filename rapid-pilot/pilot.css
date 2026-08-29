@@ -960,7 +960,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-installer-choice > span { display: grid; gap: 3px; min-inline-size: 0; }
 .fm2-installer-choice strong { overflow-wrap: anywhere; font-size: 14px; }
 .fm2-installer-choice small { color: #657181; font-size: 11px; }
-.fm2-installer-choice em { padding: 4px 7px; border-radius: 8px; background: #f4e8e8; color: #8a3636; font-size: 11px; font-style: normal; font-weight: 600; }
+.fm2-installer-choice em { padding: 4px 7px; border-radius: 8px; font-size: 11px; font-style: normal; font-weight: 600; white-space: nowrap; }
+.fm2-installer-choice.is-employed em { background: #e6efe7; color: #2f6a42; }
+.fm2-installer-choice.is-dismissed em { background: #f4e8e8; color: #8a3636; }
 .fm2-installer-error { margin: 12px 0 0; color: #a32d2d; font-size: 13px; font-weight: 600; }
 .fm2-installer-dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 20px; border-block-start: 1px solid #edf0f4; }
 .fm2-installer-dialog footer .shlz-button { min-block-size: 44px; }
