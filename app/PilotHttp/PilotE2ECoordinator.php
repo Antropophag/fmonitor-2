@@ -21,12 +21,14 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         private readonly ObjectCardRenderer $cards,
         private readonly ObjectListRenderer $lists,
         private readonly PrepareFormRenderer $forms,
+        private readonly ProductionChecklistRenderer $checklists,
     ) { parent::__construct($identity,new ProductionPilotShellRenderer(),$dependencies); }
 
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
         if(!$this->dependencies->pilotUiConfigured()||!$this->dependencies->prepareCommandConfigured()||!$this->dependencies->e2eConfigured())return $this->reads->handle($r);
         if($r->path==='/pilot/users')return $this->redirect('/pilot/admin/users');
+        if(preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist(?:/operations|/photos)?$#D',$r->path,$checklistMatch)===1&&self::positive($checklistMatch[1]))return $this->checklist($r,(int)$checklistMatch[1]);
         if(in_array($r->path,['/pilot/admin/users','/pilot/admin/roles'],true)||preg_match('#^/pilot/admin/users/([1-9][0-9]*)/roles/([1-9][0-9]*)$#D',$r->path,$userRoleMatch)===1)return $this->users($r,$userRoleMatch??[]);
         if($r->path==='/pilot/installers'){
             if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
@@ -49,6 +51,22 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
             return $this->preparePage($r,$route['id'],$user);
         }catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
         catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
+    }
+
+    private function checklist(PilotHttpRequest $r,int $objectId):PilotHttpResponse
+    {
+        $isPage=str_ends_with($r->path,'/checklist');$isPhoto=str_ends_with($r->path,'/photos');$allow=$isPage?'GET, HEAD':'POST';if(!in_array($r->method,explode(', ',$allow),true))return $this->response(405,"Method not allowed.\n",['Allow'=>$allow],$r->method);
+        try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
+        try{
+            $this->dependencies->css()->readBytes();$this->dependencies->pilotCss()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);$card=$this->dependencies->objectCards()->read($objectId);if($card===null)return $this->response(404,"Not found.\n",[],$r->method);
+            [$db,$prefix,,$root,$now]=$this->dependencies->commandResources();$sync=new ChecklistSync($db,$prefix,$root,$now);$sync->ensureSchema();$roleAccess=$this->dependencies->canEditChecklist($user->id);$allowed=(bool)$card['opened']&&($roleAccess||(int)($card['controlEngineer']['userId']??0)===$user->id);
+            if($isPage){[$session,$headers]=$this->session($r,$user,true);$csrf=$this->token($session,$user,$objectId);return $this->response(200,$this->checklists->render($user,$card,$roleAccess,$sync->projection($objectId),$csrf),['Content-Type'=>'text/html; charset=UTF-8']+$headers,$r->method);}
+            if(!$allowed)return $this->json(403,['status'=>'rejected','message'=>'Недостаточно прав для изменения чек-листа.']);
+            $declaredLength=$r->server['CONTENT_LENGTH']??null;if(!is_string($declaredLength)||!ctype_digit($declaredLength)||(int)$declaredLength>($isPhoto?5*1024*1024:32768))return $this->json(413,['status'=>'rejected','message'=>'Размер операции превышает допустимый.']);$r=new PilotHttpRequest($r->method,$r->path,$r->host,$r->serverIdentity,$r->server,(string)file_get_contents('php://input'));if((int)$declaredLength!==strlen($r->body))return $this->json(400,['status'=>'rejected','message'=>'Некорректный размер операции.']);[$session]=$this->session($r,$user,false);$csrf=(string)($r->server['HTTP_X_FM2_CSRF']??'');if($session===null||!$this->validChecklistRequest($r,$session,$user)||!$this->validToken($session,$csrf,$user,$objectId))return $this->json(403,['status'=>'rejected','message'=>'Сеанс проверки истёк. Обновите страницу.']);
+            if($isPhoto){$metadata=$r->server['HTTP_X_FM2_OPERATION']??'';if(!is_string($metadata)||strlen($metadata)>4096)return $this->json(400,['status'=>'rejected','message'=>'Некорректные данные фотографии.']);$operation=json_decode(base64_decode($metadata,true)?:'',true,16,JSON_THROW_ON_ERROR);if(!is_array($operation))return $this->json(400,['status'=>'rejected','message'=>'Некорректные данные фотографии.']);$result=$sync->accept($objectId,$user,$operation,$r->body);}
+            else{if(!preg_match('#^application/json(?:;\s*charset=UTF-8)?$#iD',(string)($r->server['CONTENT_TYPE']??''))||strlen($r->body)>32768)return $this->json(400,['status'=>'rejected','message'=>'Некорректный формат операции.']);$operation=json_decode($r->body,true,16,JSON_THROW_ON_ERROR);if(!is_array($operation))return $this->json(400,['status'=>'rejected','message'=>'Некорректный формат операции.']);$result=$sync->accept($objectId,$user,$operation);}
+            $result['projection']=$sync->projection($objectId);return $this->json(in_array($result['status'],['accepted','duplicate'],true)?200:($result['status']==='conflict'?409:422),$result);
+        }catch(\JsonException){return $this->json(400,['status'=>'rejected','message'=>'Некорректные данные операции.']);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->json(503,['status'=>'retryable','message'=>'Сервис временно недоступен.']);}catch(\Throwable){return $this->json(503,['status'=>'retryable','message'=>'Сервис временно недоступен.']);}
     }
 
     private function users(PilotHttpRequest $r,array $route):PilotHttpResponse
@@ -148,6 +166,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         return [&$_SESSION,$headers];
     }
     private function token(array &$s,HttpUser $u,int $id):string{$t=\bin2hex(\random_bytes(16));$s['tokens'][$t]=['actor'=>$u->id,'id'=>$id,'at'=>\time()];$_SESSION=$s;return $t;}
+    private function validToken(array $s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;return \is_array($x)&&($x['actor']??null)===$u->id&&($x['id']??null)===$id&&\time()-(int)($x['at']??0)<=1800;}
     private function consume(array &$s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;unset($s['tokens'][$token]);$_SESSION=$s;return \is_array($x)&&$x['actor']===$u->id&&$x['id']===$id&&\time()-$x['at']<=1800;}
     private function revision(array $s,int $id):string{[$db,$prefix]=$this->dependencies->commandResources();$q=$db->prepare("SELECT lock_version FROM `{$prefix}fm2_installation_cases` WHERE legacy_installation_object_id=? LIMIT 2");$q->bind_param('i',$id);$q->execute();$rows=$q->get_result()->fetch_all(MYSQLI_ASSOC);if(\count($rows)!==1)throw new PilotHttpInfrastructureUnavailable();return \hash_hmac('sha256',$id.':'.$rows[0]['lock_version'],$s['secret']);}
     private function validRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
@@ -156,6 +175,11 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         $trustedDemo=self::trustedDemo($r);$expectedOrigin=($trustedDemo?'http://':'https://').$r->host;
         $originAllowed=$origin===null||$origin===$expectedOrigin||($trustedDemo&&$origin==='null');
         return $s['actor']===$u->id&&$originAllowed&&($fetch===null||$fetch==='same-origin');
+    }
+    private function validChecklistRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
+    {
+        $expected=(self::trustedDemo($r)?'http://':'https://').$r->host;
+        return ($s['actor']??null)===$u->id&&($r->server['HTTP_ORIGIN']??null)===$expected&&($r->server['HTTP_SEC_FETCH_SITE']??null)==='same-origin';
     }
     private static function trustedDemo(PilotHttpRequest $r):bool
     {
@@ -172,4 +196,5 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     public static function positive(string $v):bool{return \preg_match('/^[1-9][0-9]*$/D',$v)===1&&\strlen($v)<=19&&(\strlen($v)<19||\strcmp($v,'9223372036854775807')<=0);}
     private static function date(string $v):bool{return \preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D',$v,$m)===1&&$m[1]!=='0000'&&\checkdate((int)$m[2],(int)$m[3],(int)$m[1]);}
     private function response(int $status,string $body,array $extra=[],string $method='GET'):PilotHttpResponse{$headers=$extra+['Content-Type'=>'text/plain; charset=UTF-8','X-Content-Type-Options'=>'nosniff','Referrer-Policy'=>'no-referrer','X-Frame-Options'=>'DENY','Content-Security-Policy'=>"default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",'Permissions-Policy'=>'camera=(), microphone=(), geolocation=()','Cross-Origin-Opener-Policy'=>'same-origin','Cache-Control'=>'no-store'];$headers['Content-Length']=(string)\strlen($body);return new PilotHttpResponse($status,$headers,$method==='HEAD'?'':$body);}
+    private function json(int $status,array $payload):PilotHttpResponse{return $this->response($status,\json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),['Content-Type'=>'application/json; charset=UTF-8']);}
 }

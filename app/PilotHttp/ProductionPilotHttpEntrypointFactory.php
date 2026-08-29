@@ -12,7 +12,7 @@ final class ProductionPilotHttpEntrypointFactory
         $identity=new RemoteUserIdentity();$cards=new ProductionObjectCardRenderer();$lists=new ProductionObjectListRenderer();$forms=new ProductionPrepareFormRenderer();$checklists=new ProductionChecklistRenderer();
         $reads=new PilotHttpApplication($identity,new ProductionPilotShellRenderer(),$dependencies,$cards,$dependencies,$lists,$dependencies,$forms,$dependencies,$checklists);
         require_once __DIR__.'/PilotE2ECoordinator.php';
-        $application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms);
+        $application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms,$checklists);
         return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
     }
 }

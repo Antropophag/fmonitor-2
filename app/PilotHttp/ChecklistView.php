@@ -14,7 +14,7 @@ final class ProductionChecklistRenderer
         ['id'=>8,'name'=>'Акты','items'=>[[42,'Акт ввода лифта в эксплуатацию',15]]],
     ];
 
-    public function render(HttpUser $user,array $case,bool $roleAccess=false):string
+    public function render(HttpUser $user,array $case,bool $roleAccess=false,array $projection=['revision'=>0,'items'=>[],'photos'=>[],'completedSections'=>[]],string $csrf=''):string
     {
         $e=[PilotView::class,'e'];$id=(int)$case['id'];$sections='';
         foreach(self::SECTIONS as $index=>$section){$weight=\array_sum(\array_column($section['items'],2));$items='';foreach($section['items']as[$itemId,$name,$share])$items.='<button class="fm2-check-item" type="button" role="checkbox" aria-checked="false" data-check-item="'.$itemId.'" data-weight="'.$share.'"><span class="fm2-check-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span><span class="fm2-check-label">'.$e($name).'<small data-item-sync>Не отмечено</small></span><span class="fm2-check-weight">+'.$share.'%</span></button>';
@@ -23,6 +23,8 @@ final class ProductionChecklistRenderer
         $opened=(bool)($case['opened']??false);$assignedEngineerId=(int)($case['controlEngineer']['userId']??0);$available=$opened&&($assignedEngineerId===$user->id||$roleAccess);
         $gate=$available?'':($opened?'<div class="fm2-check-gate" role="status"><strong>Чек-лист доступен только уполномоченным ролям</strong><span>Отмечать работы и добавлять фото могут инженеры строительного контроля, руководители и администраторы.</span></div>':'<div class="fm2-check-gate" role="status"><strong>Чек-лист пока недоступен</strong><span>Сначала откройте монтажные работы по зарегистрированному распоряжению.</span></div>');
         $body='<div class="fm2-check-page" data-checklist data-object-id="'.$id.'" data-enabled="'.($available?'true':'false').'"><header class="fm2-check-hero"><div class="fm2-check-object"><a class="fm2-back-link" href="/pilot/objects/'.$id.'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>Карточка объекта</a><h1>'.$e($case['address']).', подъезд '.$e($case['entrance']).'</h1><p>Рег. № '.$e($case['registrationNumber']).'</p></div><div class="fm2-progress-summary"><strong><span data-total-progress>0</span>%</strong><span><span data-total-items>0</span> из 42 работ</span></div></header><div class="fm2-sync-banner" data-sync-banner role="status"><span class="fm2-sync-dot" aria-hidden="true"></span><span data-sync-copy>Синхронизировано</span><button type="button" data-sync-now hidden>Повторить отправку</button></div>'.$gate.'<main class="fm2-check-layout"'.($available?'':' inert').'><div class="fm2-check-content">'.$sections.'</div></main><div class="fm2-toast" role="status" aria-live="polite" data-toast hidden></div></div>';
+        $projectionJson=\base64_encode(\json_encode($projection,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
+        $body=\str_replace(' data-enabled=',' data-user-id="'.$user->id.'" data-csrf="'.$e($csrf).'" data-projection="'.$e($projectionJson).'" data-enabled=',$body);
         $document=PilotView::document($user,'Чек-лист объекта № '.$id,'Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects'],['Объект № '.$id,'/pilot/objects/'.$id]],'Чек-лист'),$body);
         return \str_replace('</body>','<script src="/pilot/assets/checklist.js" defer></script></body>',$document);
     }
