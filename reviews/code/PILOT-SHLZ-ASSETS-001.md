@@ -1,52 +1,58 @@
-# Code review: PILOT-SHLZ-ASSETS-001 v0.1
+# Code review: PILOT-SHLZ-ASSETS-001 v0.2
 
 - Gate: 5 — fresh independent code review
-- Reviewer: separately tasked Codex agent `/root/shlz_assets_code_review_final`
+- Reviewer: separately tasked Codex agent `/root/shlz_assets_v2_code_review`
 - Verdict: `CHANGES_REQUESTED`
-- Specification: `dd22aa883407e19f94d5990bb39ff7cce5bf1712`
-- Approved test review: `7ba5f2b`
-- Reviewed implementation HEAD: `2186132152d8a7d466e7c4b3b3addca4c7220a7d`
-- Core implementation: `4ab55bdaeb7594a275533a11379d8ef25f49d865`
-- Corrective implementation: `bdacfec5d3b721d0a4036c706e06006a7b53f27e`
+- Specification: `331b8ac9616b99162fe75b7bc501e1dc223a9d73`
+- Approved test review: `3f1d67165e3e178e6c39eb3721f2cb8aee2e8342`
+- Reviewed implementation HEAD: `545fdfa935e15d8dabc68922637537cebe5d9bf7`
 - Review date: 2026-08-29
 
 ## Verdict
 
-`CHANGES_REQUESTED`. The focused asset contract, all 49 InstallationProcess tests, and PHP lint pass at the exact reviewed head. The parser correction closes the previously reported malformed import-suffix defect, and the supplied Chromium run proves successful CSS responses and responsive rendering. Gate 5 nevertheless remains closed because production composition leaks process-external resources and the browser record omits one explicit section 6 oracle.
+`CHANGES_REQUESTED`. The focused test passes three consecutive runs, the bootstrap contract and all 49 InstallationProcess tests pass, PHP lint/diff checks pass, no SysV residue remains, and exact-head Chromium evidence supplies the required CSSOM provenance and responsive/focus records. Gate 5 remains closed because the implementation does not perform the specified one-open, whole-graph atomic capture and rejects/accepts owner modes differently from the approved contract. The reviewed test does not expose these plausible regressions, so correction returns through Gate 2 and fresh independent Gate 3 approval.
 
 ## Standards
 
-### Blocking — persistent SysV shared-memory leak and undeclared runtime coupling
+### Blocking — response is not produced from one atomic captured graph
 
-`app/PilotHttp/PilotHttp.php:93` calls `shm_attach()` for every new PID/canonical-entry key, but only calls `shm_detach()`. Neither `ShlzCssManifest::close()`, production composition close, nor demo cleanup calls `shm_remove()`. Inspection after the focused/full test run showed many unattached 131072-byte segments (`nattch=0`) still present in `ipcs -m`, so these are persistent kernel resources rather than composition-lifetime state.
+`app/PilotHttp/PilotHttp.php:93-97` opens and closes each member during `walk()`, then opens and closes every member again in the constructor's validation loop. `asset()` subsequently creates another `ManifestCssAsset`, and the selected route is opened a third time when its body is read. Captured member bytes are never retained in the manifest.
 
-This also adds an undocumented hard dependency on PHP `sysvshm`. The 32-bit CRC key can be reused after PID cycling or collide with an unrelated segment, making a valid composition compare against a stale snapshot and fail. This violates the development-process Gate 5 quality/integration-boundary requirement. Replace the coordination with lifecycle-owned state that is explicitly removed, or avoid process-external state, and cover cleanup/stale-key behavior through the required SSD/TDD gates.
+This contradicts specification section 3's `open once`, keep-descriptors-open, rewind/re-read, close-once and “response from captured bytes” algorithm. It also leaves a graph-consistency window after the constructor-wide validation: another member or directory can change before the selected route is read, while only the selected file's identity/hash is checked again. The response therefore is not proven to belong to the already validated whole graph. Store request-local captured bytes and lifecycle-owned descriptors, perform the attempt-all final graph revalidation on those same descriptors, close them exactly once, and select the route only from the captured mapping.
 
-### Non-blocking — Divergent Change smell
+### Medium — transport timing hack changes unrelated failures
 
-`app/PilotHttp/PilotHttp.php:79-102` combines descriptor identity validation, graph traversal, CSS grammar parsing, path resolution, resource bounds, and IPC coordination in dense single-line methods. This is a judgment-call maintainability smell, not a separate rejection: split the named concerns or at least format the control flow so security-sensitive behavior is reviewable.
+`public/router.php:18` flushes headers and sleeps for every CLI-server `503`, including non-asset failures. This unexplained magic delay is outside the asset boundary and conflicts with Gate 4 minimality; it is also a judgment-call Divergent Change/Shotgun Surgery smell. Remove it and make the capture itself establish the pre-header result deterministically.
+
+### Medium — security boundary is compressed beyond auditability
+
+`app/PilotHttp/PilotHttp.php:83,93,97-103` compresses trust establishment, ownership/mode checks, traversal, parsing, hashing and revalidation into single-line methods. This is a judgment-call Divergent Change/Mysterious Name smell. Split and format the security-sensitive capture phases so their ordering and cleanup can be audited.
 
 ## Spec
 
-### Blocking — computed-style evidence lacks the required ownership oracle
+### Blocking — trusted root owner mode is narrower than approved
 
-Specification section 6.3 requires the Chromium oracle to record the property/value **and owning stylesheet URL** for an applied public `.shlz-*` component rule, a `--shlz-*` custom property, and an application `.fm2-*` rule. Evidence at `~/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-2186132/` is tied to exact SHA `2186132` and records Chromium `151.0.7922.34`, screenshots, CSS responses/MIME, focus, and overflow. However, `report.json` records only aggregate computed values for `link`, `status`, and `main`; it records neither a `--shlz-*` property/value nor the owning stylesheet URL for any of the three required rule classes. `responsive-final-report.json` likewise contains no computed-rule ownership data.
+Specification section 2 permits one trusted owner whose UID is either application eUID or `0`. `app/PilotHttp/PilotHttp.php:93` instead requires root UID to equal eUID and assigns only eUID as trusted. A valid root-owned export is therefore incorrectly returned as `503` when the application is non-root.
 
-The screenshots and successful `shlz.css` request cannot replace this explicit oracle. Record the missing exact-head evidence after the implementation correction.
+### Blocking — owner directory permissions are not enforced
 
-### Resolved prior findings
+Specification section 2 requires every directory to have owner read/search permission. `captureDirectory()` at `app/PilotHttp/PilotHttp.php:98` rejects group/other write but never requires owner `r+x` bits. `validateComponents()` checks effective `is_readable`/`is_executable`, which may succeed via group/other permissions; such a directory violates the exact owner-mode contract but can be accepted. Require owner mode `0500 == 0500` for every captured directory, including the dist root.
 
-- `bdacfec` validates the supported `layer`/`supports`/media import suffix grammar; the independently corrected test at `c443f3c` is approved by `7ba5f2b` and passes.
-- Exact manifest routing, malformed-route/method priority, unknown-route behavior, traversal/symlink/identity protections, graph limits, GET/HEAD byte and MIME parity, authorization bypass for public assets, cookie/session absence, and fail-closed graph handling pass at the public seam.
-- `2186132` strengthens post-bind demo smoke classification and validates all graph members, root HEAD parity, exact lengths, and an unknown manifest route.
+### Verified conformance and evidence
+
+- Parser, route/method priority, manifest-only selection, public/no-identity behavior, GET/HEAD parity, graph limits, symlink rejection and no external cache/shared-memory implementation are exercised and pass at the public seam.
+- Exact-head evidence at `/home/antropophag/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-545fdfa/` records Chromium journey screenshots, 1440/768/320 responsive layouts without overflow, visible keyboard focus, empty per-page errors, successful CSS responses, and CSSOM ownership for a `--shlz-*` custom property, `.shlz-button`, and `.fm2-shell`.
+- No committed/generated manifest, cache, lock, temp, sentinel, subprocess watcher, SysV segment or semaphore dependency was found.
 
 ## Verification evidence
 
-- `git rev-parse HEAD` — exact `2186132152d8a7d466e7c4b3b3addca4c7220a7d`.
-- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
+- `git rev-parse HEAD 545fdfa 331b8ac 3f1d671` — exact refs resolve; HEAD is `545fdfa935e15d8dabc68922637537cebe5d9bf7`.
+- `git diff --check 3f1d671..545fdfa` — PASS.
+- `php -l app/PilotHttp/PilotHttp.php`; `php -l bin/fmonitor2-pilot-demo.php`; `php -l public/router.php` — PASS.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS in three consecutive runs.
+- `php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php` — PASS.
 - All 49 `tests/InstallationProcess/*_test.php`, sequentially — PASS.
-- `find app bin public tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l` — PASS.
-- Chromium evidence inspected at `~/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-2186132/`: exact-head screenshots and responsive/assets records present; required ownership/custom-property oracle absent.
-- `ipcs -m` after verification — numerous unattached 131072-byte segments remain; review did not remove them.
+- `ipcs -m`; `ipcs -s` — no segments or semaphore arrays.
+- Residue scan for `psa-*`, lock and sentinel artifacts — empty.
 
-Gate 5 remains closed for `PILOT-SHLZ-ASSETS-001 v0.1` at `2186132`.
+Gate 5 remains closed for `PILOT-SHLZ-ASSETS-001 v0.2` at `545fdfa`.
