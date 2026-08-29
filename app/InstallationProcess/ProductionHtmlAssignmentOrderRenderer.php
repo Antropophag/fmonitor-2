@@ -19,15 +19,19 @@ final class ProductionHtmlAssignmentOrderRenderer
         $plannedStart = $this->escape($this->displayDate((string) $object['plannedStartDate']));
         $plannedFinish = $this->escape($this->displayDate((string) $object['plannedFinishDate']));
         $organizationType = $this->escape($this->organizationLabel((string) $input['organizationType']));
-        $installer = $input['installers'][0];
-        $installerTabId = $this->escape((string) $installer['tabId']);
-        $installerName = $this->escape((string) $installer['fullName']);
-        $installerPosition = $this->escape((string) $installer['position']);
-        $installerStatus = $this->escape((string) $installer['status']);
-        $installerSource = $this->escape((string) $installer['source']);
         $engineer = $input['controlEngineer'];
         $engineerName = $this->escape((string) $engineer['fullName']);
         $engineerPosition = $this->escape((string) $engineer['position']);
+        $appendixRows = [];
+        foreach ($input['installers'] as $installer) {
+            $installerTabId = $this->escape((string) $installer['tabId']);
+            $installerName = $this->escape((string) $installer['fullName']);
+            $installerPosition = $this->escape((string) $installer['position']);
+            $installerStatus = $this->escape((string) $installer['status']);
+            $installerSource = $this->escape((string) $installer['source']);
+            $appendixRows[] = "<tr><td>{$address}; подъезд/секция {$entrance}; рег. номер {$registrationNumber}</td><td>{$plannedStart}–{$plannedFinish}</td><td>{$installerTabId} — {$installerName} — {$installerPosition}</td><td>{$installerStatus}; источник {$installerSource}</td><td>{$engineerName} — {$engineerPosition}</td></tr>";
+        }
+        $appendixRows = implode("\n", $appendixRows);
 
         $order = <<<HTML
 <!doctype html>
@@ -68,7 +72,7 @@ HTML;
 <h1>Приложение к проекту распоряжения</h1>
 <table>
 <thead><tr><th>Объект</th><th>Плановые даты</th><th>Монтажник</th><th>Кадровый факт</th><th>Инженер строительного контроля</th></tr></thead>
-<tbody><tr><td>{$address}; подъезд/секция {$entrance}; рег. номер {$registrationNumber}</td><td>{$plannedStart}–{$plannedFinish}</td><td>{$installerTabId} — {$installerName} — {$installerPosition}</td><td>{$installerStatus}; источник {$installerSource}</td><td>{$engineerName} — {$engineerPosition}</td></tr></tbody>
+<tbody>{$appendixRows}</tbody>
 </table>
 </main>
 </body>
@@ -91,30 +95,23 @@ HTML;
     {
         $object = $input['installationObjectSnapshot'] ?? null;
         $installers = $input['installers'] ?? null;
-        $installer = is_array($installers) && array_is_list($installers) && count($installers) === 1
-            ? $installers[0]
-            : null;
         $engineer = $input['controlEngineer'] ?? null;
 
         $valid = isset($input['assignmentOrderVersion'])
             && is_int($input['assignmentOrderVersion'])
             && $input['assignmentOrderVersion'] > 0
             && $this->isDate($input['assignmentOrderDate'] ?? null)
-            && ($input['organizationType'] ?? null) === 'individual'
+            && in_array($input['organizationType'] ?? null, ['individual', 'brigade'], true)
             && is_array($object)
             && $this->isNonblankString($object['address'] ?? null)
             && $this->isNonblankString($object['entrance'] ?? null)
             && $this->isNonblankString($object['objectRegistrationNumber'] ?? null)
             && $this->isDate($object['plannedStartDate'] ?? null)
             && $this->isDate($object['plannedFinishDate'] ?? null)
-            && is_array($installer)
-            && isset($installer['tabId'])
-            && is_int($installer['tabId'])
-            && $installer['tabId'] > 0
-            && $this->isNonblankString($installer['fullName'] ?? null)
-            && $this->isNonblankString($installer['position'] ?? null)
-            && $this->isNonblankString($installer['status'] ?? null)
-            && $this->isNonblankString($installer['source'] ?? null)
+            && is_array($installers)
+            && array_is_list($installers)
+            && count($installers) > 0
+            && $this->validInstallers($installers)
             && is_array($engineer)
             && isset($engineer['userId'])
             && is_int($engineer['userId'])
@@ -125,6 +122,23 @@ HTML;
         if (!$valid) {
             throw new \InvalidArgumentException('Invalid assignment order document input.');
         }
+    }
+
+    private function validInstallers(array $installers): bool
+    {
+        foreach ($installers as $installer) {
+            if (!is_array($installer)
+                || !isset($installer['tabId'])
+                || !is_int($installer['tabId'])
+                || $installer['tabId'] <= 0
+                || !$this->isNonblankString($installer['fullName'] ?? null)
+                || !$this->isNonblankString($installer['position'] ?? null)
+                || !$this->isNonblankString($installer['status'] ?? null)
+                || !$this->isNonblankString($installer['source'] ?? null)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private function isNonblankString(mixed $value): bool
@@ -149,6 +163,6 @@ HTML;
 
     private function organizationLabel(string $value): string
     {
-        return $value === 'individual' ? 'Индивидуальная' : $value;
+        return $value === 'individual' ? 'Индивидуальная' : 'Бригадная';
     }
 }
