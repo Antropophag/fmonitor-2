@@ -1,34 +1,29 @@
 # Test review: PILOT-DEMO-BOOTSTRAP-001 v0.1
 
-- Gate: 3 — fresh independent re-review
-- Reviewer: separately tasked agent `/root/bootstrap_test_rereview`
+- Gate: 3 — fresh independent final re-review
+- Reviewer: separately tasked agent `/root/bootstrap_test_review_final`
 - Test author: separately tasked agent (commit author `antropophag`)
-- Reviewed commit: `81339d8a43150a047aa1e62c3a2ef4bcb5f2371f`
+- Reviewed commit: `76149d0d3f0eeebff2f96d8a67584204f83b168b`
 - Specification commit: `71e5e5066a26b3a7d9e5d2ee08b27f14e205ed94`
 - Specification: `specs/PILOT-DEMO-BOOTSTRAP-001.md`, version `0.1`, `APPROVED`
 - Public seam: separate `php bin/fmonitor2-pilot-demo.php [start|reset|status|cleanup]` process, its printed loopback URL, and browser-shaped HTTP requests
 - Date: `2026-08-29`
 - Verdict: `CHANGES_REQUESTED`
 
-This record supersedes the prior Gate 3 rejection for test commit `562f36455e52c3de3134ec9900f7ab528a8b8b03`. The new test was reviewed independently against the approved specification rather than against a planned bootstrap implementation.
+The test was reviewed independently against the approved specification and all findings in the preceding rejection. Commit `76149d0` resolves the earlier coverage and seam-boundary findings, but one deterministic-execution blocker remains.
 
-## Findings
+## Finding
 
-1. **Wrong/missing shlz CSS sensitivity remains absent.** Sections 7 and 8 require startup failure before the banner when the sibling built CSS is missing or incompatible. The new success-path byte equality at line 146 proves only that a correctly configured server serves the current file. The test never makes the source missing, unreadable, wrong, or otherwise incompatible before `start`; a bootstrap that ignores the sibling asset while serving copied or fabricated bytes can still pass. Add an isolated adversarial probe that changes only the CSS availability/identity observed by the public CLI, expects nonzero/redacted/no-banner failure, and restores the shared dependency unconditionally without changing repository bytes.
+1. **Negative CLI probes have no enforceable runtime bound and can bypass cleanup.** `pdbRun()` applies stream timeouts to stdout/stderr, but then calls blocking `proc_close()` without checking or terminating the child. Stream timeouts do not impose a process deadline. A defective Gate 4 implementation that hangs, waits indefinitely, or incorrectly starts the foreground server for `status`, invalid arguments, occupied-port `start`, CSS failure, running-server `reset`/`cleanup`, marker collision, prefix collision, or final `cleanup` can therefore hang this acceptance test indefinitely. Because control never returns to the outer `finally`, its server/database/home cleanup is also not guaranteed. `pdbContract()` has the same unbounded subprocess shape for the inherited support-oracle set. Replace both with a deadline-driven nonblocking collector which polls process state, terminates on timeout (with bounded escalation), closes pipes/process, and reports a `TestFailure`; preserve partial stdout/stderr for diagnosis with secret-safe assertions. Add or extract a focused self-check proving a deliberately sleeping child is bounded and reaped, rather than relying on the outer shell `timeout` used only during review.
 
-2. **Foreign marker/prefix conflict sensitivity remains absent.** Section 8 separately requires `foreign marker/prefix`; section 3 says a prefix may never be reused without its matching marker. Lines 179–180 create an unrelated `fm2d_deadbeef_g99_foreign` table and unrelated directory outside any generation. That covers cleanup containment, but it does not place a foreign/mismatched owner marker or a conflicting table under the exact next generation prefix and prove fail-closed provisioning. A bootstrap that accepts a foreign marker or reuses occupied `fm2d_<this fingerprint>_gN_` rows can pass. Add public-CLI cases for both mismatched ownership marker and exact candidate-prefix collision, with preservation oracles.
+## Prior blockers verified resolved
 
-3. **The production composition boundary is still not independently protected.** The prior finding required sensitivity to replacing production `InstallationProcess`, `AssignmentOrderArtifactService`, migrations/importer, or real storage with a self-contained fake bootstrap/HTTP state machine. Lines 145 and 150 only reject a response literal and inspect table names/counts; a fake implementation can create those eleven shaped tables and satisfy the browser journey without composing the required production services. The test does not run inherited production composition/E2E suites, pin and probe the production entrypoint/dependencies, or otherwise make such substitution fail. Add a composition oracle at public production seams (or explicitly run the relevant inherited approved tests as part of this Gate 2 test) without deriving business expected values from production internals.
-
-4. **The claimed public-seam/isolation boundary is inaccurate and overbroad.** The header says SQL only creates/removes the database and business facts are exclusively observed through HTTP, while lines 150, 174 and 177 query every process table, assert the process-event count, snapshot every row, and compare those rows after reset. Section 8 permits bootstrap-owned table-catalog inspection for isolation, not arbitrary process-fact observation. Limit SQL to catalog/ownership containment facts needed to prove generation isolation, and prove old-generation recoverability through the public `start`/HTTP seam (or narrow the specification before retaining row-level SQL). This also avoids coupling the test to incidental row representation and all future production tables.
-
-## Resolved since the prior review
-
-- Unknown, repeated, and extra CLI arguments plus canonical port validation are now covered.
-- Occupied-port startup, no-banner behavior, and redaction are covered.
-- Launch smoke now checks stylesheet links, card state/prepare link, enabled submit, and repeated queue GET stability.
-- Spoofed identity headers, non-imported object `4999`, immediate/restart artifact immutability, and restart persistence are covered.
-- Running-server reset/cleanup refusal, interrupted inactive generation numbering, previous-generation preservation, and cleanup preservation of unrelated path/table sentinels are covered.
+- Missing and incompatible sibling `shlz-ui` CSS are exercised through an isolated sibling-checkout layout. The adversary changes only task-owned copies/links under the test home and leaves the real sibling checkout untouched.
+- Mismatched generation ownership and exact next-generation prefix collision are both driven through the public CLI and protected by preservation sentinels.
+- Production composition is protected by executing the approved migration-runner, importer, artifact-store, and pilot E2E public contracts; the bootstrap journey still uses only CLI/HTTP for business assertions.
+- Direct SQL is now limited to bootstrap-owned catalog discovery and ownership/collision containment sentinels. It no longer observes process events or snapshots business rows as an oracle.
+- CLI grammar, canonical ports, occupied bind, launch smoke, spoofed identity, non-imported object, artifact immutability, restart persistence, running-server refusal, interrupted generation behavior, backup preservation, reset, and cleanup containment are covered with independently fixed values.
+- The outer `finally` correctly stops a tracked server, drops both task databases, and removes the task-owned home when normal control or an exception reaches it; filesystem traversal treats symlinks as links and does not descend into the shared source checkout.
 
 ## RED evidence
 
@@ -38,26 +33,30 @@ Commands run from repository root:
 $ php -l tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 No syntax errors detected in tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 
-$ php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+$ timeout 30s php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 PHP Fatal error: Uncaught TestFailure: extra CLI argument exact redacted rejection
 Expected: [64, "{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n", ""]
 Actual:   [1, "", "Could not open input file: bin/fmonitor2-pilot-demo.php\n"]
 ```
 
-Exit status: `255`.
+Exit status: `255` (elapsed approximately 14.4 seconds, before the external 30-second review guard).
 
-The RED is deterministic and reaches the first executable expectation. Its cause is the absent approved public CLI file, not a PHP syntax, MariaDB, fixture, or HTTP setup failure. The exact first assertion does not yet distinguish missing CLI behavior from a missing file, but both are within the wholly absent Gate 4 bootstrap seam; after the file exists, all adversarial cases must remain independently sensitive.
+The RED is deterministic and reaches the first executable expectation. Its cause is the absent approved public CLI seam, not syntax, MariaDB setup, fixture setup, or HTTP behavior.
 
-## Required changes
+## Required change
 
-Add the four missing protections above and request another fresh Gate 3 review. Gate 4 must not begin on test commit `81339d8a43150a047aa1e62c3a2ef4bcb5f2371f`.
+Bound and reap every subprocess started by `pdbRun()` and `pdbContract()`, add a focused timeout/reaping proof, and request another fresh Gate 3 review. Gate 4 must not begin on test commit `76149d0d3f0eeebff2f96d8a67584204f83b168b`.
 
 ## Reviewed artifact manifest
 
 ```text
 e6b082c9b2ed2bd0c8aca370fa785dd2aa25a38901c12d620f8b6e1e1d048263  specs/PILOT-DEMO-BOOTSTRAP-001.md
-f956fb98f20fd0c61b196d48b1ff24d6cd413eed4bcf637dca5b4464a5746ca9  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+c489731b6719c633c20b5bed61685667185f1107e329214d974c8af5e3793398  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 800d135a043633260ce59440579f35f4dcf16553c61f7e149d82825c9e6c3509  tests/bootstrap.php
+45fe94035a3295b14f47a8bc7dc3941d0b51f1796b448521438923f36b694137  tests/InstallationProcess/production_migration_runner_001_test.php
+08b991f19719eacc1368ce6302d51854006323dc928f184ae5892578519b03e1  tests/InstallationProcess/pilot_case_import_001_test.php
+952a3e5cdf515695712c149c63a7ff9783dad0d7f8db3c8583779c768c3688fc  tests/InstallationProcess/artifact_store_001_test.php
+2929830a6808fac914557b75b9689f13f2b9ae95beb69dfc3ed8d71887ad3a14  tests/InstallationProcess/pilot_e2e_flow_001_test.php
 ```
 
 Any change to the specification, executable test, test bootstrap, or relevant support-oracle set invalidates this verdict and requires a fresh independent review.
