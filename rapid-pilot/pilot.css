@@ -449,6 +449,16 @@
 }
 
 .fm2-installer-table-scroll { max-block-size: calc(100vh - 300px); overflow: auto; }
+.fm2-installer-filters { display: flex; gap: 6px; padding: 11px 14px; overflow-x: auto; border-block-end: 1px solid var(--fm2-border); }
+.fm2-installer-filters input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+.fm2-installer-filters label { flex: 0 0 auto; padding: 7px 11px; color: var(--fm2-muted); background: var(--fm2-surface); border: 1px solid var(--fm2-border); border-radius: var(--fm2-pill); cursor: pointer; font-size: 12px; }
+.fm2-installer-filters label b { margin-inline-start: 4px; color: inherit; }
+.fm2-installer-filters input:checked + label { color: var(--fm2-primary); background: var(--fm2-filter); border-color: var(--fm2-primary-soft); font-weight: 600; }
+.fm2-installer-filters input:focus-visible + label { outline: 3px solid #8ea2e8; outline-offset: 2px; }
+.fm2-installer-directory:has(#if-employed:checked) .fm2-installer-row:not(.fm2-installer-row--employed),
+.fm2-installer-directory:has(#if-dismissed:checked) .fm2-installer-row:not(.fm2-installer-row--dismissed),
+.fm2-installer-directory:has(#if-assigned:checked) .fm2-installer-row:not(.fm2-installer-row--assigned),
+.fm2-installer-directory:has(#if-free:checked) .fm2-installer-row:not(.fm2-installer-row--free) { display: none; }
 .fm2-installer-table { inline-size: 100%; border-collapse: collapse; table-layout: fixed; }
 .fm2-installer-table th { position: sticky; z-index: 2; inset-block-start: 0; padding: 11px 14px; color: var(--fm2-muted); background: #f8fafc; border-block-end: 1px solid var(--fm2-border); text-align: start; font-size: 11px; font-weight: 500; }
 .fm2-installer-table th:nth-child(1) { inline-size: 25%; }
