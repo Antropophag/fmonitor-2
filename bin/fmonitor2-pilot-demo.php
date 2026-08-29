@@ -263,9 +263,9 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
             && $cardStatus === 200 && str_contains($card,'77-000123') && str_contains($card,'Москва, ул. Примерная, д. 10')
             && str_contains($card,'2026-10-05') && str_contains($card,'2026-12-20')
             && (!$initialSmoke || (str_contains($card, 'Требуется распоряжение') && str_contains($card, '/pilot/objects/4512/assignment-order/prepare')
-                && $formStatus === 200 && preg_match('/name="installerTabIds\[\]"[^>]*value="1042"/D',$form)===1
-                && preg_match('/name="installerTabIds\[\]"[^>]*value="2088"/D',$form)===1
-                && preg_match('/name="controlEngineerUserId"[^>]*value="73"[^>]*checked/D',$form)===1
+                && $formStatus === 200 && str_contains($form,'name="installerTabIds[]"') && str_contains($form,'value="1042"')
+                && str_contains($form,'value="2088"')
+                && str_contains($form,'name="controlEngineerUserId"') && preg_match('/<option[^>]*value="73"[^>]*selected/D',$form)===1
                 && preg_match('/<(?:button|input)[^>]*type="submit"(?![^>]*disabled)[^>]*>/D',$form)===1))
             && $foreignStatus === 404;
     } while (!$ok && microtime(true) < $deadline && proc_get_status($server)['running']);
