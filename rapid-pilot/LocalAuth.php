@@ -26,7 +26,7 @@ final class RapidPilotLocalAuth
             $this->loginPage();
         }
         $user=$this->user();
-        if($user===null){$_SESSION['auth_return_to']=$this->safeReturnTo((string)($_SERVER['REQUEST_URI']??'/pilot/objects'));$this->redirect('/pilot/login');}
+        if($user===null){if(($_SERVER['REQUEST_METHOD']??'GET')==='GET')$_SESSION['auth_return_to']=$this->safeReturnTo((string)($_SERVER['REQUEST_URI']??'/pilot/objects'));$this->redirect('/pilot/login');}
         $_SERVER['REMOTE_USER']=$user['email'];
     }
 
@@ -114,7 +114,7 @@ final class RapidPilotLocalAuth
     private function allowedEmail(string $email):bool{return filter_var($email,FILTER_VALIDATE_EMAIL)!==false&&preg_match('/^[^@]+@shlz\.ru$/Di',$email)===1;}
     private function now():string{return(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);}
     private function isHttps():bool{return(string)($_SERVER['HTTPS']??'')==='on'||(string)($_SERVER['HTTP_X_FORWARDED_PROTO']??'')==='https';}
-    private function safeReturnTo(string $path):string{return preg_match('#^/pilot/(?!login|logout)[A-Za-z0-9/_?&=.%~-]*$#D',$path)===1?$path:'/pilot/objects';}
+    private function safeReturnTo(string $path):string{return preg_match('#^/pilot/(?!assets(?:/|$)|login(?:/|$)|logout(?:/|$))[A-Za-z0-9/_?&=.%~-]*$#D',$path)===1?$path:'/pilot/objects';}
     private function initials(string $name):string{$parts=preg_split('/\s+/u',trim($name),3,PREG_SPLIT_NO_EMPTY)?:[];return mb_strtoupper(implode('',array_map(static fn(string $p):string=>mb_substr($p,0,1),array_slice($parts,0,2))));}
     private function redirect(string $path):never{header('Location: '.$path,true,303);header('Cache-Control: no-store');exit;}
     private function plain(int $status,string $message):never{http_response_code($status);header('Content-Type: text/plain; charset=UTF-8');header('Cache-Control: no-store');echo$message."\n";exit;}

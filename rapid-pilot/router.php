@@ -54,6 +54,21 @@ if ($path === '/pilot/assets/shlz-tabs.js') {
     echo $bytes;
     exit;
 }
+if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue)\.js$#D', $path, $script) === 1) {
+    $filename = $script[1] . '.js';
+    $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    if ($filename === 'checklist-sw.js') {
+        header('Service-Worker-Allowed: /pilot/');
+        header("Content-Security-Policy: default-src 'self'; connect-src 'self'");
+    }
+    echo $bytes;
+    exit;
+}
 if ($path === '/pilot/assets/object-details.js') {
     $bytes = file_get_contents(__DIR__ . '/object-details.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
