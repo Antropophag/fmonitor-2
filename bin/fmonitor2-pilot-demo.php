@@ -206,11 +206,11 @@ function demoRunning(array $config): bool
     return is_string($command) && str_contains($command, 'fmonitor2-pilot-demo.php');
 }
 
-function demoHttp(int $port, string $path): array
+function demoHttp(int $port, string $path,string $method='GET'): array
 {
     $socket = @stream_socket_client("tcp://127.0.0.1:{$port}", $errno, $error, .5);
     if ($socket === false) return [0, ''];
-    fwrite($socket, "GET {$path} HTTP/1.1\r\nHost: 127.0.0.1:{$port}\r\nConnection: close\r\n\r\n");
+    fwrite($socket, "{$method} {$path} HTTP/1.1\r\nHost: 127.0.0.1:{$port}\r\nConnection: close\r\n\r\n");
     stream_set_timeout($socket, 2); $raw = stream_get_contents($socket); fclose($socket);
     if (!is_string($raw) || preg_match('/^HTTP\/1\.[01] (\d{3})/', $raw, $match) !== 1) return [0, '', []];
     [$head,$body]=array_pad(explode("\r\n\r\n",$raw,2),2,'');$headers=[];
@@ -245,13 +245,20 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         [$pilotStatus,$pilotBytes,$pilotHeaders]=demoHttp($config['port'],'/pilot/assets/pilot.css');
         [$repeatStatus,$repeatQueue]=demoHttp($config['port'],'/pilot/objects');
         $graphOk=true;
-        foreach($config['shlzMembers']as$relative=>$expectedBytes){[$assetStatus,$assetBytes,$assetHeaders]=demoHttp($config['port'],'/pilot/assets/'.$relative);if($assetStatus!==200||$assetBytes!==$expectedBytes||($assetHeaders['content-type']??null)!=='text/css; charset=UTF-8'){$graphOk=false;break;}}
+        foreach($config['shlzMembers']as$relative=>$expectedBytes){
+            $route='/pilot/assets/'.$relative;[$assetStatus,$assetBytes,$assetHeaders]=demoHttp($config['port'],$route);
+            $length=(string)strlen($expectedBytes);
+            if($assetStatus!==200||$assetBytes!==$expectedBytes||($assetHeaders['content-type']??null)!=='text/css; charset=UTF-8'||($assetHeaders['content-length']??null)!==$length){$graphOk=false;break;}
+        }
+        $rootBytes=$config['shlzMembers']['shlz.css'];[$headStatus,$headBytes,$headHeaders]=demoHttp($config['port'],'/pilot/assets/shlz.css','HEAD');
+        $graphOk=$graphOk&&$headStatus===200&&$headBytes===''&&($headHeaders['content-type']??null)==='text/css; charset=UTF-8'&&($headHeaders['content-length']??null)===(string)strlen($rootBytes);
         [$unknownAssetStatus]=demoHttp($config['port'],'/pilot/assets/not-in-official-graph.css');
+        $graphOk=$graphOk&&$unknownAssetStatus===404;
         $ok = $queueStatus === 200 && substr_count($queue, '/pilot/objects/4512') === 1
             && str_contains($queue, '/pilot/assets/shlz.css') && str_contains($queue, '/pilot/assets/pilot.css')
             && strpos($queue,'/pilot/assets/shlz.css')<strpos($queue,'/pilot/assets/pilot.css')
             && $repeatStatus===200&&$repeatQueue===$queue
-            && $graphOk&&$unknownAssetStatus===404
+            && $graphOk
             && $pilotStatus===200&&($pilotHeaders['content-type']??null)==='text/css; charset=UTF-8'&&hash('sha256',$pilotBytes)===hash_file('sha256',$config['pilotCss'])
             && $cardStatus === 200 && str_contains($card,'77-000123') && str_contains($card,'Москва, ул. Примерная, д. 10')
             && str_contains($card,'2026-10-05') && str_contains($card,'2026-12-20')
@@ -262,7 +269,12 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
                 && preg_match('/<(?:button|input)[^>]*type="submit"(?![^>]*disabled)[^>]*>/D',$form)===1))
             && $foreignStatus === 404;
     } while (!$ok && microtime(true) < $deadline && proc_get_status($server)['running']);
-    if (!$ok) { proc_terminate($server); proc_close($server); demoFailure(); }
+    if (!$ok) {
+        $shlzSmokeFailure=$queueStatus===200&&!$graphOk;
+        proc_terminate($server);proc_close($server);
+        if($shlzSmokeFailure)demoFailure('SHLZ_ASSETS_UNAVAILABLE',78);
+        demoFailure();
+    }
     try{
         if($activate)demoWriteJson($config['root'] . '/active.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation['generation'], 'processPrefix'=>$generation['processPrefix'], 'legacyPrefix'=>$generation['legacyPrefix'], 'port'=>$config['port'], 'state'=>'ready']);
         demoWriteJson($config['root'] . '/server.json', ['fingerprint'=>$config['fingerprint'], 'pid'=>getmypid(), 'port'=>$config['port']]);
