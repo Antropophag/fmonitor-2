@@ -1,46 +1,47 @@
 # Test review: PILOT-SHLZ-ASSETS-001 v0.2
 
-- Reviewer: separately tasked agent `/root/shlz_assets_v2_test_final`
-- Test author: separately tasked Gate 2 agents; final corrective commit `f4dbe62`
-- Reviewed commit: `f4dbe62deb2b58b264b7a911160a7acd32557098`
+- Reviewer: separately tasked agent `/root/shlz_assets_v2_test_approve`
+- Test author: separately tasked Gate 2 agents; reviewed corrective commit `c2e378d`
+- Reviewed commit: `c2e378d7a65f11576a9d78cfdd66d38481adbb26`
 - Specification: `specs/PILOT-SHLZ-ASSETS-001.md` v0.2 at `331b8ac9616b99162fe75b7bc501e1dc223a9d73`
 - Public seam: raw HTTP `GET|HEAD /pilot/assets/shlz.css`, browser-relative manifest routes, and configured root HTML
-- Red command and intended failure: `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — RED, exit `255`; overlapped identity/mode drift returned `200` with a 6 MiB body instead of required redacted `503`; cleanup then also reported nine newly created current-EUID SysV segments.
+- Red command and intended failure: `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — RED, exit `255`; overlapped identity/mode drift returned `200` with a 6 MiB body instead of required redacted `503`; cleanup also observed ten new current-EUID SysV shared-memory segments.
 - Verdict: `CHANGES_REQUESTED`
 
 ## Findings
 
-### 1. Filesystem residue snapshot remains incomplete and is insensitive to empty cache roots
+### 1. Filesystem residue oracle still misses plausible forbidden residue
 
-Section 3 prohibits any filesystem manifest/cache/lock/sentinel and section 7 prohibits cache/build/temp residue. `psaCacheState()` observes only four hard-coded repository paths that are neither named by the specification nor derived from runtime configuration. A plausible implementation writing `/tmp/fmonitor-shlz.cache`, `/dev/shm/fmonitor-shlz`, `<repo>/var/tmp/shlz.lock`, or any differently named repository cache passes this oracle. Even at the four listed paths, a newly created empty root is represented as `[]`, exactly like an absent root, because root existence/type/metadata are not included. Empty directories and changed directory metadata are therefore invisible.
+Sections 3 and 7 prohibit any filesystem manifest/cache/lock/temp/sentinel residue. `psaRuntimeState()` inventories broad runtime roots, but `psaRuntimeResidueProbe()` reports a changed path only when it is below the three test-owned environment directories, contains the configured fixture-root string in a readable file of at most 1 MiB, or happens to be open at one of two `/proc/<pid>/fd` samples. A plausible implementation that writes and closes `/tmp/fmonitor-shlz.cache`, `/dev/shm/shlz.lock`, or a repository cache with opaque/binary content does not meet any of those attribution predicates and passes. Files over 1 MiB and deleted-but-still-open files are similarly invisible. The retained four exact cache paths do not close this gap for arbitrary allowed names.
 
-Replace this with before/after fingerprints of the bounded runtime and repository locations in which this application could place residue, recording root existence/type plus descendant path, type, identity/metadata, and content hash. Explicitly exclude the test-owned fixture and concurrency-safe shared test namespaces. If production configuration constrains writable cache/temp locations, derive the exact roots from that configuration rather than inventing names in the test.
+Make the runtime namespace attributable before executing the request rather than filtering unexplained changes afterward. For example, use task-owned effective HOME/TMP/cache/repository runtime roots plus an observation mechanism that captures every path created/opened by the asset-server process during the probe. The oracle must detect a closed opaque residue file without treating unrelated concurrent changes elsewhere in `/tmp`, `/dev/shm`, or the repository as product behavior.
 
-### 2. SysV snapshot does not detect reuse or mutation of a pre-existing segment
+### 2. SysV oracle is comprehensive but not attributable or deterministic
 
-`array_diff($sysvAfter, $sysvBefore)` detects only a new key/id. A cross-request implementation can attach to one stable segment that already exists before the test and mutate/use it on every request; before and after membership stays identical and the test passes, although sections 3 and 7 forbid the dependency itself. This is especially relevant after any earlier request has initialized a fixed-key cache.
+The corrected `psaSysv()` value includes full metadata and therefore detects new, removed, and metadata-mutated current-EUID IPC objects, including reuse of a pre-existing object. However, the snapshots bracket the complete multi-second test and compare every SysV object belonging to the UID. Any unrelated concurrent process that creates, removes, attaches to, detaches from, or otherwise changes such an object causes this test to fail. Nothing in the resulting key/id diff ties the object to the asset-server child. This violates Gate 2 determinism and creates a material false-positive path in the repository's parallel-agent/test environment.
 
-Run the asset fixture in an isolated/known-clean IPC scope if the harness already provides one, or add black-box evidence that a pre-existing task-owned segment cannot be consumed/changed and that no segment is required. Do not fall back to the former broad lexical production-source ban.
+Use a task-owned IPC object/dependency probe or attribute changed objects to the spawned asset server (including its relevant creator/last-operation PIDs) within a bounded request window. Preserve the useful sensitivity to an implementation that consumes or mutates a pre-existing segment, semaphore, or queue, while excluding IPC activity with no causal relation to this fixture.
 
 ## Non-blocking checks passed
 
-- The corrected overlap fixture sends the request over the real socket, counts at least 20 mutations between transmission and the first response byte, verifies the worker is live at that boundary, and observes further mutations through response completion. Because the specification requires capture to finish before any response header byte, this is adequate first-byte overlap evidence without a production hook.
-- The fixture restores the two mutated members, removes its counter/stop/temporary files, stops its worker/server in `finally`, and the review run left no `psa-*` fixture or worker/server process. The nine exact SysV ids created by the current production implementation during the review run were removed explicitly afterward.
-- The focused test is honestly RED for missing v0.2 behavior: it reaches the overlap assertion and observes exact `200` with 6,291,456 body bytes instead of `503`. The additional SysV cleanup failure is also product residue, not setup failure.
-- All prior v0.1 graph/routing/parser/security/limit/HTML-order coverage remains present; v0.2 additionally covers legitimate between-request replacement, owner/mode rejection, overlap, and residue membership.
+- The overlap fixture proves at least 20 mutations after request transmission and before the first response byte, keeps the worker alive through response completion, and therefore supplies adequate real-socket evidence for the pre-header capture boundary.
+- The focused run is honestly RED for missing v0.2 behavior: the public seam returned exact `200` with 6,291,456 body bytes where the specification requires redacted `503`. The ten new SysV segments reported during cleanup were also created by the current production behavior, not by fixture setup.
+- Full-metadata SysV comparison fixes the earlier membership-only blind spot, and cache-root presence now distinguishes absent from empty.
+- Prior graph, grammar, routing, security, bounds, owner/mode, between-request replacement, GET/HEAD, and HTML-order assertions remain traceable to v0.2.
+- The review run left no `psa-*` fixture, worker, or server process. The ten exact shared-memory ids reported by this run were removed and verified absent.
 
 ## Required changes
 
-1. Make the filesystem residue fingerprint sensitive to root creation and to plausible bounded runtime/repository residue locations independent of chosen cache filename.
-2. Make the SysV oracle sensitive to reuse/mutation/dependency on a pre-existing task-owned segment, not only newly allocated ids.
-3. Re-run and capture the focused RED after correction, then obtain a fresh independent Gate 3 review.
+1. Make filesystem residue detection sensitive to opaque, closed, arbitrarily named residue while causally attributing observations to the asset process.
+2. Scope or attribute SysV observations so unrelated current-UID IPC activity cannot fail the test, without losing sensitivity to pre-existing-object use or mutation.
+3. Re-run and capture the focused RED, then obtain a fresh independent Gate 3 review.
 
 Gate 4 remains closed.
 
 ## Verification evidence
 
-- `git diff f4dbe62^ f4dbe62 -- tests/InstallationProcess/pilot_shlz_assets_001_test.php` — reviewed corrective delta.
-- `git diff --check 331b8ac^..f4dbe62 -- specs/PILOT-SHLZ-ASSETS-001.md tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
+- `git diff f4dbe62..c2e378d -- tests/InstallationProcess/pilot_shlz_assets_001_test.php` — reviewed corrective delta.
+- `git diff --check 331b8ac^..c2e378d -- specs/PILOT-SHLZ-ASSETS-001.md tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
 - `php -l tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
-- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — intended RED, exit `255`: overlap expected `503`, actual `200`, body bytes `6291456`; final residue assertion listed nine new current-EUID SysV ids.
-- Post-run inspection — no task fixture paths or worker/server processes remained; exact reported SysV ids `65617`–`65625` were removed and verified absent.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — intended RED, exit `255`: overlap expected `503`, actual `200`, body bytes `6291456`; cleanup reported ten newly created current-EUID SysV shared-memory ids.
+- Post-run inspection — no task fixture paths or worker/server processes remained; reported ids `65646`–`65655` were removed and verified absent.
