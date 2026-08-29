@@ -4,42 +4,38 @@
 
 ## Режим работы
 
-Делаем быстрый рабочий пилот без SSD/TDD-церемонии и без субагентов. После проверки его следует переложить на SSD/TDD foundation. Правило закреплено в `rapid-pilot/AGENTS.md`. Не merge-ить `main`; делать checkpoint-коммиты в текущей ветке.
+Продолжать быстрый рабочий пилот без SSD/TDD-церемонии и без субагентов. Правило и визуальные границы закреплены в `rapid-pilot/AGENTS.md`. Не merge-ить `main`; делать checkpoint-коммиты в текущей ветке.
 
-UI-эталоны:
+UI-источники истины:
 
-- Service Desk: Windows `C:\Users\Polly\Downloads\ЩЛЗ - фронт ServiceDesk`;
-- WSL: `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`;
-- `../shlz-ui` — использовать публичные exports;
+- Service Desk: `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`;
+- `../shlz-ui` — использовать публичные exports и документированные HTML-контракты;
 - Figma: <https://www.figma.com/design/x75wCNufIZQuwFOTLhGZi9/Service-desk--Copy-?node-id=0-1&p=f&t=8Qd9tmQOOMJiecQt-0>.
-
-Путь Service Desk также записан в `rapid-pilot/AGENTS.md`.
 
 ## Последние checkpoint-коммиты
 
 ```text
+60f0803 feat: filter pilot users by role
+ec3fb4b fix: flatten pilot administration navigation
+6abcd5c feat: split pilot user administration pages
+cd6e785 feat: add rapid pilot user role directory
+6b9bbd0 docs: refresh rapid pilot session handoff
 7831c5d fix: show selected installers inside picker
 fbacb32 feat: redesign installer assignment picker
 e618bd1 fix: keep assignment picker available after Bitrix sync
-b53f1f0 feat: add workforce filters and hourly Bitrix refresh
-9a8a091 feat: scale installer directory to full Bitrix catalog
-630926e feat: add rapid pilot installer directory
-2dacb39 docs: save rapid pilot session handoff
-bcb6fa4 feat: import production objects into rapid pilot
 ```
 
-## Текущее состояние пилота
+## Стенд
 
-- `http://127.0.0.1:8092/pilot/objects` — `200`;
-- `http://127.0.0.1:8092/pilot/objects/444/assignment-order/prepare` — `200`.
-
-HTTP сейчас работает через оставшийся PHP dev-server, но штатная команда сообщает:
+Штатный launcher работает, generation `5` готова:
 
 ```json
-{"ok":true,"running":false,"url":"http://127.0.0.1:8092/pilot/objects","generation":null,"state":"incomplete"}
+{"ok":true,"running":true,"url":"http://127.0.0.1:8092/pilot/objects","generation":5,"state":"ready"}
 ```
 
-Readiness-проверка поколения ожидает точный fixture и считает дополнительные реальные строки отклонением. После перезапуска сначала проверить URL. Если сервер пропал, поднять стенд через `php bin/fmonitor2-pilot-demo.php reset`, затем восстановить реальные объекты и workforce. Не удалять локальную БД без необходимости.
+Проверка: `php bin/fmonitor2-pilot-demo.php status`.
+
+Readiness обновлён: дополнительные реальные process-таблицы и строки разрешены, но обязательные fixture-сентинелы всё ещё проверяются. После reset потребуется повторно импортировать production-объекты, workforce, пользователей и роли.
 
 Локальная MariaDB:
 
@@ -47,57 +43,78 @@ Readiness-проверка поколения ожидает точный fixtur
 container: fmonitor2-redesign-test-db
 127.0.0.1:23306
 database/user: fmonitor2_demo
+active process prefix: fm2d_78d99d34_g5_
+active legacy prefix: fm2l_78d99d34_g5_
 ```
 
-Локально 101 process case: один fixture и 100 реальных ещё не открытых объектов, включая `444`.
+## Пользователи и роли
 
-## Справочник монтажников и Bitrix
+Рабочие URL:
 
-`/pilot/installers` работает на реальной интеграции Bitrix/legacy. Последняя подтверждённая загрузка:
+- `http://127.0.0.1:8092/pilot/admin/users`;
+- `http://127.0.0.1:8092/pilot/admin/roles`;
+- старый `/pilot/users` отвечает `303` на `/pilot/admin/users`.
+
+Левая навигация плоская: текстовая группа `Администрирование`, под ней самостоятельные пункты `Пользователи` и `Роли`, без раскрывающейся иерархии.
+
+Последний подтверждённый production-снимок:
 
 ```text
-1259 пользователей с табельным номером
-930 работающих
-329 уволенных
-1 запись без пригодного табельного исключена
+41 пользователь
+38 активных
+3 заблокированных
+14 активных ролей
+41 исходное назначение legacy-роли
 ```
 
-Реализовано:
+Fixture-пользователи и fixture-роли удалены из локального каталога; количество локальных строк совпадает с production-снимком.
 
-- пятизначный табельный отображается с ведущим нулём;
-- над таблицей есть фильтры-таблетки;
-- таблица показывает текущие закрепления;
-- показывается дата последнего списка;
-- обновление Bitrix выполняется раз в час.
+На странице пользователей реализованы:
 
-Cron:
+- Service Desk / `shlz-ui` Search field по ФИО, email или телефону;
+- статусные фильтры `Все / Активные / Заблокированные`;
+- раскрывающийся role-фильтр со всеми 14 ролями и числом пользователей;
+- совместная работа поиска, статуса и role-фильтра;
+- несколько ролей у одного пользователя;
+- назначение роли через список и снятие отдельной кнопкой рядом с presentation `shlz-tag`;
+- CSRF и append-only события изменения ролей в локальной pilot-БД.
 
-```cron
-7 * * * * cd /home/antropophag/code/fmonitor-2 && /usr/bin/php rapid-pilot/hourly-bitrix-workforce.php >> /home/antropophag/.local/state/fmonitor2/pilot-demo/78d99d34/workforce-sync.log 2>&1 # fmonitor2-bitrix-workforce
+Страница ролей отдельная и показывает production-название, статус и количество пользователей.
+
+Ключевые файлы:
+
+```text
+app/PilotHttp/UserDirectoryView.php
+app/PilotHttp/users.js
+app/PilotHttp/PilotE2ECoordinator.php
+app/PilotHttp/PilotView.php
+rapid-pilot/import-production-users.php
+rapid-pilot/pilot.css
 ```
 
-`rapid-pilot/hourly-bitrix-workforce.php` создаёт завершённый sync run и атомарно обновляет каталог с provenance текущего запуска. Несогласованный provenance раньше вызывал `Service unavailable` на форме распоряжения.
+Импортёр `rapid-pilot/import-production-users.php` выполняет против production только `SELECT`, пишет только в локальную `fmonitor2_demo`, строго синхронизирует каталоги и сохраняет дополнительные локальные назначения только для существующих пользователей/ролей.
 
-## Модалка выбора монтажников
+Production-пароли не запрашиваются и не импортируются. Production использует LDAP; будущая локальная авторизация FMonitor 2.0 является отдельным контуром и пока не реализована.
 
-Нативный огромный `<select multiple>` удалён. Теперь:
+После reset импорт запускается с read-only credentials только через environment:
 
-- поиск по ФИО или шестизначному табельному;
-- поиск начинается с двух символов;
-- видимая выдача ограничена 20 результатами;
-- строка показывает ФИО, табельный, должность и закрепление;
-- выбранная строка отмечается галочкой;
-- прямо внутри модалки есть блок `Выбрано` с тегами и удалением;
-- выбранные также видны на форме после закрытия;
-- скрытые `installerTabIds[]` формируются JavaScript.
+```bash
+FMONITOR_PILOT_ACTIVE_MANIFEST="$HOME/.local/state/fmonitor2/pilot-demo/78d99d34/active.json" \
+FMONITOR_SOURCE_USER='<read-only user>' \
+FMONITOR_SOURCE_PASSWORD='<read-only password>' \
+php rapid-pilot/import-production-users.php
+```
 
-Ключевые файлы: `app/PilotHttp/PrepareFormView.php`, `app/PilotHttp/picker.js`, `app/PilotHttp/PilotHttp.php`, `app/PilotHttp/PilotE2ECoordinator.php`, `rapid-pilot/pilot.css`.
+## Объекты и монтажники
 
-Скрипт доступен по `/pilot/assets/picker.js`; CSP — `script-src 'self'`. Последние проверки: PHP/JS syntax OK, `git diff --check` OK, UI detector `impeccable` вернул `[]`.
+- `/pilot/objects` содержит fixture и реальные ещё не открытые объекты, включая объект `444`.
+- `/pilot/installers` использует реальный каталог Bitrix/legacy: последняя подтверждённая загрузка — `1259` записей, `930` работающих, `329` уволенных.
+- Hourly sync работает через `rapid-pilot/hourly-bitrix-workforce.php`; cron запускается на 7-й минуте каждого часа.
+- Модалка распоряжения ищет по ФИО/табельному, ограничивает выдачу 20 строками и хранит выбранных монтажников внутри модалки и формы.
 
-## Production-данные и секреты
+## Production-доступ
 
-Legacy production и Bitrix — read-only источники. Секреты не сохранены ни в Git, ни в handoff.
+Legacy production и Bitrix — read-only источники. Секреты не сохранены в Git или handoff.
 
 ```text
 fmonitor-db-tunnel
@@ -105,31 +122,16 @@ fmonitor-db-tunnel
 database: c1_fmonitor
 ```
 
-Импортёр объектов: `rapid-pilot/import-production-objects.php`. Он выполняет против production только `SELECT`, пишет только в локальную `fmonitor2_demo` и создаёт process cases через `PilotCaseImporter`.
+Если credentials недоступны в новой сессии, запросить их у пользователя. Не записывать credentials в документы, скрипты, логи или коммиты.
 
-После reset импорт запускается с read-only реквизитами только через окружение:
+## Следующие проверки
 
-```bash
-FMONITOR_PILOT_ACTIVE_MANIFEST="$HOME/.local/state/fmonitor2/pilot-demo/78d99d34/active.json" \
-FMONITOR_SOURCE_USER='<read-only user>' \
-FMONITOR_SOURCE_PASSWORD='<read-only password>' \
-php rapid-pilot/import-production-objects.php
-```
+1. В браузере проверить `/pilot/admin/users`: открыть role-фильтр, выбрать несколько разных ролей по очереди и совместить с поиском/статусом.
+2. Проверить назначение и снятие второй роли у реального пользователя; убедиться, что остальные роли не меняются.
+3. Продолжить основной сценарий объекта `444`: `очередь → карточка → распоряжение → номер 1С ДО → открытие работ`.
+4. Отдельным следующим срезом спроектировать локальную авторизацию нового FMonitor без переноса production/LDAP-паролей.
 
-Если секреты недоступны, попросить пользователя передать их снова. Не записывать credentials в документы, скрипты, логи или коммиты.
-
-## Следующий шаг
-
-Открыть форму объекта `444` и проверить в браузере:
-
-1. поиск по части ФИО;
-2. поиск по шестизначному табельному;
-3. выбор нескольких монтажников;
-4. видимость выбранных внутри модалки;
-5. удаление через тег;
-6. сохранение после закрытия и формирование распоряжения.
-
-Затем продолжить сценарий `очередь → карточка → распоряжение → номер 1С ДО → открытие работ`. Технический долг: readiness-проверка должна разрешать дополнительные реальные строки при наличии fixture-сентинелов.
+Последние проверки UI: PHP/JS syntax OK, `git diff --check` OK, `impeccable` detector вернул `[]`.
 
 ## Сохранность пользовательских изменений
 
@@ -140,6 +142,8 @@ php rapid-pilot/import-production-objects.php
  M CONTEXT.md
 ?? docs/fmonitor-2-completed-history-migration-proposal.md
 ?? docs/fmonitor-2-installer-contractor-mapping-analysis.md
+?? docs/fmonitor-2-legacy-mounting-organizations.md
+?? docs/fmonitor-2-subcontractor-legal-identity-research.md
 ?? reviews/tests/PILOT-SERVICEDESK-REDESIGN-001.md
 ?? tools/
 ```
