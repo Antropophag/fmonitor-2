@@ -20,7 +20,7 @@ if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
     echo $bytes;
     exit;
 }
-if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' || $path === '/pilot/assets/pilot-20260829-22.css') {
+if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' || $path === '/pilot/assets/pilot-20260829-22.css' || $path === '/pilot/assets/pilot-20260829-23.css') {
     $file = $path === '/pilot/assets/shlz.css'
         ? dirname(__DIR__, 2) . '/shlz-ui/packages/styles/dist/shlz.css'
         : __DIR__ . '/pilot.css';
