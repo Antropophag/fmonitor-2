@@ -1,45 +1,41 @@
 # Test review: PILOT-DEMO-BOOTSTRAP-001 v0.2
 
-- Gate: 3 — fresh independent review of post-bind transitive CSS identity mismatch
-- Reviewer: separately tasked agent `/root/bootstrap_smoke_test_review`
+- Gate: 3 — fresh independent re-review of post-bind transitive CSS identity mismatch
+- Reviewer: separately tasked agent `/root/bootstrap_smoke_test_rereview`
 - Independence: reviewer authored neither specification nor reviewed test
 - Specification: `919383966f962fb9811a5bf6350536310de03683`
-- Reviewed test commit: `bd1d648`
+- Reviewed test commit: `834d6831e45e575f8c24619f0928fa0a45da545d`
 - Review date: 2026-08-29
-- Verdict: `CHANGES_REQUESTED`
+- Verdict: `APPROVED`
 
-## Finding
+## Findings
 
-### Blocking — exit `70` is not an independently specified expected value
+No blocking findings.
 
-`tests/InstallationProcess/pilot_demo_bootstrap_001_test.php:149` compares the complete result to an array whose first member is exact exit `70`.
+The sole change from the previously reviewed test replaces the unsupported exact exit-code oracle `70` with the specified `exitCode !== 0`. It preserves the independently specified exact `SHLZ_ASSETS_UNAVAILABLE` stdout, empty stderr, no-timeout, stopped-listener, no-active-generation, and no-server-marker assertions.
 
-The approved v0.2 specification requires a `SHLZ_ASSETS_UNAVAILABLE` reason and a **nonzero** exit for missing, invalid, identity-failed, or post-bind mismatched shlz graph assets. It specifies exact exit `64` only for CLI grammar errors; it does not assign exit `70` to this failure. Moreover, the already-established preflight path for the same public `SHLZ_ASSETS_UNAVAILABLE` class exits `78`. Exact `70` therefore cannot be derived independently from the specification and would reject a conforming implementation that preserves the existing shlz failure exit while correcting the post-bind reason.
+## Review checks
 
-Required change: assert that the exit is nonzero (or amend and reapprove Gate 1 with a single exact exit-code contract for this failure class). Keep the exact stdout, empty stderr, no-timeout, stopped-server, no-active-generation, and no-server-marker assertions.
+- Traceability: the sensitivity exercises the v0.2 sections 4–5 post-bind full transitive graph smoke requirement.
+- Public seam: the test launches the CLI as a separate process and observes its public HTTP listener and process result; it does not invoke production internals or inspect business facts through SQL.
+- Sensitivity: preflight succeeds, the adversary waits for the listener, atomically replaces the last manifest member without changing size, and current production fails on the exact missing classification.
+- Expected-value independence: `nonzero` and `SHLZ_ASSETS_UNAVAILABLE` come directly from specification `9193839`; no implementation-selected exit value remains.
+- Determinism and isolation: the fixture stays at the exact 256-member graph bound and below 8 MiB, uses task-owned paths/database/port, and cleanup leaves no demo/router process residue.
+- Regression strength: an implementation that reports the generic `STARTUP_FAILED`, leaves the listener running, activates the generation, writes server residue, times out, or leaks stderr remains rejected.
 
-## Other review checks
-
-- Traceability: the sensitivity directly exercises sections 4–5 through the separate CLI and same-origin HTTP listener.
-- Public seam: no production private method, parser, test hook, or SQL business-state oracle is used.
-- Sensitivity: preflight succeeds, the adversary waits for the child listener, atomically swaps the final transitive member, and the observed RED is specifically the missing post-bind public classification.
-- Graph oracle: the `./` correction is valid; dot segments now match the inherited accepted relative-import grammar.
-- Bounds: the fixture has exactly 256 unique members including `shlz.css`, stays below 8 MiB, and places the swapped member last in sorted traversal.
-- Cleanup/isolation: `finally` stops the asynchronous process, drops the dedicated database, and removes the task-owned home; the failed run left no demo/router process residue.
-
-## Verification evidence
+## RED verification evidence
 
 ```text
 $ php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 RED at post-spawn transitive mismatch exact failure
-Expected reason: SHLZ_ASSETS_UNAVAILABLE
-Actual reason:   STARTUP_FAILED
-Actual exit:     70
+Expected stdout: {"ok":false,"reason":"SHLZ_ASSETS_UNAVAILABLE"}
+Actual stdout:   {"ok":false,"reason":"STARTUP_FAILED"}
 stderr:          empty
 timedOut:        false
+process exit:    255 (test assertion failure)
 
 $ ps -eo pid=,args= | rg 'php -S 127\\.0\\.0\\.1|fmonitor2-pilot-demo\\.php'
 No demo/router process residue.
 ```
 
-Gate 3 remains closed for test commit `bd1d648` until the unsupported exact exit-code oracle is corrected and independently re-reviewed.
+Gate 3 is approved for test commit `834d6831e45e575f8c24619f0928fa0a45da545d`. Gate 4 may implement only the reviewed post-bind error classification behavior without changing the approved expectation.
