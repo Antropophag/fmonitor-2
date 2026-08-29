@@ -125,9 +125,9 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     private function validRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
         $origin=$r->server['HTTP_ORIGIN']??null;$fetch=$r->server['HTTP_SEC_FETCH_SITE']??null;
-        $expectedOrigin='https://'.$r->host;
-        if(self::trustedDemo($r))$expectedOrigin='http://'.$r->host;
-        return $s['actor']===$u->id&&($origin===null||$origin===$expectedOrigin)&&($fetch===null||$fetch==='same-origin');
+        $trustedDemo=self::trustedDemo($r);$expectedOrigin=($trustedDemo?'http://':'https://').$r->host;
+        $originAllowed=$origin===null||$origin===$expectedOrigin||($trustedDemo&&$origin==='null');
+        return $s['actor']===$u->id&&$originAllowed&&($fetch===null||$fetch==='same-origin');
     }
     private static function trustedDemo(PilotHttpRequest $r):bool
     {
