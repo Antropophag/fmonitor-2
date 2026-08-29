@@ -49,7 +49,7 @@
   transition: grid-template-columns 280ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.fm2-shell:has(.fm2-nav-toggle:checked) { grid-template-columns: 260px minmax(0, 1fr); }
+.fm2-shell:has(.fm2-nav-state[open]) { grid-template-columns: 260px minmax(0, 1fr); }
 
 .fm2-sidebar {
   position: sticky;
@@ -62,6 +62,9 @@
   color: #fff;
   background: var(--fm2-ink);
 }
+
+.fm2-nav-state { display: flex; flex: 1; flex-direction: column; inline-size: 100%; min-block-size: 0; }
+.fm2-nav-body { display: flex; flex: 1; flex-direction: column; min-block-size: 0; order: 1; }
 
 .fm2-logo {
   display: flex;
@@ -79,29 +82,28 @@
 .fm2-logo:hover { background: rgb(255 255 255 / 13%); }
 
 .fm2-logo-mark { flex: 0 0 32px; inline-size: 32px; block-size: 32px; overflow: visible; }
-.fm2-logo-rail { fill: none; stroke: rgb(255 255 255 / 38%); stroke-width: 2.5; }
-.fm2-logo-letter { fill: #fff; }
-.fm2-logo-signal { fill: none; stroke: #6f8cff; stroke-linecap: square; stroke-linejoin: miter; stroke-width: 1.8; }
+.fm2-logo-rail { fill: #fff; }
+.fm2-logo-progress { fill: #6f8cff; }
 .fm2-logo-name { display: none; color: #fff; font-size: 16px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; }
-.fm2-nav-toggle { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
-.fm2-nav-toggle-button {
-  position: absolute;
-  z-index: 2;
-  inset: 28px -13px auto auto;
-  display: grid;
-  inline-size: 26px;
-  block-size: 26px;
-  place-items: center;
-  color: var(--fm2-ink);
-  background: #fff;
-  border: 1px solid var(--fm2-border);
-  border-radius: 50%;
-  box-shadow: 0 3px 10px rgb(11 22 35 / 12%);
+.fm2-nav-trigger {
+  display: flex;
+  min-block-size: 48px;
+  padding: 12px 14px;
+  align-items: center;
+  gap: 12px;
+  order: 2;
+  color: rgb(255 255 255 / 62%);
+  border-block-start: 1px solid rgb(255 255 255 / 10%);
+  font-size: 12px;
+  list-style: none;
   cursor: pointer;
 }
-.fm2-nav-toggle-button svg { inline-size: 15px; block-size: 15px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; transition: transform 220ms cubic-bezier(.2, 0, 0, 1); }
-.fm2-nav-toggle:checked + .fm2-nav-toggle-button svg { transform: rotate(180deg); }
-.fm2-nav-toggle:focus-visible + .fm2-nav-toggle-button { outline: 2px solid #6f8cff; outline-offset: 2px; }
+.fm2-nav-trigger::-webkit-details-marker { display: none; }
+.fm2-nav-trigger:hover { color: #fff; background: rgb(255 255 255 / 7%); }
+.fm2-nav-trigger:focus-visible { outline: 2px solid #6f8cff; outline-offset: -2px; }
+.fm2-nav-trigger svg { flex: 0 0 24px; inline-size: 24px; block-size: 24px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; transition: transform 220ms cubic-bezier(.2, 0, 0, 1); }
+.fm2-nav-state[open] .fm2-nav-trigger svg { transform: rotate(180deg); }
+.fm2-nav-trigger-text { display: none; white-space: nowrap; }
 
 .fm2-primary-nav {
   display: flex;
@@ -137,8 +139,8 @@
 .fm2-nav-text, .fm2-nav-group { display: none; }
 .fm2-nav-text { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm2-nav-group { margin: 14px 13px 3px; color: rgb(255 255 255 / 38%); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
-.fm2-shell:has(.fm2-nav-toggle:checked) :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name) { display: block; }
-.fm2-shell:has(.fm2-nav-toggle:checked) .fm2-logo { inline-size: 100%; }
+.fm2-shell:has(.fm2-nav-state[open]) :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name, .fm2-nav-trigger-text) { display: block; }
+.fm2-shell:has(.fm2-nav-state[open]) .fm2-logo { inline-size: 100%; }
 
 .fm2-workspace { min-inline-size: 0; }
 
@@ -409,7 +411,7 @@
 
 @media (max-width: 900px) {
   .fm2-shell { grid-template-columns: 64px minmax(0, 1fr); }
-  .fm2-shell:has(.fm2-nav-toggle:checked) { grid-template-columns: 238px minmax(0, 1fr); }
+  .fm2-shell:has(.fm2-nav-state[open]) { grid-template-columns: 238px minmax(0, 1fr); }
   .fm2-topbar { padding-inline: 20px; }
   .fm2-main { padding: 22px 20px 40px; }
   .fm2-user > span:last-child { display: none; }
@@ -424,7 +426,7 @@
   .fm2-logo { inline-size: 40px; block-size: 40px; }
   .fm2-primary-nav { flex-direction: row; margin: 0 0 0 12px; overflow-x: auto; overflow-y: hidden; }
   .fm2-nav-item { flex: 0 0 42px; inline-size: 42px; min-block-size: 40px; padding: 8px 9px; }
-  .fm2-nav-toggle-button, .fm2-nav-group, .fm2-nav-text, .fm2-logo-name { display: none !important; }
+  .fm2-nav-trigger, .fm2-nav-group, .fm2-nav-text, .fm2-logo-name { display: none !important; }
   .fm2-topbar { min-block-size: 58px; padding-inline: 14px; }
   .fm2-main { padding: 18px 12px 32px; }
   .fm2-page-header, .fm2-object-head, .fm2-command { display: grid; }
