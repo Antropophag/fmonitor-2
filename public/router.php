@@ -15,6 +15,7 @@ function emitPilotResponse(int $status, array $headers, string $body): never
     header_remove('X-Powered-By');
     header_remove('Server');
     foreach ($headers as $name => $value) header($name . ': ' . $value);
+    if ($status === 503 && PHP_SAPI === 'cli-server') { flush(); usleep(1000); }
     echo $body;
     exit;
 }

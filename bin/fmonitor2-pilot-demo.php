@@ -245,7 +245,7 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         [$pilotStatus,$pilotBytes,$pilotHeaders]=demoHttp($config['port'],'/pilot/assets/pilot.css');
         [$repeatStatus,$repeatQueue]=demoHttp($config['port'],'/pilot/objects');
         $graphOk=true;
-        foreach($config['shlzMembers']as$relative=>$expectedBytes){
+        foreach(array_reverse($config['shlzMembers'],true)as$relative=>$expectedBytes){
             $route='/pilot/assets/'.$relative;[$assetStatus,$assetBytes,$assetHeaders]=demoHttp($config['port'],$route);
             $length=(string)strlen($expectedBytes);
             if($assetStatus!==200||$assetBytes!==$expectedBytes||($assetHeaders['content-type']??null)!=='text/css; charset=UTF-8'||($assetHeaders['content-length']??null)!==$length){$graphOk=false;break;}
