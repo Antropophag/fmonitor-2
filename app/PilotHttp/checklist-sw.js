@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='fmonitor2-checklist-shell-v2';
+const CACHE='fmonitor2-checklist-shell-v3';
 const ASSETS=[
   '/pilot/assets/shlz.css','/pilot/assets/pilot.css','/pilot/assets/checklist.js',
   '/pilot/assets/fonts/golos-text-cyrillic-400-normal.woff2','/pilot/assets/fonts/golos-text-cyrillic-500-normal.woff2','/pilot/assets/fonts/golos-text-cyrillic-600-normal.woff2',
