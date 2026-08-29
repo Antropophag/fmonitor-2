@@ -1,115 +1,124 @@
 # FMonitor 2.0 — session handoff
 
-Актуально на `2026-08-28`.
+Актуально на `2026-08-29`, ветка `feature/demo-pilot-flow`.
 
-## Возобновление
+## Главная установка пользователя
 
-Работа остановлена на чистой границе срезов. `PILOT-OBJECT-CARD-001 v0.2` прошёл Gate 1–5; следующий срез ещё не начат.
+Делаем внутри `fmonitor-2` быстрый красивый функциональный пилот. Существующие SSD/TDD-наработки используются только как foundation; новые UI-итерации не прогоняются через церемонию Gate 1–5. Пользователь будет быстро добавлять функции и менять дизайн.
 
-1. Прочитать `AGENTS.md`, `PRODUCT.md`, `CONTEXT.md`, `docs/development-process.md`.
-2. Проверить `git status --short`: HEAD — только initial commit, почти вся реализация, тесты и reviews находятся в dirty worktree. Сохранять все несвязанные изменения; `reset/clean` недопустимы.
-3. Запустить полный suite:
+Работать напрямую, без сабагентов: пользователь отдельно попросил прекратить делегирование, потому что теряется нить. Делать checkpoint-коммиты в feature-ветке; `main` не merge-ить.
 
-```bash
-set -o pipefail
-passed=0
-for test_file in tests/InstallationProcess/*_test.php; do
-  php "$test_file" || exit 1
-  passed=$((passed + 1))
-done
-printf 'TOTAL_PASS=%s\n' "$passed"
-```
+Визуальный эталон — классический Service Desk из:
 
-Ожидается `TOTAL_PASS=42`. Последний последовательный прогон дал `42/42 PASS`; `.test-artifacts` пуст. Последний независимый Gate 5 зафиксировал focused `3/3 PASS`, sequential `42/42 PASS` и чистую серию из трёх полных parallel `-P8` прогонов по `42/42 PASS`.
+- Windows: `C:\Users\Polly\Downloads\ЩЛЗ - фронт ServiceDesk`;
+- WSL: `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`.
 
-Известная внешняя test-infrastructure flake: старый `PILOT-HTTP-AUTH-001` global resource-observation probe изредка видит transient соединение другого параллельного HTTP-теста. Она не воспроизводится в чистой серии и не оставляет ресурсов; не смешивать её с новым UI-срезом. Если станет воспроизводимой, оформить отдельный harness slice.
+Использовать публичные компоненты, токены, радиусы, цвета и иконки `../shlz-ui`. Не копировать реализации. Figma: <https://www.figma.com/design/x75wCNufIZQuwFOTLhGZi9/Service-desk--Copy-?node-id=0-1&p=f&t=8Qd9tmQOOMJiecQt-0>.
 
-## Обязательная оркестрация
+Информационная архитектура карточки взята из legacy-derived прототипа `docs/fmonitor-2-flow-prototype.html`: `Обзор → Данные объекта → Работы → Документы → Команда → История`. Следующее процессное действие показывается над вкладками.
 
-- Root-сессия оркестрирует и хранит короткое состояние.
-- Каждый Gate выполняет новый агент с пустым или минимальным fork-контекстом. Старого агента между Gate не переиспользовать.
-- Gate 3 и Gate 5 выполняют отдельно назначенные независимые reviewers.
-- Review фиксирует SHA-256 всех входов; изменение состава или байтов manifest инвалидирует verdict.
-- Одновременно выполняется один вертикальный behavior slice, строго Gate 1 → 5.
+## Текущее состояние
 
-## Фактическое состояние
-
-Работают доменные команды подготовки распоряжения, подтверждения номера 1С ДО и открытия работ; append-only аудит; MariaDB persistence; production migration process-таблиц `fm2_*`; pilot-case import; legacy object snapshot; user/capability adapters; authorization; HTML renderer; artifact store; production composition; HTTP authentication/security shell; read-only карточка явно импортированного объекта монтажа.
-
-Production entrypoints:
-
-- `bin/fmonitor2-migrate.php`;
-- `bin/fmonitor2-import-cases.php`;
-- `public/router.php` (`GET /pilot/`, `GET|HEAD /pilot/objects/{positive-id}` и stylesheet).
-
-Последние manifest-pinned approvals:
-
-- `PILOT-HTTP-AUTH-001 v0.12` — `reviews/code/PILOT-HTTP-AUTH-001.md`;
-- `BITRIX-WORKFORCE-SCHEMA-001 v0.3` — `reviews/code/BITRIX-WORKFORCE-SCHEMA-001.md`;
-- `PILOT-OBJECT-CARD-001 v0.2` — `reviews/code/PILOT-OBJECT-CARD-001.md`.
-
-Точные финальные hashes карточки:
+Последние checkpoint-коммиты:
 
 ```text
-ec5d7b438c6696950e09397ae3b129c9890b9182636d27650127532d5d979732  specs/PILOT-OBJECT-CARD-001.md
-4577d14d1323844cc36aab3935269e708c1adb854e4f1d6e9f036950d66c45dc  tests/InstallationProcess/pilot_object_card_001_test.php
-014bf3f5726ef7913816ebb536a0b57946b1203e96809c2ecb14f49d4d0e3d19  reviews/tests/PILOT-OBJECT-CARD-001.md
-ae3a730987d59196a2daa96c47fbd64d6593f19caef523d80d949e5c0fc4f36b  reviews/code/PILOT-OBJECT-CARD-001.md
-34e294b65e30499293687414fdf8f87791cbca752c9a1c8830f8094cebe07661  app/PilotHttp/PilotHttp.php
+6cfacd2 feat: add compact assignment team pickers
+5da1aff feat: reshape pilot queue and object dossier
 ```
 
-Более ранние Gate records существуют в `reviews/tests/` и `reviews/code/`, но многие предшествуют полному manifest-подходу. Перед релизным утверждением нужен свежий независимый аудит всей композиции; переписывать работающие модули только по этой причине не требуется.
+Реализовано:
 
-## Архитектурные решения
+- общий shell в стиле Service Desk: тёмная компактная боковая навигация, белый header, фон `#F4F6F9`;
+- очередь объектов как одна плотная белая таблица вместо набора слипшихся карточек;
+- responsive table-to-card поведение;
+- карточка объекта с процессной линейкой, выделенным следующим действием и шестью вкладками;
+- сохранены реальные команды `InstallationProcess`: сформировать и скачать распоряжение/приложение, внести номер 1С ДО, открыть работы;
+- форма распоряжения разделена на три шага;
+- монтажники и стройконтроль больше не выводятся полотном флагов: открываются отдельные popover-модалки с `<select>`;
+- demo bootstrap обновлён под новую разметку формы.
 
-FMonitor 2.0 — отдельное приложение и владелец нового процесса в собственных `fm2_*` таблицах. `../fmonitor` — read-only integration source. `../shlz-ui` используется через публичные exports.
+Изменённые основные файлы:
 
-Инженер строительного контроля — пользователь FMonitor с ролью/capability. Монтажник не является пользователем FMonitor и не получает роль.
+- `app/PilotHttp/PilotView.php`;
+- `app/PilotHttp/ObjectListView.php`;
+- `app/PilotHttp/ObjectCardView.php`;
+- `app/PilotHttp/PrepareFormView.php`;
+- `app/PilotHttp/pilot.css`;
+- `bin/fmonitor2-pilot-demo.php`.
 
-Кадровый поток: `1С ЗУП` (организационный первоисточник) → `Bitrix24` (операционная реплика и прямой endpoint) → versioned workforce history FMonitor 2.0. Bitrix сейчас даёт актуальный `ACTIVE`, но не доказанную дату увольнения. Поэтому различаются:
+## Запуск
 
-- `dismissal_effective_at` — фактическая дата из явного ZUP-origin поля;
-- `first_observed_dismissed_at` — момент первого наблюдения неактивного статуса.
+MariaDB container:
 
-Пропуск записи в одной доставке не означает увольнение. Evidence: `docs/bitrix-workforce-integration-research.md`, термины: `CONTEXT.md`.
+```text
+fmonitor2-redesign-test-db
+127.0.0.1:23306
+root password: fmonitor2_demo_local
+```
 
-Legacy data-estate source audit зафиксирован в `docs/fmonitor-2-legacy-data-estate-audit.md`: обнаружено 38 concrete local tables и существенные факты вне `fm_maintable`. ADR `docs/adr/0001-no-generic-legacy-metadata-platform.md` исключает из 2.0 generic MDM, custom-field/view-builder platform и runtime formulas. Они не мигрируются и не исполняются; transient read-only metadata допустима только для толкования явно выбранных legacy facts.
+В контейнере созданы база и пользователь `fmonitor2_demo` / `fmonitor2_demo_local`.
 
-## Что ещё не готово
+Пилот сейчас запущен в PTY-сессии Codex на:
 
-- Нет HTTP-очереди объектов; карточка реализована только как read-only overview tracer.
-- Нет HTTP command forms, CSRF/session workflow.
-- Для Bitrix реализована только schema migration; публикация снимка и исторические переходы отсутствуют.
-- Legacy `MariaDbWorkforceCatalog` не должен остаться финальным источником монтажников; production composition переводится на Bitrix-derived projection отдельными срезами.
-- Нет развёрнутого тестового стенда и end-to-end smoke его конфигурации.
+```text
+http://127.0.0.1:8092/pilot/objects
+```
 
-Maintainability follow-up после видимого tracer bullet: декомпозиция крупного `PilotHttp.php`, затем оценка `InstallationProcess.php`. Не смешивать её с новым UI-срезом без нарушения спецификации.
+После перезапуска сессии процесс, вероятно, остановится. Запуск с чистыми подготовленными данными:
 
-## Следующий срез: read-only очередь объектов
+```bash
+php bin/fmonitor2-pilot-demo.php reset
+```
 
-Начать только Gate 1 и присвоить новый стабильный spec ID. Прочитать `docs/fmonitor-2-pilot-spec.md`, `docs/fmonitor-2-pilot-data-model.md`, `docs/fmonitor-2-screen-flow.md`, `docs/fmonitor-2-leader-queue-discovery.md`, `docs/installation-process-interface.md` и successor contracts `specs/PILOT-HTTP-AUTH-001.md`, `specs/PILOT-OBJECT-CARD-001.md`.
+Обычный повторный запуск сохранённого поколения:
 
-Узкая граница среза:
+```bash
+php bin/fmonitor2-pilot-demo.php start
+```
 
-- авторизованный read-only `GET|HEAD /pilot/objects` collection route;
-- только явно импортированные pilot cases;
-- минимальный один acceptance statement/tracer: канонический список и переход в уже утверждённую карточку;
-- точные ordering/pagination/access outcomes должны быть решены Gate 1, не переносить предположения из старого широкого UI;
-- ноль process/audit мутаций, форм и command controls;
-- UI через публичные exports `shlz-ui`.
+Проверка:
 
-После затянувшегося object-card slice держать каждый следующий срез существенно уже: один acceptance statement → один RED → одна minimal implementation. Не объединять route grammar, весь state matrix, corruption census и harness refactoring в один Gate 2.
+```bash
+php bin/fmonitor2-pilot-demo.php status
+```
 
-После очереди: минимальные command slices → Bitrix workforce publication/history → concrete legacy live-data census (без generic MDM/custom fields) → deployment и end-to-end smoke.
+Последний `reset` успешно прошёл встроенный startup smoke и открыл порт 8092.
 
-## Bitrix backlog
+## Точный следующий шаг
 
-`specs/BITRIX-WORKFORCE-HISTORY-001.md` — retired horizontal epic, не Gate 2 spec. Остались отдельные срезы: first publication; repeat/material/missing transitions; delivery validation; transport security; concurrency; commit reconciliation; history read model; DB privileges.
+Сначала довести модалки выбора команды до честно рабочего UX:
 
-## Неблокирующие продуктовые вопросы
+1. Поле поиска в модалке сейчас визуальное; оно ещё не фильтрует варианты.
+2. Добавить локальный `pilot.js`, безопасно отдать его через `/pilot/assets/pilot.js`, подключить `script-src 'self'` в CSP.
+3. Фильтровать `<option>` по ФИО/табельному номеру без рендера тысяч checkbox-строк.
+4. Показывать выбранных монтажников и инженера компактными строками/chips с удалением до submit.
+5. Проверить keyboard/focus/закрытие popover и mobile layout.
 
-- Нужен ли финальный файл из 1С ДО помимо номера.
-- Область уникальности регистрационного номера и исправление ошибки.
-- Формулы SLA очередей.
-- Retention/export security-аудита.
-- Явное ZUP-origin поле фактической даты увольнения.
+После этого вручную пройти весь сценарий на чистом `reset`:
+
+```text
+очередь → карточка → выбор команды → формирование → скачивание
+→ номер 1С ДО → открытие работ → новое состояние → следующий шаг
+```
+
+Затем сделать визуальный проход по живому Service Desk: особенно плотность строк очереди, типографика, табы, document icons и реальные SVG-иконки из публичных exports `shlz-ui`. Сейчас в sidebar стоят временные текстовые glyph `ОБ / РП / ИН`; их надо заменить.
+
+## Важные ограничения и незавершённое
+
+- Не утверждать, что поиск уже работает: пока работает только нативный typeahead самого `<select>`, отдельный search input не связан со списком.
+- Popover API выбран намеренно, чтобы модалки открывались и закрывались без inline JavaScript; проверить поддержку в целевом браузере.
+- Поля во вкладках пока покрывают только данные, уже доступные текущему HTTP read model. Следующим проходом расширять их реальными legacy-derived полями, ориентируясь на `docs/fmonitor-2-flow-prototype.html`, без моков.
+- `pilot.css` после механического форматирования содержит много коротких CSS-строк; функционально валиден, позднее можно прогнать штатным formatter, но не тратить на это продуктовую итерацию.
+- Неотслеживаемый файл `reviews/tests/PILOT-SERVICEDESK-REDESIGN-001.md` остался от прерванного SSD-процесса. Не удалять автоматически: сначала определить, нужен ли он пользователю. Он не включён в checkpoint-коммиты.
+- Не заниматься Bitrix history, CI, harness-refactor и архитектурной уборкой вне необходимого для работающего пилота.
+
+## Git
+
+Ожидаемый статус при возобновлении:
+
+```text
+## feature/demo-pilot-flow
+?? reviews/tests/PILOT-SERVICEDESK-REDESIGN-001.md
+```
+
+Сам handoff после этой сессии будет отдельным tracked change/commit. Не использовать destructive reset/clean.
