@@ -979,10 +979,11 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
   .fm2-progress-summary { justify-items: end; align-self: end; padding-block-end: 1px; }
   .fm2-progress-summary strong { font-size: 34px; }
   .fm2-progress-summary > span { margin-block-start: 5px; font-size: 10px; }
-  .fm2-confirm-dialog { inline-size: 100%; max-inline-size: none; margin: auto 0 0; border-radius: 18px 18px 0 0; }
+  .fm2-confirm-dialog { box-sizing: border-box; inline-size: calc(100vw - 24px); max-inline-size: calc(100vw - 24px); margin: auto; margin-block-end: 12px; border-radius: 18px; }
   .fm2-confirm-dialog__content { padding: 24px 18px max(18px,env(safe-area-inset-bottom)); }
-  .fm2-confirm-dialog__actions { display: grid; grid-template-columns: 1fr 1fr; }
-  .fm2-confirm-dialog__actions .shlz-button { inline-size: 100%; min-block-size: 48px; }
+  .fm2-confirm-dialog p strong { overflow-wrap: anywhere; }
+  .fm2-confirm-dialog__actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .fm2-confirm-dialog__actions .shlz-button { inline-size: 100%; min-inline-size: 0; min-block-size: 48px; padding-inline: 10px; white-space: normal; }
   .fm2-installer-dialog { inline-size: 100%; max-inline-size: none; max-block-size: min(88dvh,760px); margin: auto 0 0; border-radius: 18px 18px 0 0; }
   .fm2-installer-dialog header { padding: 18px 16px 12px; }
   .fm2-installer-dialog__body { padding: 14px 16px; }
