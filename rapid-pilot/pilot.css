@@ -570,6 +570,10 @@
 
 .fm2-user-toolbar { display: flex; gap: 14px; padding: 12px 14px; align-items: end; border-block-end: 1px solid var(--fm2-border); }
 .fm2-user-toolbar .shlz-field { flex: 1 1 340px; max-inline-size: 460px; }
+.fm2-user-toolbar .fm2-role-filter { position: relative; flex: 0 0 230px; max-inline-size: 230px; }
+.fm2-role-filter .shlz-select__listbox { z-index: 8; inline-size: 280px; max-block-size: 330px; overflow-y: auto; }
+.fm2-role-filter .shlz-select__option { display: flex; gap: 16px; justify-content: space-between; }
+.fm2-role-filter .shlz-select__option small { color: var(--fm2-muted); font-size: 11px; }
 .fm2-user-toolbar .fm2-installer-filters { padding: 0; border: 0; }
 .fm2-user-table th:nth-child(1) { inline-size: 26%; }
 .fm2-user-table th:nth-child(2) { inline-size: 24%; }
