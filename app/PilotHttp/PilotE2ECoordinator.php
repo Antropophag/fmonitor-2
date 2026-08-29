@@ -176,7 +176,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     }
     private function session(PilotHttpRequest $r,HttpUser $user,bool $create):array
     {
-        $headers=[];if(\session_status()!==PHP_SESSION_ACTIVE){\session_name('fm2pilot');\ini_set('session.use_cookies','0');$incoming=null;if(\preg_match('/(?:^|;\s*)fm2pilot=([A-Za-z0-9,-]{16,128})/',(string)($r->server['HTTP_COOKIE']??''),$m)===1)$incoming=$m[1];if($incoming===null&&!$create)return [null,[]];if($incoming!==null)\session_id($incoming);if(!@\session_start())throw new PilotHttpInfrastructureUnavailable();if($incoming===null)$headers=['Set-Cookie'=>'fm2pilot='.\session_id().(self::trustedDemo($r)?'':'; Secure').'; HttpOnly; SameSite=Strict; Path=/pilot'];}
+        $headers=[];if(\session_status()!==PHP_SESSION_ACTIVE){\session_name('fm2pilot');\ini_set('session.use_cookies','0');$incoming=null;if(\preg_match('/(?:^|;\s*)fm2pilot=([A-Za-z0-9,-]{16,128})/',(string)($r->server['HTTP_COOKIE']??''),$m)===1)$incoming=$m[1];if($incoming===null&&!$create)return [null,[]];\session_id($incoming??'');if(!@\session_start())throw new PilotHttpInfrastructureUnavailable();if($incoming===null)$headers=['Set-Cookie'=>'fm2pilot='.\session_id().(self::trustedDemo($r)?'':'; Secure').'; HttpOnly; SameSite=Strict; Path=/pilot'];}
         if(isset($_SESSION['actor'])&&$_SESSION['actor']!==$user->id){\session_regenerate_id(true);$_SESSION=[];}
         if(!isset($_SESSION['actor'])){if(!$create)return [null,[]];$_SESSION=['actor'=>$user->id,'secret'=>\random_bytes(32),'tokens'=>[],'flash'=>[]];}
         return [&$_SESSION,$headers];

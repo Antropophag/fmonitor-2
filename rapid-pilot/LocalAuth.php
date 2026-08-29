@@ -28,6 +28,8 @@ final class RapidPilotLocalAuth
         $user=$this->user();
         if($user===null){if(($_SERVER['REQUEST_METHOD']??'GET')==='GET')$_SESSION['auth_return_to']=$this->safeReturnTo((string)($_SERVER['REQUEST_URI']??'/pilot/objects'));$this->redirect('/pilot/login');}
         $_SERVER['REMOTE_USER']=$user['email'];
+        $_SERVER['FMONITOR_AUTH_CSRF']=$this->csrf();
+        session_write_close();
     }
 
     private function loginPage():never

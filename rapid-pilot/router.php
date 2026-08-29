@@ -109,7 +109,7 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
-    $logoutToken = htmlspecialchars((string) ($_SESSION['auth_csrf'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $logoutToken = htmlspecialchars((string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
     $body = str_replace('</aside>', $logout . '</aside>', $body);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
