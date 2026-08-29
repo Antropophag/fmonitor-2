@@ -1,15 +1,25 @@
 # Test review: PILOT-SHLZ-ASSETS-001
 
-- Reviewer: `/root/shlz_assets_test_review_final`
-- Test author: separately tasked Gate 2 agents (commits `277e08f`, `0ed3874`, `9f87f1f`)
-- Reviewed commit: `9f87f1f3c3edf69667111cf1c622923460e7707b`
+- Reviewer: `/root/shlz_parser_test_review`
+- Test author: separately tasked Gate 2 agents (latest commit `e3228dd`)
+- Reviewed commit: `e3228dda483222ac8ae21e241daf7a5883c55cce`
 - Specification: `specs/PILOT-SHLZ-ASSETS-001.md` v0.1 at `dd22aa883407e19f94d5990bb39ff7cce5bf1712`
 - Public seam: raw HTTP `GET|HEAD /pilot/assets/shlz.css`, browser-relative manifest routes, and configured root HTML
-- Verdict: `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
 
 ## Findings
 
-No blocking findings.
+### Blocking — malformed-grammar oracle is not independently fixed by the specification
+
+The new `$malformedGrammar` table classifies `@import "member.css" totally-bogus;` as malformed. Under CSS `@import` grammar the suffix is a media query list, and an identifier can be a media type; an unknown media type is syntactically valid even though it does not match. The test would therefore reject a conforming parser and is not an implementation-independent expected value.
+
+The new expectations for an unterminated trailing comment and an unterminated ordinary `@media` block are likewise not stated by section 3 or its worked examples. Section 3 defines which leading top-level rules participate in manifest discovery and explicitly says parsing stops at an ordinary style statement; it does not define a strict whole-stylesheet validator or override CSS error recovery. Consequently those cases cannot acquire exact `503` expectations from parser implementation intent.
+
+Return to Gate 1 or Gate 2: normatively define the accepted/rejected trailing and import-suffix grammar with independent worked examples, or remove the unsupported cases. Keep at least one valid nearby suffix and one unambiguously malformed `@import` case so the test remains sensitive without treating valid media syntax as invalid.
+
+The public seam itself is correct: the additions use raw HTTP `GET` against both root and member routes, assert exact redacted `503` for an invalid graph, and exact bytes/MIME/HEAD parity for accepted graphs. Fixtures remain task-owned and isolated.
+
+This verdict supersedes the earlier approval for the augmented test head; the previously approved expectations through `9f87f1f` are unaffected.
 
 The test is traceable to the approved specification and exercises the real raw-HTTP seam with task-owned fixtures. Expected bytes, MIME, lengths, route outcomes, boundary values, security headers, and stylesheet order are independently fixed by the specification rather than production parsing or Showcase internals.
 
@@ -21,7 +31,8 @@ Prior coverage remains intact: the fixed recursive graph and all exact GET/HEAD 
 
 ## Verification evidence
 
+- `git diff e3228dd^ e3228dd --check` — PASS.
 - `php -l tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS, no syntax errors.
-- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — expected RED at the first missing split dependency: `GET /pilot/assets/foundation.css` expected `200 text/css; charset=UTF-8`, length `55`, and task-owned bytes; current implementation returned exact `404 Not found.`. This is the intended missing behavior, not a setup failure.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — RED at new malformed case 0: expected exact `503`, current public seam returned exact `200` root bytes. The failure is observable at the correct seam, but it does not cure the unsupported oracle above.
 
-Gate 4 may proceed against the reviewed expectations at commit `9f87f1f3c3edf69667111cf1c622923460e7707b`.
+Gate 4 must not proceed against the augmented expectations at `e3228dd`.
