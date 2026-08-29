@@ -69,6 +69,13 @@ function pdbStop(array $server): void
     if (is_resource($server['process'])) proc_close($server['process']);
 }
 
+function pdbCollect($process,array $pipes,float $timeoutSeconds):array
+{
+    stream_set_blocking($pipes[1],false);stream_set_blocking($pipes[2],false);$stdout='';$stderr='';$deadline=microtime(true)+$timeoutSeconds;$timedOut=false;$exitCode=null;$pid=(int)(proc_get_status($process)['pid']??0);
+    while(true){foreach([1=>&$stdout,2=>&$stderr]as$fd=>&$buffer)$buffer.=(string)stream_get_contents($pipes[$fd]);unset($buffer);$status=proc_get_status($process);if(!$status['running']){$exitCode=$status['exitcode'];break;}if(microtime(true)>=$deadline){$timedOut=true;proc_terminate($process);$grace=microtime(true)+.25;do{usleep(10000);$status=proc_get_status($process);}while($status['running']&&microtime(true)<$grace);if($status['running'])proc_terminate($process,9);$killGrace=microtime(true)+.5;do{usleep(10000);$status=proc_get_status($process);}while($status['running']&&microtime(true)<$killGrace);if($status['running'])throw new TestFailure('child cannot be terminated within deadline');$exitCode=$status['exitcode'];break;}usleep(10000);}
+    foreach([1=>&$stdout,2=>&$stderr]as$fd=>&$buffer){$drain=microtime(true)+.2;do{$chunk=(string)stream_get_contents($pipes[$fd]);$buffer.=$chunk;if($chunk==='')usleep(1000);}while(!feof($pipes[$fd])&&microtime(true)<$drain);fclose($pipes[$fd]);}unset($buffer);$reaped=proc_close($process);if($exitCode===null||$exitCode<0)$exitCode=$reaped;return compact('exitCode','stdout','stderr','timedOut','pid');
+}
+
 function pdbRun(array $environment, array $arguments, string $stdin = '', ?string $root = null): array
 {
     $command = ['/usr/bin/env', '-i'];
@@ -77,10 +84,7 @@ function pdbRun(array $environment, array $arguments, string $stdin = '', ?strin
     $pipes=[]; $process=proc_open($command,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,$root??dirname(__DIR__,2));
     if (!is_resource($process)) throw new TestFailure('demo command starts');
     fwrite($pipes[0], $stdin); fclose($pipes[0]);
-    stream_set_timeout($pipes[1], 8); stream_set_timeout($pipes[2], 8);
-    $stdout=stream_get_contents($pipes[1]); $stderr=stream_get_contents($pipes[2]);
-    fclose($pipes[1]); fclose($pipes[2]);
-    return ['exitCode'=>proc_close($process),'stdout'=>$stdout,'stderr'=>$stderr];
+    return pdbCollect($process,$pipes,8);
 }
 
 function pdbRequest(int $port, string $method, string $path, array $headers = [], string $body = ''): array
@@ -109,7 +113,8 @@ function pdbTree(string $root):array{if(!is_dir($root))return[];$rows=[];$iterat
 function pdbFailure(array $result,array $secrets,string $why):void{assertSameValue(true,$result['exitCode']!==0,$why.' fails');assertSameValue(false,str_contains($result['stdout'],"FMonitor 2.0 pilot:"),$why.' prints no ready banner');foreach($secrets as$secret)assertSameValue(false,str_contains($result['stdout'].$result['stderr'],$secret),$why.' redacts secret');}
 function pdbCopyTree(string $source,string $target):void{if(!mkdir($target,0700,true))throw new TestFailure('copy target');$iterator=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::SELF_FIRST);foreach($iterator as$item){$relative=substr($item->getPathname(),strlen($source)+1);$to=$target.'/'.$relative;if($item->isDir()){if(!mkdir($to,0700))throw new TestFailure('copy directory');}elseif(!copy($item->getPathname(),$to))throw new TestFailure('copy file');}}
 function pdbRemoveTree(string $root):void{if(!is_dir($root))return;$iterator=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::CHILD_FIRST);foreach($iterator as$item)$item->isDir()?rmdir($item->getPathname()):unlink($item->getPathname());rmdir($root);}
-function pdbContract(string $file):void{$pipes=[];$process=proc_open([PHP_BINARY,$file],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));if(!is_resource($process))throw new TestFailure('production contract starts '.$file);fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);assertSameValue([0,''],[proc_close($process),$stderr],'inherited production contract '.$file);assertSameValue(true,str_contains($stdout,'PASS'),'inherited production contract passes '.$file);}
+function pdbContract(string $file):void{$pipes=[];$process=proc_open([PHP_BINARY,$file],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));if(!is_resource($process))throw new TestFailure('production contract starts '.$file);fclose($pipes[0]);$result=pdbCollect($process,$pipes,25);assertSameValue(false,$result['timedOut'],'inherited production contract deadline '.$file);assertSameValue([0,''],[$result['exitCode'],$result['stderr']],'inherited production contract '.$file);assertSameValue(true,str_contains($result['stdout'],'PASS'),'inherited production contract passes '.$file);}
+function pdbDeadlineSelfCheck():void{$pipes=[];$process=proc_open([PHP_BINARY,'-r','fwrite(STDOUT,"READY\\n");usleep(10000000);'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));if(!is_resource($process))throw new TestFailure('deadline self-check starts');fclose($pipes[0]);$started=microtime(true);$result=pdbCollect($process,$pipes,.15);assertSameValue(true,$result['timedOut'],'deadline self-check times out');assertSameValue(true,microtime(true)-$started<1.5,'deadline self-check is bounded');assertSameValue("READY\n",$result['stdout'],'deadline collector preserves stdout');assertSameValue('',$result['stderr'],'deadline collector preserves stderr');if(function_exists('posix_kill')&&$result['pid']>0)assertSameValue(false,@posix_kill($result['pid'],0),'deadline child is terminated and reaped');}
 
 $token=bin2hex(random_bytes(6));
 $database='t_pdb001_'.$token;
@@ -124,6 +129,7 @@ $home=dirname(__DIR__,3).'/.pilot-demo-test-homes/'.$token;
 $port=pdbPort(); $server=null; $db=null;
 
 try {
+    pdbDeadlineSelfCheck();
     if (!mkdir($home,0700,true)) throw new TestFailure('task-owned test home');
     $db=new mysqli($adminHost,$adminUser,$adminPassword,'',$adminPort);$db->query('CREATE DATABASE `'.$database.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');$db->query('CREATE DATABASE `'.$cssDatabase.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');
     $environment=['HOME'=>$home,'PATH'=>'/usr/bin:/bin','FMONITOR_DEMO_PORT'=>(string)$port,'FMONITOR_DEMO_DB_HOST'=>$adminHost,'FMONITOR_DEMO_DB_PORT'=>(string)$adminPort,'FMONITOR_DEMO_DB_NAME'=>$database,'FMONITOR_DEMO_DB_USER'=>$demoUser,'FMONITOR_DEMO_DB_PASSWORD'=>$demoPassword];
