@@ -66,13 +66,16 @@
   block-size: 44px;
   place-items: center;
   color: #fff;
-  background: var(--fm2-primary);
+  background: rgb(255 255 255 / 8%);
   border-radius: var(--fm2-radius);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .02em;
   text-decoration: none;
 }
+
+.fm2-logo:hover { background: rgb(255 255 255 / 13%); }
+
+.fm2-logo-mark { inline-size: 30px; block-size: 30px; overflow: visible; }
+.fm2-logo-frame { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.25; }
+.fm2-logo-signal { fill: none; stroke: #6f8cff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.6; }
 
 .fm2-primary-nav {
   display: grid;
@@ -99,15 +102,16 @@
 .fm2-nav-item[aria-current="page"] { color: #fff; background: rgb(255 255 255 / 10%); }
 .fm2-nav-item--muted { opacity: .42; }
 
-.fm2-nav-glyph {
-  display: grid;
-  inline-size: 28px;
-  block-size: 28px;
-  place-items: center;
-  border-radius: 6px;
-  background: rgb(255 255 255 / 8%);
+.fm2-nav-icon { inline-size: 22px; block-size: 22px; fill: currentcolor; }
+
+.fm2-brand-caption {
+  display: block;
+  color: rgb(255 255 255 / 34%);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: .04em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
 .fm2-sidebar-foot { margin-block-start: auto; }
