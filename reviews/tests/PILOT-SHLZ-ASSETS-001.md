@@ -1,23 +1,27 @@
 # Test review: PILOT-SHLZ-ASSETS-001
 
-- Reviewer: `/root/shlz_assets_test_rereview`
-- Test author: separately tasked Gate 2 agents (commits `277e08f`, `0ed3874`)
-- Reviewed commit: `0ed3874e2defb9ef14c01b198373e172c58cee9a`
+- Reviewer: `/root/shlz_assets_test_review_final`
+- Test author: separately tasked Gate 2 agents (commits `277e08f`, `0ed3874`, `9f87f1f`)
+- Reviewed commit: `9f87f1f3c3edf69667111cf1c622923460e7707b`
 - Specification: `specs/PILOT-SHLZ-ASSETS-001.md` v0.1 at `dd22aa883407e19f94d5990bb39ff7cce5bf1712`
 - Public seam: raw HTTP `GET|HEAD /pilot/assets/shlz.css`, browser-relative manifest routes, and configured root HTML
-- Red command and intended failure: `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` fails at the first split dependency, `GET /pilot/assets/foundation.css`, with expected `200 text/css` and task-owned bytes versus actual `404 Not found.`
-- Verdict: `CHANGES_REQUESTED`
+- Verdict: `APPROVED`
 
 ## Findings
 
-1. **Blocking — different-identity alias remains untested.** The previous review explicitly required the section 5 `different-identity alias` failure case. Commit `0ed3874` adds the allowed duplicate-normalization/cycle fixture, but no fixture creates two observations of one logical route backed by different filesystem identities and no assertion requires the graph to fail closed with `503`. An implementation that deduplicates solely by route text while accepting an identity change during manifest capture would still pass.
+No blocking findings.
 
-2. **Blocking — concurrent `GET|HEAD` contract is only partially observed.** `psaConcurrent()` sends GET only and retains only status/body. It neither sends concurrent HEAD requests nor checks their committed `Content-Length`, CSS MIME, security headers, and empty bodies. Sequential `psaGetHead()` coverage and concurrent GET bodies are useful, but an implementation whose concurrent HEAD path diverges from the committed representation required by section 4 would pass.
+The test is traceable to the approved specification and exercises the real raw-HTTP seam with task-owned fixtures. Expected bytes, MIME, lengths, route outcomes, boundary values, security headers, and stylesheet order are independently fixed by the specification rather than production parsing or Showcase internals.
 
-The other previously reported gaps are closed at the public seam. The revised test now covers exact lower/pass and upper/fail boundaries for 256 members, depth 32, and aggregate 8 MiB; allowed duplicate normalization and a cycle; lifetime identity replacement after composition capture; repeated GET/HEAD; concurrent GET bytes; and root HTML stylesheet order. Existing coverage remains sensitive to recursive imports, exact member bytes/MIME/length, route and method priority, unreferenced files, malformed targets and graph, invalid UTF-8, `pilot.css` collision, symlink components, removal/replacement, redaction, and security headers. Expected CSS bytes and boundary values come from the approved specification and task-owned fixtures. Syntax is valid, fixture cleanup is isolated, and the captured RED is caused by missing split-export behavior rather than setup failure.
+The final revision closes the prior concurrency gap with one mixed concurrent batch containing `GET` and `HEAD` for every member in the five-route worked manifest. Every response is parsed through the same public-response oracle: GET asserts exact status, CSS MIME, byte length, bytes, and inherited security headers; HEAD asserts the same committed status/MIME/length and security headers with an empty body. The following sequential request also retains repeated-response sensitivity.
 
-## Required changes
+The same-filesystem-identity hardlink fixture has the correct expected result. Section 3 rejects a duplicate logical route only when its observed file identity differs; it does not reject two distinct manifest routes that intentionally resolve to the same device/inode. The fixture proves both paths really share identity and requires both exact public routes to remain available. Existing removal and regular-file-swap fixtures separately prove fail-closed behavior when a captured route loses or changes identity. No unsupported collision rule is introduced by the test.
 
-- Add a public-seam fixture and assertion for a duplicate logical route observed with a different filesystem identity, expecting redacted `503`.
-- Extend concurrent coverage to include HEAD and assert the same committed status/application headers/length with an empty body.
-- Re-run the focused test and retain the intended first-split-route RED output.
+Prior coverage remains intact: the fixed recursive graph and all exact GET/HEAD representations; unknown and malformed route behavior; method priority; unreferenced-file exclusion; root HTML stylesheet order; normalized duplicate/cycle handling; exact 256-member, depth-32, and 8-MiB boundaries; malformed/remote/escaping imports; invalid UTF-8; `pilot.css` collision; broken-graph priority; symlink file/directory rejection; removal and replacement after manifest capture; redaction; and inherited no-session/security headers. Fixtures are isolated and removed in `finally`.
+
+## Verification evidence
+
+- `php -l tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS, no syntax errors.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — expected RED at the first missing split dependency: `GET /pilot/assets/foundation.css` expected `200 text/css; charset=UTF-8`, length `55`, and task-owned bytes; current implementation returned exact `404 Not found.`. This is the intended missing behavior, not a setup failure.
+
+Gate 4 may proceed against the reviewed expectations at commit `9f87f1f3c3edf69667111cf1c622923460e7707b`.
