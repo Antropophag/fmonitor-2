@@ -114,7 +114,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     }
     private function session(PilotHttpRequest $r,HttpUser $user,bool $create):array
     {
-        $headers=[];if(\session_status()!==PHP_SESSION_ACTIVE){\session_name('fm2pilot');\ini_set('session.use_cookies','0');$incoming=null;if(\preg_match('/(?:^|;\s*)fm2pilot=([A-Za-z0-9,-]{16,128})/',(string)($r->server['HTTP_COOKIE']??''),$m)===1)$incoming=$m[1];if($incoming===null&&!$create)return [null,[]];if($incoming!==null)\session_id($incoming);if(!@\session_start())throw new PilotHttpInfrastructureUnavailable();if($incoming===null){$demoNonce=$r->server['FMONITOR_DEMO_LOOPBACK_NONCE']??null;$trustedDemo=PHP_SAPI==='cli-server'&&\is_string($demoNonce)&&\preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1&&\preg_match('/^127\.0\.0\.1:[1-9][0-9]*$/D',$r->host)===1;$headers=['Set-Cookie'=>'fm2pilot='.\session_id().($trustedDemo?'':'; Secure').'; HttpOnly; SameSite=Strict; Path=/pilot'];}}
+        $headers=[];if(\session_status()!==PHP_SESSION_ACTIVE){\session_name('fm2pilot');\ini_set('session.use_cookies','0');$incoming=null;if(\preg_match('/(?:^|;\s*)fm2pilot=([A-Za-z0-9,-]{16,128})/',(string)($r->server['HTTP_COOKIE']??''),$m)===1)$incoming=$m[1];if($incoming===null&&!$create)return [null,[]];if($incoming!==null)\session_id($incoming);if(!@\session_start())throw new PilotHttpInfrastructureUnavailable();if($incoming===null)$headers=['Set-Cookie'=>'fm2pilot='.\session_id().(self::trustedDemo($r)?'':'; Secure').'; HttpOnly; SameSite=Strict; Path=/pilot'];}
         if(isset($_SESSION['actor'])&&$_SESSION['actor']!==$user->id){\session_regenerate_id(true);$_SESSION=[];}
         if(!isset($_SESSION['actor'])){if(!$create)return [null,[]];$_SESSION=['actor'=>$user->id,'secret'=>\random_bytes(32),'tokens'=>[],'flash'=>[]];}
         return [&$_SESSION,$headers];
@@ -126,10 +126,15 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     {
         $origin=$r->server['HTTP_ORIGIN']??null;$fetch=$r->server['HTTP_SEC_FETCH_SITE']??null;
         $expectedOrigin='https://'.$r->host;
-        $demoNonce=$r->server['FMONITOR_DEMO_LOOPBACK_NONCE']??null;
-        if(PHP_SAPI==='cli-server'&&\is_string($demoNonce)&&\preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1
-            &&\preg_match('/^127\.0\.0\.1:[1-9][0-9]*$/D',$r->host)===1)$expectedOrigin='http://'.$r->host;
+        if(self::trustedDemo($r))$expectedOrigin='http://'.$r->host;
         return $s['actor']===$u->id&&($origin===null||$origin===$expectedOrigin)&&($fetch===null||$fetch==='same-origin');
+    }
+    private static function trustedDemo(PilotHttpRequest $r):bool
+    {
+        $nonce=$r->server['FMONITOR_DEMO_LOOPBACK_NONCE']??null;$trustedHost=$r->server['FMONITOR_DEMO_TRUSTED_REQUEST_HOST']??null;
+        return PHP_SAPI==='cli-server'&&\is_string($nonce)&&\preg_match('/^[0-9a-f]{32}$/D',$nonce)===1
+            &&\is_string($trustedHost)&&\preg_match('/^127\.0\.0\.1:([1-9][0-9]{3,4})$/D',$trustedHost,$parts)===1
+            &&(int)$parts[1]>=1024&&(int)$parts[1]<=65535&&$r->host===$trustedHost;
     }
     private function body(PilotHttpRequest $r,array $allowed):?array{$type=(string)($r->server['CONTENT_TYPE']??'');$length=$r->server['CONTENT_LENGTH']??null;if(!\preg_match('#^application/x-www-form-urlencoded(?:;\s*charset=UTF-8)?$#iD',$type)||!\is_string($length)||!\ctype_digit($length)||(int)$length>16384||(int)$length!==\strlen($r->body))return null;$out=[];$nextInstaller=0;foreach(\explode('&',$r->body)as$part){if($part==='')continue;$pair=\explode('=',$part,2);if(\preg_match('/%(?![0-9A-Fa-f]{2})/',($pair[0]??'').($pair[1]??''))===1)return null;$key=\rawurldecode(\str_replace('+',' ',$pair[0]));$value=\rawurldecode(\str_replace('+',' ',$pair[1]??''));if(\preg_match('/^installerTabIds\[([0-9]+)\]$/D',$key,$m)===1){if((int)$m[1]!==$nextInstaller++||$nextInstaller>500)return null;$key='installerTabIds[]';}if(!\in_array($key,$allowed,true)||!\mb_check_encoding($key,'UTF-8')||!\mb_check_encoding($value,'UTF-8'))return null;$out[$key][]=$value;if($key==='installerTabIds[]'&&\count($out[$key])>500)return null;}if(!isset($out['csrfToken'])||\count($out['csrfToken'])!==1)throw new InvalidCsrfRequest();foreach($out as$key=>$values)if($key!=='installerTabIds[]'&&\count($values)!==1)return null;return $out;}
     private function flashRedirect(array &$s,string $path,string $message,?string $field=null,bool $suppressOpen=false,array $selected=[]):PilotHttpResponse{if($selected===[]&&isset($s['pendingSelection']))$selected=$s['pendingSelection'];unset($s['pendingSelection']);$s['flash'][$path]=['message'=>$message,'field'=>$field,'suppressOpen'=>$suppressOpen,'selected'=>$selected];$_SESSION=$s;return $this->redirect($path);}

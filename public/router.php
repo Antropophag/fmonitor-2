@@ -39,7 +39,13 @@ if (PHP_SAPI === 'cli-server' && in_array($localServerAddress, ['127.0.0.1','::1
 }
 if(PHP_SAPI==='cli-server'&&$localServerAddress==='127.0.0.1'){
     $demoNonce=getenv('FMONITOR_DEMO_LOOPBACK_NONCE');
-    if(getenv('FMONITOR_DEMO_LOOPBACK')==='1'&&is_string($demoNonce)&&preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1)$_SERVER['FMONITOR_DEMO_LOOPBACK_NONCE']=$demoNonce;
+    $demoHost=getenv('FMONITOR_TRUSTED_REQUEST_HOST');
+    if(getenv('FMONITOR_DEMO_LOOPBACK')==='1'&&is_string($demoNonce)&&preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1
+        &&is_string($demoHost)&&preg_match('/^127\.0\.0\.1:([1-9][0-9]{3,4})$/D',$demoHost,$demoHostParts)===1
+        &&(int)$demoHostParts[1]>=1024&&(int)$demoHostParts[1]<=65535){
+        $_SERVER['FMONITOR_DEMO_LOOPBACK_NONCE']=$demoNonce;
+        $_SERVER['FMONITOR_DEMO_TRUSTED_REQUEST_HOST']=$demoHost;
+    }
 }
 
 if(PHP_SAPI!=='cli-server')$_SERVER['FMONITOR_TRUSTED_REQUEST_HOST']=getenv('FMONITOR_TRUSTED_REQUEST_HOST');
