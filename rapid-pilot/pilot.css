@@ -523,6 +523,9 @@
 .fm2-next-action .fm2-inline-form { grid-template-columns: minmax(210px, 1fr) auto; max-inline-size: 600px; margin: 0; padding: 0; align-items: end; border: 0; }
 .fm2-next-action .fm2-inline-form label, .fm2-next-action .fm2-inline-form small { grid-column: 1; }
 .fm2-next-action .fm2-inline-form button { grid-column: 2; grid-row: 2; }
+.fm2-next-action .fm2-registration-form { inline-size: min(100%, 640px); }
+.fm2-order-documents { margin-block-start: 16px; }
+.fm2-order-documents .shlz-document-row:last-child { border-block-end: 0; }
 .fm2-object-dashboard { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr); gap: 16px; align-items: start; }
 .fm2-object-dashboard > main, .fm2-object-dashboard > aside { display: grid; min-inline-size: 0; gap: 16px; }
 .fm2-object-dashboard .fm2-panel { background: #fff; border-radius: var(--fm2-radius); }

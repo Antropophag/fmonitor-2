@@ -245,7 +245,7 @@ final class InstallationProcess
             ];
         }
 
-        $organizationType = 'individual';
+        $organizationType = count($installerSnapshots) === 1 ? 'individual' : 'brigade';
         try {
             $renderedArtifacts = $this->environment->renderAssignmentOrder([
                 'assignmentOrderVersion' => $assignmentOrderVersion,

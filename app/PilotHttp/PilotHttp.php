@@ -191,7 +191,7 @@ final class MariaDbObjectCardReader implements ObjectCardReader
             if($case===null||$legacy===null)return null;
             $card=$this->legacyCard($legacy,$id);if($card===null)return null;
             $caseId=(int)$case['id'];
-            $orders=$this->many('SELECT id,installation_case_id,version_no,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
+            $orders=$this->many('SELECT id,installation_case_id,version_no,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
             $order=null;
             $highestVersion=null;
             if($orders!==[]){
@@ -227,7 +227,11 @@ final class MariaDbObjectCardReader implements ObjectCardReader
                 if($installers===[])throw new PilotHttpInfrastructureUnavailable();
                 $renderedInstallers=[];
                 foreach($installers as $installer){$tabId=self::positiveId($installer['installer_tab_id']);if($tabId===null||\trim((string)$installer['fio_snapshot'])===''||\trim((string)$installer['position_snapshot'])===''||!\in_array($installer['employment_status_snapshot'],['employed','dismissed'],true))throw new PilotHttpInfrastructureUnavailable();$renderedInstallers[]=['tabId'=>$tabId,'fullName'=>(string)$installer['fio_snapshot'],'position'=>(string)$installer['position_snapshot'],'status'=>(string)$installer['employment_status_snapshot']];}
-                $renderedOrder=['version'=>$highestVersion,'status'=>$order['status'],'orderDate'=>$order['order_date'],'registrationNumber'=>$registrationNumber,'organizationType'=>$order['organization_form'],'engineer'=>['userId'=>$engineerId,'fullName'=>(string)$order['control_engineer_fio_snapshot'],'position'=>(string)$order['control_engineer_position_snapshot']],'installers'=>$renderedInstallers];
+                if(!self::rfc3339($order['prepared_at']))throw new PilotHttpInfrastructureUnavailable();
+                $artifactRows=$this->many('SELECT assignment_order_id,artifact_type,filename,media_type,byte_size,sha256 FROM fm2_order_artifacts WHERE assignment_order_id=? ORDER BY FIELD(artifact_type,\'order\',\'appendix\'),artifact_type',(int)$order['id']);
+                $artifacts=[];
+                foreach($artifactRows as $artifact){$type=(string)$artifact['artifact_type'];$filename=(string)$artifact['filename'];$media=(string)$artifact['media_type'];$size=(int)$artifact['byte_size'];if(!in_array($type,['order','appendix'],true)||$filename===''||!in_array($media,['application/pdf','text/html'],true)||$size<0)throw new PilotHttpInfrastructureUnavailable();$artifacts[]=['type'=>$type,'filename'=>$filename,'mediaType'=>$media,'size'=>$size];}
+                $renderedOrder=['version'=>$highestVersion,'status'=>$order['status'],'orderDate'=>$order['order_date'],'preparedAt'=>$order['prepared_at'],'registrationNumber'=>$registrationNumber,'organizationType'=>$order['organization_form'],'engineer'=>['userId'=>$engineerId,'fullName'=>(string)$order['control_engineer_fio_snapshot'],'position'=>(string)$order['control_engineer_position_snapshot']],'installers'=>$renderedInstallers,'artifacts'=>$artifacts];
             }
             $eventFields=$hasPilotUsers?'id,installation_case_id,event_type,occurred_at,actor_user_id,payload_json':'id,installation_case_id,event_type,occurred_at,actor_user_id';$events=$this->many("SELECT {$eventFields} FROM fm2_process_events WHERE installation_case_id=? ORDER BY id DESC LIMIT ".($hasPilotUsers?'8':'3'),$caseId);
             $renderedEvents=[];

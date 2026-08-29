@@ -20,7 +20,7 @@ final class ProductionInstallationProcessFactory
             new MariaDbLegacyInstallationObject($connection, $legacyPrefix),
             $workforce,
             $directory,
-            new StoringAssignmentOrderRenderer(new ProductionHtmlAssignmentOrderRenderer(),$store),
+            new StoringAssignmentOrderRenderer(new ProductionPdfAssignmentOrderRenderer(),$store),
             $clock ?? new SystemClock(),
         );
 

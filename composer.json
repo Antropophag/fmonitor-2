@@ -1,0 +1,8 @@
+{
+    "name": "shlz/fmonitor-2",
+    "description": "FMonitor 2.0 installation process pilot",
+    "license": "proprietary",
+    "require": {
+        "tecnickcom/tcpdf": "^6.10"
+    }
+}

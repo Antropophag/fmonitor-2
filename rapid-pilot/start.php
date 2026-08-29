@@ -28,6 +28,8 @@ $environment = array_merge($_ENV, [
     'FMONITOR_PILOT_CSS_PATH' => $root . '/rapid-pilot/pilot.css',
     'FMONITOR_NOW' => (new DateTimeImmutable('now', new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),
     'FMONITOR_TRUSTED_REQUEST_HOST' => '127.0.0.1:' . $port,
+    'FMONITOR_DEMO_LOOPBACK' => '1',
+    'FMONITOR_DEMO_LOOPBACK_NONCE' => bin2hex(random_bytes(16)),
     'REMOTE_USER' => getenv('FMONITOR_DEMO_REMOTE_USER') ?: 'sidorov@shlz.ru',
 ]);
 foreach ($environment as $name => $value) {
