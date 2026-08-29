@@ -552,10 +552,13 @@
 
 @media (max-width: 680px) {
   .fm2-shell { display: block; }
-  .fm2-sidebar { position: static; flex-direction: row; inline-size: 100%; block-size: 60px; padding: 8px 12px; }
-  .fm2-logo { inline-size: 40px; block-size: 40px; }
-  .fm2-primary-nav { flex-direction: row; margin: 0 0 0 12px; overflow-x: auto; overflow-y: hidden; }
-  .fm2-nav-item { flex: 0 0 42px; inline-size: 42px; min-block-size: 40px; padding: 8px 9px; }
+  .fm2-workspace { padding-block-end: calc(64px + env(safe-area-inset-bottom)); }
+  .fm2-sidebar { position: fixed; z-index: 40; inset: auto 0 0; flex-direction: row; inline-size: 100%; block-size: calc(64px + env(safe-area-inset-bottom)); padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-block-start: 1px solid rgb(255 255 255 / 12%); box-shadow: 0 -10px 28px rgb(11 22 35 / 18%); }
+  .fm2-nav-body { flex-direction: row; }
+  .fm2-logo { display: none; }
+  .fm2-primary-nav { flex-direction: row; gap: 4px; margin: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scrollbar-width: none; }
+  .fm2-primary-nav::-webkit-scrollbar { display: none; }
+  .fm2-nav-item { flex: 0 0 48px; inline-size: 48px; min-block-size: 48px; padding: 10px 12px; }
   .fm2-nav-trigger, .fm2-nav-group, .fm2-nav-text, .fm2-logo-name { display: none !important; }
   .fm2-topbar { min-block-size: 58px; padding-inline: 14px; }
   .fm2-main { padding: 18px 12px 32px; }

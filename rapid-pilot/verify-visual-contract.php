@@ -42,6 +42,7 @@ $require(preg_match('/<a class="shlz-button/u',$view.$prepare.$card.$list.$shell
 $require(str_contains($css,'.fm2-check-page'),'the served rapid-pilot stylesheet must include the checklist surface');
 $require(str_contains($checklist,'shlz-button--primary fm2-complete-section'),'checklist primary actions must use shlz-ui primary modifiers');
 $require(!str_contains($checklist,'data-action-dock')&&!str_contains($css,'.fm2-check-dock'),'checklist must not restore the floating action dock');
+$require(str_contains($css,'.fm2-sidebar { position: fixed; z-index: 40; inset: auto 0 0;')&&str_contains($css,'padding-block-end: calc(64px + env(safe-area-inset-bottom))'),'mobile primary navigation must be fixed to the bottom without covering content');
 
     return $failures;
 }
