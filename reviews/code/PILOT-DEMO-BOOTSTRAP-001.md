@@ -1,30 +1,34 @@
 # Code review: PILOT-DEMO-BOOTSTRAP-001 v0.1
 
-- Gate: 5 — fresh independent code review after corrective Gate 4
-- Reviewer: separately tasked agent `/root/bootstrap_code_review_final`
+- Gate: 5 — fresh independent review of the exact cookie correction
+- Reviewer: separately tasked agent `/root/bootstrap_cookie_code_review`
 - Independence: reviewer authored neither specification, approved test, nor implementation
+- Implementation author: commit author `antropophag`
 - Specification commit: `71e5e50`
-- Approved test commit: `a1fca72`
-- Approved test review: `cdb5b3a`
-- Exact reviewed HEAD: `aca0bbc9b66ff8a6a77209fd67f48ef56749438f`
+- Approved test commit: `cc5dfe3`
+- Approved test review: `171b241`
+- Exact reviewed HEAD: `a55eb2d7079108a31a3aa16191766478bc481edd`
 - Review date: 2026-08-29
-- Verdict: `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
 
 ## Verdict
 
-`APPROVED`. The exact reviewed implementation conforms to the approved bootstrap specification and closes the previously identified safety gaps. Reset activates a generation only after its public HTTP smoke succeeds; occupied-bind failure preserves the byte-identical active manifest, old generation tree, and usable prior process state. Initial and final generations survive restart without reseeding, while interrupted inactive generations are skipped without being mistaken for ready state.
-
-Destructive database cleanup requires an independent random nonce to agree between the filesystem owner record and markers on both the process and legacy anchor tables. Forged same-fingerprint owner files and same-prefix tables therefore do not authorize a drop. Cleanup remains confined to marked generations, leaves foreign paths/rows intact, and reports irreversible material removal. No residual demo process or test-state artifact remained after verification.
-
-The plain-HTTP exception is limited to the loopback PHP development server and a bootstrap-injected random nonce. The same production router composition without that marker remains HTTPS-origin-only and rejects the command with `403`; inbound identity headers cannot replace the configured actor. The launch smoke validates the exact CSS bytes, queue/card/form projection, non-import boundary, enabled action, and read-only repeat before printing the banner or switching `active.json`.
+`CHANGES_REQUESTED`. The exact cookie attributes and regression suite pass, and an inbound HTTP header cannot forge the process-environment nonce. However, the trusted-demo decision is not bound to the configured canonical host and port. The client-controlled `Host` therefore selects both whether `Secure` is removed and which plain-HTTP Origin is accepted.
 
 ## Standards
 
-Pass — zero blocking findings. The implementation stays within demo/deployment orchestration, uses production migrations, importer, HTTP router, process commands, and artifact service, and does not introduce mocks or direct SQL process transitions. The single-file CLI is dense, but splitting it would be architecture refactoring beyond this bounded slice; its lifecycle helpers and ownership checks keep responsibilities explicit enough for the approved pilot scope.
+No blocking documented-standard finding. Non-blocking Fowler judgement: the raw trusted-loopback predicate is duplicated in `PilotE2ECoordinator.php` for cookie and Origin handling. A single named predicate/context would prevent those two security decisions drifting.
 
 ## Spec
 
-Pass — zero findings. Provisioning, deterministic fixture, loopback launch, browser walkthrough, persistence, reset recovery, status/cleanup behavior, redaction, ownership containment, and documented short run instructions match `PILOT-DEMO-BOOTSTRAP-001 v0.1`. No scope creep was found.
+Blocking security/spec finding: specification sections 4–5 fix `FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:8092`, restrict HTTP to this loopback demo composition, and require a canonical Host. In `app/PilotHttp/PilotE2ECoordinator.php:117`, any syntactically valid inbound `Host: 127.0.0.1:<port>` removes `Secure` whenever a format-valid environment nonce exists. Lines 127–132 accept that same client-selected host as `Origin: http://...`. `PilotHttpRequestFactory` obtains Host from inbound `HTTP_HOST` under `cli-server`, while the router forwards the environment nonce but does not bind the decision to `FMONITOR_TRUSTED_REQUEST_HOST`. Thus a request sent to the demo listener with `Host: 127.0.0.1:4444` and matching Origin is treated as trusted even though it is not the configured endpoint.
+
+The correction otherwise preserves the production `Secure`, `HttpOnly`, `SameSite=Strict`, and `Path=/pilot` attributes. The nonce and actor remain environment-sourced rather than header-sourced.
+
+## Required changes
+
+1. Bind the plain-HTTP cookie and Origin exception to one router-provided trusted demo context containing the canonical configured host/port, and compare the request Host exactly. Do not accept an arbitrary loopback port merely because its syntax is valid.
+2. Add a Gate 2 regression proving that a non-canonical loopback Host plus matching Origin cannot activate the demo exception; obtain fresh independent Gate 3 approval before correcting production code.
 
 ## Verification
 
@@ -36,29 +40,16 @@ $ for test_file in tests/InstallationProcess/*_test.php; do php -d display_error
 48/48 test files PASS
 
 $ find app public bin tests/InstallationProcess tests/Support -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-PHP lint PASS
+148 PHP files lint PASS
 
 $ git diff --check 71e5e50..HEAD
 PASS
 
-$ git status --short
-clean before review record
+$ pgrep -af 'fmonitor2-pilot-demo|php.*-S 127\\.0\\.0\\.1'
+No demo/router residue (only the inspection shell matched itself)
+
+$ find /home/antropophag -maxdepth 5 -type d -name '*pilot-demo-test-*'
+No test-state residue
 ```
 
-The first full-suite attempt encountered a transient failure in the pre-existing `pilot_http_auth_001_test.php` resource-close assertion after its global-call companion. The failing test passed immediately in isolation, and a fresh complete sequential run then passed all 48 files. No bootstrap process or state residue was present after either run.
-
-## Reviewed-input hashes
-
-```text
-e6b082c9b2ed2bd0c8aca370fa785dd2aa25a38901c12d620f8b6e1e1d048263  specs/PILOT-DEMO-BOOTSTRAP-001.md
-67d5a8122a08a465ae4e35a2e5bb66051a860eaf9f3c272f76a6f55e1897537c  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
-ac61ec61c500bc3301cc74256f62295425f7f6c47865a4e807b002a764087e4c  reviews/tests/PILOT-DEMO-BOOTSTRAP-001.md
-826f3a79a666a0a1c8435cff996a1ae82a308e011da369db8ef22487c52982e3  bin/fmonitor2-pilot-demo.php
-fceab9b40c2d3fe766217e2cda2d4d54966cef141bc6cd8fe7a6e90836d2cd38  app/PilotHttp/PilotE2ECoordinator.php
-c84db90cbbe0dfc759ea5ea8a319176ac273fb2a2cccd105883c8a097e38e5eb  public/router.php
-854f64fde52a2d85d63ffe022adb040c3998ea786e1dee757d18ba6239e3d03e  README.md
-```
-
-## Required changes
-
-None. Gate 5 is approved for exact reviewed commit `aca0bbc9b66ff8a6a77209fd67f48ef56749438f`.
+Gate 5 remains closed for exact reviewed commit `a55eb2d7079108a31a3aa16191766478bc481edd`.
