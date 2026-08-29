@@ -90,7 +90,16 @@ final class RapidPilotLocalAuth
         $this->db->query("INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) SELECT user_id,LOWER(TRIM(email)),NULL,NULL,'{$now}' FROM `{$this->prefix}fm2_pilot_users` WHERE LOWER(TRIM(email)) REGEXP '^[^@[:space:]]+@shlz\\.ru$' ON DUPLICATE KEY UPDATE email_normalized=VALUES(email_normalized),updated_at=VALUES(updated_at)");
     }
 
-    private function startSession():void{session_name('fm2auth');session_set_cookie_params(['lifetime'=>0,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);session_start(['use_strict_mode'=>1,'use_only_cookies'=>1,'cookie_httponly'=>1,'cookie_samesite'=>'Strict']);}
+    private function startSession():void
+    {
+        $sessionPath='/home/fmonitor/.local/state/fmonitor2/sessions';
+        if(!is_dir($sessionPath)&&!mkdir($sessionPath,0700,true)&&!is_dir($sessionPath))throw new RuntimeException('Session storage unavailable');
+        if(!is_writable($sessionPath))throw new RuntimeException('Session storage unavailable');
+        session_save_path($sessionPath);
+        session_name('fm2auth');
+        session_set_cookie_params(['lifetime'=>604800,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);
+        session_start(['use_strict_mode'=>1,'use_only_cookies'=>1,'cookie_httponly'=>1,'cookie_samesite'=>'Strict','gc_maxlifetime'=>604800]);
+    }
     private function user():?array{$userId=(int)($_SESSION['auth_user_id']??0);$email=$this->normalizeEmail((string)($_SESSION['auth_email']??''));if($userId<1||!$this->allowedEmail($email))return null;$s=$this->db->prepare("SELECT u.user_id,u.email FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE u.user_id=? AND u.status=1 AND c.email_normalized=? AND c.password_hash IS NOT NULL");$s->bind_param('is',$userId,$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?['user_id'=>(int)$row['user_id'],'email'=>$this->normalizeEmail((string)$row['email'])]:null;}
     private function findUser(string $email):?array{$s=$this->db->prepare("SELECT u.user_id,u.full_name,u.status,c.password_hash FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE c.email_normalized=? LIMIT 1");$s->bind_param('s',$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?$row:null;}
     private function provisionUser(string $email):array
