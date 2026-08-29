@@ -1,55 +1,67 @@
 # Code review: PILOT-DEMO-BOOTSTRAP-001 v0.1
 
-- Gate: 5 — fresh independent review of the exact cookie correction
-- Reviewer: separately tasked agent `/root/bootstrap_cookie_code_review`
+- Gate: 5 — fresh independent review after canonical demo Host-binding correction
+- Reviewer: separately tasked agent `/root/bootstrap_host_code_review`
 - Independence: reviewer authored neither specification, approved test, nor implementation
 - Implementation author: commit author `antropophag`
 - Specification commit: `71e5e50`
-- Approved test commit: `cc5dfe3`
-- Approved test review: `171b241`
-- Exact reviewed HEAD: `a55eb2d7079108a31a3aa16191766478bc481edd`
+- Approved test commit: `b7920be`
+- Approved test review: `43d3821`
+- Exact reviewed HEAD: `ce357bd66e229c4b34a267786a47a8993d3ecb25`
 - Review date: 2026-08-29
-- Verdict: `CHANGES_REQUESTED`
+- Verdict: `APPROVED`
 
-## Verdict
+## Findings
 
-`CHANGES_REQUESTED`. The exact cookie attributes and regression suite pass, and an inbound HTTP header cannot forge the process-environment nonce. However, the trusted-demo decision is not bound to the configured canonical host and port. The client-controlled `Host` therefore selects both whether `Secure` is removed and which plain-HTTP Origin is accepted.
+### Standards
 
-## Standards
+None. The implementation is the minimal Host-binding correction required by the approved regression. It keeps the demo exception at the HTTP adapter boundary and does not change domain history, process commands, identity, authorization, legacy integration, or shlz-ui integration.
 
-No blocking documented-standard finding. Non-blocking Fowler judgement: the raw trusted-loopback predicate is duplicated in `PilotE2ECoordinator.php` for cookie and Origin handling. A single named predicate/context would prevent those two security decisions drifting.
+The router creates the request-scoped trusted context only for a PHP loopback server bound to exact `127.0.0.1`. Its nonce and canonical trusted Host come from process environment rather than inbound `HTTP_*` headers. Both values are grammar-checked before being copied to separate non-HTTP server keys. The coordinator independently validates the trusted context at its consumption point and requires exact byte equality between the already validated request Host and configured trusted Host.
 
-## Spec
+The repeated router/coordinator validation is proportionate defense in depth, not actionable duplicated code: the router constrains creation of trusted context and the coordinator fails closed when consuming it. No material baseline smell was found.
 
-Blocking security/spec finding: specification sections 4–5 fix `FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:8092`, restrict HTTP to this loopback demo composition, and require a canonical Host. In `app/PilotHttp/PilotE2ECoordinator.php:117`, any syntactically valid inbound `Host: 127.0.0.1:<port>` removes `Secure` whenever a format-valid environment nonce exists. Lines 127–132 accept that same client-selected host as `Origin: http://...`. `PilotHttpRequestFactory` obtains Host from inbound `HTTP_HOST` under `cli-server`, while the router forwards the environment nonce but does not bind the decision to `FMONITOR_TRUSTED_REQUEST_HOST`. Thus a request sent to the demo listener with `Host: 127.0.0.1:4444` and matching Origin is treated as trusted even though it is not the configured endpoint.
+### Specification
 
-The correction otherwise preserves the production `Secure`, `HttpOnly`, `SameSite=Strict`, and `Path=/pilot` attributes. The nonce and actor remain environment-sourced rather than header-sourced.
+None. The correction satisfies specification sections 4–5: plain HTTP remains restricted to the exact canonical loopback demo composition. A non-canonical client-selected loopback Host cannot activate demo trust even when it has valid syntax and a matching Origin.
+
+`PilotE2ECoordinator::trustedDemo()` is the single predicate for both security decisions: omitting `Secure` from the demo session cookie and accepting the canonical plain-HTTP Origin. This closes the previous policy-drift risk. Ordinary production retains `Secure` and HTTPS-only Origin behavior; canonical demo cookie/forms remain usable; a non-canonical Host retains `Secure`, rejects its matching HTTP Origin, and creates no process fact.
+
+The implementation is cumulative with the approved bootstrap contract: actor identity remains environment-sourced, capability authorization and CSRF/session checks are unchanged, browser commands still use production `InstallationProcess`, and append-only persistence, artifact, restart, reset, cleanup, and ownership behavior remain green.
 
 ## Required changes
 
-1. Bind the plain-HTTP cookie and Origin exception to one router-provided trusted demo context containing the canonical configured host/port, and compare the request Host exactly. Do not accept an arbitrary loopback port merely because its syntax is valid.
-2. Add a Gate 2 regression proving that a non-canonical loopback Host plus matching Origin cannot activate the demo exception; obtain fresh independent Gate 3 approval before correcting production code.
+None.
 
 ## Verification
 
 ```text
+$ php -l app/PilotHttp/PilotE2ECoordinator.php
+No syntax errors detected in app/PilotHttp/PilotE2ECoordinator.php
+
+$ php -l public/router.php
+No syntax errors detected in public/router.php
+
+$ php -l tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+No syntax errors detected in tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+
 $ php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 PASS PILOT-DEMO-BOOTSTRAP-001 public launch, walkthrough, persistence, reset and cleanup
 
-$ for test_file in tests/InstallationProcess/*_test.php; do php -d display_errors=1 -d error_reporting=E_ALL "$test_file"; done
+$ for test_file in tests/InstallationProcess/*_test.php; do php "$test_file"; done
 48/48 test files PASS
 
 $ find app public bin tests/InstallationProcess tests/Support -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-148 PHP files lint PASS
+148/148 PHP files lint PASS
 
-$ git diff --check 71e5e50..HEAD
+$ git diff --check 43d3821..ce357bd
 PASS
 
-$ pgrep -af 'fmonitor2-pilot-demo|php.*-S 127\\.0\\.0\\.1'
-No demo/router residue (only the inspection shell matched itself)
+$ ps -eo pid=,args= | rg 'php -S 127\\.0\\.0\\.1|fmonitor2-pilot-demo\\.php'
+No demo/router process residue
 
-$ find /home/antropophag -maxdepth 5 -type d -name '*pilot-demo-test-*'
-No test-state residue
+$ find .test-artifacts -mindepth 1 -maxdepth 3 -print
+No test artifact residue
 ```
 
-Gate 5 remains closed for exact reviewed commit `a55eb2d7079108a31a3aa16191766478bc481edd`.
+Gate 5 is `APPROVED` for exact reviewed commit `ce357bd66e229c4b34a267786a47a8993d3ecb25`.
