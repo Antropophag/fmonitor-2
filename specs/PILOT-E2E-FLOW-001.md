@@ -1,11 +1,11 @@
 # PILOT-E2E-FLOW-001 — пройти пилотный путь ФКР от очереди до открытия работ
 
 - Статус: `APPROVED`
-- Версия: `0.1`
+- Версия: `0.2`
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью и явно настроенными process capabilities
 - Публичный seam: configured production HTTP под `/pilot`
-- Наследует: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-LIST-001 v0.1`, `PILOT-OBJECT-CARD-001 v0.2`, `PILOT-PREPARE-FORM-001 v0.1`, `PILOT-UI-SHELL-001 v0.4`, `ORDER-PREPARE-001..010`, `REGISTRATION-CONFIRM-001 v0.1`, `OPEN-INSTALLATION-001 v0.2`, `ARTIFACT-STORE-001 v0.3`, `PERSISTENCE-PREPARE-001`, `PERSISTENCE-REGISTRATION-001 v0.2`, `PERSISTENCE-OPEN-001 v0.1`
+- Наследует: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-LIST-001 v0.1`, `PILOT-OBJECT-CARD-001 v0.2`, `PILOT-PREPARE-FORM-001 v0.1`, `PILOT-UI-SHELL-001 v0.4`, `ORDER-PREPARE-001..010`, `REGISTRATION-CONFIRM-001 v0.1`, `OPEN-INSTALLATION-001 v0.2`, `ARTIFACT-STORE-001 v0.2`, `PERSISTENCE-PREPARE-001`, `PERSISTENCE-REGISTRATION-001 v0.2`, `PERSISTENCE-OPEN-001 v0.1`
 
 ## 1. Цель и граница
 
@@ -186,7 +186,23 @@ One cookie-aware HTTP client performs, with token/revision read from immediately
 3. `GET` prepare → installer `1042`, engineer `73` prefilled, confirmation unchecked.
 4. `POST` prepare with `[1042]`, `73`, `yes` → `303` card.
 5. Follow GET → prepared version `1`, two exact artifact links and registration form.
-6. GET both artifact URLs → exact persisted HTML bytes whose sizes/SHA-256 equal process metadata.
+6. GET both artifact URLs → exact persisted HTML bytes и metadata:
+
+   ```text
+   order:
+     filename = assignment-order-v1.html
+     mediaType = text/html
+     size = 1078
+     sha256 = 7940150eaea4b749f2f80997f98e159ceac12c3d6ca2fca2fa5f847a689fee06
+
+   appendix:
+     filename = assignment-order-v1-appendix.html
+     mediaType = text/html
+     size = 1247
+     sha256 = 966227fba7d9acc15b39d06850fced300436856d31fbe614cad5f4397a923b01
+   ```
+
+   Exact bytes наследуют два literal UTF-8/LF шаблона `DOCUMENT-RENDER-HTML-001 v0.2` без любых других изменений, но exact engineer fragment в обоих files равен `Анна Волкова — Инженер строительного контроля`.
 7. POST registration number ` 12-Р ` and version `1` → `303`; follow GET shows `12-Р`, registered status and open form.
 8. POST actual date `2026-08-28`, version `1` → `303`; follow GET shows working/opening facts/checklist and exact engineer next-step block.
 9. GET queue → same object status/next step updated from persisted `fm2_*` state.
@@ -200,6 +216,19 @@ After step 9 a fresh production composition/new MariaDB connection returns the s
 Test proves happy journey section 8 plus representative rejection for every mapping group: malformed body, CSRF, missing installer, unconfirmed engineer, stale revision/version, invalid registration number, open before order date, capability denial, unknown artifact and artifact integrity failure. It verifies zero domain mutation for pre-command transport/auth/validation failures and append-only unchanged prior facts after domain rejection.
 
 Expected IDs, dates, copy, filenames, headers, URLs and state are literals from this specification and inherited approved specs. Test/reviewer may reuse test support for HTTP transport and unique-prefix migrations, but may not improve harness, add mocks, inspect private renderer methods or derive expected values from implementation.
+
+### Независимое выведение artifact oracle v0.2
+
+Fixed product example intentionally keeps engineer identity `73 / Анна Волкова`, because the prepare-form prefill, selected team, opened-card responsible person and next engineer step all pin that same person. Previous renderer tracer used a different descriptive snapshot `Петров Пётр Петрович` for the same numeric user ID; its metadata therefore cannot be copied into this E2E example.
+
+Oracle section 8 is derived only from the approved literal templates of `DOCUMENT-RENDER-HTML-001 v0.2` and the fixed input above:
+
+1. retain every byte, UTF-8 encoding, LF and final newline of each approved template;
+2. replace the one engineer-name occurrence in each artifact from the renderer tracer's 38-byte UTF-8 name to the fixed example's 23-byte UTF-8 name;
+3. retain exact position `Инженер строительного контроля` and every other field unchanged;
+4. the independently fixed length of each artifact is consequently 15 bytes below the predecessor tracer (`1093 → 1078`, `1262 → 1247`); SHA-256 over those complete specified bytes is fixed in section 8.
+
+No production renderer, stored blob, process metadata or current implementation output is used as the source of these expected values. A later intentional template change requires a newly approved spec version and new independent oracle; it cannot silently update the E2E expectation.
 
 ## 10. Не входит в срез
 
@@ -219,6 +248,6 @@ Expected IDs, dates, copy, filenames, headers, URLs and state are literals from 
 - Approved by: separately tasked Gate 1 Codex agent `/root/e2e_spec`
 - Date: `2026-08-29`
 - Decision: `APPROVED`
-- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.1` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes и оставляет data bootstrap отдельным следующим срезом.
+- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.2` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes, corrects the exact artifact oracle for the fixed engineer `73 / Анна Волкова` and leaves data bootstrap as a separate subsequent slice.
 
-Gate 2 разрешён только для version `0.1`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
+Gate 2 разрешён только для version `0.2`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
