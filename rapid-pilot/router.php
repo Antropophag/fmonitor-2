@@ -111,7 +111,7 @@ if ($response->status === 200 && is_string($path) && str_starts_with((string) ($
     $body = RapidPilotObjectDetails::enhance($body, $path);
     $logoutToken = htmlspecialchars((string) ($_SESSION['auth_csrf'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
-    $body = str_replace('</span></div></header>', '</span>' . $logout . '</div></header>', $body);
+    $body = str_replace('</aside>', $logout . '</aside>', $body);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }
