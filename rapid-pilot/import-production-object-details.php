@@ -14,7 +14,13 @@ $manifest = json_decode((string) file_get_contents(detailEnv('FMONITOR_PILOT_ACT
 $prefix = (string) ($manifest['processPrefix'] ?? '');
 if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new RuntimeException('Invalid process prefix');
 
-$source = new mysqli('127.0.0.1', detailEnv('FMONITOR_SOURCE_USER'), detailEnv('FMONITOR_SOURCE_PASSWORD'), 'c1_fmonitor', 13306);
+$source = new mysqli(
+    getenv('FMONITOR_SOURCE_HOST') ?: '127.0.0.1',
+    detailEnv('FMONITOR_SOURCE_USER'),
+    detailEnv('FMONITOR_SOURCE_PASSWORD'),
+    getenv('FMONITOR_SOURCE_NAME') ?: 'c1_fmonitor',
+    (int) (getenv('FMONITOR_SOURCE_PORT') ?: '13306'),
+);
 $source->set_charset('utf8mb4');
 $target = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
 $target->set_charset('utf8mb4');

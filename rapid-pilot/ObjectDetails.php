@@ -8,8 +8,7 @@ final class RapidPilotObjectDetails
     {
         if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $match) !== 1) return $html;
         $html = self::correctUnavailableOpenCommand($html);
-        $details = self::read((int) $match[1]);
-        if ($details === null) return $html;
+        $details = self::read((int) $match[1]) ?? self::fallbackDetails();
         $identity=self::extractElement($html,'<header class="fm2-object-identity"');$action=self::extractElement($html,'<section class="fm2-next-action"');$dashboard=self::extractElement($html,'<div class="fm2-object-dashboard"');
         if ($identity===null||$action===null||$dashboard===null) return $html;
         $identityFacts=self::identityFacts($identity['html']);$section = self::render($details,$action['html'],$dashboard['html'],$identityFacts);
@@ -68,6 +67,16 @@ final class RapidPilotObjectDetails
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private static function fallbackDetails(): array
+    {
+        $updatedAt = getenv('FMONITOR_NOW');
+        return [
+            'fields' => [],
+            'sourceUpdatedAt' => is_string($updatedAt) ? $updatedAt : '',
+            'installers' => [],
+        ];
     }
 
     private static function render(array $data,string $action,string $dashboard,array $identity): string

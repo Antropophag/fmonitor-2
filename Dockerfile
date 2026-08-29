@@ -26,6 +26,10 @@ FROM php:8.5-cli-bookworm
 RUN apt-get update \
     && apt-get install -y --no-install-recommends socat \
     && docker-php-ext-install -j"$(nproc)" mysqli pcntl \
+    && groupadd --gid 10001 fmonitor \
+    && useradd --uid 10001 --gid 10001 --home-dir /home/fmonitor --create-home --shell /usr/sbin/nologin fmonitor \
+    && mkdir -p /home/fmonitor/.local/state/fmonitor2 \
+    && chown -R fmonitor:fmonitor /home/fmonitor \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace/fmonitor-2
@@ -39,6 +43,8 @@ COPY rapid-pilot ./rapid-pilot
 
 RUN chmod +x rapid-pilot/docker-entrypoint.sh rapid-pilot/workforce-worker.sh \
     && php rapid-pilot/verify-visual-contract.php
+
+USER fmonitor
 
 EXPOSE 8092
 

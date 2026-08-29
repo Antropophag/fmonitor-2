@@ -30,6 +30,7 @@ services:
   workforce-sync:
     image: fmonitor2-pilot
     pull_policy: never
+    user: "0:0"
     entrypoint: ["rapid-pilot/workforce-worker.sh"]
     environment:
       FMONITOR_DB_HOST: mariadb
