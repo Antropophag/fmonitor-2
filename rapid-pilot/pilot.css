@@ -599,15 +599,5 @@
 .fm2-search-control svg { position: absolute; z-index: 1; inset: 50% auto auto 13px; inline-size: 18px; block-size: 18px; fill: none; stroke: #697586; stroke-linecap: round; stroke-width: 1.6; transform: translateY(-50%); pointer-events: none; }
 .fm2-search-control .shlz-input { inline-size: 100%; padding-inline-start: 40px; appearance: none; }
 .fm2-search-control .shlz-input::-webkit-search-cancel-button { opacity: .55; cursor: pointer; }
-.fm2-admin-nav { inline-size: 100%; }
-.fm2-admin-nav > summary { list-style: none; cursor: pointer; }
-.fm2-admin-nav > summary::-webkit-details-marker { display: none; }
-.fm2-admin-chevron { display: none; flex: 0 0 16px; inline-size: 16px; block-size: 16px; margin-inline-start: auto; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; transition: transform 180ms cubic-bezier(.2,0,0,1); }
-.fm2-admin-nav[open] .fm2-admin-chevron { transform: rotate(90deg); }
-.fm2-admin-links { display: none; gap: 2px; padding: 3px 8px 8px 48px; }
-.fm2-admin-links a { padding: 7px 9px; color: rgb(255 255 255 / 62%); border-radius: 6px; text-decoration: none; font-size: 12px; }
-.fm2-admin-links a:hover, .fm2-admin-links a[aria-current="page"] { color: #fff; background: rgb(255 255 255 / 9%); }
-.fm2-shell:has(.fm2-nav-state[open]) .fm2-admin-chevron { display: block; }
-.fm2-shell:has(.fm2-nav-state[open]) .fm2-admin-nav[open] .fm2-admin-links { display: grid; }
 @media (max-width: 900px) { .fm2-user-toolbar { display: grid; align-items: stretch; } .fm2-user-toolbar .shlz-field { max-inline-size: none; } .fm2-user-toolbar .fm2-installer-filters { overflow-x: auto; } }
 @media (max-width: 680px) { .fm2-user-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } .fm2-user-table td { grid-template-columns: 92px minmax(0, 1fr); } .fm2-section-head { display: grid; } }
