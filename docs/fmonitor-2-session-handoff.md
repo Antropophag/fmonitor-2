@@ -4,6 +4,8 @@
 
 ## Последний UX/UI checkpoint
 
+Чек-лист открытого объекта подключён к фактически раздаваемому `rapid-pilot/pilot.css`. Параллельная реализация уже содержала renderer, route и JS, но её стили находились только в `app/PilotHttp/pilot.css`, тогда как launcher стенда использует `rapid-pilot/pilot.css`; из-за этого экран отображался без layout. Checklist surface перенесён в активный asset, primary actions выровнены по modifiers `shlz-ui`, исправлено отображение скрытого action dock в read-only состоянии. Visual-contract gate теперь требует checklist styles и documented primary modifiers.
+
 Поверхности пилота повторно выровнены по публичным контрактам `shlz-ui` и Service Desk. Удалены глобальные переопределения `.shlz-button`/`.shlz-status`, которые конфликтовали с source-backed hover/active/disabled states; primary actions используют документированные modifiers, статусы — штатную геометрию и paint variants, breadcrumbs получили отдельную компактную application-owned типографику.
 
 Golos Text теперь детерминированно self-hosted из `@fontsource/golos-text` 5.3.0: в репозитории закреплены WOFF2 Cyrillic/Latin для весов 400/500/600 и лицензия, font endpoints отдают `200 font/woff2`. Для предотвращения регрессии добавлен `rapid-pilot/verify-visual-contract.php`: gate проверяет порядок CSS, владение базовыми `shlz-ui` классами, шрифт, breadcrumbs и primary actions. Gate вызывается автоматически launcher-ом и закреплён как обязательный в `rapid-pilot/AGENTS.md`.
