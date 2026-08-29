@@ -31,6 +31,18 @@ function pilotSecurityHeaders(string $body): array
     ];
 }
 
+$requestPath=parse_url((string)($_SERVER['REQUEST_URI']??''),PHP_URL_PATH);
+if(is_string($requestPath)&&preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$#D',$requestPath,$fontMatch)===1){
+    $fontPath=dirname(__DIR__).'/rapid-pilot/fonts/'.$fontMatch[1];
+    $fontBytes=is_file($fontPath)&&!is_link($fontPath)?file_get_contents($fontPath):false;
+    if(!is_string($fontBytes))emitPilotResponse(404,pilotSecurityHeaders("Not found.\n"),"Not found.\n");
+    emitPilotResponse(200,[
+        'Content-Type'=>'font/woff2','Content-Length'=>(string)strlen($fontBytes),
+        'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'public, max-age=31536000, immutable',
+        'Cross-Origin-Resource-Policy'=>'same-origin',
+    ],$fontBytes);
+}
+
 $localServerAddress = $_SERVER['SERVER_ADDR'] ?? $_SERVER['SERVER_NAME'] ?? null;
 if (PHP_SAPI === 'cli-server' && in_array($localServerAddress, ['127.0.0.1','::1','localhost'], true)
     && !array_key_exists('REMOTE_USER', $_SERVER)) {

@@ -16,7 +16,7 @@ final class PilotView
         foreach(\array_slice($parts,0,2)as$part)$result.=\mb_strtoupper(\mb_substr($part,0,1));
         return self::e($result!==''?$result:'П');
     }
-    public static function breadcrumb(array $links,string $current):string{$items='';foreach($links as[$label,$href])$items.='<li><a class="shlz-link" href="'.self::e($href).'">'.self::e($label).'</a></li>';return '<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><ol>'.$items.'<li><span aria-current="page">'.self::e($current).'</span></li></ol></nav>';}
+    public static function breadcrumb(array $links,string $current):string{$items='';foreach($links as[$label,$href])$items.='<li><a class="fm2-breadcrumb-link" href="'.self::e($href).'">'.self::e($label).'</a></li>';return '<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><ol>'.$items.'<li><span aria-current="page">'.self::e($current).'</span></li></ol></nav>';}
     private static function logo():string{return '<svg class="fm2-logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="fm2-logo-rail" x="5" y="4" width="4" height="24"/><rect class="fm2-logo-rail" x="23" y="4" width="4" height="24"/><rect class="fm2-logo-progress" x="11" y="10" width="10" height="12"/></svg><span class="fm2-logo-name">FMonitor</span>';}
     private static function icon(string $name):string
     {

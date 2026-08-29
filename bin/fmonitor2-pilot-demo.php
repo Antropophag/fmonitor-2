@@ -13,6 +13,7 @@ use FMonitor2\PilotHttp\PhpCssDescriptorOpener;
 use FMonitor2\PilotHttp\ShlzCssManifest;
 
 require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
+require_once dirname(__DIR__) . '/rapid-pilot/verify-visual-contract.php';
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -319,6 +320,7 @@ try {
         demoFinish(['ok'=>true, 'running'=>demoRunning($config), 'url'=>'http://127.0.0.1:' . $config['port'] . '/pilot/objects', 'generation'=>$generation? $generationNumber : null, 'state'=>$generation ? 'ready' : ($manifest === null ? 'absent' : 'incomplete')], 0);
     }
     if($verb!=='cleanup'){
+        if(verifyRapidPilotVisualContract($repo)!==[])demoFailure('VISUAL_CONTRACT_INVALID',78);
         try{$config['shlzMembers']=demoShlzGraph($shlz,$repo);}catch(Throwable){demoFailure('SHLZ_ASSETS_UNAVAILABLE',78);}
     }
     if (!is_string($pilotCss) || !is_file($pilotCss)) demoFailure();

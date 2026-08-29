@@ -21,6 +21,12 @@ This directory is an isolated workspace for the fast functional FMonitor 2.0 pil
 
 For every rapid-pilot frontend change, inspect the Service Desk source at Windows path `C:\Users\Polly\Downloads\ЩЛЗ - фронт ServiceDesk` (WSL path `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`) and the public exports in `../shlz-ui` before editing. Preserve the Service Desk shell geometry, typography, density, palette, spacing, radii, and interaction-state language while adapting the information architecture to FMonitor's installation workflow.
 
+### Visual contract gate
+
+Treat `../shlz-ui/packages/styles/dist/shlz.css` and `../shlz-ui/docs/components/` as the component API. Application CSS may compose or lay out `.shlz-*` components, while their base geometry, typography, paint, and interaction states remain owned by `shlz-ui`; select variants through documented modifier classes. FMonitor-owned breadcrumbs use the compact `.fm2-breadcrumb-link` pattern because `shlz-ui` has no Breadcrumb contract. Golos Text is self-hosted from the pinned `@fontsource/golos-text` assets under `rapid-pilot/fonts/`.
+
+After every rapid-pilot frontend change, run `php rapid-pilot/verify-visual-contract.php`. The change is complete only when this gate, the relevant syntax checks, `git diff --check`, and the Impeccable detector all pass.
+
 ## Product invariants
 
 - Preserve append-only domain history.
