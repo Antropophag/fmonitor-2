@@ -131,7 +131,7 @@ $port=pdbPort(); $server=null; $db=null;
 try {
     pdbDeadlineSelfCheck();
     if (!mkdir($home,0700,true)) throw new TestFailure('task-owned test home');
-    $db=new mysqli($adminHost,$adminUser,$adminPassword,'',$adminPort);$db->query('CREATE DATABASE `'.$database.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');$db->query('CREATE DATABASE `'.$cssDatabase.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');
+    $db=new mysqli($adminHost,$adminUser,$adminPassword,'',$adminPort);$db->query('CREATE DATABASE `'.$database.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');$db->query('CREATE DATABASE `'.$cssDatabase.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');$db->select_db($database);
     $environment=['HOME'=>$home,'PATH'=>'/usr/bin:/bin','FMONITOR_DEMO_PORT'=>(string)$port,'FMONITOR_DEMO_DB_HOST'=>$adminHost,'FMONITOR_DEMO_DB_PORT'=>(string)$adminPort,'FMONITOR_DEMO_DB_NAME'=>$database,'FMONITOR_DEMO_DB_USER'=>$demoUser,'FMONITOR_DEMO_DB_PASSWORD'=>$demoPassword];
 
     foreach(['production_migration_runner_001_test.php','pilot_case_import_001_test.php','artifact_store_001_test.php','pilot_e2e_flow_001_test.php']as$contract)pdbContract('tests/InstallationProcess/'.$contract);
