@@ -7,6 +7,12 @@ use FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
+use FMonitor2\PilotHttp\NativePhpFclosePrimitive;
+use FMonitor2\PilotHttp\NativePhpStreamCloser;
+use FMonitor2\PilotHttp\PhpCssDescriptorOpener;
+use FMonitor2\PilotHttp\ShlzCssManifest;
+
+require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -90,6 +96,20 @@ function demoDatabaseMarker(mysqli $db, string $table): ?string
 function demoMarkerValue(string $fingerprint,int $generation,string $nonce):string
 {
     return "fmonitor2-demo:{$fingerprint}:{$generation}:{$nonce}";
+}
+
+/** @return array<string,string> */
+function demoShlzGraph(mixed $entry,string $repo):array
+{
+    if(!is_string($entry)||!str_ends_with($entry,'/packages/styles/dist/shlz.css')
+        ||!str_starts_with($entry,dirname($repo).'/shlz-ui/'))throw new RuntimeException();
+    $opener=new PhpCssDescriptorOpener(new NativePhpStreamCloser(new NativePhpFclosePrimitive()));
+    $manifest=new ShlzCssManifest($entry,$opener);$members=[];
+    try{
+        foreach($manifest->relativePaths()as$relative){$asset=$manifest->asset($relative);if($asset===null)throw new RuntimeException();$members[$relative]=$asset->readBytes();}
+    }finally{$manifest->close();}
+    if(!isset($members['shlz.css']))throw new RuntimeException();
+    return $members;
 }
 
 function demoProvision(array $config, int $generation): array
@@ -192,8 +212,10 @@ function demoHttp(int $port, string $path): array
     if ($socket === false) return [0, ''];
     fwrite($socket, "GET {$path} HTTP/1.1\r\nHost: 127.0.0.1:{$port}\r\nConnection: close\r\n\r\n");
     stream_set_timeout($socket, 2); $raw = stream_get_contents($socket); fclose($socket);
-    if (!is_string($raw) || preg_match('/^HTTP\/1\.[01] (\d{3})/', $raw, $match) !== 1) return [0, ''];
-    return [(int) $match[1], explode("\r\n\r\n", $raw, 2)[1] ?? ''];
+    if (!is_string($raw) || preg_match('/^HTTP\/1\.[01] (\d{3})/', $raw, $match) !== 1) return [0, '', []];
+    [$head,$body]=array_pad(explode("\r\n\r\n",$raw,2),2,'');$headers=[];
+    foreach(array_slice(explode("\r\n",$head),1)as$line)if(str_contains($line,':')){[$name,$value]=explode(':',$line,2);$headers[strtolower($name)]=trim($value);}
+    return [(int) $match[1],$body,$headers];
 }
 
 function demoServe(array $config, array $generation, bool $initialSmoke, bool $activate): never
@@ -220,14 +242,17 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         [$cardStatus, $card] = demoHttp($config['port'], '/pilot/objects/4512');
         [$formStatus, $form] = demoHttp($config['port'], '/pilot/objects/4512/assignment-order/prepare');
         [$foreignStatus] = demoHttp($config['port'], '/pilot/objects/4999');
-        [$shlzStatus,$shlzBytes]=demoHttp($config['port'],'/pilot/assets/shlz.css');
-        [$pilotStatus,$pilotBytes]=demoHttp($config['port'],'/pilot/assets/pilot.css');
+        [$pilotStatus,$pilotBytes,$pilotHeaders]=demoHttp($config['port'],'/pilot/assets/pilot.css');
         [$repeatStatus,$repeatQueue]=demoHttp($config['port'],'/pilot/objects');
+        $graphOk=true;
+        foreach($config['shlzMembers']as$relative=>$expectedBytes){[$assetStatus,$assetBytes,$assetHeaders]=demoHttp($config['port'],'/pilot/assets/'.$relative);if($assetStatus!==200||$assetBytes!==$expectedBytes||($assetHeaders['content-type']??null)!=='text/css; charset=UTF-8'){$graphOk=false;break;}}
+        [$unknownAssetStatus]=demoHttp($config['port'],'/pilot/assets/not-in-official-graph.css');
         $ok = $queueStatus === 200 && substr_count($queue, '/pilot/objects/4512') === 1
             && str_contains($queue, '/pilot/assets/shlz.css') && str_contains($queue, '/pilot/assets/pilot.css')
+            && strpos($queue,'/pilot/assets/shlz.css')<strpos($queue,'/pilot/assets/pilot.css')
             && $repeatStatus===200&&$repeatQueue===$queue
-            && $shlzStatus===200&&hash('sha256',$shlzBytes)===hash_file('sha256',$config['shlz'])
-            && $pilotStatus===200&&hash('sha256',$pilotBytes)===hash_file('sha256',$config['pilotCss'])
+            && $graphOk&&$unknownAssetStatus===404
+            && $pilotStatus===200&&($pilotHeaders['content-type']??null)==='text/css; charset=UTF-8'&&hash('sha256',$pilotBytes)===hash_file('sha256',$config['pilotCss'])
             && $cardStatus === 200 && str_contains($card,'77-000123') && str_contains($card,'Москва, ул. Примерная, д. 10')
             && str_contains($card,'2026-10-05') && str_contains($card,'2026-12-20')
             && (!$initialSmoke || (str_contains($card, 'Требуется распоряжение') && str_contains($card, '/pilot/objects/4512/assignment-order/prepare')
@@ -283,9 +308,10 @@ try {
         $generationNumber = (int)($manifest['generation'] ?? 0); $generation = $generationNumber > 0 ? demoGeneration($config, $generationNumber) : null;
         demoFinish(['ok'=>true, 'running'=>demoRunning($config), 'url'=>'http://127.0.0.1:' . $config['port'] . '/pilot/objects', 'generation'=>$generation? $generationNumber : null, 'state'=>$generation ? 'ready' : ($manifest === null ? 'absent' : 'incomplete')], 0);
     }
-    $shlzBytes=is_string($shlz)&&is_file($shlz)&&!is_link($shlz)?file_get_contents($shlz):false;
-    if (!is_string($shlzBytes) || !str_contains($shlzBytes, 'Generated standalone bundle: tokens followed by foundation and components.')
-        || !str_contains($shlzBytes, '.shlz-button') || !str_contains($shlzBytes, '--shlz-') || !is_string($pilotCss) || !is_file($pilotCss)) demoFailure();
+    if($verb!=='cleanup'){
+        try{$config['shlzMembers']=demoShlzGraph($shlz,$repo);}catch(Throwable){demoFailure('SHLZ_ASSETS_UNAVAILABLE',78);}
+    }
+    if (!is_string($pilotCss) || !is_file($pilotCss)) demoFailure();
     if (demoRunning($config)) demoFailure('ALREADY_RUNNING', 73);
     if ($verb === 'cleanup') {
         $removed = 0;
