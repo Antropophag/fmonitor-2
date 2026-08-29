@@ -1,0 +1,10 @@
+.git
+.gitignore
+vendor
+tests
+reviews
+specs
+docs
+tools
+*.md
+.local

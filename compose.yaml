@@ -1,0 +1,81 @@
+name: fmonitor2-pilot
+
+services:
+  pilot:
+    image: fmonitor2-pilot
+    build:
+      context: .
+    environment:
+      FMONITOR_DEMO_DB_HOST: mariadb
+      FMONITOR_DEMO_DB_PORT: "3306"
+      FMONITOR_DEMO_DB_NAME: fmonitor2_demo
+      FMONITOR_DEMO_DB_USER: fmonitor2_demo
+      FMONITOR_DEMO_DB_PASSWORD: fmonitor2_demo_local
+      FMONITOR_DEMO_PORT: "8092"
+    ports:
+      - "127.0.0.1:8092:8092"
+    volumes:
+      - pilot-state:/home/fmonitor/.local/state/fmonitor2
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8092/pilot/objects') === false || @file_get_contents('http://127.0.0.1:8092/pilot/installers') === false ? 1 : 0);"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  workforce-sync:
+    image: fmonitor2-pilot
+    pull_policy: never
+    entrypoint: ["rapid-pilot/workforce-worker.sh"]
+    environment:
+      FMONITOR_DB_HOST: mariadb
+      FMONITOR_DB_PORT: "3306"
+      FMONITOR_DB_NAME: fmonitor2_demo
+      FMONITOR_DB_USER: fmonitor2_demo
+      FMONITOR_DB_PASSWORD: fmonitor2_demo_local
+      FMONITOR_BITRIX_CONFIG: /run/secrets/bitrix-workforce
+    volumes:
+      - pilot-state:/home/fmonitor/.local/state/fmonitor2:ro
+    secrets:
+      - bitrix-workforce
+    depends_on:
+      pilot:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/workforce-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 10s
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11.4.7-noble
+    environment:
+      MARIADB_DATABASE: fmonitor2_demo
+      MARIADB_USER: fmonitor2_demo
+      MARIADB_PASSWORD: fmonitor2_demo_local
+      MARIADB_ROOT_PASSWORD: fmonitor2_demo_root_local
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  mariadb-data:
+  pilot-state:
+
+secrets:
+  bitrix-workforce:
+    file: ./.local/bitrix-workforce.json

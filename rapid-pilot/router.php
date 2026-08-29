@@ -4,6 +4,21 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/ObjectDetails.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+if ($path === '/') {
+    header('Location: /pilot/objects', true, 302);
+    header('Cache-Control: no-store');
+    exit;
+}
+if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.png') {
+    $bytes = file_get_contents(__DIR__ . '/favicon.png');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: image/png');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: public, max-age=31536000, immutable');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'files/file-pdf-default.svg' : 'interface/download.svg';
     $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/normalized/' . $icon);
@@ -68,6 +83,7 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
+    $body = str_replace('</head>', '<link rel="icon" type="image/png" href="/pilot/assets/favicon.png"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }
 
