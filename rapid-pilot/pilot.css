@@ -577,11 +577,12 @@
 .fm2-user-table th:nth-child(4) { inline-size: 37%; }
 .fm2-role-stack { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .fm2-role-stack form { margin: 0; }
-.fm2-role-tag { display: inline-flex; min-block-size: 28px; padding: 4px 8px 4px 10px; gap: 6px; align-items: center; color: #253d98; background: #dfe2f0; border: 1px solid #cbd2e8; border-radius: var(--fm2-pill); cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
-.fm2-role-tag:hover { background: #d4d9ea; border-color: #aebbe4; }
-.fm2-role-tag:focus-visible, .fm2-role-add select:focus-visible { outline: 3px solid #8ea2e8; outline-offset: 2px; }
-.fm2-role-tag svg { inline-size: 12px; block-size: 12px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-width: 1.5; }
-.fm2-role-tag--archived { color: #697586; background: #f2f4f6; border-color: #e1e5ea; }
+.fm2-role-stack form:has(.fm2-role-chip) { display: inline-flex; overflow: hidden; border-radius: var(--fm2-pill); }
+.fm2-role-chip { min-block-size: 30px; padding-inline: 11px; color: #253d98; background: #dfe2f0; border-radius: var(--fm2-pill) 0 0 var(--fm2-pill); font-size: 11px; font-weight: 600; }
+.fm2-role-remove { display: grid; inline-size: 28px; min-block-size: 30px; padding: 0; color: #253d98; background: #dfe2f0; border: 0; border-inline-start: 1px solid #c8cee3; cursor: pointer; place-items: center; }
+.fm2-role-remove:hover { background: #ccd3e8; }
+.fm2-role-remove:focus-visible, .fm2-role-add select:focus-visible { position: relative; z-index: 1; outline: 3px solid #8ea2e8; outline-offset: -3px; }
+.fm2-role-remove svg { inline-size: 12px; block-size: 12px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-width: 1.5; }
 .fm2-role-add select { min-block-size: 28px; max-inline-size: 190px; padding: 3px 28px 3px 9px; color: var(--fm2-muted); background: #fff; border: 1px dashed #aeb7c3; border-radius: var(--fm2-pill); cursor: pointer; font-size: 11px; }
 .fm2-no-role { color: var(--fm2-muted); font-size: 11px; }
 .fm2-role-catalog { margin-block-start: 28px; }
@@ -592,6 +593,21 @@
 .fm2-role-table th, .fm2-role-table td { padding: 10px 14px; border-block-end: 1px solid var(--fm2-border); text-align: start; font-size: 12px; }
 .fm2-role-table th { color: var(--fm2-muted); background: #f8fafc; font-size: 11px; font-weight: 500; }
 .fm2-role-table td small { display: block; margin-block-start: 2px; color: var(--fm2-muted); font-size: 10px; }
+.fm2-role-table .fm2-role-chip { border-radius: var(--fm2-pill); }
 .fm2-user-row[hidden] { display: none; }
+.fm2-search-control { position: relative; }
+.fm2-search-control svg { position: absolute; z-index: 1; inset: 50% auto auto 13px; inline-size: 18px; block-size: 18px; fill: none; stroke: #697586; stroke-linecap: round; stroke-width: 1.6; transform: translateY(-50%); pointer-events: none; }
+.fm2-search-control .shlz-input { inline-size: 100%; padding-inline-start: 40px; appearance: none; }
+.fm2-search-control .shlz-input::-webkit-search-cancel-button { opacity: .55; cursor: pointer; }
+.fm2-admin-nav { inline-size: 100%; }
+.fm2-admin-nav > summary { list-style: none; cursor: pointer; }
+.fm2-admin-nav > summary::-webkit-details-marker { display: none; }
+.fm2-admin-chevron { display: none; flex: 0 0 16px; inline-size: 16px; block-size: 16px; margin-inline-start: auto; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; transition: transform 180ms cubic-bezier(.2,0,0,1); }
+.fm2-admin-nav[open] .fm2-admin-chevron { transform: rotate(90deg); }
+.fm2-admin-links { display: none; gap: 2px; padding: 3px 8px 8px 48px; }
+.fm2-admin-links a { padding: 7px 9px; color: rgb(255 255 255 / 62%); border-radius: 6px; text-decoration: none; font-size: 12px; }
+.fm2-admin-links a:hover, .fm2-admin-links a[aria-current="page"] { color: #fff; background: rgb(255 255 255 / 9%); }
+.fm2-shell:has(.fm2-nav-state[open]) .fm2-admin-chevron { display: block; }
+.fm2-shell:has(.fm2-nav-state[open]) .fm2-admin-nav[open] .fm2-admin-links { display: grid; }
 @media (max-width: 900px) { .fm2-user-toolbar { display: grid; align-items: stretch; } .fm2-user-toolbar .shlz-field { max-inline-size: none; } .fm2-user-toolbar .fm2-installer-filters { overflow-x: auto; } }
 @media (max-width: 680px) { .fm2-user-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } .fm2-user-table td { grid-template-columns: 92px minmax(0, 1fr); } .fm2-section-head { display: grid; } }
