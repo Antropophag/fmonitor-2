@@ -98,8 +98,17 @@ final class RapidPilotLocalAuth
         if(!is_dir($sessionPath)&&!mkdir($sessionPath,0700,true)&&!is_dir($sessionPath))throw new RuntimeException('Session storage unavailable');
         if(!is_writable($sessionPath))throw new RuntimeException('Session storage unavailable');
         session_save_path($sessionPath);
-        session_name($this->sessionCookieName());
+        $cookieName=$this->sessionCookieName();
+        session_name($cookieName);
         session_set_cookie_params(['lifetime'=>604800,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);
+        $incoming=null;
+        if(preg_match('/(?:^|;\s*)'.preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($_SERVER['HTTP_COOKIE']??''),$match)===1)$incoming=$match[1];
+        $path=(string)(parse_url((string)($_SERVER['REQUEST_URI']??''),PHP_URL_PATH)??'');
+        if($path!=='/pilot/login'){
+            if($incoming===null){$_SESSION=[];return;}
+            ini_set('session.use_cookies','0');
+            session_id($incoming);
+        }
         session_start(['use_strict_mode'=>1,'use_only_cookies'=>1,'cookie_httponly'=>1,'cookie_samesite'=>'Strict','gc_maxlifetime'=>604800]);
     }
     private function user():?array{$userId=(int)($_SESSION['auth_user_id']??0);$email=$this->normalizeEmail((string)($_SESSION['auth_email']??''));if($userId<1||!$this->allowedEmail($email))return null;$s=$this->db->prepare("SELECT u.user_id,u.email FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE u.user_id=? AND u.status=1 AND c.email_normalized=? AND c.password_hash IS NOT NULL");$s->bind_param('is',$userId,$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?['user_id'=>(int)$row['user_id'],'email'=>$this->normalizeEmail((string)$row['email'])]:null;}
@@ -134,5 +143,5 @@ final class RapidPilotLocalAuth
     private function initials(string $name):string{$parts=preg_split('/\s+/u',trim($name),3,PREG_SPLIT_NO_EMPTY)?:[];return mb_strtoupper(implode('',array_map(static fn(string $p):string=>mb_substr($p,0,1),array_slice($parts,0,2))));}
     private function redirect(string $path):never{header('Location: '.$path,true,303);header('Cache-Control: no-store');exit;}
     private function plain(int $status,string $message):never{http_response_code($status);header('Content-Type: text/plain; charset=UTF-8');header('Cache-Control: no-store');echo$message."\n";exit;}
-    private function destroySession():void{$_SESSION=[];if(ini_get('session.use_cookies'))setcookie(session_name(),'', ['expires'=>time()-42000,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);session_destroy();}
+    private function destroySession():void{$_SESSION=[];setcookie(session_name(),'', ['expires'=>time()-42000,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);if(session_status()===PHP_SESSION_ACTIVE)session_destroy();}
 }
