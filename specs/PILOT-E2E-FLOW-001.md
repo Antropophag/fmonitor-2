@@ -1,7 +1,7 @@
 # PILOT-E2E-FLOW-001 — пройти пилотный путь ФКР от очереди до открытия работ
 
 - Статус: `APPROVED`
-- Версия: `0.3`
+- Версия: `0.4`
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью и явно настроенными process capabilities
 - Публичный seam: configured production HTTP под `/pilot`
@@ -217,6 +217,18 @@ Test proves happy journey section 8 plus representative rejection for every mapp
 
 Expected IDs, dates, copy, filenames, headers, URLs and state are literals from this specification and inherited approved specs. Test/reviewer may reuse test support for HTTP transport and unique-prefix migrations, but may not improve harness, add mocks, inspect private renderer methods or derive expected values from implementation.
 
+### Изолированный infrastructure-failure fixture v0.4
+
+Для детерминированного доказательства redacted artifact/infrastructure failure Gate 2 разрешает один отдельный isolated fixture case. Он не является шагом main journey и выполняется по всем следующим правилам:
+
+1. test создаёт свой unique-prefix production MariaDB fixture и свой task-owned artifact root, заранее доводит public process seam до нужной prepared projection и фиксирует её public projection/artifact metadata as the before oracle;
+2. до запуска dedicated production HTTP composition и до любого HTTP request тест создаёт ровно один обратимый infrastructure fault в принадлежащей этому fixture границе: например, temporary rename точного content-addressed blob либо временно unreadable task-owned artifact root. Нельзя повреждать shared/user artifact root, `../shlz-ui`, source tree или unrelated database;
+3. dedicated composition получает ровно один failure HTTP request к exact artifact URL. До и после него нет probe/warm-up/retry/follow-up request; expected public response берётся из раздела 4, а не из exception/filesystem/SQL details;
+4. fault restoration выполняется в mandatory `finally`, даже если assertion/request/composition startup fails. Перед cleanup test новым production process instance/connection сравнивает public process projection с before oracle и читает restored artifact только через public `AssignmentOrderArtifactService`; equality доказывает no domain mutation и byte restoration;
+5. private-table rows, filesystem layout, implementation exception и production output не используются как expected oracle. Filesystem operation разрешена только для setup/restoration точного test-owned fault target, а direct SQL — только в обычных pre-request fixture/cleanup boundaries раздела 9.
+
+Это узкое test permission не меняет product runtime behavior и не разрешает application code инъектировать faults, переименовывать artifacts, менять permissions или обходить service. В main journey раздела 8 по-прежнему запрещены SQL, filesystem/manual intervention, fixture mutation и process restart между requests.
+
 ### Независимое выведение artifact oracle v0.2
 
 Fixed product example intentionally keeps engineer identity `73 / Анна Волкова`, because the prepare-form prefill, selected team, opened-card responsible person and next engineer step all pin that same person. Previous renderer tracer used a different descriptive snapshot `Петров Пётр Петрович` for the same numeric user ID; its metadata therefore cannot be copied into this E2E example.
@@ -261,6 +273,6 @@ The fixed example therefore advances the same production clock between requests 
 - Approved by: separately tasked Gate 1 Codex agent `/root/e2e_spec`
 - Date: `2026-08-29`
 - Decision: `APPROVED`
-- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.3` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes, keeps the exact artifact oracle for `73 / Анна Волкова`, and corrects the fixed prepare instant so the immutable order date is derived from the same clock value as its audit event.
+- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.4` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes and permits one isolated, restored pre-start infrastructure fault fixture without weakening the uninterrupted main journey or runtime boundaries.
 
-Gate 2 разрешён только для version `0.3`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
+Gate 2 разрешён только для version `0.4`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
