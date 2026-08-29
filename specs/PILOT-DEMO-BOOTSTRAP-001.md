@@ -1,11 +1,11 @@
 # PILOT-DEMO-BOOTSTRAP-001 — запустить воспроизводимый демонстрационный пилот одной командой
 
 - Статус: `APPROVED`
-- Версия: `0.1`
+- Версия: `0.2`
 - Дата: `2026-08-29`
 - Актор: локальный оператор демонстрации FMonitor 2.0
 - Публичный seam: отдельный процесс `php bin/fmonitor2-pilot-demo.php [start|reset|status|cleanup]`
-- Наследует: `PRODUCTION-MIGRATION-RUNNER-001`, `PILOT-CASE-IMPORT-001`, `PRODUCTION-COMPOSITION-001`, `ARTIFACT-STORE-001`, `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-E2E-FLOW-001 v0.4`
+- Наследует: `PRODUCTION-MIGRATION-RUNNER-001`, `PILOT-CASE-IMPORT-001`, `PRODUCTION-COMPOSITION-001`, `ARTIFACT-STORE-001`, `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-E2E-FLOW-001 v0.4`, `PILOT-SHLZ-ASSETS-001 v0.1`
 
 ## 1. Цель и граница
 
@@ -102,7 +102,17 @@ FMONITOR_NOW=2026-08-29T12:00:00+03:00
 FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:8092
 ```
 
-и generation-specific DB prefixes/artifact root plus actual `../shlz-ui` built CSS and repository `app/PilotHttp/pilot.css`. `FMONITOR_NOW` — единственный clock для команды и business date; отдельный `businessDate` override запрещён. Все три demo-команды могут иметь один exact instant: append-only ordering остаётся по записи/ID, а order date и допустимая actual start согласованно равны `2026-08-29`.
+и generation-specific DB prefixes/artifact root, repository `app/PilotHttp/pilot.css` и `FMONITOR_SHLZ_CSS_PATH`, указывающий на официальный standalone public export sibling design system:
+
+```text
+../shlz-ui/packages/styles/dist/shlz.css
+```
+
+Допустим иной resolved path только если он является public export path того же установленного `@shlz/styles`, оканчивается exact `/packages/styles/dist/shlz.css` и проходит весь filesystem/manifest contract `PILOT-SHLZ-ASSETS-001`; source entrypoint `../shlz-ui/packages/styles/shlz.css`, Showcase, `src/`, copied/local snapshot и автоматически выбранный «похожий» CSS запрещены. Bootstrap разрешает canonical repository-relative path через `realpath`, но передаёт HTTP composition абсолютный canonical public export path. Он не собирает `shlz-ui` и не исправляет отсутствующий dist.
+
+До ready banner bootstrap требует readable exact public export и успешно построенный полный transitive `@import` graph. Browser получает root и каждый dependency только через same-origin routes `/pilot/assets/...`, определённые `PILOT-SHLZ-ASSETS-001`; bootstrap не считает наличие или `200` одного root `shlz.css` достаточным. Missing/wrong-basename/source-tree/symlinked/unreadable public export, invalid/escaping/missing dependency, graph limit/identity failure либо любой non-`200`/wrong MIME transitive smoke response дают redacted startup failure `SHLZ_ASSETS_UNAVAILABLE`, nonzero exit, остановку spawned server и отсутствие ready banner. Failure не печатает path, import target или filesystem details и не делает fallback.
+
+`FMONITOR_NOW` — единственный clock для команды и business date; отдельный `businessDate` override запрещён. Все три demo-команды могут иметь один exact instant: append-only ordering остаётся по записи/ID, а order date и допустимая actual start согласованно равны `2026-08-29`.
 
 Loopback development identity наследует `PILOT-HTTP-AUTH-001`: browser не вводит пароль, header или cookie identity; router переносит process environment `REMOTE_USER` в server variable только для loopback PHP server. Это не login и не разрешено на non-loopback bind. CSRF/session остаются production E2E contract; browser проходит формы обычными cookies. URL использует `http` только в этой loopback demo composition.
 
@@ -110,11 +120,12 @@ Loopback development identity наследует `PILOT-HTTP-AUTH-001`: browser 
 
 До banner bootstrap сам делает public HTTP smoke через уже запущенный router, без SQL observation:
 
-1. `GET /pilot/objects` с canonical Host возвращает `200`, shlz/pilot CSS links и ровно один object link `/pilot/objects/4512`;
+1. `GET /pilot/objects` с canonical Host возвращает `200`, stylesheet links в exact порядке `/pilot/assets/shlz.css`, затем `/pilot/assets/pilot.css`, и ровно один object link `/pilot/objects/4512`;
 2. `GET /pilot/objects/4512` возвращает `200`, `Требуется распоряжение` и canonical prepare link;
 3. `GET /pilot/objects/4512/assignment-order/prepare` возвращает `200`, selectable installer IDs `1042,2088`, prefilled engineer `73` and an enabled submit;
 4. `GET /pilot/objects/4999` возвращает `404`;
-5. повторный `GET /pilot/objects` не меняет public projection.
+5. `GET` root `/pilot/assets/shlz.css`, каждый member полного transitive manifest и `/pilot/assets/pilot.css` возвращает `200`, exact CSS MIME и exact configured bytes; unknown well-formed CSS asset отсутствует;
+6. повторный `GET /pilot/objects` не меняет public projection.
 
 Smoke не выполняет POST, не создаёт session/domain facts и не скачивает artifact. Любой mismatch завершает startup failure, останавливает spawned server и не печатает ready banner.
 
@@ -137,7 +148,7 @@ Server restart через `start` без `reset` использует тот ж�
 - stale PID распознаётся только после проверки process identity; чужой PID никогда не сигналится;
 - `reset` generation `N → N+1` создаёт снова exact initial fixture и новый empty artifact root, сохраняя `N` неизменным;
 - interrupted reset оставляет `N` active; следующий reset использует новый generation number и не принимает partial rows как success;
-- отсутствие MariaDB, PHP `mysqli`, sibling `../shlz-ui` built CSS, writable secure state root или compatible schema даёт concise redacted failure и nonzero exit до banner;
+- отсутствие MariaDB, PHP `mysqli`, official sibling `../shlz-ui/packages/styles/dist/shlz.css` public export или любого его transitive dependency, writable secure state root или compatible schema даёт concise redacted failure и nonzero exit до banner;
 - никакой failure не включает password, SQL, driver exception, absolute artifact/CSS paths или row payload.
 
 ## 8. Gate 2 seam и independently fixed expected values
@@ -146,7 +157,7 @@ Gate 2 запускает CLI как отдельный process против rea
 
 Один test доказывает: clean `start` provisioning and smoke; section 6 browser-shaped GET/POST/cookie/redirect/download journey; server stop/restart persistence; reset to initial state; cleanup ownership containment. Expected labels, people, dates, number, routes and final next step берутся литералами из разделов 4–6. Fixture setup может проверять bootstrap-owned table catalog для isolation, но успешные business facts наблюдаются только HTTP.
 
-Обязательная sensitivity: wrong/missing shlz CSS; occupied port; foreign marker/prefix; interrupted inactive generation; spoof identity headers do not change actor; non-imported `4999`; restart does not reseed; reset does not delete previous generation; cleanup refuses foreign paths/rows.
+Обязательная sensitivity: official standalone dist export succeeds; source `packages/styles/shlz.css`, wrong-basename, missing root и broken/escaping transitive import fail closed before banner; every manifest member is browser-loadable with exact CSS MIME; occupied port; foreign marker/prefix; interrupted inactive generation; spoof identity headers do not change actor; non-imported `4999`; restart does not reseed; reset does not delete previous generation; cleanup refuses foreign paths/rows.
 
 ## 9. Authorization, audit и запреты
 
@@ -167,4 +178,4 @@ OS user and demo DB credential authorize offline provisioning. Browser actor aut
 - Approved by: separately tasked Gate 1 agent `/root/bootstrap_spec`
 - Дата: `2026-08-29`
 - Решение: `APPROVED`
-- Комментарий: пользователь явно поручил автономно довести пилот до запускаемого browser journey без SQL/ручной подготовки, с real legacy-shaped и `fm2_*` data, детерминированным clock, безопасным reset и сохранением обязательного SSD + TDD workflow. Срез ограничен demo/deployment orchestration и не вводит альтернативную бизнес-реализацию.
+- Комментарий: пользователь явно поручил автономно довести пилот до запускаемого browser journey без SQL/ручной подготовки, с real legacy-shaped и `fm2_*` data, детерминированным clock, безопасным reset и сохранением обязательного SSD + TDD workflow. Версия 0.2 закрепляет официальный standalone `packages/styles/dist/shlz.css` и обязательную browser-выдачу всего transitive public graph `PILOT-SHLZ-ASSETS-001`, исключая source-tree и root-only ложный success. Срез ограничен demo/deployment orchestration и не вводит альтернативную бизнес-реализацию.
