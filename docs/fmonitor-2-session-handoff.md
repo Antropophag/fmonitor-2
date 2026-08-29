@@ -4,73 +4,42 @@
 
 ## Режим работы
 
-Делаем быстрый функциональный пилот внутри `fmonitor-2`. Ранние SSD/TDD-наработки используются как foundation, новые пилотные итерации выполняются без процессной церемонии. Локальное правило закреплено в `rapid-pilot/AGENTS.md`.
+Делаем быстрый рабочий пилот без SSD/TDD-церемонии и без субагентов. После проверки его следует переложить на SSD/TDD foundation. Правило закреплено в `rapid-pilot/AGENTS.md`. Не merge-ить `main`; делать checkpoint-коммиты в текущей ветке.
 
-Работать в одной агентской сессии без субагентов: пользователь отдельно попросил не делегировать, чтобы не терять контекст. Делать checkpoint-коммиты в текущую feature-ветку; `main` не merge-ить.
+UI-эталоны:
 
-Перед фронтенд-изменениями сверяться с Service Desk:
-
-- `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`;
-- `../shlz-ui` — корпоративная UI-зависимость, использовать её публичные exports;
+- Service Desk: Windows `C:\Users\Polly\Downloads\ЩЛЗ - фронт ServiceDesk`;
+- WSL: `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`;
+- `../shlz-ui` — использовать публичные exports;
 - Figma: <https://www.figma.com/design/x75wCNufIZQuwFOTLhGZi9/Service-desk--Copy-?node-id=0-1&p=f&t=8Qd9tmQOOMJiecQt-0>.
 
-Продукт — минималистичный портал контроля выполнения монтажа. Не превращать его в универсальный Service Desk.
+Путь Service Desk также записан в `rapid-pilot/AGENTS.md`.
 
 ## Последние checkpoint-коммиты
 
 ```text
+7831c5d fix: show selected installers inside picker
+fbacb32 feat: redesign installer assignment picker
+e618bd1 fix: keep assignment picker available after Bitrix sync
+b53f1f0 feat: add workforce filters and hourly Bitrix refresh
+9a8a091 feat: scale installer directory to full Bitrix catalog
+630926e feat: add rapid pilot installer directory
+2dacb39 docs: save rapid pilot session handoff
 bcb6fa4 feat: import production objects into rapid pilot
-2a04482 fix: keep collapsed sidebar navigation visible
-2b71779 fix: align pilot sidebar with service desk
-344256a feat: build expandable pilot navigation
-bc7ec19 feat: replace pilot menu glyphs with real icons
-47e9281 feat: establish rapid pilot visual workspace
-13ff05d docs: refresh pilot session handoff
 ```
 
-## UI на момент handoff
+## Текущее состояние пилота
 
-- Сайдбар в свёрнутом виде сохраняет все иконки; в развёрнутом показывает иконку и текст.
-- Стрелка раскрытия находится внутри сайдбара снизу, отдельного checkbox-контрола нет.
-- Навигация вынесена из закрытого `<details>`: regression probe показал `nav_nested_in_closed_details=0`, `nav_outside_trigger=1`.
-- Используются SVG-иконки вместо текстовых glyph; они сделаны визуально тяжелее по образцу Service Desk.
-- Логотип минималистичный и рендерится SVG; bitmap-концепт лежит в `rapid-pilot/assets/fmonitor-logo-concept.png`.
-- В меню предусмотрены объекты монтажа, распоряжения, монтажники, ОтИЗ и связанные рабочие разделы.
-- Очередь, карточка объекта и формы остаются на базе ранее реализованного рабочего process flow.
+- `http://127.0.0.1:8092/pilot/objects` — `200`;
+- `http://127.0.0.1:8092/pilot/objects/444/assignment-order/prepare` — `200`.
 
-Ключевые UI-файлы: `app/PilotHttp/PilotView.php`, `ObjectListView.php`, `ObjectCardView.php`, `PrepareFormView.php`, `pilot.css`.
+HTTP сейчас работает через оставшийся PHP dev-server, но штатная команда сообщает:
 
-## Production-данные
-
-Пользователь подключил корпоративный VPN и дал отдельную read-only учётку MySQL. Секреты намеренно не сохранены ни в Git, ни в handoff.
-
-Маршрут к production:
-
-```text
-fmonitor-db-tunnel
-127.0.0.1:13306 → configurator.shlz.ru:3306 через SOCKS
-database: c1_fmonitor
+```json
+{"ok":true,"running":false,"url":"http://127.0.0.1:8092/pilot/objects","generation":null,"state":"incomplete"}
 ```
 
-Импортёр: `rapid-pilot/import-production-objects.php`.
-
-Он выполняет против production только `SELECT`, выбирает ровно 100 ещё не открытых объектов, пишет только в локальную `fmonitor2_demo` и создаёт process cases через `PilotCaseImporter`.
-
-Особенность legacy: у неоткрытых объектов `workdatefinish` содержит будущую плановую дату, а не факт завершения. Импортёр нормализует её в `plan_finish_date`; локальный `workdatefinish` оставляет пустым. Отсутствие старта определяется production-полем `factworkstartdate = '0000-00-00 00:00:00'`.
-
-В поколение 5 успешно загружено:
-
-```text
-copied: 100
-imported: 100
-process cases total: 101
-unopened process cases: 100
-production object id range in selected ordering: 444 … 1686
-```
-
-## Запуск и восстановление стенда
-
-URL: `http://127.0.0.1:8092/pilot/objects`.
+Readiness-проверка поколения ожидает точный fixture и считает дополнительные реальные строки отклонением. После перезапуска сначала проверить URL. Если сервер пропал, поднять стенд через `php bin/fmonitor2-pilot-demo.php reset`, затем восстановить реальные объекты и workforce. Не удалять локальную БД без необходимости.
 
 Локальная MariaDB:
 
@@ -80,14 +49,65 @@ container: fmonitor2-redesign-test-db
 database/user: fmonitor2_demo
 ```
 
-На момент handoff HTTP отвечает, но `php bin/fmonitor2-pilot-demo.php status` сообщает `state: incomplete`: штатный валидатор поколения ожидает точный fixture и считает добавленные production-строки отклонением. Данные не потеряны, однако после остановки обычный `start` может не поднять поколение 5.
+Локально 101 process case: один fixture и 100 реальных ещё не открытых объектов, включая `444`.
 
-Надёжное восстановление после перезапуска сессии:
+## Справочник монтажников и Bitrix
 
-1. Убедиться, что `fmonitor2-redesign-test-db` и `fmonitor-db-tunnel` запущены.
-2. Выполнить `php bin/fmonitor2-pilot-demo.php reset` — будет создано чистое активное поколение и запущен HTTP.
-3. Передать read-only реквизиты через окружение, не записывая их в файл.
-4. Запустить импорт:
+`/pilot/installers` работает на реальной интеграции Bitrix/legacy. Последняя подтверждённая загрузка:
+
+```text
+1259 пользователей с табельным номером
+930 работающих
+329 уволенных
+1 запись без пригодного табельного исключена
+```
+
+Реализовано:
+
+- пятизначный табельный отображается с ведущим нулём;
+- над таблицей есть фильтры-таблетки;
+- таблица показывает текущие закрепления;
+- показывается дата последнего списка;
+- обновление Bitrix выполняется раз в час.
+
+Cron:
+
+```cron
+7 * * * * cd /home/antropophag/code/fmonitor-2 && /usr/bin/php rapid-pilot/hourly-bitrix-workforce.php >> /home/antropophag/.local/state/fmonitor2/pilot-demo/78d99d34/workforce-sync.log 2>&1 # fmonitor2-bitrix-workforce
+```
+
+`rapid-pilot/hourly-bitrix-workforce.php` создаёт завершённый sync run и атомарно обновляет каталог с provenance текущего запуска. Несогласованный provenance раньше вызывал `Service unavailable` на форме распоряжения.
+
+## Модалка выбора монтажников
+
+Нативный огромный `<select multiple>` удалён. Теперь:
+
+- поиск по ФИО или шестизначному табельному;
+- поиск начинается с двух символов;
+- видимая выдача ограничена 20 результатами;
+- строка показывает ФИО, табельный, должность и закрепление;
+- выбранная строка отмечается галочкой;
+- прямо внутри модалки есть блок `Выбрано` с тегами и удалением;
+- выбранные также видны на форме после закрытия;
+- скрытые `installerTabIds[]` формируются JavaScript.
+
+Ключевые файлы: `app/PilotHttp/PrepareFormView.php`, `app/PilotHttp/picker.js`, `app/PilotHttp/PilotHttp.php`, `app/PilotHttp/PilotE2ECoordinator.php`, `rapid-pilot/pilot.css`.
+
+Скрипт доступен по `/pilot/assets/picker.js`; CSP — `script-src 'self'`. Последние проверки: PHP/JS syntax OK, `git diff --check` OK, UI detector `impeccable` вернул `[]`.
+
+## Production-данные и секреты
+
+Legacy production и Bitrix — read-only источники. Секреты не сохранены ни в Git, ни в handoff.
+
+```text
+fmonitor-db-tunnel
+127.0.0.1:13306 → configurator.shlz.ru:3306 через SOCKS
+database: c1_fmonitor
+```
+
+Импортёр объектов: `rapid-pilot/import-production-objects.php`. Он выполняет против production только `SELECT`, пишет только в локальную `fmonitor2_demo` и создаёт process cases через `PilotCaseImporter`.
+
+После reset импорт запускается с read-only реквизитами только через окружение:
 
 ```bash
 FMONITOR_PILOT_ACTIVE_MANIFEST="$HOME/.local/state/fmonitor2/pilot-demo/78d99d34/active.json" \
@@ -96,37 +116,32 @@ FMONITOR_SOURCE_PASSWORD='<read-only password>' \
 php rapid-pilot/import-production-objects.php
 ```
 
-5. Проверить URL и локально подтвердить 101 process case.
+Если секреты недоступны, попросить пользователя передать их снова. Не записывать credentials в документы, скрипты, логи или коммиты.
 
-Если новая сессия не знает секрет, попросить пользователя передать его снова или экспортировать переменные в окружение. Не сохранять credential в handoff, скриптах или коммитах.
+## Следующий шаг
 
-## Точный следующий шаг
+Открыть форму объекта `444` и проверить в браузере:
 
-Сначала открыть живой список объектов и визуально сравнить его с Service Desk/shlz-ui. Главная незакрытая претензия пользователя — профессиональное качество списка: типографика, плотность, палитра, отступы, радиусы и визуальная иерархия должны соответствовать источнику.
+1. поиск по части ФИО;
+2. поиск по шестизначному табельному;
+3. выбор нескольких монтажников;
+4. видимость выбранных внутри модалки;
+5. удаление через тег;
+6. сохранение после закрытия и формирование распоряжения.
 
-Затем:
+Затем продолжить сценарий `очередь → карточка → распоряжение → номер 1С ДО → открытие работ`. Технический долг: readiness-проверка должна разрешать дополнительные реальные строки при наличии fixture-сентинелов.
 
-1. проверить свёрнутый и развёрнутый sidebar на странице с 101 строкой;
-2. проверить скролл, sticky header, hover/focus и адаптивность очереди;
-3. убедиться, что production-адреса и номера не ломают ширины колонок;
-4. продолжить сценарий `очередь → карточка → распоряжение → номер 1С ДО → открытие работ`.
+## Сохранность пользовательских изменений
 
-Отдельная техническая задача: ослабить readiness-проверку demo generation так, чтобы она проверяла наличие fixture-сентинелов, но разрешала дополнительные импортированные production-строки. Тогда `start/status` будут корректно работать после импорта без обязательного `reset`.
-
-## Ограничения и сохранность
-
-- `../fmonitor` и production БД — только read-only.
-- Любые записи выполняются исключительно в локальную demo DB.
-- Не подменять production-данные синтетикой.
-- Не раскрывать пароли в документах, коммитах или ответах.
-- Не заниматься Bitrix history, CI и архитектурной уборкой вне нужд пилота.
-- Неотслеживаемый `reviews/tests/PILOT-SERVICEDESK-REDESIGN-001.md` принадлежит прежнему процессу; не удалять и не включать в коммиты без отдельного решения пользователя.
-
-Ожидаемый Git status после коммита handoff:
+Не удалять, не перезаписывать и не включать в checkpoint-коммиты:
 
 ```text
-## feature/demo-pilot-flow
+ M .gitignore
+ M CONTEXT.md
+?? docs/fmonitor-2-completed-history-migration-proposal.md
+?? docs/fmonitor-2-installer-contractor-mapping-analysis.md
 ?? reviews/tests/PILOT-SERVICEDESK-REDESIGN-001.md
+?? tools/
 ```
 
 Не использовать destructive reset/clean.
