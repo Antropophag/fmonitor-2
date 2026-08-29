@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/ObjectDetails.php';
 require_once __DIR__ . '/LocalAuth.php';
+require_once __DIR__ . '/Otiz.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -79,6 +80,16 @@ if ($path === '/pilot/assets/object-details.js') {
     echo $bytes;
     exit;
 }
+if ($path === '/pilot/assets/otiz.js') {
+    $bytes = file_get_contents(__DIR__ . '/otiz.js');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$#D', $path, $font) === 1) {
     $bytes = file_get_contents(__DIR__ . '/fonts/' . $font[1]);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -90,6 +101,11 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     exit;
 }
 (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && RapidPilotOtiz::matches($path)) {
+    require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
+    require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
+    (new RapidPilotOtiz())->handle($path);
+}
 $localServerAddress = $_SERVER['SERVER_ADDR'] ?? $_SERVER['SERVER_NAME'] ?? null;
 if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
     $demoNonce = getenv('FMONITOR_DEMO_LOOPBACK_NONCE');
@@ -109,6 +125,7 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
+    if (RapidPilotOtiz::currentUserCanAccess()) $body = RapidPilotOtiz::decorateNavigation($body, false);
     $logoutToken = htmlspecialchars((string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
     $body = str_replace('</aside>', $logout . '</aside>', $body);

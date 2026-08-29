@@ -9,6 +9,8 @@ use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
 
+require_once __DIR__ . '/Otiz.php';
+
 $root = dirname(__DIR__);
 $home = getenv('HOME');
 if (!is_string($home) || $home === '') throw new RuntimeException('Home directory unavailable');
@@ -67,6 +69,9 @@ try {
     $db->query("INSERT INTO `{$processPrefix}fm2_pilot_users`(user_id,full_name,email,phone,status,source_updated_at) SELECT id,name,email,'',status,'{$sourceUpdatedAt}' FROM `{$legacyPrefix}users` ON DUPLICATE KEY UPDATE full_name=VALUES(full_name),email=VALUES(email),status=VALUES(status),source_updated_at=VALUES(source_updated_at)");
     $db->query("INSERT INTO `{$processPrefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) SELECT id,LOWER(TRIM(email)),NULL,NULL,'{$sourceUpdatedAt}' FROM `{$legacyPrefix}users` WHERE LOWER(TRIM(email)) REGEXP '^[^@[:space:]]+@shlz\\.ru$' ON DUPLICATE KEY UPDATE email_normalized=VALUES(email_normalized),updated_at=VALUES(updated_at)");
     $db->query("INSERT INTO `{$processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) SELECT id,role_id,'legacy_primary','{$sourceUpdatedAt}',NULL FROM `{$legacyPrefix}users` ON DUPLICATE KEY UPDATE origin=origin");
+    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_roles`(role_id,name,status,source_updated_at) VALUES(9001,'ОТиЗ',1,'{$sourceUpdatedAt}') ON DUPLICATE KEY UPDATE name=VALUES(name),status=VALUES(status),source_updated_at=VALUES(source_updated_at)");
+    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,9001,'rapid_pilot','{$sourceUpdatedAt}',NULL) ON DUPLICATE KEY UPDATE origin=origin");
+    RapidPilotOtiz::bootstrap($db, $processPrefix);
     (new PilotCaseImporter($db, $processPrefix, $legacyPrefix))->import([4512], '2026-08-29T12:00:00+03:00');
 } finally {
     $db->close();
