@@ -1,50 +1,46 @@
 # Test review: PILOT-SHLZ-ASSETS-001 v0.2
 
-- Reviewer: separately tasked agent `/root/shlz_assets_v2_test_rereview`
-- Test author: separately tasked Gate 2 agent; reviewed commit `1cd7b78`
-- Reviewed commit: `1cd7b78`
-- Specification: `specs/PILOT-SHLZ-ASSETS-001.md` v0.2 at `331b8ac`
+- Reviewer: separately tasked agent `/root/shlz_assets_v2_test_final`
+- Test author: separately tasked Gate 2 agents; final corrective commit `f4dbe62`
+- Reviewed commit: `f4dbe62deb2b58b264b7a911160a7acd32557098`
+- Specification: `specs/PILOT-SHLZ-ASSETS-001.md` v0.2 at `331b8ac9616b99162fe75b7bc501e1dc223a9d73`
 - Public seam: raw HTTP `GET|HEAD /pilot/assets/shlz.css`, browser-relative manifest routes, and configured root HTML
-- Red command and intended failure: `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — RED, exit `255`; an overlapped mutation response was `200` with 6 MiB body instead of required redacted `503`.
+- Red command and intended failure: `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — RED, exit `255`; overlapped identity/mode drift returned `200` with a 6 MiB body instead of required redacted `503`; cleanup then also reported nine newly created current-EUID SysV segments.
 - Verdict: `CHANGES_REQUESTED`
 
 ## Findings
 
-### 1. The production source oracle imposes false broad bans
+### 1. Filesystem residue snapshot remains incomplete and is insensitive to empty cache roots
 
-Section 3 forbids named mechanisms only when they provide cross-request graph coordination. `psaNoCoordinationSource()` instead rejects every occurrence of `guardian`, every listed APCu/SysV/opcache call, and a broad `static ... manifest|shlz` pattern anywhere under `app`, `bin`, or `public`, regardless of purpose. A legitimate unrelated APCu use, a guardian word in copy/comment, or a stateless `public static function shlz...` therefore fails although it does not retain graph identity, bytes, locks, or state. Conversely, a generic cache helper whose writer contains no nearby `manifest|shlz` token can coordinate the graph without matching the regex. The oracle is simultaneously broader than the normative prohibition and incomplete for indirection.
+Section 3 prohibits any filesystem manifest/cache/lock/sentinel and section 7 prohibits cache/build/temp residue. `psaCacheState()` observes only four hard-coded repository paths that are neither named by the specification nor derived from runtime configuration. A plausible implementation writing `/tmp/fmonitor-shlz.cache`, `/dev/shm/fmonitor-shlz`, `<repo>/var/tmp/shlz.lock`, or any differently named repository cache passes this oracle. Even at the four listed paths, a newly created empty root is represented as `[]`, exactly like an absent root, because root existence/type/metadata are not included. Empty directories and changed directory metadata are therefore invisible.
 
-Replace the lexical ban with an oracle scoped to asset-request effects/state. If a source-membership guard is retained as supplemental evidence, restrict matches to actual coordination calls/state owned by the asset implementation and avoid banning unrelated production capabilities or identifiers.
+Replace this with before/after fingerprints of the bounded runtime and repository locations in which this application could place residue, recording root existence/type plus descendant path, type, identity/metadata, and content hash. Explicitly exclude the test-owned fixture and concurrency-safe shared test namespaces. If production configuration constrains writable cache/temp locations, derive the exact roots from that configuration rather than inventing names in the test.
 
-### 2. The filesystem residue oracle is not sensitive to implementation-owned residue
+### 2. SysV snapshot does not detect reuse or mutation of a pre-existing segment
 
-`psaResidue($token)` only reports paths containing the test's random token. The application is never given that token, so an implementation can leave `shlz-manifest.cache`, `asset.lock`, or another fixed/generic cache path in the repository or scanned runtime directories and the before/after arrays remain equal. This does not satisfy section 7's prohibition or the prior requested fingerprint of task-owned runtime/repository locations.
+`array_diff($sysvAfter, $sysvBefore)` detects only a new key/id. A cross-request implementation can attach to one stable segment that already exists before the test and mutate/use it on every request; before and after membership stays identical and the test passes, although sections 3 and 7 forbid the dependency itself. This is especially relevant after any earlier request has initialized a fixed-key cache.
 
-Capture and compare the relevant directory entries/content metadata before and after requests independently of filename, while excluding the test fixture paths explicitly. The comparison must detect a newly created or changed generic cache/lock/temp/sentinel.
+Run the asset fixture in an isolated/known-clean IPC scope if the harness already provides one, or add black-box evidence that a pre-existing task-owned segment cannot be consumed/changed and that no segment is required. Do not fall back to the former broad lexical production-source ban.
 
-### 3. The timestamp assertion does not prove the claimed overlap
+## Non-blocking checks passed
 
-The worker/counter is a substantial improvement, and the counter advancing by at least 20 during the client lifetime makes overlap likely. However, `firstAt <= completed && lastAt >= sent` only says that some post-snapshot mutations lie somewhere inside or around the client interval; it does not show activity bracketing that interval or the server's capture. Both inequalities can pass when all recorded mutations occur in a short period after capture but before response completion. The test then requires `503` even though the specification permits a whole old/new response when replacement did not intersect capture.
-
-At minimum, retain timestamped mutations already observed before request transmission and mutations observed after response completion, and assert those timestamps bracket the public request interval. Use the continuous counter as the no-pause witness and keep the exact `503` assertion. A production test hook or prohibited coordination remains unnecessary.
-
-## Coverage retained from v0.1
-
-The unchanged coverage still traces exact graph routes/bytes, import grammar, GET/HEAD parity, security/error priority, deduplication/cycles, identity aliases, member/depth/size limits, malformed and escaping imports, invalid UTF-8, collisions, symlink boundaries, owner/mode cases, and HTML stylesheet order. The sequential replacement fixture correctly distinguishes v0.2 from the former process-lifetime immutable graph. The focused run is honestly RED for missing v0.2 atomic revalidation rather than setup: it reaches the overlap case and receives `200` instead of `503`.
+- The corrected overlap fixture sends the request over the real socket, counts at least 20 mutations between transmission and the first response byte, verifies the worker is live at that boundary, and observes further mutations through response completion. Because the specification requires capture to finish before any response header byte, this is adequate first-byte overlap evidence without a production hook.
+- The fixture restores the two mutated members, removes its counter/stop/temporary files, stops its worker/server in `finally`, and the review run left no `psa-*` fixture or worker/server process. The nine exact SysV ids created by the current production implementation during the review run were removed explicitly afterward.
+- The focused test is honestly RED for missing v0.2 behavior: it reaches the overlap assertion and observes exact `200` with 6,291,456 body bytes instead of `503`. The additional SysV cleanup failure is also product residue, not setup failure.
+- All prior v0.1 graph/routing/parser/security/limit/HTML-order coverage remains present; v0.2 additionally covers legitimate between-request replacement, owner/mode rejection, overlap, and residue membership.
 
 ## Required changes
 
-1. Scope the source oracle to forbidden asset graph coordination without banning unrelated production code.
-2. Fingerprint residue locations independently of the random fixture token and detect generic created/changed residue.
-3. Make timestamp evidence bracket the request interval before requiring the overlapped response to be `503`.
-4. Re-run and capture the focused RED after correction, then obtain a fresh independent Gate 3 review.
+1. Make the filesystem residue fingerprint sensitive to root creation and to plausible bounded runtime/repository residue locations independent of chosen cache filename.
+2. Make the SysV oracle sensitive to reuse/mutation/dependency on a pre-existing task-owned segment, not only newly allocated ids.
+3. Re-run and capture the focused RED after correction, then obtain a fresh independent Gate 3 review.
 
 Gate 4 remains closed.
 
 ## Verification evidence
 
-- `git diff 331b8ac^ 331b8ac -- specs/PILOT-SHLZ-ASSETS-001.md` — reviewed normative v0.2 delta.
-- `git diff 1cd7b78^ 1cd7b78 -- tests/InstallationProcess/pilot_shlz_assets_001_test.php` — reviewed corrective Gate 2 delta.
-- `git diff --check 331b8ac^..1cd7b78 -- specs/PILOT-SHLZ-ASSETS-001.md tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
+- `git diff f4dbe62^ f4dbe62 -- tests/InstallationProcess/pilot_shlz_assets_001_test.php` — reviewed corrective delta.
+- `git diff --check 331b8ac^..f4dbe62 -- specs/PILOT-SHLZ-ASSETS-001.md tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
 - `php -l tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
-- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — intended RED, exit `255`: `expected 503, actual 200, body bytes 6291456`.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — intended RED, exit `255`: overlap expected `503`, actual `200`, body bytes `6291456`; final residue assertion listed nine new current-EUID SysV ids.
+- Post-run inspection — no task fixture paths or worker/server processes remained; exact reported SysV ids `65617`–`65625` were removed and verified absent.
