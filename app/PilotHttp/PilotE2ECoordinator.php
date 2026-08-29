@@ -126,7 +126,9 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     {
         $origin=$r->server['HTTP_ORIGIN']??null;$fetch=$r->server['HTTP_SEC_FETCH_SITE']??null;
         $expectedOrigin='https://'.$r->host;
-        if(PHP_SAPI==='cli-server'&&\preg_match('/^127\.0\.0\.1:[1-9][0-9]*$/D',$r->host)===1)$expectedOrigin='http://'.$r->host;
+        $demoNonce=$r->server['FMONITOR_DEMO_LOOPBACK_NONCE']??null;
+        if(PHP_SAPI==='cli-server'&&\is_string($demoNonce)&&\preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1
+            &&\preg_match('/^127\.0\.0\.1:[1-9][0-9]*$/D',$r->host)===1)$expectedOrigin='http://'.$r->host;
         return $s['actor']===$u->id&&($origin===null||$origin===$expectedOrigin)&&($fetch===null||$fetch==='same-origin');
     }
     private function body(PilotHttpRequest $r,array $allowed):?array{$type=(string)($r->server['CONTENT_TYPE']??'');$length=$r->server['CONTENT_LENGTH']??null;if(!\preg_match('#^application/x-www-form-urlencoded(?:;\s*charset=UTF-8)?$#iD',$type)||!\is_string($length)||!\ctype_digit($length)||(int)$length>16384||(int)$length!==\strlen($r->body))return null;$out=[];$nextInstaller=0;foreach(\explode('&',$r->body)as$part){if($part==='')continue;$pair=\explode('=',$part,2);if(\preg_match('/%(?![0-9A-Fa-f]{2})/',($pair[0]??'').($pair[1]??''))===1)return null;$key=\rawurldecode(\str_replace('+',' ',$pair[0]));$value=\rawurldecode(\str_replace('+',' ',$pair[1]??''));if(\preg_match('/^installerTabIds\[([0-9]+)\]$/D',$key,$m)===1){if((int)$m[1]!==$nextInstaller++||$nextInstaller>500)return null;$key='installerTabIds[]';}if(!\in_array($key,$allowed,true)||!\mb_check_encoding($key,'UTF-8')||!\mb_check_encoding($value,'UTF-8'))return null;$out[$key][]=$value;if($key==='installerTabIds[]'&&\count($out[$key])>500)return null;}if(!isset($out['csrfToken'])||\count($out['csrfToken'])!==1)throw new InvalidCsrfRequest();foreach($out as$key=>$values)if($key!=='installerTabIds[]'&&\count($values)!==1)return null;return $out;}

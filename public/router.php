@@ -37,6 +37,10 @@ if (PHP_SAPI === 'cli-server' && in_array($localServerAddress, ['127.0.0.1','::1
     $loopbackPrincipal=getenv('REMOTE_USER');
     if ($loopbackPrincipal !== false) $_SERVER['REMOTE_USER']=$loopbackPrincipal;
 }
+if(PHP_SAPI==='cli-server'&&$localServerAddress==='127.0.0.1'){
+    $demoNonce=getenv('FMONITOR_DEMO_LOOPBACK_NONCE');
+    if(getenv('FMONITOR_DEMO_LOOPBACK')==='1'&&is_string($demoNonce)&&preg_match('/^[0-9a-f]{32}$/D',$demoNonce)===1)$_SERVER['FMONITOR_DEMO_LOOPBACK_NONCE']=$demoNonce;
+}
 
 if(PHP_SAPI!=='cli-server')$_SERVER['FMONITOR_TRUSTED_REQUEST_HOST']=getenv('FMONITOR_TRUSTED_REQUEST_HOST');
 $response=$entrypoint->handle($_SERVER);$headers=$response->headers;
