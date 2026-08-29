@@ -68,32 +68,42 @@ final class RapidPilotOtiz
             $id = $this->calculate($date); $this->redirect('/pilot/otiz/snapshots/' . $id . '?created=1');
         }
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/accept$#D', $path, $m) === 1) {
-            $id = (int) $m[1]; $row = $this->snapshotRow($id);
-            if ($row['status'] !== 'draft') $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=immutable');
+            $id = (int) $m[1]; $this->db->begin_transaction();
+            $row = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1 FOR UPDATE")->fetch_assoc();
+            if (!is_array($row)) { $this->db->rollback(); $this->fail(404, 'Срез не найден.'); }
+            if ($row['status'] !== 'draft') { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=immutable'); }
             $count = (int) $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND severity='blocker' AND state='open'")->fetch_assoc()['n'];
-            if ($count > 0) $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=blockers');
+            if ($count > 0) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=blockers'); }
             $now = $this->now(); $s = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_otiz_snapshots` SET status='accepted',accepted_at=?,accepted_by_user_id=? WHERE id=? AND status='draft'"); $s->bind_param('sii', $now, $this->userId, $id); $s->execute();
-            $this->event($id, null, 'snapshot_accepted', ['hash' => $row['content_hash']]); $this->redirect('/pilot/otiz/snapshots/' . $id . '?accepted=1');
+            $this->event($id, null, 'snapshot_accepted', ['hash' => $row['content_hash']]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?accepted=1');
         }
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/closures$#D', $path, $m) === 1) {
-            $snapshotId = (int) $m[1]; $snapshot = $this->snapshotRow($snapshotId);
-            if ($snapshot['status'] !== 'accepted') $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=accept-first');
+            $snapshotId = (int) $m[1];
             $objectId = (int) ($_POST['objectId'] ?? 0); $paid = $this->money((string) ($_POST['paid'] ?? '0')); $discipline = $this->money((string) ($_POST['discipline'] ?? '0')); $deadline = $this->money((string) ($_POST['deadline'] ?? '0')); $basis = trim((string) ($_POST['basis'] ?? ''));
-            $object = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$snapshotId} AND object_id={$objectId} LIMIT 1")->fetch_assoc();
             $sum = $paid + $discipline + $deadline;
-            if (!is_array($object) || $sum <= 0 || $basis === '' || $sum > (int) $object['pool_cents']) $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure');
+            if ($paid < 0 || $discipline < 0 || $deadline < 0 || $sum <= 0 || $basis === '' || mb_strlen($basis) > 500) $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure');
+            $artifact = trim((string) ($_POST['artifact'] ?? '')); if (mb_strlen($artifact) > 300) $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure');
+            $this->db->begin_transaction();
+            $snapshot = $this->db->query("SELECT status FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$snapshotId} LIMIT 1 FOR UPDATE")->fetch_assoc();
+            if (!is_array($snapshot)) { $this->db->rollback(); $this->fail(404, 'Срез не найден.'); }
+            if ($snapshot['status'] !== 'accepted') { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=accept-first'); }
+            $object = $this->db->query("SELECT pool_cents,calculation_state FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$snapshotId} AND object_id={$objectId} LIMIT 1 FOR UPDATE")->fetch_assoc();
+            $closed = (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$snapshotId} AND object_id={$objectId}")->fetch_assoc()['n'];
+            if (!is_array($object) || $object['calculation_state'] === 'blocked' || $sum > (int) $object['pool_cents'] - $closed) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure'); }
             $now = $this->now(); $date = substr($now, 0, 10); $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_payment_closures`(snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at,reverses_payment_closure_id) VALUES(?,?,?,?,?,?,?,?,?,?,NULL)"); $artifact = trim((string) ($_POST['artifact'] ?? '')); $s->bind_param('iisiiissis', $snapshotId, $objectId, $date, $paid, $discipline, $deadline, $basis, $artifact, $this->userId, $now); $s->execute();
-            $this->event($snapshotId, $objectId, 'payment_closure_recorded', ['closureId' => $s->insert_id, 'closedCents' => $sum]); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?closed=1');
+            $this->event($snapshotId, $objectId, 'payment_closure_recorded', ['closureId' => $s->insert_id, 'closedCents' => $sum]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?closed=1');
         }
         if (preg_match('#^/pilot/otiz/closures/(\d+)/reverse$#D', $path, $m) === 1) {
-            $closureId = (int) $m[1]; $closure = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE id={$closureId} LIMIT 1")->fetch_assoc();
-            if (!is_array($closure) || (int) $closure['reverses_payment_closure_id'] > 0) $this->fail(404, 'Запись не найдена.');
+            $closureId = (int) $m[1]; $basis = trim((string) ($_POST['basis'] ?? ''));
+            if ($basis === '' || mb_strlen($basis) > 500) $this->redirect('/pilot/otiz?error=reverse-basis');
+            $this->db->begin_transaction();
+            $closure = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE id={$closureId} LIMIT 1 FOR UPDATE")->fetch_assoc();
+            if (!is_array($closure) || (int) $closure['reverses_payment_closure_id'] > 0) { $this->db->rollback(); $this->fail(404, 'Запись не найдена.'); }
             $exists = (int) $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE reverses_payment_closure_id={$closureId}")->fetch_assoc()['n'];
-            if ($exists > 0) $this->redirect('/pilot/otiz/snapshots/' . $closure['snapshot_id'] . '?error=reversed');
-            $basis = trim((string) ($_POST['basis'] ?? '')); if ($basis === '') $this->redirect('/pilot/otiz/snapshots/' . $closure['snapshot_id'] . '?error=reverse-basis');
+            if ($exists > 0) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $closure['snapshot_id'] . '?error=reversed'); }
             $snapshotId = (int) $closure['snapshot_id']; $objectId = (int) $closure['object_id']; $date = substr($this->now(), 0, 10); $paid = -(int) $closure['paid_cents']; $discipline = -(int) $closure['discipline_cents']; $deadline = -(int) $closure['deadline_cents']; $artifact = ''; $now = $this->now();
             $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_payment_closures`(snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at,reverses_payment_closure_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)"); $s->bind_param('iisiiissisi', $snapshotId, $objectId, $date, $paid, $discipline, $deadline, $basis, $artifact, $this->userId, $now, $closureId); $s->execute();
-            $this->event($snapshotId, $objectId, 'payment_closure_reversed', ['closureId' => $closureId, 'reversalId' => $s->insert_id]); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?reversed=1');
+            $this->event($snapshotId, $objectId, 'payment_closure_reversed', ['closureId' => $closureId, 'reversalId' => $s->insert_id]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?reversed=1');
         }
         $this->fail(404, 'Команда не найдена.');
     }
@@ -238,8 +248,11 @@ final class RapidPilotOtiz
 
     private function closureForm(array $snapshot, array $object): string
     {
-        if ($snapshot['status'] !== 'accepted' || (int) $object['pool_cents'] <= 0 || $object['calculation_state'] === 'blocked') return '';
-        return '<details class="fm2-otiz-close"><summary>Зафиксировать выплату или удержание</summary><form method="post" action="/pilot/otiz/snapshots/' . (int) $snapshot['id'] . '/closures"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="objectId" value="' . (int) $object['object_id'] . '"><label class="shlz-field"><span class="shlz-field__label">Выплачено, ₽</span><input class="shlz-input" name="paid" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Дисциплинарное удержание, ₽</span><input class="shlz-input" name="discipline" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Удержание за сроки, ₽</span><input class="shlz-input" name="deadline" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Основание</span><input class="shlz-input" name="basis" required placeholder="ПВР или служебная записка"></label><label class="shlz-field"><span class="shlz-field__label">Артефакт</span><input class="shlz-input" name="artifact" placeholder="Номер документа (необязательно)"></label><button class="shlz-button shlz-button--primary" type="submit">Зафиксировать закрытие</button><small>Доступно не более ' . $this->rub((int) $object['pool_cents']) . '</small></form></details>';
+        $snapshotId = (int) $snapshot['id']; $objectId = (int) $object['object_id'];
+        $closed = (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$snapshotId} AND object_id={$objectId}")->fetch_assoc()['n'];
+        $available = max(0, (int) $object['pool_cents'] - $closed);
+        if ($snapshot['status'] !== 'accepted' || $available === 0 || $object['calculation_state'] === 'blocked') return '';
+        return '<details class="fm2-otiz-close"><summary>Зафиксировать выплату или удержание</summary><form method="post" action="/pilot/otiz/snapshots/' . (int) $snapshot['id'] . '/closures"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="objectId" value="' . (int) $object['object_id'] . '"><label class="shlz-field"><span class="shlz-field__label">Выплачено, ₽</span><input class="shlz-input" name="paid" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Дисциплинарное удержание, ₽</span><input class="shlz-input" name="discipline" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Удержание за сроки, ₽</span><input class="shlz-input" name="deadline" inputmode="decimal" value="0"></label><label class="shlz-field"><span class="shlz-field__label">Основание</span><input class="shlz-input" name="basis" required placeholder="ПВР или служебная записка"></label><label class="shlz-field"><span class="shlz-field__label">Артефакт</span><input class="shlz-input" name="artifact" placeholder="Номер документа (необязательно)"></label><button class="shlz-button shlz-button--primary" type="submit">Зафиксировать закрытие</button><small>Доступно не более ' . $this->rub($available) . '</small></form></details>';
     }
 
     private function closures(int $snapshotId): string
@@ -264,9 +277,12 @@ final class RapidPilotOtiz
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_objects`(snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,regnumber VARCHAR(120) NOT NULL,address VARCHAR(500) NOT NULL,previous_progress_bp INT NOT NULL,current_progress_bp INT NOT NULL,progress_fact_date DATE NOT NULL,premium_cents BIGINT NOT NULL,shaft_bp INT NOT NULL,kss_bp INT NOT NULL,accrued_cents BIGINT NOT NULL,fund_cents BIGINT NOT NULL,closed_before_cents BIGINT NOT NULL,remaining_cents BIGINT NOT NULL,pool_cents BIGINT NOT NULL,distributed_cents BIGINT NOT NULL,undistributed_cents BIGINT NOT NULL,calculation_state VARCHAR(40) NOT NULL,inputs_json JSON NOT NULL,PRIMARY KEY(snapshot_id,object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_allocations`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,tab_id VARCHAR(40) NOT NULL,full_name VARCHAR(300) NOT NULL,position_name VARCHAR(200) NOT NULL,contribution_bp INT NOT NULL,base_ktu_bp INT NOT NULL,adjustment_ktu_bp INT NOT NULL,effective_ktu_bp INT NOT NULL,share_bp INT NOT NULL,amount_cents BIGINT NOT NULL,employment_status VARCHAR(40) NOT NULL,participation_basis VARCHAR(300) NOT NULL,KEY(snapshot_id,object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_issues`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,severity ENUM('blocker','warning') NOT NULL,issue_code VARCHAR(80) NOT NULL,message VARCHAR(600) NOT NULL,owner_role VARCHAR(120) NOT NULL,state ENUM('open','resolved') NOT NULL DEFAULT 'open',resolution VARCHAR(600) NULL,resolved_by_user_id BIGINT UNSIGNED NULL,resolved_at VARCHAR(40) NULL,KEY(snapshot_id,object_id,severity)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-            "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_payment_closures`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,closed_on DATE NOT NULL,paid_cents BIGINT NOT NULL,discipline_cents BIGINT NOT NULL,deadline_cents BIGINT NOT NULL,basis VARCHAR(500) NOT NULL,artifact VARCHAR(300) NOT NULL,created_by_user_id BIGINT UNSIGNED NOT NULL,created_at VARCHAR(40) NOT NULL,reverses_payment_closure_id BIGINT UNSIGNED NULL,KEY(object_id,closed_on),KEY(snapshot_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_payment_closures`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,closed_on DATE NOT NULL,paid_cents BIGINT NOT NULL,discipline_cents BIGINT NOT NULL,deadline_cents BIGINT NOT NULL,basis VARCHAR(500) NOT NULL,artifact VARCHAR(300) NOT NULL,created_by_user_id BIGINT UNSIGNED NOT NULL,created_at VARCHAR(40) NOT NULL,reverses_payment_closure_id BIGINT UNSIGNED NULL,KEY(object_id,closed_on),KEY(snapshot_id),UNIQUE KEY unique_reversal(reverses_payment_closure_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_events`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NULL,object_id BIGINT UNSIGNED NULL,event_type VARCHAR(80) NOT NULL,payload_json JSON NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,KEY(snapshot_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         ]; foreach ($queries as $query) $db->query($query);
+        $table = $db->real_escape_string($prefix . 'fm2_pilot_otiz_payment_closures');
+        $hasUniqueReversal = (int) $db->query("SELECT COUNT(*) n FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}' AND INDEX_NAME='unique_reversal' AND NON_UNIQUE=0")->fetch_assoc()['n'];
+        if ($hasUniqueReversal === 0) $db->query("ALTER TABLE `{$prefix}fm2_pilot_otiz_payment_closures` ADD UNIQUE KEY unique_reversal(reverses_payment_closure_id)");
     }
 
     private function inputs(): array
