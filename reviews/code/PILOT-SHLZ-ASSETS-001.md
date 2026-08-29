@@ -1,51 +1,52 @@
 # Code review: PILOT-SHLZ-ASSETS-001 v0.1
 
 - Gate: 5 — fresh independent code review
-- Reviewer: separately tasked Codex agent `/root/shlz_assets_code_review`
+- Reviewer: separately tasked Codex agent `/root/shlz_assets_code_review_final`
 - Verdict: `CHANGES_REQUESTED`
 - Specification: `dd22aa883407e19f94d5990bb39ff7cce5bf1712`
-- Approved test review: `f56b1418ec4562357a61d15d7e105a9c7dd1ea5e`
-- Reviewed implementation HEAD: `d421a095197c3c5dc5a56f14ca3fc9b9e013d5e9`
+- Approved test review: `7ba5f2b`
+- Reviewed implementation HEAD: `2186132152d8a7d466e7c4b3b3addca4c7220a7d`
 - Core implementation: `4ab55bdaeb7594a275533a11379d8ef25f49d865`
-- Cumulative bootstrap implementations: `3afced4b8f49cb63553837b53dc2967049cfd96f`, `d421a095197c3c5dc5a56f14ca3fc9b9e013d5e9`
+- Corrective implementation: `bdacfec5d3b721d0a4036c706e06006a7b53f27e`
 - Review date: 2026-08-29
 
 ## Verdict
 
-`CHANGES_REQUESTED`. The deterministic asset contract and all 49 regression tests are green, but the exact reviewed head has no required real-Chromium evidence for this slice. In addition, the manifest parser accepts malformed trailing top-level CSS after a valid import prefix instead of failing the graph closed. Gate 5 therefore cannot approve this head.
+`CHANGES_REQUESTED`. The focused asset contract, all 49 InstallationProcess tests, and PHP lint pass at the exact reviewed head. The parser correction closes the previously reported malformed import-suffix defect, and the supplied Chromium run proves successful CSS responses and responsive rendering. Gate 5 nevertheless remains closed because production composition leaks process-external resources and the browser record omits one explicit section 6 oracle.
 
-## Spec findings
+## Standards
 
-### Blocking — required exact-head browser acceptance is absent
+### Blocking — persistent SysV shared-memory leak and undeclared runtime coupling
 
-Specification section 6 requires the implementation author to record Chromium evidence for the final queue and final object card at `1440×900`, `768×1024`, and `320×568`, tied to the exact Git HEAD. It must include the complete stylesheet request graph and MIME, zero console/import errors, computed ownership of `.shlz-*`, `--shlz-*`, and `.fm2-*` rules, overflow results, focus traversal, screenshots, and runtime/version metadata. Section 9 explicitly makes that evidence a Gate 5 requirement and says deterministic Gate 2 does not replace it.
+`app/PilotHttp/PilotHttp.php:93` calls `shm_attach()` for every new PID/canonical-entry key, but only calls `shm_detach()`. Neither `ShlzCssManifest::close()`, production composition close, nor demo cleanup calls `shm_remove()`. Inspection after the focused/full test run showed many unattached 131072-byte segments (`nattch=0`) still present in `ipcs -m`, so these are persistent kernel resources rather than composition-lifetime state.
 
-No evidence referencing `d421a09` or `PILOT-SHLZ-ASSETS-001` exists in the repository or the established evidence location named by the prior UI review. Consequently the reviewer cannot establish that the split export is actually applied by Chromium or that all browser implications remain sound at this head.
+This also adds an undocumented hard dependency on PHP `sysvshm`. The 32-bit CRC key can be reused after PID cycling or collide with an unrelated segment, making a valid composition compare against a stale snapshot and fail. This violates the development-process Gate 5 quality/integration-boundary requirement. Replace the coordination with lifecycle-owned state that is explicitly removed, or avoid process-external state, and cover cleanup/stale-key behavior through the required SSD/TDD gates.
 
-### Blocking — malformed graph can be accepted
+### Non-blocking — Divergent Change smell
 
-`app/PilotHttp/PilotHttp.php:98` stops parsing as soon as the next top-level token is neither whitespace/comment, accepted `@charset`/`@layer`, nor `@import`. This is correct after an ordinary style rule, but it also silently accepts malformed syntax after the import prefix, for example a valid import followed by an unterminated top-level comment. The import-rule suffix is also accepted by the broad `[^;{}]*` expression without validating the permitted layer/supports/media grammar.
+`app/PilotHttp/PilotHttp.php:79-102` combines descriptor identity validation, graph traversal, CSS grammar parsing, path resolution, resource bounds, and IPC coordination in dense single-line methods. This is a judgment-call maintainability smell, not a separate rejection: split the named concerns or at least format the control flow so security-sensitive behavior is reviewable.
 
-That conflicts with sections 2, 3, and 5, which require a malformed graph to fail closed as exact `503`, and can surface as a Chromium CSS parse/import error forbidden by section 6. The approved test's generic malformed-import cases do not catch this plausible regression. Fixing the behavior needs a focused public-seam RED assertion and therefore restarts at Gate 2/test review under the mandatory process.
+## Spec
 
-## Standards findings
+### Blocking — computed-style evidence lacks the required ownership oracle
 
-### Blocking process finding in the requested cumulative head
+Specification section 6.3 requires the Chromium oracle to record the property/value **and owning stylesheet URL** for an applied public `.shlz-*` component rule, a `--shlz-*` custom property, and an application `.fm2-*` rule. Evidence at `~/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-2186132/` is tied to exact SHA `2186132` and records Chromium `151.0.7922.34`, screenshots, CSS responses/MIME, focus, and overflow. However, `report.json` records only aggregate computed values for `link`, `status`, and `main`; it records neither a `--shlz-*` property/value nor the owning stylesheet URL for any of the three required rule classes. `responsive-final-report.json` likewise contains no computed-rule ownership data.
 
-The cumulative history places production commit `3afced4` before its executable bootstrap specification `9193839`. `docs/development-process.md` requires Gate 1 approval before the failing test and implementation, with each gate passed in order. This does not invalidate the correctly ordered core asset sequence (`dd22aa8 → 277e08f/0ed3874/9f87f1f → f56b141 → 4ab55bd`), but the requested cumulative implementation cannot be declared fully workflow-compliant without an explicit project-level resolution of that bootstrap slice.
+The screenshots and successful `shlz.css` request cannot replace this explicit oracle. Record the missing exact-head evidence after the implementation correction.
 
-### Non-blocking maintainability observations
+### Resolved prior findings
 
-- `bin/fmonitor2-pilot-demo.php:102-113` imports descriptor primitives and `ShlzCssManifest` from the monolithic HTTP implementation and independently enumerates/reads the graph. This creates Feature Envy and shotgun coupling between demo bootstrap and HTTP asset internals. A narrow graph-preflight service/value would preserve ownership without broad refactoring in this gate.
-- `bin/fmonitor2-pilot-demo.php:212-219` is a deliberately small smoke client, but it overwrites repeated response headers and does not model transfer framing. That is acceptable for the current built-in-server CSS smoke, yet its limited contract should remain contained.
-
-No separate traversal, route-priority, identity, MIME, HEAD-body, graph-limit, authorization, cookie/session, or database-access defect was found. Exact manifest membership prevents a syntactically valid route from selecting an arbitrary file; malformed routes and unsupported methods are rejected before identity, DB, graph, or body reads. Descriptor identity/size revalidation remains active for `GET` and `HEAD`.
+- `bdacfec` validates the supported `layer`/`supports`/media import suffix grammar; the independently corrected test at `c443f3c` is approved by `7ba5f2b` and passes.
+- Exact manifest routing, malformed-route/method priority, unknown-route behavior, traversal/symlink/identity protections, graph limits, GET/HEAD byte and MIME parity, authorization bypass for public assets, cookie/session absence, and fail-closed graph handling pass at the public seam.
+- `2186132` strengthens post-bind demo smoke classification and validates all graph members, root HEAD parity, exact lengths, and an unknown manifest route.
 
 ## Verification evidence
 
-- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — `PASS: PILOT-SHLZ-ASSETS-001 public CSS manifest`.
-- All 49 `tests/InstallationProcess/*_test.php`, run sequentially — all `PASS`.
-- `find app bin public tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l` — all files report no syntax errors.
-- Working tree already contained untracked `.test-artifacts/`; this review did not modify or remove it.
+- `git rev-parse HEAD` — exact `2186132152d8a7d466e7c4b3b3addca4c7220a7d`.
+- `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS.
+- All 49 `tests/InstallationProcess/*_test.php`, sequentially — PASS.
+- `find app bin public tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l` — PASS.
+- Chromium evidence inspected at `~/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-2186132/`: exact-head screenshots and responsive/assets records present; required ownership/custom-property oracle absent.
+- `ipcs -m` after verification — numerous unattached 131072-byte segments remain; review did not remove them.
 
-Gate 5 remains closed for `PILOT-SHLZ-ASSETS-001 v0.1` at `d421a09`.
+Gate 5 remains closed for `PILOT-SHLZ-ASSETS-001 v0.1` at `2186132`.
