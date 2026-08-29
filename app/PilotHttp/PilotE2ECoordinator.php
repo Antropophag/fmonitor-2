@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
 
 use FMonitor2\InstallationProcess\ArtifactUnavailableException;
-use FMonitor2\InstallationProcess\ArtifactStoreUnavailableException;
 use FMonitor2\InstallationProcess\Clock;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessConfig;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessFactory;
@@ -92,7 +91,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
 
     private function artifact(PilotHttpRequest $r,array $route,HttpUser $user):PilotHttpResponse
     {
-        [$connection,$processPrefix,$legacyPrefix,$root]=$this->dependencies->commandResources();try{$a=ProductionInstallationProcessFactory::createArtifactService($connection,new ProductionInstallationProcessConfig($processPrefix,$legacyPrefix,$root))->download($route['id'],$route['version'],$route['type'],$user->id);}catch(ArtifactStoreUnavailableException){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}catch(ArtifactUnavailableException){return $this->response(404,"Not found.\n",[],$r->method);}if(!($a['accepted']??false))return $this->response(403,"Access denied.\n",[],$r->method);$filename=$a['filename']??'';$bytes=$a['bytes']??'';if(!\is_string($filename)||\preg_match('/^[\x20-\x21\x23-\x2E\x30-\x5B\x5D-\x7E]+$/D',$filename)!==1||!\is_string($bytes))return $this->response(404,"Not found.\n",[],$r->method);return $this->response(200,$bytes,['Content-Type'=>$a['mediaType'],'Content-Disposition'=>'attachment; filename="'.$filename.'"'],$r->method);
+        [$connection,$processPrefix,$legacyPrefix,$root]=$this->dependencies->commandResources();try{$a=ProductionInstallationProcessFactory::createArtifactService($connection,new ProductionInstallationProcessConfig($processPrefix,$legacyPrefix,$root))->download($route['id'],$route['version'],$route['type'],$user->id);}catch(ArtifactUnavailableException){return $this->response(404,"Not found.\n",[],$r->method);}if(!($a['accepted']??false))return $this->response(403,"Access denied.\n",[],$r->method);$filename=$a['filename']??'';$bytes=$a['bytes']??'';if(!\is_string($filename)||\preg_match('/^[\x20-\x21\x23-\x2E\x30-\x5B\x5D-\x7E]+$/D',$filename)!==1||!\is_string($bytes))return $this->response(404,"Not found.\n",[],$r->method);return $this->response(200,$bytes,['Content-Type'=>$a['mediaType'],'Content-Disposition'=>'attachment; filename="'.$filename.'"'],$r->method);
     }
 
     private function commandLogicException(PilotHttpRequest $r,array $route,HttpUser $user,\LogicException $error):PilotHttpResponse
