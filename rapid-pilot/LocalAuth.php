@@ -98,7 +98,7 @@ final class RapidPilotLocalAuth
         if(!is_dir($sessionPath)&&!mkdir($sessionPath,0700,true)&&!is_dir($sessionPath))throw new RuntimeException('Session storage unavailable');
         if(!is_writable($sessionPath))throw new RuntimeException('Session storage unavailable');
         session_save_path($sessionPath);
-        session_name('fm2auth');
+        session_name($this->sessionCookieName());
         session_set_cookie_params(['lifetime'=>604800,'path'=>'/pilot','secure'=>$this->isHttps(),'httponly'=>true,'samesite'=>'Strict']);
         session_start(['use_strict_mode'=>1,'use_only_cookies'=>1,'cookie_httponly'=>1,'cookie_samesite'=>'Strict','gc_maxlifetime'=>604800]);
     }
@@ -125,6 +125,11 @@ final class RapidPilotLocalAuth
     private function allowedEmail(string $email):bool{return filter_var($email,FILTER_VALIDATE_EMAIL)!==false&&preg_match('/^[^@]+@shlz\.ru$/Di',$email)===1;}
     private function now():string{return(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);}
     private function isHttps():bool{return(string)($_SERVER['HTTPS']??'')==='on'||(string)($_SERVER['HTTP_X_FORWARDED_PROTO']??'')==='https';}
+    private function sessionCookieName():string
+    {
+        $host=(string)($_SERVER['HTTP_HOST']??'');
+        return preg_match('/:(\d{1,5})$/D',$host,$match)===1?'fm2auth_'.$match[1]:'fm2auth';
+    }
     private function safeReturnTo(string $path):string{return preg_match('#^/pilot/(?!assets(?:/|$)|login(?:/|$)|logout(?:/|$))[A-Za-z0-9/_?&=.%~-]*$#D',$path)===1?$path:'/pilot/objects';}
     private function initials(string $name):string{$parts=preg_split('/\s+/u',trim($name),3,PREG_SPLIT_NO_EMPTY)?:[];return mb_strtoupper(implode('',array_map(static fn(string $p):string=>mb_substr($p,0,1),array_slice($parts,0,2))));}
     private function redirect(string $path):never{header('Location: '.$path,true,303);header('Cache-Control: no-store');exit;}
