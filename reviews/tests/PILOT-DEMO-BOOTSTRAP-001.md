@@ -1,26 +1,23 @@
 # Test review: PILOT-DEMO-BOOTSTRAP-001 v0.1
 
-- Gate: 3 — fresh independent restart after Gate 5 safety findings
-- Reviewer: separately tasked agent `/root/bootstrap_test_review_safety`
-- Independence: reviewer authored neither specification, test, nor Gate 4 implementation
+- Gate: 3 — fresh review after browser-cookie correction
+- Reviewer: separately tasked agent `/root/bootstrap_cookie_test_review`
+- Independence: reviewer authored neither specification nor reviewed test
 - Test author: separately tasked agent (commit author `antropophag`)
-- Reviewed commit: `a1fca72`
+- Reviewed commit: `3cda9ba`
 - Specification commit: `71e5e50`
 - Specification: `specs/PILOT-DEMO-BOOTSTRAP-001.md`, version `0.1`, `APPROVED`
-- Public seam: separate `php bin/fmonitor2-pilot-demo.php [start|reset|status|cleanup]` process, its printed loopback URL, and browser-shaped HTTP requests to production `public/router.php`
+- Public seam: separate demo CLI, its printed loopback HTTP URL, and response headers/browser-shaped requests served by production `public/router.php`
 - Date: `2026-08-29`
-- Verdict: `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
 
 ## Findings
 
-None.
-
-- **Gate 5 safety findings are executable — pass.** The corrective test distinguishes the missing protections with four independent observations: a restart of the initial generation must preserve the complete actionable initial projection; an ordinary built-in-server composition must still reject a same-origin plain-HTTP command; reset with its configured port occupied must preserve byte-identical `active.json`, the prior generation tree, and the publicly usable prior process state; and cleanup must preserve a forged same-fingerprint generation plus same-prefix table when its owner file lacks the independent database nonce marker.
-- **Traceability and allowed seams — pass.** These assertions trace to specification sections 2, 3, 4, 6, 7, and 9. Process behavior is observed through browser-shaped requests to the production router. SQL is used only for the explicitly permitted isolated fixture/catalog and ownership-containment evidence; it is not an oracle for preparation, registration, opening, restart process state, or artifact behavior.
-- **Sensitivity — pass.** The ordinary-router assertion fails against reviewed production commit `316e8b7` with `303` instead of the independently fixed `403 / Invalid request.\n`, directly exposing the demo-only HTTP relaxation leaking into normal composition. The occupied-port checks would catch premature active-manifest replacement or mutation of generation 1. The interrupted fixture now has a plausible owner marker and artifact directory, so accepting filesystem presence as completeness is observable. The forged-generation case specifically defeats cleanup based only on path, fingerprint, generation number, or table-prefix agreement.
-- **Expected-value independence — pass.** Expected status, error bytes, routes, fixture people and dates, initial/final labels, prefix grammar, generation numbers, immutable tree bytes, and ownership outcomes are literal consequences of the approved specification. They are not derived from production output, private bootstrap methods, renderer output, or process-table business rows.
-- **Rejected cases and preservation — pass.** The new cases verify both rejection and absence of collateral effects: a rejected ordinary HTTP POST leaves the demo queue unchanged; occupied-port reset leaves the active generation usable; foreign marker/prefix and forged marker/table inputs remain intact; interrupted generation 2 remains inactive while reset advances to generation 3.
-- **Determinism, bounds, and cleanup — pass.** Ports, database names, test home, and fixture tokens remain unique. All child collection remains deadline-bounded with TERM/KILL escalation and the collector self-check. The independent RED completed in 16.0 seconds; the outer `finally` removed both unique databases and the unique home, and post-run process inspection found no bootstrap/router child. The added ordinary router is stopped in its own `finally`.
+- **Blocking — cookie attributes are not asserted exactly.** Both new policy checks use substring membership. `str_contains($setCookie, 'Path=/pilot')` also accepts `Path=/pilot-anything`; the combined checks similarly do not prove that `HttpOnly`, `SameSite=Strict`, and `Path=/pilot` are complete semicolon-delimited cookie attributes. Consequently the test can pass a plausible path-scope regression and does not establish the required exact non-transport protections at the public `Set-Cookie` seam. Parse the header into exact semicolon-delimited attributes (or assert an independently fixed exact attribute suffix/set) for both ordinary production and trusted demo responses. Preserve the exact demo absence of the standalone `Secure` attribute and ordinary production presence of it.
+- **Traceability — otherwise pass.** The exception is required by specification sections 1, 4, 5, 6, and 8 together: the operator must complete ordinary browser POSTs at the printed `http://127.0.0.1` URL without manual cookie substitution, while CSRF/session remain the production contract. A `Secure` session cookie is therefore unusable for that approved launch contract. Comparing the demo CLI composition with an ordinary production-router composition correctly bounds the transport exception to trusted demo startup.
+- **Public seam and sensitivity — otherwise pass.** The assertions observe the real public `Set-Cookie` response header, not a private session helper. The independent run provisions the bootstrap, reaches the trusted demo response, and fails because current production still emits `Secure`; this is the intended missing behavior rather than a syntax, fixture, MariaDB, port, or bootstrap failure. The ordinary composition assertion passes first and proves its current cookie retains the production transport policy.
+- **Expected-value independence and preservation — otherwise pass.** Cookie name, loopback HTTP exception, and retained protections come from the approved browser launch contract and established production security contract, not planned implementation. The existing subsequent full browser-shaped POST journey remains capable of detecting a missing usable session, and the ordinary HTTP POST rejection plus unchanged demo projection guards against broadening origin acceptance or process mutation.
+- **Determinism and cleanup — pass.** The independent RED completed in 16 seconds with the test's bounded child-process cleanup and isolated database/home fixtures.
 
 ## RED evidence
 
@@ -29,31 +26,31 @@ $ php -l tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 No syntax errors detected in tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 
 $ php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
-PHP Fatal error: Uncaught TestFailure: ordinary built-in/router composition remains HTTPS-origin-only
-Expected: array (0 => 403, 1 => 'Invalid request.\n')
-Actual:   array (0 => 303, 1 => '')
-at tests/InstallationProcess/pilot_demo_bootstrap_001_test.php:169
+PHP Fatal error: Uncaught TestFailure: trusted loopback HTTP demo cookie omits Secure for real browser POST
+Expected: false
+Actual: true
+at tests/InstallationProcess/pilot_demo_bootstrap_001_test.php:177
 exit 255
 ```
 
-The bootstrap provisions successfully, the public launch smoke and initial restart assertions pass, and execution reaches the new normal-composition request. This is the intended missing production safety behavior, not a syntax, MariaDB, fixture, port, or process-collection failure.
+The RED is honest and reaches the public response-header seam after successful provisioning and ordinary-production checks.
 
 ## Reviewed manifest
 
 ```text
 71e5e50  specification
-a1fca72  corrective test
+3cda9ba  corrective test
 e6b082c9b2ed2bd0c8aca370fa785dd2aa25a38901c12d620f8b6e1e1d048263  specs/PILOT-DEMO-BOOTSTRAP-001.md
-67d5a8122a08a465ae4e35a2e5bb66051a860eaf9f3c272f76a6f55e1897537c  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+01d592adc2e8d6fc421c4b33bf6fbbf9037e1db55992f88a56e68d2c63e3dd40  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
 800d135a043633260ce59440579f35f4dcf16553c61f7e149d82825c9e6c3509  tests/bootstrap.php
+fceab9b40c2d3fe766217e2cda2d4d54966cef141bc6cd8fe7a6e90836d2cd38  app/PilotHttp/PilotE2ECoordinator.php
 ```
-
-Any change to the specification, reviewed test, bootstrap, helper seam, or relevant production router/composition invalidates this approval and requires a fresh independent Gate 3 review.
 
 ## Required changes
 
-None. Gate 3 is `APPROVED`; Gate 4 may make the minimal production changes required by this reviewed test without changing its expectations.
+1. Replace substring checks for `HttpOnly`, `SameSite=Strict`, and `Path=/pilot` with exact cookie-attribute token/set checks in both ordinary-production and trusted-demo assertions.
+2. Re-run the focused test and request a fresh independent Gate 3 review. Gate 4 must not begin from commit `3cda9ba`.
 
 ## Superseded review history
 
-Earlier Gate 3 rounds reviewed the initial tracer, completeness/safety corrections, bounded process collection, and fixture database selection. This fresh approval supersedes those records for commit `a1fca72` after the Gate 5 safety restart.
+The prior approval covered corrective test commit `a1fca72`. Test commit `3cda9ba` changed the reviewed executable contract and invalidated that approval.
