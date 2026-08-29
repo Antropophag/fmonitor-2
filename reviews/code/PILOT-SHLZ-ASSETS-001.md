@@ -1,58 +1,53 @@
 # Code review: PILOT-SHLZ-ASSETS-001 v0.2
 
 - Gate: 5 — fresh independent code review
-- Reviewer: separately tasked Codex agent `/root/shlz_assets_v2_code_review`
-- Verdict: `CHANGES_REQUESTED`
+- Reviewer: separately tasked Codex agent `/root/shlz_assets_code_review_end`
+- Verdict: `APPROVED`
 - Specification: `331b8ac9616b99162fe75b7bc501e1dc223a9d73`
-- Approved test review: `3f1d67165e3e178e6c39eb3721f2cb8aee2e8342`
-- Reviewed implementation HEAD: `545fdfa935e15d8dabc68922637537cebe5d9bf7`
+- Approved test review: `a1ad44b539a9bbf5463aedce2332c7e2292b4583`
+- Reviewed implementation HEAD: `df765325fe1a3823dcffc534a7fc05b376328657`
 - Review date: 2026-08-29
 
 ## Verdict
 
-`CHANGES_REQUESTED`. The focused test passes three consecutive runs, the bootstrap contract and all 49 InstallationProcess tests pass, PHP lint/diff checks pass, no SysV residue remains, and exact-head Chromium evidence supplies the required CSSOM provenance and responsive/focus records. Gate 5 remains closed because the implementation does not perform the specified one-open, whole-graph atomic capture and rejects/accepts owner modes differently from the approved contract. The reviewed test does not expose these plausible regressions, so correction returns through Gate 2 and fresh independent Gate 3 approval.
+`APPROVED`. No blocking Standards or Spec finding remains. The implementation now performs one-open, same-descriptor whole-graph capture/revalidation/close and serves only captured bytes. Trusted owner modes, parser/routes/security behavior, cleanup, the approved behavioral test and exact-head browser evidence conform to the approved v0.2 specification.
 
 ## Standards
 
-### Blocking — response is not produced from one atomic captured graph
+No finding.
 
-`app/PilotHttp/PilotHttp.php:93-97` opens and closes each member during `walk()`, then opens and closes every member again in the constructor's validation loop. `asset()` subsequently creates another `ManifestCssAsset`, and the selected route is opened a third time when its body is read. Captured member bytes are never retained in the manifest.
-
-This contradicts specification section 3's `open once`, keep-descriptors-open, rewind/re-read, close-once and “response from captured bytes” algorithm. It also leaves a graph-consistency window after the constructor-wide validation: another member or directory can change before the selected route is read, while only the selected file's identity/hash is checked again. The response therefore is not proven to belong to the already validated whole graph. Store request-local captured bytes and lifecycle-owned descriptors, perform the attempt-all final graph revalidation on those same descriptors, close them exactly once, and select the route only from the captured mapping.
-
-### Medium — transport timing hack changes unrelated failures
-
-`public/router.php:18` flushes headers and sleeps for every CLI-server `503`, including non-asset failures. This unexplained magic delay is outside the asset boundary and conflicts with Gate 4 minimality; it is also a judgment-call Divergent Change/Shotgun Surgery smell. Remove it and make the capture itself establish the pre-header result deterministically.
-
-### Medium — security boundary is compressed beyond auditability
-
-`app/PilotHttp/PilotHttp.php:83,93,97-103` compresses trust establishment, ownership/mode checks, traversal, parsing, hashing and revalidation into single-line methods. This is a judgment-call Divergent Change/Mysterious Name smell. Split and format the security-sensitive capture phases so their ordering and cleanup can be audited.
+- `ShlzCssManifest::walk()` opens each unique member once and retains that exact resource in the request-owned handle map. `revalidate()` checks the still-open descriptor and path identity, rewinds and rereads that same descriptor, and verifies its captured SHA-256 before any response is selected.
+- Constructor cleanup is attempt-all across retained handles and preserves the first capture/revalidation failure over a later close failure. Successfully captured bytes are exposed through `CapturedCssAsset`; response construction does not reopen a filesystem path.
+- No response-timing delay or router flush hack exists. No process-global cache, watcher, subprocess, filesystem manifest/lock/sentinel, APCu or SysV coordination was introduced.
+- The security-sensitive code remains compact, but the phases and ownership are explicit enough to audit in this narrow module. No actionable smell or unrelated refactor was found in the reviewed implementation delta.
 
 ## Spec
 
-### Blocking — trusted root owner mode is narrower than approved
+No finding.
 
-Specification section 2 permits one trusted owner whose UID is either application eUID or `0`. `app/PilotHttp/PilotHttp.php:93` instead requires root UID to equal eUID and assigns only eUID as trusted. A valid root-owned export is therefore incorrectly returned as `503` when the application is non-root.
+- Dist-root ownership accepts exactly root UID or application eUID; every graph directory/member must retain the same trusted UID. Directories require owner read/search and reject group/other write; files require owner read, reject group/other write and executable bits.
+- Root/member/directory identity includes device, inode, type/mode, owner, size where applicable and mtime. Whole-graph path and same-descriptor revalidation occurs before route selection, with captured byte/hash equality and fail-closed cleanup.
+- Approved public tests cover the fixed split manifest, recursive grammar, manifest-only routes, GET/HEAD parity, route/method priority, owner/mode cases, symlink/traversal and drift rejection, graph bounds, legitimate between-request replacement, redaction, no mutation and cleanup.
+- Prior parser, route, auth, Host, no-cookie/no-session and pilot.css ownership contracts remain green in the complete InstallationProcess suite.
 
-### Blocking — owner directory permissions are not enforced
+## Browser evidence
 
-Specification section 2 requires every directory to have owner read/search permission. `captureDirectory()` at `app/PilotHttp/PilotHttp.php:98` rejects group/other write but never requires owner `r+x` bits. `validateComponents()` checks effective `is_readable`/`is_executable`, which may succeed via group/other permissions; such a directory violates the exact owner-mode contract but can be accepted. Require owner mode `0500 == 0500` for every captured directory, including the dist root.
+Exact-head evidence is recorded at `/home/antropophag/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-df76532/`.
 
-### Verified conformance and evidence
-
-- Parser, route/method priority, manifest-only selection, public/no-identity behavior, GET/HEAD parity, graph limits, symlink rejection and no external cache/shared-memory implementation are exercised and pass at the public seam.
-- Exact-head evidence at `/home/antropophag/code/fmonitor-2-visual-tools/evidence/final-pilot-acceptance-545fdfa/` records Chromium journey screenshots, 1440/768/320 responsive layouts without overflow, visible keyboard focus, empty per-page errors, successful CSS responses, and CSSOM ownership for a `--shlz-*` custom property, `.shlz-button`, and `.fm2-shell`.
-- No committed/generated manifest, cache, lock, temp, sentinel, subprocess watcher, SysV segment or semaphore dependency was found.
+- Evidence metadata is bound to `df765325fe1a3823dcffc534a7fc05b376328657`.
+- `shlz.css` and `pilot.css` requests are `200` with `text/css; charset=UTF-8`.
+- CSSOM provenance identifies a public `--shlz-*` property and `.shlz-button` in `/pilot/assets/shlz.css`, plus `.fm2-shell` in `/pilot/assets/pilot.css`.
+- Queue/card checks at 1440, 768 and 320 report no horizontal overflow, visible focus and empty page/console/CSS error arrays. The two general journey `ERR_ABORTED` entries are the browser navigation signals for the two successful artifact downloads, not stylesheet or application failures; both downloaded files are present in the evidence set.
 
 ## Verification evidence
 
-- `git rev-parse HEAD 545fdfa 331b8ac 3f1d671` — exact refs resolve; HEAD is `545fdfa935e15d8dabc68922637537cebe5d9bf7`.
-- `git diff --check 3f1d671..545fdfa` — PASS.
-- `php -l app/PilotHttp/PilotHttp.php`; `php -l bin/fmonitor2-pilot-demo.php`; `php -l public/router.php` — PASS.
+- Exact refs: HEAD `df765325fe1a3823dcffc534a7fc05b376328657`; spec `331b8ac9616b99162fe75b7bc501e1dc223a9d73`; approved test review `a1ad44b539a9bbf5463aedce2332c7e2292b4583`.
 - `php tests/InstallationProcess/pilot_shlz_assets_001_test.php` — PASS in three consecutive runs.
 - `php tests/InstallationProcess/pilot_demo_bootstrap_001_test.php` — PASS.
 - All 49 `tests/InstallationProcess/*_test.php`, sequentially — PASS.
-- `ipcs -m`; `ipcs -s` — no segments or semaphore arrays.
-- Residue scan for `psa-*`, lock and sentinel artifacts — empty.
+- PHP lint for production asset/application entrypoints and the focused test — PASS.
+- `git diff --check a1ad44b..df76532` — PASS.
+- `ipcs -m`; `ipcs -s` — no shared-memory segments or semaphore arrays.
+- Residue scan for `psa-*`, lock and manifest-cache artifacts — empty; worktree clean before this review record.
 
-Gate 5 remains closed for `PILOT-SHLZ-ASSETS-001 v0.2` at `545fdfa`.
+Gate 5 is approved for `PILOT-SHLZ-ASSETS-001 v0.2` at exact implementation HEAD `df765325fe1a3823dcffc534a7fc05b376328657`.
