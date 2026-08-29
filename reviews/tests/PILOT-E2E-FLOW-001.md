@@ -1,60 +1,68 @@
-# Test review: PILOT-E2E-FLOW-001 v0.3
+# Test review: PILOT-E2E-FLOW-001 v0.4
 
-- Gate: 3 — fresh independent review of the unified command-time oracle
-- Reviewer: separately tasked agent `/root/e2e_test_review_v4`
+- Gate: 3 — fresh independent review
+- Reviewer: separately tasked agent `/root/e2e_test_review_v7`
 - Test author: separately tasked Gate 2 author; reviewer authored neither reviewed input
-- Specification commit: `d99df4e0eb8119f39281daa3cb99175c9880ffd4`
-- Test commit / reviewed artifact: `0bbc51e56607dea57f81010ead1e0a9d40cdf6f3`
-- Specification: `specs/PILOT-E2E-FLOW-001.md`, version `0.3`, `APPROVED`
+- Specification commit: `d211c92eea2e4980e6ebee5c2765d677cce76f14`
+- Test commit / reviewed artifact: `3dec4f565e7af73f4d5894a46bce0aa141b65aa6`
+- Specification: `specs/PILOT-E2E-FLOW-001.md`, version `0.4`, `APPROVED`
 - Test: `tests/InstallationProcess/pilot_e2e_flow_001_test.php`
-- Public seam: configured production raw HTTP under `/pilot`, isolated MariaDB `fm2_*` state, and production artifact store
+- Public seam: configured production raw HTTP under `/pilot`, public process projections, and public `AssignmentOrderArtifactService`
 - Date: `2026-08-29`
-- Verdict: `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
 
 ## Findings
 
-None.
+1. **Blocking — the v0.4 fault case is not a separate isolated fixture and does not contain exactly one fault.** Lines 73–75 reuse the database, artifact root, cookie, prepared state, and expected values of the still-running main journey. They then stop that journey's server, inject a private-table rename fault and a root-permission fault in sequence, issue one request to each of two compositions, restart the journey, and continue registration/opening. Section 9 permits one separate isolated fixture with its own unique-prefix database/root, prepared through the public seam, exactly one pre-start reversible fault, and exactly one failure request. Reusing and mutating the main fixture also violates the reiterated uninterrupted main-journey boundary.
 
-## Review assessment
+2. **Blocking — the private-table rename remains outside the approved fixture boundary.** `RENAME TABLE fm2_order_artifacts ...` mutates an internal process/artifact table. Section 9 limits direct SQL to ordinary pre-request external/case fixture setup and cleanup; v0.4's narrow permission does not turn private `fm2_*` tables into a fault-injection seam. The table is restored in `finally`, but restoration does not authorize the arrangement.
 
-- **Normative time oracle:** v0.3 correctly makes prepare use `2026-08-27T12:30:00+03:00`, derives `assignmentOrderDate = 2026-08-27` from that exact instant in `Europe/Moscow`, then advances the production clock to the already approved registration and opening instants. This matches `ORDER-PREPARE-002` sections 5 and 7, whose successful command obtains the business date from the server command moment and records that same moment as `occurred_at`, plus `DECISION-004`'s `Europe/Moscow` rule. It removes the forbidden independent `FMONITOR_BUSINESS_DATE` oracle.
-- **Traceability and sensitivity:** the test cites approved spec v0.3 at `d99df4e`. Its fixture now exposes only `FMONITOR_NOW` for the prepare instant. The unchanged card/action assertion is deliberately sensitive to production composition still requiring an independent business-date environment value, while the final durable-event assertion pins all three exact command instants.
-- **Correction scope:** relative to previously approved test commit `815e4e9`, the executable changes are limited to four time-oracle edits: spec citation, removal of `FMONITOR_BUSINESS_DATE` plus correction of prepare `FMONITOR_NOW`, one server restart advancing the clock before registration, and the expected prepare event instant. No assertion is deleted or weakened.
-- **Coverage unchanged:** all prior raw-HTTP journey, routing/method, capability/authentication, CSRF/body, PRG/error, validation, concurrency, queue/card, artifact bytes/integrity, append-only persistence, no-task, and no-legacy-write assertions remain. The literal artifact oracle is correctly unchanged because the derived order date remains `2026-08-27`.
-- **Expected-value independence:** the three instants and derived prepare date are literals fixed by approved v0.3 and inherited domain contracts, not read from production output. Artifact lengths/hashes retain their independently derived v0.2 oracle. No implementation detail, mock, private method, or stored output is used to establish an expectation.
-- **Determinism and isolation:** the test uses exact clock values, identities, randomized bounded database/user/artifact names, production migrations, real MariaDB and production HTTP composition, with `finally` cleanup. Restarting the server between command phases deterministically changes only the production clock input; persisted process state and client cookie remain stable.
+3. **Blocking — the existing integrity mutation is still performed inside the main journey and is not finally-restored.** Line 76 writes `corrupt` directly to a hard-coded content-addressed path after the fault compositions, makes another artifact request, then restores the bytes only on the assertion-success path. Section 9 requires filesystem fault setup/restoration to target the isolated fixture and restoration to run in mandatory `finally`; it expressly keeps filesystem/manual intervention forbidden between main-journey requests. The required integrity rejection must be expressed without weakening those boundaries.
+
+4. **Resolved aspect — the new public restoration oracle is suitable once moved into a compliant isolated case.** Fresh production connections construct the public artifact service before and after the faults, download both artifacts through `AssignmentOrderArtifactService`, and compare complete results. Together with the exact public queue-body comparison, this avoids private rows as expected values and observes process projection plus restored bytes/metadata. Connection and the two newly added fault restorations use `finally`.
+
+5. **Exact request and response sensitivity are individually present but do not cure the fixture violation.** Each of the two dedicated compositions receives one exact artifact GET and asserts redacted `503`, `Service unavailable.\n`, and `Retry-After: 60`. The approved contract, however, permits one fault/composition/request in one separate case, not two one-request fault compositions embedded in the main journey.
+
+6. **Determinism risk.** `chmod($artifactRoot, 0000)` is not a portable unreadability oracle when the test may run with privileges that bypass mode bits. A precise task-owned blob rename is the specification's deterministic example and can serve as the sole isolated fault without depending on execution identity.
 
 ## RED verification
 
-Command run in a clean detached worktree at exact commit `0bbc51e`:
+Command run in the shared feature workspace with reviewed test bytes matching commit `3dec4f5`:
 
 ```text
 $ php tests/InstallationProcess/pilot_e2e_flow_001_test.php
-PHP Fatal error: Uncaught TestFailure: launch action visible Сформировать распоряжение
-Expected: true
-Actual: false
-at tests/InstallationProcess/pilot_e2e_flow_001_test.php:54
+PHP Fatal error: Uncaught TestFailure: artifact projection unexpected DB failure redacted 503
+Expected: [503, "Service unavailable.\n", "60"]
+Actual:   [404, "Not found.\n", null]
+at tests/InstallationProcess/pilot_e2e_flow_001_test.php:34
+called from tests/InstallationProcess/pilot_e2e_flow_001_test.php:74
 exit code: 255
 ```
 
-The test completes schema creation, all production migrations and fixture setup, starts the production HTTP server, and successfully reads both queue and object card. It first fails because the production card composition still treats the prepare command as unconfigured when the now-forbidden separate `FMONITOR_BUSINESS_DATE` input is absent. This is the intended missing clock-driven UI/composition behavior, not a broken database fixture, server setup, HTTP transport, dependency, or artifact oracle.
+The test reaches the first infrastructure-classification assertion and fails for the missing redacted `503` behavior rather than setup/authentication/transport failure. This is a sensitive RED, but Gate 3 cannot approve a test whose fault fixture contradicts the approved observable contract.
 
 ## SHA-256 reviewed-input manifest
 
 ```text
-d3976ec3a49f81763a1c02d7a7fa8bcf532b69b88e240a3549fbac1333821fc2  specs/PILOT-E2E-FLOW-001.md
-6df5a950c8cb0e53da96e18bbb71f4d57218c8ec4a1f5abdb2be295c5dd8b2ed  tests/InstallationProcess/pilot_e2e_flow_001_test.php
+2c9ae79f73e5a3bf8d93c81fad3f431bd810a5d63c2648fa7dfab16f646839ab  specs/PILOT-E2E-FLOW-001.md
+fd51e17eb9ef655904d5a99b22813975a85a4f65eb0a88ca1144cc54c2da4481  tests/InstallationProcess/pilot_e2e_flow_001_test.php
 ```
 
 Git blob identities:
 
 ```text
-8f384ae1f889b1af544e4e8f40b2f93132c523bf  specs/PILOT-E2E-FLOW-001.md
-69af793c19e8c5fb9428cde781d9c98b960b432e  tests/InstallationProcess/pilot_e2e_flow_001_test.php
+2b3404a1564df3b1c1259058dd4a704841adb53a  specs/PILOT-E2E-FLOW-001.md
+9d633d5ec47da980dc6e940eb39aba5cbc0aa613  tests/InstallationProcess/pilot_e2e_flow_001_test.php
 ```
 
-Any byte change to either reviewed input invalidates this approval. The review record is excluded from the self-referential manifest.
+Any byte change to either reviewed input invalidates this verdict. The review record is excluded from the self-referential manifest.
 
 ## Required changes
 
-None. Gate 3 is approved for test commit `0bbc51e`; Gate 4 may proceed only against these exact reviewed inputs.
+- Build one wholly separate unique-prefix MariaDB/artifact-root fixture and drive it to the prepared before-projection through the public process seam.
+- Choose exactly one reversible pre-start fault, issue exactly one artifact failure request in its dedicated production composition, and restore the exact target in mandatory `finally`.
+- After restoration, compare the public process projection with its before oracle using a fresh production process instance/connection and compare both restored artifacts through public `AssignmentOrderArtifactService`.
+- Remove the private `fm2_order_artifacts` rename fault. Move/rework the integrity case so no filesystem mutation occurs inside the uninterrupted main journey and restoration is guaranteed on every failure path.
+- Re-run the corrected committed test and request a fresh independent Gate 3 review.
+
+Gate 3 is not approved. No Gate 4 implementation may proceed from test commit `3dec4f5`.
