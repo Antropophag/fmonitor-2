@@ -60,6 +60,8 @@ e618bd1 fix: keep assignment picker available after Bitrix sync
 
 Проверка: `php bin/fmonitor2-pilot-demo.php status`.
 
+Локальную доверенную учётную запись launcher можно выбрать при старте через `FMONITOR_DEMO_REMOTE_USER=<email>`. Без переменной сохраняется fixture fallback `sidorov@shlz.ru`. Текущий стенд запущен под активным администратором `jonsnow@shlz.ru`, чтобы ролевая доступность чек-листа проверялась в браузере.
+
 Readiness обновлён: дополнительные реальные process-таблицы и строки разрешены, но обязательные fixture-сентинелы всё ещё проверяются. После reset потребуется повторно импортировать production-объекты, workforce, пользователей и роли.
 
 Локальная MariaDB:

@@ -228,7 +228,7 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         'FMONITOR_DB_USER'=>$config['user'], 'FMONITOR_DB_PASSWORD'=>$config['password'], 'FMONITOR_PROCESS_TABLE_PREFIX'=>$generation['processPrefix'],
         'FMONITOR_LEGACY_TABLE_PREFIX'=>$generation['legacyPrefix'], 'FMONITOR_ARTIFACT_STORAGE_ROOT'=>$generation['artifactRoot'],
         'FMONITOR_SHLZ_CSS_PATH'=>$config['shlz'], 'FMONITOR_PILOT_CSS_PATH'=>$config['pilotCss'], 'FMONITOR_NOW'=>DEMO_NOW,
-        'FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:' . $config['port'], 'REMOTE_USER'=>'sidorov@shlz.ru',
+        'FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:' . $config['port'], 'REMOTE_USER'=>$config['remoteUser'],
         'FMONITOR_DEMO_LOOPBACK'=>'1','FMONITOR_DEMO_LOOPBACK_NONCE'=>bin2hex(random_bytes(16)),
     ]);
     $pipes = [];
@@ -279,7 +279,7 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         demoWriteJson($config['root'] . '/server.json', ['fingerprint'=>$config['fingerprint'], 'pid'=>getmypid(), 'port'=>$config['port']]);
     }catch(Throwable $error){proc_terminate($server);proc_close($server);throw $error;}
     echo "FMonitor 2.0 pilot: http://127.0.0.1:{$config['port']}/pilot/objects\n";
-    echo "User: sidorov@shlz.ru · business time: " . DEMO_NOW . "\n";
+    echo "User: {$config['remoteUser']} · business time: " . DEMO_NOW . "\n";
     echo "Stop: Ctrl+C · reset: php bin/fmonitor2-pilot-demo.php reset\n";
     flush();
     $stop = false;
@@ -307,11 +307,13 @@ $config = [
     'database'=>getenv('FMONITOR_DEMO_DB_NAME') === false ? 'fmonitor2_demo' : getenv('FMONITOR_DEMO_DB_NAME'),
     'user'=>getenv('FMONITOR_DEMO_DB_USER') === false ? 'fmonitor2_demo' : getenv('FMONITOR_DEMO_DB_USER'),
     'password'=>getenv('FMONITOR_DEMO_DB_PASSWORD') === false ? 'fmonitor2_demo_local' : getenv('FMONITOR_DEMO_DB_PASSWORD'),
+    'remoteUser'=>getenv('FMONITOR_DEMO_REMOTE_USER') === false ? 'sidorov@shlz.ru' : getenv('FMONITOR_DEMO_REMOTE_USER'),
     'shlz'=>$shlz, 'pilotCss'=>$pilotCss,
 ];
 if (!is_string($dbPortText) || preg_match('/^[1-9][0-9]*$/D', $dbPortText) !== 1
     || !is_string($config['host']) || $config['host'] === '' || !is_string($config['database']) || $config['database'] === ''
-    || !is_string($config['user']) || $config['user'] === '' || !is_string($config['password']) || $config['dbPort'] < 1 || $config['dbPort'] > 65535) demoFailure('CONFIGURATION_INVALID', 64);
+    || !is_string($config['user']) || $config['user'] === '' || !is_string($config['password']) || $config['dbPort'] < 1 || $config['dbPort'] > 65535
+    || !is_string($config['remoteUser']) || strlen($config['remoteUser']) > 254 || preg_match("/^[A-Za-z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[A-Za-z0-9.-]+$/D", $config['remoteUser']) !== 1) demoFailure('CONFIGURATION_INVALID', 64);
 try {
     demoMkdir($config['root'] . '/generations');
     $manifest = demoReadJson($config['root'] . '/active.json');
