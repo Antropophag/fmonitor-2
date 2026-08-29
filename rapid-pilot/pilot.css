@@ -448,6 +448,32 @@
   .fm2-picker-dialog { padding: 18px; }
 }
 
+.fm2-installer-table-scroll { max-block-size: calc(100vh - 300px); overflow: auto; }
+.fm2-installer-table { inline-size: 100%; border-collapse: collapse; table-layout: fixed; }
+.fm2-installer-table th { position: sticky; z-index: 2; inset-block-start: 0; padding: 11px 14px; color: var(--fm2-muted); background: #f8fafc; border-block-end: 1px solid var(--fm2-border); text-align: start; font-size: 11px; font-weight: 500; }
+.fm2-installer-table th:nth-child(1) { inline-size: 25%; }
+.fm2-installer-table th:nth-child(2) { inline-size: 12%; }
+.fm2-installer-table th:nth-child(3) { inline-size: 20%; }
+.fm2-installer-table th:nth-child(4) { inline-size: 28%; }
+.fm2-installer-table th:nth-child(5) { inline-size: 15%; }
+.fm2-installer-table td { padding: 11px 14px; border-block-end: 1px solid var(--fm2-border); vertical-align: middle; overflow-wrap: anywhere; font-size: 13px; }
+.fm2-installer-table tbody tr:hover { background: #f8f9fc; }
+.fm2-installer-table td > small, .fm2-installer-person small { display: block; margin-block-start: 3px; color: var(--fm2-muted); font-size: 11px; }
+.fm2-installer-person { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; }
+.fm2-installer-person .fm2-person-mark { inline-size: 34px; block-size: 34px; }
+.fm2-assignment-stack { display: grid; gap: 5px; }
+.fm2-assignment-link { display: grid; min-inline-size: 0; text-decoration: none; }
+.fm2-assignment-link span { overflow: hidden; color: var(--fm2-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 680px) {
+  .fm2-installer-table-scroll { max-block-size: none; overflow: visible; }
+  .fm2-installer-table thead { display: none; }
+  .fm2-installer-table, .fm2-installer-table tbody, .fm2-installer-table tr, .fm2-installer-table td { display: block; inline-size: 100%; }
+  .fm2-installer-table tr { padding: 10px 12px; border-block-end: 1px solid var(--fm2-border); }
+  .fm2-installer-table td { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px; padding: 6px 0; border: 0; }
+  .fm2-installer-table td::before { color: var(--fm2-muted); font-size: 11px; content: attr(data-label); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
