@@ -567,3 +567,31 @@
   .fm2-employment { grid-column: 2; justify-self: start; }
   .fm2-installer-meta, .fm2-installer-card > section { padding-inline: 13px; }
 }
+
+.fm2-user-toolbar { display: flex; gap: 14px; padding: 12px 14px; align-items: end; border-block-end: 1px solid var(--fm2-border); }
+.fm2-user-toolbar .shlz-field { flex: 1 1 340px; max-inline-size: 460px; }
+.fm2-user-toolbar .fm2-installer-filters { padding: 0; border: 0; }
+.fm2-user-table th:nth-child(1) { inline-size: 26%; }
+.fm2-user-table th:nth-child(2) { inline-size: 24%; }
+.fm2-user-table th:nth-child(3) { inline-size: 13%; }
+.fm2-user-table th:nth-child(4) { inline-size: 37%; }
+.fm2-role-stack { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fm2-role-stack form { margin: 0; }
+.fm2-role-tag { display: inline-flex; min-block-size: 28px; padding: 4px 8px 4px 10px; gap: 6px; align-items: center; color: #253d98; background: #dfe2f0; border: 1px solid #cbd2e8; border-radius: var(--fm2-pill); cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
+.fm2-role-tag:hover { background: #d4d9ea; border-color: #aebbe4; }
+.fm2-role-tag:focus-visible, .fm2-role-add select:focus-visible { outline: 3px solid #8ea2e8; outline-offset: 2px; }
+.fm2-role-tag svg { inline-size: 12px; block-size: 12px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-width: 1.5; }
+.fm2-role-tag--archived { color: #697586; background: #f2f4f6; border-color: #e1e5ea; }
+.fm2-role-add select { min-block-size: 28px; max-inline-size: 190px; padding: 3px 28px 3px 9px; color: var(--fm2-muted); background: #fff; border: 1px dashed #aeb7c3; border-radius: var(--fm2-pill); cursor: pointer; font-size: 11px; }
+.fm2-no-role { color: var(--fm2-muted); font-size: 11px; }
+.fm2-role-catalog { margin-block-start: 28px; }
+.fm2-section-head { display: flex; gap: 18px; margin-block-end: 12px; align-items: end; justify-content: space-between; }
+.fm2-section-head h2 { margin: 0; color: var(--fm2-ink); font-size: 18px; }
+.fm2-section-head p { max-inline-size: 58ch; margin: 0; color: var(--fm2-muted); font-size: 12px; }
+.fm2-role-table { inline-size: 100%; border-collapse: collapse; }
+.fm2-role-table th, .fm2-role-table td { padding: 10px 14px; border-block-end: 1px solid var(--fm2-border); text-align: start; font-size: 12px; }
+.fm2-role-table th { color: var(--fm2-muted); background: #f8fafc; font-size: 11px; font-weight: 500; }
+.fm2-role-table td small { display: block; margin-block-start: 2px; color: var(--fm2-muted); font-size: 10px; }
+.fm2-user-row[hidden] { display: none; }
+@media (max-width: 900px) { .fm2-user-toolbar { display: grid; align-items: stretch; } .fm2-user-toolbar .shlz-field { max-inline-size: none; } .fm2-user-toolbar .fm2-installer-filters { overflow-x: auto; } }
+@media (max-width: 680px) { .fm2-user-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } .fm2-user-table td { grid-template-columns: 92px minmax(0, 1fr); } .fm2-section-head { display: grid; } }

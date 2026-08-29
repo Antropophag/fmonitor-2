@@ -26,6 +26,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
         if(!$this->dependencies->pilotUiConfigured()||!$this->dependencies->prepareCommandConfigured()||!$this->dependencies->e2eConfigured())return $this->reads->handle($r);
+        if($r->path==='/pilot/users'||preg_match('#^/pilot/users/([1-9][0-9]*)/roles/([1-9][0-9]*)$#D',$r->path,$userRoleMatch)===1)return $this->users($r,$userRoleMatch??[]);
         if($r->path==='/pilot/installers'){
             if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
             try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
@@ -47,6 +48,16 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
             return $this->preparePage($r,$route['id'],$user);
         }catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
         catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
+    }
+
+    private function users(PilotHttpRequest $r,array $route):PilotHttpResponse
+    {
+        $isCommand=$route!==[];$allow=$isCommand?'POST':'GET, HEAD';if(!in_array($r->method,explode(', ',$allow),true))return $this->response(405,"Method not allowed.\n",['Allow'=>$allow],$r->method);
+        try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
+        try{$this->dependencies->css()->readBytes();$this->dependencies->pilotCss()->readBytes();$actor=$this->dependencies->users()->resolveActiveUser($principal);if($actor===null||!$this->dependencies->hasCapability($actor->id,'assignment_order.prepare'))return $this->response(403,"Access denied.\n",[],$r->method);[$db,$prefix,,,$now]=$this->dependencies->commandResources();$directory=new MariaDbPilotUserDirectory($db,$prefix);
+            if(!$isCommand){$data=$directory->read();[$session,$headers]=$this->session($r,$actor,true);$tokens=[];foreach($data['users']as$user)$tokens[$user['id']]=$this->token($session,$actor,$user['id']);$html=(new ProductionUserDirectoryRenderer())->render($actor,$data,$tokens);return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8']+$headers,$r->method);}
+            $r=new PilotHttpRequest($r->method,$r->path,$r->host,$r->serverIdentity,$r->server,(string)file_get_contents('php://input'));$userId=(int)$route[1];$roleId=(int)$route[2];[$session]=$this->session($r,$actor,false);if($session===null||!$this->validRequest($r,$session,$actor))return $this->response(403,"Invalid request.\n");try{$fields=$this->body($r,['csrfToken','action']);}catch(InvalidCsrfRequest){return $this->response(403,"Invalid request.\n");}if($fields===null||!$this->consume($session,$fields['csrfToken'][0]??'',$actor,$userId))return $this->response(403,"Invalid request.\n");$action=$fields['action'][0]??'';if(!$directory->changeRole($userId,$roleId,$action,$actor->id,$now))return $this->response(400,"Bad request.\n");return $this->redirect('/pilot/users');
+        }catch(PilotHttpInfrastructureUnavailable|CssAssetUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
     }
 
     public function card(PilotHttpRequest $r,int $id,HttpUser $user):PilotHttpResponse

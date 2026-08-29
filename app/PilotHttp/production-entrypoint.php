@@ -8,6 +8,7 @@ require_once __DIR__.'/ObjectListView.php';
 require_once __DIR__.'/ObjectCardView.php';
 require_once __DIR__.'/PrepareFormView.php';
 require_once __DIR__.'/InstallerDirectoryView.php';
+require_once __DIR__.'/UserDirectoryView.php';
 require_once __DIR__.'/PilotE2ECoordinator.php';
 require __DIR__.'/ProductionPilotHttpEntrypointFactory.php';
 return \FMonitor2\PilotHttp\ProductionPilotHttpEntrypointFactory::create(new \FMonitor2\PilotHttp\ProcessEnvironmentSource());

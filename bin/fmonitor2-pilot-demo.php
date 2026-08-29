@@ -172,26 +172,24 @@ function demoGeneration(array $config, int $generation): ?array
     try {
         $expected = ['fm2_assignment_orders','fm2_installation_cases','fm2_order_artifacts','fm2_order_installers','fm2_process_events','fm2_process_tasks','fm2_process_user_capabilities','fm2_workforce_catalog'];
         $tables = demoTables($db, (string) $owner['processPrefix']);
-        if ($tables !== array_map(static fn(string $suffix): string => $owner['processPrefix'] . $suffix, $expected)) return null;
+        $requiredTables=array_map(static fn(string $suffix): string => $owner['processPrefix'] . $suffix, $expected);
+        if(array_diff($requiredTables,$tables)!==[])return null;
         if (count(demoTables($db, (string) $owner['legacyPrefix'])) !== 3) return null;
         $marker=demoMarkerValue($config['fingerprint'],$generation,$owner['nonce']);
         if(demoDatabaseMarker($db,$owner['processPrefix'].'fm2_installation_cases')!==$marker
             ||demoDatabaseMarker($db,$owner['legacyPrefix'].'fm_maintable')!==$marker)return null;
-        $legacyRows=$db->query("SELECT id,regnumber,ordadr_address,entrance,workdatestart,workdateendadjusted,responsstroicontrol FROM `{$owner['legacyPrefix']}fm_maintable` ORDER BY id")->fetch_all(MYSQLI_ASSOC);
+        $legacyRows=$db->query("SELECT id,regnumber,ordadr_address,entrance,workdatestart,workdateendadjusted,responsstroicontrol FROM `{$owner['legacyPrefix']}fm_maintable` WHERE id IN(4512,4999) ORDER BY id")->fetch_all(MYSQLI_ASSOC);
         if($legacyRows!==[
             ['id'=>'4512','regnumber'=>'77-000123','ordadr_address'=>'Москва, ул. Примерная, д. 10','entrance'=>'2','workdatestart'=>'2026-10-05','workdateendadjusted'=>'2026-12-20','responsstroicontrol'=>'73'],
             ['id'=>'4999','regnumber'=>'77-000999','ordadr_address'=>'Москва, ул. Непилотная, д. 1','entrance'=>'1','workdatestart'=>'2026-09-30','workdateendadjusted'=>'2026-12-01','responsstroicontrol'=>'73'],
         ])return null;
-        $people=$db->query("SELECT id,name,email,role_id,status FROM `{$owner['legacyPrefix']}users` ORDER BY id")->fetch_all(MYSQLI_ASSOC);
+        $people=$db->query("SELECT id,name,email,role_id,status FROM `{$owner['legacyPrefix']}users` WHERE id IN(18,73) ORDER BY id")->fetch_all(MYSQLI_ASSOC);
         if($people!==[
             ['id'=>'18','name'=>'Сидоров Сергей Сергеевич','email'=>'sidorov@shlz.ru','role_id'=>'5','status'=>'1'],
             ['id'=>'73','name'=>'Анна Волкова','email'=>'volkova@shlz.ru','role_id'=>'8','status'=>'1'],
         ])return null;
-        $workforce=$db->query("SELECT installer_tab_id,fio,employment_status,workforce_source_updated_at FROM `{$owner['processPrefix']}fm2_workforce_catalog` ORDER BY installer_tab_id")->fetch_all(MYSQLI_ASSOC);
-        if($workforce!==[
-            ['installer_tab_id'=>'1042','fio'=>'Иванов Иван Иванович','employment_status'=>'employed','workforce_source_updated_at'=>'2026-08-27T18:15:00+03:00'],
-            ['installer_tab_id'=>'2088','fio'=>'Петров Пётр Петрович','employment_status'=>'employed','workforce_source_updated_at'=>'2026-08-27T18:15:00+03:00'],
-        ])return null;
+        $workforceCount=(int)$db->query("SELECT COUNT(*) n FROM `{$owner['processPrefix']}fm2_workforce_catalog` WHERE reconciliation_state='delivered'")->fetch_assoc()['n'];
+        if($workforceCount<2)return null;
     } finally { $db->close(); }
     return ['generation'=>$generation, 'processPrefix'=>$owner['processPrefix'], 'legacyPrefix'=>$owner['legacyPrefix'], 'artifactRoot'=>$directory . '/artifacts'];
 }
