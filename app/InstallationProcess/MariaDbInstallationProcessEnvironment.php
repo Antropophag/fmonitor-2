@@ -24,6 +24,7 @@ final class MariaDbInstallationProcessEnvironment
     public function findEngineerSnapshot(int $id): ?array { return $this->externalFacts->findEngineerSnapshot($id); }
     public function renderAssignmentOrder(array $input): array { return $this->externalFacts->renderAssignmentOrder($input); }
     public function now(): string { return $this->externalFacts->now(); }
+    public function assignmentOrderDate(string $occurredAt):string{return \method_exists($this->externalFacts,'assignmentOrderDate')?$this->externalFacts->assignmentOrderDate($occurredAt):(new \DateTimeImmutable($occurredAt))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');}
     public function newPreparationOperationId(): string { return bin2hex(random_bytes(16)); }
     public function findPreparationResult(string $operationId): ?array { return null; }
 

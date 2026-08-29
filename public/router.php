@@ -4,6 +4,7 @@ declare(strict_types=1);
 $entrypoint = require dirname(__DIR__) . '/app/PilotHttp/production-entrypoint.php';
 
 ini_set('expose_php', '0');
+ini_set('default_charset', '');
 header_remove('X-Powered-By');
 header_remove('Server');
 

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\PilotHttp;
 
-final readonly class PilotHttpRequest { public function __construct(public string $method,public string $path,public string $host,public mixed $serverIdentity){} }
+final readonly class PilotHttpRequest { public function __construct(public string $method,public string $path,public string $host,public mixed $serverIdentity,public array $server=[],public string $body=''){} }
 final readonly class PilotHttpResponse { public function __construct(public int $status,public array $headers,public string $body){} }
 final readonly class HttpUser { public function __construct(public int $id,public string $displayName,public string $email){} }
 final class InvalidServerIdentity extends \RuntimeException {}
@@ -270,7 +270,7 @@ final class PilotHttpRequestFactory
     {
         $host=PHP_SAPI==='cli-server'?($server['HTTP_HOST']??null):($server['FMONITOR_TRUSTED_REQUEST_HOST']??null);if(!self::validHost($host))throw new InvalidHttpRequest();
         $method=\strtoupper((string)($server['REQUEST_METHOD']??''));$uri=(string)($server['REQUEST_URI']??'');$raw=\explode('?',$uri,2)[0];$invalid=\preg_match('/%(?![0-9A-Fa-f]{2})/',$raw)===1||\preg_match('/%(?:2f|5c)/i',$raw)===1;$path=\rawurldecode($raw);$invalid=$invalid||\str_contains($path,"\0")||\str_contains($path,'\\')||\str_contains($path,'//')||(\str_starts_with($path,'/pilot/objects/')&&$raw!==$path);foreach(\explode('/',$path) as $s)if($s==='.'||$s==='..')$invalid=true;if($invalid){if(PHP_SAPI!=='cli-server')throw new InvalidHttpRequest();$path="\0invalid-path";}
-        return new PilotHttpRequest($method,$path,$host,$server['REMOTE_USER']??null);
+        return new PilotHttpRequest($method,$path,$host,$server['REMOTE_USER']??null,$server,'');
     }
 
     private static function validHost(mixed $host):bool
@@ -353,6 +353,14 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
         $this->users();try{$s=$this->connection->prepare('SELECT user_id FROM fm2_process_user_capabilities WHERE user_id=? AND capability=? LIMIT 2');$s->bind_param('is',$userId,$capability);$s->execute();return \count($s->get_result()->fetch_all(MYSQLI_ASSOC))===1;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
     public function businessDate():string{$v=$this->environment->read('FMONITOR_BUSINESS_DATE');if(!\is_string($v))throw new PilotHttpInfrastructureUnavailable();return $v;}
+    public function commandResources():array
+    {
+        $this->users();if(!$this->connection instanceof \mysqli||$this->legacyTablePrefix===null)throw new PilotHttpInfrastructureUnavailable();
+        $processPrefix=$this->environment->read('FMONITOR_PROCESS_TABLE_PREFIX');$root=$this->environment->read('FMONITOR_ARTIFACT_STORAGE_ROOT');$now=$this->environment->read('FMONITOR_NOW');
+        if(!\is_string($processPrefix)||!\is_string($root)||!\is_string($now))throw new PilotHttpInfrastructureUnavailable();
+        return [$this->connection,$processPrefix,$this->legacyTablePrefix,$root,$now];
+    }
+    public function e2eConfigured():bool{return \is_string($this->environment->read('FMONITOR_ARTIFACT_STORAGE_ROOT'))&&\is_string($this->environment->read('FMONITOR_PROCESS_TABLE_PREFIX'))&&\is_string($this->environment->read('FMONITOR_NOW'));}
     public function pilotUiConfigured():bool{return $this->environment instanceof ProcessEnvironmentSource&&\is_string($this->environment->read('FMONITOR_PILOT_CSS_PATH'));}
     public function prepareCommandConfigured():bool{return $this->environment instanceof ProcessEnvironmentSource&&\is_string($this->environment->read('FMONITOR_BUSINESS_DATE'));}
     public function close():void

@@ -9,7 +9,10 @@ final class ProductionPilotHttpEntrypointFactory
     {
         $closer=new NativePhpStreamCloser(new NativePhpFclosePrimitive());
         $dependencies=new ProductionPilotHttpDependencies($environment,new PhpCssDescriptorOpener($closer));
-        $application=new PilotHttpApplication(new RemoteUserIdentity(),new ProductionPilotShellRenderer(),$dependencies,new ProductionObjectCardRenderer(),$dependencies,new ProductionObjectListRenderer(),$dependencies,new ProductionPrepareFormRenderer(),$dependencies);
+        $identity=new RemoteUserIdentity();$cards=new ProductionObjectCardRenderer();$lists=new ProductionObjectListRenderer();$forms=new ProductionPrepareFormRenderer();
+        $reads=new PilotHttpApplication($identity,new ProductionPilotShellRenderer(),$dependencies,$cards,$dependencies,$lists,$dependencies,$forms,$dependencies);
+        require_once __DIR__.'/PilotE2ECoordinator.php';
+        $application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms);
         return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
     }
 }

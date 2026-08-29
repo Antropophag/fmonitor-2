@@ -163,9 +163,9 @@ final class InstallationProcess
 
         $assignmentOrderVersion = 1;
         $occurredAt = $this->environment->now();
-        $assignmentOrderDate = (new \DateTimeImmutable($occurredAt))
-            ->setTimezone(new \DateTimeZone('Europe/Moscow'))
-            ->format('Y-m-d');
+        $assignmentOrderDate = \method_exists($this->environment,'assignmentOrderDate')
+            ? $this->environment->assignmentOrderDate($occurredAt)
+            : (new \DateTimeImmutable($occurredAt))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');
         $installerSnapshots = [];
         $installerViolations = [];
         foreach ($normalizedInstallerTabIds as $index => $installerTabId) {
