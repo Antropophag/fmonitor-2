@@ -1,7 +1,7 @@
 # PILOT-SHLZ-ASSETS-001 — полный публичный CSS export `shlz-ui`
 
 - Статус: `APPROVED`
-- Версия: `0.1`
+- Версия: `0.2`
 - Дата: `2026-08-29`
 - Актор: browser пилотного FMonitor 2.0; asset routes публичны и не требуют identity
 - Публичный seam: HTTP `GET|HEAD` корневого `/pilot/assets/shlz.css` и его разрешённых relative `@import` dependencies
@@ -35,11 +35,13 @@ configured public shlz.css
 5. каждый manifest dependency является descendant dist root, а не самим root; все его directory components и file — non-symlink; canonical dependency остаётся внутри exact canonical dist root;
 6. opened descriptor каждого member проходит inherited `lstat → open once → fstat identity → lstat revalidation → complete read → final fstat/size → close exactly once` contract.
 
+Deployment/bootstrap обязан установить dist root и все directories/files внутри него с одним trusted filesystem owner. Owner считается trusted только если его numeric UID равен effective UID application process либо `0`. Root и members не могут быть group/other-writable (`mode & 0022 == 0`); regular file не может быть executable; directory обязана иметь owner read/search permission. Owner-write на root допустим только потому, что этот owner уже trusted и выполняет официальную atomic replacement. Owner/mode mismatch либо смена owner/mode во время request дают `503`. HTTP-приложение само permissions не исправляет и export не публикует.
+
 Missing, relative, unreadable, wrong-type, wrong-basename, symlinked component, escape, identity/size swap, malformed graph, read/stat/open/close failure или изменение любого manifest member во время конкретного response дают inherited redacted `503 Service unavailable.\n` с `Retry-After: 60`; partial CSS bytes не отправляются. Никакого fallback на source tree, copied CSS, private Showcase, package manager или bundled local snapshot нет.
 
-## 3. Fixed transitive manifest
+## 3. Stateless per-request atomic graph capture
 
-Manifest строится из exact bytes configured public export, начиная с relative path `shlz.css`, рекурсивно и без чтения directory listing. Учитываются только top-level CSS `@import` rules, разрешённые CSS grammar до первого не-`@charset`/не-`@layer` statement и до обычного style rule. Comments и whitespace допустимы. Import media/supports/layer suffix сохраняется browser-у, но на filesystem target не влияет.
+Manifest строится заново внутри каждого exact `GET|HEAD` request из exact bytes configured public export, начиная с relative path `shlz.css`, рекурсивно и без чтения directory listing. Между requests не сохраняется identity, graph или bytes. Учитываются только top-level CSS `@import` rules, разрешённые CSS grammar до первого не-`@charset`/не-`@layer` statement и до обычного style rule. Comments и whitespace допустимы. Import media/supports/layer suffix сохраняется browser-у, но на filesystem target не влияет.
 
 Разрешённый import target — quoted string либо `url(...)` с quoted/unquoted значением, которое после CSS string decoding является непустым relative POSIX path и:
 
@@ -51,7 +53,19 @@ Manifest строится из exact bytes configured public export, начин�
 
 Remote/data/package imports (`http:`, `https:`, `//`, `data:`, `@shlz/...`), non-CSS imports, CSS escape, invalid UTF-8, duplicate logical route with different file identity и dependency outside root делают весь graph invalid (`503`), а не пропускаются browser-у. Повторный import того же canonical member допустим и даёт одну manifest entry. Cycle допустим только как уже посещённая canonical identity и не расширяет обход. Максимум — 256 unique members, глубина — 32, суммарный размер — 8 MiB; превышение — `503`.
 
-Manifest immutable для lifetime production composition: exact sorted mapping `public route → relative path → canonical device/inode/type/size` фиксируется до успешного asset response. Request path никогда не выбирает filesystem path. Изменение graph требует нового process/composition start; при этом descriptor revalidation всё равно не позволяет отдать подменённые bytes.
+Один request выполняет atomic capture целого graph до отправки headers:
+
+1. фиксирует для dist root и каждого посещённого directory `device + inode + type + owner + mode + mtime`, затем для каждого member до открытия — те же значения плюс size;
+2. открывает member ровно один раз, сверяет descriptor `device + inode + type + owner + mode + size + mtime`, читает exact bytes и вычисляет SHA-256 captured bytes;
+3. строит exact sorted mapping `public route → relative path → captured identity + SHA-256 + bytes` только из этих captured bytes;
+4. после полного обхода повторяет `lstat` каждого directory/member и `fstat` ещё открытых descriptors, требуя byte-exact равенство всех captured identity fields; каждый descriptor перематывается и повторно читается до EOF, а повторный size/SHA-256 обязан совпасть с captured bytes; затем все descriptors закрываются attempt-all;
+5. только после успешной общей revalidation выбирает exact request route из captured manifest и формирует response из captured bytes.
+
+Любая symlink/path/owner/mode/identity/size/mtime/hash inconsistency или directory-entry change в границах одного request даёт `503`; ни старые, ни новые, ни смешанные partial bytes не выдаются. Request path никогда не выбирает filesystem path напрямую.
+
+После завершения request никакая identity не обязана оставаться в process memory. Между двумя отдельными requests deployment может легитимно атомарно заменить официальный export; следующий request заново захватит и проверит целый новый graph. Поэтому изменение export не требует restart process и не считается ошибкой само по себе. Если replacement пересекается по времени с capture, текущий request обязан получить `503`, а следующий request после завершённой replacement может получить новый internally consistent export.
+
+Запрещены SysV/shared-memory semaphore или segment, APCu/opcache user cache, filesystem manifest/cache/lock/sentinel, daemon/guardian, background watcher, subprocess и иная cross-request coordination. Реализация не оставляет cache, lock, temp, shared-memory или process-global residue. Весь request-owned capture освобождается/закрывается attempt-all и не является external dependency.
 
 Этот manifest описывает public export, а не private структуру Showcase. FMonitor не сканирует `apps/showcase`, `packages/styles` source или `node_modules` и не утверждает, что конкретный набор component filenames вечен.
 
@@ -76,7 +90,7 @@ components/button.css   → /pilot/assets/components/button.css
 
 - `GET` возвращает `200`, exact member bytes, `Content-Type: text/css; charset=UTF-8` и exact byte `Content-Length`;
 - `HEAD` выполняет те же validation/integrity reads, возвращает те же application headers/length, но empty body;
-- repeated/concurrent GET/HEAD дают byte-stable committed representation;
+- каждый response внутренне согласован с одним per-request capture; repeated/concurrent requests на неизменённом fixture дают exact одинаковые bytes, но не полагаются на общую identity/cache;
 - inherited security headers, `Cache-Control: no-store`, Host boundary, redaction и no-cookie/no-session rules применяются без исключений;
 - asset не требует `REMOTE_USER`, DB connection, user lookup, process capability или body read.
 
@@ -118,7 +132,8 @@ Fixture также содержит unreferenced readable `dist/private.css`; `/
 Отдельные fixtures независимо дают:
 
 - traversal (`../secret.css`, encoded/double-encoded variants), absolute/remote/package import, query/fragment, uppercase/non-CSS suffix и malformed import → redacted `503` graph, ни target, ни secret bytes не выдаются;
-- dependency symlink, symlink directory component, regular-file swap и removal после manifest identity capture → `503`, ни target, ни replacement bytes не выдаются;
+- dependency symlink, symlink directory component, regular-file swap/removal либо graph replacement во время per-request capture → `503`, ни target, ни replacement/mixed bytes не выдаются;
+- legitimate atomic official export replacement, завершённая между двумя requests, позволяет первому response вернуть целый старый graph, а следующему — целый новый graph; equality требуется только пока fixture не менялся;
 - unknown well-formed CSS route → `404`; malformed route → `404`; `POST|PUT|PATCH|DELETE|OPTIONS` manifest candidate → `405` + exact Allow;
 - graph duplicate through the same normalized relative target remains one route; graph collision with `pilot.css`, different-identity alias, limit overflow or invalid UTF-8 → `503`.
 
@@ -139,14 +154,14 @@ Browser evidence не добавляет новый harness и не заменя
 
 ## 7. Zero mutation, authorization и audit
 
-У asset read нет business actor, authorization capability или domain audit event. Before/after fingerprints `fm2_*`, legacy data, artifact store, application CSS и configured shlz dist root byte-equivalent. Никакой request не пишет cache/build output, manifest file, event, log, session или cookie. In-memory manifest допустим; committed/generated manifest в FMonitor запрещён как copied dependency.
+У asset read нет business actor, authorization capability или domain audit event. Для обычного неизменяемого fixture before/after fingerprints `fm2_*`, legacy data, artifact store, application CSS и configured shlz dist root byte-equivalent. Никакой request не пишет cache/build output, manifest/lock/temp/sentinel file, shared memory, event, log, session или cookie. Только request-local in-memory capture допустим; process-global/external cache и committed/generated manifest в FMonitor запрещены.
 
 ## 8. Out of scope
 
 - изменение/сборка/публикация `shlz-ui` или private Showcase;
 - копирование/инлайнинг/переписывание CSS, tokens, fonts, icons и component markup;
 - generic static server, directory browsing, source maps и arbitrary media/font assets;
-- cache validators, compression, CDN, immutable production caching;
+- cache validators, compression, CDN, immutable production caching и любая cross-request coordination;
 - изменение business flow, `InstallationProcess`, HTML views или `pilot.css`;
 - harness, CI, Bitrix-history и unrelated architectural refactoring.
 
@@ -154,7 +169,7 @@ Browser evidence не добавляет новый harness и не заменя
 
 Новый отдельно поставленный Gate 2 agent пишет минимальный RED через existing real raw HTTP public seam и task-owned split-export fixture section 5. Он не вызывает private parser/manifest methods, не читает production source tree как expected oracle, не меняет harness и не использует private Showcase. Existing focused HTTP/auth/UI/E2E tests остаются regression obligations; новый тест не ослабляет их exact outcomes или security priority.
 
-Gate 3 reviewer независимо проверяет traceability, import grammar, manifest sensitivity, GET/HEAD parity, fail-closed filesystem boundary и captured RED. Gate 4 разрешён только после `APPROVED` Gate 3. Gate 5 требует отдельного свежего reviewer и real Chromium evidence section 6.
+Gate 3 reviewer независимо проверяет traceability, import grammar, stateless per-request manifest sensitivity, trusted owner/mode boundary, GET/HEAD parity, отсутствие external cache/guardian dependency, fail-closed filesystem boundary и captured RED. Gate 4 разрешён только после `APPROVED` Gate 3. Gate 5 требует отдельного свежего reviewer и real Chromium evidence section 6.
 
 ## 10. Gate 1 approval
 
@@ -164,4 +179,6 @@ Gate 3 reviewer независимо проверяет traceability, import gra
 - Decision: `APPROVED`
 - Basis: пользователь поручил автономно довести пилот до visually ready состояния, использовать полный public `shlz-ui` export без копирования и сохранить обязательные SSD/TDD/security gates; real Chromium acceptance at `6313e1a` зафиксировал missing dependency-serving behavior.
 
-Gate 2 разрешён только для exact version `0.1` и должен выполняться новым bounded-context agent.
+Version `0.2` replaces `0.1`: она устраняет cross-request/process-lifetime identity memory и разрешает официальную atomic replacement между requests без ослабления atomicity внутри одного response.
+
+Gate 2 разрешён только для exact version `0.2` и должен выполняться новым bounded-context agent.
