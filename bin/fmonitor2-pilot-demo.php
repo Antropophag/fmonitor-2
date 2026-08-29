@@ -259,7 +259,7 @@ $verb = $arguments[0] ?? 'start';
 $portText = getenv('FMONITOR_DEMO_PORT') === false ? '8092' : getenv('FMONITOR_DEMO_PORT');
 if (!is_string($portText) || preg_match('/^(?:[1-9][0-9]{3,4})$/D', $portText) !== 1 || (int)$portText < 1024 || (int)$portText > 65535) demoFailure('CONFIGURATION_INVALID', 64);
 $repo = realpath(dirname(__DIR__)); $home = getenv('HOME');
-$shlz = realpath(dirname((string)$repo) . '/shlz-ui/packages/styles/shlz.css');
+$shlz = realpath(dirname((string)$repo) . '/shlz-ui/packages/styles/dist/shlz.css');
 $pilotCss = realpath((string)$repo . '/app/PilotHttp/pilot.css');
 if (!is_string($repo) || !is_string($home) || $home === '' || !is_dir($home)) demoFailure('CONFIGURATION_INVALID', 64);
 $fingerprint = substr(hash('sha256', $repo), 0, 8);
@@ -283,7 +283,9 @@ try {
         $generationNumber = (int)($manifest['generation'] ?? 0); $generation = $generationNumber > 0 ? demoGeneration($config, $generationNumber) : null;
         demoFinish(['ok'=>true, 'running'=>demoRunning($config), 'url'=>'http://127.0.0.1:' . $config['port'] . '/pilot/objects', 'generation'=>$generation? $generationNumber : null, 'state'=>$generation ? 'ready' : ($manifest === null ? 'absent' : 'incomplete')], 0);
     }
-    if (!is_string($shlz) || !is_file($shlz) || is_link($shlz) || !str_contains((string)file_get_contents($shlz), '@shlz/tokens/tokens.css') || !is_string($pilotCss) || !is_file($pilotCss)) demoFailure();
+    $shlzBytes=is_string($shlz)&&is_file($shlz)&&!is_link($shlz)?file_get_contents($shlz):false;
+    if (!is_string($shlzBytes) || !str_contains($shlzBytes, 'Generated standalone bundle: tokens followed by foundation and components.')
+        || !str_contains($shlzBytes, '.shlz-button') || !str_contains($shlzBytes, '--shlz-') || !is_string($pilotCss) || !is_file($pilotCss)) demoFailure();
     if (demoRunning($config)) demoFailure('ALREADY_RUNNING', 73);
     if ($verb === 'cleanup') {
         $removed = 0;
