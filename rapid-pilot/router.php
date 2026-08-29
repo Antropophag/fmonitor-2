@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/ObjectDetails.php';
 require_once __DIR__ . '/LocalAuth.php';
 require_once __DIR__ . '/Otiz.php';
+require_once __DIR__ . '/Calendar.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -22,8 +23,9 @@ if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
     exit;
 }
 if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' || $path === '/pilot/assets/pilot-20260829-22.css' || $path === '/pilot/assets/pilot-20260829-23.css') {
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
     $file = $path === '/pilot/assets/shlz.css'
-        ? dirname(__DIR__, 2) . '/shlz-ui/packages/styles/dist/shlz.css'
+        ? $shlzRoot . '/packages/styles/dist/shlz.css'
         : __DIR__ . '/pilot.css';
     $bytes = file_get_contents($file);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -33,6 +35,13 @@ if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' ||
     header('X-Content-Type-Options: nosniff');
     echo $bytes;
     exit;
+}
+if ($path === '/pilot/assets/shlz-calendar-grid.js') {
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
+    $file = $shlzRoot . '/packages/behaviors/dist/calendar-grid.js';
+    $bytes = file_get_contents($file);
+    if (!is_string($bytes)) { http_response_code(503); header('Content-Type: text/plain; charset=UTF-8'); echo "Configured shlz-ui does not export Calendar Grid behavior. Set FMONITOR_SHLZ_UI_ROOT to a compatible public shlz-ui checkout.\n"; exit; }
+    header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'files/file-pdf-default.svg' : 'interface/download.svg';
@@ -90,6 +99,11 @@ if ($path === '/pilot/assets/otiz.js') {
     echo $bytes;
     exit;
 }
+if ($path === '/pilot/assets/calendar.js') {
+    $bytes = file_get_contents(__DIR__ . '/calendar.js');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
+}
 if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$#D', $path, $font) === 1) {
     $bytes = file_get_contents(__DIR__ . '/fonts/' . $font[1]);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -101,6 +115,11 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     exit;
 }
 (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && RapidPilotCalendar::matches($path)) {
+    require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
+    require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
+    (new RapidPilotCalendar())->handle();
+}
 if (is_string($path) && RapidPilotOtiz::matches($path)) {
     require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
     require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
@@ -126,6 +145,7 @@ $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
     if (RapidPilotOtiz::currentUserCanAccess()) $body = RapidPilotOtiz::decorateNavigation($body, false);
+    $body = RapidPilotCalendar::decorateNavigation($body, false);
     $logoutToken = htmlspecialchars((string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
     $body = str_replace('</aside>', $logout . '</aside>', $body);

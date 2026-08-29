@@ -13,6 +13,7 @@ function verifyRapidPilotVisualContract(string $root):array
     $shell=(string)file_get_contents($root.'/app/PilotHttp/PilotShellView.php');
     $checklist=(string)file_get_contents($root.'/app/PilotHttp/ChecklistView.php');
     $otiz=(string)file_get_contents($root.'/rapid-pilot/Otiz.php');
+    $calendar=(string)file_get_contents($root.'/rapid-pilot/Calendar.php');
     $rapidRouter=(string)file_get_contents($root.'/rapid-pilot/router.php');
     $router=(string)file_get_contents($root.'/public/router.php');
     $failures=[];
@@ -46,6 +47,11 @@ foreach(['Рассчитать черновик','Оформить срез','З
 $require(str_contains($otiz,'class="fm2-breadcrumb-link"'),'OTIZ breadcrumbs must use the FMonitor compact link contract');
 $require(str_contains($rapidRouter,"RapidPilotOtiz::matches"),'rapid-pilot router must expose the OTIZ surface');
 $require(str_contains($otiz,'PilotView::document'),'OTIZ must reuse the canonical rapid-pilot shell');
+$require(str_contains($calendar,'class="shlz-calendar-grid fm2-calendar-grid" data-shlz-calendar-grid'),'calendar must consume the public shlz Calendar Grid root');
+$require(str_contains($calendar,'scope="row"')&&str_contains($calendar,'scope="col"')&&str_contains($calendar,'headers="calendar-row-'),'calendar must retain native table header relationships');
+$require(str_contains($rapidRouter,'FMONITOR_SHLZ_UI_ROOT')&&str_contains($rapidRouter,'does not export Calendar Grid'),'calendar shlz-ui root must be configurable and diagnose a missing export');
+$require(str_contains($rapidRouter,'RapidPilotCalendar::matches'),'rapid-pilot router must expose the calendar surface');
+$require(!str_contains($css,'.shlz-calendar-grid {'),'pilot CSS must not redefine the Calendar Grid root contract');
 
 $require(preg_match('/<a class="shlz-button/u',$view.$prepare.$card.$list.$shell)!==1,'navigation links must use the shlz Link contract, not Button classes');
 $require(str_contains($css,'.fm2-check-page'),'the served rapid-pilot stylesheet must include the checklist surface');
