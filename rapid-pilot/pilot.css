@@ -127,18 +127,18 @@
   padding-inline: 8px;
   align-items: center;
   gap: 11px;
-  color: #fff;
-  background: rgb(255 255 255 / 8%);
+  color: var(--fm2-ink);
+  background: #fff;
   border-radius: var(--fm2-radius);
   text-decoration: none;
 }
 
-.fm2-logo:hover { background: rgb(255 255 255 / 13%); }
+.fm2-logo:hover { background: var(--shlz-source-color-gray-gray-50, #f5f5f5); }
 
 .fm2-logo-mark { flex: 0 0 32px; inline-size: 32px; block-size: 32px; overflow: visible; }
-.fm2-logo-rail { fill: #fff; }
+.fm2-logo-rail { fill: var(--fm2-ink); }
 .fm2-logo-progress { fill: var(--shlz-source-color-blue-blue-200, #253d98); }
-.fm2-logo-name { display: none; color: #fff; font-size: 16px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; }
+.fm2-logo-name { display: none; color: var(--fm2-ink); font-size: 16px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; }
 .fm2-nav-trigger {
   display: flex;
   min-block-size: 48px;
