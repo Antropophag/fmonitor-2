@@ -36,6 +36,7 @@ interface ObjectCardReaderProvider { public function objectCards():ObjectCardRea
 interface ObjectListReaderProvider { public function objectList():ObjectListReader; }
 interface PrepareFormReaderProvider { public function prepareForms():PrepareFormReader; public function hasCapability(int $userId,string $capability):bool; public function processDate():string; }
 interface PilotUiConfiguration { public function pilotUiConfigured():bool; public function prepareCommandConfigured():bool; public function pilotCss():CssAsset; }
+interface ShlzAssetProvider { public function shlzAsset(string $relativePath):?CssAsset; }
 interface UnexpectedFailureReporter { public function report(string $category,string $correlationId):void; }
 interface CorrelationIdSource { public function nextId():string; }
 
@@ -73,6 +74,28 @@ final class ShlzCssAsset extends NamedCssAsset
 final class PilotCssAsset extends NamedCssAsset
 {
     public function __construct(string $path,CssDescriptorOpener $descriptors){parent::__construct($path,$descriptors,'pilot.css');}
+}
+
+final class ManifestCssAsset implements CssAsset
+{
+    private ?CssDescriptor $descriptor=null;private bool $closeAttempted=false;
+    public function __construct(private readonly string $path,private readonly array $identity,private readonly CssDescriptorOpener $opener){}
+    public function readBytes():string{self::validateComponents($this->path);$before=@\lstat($this->path);if(!self::same($before,$this->identity))throw new CssAssetUnavailable();$this->descriptor=$this->opener->open($this->path);$bytes=$this->descriptor->readBytes();$after=@\lstat($this->path);if(!self::same($after,$this->identity)||(int)$after['size']!==\strlen($bytes))throw new CssAssetUnavailable();return $bytes;}
+    public function close():void{if($this->closeAttempted)return;$this->closeAttempted=true;if($this->descriptor!==null)$this->descriptor->close();$this->descriptor=null;}
+    public static function validateComponents(string $path,bool $directory=false):void{$parts=\explode('/',\trim($path,'/'));if($path===''||$path[0]!=='/'||\str_contains($path,"\0")||$parts===[])throw new CssAssetUnavailable();$current='';foreach($parts as$i=>$part){$current.='/'.$part;$s=@\lstat($current);if(!\is_array($s)||\is_link($current))throw new CssAssetUnavailable();$last=$i===\count($parts)-1;$type=$s['mode']&0170000;if(($last&&!$directory&&$type!==0100000)||((!$last||$directory)&&$type!==0040000))throw new CssAssetUnavailable();if(!$last&&!\is_executable($current))throw new CssAssetUnavailable();}if(!\is_readable($path)||($directory&&!\is_executable($path)))throw new CssAssetUnavailable();\clearstatcache(true,$path);$final=@\lstat($path);if(!\is_array($final)||$final['dev']!==$s['dev']||$final['ino']!==$s['ino']||($final['mode']&0170000)!==($s['mode']&0170000))throw new CssAssetUnavailable();}
+    public static function identity(string $path):array{$s=@\lstat($path);if(!\is_array($s))throw new CssAssetUnavailable();return ['dev'=>$s['dev'],'ino'=>$s['ino'],'mode'=>$s['mode']&0170000,'size'=>(int)$s['size']];}
+    private static function same(array|false $a,array $b):bool{return \is_array($a)&&($a['mode']&0170000)===0100000&&$b['mode']===0100000&&$a['dev']===$b['dev']&&$a['ino']===$b['ino']&&(int)$a['size']===$b['size'];}
+}
+
+final class ShlzCssManifest
+{
+    private array $members=[];private array $assets=[];
+    public function __construct(string $entry,private readonly CssDescriptorOpener $opener){if($entry===''||$entry[0]!=='/'||\basename($entry)!=='shlz.css')throw new CssAssetUnavailable();$root=\dirname($entry);ManifestCssAsset::validateComponents($root,true);ManifestCssAsset::validateComponents($entry);$root=\realpath($root);$canonical=\realpath($entry);if($root===false||$canonical===false||\dirname($canonical)!==$root)throw new CssAssetUnavailable();$this->walk($root,'shlz.css',1,0);\ksort($this->members);$snapshot=[];foreach($this->members as$r=>$m)$snapshot[$r]=$m['identity'];$key=(int)\sprintf('%u',\crc32(\getmypid()."\0".$canonical));if($key===0)$key=1;$shared=@\shm_attach($key,131072,0600);if($shared===false)throw new CssAssetUnavailable();try{if(\shm_has_var($shared,1)){if(\shm_get_var($shared,1)!==$snapshot)throw new CssAssetUnavailable();}elseif(!\shm_put_var($shared,1,$snapshot))throw new CssAssetUnavailable();}finally{\shm_detach($shared);}}
+    public function asset(string $relative):?CssAsset{if(!isset($this->members[$relative]))return null;if(isset($this->assets[$relative]))return $this->assets[$relative];$m=$this->members[$relative];return $this->assets[$relative]=new ManifestCssAsset($m['path'],$m['identity'],$this->opener);}
+    public function close():void{$first=null;foreach($this->assets as$a)try{$a->close();}catch(\Throwable $e){$first??=$e;}$this->assets=[];if($first!==null)throw $first;}
+    private function walk(string $root,string $relative,int $depth,int $total):int{if(isset($this->members[$relative]))return$total;if($depth>32||\count($this->members)>=256)throw new CssAssetUnavailable();$path=$root.'/'.$relative;ManifestCssAsset::validateComponents($path);$canonical=\realpath($path);if($canonical===false||!\str_starts_with($canonical,$root.'/'))throw new CssAssetUnavailable();$identity=ManifestCssAsset::identity($path);$a=new ManifestCssAsset($path,$identity,$this->opener);try{$bytes=$a->readBytes();}finally{$a->close();}$total+=\strlen($bytes);if($total>8388608||\preg_match('//u',$bytes)!==1)throw new CssAssetUnavailable();$this->members[$relative]=['path'=>$path,'identity'=>$identity];foreach($this->imports($bytes)as$target){$resolved=$this->resolve($relative,$target);if($resolved==='pilot.css')throw new CssAssetUnavailable();$total=$this->walk($root,$resolved,$depth+1,$total);}return$total;}
+    private function imports(string $css):array{$out=[];$o=0;$n=\strlen($css);while($o<$n){if(\preg_match('/\G(?:\s+|\/\*.*?\*\/)+/As',$css,$m,0,$o)===1){$o+=\strlen($m[0]);continue;}if(\preg_match('/\G@charset\s+(?:"[^"]*"|\'[^\']*\')\s*;/Ai',$css,$m,0,$o)===1){$o+=\strlen($m[0]);continue;}if(\preg_match('/\G@layer\s+[A-Za-z0-9._-]+(?:\s*,\s*[A-Za-z0-9._-]+)*\s*;/A',$css,$m,0,$o)===1){$o+=\strlen($m[0]);continue;}if(\strncasecmp(\substr($css,$o,7),'@import',7)!==0)break;if(\preg_match('/\G@import\s+(?:"([^"]*)"|\'([^\']*)\'|url\(\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s\)"\']+))\s*\))[^;{}]*;/Ai',$css,$m,0,$o)!==1)throw new CssAssetUnavailable();$target='';for($i=1;$i<=5;$i++)if(isset($m[$i])&&$m[$i]!==''){$target=$m[$i];break;}if($target==='')throw new CssAssetUnavailable();$out[]=$target;$o+=\strlen($m[0]);}return$out;}
+    private function resolve(string $importer,string $target):string{if($target===''||$target[0]==='/'||\str_contains($target,'\\')||\preg_match('/[\x00-\x20\x7f%?#:]/',$target)===1||!\str_ends_with($target,'.css'))throw new CssAssetUnavailable();$stack=\dirname($importer)==='.'?[]:\explode('/',\dirname($importer));foreach(\explode('/',$target)as$i=>$p){if($p===''||($p==='.'&&$i!==0)||($p==='..'&&$i!==0)||($p!=='..'&&$p!=='.'&&\preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/D',$p)!==1))throw new CssAssetUnavailable();if($p==='.')continue;if($p==='..'){if($stack===[])throw new CssAssetUnavailable();\array_pop($stack);}else$stack[]=$p;}$r=\implode('/',$stack);if($r===''||!\str_ends_with($r,'.css'))throw new CssAssetUnavailable();return$r;}
 }
 
 final class PhpCssDescriptor implements CssDescriptor
@@ -230,10 +253,11 @@ class PilotHttpCoordinator
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
         $cardId=self::cardId($r->path);$prepareId=self::prepareId($r->path);
-        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/shlz.css','/pilot/assets/pilot.css','/pilot/objects'],true)&&$cardId===null&&$prepareId===null)return $this->response(404,"Not found.\n");
+        $shlzRelative=self::shlzRelative($r->path);$assetCandidate=$shlzRelative!==null;
+        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/pilot.css','/pilot/objects'],true)&&!$assetCandidate&&$cardId===null&&$prepareId===null)return $this->response(404,"Not found.\n");
         if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
         if($r->path==='/pilot')return $this->response(308,'',['Location'=>'/pilot/'],$r->method);
-        if($r->path==='/pilot/assets/shlz.css'){try{$body=$this->dependencies->css()->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
+        if($assetCandidate){try{$asset=$this->dependencies instanceof ShlzAssetProvider?$this->dependencies->shlzAsset($shlzRelative):($shlzRelative==='shlz.css'?$this->dependencies->css():null);if($asset===null)return $this->response(404,"Not found.\n",[],$r->method);$body=$asset->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         if($r->path==='/pilot/assets/pilot.css'){$assetConfigured=$this->dependencies instanceof PilotUiConfiguration&&$this->dependencies->pilotUiConfigured();if(!$assetConfigured)return $this->response(404,"Not found.\n",[],$r->method);try{$body=$this->dependencies->pilotCss()->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
         $configured=$this->dependencies instanceof PilotUiConfiguration&&$this->dependencies->pilotUiConfigured();
@@ -245,6 +269,7 @@ class PilotHttpCoordinator
         $digits=$m[1];if(\strlen($digits)>19||(\strlen($digits)===19&&\strcmp($digits,'9223372036854775807')>0))return null;
         return (int)$digits;
     }
+    private static function shlzRelative(string $path):?string{if(\preg_match('#^/pilot/assets/([A-Za-z0-9][A-Za-z0-9._-]*(?:/[A-Za-z0-9][A-Za-z0-9._-]*)*\.css)$#D',$path,$m)!==1||$m[1]==='pilot.css')return null;return $m[1];}
     private static function prepareId(string $path):?int
     {
         if(\preg_match('#^/pilot/objects/([1-9][0-9]*)/assignment-order/prepare$#D',$path,$m)!==1)return null;$digits=$m[1];if(\strlen($digits)>19||(\strlen($digits)===19&&\strcmp($digits,'9223372036854775807')>0))return null;return (int)$digits;
@@ -300,9 +325,10 @@ final class ProcessEnvironmentSource implements EnvironmentSource
     public function read(string $name):string|false{return \getenv($name);}
 }
 
-final class ProductionPilotHttpDependencies implements PilotHttpDependencies,ObjectCardReaderProvider,ObjectListReaderProvider,PrepareFormReaderProvider,PilotUiConfiguration
+final class ProductionPilotHttpDependencies implements PilotHttpDependencies,ObjectCardReaderProvider,ObjectListReaderProvider,PrepareFormReaderProvider,PilotUiConfiguration,ShlzAssetProvider
 {
     private ?CssAsset $cssAsset=null;
+    private ?ShlzCssManifest $shlzManifest=null;
     private ?CssAsset $pilotCssAsset=null;
     private ?HttpUserDirectory $userDirectory=null;
     private ?ObjectCardReader $objectCardReader=null;
@@ -314,11 +340,9 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     public function __construct(private readonly EnvironmentSource $environment,private readonly CssDescriptorOpener $cssDescriptors){}
     public function css():CssAsset
     {
-        if($this->cssAsset!==null)return $this->cssAsset;
-        $path=$this->environment->read('FMONITOR_SHLZ_CSS_PATH');
-        if(!\is_string($path))throw new CssAssetUnavailable();
-        return $this->cssAsset=new ShlzCssAsset($path,$this->cssDescriptors);
+        if($this->cssAsset!==null)return $this->cssAsset;$path=$this->environment->read('FMONITOR_SHLZ_CSS_PATH');if(!\is_string($path))throw new CssAssetUnavailable();return $this->cssAsset=new ShlzCssAsset($path,$this->cssDescriptors);
     }
+    public function shlzAsset(string $relativePath):?CssAsset{if($this->shlzManifest===null){$path=$this->environment->read('FMONITOR_SHLZ_CSS_PATH');if(!\is_string($path))throw new CssAssetUnavailable();$this->shlzManifest=new ShlzCssManifest($path,$this->cssDescriptors);}return $this->shlzManifest->asset($relativePath);}
     public function pilotCss():CssAsset
     {
         if($this->pilotCssAsset!==null)return $this->pilotCssAsset;
@@ -369,8 +393,8 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     public function prepareCommandConfigured():bool{if(!$this->environment instanceof ProcessEnvironmentSource)return false;try{$this->users();$prefix=$this->environment->read('FMONITOR_PROCESS_TABLE_PREFIX');$table=(\is_string($prefix)?$prefix:'').'fm2_process_user_capabilities';$q=$this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');$q->bind_param('s',$table);$q->execute();return $q->get_result()->fetch_assoc()!==null;}catch(\Throwable){return false;}}
     public function close():void
     {
-        $css=$this->cssAsset;$pilotCss=$this->pilotCssAsset;$this->cssAsset=null;$this->pilotCssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$first=null;
-        try{if($css!==null)$css->close();}catch(\Throwable $e){$first=$e;}
+        $css=$this->cssAsset;$manifest=$this->shlzManifest;$pilotCss=$this->pilotCssAsset;$this->cssAsset=null;$this->shlzManifest=null;$this->pilotCssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$first=null;
+        try{if($css!==null)$css->close();}catch(\Throwable $e){$first=$e;}try{if($manifest!==null)$manifest->close();}catch(\Throwable $e){$first??=$e;}
         try{if($pilotCss!==null)$pilotCss->close();}catch(\Throwable $e){$first??=$e;}
         try{if($connection instanceof \mysqli&&$connection->close()!==true)throw new \RuntimeException();}catch(\Throwable $e){$first??=$e;}
         if($first!==null)throw $first;
