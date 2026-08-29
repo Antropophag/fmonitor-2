@@ -30,7 +30,6 @@ $environment = array_merge($_ENV, [
     'FMONITOR_TRUSTED_REQUEST_HOST' => '127.0.0.1:' . $port,
     'FMONITOR_DEMO_LOOPBACK' => '1',
     'FMONITOR_DEMO_LOOPBACK_NONCE' => bin2hex(random_bytes(16)),
-    'REMOTE_USER' => getenv('FMONITOR_DEMO_REMOTE_USER') ?: 'sidorov@shlz.ru',
 ]);
 foreach ($environment as $name => $value) {
     if (!is_string($name) || (!is_string($value) && !is_numeric($value))) continue;

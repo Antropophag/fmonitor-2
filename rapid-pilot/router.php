@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/ObjectDetails.php';
+require_once __DIR__ . '/LocalAuth.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -15,6 +16,19 @@ if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
     header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
     header('Cache-Control: public, max-age=31536000, immutable');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
+if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css') {
+    $file = $path === '/pilot/assets/shlz.css'
+        ? dirname(__DIR__, 2) . '/shlz-ui/packages/styles/dist/shlz.css'
+        : __DIR__ . '/pilot.css';
+    $bytes = file_get_contents($file);
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/css; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');
     echo $bytes;
     exit;
@@ -60,10 +74,7 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     echo $bytes;
     exit;
 }
-if (PHP_SAPI === 'cli-server' && !isset($_SERVER['REMOTE_USER'])) {
-    $principal = getenv('REMOTE_USER');
-    if (is_string($principal) && $principal !== '') $_SERVER['REMOTE_USER'] = $principal;
-}
+(new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
 $localServerAddress = $_SERVER['SERVER_ADDR'] ?? $_SERVER['SERVER_NAME'] ?? null;
 if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
     $demoNonce = getenv('FMONITOR_DEMO_LOOPBACK_NONCE');
@@ -83,6 +94,9 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
+    $logoutToken = htmlspecialchars((string) ($_SESSION['auth_csrf'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
+    $body = str_replace('</span></div></header>', '</span>' . $logout . '</div></header>', $body);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }
