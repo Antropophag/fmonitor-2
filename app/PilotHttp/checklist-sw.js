@@ -1,0 +1,14 @@
+'use strict';
+const CACHE='fmonitor2-checklist-shell-v2';
+const ASSETS=[
+  '/pilot/assets/shlz.css','/pilot/assets/pilot.css','/pilot/assets/checklist.js',
+  '/pilot/assets/fonts/golos-text-cyrillic-400-normal.woff2','/pilot/assets/fonts/golos-text-cyrillic-500-normal.woff2','/pilot/assets/fonts/golos-text-cyrillic-600-normal.woff2',
+  '/pilot/assets/fonts/golos-text-latin-400-normal.woff2','/pilot/assets/fonts/golos-text-latin-500-normal.woff2','/pilot/assets/fonts/golos-text-latin-600-normal.woff2'
+];
+self.addEventListener('install',event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await Promise.all(ASSETS.map(async asset=>{try{const response=await fetch(asset);if(response.ok)await cache.put(asset,response);}catch{}}));await self.skipWaiting();})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const name of await caches.keys())if(name.startsWith('fmonitor2-checklist-shell-')&&name!==CACHE)await caches.delete(name);await self.clients.claim();})()));
+self.addEventListener('message',event=>{if(event.data?.type!=='CACHE_CHECKLIST'||typeof event.data.url!=='string')return;const url=new URL(event.data.url);if(url.origin!==self.location.origin||!/^\/pilot\/objects\/[1-9][0-9]*\/checklist$/.test(url.pathname))return;event.waitUntil(refresh(url.href));});
+self.addEventListener('fetch',event=>{const request=event.request,url=new URL(request.url);if(request.method!=='GET'||url.origin!==self.location.origin)return;if(request.mode==='navigate'&&/^\/pilot\/objects\/[1-9][0-9]*\/checklist$/.test(url.pathname)){event.respondWith(networkFirst(request));return;}if(url.pathname.startsWith('/pilot/assets/'))event.respondWith(cacheFirst(request));});
+async function refresh(url){const cache=await caches.open(CACHE);const page=await fetch(url,{credentials:'include',cache:'no-store'});if(page.ok)await cache.put(url,page.clone());await Promise.all(ASSETS.map(async asset=>{try{const response=await fetch(asset,{credentials:'same-origin',cache:'no-store'});if(response.ok)await cache.put(asset,response);}catch{}}));}
+async function networkFirst(request){const cache=await caches.open(CACHE);try{const response=await fetch(request);if(response.ok)await cache.put(request.url,response.clone());return response;}catch{const cached=await cache.match(request.url);return cached||new Response('Этот чек-лист ещё не сохранён на устройстве.',{status:503,headers:{'Content-Type':'text/plain; charset=UTF-8'}});}}
+async function cacheFirst(request){const cache=await caches.open(CACHE),cached=await cache.match(request.url);if(cached)return cached;const response=await fetch(request);if(response.ok)await cache.put(request.url,response.clone());return response;}
