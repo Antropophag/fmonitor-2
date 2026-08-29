@@ -4,6 +4,7 @@
 
   const template = root.querySelector('[data-picker-data]');
   const selection = root.querySelector('[data-picker-selection]');
+  const modalSelection = root.querySelector('[data-picker-modal-selection]');
   const inputs = root.querySelector('[data-picker-inputs]');
   const dialog = root.querySelector('.fm2-picker-dialog');
   const search = root.querySelector('[data-picker-search]');
@@ -23,25 +24,33 @@
 
   function renderSelection() {
     selection.replaceChildren();
+    modalSelection.replaceChildren();
     inputs.replaceChildren();
     if (selected.size === 0) {
-      const empty = document.createElement('span');
-      empty.className = 'fm2-picker-selection-empty';
-      empty.textContent = 'Монтажники ещё не выбраны';
-      selection.append(empty);
+      const outsideEmpty = document.createElement('span');
+      outsideEmpty.className = 'fm2-picker-selection-empty';
+      outsideEmpty.textContent = 'Монтажники ещё не выбраны';
+      const modalEmpty = outsideEmpty.cloneNode();
+      modalEmpty.textContent = 'Пока никого';
+      selection.append(outsideEmpty);
+      modalSelection.append(modalEmpty);
     }
     selected.forEach((person) => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'fm2-picker-chip';
-      chip.setAttribute('aria-label', `Убрать ${person.name}`);
-      chip.textContent = `${person.name} · ${person.tab}  ×`;
-      chip.addEventListener('click', () => {
-        selected.delete(person.id);
-        renderSelection();
-        renderResults();
-      });
-      selection.append(chip);
+      const createChip = () => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'fm2-picker-chip';
+        chip.setAttribute('aria-label', `Убрать ${person.name}`);
+        chip.textContent = `${person.name} · ${person.tab}  ×`;
+        chip.addEventListener('click', () => {
+          selected.delete(person.id);
+          renderSelection();
+          renderResults();
+        });
+        return chip;
+      };
+      selection.append(createChip());
+      modalSelection.append(createChip());
 
       const input = document.createElement('input');
       input.type = 'hidden';

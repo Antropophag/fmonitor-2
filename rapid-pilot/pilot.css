@@ -413,6 +413,9 @@
 .fm2-picker:not(.fm2-installer-picker) .fm2-picker-dialog { padding: 22px; }
 .fm2-picker:not(.fm2-installer-picker) .fm2-picker-head { padding: 0; border: 0; }
 .fm2-installer-picker .fm2-search-field { position: relative; margin: 16px 22px 0; }
+.fm2-picker-modal-selection { display: grid; gap: 8px; padding: 12px 22px; background: #fafbfc; border-block-end: 1px solid var(--fm2-border); }
+.fm2-picker-modal-selection > strong { color: var(--fm2-muted); font-size: 11px; font-weight: 600; }
+.fm2-picker-modal-selection .fm2-picker-selection { max-block-size: 72px; overflow-y: auto; }
 .fm2-installer-picker .fm2-search-field::before { position: absolute; z-index: 1; inset: 13px auto auto 14px; inline-size: 10px; block-size: 10px; border: 1.5px solid #788494; border-radius: 50%; content: ''; pointer-events: none; }
 .fm2-installer-picker .fm2-search-field::after { position: absolute; z-index: 1; inset: 24px auto auto 25px; inline-size: 6px; block-size: 1.5px; background: #788494; content: ''; pointer-events: none; transform: rotate(45deg); transform-origin: left center; }
 .fm2-installer-picker .fm2-search-field input { block-size: 42px; padding-inline: 38px 14px; background: #f5f7fa; border-color: #e2e6ec; border-radius: 8px; }
@@ -479,6 +482,7 @@
   .fm2-picker:not(.fm2-installer-picker) .fm2-picker-dialog { padding: 18px; }
   .fm2-picker-head { padding: 16px; }
   .fm2-installer-picker .fm2-search-field { margin-inline: 16px; }
+  .fm2-picker-modal-selection { padding-inline: 16px; }
   .fm2-picker-result-meta, .fm2-picker-footer { padding-inline: 16px; }
   .fm2-picker-result { grid-template-columns: 28px minmax(0, 1fr); }
   .fm2-picker-result-busy { grid-column: 2; max-inline-size: none; text-align: start; }
