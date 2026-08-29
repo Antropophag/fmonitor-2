@@ -32,7 +32,23 @@ final class ContentAddressedArtifactStore
 
     public function read(string $hash,int $expectedSize): string
     {
-        try{if(preg_match('/^[a-f0-9]{64}$/D',$hash)!==1||$expectedSize<0)throw new \RuntimeException();$this->validateRoot();$directory=$this->leafDirectory($hash,false);$path=$directory.'/'.$hash;$this->validateRoot();$this->validateShardChain($hash);$before=@lstat($path);if($before===false||($before['mode']&0170000)!==0100000||is_link($path)||(int)$before['uid']!==$this->effectiveUid||(($before['mode']&0777)&~0640)!==0)throw new \RuntimeException();$this->validateRoot();$handle=@fopen($path,'rb');if($handle===false)throw new \RuntimeException();try{$after=fstat($handle);if($after===false||($after['mode']&0170000)!==0100000||(int)$after['uid']!==$this->effectiveUid||(($after['mode']&0777)&~0640)!==0||(int)$after['dev']!==(int)$before['dev']||(int)$after['ino']!==(int)$before['ino']||(int)$after['size']!==$expectedSize)throw new \RuntimeException();$bytes='';$remaining=$expectedSize+1;while($remaining>0&&!feof($handle)){$chunk=fread($handle,min(8192,$remaining));if($chunk===false)throw new \RuntimeException();if($chunk==='')break;$bytes.=$chunk;$remaining-=strlen($chunk);}}finally{fclose($handle);}$this->validateRoot();if(strlen($bytes)!==$expectedSize||!hash_equals($hash,hash('sha256',$bytes)))throw new \RuntimeException();return $bytes;}catch(\Throwable){throw new ArtifactUnavailableException('Assignment order artifact is unavailable.');}
+        if(preg_match('/^[a-f0-9]{64}$/D',$hash)!==1||$expectedSize<0)throw new ArtifactIntegrityException('Assignment order artifact is unavailable.');
+        try{$this->validateRoot();}catch(\Throwable){throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');}
+        try{$directory=$this->leafDirectory($hash,false);}catch(\Throwable){throw new ArtifactNotFoundException('Assignment order artifact is unavailable.');}
+        $path=$directory.'/'.$hash;
+        try{$this->validateRoot();$this->validateShardChain($hash);}catch(\Throwable){throw new ArtifactIntegrityException('Assignment order artifact is unavailable.');}
+        $before=@lstat($path);if($before===false)throw new ArtifactNotFoundException('Assignment order artifact is unavailable.');
+        if(($before['mode']&0170000)!==0100000||is_link($path)||(int)$before['uid']!==$this->effectiveUid||(($before['mode']&0777)&~0640)!==0)throw new ArtifactIntegrityException('Assignment order artifact is unavailable.');
+        try{$this->validateRoot();}catch(\Throwable){throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');}
+        $handle=@fopen($path,'rb');if($handle===false)throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');
+        try{
+            $after=fstat($handle);if($after===false)throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');
+            if(($after['mode']&0170000)!==0100000||(int)$after['uid']!==$this->effectiveUid||(($after['mode']&0777)&~0640)!==0||(int)$after['dev']!==(int)$before['dev']||(int)$after['ino']!==(int)$before['ino']||(int)$after['size']!==$expectedSize)throw new ArtifactIntegrityException('Assignment order artifact is unavailable.');
+            $bytes='';$remaining=$expectedSize+1;while($remaining>0&&!feof($handle)){$chunk=fread($handle,min(8192,$remaining));if($chunk===false)throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');if($chunk==='')break;$bytes.=$chunk;$remaining-=strlen($chunk);}
+        }finally{fclose($handle);}
+        try{$this->validateRoot();}catch(\Throwable){throw new ArtifactStoreUnavailableException('Assignment order artifact is unavailable.');}
+        if(strlen($bytes)!==$expectedSize||!hash_equals($hash,hash('sha256',$bytes)))throw new ArtifactIntegrityException('Assignment order artifact is unavailable.');
+        return $bytes;
     }
 
     private function leafDirectory(string $hash,bool $create): string
