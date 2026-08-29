@@ -440,6 +440,12 @@
 .fm2-picker-chip:hover { background: #dfe5fa; }
 .fm2-visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .fm2-confirm { display: flex; align-items: flex-start; gap: 9px; }
+.fm2-engineer-form { display: grid; grid-template-columns: minmax(240px, 1fr) auto; gap: 10px; margin-block-start: 18px; align-items: end; }
+.fm2-engineer-form small { grid-column: 1 / -1; color: var(--fm2-muted); font-size: 11px; }
+.fm2-reference-person { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; max-inline-size: 520px; padding: 12px; align-items: center; background: var(--fm2-filter); border-radius: var(--fm2-radius); }
+.fm2-reference-person span:last-child { display: grid; gap: 3px; }
+.fm2-reference-person strong { font-size: 13px; font-weight: 600; }
+.fm2-reference-person small { color: var(--fm2-muted); font-size: 11px; }
 
 @media (max-width: 900px) {
   .fm2-shell { grid-template-columns: 64px minmax(0, 1fr); }
@@ -478,6 +484,8 @@
   .fm2-details dd { margin-block-end: 10px; }
   .fm2-event { grid-template-columns: 1fr; gap: 3px; }
   .fm2-form-card { padding: 4px 14px; }
+  .fm2-engineer-form { grid-template-columns: 1fr; }
+  .fm2-engineer-form small { grid-column: auto; }
   .fm2-picker-dialog { inline-size: calc(100vw - 20px); }
   .fm2-picker:not(.fm2-installer-picker) .fm2-picker-dialog { padding: 18px; }
   .fm2-picker-head { padding: 16px; }

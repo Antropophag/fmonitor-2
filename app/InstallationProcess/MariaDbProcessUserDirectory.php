@@ -36,6 +36,33 @@ final class MariaDbProcessUserDirectory
             return null;
         }
 
+        $pilotUsers = $this->processTablePrefix . 'fm2_pilot_users';
+        $table = $this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');
+        $table->bind_param('s', $pilotUsers);
+        $table->execute();
+        if ($table->get_result()->fetch_assoc() !== null) {
+            $pilotRoles = $this->processTablePrefix . 'fm2_pilot_roles';
+            $pilotAssignments = $this->processTablePrefix . 'fm2_pilot_user_roles';
+            $statement = $this->connection->prepare(
+                "SELECT u.user_id,u.full_name FROM `{$pilotUsers}` u "
+                . "JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id "
+                . "JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id "
+                . "WHERE u.user_id=? AND u.status=1 AND r.status=1 AND r.name='Строительный контроль' LIMIT 2",
+            );
+            $statement->bind_param('i', $controlEngineerUserId);
+            $statement->execute();
+            $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+            if (count($rows) === 1) {
+                return [
+                    'userId' => (int) $rows[0]['user_id'],
+                    'fullName' => $rows[0]['full_name'],
+                    'position' => 'Строительный контроль',
+                    'active' => true,
+                    'role' => 'construction_control_engineer',
+                ];
+            }
+        }
+
         $users = $this->legacyTablePrefix . 'users';
         $roles = $this->legacyTablePrefix . 'users_roles';
         $capabilities = $this->processTablePrefix . 'fm2_process_user_capabilities';
