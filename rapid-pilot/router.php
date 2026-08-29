@@ -9,10 +9,10 @@ if ($path === '/') {
     header('Cache-Control: no-store');
     exit;
 }
-if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.png') {
-    $bytes = file_get_contents(__DIR__ . '/favicon.png');
+if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
+    $bytes = file_get_contents(__DIR__ . '/favicon.svg');
     if (!is_string($bytes)) { http_response_code(404); exit; }
-    header('Content-Type: image/png');
+    header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
     header('Cache-Control: public, max-age=31536000, immutable');
     header('X-Content-Type-Options: nosniff');
@@ -83,7 +83,7 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
-    $body = str_replace('</head>', '<link rel="icon" type="image/png" href="/pilot/assets/favicon.png"></head>', $body);
+    $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }
 

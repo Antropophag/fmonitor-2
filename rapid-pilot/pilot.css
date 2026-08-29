@@ -137,7 +137,7 @@
 
 .fm2-logo-mark { flex: 0 0 32px; inline-size: 32px; block-size: 32px; overflow: visible; }
 .fm2-logo-rail { fill: #fff; }
-.fm2-logo-progress { fill: #6f8cff; }
+.fm2-logo-progress { fill: var(--shlz-source-color-blue-blue-200, #253d98); }
 .fm2-logo-name { display: none; color: #fff; font-size: 16px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; }
 .fm2-nav-trigger {
   display: flex;
