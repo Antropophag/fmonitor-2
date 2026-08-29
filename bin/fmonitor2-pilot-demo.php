@@ -297,7 +297,7 @@ $portText = getenv('FMONITOR_DEMO_PORT') === false ? '8092' : getenv('FMONITOR_D
 if (!is_string($portText) || preg_match('/^(?:[1-9][0-9]{3,4})$/D', $portText) !== 1 || (int)$portText < 1024 || (int)$portText > 65535) demoFailure('CONFIGURATION_INVALID', 64);
 $repo = realpath(dirname(__DIR__)); $home = getenv('HOME');
 $shlz = realpath(dirname((string)$repo) . '/shlz-ui/packages/styles/dist/shlz.css');
-$pilotCss = realpath((string)$repo . '/app/PilotHttp/pilot.css');
+$pilotCss = realpath((string)$repo . '/rapid-pilot/pilot.css');
 if (!is_string($repo) || !is_string($home) || $home === '' || !is_dir($home)) demoFailure('CONFIGURATION_INVALID', 64);
 $fingerprint = substr(hash('sha256', $repo), 0, 8);
 $dbPortText = getenv('FMONITOR_DEMO_DB_PORT') === false ? '23306' : getenv('FMONITOR_DEMO_DB_PORT');
