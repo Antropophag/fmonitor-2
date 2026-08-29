@@ -451,3 +451,43 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+.fm2-directory-summary { display: grid; grid-template-columns: repeat(3, minmax(110px, 150px)) minmax(280px, 1fr); gap: 1px; margin-block-end: 16px; overflow: hidden; background: var(--fm2-border); border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); }
+.fm2-directory-summary > div, .fm2-directory-summary > p { display: grid; min-block-size: 72px; margin: 0; padding: 13px 16px; align-content: center; background: var(--fm2-surface); }
+.fm2-directory-summary strong { color: var(--fm2-ink); font-size: 21px; line-height: 1.1; }
+.fm2-directory-summary span { margin-block-start: 4px; color: var(--fm2-muted); font-size: 12px; }
+.fm2-directory-summary p { font-size: 13px; line-height: 1.35; }
+.fm2-installer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fm2-installer-card { min-inline-size: 0; overflow: hidden; background: var(--fm2-surface); border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); }
+.fm2-installer-card > header { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 11px; padding: 14px 16px; align-items: center; }
+.fm2-person-mark { display: grid; inline-size: 40px; block-size: 40px; color: var(--fm2-primary); background: var(--fm2-filter); border-radius: var(--fm2-radius); place-items: center; font-size: 12px; font-weight: 600; }
+.fm2-installer-card h2 { margin: 0; color: var(--fm2-ink); font-size: 15px; line-height: 1.35; font-weight: 600; }
+.fm2-installer-card header p { margin: 3px 0 0; color: var(--fm2-muted); font-size: 12px; line-height: 1.4; }
+.fm2-employment { display: inline-flex; padding: 5px 8px; border-radius: var(--fm2-radius); font-size: 12px; font-weight: 600; }
+.fm2-employment--active { color: #2f6a42; background: #e6efe7; }
+.fm2-employment--dismissed { color: #8a3636; background: #f4e8e8; }
+.fm2-dismissal-note { margin: 0 16px 12px; padding: 8px 10px; color: #7b4444; background: #faf2f2; border-radius: var(--fm2-radius); font-size: 12px; }
+.fm2-installer-meta { display: flex; flex-wrap: wrap; gap: 7px 20px; padding: 10px 16px; color: var(--fm2-muted); background: #fafbfc; border-block: 1px solid var(--fm2-border); font-size: 11px; }
+.fm2-installer-meta b, .fm2-installer-meta time { color: #3f4b5a; font-weight: 500; }
+.fm2-installer-card > section { padding: 12px 16px 14px; }
+.fm2-installer-card h3 { margin: 0 0 8px; color: #616d7c; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.fm2-installer-card ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.fm2-installer-card li { display: grid; min-inline-size: 0; gap: 2px; font-size: 12px; }
+.fm2-installer-card li > a { overflow-wrap: anywhere; font-weight: 500; }
+.fm2-installer-card li > span, .fm2-assignment-empty { color: var(--fm2-muted); font-size: 11px; }
+
+@media (max-width: 900px) {
+  .fm2-installer-grid { grid-template-columns: 1fr; }
+  .fm2-directory-summary { grid-template-columns: repeat(3, 1fr); }
+  .fm2-directory-summary > p { grid-column: 1 / -1; }
+}
+
+@media (max-width: 680px) {
+  .fm2-directory-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fm2-directory-summary > div, .fm2-directory-summary > p { min-block-size: 58px; padding: 10px; }
+  .fm2-directory-summary strong { font-size: 18px; }
+  .fm2-installer-card > header { grid-template-columns: 38px minmax(0, 1fr); padding: 13px; }
+  .fm2-person-mark { inline-size: 38px; block-size: 38px; }
+  .fm2-employment { grid-column: 2; justify-self: start; }
+  .fm2-installer-meta, .fm2-installer-card > section { padding-inline: 13px; }
+}

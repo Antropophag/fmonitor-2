@@ -349,6 +349,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     private ?ObjectCardReader $objectCardReader=null;
     private ?ObjectListReader $objectListReader=null;
     private ?PrepareFormReader $prepareFormReader=null;
+    private ?MariaDbInstallerDirectoryReader $installerDirectoryReader=null;
     private ?\mysqli $connection=null;
     private ?string $legacyTablePrefix=null;
     private string $processTablePrefix='';
@@ -390,6 +391,10 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     {
         if($this->prepareFormReader!==null)return $this->prepareFormReader;$this->users();if(!$this->connection instanceof \mysqli||$this->legacyTablePrefix===null)throw new PilotHttpInfrastructureUnavailable();return $this->prepareFormReader=new MariaDbPrepareFormReader($this->connection,$this->legacyTablePrefix,$this->resolveProcessPrefix());
     }
+    public function installerDirectory():MariaDbInstallerDirectoryReader
+    {
+        if($this->installerDirectoryReader!==null)return $this->installerDirectoryReader;$this->users();if(!$this->connection instanceof \mysqli||$this->legacyTablePrefix===null)throw new PilotHttpInfrastructureUnavailable();return $this->installerDirectoryReader=new MariaDbInstallerDirectoryReader($this->connection,$this->resolveProcessPrefix(),$this->legacyTablePrefix);
+    }
     public function hasCapability(int $userId,string $capability):bool
     {
         $this->users();$this->resolveProcessPrefix();try{$s=$this->connection->prepare("SELECT user_id FROM `{$this->processTablePrefix}fm2_process_user_capabilities` WHERE user_id=? AND capability=? LIMIT 2");$s->bind_param('is',$userId,$capability);$s->execute();return \count($s->get_result()->fetch_all(MYSQLI_ASSOC))===1;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
@@ -408,7 +413,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     public function prepareCommandConfigured():bool{if(!$this->environment instanceof ProcessEnvironmentSource)return false;try{$this->users();$prefix=$this->environment->read('FMONITOR_PROCESS_TABLE_PREFIX');$table=(\is_string($prefix)?$prefix:'').'fm2_process_user_capabilities';$q=$this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');$q->bind_param('s',$table);$q->execute();return $q->get_result()->fetch_assoc()!==null;}catch(\Throwable){return false;}}
     public function close():void
     {
-        $css=$this->cssAsset;$manifest=$this->shlzManifest;$pilotCss=$this->pilotCssAsset;$this->cssAsset=null;$this->shlzManifest=null;$this->pilotCssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$first=null;
+        $css=$this->cssAsset;$manifest=$this->shlzManifest;$pilotCss=$this->pilotCssAsset;$this->cssAsset=null;$this->shlzManifest=null;$this->pilotCssAsset=null;$connection=$this->connection;$this->connection=null;$this->legacyTablePrefix=null;$this->userDirectory=null;$this->objectCardReader=null;$this->objectListReader=null;$this->prepareFormReader=null;$this->installerDirectoryReader=null;$first=null;
         try{if($css!==null)$css->close();}catch(\Throwable $e){$first=$e;}try{if($manifest!==null)$manifest->close();}catch(\Throwable $e){$first??=$e;}
         try{if($pilotCss!==null)$pilotCss->close();}catch(\Throwable $e){$first??=$e;}
         try{if($connection instanceof \mysqli&&$connection->close()!==true)throw new \RuntimeException();}catch(\Throwable $e){$first??=$e;}
@@ -470,3 +475,4 @@ require_once __DIR__.'/PilotShellView.php';
 require_once __DIR__.'/ObjectListView.php';
 require_once __DIR__.'/ObjectCardView.php';
 require_once __DIR__.'/PrepareFormView.php';
+require_once __DIR__.'/InstallerDirectoryView.php';

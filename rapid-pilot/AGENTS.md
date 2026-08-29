@@ -17,6 +17,10 @@ This directory is an isolated workspace for the fast functional FMonitor 2.0 pil
 - Keep primary evidence and sensitive source artifacts outside the repository. Commit only derived, redacted pilot assets and contracts.
 - Continue to consume public `../shlz-ui` exports; do not copy or imitate its private component implementations or tokens.
 
+## Visual source
+
+For every rapid-pilot frontend change, inspect the Service Desk source at Windows path `C:\Users\Polly\Downloads\ЩЛЗ - фронт ServiceDesk` (WSL path `/mnt/c/Users/Polly/Downloads/ЩЛЗ - фронт ServiceDesk`) and the public exports in `../shlz-ui` before editing. Preserve the Service Desk shell geometry, typography, density, palette, spacing, radii, and interaction-state language while adapting the information architecture to FMonitor's installation workflow.
+
 ## Product invariants
 
 - Preserve append-only domain history.

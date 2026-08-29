@@ -26,6 +26,11 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
         if(!$this->dependencies->pilotUiConfigured()||!$this->dependencies->prepareCommandConfigured()||!$this->dependencies->e2eConfigured())return $this->reads->handle($r);
+        if($r->path==='/pilot/installers'){
+            if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
+            try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
+            try{$this->dependencies->css()->readBytes();$this->dependencies->pilotCss()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);$html=(new ProductionInstallerDirectoryRenderer())->render($user,$this->dependencies->installerDirectory()->read($this->dependencies->processDate()));return $this->response(200,$html,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
+        }
         $route=$this->route($r->path);$cardId=null;if(\preg_match('#^/pilot/objects/([1-9][0-9]*)$#D',$r->path,$m)===1&&self::positive($m[1]))$cardId=(int)$m[1];
         if($route===null&&$cardId===null&&$r->path!=='/pilot/objects')return $this->reads->handle($r);
         if($route===null){if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}try{$this->dependencies->css()->readBytes();$this->dependencies->pilotCss()->readBytes();$user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);return $cardId===null?$this->queue($r,$user):$this->card($r,$cardId,$user);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
