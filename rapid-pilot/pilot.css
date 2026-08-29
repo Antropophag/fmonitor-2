@@ -63,8 +63,8 @@
   background: var(--fm2-ink);
 }
 
-.fm2-nav-state { display: flex; flex: 1; flex-direction: column; inline-size: 100%; min-block-size: 0; }
-.fm2-nav-body { display: flex; flex: 1; flex-direction: column; min-block-size: 0; order: 1; }
+.fm2-nav-state { inline-size: 100%; margin-block-start: auto; }
+.fm2-nav-body { display: flex; flex: 1; flex-direction: column; inline-size: 100%; min-block-size: 0; }
 
 .fm2-logo {
   display: flex;
@@ -91,7 +91,6 @@
   padding: 12px 14px;
   align-items: center;
   gap: 12px;
-  order: 2;
   color: rgb(255 255 255 / 62%);
   border-block-start: 1px solid rgb(255 255 255 / 10%);
   font-size: 12px;
