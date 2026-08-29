@@ -40,7 +40,8 @@ foreach([
 
 $require(preg_match('/<a class="shlz-button/u',$view.$prepare.$card.$list.$shell)!==1,'navigation links must use the shlz Link contract, not Button classes');
 $require(str_contains($css,'.fm2-check-page'),'the served rapid-pilot stylesheet must include the checklist surface');
-$require(str_contains($checklist,'class="shlz-button shlz-button--primary" type="button" data-primary-action')&&str_contains($checklist,'shlz-button--primary fm2-complete-section'),'checklist primary actions must use shlz-ui primary modifiers');
+$require(str_contains($checklist,'shlz-button--primary fm2-complete-section'),'checklist primary actions must use shlz-ui primary modifiers');
+$require(!str_contains($checklist,'data-action-dock')&&!str_contains($css,'.fm2-check-dock'),'checklist must not restore the floating action dock');
 
     return $failures;
 }
