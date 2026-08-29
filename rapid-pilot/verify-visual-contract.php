@@ -17,7 +17,9 @@ function verifyRapidPilotVisualContract(string $root):array
 
     $require=static function(bool $condition,string $message)use(&$failures):void{if(!$condition)$failures[]=$message;};
 
-$require(strpos($view,'/pilot/assets/shlz.css')<strpos($view,'/pilot/assets/pilot.css'),'shlz.css must load before pilot.css');
+$shlzLinkAt=strpos($view,'<link rel="stylesheet" href="/pilot/assets/shlz.css">');
+$pilotLinkAt=strpos($view,'<link rel="stylesheet" href="\'.$pilotCssHref.\'">');
+$require($shlzLinkAt!==false&&$pilotLinkAt!==false&&$shlzLinkAt<$pilotLinkAt,'shlz.css must load before pilot.css');
 $require(preg_match('/(?:^|})\s*\.shlz-(?:button|status)\s*(?:,|\{)/m',$css)!==1,'pilot.css must not redefine bare shlz button/status contracts');
 $require(!str_contains($css,'.shlz-button:hover'),'pilot.css must not replace shlz button hover states');
 $require(str_contains($view,'class="fm2-breadcrumb-link"'),'breadcrumbs must use the FMonitor compact link contract');
@@ -40,7 +42,7 @@ foreach([
 
 $require(preg_match('/<a class="shlz-button/u',$view.$prepare.$card.$list.$shell)!==1,'navigation links must use the shlz Link contract, not Button classes');
 $require(str_contains($css,'.fm2-check-page'),'the served rapid-pilot stylesheet must include the checklist surface');
-$require(str_contains($checklist,'shlz-button--primary fm2-complete-section'),'checklist primary actions must use shlz-ui primary modifiers');
+$require(!str_contains($checklist,'data-complete-section'),'checklist sections must complete automatically without a redundant action');
 $require(!str_contains($checklist,'data-action-dock')&&!str_contains($css,'.fm2-check-dock'),'checklist must not restore the floating action dock');
 $require(str_contains($css,'.fm2-sidebar { position: fixed; z-index: 40; inset: auto 0 0;')&&str_contains($css,'padding-block-end: calc(64px + env(safe-area-inset-bottom))'),'mobile primary navigation must be fixed to the bottom without covering content');
 

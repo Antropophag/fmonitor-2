@@ -281,7 +281,7 @@ class PilotHttpCoordinator
     {
         $cardId=self::cardId($r->path);$prepareId=self::prepareId($r->path);$checklistId=self::checklistId($r->path);
         $shlzRelative=self::shlzRelative($r->path);$assetCandidate=$shlzRelative!==null;
-        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/pilot.css','/pilot/assets/picker.js','/pilot/assets/users.js','/pilot/assets/checklist.js','/pilot/assets/checklist-sw.js','/pilot/objects'],true)&&!$assetCandidate&&$cardId===null&&$prepareId===null&&$checklistId===null)return $this->response(404,"Not found.\n");
+        if(!\in_array($r->path,['/pilot','/pilot/','/pilot/assets/pilot.css','/pilot/assets/picker.js','/pilot/assets/users.js','/pilot/assets/checklist.js','/pilot/assets/checklist-sw.js','/pilot/assets/control-queue.js','/pilot/objects'],true)&&!$assetCandidate&&$cardId===null&&$prepareId===null&&$checklistId===null)return $this->response(404,"Not found.\n");
         if(!\in_array($r->method,['GET','HEAD'],true))return $this->response(405,"Method not allowed.\n",['Allow'=>'GET, HEAD'],$r->method);
         if($r->path==='/pilot')return $this->response(308,'',['Location'=>'/pilot/'],$r->method);
         if($assetCandidate){try{$asset=$this->dependencies instanceof ShlzAssetProvider?$this->dependencies->shlzAsset($shlzRelative):($shlzRelative==='shlz.css'?$this->dependencies->css():null);if($asset===null)return $this->response(404,"Not found.\n",[],$r->method);$body=$asset->readBytes();return $this->response(200,$body,['Content-Type'=>'text/css; charset=UTF-8'],$r->method);}catch(CssAssetUnavailable|PilotHttpInfrastructureUnavailable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
@@ -289,6 +289,7 @@ class PilotHttpCoordinator
         if($r->path==='/pilot/assets/picker.js'){try{$body=\file_get_contents(__DIR__.'/picker.js');if($body===false)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$body,['Content-Type'=>'text/javascript; charset=UTF-8'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         if($r->path==='/pilot/assets/users.js'){try{$body=\file_get_contents(__DIR__.'/users.js');if($body===false)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$body,['Content-Type'=>'text/javascript; charset=UTF-8'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         if($r->path==='/pilot/assets/checklist.js'){try{$body=\file_get_contents(__DIR__.'/checklist.js');if($body===false)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$body,['Content-Type'=>'text/javascript; charset=UTF-8'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
+        if($r->path==='/pilot/assets/control-queue.js'){try{$body=\file_get_contents(__DIR__.'/control-queue.js');if($body===false)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$body,['Content-Type'=>'text/javascript; charset=UTF-8'],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         if($r->path==='/pilot/assets/checklist-sw.js'){try{$body=\file_get_contents(__DIR__.'/checklist-sw.js');if($body===false)throw new PilotHttpInfrastructureUnavailable();return $this->response(200,$body,['Content-Type'=>'text/javascript; charset=UTF-8','Service-Worker-Allowed'=>'/pilot/','Content-Security-Policy'=>"default-src 'self'; connect-src 'self'"],$r->method);}catch(\Throwable){return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}}
         try{$principal=$this->identity->resolve($r->serverIdentity);}catch(InvalidServerIdentity){return $this->response(401,"Authentication required.\n",[],$r->method);}
         $configured=$this->dependencies instanceof PilotUiConfiguration&&$this->dependencies->pilotUiConfigured();
@@ -423,6 +424,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     {
         $this->users();$this->resolveProcessPrefix();
         try{
+            if($this->hasCapability($userId,'construction_control_engineer'))return true;
             $s=$this->connection->prepare("SELECT ur.user_id FROM `{$this->processTablePrefix}fm2_pilot_user_roles` ur JOIN `{$this->processTablePrefix}fm2_pilot_users` u ON u.user_id=ur.user_id JOIN `{$this->processTablePrefix}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE ur.user_id=? AND u.status=1 AND r.status=1 AND (r.name='Строительный контроль' OR r.name='Администратор' OR r.name='Суперадминистратор' OR r.name LIKE 'Руководитель %' OR r.name LIKE 'Директор %') LIMIT 1");
             $s->bind_param('i',$userId);$s->execute();return $s->get_result()->fetch_assoc()!==null;
         }catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
