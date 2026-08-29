@@ -1,7 +1,7 @@
 # PILOT-E2E-FLOW-001 — пройти пилотный путь ФКР от очереди до открытия работ
 
 - Статус: `APPROVED`
-- Версия: `0.2`
+- Версия: `0.3`
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью и явно настроенными process capabilities
 - Публичный seam: configured production HTTP под `/pilot`
@@ -177,7 +177,7 @@ Production MariaDB fixture до первого request содержит реал
 - active engineer `73 / Анна Волкова`, active role, `construction_control_engineer`, position `Инженер строительного контроля`;
 - imported case/object `4512`, revision `1`, `needs_assignment_order`, no order/opening/PTO/completion; registration `77-000123`, address `Москва, ул. Примерная, д. 10`, entrance `2`, planned dates `2026-10-05..2026-12-20`, prefill engineer `73`;
 - current `fm2_workforce_catalog` installer `1042 / Иванов Иван Иванович / Электромеханик по лифтам`, employed `2024-02-01..null`, source `one_c_zup_via_bitrix`, updated `2026-08-27T18:15:00+03:00`;
-- production clock examples inherit command specs: prepare date `2026-08-27`, registration moment `2026-08-28T12:15:30+03:00`, opening moment `2026-08-28T12:45:00+03:00`.
+- production clock returns one exact instant per successful command in chronological order: prepare `2026-08-27T12:30:00+03:00`, registration `2026-08-28T12:15:30+03:00`, opening `2026-08-28T12:45:00+03:00`. The immutable prepare `occurredAt` is therefore `2026-08-27T12:30:00+03:00`, and its `assignmentOrderDate = 2026-08-27` is derived from that same instant in `Europe/Moscow`.
 
 One cookie-aware HTTP client performs, with token/revision read from immediately preceding HTML:
 
@@ -230,6 +230,19 @@ Oracle section 8 is derived only from the approved literal templates of `DOCUMEN
 
 No production renderer, stored blob, process metadata or current implementation output is used as the source of these expected values. A later intentional template change requires a newly approved spec version and new independent oracle; it cannot silently update the E2E expectation.
 
+### Единый time seam v0.3
+
+`ORDER-PREPARE-002` and product decision `DECISION-004` require one source instant for both audit and document business date:
+
+```text
+occurredAt = Clock.now()
+assignmentOrderDate = occurredAt converted to Europe/Moscow and formatted YYYY-MM-DD
+```
+
+An adapter may encapsulate timezone/calendar conversion for testability, but it must receive or otherwise be bound to that exact command instant. It is not an independently configurable second clock and cannot return a date inconsistent with `occurredAt`. In particular, a production environment override such as `businessDate = 2026-08-27` combined with prepare `Clock.now() = 2026-08-28T12:30:00+03:00` is forbidden: it would make the signed-document date and append-only audit describe different command days and would contradict the already approved domain behavior.
+
+The fixed example therefore advances the same production clock between requests and uses the three exact instants in section 8. It does not freeze one `now` for the complete multi-request journey and does not introduce a separate business-date environment input. Registration and opening retain their approved later instants. The artifact oracle remains unchanged because its document date is still the correctly derived `2026-08-27`.
+
 ## 10. Не входит в срез
 
 - bootstrap/seed/reset command and short launch instructions;
@@ -248,6 +261,6 @@ No production renderer, stored blob, process metadata or current implementation 
 - Approved by: separately tasked Gate 1 Codex agent `/root/e2e_spec`
 - Date: `2026-08-29`
 - Decision: `APPROVED`
-- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.2` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes, corrects the exact artifact oracle for the fixed engineer `73 / Анна Волкова` and leaves data bootstrap as a separate subsequent slice.
+- Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.3` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes, keeps the exact artifact oracle for `73 / Анна Волкова`, and corrects the fixed prepare instant so the immutable order date is derived from the same clock value as its audit event.
 
-Gate 2 разрешён только для version `0.2`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
+Gate 2 разрешён только для version `0.3`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
