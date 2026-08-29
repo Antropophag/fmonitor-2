@@ -4,6 +4,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap.php';
 
 use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
+use FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
@@ -39,7 +40,7 @@ try {
  $db->query("INSERT INTO legacy_users_roles VALUES(5,'ФКР',1),(8,'Строительный контроль',1)");
  $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'Читатель','reader@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
  $db->query("INSERT INTO legacy_fm_maintable VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73')");
- ProductionProcessSchemaMigration::apply($db);WorkforceCatalogSchemaMigration::apply($db);ProcessUserCapabilitiesSchemaMigration::apply($db);BitrixWorkforceHistorySchemaMigration::apply($db);
+ ProductionProcessSchemaMigration::apply($db);WorkforceCatalogSchemaMigration::apply($db);ProcessUserCapabilitiesSchemaMigration::apply($db);ProcessCommandCapabilitiesSchemaMigration::apply($db);BitrixWorkforceHistorySchemaMigration::apply($db);
  $capabilityChecks=array_column(pefRows($db,"SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='ck_fm2_process_user_capability'"),'CHECK_CLAUSE');assertSameValue(1,count($capabilityChecks),'production capability constraint exists');$capabilityCheck=strtolower(preg_replace('/\\s+/','',(string)$capabilityChecks[0]));foreach(['assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer']as$capability)assertSameValue(true,str_contains($capabilityCheck,"'$capability'"),'production migration permits exact capability '.$capability);
  $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES(1,4512,'needs_assignment_order','2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
  $db->query("INSERT INTO fm2_process_user_capabilities VALUES(18,'assignment_order.prepare',NULL),(18,'assignment_order.confirm_registration',NULL),(18,'installation.open',NULL),(73,'construction_control_engineer','Инженер строительного контроля')");
