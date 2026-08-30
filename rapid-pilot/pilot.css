@@ -604,6 +604,7 @@
 .fm2-recon-pager > span, .fm2-recon-pager strong { color: var(--fm2-muted); font-size: 11px; font-weight: 500; }
 .fm2-recon-pager > div { display: flex; align-items: center; gap: 12px; }
 .fm2-recon-pager .shlz-button { padding-block: 7px; text-decoration: none; }
+.fm2-recon-pager .shlz-pagination__item { min-inline-size: 44px; block-size: 44px; }
 .fm2-active-summary { display: grid; grid-template-columns: repeat(4,auto) minmax(300px,1fr); overflow: hidden; margin-block-end: 10px; color: #fff; background: var(--fm2-ink); border-radius: var(--fm2-radius); }
 .fm2-active-summary > div { display: grid; align-content: center; min-inline-size: 130px; gap: 3px; padding: 17px 18px; border-inline-end: 1px solid rgb(255 255 255 / 14%); }
 .fm2-active-summary strong { font-size: 23px; font-weight: 500; }
@@ -734,6 +735,8 @@
   .fm2-recon-filter-actions .fm2-result-count { margin-inline-start: 0; text-align: center; }
   .fm2-recon-pager, .fm2-recon-pager > div { align-items: stretch; flex-direction: column; text-align: center; }
   .fm2-recon-pager .shlz-button { min-block-size: 44px; box-sizing: border-box; justify-content: center; }
+  .fm2-recon-pager .fm2-pagination__context { display: none; }
+  .fm2-recon-pager .shlz-pagination__list { justify-content: center; gap: 8px; }
   .fm2-active-summary { grid-template-columns: repeat(2,1fr); }
   .fm2-active-summary > div { min-inline-size: 0; }
   .fm2-active-summary p { grid-column: 1 / -1; }
