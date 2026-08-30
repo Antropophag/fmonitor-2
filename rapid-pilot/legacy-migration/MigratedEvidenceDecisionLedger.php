@@ -17,6 +17,7 @@ final class MigratedEvidenceDecisionLedger
     {
         $p=$this->prefix;
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_migrated_evidence_decisions`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,operation_id CHAR(36) NOT NULL,request_sha256 CHAR(64) NOT NULL,snapshot_id BIGINT UNSIGNED NOT NULL,snapshot_sha256 CHAR(64) NOT NULL,projection_sha256 CHAR(64) NOT NULL,source_locator VARCHAR(500) NOT NULL,issue_code VARCHAR(80) NOT NULL,outcome VARCHAR(40) NOT NULL,target_locator VARCHAR(500) NULL,reason VARCHAR(1000) NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,UNIQUE KEY uq_operation(operation_id),KEY ix_snapshot_issue(snapshot_id,issue_code,id),KEY ix_actor(actor_user_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        (new MigratedEvidenceProjectionStore($this->db,$p))->ensureSchema();
     }
 
     public function decide(array $command):array
@@ -31,7 +32,7 @@ final class MigratedEvidenceDecisionLedger
             if(!hash_equals((string)$normalized['snapshotSha256'],(string)$projection['contentSha256'])||!hash_equals((string)$normalized['projectionSha256'],(string)$projection['projectionHash']))throw new DomainException('Migrated evidence projection is stale or unavailable.');
             if(!hash_equals((string)$normalized['sourceLocator'],(string)$projection['sourceLocator'])||!in_array($normalized['issueCode'],$projection['conflictCodes'],true))throw new DomainException('Migrated evidence issue reference is invalid.');
             $s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_migrated_evidence_decisions`(operation_id,request_sha256,snapshot_id,snapshot_sha256,projection_sha256,source_locator,issue_code,outcome,target_locator,reason,actor_user_id,occurred_at)VALUES(?,?,?,?,?,?,?,?,?,?,?,?)");
-            $s->bind_param('ssisssssssis',$normalized['operationId'],$requestHash,$normalized['snapshotId'],$normalized['snapshotSha256'],$normalized['projectionSha256'],$normalized['sourceLocator'],$normalized['issueCode'],$normalized['outcome'],$normalized['targetLocator'],$normalized['reason'],$normalized['actorUserId'],$normalized['occurredAt']);$s->execute();$id=(int)$s->insert_id;
+            $s->bind_param('ssisssssssis',$normalized['operationId'],$requestHash,$normalized['snapshotId'],$normalized['snapshotSha256'],$normalized['projectionSha256'],$normalized['sourceLocator'],$normalized['issueCode'],$normalized['outcome'],$normalized['targetLocator'],$normalized['reason'],$normalized['actorUserId'],$normalized['occurredAt']);$s->execute();$id=(int)$s->insert_id;(new MigratedEvidenceProjectionStore($this->db,$this->prefix))->recordDecision((int)$normalized['snapshotId'],(string)$normalized['issueCode'],$id,(string)$normalized['outcome']);
             $this->db->commit();return ['status'=>'accepted','decisionId'=>$id];
         }catch(mysqli_sql_exception $error){
             $this->db->rollback();
