@@ -45,8 +45,8 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         try{
             $this->dependencies->css()->readBytes();$this->dependencies->pilotCss()->readBytes();
             $user=$this->dependencies->users()->resolveActiveUser($principal);if($user===null)return $this->response(403,"Access denied.\n",[],$r->method);
-            $cap=match($route['kind']){'prepare','artifact','engineer'=>'assignment_order.prepare','registration'=>'assignment_order.confirm_registration','open'=>'installation.open'};
-            if(!$this->dependencies->hasCapability($user->id,$cap))return $this->response(403,"Access denied.\n",[],$r->method);
+            $cap=match($route['kind']){'prepare','engineer'=>'assignment_order.prepare','registration'=>'assignment_order.confirm_registration','open'=>'installation.open','artifact'=>null};
+            if($cap!==null&&!$this->dependencies->hasCapability($user->id,$cap))return $this->response(403,"Access denied.\n",[],$r->method);
             if($route['kind']==='artifact')return $this->artifact($r,$route,$user);
             if($r->method==='POST'){try{return $this->command($r,$route,$user);}catch(\LogicException $e){return $this->commandLogicException($r,$route,$user,$e);}}
             return $this->preparePage($r,$route['id'],$user);
