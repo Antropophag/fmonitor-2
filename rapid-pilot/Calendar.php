@@ -34,7 +34,7 @@ final class RapidPilotCalendar
     public static function decorateNavigation(string $html, bool $active): string
     {
         $current = $active ? ' aria-current="page"' : '';
-        $link = '<a class="fm2-nav-item" href="/pilot/calendar"' . $current . '><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v3m14-3v3M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm2 7h3v3H7zm5 0h3v3h-3z"/></svg><span class="fm2-nav-text">Календарь</span></a>';
+        $link = '<a class="fm2-nav-item" href="/pilot/calendar"' . $current . '><svg class="fm2-nav-icon fm2-nav-icon--shlz" viewBox="0 0 24 24" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-circle-grid-interface-sidebar"/></svg><span class="fm2-nav-text">Календарь</span></a>';
         return str_replace('<a class="fm2-nav-item" href="/pilot/objects"', $link . '<a class="fm2-nav-item" href="/pilot/objects"', $html);
     }
 
@@ -48,7 +48,7 @@ final class RapidPilotCalendar
             $user = $this->user();
             $events = $this->read($first, $last);
             $html = $this->render($user, $month, $first, $last, $selected, $events);
-            $html = self::decorateNavigation($html, true);
+            $html = RapidPilotShell::decorate($html, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), true, RapidPilotOtiz::currentUserCanAccess(), false);
             $html = str_replace('</body>', '<script type="module" src="/pilot/assets/calendar.js"></script></body>', $html);
             header('Content-Type: text/html; charset=UTF-8');
             header('Content-Security-Policy: default-src \'self\'; style-src \'self\'; script-src \'self\'; img-src \'self\'; font-src \'self\'; base-uri \'none\'; frame-ancestors \'none\'');

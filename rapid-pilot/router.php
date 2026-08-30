@@ -6,6 +6,7 @@ require_once __DIR__ . '/ObjectDetails.php';
 require_once __DIR__ . '/LocalAuth.php';
 require_once __DIR__ . '/Otiz.php';
 require_once __DIR__ . '/Calendar.php';
+require_once __DIR__ . '/Shell.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -43,6 +44,17 @@ if ($path === '/pilot/assets/shlz-calendar-grid.js') {
     if (!is_string($bytes)) { http_response_code(503); header('Content-Type: text/plain; charset=UTF-8'); echo "Configured shlz-ui does not export Calendar Grid behavior. Set FMONITOR_SHLZ_UI_ROOT to a compatible public shlz-ui checkout.\n"; exit; }
     header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
+if ($path === '/pilot/assets/shlz-icons.svg') {
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
+    $bytes = file_get_contents($shlzRoot . '/packages/icons/dist/sprite.svg');
+    if (!is_string($bytes)) { http_response_code(503); header('Content-Type: text/plain; charset=UTF-8'); echo "Configured shlz-ui does not export its icon sprite. Set FMONITOR_SHLZ_UI_ROOT to a compatible public shlz-ui checkout.\n"; exit; }
+    header('Content-Type: image/svg+xml; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'files/file-pdf-default.svg' : 'interface/download.svg';
     $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/normalized/' . $icon);
@@ -64,7 +76,7 @@ if ($path === '/pilot/assets/shlz-tabs.js') {
     echo $bytes;
     exit;
 }
-if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue)\.js$#D', $path, $script) === 1) {
+if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue|navigation)\.js$#D', $path, $script) === 1) {
     $filename = $script[1] . '.js';
     $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -144,11 +156,7 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
-    if (RapidPilotOtiz::currentUserCanAccess()) $body = RapidPilotOtiz::decorateNavigation($body, false);
-    $body = RapidPilotCalendar::decorateNavigation($body, false);
-    $logoutToken = htmlspecialchars((string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $logoutToken . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
-    $body = str_replace('</aside>', $logout . '</aside>', $body);
+    $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }

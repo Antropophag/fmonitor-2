@@ -58,7 +58,8 @@ final class RapidPilotOtiz
     public static function decorateNavigation(string $html, bool $active): string
     {
         $current = $active ? ' aria-current="page"' : '';
-        return preg_replace('#<span class="fm2-nav-group">Управление</span><span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true">(<svg[^>]*>.*?</svg><span class="fm2-nav-text">Расчёты ОТиЗ</span>)</span>#s', '<span class="fm2-nav-group">ОТиЗ</span><a class="fm2-nav-item" href="/pilot/otiz"' . $current . '>$1</a><span class="fm2-nav-group">Управление</span>', $html) ?? $html;
+        $icon = '<svg class="fm2-nav-icon fm2-nav-icon--shlz" viewBox="0 0 24 25" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-bar-chart-square-plus"/></svg>';
+        return preg_replace('#<span class="fm2-nav-group">Управление</span><span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true"><svg[^>]*>.*?</svg><span class="fm2-nav-text">Расчёты ОТиЗ</span></span>#s', '<span class="fm2-nav-group">ОТиЗ</span><a class="fm2-nav-item" href="/pilot/otiz"' . $current . '>' . $icon . '<span class="fm2-nav-text">Расчёты ОТиЗ</span></a><span class="fm2-nav-group">Управление</span>', $html) ?? $html;
     }
 
     public function handle(string $path): never
@@ -381,9 +382,7 @@ final class RapidPilotOtiz
     {
         $user = new \FMonitor2\PilotHttp\HttpUser($this->userId, $this->userName, (string) ($_SERVER['REMOTE_USER'] ?? ''));
         $html = \FMonitor2\PilotHttp\PilotView::document($user, $title, 'Расчёты ОТиЗ', '', '<div class="fm2-otiz">' . $content . '</div>');
-        $html = self::decorateNavigation($html, true);
-        $logout = '<form method="post" action="/pilot/logout" class="fm2-logout-form"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><button class="fm2-logout" type="submit">Выйти</button></form>';
-        $html = str_replace('</aside>', $logout . '</aside>', $html);
+        $html = RapidPilotShell::decorate($html, $this->csrf, false, true, true);
         $html = str_replace('</head>', '<script src="/pilot/assets/otiz.js" defer></script><link rel="icon" href="/pilot/assets/favicon.svg"></head>', $html);
         header('Content-Type: text/html; charset=UTF-8'); header('Cache-Control: no-store'); header('X-Frame-Options: DENY');
         echo $html; exit;

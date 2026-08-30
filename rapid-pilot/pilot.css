@@ -149,7 +149,7 @@
   background: var(--fm2-ink);
 }
 
-.fm2-nav-state { inline-size: 100%; margin-block-start: auto; }
+.fm2-nav-state { inline-size: 100%; }
 .fm2-nav-body { display: flex; flex: 1; flex-direction: column; inline-size: 100%; min-block-size: 0; }
 
 .fm2-logo {
@@ -221,13 +221,25 @@
 .fm2-nav-item--muted { opacity: .42; }
 
 .fm2-nav-icon { flex: 0 0 24px; inline-size: 24px; block-size: 24px; fill: currentcolor; stroke: currentcolor; stroke-width: .55; paint-order: stroke fill; }
+.fm2-nav-icon--shlz { stroke: none; paint-order: normal; }
 .fm2-nav-text, .fm2-nav-group { display: none; }
 .fm2-nav-text { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm2-nav-group { margin: 14px 13px 3px; color: rgb(255 255 255 / 38%); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .fm2-shell:has(.fm2-nav-state[open]) :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name, .fm2-nav-trigger-text) { display: block; }
 .fm2-shell:has(.fm2-nav-state[open]) .fm2-logo { inline-size: 100%; }
-.fm2-logout-form { margin-block-start: auto; }
-.fm2-logout { inline-size: 100%; min-block-size: 38px; padding: 8px 10px; border: 0; border-radius: 8px; background: rgb(255 255 255 / 8%); color: rgb(255 255 255 / 72%); font: inherit; font-size: 12px; cursor: pointer; }
+.fm2-sidebar-user { display: flex; inline-size: 100%; min-block-size: 56px; padding: 10px 8px; align-items: center; gap: 10px; border-block-start: 1px solid rgb(255 255 255 / 10%); }
+.fm2-sidebar-avatar { flex: 0 0 32px; color: var(--fm2-ink); background: #fff; font-size: 10px; }
+.fm2-sidebar:not(:has(.fm2-nav-state[open])) .fm2-sidebar-user { justify-content: center; gap: 0; }
+.fm2-sidebar:not(:has(.fm2-nav-state[open])) .fm2-sidebar-avatar { display: none; }
+.fm2-sidebar-user-copy { display: none; min-inline-size: 0; flex: 1; }
+.fm2-sidebar-user-copy strong, .fm2-sidebar-user-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm2-sidebar-user-copy strong { color: #fff; font-size: 12px; font-weight: 500; }
+.fm2-sidebar-user-copy small { margin-block-start: 2px; color: rgb(255 255 255 / 48%); font-size: 10px; }
+.fm2-shell:has(.fm2-nav-state[open]) .fm2-sidebar-user-copy { display: block; }
+.fm2-logout-form { flex: 0 0 auto; margin-inline-start: auto; }
+.fm2-logout { display: grid; inline-size: 34px; block-size: 34px; padding: 7px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: rgb(255 255 255 / 62%); font: inherit; cursor: pointer; }
+.fm2-user-logout-icon { inline-size: 20px; block-size: 20px; fill: currentcolor; }
+.fm2-logout-text { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .fm2-logout:hover { background: rgb(255 255 255 / 14%); color: #fff; }
 .fm2-logout:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
@@ -907,8 +919,9 @@
   .fm2-primary-nav::-webkit-scrollbar { display: none; }
   .fm2-nav-item { flex: 0 0 48px; inline-size: 48px; min-block-size: 48px; padding: 10px 12px; }
   .fm2-nav-trigger, .fm2-nav-group, .fm2-nav-text, .fm2-logo-name { display: none !important; }
-  .fm2-logout-form { flex: 0 0 auto; margin: 0 0 0 auto; }
-  .fm2-logout { inline-size: auto; min-block-size: 48px; }
+  .fm2-sidebar-user { flex: 0 0 auto; inline-size: auto; min-block-size: 48px; padding: 4px; border: 0; }
+  .fm2-sidebar-user-copy, .fm2-sidebar-avatar { display: none !important; }
+  .fm2-logout { inline-size: 40px; block-size: 40px; }
   .fm2-main { padding: 18px 12px 32px; }
   .fm2-page-header, .fm2-object-head, .fm2-command { display: grid; }
   .fm2-page-header h1 { font-size: 22px; }
