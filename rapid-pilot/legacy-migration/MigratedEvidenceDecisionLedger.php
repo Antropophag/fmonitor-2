@@ -47,7 +47,7 @@ final class MigratedEvidenceDecisionLedger
 
     public function allDecisions():array
     {
-        return $this->db->query("SELECT id,operation_id,snapshot_id,snapshot_sha256,projection_sha256,source_locator,issue_code,outcome,target_locator,reason,actor_user_id,occurred_at FROM `{$this->prefix}fm2_migrated_evidence_decisions` ORDER BY snapshot_id,id")->fetch_all(MYSQLI_ASSOC);
+        return $this->db->query("SELECT d.id,d.operation_id,d.snapshot_id,d.snapshot_sha256,d.projection_sha256,d.source_locator,d.issue_code,d.outcome,d.target_locator,d.reason,d.actor_user_id,d.occurred_at FROM `{$this->prefix}fm2_migrated_evidence_decisions` d JOIN `{$this->prefix}fm2_history_source_snapshots` s ON s.id=d.snapshot_id WHERE NOT EXISTS(SELECT 1 FROM `{$this->prefix}fm2_history_source_snapshots` newer WHERE newer.legacy_object_id=s.legacy_object_id AND newer.id>s.id) ORDER BY d.snapshot_id,d.id")->fetch_all(MYSQLI_ASSOC);
     }
 
     private function validate(array $c):array

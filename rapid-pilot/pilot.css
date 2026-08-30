@@ -570,6 +570,25 @@
 .fm2-recon-summary strong { font-size: 23px; font-weight: 500; }
 .fm2-recon-summary span { color: rgb(255 255 255 / 64%); font-size: 11px; }
 .fm2-recon-summary p { align-self: center; max-inline-size: 68ch; margin: 0; padding: 18px 22px; color: rgb(255 255 255 / 72%); font-size: 12px; }
+.fm2-recon-queue-summary { display: grid; grid-template-columns: repeat(3,auto) minmax(250px,.8fr) minmax(300px,1.2fr); align-items: stretch; overflow: hidden; margin-block-end: 10px; color: #fff; background: var(--fm2-ink); border-radius: var(--fm2-radius); }
+.fm2-recon-queue-summary > div { display: grid; align-content: center; min-inline-size: 140px; gap: 3px; padding: 17px 18px; border-inline-end: 1px solid rgb(255 255 255 / 14%); }
+.fm2-recon-queue-summary > div strong { font-size: 23px; font-weight: 500; }
+.fm2-recon-queue-summary > div span, .fm2-recon-queue-summary dt, .fm2-recon-queue-summary p { color: rgb(255 255 255 / 65%); font-size: 10px; }
+.fm2-recon-queue-summary dl { display: grid; align-content: center; gap: 5px; margin: 0; padding: 14px 18px; border-inline-end: 1px solid rgb(255 255 255 / 14%); }
+.fm2-recon-queue-summary dl div { display: flex; justify-content: space-between; gap: 12px; }
+.fm2-recon-queue-summary dd { margin: 0; font-size: 11px; }
+.fm2-recon-queue-summary p { align-self: center; margin: 0; padding: 16px 18px; line-height: 1.45; }
+.fm2-recon-status-counts { display: flex; flex-wrap: wrap; gap: 1px; margin-block-end: 10px; overflow: hidden; border-radius: var(--fm2-radius); background: var(--fm2-border); }
+.fm2-recon-status-counts span { flex: 1 1 150px; padding: 10px 13px; color: var(--fm2-muted); background: var(--fm2-surface); font-size: 10px; }
+.fm2-recon-status-counts strong { float: inline-end; color: var(--fm2-ink); font-size: 12px; }
+.fm2-recon-filters { display: grid; grid-template-columns: repeat(5,minmax(135px,1fr)); gap: 10px; margin-block-end: 14px; padding: 14px; border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); background: var(--fm2-surface); }
+.fm2-recon-filters .shlz-input { min-inline-size: 0; font-size: 13px; }
+.fm2-recon-filter-actions { display: flex; grid-column: 1 / -1; align-items: center; gap: 14px; }
+.fm2-recon-filter-actions .fm2-result-count { margin-inline-start: auto; }
+.fm2-recon-pager { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-block-start: 14px; padding: 12px 14px; border-radius: var(--fm2-radius); background: var(--fm2-surface); }
+.fm2-recon-pager > span, .fm2-recon-pager strong { color: var(--fm2-muted); font-size: 11px; font-weight: 500; }
+.fm2-recon-pager > div { display: flex; align-items: center; gap: 12px; }
+.fm2-recon-pager .shlz-button { padding-block: 7px; text-decoration: none; }
 .fm2-recon-list { display: grid; gap: 12px; }
 .fm2-recon-item { overflow: hidden; background: var(--fm2-surface); border-radius: var(--fm2-radius); }
 .fm2-recon-item > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 20px 22px 16px; border-block-end: 1px solid var(--fm2-border); }
@@ -627,6 +646,9 @@
   .fm2-otiz-scenarios ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fm2-otiz-scenarios li:nth-child(n) { padding-inline: 0 18px; border-inline-start: 0; }
   .fm2-otiz-scenarios li:nth-child(even) { padding-inline-start: 18px; border-inline-start: 1px solid var(--fm2-border); }
+  .fm2-recon-queue-summary { grid-template-columns: repeat(3,1fr); }
+  .fm2-recon-queue-summary dl, .fm2-recon-queue-summary p { grid-column: span 3; border-block-start: 1px solid rgb(255 255 255 / 14%); border-inline-end: 0; }
+  .fm2-recon-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -657,6 +679,17 @@
   .fm2-recon-grid > section:last-child { border-block-end: 0; }
   .fm2-recon-item > header { align-items: stretch; flex-direction: column; }
   .fm2-recon-state { justify-items: start; }
+  .fm2-recon-queue-summary { grid-template-columns: 1fr; }
+  .fm2-recon-queue-summary > div { border-inline-end: 0; border-block-end: 1px solid rgb(255 255 255 / 14%); }
+  .fm2-recon-queue-summary dl, .fm2-recon-queue-summary p { grid-column: auto; }
+  .fm2-recon-status-counts { display: grid; grid-template-columns: 1fr; }
+  .fm2-recon-filters { grid-template-columns: 1fr; }
+  .fm2-recon-filters .shlz-input { font-size: 16px; }
+  .fm2-recon-filter-actions { align-items: stretch; flex-direction: column; }
+  .fm2-recon-filter-actions .shlz-button { min-block-size: 44px; }
+  .fm2-recon-filter-actions .fm2-result-count { margin-inline-start: 0; text-align: center; }
+  .fm2-recon-pager, .fm2-recon-pager > div { align-items: stretch; flex-direction: column; text-align: center; }
+  .fm2-recon-pager .shlz-button { min-block-size: 44px; box-sizing: border-box; justify-content: center; }
   .fm2-recon-decision { margin-inline: 12px; }
   .fm2-recon-decision > header, .fm2-recon-history li > div { flex-direction: column; }
   .fm2-recon-decision-form { grid-template-columns: 1fr; }
