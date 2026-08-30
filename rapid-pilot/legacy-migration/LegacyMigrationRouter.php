@@ -89,6 +89,7 @@ final class LegacyActiveBaselineTarget
 
 final class MigrationClassificationProvenanceTarget
 {
+    private bool $schemaReady=false;
     public function __construct(private mysqli $db, private string $prefix)
     {
         if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new InvalidArgumentException('Invalid local table prefix');
@@ -101,7 +102,7 @@ final class MigrationClassificationProvenanceTarget
         if ($route['applyBlocked']) throw new DomainException('QUARANTINED_EVIDENCE');
         $json = json_encode($classification, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $hash = hash('sha256', $json); $p = $this->prefix;
-        $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_migration_classification_provenance` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,output_kind VARCHAR(40) NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,output_id BIGINT UNSIGNED NOT NULL,source_cutoff_at DATETIME NOT NULL,classification_version VARCHAR(80) NOT NULL,category VARCHAR(40) NOT NULL,reason_codes_json TEXT NOT NULL,classification_sha256 CHAR(64) NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_output(output_kind,output_id),KEY legacy_object(legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        if(!$this->schemaReady){$this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_migration_classification_provenance` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,output_kind VARCHAR(40) NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,output_id BIGINT UNSIGNED NOT NULL,source_cutoff_at DATETIME NOT NULL,classification_version VARCHAR(80) NOT NULL,category VARCHAR(40) NOT NULL,reason_codes_json TEXT NOT NULL,classification_sha256 CHAR(64) NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_output(output_kind,output_id),KEY legacy_object(legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");$this->schemaReady=true;}
         $reasons = json_encode($classification['reasonCodes'], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $version = (string)$classification['classificationVersion']; $category = (string)$classification['category'];
         $insert = $this->db->prepare("INSERT IGNORE INTO `{$p}fm2_migration_classification_provenance`(output_kind,legacy_object_id,output_id,source_cutoff_at,classification_version,category,reason_codes_json,classification_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?)");

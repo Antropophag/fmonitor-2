@@ -101,6 +101,7 @@ SQL;
 
 final class LegacyHistoryMySqlTarget
 {
+    private bool $schemaReady=false;
     public function __construct(private mysqli $db, private string $prefix)
     {
         if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new InvalidArgumentException('Invalid local table prefix');
@@ -108,9 +109,11 @@ final class LegacyHistoryMySqlTarget
 
     public function createSchema(): void
     {
+        if($this->schemaReady)return;
         $p = $this->prefix;
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_history_source_snapshots` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,legacy_object_id BIGINT UNSIGNED NOT NULL,source_system VARCHAR(40) NOT NULL,source_locator VARCHAR(160) NOT NULL,cutoff_at DATETIME NOT NULL,extractor_version VARCHAR(80) NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_content(content_sha256),KEY object_id(legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_history_import_quarantine` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,issue_no INT UNSIGNED NOT NULL,code VARCHAR(80) NOT NULL,diagnostic_json LONGTEXT NOT NULL,UNIQUE KEY uq_issue(snapshot_id,issue_no)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->schemaReady=true;
     }
 
     public function apply(array $snapshot, int $objectId, string $cutoff, string $now): array

@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__.'/legacy-migration/LegacyHistoryMigration.php';
+require_once __DIR__.'/legacy-migration/LegacyMigrationRouter.php';
+function batchEnv(string$n):string{$v=getenv($n);if(!is_string($v)||$v==='')throw new RuntimeException('CONFIGURATION_INVALID');return$v;}
+set_exception_handler(static function(Throwable$e):never{echo json_encode(['ok'=>false,'reason'=>'HISTORY_BATCH_UNAVAILABLE'],JSON_THROW_ON_ERROR),"\n";exit(2);});
+$o=getopt('',['cutoff:','after-id:','batch-size:','apply','dry-run-all']);$cutoff=(string)($o['cutoff']??'');$after=filter_var($o['after-id']??'0',FILTER_VALIDATE_INT,['options'=>['min_range'=>0]]);$size=filter_var($o['batch-size']??'25',FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>100]]);$apply=isset($o['apply']);$all=isset($o['dry-run-all']);if($cutoff===''||$after===false||$size===false||($apply&&$all))throw new InvalidArgumentException('CONFIGURATION_INVALID');
+$source=new mysqli(getenv('FMONITOR_SOURCE_HOST')?:'127.0.0.1',batchEnv('FMONITOR_SOURCE_USER'),batchEnv('FMONITOR_SOURCE_PASSWORD'),getenv('FMONITOR_SOURCE_NAME')?:'c1_fmonitor',(int)(getenv('FMONITOR_SOURCE_PORT')?:13306));$source->set_charset('utf8mb4');$target=null;$prefix='';
+if($apply){$manifest=json_decode((string)file_get_contents(batchEnv('FMONITOR_PILOT_ACTIVE_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);$prefix=(string)($manifest['processPrefix']??'');$target=new mysqli(batchEnv('FMONITOR_DB_HOST'),batchEnv('FMONITOR_DB_USER'),batchEnv('FMONITOR_DB_PASSWORD'),batchEnv('FMONITOR_DB_NAME'),(int)batchEnv('FMONITOR_DB_PORT'));$target->set_charset('utf8mb4');}
+$historyTarget=$apply?new LegacyHistoryMySqlTarget($target,$prefix):null;$provenanceTarget=$apply?new MigrationClassificationProvenanceTarget($target,$prefix):null;
+$stats=['scanned'=>0,'historicalReconstruction'=>0,'classifierQuarantined'=>0,'evidenceQuarantined'=>0,'created'=>0,'alreadyPresent'=>0,'provenanceCreated'=>0,'provenancePresent'=>0];$checkpoint=(int)$after;$complete=false;
+do{
+ $source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');$source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+ try{$q=$source->prepare('SELECT id,ordadr_address,entrance,regnumber,CASE WHEN factworkstartdate<=? THEN factworkstartdate ELSE NULL END factworkstartdate,CASE WHEN ptoactdate<=? THEN ptoactdate ELSE NULL END ptoactdate,object_status,fact_percent,workstarted FROM fm_maintable WHERE id>? ORDER BY id LIMIT ?');$q->bind_param('ssii',$cutoff,$cutoff,$checkpoint,$size);$q->execute();$rows=$q->get_result()->fetch_all(MYSQLI_ASSOC);
+  if($rows!==[]){$first=(int)$rows[0]['id'];$last=(int)$rows[array_key_last($rows)]['id'];$events=[];$x=$source->prepare('SELECT value_id,COUNT(*)n FROM fm_install_checklists_values_log WHERE value_id BETWEEN ? AND ? AND ctime<=? GROUP BY value_id');$x->bind_param('iis',$first,$last,$cutoff);$x->execute();foreach($x->get_result()->fetch_all(MYSQLI_ASSOC)as$r)$events[(int)$r['value_id']]=(int)$r['n'];$attrs=[];$x=$source->prepare('SELECT v.value_id,COUNT(*)n FROM fm_install_checklists_values_installators_log a JOIN fm_install_checklists_values v ON v.id=a.checklist_value_id WHERE v.value_id BETWEEN ? AND ? AND a.ctime<=? GROUP BY v.value_id');$x->bind_param('iis',$first,$last,$cutoff);$x->execute();foreach($x->get_result()->fetch_all(MYSQLI_ASSOC)as$r)$attrs[(int)$r['value_id']]=(int)$r['n'];}
+  foreach($rows as$row){$id=(int)$row['id'];$row['checklist_event_count']=$events[$id]??0;$row['attribution_count']=$attrs[$id]??0;$checkpoint=$id;$stats['scanned']++;$classification=LegacyObjectClassification::classify($row);$route=LegacyMigrationRoute::decide($classification);if($route['route']!=='historical_reconstruction')continue;if($route['applyBlocked']){$stats['classifierQuarantined']++;continue;}$stats['historicalReconstruction']++;
+   if(!$apply)continue;$snapshot=(new LegacyHistoryMySqlSource($source))->extract($id,$cutoff);if($snapshot['issues']!==[]){$stats['evidenceQuarantined']++;continue;}$now=gmdate('Y-m-d H:i:s');$saved=$historyTarget->apply($snapshot,$id,$cutoff,$now);$saved['created']?$stats['created']++:$stats['alreadyPresent']++;$proof=$provenanceTarget->reconcile('historical_snapshot',$id,(int)$saved['snapshotId'],$cutoff,$classification,$now);$proof['provenanceCreated']?$stats['provenanceCreated']++:$stats['provenancePresent']++;
+  }$source->commit();
+ }catch(Throwable$e){$source->rollback();throw$e;}
+ $complete=count($rows)<$size;
+}while($all&&!$complete);
+echo json_encode(['ok'=>true,'mode'=>$apply?'apply':($all?'dry-run-all':'dry-run'),'batchSize'=>(int)$size,'startedAfterId'=>(int)$after,'nextAfterId'=>$checkpoint,'complete'=>$complete,'classificationVersion'=>LegacyObjectClassification::VERSION,'route'=>'historical_reconstruction','stats'=>$stats],JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),"\n";
