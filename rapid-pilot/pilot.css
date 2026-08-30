@@ -1106,6 +1106,17 @@
 .fm2-role-table th { color: var(--fm2-muted); background: #f8fafc; font-size: 11px; font-weight: 500; }
 .fm2-role-table td small { display: block; margin-block-start: 2px; color: var(--fm2-muted); font-size: 10px; }
 .fm2-role-table .fm2-role-chip { border-radius: var(--fm2-pill); }
+.fm2-role-model-note { padding: 16px 18px; border-radius: var(--fm2-radius); background: #fff; }
+.fm2-role-model-note strong { font-size: 14px; }
+.fm2-role-model-note p { max-inline-size: 76ch; margin: 5px 0 0; color: var(--fm2-muted); font-size: 12px; line-height: 1.5; }
+.fm2-role-surface { overflow-x: auto; }
+.fm2-role-table th:nth-child(2) { min-inline-size: 360px; }
+.fm2-permission-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.fm2-permission-chip { padding: 4px 7px; border-radius: 7px; background: #edf2ff; color: #253d98; font-size: 10px; font-weight: 600; white-space: nowrap; }
+@media (max-width: 680px) {
+  .fm2-role-model-note { padding: 14px; }
+  .fm2-role-table th:nth-child(2) { min-inline-size: 260px; }
+}
 .fm2-user-row[hidden] { display: none; }
 .fm2-search-control { position: relative; }
 .fm2-search-control svg { position: absolute; z-index: 1; inset: 50% auto auto 13px; inline-size: 18px; block-size: 18px; fill: none; stroke: #697586; stroke-linecap: round; stroke-width: 1.6; transform: translateY(-50%); pointer-events: none; }

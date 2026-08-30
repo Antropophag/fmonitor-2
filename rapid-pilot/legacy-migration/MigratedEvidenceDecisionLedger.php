@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__,2).'/app/PilotHttp/AccessPolicy.php';
 
 require_once __DIR__.'/MigratedEvidenceReconciliation.php';
 require_once __DIR__.'/MigratedEvidenceProjectionStore.php';
@@ -62,7 +63,7 @@ final class MigratedEvidenceDecisionLedger
     }
 
     private function bounded(mixed $value,int $max):bool{return is_string($value)&&trim($value)!==''&&mb_strlen($value)<= $max&&preg_match('/[\x00-\x1F\x7F]/u',$value)!==1;}
-    private function authorized(int $actor):bool{$s=$this->db->prepare("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$this->prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE u.user_id=? AND u.status=1 AND r.status=1 AND (r.name='ОТиЗ' OR LOWER(r.name) LIKE '%администратор%')");$s->bind_param('i',$actor);$s->execute();return (int)$s->get_result()->fetch_assoc()['n']>0;}
+    private function authorized(int $actor):bool{return \FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($this->db,$this->prefix,$actor),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE);}
     private function operation(string $id,bool $lock):?array{$suffix=$lock?' FOR UPDATE':'';$s=$this->db->prepare("SELECT id,request_sha256 FROM `{$this->prefix}fm2_migrated_evidence_decisions` WHERE operation_id=?{$suffix}");$s->bind_param('s',$id);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?$row:null;}
     private function projection(int $snapshotId):array{return(new MigratedEvidenceProjectionStore($this->db,$this->prefix))->single($snapshotId);}
 }

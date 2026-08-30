@@ -61,8 +61,8 @@ try {
     $db->query("CREATE TABLE `{$prefix}fm2_pilot_roles`(role_id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),status TINYINT)");
     $db->query("CREATE TABLE `{$prefix}fm2_pilot_user_roles`(user_id BIGINT UNSIGNED,role_id BIGINT UNSIGNED,PRIMARY KEY(user_id,role_id))");
     $db->query("INSERT INTO `{$prefix}fm2_pilot_users` VALUES(101,'OTIZ Verifier','otiz.verify@shlz.ru',1),(102,'Unauthorized Verifier','viewer.verify@shlz.ru',1)");
-    $db->query("INSERT INTO `{$prefix}fm2_pilot_roles` VALUES(901,'ОТиЗ',1),(902,'Наблюдатель',1)");
-    $db->query("INSERT INTO `{$prefix}fm2_pilot_user_roles` VALUES(101,901),(102,902)");
+    $db->query("INSERT INTO `{$prefix}fm2_pilot_roles` VALUES(19,'Финансовый контролер',1),(2,'Пользователь',1)");
+    $db->query("INSERT INTO `{$prefix}fm2_pilot_user_roles` VALUES(101,19),(102,2)");
     require_once __DIR__ . '/Otiz.php';
     RapidPilotOtiz::bootstrap($db, $prefix);
 

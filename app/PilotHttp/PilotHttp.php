@@ -3,9 +3,15 @@ declare(strict_types=1);
 
 namespace FMonitor2\PilotHttp;
 
+require_once __DIR__.'/AccessPolicy.php';
+
 final readonly class PilotHttpRequest { public function __construct(public string $method,public string $path,public string $host,public mixed $serverIdentity,public array $server=[],public string $body=''){} }
 final readonly class PilotHttpResponse { public function __construct(public int $status,public array $headers,public string $body){} }
-final readonly class HttpUser { public function __construct(public int $id,public string $displayName,public string $email){} }
+final readonly class HttpUser
+{
+    public function __construct(public int $id,public string $displayName,public string $email,public array $permissions=[]){ }
+    public function can(string $permission):bool{return AccessPolicy::grants($this->permissions,$permission);}
+}
 final class InvalidServerIdentity extends \RuntimeException {}
 final class CssAssetUnavailable extends \RuntimeException {}
 final class CssDescriptorCloseFailed extends \RuntimeException { public function __construct(){parent::__construct('CSS descriptor close failed.',0,null);} }
@@ -440,15 +446,14 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     }
     public function hasCapability(int $userId,string $capability):bool
     {
-        $this->users();$this->resolveProcessPrefix();try{$s=$this->connection->prepare("SELECT user_id FROM `{$this->processTablePrefix}fm2_process_user_capabilities` WHERE user_id=? AND capability=? LIMIT 2");$s->bind_param('is',$userId,$capability);$s->execute();return \count($s->get_result()->fetch_all(MYSQLI_ASSOC))===1;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
+        $this->users();$this->resolveProcessPrefix();try{return AccessPolicy::grants(AccessPolicy::forUser($this->connection,$this->processTablePrefix,$userId),$capability);}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
     public function canEditChecklist(int $userId):bool
     {
         $this->users();$this->resolveProcessPrefix();
         try{
-            if($this->hasCapability($userId,'construction_control_engineer'))return true;
-            $s=$this->connection->prepare("SELECT ur.user_id FROM `{$this->processTablePrefix}fm2_pilot_user_roles` ur JOIN `{$this->processTablePrefix}fm2_pilot_users` u ON u.user_id=ur.user_id JOIN `{$this->processTablePrefix}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE ur.user_id=? AND u.status=1 AND r.status=1 AND (r.name='Строительный контроль' OR r.name='Администратор' OR r.name='Суперадминистратор' OR r.name LIKE 'Руководитель %' OR r.name LIKE 'Директор %') LIMIT 1");
-            $s->bind_param('i',$userId);$s->execute();return $s->get_result()->fetch_assoc()!==null;
+            $permissions=AccessPolicy::forUser($this->connection,$this->processTablePrefix,$userId);
+            return AccessPolicy::grants($permissions,AccessPolicy::CHECKLIST_EDIT);
         }catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
     private function resolveProcessPrefix():string{$configured=$this->environment->read('FMONITOR_PROCESS_TABLE_PREFIX');$this->processTablePrefix=\is_string($configured)?$configured:'';if(\strlen($this->processTablePrefix)>32||\preg_match('/^[A-Za-z0-9_]*$/D',$this->processTablePrefix)!==1)throw new PilotHttpInfrastructureUnavailable();return $this->processTablePrefix;}
@@ -484,7 +489,7 @@ final class MariaDbHttpUserDirectory implements HttpUserDirectory
             $s=$this->connection->prepare("SELECT u.id,u.name,u.email FROM `{$this->prefix}users` u JOIN `{$this->prefix}users_roles` r ON r.id=u.role_id WHERE BINARY u.email=BINARY ? AND u.status=1 AND r.status=1 LIMIT 2");$s->bind_param('s',$principal);$s->execute();return $this->user($s->get_result()->fetch_all(MYSQLI_ASSOC),$principal);
         }catch(\Throwable $e){if($e instanceof PilotHttpInfrastructureUnavailable)throw $e;throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
-    private function user(array $rows,string $principal):?HttpUser{if(\count($rows)!==1)return null;$row=$rows[0];$id=\filter_var($row['id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($id===false||\trim((string)$row['name'])===''||$row['email']!==$principal)throw new PilotHttpInfrastructureUnavailable();return new HttpUser($id,(string)$row['name'],(string)$row['email']);}
+    private function user(array $rows,string $principal):?HttpUser{if(\count($rows)!==1)return null;$row=$rows[0];$id=\filter_var($row['id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($id===false||\trim((string)$row['name'])===''||$row['email']!==$principal)throw new PilotHttpInfrastructureUnavailable();$permissions=$this->processPrefix===''?[]:AccessPolicy::forUser($this->connection,$this->processPrefix,(int)$id);return new HttpUser((int)$id,(string)$row['name'],(string)$row['email'],$permissions);}
 }
 
 final class ErrorLogUnexpectedFailureReporter implements UnexpectedFailureReporter

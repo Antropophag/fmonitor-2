@@ -7,6 +7,7 @@ require_once __DIR__ . '/legacy-migration/MigratedEvidenceDecisionLedger.php';
 require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
 require_once __DIR__ . '/legacy-migration/PremiumCalculation.php';
 require_once __DIR__ . '/NativeOperationalPremiumInputs.php';
+require_once dirname(__DIR__) . '/app/PilotHttp/AccessPolicy.php';
 require_once __DIR__ . '/legacy-migration/HistoricalPremiumReplayReadModel.php';
 require_once __DIR__ . '/legacy-migration/LegacyActiveBaselineReadModel.php';
 require_once __DIR__ . '/legacy-migration/MigrationQuarantineReadModel.php';
@@ -34,8 +35,7 @@ final class RapidPilotOtiz
         $statement->bind_param('s', $email); $statement->execute(); $user = $statement->get_result()->fetch_assoc();
         if (!is_array($user)) throw new RuntimeException('Pilot user unavailable');
         $this->userId = (int) $user['user_id']; $this->userName = (string) $user['full_name'];
-        $role = $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_user_roles` ur JOIN `{$this->prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE ur.user_id={$this->userId} AND r.status=1 AND (r.name='ОТиЗ' OR LOWER(r.name) LIKE '%администратор%')")->fetch_assoc();
-        if ((int) ($role['n'] ?? 0) < 1) $this->fail(403, 'Раздел доступен сотрудникам ОТиЗ и администраторам.');
+        if (!\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($this->db,$this->prefix,$this->userId),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE)) $this->fail(403, 'Раздел доступен сотрудникам ОТиЗ и администраторам.');
         $this->csrf = (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? '');
         $this->ensureSchema();
         $this->decisionLedger = new MigratedEvidenceDecisionLedger($this->db, $this->prefix);
@@ -51,8 +51,8 @@ final class RapidPilotOtiz
         if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1 || $email === '') return false;
         try {
             $db = new mysqli(getenv('FMONITOR_DB_HOST') ?: '127.0.0.1', getenv('FMONITOR_DB_USER') ?: 'fmonitor2_demo', getenv('FMONITOR_DB_PASSWORD') ?: 'fmonitor2_demo_local', getenv('FMONITOR_DB_NAME') ?: 'fmonitor2_demo', (int) (getenv('FMONITOR_DB_PORT') ?: '23306'));
-            $db->set_charset('utf8mb4'); $statement = $db->prepare("SELECT COUNT(*) n FROM `{$prefix}fm2_pilot_users` u JOIN `{$prefix}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE LOWER(u.email)=LOWER(?) AND u.status=1 AND r.status=1 AND (r.name='ОТиЗ' OR LOWER(r.name) LIKE '%администратор%')");
-            $statement->bind_param('s', $email); $statement->execute(); $allowed = (int) $statement->get_result()->fetch_assoc()['n'] > 0; $db->close(); return $allowed;
+            $db->set_charset('utf8mb4'); $statement = $db->prepare("SELECT user_id FROM `{$prefix}fm2_pilot_users` WHERE LOWER(email)=LOWER(?) AND status=1 LIMIT 2");
+            $statement->bind_param('s', $email); $statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);$allowed=count($rows)===1&&\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($db,$prefix,(int)$rows[0]['user_id']),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE); $db->close(); return $allowed;
         } catch (Throwable) { return false; }
     }
 

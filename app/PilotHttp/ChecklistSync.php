@@ -63,7 +63,8 @@ final class ChecklistSync
         try{$s=$this->db->prepare("SELECT a.effective_at,a.template_snapshot_id,a.template_snapshot_version,a.template_content_sha256,t.snapshot_version,t.valid_from,t.content_sha256 FROM `{$this->prefix}fm2_checklist_template_associations` a JOIN `{$this->prefix}fm2_checklist_template_snapshots` t ON t.id=a.template_snapshot_id WHERE a.subject_kind='operational_case' AND a.subject_id=? LIMIT 2 FOR UPDATE");$subject=(string)$caseId;$s->bind_param('s',$subject);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);}catch(\mysqli_sql_exception){return null;}if(count($rows)!==1)return null;$r=$rows[0];
         if((string)$r['template_snapshot_version']!==(string)$r['snapshot_version']||!hash_equals((string)$r['template_content_sha256'],(string)$r['content_sha256'])||preg_match('/^[a-f0-9]{64}$/D',(string)$r['content_sha256'])!==1)return null;
         try{$valid=new \DateTimeImmutable((string)$r['valid_from'],new \DateTimeZone('UTC'));$effective=new \DateTimeImmutable((string)$r['effective_at'],new \DateTimeZone('UTC'));$device=new \DateTimeImmutable($deviceTime);$received=new \DateTimeImmutable($this->now);}catch(\Throwable){return null;}
-        if($effective<$valid||$device<$valid||$received<$valid)return null;return['snapshot_id'=>(int)$r['template_snapshot_id'],'snapshot_version'=>(string)$r['snapshot_version'],'content_sha256'=>(string)$r['content_sha256']];
+        $validDate=$valid->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d');$deviceDate=$device->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d');$receivedDate=$received->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d');
+        if($effective<$valid||$deviceDate<$validDate||$receivedDate<$validDate)return null;return['snapshot_id'=>(int)$r['template_snapshot_id'],'snapshot_version'=>(string)$r['snapshot_version'],'content_sha256'=>(string)$r['content_sha256']];
     }
     private function crew(int $caseId):array
     {

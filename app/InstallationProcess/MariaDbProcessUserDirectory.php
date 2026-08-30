@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace FMonitor2\InstallationProcess;
 
+use FMonitor2\RapidPilot\RoleCapabilityMap;
+require_once dirname(__DIR__).'/RapidPilot/RoleCapabilityMap.php';
+
 final class MariaDbProcessUserDirectory
 {
     public function __construct(
@@ -126,7 +129,7 @@ final class MariaDbProcessUserDirectory
         if ($actorId <= 0) return false;
         $capabilities=$this->processTablePrefix.'fm2_process_user_capabilities';
         $pilotUsers=$this->processTablePrefix.'fm2_pilot_users';$table=$this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');$table->bind_param('s',$pilotUsers);$table->execute();
-        if($table->get_result()->fetch_assoc()!==null){$pilotRoles=$this->processTablePrefix.'fm2_pilot_roles';$pilotAssignments=$this->processTablePrefix.'fm2_pilot_user_roles';$statement=$this->connection->prepare("SELECT 1 FROM `{$pilotUsers}` u JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id JOIN `{$capabilities}` c ON c.user_id=u.user_id AND c.capability=? WHERE u.user_id=? AND u.status=1 AND r.status=1 LIMIT 1");$statement->bind_param('si',$capability,$actorId);$statement->execute();return $statement->get_result()->fetch_row()!==null;}
+        if($table->get_result()->fetch_assoc()!==null){$pilotRoles=$this->processTablePrefix.'fm2_pilot_roles';$pilotAssignments=$this->processTablePrefix.'fm2_pilot_user_roles';$roleIds=RoleCapabilityMap::roleIdsFor($capability);$roleSql=$roleIds===[]?'0':implode(',',array_map('intval',$roleIds));$statement=$this->connection->prepare("SELECT 1 FROM `{$pilotUsers}` u JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id LEFT JOIN `{$capabilities}` c ON c.user_id=u.user_id AND c.capability=? WHERE u.user_id=? AND u.status=1 AND r.status=1 AND (c.user_id IS NOT NULL OR r.role_id IN ({$roleSql})) LIMIT 1");$statement->bind_param('si',$capability,$actorId);$statement->execute();return $statement->get_result()->fetch_row()!==null;}
         $users=$this->legacyTablePrefix.'users';$roles=$this->legacyTablePrefix.'users_roles';
         $statement=$this->connection->prepare("SELECT 1 FROM `{$users}` u JOIN `{$roles}` r ON r.id=u.role_id JOIN `{$capabilities}` c ON c.user_id=u.id AND c.capability=? WHERE u.id=? AND u.status=1 AND r.status=1 LIMIT 1");
         $statement->bind_param('si',$capability,$actorId);$statement->execute();

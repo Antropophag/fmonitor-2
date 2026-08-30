@@ -48,11 +48,14 @@ final class PilotView
     public static function document(HttpUser $user,string $title,string $current,string $breadcrumb,string $content):string
     {
         $objects=$current==='Объекты монтажа'?' aria-current="page"':'';$constructionControl=$current==='Стройконтроль'?' aria-current="page"':'';$installers=$current==='Монтажники'?' aria-current="page"':'';$users=$current==='Пользователи'?' aria-current="page"':'';$roles=$current==='Роли'?' aria-current="page"':'';
-        $item=static fn(string $icon,string $label,bool $active=false):string=>'<span class="fm2-nav-item'.($active?' fm2-nav-item--active':' fm2-nav-item--muted').'"'.($active?'':' aria-disabled="true"').'>'.self::icon($icon).'<span class="fm2-nav-text">'.$label.'</span></span>';
-        $nav='<span class="fm2-nav-group">Работа</span>'.$item('work','Моя работа').'<a class="fm2-nav-item" href="/pilot/construction-control"'.$constructionControl.'>'.self::icon('inspections').'<span class="fm2-nav-text">Стройконтроль</span></a><a class="fm2-nav-item" href="/pilot/objects"'.$objects.'>'.self::icon('objects').'<span class="fm2-nav-text">Объекты монтажа</span></a>'.$item('orders','Распоряжения')
-            .'<span class="fm2-nav-group">Справочники</span><a class="fm2-nav-item" href="/pilot/installers"'.$installers.'>'.self::icon('installers').'<span class="fm2-nav-text">Монтажники</span></a>'
-            .'<span class="fm2-nav-group">Управление</span>'.$item('otiz','Расчёты ОТиЗ').$item('control','Контроль')
-            .'<span class="fm2-nav-group">Администрирование</span><a class="fm2-nav-item" href="/pilot/admin/users"'.$users.'>'.self::icon('admin').'<span class="fm2-nav-text">Пользователи</span></a><a class="fm2-nav-item" href="/pilot/admin/roles"'.$roles.'>'.self::icon('roles').'<span class="fm2-nav-text">Роли</span></a>';
+        $item=static fn(string $icon,string $label):string=>'<span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true">'.self::icon($icon).'<span class="fm2-nav-text">'.$label.'</span></span>';
+        $nav='<span class="fm2-nav-group">Работа</span>'.$item('work','Моя работа');
+        if($user->can(AccessPolicy::CONSTRUCTION_CONTROL_READ))$nav.='<a class="fm2-nav-item" href="/pilot/construction-control"'.$constructionControl.'>'.self::icon('inspections').'<span class="fm2-nav-text">Стройконтроль</span></a>';
+        if($user->can(AccessPolicy::OBJECTS_READ))$nav.='<a class="fm2-nav-item" href="/pilot/objects"'.$objects.'>'.self::icon('objects').'<span class="fm2-nav-text">Объекты монтажа</span></a>';
+        $nav.=$item('orders','Распоряжения');
+        if($user->can(AccessPolicy::INSTALLERS_READ))$nav.='<span class="fm2-nav-group">Справочники</span><a class="fm2-nav-item" href="/pilot/installers"'.$installers.'>'.self::icon('installers').'<span class="fm2-nav-text">Монтажники</span></a>';
+        $nav.='<span class="fm2-nav-group">Управление</span>'.$item('otiz','Расчёты ОТиЗ').$item('control','Контроль');
+        if($user->can(AccessPolicy::ADMINISTER_ACCESS))$nav.='<span class="fm2-nav-group">Администрирование</span><a class="fm2-nav-item" href="/pilot/admin/users"'.$users.'>'.self::icon('admin').'<span class="fm2-nav-text">Пользователи</span></a><a class="fm2-nav-item" href="/pilot/admin/roles"'.$roles.'>'.self::icon('roles').'<span class="fm2-nav-text">Роли</span></a>';
         $trigger='<summary class="fm2-nav-trigger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg><span class="fm2-nav-trigger-text">Свернуть меню</span></summary>';
         $userMenu='<div class="fm2-sidebar-user"><span class="shlz-avatar shlz-avatar--32 fm2-sidebar-avatar" aria-hidden="true">'.self::initials($user->displayName).'</span><span class="fm2-sidebar-user-copy"><strong>'.self::e($user->displayName).'</strong><small>'.self::e($user->email).'</small></span><!-- fm2-user-actions --></div>';
         $pilotCssHref='/pilot/assets/pilot-20260829-23.css';

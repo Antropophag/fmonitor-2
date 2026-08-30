@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use FMonitor2\PilotHttp\HttpUser;
 use FMonitor2\PilotHttp\PilotView;
+use FMonitor2\PilotHttp\AccessPolicy;
 
 final class RapidPilotCalendar
 {
@@ -105,7 +106,9 @@ final class RapidPilotCalendar
         $statement = $this->db->prepare("SELECT user_id,full_name,email FROM `{$this->processPrefix}fm2_pilot_users` WHERE BINARY email=BINARY ? AND status=1 LIMIT 2");
         $statement->bind_param('s', $email); $statement->execute(); $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         if (count($rows) !== 1) throw new RuntimeException('Pilot user unavailable');
-        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email']);
+        $permissions=AccessPolicy::forUser($this->db,$this->processPrefix,(int)$rows[0]['user_id']);
+        if(!AccessPolicy::grants($permissions,AccessPolicy::OBJECTS_READ))$this->fail(403,'Календарь недоступен для вашей роли.');
+        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email'],$permissions);
     }
 
     /** @return list<array<string,mixed>> */
