@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/legacy-migration/WorkforceAttributionCoverageProfiler.php';
+$db=new mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:'fmonitor2_demo',getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local',getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo',(int)(getenv('FMONITOR_DB_PORT')?:23306));$db->set_charset('utf8mb4');$prefix=getenv('FMONITOR_TABLE_PREFIX')?:'pilot_';$at=$argv[1]??null;if(!is_string($at))throw new InvalidArgumentException('Usage: php profile-workforce-attribution-coverage.php <RFC3339-profiled-at>');$db->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');$db->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');try{$result=WorkforceAttributionCoverageProfiler::load($db,$prefix,$at);$db->commit();echo json_encode($result,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),"\n";}catch(Throwable$error){$db->rollback();throw$error;}finally{$db->close();}
