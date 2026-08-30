@@ -843,6 +843,7 @@
 .fm2-next-action .fm2-registration-form { inline-size: min(100%, 640px); }
 .fm2-next-action .fm2-inline-form:has(#actualStartDate) { display: flex; inline-size: auto; max-inline-size: none; align-items: center; gap: 12px; }
 .fm2-open-date { display: flex; align-items: center; gap: 10px; color: #4b5670; font-size: 12px; white-space: nowrap; }
+.fm2-open-date > span { inline-size: 112px; line-height: 1.25; white-space: normal; }
 .fm2-open-date .shlz-input { inline-size: 156px; min-block-size: 40px; padding-inline: 12px; color: var(--fm2-ink); background: #fff; border: 1px solid var(--fm2-border); border-radius: 10px; }
 .fm2-next-action .fm2-inline-form:has(#actualStartDate) > button { flex: 0 0 auto; white-space: nowrap; }
 .fm2-order-documents { margin-block-start: 16px; }
