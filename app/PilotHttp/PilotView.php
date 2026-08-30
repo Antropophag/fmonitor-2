@@ -17,6 +17,17 @@ final class PilotView
         return self::e($result!==''?$result:'П');
     }
     public static function breadcrumb(array $links,string $current):string{$items='';foreach($links as[$label,$href])$items.='<li><a class="fm2-breadcrumb-link" href="'.self::e($href).'">'.self::e($label).'</a></li>';return '<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><ol>'.$items.'<li><span aria-current="page">'.self::e($current).'</span></li></ol></nav>';}
+    public static function pagination(string $path,int $current,int $pages,string $label,array $query=[]):string
+    {
+        if($pages<=1||$current<1||$current>$pages)return'';
+        $href=static function(int$page)use($path,$query):string{$parameters=$query;$parameters['page']=$page;return self::e($path.'?'.\http_build_query($parameters,'','&',PHP_QUERY_RFC3986));};
+        $icon=static fn(string$direction):string=>'<svg class="shlz-pagination__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'.($direction==='left'?'M19 12H5M11 6L5 12L11 18':'M5 12H19M13 18L19 12L13 6').'" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        $items='<li>'.($current>1?'<a class="shlz-pagination__item" rel="prev" href="'.$href($current-1).'" aria-label="Предыдущая страница">'.$icon('left').'</a>':'<span class="shlz-pagination__item shlz-pagination__item--disabled" aria-disabled="true">'.$icon('left').'<span class="shlz-visually-hidden">Предыдущая страница недоступна</span></span>').'</li>';
+        $window=[1];for($page=max(2,$current-1);$page<=min($pages-1,$current+1);$page++)$window[]=$page;if($pages>1)$window[]=$pages;$window=array_values(array_unique($window));$previous=0;
+        foreach($window as$page){if($previous!==0&&$page>$previous+1)$items.='<li class="fm2-pagination__context"><span class="shlz-pagination__item shlz-pagination__item--ellipsis" aria-hidden="true">…</span></li>';$context=$page!==1&&$page!==$pages&&$page!==$current?' class="fm2-pagination__context"':'';$items.='<li'.$context.'><a class="shlz-pagination__item" href="'.$href($page).'"'.($page===$current?' aria-current="page"':'').' aria-label="Страница '.$page.'">'.$page.'</a></li>';$previous=$page;}
+        $items.='<li>'.($current<$pages?'<a class="shlz-pagination__item" rel="next" href="'.$href($current+1).'" aria-label="Следующая страница">'.$icon('right').'</a>':'<span class="shlz-pagination__item shlz-pagination__item--disabled" aria-disabled="true">'.$icon('right').'<span class="shlz-visually-hidden">Следующая страница недоступна</span></span>').'</li>';
+        return'<nav class="shlz-pagination" aria-label="'.self::e($label).'"><ul class="shlz-pagination__list">'.$items.'</ul></nav>';
+    }
     private static function logo():string{return '<svg class="fm2-logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="fm2-logo-rail" x="5" y="4" width="4" height="24"/><rect class="fm2-logo-rail" x="23" y="4" width="4" height="24"/><rect class="fm2-logo-progress" x="11" y="10" width="10" height="12"/></svg><span class="fm2-logo-name">FMonitor</span>';}
     private static function icon(string $name):string
     {
