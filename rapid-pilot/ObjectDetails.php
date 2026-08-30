@@ -75,6 +75,15 @@ final class RapidPilotObjectDetails
     private static function render(array $data,string $action,string $dashboard,array $identity): string
     {
         $fields = $data['fields'] ?? [];
+        $teamCommand='';
+        $action=preg_replace_callback(
+            '#<a class="shlz-link" href="([^"]+)">Изменить состав новым распоряжением</a>#u',
+            static function(array $match)use(&$teamCommand):string{
+                $teamCommand='<section class="fm2-team-command"><div><h3>Изменение состава</h3><p>Новая версия распоряжения сохранит прежний состав и историю закреплений.</p></div><form method="get" action="'.$match[1].'"><button class="shlz-button shlz-button--primary shlz-button--sm" type="submit">Изменить состав</button></form></section>';
+                return '';
+            },
+            $action,
+        )??$action;
         $existing=self::existingPanels($dashboard);$processDates=self::panelPairs($existing['Сроки работ']??'');$teamFacts=self::panelPairs($existing['Команда объекта']??'');
         foreach(['Плановое начало'=>'workdatestart','Плановое окончание'=>'workdatefinish','Фактическое начало'=>'factworkstartdate']as$label=>$key)if(isset($processDates[$label]))$fields[$key]['display']=$processDates[$label]==='Не зафиксировано'?'':$processDates[$label];
         $updated = self::dateTime((string) ($data['capturedAt'] ?? ''));
@@ -100,9 +109,9 @@ final class RapidPilotObjectDetails
             .self::compactRow('Состояние',[['Legacy-статус','object_status'],['Контроль','control_flag']],$fields)
             .self::compactRow('Комментарии',[['Причина задержки','comments'],['Комментарий СМ','sm_comment']],$fields);
         $documents.=($existing['Распоряжение']??$existing['Распоряжение и 1С ДО']??'');$control.=($existing['Проблемы']??'').($existing['Последние события']??'');
-        $tabs=['schedule'=>['Сроки и готовность',$schedule],'participants'=>['Команда',$participants],'documents'=>['Документы',$documents],'control'=>['Контроль и история',$control]];$buttons='';$panels='';
+        $tabs=['schedule'=>['Сроки и готовность',$schedule],'participants'=>['Команда',$teamCommand.$participants],'documents'=>['Документы',$documents],'control'=>['Контроль и история',$control]];$buttons='';$panels='';
         foreach($tabs as$key=>[$label,$content]){$selected=$key==='schedule';$buttons.='<button class="shlz-tabs__tab" id="object-'.$key.'-tab" type="button" role="tab" aria-selected="'.($selected?'true':'false').'" aria-controls="object-'.$key.'-panel"'.($selected?'':' tabindex="-1"').'>'.$label.'</button>';$panels.='<div class="shlz-tabs__panel fm2-object-tab-panel" id="object-'.$key.'-panel" role="tabpanel" aria-labelledby="object-'.$key.'-tab"'.($selected?'':' hidden').'><div class="fm2-compact-list">'.$content.'</div></div>';}
-        $unavailable=isset($data['projectionUnavailable'])?'<p class="fm2-data-unavailable" role="alert">'.self::e((string)$data['projectionUnavailable']).'</p>':'';return '<section class="fm2-object-data"><header class="fm2-card-header"><div><h1>'.self::e($identity['address']).'</h1><p>Проекция данных зафиксирована '.$updated.'</p>'.$identity['status'].'</div><div class="fm2-registration"><span>Регистрационный номер</span><strong>'.self::e($identity['registration']).'</strong></div></header>'.$unavailable.'<div class="fm2-object-layout"><aside class="fm2-static-passport" aria-labelledby="passport-title"><h3 id="passport-title">Основные сведения</h3><div class="fm2-compact-list">'.$passport.'</div></aside><div class="fm2-object-workspace">'.$action.'<div class="shlz-tabs fm2-object-tabs" data-shlz-tabs><div class="shlz-tabs__list" role="tablist" aria-label="Рабочие данные объекта">'.$buttons.'</div>'.$panels.'</div></div></div></section>';
+        $unavailable=isset($data['projectionUnavailable'])?'<p class="fm2-data-unavailable" role="alert">'.self::e((string)$data['projectionUnavailable']).'</p>':'';return '<section class="fm2-object-data"><header class="fm2-card-header"><div class="fm2-object-title"><div class="fm2-object-title__line"><h1>'.self::e($identity['address']).'</h1>'.$identity['status'].'</div><p>Данные объекта актуальны на '.$updated.'</p></div><div class="fm2-registration"><span>Регистрационный номер</span><strong>'.self::e($identity['registration']).'</strong></div></header>'.$unavailable.'<div class="fm2-object-layout"><aside class="fm2-static-passport" aria-labelledby="passport-title"><div class="fm2-passport-heading"><h2 id="passport-title">Паспорт объекта</h2><span>Постоянные реквизиты</span></div><div class="fm2-compact-list">'.$passport.'</div></aside><div class="fm2-object-workspace">'.$action.'<div class="shlz-tabs shlz-tabs--boxed fm2-object-tabs" data-shlz-tabs><div class="shlz-tabs__list" role="tablist" aria-label="Рабочие данные объекта">'.$buttons.'</div>'.$panels.'</div></div></div></section>';
     }
 
     private static function existingPanels(string $dashboard):array
