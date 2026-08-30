@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
+require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
 
 final class RapidPilotOtiz
 {
@@ -116,6 +117,15 @@ final class RapidPilotOtiz
         $previousId = is_array($previous) ? (int) $previous['id'] : null; $now = $this->now();
         $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshots`(report_date,status,previous_snapshot_id,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(?,'draft',?,'rapid-otiz-1.0',?,?,NULL,NULL,0,0,0,'pending')"); $s->bind_param('sisi', $date, $previousId, $now, $this->userId); $s->execute(); $snapshotId = (int) $s->insert_id;
         $objects = $this->inputs(); $totalPool = 0; $totalClosed = 0; $payload = [];
+        $reconciliationByObject = [];
+        foreach (MigratedEvidenceReconciliation::load($this->db, $this->prefix) as $evidence) {
+            $reconciliationByObject[(int)$evidence['legacyObjectId']] = $evidence;
+            $state = $evidence['evidenceGrade'] === 'A' && $evidence['confidence'] === 'high' && $evidence['conflictCodes'] === [] ? 'confirmed_not_mapped' : 'excluded';
+            $payloadJson = json_encode(['checklistEventCount'=>$evidence['counts']['checklistEvents'],'attributionObservations'=>$evidence['attributionObservations'],'workforceFacts'=>$evidence['workforceFacts'],'conflictCodes'=>$evidence['conflictCodes']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
+            $insertEvidence = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_evidence`(snapshot_id,legacy_object_id,admission_state,source_label,source_locator,snapshot_hash,projection_hash,evidence_grade,payload_json) VALUES(?,?,?,?,?,?,?,?,?)");
+            $legacyObjectId=(int)$evidence['legacyObjectId'];$sourceLabel=(string)$evidence['sourceLabel'];$sourceLocator=(string)$evidence['sourceLocator'];$snapshotHash=(string)$evidence['contentSha256'];$projectionHash=(string)$evidence['projectionHash'];$grade=(string)$evidence['evidenceGrade'];
+            $insertEvidence->bind_param('iisssssss',$snapshotId,$legacyObjectId,$state,$sourceLabel,$sourceLocator,$snapshotHash,$projectionHash,$grade,$payloadJson);$insertEvidence->execute();
+        }
         foreach ($objects as $o) {
             $sourceCorrected = $date >= '2026-09-15';
             $hasBlocker = $o['blocker'] && !$sourceCorrected;
@@ -128,7 +138,9 @@ final class RapidPilotOtiz
             $accrued = intdiv(intdiv($fund * $progress, 10000) * $kss, 10000);
             $closed = $this->closedBefore($o['id'], $date); $pool = max(0, $accrued - $closed); $remaining = max(0, $fund - $closed);
             $state = ($hasBlocker || $hasZeroKtu) ? 'blocked' : ($pool === 0 ? 'no_new_amount' : ($o['pto'] !== null && $progress === 10000 && $remaining === 0 ? 'completed' : 'ready'));
-            $inputs = ['address' => $o['address'], 'deadline' => $o['deadline'], 'pto' => $o['pto'], 'daysLate' => $daysLate, 'source' => 'Синтетические датированные факты rapid pilot', 'legacyExpectedCents' => $o['legacy']];
+            $inputs = ['address' => $o['address'], 'deadline' => $o['deadline'], 'pto' => $o['pto'], 'daysLate' => $daysLate,
+                'calculationOperandsSource' => 'synthetic_rapid_pilot', 'calculationOperandsLabel' => 'Синтетические датированные факты rapid pilot — не результат reconciliation',
+                'migratedEvidence' => OtizMigratedEvidenceInputs::forObject((int)$o['id'], $reconciliationByObject), 'legacyExpectedCents' => $o['legacy']];
             $stmt = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_objects`(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             $distributed = $hasBlocker || $hasZeroKtu ? 0 : $pool; $undistributed = $pool - $distributed; $progressDate = $date; $json = json_encode($inputs, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $stmt->bind_param('iissiisiiiiiiiiiiss', $snapshotId, $o['id'], $o['reg'], $o['address'], $previousProgress, $progress, $progressDate, $o['premium'], $o['shaft'], $kss, $accrued, $fund, $closed, $remaining, $pool, $distributed, $undistributed, $state, $json); $stmt->execute();
@@ -177,7 +189,7 @@ final class RapidPilotOtiz
             $status = $o['calculation_state'] === 'blocked' ? ['shlz-status--orange','Заблокирован'] : ($o['calculation_state'] === 'no_new_amount' ? ['','Нет новой суммы'] : ($o['calculation_state'] === 'completed' ? ['shlz-status--green','Завершён'] : ['shlz-status--blue','Готов']));
             $body .= '<tr class="fm2-otiz-object-row"><td><details><summary><strong>' . $this->e($o['regnumber']) . '</strong><small>' . $this->e($o['address']) . '</small></summary><div class="fm2-otiz-detail">' . $this->allocation($id, (int) $o['object_id']) . ($issueHtml !== '' ? '<ul class="fm2-otiz-issues">' . $issueHtml . '</ul>' : '') . $this->closureForm($s, $o) . '</div></details></td><td><strong>' . $this->percent((int) $o['previous_progress_bp']) . ' → ' . $this->percent((int) $o['current_progress_bp']) . '</strong><small>+' . $this->percent(max(0, (int) $o['current_progress_bp'] - (int) $o['previous_progress_bp'])) . '</small></td><td>' . number_format((int) $o['kss_bp'] / 10000, 2, ',', ' ') . '</td><td>' . $this->rub((int) $o['closed_before_cents']) . '</td><td><strong>' . $this->rub((int) $o['pool_cents']) . '</strong></td><td><span class="shlz-status ' . $status[0] . '">' . $status[1] . '</span></td></tr>';
         }
-        $body .= '</tbody></table></div></section>' . $this->closures($id);
+        $body .= '</tbody></table></div></section>' . $this->evidenceLedger($id) . $this->closures($id);
         $this->page('Срез на ' . $this->date($s['report_date']), $body);
     }
 
@@ -280,6 +292,15 @@ final class RapidPilotOtiz
         return $html . '</tbody></table></div></section>';
     }
 
+    private function evidenceLedger(int $snapshotId): string
+    {
+        $rows=$this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_evidence` WHERE snapshot_id={$snapshotId} ORDER BY FIELD(admission_state,'excluded','confirmed_not_mapped'),legacy_object_id")->fetch_all(MYSQLI_ASSOC);
+        if($rows===[])return '';
+        $html='<section class="fm2-otiz-ledger"><h2>Входящие migrated evidence</h2><p>Подтверждённые факты сохранены в срезе, но не меняют сумму до утверждения semantic mapping checklist → progress/КТУ.</p><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table"><thead><tr><th>Legacy-объект</th><th>Источник</th><th>Класс</th><th>Состояние</th><th>Контроль</th></tr></thead><tbody>';
+        foreach($rows as$row)$html.='<tr><td>'.(int)$row['legacy_object_id'].'</td><td>'.$this->e($row['source_label']).'<small>'.$this->e($row['source_locator']).'</small></td><td>'.$this->e($row['evidence_grade']).'</td><td><span class="shlz-status '.($row['admission_state']==='excluded'?'shlz-status--orange':'shlz-status--blue').'">'.($row['admission_state']==='excluded'?'Исключено':'Подтверждено, не сопоставлено').'</span></td><td><small title="'.$this->e($row['projection_hash']).'">'.$this->e(substr($row['projection_hash'],0,16)).'…</small></td></tr>';
+        return $html.'</tbody></table></div></section>';
+    }
+
     private function ensureSchema(): void
     {
         self::bootstrap($this->db, $this->prefix);
@@ -293,6 +314,7 @@ final class RapidPilotOtiz
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_objects`(snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,regnumber VARCHAR(120) NOT NULL,address VARCHAR(500) NOT NULL,previous_progress_bp INT NOT NULL,current_progress_bp INT NOT NULL,progress_fact_date DATE NOT NULL,premium_cents BIGINT NOT NULL,shaft_bp INT NOT NULL,kss_bp INT NOT NULL,accrued_cents BIGINT NOT NULL,fund_cents BIGINT NOT NULL,closed_before_cents BIGINT NOT NULL,remaining_cents BIGINT NOT NULL,pool_cents BIGINT NOT NULL,distributed_cents BIGINT NOT NULL,undistributed_cents BIGINT NOT NULL,calculation_state VARCHAR(40) NOT NULL,inputs_json JSON NOT NULL,PRIMARY KEY(snapshot_id,object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_allocations`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,tab_id VARCHAR(40) NOT NULL,full_name VARCHAR(300) NOT NULL,position_name VARCHAR(200) NOT NULL,contribution_bp INT NOT NULL,base_ktu_bp INT NOT NULL,adjustment_ktu_bp INT NOT NULL,effective_ktu_bp INT NOT NULL,share_bp INT NOT NULL,amount_cents BIGINT NOT NULL,employment_status VARCHAR(40) NOT NULL,participation_basis VARCHAR(300) NOT NULL,KEY(snapshot_id,object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_issues`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,severity ENUM('blocker','warning') NOT NULL,issue_code VARCHAR(80) NOT NULL,message VARCHAR(600) NOT NULL,owner_role VARCHAR(120) NOT NULL,state ENUM('open','resolved') NOT NULL DEFAULT 'open',resolution VARCHAR(600) NULL,resolved_by_user_id BIGINT UNSIGNED NULL,resolved_at VARCHAR(40) NULL,KEY(snapshot_id,object_id,severity)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_snapshot_evidence`(snapshot_id BIGINT UNSIGNED NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,admission_state ENUM('confirmed_not_mapped','excluded') NOT NULL,source_label VARCHAR(160) NOT NULL,source_locator VARCHAR(160) NOT NULL,snapshot_hash CHAR(64) NOT NULL,projection_hash CHAR(64) NOT NULL,evidence_grade CHAR(1) NOT NULL,payload_json JSON NOT NULL,PRIMARY KEY(snapshot_id,legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_payment_closures`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,object_id BIGINT UNSIGNED NOT NULL,closed_on DATE NOT NULL,paid_cents BIGINT NOT NULL,discipline_cents BIGINT NOT NULL,deadline_cents BIGINT NOT NULL,basis VARCHAR(500) NOT NULL,artifact VARCHAR(300) NOT NULL,created_by_user_id BIGINT UNSIGNED NOT NULL,created_at VARCHAR(40) NOT NULL,reverses_payment_closure_id BIGINT UNSIGNED NULL,KEY(object_id,closed_on),KEY(snapshot_id),UNIQUE KEY unique_reversal(reverses_payment_closure_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
             "CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_otiz_events`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NULL,object_id BIGINT UNSIGNED NULL,event_type VARCHAR(80) NOT NULL,payload_json JSON NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,KEY(snapshot_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         ]; foreach ($queries as $query) $db->query($query);
