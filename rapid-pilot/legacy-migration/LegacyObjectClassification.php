@@ -95,8 +95,12 @@ final class LegacyObjectProfile
             foreach ($result['quarantineCodes'] as $code) $quarantine[$code] = ($quarantine[$code] ?? 0) + 1;
         }
         ksort($reasons, SORT_STRING); ksort($quarantine, SORT_STRING);
+        $routes = ['operational_case_import' => $categories['native_candidate'],
+            'cutover_baseline' => $categories['legacy_active'],
+            'historical_reconstruction' => $categories['legacy_historical']];
         return ['classificationVersion' => LegacyObjectClassification::VERSION, 'total' => $total,
             'categories' => $categories, 'quarantinedObjects' => $quarantined,
+            'routes' => $routes, 'applyBlocked' => $quarantined,
             'reasonCounts' => $reasons, 'quarantineCounts' => $quarantine];
     }
 }

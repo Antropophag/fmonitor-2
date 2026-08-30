@@ -26,6 +26,8 @@ exact(['COMPLETION_WITHOUT_START_EVIDENCE'], $results[4]['quarantineCodes'], 'in
 $profile = LegacyObjectProfile::aggregate($examples);
 exact(['native_candidate' => 2, 'legacy_active' => 1, 'legacy_historical' => 2], $profile['categories'], 'aggregate category counts');
 exact(2, $profile['quarantinedObjects'], 'aggregate quarantine object count');
+exact(['operational_case_import'=>2,'cutover_baseline'=>1,'historical_reconstruction'=>2], $profile['routes'], 'aggregate migration routes');
+exact(2, $profile['applyBlocked'], 'quarantine blocks aggregate apply candidates');
 exact(['COMPLETION_WITHOUT_START_EVIDENCE' => 1, 'MALFORMED_FACTWORKSTARTDATE' => 1], $profile['quarantineCounts'], 'aggregate quarantine reasons');
 exact($profile, LegacyObjectProfile::aggregate($examples), 'repeat is deterministic');
 
