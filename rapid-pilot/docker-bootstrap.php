@@ -31,6 +31,7 @@ $processPrefix = 'fm2d_' . $fingerprint . '_g' . $generation . '_';
 $legacyPrefix = 'fm2l_' . $fingerprint . '_g' . $generation . '_';
 $generationRoot = $stateRoot . '/generations/' . $generation;
 $artifactRoot = $generationRoot . '/artifacts';
+$manifestNonce = bin2hex(random_bytes(32));
 if (!is_dir($artifactRoot) && !mkdir($artifactRoot, 0755, true)) throw new RuntimeException('State directory unavailable');
 
 $db = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
@@ -57,6 +58,8 @@ try {
         $result = $migration::apply($db, $processPrefix);
         if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
     }
+    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_generation_sentinel`(singleton_id TINYINT UNSIGNED PRIMARY KEY,generation INT UNSIGNED NOT NULL,fingerprint CHAR(8) NOT NULL,manifest_nonce CHAR(64) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $sentinel=$db->prepare("INSERT INTO `{$processPrefix}fm2_pilot_generation_sentinel` VALUES(1,?,?,?) ON DUPLICATE KEY UPDATE generation=VALUES(generation),fingerprint=VALUES(fingerprint),manifest_nonce=VALUES(manifest_nonce)");$sentinel->bind_param('iss',$generation,$fingerprint,$manifestNonce);$sentinel->execute();
     $db->query("INSERT IGNORE INTO `{$processPrefix}fm2_process_user_capabilities` VALUES(18,'assignment_order.prepare',NULL),(18,'assignment_order.confirm_registration',NULL),(18,'installation.open',NULL),(73,'construction_control_engineer','Инженер строительного контроля')");
     $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_users`(user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,full_name VARCHAR(300) NOT NULL,email VARCHAR(254) NOT NULL,phone VARCHAR(100) NOT NULL,status TINYINT(1) NOT NULL,source_updated_at VARCHAR(40) NOT NULL,KEY(status,full_name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_roles`(role_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,status TINYINT(1) NOT NULL,source_updated_at VARCHAR(40) NOT NULL,KEY(status,name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -84,6 +87,7 @@ $manifest = json_encode([
     'legacyPrefix' => $legacyPrefix,
     'port' => 8092,
     'state' => 'ready',
+    'manifestNonce' => $manifestNonce,
 ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 $temporaryManifest = $manifestPath . '.new';
 if (file_put_contents($temporaryManifest, $manifest, LOCK_EX) === false || !rename($temporaryManifest, $manifestPath)) {
