@@ -60,8 +60,9 @@ $require(str_contains($css,'.fm2-object-workspace > .fm2-next-action { margin: 2
 $require(!str_contains($css,'.fm2-object-workspace > .fm2-next-action:has(.fm2-action-stack) {'),'current-action geometry must not depend on its child controls');
 $require(str_contains($css,'block-size: 10px; margin-block-end: 12px;'),'work progress must remain a compact secondary indicator');
 $require(str_contains($objectDetails,'<a class="shlz-button shlz-button--primary"$1>Загрузить распоряжение</a>'),'assignment-order upload must render as the primary action button');
-$require(str_contains($objectDetails,'<span class="shlz-field__control"><input class="shlz-input" id="actualStartDate"$1>'),'actual-start date must use the documented shlz Input composition');
-$require(str_contains($css,'.fm2-next-action .fm2-inline-form:has(#actualStartDate) > button { grid-column: 2; grid-row: 1;'),'actual-start date and open command must remain on one desktop row');
+$require(str_contains($objectDetails,'<label class="fm2-open-date" for="actualStartDate">'),'actual-start date must use the compact inline field composition');
+$require(str_contains($css,'.fm2-next-action .fm2-inline-form:has(#actualStartDate) { display: flex;'),'actual-start date and open command must remain on one desktop row');
+$require(str_contains($css,'.fm2-open-date .shlz-input { inline-size: 156px;')&&str_contains($css,'background: #fff; border: 1px solid var(--fm2-border); border-radius: 10px;'),'actual-start date must have one explicit white bounded surface');
 $require(!str_contains($checklist,'data-complete-section'),'checklist sections must complete automatically without a redundant action');
 $require(!str_contains($checklist,'data-action-dock')&&!str_contains($css,'.fm2-check-dock'),'checklist must not restore the floating action dock');
 $require(str_contains($css,'.fm2-sidebar { position: fixed; z-index: 40; inset: auto 0 0;')&&str_contains($css,'padding-block-end: calc(64px + env(safe-area-inset-bottom))'),'mobile primary navigation must be fixed to the bottom without covering content');

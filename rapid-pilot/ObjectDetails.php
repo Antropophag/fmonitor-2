@@ -17,7 +17,7 @@ final class RapidPilotObjectDetails
         $identity=self::extractElement($html,'<header class="fm2-object-identity"');$action=self::extractElement($html,'<section class="fm2-next-action"');$dashboard=self::extractElement($html,'<div class="fm2-object-dashboard"');
         if ($identity===null||$action===null||$dashboard===null) return $html;
         $action['html']=preg_replace('#<a class="shlz-link"([^>]*)>Загрузить распоряжение</a>#','<a class="shlz-button shlz-button--primary"$1>Загрузить распоряжение</a>',$action['html'],1)??$action['html'];
-        $action['html']=preg_replace('#<label for="actualStartDate">Фактическая дата начала работ</label><input id="actualStartDate"([^>]*)><small>(.*?)</small>#s','<label class="shlz-field" for="actualStartDate"><span class="shlz-field__label">Фактическая дата начала работ</span><span class="shlz-field__control"><input class="shlz-input" id="actualStartDate"$1></span><small class="shlz-field__secondary">$2</small></label>',$action['html'],1)??$action['html'];
+        $action['html']=preg_replace('#<label for="actualStartDate">Фактическая дата начала работ</label><input id="actualStartDate"([^>]*)><small>.*?</small>#s','<label class="fm2-open-date" for="actualStartDate"><span>Дата начала</span><input class="shlz-input" id="actualStartDate"$1></label>',$action['html'],1)??$action['html'];
         $originNotice=self::extractElement($html,'<div class="fm2-alert fm2-origin-notice"');
         $identityFacts=self::identityFacts($identity['html']);$section = ($originNotice['html']??'').self::render($details,$action['html'],$dashboard['html'],$identityFacts);
         $start=min($identity['start'],$action['start'],$dashboard['start']);$end=max($identity['end'],$action['end'],$dashboard['end']);
