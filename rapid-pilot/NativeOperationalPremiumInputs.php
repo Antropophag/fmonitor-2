@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/NativePremiumNorms.php';
+
 /** Read model for the native operational calculation boundary. It never reads legacy
  * active/historical migration payloads and never invents a missing operand. */
 final class NativeOperationalPremiumInputs
@@ -23,9 +25,7 @@ final class NativeOperationalPremiumInputs
         foreach($s->get_result()->fetch_all(MYSQLI_ASSOC) as $row){
             $case=(int)$row['case_id'];$object=(int)$row['object_id'];$issues=[];
             [$progress,$progressSource,$templateIssues]=$this->progress($case,$reportDate);$issues=array_merge($issues,$templateIssues);
-            $finance=$this->latest("{$p}fm2_operational_premium_facts",$case,$reportDate,'effective_date');
-            if(!$finance){$issues[]=['code'=>'PREMIUM_EVIDENCE_ABSENT','message'=>'Нет подтверждённой плановой премии и коэффициента шахты для native-объекта.','owner'=>'ОТиЗ'];}
-            elseif(!$this->storedSourceValid($finance)){$issues[]=['code'=>'FINANCIAL_PROVENANCE_INVALID','message'=>'Provenance финансового факта повреждён или неполон.','owner'=>'Администратор'];}
+            $finance=$this->financeFromObjectCard($object,$issues);
             $crew=$this->crew($case,$reportDate,$issues,$progressSource['contributions']??[]);
             $deadline=(string)($row['deadline_date']??'');if(!$this->date($deadline))$issues[]=['code'=>'DEADLINE_EVIDENCE_ABSENT','message'=>'В зарегистрированном распоряжении нет подтверждённого срока окончания.','owner'=>'ФКР'];
             if($progressSource===null)$issues[]=['code'=>'PROGRESS_EVIDENCE_ABSENT','message'=>'На отчётную дату нет доказуемой версии чек-листа и server-side отметок.','owner'=>'Стройконтроль'];
@@ -51,10 +51,22 @@ final class NativeOperationalPremiumInputs
 
     private function crew(int $case,string $date,array &$issues,array $contributions):array
     {
-        $p=$this->prefix;$sql="SELECT oi.installer_tab_id,oi.fio_snapshot,oi.position_snapshot,k.id ktu_id,k.ktu_bp,k.effective_date,k.source_label,k.source_locator,k.source_sha256 FROM `{$p}fm2_assignment_orders` o JOIN `{$p}fm2_order_installers` oi ON oi.assignment_order_id=o.id LEFT JOIN `{$p}fm2_operational_ktu_facts` k ON k.installation_case_id=o.installation_case_id AND k.installer_tab_id=oi.installer_tab_id AND k.effective_date<=? WHERE o.installation_case_id=? AND o.status='registered' AND NOT EXISTS(SELECT 1 FROM `{$p}fm2_assignment_orders` n WHERE n.installation_case_id=o.installation_case_id AND n.status='registered' AND n.version_no>o.version_no) ORDER BY oi.installer_tab_id,k.effective_date DESC,k.id DESC";$s=$this->db->prepare($sql);$s->bind_param('si',$date,$case);$s->execute();$crew=[];$seen=[];foreach($s->get_result()->fetch_all(MYSQLI_ASSOC)as$r){$tab=(string)$r['installer_tab_id'];if(isset($seen[$tab]))continue;$seen[$tab]=true;if($r['ktu_id']===null){$issues[]=['code'=>'KTU_EVIDENCE_ABSENT','message'=>'Нет подтверждённого КТУ монтажника '.$r['fio_snapshot'].'.','owner'=>'ОТиЗ'];continue;}if(!$this->storedSourceValid($r)){$issues[]=['code'=>'KTU_PROVENANCE_INVALID','message'=>'Provenance КТУ монтажника '.$r['fio_snapshot'].' повреждён.','owner'=>'Администратор'];continue;}$contribution=(int)($contributions[$tab]??0);if($contribution===0){$issues[]=['code'=>'INSTALLER_ATTRIBUTION_ABSENT','message'=>'У монтажника '.$r['fio_snapshot'].' нет подтверждённого вклада checklist на дату.','owner'=>'Стройконтроль'];continue;}$crew[]=['tab'=>$tab,'name'=>$r['fio_snapshot'],'position'=>$r['position_snapshot'],'contribution'=>$contribution,'weight'=>intdiv($contribution*(int)$r['ktu_bp'],10000),'basis'=>'Checklist attribution + подтверждённый КТУ #'.(int)$r['ktu_id']];}if($crew===[])$issues[]=['code'=>'CREW_EVIDENCE_ABSENT','message'=>'Нет состава с подтверждённым КТУ на отчётную дату.','owner'=>'ОТиЗ'];return$crew;
+        $p=$this->prefix;$sql="SELECT oi.installer_tab_id,oi.fio_snapshot,oi.position_snapshot FROM `{$p}fm2_assignment_orders` o JOIN `{$p}fm2_order_installers` oi ON oi.assignment_order_id=o.id WHERE o.installation_case_id=? AND o.status='registered' AND NOT EXISTS(SELECT 1 FROM `{$p}fm2_assignment_orders` n WHERE n.installation_case_id=o.installation_case_id AND n.status='registered' AND n.version_no>o.version_no) ORDER BY oi.installer_tab_id";$s=$this->db->prepare($sql);$s->bind_param('i',$case);$s->execute();$crew=[];foreach($s->get_result()->fetch_all(MYSQLI_ASSOC)as$r){$tab=(string)$r['installer_tab_id'];$contribution=(int)($contributions[$tab]??0);if($contribution===0){$issues[]=['code'=>'INSTALLER_ATTRIBUTION_ABSENT','message'=>'У монтажника '.$r['fio_snapshot'].' нет подтверждённого вклада checklist на дату.','owner'=>'Стройконтроль'];continue;}$crew[]=['tab'=>$tab,'name'=>$r['fio_snapshot'],'position'=>$r['position_snapshot'],'contribution'=>$contribution,'weight'=>$contribution,'basis'=>'Фактический вклад checklist × базовый управленческий коэффициент 1,00'];}if($crew===[])$issues[]=['code'=>'CREW_EVIDENCE_ABSENT','message'=>'Нет состава с подтверждённым вкладом на отчётную дату.','owner'=>'Стройконтроль'];return$crew;
     }
-    private function latest(string$table,int$case,string$date,string$dateColumn):?array{$s=$this->db->prepare("SELECT * FROM `{$table}` WHERE installation_case_id=? AND `{$dateColumn}`<=? ORDER BY `{$dateColumn}` DESC,id DESC LIMIT 1");$s->bind_param('is',$case,$date);$s->execute();return$s->get_result()->fetch_assoc()?:null;}
+
+    private function financeFromObjectCard(int $object,array &$issues):?array
+    {
+        $p=$this->prefix;$s=$this->db->prepare("SELECT content_sha256,payload_json,captured_at FROM `{$p}fm2_pilot_object_details` WHERE object_id=? LIMIT 1");$s->bind_param('i',$object);$s->execute();$row=$s->get_result()->fetch_assoc();
+        if(!is_array($row)){$issues[]=['code'=>'OBJECT_CARD_EVIDENCE_ABSENT','message'=>'Нет неизменяемого снимка характеристик карточки объекта.','owner'=>'Администратор'];return null;}
+        try{$payload=json_decode((string)$row['payload_json'],true,flags:JSON_THROW_ON_ERROR);}catch(JsonException){$payload=null;}
+        if(!is_array($payload)||!preg_match('/^[a-f0-9]{64}$/D',(string)$row['content_sha256'])){$issues[]=['code'=>'OBJECT_CARD_PROVENANCE_INVALID','message'=>'Снимок характеристик карточки объекта повреждён.','owner'=>'Администратор'];return null;}
+        $fields=$payload['fields']??[];$floors=filter_var($fields['floors']['raw']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$capacity=filter_var($fields['weight']['raw']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$material=trim((string)($fields['pitmaterial']['display']??''));$typeText=mb_strtolower((string)($fields['lift_type']['display']??''),'UTF-8');$type=str_contains($typeText,'груз')?'cargo':(str_contains($typeText,'пассаж')?'passenger':null);
+        $norms=new NativePremiumNorms();$premium=$floors===false||$capacity===false?null:$norms->premiumCents($type,(int)$floors,(int)$capacity);$shaft=$norms->shaftBasisPoints($material);
+        if($premium===null){$issues[]=['code'=>'PREMIUM_NORM_UNRESOLVED','message'=>'По этажности и грузоподъёмности карточки не найдена плановая премия приложения 4.','owner'=>'ФКР'];}
+        if($shaft===null){$issues[]=['code'=>'SHAFT_COEFFICIENT_UNRESOLVED','message'=>'По материалу шахты карточки не найден коэффициент приложения 4.','owner'=>'ФКР'];}
+        if($premium===null||$shaft===null)return null;
+        return['premium_cents'=>$premium,'shaft_bp'=>$shaft,'effective_date'=>substr((string)$row['captured_at'],0,10),'source_label'=>'Характеристики карточки объекта + приложение 4 к приказу №178','source_locator'=>'fm2_pilot_object_details/'.$object,'source_sha256'=>(string)$row['content_sha256']];
+    }
     private function source(string$label,string$locator,array$data):array{$json=json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);return compact('label','locator')+['contentSha256'=>hash('sha256',$json)];}
-    private function storedSourceValid(array$row):bool{return trim((string)($row['source_label']??''))!==''&&trim((string)($row['source_locator']??''))!==''&&preg_match('/^[a-f0-9]{64}$/D',(string)($row['source_sha256']??''))===1;}
     private function date(string$v):bool{$d=DateTimeImmutable::createFromFormat('!Y-m-d',$v);return$d!==false&&$d->format('Y-m-d')===$v;}
 }
