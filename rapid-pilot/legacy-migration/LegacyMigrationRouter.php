@@ -49,6 +49,7 @@ SQL;
 final class LegacyActiveBaselineTarget
 {
     public const CONTRACT_VERSION = 'legacy-active-cutover-baseline-v1';
+    private bool $schemaReady = false;
 
     public function __construct(private mysqli $db, private string $prefix)
     {
@@ -65,7 +66,7 @@ final class LegacyActiveBaselineTarget
             'cutover' => $cutover, 'legacyObject' => $sourceRow, 'classification' => $classification]);
         $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $hash = hash('sha256', $json); $id = (int)$sourceRow['id']; $p = $this->prefix;
-        $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_legacy_active_baselines` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,legacy_object_id BIGINT UNSIGNED NOT NULL,contract_version VARCHAR(80) NOT NULL,cutover_at DATETIME NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_legacy_object(legacy_object_id),UNIQUE KEY uq_content(content_sha256)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        if (!$this->schemaReady) { $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_legacy_active_baselines` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,legacy_object_id BIGINT UNSIGNED NOT NULL,contract_version VARCHAR(80) NOT NULL,cutover_at DATETIME NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_legacy_object(legacy_object_id),UNIQUE KEY uq_content(content_sha256)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"); $this->schemaReady = true; }
         $this->db->begin_transaction();
         try {
             $insert = $this->db->prepare("INSERT IGNORE INTO `{$p}fm2_legacy_active_baselines`(legacy_object_id,contract_version,cutover_at,content_sha256,payload_json,created_at) VALUES(?,?,?,?,?,?)");
