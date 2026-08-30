@@ -3,6 +3,12 @@
 declare(strict_types=1);
 
 use FMonitor2\InstallationProcess\PilotCaseImporter;
+require_once __DIR__ . '/legacy-migration/LegacyMigrationRouter.php';
+
+set_exception_handler(static function(Throwable $error):never {
+    $reason=in_array($error->getMessage(),['QUARANTINED_EVIDENCE','PROVENANCE_CONFLICT'],true)?$error->getMessage():'OPERATIONAL_IMPORT_UNAVAILABLE';
+    echo json_encode(['ok'=>false,'reason'=>$reason],JSON_THROW_ON_ERROR),PHP_EOL;exit(2);
+});
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -42,13 +48,16 @@ $existing = [];
 $existingResult = $target->query("SELECT id FROM `{$legacyPrefix}fm_maintable`");
 foreach ($existingResult->fetch_all(MYSQLI_ASSOC) as $row) $existing[(int) $row['id']] = true;
 
+$cutoff = getenv('FMONITOR_MIGRATION_CUTOFF') ?: '2026-08-30 23:59:59';
 $sql = <<<'SQL'
 SELECT id, ordadr_address, entrance, regnumber, workdatestart,
        workdateendadjusted,
        COALESCE(NULLIF(plan_finish_date, '0000-00-00 00:00:00'), workdatefinish) AS plan_finish_date,
        NULL AS workdatefinish, ptoactdate,
-       responsstroicontrol
-FROM fm_maintable
+       responsstroicontrol,factworkstartdate,object_status,fact_percent,workstarted,
+       (SELECT COUNT(*) FROM fm_install_checklists_values_log l WHERE l.value_id=m.id AND l.ctime<=?) checklist_event_count,
+       (SELECT COUNT(*) FROM fm_install_checklists_values_installators_log ai JOIN fm_install_checklists_values v ON v.id=ai.checklist_value_id WHERE v.value_id=m.id AND ai.ctime<=?) attribution_count
+FROM fm_maintable m
 WHERE factworkstartdate = '0000-00-00 00:00:00'
   AND object_status <> 259
   AND workdatestart >= '2026-10-01'
@@ -62,12 +71,21 @@ LIMIT 250
 SQL;
 
 $selected = [];
-foreach ($source->query($sql)->fetch_all(MYSQLI_ASSOC) as $row) {
+$classifications = [];
+$existingClassifications = [];
+$source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+$source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+$selection = $source->prepare($sql); $selection->bind_param('ss',$cutoff,$cutoff); $selection->execute();
+foreach ($selection->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
     $id = (int) $row['id'];
-    if (isset($existing[$id])) continue;
+    $classification=LegacyObjectClassification::classify($row);$route=LegacyMigrationRoute::decide($classification);
+    if($route['route']!=='operational_case_import'||$route['applyBlocked'])continue;
+    if (isset($existing[$id])) { $existingClassifications[$id]=$classification; continue; }
     $selected[] = $row;
+    $classifications[$id]=$classification;
     if (count($selected) === $limit) break;
 }
+$source->commit();
 if (count($selected) !== $limit) throw new RuntimeException('Production selection returned fewer than 100 eligible new objects');
 
 $target->begin_transaction();
@@ -98,6 +116,8 @@ $importer = new PilotCaseImporter($target, $processPrefix, $legacyPrefix);
 $importer->assertSchemaAvailable();
 $result = $importer->import($ids, (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:sP'));
 if (isset($result['rejected'])) throw new RuntimeException('Local pilot importer rejected production rows');
+$provenance=new MigrationClassificationProvenanceTarget($target,$processPrefix);$provenanceCreated=0;$provenanceBackfilled=0;
+foreach($classifications+$existingClassifications as$id=>$classification){$case=$target->query("SELECT id FROM `{$processPrefix}fm2_installation_cases` WHERE legacy_installation_object_id=".(int)$id)->fetch_assoc();if($case===null){if(isset($existingClassifications[$id]))continue;throw new RuntimeException('Imported case missing');}$proof=$provenance->reconcile('operational_case',(int)$id,(int)$case['id'],$cutoff,$classification,gmdate('Y-m-d H:i:s'));if($proof['provenanceCreated']){if(isset($existingClassifications[$id]))$provenanceBackfilled++;else $provenanceCreated++;}}
 
 $caseCount = (int) $target->query("SELECT COUNT(*) AS n FROM `{$processPrefix}fm2_installation_cases`")->fetch_assoc()['n'];
 echo json_encode([
@@ -105,6 +125,9 @@ echo json_encode([
     'copied' => count($selected),
     'imported' => count($result['imported']),
     'queueCases' => $caseCount,
+    'classificationVersion'=>LegacyObjectClassification::VERSION,
+    'provenanceCreated'=>$provenanceCreated,
+    'provenanceBackfilled'=>$provenanceBackfilled,
     'firstId' => $ids[0],
     'lastId' => $ids[array_key_last($ids)],
 ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), PHP_EOL;

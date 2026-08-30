@@ -25,7 +25,7 @@ final class LegacyObjectMySqlClassificationSource
 {
     public function __construct(private mysqli $db) {}
 
-    public function read(int $objectId, string $cutover): array
+    public function read(int $objectId, string $cutover, bool $manageTransaction = true): array
     {
         $sql = <<<'SQL'
 SELECT m.id,m.ordadr_address,m.entrance,m.regnumber,
@@ -35,15 +35,14 @@ SELECT m.id,m.ordadr_address,m.entrance,m.regnumber,
        (SELECT COUNT(*) FROM fm_install_checklists_values_installators_log ai JOIN fm_install_checklists_values v ON v.id=ai.checklist_value_id WHERE v.value_id=m.id AND ai.ctime<=?) attribution_count
 FROM fm_maintable m WHERE m.id=? LIMIT 1
 SQL;
-        $this->db->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-        $this->db->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+        if ($manageTransaction) { $this->db->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ'); $this->db->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY'); }
         try {
             $statement = $this->db->prepare($sql); $statement->bind_param('ssssi', $cutover, $cutover, $cutover, $cutover, $objectId); $statement->execute();
             $row = $statement->get_result()->fetch_assoc();
-            $this->db->commit();
+            if ($manageTransaction) $this->db->commit();
             if ($row === null) throw new OutOfBoundsException('LEGACY_OBJECT_NOT_FOUND');
             return $row;
-        } catch (Throwable $error) { try { $this->db->rollback(); } catch (Throwable) {} throw $error; }
+        } catch (Throwable $error) { if ($manageTransaction) try { $this->db->rollback(); } catch (Throwable) {} throw $error; }
     }
 }
 
@@ -86,4 +85,31 @@ final class LegacyActiveBaselineTarget
         if (!$date || ($errors !== false && ($errors['warning_count'] || $errors['error_count'])) || $date->format('Y-m-d H:i:s') !== $value) throw new InvalidArgumentException('Invalid exact timestamp');
     }
     private static function canonical(mixed $value): mixed { if (!is_array($value)) return $value; if (!array_is_list($value)) ksort($value, SORT_STRING); foreach ($value as $k => $v) $value[$k] = self::canonical($v); return $value; }
+}
+
+final class MigrationClassificationProvenanceTarget
+{
+    public function __construct(private mysqli $db, private string $prefix)
+    {
+        if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new InvalidArgumentException('Invalid local table prefix');
+    }
+
+    /** @param array<string,mixed> $classification */
+    public function reconcile(string $outputKind, int $legacyObjectId, int $outputId, string $cutoff, array $classification, string $createdAt): array
+    {
+        $route = LegacyMigrationRoute::decide($classification);
+        if ($route['applyBlocked']) throw new DomainException('QUARANTINED_EVIDENCE');
+        $json = json_encode($classification, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $hash = hash('sha256', $json); $p = $this->prefix;
+        $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_migration_classification_provenance` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,output_kind VARCHAR(40) NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,output_id BIGINT UNSIGNED NOT NULL,source_cutoff_at DATETIME NOT NULL,classification_version VARCHAR(80) NOT NULL,category VARCHAR(40) NOT NULL,reason_codes_json TEXT NOT NULL,classification_sha256 CHAR(64) NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_output(output_kind,output_id),KEY legacy_object(legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $reasons = json_encode($classification['reasonCodes'], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $version = (string)$classification['classificationVersion']; $category = (string)$classification['category'];
+        $insert = $this->db->prepare("INSERT IGNORE INTO `{$p}fm2_migration_classification_provenance`(output_kind,legacy_object_id,output_id,source_cutoff_at,classification_version,category,reason_codes_json,classification_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?)");
+        $insert->bind_param('siissssss', $outputKind, $legacyObjectId, $outputId, $cutoff, $version, $category, $reasons, $hash, $createdAt); $insert->execute();
+        $created = $insert->affected_rows === 1;
+        $lookup = $this->db->prepare("SELECT id,legacy_object_id,source_cutoff_at,classification_sha256 FROM `{$p}fm2_migration_classification_provenance` WHERE output_kind=? AND output_id=?");
+        $lookup->bind_param('si', $outputKind, $outputId); $lookup->execute(); $stored = $lookup->get_result()->fetch_assoc();
+        if ($stored === null || (int)$stored['legacy_object_id'] !== $legacyObjectId || $stored['source_cutoff_at'] !== $cutoff || !hash_equals($hash, (string)$stored['classification_sha256'])) throw new DomainException('PROVENANCE_CONFLICT');
+        return ['provenanceId'=>(int)$stored['id'],'provenanceCreated'=>$created,'classificationSha256'=>$hash];
+    }
 }
