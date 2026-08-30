@@ -1,17 +1,17 @@
 # DOCUMENT-RENDER-HTML-001 — сформировать печатные HTML-артефакты проекта распоряжения
 
 - Статус: `APPROVED`
-- Версия: `0.2`
+- Версия: `0.3`
 - Дата: `2026-08-28`
 - Актор: сотрудник ФКР с полномочием `assignment_order.prepare`
 - Публичный командный шов: `InstallationProcess.prepareAssignmentOrder(installationObjectId, installerTabIds[], controlEngineerUserId, actorId)`
 - Публичный шов наблюдения: результат команды и `InstallationProcess.getInstallationObjectProcess(installationObjectId)`
-- Внутренний production delegate: `ProductionHtmlAssignmentOrderRenderer`
+- Retained compatibility delegate: `ProductionHtmlAssignmentOrderRenderer`
 - Утверждённый secondary adapter seam: `ProductionHtmlAssignmentOrderRenderer.renderAssignmentOrder(documentInput)`
 
 ## 1. Цель и честная граница формата
 
-Сформировать для первого production-инкремента два самодостаточных печатных UTF-8 HTML-артефакта: проект распоряжения и приложение. Пользователь может скачать HTML, открыть его в браузере и напечатать стандартными средствами.
+Сохранить совместимый renderer двух самодостаточных печатных UTF-8 HTML-артефактов: проекта распоряжения и приложения. Текущая production composition формирует PDF, но ранее сохранённые HTML metadata/bytes и прямой compatibility seam остаются валидными.
 
 Артефакты не являются PDF, DOCX, подписанным документом или финальным файлом 1С ДО. UI/download metadata обязаны показывать расширение `.html` и media type `text/html`; label «PDF» недопустим. Нормативный PDF-пример № 12-Р остаётся основанием состава реквизитов, а не заявлением о текущем output format.
 
@@ -23,7 +23,7 @@
 - organization form `individual`;
 - installer snapshot содержит `1042`, `Иванов Иван Иванович`, `Электромеханик по лифтам`, status `employed`, source `one_c_zup_via_bitrix`;
 - engineer snapshot содержит `Петров Пётр Петрович`, `Инженер строительного контроля`;
-- `ProductionHtmlAssignmentOrderRenderer` является единственным renderer delegate; fallback test/PDF renderer отсутствует.
+- `ProductionHtmlAssignmentOrderRenderer` проверяется как retained compatibility delegate; текущая factory composition выбирает PDF renderer.
 
 Окружение может быть in-memory: persistence HTML bytes не является целью этого renderer slice.
 
@@ -47,7 +47,7 @@ Renderer получает уже проверенный immutable document input
 - encoding — UTF-8 без BOM;
 - line endings — только LF (`0A`), после закрывающего `</html>` находится ровно один завершающий LF;
 - даты отображаются `DD.MM.YYYY`; диапазон соединён UTF-8 en dash `–` без пробелов;
-- `individual` отображается русской меткой `Индивидуальная`;
+- `individual` отображается русской меткой `Индивидуальная`, `brigade` — `Бригадная`;
 - document status — точная метка `Проект`; renderer не присваивает регистрационный номер;
 - все динамические текстовые значения перед интерполяцией проходят PHP-эквивалент `htmlspecialchars(value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')` с `double_encode = true`;
 - числа tab/version также преобразуются в decimal string и экранируются тем же правилом;
@@ -164,11 +164,11 @@ organizationType = individual
 
 ## 8. Публичный seam теста
 
-Тест собирает `InstallationProcess` с `ProductionHtmlAssignmentOrderRenderer` как единственным новым production delegate и вызывает только публичную prepare command/projection. Он не вызывает renderer напрямую и не читает его private/template methods.
+Основной tracer собирает `InstallationProcess` с `ProductionHtmlAssignmentOrderRenderer` как renderer delegate и вызывает только публичную prepare command/projection. Secondary compatibility examples вызывают утверждённый public adapter seam, но не читают private/template methods.
 
 Expected HTML, sizes и hashes берутся литерально из разделов 5–7. Тест не вычисляет expected SHA/size из production output. Production process самостоятельно вычисляет metadata из returned bytes, поэтому любая разница в escaping, field mapping, whitespace, LF, CSS, order или encoding меняет публичный hash/size и делает тест красным.
 
-Отдельный malicious-text escaping example не входит в этот tracer; обязательное экранирование остаётся production invariant и проверяется Gate 5 review. Его отдельная чувствительная public test требует следующего SSD-slice с независимо заданными escaped bytes.
+Positive brigade compatibility example отдельно доказывает escaping HTML-significant characters в dynamic installer name/position и отсутствие исходной markup-последовательности в output.
 
 ## 9. Secondary adapter seam и fail-closed input contract
 
@@ -184,9 +184,9 @@ $renderer->renderAssignmentOrder($documentInput);
 
 - `assignmentOrderVersion` существует, является именно PHP `int` и `> 0`;
 - `assignmentOrderDate` является string точного формата `YYYY-MM-DD` и реальной календарной датой;
-- `organizationType` имеет точное значение `individual`; `brigade` этим первым шаблоном не поддерживается;
+- `organizationType` имеет точное значение `individual` или `brigade`;
 - `installationObjectSnapshot` является array с непустыми string `address`, `entrance`, `objectRegistrationNumber` и реальными exact `YYYY-MM-DD` `plannedStartDate`, `plannedFinishDate`;
-- `installers` является list ровно из одного array; у элемента положительный integer `tabId` и непустые string `fullName`, `position`, `status`, `source`;
+- `installers` является непустым list из одного или нескольких array; у каждого элемента положительный integer `tabId` и непустые string `fullName`, `position`, `status`, `source`;
 - `controlEngineer` является array с положительным integer `userId` и непустыми string `fullName`, `position`.
 
 «Непустая string» здесь означает string, для которой `trim(value) !== ''`; renderer сохраняет/экранирует исходное значение и не использует trim как преобразование output. Array с associative/gapped numeric keys не является list. Дополнительные поля допустимы и игнорируются: renderer не сериализует input целиком.
@@ -206,11 +206,13 @@ message = "Invalid assignment order document input."
 A: assignmentOrderVersion = 0
 B: assignmentOrderVersion = "../1"
 C: assignmentOrderDate = "2026-02-31"
-D: organizationType = "brigade"
+D: organizationType = "crew"
 E: installers = [{ tabId: 1042, fullName: "Иванов Иван Иванович" }]
 ```
 
-Каждый отдельный прямой вызов получает exact exception выше и никакого результата. A/B доказывают, что version нельзя использовать как path-like filename component; C — что regex без календарной проверки недостаточен; D — что unsupported brigade не выдаётся за корректный документ; E — что отсутствующие nested fields не превращаются в notices, пустые ячейки или частичный шаблон.
+Каждый отдельный прямой вызов получает exact exception выше и никакого результата. A/B доказывают, что version нельзя использовать как path-like filename component; C — что regex без календарной проверки недостаточен; D — что неизвестный organization type не выдаётся за корректный документ; E — что отсутствующие nested fields не превращаются в notices, пустые ячейки или частичный шаблон.
+
+Отдельный positive compatibility example передаёт `organizationType = "brigade"` и двух монтажников. Он получает два artifacts, русскую метку `Бригадная`, две строки appendix и HTML-escaped dynamic values каждого монтажника.
 
 Если то же исключение возникает при вызове renderer из публичной `prepareAssignmentOrder`, процесс наследует утверждённый `ORDER-PREPARE-007`: возвращает стабильный render-failure result, не сохраняет version/assignments/artifacts и не раскрывает exception details. Новый process reason этим срезом не вводится.
 
@@ -226,8 +228,7 @@ E: installers = [{ tabId: 1042, fullName: "Иванов Иван Иванови�
 - подпись, печать 1С ДО и финальный зарегистрированный файл;
 - storage bytes, download/regeneration endpoint и retention;
 - template version table/editor;
-- multi-installer brigade layout и pagination beyond browser print;
-- malicious dynamic-text escaping executable test;
+- pagination beyond browser print;
 - fonts/images/logos/remote resources;
 - HTTP/UI и browser compatibility matrix.
 

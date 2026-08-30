@@ -9,7 +9,7 @@ use FMonitor2\InstallationProcess\InstallationProcess;
 use FMonitor2\InstallationProcess\ProductionHtmlAssignmentOrderRenderer;
 use FMonitor2\Tests\Support\InMemoryInstallationProcessEnvironment;
 
-// Specification: DOCUMENT-RENDER-HTML-001 v0.2.
+// Specification: DOCUMENT-RENDER-HTML-001 v0.3.
 
 $expectedOrderBytes = <<<'HTML'
 <!doctype html>
@@ -195,13 +195,30 @@ $validDocumentInput = [
     ],
 ];
 
+$brigadeDocumentInput=$validDocumentInput;
+$brigadeDocumentInput['organizationType']='brigade';
+$brigadeDocumentInput['installers'][]=[
+    'tabId'=>1043,
+    'fullName'=>'Сидоров <Сергей> & "Сергеевич"',
+    'position'=>"Помощник 'электромеханика'",
+    'status'=>'employed',
+    'source'=>'one_c_zup_via_bitrix',
+];
+$brigadeArtifacts=$renderer->renderAssignmentOrder($brigadeDocumentInput);
+assertSameValue(2,count($brigadeArtifacts),'Brigade compatibility render must retain the two-artifact shape.');
+assertSameValue(true,str_contains($brigadeArtifacts[0]['bytes'],'<dt>Форма организации труда</dt><dd>Бригадная</dd>'),'Brigade organization type must use the approved Russian label.');
+assertSameValue(2,substr_count($brigadeArtifacts[1]['bytes'],'<tr><td>'),'Brigade appendix must contain one escaped row per installer.');
+assertSameValue(true,str_contains($brigadeArtifacts[1]['bytes'],'Сидоров &lt;Сергей&gt; &amp; &quot;Сергеевич&quot;'),'Brigade installer name must be HTML escaped.');
+assertSameValue(true,str_contains($brigadeArtifacts[1]['bytes'],'Помощник &#039;электромеханика&#039;'),'Brigade installer position must be HTML escaped.');
+assertSameValue(false,str_contains($brigadeArtifacts[1]['bytes'],'Сидоров <Сергей>'),'Brigade output must not expose unescaped dynamic markup.');
+
 $invalidDocuments = [
     'zero version' => static function (array &$input): void { $input['assignmentOrderVersion'] = 0; },
     'path-like string version' => static function (array &$input): void { $input['assignmentOrderVersion'] = '../1'; },
     'missing version' => static function (array &$input): void { unset($input['assignmentOrderVersion']); },
     'impossible order date' => static function (array &$input): void { $input['assignmentOrderDate'] = '2026-02-31'; },
     'non-string order date' => static function (array &$input): void { $input['assignmentOrderDate'] = 20260827; },
-    'unsupported brigade' => static function (array &$input): void { $input['organizationType'] = 'brigade'; },
+    'unsupported organization type' => static function (array &$input): void { $input['organizationType'] = 'crew'; },
     'missing object snapshot' => static function (array &$input): void { unset($input['installationObjectSnapshot']); },
     'non-array object snapshot' => static function (array &$input): void { $input['installationObjectSnapshot'] = 'object'; },
     'missing object address' => static function (array &$input): void { unset($input['installationObjectSnapshot']['address']); },
@@ -212,7 +229,6 @@ $invalidDocuments = [
     'missing installers list' => static function (array &$input): void { unset($input['installers']); },
     'non-list installers' => static function (array &$input): void { $input['installers'] = [1 => $input['installers'][0]]; },
     'empty installers list' => static function (array &$input): void { $input['installers'] = []; },
-    'brigade-sized installers list' => static function (array &$input): void { $input['installers'][] = $input['installers'][0]; },
     'non-array installer' => static function (array &$input): void { $input['installers'][0] = 'installer'; },
     'non-positive installer tab id' => static function (array &$input): void { $input['installers'][0]['tabId'] = 0; },
     'string installer tab id' => static function (array &$input): void { $input['installers'][0]['tabId'] = '1042'; },
