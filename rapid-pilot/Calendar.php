@@ -8,6 +8,8 @@ use FMonitor2\PilotHttp\PilotView;
 final class RapidPilotCalendar
 {
     private const ZONE = 'Europe/Moscow';
+    private const SOURCE_ROW_LIMIT = 5000;
+    private const TOTAL_EVENT_LIMIT = 12000;
     private mysqli $db;
     private string $processPrefix;
     private string $legacyPrefix;
@@ -110,47 +112,36 @@ final class RapidPilotCalendar
     private function read(DateTimeImmutable $first, DateTimeImmutable $last): array
     {
         $p = $this->processPrefix; $l = $this->legacyPrefix;
-        $sql = "SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,
-                NULLIF(LEFT(m.workdatestart,10),'0000-00-00') planned_start,
-                COALESCE(NULLIF(LEFT(m.workdatefinish,10),'0000-00-00'),NULLIF(LEFT(m.plan_finish_date,10),'0000-00-00')) planned_end,
-                NULLIF(LEFT(m.workdateendadjusted,10),'0000-00-00') adjusted_end,
-                NULLIF(LEFT(m.ptoactdate,10),'0000-00-00') pto_date,
-                c.actual_start_date,c.process_state,
-                o.id order_id,o.version_no,o.status order_status,o.order_date,o.registered_at,o.registration_number,
-                t.id task_id,t.task_type,t.due_date task_due,t.status task_status
-            FROM `{$l}fm_maintable` m
-            LEFT JOIN `{$p}fm2_installation_cases` c ON c.legacy_installation_object_id=m.id
-            LEFT JOIN `{$p}fm2_assignment_orders` o ON o.installation_case_id=c.id
-            LEFT JOIN `{$p}fm2_process_tasks` t ON t.installation_case_id=c.id
-            WHERE (NULLIF(LEFT(m.workdatestart,10),'0000-00-00') BETWEEN ? AND ?)
-               OR (COALESCE(NULLIF(LEFT(m.workdatefinish,10),'0000-00-00'),NULLIF(LEFT(m.plan_finish_date,10),'0000-00-00')) BETWEEN ? AND ?)
-               OR (NULLIF(LEFT(m.workdateendadjusted,10),'0000-00-00') BETWEEN ? AND ?)
-               OR (NULLIF(LEFT(m.ptoactdate,10),'0000-00-00') BETWEEN ? AND ?)
-               OR (c.actual_start_date BETWEEN ? AND ?)
-               OR (o.order_date BETWEEN ? AND ?)
-               OR (LEFT(o.registered_at,10) BETWEEN ? AND ?)
-               OR (t.due_date BETWEEN ? AND ?)
-            ORDER BY m.id,o.version_no,t.id LIMIT 5000";
         $start = $first->format('Y-m-d'); $end = $last->format('Y-m-d');
-        $statement = $this->db->prepare($sql);
-        $statement->bind_param(str_repeat('s', 16), $start,$end,$start,$end,$start,$end,$start,$end,$start,$end,$start,$end,$start,$end,$start,$end);
-        $statement->execute(); $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $legacyBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,COALESCE(c.process_state,'') event_status,%s event_date,'' identity,'' task_type FROM `{$l}fm_maintable` m LEFT JOIN `{$p}fm2_installation_cases` c ON c.legacy_installation_object_id=m.id WHERE %s BETWEEN ? AND ? ORDER BY event_date,m.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
+        $caseBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,COALESCE(c.process_state,'') event_status,c.actual_start_date event_date,'' identity,'' task_type FROM `{$p}fm2_installation_cases` c JOIN `{$l}fm_maintable` m ON m.id=c.legacy_installation_object_id WHERE c.actual_start_date BETWEEN ? AND ? ORDER BY event_date,m.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
+        $orderBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,%s event_status,%s event_date,CONCAT('order-',o.id%s) identity,'' task_type FROM `{$p}fm2_assignment_orders` o JOIN `{$p}fm2_installation_cases` c ON c.id=o.installation_case_id JOIN `{$l}fm_maintable` m ON m.id=c.legacy_installation_object_id WHERE %s BETWEEN ? AND ? ORDER BY event_date,m.id,o.version_no,o.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
+        $taskBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,t.status event_status,t.due_date event_date,CONCAT('task-',t.id) identity,t.task_type FROM `{$p}fm2_process_tasks` t JOIN `{$p}fm2_installation_cases` c ON c.id=t.installation_case_id JOIN `{$l}fm_maintable` m ON m.id=c.legacy_installation_object_id WHERE t.due_date BETWEEN ? AND ? ORDER BY event_date,m.id,t.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
+        $definitions=[
+            ['planned_start','Плановое начало',sprintf($legacyBase,"NULLIF(LEFT(m.workdatestart,10),'0000-00-00')","NULLIF(LEFT(m.workdatestart,10),'0000-00-00')")],
+            ['planned_end','Плановое окончание',sprintf($legacyBase,"COALESCE(NULLIF(LEFT(m.workdatefinish,10),'0000-00-00'),NULLIF(LEFT(m.plan_finish_date,10),'0000-00-00'))","COALESCE(NULLIF(LEFT(m.workdatefinish,10),'0000-00-00'),NULLIF(LEFT(m.plan_finish_date,10),'0000-00-00'))")],
+            ['adjusted_end','Скорректированное окончание',sprintf($legacyBase,"NULLIF(LEFT(m.workdateendadjusted,10),'0000-00-00')","NULLIF(LEFT(m.workdateendadjusted,10),'0000-00-00')")],
+            ['pto_act','Акт ПТО',sprintf($legacyBase,"NULLIF(LEFT(m.ptoactdate,10),'0000-00-00')","NULLIF(LEFT(m.ptoactdate,10),'0000-00-00')")],
+            ['actual_start','Фактическое начало',$caseBase],
+            ['order_issued','Распоряжение выпущено',sprintf($orderBase,'o.status','o.order_date',"",'o.order_date')],
+            ['order_registered','Распоряжение зарегистрировано',sprintf($orderBase,"COALESCE(NULLIF(o.registration_number,''),o.status)",'LEFT(o.registered_at,10)'," ,'-registered'",'LEFT(o.registered_at,10)')],
+            ['process_task','Процессная задача',$taskBase],
+        ];
         $events = [];
-        foreach ($rows as $row) {
-            $base = ['objectId'=>(int)$row['object_id'],'address'=>(string)$row['address'],'entrance'=>(string)$row['entrance'],'registration'=>(string)$row['regnumber']];
-            $this->add($events, $base, $row['planned_start'], 'planned_start', 'Плановое начало', (string)$row['process_state']);
-            $this->add($events, $base, $row['planned_end'], 'planned_end', 'Плановое окончание', (string)$row['process_state']);
-            $this->add($events, $base, $row['adjusted_end'], 'adjusted_end', 'Скорректированное окончание', (string)$row['process_state']);
-            $this->add($events, $base, $row['actual_start_date'], 'actual_start', 'Фактическое начало', (string)$row['process_state']);
-            $this->add($events, $base, $row['pto_date'], 'pto_act', 'Акт ПТО', 'зафиксирован');
-            if ($row['order_id'] !== null) {
-                $orderKey = 'order-' . $row['order_id'];
-                $this->add($events, $base, $row['order_date'], 'order_issued', 'Распоряжение выпущено', (string)$row['order_status'], $orderKey);
-                $this->add($events, $base, $row['registered_at'] === null ? null : substr((string)$row['registered_at'],0,10), 'order_registered', 'Распоряжение зарегистрировано', (string)($row['registration_number'] ?: $row['order_status']), $orderKey . '-registered');
-            }
-            if ($row['task_id'] !== null) $this->add($events, $base, $row['task_due'], 'process_task', $this->taskLabel((string)$row['task_type']), (string)$row['task_status'], 'task-'.$row['task_id']);
+        foreach($definitions as[$type,$label,$sql]){
+            $rows=$this->boundedProjection($sql,$start,$end);
+            foreach($rows as$row){$base=['objectId'=>(int)$row['object_id'],'address'=>(string)$row['address'],'entrance'=>(string)$row['entrance'],'registration'=>(string)$row['regnumber']];$eventLabel=$type==='process_task'?$this->taskLabel((string)$row['task_type']):$label;$status=$type==='pto_act'?'зафиксирован':(string)$row['event_status'];$this->add($events,$base,$row['event_date'],$type,$eventLabel,$status,(string)$row['identity']);}
+            if(count($events)>self::TOTAL_EVENT_LIMIT)throw new RuntimeException('Calendar event projection overflow.');
         }
         ksort($events); return array_values($events);
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function boundedProjection(string $sql,string $start,string $end):array
+    {
+        $statement=$this->db->prepare($sql);$statement->bind_param('ss',$start,$end);$statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        if(count($rows)>self::SOURCE_ROW_LIMIT)throw new RuntimeException('Calendar source projection overflow.');
+        return$rows;
     }
 
     private function add(array &$events, array $base, mixed $date, string $type, string $label, string $status, string $identity=''): void
