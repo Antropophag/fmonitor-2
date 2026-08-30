@@ -614,6 +614,28 @@
 .fm2-otiz-reverse { display: flex; min-inline-size: 250px; gap: 6px; align-items: center; }
 .fm2-otiz-reverse .shlz-input { min-inline-size: 140px; }
 .fm2-otiz-proof p { max-inline-size: 72ch; color: var(--fm2-muted); }
+
+/* OTIZ payout desk: one calm operational hierarchy, composed from shlz-ui primitives. */
+.fm2-otiz-start { padding: 28px 30px; align-items: center; border: 1px solid var(--fm2-border); }
+.fm2-otiz-start h1 { font-size: 30px; font-weight: 550; }
+.fm2-otiz-start p { max-inline-size: 58ch; font-size: 14px; line-height: 1.5; }
+.fm2-otiz-date { padding-inline-start: 28px; border-inline-start: 1px solid var(--fm2-border); }
+.fm2-otiz-subnav { margin-block: 14px 20px; }
+.fm2-otiz-current { min-block-size: 164px; padding: 28px 30px; background: #172334; }
+.fm2-otiz-current h2 { margin-block-start: 14px; font-size: 24px; }
+.fm2-otiz-current p { max-inline-size: 60ch; font-size: 13px; line-height: 1.45; }
+.fm2-otiz-current > div:last-child { min-inline-size: 230px; gap: 5px; }
+.fm2-otiz-current > div:last-child strong { font-size: 30px; }
+.fm2-otiz-current .shlz-button { margin-block-start: 12px; text-decoration: none; }
+.fm2-otiz-scenarios { padding: 26px 30px; border: 1px solid var(--fm2-border); }
+.fm2-otiz-scenarios header p { font-size: 13px; }
+.fm2-otiz-scenarios ol { margin-block-start: 20px; }
+.fm2-otiz-scenarios li { gap: 6px; padding-block: 20px 6px; }
+.fm2-otiz-scenarios li strong { font-size: 14px; }
+.fm2-otiz-scenarios li span { max-inline-size: 34ch; font-size: 12px; line-height: 1.45; }
+.fm2-otiz-trace li { grid-template-columns: minmax(0, 1fr) auto; padding-block: 4px; border-block-end: 1px solid var(--fm2-border); }
+.fm2-otiz-trace li:last-child { border-block-end: 0; }
+.fm2-otiz-trace li strong { font-size: 11px; }
 .fm2-recon-summary { display: grid; grid-template-columns: auto auto minmax(0,1fr); margin-block-end: 18px; overflow: hidden; color: #fff; background: var(--fm2-ink); border-radius: var(--fm2-radius); }
 .fm2-recon-summary > div { display: grid; min-inline-size: 150px; gap: 2px; padding: 18px 22px; border-inline-end: 1px solid rgb(255 255 255 / 14%); }
 .fm2-recon-summary strong { font-size: 23px; font-weight: 500; }
@@ -718,6 +740,7 @@
 
 @media (max-width: 900px) {
   .fm2-otiz-start { grid-template-columns: 1fr; gap: 20px; }
+  .fm2-otiz-date { padding-inline-start: 0; border-inline-start: 0; }
   .fm2-otiz-scenarios ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fm2-otiz-scenarios li:nth-child(n) { padding-inline: 0 18px; border-inline-start: 0; }
   .fm2-otiz-scenarios li:nth-child(even) { padding-inline-start: 18px; border-inline-start: 1px solid var(--fm2-border); }
