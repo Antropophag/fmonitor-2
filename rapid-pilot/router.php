@@ -122,6 +122,16 @@ if ($path === '/pilot/assets/object-queue.js') {
     echo $bytes;
     exit;
 }
+if ($path === '/pilot/assets/installer-directory.js') {
+    $bytes = file_get_contents(__DIR__ . '/installer-directory.js');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if ($path === '/pilot/assets/otiz.js') {
     $bytes = file_get_contents(__DIR__ . '/otiz.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }

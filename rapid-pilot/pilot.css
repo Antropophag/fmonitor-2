@@ -394,17 +394,6 @@
   font-size: 12px;
 }
 
-.fm2-table-footer span:last-child {
-  display: grid;
-  inline-size: 32px;
-  block-size: 32px;
-  place-items: center;
-  color: var(--fm2-primary);
-  background: var(--fm2-primary-soft);
-  border-radius: 50%;
-  font-variant-numeric: tabular-nums;
-}
-
 /* Pagination is rendered by the public SHLZ contract; keep controls touch-safe
    and reduce only the contextual window on narrow screens. */
 .fm2-table-footer .shlz-pagination__item,
@@ -1009,8 +998,15 @@
 }
 
 .fm2-installer-table-scroll { max-block-size: calc(100vh - 300px); overflow: auto; }
-.fm2-installer-server-filters { display: grid; grid-template-columns: minmax(240px,2fr) minmax(150px,1fr) minmax(150px,1fr) auto auto; gap: 12px; align-items: end; margin-block-end: 14px; }
-.fm2-installer-server-filters .shlz-link { display: inline-flex; min-block-size: 44px; align-items: center; }
+.fm2-installer-server-filters { display: grid; grid-template-columns: minmax(280px,2fr) minmax(180px,1fr) minmax(180px,1fr) auto auto; gap: 12px; align-items: end; margin-block-end: 16px; padding: 18px 20px; background: var(--fm2-surface); border-radius: var(--fm2-radius); box-shadow: 0 1px 2px rgb(11 22 35 / 5%); }
+.fm2-installer-server-filters .shlz-field { inline-size: 100%; }
+.fm2-installer-server-filters .shlz-field__control { color: var(--fm2-ink); background: var(--fm2-surface); border-color: var(--fm2-border); border-radius: 10px; transition: border-color 120ms ease-out, box-shadow 120ms ease-out; }
+.fm2-installer-server-filters .shlz-field__control:hover { background: var(--fm2-surface); border-color: #aeb7c2; }
+.fm2-installer-server-filters .shlz-field__control:focus-within { background: var(--fm2-surface); border-color: var(--fm2-focus-ring); box-shadow: 0 0 0 3px var(--fm2-focus-halo); }
+.fm2-installer-server-filters .shlz-input { appearance: none; caret-color: var(--fm2-primary); }
+.fm2-installer-server-filters .shlz-input::-webkit-search-decoration { appearance: none; }
+.fm2-installer-server-filters .shlz-select__listbox { inline-size: max(100%, 220px); }
+.fm2-installer-filter-reset { display: inline-flex; min-block-size: 44px; align-items: center; }
 .fm2-installer-directory > .shlz-pagination { padding: 14px; border-block-start: 1px solid var(--fm2-border); }
 .fm2-installer-filters { display: flex; gap: 6px; padding: 11px 14px; overflow-x: auto; border-block-end: 1px solid var(--fm2-border); }
 .fm2-installer-filters input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
@@ -1022,15 +1018,13 @@
 .fm2-installer-directory:has(#if-dismissed:checked) .fm2-installer-row:not(.fm2-installer-row--dismissed),
 .fm2-installer-directory:has(#if-assigned:checked) .fm2-installer-row:not(.fm2-installer-row--assigned),
 .fm2-installer-directory:has(#if-free:checked) .fm2-installer-row:not(.fm2-installer-row--free) { display: none; }
-.fm2-installer-table { inline-size: 100%; border-collapse: collapse; table-layout: fixed; }
-.fm2-installer-table th { position: sticky; z-index: 2; inset-block-start: 0; padding: 11px 14px; color: var(--fm2-muted); background: #f8fafc; border-block-end: 1px solid var(--fm2-border); text-align: start; font-size: 11px; font-weight: 500; }
+.fm2-installer-table { min-inline-size: 900px; table-layout: auto; }
+.fm2-installer-table .shlz-table__head .shlz-table__cell { position: sticky; z-index: 2; inset-block-start: 0; background: var(--shlz-semantic-color-surface-base, #fff); }
 .fm2-installer-table th:nth-child(1) { inline-size: 25%; }
 .fm2-installer-table th:nth-child(2) { inline-size: 12%; }
 .fm2-installer-table th:nth-child(3) { inline-size: 20%; }
 .fm2-installer-table th:nth-child(4) { inline-size: 28%; }
 .fm2-installer-table th:nth-child(5) { inline-size: 15%; }
-.fm2-installer-table td { padding: 11px 14px; border-block-end: 1px solid var(--fm2-border); vertical-align: middle; overflow-wrap: anywhere; font-size: 13px; }
-.fm2-installer-table tbody tr:hover { background: #f8f9fc; }
 .fm2-installer-table td > small, .fm2-installer-person small { display: block; margin-block-start: 3px; color: var(--fm2-muted); font-size: 11px; }
 .fm2-installer-person { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; }
 .fm2-installer-person .fm2-person-mark { inline-size: 34px; block-size: 34px; }
@@ -1040,13 +1034,10 @@
 
 @media (max-width: 680px) {
   .fm2-installer-server-filters { grid-template-columns: 1fr; }
+  .fm2-installer-server-filters { padding: 16px; }
+  .fm2-installer-server-filters .shlz-button { inline-size: 100%; }
   .fm2-installer-server-filters .shlz-input, .fm2-installer-directory .shlz-pagination__item { min-block-size: 44px; }
-  .fm2-installer-table-scroll { max-block-size: none; overflow: visible; }
-  .fm2-installer-table thead { display: none; }
-  .fm2-installer-table, .fm2-installer-table tbody, .fm2-installer-table tr, .fm2-installer-table td { display: block; inline-size: 100%; }
-  .fm2-installer-table tr { padding: 10px 12px; border-block-end: 1px solid var(--fm2-border); }
-  .fm2-installer-table td { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px; padding: 6px 0; border: 0; }
-  .fm2-installer-table td::before { color: var(--fm2-muted); font-size: 11px; content: attr(data-label); }
+  .fm2-installer-table { min-inline-size: 760px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
