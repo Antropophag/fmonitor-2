@@ -108,12 +108,12 @@ try {
     $object = $db->query("SELECT object_id,pool_cents FROM `{$prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$acceptedId} AND calculation_state<>'blocked' AND pool_cents>20000 ORDER BY object_id LIMIT 1")->fetch_assoc();
     $objectId = (int) $object['object_id'];
     $closurePath = "/pilot/otiz/snapshots/{$acceptedId}/closures";
-    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => '100.00', 'discipline' => '0', 'deadline' => '0', 'basis' => 'Verifier payment']);
-    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => 'oops', 'discipline' => '1.01', 'deadline' => '0', 'basis' => 'Malformed money']);
+    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'discipline' => '100.00', 'basis' => 'Verifier discipline hold']);
+    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'discipline' => 'oops', 'basis' => 'Malformed money']);
     $closureCount = (int) $db->query("SELECT COUNT(*) n FROM `{$prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$acceptedId} AND object_id={$objectId}")->fetch_assoc()['n'];
     $expect($closureCount === 1, 'malformed money cannot create a closure');
     $remaining = (int) $object['pool_cents'] - 10000;
-    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => number_format(($remaining + 1) / 100, 2, '.', ''), 'discipline' => '0', 'deadline' => '0', 'basis' => 'Over-close attempt']);
+    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'discipline' => number_format(($remaining + 1) / 100, 2, '.', ''), 'basis' => 'Over-close attempt']);
     $closureCount = (int) $db->query("SELECT COUNT(*) n FROM `{$prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$acceptedId} AND object_id={$objectId}")->fetch_assoc()['n'];
     $expect($closureCount === 1, 'cumulative closures cannot exceed the accepted object pool');
 
@@ -123,11 +123,11 @@ try {
     $reversalCount = (int) $db->query("SELECT COUNT(*) n FROM `{$prefix}fm2_pilot_otiz_payment_closures` WHERE reverses_payment_closure_id={$closureId}")->fetch_assoc()['n'];
     $expect($reversalCount === 1, 'reversal is append-only and idempotent');
 
-    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => '75.00', 'discipline' => '25.00', 'deadline' => '0', 'basis' => 'Closed for next period']);
+    $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => '999999.00', 'discipline' => '100.00', 'deadline' => '999999.00', 'basis' => 'Discipline hold for next period']);
     $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-09-30']);
     $nextId = (int) $db->query("SELECT MAX(id) id FROM `{$prefix}fm2_pilot_otiz_snapshots`")->fetch_assoc()['id'];
     $closedBefore = (int) $db->query("SELECT closed_before_cents FROM `{$prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$nextId} AND object_id={$objectId}")->fetch_assoc()['closed_before_cents'];
-    $expect($closedBefore === 10000, 'next calculation subtracts net closed payments and holds');
+    $expect($closedBefore === 10000, 'next calculation subtracts only the recorded discipline hold; spoofed payment and deadline fields are ignored');
     $expect($snapshotContent() === $acceptedContentBefore, 'closures and later calculations do not rewrite accepted snapshot content');
 
     $xlsx = $run("/pilot/otiz/snapshots/{$acceptedId}/export.xlsx");
