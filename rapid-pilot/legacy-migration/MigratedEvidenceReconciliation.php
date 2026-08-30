@@ -35,12 +35,13 @@ final class MigratedEvidenceReconciliation
         $events = is_array($payload['checklistEvents'] ?? null) ? $payload['checklistEvents'] : [];
         $attributions = is_array($payload['attributions'] ?? null) ? $payload['attributions'] : [];
         $classification = LegacyObjectClassification::classify($object + ['checklist_event_count' => count($events), 'attribution_count' => count($attributions)]);
-        $conflicts = $classification['quarantineCodes']; foreach ($importIssues as $issue) $conflicts[] = (string)$issue['code'];
+        $derivedConflicts=[];foreach($attributions as$attribution){$tab=ltrim(trim((string)($attribution['tab_id']??'')),'0');if($tab==='999999'){$derivedConflicts[]='LEGACY_UNASSIGNED_SENTINEL';break;}}
+        $conflicts = array_merge($classification['quarantineCodes'],$derivedConflicts); foreach ($importIssues as $issue) $conflicts[] = (string)$issue['code'];
         $conflicts = array_values(array_unique($conflicts)); sort($conflicts, SORT_STRING);
         $grade = $conflicts !== [] ? 'Q' : ($events !== [] && $attributions !== [] ? 'A' : (($events !== [] || $attributions !== []) ? 'B' : 'C'));
         $observations = [];
         foreach ($attributions as $attribution) {
-            $tab = trim((string)($attribution['tab_id'] ?? '')); if ($tab === '') continue;
+            $tab = trim((string)($attribution['tab_id'] ?? '')); if ($tab === ''||ltrim($tab,'0')==='999999') continue;
             $observations[$tab] = ['tabId'=>$tab, 'observedName'=>trim((string)($attribution['fio'] ?? '')), 'observedAt'=>(string)($attribution['ctime'] ?? ''), 'source'=>'legacy_attribution_log'];
         }
         ksort($observations, SORT_STRING); $workforceFacts = [];
@@ -50,6 +51,7 @@ final class MigratedEvidenceReconciliation
             'authoritySystem'=>(string)$workforce[$tab]['authority_system'], 'source'=>(string)$workforce[$tab]['workforce_source'],
             'sourceUpdatedAt'=>(string)$workforce[$tab]['workforce_source_updated_at'],
         ];
+        $progressMapping=LegacyChecklistProgressMapping::profile($payload);if(in_array('LEGACY_UNASSIGNED_SENTINEL',$derivedConflicts,true)){$progressMapping['candidateProgressBp']=null;$progressMapping['eligibleForCalculation']=false;$progressMapping['conflictCodes'][]='LEGACY_UNASSIGNED_SENTINEL';$progressMapping['conflictCodes']=array_values(array_unique($progressMapping['conflictCodes']));sort($progressMapping['conflictCodes'],SORT_STRING);}
         $projection = [
             'snapshotId' => (int)$snapshot['id'], 'legacyObjectId' => (int)$snapshot['legacy_object_id'],
             'regnumber' => trim((string)($object['regnumber'] ?? '')), 'address' => trim((string)($object['ordadr_address'] ?? '')),
@@ -60,9 +62,9 @@ final class MigratedEvidenceReconciliation
             'reasonCodes' => $classification['reasonCodes'], 'evidenceGrade' => $grade,
             'confidence' => $grade === 'A' ? 'high' : ($grade === 'B' ? 'medium' : 'low'),
             'counts' => ['checklistEvents' => count($events), 'attributions' => count($attributions)],
-            'progressMapping' => LegacyChecklistProgressMapping::profile($payload),
+            'progressMapping' => $progressMapping,
             'attributionObservations' => array_values($observations), 'workforceFacts' => array_values($workforceFacts),
-            'conflictCodes' => $conflicts, 'quarantineCount' => count($importIssues) + count($classification['quarantineCodes']),
+            'conflictCodes' => $conflicts, 'quarantineCount' => count($importIssues) + count($classification['quarantineCodes']) + count($derivedConflicts),
         ];
         $projection['projectionHash'] = hash('sha256', json_encode($projection, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         return $projection;

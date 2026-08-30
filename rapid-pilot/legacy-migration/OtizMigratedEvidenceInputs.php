@@ -8,6 +8,7 @@ final class OtizMigratedEvidenceInputs
     {
         $row = $reconciliationByObject[$objectId] ?? null;
         if (!is_array($row)) return ['mode'=>'synthetic_fallback','reconciliationClaim'=>false,'admittedEvidence'=>null,'exclusionReason'=>'NO_MATCHING_IMPORTED_SNAPSHOT'];
+        if (in_array('LEGACY_UNASSIGNED_SENTINEL',$row['conflictCodes']??[],true)) return ['mode'=>'synthetic_fallback','reconciliationClaim'=>false,'admittedEvidence'=>null,'exclusionReason'=>'LEGACY_UNASSIGNED_SENTINEL'];
         if ($row['evidenceGrade'] !== 'A' || $row['confidence'] !== 'high' || $row['conflictCodes'] !== []) {
             return ['mode'=>'synthetic_fallback','reconciliationClaim'=>false,'admittedEvidence'=>null,'exclusionReason'=>'EVIDENCE_NOT_CONFIRMED'];
         }
