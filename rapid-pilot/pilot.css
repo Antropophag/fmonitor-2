@@ -1480,3 +1480,35 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-assignment-version>div:first-child{display:grid;gap:3px;min-width:0}.fm2-assignment-version strong{overflow-wrap:anywhere}.fm2-assignment-version span{color:var(--shlz-color-text-secondary,#56616d);font-size:13px}
 .fm2-assignment-files{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px}.fm2-document-empty{white-space:nowrap}
 @media(max-width:760px){.fm2-assignment-version{align-items:flex-start;grid-template-columns:1fr}.fm2-assignment-files{justify-content:flex-start}}
+.fm2-completion { margin-block-end: 24px; padding: 24px; border: 1px solid var(--shlz-color-border, #d9dde3); border-radius: 12px; background: #fff; }
+.fm2-completion > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-block-end: 20px; }
+.fm2-completion h2 { margin: 0 0 6px; font-size: 20px; }
+.fm2-completion header p { margin: 0; color: #5d6470; }
+.fm2-completion-track { display: grid; grid-template-columns: 85fr 15fr; min-height: 34px; margin-block-end: 22px; overflow: hidden; border: 1px solid #d9dde3; border-radius: 6px; color: #303640; font-size: 12px; font-weight: 600; }
+.fm2-completion-track__segment { position: relative; min-width: 0; background: #eef0f3; }
+.fm2-completion-track__segment > i { position: absolute; inset: 0 auto 0 0; background: #58a76f; }
+.fm2-completion-track__segment--documents > i { background: #2f7a45; }
+.fm2-completion-track__segment + .fm2-completion-track__segment { border-inline-start: 2px solid #fff; }
+.fm2-completion-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.fm2-completion-steps li { display: flex; gap: 10px; min-width: 0; color: #747b86; }
+.fm2-completion-steps li > span { flex: 0 0 28px; display: grid; place-items: center; height: 28px; border: 1px solid #c9ced6; border-radius: 50%; font-weight: 600; }
+.fm2-completion-steps li div { display: grid; gap: 3px; min-width: 0; }
+.fm2-completion-steps strong { color: #303640; }
+.fm2-completion-steps small, .fm2-completion-steps div > span { color: #6c737e; font-size: 13px; }
+.fm2-completion-steps .is-done > span { border-color: #2f7a45; background: #2f7a45; color: #fff; }
+.fm2-completion-steps .is-current > span { border-color: #303640; color: #303640; }
+.fm2-completion-form { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr) auto; align-items: end; gap: 16px; margin-block-start: 24px; padding-block-start: 20px; border-block-start: 1px solid #e4e7eb; }
+.fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: minmax(180px, 320px) auto; justify-content: start; }
+.fm2-check-closeout { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 24px; }
+.fm2-check-closeout__copy { display: grid; gap: 9px; min-width: 0; }
+.fm2-check-closeout__copy > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fm2-check-closeout__copy > div > strong { font-size: 17px; }
+.fm2-check-closeout__copy p { margin: 0; color: #657181; font-size: 13px; }
+.fm2-check-closeout__copy ul { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; list-style: none; }
+.fm2-check-closeout__copy li { display: flex; align-items: center; gap: 7px; color: #657181; font-size: 13px; }
+.fm2-check-closeout__copy li > span { width: 9px; height: 9px; border: 1px solid #aab1bc; border-radius: 50%; background: #fff; }
+.fm2-check-closeout__copy li.is-done { color: #285f39; font-weight: 500; }
+.fm2-check-closeout__copy li.is-done > span { border-color: #2f7a45; background: #2f7a45; }
+.fm2-check-closeout > .shlz-button { flex: 0 0 auto; text-decoration: none; }
+@media (max-width: 760px) { .fm2-completion { padding: 18px; } .fm2-completion > header { flex-direction: column; gap: 12px; } .fm2-completion-steps, .fm2-completion-form { grid-template-columns: 1fr; } .fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .fm2-check-closeout { align-items: stretch; flex-direction: column; padding: 18px; } .fm2-check-closeout > .shlz-button { width: 100%; } }

@@ -11,6 +11,7 @@ final class RapidPilotObjectDetails
         }
         if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $match) !== 1) return $html;
         $html=str_replace('>Изменяющее распоряжение подготовлено</span>','>В работе</span>',$html);
+        $html=str_replace('>Распоряжение подготовлено</span>','>Требуется распоряжение</span>',$html);
         $html = self::correctUnavailableOpenCommand($html);
         $details = self::read((int) $match[1]);
         $identity=self::extractElement($html,'<header class="fm2-object-identity"');$action=self::extractElement($html,'<section class="fm2-next-action"');$dashboard=self::extractElement($html,'<div class="fm2-object-dashboard"');

@@ -8,6 +8,7 @@ require_once __DIR__ . '/Otiz.php';
 require_once __DIR__ . '/Calendar.php';
 require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
+require_once __DIR__ . '/CompletionFlow.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -158,6 +159,8 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     exit;
 }
 (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && RapidPilotCompletionFlow::matches($path)) RapidPilotCompletionFlow::handle($path);
+if (is_string($path) && RapidPilotCompletionFlow::blocksLegacyCompletion($path)) exit;
 if (is_string($path) && RapidPilotObjectQueue::matches($path)) RapidPilotObjectQueue::handle();
 if (is_string($path) && RapidPilotCalendar::matches($path)) {
     require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
@@ -188,6 +191,9 @@ $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
     $body = RapidPilotObjectDetails::enhance($body, $path);
+    if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $completionCard) === 1) $body = RapidPilotCompletionFlow::enhanceCard($body, (int) $completionCard[1]);
+    if (preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
+    $body = RapidPilotCompletionFlow::paintStatuses($body);
     $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
