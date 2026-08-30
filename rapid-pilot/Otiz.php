@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
+require_once __DIR__ . '/legacy-migration/MigratedEvidenceDecisionLedger.php';
 require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
 require_once __DIR__ . '/legacy-migration/PremiumCalculation.php';
 require_once __DIR__ . '/legacy-migration/HistoricalPremiumReplayReadModel.php';
@@ -14,6 +15,7 @@ final class RapidPilotOtiz
     private int $userId;
     private string $userName;
     private string $csrf;
+    private MigratedEvidenceDecisionLedger $decisionLedger;
 
     public function __construct()
     {
@@ -31,6 +33,8 @@ final class RapidPilotOtiz
         if ((int) ($role['n'] ?? 0) < 1) $this->fail(403, 'Раздел доступен сотрудникам ОТиЗ и администраторам.');
         $this->csrf = (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? '');
         $this->ensureSchema();
+        $this->decisionLedger = new MigratedEvidenceDecisionLedger($this->db, $this->prefix);
+        $this->decisionLedger->ensureSchema();
     }
 
     public static function matches(string $path): bool { return preg_match('#^/pilot/otiz(?:/|$)#D', $path) === 1; }
@@ -72,6 +76,26 @@ final class RapidPilotOtiz
             $date = (string) ($_POST['reportDate'] ?? '');
             if (!$this->validDate($date)) $this->redirect('/pilot/otiz?error=date');
             $id = $this->calculate($date); $this->redirect('/pilot/otiz/snapshots/' . $id . '?created=1');
+        }
+        if ($path === '/pilot/otiz/reconciliation/decisions') {
+            $snapshotId = filter_var($_POST['snapshotId'] ?? null, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+            $outcome = (string)($_POST['outcome'] ?? '');
+            $target = trim((string)($_POST['targetLocator'] ?? ''));
+            try {
+                $result = $this->decisionLedger->decide([
+                    'operationId'=>(string)($_POST['operationId'] ?? ''), 'snapshotId'=>$snapshotId,
+                    'snapshotSha256'=>(string)($_POST['snapshotSha256'] ?? ''), 'projectionSha256'=>(string)($_POST['projectionSha256'] ?? ''),
+                    'sourceLocator'=>(string)($_POST['sourceLocator'] ?? ''), 'issueCode'=>(string)($_POST['issueCode'] ?? ''),
+                    'outcome'=>$outcome, 'targetLocator'=>$outcome === 'map_link' ? $target : null,
+                    'reason'=>trim((string)($_POST['reason'] ?? '')), 'actorUserId'=>$this->userId, 'occurredAt'=>$this->now(),
+                ]);
+                $this->redirect('/pilot/otiz/reconciliation?decision='.$result['status'].'#snapshot-'.$snapshotId);
+            } catch (InvalidArgumentException) {
+                $this->redirect('/pilot/otiz/reconciliation?decisionError=invalid#snapshot-'.(int)$snapshotId);
+            } catch (DomainException $error) {
+                $message=$error->getMessage();$code=str_contains($message,'stale or unavailable')?'stale':(str_contains($message,'issue reference')?'conflict':(str_contains($message,'Operation id')?'operation':'forbidden'));
+                $this->redirect('/pilot/otiz/reconciliation?decisionError='.$code.'#snapshot-'.(int)$snapshotId);
+            }
         }
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/accept$#D', $path, $m) === 1) {
             $id = (int) $m[1]; $this->db->begin_transaction();
@@ -208,25 +232,39 @@ final class RapidPilotOtiz
     private function reconciliation(): never
     {
         $rows = MigratedEvidenceReconciliation::load($this->db, $this->prefix);
+        $decisionsBySnapshot=[];foreach($this->decisionLedger->allDecisions()as$decision)$decisionsBySnapshot[(int)$decision['snapshot_id']][]=$decision;
         $conflicted = count(array_filter($rows, static fn(array $row): bool => $row['conflictCodes'] !== []));
         $body = '<header class="fm2-page-header"><div><h1>Сверка перенесённых свидетельств</h1><p>ОТиЗ видит происхождение и качество legacy-фактов до их использования. Этот экран ничего не исправляет и не меняет расчёт.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/reconciliation">Сверка свидетельств</a><a class="shlz-link" href="/pilot/otiz/historical-replay">Historical replay</a></nav>';
+        $result=(string)($_GET['decision']??'');$error=(string)($_GET['decisionError']??'');
+        if(in_array($result,['accepted','duplicate'],true))$body.='<p class="fm2-recon-notice fm2-recon-notice--success" role="status">'.($result==='accepted'?'Решение добавлено в неизменяемую историю.':'Это решение уже было записано; повтор не создал новую запись.').'</p>';
+        if($error!==''){$messages=['invalid'=>'Проверьте действие, основание и формат целевой ссылки.','stale'=>'Проекция изменилась. Обновите страницу и повторно проверьте конфликт.','conflict'=>'Конфликт больше не относится к этой проекции. Обновите страницу.','operation'=>'Идентификатор операции уже использован для другого решения.','forbidden'=>'Недостаточно прав для решения по свидетельству.'];$body.='<p class="fm2-recon-notice fm2-recon-notice--error" role="alert">'.$this->e($messages[$error]??'Решение не записано.').'</p>';}
         if ($rows === []) {
             $body .= '<section class="fm2-empty"><h2>Импортированных свидетельств пока нет</h2><p>Выполните dry-run и явно примените проверенный snapshot. Legacy-источник останется доступен только для чтения.</p></section>';
         } else {
             $body .= '<section class="fm2-recon-summary" aria-label="Состояние сверки"><div><strong>' . count($rows) . '</strong><span>последних snapshot</span></div><div><strong>' . $conflicted . '</strong><span>требуют разбора</span></div><p>Класс и оценка повторяемо строятся из immutable payload. Hash проекции меняется вместе с evidence или quarantine.</p></section><section class="fm2-recon-list" aria-label="Перенесённые свидетельства">';
-            foreach ($rows as $row) $body .= $this->reconciliationItem($row);
+            foreach ($rows as $row) $body .= $this->reconciliationItem($row,$decisionsBySnapshot[(int)$row['snapshotId']]??[]);
             $body .= '</section>';
         }
         $this->page('Сверка перенесённых свидетельств', $body);
     }
 
-    private function reconciliationItem(array $row): string
+    private function reconciliationItem(array $row,array$decisions): string
     {
         $classes = ['native_candidate'=>'Нативный кандидат','legacy_active'=>'Активный legacy','legacy_historical'=>'Исторический legacy'];
         $confidence = ['high'=>'Высокая','medium'=>'Средняя','low'=>'Низкая'];
         $reasons = implode(' · ', array_map($this->reasonLabel(...), $row['reasonCodes']));
+        $byIssue=[];foreach($decisions as$decision)$byIssue[(string)$decision['issue_code']][]=$decision;
         $conflicts = $row['conflictCodes'] === [] ? '<span class="fm2-recon-clear">Конфликтов не обнаружено</span>' : '<ul>' . implode('', array_map(fn(string $code): string => '<li>' . $this->e($this->reasonLabel($code)) . '</li>', $row['conflictCodes'])) . '</ul>';
-        return '<article class="fm2-recon-item"><header><div><h2>' . $this->e($row['regnumber'] !== '' ? $row['regnumber'] : 'Объект № ' . $row['legacyObjectId']) . '</h2><p>' . $this->e($row['address']) . '</p></div><div class="fm2-recon-state"><span class="shlz-status ' . ($row['conflictCodes'] === [] ? 'shlz-status--green' : 'shlz-status--orange') . '">Класс ' . $this->e($row['evidenceGrade']) . '</span><strong>' . $this->e($classes[$row['classification']] ?? $row['classification']) . '</strong></div></header><div class="fm2-recon-grid"><section><h3>Решение маршрута</h3><p>' . $this->e($reasons) . '</p><dl><div><dt>Классификатор</dt><dd>' . $this->e($row['classificationVersion']) . '</dd></div><div><dt>Уверенность</dt><dd>' . $this->e($confidence[$row['confidence']] ?? $row['confidence']) . '</dd></div></dl></section><section><h3>Происхождение</h3><p><strong>' . $this->e($row['sourceLabel']) . '</strong><br>' . $this->e($row['sourceLocator']) . '</p><dl><div><dt>Cutover</dt><dd>' . $this->e($row['cutoffAt']) . '</dd></div><div><dt>Snapshot hash</dt><dd title="' . $this->e($row['contentSha256']) . '">' . $this->e(substr($row['contentSha256'],0,16)) . '…</dd></div><div><dt>Projection hash</dt><dd title="' . $this->e($row['projectionHash']) . '">' . $this->e(substr($row['projectionHash'],0,16)) . '…</dd></div></dl></section><section><h3>Покрытие evidence</h3><dl><div><dt>События чек-листа</dt><dd>' . (int)$row['counts']['checklistEvents'] . '</dd></div><div><dt>Атрибуции работ</dt><dd>' . (int)$row['counts']['attributions'] . '</dd></div><div><dt>Quarantine</dt><dd>' . (int)$row['quarantineCount'] . '</dd></div></dl></section><section class="fm2-recon-conflicts"><h3>Конфликты и quarantine</h3>' . $conflicts . '</section></div></article>';
+        $workflow='';foreach($row['conflictCodes']as$code)$workflow.=$this->decisionWorkflow($row,$code,$byIssue[$code]??[]);
+        return '<article class="fm2-recon-item" id="snapshot-' . (int)$row['snapshotId'] . '"><header><div><h2>' . $this->e($row['regnumber'] !== '' ? $row['regnumber'] : 'Объект № ' . $row['legacyObjectId']) . '</h2><p>' . $this->e($row['address']) . '</p></div><div class="fm2-recon-state"><span class="shlz-status ' . ($row['conflictCodes'] === [] ? 'shlz-status--green' : 'shlz-status--orange') . '">Класс ' . $this->e($row['evidenceGrade']) . '</span><strong>' . $this->e($classes[$row['classification']] ?? $row['classification']) . '</strong></div></header><div class="fm2-recon-grid"><section><h3>Решение маршрута</h3><p>' . $this->e($reasons) . '</p><dl><div><dt>Классификатор</dt><dd>' . $this->e($row['classificationVersion']) . '</dd></div><div><dt>Уверенность</dt><dd>' . $this->e($confidence[$row['confidence']] ?? $row['confidence']) . '</dd></div></dl></section><section><h3>Происхождение</h3><p><strong>' . $this->e($row['sourceLabel']) . '</strong><br>' . $this->e($row['sourceLocator']) . '</p><dl><div><dt>Cutover</dt><dd>' . $this->e($row['cutoffAt']) . '</dd></div><div><dt>Snapshot hash</dt><dd title="' . $this->e($row['contentSha256']) . '">' . $this->e(substr($row['contentSha256'],0,16)) . '…</dd></div><div><dt>Projection hash</dt><dd title="' . $this->e($row['projectionHash']) . '">' . $this->e(substr($row['projectionHash'],0,16)) . '…</dd></div></dl></section><section><h3>Покрытие evidence</h3><dl><div><dt>События чек-листа</dt><dd>' . (int)$row['counts']['checklistEvents'] . '</dd></div><div><dt>Атрибуции работ</dt><dd>' . (int)$row['counts']['attributions'] . '</dd></div><div><dt>Quarantine</dt><dd>' . (int)$row['quarantineCount'] . '</dd></div></dl></section><section class="fm2-recon-conflicts"><h3>Конфликты и quarantine</h3>' . $conflicts . '</section></div>'.$workflow.'</article>';
+    }
+
+    private function decisionWorkflow(array$row,string$code,array$history):string
+    {
+        $labels=['acknowledge'=>'Ознакомление зафиксировано','reject_evidence'=>'Свидетельство отклонено','request_source_correction'=>'Запрошено исправление источника','map_link'=>'Зафиксировано намерение сопоставить'];$latest=$history===[]?null:$history[array_key_last($history)];$timeline='';
+        foreach($history as$decision)$timeline.='<li><div><strong>'.$this->e($labels[$decision['outcome']]??$decision['outcome']).'</strong><span>'.$this->dateTime((string)$decision['occurred_at']).' · пользователь № '.(int)$decision['actor_user_id'].'</span></div><p>'.$this->e($decision['reason']).'</p>'.($decision['target_locator']===null?'':'<code>'.$this->e($decision['target_locator']).'</code>').'</li>';
+        $operation=$this->uuid();$hidden='<input type="hidden" name="csrfToken" value="'.$this->e($this->csrf).'"><input type="hidden" name="operationId" value="'.$operation.'"><input type="hidden" name="snapshotId" value="'.(int)$row['snapshotId'].'"><input type="hidden" name="snapshotSha256" value="'.$this->e($row['contentSha256']).'"><input type="hidden" name="projectionSha256" value="'.$this->e($row['projectionHash']).'"><input type="hidden" name="sourceLocator" value="'.$this->e($row['sourceLocator']).'"><input type="hidden" name="issueCode" value="'.$this->e($code).'">';
+        return '<section class="fm2-recon-decision" aria-labelledby="decision-'.$operation.'"><header><div><h3 id="decision-'.$operation.'">'.$this->e($this->reasonLabel($code)).'</h3><p>Код '.$this->e($code).'</p></div><span class="shlz-status '.($latest===null?'shlz-status--orange':'shlz-status--blue').'">'.($latest===null?'Решение не зафиксировано':$this->e($labels[$latest['outcome']]??$latest['outcome'])).'</span></header>'.($timeline===''?'<p class="fm2-recon-history-empty">История решений пуста.</p>':'<ol class="fm2-recon-history" aria-label="Неизменяемая история решений">'.$timeline.'</ol>').'<form method="post" action="/pilot/otiz/reconciliation/decisions" class="fm2-recon-decision-form">'.$hidden.'<label class="shlz-field"><span class="shlz-field__label">Действие</span><span class="shlz-field__control"><select class="shlz-input" name="outcome" required><option value="acknowledge">Зафиксировать ознакомление</option><option value="reject_evidence">Отклонить свидетельство</option><option value="request_source_correction">Запросить исправление источника</option><option value="map_link">Зафиксировать намерение сопоставить</option></select></span></label><label class="shlz-field"><span class="shlz-field__label">Целевая ссылка для сопоставления</span><span class="shlz-field__control"><input class="shlz-input" name="targetLocator" maxlength="500" placeholder="operational_case:123"></span><span class="shlz-field__secondary">Только для намерения сопоставить: operational_case, workforce_tab или legacy_object.</span></label><label class="shlz-field fm2-recon-reason"><span class="shlz-field__label">Основание решения</span><span class="shlz-field__control"><textarea class="shlz-input" name="reason" maxlength="1000" rows="3" required></textarea></span></label><button class="shlz-button shlz-button--primary" type="submit">Добавить решение</button></form><p class="fm2-recon-guardrail">Решение дополняет аудит. Оно не снимает quarantine, не исправляет legacy-источник и не разрешает расчёт или выплату.</p></section>';
     }
 
     private function reasonLabel(string $code): string
@@ -383,6 +421,7 @@ final class RapidPilotOtiz
     private function date(string $value): string { return preg_match('/^(\d{4})-(\d{2})-(\d{2})/D',$value,$m)===1?$m[3].'.'.$m[2].'.'.$m[1]:$this->e($value); }
     private function dateTime(string $value): string { try{return(new DateTimeImmutable($value))->setTimezone(new DateTimeZone('Europe/Moscow'))->format('d.m.Y H:i');}catch(Throwable){return$this->e($value);} }
     private function now(): string { return(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM); }
+    private function uuid(): string { $bytes=random_bytes(16);$bytes[6]=chr((ord($bytes[6])&0x0f)|0x40);$bytes[8]=chr((ord($bytes[8])&0x3f)|0x80);$hex=bin2hex($bytes);return substr($hex,0,8).'-'.substr($hex,8,4).'-'.substr($hex,12,4).'-'.substr($hex,16,4).'-'.substr($hex,20); }
     private function e(mixed $value): string { return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8'); }
     private function xml(mixed $value): string { return htmlspecialchars((string)$value,ENT_XML1|ENT_QUOTES,'UTF-8'); }
     private function worksheet(array $rows): string { $xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';foreach($rows as$row){$xml.='<row>';foreach($row as$value){if(is_int($value)||is_float($value))$xml.='<c><v>'.$value.'</v></c>';else$xml.='<c t="inlineStr"><is><t>'.$this->xml($value).'</t></is></c>';}$xml.='</row>';}$xml.='</sheetData></worksheet>';return$xml; }

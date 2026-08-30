@@ -20,7 +20,7 @@ final class MigratedEvidenceDecisionLedger
 
     public function decide(array $command):array
     {
-        $normalized=$this->validate($command);$requestHash=hash('sha256',json_encode($normalized,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
+        $normalized=$this->validate($command);$decisionRequest=$normalized;unset($decisionRequest['occurredAt']);$requestHash=hash('sha256',json_encode($decisionRequest,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
         $this->db->begin_transaction();
         try{
             $existing=$this->operation((string)$normalized['operationId'],true);
@@ -43,6 +43,11 @@ final class MigratedEvidenceDecisionLedger
     {
         if($snapshotId<1)throw new InvalidArgumentException('Invalid reconciliation decision command.');
         $s=$this->db->prepare("SELECT id,operation_id,snapshot_id,snapshot_sha256,projection_sha256,source_locator,issue_code,outcome,target_locator,reason,actor_user_id,occurred_at FROM `{$this->prefix}fm2_migrated_evidence_decisions` WHERE snapshot_id=? ORDER BY id");$s->bind_param('i',$snapshotId);$s->execute();return $s->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function allDecisions():array
+    {
+        return $this->db->query("SELECT id,operation_id,snapshot_id,snapshot_sha256,projection_sha256,source_locator,issue_code,outcome,target_locator,reason,actor_user_id,occurred_at FROM `{$this->prefix}fm2_migrated_evidence_decisions` ORDER BY snapshot_id,id")->fetch_all(MYSQLI_ASSOC);
     }
 
     private function validate(array $c):array
