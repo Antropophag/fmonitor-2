@@ -42,6 +42,16 @@ function assertPdfTextMarker(array $streams,string $marker): void
     throw new TestFailure("Combined PDF must contain semantic text marker: {$marker}");
 }
 
+function pdfMarkerPosition(array $streams,string $marker): int
+{
+    $needle=strtolower(bin2hex(mb_convert_encoding($marker,'UTF-16BE','UTF-8')));$haystack=strtolower(bin2hex(implode('', $streams)));$position=strpos($haystack,$needle);if($position===false)throw new TestFailure("PDF marker absent: {$marker}");return$position;
+}
+
+function assertPdfTextMarkerAbsent(array $streams,string $marker):void
+{
+    $needle=strtolower(bin2hex(mb_convert_encoding($marker,'UTF-16BE','UTF-8')));$haystack=strtolower(bin2hex(implode('', $streams)));assertSameValue(false,str_contains($haystack,$needle),"PDF must not contain marker: {$marker}");
+}
+
 $renderer=new ProductionPdfAssignmentOrderRenderer();
 $artifacts=$renderer->renderAssignmentOrder(pdfInput());
 assertSameValue(1,count($artifacts),'PDF renderer must return one combined artifact.');
@@ -53,6 +63,18 @@ assertSameValue('%PDF-',substr($artifact['bytes'],0,5),'Renderer must return PDF
 assertSameValue(3,preg_match_all('/\/Type\s*\/Page\b/',$artifact['bytes']),'Combined PDF must contain two order pages and one appendix page.');
 $streams=pdfDecodedStreams($artifact['bytes']);
 foreach(['РАСПОРЯЖЕНИЕ','Перечень монтажников','Москва, ул. Проверочная, д. 10','Иванов Иван Иванович','Петров Пётр Петрович'] as $marker)assertPdfTextMarker($streams,$marker);
+
+$changeInput=pdfInput();
+$changeInput['documentInstallers']=[
+    $changeInput['installers'][1]+['workStatus'=>'Работа'],
+    $changeInput['installers'][0]+['workStatus'=>'Перемещён'],
+];
+$changeArtifact=$renderer->renderAssignmentOrder($changeInput)[0];
+$changeStreams=pdfDecodedStreams($changeArtifact['bytes']);
+assertPdfTextMarker($changeStreams,'Перемещён');
+assertPdfTextMarker($changeStreams,'Работа');
+assertSameValue(true,pdfMarkerPosition($changeStreams,'Сидоров Сергей Сергеевич')<pdfMarkerPosition($changeStreams,'Работа')&&pdfMarkerPosition($changeStreams,'Работа')<pdfMarkerPosition($changeStreams,'Иванов Иван Иванович')&&pdfMarkerPosition($changeStreams,'Иванов Иван Иванович')<pdfMarkerPosition($changeStreams,'Перемещён'),'PDF rows must correlate Sidorov with Work and Ivanov with Moved status in row order.');
+$noRemovalInput=pdfInput();$noRemovalInput['documentInstallers']=array_map(static fn(array$x):array=>$x+['workStatus'=>'Работа'],$noRemovalInput['installers']);$noRemovalStreams=pdfDecodedStreams($renderer->renderAssignmentOrder($noRemovalInput)[0]['bytes']);assertPdfTextMarker($noRemovalStreams,'Иванов Иван Иванович');assertPdfTextMarker($noRemovalStreams,'Сидоров Сергей Сергеевич');assertPdfTextMarker($noRemovalStreams,'Работа');assertPdfTextMarkerAbsent($noRemovalStreams,'Перемещён');
 
 $invalidCases=[
     'zero version'=>static function(array &$input):void{$input['assignmentOrderVersion']=0;},

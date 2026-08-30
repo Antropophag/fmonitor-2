@@ -162,8 +162,8 @@ final class ProductionPdfAssignmentOrderRenderer
         $this->tableCell($pdf,$x+$widths[11],$y+$top,$widths[12],$lower,'ФИО','C','M');
 
         $pdf->SetFont('dejavusanscondensed','',6.8);$y+=$full;$number=1;
-        foreach($input['installers'] as $installer){
-            $values=[(string)$number++,'Монтажник лифтового оборудования',(string)$installer['fullName'],str_pad((string)$installer['tabId'],6,'0',STR_PAD_LEFT),$this->organizationLabel((string)$input['organizationType']),(string)$object['address'],(string)$object['entrance'],(string)$object['objectRegistrationNumber'],$this->displayDate((string)$object['plannedStartDate']),$this->displayDate((string)$object['plannedFinishDate']),'работа',(string)$engineer['position'],(string)$engineer['fullName']];
+        foreach(($input['documentInstallers']??$input['installers']) as $installer){
+            $values=[(string)$number++,'Монтажник лифтового оборудования',(string)$installer['fullName'],str_pad((string)$installer['tabId'],6,'0',STR_PAD_LEFT),$this->organizationLabel((string)$input['organizationType']),(string)$object['address'],(string)$object['entrance'],(string)$object['objectRegistrationNumber'],$this->displayDate((string)$object['plannedStartDate']),$this->displayDate((string)$object['plannedFinishDate']),(string)($installer['workStatus']??'Работа'),(string)$engineer['position'],(string)$engineer['fullName']];
             $rowHeight=12.0;
             foreach($values as $index=>$value)$rowHeight=max($rowHeight,$pdf->getNumLines($value,$widths[$index]-2)*3.7+2);
             $x=$x0;foreach($values as $index=>$value){$this->tableCell($pdf,$x,$y,$widths[$index],$rowHeight,$value,'L','T');$x+=$widths[$index];}$y+=$rowHeight;
@@ -188,15 +188,17 @@ final class ProductionPdfAssignmentOrderRenderer
 
     private function validateInput(array $input): void
     {
-        $object=$input['installationObjectSnapshot']??null;$installers=$input['installers']??null;$engineer=$input['controlEngineer']??null;
+        $object=$input['installationObjectSnapshot']??null;$installers=$input['installers']??null;$documentInstallers=$input['documentInstallers']??$installers;$engineer=$input['controlEngineer']??null;
         $valid=isset($input['assignmentOrderVersion'])&&is_int($input['assignmentOrderVersion'])&&$input['assignmentOrderVersion']>0
             &&$this->isDate($input['assignmentOrderDate']??null)&&in_array($input['organizationType']??null,['individual','brigade'],true)
             &&is_array($object)&&$this->nonblank($object['address']??null)&&$this->nonblank($object['entrance']??null)&&$this->nonblank($object['objectRegistrationNumber']??null)&&$this->isDate($object['plannedStartDate']??null)&&$this->isDate($object['plannedFinishDate']??null)
             &&is_array($installers)&&array_is_list($installers)&&$installers!==[]&&$this->validInstallers($installers)
+            &&is_array($documentInstallers)&&array_is_list($documentInstallers)&&$documentInstallers!==[]&&$this->validDocumentInstallers($documentInstallers)
             &&is_array($engineer)&&isset($engineer['userId'])&&is_int($engineer['userId'])&&$engineer['userId']>0&&$this->nonblank($engineer['fullName']??null)&&$this->nonblank($engineer['position']??null);
         if(!$valid)throw new \InvalidArgumentException('Invalid assignment order document input.');
     }
     private function validInstallers(array $installers):bool{foreach($installers as $x)if(!is_array($x)||!isset($x['tabId'])||!is_int($x['tabId'])||$x['tabId']<=0||!$this->nonblank($x['fullName']??null)||!$this->nonblank($x['position']??null))return false;return true;}
+    private function validDocumentInstallers(array $installers):bool{if(!$this->validInstallers($installers))return false;foreach($installers as$x)if(isset($x['workStatus'])&&!in_array($x['workStatus'],['Работа','Перемещён'],true))return false;return true;}
     private function nonblank(mixed $v):bool{return is_string($v)&&trim($v)!=='';}
     private function isDate(mixed $v):bool{if(!is_string($v)||preg_match('/^\d{4}-\d{2}-\d{2}$/D',$v)!==1)return false;$d=\DateTimeImmutable::createFromFormat('!Y-m-d',$v);return $d!==false&&$d->format('Y-m-d')===$v;}
     private function displayDate(string $v):string{return \DateTimeImmutable::createFromFormat('!Y-m-d',$v)->format('d.m.Y');}

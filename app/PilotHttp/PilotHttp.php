@@ -186,6 +186,14 @@ final class MariaDbPrepareFormReader implements PrepareFormReader
     }
 }
 
+final class ObjectCardProcessStatePolicy
+{
+    public static function workingOrderValid(?array $order,array $orders,?int $highestVersion):bool
+    {
+        if($order===null)return false;if($order['status']==='registered')return true;if($order['status']!=='prepared'||$highestVersion===null||$highestVersion<=1||($order['kind']??null)!=='change')return false;$previousId=filter_var($order['previous_assignment_order_id']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($previousId===false)return false;$previous=array_values(array_filter($orders,static fn(array $candidate):bool=>(int)($candidate['id']??0)===$previousId&&($candidate['status']??null)==='registered'&&(int)($candidate['version_no']??0)<$highestVersion));return count($previous)===1;
+    }
+}
+
 final class MariaDbObjectCardReader implements ObjectCardReader
 {
     public function __construct(private readonly \mysqli $connection,private readonly string $prefix,private readonly string $processPrefix=''){}
@@ -198,7 +206,7 @@ final class MariaDbObjectCardReader implements ObjectCardReader
             if($case===null)return null;
             $caseId=(int)$case['id'];$activeProvenance=$this->activeProvenance($caseId,$id);
             $card=$legacy===null?null:$this->legacyCard($legacy,$id);if($card===null&&$activeProvenance!==null){$facts=$activeProvenance['legacyObject'];$card=['id'=>$id,'address'=>(string)$facts['ordadr_address'],'entrance'=>(string)$facts['entrance'],'registrationNumber'=>(string)$facts['regnumber'],'plannedStartDate'=>null,'plannedFinishDate'=>null];}if($card===null)return null;
-            $orders=$this->many('SELECT id,installation_case_id,version_no,status,order_date,registration_number,registration_source,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
+            $orders=$this->many('SELECT id,installation_case_id,version_no,kind,status,previous_assignment_order_id,order_date,registration_number,registration_source,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
             $order=null;
             $highestVersion=null;
             if($orders!==[]){
@@ -214,12 +222,13 @@ final class MariaDbObjectCardReader implements ObjectCardReader
             if($opened!==$allOpening)throw new PilotHttpInfrastructureUnavailable();
             if($allOpening&&(self::date($case['actual_start_date'])!==(string)$case['actual_start_date']||!self::rfc3339($case['opened_at'])||self::positiveId($case['opened_by_user_id'])===null))throw new PilotHttpInfrastructureUnavailable();
             $state=(string)$case['process_state'];
+            $workingOrderValid=ObjectCardProcessStatePolicy::workingOrderValid($order,$orders,$highestVersion);
             $status=match($state){
                 'needs_assignment_order'=>(!$opened&&$order===null)?'Требуется распоряжение':throw new PilotHttpInfrastructureUnavailable(),
                 'assignment_order_prepared'=>(!$opened&&$order!==null&&$order['status']==='prepared')?'Распоряжение подготовлено':((!$opened&&$order!==null&&$order['status']==='registered')?'Готов к открытию':throw new PilotHttpInfrastructureUnavailable()),
                 'working'=>$migratedActive
                     ?(!$allOpening&&$order===null?'В работе после cutover':throw new PilotHttpInfrastructureUnavailable())
-                    :( $allOpening&&$order!==null&&$order['status']==='registered'?'В работе':throw new PilotHttpInfrastructureUnavailable()),
+                    :( $allOpening&&$workingOrderValid?'В работе':throw new PilotHttpInfrastructureUnavailable()),
                 'needs_assignment_change'=>($allOpening&&$order!==null&&\in_array($order['status'],['prepared','registered'],true))?($order['status']==='prepared'?'Изменяющее распоряжение подготовлено':'В работе') :throw new PilotHttpInfrastructureUnavailable(),
                 default=>throw new PilotHttpInfrastructureUnavailable(),
             };

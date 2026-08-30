@@ -61,6 +61,7 @@ final class InMemoryInstallationProcessEnvironment
 
     /** @var list<array<string, mixed>> */
     private array $renderedArtifacts = [];
+    private ?array $lastDocumentInput = null;
 
     private bool $installationObjectSnapshotReadsForbidden = false;
 
@@ -343,6 +344,7 @@ final class InMemoryInstallationProcessEnvironment
         }
 
         ++$this->renderCallCount;
+        $this->lastDocumentInput = $documentInput;
         if ($this->repeatedRenderingForbidden && $this->renderCallCount > 1) {
             throw new \LogicException('Renderer must not be repeated while retrying audit append.');
         }
@@ -353,6 +355,8 @@ final class InMemoryInstallationProcessEnvironment
 
         return $this->renderedArtifacts;
     }
+
+    public function getLastDocumentInput(): ?array { return $this->lastDocumentInput; }
 
     public function forbidRendering(): void
     {

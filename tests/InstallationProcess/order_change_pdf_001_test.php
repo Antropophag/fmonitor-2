@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';
+require dirname(__DIR__).'/Support/InMemoryInstallationProcessEnvironment.php';
+use FMonitor2\InstallationProcess\InstallationProcess;
+use FMonitor2\Tests\Support\InMemoryInstallationProcessEnvironment;
+
+$env=new InMemoryInstallationProcessEnvironment();$env->allowPreparationBy(18);$env->allowRegistrationConfirmationBy(18);$env->setNow('2026-08-30T12:00:00+03:00');
+$ivanov=['tabId'=>1042,'fullName'=>'Иванов Иван Иванович','position'=>'Монтажник','status'=>'employed','employedFrom'=>'2024-01-01','employedTo'=>null,'source'=>'one_c_zup','sourceUpdatedAt'=>'2026-08-30T08:00:00+03:00'];
+$sidorov=['tabId'=>1043,'fullName'=>'Сидоров Сергей Сергеевич','position'=>'Монтажник','status'=>'employed','employedFrom'=>'2024-01-01','employedTo'=>null,'source'=>'one_c_zup','sourceUpdatedAt'=>'2026-08-30T08:00:00+03:00'];
+$previousArtifact=['type'=>'order','filename'=>'v1.pdf','mediaType'=>'application/pdf','size'=>6,'sha256'=>str_repeat('a',64)];$previous=['version'=>1,'status'=>'registered','registrationNumber'=>'12-Р','assignmentOrderDate'=>'2026-08-20','organizationType'=>'brigade','installationObjectSnapshot'=>['address'=>'Москва, ул. Проверочная, д. 10','entrance'=>'2','objectRegistrationNumber'=>'77-000123','plannedStartDate'=>'2026-08-20','plannedFinishDate'=>'2026-12-20','ptoActDate'=>null],'installers'=>[$ivanov,$sidorov],'controlEngineer'=>['userId'=>73,'fullName'=>'Петров Пётр Петрович','position'=>'Инженер','active'=>true,'role'=>'construction_control_engineer'],'artifacts'=>[$previousArtifact]];
+$env->seedInstallationObjectProcess(4512,['installationObjectId'=>4512,'processState'=>'working','actualStartDate'=>'2026-08-21','openedAt'=>'2026-08-21T08:00:00+03:00','openedByUserId'=>18,'assignmentOrders'=>[$previous],'assignments'=>[],'openTasks'=>[],'installationOpened'=>true,'checklistAvailable'=>true,'events'=>[]]);
+$env->seedInstallationObjectProcessRevision(4512,1);$env->seedInstallationObjectSnapshot(4512,$previous['installationObjectSnapshot']);$env->seedInstallerSnapshot(1042,$ivanov);$env->seedInstallerSnapshot(1043,$sidorov);$env->seedEngineerSnapshot(73,$previous['controlEngineer']);$env->setRenderedArtifacts([['type'=>'order','filename'=>'order.pdf','mediaType'=>'application/pdf','bytes'=>'pdf']]);
+$withoutRemoval=clone$env;$sameResult=(new InstallationProcess($withoutRemoval))->prepareAssignmentOrder(4512,[1042,1043],73,18);assertSameValue(true,$sameResult['accepted'],'Change without removal must be accepted');assertSameValue(['Работа','Работа'],array_column($withoutRemoval->getLastDocumentInput()['documentInstallers']??[],'workStatus'),'Change without removal must mark the complete selected composition as working');
+$result=(new InstallationProcess($env))->prepareAssignmentOrder(4512,[1043],73,18);
+assertSameValue(true,$result['accepted'],'ORDER-CHANGE-PDF-001 change must be accepted');
+assertSameValue([['tabId'=>1043,'fullName'=>'Сидоров Сергей Сергеевич','position'=>'Монтажник','workStatus'=>'Работа'],['tabId'=>1042,'fullName'=>'Иванов Иван Иванович','position'=>'Монтажник','workStatus'=>'Перемещён']],array_map(static fn(array$x):array=>array_intersect_key($x,array_flip(['tabId','fullName','position','workStatus'])),$env->getLastDocumentInput()['documentInstallers']??[]),'PDF input must correlate retained and removed installers with independent statuses');
+$orders=$env->getInstallationObjectProcess(4512)['assignmentOrders'];
+assertSameValue([1043],array_column($orders[1]['installers'],'tabId'),'Removed installer must not remain in the new active composition');
+$afterPrepare=$env->getInstallationObjectProcess(4512);assertSameValue(['working',true,true],[$afterPrepare['processState'],$afterPrepare['installationOpened'],$afterPrepare['checklistAvailable']],'Preparing a change must keep an opened installation in construction control with checklist available');
+$registration=(new InstallationProcess($env))->confirmOrderRegistration(4512,2,'13-Р','manual',18);assertSameValue(true,$registration['accepted'],'Change registration must be accepted');$afterRegistration=$env->getInstallationObjectProcess(4512);assertSameValue(['working',true,true],[$afterRegistration['processState'],$afterRegistration['installationOpened'],$afterRegistration['checklistAvailable']],'Registering a change must keep an opened installation in construction control with checklist available');
+assertSameValue($previousArtifact,$orders[0]['artifacts'][0],'Preparing a change must not rewrite the previous PDF artifact metadata');
+echo "PASS ORDER-CHANGE-PDF-001 moved installer document status\n";

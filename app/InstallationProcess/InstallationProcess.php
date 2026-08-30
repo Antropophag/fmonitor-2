@@ -250,6 +250,18 @@ final class InstallationProcess
         }
 
         $organizationType = count($installerSnapshots) === 1 ? 'individual' : 'brigade';
+        $documentInstallers = array_map(
+            static fn (array $installer): array => $installer + ['workStatus' => 'Работа'],
+            $installerSnapshots,
+        );
+        if ($currentAssignmentOrder !== null) {
+            $selectedIds = array_fill_keys(array_map('strval', $normalizedInstallerTabIds), true);
+            foreach ($currentAssignmentOrder['installers'] ?? [] as $previousInstaller) {
+                if (!isset($selectedIds[(string) ($previousInstaller['tabId'] ?? '')])) {
+                    $documentInstallers[] = $previousInstaller + ['workStatus' => 'Перемещён'];
+                }
+            }
+        }
         try {
             $renderedArtifacts = $this->environment->renderAssignmentOrder([
                 'assignmentOrderVersion' => $assignmentOrderVersion,
@@ -257,6 +269,7 @@ final class InstallationProcess
                 'organizationType' => $organizationType,
                 'installationObjectSnapshot' => $installationObjectSnapshot,
                 'installers' => $installerSnapshots,
+                'documentInstallers' => $documentInstallers,
                 'controlEngineer' => $controlEngineer,
             ]);
         } catch (\Throwable) {
@@ -298,7 +311,7 @@ final class InstallationProcess
         }
 
         $isChangingOrder = $currentAssignmentOrder !== null;
-        $currentProcess['processState'] = $isChangingOrder ? 'needs_assignment_change' : 'assignment_order_prepared';
+        $currentProcess['processState'] = $isChangingOrder ? 'working' : 'assignment_order_prepared';
         $currentProcess['assignmentOrders'][] = [
                 'version' => $assignmentOrderVersion,
                 'status' => 'prepared',
