@@ -312,6 +312,10 @@
 
 .fm2-segment--active { color: #fff; background: var(--fm2-primary); font-weight: 500; }
 .fm2-segment b { margin-inline-start: 4px; font-weight: inherit; }
+.fm2-segment { text-decoration: none; min-block-size: 44px; display: inline-flex; align-items: center; }
+.fm2-origin-badge { margin-block-start: 7px; font-size: 11px; }
+.fm2-object-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.fm2-origin-notice { margin-block: 16px; }
 .fm2-table-wrap { overflow-x: auto; }
 
 .fm2-queue-table { inline-size: 100%; border-collapse: collapse; }

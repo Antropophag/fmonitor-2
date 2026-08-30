@@ -25,6 +25,10 @@
 .fm2-segment{padding:9px 12px;border-radius:9px;color:var(--fm2-muted);font-size:13px}
 .fm2-segment--active{background:#eef0f7;color:var(--fm2-blue);font-weight:600}
 .fm2-segment b{margin-left:5px}
+.fm2-segment{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}
+.fm2-origin-badge{margin-top:7px;font-size:11px}
+.fm2-object-badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.fm2-origin-notice{margin-block:16px}
 .fm2-table-wrap{overflow-x:auto}
 .fm2-queue-table{width:100%;border-collapse:collapse}
 .fm2-queue-table th{padding:14px 18px;text-align:left;background:#fafbfc;color:#89919d;font-size:12px;font-weight:500;white-space:nowrap}

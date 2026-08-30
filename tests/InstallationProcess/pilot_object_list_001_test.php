@@ -161,6 +161,8 @@ try {
     assertSameValue(1,(int)$xpath->evaluate("count(//main[@id='main-content' and @tabindex='-1']//h1[normalize-space(.)='Объекты монтажа'])"),'exact collection heading');
     assertSameValue(1,(int)$xpath->evaluate("count(//a[@href='/pilot/' and normalize-space(.)='Моя работа'])"),'shell navigation');
     assertSameValue(1,(int)$xpath->evaluate("count(//a[@href='/pilot/objects' and normalize-space(.)='Объекты монтажа'])"),'current collection navigation');
+    assertSameValue(1,(int)$xpath->evaluate("count(//nav[@aria-label='Фильтр по происхождению данных']//a[@href='/pilot/objects?origin=demo_fixture'])"),'origin filter exposes demo data explicitly');
+    assertSameValue(3,(int)$xpath->evaluate("count(//tr[@data-origin='demo_fixture'])"),'absence of immutable migration provenance is visibly classified as demo fixture');
     // Public shlz-ui docs fix a native a.shlz-link contract whose long text wraps in a
     // narrow consumer surface. Table instead owns a horizontally overflowing wrapper,
     // so this no-application-CSS slice chooses the spec-permitted semantic-list branch.
