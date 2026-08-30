@@ -36,6 +36,7 @@ if (!is_dir($artifactRoot) && !mkdir($artifactRoot, 0755, true)) throw new Runti
 
 $db = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
 $db->set_charset('utf8mb4');
+$serverIdentity=(string)$db->query('SELECT @@hostname AS identity')->fetch_assoc()['identity'];
 try {
     $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}fm_maintable` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120),workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40),workdatefinish VARCHAR(40),ptoactdate VARCHAR(40),responsstroicontrol VARCHAR(80)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}users_roles` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -88,6 +89,8 @@ $manifest = json_encode([
     'port' => 8092,
     'state' => 'ready',
     'manifestNonce' => $manifestNonce,
+    'dbEndpoint' => ['host'=>'127.0.0.1','port'=>23306,'name'=>'fmonitor2_demo'],
+    'dbServerIdentity' => $serverIdentity,
 ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 $temporaryManifest = $manifestPath . '.new';
 if (file_put_contents($temporaryManifest, $manifest, LOCK_EX) === false || !rename($temporaryManifest, $manifestPath)) {
