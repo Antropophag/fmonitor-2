@@ -23,7 +23,7 @@ function compositionConnection(?string $database=null): mysqli
 function compositionRows(mysqli $connection,string $sql):array{return $connection->query($sql)->fetch_all(MYSQLI_ASSOC);}
 function compositionArtifactFiles(string $root):array{$files=[];$it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root,FilesystemIterator::SKIP_DOTS));foreach($it as $entry){if($entry->isFile()&&!$entry->isLink())$files[]=str_replace(DIRECTORY_SEPARATOR,'/',substr($entry->getPathname(),strlen($root)+1));}sort($files);return $files;}
 function compositionRemoveArtifactRoot(string $root,string $parent):void{$realRoot=realpath($root);$realParent=realpath($parent);if($realRoot===false||$realParent===false||!str_starts_with($realRoot,$realParent.DIRECTORY_SEPARATOR))throw new LogicException('Unsafe composition artifact cleanup.');$it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($realRoot,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::CHILD_FIRST);foreach($it as $entry){$entry->isDir()&&!$entry->isLink()?rmdir($entry->getPathname()):unlink($entry->getPathname());}rmdir($realRoot);}
-function expectedCompositionProjection():array
+function expectedCompositionProjection(array $pdfArtifact):array
 {
     return [
         'installationObjectId'=>4512,'processState'=>'working','actualStartDate'=>'2026-08-28','openedAt'=>'2026-08-28T12:45:00+03:00','openedByUserId'=>18,
@@ -32,12 +32,12 @@ function expectedCompositionProjection():array
             'installationObjectSnapshot'=>['address'=>'Москва, ул. Примерная, д. 10','entrance'=>'2','objectRegistrationNumber'=>'77-000123','plannedStartDate'=>'2026-10-05','plannedFinishDate'=>'2026-12-20','ptoActDate'=>null],
             'installers'=>[['tabId'=>1042,'fullName'=>'Иванов Иван Иванович','position'=>'Электромеханик по лифтам','status'=>'employed','employedFrom'=>'2024-02-01','employedTo'=>null,'source'=>'one_c_zup_via_bitrix','sourceUpdatedAt'=>'2026-08-26T18:00:00+03:00']],
             'controlEngineer'=>['userId'=>73,'fullName'=>'Петров Пётр Петрович','position'=>'Инженер строительного контроля','active'=>true,'role'=>'construction_control_engineer'],
-            'artifacts'=>[['type'=>'order','filename'=>'assignment-order-v1.html','mediaType'=>'text/html','size'=>1093,'sha256'=>'682749a063958eb102f5b184c4dfe6c21a009f77932b3b68b3b92e340adf4928'],['type'=>'appendix','filename'=>'assignment-order-v1-appendix.html','mediaType'=>'text/html','size'=>1262,'sha256'=>'da33d58efd35c6211d850446ee9f159526c9ba779fbdd9355b68ac35806ee3ac']],
+            'artifacts'=>[$pdfArtifact],
         ] ],
         'assignments'=>[['role'=>'installer','tabId'=>1042,'assignmentOrderVersion'=>1,'status'=>'preliminary'],['role'=>'control_engineer','userId'=>73,'assignmentOrderVersion'=>1,'status'=>'preliminary']],
         'openTasks'=>[],'installationOpened'=>true,'checklistAvailable'=>true,
         'events'=>[
-            ['type'=>'assignment_order_prepared','occurredAt'=>'2026-08-26T21:30:00+00:00','actorId'=>18,'payload'=>['assignmentOrderVersion'=>1,'assignmentOrderDate'=>'2026-08-27','installerTabIds'=>[1042],'controlEngineerUserId'=>73,'organizationType'=>'individual','artifactSha256'=>['order'=>'682749a063958eb102f5b184c4dfe6c21a009f77932b3b68b3b92e340adf4928','appendix'=>'da33d58efd35c6211d850446ee9f159526c9ba779fbdd9355b68ac35806ee3ac']]],
+            ['type'=>'assignment_order_prepared','occurredAt'=>'2026-08-26T21:30:00+00:00','actorId'=>18,'payload'=>['assignmentOrderVersion'=>1,'assignmentOrderDate'=>'2026-08-27','installerTabIds'=>[1042],'controlEngineerUserId'=>73,'organizationType'=>'individual','artifactSha256'=>['order'=>$pdfArtifact['sha256']]]],
             ['type'=>'assignment_order_registered','occurredAt'=>'2026-08-28T12:15:30+03:00','actorId'=>18,'payload'=>['assignmentOrderVersion'=>1,'registrationNumber'=>'12-Р','registrationSource'=>'manual','registrationActorType'=>'user']],
             ['type'=>'installation_opened','occurredAt'=>'2026-08-28T12:45:00+03:00','actorId'=>18,'payload'=>['actualStartDate'=>'2026-08-28','assignmentOrderVersion'=>1,'installerCount'=>1]],
         ],
@@ -77,14 +77,14 @@ try {
     assertSameValue(['accepted'=>true,'assignmentOrderVersion'=>1,'status'=>'prepared','assignmentOrderDate'=>'2026-08-27','organizationType'=>'individual'],$process->prepareAssignmentOrder(4512,[1042],73,18),'Factory composition must prepare with production delegates.');
     assertSameValue(['accepted'=>true,'assignmentOrderVersion'=>1,'status'=>'registered','registrationNumber'=>'12-Р','registeredAt'=>'2026-08-28T12:15:30+03:00','registrationActorType'=>'user','registrationActorId'=>18,'registrationSource'=>'manual','externalRegistrationId'=>null,'processState'=>'assignment_order_prepared'],$process->confirmOrderRegistration(4512,1,' 12-Р ','manual',18),'Factory composition must confirm with its distinct capability.');
     assertSameValue(['accepted'=>true,'processState'=>'working','actualStartDate'=>'2026-08-28','openedAt'=>'2026-08-28T12:45:00+03:00','openedByUserId'=>18,'installationOpened'=>true,'checklistAvailable'=>true,'assignmentOrderVersion'=>1],$process->openInstallation(4512,'2026-08-28',18),'Factory composition must open with production Workforce recheck.');
-    assertSameValue(['sha256/68/27/682749a063958eb102f5b184c4dfe6c21a009f77932b3b68b3b92e340adf4928','sha256/da/33/da33d58efd35c6211d850446ee9f159526c9ba779fbdd9355b68ac35806ee3ac'],compositionArtifactFiles($artifactRoot),'Production composition must always use storing HTML renderer with only exact SHA-addressed blobs.');
+    $preparedProjection=$process->getInstallationObjectProcess(4512);$pdfArtifact=$preparedProjection['assignmentOrders'][0]['artifacts'][0]??null;assertSameValue(true,is_array($pdfArtifact),'Production composition must expose one PDF artifact.');assertSameValue('Распоряжение о закреплении монтажников.pdf',$pdfArtifact['filename'],'Production composition must use the PDF factory filename.');assertSameValue('application/pdf',$pdfArtifact['mediaType'],'Production composition must use the PDF media type.');assertSameValue(true,$pdfArtifact['size']>10000,'Production composition must store non-trivial PDF bytes.');$pdfRelativePath='sha256/'.substr($pdfArtifact['sha256'],0,2).'/'.substr($pdfArtifact['sha256'],2,2).'/'.$pdfArtifact['sha256'];assertSameValue([$pdfRelativePath],compositionArtifactFiles($artifactRoot),'Production composition must use one exact SHA-addressed PDF blob.');
     assertSameValue($externalBefore,array_map(fn(string $sql):array=>compositionRows($connection,$sql),$externalSql),'Production composition must route namespaces exactly and leave all real/decoy external tables unchanged.');
 
     foreach(["`{$legacyPrefix}fm_maintable`","`{$legacyPrefix}users`","`{$legacyPrefix}users_roles`","`{$processPrefix}fm2_workforce_catalog`","`{$processPrefix}fm2_process_user_capabilities`"] as $table){$connection->query("DELETE FROM {$table}");}
     $connection->close(); unset($process,$sequenceClock); $connection=compositionConnection($database);
     $forbiddenClock=new class implements Clock {public function now():string{throw new LogicException('Clock must not be read during public reload.');}};
     $reloaded=ProductionInstallationProcessFactory::create($connection,$config,$forbiddenClock);
-    assertSameValue(expectedCompositionProjection(),$reloaded->getInstallationObjectProcess(4512),'Fresh factory/connection must hydrate exact full HTML opened projection after external rows are unavailable.');
+    assertSameValue(expectedCompositionProjection($pdfArtifact),$reloaded->getInstallationObjectProcess(4512),'Fresh factory/connection must hydrate the exact full PDF opened projection after external rows are unavailable.');
 
     $timezoneBefore=date_default_timezone_get(); $systemNow=(new SystemClock())->now();
     assertSameValue(1,preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/D',$systemNow),'SystemClock must return seconds precision with explicit RFC3339 offset.');

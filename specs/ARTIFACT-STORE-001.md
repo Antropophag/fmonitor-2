@@ -1,17 +1,17 @@
-# ARTIFACT-STORE-001 — долговечно сохранить и скачать HTML-артефакт распоряжения
+# ARTIFACT-STORE-001 — долговечно сохранить и скачать PDF-артефакт распоряжения
 
 - Статус: `APPROVED`
-- Версия: `0.2`
+- Версия: `0.3`
 - Дата: `2026-08-28`
 - Актор: сотрудник ФКР с capability `assignment_order.prepare`
 - Публичный command seam записи: `InstallationProcess.prepareAssignmentOrder(...)`
 - Публичный seam чтения bytes: `AssignmentOrderArtifactService.download(installationObjectId, assignmentOrderVersion, artifactType, actorId)`
 - Storage seam: `ContentAddressedArtifactStore(root)`
-- Renderer adapter: `StoringAssignmentOrderRenderer(ProductionHtmlAssignmentOrderRenderer, ContentAddressedArtifactStore)`
+- Renderer adapter: `StoringAssignmentOrderRenderer(ProductionPdfAssignmentOrderRenderer, ContentAddressedArtifactStore)`
 
 ## 1. Цель и граница
 
-Сохранить exact production HTML bytes одновременно с подготовкой распоряжения и сделать их доступными после завершения исходного request/process через авторизованный service. Process persistence продолжает хранить filename/mediaType/size/SHA-256; content store хранит immutable bytes по SHA-256.
+Сохранить exact production PDF bytes одновременно с подготовкой распоряжения и сделать их доступными после завершения исходного request/process через авторизованный service. Process persistence продолжает хранить filename/mediaType/size/SHA-256; content store хранит immutable bytes по SHA-256.
 
 Срез не добавляет HTTP response/controller. Download service возвращает типизированный application result, который будущий transport сможет преобразовать в безопасную загрузку.
 
@@ -81,17 +81,13 @@ Underlying path, bytes, OS/driver message и персональные данны
 
 ## 4. Storing renderer behavior
 
-`StoringAssignmentOrderRenderer` вызывает защищённый adapter seam `ProductionHtmlAssignmentOrderRenderer.renderAssignmentOrder(documentInput)` ровно один раз. После успешной генерации двух элементов он:
-
-1. сохраняет exact `order` bytes в content store;
-2. сохраняет exact `appendix` bytes;
-3. только после двух успешных writes возвращает исходные два renderer elements без изменения filename/mediaType/bytes/order.
+`StoringAssignmentOrderRenderer` вызывает защищённый adapter seam `ProductionPdfAssignmentOrderRenderer.renderAssignmentOrder(documentInput)` ровно один раз. После успешной генерации одного combined PDF element он сохраняет exact `order` bytes в content store и возвращает исходный renderer element без изменения filename/mediaType/bytes/order. PDF содержит распоряжение и приложение как отдельные страницы; отдельный artifact type `appendix` текущая production factory не создаёт.
 
 `InstallationProcess` вычисляет metadata/hash из тех же returned bytes и сохраняет их обычным atomic process persistence. Поэтому DB metadata и storage address совпадают по construction, а не по доверенному caller hash.
 
 При render/storage failure wrapper не возвращает partial artifacts. Public prepare наследует exact `ORDER-PREPARE-007` render-failure result: process version, assignments, artifact metadata и success event не сохраняются.
 
-Если первый content успешно опубликован, а второй storage write либо последующий DB transaction неуспешен, первый immutable blob может остаться orphan. Это безопасно: он не доступен download service без process metadata. GC/reconciliation orphan content — отдельный slice; process transaction не удаляет shared content-addressed blob при rollback.
+Если content успешно опубликован, а последующий DB transaction неуспешен, immutable blob может остаться orphan. Это безопасно: он не доступен download service без process metadata. GC/reconciliation orphan content — отдельный slice; process transaction не удаляет shared content-addressed blob при rollback.
 
 ## 5. Exact successful prepare
 
@@ -103,22 +99,17 @@ Public action:
 $prepare = $process->prepareAssignmentOrder(4512, [1042], 73, 18);
 ```
 
-Command result и process projection совпадают с `DOCUMENT-RENDER-HTML-001 v0.2`. Ровно два metadata:
+Command result сохраняет один metadata element, полученный из фактических returned PDF bytes:
 
 ```text
 order:
-  filename = assignment-order-v1.html
-  mediaType = text/html
-  size = 1093
-  sha256 = 682749a063958eb102f5b184c4dfe6c21a009f77932b3b68b3b92e340adf4928
-appendix:
-  filename = assignment-order-v1-appendix.html
-  mediaType = text/html
-  size = 1262
-  sha256 = da33d58efd35c6211d850446ee9f159526c9ba779fbdd9355b68ac35806ee3ac
+  filename = Распоряжение о закреплении монтажников.pdf
+  mediaType = application/pdf
+  size = exact byte length фактически созданного PDF
+  sha256 = lowercase SHA-256 фактически созданного PDF
 ```
 
-Store содержит exact two HTML byte sequences разделов 5–6 `DOCUMENT-RENDER-HTML-001` по двум derived paths. Process/external tables не получают blob/path columns.
+Store содержит exact combined PDF byte sequence по одному derived path. PDF начинается с `%PDF-`; тест не фиксирует byte hash между независимыми renders, потому что PDF factory вправе включать renderer metadata. Process/external tables не получают blob/path columns.
 
 ## 6. Download authorization и lookup
 
@@ -143,8 +134,8 @@ violations = [{
 
 Service читает public process projection, находит exact version и unique artifact type. Он принимает metadata только если:
 
-- filename — basename matching `^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$` без `/`, `\\`, control chars или `..` segment;
-- mediaType exact `text/html`;
+- filename — непустой valid UTF-8 basename длиной не более 255 code points без `/`, `\\`, control chars или `..` segment; Unicode production filename разрешён, но никогда не используется как filesystem path;
+- mediaType exact `application/pdf` для текущего production output либо `text/html` для уже сохранённых legacy artifacts;
 - size — nonnegative integer;
 - sha256 exact lowercase `[a-f0-9]{64}`.
 
@@ -154,18 +145,18 @@ Filesystem path строится только из validated sha256 по раз�
 
 Store проверяет path через `lstat`, открывает только regular non-symlink expected hash path внутри validated root, затем проверяет `fstat` открытого handle и exact expected size до чтения. Он читает не более `metadata.size + 1` bytes и заново проверяет exact byte size/SHA-256 до возврата; подмена на слишком большой файл не вызывает unbounded read.
 
-Successful `order` result:
+Successful current-production `order` result:
 
 ```text
 accepted = true
-filename = assignment-order-v1.html
-mediaType = text/html
-size = 1093
-sha256 = 682749a063958eb102f5b184c4dfe6c21a009f77932b3b68b3b92e340adf4928
-bytes = <exact order UTF-8 bytes DOCUMENT-RENDER-HTML-001 section 5>
+filename = Распоряжение о закреплении монтажников.pdf
+mediaType = application/pdf
+size = <exact generated byte length>
+sha256 = <exact generated lowercase SHA-256>
+bytes = <exact combined PDF bytes>
 ```
 
-Successful `appendix` result аналогичен с filename/hash/1262 bytes раздела 5 и exact appendix bytes раздела 6 renderer spec.
+Ранее сохранённый HTML `appendix` остаётся доступен по прежнему metadata для обратной совместимости; новый production prepare его не создаёт.
 
 После authorization любое отсутствующее version/type/metadata/blob, invalid persisted metadata, symlink/nonregular path, read failure, size mismatch или hash mismatch fail closed единым exception:
 
@@ -189,7 +180,7 @@ $artifactService = ProductionInstallationProcessFactory::createArtifactService(
 
 Он использует то же prefix validation, `processTablePrefix`, `legacyTablePrefix`, `artifactStorageRoot`, production process reader и `MariaDbProcessUserDirectory`. Renderer/clock/Workforce/LegacyObject download service не получает и не вызывает.
 
-После prepare исходные process/service/connection уничтожаются. Новое connection + factory service скачивает оба artifact types; expected bytes строго равны normative HTML literals, даже если external object/workforce/engineer descriptive rows были удалены. Для authorization actor `18` сохраняются active user/role/prepare capability.
+После prepare исходные process/service/connection уничтожаются. Новое connection + factory service скачивает combined PDF; bytes проходят exact size/SHA-256 verification, даже если external object/workforce/engineer descriptive rows были удалены. Для authorization actor `18` сохраняются active user/role/prepare capability.
 
 ## 9. Gate 2 observability
 
@@ -198,7 +189,7 @@ Integration test suite:
 1. создаёт persistent test root под workspace/home и production v1–v4 MariaDB fixtures;
 2. собирает production process factory, вызывает public prepare и проверяет public metadata;
 3. уничтожает исходные objects/connection;
-4. новым factory service скачивает `order` и `appendix` и сравнивает exact literal bytes/metadata;
+4. новым factory service скачивает `order`, проверяет PDF signature и exact persisted size/hash;
 5. проверяет forbidden actor без store read;
 6. отдельно повреждает exact test blob и ожидает `ArtifactUnavailableException`, без возврата bytes;
 7. удаляет только exact test root после завершения, предварительно проверив, что path остаётся внутри заранее созданного trusted-home workspace test parent;
@@ -217,13 +208,14 @@ Test не вызывает private path-builder и не выводит expected 
 - blob DB storage/object cloud storage;
 - orphan GC, retention, backup/restore verification;
 - re-render/versioned templates;
-- PDF/DOCX/1С ДО final file;
+- DOCX/1С ДО final file;
 - deletion of historical artifact metadata/content;
 - antivirus/content-disposition browser policy.
 
 ## 11. Решения и доказательства
 
-- `specs/DOCUMENT-RENDER-HTML-001.md` v0.2: exact bytes/metadata and renderer validation.
+- `ProductionPdfAssignmentOrderRenderer`: текущий production PDF factory с combined order/appendix output.
+- `specs/DOCUMENT-RENDER-HTML-001.md` v0.2: historical HTML renderer contract, сохраняемый для legacy compatibility.
 - `specs/ORDER-PREPARE-007.md`: renderer/storage failure maps to no partial process result.
 - `specs/PRODUCTION-COMPOSITION-001.md`: one production factory/config and explicit prefix routing.
 - data model: process DB stores reproducible metadata/hash while byte strategy belongs to renderer/storage.
@@ -233,6 +225,6 @@ Test не вызывает private path-builder и не выводит expected 
 - Владелец продукта: пользователь проекта
 - Дата: `2026-08-28`
 - Решение: `APPROVED`
-- Комментарий: пользователь поручил самостоятельно продолжать работу и выбрал durable content-addressed HTML storage/download следующим единичным SSD + TDD-срезом; версия 0.2 повторно утверждена с обязательным storing factory и POSIX owner/ancestor/root-identity containment checks.
+- Комментарий: версия 0.2 первоначально ввела durable content-addressed HTML storage/download; версия 0.3 сохраняет его POSIX owner/ancestor/root-identity invariants и отражает последующую production PDF composition.
 
-Gate 2 разрешён для версии `0.2`.
+Версия `0.3` синхронизирует contract с уже действующей production PDF factory. В рамках rapid-delivery задачи пользователь явно отменил обязательные Gate 1–5; security/storage invariants версии 0.2 не ослаблены.

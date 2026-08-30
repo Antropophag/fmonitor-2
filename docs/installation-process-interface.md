@@ -48,13 +48,13 @@ $process->openInstallation(
 
 `PERSISTENCE-OPEN-001` сохраняет opening fact production MariaDB adapter-ом и восстанавливает полные root `actualStartDate`, `openedAt`, `openedByUserId`, gates, registered history и событие новым соединением без внешних reads.
 
-`DOCUMENT-RENDER-HTML-001` утверждает первый production `DocumentRenderer`: два детерминированных self-contained print-ready UTF-8 HTML-файла (`order`, `appendix`) с честными `.html`/`text/html` metadata. PDF/conversion и storage/download bytes остаются отдельными seams.
+`DOCUMENT-RENDER-HTML-001` зафиксировал первый HTML `DocumentRenderer`; текущая production composition использует `ProductionPdfAssignmentOrderRenderer`, который создаёт один combined PDF (`order`) со страницами распоряжения и приложения. HTML metadata сохраняется как legacy-compatible формат чтения.
 
 `PROCESS-COMMAND-AUTHORIZATION-001` закрепляет отдельные production capabilities `assignment_order.prepare`, `assignment_order.confirm_registration` и `installation.open`. Composite `MariaDbProcessUserDirectory` проверяет active user/role и exact capability каждого command seam без fallback к другим capabilities или `users_rights2roles`.
 
 `PRODUCTION-COMPOSITION-001` добавляет единый composition root `ProductionInstallationProcessFactory`: одно `mysqli`, явные `processTablePrefix`/`legacyTablePrefix` и optional test `Clock` дают готовый `InstallationProcess` со всеми production adapters. Production default — `SystemClock`; delegates наружу не выдаются.
 
-`ARTIFACT-STORE-001` расширяет composition обязательным `artifactStorageRoot`, оборачивает HTML renderer в content-addressed storing adapter и добавляет авторизованный `AssignmentOrderArtifactService` для integrity-checked download по process metadata/hash. Filename никогда не является filesystem path.
+`ARTIFACT-STORE-001` расширяет composition обязательным `artifactStorageRoot`, оборачивает текущий PDF renderer в content-addressed storing adapter и добавляет авторизованный `AssignmentOrderArtifactService` для integrity-checked download по process metadata/hash. Filename никогда не является filesystem path.
 
 Наблюдаемый `CommandResult` для отказа:
 
