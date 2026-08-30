@@ -38,5 +38,6 @@ foreach ($environment as $name => $value) {
 if (getenv('PHP_CLI_SERVER_WORKERS') === false) putenv('PHP_CLI_SERVER_WORKERS=4');
 
 echo "FMonitor rapid pilot: http://127.0.0.1:{$port}/pilot/objects\n";
-passthru(escapeshellarg(PHP_BINARY) . ' -S ' . escapeshellarg('127.0.0.1:' . $port) . ' ' . escapeshellarg(__DIR__ . '/router.php'), $exitCode);
+$runtimeOptions = ' -d post_max_size=28M -d upload_max_filesize=25M -d display_errors=0 -d log_errors=1';
+passthru(escapeshellarg(PHP_BINARY) . $runtimeOptions . ' -S ' . escapeshellarg('127.0.0.1:' . $port) . ' ' . escapeshellarg(__DIR__ . '/router.php'), $exitCode);
 exit($exitCode);

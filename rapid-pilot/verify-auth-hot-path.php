@@ -26,6 +26,9 @@ foreach (['fm2_pilot_auth_credentials', 'fm2_pilot_auth_attempts'] as $table) {
 }
 $fail(str_contains($bootstrap, 'INSERT INTO `{$processPrefix}fm2_pilot_auth_credentials`'), 'credential synchronization is not initialized by generation bootstrap');
 $fail(str_contains($launcher, "putenv('PHP_CLI_SERVER_WORKERS=4')"), 'rapid-pilot HTTP runtime is not configured for concurrent requests');
+$fail(str_contains($launcher, '-d post_max_size=28M'), 'rapid-pilot HTTP runtime cannot parse a 25 MiB multipart upload');
+$fail(str_contains($launcher, '-d upload_max_filesize=25M'), 'rapid-pilot HTTP runtime upload limit differs from the form contract');
+$fail(str_contains($launcher, '-d display_errors=0'), 'rapid-pilot HTTP runtime can leak startup warnings into responses');
 $fail(!str_contains($queue, 'objectCards()->read'), 'rapid operational queue contains per-object card reads');
 $fail(str_contains($queue, 'self::readObjects($db,$prefix,$legacy)'), 'rapid operational queue does not use bounded server-side projection');
 

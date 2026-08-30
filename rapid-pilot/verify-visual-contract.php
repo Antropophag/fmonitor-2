@@ -38,9 +38,9 @@ foreach([400,500,600]as$weight){
 }
 
 foreach([
-    [$prepare,'Сформировать распоряжение'],
+    [$prepare,'Загрузить распоряжение'],
     [$card,'Открыть работы'],
-    [$card,'Сохранить номер'],
+    [$card,'Загрузить оригинал'],
 ]as[$markup,$label])$require(preg_match('/class="shlz-button shlz-button--primary[^"]*"[^>]*>'.preg_quote($label,'/').'</u',$markup)===1,"primary action lacks shlz-button--primary: {$label}");
 
 foreach(['Рассчитать черновик','Оформить срез','Отметить выплаты по срезу выполненными']as$label){$at=strpos($otiz,$label);$before=$at===false?'':substr($otiz,max(0,$at-700),700);$require($at!==false&&str_contains($before,'class="shlz-button shlz-button--primary"'),"OTIZ primary action lacks shlz-button--primary: {$label}");}

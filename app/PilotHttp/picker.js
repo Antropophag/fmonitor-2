@@ -1,4 +1,15 @@
 (() => {
+  const fileInput = document.querySelector('[data-file-input]');
+  if (fileInput) {
+    const drop = fileInput.closest('[data-file-drop]');
+    const name = drop.querySelector('[data-file-name]');
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      name.textContent = file ? `${file.name} · ${(file.size / 1048576).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ` : 'PDF, не более 25 МБ';
+      drop.classList.toggle('fm2-file-drop--selected', Boolean(file));
+    });
+  }
+
   const root = document.querySelector('[data-installer-picker]');
   if (!root) return;
 

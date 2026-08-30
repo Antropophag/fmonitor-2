@@ -197,7 +197,7 @@ final class MariaDbObjectCardReader implements ObjectCardReader
             if($case===null)return null;
             $caseId=(int)$case['id'];$activeProvenance=$this->activeProvenance($caseId,$id);
             $card=$legacy===null?null:$this->legacyCard($legacy,$id);if($card===null&&$activeProvenance!==null){$facts=$activeProvenance['legacyObject'];$card=['id'=>$id,'address'=>(string)$facts['ordadr_address'],'entrance'=>(string)$facts['entrance'],'registrationNumber'=>(string)$facts['regnumber'],'plannedStartDate'=>null,'plannedFinishDate'=>null];}if($card===null)return null;
-            $orders=$this->many('SELECT id,installation_case_id,version_no,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
+            $orders=$this->many('SELECT id,installation_case_id,version_no,status,order_date,registration_number,registration_source,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at FROM fm2_assignment_orders WHERE installation_case_id=? ORDER BY version_no DESC,id DESC',$caseId);
             $order=null;
             $highestVersion=null;
             if($orders!==[]){
@@ -230,7 +230,7 @@ final class MariaDbObjectCardReader implements ObjectCardReader
                 $registrationNumber=$order['registration_number'];
                 $registrationNumberValid=$order['status']==='prepared'
                     ?$registrationNumber===null
-                    :\is_string($registrationNumber)&&$registrationNumber!==''&&\trim($registrationNumber)===$registrationNumber;
+                    :(($order['registration_source']==='signed_original'&&$registrationNumber===null)||\is_string($registrationNumber)&&$registrationNumber!==''&&\trim($registrationNumber)===$registrationNumber);
                 if(!\in_array($order['organization_form'],['individual','brigade'],true)||self::date($order['order_date'])!==(string)$order['order_date']||!$registrationNumberValid||$engineerId===null||\trim((string)$order['control_engineer_fio_snapshot'])===''||\trim((string)$order['control_engineer_position_snapshot'])==='')throw new PilotHttpInfrastructureUnavailable();
                 $installers=$this->many('SELECT assignment_order_id,installer_tab_id,fio_snapshot,position_snapshot,employment_status_snapshot FROM fm2_order_installers WHERE assignment_order_id=? ORDER BY installer_tab_id ASC',(int)$order['id']);
                 if($installers===[])throw new PilotHttpInfrastructureUnavailable();
@@ -239,7 +239,9 @@ final class MariaDbObjectCardReader implements ObjectCardReader
                 if(!self::rfc3339($order['prepared_at']))throw new PilotHttpInfrastructureUnavailable();
                 $artifactRows=$this->many('SELECT assignment_order_id,artifact_type,filename,media_type,byte_size,sha256 FROM fm2_order_artifacts WHERE assignment_order_id=? ORDER BY FIELD(artifact_type,\'order\',\'appendix\'),artifact_type',(int)$order['id']);
                 $artifacts=[];
-                foreach($artifactRows as $artifact){$type=(string)$artifact['artifact_type'];$filename=(string)$artifact['filename'];$media=(string)$artifact['media_type'];$size=(int)$artifact['byte_size'];if(!in_array($type,['order','appendix'],true)||$filename===''||!in_array($media,['application/pdf','text/html'],true)||$size<0)throw new PilotHttpInfrastructureUnavailable();$artifacts[]=['type'=>$type,'filename'=>$filename,'mediaType'=>$media,'size'=>$size];}
+                foreach($artifactRows as $artifact){$type=(string)$artifact['artifact_type'];$filename=(string)$artifact['filename'];$media=(string)$artifact['media_type'];$size=(int)$artifact['byte_size'];if(!in_array($type,['order','appendix','signed_original'],true)||$filename===''||!in_array($media,['application/pdf','text/html'],true)||$size<0||($type==='signed_original'&&$media!=='application/pdf'))throw new PilotHttpInfrastructureUnavailable();$artifacts[]=['type'=>$type,'filename'=>$filename,'mediaType'=>$media,'size'=>$size];}
+                $signedOriginalCount=count(array_filter($artifacts,static fn(array $artifact):bool=>$artifact['type']==='signed_original'));
+                if($order['registration_source']==='signed_original'&&$signedOriginalCount!==1)throw new PilotHttpInfrastructureUnavailable();
                 $renderedOrder=['version'=>$highestVersion,'status'=>$order['status'],'orderDate'=>$order['order_date'],'preparedAt'=>$order['prepared_at'],'registrationNumber'=>$registrationNumber,'organizationType'=>$order['organization_form'],'engineer'=>['userId'=>$engineerId,'fullName'=>(string)$order['control_engineer_fio_snapshot'],'position'=>(string)$order['control_engineer_position_snapshot']],'installers'=>$renderedInstallers,'artifacts'=>$artifacts];
             }
             $eventFields=$hasPilotUsers?'id,installation_case_id,event_type,occurred_at,actor_user_id,payload_json':'id,installation_case_id,event_type,occurred_at,actor_user_id';$events=$this->many("SELECT {$eventFields} FROM fm2_process_events WHERE installation_case_id=? ORDER BY id DESC LIMIT ".($hasPilotUsers?'8':'3'),$caseId);

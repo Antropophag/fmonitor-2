@@ -793,27 +793,42 @@
 }
 
 .fm2-order-heading { max-inline-size: 760px; }
+.fm2-order-form { display: grid; grid-template-columns: minmax(0, 920px) minmax(240px, 300px); gap: 16px; align-items: start; }
 .fm2-order-surface { inline-size: 100%; max-inline-size: 920px; min-inline-size: 0; overflow: hidden; background: #fff; border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); }
 .fm2-order-surface > header { padding: 16px 20px; background: #f8f9fb; border-block-end: 1px solid var(--fm2-border); }
 .fm2-order-object { display: grid; gap: 3px; }
 .fm2-order-object strong { font-size: 14px; }
 .fm2-order-object span, .fm2-order-object small { color: var(--fm2-muted); font-size: 12px; }
+.fm2-order-upload { display: grid; gap: 14px; padding: 22px 20px; border-block-end: 1px solid var(--fm2-border); }
+.fm2-order-section-head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+.fm2-order-eyebrow { display: block; margin-block-end: 5px; color: var(--fm2-primary); font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .fm2-order-team { display: grid; gap: 14px; padding: 22px 20px; }
 .fm2-order-section-head h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
 .fm2-order-section-head p { margin: 0; color: var(--fm2-muted); font-size: 12px; }
 .fm2-order-selection { padding: 16px; background: var(--fm2-filter); border-radius: var(--fm2-radius); }
 .fm2-order-selection .fm2-picker { gap: 12px; }
 .fm2-order-selection .fm2-picker-selection { min-block-size: 28px; align-items: center; }
+.fm2-file-drop { position: relative; display: flex; min-block-size: 112px; padding: 22px; align-items: center; justify-content: center; gap: 14px; color: var(--fm2-muted); background: #fafbfc; border: 1px dashed #b9c1cb; border-radius: var(--fm2-radius); text-align: center; cursor: pointer; transition: 120ms ease-out; }
+.fm2-file-drop:hover { color: var(--fm2-primary); background: var(--fm2-primary-soft); border-color: var(--fm2-primary); }
+.fm2-file-drop:focus-within { border-color: var(--fm2-focus-ring); box-shadow: 0 0 0 3px var(--fm2-focus-halo); }
+.fm2-file-drop input { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; cursor: pointer; }
+.fm2-file-drop svg { inline-size: 30px; block-size: 30px; flex: 0 0 auto; fill: none; stroke: currentcolor; stroke-width: 1.5; }
+.fm2-file-drop span { display: grid; gap: 5px; text-align: start; }
+.fm2-file-drop strong { color: var(--fm2-ink); font-size: 13px; font-weight: 500; }
+.fm2-file-drop small { color: var(--fm2-muted); font-size: 11px; overflow-wrap: anywhere; }
+.fm2-file-drop--selected { color: var(--fm2-primary); background: var(--fm2-primary-soft); border-style: solid; border-color: #b9c6ea; }
 .fm2-order-engineer { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr); gap: 18px; padding: 16px 20px; align-items: center; border-block: 1px solid var(--fm2-border); }
 .fm2-order-engineer > div:first-child { display: grid; gap: 3px; }
 .fm2-order-engineer > div:first-child span { font-size: 13px; font-weight: 600; }
 .fm2-order-engineer > div:first-child small { color: var(--fm2-muted); font-size: 11px; }
 .fm2-order-engineer .fm2-reference-person { max-inline-size: none; padding: 0; background: transparent; }
-.fm2-order-actions { display: flex; justify-content: space-between; gap: 24px; padding: 16px 20px; align-items: center; background: #f8f9fb; }
-.fm2-order-actions > div:first-child { display: grid; gap: 3px; }
-.fm2-order-actions > div:first-child strong { font-size: 12px; font-weight: 600; }
-.fm2-order-actions > div:first-child span { color: var(--fm2-muted); font-size: 11px; }
-.fm2-order-actions .fm2-actions { margin: 0; align-items: center; }
+.fm2-order-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; align-items: center; background: #f8f9fb; }
+.fm2-order-helper { display: grid; gap: 14px; padding: 18px; background: #fff; border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); }
+.fm2-order-helper-icon { display: grid; inline-size: 38px; block-size: 38px; place-items: center; color: var(--fm2-primary); background: var(--fm2-primary-soft); border-radius: 50%; }
+.fm2-order-helper-icon svg { inline-size: 21px; block-size: 21px; fill: none; stroke: currentcolor; stroke-width: 1.5; }
+.fm2-order-helper h2 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
+.fm2-order-helper p { margin: 0; color: var(--fm2-muted); font-size: 12px; line-height: 1.45; }
+.fm2-order-helper .shlz-button { justify-self: start; }
 
 .fm2-object-identity { display: flex; justify-content: space-between; gap: 24px; margin-block-end: 18px; align-items: flex-start; }
 .fm2-object-identity h1 { margin: 0 0 6px; font-size: 25px; font-weight: 600; }
@@ -985,6 +1000,8 @@
   .fm2-picker-result { grid-template-columns: 28px minmax(0, 1fr); }
   .fm2-picker-result-busy { grid-column: 2; max-inline-size: none; text-align: start; }
   .fm2-object-identity, .fm2-order-actions { display: grid; }
+  .fm2-order-form { grid-template-columns: 1fr; }
+  .fm2-order-helper { grid-template-columns: auto 1fr auto; align-items: center; }
   .fm2-object-identity h1 { font-size: 22px; }
   .fm2-next-action { display: grid; padding: 16px; }
   .fm2-next-action .fm2-inline-form { grid-template-columns: 1fr; }
@@ -1102,7 +1119,7 @@
 .fm2-role-chip .shlz-tag__icon { fill: none; stroke: currentcolor; stroke-linecap: round; stroke-width: 1.5; }
 .fm2-role-add select { min-block-size: 30px; max-inline-size: 190px; padding: 4px 32px 4px 10px; color: var(--shlz-semantic-color-text-secondary); background: var(--shlz-semantic-color-surface-base); border: 1px solid var(--shlz-semantic-color-border-default); border-radius: var(--shlz-source-radius-regular); cursor: pointer; font: inherit; }
 .fm2-role-add select:hover { border-color: var(--shlz-semantic-color-action-primary); }
-.fm2-role-add select:focus-visible { outline: 2px solid var(--shlz-semantic-color-action-primary); outline-offset: 1px; }
+.fm2-role-add select:focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: 1px; }
 .fm2-role-catalog { margin-block-start: 28px; }
 .fm2-section-head { display: flex; gap: 18px; margin-block-end: 12px; align-items: end; justify-content: space-between; }
 .fm2-section-head h2 { margin: 0; color: var(--fm2-ink); font-size: 18px; }
