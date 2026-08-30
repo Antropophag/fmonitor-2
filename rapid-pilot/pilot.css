@@ -371,6 +371,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Pagination is rendered by the public SHLZ contract; keep controls touch-safe
+   and reduce only the contextual window on narrow screens. */
+.fm2-table-footer .shlz-pagination__item,
+.fm2-control-footer .shlz-pagination__item {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+
+@media (max-width: 480px) {
+  .fm2-table-footer .fm2-pagination__context,
+  .fm2-control-footer .fm2-pagination__context { display: none; }
+  .fm2-table-footer .shlz-pagination__list,
+  .fm2-control-footer .shlz-pagination__list { gap: 8px; }
+}
+
 .fm2-primary-link {
   display: inline-flex;
   min-block-size: 36px;
