@@ -942,6 +942,9 @@
 }
 
 .fm2-installer-table-scroll { max-block-size: calc(100vh - 300px); overflow: auto; }
+.fm2-installer-server-filters { display: grid; grid-template-columns: minmax(240px,2fr) minmax(150px,1fr) minmax(150px,1fr) auto auto; gap: 12px; align-items: end; margin-block-end: 14px; }
+.fm2-installer-server-filters .shlz-link { display: inline-flex; min-block-size: 44px; align-items: center; }
+.fm2-installer-directory > .shlz-pagination { padding: 14px; border-block-start: 1px solid var(--fm2-border); }
 .fm2-installer-filters { display: flex; gap: 6px; padding: 11px 14px; overflow-x: auto; border-block-end: 1px solid var(--fm2-border); }
 .fm2-installer-filters input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
 .fm2-installer-filters label { flex: 0 0 auto; padding: 7px 11px; color: var(--fm2-muted); background: var(--fm2-surface); border: 1px solid var(--fm2-border); border-radius: var(--fm2-pill); cursor: pointer; font-size: 12px; }
@@ -969,6 +972,8 @@
 .fm2-assignment-link span { overflow: hidden; color: var(--fm2-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-width: 680px) {
+  .fm2-installer-server-filters { grid-template-columns: 1fr; }
+  .fm2-installer-server-filters .shlz-input, .fm2-installer-directory .shlz-pagination__item { min-block-size: 44px; }
   .fm2-installer-table-scroll { max-block-size: none; overflow: visible; }
   .fm2-installer-table thead { display: none; }
   .fm2-installer-table, .fm2-installer-table tbody, .fm2-installer-table tr, .fm2-installer-table td { display: block; inline-size: 100%; }
