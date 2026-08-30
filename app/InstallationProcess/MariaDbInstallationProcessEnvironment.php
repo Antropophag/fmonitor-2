@@ -57,12 +57,13 @@ final class MariaDbInstallationProcessEnvironment
             $statement->bind_param('i', $caseId);
             $statement->execute();
             $storedOrder = $statement->get_result()->fetch_assoc();
+            $event = $process['events'][array_key_last($process['events'])];
             if ($storedOrder === null) $this->persistPreparation($caseId, $process);
+            elseif ($storedOrder['status'] === 'registered' && ($event['type'] ?? null) === 'assignment_order_prepared') $this->persistPreparation($caseId, $process);
             elseif ($storedOrder['status'] === 'prepared') $this->persistRegistration($caseId, $storedOrder, $process);
             elseif ($storedOrder['status'] === 'registered') $this->persistOpening($caseId, $storedOrder, $process);
             else throw new \LogicException('Stored assignment order transition is unsupported.');
 
-            $event = $process['events'][array_key_last($process['events'])];
             $this->appendProcessEvent($caseId, $event);
             $this->persistCaseTransition($caseId, $revision + 1, $process, (string) $event['occurredAt']);
         } catch (\Throwable $error) {
@@ -77,10 +78,14 @@ final class MariaDbInstallationProcessEnvironment
 
     private function persistPreparation(int $caseId, array $process): void
     {
-        $order=$process['assignmentOrders'][0]; $engineer=$order['controlEngineer']; $snapshot=$order['installationObjectSnapshot']; $event=$process['events'][array_key_last($process['events'])];
+        $order=$process['assignmentOrders'][array_key_last($process['assignmentOrders'])]; $engineer=$order['controlEngineer']; $snapshot=$order['installationObjectSnapshot']; $event=$process['events'][array_key_last($process['events'])];
+        $previousId=null;
+        if((int)$order['version']>1){$statement=$this->connection->prepare("SELECT id FROM {$this->tablePrefix}fm2_assignment_orders WHERE installation_case_id=? AND version_no=? AND status='registered' FOR UPDATE");$previousVersion=(int)$order['version']-1;$statement->bind_param('ii',$caseId,$previousVersion);$statement->execute();$previous=$statement->get_result()->fetch_assoc();if($previous===null)throw new \LogicException('Previous registered assignment order was not found.');$previousId=(int)$previous['id'];}
         $values=[$caseId,(int)$order['version'],(string)$order['status'],(string)$order['assignmentOrderDate'],(int)$engineer['userId'],(string)$engineer['fullName'],(string)$engineer['position'],(string)$order['organizationType'],(string)$snapshot['address'],(string)$snapshot['entrance'],(string)$snapshot['objectRegistrationNumber'],(string)$snapshot['plannedStartDate'],(string)$snapshot['plannedFinishDate'],$snapshot['ptoActDate'],(string)$event['occurredAt'],(int)$event['actorId']];
-        $statement=$this->connection->prepare("INSERT INTO {$this->tablePrefix}fm2_assignment_orders (installation_case_id,version_no,kind,status,registration_number,order_date,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,previous_assignment_order_id,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,pto_act_date_snapshot,prepared_at,prepared_by_user_id) VALUES (?,?,'initial',?,NULL,?,?,?,?,?,NULL,?,?,?,?,?,?,?,?)");
-        $statement->bind_param('iississssssssssi',...$values); $statement->execute(); $orderId=(int)$this->connection->insert_id;
+        $kind=$previousId===null?'initial':'change';
+        $statement=$this->connection->prepare("INSERT INTO {$this->tablePrefix}fm2_assignment_orders (installation_case_id,version_no,kind,status,registration_number,order_date,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,previous_assignment_order_id,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,pto_act_date_snapshot,prepared_at,prepared_by_user_id) VALUES (?,?,?, ?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $values=[$caseId,(int)$order['version'],$kind,(string)$order['status'],(string)$order['assignmentOrderDate'],(int)$engineer['userId'],(string)$engineer['fullName'],(string)$engineer['position'],(string)$order['organizationType'],$previousId,(string)$snapshot['address'],(string)$snapshot['entrance'],(string)$snapshot['objectRegistrationNumber'],(string)$snapshot['plannedStartDate'],(string)$snapshot['plannedFinishDate'],$snapshot['ptoActDate'],(string)$event['occurredAt'],(int)$event['actorId']];
+        $statement->bind_param('iisssisssisssssssi',...$values); $statement->execute(); $orderId=(int)$this->connection->insert_id;
         foreach($order['installers'] as $installer){$tabId=(string)$installer['tabId'];$name=(string)$installer['fullName'];$position=(string)$installer['position'];$status=(string)$installer['status'];$from=(string)$installer['employedFrom'];$to=$installer['employedTo'];$source=(string)$installer['source'];$updated=(string)$installer['sourceUpdatedAt'];$validFrom=(string)$order['assignmentOrderDate'];$statement=$this->connection->prepare("INSERT INTO {$this->tablePrefix}fm2_order_installers (assignment_order_id,installer_tab_id,fio_snapshot,position_snapshot,employment_status_snapshot,employed_from_snapshot,employed_to_snapshot,workforce_source_snapshot,workforce_source_updated_at_snapshot,valid_from,valid_to,change_action) VALUES (?,?,?,?,?,?,?,?,?,?,NULL,'assign')");$statement->bind_param('isssssssss',$orderId,$tabId,$name,$position,$status,$from,$to,$source,$updated,$validFrom);$statement->execute();}
         foreach($order['artifacts'] as $artifact){$type=(string)$artifact['type'];$filename=(string)$artifact['filename'];$media=(string)$artifact['mediaType'];$size=(int)$artifact['size'];$sha=(string)$artifact['sha256'];$statement=$this->connection->prepare("INSERT INTO {$this->tablePrefix}fm2_order_artifacts (assignment_order_id,artifact_type,filename,media_type,byte_size,sha256) VALUES (?,?,?,?,?,?)");$statement->bind_param('isssis',$orderId,$type,$filename,$media,$size,$sha);$statement->execute();}
     }

@@ -94,7 +94,9 @@ final class InstallationProcess
             ? null
             : $currentAssignmentOrders[array_key_last($currentAssignmentOrders)];
         if ($currentAssignmentOrder !== null
-            && in_array($currentAssignmentOrder['status'] ?? null, ['prepared', 'registered'], true)
+            && (($currentAssignmentOrder['status'] ?? null) === 'prepared'
+                || ($currentAssignmentOrder['status'] ?? null) !== 'registered'
+                || !in_array($currentProcess['processState'] ?? null, ['working', 'needs_assignment_change'], true))
         ) {
             $this->environment->appendEvent($installationObjectId, [
                 'type' => 'assignment_order_prepare_rejected',
@@ -161,7 +163,9 @@ final class InstallationProcess
             return ['accepted' => false, 'violations' => $installationObjectDataViolations];
         }
 
-        $assignmentOrderVersion = 1;
+        $assignmentOrderVersion = $currentAssignmentOrder === null
+            ? 1
+            : (int) $currentAssignmentOrder['version'] + 1;
         $occurredAt = $this->environment->now();
         $assignmentOrderDate = (new \DateTimeImmutable($occurredAt))
             ->setTimezone(new \DateTimeZone('Europe/Moscow'))
@@ -293,9 +297,9 @@ final class InstallationProcess
             $artifactSha256[$renderedArtifact['type']] = $sha256;
         }
 
-        $currentProcess['processState'] = 'assignment_order_prepared';
-        $currentProcess['assignmentOrders'] = [
-            [
+        $isChangingOrder = $currentAssignmentOrder !== null;
+        $currentProcess['processState'] = $isChangingOrder ? 'needs_assignment_change' : 'assignment_order_prepared';
+        $currentProcess['assignmentOrders'][] = [
                 'version' => $assignmentOrderVersion,
                 'status' => 'prepared',
                 'registrationNumber' => null,
@@ -305,14 +309,13 @@ final class InstallationProcess
                 'installers' => $installerSnapshots,
                 'controlEngineer' => $controlEngineer,
                 'artifacts' => $artifacts,
-            ],
-        ];
-        $currentProcess['assignments'] = array_merge(
+            ];
+        $newAssignments = array_merge(
             array_map(
                 static fn (int|string $installerTabId): array => [
                     'role' => 'installer',
                     'tabId' => $installerTabId,
-                    'assignmentOrderVersion' => 1,
+                    'assignmentOrderVersion' => $assignmentOrderVersion,
                     'status' => 'preliminary',
                 ],
                 $normalizedInstallerTabIds,
@@ -324,7 +327,8 @@ final class InstallationProcess
                 'status' => 'preliminary',
             ]],
         );
-        $currentProcess['openTasks'] = [];
+        $currentProcess['assignments'] = array_merge($currentProcess['assignments'] ?? [], $newAssignments);
+        if (!$isChangingOrder) $currentProcess['openTasks'] = [];
         $currentProcess['events'][] = [
             'type' => 'assignment_order_prepared',
             'occurredAt' => $occurredAt,
@@ -335,6 +339,7 @@ final class InstallationProcess
                 'installerTabIds' => $normalizedInstallerTabIds,
                 'controlEngineerUserId' => $controlEngineerUserId,
                 'organizationType' => $organizationType,
+                ...($isChangingOrder ? ['changesPreviousVersion' => $currentAssignmentOrder['version']] : []),
                 'artifactSha256' => $artifactSha256,
             ],
         ];
