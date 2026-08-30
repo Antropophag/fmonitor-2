@@ -12,7 +12,7 @@ final class RapidPilotLocalAuth
         if(preg_match('/^[A-Za-z0-9_]+$/D',$this->prefix)!==1)throw new RuntimeException('Invalid pilot table prefix');
         mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
         $this->db=new mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:'fmonitor2_demo',getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local',getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo',(int)(getenv('FMONITOR_DB_PORT')?:'23306'));
-        $this->db->set_charset('utf8mb4');$this->ensureSchema();$this->startSession();
+        $this->db->set_charset('utf8mb4');$this->startSession();
     }
 
     public function handle(string $path):void
@@ -82,14 +82,6 @@ final class RapidPilotLocalAuth
         $button=$stage==='setup'?'Создать пароль и войти':($stage==='password'?'Войти':'Продолжить');$back=$stage==='email'?'':'<a class="fm2-auth-back" href="/pilot/login">Войти с другим email</a>';$errorHtml=$error===''?'':'<p class="fm2-auth-error" role="alert">'.$safe($error).'</p>';
         header('Content-Type: text/html; charset=UTF-8');header('Cache-Control: no-store');header('X-Frame-Options: DENY');header("Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
         echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.$safe($title).' — FMonitor</title><link rel="stylesheet" href="/pilot/assets/shlz.css"><link rel="stylesheet" href="/pilot/assets/pilot.css"><link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head><body class="shlz-scope fm2-auth-page"><main class="fm2-auth-layout"><section class="fm2-auth-brand" aria-label="FMonitor"><img src="/pilot/assets/favicon.svg" alt="" width="56" height="56"><div><strong>FMonitor</strong><span>Управление монтажными работами</span></div></section><section class="fm2-auth-card"><div class="fm2-auth-heading"><span class="fm2-auth-kicker">ЩЛЗ · защищённый контур</span><h1>'.$safe($title).'</h1><p>'.$safe($intro).'</p></div><form method="post" action="/pilot/login" class="fm2-auth-form"><input type="hidden" name="csrfToken" value="'.$safe($csrf).'">'.$emailField.$passwordFields.$errorHtml.'<button class="shlz-button shlz-button--primary fm2-auth-submit" type="submit">'.$safe($button).'</button>'.$back.'</form></section><p class="fm2-auth-note">Пароль хранится только в виде необратимого криптографического хэша.</p></main></body></html>';exit;
-    }
-
-    private function ensureSchema():void
-    {
-        $this->db->query("CREATE TABLE IF NOT EXISTS `{$this->prefix}fm2_pilot_auth_credentials`(user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL,password_hash VARCHAR(255) NULL,password_set_at VARCHAR(40) NULL,updated_at VARCHAR(40) NOT NULL,UNIQUE KEY(email_normalized)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS `{$this->prefix}fm2_pilot_auth_attempts`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL,succeeded TINYINT(1) NOT NULL,attempted_at DATETIME(6) NOT NULL,KEY(email_normalized,attempted_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $now=$this->db->real_escape_string($this->now());
-        $this->db->query("INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) SELECT user_id,LOWER(TRIM(email)),NULL,NULL,'{$now}' FROM `{$this->prefix}fm2_pilot_users` WHERE LOWER(TRIM(email)) REGEXP '^[^@[:space:]]+@shlz\\.ru$' ON DUPLICATE KEY UPDATE email_normalized=VALUES(email_normalized),updated_at=VALUES(updated_at)");
     }
 
     private function startSession():void

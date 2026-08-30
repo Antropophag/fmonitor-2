@@ -62,6 +62,9 @@
   --fm2-surface: var(--shlz-semantic-color-surface-base, #fff);
   --fm2-border: var(--shlz-semantic-color-border-default, #d1d8df);
   --fm2-muted: var(--shlz-semantic-color-text-secondary, #697586);
+  --fm2-focus-ring: #46515e;
+  --fm2-focus-ring-inverse: #fff;
+  --fm2-focus-halo: rgb(70 81 94 / 18%);
   --fm2-radius: var(--shlz-source-radius-regular, 8px);
   --fm2-pill: var(--shlz-source-radius-max, 999px);
 }
@@ -185,7 +188,7 @@
 }
 .fm2-nav-trigger::-webkit-details-marker { display: none; }
 .fm2-nav-trigger:hover { color: #fff; background: rgb(255 255 255 / 7%); }
-.fm2-nav-trigger:focus-visible { outline: 2px solid #6f8cff; outline-offset: -2px; }
+.fm2-nav-trigger:focus-visible { outline: 2px solid var(--fm2-focus-ring-inverse); outline-offset: -2px; }
 .fm2-nav-trigger svg { flex: 0 0 24px; inline-size: 24px; block-size: 24px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; transition: transform 220ms cubic-bezier(.2, 0, 0, 1); }
 .fm2-nav-state[open] .fm2-nav-trigger svg { transform: rotate(180deg); }
 .fm2-nav-trigger-text { display: none; white-space: nowrap; }
@@ -264,7 +267,7 @@
 .fm2-breadcrumb li + li::before { margin-inline-end: 8px; color: #a8afb6; content: "/"; }
 .fm2-breadcrumb-link { color: var(--fm2-primary); font: inherit; text-decoration: none; }
 .fm2-breadcrumb-link:hover { color: var(--shlz-source-color-blue-blue-300); text-decoration: underline; text-underline-offset: 3px; }
-.fm2-breadcrumb-link:focus-visible { border-radius: 2px; outline: 2px solid var(--fm2-primary); outline-offset: 2px; }
+.fm2-breadcrumb-link:focus-visible { border-radius: 2px; outline: 2px solid var(--fm2-focus-ring); outline-offset: 2px; }
 
 .fm2-page-header {
   display: flex;
@@ -311,6 +314,15 @@
   padding-inline: 16px;
   border-block-end: 1px solid var(--fm2-border);
 }
+.fm2-object-filters { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(220px, 280px) auto auto; gap: 12px; align-items: end; inline-size: 100%; padding-block: 12px; }
+.fm2-object-filters .shlz-button, .fm2-object-filters > .shlz-link { min-block-size: 44px; }
+.fm2-object-filters > .shlz-link { display: inline-flex; align-items: center; }
+.fm2-object-filters .shlz-field { inline-size: 100%; }
+.fm2-object-filters .shlz-field__control { color: var(--fm2-text); background: #fff; border-color: var(--fm2-border); border-radius: 10px; transition: border-color 120ms ease-out, box-shadow 120ms ease-out; }
+.fm2-object-filters .shlz-field__control:hover:not(:has(:disabled, [readonly])) { background: #fff; border-color: #aeb7c2; }
+.fm2-object-filters .shlz-field__control:focus-within { background: #fff; border-color: var(--fm2-focus-ring); box-shadow: 0 0 0 3px var(--fm2-focus-halo); }
+.fm2-object-filters .shlz-input { appearance: none; caret-color: var(--fm2-primary); }
+.fm2-object-filters .shlz-input::-webkit-search-decoration { appearance: none; }
 
 .fm2-segments { display: flex; gap: 4px; padding: 4px; background: var(--fm2-filter); border-radius: var(--fm2-pill); }
 
@@ -469,7 +481,7 @@
 .fm2-field-error { color: #a62b2b; }
 .fm2-db-text { overflow-wrap: anywhere; }
 .fm2-empty { padding: 32px; }
-.fm2-shell :is(a, input, button, label, select):focus-visible { outline: 2px solid var(--fm2-primary); outline-offset: 2px; }
+.fm2-shell :is(a, input, button, label, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: 2px; }
 .fm2-form-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; align-items: start; }
 .fm2-form-card { padding: 4px 22px; }
 .fm2-form-card > section { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding-block: 20px; border-block-end: 1px solid var(--fm2-border); }
@@ -927,6 +939,8 @@
   .fm2-page-header h1 { font-size: 22px; }
   .fm2-result-count { justify-self: start; }
   .fm2-list-toolbar { align-items: flex-start; gap: 10px; padding: 10px; overflow: hidden; }
+  .fm2-object-filters { grid-template-columns: 1fr; padding-block: 0; }
+  .fm2-object-filters .shlz-button { inline-size: 100%; }
   .fm2-segments { overflow-x: auto; max-inline-size: 100%; }
   .fm2-queue-table thead { display: none; }
   .fm2-queue-table, .fm2-queue-table tbody, .fm2-queue-table tr, .fm2-queue-table td { display: block; inline-size: 100%; }
@@ -986,7 +1000,7 @@
 .fm2-installer-filters label { flex: 0 0 auto; padding: 7px 11px; color: var(--fm2-muted); background: var(--fm2-surface); border: 1px solid var(--fm2-border); border-radius: var(--fm2-pill); cursor: pointer; font-size: 12px; }
 .fm2-installer-filters label b { margin-inline-start: 4px; color: inherit; }
 .fm2-installer-filters input:checked + label { color: var(--fm2-primary); background: var(--fm2-filter); border-color: var(--fm2-primary-soft); font-weight: 600; }
-.fm2-installer-filters input:focus-visible + label { outline: 3px solid #8ea2e8; outline-offset: 2px; }
+.fm2-installer-filters input:focus-visible + label { outline: 2px solid var(--fm2-focus-ring); outline-offset: 2px; }
 .fm2-installer-directory:has(#if-employed:checked) .fm2-installer-row:not(.fm2-installer-row--employed),
 .fm2-installer-directory:has(#if-dismissed:checked) .fm2-installer-row:not(.fm2-installer-row--dismissed),
 .fm2-installer-directory:has(#if-assigned:checked) .fm2-installer-row:not(.fm2-installer-row--assigned),
@@ -1079,7 +1093,7 @@
 .fm2-role-chip { min-block-size: 30px; padding-inline: 11px; color: #253d98; background: #dfe2f0; border-radius: var(--fm2-pill) 0 0 var(--fm2-pill); font-size: 11px; font-weight: 600; }
 .fm2-role-remove { display: grid; inline-size: 28px; min-block-size: 30px; padding: 0; color: #253d98; background: #dfe2f0; border: 0; border-inline-start: 1px solid #c8cee3; cursor: pointer; place-items: center; }
 .fm2-role-remove:hover { background: #ccd3e8; }
-.fm2-role-remove:focus-visible, .fm2-role-add select:focus-visible { position: relative; z-index: 1; outline: 3px solid #8ea2e8; outline-offset: -3px; }
+.fm2-role-remove:focus-visible, .fm2-role-add select:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--fm2-focus-ring); outline-offset: -2px; }
 .fm2-role-remove svg { inline-size: 12px; block-size: 12px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-width: 1.5; }
 .fm2-role-add select { min-block-size: 28px; max-inline-size: 190px; padding: 3px 28px 3px 9px; color: var(--fm2-muted); background: #fff; border: 1px dashed #aeb7c3; border-radius: var(--fm2-pill); cursor: pointer; font-size: 11px; }
 .fm2-no-role { color: var(--fm2-muted); font-size: 11px; }
@@ -1132,7 +1146,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-check-section { overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 1px 0 rgba(19,34,56,.08), 0 10px 28px rgba(19,34,56,.055); }
 .fm2-check-section-head { display: grid; grid-template-columns: minmax(0,1fr) 22px; gap: 12px; align-items: center; inline-size: 100%; min-block-size: 68px; padding: 11px 16px; border: 0; background: #fff; color: inherit; text-align: start; cursor: pointer; }
 .fm2-section-toggle:hover, .fm2-check-toggle:hover { background: #f9fbff; }
-.fm2-section-toggle:focus-visible, .fm2-check-all:focus-visible, .fm2-check-toggle:focus-visible, .fm2-item-installers:focus-visible { outline: 2px solid var(--check-blue); outline-offset: -2px; }
+.fm2-section-toggle:focus-visible, .fm2-check-all:focus-visible, .fm2-check-toggle:focus-visible, .fm2-item-installers:focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: -2px; }
 .fm2-check-all { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 12px; align-items: center; inline-size: 100%; min-block-size: 52px; padding: 8px 2px; border: 0; border-block-end: 1px solid #edf0f4; background: var(--check-soft); color: var(--check-blue); font: inherit; font-size: 13px; font-weight: 600; text-align: start; cursor: pointer; }
 .fm2-check-all:hover { background: #e5ecff; }
 .fm2-check-all .fm2-check-box { inline-size: 26px; block-size: 26px; border-color: #7890cb; border-radius: 8px; }
@@ -1295,6 +1309,80 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-control-search .shlz-input { padding-inline-start: 40px; }
 .fm2-control-search .shlz-input:focus-visible { outline: 0; }
 .fm2-control-search input[type=search]::-webkit-search-cancel-button { cursor: pointer; }
+
+/*
+ * Rapid-pilot focus contract
+ * Keep focus chrome neutral across native controls and shlz-ui components.
+ * Product/status blue remains valid outside focus and expanded-control paint.
+ */
+.shlz-scope :is(
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex],
+  .shlz-control,
+  .shlz-focusable,
+  [class~="shlz-button"],
+  .shlz-link,
+  .shlz-table__affordance,
+  .shlz-table__dropdown,
+  .shlz-select__trigger,
+  .shlz-select__option,
+  .shlz-checkbox,
+  .shlz-radio,
+  .shlz-switch__input,
+  .shlz-dropdown__item,
+  .shlz-tabs__tab,
+  .shlz-pagination__item,
+  .shlz-tag__remove,
+  .shlz-notification__action,
+  .shlz-notification__close,
+  .shlz-modal__close,
+  .shlz-drawer__close,
+  .shlz-file-row__primary,
+  .shlz-file-row__action,
+  .shlz-document-row__title,
+  .shlz-document-row__action
+):focus-visible {
+  outline-color: var(--fm2-focus-ring);
+}
+
+.shlz-scope .shlz-field__control:focus-within,
+.shlz-scope .shlz-field--visual-focus .shlz-field__control {
+  background: var(--fm2-surface);
+  border-color: var(--fm2-focus-ring);
+  box-shadow: 0 0 0 3px var(--fm2-focus-halo);
+}
+
+.shlz-scope .shlz-select__trigger[aria-expanded="true"] {
+  background: var(--fm2-surface);
+  border-color: var(--fm2-focus-ring);
+}
+
+.shlz-scope .shlz-segment__input:focus-visible + .shlz-segment__label {
+  outline-color: var(--fm2-focus-ring);
+}
+
+.shlz-scope :is(.fm2-sidebar, .fm2-skip) :is(a, button, summary, [tabindex]):focus-visible {
+  outline-color: var(--fm2-focus-ring-inverse);
+}
+
+/* A field shell owns search focus. The nested input must never draw a second
+   browser/global ring, and this compact filter intentionally has no halo. */
+.shlz-scope .fm2-object-filters .shlz-field__control:focus-within {
+  background: #fff;
+  border-color: var(--fm2-focus-ring);
+  box-shadow: none;
+}
+
+.shlz-scope .fm2-object-filters .shlz-input:focus,
+.shlz-scope .fm2-object-filters .shlz-input:focus-visible {
+  outline: 0;
+  box-shadow: none;
+}
 .fm2-control-filters { display: flex; align-items: center; justify-content: flex-end; gap: 20px; min-block-size: 40px; }
 .fm2-completed-switch { white-space: nowrap; }
 .fm2-control-surface { overflow: hidden; border-radius: 14px; background: #fff; }

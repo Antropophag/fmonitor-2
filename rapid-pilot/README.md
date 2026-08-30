@@ -22,6 +22,13 @@ make up
 контейнеры с сохранением данных, `make logs` показывает логи, а `make reset`
 удаляет локальную базу и состояние пилота.
 
+Обычный bootstrap работает в `native-only` режиме и не создаёт тестовых
+пользователей, объектов или процессов. Старые демонстрационные fixtures доступны
+только для изолированных тестов через явный запуск
+`docker compose run --rm -e FMONITOR_PILOT_FIXTURE_MODE=test-fixtures pilot`;
+этот режим нельзя использовать
+для operational-проверки владельцем продукта.
+
 Поддерживаются как Docker Engine, установленный непосредственно внутри WSL,
 так и Docker Desktop с включённой WSL integration.
 
@@ -34,6 +41,21 @@ make up
 Данные MariaDB и история сохраняются между `make down` / `make up`.
 
 ## Актуальная сборка
+
+После чистого `make reset && make up` штатная native-only инициализация запускается
+одной командой из окружения, где уже заданы `FMONITOR_SOURCE_*`, `FMONITOR_DB_*`
+и `FMONITOR_PILOT_ACTIVE_MANIFEST`:
+
+```bash
+php rapid-pilot/initialize-native-only.php --cutoff='2026-08-30 23:59:59'
+```
+
+Команда сначала доказывает пустую native-only generation, затем импортирует
+production users, workforce, актуальный checklist template, только подтверждённые
+`native_candidate / operational_case_import`, карточки объектов и связи template.
+Production-чтения выполняются в READ ONLY transactions. Команда не вызывает
+legacy active/history, historical replay или reconciliation и завершится ошибкой,
+если итоговая generation содержит такие данные, fixtures либо synthetic ОТиЗ.
 
 После штатного bootstrap локальной базы обновите read-only production-снимок карточек:
 
@@ -55,3 +77,13 @@ php rapid-pilot/start.php
 ## Локальная авторизация
 
 Каталог пользователей и роли переносятся из legacy FMonitor командой `import-production-users.php`. Вход разрешён активным пользователям с корпоративным email `@shlz.ru`. Если email ещё отсутствует в локальном каталоге, при создании пароля система добавляет учётную запись без процессных ролей; роли не выдаются саморегистрацией и по-прежнему поступают из legacy. Исходные legacy-пароли не импортируются. Пароль хранится только как Argon2id-хэш (bcrypt используется как fallback, если Argon2id недоступен в сборке PHP).
+### Регистрация подтверждённых operands ОТиЗ
+
+ОТиЗ регистрирует факты append-only через авторизованные CSRF-защищённые команды:
+`POST /pilot/otiz/cases/{caseId}/premium-facts` (`effectiveDate`, `premiumCents`,
+`shaftBp`, `sourceLabel`, `sourceLocator`, `sourceSha256`) и
+`POST /pilot/otiz/cases/{caseId}/ktu-facts` (те же поля основания плюс
+`installerTabId`, `ktuBp`). Команды принимают только provenance-confirmed
+`native_candidate / operational_case`; КТУ дополнительно требует монтажника в
+зарегистрированном распоряжении. Исправление оформляется новым датированным
+фактом, существующие строки не изменяются.

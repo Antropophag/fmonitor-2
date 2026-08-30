@@ -35,6 +35,7 @@ foreach ($environment as $name => $value) {
     if (!is_string($name) || (!is_string($value) && !is_numeric($value))) continue;
     putenv($name . '=' . (string) $value);
 }
+if (getenv('PHP_CLI_SERVER_WORKERS') === false) putenv('PHP_CLI_SERVER_WORKERS=4');
 
 echo "FMonitor rapid pilot: http://127.0.0.1:{$port}/pilot/objects\n";
 passthru(escapeshellarg(PHP_BINARY) . ' -S ' . escapeshellarg('127.0.0.1:' . $port) . ' ' . escapeshellarg(__DIR__ . '/router.php'), $exitCode);

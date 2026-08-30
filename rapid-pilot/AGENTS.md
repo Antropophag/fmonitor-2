@@ -27,6 +27,13 @@ Treat `../shlz-ui/packages/styles/dist/shlz.css` and `../shlz-ui/docs/components
 
 After every rapid-pilot frontend change, run `php rapid-pilot/verify-visual-contract.php`. The change is complete only when this gate, the relevant syntax checks, `git diff --check`, and the Impeccable detector all pass.
 
+### Focus-state contract
+
+- Every keyboard-focusable control must retain a visible WCAG 2.2 AA focus indicator. Rapid-pilot focus chrome is neutral/dark (`--fm2-focus-ring`, or white on the dark navigation); never use semantic/product blue for an outline, focused border, fill, or halo.
+- This contract applies to native inputs, textareas, selects, buttons, links, summaries and custom tabindex controls, plus all `shlz-ui` interactive families. Semantic blue text, status and normal primary-button paint remain valid when they are not focus chrome.
+- A focused field wrapper and an expanded `shlz-ui` Select must keep a white surface, a neutral border and a neutral halo. Do not restore browser-blue or inherited `shlz-ui` blue focus/expanded paint.
+- After any frontend change, the named focus verifier `php rapid-pilot/verify-focus-contract.php` is mandatory; update its interactive-family inventory when adopting a new public `shlz-ui` control.
+
 ## Product invariants
 
 - Preserve append-only domain history.
