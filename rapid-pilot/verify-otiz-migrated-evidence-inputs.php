@@ -8,6 +8,7 @@ function evidenceCheck(bool $condition, string $message): void { if (!$condition
 $confirmed = ['legacyObjectId'=>7101,'evidenceGrade'=>'A','confidence'=>'high','conflictCodes'=>[],
     'sourceLabel'=>'Legacy FMonitor · только чтение','sourceLocator'=>'fm_maintable+checklist_logs','contentSha256'=>str_repeat('a',64),
     'projectionHash'=>str_repeat('b',64),'classification'=>'legacy_active','counts'=>['checklistEvents'=>12],
+    'progressMapping'=>['mappingVersion'=>'legacy-checklist-progress-mapping-v1','candidateProgressBp'=>6000,'eligibleForCalculation'=>false,'conflictCodes'=>['DEFINITION_VERSION_UNPROVEN']],
     'attributionObservations'=>[['tabId'=>'1042','observedName'=>'Наблюдаемый монтажник','source'=>'legacy_attribution_log']],
     'workforceFacts'=>[['tabId'=>'1042','employmentStatus'=>'employed','authoritySystem'=>'one_c_zup','source'=>'one_c_zup_via_bitrix']]];
 $input = OtizMigratedEvidenceInputs::forObject(7101, [7101=>$confirmed]);

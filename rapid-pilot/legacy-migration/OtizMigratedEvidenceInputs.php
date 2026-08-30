@@ -14,7 +14,7 @@ final class OtizMigratedEvidenceInputs
         return ['mode'=>'synthetic_fallback_with_confirmed_evidence','reconciliationClaim'=>false,'admittedEvidence'=>[
             'sourceLabel'=>$row['sourceLabel'], 'sourceLocator'=>$row['sourceLocator'], 'snapshotHash'=>$row['contentSha256'],
             'projectionHash'=>$row['projectionHash'], 'evidenceGrade'=>$row['evidenceGrade'], 'classification'=>$row['classification'],
-            'checklistEventCount'=>$row['counts']['checklistEvents'], 'attributionObservations'=>$row['attributionObservations'],
+            'checklistEventCount'=>$row['counts']['checklistEvents'], 'progressMapping'=>$row['progressMapping'], 'attributionObservations'=>$row['attributionObservations'],
             'workforceFacts'=>$row['workforceFacts'],
         ], 'exclusionReason'=>'CALCULATION_OPERAND_MAPPING_NOT_APPROVED'];
     }

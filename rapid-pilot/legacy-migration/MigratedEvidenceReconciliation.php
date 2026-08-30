@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/LegacyObjectClassification.php';
+require_once __DIR__ . '/LegacyChecklistProgressMapping.php';
 
 final class MigratedEvidenceReconciliation
 {
@@ -59,6 +60,7 @@ final class MigratedEvidenceReconciliation
             'reasonCodes' => $classification['reasonCodes'], 'evidenceGrade' => $grade,
             'confidence' => $grade === 'A' ? 'high' : ($grade === 'B' ? 'medium' : 'low'),
             'counts' => ['checklistEvents' => count($events), 'attributions' => count($attributions)],
+            'progressMapping' => LegacyChecklistProgressMapping::profile($payload),
             'attributionObservations' => array_values($observations), 'workforceFacts' => array_values($workforceFacts),
             'conflictCodes' => $conflicts, 'quarantineCount' => count($importIssues) + count($classification['quarantineCodes']),
         ];
