@@ -11,7 +11,8 @@ final class RapidPilotObjectDetails
         $details = self::read((int) $match[1]);
         $identity=self::extractElement($html,'<header class="fm2-object-identity"');$action=self::extractElement($html,'<section class="fm2-next-action"');$dashboard=self::extractElement($html,'<div class="fm2-object-dashboard"');
         if ($identity===null||$action===null||$dashboard===null) return $html;
-        $identityFacts=self::identityFacts($identity['html']);$section = self::render($details,$action['html'],$dashboard['html'],$identityFacts);
+        $originNotice=self::extractElement($html,'<div class="fm2-alert fm2-origin-notice"');
+        $identityFacts=self::identityFacts($identity['html']);$section = ($originNotice['html']??'').self::render($details,$action['html'],$dashboard['html'],$identityFacts);
         $start=min($identity['start'],$action['start'],$dashboard['start']);$end=max($identity['end'],$action['end'],$dashboard['end']);
         $html=substr_replace($html,$section,$start,$end-$start);
         $id=(string)$match[1];$registration=self::e($identityFacts['registration']);$html=str_replace('<strong>Объект монтажа № '.$id.'</strong>','<strong>Карточка объекта</strong>',$html);$html=str_replace('<span aria-current="page">Объект монтажа № '.$id.'</span>','<span aria-current="page">Рег. № '.$registration.'</span>',$html);
