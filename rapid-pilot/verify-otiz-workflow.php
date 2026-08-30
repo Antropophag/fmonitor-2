@@ -85,6 +85,12 @@ try {
     $run("/pilot/otiz/snapshots/{$acceptedId}/accept", 'POST', ['csrfToken' => 'verified-csrf-token']);
     $snapshotBefore = $db->query("SELECT * FROM `{$prefix}fm2_pilot_otiz_snapshots` WHERE id={$acceptedId}")->fetch_assoc();
     $expect($snapshotBefore['status'] === 'accepted', 'blocker-free draft can be accepted');
+    $expect($snapshotBefore['rules_version'] === PremiumCalculation::VERSION, 'snapshot persists shared premium calculation version');
+    $calculatedInputs = json_decode((string) $db->query("SELECT inputs_json FROM `{$prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$acceptedId} ORDER BY object_id LIMIT 1")->fetch_assoc()['inputs_json'], true, flags: JSON_THROW_ON_ERROR);
+    $expect(($calculatedInputs['premiumCalculation']['calculationVersion'] ?? null) === PremiumCalculation::VERSION, 'snapshot object persists exact shared calculation result');
+    $expect(count($calculatedInputs['premiumCalculation']['formulaTrace'] ?? []) === 5, 'snapshot object persists exact five-step formula trace');
+    $amounts=$calculatedInputs['premiumCalculation']['amounts']??[];$expect(array_key_exists('payoutDiscrepancyCents',$amounts)&&$amounts['payoutDiscrepancyCents']===null, 'absent actual payout produces no discrepancy');
+    $expect(($calculatedInputs['premiumCalculation']['paymentEvidence']['actualPayouts'] ?? null) === [], 'current synthetic calculation declares no actual payout evidence');
     $run("/pilot/otiz/snapshots/{$acceptedId}/accept", 'POST', ['csrfToken' => 'verified-csrf-token']);
     $snapshotAfter = $db->query("SELECT * FROM `{$prefix}fm2_pilot_otiz_snapshots` WHERE id={$acceptedId}")->fetch_assoc();
     $expect($snapshotBefore === $snapshotAfter, 'accepted snapshot is immutable on repeated acceptance');

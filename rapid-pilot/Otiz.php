@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
 require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
+require_once __DIR__ . '/legacy-migration/PremiumCalculation.php';
 
 final class RapidPilotOtiz
 {
@@ -115,7 +116,7 @@ final class RapidPilotOtiz
     {
         $previous = $this->db->query("SELECT id FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE status='accepted' AND report_date<'" . $this->db->real_escape_string($date) . "' ORDER BY report_date DESC,id DESC LIMIT 1")->fetch_assoc();
         $previousId = is_array($previous) ? (int) $previous['id'] : null; $now = $this->now();
-        $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshots`(report_date,status,previous_snapshot_id,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(?,'draft',?,'rapid-otiz-1.0',?,?,NULL,NULL,0,0,0,'pending')"); $s->bind_param('sisi', $date, $previousId, $now, $this->userId); $s->execute(); $snapshotId = (int) $s->insert_id;
+        $rulesVersion=PremiumCalculation::VERSION;$s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshots`(report_date,status,previous_snapshot_id,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(?,'draft',?,?,?, ?,NULL,NULL,0,0,0,'pending')"); $s->bind_param('sissi', $date, $previousId,$rulesVersion, $now, $this->userId); $s->execute(); $snapshotId = (int) $s->insert_id;
         $objects = $this->inputs(); $totalPool = 0; $totalClosed = 0; $payload = [];
         $reconciliationByObject = [];
         foreach (MigratedEvidenceReconciliation::load($this->db, $this->prefix) as $evidence) {
@@ -132,17 +133,18 @@ final class RapidPilotOtiz
             $hasZeroKtu = $o['zeroKtu'] && !$sourceCorrected;
             $progress = $date < '2026-07-31' ? $o['progress1'] : $o['progress2'];
             $previousProgress = $previousId === null ? 0 : ($date < '2026-07-31' ? 0 : $o['progress1']);
-            $comparisonDate = $o['pto'] !== null && $o['pto'] <= $date ? $o['pto'] : $date;
-            $daysLate = max(0, (int) ((strtotime($comparisonDate) - strtotime($o['deadline'])) / 86400)); $kss = max(0, 10000 - 100 * $daysLate);
-            $fund = intdiv($o['premium'] * $o['shaft'], 10000);
-            $accrued = intdiv(intdiv($fund * $progress, 10000) * $kss, 10000);
-            $closed = $this->closedBefore($o['id'], $date); $pool = max(0, $accrued - $closed); $remaining = max(0, $fund - $closed);
+            $synthetic=$this->syntheticSource((int)$o['id']);$fact=static fn(mixed$value,string$effectiveDate,array$source):array=>['value'=>$value,'effectiveDate'=>$effectiveDate,'source'=>$source];
+            $operands=['reportDate'=>$fact($date,$date,$synthetic),'premiumCents'=>$fact((int)$o['premium'],'2026-01-01',$synthetic),'shaftBp'=>$fact((int)$o['shaft'],'2026-01-01',$synthetic),'progressBp'=>$fact($progress,$date,$synthetic),'deadlineDate'=>$fact((string)$o['deadline'],'2026-01-01',$synthetic),'completionDate'=>$fact($o['pto'],$date,$synthetic)];
+            $exclusions=[];if($hasBlocker)$exclusions[]=['code'=>'UNPROVEN_INSTALLER','effectiveDate'=>$date,'source'=>$synthetic];if($hasZeroKtu)$exclusions[]=['code'=>'ZERO_TEAM_KTU','effectiveDate'=>$date,'source'=>$synthetic];
+            $mapped=$reconciliationByObject[(int)$o['id']]['progressMapping']??null;if(is_array($mapped)&&!($mapped['eligibleForCalculation']??false))$exclusions[]=['code'=>'LEGACY_PROGRESS_DEFINITION_UNPROVEN','effectiveDate'=>$date,'source'=>$synthetic];
+            $calculation=PremiumCalculation::calculate($operands,['closures'=>$this->closureEvidence((int)$o['id'],$date),'actualPayouts'=>[]],$exclusions);
+            $daysLate=(int)($calculation['formulaTrace'][2]['daysLate']??0);$kss=(int)$calculation['kssBp'];$fund=(int)$calculation['amounts']['fundCents'];$accrued=(int)$calculation['amounts']['accruedCents'];$closed=(int)$calculation['amounts']['closedBeforeCents'];$pool=(int)$calculation['amounts']['poolCents'];$remaining=(int)$calculation['amounts']['remainingFundCents'];
             $state = ($hasBlocker || $hasZeroKtu) ? 'blocked' : ($pool === 0 ? 'no_new_amount' : ($o['pto'] !== null && $progress === 10000 && $remaining === 0 ? 'completed' : 'ready'));
             $inputs = ['address' => $o['address'], 'deadline' => $o['deadline'], 'pto' => $o['pto'], 'daysLate' => $daysLate,
                 'calculationOperandsSource' => 'synthetic_rapid_pilot', 'calculationOperandsLabel' => 'Синтетические датированные факты rapid pilot — не результат reconciliation',
-                'migratedEvidence' => OtizMigratedEvidenceInputs::forObject((int)$o['id'], $reconciliationByObject), 'legacyExpectedCents' => $o['legacy']];
+                'premiumCalculation'=>$calculation,'migratedEvidence' => OtizMigratedEvidenceInputs::forObject((int)$o['id'], $reconciliationByObject), 'legacyExpectedCents' => $o['legacy']];
             $stmt = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_objects`(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $distributed = $hasBlocker || $hasZeroKtu ? 0 : $pool; $undistributed = $pool - $distributed; $progressDate = $date; $json = json_encode($inputs, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $distributed = (int)$calculation['amounts']['distributableCents']; $undistributed = $pool - $distributed; $progressDate = $date; $json = json_encode($inputs, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $stmt->bind_param('iissiisiiiiiiiiiiss', $snapshotId, $o['id'], $o['reg'], $o['address'], $previousProgress, $progress, $progressDate, $o['premium'], $o['shaft'], $kss, $accrued, $fund, $closed, $remaining, $pool, $distributed, $undistributed, $state, $json); $stmt->execute();
             if ($hasBlocker) $this->issue($snapshotId, $o['id'], 'blocker', 'UNPROVEN_INSTALLER', 'Выполненная работа не имеет доказанного монтажника на отчётную дату.', 'ФКР');
             if ($daysLate > 0) $this->issue($snapshotId, $o['id'], 'warning', 'DEADLINE_PENALTY', "Просрочка {$daysLate} календ. дн.; Ксс уменьшен до " . number_format($kss / 10000, 2, ',', ' '), 'ОТиЗ');
@@ -157,7 +159,7 @@ final class RapidPilotOtiz
             }
             $totalPool += $pool; $totalClosed += $closed; $payload[] = [$o['id'], $progress, $kss, $pool, $closed, $state];
         }
-        $hash = hash('sha256', json_encode([$date, 'rapid-otiz-1.0', $payload], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        $hash = hash('sha256', json_encode([$date, PremiumCalculation::VERSION, $payload], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $u = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_otiz_snapshots` SET total_pool_cents=?,total_closed_cents=?,total_available_cents=?,content_hash=? WHERE id=?"); $u->bind_param('iiisi', $totalPool, $totalClosed, $totalPool, $hash, $snapshotId); $u->execute();
         $this->event($snapshotId, null, 'draft_calculated', ['reportDate' => $date, 'hash' => $hash]); return $snapshotId;
     }
@@ -187,7 +189,7 @@ final class RapidPilotOtiz
             $issues = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND object_id=" . (int) $o['object_id'] . " ORDER BY FIELD(severity,'blocker','warning')")->fetch_all(MYSQLI_ASSOC);
             $issueHtml = ''; foreach ($issues as $issue) $issueHtml .= '<li><b>' . ($issue['severity'] === 'blocker' ? 'Блокер' : 'Внимание') . ':</b> ' . $this->e($issue['message']) . ' <span>Владелец: ' . $this->e($issue['owner_role']) . '</span></li>';
             $status = $o['calculation_state'] === 'blocked' ? ['shlz-status--orange','Заблокирован'] : ($o['calculation_state'] === 'no_new_amount' ? ['','Нет новой суммы'] : ($o['calculation_state'] === 'completed' ? ['shlz-status--green','Завершён'] : ['shlz-status--blue','Готов']));
-            $body .= '<tr class="fm2-otiz-object-row"><td><details><summary><strong>' . $this->e($o['regnumber']) . '</strong><small>' . $this->e($o['address']) . '</small></summary><div class="fm2-otiz-detail">' . $this->allocation($id, (int) $o['object_id']) . ($issueHtml !== '' ? '<ul class="fm2-otiz-issues">' . $issueHtml . '</ul>' : '') . $this->closureForm($s, $o) . '</div></details></td><td><strong>' . $this->percent((int) $o['previous_progress_bp']) . ' → ' . $this->percent((int) $o['current_progress_bp']) . '</strong><small>+' . $this->percent(max(0, (int) $o['current_progress_bp'] - (int) $o['previous_progress_bp'])) . '</small></td><td>' . number_format((int) $o['kss_bp'] / 10000, 2, ',', ' ') . '</td><td>' . $this->rub((int) $o['closed_before_cents']) . '</td><td><strong>' . $this->rub((int) $o['pool_cents']) . '</strong></td><td><span class="shlz-status ' . $status[0] . '">' . $status[1] . '</span></td></tr>';
+            $body .= '<tr class="fm2-otiz-object-row"><td><details><summary><strong>' . $this->e($o['regnumber']) . '</strong><small>' . $this->e($o['address']) . '</small></summary><div class="fm2-otiz-detail">' . $this->calculationTrace($o) . $this->allocation($id, (int) $o['object_id']) . ($issueHtml !== '' ? '<ul class="fm2-otiz-issues">' . $issueHtml . '</ul>' : '') . $this->closureForm($s, $o) . '</div></details></td><td><strong>' . $this->percent((int) $o['previous_progress_bp']) . ' → ' . $this->percent((int) $o['current_progress_bp']) . '</strong><small>+' . $this->percent(max(0, (int) $o['current_progress_bp'] - (int) $o['previous_progress_bp'])) . '</small></td><td>' . number_format((int) $o['kss_bp'] / 10000, 2, ',', ' ') . '</td><td>' . $this->rub((int) $o['closed_before_cents']) . '</td><td><strong>' . $this->rub((int) $o['pool_cents']) . '</strong></td><td><span class="shlz-status ' . $status[0] . '">' . $status[1] . '</span></td></tr>';
         }
         $body .= '</tbody></table></div></section>' . $this->evidenceLedger($id) . $this->closures($id);
         $this->page('Срез на ' . $this->date($s['report_date']), $body);
@@ -301,6 +303,14 @@ final class RapidPilotOtiz
         return $html.'</tbody></table></div></section>';
     }
 
+    private function calculationTrace(array $object):string
+    {
+        $inputs=json_decode((string)$object['inputs_json'],true);$calculation=$inputs['premiumCalculation']??null;if(!is_array($calculation))return'';
+        $steps='';foreach($calculation['formulaTrace']??[]as$step){$result=array_key_exists('resultCents',$step)?$this->rub((int)$step['resultCents']):$this->percent((int)($step['resultBp']??0));$steps.='<li><span>'.$this->e($step['step']??'').'</span><code>'.$this->e($step['formula']??'').'</code><strong>'.$result.'</strong></li>';}
+        $exclusions=$calculation['exclusions']??[];$note=$exclusions===[]?'Расчёт допущен к распределению.':'Исключено: '.implode(', ',array_column($exclusions,'code'));
+        return'<details class="fm2-otiz-trace"><summary>Версия и точный trace расчёта</summary><p>'.$this->e((string)$calculation['calculationVersion']).' · '.$this->e($note).'</p><ol>'.$steps.'</ol></details>';
+    }
+
     private function ensureSchema(): void
     {
         self::bootstrap($this->db, $this->prefix);
@@ -339,6 +349,12 @@ final class RapidPilotOtiz
     }
 
     private function closedBefore(int $objectId, string $date): int { return (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE object_id={$objectId} AND closed_on<='" . $this->db->real_escape_string($date) . "'")->fetch_assoc()['n']; }
+    private function closureEvidence(int $objectId,string $date):array
+    {
+        $rows=$this->db->query("SELECT id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,reverses_payment_closure_id FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE object_id={$objectId} AND closed_on<='".$this->db->real_escape_string($date)."' ORDER BY id")->fetch_all(MYSQLI_ASSOC);$evidence=[];
+        foreach($rows as$row){$canonical=json_encode($row,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$evidence[]=['amountCents'=>(int)$row['paid_cents']+(int)$row['discipline_cents']+(int)$row['deadline_cents'],'closedOn'=>(string)$row['closed_on'],'source'=>['label'=>'Принятое закрытие ОТиЗ','locator'=>'fm2_pilot_otiz_payment_closures/'.(int)$row['id'],'contentSha256'=>hash('sha256',$canonical)]];}return$evidence;
+    }
+    private function syntheticSource(int $objectId):array{return['label'=>'Синтетические operands rapid pilot — не reconciliation','locator'=>'rapid-pilot/fixtures/object/'.$objectId,'contentSha256'=>hash('sha256','rapid-pilot-synthetic-v1:'.$objectId)];}
     private function issue(int $snapshotId,int $objectId,string $severity,string $code,string $message,string $owner): void { $s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_issues`(snapshot_id,object_id,severity,issue_code,message,owner_role,state) VALUES(?,?,?,?,?,?,'open')"); $s->bind_param('iissss',$snapshotId,$objectId,$severity,$code,$message,$owner); $s->execute(); }
     private function event(?int $snapshotId,?int $objectId,string $type,array $payload): void { $json=json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$now=$this->now();$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_events`(snapshot_id,object_id,event_type,payload_json,actor_user_id,occurred_at) VALUES(?,?,?,?,?,?)");$s->bind_param('iissis',$snapshotId,$objectId,$type,$json,$this->userId,$now);$s->execute(); }
     private function snapshotRow(int $id): array { $row=$this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1")->fetch_assoc(); if(!is_array($row))$this->fail(404,'Срез не найден.'); return $row; }

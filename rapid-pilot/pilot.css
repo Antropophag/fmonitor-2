@@ -539,6 +539,13 @@
 .fm2-otiz-object-row:has(details[open]) > td { vertical-align: top; background: #fbfcfe; }
 .fm2-otiz-detail { inline-size: min(660px, calc(100vw - 160px)); padding: 16px 0 8px 14px; color: var(--fm2-ink); }
 .fm2-otiz-allocation h3 { margin: 0 0 10px; font-size: 12px; font-weight: 500; }
+.fm2-otiz-trace { margin-block-end: 16px; padding: 11px 13px; background: var(--fm2-filter); border-radius: var(--fm2-radius); }
+.fm2-otiz-trace > summary { display: list-item; color: var(--fm2-primary); font-size: 12px; font-weight: 500; cursor: pointer; }
+.fm2-otiz-trace p { margin: 9px 0; color: var(--fm2-muted); font-size: 10px; }
+.fm2-otiz-trace ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fm2-otiz-trace li { display: grid; grid-template-columns: 70px minmax(0,1fr) auto; gap: 10px; align-items: baseline; font-size: 10px; }
+.fm2-otiz-trace code { color: var(--fm2-muted); overflow-wrap: anywhere; }
+.fm2-otiz-trace strong { font-weight: 600; white-space: nowrap; }
 .fm2-otiz-allocation > div { display: flex; padding-block: 8px; align-items: center; justify-content: space-between; gap: 16px; border-block-end: 1px solid var(--fm2-border); }
 .fm2-otiz-allocation span { display: grid; gap: 2px; }
 .fm2-otiz-allocation small { margin: 0; }

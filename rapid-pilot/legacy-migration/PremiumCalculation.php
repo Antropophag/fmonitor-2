@@ -15,7 +15,7 @@ final class PremiumCalculation
     {
         $reportDate = self::fact($operands, 'reportDate', 'date');
         $premium = self::fact($operands, 'premiumCents', 'money');
-        $shaft = self::fact($operands, 'shaftBp', 'basisPoints');
+        $shaft = self::fact($operands, 'shaftBp', 'coefficientBp');
         $progress = self::fact($operands, 'progressBp', 'basisPoints');
         $deadline = self::fact($operands, 'deadlineDate', 'date');
         $completion = self::fact($operands, 'completionDate', 'nullableDate');
@@ -29,7 +29,9 @@ final class PremiumCalculation
 
         $closed = self::payments($paymentEvidence['closures'] ?? null, 'closedOn');
         if ($closed < 0) throw new InvalidArgumentException('Net closed amount cannot be negative');
-        $actualPaid = self::payments($paymentEvidence['actualPayouts'] ?? null, 'paidOn');
+        $actualPayoutRows=$paymentEvidence['actualPayouts']??null;
+        $actualPaid = self::payments($actualPayoutRows, 'paidOn');
+        $hasActualPayoutEvidence=is_array($actualPayoutRows)&&$actualPayoutRows!==[];
         if ($actualPaid < 0) throw new InvalidArgumentException('Net actual payout cannot be negative');
         $pool = max(0, $accrued - $closed);
         $remaining = max(0, $fund - $closed);
@@ -44,7 +46,7 @@ final class PremiumCalculation
         $reasons = [];
         if ($daysLate > 0) $reasons[] = 'DEADLINE_PENALTY';
         if ($pool === 0) $reasons[] = 'NO_NEW_AMOUNT';
-        if ($actualPaid !== $accrued) $reasons[] = 'PAYOUT_DISCREPANCY';
+        if ($hasActualPayoutEvidence&&$actualPaid !== $accrued) $reasons[] = 'PAYOUT_DISCREPANCY';
         if ($normalizedExclusions !== []) $reasons[] = 'CALCULATION_EXCLUDED';
         $distributable = $normalizedExclusions === [] ? $pool : 0;
 
@@ -61,7 +63,7 @@ final class PremiumCalculation
             'reasons'=>$reasons,'exclusions'=>$normalizedExclusions,
             'amounts'=>['fundCents'=>$fund,'accruedCents'=>$accrued,'closedBeforeCents'=>$closed,'poolCents'=>$pool,
                 'remainingFundCents'=>$remaining,'distributableCents'=>$distributable,'actualPayoutCents'=>$actualPaid,
-                'payoutDiscrepancyCents'=>$actualPaid-$accrued],
+                'payoutDiscrepancyCents'=>$hasActualPayoutEvidence?$actualPaid-$accrued:null],
             'progressBp'=>$progress,'kssBp'=>$kss,
             'paymentEvidence'=>$paymentEvidence,
         ];
@@ -74,7 +76,7 @@ final class PremiumCalculation
         if($type==='date'){self::date((string)$value);return(string)$value;}
         if($type==='nullableDate'){if($value===null)return null;self::date((string)$value);return(string)$value;}
         if(!is_int($value))throw new InvalidArgumentException("Operand {$name} must be integer");
-        $max=$type==='money'?1000000000000:10000;if($value<0||$value>$max)throw new InvalidArgumentException("Operand {$name} out of range");return$value;
+        $max=$type==='money'?1000000000000:($type==='coefficientBp'?20000:10000);if($value<0||$value>$max)throw new InvalidArgumentException("Operand {$name} out of range");return$value;
     }
     private static function payments(mixed $rows,string $dateField):int
     {
