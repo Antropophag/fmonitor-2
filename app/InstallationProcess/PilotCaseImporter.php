@@ -151,7 +151,6 @@ final class PilotCaseImporter
                 || trim((string) $row['regnumber']) === ''
                 || $start === null || $finish === null
             ) $reasons[] = 'LEGACY_OBJECT_REQUIRED_DATA_MISSING';
-            if ($start !== null && $start < '2026-10-01') $reasons[] = 'PILOT_PLANNED_START_BEFORE_CUTOFF';
             if ($pto !== null) $reasons[] = 'ORDER_HAS_PTO_ACT';
             if ($completed !== null) $reasons[] = 'LEGACY_INSTALLATION_ALREADY_COMPLETED';
             if ($reasons !== []) $rejected[] = ['installationObjectId' => $id, 'reasonCodes' => $reasons];
