@@ -8,7 +8,7 @@ final class RapidPilotObjectDetails
     {
         if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $match) !== 1) return $html;
         $html = self::correctUnavailableOpenCommand($html);
-        $details = self::read((int) $match[1]) ?? self::fallbackDetails();
+        $details = self::read((int) $match[1]);
         $identity=self::extractElement($html,'<header class="fm2-object-identity"');$action=self::extractElement($html,'<section class="fm2-next-action"');$dashboard=self::extractElement($html,'<div class="fm2-object-dashboard"');
         if ($identity===null||$action===null||$dashboard===null) return $html;
         $identityFacts=self::identityFacts($identity['html']);$section = self::render($details,$action['html'],$dashboard['html'],$identityFacts);
@@ -46,7 +46,7 @@ final class RapidPilotObjectDetails
     private static function read(int $objectId): ?array
     {
         $prefix = getenv('FMONITOR_PROCESS_TABLE_PREFIX');
-        if (!is_string($prefix) || preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) return null;
+        if (!is_string($prefix) || preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) return self::unavailableDetails('Проекция технических данных поколения недоступна.');
         try {
             $db = new mysqli(
                 getenv('FMONITOR_DB_HOST') ?: '127.0.0.1',
@@ -55,36 +55,28 @@ final class RapidPilotObjectDetails
                 (string) getenv('FMONITOR_DB_NAME'),
                 (int) (getenv('FMONITOR_DB_PORT') ?: 3306),
             );
-            $statement = $db->prepare("SELECT payload_json,source_updated_at FROM `{$prefix}fm2_pilot_object_details` WHERE object_id=? LIMIT 1");
+            $statement = $db->prepare("SELECT payload_json,captured_at FROM `{$prefix}fm2_pilot_object_details` WHERE object_id=? LIMIT 1");
             $statement->bind_param('i', $objectId);
             $statement->execute();
             $row = $statement->get_result()->fetch_assoc();
-            if (!is_array($row)) return null;
+            if (!is_array($row)) return self::unavailableDetails('Проекция технических данных для объекта недоступна.');
             $payload = json_decode((string) $row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
-            if(!is_array($payload))return null;
+            if(!is_array($payload))return self::unavailableDetails('Проекция технических данных повреждена.');
             $team=$db->prepare("SELECT oi.installer_tab_id,oi.fio_snapshot,oi.employment_status_snapshot,w.employment_status FROM `{$prefix}fm2_order_installers` oi JOIN `{$prefix}fm2_assignment_orders` o ON o.id=oi.assignment_order_id JOIN `{$prefix}fm2_installation_cases` c ON c.id=o.installation_case_id LEFT JOIN `{$prefix}fm2_workforce_catalog` w ON w.installer_tab_id=oi.installer_tab_id WHERE c.legacy_installation_object_id=? AND o.version_no=(SELECT MAX(latest.version_no) FROM `{$prefix}fm2_assignment_orders` latest WHERE latest.installation_case_id=c.id) AND oi.change_action<>'release' ORDER BY oi.installer_tab_id");$team->bind_param('i',$objectId);$team->execute();$installers=$team->get_result()->fetch_all(MYSQLI_ASSOC);$db->close();
-            return $payload + ['sourceUpdatedAt' => (string) $row['source_updated_at'],'installers'=>$installers];
+            return $payload + ['capturedAt' => (string) $row['captured_at'],'installers'=>$installers];
         } catch (Throwable) {
-            return null;
+            return self::unavailableDetails('Проекция технических данных поколения недоступна.');
         }
     }
 
-    private static function fallbackDetails(): array
-    {
-        $updatedAt = getenv('FMONITOR_NOW');
-        return [
-            'fields' => [],
-            'sourceUpdatedAt' => is_string($updatedAt) ? $updatedAt : '',
-            'installers' => [],
-        ];
-    }
+    private static function unavailableDetails(string$message):array{return['fields'=>[],'capturedAt'=>'','installers'=>[],'projectionUnavailable'=>$message];}
 
     private static function render(array $data,string $action,string $dashboard,array $identity): string
     {
         $fields = $data['fields'] ?? [];
         $existing=self::existingPanels($dashboard);$processDates=self::panelPairs($existing['Сроки работ']??'');$teamFacts=self::panelPairs($existing['Команда объекта']??'');
         foreach(['Плановое начало'=>'workdatestart','Плановое окончание'=>'workdatefinish','Фактическое начало'=>'factworkstartdate']as$label=>$key)if(isset($processDates[$label]))$fields[$key]['display']=$processDates[$label]==='Не зафиксировано'?'':$processDates[$label];
-        $updated = self::dateTime((string) ($data['sourceUpdatedAt'] ?? ''));
+        $updated = self::dateTime((string) ($data['capturedAt'] ?? ''));
         $passport=self::compactRow('Расположение',[['Округ','area'],['Район','district']],$fields)
             .self::compactRow('Лифт',[['Этажность','floors'],['Грузоподъёмность','weight',' кг'],['Скорость','speed',' м/с']],$fields)
             .self::compactRow('Шахта',[['Тип','pittype'],['Материал','pitmaterial'],['Очередность','paired']],$fields)
@@ -109,7 +101,7 @@ final class RapidPilotObjectDetails
         $documents.=($existing['Распоряжение и 1С ДО']??'');$control.=($existing['Проблемы']??'').($existing['Последние события']??'');
         $tabs=['schedule'=>['Сроки и готовность',$schedule],'participants'=>['Команда',$participants],'documents'=>['Документы',$documents],'control'=>['Контроль и история',$control]];$buttons='';$panels='';
         foreach($tabs as$key=>[$label,$content]){$selected=$key==='schedule';$buttons.='<button class="shlz-tabs__tab" id="object-'.$key.'-tab" type="button" role="tab" aria-selected="'.($selected?'true':'false').'" aria-controls="object-'.$key.'-panel"'.($selected?'':' tabindex="-1"').'>'.$label.'</button>';$panels.='<div class="shlz-tabs__panel fm2-object-tab-panel" id="object-'.$key.'-panel" role="tabpanel" aria-labelledby="object-'.$key.'-tab"'.($selected?'':' hidden').'><div class="fm2-compact-list">'.$content.'</div></div>';}
-        return '<section class="fm2-object-data"><header class="fm2-card-header"><div><h1>'.self::e($identity['address']).'</h1><p>Данные обновлены '.$updated.'</p>'.$identity['status'].'</div><div class="fm2-registration"><span>Регистрационный номер</span><strong>'.self::e($identity['registration']).'</strong></div></header><div class="fm2-object-layout"><aside class="fm2-static-passport" aria-labelledby="passport-title"><h3 id="passport-title">Основные сведения</h3><div class="fm2-compact-list">'.$passport.'</div></aside><div class="fm2-object-workspace">'.$action.'<div class="shlz-tabs fm2-object-tabs" data-shlz-tabs><div class="shlz-tabs__list" role="tablist" aria-label="Рабочие данные объекта">'.$buttons.'</div>'.$panels.'</div></div></div></section>';
+        $unavailable=isset($data['projectionUnavailable'])?'<p class="fm2-data-unavailable" role="alert">'.self::e((string)$data['projectionUnavailable']).'</p>':'';return '<section class="fm2-object-data"><header class="fm2-card-header"><div><h1>'.self::e($identity['address']).'</h1><p>Проекция данных зафиксирована '.$updated.'</p>'.$identity['status'].'</div><div class="fm2-registration"><span>Регистрационный номер</span><strong>'.self::e($identity['registration']).'</strong></div></header>'.$unavailable.'<div class="fm2-object-layout"><aside class="fm2-static-passport" aria-labelledby="passport-title"><h3 id="passport-title">Основные сведения</h3><div class="fm2-compact-list">'.$passport.'</div></aside><div class="fm2-object-workspace">'.$action.'<div class="shlz-tabs fm2-object-tabs" data-shlz-tabs><div class="shlz-tabs__list" role="tablist" aria-label="Рабочие данные объекта">'.$buttons.'</div>'.$panels.'</div></div></div></section>';
     }
 
     private static function existingPanels(string $dashboard):array

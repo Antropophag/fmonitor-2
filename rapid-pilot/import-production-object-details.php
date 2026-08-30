@@ -1,72 +1,16 @@
 <?php
-
 declare(strict_types=1);
-
-function detailEnv(string $name): string
-{
-    $value = getenv($name);
-    if ($value === false || $value === '') throw new RuntimeException("Missing {$name}");
-    return $value;
-}
-
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$manifest = json_decode((string) file_get_contents(detailEnv('FMONITOR_PILOT_ACTIVE_MANIFEST')), true, flags: JSON_THROW_ON_ERROR);
-$prefix = (string) ($manifest['processPrefix'] ?? '');
-if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new RuntimeException('Invalid process prefix');
-
-$source = new mysqli(
-    getenv('FMONITOR_SOURCE_HOST') ?: '127.0.0.1',
-    detailEnv('FMONITOR_SOURCE_USER'),
-    detailEnv('FMONITOR_SOURCE_PASSWORD'),
-    getenv('FMONITOR_SOURCE_NAME') ?: 'c1_fmonitor',
-    (int) (getenv('FMONITOR_SOURCE_PORT') ?: '13306'),
-);
-$source->set_charset('utf8mb4');
-$target = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
-$target->set_charset('utf8mb4');
-
-$ids = [];
-foreach ($target->query("SELECT legacy_installation_object_id FROM `{$prefix}fm2_installation_cases` ORDER BY legacy_installation_object_id")->fetch_all(MYSQLI_ASSOC) as $row) $ids[] = (int) $row['legacy_installation_object_id'];
-if ($ids === []) throw new RuntimeException('No pilot objects');
-
-$metadata = [];
-$metaSql = "SELECT f.id,f.sysname,COALESCE(NULLIF(vf.showname,''),f.name) label,f.type FROM fm_fields f LEFT JOIN fm_view_fields vf ON vf.fields_id=f.id AND vf.views_id=4 AND vf.status=1 ORDER BY f.id";
-foreach ($source->query($metaSql)->fetch_all(MYSQLI_ASSOC) as $row) $metadata[(string) $row['sysname']] = $row;
-
-$physical = [];
-foreach ($source->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='fm_maintable'")->fetch_all(MYSQLI_ASSOC) as $row) $physical[(string) $row['COLUMN_NAME']] = true;
-$wanted = ['area','district','zavnumber','floors','weight','speed','paired','pittype','pitmaterial','doorcabin_type','typepitdoor','workdatestart','workdatefinish','workdatestartadjusted','workdateendadjusted','plan_finish_date','equipmentproduced','equipmentdeliverydate','equiponobject','measurements','factworkstartdate','generalcontractor','subsuplier','respperson','contact_phone','headofconstructarea','contact_phone_headofconstruct','responsstroicontrol','contact_phone_itn','openingactuploaded','openingactverified','siteplanuploaded','siteplanverified','transferactsign','transferactdate','transferactdeliverdate','transferactstatus','acttransfertoulhdate','transfer_act_uploaded','transferactverified','ptoactdate','non_conformance_act_date','declarations','contractor_docs_transfer_date','object_status','control_flag','comments','sm_comment'];
-$wanted = array_values(array_filter($wanted, static fn(string $field): bool => isset($physical[$field])));
-
-$dictionary = [];
-foreach ($source->query('SELECT field_id,id,name FROM fm_fields_values')->fetch_all(MYSQLI_ASSOC) as $row) $dictionary[(int) $row['field_id']][(string) $row['id']] = (string) $row['name'];
-$users = [];
-foreach ($source->query('SELECT id,name FROM users')->fetch_all(MYSQLI_ASSOC) as $row) $users[(string) $row['id']] = (string) $row['name'];
-
-$idList = implode(',', $ids);
-$select = implode(',', array_map(static fn(string $field): string => "`{$field}`", $wanted));
-$rows = $source->query("SELECT id,{$select} FROM fm_maintable WHERE id IN ({$idList}) ORDER BY id")->fetch_all(MYSQLI_ASSOC);
-$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
-
-$target->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_object_details` (object_id INT NOT NULL PRIMARY KEY,payload_json LONGTEXT NOT NULL,source_updated_at VARCHAR(40) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-$upsert = $target->prepare("INSERT INTO `{$prefix}fm2_pilot_object_details`(object_id,payload_json,source_updated_at) VALUES(?,?,?) ON DUPLICATE KEY UPDATE payload_json=VALUES(payload_json),source_updated_at=VALUES(source_updated_at)");
-foreach ($rows as $row) {
-    $fields = [];
-    foreach ($wanted as $field) {
-        $meta = $metadata[$field] ?? ['id' => 0, 'label' => $field, 'type' => 0];
-        $raw = trim((string) ($row[$field] ?? ''));
-        $display = $raw;
-        if ($raw === '' || preg_match('/^0000-00-00/', $raw) === 1) $display = '';
-        elseif ((int) $meta['type'] === 4) $display = $dictionary[(int) $meta['id']][$raw] ?? $raw;
-        elseif ((int) $meta['type'] === 10) $display = $users[$raw] ?? $raw;
-        elseif ((int) $meta['type'] === 11) $display = $raw === '1' ? 'Да' : 'Нет';
-        elseif ((int) $meta['type'] === 5 && preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $raw, $date) === 1) $display = "{$date[3]}.{$date[2]}.{$date[1]}";
-        $fields[$field] = ['label' => (string) $meta['label'], 'display' => $display];
-    }
-    $payload = json_encode(['objectId' => (int) $row['id'], 'fields' => $fields], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    $id = (int) $row['id'];
-    $upsert->bind_param('iss', $id, $payload, $now);
-    $upsert->execute();
-}
-
-echo json_encode(['ok' => true, 'objects' => count($rows), 'fields' => count($wanted)], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), PHP_EOL;
+require_once __DIR__.'/legacy-migration/WorkforceCatalogReconciliationCandidate.php';
+function detailEnv(string $name):string{$v=getenv($name);if($v===false||$v==='')throw new RuntimeException("Missing {$name}");return$v;}
+function canonicalCapture(string $v):string{$d=DateTimeImmutable::createFromFormat('!Y-m-d\TH:i:sP',$v);if(!$d||$d->format('Y-m-d\TH:i:sP')!==$v)throw new InvalidArgumentException('CAPTURED_AT_INVALID');return$v;}
+mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$o=getopt('',['apply','captured-at:','page-size::']);$apply=isset($o['apply']);$captured=canonicalCapture((string)($o['captured-at']??''));$pageSize=filter_var($o['page-size']??100,FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>500]]);if($pageSize===false)throw new InvalidArgumentException('PAGE_SIZE_INVALID');if($apply&&detailEnv('FMONITOR_LOCAL_PILOT_ACK')!=='local-pilot-only')throw new DomainException('LOCAL_PILOT_GUARD_REQUIRED');
+$manifest=json_decode((string)file_get_contents(detailEnv('FMONITOR_PILOT_ACTIVE_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);$p=(string)($manifest['processPrefix']??'');$endpoint=WorkforceCatalogReconciliationCandidate::endpoint($manifest);$target=new mysqli($endpoint['host'],detailEnv('FMONITOR_DB_USER'),detailEnv('FMONITOR_DB_PASSWORD'),$endpoint['name'],$endpoint['port']);$target->set_charset('utf8mb4');WorkforceCatalogReconciliationCandidate::assertGeneration($target,$p,$manifest);
+$source=new mysqli(getenv('FMONITOR_SOURCE_HOST')?:'127.0.0.1',detailEnv('FMONITOR_SOURCE_USER'),detailEnv('FMONITOR_SOURCE_PASSWORD'),getenv('FMONITOR_SOURCE_NAME')?:'c1_fmonitor',(int)(getenv('FMONITOR_SOURCE_PORT')?:13306));$source->set_charset('utf8mb4');$facts=['floors','weight','speed','pittype','pitmaterial','paired'];$version='technical-object-detail-v1';$source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');$source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+try{$metadata=[];foreach($source->query("SELECT f.id,f.sysname,COALESCE(NULLIF(vf.showname,''),f.name) label,f.type FROM fm_fields f LEFT JOIN fm_view_fields vf ON vf.fields_id=f.id AND vf.views_id=4 AND vf.status=1 WHERE f.sysname IN ('".implode("','",$facts)."')")as$r)$metadata[$r['sysname']]=$r;if(count($metadata)!==count($facts))throw new DomainException('SOURCE_METADATA_INCOMPLETE');$dictionary=[];foreach($source->query("SELECT field_id,id,name FROM fm_fields_values WHERE field_id IN(".implode(',',array_map(fn($x)=>(int)$x['id'],$metadata)).")")as$r)$dictionary[(int)$r['field_id']][(string)$r['id']]=(string)$r['name'];
+$ids=[];$after=0;$idQuery=$target->prepare("SELECT legacy_installation_object_id FROM `{$p}fm2_installation_cases` WHERE legacy_installation_object_id>? ORDER BY legacy_installation_object_id LIMIT ?");do{$idQuery->bind_param('ii',$after,$pageSize);$idQuery->execute();$idPage=array_map('intval',array_column($idQuery->get_result()->fetch_all(MYSQLI_ASSOC),'legacy_installation_object_id'));foreach($idPage as$id){$ids[]=$id;$after=$id;}}while(count($idPage)===$pageSize);
+$projections=[];$missing=[];for($offset=0;$offset<count($ids);$offset+=$pageSize){$page=array_slice($ids,$offset,$pageSize);$rows=[];foreach($source->query('SELECT id,'.implode(',',$facts).' FROM fm_maintable WHERE id IN('.implode(',',$page).') ORDER BY id')as$r)$rows[(int)$r['id']]=$r;foreach($page as$id){if(!isset($rows[$id])){$missing[]=$id;continue;}$fields=[];foreach($facts as$name){$meta=$metadata[$name];$raw=trim((string)$rows[$id][$name]);$display=$raw;if((int)$meta['type']===4){if($raw!==''&&!isset($dictionary[(int)$meta['id']][$raw]))throw new DomainException('SOURCE_DICTIONARY_VALUE_UNKNOWN');$display=$raw===''?'':$dictionary[(int)$meta['id']][$raw];}$fields[$name]=['raw'=>$raw,'display'=>$display,'provenance'=>['sourceTable'=>'fm_maintable','sourceColumn'=>$name,'fieldId'=>(int)$meta['id'],'fieldType'=>(int)$meta['type'],'dictionaryTable'=>(int)$meta['type']===4?'fm_fields_values':null,'dictionaryId'=>(int)$meta['type']===4&&$raw!==''?$raw:null]];}$material=['schemaVersion'=>$version,'objectId'=>$id,'fields'=>$fields];$hash=hash('sha256',json_encode($material,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));$projections[$id]=$material+['contentSha256'=>$hash,'capturedAt'=>$captured];}}$source->commit();}catch(Throwable$e){$source->rollback();throw$e;}finally{$source->close();}
+$public=['mode'=>$apply?'apply':'dry-run','activeCases'=>count($ids),'sourceRows'=>count($projections),'missingSource'=>count($missing),'schemaVersion'=>$version];if(!$apply){echo json_encode($public+['writes'=>0],JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),"\n";$target->close();exit;}
+$target->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_object_details`(object_id BIGINT UNSIGNED PRIMARY KEY,schema_version VARCHAR(80) NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,captured_at VARCHAR(40) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+$target->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_object_detail_quarantine`(object_id BIGINT UNSIGNED PRIMARY KEY,code VARCHAR(80) NOT NULL,schema_version VARCHAR(80) NOT NULL,content_sha256 CHAR(64) NOT NULL,captured_at VARCHAR(40) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+$target->begin_transaction();try{WorkforceCatalogReconciliationCandidate::assertGeneration($target,$p,$manifest,true);
+$created=0;$present=0;$insert=$target->prepare("INSERT INTO `{$p}fm2_pilot_object_details` VALUES(?,?,?,?,?)");foreach($projections as$id=>$projection){$s=$target->prepare("SELECT content_sha256 FROM `{$p}fm2_pilot_object_details` WHERE object_id=? FOR UPDATE");$s->bind_param('i',$id);$s->execute();$existing=$s->get_result()->fetch_assoc();if($existing){if(!hash_equals((string)$existing['content_sha256'],$projection['contentSha256']))throw new DomainException('DETAIL_PROJECTION_CONFLICT');$present++;continue;}$json=json_encode($projection,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$hash=$projection['contentSha256'];$insert->bind_param('issss',$id,$version,$hash,$json,$captured);$insert->execute();$created++;}$qCreated=0;$qPresent=0;$qInsert=$target->prepare("INSERT INTO `{$p}fm2_pilot_object_detail_quarantine` VALUES(?,'SOURCE_OBJECT_NOT_FOUND',?,?,?)");foreach($missing as$id){$hash=hash('sha256',json_encode(['schemaVersion'=>$version,'objectId'=>$id,'code'=>'SOURCE_OBJECT_NOT_FOUND'],JSON_THROW_ON_ERROR));$s=$target->prepare("SELECT content_sha256 FROM `{$p}fm2_pilot_object_detail_quarantine` WHERE object_id=? FOR UPDATE");$s->bind_param('i',$id);$s->execute();$existing=$s->get_result()->fetch_assoc();if($existing){if(!hash_equals((string)$existing['content_sha256'],$hash))throw new DomainException('DETAIL_QUARANTINE_CONFLICT');$qPresent++;continue;}$qInsert->bind_param('isss',$id,$version,$hash,$captured);$qInsert->execute();$qCreated++;}$target->commit();echo json_encode($public+['created'=>$created,'alreadyPresent'=>$present,'quarantineCreated'=>$qCreated,'quarantinePresent'=>$qPresent],JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),"\n";}catch(Throwable$e){$target->rollback();throw$e;}finally{$target->close();}
