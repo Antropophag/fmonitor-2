@@ -61,6 +61,7 @@ $require(!str_contains($css,'.fm2-object-workspace > .fm2-next-action:has(.fm2-a
 $require(str_contains($css,'block-size: 10px; margin-block-end: 12px;'),'work progress must remain a compact secondary indicator');
 $require(str_contains($objectDetails,'<a class="shlz-button shlz-button--primary"$1>Загрузить распоряжение</a>'),'assignment-order upload must render as the primary action button');
 $require(str_contains($objectDetails,'<span class="shlz-field__control"><input class="shlz-input" id="actualStartDate"$1>'),'actual-start date must use the documented shlz Input composition');
+$require(str_contains($css,'.fm2-next-action .fm2-inline-form:has(#actualStartDate) > button { grid-column: 2; grid-row: 1;'),'actual-start date and open command must remain on one desktop row');
 $require(!str_contains($checklist,'data-complete-section'),'checklist sections must complete automatically without a redundant action');
 $require(!str_contains($checklist,'data-action-dock')&&!str_contains($css,'.fm2-check-dock'),'checklist must not restore the floating action dock');
 $require(str_contains($css,'.fm2-sidebar { position: fixed; z-index: 40; inset: auto 0 0;')&&str_contains($css,'padding-block-end: calc(64px + env(safe-area-inset-bottom))'),'mobile primary navigation must be fixed to the bottom without covering content');

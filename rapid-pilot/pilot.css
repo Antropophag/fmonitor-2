@@ -841,6 +841,9 @@
 .fm2-next-action .fm2-inline-form label, .fm2-next-action .fm2-inline-form small { grid-column: 1; }
 .fm2-next-action .fm2-inline-form button { grid-column: 2; grid-row: 2; }
 .fm2-next-action .fm2-registration-form { inline-size: min(100%, 640px); }
+.fm2-next-action .fm2-inline-form:has(#actualStartDate) { grid-template-columns: minmax(260px, 1fr) auto; inline-size: min(100%, 520px); align-items: end; }
+.fm2-next-action .fm2-inline-form:has(#actualStartDate) > .shlz-field { grid-column: 1; grid-row: 1; }
+.fm2-next-action .fm2-inline-form:has(#actualStartDate) > button { grid-column: 2; grid-row: 1; white-space: nowrap; }
 .fm2-order-documents { margin-block-start: 16px; }
 .fm2-order-documents .shlz-document-row:last-child { border-block-end: 0; }
 .fm2-object-dashboard { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr); gap: 16px; align-items: start; }
