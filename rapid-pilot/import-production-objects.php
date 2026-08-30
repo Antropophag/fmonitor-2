@@ -35,7 +35,6 @@ $manifestPath = requiredEnv('FMONITOR_PILOT_ACTIVE_MANIFEST');
 $manifest = json_decode((string) file_get_contents($manifestPath), true, flags: JSON_THROW_ON_ERROR);
 $processPrefix = (string) ($manifest['processPrefix'] ?? '');
 $legacyPrefix = (string) ($manifest['legacyPrefix'] ?? '');
-$limit = 100;
 
 $source = new mysqli(
     getenv('FMONITOR_SOURCE_HOST') ?: '127.0.0.1',
@@ -96,7 +95,6 @@ WHERE factworkstartdate = '0000-00-00 00:00:00'
   AND COALESCE(NULLIF(workdateendadjusted, '0000-00-00 00:00:00'), NULLIF(plan_finish_date, '0000-00-00 00:00:00'), NULLIF(workdatefinish, '0000-00-00 00:00:00')) IS NOT NULL
   AND (ptoactdate IS NULL OR ptoactdate = '' OR ptoactdate = '0000-00-00 00:00:00')
 ORDER BY workdatestart, id
-LIMIT 250
 SQL;
 
 $selected = [];
@@ -112,10 +110,13 @@ foreach ($selection->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
     if (isset($existing[$id])) { $existingClassifications[$id]=$classification; continue; }
     $selected[] = $row;
     $classifications[$id]=$classification;
-    if (count($selected) === $limit) break;
 }
 $source->commit();
-if (count($selected) !== $limit) throw new RuntimeException('Production selection returned fewer than 100 eligible new objects');
+if ($selected === []) {
+    $caseCount = (int) $target->query("SELECT COUNT(*) AS n FROM `{$processPrefix}fm2_installation_cases`")->fetch_assoc()['n'];
+    echo json_encode(['ok'=>true,'copied'=>0,'imported'=>0,'queueCases'=>$caseCount,'reason'=>'NO_NEW_ELIGIBLE_OBJECTS'],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),PHP_EOL;
+    exit(0);
+}
 
 $target->begin_transaction();
 try {

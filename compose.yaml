@@ -14,6 +14,8 @@ services:
       FMONITOR_DEMO_PORT: "8092"
     ports:
       - "127.0.0.1:8092:8092"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - pilot-state:/home/fmonitor/.local/state/fmonitor2
     depends_on:
@@ -28,6 +30,7 @@ services:
     restart: unless-stopped
 
   workforce-sync:
+    profiles: ["bitrix"]
     image: fmonitor2-pilot
     pull_policy: never
     user: "0:0"

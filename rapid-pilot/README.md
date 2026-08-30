@@ -14,9 +14,10 @@ For a non-Docker local launch, install PHP dependencies with `composer install -
 make up
 ```
 
-При первом запуске Makefile извлекает конфигурацию read-only Bitrix API из
-соседнего legacy-репозитория `../fmonitor` в git-ignored файл `.local/` с
-правами `0600`. Секреты не попадают ни в образ, ни в этот репозиторий.
+Обычный запуск не зависит от соседнего legacy-репозитория и не требует production-секретов.
+Если нужна часовая синхронизация монтажников через Bitrix, выполните `make up-bitrix`:
+эта команда извлекает read-only конфигурацию из `../fmonitor` в git-ignored файл
+`.local/` с правами `0600`. Секреты не попадают ни в образ, ни в репозиторий.
 
 Пилот будет доступен на <http://127.0.0.1:8092/>. `make down` останавливает
 контейнеры с сохранением данных, `make logs` показывает логи, а `make reset`
@@ -31,6 +32,25 @@ make up
 
 Поддерживаются как Docker Engine, установленный непосредственно внутри WSL,
 так и Docker Desktop с включённой WSL integration.
+
+## Первичная загрузка production
+
+После `make up` задайте реквизиты read-only пользователя legacy MariaDB в
+текущей оболочке и выполните одну команду:
+
+```bash
+export FMONITOR_SOURCE_USER='<read-only user>'
+export FMONITOR_SOURCE_PASSWORD='<read-only password>'
+make import-production
+```
+
+По умолчанию источник доступен контейнеру как `host.docker.internal:3306`, база —
+`c1_fmonitor`, а cutoff — конец текущего дня. При необходимости переопределите
+`FMONITOR_SOURCE_HOST`, `FMONITOR_SOURCE_PORT`, `FMONITOR_SOURCE_NAME` и
+`FMONITOR_MIGRATION_CUTOFF='YYYY-MM-DD HH:MM:SS'`. Команда импортирует пользователей,
+роли, кадровый каталог и все подходящие объекты, на которых работы ещё не начаты.
+Она предназначена для чистой native-only generation и останавливается при обнаружении
+уже начатой инициализации, чтобы не смешать снимки разных моментов времени.
 
 Локальный Composer для этого сценария не нужен: зафиксированная версия TCPDF
 загружается Docker-сборкой напрямую из исходного GitHub-репозитория.
