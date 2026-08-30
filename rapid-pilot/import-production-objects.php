@@ -6,7 +6,7 @@ use FMonitor2\InstallationProcess\PilotCaseImporter;
 require_once __DIR__ . '/legacy-migration/LegacyMigrationRouter.php';
 
 set_exception_handler(static function(Throwable $error):never {
-    $reason=in_array($error->getMessage(),['QUARANTINED_EVIDENCE','PROVENANCE_CONFLICT'],true)?$error->getMessage():'OPERATIONAL_IMPORT_UNAVAILABLE';
+    $reason=in_array($error->getMessage(),['QUARANTINED_EVIDENCE','PROVENANCE_CONFLICT','OPERATIONAL_ROUTE_NOT_ALLOWED','OPERATIONAL_CASE_NOT_ELIGIBLE','CONFIGURATION_INVALID'],true)?$error->getMessage():'OPERATIONAL_IMPORT_UNAVAILABLE';
     echo json_encode(['ok'=>false,'reason'=>$reason],JSON_THROW_ON_ERROR),PHP_EOL;exit(2);
 });
 
@@ -26,6 +26,11 @@ function requiredEnv(string $name): string
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+$options=getopt('',['object-id:','dry-run']);
+$selectedId=array_key_exists('object-id',$options)?filter_var($options['object-id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]):null;
+$dryRun=array_key_exists('dry-run',$options);
+if(($selectedId===false)||($dryRun&&$selectedId===null))throw new InvalidArgumentException('CONFIGURATION_INVALID');
+
 $manifestPath = requiredEnv('FMONITOR_PILOT_ACTIVE_MANIFEST');
 $manifest = json_decode((string) file_get_contents($manifestPath), true, flags: JSON_THROW_ON_ERROR);
 $processPrefix = (string) ($manifest['processPrefix'] ?? '');
@@ -41,14 +46,38 @@ $source = new mysqli(
 );
 $source->set_charset('utf8mb4');
 
-$target = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
+$targetConnection=static function():mysqli{$db=new mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:'fmonitor2_demo',getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local',getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo',(int)(getenv('FMONITOR_DB_PORT')?:23306));$db->set_charset('utf8mb4');return $db;};
+
+$cutoff = getenv('FMONITOR_MIGRATION_CUTOFF') ?: '2026-08-30 23:59:59';
+if($selectedId!==null){
+    $source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');$source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+    try{
+        $classificationRow=(new LegacyObjectMySqlClassificationSource($source))->read((int)$selectedId,$cutoff,false);
+        $projection=$source->prepare("SELECT id,ordadr_address,entrance,regnumber,workdatestart,workdateendadjusted,COALESCE(NULLIF(plan_finish_date,'0000-00-00 00:00:00'),workdatefinish) plan_finish_date,NULL workdatefinish,ptoactdate,responsstroicontrol FROM fm_maintable WHERE id=? LIMIT 1");$projection->bind_param('i',$selectedId);$projection->execute();$row=$projection->get_result()->fetch_assoc();
+        $source->commit();
+    }catch(Throwable$error){$source->rollback();throw$error;}
+    $classification=LegacyObjectClassification::classify($classificationRow);$route=LegacyMigrationRoute::decide($classification);
+    if($route['applyBlocked'])throw new DomainException('QUARANTINED_EVIDENCE');
+    if($route['route']!=='operational_case_import')throw new DomainException('OPERATIONAL_ROUTE_NOT_ALLOWED');
+    $eligible=$row!==null&&trim((string)$row['ordadr_address'])!==''&&trim((string)$row['entrance'])!==''&&trim((string)$row['regnumber'])!==''&&(string)$row['workdatestart']>='2026-10-01'&&$row['plan_finish_date']!==null&&!str_starts_with((string)$row['plan_finish_date'],'0000-00-00');
+    if(!$eligible)throw new DomainException('OPERATIONAL_CASE_NOT_ELIGIBLE');
+    $base=['ok'=>true,'mode'=>$dryRun?'dry-run':'apply','selected'=>[(int)$selectedId],'route'=>$route['route'],'classification'=>$classification,'sourceCutoff'=>$cutoff];
+    if($dryRun){echo json_encode($base,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),PHP_EOL;exit(0);}
+    $target=$targetConnection();$exists=$target->query("SELECT id FROM `{$legacyPrefix}fm_maintable` WHERE id=".(int)$selectedId)->fetch_assoc()!==null;
+    if(!$exists){$insert=$target->prepare("INSERT INTO `{$legacyPrefix}fm_maintable`(id,ordadr_address,entrance,regnumber,workdatestart,workdateendadjusted,plan_finish_date,workdatefinish,ptoactdate,responsstroicontrol) VALUES(?,?,?,?,?,?,?,?,?,?)");$values=array_map(static fn($v):?string=>$v===null?null:(string)$v,[$row['ordadr_address'],$row['entrance'],$row['regnumber'],$row['workdatestart'],$row['workdateendadjusted'],$row['plan_finish_date'],$row['workdatefinish'],$row['ptoactdate'],$row['responsstroicontrol']]);$insert->bind_param('isssssssss',$selectedId,...$values);$insert->execute();}
+    $importer=new PilotCaseImporter($target,$processPrefix,$legacyPrefix);$importer->assertSchemaAvailable();$import=$importer->import([(int)$selectedId],gmdate('Y-m-d\TH:i:sP'));if(isset($import['rejected']))throw new DomainException('OPERATIONAL_CASE_NOT_ELIGIBLE');
+    $case=$target->query("SELECT id FROM `{$processPrefix}fm2_installation_cases` WHERE legacy_installation_object_id=".(int)$selectedId)->fetch_assoc();if($case===null)throw new RuntimeException('Imported case missing');
+    $proof=(new MigrationClassificationProvenanceTarget($target,$processPrefix))->reconcile('operational_case',(int)$selectedId,(int)$case['id'],$cutoff,$classification,gmdate('Y-m-d H:i:s'));
+    echo json_encode($base+['copied'=>!$exists,'imported'=>$import['imported'],'alreadyPresent'=>$import['alreadyPresent']]+$proof,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),PHP_EOL;exit(0);
+}
+
+$target=$targetConnection();
 $target->set_charset('utf8mb4');
 
 $existing = [];
 $existingResult = $target->query("SELECT id FROM `{$legacyPrefix}fm_maintable`");
 foreach ($existingResult->fetch_all(MYSQLI_ASSOC) as $row) $existing[(int) $row['id']] = true;
 
-$cutoff = getenv('FMONITOR_MIGRATION_CUTOFF') ?: '2026-08-30 23:59:59';
 $sql = <<<'SQL'
 SELECT id, ordadr_address, entrance, regnumber, workdatestart,
        workdateendadjusted,
