@@ -588,6 +588,21 @@
 .fm2-recon-grid dd { margin: 0; font-size: 10px; font-weight: 500; text-align: end; overflow-wrap: anywhere; }
 .fm2-recon-conflicts ul { display: grid; gap: 6px; margin: 0; padding-inline-start: 16px; color: #8c3d13; font-size: 11px; }
 .fm2-recon-clear { color: #276747; font-size: 11px; font-weight: 500; }
+.fm2-replay-list { display: grid; gap: 12px; }
+.fm2-replay-item { overflow: hidden; background: var(--fm2-surface); border-radius: var(--fm2-radius); }
+.fm2-replay-item > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 18px 22px; border-block-end: 1px solid var(--fm2-border); }
+.fm2-replay-item h2 { margin: 0; font-size: 18px; font-weight: 550; letter-spacing: -.015em; }
+.fm2-replay-item header p { margin: 4px 0 0; color: var(--fm2-muted); font-size: 12px; }
+.fm2-replay-body { display: grid; grid-template-columns: 1.5fr .75fr 1fr 1fr; }
+.fm2-replay-body > section { min-inline-size: 0; padding: 18px 20px; border-inline-end: 1px solid var(--fm2-border); }
+.fm2-replay-body > section:last-child { border-inline-end: 0; }
+.fm2-replay-body h3 { margin: 0 0 10px; color: var(--fm2-muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.fm2-replay-body ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.fm2-replay-body li { display: grid; gap: 2px; }
+.fm2-replay-body li code { color: #8c3d13; font-size: 9px; overflow-wrap: anywhere; }
+.fm2-replay-body li span, .fm2-replay-body p { margin: 0; color: var(--fm2-muted); font-size: 10px; line-height: 1.45; }
+.fm2-replay-body > section > strong { display: block; margin-block-end: 6px; font-size: 18px; font-weight: 550; }
+.fm2-replay-body > section > code { display: block; margin-block-start: 8px; color: var(--fm2-muted); font-size: 9px; overflow-wrap: anywhere; }
 
 @media (max-width: 900px) {
   .fm2-otiz-start { grid-template-columns: 1fr; gap: 20px; }
@@ -624,6 +639,10 @@
   .fm2-recon-grid > section:last-child { border-block-end: 0; }
   .fm2-recon-item > header { align-items: stretch; flex-direction: column; }
   .fm2-recon-state { justify-items: start; }
+  .fm2-replay-item > header { align-items: stretch; flex-direction: column; }
+  .fm2-replay-body { grid-template-columns: 1fr; }
+  .fm2-replay-body > section { border-inline-end: 0; border-block-end: 1px solid var(--fm2-border); }
+  .fm2-replay-body > section:last-child { border-block-end: 0; }
 }
 
 .fm2-order-heading { max-inline-size: 760px; }

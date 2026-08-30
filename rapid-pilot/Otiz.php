@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
 require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
 require_once __DIR__ . '/legacy-migration/PremiumCalculation.php';
+require_once __DIR__ . '/legacy-migration/HistoricalPremiumReplayReadModel.php';
 
 final class RapidPilotOtiz
 {
@@ -58,6 +59,7 @@ final class RapidPilotOtiz
         if ($path === '/pilot/otiz' || $path === '/pilot/otiz/') $this->queue();
         if ($path === '/pilot/otiz/history') $this->history();
         if ($path === '/pilot/otiz/reconciliation') $this->reconciliation();
+        if ($path === '/pilot/otiz/historical-replay') $this->historicalReplay();
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)$#D', $path, $m) === 1) $this->snapshot((int) $m[1]);
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/export\.xlsx$#D', $path, $m) === 1) $this->export((int) $m[1]);
         http_response_code(404); echo "Not found.\n"; exit;
@@ -168,7 +170,7 @@ final class RapidPilotOtiz
     {
         $latest = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY id DESC LIMIT 1")->fetch_assoc();
         $cards = '<section class="fm2-otiz-start"><div><h1>Расчёты ОТиЗ</h1><p>Проверьте доказательность фактов, оформите воспроизводимый срез и закройте фактические выплаты.</p></div><form method="post" action="/pilot/otiz/calculate" class="fm2-otiz-date"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><label class="shlz-field"><span class="shlz-field__label">Отчётная дата</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="reportDate" value="2026-08-31" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Рассчитать черновик</button></form></section>';
-        $cards .= '<nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" aria-current="page" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav>';
+        $cards .= '<nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" aria-current="page" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a><a class="shlz-link" href="/pilot/otiz/historical-replay">Historical replay</a></nav>';
         if (is_array($latest)) $cards .= '<section class="fm2-otiz-current"><div><span class="shlz-status ' . ($latest['status'] === 'accepted' ? 'shlz-status--green' : 'shlz-status--orange') . '">' . ($latest['status'] === 'accepted' ? 'Принят' : 'Черновик') . '</span><h2>Срез на ' . $this->date($latest['report_date']) . '</h2><p>Версия правил ' . $this->e($latest['rules_version']) . ' · hash ' . $this->e(substr($latest['content_hash'], 0, 12)) . '</p></div><div><strong>' . $this->rub((int) $latest['total_pool_cents']) . '</strong><span>доступно в этом срезе</span><a class="shlz-link" href="/pilot/otiz/snapshots/' . (int) $latest['id'] . '">Продолжить проверку</a></div></section>';
         $cards .= $this->scenarioOverview();
         $this->page('Расчёты ОТиЗ', $cards);
@@ -198,7 +200,7 @@ final class RapidPilotOtiz
     private function history(): never
     {
         $rows = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY report_date DESC,id DESC")->fetch_all(MYSQLI_ASSOC);
-        $body = '<header class="fm2-page-header"><div><h1>История срезов</h1><p>Каждая принятая версия открывается с исходным hash и неизменными результатами.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav><section class="fm2-list-surface"><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table fm2-otiz-history"><thead><tr><th>Отчётная дата</th><th>Версия</th><th>Принят</th><th>Новый пул</th><th>Закрыто ранее</th><th>Контроль</th></tr></thead><tbody>';
+        $body = '<header class="fm2-page-header"><div><h1>История срезов</h1><p>Каждая принятая версия открывается с исходным hash и неизменными результатами.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a><a class="shlz-link" href="/pilot/otiz/historical-replay">Historical replay</a></nav><section class="fm2-list-surface"><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table fm2-otiz-history"><thead><tr><th>Отчётная дата</th><th>Версия</th><th>Принят</th><th>Новый пул</th><th>Закрыто ранее</th><th>Контроль</th></tr></thead><tbody>';
         foreach ($rows as $r) $body .= '<tr><td data-label="Отчётная дата"><a class="shlz-link" href="/pilot/otiz/snapshots/' . (int) $r['id'] . '">' . $this->date($r['report_date']) . '</a></td><td data-label="Версия"><span class="shlz-status ' . ($r['status'] === 'accepted' ? 'shlz-status--green' : 'shlz-status--orange') . '">' . ($r['status'] === 'accepted' ? 'Принят' : 'Черновик') . '</span></td><td data-label="Принят">' . ($r['accepted_at'] ? $this->dateTime($r['accepted_at']) : '—') . '</td><td data-label="Новый пул">' . $this->rub((int) $r['total_pool_cents']) . '</td><td data-label="Закрыто ранее">' . $this->rub((int) $r['total_closed_cents']) . '</td><td data-label="Контроль"><small>' . $this->e(substr($r['content_hash'], 0, 12)) . '</small></td></tr>';
         $body .= '</tbody></table></div></section>'; $this->page('История срезов', $body);
     }
@@ -207,7 +209,7 @@ final class RapidPilotOtiz
     {
         $rows = MigratedEvidenceReconciliation::load($this->db, $this->prefix);
         $conflicted = count(array_filter($rows, static fn(array $row): bool => $row['conflictCodes'] !== []));
-        $body = '<header class="fm2-page-header"><div><h1>Сверка перенесённых свидетельств</h1><p>ОТиЗ видит происхождение и качество legacy-фактов до их использования. Этот экран ничего не исправляет и не меняет расчёт.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav>';
+        $body = '<header class="fm2-page-header"><div><h1>Сверка перенесённых свидетельств</h1><p>ОТиЗ видит происхождение и качество legacy-фактов до их использования. Этот экран ничего не исправляет и не меняет расчёт.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/reconciliation">Сверка свидетельств</a><a class="shlz-link" href="/pilot/otiz/historical-replay">Historical replay</a></nav>';
         if ($rows === []) {
             $body .= '<section class="fm2-empty"><h2>Импортированных свидетельств пока нет</h2><p>Выполните dry-run и явно примените проверенный snapshot. Legacy-источник останется доступен только для чтения.</p></section>';
         } else {
@@ -230,6 +232,22 @@ final class RapidPilotOtiz
     private function reasonLabel(string $code): string
     {
         return ['PTO_ACT_RECORDED'=>'зафиксирован акт ПТО','LEGACY_FINISHED_STATUS'=>'legacy-статус завершения','ACTUAL_START_RECORDED'=>'зафиксирован фактический старт','CHECKLIST_HISTORY_PRESENT'=>'есть история чек-листа','WORK_ATTRIBUTION_HISTORY_PRESENT'=>'есть атрибуция работ','FACT_PROGRESS_RECORDED'=>'есть фактический прогресс','LEGACY_WORK_STARTED_FLAG'=>'legacy-флаг начала работ','NO_ACTUAL_START_OR_PROGRESS_EVIDENCE'=>'нет свидетельств старта или прогресса','ORPHAN_ATTRIBUTION'=>'атрибуция без связанного значения','ORPHAN_CHECKLIST_EVENT'=>'событие без определения чек-листа','MALFORMED_EVENT_DATE'=>'некорректная дата события','MALFORMED_ATTRIBUTION_DATE'=>'некорректная дата атрибуции','COMPLETION_WITHOUT_START_EVIDENCE'=>'завершение без свидетельства старта'][$code] ?? $code;
+    }
+
+    private function historicalReplay():never
+    {
+        $rows=HistoricalPremiumReplayReadModel::load($this->db,$this->prefix);
+        $body='<header class="fm2-page-header"><div><h1>Историческое воспроизведение премии</h1><p>Расчёт появляется только из доказанных operands. Кандидаты, balance assertions и отсутствующие выплаты не заменяются нулями или synthetic-данными.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/historical-replay">Historical replay</a></nav>';
+        if($rows===[])$body.='<section class="fm2-empty"><h2>Исторические snapshots не импортированы</h2><p>Сначала требуется read-only snapshot и reconciliation без quarantine.</p></section>';
+        else{$body.='<section class="fm2-replay-list" aria-label="Исторические расчёты">';foreach($rows as$row){$reasons='';foreach($row['exclusionReasons']as$reason)$reasons.='<li><code>'.$this->e($reason).'</code><span>'.$this->e($this->replayReason($reason)).'</span></li>';
+            $candidate=$row['progressCandidate']['candidateProgressBp']===null?'—':$this->percent((int)$row['progressCandidate']['candidateProgressBp']);
+            $body.='<article class="fm2-replay-item"><header><div><h2>'.$this->e($row['regnumber']!==''?$row['regnumber']:'Legacy № '.$row['legacyObjectId']).'</h2><p>'.$this->e($row['address']).'</p></div><span class="shlz-status shlz-status--orange">Расчёт недоступен</span></header><div class="fm2-replay-body"><section><h3>Почему исключено</h3><ul>'.$reasons.'</ul></section><section><h3>Progress candidate</h3><strong>'.$candidate.'</strong><p>'.$this->e((string)$row['progressCandidate']['mappingVersion']).'<br>В расчёте: нет</p></section><section><h3>Фактическая выплата</h3><strong>Не найдена</strong><p>Discrepancy не вычисляется. Balance assertions не являются выплатой.</p></section><section><h3>Provenance</h3><p>'.$this->e($row['provenance']['sourceLabel']).'<br>'.$this->e($row['provenance']['sourceLocator']).'</p><code title="'.$this->e($row['provenance']['snapshotHash']).'">'.$this->e(substr($row['provenance']['snapshotHash'],0,16)).'…</code></section></div></article>';}$body.='</section>';}
+        $this->page('Историческое воспроизведение премии',$body);
+    }
+
+    private function replayReason(string$code):string
+    {
+        return['REPORT_DATE_EVIDENCE_ABSENT'=>'Нет доказанной отчётной даты расчёта.','PREMIUM_EVIDENCE_ABSENT'=>'Нет подтверждённой премиальной базы.','SHAFT_COEFFICIENT_EVIDENCE_ABSENT'=>'Нет подтверждённого коэффициента шахты.','PROGRESS_EVIDENCE_ABSENT'=>'Нет допустимого progress operand.','DEADLINE_EVIDENCE_ABSENT'=>'Нет подтверждённого договорного срока.','COMPLETION_EVIDENCE_ABSENT'=>'Нет подтверждённого completion operand.','DEFINITION_VERSION_UNPROVEN'=>'Вес checklist definition не доказан на дату события.'][$code]??'Evidence требует отдельной сверки.';
     }
 
     private function export(int $id): never
