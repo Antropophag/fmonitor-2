@@ -1480,7 +1480,10 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-activity--never { color: #8a5d05; font-weight: 500; }
 .fm2-activity-line { display: flex; align-items: center; gap: 8px; }
 .fm2-local-sync { flex: 0 0 auto; inline-size: 9px; block-size: 9px; border-radius: 50%; background: #25983e; }
-.fm2-local-sync.is-pending { background: #d47e2e; }
+.fm2-local-sync[data-state="queued"] { background: #d47e2e; }
+.fm2-local-sync[data-state="sending"] { background: #2f67c7; box-shadow: 0 0 0 3px rgb(47 103 199 / 16%); }
+.fm2-local-sync[data-state="retryable"] { background: #b96a00; box-shadow: 0 0 0 3px rgb(185 106 0 / 18%); }
+.fm2-local-sync[data-state="blocked"] { background: #b82c35; box-shadow: 0 0 0 3px rgb(184 44 53 / 18%); }
 .fm2-control-table .fm2-row-action { inline-size: 48px; padding-inline-start: 4px; }
 .fm2-control-table .fm2-row-action span { display: grid; place-items: center; inline-size: 36px; block-size: 36px; border-radius: 9px; color: #253d98; }
 .fm2-control-table .fm2-row-action svg { inline-size: 20px; block-size: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
