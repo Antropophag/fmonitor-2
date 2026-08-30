@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
+
 final class RapidPilotOtiz
 {
     private mysqli $db;
@@ -152,7 +154,7 @@ final class RapidPilotOtiz
     {
         $latest = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY id DESC LIMIT 1")->fetch_assoc();
         $cards = '<section class="fm2-otiz-start"><div><h1>Расчёты ОТиЗ</h1><p>Проверьте доказательность фактов, оформите воспроизводимый срез и закройте фактические выплаты.</p></div><form method="post" action="/pilot/otiz/calculate" class="fm2-otiz-date"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><label class="shlz-field"><span class="shlz-field__label">Отчётная дата</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="reportDate" value="2026-08-31" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Рассчитать черновик</button></form></section>';
-        $cards .= '<nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" aria-current="page" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Пилотная сверка</a></nav>';
+        $cards .= '<nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" aria-current="page" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav>';
         if (is_array($latest)) $cards .= '<section class="fm2-otiz-current"><div><span class="shlz-status ' . ($latest['status'] === 'accepted' ? 'shlz-status--green' : 'shlz-status--orange') . '">' . ($latest['status'] === 'accepted' ? 'Принят' : 'Черновик') . '</span><h2>Срез на ' . $this->date($latest['report_date']) . '</h2><p>Версия правил ' . $this->e($latest['rules_version']) . ' · hash ' . $this->e(substr($latest['content_hash'], 0, 12)) . '</p></div><div><strong>' . $this->rub((int) $latest['total_pool_cents']) . '</strong><span>доступно в этом срезе</span><a class="shlz-link" href="/pilot/otiz/snapshots/' . (int) $latest['id'] . '">Продолжить проверку</a></div></section>';
         $cards .= $this->scenarioOverview();
         $this->page('Расчёты ОТиЗ', $cards);
@@ -182,24 +184,38 @@ final class RapidPilotOtiz
     private function history(): never
     {
         $rows = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY report_date DESC,id DESC")->fetch_all(MYSQLI_ASSOC);
-        $body = '<header class="fm2-page-header"><div><h1>История срезов</h1><p>Каждая принятая версия открывается с исходным hash и неизменными результатами.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Пилотная сверка</a></nav><section class="fm2-list-surface"><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table fm2-otiz-history"><thead><tr><th>Отчётная дата</th><th>Версия</th><th>Принят</th><th>Новый пул</th><th>Закрыто ранее</th><th>Контроль</th></tr></thead><tbody>';
+        $body = '<header class="fm2-page-header"><div><h1>История срезов</h1><p>Каждая принятая версия открывается с исходным hash и неизменными результатами.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav><section class="fm2-list-surface"><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table fm2-otiz-history"><thead><tr><th>Отчётная дата</th><th>Версия</th><th>Принят</th><th>Новый пул</th><th>Закрыто ранее</th><th>Контроль</th></tr></thead><tbody>';
         foreach ($rows as $r) $body .= '<tr><td data-label="Отчётная дата"><a class="shlz-link" href="/pilot/otiz/snapshots/' . (int) $r['id'] . '">' . $this->date($r['report_date']) . '</a></td><td data-label="Версия"><span class="shlz-status ' . ($r['status'] === 'accepted' ? 'shlz-status--green' : 'shlz-status--orange') . '">' . ($r['status'] === 'accepted' ? 'Принят' : 'Черновик') . '</span></td><td data-label="Принят">' . ($r['accepted_at'] ? $this->dateTime($r['accepted_at']) : '—') . '</td><td data-label="Новый пул">' . $this->rub((int) $r['total_pool_cents']) . '</td><td data-label="Закрыто ранее">' . $this->rub((int) $r['total_closed_cents']) . '</td><td data-label="Контроль"><small>' . $this->e(substr($r['content_hash'], 0, 12)) . '</small></td></tr>';
         $body .= '</tbody></table></div></section>'; $this->page('История срезов', $body);
     }
 
     private function reconciliation(): never
     {
-        $latest = $this->db->query("SELECT id,report_date FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY id DESC LIMIT 1")->fetch_assoc();
-        $body = '<header class="fm2-page-header"><div><h1>Пилотная сверка</h1><p>Контрольные объекты классифицированы по источнику расхождения со старой таблицей ОТиЗ.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/reconciliation">Пилотная сверка</a></nav>';
-        if (!is_array($latest)) $body .= '<section class="fm2-empty"><h2>Сначала рассчитайте срез</h2><p>Сверка строится по зафиксированным результатам rapid pilot.</p></section>';
-        else {
-            $rows = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id=" . (int) $latest['id'] . ' ORDER BY regnumber')->fetch_all(MYSQLI_ASSOC); $sumPilot = 0; $sumLegacy = 0;
-            $body .= '<section class="fm2-list-surface"><div class="fm2-list-toolbar"><h2>Срез на ' . $this->date($latest['report_date']) . '</h2><span class="fm2-result-count">' . count($rows) . ' объектов</span></div><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table"><thead><tr><th>Объект</th><th>Rapid pilot</th><th>Старая таблица</th><th>Разница</th><th>Классификация</th></tr></thead><tbody>';
-            foreach ($rows as $r) { $inputs = json_decode($r['inputs_json'], true, flags: JSON_THROW_ON_ERROR); $legacy = (int) $inputs['legacyExpectedCents']; $pilot = (int) $r['pool_cents']; $diff = $pilot - $legacy; $sumPilot += $pilot; $sumLegacy += $legacy; $class = $diff === 0 ? 'Совпало' : ((int) $r['kss_bp'] < 10000 ? 'Различие правила Ксс' : ($r['calculation_state'] === 'blocked' ? 'Дефект входа' : 'Требует разбора'));
-                $body .= '<tr><td><strong>' . $this->e($r['regnumber']) . '</strong></td><td>' . $this->rub($pilot) . '</td><td>' . $this->rub($legacy) . '</td><td>' . $this->rub($diff) . '</td><td><span class="shlz-status ' . ($diff === 0 ? 'shlz-status--green' : 'shlz-status--orange') . '">' . $class . '</span></td></tr>'; }
-            $body .= '</tbody><tfoot><tr><th>Итого</th><th>' . $this->rub($sumPilot) . '</th><th>' . $this->rub($sumLegacy) . '</th><th>' . $this->rub($sumPilot - $sumLegacy) . '</th><th>По объектам и срезу</th></tr></tfoot></table></div></section><section class="fm2-otiz-proof"><h2>Доказательство от повторной выплаты</h2><p>Следующий расчёт вычитает выплаты и удержания из накопленного начисления. Сторно возвращает сумму только отдельным отрицательным событием.</p><a class="shlz-link" href="/pilot/otiz/snapshots/' . (int) $latest['id'] . '">Открыть реестр закрытия</a></section>';
+        $rows = MigratedEvidenceReconciliation::load($this->db, $this->prefix);
+        $conflicted = count(array_filter($rows, static fn(array $row): bool => $row['conflictCodes'] !== []));
+        $body = '<header class="fm2-page-header"><div><h1>Сверка перенесённых свидетельств</h1><p>ОТиЗ видит происхождение и качество legacy-фактов до их использования. Этот экран ничего не исправляет и не меняет расчёт.</p></div></header><nav class="fm2-otiz-subnav" aria-label="Раздел ОТиЗ"><a class="shlz-link" href="/pilot/otiz">Очередь расчёта</a><a class="shlz-link" href="/pilot/otiz/history">История срезов</a><a class="shlz-link" aria-current="page" href="/pilot/otiz/reconciliation">Сверка свидетельств</a></nav>';
+        if ($rows === []) {
+            $body .= '<section class="fm2-empty"><h2>Импортированных свидетельств пока нет</h2><p>Выполните dry-run и явно примените проверенный snapshot. Legacy-источник останется доступен только для чтения.</p></section>';
+        } else {
+            $body .= '<section class="fm2-recon-summary" aria-label="Состояние сверки"><div><strong>' . count($rows) . '</strong><span>последних snapshot</span></div><div><strong>' . $conflicted . '</strong><span>требуют разбора</span></div><p>Класс и оценка повторяемо строятся из immutable payload. Hash проекции меняется вместе с evidence или quarantine.</p></section><section class="fm2-recon-list" aria-label="Перенесённые свидетельства">';
+            foreach ($rows as $row) $body .= $this->reconciliationItem($row);
+            $body .= '</section>';
         }
-        $this->page('Пилотная сверка', $body);
+        $this->page('Сверка перенесённых свидетельств', $body);
+    }
+
+    private function reconciliationItem(array $row): string
+    {
+        $classes = ['native_candidate'=>'Нативный кандидат','legacy_active'=>'Активный legacy','legacy_historical'=>'Исторический legacy'];
+        $confidence = ['high'=>'Высокая','medium'=>'Средняя','low'=>'Низкая'];
+        $reasons = implode(' · ', array_map($this->reasonLabel(...), $row['reasonCodes']));
+        $conflicts = $row['conflictCodes'] === [] ? '<span class="fm2-recon-clear">Конфликтов не обнаружено</span>' : '<ul>' . implode('', array_map(fn(string $code): string => '<li>' . $this->e($this->reasonLabel($code)) . '</li>', $row['conflictCodes'])) . '</ul>';
+        return '<article class="fm2-recon-item"><header><div><h2>' . $this->e($row['regnumber'] !== '' ? $row['regnumber'] : 'Объект № ' . $row['legacyObjectId']) . '</h2><p>' . $this->e($row['address']) . '</p></div><div class="fm2-recon-state"><span class="shlz-status ' . ($row['conflictCodes'] === [] ? 'shlz-status--green' : 'shlz-status--orange') . '">Класс ' . $this->e($row['evidenceGrade']) . '</span><strong>' . $this->e($classes[$row['classification']] ?? $row['classification']) . '</strong></div></header><div class="fm2-recon-grid"><section><h3>Решение маршрута</h3><p>' . $this->e($reasons) . '</p><dl><div><dt>Классификатор</dt><dd>' . $this->e($row['classificationVersion']) . '</dd></div><div><dt>Уверенность</dt><dd>' . $this->e($confidence[$row['confidence']] ?? $row['confidence']) . '</dd></div></dl></section><section><h3>Происхождение</h3><p><strong>' . $this->e($row['sourceLabel']) . '</strong><br>' . $this->e($row['sourceLocator']) . '</p><dl><div><dt>Cutover</dt><dd>' . $this->e($row['cutoffAt']) . '</dd></div><div><dt>Snapshot hash</dt><dd title="' . $this->e($row['contentSha256']) . '">' . $this->e(substr($row['contentSha256'],0,16)) . '…</dd></div><div><dt>Projection hash</dt><dd title="' . $this->e($row['projectionHash']) . '">' . $this->e(substr($row['projectionHash'],0,16)) . '…</dd></div></dl></section><section><h3>Покрытие evidence</h3><dl><div><dt>События чек-листа</dt><dd>' . (int)$row['counts']['checklistEvents'] . '</dd></div><div><dt>Атрибуции работ</dt><dd>' . (int)$row['counts']['attributions'] . '</dd></div><div><dt>Quarantine</dt><dd>' . (int)$row['quarantineCount'] . '</dd></div></dl></section><section class="fm2-recon-conflicts"><h3>Конфликты и quarantine</h3>' . $conflicts . '</section></div></article>';
+    }
+
+    private function reasonLabel(string $code): string
+    {
+        return ['PTO_ACT_RECORDED'=>'зафиксирован акт ПТО','LEGACY_FINISHED_STATUS'=>'legacy-статус завершения','ACTUAL_START_RECORDED'=>'зафиксирован фактический старт','CHECKLIST_HISTORY_PRESENT'=>'есть история чек-листа','WORK_ATTRIBUTION_HISTORY_PRESENT'=>'есть атрибуция работ','FACT_PROGRESS_RECORDED'=>'есть фактический прогресс','LEGACY_WORK_STARTED_FLAG'=>'legacy-флаг начала работ','NO_ACTUAL_START_OR_PROGRESS_EVIDENCE'=>'нет свидетельств старта или прогресса','ORPHAN_ATTRIBUTION'=>'атрибуция без связанного значения','ORPHAN_CHECKLIST_EVENT'=>'событие без определения чек-листа','MALFORMED_EVENT_DATE'=>'некорректная дата события','MALFORMED_ATTRIBUTION_DATE'=>'некорректная дата атрибуции','COMPLETION_WITHOUT_START_EVIDENCE'=>'завершение без свидетельства старта'][$code] ?? $code;
     }
 
     private function export(int $id): never
