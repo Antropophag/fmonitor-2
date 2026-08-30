@@ -127,7 +127,7 @@ final class RapidPilotObjectDetails
             .self::compactRow('Файл акта передачи',[['Загружен','transfer_act_uploaded'],['Проверен','transferactverified']],$fields);
         $control=self::compactRow('ПТО и несоответствия',[['Дата акта ПТО','ptoactdate'],['Акт несоответствия','non_conformance_act_date']],$fields)
             .self::compactRow('Декларации',[['Реквизиты','declarations'],['Переданы подрядчику','contractor_docs_transfer_date']],$fields)
-            .self::compactRow('Состояние',[['Legacy-статус','object_status'],['Контроль','control_flag']],$fields)
+            .self::compactRow('Статус',[['Legacy-статус','object_status'],['Контроль','control_flag']],$fields)
             .self::compactRow('Комментарии',[['Причина задержки','comments'],['Комментарий СМ','sm_comment']],$fields);
         $orderHistory=self::assignmentDocumentHistory($data['assignmentDocuments']??[],(int)($data['objectId']??0));$documents.=$orderHistory!==''?$orderHistory:($existing['Распоряжение']??$existing['Распоряжение и 1С ДО']??'');$control.=($existing['Проблемы']??'').($existing['Последние события']??'');
         $tabs=['schedule'=>['Сроки и готовность',$schedule],'participants'=>['Команда',$teamCommand.$participants],'documents'=>['Документы',$documents],'control'=>['Контроль и история',$control]];$buttons='';$panels='';
