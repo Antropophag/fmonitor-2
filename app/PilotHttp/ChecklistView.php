@@ -29,6 +29,6 @@ final class ProductionChecklistRenderer
         $projectionJson=\base64_encode(\json_encode($projection,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
         $body=\str_replace(' data-enabled=',' data-user-id="'.$user->id.'" data-csrf="'.$e($csrf).'" data-projection="'.$e($projectionJson).'" data-enabled=',$body);
         $links=$fromConstructionControl?[['Стройконтроль','/pilot/construction-control']]:[['Объекты монтажа','/pilot/objects'],['Объект № '.$id,'/pilot/objects/'.$id]];$document=PilotView::document($user,'Чек-лист объекта № '.$id,$fromConstructionControl?'Стройконтроль':'Объекты монтажа',PilotView::breadcrumb($links,'Чек-лист'),$body);
-        return \str_replace('</body>','<script src="/pilot/assets/checklist.js?v=20260829-19" defer></script></body>',$document);
+        return \str_replace('</body>','<script src="/pilot/assets/checklist.js?v=20260831-1" defer></script></body>',$document);
     }
 }
