@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/HistoricalPremiumReplayAdapter.php';
 require_once __DIR__.'/MigratedEvidenceReconciliation.php';
+require_once __DIR__.'/MigratedEvidenceProjectionStore.php';
 
 final class HistoricalPremiumReplayReadModel
 {
@@ -14,6 +15,7 @@ final class HistoricalPremiumReplayReadModel
         $rows=[];foreach(MigratedEvidenceReconciliation::load($db,$prefix)as$evidence)if($evidence['classification']==='legacy_historical')$rows[]=self::build($evidence);
         return$rows;
     }
+    public static function page(mysqli$db,string$prefix,int$page,int$size=50):array{$result=(new MigratedEvidenceProjectionStore($db,$prefix))->page(['classification'=>'legacy_historical'],$page,$size);return['total'=>$result['total'],'rows'=>array_map(fn($evidence)=>self::build($evidence),$result['rows'])];}
 
     public static function build(array$evidence,array$provenOperands=[],array$closures=[],array$actualPayouts=[],array$balanceAssertions=[]):array
     {

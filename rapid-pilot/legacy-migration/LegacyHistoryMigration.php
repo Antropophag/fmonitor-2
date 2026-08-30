@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/MigratedEvidenceProjectionStore.php';
 
 final class LegacyHistorySnapshot
 {
@@ -113,7 +114,7 @@ final class LegacyHistoryMySqlTarget
         $p = $this->prefix;
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_history_source_snapshots` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,legacy_object_id BIGINT UNSIGNED NOT NULL,source_system VARCHAR(40) NOT NULL,source_locator VARCHAR(160) NOT NULL,cutoff_at DATETIME NOT NULL,extractor_version VARCHAR(80) NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_content(content_sha256),KEY object_id(legacy_object_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_history_import_quarantine` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,snapshot_id BIGINT UNSIGNED NOT NULL,issue_no INT UNSIGNED NOT NULL,code VARCHAR(80) NOT NULL,diagnostic_json LONGTEXT NOT NULL,UNIQUE KEY uq_issue(snapshot_id,issue_no)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->schemaReady=true;
+        $this->schemaReady=true;(new MigratedEvidenceProjectionStore($this->db,$p))->ensureSchema();
     }
 
     public function apply(array $snapshot, int $objectId, string $cutoff, string $now): array
@@ -137,6 +138,7 @@ final class LegacyHistoryMySqlTarget
                 $number = $i + 1; $code = (string)$issue['code']; $diagnostic = json_encode($issue, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
                 $issueInsert->bind_param('iiss', $snapshotId, $number, $code, $diagnostic); $issueInsert->execute();
             }
+            (new MigratedEvidenceProjectionStore($this->db,$this->prefix))->persist($snapshotId,$now);
             $this->db->commit();
             return ['snapshotId' => $snapshotId, 'created' => $created];
         } catch (Throwable $e) { $this->db->rollback(); throw $e; }
