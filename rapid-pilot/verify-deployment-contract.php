@@ -6,6 +6,7 @@ $root = dirname(__DIR__);
 $makefile = (string) file_get_contents($root . '/Makefile');
 $compose = (string) file_get_contents($root . '/compose.yaml');
 $importer = (string) file_get_contents(__DIR__ . '/import-production-objects.php');
+$initializer = (string) file_get_contents(__DIR__ . '/initialize-native-only.php');
 $readme = (string) file_get_contents(__DIR__ . '/README.md');
 $envExample = (string) file_get_contents($root . '/.env.example');
 
@@ -25,6 +26,8 @@ $check(str_contains($compose, 'profiles: ["bitrix"]'), 'Bitrix sync is not opt-i
 $check(str_contains($compose, 'host.docker.internal:host-gateway'), 'container cannot address a host production tunnel');
 $check(!preg_match('/LIMIT\s+(?:100|250)\b/i', $importer), 'production object selection is still truncated');
 $check(str_contains($importer, 'NO_NEW_ELIGIBLE_OBJECTS'), 'empty idempotent import is not supported');
+$check(str_contains($initializer, "str_replace(\$passwords, '<REDACTED>', \$stderr)"), 'initialization diagnostics do not redact configured passwords');
+$check(str_contains($initializer, '$detail = trim('), 'initialization wrapper still hides failed-step diagnostics');
 $check(str_contains($readme, 'make import-production'), 'fresh-machine import is undocumented');
 
 echo "PASS deployment contract\n";

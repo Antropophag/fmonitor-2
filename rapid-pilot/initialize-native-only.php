@@ -16,9 +16,17 @@ function initializationRun(string $script, array $arguments = []): array
     if (!is_resource($process)) throw new RuntimeException('NATIVE_INITIALIZATION_PROCESS_UNAVAILABLE');
     fclose($pipes[0]);
     $stdout = stream_get_contents($pipes[1]);
-    stream_get_contents($pipes[2]);
+    $stderr = stream_get_contents($pipes[2]);
     fclose($pipes[1]); fclose($pipes[2]);
-    if (proc_close($process) !== 0) throw new RuntimeException('NATIVE_INITIALIZATION_STEP_FAILED:' . $script);
+    if (proc_close($process) !== 0) {
+        $passwords = array_filter([
+            getenv('FMONITOR_SOURCE_PASSWORD'),
+            getenv('FMONITOR_DB_PASSWORD'),
+        ], static fn (mixed $value): bool => is_string($value) && $value !== '');
+        $detail = trim(str_replace($passwords, '<REDACTED>', $stderr));
+        if ($detail === '') $detail = 'Step returned a non-zero exit code without diagnostics.';
+        throw new RuntimeException('NATIVE_INITIALIZATION_STEP_FAILED:' . $script . PHP_EOL . $detail);
+    }
     $result = json_decode(trim($stdout), true, flags: JSON_THROW_ON_ERROR);
     if (!is_array($result) || ($result['ok'] ?? true) !== true) throw new RuntimeException('NATIVE_INITIALIZATION_STEP_REJECTED:' . $script);
     return $result;
