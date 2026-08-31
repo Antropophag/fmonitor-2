@@ -85,6 +85,8 @@ try {
         $db->query("INSERT INTO `{$processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,9001,'rapid_pilot','{$sourceUpdatedAt}',NULL) ON DUPLICATE KEY UPDATE origin=origin");
     }
     RapidPilotOtiz::bootstrap($db, $processPrefix);
+    require_once __DIR__ . '/InspectionSchedule.php';
+    RapidPilotInspectionSchedule::ensureSchema($db, $processPrefix);
     if ($withTestFixtures) (new PilotCaseImporter($db, $processPrefix, $legacyPrefix))->import([4512], '2026-08-29T12:00:00+03:00');
 } finally {
     $db->close();

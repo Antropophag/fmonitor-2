@@ -9,6 +9,7 @@ require_once __DIR__ . '/Calendar.php';
 require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
+require_once __DIR__ . '/InspectionSchedule.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -148,6 +149,11 @@ if ($path === '/pilot/assets/calendar.js') {
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
+if ($path === '/pilot/assets/inspection-schedule.js') {
+    $bytes = file_get_contents(__DIR__ . '/inspection-schedule.js');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
+}
 if ($path === '/pilot/assets/preloader.js') {
     $bytes = file_get_contents(__DIR__ . '/preloader.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -169,6 +175,7 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     exit;
 }
 (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && RapidPilotInspectionSchedule::matches($path)) RapidPilotInspectionSchedule::handle($path);
 if (is_string($path) && RapidPilotCompletionFlow::matches($path)) RapidPilotCompletionFlow::handle($path);
 if (is_string($path) && RapidPilotCompletionFlow::blocksLegacyCompletion($path)) exit;
 if (is_string($path) && RapidPilotObjectQueue::matches($path)) RapidPilotObjectQueue::handle();
@@ -204,6 +211,7 @@ if ($response->status === 200 && is_string($path) && str_starts_with((string) ($
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $completionCard) === 1) $body = RapidPilotCompletionFlow::enhanceCard($body, (int) $completionCard[1]);
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
     $body = RapidPilotCompletionFlow::paintStatuses($body);
+    if ($path === '/pilot/construction-control') $body = RapidPilotInspectionSchedule::enhanceControl($body);
     $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);

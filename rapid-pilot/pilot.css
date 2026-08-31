@@ -1453,6 +1453,26 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 }
 @media (prefers-reduced-motion: reduce) { .fm2-check-page * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
 
+/* Rapid-pilot inspection scheduling */
+.fm2-inspection-action { inline-size: 52px; padding-inline: 4px !important; text-align: center; }
+.fm2-schedule-button { display: inline-grid; inline-size: 40px; min-inline-size: 40px; block-size: 40px; padding: 0; place-items: center; }
+.fm2-schedule-button svg { inline-size: 19px; block-size: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fm2-inspection-notice { margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: #e8f3ea; color: #285f38; font-size: 14px; font-weight: 600; }
+.fm2-inspection-dialog { inline-size: min(480px,calc(100vw - 32px)); padding: 0; border: 0; border-radius: 16px; background: transparent; color: #0b1623; }
+.fm2-inspection-dialog::backdrop { background: rgba(12,24,41,.52); }
+.fm2-inspection-dialog__surface { overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 24px 64px rgba(19,34,56,.24); }
+.fm2-inspection-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 22px 14px; border-block-end: 1px solid #edf0f4; }
+.fm2-inspection-dialog h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+.fm2-inspection-dialog header p { margin: 5px 0 0; color: #5d6b7d; font-size: 13px; }
+.fm2-inspection-dialog header button { display: grid; flex: 0 0 44px; inline-size: 44px; block-size: 44px; padding: 0; border: 0; border-radius: 10px; background: #f2f4f7; color: #536174; font-size: 26px; cursor: pointer; place-items: center; }
+.fm2-inspection-dialog__body { padding: 18px 22px 24px; }
+.fm2-inspection-dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 20px; border-block-start: 1px solid #edf0f4; }
+.fm2-control-row--planned { background: #f5f8ff; }
+.fm2-planned-inspection { display: inline-flex; align-items: center; gap: 7px; margin-block-end: 7px; color: #253d98; font-size: 12px; font-weight: 600; }
+.fm2-planned-inspection svg { inline-size: 16px; block-size: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+@media (max-width: 900px) { .fm2-inspection-action { min-inline-size: 0; } }
+@media (max-width: 680px) { .fm2-inspection-dialog { position: fixed; inset: auto 8px 8px; inline-size: auto; max-inline-size: none; margin: 0; border-radius: 18px; } .fm2-inspection-dialog footer { display: grid; grid-template-columns: 1fr; padding-block-end: max(16px,env(safe-area-inset-bottom)); } .fm2-inspection-dialog footer .shlz-button { inline-size: 100%; min-block-size: 48px; } .fm2-queue-table .fm2-inspection-action { display: block; margin-block-start: 12px; } }
+
 /* Construction-control queue */
 .fm2-control-queue { display: grid; gap: 20px; color: #0b1623; }
 .fm2-control-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }

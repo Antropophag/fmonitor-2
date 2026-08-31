@@ -111,6 +111,7 @@ final class RapidPilotCalendar
     private function read(DateTimeImmutable $first, DateTimeImmutable $last): array
     {
         $p = $this->processPrefix; $l = $this->legacyPrefix;
+        RapidPilotInspectionSchedule::ensureSchema($this->db,$p);
         $start = $first->format('Y-m-d'); $end = $last->format('Y-m-d');
         $legacyBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,COALESCE(c.process_state,'') event_status,%s event_date,'' identity,'' task_type FROM `{$l}fm_maintable` m LEFT JOIN `{$p}fm2_installation_cases` c ON c.legacy_installation_object_id=m.id WHERE %s BETWEEN ? AND ? ORDER BY event_date,m.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
         $definitions=[
@@ -123,6 +124,8 @@ final class RapidPilotCalendar
             foreach($rows as$row){$base=['objectId'=>(int)$row['object_id'],'address'=>(string)$row['address'],'entrance'=>(string)$row['entrance'],'registration'=>(string)$row['regnumber']];$this->add($events,$base,$row['event_date'],$type,$label,(string)$row['event_status'],(string)$row['identity']);}
             if(count($events)>self::TOTAL_EVENT_LIMIT)throw new RuntimeException('Calendar event projection overflow.');
         }
+        $inspectionSql="SELECT s.legacy_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber,'scheduled' event_status,s.inspection_date event_date,CAST(s.id AS CHAR) identity,'' task_type FROM `{$p}fm2_pilot_inspection_schedules` s JOIN `{$l}fm_maintable` m ON m.id=s.legacy_object_id WHERE s.inspection_date BETWEEN ? AND ? ORDER BY s.inspection_date,s.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
+        foreach($this->boundedProjection($inspectionSql,$start,$end) as $row){$base=['objectId'=>(int)$row['object_id'],'address'=>(string)$row['address'],'entrance'=>(string)$row['entrance'],'registration'=>(string)$row['regnumber']];$this->add($events,$base,$row['event_date'],'inspection','Инспекция','scheduled',(string)$row['identity']);}
         ksort($events); return array_values($events);
     }
 
@@ -144,7 +147,7 @@ final class RapidPilotCalendar
 
     private function render(HttpUser $user, DateTimeImmutable $first, DateTimeImmutable $last, DateTimeImmutable $selected, array $events): string
     {
-        $types=['planned_start'=>['Плановое начало','accent'],'planned_end'=>['Плановое окончание','warning']];
+        $types=['planned_start'=>['Плановое начало','accent'],'planned_end'=>['Плановое окончание','warning'],'inspection'=>['Инспекции','success']];
         $by=[]; foreach($events as $event)$by[$event['type']][$event['date']][]=$event;
         $days=[]; for($day=$first;$day<=$last;$day=$day->modify('+1 day'))$days[]=$day;
         $today=$this->now()->format('Y-m-d');$head='';$groups=[];foreach($days as$day){$iso=$day->format('Y-m-d');$state=$iso===$today?'today':($iso<$today?'past':'future');$groups[$state]=($groups[$state]??0)+1;$week=['1'=>'Пн','2'=>'Вт','3'=>'Ср','4'=>'Чт','5'=>'Пт','6'=>'Сб','7'=>'Вс'][$day->format('N')];$head.='<th id="calendar-day-'.$iso.'" scope="col" data-shlz-calendar-grid-state="'.$state.'"><button class="fm2-calendar-day'.($iso===$selected->format('Y-m-d')?' is-selected':'').'" type="button" data-calendar-date="'.$iso.'" aria-pressed="'.($iso===$selected->format('Y-m-d')?'true':'false').'"><span class="shlz-calendar-grid__date-primary">'.$day->format('j').'</span><span class="shlz-calendar-grid__date-secondary">'.$week.'</span></button></th>';}$groupHead='';foreach(['past'=>'Прошлое','today'=>'Сегодня','future'=>'Будущее']as$state=>$label){if(isset($groups[$state]))$groupHead.='<th scope="colgroup" colspan="'.$groups[$state].'" data-shlz-calendar-grid-state="'.$state.'"><span class="shlz-calendar-grid__group-label">'.$label.'</span></th>';}
@@ -156,7 +159,7 @@ final class RapidPilotCalendar
     }
 
     private function eventMarkup(array $event,string $tone):string{return '<li class="shlz-calendar-grid__item" data-tone="'.$tone.'"><a class="fm2-calendar-event-link" href="/pilot/objects/'.$event['objectId'].'"><strong>'.$this->e($event['registration']).'</strong><span>'.$this->e($event['status']===''?$event['label']:$this->status($event['status'])).'</span></a></li>';}
-    private function status(string $status):string{return ['needs_assignment_order'=>'Требуется распоряжение','order_prepared'=>'Распоряжение подготовлено','registered'=>'Зарегистрировано','working'=>'Работы открыты','open'=>'Открыта','completed'=>'Выполнена','cancelled'=>'Отменена','prepared'=>'Подготовлено','зафиксирован'=>'Зафиксирован'][$status]??($status!==''?str_replace('_',' ',$status):'Статус не указан');}
+    private function status(string $status):string{return ['scheduled'=>'Запланировано','needs_assignment_order'=>'Требуется распоряжение','order_prepared'=>'Распоряжение подготовлено','registered'=>'Зарегистрировано','working'=>'Работы открыты','open'=>'Открыта','completed'=>'Выполнена','cancelled'=>'Отменена','prepared'=>'Подготовлено','зафиксирован'=>'Зафиксирован'][$status]??($status!==''?str_replace('_',' ',$status):'Статус не указан');}
     private function e(mixed $value):string{return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');}
     private function fail(int $status,string $message):never{http_response_code($status);header('Content-Type: text/plain; charset=UTF-8');header('Cache-Control: no-store');echo $message."\n";exit;}
 }
