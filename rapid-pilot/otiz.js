@@ -1,3 +1,7 @@
+import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
+
+enhanceSelects(document);
+
 (() => {
   const tables = document.querySelectorAll('.fm2-otiz-object-row > td > details');
   tables.forEach((details) => details.addEventListener('toggle', () => {
