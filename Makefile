@@ -1,13 +1,5 @@
 .DEFAULT_GOAL := help
 
--include .env
-export FMONITOR_SOURCE_HOST
-export FMONITOR_SOURCE_PORT
-export FMONITOR_SOURCE_NAME
-export FMONITOR_SOURCE_USER
-export FMONITOR_SOURCE_PASSWORD
-export FMONITOR_MIGRATION_CUTOFF
-
 COMPOSE := docker compose
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret
@@ -36,15 +28,14 @@ up-bitrix: _bitrix-secret
 	@echo "FMonitor 2.0 с Bitrix sync: http://127.0.0.1:8092/"
 
 import-production:
-	@php rapid-pilot/validate-production-import-env.php
-	$(COMPOSE) exec \
-		-e FMONITOR_SOURCE_HOST="$${FMONITOR_SOURCE_HOST}" \
-		-e FMONITOR_SOURCE_PORT="$${FMONITOR_SOURCE_PORT:-3306}" \
-		-e FMONITOR_SOURCE_NAME="$${FMONITOR_SOURCE_NAME:-c1_fmonitor}" \
-		-e FMONITOR_SOURCE_USER="$${FMONITOR_SOURCE_USER}" \
-		-e FMONITOR_SOURCE_PASSWORD="$${FMONITOR_SOURCE_PASSWORD}" \
-		-e FMONITOR_MIGRATION_CUTOFF="$${FMONITOR_MIGRATION_CUTOFF:-}" \
-		pilot sh -c 'FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" FMONITOR_DB_HOST=127.0.0.1 FMONITOR_DB_PORT=23306 FMONITOR_DB_NAME=fmonitor2_demo FMONITOR_DB_USER=fmonitor2_demo FMONITOR_DB_PASSWORD=fmonitor2_demo_local php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
+	@test -f .env || { echo ".env не найден. Выполните: cp .env.example .env" >&2; exit 2; }
+	$(COMPOSE) run --rm --no-deps --env-from-file .env --entrypoint sh \
+		-e FMONITOR_DB_HOST=mariadb \
+		-e FMONITOR_DB_PORT=3306 \
+		-e FMONITOR_DB_NAME=fmonitor2_demo \
+		-e FMONITOR_DB_USER=fmonitor2_demo \
+		-e FMONITOR_DB_PASSWORD=fmonitor2_demo_local \
+		pilot -c 'FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
 
 down:
 	$(COMPOSE) down
