@@ -10,6 +10,7 @@ require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
+require_once __DIR__ . '/UserAccessView.php';
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
@@ -99,6 +100,7 @@ if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|us
         if (substr_count($bytes, $broken) !== 1) { http_response_code(503); exit; }
         $bytes = str_replace($broken, $fixed, $bytes);
     }
+    if ($filename === 'users.js') $bytes = str_replace("(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))", "(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))||(filter==='uf-invited'&&row.classList.contains('fm2-user-row--invited'))", $bytes);
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
     header('Cache-Control: no-store');
@@ -170,6 +172,16 @@ if ($path === '/pilot/assets/preloader.js') {
     echo $bytes;
     exit;
 }
+if ($path === '/pilot/assets/invite.js') {
+    $bytes = file_get_contents(__DIR__ . '/invite.js');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: text/javascript; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$#D', $path, $font) === 1) {
     $bytes = file_get_contents(__DIR__ . '/fonts/' . $font[1]);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -181,6 +193,10 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     exit;
 }
 (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && preg_match('#^/pilot/admin/users/([1-9][0-9]*)/status$#D', $path, $statusRoute) === 1) {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') { http_response_code(405); header('Allow: POST'); exit; }
+    RapidPilotUserAccessView::handleStatus((int) $statusRoute[1]);
+}
 if (is_string($path) && RapidPilotInspectionSchedule::matches($path)) RapidPilotInspectionSchedule::handle($path);
 if (is_string($path) && RapidPilotCompletionFlow::matches($path)) RapidPilotCompletionFlow::handle($path);
 if (is_string($path) && RapidPilotCompletionFlow::blocksLegacyCompletion($path)) exit;
@@ -210,9 +226,11 @@ if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
 $entrypoint = require dirname(__DIR__) . '/app/PilotHttp/production-entrypoint.php';
 
 $response = $entrypoint->handle($_SERVER);
+if ($path === '/pilot/admin/users/invite') $response = RapidPilotUserAccessView::invitationResponse($response);
 $body = $response->body;
 $headers = $response->headers;
 if ($response->status === 200 && is_string($path) && str_starts_with((string) ($response->headers['Content-Type'] ?? ''), 'text/html')) {
+    $body = RapidPilotUserAccessView::enhance($body, $path);
     $body = RapidPilotObjectDetails::enhance($body, $path);
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $completionCard) === 1) $body = RapidPilotCompletionFlow::enhanceCard($body, (int) $completionCard[1]);
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
