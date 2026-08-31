@@ -28,6 +28,8 @@ $check(!preg_match('/LIMIT\s+(?:100|250)\b/i', $importer), 'production object se
 $check(str_contains($importer, 'NO_NEW_ELIGIBLE_OBJECTS'), 'empty idempotent import is not supported');
 $check(str_contains($initializer, "str_replace(\$passwords, '<REDACTED>', \$diagnostics)"), 'initialization diagnostics do not redact configured passwords');
 $check(str_contains($initializer, 'array_filter([$stderr, $stdout]'), 'initialization wrapper does not capture both PHP diagnostic streams');
+$check(!str_contains($initializer, "initializationRun('import-production-installers.php')"), 'native bootstrap must not source installers from legacy production');
+$check(str_contains($initializer, "'workforceSource' => 'bitrix_sync'"), 'native bootstrap does not declare Bitrix as the workforce authority');
 $check(str_contains($initializer, '$detail = trim('), 'initialization wrapper still hides failed-step diagnostics');
 $check(str_contains($readme, 'make import-production'), 'fresh-machine import is undocumented');
 

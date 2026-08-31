@@ -38,7 +38,7 @@ up-bitrix: _bitrix-secret
 import-production:
 	@php rapid-pilot/validate-production-import-env.php
 	$(COMPOSE) exec \
-		-e FMONITOR_SOURCE_HOST="$${FMONITOR_SOURCE_HOST:-host.docker.internal}" \
+		-e FMONITOR_SOURCE_HOST="$${FMONITOR_SOURCE_HOST}" \
 		-e FMONITOR_SOURCE_PORT="$${FMONITOR_SOURCE_PORT:-3306}" \
 		-e FMONITOR_SOURCE_NAME="$${FMONITOR_SOURCE_NAME:-c1_fmonitor}" \
 		-e FMONITOR_SOURCE_USER="$${FMONITOR_SOURCE_USER}" \

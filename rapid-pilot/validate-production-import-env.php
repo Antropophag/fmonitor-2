@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $missing = [];
-foreach (['FMONITOR_SOURCE_USER', 'FMONITOR_SOURCE_PASSWORD'] as $name) {
+foreach (['FMONITOR_SOURCE_HOST', 'FMONITOR_SOURCE_PORT', 'FMONITOR_SOURCE_NAME', 'FMONITOR_SOURCE_USER', 'FMONITOR_SOURCE_PASSWORD'] as $name) {
     $value = getenv($name);
     if (!is_string($value) || $value === '') $missing[] = $name;
 }
