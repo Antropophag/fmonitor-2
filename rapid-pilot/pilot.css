@@ -75,6 +75,70 @@
   --fm2-pill: var(--shlz-source-radius-max, 999px);
 }
 
+/* Short first-session launch state. Kept local so it remains available before
+   the application shell and optional behavior bundles finish loading. */
+.fm2-preloader {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: none;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  background: var(--fm2-ink, #0b1623);
+  isolation: isolate;
+}
+
+.fm2-preload-enabled .fm2-preloader { display: grid; }
+
+.fm2-preloader::before {
+  position: absolute;
+  z-index: -1;
+  inset: 34% 14%;
+  background: radial-gradient(ellipse at center, rgb(111 140 255 / 24%), transparent 68%);
+  content: "";
+  animation: fm2-preloader-ambient 1.1s ease-in-out infinite alternate;
+}
+
+.fm2-preloader__lockup {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  inline-size: min(320px, 80vw);
+}
+
+.fm2-preloader__mark {
+  inline-size: 76px;
+  block-size: 76px;
+  filter: drop-shadow(0 12px 22px rgb(0 0 0 / 24%));
+  animation: fm2-preloader-mark-in .52s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.fm2-preloader__lift { animation: fm2-preloader-lift .82s cubic-bezier(.65, 0, .35, 1) infinite; }
+.fm2-preloader__track { inline-size: 100%; block-size: 2px; overflow: hidden; background: rgb(255 255 255 / 14%); }
+.fm2-preloader__track::after { display: block; inline-size: 38%; block-size: 100%; background: #8ea2e8; transform: translateX(-110%); content: ""; animation: fm2-preloader-progress .82s cubic-bezier(.65, 0, .35, 1) infinite; }
+.fm2-preloader__name { margin: 0; color: #fff; font-size: 19px; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+.fm2-preloader__name span { color: #aab8ef; }
+.fm2-preloader__status { margin: -8px 0 0; color: #cbd2dc; font-size: 12px; line-height: 1.4; letter-spacing: .02em; }
+.fm2-preloader.is-leaving { pointer-events: none; animation: fm2-preloader-leave .24s cubic-bezier(.3, 0, 1, 1) forwards; }
+.fm2-preloader.is-leaving .fm2-preloader__lockup { animation: fm2-preloader-lockup-out .2s cubic-bezier(.3, 0, 1, 1) forwards; }
+
+@keyframes fm2-preloader-mark-in { from { opacity: 0; transform: translateY(10px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes fm2-preloader-lift { 0%, 100% { transform: translateY(7px); } 50% { transform: translateY(-7px); } }
+@keyframes fm2-preloader-progress { 0% { transform: translateX(-110%); } 55%, 100% { transform: translateX(270%); } }
+@keyframes fm2-preloader-ambient { from { opacity: .55; transform: scale(.9); } to { opacity: 1; transform: scale(1.08); } }
+@keyframes fm2-preloader-leave { to { opacity: 0; visibility: hidden; } }
+@keyframes fm2-preloader-lockup-out { to { opacity: 0; transform: translateY(-6px) scale(.98); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fm2-preloader::before,
+  .fm2-preloader__lift,
+  .fm2-preloader__track::after { animation: none; }
+  .fm2-preloader__track::after { inline-size: 100%; transform: none; }
+  .fm2-preloader__mark { animation: fm2-preloader-reduced-in .18s ease-out both; }
+  @keyframes fm2-preloader-reduced-in { from { opacity: .65; } to { opacity: 1; } }
+}
+
 * { box-sizing: border-box; }
 
 .fm2-auth-page { min-block-size: 100vh; background: var(--fm2-canvas); }
