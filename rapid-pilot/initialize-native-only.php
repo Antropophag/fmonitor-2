@@ -23,7 +23,8 @@ function initializationRun(string $script, array $arguments = []): array
             getenv('FMONITOR_SOURCE_PASSWORD'),
             getenv('FMONITOR_DB_PASSWORD'),
         ], static fn (mixed $value): bool => is_string($value) && $value !== '');
-        $detail = trim(str_replace($passwords, '<REDACTED>', $stderr));
+        $diagnostics = implode(PHP_EOL, array_filter([$stderr, $stdout], static fn (string $value): bool => trim($value) !== ''));
+        $detail = trim(str_replace($passwords, '<REDACTED>', $diagnostics));
         if ($detail === '') $detail = 'Step returned a non-zero exit code without diagnostics.';
         throw new RuntimeException('NATIVE_INITIALIZATION_STEP_FAILED:' . $script . PHP_EOL . $detail);
     }
