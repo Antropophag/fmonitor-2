@@ -246,7 +246,7 @@ final class RapidPilotOtiz
         $legacyPrefix=(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:$this->prefix);
         if(preg_match('/^[A-Za-z0-9_]+$/D',$legacyPrefix)!==1)throw new RuntimeException('Invalid legacy table prefix');
         $rows = $this->db->query("SELECT l.id object_id,l.regnumber,l.ordadr_address address,d.payload_json,d.captured_at,
-            so.snapshot_id,so.report_date,so.current_progress_bp,so.progress_fact_date,so.accrued_cents,so.kss_bp,so.calculation_state,
+            so.snapshot_id,so.report_date,so.current_progress_bp,so.progress_fact_date,so.accrued_cents,so.kss_bp,so.calculation_state,so.inputs_json,
             COALESCE(c.paid_cents,0) paid_cents,
             COALESCE(c.discipline_cents,0) discipline_cents,
             COALESCE(c.deadline_cents,0) deadline_cents
