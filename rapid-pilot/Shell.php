@@ -8,6 +8,12 @@ final class RapidPilotShell
     {
         if ($otizAllowed) $html = RapidPilotOtiz::decorateNavigation($html, $otizActive);
         $html = RapidPilotCalendar::decorateNavigation($html, $calendarActive);
+        $html = self::distillNavigation($html);
+        $html = str_replace(
+            ['<span class="fm2-logo-name">FMonitor</span>', 'aria-label="FMonitor — объекты монтажа"', ' · FMonitor</title>'],
+            ['<span class="fm2-logo-name">FMonitor 2.0</span>', 'aria-label="FMonitor 2.0 — объекты монтажа"', ' · FMonitor 2.0</title>'],
+            $html
+        );
 
         $token = htmlspecialchars($csrf, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $logoutIcon = '<svg class="fm2-user-logout-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-logout"/></svg>';
@@ -19,5 +25,25 @@ final class RapidPilotShell
         $html = str_replace('<link rel="stylesheet" href="/pilot/assets/shlz.css">', '<script src="/pilot/assets/preloader.js"></script><link rel="stylesheet" href="/pilot/assets/shlz.css">', $html);
 
         return str_replace('<body class="shlz-scope">', '<body class="shlz-scope">' . $preloader, $html);
+    }
+
+    private static function distillNavigation(string $html): string
+    {
+        $html = preg_replace(
+            '#<span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true"><svg.*?</svg><span class="fm2-nav-text">.*?</span></span>#s',
+            '',
+            $html
+        ) ?? $html;
+        $html = preg_replace(
+            '#(<a class="fm2-nav-item" href="/pilot/construction-control"[^>]*>.*?</a>)(<a class="fm2-nav-item" href="/pilot/objects"[^>]*>.*?</a>)#s',
+            '$2$1',
+            $html,
+            1
+        ) ?? $html;
+        return preg_replace(
+            '#<span class="fm2-nav-group">([^<]+)</span>(?=<span class="fm2-nav-group">|</nav>)#',
+            '',
+            $html
+        ) ?? $html;
     }
 }
