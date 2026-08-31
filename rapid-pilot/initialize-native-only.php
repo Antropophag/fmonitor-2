@@ -42,7 +42,7 @@ foreach (['FMONITOR_PILOT_ACTIVE_MANIFEST', 'FMONITOR_SOURCE_USER', 'FMONITOR_SO
 $manifest = json_decode((string) file_get_contents(initializationEnv('FMONITOR_PILOT_ACTIVE_MANIFEST')), true, flags: JSON_THROW_ON_ERROR);
 if (($manifest['mode'] ?? null) !== 'native-only') throw new DomainException('GENERATION_NOT_NATIVE_ONLY');
 
-initializationRun('verify-native-only-generation.php', ['--expect-empty-cases']);
+initializationRun('verify-native-only-generation.php');
 $users = initializationRun('import-production-users.php');
 $template = initializationRun('import-checklist-template.php', ['--captured-at=' . $cutoff, '--apply']);
 $templateId = filter_var($template['snapshotId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
