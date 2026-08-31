@@ -30,9 +30,10 @@ final class RapidPilotOtiz
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $this->db = new mysqli(getenv('FMONITOR_DB_HOST') ?: '127.0.0.1', getenv('FMONITOR_DB_USER') ?: 'fmonitor2_demo', getenv('FMONITOR_DB_PASSWORD') ?: 'fmonitor2_demo_local', getenv('FMONITOR_DB_NAME') ?: 'fmonitor2_demo', (int) (getenv('FMONITOR_DB_PORT') ?: '23306'));
         $this->db->set_charset('utf8mb4');
-        $email = (string) ($_SERVER['REMOTE_USER'] ?? '');
-        $statement = $this->db->prepare("SELECT user_id,full_name FROM `{$this->prefix}fm2_pilot_users` WHERE LOWER(email)=LOWER(?) AND status=1 LIMIT 1");
-        $statement->bind_param('s', $email); $statement->execute(); $user = $statement->get_result()->fetch_assoc();
+        $userId = filter_var($_SERVER['FMONITOR_AUTH_USER_ID'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($userId === false) throw new RuntimeException('Authenticated pilot user unavailable');
+        $statement = $this->db->prepare("SELECT user_id,full_name FROM `{$this->prefix}fm2_pilot_users` WHERE user_id=? AND status=1 LIMIT 1");
+        $statement->bind_param('i', $userId); $statement->execute(); $user = $statement->get_result()->fetch_assoc();
         if (!is_array($user)) throw new RuntimeException('Pilot user unavailable');
         $this->userId = (int) $user['user_id']; $this->userName = (string) $user['full_name'];
         if (!\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($this->db,$this->prefix,$this->userId),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE)) $this->fail(403, 'Раздел доступен сотрудникам ОТиЗ и администраторам.');
@@ -47,12 +48,13 @@ final class RapidPilotOtiz
 
     public static function currentUserCanAccess(): bool
     {
-        $prefix = (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'); $email = (string) ($_SERVER['REMOTE_USER'] ?? '');
-        if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1 || $email === '') return false;
+        $prefix = (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX');
+        $userId = filter_var($_SERVER['FMONITOR_AUTH_USER_ID'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1 || $userId === false) return false;
         try {
             $db = new mysqli(getenv('FMONITOR_DB_HOST') ?: '127.0.0.1', getenv('FMONITOR_DB_USER') ?: 'fmonitor2_demo', getenv('FMONITOR_DB_PASSWORD') ?: 'fmonitor2_demo_local', getenv('FMONITOR_DB_NAME') ?: 'fmonitor2_demo', (int) (getenv('FMONITOR_DB_PORT') ?: '23306'));
-            $db->set_charset('utf8mb4'); $statement = $db->prepare("SELECT user_id FROM `{$prefix}fm2_pilot_users` WHERE LOWER(email)=LOWER(?) AND status=1 LIMIT 2");
-            $statement->bind_param('s', $email); $statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);$allowed=count($rows)===1&&\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($db,$prefix,(int)$rows[0]['user_id']),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE); $db->close(); return $allowed;
+            $db->set_charset('utf8mb4'); $statement = $db->prepare("SELECT user_id FROM `{$prefix}fm2_pilot_users` WHERE user_id=? AND status=1 LIMIT 1");
+            $statement->bind_param('i', $userId); $statement->execute();$row=$statement->get_result()->fetch_assoc();$allowed=is_array($row)&&\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($db,$prefix,(int)$row['user_id']),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE); $db->close(); return $allowed;
         } catch (Throwable) { return false; }
     }
 

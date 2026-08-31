@@ -31,6 +31,7 @@ $run = static function (string $path, string $method = 'GET', array $post = [], 
 require getcwd() . '/rapid-pilot/Otiz.php';
 $_SERVER['REQUEST_METHOD'] = getenv('VERIFY_METHOD');
 $_SERVER['REMOTE_USER'] = getenv('VERIFY_EMAIL');
+$_SERVER['FMONITOR_AUTH_USER_ID'] = getenv('VERIFY_USER_ID');
 $_SERVER['FMONITOR_AUTH_CSRF'] = getenv('VERIFY_CSRF');
 $_POST = json_decode(base64_decode((string) getenv('VERIFY_POST')), true, flags: JSON_THROW_ON_ERROR);
 (new RapidPilotOtiz())->handle((string) getenv('VERIFY_PATH'));
@@ -45,6 +46,7 @@ PHP;
         'VERIFY_PATH' => $path,
         'VERIFY_METHOD' => $method,
         'VERIFY_EMAIL' => $email,
+        'VERIFY_USER_ID' => $email === 'viewer.verify@shlz.ru' ? '102' : '101',
         'VERIFY_CSRF' => $csrf,
         'VERIFY_POST' => base64_encode(json_encode($post, JSON_THROW_ON_ERROR)),
     ]);
