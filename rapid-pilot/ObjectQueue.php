@@ -12,6 +12,7 @@ final class RapidPilotObjectQueue
             require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
             require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
             require_once dirname(__DIR__) . '/app/PilotHttp/ObjectListView.php';
+            require_once dirname(__DIR__) . '/app/PilotHttp/ChecklistSync.php';
             $prefix=(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX');$legacy=(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX');
             if(preg_match('/^[A-Za-z0-9_]+$/D',$prefix)!==1||preg_match('/^[A-Za-z0-9_]+$/D',$legacy)!==1)throw new RuntimeException();
             $db=new mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',(string)getenv('FMONITOR_DB_USER'),(string)getenv('FMONITOR_DB_PASSWORD'),(string)getenv('FMONITOR_DB_NAME'),(int)(getenv('FMONITOR_DB_PORT')?:3306));$db->set_charset('utf8mb4');

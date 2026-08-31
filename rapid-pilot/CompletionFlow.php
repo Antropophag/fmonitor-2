@@ -72,7 +72,11 @@ final class RapidPilotCompletionFlow
         foreach($objects as&$object)if(($object['status']??null)==='В работе'&&isset($state[(int)$object['id']]))$object=array_replace($object,$state[(int)$object['id']]);unset($object);return$objects;
     }
 
-    public static function ensureQueueSchema(mysqli$db,string$prefix):void{self::ensureSchema($db,$prefix);}
+    public static function ensureQueueSchema(mysqli$db,string$prefix):void
+    {
+        self::ensureSchema($db,$prefix);
+        (new \FMonitor2\PilotHttp\ChecklistSync($db,$prefix,'',''))->ensureSchema();
+    }
 
     public static function paintStatuses(string$html):string
     {
