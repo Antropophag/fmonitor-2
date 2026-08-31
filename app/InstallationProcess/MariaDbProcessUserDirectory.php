@@ -1,138 +1,23 @@
 <?php
-
 declare(strict_types=1);
-
 namespace FMonitor2\InstallationProcess;
 
-use FMonitor2\RapidPilot\RoleCapabilityMap;
-require_once dirname(__DIR__).'/RapidPilot/RoleCapabilityMap.php';
-
+/** Process authorization backed exclusively by autonomous FMonitor roles. */
 final class MariaDbProcessUserDirectory
 {
-    public function __construct(
-        private readonly \mysqli $connection,
-        private readonly string $processTablePrefix = '',
-        private readonly string $legacyTablePrefix = '',
-    ) {
-        MariaDbSchemaInspector::validateTablePrefix($this->processTablePrefix);
-        MariaDbSchemaInspector::validateTablePrefix($this->legacyTablePrefix);
-    }
-
-    public function actorCanPrepareAssignmentOrder(int $actorId): bool
+    public function __construct(private readonly \mysqli $connection,private readonly string $processTablePrefix='',private readonly string $legacyTablePrefix=''){MariaDbSchemaInspector::validateTablePrefix($this->processTablePrefix);}
+    public function actorCanPrepareAssignmentOrder(int $actorId):bool{return $this->has($actorId,'assignment_order.prepare');}
+    public function actorCanConfirmOrderRegistration(int $actorId):bool{return $this->has($actorId,'assignment_order.confirm_registration');}
+    public function actorCanOpenInstallation(int $actorId):bool{return $this->has($actorId,'installation.open');}
+    public function actorCanReadAssignmentOrderArtifact(int $actorId):bool{return $this->has($actorId,'assignment_order_artifact.read');}
+    public function findEngineerSnapshot(int $userId):?array
     {
-        return $this->actorHasCapability($actorId, 'assignment_order.prepare');
+        if($userId<1)return null;$p=$this->processTablePrefix;
+        $s=$this->connection->prepare("SELECT u.user_id,u.full_name FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND r.status=1 AND r.code='construction_control_engineer' LIMIT 1");$s->bind_param('i',$userId);$s->execute();$row=$s->get_result()->fetch_assoc();if($row===null)return null;
+        return ['userId'=>(int)$row['user_id'],'fullName'=>(string)$row['full_name'],'position'=>'Инженер строительного контроля','active'=>true,'role'=>'construction_control_engineer'];
     }
-
-    public function actorCanConfirmOrderRegistration(int $actorId): bool
+    private function has(int $userId,string $permission):bool
     {
-        return $this->actorHasCapability($actorId, 'assignment_order.confirm_registration');
-    }
-
-    public function actorCanOpenInstallation(int $actorId): bool
-    {
-        return $this->actorHasCapability($actorId, 'installation.open');
-    }
-
-    public function actorCanReadAssignmentOrderArtifact(int $actorId): bool
-    {
-        if ($actorId <= 0) return false;
-        $pilotUsers = $this->processTablePrefix . 'fm2_pilot_users';
-        $table = $this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');
-        $table->bind_param('s', $pilotUsers);
-        $table->execute();
-        if ($table->get_result()->fetch_assoc() !== null) {
-            $pilotRoles = $this->processTablePrefix . 'fm2_pilot_roles';
-            $pilotAssignments = $this->processTablePrefix . 'fm2_pilot_user_roles';
-            $statement = $this->connection->prepare(
-                "SELECT 1 FROM `{$pilotUsers}` u JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id "
-                . "JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id WHERE u.user_id=? AND u.status=1 AND r.status=1 LIMIT 1",
-            );
-            $statement->bind_param('i', $actorId);
-            $statement->execute();
-            return $statement->get_result()->fetch_row() !== null;
-        }
-        $users = $this->legacyTablePrefix . 'users';
-        $roles = $this->legacyTablePrefix . 'users_roles';
-        $statement = $this->connection->prepare(
-            "SELECT 1 FROM `{$users}` u JOIN `{$roles}` r ON r.id=u.role_id "
-            . 'WHERE u.id=? AND u.status=1 AND r.status=1 LIMIT 1',
-        );
-        $statement->bind_param('i', $actorId);
-        $statement->execute();
-        return $statement->get_result()->fetch_row() !== null;
-    }
-
-    public function findEngineerSnapshot(int $controlEngineerUserId): ?array
-    {
-        if ($controlEngineerUserId <= 0) {
-            return null;
-        }
-
-        $pilotUsers = $this->processTablePrefix . 'fm2_pilot_users';
-        $table = $this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');
-        $table->bind_param('s', $pilotUsers);
-        $table->execute();
-        if ($table->get_result()->fetch_assoc() !== null) {
-            $pilotRoles = $this->processTablePrefix . 'fm2_pilot_roles';
-            $pilotAssignments = $this->processTablePrefix . 'fm2_pilot_user_roles';
-            $statement = $this->connection->prepare(
-                "SELECT u.user_id,u.full_name FROM `{$pilotUsers}` u "
-                . "JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id "
-                . "JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id "
-                . "WHERE u.user_id=? AND u.status=1 AND r.status=1 AND r.name='Строительный контроль' LIMIT 2",
-            );
-            $statement->bind_param('i', $controlEngineerUserId);
-            $statement->execute();
-            $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
-            if (count($rows) === 1) {
-                return [
-                    'userId' => (int) $rows[0]['user_id'],
-                    'fullName' => $rows[0]['full_name'],
-                    'position' => 'Строительный контроль',
-                    'active' => true,
-                    'role' => 'construction_control_engineer',
-                ];
-            }
-        }
-
-        $users = $this->legacyTablePrefix . 'users';
-        $roles = $this->legacyTablePrefix . 'users_roles';
-        $capabilities = $this->processTablePrefix . 'fm2_process_user_capabilities';
-        $statement = $this->connection->prepare(
-            "SELECT u.id,u.name,c.position_snapshot FROM `{$users}` u "
-            . "JOIN `{$roles}` r ON r.id=u.role_id "
-            . "JOIN `{$capabilities}` c ON c.user_id=u.id AND c.capability='construction_control_engineer' "
-            . 'WHERE u.id=? AND u.status=1 AND r.status=1 LIMIT 1',
-        );
-        $statement->bind_param('i', $controlEngineerUserId);
-        $statement->execute();
-        $row = $statement->get_result()->fetch_assoc();
-        if ($row === null) {
-            return null;
-        }
-        $position = $row['position_snapshot'];
-        if (!is_string($position) || trim($position) === '') {
-            return null;
-        }
-
-        return [
-            'userId' => (int) $row['id'],
-            'fullName' => $row['name'],
-            'position' => $position,
-            'active' => true,
-            'role' => 'construction_control_engineer',
-        ];
-    }
-
-    private function actorHasCapability(int $actorId, string $capability): bool
-    {
-        if ($actorId <= 0) return false;
-        $capabilities=$this->processTablePrefix.'fm2_process_user_capabilities';
-        $pilotUsers=$this->processTablePrefix.'fm2_pilot_users';$table=$this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');$table->bind_param('s',$pilotUsers);$table->execute();
-        if($table->get_result()->fetch_assoc()!==null){$pilotRoles=$this->processTablePrefix.'fm2_pilot_roles';$pilotAssignments=$this->processTablePrefix.'fm2_pilot_user_roles';$roleIds=RoleCapabilityMap::roleIdsFor($capability);$roleSql=$roleIds===[]?'0':implode(',',array_map('intval',$roleIds));$statement=$this->connection->prepare("SELECT 1 FROM `{$pilotUsers}` u JOIN `{$pilotAssignments}` ur ON ur.user_id=u.user_id JOIN `{$pilotRoles}` r ON r.role_id=ur.role_id LEFT JOIN `{$capabilities}` c ON c.user_id=u.user_id AND c.capability=? WHERE u.user_id=? AND u.status=1 AND r.status=1 AND (c.user_id IS NOT NULL OR r.role_id IN ({$roleSql})) LIMIT 1");$statement->bind_param('si',$capability,$actorId);$statement->execute();return $statement->get_result()->fetch_row()!==null;}
-        $users=$this->legacyTablePrefix.'users';$roles=$this->legacyTablePrefix.'users_roles';
-        $statement=$this->connection->prepare("SELECT 1 FROM `{$users}` u JOIN `{$roles}` r ON r.id=u.role_id JOIN `{$capabilities}` c ON c.user_id=u.id AND c.capability=? WHERE u.id=? AND u.status=1 AND r.status=1 LIMIT 1");
-        $statement->bind_param('si',$capability,$actorId);$statement->execute();
-        return $statement->get_result()->fetch_row()!==null;
+        if($userId<1)return false;$p=$this->processTablePrefix;$s=$this->connection->prepare("SELECT 1 FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND r.status=1 AND rp.permission=? LIMIT 1");$s->bind_param('is',$userId,$permission);$s->execute();return $s->get_result()->fetch_row()!==null;
     }
 }

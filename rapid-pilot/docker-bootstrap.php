@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 use FMonitor2\InstallationProcess\PilotCaseImporter;
 use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
-use FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration;
-use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
 
 require_once __DIR__ . '/Otiz.php';
+require_once __DIR__ . '/IdentityBootstrap.php';
 
 $root = dirname(__DIR__);
 $home = getenv('HOME');
@@ -43,11 +42,7 @@ $db->set_charset('utf8mb4');
 $serverIdentity=(string)$db->query('SELECT @@hostname AS identity')->fetch_assoc()['identity'];
 try {
     $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}fm_maintable` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120),workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40),workdatefinish VARCHAR(40),ptoactdate VARCHAR(40),responsstroicontrol VARCHAR(80)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}users_roles` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}users` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,email VARCHAR(300) NOT NULL,role_id BIGINT UNSIGNED NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     if ($withTestFixtures) {
-        $db->query("INSERT IGNORE INTO `{$legacyPrefix}users_roles` VALUES(5,'ФКР',1),(8,'Строительный контроль',1)");
-        $db->query("INSERT IGNORE INTO `{$legacyPrefix}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
         $db->query("INSERT IGNORE INTO `{$legacyPrefix}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
     }
 
@@ -61,29 +56,17 @@ try {
         $result = WorkforceCatalogSchemaMigration::apply($db, $processPrefix);
         if (isset($result['reason'])) throw new RuntimeException('Workforce schema migration failed');
     }
-    foreach ([BitrixWorkforceHistorySchemaMigration::class, ProcessUserCapabilitiesSchemaMigration::class, ProcessCommandCapabilitiesSchemaMigration::class] as $migration) {
+    foreach ([BitrixWorkforceHistorySchemaMigration::class] as $migration) {
         $result = $migration::apply($db, $processPrefix);
         if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
     }
     $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_generation_sentinel`(singleton_id TINYINT UNSIGNED PRIMARY KEY,generation INT UNSIGNED NOT NULL,fingerprint CHAR(8) NOT NULL,manifest_nonce CHAR(64) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $sentinel=$db->prepare("INSERT INTO `{$processPrefix}fm2_pilot_generation_sentinel` VALUES(1,?,?,?) ON DUPLICATE KEY UPDATE generation=VALUES(generation),fingerprint=VALUES(fingerprint),manifest_nonce=VALUES(manifest_nonce)");$sentinel->bind_param('iss',$generation,$fingerprint,$manifestNonce);$sentinel->execute();
-    if ($withTestFixtures) $db->query("INSERT IGNORE INTO `{$processPrefix}fm2_process_user_capabilities` VALUES(18,'assignment_order.prepare',NULL),(18,'assignment_order.confirm_registration',NULL),(18,'installation.open',NULL),(73,'construction_control_engineer','Инженер строительного контроля')");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_users`(user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,full_name VARCHAR(300) NOT NULL,email VARCHAR(254) NOT NULL,phone VARCHAR(100) NOT NULL,status TINYINT(1) NOT NULL,source_updated_at VARCHAR(40) NOT NULL,KEY(status,full_name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_roles`(role_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,status TINYINT(1) NOT NULL,source_updated_at VARCHAR(40) NOT NULL,KEY(status,name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_user_roles`(user_id BIGINT UNSIGNED NOT NULL,role_id BIGINT UNSIGNED NOT NULL,origin VARCHAR(40) NOT NULL,assigned_at VARCHAR(40) NOT NULL,assigned_by_user_id BIGINT UNSIGNED NULL,PRIMARY KEY(user_id,role_id),KEY(role_id,user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_user_role_events`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,user_id BIGINT UNSIGNED NOT NULL,role_id BIGINT UNSIGNED NOT NULL,action VARCHAR(40) NOT NULL,occurred_at VARCHAR(40) NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,KEY(user_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_auth_credentials`(user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL,password_hash VARCHAR(255) NULL,password_set_at VARCHAR(40) NULL,updated_at VARCHAR(40) NOT NULL,UNIQUE KEY(email_normalized)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_auth_attempts`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL,succeeded TINYINT(1) NOT NULL,attempted_at DATETIME(6) NOT NULL,KEY(email_normalized,attempted_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $sourceUpdatedAt = (new DateTimeImmutable('now', new DateTimeZone('Europe/Moscow')))->format('Y-m-d\\TH:i:sP');
-    $sourceUpdatedAt = $db->real_escape_string($sourceUpdatedAt);
-    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_roles`(role_id,name,status,source_updated_at) SELECT id,name,status,'{$sourceUpdatedAt}' FROM `{$legacyPrefix}users_roles` ON DUPLICATE KEY UPDATE name=VALUES(name),status=VALUES(status),source_updated_at=VALUES(source_updated_at)");
-    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_users`(user_id,full_name,email,phone,status,source_updated_at) SELECT id,name,email,'',status,'{$sourceUpdatedAt}' FROM `{$legacyPrefix}users` ON DUPLICATE KEY UPDATE full_name=VALUES(full_name),email=VALUES(email),status=VALUES(status),source_updated_at=VALUES(source_updated_at)");
-    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) SELECT id,LOWER(TRIM(email)),NULL,NULL,'{$sourceUpdatedAt}' FROM `{$legacyPrefix}users` WHERE LOWER(TRIM(email)) REGEXP '^[^@[:space:]]+@shlz\\.ru$' ON DUPLICATE KEY UPDATE email_normalized=VALUES(email_normalized),updated_at=VALUES(updated_at)");
-    $db->query("INSERT INTO `{$processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) SELECT id,role_id,'legacy_primary','{$sourceUpdatedAt}',NULL FROM `{$legacyPrefix}users` ON DUPLICATE KEY UPDATE origin=origin");
-    if ($withTestFixtures) {
-        $db->query("INSERT INTO `{$processPrefix}fm2_pilot_roles`(role_id,name,status,source_updated_at) VALUES(9001,'ОТиЗ',1,'{$sourceUpdatedAt}') ON DUPLICATE KEY UPDATE name=VALUES(name),status=VALUES(status),source_updated_at=VALUES(source_updated_at)");
-        $db->query("INSERT INTO `{$processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,9001,'rapid_pilot','{$sourceUpdatedAt}',NULL) ON DUPLICATE KEY UPDATE origin=origin");
-    }
+    $bootstrapEmails=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS')?:'');
+    $bootstrapPassword=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD')?:'');
+    RapidPilotIdentityBootstrap::apply($db,$processPrefix,$bootstrapEmails,$bootstrapPassword);
+    $db->query("DROP TABLE IF EXISTS `{$processPrefix}fm2_process_user_capabilities`");
+    $db->query("DROP TABLE IF EXISTS `{$legacyPrefix}users`,`{$legacyPrefix}users_roles`");
     RapidPilotOtiz::bootstrap($db, $processPrefix);
     require_once __DIR__ . '/InspectionSchedule.php';
     RapidPilotInspectionSchedule::ensureSchema($db, $processPrefix);

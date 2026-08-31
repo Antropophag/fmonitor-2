@@ -56,16 +56,11 @@ final class RapidPilotInspectionSchedule
     {
         $db->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_inspection_schedules`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT UNSIGNED NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,control_engineer_user_id BIGINT UNSIGNED NOT NULL,inspection_date DATE NOT NULL,scheduled_by_user_id BIGINT UNSIGNED NOT NULL,scheduled_at VARCHAR(40) NOT NULL,UNIQUE KEY unique_planned_inspection(installation_case_id,control_engineer_user_id,inspection_date),KEY calendar_date(inspection_date,id),KEY engineer_day(control_engineer_user_id,inspection_date,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $db->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_inspection_schedule_events`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,schedule_id BIGINT UNSIGNED NOT NULL,installation_case_id BIGINT UNSIGNED NOT NULL,event_type VARCHAR(80) NOT NULL,payload_json JSON NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,KEY(schedule_id,id),KEY(installation_case_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_inspection_schedulers`(user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,origin VARCHAR(80) NOT NULL,granted_at VARCHAR(40) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $grantedAt=self::now()->format(DATE_ATOM);
-        $grant=$db->prepare("INSERT INTO `{$prefix}fm2_pilot_inspection_schedulers`(user_id,origin,granted_at) SELECT user_id,'corporate_pilot_owner',? FROM `{$prefix}fm2_pilot_users` WHERE status=1 AND LOWER(TRIM(email))='ts.grishin@shlz.ru' ON DUPLICATE KEY UPDATE origin=VALUES(origin)");
-        $grant->bind_param('s',$grantedAt);$grant->execute();
     }
 
     public static function canSchedule(mysqli $db, string $prefix, int $userId): bool
     {
-        $query=$db->prepare("SELECT 1 FROM `{$prefix}fm2_process_user_capabilities` WHERE user_id=? AND capability='assignment_order.prepare' UNION SELECT 1 FROM `{$prefix}fm2_pilot_inspection_schedulers` WHERE user_id=? LIMIT 1");
-        $query->bind_param('ii',$userId,$userId);$query->execute();return $query->get_result()->fetch_row()!==null;
+        require_once dirname(__DIR__).'/app/PilotHttp/AccessPolicy.php';return \FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($db,$prefix,$userId),'inspection.schedule');
     }
 
     public static function queueButton(int $objectId, string $label, string $csrf): string

@@ -17,6 +17,7 @@ final class RapidPilotLocalAuth
 
     public function handle(string $path):void
     {
+        if($path==='/pilot/activate')$this->activationPage();
         if($path==='/pilot/logout'){
             if(($_SERVER['REQUEST_METHOD']??'GET')!=='POST'||!$this->validCsrf((string)($_POST['csrfToken']??'')))$this->plain(403,'Недопустимый запрос.');
             $this->destroySession();$this->redirect('/pilot/login');
@@ -44,22 +45,8 @@ final class RapidPilotLocalAuth
                 if($this->isRateLimited($email)){$this->recordAttempt($email,false);$error='Не удалось войти. Проверьте email и данные доступа.';}
                 elseif($user!==null&&(int)$user['status']!==1){$this->recordAttempt($email,false);$error='Учётная запись заблокирована. Обратитесь к администратору FMonitor.';}
                 else{
-                    if($user===null)$user=['user_id'=>0,'full_name'=>$email,'password_hash'=>null,'status'=>1];
-                    if($user['password_hash']===null){
-                    $stage='setup';
-                    if(isset($_POST['password'])){
-                        $password=(string)$_POST['password'];$passwordError=$this->passwordError($password,(string)($_POST['passwordConfirmation']??''),$email);
-                        if($passwordError!==null)$error=$passwordError;
-                        else{
-                            $hash=password_hash($password,defined('PASSWORD_ARGON2ID')?PASSWORD_ARGON2ID:PASSWORD_BCRYPT);
-                            if(!is_string($hash))throw new RuntimeException('Password hashing failed');
-                            $userId=(int)$user['user_id'];if($userId===0){$user=$this->provisionUser($email);$userId=(int)$user['user_id'];}
-                            $statement=$this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_auth_credentials` SET password_hash=?,password_set_at=?,updated_at=? WHERE user_id=? AND password_hash IS NULL");$now=$this->now();$statement->bind_param('sssi',$hash,$now,$now,$userId);$statement->execute();
-                            if($statement->affected_rows!==1){$error='Пароль уже был задан. Войдите с установленным паролем.';$stage='password';}
-                            else{$this->recordAttempt($email,true);$this->signIn($userId,$email);}
-                        }
-                    }
-                    }else{
+                    if($user===null||$user['password_hash']===null){$this->recordAttempt($email,false);$error='Не удалось войти. Проверьте email или обратитесь к администратору.';}
+                    else{
                         $stage='password';
                         if(isset($_POST['password'])){
                             $password=(string)$_POST['password'];
@@ -71,6 +58,13 @@ final class RapidPilotLocalAuth
             }
         }
         $this->renderLogin($stage,$email,$error,is_array($user)?(string)$user['full_name']:'');
+    }
+
+    private function activationPage():never
+    {
+        $token=(string)($_POST['token']??$_GET['token']??'');$error=preg_match('/^[A-Za-z0-9_-]{43}$/D',$token)===1?'':'Ссылка активации недействительна или истекла.';$done=false;
+        if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'&&$error===''){$hash=hash('sha256',$token,true);$this->db->begin_transaction();try{$s=$this->db->prepare("SELECT i.id,i.user_id,u.email FROM `{$this->prefix}fm2_pilot_invitations` i JOIN `{$this->prefix}fm2_pilot_users` u ON u.user_id=i.user_id WHERE i.token_hash=? AND i.used_at IS NULL AND i.revoked_at IS NULL AND i.expires_at>NOW(6) AND u.status=1 AND u.activation_state='invited' FOR UPDATE");$s->bind_param('s',$hash);$s->execute();$row=$s->get_result()->fetch_assoc();if(!is_array($row))throw new RuntimeException();$password=(string)($_POST['password']??'');$passwordError=$this->passwordError($password,(string)($_POST['passwordConfirmation']??''),(string)$row['email']);if($passwordError!==null){$this->db->rollback();$error=$passwordError;}else{$passwordHash=password_hash($password,PASSWORD_ARGON2ID);if(!is_string($passwordHash))throw new RuntimeException();$now=$this->now();$userId=(int)$row['user_id'];$u=$this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_auth_credentials` SET password_hash=?,password_set_at=?,updated_at=? WHERE user_id=? AND password_hash IS NULL");$u->bind_param('sssi',$passwordHash,$now,$now,$userId);$u->execute();if($u->affected_rows!==1)throw new RuntimeException();$this->db->query("UPDATE `{$this->prefix}fm2_pilot_invitations` SET used_at=NOW(6) WHERE id=".(int)$row['id']);$this->db->query("UPDATE `{$this->prefix}fm2_pilot_users` SET activation_state='active',source_updated_at='".$this->db->real_escape_string($now)."' WHERE user_id={$userId}");$this->db->commit();$done=true;}}catch(Throwable){try{$this->db->rollback();}catch(Throwable){}$error='Ссылка активации недействительна или истекла.';}}
+        $e=static fn(string$v):string=>htmlspecialchars($v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');header('Content-Type: text/html; charset=UTF-8');header('Cache-Control: no-store');header('Referrer-Policy: no-referrer');header('X-Frame-Options: DENY');header("Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");$content=$done?'<h1>Учётная запись активирована</h1><a class="shlz-button shlz-button--primary" href="/pilot/login">Войти</a>':'<h1>Активация FMonitor</h1>'.($error===''?'<form method="post" action="/pilot/activate" class="fm2-auth-form"><input type="hidden" name="token" value="'.$e($token).'"><label class="shlz-field"><span class="shlz-field__label">Пароль</span><span class="shlz-field__control"><input class="shlz-input" type="password" name="password" minlength="14" maxlength="200" required></span></label><label class="shlz-field"><span class="shlz-field__label">Повторите пароль</span><span class="shlz-field__control"><input class="shlz-input" type="password" name="passwordConfirmation" minlength="14" maxlength="200" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Активировать</button></form>':'<p class="fm2-auth-error" role="alert">'.$e($error).'</p>');echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Активация — FMonitor</title><link rel="stylesheet" href="/pilot/assets/shlz.css"><link rel="stylesheet" href="/pilot/assets/pilot.css"></head><body class="shlz-scope fm2-auth-page"><main class="fm2-auth-card">'.$content.'</main></body></html>';exit;
     }
 
     private function renderLogin(string $stage,string $email,string $error,string $fullName):never
@@ -104,21 +98,10 @@ final class RapidPilotLocalAuth
         }
         session_start(['use_strict_mode'=>1,'use_only_cookies'=>1,'cookie_httponly'=>1,'cookie_samesite'=>'Strict','gc_maxlifetime'=>604800]);
     }
-    private function user():?array{$userId=(int)($_SESSION['auth_user_id']??0);$email=$this->normalizeEmail((string)($_SESSION['auth_email']??''));if($userId<1||!$this->allowedEmail($email))return null;$s=$this->db->prepare("SELECT u.user_id,u.email FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE u.user_id=? AND u.status=1 AND c.email_normalized=? AND c.password_hash IS NOT NULL");$s->bind_param('is',$userId,$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?['user_id'=>(int)$row['user_id'],'email'=>$this->normalizeEmail((string)$row['email'])]:null;}
-    private function findUser(string $email):?array{$s=$this->db->prepare("SELECT u.user_id,u.full_name,u.status,c.password_hash FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE c.email_normalized=? LIMIT 1");$s->bind_param('s',$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?$row:null;}
-    private function provisionUser(string $email):array
-    {
-        $lockName=$this->prefix.'pilot-auth-provision';$lock=$this->db->prepare('SELECT GET_LOCK(?,5) acquired');$lock->bind_param('s',$lockName);$lock->execute();if((int)$lock->get_result()->fetch_assoc()['acquired']!==1)throw new RuntimeException('Account provisioning lock unavailable');
-        try{
-            $existing=$this->findUser($email);if($existing!==null)return$existing;
-            $row=$this->db->query("SELECT GREATEST(COALESCE(MAX(user_id),0)+1,9000000000) next_id FROM `{$this->prefix}fm2_pilot_users`")->fetch_assoc();$userId=(int)$row['next_id'];$now=$this->now();$fullName=$email;
-            $s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_users`(user_id,full_name,email,phone,status,source_updated_at) VALUES(?,?,?,'',1,?)");$s->bind_param('isss',$userId,$fullName,$email,$now);$s->execute();
-            $s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(?,?,NULL,NULL,?)");$s->bind_param('iss',$userId,$email,$now);$s->execute();
-            return['user_id'=>$userId,'full_name'=>$fullName,'password_hash'=>null,'status'=>1];
-        }finally{$release=$this->db->prepare('SELECT RELEASE_LOCK(?)');$release->bind_param('s',$lockName);$release->execute();}
-    }
+    private function user():?array{$userId=(int)($_SESSION['auth_user_id']??0);$email=$this->normalizeEmail((string)($_SESSION['auth_email']??''));if($userId<1||!$this->allowedEmail($email))return null;$s=$this->db->prepare("SELECT u.user_id,u.email FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND c.email_normalized=? AND c.password_hash IS NOT NULL");$s->bind_param('is',$userId,$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?['user_id'=>(int)$row['user_id'],'email'=>$this->normalizeEmail((string)$row['email'])]:null;}
+    private function findUser(string $email):?array{$s=$this->db->prepare("SELECT u.user_id,u.full_name,u.status,c.password_hash FROM `{$this->prefix}fm2_pilot_users` u JOIN `{$this->prefix}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id WHERE c.email_normalized=? AND u.activation_state='active' LIMIT 1");$s->bind_param('s',$email);$s->execute();$row=$s->get_result()->fetch_assoc();return is_array($row)?$row:null;}
     private function signIn(int $userId,string $email):never{session_regenerate_id(true);$_SESSION['auth_user_id']=$userId;$_SESSION['auth_email']=$email;$_SESSION['auth_signed_in_at']=time();$returnTo=$this->safeReturnTo((string)($_SESSION['auth_return_to']??'/pilot/objects'));unset($_SESSION['auth_return_to']);$this->redirect($returnTo);}
-    private function passwordError(string $password,string $confirmation,string $email):?string{if($password!==$confirmation)return'Пароли не совпадают.';if(strlen($password)<12)return'Пароль должен содержать не менее 12 символов.';if(strlen($password)>200)return'Пароль слишком длинный.';$local=strstr($email,'@',true);if(is_string($local)&&strlen($local)>=4&&str_contains(mb_strtolower($password),mb_strtolower($local)))return'Пароль не должен содержать ваш email.';return null;}
+    private function passwordError(string $password,string $confirmation,string $email):?string{if($password!==$confirmation)return'Пароли не совпадают.';if(strlen($password)<14)return'Пароль должен содержать не менее 14 символов.';if(strlen($password)>200)return'Пароль слишком длинный.';$local=strstr($email,'@',true);if(is_string($local)&&strlen($local)>=4&&str_contains(mb_strtolower($password),mb_strtolower($local)))return'Пароль не должен содержать ваш email.';return null;}
     private function isRateLimited(string $email):bool{$s=$this->db->prepare("SELECT COUNT(*) failures FROM `{$this->prefix}fm2_pilot_auth_attempts` WHERE email_normalized=? AND succeeded=0 AND attempted_at>=DATE_SUB(NOW(6),INTERVAL 15 MINUTE)");$s->bind_param('s',$email);$s->execute();return(int)$s->get_result()->fetch_assoc()['failures']>=10;}
     private function recordAttempt(string $email,bool $success):void{$value=$success?1:0;$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_auth_attempts`(email_normalized,succeeded,attempted_at) VALUES(?,?,NOW(6))");$s->bind_param('si',$email,$value);$s->execute();if($success){$s=$this->db->prepare("DELETE FROM `{$this->prefix}fm2_pilot_auth_attempts` WHERE email_normalized=?");$s->bind_param('s',$email);$s->execute();}}
     private function csrf():string{if(!isset($_SESSION['auth_csrf'])||!is_string($_SESSION['auth_csrf']))$_SESSION['auth_csrf']=bin2hex(random_bytes(32));return$_SESSION['auth_csrf'];}

@@ -43,7 +43,6 @@ $manifest = json_decode((string) file_get_contents(initializationEnv('FMONITOR_P
 if (($manifest['mode'] ?? null) !== 'native-only') throw new DomainException('GENERATION_NOT_NATIVE_ONLY');
 
 initializationRun('verify-native-only-generation.php');
-$users = initializationRun('import-production-users.php');
 $template = initializationRun('import-checklist-template.php', ['--captured-at=' . $cutoff, '--apply']);
 $templateId = filter_var($template['snapshotId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 if ($templateId === false) throw new RuntimeException('NATIVE_TEMPLATE_UNAVAILABLE');
@@ -72,4 +71,4 @@ $db->close();
 foreach ($ids as $id) initializationRun('link-operational-case-template.php', ['--object-id=' . $id, '--template-snapshot-id=' . $templateId, '--effective-at=' . $cutoff, '--apply']);
 $proof = initializationRun('verify-native-only-generation.php');
 
-echo json_encode(['ok' => true, 'mode' => 'native-only-initialization', 'users' => (int) ($users['users'] ?? 0), 'workforceSource' => 'bitrix_sync', 'eligibleCandidates' => $eligible, 'createdCases' => $imported, 'caseCount' => (int) ($proof['cases'] ?? 0), 'details' => (int) ($details['sourceRows'] ?? 0), 'templateLinkedCases' => count($ids), 'identifiersExposed' => false], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;
+echo json_encode(['ok' => true, 'mode' => 'native-only-initialization', 'identitySource' => 'local', 'workforceSource' => 'bitrix_sync', 'eligibleCandidates' => $eligible, 'createdCases' => $imported, 'caseCount' => (int) ($proof['cases'] ?? 0), 'details' => (int) ($details['sourceRows'] ?? 0), 'templateLinkedCases' => count($ids), 'identifiersExposed' => false], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;
