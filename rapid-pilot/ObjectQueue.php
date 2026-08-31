@@ -20,7 +20,11 @@ final class RapidPilotObjectQueue
             $caps=[];foreach(['assignment_order.prepare','assignment_order.confirm_registration','installation.open']as$cap)$caps[$cap]=$user->can($cap);$canProvideOrder=$caps['assignment_order.prepare']||$caps['assignment_order.confirm_registration'];$allowed=['Требуется распоряжение'=>$canProvideOrder,'Готов к открытию'=>$caps['installation.open']];
             foreach($objects as&$object){if(($object['status']??null)==='Распоряжение подготовлено')$object['status']='Требуется распоряжение';$status=(string)$object['status'];$object['nextStep']=($allowed[$status]??($status==='В работе'))?match($status){'Требуется распоряжение'=>'Загрузить оригинал распоряжения','Готов к открытию'=>'Открыть работы','В работе'=>'Инженеру: провести первую инспекцию',default=>'Откройте карточку объекта монтажа'}:'Откройте карточку объекта монтажа';}unset($object);$objects=RapidPilotCompletionFlow::decorateQueue($objects,$db,$prefix);$db->close();
             $html=self::render($user,$objects,$filters);$html=RapidPilotCompletionFlow::paintStatuses($html);$html=RapidPilotShell::decorate($html,(string)($_SERVER['FMONITOR_AUTH_CSRF']??''),false,RapidPilotOtiz::currentUserCanAccess(),false);$html=str_replace('</head>','<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>',$html);$html=str_replace('</body>','<script type="module" src="/pilot/assets/object-queue.js"></script></body>',$html);self::respond(200,$html);
-        } catch(Throwable) { self::respond(503,"Service unavailable.\n",'text/plain; charset=UTF-8'); }
+        } catch(Throwable $error) {
+            $reference=bin2hex(random_bytes(6));
+            error_log('object_queue_failure '.$reference.' '.get_class($error).' '.$error->getMessage());
+            self::respond(503,"Service unavailable. Reference: {$reference}\n",'text/plain; charset=UTF-8');
+        }
     }
 
     private static function readObjects(mysqli$db,string$prefix,string$legacy):array

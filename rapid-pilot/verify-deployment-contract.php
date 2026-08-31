@@ -7,6 +7,7 @@ $makefile = (string) file_get_contents($root . '/Makefile');
 $compose = (string) file_get_contents($root . '/compose.yaml');
 $importer = (string) file_get_contents(__DIR__ . '/import-production-objects.php');
 $initializer = (string) file_get_contents(__DIR__ . '/initialize-native-only.php');
+$objectQueue = (string) file_get_contents(__DIR__ . '/ObjectQueue.php');
 $readme = (string) file_get_contents(__DIR__ . '/README.md');
 $envExample = (string) file_get_contents($root . '/.env.example');
 
@@ -32,6 +33,7 @@ $check(str_contains($initializer, "str_replace(\$passwords, '<REDACTED>', \$diag
 $check(str_contains($initializer, 'array_filter([$stderr, $stdout]'), 'initialization wrapper does not capture both PHP diagnostic streams');
 $check(!str_contains($initializer, "initializationRun('import-production-installers.php')"), 'native bootstrap must not source installers from legacy production');
 $check(str_contains($initializer, "'workforceSource' => 'bitrix_sync'"), 'native bootstrap does not declare Bitrix as the workforce authority');
+$check(str_contains($objectQueue, "error_log('object_queue_failure '"), 'production object queue failures are hidden from container diagnostics');
 $check(str_contains($initializer, '$detail = trim('), 'initialization wrapper still hides failed-step diagnostics');
 $check(str_contains($readme, 'make import-production'), 'fresh-machine import is undocumented');
 
