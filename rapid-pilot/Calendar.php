@@ -44,11 +44,11 @@ final class RapidPilotCalendar
         header('Cache-Control: no-store');
         try {
             $this->assertCalendarGridExport();
-            [$month, $first, $last] = $this->period((string) ($_GET['month'] ?? ''));
+            [$first, $last] = $this->period();
             $selected = $this->selectedDate((string) ($_GET['date'] ?? ''), $first, $last);
             $user = $this->user();
             $events = $this->read($first, $last);
-            $html = $this->render($user, $month, $first, $last, $selected, $events);
+            $html = $this->render($user, $first, $last, $selected, $events);
             $html = RapidPilotShell::decorate($html, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), true, RapidPilotOtiz::currentUserCanAccess(), false);
             $html = str_replace('</body>', '<script type="module" src="/pilot/assets/calendar.js"></script></body>', $html);
             header('Content-Type: text/html; charset=UTF-8');
@@ -72,16 +72,11 @@ final class RapidPilotCalendar
         }
     }
 
-    /** @return array{DateTimeImmutable,DateTimeImmutable,DateTimeImmutable} */
-    private function period(string $requested): array
+    /** @return array{DateTimeImmutable,DateTimeImmutable} */
+    private function period(): array
     {
-        $zone = new DateTimeZone(self::ZONE);
-        $now = $this->now();
-        $value = $requested === '' ? $now->format('Y-m') : $requested;
-        if (preg_match('/^(20\d{2})-(0[1-9]|1[0-2])$/D', $value) !== 1) throw new InvalidArgumentException('Укажите месяц в формате ГГГГ-ММ.');
-        $month = DateTimeImmutable::createFromFormat('!Y-m', $value, $zone);
-        if (!$month) throw new InvalidArgumentException('Не удалось определить месяц.');
-        return [$month, $month, $month->modify('last day of this month')];
+        $today = $this->now()->setTime(0, 0);
+        return [$today->modify('-30 days'), $today->modify('+6 months')];
     }
 
     private function selectedDate(string $requested, DateTimeImmutable $first, DateTimeImmutable $last): DateTimeImmutable
@@ -89,7 +84,7 @@ final class RapidPilotCalendar
         $today = $this->now()->setTime(0, 0);
         if ($requested === '') return $today >= $first && $today <= $last ? $today : $first;
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $requested, new DateTimeZone(self::ZONE));
-        if (!$date || $date->format('Y-m-d') !== $requested || $date < $first || $date > $last) throw new InvalidArgumentException('Выбранный день не входит в открытый месяц.');
+        if (!$date || $date->format('Y-m-d') !== $requested || $date < $first || $date > $last) throw new InvalidArgumentException('Выбранный день не входит в доступный период календаря.');
         return $date;
     }
 
@@ -147,18 +142,16 @@ final class RapidPilotCalendar
         $events[$key] = $base + ['date'=>$date,'type'=>$type,'label'=>$label,'status'=>$status];
     }
 
-    private function render(HttpUser $user, DateTimeImmutable $month, DateTimeImmutable $first, DateTimeImmutable $last, DateTimeImmutable $selected, array $events): string
+    private function render(HttpUser $user, DateTimeImmutable $first, DateTimeImmutable $last, DateTimeImmutable $selected, array $events): string
     {
-        $months=['01'=>'январь','02'=>'февраль','03'=>'март','04'=>'апрель','05'=>'май','06'=>'июнь','07'=>'июль','08'=>'август','09'=>'сентябрь','10'=>'октябрь','11'=>'ноябрь','12'=>'декабрь'];
-        $monthTitle=mb_strtoupper(mb_substr($months[$month->format('m')],0,1)).mb_substr($months[$month->format('m')],1).' '.$month->format('Y');
-        $types=['planned_start'=>['Плановое начало','accent'],'planned_end'=>['Плановое окончание','accent']];
+        $types=['planned_start'=>['Плановое начало','accent'],'planned_end'=>['Плановое окончание','warning']];
         $by=[]; foreach($events as $event)$by[$event['type']][$event['date']][]=$event;
         $days=[]; for($day=$first;$day<=$last;$day=$day->modify('+1 day'))$days[]=$day;
         $today=$this->now()->format('Y-m-d');$head='';$groups=[];foreach($days as$day){$iso=$day->format('Y-m-d');$state=$iso===$today?'today':($iso<$today?'past':'future');$groups[$state]=($groups[$state]??0)+1;$week=['1'=>'Пн','2'=>'Вт','3'=>'Ср','4'=>'Чт','5'=>'Пт','6'=>'Сб','7'=>'Вс'][$day->format('N')];$head.='<th id="calendar-day-'.$iso.'" scope="col" data-shlz-calendar-grid-state="'.$state.'"><button class="fm2-calendar-day'.($iso===$selected->format('Y-m-d')?' is-selected':'').'" type="button" data-calendar-date="'.$iso.'" aria-pressed="'.($iso===$selected->format('Y-m-d')?'true':'false').'"><span class="shlz-calendar-grid__date-primary">'.$day->format('j').'</span><span class="shlz-calendar-grid__date-secondary">'.$week.'</span></button></th>';}$groupHead='';foreach(['past'=>'Прошлое','today'=>'Сегодня','future'=>'Будущее']as$state=>$label){if(isset($groups[$state]))$groupHead.='<th scope="colgroup" colspan="'.$groups[$state].'" data-shlz-calendar-grid-state="'.$state.'"><span class="shlz-calendar-grid__group-label">'.$label.'</span></th>';}
         $body=''; foreach($types as$type=>[$label,$tone]){$cells='';foreach($days as$day){$iso=$day->format('Y-m-d');$state=$iso===$today?'today':($iso<$today?'past':'future');$items=$by[$type][$iso]??[];$list='';foreach(array_slice($items,0,3)as$event)$list.=$this->eventMarkup($event,$tone);if(count($items)>3){$moreId='calendar-more-'.$type.'-'.$iso;$hidden='';foreach(array_slice($items,3)as$event)$hidden.=$this->eventMarkup($event,$tone);$list.='<li><button class="shlz-button shlz-button--sm shlz-calendar-grid__disclosure" type="button" data-shlz-calendar-grid-disclosure="cell" aria-controls="'.$moreId.'" aria-expanded="false">Ещё '.(count($items)-3).'</button><ul class="shlz-calendar-grid__items" id="'.$moreId.'" hidden>'.$hidden.'</ul></li>';}$cells.='<td headers="calendar-row-'.$type.' calendar-day-'.$iso.'" data-shlz-calendar-grid-state="'.$state.'">'.($list===''?'<span class="fm2-calendar-cell-empty" aria-label="Нет событий">—</span>':'<ul class="shlz-calendar-grid__items">'.$list.'</ul>').'</td>';}$body.='<tr><th id="calendar-row-'.$type.'" scope="row"><span>'.$this->e($label).'</span><span class="shlz-calendar-grid__row-description">'.count($by[$type]??[]).' дн.</span></th>'.$cells.'</tr>';}
         $agendaEvents=array_values(array_filter($events,fn(array$event):bool=>$event['date']===$selected->format('Y-m-d')));$agenda='';foreach($agendaEvents as$event){$tone=$types[$event['type']][1];$agenda.='<li class="fm2-agenda-item"><span class="fm2-agenda-tone" data-tone="'.$tone.'" aria-hidden="true"></span><div><strong>'.$this->e($event['label']).'</strong><a class="shlz-link" href="/pilot/objects/'.$event['objectId'].'">'.$this->e($event['address']).', подъезд '.$this->e($event['entrance']).'</a><span>Рег. № '.$this->e($event['registration']).' · '.$this->e($this->status($event['status'])).'</span></div></li>';}$agenda=$agenda===''?'<p class="fm2-calendar-empty">На этот день событий нет.</p>':'<ul class="fm2-agenda-list">'.$agenda.'</ul>';
-        $previous=$month->modify('-1 month')->format('Y-m');$next=$month->modify('+1 month')->format('Y-m');$todayMonth=$this->now()->format('Y-m');$selectedLabel=$selected->format('d.m.Y');
-        $content='<section class="fm2-calendar-page" data-calendar-page><header class="fm2-calendar-header"><div><h1>Календарь работ</h1><p>Плановые даты начала и окончания работ по объектам монтажа</p></div><span class="fm2-result-count">'.count($events).' событий</span></header><div class="fm2-calendar-toolbar" aria-label="Навигация по календарю"><div class="fm2-calendar-period"><a class="shlz-button" href="/pilot/calendar?month='.$previous.'" aria-label="Предыдущий месяц">←</a><h2>'.$this->e($monthTitle).'</h2><a class="shlz-button" href="/pilot/calendar?month='.$next.'" aria-label="Следующий месяц">→</a></div><a class="shlz-button" href="/pilot/calendar?month='.$todayMonth.'">Сегодня</a></div><div class="fm2-calendar-layout"><div class="shlz-calendar-grid fm2-calendar-grid" data-shlz-calendar-grid><table><caption class="fm2-visually-hidden">Рабочие события за '.$this->e($monthTitle).'</caption><thead><tr><th scope="col" rowspan="2">Тип события</th>'.$groupHead.'</tr><tr data-shlz-calendar-grid-header-row="dates">'.$head.'</tr></thead><tbody>'.$body.'</tbody></table></div><aside class="fm2-calendar-agenda" aria-labelledby="calendar-agenda-title" aria-live="polite"><header><div><h2 id="calendar-agenda-title">'.$selectedLabel.'</h2><p>'.count($agendaEvents).' событий</p></div></header><div data-calendar-agenda>'.$agenda.'</div></aside></div><noscript><p class="fm2-calendar-note">Выберите день в адресной строке параметром <code>date=ГГГГ-ММ-ДД</code>. Навигация по месяцам работает без JavaScript.</p></noscript></section>';
+        $selectedLabel=$selected->format('d.m.Y');$rangeLabel=$first->format('d.m.Y').' — '.$last->format('d.m.Y');
+        $content='<section class="fm2-calendar-page" data-calendar-page><header class="fm2-calendar-header"><div><h1>Календарь работ</h1><p>Плановые даты начала и окончания работ по объектам монтажа</p></div><span class="fm2-result-count">'.count($events).' событий</span></header><div class="fm2-calendar-toolbar" aria-label="Навигация по календарю"><div class="fm2-calendar-period"><h2>Непрерывная шкала дат</h2><span>'.$this->e($rangeLabel).'</span></div><a class="shlz-button" href="/pilot/calendar">Сегодня</a></div><div class="fm2-calendar-layout"><div class="shlz-calendar-grid fm2-calendar-grid" data-shlz-calendar-grid><table><caption class="fm2-visually-hidden">Рабочие события с '.$this->e($first->format('d.m.Y')).' по '.$this->e($last->format('d.m.Y')).'</caption><thead><tr><th scope="col" rowspan="2">Тип события</th>'.$groupHead.'</tr><tr data-shlz-calendar-grid-header-row="dates">'.$head.'</tr></thead><tbody>'.$body.'</tbody></table></div><aside class="fm2-calendar-agenda" aria-labelledby="calendar-agenda-title" aria-live="polite"><header><div><h2 id="calendar-agenda-title">'.$selectedLabel.'</h2><p>'.count($agendaEvents).' событий</p></div></header><div data-calendar-agenda>'.$agenda.'</div></aside></div><noscript><p class="fm2-calendar-note">Выберите день в адресной строке параметром <code>date=ГГГГ-ММ-ДД</code>.</p></noscript></section>';
         return PilotView::document($user,'Календарь работ','Календарь',PilotView::breadcrumb([['Моя работа','/pilot/']], 'Календарь'),$content);
     }
 

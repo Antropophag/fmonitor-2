@@ -3,6 +3,15 @@
   const storageKey = 'fmonitor-rapid-pilot-ready';
   let shouldShow = true;
 
+  if (window.location.pathname === '/pilot/login') {
+    try {
+      sessionStorage.removeItem(storageKey);
+    } catch (_) {
+      // Storage may be disabled; there is no launch state to reset.
+    }
+    return;
+  }
+
   try {
     shouldShow = sessionStorage.getItem(storageKey) !== '1';
   } catch (_) {

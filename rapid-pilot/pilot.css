@@ -1393,9 +1393,11 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-calendar-header p { margin: 5px 0 0; color: var(--fm2-muted); font-size: 13px; }
 .fm2-calendar-toolbar { min-block-size: 58px; padding: 9px 12px; border-radius: var(--fm2-radius); background: var(--fm2-surface); }
 .fm2-calendar-period h2 { min-inline-size: 190px; margin: 0; text-align: center; font-size: 17px; font-weight: 500; }
+.fm2-calendar-period > span { color: var(--fm2-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .fm2-calendar-period .shlz-button { min-inline-size: 40px; padding-inline: 10px; text-decoration: none; }
 .fm2-calendar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 16px; align-items: start; min-inline-size: 0; }
 .fm2-calendar-grid { --shlz-calendar-grid-row-header-width: 12rem; --shlz-calendar-grid-column-width: 8rem; --shlz-calendar-grid-max-block-size: calc(100vh - 220px); }
+.fm2-calendar-grid thead [scope="colgroup"]:is([data-shlz-calendar-grid-state="past"],[data-shlz-calendar-grid-state="future"]) > .shlz-calendar-grid__group-label { position: sticky; inset-inline-start: calc(var(--shlz-calendar-grid-row-header-width) + 12px); display: inline-block; min-inline-size: max-content; }
 .fm2-calendar-grid .fm2-calendar-day { inline-size: 100%; padding: 3px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; text-align: start; cursor: pointer; }
 .fm2-calendar-grid .fm2-calendar-day:hover, .fm2-calendar-grid .fm2-calendar-day.is-selected { color: var(--fm2-primary); background: var(--fm2-primary-soft); }
 .fm2-calendar-event-link { display: grid; gap: 2px; color: inherit; font-size: 11px; line-height: 1.3; text-decoration: none; }
