@@ -93,6 +93,12 @@ if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|us
     $filename = $script[1] . '.js';
     $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }
+    if ($filename === 'checklist.js') {
+        $broken = 'request.onerror=()=>{paintSync("error","Локальное хранилище недоступно");restoreSection()}';
+        $fixed = 'request.onerror=()=>{paintSync("error","Локальное хранилище недоступно");render();restoreSection()}';
+        if (substr_count($bytes, $broken) !== 1) { http_response_code(503); exit; }
+        $bytes = str_replace($broken, $fixed, $bytes);
+    }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
     header('Cache-Control: no-store');
