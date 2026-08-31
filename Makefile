@@ -35,6 +35,7 @@ import-production:
 		-e FMONITOR_DB_NAME=fmonitor2_demo \
 		-e FMONITOR_DB_USER=fmonitor2_demo \
 		-e FMONITOR_DB_PASSWORD=fmonitor2_demo_local \
+		-e FMONITOR_PILOT_OWNER_EMAIL="$${FMONITOR_PILOT_OWNER_EMAIL:-ts.grishin@shlz.ru}" \
 		pilot -c 'socat TCP4-LISTEN:23306,bind=127.0.0.1,fork,reuseaddr TCP4:mariadb:3306 & FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
 
 down:
