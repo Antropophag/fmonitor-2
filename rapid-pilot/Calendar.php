@@ -102,13 +102,14 @@ final class RapidPilotCalendar
 
     private function user(): HttpUser
     {
-        $email = (string) ($_SERVER['REMOTE_USER'] ?? '');
-        $statement = $this->db->prepare("SELECT user_id,full_name,email FROM `{$this->processPrefix}fm2_pilot_users` WHERE BINARY email=BINARY ? AND status=1 LIMIT 2");
-        $statement->bind_param('s', $email); $statement->execute(); $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
-        if (count($rows) !== 1) throw new RuntimeException('Pilot user unavailable');
-        $permissions=AccessPolicy::forUser($this->db,$this->processPrefix,(int)$rows[0]['user_id']);
+        $userId=filter_var($_SERVER['FMONITOR_AUTH_USER_ID']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+        if($userId===false)throw new RuntimeException('Authenticated user id unavailable');
+        $statement = $this->db->prepare("SELECT user_id,full_name,email FROM `{$this->processPrefix}fm2_pilot_users` WHERE user_id=? AND status=1 LIMIT 1");
+        $statement->bind_param('i', $userId); $statement->execute(); $row = $statement->get_result()->fetch_assoc();
+        if (!is_array($row)) throw new RuntimeException('Pilot user unavailable');
+        $permissions=AccessPolicy::forUser($this->db,$this->processPrefix,(int)$row['user_id']);
         if(!AccessPolicy::grants($permissions,AccessPolicy::OBJECTS_READ))$this->fail(403,'Календарь недоступен для вашей роли.');
-        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email'],$permissions);
+        return new HttpUser((int) $row['user_id'], (string) $row['full_name'], (string) $row['email'],$permissions);
     }
 
     /** @return list<array<string,mixed>> */
