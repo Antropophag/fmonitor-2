@@ -1,5 +1,13 @@
 .DEFAULT_GOAL := help
 
+-include .env
+export FMONITOR_SOURCE_HOST
+export FMONITOR_SOURCE_PORT
+export FMONITOR_SOURCE_NAME
+export FMONITOR_SOURCE_USER
+export FMONITOR_SOURCE_PASSWORD
+export FMONITOR_MIGRATION_CUTOFF
+
 COMPOSE := docker compose
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret

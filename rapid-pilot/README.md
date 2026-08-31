@@ -35,17 +35,18 @@ make up
 
 ## Первичная загрузка production
 
-После `make up` задайте реквизиты read-only пользователя legacy MariaDB в
-текущей оболочке и выполните одну команду:
+После `make up` скопируйте шаблон настроек, укажите реквизиты read-only
+пользователя legacy MariaDB и выполните одну команду:
 
 ```bash
-export FMONITOR_SOURCE_USER='<read-only user>'
-export FMONITOR_SOURCE_PASSWORD='<read-only password>'
+cp .env.example .env
+# откройте .env в редакторе и замените FMONITOR_SOURCE_USER / FMONITOR_SOURCE_PASSWORD
 make import-production
 ```
 
 По умолчанию источник доступен контейнеру как `host.docker.internal:3306`, база —
 `c1_fmonitor`, а cutoff — конец текущего дня. При необходимости переопределите
+Файл `.env` исключён из Git. В нём можно переопределить
 `FMONITOR_SOURCE_HOST`, `FMONITOR_SOURCE_PORT`, `FMONITOR_SOURCE_NAME` и
 `FMONITOR_MIGRATION_CUTOFF='YYYY-MM-DD HH:MM:SS'`. Команда импортирует пользователей,
 роли, кадровый каталог и все подходящие объекты, на которых работы ещё не начаты.
