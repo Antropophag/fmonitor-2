@@ -45,10 +45,20 @@ SHALL fail closed до mutation и не записывать migration version.
 #### Scenario: Single-table fingerprint conflict
 - **WHEN** все девять имён присутствуют, но хотя бы одна таблица отличается от одобренного fingerprint колонкой, типом, nullability, default, enum, index, foreign key, engine, charset или collation
 - **THEN** runner возвращает deterministic schema conflict и не изменяет ни одну таблицу или строку
+- **THEN** application diagnostic result до CLI redaction содержит ordered
+  exact conflicting/missing lists, а CLI не раскрывает эти identifiers
 
 #### Scenario: Family-level relationship conflict
 - **WHEN** individual table shapes выглядят допустимо, но их foreign-key/index relationships не соответствуют одобренному fingerprint family
 - **THEN** runner отклоняет всю family до version registration без частичного repair
+
+#### Scenario: V6 failure short-circuits later migrations
+- **WHEN** identity/access v6 получает unexpected metadata/DDL/driver failure
+- **THEN** application runner не вызывает later migrations и CLI возвращает
+  redacted `MIGRATION_FAILED`
+- **THEN** этот v6-dependent сценарий SHALL быть authored и независимо reviewed
+  в RED-пакете и SHALL впервые исполниться после minimal v6 GREEN без изменения
+  expectation
 
 ### Requirement: Table prefix isolates the migration target
 Canonical identity/access migration MUST применять один валидированный prefix ко всем девяти таблицам и MUST не читать, создавать или изменять одноимённые таблицы другого prefix.
@@ -60,6 +70,18 @@ Canonical identity/access migration MUST применять один валид�
 #### Scenario: Invalid prefix
 - **WHEN** operator передаёт prefix вне одобренного безопасного формата
 - **THEN** runner отклоняет запуск до schema access и не исполняет DDL
+
+#### Scenario: MariaDB UCA default alias
+- **WHEN** database default charset равен `utf8mb4`, exact reported collation
+  имеет safe name и MariaDB публикует её только как documented UCA alias без
+  `utf8mb4_` prefix
+- **THEN** runner подтверждает alias membership и безопасное trial application
+  exact default к utf8mb4 до первого target DDL
+
+#### Scenario: Non-utf8mb4 database
+- **WHEN** database default charset не равен `utf8mb4` либо collation name/alias
+  validation не проходит
+- **THEN** runner возвращает redacted `DATABASE_UNAVAILABLE` до identity mutation
 
 ### Requirement: Runtime paths require pre-migrated schema
 После canonicalization login, invitation, role grant, block/unblock и access projection paths MUST работать только с заранее мигрированной family и MUST не исполнять `CREATE`, `ALTER`, `DROP`, destructive rebuild или schema repair. Explicit destructive bootstrap MAY существовать только как отдельная operator-invoked seed/rebuild operation вне canonical migration и request traffic.

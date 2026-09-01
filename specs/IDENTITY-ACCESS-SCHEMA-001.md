@@ -1,11 +1,15 @@
 # IDENTITY-ACCESS-SCHEMA-001 — canonical identity/access schema ownership
 
-- Статус: `PROPOSED / AWAITING OWNER APPROVAL`
+- Статус: `APPROVED / GATE 1 COMPLETE`
 - Версия: `0.1`
 - Дата: `2026-09-01`
 - Актор: оператор развёртывания FMonitor 2.0
-- Публичный seam: отдельный процесс `php bin/fmonitor2-migrate.php`
-- Решение Gate 1: `PENDING`
+- Публичный operator seam: отдельный процесс `php bin/fmonitor2-migrate.php`
+- Публичный application diagnostic seam: identity/access migration result object
+  до redaction CLI output
+- Решение Gate 1: `APPROVED` — owner явно утвердил literal canonical version
+  `6` и restartable exact-compatible partial recovery; `GRILL-002` остаётся
+  blocker только для RBAC/authorization behavior и не блокирует schema ownership.
 
 ## 1. Цель и граница
 
@@ -108,8 +112,14 @@ rename существующих security-sensitive tables.
 
 Runner подтверждает, что database default character set — `utf8mb4`, и берёт её
 exact database-default collation как environment value этого запуска. До DDL он
-проверяет имя collation по `/^[A-Za-z0-9_]+$/D` и подтверждает через
-`information_schema.COLLATIONS`, что оно существует для `utf8mb4`. Canonical
+проверяет имя collation по `/^[A-Za-z0-9_]+$/D`. MariaDB может сообщать default
+как `utf8mb4_uca1400_ai_ci`, но публиковать ту же UCA collation в
+`information_schema.COLLATIONS` как alias `uca1400_ai_ci` с nullable charset.
+Поэтому membership подтверждается либо exact utf8mb4 row, либо documented UCA
+alias без `utf8mb4_` prefix, после чего безопасное пробное применение exact
+database-default имени к utf8mb4 обязано успешно пройти до первого target DDL.
+Unknown alias, небезопасное имя и non-utf8mb4 database отклоняются как
+`DATABASE_UNAVAILABLE` до identity mutation. Canonical
 DDL задаёт `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE <validated database
 default>` с безопасным identifier quoting; полагаться на server/connection
 default через omission `COLLATE` запрещено. Конкретное имя вроде observed
@@ -334,6 +344,8 @@ outside classified conflict remain runner `MIGRATION_FAILED`; confirmed earlier
 MariaDB DDL is not falsely reported rolled back, and a repeat reclassifies the
 whole family.
 
+Application diagnostic result сохраняет ordered `conflictingTables`,
+`missingTables` и `tablesCreated` для проверки classifier и orchestration.
 At CLI boundary migration conflict preserves existing runner contract: exact
 single JSON line with `ok=false`, reason `SCHEMA_MIGRATION_CONFLICT`,
 `schemaVersion=6`, empty stderr and exit `2`. Success final
@@ -413,8 +425,10 @@ success, repeat or partial recovery.
 ## 7. Gate 2 independent matrix
 
 Gate 2 starts only after owner approval and must be authored/reviewed independently
-from implementation. Tests run the real CLI process against isolated MariaDB
-and transcribe section 4 manifests into test-owned literal tuples; production
+from implementation. Operator-boundary tests run the real CLI process against
+isolated MariaDB; classifier-detail tests use the public migration application
+result object before CLI redaction. Tests transcribe section 4 manifests into
+test-owned literal tuples; production
 DDL, production constants, SHOW CREATE output and post-migration catalog cannot
 generate expected values.
 
@@ -440,8 +454,11 @@ Required sensitivity matrix:
    migrated success characterization and missing/incompatible fail-closed path;
 10. canonical migration never seeds/rebuilds, while destructive bootstrap is a
     separately invoked seam;
-11. exact CLI stdout/stderr/exit, redaction and stop-before-later-migration for
-    conflict and unexpected failure.
+11. exact CLI stdout/stderr/exit and redaction for conflict and unexpected
+    failure; ordered conflict/missing lists and stop-before-later-migration are
+    asserted at the application diagnostic seam. Assertions requiring v6 to
+    exist are authored and independently reviewed during RED, then first execute
+    after minimal v6 GREEN without weakening expectations.
 
 Gate 2 records a demonstrated RED caused by the absent identity migration and
 remaining runtime DDL, not fixture failure. A separately tasked reviewer records
@@ -510,6 +527,14 @@ Relevant inherited contracts: `PRODUCT.md`, `CONTEXT.md`,
 catalogue inventory in `docs/operations/catalogue-prefix-ceiling-reconciliation.md`.
 
 - Владелец продукта: пользователь проекта
-- Дата решения: `PENDING`
-- Решение: `PENDING`
-- Комментарий: требуется явное owner approval; до него Gate 2 не разрешён.
+- Дата решения: `2026-09-01`
+- Решение: `APPROVED`
+- Комментарий: owner явно утвердил `IDENTITY-ACCESS-SCHEMA-001 v0.1` с
+  literal canonical version `6` и restartable exact-compatible partial
+  recovery. Owner amendment разрешает application diagnostic seam для exact
+  internal lists при сохранении redacted CLI и разрешает впервые исполнить
+  v6-dependent failure/short-circuit assertions на minimal GREEN. Второй owner
+  amendment разрешает MariaDB UCA alias normalization при обязательных safe-name,
+  utf8mb4 database и trial-application checks. Gate 2
+  разрешён; `GRILL-002` продолжает блокировать только отдельные RBAC/authorization
+  behavior changes.

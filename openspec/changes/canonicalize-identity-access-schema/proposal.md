@@ -30,7 +30,10 @@
 
 - **Behavior slice / actor:** deployment operator применяет canonical runner до запуска test-user HTTP/auth путей; runtime users продолжают наблюдать существующие login, invitation, role-grant и block/unblock outcomes без принятия новых security semantics.
 - **Source oracle:** `rapid-pilot/IdentityBootstrap.php`, `rapid-pilot/UserAccessView.php`, `rapid-pilot/LocalAuth.php`, `app/RapidPilot/LocalRoleCatalog.php`, `app/PilotHttp/AccessPolicy.php` и identity/access verifiers являются evidence текущей схемы и поведения, но не получают canonical ownership.
-- **Target public seam:** `bin/fmonitor2-migrate.php` и его strict migration/version contract; destructive bootstrap остаётся отдельным operator seam.
+- **Target public seams:** `bin/fmonitor2-migrate.php` сохраняет strict redacted
+  operator contract; migration application result object до CLI redaction
+  предоставляет exact classifier diagnostics для orchestration/tests.
+  Destructive bootstrap остаётся отдельным operator seam.
 - **Release value:** clean и populated test deployments смогут доказать identity/access readiness до HTTP traffic, а architecture debt уменьшится без потери строк или скрытого repair на request path.
 - **Explicit non-goals:** изменение permission catalogue, role meanings, legacy fallback, login/session/password/invitation policy, block/unblock authorization, audit semantics, UI/API, seed contents или destructive reset lifecycle; эти behavior решения остаются в GRILL-002 и последующих Gate 1 slices.
 - **Dependencies:** landed canonical runner заканчивается workforce v5;

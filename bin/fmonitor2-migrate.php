@@ -7,6 +7,10 @@ use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
+use FMonitor2\InstallationProcess\IdentityAccessSchemaMigration;
+use FMonitor2\InstallationProcess\IdentityAccessDefinitionSchemaMigration;
+use FMonitor2\InstallationProcess\DatabaseUnavailable;
+use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -83,35 +87,30 @@ $migrations = [
     3 => ProcessUserCapabilitiesSchemaMigration::class,
     4 => ProcessCommandCapabilitiesSchemaMigration::class,
     5 => BitrixWorkforceHistorySchemaMigration::class,
+    6 => IdentityAccessSchemaMigration::class,
 ];
-$appliedVersions = [];
+$databasePreflight = static function () use ($connection, $tablePrefix): int {
+    IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
 
-try {
-    foreach ($migrations as $version => $migration) {
-        $result = $migration::apply($connection, $tablePrefix);
-        if (($result['reason'] ?? null) === 'SCHEMA_MIGRATION_CONFLICT') {
-            $connection->close();
-            finishMigrationRunner([
-                'ok' => false,
-                'reason' => 'SCHEMA_MIGRATION_CONFLICT',
-                'schemaVersion' => $version,
-            ], 2);
-        }
-        if (($result['applied'] ?? false) === true) {
-            $appliedVersions[] = $version;
+    foreach (IdentityAccessDefinitionSchemaMigration::tables() as $identityTable) {
+        if (FMonitor2\InstallationProcess\MariaDbSchemaInspector::tableExists(
+            $connection,
+            $tablePrefix . $identityTable,
+        )) {
+            return 6;
         }
     }
+
+    return 1;
+};
+$outcome = CanonicalMigrationApplication::run(
+    connection: $connection,
+    tablePrefix: $tablePrefix,
+    migrations: $migrations,
+    databasePreflight: $databasePreflight,
+);
+try {
     $connection->close();
 } catch (Throwable) {
-    try {
-        $connection->close();
-    } catch (Throwable) {
-    }
-    finishMigrationRunner(['ok' => false, 'reason' => 'MIGRATION_FAILED'], 70);
 }
-
-finishMigrationRunner([
-    'ok' => true,
-    'schemaVersion' => 5,
-    'appliedVersions' => $appliedVersions,
-], 0);
+finishMigrationRunner($outcome['result'], $outcome['exitCode']);

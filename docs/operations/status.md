@@ -195,10 +195,16 @@
   contract is now literal v6 after workforce v5, uses exact clean
   `[1,2,3,4,5,6]`, partial `[6]`, repeat `[]`, current composed 25/26 and the
   approved partial policy. Final fresh rereview v3 returned
-  `READY_FOR_OWNER_APPROVAL`. RED remains prohibited until explicit Gate 1
-  owner approval is recorded.
+  `READY_FOR_OWNER_APPROVAL`; owner subsequently approved
+  `IDENTITY-ACCESS-SCHEMA-001 v0.1` with literal canonical version `6` and
+  restartable exact-compatible partial recovery. Gate 1 is complete; Gate 2 may
+  now begin through the public canonical runner seam. A subsequent owner-approved
+  diagnostic-seam amendment keeps CLI errors redacted, permits exact internal
+  list assertions through the migration application result object and defers
+  first execution (not authorship/review) of v6-dependent failure/short-circuit
+  assertions until minimal GREEN.
 - Identity/access Gate 1 evidence is captured in `docs/operations/identity-access-schema-evidence.md` from source owners and an isolated populated MariaDB 11.4.7 namespace. It proves bootstrap creates 8/9 tables while `fm2_pilot_user_status_events` is request-lazy, records exact columns/indexes/FKs/defaults/collation and normalized hashes without secrets, and leaves zero fixture tables with Compose down.
-- Proposed `IDENTITY-ACCESS-SCHEMA-001 v0.1` translates that evidence into nine exact manifests, semantic compatibility for MariaDB-generated names, deterministic symbols for clean creation, superseding composed 25/26 pre-DB-access boundaries, sequential `V_identity`, populated preservation, restartable compatible-partial recovery, incompatible-family zero mutation, and runtime-no-DDL/destructive-seed separation. Fresh cross-spec prefix rereview accepted the boundary update; OpenSpec is now reconciled to the same owner-approved partial policy. RED remains prohibited pending predecessor state, fresh planning review and explicit Gate 1 approval.
+- `IDENTITY-ACCESS-SCHEMA-001 v0.1` completed Gates 1–5 with final independent code rereview `reviews/code/IDENTITY-ACCESS-SCHEMA-001-v3.md` and supplementary scoped rereview v4 both `APPROVED`. Canonical runner owns the exact nine-table family as literal v6 after workforce v5, accepts generated presentation names semantically, validates utf8mb4/UCA defaults before any migration, preserves populated/compatible partial state, rejects incompatible families before mutation, keeps CLI diagnostics redacted and removes runtime identity DDL behind explicit application seams. Strict OpenSpec, focused schema/runtime/preflight suites, current-tree built image and architecture 7/7 pass. Final `make verify` returns exactly the known baseline of eight DB failures plus the same combined-PDF E2E failure; no identity/access regression remains. The slice is DONE and ready for its dedicated local commit.
 - Calibration change `migrate-inspection-item-completion`: proposal/spec/design/tasks ready; fresh behavior/auth evidence corrected its earlier “NEEDS_GRILL none” claim. Gate 1 now explicitly requires approval of `inspection.item.complete` and GRILL-003 object scope before RED.
 - Checklist-template and inspection-evidence canonicalization are prepared for Gate 1; the local-RBAC schema contract remains pending GRILL-002.
 - Inspection-evidence schema ownership is also implementation-ready through Gate 1 and is the direct prerequisite for the calibration item-completion slice.

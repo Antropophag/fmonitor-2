@@ -1,43 +1,22 @@
 <?php
 declare(strict_types=1);
 
-use FMonitor2\RapidPilot\LocalRoleCatalog;
 require_once dirname(__DIR__).'/app/RapidPilot/LocalRoleCatalog.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbSchemaInspector.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/IdentityAccessSchemaMigration.php';
+require_once dirname(__DIR__).'/app/PilotHttp/MariaDbIdentityBootstrapApplication.php';
 
+/** Temporary pilot adapter for the public identity bootstrap application seam. */
 final class RapidPilotIdentityBootstrap
 {
     public static function apply(mysqli $db,string $p,string $configured,string $bootstrapPassword):void
     {
-        if(preg_match('/^[A-Za-z0-9_]+$/D',$p)!==1)throw new RuntimeException('Invalid identity table prefix');
-        self::replaceLegacySchema($db,$p);self::createSchema($db,$p);self::seedRoles($db,$p);
-        $emails=self::emails($configured);if($emails!==[]&&$bootstrapPassword==='')throw new RuntimeException('Missing FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD');$passwordHash=$emails===[]?null:password_hash($bootstrapPassword,PASSWORD_ARGON2ID);if($emails!==[]&&!is_string($passwordHash))throw new RuntimeException('Bootstrap password hashing failed');$db->begin_transaction();
-        try{
-            foreach($emails as$email){$user=self::user($db,$p,$email);$now=self::now();if($user===null){$s=$db->prepare("INSERT INTO `{$p}fm2_pilot_users`(full_name,email,phone,status,activation_state,session_version,source_updated_at) VALUES(?,?,'',1,'active',1,?)");$s->bind_param('sss',$email,$email,$now);$s->execute();$userId=(int)$db->insert_id;$c=$db->prepare("INSERT INTO `{$p}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(?,?,?,?,?)");$c->bind_param('issss',$userId,$email,$passwordHash,$now,$now);$c->execute();}else{$userId=(int)$user['user_id'];if((int)$user['status']!==1)throw new RuntimeException('Configured bootstrap superadministrator is blocked: '.$email);$c=$db->prepare("UPDATE `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_auth_credentials` c ON c.user_id=u.user_id SET u.activation_state='active',u.source_updated_at=?,c.password_hash=COALESCE(c.password_hash,?),c.password_set_at=COALESCE(c.password_set_at,?),c.updated_at=? WHERE u.user_id=?");$c->bind_param('ssssi',$now,$passwordHash,$now,$now,$userId);$c->execute();}$db->query("UPDATE `{$p}fm2_pilot_invitations` SET revoked_at=NOW(6) WHERE user_id={$userId} AND used_at IS NULL AND revoked_at IS NULL");self::grant($db,$p,$userId,'user','bootstrap',null);self::grant($db,$p,$userId,'superadministrator','bootstrap',null);
-            }
-            $count=(int)$db->query("SELECT COUNT(*) n FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id WHERE u.status=1 AND u.activation_state='active' AND r.code='superadministrator'")->fetch_assoc()['n'];if($count<1)throw new RuntimeException('No active superadministrator; configure bootstrap credentials');$db->commit();
-        }catch(Throwable $e){$db->rollback();throw $e;}
+        \FMonitor2\PilotHttp\MariaDbIdentityBootstrapApplication::apply($db,$p,$configured,$bootstrapPassword);
     }
 
-    private static function replaceLegacySchema(mysqli$db,string$p):void
+    public static function rebuild(mysqli $db,string $p,string $configured,string $bootstrapPassword):void
     {
-        $table=$p.'fm2_pilot_roles';$e=$db->real_escape_string($table);$exists=(int)$db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$e}'")->fetch_assoc()['n'];if($exists===0)return;
-        $column=(int)$db->query("SELECT COUNT(*) n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$e}' AND COLUMN_NAME='code'")->fetch_assoc()['n'];if($column===1)return;
-        foreach(['fm2_pilot_user_role_events','fm2_pilot_user_roles','fm2_pilot_role_permissions','fm2_pilot_invitations','fm2_pilot_auth_attempts','fm2_pilot_auth_credentials','fm2_pilot_roles','fm2_pilot_users']as$suffix)$db->query("DROP TABLE IF EXISTS `{$p}{$suffix}`");
+        \FMonitor2\PilotHttp\MariaDbIdentityBootstrapApplication::rebuild($db,$p,$configured,$bootstrapPassword);
     }
-    private static function createSchema(mysqli$db,string$p):void
-    {
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_users`(user_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,full_name VARCHAR(300) NOT NULL,email VARCHAR(254) NOT NULL,phone VARCHAR(100) NOT NULL DEFAULT '',status TINYINT(1) NOT NULL DEFAULT 1,activation_state ENUM('invited','active','blocked') NOT NULL,session_version INT UNSIGNED NOT NULL DEFAULT 1,source_updated_at VARCHAR(40) NOT NULL,UNIQUE KEY(email),KEY(status,full_name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_roles`(role_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,code VARCHAR(64) NOT NULL UNIQUE,name VARCHAR(300) NOT NULL,description VARCHAR(500) NOT NULL,status TINYINT(1) NOT NULL,source_updated_at VARCHAR(40) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_role_permissions`(role_id BIGINT UNSIGNED NOT NULL,permission VARCHAR(100) NOT NULL,PRIMARY KEY(role_id,permission),FOREIGN KEY(role_id) REFERENCES `{$p}fm2_pilot_roles`(role_id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_user_roles`(user_id BIGINT UNSIGNED NOT NULL,role_id BIGINT UNSIGNED NOT NULL,origin VARCHAR(40) NOT NULL,assigned_at VARCHAR(40) NOT NULL,assigned_by_user_id BIGINT UNSIGNED NULL,PRIMARY KEY(user_id,role_id),FOREIGN KEY(user_id) REFERENCES `{$p}fm2_pilot_users`(user_id) ON DELETE CASCADE,FOREIGN KEY(role_id) REFERENCES `{$p}fm2_pilot_roles`(role_id) ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_auth_credentials`(user_id BIGINT UNSIGNED PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL UNIQUE,password_hash VARCHAR(255) NULL,password_set_at VARCHAR(40) NULL,updated_at VARCHAR(40) NOT NULL,FOREIGN KEY(user_id) REFERENCES `{$p}fm2_pilot_users`(user_id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_invitations`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,user_id BIGINT UNSIGNED NOT NULL,token_hash BINARY(32) NOT NULL UNIQUE,expires_at DATETIME(6) NOT NULL,used_at DATETIME(6) NULL,revoked_at DATETIME(6) NULL,created_by_user_id BIGINT UNSIGNED NULL,created_at DATETIME(6) NOT NULL,KEY(user_id,expires_at),FOREIGN KEY(user_id) REFERENCES `{$p}fm2_pilot_users`(user_id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_user_role_events`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,user_id BIGINT UNSIGNED NOT NULL,role_id BIGINT UNSIGNED NOT NULL,action VARCHAR(40) NOT NULL,occurred_at VARCHAR(40) NOT NULL,actor_user_id BIGINT UNSIGNED NULL,KEY(user_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_auth_attempts`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,email_normalized VARCHAR(254) NOT NULL,succeeded TINYINT(1) NOT NULL,attempted_at DATETIME(6) NOT NULL,KEY(email_normalized,attempted_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    }
-    private static function seedRoles(mysqli$db,string$p):void{$now=self::now();foreach(LocalRoleCatalog::roles()as$code=>$role){$s=$db->prepare("INSERT INTO `{$p}fm2_pilot_roles`(code,name,description,status,source_updated_at) VALUES(?,?,?,1,?) ON DUPLICATE KEY UPDATE name=VALUES(name),description=VALUES(description),status=1,source_updated_at=VALUES(source_updated_at)");$s->bind_param('ssss',$code,$role['name'],$role['description'],$now);$s->execute();$id=(int)$db->query("SELECT role_id FROM `{$p}fm2_pilot_roles` WHERE code='".$db->real_escape_string($code)."'")->fetch_assoc()['role_id'];$db->query("DELETE FROM `{$p}fm2_pilot_role_permissions` WHERE role_id={$id}");$q=$db->prepare("INSERT INTO `{$p}fm2_pilot_role_permissions`(role_id,permission) VALUES(?,?)");foreach($role['permissions']as$permission){$q->bind_param('is',$id,$permission);$q->execute();}}}
-    private static function grant(mysqli$db,string$p,int$userId,string$code,string$origin,?int$actor):void{$role=(int)$db->query("SELECT role_id FROM `{$p}fm2_pilot_roles` WHERE code='".$db->real_escape_string($code)."'")->fetch_assoc()['role_id'];$now=self::now();$s=$db->prepare("INSERT IGNORE INTO `{$p}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(?,?,?,?,?)");$s->bind_param('iissi',$userId,$role,$origin,$now,$actor);$s->execute();}
-    private static function user(mysqli$db,string$p,string$email):?array{$s=$db->prepare("SELECT user_id,status FROM `{$p}fm2_pilot_users` WHERE email=? LIMIT 1");$s->bind_param('s',$email);$s->execute();return$s->get_result()->fetch_assoc()?:null;}
-    private static function emails(string$raw):array{$raw=trim($raw);if($raw==='')return[];$out=[];foreach(explode(',',$raw)as$value){$email=mb_strtolower(trim($value));if(filter_var($email,FILTER_VALIDATE_EMAIL)===false||preg_match('/^[^@]+@shlz\.ru$/D',$email)!==1)throw new RuntimeException('Invalid bootstrap superadministrator email');$out[$email]=true;}return array_keys($out);}
-    private static function now():string{return(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);}
 }

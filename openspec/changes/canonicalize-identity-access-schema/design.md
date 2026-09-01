@@ -40,6 +40,21 @@ Owning module — production migration layer в `app/InstallationProcess`, вы�
 
 7. **Prefix — часть public migration input.** Один валидированный prefix передаётся во все table/fingerprint operations; metadata queries фильтруют exact prefixed table names. Prefix decoys другого namespace входят в verifier и не влияют на target result.
 
+8. **Operator output и application diagnostics разделены.** CLI остаётся
+   redacted и не раскрывает table names/SQL/catalog details. Public migration
+   application result object до redaction содержит ordered conflicting,
+   missing и created lists для runner orchestration и classifier tests.
+   V6-dependent failure и post-v6 short-circuit assertions пишутся и независимо
+   принимаются в RED-пакете, но впервые исполняются только после minimal v6
+   GREEN; expectations после этого не меняются.
+
+9. **MariaDB UCA alias нормализуется до DDL.** Database default обязан быть
+   utf8mb4 и иметь safe identifier. Membership допускает exact utf8mb4 row либо
+   MariaDB UCA alias без `utf8mb4_` prefix с nullable charset; exact reported
+   default дополнительно проходит безопасное trial application к utf8mb4 до
+   первого target DDL. Unknown/non-utf8mb4 values fail as
+   `DATABASE_UNAVAILABLE` without identity mutation.
+
 ## Risks / Trade-offs
 
 - **[Текущие CREATE strings могут расходиться с реально populated pilot schema]** → Gate 1 отдельно снимает и утверждает exact fingerprints; RED включает complete-compatible и каждую конфликтную category до production edit.

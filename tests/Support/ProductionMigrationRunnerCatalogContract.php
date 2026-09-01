@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v5 specifications.
+ * Literal catalog contract transcribed from the approved v1-v6 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -17,6 +17,33 @@ final class ProductionMigrationRunnerCatalogContract
             ),
             'fm2_installation_cases' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;legacy_installation_object_id:bigint unsigned:NO:;process_state:varchar(80):NO:;actual_start_date:date:YES:;opened_at:varchar(40):YES:;opened_by_user_id:bigint unsigned:YES:;created_at:varchar(40):NO:;updated_at:varchar(40):NO:;lock_version:int unsigned:NO:'
+            ),
+            'fm2_pilot_auth_attempts' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;email_normalized:varchar(254):NO:;succeeded:tinyint:NO:;attempted_at:datetime(6):NO:'
+            ),
+            'fm2_pilot_auth_credentials' => self::parseColumns(
+                'user_id:bigint unsigned:NO:;email_normalized:varchar(254):NO:;password_hash:varchar(255):YES:;password_set_at:varchar(40):YES:;updated_at:varchar(40):NO:'
+            ),
+            'fm2_pilot_invitations' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;user_id:bigint unsigned:NO:;token_hash:binary(32):NO:;expires_at:datetime(6):NO:;used_at:datetime(6):YES:;revoked_at:datetime(6):YES:;created_by_user_id:bigint unsigned:YES:;created_at:datetime(6):NO:'
+            ),
+            'fm2_pilot_role_permissions' => self::parseColumns(
+                'role_id:bigint unsigned:NO:;permission:varchar(100):NO:'
+            ),
+            'fm2_pilot_roles' => self::parseColumns(
+                'role_id:bigint unsigned:NO:auto_increment;code:varchar(64):NO:;name:varchar(300):NO:;description:varchar(500):NO:;status:tinyint:NO:;source_updated_at:varchar(40):NO:'
+            ),
+            'fm2_pilot_user_role_events' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;user_id:bigint unsigned:NO:;role_id:bigint unsigned:NO:;action:varchar(40):NO:;occurred_at:varchar(40):NO:;actor_user_id:bigint unsigned:YES:'
+            ),
+            'fm2_pilot_user_roles' => self::parseColumns(
+                'user_id:bigint unsigned:NO:;role_id:bigint unsigned:NO:;origin:varchar(40):NO:;assigned_at:varchar(40):NO:;assigned_by_user_id:bigint unsigned:YES:'
+            ),
+            'fm2_pilot_user_status_events' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;user_id:bigint unsigned:NO:;action:varchar(40):NO:;occurred_at:varchar(40):NO:;actor_user_id:bigint unsigned:NO:'
+            ),
+            'fm2_pilot_users' => self::parseColumns(
+                'user_id:bigint unsigned:NO:auto_increment;full_name:varchar(300):NO:;email:varchar(254):NO:;phone:varchar(100):NO:;status:tinyint:NO:;activation_state:enum(\'invited\',\'active\',\'blocked\'):NO:;session_version:int unsigned:NO:;source_updated_at:varchar(40):NO:'
             ),
             'fm2_order_artifacts' => self::parseColumns(
                 'assignment_order_id:bigint unsigned:NO:;artifact_type:varchar(40):NO:;filename:varchar(500):NO:;media_type:varchar(120):NO:;byte_size:bigint unsigned:NO:;sha256:char(64):NO:'
@@ -58,6 +85,25 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_assignment_orders|INDEX|previous_assignment_order_id',
             'fm2_installation_cases|PRIMARY|id',
             'fm2_installation_cases|UNIQUE|legacy_installation_object_id',
+            'fm2_pilot_auth_attempts|PRIMARY|id',
+            'fm2_pilot_auth_attempts|INDEX|email_normalized,attempted_at',
+            'fm2_pilot_auth_credentials|PRIMARY|user_id',
+            'fm2_pilot_auth_credentials|UNIQUE|email_normalized',
+            'fm2_pilot_invitations|PRIMARY|id',
+            'fm2_pilot_invitations|UNIQUE|token_hash',
+            'fm2_pilot_invitations|INDEX|user_id,expires_at',
+            'fm2_pilot_role_permissions|PRIMARY|role_id,permission',
+            'fm2_pilot_roles|PRIMARY|role_id',
+            'fm2_pilot_roles|UNIQUE|code',
+            'fm2_pilot_user_role_events|PRIMARY|id',
+            'fm2_pilot_user_role_events|INDEX|user_id,id',
+            'fm2_pilot_user_roles|PRIMARY|user_id,role_id',
+            'fm2_pilot_user_roles|INDEX|role_id',
+            'fm2_pilot_user_status_events|PRIMARY|id',
+            'fm2_pilot_user_status_events|INDEX|user_id,id',
+            'fm2_pilot_users|PRIMARY|user_id',
+            'fm2_pilot_users|UNIQUE|email',
+            'fm2_pilot_users|INDEX|status,full_name',
             'fm2_order_artifacts|PRIMARY|assignment_order_id,artifact_type',
             'fm2_order_installers|PRIMARY|assignment_order_id,installer_tab_id',
             'fm2_process_events|PRIMARY|id',
@@ -88,6 +134,11 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_assignment_orders|previous_assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_order_artifacts|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_order_installers|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
+            'fm2_pilot_auth_credentials|user_id|fm2_pilot_users|user_id|CASCADE',
+            'fm2_pilot_invitations|user_id|fm2_pilot_users|user_id|CASCADE',
+            'fm2_pilot_role_permissions|role_id|fm2_pilot_roles|role_id|CASCADE',
+            'fm2_pilot_user_roles|role_id|fm2_pilot_roles|role_id|RESTRICT',
+            'fm2_pilot_user_roles|user_id|fm2_pilot_users|user_id|CASCADE',
             'fm2_process_events|installation_case_id|fm2_installation_cases|id|RESTRICT',
             'fm2_process_tasks|installation_case_id|fm2_installation_cases|id|RESTRICT',
             'fm2_workforce_observations|sync_run_id|fm2_workforce_sync_runs|run_id|RESTRICT',
