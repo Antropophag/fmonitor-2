@@ -183,9 +183,22 @@
   Gate 5 code rereview v4 returned `APPROVED`. All OpenSpec tasks are complete;
   the slice is DONE and ready for its dedicated commit.
 - Exact owner-review artifacts are prepared for checklist-template and inspection-evidence ownership with OpenSpec tasks unchecked. The checklist-template draft now separates its family-local 29-byte arithmetic from the composed 25/26 pre-DB-access contract. A fresh cross-spec prefix rereview returned `READY_FOR_FRESH_OWNER_REVIEW_WHEN_PREDECESSORS_LAND`; `CHECKLIST-TEMPLATE-SCHEMA-001 v0.1` remains explicitly `DRAFT/BLOCKED_PREDECESSORS` until workforce and identity/access land, and its literal version/catalogue still requires another fresh review and owner approval before RED.
-- Planning-only OpenSpec change `canonicalize-identity-access-schema` now has proposal/delta-spec/design/tasks and strict validation green for all nine existing tables, populated preservation, prefix isolation, separate destructive seed/rebuild and no runtime DDL. Exact evidence is captured, but the current OpenSpec all-or-none partial-family policy still contradicts the proposed restartable exact-compatible partial recovery policy. Updating those existing OpenSpec artifacts requires owner confirmation under the repository workflow; no RED starts while they disagree.
+- Planning-only OpenSpec change `canonicalize-identity-access-schema` has
+  proposal/delta-spec/design/tasks and strict validation green for all nine
+  existing tables, populated preservation, prefix isolation, separate
+  destructive seed/rebuild and no runtime DDL. Owner approved restartable
+  exact-compatible partial recovery and authorized all four artifact updates;
+  GRILL-005 is resolved. Current artifacts now require full-family preflight,
+  missing-only FK-safe recovery and zero mutation on any incompatible member.
+  Fresh planning review accepted the four artifacts. Three Gate 1 review cycles
+  then reconciled landed predecessor/version and stale wording: the executable
+  contract is now literal v6 after workforce v5, uses exact clean
+  `[1,2,3,4,5,6]`, partial `[6]`, repeat `[]`, current composed 25/26 and the
+  approved partial policy. Final fresh rereview v3 returned
+  `READY_FOR_OWNER_APPROVAL`. RED remains prohibited until explicit Gate 1
+  owner approval is recorded.
 - Identity/access Gate 1 evidence is captured in `docs/operations/identity-access-schema-evidence.md` from source owners and an isolated populated MariaDB 11.4.7 namespace. It proves bootstrap creates 8/9 tables while `fm2_pilot_user_status_events` is request-lazy, records exact columns/indexes/FKs/defaults/collation and normalized hashes without secrets, and leaves zero fixture tables with Compose down.
-- Proposed `IDENTITY-ACCESS-SCHEMA-001 v0.1` translates that evidence into nine exact manifests, semantic compatibility for MariaDB-generated names, deterministic symbols for clean creation, superseding composed 25/26 pre-DB-access boundaries, sequential `V_identity`, populated preservation, restartable compatible-partial recovery, incompatible-family zero mutation, and runtime-no-DDL/destructive-seed separation. Fresh cross-spec prefix rereview accepted the boundary update; the known OpenSpec partial-policy contradiction remains `NEEDS_GRILL` under GRILL-005, so RED remains prohibited.
+- Proposed `IDENTITY-ACCESS-SCHEMA-001 v0.1` translates that evidence into nine exact manifests, semantic compatibility for MariaDB-generated names, deterministic symbols for clean creation, superseding composed 25/26 pre-DB-access boundaries, sequential `V_identity`, populated preservation, restartable compatible-partial recovery, incompatible-family zero mutation, and runtime-no-DDL/destructive-seed separation. Fresh cross-spec prefix rereview accepted the boundary update; OpenSpec is now reconciled to the same owner-approved partial policy. RED remains prohibited pending predecessor state, fresh planning review and explicit Gate 1 approval.
 - Calibration change `migrate-inspection-item-completion`: proposal/spec/design/tasks ready; fresh behavior/auth evidence corrected its earlier “NEEDS_GRILL none” claim. Gate 1 now explicitly requires approval of `inspection.item.complete` and GRILL-003 object scope before RED.
 - Checklist-template and inspection-evidence canonicalization are prepared for Gate 1; the local-RBAC schema contract remains pending GRILL-002.
 - Inspection-evidence schema ownership is also implementation-ready through Gate 1 and is the direct prerequisite for the calibration item-completion slice.
@@ -327,7 +340,10 @@
   fixtures, changes no importer/product behavior and explicitly excludes
   concurrency, transitions, production data, authorization and financial
   semantics. This blocks only its RED/GREEN characterization gates.
-- GRILL-005: reconcile identity/access partial-family policy. Recommended: update the existing OpenSpec change to exact-compatible partial recovery, because MariaDB DDL commits per statement and fail-closed partial handling would make a transient interrupted migration operator-unrecoverable despite every existing member matching exactly. This blocks only identity/access Gate 1 and RED.
+- GRILL-005 resolved 2026-09-02: owner approved exact-compatible partial
+  recovery and the coherent four-artifact OpenSpec update. Any incompatible
+  existing member remains zero-mutation conflict; GRILL-002 behavior authority
+  remains separate.
 - GRILL-006: approve target photo evidence limit scope, overflow UX and client-operation payload-conflict semantics. Recommended: a per-section active-photo limit, deterministic non-retryable overflow that remains removable locally, and conflict (not duplicate) when one operation id is reused with different payload. This blocks target photo-upload Gate 1 but not the PILOT_ONLY concurrency characterization now in preparation.
 - GRILL-007: approve photo revoke authorization, mandatory reason/confirmation, completed-section correction, identical-content re-upload and retention. Recommended: exact revoke capability plus current assignment; bounded mandatory reason; ordinary last-photo revoke rejected until replacement, elevated audited correction separate; identical bytes allowed as a new evidence fact while reusing blob storage; retain revoked blobs through the test-user release. This blocks target revoke/UX only, not the PILOT_ONLY revoke characterization.
 - Gate 1 approval for `INSPECTION-ITEM-COMPLETE-001`, including capability name `inspection.item.complete`.
