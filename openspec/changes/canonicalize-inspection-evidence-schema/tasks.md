@@ -1,7 +1,7 @@
 ## 1. Gate 1 — executable schema contract
 
-- [ ] 1.1 Получить fresh independent Gate 1 review executable spec `INSPECTION-EVIDENCE-SCHEMA-001` с exact final fingerprints, двумя разрешёнными predecessor forms, family preflight, inherited UCA-alias normalization, literal v8 после exact landed v1–v7 и runtime-no-DDL outcomes; verification: review manifest фиксирует hashes и verdict `READY_FOR_OWNER_APPROVAL`.
-- [ ] 1.2 Получить явное owner approval reviewed executable spec до test edits; verification: exact approved artifact/version и решение владельца записаны в spec/review evidence.
+- [x] 1.1 Получить fresh independent Gate 1 review executable spec `INSPECTION-EVIDENCE-SCHEMA-001` с exact final fingerprints, двумя разрешёнными predecessor forms, family preflight, inherited UCA-alias normalization, literal v8 после exact landed v1–v7 и runtime-no-DDL outcomes; verification: review manifest фиксирует hashes и verdict `READY_FOR_OWNER_APPROVAL`.
+- [x] 1.2 Получить явное owner approval reviewed executable spec до test edits; verification: владелец ответил `ок` 2026-09-01 для exact reviewed artifact из commit `308145d`.
 
 ## 2. Gates 2–3 — RED и independent test review
 

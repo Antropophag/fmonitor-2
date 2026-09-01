@@ -8,9 +8,9 @@
 наблюдаемых additive upgrade сохраняются; правила выполнения, исправления и
 авторизации этим срезом не меняются.
 
-Статус: **DRAFT — READY_FOR_INDEPENDENT_REVIEW**  
-Решение владельца: **PENDING**  
-Gate: **1 (executable specification), predecessors landed; не пройден до fresh independent review и явного APPROVED владельца**
+Статус: **GATE_1_APPROVED**  
+Решение владельца: **APPROVED 2026-09-01 для exact reviewed artifact из commit `308145d`**  
+Gate: **1 пройден; Gate 2 RED разрешён**
 
 ## 1. Actor, цель и граница поведения
 
@@ -282,7 +282,6 @@ Gate 2 RED evidence валидно только если test environment/setup 
 
 ## 9. Gate 1 decision
 
-Predecessors v1–v7 landed. До fresh independent review и отдельной явной записи
-владельца `APPROVED` этот документ остаётся `DRAFT — READY_FOR_INDEPENDENT_REVIEW`.
-Автор документа не утверждает собственную спецификацию и не разрешает Gate 2
-test edits.
+Predecessors v1–v7 landed. Fresh independent review зафиксировал
+`READY_FOR_OWNER_APPROVAL` для exact artifact из commit `308145d`; владелец
+явно ответил `ок` 2026-09-01. Gate 1 пройден, Gate 2 test edits разрешены.
