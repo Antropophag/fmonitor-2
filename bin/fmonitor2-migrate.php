@@ -11,6 +11,7 @@ use FMonitor2\InstallationProcess\IdentityAccessSchemaMigration;
 use FMonitor2\InstallationProcess\IdentityAccessDefinitionSchemaMigration;
 use FMonitor2\InstallationProcess\DatabaseUnavailable;
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
+use FMonitor2\InstallationProcess\ChecklistTemplateSchemaMigration;
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -88,6 +89,7 @@ $migrations = [
     4 => ProcessCommandCapabilitiesSchemaMigration::class,
     5 => BitrixWorkforceHistorySchemaMigration::class,
     6 => IdentityAccessSchemaMigration::class,
+    7 => ChecklistTemplateSchemaMigration::class,
 ];
 $databasePreflight = static function () use ($connection, $tablePrefix): int {
     IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);

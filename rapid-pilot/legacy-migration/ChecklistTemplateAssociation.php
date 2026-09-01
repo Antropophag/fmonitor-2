@@ -27,11 +27,11 @@ final class ChecklistTemplateAssociationTarget
     public function associate(string$subjectKind,string$subjectId,string$effectiveAt,int$snapshotId,string$expectedHash,string$expectedVersion,string$createdAt):array
     {
         if($subjectId===''||strlen($subjectId)>160||$snapshotId<1)throw new InvalidArgumentException('Invalid association identity');$p=$this->prefix;
+        $this->requireSchema();
         $snapshot=$this->db->query("SELECT snapshot_version,valid_from,content_sha256 FROM `{$p}fm2_checklist_template_snapshots` WHERE id=".$snapshotId)->fetch_assoc();
         if(!is_array($snapshot)||!hash_equals((string)$snapshot['content_sha256'],$expectedHash)||(string)$snapshot['snapshot_version']!==$expectedVersion)throw new DomainException('CHECKLIST_TEMPLATE_SNAPSHOT_MISMATCH');
         $policy=ChecklistTemplateAssociationPolicy::validate($subjectKind,$effectiveAt,(string)$snapshot['valid_from'],$expectedVersion,$expectedHash);
         if(!$policy['allowed'])throw new DomainException((string)$policy['conflictCode']);
-        if(!$this->schemaReady){$this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_checklist_template_associations`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,association_version VARCHAR(80) NOT NULL,subject_kind VARCHAR(40) NOT NULL,subject_id VARCHAR(160) NOT NULL,effective_at DATETIME NOT NULL,template_snapshot_id BIGINT UNSIGNED NOT NULL,template_snapshot_version VARCHAR(80) NOT NULL,template_content_sha256 CHAR(64) NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_subject(subject_kind,subject_id),KEY snapshot_id(template_snapshot_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");$this->schemaReady=true;}
         $version=ChecklistTemplateAssociationPolicy::VERSION;
         $insert=$this->db->prepare("INSERT IGNORE INTO `{$p}fm2_checklist_template_associations`(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES(?,?,?,?,?,?,?,?)");$insert->bind_param('ssssisss',$version,$subjectKind,$subjectId,$effectiveAt,$snapshotId,$expectedVersion,$expectedHash,$createdAt);$insert->execute();$created=$insert->affected_rows===1;
         $lookup=$this->db->prepare("SELECT id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256 FROM `{$p}fm2_checklist_template_associations` WHERE subject_kind=? AND subject_id=?");$lookup->bind_param('ss',$subjectKind,$subjectId);$lookup->execute();$stored=$lookup->get_result()->fetch_assoc();
@@ -41,8 +41,15 @@ final class ChecklistTemplateAssociationTarget
 
     public function associateActiveBaseline(int$legacyObjectId,int$snapshotId,string$createdAt):array
     {
-        $p=$this->prefix;$baseline=$this->db->query("SELECT id,cutover_at FROM `{$p}fm2_legacy_active_baselines` WHERE legacy_object_id=".$legacyObjectId)->fetch_assoc();if(!is_array($baseline))throw new OutOfBoundsException('ACTIVE_BASELINE_NOT_FOUND');
+        $this->requireSchema();$p=$this->prefix;$baseline=$this->db->query("SELECT id,cutover_at FROM `{$p}fm2_legacy_active_baselines` WHERE legacy_object_id=".$legacyObjectId)->fetch_assoc();if(!is_array($baseline))throw new OutOfBoundsException('ACTIVE_BASELINE_NOT_FOUND');
         $snapshot=$this->db->query("SELECT snapshot_version,content_sha256 FROM `{$p}fm2_checklist_template_snapshots` WHERE id=".$snapshotId)->fetch_assoc();if(!is_array($snapshot))throw new OutOfBoundsException('CHECKLIST_TEMPLATE_NOT_FOUND');
         return$this->associate('legacy_active_baseline',(string)$baseline['id'],(string)$baseline['cutover_at'],$snapshotId,(string)$snapshot['content_sha256'],(string)$snapshot['snapshot_version'],$createdAt);
+    }
+
+    private function requireSchema():void
+    {
+        if($this->schemaReady)return;
+        try{$this->schemaReady=\FMonitor2\InstallationProcess\ChecklistTemplateSchemaMigration::isCompleteCompatible($this->db,$this->prefix);}catch(\FMonitor2\InstallationProcess\DatabaseUnavailable){$this->schemaReady=false;}
+        if(!$this->schemaReady)throw new RuntimeException('CHECKLIST_TEMPLATE_SCHEMA_REQUIRED');
     }
 }

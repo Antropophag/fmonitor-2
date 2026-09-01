@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2).'/app/InstallationProcess/MariaDbSchemaInspector.php';
+require_once dirname(__DIR__, 2).'/app/InstallationProcess/DatabaseUnavailable.php';
+require_once dirname(__DIR__, 2).'/app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php';
+require_once dirname(__DIR__, 2).'/app/InstallationProcess/ChecklistTemplateSchemaMigration.php';
+
 final class LegacyChecklistTemplateSnapshot
 {
     public const VERSION='legacy-checklist-template-cutover-v1';
@@ -36,7 +41,9 @@ final class LegacyChecklistTemplateMySqlTarget
     public function __construct(private mysqli $db,private string $prefix){if(preg_match('/^[A-Za-z0-9_]+$/D',$prefix)!==1)throw new InvalidArgumentException('Invalid local prefix');}
     public function apply(array $snapshot,string $capturedAt,string $createdAt):array
     {
-        $p=$this->prefix;$this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_checklist_template_snapshots`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,snapshot_version VARCHAR(80) NOT NULL,captured_at DATETIME NOT NULL,valid_from DATETIME NOT NULL,validity_scope VARCHAR(120) NOT NULL,source_label VARCHAR(160) NOT NULL,content_sha256 CHAR(64) NOT NULL,payload_json LONGTEXT NOT NULL,created_at DATETIME NOT NULL,UNIQUE KEY uq_hash(content_sha256),UNIQUE KEY uq_valid_from(valid_from)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $p=$this->prefix;
+        try{$ready=\FMonitor2\InstallationProcess\ChecklistTemplateSchemaMigration::isCompleteCompatible($this->db,$p);}catch(\FMonitor2\InstallationProcess\DatabaseUnavailable){$ready=false;}
+        if(!$ready)throw new RuntimeException('CHECKLIST_TEMPLATE_SCHEMA_REQUIRED');
         $hash=(string)$snapshot['contentSha256'];$json=json_encode($snapshot['payload'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
         $this->db->begin_transaction();try{
             $lookup=$this->db->prepare("SELECT id,content_sha256 FROM `{$p}fm2_checklist_template_snapshots` WHERE valid_from=? FOR UPDATE");$lookup->bind_param('s',$capturedAt);$lookup->execute();$existing=$lookup->get_result()->fetch_assoc();

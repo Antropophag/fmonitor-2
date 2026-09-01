@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v6 specifications.
+ * Literal catalog contract transcribed from the approved v1-v7 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -14,6 +14,12 @@ final class ProductionMigrationRunnerCatalogContract
         return [
             'fm2_assignment_orders' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;version_no:smallint unsigned:NO:;kind:varchar(40):NO:;status:varchar(40):NO:;order_date:date:NO:;registration_number:varchar(120):YES:;registered_at:varchar(40):YES:;registration_actor_type:varchar(40):YES:;registration_actor_id:varchar(120):YES:;registration_source:varchar(40):YES:;external_registration_id:varchar(120):YES:;control_engineer_user_id:bigint unsigned:NO:;control_engineer_fio_snapshot:varchar(300):NO:;control_engineer_position_snapshot:varchar(300):NO:;organization_form:varchar(40):NO:;previous_assignment_order_id:bigint unsigned:YES:;object_address_snapshot:varchar(500):NO:;entrance_snapshot:varchar(80):NO:;object_registration_number_snapshot:varchar(120):NO:;planned_start_date_snapshot:date:NO:;planned_finish_date_snapshot:date:NO:;pto_act_date_snapshot:date:YES:;prepared_at:varchar(40):NO:;prepared_by_user_id:bigint unsigned:NO:'
+            ),
+            'fm2_checklist_template_associations' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;association_version:varchar(80):NO:;subject_kind:varchar(40):NO:;subject_id:varchar(160):NO:;effective_at:datetime:NO:;template_snapshot_id:bigint unsigned:NO:;template_snapshot_version:varchar(80):NO:;template_content_sha256:char(64):NO:;created_at:datetime:NO:'
+            ),
+            'fm2_checklist_template_snapshots' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;snapshot_version:varchar(80):NO:;captured_at:datetime:NO:;valid_from:datetime:NO:;validity_scope:varchar(120):NO:;source_label:varchar(160):NO:;content_sha256:char(64):NO:;payload_json:longtext:NO:;created_at:datetime:NO:'
             ),
             'fm2_installation_cases' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;legacy_installation_object_id:bigint unsigned:NO:;process_state:varchar(80):NO:;actual_start_date:date:YES:;opened_at:varchar(40):YES:;opened_by_user_id:bigint unsigned:YES:;created_at:varchar(40):NO:;updated_at:varchar(40):NO:;lock_version:int unsigned:NO:'
@@ -83,6 +89,12 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_assignment_orders|UNIQUE|installation_case_id,version_no',
             'fm2_assignment_orders|INDEX|installation_case_id,status',
             'fm2_assignment_orders|INDEX|previous_assignment_order_id',
+            'fm2_checklist_template_associations|PRIMARY|id',
+            'fm2_checklist_template_associations|UNIQUE|subject_kind,subject_id',
+            'fm2_checklist_template_associations|INDEX|template_snapshot_id',
+            'fm2_checklist_template_snapshots|PRIMARY|id',
+            'fm2_checklist_template_snapshots|UNIQUE|content_sha256',
+            'fm2_checklist_template_snapshots|UNIQUE|valid_from',
             'fm2_installation_cases|PRIMARY|id',
             'fm2_installation_cases|UNIQUE|legacy_installation_object_id',
             'fm2_pilot_auth_attempts|PRIMARY|id',
