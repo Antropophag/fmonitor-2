@@ -97,3 +97,31 @@ No syntax errors detected in tests/InstallationProcess/inspection_evidence_schem
 
 Gate 2 result: **QUALIFIED RED**. Gate 3 independent test review is required
 before implementation.
+
+## Post-approval fixture correction — 2026-09-01
+
+Gate 4 exposed a test-owned G2-14 fixture defect: item `1` was paired with
+section `1`, while the landed public `ChecklistSync` contract maps item `1` to
+section `3`. This was a valid runtime rejection, not an implementation defect.
+The frozen test fixture alone was corrected to `sectionId=3,itemId=1`; the
+photo already used section `3`, so its base revision and projection
+expectations remain unchanged.
+
+The original qualified RED transcript above is retained as historical Gate 2
+evidence. The corrected artifact was checked against the current Gate 4
+worktree:
+
+```text
+$ php -l tests/InstallationProcess/inspection_evidence_schema_001_test.php
+No syntax errors detected in tests/InstallationProcess/inspection_evidence_schema_001_test.php
+
+$ make test-env-up && php tests/InstallationProcess/inspection_evidence_schema_001_test.php
+INSPECTION-EVIDENCE-SCHEMA-001 tests passed.
+```
+
+Corrected test SHA-256:
+`3e9ce3564f3b5645e2c703887cd7782a3d5804911437f83387a2283723e3ea38`.
+
+Because reviewed test bytes changed, OpenSpec task 2.2 is returned to unchecked
+pending fresh independent test rereview. No production or specification bytes
+were changed by this correction.

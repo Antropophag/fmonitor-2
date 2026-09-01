@@ -194,22 +194,26 @@ $db->close();
 $migration = hoccRun(['make', '--no-print-directory', 'migrate'], $root, $environment);
 $migrationEvidence = json_encode($migration, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 if ($migration['status'] !== 0) {
-    throw new TestFailure("SETUP_FAILURE: public make migrate did not establish canonical v1-v7; evidence=$migrationEvidence");
+    throw new TestFailure("SETUP_FAILURE: public make migrate did not establish canonical v1-v8; evidence=$migrationEvidence");
 }
 $migrationResult = hoccMigrationResult($migration);
 $appliedVersions = $migrationResult['appliedVersions'] ?? null;
 $validAppliedVersions = is_array($appliedVersions)
     && array_values(array_unique($appliedVersions, SORT_REGULAR)) === array_values($appliedVersions)
-    && array_values(array_filter($appliedVersions, static fn (mixed $version): bool => !is_int($version) || $version < 1 || $version > 7)) === [];
+    && array_values(array_filter($appliedVersions, static fn (mixed $version): bool => !is_int($version) || $version < 1 || $version > 8)) === [];
 assertSameValue(true, ($migrationResult['ok'] ?? null) === true, "SETUP_FAILURE: migration JSON must report ok=true; evidence=$migrationEvidence");
-assertSameValue(7, $migrationResult['schemaVersion'] ?? null, "SETUP_FAILURE: migration JSON must report schemaVersion=7; evidence=$migrationEvidence");
-assertSameValue(true, $validAppliedVersions, "SETUP_FAILURE: migration JSON appliedVersions must be [] or a unique subset of [1,2,3,4,5,6,7]; evidence=$migrationEvidence");
+assertSameValue(8, $migrationResult['schemaVersion'] ?? null, "SETUP_FAILURE: migration JSON must report schemaVersion=8; evidence=$migrationEvidence");
+assertSameValue(true, $validAppliedVersions, "SETUP_FAILURE: migration JSON appliedVersions must be [] or a unique subset of [1,2,3,4,5,6,7,8]; evidence=$migrationEvidence");
 
 $canonicalTables = [
     'fm2_installation_cases',
     'fm2_assignment_orders',
     'fm2_checklist_template_associations',
     'fm2_checklist_template_snapshots',
+    'fm2_checklist_revisions',
+    'fm2_checklist_operations',
+    'fm2_checklist_operation_installers',
+    'fm2_checklist_photos',
     'fm2_order_installers',
     'fm2_order_artifacts',
     'fm2_process_tasks',
@@ -248,8 +252,8 @@ try {
         'leaksAfterSecond'=>$leaksAfterSecond,
     ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-    assertSameValue(0, $first['status'], "RED_ASSERTION: OTIZ isolation public seam must coexist with pre-existing canonical v1-v7 tables on its first invocation; evidence=$evidence");
-    assertSameValue(0, $second['status'], "RED_ASSERTION: OTIZ isolation public seam must coexist with pre-existing canonical v1-v7 tables on its repeated invocation; evidence=$evidence");
+    assertSameValue(0, $first['status'], "RED_ASSERTION: OTIZ isolation public seam must coexist with pre-existing canonical v1-v8 tables on its first invocation; evidence=$evidence");
+    assertSameValue(0, $second['status'], "RED_ASSERTION: OTIZ isolation public seam must coexist with pre-existing canonical v1-v8 tables on its repeated invocation; evidence=$evidence");
     assertSameValue('', $first['stderr'], "OTIZ canonical compatibility first invocation must not emit setup or regression errors; evidence=$evidence");
     assertSameValue('', $second['stderr'], "OTIZ canonical compatibility repeated invocation must not emit setup or regression errors; evidence=$evidence");
     assertSameValue($first['stdout'], $second['stdout'], "Both canonical compatibility invocations must emit an identical stable transcript; evidence=$evidence");
@@ -280,7 +284,7 @@ try {
     assertSameValue([], $failurePrivateLeaks, "Controlled post-fixture failure must remove all private OTIZ tables; evidence=$failureEvidence");
     assertSameValue([], $failureOwnedLeaks, "Controlled post-fixture failure must remove every harness-owned noncanonical artifact; evidence=$failureEvidence");
 
-    echo 'ok - HARNESS-OTIZ-CANONICAL-COMPAT-001 preserves canonical v1-v7 across repeated isolated OTIZ characterization', "\n";
+    echo 'ok - HARNESS-OTIZ-CANONICAL-COMPAT-001 preserves canonical v1-v8 across repeated isolated OTIZ characterization', "\n";
 } finally {
     hoccDropOwnedTables($db, array_merge(hoccPrivateTables($db), hoccOwnedNoncanonicalTables($db)));
     hoccRemoveSentinels($db, $sentinelIds);

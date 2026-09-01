@@ -20,6 +20,10 @@ final class CanonicalMigrationApplication
     ): array {
         $appliedVersions = [];
         try {
+            $versions = array_keys($migrations);
+            if ($versions !== [] && $versions !== range(1, max($versions))) {
+                throw new \LogicException('Canonical migration catalogue must be contiguous from v1.');
+            }
             if ($databasePreflight !== null) {
                 $preflightReportFromVersion = $databasePreflight();
                 if (is_int($preflightReportFromVersion)) {

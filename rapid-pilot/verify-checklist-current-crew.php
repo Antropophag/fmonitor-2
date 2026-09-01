@@ -2,6 +2,13 @@
 declare(strict_types=1);
 require_once dirname(__DIR__).'/app/PilotHttp/PilotHttp.php';
 require_once dirname(__DIR__).'/app/PilotHttp/ChecklistSync.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/DatabaseUnavailable.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbSchemaInspector.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbExactSchemaFingerprint.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceOperationDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceSchemaMigration.php';
 use FMonitor2\PilotHttp\ChecklistSync;
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
 $db=new mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:'fmonitor2_demo',getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local',getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo',(int)(getenv('FMONITOR_DB_PORT')?:23306));$db->set_charset('utf8mb4');$p='crew_'.bin2hex(random_bytes(5)).'_';
@@ -13,6 +20,7 @@ try{
  $db->query("INSERT INTO `{$p}fm2_installation_cases` VALUES(1,1103,'working')");
  $db->query("INSERT INTO `{$p}fm2_assignment_orders` VALUES(11,1,1,'registered'),(12,1,2,'registered')");
  $db->query("INSERT INTO `{$p}fm2_order_installers` VALUES(11,101,'Первый','Монтажник','employed','2026-08-01T00:00:00+03:00'),(12,202,'Последний','Монтажник','employed','2026-08-02T00:00:00+03:00')");
+ \FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration::apply($db,$p);
  $sync=new ChecklistSync($db,$p,sys_get_temp_dir(),'2026-08-30T20:00:00+03:00');$sync->ensureSchema();
  $db->query("INSERT INTO `{$p}fm2_checklist_operations`(installation_case_id,client_operation_id,device_installation_id,operation_type,section_id,item_id,actor_user_id,device_time,server_received_at,base_revision,accepted_revision,payload_json) VALUES(1,'11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','item_completed',1,28,9,'2026-08-01T10:00:00+03:00','2026-08-01T10:00:01+03:00',0,1,'{\"installerTabIds\":[\"101\"]}')");
  $db->query("INSERT INTO `{$p}fm2_checklist_operation_installers` VALUES('11111111-1111-4111-8111-111111111111',101,'Первый','Монтажник','employed',NULL,'2026-08-01T00:00:00+03:00','completion')");

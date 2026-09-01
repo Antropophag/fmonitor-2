@@ -357,3 +357,168 @@ METADATA  reviews/tests/INSPECTION-EVIDENCE-SCHEMA-001.md
 Any byte change in the approved spec, exact test, or RED evidence invalidates
 this approval. Gate 4 may change production only; a fresh independent Gate 5
 review remains mandatory.
+
+---
+
+## Post-Gate-4 fixture-correction rereview — 2026-09-01
+
+- Reviewer: separately tasked agent `/root/inspection_v8_test_review`
+- Verdict: `APPROVED`
+- Corrected test: `3e9ce3564f3b5645e2c703887cd7782a3d5804911437f83387a2283723e3ea38`
+
+The correction changes exactly one test-owned value: G2-14's item-completion
+fixture now pairs `itemId=1` with `sectionId=3` instead of `sectionId=1`.
+Reconstructing the prior bytes by changing that value back produces the exact
+previously approved SHA-256
+`ebca4c75101f2714e69843171a60f993f7443efee4b7a147eb4f1942d18995c0`.
+No expectation, seam, schema oracle, conflict case, or other fixture changed.
+
+The correction matches the landed public `ChecklistSync::SECTION_ITEMS`
+mapping, where section 3 owns items 1–6. It removes a test-fixture rejection;
+it does not weaken G2-14. The test still requires, in sequence under the same
+DML-only principal:
+
+1. exact item result `accepted`, revision 1;
+2. exact photo result `accepted`, revision 2, with base revision 1;
+3. projection revision 2; and
+4. the exact SHA-addressed photo blob on disk.
+
+Thus either operation rejecting, skipping DML, using the wrong revision, losing
+projection visibility, performing runtime DDL, or failing file persistence is
+still observable. G2-15's per-table absent/incompatible DB and recursive file
+invariance matrix is byte-identical to the prior approval.
+
+The corrected focused test was independently run against the current Gate 4
+worktree:
+
+```text
+make test-env-up
+php -l tests/InstallationProcess/inspection_evidence_schema_001_test.php
+php tests/InstallationProcess/inspection_evidence_schema_001_test.php
+
+No syntax errors detected in tests/InstallationProcess/inspection_evidence_schema_001_test.php
+INSPECTION-EVIDENCE-SCHEMA-001 tests passed.
+```
+
+This GREEN run is post-Gate-4 sensitivity proof only. The historical qualified
+RED (real runner through exact v1–v7, expected v8/actual v7) remains preserved
+in the reviewed evidence; changing a fixture after implementation correctly
+required this fresh Gate 3 approval.
+
+### Exact SHA-256 manifest
+
+```text
+82b82114ab7db34c63a06ec34dd287d38a0f25e52e71b4dd314545f97f0f58d7  specs/INSPECTION-EVIDENCE-SCHEMA-001.md
+3e9ce3564f3b5645e2c703887cd7782a3d5804911437f83387a2283723e3ea38  tests/InstallationProcess/inspection_evidence_schema_001_test.php
+475860373aef8f7b48e7cc334c792af9408165451fb82eddc8c2b248398bff62  docs/operations/inspection-evidence-schema-red-evidence.md
+b0c1b178bd34b3ddfd1d11829c434002b033df8250af05ba56fe9c7d3a75a995  openspec/changes/canonicalize-inspection-evidence-schema/tasks.md (task 2.2 complete)
+6ad3cad4d132e08ad79422918a5c2f9c82ff7811b1f689058ad5fa74f97021c9  openspec/changes/canonicalize-inspection-evidence-schema/proposal.md
+57336dc20461afca35cdf90514a419885efd28dd6ede5dd1cb6f528955d3345f  openspec/changes/canonicalize-inspection-evidence-schema/design.md
+123704eda50e1fc552335a14db07f418115ade304ccf6206583dc9d8bd0b1745  openspec/changes/canonicalize-inspection-evidence-schema/.openspec.yaml
+69676a9d16dd2d380de13b76f2f50d35d4c085998b01a109a4a9a6cc49b0cdb7  openspec/changes/canonicalize-inspection-evidence-schema/specs/deployment/canonical-inspection-evidence-schema/spec.md
+a0e448c888ab7a25041d615fd7f2bab855047a5247d8ae42900e8c3d9d1c7504  docs/development-process.md
+800d135a043633260ce59440579f35f4dcf16553c61f7e149d82825c9e6c3509  tests/bootstrap.php
+
+POST-GATE-4 CONTEXT (not frozen by Gate 3):
+2e514ad5b270962d8bcb5036c5933a55157d0b42e91f2aaf01c663eddec78d4b  app/InstallationProcess/InspectionEvidenceSchemaMigration.php
+5ca58842cf4b0f1e7107cb277afa349251b6f971b1ace2d1527c841f34348007  app/InstallationProcess/CanonicalMigrationApplication.php
+eba45bff34689c54088e89b9d4801c8c16bef2b420b3abdaed7f9f98e8c7bef6  app/PilotHttp/ChecklistSync.php
+024e88f6879b7ac7d33b2deeb672d514e397b24530c1f989caeaa7cd018bbc23  bin/fmonitor2-migrate.php
+
+METADATA  reviews/tests/INSPECTION-EVIDENCE-SCHEMA-001.md
+```
+
+OpenSpec task 2.2 is complete again. The corrected exact test/spec/evidence
+bytes are frozen for Gate 4 completion and fresh independent Gate 5 review.
+
+---
+
+## Integration-driven shared-v8 contract rereview — 2026-09-01
+
+- Reviewer: separately tasked agent `/root/inspection_v8_test_review`
+- Independence: reviewer did not author the shared contract or eight changed tests
+- Verdict: `APPROVED`
+
+The integration edits correctly advance only composed real-runner expectations
+to terminal schema v8 and `[1,2,3,4,5,6,7,8]`. They do not renumber or weaken
+the direct predecessor seams: the checklist-template test still asserts literal
+`ChecklistTemplateSchemaMigration` version 7 results, and the identity/access
+test still asserts literal `IdentityAccessSchemaMigration` version 6 results.
+
+`ProductionMigrationRunnerCatalogContract` is test-owned and does not load
+production migration SQL. Its literal catalog now contains exactly 26 tables.
+The four v8 tables contribute exact ordered columns/types/nullability/extras
+and ten exact primary/unique/secondary index tuples. The composed runner test
+compares the complete returned table set against those 26 names, compares every
+column/index tuple, and compares the complete global FK and CHECK lists. Because
+the v8 tables add no entries to the latter two lists, any v8 FK or CHECK (or any
+other extra constraint represented there) fails the shared contract. The
+dedicated approved test retains the stricter v8 defaults, generated metadata,
+collation, index visibility/direction, and no-FK/no-CHECK fingerprints.
+
+The other consumers change only their canonical setup/catalogue expectations:
+case import, HTTP auth, workforce runner, checklist-template runner,
+identity/access runner, production runner and OTIZ compatibility now require
+the real runner's v8 terminal state. No product acceptance/rejection literal or
+known GRILL-002 assertion was removed or relaxed.
+
+### Independent executions
+
+With `FMONITOR_TEST_DB_ADMIN_PASSWORD=fmonitor2_test_root_local` where required:
+
+```text
+PASS  tests/InstallationProcess/inspection_evidence_schema_001_test.php
+PASS  tests/InstallationProcess/checklist_template_schema_001_test.php
+PASS  tests/InstallationProcess/identity_access_schema_001_test.php
+PASS  tests/InstallationProcess/pilot_case_import_001_test.php
+PASS  tests/InstallationProcess/production_migration_runner_001_test.php
+PASS  tests/InstallationProcess/workforce_canonical_runner_001_test.php
+PASS  tests/Verification/harness_otiz_canonical_compat_001_test.php
+```
+
+The first direct case-import attempt without the test password was correctly
+classified as setup failure (`Access denied`), then passed with the harness
+credential. It is not a RED or regression.
+
+`pilot_http_auth_001_test.php` passed the new real v8 migration fixture and then
+reached the established unrelated CSP baseline:
+
+```text
+missing identity despite spoof content-security-policy
+Expected: default-src 'none'; style-src 'self'; img-src 'self'; ...
+Actual:   default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; ...
+```
+
+This is the pre-existing `script-src 'self'` expectation mismatch, not a v8
+fixture/schema failure. The test edit changes only its setup result from v7 to
+v8, so the GRILL-002 outcome remains visible and unweakened.
+
+### Exact SHA-256 reviewed manifest
+
+```text
+82b82114ab7db34c63a06ec34dd287d38a0f25e52e71b4dd314545f97f0f58d7  specs/INSPECTION-EVIDENCE-SCHEMA-001.md
+e06b02081fcebd70407a6d18c8d294549cc8b16bc1dbd948bb92497d99dbb989  tests/Support/ProductionMigrationRunnerCatalogContract.php
+d8d96368b9f45d66da15dff91bf6265cacf6eb0f5b7ea44ad71676197a2b0b9d  tests/InstallationProcess/checklist_template_schema_001_test.php
+bb411e4bcf6d1d9dbb0fb7f513672923c903bb32c7fe893c6e8e30e9e2068ad4  tests/InstallationProcess/identity_access_schema_001_test.php
+3e9ce3564f3b5645e2c703887cd7782a3d5804911437f83387a2283723e3ea38  tests/InstallationProcess/inspection_evidence_schema_001_test.php
+a4f03f69b4061cc93b36488ca49319615c5cd6b367a03b761b1233d241d8b2f9  tests/InstallationProcess/pilot_case_import_001_test.php
+50fefbdc32e93eee2874db1b0cd67ac782af7e28dd106654771fa6997a27ec73  tests/InstallationProcess/pilot_http_auth_001_test.php
+81df9e82583c489380d917d615e00d89021c8e35e199a3639364545a5deb1d03  tests/InstallationProcess/production_migration_runner_001_test.php
+7e02179ce41b308a187355b30d15cb527788db32f5827d9b3756828eae3fc7fb  tests/InstallationProcess/workforce_canonical_runner_001_test.php
+b0fd777b8748a54611bf6061299b38cb48944f85b6512a7ff8e0b6bd868eb639  tests/Verification/harness_otiz_canonical_compat_001_test.php
+475860373aef8f7b48e7cc334c792af9408165451fb82eddc8c2b248398bff62  docs/operations/inspection-evidence-schema-red-evidence.md
+b6910d389763d75b0eb5c907014cb81cd3116a12d714ae7a985c1f6b1327572e  docs/operations/inspection-evidence-schema-green-verification.md
+7890acc5ffeb7e163a013a6892072e8747d5a2be95a41a88461009c812db80ca  openspec/changes/canonicalize-inspection-evidence-schema/tasks.md
+
+POST-GATE-4 CONTEXT:
+2e514ad5b270962d8bcb5036c5933a55157d0b42e91f2aaf01c663eddec78d4b  app/InstallationProcess/InspectionEvidenceSchemaMigration.php
+5ca58842cf4b0f1e7107cb277afa349251b6f971b1ace2d1527c841f34348007  app/InstallationProcess/CanonicalMigrationApplication.php
+eba45bff34689c54088e89b9d4801c8c16bef2b420b3abdaed7f9f98e8c7bef6  app/PilotHttp/ChecklistSync.php
+024e88f6879b7ac7d33b2deeb672d514e397b24530c1f989caeaa7cd018bbc23  bin/fmonitor2-migrate.php
+
+METADATA  reviews/tests/INSPECTION-EVIDENCE-SCHEMA-001.md
+```
+
+Any byte change in the shared contract, eight reviewed tests, dedicated test,
+specification, or evidence invalidates this integration approval. Gate 5 remains
+independent and mandatory.

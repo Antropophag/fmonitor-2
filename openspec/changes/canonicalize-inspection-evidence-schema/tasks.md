@@ -10,13 +10,13 @@
 
 ## 3. Gate 4 — minimal ownership implementation
 
-- [ ] 3.1 Реализовать strict four-table migration с family-wide preflight и зарегистрировать её после landed prerequisites; verification: focused clean/repeat/partial/conflict runner cases GREEN без изменения reviewed expectations.
-- [ ] 3.2 Реализовать два exact additive upgrades с сохранением sentinel rows и auto-increment state; verification: template identity columns и `assignment_source` появляются, legacy evidence byte-equivalent.
-- [ ] 3.3 Удалить production DDL и schema repair из `ChecklistSync`, оставить fail-closed precondition; verification: static/runtime no-DDL cases GREEN и architecture debt уменьшается без новых violations.
-- [ ] 3.4 Прогнать current-crew, template binding, offline/prefetch, completion и native OTIZ characterization; verification: observable checklist/downstream behavior остаётся GREEN.
+- [x] 3.1 Реализовать strict four-table migration с family-wide preflight и зарегистрировать её после landed prerequisites; verification: focused clean/repeat/partial/conflict runner cases GREEN без изменения reviewed expectations.
+- [x] 3.2 Реализовать два exact additive upgrades с сохранением sentinel rows и auto-increment state; verification: template identity columns и `assignment_source` появляются, legacy evidence byte-equivalent.
+- [x] 3.3 Удалить production DDL и schema repair из `ChecklistSync`, оставить fail-closed precondition; verification: static/runtime no-DDL cases GREEN и architecture debt уменьшается без новых violations.
+- [x] 3.4 Прогнать current-crew, template binding, offline/prefetch, completion и native OTIZ characterization; verification: observable checklist/downstream behavior остаётся GREEN.
 
 ## 4. Gate 5 и Done
 
-- [ ] 4.1 Выполнить focused DB, canonical runner, `make architecture-check`, lint и full `make verify`; verification: новые failures отсутствуют, а известные GRILL-002 failures не скрыты и классифицированы отдельно.
-- [ ] 4.2 Свежий independent code reviewer проверяет spec, reviewed RED, migration/runner/runtime diff, debt reduction и regression и записывает `APPROVED` в `reviews/code/INSPECTION-EVIDENCE-SCHEMA-001.md`.
-- [ ] 4.3 Done: canonical runner единолично создаёт/обновляет exact family; runtime не выполняет её DDL; clean/repeat/upgrade/conflict/characterization проходят; обе independent reviews approved; calibration dependency READY.
+- [x] 4.1 Выполнить focused DB, canonical runner, `make architecture-check`, lint и full `make verify`; verification: v8 focused/runner/architecture/lint GREEN, full verify вернулся к baseline 8 DB + 1 E2E failures, characterization PASS.
+- [x] 4.2 Свежий independent code reviewer проверяет spec, reviewed RED, migration/runner/runtime diff, debt reduction и regression и записывает `APPROVED` в `reviews/code/INSPECTION-EVIDENCE-SCHEMA-001.md`.
+- [x] 4.3 Done: canonical runner единолично создаёт/обновляет exact family; runtime не выполняет её DDL; clean/repeat/upgrade/conflict/characterization проходят; обе independent reviews approved; calibration dependency READY.

@@ -1,21 +1,28 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/CompletionFlow.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/DatabaseUnavailable.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbSchemaInspector.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbExactSchemaFingerprint.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceOperationDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceSchemaMigration.php';
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
 $db=new mysqli(getenv('FMONITOR_DB_HOST')?:getenv('FMONITOR_DEMO_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:getenv('FMONITOR_DEMO_DB_USER')?:'',getenv('FMONITOR_DB_PASSWORD')?:getenv('FMONITOR_DEMO_DB_PASSWORD')?:'',getenv('FMONITOR_DB_NAME')?:getenv('FMONITOR_DEMO_DB_NAME')?:'',(int)(getenv('FMONITOR_DB_PORT')?:getenv('FMONITOR_DEMO_DB_PORT')?:3306));$db->set_charset('utf8mb4');
-$prefix='completion_verify_'.bin2hex(random_bytes(5)).'_';putenv('FMONITOR_PROCESS_TABLE_PREFIX='.$prefix);
-$tables=['fm2_pilot_completion_facts','fm2_checklist_operations','fm2_installation_cases'];
+$prefix='completion_'.bin2hex(random_bytes(5)).'_';putenv('FMONITOR_PROCESS_TABLE_PREFIX='.$prefix);
+$tables=['fm2_pilot_completion_facts','fm2_checklist_photos','fm2_checklist_operation_installers','fm2_checklist_operations','fm2_checklist_revisions','fm2_installation_cases'];
 $ok=static function(bool$value,string$message):void{if(!$value)throw new RuntimeException($message);};
 try{
  $db->query("CREATE TABLE `{$prefix}fm2_installation_cases`(id BIGINT PRIMARY KEY,legacy_installation_object_id BIGINT UNIQUE,process_state VARCHAR(40))");
- $db->query("CREATE TABLE `{$prefix}fm2_checklist_operations`(id BIGINT AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT,operation_type VARCHAR(40),item_id INT)");
+ \FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration::apply($db,$prefix);
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(7,4512,'working')");
  $shell='<div class="fm2-object-workspace"><section class="fm2-next-action" aria-label="Ближайшее действие"><div><h2>Работы открыты</h2></div><div class="fm2-action-stack"><a href="/pilot/objects/4512/checklist">Открыть чек-лист</a></div></section></div>';
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(8,4513,'needs_assignment_order')");
  $unopened=RapidPilotCompletionFlow::enhanceCard($shell,4513);$ok($unopened===$shell&&!str_contains($unopened,'Текущее действие'),'work progress stays hidden until the installation case is opened');
  $below=RapidPilotCompletionFlow::enhanceCard($shell,4512);$ok(str_contains($below,'Монтажные работы · 0%')&&str_contains($below,'aria-valuenow="0"')&&str_contains($below,'<progress class="fm2-completion-track__segment fm2-completion-track__segment--installation" max="85" value="0"')&&!str_contains($below,'style="width:'),'empty checklist starts montage state with a CSP-safe empty bar');
  $weights=[28,29,30,31,32,33,34,35,36,37,38,39,40,41,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27];
- $insert=$db->prepare("INSERT INTO `{$prefix}fm2_checklist_operations`(installation_case_id,operation_type,item_id)VALUES(7,'item_completed',?)");foreach($weights as$item){$insert->bind_param('i',$item);$insert->execute();}
+ $insert=$db->prepare("INSERT INTO `{$prefix}fm2_checklist_operations`(installation_case_id,client_operation_id,device_installation_id,operation_type,section_id,item_id,actor_user_id,device_time,server_received_at,base_revision,accepted_revision,payload_json)VALUES(7,?,?,'item_completed',1,?,1,'2026-08-30','2026-08-30',0,1,'{}')");$device='00000000-0000-4000-8000-000000000001';foreach($weights as$item){$operation=sprintf('00000000-0000-4000-8000-%012d',$item);$insert->bind_param('ssi',$operation,$device,$item);$insert->execute();}
  $at85=RapidPilotCompletionFlow::enhanceCard($shell,4512);$actionPosition=strpos($at85,'fm2-completion-action');$progressPosition=strpos($at85,'<h2 id="work-progress-title">Ход работ</h2>');$ok($actionPosition!==false&&$progressPosition!==false&&$actionPosition<$progressPosition&&str_contains($at85,'Документарное закрытие · 85%')&&str_contains($at85,'aria-valuenow="85"')&&str_contains($at85,'max="85" value="85"')&&!str_contains($at85,'style="width:')&&str_contains($at85,'Зафиксировать акт ПТО')&&!str_contains($at85,'value="record_declaration"'),'85% requires PTO in the current action above the separate work-progress layout: '.$at85);
  $db->query("INSERT INTO `{$prefix}fm2_pilot_completion_facts`(installation_case_id,fact_type,fact_date,details,recorded_at,recorded_by_user_id)VALUES(7,'pto_act','2026-08-29','','2026-08-30T10:00:00+03:00',18)");
  $afterPto=RapidPilotCompletionFlow::enhanceCard($shell,4512);$ok(str_contains($afterPto,'Акт ПТО от 29.08.2026')&&str_contains($afterPto,'Завершить работы')&&!str_contains($afterPto,'Работы по объекту завершены'),'PTO unlocks declaration but not completion');

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v7 specifications.
+ * Literal catalog contract transcribed from the approved v1-v8 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -12,6 +12,18 @@ final class ProductionMigrationRunnerCatalogContract
     public static function columns(): array
     {
         return [
+            'fm2_checklist_operation_installers' => self::parseColumns(
+                'client_operation_id:char(36):NO:;installer_tab_id:bigint unsigned:NO:;fio_snapshot:varchar(300):NO:;position_snapshot:varchar(300):NO:;employment_status_snapshot:varchar(40):NO:;dismissal_effective_at_snapshot:varchar(40):YES:;workforce_source_updated_at_snapshot:varchar(40):NO:;assignment_source:varchar(40):NO:'
+            ),
+            'fm2_checklist_operations' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;client_operation_id:char(36):NO:;device_installation_id:char(36):NO:;operation_type:varchar(40):NO:;section_id:tinyint unsigned:NO:;item_id:smallint unsigned:YES:;actor_user_id:bigint unsigned:NO:;device_time:varchar(40):NO:;server_received_at:varchar(40):NO:;base_revision:bigint unsigned:NO:;accepted_revision:bigint unsigned:NO:;payload_json:text:NO:;template_snapshot_id:bigint unsigned:YES:;template_snapshot_version:varchar(80):YES:;template_content_sha256:char(64):YES:'
+            ),
+            'fm2_checklist_photos' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;section_id:tinyint unsigned:NO:;upload_operation_id:char(36):NO:;sha256:char(64):NO:;mime_type:varchar(40):NO:;byte_size:int unsigned:NO:;original_name:varchar(255):NO:;storage_name:varchar(255):NO:;actor_user_id:bigint unsigned:NO:;device_time:varchar(40):NO:;server_received_at:varchar(40):NO:;revoked_at:varchar(40):YES:'
+            ),
+            'fm2_checklist_revisions' => self::parseColumns(
+                'installation_case_id:bigint unsigned:NO:;revision_no:bigint unsigned:NO:;updated_at:varchar(40):NO:'
+            ),
             'fm2_assignment_orders' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;version_no:smallint unsigned:NO:;kind:varchar(40):NO:;status:varchar(40):NO:;order_date:date:NO:;registration_number:varchar(120):YES:;registered_at:varchar(40):YES:;registration_actor_type:varchar(40):YES:;registration_actor_id:varchar(120):YES:;registration_source:varchar(40):YES:;external_registration_id:varchar(120):YES:;control_engineer_user_id:bigint unsigned:NO:;control_engineer_fio_snapshot:varchar(300):NO:;control_engineer_position_snapshot:varchar(300):NO:;organization_form:varchar(40):NO:;previous_assignment_order_id:bigint unsigned:YES:;object_address_snapshot:varchar(500):NO:;entrance_snapshot:varchar(80):NO:;object_registration_number_snapshot:varchar(120):NO:;planned_start_date_snapshot:date:NO:;planned_finish_date_snapshot:date:NO:;pto_act_date_snapshot:date:YES:;prepared_at:varchar(40):NO:;prepared_by_user_id:bigint unsigned:NO:'
             ),
@@ -85,6 +97,16 @@ final class ProductionMigrationRunnerCatalogContract
     public static function indexes(): array
     {
         return [
+            'fm2_checklist_operation_installers|PRIMARY|client_operation_id,installer_tab_id',
+            'fm2_checklist_operation_installers|INDEX|installer_tab_id,client_operation_id',
+            'fm2_checklist_operations|PRIMARY|id',
+            'fm2_checklist_operations|UNIQUE|client_operation_id',
+            'fm2_checklist_operations|INDEX|installation_case_id,id',
+            'fm2_checklist_photos|PRIMARY|id',
+            'fm2_checklist_photos|UNIQUE|upload_operation_id',
+            'fm2_checklist_photos|UNIQUE|installation_case_id,section_id,sha256',
+            'fm2_checklist_photos|INDEX|installation_case_id,section_id',
+            'fm2_checklist_revisions|PRIMARY|installation_case_id',
             'fm2_assignment_orders|PRIMARY|id',
             'fm2_assignment_orders|UNIQUE|installation_case_id,version_no',
             'fm2_assignment_orders|INDEX|installation_case_id,status',

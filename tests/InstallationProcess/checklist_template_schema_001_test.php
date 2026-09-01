@@ -225,12 +225,12 @@ $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf
 
 try {
     $runner = ctsRunRunner($database);
-    assertSameValue(0, $runner['exitCode'], 'Canonical runner must complete the landed v1-v6 prerequisites before checklist-template v7.');
+    assertSameValue(0, $runner['exitCode'], 'Canonical runner must complete the composed v1-v8 catalogue.');
     assertSameValue('', $runner['stderr'], 'Successful canonical runner must keep stderr empty.');
     assertSameValue(
-        ['ok' => true, 'schemaVersion' => 7, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7]],
+        ['ok' => true, 'schemaVersion' => 8, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8]],
         json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR),
-        'Clean canonical runner must apply literal checklist-template migration v7.',
+        'Clean canonical runner must apply v7 and its landed v8 successor.',
     );
 
     $connection = new mysqli($host, $user, $password, $database, $port);
