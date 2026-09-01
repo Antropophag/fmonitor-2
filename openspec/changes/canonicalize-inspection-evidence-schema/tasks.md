@@ -5,8 +5,8 @@
 
 ## 2. Gates 2–3 — RED и independent test review
 
-- [ ] 2.1 Свежий RED-agent добавляет dedicated MariaDB schema/runner test для clean, repeat, both upgrades, compatible partial, incompatible family, prefix isolation и no-runtime-DDL; verification: RED доказывает отсутствие canonical ownership, а не setup failure.
-- [ ] 2.2 Свежий independent reviewer проверяет expected fingerprints против approved schema evidence и записывает `APPROVED` в `reviews/tests/INSPECTION-EVIDENCE-SCHEMA-001.md`; verification: spec/test hashes и RED transcript зафиксированы.
+- [x] 2.1 Свежий RED-agent добавляет dedicated MariaDB schema/runner test для clean, repeat, both upgrades, compatible partial, incompatible family, prefix isolation и no-runtime-DDL; verification: RED доказывает отсутствие canonical ownership, а не setup failure.
+- [x] 2.2 Свежий independent reviewer проверяет expected fingerprints против approved schema evidence и записывает `APPROVED` в `reviews/tests/INSPECTION-EVIDENCE-SCHEMA-001.md`; verification: spec/test hashes и RED transcript зафиксированы.
 
 ## 3. Gate 4 — minimal ownership implementation
 
