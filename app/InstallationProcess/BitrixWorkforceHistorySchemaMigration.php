@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 namespace FMonitor2\InstallationProcess;
-
 final class BitrixWorkforceHistorySchemaMigration
 {
     private const LOGICAL_TABLES = [
@@ -23,6 +22,7 @@ final class BitrixWorkforceHistorySchemaMigration
             self::LOGICAL_TABLES,
             array_map(static fn (string $name): string => $tablePrefix . $name, self::LOGICAL_TABLES),
         );
+        $databaseCollation = self::rows($connection, 'SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME=DATABASE()')[0]['DEFAULT_COLLATION_NAME'];
         $states = [];
         $conflicts = [];
 
@@ -46,15 +46,15 @@ final class BitrixWorkforceHistorySchemaMigration
 
         $created = [];
         if ($states['fm2_workforce_sync_runs'] === 'absent') {
-            self::createRuns($connection, $tables['fm2_workforce_sync_runs'], $tablePrefix);
+            self::createRuns($connection, $tables['fm2_workforce_sync_runs'], $tablePrefix, $databaseCollation);
             $created[] = $tables['fm2_workforce_sync_runs'];
         }
         if ($states['fm2_workforce_observations'] === 'absent') {
-            self::createObservations($connection, $tables['fm2_workforce_observations'], $tables['fm2_workforce_sync_runs'], $tablePrefix);
+            self::createObservations($connection, $tables['fm2_workforce_observations'], $tables['fm2_workforce_sync_runs'], $tablePrefix, $databaseCollation);
             $created[] = $tables['fm2_workforce_observations'];
         }
         if ($states['fm2_workforce_sync_metadata'] === 'absent') {
-            self::createMetadata($connection, $tables['fm2_workforce_sync_metadata'], $tables['fm2_workforce_sync_runs'], $tablePrefix);
+            self::createMetadata($connection, $tables['fm2_workforce_sync_metadata'], $tables['fm2_workforce_sync_runs'], $tablePrefix, $databaseCollation);
             $created[] = $tables['fm2_workforce_sync_metadata'];
         }
 
@@ -85,7 +85,7 @@ final class BitrixWorkforceHistorySchemaMigration
         ];
     }
 
-    private static function classify(\mysqli $connection, string $logicalName, string $table, string $prefix): string
+    public static function classify(\mysqli $connection, string $logicalName, string $table, string $prefix): string
     {
         if (!MariaDbSchemaInspector::tableExists($connection, $table)) {
             return $logicalName === 'fm2_workforce_catalog' ? 'conflict' : 'absent';
@@ -278,26 +278,26 @@ final class BitrixWorkforceHistorySchemaMigration
         return compact('parsedColumns', 'indexes', 'checks', 'foreignKeys', 'namedChecks') + ['columns' => $parsedColumns];
     }
 
-    private static function createRuns(\mysqli $connection, string $table, string $prefix): void
+    private static function createRuns(\mysqli $connection, string $table, string $prefix, string $collation): void
     {
         $statusCheck = self::symbol($prefix, 'ck_fm2_workforce_sync_run_status', 'ck_', 'wf_run_status');
-        $connection->query("CREATE TABLE `{$table}` (run_id CHAR(36) NOT NULL,status VARCHAR(20) NOT NULL,started_at VARCHAR(40) NOT NULL,observed_at VARCHAR(40) NULL,completed_at VARCHAR(40) NULL,failure_code VARCHAR(80) NULL,page_count INT UNSIGNED NULL,delivered_count INT UNSIGNED NULL,material_change_count INT UNSIGNED NULL,missing_count INT UNSIGNED NULL,normalized_checksum CHAR(64) NULL,PRIMARY KEY (run_id),CONSTRAINT `{$statusCheck}` CHECK (status IN ('started','completed','failed'))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $connection->query("CREATE TABLE `{$table}` (run_id CHAR(36) NOT NULL,status VARCHAR(20) NOT NULL,started_at VARCHAR(40) NOT NULL,observed_at VARCHAR(40) NULL,completed_at VARCHAR(40) NULL,failure_code VARCHAR(80) NULL,page_count INT UNSIGNED NULL,delivered_count INT UNSIGNED NULL,material_change_count INT UNSIGNED NULL,missing_count INT UNSIGNED NULL,normalized_checksum CHAR(64) NULL,PRIMARY KEY (run_id),CONSTRAINT `{$statusCheck}` CHECK (status IN ('started','completed','failed'))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `{$collation}`");
     }
 
-    private static function createObservations(\mysqli $connection, string $table, string $runs, string $prefix): void
+    private static function createObservations(\mysqli $connection, string $table, string $runs, string $prefix, string $collation): void
     {
         $statusCheck = self::symbol($prefix, 'ck_fm2_workforce_observation_status', 'ck_', 'wf_obs_status');
         $reconciliationCheck = self::symbol($prefix, 'ck_fm2_workforce_observation_reconciliation', 'ck_', 'wf_obs_rec');
         $dismissalCheck = self::symbol($prefix, 'ck_fm2_workforce_observation_dismissal_quality', 'ck_', 'wf_obs_dq');
         $runForeignKey = self::symbol($prefix, 'fk_fm2_workforce_observation_run', 'fk_', 'wf_obs_run');
-        $connection->query("CREATE TABLE `{$table}` (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,sync_run_id CHAR(36) NOT NULL,delivery_person_id BIGINT UNSIGNED NOT NULL,employee_number BIGINT UNSIGNED NOT NULL,full_name VARCHAR(300) NOT NULL,position VARCHAR(300) NOT NULL,employment_status VARCHAR(40) NOT NULL,employed_from DATE NULL,dismissal_effective_at DATE NULL,authority_system VARCHAR(40) NOT NULL,delivery_system VARCHAR(40) NOT NULL,source_modified_at VARCHAR(40) NULL,reconciliation_state VARCHAR(40) NOT NULL,observed_at VARCHAR(40) NOT NULL,dismissal_time_quality VARCHAR(40) NOT NULL,PRIMARY KEY (id),UNIQUE KEY uq_fm2_workforce_observation_run_person (sync_run_id,delivery_system,delivery_person_id),KEY ix_fm2_workforce_observation_person_time (delivery_system,delivery_person_id,observed_at),KEY ix_fm2_workforce_observation_employee_time (employee_number,observed_at),CONSTRAINT `{$statusCheck}` CHECK (employment_status IN ('employed','dismissed')),CONSTRAINT `{$reconciliationCheck}` CHECK (reconciliation_state IN ('delivered','missing_from_delivery')),CONSTRAINT `{$dismissalCheck}` CHECK (dismissal_time_quality IN ('observed_only','effective_from_source')),CONSTRAINT `{$runForeignKey}` FOREIGN KEY (sync_run_id) REFERENCES `{$runs}` (run_id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $connection->query("CREATE TABLE `{$table}` (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,sync_run_id CHAR(36) NOT NULL,delivery_person_id BIGINT UNSIGNED NOT NULL,employee_number BIGINT UNSIGNED NOT NULL,full_name VARCHAR(300) NOT NULL,position VARCHAR(300) NOT NULL,employment_status VARCHAR(40) NOT NULL,employed_from DATE NULL,dismissal_effective_at DATE NULL,authority_system VARCHAR(40) NOT NULL,delivery_system VARCHAR(40) NOT NULL,source_modified_at VARCHAR(40) NULL,reconciliation_state VARCHAR(40) NOT NULL,observed_at VARCHAR(40) NOT NULL,dismissal_time_quality VARCHAR(40) NOT NULL,PRIMARY KEY (id),UNIQUE KEY uq_fm2_workforce_observation_run_person (sync_run_id,delivery_system,delivery_person_id),KEY ix_fm2_workforce_observation_person_time (delivery_system,delivery_person_id,observed_at),KEY ix_fm2_workforce_observation_employee_time (employee_number,observed_at),CONSTRAINT `{$statusCheck}` CHECK (employment_status IN ('employed','dismissed')),CONSTRAINT `{$reconciliationCheck}` CHECK (reconciliation_state IN ('delivered','missing_from_delivery')),CONSTRAINT `{$dismissalCheck}` CHECK (dismissal_time_quality IN ('observed_only','effective_from_source')),CONSTRAINT `{$runForeignKey}` FOREIGN KEY (sync_run_id) REFERENCES `{$runs}` (run_id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `{$collation}`");
     }
 
-    private static function createMetadata(\mysqli $connection, string $table, string $runs, string $prefix): void
+    private static function createMetadata(\mysqli $connection, string $table, string $runs, string $prefix, string $collation): void
     {
         $singletonCheck = self::symbol($prefix, 'ck_fm2_workforce_sync_metadata_singleton', 'ck_', 'wf_meta_one');
         $runForeignKey = self::symbol($prefix, 'fk_fm2_workforce_metadata_run', 'fk_', 'wf_meta_run');
-        $connection->query("CREATE TABLE `{$table}` (singleton_id TINYINT UNSIGNED NOT NULL,last_successful_run_id CHAR(36) NULL,last_successful_at VARCHAR(40) NULL,PRIMARY KEY (singleton_id),KEY `{$runForeignKey}` (last_successful_run_id),CONSTRAINT `{$singletonCheck}` CHECK (singleton_id = 1),CONSTRAINT `{$runForeignKey}` FOREIGN KEY (last_successful_run_id) REFERENCES `{$runs}` (run_id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $connection->query("CREATE TABLE `{$table}` (singleton_id TINYINT UNSIGNED NOT NULL,last_successful_run_id CHAR(36) NULL,last_successful_at VARCHAR(40) NULL,PRIMARY KEY (singleton_id),KEY `{$runForeignKey}` (last_successful_run_id),CONSTRAINT `{$singletonCheck}` CHECK (singleton_id = 1),CONSTRAINT `{$runForeignKey}` FOREIGN KEY (last_successful_run_id) REFERENCES `{$runs}` (run_id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `{$collation}`");
     }
 
     private static function upgradeCatalog(\mysqli $connection, string $table, string $prefix): void

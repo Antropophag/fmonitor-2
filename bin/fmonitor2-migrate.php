@@ -5,6 +5,7 @@ declare(strict_types=1);
 use FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
+use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
 use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
 
 spl_autoload_register(static function (string $class): void {
@@ -54,7 +55,7 @@ if ($environment['FMONITOR_DB_HOST'] === ''
     || preg_match('/^[0-9]+$/D', $port) !== 1
     || (int) $port < 1
     || (int) $port > 65535
-    || strlen($tablePrefix) > 32
+    || strlen($tablePrefix) > 25
     || preg_match('/^[A-Za-z0-9_]*$/D', $tablePrefix) !== 1
 ) {
     finishMigrationRunner(['ok' => false, 'reason' => 'CONFIGURATION_INVALID'], 64);
@@ -81,6 +82,7 @@ $migrations = [
     2 => WorkforceCatalogSchemaMigration::class,
     3 => ProcessUserCapabilitiesSchemaMigration::class,
     4 => ProcessCommandCapabilitiesSchemaMigration::class,
+    5 => BitrixWorkforceHistorySchemaMigration::class,
 ];
 $appliedVersions = [];
 
@@ -110,6 +112,6 @@ try {
 
 finishMigrationRunner([
     'ok' => true,
-    'schemaVersion' => 4,
+    'schemaVersion' => 5,
     'appliedVersions' => $appliedVersions,
 ], 0);

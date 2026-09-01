@@ -3,9 +3,8 @@
 declare(strict_types=1);
 
 use FMonitor2\InstallationProcess\PilotCaseImporter;
-use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
+use FMonitor2\InstallationProcess\WorkforceHistorySchemaReadiness;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
-use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
 
 require_once __DIR__ . '/Otiz.php';
 require_once __DIR__ . '/IdentityBootstrap.php';
@@ -50,16 +49,7 @@ try {
         $result = $migration::apply($db, $processPrefix);
         if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
     }
-    $catalogName = $db->real_escape_string($processPrefix . 'fm2_workforce_catalog');
-    $catalogExists = (int) $db->query("SELECT COUNT(*) AS count FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$catalogName}'")->fetch_assoc()['count'] === 1;
-    if (!$catalogExists) {
-        $result = WorkforceCatalogSchemaMigration::apply($db, $processPrefix);
-        if (isset($result['reason'])) throw new RuntimeException('Workforce schema migration failed');
-    }
-    foreach ([BitrixWorkforceHistorySchemaMigration::class] as $migration) {
-        $result = $migration::apply($db, $processPrefix);
-        if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
-    }
+    WorkforceHistorySchemaReadiness::assertReady($db, $processPrefix);
     $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_generation_sentinel`(singleton_id TINYINT UNSIGNED PRIMARY KEY,generation INT UNSIGNED NOT NULL,fingerprint CHAR(8) NOT NULL,manifest_nonce CHAR(64) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $sentinel=$db->prepare("INSERT INTO `{$processPrefix}fm2_pilot_generation_sentinel` VALUES(1,?,?,?) ON DUPLICATE KEY UPDATE generation=VALUES(generation),fingerprint=VALUES(fingerprint),manifest_nonce=VALUES(manifest_nonce)");$sentinel->bind_param('iss',$generation,$fingerprint,$manifestNonce);$sentinel->execute();
     $bootstrapEmails=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS')?:'');

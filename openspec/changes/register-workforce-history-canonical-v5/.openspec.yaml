@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-31
+goal: Fresh test deployment reaches all workforce schema required by importers
+  using one canonical migration command.

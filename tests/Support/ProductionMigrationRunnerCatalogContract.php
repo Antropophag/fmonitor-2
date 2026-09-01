@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v4 specifications.
+ * Literal catalog contract transcribed from the approved v1-v5 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -34,7 +34,16 @@ final class ProductionMigrationRunnerCatalogContract
                 'user_id:bigint unsigned:NO:;capability:varchar(80):NO:;position_snapshot:varchar(300):YES:'
             ),
             'fm2_workforce_catalog' => self::parseColumns(
-                'installer_tab_id:bigint unsigned:NO:;fio:varchar(300):NO:;position:varchar(300):NO:;employment_status:varchar(40):NO:;employed_from:date:YES:;employed_to:date:YES:;workforce_source:varchar(80):NO:;workforce_source_updated_at:varchar(40):NO:'
+                'installer_tab_id:bigint unsigned:NO:;fio:varchar(300):NO:;position:varchar(300):NO:;employment_status:varchar(40):NO:;employed_from:date:YES:;employed_to:date:YES:;workforce_source:varchar(80):NO:;workforce_source_updated_at:varchar(40):NO:;delivery_system:varchar(40):YES:;delivery_person_id:bigint unsigned:YES:;dismissal_effective_at:date:YES:;first_observed_dismissed_at:varchar(40):YES:;dismissal_time_quality:varchar(40):YES:;reconciliation_state:varchar(40):YES:;authority_system:varchar(40):YES:;last_successful_sync_run_id:char(36):YES:;last_successful_sync_at:varchar(40):YES:'
+            ),
+            'fm2_workforce_observations' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;sync_run_id:char(36):NO:;delivery_person_id:bigint unsigned:NO:;employee_number:bigint unsigned:NO:;full_name:varchar(300):NO:;position:varchar(300):NO:;employment_status:varchar(40):NO:;employed_from:date:YES:;dismissal_effective_at:date:YES:;authority_system:varchar(40):NO:;delivery_system:varchar(40):NO:;source_modified_at:varchar(40):YES:;reconciliation_state:varchar(40):NO:;observed_at:varchar(40):NO:;dismissal_time_quality:varchar(40):NO:'
+            ),
+            'fm2_workforce_sync_metadata' => self::parseColumns(
+                'singleton_id:tinyint unsigned:NO:;last_successful_run_id:char(36):YES:;last_successful_at:varchar(40):YES:'
+            ),
+            'fm2_workforce_sync_runs' => self::parseColumns(
+                'run_id:char(36):NO:;status:varchar(20):NO:;started_at:varchar(40):NO:;observed_at:varchar(40):YES:;completed_at:varchar(40):YES:;failure_code:varchar(80):YES:;page_count:int unsigned:YES:;delivered_count:int unsigned:YES:;material_change_count:int unsigned:YES:;missing_count:int unsigned:YES:;normalized_checksum:char(64):YES:'
             ),
         ];
     }
@@ -59,7 +68,15 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_process_user_capabilities|PRIMARY|user_id,capability',
             'fm2_process_user_capabilities|INDEX|capability,user_id',
             'fm2_workforce_catalog|PRIMARY|installer_tab_id',
-            'fm2_workforce_catalog|INDEX|employment_status,employed_to',
+            'fm2_workforce_catalog|UNIQUE|delivery_system,delivery_person_id',
+            'fm2_workforce_catalog|INDEX|employment_status,reconciliation_state,last_successful_sync_at',
+            'fm2_workforce_observations|PRIMARY|id',
+            'fm2_workforce_observations|UNIQUE|sync_run_id,delivery_system,delivery_person_id',
+            'fm2_workforce_observations|INDEX|delivery_system,delivery_person_id,observed_at',
+            'fm2_workforce_observations|INDEX|employee_number,observed_at',
+            'fm2_workforce_sync_metadata|PRIMARY|singleton_id',
+            'fm2_workforce_sync_metadata|INDEX|last_successful_run_id',
+            'fm2_workforce_sync_runs|PRIMARY|run_id',
         ];
     }
 
@@ -73,6 +90,8 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_order_installers|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_process_events|installation_case_id|fm2_installation_cases|id|RESTRICT',
             'fm2_process_tasks|installation_case_id|fm2_installation_cases|id|RESTRICT',
+            'fm2_workforce_observations|sync_run_id|fm2_workforce_sync_runs|run_id|RESTRICT',
+            'fm2_workforce_sync_metadata|last_successful_run_id|fm2_workforce_sync_runs|run_id|RESTRICT',
         ];
     }
 
@@ -83,7 +102,14 @@ final class ProductionMigrationRunnerCatalogContract
             ['table' => 'fm2_process_events', 'constraint' => null, 'clause' => 'json_valid(payload_json)'],
             ['table' => 'fm2_process_user_capabilities', 'constraint' => null, 'clause' => "OR(capability<>'construction_control_engineer',AND(position_snapshotisnotnull,trim(position_snapshot)<>''))"],
             ['table' => 'fm2_process_user_capabilities', 'constraint' => 'ck_fm2_process_user_capability', 'clause' => "capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')"],
+            ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "dismissal_time_qualityisnullordismissal_time_qualityin('observed_only','effective_from_source')"],
             ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "employment_statusin('employed','dismissed')"],
+            ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "reconciliation_stateisnullorreconciliation_statein('delivered','missing_from_delivery')"],
+            ['table' => 'fm2_workforce_observations', 'constraint' => null, 'clause' => "dismissal_time_qualityin('observed_only','effective_from_source')"],
+            ['table' => 'fm2_workforce_observations', 'constraint' => null, 'clause' => "employment_statusin('employed','dismissed')"],
+            ['table' => 'fm2_workforce_observations', 'constraint' => null, 'clause' => "reconciliation_statein('delivered','missing_from_delivery')"],
+            ['table' => 'fm2_workforce_sync_metadata', 'constraint' => null, 'clause' => 'singleton_id=1'],
+            ['table' => 'fm2_workforce_sync_runs', 'constraint' => null, 'clause' => "statusin('started','completed','failed')"],
         ];
     }
 

@@ -12,7 +12,9 @@ final class WorkforceCatalogSchemaMigration
 
         $table = $tablePrefix . 'fm2_workforce_catalog';
         if (MariaDbSchemaInspector::tableExists($connection, $table)) {
-            if (!self::isCompatible($connection, $table)) {
+            if (!self::isCompatible($connection, $table)
+                && !WorkforceHistorySchemaReadiness::isCatalogCompatible($connection, $tablePrefix)
+            ) {
                 return [
                     'applied' => false,
                     'schemaVersion' => 2,
@@ -22,6 +24,13 @@ final class WorkforceCatalogSchemaMigration
             }
 
             return ['applied' => false, 'schemaVersion' => 2, 'tablesCreated' => []];
+        }
+
+        $databaseCollation = (string) $connection->query(
+            'SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME=DATABASE()',
+        )->fetch_assoc()['DEFAULT_COLLATION_NAME'];
+        if (preg_match('/^utf8mb4_[A-Za-z0-9_]+$/D', $databaseCollation) !== 1) {
+            throw new \RuntimeException('Database collation is incompatible.');
         }
 
         $connection->query("CREATE TABLE `{$table}` (
@@ -36,7 +45,7 @@ final class WorkforceCatalogSchemaMigration
             PRIMARY KEY (installer_tab_id),
             KEY (employment_status, employed_to),
             CHECK (employment_status IN ('employed', 'dismissed'))
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `{$databaseCollation}`");
 
         return ['applied' => true, 'schemaVersion' => 2, 'tablesCreated' => [$table]];
     }

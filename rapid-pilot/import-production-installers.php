@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use FMonitor2\InstallationProcess\BitrixWorkforceHistorySchemaMigration;
+use FMonitor2\InstallationProcess\WorkforceHistorySchemaReadiness;
 
 spl_autoload_register(static function(string $class):void{$prefix='FMonitor2\\InstallationProcess\\';if(!str_starts_with($class,$prefix))return;$path=dirname(__DIR__).'/app/InstallationProcess/'.str_replace('\\','/',substr($class,strlen($prefix))).'.php';if(is_file($path))require_once $path;});
 
@@ -12,8 +12,7 @@ mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
 $manifest=json_decode((string)file_get_contents(installerEnv('FMONITOR_PILOT_ACTIVE_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);$prefix=(string)($manifest['processPrefix']??'');
 $source=new mysqli(getenv('FMONITOR_SOURCE_HOST')?:'127.0.0.1',installerEnv('FMONITOR_SOURCE_USER'),installerEnv('FMONITOR_SOURCE_PASSWORD'),getenv('FMONITOR_SOURCE_NAME')?:'c1_fmonitor',(int)(getenv('FMONITOR_SOURCE_PORT')?:'13306'));$source->set_charset('utf8mb4');
 $target=new mysqli('127.0.0.1','fmonitor2_demo','fmonitor2_demo_local','fmonitor2_demo',23306);$target->set_charset('utf8mb4');
-$collation=(string)$target->query('SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME=DATABASE()')->fetch_assoc()['DEFAULT_COLLATION_NAME'];$catalog=$prefix.'fm2_workforce_catalog';$catalogCollation=$target->query("SELECT TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='".$target->real_escape_string($catalog)."'")->fetch_assoc()['TABLE_COLLATION']??null;if($catalogCollation!==$collation)$target->query("ALTER TABLE `{$catalog}` CONVERT TO CHARACTER SET utf8mb4 COLLATE `{$collation}`");
-$migration=BitrixWorkforceHistorySchemaMigration::apply($target,$prefix);if(isset($migration['reason']))throw new RuntimeException('Local workforce history schema is unavailable');
+WorkforceHistorySchemaReadiness::assertReady($target,$prefix);
 $source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');$source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
 try{$rows=$source->query("SELECT tab_id,tab_id_char,lastname,name,s_name,status,ctime FROM fm_installators WHERE tab_id<>999999 ORDER BY lastname,name,s_name,tab_id")->fetch_all(MYSQLI_ASSOC);$source->commit();}catch(Throwable$error){$source->rollback();throw$error;}finally{$source->close();}if($rows===[])throw new RuntimeException('Production workforce snapshot is empty');
 $normalized=[];$seen=[];$latest='';foreach($rows as$row){$tab=(int)$row['tab_id'];$fio=trim(preg_replace('/\s+/u',' ',implode(' ',[$row['lastname'],$row['name'],$row['s_name']])));$updated=(new DateTimeImmutable((string)$row['ctime'],new DateTimeZone('Europe/Moscow')))->format('Y-m-d\TH:i:sP');if($tab<1||isset($seen[$tab])||$fio==='')throw new RuntimeException('Invalid or duplicate production workforce identity');$seen[$tab]=true;$latest=max($latest,$updated);$normalized[]=['tab'=>$tab,'fio'=>$fio,'status'=>(int)$row['status']===1?'employed':'dismissed','updated'=>$updated];}
