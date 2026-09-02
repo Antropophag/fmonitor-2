@@ -7,7 +7,7 @@
 ## 2. Gates 2–3 — RED и независимый test review
 
 - [ ] 2.1 Написать минимальные тесты публичной repository-owned governance команды для valid lineage, exact test/implementation sets, missing evidence, hash drift, reviewer non-independence, Git gate chronology, reviewed-commit mismatch, path escape, immutable supersession, duplicate IDs и stale graph provenance; проверить, что setup исправен.
-- [ ] 2.2 Продемонстрировать intended RED до implementation, сохранить точную команду, exit code и релевантный вывод в `docs/operations/quality-graph-governance-red-evidence.md`.
+- [x] 2.2 Продемонстрировать intended RED до implementation, сохранить точную команду, exit code и релевантный вывод в `docs/operations/quality-graph-governance-red-evidence.md`.
 - [ ] 2.3 Поручить отдельному агенту независимый Gate 3 review спецификации, тестов и RED; сохранить `reviews/tests/QUALITY-GRAPH-GOVERNANCE-001.md` с reviewer identity и verdict `APPROVED` до GREEN.
 
 ## 3. Gate 4 — минимальный lineage governance
