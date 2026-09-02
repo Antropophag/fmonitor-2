@@ -65,6 +65,7 @@ function pwnItems(DOMXPath $xpath): array
             $node instanceof DOMElement ? $node->getAttribute('href') : '',
             $node instanceof DOMElement ? $node->getAttribute('aria-current') : '',
             $node instanceof DOMElement ? $node->getAttribute('aria-disabled') : '',
+            hash('sha256', $node->ownerDocument->saveHTML($node)),
         ];
     }
     return $items;
@@ -103,28 +104,28 @@ foreach ($representations as [$route, $actor, $current]) {
 
 $minimalObjects = pwnDom(PilotView::document($minimal, 'Sentinel', 'Объекты монтажа', '', '<h1>sentinel</h1>'), 'minimal siblings');
 assertSameValue([
-    ['Работа', '', '', ''],
-    ['Объекты монтажа', '/pilot/objects', 'page', ''],
-    ['Распоряжения', '', '', 'true'],
-    ['Управление', '', '', ''],
-    ['Расчёты ОТиЗ', '', '', 'true'],
-    ['Контроль', '', '', 'true'],
+    ['Работа', '', '', '', 'e8f55f37cc37cc7faac43c7b19ca30b6e2270301dd0a06ea9ac809e730439787'],
+    ['Объекты монтажа', '/pilot/objects', 'page', '', '89e38a8db8c6747a57e4021b24e78c41b60fcb0fa8db0eb78931ef8d78076208'],
+    ['Распоряжения', '', '', 'true', 'f144121bf33ec44811826a24f960d1ba1a3e24b14d824a0b7d3f5b21432ca9dd'],
+    ['Управление', '', '', '', 'c5ee6105bcc0b88abfafe671770436335d6b504774cfc5cc417ffaa56186c9a8'],
+    ['Расчёты ОТиЗ', '', '', 'true', '629720a8c164bb29a1869821e51d7236a8479e8981713cc1b22389b2582db9de'],
+    ['Контроль', '', '', 'true', '5126c31fba27062f6a75cd6785133de83df6c02d1d72cd0df78df20641bd179d'],
 ], pwnItems($minimalObjects), 'minimal actor exact remaining sibling sequence and states');
 
 $broadUsers = pwnDom(PilotView::document($broad, 'Sentinel', 'Пользователи', '', '<h1>sentinel</h1>'), 'broad siblings');
 assertSameValue([
-    ['Работа', '', '', ''],
-    ['Стройконтроль', '/pilot/construction-control', '', ''],
-    ['Объекты монтажа', '/pilot/objects', '', ''],
-    ['Распоряжения', '', '', 'true'],
-    ['Справочники', '', '', ''],
-    ['Монтажники', '/pilot/installers', '', ''],
-    ['Управление', '', '', ''],
-    ['Расчёты ОТиЗ', '', '', 'true'],
-    ['Контроль', '', '', 'true'],
-    ['Администрирование', '', '', ''],
-    ['Пользователи', '/pilot/admin/users', 'page', ''],
-    ['Роли', '/pilot/admin/roles', '', ''],
+    ['Работа', '', '', '', 'e8f55f37cc37cc7faac43c7b19ca30b6e2270301dd0a06ea9ac809e730439787'],
+    ['Стройконтроль', '/pilot/construction-control', '', '', 'eb79d631ff128ff7b1a17f49fc160ecc99b4fb524e9b1961ad938fc1e768ec9a'],
+    ['Объекты монтажа', '/pilot/objects', '', '', '4f2fcf9f64280c9bb5d76d594acb6130c54d50505fefb73c122ac32e5caec962'],
+    ['Распоряжения', '', '', 'true', 'f144121bf33ec44811826a24f960d1ba1a3e24b14d824a0b7d3f5b21432ca9dd'],
+    ['Справочники', '', '', '', '4ce8192b5d0184a93152489995824a9a46e0b116183f57e8328fff61d0996bfa'],
+    ['Монтажники', '/pilot/installers', '', '', '9a162177348ef532945d88a7a1af1237a47978f6bfd32d0b15b1af50183e9ca4'],
+    ['Управление', '', '', '', 'c5ee6105bcc0b88abfafe671770436335d6b504774cfc5cc417ffaa56186c9a8'],
+    ['Расчёты ОТиЗ', '', '', 'true', '629720a8c164bb29a1869821e51d7236a8479e8981713cc1b22389b2582db9de'],
+    ['Контроль', '', '', 'true', '5126c31fba27062f6a75cd6785133de83df6c02d1d72cd0df78df20641bd179d'],
+    ['Администрирование', '', '', '', '89d36a6a96926e8c9b080f737a5e4b54b5ea598670f46bb1ea4b53c74685258d'],
+    ['Пользователи', '/pilot/admin/users', 'page', '', 'fdd196bbaf8c1745f9111beeb4eceb36204b31a3e2b3a5f0a3915fbfb64142c5'],
+    ['Роли', '/pilot/admin/roles', '', '', '59413584d40f53f78f27c7f813bd7532df457cab4755a061d04632117e3356ce'],
 ], pwnItems($broadUsers), 'broad actor exact remaining sibling sequence and states');
 
 echo "PASS: PILOT-WORK-NAVIGATION-ITEM-REMOVAL-001 configured shared navigation\n";
