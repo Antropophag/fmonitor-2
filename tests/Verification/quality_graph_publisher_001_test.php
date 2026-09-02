@@ -17,6 +17,20 @@ function qgpRemoveFixture(string $path): void
     rmdir($path);
 }
 
+function qgpRun(array $command, string $cwd): array
+{
+    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $cwd);
+    if (!is_resource($process)) {
+        throw new TestFailure('SETUP_FAILURE: fixture command did not start');
+    }
+    fclose($pipes[0]);
+    $stdout = stream_get_contents($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    return ['status' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
+}
+
 $root = dirname(__DIR__, 2);
 $publisherPath = $root . '/.github/workflows/quality-graph-publish.yml';
 $baselinePath = $root . '/.quality-graph/generated-publisher-v0.1.7.yml';
@@ -106,7 +120,7 @@ try {
         }
     }
     file_put_contents($fixture . '/.github/workflows/quality-graph-publish.yml', "# arbitrary drift\n", FILE_APPEND);
-    $result = qggRun(['php', $root . '/tools/delivery/check-quality-graph.php', '--repo', $fixture], $fixture);
+    $result = qgpRun(['php', $root . '/tools/delivery/check-quality-graph.php', '--repo', $fixture], $fixture);
     $combined = $result['stdout'] . "\n" . $result['stderr'];
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     assertSameValue(true, $result['status'] !== 0, "Mutated publisher must fail repository validator; evidence=$evidence");
