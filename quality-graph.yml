@@ -5,7 +5,7 @@ provider:
     default-branch: main
     runtime:
       action: alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef
-      upload-artifact-action: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      upload-artifact-action: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
 
 profiles:
   default:
@@ -13,7 +13,7 @@ profiles:
     permissions:
       contents: read
     setup:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: "false"
           fetch-depth: "0"
