@@ -20,7 +20,7 @@
 ## 4. Gate 4 — минимальный Quality Graph и CI
 
 - [x] 4.1 Добавить canonical graph declaration и детерминированные generated runner/manifest с минимальными nodes для drift validation, lineage governance и существующего full verification seam; проверить их parity командой upstream CLI и отдельно зафиксировать allowlisted publisher override.
-- [ ] 4.2 Добавить untrusted PR runner с read-only permissions, exact pins и content-addressed Result v0 artifacts; проверить node/PR/head/run/attempt/graphDigest provenance на fixture event.
+- [x] 4.2 Добавить untrusted PR runner с read-only permissions, exact pins и content-addressed Result v0 artifacts; проверить node/PR/head/run/attempt/graphDigest provenance на representative PR run.
 - [ ] 4.3 Добавить repository-owned trusted publisher только для upstream `watch`/`publish`, с `actions: read`, `contents: read`, `checks: write`, base-branch topology, без checkout, `issue_comment`, command job и approval/write surfaces; проверить rejection missing/stale/mismatched results и fail-closed allowlisted comparison с generated v0.1.7 publisher.
 - [ ] 4.4 Расширить architecture policy проверками запрета floating refs, mixed toolchain versions, обхода repository commands и небезопасных publisher permissions; выполнить `make architecture-check`.
 - [ ] 4.5 Выполнить focused suites и `make verify`, сохранить GREEN commands/results и exact head commit в operations evidence.
