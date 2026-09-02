@@ -29,8 +29,9 @@ password/RBAC, production volume data migration.
    Tombstone unlink is same-lock bounded GC, not rollback/security success.
 5. Both LocalAuth and UserAccessView depend on adapter; architecture rejects
    `session_save_path/session_start` elsewhere and hardcoded session paths.
-6. Router retains static-asset/outer Host/URI priority. Unknown non-assets retain
-   predecessor auth behavior.
+6. Router retains static-asset/outer Host/URI priority. Unknown `/pilot/*`
+   routes resolve to inherited 404 before session/config/auth; only known
+   login-required routes may redirect to `/pilot/login`.
 7. Production never cleans roots. Tests use task-owned roots/processes and
    attempt-all finally cleanup; Compose restart verifier uses persistent volume
    and fixed clock below GC lifetime.
