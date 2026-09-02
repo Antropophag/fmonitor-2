@@ -5,7 +5,7 @@
 
 ## 2. Gates 2–3 — RED и independent test review
 
-- [ ] 2.1 Написать public HTTP RED для exact `GET /pilot/objects` positive grant и legacy-only/inactive/missing/near-match/revoke/unknown-suffix cases; verification: intended failures не setup и list-handler reads/mutations observable.
+- [x] 2.1 Написать public HTTP RED для exact `GET /pilot/objects` positive grant и legacy-only/inactive/missing/near-match/revoke/unknown-suffix cases; verification: intended failures не setup и list-handler reads/mutations observable.
 - [ ] 2.2 Поручить tests fresh independent reviewer; verification: review APPROVED и фиксирует hashes, env isolation, list-representation independence и negative sensitivity.
 
 ## 3. Gate 4 — fixture alignment
