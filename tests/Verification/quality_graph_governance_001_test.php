@@ -255,6 +255,8 @@ try {
     assertSameValue(0, $result['status'], "RED_ASSERTION: one immutable supersession chain must be accepted; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=' . preg_quote($supersessionHead, '/') . '$/m', $combined), "Only the current receipt leaf must be counted; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Valid supersession must emit no failure; evidence=$evidence");
+    $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
+    assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $supersessionHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Supersession success must be terminal stdout; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
 }
