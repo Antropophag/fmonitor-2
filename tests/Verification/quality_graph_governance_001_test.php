@@ -240,6 +240,21 @@ try {
     assertSameValue(true, $result['status'] !== 0, "Duplicate slice identity must fail; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=duplicate_slice receipt=delivery\/evidence\/ZZZ-DUPLICATE-001\/duplicate-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: later duplicate slice claimant must be classified in bytewise discovery order; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Duplicate slice failure must not print success; evidence=$evidence");
+
+    unlink($lineage . '/delivery/evidence/ZZZ-DUPLICATE-001/duplicate-v1.json');
+    rmdir($lineage . '/delivery/evidence/ZZZ-DUPLICATE-001');
+    $receipt['receiptId'] = 'lineage-v2';
+    $receipt['supersedes'] = 'lineage-v1';
+    $write('delivery/evidence/LINEAGE-001/lineage-v2.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'superseding receipt']);
+    $supersessionHead = $git(['rev-parse', 'HEAD']);
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(0, $result['status'], "RED_ASSERTION: one immutable supersession chain must be accepted; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=' . preg_quote($supersessionHead, '/') . '$/m', $combined), "Only the current receipt leaf must be counted; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Valid supersession must emit no failure; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
 }
