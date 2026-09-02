@@ -1,0 +1,41 @@
+version: 0
+provider:
+  name: github
+  configuration:
+    default-branch: main
+    runtime:
+      action: alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef
+      upload-artifact-action: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+
+profiles:
+  default:
+    runner: ubuntu-latest
+    permissions:
+      contents: read
+    setup:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: "false"
+          fetch-depth: "0"
+
+nodes:
+  delivery-evidence:
+    title: SSD/TDD delivery evidence
+    run: make delivery-evidence-check
+    policy:
+      blocking: true
+      approvals:
+        findings: false
+        files: false
+        node: false
+
+  verify:
+    title: Repository verification
+    needs: [delivery-evidence]
+    run: make fresh-test-verify
+    policy:
+      blocking: true
+      approvals:
+        findings: false
+        files: false
+        node: false

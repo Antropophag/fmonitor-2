@@ -1,0 +1,12 @@
+[project]
+name = "fmonitor-delivery-governance"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "quality-graph-cli==0.1.7",
+  "quality-graph-github==0.1.7",
+]
+
