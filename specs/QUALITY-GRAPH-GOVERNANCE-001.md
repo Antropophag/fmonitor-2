@@ -4,7 +4,7 @@
 {"schemaVersion":1,"kind":"spec","sliceId":"QUALITY-GRAPH-GOVERNANCE-001","author":"agent:/root"}
 ```
 
-Status: OWNER_APPROVED on 2026-09-03 for repository-owned publisher amendment; independent Gate 1 amendment review pending.
+Status: APPROVED; base contract review `quality-graph-governance-gate1-rereview-v6.md`, publisher amendment review `quality-graph-governance-gate1-publisher-amendment-review.md`.
 
 ## Простыми словами
 
