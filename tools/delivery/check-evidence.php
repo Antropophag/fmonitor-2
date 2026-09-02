@@ -120,6 +120,7 @@ if ($receipts === false || $receipts === []) {
     deliveryFailure('missing_receipt', 'delivery/evidence', 'no receipt JSON files discovered');
 }
 sort($receipts, SORT_STRING);
+$seenSlices = [];
 foreach ($receipts as $receiptPath) {
     $receipt = substr($receiptPath, strlen($repository) + 1);
     $contents = file_get_contents($receiptPath);
@@ -138,6 +139,13 @@ foreach ($receipts as $receiptPath) {
     if ($data['schemaVersion'] !== 1 || !is_array($data['authors']) || !is_array($data['artifacts'])) {
         deliveryFailure('invalid_schema', $receipt, 'receipt schema version or object fields are invalid');
     }
+    if (!is_string($data['sliceId']) || $data['sliceId'] === '') {
+        deliveryFailure('invalid_schema', $receipt, 'sliceId must be a nonempty string');
+    }
+    if (isset($seenSlices[$data['sliceId']])) {
+        deliveryFailure('duplicate_slice', $receipt, 'sliceId already claimed by ' . $seenSlices[$data['sliceId']]);
+    }
+    $seenSlices[$data['sliceId']] = $receipt;
     deliveryExactKeys($data['authors'], ['spec', 'test', 'implementation'], $receipt, 'authors');
     deliveryExactKeys($data['artifacts'], ['spec', 'tests', 'red', 'testReview', 'green', 'codeReview'], $receipt, 'artifacts');
     if (!is_array($data['artifacts']['spec'])) {
