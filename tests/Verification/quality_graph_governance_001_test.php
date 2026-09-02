@@ -232,6 +232,34 @@ try {
     $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
     assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $lineageHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Success must be the terminal nonempty stdout line; evidence=$evidence");
 
+    $metadataFixture = sys_get_temp_dir() . '/fmonitor-qgg-metadata-' . bin2hex(random_bytes(8));
+    try {
+        $setup = qggRun(['git', 'clone', '--quiet', $lineage, $metadataFixture], $root);
+        assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata mutation clone failed');
+        qggRun(['git', 'config', 'user.email', 'metadata@example.invalid'], $metadataFixture);
+        qggRun(['git', 'config', 'user.name', 'Metadata Fixture'], $metadataFixture);
+        $redContents = (string) file_get_contents($metadataFixture . '/' . $redPath);
+        preg_match('/\A```delivery-metadata\R([^\r\n]+)/', $redContents, $redMatch);
+        $redMetadata = json_decode($redMatch[1], true, 32, JSON_THROW_ON_ERROR);
+        $redMetadata['unexpected'] = true;
+        $redContents = str_replace($redMatch[1], json_encode($redMetadata, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $redContents);
+        file_put_contents($metadataFixture . '/' . $redPath, $redContents);
+        $receiptPath = $metadataFixture . '/delivery/evidence/LINEAGE-001/lineage-v1.json';
+        $mutatedReceipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR);
+        $mutatedReceipt['artifacts']['red']['sha256'] = hash('sha256', $redContents);
+        file_put_contents($receiptPath, json_encode($mutatedReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
+        qggRun(['git', 'add', '.'], $metadataFixture);
+        qggRun(['git', 'commit', '--quiet', '-m', 'unknown metadata field'], $metadataFixture);
+        $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $metadataFixture], $metadataFixture);
+        $combined = $result['stdout'] . "\n" . $result['stderr'];
+        $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        assertSameValue(true, $result['status'] !== 0, "Unknown canonical metadata field must fail; evidence=$evidence");
+        assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=invalid_schema receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: unknown RED metadata field must fail before lineage traversal; evidence=$evidence");
+        assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Unknown metadata field must not print success; evidence=$evidence");
+    } finally {
+        qggRemoveFixture($metadataFixture);
+    }
+
     $receipt['receiptId'] = 'duplicate-v1';
     $write('delivery/evidence/ZZZ-DUPLICATE-001/duplicate-v1.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
     $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
