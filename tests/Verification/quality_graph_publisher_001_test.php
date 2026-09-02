@@ -5,6 +5,18 @@ require dirname(__DIR__) . '/bootstrap.php';
 
 /** QUALITY-GRAPH-GOVERNANCE-001 v0.6, custom publisher RED. */
 
+function qgpRemoveFixture(string $path): void
+{
+    if (!is_dir($path)) {
+        return;
+    }
+    $items = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($items as $item) {
+        $item->isDir() && !$item->isLink() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+    }
+    rmdir($path);
+}
+
 $root = dirname(__DIR__, 2);
 $publisherPath = $root . '/.github/workflows/quality-graph-publish.yml';
 $baselinePath = $root . '/.quality-graph/generated-publisher-v0.1.7.yml';
@@ -67,8 +79,41 @@ fclose($pipes[1]);
 fclose($pipes[2]);
 $status = proc_close($process);
 $evidence = json_encode(compact('status', 'stdout', 'stderr'), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+$manifest = json_decode((string) file_get_contents($root . '/.quality-graph/manifest.json'), true, 32, JSON_THROW_ON_ERROR);
+$expectedDigest = $manifest['graphDigest'] ?? null;
+assertSameValue(1, preg_match('/^[0-9a-f]{64}$/D', (string) $expectedDigest), 'SETUP_FAILURE: generated manifest must expose graphDigest');
 assertSameValue(0, $status, "RED_ASSERTION: repository validation must accept only the reviewed publisher override; evidence=$evidence");
-assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK digest=[0-9a-f]{64}$/m', $stdout), "Validation must emit one stable success; evidence=$evidence");
+assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK digest=' . preg_quote((string) $expectedDigest, '/') . '$/m', $stdout), "Validation must emit the independently expected graph digest; evidence=$evidence");
 assertSameValue($before, hash_file('sha256', $publisherPath), 'Validation must not rewrite the deployable publisher');
+
+$fixture = sys_get_temp_dir() . '/fmonitor-qgp-' . bin2hex(random_bytes(8));
+$fixtureFiles = [
+    'quality-graph.yml',
+    '.quality-graph/manifest.json',
+    '.quality-graph/generated-publisher-v0.1.7.yml',
+    '.github/workflows/quality-graph.yml',
+    '.github/workflows/quality-graph-push.yml',
+    '.github/workflows/quality-graph-publish.yml',
+];
+try {
+    foreach ($fixtureFiles as $relative) {
+        $target = $fixture . '/' . $relative;
+        if (!is_dir(dirname($target)) && !mkdir(dirname($target), 0700, true) && !is_dir(dirname($target))) {
+            throw new TestFailure("SETUP_FAILURE: cannot create fixture directory for $relative");
+        }
+        if (!copy($root . '/' . $relative, $target)) {
+            throw new TestFailure("SETUP_FAILURE: cannot copy fixture $relative");
+        }
+    }
+    file_put_contents($fixture . '/.github/workflows/quality-graph-publish.yml', "# arbitrary drift\n", FILE_APPEND);
+    $result = qggRun(['php', $root . '/tools/delivery/check-quality-graph.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "Mutated publisher must fail repository validator; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_FAILURE category=publisher_override_drift detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: validator must classify arbitrary publisher drift; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK /m', $combined), "Drift failure must not print success; evidence=$evidence");
+} finally {
+    qgpRemoveFixture($fixture);
+}
 
 echo "QUALITY-GRAPH-PUBLISHER-001 TESTS PASSED\n";
