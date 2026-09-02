@@ -1,8 +1,8 @@
 # PILOT-WORK-NAVIGATION-ITEM-REMOVAL-001 — remove «Моя работа» from shared navigation
 
-Статус: **DRAFT / Gate 1**  
-Версия: **v1**  
-Дата: **2026-09-02**
+Статус: **OWNER_APPROVED / Gate 1 re-review pending**
+Версия: **v2 — deep renderer seam + HTTP sentinels**
+Дата: **2026-09-03**
 
 ## Простыми словами
 
@@ -74,13 +74,18 @@ fail Gate 2.
 
 ## 3. Governed route coverage, GET и HEAD
 
-Gate 2 SHALL exercise exact `/pilot/` plus at least one successful configured
-representation from every family enumerated in section 1 through the canonical
-HTTP entrypoint, not a separately reconstructed renderer graph. Every GET DOM
-SHALL satisfy section 2 for an applicable minimal-permission actor and for a
-broad-permission actor wherever both can be admitted.
+Gate 2 SHALL exercise all ten enumerated current-screen states through the one
+production shared renderer seam, with exact section 2 absence and section 4
+sibling/accessibility/icon preservation for applicable minimal and broad
+actors. Canonical real HTTP entrypoint sentinels SHALL cover `/pilot/` and
+`/pilot/objects`; existing route-specific HTTP tests SHALL continue proving
+that card, prepare, checklist, construction-control, installer and
+administration callers reach their production views and preserve their own
+admission/content contracts. Gate 2 SHALL NOT reconstruct route output or add
+eight duplicate DB/server fixtures whose sole new observation is the already
+exhaustive shared navigation composition.
 
-Successful `HEAD` SHALL preserve the corresponding inherited status and
+Sentinel and existing route-specific successful `HEAD` SHALL preserve the corresponding inherited status and
 application-controlled headers, including the GET representation's exact
 `Content-Length` semantics where already specified, and SHALL return empty
 body. HEAD does not manufacture a DOM body for inspection; its paired GET proves
@@ -144,13 +149,14 @@ backfill, cleanup or rollback-data operation.
 
 ## 7. Gates and Done
 
-The owner decision authorizes this Gate 1 draft only; it does not approve this
-exact hash. `restore-pilot-work-navigation` and its reviews are superseded
+The owner approved the v2 deep-seam strategy; fresh independent review of this
+exact hash remains required. `restore-pilot-work-navigation` and its reviews are superseded
 historical evidence and confer no approval on this opposite behavior.
 
 Done requires, in order: fresh independent Gate 1 review and explicit owner
-approval of exact reviewed hashes; focused canonical-HTTP/DOM RED sensitive to
-visible, accessible, hidden, renamed and icon-only variants; fresh independent
+approval of exact reviewed hashes; exhaustive shared-renderer RED plus root/
+object-list HTTP sentinels sensitive to visible, accessible, hidden, renamed
+and icon-only variants, with existing route-specific wiring evidence; fresh independent
 test approval; minimal shared-composition GREEN; downstream object-list RBAC
 predecessor update without weakened authorization assertions; focused GET/HEAD,
 route/error/sibling/zero-write regressions; `git diff --check`, architecture
