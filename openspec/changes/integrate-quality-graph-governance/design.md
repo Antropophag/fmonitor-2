@@ -54,11 +54,16 @@ Bootstrap phase A доказывает local/CI runner и governance parity на
 
 ### 6. Trusted boundary минимальна
 
-PR workflow выполняет недоверенный код только с read permissions и публикует content-addressed result artifacts. Отдельный trusted publisher получает минимальные permissions, не checkout'ит и не исполняет PR code, валидирует provenance против event/base topology и публикует итог. Approvals feature выключена.
+PR workflow выполняет недоверенный код только с read permissions и публикует content-addressed result artifacts. Отдельный repository-owned trusted publisher вызывает pinned upstream runtime только с `watch`/`publish`, получает `actions: read`, `contents: read`, `checks: write`, не checkout'ит и не исполняет PR code, валидирует provenance против event/base topology и публикует итог. В нём отсутствуют `issue_comment`, command job, `actions: write`, `issues: write` и `pull-requests: write`.
+
+Compiler-owned PR/push workflows и manifest сохраняются без ручного редактирования. Generated publisher v0.1.7 хранится только как reproducible comparison artifact либо исключается из deployable path детерминированной repository-командой; canonical custom publisher проверяется отдельным architecture/test contract. Validation сравнивает declaration/manifest/runner с чистым `qg generate`, а publisher сравнивает с явно документированным allowlisted transformation, поэтому произвольный generated drift остаётся fail-closed.
+
+Альтернатива — развернуть generated publisher как есть. Отклонена: approvals=false не удаляет привилегированный comment-command интерфейс. Fork upstream также отклонён как более дорогой и менее обновляемый вариант.
 
 ## Risks / Trade-offs
 
 - [Pre-release upstream изменит schema/CLI] → exact pins, graph digest, dependency review и parity rerun.
+- [Custom publisher расходится с upstream protocol] → pinned runtime, fixture Result v0 tests и allowlisted generated comparison; любое иное расхождение блокирует CI.
 - [Первый PR выглядит green без publisher parity] → отдельные migration states и fail-closed запрет cutover до phase B.
 - [Receipt превращается во второй narrative record] → хранить только identifiers, hashes, identities, Git commit edges и links; narrative остаётся в существующих artifacts.
 - [Author identity неоднозначна для agent reviews] → executable spec задаёт canonical identity и authored-artifact set; missing identity отклоняется.
@@ -69,7 +74,7 @@ PR workflow выполняет недоверенный код только с r
 
 1. Зафиксировать executable delivery spec и RED для отсутствующего graph/lineage checker; получить независимый Gate 3 review.
 2. Добавить receipt schema/checker и repository-owned команду, затем minimal GREEN и regression.
-3. Добавить pinned Quality Graph declaration/generated output и untrusted runner/trusted publisher workflows, оставив старый mechanism обязательным.
+3. Добавить pinned Quality Graph declaration/generated runner/manifest и repository-owned minimal trusted publisher; проверить allowlisted отличие от generated publisher, оставив старый mechanism обязательным.
 4. Получить независимый Gate 5 code review exact commit.
 5. На representative PR выполнить phase A positive/negative dual-run matrix и сохранить immutable evidence.
 6. Выполнить phase B publisher proof только когда base branch уже содержит trusted topology; до этого cutover task остаётся unchecked.
