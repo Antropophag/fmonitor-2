@@ -103,6 +103,7 @@ assertSameValue($before, hash_file('sha256', $publisherPath), 'Validation must n
 $fixture = sys_get_temp_dir() . '/fmonitor-qgp-' . bin2hex(random_bytes(8));
 $fixtureFiles = [
     'quality-graph.yml',
+    'pyproject.toml',
     '.quality-graph/manifest.json',
     '.quality-graph/generated-publisher-v0.1.7.yml',
     '.github/workflows/quality-graph.yml',
@@ -126,6 +127,15 @@ try {
     assertSameValue(true, $result['status'] !== 0, "Mutated publisher must fail repository validator; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_FAILURE category=publisher_override_drift detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: validator must classify arbitrary publisher drift; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK /m', $combined), "Drift failure must not print success; evidence=$evidence");
+
+    copy($root . '/.github/workflows/quality-graph-publish.yml', $fixture . '/.github/workflows/quality-graph-publish.yml');
+    file_put_contents($fixture . '/pyproject.toml', "\n# quality-graph-cli>=0.1\n", FILE_APPEND);
+    $result = qgpRun(['php', $root . '/tools/delivery/check-quality-graph.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "Mixed/floating package pin must fail repository validator; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_FAILURE category=toolchain_pin_drift detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: production validator must classify extra package refs; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK /m', $combined), "Pin drift failure must not print success; evidence=$evidence");
 } finally {
     qgpRemoveFixture($fixture);
 }
