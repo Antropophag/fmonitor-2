@@ -3,13 +3,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\Tests\Support;
 
-/**
- * Gate-2 fixture boundary for PILOT-OBJECT-READ-RBAC-FIXTURES-001.
- *
- * The temporary delegation deliberately exposes the pre-slice generic fixture.
- * The executable test therefore reaches the public HTTP seam before proving
- * that the required canonical role/manifest is still missing.
- */
+/** Canonical fixture boundary for PILOT-OBJECT-READ-RBAC-FIXTURES-001. */
 final class PilotObjectReadRbacFixture
 {
     public static function install(\mysqli $db): void
@@ -26,6 +20,12 @@ final class PilotObjectReadRbacFixture
             26 => ['email' => 'suffix-grant@example.invalid', 'permissions' => ['objects.read.more']],
             27 => ['email' => 'unassigned@example.invalid', 'permissions' => ['objects.read']],
         ]);
+        $db->query('DELETE FROM fm2_pilot_user_roles WHERE user_id=18');
+        $db->query('DELETE FROM fm2_pilot_role_permissions WHERE role_id=900018');
+        $db->query('DELETE FROM fm2_pilot_roles WHERE role_id=900018');
+        $db->query("INSERT INTO fm2_pilot_roles(role_id,code,name,description,status,source_updated_at) VALUES(5101,'object_list_reader','Object list reader','PILOT-OBJECT-READ-RBAC-FIXTURES-001',1,'2026-09-02T00:00:00+03:00')");
+        $db->query("INSERT INTO fm2_pilot_user_roles(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,5101,'fixture','2026-09-02T00:00:00+03:00',NULL)");
+        $db->query("INSERT INTO fm2_pilot_role_permissions(role_id,permission) VALUES(5101,'objects.read')");
         $db->query('DELETE FROM fm2_pilot_user_roles WHERE user_id=27');
     }
 }
