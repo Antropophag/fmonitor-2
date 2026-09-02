@@ -122,3 +122,95 @@ not close the blockers above.
   evidence required by section 5.
 - Request a fresh independent Gate 3 review after test-only corrections and
   fresh intended RED evidence. Production/fixture GREEN remains unauthorized.
+
+---
+
+# Independent Gate 3 rereview v2
+
+- Reviewer: separately tasked agent `/root/object_list_rereview`
+- Test author: separately tasked agent `/root/object_list_red_correction`; reviewer did not author the specification, fixture, test, production, or prior review
+- Reviewed commit: `c9419b0aa6f170dbf82a6035e9ec4145f20f72c4`
+- Specification: `PILOT-OBJECT-READ-RBAC-FIXTURES-001` v1, owner-approved SHA-256 `e3858f094c1f5c4411887b7a242122f714ec6d488febca87bd591553f5b05828`
+- Public seam: production HTTP `GET /pilot/objects`
+- Red command and intended failure: focused command below fails on canonical role `5101` revocation remaining ineffective through the public route because the pre-GREEN fixture still grants actor 18 through generic role `900018`
+- Verdict: `APPROVED`
+
+## Reviewed hashes
+
+```text
+e3858f094c1f5c4411887b7a242122f714ec6d488febca87bd591553f5b05828  specs/PILOT-OBJECT-READ-RBAC-FIXTURES-001.md
+a534ca9cf726c01c1dbd0d3faeb3c4560197c23d6f2fc1b654afe49741c6e4cc  openspec/changes/pilot-object-read-rbac-fixtures/proposal.md
+bd2cb1b9e48e2b8d8959d88d67b4591297d447f94856179ebaf8a1f18a7e891a  openspec/changes/pilot-object-read-rbac-fixtures/design.md
+3128529b18a6226a6f66ebce2159bdf48ffb194f396869132cab179df99aabc2  openspec/changes/pilot-object-read-rbac-fixtures/specs/verification/pilot-object-read-rbac-fixtures/spec.md
+71ab6211e1beb90e4af42ddcb6776b5008257d5202aec3e2a8e2bf2d4d0e921d  openspec/changes/pilot-object-read-rbac-fixtures/tasks.md
+6ab9b7fcc4e65e7f87fb8a46a39ef4c5c2ee7aec4ca98fefd14d25fd0a1d0616  tests/Support/PilotObjectReadRbacFixture.php
+42e8c066638f41de4ca0486f489273d0e58ed45fa0467fcd56cfd7809d238c4c  tests/InstallationProcess/pilot_object_list_001_test.php
+a7f69dc47d81aed886f18e6f53cbb3488f532a7d9c3e358cecffc646f0b8850f  docs/operations/pilot-object-read-rbac-fixtures-red-correction-evidence-v2.md
+```
+
+## Fresh verification
+
+```text
+php -l tests/Support/PilotObjectReadRbacFixture.php
+No syntax errors detected in tests/Support/PilotObjectReadRbacFixture.php
+
+php -l tests/InstallationProcess/pilot_object_list_001_test.php
+No syntax errors detected in tests/InstallationProcess/pilot_object_list_001_test.php
+
+openspec validate pilot-object-read-rbac-fixtures --strict
+Change 'pilot-object-read-rbac-fixtures' is valid
+
+FMONITOR_TEST_DB_ADMIN_PASSWORD=fmonitor2_test_root_local \
+  php tests/InstallationProcess/pilot_object_list_001_test.php
+PHP Fatal error: Uncaught TestFailure: canonical fixture revoke controls public list before navigation status
+Expected: 403
+Actual: 200
+```
+
+The focused RED exited `255`. A post-failure inspection found no task or foreign
+decoy databases, no `pol_*` or `pold_*` principals, and no `pol-*` or
+`foreign-*` entries under `.test-artifacts`.
+
+## Findings
+
+All blockers from the prior `CHANGES_REQUESTED` review are closed for the exact
+reviewed blobs:
+
+1. The first behavioral assertion now commits the specified fixture-admin
+   revocation and observes its result through exact `GET /pilot/objects`. It
+   fails `200` versus expected exact `403` because role `5101` is absent while
+   generic role `900018` continues to authorize. This is the missing canonical
+   fixture behavior, not setup or an unrelated route. The navigation-removal
+   assertion remains later in the test and neither supplies nor substitutes for
+   this RED.
+2. Both authorization-unavailable branches now pin the no-`Retry-After` 503
+   contract, exact singleton header inventory and values, 12-hex correlation
+   identity, exactly one safe logger event, response/log identity equality,
+   category, and response/log redaction.
+3. Independent server processes cover absent, empty, `0`, `-1`, `abc`, ` 18`,
+   `18 `, unknown and inactive actors, inactive/unassigned roles, and all four
+   near-match permissions. Cookie, synthetic identity header, and
+   `REMOTE_USER` decoys cannot replace the trusted environment key.
+4. Every RBAC denial uses the separate `pold_*` principal with SELECT grants
+   only on the four canonical authorization tables. A downstream object,
+   process, session, audit, or legacy read cannot silently satisfy a denial.
+5. Database snapshots cover ordered complete rows, `AUTO_INCREMENT`, and exact
+   `SHOW CREATE`; filesystem guards cover bytes and metadata. The attempt-all
+   cleanup inventory addresses server resources, DB resource, both principals,
+   the exact task database and task-owned root once each, then proves foreign
+   database/file preservation before removing the test decoys. Fresh RED cleanup
+   left no inspected residue.
+6. The temporary generic fixture remains deliberately non-canonical and is now
+   precisely what makes the leading public-seam tracer RED. The later exact
+   manifest assertion and committed revoke remain sensitive to the required
+   positive role `5101` after GREEN.
+
+Traceability, expected-value independence, rejected cases, repeat/revoke
+sensitivity, route isolation, deterministic task-owned inputs, and public-seam
+choice satisfy Gate 3. This approval authorizes minimal Gate 4 fixture GREEN; it
+does not approve production implementation or waive later navigation and full
+regression gates.
+
+## Required changes
+
+None.
