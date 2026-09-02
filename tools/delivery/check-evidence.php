@@ -8,6 +8,27 @@ function deliveryFailure(string $category, string $receipt, string $detail): nev
     exit(1);
 }
 
+function deliveryExactKeys(array $value, array $expected, string $receipt, string $location): void
+{
+    $actual = array_keys($value);
+    sort($actual, SORT_STRING);
+    sort($expected, SORT_STRING);
+    if ($actual !== $expected) {
+        deliveryFailure('invalid_schema', $receipt, "$location fields do not match schema v1");
+    }
+}
+
+function deliverySafePath(string $path, string $receipt): void
+{
+    if ($path === '' || str_starts_with($path, '/') || str_contains($path, "\0")) {
+        deliveryFailure('unsafe_path', $receipt, 'artifact path must be normalized and repository-relative');
+    }
+    $parts = explode('/', str_replace('\\', '/', $path));
+    if (in_array('', $parts, true) || in_array('.', $parts, true) || in_array('..', $parts, true)) {
+        deliveryFailure('unsafe_path', $receipt, 'artifact path contains an unsafe segment');
+    }
+}
+
 $repository = dirname(__DIR__, 2);
 if ($argc === 3 && $argv[1] === '--repo') {
     $candidate = realpath($argv[2]);
@@ -45,5 +66,36 @@ $receipts = glob($receiptRoot . '/*/*.json', GLOB_NOSORT);
 if ($receipts === false || $receipts === []) {
     deliveryFailure('missing_receipt', 'delivery/evidence', 'no receipt JSON files discovered');
 }
+sort($receipts, SORT_STRING);
+foreach ($receipts as $receiptPath) {
+    $receipt = substr($receiptPath, strlen($repository) + 1);
+    $contents = file_get_contents($receiptPath);
+    if ($contents === false || !mb_check_encoding($contents, 'UTF-8')) {
+        deliveryFailure('invalid_schema', $receipt, 'receipt must be readable UTF-8 JSON');
+    }
+    try {
+        $data = json_decode($contents, true, 64, JSON_THROW_ON_ERROR);
+    } catch (JsonException) {
+        deliveryFailure('invalid_schema', $receipt, 'receipt is malformed JSON');
+    }
+    if (!is_array($data)) {
+        deliveryFailure('invalid_schema', $receipt, 'receipt must be a JSON object');
+    }
+    deliveryExactKeys($data, ['schemaVersion', 'sliceId', 'change', 'receiptId', 'supersedes', 'baseCommit', 'authors', 'artifacts'], $receipt, 'receipt');
+    if ($data['schemaVersion'] !== 1 || !is_array($data['authors']) || !is_array($data['artifacts'])) {
+        deliveryFailure('invalid_schema', $receipt, 'receipt schema version or object fields are invalid');
+    }
+    deliveryExactKeys($data['authors'], ['spec', 'test', 'implementation'], $receipt, 'authors');
+    deliveryExactKeys($data['artifacts'], ['spec', 'tests', 'red', 'testReview', 'green', 'codeReview'], $receipt, 'artifacts');
+    if (!is_array($data['artifacts']['spec'])) {
+        deliveryFailure('invalid_schema', $receipt, 'artifacts.spec must be an object');
+    }
+    deliveryExactKeys($data['artifacts']['spec'], ['path', 'sha256'], $receipt, 'artifacts.spec');
+    if (!is_string($data['artifacts']['spec']['path'])) {
+        deliveryFailure('invalid_schema', $receipt, 'artifacts.spec.path must be a string');
+    }
+    deliverySafePath($data['artifacts']['spec']['path'], $receipt);
+    deliveryFailure('invalid_schema', $receipt, 'remaining receipt validation is not implemented');
+}
 
-deliveryFailure('invalid_schema', 'delivery/evidence', 'receipt validation is not implemented by this tracer slice');
+deliveryFailure('invalid_schema', 'delivery/evidence', 'unreachable receipt validation state');
