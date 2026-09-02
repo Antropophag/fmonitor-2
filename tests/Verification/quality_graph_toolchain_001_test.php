@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
 
-/** QUALITY-GRAPH-GOVERNANCE-001 v0.6, exact toolchain contract. */
+/** QUALITY-GRAPH-GOVERNANCE-001 v0.5, exact toolchain RED. */
 
 function qgtPinsValid(string $yaml, string $toml): bool
 {
