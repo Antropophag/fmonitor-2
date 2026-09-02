@@ -265,7 +265,8 @@ try {
     $combined = $result['stdout'] . "\n" . $result['stderr'];
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     assertSameValue(true, $result['status'] !== 0, "Post-review implementation drift must fail; evidence=$evidence");
-    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=commit_mismatch receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: governed file changed after reviewed implementation commit must be rejected; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=commit_mismatch receipt=delivery\/evidence\/LINEAGE-001\/lineage-v2\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: governed file changed after reviewed implementation commit must be rejected against the unique current leaf; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Post-review drift must emit exactly one deterministic failure; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Post-review drift must not print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
