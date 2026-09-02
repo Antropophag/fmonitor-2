@@ -114,6 +114,10 @@ try {
 
     mkdir($fixture . '/specs');
     file_put_contents($fixture . '/specs/missing.md', "present but changed\n");
+    foreach ([['git', 'add', 'specs/missing.md'], ['git', 'commit', '--quiet', '-m', 'add governed spec']] as $command) {
+        $setup = qggRun($command, $fixture);
+        assertSameValue(0, $setup['status'], 'SETUP_FAILURE: governed spec fixture commit failed');
+    }
     $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
     $combined = $result['stdout'] . "\n" . $result['stderr'];
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
