@@ -213,6 +213,9 @@ foreach ($receipts as $receiptPath) {
     foreach (['red', 'testReview', 'green', 'codeReview'] as $kind) if (($metadata[$kind]['tests'] ?? null) !== $tests) deliveryFailure('metadata_mismatch', $receipt, "$kind test set differs");
     $implementation = deliveryDiffSet($repository, $testReviewCommit, $greenCommit, null, [$data['artifacts']['green']['path'], 'openspec/changes/' . $data['change'] . '/tasks.md'], $receipt);
     foreach (['green', 'codeReview'] as $kind) if (($metadata[$kind]['implementationFiles'] ?? null) !== $implementation) deliveryFailure('metadata_mismatch', $receipt, "$kind implementation set differs");
+    $sliceHistories[$data['sliceId']]['receipts'][$data['receiptId']]['greenCommit'] = $greenCommit;
+    $sliceHistories[$data['sliceId']]['receipts'][$data['receiptId']]['codeReviewPath'] = $data['artifacts']['codeReview']['path'];
+    $sliceHistories[$data['sliceId']]['receipts'][$data['receiptId']]['change'] = $data['change'];
 }
 
 foreach ($sliceHistories as $history) {
@@ -236,6 +239,15 @@ foreach ($sliceHistories as $history) {
         $cursor = $history['receipts'][$cursor]['supersedes'];
     }
     if (count($visited) !== count($history['receipts'])) deliveryFailure('invalid_history', $history['directory'], 'receipt history is disconnected');
+    $leaf = $history['receipts'][array_values($leaves)[0]];
+    $changedAfterReview = array_filter(explode("\n", deliveryGit($repository, ['diff', '--no-renames', '--name-only', $leaf['greenCommit'] . '..' . $head], $leaf['path'])));
+    foreach ($changedAfterReview as $changedPath) {
+        $allowed = $changedPath === $leaf['codeReviewPath']
+            || str_starts_with($changedPath, $history['directory'] . '/')
+            || $changedPath === 'openspec/changes/' . $leaf['change'] . '/tasks.md'
+            || str_starts_with($changedPath, 'docs/operations/');
+        if (!$allowed) deliveryFailure('commit_mismatch', $leaf['path'], "governed path changed after review: $changedPath");
+    }
 }
 
 echo 'DELIVERY_EVIDENCE_OK receipts=' . count($sliceHistories) . " head=$head\n";
