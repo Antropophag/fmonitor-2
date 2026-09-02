@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: 'false'
           fetch-depth: '0'
@@ -39,13 +39,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
+          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload Quality Graph declaration and publisher validation result
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: quality-result-graph-validation-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/graph-validation.json
@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: 'false'
           fetch-depth: '0'
@@ -84,13 +84,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
+          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload SSD/TDD delivery evidence result
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: quality-result-delivery-evidence-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/delivery-evidence.json
@@ -110,7 +110,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: 'false'
           fetch-depth: '0'
@@ -131,13 +131,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
+          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload Repository verification result
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: quality-result-verify-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/verify.json
