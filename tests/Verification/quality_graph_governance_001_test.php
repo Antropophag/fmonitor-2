@@ -111,6 +111,15 @@ try {
     assertSameValue(true, $result['status'] !== 0, "A missing artifact must exit nonzero; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=missing_artifact receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: missing safe artifact path must be classified; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Missing artifact rejection must never print success; evidence=$evidence");
+
+    mkdir($fixture . '/specs');
+    file_put_contents($fixture . '/specs/missing.md', "present but changed\n");
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "A hash mismatch must exit nonzero; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=hash_mismatch receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: present artifact with wrong SHA-256 must be classified; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Hash mismatch must never print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($fixture);
 }
