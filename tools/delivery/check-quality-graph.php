@@ -34,6 +34,7 @@ if ($argc === 3 && $argv[1] === '--repo') {
 
 $relativeFiles = [
     'quality-graph.yml',
+    'pyproject.toml',
     '.quality-graph/manifest.json',
     '.quality-graph/generated-publisher-v0.1.7.yml',
     '.github/workflows/quality-graph.yml',
@@ -45,6 +46,17 @@ foreach ($relativeFiles as $relative) {
     if (!is_file($path) || is_link($path)) {
         qgvFail('missing_generated_file', "$relative is absent or unsafe");
     }
+}
+
+$project = (string) file_get_contents($repository . '/pyproject.toml');
+$withoutApprovedPackages = str_replace(
+    ['quality-graph-cli==0.1.7', 'quality-graph-github==0.1.7'],
+    '',
+    $project,
+    $approvedPackageCount,
+);
+if ($approvedPackageCount !== 2 || preg_match('/quality-graph-(?:cli|github)/', $withoutApprovedPackages) === 1) {
+    qgvFail('toolchain_pin_drift', 'project must contain only the exact approved Quality Graph package set');
 }
 
 $baseline = (string) file_get_contents($repository . '/.quality-graph/generated-publisher-v0.1.7.yml');
