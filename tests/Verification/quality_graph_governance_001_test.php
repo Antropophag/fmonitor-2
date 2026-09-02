@@ -96,7 +96,9 @@ try {
     $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
     $combined = $result['stdout'] . "\n" . $result['stderr'];
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "An unsafe artifact path must exit nonzero; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=unsafe_path receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: escaping artifact path must be rejected before artifact access; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Unsafe path rejection must never print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($fixture);
 }
