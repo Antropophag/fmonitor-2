@@ -95,6 +95,10 @@ foreach ($receipts as $receiptPath) {
         deliveryFailure('invalid_schema', $receipt, 'artifacts.spec.path must be a string');
     }
     deliverySafePath($data['artifacts']['spec']['path'], $receipt);
+    $specPath = $repository . '/' . $data['artifacts']['spec']['path'];
+    if (!file_exists($specPath)) {
+        deliveryFailure('missing_artifact', $receipt, 'specification artifact is absent');
+    }
     deliveryFailure('invalid_schema', $receipt, 'remaining receipt validation is not implemented');
 }
 
