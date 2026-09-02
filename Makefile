@@ -92,6 +92,7 @@ e2e-test: test-env-up
 
 architecture-check:
 	@tools/architecture/check
+	@php tools/delivery/check-quality-graph.php
 
 delivery-evidence-check:
 	@php tools/delivery/check-evidence.php

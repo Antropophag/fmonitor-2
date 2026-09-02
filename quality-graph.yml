@@ -17,10 +17,23 @@ profiles:
         with:
           persist-credentials: "false"
           fetch-depth: "0"
+      - name: Install exact Quality Graph toolchain
+        run: python -m pip install quality-graph-cli==0.1.7 quality-graph-github==0.1.7
 
 nodes:
+  graph-validation:
+    title: Quality Graph declaration and publisher validation
+    run: make quality-graph-validate
+    policy:
+      blocking: true
+      approvals:
+        findings: false
+        files: false
+        node: false
+
   delivery-evidence:
     title: SSD/TDD delivery evidence
+    needs: [graph-validation]
     run: make delivery-evidence-check
     policy:
       blocking: true

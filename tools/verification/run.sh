@@ -82,6 +82,9 @@ case "${1:-}" in
       tests/Verification/characterize_inspection_photo_revoke_001_test.php \
       tests/Verification/characterize_inspection_photo_rejections_001_test.php \
       tests/Verification/characterize_inspection_photo_upload_001_test.php \
+      tests/Verification/quality_graph_governance_001_test.php \
+      tests/Verification/quality_graph_publisher_001_test.php \
+      tests/Verification/quality_graph_toolchain_001_test.php \
       rapid-pilot/verify-completion-flow.php \
       rapid-pilot/verify-deployment-contract.php \
       rapid-pilot/verify-focus-contract.php \
