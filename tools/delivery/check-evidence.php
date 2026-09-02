@@ -43,6 +43,15 @@ function deliveryMetadata(string $contents, string $receipt, string $kind): arra
     if (preg_match('/\A```delivery-metadata\R([^\r\n]+)\R```\R/', $contents, $match) !== 1) deliveryFailure('metadata_mismatch', $receipt, "$kind metadata block is absent");
     try { $metadata = json_decode($match[1], true, 32, JSON_THROW_ON_ERROR); } catch (JsonException) { deliveryFailure('metadata_mismatch', $receipt, "$kind metadata is malformed"); }
     if (!is_array($metadata) || ($metadata['kind'] ?? null) !== $kind) deliveryFailure('metadata_mismatch', $receipt, "$kind metadata kind differs");
+    $schemas = [
+        'spec' => ['schemaVersion', 'kind', 'sliceId', 'author'],
+        'red' => ['schemaVersion', 'kind', 'sliceId', 'author', 'specPath', 'specSha256', 'baseCommit', 'tests', 'command', 'observedFailure', 'recordedAt'],
+        'test-review' => ['schemaVersion', 'kind', 'sliceId', 'reviewer', 'verdict', 'specSha256', 'tests', 'redCommit', 'recordedAt'],
+        'green' => ['schemaVersion', 'kind', 'sliceId', 'author', 'specSha256', 'tests', 'testReviewRecordPath', 'implementationFiles', 'commands', 'recordedAt'],
+        'code-review' => ['schemaVersion', 'kind', 'sliceId', 'reviewer', 'verdict', 'specSha256', 'tests', 'implementationCommit', 'implementationFiles', 'recordedAt'],
+    ];
+    deliveryExactKeys($metadata, $schemas[$kind], $receipt, "$kind metadata");
+    if ($metadata['schemaVersion'] !== 1) deliveryFailure('invalid_schema', $receipt, "$kind metadata schema version differs");
     return $metadata;
 }
 
