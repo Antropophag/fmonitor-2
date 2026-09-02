@@ -1,0 +1,7 @@
+```delivery-metadata
+{"schemaVersion":1,"kind":"red","sliceId":"QUALITY-GRAPH-GOVERNANCE-001","author":"agent:/root","specPath":"specs/QUALITY-GRAPH-GOVERNANCE-001.md","specSha256":"189111265896cf1f83531c6786cb2e13e3f7e00f64d54c423807ab683fe8f859","baseCommit":"9c87164393b2048428fc0987c357e65e0e9fc146","tests":[{"path":"tests/Verification/quality_graph_governance_001_test.php","status":"A","sha256":"3957207fe6693564042cd99b47cbc441bab8964cef379ec4649646adc9fcc262"},{"path":"tests/Verification/quality_graph_publisher_001_test.php","status":"A","sha256":"b690aead82e854529740fb9e835e94a682a0d0f01d1aa6e54ceb49c1e7fb7c64"},{"path":"tests/Verification/quality_graph_toolchain_001_test.php","status":"A","sha256":"ede3aae46a8860a15369c70a802e5204827d5ca7495f5aec3e7c321424e58863"}],"command":"php tests/Verification/quality_graph_governance_001_test.php","observedFailure":"complete valid Git lineage reaches unimplemented remainder and returns invalid_schema","recordedAt":"2026-09-03T03:15:00+03:00"}
+```
+
+# QUALITY-GRAPH-GOVERNANCE-001 Gate 2 RED v16
+
+The fixture constructs and commits strict base → RED → test review → GREEN/implementation → code review → receipt history with canonical metadata, independently computed hashes, complete Git-derived test/implementation sets and distinct reviewers. Earlier negative cases remain GREEN; valid lineage is rejected by the intentionally incomplete checker.

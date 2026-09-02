@@ -128,4 +128,108 @@ try {
     qggRemoveFixture($fixture);
 }
 
+$lineage = sys_get_temp_dir() . '/fmonitor-qgg-lineage-' . bin2hex(random_bytes(8));
+if (!mkdir($lineage, 0700, true)) {
+    throw new TestFailure('SETUP_FAILURE: cannot create lineage fixture');
+}
+try {
+    $git = static function (array $arguments) use ($lineage): string {
+        $result = qggRun(array_merge(['git'], $arguments), $lineage);
+        assertSameValue(0, $result['status'], 'SETUP_FAILURE: git fixture command failed: ' . json_encode($result));
+        return trim($result['stdout']);
+    };
+    $write = static function (string $path, string $contents) use ($lineage): void {
+        $target = $lineage . '/' . $path;
+        if (!is_dir(dirname($target)) && !mkdir(dirname($target), 0700, true) && !is_dir(dirname($target))) {
+            throw new TestFailure("SETUP_FAILURE: cannot create fixture directory for $path");
+        }
+        file_put_contents($target, $contents);
+    };
+    $metadata = static fn (array $value): string => "```delivery-metadata\n"
+        . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)
+        . "\n```\n\nfixture\n";
+    $git(['init', '--quiet']);
+    $git(['config', 'user.email', 'lineage@example.invalid']);
+    $git(['config', 'user.name', 'Lineage Fixture']);
+    $write('README.md', "base\n");
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'base']);
+    $base = $git(['rev-parse', 'HEAD']);
+
+    $specPath = 'specs/LINEAGE-001.md';
+    $testPath = 'tests/lineage_test.php';
+    $redPath = 'docs/red.md';
+    $testReviewPath = 'reviews/tests/LINEAGE-001.md';
+    $greenPath = 'docs/green.md';
+    $implementationPath = 'tools/delivery/lineage-fixture.txt';
+    $codeReviewPath = 'reviews/code/LINEAGE-001.md';
+    $spec = $metadata(['schemaVersion' => 1, 'kind' => 'spec', 'sliceId' => 'LINEAGE-001', 'author' => 'agent:/spec']);
+    $write($specPath, $spec);
+    $write($testPath, "<?php echo 'fixture';\n");
+    $specHash = hash('sha256', $spec);
+    $testHash = hash_file('sha256', $lineage . '/' . $testPath);
+    $tests = [['path' => $testPath, 'status' => 'A', 'sha256' => $testHash]];
+    $write($redPath, $metadata([
+        'schemaVersion' => 1, 'kind' => 'red', 'sliceId' => 'LINEAGE-001', 'author' => 'agent:/test',
+        'specPath' => $specPath, 'specSha256' => $specHash, 'baseCommit' => $base, 'tests' => $tests,
+        'command' => 'php tests/lineage_test.php', 'observedFailure' => 'fixture red', 'recordedAt' => '2026-09-03T00:00:00Z',
+    ]));
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'red']);
+    $redCommit = $git(['rev-parse', 'HEAD']);
+
+    $write($testReviewPath, $metadata([
+        'schemaVersion' => 1, 'kind' => 'test-review', 'sliceId' => 'LINEAGE-001', 'reviewer' => 'agent:/test-reviewer',
+        'verdict' => 'APPROVED', 'specSha256' => $specHash, 'tests' => $tests, 'redCommit' => $redCommit,
+        'recordedAt' => '2026-09-03T00:01:00Z',
+    ]));
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'test review']);
+
+    $write($implementationPath, "implementation\n");
+    $implementationFiles = [['path' => $implementationPath, 'status' => 'A', 'sha256' => hash_file('sha256', $lineage . '/' . $implementationPath)]];
+    $write($greenPath, $metadata([
+        'schemaVersion' => 1, 'kind' => 'green', 'sliceId' => 'LINEAGE-001', 'author' => 'agent:/implementation',
+        'specSha256' => $specHash, 'tests' => $tests, 'testReviewRecordPath' => $testReviewPath,
+        'implementationFiles' => $implementationFiles, 'commands' => ['php tests/lineage_test.php'], 'recordedAt' => '2026-09-03T00:02:00Z',
+    ]));
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'green']);
+    $implementationCommit = $git(['rev-parse', 'HEAD']);
+
+    $write($codeReviewPath, $metadata([
+        'schemaVersion' => 1, 'kind' => 'code-review', 'sliceId' => 'LINEAGE-001', 'reviewer' => 'agent:/code-reviewer',
+        'verdict' => 'APPROVED', 'specSha256' => $specHash, 'tests' => $tests,
+        'implementationCommit' => $implementationCommit, 'implementationFiles' => $implementationFiles,
+        'recordedAt' => '2026-09-03T00:03:00Z',
+    ]));
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'code review']);
+
+    $receipt = [
+        'schemaVersion' => 1, 'sliceId' => 'LINEAGE-001', 'change' => 'lineage-fixture', 'receiptId' => 'lineage-v1',
+        'supersedes' => null, 'baseCommit' => $base,
+        'authors' => ['spec' => 'agent:/spec', 'test' => 'agent:/test', 'implementation' => 'agent:/implementation'],
+        'artifacts' => [
+            'spec' => ['path' => $specPath, 'sha256' => $specHash], 'tests' => $tests,
+            'red' => ['path' => $redPath, 'sha256' => hash_file('sha256', $lineage . '/' . $redPath)],
+            'testReview' => ['path' => $testReviewPath, 'sha256' => hash_file('sha256', $lineage . '/' . $testReviewPath), 'reviewer' => 'agent:/test-reviewer', 'verdict' => 'APPROVED', 'specSha256' => $specHash],
+            'green' => ['path' => $greenPath, 'sha256' => hash_file('sha256', $lineage . '/' . $greenPath)],
+            'codeReview' => ['path' => $codeReviewPath, 'sha256' => hash_file('sha256', $lineage . '/' . $codeReviewPath), 'reviewer' => 'agent:/code-reviewer', 'verdict' => 'APPROVED', 'specSha256' => $specHash, 'reviewedCommit' => $implementationCommit],
+        ],
+    ];
+    $write('delivery/evidence/LINEAGE-001/lineage-v1.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
+    $git(['add', '.']);
+    $git(['commit', '--quiet', '-m', 'receipt']);
+    $lineageHead = $git(['rev-parse', 'HEAD']);
+
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(0, $result['status'], "RED_ASSERTION: complete independently reviewed lineage must pass; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=' . preg_quote($lineageHead, '/') . '$/m', $combined), "Valid lineage must emit exact success; evidence=$evidence");
+} finally {
+    qggRemoveFixture($lineage);
+}
+
 echo "QUALITY-GRAPH-GOVERNANCE-001 TESTS PASSED\n";
