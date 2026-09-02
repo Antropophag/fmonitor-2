@@ -50,4 +50,25 @@ assertSameValue(false, ($expected . "\nissue_comment: {}") === $publisher, 'Muta
 assertSameValue(false, str_replace('actions: read', 'actions: write', $expected . "\n") === $publisher, 'Mutation: expanded permission must not match');
 assertSameValue(false, ($expected . "\n- uses: actions/checkout@deadbeef") === $publisher, 'Mutation: extra execution step must not match');
 
+$before = hash_file('sha256', $publisherPath);
+$process = proc_open(
+    ['make', '--no-print-directory', 'quality-graph-validate'],
+    [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+    $pipes,
+    $root,
+);
+if (!is_resource($process)) {
+    throw new TestFailure('SETUP_FAILURE: quality graph validation command did not start');
+}
+fclose($pipes[0]);
+$stdout = stream_get_contents($pipes[1]);
+$stderr = stream_get_contents($pipes[2]);
+fclose($pipes[1]);
+fclose($pipes[2]);
+$status = proc_close($process);
+$evidence = json_encode(compact('status', 'stdout', 'stderr'), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+assertSameValue(0, $status, "RED_ASSERTION: repository validation must accept only the reviewed publisher override; evidence=$evidence");
+assertSameValue(1, preg_match_all('/^QUALITY_GRAPH_VALIDATION_OK digest=[0-9a-f]{64}$/m', $stdout), "Validation must emit one stable success; evidence=$evidence");
+assertSameValue($before, hash_file('sha256', $publisherPath), 'Validation must not rewrite the deployable publisher');
+
 echo "QUALITY-GRAPH-PUBLISHER-001 TESTS PASSED\n";
