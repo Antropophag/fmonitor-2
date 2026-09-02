@@ -1,10 +1,10 @@
-# QUALITY-GRAPH-GOVERNANCE-001 v0.5
+# QUALITY-GRAPH-GOVERNANCE-001 v0.6
 
 ```delivery-metadata
 {"schemaVersion":1,"kind":"spec","sliceId":"QUALITY-GRAPH-GOVERNANCE-001","author":"agent:/root"}
 ```
 
-Status: APPROVED for Gate 2 on 2026-09-02; see `docs/operations/quality-graph-governance-gate1-rereview-v6.md`.
+Status: OWNER_APPROVED on 2026-09-03 for repository-owned publisher amendment; independent Gate 1 amendment review pending.
 
 ## Простыми словами
 
@@ -80,8 +80,9 @@ Stable categories: `invalid_input`, `missing_receipt`, `invalid_schema`, `duplic
 4. Graph declaration/generated drift, missing nodes/results/reports, nonzero commands and provenance mismatch are blocking.
 5. Result provenance binds node ID, repository, PR, head SHA, workflow run ID, run attempt and graph digest.
 6. Quality Graph approvals are disabled; only repository-owned APPROVED records satisfy Gates 3 and 5.
-7. PR runner has read-only permissions and no persisted checkout credential. Trusted publisher uses base-branch topology, does not checkout/execute PR code, and has only required artifact/check permissions.
+7. PR runner has read-only permissions and no persisted checkout credential. Trusted publisher uses base-branch topology, does not checkout/execute PR code, and has only `actions: read`, `contents: read`, `checks: write`.
 8. CLI/provider packages are exactly `0.1.7`; runtime is exactly `alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef`. Floating or mixed pins fail architecture validation.
+9. Because compiler v0.1.7 emits an `issue_comment` command/approval job even with node approvals disabled, that generated publisher MUST NOT be deployed. The repository-owned publisher MUST expose only `workflow_run`, invoke the pinned runtime only with `watch` or `publish`, and contain no `issue_comment`, command job, checkout, `actions: write`, `issues: write` or `pull-requests: write`. A repository check MUST compare it to the pinned generated publisher and allow only this documented privilege-removal transformation; every other drift fails closed.
 
 ## Acceptance examples
 

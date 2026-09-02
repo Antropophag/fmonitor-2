@@ -52,6 +52,10 @@ Graph SHALL считать Gate 3 и Gate 5 выполненными тольк�
 - **WHEN** все тестовые команды успешны, но обязательный независимый APPROVED review record отсутствует
 - **THEN** governance node и итоговый graph остаются неуспешными
 
+#### Scenario: Compiler генерирует неиспользуемый command handler
+- **WHEN** pinned compiler v0.1.7 создаёт publisher с `issue_comment` trigger, command/approval job или write permissions, не нужными publish/watch
+- **THEN** repository SHALL не развёртывать этот generated publisher и SHALL использовать проверяемый repository-owned publisher без указанной поверхности
+
 ### Requirement: Миграция требует доказанной dual-run parity
 Существующий CI/harness SHALL оставаться работающим и обязательным до сохранения parity evidence на representative PR. Parity SHALL сравнивать одинаковый head commit, набор repository-owned команд, коды завершения, обязательные failures и provenance; расхождение SHALL блокировать переключение или удаление старого механизма.
 
