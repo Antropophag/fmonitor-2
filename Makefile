@@ -4,7 +4,7 @@ COMPOSE := docker compose
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint verify fresh-test-verify
+	characterization-test e2e-test architecture-check lint delivery-evidence-check verify fresh-test-verify
 
 help:
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
@@ -19,6 +19,7 @@ help:
 	@echo "make migrate          Применить canonical production migrations к test DB"
 	@echo "make unit-test/db-test/characterization-test/e2e-test"
 	@echo "make architecture-check  Проверить machine-checkable boundaries"
+	@echo "make delivery-evidence-check  Проверить SSD/TDD provenance receipts"
 	@echo "make verify           Полная clean-checkout проверка"
 	@echo "make fresh-test-verify  Полная проверка с обязательным test-env teardown"
 
@@ -90,6 +91,9 @@ e2e-test: test-env-up
 
 architecture-check:
 	@tools/architecture/check
+
+delivery-evidence-check:
+	@php tools/delivery/check-evidence.php
 
 lint:
 	@bash tools/verification/run.sh lint
