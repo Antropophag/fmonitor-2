@@ -12,6 +12,51 @@ concurrency:
   group: quality-graph-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  graph-validation:
+    name: Quality Graph declaration and publisher validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: 'false'
+          fetch-depth: '0'
+      - name: Install exact Quality Graph toolchain
+        run: python -m pip install quality-graph-cli==0.1.7 quality-graph-github==0.1.7
+      - run: make quality-graph-validate
+        name: Run Quality Graph declaration and publisher validation
+        id: quality-command
+        continue-on-error: true
+      - name: Collect Quality Graph declaration and publisher validation result
+        id: quality-result
+        if: always()
+        uses: alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef
+        with:
+          operation: collect
+          node-id: graph-validation
+          title: Quality Graph declaration and publisher validation
+          adapter: exit-code
+          report-path: ''
+          command-outcome: ${{ steps.quality-command.outcome }}
+          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
+          approval-findings: 'false'
+          approval-files: 'false'
+          approval-node: 'false'
+      - name: Upload Quality Graph declaration and publisher validation result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: quality-result-graph-validation-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/quality-graph/graph-validation.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce Quality Graph declaration and publisher validation result
+        if: always()
+        shell: bash
+        env:
+          EXIT_CODE: ${{ steps.quality-result.outputs.exit-code }}
+        run: exit "${EXIT_CODE:-2}"
   delivery-evidence:
     name: SSD/TDD delivery evidence
     runs-on: ubuntu-latest
@@ -22,6 +67,8 @@ jobs:
         with:
           persist-credentials: 'false'
           fetch-depth: '0'
+      - name: Install exact Quality Graph toolchain
+        run: python -m pip install quality-graph-cli==0.1.7 quality-graph-github==0.1.7
       - run: make delivery-evidence-check
         name: Run SSD/TDD delivery evidence
         id: quality-command
@@ -37,7 +84,7 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: 20ea1f95906a0ce54c1d35eead68bb78b0ee728146423257f54bedddc5975e4b
+          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
@@ -55,6 +102,8 @@ jobs:
         env:
           EXIT_CODE: ${{ steps.quality-result.outputs.exit-code }}
         run: exit "${EXIT_CODE:-2}"
+    needs:
+      - graph-validation
   verify:
     name: Repository verification
     runs-on: ubuntu-latest
@@ -65,6 +114,8 @@ jobs:
         with:
           persist-credentials: 'false'
           fetch-depth: '0'
+      - name: Install exact Quality Graph toolchain
+        run: python -m pip install quality-graph-cli==0.1.7 quality-graph-github==0.1.7
       - run: make fresh-test-verify
         name: Run Repository verification
         id: quality-command
@@ -80,7 +131,7 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: 20ea1f95906a0ce54c1d35eead68bb78b0ee728146423257f54bedddc5975e4b
+          graph-digest: d19c74290776c2f4a5cf63480a3a6719d2b10c096bc991cdea488d14afc76401
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'

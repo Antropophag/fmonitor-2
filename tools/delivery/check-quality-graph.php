@@ -95,6 +95,14 @@ try {
     }
     $qg = $sourceRoot . '/.venv/bin/qg';
     if (!is_file($qg)) {
+        $which = proc_open(['sh', '-c', 'command -v qg'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $whichPipes);
+        if (is_resource($which)) {
+            fclose($whichPipes[0]);
+            $qg = trim((string) stream_get_contents($whichPipes[1]));
+            fclose($whichPipes[1]); fclose($whichPipes[2]); proc_close($which);
+        }
+    }
+    if ($qg === '' || !is_file($qg)) {
         qgvFail('setup_failure', 'run uv sync before Quality Graph validation');
     }
     $process = proc_open([$qg, 'validate'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $temporary);
