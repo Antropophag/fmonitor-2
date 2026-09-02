@@ -99,6 +99,18 @@ try {
     assertSameValue(true, $result['status'] !== 0, "An unsafe artifact path must exit nonzero; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=unsafe_path receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: escaping artifact path must be rejected before artifact access; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Unsafe path rejection must never print success; evidence=$evidence");
+
+    $unsafeReceipt['artifacts']['spec']['path'] = 'specs/missing.md';
+    file_put_contents(
+        $fixture . '/delivery/evidence/unsafe/unsafe-v1.json',
+        json_encode($unsafeReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
+    );
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "A missing artifact must exit nonzero; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=missing_artifact receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: missing safe artifact path must be classified; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Missing artifact rejection must never print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($fixture);
 }
