@@ -228,6 +228,9 @@ try {
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     assertSameValue(0, $result['status'], "RED_ASSERTION: complete independently reviewed lineage must pass; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=' . preg_quote($lineageHead, '/') . '$/m', $combined), "Valid lineage must emit exact success; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Valid lineage must emit no failure; evidence=$evidence");
+    $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
+    assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $lineageHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Success must be the terminal nonempty stdout line; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
 }
