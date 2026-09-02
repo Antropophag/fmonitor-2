@@ -10,7 +10,7 @@ require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
-require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
+require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
 if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
@@ -210,7 +210,7 @@ if (is_string($path) && str_starts_with($path, '/pilot/assets/')) {
     echo "Not found.\n";
     exit;
 }
-try {
+\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotCompletionFlow::blocksLegacyCompletion((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path)||RapidPilotOtiz::matches((string)$path));try {
     (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
 } catch (Throwable) {
     $body = "Service unavailable.\n";

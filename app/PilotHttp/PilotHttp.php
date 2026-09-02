@@ -459,7 +459,7 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
     {
         $this->users();$this->resolveProcessPrefix();try{return AccessPolicy::grants(AccessPolicy::forUser($this->connection,$this->processTablePrefix,$userId),$capability);}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
-    public function hasProcessCapability(int $userId,string $capability):bool{$this->users();$this->resolveProcessPrefix();try{$s=$this->connection->prepare("SELECT 1 FROM `{$this->processTablePrefix}fm2_process_user_capabilities` WHERE user_id=? AND BINARY capability=BINARY ? LIMIT 1");$s->bind_param('is',$userId,$capability);$s->execute();return $s->get_result()->fetch_assoc()!==null;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}}
+    public function hasProcessCapability(int $userId,string $capability):bool{$this->users();$this->resolveProcessPrefix();try{return(new MariaDbProcessCapabilityReader($this->connection,$this->processTablePrefix))->grants($userId,$capability);}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('',0,$e);}}
     public function canEditChecklist(int $userId):bool
     {
         $this->users();$this->resolveProcessPrefix();
@@ -548,5 +548,4 @@ require_once __DIR__.'/PilotShellView.php';
 require_once __DIR__.'/ObjectListView.php';
 require_once __DIR__.'/ObjectCardView.php';
 require_once __DIR__.'/PrepareFormView.php';
-require_once __DIR__.'/InstallerDirectoryView.php';
-require_once __DIR__.'/ChecklistView.php';
+require_once __DIR__.'/InstallerDirectoryView.php';require_once __DIR__.'/ChecklistView.php';
