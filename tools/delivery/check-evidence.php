@@ -99,6 +99,16 @@ foreach ($receipts as $receiptPath) {
     if (!file_exists($specPath)) {
         deliveryFailure('missing_artifact', $receipt, 'specification artifact is absent');
     }
+    if (is_link($specPath) || !is_file($specPath)) {
+        deliveryFailure('unsafe_path', $receipt, 'specification artifact must be a regular non-symlink file');
+    }
+    $expectedHash = $data['artifacts']['spec']['sha256'];
+    if (!is_string($expectedHash) || preg_match('/^[0-9a-f]{64}$/D', $expectedHash) !== 1) {
+        deliveryFailure('invalid_schema', $receipt, 'artifacts.spec.sha256 must be lowercase SHA-256');
+    }
+    if (!hash_equals($expectedHash, hash_file('sha256', $specPath))) {
+        deliveryFailure('hash_mismatch', $receipt, 'specification artifact digest differs');
+    }
     deliveryFailure('invalid_schema', $receipt, 'remaining receipt validation is not implemented');
 }
 
