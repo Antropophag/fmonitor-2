@@ -39,13 +39,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
+          graph-digest: a6d37d59715b355c8e717ad6f06a71f50f09806dbd6a57dcfcdea7a0f0a8dbdf
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload Quality Graph declaration and publisher validation result
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: quality-result-graph-validation-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/graph-validation.json
@@ -84,13 +84,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
+          graph-digest: a6d37d59715b355c8e717ad6f06a71f50f09806dbd6a57dcfcdea7a0f0a8dbdf
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload SSD/TDD delivery evidence result
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: quality-result-delivery-evidence-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/delivery-evidence.json
@@ -131,13 +131,13 @@ jobs:
           adapter: exit-code
           report-path: ''
           command-outcome: ${{ steps.quality-command.outcome }}
-          graph-digest: 9ec2219042f754251199f03f6c217edd91776199e9c7d6e20c281e233a724ab8
+          graph-digest: a6d37d59715b355c8e717ad6f06a71f50f09806dbd6a57dcfcdea7a0f0a8dbdf
           approval-findings: 'false'
           approval-files: 'false'
           approval-node: 'false'
       - name: Upload Repository verification result
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: quality-result-verify-${{ github.run_attempt }}
           path: ${{ runner.temp }}/quality-graph/verify.json
