@@ -70,6 +70,33 @@ try {
     assertSameValue(true, $result['status'] !== 0, "RED_ASSERTION: missing receipt inventory must fail closed; evidence=$evidence");
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=missing_receipt receipt=delivery\/evidence detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: isolated test seam must classify the absent opt-in receipt root; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "A failed governance run must never print success; evidence=$evidence");
+
+    mkdir($fixture . '/delivery/evidence/unsafe', 0700, true);
+    $unsafeReceipt = [
+        'schemaVersion' => 1,
+        'sliceId' => 'UNSAFE-001',
+        'change' => 'unsafe-fixture',
+        'receiptId' => 'unsafe-v1',
+        'supersedes' => null,
+        'baseCommit' => $head,
+        'authors' => ['spec' => 'agent:/spec', 'test' => 'agent:/test', 'implementation' => 'agent:/implementation'],
+        'artifacts' => [
+            'spec' => ['path' => '../outside.md', 'sha256' => str_repeat('a', 64)],
+            'tests' => [],
+            'red' => ['path' => 'red.md', 'sha256' => str_repeat('b', 64)],
+            'testReview' => ['path' => 'test-review.md', 'sha256' => str_repeat('c', 64), 'reviewer' => 'agent:/review-test', 'verdict' => 'APPROVED', 'specSha256' => str_repeat('a', 64)],
+            'green' => ['path' => 'green.md', 'sha256' => str_repeat('d', 64)],
+            'codeReview' => ['path' => 'code-review.md', 'sha256' => str_repeat('e', 64), 'reviewer' => 'agent:/review-code', 'verdict' => 'APPROVED', 'specSha256' => str_repeat('a', 64), 'reviewedCommit' => $head],
+        ],
+    ];
+    file_put_contents(
+        $fixture . '/delivery/evidence/unsafe/unsafe-v1.json',
+        json_encode($unsafeReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
+    );
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=unsafe_path receipt=delivery\/evidence\/unsafe\/unsafe-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: escaping artifact path must be rejected before artifact access; evidence=$evidence");
 } finally {
     qggRemoveFixture($fixture);
 }
