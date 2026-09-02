@@ -5,9 +5,11 @@ declare(strict_types=1);
 use FMonitor2\InstallationProcess\PilotCaseImporter;
 use FMonitor2\InstallationProcess\WorkforceHistorySchemaReadiness;
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
+use FMonitor2\InstallationProcess\MariaDbPilotLegacyObjectSchemaReadiness;
 
 require_once __DIR__ . '/Otiz.php';
 require_once __DIR__ . '/IdentityBootstrap.php';
+require_once __DIR__ . '/CompletionFlow.php';
 
 $root = dirname(__DIR__);
 $home = getenv('HOME');
@@ -39,30 +41,45 @@ if (!is_dir($artifactRoot) && !mkdir($artifactRoot, 0755, true)) throw new Runti
 $db = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
 $db->set_charset('utf8mb4');
 $serverIdentity=(string)$db->query('SELECT @@hostname AS identity')->fetch_assoc()['identity'];
+$migrationFailed = false;
 try {
-    $db->query("CREATE TABLE IF NOT EXISTS `{$legacyPrefix}fm_maintable` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120),workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40),workdatefinish VARCHAR(40),ptoactdate VARCHAR(40),responsstroicontrol VARCHAR(80)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    if ($withTestFixtures) {
+    require_once __DIR__ . '/InspectionSchedule.php';
+    try {
+        RapidPilotInspectionSchedule::assertSchemaReady($db, $processPrefix);
+        RapidPilotCompletionFlow::assertSchemaReady($db, $processPrefix);
+    } catch (Throwable) {
+        $migrationFailed = true;
+    }
+    if (!$migrationFailed) try {
+        MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db, $legacyPrefix);
+    } catch (Throwable) {
+        $migrationFailed = true;
+    }
+    if (!$migrationFailed && $withTestFixtures) {
         $db->query("INSERT IGNORE INTO `{$legacyPrefix}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
     }
 
-    foreach ([ProductionProcessSchemaMigration::class] as $migration) {
+    foreach ($migrationFailed ? [] : [ProductionProcessSchemaMigration::class] as $migration) {
         $result = $migration::apply($db, $processPrefix);
         if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
     }
-    WorkforceHistorySchemaReadiness::assertReady($db, $processPrefix);
-    $db->query("CREATE TABLE IF NOT EXISTS `{$processPrefix}fm2_pilot_generation_sentinel`(singleton_id TINYINT UNSIGNED PRIMARY KEY,generation INT UNSIGNED NOT NULL,fingerprint CHAR(8) NOT NULL,manifest_nonce CHAR(64) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    if (!$migrationFailed) WorkforceHistorySchemaReadiness::assertReady($db, $processPrefix);
+    if (!$migrationFailed) {
+    MariaDbPilotLegacyObjectSchemaReadiness::assertGenerationSentinelReady($db, $processPrefix);
     $sentinel=$db->prepare("INSERT INTO `{$processPrefix}fm2_pilot_generation_sentinel` VALUES(1,?,?,?) ON DUPLICATE KEY UPDATE generation=VALUES(generation),fingerprint=VALUES(fingerprint),manifest_nonce=VALUES(manifest_nonce)");$sentinel->bind_param('iss',$generation,$fingerprint,$manifestNonce);$sentinel->execute();
     $bootstrapEmails=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS')?:'');
     $bootstrapPassword=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD')?:'');
     RapidPilotIdentityBootstrap::apply($db,$processPrefix,$bootstrapEmails,$bootstrapPassword);
-    $db->query("DROP TABLE IF EXISTS `{$processPrefix}fm2_process_user_capabilities`");
-    $db->query("DROP TABLE IF EXISTS `{$legacyPrefix}users`,`{$legacyPrefix}users_roles`");
     RapidPilotOtiz::bootstrap($db, $processPrefix);
-    require_once __DIR__ . '/InspectionSchedule.php';
-    RapidPilotInspectionSchedule::ensureSchema($db, $processPrefix);
     if ($withTestFixtures) (new PilotCaseImporter($db, $processPrefix, $legacyPrefix))->import([4512], '2026-08-29T12:00:00+03:00');
+    }
 } finally {
     $db->close();
+}
+
+if ($migrationFailed) {
+    echo "{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n";
+    exit(70);
 }
 
 $manifest = json_encode([

@@ -136,6 +136,10 @@ def workforce_ownership_matches(text: str) -> list[tuple[str, int]]:
 
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
+    if rel.startswith("app/IdentityAccess/"):
+        return path.name.startswith("MariaDb")
+    if rel.startswith("app/InspectionEvidence/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/InstallationProcess/"):
         return (
             path.name.startswith("MariaDb")
@@ -173,8 +177,11 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
-        if rel.startswith("app/InstallationProcess/"):
-            forbidden = re.compile(r"(?:FMonitor2\\\\PilotHttp|FMonitor2\\\\RapidPilot|app/PilotHttp|rapid-pilot|new\s+\\?mysqli|new\s+MariaDb)")
+        if rel.startswith(("app/InstallationProcess/", "app/InspectionEvidence/", "app/IdentityAccess/")):
+            forbidden_terms = r"(?:FMonitor2\\PilotHttp|FMonitor2\\RapidPilot|app/PilotHttp|rapid-pilot)"
+            if rel.startswith("app/InstallationProcess/"):
+                forbidden_terms = r"(?:" + forbidden_terms[3:-1] + r"|new\s+\?mysqli|new\s+MariaDb)"
+            forbidden = re.compile(forbidden_terms)
             for number, line in enumerate(lines, 1):
                 if forbidden.search(line):
                     violations["dependency_direction"].append(finding("dependency", path, number, line))

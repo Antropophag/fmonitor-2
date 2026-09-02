@@ -13,6 +13,9 @@ use FMonitor2\InstallationProcess\DatabaseUnavailable;
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
 use FMonitor2\InstallationProcess\ChecklistTemplateSchemaMigration;
 use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
+use FMonitor2\InstallationProcess\InspectionPlanningSchemaMigration;
+use FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration;
+use FMonitor2\InstallationProcess\ClassificationProvenanceSchemaMigration;
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -92,9 +95,27 @@ $migrations = [
     6 => IdentityAccessSchemaMigration::class,
     7 => ChecklistTemplateSchemaMigration::class,
     8 => InspectionEvidenceSchemaMigration::class,
+    9 => InspectionPlanningSchemaMigration::class,
+    10 => InstallationCompletionSchemaMigration::class,
+    11 => static fn (mysqli $connection, string $prefix): array =>
+        ClassificationProvenanceSchemaMigration::apply(
+            $connection,
+            $prefix,
+            static function (): void {
+            },
+        ),
 ];
 $databasePreflight = static function () use ($connection, $tablePrefix): int {
-    IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
+    try {
+        IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
+    } catch (DatabaseUnavailable $error) {
+        foreach (IdentityAccessDefinitionSchemaMigration::tables() as $identityTable) {
+            if (FMonitor2\InstallationProcess\MariaDbSchemaInspector::tableExists($connection, $tablePrefix . $identityTable)) {
+                throw $error;
+            }
+        }
+        throw new RuntimeException('Canonical database defaults are incompatible.', 0, $error);
+    }
 
     foreach (IdentityAccessDefinitionSchemaMigration::tables() as $identityTable) {
         if (FMonitor2\InstallationProcess\MariaDbSchemaInspector::tableExists(

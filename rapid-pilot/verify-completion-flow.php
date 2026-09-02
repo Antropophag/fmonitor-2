@@ -8,14 +8,18 @@ require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbExactSchemaFinger
 require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceOperationDefinitionSchemaMigration.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceDefinitionSchemaMigration.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InstallationCompletionDefinitionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbInstallationCompletionSchemaFingerprint.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InstallationCompletionSchemaMigration.php';
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
-$db=new mysqli(getenv('FMONITOR_DB_HOST')?:getenv('FMONITOR_DEMO_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:getenv('FMONITOR_DEMO_DB_USER')?:'',getenv('FMONITOR_DB_PASSWORD')?:getenv('FMONITOR_DEMO_DB_PASSWORD')?:'',getenv('FMONITOR_DB_NAME')?:getenv('FMONITOR_DEMO_DB_NAME')?:'',(int)(getenv('FMONITOR_DB_PORT')?:getenv('FMONITOR_DEMO_DB_PORT')?:3306));$db->set_charset('utf8mb4');
-$prefix='completion_'.bin2hex(random_bytes(5)).'_';putenv('FMONITOR_PROCESS_TABLE_PREFIX='.$prefix);
-$tables=['fm2_pilot_completion_facts','fm2_checklist_photos','fm2_checklist_operation_installers','fm2_checklist_operations','fm2_checklist_revisions','fm2_installation_cases'];
+$host=getenv('FMONITOR_DB_HOST')?:getenv('FMONITOR_DEMO_DB_HOST')?:'127.0.0.1';$user=getenv('FMONITOR_DB_USER')?:getenv('FMONITOR_DEMO_DB_USER')?:'';$password=getenv('FMONITOR_DB_PASSWORD')?:getenv('FMONITOR_DEMO_DB_PASSWORD')?:'';$port=(int)(getenv('FMONITOR_DB_PORT')?:getenv('FMONITOR_DEMO_DB_PORT')?:3306);$adminUser=getenv('FMONITOR_TEST_DB_ADMIN_USER')?:$user;$adminPassword=getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:$password;$database='t_completion_flow_'.bin2hex(random_bytes(5));$admin=new mysqli($host,$adminUser,$adminPassword,'',$port);$admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");$escapedUser=$admin->real_escape_string($user);$admin->query("GRANT ALL PRIVILEGES ON `{$database}`.* TO `{$escapedUser}`@'%'");$db=new mysqli($host,$user,$password,$database,$port);$db->set_charset('utf8mb4');
+$prefix='completion_'.bin2hex(random_bytes(5)).'_';$previousDatabase=getenv('FMONITOR_DB_NAME');putenv('FMONITOR_DB_NAME='.$database);putenv('FMONITOR_PROCESS_TABLE_PREFIX='.$prefix);
+$tables=['fm2_pilot_completion_fact_corrections','fm2_pilot_completion_facts','fm2_checklist_photos','fm2_checklist_operation_installers','fm2_checklist_operations','fm2_checklist_revisions','fm2_installation_cases'];
 $ok=static function(bool$value,string$message):void{if(!$value)throw new RuntimeException($message);};
 try{
  $db->query("CREATE TABLE `{$prefix}fm2_installation_cases`(id BIGINT PRIMARY KEY,legacy_installation_object_id BIGINT UNIQUE,process_state VARCHAR(40))");
  \FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration::apply($db,$prefix);
+ \FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$prefix);
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(7,4512,'working')");
  $shell='<div class="fm2-object-workspace"><section class="fm2-next-action" aria-label="Ближайшее действие"><div><h2>Работы открыты</h2></div><div class="fm2-action-stack"><a href="/pilot/objects/4512/checklist">Открыть чек-лист</a></div></section></div>';
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(8,4513,'needs_assignment_order')");
@@ -33,4 +37,4 @@ try{
  $enhanced=RapidPilotCompletionFlow::enhanceChecklist($check,4512);$ok(!str_contains($enhanced,'old item')&&!str_contains($enhanced,'Перейти к закрытию')&&str_contains($enhanced,'fm2-check-closeout')&&str_contains($enhanced,'Посмотреть документы')&&str_contains($enhanced,'data-progress-cap="100"')&&str_contains($enhanced,'из 41 монтажной работы'),'checklist exposes a complete closeout block instead of legacy item 42');
  $statuses='<span class="shlz-status shlz-status--orange">Требуется распоряжение</span><span class="shlz-status shlz-status--orange">Готов к открытию</span><span class="shlz-status shlz-status--bright-green">Монтажные работы</span><span class="shlz-status shlz-status--orange">Документарное закрытие</span><span class="shlz-status shlz-status--orange">Работы завершены</span>';$painted=RapidPilotCompletionFlow::paintStatuses($statuses);foreach(['shlz-status--orange">Требуется распоряжение','shlz-status--source-blue">Готов к открытию','shlz-status--cyan">Монтажные работы','shlz-status--purple">Документарное закрытие','shlz-status--bright-green">Работы завершены']as$mapping)$ok(str_contains($painted,$mapping),'status paint mapping missing: '.$mapping);
  echo "PASS rapid completion flow 85% -> PTO -> declaration -> 100%\n";
-}finally{foreach($tables as$table)try{$db->query("DROP TABLE IF EXISTS `{$prefix}{$table}`");}catch(Throwable){}$db->close();}
+}finally{$db->close();$admin->query("REVOKE ALL PRIVILEGES ON `{$database}`.* FROM `{$escapedUser}`@'%'");$admin->query("DROP DATABASE IF EXISTS `{$database}`");$admin->close();$previousDatabase===false?putenv('FMONITOR_DB_NAME'):putenv('FMONITOR_DB_NAME='.$previousDatabase);}

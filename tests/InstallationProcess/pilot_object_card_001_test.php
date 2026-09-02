@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
+require dirname(__DIR__) . '/Support/LocalRbacFixture.php';
 
 use FMonitor2\Tests\Support\HttpReadOnlyFilesystemGuard;
 use FMonitor2\Tests\Support\TaskOwnedArtifactRoot;
@@ -373,6 +374,7 @@ try {
     foreach ($legacy as $row) { $statement->bind_param('issssssss', ...$row); $statement->execute(); }
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
     ProductionProcessSchemaMigration::apply($db);
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]]);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,'');
     $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
         (1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (2,4513,'working','2026-10-03','2026-10-03T08:15:30+03:00',18,'2026-08-20T09:00:00+03:00','2026-10-03T08:15:30+03:00',4),
@@ -450,7 +452,7 @@ try {
         'legacy_users_roles'=>['id','status'],
         'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],
         'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
-        'fm2_assignment_orders'=>['id','installation_case_id','version_no','status','order_date','registration_number','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot'],
+        'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
         'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
         'fm2_process_events'=>['id','installation_case_id','event_type','occurred_at','actor_user_id'],
     ];
@@ -458,6 +460,7 @@ try {
         $quotedColumns = implode(',', array_map(static fn(string $column): string => '`' . $column . '`', $columns));
         $admin->query("GRANT SELECT ({$quotedColumns}) ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     }
+    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     $admin->query("CREATE USER `{$userOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users` TO `{$userOnlyReader}`@`%`");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users_roles` TO `{$userOnlyReader}`@`%`");
@@ -478,7 +481,7 @@ try {
     try { $readerProbe->query('SELECT forbidden_secret FROM legacy_fm_maintable WHERE id=4512'); throw new TestFailure('SELECT-only principal unexpectedly read forbidden legacy column'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT message FROM legacy_logs LIMIT 1'); throw new TestFailure('SELECT-only principal unexpectedly read unrelated table'); } catch (mysqli_sql_exception) {}
     $readerProbe->close();
-    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'reader@shlz.ru'];
+    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
     $before = pocSnapshot($db); $server = pocStart($environment);
 
     $a = pocRequest($server['port'], 'GET', '/pilot/objects/4512');

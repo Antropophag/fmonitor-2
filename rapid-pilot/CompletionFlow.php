@@ -18,7 +18,7 @@ final class RapidPilotCompletionFlow
         $objectId=(int)$match[1];
         $csrf=(string)($_POST['csrfToken']??'');
         if($csrf===''||!hash_equals((string)($_SERVER['FMONITOR_AUTH_CSRF']??''),$csrf))self::plain(403,'Недопустимый запрос.');
-        $db=self::db();$prefix=self::prefix();self::ensureSchema($db,$prefix);
+        $db=self::db();$prefix=self::prefix();self::assertHttpSchemaReady($db,$prefix);
         $actor=self::actorId($db,$prefix);$now=self::now();
         try{$db->begin_transaction();$case=self::case($db,$prefix,$objectId,true);if($case===null)self::fail($db,404,'Объект не найден.');
             $progress=self::installationProgress($db,$prefix,(int)$case['id']);if($progress<85)self::fail($db,409,'Сначала завершите монтажные работы до 85%.');
@@ -50,7 +50,8 @@ final class RapidPilotCompletionFlow
 
     public static function enhanceCard(string $html,int $objectId):string
     {
-        try{$db=self::db();$prefix=self::prefix();self::ensureSchema($db,$prefix);$case=self::case($db,$prefix,$objectId,false);if($case===null||($case['process_state']??null)!=='working')return$html;$progress=self::installationProgress($db,$prefix,(int)$case['id']);$facts=self::facts($db,$prefix,(int)$case['id']);}
+        $db=self::db();$prefix=self::prefix();self::assertHttpSchemaReady($db,$prefix);
+        try{$case=self::case($db,$prefix,$objectId,false);if($case===null||($case['process_state']??null)!=='working')return$html;$progress=self::installationProgress($db,$prefix,(int)$case['id']);$facts=self::facts($db,$prefix,(int)$case['id']);}
         catch(Throwable){return$html;}
         $complete=isset($facts['pto_act'],$facts['declaration']);$status=self::status($progress,$complete);
         $paint=$complete?'shlz-status--bright-green':($progress>=85?'shlz-status--orange':'shlz-status--blue');
@@ -65,7 +66,7 @@ final class RapidPilotCompletionFlow
 
     public static function decorateQueue(array $objects,mysqli$db,string$prefix):array
     {
-        if($objects===[])return[];self::ensureSchema($db,$prefix);$objectIds=array_map('intval',array_column($objects,'id'));$idList=implode(',',$objectIds);$cases=$db->query("SELECT id,legacy_installation_object_id FROM `{$prefix}fm2_installation_cases` WHERE legacy_installation_object_id IN({$idList})")->fetch_all(MYSQLI_ASSOC);$objectByCase=[];$caseIds=[];foreach($cases as$row){$case=(int)$row['id'];$caseIds[]=$case;$objectByCase[$case]=(int)$row['legacy_installation_object_id'];}if($caseIds===[])return$objects;$caseList=implode(',',$caseIds);
+        if($objects===[])return[];self::assertSchemaReady($db,$prefix);$objectIds=array_map('intval',array_column($objects,'id'));$idList=implode(',',$objectIds);$cases=$db->query("SELECT id,legacy_installation_object_id FROM `{$prefix}fm2_installation_cases` WHERE legacy_installation_object_id IN({$idList})")->fetch_all(MYSQLI_ASSOC);$objectByCase=[];$caseIds=[];foreach($cases as$row){$case=(int)$row['id'];$caseIds[]=$case;$objectByCase[$case]=(int)$row['legacy_installation_object_id'];}if($caseIds===[])return$objects;$caseList=implode(',',$caseIds);
         $progress=[];$items=$db->query("SELECT DISTINCT installation_case_id,item_id FROM `{$prefix}fm2_checklist_operations` WHERE installation_case_id IN({$caseList}) AND operation_type='item_completed'")->fetch_all(MYSQLI_ASSOC);foreach($items as$row){$case=(int)$row['installation_case_id'];$progress[$case]=min(85,($progress[$case]??0)+(self::WEIGHTS[(int)$row['item_id']]??0));}
         $factTypes=[];$factRows=$db->query("SELECT installation_case_id,fact_type FROM `{$prefix}fm2_pilot_completion_facts` WHERE installation_case_id IN({$caseList})")->fetch_all(MYSQLI_ASSOC);foreach($factRows as$row)$factTypes[(int)$row['installation_case_id']][(string)$row['fact_type']]=true;
         $state=[];foreach($objectByCase as$case=>$objectId){$value=$progress[$case]??0;$pto=isset($factTypes[$case]['pto_act']);$complete=$pto&&isset($factTypes[$case]['declaration']);$state[$objectId]=['status'=>self::status($value,$complete),'nextStep'=>$complete?'Монтаж закрыт актом ПТО и декларацией':($value<85?'Продолжить монтажные работы':($pto?'Добавить декларацию':'Зафиксировать дату акта ПТО'))];}
@@ -74,8 +75,15 @@ final class RapidPilotCompletionFlow
 
     public static function ensureQueueSchema(mysqli$db,string$prefix):void
     {
-        self::ensureSchema($db,$prefix);
+        self::assertSchemaReady($db,$prefix);
         (new \FMonitor2\PilotHttp\ChecklistSync($db,$prefix,'',''))->ensureSchema();
+    }
+
+    public static function assertSchemaReady(mysqli $db, string $prefix): void
+    {
+        if (!\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::isCompleteCompatible($db, $prefix)) {
+            throw new RuntimeException('Completion schema is unavailable.');
+        }
     }
 
     public static function paintStatuses(string$html):string
@@ -86,7 +94,8 @@ final class RapidPilotCompletionFlow
 
     public static function enhanceChecklist(string $html,int $objectId):string
     {
-        try{$db=self::db();$prefix=self::prefix();self::ensureSchema($db,$prefix);$case=self::case($db,$prefix,$objectId,false);if($case===null)return$html;$facts=self::facts($db,$prefix,(int)$case['id']);}
+        $db=self::db();$prefix=self::prefix();self::assertHttpSchemaReady($db,$prefix);
+        try{$case=self::case($db,$prefix,$objectId,false);if($case===null)return$html;$facts=self::facts($db,$prefix,(int)$case['id']);}
         catch(Throwable){return$html;}
         $pto=isset($facts['pto_act']);$complete=$pto&&isset($facts['declaration']);$final=$complete?100:85;
         $status=$complete?'Работы завершены':($pto?'Ожидается декларация':'Ожидается акт ПТО');$paint=$complete?'shlz-status--bright-green':'shlz-status--orange';$action=$complete?'Посмотреть документы':($pto?'Добавить декларацию':'Зафиксировать акт ПТО');
@@ -95,7 +104,7 @@ final class RapidPilotCompletionFlow
         $html=preg_replace('#<section class="fm2-check-section" data-check-section="8".*?</section>#s',$closeout,$html,1)??$html;
         $html=str_replace('<span data-total-progress>0</span>%','<span data-total-progress data-progress-cap="'.$final.'">0</span>%',$html);
         $html=str_replace('<span data-total-items>0</span> из 42 работ','<span data-total-items>0</span> из 41 монтажной работы',$html);
-        return str_replace('</body>','<script>document.addEventListener("DOMContentLoaded",()=>{const n=document.querySelector("[data-progress-cap]");if(!n)return;const cap=Number(n.dataset.progressCap);const paint=()=>{const v=Number(n.textContent);if((cap===100&&v!==100)||(cap===85&&v>85))n.textContent=String(cap)};new MutationObserver(paint).observe(n,{childList:true,characterData:true,subtree:true});paint()})</script></body>',$html);
+        return $html;
     }
 
     private static function currentAction(int$id,int$progress,array$facts,string$csrf,string$actions):string
@@ -120,7 +129,7 @@ final class RapidPilotCompletionFlow
     private static function status(int$progress,bool$complete):string{return$complete?'Работы завершены':($progress>=85?'Документарное закрытие':'Монтажные работы');}
     private static function facts(mysqli$db,string$p,int$caseId):array{$s=$db->prepare("SELECT fact_type,fact_date,details,recorded_at,recorded_by_user_id FROM `{$p}fm2_pilot_completion_facts` WHERE installation_case_id=? ORDER BY id");$s->bind_param('i',$caseId);$s->execute();$facts=[];foreach($s->get_result()->fetch_all(MYSQLI_ASSOC)as$r)$facts[$r['fact_type']]=$r;return$facts;}
     private static function insert(mysqli$db,string$p,int$caseId,string$type,string$date,string$details,int$actor,string$now):void{$s=$db->prepare("INSERT INTO `{$p}fm2_pilot_completion_facts`(installation_case_id,fact_type,fact_date,details,recorded_at,recorded_by_user_id)VALUES(?,?,?,?,?,?)");$s->bind_param('issssi',$caseId,$type,$date,$details,$now,$actor);$s->execute();}
-    private static function ensureSchema(mysqli$db,string$p):void{$db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_pilot_completion_facts`(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT UNSIGNED NOT NULL,fact_type ENUM('pto_act','declaration') NOT NULL,fact_date DATE NOT NULL,details VARCHAR(500) NOT NULL DEFAULT '',recorded_at VARCHAR(40) NOT NULL,recorded_by_user_id BIGINT UNSIGNED NOT NULL,UNIQUE KEY uq_case_fact(installation_case_id,fact_type),KEY(installation_case_id,id))ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");}
+    private static function assertHttpSchemaReady(mysqli$db,string$p):void{try{self::assertSchemaReady($db,$p);}catch(Throwable){self::unavailable();}}
     private static function case(mysqli$db,string$p,int$id,bool$lock):?array{$s=$db->prepare("SELECT id,process_state FROM `{$p}fm2_installation_cases` WHERE legacy_installation_object_id=? LIMIT 2".($lock?' FOR UPDATE':''));$s->bind_param('i',$id);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);return count($rows)===1?$rows[0]:null;}
     private static function actorId(mysqli$db,string$p):int{$userId=filter_var($_SERVER['FMONITOR_AUTH_USER_ID']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($userId===false)self::plain(403,'Пользователь не найден.');$s=$db->prepare("SELECT user_id FROM `{$p}fm2_pilot_users` WHERE user_id=? AND status=1 LIMIT 1");$s->bind_param('i',$userId);$s->execute();$row=$s->get_result()->fetch_assoc();if(!is_array($row))self::plain(403,'Пользователь не найден.');return(int)$row['user_id'];}
     private static function db():mysqli{mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$db=new mysqli(getenv('FMONITOR_DB_HOST')?:getenv('FMONITOR_DEMO_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:getenv('FMONITOR_DEMO_DB_USER')?:'',getenv('FMONITOR_DB_PASSWORD')?:getenv('FMONITOR_DEMO_DB_PASSWORD')?:'',getenv('FMONITOR_DB_NAME')?:getenv('FMONITOR_DEMO_DB_NAME')?:'',(int)(getenv('FMONITOR_DB_PORT')?:getenv('FMONITOR_DEMO_DB_PORT')?:3306));$db->set_charset('utf8mb4');return$db;}
@@ -129,5 +138,6 @@ final class RapidPilotCompletionFlow
     private static function now():string{return(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);}
     private static function shortDate(string$v):string{return(DateTimeImmutable::createFromFormat('!Y-m-d',$v)?->format('d.m.Y'))??$v;}
     private static function fail(mysqli$db,int$status,string$message):never{$db->rollback();self::plain($status,$message);}
+    private static function unavailable():never{$body="Service unavailable.\n";http_response_code(503);header('Content-Type: text/plain; charset=UTF-8');header('Cache-Control: no-store');header('Retry-After: 60');header('Content-Length: '.strlen($body));if(($_SERVER['REQUEST_METHOD']??'GET')!=='HEAD')echo$body;exit;}
     private static function plain(int$status,string$message):never{http_response_code($status);header('Content-Type: text/plain; charset=UTF-8');header('Cache-Control: no-store');echo$message."\n";exit;}
 }

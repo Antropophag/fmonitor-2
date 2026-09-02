@@ -10,8 +10,17 @@ require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
-require_once __DIR__ . '/UserAccessView.php';
+require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
 $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+$host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
+    http_response_code(400);
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Length: 13');
+    header('Cache-Control: no-store');
+    echo "Bad request.\n";
+    exit;
+}
 if ($path === '/') {
     header('Location: /pilot/objects', true, 302);
     header('Cache-Control: no-store');
@@ -192,7 +201,36 @@ if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrilli
     echo $bytes;
     exit;
 }
-(new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+if (is_string($path) && str_starts_with($path, '/pilot/assets/')) {
+    http_response_code(404);
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Length: 11');
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    echo "Not found.\n";
+    exit;
+}
+try {
+    (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
+} catch (Throwable) {
+    $body = "Service unavailable.\n";
+    http_response_code(503);
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Length: ' . strlen($body));
+    header('Retry-After: 60');
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: no-referrer');
+    header('X-Frame-Options: DENY');
+    header("Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+    header('Cross-Origin-Opener-Policy: same-origin');
+    header_remove('Set-Cookie');
+    header_remove('Location');
+    header_remove('X-Powered-By');
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') echo $body;
+    exit;
+}
 if (is_string($path) && preg_match('#^/pilot/admin/users/([1-9][0-9]*)/status$#D', $path, $statusRoute) === 1) {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') { http_response_code(405); header('Allow: POST'); exit; }
     RapidPilotUserAccessView::handleStatus((int) $statusRoute[1]);

@@ -7,7 +7,7 @@ RUN git clone --branch 6.11.4 --depth 1 https://github.com/tecnickcom/TCPDF.git 
 
 FROM alpine/git:2.49.1 AS shlz-ui
 
-ARG SHLZ_UI_REVISION=7ae8b5d6f42fa3143af078a8814fda2b36d80aa4
+ARG SHLZ_UI_REVISION=a0a8ca6df60b84aa1fe10a1cb500de32dacd4516
 RUN git clone https://github.com/Antropophag/shlz-ui.git /shlz-ui \
     && git -C /shlz-ui checkout --detach "${SHLZ_UI_REVISION}" \
     && test "$(git -C /shlz-ui rev-parse HEAD)" = "${SHLZ_UI_REVISION}"
@@ -38,6 +38,7 @@ COPY --from=shlz-ui-build /shlz-ui /workspace/shlz-ui
 COPY --from=tcpdf /tcpdf ./vendor/tecnickcom/tcpdf
 COPY rapid-pilot/tcpdf-autoload.php ./vendor/autoload.php
 COPY app ./app
+COPY bin ./bin
 COPY public ./public
 COPY rapid-pilot ./rapid-pilot
 

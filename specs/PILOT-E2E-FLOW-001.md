@@ -1,8 +1,12 @@
 # PILOT-E2E-FLOW-001 — пройти пилотный путь ФКР от очереди до открытия работ
 
-- Статус: `APPROVED`
-- Версия: `0.4`
-- Дата: `2026-08-29`
+> **BLOCKED TARGET E2E — 2026-09-02.** Manual registration route/number и
+> `registered` gate ниже — legacy characterization. Target amendment ждёт
+> original command, HTTP, composition и opening slices и fresh Gate 1 approval.
+
+- Статус: `DRAFT v0.5 — superseding combined-PDF amendment awaits review/owner approval`
+- Версия: `0.5`
+- Дата: `2026-09-02`
 - Актор: exact active legacy-пользователь с active legacy-ролью и явно настроенными process capabilities
 - Публичный seam: configured production HTTP под `/pilot`
 - Наследует: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-LIST-001 v0.1`, `PILOT-OBJECT-CARD-001 v0.2`, `PILOT-PREPARE-FORM-001 v0.1`, `PILOT-UI-SHELL-001 v0.4`, `ORDER-PREPARE-001..010`, `REGISTRATION-CONFIRM-001 v0.1`, `OPEN-INSTALLATION-001 v0.2`, `ARTIFACT-STORE-001 v0.2`, `PERSISTENCE-PREPARE-001`, `PERSISTENCE-REGISTRATION-001 v0.2`, `PERSISTENCE-OPEN-001 v0.1`
@@ -276,3 +280,112 @@ The fixed example therefore advances the same production clock between requests 
 - Comment: пользователь явно поручил delivery-optimized цельный демонстрационный путь, разрешил объединять близкие acceptance statements и потребовал сохранить SSD/TDD gates. Version `0.4` соединяет только уже утверждённые domain/persistence behaviors через production HTTP, фиксирует public observable PRG/CSRF/capability/concurrency/download/UI outcomes and permits one isolated, restored pre-start infrastructure fault fixture without weakening the uninterrupted main journey or runtime boundaries.
 
 Gate 2 разрешён только для version `0.4`; тест, независимый test review, implementation и независимый code review выполняются fresh bounded-context agents.
+
+## 12. Superseding combined-PDF amendment v0.5
+
+Этот раздел полностью supersede-ит противоречащие v0.4 clauses sections 1, 2,
+3, 4, 5, 6, 8 step 5–6/postcondition, 9 artifact oracle, 10 PDF non-goal и Gate 1
+authorization. Остальные command/CSRF/PRG/state/time/UI/rejection clauses v0.4
+сохраняются. Approval v0.4 не разрешает Gate 2 v0.5.
+
+### 12.1 Journey и route
+
+Journey exact:
+
+```text
+очередь → карточка → выбор состава → подготовленное распоряжение
+→ один combined PDF (распоряжение + приложение) → ручной номер 1С ДО
+→ открытие работ → updated card/queue → next engineer step
+```
+
+Download route допускает только:
+
+```text
+GET|HEAD /pilot/objects/{positive-id}/assignment-orders/{positive-version}/artifacts/order
+```
+
+Literal `appendix` и любой другой type, suffix, encoded/extra segment SHALL дать
+inherited exact 404 до artifact metadata/store read. Wrong method даёт 405
+`Allow: GET, HEAD` до identity/config/DB/body. Query ignored. Prepared/registered
+card содержит ровно одну visible link `Скачать распоряжение` на exact current
+version order URL; `Скачать приложение`/appendix URL отсутствуют.
+
+### 12.2 One artifact projection
+
+После prepare public process projection содержит ровно один artifact:
+
+```text
+type = order
+filename = Распоряжение о закреплении монтажников.pdf
+mediaType = application/pdf
+size = exact positive byte length stored bytes
+sha256 = lowercase SHA-256 stored bytes
+bytes prefix = %PDF-
+```
+
+Отдельный appendix metadata/blob не создаётся. Registration/open не
+пересобирают PDF; fresh connection/service after step 9 returns byte-identical
+metadata/bytes and exactly three process events prepare→registration→opening.
+
+### 12.3 Fixed example step 5–6
+
+Step 5 card показывает version1, одну order link и registration form. Step 6
+GET order link returns status200, `Content-Type: application/pdf`, exact stored
+Content-Length/bytes/hash and Unicode filename through approved disposition
+contract. PDF имеет ровно три `/Type /Page` objects (две страницы распоряжения,
+одна приложения).
+
+Independent decoder SHALL извлечь streams и доказать markers, заданные inputs/
+approved templates, а не download metadata/current output:
+
+```text
+РАСПОРЯЖЕНИЕ
+Перечень монтажников
+Москва, ул. Примерная, д. 10
+Иванов Иван Иванович
+Анна Волкова
+Инженер строительного контроля
+```
+
+Marker/page order SHALL доказывать order pages before appendix and installer/
+engineer correlation. Exact PDF hash между independent renders не фиксируется,
+поскольку renderer metadata допустима; внутри одного prepared artifact GET bytes
+MUST совпасть с persisted size/hash, repeat and fresh reload.
+
+### 12.4 Authorization, HEAD и failures
+
+- actor without exact artifact-read predecessor authority: 403
+  `Access denied.\n`, no-store/base security headers, no metadata/store read;
+- structurally valid unknown object/version/order metadata или invalid metadata/
+  filename/media/size/hash/store corruption: non-enumerating 404
+  `Not found.\n`, no partial bytes;
+- found metadata + storage I/O/EACCES/identity outage: 503
+  `Service unavailable.\n`, `Retry-After: 60`, no-store/base security headers,
+  no path/hash/object/SQL/exception leak;
+- HEAD performs same authorization/metadata/store integrity reads, returns same
+  status/application headers/GET Content-Length and empty body.
+
+### 12.5 Isolated fault, repeat and concurrency oracle
+
+Digest and shard EACCES are separate task-owned fixtures. Before fault each uses
+public process seam to prepare exact one-PDF projection and records public
+projection/artifact/event/DB-counter/storage-identity snapshots. One HTTP
+failure request occurs; finally stops server, restores mode, reloads through new
+connection/service and compares exact snapshots/bytes before cleanup.
+
+Two concurrent authorized GETs of same exact URL SHALL both return byte-identical
+200 PDF. Before/after public projection, artifact list, events, DB counters and
+owned storage file count/identity remain unchanged; no audit/domain/read marker
+is created. Repeat sequential GET/HEAD has same property.
+
+Fixture ownership/cleanup order: stop/reap server → restore exact fault → close
+handles/connections → revoke/drop exact task DB user/database → delete only
+verified task session/artifact roots. Setup/RBAC failure before artifact request
+is classified prerequisite failure, not combined-PDF RED.
+
+### 12.6 Gate 1 v0.5
+
+V0.4 approval is retained as superseded history only. V0.5 requires fresh
+independent Gate 1 review and explicit owner approval exact hash before changing
+E2E tests. RED, independent test review, minimal GREEN, full/fresh verification
+and independent code review remain mandatory.

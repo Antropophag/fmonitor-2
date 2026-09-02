@@ -111,7 +111,7 @@ final class RapidPilotCalendar
     private function read(DateTimeImmutable $first, DateTimeImmutable $last): array
     {
         $p = $this->processPrefix; $l = $this->legacyPrefix;
-        RapidPilotInspectionSchedule::ensureSchema($this->db,$p);
+        RapidPilotInspectionSchedule::assertSchemaReady($this->db,$p);
         $start = $first->format('Y-m-d'); $end = $last->format('Y-m-d');
         $legacyBase="SELECT m.id object_id,m.ordadr_address address,m.entrance,m.regnumber,COALESCE(c.process_state,'') event_status,%s event_date,'' identity,'' task_type FROM `{$l}fm_maintable` m LEFT JOIN `{$p}fm2_installation_cases` c ON c.legacy_installation_object_id=m.id WHERE %s BETWEEN ? AND ? ORDER BY event_date,m.id LIMIT ".(self::SOURCE_ROW_LIMIT+1);
         $definitions=[

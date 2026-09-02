@@ -1,5 +1,9 @@
 # OPEN-INSTALLATION-001 — успешно открыть монтажные работы
 
+> **TARGET PREDECESSOR — 2026-09-02.** Ниже описан реализованный opening через
+> legacy `registered` order. Target replacement принадлежит
+> `open-installation-from-assignment-order-original`; upload сам не открывает.
+
 - Статус: `APPROVED`
 - Версия: `0.2`
 - Дата: `2026-08-28`

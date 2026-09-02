@@ -1,5 +1,10 @@
 # REGISTRATION-CONFIRM-001 — вручную подтвердить регистрацию подготовленного распоряжения
 
+> **SUPERSEDED FOR TARGET PILOT — 2026-09-02.** Этот spec сохраняется как
+> immutable characterization manual-registration predecessor. Новый pilot не
+> вводит номер вручную и не использует `registered` как target gate. Replacement:
+> `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001`; новый RED/GREEN здесь запрещён.
+
 - Статус: `APPROVED`
 - Версия: `0.1`
 - Дата: `2026-08-28`

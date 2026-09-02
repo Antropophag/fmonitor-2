@@ -7,3 +7,5 @@ vendor/
 node_modules/
 .local-analysis/
 .local/
+__pycache__/
+*.pyc

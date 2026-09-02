@@ -2,11 +2,20 @@
 
 This is the mandatory path from a product decision to merged FMonitor 2.0 code. SSD means Specification-Driven Development.
 
+## OpenSpec lifecycle
+
+Every new migration slice starts as one structured change under `openspec/changes/`. Its proposal, delta specification, design, and tasks describe the lifecycle and integration scope. The normative executable behavior remains the stable specification identified below and reviewed through Gates 1–5; OpenSpec artifacts cannot waive, reorder, or self-approve a gate. Archive a change only after its Done definition, regression, architecture check, and independent code review are complete.
+
 ## Unit of work
 
 Deliver one vertical behavior slice at a time. A slice crosses the real public seam—from an accepted command or user action to its observable result—and is small enough for one red-green cycle. Each slice has a stable specification identifier such as `ORDER-PREPARE-001`.
 
 Before tests are written, record and confirm the public seam. Tests exercise that seam and remain valid when internals are replaced.
+
+Every executable specification starts with a short non-normative section
+`Простыми словами`: in plain language it says what changes, why it matters, and
+what the slice deliberately does not do. This summary helps navigation but does
+not replace or override the normative acceptance contract below it.
 
 ## Gate 1: executable specification
 

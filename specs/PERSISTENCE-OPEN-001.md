@@ -1,5 +1,9 @@
 # PERSISTENCE-OPEN-001 — долговечно сохранить открытие монтажных работ
 
+> **TARGET PREDECESSOR — 2026-09-02.** Legacy opening persistence ниже не
+> является target acceptance oracle. Replacement: отдельный change
+> `open-installation-from-assignment-order-original`.
+
 - Статус: `APPROVED`
 - Версия: `0.1`
 - Дата: `2026-08-28`

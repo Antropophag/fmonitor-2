@@ -1,5 +1,9 @@
 # PERSISTENCE-REGISTRATION-001 — долговечно сохранить ручную регистрацию точной версии
 
+> **SUPERSEDED FOR TARGET PILOT — 2026-09-02.** Ниже сохранён legacy
+> persistence contract manual registration. Historical rows остаются read-only;
+> replacement начинается с `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001`.
+
 - Статус: `APPROVED`
 - Версия: `0.2`
 - Дата: `2026-08-28`

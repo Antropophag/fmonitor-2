@@ -12,6 +12,8 @@ services:
       FMONITOR_DEMO_DB_USER: fmonitor2_demo
       FMONITOR_DEMO_DB_PASSWORD: fmonitor2_demo_local
       FMONITOR_DEMO_PORT: "8092"
+      FMONITOR_SESSION_STATE_ROOT: /home/fmonitor/.local/state/fmonitor2
+      FMONITOR_SESSION_INSTANCE: pilot
       FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS: "${FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS:-ts.grishin@shlz.ru}"
       FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD: "${FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD:?Set bootstrap superadministrator password in .env}"
     ports:

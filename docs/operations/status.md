@@ -8,6 +8,69 @@
 
 ## DONE
 
+- `CLASSIFICATION-PROVENANCE-SCHEMA-001` завершён через Gates 1–5. Canonical
+  runner владеет literal v11 `fm2_migration_classification_provenance`, включая
+  exact semantic fingerprint, clean/populated/conflict/repeat и verifier-only
+  two-runner race barrier; production composition использует только no-op и не
+  содержит `GET_LOCK`, `SLEEP`, ledger или скрытую serialization. Native,
+  historical и active-baseline consumers проверяют read-only readiness до
+  source access и выполняют только provenance DML. Унаследованные terminal-v10
+  catalogue/runtime fixtures согласованы с v11 без ослабления assertions.
+  Fresh Gate 5 rereview
+  `reviews/code/CLASSIFICATION-PROVENANCE-SCHEMA-001-v2.md` — `APPROVED`.
+  Slice GREEN; repository-wide `make verify` остаётся RED только по отдельно
+  owned session-storage, work-navigation и RBAC/PilotHttp slices, поэтому
+  глобальный `VERIFY_OK` не заявляется.
+
+- Владелец согласовал весь exact-hash batch
+  `morning-owner-approval-batch-2026-09-02`: classification-provenance v11,
+  object-list/prepare/E2E RBAC fixtures, joint combined-PDF/E2E v0.5 и session
+  storage. Append-only решение
+  `docs/operations/morning-owner-approval-decision-2026-09-02.md` закрывает
+  только Gate 1 и открывает Gate 2; tests/code/Done отдельно не одобрены.
+
+- `INSPECTION-PLANNING-SCHEMA-001` завершён через Gates 1–5. Canonical v9
+  единолично владеет exact schedules/events family; populated and both partial
+  families сохраняются, conflicts/CHECK/collation/prefix fail closed до
+  mutation. Scheduling POST, Calendar, queue, construction-control и bootstrap
+  используют read-only readiness и проходят DML-only exact/missing/drift
+  matrix. Runtime planning DDL удалён, architecture 7/7 и related
+  characterization GREEN. После Gate 5 maintainability finding migration
+  разделён на readable orchestration, one structured definition/DDL renderer и
+  derived MariaDB fingerprint; final code rereview `APPROVED`. Cadence,
+  reschedule/cancel и scheduling authorization остаются вне ownership slice.
+
+- `INSTALLATION-COMPLETION-SCHEMA-001` завершён через Gates 1–5. Canonical
+  runner теперь владеет literal v10 completion family: неизменяемыми root
+  ПТО/декларация facts и append-only correction chain. Existing populated
+  roots/ids/payload/counters сохраняются; incompatible и interrupted
+  reserved-index states fail closed до mutation. Queue, card, checklist,
+  completion POST и Compose bootstrap используют read-only readiness и проходят
+  exact/missing/drift matrix под DML-only principal; request-time completion
+  DDL удалён. Prefix 25/26, database-default collation, correction branch/gap/
+  cross-root constraints, caller `FOREIGN_KEY_CHECKS`, built image, fresh
+  lifecycle и architecture 7/7 доказаны. Final independent test review —
+  `APPROVED`; final code review после двух correction cycles — `APPROVED`.
+  Полный verify сохраняет только отдельно owned local-RBAC/login fixtures и
+  combined-PDF E2E; completion-owned, v10 catalogue/planning и characterization
+  checks GREEN.
+
+- Owner rejected weekly inspection cadence entirely. Product truth no longer
+  requires `+7 calendar days` due dates or weekly overdue state; historical
+  discovery provenance is retained only as rejected evidence. Inspection
+  scheduling/reschedule/cancel semantics remain separate, without a cadence
+  invariant.
+
+- `migrate-inspection-item-completion` завершён через Gate 1–5. Canonical v8
+  владеет schema, `InspectionRecording::completeItem` — единственный mutation
+  seam, а capability-only инженер теперь может использовать ровно одиночные
+  item controls без photo/revoke, attribution correction или bulk/section
+  completion. Executable UI RED прошёл независимый rereview, минимальный GREEN
+  и code review (`APPROVED`); focused item suites, characterization и
+  architecture 7/7 зелёные. Полный verify сохранил известный baseline из восьми
+  CSP/local-RBAC/combined-PDF DB regressions и повторяющего combined-PDF E2E
+  fault, уже разложенных на отдельные slices.
+
 - Catalogue-wide process-prefix reconciliation is independently accepted as
   `READY_FOR_PLANNING_UPDATES`. The release-supporting 39-byte
   `fm2_migration_classification_provenance` basename fixes the future composed
@@ -62,7 +125,205 @@
 - `CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001` completed all five gates with fresh independent review. The PILOT_ONLY oracle proves upload→revoke revision/history/blob retention, projection omission, exact sequential replay, already-revoked zero mutation and the current SQLSTATE `23000`/vendor `1062` identical-content re-upload failure without pinning exception text. Gate 3 caught and closed missing revision-1 projection, incomplete immutable metadata/payload evidence and early-failure cleanup gaps. Target revoke/correction/re-upload/retention semantics remain isolated in GRILL-007.
 - `CHARACTERIZE-INSPECTION-SCHEDULE-DUPLICATE-001 v0.2` completed all five gates after deliberately discarding an overfit 1000-line concurrency harness. The compact PILOT_ONLY oracle now proves six real form POST exchanges through the current handler: exact schedule/event creation, sequential duplicate no-op, and CSRF/capability/invalid-date/ineligible-case zero-mutation rejections. Test-owned loopback logs and per-request full-schema/raw-row snapshots prevent transcript or final-state fabrication. Concurrency, cadence, reassignment and reschedule/cancel remain deferred to GRILL-001 instead of being promoted.
 
-## IN_PROGRESS
+## IN_PROGRESS (authoritative current queue)
+
+- `define-pilot-session-storage-contract`: два честных Gate 3 цикла подтвердили
+  RED, но отвергли self-attesting test dispatcher и неполную public/Compose
+  наблюдаемость. Slice возвращён в planning/Gate 1 amendment; production work
+  запрещён до решения GRILL-009, fresh Gate 1 review, owner approval и нового
+  Gate 2/3 цикла.
+- `pilot-e2e-rbac-fixtures`: intended RBAC RED воспроизведён до PDF assertion,
+  однако fresh Gate 3 v3 — `CHANGES_REQUESTED`. Cleanup и denial diagnostics
+  можно исправлять test-only, но literal pre-list→artifact full-state equality
+  конфликтует с approved prepare mutation и требует Gate 1 amendment по
+  GRILL-009. Task 2.2 и весь GREEN остаются открыты.
+- `restore-pilot-work-navigation`: три planning findings закрыты согласованной
+  правкой всех четырёх OpenSpec artifacts: exact shared-shell route set,
+  root/non-root DOM oracle и inherited redirect/401/403/404/405/503 contracts.
+  Fresh independent rereview
+  `docs/operations/pilot-work-navigation-planning-rereview.md` вернул
+  `READY_FOR_OWNER_APPROVAL`; strict validation GREEN. Gate 2/RED остаётся
+  закрыт до exact-hash owner approval.
+- `pilot-prepare-rbac-fixtures`: Gate 1 owner-approved; task 2.1 RED завершён на
+  public GET/HEAD matrix (`403` вместо safe `503` при local permission-schema
+  fault). Fresh Gate 3 review вернул `CHANGES_REQUESTED` по boundary sentinels,
+  process-capability revoke, HEAD/503 correlation, actor/foreign decoys и
+  wrong-method body-read sensitivity; test-only correction идёт, task 2.2
+  открыта. Slice не зависит от GRILL-009; POST command semantics не меняются.
+- `pilot-object-read-rbac-fixtures`: первый RED attempt честно остановился на
+  work-navigation predecessor, а не на RBAC. Slice остаётся Gate 2-ready после
+  исправления и approval navigation slice; assertions не ослабляются.
+- `pilot-e2e-combined-pdf`: Gate 1 owner-approved, но его RED зависит от
+  исправленного E2E RBAC Gate 1/3 boundary; production/PDF alignment не начат.
+- `characterize-construction-control-queue`: read-only discovery оформлен в
+  planning-only OpenSpec 4/4. Fresh independent planning review
+  `docs/operations/construction-control-queue-planning-review.md` вернул
+  `READY_FOR_EXECUTABLE_SPEC_AUTHORING`; Gate 1 executable draft готовится без
+  RED/production и без продвижения PILOT_ONLY hazards в target requirements.
+- Completion characterization wiring correction independently `APPROVED` и
+  canonical characterization снова GREEN; этот bounded integration fix закрыт.
+
+## READY
+
+- Получить exact-hash owner approval для reviewed
+  `restore-pilot-work-navigation`; до него не начинать Gate 2/implementation.
+- Выполнить `pilot-prepare-rbac-fixtures` Gate 2 RED и independent Gate 3 review
+  без изменения POST command semantics.
+- Исправить test-only E2E RBAC denial diagnostics и attempt-all cleanup findings,
+  не пытаясь обойти заблокированный snapshot contract.
+- Продолжить predecessor-safe discovery и подготовку: object detail, generation
+  metadata, deterministic fictional fixture seed, migrated evidence и
+  quarantine; literal migration versions и RED остаются привязаны к landing
+  canonical frontier.
+- Продолжить PILOT_ONLY characterization discovery, не превращая текущие
+  completion/OTIZ дефекты и формулы в target requirements.
+- Подготовить exact executable Gate 1 draft для read-only construction-control
+  queue characterization, затем fresh independent review и owner approval до
+  любого RED.
+
+## NEEDS_GRILL
+
+- **GRILL-009** в
+  `docs/operations/post-departure-grill-package-2026-09-02.md` — три exact Gate 1
+  amendments. Recommended decisions: (1) session storage получает injectable
+  filesystem events/faults/clock/entropy, public factory/result DTO и read-only
+  Compose inspection seam; (2) classification получает verifier-only barrier
+  после absent-v11 preflight, без production config/lock semantics; (3) E2E RBAC
+  требует full equality вокруг authorization reads, затем exact approved prepare
+  delta при неизменных RBAC facts/counters до PDF. Блокирует только session
+  amendment/GREEN, classification tasks 3.1 и 3.3–5.2 плюс dependent canonical
+  frontier, E2E RBAC Gate 3/4 и dependent combined-PDF RED.
+- Gate 1 owner approvals всё ещё нужны для подготовленных PILOT_ONLY
+  characterization contracts: OTIZ snapshot acceptance, premium determinism,
+  declaration recording, PTO recording, inspection section completion,
+  attribution correction, inspection item completion и object-detail import.
+- GRILL-001 остаётся источником unresolved target semantics для completion
+  85/15/documents, completion roles/corrections, OTIZ release scope,
+  payment-closure evidence и financial separation of duties. Weekly inspection
+  cadence уже отвергнута и не должна возвращаться как pending question.
+- GRILL-003 уже решён для item completion. Photo-upload authorization/current
+  assignment остаётся отдельным решением и не выводится автоматически из него.
+
+## BLOCKED_EXTERNAL
+
+- Внешних environment blockers нет. Отсутствие owner во время автономной сессии
+  блокирует только перечисленные Gate 1 decisions; READY work продолжается.
+
+## Discovered risks
+
+- Три approved contracts дошли до independently demonstrated testability/design
+  contradictions. Продолжение GREEN без GRILL-009 создало бы hidden test hooks,
+  self-attesting harness либо невыполнимую snapshot expectation.
+- Full verification пока не release-green: local-RBAC route fixtures,
+  work-navigation predecessor и combined-PDF golden path образуют связанную,
+  но раздельно gated цепочку. Их нельзя «чинить» ослаблением assertions.
+- Canonical v11 frontier остановлен до classification amendment; object detail,
+  generation metadata и test-user seed не получают преждевременные literal
+  versions.
+- Runtime DDL/SQL/rapid-pilot mutation debt остаётся ratcheted, но не устранён;
+  critical completion/OTIZ authorization и financial invariants ещё не
+  stakeholder-approved target behavior.
+
+## Next autonomous actions
+
+1. Получить exact-hash owner approval work-navigation после fresh
+   `READY_FOR_OWNER_APPROVAL` rereview; затем начать отдельный RED/review cycle.
+2. Провести prepare-RBAC fixture через RED и independent test review, не
+   конкурируя за shared golden files.
+3. Подготовить exact GRILL-009 amendments без production edits, чтобы после
+   owner response немедленно запустить fresh Gate 1 review/approval cycle.
+4. Исправить незаблокированные E2E RBAC test-only diagnostics/cleanup findings и
+   сохранить intended RBAC RED.
+5. Продолжить discovery/prepare work за canonical frontier; после каждого
+   integrated GREEN запускать focused suites, architecture-check и full verify.
+
+## Historical queue snapshot (superseded 2026-09-02)
+
+Ниже сохранён прежний подробный status snapshot как навигация к evidence. Его
+утверждения о текущих очередях и gates не являются authoritative; при
+расхождении действуют разделы выше и append-only linked decisions/reviews.
+
+- Root-cause diagnosis proved the object-list shell predecessor failure is not
+  RBAC: `PilotView` unconditionally renders disabled «Моя работа» after commit
+  `5da1aff`, while approved object-list/UI-shell contracts require `/pilot/`.
+  Separate planning-only OpenSpec `restore-pilot-work-navigation` is 4/4 and
+  strict-valid; it awaits independent Gate 1 review/owner approval and has not
+  entered apply. Object-list RBAC RED remains honest and does not weaken the
+  predecessor assertion.
+
+- Gate 2 RED параллельно выполняется для
+  `canonicalize-classification-provenance-schema`,
+  `define-pilot-session-storage-contract` и `pilot-e2e-combined-pdf` после
+  exact owner approval. Следом READY три RBAC fixture slices; каждый test diff
+  требует fresh independent Gate 3 review.
+- Fresh `make verify` после canonical reset/migrations v1–v10: setup,
+  architecture 7/7, lint, unit и diff-check GREEN; DB, characterization и E2E
+  имели integration regressions. Completion characterization fatal был
+  локализован в отсутствующем require derived v10 fingerprint; bounded harness
+  wiring correction вернул полный `make characterization-test` в GREEN.
+  Independent review
+  `reviews/code/INSTALLATION-COMPLETION-CHARACTERIZATION-WIRING-001.md`
+  подтвердил `APPROVED`: one-line require является всем diff и его удаление
+  воспроизводит ранее reviewed verifier hash.
+- `define-pilot-session-storage-contract` Gate 2 прошёл два честных
+  `CHANGES_REQUIRED` review cycles. Второй review выявил Gate 1 design gap:
+  approved contract не задаёт injectable filesystem event/fault seam,
+  deterministic crash hooks, public storage result/factory shape и Compose
+  volume inspection contract, без которых test-owned dispatcher может
+  самоутвердить GREEN. Production work остановлен; требуется planning amendment,
+  fresh independent Gate 1 rereview и новое exact owner approval. Остальная
+  READY очередь продолжается.
+
+- Historical pre-approval checkpoint (superseded owner batch below): new
+  release-blocker planning packages were complete and strict-valid:
+  `pilot-e2e-combined-pdf` and `define-pilot-session-storage-contract` (4/4
+  artifacts each). They isolate the stale two-artifact E2E contract and
+  hardcoded `/home/fmonitor` session-path failure respectively; both require
+  their own Gate 1 review/owner approval before tests or code.
+  Final independent planning rereviews are `APPROVED_FOR_GATE1_DRAFT` for these
+  two plus object-list/prepare/E2E RBAC fixture packages; no RED is authorized.
+
+- `CLASSIFICATION-PROVENANCE-SCHEMA-001` exact Gate 1 draft is coherent and
+  independently `READY_FOR_OWNER_APPROVAL` at SHA-256
+  `a044645fac8c347e98ae876f1dfdb98c12944a1c4fde85a098f99b6a84be71ed`.
+  It fixes literal v11 after v1–v10, exact ten-column manifest, no-ledger bounded
+  race, three pre-source CLI outcomes and mandatory native-only non-atomic
+  contrast. Gate 2 remains prohibited pending explicit owner approval.
+
+- Morning owner batch is approved at every recorded exact hash. Decision:
+  `docs/operations/morning-owner-approval-decision-2026-09-02.md`; Gate 2 is
+  open, while test review/GREEN/code review/Done remain separate.
+
+- `LOCAL-RBAC-AUTH-CONTRACT-001` имеет approved Gates 1–5 и stable first-route
+  seam. Relevant focused DB/characterization и architecture GREEN; full verify
+  классифицирует remaining route fixtures отдельно. Три follow-up OpenSpec
+  planning packages созданы и strict-valid: `pilot-object-read-rbac-fixtures`,
+  `pilot-prepare-rbac-fixtures`, `pilot-e2e-rbac-fixtures` (каждый 4/4
+  artifacts). Они ссылаются на stable contract и ждут собственных Gate 1
+  review/owner approval; базовый contract остаётся 16/17 и не считается Done до
+  green full verification.
+
+- Historical checkpoint: `LOCAL-RBAC-AUTH-CONTRACT-001` was 14/17 when independently code-reviewed
+  `APPROVED`. The application seam, one-statement MariaDB snapshot adapter and
+  first `GET /pilot/objects → objects.read` consumer are focused-GREEN; lint and
+  architecture pass. Integration Done remains open while v9 catalogue fixtures,
+  follow-up route RBAC fixtures, CSP and combined-PDF E2E failures are resolved
+  through their own gated slices.
+
+- `LOCAL-RBAC-AUTH-CONTRACT-001` planning and executable Gate 1 are complete.
+  Fresh rereview returned `READY_FOR_OWNER_APPROVAL`; owner approved the exact
+  reviewed contract. The first vertical consumer is
+  `GET /pilot/objects → objects.read`; other routes remain follow-up slices.
+  Gate 2 RED is authorized; production changes still await independent test
+  approval.
+
+- `CANONICALIZE-INSPECTION-PLANNING-SCHEMA` Gate 1 is owner-approved:
+  canonical v1–v8 are landed, so the exact executable
+  `INSPECTION-PLANNING-SCHEMA-001` fixes literal v9. Two correction cycles
+  removed false runner lock/ledger assumptions, added every real runtime seam
+  including ObjectQueue, and bounded MariaDB JSON CHECK normalization. Fresh
+  final Gate 1 review is `READY_FOR_OWNER_APPROVAL`, and owner approval is
+  recorded. OpenSpec Gate 1 tasks are complete (3/13); Gate 2 RED may begin.
 
 - `CHARACTERIZE-OTIZ-SNAPSHOT-ACCEPTANCE-001 v0.1`: focused evidence and the
   four-artifact OpenSpec planning package are complete, strict-valid and passed
@@ -205,9 +466,19 @@
   assertions until minimal GREEN.
 - Identity/access Gate 1 evidence is captured in `docs/operations/identity-access-schema-evidence.md` from source owners and an isolated populated MariaDB 11.4.7 namespace. It proves bootstrap creates 8/9 tables while `fm2_pilot_user_status_events` is request-lazy, records exact columns/indexes/FKs/defaults/collation and normalized hashes without secrets, and leaves zero fixture tables with Compose down.
 - `IDENTITY-ACCESS-SCHEMA-001 v0.1` completed Gates 1–5 with final independent code rereview `reviews/code/IDENTITY-ACCESS-SCHEMA-001-v3.md` and supplementary scoped rereview v4 both `APPROVED`. Canonical runner owns the exact nine-table family as literal v6 after workforce v5, accepts generated presentation names semantically, validates utf8mb4/UCA defaults before any migration, preserves populated/compatible partial state, rejects incompatible families before mutation, keeps CLI diagnostics redacted and removes runtime identity DDL behind explicit application seams. Strict OpenSpec, focused schema/runtime/preflight suites, current-tree built image and architecture 7/7 pass. Final `make verify` returns exactly the known baseline of eight DB failures plus the same combined-PDF E2E failure; no identity/access regression remains. The slice is DONE and ready for its dedicated local commit.
-- Calibration change `migrate-inspection-item-completion`: proposal/spec/design/tasks ready; fresh behavior/auth evidence corrected its earlier “NEEDS_GRILL none” claim. Gate 1 now explicitly requires approval of `inspection.item.complete` and GRILL-003 object scope before RED.
-- Checklist-template and inspection-evidence canonicalization are prepared for Gate 1; the local-RBAC schema contract remains pending GRILL-002.
-- Inspection-evidence schema ownership is also implementation-ready through Gate 1 and is the direct prerequisite for the calibration item-completion slice.
+- Calibration change `migrate-inspection-item-completion`: GRILL-003 is
+  owner-resolved. Any active engineer with exact capability
+  `inspection.item.complete` may complete items on any object; assignment is
+  routing/audit context, while every offline receipt rechecks current active
+  status and capability without treating `deviceTime` as authority time. Durable
+  decision, target executable Gate 1 draft and OpenSpec acceptance scenarios are
+  synchronized. Landed canonical inspection-evidence v8 is the persistence
+  prerequisite; inspection-planning is not a dependency. Independent Gate 1
+  review and explicit approval of the exact executable spec precede RED.
+- Checklist-template, inspection-evidence, identity/access, inspection-planning,
+  installation-completion and calibration item-completion ownership slices are
+  landed; their historical planning notes below remain provenance, not queue
+  state.
 - Full-suite discovery is active. DB matrix is down to eight isolated regressions: three shared CSP paths, four local-RBAC fixture paths, and the combined-PDF E2E artifact path.
 - `INSPECTION-PHOTO-UPLOAD-001` behavior discovery is complete: validation/idempotency/storage rules are inventoried, the focused success/replay/storage-failure oracle is executable, and only exact evidence authorization remains a product decision before target Gate 1.
 - The first focused photo-upload characterization tracer is green; broader rejection/limit/concurrency characterization and target authorization clauses remain separate work.
@@ -289,22 +560,23 @@
   independent planning rereview returned `READY_WHEN_PREDECESSORS_LAND`. No
   literal version, Gate 1 approval, RED or implementation has started.
 
-## READY
+### Historical READY
 
-- Continue behavior/schema discovery beyond the prepared workforce → identity → checklist-template → inspection-evidence → inspection-planning dependency chain while their explicit approvals/versions are pending.
-- Continue generation-metadata planning only after fresh rereview; ownership/
-  separation discovery and release-contour choice are complete. It remains
-  setup-only and must not import destructive reset behavior into production
-  migrations.
-- Keep optional active-baseline provenance behind GRILL-004; its ownership
-  discovery is complete and the Compose release-contour decision does not
-  promote legacy-active cutover.
-- Continue object-detail snapshot schema planning from its existing evidence;
-  keep importer capture semantics separate from the approved fictional fixture
-  contour and do not import production personal data.
-- `INSPECTION-PHOTO-UPLOAD-001` target spec preparation resumes immediately after GRILL-003/006 authorization and replay/limit decisions.
+- Finish Gate 2/3 correction cycles for classification v11 and session storage;
+  finish first Gate 2/3 cycle for combined-PDF/E2E.
+- Start the three owner-approved RBAC fixture RED slices after the shared E2E
+  test writer releases its file; do not overlap edits to the golden journey.
+- Independently review the bounded completion-characterization wiring fix, then
+  keep the characterization stage GREEN.
+- Continue behavior/schema discovery beyond the landed canonical frontier.
+  Generation metadata, fixture seed, migrated evidence, quarantine and object
+  detail remain predecessor-ordered; approved synthetic data never promotes
+  production personal data or legacy-active cutover.
+- Photo upload target planning may use approved limit/replay policy, but exact
+  upload authorization/current-assignment semantics remain a distinct owner
+  decision and must not be inferred from item-completion policy.
 
-## NEEDS_GRILL
+### Historical NEEDS_GRILL
 
 - Gate 1 approval for `CHARACTERIZE-OTIZ-SNAPSHOT-ACCEPTANCE-001 v0.1` as a
   strictly `PILOT_ONLY` oracle. Recommended: `APPROVED`; it changes no product
@@ -350,18 +622,33 @@
   recovery and the coherent four-artifact OpenSpec update. Any incompatible
   existing member remains zero-mutation conflict; GRILL-002 behavior authority
   remains separate.
-- GRILL-006: approve target photo evidence limit scope, overflow UX and client-operation payload-conflict semantics. Recommended: a per-section active-photo limit, deterministic non-retryable overflow that remains removable locally, and conflict (not duplicate) when one operation id is reused with different payload. This blocks target photo-upload Gate 1 but not the PILOT_ONLY concurrency characterization now in preparation.
-- GRILL-007: approve photo revoke authorization, mandatory reason/confirmation, completed-section correction, identical-content re-upload and retention. Recommended: exact revoke capability plus current assignment; bounded mandatory reason; ordinary last-photo revoke rejected until replacement, elevated audited correction separate; identical bytes allowed as a new evidence fact while reusing blob storage; retain revoked blobs through the test-user release. This blocks target revoke/UX only, not the PILOT_ONLY revoke characterization.
-- Gate 1 approval for `INSPECTION-ITEM-COMPLETE-001`, including capability name `inspection.item.complete`.
+- GRILL-006 resolved 2026-09-02: owner approved maximum 10 active photos per
+  section, revoked-history exclusion from the count, deterministic non-retryable
+  `PHOTO_LIMIT_REACHED` with removable/replaceable local item, exact replay as
+  idempotent duplicate and changed-payload reuse as zero-mutation
+  `OPERATION_PAYLOAD_CONFLICT`. Target photo-upload Gate 1 is unblocked;
+  authorization and revoke policy remain separate.
+- GRILL-007 resolved 2026-09-02: owner approved exact revoke capability plus
+  current assignment, bounded mandatory reason and confirmation, replacement
+  before ordinary last-photo revoke on a completed section, separate elevated
+  readiness correction, identical-byte re-upload as a new fact with optional
+  blob reuse, and permanent retention of all active/revoked photos. Physical
+  product cleanup is prohibited until a new explicit owner decision with
+  legal/security review. Target revoke/correction/UX Gate 1 is unblocked.
+- Gate 1 approval for exact `INSPECTION-ITEM-COMPLETE-001 v0.1`; GRILL-003
+  authorization policy itself is already owner-approved.
 - GRILL-001 questions in `migration-backlog-and-grill.md`: inspection cadence; completion 85/15/documents; completion roles/corrections; OTIZ release scope; payment-closure meaning/evidence; financial separation of duties.
-- GRILL-002: approve local RBAC as authoritative, route-specific same-origin JavaScript CSP, and the single combined-PDF assignment-order contract. These decisions block only the eight isolated HTTP/E2E regressions.
+- GRILL-002 resolved 2026-09-02: owner approved authoritative local RBAC,
+  route-scoped same-origin external JavaScript CSP without inline/eval, and one
+  combined versioned assignment-order PDF. Six focused security/E2E slices are
+  unblocked; each retains all five delivery gates.
 - GRILL-003: require both `inspection.photo.upload` and current engineer assignment, and reject queued uploads received after reassignment. This blocks evidence-mutation authorization clauses, not characterization/schema work.
 
-## BLOCKED_EXTERNAL
+### Historical BLOCKED_EXTERNAL
 
 - None for bootstrap. Product decisions block only the named slices; other READY work continues.
 
-## Discovered risks
+### Historical discovered risks
 
 - Golden E2E proves no post-open engineer mutation. Current item-completion pilot
   semantics contradict the draft target on payload conflicts, stale revision and
@@ -386,13 +673,16 @@
 - Fresh real `make fresh-test-verify` independently reviewed on 2026-09-01: it preserved the same `FULL_VERIFICATION_FAILURE count=2 stages=db-test,e2e-test`, emitted `FRESH_TEST_VERIFY_FAILURE verify_status=2 teardown_status=0`, and left no Compose services.
 - The DB regressions expose three unapproved historical contract changes rather than implementation-only fixture drift; they must not be greened by weakening assertions.
 
-## Next autonomous actions
+### Historical next autonomous actions
 
-1. On owner approval of `CHARACTERIZE-OBJECT-DETAIL-IMPORT-001 v0.1`, assign a
-   fresh RED author and then a different fresh independent test reviewer; do not
-   modify the importer before Gate 3 approval.
-2. On owner response, resolve GRILL-002 and immediately migrate CSP/local-RBAC/combined-PDF contracts without weakening authorization.
-3. Execute Gate 2 for approved `WORKFORCE-CANONICAL-RUNNER-001 v0.1` with a fresh RED author, then a different fresh independent test reviewer; canonical `make verify` currently truthfully reports v4 and no implementation begins before Gate 3 approval.
-4. Extend photo-upload characterization only where it unlocks the target slice; keep GRILL-003 authorization and target-only dimensions/caption REDs unresolved until Gate 1.
-5. On owner approval, immediately assign fresh RED and independent test-review agents for calibration and evidence slices.
-6. Draft the smallest versioned fictional test-user fixture-seed Gate 1 under the approved no-personal-data policy; keep destructive reset operator-only and normal restart state-preserving.
+1. Close classification/session/combined-PDF Gate 3 correction cycles with
+   fresh reviewers; begin minimal GREEN only after APPROVED verdicts.
+2. Run object-list, prepare and E2E RBAC fixture slices through RED and separate
+   independent test reviews, serializing writers of shared golden files.
+3. Re-run canonical verification after each integrated GREEN and close
+   `define-pilot-route-csp`/`define-local-rbac-auth-contract` only when their
+   owned historical regressions actually disappear.
+4. Advance the canonical predecessor frontier from classification v11 toward
+   object detail, generation metadata and deterministic fictional fixture seed.
+5. Keep discovery moving for characterization slices awaiting owner Gate 1;
+   do not promote PILOT_ONLY financial/completion behavior into target rules.

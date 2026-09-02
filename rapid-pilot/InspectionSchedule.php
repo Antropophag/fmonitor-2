@@ -18,7 +18,7 @@ final class RapidPilotInspectionSchedule
         $prefix = self::prefix();
         $db = self::db();
         try {
-            self::ensureSchema($db, $prefix);
+            self::assertSchemaReady($db, $prefix);
             $csrf = (string) ($_POST['csrfToken'] ?? '');
             $expected = (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? '');
             if ($csrf === '' || $expected === '' || !hash_equals($expected, $csrf)) self::fail(403, 'Недопустимый запрос.');
@@ -52,10 +52,12 @@ final class RapidPilotInspectionSchedule
         } finally { $db->close(); }
     }
 
-    public static function ensureSchema(mysqli $db, string $prefix): void
+    public static function assertSchemaReady(mysqli $db, string $prefix): void
     {
-        $db->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_inspection_schedules`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT UNSIGNED NOT NULL,legacy_object_id BIGINT UNSIGNED NOT NULL,control_engineer_user_id BIGINT UNSIGNED NOT NULL,inspection_date DATE NOT NULL,scheduled_by_user_id BIGINT UNSIGNED NOT NULL,scheduled_at VARCHAR(40) NOT NULL,UNIQUE KEY unique_planned_inspection(installation_case_id,control_engineer_user_id,inspection_date),KEY calendar_date(inspection_date,id),KEY engineer_day(control_engineer_user_id,inspection_date,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE IF NOT EXISTS `{$prefix}fm2_pilot_inspection_schedule_events`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,schedule_id BIGINT UNSIGNED NOT NULL,installation_case_id BIGINT UNSIGNED NOT NULL,event_type VARCHAR(80) NOT NULL,payload_json JSON NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,KEY(schedule_id,id),KEY(installation_case_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        require_once dirname(__DIR__).'/app/InstallationProcess/InspectionPlanningSchemaMigration.php';
+        if (!\FMonitor2\InstallationProcess\InspectionPlanningSchemaMigration::isCompleteCompatible($db, $prefix)) {
+            throw new RuntimeException('INSPECTION_PLANNING_SCHEMA_NOT_READY');
+        }
     }
 
     public static function canSchedule(mysqli $db, string $prefix, int $userId): bool
@@ -77,7 +79,7 @@ final class RapidPilotInspectionSchedule
 
     public static function enhanceControl(string $html): string
     {
-        $prefix=self::prefix();$db=self::db();try{self::ensureSchema($db,$prefix);$today=self::now()->format('Y-m-d');$s=$db->prepare("SELECT legacy_object_id FROM `{$prefix}fm2_pilot_inspection_schedules` WHERE inspection_date=?");$s->bind_param('s',$today);$s->execute();$planned=array_fill_keys(array_map('intval',array_column($s->get_result()->fetch_all(MYSQLI_ASSOC),'legacy_object_id')),true);}finally{$db->close();}
+        $prefix=self::prefix();$db=self::db();try{self::assertSchemaReady($db,$prefix);$today=self::now()->format('Y-m-d');$s=$db->prepare("SELECT legacy_object_id FROM `{$prefix}fm2_pilot_inspection_schedules` WHERE inspection_date=?");$s->bind_param('s',$today);$s->execute();$planned=array_fill_keys(array_map('intval',array_column($s->get_result()->fetch_all(MYSQLI_ASSOC),'legacy_object_id')),true);}catch(Throwable $error){error_log('construction_control_planning_failed '.get_class($error));self::fail(503,'Контроль объектов временно недоступен. Повторите попытку.');}finally{$db->close();}
         if($planned===[])return$html;
         if(preg_match('#<tbody>(.*?)</tbody>#s',$html,$body)!==1)return$html;
         preg_match_all('#<tr class="fm2-control-row"[^>]*data-object-id="([1-9][0-9]*)".*?</tr>#s',$body[1],$matches,PREG_SET_ORDER);$first='';$rest=$body[1];

@@ -2,7 +2,9 @@
 
 COMPOSE := docker compose
 
-.PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret
+.PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
+	test-env-up test-env-down test-db-reset migrate unit-test db-test \
+	characterization-test e2e-test architecture-check lint verify fresh-test-verify
 
 help:
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
@@ -12,6 +14,13 @@ help:
 	@echo "make logs   Показать логи"
 	@echo "make ps     Показать состояние контейнеров"
 	@echo "make reset  Удалить локальные данные пилота"
+	@echo "make test-env-up/down  Поднять/остановить disposable test MariaDB"
+	@echo "make test-db-reset    Пересоздать чистую test DB"
+	@echo "make migrate          Применить canonical production migrations к test DB"
+	@echo "make unit-test/db-test/characterization-test/e2e-test"
+	@echo "make architecture-check  Проверить machine-checkable boundaries"
+	@echo "make verify           Полная clean-checkout проверка"
+	@echo "make fresh-test-verify  Полная проверка с обязательным test-env teardown"
 
 _bitrix-secret:
 	@mkdir -p .local
@@ -49,3 +58,117 @@ ps:
 
 reset:
 	$(COMPOSE) down --volumes
+
+test-env-up:
+	docker compose -f compose.test.yaml up --detach --wait test-db
+
+test-env-down:
+	docker compose -f compose.test.yaml down --volumes --remove-orphans
+
+test-db-reset: test-env-up
+	@FMONITOR_TEST_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" php tools/verification/reset-test-db.php
+
+migrate:
+	@FMONITOR_DB_HOST="$${FMONITOR_TEST_DB_HOST:-127.0.0.1}" \
+	FMONITOR_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" \
+	FMONITOR_DB_NAME="$${FMONITOR_TEST_DB_NAME:-fmonitor2_test}" \
+	FMONITOR_DB_USER="$${FMONITOR_TEST_DB_USER:-fmonitor2_test}" \
+	FMONITOR_DB_PASSWORD="$${FMONITOR_TEST_DB_PASSWORD:-fmonitor2_test_local}" \
+	FMONITOR_PROCESS_TABLE_PREFIX= php bin/fmonitor2-migrate.php
+
+unit-test:
+	@bash tools/verification/run.sh unit
+
+db-test: test-env-up
+	@bash tools/verification/run.sh db
+
+characterization-test:
+	@bash tools/verification/run.sh characterization
+
+e2e-test: test-env-up
+	@bash tools/verification/run.sh e2e
+
+architecture-check:
+	@tools/architecture/check
+
+lint:
+	@bash tools/verification/run.sh lint
+
+verify:
+	@set +e; failures=""; failed_count=0; setup_failed=0; setup_cause=""; \
+	record_failure() { \
+		failed_stage="$$1"; \
+		failed_count=$$((failed_count + 1)); \
+		failures="$${failures}$${failures:+,}$${failed_stage}"; \
+	}; \
+	run_stage() { \
+		stage_name="$$1"; shift; \
+		"$$@"; stage_status=$$?; \
+		if [ $$stage_status -eq 0 ]; then \
+			printf 'VERIFY_STAGE %s PASS\n' "$$stage_name"; \
+		else \
+			printf 'VERIFY_STAGE %s FAIL\n' "$$stage_name"; \
+			record_failure "$$stage_name"; \
+		fi; \
+		return $$stage_status; \
+	}; \
+	run_setup_stage() { \
+		stage_name="$$1"; shift; \
+		run_stage "$$stage_name" "$$@"; stage_status=$$?; \
+		if [ $$stage_status -ne 0 ]; then \
+			printf 'SETUP_FAILURE stage=%s\n' "$$stage_name" >&2; \
+			setup_failed=1; \
+			setup_cause="$$stage_name"; \
+		fi; \
+		return $$stage_status; \
+	}; \
+	skip_setup_blocked_stage() { \
+		stage_name="$$1"; \
+		setup_blocker="$$2"; \
+		printf 'SETUP_FAILURE stage=%s cause=%s outcome=SKIP\n' "$$stage_name" "$$setup_blocker" >&2; \
+		printf 'VERIFY_STAGE %s FAIL\n' "$$stage_name"; \
+		record_failure "$$stage_name"; \
+	}; \
+	run_setup_stage test-db-reset $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test-db-reset; \
+	if [ $$setup_failed -eq 0 ]; then \
+		run_setup_stage migrate $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') migrate; \
+	else \
+		skip_setup_blocked_stage migrate "$$setup_cause"; \
+	fi; \
+	run_stage architecture-check $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') architecture-check; \
+	run_stage lint $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') lint; \
+	run_stage unit-test $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') unit-test; \
+	if [ $$setup_failed -eq 0 ]; then \
+		run_stage db-test $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') db-test; \
+	else \
+		skip_setup_blocked_stage db-test "$$setup_cause"; \
+	fi; \
+	run_stage characterization-test $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') characterization-test; \
+	if [ $$setup_failed -eq 0 ]; then \
+		run_stage e2e-test $(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') e2e-test; \
+	else \
+		skip_setup_blocked_stage e2e-test "$$setup_cause"; \
+	fi; \
+	run_stage diff-check git diff --check; \
+	if [ $$failed_count -ne 0 ]; then \
+		printf 'FULL_VERIFICATION_FAILURE count=%s stages=%s\n' "$$failed_count" "$$failures"; \
+		exit 1; \
+	fi; \
+	printf 'VERIFY_OK\n'
+
+fresh-test-verify:
+	@set +e; \
+	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') verify; \
+	verify_status=$$?; \
+	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test-env-down; \
+	teardown_status=$$?; \
+	if [ $$teardown_status -ne 0 ]; then \
+		printf 'SETUP_FAILURE stage=test-env-down\n' >&2; \
+	fi; \
+	if [ $$verify_status -eq 0 ] && [ $$teardown_status -eq 0 ]; then \
+		printf 'FRESH_TEST_VERIFY_OK\n'; \
+		exit 0; \
+	fi; \
+	printf 'FRESH_TEST_VERIFY_FAILURE verify_status=%s teardown_status=%s\n' "$$verify_status" "$$teardown_status"; \
+	if [ $$verify_status -ne 0 ]; then exit $$verify_status; fi; \
+	exit $$teardown_status

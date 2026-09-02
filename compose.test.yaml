@@ -1,0 +1,21 @@
+name: fmonitor2-test
+
+services:
+  test-db:
+    image: mariadb:11.4.7-noble
+    environment:
+      MARIADB_DATABASE: fmonitor2_test
+      MARIADB_USER: fmonitor2_test
+      MARIADB_PASSWORD: fmonitor2_test_local
+      MARIADB_ROOT_PASSWORD: fmonitor2_test_root_local
+    ports:
+      - "127.0.0.1:${FMONITOR_TEST_DB_PORT:-23306}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    tmpfs:
+      - /var/lib/mysql
+

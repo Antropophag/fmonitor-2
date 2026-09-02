@@ -1,5 +1,10 @@
 # PROCESS-COMMAND-AUTHORIZATION-001 — авторизовать подтверждение регистрации и открытие отдельными capabilities
 
+> **PILOT DISPOSITION — 2026-09-02.** `assignment_order.confirm_registration`
+> ниже — legacy predecessor. Target command требует exact
+> `assignment_order.original.upload`/`.correct` по
+> `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001`; HTTP/local admission отложен.
+
 - Статус: `APPROVED`
 - Версия: `0.2`
 - Дата: `2026-08-28`

@@ -3,12 +3,31 @@ declare(strict_types=1);
 
 namespace FMonitor2\PilotHttp;
 
+require_once __DIR__.'/MariaDbInstallationCaseIdResolver.php';
+foreach(['InspectionEvidenceClock','InspectionRecording','InspectionEvidenceView','InspectionEvidenceApplication','CompleteInspectionItem','ItemCompletionResult','InstallerEvidence','ItemCompletionEvidence','InspectionItemCommandPolicy','ItemCompletionEvidenceCodec','InspectionEvidence','MariaDbInspectionAuthorization','MariaDbInspectionTransaction','MariaDbInspectionCaseDirectory','MariaDbInspectionTemplateDirectory','MariaDbInspectionEvidenceWriter','MariaDbInspectionEvidenceReader','MariaDbInspectionEvidenceEnvironment','ProductionInspectionEvidenceConfig','ProductionInspectionEvidenceFactory']as$file)require_once \dirname(__DIR__).'/InspectionEvidence/'.$file.'.php';
+
+use FMonitor2\InspectionEvidence\{CompleteInspectionItem,InspectionEvidenceClock,InspectionRecording,ProductionInspectionEvidenceConfig,ProductionInspectionEvidenceFactory};
 use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
 
 final class ChecklistSync
 {
     private const SECTION_ITEMS=[1=>[28,29,30,31,32,33,34,35,36],2=>[37,38,39,40,41],3=>[1,2,3,4,5,6],4=>[7,8,9,10],5=>[11,12,13,14,15],6=>[16,17,18,19,20,21],7=>[22,23,24,25,26,27],8=>[42]];
-    public function __construct(private readonly \mysqli $db,private readonly string $prefix,private readonly string $storageRoot,private readonly string $now){}
+    private ?InspectionRecording $inspectionRecording;private readonly \Closure $installationCaseIdResolver;private readonly ProductionInspectionEvidenceConfig $inspectionConfig;
+
+    public function __construct(
+        private readonly \mysqli $db,
+        private readonly string $prefix,
+        private readonly string $storageRoot,
+        private readonly string $now,
+        ?InspectionRecording $inspectionRecording = null,
+        ?callable $installationCaseIdResolver = null,
+    ) {
+        $this->inspectionConfig = new ProductionInspectionEvidenceConfig($prefix);
+        $this->inspectionRecording = $inspectionRecording;
+        $this->installationCaseIdResolver = $installationCaseIdResolver === null
+            ? $this->resolveInstallationCaseId(...)
+            : \Closure::fromCallable($installationCaseIdResolver);
+    }
 
     public function ensureSchema():void
     {
@@ -29,7 +48,9 @@ final class ChecklistSync
 
     public function accept(int $objectId,HttpUser $actor,array $operation,?string $bytes=null):array
     {
-        $id=(string)($operation['clientOperationId']??'');$device=(string)($operation['deviceInstallationId']??'');$type=(string)($operation['type']??'');$deviceTime=(string)($operation['deviceTime']??'');$base=$operation['baseRevision']??null;$section=$operation['sectionId']??null;
+        $type=(string)($operation['type']??'');
+        if($type==='item_completed')return $this->completeItem($objectId,$actor,$operation);
+        $id=(string)($operation['clientOperationId']??'');$device=(string)($operation['deviceInstallationId']??'');$deviceTime=(string)($operation['deviceTime']??'');$base=$operation['baseRevision']??null;$section=$operation['sectionId']??null;
         if(!self::uuid($id)||!self::uuid($device)||!self::instant($deviceTime)||!\is_int($base)||$base<0||!\is_int($section)||!isset(self::SECTION_ITEMS[$section]))return ['status'=>'rejected','message'=>'Некорректные данные операции.'];
         $duplicate=$this->duplicate($id);if($duplicate!==null)return ['status'=>'duplicate','revision'=>(int)$duplicate['accepted_revision']];
         $this->db->begin_transaction();try{
@@ -42,6 +63,54 @@ final class ChecklistSync
             else{$this->db->rollback();return ['status'=>'rejected','message'=>'Неизвестная операция.'];}
             $next=$revision+1;$json=\json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_checklist_operations`(installation_case_id,client_operation_id,device_installation_id,operation_type,section_id,item_id,actor_user_id,device_time,server_received_at,base_revision,accepted_revision,payload_json,template_snapshot_id,template_snapshot_version,template_content_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");$actorId=$actor->id;$receivedAt=$this->now;$snapshotId=(int)$template['snapshot_id'];$snapshotVersion=(string)$template['snapshot_version'];$snapshotHash=(string)$template['content_sha256'];$s->bind_param('isssiisssiisiss',$caseId,$id,$device,$type,$section,$item,$actorId,$deviceTime,$receivedAt,$base,$next,$json,$snapshotId,$snapshotVersion,$snapshotHash);$s->execute();if(isset($selected)){$assignment=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_checklist_operation_installers`(client_operation_id,installer_tab_id,fio_snapshot,position_snapshot,employment_status_snapshot,dismissal_effective_at_snapshot,workforce_source_updated_at_snapshot,assignment_source) VALUES(?,?,?,?,?,?,?,?)");$source=$type==='item_completed'?'completion':'correction';foreach($selected as$installer){$tab=(string)$installer['tabId'];$fio=(string)$installer['fio'];$position=(string)$installer['position'];$status=(string)$installer['employmentStatus'];$dismissal=$installer['dismissalEffectiveAt'];$updated=(string)$installer['sourceUpdatedAt'];$assignment->bind_param('ssssssss',$id,$tab,$fio,$position,$status,$dismissal,$updated,$source);$assignment->execute();}}$this->setRevision($caseId,$next);$this->db->commit();return ['status'=>'accepted','revision'=>$next];
         }catch(\mysqli_sql_exception $e){$this->db->rollback();$duplicate=$this->duplicate($id);if($duplicate!==null)return ['status'=>'duplicate','revision'=>(int)$duplicate['accepted_revision']];throw $e;}catch(\Throwable $e){$this->db->rollback();throw $e;}
+    }
+
+    private function completeItem(int $objectId,HttpUser $actor,array $operation):array
+    {
+        try{$caseId=($this->installationCaseIdResolver)($objectId);}catch(PilotHttpInfrastructureUnavailable $e){throw $e;}catch(\Throwable $e){throw new PilotHttpInfrastructureUnavailable('INSTALLATION_CASE_RESOLUTION_FAILED',0,$e);}
+        if($caseId===null)return ['status'=>'rejected','revision'=>0];
+        $result=$this->inspectionRecording()->completeItem(new CompleteInspectionItem(
+            $actor->id,
+            $caseId,
+            (string)($operation['clientOperationId']??''),
+            (string)($operation['deviceInstallationId']??''),
+            (string)($operation['deviceTime']??''),
+            (int)($operation['baseRevision']??-1),
+            (int)($operation['sectionId']??0),
+            (int)($operation['itemId']??0),
+            \array_map('intval',(array)($operation['installerTabIds']??[])),
+        ));
+        if($result->status==='INSPECTION_SCHEMA_UNAVAILABLE')throw new PilotHttpInfrastructureUnavailable('INSPECTION_EVIDENCE_SCHEMA_REQUIRED');
+        $status=match($result->status){
+            'ACCEPTED'=>'accepted',
+            'DUPLICATE'=>'duplicate',
+            'STALE_REVISION','OPERATION_PAYLOAD_CONFLICT'=>'conflict',
+            default=>'rejected',
+        };
+        return ['status'=>$status,'revision'=>$result->revision];
+    }
+
+    private function inspectionRecording():InspectionRecording
+    {
+        if($this->inspectionRecording!==null)return $this->inspectionRecording;
+        $clock=new readonly class($this->now) implements InspectionEvidenceClock{
+            public function __construct(private string$now){}
+            public function now():\DateTimeImmutable{return new \DateTimeImmutable($this->now);}
+        };
+        return $this->inspectionRecording=ProductionInspectionEvidenceFactory::create(
+            $this->db,
+            $this->inspectionConfig,
+            $clock,
+        );
+    }
+
+    private function resolveInstallationCaseId(int $objectId):?int
+    {
+        $resolver=new MariaDbInstallationCaseIdResolver(
+            $this->db,
+            $this->inspectionConfig,
+        );
+        return $resolver($objectId);
     }
 
     private function storePhoto(int $caseId,int $section,string $id,HttpUser $actor,string $deviceTime,array $o,?string $bytes):?array

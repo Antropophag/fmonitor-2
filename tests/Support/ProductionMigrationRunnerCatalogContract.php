@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v8 specifications.
+ * Literal catalog contract transcribed from the approved v1-v11 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -12,6 +12,9 @@ final class ProductionMigrationRunnerCatalogContract
     public static function columns(): array
     {
         return [
+            'fm2_migration_classification_provenance' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;output_kind:varchar(40):NO:;legacy_object_id:bigint unsigned:NO:;output_id:bigint unsigned:NO:;source_cutoff_at:datetime:NO:;classification_version:varchar(80):NO:;category:varchar(40):NO:;reason_codes_json:text:NO:;classification_sha256:char(64):NO:;created_at:datetime:NO:'
+            ),
             'fm2_checklist_operation_installers' => self::parseColumns(
                 'client_operation_id:char(36):NO:;installer_tab_id:bigint unsigned:NO:;fio_snapshot:varchar(300):NO:;position_snapshot:varchar(300):NO:;employment_status_snapshot:varchar(40):NO:;dismissal_effective_at_snapshot:varchar(40):YES:;workforce_source_updated_at_snapshot:varchar(40):NO:;assignment_source:varchar(40):NO:'
             ),
@@ -42,8 +45,20 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_pilot_auth_credentials' => self::parseColumns(
                 'user_id:bigint unsigned:NO:;email_normalized:varchar(254):NO:;password_hash:varchar(255):YES:;password_set_at:varchar(40):YES:;updated_at:varchar(40):NO:'
             ),
+            'fm2_pilot_completion_fact_corrections' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;root_fact_id:bigint unsigned:NO:;version_no:int unsigned:NO:;previous_correction_id:bigint unsigned:YES:;previous_version_no:int unsigned:YES:;fact_date:date:NO:;reason:varchar(1000):NO:;recorded_at:varchar(40):NO:;recorded_by_user_id:bigint unsigned:NO:'
+            ),
+            'fm2_pilot_completion_facts' => self::parseColumns(
+                "id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;fact_type:enum('pto_act','declaration'):NO:;fact_date:date:NO:;details:varchar(500):NO:;recorded_at:varchar(40):NO:;recorded_by_user_id:bigint unsigned:NO:"
+            ),
             'fm2_pilot_invitations' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;user_id:bigint unsigned:NO:;token_hash:binary(32):NO:;expires_at:datetime(6):NO:;used_at:datetime(6):YES:;revoked_at:datetime(6):YES:;created_by_user_id:bigint unsigned:YES:;created_at:datetime(6):NO:'
+            ),
+            'fm2_pilot_inspection_schedule_events' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;schedule_id:bigint unsigned:NO:;installation_case_id:bigint unsigned:NO:;event_type:varchar(80):NO:;payload_json:longtext:NO:;actor_user_id:bigint unsigned:NO:;occurred_at:varchar(40):NO:'
+            ),
+            'fm2_pilot_inspection_schedules' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;legacy_object_id:bigint unsigned:NO:;control_engineer_user_id:bigint unsigned:NO:;inspection_date:date:NO:;scheduled_by_user_id:bigint unsigned:NO:;scheduled_at:varchar(40):NO:'
             ),
             'fm2_pilot_role_permissions' => self::parseColumns(
                 'role_id:bigint unsigned:NO:;permission:varchar(100):NO:'
@@ -97,6 +112,9 @@ final class ProductionMigrationRunnerCatalogContract
     public static function indexes(): array
     {
         return [
+            'fm2_migration_classification_provenance|PRIMARY|id',
+            'fm2_migration_classification_provenance|UNIQUE|output_kind,output_id',
+            'fm2_migration_classification_provenance|INDEX|legacy_object_id',
             'fm2_checklist_operation_installers|PRIMARY|client_operation_id,installer_tab_id',
             'fm2_checklist_operation_installers|INDEX|installer_tab_id,client_operation_id',
             'fm2_checklist_operations|PRIMARY|id',
@@ -123,9 +141,24 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_pilot_auth_attempts|INDEX|email_normalized,attempted_at',
             'fm2_pilot_auth_credentials|PRIMARY|user_id',
             'fm2_pilot_auth_credentials|UNIQUE|email_normalized',
+            'fm2_pilot_completion_fact_corrections|PRIMARY|id',
+            'fm2_pilot_completion_fact_corrections|UNIQUE|root_fact_id,version_no',
+            'fm2_pilot_completion_fact_corrections|UNIQUE|previous_correction_id',
+            'fm2_pilot_completion_fact_corrections|UNIQUE|id,root_fact_id,version_no',
+            'fm2_pilot_completion_fact_corrections|INDEX|root_fact_id,id',
+            'fm2_pilot_completion_facts|PRIMARY|id',
+            'fm2_pilot_completion_facts|UNIQUE|installation_case_id,fact_type',
+            'fm2_pilot_completion_facts|INDEX|installation_case_id,id',
             'fm2_pilot_invitations|PRIMARY|id',
             'fm2_pilot_invitations|UNIQUE|token_hash',
             'fm2_pilot_invitations|INDEX|user_id,expires_at',
+            'fm2_pilot_inspection_schedule_events|PRIMARY|id',
+            'fm2_pilot_inspection_schedule_events|INDEX|schedule_id,id',
+            'fm2_pilot_inspection_schedule_events|INDEX|installation_case_id,id',
+            'fm2_pilot_inspection_schedules|PRIMARY|id',
+            'fm2_pilot_inspection_schedules|UNIQUE|installation_case_id,control_engineer_user_id,inspection_date',
+            'fm2_pilot_inspection_schedules|INDEX|inspection_date,id',
+            'fm2_pilot_inspection_schedules|INDEX|control_engineer_user_id,inspection_date,id',
             'fm2_pilot_role_permissions|PRIMARY|role_id,permission',
             'fm2_pilot_roles|PRIMARY|role_id',
             'fm2_pilot_roles|UNIQUE|code',
@@ -169,6 +202,10 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_order_artifacts|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_order_installers|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_pilot_auth_credentials|user_id|fm2_pilot_users|user_id|CASCADE',
+            'fm2_pilot_completion_fact_corrections|previous_correction_id|fm2_pilot_completion_fact_corrections|id|RESTRICT',
+            'fm2_pilot_completion_fact_corrections|previous_version_no|fm2_pilot_completion_fact_corrections|version_no|RESTRICT',
+            'fm2_pilot_completion_fact_corrections|root_fact_id|fm2_pilot_completion_fact_corrections|root_fact_id|RESTRICT',
+            'fm2_pilot_completion_fact_corrections|root_fact_id|fm2_pilot_completion_facts|id|RESTRICT',
             'fm2_pilot_invitations|user_id|fm2_pilot_users|user_id|CASCADE',
             'fm2_pilot_role_permissions|role_id|fm2_pilot_roles|role_id|CASCADE',
             'fm2_pilot_user_roles|role_id|fm2_pilot_roles|role_id|RESTRICT',
@@ -184,6 +221,10 @@ final class ProductionMigrationRunnerCatalogContract
     public static function checks(): array
     {
         return [
+            ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'char_length(trim(reason))between1and1000'],
+            ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'version_no=1andprevious_correction_idisnullandprevious_version_noisnullorversion_no>1andprevious_correction_idisnotnullandprevious_version_no=version_no-1'],
+            ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'version_no>=1'],
+            ['table' => 'fm2_pilot_inspection_schedule_events', 'constraint' => null, 'clause' => 'json_valid(payload_json)'],
             ['table' => 'fm2_process_events', 'constraint' => null, 'clause' => 'json_valid(payload_json)'],
             ['table' => 'fm2_process_user_capabilities', 'constraint' => null, 'clause' => "OR(capability<>'construction_control_engineer',AND(position_snapshotisnotnull,trim(position_snapshot)<>''))"],
             ['table' => 'fm2_process_user_capabilities', 'constraint' => 'ck_fm2_process_user_capability', 'clause' => "capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')"],

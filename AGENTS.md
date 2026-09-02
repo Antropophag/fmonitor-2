@@ -1,24 +1,19 @@
-# FMonitor 2.0 agent instructions
+# FMonitor 2.0 constitution
 
-Read `PRODUCT.md` and `CONTEXT.md` before product work. For a pilot behavior, also read `docs/fmonitor-2-pilot-spec.md` and `docs/fmonitor-2-pilot-data-model.md`.
+- Read `PRODUCT.md` and `CONTEXT.md` before product work. For pilot behavior also read `docs/fmonitor-2-pilot-spec.md` and `docs/fmonitor-2-pilot-data-model.md`.
+- Every product behavior follows every gate in `docs/development-process.md`: approved executable spec, demonstrated RED, independent test review, minimal GREEN, independent code review. Reviewers are separately tasked agents and never approve their own work.
+- New migration slices use the lifecycle under `openspec/`; OpenSpec does not replace executable specs, RED evidence, or review records.
+- Preserve append-only history. State changes belong to one explicit public application seam; screens, HTTP, imports, and cron do not own domain facts.
+- `rapid-pilot/` is a behavioral oracle and temporary adapter, not a destination for new domain logic. Follow its local boundary instructions.
+- `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.
+- Run `make architecture-check` while changing boundaries and `make verify` before declaring integration complete.
 
-## Required delivery workflow
+## Navigation
 
-All product behavior is developed through the SSD + TDD workflow in `docs/development-process.md`. Treat every gate as mandatory:
-
-1. approved executable specification;
-2. failing test derived from that specification;
-3. independent test review recorded under `reviews/tests/`;
-4. minimal implementation that makes the reviewed test pass;
-5. independent code review recorded under `reviews/code/`.
-
-Proceed to the next gate only after the current gate is approved. Work in one vertical behavior slice at a time. Preserve test-review independence: the implementation author cannot approve their own test or code review, and implementation context or assertions cannot be used as the source of expected test values.
-
-Always assign mandatory test and code reviews to separately tasked agents. Use an applicable review skill when one matches the review type; otherwise follow the project review templates and gates directly.
-
-## Boundaries
-
-- `../fmonitor` is the legacy production application and a read-only integration source. Product implementation belongs in this repository.
-- `../shlz-ui` is the corporate UI dependency. Consume its public exports; do not copy or locally imitate its components and tokens.
-- Primary `.msg`, `.pdf`, database dumps, and other source evidence remain outside this repository. Commit only derived, redacted product contracts needed to implement FMonitor 2.0.
-- Preserve append-only domain history. Commands change process state; screens do not edit historical facts directly.
+- Product truth: `PRODUCT.md`, `CONTEXT.md`
+- Pilot contracts: `docs/fmonitor-2-pilot-spec.md`, `docs/fmonitor-2-pilot-data-model.md`
+- Delivery gates: `docs/development-process.md`
+- Operations state: `docs/operations/`
+- Architecture policy/baseline: `docs/architecture/`
+- OpenSpec lifecycle: `openspec/config.yaml`, `openspec/changes/`, `openspec/specs/`
+- Reviews: `reviews/tests/`, `reviews/code/`

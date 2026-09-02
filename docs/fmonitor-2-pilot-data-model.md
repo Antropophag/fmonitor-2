@@ -12,14 +12,14 @@
 
 ```text
 prepareAssignmentOrder(installationObjectId, installerTabIds[], controlEngineerUserId, actorId)
-confirmOrderRegistration(installationObjectId, assignmentOrderVersion, registrationNumber, source, actorId)
+submitAssignmentOrderOriginal(command)
 openInstallation(installationObjectId, actualStartDate, actorId)
 prepareAssignmentChange(installationObjectId, installerTabIds[], controlEngineerUserId, effectiveDate, actorId)
 getInstallationObjectProcess(installationObjectId)
 getWorkQueue(actorId, filters)
 ```
 
-`confirmOrderRegistration` — общий прикладной контракт для временного ручного ввода (`source = manual`) и будущей интеграции с 1С ДО (`source = one_c_do`). Команда переводит точную версию из `prepared` в `registered`, сохраняет реквизиты и аудит источника, но не создаёт отдельный этап или процессную задачу.
+`submitAssignmentOrderOriginal` — единый pilot application seam для initial upload и append-only correction подписанного PDF. Он сохраняет original evidence, подтверждённую дату документа, отдельное системное время загрузки, состав, hash и audit, но не применяет состав и не открывает работы. Ручного command регистрации/номера в pilot interface нет. Возможная будущая интеграция с 1С ДО находится вне пилота и не меняет этот факт.
 
 Каждая команда:
 
@@ -63,14 +63,8 @@ getWorkQueue(actorId, filters)
 | `installation_case_id` | монтажное дело |
 | `version_no` | последовательная версия внутри дела |
 | `kind` | `initial` или `change` |
-| `status` | `prepared`, `registered`, `superseded`, `cancelled` |
-| `order_date` | дата, которую FMonitor неизменно фиксирует при формировании |
-| `registration_number` | номер, возвращённый из 1С ДО |
-| `registered_at` | системное время внесения номера в FMonitor, не дата документа |
-| `registration_actor_type` | `user` или `integration` |
-| `registration_actor_id` | идентификатор пользователя или интеграционного принципала |
-| `registration_source` | `manual` или `one_c_do`; источник подтверждения статуса |
-| `external_registration_id` | идентификатор события/документа 1С ДО для идемпотентной интеграции, nullable в ручном режиме |
+| `status` | pilot lifecycle выбранного состава/template; не содержит manual `registered` gate |
+| `template_date` | предложенная дата, напечатанная в необязательном шаблоне; не является окончательной датой документа |
 | `control_engineer_user_id` | выбранный инженер строительного контроля |
 | `control_engineer_fio_snapshot`, `control_engineer_position_snapshot` | снимок данных инженера на момент формирования |
 | `organization_form` | сохранённая производная `individual`/`brigade` для воспроизводимости документа |
@@ -79,7 +73,7 @@ getWorkQueue(actorId, filters)
 | `planned_start_date_snapshot`, `planned_finish_date_snapshot`, `pto_act_date_snapshot` | неизменяемый снимок дат объекта на момент формирования |
 | `prepared_at`, `prepared_by_user_id` | аудит формирования |
 
-Один документ относится к одному монтажному делу. Номер обязателен только для статуса `registered`.
+Одна версия относится к одному монтажному делу. Legacy registration columns/facts могут временно сохраняться для read-only compatibility, но не являются pilot source of truth и не участвуют в новом opening contract.
 
 ### `fm2_order_installers`
 
@@ -109,7 +103,11 @@ getWorkQueue(actorId, filters)
 | `filename`, `media_type`, `byte_size` | воспроизводимые метаданные файла |
 | `sha256` | контроль неизменности содержимого |
 
-Уникальность `(assignment_order_id, artifact_type)` не допускает два файла одного типа в одной версии.
+Generated template artifact отличается от подписанного original evidence и никогда им не перезаписывается. Точная additive schema original lineage назначается change `replace-pilot-registration-with-original-upload`; literal migration version выбирается только на актуальном frontier.
+
+### Original evidence lineage
+
+Initial upload создаёт immutable original identity/revision 1. Correction ссылается на current leaf и exact expected revision и добавляет revision `n+1`; прежние bytes/metadata не обновляются. Каждая revision хранит assignment-order identity, immutable composition identity/hash, document date, upload time, actor, SHA-256, exact received byte size, private storage identity и correction target/reason. Stored request identity и accepted-operation fingerprint обеспечивают replay/response-loss recovery. Original evidence само по себе не меняет assignment intervals или opening state.
 
 ### `fm2_process_tasks`
 
@@ -163,10 +161,10 @@ Production-owned явное соответствие пользователя pr
 | Поле | Назначение |
 |---|---|
 | `user_id` | ссылка по значению на legacy `users.id` без cross-schema FK |
-| `capability` | `assignment_order.prepare`, `assignment_order.confirm_registration`, `installation.open` или `construction_control_engineer`; вместе с `user_id` образует primary key |
+| `capability` | включая `assignment_order.prepare`, `assignment_order.original.upload`, `assignment_order.original.correct`, `installation.open` и `construction_control_engineer`; вместе с `user_id` образует primary key |
 | `position_snapshot` | обязательная настроенная должность инженера; nullable для capability подготовки |
 
-Активность пользователя и его legacy-роли проверяется по `users.status = 1` и `users_roles.status = 1`. Каждая process-команда требует свою exact capability; prepare/confirm/open не наследуют права друг друга. `users_rights2roles` не является источником process capabilities. Process-команды читают эту конфигурацию, но не изменяют её; уже сохранённый снимок инженера в распоряжении остаётся неизменным. Расширение command capability enum применяется forward migration v4 без пересоздания таблицы.
+Активность пользователя и его legacy-роли проверяется по `users.status = 1` и `users_roles.status = 1`. Каждая process-команда требует свою exact capability; prepare/upload/correct/open не наследуют права друг друга. `users_rights2roles` и отображаемое имя роли не являются источником process capabilities. Historical `assignment_order.confirm_registration` rows могут сохраняться read-only для совместимости, но новая pilot command их не требует. Расширение enum выполняется additive migration на актуальном frontier.
 
 ## 4. Читаемые проекции
 
@@ -178,7 +176,7 @@ Production-owned явное соответствие пользователя pr
 - плановую дату и количество дней до неё;
 - процессное состояние;
 - следующее действие и срок;
-- дату/номер актуального распоряжения;
+- подтверждённую дату и наличие актуального оригинала;
 - выбранных монтажников и инженера в компактном виде;
 - причины блокировки.
 
@@ -226,11 +224,11 @@ Composite ProcessUserDirectory читает активность и ФИО из 
 ## 6. Транзакционные инварианты
 
 1. Одновременно по объекту монтажа формируется только одна новая версия.
-2. Подготовленная версия имеет дату распоряжения, состав и хэш документа.
-3. После подготовки содержимое версии не изменяется.
-4. Подтверждение регистрации атомарно добавляет реквизиты к той же версии и переводит её из `prepared` в `registered`, не пересобирая документ и не изменяя этап монтажного дела.
-5. Фактическая дата начала не раньше даты актуального распоряжения и не позже текущей даты.
-6. Открытие возможно только по актуальному распоряжению в статусе `registered`, при наличии минимум одного монтажника и одного инженера.
+2. Необязательный шаблон имеет предложенную дату и состав, но не является подписанным оригиналом или gate открытия.
+3. Принятый original имеет подтверждённую document date, immutable состав/hash/bytes metadata и отдельный upload time.
+4. Correction только добавляет новую revision с причиной; исходные bytes/facts не обновляются.
+5. Upload/correction не меняет composition intervals, case state, actual start или checklist availability.
+6. Целевое открытие возможно только отдельной командой при наличии применимого original, минимум одного монтажника и одного инженера; exact переключение legacy gate принадлежит `open-installation-from-assignment-order-original`.
 7. Монтажник должен существовать в актуальном кадровом каталоге на дату распоряжения.
 8. Инженер должен быть активным пользователем допустимой роли.
 9. После Акта ПТО обычные команды формирования и открытия запрещены.
@@ -253,11 +251,12 @@ Composite ProcessUserDirectory читает активность и ФИО из 
 - нельзя сформировать без монтажника;
 - нельзя сформировать без инженера;
 - нельзя выбрать уволенного монтажника;
-- дата распоряжения фиксируется системной датой и не меняется при регистрации номера;
+- дата шаблона предлагается системой, а окончательная дата берётся из original и хранится отдельно от upload time;
 - нельзя открыть с датой раньше распоряжения;
-- нельзя открыть дело по распоряжению в статусе `prepared`, даже если регистрационный номер оказался заполнен в обход команды;
-- можно открыть дело после перехода актуального распоряжения в `registered` как из ручного, так и из интеграционного источника;
-- отсутствие номера не создаёт отдельную процессную задачу или состояние дела;
+- original можно принять после шаблона или напрямую, без номера и registration status;
+- нельзя принять original без composition confirmation или с будущей document date;
+- byte-identical semantic replay не создаёт дубль, correction сохраняет прежнюю revision;
+- upload не открывает дело и не применяет состав;
 - нельзя открыть второй раз;
 - изменение состава не меняет предыдущую версию и исторический чек-лист;
 - параллельные команды не создают две актуальные версии.

@@ -1,5 +1,10 @@
 # InstallationProcess — техническая привязка публичного шва
 
+> **Target pilot disposition — 2026-09-02.** `confirmOrderRegistration`, manual
+> number и `registered` gate ниже документируют legacy predecessor, не target.
+> Replacement начинается с `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001`; дальнейшие
+> HTTP/composition/opening changes имеют отдельные Gates.
+
 - Статус: `APPROVED для ORDER-PREPARE-001`
 - Дата: `2026-08-27`
 

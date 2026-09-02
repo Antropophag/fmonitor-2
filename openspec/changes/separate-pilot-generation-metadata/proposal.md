@@ -36,7 +36,7 @@ guards. Target public seam — `make up` / `rapid-pilot/docker-entrypoint.sh`,
 и workers.
 Release value — повторный запуск test-user contour без потери/скрытого изменения
 состояния и fail-closed защита от смешанной generation. Non-goals — production
-schema ownership, product/domain facts, fixture choice, import/backfill,
+schema ownership, product/domain facts, literal fixture contents, import/backfill,
 destructive data migration и массовый persistence redesign.
 
 По принятому owner decision `bin/fmonitor2-pilot-demo.php` является отдельным synthetic fixture harness с
@@ -64,7 +64,8 @@ state root/prefix; co-located invocation requires an explicit discriminator.
 validation, optional workforce worker и import/apply tools. Production seam
 `bin/fmonitor2-migrate.php` и domain persistence не получают generation table.
 Изменение требует согласования с release-critical schema/bootstrap slices до
-GREEN, но не утверждает заблокированную GRILL-004 fixture semantics. Synthetic
-fixture/lifecycle semantics не переписываются, но supported-topology isolation
-и исправление противоречивого root runbook входят в collision closure при выборе
-Compose.
+GREEN. Approved GRILL-004 policy задаёт synthetic/native contour, запрет real
+personal data и ownership-checked reset, но literal fixture contents остаются в
+отдельном gated `seed-test-user-fixtures` contract. Synthetic fixture/lifecycle
+semantics не переписываются, но supported-topology isolation и исправление
+противоречивого root runbook входят в collision closure при выборе Compose.
