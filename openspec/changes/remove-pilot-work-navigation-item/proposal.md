@@ -18,6 +18,10 @@ verification.
 - Провести новый Gate 1 → RED → independent test review → minimal GREEN →
   independent code review cycle. `restore-pilot-work-navigation` и его reviews
   остаются superseded historical evidence и не дают approval этому change.
+- Проверять единый deep presentation seam исчерпывающим renderer oracle для
+  всех 10 current-state representations; root и object-list остаются real HTTP
+  sentinels, а existing route-specific tests доказывают wiring остальных
+  callers без восьми дублирующих DB/server fixtures.
 - **Behavior slice:** `PILOT-WORK-NAVIGATION-ITEM-REMOVAL-001`.
 - **Actor:** любой посетитель успешного configured pilot HTML shell после
   применимого route admission.
@@ -45,8 +49,8 @@ verification.
 
 ## Impact
 
-Затрагиваются только shared pilot navigation renderer/composition и его public
-HTML regression tests. Production routes, application/domain seams,
+Затрагиваются только shared pilot navigation renderer/composition и его deep
+renderer + existing public HTTP regression tests. Production routes, application/domain seams,
 persistence, rapid-pilot business logic и schema не меняются. Downstream
 object-list RBAC verifier должен заменить superseded predecessor assertion на
 approved absence contract только после завершения соответствующих gates.
