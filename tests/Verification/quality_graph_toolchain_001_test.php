@@ -8,10 +8,12 @@ require dirname(__DIR__) . '/bootstrap.php';
 function qgtPinsValid(string $yaml, string $toml): bool
 {
     preg_match_all('/alchemmist\/quality-graph@([^\s"\']+)/', $yaml, $runtimeMatches);
+    preg_match_all('/astral-sh\/setup-uv@([^\s"\']+)/', $yaml, $setupMatches);
     preg_match_all('/"(quality-graph-(?:cli|github)[^"]*)"/', $toml, $packageMatches);
     $packages = $packageMatches[1];
     sort($packages, SORT_STRING);
     return $runtimeMatches[1] === ['caf5366a04ca01b230f1df5585d0fbd9693d7bef']
+        && $setupMatches[1] === ['37802adc94f370d6bfd71619e3f0bf239e1f3b78']
         && $packages === ['quality-graph-cli==0.1.7', 'quality-graph-github==0.1.7'];
 }
 
@@ -28,5 +30,6 @@ assertSameValue(true, qgtPinsValid($yaml, $toml), 'RED_ASSERTION: toolchain occu
 assertSameValue(false, qgtPinsValid($yaml . "\n# alchemmist/quality-graph@master\n", $toml), 'Mutation: an additional floating runtime ref must be rejected');
 assertSameValue(false, qgtPinsValid($yaml, $toml . "\n# \"quality-graph-cli>=0.1\"\n"), 'Mutation: an additional ranged package ref must be rejected');
 assertSameValue(false, qgtPinsValid($yaml, str_replace('quality-graph-github==0.1.7', 'quality-graph-github==0.1.6', $toml)), 'Mutation: a mixed provider version must be rejected');
+assertSameValue(false, qgtPinsValid($yaml . "\n# astral-sh/setup-uv@v7\n", $toml), 'Mutation: a floating setup-uv action must be rejected');
 
 echo "QUALITY-GRAPH-TOOLCHAIN-001 TESTS PASSED\n";
