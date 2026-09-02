@@ -120,7 +120,7 @@ if ($receipts === false || $receipts === []) {
     deliveryFailure('missing_receipt', 'delivery/evidence', 'no receipt JSON files discovered');
 }
 sort($receipts, SORT_STRING);
-$seenSlices = [];
+$sliceHistories = [];
 foreach ($receipts as $receiptPath) {
     $receipt = substr($receiptPath, strlen($repository) + 1);
     $contents = file_get_contents($receiptPath);
@@ -142,10 +142,20 @@ foreach ($receipts as $receiptPath) {
     if (!is_string($data['sliceId']) || $data['sliceId'] === '') {
         deliveryFailure('invalid_schema', $receipt, 'sliceId must be a nonempty string');
     }
-    if (isset($seenSlices[$data['sliceId']])) {
-        deliveryFailure('duplicate_slice', $receipt, 'sliceId already claimed by ' . $seenSlices[$data['sliceId']]);
+    $sliceDirectory = dirname($receipt);
+    if (isset($sliceHistories[$data['sliceId']]) && $sliceHistories[$data['sliceId']]['directory'] !== $sliceDirectory) {
+        deliveryFailure('duplicate_slice', $receipt, 'sliceId already claimed under ' . $sliceHistories[$data['sliceId']]['directory']);
     }
-    $seenSlices[$data['sliceId']] = $receipt;
+    if (!isset($sliceHistories[$data['sliceId']])) {
+        $sliceHistories[$data['sliceId']] = ['directory' => $sliceDirectory, 'receipts' => []];
+    }
+    if (!is_string($data['receiptId']) || preg_match('/^[a-z0-9][a-z0-9-]{0,62}$/D', $data['receiptId']) !== 1 || isset($sliceHistories[$data['sliceId']]['receipts'][$data['receiptId']])) {
+        deliveryFailure('invalid_history', $receipt, 'receiptId is invalid or reused');
+    }
+    if ($data['supersedes'] !== null && !is_string($data['supersedes'])) {
+        deliveryFailure('invalid_history', $receipt, 'supersedes must be null or a receiptId');
+    }
+    $sliceHistories[$data['sliceId']]['receipts'][$data['receiptId']] = ['supersedes' => $data['supersedes'], 'path' => $receipt, 'absolute' => $receiptPath];
     deliveryExactKeys($data['authors'], ['spec', 'test', 'implementation'], $receipt, 'authors');
     deliveryExactKeys($data['artifacts'], ['spec', 'tests', 'red', 'testReview', 'green', 'codeReview'], $receipt, 'artifacts');
     if (!is_array($data['artifacts']['spec'])) {
@@ -205,4 +215,27 @@ foreach ($receipts as $receiptPath) {
     foreach (['green', 'codeReview'] as $kind) if (($metadata[$kind]['implementationFiles'] ?? null) !== $implementation) deliveryFailure('metadata_mismatch', $receipt, "$kind implementation set differs");
 }
 
-echo 'DELIVERY_EVIDENCE_OK receipts=' . count($receipts) . " head=$head\n";
+foreach ($sliceHistories as $history) {
+    $referenced = [];
+    foreach ($history['receipts'] as $id => $item) {
+        if ($item['supersedes'] === null) continue;
+        if (!isset($history['receipts'][$item['supersedes']])) deliveryFailure('invalid_history', $item['path'], 'supersedes target is missing');
+        $referenced[$item['supersedes']] = true;
+        $older = $history['receipts'][$item['supersedes']];
+        $olderCommit = deliveryFirstBlobCommit($repository, $older['path'], hash_file('sha256', $older['absolute']), $item['path']);
+        $newerCommit = deliveryFirstBlobCommit($repository, $item['path'], hash_file('sha256', $item['absolute']), $item['path']);
+        deliveryAncestor($repository, $olderCommit, $newerCommit, $item['path']);
+    }
+    $leaves = array_diff(array_keys($history['receipts']), array_keys($referenced));
+    if (count($leaves) !== 1) deliveryFailure('invalid_history', $history['directory'], 'receipt history must have exactly one current leaf');
+    $visited = [];
+    $cursor = array_values($leaves)[0];
+    while ($cursor !== null) {
+        if (isset($visited[$cursor])) deliveryFailure('invalid_history', $history['directory'], 'receipt supersession contains a cycle');
+        $visited[$cursor] = true;
+        $cursor = $history['receipts'][$cursor]['supersedes'];
+    }
+    if (count($visited) !== count($history['receipts'])) deliveryFailure('invalid_history', $history['directory'], 'receipt history is disconnected');
+}
+
+echo 'DELIVERY_EVIDENCE_OK receipts=' . count($sliceHistories) . " head=$head\n";
