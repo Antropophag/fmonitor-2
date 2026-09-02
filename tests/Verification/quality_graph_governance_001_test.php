@@ -236,25 +236,30 @@ try {
     try {
         $setup = qggRun(['git', 'clone', '--quiet', $lineage, $metadataFixture], $root);
         assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata mutation clone failed');
-        qggRun(['git', 'config', 'user.email', 'metadata@example.invalid'], $metadataFixture);
-        qggRun(['git', 'config', 'user.name', 'Metadata Fixture'], $metadataFixture);
+        foreach ([['git', 'config', 'user.email', 'metadata@example.invalid'], ['git', 'config', 'user.name', 'Metadata Fixture']] as $command) {
+            $setup = qggRun($command, $metadataFixture);
+            assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata fixture Git configuration failed');
+        }
         $redContents = (string) file_get_contents($metadataFixture . '/' . $redPath);
-        preg_match('/\A```delivery-metadata\R([^\r\n]+)/', $redContents, $redMatch);
+        assertSameValue(1, preg_match('/\A```delivery-metadata\R([^\r\n]+)/', $redContents, $redMatch), 'SETUP_FAILURE: RED metadata source block missing');
         $redMetadata = json_decode($redMatch[1], true, 32, JSON_THROW_ON_ERROR);
         $redMetadata['unexpected'] = true;
         $redContents = str_replace($redMatch[1], json_encode($redMetadata, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $redContents);
-        file_put_contents($metadataFixture . '/' . $redPath, $redContents);
+        assertSameValue(true, file_put_contents($metadataFixture . '/' . $redPath, $redContents) !== false, 'SETUP_FAILURE: cannot write mutated RED metadata');
         $receiptPath = $metadataFixture . '/delivery/evidence/LINEAGE-001/lineage-v1.json';
         $mutatedReceipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR);
         $mutatedReceipt['artifacts']['red']['sha256'] = hash('sha256', $redContents);
-        file_put_contents($receiptPath, json_encode($mutatedReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
-        qggRun(['git', 'add', '.'], $metadataFixture);
-        qggRun(['git', 'commit', '--quiet', '-m', 'unknown metadata field'], $metadataFixture);
+        assertSameValue(true, file_put_contents($receiptPath, json_encode($mutatedReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") !== false, 'SETUP_FAILURE: cannot update mutated receipt');
+        foreach ([['git', 'add', '.'], ['git', 'commit', '--quiet', '-m', 'unknown metadata field']] as $command) {
+            $setup = qggRun($command, $metadataFixture);
+            assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata mutation commit failed');
+        }
         $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $metadataFixture], $metadataFixture);
         $combined = $result['stdout'] . "\n" . $result['stderr'];
         $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         assertSameValue(true, $result['status'] !== 0, "Unknown canonical metadata field must fail; evidence=$evidence");
         assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=invalid_schema receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: unknown RED metadata field must fail before lineage traversal; evidence=$evidence");
+        assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Unknown metadata must emit exactly one terminal failure; evidence=$evidence");
         assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Unknown metadata field must not print success; evidence=$evidence");
     } finally {
         qggRemoveFixture($metadataFixture);
