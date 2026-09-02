@@ -257,6 +257,16 @@ try {
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Valid supersession must emit no failure; evidence=$evidence");
     $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
     assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $supersessionHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Supersession success must be terminal stdout; evidence=$evidence");
+
+    $write($implementationPath, "post-review mutation\n");
+    $git(['add', $implementationPath]);
+    $git(['commit', '--quiet', '-m', 'forbidden post-review implementation drift']);
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(true, $result['status'] !== 0, "Post-review implementation drift must fail; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=commit_mismatch receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: governed file changed after reviewed implementation commit must be rejected; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Post-review drift must not print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
 }
