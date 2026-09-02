@@ -25,16 +25,53 @@ function qggRun(array $command, string $cwd, array $environment = []): array
     return ['status' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
 }
 
+function qggRemoveFixture(string $path): void
+{
+    if (!is_dir($path)) {
+        return;
+    }
+    $items = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST,
+    );
+    foreach ($items as $item) {
+        $item->isDir() && !$item->isLink() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+    }
+    rmdir($path);
+}
+
 $root = dirname(__DIR__, 2);
 $head = trim((string) shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse HEAD'));
 assertSameValue(1, preg_match('/^[0-9a-f]{40}$/', $head), 'SETUP_FAILURE: test requires a Git checkout');
 
-$result = qggRun(['make', '--no-print-directory', 'delivery-evidence-check'], $root);
-$combined = $result['stdout'] . "\n" . $result['stderr'];
-$evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+$fixture = sys_get_temp_dir() . '/fmonitor-qgg-' . bin2hex(random_bytes(8));
+if (!mkdir($fixture, 0700, true)) {
+    throw new TestFailure('SETUP_FAILURE: cannot create isolated Git fixture');
+}
+try {
+    foreach ([
+        ['git', 'init', '--quiet'],
+        ['git', 'config', 'user.email', 'qgg-fixture@example.invalid'],
+        ['git', 'config', 'user.name', 'QGG Fixture'],
+    ] as $command) {
+        $setup = qggRun($command, $fixture);
+        assertSameValue(0, $setup['status'], 'SETUP_FAILURE: isolated Git fixture initialization failed');
+    }
+    file_put_contents($fixture . '/README.md', "fixture\n");
+    foreach ([['git', 'add', 'README.md'], ['git', 'commit', '--quiet', '-m', 'fixture base']] as $command) {
+        $setup = qggRun($command, $fixture);
+        assertSameValue(0, $setup['status'], 'SETUP_FAILURE: isolated Git fixture commit failed');
+    }
 
-assertSameValue(true, $result['status'] !== 0, "RED_ASSERTION: missing receipt inventory must fail closed; evidence=$evidence");
-assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=missing_receipt receipt=delivery\/evidence detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: public seam must classify the absent opt-in receipt root; evidence=$evidence");
-assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "A failed governance run must never print success; evidence=$evidence");
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $fixture], $fixture);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+    assertSameValue(true, $result['status'] !== 0, "RED_ASSERTION: missing receipt inventory must fail closed; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=missing_receipt receipt=delivery\/evidence detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: isolated test seam must classify the absent opt-in receipt root; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "A failed governance run must never print success; evidence=$evidence");
+} finally {
+    qggRemoveFixture($fixture);
+}
 
 echo "QUALITY-GRAPH-GOVERNANCE-001 TESTS PASSED\n";
