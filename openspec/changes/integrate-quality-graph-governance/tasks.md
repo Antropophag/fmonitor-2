@@ -2,7 +2,7 @@
 
 - [x] 1.1 Составить inventory текущих SSD/TDD harness, CI entry points, repository-owned команд и evidence formats; сохранить audit с командами и file/commit references и проверить `git diff --check`.
 - [x] 1.2 Создать executable spec `QUALITY-GRAPH-GOVERNANCE-001` с public governance seam, receipt schema, canonical identities, gate ordering, rejected cases, representative PR matrix и exact expected results; получить явное Gate 1 approval по `docs/development-process.md`.
-- [ ] 1.3 Зафиксировать проверенный exact Quality Graph v0.1.7-compatible package/action release set и upstream source permalinks; проверить отсутствие floating refs и смешанных версий автоматической проверкой fixtures.
+- [x] 1.3 Зафиксировать проверенный exact Quality Graph v0.1.7-compatible package/action release set и upstream source permalinks; проверить отсутствие floating refs и смешанных версий автоматической проверкой fixtures.
 
 ## 2. Gates 2–3 — RED и независимый test review
 
