@@ -233,12 +233,12 @@ try {
     assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $lineageHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Success must be the terminal nonempty stdout line; evidence=$evidence");
 
     $receipt['receiptId'] = 'duplicate-v1';
-    $write('delivery/evidence/DUPLICATE-001/duplicate-v1.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
+    $write('delivery/evidence/ZZZ-DUPLICATE-001/duplicate-v1.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
     $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
     $combined = $result['stdout'] . "\n" . $result['stderr'];
     $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     assertSameValue(true, $result['status'] !== 0, "Duplicate slice identity must fail; evidence=$evidence");
-    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=duplicate_slice receipt=delivery\/evidence\/DUPLICATE-001\/duplicate-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: duplicate slice across receipt paths must be classified; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=duplicate_slice receipt=delivery\/evidence\/ZZZ-DUPLICATE-001\/duplicate-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: later duplicate slice claimant must be classified in bytewise discovery order; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Duplicate slice failure must not print success; evidence=$evidence");
 } finally {
     qggRemoveFixture($lineage);
