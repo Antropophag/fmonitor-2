@@ -4,7 +4,7 @@ Date: 2026-09-03
 
 ```text
 054004a16fad845e9c42d5c8f5cf2f0303998c082695b2792a73e03bf20ca30f  specs/PILOT-SESSION-STORAGE-001.md
-7db8e4d6758afc0ea6561e536bce500fc09e57f5dbf48e88dd9a741c9013a5e5  tests/InstallationProcess/pilot_session_storage_malformed_payload_http_001_test.php
+342833c29488684837495d9c85289fef3f7ae18a78ad90486c4c17ae6a762d6f  tests/InstallationProcess/pilot_session_storage_malformed_payload_http_001_test.php
 ```
 
 Public seam: raw `POST /pilot/login` through
@@ -39,6 +39,10 @@ material. A positive readiness flag is set only after an actual loopback socket
 connection while the child remains running. The test does not decode the payload, invoke a test-owned dispatcher,
 construct an owner result or infer success from events. Its task-owned root,
 server and pipes are cleaned in `finally`.
+
+The production-server child runs with a bounded 32 MiB memory limit and the
+client read has a three-second timeout. These bounds do not affect the object
+case result and make a recursive-decoder regression fail deterministically.
 
 The child stderr MUST contain exactly one safe
 `PILOT_SESSION_UNAVAILABLE category=payload_invalid correlation_id=<12hex>`
