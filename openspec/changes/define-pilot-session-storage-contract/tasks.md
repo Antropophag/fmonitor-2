@@ -22,7 +22,7 @@
 
 - [x] 3.1 Реализовать one IdentityAccess storage/session handler with explicit atomic commit and typed results; filesystem matrix GREEN.
 - [ ] 3.2 Подключить оба consumers, response buffering, Compose compatibility config and task-owned harness; protocol suites host+image GREEN.
-- [ ] 3.3 Добавить ratchet against alternate native session primitives/hardcoded paths/unsafe repair и against owner/event/inspection `@internal` factory calls outside exact owner/inspector classes; architecture targeted fixtures GREEN.
+- [x] 3.3 Добавить ratchet against alternate native session primitives/hardcoded paths/unsafe repair и against owner/event/inspection `@internal` factory calls outside exact owner/inspector classes; architecture targeted fixtures GREEN.
 
 ## 4. Verification, Gate 5 и Done
 
