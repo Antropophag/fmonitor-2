@@ -7,6 +7,7 @@
 - `rapid-pilot/` is a behavioral oracle and temporary adapter, not a destination for new domain logic. Follow its local boundary instructions.
 - `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.
 - Run `make architecture-check` while changing boundaries and `make verify` before declaring integration complete.
+- При автономной задаче непрерывно продвигай работу до её проверяемого конечного результата: после промежуточных отчётов, gates, коммитов и известных blockers сразу переходи к следующему безопасному действию. Завершай ход только по явной просьбе владельца либо при недоступности электричества или сети.
 
 ## Navigation
 
