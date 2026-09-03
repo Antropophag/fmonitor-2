@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-\spl_autoload_register(static function(string $class):void{$prefix='FMonitor2\\';if(\str_starts_with($class,$prefix)){$path=\dirname(__DIR__).'/'.\str_replace('\\','/',\substr($class,\strlen($prefix))).'.php';if(\is_file($path))require_once $path;}});
+require_once \dirname(__DIR__) . '/autoload.php';
 require __DIR__.'/PilotHttp.php';
 require_once __DIR__.'/PilotView.php';
 require_once __DIR__.'/PilotShellView.php';

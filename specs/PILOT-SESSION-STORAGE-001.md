@@ -1,8 +1,8 @@
 # PILOT-SESSION-STORAGE-001 — owned filesystem session lifecycle
 
-Статус: **DRAFT / Gate 1**  
-Версия: **v8 (injectable inspector CLI application amendment)**  
-Дата: **2026-09-02**
+Статус: **OWNER_APPROVED / Gate 1 re-review pending**
+Версия: **v9 (unknown-route priority amendment)**
+Дата: **2026-09-03**
 
 ## Простыми словами
 
@@ -181,8 +181,10 @@ Predecessor protocol remains:
 
 Malformed/duplicate Host/URI rejected by outer boundary before session config.
 All exact `/pilot/assets/*` CSS/JS/SVG/font routes resolve before session config/
-filesystem/primitive, including unknown asset 404. Unknown non-asset pilot route
-retains predecessor auth/session behavior.
+filesystem/primitive, including unknown asset 404. Every unknown `/pilot/*`
+route returns inherited 404 before session config/filesystem/authentication for
+anonymous and authenticated requests. It never redirects to login. Only known
+login-required routes may return `303 Location: /pilot/login`.
 
 Both `RapidPilotLocalAuth` and `RapidPilotUserAccessView` MUST use this single
 owner. Direct `session_save_path`, `session_start`, `session_regenerate_id`,

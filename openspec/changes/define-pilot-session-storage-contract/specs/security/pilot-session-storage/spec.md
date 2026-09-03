@@ -118,13 +118,19 @@ invalidation preserved. GC max lifetime remains 604800.
 ### Requirement: Exact route priority и оба consumer используют owner
 Static assets `/pilot/assets/*` (including CSS/JS/SVG/fonts) SHALL be served or
 rejected before LocalAuth/session configuration. Malformed Host/URI belongs to
-outer boundary before storage. Unknown non-asset pilot route MAY traverse auth
-per predecessor router. Both LocalAuth and UserAccessView MUST use the one
+outer boundary before storage. Any unknown `/pilot/*` route SHALL return the
+inherited `404 Not found` before session configuration, storage or authentication
+and SHALL NOT redirect to login. `303 /pilot/login` is reserved for known
+login-required routes. Both LocalAuth and UserAccessView MUST use the one
 adapter/config; hardcoded/alternate save path forbidden.
 
 #### Scenario: Asset with invalid storage config
 - **WHEN** exact known/unknown `/pilot/assets/...` requested while storage config invalid
 - **THEN** inherited asset result returned with zero storage env/filesystem/primitive access
+
+#### Scenario: Unknown non-asset route
+- **WHEN** anonymous or authenticated request targets an unrecognized `/pilot/*` path
+- **THEN** response is inherited `404 Not found` with zero session env/filesystem/primitive access and no login redirect
 
 ### Requirement: Cleanup ownership разделён
 Production adapter never removes session directories. It removes files only by
