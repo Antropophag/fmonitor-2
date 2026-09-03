@@ -575,6 +575,46 @@ $db->query("{operation} `{{${variable}}}`{suffix}");
                 findings = architecture_check.collect()
                 self.assertEqual(1, len(findings.get("workforce_migration_ownership", [])))
 
+    def test_session_storage_ownership_rejects_native_session_and_hardcoded_root(self) -> None:
+        rapid_pilot = architecture_check.ROOT / "rapid-pilot"
+        source = """<?php
+session_save_path('/home/fmonitor/.local/state/fmonitor2/sessions');
+session_start();
+session_regenerate_id(true);
+session_write_close();
+session_destroy();
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w+",
+            encoding="utf-8",
+            suffix=".php",
+            prefix="SessionOwnershipFixture",
+            dir=rapid_pilot,
+        ) as fixture, patch.object(architecture_check, "files", return_value=[Path(fixture.name)]):
+            fixture.write(source)
+            fixture.flush()
+            findings = architecture_check.collect()
+        self.assertEqual(6, len(findings.get("session_storage_ownership", [])))
+
+    def test_session_storage_ownership_rejects_internal_factory_callers(self) -> None:
+        identity = architecture_check.ROOT / "app" / "IdentityAccess"
+        source = """<?php
+PilotSessionOperationResult::ownerStarted('fixture-session-id');
+PilotSessionFilesystemEvent::ownerBefore(1, $operation, $artifact, null, 1);
+PilotSessionInspectionResult::inspectorOk('{}');
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w+",
+            encoding="utf-8",
+            suffix=".php",
+            prefix="SessionInternalFactoryFixture",
+            dir=identity,
+        ) as fixture, patch.object(architecture_check, "files", return_value=[Path(fixture.name)]):
+            fixture.write(source)
+            fixture.flush()
+            findings = architecture_check.collect()
+        self.assertEqual(3, len(findings.get("session_storage_ownership", [])))
+
 
 if __name__ == "__main__":
     unittest.main()
