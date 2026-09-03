@@ -221,6 +221,15 @@ function aoosNormalizeSql(string $value): string
     return $normalized;
 }
 
+/** @param array{COLUMN_NAME:string,COLUMN_TYPE:string,IS_NULLABLE:string,EXTRA:string} $row */
+function aoosColumnSignature(array $row): string
+{
+    $column = $row['COLUMN_NAME'] . ':'
+        . preg_replace('/^(bigint|int|tinyint)\(\d+\)/', '$1', strtolower($row['COLUMN_TYPE']))
+        . ':' . $row['IS_NULLABLE'];
+    return $row['EXTRA'] === '' ? $column : $column . ':' . $row['EXTRA'];
+}
+
 /** @return array<string,mixed> */
 function aoosOriginalFingerprint(mysqli $connection, string $prefix): array
 {
@@ -234,7 +243,7 @@ function aoosOriginalFingerprint(mysqli $connection, string $prefix): array
             throw new TestFailure("Canonical v12 table is missing: {$base}");
         }
         $columns = $connection->query("SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$escaped}' ORDER BY ORDINAL_POSITION")->fetch_all(MYSQLI_ASSOC);
-        $columnText = implode(';', array_map(static fn (array $row): string => $row['COLUMN_NAME'].':'.preg_replace('/^(bigint|int|tinyint)\\(\\d+\\)/', '$1', strtolower($row['COLUMN_TYPE'])).':'.$row['IS_NULLABLE'].':'.$row['EXTRA'], $columns));
+        $columnText = implode(';', array_map('aoosColumnSignature', $columns));
         $indexes = $connection->query("SELECT INDEX_NAME,NON_UNIQUE,SEQ_IN_INDEX,COLUMN_NAME,SUB_PART,COLLATION,INDEX_TYPE,IGNORED FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$escaped}' ORDER BY BINARY INDEX_NAME,SEQ_IN_INDEX")->fetch_all(MYSQLI_ASSOC);
         $groups = [];
         foreach ($indexes as $index) {
@@ -292,6 +301,16 @@ assertSameValue(
     '127eddc8a0e7b3ce270b5c704ddf6a55022de22cd3d3447592402b426256cee2',
     hash_file('sha256', $repositoryRoot . '/openspec/changes/replace-pilot-registration-with-original-upload/specs/pilot/assignment-order-original/spec.md'),
     'Gate 2 remains pinned to the owner-approved v4 OpenSpec delta.',
+);
+assertSameValue(
+    'root_original_id:varchar(160):NO',
+    aoosColumnSignature(['COLUMN_NAME'=>'root_original_id','COLUMN_TYPE'=>'varchar(160)','IS_NULLABLE'=>'NO','EXTRA'=>'']),
+    'Empty MariaDB EXTRA does not add a phantom manifest delimiter.',
+);
+assertSameValue(
+    'id:bigint unsigned:NO:auto_increment',
+    aoosColumnSignature(['COLUMN_NAME'=>'id','COLUMN_TYPE'=>'bigint(20) unsigned','IS_NULLABLE'=>'NO','EXTRA'=>'auto_increment']),
+    'Non-empty MariaDB EXTRA remains part of the exact column signature.',
 );
 
 if (!class_exists(AssignmentOrderOriginalSchemaMigration::class)) {
