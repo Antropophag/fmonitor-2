@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
+$shlzCss = dirname($root) . '/shlz-ui/packages/styles/dist/shlz.css';
+putenv('FMONITOR_SHLZ_CSS_PATH=' . $shlzCss);
+putenv('FMONITOR_PILOT_CSS_PATH=' . $root . '/app/PilotHttp/pilot.css');
 spl_autoload_register(static function (string $class) use ($root): void {
     foreach (['FMonitor2\\' => $root . '/app/', 'FMonitor\\IdentityAccess\\' => $root . '/app/IdentityAccess/'] as $prefix => $base) {
         if (!str_starts_with($class, $prefix)) continue;
