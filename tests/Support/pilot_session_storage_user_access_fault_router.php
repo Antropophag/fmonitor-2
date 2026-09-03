@@ -8,6 +8,7 @@ putenv('FMONITOR_PILOT_CSS_PATH=' . $root . '/app/PilotHttp/pilot.css');
 putenv('FMONITOR_ARTIFACT_STORAGE_ROOT=' . (string) getenv('FMONITOR_SESSION_STATE_ROOT') . '/artifacts');
 putenv('FMONITOR_NOW=2026-09-03T12:00:00+03:00');
 putenv('FMONITOR_LEGACY_TABLE_PREFIX=');
+putenv('FMONITOR_PROCESS_TABLE_PREFIX=');
 spl_autoload_register(static function (string $class) use ($root): void {
     foreach (['FMonitor2\\' => $root . '/app/', 'FMonitor\\IdentityAccess\\' => $root . '/app/IdentityAccess/'] as $prefix => $base) {
         if (!str_starts_with($class, $prefix)) continue;
