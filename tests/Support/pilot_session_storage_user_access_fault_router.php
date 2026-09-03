@@ -22,7 +22,9 @@ $observer = new class($trace) implements FMonitor\IdentityAccess\PilotSessionLif
             'operation' => $event->operation()->value,
             'artifact' => $event->artifact()->value,
             'ordinal' => $event->ordinal(),
-            'outcome' => $event->outcome()?->value,
+            'outcome' => $event->outcome() === FMonitor\IdentityAccess\PilotSessionPrimitiveOutcome::NATIVE_FALSE
+                ? 'native_false'
+                : $event->outcome()?->value,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);
     }
 };
