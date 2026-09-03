@@ -10,7 +10,7 @@ final class ProcessCommandCapabilitiesSchemaMigration
         MariaDbSchemaInspector::validateTablePrefix($tablePrefix);
         $table = $tablePrefix . 'fm2_process_user_capabilities';
         $inspection = self::inspectSchema($connection, $table);
-        if (($inspection['state'] ?? null) === 'v4') {
+        if (in_array(($inspection['state'] ?? null), ['v4','v12'], true)) {
             return ['applied'=>false,'schemaVersion'=>4,'constraintsChanged'=>[]];
         }
         if (($inspection['state'] ?? null) !== 'v3') {

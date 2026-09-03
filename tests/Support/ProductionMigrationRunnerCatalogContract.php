@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Literal catalog contract transcribed from the approved v1-v11 specifications.
+ * Literal catalog contract transcribed from the approved v1-v12 specifications.
  * It deliberately does not load migration classes or production SQL.
  */
 final class ProductionMigrationRunnerCatalogContract
@@ -29,6 +29,27 @@ final class ProductionMigrationRunnerCatalogContract
             ),
             'fm2_assignment_orders' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;installation_case_id:bigint unsigned:NO:;version_no:smallint unsigned:NO:;kind:varchar(40):NO:;status:varchar(40):NO:;order_date:date:NO:;registration_number:varchar(120):YES:;registered_at:varchar(40):YES:;registration_actor_type:varchar(40):YES:;registration_actor_id:varchar(120):YES:;registration_source:varchar(40):YES:;external_registration_id:varchar(120):YES:;control_engineer_user_id:bigint unsigned:NO:;control_engineer_fio_snapshot:varchar(300):NO:;control_engineer_position_snapshot:varchar(300):NO:;organization_form:varchar(40):NO:;previous_assignment_order_id:bigint unsigned:YES:;object_address_snapshot:varchar(500):NO:;entrance_snapshot:varchar(80):NO:;object_registration_number_snapshot:varchar(120):NO:;planned_start_date_snapshot:date:NO:;planned_finish_date_snapshot:date:NO:;pto_act_date_snapshot:date:YES:;prepared_at:varchar(40):NO:;prepared_by_user_id:bigint unsigned:NO:'
+            ),
+            'fm2_assignment_order_original_roots' => self::parseColumns(
+                'root_original_id:varchar(160):NO:;installation_case_id:bigint unsigned:NO:;assignment_order_id:bigint unsigned:NO:;composition_identity:varchar(255):NO:;composition_sha256:char(64):NO:;created_at:varchar(40):NO:'
+            ),
+            'fm2_assignment_order_original_revisions' => self::parseColumns(
+                'revision_id:varchar(160):NO:;root_original_id:varchar(160):NO:;revision_number:int unsigned:NO:;previous_revision_id:varchar(160):YES:;expected_current_revision_id:varchar(160):YES:;current_marker:tinyint unsigned:YES:;document_date:date:NO:;uploaded_at:varchar(40):NO:;actor_user_id:bigint unsigned:NO:;pdf_sha256:char(64):NO:;byte_size:bigint unsigned:NO:;private_content_identity:varchar(255):NO:;correction_reason:varchar(500):YES:'
+            ),
+            'fm2_assignment_order_original_requests' => self::parseColumns(
+                'request_id:char(36):NO:;actor_user_id:bigint unsigned:NO:;mode:varchar(20):NO:;installation_case_id:bigint unsigned:NO:;assignment_order_id:bigint unsigned:NO:;status:varchar(20):NO:;reason_code:varchar(80):YES:;retryable:tinyint:NO:;root_original_id:varchar(160):YES:;current_revision_id:varchar(160):YES:;revision_number:int unsigned:YES:;document_date:date:YES:;sha256:char(64):YES:;byte_size:bigint unsigned:YES:;uploaded_at:varchar(40):YES:;attempted_at:varchar(40):NO:'
+            ),
+            'fm2_assignment_order_original_fingerprints' => self::parseColumns(
+                'fingerprint:char(64):NO:;request_id:char(36):NO:;root_original_id:varchar(160):NO:;revision_id:varchar(160):NO:'
+            ),
+            'fm2_assignment_order_original_events' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;event_type:varchar(80):NO:;installation_case_id:bigint unsigned:NO:;assignment_order_id:bigint unsigned:NO:;root_original_id:varchar(160):NO:;revision_id:varchar(160):NO:;occurred_at:varchar(40):NO:;actor_user_id:bigint unsigned:NO:'
+            ),
+            'fm2_assignment_order_original_attempt_audits' => self::parseColumns(
+                'id:bigint unsigned:NO:auto_increment;request_id:char(36):NO:;actor_identity:varchar(120):NO:;mode:varchar(20):NO:;installation_case_id:bigint unsigned:NO:;assignment_order_id:bigint unsigned:NO:;status:varchar(20):NO:;reason_code:varchar(80):NO:;attempted_at:varchar(40):NO:'
+            ),
+            'fm2_assignment_order_original_maintenance_results' => self::parseColumns(
+                'request_id:char(36):NO:;system_principal_id:varchar(160):NO:;status:varchar(20):NO:;reason_code:varchar(80):YES:;retryable:tinyint:NO:;scanned:int unsigned:NO:;deleted:int unsigned:NO:;retained:int unsigned:NO:;failed:int unsigned:NO:;next_cursor:varchar(500):YES:;attempted_at:varchar(40):NO:'
             ),
             'fm2_checklist_template_associations' => self::parseColumns(
                 'id:bigint unsigned:NO:auto_increment;association_version:varchar(80):NO:;subject_kind:varchar(40):NO:;subject_id:varchar(160):NO:;effective_at:datetime:NO:;template_snapshot_id:bigint unsigned:NO:;template_snapshot_version:varchar(80):NO:;template_content_sha256:char(64):NO:;created_at:datetime:NO:'
@@ -112,6 +133,32 @@ final class ProductionMigrationRunnerCatalogContract
     public static function indexes(): array
     {
         return [
+            'fm2_assignment_order_original_attempt_audits|PRIMARY|id',
+            'fm2_assignment_order_original_attempt_audits|UNIQUE|request_id',
+            'fm2_assignment_order_original_attempt_audits|INDEX|actor_identity,attempted_at',
+            'fm2_assignment_order_original_events|PRIMARY|id',
+            'fm2_assignment_order_original_events|UNIQUE|revision_id',
+            'fm2_assignment_order_original_events|INDEX|assignment_order_id',
+            'fm2_assignment_order_original_events|INDEX|installation_case_id,assignment_order_id,id',
+            'fm2_assignment_order_original_events|INDEX|root_original_id',
+            'fm2_assignment_order_original_fingerprints|PRIMARY|fingerprint',
+            'fm2_assignment_order_original_fingerprints|UNIQUE|request_id',
+            'fm2_assignment_order_original_fingerprints|INDEX|revision_id',
+            'fm2_assignment_order_original_fingerprints|INDEX|root_original_id,revision_id',
+            'fm2_assignment_order_original_maintenance_results|PRIMARY|request_id',
+            'fm2_assignment_order_original_maintenance_results|INDEX|system_principal_id,attempted_at',
+            'fm2_assignment_order_original_requests|PRIMARY|request_id',
+            'fm2_assignment_order_original_requests|INDEX|assignment_order_id,request_id',
+            'fm2_assignment_order_original_requests|INDEX|current_revision_id',
+            'fm2_assignment_order_original_requests|INDEX|installation_case_id',
+            'fm2_assignment_order_original_requests|INDEX|root_original_id',
+            'fm2_assignment_order_original_revisions|PRIMARY|revision_id',
+            'fm2_assignment_order_original_revisions|UNIQUE|root_original_id,current_marker',
+            'fm2_assignment_order_original_revisions|UNIQUE|root_original_id,revision_id',
+            'fm2_assignment_order_original_revisions|UNIQUE|root_original_id,revision_number',
+            'fm2_assignment_order_original_roots|PRIMARY|root_original_id',
+            'fm2_assignment_order_original_roots|UNIQUE|assignment_order_id',
+            'fm2_assignment_order_original_roots|INDEX|installation_case_id',
             'fm2_migration_classification_provenance|PRIMARY|id',
             'fm2_migration_classification_provenance|UNIQUE|output_kind,output_id',
             'fm2_migration_classification_provenance|INDEX|legacy_object_id',
@@ -197,6 +244,23 @@ final class ProductionMigrationRunnerCatalogContract
     public static function foreignKeys(): array
     {
         return [
+            'fm2_assignment_order_original_attempt_audits|request_id|fm2_assignment_order_original_requests|request_id|RESTRICT',
+            'fm2_assignment_order_original_events|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
+            'fm2_assignment_order_original_events|installation_case_id|fm2_installation_cases|id|RESTRICT',
+            'fm2_assignment_order_original_events|revision_id|fm2_assignment_order_original_revisions|revision_id|RESTRICT',
+            'fm2_assignment_order_original_events|root_original_id|fm2_assignment_order_original_roots|root_original_id|RESTRICT',
+            'fm2_assignment_order_original_fingerprints|request_id|fm2_assignment_order_original_requests|request_id|RESTRICT',
+            'fm2_assignment_order_original_fingerprints|revision_id|fm2_assignment_order_original_revisions|revision_id|RESTRICT',
+            'fm2_assignment_order_original_fingerprints|root_original_id|fm2_assignment_order_original_roots|root_original_id|RESTRICT',
+            'fm2_assignment_order_original_requests|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
+            'fm2_assignment_order_original_requests|current_revision_id|fm2_assignment_order_original_revisions|revision_id|RESTRICT',
+            'fm2_assignment_order_original_requests|installation_case_id|fm2_installation_cases|id|RESTRICT',
+            'fm2_assignment_order_original_requests|root_original_id|fm2_assignment_order_original_roots|root_original_id|RESTRICT',
+            'fm2_assignment_order_original_revisions|previous_revision_id|fm2_assignment_order_original_revisions|revision_id|RESTRICT',
+            'fm2_assignment_order_original_revisions|root_original_id|fm2_assignment_order_original_revisions|root_original_id|RESTRICT',
+            'fm2_assignment_order_original_revisions|root_original_id|fm2_assignment_order_original_roots|root_original_id|RESTRICT',
+            'fm2_assignment_order_original_roots|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
+            'fm2_assignment_order_original_roots|installation_case_id|fm2_installation_cases|id|RESTRICT',
             'fm2_assignment_orders|installation_case_id|fm2_installation_cases|id|RESTRICT',
             'fm2_assignment_orders|previous_assignment_order_id|fm2_assignment_orders|id|RESTRICT',
             'fm2_order_artifacts|assignment_order_id|fm2_assignment_orders|id|RESTRICT',
@@ -221,13 +285,29 @@ final class ProductionMigrationRunnerCatalogContract
     public static function checks(): array
     {
         return [
+            ['table'=>'fm2_assignment_order_original_attempt_audits','constraint'=>null,'clause'=>"modein('initial','correction')"],
+            ['table'=>'fm2_assignment_order_original_attempt_audits','constraint'=>null,'clause'=>"statusin('rejected','conflict')"],
+            ['table'=>'fm2_assignment_order_original_events','constraint'=>null,'clause'=>"event_typein('assignment_order_original_accepted','assignment_order_original_corrected')"],
+            ['table'=>'fm2_assignment_order_original_fingerprints','constraint'=>null,'clause'=>'char_length(fingerprint)=64'],
+            ['table'=>'fm2_assignment_order_original_maintenance_results','constraint'=>null,'clause'=>'scanned=deleted+retained+failed'],
+            ['table'=>'fm2_assignment_order_original_maintenance_results','constraint'=>null,'clause'=>"status='completed'andreason_codeisnullandretryable=0orstatus='partial'andreason_codein('locked','storage_failure')andretryable=1orstatus='rejected'andreason_codein('invalid_command','authorization_denied')andretryable=0"],
+            ['table'=>'fm2_assignment_order_original_maintenance_results','constraint'=>null,'clause'=>"statusin('completed','partial','rejected')"],
+            ['table'=>'fm2_assignment_order_original_requests','constraint'=>null,'clause'=>"modein('initial','correction')"],
+            ['table'=>'fm2_assignment_order_original_requests','constraint'=>null,'clause'=>'retryable=0'],
+            ['table'=>'fm2_assignment_order_original_requests','constraint'=>null,'clause'=>"status='accepted'andreason_codeisnullandroot_original_idisnotnullandcurrent_revision_idisnotnullandrevision_numberisnotnullanddocument_dateisnotnullandsha256isnotnullandbyte_sizeisnotnullanduploaded_atisnotnullorstatusin('rejected','conflict')andreason_codeisnotnullandroot_original_idisnullandcurrent_revision_idisnullandrevision_numberisnullanddocument_dateisnullandsha256isnullandbyte_sizeisnullanduploaded_atisnull"],
+            ['table'=>'fm2_assignment_order_original_requests','constraint'=>null,'clause'=>"statusin('accepted','rejected','conflict')"],
+            ['table'=>'fm2_assignment_order_original_revisions','constraint'=>null,'clause'=>'byte_size>=1andbyte_size<=20971520'],
+            ['table'=>'fm2_assignment_order_original_revisions','constraint'=>null,'clause'=>'char_length(pdf_sha256)=64'],
+            ['table'=>'fm2_assignment_order_original_revisions','constraint'=>null,'clause'=>'current_markerisnullorcurrent_marker=1'],
+            ['table'=>'fm2_assignment_order_original_revisions','constraint'=>null,'clause'=>'revision_number=1andprevious_revision_idisnullandexpected_current_revision_idisnullandcorrection_reasonisnullorrevision_number>1andprevious_revision_idisnotnullandexpected_current_revision_id=previous_revision_idandchar_length(trim(correction_reason))between1and500'],
+            ['table'=>'fm2_assignment_order_original_roots','constraint'=>null,'clause'=>'char_length(composition_sha256)=64'],
             ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'char_length(trim(reason))between1and1000'],
             ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'version_no=1andprevious_correction_idisnullandprevious_version_noisnullorversion_no>1andprevious_correction_idisnotnullandprevious_version_no=version_no-1'],
             ['table' => 'fm2_pilot_completion_fact_corrections', 'constraint' => null, 'clause' => 'version_no>=1'],
             ['table' => 'fm2_pilot_inspection_schedule_events', 'constraint' => null, 'clause' => 'json_valid(payload_json)'],
             ['table' => 'fm2_process_events', 'constraint' => null, 'clause' => 'json_valid(payload_json)'],
             ['table' => 'fm2_process_user_capabilities', 'constraint' => null, 'clause' => "OR(capability<>'construction_control_engineer',AND(position_snapshotisnotnull,trim(position_snapshot)<>''))"],
-            ['table' => 'fm2_process_user_capabilities', 'constraint' => 'ck_fm2_process_user_capability', 'clause' => "capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')"],
+            ['table' => 'fm2_process_user_capabilities', 'constraint' => 'ck_fm2_process_user_capability', 'clause' => "capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct','assignment_order.original.storage.reconcile')"],
             ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "dismissal_time_qualityisnullordismissal_time_qualityin('observed_only','effective_from_source')"],
             ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "employment_statusin('employed','dismissed')"],
             ['table' => 'fm2_workforce_catalog', 'constraint' => null, 'clause' => "reconciliation_stateisnullorreconciliation_statein('delivered','missing_from_delivery')"],
