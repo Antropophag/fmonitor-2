@@ -11,10 +11,12 @@ owner/inspector-named fixtures separately require zero findings.
 ```text
 python3 -m unittest \
   tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_rejects_native_session_and_hardcoded_root \
-  tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_rejects_internal_factory_callers
+  tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_rejects_internal_factory_callers \
+  tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_allows_exact_internal_factory_owners
 
 FAIL: expected 8 session_storage_ownership findings, actual 0
 FAIL: expected 3 session_storage_ownership findings, actual 0
+PASS: exact complete owner/event/inspector factory matrix has zero findings
 ```
 
 Оба fixture-файла создаются внутри разрешённых production roots, передаются

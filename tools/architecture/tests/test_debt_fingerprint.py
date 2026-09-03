@@ -624,9 +624,20 @@ PilotSessionInspectionResult::inspectorOk('{}');
             inspector = Path(directory) / "PilotSessionStorageInspector.php"
             owner.write_text("""<?php
 PilotSessionOperationResult::ownerStarted('fixture-session-id');
+PilotSessionOperationResult::ownerWriteCommitted('fixture-session-id');
+PilotSessionOperationResult::ownerRegenerated('fixture-session-id');
+PilotSessionOperationResult::ownerDestroyed();
+PilotSessionOperationResult::ownerClosed();
+PilotSessionOperationResult::ownerNotFound();
+PilotSessionOperationResult::ownerInvalid();
+PilotSessionOperationResult::ownerUnavailable($category, '123456789abc');
 PilotSessionFilesystemEvent::ownerBefore(1, $operation, $artifact, null, 1);
+PilotSessionFilesystemEvent::ownerAfter(2, $operation, $artifact, null, 1, $outcome);
 """, encoding="utf-8")
-            inspector.write_text("<?php PilotSessionInspectionResult::inspectorOk('{}');\n", encoding="utf-8")
+            inspector.write_text("""<?php
+PilotSessionInspectionResult::inspectorOk('{}');
+PilotSessionInspectionResult::inspectorUnavailable();
+""", encoding="utf-8")
             with patch.object(architecture_check, "files", return_value=[owner, inspector]):
                 findings = architecture_check.collect()
         self.assertEqual([], findings.get("session_storage_ownership", []))
