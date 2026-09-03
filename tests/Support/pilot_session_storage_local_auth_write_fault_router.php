@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);const PSLA_FAULT_KIND='write';const PSLA_FAULT_OPERATION='rename';const PSLA_FAULT_ARTIFACT='committed';require __DIR__.'/pilot_session_storage_local_auth_fault_common.php';
