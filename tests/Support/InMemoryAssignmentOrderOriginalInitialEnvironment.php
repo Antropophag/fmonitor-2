@@ -51,6 +51,16 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public ?string $storageFault = null;
     /** @var list<string> */
     public array $storageEvents = [];
+    public string $compositionIdentity = 'composition-81-v1';
+    public string $compositionSha256 = self::COMPOSITION_SHA256;
+    /** @var list<AssignmentOrderOriginalAttemptCommit> */
+    public array $attemptCommits = [];
+    /** @var array<string, \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult> */
+    public array $terminalResults = [];
+    /** @var array<string, \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult> */
+    public array $fingerprintResults = [];
+    public int $rootIdCalls = 0;
+    public int $revisionIdCalls = 0;
 
     /** @var array<string, mixed> */
     private array $process = [
@@ -81,15 +91,16 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
                     : AssignmentOrderOriginalAuthorizationStatus::DENIED;
             }
         };
-        $compositions = new class implements AssignmentOrderCompositionReader {
+        $compositions = new class($owner) implements AssignmentOrderCompositionReader {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function find(int $caseId, int $orderId): AssignmentOrderCompositionSnapshot
             {
                 return new AssignmentOrderCompositionSnapshot(
                     AssignmentOrderCompositionLookupStatus::FOUND,
                     $caseId,
                     $orderId,
-                    'composition-81-v1',
-                    InMemoryAssignmentOrderOriginalInitialEnvironment::COMPOSITION_SHA256,
+                    $this->owner->compositionIdentity,
+                    $this->owner->compositionSha256,
                     [7001, 7002],
                     901,
                 );
@@ -98,14 +109,17 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
         $clock = new class implements AssignmentOrderOriginalClock {
             public function nowUtc(): string { return '2026-09-02T09:15:30Z'; }
         };
-        $ids = new class implements AssignmentOrderOriginalIdSource {
+        $ids = new class($owner) implements AssignmentOrderOriginalIdSource {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function nextRootId(): AssignmentOrderOriginalIdResult
             {
-                return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'original-0001');
+                $this->owner->rootIdCalls++;
+                return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'original-' . str_pad((string) $this->owner->rootIdCalls, 4, '0', STR_PAD_LEFT));
             }
             public function nextRevisionId(): AssignmentOrderOriginalIdResult
             {
-                return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'revision-0001');
+                $this->owner->revisionIdCalls++;
+                return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'revision-' . str_pad((string) $this->owner->revisionIdCalls, 4, '0', STR_PAD_LEFT));
             }
         };
         $inspector = new class implements AssignmentOrderOriginalPdfInspector {
@@ -221,8 +235,17 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
 final class InMemoryAssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
 {
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
-    public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup { return $this->miss(); }
-    public function findAcceptedFingerprint(string $fingerprint): AssignmentOrderOriginalResultLookup { return $this->miss(); }
+    public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup { return $this->lookup($this->owner->terminalResults[$requestId] ?? null); }
+    public function findAcceptedFingerprint(string $fingerprint): AssignmentOrderOriginalResultLookup { return $this->lookup($this->owner->fingerprintResults[$fingerprint] ?? null); }
+    private function lookup(?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $result): AssignmentOrderOriginalResultLookup
+    {
+        if ($result === null) return $this->miss();
+        return new class($result) implements AssignmentOrderOriginalResultLookup {
+            public function __construct(private \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $stored) {}
+            public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::FOUND; }
+            public function result(): ?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult { return $this->stored; }
+        };
+    }
     private function miss(): AssignmentOrderOriginalResultLookup
     {
         return new class implements AssignmentOrderOriginalResultLookup {
@@ -232,6 +255,19 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function findLineage(string $rootOriginalId): AssignmentOrderOriginalLineageLookup
     {
+        $commit = $this->owner->acceptedCommit;
+        if ($commit !== null && $commit->rootOriginalId === $rootOriginalId) {
+            return new class($commit) implements AssignmentOrderOriginalLineageLookup {
+                public function __construct(private AssignmentOrderOriginalAcceptedCommit $commit) {}
+                public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::FOUND; }
+                public function rootOriginalId(): ?string { return $this->commit->rootOriginalId; }
+                public function currentRevisionId(): ?string { return $this->commit->newRevisionId; }
+                public function currentRevisionNumber(): ?int { return $this->commit->newRevisionNumber; }
+                public function compositionIdentity(): ?string { return $this->commit->compositionIdentity; }
+                public function compositionSha256(): ?string { return $this->commit->compositionSha256; }
+                public function containsRevision(string $revisionId): bool { return $revisionId === $this->commit->newRevisionId; }
+            };
+        }
         return new class implements AssignmentOrderOriginalLineageLookup {
             public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::NOT_FOUND; }
             public function rootOriginalId(): ?string { return null; }
@@ -245,15 +281,35 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
         $this->owner->acceptedCommit = $commit;
+        $stored = new InMemoryAssignmentOrderOriginalStoredResult($commit);
+        $this->owner->terminalResults[$commit->requestId] = $stored;
+        $this->owner->fingerprintResults[$commit->fingerprint] = $stored;
         return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
     public function commitAttempt(AssignmentOrderOriginalAttemptCommit $commit): AssignmentOrderOriginalCommitStatus
     {
-        throw new \LogicException('Not used by valid initial upload.');
+        $this->owner->attemptCommits[] = $commit;
+        return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
     public function hasCommittedContent(string $opaqueIdentity): AssignmentOrderOriginalReferenceLookup
     {
         throw new \LogicException('Not used by initial upload.');
     }
     public function evidenceCanonicalJson(int $caseId, int $orderId): string { return '{}'; }
+}
+
+final class InMemoryAssignmentOrderOriginalStoredResult implements \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult
+{
+    public function __construct(private AssignmentOrderOriginalAcceptedCommit $commit) {}
+    public function status(): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalStatus { return \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalStatus::ACCEPTED; }
+    public function reasonCode(): ?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalReason { return null; }
+    public function retryable(): bool { return false; }
+    public function requestId(): string { return $this->commit->requestId; }
+    public function rootOriginalId(): ?string { return $this->commit->rootOriginalId; }
+    public function currentRevisionId(): ?string { return $this->commit->newRevisionId; }
+    public function revisionNumber(): ?int { return $this->commit->newRevisionNumber; }
+    public function documentDate(): ?string { return $this->commit->documentDate; }
+    public function sha256(): ?string { return $this->commit->pdfSha256; }
+    public function byteSize(): ?int { return $this->commit->byteSize; }
+    public function uploadedAt(): ?string { return $this->commit->uploadedAt; }
 }
