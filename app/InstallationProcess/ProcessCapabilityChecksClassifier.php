@@ -6,7 +6,7 @@ namespace FMonitor2\InstallationProcess;
 
 final class ProcessCapabilityChecksClassifier
 {
-    /** @return array{state: 'v3'|'v4', capabilityConstraint: string}|null */
+    /** @return array{state: 'v3'|'v4'|'v12', capabilityConstraint: string}|null */
     public static function inspect(\mysqli $connection, string $table): ?array
     {
         $statement = $connection->prepare('SELECT CONSTRAINT_NAME,CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY CONSTRAINT_NAME');
@@ -47,7 +47,7 @@ final class ProcessCapabilityChecksClassifier
         ];
     }
 
-    /** @return 'v3'|'v4'|null */
+    /** @return 'v3'|'v4'|'v12'|null */
     private static function capabilityVersion(string $check): ?string
     {
         $check = self::stripOptionalWholeExpressionParentheses($check);
@@ -71,12 +71,12 @@ final class ProcessCapabilityChecksClassifier
         sort($capabilities, SORT_STRING);
         $v3 = ['assignment_order.prepare', 'construction_control_engineer'];
         $v4 = ['assignment_order.confirm_registration', 'assignment_order.prepare', 'construction_control_engineer', 'installation.open'];
-        sort($v3, SORT_STRING);
-        sort($v4, SORT_STRING);
+        $v12 = ['assignment_order.confirm_registration','assignment_order.original.correct','assignment_order.original.storage.reconcile','assignment_order.original.upload','assignment_order.prepare','construction_control_engineer','installation.open'];
+        sort($v3, SORT_STRING); sort($v4, SORT_STRING); sort($v12, SORT_STRING);
 
         return match ($capabilities) {
             $v3 => 'v3',
-            $v4 => 'v4',
+            $v4 => 'v4', $v12 => 'v12',
             default => null,
         };
     }
