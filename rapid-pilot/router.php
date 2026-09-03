@@ -210,7 +210,7 @@ if (is_string($path) && str_starts_with($path, '/pilot/assets/')) {
     echo "Not found.\n";
     exit;
 }
-\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotCompletionFlow::blocksLegacyCompletion((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path)||RapidPilotOtiz::matches((string)$path));try {
+\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotCompletionFlow::matchesLegacyCompletionBlock((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path)||RapidPilotOtiz::matches((string)$path));try {
     (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
 } catch (Throwable) {
     $body = "Service unavailable.\n";

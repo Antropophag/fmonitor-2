@@ -11,6 +11,11 @@ final class RapidPilotCompletionFlow
         return preg_match('#^/pilot/objects/[1-9][0-9]*/completion$#D', $path) === 1;
     }
 
+    public static function matchesLegacyCompletionBlock(string $path): bool
+    {
+        return preg_match('#^/pilot/objects/[1-9][0-9]*/checklist/operations$#D', $path) === 1;
+    }
+
     public static function handle(string $path): never
     {
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') self::plain(405, 'Метод не поддерживается.');
@@ -41,7 +46,7 @@ final class RapidPilotCompletionFlow
 
     public static function blocksLegacyCompletion(string $path): bool
     {
-        if(($_SERVER['REQUEST_METHOD']??'GET')!=='POST'||preg_match('#^/pilot/objects/[1-9][0-9]*/checklist/operations$#D',$path)!==1)return false;
+        if(($_SERVER['REQUEST_METHOD']??'GET')!=='POST'||!self::matchesLegacyCompletionBlock($path))return false;
         $body=file_get_contents('php://input');if(!is_string($body))return false;$payload=json_decode($body,true);
         if(!is_array($payload)||($payload['itemId']??null)!==42)return false;
         http_response_code(409);header('Content-Type: application/json; charset=UTF-8');header('Cache-Control: no-store');
