@@ -12,6 +12,9 @@ assertSameValue(array_fill(0,4096,'x'),$codec->decode(serialize(array_fill(0,409
 assertSameValue(null,$codec->decode(serialize(array_fill(0,4097,'x'))),'4097 total entries rejected');
 $nested4096=[];for($i=0;$i<64;$i++)$nested4096[]=array_fill(0,63,'x');assertSameValue($nested4096,$codec->decode(serialize($nested4096)),'4096 recursively reachable entries accepted');$nestedOverflow=$nested4096;$nestedOverflow[0][]='overflow';assertSameValue(null,$codec->decode(serialize($nestedOverflow)),'nested total entry overflow rejected');
 $mixed=['null'=>null,'bool'=>true,'int'=>17,'string'=>'value','nested'=>['key'=>false,3=>'three']];assertSameValue(serialize($mixed),$codec->encode($mixed),'all allowed encode leaves are canonical');assertSameValue($canonical,$codec->encode($valid),'checked encode returns exact canonical bytes');
+assertSameValue(serialize($depth16),$codec->encode($depth16),'encode accepts exact depth 16');
+assertSameValue(serialize(array_fill(0,4096,'x')),$codec->encode(array_fill(0,4096,'x')),'encode accepts exact flat 4096 entries');
+assertSameValue(serialize($nested4096),$codec->encode($nested4096),'encode accepts exact nested total 4096 entries');
 assertSameValue(null,$codec->encode(['float'=>1.5]),'encode rejects float');
 assertSameValue(null,$codec->encode($deep),'encode rejects depth 17');
 assertSameValue(null,$codec->encode(array_fill(0,4097,'x')),'encode rejects 4097 entries');
