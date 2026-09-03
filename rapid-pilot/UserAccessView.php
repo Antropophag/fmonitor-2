@@ -48,13 +48,6 @@ final class RapidPilotUserAccessView
             static fn (array $match): string => '<section class="fm2-role-model-note fm2-invite-panel"><strong>Пригласить пользователя</strong><p>FMonitor создаст одноразовую ссылку. Скопируйте и передайте её пользователю самостоятельно — отправка писем в rapid pilot не подключена.</p><form method="post" action="/pilot/admin/users/invite" class="fm2-auth-form"><input type="hidden" name="csrfToken" value="' . self::e($match[1]) . '"><label class="shlz-field"><span class="shlz-field__label">Корпоративный email</span><span class="shlz-field__control"><input class="shlz-input" type="email" name="email" placeholder="name@shlz.ru" autocomplete="off" pattern="[^@]+@shlz\\.ru" required></span></label><label class="shlz-field"><span class="shlz-field__label">ФИО</span><span class="shlz-field__control"><input class="shlz-input" name="fullName" autocomplete="off" maxlength="300" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Создать приглашение</button></form></section>',
             $html
         ) ?? $html;
-        $flash = self::takeInvitationFlash();
-        if ($flash !== null) {
-            $feedback = self::invitationFeedback($flash);
-            $html = str_replace('<section class="fm2-directory-summary fm2-user-summary">', $feedback . '<section class="fm2-directory-summary fm2-user-summary">', $html);
-            if (($flash['kind'] ?? '') === 'success') $html = str_replace('</body>', '<script src="/pilot/assets/invite.js" defer></script></body>', $html);
-        }
-
         return preg_replace_callback(
             '#(<tr class="shlz-table__row fm2-user-row[^>]*data-user-id="([1-9][0-9]*)".*?)(</tr>)#s',
             static function (array $match) use ($access, $states, $actorId, $csrf): string {
@@ -73,14 +66,6 @@ final class RapidPilotUserAccessView
 
     public static function invitationResponse(\FMonitor2\PilotHttp\PilotHttpResponse $response): \FMonitor2\PilotHttp\PilotHttpResponse
     {
-        if ($response->status === 201 && preg_match('#^Invitation: (/pilot/activate\?token=[A-Za-z0-9_-]{43})\n$#D', $response->body, $match) === 1) {
-            self::putInvitationFlash(['kind' => 'success', 'url' => self::absoluteUrl($match[1])]);
-            return self::redirectResponse($response);
-        }
-        if ($response->status === 400 && $response->body === "Bad request.\n") {
-            self::putInvitationFlash(['kind' => 'error']);
-            return self::redirectResponse($response);
-        }
         return $response;
     }
 
@@ -98,36 +83,6 @@ final class RapidPilotUserAccessView
         $headers['Location'] = '/pilot/admin/users';
         $headers['Content-Length'] = '0';
         return new \FMonitor2\PilotHttp\PilotHttpResponse(303, $headers, '');
-    }
-
-    /** @param array{kind:string,url?:string} $flash */
-    private static function putInvitationFlash(array $flash): void
-    {
-        if (!self::openLocalSession()) return;
-        $_SESSION['fm2_invitation_flash'] = $flash;
-        session_write_close();
-    }
-
-    /** @return array{kind:string,url?:string}|null */
-    private static function takeInvitationFlash(): ?array
-    {
-        if (!self::openLocalSession()) return null;
-        $flash = $_SESSION['fm2_invitation_flash'] ?? null;
-        unset($_SESSION['fm2_invitation_flash']);
-        session_write_close();
-        return is_array($flash) ? $flash : null;
-    }
-
-    private static function openLocalSession(): bool
-    {
-        if (session_status() === PHP_SESSION_ACTIVE) return true;
-        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
-        $name = preg_match('/:(\d{1,5})$/D', $host, $match) === 1 ? 'fm2auth_' . $match[1] : 'fm2auth';
-        if (preg_match('/(?:^|;\s*)' . preg_quote($name, '/') . '=([A-Za-z0-9,-]{16,128})(?:;|$)/', (string) ($_SERVER['HTTP_COOKIE'] ?? ''), $cookie) !== 1) return false;
-        session_save_path('/home/fmonitor/.local/state/fmonitor2/sessions');
-        session_name($name);
-        session_id($cookie[1]);
-        return session_start(['use_strict_mode' => 1, 'use_only_cookies' => 1, 'cookie_httponly' => 1, 'cookie_samesite' => 'Strict', 'gc_maxlifetime' => 604800]);
     }
 
     private static function absoluteUrl(string $path): string
