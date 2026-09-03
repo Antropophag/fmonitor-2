@@ -50,12 +50,13 @@ function polStart(array $environment): array
     throw new TestFailure('PHP server did not listen');
 }
 
-function polStop(?array $server): void
+function polStop(?array $server): string
 {
-    if ($server === null || !is_resource($server['process'])) return;
+    if ($server === null || !is_resource($server['process'])) return '';
     if (proc_get_status($server['process'])['running']) proc_terminate($server['process']);
-    foreach ([1,2] as $fd) if (is_resource($server['pipes'][$fd])) { stream_get_contents($server['pipes'][$fd]); fclose($server['pipes'][$fd]); }
+    $diagnostics=''; foreach ([1,2] as $fd) if (is_resource($server['pipes'][$fd])) { $diagnostics.=stream_get_contents($server['pipes'][$fd]); fclose($server['pipes'][$fd]); }
     proc_close($server['process']);
+    return $diagnostics;
 }
 
 function polRequestRaw(int $port, string $method, string $target, array $headers = [], string $body = ''): array
@@ -104,7 +105,36 @@ function polError(array $response, int $status, string $body, string $why, ?stri
     assertSameValue((string) strlen($body), polHeader($response,'content-length'), $why . ' content length');
     assertSameValue($body, $response['body'], $why . ' exact body');
     assertSameValue($allow, polHeader($response,'allow'), $why . ' Allow');
-    assertSameValue($status === 503 ? '60' : null, polHeader($response,'retry-after'), $why . ' Retry-After');
+    assertSameValue(null, polHeader($response,'retry-after'), $why . ' omits Retry-After');
+}
+
+function polAuthorizationError(array $response,int $status,string $body,string $why,bool $correlation=false): void
+{
+    polError($response,$status,$body,$why);
+    $expected=['cache-control','content-length','content-security-policy','content-type','cross-origin-opener-policy','permissions-policy','referrer-policy','x-content-type-options','x-frame-options'];
+    if($correlation)$expected[]='x-correlation-id'; sort($expected);
+    $actual=array_values(array_diff(array_keys($response['headers']),['date','connection','host']));sort($actual);
+    assertSameValue($expected,$actual,$why.' exact singleton application headers');
+    assertSameValue('no-store',polHeader($response,'cache-control'),$why.' no-store');
+    assertSameValue('nosniff',polHeader($response,'x-content-type-options'),$why.' nosniff');
+    assertSameValue('no-referrer',polHeader($response,'referrer-policy'),$why.' no-referrer');
+    assertSameValue('DENY',polHeader($response,'x-frame-options'),$why.' DENY');
+    assertSameValue("default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",polHeader($response,'content-security-policy'),$why.' exact CSP');
+    assertSameValue('camera=(), microphone=(), geolocation=()',polHeader($response,'permissions-policy'),$why.' singleton Permissions-Policy');
+    assertSameValue('same-origin',polHeader($response,'cross-origin-opener-policy'),$why.' singleton COOP');
+    foreach(['set-cookie','location','www-authenticate','access-control-allow-origin','server','x-powered-by']as$name)assertSameValue(null,polHeader($response,$name),$why.' omits '.$name);
+    assertSameValue($correlation?1:0,preg_match('/^[0-9a-f]{12}$/D',(string)polHeader($response,'x-correlation-id')),$why.' correlation contract');
+    foreach(['mysqli','SQL','fm2_','role','permission','user_id','password','/home/','4512']as$secret)assertSameValue(false,str_contains($response['body'],$secret),$why.' redacts '.$secret);
+}
+
+function polUnavailable(array $environment,mysqli $db,string $category,string $why): void
+{
+    $probe=polStart($environment);
+    try{$response=polReadOnly($db,fn()=>polRequest($probe['port'],'GET','/pilot/objects'),$why);polAuthorizationError($response,503,"Service unavailable.\n",$why,true);$id=(string)polHeader($response,'x-correlation-id');}
+    finally{$log=polStop($probe);}
+    preg_match_all('/^FMONITOR_AUTHORIZATION_UNAVAILABLE category=([A-Z_]+) correlation_id=([0-9a-f]{12})$/m',str_replace("\r",'',$log),$events,PREG_SET_ORDER);
+    assertSameValue(1,count($events),$why.' exactly one safe logger event');assertSameValue($category,$events[0][1]??null,$why.' safe logger category');assertSameValue($id,$events[0][2]??null,$why.' response/log correlation equality');
+    foreach(['SELECT','INSERT','UPDATE','DELETE','fm2_','objects.read','user_id','password','FMONITOR_DB_','legacy_','/home/','4512']as$secret)assertSameValue(false,str_contains($log,$secret),$why.' logger redacts '.$secret);
 }
 
 function polDocument(string $html): DOMDocument
@@ -118,7 +148,7 @@ function polDocument(string $html): DOMDocument
 function polSnapshot(mysqli $db): string
 {
     $all=[]; $tables=$db->query('SELECT TABLE_NAME,AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME')->fetch_all(MYSQLI_ASSOC);
-    foreach($tables as $table){$name=$table['TABLE_NAME'];$rows=$db->query("SELECT * FROM `{$name}`")->fetch_all(MYSQLI_ASSOC);usort($rows,static fn($a,$b)=>json_encode($a)<=>json_encode($b));$all[]=[$table,$rows];}
+    foreach($tables as $table){$name=$table['TABLE_NAME'];$create=array_values($db->query("SHOW CREATE TABLE `{$name}`")->fetch_assoc());$rows=$db->query("SELECT * FROM `{$name}`")->fetch_all(MYSQLI_ASSOC);usort($rows,static fn($a,$b)=>strcmp(serialize($a),serialize($b)));$all[]=[$table,$create,$rows];}
     return hash('sha256',serialize($all));
 }
 
@@ -131,10 +161,11 @@ function polReadOnly(mysqli $db, callable $request, string $why): mixed
     return $result;
 }
 
-$token = bin2hex(random_bytes(6)); $database = 't_pol_' . $token; $reader = 'pol_' . $token; $password = 'select-' . $token;
-$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$polProtectedPaths=[];$polMutableRoots=[]; $admin = polDb(); $db = null; $server = null;
+$token = bin2hex(random_bytes(6)); $database = 't_pol_' . $token; $reader = 'pol_' . $token; $denialReader='pold_'.$token; $password = 'select-' . $token;
+$foreignDatabase='foreign_pol_'.$token;$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$foreignPath='';$foreignBefore=[];$css='';$polProtectedPaths=[];$polMutableRoots=[];$cleanupAttempts=[]; $admin = polDb(); $db = null; $server = null;
 try {
-    $ownership=TaskOwnedArtifactRoot::create('pol',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$polProtectedPaths=[$protectedArtifactRoot,$css];$polMutableRoots=[$mutableRoot];
+    $ownership=TaskOwnedArtifactRoot::create('pol',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$foreignPath=$ownership['parent'].'/foreign-'.$token;$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);mkdir($foreignPath,0700);file_put_contents($foreignPath.'/keep','foreign-bytes');scandir($foreignPath);$foreignBefore=[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')];file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$polProtectedPaths=[$protectedArtifactRoot,$css,$foreignPath];$polMutableRoots=[$mutableRoot];
+    $admin->query("CREATE DATABASE `{$foreignDatabase}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE TABLE `{$foreignDatabase}`.sentinel(id INT PRIMARY KEY,payload VARCHAR(40))");$admin->query("INSERT INTO `{$foreignDatabase}`.sentinel VALUES(1,'foreign-db-bytes')");
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4"); $db=polDb($database);
     $db->query('CREATE TABLE legacy_users_roles(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(120),status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
     $db->query('CREATE TABLE legacy_users(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),email VARCHAR(300),role_id BIGINT UNSIGNED,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
@@ -148,10 +179,20 @@ try {
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
     ProductionProcessSchemaMigration::apply($db);\FMonitor2\Tests\Support\PilotObjectReadRbacFixture::install($db);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,'');
     $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES(3,4515,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),(1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),(2,4513,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
-    $admin->query("CREATE USER `{$reader}`@`%` IDENTIFIED BY '{$password}'");
+    $admin->query("CREATE USER `{$reader}`@`%` IDENTIFIED BY '{$password}'");$admin->query("CREATE USER `{$denialReader}`@`%` IDENTIFIED BY '{$password}'");
     foreach(['legacy_users'=>['id','name','email','role_id','status'],'legacy_users_roles'=>['id','status'],'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state']] as $table=>$columns){$quoted=implode(',',array_map(static fn($c)=>'`'.$c.'`',$columns));$admin->query("GRANT SELECT ({$quoted}) ON `{$database}`.`{$table}` TO `{$reader}`@`%`");}
     foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$reader}`@`%`");
+    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$denialReader}`@`%`");
     $environment=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$reader,'FMONITOR_DB_PASSWORD'=>$password,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18'];
+    $before=polSnapshot($db);
+
+    // Own-slice RED is deliberately first. Generic pre-GREEN fixtures grant via
+    // role 900018, so deleting canonical role 5101 does not revoke the public
+    // route. GREEN must install 5101; then this exact public GET becomes 403.
+    $db->query("DELETE FROM fm2_pilot_role_permissions WHERE role_id=5101 AND permission='objects.read'");$removed=$db->affected_rows;
+    $redServer=polStart($environment);try{$redResponse=polRequest($redServer['port'],'GET','/pilot/objects');polAuthorizationError($redResponse,403,"Access denied.\n",'canonical fixture revoke controls public list before navigation');}finally{polStop($redServer);}
+    assertSameValue(1,$removed,'canonical fixture contains exact independently approved grant');
+    $db->query("INSERT INTO fm2_pilot_role_permissions(role_id,permission) VALUES(5101,'objects.read')");
     $before=polSnapshot($db); $server=polStart($environment);
 
     // One acceptance tracer: all sub-assertions are sensitivity checks for PILOT-OBJECT-LIST-001 section 1.
@@ -193,27 +234,38 @@ try {
     $probe=polStart(array_replace($environment,['FMONITOR_SHLZ_CSS_PATH'=>$css.'.missing','FMONITOR_DB_PASSWORD'=>'wrong']));try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'combined invalid CSS'),503,"Service unavailable.\n",'CSS precedes DB');}finally{polStop($probe);}
 
     $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES(90,9090,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
-    $legacyOnly=array_diff_key($environment,['FMONITOR_AUTH_USER_ID'=>true]);$legacyOnly['REMOTE_USER']='sidorov@shlz.ru';
+    $legacyOnly=array_diff_key(array_replace($environment,['FMONITOR_DB_USER'=>$denialReader]),['FMONITOR_AUTH_USER_ID'=>true]);$legacyOnly['REMOTE_USER']='sidorov@shlz.ru';
+    $denialEnvironment=array_replace($environment,['FMONITOR_DB_USER'=>$denialReader]);
     $negativeActors=[
         [$legacyOnly,401,"Authentication required.\n",'legacy-only REMOTE_USER'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'9999']),403,"Access denied.\n",'missing local user'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'19']),403,"Access denied.\n",'inactive activation'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'20']),403,"Access denied.\n",'inactive user'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'21']),403,"Access denied.\n",'inactive role'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'22']),403,"Access denied.\n",'missing exact grant'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'23']),403,"Access denied.\n",'case near-match grant'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'24']),403,"Access denied.\n",'space near-match grant'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'25']),403,"Access denied.\n",'wildcard near-match grant'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'26']),403,"Access denied.\n",'suffix near-match grant'],
-        [array_replace($environment,['FMONITOR_AUTH_USER_ID'=>'27']),403,"Access denied.\n",'missing assignment'],
+        [array_diff_key($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>true]),401,"Authentication required.\n",'trusted actor key absent'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'']),401,"Authentication required.\n",'empty trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'0']),401,"Authentication required.\n",'zero trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'-1']),401,"Authentication required.\n",'negative trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'abc']),401,"Authentication required.\n",'alphabetic trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>' 18']),401,"Authentication required.\n",'leading-space trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'18 ']),401,"Authentication required.\n",'trailing-space trusted actor'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'9999']),403,"Access denied.\n",'missing local user'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'19']),403,"Access denied.\n",'inactive activation'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'20']),403,"Access denied.\n",'inactive user'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'21']),403,"Access denied.\n",'inactive role'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'22']),403,"Access denied.\n",'missing exact grant'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'23']),403,"Access denied.\n",'case near-match grant'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'24']),403,"Access denied.\n",'space near-match grant'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'25']),403,"Access denied.\n",'wildcard near-match grant'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'26']),403,"Access denied.\n",'suffix near-match grant'],
+        [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'27']),403,"Access denied.\n",'missing assignment'],
     ];
-    foreach($negativeActors as[$actorEnvironment,$status,$body,$why]){$probe=polStart($actorEnvironment);try{polError(polReadOnly($db,fn()=>polRequest($probe['port'],'GET','/pilot/objects'),'RBAC denial '.$why),$status,$body,$why.' precedes dangling list handler/read');}finally{polStop($probe);}}
+    foreach($negativeActors as[$actorEnvironment,$status,$body,$why]){$probe=polStart($actorEnvironment);try{polAuthorizationError(polReadOnly($db,fn()=>polRequest($probe['port'],'GET','/pilot/objects',['Cookie'=>'actor=18','X-Authenticated-User-ID'=>'18']),'RBAC denial '.$why),$status,$body,$why.' precedes forbidden list handler/read');}finally{polStop($probe);}}
     $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'dangling imported case'),503,"Service unavailable.\n",'dangling imported case fails closed');}finally{polStop($probe);} $db->query('DELETE FROM fm2_installation_cases WHERE id=90');
 
     $db->query("UPDATE legacy_fm_maintable SET regnumber='   ' WHERE id=4513");
     $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'invalid required value'),503,"Service unavailable.\n",'invalid required value fails closed');}finally{polStop($probe);} $db->query("UPDATE legacy_fm_maintable SET regnumber='77-000124' WHERE id=4513");
 
-    foreach([[array_replace($environment,['REMOTE_USER'=>' malformed ']),401,"Authentication required.\n",'malformed identity'],[array_replace($environment,['FMONITOR_DB_PASSWORD'=>'wrong']),503,"Service unavailable.\n",'database failure']] as [$env,$status,$body,$why]){$probe=polStart($env);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),$why),$status,$body,$why);}finally{polStop($probe);}}
+    $db->query('RENAME TABLE fm2_pilot_role_permissions TO fm2_pilot_role_permissions_missing');
+    try{polUnavailable($environment,$db,'AUTHORIZATION_SCHEMA_INVALID','authorization schema unavailable');}
+    finally{$db->query('RENAME TABLE fm2_pilot_role_permissions_missing TO fm2_pilot_role_permissions');}
+    polUnavailable(array_replace($environment,['FMONITOR_DB_PASSWORD'=>'wrong']),$db,'AUTHORIZATION_READ_FAILED','authorization DB read failure');
     $db->query('DELETE FROM fm2_installation_cases'); $emptyBefore=polSnapshot($db); $server=polStart($environment); $empty=polParity($server['port'],'/pilot/objects'); assertSameValue(200,$empty['status'],'empty collection succeeds'); assertSameValue(true,str_contains($empty['body'],'Импортированные объекты монтажа пока отсутствуют.'),'exact empty text'); assertSameValue(0,preg_match_all('~href=["\']/pilot/objects/\d+["\']~',$empty['body']),'empty has no card links'); assertSameValue($emptyBefore,polSnapshot($db),'empty read-only'); polStop($server);$server=null;
     $caseValues=[];$legacyValues=[];for($i=1;$i<=501;$i++){$id=6000+$i;$caseValues[]="({$i},{$id},'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)";$legacyValues[]="({$id},'Ceiling address','1','C-{$id}','2026-10-01','2026-11-01',NULL,NULL,'hidden')";} $db->query('INSERT INTO legacy_fm_maintable VALUES'.implode(',',$legacyValues)); $db->query('INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES'.implode(',',$caseValues));
     $server=polStart($environment);$firstPage=polReadOnly($db,fn()=>polParity($server['port'],'/pilot/objects'),'501-case page one');assertSameValue(200,$firstPage['status'],'501 imported cases paginate');assertSameValue(50,preg_match_all('~href=["\']/pilot/objects/\d+["\']~',$firstPage['body']),'fixed page size');assertSameValue(true,str_contains($firstPage['body'],'Показано 50 из 501')&&str_contains($firstPage['body'],'class="shlz-pagination"')&&str_contains($firstPage['body'],'href="/pilot/objects?page=2" aria-label="Страница 2"'),'SHLZ pagination total and direct page rendered');assertSameValue(1,preg_match_all('~aria-current="page" aria-label="Страница 1"~',$firstPage['body']),'exact current page');assertSameValue(true,str_contains($firstPage['body'],'aria-disabled="true"')&&str_contains($firstPage['body'],'rel="next"'),'boundary directions');$lastPage=polReadOnly($db,fn()=>polParity($server['port'],'/pilot/objects?page=11'),'501-case last page');assertSameValue(200,$lastPage['status'],'last page succeeds');assertSameValue(1,preg_match_all('~href=["\']/pilot/objects/\d+["\']~',$lastPage['body']),'last page remainder');assertSameValue(true,str_contains($lastPage['body'],'href="/pilot/objects?page=11" aria-current="page"')&&str_contains($lastPage['body'],'rel="prev"')&&str_contains($lastPage['body'],'Следующая страница недоступна'),'last page current and boundary rendered');polStop($server);$server=null;
@@ -222,5 +274,16 @@ try {
     $grantBefore=polSnapshot($db);$db->query("DELETE FROM fm2_pilot_role_permissions WHERE role_id=5101 AND permission='objects.read'");assertSameValue(1,$db->affected_rows,'committed revoke removes exact canonical grant');$server=polStart($environment);$revoked=polRequest($server['port'],'GET','/pilot/objects');polError($revoked,403,"Access denied.\n",'committed revoke denies next invocation before list read');polStop($server);$server=null;assertSameValue(false,$grantBefore===polSnapshot($db),'only explicit fixture-admin revoke changes committed snapshot');
     echo "PASS: PILOT-OBJECT-LIST-001 public HTTP collection\n";
 } finally {
-    polStop($server); if($db instanceof mysqli)$db->close(); $admin->query("DROP DATABASE IF EXISTS `{$database}`"); $admin->query("DROP USER IF EXISTS `{$reader}`@`%`"); $admin->close(); if($ownership!==[])TaskOwnedArtifactRoot::cleanup($ownership,'pol',$token);
+    $primary=$GLOBALS['__pol_primary']??null;$cleanupErrors=[];
+    foreach([
+        'server PID/pipes'=>static fn()=>polStop($server),
+        'DB resource'=>static fn()=>$db instanceof mysqli?$db->close():null,
+        'denial DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$denialReader}`@`%`"),
+        'reader DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$reader}`@`%`"),
+        'task database'=>static fn()=>$admin->query("DROP DATABASE IF EXISTS `{$database}`"),
+        'mutable root'=>static fn()=>$ownership!==[]?TaskOwnedArtifactRoot::cleanup($ownership,'pol',$token):null,
+    ]as$name=>$cleanup){$cleanupAttempts[$name]=($cleanupAttempts[$name]??0)+1;try{$cleanup();}catch(Throwable $failure){$cleanupErrors[]=$failure;}}
+    try{assertSameValue(array_fill_keys(['server PID/pipes','DB resource','denial DB user','reader DB user','task database','mutable root'],1),$cleanupAttempts,'cleanup inventory attempted exactly once');assertSameValue([], $admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$database}'")->fetch_all(MYSQLI_ASSOC),'exact task DB removed');assertSameValue([], $admin->query("SELECT User FROM mysql.user WHERE User IN ('{$reader}','{$denialReader}')")->fetch_all(MYSQLI_ASSOC),'exact task users removed');assertSameValue([['SCHEMA_NAME'=>$foreignDatabase]],$admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$foreignDatabase}'")->fetch_all(MYSQLI_ASSOC),'foreign DB preserved');assertSameValue([['id'=>'1','payload'=>'foreign-db-bytes']],$admin->query("SELECT * FROM `{$foreignDatabase}`.sentinel")->fetch_all(MYSQLI_ASSOC),'foreign DB bytes preserved');assertSameValue($foreignBefore,[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')],'foreign file bytes and metadata preserved');}catch(Throwable $failure){$cleanupErrors[]=$failure;}
+    try{$admin->query("DROP DATABASE IF EXISTS `{$foreignDatabase}`");if(is_file($foreignPath.'/keep'))unlink($foreignPath.'/keep');if(is_dir($foreignPath))rmdir($foreignPath);$admin->close();}catch(Throwable $failure){$cleanupErrors[]=$failure;}
+    if($cleanupErrors!==[])throw new TestFailure('attempt-all cleanup failure: '.$cleanupErrors[0]->getMessage(),0,$cleanupErrors[0]);
 }
