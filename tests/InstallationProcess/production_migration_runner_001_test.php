@@ -110,6 +110,25 @@ function pmrAssertEngineerCheckNormalizerSensitivity(): void
     }
 }
 
+/** @param list<string> $signatures @return list<string> */
+function pmrSortedSignatures(array $signatures): array
+{
+    sort($signatures, SORT_STRING);
+    return $signatures;
+}
+
+function pmrAssertForeignKeyOrderingSensitivity(): void
+{
+    $canonical = [
+        'table_a|left_id|parent_a|id|RESTRICT',
+        'table_b|right_id|parent_b|id|RESTRICT',
+    ];
+    assertSameValue($canonical, pmrSortedSignatures(array_reverse($canonical)), 'FK input order is normalized bytewise.');
+    $changed = $canonical;
+    $changed[1] = 'table_b|right_id|parent_b|other_id|RESTRICT';
+    assertSameValue(false, pmrSortedSignatures($canonical) === pmrSortedSignatures($changed), 'Changed FK target mapping remains observable after ordering normalization.');
+}
+
 function pmrCatalog(mysqli $connection, string $prefix): void
 {
     $contract = ProductionMigrationRunnerCatalogContract::columns();
@@ -155,9 +174,9 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     sort($expectedIndexes);
     assertSameValue($expectedIndexes, $indexes, 'All primary, unique, secondary and FK-support indexes must match the approved contract.');
 
-    $foreignKeys = pmrRows($connection, "SELECT k.TABLE_NAME,k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE k JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.TABLE_NAME=k.TABLE_NAME AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME WHERE k.CONSTRAINT_SCHEMA=DATABASE() AND k.TABLE_NAME LIKE '{$like}' ORDER BY k.TABLE_NAME,k.COLUMN_NAME,k.CONSTRAINT_NAME");
+    $foreignKeys = pmrRows($connection, "SELECT k.TABLE_NAME,k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE k JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.TABLE_NAME=k.TABLE_NAME AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME WHERE k.CONSTRAINT_SCHEMA=DATABASE() AND k.TABLE_NAME LIKE '{$like}' ORDER BY BINARY k.TABLE_NAME,BINARY k.CONSTRAINT_NAME,k.ORDINAL_POSITION");
     $foreignKeys = array_map(static fn (array $row): string => substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $row['COLUMN_NAME'] . '|' . substr((string) $row['REFERENCED_TABLE_NAME'], strlen($prefix)) . '|' . $row['REFERENCED_COLUMN_NAME'] . '|' . $row['DELETE_RULE'], $foreignKeys);
-    assertSameValue(ProductionMigrationRunnerCatalogContract::foreignKeys(), $foreignKeys, 'All canonical foreign-key column mappings and delete rules must match the approved contract.');
+    assertSameValue(pmrSortedSignatures(ProductionMigrationRunnerCatalogContract::foreignKeys()), pmrSortedSignatures($foreignKeys), 'All canonical foreign-key column mappings and delete rules must match the approved contract.');
 
     $checks = pmrRows($connection, "SELECT tc.TABLE_NAME,tc.CONSTRAINT_NAME,cc.CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS cc JOIN information_schema.TABLE_CONSTRAINTS tc ON tc.CONSTRAINT_SCHEMA=cc.CONSTRAINT_SCHEMA AND tc.TABLE_NAME=cc.TABLE_NAME AND tc.CONSTRAINT_NAME=cc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME LIKE '{$like}' ORDER BY tc.TABLE_NAME,cc.CHECK_CLAUSE");
     $checks = array_map(static function (array $check) use ($prefix): array {
@@ -311,6 +330,7 @@ function pmrAbortCharsetFaultProxy(array $proxy): void
 }
 
 pmrAssertEngineerCheckNormalizerSensitivity();
+pmrAssertForeignKeyOrderingSensitivity();
 
 $tok=bin2hex(random_bytes(6));$dbs=[];$users=[];$files=[];$admin=pmrDb();
 try{
