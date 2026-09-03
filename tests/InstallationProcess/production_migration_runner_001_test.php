@@ -129,6 +129,29 @@ function pmrAssertForeignKeyOrderingSensitivity(): void
     assertSameValue(false, pmrSortedSignatures($canonical) === pmrSortedSignatures($changed), 'Changed FK target mapping remains observable after ordering normalization.');
 }
 
+/** @param list<array{table:string,constraint:?string,clause:string}> $checks */
+function pmrSortedChecks(array $checks): array
+{
+    usort($checks, static function (array $left, array $right): int {
+        $leftSignature = $left['table'] . "\0" . ($left['constraint'] ?? '') . "\0" . $left['clause'];
+        $rightSignature = $right['table'] . "\0" . ($right['constraint'] ?? '') . "\0" . $right['clause'];
+        return strcmp($leftSignature, $rightSignature);
+    });
+    return $checks;
+}
+
+function pmrAssertCheckOrderingSensitivity(): void
+{
+    $canonical = [
+        ['table'=>'table_a','constraint'=>null,'clause'=>'alpha=1'],
+        ['table'=>'table_a','constraint'=>'named_check','clause'=>'beta=2'],
+    ];
+    assertSameValue($canonical, pmrSortedChecks(array_reverse($canonical)), 'CHECK input order is normalized by exact tuple signature.');
+    $changed = $canonical;
+    $changed[1]['clause'] = 'beta=3';
+    assertSameValue(false, pmrSortedChecks($canonical) === pmrSortedChecks($changed), 'Changed CHECK clause remains observable after ordering normalization.');
+}
+
 function pmrCatalog(mysqli $connection, string $prefix): void
 {
     $contract = ProductionMigrationRunnerCatalogContract::columns();
@@ -189,7 +212,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
             'clause' => $clause,
         ];
     }, $checks);
-    assertSameValue(ProductionMigrationRunnerCatalogContract::checks(), $checks, 'All normalized CHECK tuples and the normative capability constraint name must match literally, with no extras.');
+    assertSameValue(pmrSortedChecks(ProductionMigrationRunnerCatalogContract::checks()), pmrSortedChecks($checks), 'All normalized CHECK tuples and the normative capability constraint name must match literally, with no extras.');
 }
 function pmrState(mysqli $c):array{$s=[];foreach(pmrRows($c,'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME') as $r){$t=$r['TABLE_NAME'];$q='`'.str_replace('`','``',$t).'`';$s[$t]=['create'=>pmrRows($c,"SHOW CREATE TABLE {$q}")[0]['Create Table'],'rows'=>pmrRows($c,"SELECT * FROM {$q}")];}return $s;}
 
@@ -331,6 +354,7 @@ function pmrAbortCharsetFaultProxy(array $proxy): void
 
 pmrAssertEngineerCheckNormalizerSensitivity();
 pmrAssertForeignKeyOrderingSensitivity();
+pmrAssertCheckOrderingSensitivity();
 
 $tok=bin2hex(random_bytes(6));$dbs=[];$users=[];$files=[];$admin=pmrDb();
 try{
