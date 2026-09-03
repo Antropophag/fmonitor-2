@@ -48,7 +48,12 @@ try {
     $sessionId = (string) $created->currentSessionId();
     assertSameValue('OK', $created->status()->name, 'seed session starts');
     $csrf = str_repeat('c', 64);
-    $malformed = 'a:2:{s:9:"auth_csrf";s:64:"' . $csrf . '";s:1:"x";O:8:"stdClass":0:{}}';
+    $payloadCase = getenv('FMONITOR_TEST_SESSION_PAYLOAD_CASE') ?: 'object';
+    if (!in_array($payloadCase, ['object', 'reference'], true)) throw new RuntimeException('SETUP_FAILURE: payload case');
+    $malformed = $payloadCase === 'reference'
+        ? 'a:2:{s:9:"auth_csrf";s:64:"' . $csrf . '";s:1:"x";R:1;}'
+        : 'a:2:{s:9:"auth_csrf";s:64:"' . $csrf . '";s:1:"x";O:8:"stdClass":0:{}}';
+    $malformedMarker = $payloadCase === 'reference' ? 'R:1' : 'stdClass';
     assertSameValue('OK', $owner->writeCommit($sessionId, $malformed)->status()->name, 'malformed bytes materially committed');
     $owner->close();
     $committed = $root . '/sessions/http_v10/s-' . $sessionId . '.session';
@@ -90,7 +95,7 @@ try {
     ]);
     $pipes = [];
     $server = proc_open(
-        [PHP_BINARY, '-S', "127.0.0.1:$port", $repo . '/tests/Support/pilot_session_storage_http_router.php'],
+        [PHP_BINARY, '-d', 'memory_limit=32M', '-S', "127.0.0.1:$port", $repo . '/tests/Support/pilot_session_storage_http_router.php'],
         [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
         $pipes,
         $repo,
@@ -109,6 +114,7 @@ try {
 
     $client = stream_socket_client("tcp://127.0.0.1:$port", $requestCode, $requestMessage, 2);
     if (!is_resource($client)) throw new RuntimeException("SETUP_FAILURE: request $requestMessage");
+    stream_set_timeout($client, 3);
     $requestBody = 'csrfToken=' . $csrf . '&email=fixture%40invalid.test&password=fixed';
     fwrite($client, "POST /pilot/login HTTP/1.1\r\nHost: 127.0.0.1:$port\r\nCookie: fm2auth_$port=$sessionId\r\nContent-Type: application/x-www-form-urlencoded\r\nConnection: close\r\nContent-Length: " . strlen($requestBody) . "\r\n\r\n$requestBody");
     $raw = (string) stream_get_contents($client);
@@ -152,12 +158,12 @@ try {
     );
     assertSameValue(1, preg_match('/^PILOT_SESSION_UNAVAILABLE category=payload_invalid correlation_id=[0-9a-f]{12}$/D', (string) reset($sessionLogLines)), 'exact safe payload-invalid log');
     assertSameValue(false, str_contains($stderr, 'pilot_http_unexpected_failure'), 'no fallback dispatch/entrypoint failure');
-    foreach ([$malformed, 'auth_csrf', 'stdClass', $csrf, 'fixture@invalid.test', 'fixed', $sessionId, $root] as $secret) {
+    foreach ([$malformed, 'auth_csrf', $malformedMarker, $csrf, 'fixture@invalid.test', 'fixed', $sessionId, $root] as $secret) {
         assertSameValue(false, str_contains($raw, $secret), 'secret absent from HTTP');
         assertSameValue(false, str_contains($stderr, $secret), 'secret absent from log');
     }
 
-    echo "PASS: PILOT-SESSION-STORAGE-001 v10 malformed payload raw HTTP\n";
+    echo "PASS: PILOT-SESSION-STORAGE-001 v10 $payloadCase payload raw HTTP\n";
 } finally {
     if (is_resource($server)) {
         if (proc_get_status($server)['running']) proc_terminate($server, 15);
