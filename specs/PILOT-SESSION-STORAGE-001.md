@@ -1,7 +1,7 @@
 # PILOT-SESSION-STORAGE-001 — owned filesystem session lifecycle
 
-Статус: **OWNER_APPROVED / Gate 1 re-review pending**
-Версия: **v9 (unknown-route priority amendment)**
+Статус: **Gate 1 re-review pending**
+Версия: **v10 (session-payload handoff amendment)**
 Дата: **2026-09-03**
 
 ## Простыми словами
@@ -10,6 +10,8 @@ Login и управление доступом используют одно б�
 которое явно задаётся конфигурацией и работает одинаково в Compose, image и
 host tests. Session сначала надёжно записывается, и только потом браузеру
 отправляются cookie/redirect. Ошибка даёт обычный 503 без утечки пути или ID.
+Прочитанное состояние session передаётся HTTP-слою самим владельцем хранилища,
+поэтому login и управление доступом не открывают session-файл повторно.
 
 ## 1. Configuration и path contract
 
@@ -76,8 +78,25 @@ old ID; NOT_FOUND maps `SESSION_STALE` unavailable. `destroyCommit` on absent
 valid ID is idempotent OK and permits deletion cookie without file mutation.
 `close` releases all locks/handles once. No native implicit shutdown write.
 
+Committed payload uses exactly PHP's `serialize()` representation of the whole
+`$_SESSION` associative array, not the `php` session-module `name|value`
+framing. The HTTP adapter decodes with `unserialize($payload,
+['allowed_classes' => false])` under warning-to-failure capture and accepts only
+a top-level array whose recursively reachable keys are integers/strings and
+values are null/bool/int/string/array, with maximum nesting depth 16 and at most
+4096 total entries. Every array element MUST have
+`ReflectionReference::fromArrayElement(...) === null`, and re-encoding the
+accepted value MUST be byte-identical to the input. Objects, resources, floats,
+references/cycles, trailing bytes, non-array roots, non-canonical or malformed encodings are `PAYLOAD_INVALID`; decode
+failure occurs before route/auth execution and maps through the exact 503 in
+section 6. Empty bytes from `start(null)` mean an empty array and are never fed
+to `unserialize`. Before `writeCommit` or `regenerate`, the adapter applies the
+same shape limits to in-memory state and encodes it with `serialize()`. It never
+calls `session_start`, `session_decode`, `session_encode` or another native
+session lifecycle primitive.
+
 Closed unavailable enum:
-`CONFIGURATION_INVALID`, `ROOT_INVALID`, `ENTROPY_FAILED`, `ID_COLLISION`,
+`CONFIGURATION_INVALID`, `ROOT_INVALID`, `PAYLOAD_INVALID`, `ENTROPY_FAILED`, `ID_COLLISION`,
 `LOCK_TIMEOUT`, `READ_FAILED`, `WRITE_FAILED`, `FSYNC_FAILED`, `PUBLISH_FAILED`,
 `SESSION_STALE`, `REGENERATE_FAILED`, `DESTROY_FAILED`, `GC_FAILED`,
 `CLOSE_FAILED`. Correlation is fresh 12 lowercase hex per failure, internal log
@@ -336,6 +355,7 @@ enum PilotSessionUnavailableCategory: string
 {
     case CONFIGURATION_INVALID = 'configuration_invalid';
     case ROOT_INVALID = 'root_invalid';
+    case PAYLOAD_INVALID = 'payload_invalid';
     case ENTROPY_FAILED = 'entropy_failed';
     case ID_COLLISION = 'id_collision';
     case LOCK_TIMEOUT = 'lock_timeout';
@@ -600,7 +620,10 @@ public constructor and these exact owner-only creation methods:
 final readonly class PilotSessionOperationResult
 {
     /** @internal Real PilotSessionStorage owner call sites only. */
-    public static function ownerStarted(string $currentSessionId): self
+    public static function ownerStarted(
+        string $currentSessionId,
+        string $sessionPayload,
+    ): self
     {
         /* validate ID and return OK */
     }
@@ -658,13 +681,19 @@ construct the final DTO; it is not verifier authority to synthesize evidence.
 The DTO exposes exact accessors `status(): PilotSessionOperationStatus`
 (`OK|NOT_FOUND|INVALID|UNAVAILABLE`),
 `category(): ?PilotSessionUnavailableCategory`, `correlationId(): ?string` and
-`currentSessionId(): ?string`. Category/correlation are non-null only for
+`currentSessionId(): ?string`, and `sessionPayload(): ?string`.
+Category/correlation are non-null only for
 `UNAVAILABLE`; current ID is non-null only for successful `start`,
 `writeCommit` or `regenerate` and is either owner-generated or the validated
-supplied ID accepted by `start`. `ownerUnavailable` requires exact 12 lowercase
-hex correlation ID. The DTO contains no mutable field, filesystem/event claim
-or test-supplied snapshot. HTTP consumes this DTO and still obeys section
-6.
+supplied ID accepted by `start`. Session payload is non-null only for successful
+`start`: it is the exact committed bytes read by the owner, or empty bytes for
+a newly started session. The HTTP adapter MUST restore `$_SESSION` from this
+in-memory handoff and MUST NOT reopen/read committed storage or invoke a second
+session owner. Payload MUST NOT enter logs, filesystem events, inspection
+output, correlation data or HTTP failures. `ownerUnavailable` requires exact 12
+lowercase hex correlation ID. The DTO contains no mutable field,
+filesystem/event claim or test-supplied snapshot. HTTP consumes this DTO and
+still obeys section 6.
 
 Wall clock owns expiry/mtime comparisons; monotonic clock owns the exact lock
 deadline; entropy owns ID, stage/tombstone token and correlation bytes. Injected
@@ -882,11 +911,11 @@ digest/bytes as appropriate; pause/kill proves crash regions. Tests own exact
 root/process/cookies and attempt-all finally stop/reap, close and delete only
 verified task root; foreign/default/Compose roots unchanged.
 
-Done requires fresh owner approval of this v8 exact reviewed hash, intended RED, independent test
+Done requires fresh owner approval of this v10 exact reviewed hash, intended RED, independent test
 approval, minimal implementation, LocalAuth+UserAccessView and asset priority
 GREEN on unprivileged host/current image, real Compose stop/start cookie proof,
 architecture/lint/full/fresh verification and independent code approval.
 Pre-amendment Gate 3 reviews do not apply. The v2 exact-hash approval remains
 historical and is insufficient only for this newly exact public PHP API; this
 DRAFT does not authorize replacement Gate 2 until a fresh independent Gate 1
-review and fresh owner approval of the v8 hashes.
+review and fresh owner approval of the v10 hashes.

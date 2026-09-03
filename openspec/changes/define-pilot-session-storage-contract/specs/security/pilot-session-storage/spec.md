@@ -168,12 +168,30 @@ running cleanup. These hooks SHALL be available only through explicit factory
 injection, MUST NOT be selectable by environment/request/Compose production
 configuration and MUST NOT change ordering or results when no-op. Clock SHALL
 provide deterministic wall seconds plus monotonic nanoseconds and has no failure
-channel; entropy SHALL provide requested byte count or typed failure. Public result SHALL contain only operation status,
-safe unavailable category, opaque correlation ID and, on success, the owner-
-generated current session ID; it SHALL contain no event claims or filesystem
-snapshot supplied by the test.
+channel; entropy SHALL provide requested byte count or typed failure. Public
+result SHALL contain only operation status, safe unavailable category, opaque
+correlation ID, the current session ID where applicable and, only for successful
+`start`, the exact opaque session payload read by the owner (empty bytes for a
+newly started session). The HTTP adapter SHALL restore in-memory session state
+only from this payload and MUST NOT reopen or otherwise read committed session
+storage. The result SHALL contain no event claims or filesystem snapshot
+supplied by the test, and payload MUST NOT appear in logs, events, inspection
+output or unavailable responses.
 
-The exact public PHP API SHALL be the v8 sections 8 and 10 surface in
+The exact codec SHALL be whole-array PHP `serialize()` / warning-captured
+`unserialize(..., ['allowed_classes' => false])`, not native session-module
+framing or lifecycle. Empty new-session payload means an empty array. Decode
+SHALL accept only an array recursively containing null/bool/int/string/array,
+integer/string keys, depth at most 16 and at most 4096 entries; malformed,
+trailing, object/resource/float/reference/cyclic or over-limit payload SHALL
+fail before route/auth execution as `PAYLOAD_INVALID` and map to the exact 503.
+Every array element SHALL be rejected when
+`ReflectionReference::fromArrayElement` is non-null, and accepted decoded state
+SHALL reserialize byte-identically to the input, rejecting trailing or
+non-canonical encoding.
+The same shape check precedes encode for `writeCommit` and `regenerate`.
+
+The exact public PHP API SHALL be the current sections 8 and 10 surface in
 `specs/PILOT-SESSION-STORAGE-001.md`: namespace `FMonitor\IdentityAccess`,
 required two-string config constructor, five-required-dependency factory
 `create`, exact owner `start/writeCommit/regenerate/destroyCommit/close`
@@ -182,16 +200,17 @@ exact `public static function` primitive/entropy result named factories,
 clock/entropy methods, opaque handle `public static function mint(): self`,
 exact scalar stat construction, observer/event accessors and
 immutable owner-result accessors. Primitive exception results carry only a
-closed safe adapter code, never a Throwable/message/path; filesystem adapters
+closed safe adapter code, never a Throwable/message/path; `PAYLOAD_INVALID` is
+an exact unavailable-category enum case. Filesystem adapters
 own minted handle identities and wrappers may pass delegate-owned successes.
 Filesystem operation, logical artifact, phase, primitive outcome/failure,
 file type, entropy status, operation status and unavailable-category enums SHALL
-use the exact case names/backing strings in v8. No listed parameter is optional/defaulted and factory
+use the exact case names/backing strings in the current executable contract. No listed parameter is optional/defaulted and factory
 or owner MUST NOT read environment/request globals. Tests SHALL wrap these
 interfaces and MUST NOT substitute a different construction or operation API.
 
 `PilotSessionOperationResult` SHALL expose only the exact eight `@internal
-public static` owner factories in v8; `PilotSessionFilesystemEvent` SHALL expose
+public static` owner factories in the current executable contract; `PilotSessionFilesystemEvent` SHALL expose
 only exact `ownerBefore/ownerAfter`; `PilotSessionInspectionResult` SHALL expose
 only exact `inspectorOk/inspectorUnavailable`. PHP public visibility exists only
 so the separate real owner/inspector classes can construct final DTOs. An
@@ -202,13 +221,21 @@ independent material/HTTP evidence and MUST NOT call these factories.
 
 Raw HTTP injected-fault verification SHALL use only the exact public
 `ProductionPilotHttpEntrypointFactory::createWithSessionStorageDependencies`
-signature from v8. It builds the same complete graph as production `create`,
+signature from the current executable contract. It builds the same complete graph as production `create`,
 replacing only filesystem/clock/entropy/observer ports. No environment, request,
 cookie, CLI or Compose selector SHALL choose or populate this composition.
 
 #### Scenario: Fault is proved by production execution
 - **WHEN** verifier injects failure for `fsyncFile(stage, ordinal=1)` and invokes a real owner operation through the public factory
 - **THEN** observed before/after trace comes from the production owner, result category is `FSYNC_FAILED`, material state matches the specified crash region, and changing production call order makes the verifier fail
+
+#### Scenario: Existing session payload handoff
+- **WHEN** `start` accepts a valid committed session whose bytes encode the authenticated user and CSRF state
+- **THEN** its result carries the exact bytes to the HTTP adapter, the adapter restores the same in-memory session state, and neither consumer performs a second filesystem read
+
+#### Scenario: Malformed session payload
+- **WHEN** a valid session ID addresses committed bytes that are malformed, contain a serialized object/reference/cycle, exceed codec limits or are not the exact whole-array encoding
+- **THEN** route/auth logic is not invoked and the request returns the exact storage-unavailable 503 without cookie, payload or parser diagnostic leakage
 
 #### Scenario: Deterministic crash boundary
 - **WHEN** verifier pauses after the observed `unlink(committed)` success event and kills only its owned child before release
@@ -232,10 +259,10 @@ HTTP cookie behavior; inspector output alone MUST NOT attest authentication.
 The exact class/result signature, command
 `php bin/pilot-session-storage-inspect.php --state-root <absolute-root> --instance <valid-instance>`,
 four-argument argv grammar, canonical JSON key/envelope grammar and exit/output
-codes `0|64|65|70` SHALL be those in executable v8 section 10. There is no
+codes `0|64|65|70` SHALL be those in current executable section 10. There is no
 predecessor inspector/default/output behavior to infer or inherit.
 
-The exact v8 CLI application SHALL accept inspection, filesystem, argv and
+The exact CLI application SHALL accept inspection, filesystem, argv and
 stdout/stderr output ports. Production bin SHALL unconditionally bind the real
 inspector, native read-only filesystem, process argv adapter and direct output;
 no argument/environment/request/Compose value selects dependencies. Invalid
