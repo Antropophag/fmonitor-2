@@ -203,12 +203,19 @@ foreach ($receipts as $receiptPath) {
     }
     $metadata = [];
     foreach ($contents as $kind => $value) $metadata[$kind] = deliveryMetadata($value, $receipt, $kind === 'testReview' ? 'test-review' : ($kind === 'codeReview' ? 'code-review' : $kind));
+    foreach ($metadata as $kind => $artifactMetadata) {
+        if (($artifactMetadata['schemaVersion'] ?? null) !== $data['schemaVersion'] || ($artifactMetadata['sliceId'] ?? null) !== $data['sliceId']) {
+            deliveryFailure('metadata_mismatch', $receipt, "$kind metadata identity differs from receipt");
+        }
+    }
     if (($metadata['spec']['author'] ?? null) !== $data['authors']['spec'] || ($metadata['red']['author'] ?? null) !== $data['authors']['test'] || ($metadata['green']['author'] ?? null) !== $data['authors']['implementation']) deliveryFailure('metadata_mismatch', $receipt, 'artifact authors differ');
     $specHash = $data['artifacts']['spec']['sha256'];
     foreach (['red', 'testReview', 'green', 'codeReview'] as $kind) if (($metadata[$kind]['specSha256'] ?? null) !== $specHash) deliveryFailure('stale_spec', $receipt, "$kind spec digest is stale");
+    if (($metadata['red']['specPath'] ?? null) !== $data['artifacts']['spec']['path'] || ($metadata['red']['baseCommit'] ?? null) !== $data['baseCommit']) deliveryFailure('metadata_mismatch', $receipt, 'RED specification or base reference differs');
+    if (($metadata['green']['testReviewRecordPath'] ?? null) !== $data['artifacts']['testReview']['path']) deliveryFailure('metadata_mismatch', $receipt, 'GREEN test review reference differs');
     foreach (['testReview', 'codeReview'] as $kind) {
         $artifact = $data['artifacts'][$kind];
-        if (($metadata[$kind]['reviewer'] ?? null) !== $artifact['reviewer'] || ($metadata[$kind]['verdict'] ?? null) !== 'APPROVED' || $artifact['verdict'] !== 'APPROVED') deliveryFailure('metadata_mismatch', $receipt, "$kind review differs");
+        if (($metadata[$kind]['reviewer'] ?? null) !== $artifact['reviewer'] || ($metadata[$kind]['verdict'] ?? null) !== 'APPROVED' || $artifact['verdict'] !== 'APPROVED' || $artifact['specSha256'] !== $specHash) deliveryFailure('metadata_mismatch', $receipt, "$kind review differs");
     }
     if ($data['authors']['test'] === $data['artifacts']['testReview']['reviewer'] || $data['authors']['implementation'] === $data['artifacts']['codeReview']['reviewer']) deliveryFailure('non_independent_review', $receipt, 'reviewer equals author');
     $redCommit = deliveryFirstBlobCommit($repository, $data['artifacts']['red']['path'], $data['artifacts']['red']['sha256'], $receipt);
