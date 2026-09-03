@@ -395,9 +395,9 @@ try {
     $conflict->query("INSERT INTO conflict_decoy VALUES(1,'must remain untouched')");
     $conflictBefore = aoosState($conflict, 'conflict_');
     assertSameValue(
-        ['exitCode'=>2, 'result'=>['ok'=>false,'reason'=>'SCHEMA_MIGRATION_CONFLICT','schemaVersion'=>12]],
-        aoosApplyThrough(12, $conflict, 'conflict_'),
-        'Unknown capability semantics fail closed at v12 before any original schema creation or repair.',
+        ['applied'=>false,'schemaVersion'=>12,'reason'=>'SCHEMA_MIGRATION_CONFLICT','conflictingTables'=>['conflict_fm2_process_user_capabilities']],
+        AssignmentOrderOriginalSchemaMigration::apply($conflict, 'conflict_'),
+        'The public v12 owner rejects unknown capability semantics before any original schema creation or repair.',
     );
     assertSameValue($conflictBefore, aoosState($conflict, 'conflict_'), 'Conflict preserves target, decoy, rows, definitions and counters exactly.');
     $conflict->close();
