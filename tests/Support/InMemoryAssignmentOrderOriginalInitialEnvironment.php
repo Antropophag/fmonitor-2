@@ -61,6 +61,9 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public array $fingerprintResults = [];
     public int $rootIdCalls = 0;
     public int $revisionIdCalls = 0;
+    public ?string $commitRace = null;
+    /** @var list<AssignmentOrderOriginalAcceptedCommit> */
+    public array $acceptedCommits = [];
 
     /** @var array<string, mixed> */
     private array $process = [
@@ -257,15 +260,16 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     {
         $commit = $this->owner->acceptedCommit;
         if ($commit !== null && $commit->rootOriginalId === $rootOriginalId) {
-            return new class($commit) implements AssignmentOrderOriginalLineageLookup {
-                public function __construct(private AssignmentOrderOriginalAcceptedCommit $commit) {}
+            return new class($commit, $this->owner->acceptedCommits) implements AssignmentOrderOriginalLineageLookup {
+                /** @param list<AssignmentOrderOriginalAcceptedCommit> $history */
+                public function __construct(private AssignmentOrderOriginalAcceptedCommit $commit, private array $history) {}
                 public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::FOUND; }
                 public function rootOriginalId(): ?string { return $this->commit->rootOriginalId; }
                 public function currentRevisionId(): ?string { return $this->commit->newRevisionId; }
                 public function currentRevisionNumber(): ?int { return $this->commit->newRevisionNumber; }
                 public function compositionIdentity(): ?string { return $this->commit->compositionIdentity; }
                 public function compositionSha256(): ?string { return $this->commit->compositionSha256; }
-                public function containsRevision(string $revisionId): bool { return $revisionId === $this->commit->newRevisionId; }
+                public function containsRevision(string $revisionId): bool { foreach ($this->history as $item) if ($item->newRevisionId === $revisionId) return true; return false; }
             };
         }
         return new class implements AssignmentOrderOriginalLineageLookup {
@@ -280,11 +284,32 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        if ($this->owner->commitRace === 'identical') {
+            $this->store($commit);
+            return AssignmentOrderOriginalCommitStatus::CONFLICT;
+        }
+        if ($this->owner->commitRace === 'different') {
+            $winner = new AssignmentOrderOriginalAcceptedCommit(
+                '00000000-0000-4000-8000-999999999999', 'different-winner-fingerprint', $commit->mode,
+                $commit->installationCaseId, $commit->assignmentOrderId, 19, $commit->rootOriginalId,
+                'revision-winner', $commit->newRevisionNumber, $commit->previousRevisionId,
+                $commit->expectedCurrentRevisionId, $commit->compositionIdentity, $commit->compositionSha256,
+                $commit->documentDate, $commit->uploadedAt, str_repeat('9', 64), $commit->byteSize,
+                'private-winner', $commit->correctionReason, $commit->domainEventType,
+            );
+            $this->store($winner);
+            return AssignmentOrderOriginalCommitStatus::CONFLICT;
+        }
+        $this->store($commit);
+        return AssignmentOrderOriginalCommitStatus::COMMITTED;
+    }
+    private function store(AssignmentOrderOriginalAcceptedCommit $commit): void
+    {
         $this->owner->acceptedCommit = $commit;
+        $this->owner->acceptedCommits[] = $commit;
         $stored = new InMemoryAssignmentOrderOriginalStoredResult($commit);
         $this->owner->terminalResults[$commit->requestId] = $stored;
         $this->owner->fingerprintResults[$commit->fingerprint] = $stored;
-        return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
     public function commitAttempt(AssignmentOrderOriginalAttemptCommit $commit): AssignmentOrderOriginalCommitStatus
     {
