@@ -45,6 +45,9 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
 
     public ?AssignmentOrderOriginalAcceptedCommit $acceptedCommit = null;
     public string $storedBytes = '';
+    public int $actorUserId = 18;
+    public string $allowedCapability = 'assignment_order.original.upload';
+    public bool $authorizationAvailable = true;
 
     /** @var array<string, mixed> */
     private array $process = [
@@ -63,10 +66,14 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public function dependencies(): AssignmentOrderOriginalDependencies
     {
         $owner = $this;
-        $authorizer = new class implements AssignmentOrderOriginalAuthorizer {
+        $authorizer = new class($owner) implements AssignmentOrderOriginalAuthorizer {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function authorize(int $actorUserId, string $exactCapability): AssignmentOrderOriginalAuthorizationStatus
             {
-                return $actorUserId === 18 && $exactCapability === 'assignment_order.original.upload'
+                if (!$this->owner->authorizationAvailable) {
+                    return AssignmentOrderOriginalAuthorizationStatus::UNAVAILABLE;
+                }
+                return $actorUserId === $this->owner->actorUserId && $exactCapability === $this->owner->allowedCapability
                     ? AssignmentOrderOriginalAuthorizationStatus::ALLOWED
                     : AssignmentOrderOriginalAuthorizationStatus::DENIED;
             }
