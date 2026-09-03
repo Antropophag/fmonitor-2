@@ -6,14 +6,14 @@
 
 ## 2. Gates 2–3 — RED и независимый test review
 
-- [ ] 2.1 Написать минимальные тесты публичной repository-owned governance команды для valid lineage, exact test/implementation sets, missing evidence, hash drift, reviewer non-independence, Git gate chronology, reviewed-commit mismatch, path escape, immutable supersession, duplicate IDs и stale graph provenance; проверить, что setup исправен.
+- [x] 2.1 Написать минимальные тесты публичной repository-owned governance команды для valid lineage, exact test/implementation sets, missing evidence, hash drift, reviewer non-independence, Git gate chronology, reviewed-commit mismatch, path escape, immutable supersession, duplicate IDs и stale graph provenance; проверить, что setup исправен.
 - [x] 2.2 Продемонстрировать intended RED до implementation, сохранить точную команду, exit code и релевантный вывод в `docs/operations/quality-graph-governance-red-evidence.md`.
 - [x] 2.3 Поручить отдельному агенту независимый Gate 3 review спецификации, тестов и RED; сохранить независимые review records с reviewer identity и verdict `APPROVED` до GREEN.
 
 ## 3. Gate 4 — минимальный lineage governance
 
-- [ ] 3.1 Добавить immutable versioned machine-readable receipt-chain schema и fixtures, которые индексируют spec, exact tests, RED/reviews/GREEN и exact implementation files по relative path и SHA-256 без копирования narrative; проверить schema/history fixtures focused tests.
-- [ ] 3.2 Реализовать fail-closed checker и одну repository-owned команду с детерминированными failure categories; проверить focused Gate 2 tests GREEN.
+- [x] 3.1 Добавить immutable versioned machine-readable receipt-chain schema и fixtures, которые индексируют spec, exact tests, RED/reviews/GREEN и exact implementation files по relative path и SHA-256 без копирования narrative; проверить schema/history fixtures focused tests.
+- [x] 3.2 Реализовать fail-closed checker и одну repository-owned команду с детерминированными failure categories; проверить focused Gate 2 tests GREEN.
 - [x] 3.3 Обновить spec/review/evidence templates canonical `delivery-metadata` блоками с identity, artifact-author, verdict, timestamps, Git-derived exact test/implementation sets и reviewed implementation commit без self-containing commit SHA; проверить старые records не ломаются вне явно onboarded slices.
 - [x] 3.4 Подключить governance checker к `make architecture-check`/отдельной документированной Make-команде без изменения test semantics `make verify`; проверить локальный positive и каждый negative fixture.
 
@@ -21,8 +21,8 @@
 
 - [x] 4.1 Добавить canonical graph declaration и детерминированные generated runner/manifest с минимальными nodes для drift validation, lineage governance и существующего full verification seam; проверить их parity командой upstream CLI и отдельно зафиксировать allowlisted publisher override.
 - [x] 4.2 Добавить untrusted PR runner с read-only permissions, exact pins и content-addressed Result v0 artifacts; проверить node/PR/head/run/attempt/graphDigest provenance на representative PR run.
-- [ ] 4.3 Добавить repository-owned trusted publisher только для upstream `watch`/`publish`, с `actions: read`, `contents: read`, `checks: write`, base-branch topology, без checkout, `issue_comment`, command job и approval/write surfaces; проверить rejection missing/stale/mismatched results и fail-closed allowlisted comparison с generated v0.1.7 publisher.
-- [ ] 4.4 Расширить architecture policy проверками запрета floating refs, mixed toolchain versions, обхода repository commands и небезопасных publisher permissions; выполнить `make architecture-check`.
+- [x] 4.3 Добавить repository-owned trusted publisher только для upstream `watch`/`publish`, с `actions: read`, `contents: read`, `checks: write`, base-branch topology, без checkout, `issue_comment`, command job и approval/write surfaces; проверить rejection missing/stale/mismatched results и fail-closed allowlisted comparison с generated v0.1.7 publisher.
+- [x] 4.4 Расширить architecture policy проверками запрета floating refs, mixed toolchain versions, обхода repository commands и небезопасных publisher permissions; выполнить `make architecture-check`.
 - [ ] 4.5 Выполнить focused suites и `make verify`, сохранить GREEN commands/results и exact head commit в operations evidence.
 
 ## 5. Gate 5 — независимый code review
