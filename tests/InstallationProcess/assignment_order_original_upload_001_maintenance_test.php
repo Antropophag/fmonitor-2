@@ -38,7 +38,6 @@ $tuple = static fn($result): array => [$result->status(),$result->reason(),$resu
 
 foreach ([
     $request('not-a-uuid'),
-    $request('00000000-0000-4000-8000-000000000101', cutoff:'2026-09-02T08:15:31Z'),
     $request('00000000-0000-4000-8000-000000000102', limit:0),
     $request('00000000-0000-4000-8000-000000000103', limit:1001),
     $request('00000000-0000-4000-8000-000000000104', cursor:'not+canonical'),
@@ -46,8 +45,17 @@ foreach ([
     $environment = new InMemoryAssignmentOrderOriginalMaintenanceEnvironment();
     $result = $run($environment, $invalid);
     assertSameValue([AssignmentOrderOriginalMaintenanceStatus::REJECTED,AssignmentOrderOriginalMaintenanceReason::INVALID_COMMAND,false,0,0,0,0,null],$tuple($result),'Invalid scalar input has exact result.');
-    assertSameValue([], $environment->calls, 'Invalid batch/cutoff/cursor fails before authorization, repository and storage.');
+    assertSameValue([], $environment->calls, 'Invalid UUID/batch/noncanonical cursor fails before authorization, repository and storage.');
 }
+
+$youngCutoff = new InMemoryAssignmentOrderOriginalMaintenanceEnvironment();
+$youngCutoffResult = $run($youngCutoff, $request('00000000-0000-4000-8000-000000000101', cutoff:'2026-09-02T08:15:31Z'));
+assertSameValue([AssignmentOrderOriginalMaintenanceStatus::REJECTED,AssignmentOrderOriginalMaintenanceReason::INVALID_COMMAND,false,0,0,0,0,null],$tuple($youngCutoffResult),'Cutoff newer than now minus 3600 seconds has exact invalid-command result.');
+assertSameValue([
+    'authorize:system:original-orphan-reconciler:assignment_order.original.storage.reconcile',
+    'request:00000000-0000-4000-8000-000000000101',
+    'clock',
+], $youngCutoff->calls, 'Young cutoff follows authorization, terminal request lookup and clock, then performs no candidate/storage/delete/commit work.');
 
 $denied = new InMemoryAssignmentOrderOriginalMaintenanceEnvironment();
 $denial = $run($denied, $request('00000000-0000-4000-8000-000000000105','system:unprivileged'));
