@@ -22,7 +22,7 @@ final class ProductionPilotHttpEntrypointFactory
         require_once __DIR__.'/PilotE2ECoordinator.php';
         $owner=PilotSessionRequestOwner::native($environment);
         $application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms,$checklists,$owner,$environment);
-        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter(),self::localAuth($owner));
+        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
     }
 
     public static function createWithSessionStorageDependencies(
