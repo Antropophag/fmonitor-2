@@ -62,6 +62,20 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public int $rootIdCalls = 0;
     public int $revisionIdCalls = 0;
     public ?string $commitRace = null;
+    public ?AssignmentOrderOriginalCommitStatus $commitOutcome = null;
+    public ?string $unknownResolution = null;
+    public int $acceptedCommitCalls = 0;
+    public int $requestLookupCalls = 0;
+    public bool $leaseHeld = false;
+    public bool $storageRecoveryOwnsLease = false;
+    public int $leaseReleaseCalls = 0;
+    public ?string $leaseReleaseFault = null;
+    /** @var list<string> */
+    public array $repositoryTrace = [];
+    /** @var list<array{event:string,safeFields:array<string, scalar|null>}> */
+    public array $safeLogs = [];
+    public bool $deliveryThrows = false;
+    public int $deliveryCalls = 0;
     /** @var list<AssignmentOrderOriginalAcceptedCommit> */
     public array $acceptedCommits = [];
 
@@ -143,11 +157,18 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
         $faults = new class implements AssignmentOrderOriginalFaultInjector {
             public function before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint $point): void {}
         };
-        $safeLog = new class implements AssignmentOrderOriginalSafeLogObserver {
-            public function record(string $event, array $safeFields): void {}
+        $safeLog = new class($owner) implements AssignmentOrderOriginalSafeLogObserver {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function record(string $event, array $safeFields): void { $this->owner->safeLogs[]=['event'=>$event,'safeFields'=>$safeFields]; }
         };
-        $delivery = new class implements AssignmentOrderOriginalResultDeliveryObserver {
-            public function afterCommitBeforeReturn(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $result): void {}
+        $delivery = new class($owner) implements AssignmentOrderOriginalResultDeliveryObserver {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function afterCommitBeforeReturn(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $result): void
+            {
+                $this->owner->deliveryCalls++;
+                $this->owner->repositoryTrace[]='delivery:'.($this->owner->leaseHeld?'held':'released');
+                if ($this->owner->deliveryThrows) throw new \RuntimeException('verifier response loss detail must not escape through domain result');
+            }
         };
 
         return new AssignmentOrderOriginalDependencies(
@@ -206,6 +227,8 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
             };
         }
         $this->owner->storedBytes = $this->bytes;
+        $this->owner->leaseHeld = true;
+        $this->owner->storageRecoveryOwnsLease = true;
         $this->owner->storageEvents[] = 'FINALIZE_DONE';
         $content = new class($sha256, $byteSize) implements AssignmentOrderOriginalPrivateContent {
             public function __construct(private string $digest, private int $size) {}
@@ -213,11 +236,20 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
             public function sha256(): string { return $this->digest; }
             public function byteSize(): int { return $this->size; }
         };
-        $lease = new class($content) implements AssignmentOrderOriginalPrivateContentLease {
-            public function __construct(private AssignmentOrderOriginalPrivateContent $contentValue) {}
+        $lease = new class($content, $this->owner) implements AssignmentOrderOriginalPrivateContentLease {
+            public function __construct(private AssignmentOrderOriginalPrivateContent $contentValue, private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function status(): AssignmentOrderOriginalStorageStatus { return AssignmentOrderOriginalStorageStatus::OK; }
             public function content(): ?AssignmentOrderOriginalPrivateContent { return $this->contentValue; }
-            public function release(): AssignmentOrderOriginalStorageStatus { return AssignmentOrderOriginalStorageStatus::OK; }
+            public function release(): AssignmentOrderOriginalStorageStatus
+            {
+                $this->owner->leaseReleaseCalls++;
+                $this->owner->repositoryTrace[]='release_attempt:'.($this->owner->leaseHeld?'held':'released');
+                if ($this->owner->leaseReleaseFault === 'throw') throw new \RuntimeException('secret lease/path detail');
+                if ($this->owner->leaseReleaseFault === 'failed') return AssignmentOrderOriginalStorageStatus::FAILED;
+                $this->owner->leaseHeld = false;
+                $this->owner->storageRecoveryOwnsLease = false;
+                return AssignmentOrderOriginalStorageStatus::OK;
+            }
         };
         return new class($lease) implements AssignmentOrderOriginalStorageOutcome {
             public function __construct(private AssignmentOrderOriginalPrivateContentLease $leaseValue) {}
@@ -238,8 +270,21 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
 final class InMemoryAssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
 {
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
-    public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup { return $this->lookup($this->owner->terminalResults[$requestId] ?? null); }
-    public function findAcceptedFingerprint(string $fingerprint): AssignmentOrderOriginalResultLookup { return $this->lookup($this->owner->fingerprintResults[$fingerprint] ?? null); }
+    public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup
+    {
+        $this->owner->requestLookupCalls++;
+        $this->owner->repositoryTrace[]='request_lookup:'.($this->owner->leaseHeld?'held':'released');
+        if ($this->owner->acceptedCommitCalls > 0 && $this->owner->unknownResolution !== null) {
+            if ($this->owner->unknownResolution === 'unavailable') return $this->unavailable();
+            if ($this->owner->unknownResolution === 'not_found') return $this->miss();
+        }
+        return $this->lookup($this->owner->terminalResults[$requestId] ?? null);
+    }
+    public function findAcceptedFingerprint(string $fingerprint): AssignmentOrderOriginalResultLookup
+    {
+        $this->owner->repositoryTrace[]='fingerprint_lookup:'.($this->owner->leaseHeld?'held':'released');
+        return $this->lookup($this->owner->fingerprintResults[$fingerprint] ?? null);
+    }
     private function lookup(?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $result): AssignmentOrderOriginalResultLookup
     {
         if ($result === null) return $this->miss();
@@ -256,8 +301,16 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
             public function result(): ?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult { return null; }
         };
     }
+    private function unavailable(): AssignmentOrderOriginalResultLookup
+    {
+        return new class implements AssignmentOrderOriginalResultLookup {
+            public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::UNAVAILABLE; }
+            public function result(): ?\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult { return null; }
+        };
+    }
     public function findLineage(string $rootOriginalId): AssignmentOrderOriginalLineageLookup
     {
+        $this->owner->repositoryTrace[]='lineage_lookup:'.($this->owner->leaseHeld?'held':'released');
         $commit = $this->owner->acceptedCommit;
         if ($commit !== null && $commit->rootOriginalId === $rootOriginalId) {
             return new class($commit, $this->owner->acceptedCommits) implements AssignmentOrderOriginalLineageLookup {
@@ -284,6 +337,8 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        $this->owner->acceptedCommitCalls++;
+        $this->owner->repositoryTrace[]='commit:'.($this->owner->leaseHeld?'held':'released');
         if ($this->owner->commitRace === 'identical') {
             $this->store($commit);
             return AssignmentOrderOriginalCommitStatus::CONFLICT;
@@ -300,6 +355,11 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
             $this->store($winner);
             return AssignmentOrderOriginalCommitStatus::CONFLICT;
         }
+        if ($this->owner->commitOutcome === AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN) {
+            if ($this->owner->unknownResolution === 'found') $this->store($commit);
+            return AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN;
+        }
+        if ($this->owner->commitOutcome === AssignmentOrderOriginalCommitStatus::ROLLED_BACK) return AssignmentOrderOriginalCommitStatus::ROLLED_BACK;
         $this->store($commit);
         return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
@@ -313,6 +373,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function commitAttempt(AssignmentOrderOriginalAttemptCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        $this->owner->repositoryTrace[]='attempt_commit:'.($this->owner->leaseHeld?'held':'released');
         $this->owner->attemptCommits[] = $commit;
         return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
