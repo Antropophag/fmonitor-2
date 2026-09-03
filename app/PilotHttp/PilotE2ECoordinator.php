@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
-
 namespace FMonitor2\PilotHttp;
-
 use FMonitor2\InstallationProcess\ArtifactUnavailableException;
 use FMonitor2\InstallationProcess\ArtifactIntegrityException;
 use FMonitor2\InstallationProcess\ArtifactNotFoundException;
@@ -11,10 +9,9 @@ use FMonitor2\InstallationProcess\ContentAddressedArtifactStore;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessConfig;
 use FMonitor2\InstallationProcess\ProductionInstallationProcessFactory;
 final class InvalidCsrfRequest extends \RuntimeException {}
-
 /** Configured production HTTP command adapter for PILOT-E2E-FLOW-001. */
 final class PilotE2ECoordinator extends PilotHttpCoordinator
-{ private string $cspMethod='GET';private string $cspPath='';private ?array $ownerSessionState=null;private ?string $ownerSessionId=null;
+{ private string $cspMethod='GET';private string $cspPath='';private ?array $ownerSessionState=null;private ?PilotCommandSession $commandSession=null;
     public function __construct(
         private readonly PilotHttpCoordinator $reads,
         private readonly TrustedServerIdentity $identity,
@@ -220,14 +217,11 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     private function session(PilotHttpRequest $r,HttpUser $user,bool $create):array
     {
         if($this->ownerSessionState!==null)return[&$this->ownerSessionState,[]];
-        $headers=[];if(\session_status()!==PHP_SESSION_ACTIVE){$cookieName=self::commandCookieName($r);\session_name($cookieName);\ini_set('session.use_cookies','0');$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})/',(string)($r->server['HTTP_COOKIE']??''),$m)===1)$incoming=$m[1];if($incoming===null&&!$create)return [null,[]];\session_id($incoming??'');if(!@\session_start())throw new PilotHttpInfrastructureUnavailable();if($incoming===null)$headers=['Set-Cookie'=>$cookieName.'='.\session_id().(self::trustedDemo($r)?'':'; Secure').'; HttpOnly; SameSite=Strict; Path=/pilot'];}
-        if(isset($_SESSION['actor'])&&$_SESSION['actor']!==$user->id){\session_regenerate_id(true);$_SESSION=[];}
-        if(!isset($_SESSION['actor'])){if(!$create)return [null,[]];$_SESSION=['actor'=>$user->id,'secret'=>\random_bytes(32),'tokens'=>[],'flash'=>[]];}
-        return [&$_SESSION,$headers];
+        $cookieName=self::commandCookieName($r);$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($r->server['HTTP_COOKIE']??''),$match)===1)$incoming=$match[1];$this->commandSession??=new PilotCommandSession($this->sessionStorage);if(!$this->commandSession->open($incoming,$cookieName,!self::trustedDemo($r),$user->id,$create))return[null,[]];return[$this->commandSession->state(),$this->commandSession->headers()];
     }
-    private function token(array &$s,HttpUser $u,int $id):string{$t=\bin2hex(\random_bytes(16));$s['tokens'][$t]=['actor'=>$u->id,'id'=>$id,'at'=>\time()];if($this->ownerSessionState!==null)$this->ownerSessionState=$s;else $_SESSION=$s;return $t;}
+    private function token(array &$s,HttpUser $u,int $id):string{$t=\bin2hex(\random_bytes(16));$s['tokens'][$t]=['actor'=>$u->id,'id'=>$id,'at'=>\time()];$this->storeSessionState($s);return $t;}
     private function validToken(array $s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;return \is_array($x)&&($x['actor']??null)===$u->id&&($x['id']??null)===$id&&\time()-(int)($x['at']??0)<=1800;}
-    private function consume(array &$s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;unset($s['tokens'][$token]);$_SESSION=$s;return \is_array($x)&&$x['actor']===$u->id&&$x['id']===$id&&\time()-$x['at']<=1800;}
+    private function consume(array &$s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;unset($s['tokens'][$token]);$this->storeSessionState($s);return \is_array($x)&&$x['actor']===$u->id&&$x['id']===$id&&\time()-$x['at']<=1800;}
     private function revision(array $s,int $id):string{[$db,$prefix]=$this->dependencies->commandResources();$q=$db->prepare("SELECT lock_version FROM `{$prefix}fm2_installation_cases` WHERE legacy_installation_object_id=? LIMIT 2");$q->bind_param('i',$id);$q->execute();$rows=$q->get_result()->fetch_all(MYSQLI_ASSOC);if(\count($rows)!==1)throw new PilotHttpInfrastructureUnavailable();return \hash_hmac('sha256',$id.':'.$rows[0]['lock_version'],$s['secret']);}
     private function validRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
@@ -253,8 +247,9 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         return self::trustedDemo($r)&&\preg_match('/:(\d{1,5})$/D',$r->host,$match)===1?'fm2pilot_'.$match[1]:'fm2pilot';
     }
     private function body(PilotHttpRequest $r,array $allowed):?array{$type=(string)($r->server['CONTENT_TYPE']??'');$length=$r->server['CONTENT_LENGTH']??null;if(!\preg_match('#^application/x-www-form-urlencoded(?:;\s*charset=UTF-8)?$#iD',$type)||!\is_string($length)||!\ctype_digit($length)||(int)$length>16384||(int)$length!==\strlen($r->body))return null;$out=[];$nextInstaller=0;foreach(\explode('&',$r->body)as$part){if($part==='')continue;$pair=\explode('=',$part,2);if(\preg_match('/%(?![0-9A-Fa-f]{2})/',($pair[0]??'').($pair[1]??''))===1)return null;$key=\rawurldecode(\str_replace('+',' ',$pair[0]));$value=\rawurldecode(\str_replace('+',' ',$pair[1]??''));if(\preg_match('/^installerTabIds\[([0-9]+)\]$/D',$key,$m)===1){if((int)$m[1]!==$nextInstaller++||$nextInstaller>500)return null;$key='installerTabIds[]';}if(!\in_array($key,$allowed,true)||!\mb_check_encoding($key,'UTF-8')||!\mb_check_encoding($value,'UTF-8'))return null;$out[$key][]=$value;if($key==='installerTabIds[]'&&\count($out[$key])>500)return null;}if(!isset($out['csrfToken'])||\count($out['csrfToken'])!==1)throw new InvalidCsrfRequest();foreach($out as$key=>$values)if($key!=='installerTabIds[]'&&\count($values)!==1)return null;return $out;}
-    private function flashRedirect(array &$s,string $path,string $message,?string $field=null,bool $suppressOpen=false,array $selected=[]):PilotHttpResponse{if($selected===[]&&isset($s['pendingSelection']))$selected=$s['pendingSelection'];unset($s['pendingSelection']);$s['flash'][$path]=['message'=>$message,'field'=>$field,'suppressOpen'=>$suppressOpen,'selected'=>$selected];$_SESSION=$s;return $this->redirect($path);}
-    private function pullFlash(array &$s,string $path):?array{$f=$s['flash'][$path]??null;unset($s['flash'][$path]);$_SESSION=$s;return $f;}
+    private function flashRedirect(array &$s,string $path,string $message,?string $field=null,bool $suppressOpen=false,array$selected=[]):PilotHttpResponse{if($selected===[]&&isset($s['pendingSelection']))$selected=$s['pendingSelection'];unset($s['pendingSelection']);$s['flash'][$path]=['message'=>$message,'field'=>$field,'suppressOpen'=>$suppressOpen,'selected'=>$selected];$this->storeSessionState($s);return$this->redirect($path);}
+    private function pullFlash(array &$s,string $path):?array{$f=$s['flash'][$path]??null;unset($s['flash'][$path]);$this->storeSessionState($s);return$f;}
+    private function storeSessionState(array$s):void{if($this->ownerSessionState!==null)$this->ownerSessionState=$s;else{$this->commandSession?->replace($s,true);}}
     private function redirect(string $path):PilotHttpResponse{return $this->response(303,'',['Location'=>$path]);}
     private function actorName(int $id):string{[$db,$prefix]=$this->dependencies->commandResources();$s=$db->prepare("SELECT full_name FROM `{$prefix}fm2_pilot_users` WHERE user_id=? AND status=1 AND activation_state='active' LIMIT 2");$s->bind_param('i',$id);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);return \count($rows)===1?(string)$rows[0]['full_name']:(string)$id;}
     public static function positive(string $v):bool{return \preg_match('/^[1-9][0-9]*$/D',$v)===1&&\strlen($v)<=19&&(\strlen($v)<19||\strcmp($v,'9223372036854775807')<=0);}
@@ -266,7 +261,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     }
     private function ownerUserAccess(PilotHttpRequest$r,string$id,array$state):PilotHttpResponse
     {
-        $this->ownerSessionState=$state;$this->ownerSessionId=$id;try{$server=$r->server+['FMONITOR_AUTH_USER_ID'=>(string)$state['auth_user_id'],'FMONITOR_AUTH_CSRF'=>(string)$state['auth_csrf']];$request=new PilotHttpRequest($r->method,$r->path,$r->host,(string)$state['auth_email'],$server,$r->body);$response=$this->users($request,[]);if($response->status!==200)return$response;$body=$response->body;$flash=$this->ownerSessionState['fm2_invitation_flash']??null;if(\is_array($flash)&&($flash['kind']??null)==='success'&&\is_string($flash['url']??null)){$url=\htmlspecialchars($flash['url'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$feedback='<section class="fm2-invite-feedback"><input value="'.$url.'"></section>';$body=\str_replace('<section class="fm2-directory-summary fm2-user-summary">',$feedback.'<section class="fm2-directory-summary fm2-user-summary">',$body);unset($this->ownerSessionState['fm2_invitation_flash']);}$commit=$this->sessionStorage->writeCommit($id,\serialize($this->ownerSessionState));if($commit->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);return$this->response(200,$body,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}finally{$this->ownerSessionState=null;$this->ownerSessionId=null;}
+        $this->ownerSessionState=$state;try{$server=$r->server+['FMONITOR_AUTH_USER_ID'=>(string)$state['auth_user_id'],'FMONITOR_AUTH_CSRF'=>(string)$state['auth_csrf']];$request=new PilotHttpRequest($r->method,$r->path,$r->host,(string)$state['auth_email'],$server,$r->body);$response=$this->users($request,[]);if($response->status!==200)return$response;$body=$response->body;$flash=$this->ownerSessionState['fm2_invitation_flash']??null;if(\is_array($flash)&&($flash['kind']??null)==='success'&&\is_string($flash['url']??null)){$url=\htmlspecialchars($flash['url'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$feedback='<section class="fm2-invite-feedback"><input value="'.$url.'"></section>';$body=\str_replace('<section class="fm2-directory-summary fm2-user-summary">',$feedback.'<section class="fm2-directory-summary fm2-user-summary">',$body);unset($this->ownerSessionState['fm2_invitation_flash']);}$commit=$this->sessionStorage->writeCommit($id,\serialize($this->ownerSessionState));if($commit->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);return$this->response(200,$body,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}finally{$this->ownerSessionState=null;}
     }
     private function knownPath(string$path):bool{return \in_array($path,['/pilot','/pilot/login','/pilot/admin/users','/pilot/admin/users/invite','/pilot/objects','/pilot/'],true)||\str_starts_with($path,'/pilot/assets/');}
     private function json(int $status,array $payload):PilotHttpResponse{return $this->response($status,\json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),['Content-Type'=>'application/json; charset=UTF-8']);}
