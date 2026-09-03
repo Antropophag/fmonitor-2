@@ -617,6 +617,22 @@ PilotSessionInspectionResult::inspectorOk('{}');
             findings = architecture_check.collect()
         self.assertEqual(3, len(findings.get("session_storage_ownership", [])))
 
+    def test_session_storage_ownership_rejects_owner_basename_impersonation(self) -> None:
+        rapid_pilot = architecture_check.ROOT / "rapid-pilot"
+        with tempfile.TemporaryDirectory(dir=rapid_pilot) as directory:
+            owner = Path(directory) / "FilesystemPilotSessionStorage.php"
+            inspector = Path(directory) / "PilotSessionStorageInspector.php"
+            owner.write_text("""<?php
+PilotSessionOperationResult::ownerStarted('fixture-session-id', 'fixture-payload');
+PilotSessionFilesystemEvent::ownerBefore(1, $operation, $artifact, null, 1);
+""", encoding="utf-8")
+            inspector.write_text("""<?php
+PilotSessionInspectionResult::inspectorOk('{}');
+""", encoding="utf-8")
+            with patch.object(architecture_check, "files", return_value=[owner, inspector]):
+                findings = architecture_check.collect()
+        self.assertEqual(3, len(findings.get("session_storage_ownership", [])))
+
     def test_session_storage_ownership_allows_exact_internal_factory_owners(self) -> None:
         identity = architecture_check.ROOT / "app" / "IdentityAccess"
         with tempfile.TemporaryDirectory(dir=identity) as directory:
