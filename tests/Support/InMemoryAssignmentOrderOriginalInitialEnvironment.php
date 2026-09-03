@@ -48,6 +48,9 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public int $actorUserId = 18;
     public string $allowedCapability = 'assignment_order.original.upload';
     public bool $authorizationAvailable = true;
+    public ?string $storageFault = null;
+    /** @var list<string> */
+    public array $storageEvents = [];
 
     /** @var array<string, mixed> */
     private array $process = [
@@ -142,6 +145,7 @@ final class InMemoryAssignmentOrderOriginalInitialStorage implements AssignmentO
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
     public function beginStage(): AssignmentOrderOriginalPrivateStage
     {
+        $this->owner->storageEvents[] = 'STAGE_BEGIN';
         return new InMemoryAssignmentOrderOriginalInitialStage($this->owner);
     }
     public function listOrphans(string $cutoffUtc, int $limit, ?string $cursor): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalOrphanPage
@@ -165,13 +169,27 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
     public function write(string $chunk): AssignmentOrderOriginalStorageStatus
     {
+        $this->owner->storageEvents[] = 'STAGE_WRITE:' . strlen($chunk);
+        if ($this->owner->storageFault === 'write') return AssignmentOrderOriginalStorageStatus::FAILED;
         $this->bytes .= $chunk;
         return AssignmentOrderOriginalStorageStatus::OK;
     }
-    public function completedBytesForInspection(): string { return $this->bytes; }
+    public function completedBytesForInspection(): string
+    {
+        $this->owner->storageEvents[] = 'STAGE_DONE';
+        return $this->bytes;
+    }
     public function finalize(string $sha256, int $byteSize): AssignmentOrderOriginalStorageOutcome
     {
+        $this->owner->storageEvents[] = 'FINALIZE_BEGIN';
+        if ($this->owner->storageFault === 'finalize') {
+            return new class implements AssignmentOrderOriginalStorageOutcome {
+                public function status(): AssignmentOrderOriginalStorageStatus { return AssignmentOrderOriginalStorageStatus::FAILED; }
+                public function lease(): ?AssignmentOrderOriginalPrivateContentLease { return null; }
+            };
+        }
         $this->owner->storedBytes = $this->bytes;
+        $this->owner->storageEvents[] = 'FINALIZE_DONE';
         $content = new class($sha256, $byteSize) implements AssignmentOrderOriginalPrivateContent {
             public function __construct(private string $digest, private int $size) {}
             public function opaqueIdentity(): string { return 'private-content-0001'; }
@@ -190,8 +208,14 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
             public function lease(): ?AssignmentOrderOriginalPrivateContentLease { return $this->leaseValue; }
         };
     }
-    public function abort(): AssignmentOrderOriginalStorageStatus { return AssignmentOrderOriginalStorageStatus::OK; }
-    public function close(): void {}
+    public function abort(): AssignmentOrderOriginalStorageStatus
+    {
+        $this->owner->storageEvents[] = 'ABORT_BEGIN';
+        $this->bytes = '';
+        $this->owner->storageEvents[] = 'ABORT_DONE';
+        return AssignmentOrderOriginalStorageStatus::OK;
+    }
+    public function close(): void { $this->owner->storageEvents[] = 'STAGE_CLOSE'; }
 }
 
 final class InMemoryAssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
