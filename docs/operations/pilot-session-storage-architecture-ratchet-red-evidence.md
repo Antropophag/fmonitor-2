@@ -4,15 +4,16 @@ Date: 2026-09-03
 
 Public seam: `tools/architecture/check.py::collect()` through the existing
 architecture unittest harness. The two isolated production-shaped fixtures
-contain direct native-session ownership/hardcoded compatibility root and
-unauthorized `@internal` result-factory calls.
+contain direct native-session ownership/hardcoded compatibility root, unsafe
+`chmod/chown` repair and unauthorized `@internal` result-factory calls. Exact
+owner/inspector-named fixtures separately require zero findings.
 
 ```text
 python3 -m unittest \
   tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_rejects_native_session_and_hardcoded_root \
   tools.architecture.tests.test_debt_fingerprint.DebtFingerprintTest.test_session_storage_ownership_rejects_internal_factory_callers
 
-FAIL: expected 6 session_storage_ownership findings, actual 0
+FAIL: expected 8 session_storage_ownership findings, actual 0
 FAIL: expected 3 session_storage_ownership findings, actual 0
 ```
 
