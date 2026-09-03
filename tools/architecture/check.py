@@ -194,10 +194,10 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 factory_class = match.group("class")
                 allowed = (
                     factory_class in {"PilotSessionOperationResult", "PilotSessionFilesystemEvent"}
-                    and path.name == "FilesystemPilotSessionStorage.php"
+                    and rel == "app/IdentityAccess/FilesystemPilotSessionStorage.php"
                 ) or (
                     factory_class == "PilotSessionInspectionResult"
-                    and path.name == "PilotSessionStorageInspector.php"
+                    and rel == "app/IdentityAccess/PilotSessionStorageInspector.php"
                 )
                 if not allowed:
                     violations["session_storage_ownership"].append(
