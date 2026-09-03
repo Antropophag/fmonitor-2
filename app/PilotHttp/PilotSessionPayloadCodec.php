@@ -23,7 +23,9 @@ final class PilotSessionPayloadCodec
 
     private function containsObject(array $state): bool
     {
-        foreach ($state as $value) {
+        foreach (array_keys($state) as $key) {
+            if (\ReflectionReference::fromArrayElement($state, $key) !== null) return true;
+            $value = $state[$key];
             if (is_object($value)) return true;
             if (is_array($value) && $this->containsObject($value)) return true;
         }
