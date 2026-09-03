@@ -9,9 +9,6 @@ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalVerificationWorkerB
 use FMonitor2\AssignmentOrderOriginal\ProductionAssignmentOrderOriginalFactory;
 
 // Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v4, sections 9, 13, 15 and 16.
-foreach ([ProductionAssignmentOrderOriginalFactory::class,AssignmentOrderOriginalPrivateStorageFactory::class,AssignmentOrderOriginalVerificationWorkerBootstrap::class] as $type) {
-    if (!class_exists($type)) throw new TestFailure('INTENDED_RED: canonical production MariaDB/worker seam is missing: '.$type);
-}
 
 function aoocQuote(string $identifier):string { if(preg_match('/^[a-z0-9_]+$/D',$identifier)!==1)throw new TestFailure('SETUP_FAILURE: unsafe owned identifier');return '`'.$identifier.'`'; }
 function aoocAdmin(?string$db=null):mysqli{$c=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local',$db,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$c->set_charset('utf8mb4');return$c;}
@@ -25,12 +22,15 @@ function aoocSeed(mysqli$db,string$p):void{
     $db->query('INSERT INTO '.$q('fm2_process_user_capabilities')."(user_id,capability,position_snapshot)VALUES(18,'assignment_order.original.correct',NULL),(901,'construction_control_engineer','Engineer')");
     $db->query('INSERT INTO '.$q('fm2_installation_cases')."(id,legacy_installation_object_id,process_state,created_at,updated_at,lock_version)VALUES(71,4512,'assignment_order_prepared','2026-09-01T00:00:00Z','2026-09-01T00:00:00Z',1)");
     $db->query('INSERT INTO '.$q('fm2_assignment_orders')."(id,installation_case_id,version_no,kind,status,order_date,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at,prepared_by_user_id)VALUES(81,71,1,'initial','prepared','2026-09-01',901,'Engineer','Engineer','brigade','Address','1','REG-4512','2026-10-01','2026-12-01','2026-09-01T00:00:00Z',18)");
-    $db->query('INSERT INTO '.$q('fm2_order_installers')."(assignment_order_id,installer_tab_id,fio_snapshot,position_snapshot,employment_status_snapshot,workforce_source_snapshot,workforce_source_updated_at_snapshot,valid_from,change_action)VALUES(81,7001,'Installer One','Installer','employed','fixture','2026-09-01T00:00:00Z','2026-09-01','assign'),(81,7002,'Installer Two','Installer','employed','fixture','2026-09-01T00:00:00Z','2026-09-01','assign')");
+    $db->query('INSERT INTO '.$q('fm2_order_installers')."(assignment_order_id,installer_tab_id,fio_snapshot,position_snapshot,employment_status_snapshot,employed_from_snapshot,employed_to_snapshot,workforce_source_snapshot,workforce_source_updated_at_snapshot,valid_from,change_action)VALUES(81,7001,'Installer One','Installer','employed','2024-01-01',NULL,'fixture','2026-09-01T00:00:00Z','2026-09-01','assign'),(81,7002,'Installer Two','Installer','employed','2024-01-01',NULL,'fixture','2026-09-01T00:00:00Z','2026-09-01','assign')");
     $db->query('INSERT INTO '.$q('fm2_assignment_order_original_roots')." VALUES('original-0001',71,81,'composition-81-v1',REPEAT('1',64),'2026-09-02T09:15:30Z')");
     $db->query('INSERT INTO '.$q('fm2_assignment_order_original_revisions')." VALUES('revision-0001','original-0001',1,NULL,NULL,1,'2026-09-01','2026-09-02T09:15:30Z',18,REPEAT('4',64),327,'private-content-seed',NULL)");
     $db->query('INSERT INTO '.$q('fm2_assignment_order_original_requests')." VALUES('00000000-0000-4000-8000-000000000160',18,'initial',71,81,'accepted',NULL,0,'original-0001','revision-0001',1,'2026-09-01',REPEAT('4',64),327,'2026-09-02T09:15:30Z','2026-09-02T09:15:30Z')");
     $db->query('INSERT INTO '.$q('fm2_assignment_order_original_fingerprints')." VALUES(REPEAT('a',64),'00000000-0000-4000-8000-000000000160','original-0001','revision-0001')");
     $db->query('INSERT INTO '.$q('fm2_assignment_order_original_events')."(event_type,installation_case_id,assignment_order_id,root_original_id,revision_id,occurred_at,actor_user_id)VALUES('assignment_order_original_accepted',71,81,'original-0001','revision-0001','2026-09-02T09:15:30Z',18)");
+    foreach ([ProductionAssignmentOrderOriginalFactory::class,AssignmentOrderOriginalPrivateStorageFactory::class,AssignmentOrderOriginalVerificationWorkerBootstrap::class] as $type) {
+        if (!class_exists($type)) throw new TestFailure('INTENDED_RED: predecessor seed complete; canonical production MariaDB/worker seam is missing: '.$type);
+    }
 }
 function aoocRemoveTree(string$root):void{if(!str_starts_with($root,dirname(__DIR__,2).'/.verification-artifacts/aooc-'))throw new TestFailure('SETUP_FAILURE: unsafe cleanup root');if(!is_dir($root))return;$items=scandir($root);if($items===false)throw new TestFailure('SETUP_FAILURE: cleanup read');foreach($items as$item){if($item==='.'||$item==='..')continue;$path=$root.'/'.$item;if(is_dir($path)&&!is_link($path))aoocRemoveTree($path);elseif(!unlink($path))throw new TestFailure('SETUP_FAILURE: cleanup file');}if(!rmdir($root))throw new TestFailure('SETUP_FAILURE: cleanup directory');}
 /** @return array{process:resource,pipes:array<int,resource>,request:string} */
