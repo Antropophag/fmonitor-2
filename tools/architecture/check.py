@@ -48,6 +48,17 @@ MUTATING_METHOD = re.compile(
     r"schedule|complete|reverse|assign|register|create|update|delete|block|unblock)"
     r"[A-Za-z0-9_]*\s*\(", re.I
 )
+NATIVE_SESSION_CALL = re.compile(
+    r"\b(?:session_save_path|session_start|session_regenerate_id|session_write_close|session_destroy)\s*\("
+)
+SESSION_COMPATIBILITY_ROOT = re.compile(
+    r"/home/fmonitor/\.local/state/fmonitor2/sessions"
+)
+UNSAFE_SESSION_REPAIR = re.compile(r"\b(?:chmod|chown)\s*\(")
+SESSION_INTERNAL_FACTORY = re.compile(
+    r"\b(?P<class>PilotSessionOperationResult|PilotSessionFilesystemEvent|PilotSessionInspectionResult)"
+    r"::(?P<method>owner[A-Za-z0-9_]+|inspector[A-Za-z0-9_]+)\s*\("
+)
 
 
 def files() -> list[Path]:
@@ -171,6 +182,27 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
         if len(lines) >= 150:
             hotspot[rel] = len(lines)
         for number, line in enumerate(lines, 1):
+            session_matches = list(NATIVE_SESSION_CALL.finditer(line))
+            compatibility_matches = list(SESSION_COMPATIBILITY_ROOT.finditer(line))
+            repair_matches = list(UNSAFE_SESSION_REPAIR.finditer(line)) if compatibility_matches else []
+            session_matches += repair_matches if repair_matches else compatibility_matches
+            for match in session_matches:
+                violations["session_storage_ownership"].append(
+                    finding("session-owner", path, number, match.group(0))
+                )
+            for match in SESSION_INTERNAL_FACTORY.finditer(line):
+                factory_class = match.group("class")
+                allowed = (
+                    factory_class in {"PilotSessionOperationResult", "PilotSessionFilesystemEvent"}
+                    and path.name == "FilesystemPilotSessionStorage.php"
+                ) or (
+                    factory_class == "PilotSessionInspectionResult"
+                    and path.name == "PilotSessionStorageInspector.php"
+                )
+                if not allowed:
+                    violations["session_storage_ownership"].append(
+                        finding("session-internal-factory", path, number, match.group(0))
+                    )
             if DDL.search(line) and not ddl_owner(path):
                 violations["ddl_ownership"].append(finding("ddl", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if SQL.search(line) and not sql_owner(path):
@@ -200,6 +232,8 @@ def compare(current: dict, baseline: dict) -> list[str]:
     errors: list[str] = []
     for item in current.get("workforce_migration_ownership", []):
         errors.append(f"workforce_migration_ownership: forbidden production owner: {item}")
+    for item in current.get("session_storage_ownership", []):
+        errors.append(f"session_storage_ownership: forbidden production owner: {item}")
     for rule in ("ddl_ownership", "sql_ownership", "dependency_direction", "rapid_pilot_boundary"):
         old = collections.Counter(baseline.get(rule, []))
         new = collections.Counter(current.get(rule, []))
