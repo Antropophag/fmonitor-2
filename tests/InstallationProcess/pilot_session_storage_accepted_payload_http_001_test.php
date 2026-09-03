@@ -47,6 +47,9 @@ try {
     assertSameValue('OK', $owner->writeCommit($sessionId, $payload)->status()->name, 'accepted payload committed by real owner');
     $owner->close();
     $committed = $root . '/sessions/accepted_v10/s-' . $sessionId . '.session';
+    clearstatcache(true, $committed);
+    $identityBefore = lstat($committed);
+    if (!is_array($identityBefore)) throw new RuntimeException('SETUP_FAILURE: committed identity');
 
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
     if (!is_resource($socket)) throw new RuntimeException("SETUP_FAILURE: port $errorMessage");
@@ -85,6 +88,14 @@ try {
     assertSameValue(true, str_starts_with($headers, 'HTTP/1.1 200 '), 'existing accepted session returns login page');
     assertSameValue(true, str_contains($body, 'name="csrfToken" value="' . $csrf . '"'), 'INTENTIONAL_RED: owner payload restores existing CSRF');
     assertSameValue(false, (bool) preg_match('/^Set-Cookie:/mi', $headers), 'existing session does not issue replacement cookie');
+    clearstatcache(true, $committed);
+    $identityAfter = lstat($committed);
+    assertSameValue(true, is_array($identityAfter), 'committed material remains present');
+    assertSameValue(
+        [$identityBefore['dev'], $identityBefore['ino']],
+        [$identityAfter['dev'], $identityAfter['ino']],
+        'unchanged accepted session is not atomically rewritten with identical bytes',
+    );
     assertSameValue($payload, file_get_contents($committed), 'unchanged session is not reseeded or re-encoded');
 
     echo "PASS: PILOT-SESSION-STORAGE-001 v10 accepted payload raw HTTP\n";
