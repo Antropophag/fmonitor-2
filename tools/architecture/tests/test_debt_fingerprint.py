@@ -583,6 +583,8 @@ session_start();
 session_regenerate_id(true);
 session_write_close();
 session_destroy();
+chmod('/home/fmonitor/.local/state/fmonitor2/sessions', 0700);
+chown('/home/fmonitor/.local/state/fmonitor2/sessions', 1000);
 """
         with tempfile.NamedTemporaryFile(
             mode="w+",
@@ -594,7 +596,7 @@ session_destroy();
             fixture.write(source)
             fixture.flush()
             findings = architecture_check.collect()
-        self.assertEqual(6, len(findings.get("session_storage_ownership", [])))
+        self.assertEqual(8, len(findings.get("session_storage_ownership", [])))
 
     def test_session_storage_ownership_rejects_internal_factory_callers(self) -> None:
         identity = architecture_check.ROOT / "app" / "IdentityAccess"
@@ -614,6 +616,20 @@ PilotSessionInspectionResult::inspectorOk('{}');
             fixture.flush()
             findings = architecture_check.collect()
         self.assertEqual(3, len(findings.get("session_storage_ownership", [])))
+
+    def test_session_storage_ownership_allows_exact_internal_factory_owners(self) -> None:
+        identity = architecture_check.ROOT / "app" / "IdentityAccess"
+        with tempfile.TemporaryDirectory(dir=identity) as directory:
+            owner = Path(directory) / "FilesystemPilotSessionStorage.php"
+            inspector = Path(directory) / "PilotSessionStorageInspector.php"
+            owner.write_text("""<?php
+PilotSessionOperationResult::ownerStarted('fixture-session-id');
+PilotSessionFilesystemEvent::ownerBefore(1, $operation, $artifact, null, 1);
+""", encoding="utf-8")
+            inspector.write_text("<?php PilotSessionInspectionResult::inspectorOk('{}');\n", encoding="utf-8")
+            with patch.object(architecture_check, "files", return_value=[owner, inspector]):
+                findings = architecture_check.collect()
+        self.assertEqual([], findings.get("session_storage_ownership", []))
 
 
 if __name__ == "__main__":
