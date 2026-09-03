@@ -10,7 +10,7 @@
 
 ## 2. Minimal RED и test review
 
-- [ ] 2.1 Поручить RED author написать smallest public-seam test initial valid direct upload с immutable composition/date/upload-time/hash evidence и no composition/opening mutation; verification: canonical command падает только из-за отсутствующего production seam и transcript классифицирован intended RED
+- [x] 2.1 Поручить RED author написать smallest public-seam test initial valid direct upload с immutable composition/date/upload-time/hash evidence и no composition/opening mutation; verification: canonical command падает только из-за отсутствующего production seam и transcript классифицирован intended RED
 - [ ] 2.2 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults; verification: каждый expected value независим от будущей реализации
 - [ ] 2.3 Поручить fresh independent test reviewer проверить sensitivity и zero-public-orphan cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 
