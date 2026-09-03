@@ -257,11 +257,15 @@ foreach ($sliceHistories as $history) {
     if (count($visited) !== count($history['receipts'])) deliveryFailure('invalid_history', $history['directory'], 'receipt history is disconnected');
     $leaf = $history['receipts'][array_values($leaves)[0]];
     $changedAfterReview = array_filter(explode("\n", deliveryGit($repository, ['diff', '--no-renames', '--name-only', $leaf['greenCommit'] . '..' . $head], $leaf['path'])));
+    $allowedOperationsEvidence = [
+        'docs/operations/quality-graph-governance-final-verification-2026-09-04.md',
+        'docs/operations/quality-graph-representative-pr-phase-a-2026-09-03.md',
+    ];
     foreach ($changedAfterReview as $changedPath) {
         $allowed = $changedPath === $leaf['codeReviewPath']
             || str_starts_with($changedPath, $history['directory'] . '/')
             || $changedPath === 'openspec/changes/' . $leaf['change'] . '/tasks.md'
-            || str_starts_with($changedPath, 'docs/operations/');
+            || in_array($changedPath, $allowedOperationsEvidence, true);
         if (!$allowed) deliveryFailure('commit_mismatch', $leaf['path'], "governed path changed after review: $changedPath");
     }
 }
