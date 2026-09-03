@@ -265,6 +265,39 @@ try {
         qggRemoveFixture($metadataFixture);
     }
 
+    $bindingFixture = sys_get_temp_dir() . '/fmonitor-qgg-binding-' . bin2hex(random_bytes(8));
+    try {
+        $setup = qggRun(['git', 'clone', '--quiet', $lineage, $bindingFixture], $root);
+        assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata binding mutation clone failed');
+        foreach ([['git', 'config', 'user.email', 'binding@example.invalid'], ['git', 'config', 'user.name', 'Binding Fixture']] as $command) {
+            $setup = qggRun($command, $bindingFixture);
+            assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata binding fixture Git configuration failed');
+        }
+        $redContents = (string) file_get_contents($bindingFixture . '/' . $redPath);
+        assertSameValue(1, preg_match('/\A```delivery-metadata\R([^\r\n]+)/', $redContents, $redMatch), 'SETUP_FAILURE: binding RED metadata source block missing');
+        $redMetadata = json_decode($redMatch[1], true, 32, JSON_THROW_ON_ERROR);
+        $redMetadata['sliceId'] = 'OTHER-SLICE-001';
+        $redContents = str_replace($redMatch[1], json_encode($redMetadata, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $redContents);
+        assertSameValue(true, file_put_contents($bindingFixture . '/' . $redPath, $redContents) !== false, 'SETUP_FAILURE: cannot write mismatched RED metadata');
+        $receiptPath = $bindingFixture . '/delivery/evidence/LINEAGE-001/lineage-v1.json';
+        $mutatedReceipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR);
+        $mutatedReceipt['artifacts']['red']['sha256'] = hash('sha256', $redContents);
+        assertSameValue(true, file_put_contents($receiptPath, json_encode($mutatedReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") !== false, 'SETUP_FAILURE: cannot update binding receipt');
+        foreach ([['git', 'add', '.'], ['git', 'commit', '--quiet', '-m', 'mismatched metadata identity']] as $command) {
+            $setup = qggRun($command, $bindingFixture);
+            assertSameValue(0, $setup['status'], 'SETUP_FAILURE: metadata binding mutation commit failed');
+        }
+        $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $bindingFixture], $bindingFixture);
+        $combined = $result['stdout'] . "\n" . $result['stderr'];
+        $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        assertSameValue(true, $result['status'] !== 0, "Mismatched authoritative metadata identity must fail; evidence=$evidence");
+        assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=metadata_mismatch receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: receipt and authoritative RED slice identity must match; evidence=$evidence");
+        assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Metadata binding mismatch must emit exactly one terminal failure; evidence=$evidence");
+        assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Metadata binding mismatch must not print success; evidence=$evidence");
+    } finally {
+        qggRemoveFixture($bindingFixture);
+    }
+
     $receipt['receiptId'] = 'duplicate-v1';
     $write('delivery/evidence/ZZZ-DUPLICATE-001/duplicate-v1.json', json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
     $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
