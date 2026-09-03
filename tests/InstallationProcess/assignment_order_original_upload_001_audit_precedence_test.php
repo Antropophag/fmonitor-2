@@ -45,6 +45,6 @@ $collision=$app->submitAssignmentOrderOriginal($command('00000000-0000-4000-8000
 assertSameValue($persistenceFailure,$tuple($collision),'CAS-selected conflict whose required terminal/audit commit fails becomes PERSISTENCE_FAILURE even after release throw.');
 $release=array_search('release_attempt:held',$conflict->repositoryTrace,true);$audit=array_search('attempt_commit:held',$conflict->repositoryTrace,true);
 assertSameValue(true,is_int($release)&&is_int($audit)&&$release<$audit,'CAS conflict attempts release before its one atomic terminal/audit commit.');
-assertSameValue([1,1],[$conflict->leaseReleaseCalls,count($conflict->safeLogs)],'Release throw remains exactly-once and safe-logged despite audit failure.');
+assertSameValue([2,1],[$conflict->leaseReleaseCalls,count($conflict->safeLogs)],'Initial acceptance and conflict each release exactly once; conflict release throw remains safe-logged despite audit failure.');
 
 fwrite(STDOUT,"ASSIGNMENT_ORDER_ORIGINAL_UPLOAD_AUDIT_PRECEDENCE_OK\n");
