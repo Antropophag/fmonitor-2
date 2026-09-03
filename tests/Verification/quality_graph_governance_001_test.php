@@ -324,6 +324,18 @@ try {
     $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
     assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $supersessionHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Supersession success must be terminal stdout; evidence=$evidence");
 
+    $write('docs/operations/quality-graph-representative-pr-phase-a-2026-09-03.md', "parity evidence\n");
+    $write('docs/operations/quality-graph-governance-final-verification-2026-09-04.md', "final verification evidence\n");
+    $git(['add', 'docs/operations/quality-graph-representative-pr-phase-a-2026-09-03.md', 'docs/operations/quality-graph-governance-final-verification-2026-09-04.md']);
+    $git(['commit', '--quiet', '-m', 'approved post-review evidence envelope']);
+    $allowedEvidenceHead = $git(['rev-parse', 'HEAD']);
+    $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $lineage], $lineage);
+    $combined = $result['stdout'] . "\n" . $result['stderr'];
+    $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    assertSameValue(0, $result['status'], "Approved parity and final-verification evidence paths must remain allowed; evidence=$evidence");
+    assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=' . preg_quote($allowedEvidenceHead, '/') . '$/m', $combined), "Approved evidence envelope must emit exact success; evidence=$evidence");
+    assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Approved evidence envelope must emit no failure; evidence=$evidence");
+
     $write('docs/operations/unrelated-note.md', "unrelated post-review record\n");
     $git(['add', 'docs/operations/unrelated-note.md']);
     $git(['commit', '--quiet', '-m', 'unapproved post-review operations record']);
@@ -335,7 +347,7 @@ try {
     assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "Unallowlisted evidence drift must emit exactly one deterministic failure; evidence=$evidence");
     assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "Unallowlisted evidence drift must not print success; evidence=$evidence");
 
-    $git(['reset', '--hard', $supersessionHead]);
+    $git(['reset', '--hard', $allowedEvidenceHead]);
 
     $write($implementationPath, "post-review mutation\n");
     $git(['add', $implementationPath]);
