@@ -65,6 +65,7 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public ?AssignmentOrderOriginalCommitStatus $commitOutcome = null;
     public ?string $unknownResolution = null;
     public int $acceptedCommitCalls = 0;
+    public AssignmentOrderOriginalCommitStatus $attemptCommitStatus = AssignmentOrderOriginalCommitStatus::COMMITTED;
     public int $requestLookupCalls = 0;
     public bool $leaseHeld = false;
     public bool $storageRecoveryOwnsLease = false;
@@ -375,7 +376,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     {
         $this->owner->repositoryTrace[]='attempt_commit:'.($this->owner->leaseHeld?'held':'released');
         $this->owner->attemptCommits[] = $commit;
-        return AssignmentOrderOriginalCommitStatus::COMMITTED;
+        return $this->owner->attemptCommitStatus;
     }
     public function hasCommittedContent(string $opaqueIdentity): AssignmentOrderOriginalReferenceLookup
     {
