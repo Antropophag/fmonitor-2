@@ -245,6 +245,8 @@ function ieaSnapshot(mysqli $db, string $p, string $root): array
         ];
     }
     $files = [];
+    $sessions = [];
+    $sessionPrefix = $root . "/sessions/";
     if (is_dir($root)) {
         foreach (
             new RecursiveIteratorIterator(
@@ -256,15 +258,22 @@ function ieaSnapshot(mysqli $db, string $p, string $root): array
             as $f
         ) {
             if ($f->isFile()) {
-                $files[] =
+                $entry =
                     substr($f->getPathname(), strlen($root) + 1) .
                     "|" .
                     hash_file("sha256", $f->getPathname());
+                if (str_starts_with($f->getPathname(), $sessionPrefix)) {
+                    if ($f->isLink()) throw new TestFailure("Session artifact must not be a symlink.");
+                    $sessions[] = $entry;
+                } else {
+                    $files[] = $entry;
+                }
             }
         }
         sort($files);
+        sort($sessions);
     }
-    return ["tables" => $out, "artifacts" => $files];
+    return ["tables" => $out, "artifacts" => $files, "sessions" => $sessions];
 }
 function ieaGet(int $p, string $path): array
 {
@@ -344,11 +353,10 @@ function ieaGet(int $p, string $path): array
         512,
         JSON_THROW_ON_ERROR,
     );
-    assertSameValue(
-        $before,
-        $after,
-        "Admission probes preserve exact v8 schema/rows and artifact tree.",
-    );
+    assertSameValue($before["tables"], $after["tables"], "Admission probes preserve exact v8 schema and rows.");
+    assertSameValue($before["artifacts"], $after["artifacts"], "Admission probes preserve every non-session artifact.");
+    assertSameValue([], $before["sessions"], "Owned session tree starts empty.");
+    assertSameValue(true, $after["sessions"] !== [], "CSRF/session flow creates durable state only in the owned session subtree.");
     assertSameValue(
         200,
         $page["status"],
@@ -678,6 +686,8 @@ try {
         )} VALUES(8101,1042,'Иванов','Электромеханик','employed','2024-01-01',NULL,'fixture','2026-09-01T08:00:00+03:00','2026-08-27',NULL,'assign')",
     );
     mkdir($root, 0700, true);
+    $sessionRoot = $root . "/sessions";
+    if (!mkdir($sessionRoot, 0700) || realpath($sessionRoot) !== $sessionRoot || !str_starts_with($sessionRoot, $root . "/")) throw new TestFailure("SETUP_FAILURE: invalid owned session root");
     $env = [
         "FMONITOR_DB_HOST" => getenv("FMONITOR_TEST_DB_HOST") ?: "127.0.0.1",
         "FMONITOR_DB_PORT" => getenv("FMONITOR_TEST_DB_PORT") ?: "23306",
@@ -689,6 +699,8 @@ try {
         "FMONITOR_LEGACY_TABLE_PREFIX" => "legacy_",
         "FMONITOR_PROCESS_TABLE_PREFIX" => $p,
         "FMONITOR_ARTIFACT_STORAGE_ROOT" => $root,
+        "FMONITOR_SESSION_STATE_ROOT" => $sessionRoot,
+        "FMONITOR_SESSION_INSTANCE" => "iea-" . $t,
         "FMONITOR_SHLZ_CSS_PATH" =>
             dirname(__DIR__, 3) . "/shlz-ui/packages/styles/dist/shlz.css",
         "FMONITOR_PILOT_CSS_PATH" =>
