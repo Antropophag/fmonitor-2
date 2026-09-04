@@ -32,13 +32,17 @@ state-changing submit.
 `data-selected`; значения HTML-escaped. `data-id` — canonical unpadded decimal
 `installerTabId` и future hidden value (`1042`), exact range `1..999999`;
 `data-tab` — display-only six digits, left-zero-padded (`001042`), и обязан
-численно равняться ID. `data-name`/`data-position` — trimmed nonempty UTF-8,
-соответственно максимум 300/160 code points. `data-busy` всегда exact empty:
+численно равняться ID. `data-name`/`data-position` — nonempty valid UTF-8,
+максимум 300/160 Unicode code points, byte-equal результату `trim` и collapse
+каждого run Unicode White_Space в один U+0020; normalization form не меняется.
+`data-busy` всегда exact empty:
 утверждённого workload/assignment projection у этого read slice нет.
-`data-selected=0` initial. Parser читает только эти six dataset fields из
-direct template descendants и fail closed: duplicate/unknown/missing field,
+`data-selected=0` initial. Server до successful HTML валидирует exact records;
+duplicate/unknown/missing field,
 invalid ID/tab/flag, nonempty busy, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
-redacted `503`, а не partial picker. Records упорядочены Unicode code-point
+redacted `503`, а не partial picker. Client независимо перепроверяет тот же
+contract; client rejection не меняет уже отданный HTTP status, а оставляет
+fallback и zero hidden IDs. Records упорядочены Unicode code-point
 ascending name, tie numeric ID; duplicate ID отклоняется целиком.
 
 Единственный route-specific script — `<script
@@ -60,7 +64,9 @@ button exact accessible name `Выбрать монтажников`, имеет
 `aria-controls=installer-picker`, initial `aria-expanded=false` и синхронный state;
 popover `id=installer-picker`, `role=dialog`, `aria-label=Выбор монтажников`
 получает focus в search exact label `Поиск монтажника`; search имеет
-`aria-describedby` на live result meta, results exact label `Результаты поиска`.
+`aria-describedby` на live result meta. Results — exact `div role=group
+aria-label="Результаты поиска" aria-live=polite`; direct children только native
+result buttons, а zero-result child — один `p` с exact empty-result text.
 Escape закрывает и возвращает focus opener,
 Tab остаётся в native document order без trap. Result buttons имеют exact
 `aria-pressed`; removal button exact accessible name `Убрать {ФИО}`. Count и
