@@ -51,4 +51,7 @@ control reaches its 50 ms timeout, is terminated/reaped, and the whole cleanup
 finishes under 1.5 seconds. Both full platform matrices remain GREEN.
 
 PHP lint and diff-check pass. No production or specification file changed.
-Fresh independent Gate 3 remains required for the follow-up hash.
+
+Fresh independent Gate 3 v3: `89244b5` (`APPROVED`). The reviewer repeated
+the hanging-child sensitivity and both complete platform matrices. This
+test-only resource-observer portability correction is complete.
