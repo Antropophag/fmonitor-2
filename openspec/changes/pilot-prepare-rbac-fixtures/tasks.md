@@ -33,4 +33,4 @@
 
 - [x] 4.1 Запустить prepare/local-auth DB suites, architecture, lint и full verify; verification: owned failures исчезли без assertion weakening.
 - [x] 4.2 Получить independent code review APPROVED; test changes возвращают Gate 2.
-- [ ] 4.3 Обновить operations status и Done только после Gates 1–5 и strict OpenSpec.
+- [x] 4.3 Обновить operations status и Done только после Gates 1–5 и strict OpenSpec.
