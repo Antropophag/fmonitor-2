@@ -26,8 +26,8 @@
 
 ## 3. Gate 4 — minimal fixture GREEN
 
-- [ ] 3.1 Подключить exact prepare GET/HEAD route к stable local authorization seam перед process-capability/form reads и seed-ить canonical actors/roles/local permission + отдельную process capability; verification: prepare verifier GREEN, negative cases не получают positive env.
-- [ ] 3.2 Сохранить POST command untouched, full process/artifact/audit snapshots и redaction; verification: rejected GET cases byte-equivalent кроме authority fixture.
+- [x] 3.1 Подключить exact prepare GET/HEAD route к stable local authorization seam перед process-capability/form reads и seed-ить canonical actors/roles/local permission + отдельную process capability; verification: prepare verifier GREEN, negative cases не получают positive env.
+- [x] 3.2 Сохранить POST command untouched, full process/artifact/audit snapshots и redaction; verification: rejected GET cases byte-equivalent кроме authority fixture.
 
 ## 4. Verification, Gate 5 и Done
 
