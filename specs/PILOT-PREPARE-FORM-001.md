@@ -30,16 +30,16 @@ state-changing submit.
 Каждая inert record — ровно один empty `span` с exact attributes
 `data-id`, `data-name`, `data-tab`, `data-position`, `data-busy`,
 `data-selected`; значения HTML-escaped. `data-id` — canonical unpadded decimal
-`installerTabId` и future hidden value (`1042`), exact lexical range
-`[1-9][0-9]{0,18}` не выше `9223372036854775807`; `data-tab` — display-only
-six digits, left-zero-padded (`001042`), и обязан численно равняться ID.
-`data-busy` берётся только из already-read current/future assignment projection:
-empty означает отсутствие известного конфликта, иначе canonical `YYYY-MM-DD`
-inclusive busy-through date; это informational label, не eligibility filter.
+`installerTabId` и future hidden value (`1042`), exact range `1..999999`;
+`data-tab` — display-only six digits, left-zero-padded (`001042`), и обязан
+численно равняться ID. `data-name`/`data-position` — trimmed nonempty UTF-8,
+соответственно максимум 300/160 code points. `data-busy` всегда exact empty:
+утверждённого workload/assignment projection у этого read slice нет.
 `data-selected=0` initial. Parser читает только эти six dataset fields из
 direct template descendants и fail closed: duplicate/unknown/missing field,
-invalid ID/tab/flag/date, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
-redacted `503`, а не partial picker.
+invalid ID/tab/flag, nonempty busy, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
+redacted `503`, а не partial picker. Records упорядочены Unicode code-point
+ascending name, tie numeric ID; duplicate ID отклоняется целиком.
 
 Единственный route-specific script — `<script
 src="/pilot/assets/picker.js" defer></script>` после shared navigation asset.
@@ -47,13 +47,13 @@ Exact bundled repository-owned `app/PilotHttp/picker.js` не имеет environ
 path/config override. `GET|HEAD /pilot/assets/picker.js` разрешается после
 exact route/method до identity/DB/CSS reads: GET `200`, content type
 `text/javascript; charset=UTF-8`, exact length, `Cache-Control: no-store` и
-byte-identical repeat; HEAD те же
+byte-identical repeat на одном Git revision; HEAD те же
 headers/empty body; другой method — `405/Allow: GET, HEAD`; missing, unreadable,
-changed или non-regular configured asset — redacted `503`. Asset/error/redirect
-responses получают `BASE_CSP` без script permission; successful prepare HTML —
-exact `SCRIPT_HTML_CSP` из `PILOT-ROUTE-CSP-001`. Никаких
-CDN/remote/inline/fallback bytes. Asset behavior changes require a new
-spec/Gate cycle, not runtime descriptor selection.
+или non-regular bundled source — redacted `503`; runtime digest/revalidation
+protocol не вводится. Asset/error/redirect CSP literal `default-src 'none';
+style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action
+'self'; frame-ancestors 'none'`. Successful prepare HTML добавляет exact
+`script-src 'self'` после `style-src`. Никаких CDN/remote/inline/fallback bytes.
 
 Все picker controls, кроме search input, имеют explicit `type=button`. Open
 button exact accessible name `Выбрать монтажников`, имеет
@@ -65,9 +65,11 @@ Escape закрывает и возвращает focus opener,
 Tab остаётся в native document order без trap. Result buttons имеют exact
 `aria-pressed`; removal button exact accessible name `Убрать {ФИО}`. Count и
 result meta находятся в `aria-live=polite`, selection summary имеет label
-`Выбранные монтажники`. Exact announcements: `Введите минимум 2 символа`,
-`Найдено: {N}`, `Найдено {N}. Показаны первые 20`, `Ничего не найдено.
-Проверьте ФИО или табельный номер.`, `Выбрано: {N}`. После удаления focus
+`Выбранные монтажники`. Empty/one-character query: `Введите минимум 2 символа`;
+2+ query: `Найдено: {N}`, `Найдено {N}. Показаны первые 20` либо `Ничего не
+найдено. Проверьте ФИО или табельный номер.` Selection count starts
+`Выбрано: 0`, then `Выбрано: {N}`. Result accessible name is `Выбрать {ФИО}`
+or `Убрать {ФИО}` according to `aria-pressed`. После удаления focus
 возвращается на opener picker, если chip исчез; после result rerender focus
 возвращается в search, а новый pressed state объявляется live count. Ни цвет, ни `+`/`✓` не являются
 единственным state.
