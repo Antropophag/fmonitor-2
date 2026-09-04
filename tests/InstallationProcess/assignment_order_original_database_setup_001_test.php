@@ -389,6 +389,41 @@ try {
         assertSameValue(0, $count, "Fixture creates no original fact in {$originalTable}.");
     }
 
+    $fixtureDrifts=[
+        ['actor user','fm2_pilot_users','user_id=18','full_name','Тестовый Оператор ФКР','Drift Actor'],
+        ['engineer user','fm2_pilot_users','user_id=31','email','test-engineer@example.invalid','drift-engineer@example.invalid'],
+        ['operator role','fm2_pilot_roles','role_id=5301','name','Сотрудник ФКР','Drift Role'],
+        ['engineer role','fm2_pilot_roles','role_id=5302','status','1','0'],
+        ['role assignment','fm2_pilot_user_roles','user_id=18 AND role_id=5301','assigned_at','2026-09-02T09:00:00Z','2026-09-02T09:00:01Z'],
+        ['actor capability','fm2_process_user_capabilities',"user_id=18 AND capability='assignment_order.original.upload'",'position_snapshot',null,'Drift'],
+        ['engineer capability','fm2_process_user_capabilities',"user_id=31 AND capability='construction_control_engineer'",'position_snapshot','Инженер строительного контроля','Drift Engineer'],
+        ['target case','fm2_installation_cases','id=4512','updated_at','2026-09-02T09:00:00Z','2026-09-02T09:00:01Z'],
+        ['decoy case','fm2_installation_cases','id=9999','legacy_installation_object_id','99999','99998'],
+        ['order snapshots','fm2_assignment_orders','id=81','object_address_snapshot','Тестовая улица, 1','Drift Address'],
+        ['installer 7001','fm2_order_installers','assignment_order_id=81 AND installer_tab_id=7001','fio_snapshot','Тестовый Монтажник 7001','Drift Installer'],
+        ['installer 7002','fm2_order_installers','assignment_order_id=81 AND installer_tab_id=7002','valid_from','2026-09-01','2026-09-02'],
+        ['task','fm2_process_tasks','id=9001','created_at','2026-09-02T09:00:00Z','2026-09-02T09:00:01Z'],
+    ];
+    $setFixtureValue=static function(mysqli$db,string$table,string$where,string$column,mixed$value)use($prefix):void{$sql="UPDATE `{$prefix}{$table}` SET `{$column}`=? WHERE {$where}";$statement=$db->prepare($sql);$statement->bind_param('s',$value);$statement->execute();assertSameValue(1,$statement->affected_rows,"Exactly one {$table}.{$column} fixture row is changed.");};
+    foreach($fixtureDrifts as[$label,$table,$where,$column,$exact,$drift]){
+        $setFixtureValue($fixture,$table,$where,$column,$drift);$beforeConflict=$stateSnapshot($fixture);
+        try{AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($fixture,$prefix);throw new TestFailure("INTENDED_RED: {$label} drift was accepted by seedExampleA.");}catch(AssignmentOrderOriginalVerificationFixtureConflict$error){assertSameValue('AssignmentOrderOriginalVerificationFixtureConflict',$error->getMessage(),"{$label} seed conflict has fixed message.");}
+        assertSameValue($beforeConflict,$stateSnapshot($fixture),"{$label} seed conflict performs zero DML.");$setFixtureValue($fixture,$table,$where,$column,$exact);
+    }
+    foreach($fixtureDrifts as[$label,$table,$where,$column,$exact,$drift]){
+        $setFixtureValue($fixture,$table,$where,$column,$drift);$beforeConflict=$stateSnapshot($fixture);
+        try{AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($fixture,$prefix);throw new TestFailure("INTENDED_RED: {$label} drift was deleted by cleanupExampleA.");}catch(AssignmentOrderOriginalVerificationFixtureConflict$error){assertSameValue('AssignmentOrderOriginalVerificationFixtureConflict',$error->getMessage(),"{$label} cleanup conflict has fixed message.");}
+        assertSameValue($beforeConflict,$stateSnapshot($fixture),"{$label} cleanup conflict performs zero DML.");$setFixtureValue($fixture,$table,$where,$column,$exact);
+    }
+    AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($fixture,$prefix);
+    $fixture->query("INSERT INTO `{$prefix}fm2_pilot_users`(user_id,full_name,email,phone,status,activation_state,session_version,source_updated_at) VALUES(18,'Foreign Occupant','foreign@example.invalid','',1,'active',1,'2026-09-02T09:00:00Z')");
+    $partialBefore=$stateSnapshot($fixture);
+    try{AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($fixture,$prefix);throw new TestFailure('INTENDED_RED: partially occupied users family was silently filled.');}catch(AssignmentOrderOriginalVerificationFixtureConflict$error){assertSameValue('AssignmentOrderOriginalVerificationFixtureConflict',$error->getMessage(),'Partial users family has fixed conflict.');}
+    assertSameValue($partialBefore,$stateSnapshot($fixture),'Partial multi-row family conflict performs zero DML.');$fixture->query("DELETE FROM `{$prefix}fm2_pilot_users` WHERE user_id=18");AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($fixture,$prefix);
+    $fixture->query("DELETE FROM `{$prefix}fm2_process_tasks` WHERE id=9001");$partialCleanupBefore=$stateSnapshot($fixture);
+    try{AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($fixture,$prefix);throw new TestFailure('INTENDED_RED: partially missing fixture was partially deleted.');}catch(AssignmentOrderOriginalVerificationFixtureConflict$error){assertSameValue('AssignmentOrderOriginalVerificationFixtureConflict',$error->getMessage(),'Partial cleanup has fixed conflict.');}
+    assertSameValue($partialCleanupBefore,$stateSnapshot($fixture),'Partially missing cleanup validates all rows before delete.');AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($fixture,$prefix);
+
     $fixture->query("UPDATE `{$prefix}fm2_installation_cases` SET process_state='foreign-drift' WHERE id=4512");
     $drift = $stateSnapshot($fixture);
     try {
