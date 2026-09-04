@@ -56,7 +56,7 @@ $checkCount = static function (mysqli $db, string $table): int {
     $statement->bind_param('s', $table); $statement->execute();
     return (int) $statement->get_result()->fetch_assoc()['n'];
 };
-$normalizeCheck=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));$value=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$value);while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}return$value;};
+$normalizeCheck=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));$value=str_replace("'[[:cntrl:]/\\\\\\\\]'","'[[:cntrl:]/\\\\]'",$value);$value=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$value);while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}return$value;};
 $checks = static function (mysqli $db, string $table) use ($normalizeCheck): array {
     $statement=$db->prepare('SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY BINARY CHECK_CLAUSE');
     $statement->bind_param('s',$table);$statement->execute();
@@ -101,6 +101,13 @@ try {
     }
     $preflight = $connect($databases[0]);
     assertSameValue('1', (string) $preflight->query('SELECT 1 ready')->fetch_assoc()['ready'], 'Isolated MariaDB setup is live before intended RED.');
+    $preflight->query(Contract::rootsDdl('probe_'));
+    $roundTripExpected=Contract::checks()[Contract::TABLES[0]];sort($roundTripExpected,SORT_STRING);
+    assertSameValue($roundTripExpected,$checks($preflight,'probe_'.Contract::TABLES[0]),'Approved roots DDL CHECKs survive MariaDB SQL-literal round trip.');
+    $wrongDdl=str_replace("'[[:cntrl:]/\\\\\\\\]'","'[[:cntrl:]/]'",Contract::rootsDdl('wrong_'));
+    assertSameValue(false,$wrongDdl===Contract::rootsDdl('wrong_'),'Wrong-pattern round-trip fixture changes the exact regex only.');
+    $preflight->query($wrongDdl);
+    assertSameValue(false,$roundTripExpected===$checks($preflight,'wrong_'.Contract::TABLES[0]),'Same-count wrong regex remains observable after MariaDB round trip.');
     $preflight->close();
 
     foreach (Contract::PROJECTIONS as $name => [$expectedHash, $literal]) {
