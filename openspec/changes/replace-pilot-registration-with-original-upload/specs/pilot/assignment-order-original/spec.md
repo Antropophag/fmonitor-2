@@ -236,7 +236,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Worker DSN однозначно строит mysqli
 - **WHEN** five-FD worker читает exact `host=...;port=...;database=...;charset=utf8mb4`
-- **THEN** bounded grammar однозначно строит `(host,user,password,database,port)` и `set_charset('utf8mb4')`; invalid/extra/reordered/socket/alternate-charset input даёт exit 70 + fixed stderr до secret/DB/storage/log access
+- **THEN** bounded grammar однозначно строит `(host,user,password,database,port)` и `set_charset('utf8mb4')`; host есть либо colon/bracket-free hostname/IPv4 token, либо balanced canonical lower-case IPv6 с filter+inet round-trip; `p:`, raw colon, bad brackets/zone/trailing-dot, invalid/extra/reordered/socket/alternate-charset input даёт exit 70 + fixed stderr до secret/DB/storage/log access
 
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.

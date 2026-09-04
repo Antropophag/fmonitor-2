@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v15 GATE 1 REVIEW PENDING — WORKER DSN AMENDMENT**
-Версия: **v15**
+Статус: **v16 GATE 1 REREVIEW PENDING — WORKER DSN AMENDMENT**
+Версия: **v16**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1468,10 +1468,15 @@ order and no whitespace, percent encoding, duplicates or extras:
 host=<host>;port=<port>;database=<database>;charset=utf8mb4
 ```
 
-`host` matches `[A-Za-z0-9.:[\]_-]{1,255}`, `port` is canonical decimal
-`1..65535` without leading zero, and `database` matches
-`[A-Za-z0-9_]{1,64}`. Bracketed IPv6 has its brackets removed before the mysqli
-host argument; every other host is passed byte-exact. `databaseUser` matches
+`host` is exactly one of two disjoint forms: (1) an ASCII hostname/IPv4 token
+matching `[A-Za-z0-9](?:[A-Za-z0-9._-]{0,253}[A-Za-z0-9])?`, containing no
+colon/bracket and passed byte-exact; or (2) one balanced `[<ipv6>]` whose inner
+value is lower-case canonical IPv6, passes `filter_var(...,
+FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)`, and is byte-equal to
+`inet_ntop(inet_pton(inner))`; only the brackets are removed for mysqli. Zone
+IDs, raw/unbalanced/nested brackets, raw colon, trailing dot and `p:` persistent
+prefix are invalid. `port` is canonical decimal `1..65535` without leading
+zero, and `database` matches `[A-Za-z0-9_]{1,64}`. `databaseUser` matches
 `[A-Za-z0-9_.-]{1,32}` and the password-file grammar is the evidence-config
 grammar already defined above. Worker parsing produces exactly the mysqli tuple
 `(host,databaseUser,passwordBytes,database,port)` and then calls
