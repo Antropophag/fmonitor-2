@@ -19,8 +19,11 @@ intro `Укажите состав и прикрепите подписанны�
 Монтажники передаются в inert `<template data-picker-data>` как escaped
 normalized records и выбираются через кнопку `Выбрать монтажников`. External
 same-origin `picker.js` строит результаты только DOM API/`textContent`, никогда
-не `innerHTML`; query нормализуется, минимум 2 символа, максимум 20 видимых
-результатов. Result — native button с `aria-pressed`; выбранные люди видимы как
+не `innerHTML`; query заменяет runs U+0009..U+000D/U+0020 одним U+0020,
+удаляет эти boundary chars и вызывает `toLocaleLowerCase('ru-RU')`. Match —
+substring normalized `data-name`; при минимум двух ASCII digits после удаления
+non-digits также substring six-digit `data-tab`. Position/busy не ищутся;
+максимум 20 видимых результатов. Result — native button с `aria-pressed`; выбранные люди видимы как
 remove-buttons и отражаются exact hidden `installerTabIds[]`. Search имеет
 label, result container — polite live semantics, popover управляется native
 button/keyboard. При отсутствии/ошибке JS hidden IDs не появляются и command
@@ -33,15 +36,20 @@ state-changing submit.
 `installerTabId` и future hidden value (`1042`), exact range `1..999999`;
 `data-tab` — display-only six digits, left-zero-padded (`001042`), и обязан
 численно равняться ID. `data-name`/`data-position` — nonempty valid UTF-8,
-максимум 300/160 Unicode code points, byte-equal результату `trim` и collapse
-каждого run Unicode White_Space в один U+0020; normalization form не меняется.
+максимум 300/160 Unicode code points; boundary/collapse whitespace — только
+U+0009..U+000D и U+0020: boundary отсутствует, каждый internal run заменён
+одним U+0020. Другие code points и normalization form не меняются.
 `data-busy` всегда exact empty:
 утверждённого workload/assignment projection у этого read slice нет.
 `data-selected=0` initial. Server до successful HTML валидирует exact records;
 duplicate/unknown/missing field,
 invalid ID/tab/flag, nonempty busy, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
-redacted `503`, а не partial picker. Client независимо перепроверяет тот же
-contract; client rejection не меняет уже отданный HTTP status, а оставляет
+redacted `503`, а не partial picker. Client DOM grammar:
+`template.content.children` содержит только direct empty `span`, каждый имеет
+ровно шесть named attributes и zero element descendants; промежуточные text
+nodes содержат только U+0009/U+000A/U+000D/U+0020. Client проверяет decoded
+ID/tab/flag/empty-busy/name/position bounds, grammar, order и duplicates;
+source UTF-8/escaping остаются server-only. Client rejection не меняет уже отданный HTTP status, а оставляет
 fallback и zero hidden IDs. Records упорядочены Unicode code-point
 ascending name, tie numeric ID; duplicate ID отклоняется целиком.
 
@@ -328,7 +336,8 @@ Expected values must be literals from this specification, never production mappi
 - POST, CSRF/session/Origin policy, body parsing/limits, PRG and command invocation;
 - сохранение draft/selection, validation response, submit button или preview документа;
 - `prepareAssignmentOrder`, renderer/artifacts/download;
-- conflicts/load/qualification/absence search, filtering, pagination or remote lookup;
+- workload/conflict/qualification/absence/remote search, server filtering и
+  pagination; exact local in-memory picker name/tab search входит в scope;
 - changed assignment, registration, opening, checklist;
 - new catalog sync/import/history policy or stale-age threshold;
 - любой custom JS кроме exact same-origin `/pilot/assets/picker.js`; `shlz-ui`
