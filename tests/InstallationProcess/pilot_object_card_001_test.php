@@ -242,8 +242,7 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     assertSameValue(2, $scripts->length, $why . ' has exactly two approved external scripts');
     foreach (['/pilot/assets/navigation.js','/pilot/assets/object-details.js'] as $index => $source) {
         $script = $scripts->item($index);
-        assertSameValue(2, $script?->attributes?->length, $why . ' script has only type and src attributes: ' . $source);
-        assertSameValue('module', $script?->getAttribute('type'), $why . ' script type: ' . $source);
+        assertSameValue(1, $script?->attributes?->length, $why . ' script has only the approved src attribute: ' . $source);
         assertSameValue($source, $script?->getAttribute('src'), $why . ' exact ordered script source');
         assertSameValue('', trim((string) $script?->textContent), $why . ' script has no inline content: ' . $source);
     }
