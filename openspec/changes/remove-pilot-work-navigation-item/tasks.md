@@ -12,8 +12,8 @@
 
 ## 3. Gate 4 — minimal GREEN
 
-- [ ] 3.1 Удалить item только из единой `app/PilotHttp` shared navigation composition без replacement root item; verification: approved focused RED становится GREEN, остальные navigation items byte-equivalent и `/pilot/` остаётся successful queue route.
-- [ ] 3.2 Прогнать object-list/card/prepare/checklist/construction-control/installers/admin/UI-shell и local-RBAC focused regressions; verification: navigation predecessor GREEN, object-list fixture достигает и доказывает собственную RBAC matrix без route/auth/persistence changes.
+- [x] 3.1 Удалить item только из единой `app/PilotHttp` shared navigation composition без replacement root item; verification: approved focused RED становится GREEN, остальные navigation items byte-equivalent и `/pilot/` остаётся successful queue route.
+- [x] 3.2 Прогнать object-list/card/prepare/checklist/construction-control/installers/admin/UI-shell и local-RBAC focused regressions; verification: navigation predecessor GREEN, object-list fixture достигает и доказывает собственную RBAC matrix без route/auth/persistence changes.
 
 ## 4. Verification, Gate 5 и Done
 
