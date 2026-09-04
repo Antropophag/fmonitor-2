@@ -225,10 +225,10 @@ $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf
 
 try {
     $runner = ctsRunRunner($database);
-    assertSameValue(0, $runner['exitCode'], 'Canonical runner must complete the composed v1-v11 catalogue.');
+    assertSameValue(0, $runner['exitCode'], 'Canonical runner must complete the composed v1-v12 catalogue.');
     assertSameValue('', $runner['stderr'], 'Successful canonical runner must keep stderr empty.');
     assertSameValue(
-        ['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]],
+        ['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]],
         json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR),
         'Clean canonical runner must apply v7 and its landed v8-v10 successors.',
     );

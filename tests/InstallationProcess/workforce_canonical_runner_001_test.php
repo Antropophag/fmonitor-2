@@ -55,6 +55,13 @@ function wcrRun(array $environment): array
     return ['exitCode' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
 }
 
+function wcrDropTerminalSuccessors(mysqli $connection, string $prefix): void
+{
+    foreach (['fm2_assignment_order_original_maintenance_results','fm2_assignment_order_original_attempt_audits','fm2_assignment_order_original_events','fm2_assignment_order_original_fingerprints','fm2_assignment_order_original_requests','fm2_assignment_order_original_revisions','fm2_assignment_order_original_roots','fm2_pilot_completion_fact_corrections','fm2_pilot_completion_facts'] as $table) {
+        $connection->query("DROP TABLE `{$prefix}{$table}`");
+    }
+}
+
 function wcrNormalizeCheck(string $clause): string
 {
     $normalized = '';
@@ -288,7 +295,7 @@ function wcrRunCommand(array $command, string $workingDirectory): array
 
 $token = bin2hex(random_bytes(6));
 $database = 't_wcr_001_' . $token;
-$prefix25 = str_repeat('a', 25);
+$prefix6 = str_repeat('a', 6);
 $prefix26 = str_repeat('a', 26);
 $admin = wcrConnection();
 $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
@@ -301,14 +308,21 @@ try {
     assertSameValue(false, $databaseCollation === $charsetDefaultCollation, 'Clean fixture database default must differ from the utf8mb4 charset default.');
     $setupConnection->close();
 
-    $environment = wcrEnvironment($database, $prefix25);
+    $environment = wcrEnvironment($database, $prefix6);
     $cleanResult = wcrRun($environment);
     $connection = wcrConnection($database);
-    $cleanTables = array_column(wcrRows($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$prefix25}fm2\\_%' ORDER BY BINARY TABLE_NAME"), 'TABLE_NAME');
+    $cleanTables = array_column(wcrRows($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$prefix6}fm2\\_%' ORDER BY BINARY TABLE_NAME"), 'TABLE_NAME');
     assertSameValue(
         [
-            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11]}\n", 'stderr' => ''],
-            'tables' => array_map(static fn (string $table): string => $prefix25 . $table, [
+            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n", 'stderr' => ''],
+            'tables' => array_map(static fn (string $table): string => $prefix6 . $table, [
+                'fm2_assignment_order_original_attempt_audits',
+                'fm2_assignment_order_original_events',
+                'fm2_assignment_order_original_fingerprints',
+                'fm2_assignment_order_original_maintenance_results',
+                'fm2_assignment_order_original_requests',
+                'fm2_assignment_order_original_revisions',
+                'fm2_assignment_order_original_roots',
                 'fm2_assignment_orders',
                 'fm2_checklist_operation_installers',
                 'fm2_checklist_operations',
@@ -343,34 +357,47 @@ try {
             ]),
         ],
         ['result' => $cleanResult, 'tables' => $cleanTables],
-        'A clean exact 25-byte composed prefix must reach ordered canonical v6 and create the full literal catalogue.',
+        'A clean representative six-byte prefix must reach ordered canonical v12 and create the full literal 38-table catalogue.',
     );
-    wcrAssertExactV5($connection, $prefix25);
-    wcrAssertFreshV5Rows($connection, $prefix25);
+    wcrAssertExactV5($connection, $prefix6);
+    wcrAssertFreshV5Rows($connection, $prefix6);
 
-    $connection->query("INSERT INTO `{$prefix25}fm2_installation_cases` (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-09-02T09:00:00+03:00','2026-09-02T09:00:00+03:00',1)");
-    $connection->query("INSERT INTO `{$prefix25}fm2_workforce_catalog` (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at,delivery_system,delivery_person_id,dismissal_effective_at,first_observed_dismissed_at,dismissal_time_quality,reconciliation_state,authority_system,last_successful_sync_run_id,last_successful_sync_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-09-02T08:00:00+03:00','bitrix',1042,NULL,NULL,NULL,'delivered','one_c_zup',NULL,NULL)");
-    $connection->query("INSERT INTO `{$prefix25}fm2_workforce_sync_runs` VALUES ('11111111-1111-1111-1111-111111111111','completed','2026-09-02T08:00:00+03:00','2026-09-02T08:01:00+03:00','2026-09-02T08:02:00+03:00',NULL,1,1,1,0,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')");
-    $connection->query("INSERT INTO `{$prefix25}fm2_workforce_observations` (sync_run_id,delivery_person_id,employee_number,full_name,position,employment_status,employed_from,dismissal_effective_at,authority_system,delivery_system,source_modified_at,reconciliation_state,observed_at,dismissal_time_quality) VALUES ('11111111-1111-1111-1111-111111111111',1042,1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup','bitrix','2026-09-02T07:59:00+03:00','delivered','2026-09-02T08:01:00+03:00','observed_only')");
-    $connection->query("UPDATE `{$prefix25}fm2_workforce_sync_metadata` SET last_successful_run_id='11111111-1111-1111-1111-111111111111',last_successful_at='2026-09-02T08:02:00+03:00' WHERE singleton_id=1");
+    $connection->query("INSERT INTO `{$prefix6}fm2_installation_cases` (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-09-02T09:00:00+03:00','2026-09-02T09:00:00+03:00',1)");
+    $connection->query("INSERT INTO `{$prefix6}fm2_workforce_catalog` (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at,delivery_system,delivery_person_id,dismissal_effective_at,first_observed_dismissed_at,dismissal_time_quality,reconciliation_state,authority_system,last_successful_sync_run_id,last_successful_sync_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-09-02T08:00:00+03:00','bitrix',1042,NULL,NULL,NULL,'delivered','one_c_zup',NULL,NULL)");
+    $connection->query("INSERT INTO `{$prefix6}fm2_workforce_sync_runs` VALUES ('11111111-1111-1111-1111-111111111111','completed','2026-09-02T08:00:00+03:00','2026-09-02T08:01:00+03:00','2026-09-02T08:02:00+03:00',NULL,1,1,1,0,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')");
+    $connection->query("INSERT INTO `{$prefix6}fm2_workforce_observations` (sync_run_id,delivery_person_id,employee_number,full_name,position,employment_status,employed_from,dismissal_effective_at,authority_system,delivery_system,source_modified_at,reconciliation_state,observed_at,dismissal_time_quality) VALUES ('11111111-1111-1111-1111-111111111111',1042,1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup','bitrix','2026-09-02T07:59:00+03:00','delivered','2026-09-02T08:01:00+03:00','observed_only')");
+    $connection->query("UPDATE `{$prefix6}fm2_workforce_sync_metadata` SET last_successful_run_id='11111111-1111-1111-1111-111111111111',last_successful_at='2026-09-02T08:02:00+03:00' WHERE singleton_id=1");
     $repeatBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated v8 repeat must report no applied versions.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated v12 repeat must report no applied versions.');
     assertSameValue($repeatBefore, wcrState($connection), 'Completed repeat preserves every v1-v5 definition and row byte-for-byte.');
-    $connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_facts`");
+    wcrDropTerminalSuccessors($connection, $prefix6);
 
-    $partialPrefix = 'wcr_partial_';
+    $partialPrefix = 'wp_';
     wcrApplyV1V4($connection, $partialPrefix);
     BitrixWorkforceHistorySchemaMigration::apply($connection, $partialPrefix);
     $connection->query("INSERT INTO `{$partialPrefix}fm2_workforce_sync_runs` (run_id,status,started_at) VALUES ('22222222-2222-2222-2222-222222222222','started','2026-09-02T10:00:00+03:00')");
     $connection->query("DROP TABLE `{$partialPrefix}fm2_workforce_observations`");
     $partialBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[5,6,7,8,9,10,11]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover v5 and landed v6-v11 successors.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[5,6,7,8,9,10,11,12]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover v5 and landed v6-v12 successors.');
     wcrAssertExactV5($connection, $partialPrefix);
     $partialAfter = wcrState($connection);
     foreach ($partialBefore as $table => $state) {
+        if ($table === $partialPrefix . 'fm2_process_user_capabilities') {
+            assertSameValue($state['rows'], $partialAfter[$table]['rows'], 'V12 capability widening preserves every existing grant row.');
+            continue;
+        }
         assertSameValue($state, $partialAfter[$table], "Partial recovery preserves existing table {$table} and its rows.");
     }
-    $connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_facts`");
+    $capabilityChecks = array_values(array_filter(array_map(
+        static fn (array $row): string => wcrNormalizeCheck((string) $row['CHECK_CLAUSE']),
+        wcrRows($connection, "SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='{$partialPrefix}fm2_process_user_capabilities'"),
+    ), static fn (string $clause): bool => str_starts_with($clause, 'capabilityin(')));
+    assertSameValue(
+        ["capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct','assignment_order.original.storage.reconcile')"],
+        $capabilityChecks,
+        'V12 capability widening owns exactly the seven approved literals.',
+    );
+    wcrDropTerminalSuccessors($connection, $partialPrefix);
 
     $conflictPrefix = 'wcr_v5_bad_';
     wcrApplyV1V4($connection, $conflictPrefix);
