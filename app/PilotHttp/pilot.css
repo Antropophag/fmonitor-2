@@ -189,4 +189,5 @@
 .fm2-queue-item{padding:16px}.fm2-queue-identity{grid-template-columns:minmax(0,1fr)}
 .fm2-picker button,.fm2-picker input,.fm2-order-actions a{min-height:44px}
 .fm2-picker-dialog{top:16px;bottom:16px;transform:translateX(-50%);width:calc(100vw - 32px);max-width:620px;max-height:none;padding:18px;overflow-y:auto;box-shadow:0 0 0 100vmax rgba(11,22,35,.52),0 24px 80px rgba(11,22,35,.28)}
+.fm2-picker-dialog h3{font-size:24px;line-height:1.2}.fm2-picker-dialog p,.fm2-picker-modal-selection,.fm2-picker-result-meta,.fm2-picker-results,.fm2-picker-footer{font-size:16px;line-height:1.35}
 }
