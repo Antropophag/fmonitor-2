@@ -17,6 +17,6 @@
 
 ## 4. Verification, Gate 5 и Done
 
-- [ ] 4.1 Запустить `git diff --check`, `make architecture-check`, lint, focused DB/HTTP tests и `make verify`; verification: architecture 7/7, owned regressions GREEN и полный verify имеет literal `VERIFY_OK`, либо unrelated failures отдельно классифицированы без объявления integration complete.
+- [x] 4.1 Запустить `git diff --check`, `make architecture-check`, lint, focused DB/HTTP tests и `make verify`; verification: architecture 7/7, owned regressions GREEN и полный verify имеет literal `VERIFY_OK`, либо unrelated failures отдельно классифицированы без объявления integration complete.
 - [ ] 4.2 Поручить fresh independent code reviewer проверить approved spec/tests, bounded renderer diff, отсутствие rapid-pilot/domain/persistence изменений и verification evidence; verification: verdict `APPROVED`, reviewer не меняет production/tests.
 - [ ] 4.3 Обновить append-only operations status и отметить Done только после Gates 1–5; verification: новый removal change является active truth, `restore-pilot-work-navigation` остаётся явно superseded evidence, object-list RBAC predecessor blocker снят.
