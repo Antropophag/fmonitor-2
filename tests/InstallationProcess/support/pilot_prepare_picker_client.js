@@ -111,6 +111,11 @@ base.push(record({ id: "999999", name: "Я".repeat(300), tab: "999999", position
 const ui = execute(source, base);
 equal([ui.opener.hidden, ui.dialog.hidden, ui.fallback.hidden], [false, true, true], "successful initialization atomically enables picker and hides fallback");
 equal(ui.inputs.children.length, 0, "initial hidden IDs");
+const equalNameTie = execute(source, [
+  record({ id: "99", name: "Одинаковое Имя", tab: "000099", position: "Монтажник", busy: "", selected: "0" }),
+  record({ id: "100", name: "Одинаковое Имя", tab: "000100", position: "Монтажник", busy: "", selected: "0" }),
+]);
+equal([equalNameTie.opener.hidden, equalNameTie.fallback.hidden], [false, true], "client accepts equal-name numeric-ID ascending tie order");
 
 ui.search.value = " \tИвАНОВ\r\n иВаН "; ui.search.dispatch("input");
 equal(ui.results.children.length, 1, "exact whitespace and ru-RU lowercase name normalization");
@@ -187,6 +192,7 @@ const malformedSets = [
   [record({ id: "1042", name: "Иванов", tab: "001042", position: "", busy: "", selected: "0" })],
   [record({ id: "1042", name: "Иванов", tab: "001042", position: "Монтажник", busy: "", selected: "0" }), record({ id: "1042", name: "Другой", tab: "001042", position: "Монтажник", busy: "", selected: "0" })],
   [record({ id: "2088", name: "Петров", tab: "002088", position: "Монтажник", busy: "", selected: "0" }), record({ id: "1042", name: "Иванов", tab: "001042", position: "Монтажник", busy: "", selected: "0" })],
+  [record({ id: "100", name: "Одинаковое Имя", tab: "000100", position: "Монтажник", busy: "", selected: "0" }), record({ id: "99", name: "Одинаковое Имя", tab: "000099", position: "Монтажник", busy: "", selected: "0" })],
 ];
 malformedSets[1][0].textContent = "forbidden";
 const extraAttribute = record({ id: "1042", name: "Иванов", tab: "001042", position: "Монтажник", busy: "", selected: "0" });extraAttribute.setAttribute("data-extra", "x");malformedSets.push([extraAttribute]);
