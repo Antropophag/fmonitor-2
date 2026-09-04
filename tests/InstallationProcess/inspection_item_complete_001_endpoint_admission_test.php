@@ -245,8 +245,7 @@ function ieaSnapshot(mysqli $db, string $p, string $root): array
         ];
     }
     $files = [];
-    $sessions = [];
-    $sessionPrefix = $root . "/sessions/";
+    $sessions = ieaSessionEntries($root, "iea-" . substr(basename($root), 4));
     if (is_dir($root)) {
         foreach (
             new RecursiveIteratorIterator(
@@ -262,10 +261,7 @@ function ieaSnapshot(mysqli $db, string $p, string $root): array
                     substr($f->getPathname(), strlen($root) + 1) .
                     "|" .
                     hash_file("sha256", $f->getPathname());
-                if (str_starts_with($f->getPathname(), $sessionPrefix)) {
-                    if ($f->isLink()) throw new TestFailure("Session artifact must not be a symlink.");
-                    $sessions[] = $entry;
-                } else {
+                if (!str_starts_with($f->getPathname(), $root . "/sessions/")) {
                     $files[] = $entry;
                 }
             }
@@ -274,6 +270,29 @@ function ieaSnapshot(mysqli $db, string $p, string $root): array
         sort($sessions);
     }
     return ["tables" => $out, "artifacts" => $files, "sessions" => $sessions];
+}
+function ieaSessionEntries(string $root,string $instance):array
+{
+    if(preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/D',$instance)!==1)throw new TestFailure('Invalid owned session instance.');
+    $sessions=$root.'/sessions';$managed=$sessions.'/'.$instance;$uid=posix_geteuid();
+    foreach([$sessions,$managed]as$directory){$stat=@lstat($directory);if($stat===false||is_link($directory)||($stat['mode']&0170000)!==0040000||($stat['mode']&0777)!==0700||$stat['uid']!==$uid)throw new TestFailure('Session directory identity/mode unavailable.');}
+    $children=array_values(array_diff(scandir($sessions)?:[],['.','..']));if($children!==[$instance])throw new TestFailure('Unexpected session directory entry.');
+    $entries=[];foreach(array_values(array_diff(scandir($managed)?:[],['.','..']))as$name){$path=$managed.'/'.$name;$stat=@lstat($path);if($stat===false||is_link($path)||($stat['mode']&0170000)!==0100000||($stat['mode']&0777)!==0600||$stat['uid']!==$uid)throw new TestFailure('Session entry identity/type/mode unavailable.');$id='[A-Za-z0-9,-]{16,128}';$hash='[0-9a-f]{64}';$token='[0-9a-f]{32}';$valid=preg_match('/^(?:s-'.$id.'\.session|l-'.$hash.'\.lock|\.stage-'.$hash.'-'.$token.'\.session|\.revoked-'.$hash.'-'.$token.'\.session)$/D',$name)===1;if(!$valid)throw new TestFailure('Unexpected session filename.');if(dirname($path)!==$managed)throw new TestFailure('Session path escaped managed instance.');$entries[]='sessions/'.$instance.'/'.$name.'|'.hash_file('sha256',$path);}sort($entries,SORT_STRING);return$entries;
+}
+function ieaSessionOwnershipSensitivity(string$root,string$instance):void
+{
+    $cases=['unexpected-file','dangling-symlink','file-symlink','unexpected-dir','dir-symlink','fifo','socket','path-escape'];
+    foreach($cases as$case){$probe=$root.'/sensitivity-'.$case;$sessions=$probe.'/sessions';$managed=$sessions.'/'.$instance;mkdir($managed,0700,true);$outside=$probe.'/outside';file_put_contents($outside,'x');chmod($outside,0600);$socket=null;
+        if($case==='unexpected-file'){file_put_contents($managed.'/unexpected', 'x');chmod($managed.'/unexpected',0600);}
+        elseif($case==='dangling-symlink')symlink($probe.'/missing',$managed.'/s-aaaaaaaaaaaaaaaa.session');
+        elseif($case==='file-symlink')symlink($outside,$managed.'/s-aaaaaaaaaaaaaaaa.session');
+        elseif($case==='unexpected-dir')mkdir($managed.'/extra',0700);
+        elseif($case==='dir-symlink'){mkdir($probe.'/other',0700);symlink($probe.'/other',$managed.'/extra');}
+        elseif($case==='fifo')posix_mkfifo($managed.'/s-aaaaaaaaaaaaaaaa.session',0600);
+        elseif($case==='socket'){$short='/home/antropophag/code/iea-socket-'.substr(hash('sha256',$probe),0,12);$socket=stream_socket_server('unix://'.$short);if(!is_resource($socket)||!rename($short,$managed.'/s-aaaaaaaaaaaaaaaa.session'))throw new TestFailure('SETUP_FAILURE: socket sensitivity fixture');}
+        else{ieaRemoveOwned($probe);mkdir($probe,0700,true);mkdir($probe.'/real-sessions',0700);symlink($probe.'/real-sessions',$sessions);}
+        $rejected=false;try{ieaSessionEntries($probe,$instance);}catch(TestFailure){$rejected=true;}assertSameValue(true,$rejected,'Session ownership sensitivity rejects '.$case);if(is_resource($socket))fclose($socket);ieaRemoveOwned($probe);assertSameValue(false,file_exists($probe)||is_link($probe),'Sensitivity cleanup removes '.$case);
+    }
 }
 function ieaGet(int $p, string $path): array
 {
@@ -528,7 +547,9 @@ function ieaRemoveOwned(string $root): void
         RecursiveIteratorIterator::CHILD_FIRST,
     );
     foreach ($it as $f) {
-        if ($f->isDir()) {
+        if ($f->isLink()) {
+            if (!unlink($f->getPathname())) throw new RuntimeException("cleanup symlink " . $f->getPathname());
+        } elseif ($f->isDir()) {
             if (!rmdir($f->getPathname())) {
                 throw new RuntimeException(
                     "cleanup directory " . $f->getPathname(),
@@ -688,6 +709,9 @@ try {
     mkdir($root, 0700, true);
     $sessionRoot = $root . "/sessions";
     if (!mkdir($sessionRoot, 0700) || realpath($sessionRoot) !== $sessionRoot || !str_starts_with($sessionRoot, $root . "/")) throw new TestFailure("SETUP_FAILURE: invalid owned session root");
+    $sessionInstance = "iea-" . $t;
+    if (!mkdir($sessionRoot . "/" . $sessionInstance, 0700)) throw new TestFailure("SETUP_FAILURE: owned session instance");
+    ieaSessionOwnershipSensitivity($root,$sessionInstance);
     $env = [
         "FMONITOR_DB_HOST" => getenv("FMONITOR_TEST_DB_HOST") ?: "127.0.0.1",
         "FMONITOR_DB_PORT" => getenv("FMONITOR_TEST_DB_PORT") ?: "23306",
@@ -699,8 +723,8 @@ try {
         "FMONITOR_LEGACY_TABLE_PREFIX" => "legacy_",
         "FMONITOR_PROCESS_TABLE_PREFIX" => $p,
         "FMONITOR_ARTIFACT_STORAGE_ROOT" => $root,
-        "FMONITOR_SESSION_STATE_ROOT" => $sessionRoot,
-        "FMONITOR_SESSION_INSTANCE" => "iea-" . $t,
+        "FMONITOR_SESSION_STATE_ROOT" => $root,
+        "FMONITOR_SESSION_INSTANCE" => $sessionInstance,
         "FMONITOR_SHLZ_CSS_PATH" =>
             dirname(__DIR__, 3) . "/shlz-ui/packages/styles/dist/shlz.css",
         "FMONITOR_PILOT_CSS_PATH" =>
