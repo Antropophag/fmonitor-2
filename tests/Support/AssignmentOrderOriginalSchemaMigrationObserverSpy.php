@@ -15,11 +15,12 @@ final class AssignmentOrderOriginalSchemaMigrationObserverSpy implements Assignm
     public function __construct(
         private readonly AssignmentOrderOriginalSchemaMigrationPhase $failurePhase,
         private readonly ?string $failureTable,
+        private readonly ?\Closure $beforeFailure = null,
     ) {}
 
     public function observe(AssignmentOrderOriginalSchemaMigrationPhase $phase, ?string $logicalTable): void
     {
         $this->calls[]=[$phase,$logicalTable];
-        if($phase===$this->failurePhase&&$logicalTable===$this->failureTable)throw new \RuntimeException('verifier-only migration fault');
+        if($phase===$this->failurePhase&&$logicalTable===$this->failureTable){if($this->beforeFailure!==null)($this->beforeFailure)();throw new \RuntimeException('verifier-only migration fault');}
     }
 }
