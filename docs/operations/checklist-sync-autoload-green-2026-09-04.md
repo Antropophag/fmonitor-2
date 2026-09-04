@@ -31,4 +31,7 @@ failure: the already classified macOS host lacks the `setsid` executable used
 by `characterize_inspection_schedule_duplicate_001_test.php`. All checklist
 characterization paths pass in that aggregate run.
 
-Gate 5 remains required before this correction is complete.
+Fresh independent Gate 5: `0f15cb892db7e4902273938eb2a4248f6f855bed`
+(`APPROVED`). The reviewer independently reproduced all five GREEN paths,
+architecture `7/7`, PHP lint, dependency loading and diff-check. This focused
+integration correction is complete.
