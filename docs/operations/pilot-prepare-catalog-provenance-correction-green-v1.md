@@ -74,3 +74,12 @@ inspection plus the current approved regressions, not by new test cases. Adding
 those cases would require a new Gate 2 RED and independent Gate 3 review.
 
 This record does not claim Gate 5 or integration readiness.
+
+## Exact correction commit confirmation
+
+The production/evidence commit is
+`2935710fa7f771e4f76b847d64f9b1cb5ca821b1`. From a clean worktree at that
+exact SHA, `2026-09-04T10:53:52+03:00` through
+`2026-09-04T10:54:31+03:00`, the direct picker harness and canonical prepare
+verifier returned their PASS literals, architecture-check passed all 7 rules,
+strict OpenSpec validation succeeded, and lint plus diff-check exited zero.
