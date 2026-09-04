@@ -20,12 +20,12 @@ $assert(AssignmentOrderOriginalPdfStatus::PASSIVE_PDF, AssignmentOrderOriginalPd
 $assert(AssignmentOrderOriginalPdfStatus::PASSIVE_PDF, AssignmentOrderOriginalPdfOracle::xrefStream(), 'Binary xref stream is structurally resolved.');
 
 $hidden = [
-    'JavaScript' => '<< /S /JavaScript /JS (app.alert) >>',
+    'JavaScript' => '<< /S /JavaScript >>',
     'JS' => '<< /JS (app.alert) >>',
-    'OpenAction' => '<< /OpenAction 8 0 R >>',
-    'AA' => '<< /AA << /O 8 0 R >> >>',
+    'OpenAction' => '<< /OpenAction null >>',
+    'AA' => '<< /AA << >> >>',
     'Launch' => '<< /S /Launch >>',
-    'EmbeddedFiles' => '<< /Names << /EmbeddedFiles 8 0 R >> >>',
+    'EmbeddedFiles' => '<< /Names << /EmbeddedFiles << >> >> >>',
     'Filespec' => '<< /Type /Filespec >>',
     'FileAttachment' => '<< /Subtype /FileAttachment >>',
     'RichMedia' => '<< /Subtype /RichMedia >>',
@@ -44,6 +44,9 @@ $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPd
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::catalogGenerationMismatch(), 'Root reference generation must match its active xref entry.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::malformedXrefStream(), 'Malformed xref-stream field widths fail closed.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::unsupportedStructuralFilter(), 'Unsupported structural stream filter fails closed.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::conflictingXrefIdentity(), 'Conflicting duplicate xref identity fails closed.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::objectCountAboveLimit(), 'Declared object namespace above 100000 fails closed.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::aggregateStructuralInflationAboveLimit(), 'Aggregate structural decompression above 67108864 bytes fails closed.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::cyclicPagesTree(), 'Cyclic Pages graph fails closed despite a decoy Page object.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::overDepthGraph(), 'Reference graph beyond depth 100 fails closed.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::latestRootHasZeroPages(), 'Prev chain resolves the latest Root rather than accepting obsolete positive pages.');

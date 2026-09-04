@@ -113,6 +113,21 @@ final class AssignmentOrderOriginalPdfOracle
         return str_replace('/Type /XRef ', '/Type /XRef /Filter /LZWDecode ', self::xrefStream());
     }
 
+    public static function conflictingXrefIdentity(): string
+    {
+        return str_replace("trailer\n", "1 1\n0000000058 00000 n \ntrailer\n", self::classic());
+    }
+
+    public static function objectCountAboveLimit(): string
+    {
+        return str_replace('/Size 4 ', '/Size 100002 ', self::classic());
+    }
+
+    public static function aggregateStructuralInflationAboveLimit(): string
+    {
+        return self::flateObjectStream('<< /Padding (' . str_repeat('A', 67_108_865) . ') >>');
+    }
+
     public static function cyclicPagesTree(): string
     {
         return str_replace('/Kids [3 0 R]', '/Kids [2 0 R]', self::classic());
