@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v7 GATE 1 REVIEW PENDING — DATABASE SETUP AMENDMENT**
-Версия: **v7**
+Статус: **v8 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
+Версия: **v8**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -881,7 +881,7 @@ final class AssignmentOrderOriginalSchemaMigration
     public static function apply(
         \mysqli $database,
         string $tablePrefix = '',
-    ): AssignmentOrderOriginalSchemaMigrationResult;
+    ): AssignmentOrderOriginalSchemaMigrationResult { /* exact migration */ }
 }
 
 final class AssignmentOrderOriginalVerificationDatabaseFixture
@@ -889,19 +889,102 @@ final class AssignmentOrderOriginalVerificationDatabaseFixture
     public static function seedExampleA(
         \mysqli $database,
         string $tablePrefix = '',
-    ): void;
+    ): void { /* verification-only DML */ }
+
+    public static function cleanupExampleA(
+        \mysqli $database,
+        string $tablePrefix = '',
+    ): void { /* bounded verification cleanup */ }
 }
+
+final class AssignmentOrderOriginalVerificationFixtureConflict extends \RuntimeException {}
+final class AssignmentOrderOriginalVerificationFixtureUnavailable extends \RuntimeException {}
 ```
 
 `schemaVersion()` is `1`. `apply()` accepts the same canonical prefix grammar as
 the evidence config. A clean or compatible partial schema returns `APPLIED` and
-the binary-sorted logical table names actually created/reconciled; an exact
+the logical table names actually created/reconciled in manifest order; an exact
 repeat returns `UNCHANGED` with an empty list; any non-equivalent existing
 owned table returns `CONFLICT` with all conflicting logical table names in
 binary order and performs no DDL. It never changes historical registration
-facts or prerequisite process rows. Exact table/column/index/constraint
-definitions remain the independently asserted task-3.1 migration contract; no
-consumer may infer readiness from a version row alone.
+facts or prerequisite process rows. No consumer may infer readiness from a
+version row alone.
+
+Version 1 owns these exact logical tables, in this creation/`affectedTables`
+order (the validated prefix is prepended). All use InnoDB, `utf8mb4`, database
+default collation; opaque IDs and hashes use `ascii`/`ascii_bin`. `UNSIGNED`,
+nullability, column order and keys below are normative:
+
+```text
+fm2_assignment_order_original_roots:
+  root_original_id varchar(80) PK; installation_case_id bigint unsigned;
+  assignment_order_id bigint unsigned UNIQUE; current_revision_id varchar(80) UNIQUE;
+  composition_identity varchar(160); composition_sha256 char(64);
+  created_at_utc datetime(6); INDEX(installation_case_id,assignment_order_id)
+fm2_assignment_order_original_revisions:
+  revision_id varchar(80) PK; root_original_id varchar(80); revision_number int unsigned;
+  previous_revision_id varchar(80) NULL UNIQUE; document_date date;
+  uploaded_at_utc datetime(6); actor_user_id bigint unsigned; pdf_sha256 char(64);
+  byte_size int unsigned; private_content_identity varchar(160) UNIQUE;
+  correction_reason varchar(500) NULL; request_id char(36) UNIQUE;
+  operation_fingerprint char(64) UNIQUE; event_type varchar(80);
+  UNIQUE(root_original_id,revision_number); INDEX(root_original_id,revision_number);
+  FK(root_original_id)->roots(root_original_id) RESTRICT;
+  FK(previous_revision_id)->revisions(revision_id) RESTRICT
+fm2_assignment_order_original_requests:
+  request_id char(36) PK; mode varchar(20); installation_case_id bigint unsigned;
+  assignment_order_id bigint unsigned; actor_identity varchar(160); status varchar(20);
+  reason_code varchar(80) NULL; retryable tinyint unsigned; root_original_id varchar(80) NULL;
+  current_revision_id varchar(80) NULL; revision_number int unsigned NULL;
+  document_date date NULL; sha256 char(64) NULL; byte_size int unsigned NULL;
+  uploaded_at_utc datetime(6) NULL; attempted_at_utc datetime(6);
+  INDEX(installation_case_id,assignment_order_id,attempted_at_utc)
+fm2_assignment_order_original_events:
+  event_id bigint unsigned AUTO_INCREMENT PK; event_type varchar(80);
+  installation_case_id bigint unsigned; assignment_order_id bigint unsigned;
+  root_original_id varchar(80); revision_id varchar(80); occurred_at_utc datetime(6);
+  actor_user_id bigint unsigned; UNIQUE(root_original_id,revision_id,event_type);
+  INDEX(installation_case_id,assignment_order_id,event_id)
+fm2_assignment_order_original_audits:
+  audit_id bigint unsigned AUTO_INCREMENT PK; request_id char(36); actor_identity varchar(160);
+  mode varchar(20); installation_case_id bigint unsigned; assignment_order_id bigint unsigned;
+  status varchar(20); reason_code varchar(80) NULL; attempted_at_utc datetime(6);
+  UNIQUE(request_id,status,reason_code); INDEX(installation_case_id,assignment_order_id,audit_id)
+fm2_assignment_order_original_maintenance_requests:
+  request_id char(36) PK; system_principal_id varchar(160); status varchar(20);
+  reason_code varchar(80) NULL; retryable tinyint unsigned; scanned int unsigned;
+  deleted int unsigned; retained int unsigned; failed int unsigned;
+  next_cursor varchar(500) NULL; attempted_at_utc datetime(6)
+fm2_assignment_order_original_maintenance_audits:
+  audit_id bigint unsigned AUTO_INCREMENT PK; request_id char(36) UNIQUE;
+  system_principal_id varchar(160); status varchar(20); reason_code varchar(80) NULL;
+  scanned int unsigned; deleted int unsigned; retained int unsigned;
+  failed int unsigned; attempted_at_utc datetime(6)
+```
+
+Every non-null hash has `^[0-9a-f]{64}$`; `retryable` is `0|1`; revision and
+byte size are positive; accepted/replayed request evidence is all non-null and
+rejected/conflict evidence is all null. Roots current revision must name the
+same root; this cross-row invariant and CAS are enforced transactionally by the
+repository. Structural equivalence compares exact ordered columns, normalized
+types/default/nullability, engine/charset/collation, PK, unique/index column
+order, FKs/actions and CHECK semantics; extra owned columns/keys/checks or
+missing/different members conflict. A compatible partial deployment may contain
+only a leading subset of the ordered complete tables; populated exact tables
+are preserved byte-for-byte.
+
+The manifest also requires semantic CHECKs for every enum against the exact
+backed values declared in sections 6, 13 and 16; `reason_code` must belong to
+the matching status or be null for success; `retryable=1` only for `FAILED` or
+`PARTIAL`; UUID request IDs are canonical lower-case; root/revision/content IDs
+are printable ASCII `1..80|160` without slash/backslash/control; correction
+reason is null for revision 1 and trimmed `1..500` for later revisions; and
+maintenance rows satisfy `scanned=deleted+retained+failed`. Roots have an FK
+from `current_revision_id` to revisions with `RESTRICT`; request nullable
+root/current IDs, event root/revision IDs and audit terminal request IDs use
+`RESTRICT` FKs where the referenced row is required by their status. Safe
+generated constraint names are implementation details; their normalized
+expressions, columns and actions are the equivalence oracle.
 
 `seedExampleA()` is a verification-only DML setup seam, callable only after the
 approved prerequisite process migrations and this migration are compatible.
@@ -910,13 +993,62 @@ audit/blob fact: active actor `18` with only the exact upload/correct grants;
 case `4512`; order `81`; composition identity `composition-81-v1`, hash
 `1111111111111111111111111111111111111111111111111111111111111111`, installers
 `7001,7002` and engineer `31`; fixed case/opening/tasks/checklist/decoy process
-projections used by section 16. An exact repeat is a no-op; any occupied
+projections used by section 16. The exact canonical projection literals and
+expected SHA-256 values are:
+
+```text
+orderCompositionSha256=388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5
+{"caseId":4512,"compositionIdentity":"composition-81-v1","engineerUserId":31,"installers":[7001,7002],"orderId":81}
+caseSha256=b28f40fe02e9b4ca3981a5edaf5e165f9f95531e38c87bc70a8458444b2ace84
+{"actualStartDate":null,"caseId":4512,"processState":"prepared"}
+openingSha256=89c2844c0f723aacd7b7982b36d6297df53a3d2f2b44a268212ab43149687f42
+{"actualStartDate":null,"openedAt":null,"openedByUserId":null}
+tasksSha256=272d922aa2cdcad49bd98141062fc752eb4f31690a720b46c2fa7a0e1b0fe799
+{"items":[{"assigneeRole":"fkr_operator","status":"open","taskId":9001,"taskType":"assignment_order_original_upload"}]}
+checklistSha256=f8ddea8b5d52fccf7edb63d89ba508ef916dd86fc175336fcea05436801ac548
+{"items":[{"availability":"blocked_pending_original_and_opening","checklistIdentity":"installation-case-4512"}]}
+decoySha256=963ca80eddc50543eb940cf813923bd451d0974585a529e7880107df6982e2ca
+{"items":[{"caseId":9999,"marker":"fixture-decoy-v1"}]}
+```
+
+The fixture rows are actor `18` active; role `5301/fkr_operator` active and
+assigned to actor 18; actor grants exactly upload/correct; engineer `31` active
+in active role `5302/control_engineer`; case `4512` links legacy identity
+`94512`, state `prepared`, null opening fields; order `81` belongs to case 4512,
+version 1/status `prepared`, date `2026-09-01`; installers `7001` then `7002`
+have active snapshot status and `assign`; task `9001` is the literal task above;
+the checklist and decoy projections are the literals above. An exact repeat is
+a no-op; any occupied
 identity with different values throws fixed
 `AssignmentOrderOriginalVerificationFixtureConflict` before DML. The fixture
 performs no DDL, creates no original evidence, accepts no arbitrary SQL/callback
 and is never referenced by production composition. Gate 2 owns an isolated
-database/prefix and removes it through the existing task-owned test cleanup;
+database/prefix. `seedExampleA()` and `cleanupExampleA()` use one `SERIALIZABLE`
+transaction and lock all exact identities in binary dependency order. Conflict
+rolls back before commit. Cleanup validates every owned row byte-for-byte, then
+deletes only those exact fixture rows in reverse dependency order; absent rows
+are a no-op and any drift conflicts without deletion. DB/commit/rollback
+failure throws `AssignmentOrderOriginalVerificationFixtureUnavailable`.
+Both exception classes have fixed message equal to their class basename,
+integer code `0` and `previous=null`. The test then drops only its separately
+validated task-owned database; no prefix-derived table drop is permitted.
 the evidence reader remains read-only and receives no fixture dependency.
+
+All fixture timestamps are `2026-09-02T09:00:00Z`; nullable values not named
+above are null. Actor is `Тестовый Оператор ФКР` / `test-fkr@example.invalid`,
+engineer is `Тестовый Инженер` / `test-engineer@example.invalid`; both have
+session version 1 and no credential. Role names are `Сотрудник ФКР` and
+`Инженер строительного контроля`. Installer snapshots are respectively
+`Тестовый Монтажник 7001` and `Тестовый Монтажник 7002`, position `Монтажник`,
+status `employed`, employed-from `2026-01-01`, no employed-to, workforce source
+`TEST-USER`, source-updated-at `2026-09-01T00:00:00Z`, valid-from
+`2026-09-01`, no valid-to, action `assign`. Order kind is `initial`, engineer
+snapshots match engineer name/position, organization form is `brigade`, previous
+order is null, address `Тестовая улица, 1`, entrance `1`, registration number
+snapshot `TEST-4512`, planned dates `2026-10-01`/`2026-10-31`, PTO date null,
+prepared-at `2026-09-01T09:00:00Z`, prepared-by actor 18. Case created/updated
+timestamps are the fixture timestamp and lock version is 1. These values and
+only these values define repeat versus conflict.
 
 ## 16. Maintenance API, evidence and concurrency IPC
 

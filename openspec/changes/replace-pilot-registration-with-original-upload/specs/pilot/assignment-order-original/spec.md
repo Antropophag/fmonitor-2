@@ -206,6 +206,10 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 - **WHEN** Example-A prerequisite identity уже занята другими values
 - **THEN** fixture до DML бросает fixed `AssignmentOrderOriginalVerificationFixtureConflict`, не принимает SQL/callback и не создаёт original evidence
 
+#### Scenario: Exact schema и bounded cleanup наблюдаемы
+- **WHEN** Gate 2 проверяет clean/repeat/partial/populated/conflict migration и завершает Example-A run
+- **THEN** version-1 manifest exact tables/columns/keys/FKs/checks/equivalence и literal fixture projections/digests определяют independent expected values, `cleanupExampleA` удаляет только byte-validated fixture rows, а test удаляет только separately validated task-owned database
+
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
 - **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, а после `close()` не оставляет ресурсов

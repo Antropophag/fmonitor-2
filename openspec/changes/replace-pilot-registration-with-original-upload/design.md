@@ -80,6 +80,11 @@ Real MariaDB RED вызывает named public
 вызывают. Verification-only deterministic `seedExampleA` владеет
 только idempotent prerequisite DML и не создаёт original facts; evidence
 reader остаётся fresh/read-only и не получает fixture dependency.
+Version-1 manifest нормативно фиксирует seven owned tables,
+structural equivalence и clean/repeat/leading-partial/populated/conflict
+outcomes. Fixture имеет literal rows/projection digests, serializable
+all-or-nothing seed и reverse byte-validated cleanup; после этого test
+удаляет только validated task-owned database, не prefix tables.
 
 ## Risks / Trade-offs
 
