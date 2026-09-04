@@ -40,5 +40,9 @@ macOS arm64 Homebrew PHP: PASS: PILOT-HTTP-AUTH-001 HTTP boundary
 Linux arm64 fmonitor2-verify-runner: PASS: PILOT-HTTP-AUTH-001 HTTP boundary
 ```
 
-PHP lint and `git diff --check` pass. Production was not edited. Fresh
-independent Gate 3 remains required.
+PHP lint and `git diff --check` pass. Production was not edited.
+
+Fresh independent Gate 3: `0eb66f5` (`APPROVED`). The reviewer independently
+repeated the complete HTTP verifier on native macOS and Linux arm64, including
+the symbol/negative/disabled-wrapper controls and all three race modes. This
+test-only portability correction is complete.
