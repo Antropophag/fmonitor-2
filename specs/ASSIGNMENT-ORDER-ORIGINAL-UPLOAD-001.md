@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v14 GATE 1 REREVIEW PENDING — CAPABILITY MIGRATION RECOVERY AMENDMENT**
-Версия: **v14**
+Статус: **v15 GATE 1 REVIEW PENDING — WORKER DSN AMENDMENT**
+Версия: **v15**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1460,5 +1460,24 @@ inventory is observation only and MUST NOT feed maintenance candidate
 enumeration or mutation.
 
 Worker config JSON has exact keys matching `AssignmentOrderOriginalWorkerConfig`, no extras, mode `real|injected_passive`, canonical fault enum/null; password file, safe-log file and config are verifier-owned mode 0600 outside repo. `safeLogFile` is an absolute canonical existing regular owner/root-owned non-symlink path outside the repository, with no NUL/control or `..` component, validated before password content or database access under the same rules as evidence config. The worker never creates or repairs it. Each child binds its real `AssignmentOrderOriginalSafeLogObserver` exclusively to that exact file; the independent evidence-reader config MUST use the same canonical path identity for the corresponding run. No environment variable, mutable global, default basename, private-root convention or callback may select another log target. Each child opens the shared MariaDB DSN/prefix and private root, constructs real repository/storage through the declared factories, injects only fixed clock/IDs/inspector/fault/barrier, then builds the same application via verification factory. Objects/connections are never serialized.
+
+`databaseDsn` has one exact canonical ASCII form, with segments in this literal
+order and no whitespace, percent encoding, duplicates or extras:
+
+```text
+host=<host>;port=<port>;database=<database>;charset=utf8mb4
+```
+
+`host` matches `[A-Za-z0-9.:[\]_-]{1,255}`, `port` is canonical decimal
+`1..65535` without leading zero, and `database` matches
+`[A-Za-z0-9_]{1,64}`. Bracketed IPv6 has its brackets removed before the mysqli
+host argument; every other host is passed byte-exact. `databaseUser` matches
+`[A-Za-z0-9_.-]{1,32}` and the password-file grammar is the evidence-config
+grammar already defined above. Worker parsing produces exactly the mysqli tuple
+`(host,databaseUser,passwordBytes,database,port)` and then calls
+`set_charset('utf8mb4')`; unix sockets, persistent prefixes, query parameters,
+driver/options or charset alternatives are forbidden. Invalid DSN/user/config
+fails worker configuration with exit `70` and fixed redacted stderr before
+password-file content, DB access, private storage or safe-log write.
 
 Command pipe carries exactly one UTF-8 JSON line, maximum `29,000,000` bytes: keys match Command, enum backed strings, PDF bytes base64, nulls explicit. Result pipe carries exactly one canonical JSON line maximum `16384` bytes and no stdout noise. Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
