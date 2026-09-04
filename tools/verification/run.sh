@@ -100,6 +100,7 @@ case "${1:-}" in
       tests/Verification/characterize_inspection_photo_upload_001_test.php \
       tests/Verification/quality_graph_governance_001_test.php \
       tests/Verification/quality_graph_publisher_001_test.php \
+      tests/Verification/quality_graph_runner_security_001_test.php \
       tests/Verification/quality_graph_toolchain_001_test.php \
       rapid-pilot/verify-completion-flow.php \
       rapid-pilot/verify-deployment-contract.php \
