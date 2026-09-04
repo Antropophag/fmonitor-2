@@ -22,7 +22,7 @@
   no payload leak, one composition-time `decorate()`, zero request-time wrapped
   renderer/mutation и application admission до domain/form work;
   verification: прежний RED v6 и review v6 только historical.
-- [ ] 2.2 Передать tests независимому reviewer; verification: APPROVED hashes, route mapping и no-fallback/no-ambient-env sensitivity.
+- [x] 2.2 Передать tests независимому reviewer; verification: APPROVED hashes, route mapping и no-fallback/no-ambient-env sensitivity.
 
 ## 3. Gate 4 — minimal fixture GREEN
 
