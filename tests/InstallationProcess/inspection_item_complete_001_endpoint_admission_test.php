@@ -694,7 +694,7 @@ try {
         "FMONITOR_PILOT_CSS_PATH" =>
             dirname(__DIR__, 2) . "/app/PilotHttp/pilot.css",
         "FMONITOR_NOW" => "2026-09-01T09:05:00+03:00",
-        "REMOTE_USER" => "engineer@example.test",
+        "FMONITOR_AUTH_USER_ID" => "7301",
     ];
     $server = ieaStart($env);
     $response = ieaGet(
