@@ -486,17 +486,11 @@ final class ProductionPilotHttpDependencies implements PilotHttpDependencies,Obj
 
 final class MariaDbHttpUserDirectory implements HttpUserDirectory
 {
-    private ?array $directory=null;
     public function __construct(private readonly \mysqli $connection,private readonly string $prefix,private readonly string $processPrefix=''){}
     public function resolveActiveUser(string $principal):?HttpUser
     {
-        try{
-            $this->directory=$this->processPrefix===''?null:(new MariaDbPilotUserDirectory($this->connection,$this->processPrefix))->read();
-            $pilotTable=$this->processPrefix.'fm2_pilot_users';$table=$this->connection->prepare('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');$table->bind_param('s',$pilotTable);$table->execute();
-            if($table->get_result()->fetch_assoc()===null)return null;$authenticatedId=\filter_var($_SERVER['FMONITOR_AUTH_USER_ID']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($authenticatedId!==false){$s=$this->connection->prepare("SELECT user_id AS id,full_name AS name,email FROM `{$pilotTable}` WHERE user_id=? AND status=1 AND activation_state='active' LIMIT 1");$s->bind_param('i',$authenticatedId);}else{$s=$this->connection->prepare("SELECT user_id AS id,full_name AS name,email FROM `{$pilotTable}` WHERE BINARY email=BINARY ? AND status=1 AND activation_state='active' LIMIT 2");$s->bind_param('s',$principal);}$s->execute();return $this->user($s->get_result()->fetch_all(MYSQLI_ASSOC),$principal);
-        }catch(\Throwable $e){if($e instanceof PilotHttpInfrastructureUnavailable)throw $e;throw new PilotHttpInfrastructureUnavailable('',0,$e);}
+        try{$identity=(new \FMonitor2\InstallationProcess\MariaDbProcessUserDirectory($this->connection,$this->processPrefix,$this->prefix))->findActiveLegacyIdentity($principal);return $identity===null?null:new HttpUser($identity['id'],$identity['name'],$identity['email']);}catch(\Throwable $e){if($e instanceof PilotHttpInfrastructureUnavailable)throw $e;throw new PilotHttpInfrastructureUnavailable('',0,$e);}
     }
-    private function user(array $rows,string $principal):?HttpUser{if(\count($rows)!==1)return null;$row=$rows[0];$id=\filter_var($row['id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if($id===false||\trim((string)$row['name'])===''||$row['email']!==$principal)throw new PilotHttpInfrastructureUnavailable();if($this->directory!==null){$profiles=\array_values(\array_filter($this->directory['users'],static fn(array $profile):bool=>$profile['id']===(int)$id&&$profile['active']&&\count(\array_filter($profile['roles'],static fn(array $role):bool=>$role['active']))>0));if(\count($profiles)!==1)return null;}$permissions=$this->processPrefix===''?[]:AccessPolicy::forUser($this->connection,$this->processPrefix,(int)$id);return new HttpUser((int)$id,(string)$row['name'],(string)$row['email'],$permissions);}
 }
 
 final class ErrorLogUnexpectedFailureReporter implements UnexpectedFailureReporter
