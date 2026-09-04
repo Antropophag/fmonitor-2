@@ -14,7 +14,7 @@ $fail = static function (bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 };
 
-$constructorStart = strpos($auth, 'public function __construct()');
+$constructorStart = strpos($auth, 'public function __construct(');
 $constructorEnd = strpos($auth, 'public function handle(', $constructorStart === false ? 0 : $constructorStart);
 $fail($constructorStart !== false && $constructorEnd !== false, 'LocalAuth constructor unavailable');
 $constructor = substr($auth, $constructorStart, $constructorEnd - $constructorStart);
