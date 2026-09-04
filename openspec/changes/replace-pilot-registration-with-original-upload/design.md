@@ -98,10 +98,11 @@ all-or-nothing seed и reverse byte-validated cleanup; после этого tes
 
 1. Coherent supersede active manual-number/registration truth, сохранить historical records; strict validate и fresh independent planning rereview.
 2. После constructibility amendment получить fresh independent Gate 1 review и новый owner exact-hash approval; прежний v1 approval сохраняется исторически и не разрешает Gate 2 по v3.
-3. Продемонстрировать minimal RED, получить fresh independent test review.
-4. Добавить exact capability migrations/grants, canonical original schema, storage/parser adapters и один command минимальным GREEN.
-5. Выполнить focused tests, architecture-check, `make verify`, fresh independent code review.
-6. Только после Done создать через отдельные propose workflows `expose-assignment-order-original-http`, `apply-assignment-order-original-to-composition`, затем `open-installation-from-assignment-order-original` по их зависимостям.
+3. Продемонстрировать migration/fixture RED, получить fresh independent Gate 3, реализовать только setup GREEN и получить его fresh Gate 5.
+4. На Gate-5-approved setup продемонстрировать full command/MariaDB/worker/fault RED и получить fresh independent Gate 3.
+5. Добавить storage/parser/repository adapters и один command минимальным GREEN.
+6. Выполнить focused tests, architecture-check, `make verify`, fresh independent code review.
+7. Только после Done создать через отдельные propose workflows `expose-assignment-order-original-http`, `apply-assignment-order-original-to-composition`, затем `open-installation-from-assignment-order-original` по их зависимостям.
 
 Rollback до production facts отключает route/composition. После появления facts rollback только forward-compatible: bytes/revisions/audit не удаляются.
 

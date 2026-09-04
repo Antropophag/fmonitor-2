@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v8 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
-Версия: **v8**
+Статус: **v9 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
+Версия: **v9**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -239,7 +239,7 @@ serverToday Europe/Moscow = 2026-09-02
 case = 4512
 order = 81
 composition identity = composition-81-v1
-composition = installers [7001,7002], engineer 901
+composition = installers [7001,7002], engineer 31
 compositionSha256 = 1111111111111111111111111111111111111111111111111111111111111111
 root ID generator first value = original-0001
 revision ID generator values = revision-0001, revision-0002
@@ -973,22 +973,56 @@ missing/different members conflict. A compatible partial deployment may contain
 only a leading subset of the ordered complete tables; populated exact tables
 are preserved byte-for-byte.
 
-The manifest also requires semantic CHECKs for every enum against the exact
-backed values declared in sections 6, 13 and 16; `reason_code` must belong to
-the matching status or be null for success; `retryable=1` only for `FAILED` or
-`PARTIAL`; UUID request IDs are canonical lower-case; root/revision/content IDs
-are printable ASCII `1..80|160` without slash/backslash/control; correction
-reason is null for revision 1 and trimmed `1..500` for later revisions; and
-maintenance rows satisfy `scanned=deleted+retained+failed`. Roots have an FK
-from `current_revision_id` to revisions with `RESTRICT`; request nullable
-root/current IDs, event root/revision IDs and audit terminal request IDs use
-`RESTRICT` FKs where the referenced row is required by their status. Safe
-generated constraint names are implementation details; their normalized
-expressions, columns and actions are the equivalence oracle.
+The exact FK set is: roots.`current_revision_id` → revisions.`revision_id`;
+revisions.`root_original_id` → roots.`root_original_id`;
+revisions.`previous_revision_id` → revisions.`revision_id`; nullable
+requests.`root_original_id` → roots.`root_original_id`; nullable
+requests.`current_revision_id` → revisions.`revision_id`; events root/revision
+to roots/revisions; audits.`request_id` → requests.`request_id`; and maintenance
+audits.`request_id` → maintenance requests.`request_id`. Every action is
+`ON UPDATE RESTRICT ON DELETE RESTRICT`; there are no other FKs.
+
+The exact semantic CHECK set is:
+
+```text
+roots: composition_sha256 REGEXP '^[0-9a-f]{64}$'
+revisions: revision_number>=1; pdf_sha256/fingerprint each lower-hex-64;
+  byte_size BETWEEN 1 AND 20971520; event_type IN
+  ('assignment_order_original_accepted','assignment_order_original_corrected');
+  (revision_number=1 AND previous_revision_id IS NULL AND correction_reason IS NULL
+   AND event_type='assignment_order_original_accepted') OR
+  (revision_number>1 AND previous_revision_id IS NOT NULL
+   AND CHAR_LENGTH(TRIM(correction_reason)) BETWEEN 1 AND 500
+   AND event_type='assignment_order_original_corrected')
+requests: request_id canonical lower UUID; mode IN ('initial','correction');
+  status IN ('accepted','replayed','rejected','conflict'); retryable=0;
+  accepted|replayed => reason_code IS NULL and all ten evidence fields non-null;
+  rejected => reason_code IN ('authorization_denied','invalid_command','order_not_found',
+  'composition_not_confirmed','invalid_composition','file_too_large','not_pdf',
+  'invalid_pdf','unsafe_pdf','future_document_date','no_changes') and all evidence null;
+  conflict => reason_code IN ('semantic_collision','stale_revision','target_not_found',
+  'target_not_current','initial_already_exists') and all evidence null
+events: event_type IN ('assignment_order_original_accepted',
+  'assignment_order_original_corrected')
+audits: request_id canonical lower UUID; mode IN ('initial','correction');
+  status IN ('accepted','rejected','conflict'); reason_code follows the same
+  success/rejected/conflict truth sets as requests
+maintenance requests/audits: request_id canonical lower UUID;
+  status IN ('completed','replayed','rejected','partial');
+  completed|replayed => reason_code IS NULL AND retryable=0;
+  rejected => reason_code IN ('invalid_command','authorization_denied') AND retryable=0;
+  partial => reason_code IN ('locked','storage_failure') AND retryable=1;
+  scanned=deleted+retained+failed
+```
+
+All opaque root/revision/content IDs are printable ASCII within their declared
+column length without slash, backslash or control. There are no other CHECKs.
+Safe generated constraint names are implementation details; the normalized
+expressions, columns and actions above are the complete equivalence oracle.
 
 `seedExampleA()` is a verification-only DML setup seam, callable only after the
 approved prerequisite process migrations and this migration are compatible.
-It inserts the section-7 Example A prerequisites and no original/request/event/
+It inserts the section-12 Example A prerequisites and no original/request/event/
 audit/blob fact: active actor `18` with only the exact upload/correct grants;
 case `4512`; order `81`; composition identity `composition-81-v1`, hash
 `1111111111111111111111111111111111111111111111111111111111111111`, installers

@@ -15,17 +15,26 @@
 ## 2. Minimal RED и test review
 
 - [x] 2.1 Поручить RED author написать smallest public-seam test initial valid direct upload с immutable composition/date/upload-time/hash evidence и no composition/opening mutation; verification: canonical command падает только из-за отсутствующего production seam и transcript классифицирован intended RED
-- [ ] 2.2 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации
-- [ ] 2.3 Поручить fresh independent test reviewer проверить sensitivity и zero-public-orphan cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
+- [ ] 2.2 Поручить RED author написать isolated MariaDB clean/repeat/leading-partial/populated/conflict migration и deterministic seed/repeat/conflict/cleanup tests для exact version-1 setup seams; verification: RED вызван отсутствующими migration/fixture seams, не setup
+- [ ] 2.3 Поручить fresh independent test reviewer проверить exact manifest/equivalence, fixture literals, sensitivity и bounded cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 
-## 3. Minimal GREEN
+## 3. Setup minimal GREEN и code review
 
 - [ ] 3.1 Добавить additive canonical capability/schema migration на актуальном frontier без runtime DDL и без изменения historical registration facts; verification: clean/repeat/populated/conflict migration fixtures GREEN
-- [ ] 3.2 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
-- [ ] 3.3 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
+- [ ] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
 
-## 4. Integration и Done
+## 4. Command matrix RED и test review
 
-- [ ] 4.1 Запустить focused suites, `make architecture-check`, `git diff --check`, затем `make verify`; verification: literal `VERIFY_OK`, без переклассификации failures
-- [ ] 4.2 Поручить fresh independent code reviewer проверить approved spec/tests, exact grants, parser/storage boundary, DB/filesystem failure protocol, immutable lineage и scope exclusions; verification: `reviews/code/` содержит explicit `APPROVED`, reviewer не был RED author/implementer
-- [ ] 4.3 Интегратор сверяет tasks/spec/reviews/tests и обновляет operations status; verification: slice Done только после Gates 1–5, а `expose-assignment-order-original-http`, composition и opening остаются явно READY/BLOCKED отдельными named future OpenSpec changes
+- [ ] 4.1 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации, real MariaDB setup уже Gate-5-approved
+- [ ] 4.2 Поручить fresh independent test reviewer проверить command-matrix sensitivity и zero-public-orphan cleanup; verification: explicit `APPROVED`, reviewer не писал tests/production
+
+## 5. Command minimal GREEN
+
+- [ ] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
+- [ ] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
+
+## 6. Integration и Done
+
+- [ ] 6.1 Запустить focused suites, `make architecture-check`, `git diff --check`, затем `make verify`; verification: literal `VERIFY_OK`, без переклассификации failures
+- [ ] 6.2 Поручить fresh independent code reviewer проверить approved spec/tests, exact grants, parser/storage boundary, DB/filesystem failure protocol, immutable lineage и scope exclusions; verification: `reviews/code/` содержит explicit `APPROVED`, reviewer не был RED author/implementer
+- [ ] 6.3 Интегратор сверяет tasks/spec/reviews/tests и обновляет operations status; verification: slice Done только после Gates 1–5, а `expose-assignment-order-original-http`, composition и opening остаются явно READY/BLOCKED отдельными named future OpenSpec changes
