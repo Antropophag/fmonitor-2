@@ -10,7 +10,6 @@ use FMonitor\IdentityAccess\PilotSessionOperationStatus;
 use FMonitor\IdentityAccess\PilotSessionPrimitiveOutcome;
 use FMonitor2\PilotHttp\PilotCommandSession;
 use FMonitor2\Tests\Support\FixedPilotSessionClock;
-use FMonitor2\Tests\Support\FixedPilotSessionEntropy;
 use FMonitor2\Tests\Support\NativePilotSessionFilesystem;
 use FMonitor2\Tests\Support\RecordingPilotSessionObserver;
 
@@ -63,12 +62,10 @@ file_put_contents($sentinel, "foreign-sequential\0");
 $sentinelHash = hash_file('sha256', $sentinel);
 
 try {
-    $entropy = new FixedPilotSessionEntropy([
-        str_repeat("\x11", 32), // anonymous session ID
-        str_repeat("\x22", 16), // first committed stage
-        str_repeat("\x33", 32), // exposed only by the current identity-rotation defect
-        str_repeat("\x44", 16), // second committed stage
-    ]);
+    $entropy = new class([
+        32 => [str_repeat("\x11", 32),str_repeat("\x33", 32)],
+        16 => [str_repeat("\x22", 16),str_repeat("\x44", 16)],
+    ]) implements \FMonitor\IdentityAccess\PilotSessionEntropy {public array$requestedLengths=[];public function __construct(private array$values){}public function bytes(int$length):\FMonitor\IdentityAccess\PilotSessionEntropyResult{$this->requestedLengths[]=$length;$queue=$this->values[$length]??[];if($queue===[])return \FMonitor\IdentityAccess\PilotSessionEntropyResult::failed();$value=array_shift($queue);$this->values[$length]=$queue;return \FMonitor\IdentityAccess\PilotSessionEntropyResult::ok($value);}};
     $observer = new RecordingPilotSessionObserver();
     $owner = (new FMonitor\IdentityAccess\PilotSessionStorageFactory())->create(
         new FMonitor\IdentityAccess\PilotSessionStorageConfig($root, 'sequential_v10'),
