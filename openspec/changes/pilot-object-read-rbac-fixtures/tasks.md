@@ -10,8 +10,8 @@
 
 ## 3. Gate 4 — fixture alignment
 
-- [ ] 3.1 Реализовать reusable canonical local-RBAC fixture с explicit actor IDs/unset для каждого case; verification: focused object-list test GREEN без production fallback.
-- [ ] 3.2 Синхронизировать list representation только с approved object-list spec; verification: predecessor/raw/security assertions не ослаблены.
+- [x] 3.1 Реализовать reusable canonical local-RBAC fixture с explicit actor IDs/unset для каждого case; verification: focused object-list test GREEN без production fallback.
+- [x] 3.2 Синхронизировать list representation только с approved object-list spec; verification: predecessor/raw/security assertions не ослаблены.
 
 ## 4. Verification, Gate 5 и Done
 
