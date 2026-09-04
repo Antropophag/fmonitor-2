@@ -122,8 +122,9 @@ Desktop content grid may place `Сроки` in a summary column, while DOM/readi
 
 Exact presentation ниже заменена upload-first поправкой
 `PILOT-PREPARE-FORM-001 v0.2`; data/authorization/zero-write contracts
-сохраняются. Исторический v0.1 текст ниже не применяется там, где противоречит
-v0.2.
+сохраняются. Replacement охватывает §6 card link, весь §7, §8 prepare example
+и browser assertions о prepare checkbox geometry. Engineer radio/confirmation
+сохраняются; installer controls заменяются picker contract v0.2.
 
 Успешная read-only prepare page сохраняет exact data/authorization/eligibility `PILOT-PREPARE-FORM-001` и показывает:
 

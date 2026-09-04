@@ -1,6 +1,6 @@
 # PILOT-PREPARE-FORM-001 — открыть форму состава первого распоряжения
 
-- Статус: `APPROVED`
+- Статус: `DRAFT — Gate 1 rereview required`
 - Версия: `0.2`
 - Дата: `2026-08-28`
 - Актор: exact active legacy-пользователь с active legacy-ролью и capability `assignment_order.prepare`
@@ -9,28 +9,44 @@
 
 ## 0. Утверждённая upload-first поправка v0.2
 
-Версия 0.2 заменяет только противоречащие ей presentation assertions разделов
-4–10. Успешный read-only `GET|HEAD` остаётся тем же RBAC seam и не принимает
+Версия 0.2 заменяет перечисленные ниже assertions. Успешный read-only
+`GET|HEAD` остаётся тем же RBAC seam и не принимает
 файл, не вызывает command и не сохраняет выбор. Card launch имеет exact текст
 `Загрузить распоряжение`. GET показывает sole `h1` `Загрузить распоряжение`,
 intro `Укажите состав и прикрепите подписанный оригинал.`, breadcrumb current
 `Распоряжение` и compact immutable object summary.
 
-Монтажники передаются в application-owned `<template data-picker-data>` как
-escaped normalized records и выбираются через кнопку `Выбрать монтажников`;
-исходный read-only DOM не содержит state-changing submit. Инженер отображается
-read-only из карточки объекта с ФИО/должностью и пояснением `справочно из
-карточки объекта`; radio и отдельный confirmation checkbox отсутствуют. При
-отсутствии инженера показывается exact safe empty text `Инженер не назначен.
-Вернитесь в карточку объекта.`
+Монтажники передаются в inert `<template data-picker-data>` как escaped
+normalized records и выбираются через кнопку `Выбрать монтажников`. External
+same-origin `picker.js` строит результаты только DOM API/`textContent`, никогда
+не `innerHTML`; query нормализуется, минимум 2 символа, максимум 20 видимых
+результатов. Result — native button с `aria-pressed`; выбранные люди видимы как
+remove-buttons и отражаются exact hidden `installerTabIds[]`. Search имеет
+label, result container — polite live semantics, popover управляется native
+button/keyboard. При отсутствии/ошибке JS hidden IDs не появляются и command
+не может получить скрытый состав. Исходный read-only DOM не содержит
+state-changing submit.
+
+Инженеры сохраняют нормативный §6: radio group, допустимый legacy prefill и
+отдельный unchecked confirmation checkbox. Это не read-only reference из
+карточки. Пользователь выбирает и явно подтверждает инженера до будущего
+upload command.
 
 Read-only response содержит GET form на canonical path, neutral link `Отмена`
 на карточку и helper `Нужен шаблон?`, но без file input, multipart, CSRF,
 upload/template submit или mutation. Эти controls принадлежат отдельно gated
 HTTP command composition. Eligibility, provenance, ordering, authorization,
-GET/HEAD/error precedence и zero-mutation правила сохраняются; старые exact
-`Состав распоряжения`, native checkbox/radio, confirmation и `Сформировать
-распоряжение` presentation assertions superseded.
+GET/HEAD/error precedence и zero-mutation правила сохраняются.
+
+| Старый clause | v0.2 replacement |
+|---|---|
+| §1 installer checkbox part | picker contract выше; engineer radio/confirmation остаются |
+| §4 card link `Сформировать распоряжение` | `Загрузить распоряжение` |
+| §5 checkbox markup | inert data + result buttons + exact hidden selected IDs |
+| §7 installer empty state | `Нет допустимых монтажников.` без picker/results |
+| §8 heading/breadcrumb/intro/form controls | exact v0.2 values выше; engineer §6; external picker script; no command controls |
+| §9 installer checkbox example | insertion-independent picker data order `1042, 2088`, initially no hidden selected IDs |
+| §10 assertions naming old markup | same authorization/failure/zero-write outcomes over v0.2 representation |
 
 ## 1. Цель и единственный acceptance tracer
 
