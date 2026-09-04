@@ -20,7 +20,7 @@ GET|HEAD /pilot/objects/{positive-id}/assignment-order/prepare
 ```
 
 Все route/query/HEAD, form/eligibility, state, failure, zero-write and UI clauses
-из approved `PILOT-PREPARE-FORM-001 v0.1` наследуются, кроме legacy-only actor
+из `PILOT-PREPARE-FORM-001 v0.2` наследуются, кроме legacy-only actor
 authorization prefix, который полностью заменён sections 2–4 этого spec.
 POST/CSRF/command seam, card link authorization и other routes вне scope.
 

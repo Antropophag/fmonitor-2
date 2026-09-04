@@ -5,7 +5,7 @@
 - Дата: `2026-08-29`
 - Актор: exact active legacy-пользователь с active legacy-ролью, аутентифицированный доверенным HTTP-сервером
 - Публичный seam: HTTP `GET|HEAD /pilot/`, `/pilot/objects`, `/pilot/objects/{positive-id}`, `/pilot/objects/{positive-id}/assignment-order/prepare` и их CSS assets
-- Successor contracts: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-LIST-001 v0.1`, `PILOT-OBJECT-CARD-001 v0.2`, `PILOT-PREPARE-FORM-001 v0.1`
+- Successor contracts: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-LIST-001 v0.1`, `PILOT-OBJECT-CARD-001 v0.2`, `PILOT-PREPARE-FORM-001 v0.2`
 
 ## 1. Цель и граница
 
@@ -58,7 +58,10 @@ Production PHP source разделён минимум на:
 
 Ни один route handler не хранит полный HTML-документ или page-sized heredoc/string. View не выполняет SQL, authorization, process commands, file writes или header decisions. View model содержит только уже утверждённые нормализованные значения и URLs.
 
-JavaScript и `@shlz/behaviors` в этом срезе не подключаются. Все переходы — обычные ссылки; все controls формы — native HTML.
+JavaScript и `@shlz/behaviors` в исходном shell-срезе не подключаются. Successor
+prepare v0.2 разрешает только exact same-origin `/pilot/assets/picker.js` по
+своему CSP/asset/accessibility contract; остальные shell controls остаются
+native HTML без нового behavior JS.
 
 ## 4. Configured shared shell, навигация и доступность — `PILOT-UI-SHELL-001-A`
 
@@ -77,7 +80,7 @@ Shell не содержит role switcher, fake notification count, burger butto
 
 Desktop (`viewport >= 960 CSS px`): navigation занимает устойчивую левую колонку, content — fluid main column с readable maximum width. Narrow (`viewport <= 767 CSS px`): identity и actor не перекрываются, navigation становится горизонтальным wrapping/scroll-free списком доступных разделов, недоступные разделы скрываются как вторичный контекст, main остаётся одноколоночным. При ширине `320 CSS px` и отдельно при 200% root text size на supported viewport нет horizontal page overflow, clipped/overlapping text или hover-only action.
 
-Heading contract детерминирован: в `main` ровно один `h1`; прямые именованные content sections используют `h2`; подразделы внутри них — только `h3`; `h4..h6` отсутствуют, и никакой heading level не пропускается. Product identity, navigation, breadcrumb, eyebrow, status и empty-state description не изображаются headings. Root сохраняет exact `h1` `Моя работа`, status `Пилот подключён` и explanation `Объекты монтажа появятся после подключения карточки.` Queue сохраняет exact `h1` `Объекты монтажа` и не имеет breadcrumb. Card breadcrumb: link `Объекты монтажа` → `/pilot/objects`, затем current `Объект монтажа № {ID}`. Prepare breadcrumb exact: link `Объекты монтажа` → `/pilot/objects`, link `Объект монтажа № {ID}` → canonical card URL, затем current `Состав распоряжения`.
+Heading contract детерминирован: в `main` ровно один `h1`; прямые именованные content sections используют `h2`; подразделы внутри них — только `h3`; `h4..h6` отсутствуют, и никакой heading level не пропускается. Product identity, navigation, breadcrumb, eyebrow, status и empty-state description не изображаются headings. Root сохраняет exact `h1` `Моя работа`, status `Пилот подключён` и explanation `Объекты монтажа появятся после подключения карточки.` Queue сохраняет exact `h1` `Объекты монтажа` и не имеет breadcrumb. Card breadcrumb: link `Объекты монтажа` → `/pilot/objects`, затем current `Объект монтажа № {ID}`. Prepare v0.2 breadcrumb exact: link `Объекты монтажа` → `/pilot/objects`, link `Объект монтажа № {ID}` → canonical card URL, затем current `Распоряжение`; sole `h1` — `Загрузить распоряжение`.
 
 Automated responsive oracle ограничен существующим raw HTTP/CSS seam. Отданный `/pilot/assets/pilot.css` обязан содержать активный `@media (max-width: 767px)` contract, который для application classes переводит `.fm2-shell` и `.fm2-object-layout` в `grid-template-columns: minmax(0, 1fr)`, скрывает `.fm2-nav__unavailable`, разрешает `.fm2-primary-nav` переносом `flex-wrap: wrap` и переводит `.fm2-queue-list`/`.fm2-queue-item` в одноколоночный vertical flow без fixed/min-width. Base application rules обязаны задавать `max-width: 100%`, `min-width: 0` для fluid content owners, `overflow-wrap: anywhere` для DB-derived long text и visible `:focus-visible` outline для `.fm2-shell a`/native controls. Gate 2 наблюдает эти exact served-CSS contracts как text/parsed declarations и DOM order; он не заявляет pixel/layout/browser proof.
 
@@ -118,7 +121,13 @@ Capability lookup является integrity/security dependency, а не option
 
 Desktop content grid may place `Сроки` in a summary column, while DOM/reading order remains predecessor exact. Narrow order exact: identity/status → identification → deadlines → order/team/action → works → events. Links wrap, no sticky/fixed CTA appears.
 
-## 7. Форма подготовки — `PILOT-UI-SHELL-001-D`
+## 7. Форма подготовки — `PILOT-UI-SHELL-001-D` (presentation superseded)
+
+Exact presentation ниже заменена upload-first поправкой
+`PILOT-PREPARE-FORM-001 v0.2`; data/authorization/zero-write contracts
+сохраняются. Replacement охватывает §6 card link, весь §7, §8 prepare example
+и browser assertions о prepare checkbox geometry. Engineer radio/confirmation
+сохраняются; installer controls заменяются picker contract v0.2.
 
 Успешная read-only prepare page сохраняет exact data/authorization/eligibility `PILOT-PREPARE-FORM-001` и показывает:
 
@@ -198,7 +207,7 @@ Rejected route, method, Host, identity, authorization, missing object, predecess
 - POST/command handling, CSRF/session, validation submit and PRG notifications;
 - selecting/saving people, preparing/downloading/registering/opening an order;
 - new queue process projection, domain facts, task/SLA inference or fake progress;
-- search/filter/pagination and behavior JavaScript;
+- search/filter/pagination и behavior JavaScript вне exact prepare picker v0.2;
 - `shlz-ui` edits, copied components/tokens or local imitation of its component families;
 - refactoring InstallationProcess, legacy Bitrix history, harness, CI or deployment.
 

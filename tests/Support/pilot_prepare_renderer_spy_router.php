@@ -2,7 +2,15 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
-require $root . '/app/PilotHttp/production-entrypoint.php';
+$pilotHttpRoot = getenv('FMONITOR_TEST_PILOT_HTTP_ROOT');
+if ($pilotHttpRoot === false) {
+    $pilotHttpRoot = $root . '/app/PilotHttp';
+}
+$pilotHttpRoot = realpath($pilotHttpRoot);
+if (!is_string($pilotHttpRoot) || !is_dir($pilotHttpRoot) || is_link($pilotHttpRoot)) {
+    throw new RuntimeException('invalid test PilotHttp root');
+}
+require $pilotHttpRoot . '/production-entrypoint.php';
 
 use FMonitor2\PilotHttp\PrepareFormRenderer;
 use FMonitor2\PilotHttp\ProcessEnvironmentSource;

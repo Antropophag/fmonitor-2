@@ -1,11 +1,122 @@
 # PILOT-PREPARE-FORM-001 — открыть форму состава первого распоряжения
 
-- Статус: `APPROVED`
-- Версия: `0.1`
+- Статус: `DRAFT — Gate 1 rereview required`
+- Версия: `0.2`
 - Дата: `2026-08-28`
 - Актор: exact active legacy-пользователь с active legacy-ролью и capability `assignment_order.prepare`
 - Публичный seam: HTTP `GET|HEAD /pilot/objects/{positive-id}/assignment-order/prepare`
 - Successor contracts: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-CARD-001 v0.2`, `ORDER-PREPARE-001..010`, `WORKFORCE-CATALOG-001`, `PROCESS-USER-DIRECTORY-001`
+
+## 0. Утверждённая upload-first поправка v0.2
+
+Версия 0.2 заменяет перечисленные ниже assertions. Успешный read-only
+`GET|HEAD` остаётся тем же RBAC seam и не принимает
+файл, не вызывает command и не сохраняет выбор. Card launch имеет exact текст
+`Загрузить распоряжение`. GET показывает sole `h1` `Загрузить распоряжение`,
+intro `Укажите состав и прикрепите подписанный оригинал.`, breadcrumb current
+`Распоряжение` и compact immutable object summary.
+
+Монтажники передаются в inert `<template data-picker-data>` как escaped
+normalized records и выбираются через кнопку `Выбрать монтажников`. External
+same-origin `picker.js` строит результаты только DOM API/`textContent`, никогда
+не `innerHTML`; query заменяет runs U+0009..U+000D/U+0020 одним U+0020,
+удаляет эти boundary chars и вызывает `toLocaleLowerCase('ru-RU')`; minimum 2
+измеряется Unicode code points (`Array.from(query).length`). Candidate
+`data-name` проходит тот же whitespace/lowercase normalizer, затем match —
+substring. Tab branch удаляет каждый code point кроме ASCII `[0-9]`; при
+минимум двух оставшихся digits выполняется substring six-digit `data-tab`.
+Position/busy не ищутся;
+максимум 20 видимых результатов. Result — native button с `aria-pressed`; выбранные люди видимы как
+remove-buttons и отражаются exact hidden `installerTabIds[]`. Search имеет
+label, result container — polite live semantics, popover управляется native
+button/keyboard. При отсутствии/ошибке JS hidden IDs не появляются и command
+не может получить скрытый состав. Исходный read-only DOM не содержит
+state-changing submit.
+
+Каждая inert record — ровно один empty `span` с exact attributes
+`data-id`, `data-name`, `data-tab`, `data-position`, `data-busy`,
+`data-selected`; значения HTML-escaped. `data-id` — canonical unpadded decimal
+`installerTabId` и future hidden value (`1042`), exact range `1..999999`;
+`data-tab` — display-only six digits, left-zero-padded (`001042`), и обязан
+численно равняться ID. `data-name`/`data-position` — nonempty valid UTF-8,
+максимум 300/160 Unicode code points; boundary/collapse whitespace — только
+U+0009..U+000D и U+0020: boundary отсутствует, каждый internal run заменён
+одним U+0020. Другие code points и normalization form не меняются.
+`data-busy` всегда exact empty:
+утверждённого workload/assignment projection у этого read slice нет.
+`data-selected=0` initial. Server до successful HTML валидирует exact records;
+duplicate/unknown/missing field,
+invalid ID/tab/flag, nonempty busy, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
+redacted `503`, а не partial picker. Client DOM grammar:
+`template.content.children` содержит только direct empty `span`, каждый имеет
+ровно шесть named attributes и zero element descendants; промежуточные text
+nodes содержат только U+0009/U+000A/U+000D/U+0020. Client проверяет decoded
+ID/tab/flag/empty-busy/name/position bounds, grammar, order и duplicates;
+source UTF-8/escaping остаются server-only. Client rejection не меняет уже отданный HTTP status, а оставляет
+fallback и zero hidden IDs. Records упорядочены Unicode code-point
+ascending name, tie numeric ID; duplicate ID отклоняется целиком.
+
+Единственный route-specific script — `<script
+src="/pilot/assets/picker.js" defer></script>` после shared navigation asset.
+Exact bundled repository-owned `app/PilotHttp/picker.js` не имеет environment
+path/config override. `GET|HEAD /pilot/assets/picker.js` разрешается после
+exact route/method до identity/DB/CSS reads: GET `200`, content type
+`text/javascript; charset=UTF-8`, exact length, `Cache-Control: no-store` и
+byte-identical repeat на одном Git revision; HEAD те же
+headers/empty body; другой method — `405/Allow: GET, HEAD`; missing, unreadable,
+или non-regular bundled source — redacted `503`; runtime digest/revalidation
+protocol не вводится. Asset/error/redirect CSP literal `default-src 'none';
+style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action
+'self'; frame-ancestors 'none'`. Successful prepare HTML добавляет exact
+`script-src 'self'` после `style-src`. Никаких CDN/remote/inline/fallback bytes.
+
+Все picker controls, кроме search input, имеют explicit `type=button`. Open
+button exact accessible name `Выбрать монтажников`, имеет
+`aria-controls=installer-picker`, initial `aria-expanded=false` и синхронный state;
+popover `id=installer-picker`, `role=dialog`, `aria-label=Выбор монтажников`
+получает focus в search exact label `Поиск монтажника`; search имеет
+`aria-describedby` на live result meta. Results — exact `div role=group
+aria-label="Результаты поиска" aria-live=polite`; direct children только native
+result buttons, а zero-result child — один `p` с exact empty-result text.
+Escape закрывает и возвращает focus opener,
+Tab остаётся в native document order без trap. Result buttons имеют exact
+`aria-pressed`; removal button exact accessible name `Убрать {ФИО}`. Count и
+result meta находятся в `aria-live=polite`, selection summary имеет label
+`Выбранные монтажники`. Empty/one-character query: `Введите минимум 2 символа`;
+2+ query: `Найдено: {N}`, `Найдено {N}. Показаны первые 20` либо `Ничего не
+найдено. Проверьте ФИО или табельный номер.` Selection count starts
+`Выбрано: 0`, then `Выбрано: {N}`. Result accessible name is `Выбрать {ФИО}`
+or `Убрать {ФИО}` according to `aria-pressed`. После удаления focus
+возвращается на opener picker, если chip исчез; после result rerender focus
+возвращается в search, а новый pressed state объявляется live count. Ни цвет, ни `+`/`✓` не являются
+единственным state.
+
+До successful initialization trigger и popover имеют `hidden`, а visible
+fallback говорит `Для выбора монтажников включите JavaScript или вернитесь к
+карточке объекта.` Init сначала атомарно валидирует весь dataset, затем снимает
+hidden и скрывает fallback. Load/error/parser rejection оставляет fallback,
+zero hidden IDs и zero request/session/domain mutation.
+
+Инженеры сохраняют нормативный §6: radio group, допустимый legacy prefill и
+отдельный unchecked confirmation checkbox. Это не read-only reference из
+карточки. Пользователь выбирает и явно подтверждает инженера до будущего
+upload command.
+
+Read-only response содержит GET form на canonical path, neutral link `Отмена`
+на карточку и helper `Нужен шаблон?`, но без file input, multipart, CSRF,
+upload/template submit или mutation. Эти controls принадлежат отдельно gated
+HTTP command composition. Eligibility, provenance, ordering, authorization,
+GET/HEAD/error precedence и zero-mutation правила сохраняются.
+
+| Старый clause | v0.2 replacement |
+|---|---|
+| §1 installer checkbox part | picker contract выше; engineer radio/confirmation остаются |
+| §4 card link `Сформировать распоряжение` | `Загрузить распоряжение` |
+| §5 checkbox markup | inert data + result buttons + exact hidden selected IDs |
+| §7 installer empty state | `Нет допустимых монтажников.` без picker/results |
+| §8 heading/breadcrumb/intro/form controls | exact v0.2 values выше; engineer §6; external picker script; no command controls |
+| §9 installer checkbox example | insertion-independent picker data order `1042, 2088`, initially no hidden selected IDs |
+| §10 assertions naming old markup | same authorization/failure/zero-write outcomes over v0.2 representation |
 
 ## 1. Цель и единственный acceptance tracer
 
@@ -228,10 +339,12 @@ Expected values must be literals from this specification, never production mappi
 - POST, CSRF/session/Origin policy, body parsing/limits, PRG and command invocation;
 - сохранение draft/selection, validation response, submit button или preview документа;
 - `prepareAssignmentOrder`, renderer/artifacts/download;
-- conflicts/load/qualification/absence search, filtering, pagination or remote lookup;
+- workload/conflict/qualification/absence/remote search, server filtering и
+  pagination; exact local in-memory picker name/tab search входит в scope;
 - changed assignment, registration, opening, checklist;
 - new catalog sync/import/history policy or stale-age threshold;
-- custom CSS/JS, `shlz-ui` source changes or Select behavior asset;
+- любой custom JS кроме exact same-origin `/pilot/assets/picker.js`; `shlz-ui`
+  source changes и Select behavior asset;
 - изменение domain model, `CONTEXT.md`, ADR или broad object-card redesign.
 
 ## 13. Решения и доказательства

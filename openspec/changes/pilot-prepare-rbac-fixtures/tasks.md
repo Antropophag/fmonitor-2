@@ -11,6 +11,9 @@
   заявляет transport no-read; verification: strict validate, fresh independent
   Gate 1 review и explicit owner approval новых exact hashes. Прежние
   approvals и Gate 2/3 reviews остаются historical.
+- [x] 1.6 Согласовать artifacts с owner-approved upload-first GET
+  `PILOT-PREPARE-FORM-001 v0.2`; verification: strict OpenSpec, fresh
+  independent Gate 1 review и exact-hash owner approval до tests.
 
 ## 2. Gates 2–3 — RED и review
 
@@ -23,11 +26,11 @@
 
 ## 3. Gate 4 — minimal fixture GREEN
 
-- [ ] 3.1 Подключить exact prepare GET/HEAD route к stable local authorization seam перед process-capability/form reads и seed-ить canonical actors/roles/local permission + отдельную process capability; verification: prepare verifier GREEN, negative cases не получают positive env.
-- [ ] 3.2 Сохранить POST command untouched, full process/artifact/audit snapshots и redaction; verification: rejected GET cases byte-equivalent кроме authority fixture.
+- [x] 3.1 Подключить exact prepare GET/HEAD route к stable local authorization seam перед process-capability/form reads и seed-ить canonical actors/roles/local permission + отдельную process capability; verification: prepare verifier GREEN, negative cases не получают positive env.
+- [x] 3.2 Сохранить POST command untouched, full process/artifact/audit snapshots и redaction; verification: rejected GET cases byte-equivalent кроме authority fixture.
 
 ## 4. Verification, Gate 5 и Done
 
-- [ ] 4.1 Запустить prepare/local-auth DB suites, architecture, lint и full verify; verification: owned failures исчезли без assertion weakening.
-- [ ] 4.2 Получить independent code review APPROVED; test changes возвращают Gate 2.
-- [ ] 4.3 Обновить operations status и Done только после Gates 1–5 и strict OpenSpec.
+- [x] 4.1 Запустить prepare/local-auth DB suites, architecture, lint и full verify; verification: owned failures исчезли без assertion weakening.
+- [x] 4.2 Получить independent code review APPROVED; test changes возвращают Gate 2.
+- [x] 4.3 Обновить operations status и Done только после Gates 1–5 и strict OpenSpec.

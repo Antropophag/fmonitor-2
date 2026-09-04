@@ -16,6 +16,8 @@ Prepare-form verifier считает legacy identity/process capability дост
 - Не выводить prepare из `objects.read` и не давать wildcard/legacy fallback.
 - Сохранить exact method/path, unknown object, wrong state, local denial,
   process-capability denial, DB failure, no-handler-read и redaction assertions.
+- Согласовать GET/HEAD fixture с owner-approved upload-first representation
+  `PILOT-PREPARE-FORM-001 v0.2`; state-changing upload остаётся вне slice.
 - Уточнить public HTTP boundary для fully delivered unsupported-method
   payload: application admission не достигает authorization/domain/form work и
   не отражает payload в 405 response; PHP built-in transport может
