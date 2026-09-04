@@ -43,8 +43,7 @@ final class PilotView
             'roles'=>'<path d="M6 3.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm12 0a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM2 19.5c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5H2Zm12 0c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5h-8Z"/>',
         ];
         if($name==='otiz')return '<svg class="fm2-nav-icon fm2-nav-icon--shlz" viewBox="0 0 24 25" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-bar-chart-square-plus"/></svg>';
-        $path=\preg_replace_callback('/[0-9]/',static fn(array$match):string=>'&#x3'.$match[0].';',$paths[$name]??'')??'';
-        return '<svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true">'.$path.'</svg>';
+        return '<svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true">'.($paths[$name]??'').'</svg>';
     }
     public static function document(HttpUser $user,string $title,string $current,string $breadcrumb,string $content):string
     {
