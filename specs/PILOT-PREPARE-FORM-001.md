@@ -29,25 +29,40 @@ state-changing submit.
 
 Каждая inert record — ровно один empty `span` с exact attributes
 `data-id`, `data-name`, `data-tab`, `data-position`, `data-busy`,
-`data-selected`; значения HTML-escaped, ID canonical decimal, tab — шесть
-цифр, `data-selected=0` для initial GET. Parser читает только эти six dataset
-fields из direct template descendants и fail closed: duplicate/unknown/missing
-field, invalid ID/tab/flag, malformed UTF-8 либо больше 500 records даёт
+`data-selected`; значения HTML-escaped. `data-id` — canonical unpadded decimal
+`installerTabId` и future hidden value (`1042`), `data-tab` — display-only
+шесть цифр (`001042`), `data-busy` — empty либо `YYYY-MM-DD`,
+`data-selected=0` initial. Parser читает только эти six dataset fields из
+direct template descendants и fail closed: duplicate/unknown/missing field,
+invalid ID/tab/flag/date, несогласованные ID/tab, malformed UTF-8 либо больше 500 records даёт
 redacted `503`, а не partial picker.
 
-Единственный script — `<script src="/pilot/assets/picker.js" defer></script>`;
-successful GET получает approved script CSP, HEAD сохраняет headers/empty body,
-asset имеет exact JavaScript media type и immutable bytes. Error/redirect и
-asset responses не получают script permission. Load/error не отправляет форму
-и не создаёт selection/session/domain state.
+Единственный route-specific script — `<script
+src="/pilot/assets/picker.js" defer></script>` после shared navigation asset.
+Exact `GET|HEAD /pilot/assets/picker.js` наследует asset admission: GET `200`,
+exact JavaScript media type/length/cache и immutable bytes; HEAD те же
+headers/empty body; другой method — `405/Allow: GET, HEAD`; missing, unreadable,
+changed или non-regular configured asset — redacted `503`. Asset/error/redirect
+responses получают BASE_CSP без script permission; successful prepare HTML —
+SCRIPT_CSP. Никаких CDN/remote/inline/fallback bytes.
 
 Все picker controls, кроме search input, имеют explicit `type=button`. Open
-button имеет `aria-controls=installer-picker` и синхронный `aria-expanded`;
+button имеет `aria-controls=installer-picker`, initial `aria-expanded=false` и синхронный state;
 popover получает focus в search, Escape закрывает и возвращает focus opener,
 Tab остаётся в native document order без trap. Result buttons имеют exact
 `aria-pressed`; removal button exact accessible name `Убрать {ФИО}`. Count и
 result meta находятся в `aria-live=polite`, selection summary имеет label
-`Выбранные монтажники`. Ни цвет, ни `+`/`✓` не являются единственным state.
+`Выбранные монтажники`. Exact announcements: `Введите минимум 2 символа`,
+`Найдено: {N}`, `Найдено {N}. Показаны первые 20`, `Ничего не найдено.
+Проверьте ФИО или табельный номер.`, `Выбрано: {N}`. После удаления focus
+возвращается на opener picker, если chip исчез. Ни цвет, ни `+`/`✓` не являются
+единственным state.
+
+До successful initialization trigger и popover имеют `hidden`, а visible
+fallback говорит `Для выбора монтажников включите JavaScript или вернитесь к
+карточке объекта.` Init сначала атомарно валидирует весь dataset, затем снимает
+hidden и скрывает fallback. Load/error/parser rejection оставляет fallback,
+zero hidden IDs и zero request/session/domain mutation.
 
 Инженеры сохраняют нормативный §6: radio group, допустимый legacy prefill и
 отдельный unchecked confirmation checkbox. Это не read-only reference из

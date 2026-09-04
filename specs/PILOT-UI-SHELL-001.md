@@ -58,7 +58,10 @@ Production PHP source разделён минимум на:
 
 Ни один route handler не хранит полный HTML-документ или page-sized heredoc/string. View не выполняет SQL, authorization, process commands, file writes или header decisions. View model содержит только уже утверждённые нормализованные значения и URLs.
 
-JavaScript и `@shlz/behaviors` в этом срезе не подключаются. Все переходы — обычные ссылки; все controls формы — native HTML.
+JavaScript и `@shlz/behaviors` в исходном shell-срезе не подключаются. Successor
+prepare v0.2 разрешает только exact same-origin `/pilot/assets/picker.js` по
+своему CSP/asset/accessibility contract; остальные shell controls остаются
+native HTML без нового behavior JS.
 
 ## 4. Configured shared shell, навигация и доступность — `PILOT-UI-SHELL-001-A`
 
@@ -204,7 +207,7 @@ Rejected route, method, Host, identity, authorization, missing object, predecess
 - POST/command handling, CSRF/session, validation submit and PRG notifications;
 - selecting/saving people, preparing/downloading/registering/opening an order;
 - new queue process projection, domain facts, task/SLA inference or fake progress;
-- search/filter/pagination and behavior JavaScript;
+- search/filter/pagination и behavior JavaScript вне exact prepare picker v0.2;
 - `shlz-ui` edits, copied components/tokens or local imitation of its component families;
 - refactoring InstallationProcess, legacy Bitrix history, harness, CI or deployment.
 
