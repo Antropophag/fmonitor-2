@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v5 OWNER-APPROVED**
-Версия: **v5**
+Статус: **v6 OWNER-APPROVED CHECKLIST-EVIDENCE AMENDMENT**
+Версия: **v6**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1094,12 +1094,22 @@ requests = {schema:"aoou-requests-v1",items:[{requestId,status,reasonCode,retrya
 fingerprints = {schema:"aoou-fingerprints-v1",items:[{fingerprint,requestId,rootOriginalId,currentRevisionId}]}
 events = {schema:"aoou-events-v1",items:[{eventId,eventType,caseId,orderId,rootOriginalId,revisionId,occurredAt,actorUserId}]}
 safeAudits = {schema:"aoou-audits-v1",items:[{auditId,requestId,actorIdentity,mode,caseId,orderId,status,reasonCode,attemptedAt}]}
-unchangedProcess = {schema:"aoou-process-v1",orderCompositionSha256,caseSha256,openingSha256,tasksSha256,decoySha256}
+unchangedProcess = {schema:"aoou-process-v1",orderCompositionSha256,caseSha256,openingSha256,tasksSha256,checklistSha256,decoySha256}
 privateBlobs = {schema:"aoou-blobs-v1",stages:[{opaqueIdentity,byteSize,createdAtUtc}],finalized:[{opaqueIdentity,sha256,byteSize,finalizedAtUtc}]}
 safeLogs = {schema:"aoou-logs-v1",items:[{sequence,event,correlationId,safeFields}]}
 ```
 
-Nulls explicit; hashes lower-case. `correctionReason` exists only in protected verifier evidence and never result/log. MariaDB acceptance MUST use production repository plus this read-only evidence adapter on a fresh connection; in-memory Gate 2 may prove initial seam wiring but cannot satisfy persistence/CAS/failure matrix. Evidence inventory is observation only and MUST NOT feed maintenance candidate enumeration or mutation.
+Nulls explicit; hashes lower-case. `checklistSha256` is the digest of the
+canonical, key-sorted checklist-availability projection for the exact
+`(caseId, orderId)`: every checklist identity and its availability state,
+ordered by binary checklist identity, including the empty projection. It is
+independent from `tasksSha256`; neither digest may stand in for the other.
+`correctionReason` exists only in protected verifier evidence and never
+result/log. MariaDB acceptance MUST use production repository plus this
+read-only evidence adapter on a fresh connection; in-memory Gate 2 may prove
+initial seam wiring but cannot satisfy persistence/CAS/failure matrix. Evidence
+inventory is observation only and MUST NOT feed maintenance candidate
+enumeration or mutation.
 
 Worker config JSON has exact keys matching `AssignmentOrderOriginalWorkerConfig`, no extras, mode `real|injected_passive`, canonical fault enum/null; password file, safe-log file and config are verifier-owned mode 0600 outside repo. `safeLogFile` is an absolute canonical existing regular owner/root-owned non-symlink path outside the repository, with no NUL/control or `..` component, validated before password content or database access under the same rules as evidence config. The worker never creates or repairs it. Each child binds its real `AssignmentOrderOriginalSafeLogObserver` exclusively to that exact file; the independent evidence-reader config MUST use the same canonical path identity for the corresponding run. No environment variable, mutable global, default basename, private-root convention or callback may select another log target. Each child opens the shared MariaDB DSN/prefix and private root, constructs real repository/storage through the declared factories, injects only fixed clock/IDs/inspector/fault/barrier, then builds the same application via verification factory. Objects/connections are never serialized.
 

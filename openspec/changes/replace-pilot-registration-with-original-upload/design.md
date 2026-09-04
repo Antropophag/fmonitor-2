@@ -64,6 +64,10 @@ reader знает canonical original tables напрямую, не исполь�
 `information_schema`, private SQL из теста, command repository или test
 callbacks. Это делает requests/fingerprints/domain/events/audits/process/blob/log
 snapshots независимыми и одновременно не создаёт второй mutation seam.
+Closed `aoou-process-v1` shape содержит отдельный `checklistSha256`
+для canonical checklist identities/availability exact case/order; он не
+выводится из `tasksSha256`, чтобы no-mutation matrix была
+sensitivity-testable без private SQL в verifier.
 Config grammar, pre-access path ownership/mode checks, no-create safe-log policy
 и optional-final-LF + post-strip ASCII `0x20..0x7E` password parsing exact; construction/read/close totality
 выражена одним fixed `AssignmentOrderOriginalEvidenceUnavailable`, а close

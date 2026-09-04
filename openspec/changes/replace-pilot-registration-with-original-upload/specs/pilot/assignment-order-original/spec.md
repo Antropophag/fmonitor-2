@@ -200,7 +200,11 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
-- **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/process/blob/log snapshots и после `close()` не оставляет ресурсов
+- **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, а после `close()` не оставляет ресурсов
+
+#### Scenario: Checklist availability наблюдается отдельно
+- **WHEN** verifier сравнивает process snapshot до и после command attempt
+- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256` для canonical key-sorted checklist identities и availability states exact case/order, включая empty projection; `tasksSha256` не заменяет этот digest
 
 #### Scenario: Evidence config invalid or read fails
 - **WHEN** config/path/password-file/prefix invalid либо evidence read/close падает
