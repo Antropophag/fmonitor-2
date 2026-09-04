@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v11 GATE 1 REREVIEW PENDING — PROCESS OBSERVABILITY AMENDMENT**
-Версия: **v11**
+Статус: **v12 GATE 1 REREVIEW PENDING — PROCESS OBSERVABILITY AMENDMENT**
+Версия: **v12**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1104,7 +1104,7 @@ only these values define repeat versus conflict.
 The production evidence reader derives `checklistSha256` only from the exact
 target `fm2_installation_cases` row: checklist identity is
 `installation-case-<caseId>`; availability is `available` exactly when
-`process_state='opened'`, `actual_start_date`, `opened_at` and
+`process_state='working'`, `actual_start_date`, `opened_at` and
 `opened_by_user_id` are all non-null, otherwise `blocked_until_opening`.
 Original tables, assignment-order status and process tasks are not inputs, so
 accepting an original cannot change this projection. The reader derives
@@ -1362,11 +1362,15 @@ privateBlobs = {schema:"aoou-blobs-v1",stages:[{opaqueIdentity,byteSize,createdA
 safeLogs = {schema:"aoou-logs-v1",items:[{sequence,event,correlationId,safeFields}]}
 ```
 
-Nulls explicit; hashes lower-case. `checklistSha256` is the digest of the
-canonical, key-sorted checklist-availability projection for the exact
-`(caseId, orderId)`: every checklist identity and its availability state,
-ordered by binary checklist identity, including the empty projection. It is
-independent from `tasksSha256`; neither digest may stand in for the other.
+Nulls explicit; hashes lower-case. `unchangedProcessCanonicalJson(caseId,
+orderId)` first requires that both target rows exist and the order belongs to
+the case; missing/mismatched target throws the fixed
+`AssignmentOrderOriginalEvidenceUnavailable` without partial JSON. Its
+`checklistSha256` hashes exactly one case-owned checklist projection described
+above; a valid target therefore never has an empty checklist projection.
+`decoySha256` includes the explicit empty projection when no other case exists.
+`checklistSha256` is independent from `tasksSha256`; neither digest may stand in
+for the other.
 `correctionReason` exists only in protected verifier evidence and never
 result/log. MariaDB acceptance MUST use production repository plus this
 read-only evidence adapter on a fresh connection; in-memory Gate 2 may prove

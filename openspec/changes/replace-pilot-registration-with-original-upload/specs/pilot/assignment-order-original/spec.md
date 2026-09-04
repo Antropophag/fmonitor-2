@@ -216,7 +216,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Checklist availability наблюдается отдельно
 - **WHEN** verifier сравнивает process snapshot до и после command attempt
-- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256`, выведенный только из target case opening state (`available` только при opened + all opening fields, иначе `blocked_until_opening`); original/order/task facts не являются inputs и `tasksSha256` не заменяет этот digest
+- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256`, выведенный только из target case opening state (`available` только при `working` + all opening fields, иначе `blocked_until_opening`); valid target всегда даёт ровно одну case-owned checklist identity, missing/mismatched case/order даёт fixed evidence-unavailable без partial JSON; original/order/task facts не являются inputs и `tasksSha256` не заменяет этот digest
 
 #### Scenario: Unrelated decoy facts наблюдаемы
 - **WHEN** reader строит `decoySha256` для exact target case
