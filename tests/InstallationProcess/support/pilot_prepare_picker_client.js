@@ -112,17 +112,34 @@ const ui = execute(source, base);
 equal([ui.opener.hidden, ui.dialog.hidden, ui.fallback.hidden], [false, true, true], "successful initialization atomically enables picker and hides fallback");
 equal(ui.inputs.children.length, 0, "initial hidden IDs");
 const mixedPeople = [record({ id: "1042", name: "Иванов", tab: "001042", position: "Монтажник", busy: "", selected: "0" }), record({ id: "2088", name: "Петров", tab: "002088", position: "Монтажник", busy: "", selected: "0" })];
-const mixedProvenance = new Node("ul");
-for (const data of [{ id: "1042", name: "Иванов", source: "one_c", updatedAt: "2026-08-27T18:15:00+03:00" }, { id: "2088", name: "Петров", source: "alternate", updatedAt: "2026-08-27T17:15:00+03:00" }]) { const row = new Node("li"); row.setAttribute("data-id", data.id); row.setAttribute("data-source", data.source); row.setAttribute("data-updated-at", data.updatedAt); row.textContent = `${data.name} · Источник кадровых данных: ${data.source} · Актуально на: ${data.updatedAt}`; mixedProvenance.append(row); }
+const provenanceData = [{ id: "1042", name: "Иванов", source: "one_c", updatedAt: "2026-08-27T18:15:00+03:00" }, { id: "2088", name: "Петров", source: "alternate", updatedAt: "2026-08-27T17:15:00+03:00" }];
+function provenanceRow(data, tag = "li") { const row = new Node(tag); row.setAttribute("data-id", data.id); row.setAttribute("data-source", data.source); row.setAttribute("data-updated-at", data.updatedAt); row.textContent = `${data.name} · Источник кадровых данных: ${data.source} · Актуально на: ${data.updatedAt}`; return row; }
+function provenanceList(rows = provenanceData.map((data) => provenanceRow(data))) { const list = new Node("ul"); list.childNodes = rows;list.children = rows.filter((row) => row.nodeType === 1);for (const row of rows) row.parentNode = list;return list; }
+const mixedProvenance = provenanceList();
+equal(mixedProvenance.children.map((row) => [row.tagName, row.getAttributeNames().sort(), row.dataset.id, row.textContent]), [["LI", ["data-id", "data-source", "data-updated-at"], "1042", "Иванов · Источник кадровых данных: one_c · Актуально на: 2026-08-27T18:15:00+03:00"], ["LI", ["data-id", "data-source", "data-updated-at"], "2088", "Петров · Источник кадровых данных: alternate · Актуально на: 2026-08-27T17:15:00+03:00"]], "positive provenance exact rows cardinality order attributes IDs and text");
 const mixedUi = execute(source, mixedPeople, mixedProvenance);
 equal(mixedProvenance.hidden, true, "validated mixed provenance fallback list hidden after initialization");
 mixedUi.search.value = "иванов"; mixedUi.search.dispatch("input");
 const mixedText = mixedUi.results.children[0].children[1];
 equal(mixedText.children[2].className, "fm2-picker-result-provenance", "dynamic result provenance follows name and details");
 equal(mixedText.children[2].textContent, "Источник кадровых данных: one_c · Актуально на: 2026-08-27T18:15:00+03:00", "dynamic result exact associated provenance");
-const mismatchedProvenance = new Node("ul");const mismatchedRow = new Node("li");mismatchedRow.setAttribute("data-id", "2088");mismatchedRow.setAttribute("data-source", "wrong");mismatchedRow.setAttribute("data-updated-at", "2026-08-27T18:15:00+03:00");mismatchedRow.textContent = "Иванов · Источник кадровых данных: wrong · Актуально на: 2026-08-27T18:15:00+03:00";mismatchedProvenance.append(mismatchedRow);
-const mismatchUi = execute(source, [mixedPeople[0]], mismatchedProvenance);
-equal([mismatchUi.opener.hidden, mismatchUi.fallback.hidden, mismatchedProvenance.hidden], [true, false, false], "mismatched provenance association remains atomically fail closed");
+mixedUi.search.value = "петров"; mixedUi.search.dispatch("input");const secondMixedText = mixedUi.results.children[0].children[1];equal(secondMixedText.children[2].className, "fm2-picker-result-provenance", "second dynamic provenance follows name and details");equal(secondMixedText.children[2].textContent, "Источник кадровых данных: alternate · Актуально на: 2026-08-27T17:15:00+03:00", "second dynamic result exact associated provenance");
+const provenanceMutations = [];
+provenanceMutations.push(provenanceList([provenanceRow(provenanceData[0])]));
+provenanceMutations.push(provenanceList([...provenanceData.map((data) => provenanceRow(data)), provenanceRow({ id: "3000", name: "Лишний", source: "x", updatedAt: "2026-08-27T16:00:00+03:00" })]));
+provenanceMutations.push(provenanceList([...provenanceData].reverse().map((data) => provenanceRow(data))));
+provenanceMutations.push(provenanceList([provenanceRow(provenanceData[0]), new TextNode("forbidden"), provenanceRow(provenanceData[1])]));
+for (const mutate of [
+  (row) => row.setAttribute("data-extra", "x"),
+  (row) => { row.attributes.delete("data-source"); delete row.dataset.source; },
+  (row) => { row.tagName = "DIV"; },
+  (row) => row.append(new Node("b")),
+  (row) => { row.textContent += " forbidden"; },
+  (row) => { row.dataset.id = "9999"; row.attributes.set("data-id", "9999"); },
+  (row) => { row.dataset.source = "wrong"; row.attributes.set("data-source", "wrong"); },
+  (row) => { row.dataset.updatedAt = "wrong"; row.attributes.set("data-updated-at", "wrong"); },
+]) { const rows = provenanceData.map((data) => provenanceRow(data));mutate(rows[1]);provenanceMutations.push(provenanceList(rows)); }
+for (const [index, invalid] of provenanceMutations.entries()) { const rejected = execute(source, mixedPeople, invalid);equal([rejected.opener.hidden, rejected.fallback.hidden, invalid.hidden, rejected.inputs.children.length], [true, false, false, 0], `malformed provenance association ${index + 1} stays atomically fail closed`); }
 const equalNameTie = execute(source, [
   record({ id: "99", name: "Одинаковое Имя", tab: "000099", position: "Монтажник", busy: "", selected: "0" }),
   record({ id: "100", name: "Одинаковое Имя", tab: "000100", position: "Монтажник", busy: "", selected: "0" }),
