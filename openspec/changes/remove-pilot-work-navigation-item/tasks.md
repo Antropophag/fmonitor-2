@@ -8,7 +8,7 @@
 - [x] 2.1 Написать exhaustive shared-renderer DOM RED для всех десяти current states и exact sibling/accessibility/icon bytes; использовать root/object-list как canonical HTTP sentinels и existing route-specific tests как wiring evidence остальных callers; verification: текущий item даёт intended RED без восьми дублирующих DB/server fixtures.
 - [x] 2.2 Доказать через renderer + два HTTP sentinels GET/HEAD, minimal/broad actor parity, repeat/zero business-audit mutation, exact sibling order/attributes/icons и inherited `/pilot` redirect плюс `401/403/404/405/503` preservation; verification: existing route tests сохраняют собственные admission/content assertions.
 - [x] 2.3 Обновить только superseded work-navigation predecessor assertion в object-list RBAC verifier на approved absence contract, сохранив RBAC facts/matrix и собственный intended RED; verification: canonical actor проходит setup/identity/authorization и current production даёт exact navigation RED `Expected: 0 / Actual: 2` до неизменённой RBAC matrix.
-- [x] 2.4 Поручить fresh independent test reviewer проверить exhaustive renderer sensitivity, root/object-list HTTP sentinels, existing route-specific wiring evidence и downstream RBAC isolation; verification: exact test hashes получают `APPROVED` до production edit.
+- [ ] 2.4 Поручить fresh independent test reviewer проверить exhaustive renderer sensitivity, root/object-list HTTP sentinels, existing route-specific wiring evidence и downstream RBAC isolation; verification: exact test hashes получают `APPROVED` до production edit.
 
 ## 3. Gate 4 — minimal GREEN
 

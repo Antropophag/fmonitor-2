@@ -184,6 +184,7 @@ try {
     foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$reader}`@`%`");
     foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$denialReader}`@`%`");
     $environment=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$reader,'FMONITOR_DB_PASSWORD'=>$password,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18'];
+    $pilotCss=(string)realpath(dirname(__DIR__,2).'/app/PilotHttp/pilot.css');assertSameValue(true,$pilotCss!==''&&basename($pilotCss)==='pilot.css','configured removal sentinel has canonical pilot CSS');$environment['FMONITOR_PILOT_CSS_PATH']=$pilotCss;$polProtectedPaths[]=$pilotCss;
     $before=polSnapshot($db);
 
     // Own-slice RED is deliberately first. Generic pre-GREEN fixtures grant via
@@ -204,6 +205,8 @@ try {
     assertSameValue($get['status'],$head['status'],'HEAD status parity'); assertSameValue(polHeader($get,'content-length'),polHeader($head,'content-length'),'HEAD GET Content-Length parity'); assertSameValue('',$head['body'],'HEAD empty body');
     $document=polDocument($get['body']); $xpath=new DOMXPath($document);
     assertSameValue(1,(int)$xpath->evaluate("count(/html[@lang='ru']/body[contains(concat(' ',normalize-space(@class),' '),' shlz-scope ')])"),'inherited Russian scoped shell');
+    assertSameValue(1,(int)$xpath->evaluate("count(/html/head/link[@rel='stylesheet' and @href='/pilot/assets/pilot.css'])"),'configured pilot CSS composition');
+    assertSameValue(1,(int)$xpath->evaluate("count(//div[contains(concat(' ',normalize-space(@class),' '),' fm2-shell ')])"),'configured shared shell composition');
     assertSameValue(1,(int)$xpath->evaluate("count(//main[@id='main-content' and @tabindex='-1']//h1[normalize-space(.)='Объекты монтажа'])"),'exact collection heading');
     assertSameValue(0,(int)$xpath->evaluate("count(//nav[@aria-label='Основная навигация']//*[normalize-space(.)='Моя работа' or @aria-label='Моя работа'] | //nav[@aria-label='Основная навигация']//a[@href='/pilot/'])"),'approved removal predecessor: no work item or root navigation destination');
     assertSameValue(1,(int)$xpath->evaluate("count(//a[@href='/pilot/objects' and normalize-space(.)='Объекты монтажа'])"),'current collection navigation');

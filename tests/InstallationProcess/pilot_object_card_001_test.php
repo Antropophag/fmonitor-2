@@ -269,11 +269,23 @@ function pocStructure(array $response, int $expectedObjectId, bool $allowPrepare
     assertSameValue(['/pilot/assets/shlz.css','/pilot/assets/pilot.css'], array_map(static fn(DOMNode $node): string => (string) $node->attributes?->getNamedItem('href')?->nodeValue, iterator_to_array($xpath->query('/html/head/link[@rel="stylesheet"]'))), $why . ' exact shared stylesheet order');
     assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//*[@aria-current='page'])"),$why.' exactly one current primary-navigation item');
     assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//a[@href='/pilot/objects' and @aria-current='page' and normalize-space(.)='Объекты монтажа'])"),$why.' exact object-list primary navigation is current');
-    $expectedAnchors=['#main-content','/pilot/objects','/pilot/objects','/pilot/objects'];
-    if($allowPrepare)$expectedAnchors[]='/pilot/objects/'.$expectedObjectId.'/assignment-order/prepare';
-    $actualAnchors=array_map(static fn(DOMNode $node):string=>(string)$node->attributes?->getNamedItem('href')?->nodeValue,iterator_to_array($xpath->query('//a[@href]')));
-    sort($expectedAnchors,SORT_STRING);sort($actualAnchors,SORT_STRING);
-    assertSameValue($expectedAnchors,$actualAnchors,$why.' exact configured anchor href multiset permits no extra process/action link');
+    $expectedAnchors=[
+        ['skip','#main-content','Перейти к содержанию'],
+        ['primary-navigation','/pilot/objects','Объекты монтажа'],
+        ['breadcrumb','/pilot/objects','Объекты монтажа'],
+    ];
+    if($allowPrepare)$expectedAnchors[]=['process-action','/pilot/objects/'.$expectedObjectId.'/assignment-order/prepare','Загрузить распоряжение'];
+    $actualAnchors=[];
+    foreach($xpath->query('//a[@href]')as$anchor){
+        $role=$anchor->getAttribute('href')==='#main-content'?'skip':(
+            $xpath->query("ancestor::nav[@aria-label='Основная навигация']",$anchor)->length===1?'primary-navigation':(
+                $xpath->query("ancestor::nav[@aria-label='Хлебные крошки']",$anchor)->length===1?'breadcrumb':'process-action'
+            )
+        );
+        $actualAnchors[]=[$role,$anchor->getAttribute('href'),trim((string)preg_replace('/\s+/u',' ',$anchor->textContent))];
+    }
+    usort($expectedAnchors,static fn(array $a,array $b):int=>$a<=>$b);usort($actualAnchors,static fn(array $a,array $b):int=>$a<=>$b);
+    assertSameValue($expectedAnchors,$actualAnchors,$why.' exact configured anchor role/href/label set permits no missing or extra link');
     foreach (['Идентификация','Сроки','Распоряжение и команда','Работы','Последние события'] as $group) {
         $sections = $xpath->query("//section[./*[self::h2 or self::h3][normalize-space(.)='".$group."'] and ./dl]");
         assertSameValue(1, $sections->length, $why . ' definition-list section ' . $group);
