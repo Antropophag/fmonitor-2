@@ -56,7 +56,7 @@ $checkCount = static function (mysqli $db, string $table): int {
     $statement->bind_param('s', $table); $statement->execute();
     return (int) $statement->get_result()->fetch_assoc()['n'];
 };
-$normalizeCheck=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));$value=str_replace("'[[:cntrl:]/\\\\\\\\]'","'[[:cntrl:]/\\\\]'",$value);$value=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$value);while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}return$value;};
+$normalizeCheck=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));$value=str_replace("'[[:cntrl:]/\\\\\\\\]'","'[[:cntrl:]/\\\\]'",$value);$value=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$value);while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}$left="revision_number=1andprevious_revision_idisnullandcorrection_reasonisnullandevent_type='assignment_order_original_accepted'";$right="revision_number>1andprevious_revision_idisnotnullandchar_length(trim(correction_reason))between1and500andevent_type='assignment_order_original_corrected'";if($value===$left.'or'.$right||$value==='('.$left.')or('.$right.')')$value='(('.$left.')or('.$right.'))';return$value;};
 $checks = static function (mysqli $db, string $table) use ($normalizeCheck): array {
     $statement=$db->prepare('SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY BINARY CHECK_CLAUSE');
     $statement->bind_param('s',$table);$statement->execute();
@@ -113,6 +113,15 @@ try {
     assertSameValue(null,$defaultProbe[0][5],'Implicit nullable NULL default canonicalizes to PHP null.');
     assertSameValue(null,$defaultProbe[1][5],'Explicit nullable DEFAULT NULL canonicalizes to the same PHP null.');
     assertSameValue(true,is_string($defaultProbe[2][5])&&$defaultProbe[2][5]!==''&&$defaultProbe[2][5]!=='NULL','Non-null wrong default remains observable and distinct.');
+    $revisionChecks=array_values(array_filter(Contract::checks()[Contract::TABLES[1]],static fn(string$value):bool=>str_contains($value,'revision_number=1andprevious_revision_id')));
+    assertSameValue(1,count($revisionChecks),'Exactly one approved revision boolean CHECK oracle is selected.');
+    $revisionColumns="revision_number INT UNSIGNED NOT NULL, previous_revision_id VARCHAR(80) NULL, correction_reason VARCHAR(500) NULL, event_type VARCHAR(80) NOT NULL";
+    $approvedRevisionSql="((revision_number=1 AND previous_revision_id IS NULL AND correction_reason IS NULL AND event_type='assignment_order_original_accepted') OR (revision_number>1 AND previous_revision_id IS NOT NULL AND CHAR_LENGTH(TRIM(correction_reason)) BETWEEN 1 AND 500 AND event_type='assignment_order_original_corrected'))";
+    $preflight->query("CREATE TABLE `revision_boolean_probe` ({$revisionColumns}, CHECK ({$approvedRevisionSql})) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    assertSameValue($revisionChecks,$checks($preflight,'revision_boolean_probe'),'Approved revision OR CHECK survives MariaDB redundant-parentheses removal.');
+    $wrongRevisionSql=str_replace('revision_number>1','revision_number>=1',$approvedRevisionSql);
+    $preflight->query("CREATE TABLE `wrong_revision_boolean_probe` ({$revisionColumns}, CHECK ({$wrongRevisionSql})) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    assertSameValue(false,$revisionChecks===$checks($preflight,'wrong_revision_boolean_probe'),'Changed revision operator remains observable after boolean canonicalization.');
     $preflight->close();
 
     foreach (Contract::PROJECTIONS as $name => [$expectedHash, $literal]) {
