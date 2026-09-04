@@ -368,8 +368,9 @@ $database = 't_poc_' . $token;
 $readerUser = 'poc_' . $token;
 $readerPassword = 'select-' . $token;
 $userOnlyReader = 'pocu_' . $token;
+$identityOnlyReader = 'poci_' . $token;
 $ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pilotCss='';$pocProtectedPaths=[];$pocMutableRoots=[];
-    $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $anonymous = null; $escapeServer = null;
+    $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $crossSource = null; $anonymous = null; $escapeServer = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
@@ -381,7 +382,7 @@ try {
     $db->query("CREATE TABLE legacy_logs(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,message VARCHAR(255)) ENGINE=InnoDB AUTO_INCREMENT=41");
     $db->query("CREATE TABLE legacy_ci_sessions(id VARCHAR(128) PRIMARY KEY,data BLOB NOT NULL) ENGINE=InnoDB");
     $db->query("INSERT INTO legacy_users_roles VALUES(5,'Active',1),(6,'Inactive',0)");
-    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1),(25,'Active Permissionless Reader','permissionless@shlz.ru',5,1)");
+    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1),(25,'Active Permissionless Reader','permissionless@shlz.ru',5,1),(26,'Legacy Inactive Local Active','legacy-inactive@shlz.ru',5,0),(27,'Legacy Role Inactive Local Active','legacy-role-inactive@shlz.ru',6,1),(28,'Legacy Active Local Inactive','local-inactive@shlz.ru',5,1),(29,'Legacy Active Local Missing','local-missing@shlz.ru',5,1)");
     $legacy = [
         [4512,'  Москва, ул. Примерная, д. 10  ',' 2 ',' 77-000123 ','2026-10-05 14:30:00','2026-12-18 09:15:00','2026-12-20','2099-01-01','FORBIDDEN-4512'],
         [4513,'Москва, ул. Вторая, д. 7','1','77-000124','2026-10-01',null,'2026-11-30','2099-01-02','FORBIDDEN-4513'],
@@ -421,7 +422,7 @@ try {
     $db->query("ALTER TABLE legacy_fm_maintable ADD ptoactdate VARCHAR(40) NULL, ADD responsstroicontrol VARCHAR(80) NULL");
     $db->query("UPDATE legacy_fm_maintable SET ptoactdate='2026-09-30' WHERE id=4518");
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
-    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']],25=>['email'=>'permissionless@shlz.ru','fullName'=>'Active Permissionless Reader']],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']],25=>['email'=>'permissionless@shlz.ru','fullName'=>'Active Permissionless Reader'],26=>['email'=>'legacy-inactive@shlz.ru','fullName'=>'Legacy Inactive Local Active'],27=>['email'=>'legacy-role-inactive@shlz.ru','fullName'=>'Legacy Role Inactive Local Active'],28=>['email'=>'local-inactive@shlz.ru','fullName'=>'Legacy Active Local Inactive','status'=>0]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
     assertSameValue(
         [
             ['user_id'=>'18','full_name'=>'Сидоров Сергей Сергеевич'],
@@ -430,6 +431,9 @@ try {
             ['user_id'=>'21','full_name'=>'Inactive role'],
             ['user_id'=>'24','full_name'=>'Актор <script>actor-secret</script> &quot;'],
             ['user_id'=>'25','full_name'=>'Active Permissionless Reader'],
+            ['user_id'=>'26','full_name'=>'Legacy Inactive Local Active'],
+            ['user_id'=>'27','full_name'=>'Legacy Role Inactive Local Active'],
+            ['user_id'=>'28','full_name'=>'Legacy Active Local Inactive'],
         ],
         $db->query("SELECT CAST(user_id AS CHAR) user_id,full_name FROM {$processPrefix}fm2_pilot_users ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),
         'Local RBAC fixture pins every asserted HTTP identity to its independently fixed expected full name.',
@@ -540,6 +544,17 @@ try {
     $admin->query("CREATE USER `{$userOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users` TO `{$userOnlyReader}`@`%`");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users_roles` TO `{$userOnlyReader}`@`%`");
+    $admin->query("CREATE USER `{$identityOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
+    foreach ([
+        'legacy_users'=>['id','name','email','role_id','status'],
+        'legacy_users_roles'=>['id','status'],
+        $processPrefix.'fm2_pilot_users'=>['user_id','full_name','email','status','activation_state'],
+        $processPrefix.'fm2_pilot_roles'=>['role_id','status'],
+        $processPrefix.'fm2_pilot_user_roles'=>['user_id','role_id'],
+    ] as $table=>$columns) {
+        $quotedColumns=implode(',',array_map(static fn(string $column):string=>'`'.$column.'`',$columns));
+        $admin->query("GRANT SELECT ({$quotedColumns}) ON `{$database}`.`{$table}` TO `{$identityOnlyReader}`@`%`");
+    }
     $privilegeRows = $admin->query("SELECT TABLE_NAME,COLUMN_NAME,PRIVILEGE_TYPE FROM information_schema.COLUMN_PRIVILEGES WHERE GRANTEE=\"'{$readerUser}'@'%'\" AND TABLE_SCHEMA='{$database}' ORDER BY TABLE_NAME,COLUMN_NAME")->fetch_all(MYSQLI_ASSOC);
     $actualReads = [];
     foreach ($privilegeRows as $privilegeRow) {
@@ -577,6 +592,27 @@ try {
     pocGroupVisible($a,'Распоряжение и команда',['Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'Example A exact empty current-basis/team consequence');
     pocGroupVisible($a,'Работы',['Работы ещё не открыты'],'Example A exact closed checklist consequence');
     foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability/action ' . $secret);
+
+    foreach ([26=>'legacy inactive despite active local identity',27=>'legacy role inactive despite active local identity'] as $actorId=>$why) {
+        $principal=$actorId===26?'legacy-inactive@shlz.ru':'legacy-role-inactive@shlz.ru';
+        $crossSource=pocStart(array_replace($environment,['REMOTE_USER'=>$principal,'FMONITOR_AUTH_USER_ID'=>(string)$actorId]));
+        try { pocError(pocParity($crossSource['port'],'/pilot/objects/4512'),403,"Access denied.\n",$why.' denied before card read'); }
+        finally { pocStop($crossSource);$crossSource=null; }
+    }
+    $identityOnlyEnvironment=array_replace($environment,['FMONITOR_DB_USER'=>$identityOnlyReader,'REMOTE_USER'=>'legacy-inactive@shlz.ru','FMONITOR_AUTH_USER_ID'=>'26']);
+    $crossSource=pocStart($identityOnlyEnvironment);
+    try { pocError(pocParity($crossSource['port'],'/pilot/objects/4512'),403,"Access denied.\n",'exact identity lookup needs no unrelated local columns or card-table privilege'); }
+    finally { pocStop($crossSource);$crossSource=null; }
+
+    foreach ([28=>['local-inactive@shlz.ru','Legacy Active Local Inactive'],29=>['local-missing@shlz.ru','Legacy Active Local Missing']] as $actorId=>[$principal,$expectedName]) {
+        $crossSource=pocStart(array_replace($environment,['REMOTE_USER'=>$principal,'FMONITOR_AUTH_USER_ID'=>(string)$actorId]));
+        try {
+            $legacyAuthorized=pocParity($crossSource['port'],'/pilot/objects/4512');
+            pocSuccess($legacyAuthorized,[$expectedName,'Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'active legacy identity ignores non-authoritative local state actor '.$actorId);
+            pocStructure($legacyAuthorized,4512,false,'active legacy identity actor '.$actorId.' shared-shell DOM');
+            foreach (['Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $forbidden) assertSameValue(false,str_contains($legacyAuthorized['body'],$forbidden),'legacy-only card has no process action actor '.$actorId);
+        } finally { pocStop($crossSource);$crossSource=null; }
+    }
 
     $permissionless = pocStart(array_replace($environment, ['REMOTE_USER'=>'permissionless@shlz.ru','FMONITOR_AUTH_USER_ID'=>'25']));
     $permissionlessCard = pocParity($permissionless['port'], '/pilot/objects/4512');
@@ -707,10 +743,11 @@ try {
     assertSameValue($before, pocSnapshot($db), 'success HEAD 404 and 403 are observationally read-only');
     echo "PASS: PILOT-OBJECT-CARD-001 public HTTP card\n";
 } finally {
-    pocStop($server); pocStop($capable); pocStop($permissionless); pocStop($anonymous); pocStop($escapeServer);
+    pocStop($server); pocStop($capable); pocStop($permissionless); pocStop($crossSource); pocStop($anonymous); pocStop($escapeServer);
     if ($db instanceof mysqli) $db->close();
     $admin->query("DROP DATABASE IF EXISTS `{$database}`");
     $admin->query("DROP USER IF EXISTS `{$readerUser}`@`%`");
-    $admin->query("DROP USER IF EXISTS `{$userOnlyReader}`@`%`"); $admin->close();
+    $admin->query("DROP USER IF EXISTS `{$userOnlyReader}`@`%`");
+    $admin->query("DROP USER IF EXISTS `{$identityOnlyReader}`@`%`"); $admin->close();
     if($ownership!==[])TaskOwnedArtifactRoot::cleanup($ownership,'poc',$token);
 }
