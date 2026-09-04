@@ -122,6 +122,20 @@ try {
     $wrongRevisionSql=str_replace('revision_number>1','revision_number>=1',$approvedRevisionSql);
     $preflight->query("CREATE TABLE `wrong_revision_boolean_probe` ({$revisionColumns}, CHECK ({$wrongRevisionSql})) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     assertSameValue(false,$revisionChecks===$checks($preflight,'wrong_revision_boolean_probe'),'Changed revision operator remains observable after boolean canonicalization.');
+    foreach(Contract::foreignKeys()as$table=>$foreignManifest)foreach($foreignManifest as[$localColumn]){
+        $covered=false;foreach(Contract::keys()[$table]as[, $keyColumns])if(explode(',',$keyColumns)[0]===$localColumn){$covered=true;break;}
+        assertSameValue(true,$covered,"Every approved {$table}.{$localColumn} FK has a leading support index in the seven-table manifest.");
+    }
+    $preflight->query("CREATE TABLE `fk_probe_parent` (id BIGINT UNSIGNED PRIMARY KEY) ENGINE=InnoDB");
+    $preflight->query("CREATE TABLE `fk_probe_correct` (id BIGINT UNSIGNED PRIMARY KEY,parent_id BIGINT UNSIGNED NULL,FOREIGN KEY(parent_id) REFERENCES `fk_probe_parent`(id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB");
+    $supportKeys=[['INDEX','parent_id'],['PRIMARY','id']];
+    assertSameValue($supportKeys,$keys($preflight,'fk_probe_correct'),'MariaDB automatic exact-column FK support index matches the oracle.');
+    $preflight->query("CREATE TABLE `fk_probe_missing` (id BIGINT UNSIGNED PRIMARY KEY,parent_id BIGINT UNSIGNED NULL) ENGINE=InnoDB");
+    assertSameValue(false,$supportKeys===$keys($preflight,'fk_probe_missing'),'Missing FK support index remains observable.');
+    $preflight->query("CREATE TABLE `fk_probe_extra` (id BIGINT UNSIGNED PRIMARY KEY,parent_id BIGINT UNSIGNED NULL,extra_id BIGINT UNSIGNED NULL,KEY(extra_id),FOREIGN KEY(parent_id) REFERENCES `fk_probe_parent`(id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB");
+    assertSameValue(false,$supportKeys===$keys($preflight,'fk_probe_extra'),'Extra support index remains observable.');
+    $preflight->query("CREATE TABLE `fk_probe_wrong` (id BIGINT UNSIGNED PRIMARY KEY,parent_id BIGINT UNSIGNED NULL,wrong_id BIGINT UNSIGNED NULL,KEY(wrong_id),FOREIGN KEY(parent_id) REFERENCES `fk_probe_parent`(id) ON UPDATE RESTRICT ON DELETE RESTRICT) ENGINE=InnoDB");
+    assertSameValue(false,$supportKeys===$keys($preflight,'fk_probe_wrong'),'Wrong-column index cannot stand in for the automatic exact FK support index.');
     $preflight->close();
 
     foreach (Contract::PROJECTIONS as $name => [$expectedHash, $literal]) {
