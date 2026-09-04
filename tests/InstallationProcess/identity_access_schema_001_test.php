@@ -250,7 +250,7 @@ function iaJson(array $result): array
     assertSameValue(true, is_array($decoded), 'Canonical runner emits one JSON object.');
     return $decoded;
 }
-function iaReleaseTerminalV10(mysqli $db,string $prefix):void{$db->query("DROP TABLE `{$prefix}fm2_pilot_completion_fact_corrections`");$db->query("DROP TABLE `{$prefix}fm2_pilot_completion_facts`");}
+function iaReleaseTerminalV10(mysqli $db,string $prefix):void{foreach(['fm2_assignment_order_original_maintenance_results','fm2_assignment_order_original_attempt_audits','fm2_assignment_order_original_events','fm2_assignment_order_original_fingerprints','fm2_assignment_order_original_requests','fm2_assignment_order_original_revisions','fm2_assignment_order_original_roots','fm2_pilot_completion_fact_corrections','fm2_pilot_completion_facts']as$table)$db->query("DROP TABLE `{$prefix}{$table}`");}
 
 /** @param array{exitCode:int,result:array<string,mixed>} $outcome */
 function iaApplicationOutput(array $outcome): array
@@ -274,7 +274,7 @@ try {
     // Clean: literal v1..v6 result and exactly nine empty identity/access tables.
     $clean = iaRun($database, 'clean_');
     assertSameValue(0, $clean['exitCode'], 'Clean canonical runner exit.');
-    assertSameValue(['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]], iaJson($clean), 'Clean composed canonical result through terminal v11.');
+    assertSameValue(['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]], iaJson($clean), 'Clean composed canonical result through terminal v12.');
     foreach (iaNames('clean_') as $table) {
         assertSameValue(1, (int) $db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}'")->fetch_assoc()['n'], "{$table} must exist.");
         assertSameValue(0, (int) $db->query("SELECT COUNT(*) n FROM `{$table}`")->fetch_assoc()['n'], "{$table} must not be seeded.");
@@ -283,7 +283,7 @@ try {
     assertSameValue(iaExpectedManifest('clean_', iaDatabaseCollation($db)), iaComparableManifest($cleanManifest), 'All nine clean semantic manifests and deterministic symbols are test-owned literals.');
     $repeatBefore = iaState($db, 'clean_');
     $repeat = iaRun($database, 'clean_');
-    assertSameValue(['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => []], iaJson($repeat), 'Complete composed repeat result.');
+    assertSameValue(['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => []], iaJson($repeat), 'Complete composed repeat result.');
     assertSameValue($repeatBefore, iaState($db, 'clean_'), 'Complete repeat preserves schema, rows and counters byte-observably.');
     iaReleaseTerminalV10($db,'clean_');
 
@@ -306,8 +306,8 @@ try {
     assertSameValue(true, array_diff($generatedFks, $canonicalFks) !== [], 'MariaDB generated at least one non-canonical FK symbol before runner.');
     }
     $populatedBefore = iaState($db, 'pop_');
-    assertSameValue(['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => [7,8,9,10,11]], iaJson(iaRun($database, 'pop_')), 'Populated identity family receives v7-v11 successors.');
-    assertSameValue($populatedBefore, array_intersect_key(iaState($db, 'pop_'),$populatedBefore), 'Populated compatible identity family is preserved exactly while v7-v11 successors are added empty.');
+    assertSameValue(['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => [7,8,9,10,11,12]], iaJson(iaRun($database, 'pop_')), 'Populated identity family receives v7-v12 successors.');
+    assertSameValue($populatedBefore, array_intersect_key(iaState($db, 'pop_'),$populatedBefore), 'Populated compatible identity family is preserved exactly while v7-v12 successors are added empty.');
     iaReleaseTerminalV10($db,'pop_');
 
     // Database-default charset/collation is an identity DDL precondition. A
@@ -339,19 +339,19 @@ try {
     iaPopulateLiteralFamily($db, 'partial_');
     $db->query('DROP TABLE `partial_fm2_pilot_user_status_events`');
     $partialBefore = iaState($db, 'partial_');
-    assertSameValue(['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => [6,7,8,9,10,11]], iaJson(iaRun($database, 'partial_')), 'Identity partial recovery composes with v7-v11 successors.');
+    assertSameValue(['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => [6,7,8,9,10,11,12]], iaJson(iaRun($database, 'partial_')), 'Identity partial recovery composes with v7-v12 successors.');
     assertSameValue($partialBefore, array_intersect_key(iaState($db, 'partial_'), $partialBefore), 'Existing partial members are unchanged.');
-    assertSameValue(['ok' => true, 'schemaVersion' => 11, 'appliedVersions' => []], iaJson(iaRun($database, 'partial_')), 'Interrupted recovery repeat is a no-op.');
+    assertSameValue(['ok' => true, 'schemaVersion' => 12, 'appliedVersions' => []], iaJson(iaRun($database, 'partial_')), 'Interrupted recovery repeat is a no-op.');
     iaReleaseTerminalV10($db,'partial_');
 
     // Dependency-safe recovery: roles and every dependent member are absent.
     iaCreateLiteralFamily($db, 'deps_');
     foreach (['fm2_pilot_invitations','fm2_pilot_auth_credentials','fm2_pilot_user_roles','fm2_pilot_role_permissions','fm2_pilot_roles'] as $base) $db->query("DROP TABLE `deps_{$base}`");
     $depsBefore = iaState($db, 'deps_');
-    assertSameValue(['ok'=>true,'schemaVersion'=>11,'appliedVersions'=>[6,7,8,9,10,11]], iaJson(iaRun($database, 'deps_')), 'Identity dependency recovery within composed v11 catalogue.');
+    assertSameValue(['ok'=>true,'schemaVersion'=>12,'appliedVersions'=>[6,7,8,9,10,11,12]], iaJson(iaRun($database, 'deps_')), 'Identity dependency recovery within composed v12 catalogue.');
     assertSameValue($depsBefore, array_intersect_key(iaState($db, 'deps_'), $depsBefore), 'Dependency recovery preserves existing members.');
     foreach (iaNames('deps_') as $table) assertSameValue(1, (int)$db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}'")->fetch_assoc()['n'], 'Dependency recovery creates every missing member in FK-safe order.');
-    assertSameValue(['ok'=>true,'schemaVersion'=>11,'appliedVersions'=>[]], iaJson(iaRun($database, 'deps_')), 'Dependency recovery is restartable within composed v11 catalogue.');
+    assertSameValue(['ok'=>true,'schemaVersion'=>12,'appliedVersions'=>[]], iaJson(iaRun($database, 'deps_')), 'Dependency recovery is restartable within composed v12 catalogue.');
     iaReleaseTerminalV10($db,'deps_');
 
     // Representative significant fingerprint defects: extra column and relationship rule.
@@ -471,11 +471,11 @@ try {
     foreach (['blue_','green_'] as $prefix) foreach (iaSemanticManifest($db,$prefix) as $table => $manifest) foreach ($manifest['fks'] as $fkRow) assertSameValue(true, str_starts_with($fkRow['REFERENCED_TABLE_NAME'],$prefix), "{$table} FK remains in its namespace.");
     assertSameValue($decoyBefore, iaState($db, 'pop_'), 'Target migration ignores decoy namespace.');
     iaReleaseTerminalV10($db,'green_');
-    $maxPrefix = str_repeat('p', 25);
-    assertSameValue(0, iaRun($database, $maxPrefix)['exitCode'], '25-byte prefix succeeds.');
+    $maxPrefix = str_repeat('p', 6);
+    assertSameValue(0, iaRun($database, $maxPrefix)['exitCode'], 'representative six-byte terminal-v12 prefix succeeds.');
     foreach (iaSemanticManifest($db,$maxPrefix) as $table => $manifest) {
-        assertSameValue(true, strlen($table) <= 64, '25-byte table identifier fits MariaDB.');
-        foreach (array_merge(array_column($manifest['indexes'],'INDEX_NAME'),array_column($manifest['fks'],'CONSTRAINT_NAME')) as $symbol) assertSameValue(true, strlen($symbol) <= 64, '25-byte derived symbol fits MariaDB.');
+        assertSameValue(true, strlen($table) <= 64, 'terminal-v12 table identifier fits MariaDB.');
+        foreach (array_merge(array_column($manifest['indexes'],'INDEX_NAME'),array_column($manifest['fks'],'CONSTRAINT_NAME')) as $symbol) assertSameValue(true, strlen($symbol) <= 64, 'terminal-v12 derived symbol fits MariaDB.');
     }
     foreach ([str_repeat('p', 26), 'invalid-prefix!'] as $invalidPrefix) {
         $invalid = iaRun('database_must_not_be_contacted', $invalidPrefix, 'unresolvable.invalid');

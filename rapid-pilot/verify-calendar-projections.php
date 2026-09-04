@@ -12,13 +12,13 @@ use FMonitor2\PilotHttp\HttpUser;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $host=getenv('FMONITOR_TEST_DB_HOST')?:getenv('FMONITOR_DB_HOST')?:'127.0.0.1';$user=getenv('FMONITOR_TEST_DB_ADMIN_USER')?:getenv('FMONITOR_DB_USER')?:'root';$password=getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local';$port=(int)(getenv('FMONITOR_TEST_DB_PORT')?:getenv('FMONITOR_DB_PORT')?:23306);$database='t_calendar_'.bin2hex(random_bytes(5));$admin=new mysqli($host,$user,$password,'',$port);$admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");$db=new mysqli($host,$user,$password,$database,$port);$db->set_charset('utf8mb4');
-$token='cal_'.bin2hex(random_bytes(5)).'_';$p=$token.'p_';$l=$token.'l_';$tables=[];
+$token='cal_'.bin2hex(random_bytes(5)).'_';$p='calp_';$l=$token.'l_';$tables=[];
 $create=static function(string$name,string$sql)use($db,&$tables):void{$db->query("CREATE TABLE `{$name}` ({$sql}) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");$tables[]=$name;};
 try{
     $environment=[];foreach([getenv(),$_ENV]as$source)if(is_array($source))foreach($source as$name=>$value)if(is_string($name)&&is_scalar($value))$environment[$name]=(string)$value;
     $environment=array_merge($environment,['FMONITOR_DB_HOST'=>$host,'FMONITOR_DB_PORT'=>(string)$port,'FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$user,'FMONITOR_DB_PASSWORD'=>$password,'FMONITOR_PROCESS_TABLE_PREFIX'=>$p]);
     $process=proc_open([PHP_BINARY,$root.'/bin/fmonitor2-migrate.php'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,$root,$environment);if(!is_resource($process))throw new RuntimeException('calendar canonical migration did not start');fclose($pipes[0]);$migrationOut=(string)stream_get_contents($pipes[1]);$migrationErr=(string)stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$migrationExit=proc_close($process);$migration=json_decode(trim($migrationOut),true);
-    if($migrationExit!==0||!is_array($migration)||($migration['ok']??null)!==true||($migration['schemaVersion']??null)!==11||($migration['appliedVersions']??null)!==[1,2,3,4,5,6,7,8,9,10,11]||$migrationErr!=='')throw new RuntimeException('calendar canonical migration did not reach exact terminal v11 catalogue');
+    if($migrationExit!==0||!is_array($migration)||($migration['ok']??null)!==true||($migration['schemaVersion']??null)!==12||($migration['appliedVersions']??null)!==[1,2,3,4,5,6,7,8,9,10,11,12]||$migrationErr!=='')throw new RuntimeException('calendar canonical migration did not reach exact terminal v12 catalogue');
     $create($l.'fm_maintable','id BIGINT PRIMARY KEY,ordadr_address VARCHAR(255),entrance VARCHAR(40),regnumber VARCHAR(80),workdatestart DATETIME NULL,workdatefinish DATETIME NULL,plan_finish_date DATETIME NULL,workdateendadjusted DATETIME NULL,ptoactdate DATETIME NULL');
     $db->query("INSERT INTO `{$l}fm_maintable` VALUES
         (1,'Адрес проверки','1','1001','2026-08-10',NULL,'2026-08-29','2026-08-28','2026-08-30'),
