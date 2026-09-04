@@ -1,49 +1,22 @@
 <?php
-
 declare(strict_types=1);
-
 namespace FMonitor2\AssignmentOrderOriginal;
-
-require_once __DIR__ . '/AssignmentOrderOriginalApplication.php';
+require_once __DIR__.'/AssignmentOrderOriginalApplication.php';
 
 final class FMonitorPassivePdfInspector implements AssignmentOrderOriginalPdfInspector
 {
-    public const ALGORITHM_ID = 'fmonitor-passive-pdf-v1';
-
-    public function algorithmId(): string
-    {
-        return self::ALGORITHM_ID;
-    }
-
-    public function inspect(string $completedBytes): AssignmentOrderOriginalPdfInspection
-    {
-        if (preg_match('/\A%PDF-1\.[4-7]\R/', $completedBytes) !== 1
-            || preg_match('/startxref\R([0-9]+)\R%%EOF\R?\z/', $completedBytes, $match) !== 1) {
-            return AssignmentOrderOriginalPdfInspection::invalid();
-        }
-
-        $xrefOffset = (int) $match[1];
-        if ($xrefOffset <= 0 || $xrefOffset >= strlen($completedBytes)) {
-            return AssignmentOrderOriginalPdfInspection::invalid();
-        }
-        $xref = substr($completedBytes, $xrefOffset);
-        if (!str_starts_with($xref, "xref\n")
-            && preg_match('/\A[0-9]+ 0 obj\R<<[^>]*\/Type\s*\/XRef\b/s', $xref) !== 1) {
-            return AssignmentOrderOriginalPdfInspection::invalid();
-        }
-
-        if (preg_match('/\/Encrypt\b/', $completedBytes) === 1) {
-            return AssignmentOrderOriginalPdfInspection::unsafe();
-        }
-        if (preg_match('/\/(?:JavaScript|JS|OpenAction|AA|Launch|EmbeddedFiles|Filespec|FileAttachment|RichMedia|Movie|Sound|URI|GoToR|SubmitForm|ImportData)\b/', $completedBytes) === 1) {
-            return AssignmentOrderOriginalPdfInspection::unsafe();
-        }
-        if (preg_match('/\/Type\s*\/Catalog\b/', $completedBytes) !== 1
-            || preg_match('/\/Type\s*\/Pages\b[^>]*\/Count\s+([1-9][0-9]*)\b/s', $completedBytes) !== 1
-            || preg_match('/\/Type\s*\/Page\b/', $completedBytes) !== 1) {
-            return AssignmentOrderOriginalPdfInspection::invalid();
-        }
-
-        return AssignmentOrderOriginalPdfInspection::passive();
-    }
+    public const ALGORITHM_ID='fmonitor-passive-pdf-v1'; private const MAX_OBJECTS=100000,MAX_DEPTH=100,MAX_INFLATED=67108864; private int$inflated=0;
+    public function algorithmId():string{return self::ALGORITHM_ID;}
+    public function inspect(string$b):AssignmentOrderOriginalPdfInspection{try{$this->inflated=0;if(preg_match('/\A%PDF-1\.[4-7]\R/',$b)!==1||preg_match('/startxref\R([0-9]+)\R%%EOF\R?\z/',$b,$m)!==1)throw new \UnexpectedValueException();if(preg_match('/\\/Encrypt\\b/',$b)===1)return AssignmentOrderOriginalPdfInspection::unsafe();$revs=$this->chain($b,(int)$m[1]);$active=[];$root=null;foreach(array_reverse($revs)as$r){foreach($r['entries']as$n=>$e)$active[$n]=$e;if($r['root']!==null)$root=$r['root'];}if($root===null||count($active)>self::MAX_OBJECTS)throw new \UnexpectedValueException();$objects=$this->objects($b,$active);foreach($objects as$body)if($this->forbidden($body))return AssignmentOrderOriginalPdfInspection::unsafe();$key=$root[0].':'.$root[1];if(!isset($objects[$key])||preg_match('/\/Type\s*\/Catalog\b/',$objects[$key])!==1)throw new \UnexpectedValueException();$seen=[];$this->walk($objects,$key,0,$seen);if(preg_match('/\/Pages\s+([0-9]+)\s+([0-9]+)\s+R\b/',$objects[$key],$p)!==1)throw new \UnexpectedValueException();$seen=[];if($this->pages($objects,$p[1].':'.$p[2],0,$seen)<1)throw new \UnexpectedValueException();return AssignmentOrderOriginalPdfInspection::passive();}catch(\UnexpectedValueException){return AssignmentOrderOriginalPdfInspection::invalid();}catch(\Throwable){return AssignmentOrderOriginalPdfInspection::failed();}}
+    private function chain(string$b,int$o):array{$seen=[];$out=[];while(true){if($o<=0||$o>=strlen($b)||isset($seen[$o]))throw new \UnexpectedValueException();$seen[$o]=1;$r=str_starts_with(substr($b,$o),"xref\n")?$this->classic($b,$o):$this->xrefStream($b,$o);$out[]=$r;if($r['prev']===null)return$out;$o=$r['prev'];}}
+    private function classic(string$b,int$o):array{$p=$o+5;$e=[];while(true){if(substr($b,$p,8)==="trailer\n"){$p+=8;break;}if(preg_match('/\G([0-9]+)\s+([0-9]+)\R/A',$b,$m,0,$p)!==1)throw new \UnexpectedValueException();$first=(int)$m[1];$count=(int)$m[2];$p+=strlen($m[0]);if($first+$count>self::MAX_OBJECTS+1)throw new \UnexpectedValueException();for($i=0;$i<$count;$i++){if(preg_match('/\G([0-9]{10})\s+([0-9]{5})\s+([nf])\s*\R/A',$b,$x,0,$p)!==1)throw new \UnexpectedValueException();$p+=strlen($x[0]);$n=$first+$i;if(isset($e[$n]))throw new \UnexpectedValueException();if($x[3]==='n')$e[$n]=['t'=>1,'o'=>(int)$x[1],'g'=>(int)$x[2]];}}[$d]=$this->dict($b,$p);$size=$this->integer($d,'Size');if($size===null||$size>self::MAX_OBJECTS)throw new \UnexpectedValueException();return['entries'=>$e,'root'=>$this->ref($d,'Root'),'prev'=>$this->integer($d,'Prev')];}
+    private function xrefStream(string$b,int$o):array{[$num,$gen,$d,$s]=$this->indirect($b,$o);if(preg_match('/\/Type\s*\/XRef\b/',$d)!==1)throw new \UnexpectedValueException();$size=$this->integer($d,'Size');if($size===null||$size>self::MAX_OBJECTS)throw new \UnexpectedValueException();$w=$this->ints($d,'W');if(count($w)!==3||array_sum($w)<1)throw new \UnexpectedValueException();$data=$this->decode($d,$s);$idx=$this->ints($d,'Index');if($idx===[])$idx=[0,$size];if(count($idx)%2)throw new \UnexpectedValueException();$row=array_sum($w);$p=0;$e=[];for($q=0;$q<count($idx);$q+=2)for($i=0;$i<$idx[$q+1];$i++){if($p+$row>strlen($data))throw new \UnexpectedValueException();$f=[];foreach($w as$z){$v=0;for($j=0;$j<$z;$j++)$v=($v<<8)|ord($data[$p++]);$f[]=$v;}$n=$idx[$q]+$i;if(isset($e[$n]))throw new \UnexpectedValueException();$t=$w[0]===0?1:$f[0];if($t===1)$e[$n]=['t'=>1,'o'=>$f[1],'g'=>$f[2]];elseif($t===2)$e[$n]=['t'=>2,'s'=>$f[1],'i'=>$f[2],'g'=>0];elseif($t!==0)throw new \UnexpectedValueException();}if($p!==strlen($data))throw new \UnexpectedValueException();$e[$num]??=['t'=>1,'o'=>$o,'g'=>$gen];return['entries'=>$e,'root'=>$this->ref($d,'Root'),'prev'=>$this->integer($d,'Prev')];}
+    private function objects(string$b,array$a):array{$out=[];$streams=[];foreach($a as$n=>$e)if($e['t']===1){[$an,$g,$d,$s,$body]=$this->indirect($b,$e['o'],true);if($an!==$n||$g!==$e['g'])throw new \UnexpectedValueException();$out[$n.':'.$g]=$body;if(preg_match('/\/Type\s*\/ObjStm\b/',$d)===1)$streams[$n]=[$d,$s];}foreach($a as$n=>$e)if($e['t']===2){if(!isset($streams[$e['s']]))throw new \UnexpectedValueException();[$d,$s]=$streams[$e['s']];$data=$this->decode($d,$s);$count=$this->integer($d,'N');$first=$this->integer($d,'First');if($count===null||$first===null||$first<0||$first>strlen($data))throw new \UnexpectedValueException();preg_match_all('/([0-9]+)\s+([0-9]+)/',substr($data,0,$first),$pairs,PREG_SET_ORDER);if(count($pairs)!==$count||!isset($pairs[$e['i']])||(int)$pairs[$e['i']][1]!==$n)throw new \UnexpectedValueException();$start=$first+(int)$pairs[$e['i']][2];$end=$e['i']+1<$count?$first+(int)$pairs[$e['i']+1][2]:strlen($data);$out[$n.':0']=trim(substr($data,$start,$end-$start));}return$out;}
+    private function indirect(string$b,int$o,bool$body=false):array{if(preg_match('/\G([0-9]+)\s+([0-9]+)\s+obj\R/A',$b,$m,0,$o)!==1)throw new \UnexpectedValueException();$start=$o+strlen($m[0]);[$d,$p]=$this->dict($b,$start);$s='';if(preg_match('/\G\s*stream\R/A',$b,$sm,0,$p)===1){$at=$p+strlen($sm[0]);$len=$this->integer($d,'Length');if($len===null||$len<0||substr($b,$at+$len,10)!=="\nendstream")throw new \UnexpectedValueException();$s=substr($b,$at,$len);$p=$at+$len+10;}$end=strpos($b,'endobj',$p);if($end===false)throw new \UnexpectedValueException();return$body?[(int)$m[1],(int)$m[2],$d,$s,substr($b,$start,$end-$start)]:[(int)$m[1],(int)$m[2],$d,$s];}
+    private function dict(string$b,int$p):array{while(isset($b[$p])&&ctype_space($b[$p]))$p++;if(substr($b,$p,2)!=='<<')throw new \UnexpectedValueException();$depth=0;$start=$p;for(;$p<strlen($b)-1;$p++){if(substr($b,$p,2)==='<<'){$depth++;$p++;}elseif(substr($b,$p,2)==='>>'){$depth--;$p++;if($depth===0)return[substr($b,$start,$p-$start+1),$p+1];}}throw new \UnexpectedValueException();}
+    private function decode(string$d,string$s):string{if(preg_match('/\/Filter\s*\/([A-Za-z0-9]+)/',$d,$m)===1){if($m[1]!=='FlateDecode')throw new \UnexpectedValueException();$x=@gzuncompress($s);if(!is_string($x))throw new \UnexpectedValueException();}else$x=$s;$this->inflated+=strlen($x);if($this->inflated>self::MAX_INFLATED)throw new \UnexpectedValueException();return$x;}
+    private function forbidden(string$x):bool{return preg_match('/\/(?:Encrypt|JavaScript|JS|OpenAction|AA|Launch|EmbeddedFiles|Filespec|FileAttachment|RichMedia|Movie|Sound|URI|GoToR|SubmitForm|ImportData)\b/',$x)===1;}
+    private function integer(string$d,string$k):?int{return preg_match('/\/'.$k.'\s+([0-9]+)\b/',$d,$m)===1?(int)$m[1]:null;}private function ints(string$d,string$k):array{if(preg_match('/\/'.$k.'\s*\[([^]]*)\]/s',$d,$m)!==1)return[];preg_match_all('/[0-9]+/',$m[1],$n);return array_map('intval',$n[0]);}private function ref(string$d,string$k):?array{return preg_match('/\/'.$k.'\s+([0-9]+)\s+([0-9]+)\s+R\b/',$d,$m)===1?[(int)$m[1],(int)$m[2]]:null;}
+    private function walk(array$o,string$k,int$d,array&$seen):void{if($d>self::MAX_DEPTH)throw new \UnexpectedValueException();if(isset($seen[$k]))return;if(!isset($o[$k]))throw new \UnexpectedValueException();$seen[$k]=1;preg_match_all('/([0-9]+)\s+([0-9]+)\s+R\b/',$o[$k],$r,PREG_SET_ORDER);foreach($r as$x)$this->walk($o,$x[1].':'.$x[2],$d+1,$seen);}
+    private function pages(array$o,string$k,int$d,array&$seen):int{if($d>self::MAX_DEPTH||isset($seen[$k])||!isset($o[$k]))throw new \UnexpectedValueException();$seen[$k]=1;$b=$o[$k];if(preg_match('/\/Type\s*\/Page\b/',$b)===1)return 1;if(preg_match('/\/Type\s*\/Pages\b/',$b)!==1||preg_match('/\/Kids\s*\[([^]]*)\]/s',$b,$m)!==1)throw new \UnexpectedValueException();preg_match_all('/([0-9]+)\s+([0-9]+)\s+R\b/',$m[1],$r,PREG_SET_ORDER);$n=0;foreach($r as$x)$n+=$this->pages($o,$x[1].':'.$x[2],$d+1,$seen);return$n;}
 }
