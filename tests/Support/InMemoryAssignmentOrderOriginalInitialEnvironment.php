@@ -53,6 +53,7 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public string $throwSecret = 'SECRET-PORT-DETAIL';
     /** @var array<string,int> */ public array $throwOnCall = [];
     /** @var array<string,int> */ public array $phaseCalls = [];
+    /** @var list<string> */ public array $portTrace = [];
     public ?string $storageFault = null;
     /** @var list<string> */
     public array $storageEvents = [];
@@ -160,7 +161,6 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
             }
             public function algorithmId(): string { return 'fmonitor-passive-pdf-v1'; }
         };
-        $storage = new InMemoryAssignmentOrderOriginalInitialStorage($owner);
         $repository = new InMemoryAssignmentOrderOriginalInitialRepository($owner);
         $lifecycle = new class($owner) implements AssignmentOrderOriginalLifecycleObserver {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
@@ -168,11 +168,11 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
         };
         $storageObserver = new class($owner) implements AssignmentOrderOriginalStorageObserver {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
-            public function observe(AssignmentOrderOriginalStorageEvent $event, ?string $opaqueIdentity): void { $this->owner->trip('storage_observer'); }
+            public function observe(AssignmentOrderOriginalStorageEvent $event, ?string $opaqueIdentity): void { $this->owner->portTrace[]='observer:'.$event->value;$this->owner->trip('storage_observer'); }
         };
         $faults = new class($owner) implements AssignmentOrderOriginalFaultInjector {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
-            public function before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint $point): void { $this->owner->trip('fault_injector'); }
+            public function before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint $point): void { $this->owner->portTrace[]='fault:'.$point->value;$this->owner->trip('fault_injector'); }
         };
         $safeLog = new class($owner) implements AssignmentOrderOriginalSafeLogObserver {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
@@ -188,6 +188,7 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
                 if ($this->owner->deliveryThrows) throw new \RuntimeException('verifier response loss detail must not escape through domain result');
             }
         };
+        $storage = new InMemoryAssignmentOrderOriginalInitialStorage($owner,$storageObserver,$faults);
 
         return new AssignmentOrderOriginalDependencies(
             $authorizer, $compositions, $clock, $ids, $inspector, $storage,
@@ -198,14 +199,14 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
 
 final class InMemoryAssignmentOrderOriginalInitialStorage implements AssignmentOrderOriginalPrivateStorage
 {
-    public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+    public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner,private AssignmentOrderOriginalStorageObserver$observer,private AssignmentOrderOriginalFaultInjector$faults) {}
     public function beginStage(): AssignmentOrderOriginalPrivateStage
     {
-        $this->owner->trip('fault_injector');
-        $this->owner->trip('storage_observer');
+        $this->faults->before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint::STAGE);
+        $this->observer->observe(AssignmentOrderOriginalStorageEvent::STAGE_BEGIN,'stage-0001');
         $this->owner->trip('stage_begin');
         $this->owner->storageEvents[] = 'STAGE_BEGIN';
-        return new InMemoryAssignmentOrderOriginalInitialStage($this->owner);
+        return new InMemoryAssignmentOrderOriginalInitialStage($this->owner,$this->observer,$this->faults);
     }
     public function listOrphans(string $cutoffUtc, int $limit, ?string $cursor): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalOrphanPage
     {
@@ -225,10 +226,10 @@ final class InMemoryAssignmentOrderOriginalInitialStorage implements AssignmentO
 final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrderOriginalPrivateStage
 {
     private string $bytes = '';
-    public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+    public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner,private AssignmentOrderOriginalStorageObserver$observer,private AssignmentOrderOriginalFaultInjector$faults) {}
     public function write(string $chunk): AssignmentOrderOriginalStorageStatus
     {
-        $this->owner->trip('fault_injector'); $this->owner->trip('storage_observer');
+        $this->faults->before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint::STAGE_WRITE);$this->observer->observe(AssignmentOrderOriginalStorageEvent::STAGE_WRITE,'stage-0001');
         $this->owner->trip('stage_write');
         $this->owner->storageEvents[] = 'STAGE_WRITE:' . strlen($chunk);
         if ($this->owner->storageFault === 'write') return AssignmentOrderOriginalStorageStatus::FAILED;
@@ -237,14 +238,14 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     }
     public function completedBytesForInspection(): string
     {
-        $this->owner->trip('fault_injector'); $this->owner->trip('storage_observer');
+        $this->observer->observe(AssignmentOrderOriginalStorageEvent::STAGE_DONE,'stage-0001');
         $this->owner->trip('stage_completed');
         $this->owner->storageEvents[] = 'STAGE_DONE';
         return $this->bytes;
     }
     public function finalize(string $sha256, int $byteSize): AssignmentOrderOriginalStorageOutcome
     {
-        $this->owner->trip('fault_injector'); $this->owner->trip('storage_observer');
+        $this->faults->before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint::PRIVATE_FINALIZE);$this->observer->observe(AssignmentOrderOriginalStorageEvent::FINALIZE_BEGIN,'private-content-0001');
         $this->owner->trip('stage_finalize');
         $this->owner->storageEvents[] = 'FINALIZE_BEGIN';
         if ($this->owner->storageFault === 'finalize') {
@@ -256,7 +257,7 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
         $this->owner->storedBytes = $this->bytes;
         $this->owner->leaseHeld = true;
         $this->owner->storageRecoveryOwnsLease = true;
-        $this->owner->storageEvents[] = 'FINALIZE_DONE';
+        $this->observer->observe(AssignmentOrderOriginalStorageEvent::FINALIZE_DONE,'private-content-0001');$this->owner->storageEvents[] = 'FINALIZE_DONE';
         $content = new class($sha256, $byteSize) implements AssignmentOrderOriginalPrivateContent {
             public function __construct(private string $digest, private int $size) {}
             public function opaqueIdentity(): string { return 'private-content-0001'; }
@@ -287,14 +288,14 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     }
     public function abort(): AssignmentOrderOriginalStorageStatus
     {
-        $this->owner->trip('fault_injector'); $this->owner->trip('storage_observer');
+        $this->faults->before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint::STAGE_ABORT);$this->observer->observe(AssignmentOrderOriginalStorageEvent::ABORT_BEGIN,'stage-0001');
         $this->owner->trip('stage_abort');
         $this->owner->storageEvents[] = 'ABORT_BEGIN';
         $this->bytes = '';
-        $this->owner->storageEvents[] = 'ABORT_DONE';
+        $this->observer->observe(AssignmentOrderOriginalStorageEvent::ABORT_DONE,'stage-0001');$this->owner->storageEvents[] = 'ABORT_DONE';
         return AssignmentOrderOriginalStorageStatus::OK;
     }
-    public function close(): void { $this->owner->trip('fault_injector'); $this->owner->trip('storage_observer'); $this->owner->trip('stage_close'); $this->owner->storageEvents[] = 'STAGE_CLOSE'; }
+    public function close(): void { $this->faults->before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint::STAGE_CLOSE);$this->observer->observe(AssignmentOrderOriginalStorageEvent::STAGE_CLOSE,'stage-0001');$this->owner->trip('stage_close');$this->owner->storageEvents[] = 'STAGE_CLOSE'; }
 }
 
 final class InMemoryAssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
