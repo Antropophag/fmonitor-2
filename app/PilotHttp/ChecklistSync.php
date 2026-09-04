@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\PilotHttp;
 
-require_once __DIR__.'/MariaDbInstallationCaseIdResolver.php';
+require_once __DIR__.'/MariaDbInstallationCaseIdResolver.php';require_once __DIR__.'/MariaDbChecklistProjectionStateReader.php';
 foreach(['InspectionEvidenceClock','InspectionRecording','InspectionEvidenceView','InspectionEvidenceApplication','CompleteInspectionItem','ItemCompletionResult','InstallerEvidence','ItemCompletionEvidence','InspectionItemCommandPolicy','ItemCompletionEvidenceCodec','InspectionEvidence','MariaDbInspectionAuthorization','MariaDbInspectionTransaction','MariaDbInspectionCaseDirectory','MariaDbInspectionTemplateDirectory','MariaDbInspectionEvidenceWriter','MariaDbInspectionEvidenceReader','MariaDbInspectionEvidenceEnvironment','ProductionInspectionEvidenceConfig','ProductionInspectionEvidenceFactory']as$file)require_once \dirname(__DIR__).'/InspectionEvidence/'.$file.'.php';
 
 use FMonitor2\InspectionEvidence\{CompleteInspectionItem,InspectionEvidenceClock,InspectionRecording,ProductionInspectionEvidenceConfig,ProductionInspectionEvidenceFactory};
