@@ -25,6 +25,26 @@ function pocDb(?string $database = null): mysqli
     return $db;
 }
 
+function pocMigrate(string $database, string $prefix): void
+{
+    $environment = [
+        'FMONITOR_DB_HOST' => getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1',
+        'FMONITOR_DB_PORT' => getenv('FMONITOR_TEST_DB_PORT') ?: '23306',
+        'FMONITOR_DB_NAME' => $database,
+        'FMONITOR_DB_USER' => getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root',
+        'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local',
+        'FMONITOR_PROCESS_TABLE_PREFIX' => $prefix,
+    ];
+    $command = ['/usr/bin/env', '-i'];
+    foreach ($environment as $name => $value) $command[] = $name . '=' . $value;
+    $command = [...$command, PHP_BINARY, dirname(__DIR__, 2) . '/bin/fmonitor2-migrate.php'];
+    $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2));
+    if (!is_resource($process)) throw new TestFailure('canonical migration start');
+    fclose($pipes[0]); $stdout=stream_get_contents($pipes[1]); $stderr=stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+    $exit=proc_close($process); $result=json_decode(trim($stdout),true);
+    assertSameValue([0,true,''],[$exit,$result['ok']??null,$stderr],'canonical migration prepares shared-shell fixture');
+}
+
 function pocPort(): int
 {
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
@@ -320,15 +340,17 @@ function pocSnapshot(mysqli $db): string
 
 
 $token = bin2hex(random_bytes(6));
+$processPrefix = 'poc_';
 $database = 't_poc_' . $token;
 $readerUser = 'poc_' . $token;
 $readerPassword = 'select-' . $token;
 $userOnlyReader = 'pocu_' . $token;
-$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pocProtectedPaths=[];$pocMutableRoots=[];
+$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pilotCss='';$pocProtectedPaths=[];$pocMutableRoots=[];
     $admin = pocDb(); $db = null; $server = null; $anonymous = null; $escapeServer = null;
 try {
-    $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$pocProtectedPaths=[$protectedArtifactRoot,$css];$pocMutableRoots=[$mutableRoot];
+    $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
+    pocMigrate($database,$processPrefix);
     $db = pocDb($database);
     $db->query("CREATE TABLE legacy_users_roles(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(120),status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $db->query("CREATE TABLE legacy_users(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),email VARCHAR(300),role_id BIGINT UNSIGNED,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -373,9 +395,14 @@ try {
     $statement = $db->prepare('INSERT INTO legacy_fm_maintable VALUES(?,?,?,?,?,?,?,?,?)');
     foreach ($legacy as $row) { $statement->bind_param('issssssss', ...$row); $statement->execute(); }
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
-    ProductionProcessSchemaMigration::apply($db);
-    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]]);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,'');
-    $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    $db->query("INSERT INTO {$processPrefix}fm2_process_user_capabilities(user_id,capability,position_snapshot) VALUES(18,'assignment_order.prepare',NULL)");
+    assertSameValue(
+        [['user_id'=>'18','capability'=>'assignment_order.prepare']],
+        $db->query("SELECT CAST(user_id AS CHAR) user_id,capability FROM {$processPrefix}fm2_process_user_capabilities ORDER BY user_id,capability")->fetch_all(MYSQLI_ASSOC),
+        'Shared-shell fixture keeps the capable actor separate and grants the broad reader no process capability.',
+    );
+    $db->query("INSERT INTO {$processPrefix}fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
         (1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (2,4513,'working','2026-10-03','2026-10-03T08:15:30+03:00',18,'2026-08-20T09:00:00+03:00','2026-10-03T08:15:30+03:00',4),
         (3,4514,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-10-02T09:00:00+03:00',2),
@@ -433,34 +460,36 @@ try {
         [351,35,1,'registered','2026-02-28','C35-Р',73,'Инженер','Должность','individual','Impossible opening calendar date','35','77-C35','2026-02-28','2026-03-31'],
         [371,37,1,'registered','2024-02-29','C37-Р',73,'Инженер','Должность','individual','Valid leap calendar dates','37','77-C37','2024-02-29','2024-03-31'],
     ];
-    $order = $db->prepare("INSERT INTO fm2_assignment_orders(id,installation_case_id,version_no,kind,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at,prepared_by_user_id) VALUES(?,?,?,'initial',?,?,?,?,?,?,?,?,?,?,?,?,'2026-10-01T09:00:00+03:00',18)");
+    $order = $db->prepare("INSERT INTO {$processPrefix}fm2_assignment_orders(id,installation_case_id,version_no,kind,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at,prepared_by_user_id) VALUES(?,?,?,'initial',?,?,?,?,?,?,?,?,?,?,?,?,'2026-10-01T09:00:00+03:00',18)");
     foreach ($orders as $row) { $order->bind_param('iiisssissssssss', ...$row); $order->execute(); }
-    $installer = $db->prepare("INSERT INTO fm2_order_installers VALUES(?,?,?,?,?,'2024-01-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00','2026-10-01',NULL,'add')");
+    $installer = $db->prepare("INSERT INTO {$processPrefix}fm2_order_installers VALUES(?,?,?,?,?,'2024-01-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00','2026-10-01',NULL,'add')");
     foreach ([[21,1057,'Смирнов Алексей Олегович','Монтажник','employed'],[21,1042,'Иванов Иван Иванович','Монтажник','employed'],[31,2014,'Предварительный Монтажник','Монтажник','employed'],[41,2015,'Готовый Монтажник','Монтажник','employed'],[51,2016,'Действующий Монтажник','Монтажник','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     foreach ([[81,9002,'Монтажник <script>installer-secret</script> & "Б"','Монтажник','employed'],[81,9001,'Альфа & <b>А</b>','Монтажник','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     foreach ([[241,2401,'   ','Монтажник','employed'],[251,2501,'Монтажник','   ','employed'],[261,0,'Монтажник','Должность','employed'],[271,2701,'Монтажник','Должность','invented_status'],[311,3101,'Монтажник','Должность','employed'],[321,3201,'Монтажник','Должность','employed'],[331,3301,'Монтажник','Должность','employed'],[341,3401,'Монтажник','Должность','employed'],[351,3501,'Монтажник','Должность','employed'],[371,3701,'Монтажник','Должность','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     $events = [[2,'older_hidden_event','2026-10-01T08:00:00+03:00'],[2,'assignment_order_prepared','2026-10-02T09:00:00+03:00'],[2,'assignment_order_registered','2026-10-02T15:10:00+03:00'],[2,'installation_opened','2026-10-03T08:15:30+03:00']];
-    $event = $db->prepare("INSERT INTO fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(?,?,?,18,'{\"secret\":\"EVENT-PAYLOAD-SECRET\"}')");
+    $event = $db->prepare("INSERT INTO {$processPrefix}fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(?,?,?,18,'{\"secret\":\"EVENT-PAYLOAD-SECRET\"}')");
     foreach ($events as $row) { $event->bind_param('iss', ...$row); $event->execute(); }
     $events = [[20,'durable_oldest','2099-12-31T23:59:59+03:00'],[20,'durable_second','2026-01-01T00:00:00+03:00'],[20,'durable_third','2025-01-01T00:00:00+03:00'],[20,'durable_newest','2024-01-01T00:00:00+03:00'],[28,'   ','2026-10-01T10:00:00+03:00'],[29,'valid_event','not-rfc3339'],[36,'impossible_calendar_event','2026-02-30T08:00:00+03:00'],[37,'valid_leap_event','2024-02-29T08:30:00+03:00']];
     foreach ($events as $row) { $event->bind_param('iss', ...$row); $event->execute(); }
-    $db->query("INSERT INTO fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(30,'valid_event','2026-10-01T10:00:00+03:00',0,'{}')");
+    $db->query("INSERT INTO {$processPrefix}fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(30,'valid_event','2026-10-01T10:00:00+03:00',0,'{}')");
 
     $admin->query("CREATE USER `{$readerUser}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $requiredReads = [
         'legacy_users'=>['id','name','email','role_id','status'],
         'legacy_users_roles'=>['id','status'],
         'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],
-        'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
-        'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
-        'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
-        'fm2_process_events'=>['id','installation_case_id','event_type','occurred_at','actor_user_id'],
+        $processPrefix.'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
+        $processPrefix.'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
+        $processPrefix.'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
+        $processPrefix.'fm2_process_events'=>['id','installation_case_id','event_type','occurred_at','actor_user_id','payload_json'],
+        $processPrefix.'fm2_process_user_capabilities'=>['user_id','capability','position_snapshot'],
+        $processPrefix.'fm2_migration_classification_provenance'=>['legacy_object_id','category','output_kind','output_id'],
     ];
     foreach ($requiredReads as $table => $columns) {
         $quotedColumns = implode(',', array_map(static fn(string $column): string => '`' . $column . '`', $columns));
         $admin->query("GRANT SELECT ({$quotedColumns}) ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     }
-    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
+    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables($processPrefix)as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     $admin->query("CREATE USER `{$userOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users` TO `{$userOnlyReader}`@`%`");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users_roles` TO `{$userOnlyReader}`@`%`");
@@ -477,11 +506,11 @@ try {
     $readerProbe = new mysqli(getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1', $readerUser, $readerPassword, $database, (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306));
     $readerProbe->set_charset('utf8mb4');
     assertSameValue('4512', (string) $readerProbe->query('SELECT id FROM legacy_fm_maintable WHERE id=4512')->fetch_row()[0], 'SELECT-only principal can read an approved column');
-    try { $readerProbe->query("UPDATE fm2_installation_cases SET process_state='working' WHERE id=1"); throw new TestFailure('SELECT-only principal unexpectedly wrote process state'); } catch (mysqli_sql_exception) {}
+    try { $readerProbe->query("UPDATE {$processPrefix}fm2_installation_cases SET process_state='working' WHERE id=1"); throw new TestFailure('SELECT-only principal unexpectedly wrote process state'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT forbidden_secret FROM legacy_fm_maintable WHERE id=4512'); throw new TestFailure('SELECT-only principal unexpectedly read forbidden legacy column'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT message FROM legacy_logs LIMIT 1'); throw new TestFailure('SELECT-only principal unexpectedly read unrelated table'); } catch (mysqli_sql_exception) {}
     $readerProbe->close();
-    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
+    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_PROCESS_TABLE_PREFIX'=>$processPrefix,'FMONITOR_SHLZ_CSS_PATH'=>$css,'FMONITOR_PILOT_CSS_PATH'=>$pilotCss,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
     $before = pocSnapshot($db); $server = pocStart($environment);
 
     $a = pocRequest($server['port'], 'GET', '/pilot/objects/4512');
