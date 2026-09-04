@@ -54,6 +54,21 @@ run_files() {
   fi
 }
 
+run_python_files() {
+  local file
+  local failures=()
+  for file in "$@"; do
+    printf 'VERIFY %s\n' "$file"
+    if ! uv run python "$file"; then
+      printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
+      failures+=("$file")
+    fi
+  done
+  if ((${#failures[@]} > 0)); then
+    fail REGRESSION_FAILURE "${#failures[@]} verifier(s) failed"
+  fi
+}
+
 unit_files=()
 db_files=()
 while IFS= read -r file; do
@@ -73,6 +88,7 @@ case "${1:-}" in
     run_files "${db_files[@]}"
     ;;
   characterization)
+    run_python_files tests/Verification/quality_graph_publisher_provenance_001_test.py
     run_files \
       rapid-pilot/verify-auth-hot-path.php \
       rapid-pilot/verify-calendar-projections.php \

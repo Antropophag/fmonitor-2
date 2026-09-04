@@ -12,12 +12,9 @@ from dataclasses import replace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-VENV = ROOT / ".venv" / "lib" / "python3.14" / "site-packages"
-sys.path.insert(0, str(VENV))
-
-from qg_github.artifacts import ArtifactError  # noqa: E402
-from qg_github.github import MemoryGitHubPort  # noqa: E402
-from quality_graph_core.result import Provenance, Result, ResultStatus  # noqa: E402
+from qg_github.artifacts import ArtifactError
+from qg_github.github import MemoryGitHubPort
+from quality_graph_core.result import Provenance, Result, ResultStatus
 
 SEAM = ROOT / "tools" / "delivery" / "quality_graph_publisher.py"
 if not SEAM.is_file():
@@ -70,17 +67,19 @@ def port_for(
     expired: bool = False,
     digest_drift: bool = False,
     duplicate_first: bool = False,
+    artifact_attempts: dict[str, int] | None = None,
 ) -> MemoryGitHubPort:
     port = MemoryGitHubPort(repository=REPOSITORY)
     descriptors: list[dict[str, object]] = []
     artifact_id = 700
     emitted = results + ((results[0],) if duplicate_first else ())
     for result in emitted:
+        artifact_attempt = (artifact_attempts or {}).get(result.node_id, RUN_ATTEMPT)
         archive = archive_for(result)
         digest = hashlib.sha256(archive).hexdigest()
         descriptor = {
             "id": artifact_id,
-            "name": f"quality-result-{result.node_id}-{RUN_ATTEMPT}",
+            "name": f"quality-result-{result.node_id}-{artifact_attempt}",
             "size_in_bytes": len(archive),
             "digest": f"sha256:{'f' * 64 if digest_drift else digest}",
             "expired": expired,
@@ -100,6 +99,7 @@ def validate(port: MemoryGitHubPort) -> dict[str, Result]:
         pull_request=PULL_REQUEST,
         head_sha=HEAD_SHA,
         workflow_run_id=WORKFLOW_RUN_ID,
+        run_attempt=RUN_ATTEMPT,
         graph_digest=GRAPH_DIGEST,
         expected_node_ids=NODE_IDS,
     )
@@ -128,6 +128,15 @@ provenance_mutations = {
 for case_name, changes in provenance_mutations.items():
     mutated = (result_for("quality-graph-validation", **changes), valid_results[1])
     rejects(case_name, port_for(mutated))
+
+coherent_attempt_replay = (
+    result_for("quality-graph-validation", run_attempt=4),
+    valid_results[1],
+)
+rejects(
+    "coherent replay from another run attempt",
+    port_for(coherent_attempt_replay, artifact_attempts={"quality-graph-validation": 4}),
+)
 
 rejects("omitted expected node artifact", port_for(valid_results[:1]))
 rejects("unexpected node artifact", port_for(valid_results + (result_for("unexpected-node"),)))
