@@ -54,7 +54,7 @@
   }
   const people = parsePeople();
   if (people === null) return;
-  if (provenance) { const rows = Array.from(provenance.children || []); if (rows.length !== people.length) return;
+  if (provenance) { const nodes = Array.from(provenance.childNodes || []); const rows = []; for (const node of nodes) { if (node.nodeType === 3) { if (!/^[\u0009\u000A\u000D\u0020]*$/.test(node.data)) return; continue; } rows.push(node); } if (rows.length !== people.length) return;
     for (let index = 0; index < rows.length; index += 1) { const row = rows[index]; const person = people[index];
       if (row.tagName !== 'LI' || row.children.length !== 0 || JSON.stringify(row.getAttributeNames().slice().sort()) !== JSON.stringify(['data-id', 'data-source', 'data-updated-at'])) return; const expected = `${person.name} · Источник кадровых данных: ${row.dataset.source} · Актуально на: ${row.dataset.updatedAt}`;
       if (row.dataset.id !== person.id || !row.dataset.source || !row.dataset.updatedAt || row.textContent !== expected) return; person.provenance = `Источник кадровых данных: ${row.dataset.source} · Актуально на: ${row.dataset.updatedAt}`; } }
