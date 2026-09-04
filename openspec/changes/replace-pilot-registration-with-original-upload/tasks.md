@@ -12,7 +12,7 @@
 - [x] 1.10 Получить fresh independent Gate 1 review owner-approved `checklistSha256` evidence amendment; verification: exact `aoou-process-v1` shape отдельно фиксирует canonical checklist availability и task 2.2 снова разрешена
 - [x] 1.11 Получить fresh independent Gate 1 review technical database-setup amendment; verification: version-1 public migration и idempotent fixed verification seed делают isolated MariaDB RED constructible без runtime DDL, private verifier SQL и original-fact fabrication
 - [x] 1.12 Получить fresh independent Gate 1 review checklist/decoy row-to-projection amendment; verification: both digests independently выводятся из named process rows без original-table input и fixture callback
-- [ ] 1.13 Получить fresh independent Gate 1 review capability-migration recovery amendment; verification: exact V4/V5/conflict classifier, last-step publication, typed unavailable/retry и verification-only phase observer закрывают Gate 5 findings без runtime selector
+- [x] 1.13 Получить fresh independent Gate 1 review capability-migration recovery amendment; verification: exact V4/V5/conflict classifier, last-step publication, typed unavailable/retry и verification-only phase observer закрывают Gate 5 findings без runtime selector
 
 ## 2. Minimal RED и test review
 
