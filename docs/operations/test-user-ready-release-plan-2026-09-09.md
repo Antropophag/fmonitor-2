@@ -3,7 +3,7 @@
 Status: living operational plan  
 Target: a controlled TEST-USER launch through the Compose `make up` contour on
 Wednesday, 2026-09-09  
-Last reconciled: 2026-09-02, against the working tree, `openspec list --json`,
+Last reconciled: 2026-09-04, against the working tree, `openspec list --json`,
 current task files, executable specs, reviews, evidence and append-only owner
 decisions. Narrative snapshots are not completion evidence.
 
@@ -28,13 +28,13 @@ release-green.
 | Slice | Actual state | Release consequence |
 |---|---|---|
 | Canonical classification provenance v11 | OpenSpec 11/11; GREEN evidence and independent code review exist | Ordered frontier can advance; integration evidence must remain green |
-| Pilot session storage | 9/15; all 14 reviewed tests GREEN in host contour, but Gate 4/5 incomplete | Must replace remaining rapid-pilot native sessions, finish ratchets and provide an approved fictional Compose login fixture for restart proof |
+| Pilot session storage | Core/session-consumer branches remain unintegrated; anonymous repeated-commit correction is focused GREEN at `5e003384` with fresh Gate 3, but no fresh Gate 5/restart proof | Must integrate reviewed branches through exact-SHA CI and provide an approved fictional Compose login fixture for restart proof |
 | Remove «Моя работа» navigation item | 3/11; exact Gate 1 approved and predecessor RED recorded | Must complete reviewed RED, minimal removal, regression and Gate 5; route `/pilot/` remains |
 | Object-list RBAC fixtures | 2/9 | Depends on navigation predecessor GREEN, then needs Gates 2–5 |
 | Prepare GET/HEAD RBAC fixtures | 6/12; amended Gate 1 approved; repeated test reviews and RED evidence exist | Finish accepted Gate 3, minimal fixture GREEN, verification and code review |
 | E2E RBAC fixtures | 5/10; amended Gate 1 approved; RED reviewed; Gate 4 attempt recorded | Must reach stable GREEN and Gate 5 before combined PDF RED |
 | Combined PDF E2E | 2/9 | Blocked by E2E RBAC GREEN; then Gates 2–5 |
-| Original assignment-order PDF upload | 5/16; product direction settled, contract still in Gate 1 constructibility refinement | Release-critical replacement for obsolete manual registration; no RED/GREEN before fresh exact-hash approval |
+| Original assignment-order PDF upload | 13/16 on `cab7b83`: Gate 1 v4, exhaustive Gate 2, fresh Gate 3 and schema/application/parser/storage/maintenance/real-worker Gate 4 are recorded; focused suites and architecture 7/7 GREEN; full verify remains RED and Gate 5 is absent | Command seam is implemented but cannot integrate before presentation/navigation predecessors, literal `VERIFY_OK` and fresh Gate 5 |
 | Fictional test-user seed | 0/17 | Release-critical; waits for the required canonical schema/generation frontier |
 | Object-detail snapshot + generation metadata | 0/13 and 0/14 | Critical predecessors to the fictional seed; versions follow the landed v11 frontier, never guessed early |
 | Full verification | no current literal `VERIFY_OK` | Hard NO-GO until a clean final run produces it |
@@ -259,9 +259,10 @@ partial suite success or an old review.
 
 GRILL-009, removal of «Моя работа», the refined session-storage contract and
 the stated RBAC amendments have owner decisions/exact-hash approvals recorded.
-They are not current decision blockers. Original-PDF upload still requires the
-fresh constructibility rereview and exact-hash approval identified in its task
-file before RED. Any newly discovered product choice is written as a compact
+They are not current decision blockers. Original-PDF application upload has
+passed its current Gate 2/3 and focused Gate 4 work, but remains unapproved at
+Gate 5 because repository-wide verification is RED on presentation/navigation
+predecessors. Any newly discovered product choice is written as a compact
 owner question and does not stop unrelated READY work.
 
 No production credential is a prerequisite for this release. Required runtime
