@@ -104,14 +104,20 @@ function polParity(int $port, string $target): array
     return $get;
 }
 
-function polError(array $response, int $status, string $body, string $why, ?string $allow = null): void
+function polError(array $response, int $status, string $body, string $why, ?string $allow = null, ?string $retryAfter = null): void
 {
     assertSameValue($status, $response['status'], $why . ' status');
     assertSameValue('text/plain; charset=UTF-8', polHeader($response,'content-type'), $why . ' content type');
     assertSameValue((string) strlen($body), polHeader($response,'content-length'), $why . ' content length');
     assertSameValue($body, $response['body'], $why . ' exact body');
     assertSameValue($allow, polHeader($response,'allow'), $why . ' Allow');
-    assertSameValue(null, polHeader($response,'retry-after'), $why . ' omits Retry-After');
+    assertSameValue($retryAfter, polHeader($response,'retry-after'), $why . ' exact Retry-After');
+}
+
+function polRejectsErrorHeaderMismatch(callable $probe, string $why): void
+{
+    try{$probe();}catch(TestFailure $failure){assertSameValue(true,str_contains($failure->getMessage(),'exact Retry-After'),$why.' fails specifically on Retry-After');return;}
+    throw new TestFailure($why.' must reject mismatched Retry-After');
 }
 
 function polAuthorizationError(array $response,int $status,string $body,string $why,bool $correlation=false): void
@@ -197,6 +203,7 @@ try {
     $ownership=TaskOwnedArtifactRoot::create('pol',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$foreignPath=$ownership['parent'].'/foreign-'.$token;$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);mkdir($foreignPath,0700);file_put_contents($foreignPath.'/keep','foreign-bytes');scandir($foreignPath);$foreignBefore=[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')];file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$polProtectedPaths=[$protectedArtifactRoot,$css,$foreignPath];$polMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$foreignDatabase}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE TABLE `{$foreignDatabase}`.sentinel(id INT PRIMARY KEY,payload VARCHAR(40))");$admin->query("INSERT INTO `{$foreignDatabase}`.sentinel VALUES(1,'foreign-db-bytes')");
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4"); $db=polDb($database);
+    $safe503=['status'=>503,'headers'=>['content-type'=>['text/plain; charset=UTF-8'],'content-length'=>[(string)strlen("Service unavailable.\n")]],'body'=>"Service unavailable.\n"];$retry503=$safe503;$retry503['headers']['retry-after']=['60'];polError($safe503,503,"Service unavailable.\n",'no-retry helper positive control');polError($retry503,503,"Service unavailable.\n",'retry helper positive control',retryAfter:'60');polRejectsErrorHeaderMismatch(fn()=>polError($retry503,503,"Service unavailable.\n",'unexpected retry negative control'),'no-retry helper sensitivity');polRejectsErrorHeaderMismatch(fn()=>polError($safe503,503,"Service unavailable.\n",'missing retry negative control',retryAfter:'60'),'required-retry helper sensitivity');
     $classificationMainProbe=polDocument('<!doctype html><html><head><meta charset="utf-8"></head><body><main id="main-content" class="fm2-origin-view"><span>4513</span></main></body></html>');assertSameValue(1,count(polObjectListClassificationHooks(new DOMXPath($classificationMainProbe))),'classification oracle catches object-list main class mutation');
     $classificationDataValueProbe=polDocument('<!doctype html><html><head><meta charset="utf-8"></head><body><main id="main-content"><span data-kind="migration">4513</span></main></body></html>');assertSameValue(1,count(polObjectListClassificationHooks(new DOMXPath($classificationDataValueProbe))),'classification oracle catches generic data attribute value mutation');
     $classificationCopyProbe=polDocument('<!doctype html><html><head><meta charset="utf-8"></head><body><main id="main-content"><span>Источник данных: импорт</span></main></body></html>');assertSameValue(1,count(polObjectListClassificationHooks(new DOMXPath($classificationCopyProbe))),'classification oracle catches normalized visible copy mutation');
@@ -275,7 +282,7 @@ try {
     // Combined faults pin the inherited order: route/method, identity, CSS, user/role, then list read.
     $brokenEarly=array_replace(array_diff_key($environment,['REMOTE_USER'=>true]),['FMONITOR_SHLZ_CSS_PATH'=>$css.'.missing','FMONITOR_DB_PASSWORD'=>'wrong']);
     $probe=polStart($brokenEarly);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects/'),'combined invalid route'),404,"Not found.\n",'route precedes identity, CSS and DB');polError(polReadOnly($db,fn()=>polRequest($probe['port'],'POST','/pilot/objects',['Content-Length'=>'6'],'opaque'),'combined invalid method'),405,"Method not allowed.\n",'method precedes identity, CSS and DB','GET, HEAD');polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'combined missing identity'),401,"Authentication required.\n",'identity precedes CSS and DB');}finally{polStop($probe);}
-    $probe=polStart(array_replace($environment,['FMONITOR_SHLZ_CSS_PATH'=>$css.'.missing','FMONITOR_DB_PASSWORD'=>'wrong']));try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'combined invalid CSS'),503,"Service unavailable.\n",'CSS precedes DB');}finally{polStop($probe);}
+    $probe=polStart(array_replace($environment,['FMONITOR_SHLZ_CSS_PATH'=>$css.'.missing','FMONITOR_DB_PASSWORD'=>'wrong']));try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'combined invalid CSS'),503,"Service unavailable.\n",'CSS precedes DB',retryAfter:'60');}finally{polStop($probe);}
 
     $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES(90,9090,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
     $legacyOnly=array_diff_key(array_replace($environment,['FMONITOR_DB_USER'=>$denialReader]),['FMONITOR_AUTH_USER_ID'=>true]);$legacyOnly['REMOTE_USER']='sidorov@shlz.ru';
@@ -301,10 +308,10 @@ try {
         [array_replace($denialEnvironment,['FMONITOR_AUTH_USER_ID'=>'27']),403,"Access denied.\n",'missing assignment'],
     ];
     foreach($negativeActors as[$actorEnvironment,$status,$body,$why]){$probe=polStart($actorEnvironment);try{polAuthorizationError(polReadOnly($db,fn()=>polRequest($probe['port'],'GET','/pilot/objects',['Cookie'=>'actor=18','X-Authenticated-User-ID'=>'18']),'RBAC denial '.$why),$status,$body,$why.' precedes forbidden list handler/read');}finally{polStop($probe);}}
-    $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'dangling imported case'),503,"Service unavailable.\n",'dangling imported case fails closed');}finally{polStop($probe);} $db->query('DELETE FROM fm2_installation_cases WHERE id=90');
+    $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'dangling imported case'),503,"Service unavailable.\n",'dangling imported case fails closed',retryAfter:'60');}finally{polStop($probe);} $db->query('DELETE FROM fm2_installation_cases WHERE id=90');
 
     $db->query("UPDATE legacy_fm_maintable SET regnumber='   ' WHERE id=4513");
-    $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'invalid required value'),503,"Service unavailable.\n",'invalid required value fails closed');}finally{polStop($probe);} $db->query("UPDATE legacy_fm_maintable SET regnumber='77-000124' WHERE id=4513");
+    $probe=polStart($environment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'invalid required value'),503,"Service unavailable.\n",'invalid required value fails closed',retryAfter:'60');}finally{polStop($probe);} $db->query("UPDATE legacy_fm_maintable SET regnumber='77-000124' WHERE id=4513");
 
     $db->query('RENAME TABLE fm2_pilot_role_permissions TO fm2_pilot_role_permissions_missing');
     try{polUnavailable($environment,$db,'AUTHORIZATION_SCHEMA_INVALID','authorization schema unavailable');}
