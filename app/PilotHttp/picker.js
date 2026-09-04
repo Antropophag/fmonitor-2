@@ -22,12 +22,12 @@
   const count = root.querySelector('[data-picker-count]');
   const opener = root.querySelector('[data-picker-open]');
   const fallback = root.querySelector('[data-picker-fallback]');
+  const provenance = document.querySelector('[data-picker-provenance]');
   const normalizeWhitespace = (value) => value.replace(/[\u0009-\u000D\u0020]+/g, ' ').replace(/^[\u0009-\u000D\u0020]+|[\u0009-\u000D\u0020]+$/g, '');
   const normalize = (value) => normalizeWhitespace(value).toLocaleLowerCase('ru-RU');
   const attributeNames = ['data-id', 'data-name', 'data-tab', 'data-position', 'data-busy', 'data-selected'];
   const compareCodePoints = (left, right) => { const a = Array.from(left, (character) => character.codePointAt(0)); const b = Array.from(right, (character) => character.codePointAt(0));
     for (let index = 0; index < Math.min(a.length, b.length); index += 1) if (a[index] !== b[index]) return a[index] - b[index]; return a.length - b.length; };
-
   function parsePeople() {
     if (!template || !template.content || !selection || !modalSelection || !inputs || !dialog || !search || !results || !meta || !count || !opener || !fallback) return null;
     const nodes = Array.from(template.content.childNodes || []);
@@ -52,9 +52,12 @@
     }
     return records;
   }
-
   const people = parsePeople();
   if (people === null) return;
+  if (provenance) { const rows = Array.from(provenance.children || []); if (rows.length !== people.length) return;
+    for (let index = 0; index < rows.length; index += 1) { const row = rows[index]; const person = people[index];
+      if (row.tagName !== 'LI' || row.children.length !== 0 || JSON.stringify(row.getAttributeNames().slice().sort()) !== JSON.stringify(['data-id', 'data-source', 'data-updated-at'])) return; const expected = `${person.name} · Источник кадровых данных: ${row.dataset.source} · Актуально на: ${row.dataset.updatedAt}`;
+      if (row.dataset.id !== person.id || !row.dataset.source || !row.dataset.updatedAt || row.textContent !== expected) return; person.provenance = `Источник кадровых данных: ${row.dataset.source} · Актуально на: ${row.dataset.updatedAt}`; } }
   const selected = new Map();
   function renderSelection() {
     selection.replaceChildren(); modalSelection.replaceChildren(); inputs.replaceChildren();
@@ -77,21 +80,18 @@
         return chip;
       };
       selection.append(createChip()); modalSelection.append(createChip());
-
       const input = document.createElement('input');
       input.type = 'hidden'; input.name = 'installerTabIds[]'; input.value = person.id;
       inputs.append(input);
     });
     count.textContent = `Выбрано: ${selected.size}`;
   }
-
   function resultButton(person) {
     const button = document.createElement('button');
     const isSelected = selected.has(person.id);
     button.type = 'button'; button.className = `fm2-picker-result${isSelected ? ' fm2-picker-result--selected' : ''}`;
     button.setAttribute('aria-pressed', String(isSelected));
     button.setAttribute('aria-label', `${isSelected ? 'Убрать' : 'Выбрать'} ${person.name}`);
-
     const mark = document.createElement('span');
     mark.className = 'fm2-picker-result-mark'; mark.textContent = isSelected ? '✓' : '+';
     const text = document.createElement('span');
@@ -101,6 +101,7 @@
     const details = document.createElement('span');
     details.textContent = `Таб. ${person.tab} · ${person.position}`;
     text.append(name, details);
+    if (person.provenance) { const provenanceText = document.createElement('span'); provenanceText.className = 'fm2-picker-result-provenance'; provenanceText.textContent = person.provenance; text.append(provenanceText); }
     button.append(mark, text);
     if (person.busy) {
       const busy = document.createElement('span');
@@ -114,7 +115,6 @@
     });
     return button;
   }
-
   function renderResults() {
     results.replaceChildren();
     const query = normalize(search.value);
@@ -145,5 +145,5 @@
     if (event.key !== 'Escape') return;
     dialog.hidden = true; opener.setAttribute('aria-expanded', 'false'); opener.focus();
   });
-  renderSelection(); opener.hidden = false; fallback.hidden = true;
+  renderSelection(); if (provenance) provenance.hidden = true; opener.hidden = false; fallback.hidden = true;
 })();
