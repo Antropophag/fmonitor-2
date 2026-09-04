@@ -73,6 +73,14 @@ Config grammar, pre-access path ownership/mode checks, no-create safe-log policy
 выражена одним fixed `AssignmentOrderOriginalEvidenceUnavailable`, а close
 attempts all resources once и кэширует success/failure для idempotent repeats.
 
+### 12. Gate 2 database setup ownership
+
+Real MariaDB RED вызывает named public
+`AssignmentOrderOriginalSchemaMigration::apply` version 1; runtime paths её не
+вызывают. Verification-only deterministic `seedExampleA` владеет
+только idempotent prerequisite DML и не создаёт original facts; evidence
+reader остаётся fresh/read-only и не получает fixture dependency.
+
 ## Risks / Trade-offs
 
 - [DB/filesystem не имеют общей транзакции] → private finalize до DB commit; private orphan не observable, bounded reconciliation/reuse; stored accepted result разрешает response-loss retry.

@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v6 OWNER-APPROVED CHECKLIST-EVIDENCE AMENDMENT**
-Версия: **v6**
+Статус: **v7 GATE 1 REVIEW PENDING — DATABASE SETUP AMENDMENT**
+Версия: **v7**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -852,6 +852,71 @@ final class AssignmentOrderOriginalVerificationFactory
     ): AssignmentOrderOriginalApplication { /* same application owner */ }
 }
 ```
+
+### Canonical schema and deterministic MariaDB setup
+
+Task 3.1 SHALL implement the single public migration seam below. It is the only
+Gate 2 entry point that may create or reconcile assignment-order-original
+tables; application, evidence-reader, HTTP and worker runtime paths MUST NOT
+invoke it.
+
+```php
+enum AssignmentOrderOriginalSchemaMigrationStatus: string
+{
+    case APPLIED = 'applied';
+    case UNCHANGED = 'unchanged';
+    case CONFLICT = 'conflict';
+}
+
+interface AssignmentOrderOriginalSchemaMigrationResult
+{
+    public function status(): AssignmentOrderOriginalSchemaMigrationStatus;
+    public function schemaVersion(): int;
+    /** @return list<string> */
+    public function affectedTables(): array;
+}
+
+final class AssignmentOrderOriginalSchemaMigration
+{
+    public static function apply(
+        \mysqli $database,
+        string $tablePrefix = '',
+    ): AssignmentOrderOriginalSchemaMigrationResult;
+}
+
+final class AssignmentOrderOriginalVerificationDatabaseFixture
+{
+    public static function seedExampleA(
+        \mysqli $database,
+        string $tablePrefix = '',
+    ): void;
+}
+```
+
+`schemaVersion()` is `1`. `apply()` accepts the same canonical prefix grammar as
+the evidence config. A clean or compatible partial schema returns `APPLIED` and
+the binary-sorted logical table names actually created/reconciled; an exact
+repeat returns `UNCHANGED` with an empty list; any non-equivalent existing
+owned table returns `CONFLICT` with all conflicting logical table names in
+binary order and performs no DDL. It never changes historical registration
+facts or prerequisite process rows. Exact table/column/index/constraint
+definitions remain the independently asserted task-3.1 migration contract; no
+consumer may infer readiness from a version row alone.
+
+`seedExampleA()` is a verification-only DML setup seam, callable only after the
+approved prerequisite process migrations and this migration are compatible.
+It inserts the section-7 Example A prerequisites and no original/request/event/
+audit/blob fact: active actor `18` with only the exact upload/correct grants;
+case `4512`; order `81`; composition identity `composition-81-v1`, hash
+`1111111111111111111111111111111111111111111111111111111111111111`, installers
+`7001,7002` and engineer `31`; fixed case/opening/tasks/checklist/decoy process
+projections used by section 16. An exact repeat is a no-op; any occupied
+identity with different values throws fixed
+`AssignmentOrderOriginalVerificationFixtureConflict` before DML. The fixture
+performs no DDL, creates no original evidence, accepts no arbitrary SQL/callback
+and is never referenced by production composition. Gate 2 owns an isolated
+database/prefix and removes it through the existing task-owned test cleanup;
+the evidence reader remains read-only and receives no fixture dependency.
 
 ## 16. Maintenance API, evidence and concurrency IPC
 

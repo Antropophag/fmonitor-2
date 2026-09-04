@@ -198,6 +198,14 @@ MUST бросать только fixed `AssignmentOrderOriginalEvidenceUnavailab
 partial JSON/diagnostics; repeated close MUST не повторять I/O и сохранять
 первый cached outcome.
 
+#### Scenario: Isolated MariaDB setup конструируем
+- **WHEN** Gate 2 готовит task-owned database/prefix для real repository/reader/worker evidence
+- **THEN** public `AssignmentOrderOriginalSchemaMigration::apply` version 1 создаёт/проверяет только owned original schema с exact `APPLIED|UNCHANGED|CONFLICT`, а verification-only `AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA` idempotently добавляет fixed prerequisites без original facts; runtime consumers не вызывают migration/fixture
+
+#### Scenario: Fixture conflict fail closed
+- **WHEN** Example-A prerequisite identity уже занята другими values
+- **THEN** fixture до DML бросает fixed `AssignmentOrderOriginalVerificationFixtureConflict`, не принимает SQL/callback и не создаёт original evidence
+
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
 - **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, а после `close()` не оставляет ресурсов
