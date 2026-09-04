@@ -189,11 +189,13 @@ function pocResponseWithoutVolatileDate(array $response): array
     return $response;
 }
 
-function pocSecurity(array $response, string $why): void
+function pocSecurity(array $response, string $why, bool $scripted = false): void
 {
     $fixed = [
         'x-content-type-options'=>'nosniff', 'referrer-policy'=>'no-referrer', 'x-frame-options'=>'DENY',
-        'content-security-policy'=>"default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        'content-security-policy'=>$scripted
+            ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+            : "default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
         'permissions-policy'=>'camera=(), microphone=(), geolocation=()', 'cross-origin-opener-policy'=>'same-origin', 'cache-control'=>'no-store',
     ];
     foreach ($fixed as $name => $value) assertSameValue($value, pocHeader($response, $name), $why . ' ' . $name);
@@ -234,11 +236,16 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     assertSameValue(200, $response['status'], $why . ' status');
     assertSameValue('text/html; charset=UTF-8', pocHeader($response, 'content-type'), $why . ' media type');
     assertSameValue((string) strlen($response['body']), pocHeader($response, 'content-length'), $why . ' length');
-    pocSecurity($response, $why);
+    pocSecurity($response, $why, true);
     $visible = pocVisible($response['body']); $offset = 0;
     foreach ($orderedVisible as $literal) { $found = mb_strpos($visible, $literal, $offset); assertSameValue(true, $found !== false, $why . ' visible literal/order: ' . $literal); $offset = $found + mb_strlen($literal); }
     assertSameValue(1, substr_count(strtolower($response['body']), '<!doctype html>'), $why . ' one doctype');
-    foreach (['<form','<input','<select','<textarea','<script','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
+    foreach (['<form','<input','<select','<textarea','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
+    $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
+    assertSameValue(1, $xpath->query('//script')->length, $why . ' has exactly one external script');
+    assertSameValue(1, $xpath->query("//script[@src='/pilot/assets/object-details.js' and @defer and not(@async) and normalize-space(.)='']")->length, $why . ' has exact deferred object-details script');
+    assertSameValue(0, $xpath->query('//@*[starts-with(translate(name(),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"on")]')->length, $why . ' forbids inline event handlers');
+    assertSameValue(0, $xpath->query('//*[@href[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")] or @src[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")]]')->length, $why . ' forbids javascript URLs');
 }
 
 function pocStructure(array $response, string $why): void
