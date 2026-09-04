@@ -212,7 +212,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Capability publication fail closed
 - **WHEN** original schema incomplete/fails/revalidation differs, observer fails after exact schema, capability CHECK is ambiguous/non-exact, or final ALTER fails
-- **THEN** V5 upload/correct grants are never published before full exact schema; conflicts return binary-complete `affectedTables`, technical failures throw fixed migration-unavailable, and retry resumes only exact leading partial/full-schema+V4 states
+- **THEN** V5 upload/correct grants are never published before full exact schema; per-created-table and pre/post-capability phases make implicit-commit failures deterministic; conflicts return binary-complete `affectedTables`, technical failures throw exact fixed migration-unavailable, and post-ALTER fresh reread resolves durable V5 or leaves only safe full-schema+V4-or-V5 unknown recovery
 
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters

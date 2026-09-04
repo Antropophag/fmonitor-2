@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v13 GATE 1 REVIEW PENDING — CAPABILITY MIGRATION RECOVERY AMENDMENT**
-Версия: **v13**
+Статус: **v14 GATE 1 REREVIEW PENDING — CAPABILITY MIGRATION RECOVERY AMENDMENT**
+Версия: **v14**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -888,13 +888,19 @@ final class AssignmentOrderOriginalSchemaMigrationUnavailable extends \RuntimeEx
 
 enum AssignmentOrderOriginalSchemaMigrationPhase: string
 {
+    case AFTER_SCHEMA_TABLE_CREATED = 'after_schema_table_created';
     case AFTER_SCHEMA_REVALIDATED_BEFORE_CAPABILITIES =
         'after_schema_revalidated_before_capabilities';
+    case AFTER_CAPABILITY_ALTER_BEFORE_REVALIDATION =
+        'after_capability_alter_before_revalidation';
 }
 
 interface AssignmentOrderOriginalSchemaMigrationObserver
 {
-    public function observe(AssignmentOrderOriginalSchemaMigrationPhase $phase): void;
+    public function observe(
+        AssignmentOrderOriginalSchemaMigrationPhase $phase,
+        ?string $logicalTable,
+    ): void;
 }
 
 interface AssignmentOrderOriginalSchemaMigrationApplication
@@ -1006,31 +1012,44 @@ semantic states. V4 is the exact set `assignment_order.prepare`,
 `assignment_order.confirm_registration`, `installation.open`,
 `construction_control_engineer`. V5 is V4 plus exactly
 `assignment_order.original.upload` and `assignment_order.original.correct`.
-There MUST be exactly one capability-enum CHECK candidate; the separate
-engineer-position CHECK is not a candidate. Upload-only, correct-only,
+There MUST be exactly one capability-enum CHECK candidate. A candidate is a
+normalized top-level `capability IN (...)` expression whose only referenced
+column is `capability`; the separate `capability <> ... OR position_snapshot`
+engineer-position CHECK is not a candidate. Multiple candidates conflict even
+when one is exact. Upload-only, correct-only,
 unexpected superset/subset, duplicate candidates, unsafe candidate name or any
 other expression is `CONFLICT`. Conflict `affectedTables()` contains every
 conflicting original logical table plus `fm2_process_user_capabilities`, binary
-sorted, and performs no DDL. Exact V5 repeats unchanged.
+sorted, and performs no DDL. `fm2_process_user_capabilities` appears in conflict
+output if and only if its candidate classification conflicts. Exact V5 repeats
+unchanged and never appears in `affectedTables()`.
 
 Migration order is: validate prefix → inspect all seven original tables and the
 capability CHECK → return all conflicts without DDL → create only missing
-leading-suffix original tables in manifest order → re-read and require the full
-exact seven-table schema → verification phase observer → if and only if prior
-state was exact V4, replace that one safe-named CHECK with exact V5 as the last
-DDL → re-read exact V5 → return. `APPLIED.affectedTables()` lists created
-original tables in manifest order and then `fm2_process_user_capabilities` only
-when upgraded; `UNCHANGED` is empty.
+leading-suffix original tables in manifest order, invoking
+`AFTER_SCHEMA_TABLE_CREATED` with that logical table after each durable CREATE
+→ re-read and require the full exact seven-table schema →
+`AFTER_SCHEMA_REVALIDATED_BEFORE_CAPABILITIES` with null table → if and only if
+prior state was exact V4, replace that one safe-named CHECK with exact V5 as the
+last DDL → `AFTER_CAPABILITY_ALTER_BEFORE_REVALIDATION` with null table → fresh
+re-read exact V5 → return. `APPLIED.affectedTables()` lists created original
+tables in manifest order and then `fm2_process_user_capabilities` only when a
+fresh reread proves the upgrade durable; `UNCHANGED` is empty.
 
 MariaDB DDL implicitly commits, so failure is fail-closed rather than falsely
 atomic. Any query/create/revalidation/ALTER/observer failure throws fixed
-`AssignmentOrderOriginalSchemaMigrationUnavailable` (message basename, code 0,
+`AssignmentOrderOriginalSchemaMigrationUnavailable` (message exactly
+`AssignmentOrderOriginalSchemaMigrationUnavailable`, code 0,
 previous null). A create failure may leave only an exact leading partial schema
 with V4 capability; retry revalidates and resumes. Observer failure occurs after
 full schema revalidation and before capability ALTER, so V4 remains. Capability
-ALTER failure may leave full schema with V4; retry revalidates and retries the
-last publication. No failure may expose V5 with incomplete/non-exact original
-schema. The static production `apply()` binds a no-op observer. Only
+ALTER or post-ALTER observer failure triggers one fresh candidate reread: exact
+V5 returns `APPLIED` with capability in `affectedTables`; exact V4 throws
+unavailable and retry attempts the last publication; conflict throws
+unavailable without further DDL; reread failure throws unavailable and permits
+the externally unknown but safe state full-exact-schema+V4-or-V5, whose retry
+classifies V4/V5 before any DDL. No failure may expose V5 with incomplete or
+non-exact original schema. The static production `apply()` binds a no-op observer. Only
 `AssignmentOrderOriginalSchemaMigrationVerificationFactory` accepts an injected
 observer; production bootstrap/runtime cannot select it by env/request/CLI/
 global and neither application nor HTTP calls either migration seam.

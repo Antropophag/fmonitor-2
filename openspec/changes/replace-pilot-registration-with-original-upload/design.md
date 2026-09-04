@@ -96,7 +96,10 @@ Capability CHECK classifier accepts only exact V4 or exact V5 and distinguishes
 the engineer-position constraint. Migration publishes V5 last, after full
 seven-table revalidation. Implicit-commit failures leave only recoverable exact
 leading partial/full-schema+V4 states; a verification-only phase factory proves
-the boundary without a production runtime selector.
+the boundary without a production runtime selector. Observer phases include
+every durable table CREATE and both sides of final capability ALTER. A
+post-ALTER fresh classifier resolves durable V5 before return; unavailable
+reread leaves only full-exact-schema+V4-or-V5 safe retry.
 
 ## Risks / Trade-offs
 
