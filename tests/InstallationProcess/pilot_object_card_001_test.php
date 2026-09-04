@@ -238,8 +238,15 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     assertSameValue((string) strlen($response['body']), pocHeader($response, 'content-length'), $why . ' length');
     pocSecurity($response, $why, true);
     $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
-    assertSameValue(1, $xpath->query('//script')->length, $why . ' has exactly one external script');
-    assertSameValue(1, $xpath->query("//script[@type='module' and @src='/pilot/assets/object-details.js' and count(@*)=2 and normalize-space(.)='']")->length, $why . ' has exact module object-details script with no invented attributes');
+    $scripts = $xpath->query('//script');
+    assertSameValue(2, $scripts->length, $why . ' has exactly two approved external scripts');
+    foreach (['/pilot/assets/navigation.js','/pilot/assets/object-details.js'] as $index => $source) {
+        $script = $scripts->item($index);
+        assertSameValue(2, $script?->attributes?->length, $why . ' script has only type and src attributes: ' . $source);
+        assertSameValue('module', $script?->getAttribute('type'), $why . ' script type: ' . $source);
+        assertSameValue($source, $script?->getAttribute('src'), $why . ' exact ordered script source');
+        assertSameValue('', trim((string) $script?->textContent), $why . ' script has no inline content: ' . $source);
+    }
     assertSameValue(0, $xpath->query('//@*[starts-with(translate(name(),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"on")]')->length, $why . ' forbids inline event handlers');
     assertSameValue(0, $xpath->query('//*[@href[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")] or @src[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")]]')->length, $why . ' forbids javascript URLs');
     $visible = pocVisible($response['body']); $offset = 0;
