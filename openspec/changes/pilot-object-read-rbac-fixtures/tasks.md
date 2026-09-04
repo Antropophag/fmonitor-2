@@ -15,6 +15,6 @@
 
 ## 4. Verification, Gate 5 и Done
 
-- [ ] 4.1 Запустить focused DB tests, local-RBAC characterization, architecture, lint и full verify; verification: owned regressions GREEN, unrelated debt classified.
-- [ ] 4.2 Поручить independent code review; verification: APPROVED по Standards/Spec без test changes.
-- [ ] 4.3 Обновить operations status и отметить Done только после Gates 1–5, strict OpenSpec и durable GREEN evidence.
+- [x] 4.1 Запустить focused DB tests, local-RBAC characterization, architecture, lint и full verify; verification: owned regressions GREEN, unrelated debt classified.
+- [x] 4.2 Поручить independent code review; verification: APPROVED по Standards/Spec без test changes.
+- [x] 4.3 Обновить operations status и отметить Done только после Gates 1–5, strict OpenSpec и durable GREEN evidence.

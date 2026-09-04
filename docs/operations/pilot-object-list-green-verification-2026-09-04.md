@@ -57,3 +57,40 @@ rapid visual drift coincide with disclosed repository-wide debt. These failures
 are not reclassified as object-list success. OpenSpec task `4.1` remains open
 until the repository verification contract is run in its canonical environment
 and all results are durably classified.
+
+## Canonical full verification receipt
+
+После появления host PHP полный repository contract выполнен через `make
+verify` с Docker CLI из Docker Desktop. Его terminal summary:
+
+```text
+VERIFY_STAGE test-db-reset PASS
+VERIFY_STAGE migrate PASS
+VERIFY_STAGE architecture-check PASS
+VERIFY_STAGE lint PASS
+VERIFY_STAGE unit-test FAIL
+VERIFY_STAGE db-test FAIL
+VERIFY_STAGE characterization-test FAIL
+VERIFY_STAGE e2e-test FAIL
+VERIFY_STAGE diff-check PASS
+FULL_VERIFICATION_FAILURE count=4 stages=unit-test,db-test,characterization-test,e2e-test
+```
+
+Внутри canonical DB stage оба owned successor/predecessor tests прошли:
+
+```text
+PASS: LOCAL-RBAC-AUTH-CONTRACT-001 real GET /pilot/objects admission
+PASS: PILOT-OBJECT-LIST-001 public HTTP collection
+```
+
+Оставшиеся четыре failed stages соответствуют переданному checkpoint: checklist
+UI/session sequential integration и UserAccess, legacy `PILOT-E2E-FLOW-001`,
+original/PDF dependency integration, rapid auth-hot-path/visual drift. В этом
+change они не исправлялись и не ослаблялись; blocked legacy E2E target не
+amended без owner-approved Gate 1.
+
+Independent Gate 5 одобрил exact production commit
+`3191d19cd32385280fd52dac4a04d15d6351906c` в
+`reviews/code/PILOT-OBJECT-READ-RBAC-FIXTURES-001-v2.md`; review commit
+`d2458d4e60c0d276d9d9c5e8d466264efb791433`. Object-list slice завершает Gates
+1–5, хотя repository-wide integration остаётся non-green.
