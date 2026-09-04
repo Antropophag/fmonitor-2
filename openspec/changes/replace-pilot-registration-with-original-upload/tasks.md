@@ -23,7 +23,7 @@
 ## 3. Setup minimal GREEN и code review
 
 - [x] 3.1 Добавить additive canonical capability/schema migration на актуальном frontier без runtime DDL и без изменения historical registration facts; verification: clean/repeat/populated/conflict migration fixtures GREEN
-- [ ] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
+- [x] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
 
 ## 4. Command matrix RED и test review
 
