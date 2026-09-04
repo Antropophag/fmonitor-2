@@ -42,5 +42,13 @@ CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-SCHEDULE-DUPLICATE-001
 
 This was repeated on native macOS arm64 and Linux arm64 in a disposable owned
 workspace under a non-root user. PHP lint and diff-check pass. Production,
-specification and expected behavior bytes are unchanged. Fresh Gate 3 remains
-required.
+specification and expected behavior bytes are unchanged.
+
+The first rereview `323b711` accepted the wrapper, handshake and controls, then
+required explicit bounded post-KILL non-running confirmation before any drain
+or `proc_close`. Follow-up `3b37158990f5ccb672e22ec05e95c973b1924d0a`
+added that confirmation to both runner paths. Fresh independent Gate 3 v3
+`a17c50f28eac5f4ec4d040474fa83efc098805b5` is `APPROVED`.
+
+After approval, the complete native `make characterization-test` stage passed
+with every verifier GREEN. This test-only portability correction is complete.
