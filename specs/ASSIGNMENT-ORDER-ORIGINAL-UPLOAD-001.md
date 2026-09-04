@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v9 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
-Версия: **v9**
+Статус: **v10 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
+Версия: **v10**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -958,7 +958,7 @@ fm2_assignment_order_original_maintenance_requests:
 fm2_assignment_order_original_maintenance_audits:
   audit_id bigint unsigned AUTO_INCREMENT PK; request_id char(36) UNIQUE;
   system_principal_id varchar(160); status varchar(20); reason_code varchar(80) NULL;
-  scanned int unsigned; deleted int unsigned; retained int unsigned;
+  retryable tinyint unsigned; scanned int unsigned; deleted int unsigned; retained int unsigned;
   failed int unsigned; attempted_at_utc datetime(6)
 ```
 
@@ -973,8 +973,7 @@ missing/different members conflict. A compatible partial deployment may contain
 only a leading subset of the ordered complete tables; populated exact tables
 are preserved byte-for-byte.
 
-The exact FK set is: roots.`current_revision_id` → revisions.`revision_id`;
-revisions.`root_original_id` → roots.`root_original_id`;
+The exact FK set is: revisions.`root_original_id` → roots.`root_original_id`;
 revisions.`previous_revision_id` → revisions.`revision_id`; nullable
 requests.`root_original_id` → roots.`root_original_id`; nullable
 requests.`current_revision_id` → revisions.`revision_id`; events root/revision
@@ -996,7 +995,9 @@ revisions: revision_number>=1; pdf_sha256/fingerprint each lower-hex-64;
    AND event_type='assignment_order_original_corrected')
 requests: request_id canonical lower UUID; mode IN ('initial','correction');
   status IN ('accepted','replayed','rejected','conflict'); retryable=0;
-  accepted|replayed => reason_code IS NULL and all ten evidence fields non-null;
+  accepted|replayed => reason_code IS NULL and all seven evidence fields
+  (root_original_id,current_revision_id,revision_number,document_date,sha256,
+  byte_size,uploaded_at_utc) non-null;
   rejected => reason_code IN ('authorization_denied','invalid_command','order_not_found',
   'composition_not_confirmed','invalid_composition','file_too_large','not_pdf',
   'invalid_pdf','unsafe_pdf','future_document_date','no_changes') and all evidence null;
@@ -1007,16 +1008,32 @@ events: event_type IN ('assignment_order_original_accepted',
 audits: request_id canonical lower UUID; mode IN ('initial','correction');
   status IN ('accepted','rejected','conflict'); reason_code follows the same
   success/rejected/conflict truth sets as requests
-maintenance requests/audits: request_id canonical lower UUID;
+maintenance requests: request_id canonical lower UUID;
   status IN ('completed','replayed','rejected','partial');
   completed|replayed => reason_code IS NULL AND retryable=0;
   rejected => reason_code IN ('invalid_command','authorization_denied') AND retryable=0;
   partial => reason_code IN ('locked','storage_failure') AND retryable=1;
   scanned=deleted+retained+failed
+maintenance audits: request_id canonical lower UUID;
+  status IN ('completed','rejected','partial');
+  completed => reason_code IS NULL AND retryable=0;
+  rejected => reason_code IN ('invalid_command','authorization_denied') AND retryable=0;
+  partial => reason_code IN ('locked','storage_failure') AND retryable=1;
+  scanned=deleted+retained+failed
 ```
 
-All opaque root/revision/content IDs are printable ASCII within their declared
-column length without slash, backslash or control. There are no other CHECKs.
+Every `request_id` CHECK is exactly
+`REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'`.
+On roots, revisions, requests and events, each non-null root/revision ID CHECK
+is exactly `CHAR_LENGTH(value) BETWEEN 1 AND 80 AND value NOT REGEXP
+'[[:cntrl:]/\\\\]'`; revisions.`private_content_identity` uses the same
+expression with upper bound 160. ASCII/`ascii_bin` columns reject non-ASCII.
+Roots additionally CHECK that `current_revision_id` is non-empty; the
+repository transaction inserts the root with its generated revision identity,
+inserts that matching revision before commit, and on correction CAS-updates
+current only to a revision inserted for the same root. This invariant has no
+FK because MariaDB FKs are not deferrable and a roots↔revisions cycle would make
+initial insertion impossible. There are no other CHECKs.
 Safe generated constraint names are implementation details; the normalized
 expressions, columns and actions above are the complete equivalence oracle.
 

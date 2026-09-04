@@ -85,6 +85,10 @@ structural equivalence и clean/repeat/leading-partial/populated/conflict
 outcomes. Fixture имеет literal rows/projection digests, serializable
 all-or-nothing seed и reverse byte-validated cleanup; после этого test
 удаляет только validated task-owned database, не prefix tables.
+MariaDB non-deferrable FK cycle не создаётся: revision ссылается
+на root, а root current-leaf same-root invariant владеется atomic repository
+transaction/CAS. Per-table UUID/opaque/status/reason/retry/evidence/count CHECK
+truth sets закрыты без символических conditional FK.
 
 ## Risks / Trade-offs
 
