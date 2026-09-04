@@ -11,7 +11,7 @@
   заявляет transport no-read; verification: strict validate, fresh independent
   Gate 1 review и explicit owner approval новых exact hashes. Прежние
   approvals и Gate 2/3 reviews остаются historical.
-- [ ] 1.6 Согласовать artifacts с owner-approved upload-first GET
+- [x] 1.6 Согласовать artifacts с owner-approved upload-first GET
   `PILOT-PREPARE-FORM-001 v0.2`; verification: strict OpenSpec, fresh
   independent Gate 1 review и exact-hash owner approval до tests.
 
