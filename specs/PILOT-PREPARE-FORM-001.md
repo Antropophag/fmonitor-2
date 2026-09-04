@@ -20,9 +20,12 @@ intro `Укажите состав и прикрепите подписанны�
 normalized records и выбираются через кнопку `Выбрать монтажников`. External
 same-origin `picker.js` строит результаты только DOM API/`textContent`, никогда
 не `innerHTML`; query заменяет runs U+0009..U+000D/U+0020 одним U+0020,
-удаляет эти boundary chars и вызывает `toLocaleLowerCase('ru-RU')`. Match —
-substring normalized `data-name`; при минимум двух ASCII digits после удаления
-non-digits также substring six-digit `data-tab`. Position/busy не ищутся;
+удаляет эти boundary chars и вызывает `toLocaleLowerCase('ru-RU')`; minimum 2
+измеряется Unicode code points (`Array.from(query).length`). Candidate
+`data-name` проходит тот же whitespace/lowercase normalizer, затем match —
+substring. Tab branch удаляет каждый code point кроме ASCII `[0-9]`; при
+минимум двух оставшихся digits выполняется substring six-digit `data-tab`.
+Position/busy не ищутся;
 максимум 20 видимых результатов. Result — native button с `aria-pressed`; выбранные люди видимы как
 remove-buttons и отражаются exact hidden `installerTabIds[]`. Search имеет
 label, result container — polite live semantics, popover управляется native
