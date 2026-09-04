@@ -42,5 +42,13 @@ native macOS arm64: PASS: PILOT-OBJECT-CARD-001 public HTTP card
 Linux arm64, disposable copy, non-root task user: PASS: PILOT-OBJECT-CARD-001 public HTTP card
 ```
 
+The first rereview `42e653d` accepted the observers and both platform runs but
+found that Darwin `lsof` collection could block indefinitely. Follow-up commit
+`1b54cca61c742a75971ef49c339557e53dd7d5fa` adds nonblocking dual-pipe
+collection, monotonic deadlines, bounded TERM then KILL, terminal confirmation,
+drain/close/reap, and a deliberately hanging five-second child control. The
+control reaches its 50 ms timeout, is terminated/reaped, and the whole cleanup
+finishes under 1.5 seconds. Both full platform matrices remain GREEN.
+
 PHP lint and diff-check pass. No production or specification file changed.
-Fresh independent Gate 3 remains required.
+Fresh independent Gate 3 remains required for the follow-up hash.
