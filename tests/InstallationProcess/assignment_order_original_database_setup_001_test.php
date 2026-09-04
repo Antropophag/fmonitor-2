@@ -37,7 +37,7 @@ $tableNames = static function (mysqli $db, string $like = '%'): array {
 $columns = static function (mysqli $db, string $table): array {
     $statement = $db->prepare('SELECT COLUMN_NAME,LOWER(COLUMN_TYPE) COLUMN_TYPE,IS_NULLABLE,CHARACTER_SET_NAME,COLLATION_NAME,COLUMN_DEFAULT,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY ORDINAL_POSITION');
     $statement->bind_param('s', $table); $statement->execute();
-    return array_map('array_values', $statement->get_result()->fetch_all(MYSQLI_ASSOC));
+    return array_map(static function(array$row):array{if($row['IS_NULLABLE']==='YES'&&$row['COLUMN_DEFAULT']==='NULL')$row['COLUMN_DEFAULT']=null;return array_values($row);},$statement->get_result()->fetch_all(MYSQLI_ASSOC));
 };
 $keys = static function (mysqli $db, string $table): array {
     $statement = $db->prepare("SELECT INDEX_NAME,NON_UNIQUE,GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',') COLUMNS FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? GROUP BY INDEX_NAME,NON_UNIQUE");
@@ -108,6 +108,11 @@ try {
     assertSameValue(false,$wrongDdl===Contract::rootsDdl('wrong_'),'Wrong-pattern round-trip fixture changes the exact regex only.');
     $preflight->query($wrongDdl);
     assertSameValue(false,$roundTripExpected===$checks($preflight,'wrong_'.Contract::TABLES[0]),'Same-count wrong regex remains observable after MariaDB round trip.');
+    $preflight->query("CREATE TABLE `default_probe` (implicit_null VARCHAR(20) NULL, explicit_null VARCHAR(20) NULL DEFAULT NULL, wrong_default VARCHAR(20) NULL DEFAULT 'wrong') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $defaultProbe=$columns($preflight,'default_probe');
+    assertSameValue(null,$defaultProbe[0][5],'Implicit nullable NULL default canonicalizes to PHP null.');
+    assertSameValue(null,$defaultProbe[1][5],'Explicit nullable DEFAULT NULL canonicalizes to the same PHP null.');
+    assertSameValue(true,is_string($defaultProbe[2][5])&&$defaultProbe[2][5]!==''&&$defaultProbe[2][5]!=='NULL','Non-null wrong default remains observable and distinct.');
     $preflight->close();
 
     foreach (Contract::PROJECTIONS as $name => [$expectedHash, $literal]) {
