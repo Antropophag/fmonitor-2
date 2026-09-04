@@ -359,7 +359,7 @@ $readerUser = 'poc_' . $token;
 $readerPassword = 'select-' . $token;
 $userOnlyReader = 'pocu_' . $token;
 $ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pilotCss='';$pocProtectedPaths=[];$pocMutableRoots=[];
-    $admin = pocDb(); $db = null; $server = null; $anonymous = null; $escapeServer = null;
+    $admin = pocDb(); $db = null; $server = null; $capable = null; $anonymous = null; $escapeServer = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
@@ -542,7 +542,18 @@ try {
     pocStructure($a, 'Example A required DOM');
     pocGroupVisible($a,'Распоряжение и команда',['Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'Example A exact empty current-basis/team consequence');
     pocGroupVisible($a,'Работы',['Работы ещё не открыты'],'Example A exact closed checklist consequence');
-    foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability ' . $secret);
+    foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability/action ' . $secret);
+
+    // PILOT-PREPARE-FORM-001 v0.2 supersedes only the capable card launch copy.
+    // The public card remains a safe GET/HEAD read and the route itself is unchanged.
+    $capable = pocStart(array_replace($environment, ['REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18']));
+    $capableCard = pocParity($capable['port'], '/pilot/objects/4512');
+    pocSuccess($capableCard, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'Example A capable upload-first launch');
+    pocGroupVisible($capableCard,'Распоряжение и команда',['Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'capable upload-first action follows reason before team history');
+    $capableDocument = pocDocument($capableCard['body']); $capableXpath = new DOMXPath($capableDocument);
+    assertSameValue(1, (int) $capableXpath->evaluate("count(//a[@href='/pilot/objects/4512/assignment-order/prepare' and normalize-space(.)='Загрузить распоряжение'])"), 'capable card has one exact upload-first launch link');
+    assertSameValue(false, str_contains(pocVisible($capableCard['body']), 'Сформировать распоряжение'), 'superseded card action copy is absent');
+    pocStop($capable); $capable = null;
 
     $b = pocRequest($server['port'], 'GET', '/pilot/objects/4513');
     pocAssertRequestResourcesReleased($server, $admin, $database, $readerUser, $css, 'Example B GET request scope');
@@ -643,7 +654,7 @@ try {
     assertSameValue($before, pocSnapshot($db), 'success HEAD 404 and 403 are observationally read-only');
     echo "PASS: PILOT-OBJECT-CARD-001 public HTTP card\n";
 } finally {
-    pocStop($server); pocStop($anonymous); pocStop($escapeServer);
+    pocStop($server); pocStop($capable); pocStop($anonymous); pocStop($escapeServer);
     if ($db instanceof mysqli) $db->close();
     $admin->query("DROP DATABASE IF EXISTS `{$database}`");
     $admin->query("DROP USER IF EXISTS `{$readerUser}`@`%`");
