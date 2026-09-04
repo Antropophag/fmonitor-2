@@ -6,7 +6,7 @@
 - [x] 1.4 Получить fresh independent Gate 1 review v5 executable spec/OpenSpec package с syntactically valid exact config/factory examples, exact owner/filesystem primitive, explicit `public static function` primitive/entropy result and handle creation, handle/stat ownership, clock/entropy и observer/event/result PHP signatures, затем explicit owner approval нового exact hash; verification: READY_FOR_OWNER_APPROVAL review + append-only exact-hash decision. До этого tasks 2.2+ закрыты.
 - [x] 1.5 Получить fresh independent Gate 1 review v7 и exact-hash owner approval для exhaustive public API: backed event/failure enums, explicit raw-HTTP injected-dependency composition, deterministic-clock-only contract, exact inspector class/CLI/JSON/exit protocol и constructible owner/event/inspection results с restricted call sites; verification: READY_FOR_OWNER_APPROVAL review + append-only decision. До этого tasks 2.2+ снова закрыты.
 - [x] 1.6 Получить fresh independent Gate 1 review v8 и exact-hash owner approval узкого inspector CLI application seam: injected inspection/filesystem/argv/output ports, unconditional native production binding и deterministic `64|65|70` mapping; verification: READY_FOR_OWNER_APPROVAL review + append-only decision. До этого tasks 2.2+ снова закрыты.
-- [ ] 1.7 Уточнить exact successful-start payload handoff (`ownerStarted(id,
+- [x] 1.7 Уточнить exact successful-start payload handoff (`ownerStarted(id,
   payload)` + nullable `sessionPayload()`), bounded whole-array codec и
   `PAYLOAD_INVALID`, запретить second-owner filesystem
   read в HTTP consumers и получить fresh independent Gate 1 review; прежние
