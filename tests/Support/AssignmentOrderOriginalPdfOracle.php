@@ -65,4 +65,64 @@ final class AssignmentOrderOriginalPdfOracle
         $pdf .= "6 0 obj\n<< /Type /XRef /Size 7 /Root 1 0 R /W [1 4 4] /Length " . strlen($entries) . " >>\nstream\n$entries\nendstream\nendobj\n";
         return $pdf . "startxref\n$xrefOffset\n%%EOF\n";
     }
+
+    public static function flateObjectStream(string $hiddenDictionary): string
+    {
+        $pdf = self::classic();
+        $eof = strrpos($pdf, '%%EOF');
+        if ($eof === false) throw new \RuntimeException('fixture');
+        $base = substr($pdf, 0, $eof + 6) . "\n";
+        $previous = (int) preg_replace('/.*startxref\n([0-9]+)\n%%EOF\n\z/s', '$1', $base);
+        $payload = '5 0 ' . $hiddenDictionary;
+        $compressed = gzcompress($payload);
+        if (!is_string($compressed)) throw new \RuntimeException('fixture');
+        $objectOffset = strlen($base);
+        $base .= "4 0 obj\n<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode /Length " . strlen($compressed) . " >>\nstream\n" . $compressed . "\nendstream\nendobj\n";
+        $xref = strlen($base);
+        return $base . "xref\n4 1\n" . sprintf('%010d 00000 n ', $objectOffset) . "\ntrailer\n<< /Size 6 /Root 1 0 R /Prev $previous >>\nstartxref\n$xref\n%%EOF\n";
+    }
+
+    public static function wrongObjectOffset(): string
+    {
+        $pdf = self::classic();
+        return preg_replace('/0000000009 00000 n /', '0000000010 00000 n ', $pdf, 1) ?? throw new \RuntimeException('fixture');
+    }
+
+    public static function nonZeroCatalogGeneration(): string
+    {
+        $pdf = preg_replace('/1 0 obj/', '1 2 obj', self::classic(), 1) ?? throw new \RuntimeException('fixture');
+        $pdf = preg_replace('/(0000000009) 00000 n /', '$1 00002 n ', $pdf, 1) ?? throw new \RuntimeException('fixture');
+        return str_replace('/Root 1 0 R', '/Root 1 2 R', $pdf);
+    }
+
+    public static function cyclicPagesTree(): string
+    {
+        return str_replace('/Kids [3 0 R]', '/Kids [2 0 R]', self::classic());
+    }
+
+    public static function latestRootHasZeroPages(): string
+    {
+        $base = self::classic();
+        $previous = (int) preg_replace('/.*startxref\n([0-9]+)\n%%EOF\n\z/s', '$1', $base);
+        $catalogOffset = strlen($base);
+        $base .= "4 0 obj\n<< /Type /Catalog /Pages 5 0 R >>\nendobj\n";
+        $pagesOffset = strlen($base);
+        $base .= "5 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n";
+        $xref = strlen($base);
+        return $base . "xref\n4 2\n" . sprintf('%010d 00000 n ', $catalogOffset) . "\n" . sprintf('%010d 00000 n ', $pagesOffset) . "\ntrailer\n<< /Size 6 /Root 4 0 R /Prev $previous >>\nstartxref\n$xref\n%%EOF\n";
+    }
+
+    public static function overDepthGraph(): string
+    {
+        $extra = '/Oracle 4 0 R';
+        $pdf = "%PDF-1.4\n";
+        $bodies = [1 => "<< /Type /Catalog /Pages 2 0 R $extra >>", 2 => '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', 3 => '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>'];
+        for ($number = 4; $number <= 105; $number++) $bodies[$number] = $number === 105 ? '<< /End true >>' : '<< /Next ' . ($number + 1) . ' 0 R >>';
+        $offsets = [0];
+        foreach ($bodies as $number => $body) { $offsets[$number] = strlen($pdf); $pdf .= "$number 0 obj\n$body\nendobj\n"; }
+        $xref = strlen($pdf);
+        $pdf .= "xref\n0 106\n0000000000 65535 f \n";
+        for ($number = 1; $number <= 105; $number++) $pdf .= sprintf('%010d 00000 n ', $offsets[$number]) . "\n";
+        return $pdf . "trailer\n<< /Size 106 /Root 1 0 R >>\nstartxref\n$xref\n%%EOF\n";
+    }
 }
