@@ -411,7 +411,18 @@ try {
     $db->query("ALTER TABLE legacy_fm_maintable ADD ptoactdate VARCHAR(40) NULL, ADD responsstroicontrol VARCHAR(80) NULL");
     $db->query("UPDATE legacy_fm_maintable SET ptoactdate='2026-09-30' WHERE id=4518");
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
-    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    assertSameValue(
+        [
+            ['user_id'=>'18','full_name'=>'Сидоров Сергей Сергеевич'],
+            ['user_id'=>'19','full_name'=>'No Capability Reader'],
+            ['user_id'=>'20','full_name'=>'Inactive'],
+            ['user_id'=>'21','full_name'=>'Inactive role'],
+            ['user_id'=>'24','full_name'=>'Актор <script>actor-secret</script> &quot;'],
+        ],
+        $db->query("SELECT CAST(user_id AS CHAR) user_id,full_name FROM {$processPrefix}fm2_pilot_users ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),
+        'Local RBAC fixture pins every asserted HTTP identity to its independently fixed expected full name.',
+    );
     $db->query("INSERT INTO {$processPrefix}fm2_process_user_capabilities(user_id,capability,position_snapshot) VALUES(18,'assignment_order.prepare',NULL)");
     assertSameValue(
         [['user_id'=>'18','capability'=>'assignment_order.prepare']],
