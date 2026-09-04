@@ -192,7 +192,8 @@ command repository и SHALL закрывать connection/descriptors exactly on
 Config SHALL иметь exact bounded ASCII scalar grammar, canonical owned
 `0700|0750` private root, existing owned `0600` password/safe-log files, SHALL
 не создавать/repair paths и SHALL принимать password только как `1..1024`
-non-control bytes с одним optional final LF. Construction/read/close failure
+bytes exact ASCII `0x20..0x7E` с одним optional final LF, удаляемым до проверки.
+TAB, DEL, non-ASCII и другие newline MUST отклоняться. Construction/read/close failure
 MUST бросать только fixed `AssignmentOrderOriginalEvidenceUnavailable` без
 partial JSON/diagnostics; repeated close MUST не повторять I/O и сохранять
 первый cached outcome.

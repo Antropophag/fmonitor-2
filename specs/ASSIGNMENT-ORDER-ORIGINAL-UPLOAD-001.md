@@ -1024,8 +1024,9 @@ canonical paths outside the repository, contain no NUL/control or `..`
 component and are not symlinks. Private root is an existing owner/root-owned
 directory with mode `0700|0750`; password and safe-log are existing regular
 owner/root-owned files with mode `0600`. Factory never creates/repairs them.
-Password file contains `1..1024` bytes excluding NUL/CR/LF, except one optional
-final LF which is removed; empty result or any other newline is invalid. Password
+Password file contains `1..1024` bytes, each in exact ASCII range `0x20..0x7E`,
+except one optional final LF which is removed before that check; empty result,
+TAB, DEL, non-ASCII or any other newline is invalid. Password
 bytes never appear in result/log/error output. All scalar/path/metadata checks
 complete before password content or database access; invalid config throws only
 `AssignmentOrderOriginalEvidenceUnavailable`.
