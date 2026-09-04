@@ -379,6 +379,7 @@ try {
         [4515,'Москва, ул. Четвёртая, д. 9','4','77-000126','2026-10-03','2026-12-02',null,null,'FORBIDDEN-4515'],
         [4516,'Москва, ул. Пятая, д. 11','5','77-000127','2026-10-04','2026-12-03',null,null,'FORBIDDEN-4516'],
         [4517,'Улица <img src=x onerror=object-secret> & "дом"','<b>7</b>','REG<&"-4517','2026-10-06','2026-12-22',null,null,'FORBIDDEN-4517'],
+        [4518,'PTO action must be hidden','8','77-PTO','2026-10-07','2026-12-23',null,null,'FORBIDDEN-4518'],
         [4599,'Legacy only must be hidden','9','77-HIDDEN','2026-10-01','2026-11-01',null,null,'FORBIDDEN-4599'],
         [4600,'Invalid imported','   ','77-BAD','2026-10-01','2026-11-01',null,null,'FORBIDDEN-4600'],
         [4610,'Corrupt state','10','77-C10','2026-10-01','2026-11-01',null,null,'SECRET-4610'],
@@ -407,6 +408,8 @@ try {
     ];
     $statement = $db->prepare('INSERT INTO legacy_fm_maintable VALUES(?,?,?,?,?,?,?,?,?)');
     foreach ($legacy as $row) { $statement->bind_param('issssssss', ...$row); $statement->execute(); }
+    $db->query("ALTER TABLE legacy_fm_maintable ADD ptoactdate VARCHAR(40) NULL, ADD responsstroicontrol VARCHAR(80) NULL");
+    $db->query("UPDATE legacy_fm_maintable SET ptoactdate='2026-09-30' WHERE id=4518");
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
     \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
     $db->query("INSERT INTO {$processPrefix}fm2_process_user_capabilities(user_id,capability,position_snapshot) VALUES(18,'assignment_order.prepare',NULL)");
@@ -424,6 +427,7 @@ try {
         (6,4600,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (7,4601,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (8,4517,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-10-06T09:00:00+03:00',1),
+        (9,4518,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (10,4610,'invented_state',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (11,4611,'working','2026-10-03',NULL,18,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (12,4612,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
@@ -490,7 +494,7 @@ try {
     $requiredReads = [
         'legacy_users'=>['id','name','email','role_id','status'],
         'legacy_users_roles'=>['id','status'],
-        'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],
+        'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date','ptoactdate','responsstroicontrol'],
         $processPrefix.'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
         $processPrefix.'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
         $processPrefix.'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
@@ -551,8 +555,17 @@ try {
     pocSuccess($capableCard, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'Example A capable upload-first launch');
     pocGroupVisible($capableCard,'Распоряжение и команда',['Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'capable upload-first action follows reason before team history');
     $capableDocument = pocDocument($capableCard['body']); $capableXpath = new DOMXPath($capableDocument);
-    assertSameValue(1, (int) $capableXpath->evaluate("count(//a[@href='/pilot/objects/4512/assignment-order/prepare' and normalize-space(.)='Загрузить распоряжение'])"), 'capable card has one exact upload-first launch link');
+    $prepareAnchors = $capableXpath->query("//a[@href='/pilot/objects/4512/assignment-order/prepare']");
+    assertSameValue(1, $prepareAnchors->length, 'capable card has exactly one canonical prepare anchor regardless of label');
+    assertSameValue('Загрузить распоряжение', trim((string) $prepareAnchors->item(0)?->textContent), 'sole canonical prepare anchor has exact upload-first label');
+    assertSameValue(1, (int) $capableXpath->evaluate("count(//section[./*[self::h2 or self::h3][normalize-space(.)='Распоряжение и команда']]//*[self::a or self::button or self::form or self::input or self::select or self::textarea])"), 'capable next-step area has no additional process-action link or control');
     assertSameValue(false, str_contains(pocVisible($capableCard['body']), 'Сформировать распоряжение'), 'superseded card action copy is absent');
+    foreach ([4514=>'wrong state',4518=>'PTO gate'] as $negativeId=>$negativeWhy) {
+        $negativeAction = pocParity($capable['port'], '/pilot/objects/'.$negativeId);
+        $negativeDocument = pocDocument($negativeAction['body']); $negativeXpath = new DOMXPath($negativeDocument);
+        assertSameValue(0, (int) $negativeXpath->evaluate("count(//a[@href='/pilot/objects/{$negativeId}/assignment-order/prepare'])"), $negativeWhy.' has no canonical prepare href');
+        assertSameValue(0, (int) $negativeXpath->evaluate("count(//*[self::a or self::button or self::form or self::input or self::select or self::textarea][normalize-space(.)='Загрузить распоряжение'])"), $negativeWhy.' has no upload-first action/control');
+    }
     pocStop($capable); $capable = null;
 
     $b = pocRequest($server['port'], 'GET', '/pilot/objects/4513');
