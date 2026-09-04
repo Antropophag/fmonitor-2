@@ -21,22 +21,33 @@ $assert(AssignmentOrderOriginalPdfStatus::PASSIVE_PDF, AssignmentOrderOriginalPd
 
 $hidden = [
     'JavaScript' => '<< /S /JavaScript /JS (app.alert) >>',
+    'JS' => '<< /JS (app.alert) >>',
     'OpenAction' => '<< /OpenAction 8 0 R >>',
     'AA' => '<< /AA << /O 8 0 R >> >>',
     'Launch' => '<< /S /Launch >>',
     'EmbeddedFiles' => '<< /Names << /EmbeddedFiles 8 0 R >> >>',
+    'Filespec' => '<< /Type /Filespec >>',
     'FileAttachment' => '<< /Subtype /FileAttachment >>',
+    'RichMedia' => '<< /Subtype /RichMedia >>',
+    'Movie' => '<< /Subtype /Movie >>',
+    'Sound' => '<< /Subtype /Sound >>',
     'URI' => '<< /S /URI /URI (https://invalid.example) >>',
     'GoToR' => '<< /S /GoToR >>',
+    'SubmitForm' => '<< /S /SubmitForm >>',
+    'ImportData' => '<< /S /ImportData >>',
 ];
 foreach ($hidden as $family => $dictionary) {
     $assert(AssignmentOrderOriginalPdfStatus::UNSAFE_PDF, AssignmentOrderOriginalPdfOracle::flateObjectStream($dictionary), 'Flate object stream hides forbidden ' . $family . '.');
 }
 
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::wrongObjectOffset(), 'Classic xref entry with wrong byte offset fails closed.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::catalogGenerationMismatch(), 'Root reference generation must match its active xref entry.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::malformedXrefStream(), 'Malformed xref-stream field widths fail closed.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::unsupportedStructuralFilter(), 'Unsupported structural stream filter fails closed.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::cyclicPagesTree(), 'Cyclic Pages graph fails closed despite a decoy Page object.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::overDepthGraph(), 'Reference graph beyond depth 100 fails closed.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::latestRootHasZeroPages(), 'Prev chain resolves the latest Root rather than accepting obsolete positive pages.');
+$assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::prevCycle(), 'Cyclic Prev chain fails closed.');
 $assert(AssignmentOrderOriginalPdfStatus::UNSAFE_PDF, AssignmentOrderOriginalPdfOracle::classic('', 1, '/Encrypt 9 0 R'), 'Encryption is unsafe.');
 $assert(AssignmentOrderOriginalPdfStatus::INVALID_PDF, AssignmentOrderOriginalPdfOracle::classic('', 0), 'Zero-page tree is invalid.');
 
