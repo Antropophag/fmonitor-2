@@ -82,3 +82,13 @@ production diff. The temporary worktree was verified clean, removed and
 `git worktree prune` was executed.
 
 Gate 4 does not claim Gate 5, repository-wide GREEN or integration readiness.
+
+## Exact production commit confirmation
+
+The first production/evidence/task commit is
+`5509fc7767c1c379dc4b0448d4e01386a9960fe4`. From a clean worktree at that
+exact SHA, `2026-09-04T10:11:45+03:00` through
+`2026-09-04T10:12:22+03:00`, the direct picker harness and canonical prepare
+verifier both returned their PASS literals, `make architecture-check` returned
+`ARCHITECTURE CHECK PASSED (7 rules)`, and `make lint` plus
+`git diff --check` exited zero without output.
