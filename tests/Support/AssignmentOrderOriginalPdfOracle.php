@@ -115,7 +115,17 @@ final class AssignmentOrderOriginalPdfOracle
 
     public static function conflictingXrefIdentity(): string
     {
-        return str_replace("trailer\n", "1 1\n0000000058 00000 n \ntrailer\n", self::classic());
+        $pdf = "%PDF-1.4\n";
+        $objects = [1 => '<< /Type /Catalog /Pages 2 0 R >>', 2 => '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', 3 => '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>'];
+        $offsets = [0];
+        foreach ($objects as $number => $body) { $offsets[$number] = strlen($pdf); $pdf .= "$number 0 obj\n$body\nendobj\n"; }
+        $conflictOffset = strlen($pdf);
+        $pdf .= "1 0 obj\n<< /Type /Catalog /Pages 2 0 R /Conflicting true >>\nendobj\n";
+        $xref = strlen($pdf);
+        $pdf .= "xref\n0 4\n0000000000 65535 f \n";
+        for ($number = 1; $number <= 3; $number++) $pdf .= sprintf('%010d 00000 n ', $offsets[$number]) . "\n";
+        $pdf .= "1 1\n" . sprintf('%010d 00000 n ', $conflictOffset) . "\n";
+        return $pdf . "trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n$xref\n%%EOF\n";
     }
 
     public static function objectCountAboveLimit(): string
