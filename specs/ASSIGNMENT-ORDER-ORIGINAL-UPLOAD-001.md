@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v1 OWNER-APPROVED; v4 lease-conflict amendment ожидает fresh Gate 1 review/owner approval**  
-Версия: **v4**  
+Статус: **v4 OWNER-APPROVED; v5 worker safe-log binding amendment ожидает fresh Gate 1 review/owner exact-hash approval**
+Версия: **v5**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1061,6 +1061,7 @@ final readonly class AssignmentOrderOriginalWorkerConfig
         public string $databasePasswordFile,
         public string $tablePrefix,
         public string $privateStorageRoot,
+        public string $safeLogFile,
         public string $clockUtc,
         public string $rootIdSequenceCsv,
         public string $revisionIdSequenceCsv,
@@ -1100,6 +1101,6 @@ safeLogs = {schema:"aoou-logs-v1",items:[{sequence,event,correlationId,safeField
 
 Nulls explicit; hashes lower-case. `correctionReason` exists only in protected verifier evidence and never result/log. MariaDB acceptance MUST use production repository plus this read-only evidence adapter on a fresh connection; in-memory Gate 2 may prove initial seam wiring but cannot satisfy persistence/CAS/failure matrix. Evidence inventory is observation only and MUST NOT feed maintenance candidate enumeration or mutation.
 
-Worker config JSON has exact keys matching `AssignmentOrderOriginalWorkerConfig`, no extras, mode `real|injected_passive`, canonical fault enum/null; password file and config are verifier-owned mode 0600 outside repo. Each child opens the shared MariaDB DSN/prefix and private root, constructs real repository/storage through the declared factories, injects only fixed clock/IDs/inspector/fault/barrier, then builds the same application via verification factory. Objects/connections are never serialized.
+Worker config JSON has exact keys matching `AssignmentOrderOriginalWorkerConfig`, no extras, mode `real|injected_passive`, canonical fault enum/null; password file, safe-log file and config are verifier-owned mode 0600 outside repo. `safeLogFile` is an absolute canonical existing regular owner/root-owned non-symlink path outside the repository, with no NUL/control or `..` component, validated before password content or database access under the same rules as evidence config. The worker never creates or repairs it. Each child binds its real `AssignmentOrderOriginalSafeLogObserver` exclusively to that exact file; the independent evidence-reader config MUST use the same canonical path identity for the corresponding run. No environment variable, mutable global, default basename, private-root convention or callback may select another log target. Each child opens the shared MariaDB DSN/prefix and private root, constructs real repository/storage through the declared factories, injects only fixed clock/IDs/inspector/fault/barrier, then builds the same application via verification factory. Objects/connections are never serialized.
 
 Command pipe carries exactly one UTF-8 JSON line, maximum `29,000,000` bytes: keys match Command, enum backed strings, PDF bytes base64, nulls explicit. Result pipe carries exactly one canonical JSON line maximum `16384` bytes and no stdout noise. Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes pipes, terminates then reaps every child in `finally`, restores faults and removes only owned prefix/root/config/password files.

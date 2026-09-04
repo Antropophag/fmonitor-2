@@ -28,7 +28,7 @@ Pilot owner отменил ручной номер распоряжения и �
 ## Impact
 
 - Planning и будущая реализация затрагивают Assignment Orders application seam, process capabilities, private document storage и immutable metadata/audit persistence.
-- Gate 2 production evidence наблюдается через отдельный read-only factory/config seam с fresh DB connection и owned private/log readers; он не является mutation/query product surface.
+- Gate 2 production evidence наблюдается через отдельный read-only factory/config seam с fresh DB connection и owned private/log readers; worker config явно передаёт тот же canonical safe-log path реальному observer, без env/global/default selector; это не mutation/query product surface.
 - Canonical `CONTEXT.md`, pilot spec и pilot data model synchronously amended owner-approved original-PDF truth до Gate 1. До executable-spec approval также должны получить явную disposition `docs/installation-process-interface.md`, behavior inventory и активные E2E/RBAC/PDF changes/specs/tests, которые характеризуют реализованный manual number, `confirmRegistration` или `registered`; исторические reviews/evidence не редактируются и помечаются как legacy evidence, а не target behavior.
 - Вне scope: OCR, signature/stamp verification, malware scanning, JPG/PNG/multi-file upload, обязательный template, 1С ДО integration, HTTP/read/download, смена current composition, sequential-order applicability и opening by original.
 - Следующие slices (создаются отдельным OpenSpec workflow, не здесь): `apply-assignment-order-original-to-composition` определяет prospective sequential orders/ties; `open-installation-from-assignment-order-original` заменяет opening gate и фиксирует immutable opening snapshot.
