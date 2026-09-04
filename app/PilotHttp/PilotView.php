@@ -51,7 +51,7 @@ final class PilotView
         $item=static fn(string $icon,string $label):string=>'<span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true">'.self::icon($icon).'<span class="fm2-nav-text">'.$label.'</span></span>';
         $nav='<span class="fm2-nav-group">Работа</span>'.$item('work','Моя работа');
         if($user->can(AccessPolicy::CONSTRUCTION_CONTROL_READ))$nav.='<a class="fm2-nav-item" href="/pilot/construction-control"'.$constructionControl.'>'.self::icon('inspections').'<span class="fm2-nav-text">Стройконтроль</span></a>';
-        if($user->can(AccessPolicy::OBJECTS_READ))$nav.='<a class="fm2-nav-item" href="/pilot/objects"'.$objects.'>'.self::icon('objects').'<span class="fm2-nav-text">Объекты монтажа</span></a>';
+        if($current==='Объекты монтажа'||$user->can(AccessPolicy::OBJECTS_READ))$nav.='<a class="fm2-nav-item" href="/pilot/objects"'.$objects.'>'.self::icon('objects').'<span class="fm2-nav-text">Объекты монтажа</span></a>';
         $nav.=$item('orders','Распоряжения');
         if($user->can(AccessPolicy::INSTALLERS_READ))$nav.='<span class="fm2-nav-group">Справочники</span><a class="fm2-nav-item" href="/pilot/installers"'.$installers.'>'.self::icon('installers').'<span class="fm2-nav-text">Монтажники</span></a>';
         $nav.='<span class="fm2-nav-group">Управление</span>'.$item('otiz','Расчёты ОТиЗ').$item('control','Контроль');
