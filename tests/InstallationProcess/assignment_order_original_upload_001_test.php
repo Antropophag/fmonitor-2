@@ -16,11 +16,35 @@ use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialCompositionReader;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialIds;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialInspector;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialObservers;
+use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialProcessEvidenceReader;
+use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialProcessState;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialRepository;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialStorage;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialStream;
 
 // Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v4, Example A.
+require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialProcessState.php';
+
+$downstreamFamilies = [
+    'orderCompositionSha256',
+    'caseSha256',
+    'openingSha256',
+    'tasksSha256',
+    'checklistSha256',
+    'decoySha256',
+];
+foreach ($downstreamFamilies as $family) {
+    $sensitivityState = new AssignmentOrderOriginalInitialProcessState();
+    $sensitivityReader = new AssignmentOrderOriginalInitialProcessEvidenceReader($sensitivityState);
+    $sensitivityBefore = $sensitivityReader->canonicalJson();
+    $sensitivityState->perturb($family);
+    assertSameValue(
+        false,
+        hash_equals($sensitivityBefore, $sensitivityReader->canonicalJson()),
+        "Downstream no-mutation oracle detects a {$family} perturbation.",
+    );
+}
+
 if (!class_exists(AssignmentOrderOriginalVerificationFactory::class)) {
     throw new TestFailure(
         'INTENDED_RED: approved AssignmentOrderOriginalVerificationFactory production seam is absent.',
@@ -36,17 +60,23 @@ $positivePdf = base64_decode(
 assertSameValue(true, is_string($positivePdf), 'Approved literal PDF fixture decodes strictly.');
 
 $authorizer = new AssignmentOrderOriginalInitialAuthorizer();
-$compositions = new AssignmentOrderOriginalInitialCompositionReader();
+$processState = new AssignmentOrderOriginalInitialProcessState();
+$processEvidence = new AssignmentOrderOriginalInitialProcessEvidenceReader($processState);
+$compositions = new AssignmentOrderOriginalInitialCompositionReader($processState);
 $clock = new AssignmentOrderOriginalInitialClock();
 $ids = new AssignmentOrderOriginalInitialIds();
 $inspector = new AssignmentOrderOriginalInitialInspector();
 $storage = new AssignmentOrderOriginalInitialStorage();
-$repository = new AssignmentOrderOriginalInitialRepository();
+$repository = new AssignmentOrderOriginalInitialRepository($processState);
 $observers = new AssignmentOrderOriginalInitialObservers();
 $stream = new AssignmentOrderOriginalInitialStream($positivePdf);
 
-$beforeProcess = '{"schema":"aoou-process-v1","orderCompositionSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","caseSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","openingSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","tasksSha256":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","decoySha256":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}';
-$processEvidence = $beforeProcess;
+$beforeProcess = $processEvidence->canonicalJson();
+assertSameValue(
+    '{"schema":"aoou-process-v1","orderCompositionSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","caseSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","openingSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","tasksSha256":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","checklistSha256":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","decoySha256":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}',
+    $beforeProcess,
+    'Independent observer reads every exactly seeded downstream family.',
+);
 
 $application = AssignmentOrderOriginalVerificationFactory::create(
     new AssignmentOrderOriginalDependencies(
@@ -105,6 +135,10 @@ assertSameValue(1, $storage->stage?->closeCalls, 'Private stage closes exactly o
 assertSameValue(0, $storage->stage?->abortCalls, 'Accepted stage is not aborted.');
 assertSameValue(1, $storage->stage?->lease?->releaseCalls, 'Accepted content lease releases exactly once.');
 assertSameValue(1, $observers->deliveryCalls, 'Delivery observer runs once after accepted commit.');
-assertSameValue($beforeProcess, $processEvidence, 'Upload does not mutate composition, case, opening, tasks, or decoy facts.');
+assertSameValue(
+    $beforeProcess,
+    $processEvidence->canonicalJson(),
+    'Upload does not mutate composition, case, opening, tasks, checklist availability, or decoy facts.',
+);
 
 fwrite(STDOUT, "ASSIGNMENT_ORDER_ORIGINAL_UPLOAD_INITIAL_OK\n");

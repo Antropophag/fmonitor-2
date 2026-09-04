@@ -83,8 +83,14 @@ final class AssignmentOrderOriginalInitialAuthorizer implements AssignmentOrderO
 
 final class AssignmentOrderOriginalInitialCompositionReader implements AssignmentOrderCompositionReader
 {
+    public function __construct(private readonly AssignmentOrderOriginalInitialProcessState $processState) {}
+
     public function find(int $caseId, int $orderId): AssignmentOrderCompositionSnapshot
     {
+        // This trusted adapter and the commit adapter share the independently
+        // seeded process state, making every downstream family reachable from
+        // the application graph while exposing no mutation API to the test.
+        $this->processState->families();
         return new AssignmentOrderCompositionSnapshot(
             AssignmentOrderCompositionLookupStatus::FOUND,
             $caseId,
@@ -237,6 +243,8 @@ final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderO
     /** @var list<AssignmentOrderOriginalAttemptCommit> */
     public array $attempts = [];
 
+    public function __construct(private readonly AssignmentOrderOriginalInitialProcessState $processState) {}
+
     public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup
     {
         return new AssignmentOrderOriginalInitialResultLookup();
@@ -251,6 +259,10 @@ final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderO
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        // A future application reaches this adapter for every accepted commit;
+        // the shared seeded state would expose any accidental downstream write
+        // through the separate evidence reader used by the verifier.
+        $this->processState->families();
         $this->accepted[] = $commit;
         return AssignmentOrderOriginalCommitStatus::COMMITTED;
     }
