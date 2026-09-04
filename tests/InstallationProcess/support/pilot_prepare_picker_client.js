@@ -161,6 +161,11 @@ equal(document.activeElement, ui.search, "client does not replace native Tab foc
 ui.selection.children[0].dispatch("click");
 equal(ui.inputs.children.length, 0, "chip removal deletes hidden installer ID");
 equal([ui.selection.children.length, ui.modalSelection.children.length], [1, 1], "both summaries return to their empty state");
+equal([ui.selection.children[0].tagName, ui.modalSelection.children[0].tagName], ["SPAN", "SPAN"], "both post-removal summaries contain non-button placeholders");
+equal([ui.selection.children[0].className, ui.modalSelection.children[0].className], ["fm2-picker-selection-empty", "fm2-picker-selection-empty"], "both post-removal placeholders use exact class");
+equal([ui.selection.children[0].textContent, ui.modalSelection.children[0].textContent], ["Монтажники ещё не выбраны", "Пока никого"], "both post-removal placeholders use exact literals");
+equal([ui.selection.children[0].getAttribute("aria-label"), ui.modalSelection.children[0].getAttribute("aria-label")], [null, null], "post-removal summaries contain no remove accessible name");
+ok(![...ui.selection.children, ...ui.modalSelection.children].some((child) => child.tagName === "BUTTON" || child.getAttribute("aria-label") === "Убрать ИВАНОВ\t  Иван"), "selected remove chip disappears from both summaries");
 equal(ui.count.textContent, "Выбрано: 0", "removal updates live count");
 equal(document.activeElement, ui.opener, "chip removal returns focus to picker opener");
 
