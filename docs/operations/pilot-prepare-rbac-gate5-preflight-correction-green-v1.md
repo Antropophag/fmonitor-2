@@ -83,3 +83,12 @@ ec246d65f3f17a314eb214ce97f03352e307a9035a86a34731131f454b1eca9e  app/PilotHttp/
 ```
 
 This record does not claim Gate 5 or integration readiness.
+
+## Exact correction commit confirmation
+
+The correction production/evidence commit is
+`ef59395182497344338bd9e8916ee748b4f78666`. From a clean worktree at that
+exact SHA, `2026-09-04T10:24:13+03:00` through
+`2026-09-04T10:24:50+03:00`, the direct picker harness and canonical prepare
+verifier returned their PASS literals, architecture-check passed all 7 rules,
+strict OpenSpec validation succeeded, and lint plus diff-check exited zero.
