@@ -645,6 +645,7 @@ try {
     ] as $id=>$expected) {
         $state=pocRequest($server['port'],'GET','/pilot/objects/'.$id);
         pocSuccess($state,[$expected['status']],'state '.$id);
+        pocStructure($state,$id,false,'state '.$id.' required shared-shell DOM');
         pocGroupVisible($state,'Распоряжение и команда',$expected['team'],'state '.$id.' exact current-basis/team consequence');
         pocGroupVisible($state,'Работы',$expected['work'],'state '.$id.' exact checklist/opening consequence');
         if ($id === 4514) assertSameValue(false,str_contains(pocGroupText($state,'Распоряжение и команда','prepared preliminary team'),'Зарегистрировано в 1С ДО'),'prepared state has no registered basis');
