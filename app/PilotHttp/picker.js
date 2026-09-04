@@ -9,7 +9,6 @@
       drop.classList.toggle('fm2-file-drop--selected', Boolean(file));
     });
   }
-
   const root = document.querySelector('[data-installer-picker]');
   if (!root) return;
   const template = root.querySelector('[data-picker-data]');
@@ -26,6 +25,8 @@
   const normalizeWhitespace = (value) => value.replace(/[\u0009-\u000D\u0020]+/g, ' ').replace(/^[\u0009-\u000D\u0020]+|[\u0009-\u000D\u0020]+$/g, '');
   const normalize = (value) => normalizeWhitespace(value).toLocaleLowerCase('ru-RU');
   const attributeNames = ['data-id', 'data-name', 'data-tab', 'data-position', 'data-busy', 'data-selected'];
+  const compareCodePoints = (left, right) => { const a = Array.from(left, (character) => character.codePointAt(0)); const b = Array.from(right, (character) => character.codePointAt(0));
+    for (let index = 0; index < Math.min(a.length, b.length); index += 1) if (a[index] !== b[index]) return a[index] - b[index]; return a.length - b.length; };
 
   function parsePeople() {
     if (!template || !template.content || !selection || !modalSelection || !inputs || !dialog || !search || !results || !meta || !count || !opener || !fallback) return null;
@@ -46,7 +47,7 @@
     }
     for (let index = 1; index < records.length; index += 1) {
       const previous = records[index - 1]; const current = records[index];
-      const nameOrder = previous.name < current.name ? -1 : previous.name > current.name ? 1 : 0;
+      const nameOrder = compareCodePoints(previous.name, current.name);
       if (nameOrder > 0 || (nameOrder === 0 && Number(previous.id) >= Number(current.id))) return null;
     }
     return records;
@@ -55,7 +56,6 @@
   const people = parsePeople();
   if (people === null) return;
   const selected = new Map();
-
   function renderSelection() {
     selection.replaceChildren(); modalSelection.replaceChildren(); inputs.replaceChildren();
     if (selected.size === 0) {
