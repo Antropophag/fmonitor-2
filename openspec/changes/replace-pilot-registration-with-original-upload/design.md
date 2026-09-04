@@ -92,6 +92,11 @@ truth sets закрыты без символических conditional FK.
 Checklist evidence выводится только из target case opening fields,
 а decoy evidence — из прочих case rows изолированного prefix;
 original acceptance не входит ни в один digest input.
+Capability CHECK classifier accepts only exact V4 or exact V5 and distinguishes
+the engineer-position constraint. Migration publishes V5 last, after full
+seven-table revalidation. Implicit-commit failures leave only recoverable exact
+leading partial/full-schema+V4 states; a verification-only phase factory proves
+the boundary without a production runtime selector.
 
 ## Risks / Trade-offs
 

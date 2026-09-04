@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v12 GATE 1 REREVIEW PENDING — PROCESS OBSERVABILITY AMENDMENT**
-Версия: **v12**
+Статус: **v13 GATE 1 REVIEW PENDING — CAPABILITY MIGRATION RECOVERY AMENDMENT**
+Версия: **v13**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -884,6 +884,34 @@ final class AssignmentOrderOriginalSchemaMigration
     ): AssignmentOrderOriginalSchemaMigrationResult { /* exact migration */ }
 }
 
+final class AssignmentOrderOriginalSchemaMigrationUnavailable extends \RuntimeException {}
+
+enum AssignmentOrderOriginalSchemaMigrationPhase: string
+{
+    case AFTER_SCHEMA_REVALIDATED_BEFORE_CAPABILITIES =
+        'after_schema_revalidated_before_capabilities';
+}
+
+interface AssignmentOrderOriginalSchemaMigrationObserver
+{
+    public function observe(AssignmentOrderOriginalSchemaMigrationPhase $phase): void;
+}
+
+interface AssignmentOrderOriginalSchemaMigrationApplication
+{
+    public function apply(
+        \mysqli $database,
+        string $tablePrefix = '',
+    ): AssignmentOrderOriginalSchemaMigrationResult;
+}
+
+final class AssignmentOrderOriginalSchemaMigrationVerificationFactory
+{
+    public static function create(
+        AssignmentOrderOriginalSchemaMigrationObserver $observer,
+    ): AssignmentOrderOriginalSchemaMigrationApplication;
+}
+
 final class AssignmentOrderOriginalVerificationDatabaseFixture
 {
     public static function seedExampleA(
@@ -972,6 +1000,40 @@ order, FKs/actions and CHECK semantics; extra owned columns/keys/checks or
 missing/different members conflict. A compatible partial deployment may contain
 only a leading subset of the ordered complete tables; populated exact tables
 are preserved byte-for-byte.
+
+The prerequisite `fm2_process_user_capabilities` CHECK has exactly two accepted
+semantic states. V4 is the exact set `assignment_order.prepare`,
+`assignment_order.confirm_registration`, `installation.open`,
+`construction_control_engineer`. V5 is V4 plus exactly
+`assignment_order.original.upload` and `assignment_order.original.correct`.
+There MUST be exactly one capability-enum CHECK candidate; the separate
+engineer-position CHECK is not a candidate. Upload-only, correct-only,
+unexpected superset/subset, duplicate candidates, unsafe candidate name or any
+other expression is `CONFLICT`. Conflict `affectedTables()` contains every
+conflicting original logical table plus `fm2_process_user_capabilities`, binary
+sorted, and performs no DDL. Exact V5 repeats unchanged.
+
+Migration order is: validate prefix → inspect all seven original tables and the
+capability CHECK → return all conflicts without DDL → create only missing
+leading-suffix original tables in manifest order → re-read and require the full
+exact seven-table schema → verification phase observer → if and only if prior
+state was exact V4, replace that one safe-named CHECK with exact V5 as the last
+DDL → re-read exact V5 → return. `APPLIED.affectedTables()` lists created
+original tables in manifest order and then `fm2_process_user_capabilities` only
+when upgraded; `UNCHANGED` is empty.
+
+MariaDB DDL implicitly commits, so failure is fail-closed rather than falsely
+atomic. Any query/create/revalidation/ALTER/observer failure throws fixed
+`AssignmentOrderOriginalSchemaMigrationUnavailable` (message basename, code 0,
+previous null). A create failure may leave only an exact leading partial schema
+with V4 capability; retry revalidates and resumes. Observer failure occurs after
+full schema revalidation and before capability ALTER, so V4 remains. Capability
+ALTER failure may leave full schema with V4; retry revalidates and retries the
+last publication. No failure may expose V5 with incomplete/non-exact original
+schema. The static production `apply()` binds a no-op observer. Only
+`AssignmentOrderOriginalSchemaMigrationVerificationFactory` accepts an injected
+observer; production bootstrap/runtime cannot select it by env/request/CLI/
+global and neither application nor HTTP calls either migration seam.
 
 The exact FK set is: revisions.`root_original_id` → roots.`root_original_id`;
 revisions.`previous_revision_id` → revisions.`revision_id`; nullable
