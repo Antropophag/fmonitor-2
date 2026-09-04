@@ -15,7 +15,7 @@
 ## 2. Minimal RED и test review
 
 - [x] 2.1 Поручить RED author написать smallest public-seam test initial valid direct upload с immutable composition/date/upload-time/hash evidence и no composition/opening mutation; verification: canonical command падает только из-за отсутствующего production seam и transcript классифицирован intended RED
-- [ ] 2.2 Поручить RED author написать isolated MariaDB clean/repeat/leading-partial/populated/conflict migration и deterministic seed/repeat/conflict/cleanup tests для exact version-1 setup seams; verification: RED вызван отсутствующими migration/fixture seams, не setup
+- [x] 2.2 Поручить RED author написать isolated MariaDB clean/repeat/leading-partial/populated/conflict migration и deterministic seed/repeat/conflict/cleanup tests для exact version-1 setup seams; verification: RED вызван отсутствующими migration/fixture seams, не setup
 - [ ] 2.3 Поручить fresh independent test reviewer проверить exact manifest/equivalence, fixture literals, sensitivity и bounded cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 
 ## 3. Setup minimal GREEN и code review
