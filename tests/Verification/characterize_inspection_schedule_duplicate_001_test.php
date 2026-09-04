@@ -150,8 +150,11 @@ function isdStop($process, array $pipes, int $pid): void
             if ($pid > 0 && function_exists("posix_kill")) { @posix_kill(-$pid, SIGKILL); } else {
                 proc_terminate($process, 9);
             }
+            $killEnd=hrtime(true)+1_000_000_000;
+            do{usleep(10000);$s=proc_get_status($process);}while(($s['running']??false)&&hrtime(true)<$killEnd);
         }
     }
+    if($s['running']??false){foreach($pipes as$p)if(is_resource($p))fclose($p);throw new InspectionScheduleTestFailure('CLEANUP_FAILURE: owned process survived bounded SIGKILL');}
     foreach ($pipes as $p) {
         if (is_resource($p)) { fclose($p); }
     }
@@ -232,12 +235,13 @@ function isdRun(array $command, string $root, array $env, float $timeout = ISD_T
                     proc_terminate($proc, 9);
                 }
             }
+            $killEnd=hrtime(true)+1_000_000_000;
+            do{$out.=stream_get_contents($pipes[1]);$err.=stream_get_contents($pipes[2]);usleep(10000);$s=proc_get_status($proc);}while(($s['running']??false)&&hrtime(true)<$killEnd);
+            if($s['running']??false){foreach($pipes as$p)if(is_resource($p))fclose($p);throw new InspectionScheduleTestFailure('CLEANUP_FAILURE: verifier survived bounded SIGKILL');}
             break;
         }
         usleep(20000);
     }
-    stream_set_blocking($pipes[1], true);
-    stream_set_blocking($pipes[2], true);
     $out .= stream_get_contents($pipes[1]);
     $err .= stream_get_contents($pipes[2]);
     foreach ($pipes as $p) {
