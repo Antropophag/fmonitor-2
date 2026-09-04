@@ -27,8 +27,24 @@ try {
     if (fgets(STDIN) !== "ENTER {$mode}\n") {
         throw new RuntimeException('barrier');
     }
+    $control = (string) getenv('AOOU_FIXTURE_WORKER_CONTROL');
+    if ($control === 'hang_before_seam') {
+        pcntl_async_signals(true);
+        pcntl_signal(SIGTERM, SIG_IGN);
+    }
     fwrite(STDOUT, "ENTERED {$mode}\n");
     fflush(STDOUT);
+    if ($control === 'fail_before_seam') {
+        throw new RuntimeException('controlled');
+    }
+    if ($control === 'hang_before_seam') {
+        while (true) {
+            usleep(100_000);
+        }
+    }
+    if ($control !== '') {
+        throw new RuntimeException('control');
+    }
     if ($mode === 'seed') {
         AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA(
             $database,
