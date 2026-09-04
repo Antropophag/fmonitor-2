@@ -48,6 +48,32 @@ foreach ($relativeFiles as $relative) {
     }
 }
 
+foreach (['.github/workflows/quality-graph.yml', '.github/workflows/quality-graph-push.yml'] as $runnerRelative) {
+    $runner = (string) file_get_contents($repository . '/' . $runnerRelative);
+    preg_match_all('/^\s*-?\s*uses:\s*([^\s]+)$/m', $runner, $uses);
+    if ($uses[1] === []) {
+        qgvFail('runner_security', "$runnerRelative has no pinned third-party actions");
+    }
+    foreach ($uses[1] as $action) {
+        if (preg_match('/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/D', $action) !== 1) {
+            qgvFail('runner_security', "$runnerRelative contains a floating or invalid action ref");
+        }
+    }
+    $checkoutCount = preg_match_all('/^\s*-\s*uses:\s*actions\/checkout@[0-9a-f]{40}$/m', $runner);
+    $disabledCredentialCount = preg_match_all("/^\s+persist-credentials: 'false'$/m", $runner);
+    if ($checkoutCount < 1 || $checkoutCount !== $disabledCredentialCount) {
+        qgvFail('runner_security', "$runnerRelative must disable credentials for every checkout");
+    }
+    if (preg_match_all('/^permissions:\n  contents: read$/m', $runner) !== 1) {
+        qgvFail('runner_security', "$runnerRelative top-level permissions must be contents read only");
+    }
+    if (preg_match('/^    permissions:\n(?!      contents: read\n    steps:)/m', $runner) === 1
+        || preg_match('/^      (?!contents: read$)[a-z-]+:\s*(?:read|write)$/m', $runner) === 1
+    ) {
+        qgvFail('runner_security', "$runnerRelative job permissions must be contents read only");
+    }
+}
+
 $project = (string) file_get_contents($repository . '/pyproject.toml');
 $withoutApprovedPackages = str_replace(
     ['quality-graph-cli==0.1.7', 'quality-graph-github==0.1.7'],
