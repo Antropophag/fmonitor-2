@@ -237,15 +237,15 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     assertSameValue('text/html; charset=UTF-8', pocHeader($response, 'content-type'), $why . ' media type');
     assertSameValue((string) strlen($response['body']), pocHeader($response, 'content-length'), $why . ' length');
     pocSecurity($response, $why, true);
+    $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
+    assertSameValue(1, $xpath->query('//script')->length, $why . ' has exactly one external script');
+    assertSameValue(1, $xpath->query("//script[@type='module' and @src='/pilot/assets/object-details.js' and count(@*)=2 and normalize-space(.)='']")->length, $why . ' has exact module object-details script with no invented attributes');
+    assertSameValue(0, $xpath->query('//@*[starts-with(translate(name(),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"on")]')->length, $why . ' forbids inline event handlers');
+    assertSameValue(0, $xpath->query('//*[@href[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")] or @src[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")]]')->length, $why . ' forbids javascript URLs');
     $visible = pocVisible($response['body']); $offset = 0;
     foreach ($orderedVisible as $literal) { $found = mb_strpos($visible, $literal, $offset); assertSameValue(true, $found !== false, $why . ' visible literal/order: ' . $literal); $offset = $found + mb_strlen($literal); }
     assertSameValue(1, substr_count(strtolower($response['body']), '<!doctype html>'), $why . ' one doctype');
     foreach (['<form','<input','<select','<textarea','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
-    $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
-    assertSameValue(1, $xpath->query('//script')->length, $why . ' has exactly one external script');
-    assertSameValue(1, $xpath->query("//script[@src='/pilot/assets/object-details.js' and @defer and not(@async) and normalize-space(.)='']")->length, $why . ' has exact deferred object-details script');
-    assertSameValue(0, $xpath->query('//@*[starts-with(translate(name(),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"on")]')->length, $why . ' forbids inline event handlers');
-    assertSameValue(0, $xpath->query('//*[@href[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")] or @src[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")]]')->length, $why . ' forbids javascript URLs');
 }
 
 function pocStructure(array $response, string $why): void
