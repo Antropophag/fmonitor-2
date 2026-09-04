@@ -52,7 +52,7 @@ function record(data) {
   return node;
 }
 
-function fixture(records) {
+function fixture(records, provenanceRows = null) {
   const root = new Node();
   const template = new Node("template");
   template.content = new Node("fragment");
@@ -79,15 +79,15 @@ function fixture(records) {
   const registry = new Map([["installer-picker", dialog]]);
   document = {
     activeElement: null,
-    querySelector: (selector) => selector === "[data-installer-picker]" ? root : null,
+    querySelector: (selector) => selector === "[data-installer-picker]" ? root : (selector === "[data-picker-provenance]" ? provenanceRows : null),
     createElement: (tag) => new Node(tag),
     getElementById: (id) => registry.get(id) || null,
   };
   return { root, template, selection, modalSelection, inputs, dialog, opener, fallback, search, results, meta, count };
 }
 
-function execute(source, records) {
-  const ui = fixture(records);
+function execute(source, records, provenanceRows = null) {
+  const ui = fixture(records, provenanceRows);
   const context = { document, console, globalThis: null };
   context.globalThis = context;
   vm.runInNewContext(source, context, { filename: "picker.js" });
@@ -111,6 +111,18 @@ base.push(record({ id: "999999", name: "Я".repeat(300), tab: "999999", position
 const ui = execute(source, base);
 equal([ui.opener.hidden, ui.dialog.hidden, ui.fallback.hidden], [false, true, true], "successful initialization atomically enables picker and hides fallback");
 equal(ui.inputs.children.length, 0, "initial hidden IDs");
+const mixedPeople = [record({ id: "1042", name: "Иванов", tab: "001042", position: "Монтажник", busy: "", selected: "0" }), record({ id: "2088", name: "Петров", tab: "002088", position: "Монтажник", busy: "", selected: "0" })];
+const mixedProvenance = new Node("ul");
+for (const data of [{ id: "1042", name: "Иванов", source: "one_c", updatedAt: "2026-08-27T18:15:00+03:00" }, { id: "2088", name: "Петров", source: "alternate", updatedAt: "2026-08-27T17:15:00+03:00" }]) { const row = new Node("li"); row.setAttribute("data-id", data.id); row.setAttribute("data-source", data.source); row.setAttribute("data-updated-at", data.updatedAt); row.textContent = `${data.name} · Источник кадровых данных: ${data.source} · Актуально на: ${data.updatedAt}`; mixedProvenance.append(row); }
+const mixedUi = execute(source, mixedPeople, mixedProvenance);
+equal(mixedProvenance.hidden, true, "validated mixed provenance fallback list hidden after initialization");
+mixedUi.search.value = "иванов"; mixedUi.search.dispatch("input");
+const mixedText = mixedUi.results.children[0].children[1];
+equal(mixedText.children[2].className, "fm2-picker-result-provenance", "dynamic result provenance follows name and details");
+equal(mixedText.children[2].textContent, "Источник кадровых данных: one_c · Актуально на: 2026-08-27T18:15:00+03:00", "dynamic result exact associated provenance");
+const mismatchedProvenance = new Node("ul");const mismatchedRow = new Node("li");mismatchedRow.setAttribute("data-id", "2088");mismatchedRow.setAttribute("data-source", "wrong");mismatchedRow.setAttribute("data-updated-at", "2026-08-27T18:15:00+03:00");mismatchedRow.textContent = "Иванов · Источник кадровых данных: wrong · Актуально на: 2026-08-27T18:15:00+03:00";mismatchedProvenance.append(mismatchedRow);
+const mismatchUi = execute(source, [mixedPeople[0]], mismatchedProvenance);
+equal([mismatchUi.opener.hidden, mismatchUi.fallback.hidden, mismatchedProvenance.hidden], [true, false, false], "mismatched provenance association remains atomically fail closed");
 const equalNameTie = execute(source, [
   record({ id: "99", name: "Одинаковое Имя", tab: "000099", position: "Монтажник", busy: "", selected: "0" }),
   record({ id: "100", name: "Одинаковое Имя", tab: "000100", position: "Монтажник", busy: "", selected: "0" }),
