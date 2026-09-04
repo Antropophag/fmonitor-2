@@ -972,6 +972,27 @@ final class AssignmentOrderOriginalMaintenanceVerificationFactory
     ): AssignmentOrderOriginalMaintenanceApplication { /* same maintenance owner */ }
 }
 
+final readonly class AssignmentOrderOriginalEvidenceReaderConfig
+{
+    public function __construct(
+        public string $databaseHost,
+        public int $databasePort,
+        public string $databaseName,
+        public string $databaseUser,
+        public string $databasePasswordFile,
+        public string $tablePrefix,
+        public string $privateStorageRoot,
+        public string $safeLogFile,
+    ) {}
+}
+
+final class AssignmentOrderOriginalEvidenceReaderFactory
+{
+    public static function create(
+        AssignmentOrderOriginalEvidenceReaderConfig $config,
+    ): AssignmentOrderOriginalEvidenceReader { /* fresh read-only production adapters */ }
+}
+
 interface AssignmentOrderOriginalEvidenceReader
 {
     public function domainCanonicalJson(int $caseId, int $orderId): string;
@@ -982,8 +1003,31 @@ interface AssignmentOrderOriginalEvidenceReader
     public function unchangedProcessCanonicalJson(int $caseId, int $orderId): string;
     public function privateBlobsCanonicalJson(): string;
     public function safeLogsCanonicalJson(): string;
+    public function close(): void;
 }
+```
 
+The evidence factory is a verification composition seam, not a second command
+repository. Config is serializable and exact: host is nonblank; port is
+`1..65535`; database/user are nonblank; password file, private root and safe-log
+file are absolute, non-symlink, verifier-owned paths outside the repository;
+prefix is canonical ASCII `0..25`. Password bytes are read only from the mode
+`0600` file and never appear in result/log/error output. Invalid config fails
+before database/filesystem access.
+
+`create()` opens one fresh `utf8mb4` MariaDB connection and binds read-only
+production evidence/private-inventory/safe-log adapters. It knows only the exact
+canonical original-evidence tables introduced by this change; it MUST NOT query
+`information_schema`, infer schema, issue DDL/DML, use command repository
+objects, or accept test callbacks/selectors. Every canonical method performs a
+fresh read through that connection and returns the closed versioned JSON shape
+defined in section 11. `privateBlobsCanonicalJson()` and
+`safeLogsCanonicalJson()` use only the two configured owned paths and redact
+absolute names. `close()` closes every live descriptor/connection exactly once,
+is idempotent, and any read/close failure is typed unavailable to the verifier
+without partial JSON or secret diagnostics.
+
+```php
 interface AssignmentOrderOriginalByteStreamFactory
 {
     public function fromBase64(string $base64): AssignmentOrderOriginalByteStream;

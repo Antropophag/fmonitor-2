@@ -54,6 +54,17 @@ Executable spec v3 фиксирует namespace `FMonitor2\AssignmentOrderOrigin
 
 Request replay после authorization предшествует order/clock/stream. New-request semantic replay требует completed staged bytes/hash. Current composition drift относительно root snapshot делает collision наблюдаемым без caller composition. Repository принимает typed accepted/attempt commit DTOs, использует `READ COMMITTED`, unique request/fingerprint и CAS current revision. Worker bootstrap получает serializable config path и пять dedicated FDs; barrier имеет READY/RELEASE protocol после fingerprint miss до CAS. Private orphan maintenance получает typed candidate pages/cursor/digest locks/reference recheck/delete и atomic terminal result+audit; upload получает typed finalized-content lease и не releases его до terminal DB/unknown resolution.
 
+### 11. Independent production evidence construction
+
+Gate 2 MariaDB/CAS/fault evidence строится только через public
+`AssignmentOrderOriginalEvidenceReaderFactory` и serializable config с exact DB
+connection fields, password-file, prefix, private root и safe-log file. Factory
+владеет fresh read-only connection/descriptors и explicit idempotent close;
+reader знает canonical original tables напрямую, не использует
+`information_schema`, private SQL из теста, command repository или test
+callbacks. Это делает requests/fingerprints/domain/events/audits/process/blob/log
+snapshots независимыми и одновременно не создаёт второй mutation seam.
+
 ## Risks / Trade-offs
 
 - [DB/filesystem не имеют общей транзакции] → private finalize до DB commit; private orphan не observable, bounded reconciliation/reuse; stored accepted result разрешает response-loss retry.

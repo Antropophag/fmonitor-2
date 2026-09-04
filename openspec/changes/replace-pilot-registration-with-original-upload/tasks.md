@@ -7,11 +7,12 @@
 - [x] 1.5 Получить owner approval exact-hash OpenSpec/executable-spec batch; verification: append-only decision перечисляет hashes, а production/tests до approval не изменены
 - [x] 1.6 Поручить fresh independent Gate 1 reviewer проверить v4 lease-conflict amendment и весь current contract: CAS loser holds lease through fingerprint/current-lineage rereads, releases exactly once, release failure preserves selected result и не пропускает audit; verification: новый immutable review имеет explicit `APPROVED` и reviewer не редактировал artifacts
 - [x] 1.7 Получить новый owner exact-hash approval v4 executable/OpenSpec batch; verification: append-only decision перечисляет новые hashes и только после него Gate 2 tasks разрешены
+- [ ] 1.8 Получить fresh independent Gate 1 review и owner exact-hash approval evidence-reader factory/config amendment; verification: public fresh-connection read-only construction/lifecycle exact и task 2.2 снова разрешена
 
 ## 2. Minimal RED и test review
 
 - [ ] 2.1 Поручить RED author написать smallest public-seam test initial valid direct upload с immutable composition/date/upload-time/hash evidence и no composition/opening mutation; verification: canonical command падает только из-за отсутствующего production seam и transcript классифицирован intended RED
-- [ ] 2.2 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults; verification: каждый expected value независим от будущей реализации
+- [ ] 2.2 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации
 - [ ] 2.3 Поручить fresh independent test reviewer проверить sensitivity и zero-public-orphan cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 
 ## 3. Minimal GREEN
