@@ -538,4 +538,4 @@ require_once __DIR__.'/PilotShellView.php';
 require_once __DIR__.'/ObjectListView.php';
 require_once __DIR__.'/ObjectCardView.php';
 require_once __DIR__.'/PrepareFormView.php';
-require_once __DIR__.'/InstallerDirectoryView.php';require_once __DIR__.'/ChecklistView.php';
+require_once __DIR__.'/InstallerDirectoryView.php';require_once __DIR__.'/ChecklistView.php';require_once __DIR__.'/PilotSessionView.php';
