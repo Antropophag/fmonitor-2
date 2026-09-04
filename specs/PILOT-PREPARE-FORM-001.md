@@ -27,6 +27,28 @@ button/keyboard. При отсутствии/ошибке JS hidden IDs не п�
 не может получить скрытый состав. Исходный read-only DOM не содержит
 state-changing submit.
 
+Каждая inert record — ровно один empty `span` с exact attributes
+`data-id`, `data-name`, `data-tab`, `data-position`, `data-busy`,
+`data-selected`; значения HTML-escaped, ID canonical decimal, tab — шесть
+цифр, `data-selected=0` для initial GET. Parser читает только эти six dataset
+fields из direct template descendants и fail closed: duplicate/unknown/missing
+field, invalid ID/tab/flag, malformed UTF-8 либо больше 500 records даёт
+redacted `503`, а не partial picker.
+
+Единственный script — `<script src="/pilot/assets/picker.js" defer></script>`;
+successful GET получает approved script CSP, HEAD сохраняет headers/empty body,
+asset имеет exact JavaScript media type и immutable bytes. Error/redirect и
+asset responses не получают script permission. Load/error не отправляет форму
+и не создаёт selection/session/domain state.
+
+Все picker controls, кроме search input, имеют explicit `type=button`. Open
+button имеет `aria-controls=installer-picker` и синхронный `aria-expanded`;
+popover получает focus в search, Escape закрывает и возвращает focus opener,
+Tab остаётся в native document order без trap. Result buttons имеют exact
+`aria-pressed`; removal button exact accessible name `Убрать {ФИО}`. Count и
+result meta находятся в `aria-live=polite`, selection summary имеет label
+`Выбранные монтажники`. Ни цвет, ни `+`/`✓` не являются единственным state.
+
 Инженеры сохраняют нормативный §6: radio group, допустимый legacy prefill и
 отдельный unchecked confirmation checkbox. Это не read-only reference из
 карточки. Пользователь выбирает и явно подтверждает инженера до будущего
@@ -272,7 +294,8 @@ Expected values must be literals from this specification, never production mappi
 - conflicts/load/qualification/absence search, filtering, pagination or remote lookup;
 - changed assignment, registration, opening, checklist;
 - new catalog sync/import/history policy or stale-age threshold;
-- custom CSS/JS, `shlz-ui` source changes or Select behavior asset;
+- любой custom JS кроме exact same-origin `/pilot/assets/picker.js`; `shlz-ui`
+  source changes и Select behavior asset;
 - изменение domain model, `CONTEXT.md`, ADR или broad object-card redesign.
 
 ## 13. Решения и доказательства

@@ -60,7 +60,9 @@ NOT быть доказательством canonical wiring.
 
 Успешный GET/HEAD SHALL использовать upload-first read-only representation
 `PILOT-PREPARE-FORM-001 v0.2` и SHALL NOT разрешать file/CSRF/multipart/submit
-command в этом fixture slice.
+command в этом fixture slice. Exact picker record/parser/asset/keyboard contract
+наследуется целиком; malformed picker input SHALL fail closed до successful
+representation.
 
 Public seam SHALL иметь exact PHP shape:
 

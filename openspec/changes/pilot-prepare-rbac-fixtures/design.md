@@ -77,7 +77,8 @@ protocol, PDF renderer или production persistence.
     request-body observation seam.
 7. **Upload-first GET не становится upload command.** Fixture проверяет
    presentation v0.2, но GET/HEAD остаётся read-only. Installer picker имеет
-   bounded keyboard/ARIA/DOM-only contract; engineer остаётся selectable radio
+   exact six-field inert-record schema, fail-closed parser и bounded
+   keyboard/ARIA/DOM-only contract; engineer остаётся selectable radio
    с explicit confirmation по product truth. File, CSRF, multipart и submit
    принадлежат отдельной command composition.
 
