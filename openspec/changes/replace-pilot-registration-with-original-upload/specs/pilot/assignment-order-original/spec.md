@@ -216,7 +216,11 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Checklist availability наблюдается отдельно
 - **WHEN** verifier сравнивает process snapshot до и после command attempt
-- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256` для canonical key-sorted checklist identities и availability states exact case/order, включая empty projection; `tasksSha256` не заменяет этот digest
+- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256`, выведенный только из target case opening state (`available` только при opened + all opening fields, иначе `blocked_until_opening`); original/order/task facts не являются inputs и `tasksSha256` не заменяет этот digest
+
+#### Scenario: Unrelated decoy facts наблюдаемы
+- **WHEN** reader строит `decoySha256` для exact target case
+- **THEN** digest покрывает every other prefixed installation-case `{caseId,processState-as-marker}` в numeric case order, включая empty projection, без original tables и fixture callback
 
 #### Scenario: Evidence config invalid or read fails
 - **WHEN** config/path/password-file/prefix invalid либо evidence read/close падает

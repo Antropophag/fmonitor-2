@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v10 GATE 1 REREVIEW PENDING — DATABASE SETUP AMENDMENT**
-Версия: **v10**
+Статус: **v11 GATE 1 REREVIEW PENDING — PROCESS OBSERVABILITY AMENDMENT**
+Версия: **v11**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1056,8 +1056,8 @@ openingSha256=89c2844c0f723aacd7b7982b36d6297df53a3d2f2b44a268212ab43149687f42
 {"actualStartDate":null,"openedAt":null,"openedByUserId":null}
 tasksSha256=272d922aa2cdcad49bd98141062fc752eb4f31690a720b46c2fa7a0e1b0fe799
 {"items":[{"assigneeRole":"fkr_operator","status":"open","taskId":9001,"taskType":"assignment_order_original_upload"}]}
-checklistSha256=f8ddea8b5d52fccf7edb63d89ba508ef916dd86fc175336fcea05436801ac548
-{"items":[{"availability":"blocked_pending_original_and_opening","checklistIdentity":"installation-case-4512"}]}
+checklistSha256=ccb8260ee585db0d0cec53f376d71a66869cf1eca3f287e5a5d7a4e91a04d546
+{"items":[{"availability":"blocked_until_opening","checklistIdentity":"installation-case-4512"}]}
 decoySha256=963ca80eddc50543eb940cf813923bd451d0974585a529e7880107df6982e2ca
 {"items":[{"caseId":9999,"marker":"fixture-decoy-v1"}]}
 ```
@@ -1100,6 +1100,21 @@ snapshot `TEST-4512`, planned dates `2026-10-01`/`2026-10-31`, PTO date null,
 prepared-at `2026-09-01T09:00:00Z`, prepared-by actor 18. Case created/updated
 timestamps are the fixture timestamp and lock version is 1. These values and
 only these values define repeat versus conflict.
+
+The production evidence reader derives `checklistSha256` only from the exact
+target `fm2_installation_cases` row: checklist identity is
+`installation-case-<caseId>`; availability is `available` exactly when
+`process_state='opened'`, `actual_start_date`, `opened_at` and
+`opened_by_user_id` are all non-null, otherwise `blocked_until_opening`.
+Original tables, assignment-order status and process tasks are not inputs, so
+accepting an original cannot change this projection. The reader derives
+`decoySha256` from every other `fm2_installation_cases` row under the configured
+prefix, numerically ordered by case ID, as `{caseId,marker}` where `marker` is
+that row's exact `process_state`; zero other rows yields `{"items":[]}`.
+Example A therefore also seeds case `9999`, legacy identity `99999`,
+`process_state='fixture-decoy-v1'`, all opening fields null, fixture timestamps
+and lock version 1. These reads use the same fresh read-only connection and no
+fixture callback or original table.
 
 ## 16. Maintenance API, evidence and concurrency IPC
 

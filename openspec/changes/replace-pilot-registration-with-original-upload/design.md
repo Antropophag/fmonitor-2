@@ -89,6 +89,9 @@ MariaDB non-deferrable FK cycle не создаётся: revision ссылает
 на root, а root current-leaf same-root invariant владеется atomic repository
 transaction/CAS. Per-table UUID/opaque/status/reason/retry/evidence/count CHECK
 truth sets закрыты без символических conditional FK.
+Checklist evidence выводится только из target case opening fields,
+а decoy evidence — из прочих case rows изолированного prefix;
+original acceptance не входит ни в один digest input.
 
 ## Risks / Trade-offs
 
