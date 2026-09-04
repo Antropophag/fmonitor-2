@@ -20,6 +20,17 @@ function polDb(?string $database = null): mysqli
     return $db;
 }
 
+function polDbAs(string $user,string $password,string $database): mysqli
+{
+    $db=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',$user,$password,$database,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$db->set_charset('utf8mb4');return$db;
+}
+
+function polDeniedSelect(mysqli $db,string $sql,string $why): void
+{
+    try{$result=$db->query($sql);if($result===false)return;}catch(mysqli_sql_exception){return;}
+    throw new TestFailure($why.' must be denied');
+}
+
 function polPort(): int
 {
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
@@ -197,8 +208,8 @@ function polReadOnly(mysqli $db, callable $request, string $why): mixed
     return $result;
 }
 
-$token = bin2hex(random_bytes(6)); $database = 't_pol_' . $token; $reader = 'pol_' . $token; $denialReader='pold_'.$token; $password = 'select-' . $token;
-$foreignDatabase='foreign_pol_'.$token;$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$foreignPath='';$foreignBefore=[];$css='';$polProtectedPaths=[];$polMutableRoots=[];$cleanupAttempts=[]; $admin = polDb(); $db = null; $server = null;
+$token = bin2hex(random_bytes(6)); $database = 't_pol_' . $token; $reader = 'pol_' . $token; $denialReader='pold_'.$token;$legacyLookupFaultReader='poll_'.$token;$listReadFaultReader='polf_'.$token; $password = 'select-' . $token;
+$foreignDatabase='foreign_pol_'.$token;$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$foreignPath='';$foreignBefore=[];$css='';$polProtectedPaths=[];$polMutableRoots=[];$cleanupAttempts=[]; $admin = polDb(); $db = null;$listFaultDb=null;$legacyFaultDb=null; $server = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('pol',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$foreignPath=$ownership['parent'].'/foreign-'.$token;$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);mkdir($foreignPath,0700);file_put_contents($foreignPath.'/keep','foreign-bytes');scandir($foreignPath);$foreignBefore=[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')];file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$polProtectedPaths=[$protectedArtifactRoot,$css,$foreignPath];$polMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$foreignDatabase}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE TABLE `{$foreignDatabase}`.sentinel(id INT PRIMARY KEY,payload VARCHAR(40))");$admin->query("INSERT INTO `{$foreignDatabase}`.sentinel VALUES(1,'foreign-db-bytes')");
@@ -221,10 +232,13 @@ try {
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
     ProductionProcessSchemaMigration::apply($db);\FMonitor2\Tests\Support\PilotObjectReadRbacFixture::install($db);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,'');
     $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES(3,4515,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),(1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),(2,4513,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
-    $admin->query("CREATE USER `{$reader}`@`%` IDENTIFIED BY '{$password}'");$admin->query("CREATE USER `{$denialReader}`@`%` IDENTIFIED BY '{$password}'");
+    $admin->query("CREATE USER `{$reader}`@`%` IDENTIFIED BY '{$password}'");$admin->query("CREATE USER `{$denialReader}`@`%` IDENTIFIED BY '{$password}'");$admin->query("CREATE USER `{$legacyLookupFaultReader}`@`%` IDENTIFIED BY '{$password}'");$admin->query("CREATE USER `{$listReadFaultReader}`@`%` IDENTIFIED BY '{$password}'");
     foreach(['legacy_users'=>['id','name','email','role_id','status'],'legacy_users_roles'=>['id','status'],'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state']] as $table=>$columns){$quoted=implode(',',array_map(static fn($c)=>'`'.$c.'`',$columns));$admin->query("GRANT SELECT ({$quoted}) ON `{$database}`.`{$table}` TO `{$reader}`@`%`");}
     foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$reader}`@`%`");
     foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$denialReader}`@`%`");
+    foreach([$legacyLookupFaultReader,$listReadFaultReader]as$faultReader)foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$faultReader}`@`%`");
+    foreach(['legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state']]as$table=>$columns){$quoted=implode(',',array_map(static fn($column)=>'`'.$column.'`',$columns));$admin->query("GRANT SELECT ({$quoted}) ON `{$database}`.`{$table}` TO `{$legacyLookupFaultReader}`@`%`");}
+    foreach(['legacy_users'=>['id','name','email','role_id','status'],'legacy_users_roles'=>['id','status'],'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date']]as$table=>$columns){$quoted=implode(',',array_map(static fn($column)=>'`'.$column.'`',$columns));$admin->query("GRANT SELECT ({$quoted}) ON `{$database}`.`{$table}` TO `{$listReadFaultReader}`@`%`");}
     $environment=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$reader,'FMONITOR_DB_PASSWORD'=>$password,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18'];
     $pilotCss=(string)realpath(dirname(__DIR__,2).'/app/PilotHttp/pilot.css');assertSameValue(true,$pilotCss!==''&&basename($pilotCss)==='pilot.css','configured removal sentinel has canonical pilot CSS');$environment['FMONITOR_PILOT_CSS_PATH']=$pilotCss;$polProtectedPaths[]=$pilotCss;
     $before=polSnapshot($db);
@@ -236,6 +250,10 @@ try {
     $redServer=polStart($environment);try{$redResponse=polRequest($redServer['port'],'GET','/pilot/objects');polAuthorizationError($redResponse,403,"Access denied.\n",'canonical fixture revoke controls public list before navigation');}finally{polStop($redServer);}
     assertSameValue(1,$removed,'canonical fixture contains exact independently approved grant');
     $db->query("INSERT INTO fm2_pilot_role_permissions(role_id,permission) VALUES(5101,'objects.read')");
+    $listFaultDb=polDbAs($listReadFaultReader,$password,$database);assertSameValue('18',(string)$listFaultDb->query("SELECT u.user_id FROM fm2_pilot_users u JOIN fm2_pilot_user_roles ur ON ur.user_id=u.user_id JOIN fm2_pilot_roles r ON r.role_id=ur.role_id JOIN fm2_pilot_role_permissions p ON p.role_id=r.role_id WHERE u.user_id=18 AND u.status=1 AND u.activation_state='active' AND r.status=1 AND p.permission='objects.read'")->fetch_assoc()['user_id'],'list-fault principal can resolve exact local authority');assertSameValue('18',(string)$listFaultDb->query("SELECT u.id FROM legacy_users u JOIN legacy_users_roles r ON r.id=u.role_id WHERE u.id=18 AND u.status=1 AND r.status=1")->fetch_assoc()['id'],'list-fault principal can resolve inherited active legacy identity');assertSameValue('4513',(string)$listFaultDb->query('SELECT id FROM legacy_fm_maintable WHERE id=4513')->fetch_assoc()['id'],'list-fault principal can read valid legacy list fact');polDeniedSelect($listFaultDb,'SELECT id FROM fm2_installation_cases LIMIT 1','list-fault principal exact case read');$listFaultDb->close();$listFaultDb=null;
+    $listFaultEnvironment=array_replace($environment,['FMONITOR_DB_USER'=>$listReadFaultReader]);$probe=polStart($listFaultEnvironment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'isolated list DB read unavailable'),503,"Service unavailable.\n",'list DB query unavailable after local and legacy identity',retryAfter:'60');}finally{polStop($probe);}
+    $legacyFaultDb=polDbAs($legacyLookupFaultReader,$password,$database);assertSameValue('18',(string)$legacyFaultDb->query("SELECT u.user_id FROM fm2_pilot_users u JOIN fm2_pilot_user_roles ur ON ur.user_id=u.user_id JOIN fm2_pilot_roles r ON r.role_id=ur.role_id JOIN fm2_pilot_role_permissions p ON p.role_id=r.role_id WHERE u.user_id=18 AND u.status=1 AND u.activation_state='active' AND r.status=1 AND p.permission='objects.read'")->fetch_assoc()['user_id'],'legacy-fault principal can resolve exact local authority');assertSameValue('3',(string)$legacyFaultDb->query('SELECT COUNT(*) n FROM fm2_installation_cases')->fetch_assoc()['n'],'legacy-fault principal can read complete case list sentinel');assertSameValue('4513',(string)$legacyFaultDb->query('SELECT id FROM legacy_fm_maintable WHERE id=4513')->fetch_assoc()['id'],'legacy-fault principal can read valid legacy list fact');polDeniedSelect($legacyFaultDb,'SELECT id FROM legacy_users WHERE id=18','legacy-fault principal exact descriptive user lookup');polDeniedSelect($legacyFaultDb,'SELECT id FROM legacy_users_roles WHERE id=5','legacy-fault principal exact descriptive role lookup');$legacyFaultDb->close();$legacyFaultDb=null;
+    $legacyFaultEnvironment=array_replace($environment,['FMONITOR_DB_USER'=>$legacyLookupFaultReader]);$probe=polStart($legacyFaultEnvironment);try{polError(polReadOnly($db,fn()=>polParity($probe['port'],'/pilot/objects'),'isolated legacy identity lookup unavailable'),503,"Service unavailable.\n",'legacy descriptive identity unavailable after local authority',retryAfter:'60');}finally{polStop($probe);}
     $before=polSnapshot($db); $server=polStart($environment);
 
     // One acceptance tracer: all sub-assertions are sensitivity checks for PILOT-OBJECT-LIST-001 section 1.
@@ -328,13 +346,17 @@ try {
     $primary=$GLOBALS['__pol_primary']??null;$cleanupErrors=[];
     foreach([
         'server PID/pipes'=>static fn()=>polStop($server),
+        'list-fault DB resource'=>static fn()=>$listFaultDb instanceof mysqli?$listFaultDb->close():null,
+        'legacy-fault DB resource'=>static fn()=>$legacyFaultDb instanceof mysqli?$legacyFaultDb->close():null,
         'DB resource'=>static fn()=>$db instanceof mysqli?$db->close():null,
+        'list-fault DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$listReadFaultReader}`@`%`"),
+        'legacy-fault DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$legacyLookupFaultReader}`@`%`"),
         'denial DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$denialReader}`@`%`"),
         'reader DB user'=>static fn()=>$admin->query("DROP USER IF EXISTS `{$reader}`@`%`"),
         'task database'=>static fn()=>$admin->query("DROP DATABASE IF EXISTS `{$database}`"),
         'mutable root'=>static fn()=>$ownership!==[]?TaskOwnedArtifactRoot::cleanup($ownership,'pol',$token):null,
     ]as$name=>$cleanup){$cleanupAttempts[$name]=($cleanupAttempts[$name]??0)+1;try{$cleanup();}catch(Throwable $failure){$cleanupErrors[]=$failure;}}
-    try{assertSameValue(array_fill_keys(['server PID/pipes','DB resource','denial DB user','reader DB user','task database','mutable root'],1),$cleanupAttempts,'cleanup inventory attempted exactly once');assertSameValue([], $admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$database}'")->fetch_all(MYSQLI_ASSOC),'exact task DB removed');assertSameValue([], $admin->query("SELECT User FROM mysql.user WHERE User IN ('{$reader}','{$denialReader}')")->fetch_all(MYSQLI_ASSOC),'exact task users removed');assertSameValue([['SCHEMA_NAME'=>$foreignDatabase]],$admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$foreignDatabase}'")->fetch_all(MYSQLI_ASSOC),'foreign DB preserved');assertSameValue([['id'=>'1','payload'=>'foreign-db-bytes']],$admin->query("SELECT * FROM `{$foreignDatabase}`.sentinel")->fetch_all(MYSQLI_ASSOC),'foreign DB bytes preserved');assertSameValue($foreignBefore,[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')],'foreign file bytes and metadata preserved');}catch(Throwable $failure){$cleanupErrors[]=$failure;}
+    try{assertSameValue(array_fill_keys(['server PID/pipes','list-fault DB resource','legacy-fault DB resource','DB resource','list-fault DB user','legacy-fault DB user','denial DB user','reader DB user','task database','mutable root'],1),$cleanupAttempts,'cleanup inventory attempted exactly once');assertSameValue([], $admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$database}'")->fetch_all(MYSQLI_ASSOC),'exact task DB removed');assertSameValue([], $admin->query("SELECT User FROM mysql.user WHERE User IN ('{$reader}','{$denialReader}','{$legacyLookupFaultReader}','{$listReadFaultReader}')")->fetch_all(MYSQLI_ASSOC),'exact task users removed');assertSameValue([['SCHEMA_NAME'=>$foreignDatabase]],$admin->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{$foreignDatabase}'")->fetch_all(MYSQLI_ASSOC),'foreign DB preserved');assertSameValue([['id'=>'1','payload'=>'foreign-db-bytes']],$admin->query("SELECT * FROM `{$foreignDatabase}`.sentinel")->fetch_all(MYSQLI_ASSOC),'foreign DB bytes preserved');assertSameValue($foreignBefore,[lstat($foreignPath),lstat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')],'foreign file bytes and metadata preserved');}catch(Throwable $failure){$cleanupErrors[]=$failure;}
     try{$admin->query("DROP DATABASE IF EXISTS `{$foreignDatabase}`");if(is_file($foreignPath.'/keep'))unlink($foreignPath.'/keep');if(is_dir($foreignPath))rmdir($foreignPath);$admin->close();}catch(Throwable $failure){$cleanupErrors[]=$failure;}
     if($cleanupErrors!==[])throw new TestFailure('attempt-all cleanup failure: '.$cleanupErrors[0]->getMessage(),0,$cleanupErrors[0]);
 }
