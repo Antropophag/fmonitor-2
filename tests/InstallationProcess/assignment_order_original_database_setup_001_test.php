@@ -196,12 +196,20 @@ try {
     $contendedFixtureCall=static function(string$mode,string$lockSql)use($fixture,$connect,$databases,$prefix):void{
         $pair=stream_socket_pair(STREAM_PF_UNIX,STREAM_SOCK_STREAM,STREAM_IPPROTO_IP);
         if($pair===false)throw new TestFailure('SETUP_FAILURE: contention socket pair.');
-        [$parentPipe,$childPipe]=$pair;$childPid=null;$transaction=false;
+        [$parentPipe,$childPipe]=$pair;$childPid=null;$transaction=false;$observer=null;
         try{
-            $fixture->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');$fixture->begin_transaction();$transaction=true;$fixture->query($lockSql);
+            $fixture->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');$fixture->begin_transaction();$transaction=true;$fixture->query($lockSql);$blockingConnectionId=(int)$fixture->thread_id;
             $childPid=pcntl_fork();if($childPid===-1)throw new TestFailure('SETUP_FAILURE: contention fork.');
-            if($childPid===0){fclose($parentPipe);try{$childDb=$connect($databases[4]);stream_set_timeout($childPipe,5);fwrite($childPipe,"READY {$mode}\n");fflush($childPipe);$enter=fgets($childPipe);if($enter!=="ENTER {$mode}\n")throw new RuntimeException('barrier');fwrite($childPipe,"ENTERED {$mode}\n");fflush($childPipe);if($mode==='seed')AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($childDb,$prefix);else AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($childDb,$prefix);$childDb->close();fwrite($childPipe,"OK {$mode}\n");fclose($childPipe);exit(0);}catch(Throwable){fwrite($childPipe,"ERR {$mode}\n");fclose($childPipe);exit(70);}}
-            fclose($childPipe);stream_set_blocking($parentPipe,true);stream_set_timeout($parentPipe,5);$ready=fgets($parentPipe);$readyMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$readyMeta['timed_out'],"{$mode} READY is bounded.");assertSameValue("READY {$mode}\n",$ready,"{$mode} child opened its independent connection.");fwrite($parentPipe,"ENTER {$mode}\n");fflush($parentPipe);$entered=fgets($parentPipe);$enteredMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$enteredMeta['timed_out'],"{$mode} ENTERED is bounded.");assertSameValue("ENTERED {$mode}\n",$entered,"{$mode} child entered the controlled fixture attempt.");
+            if($childPid===0){fclose($parentPipe);try{$childDb=$connect($databases[4]);stream_set_timeout($childPipe,5);fwrite($childPipe,"READY {$mode} ".(int)$childDb->thread_id."\n");fflush($childPipe);$enter=fgets($childPipe);if($enter!=="ENTER {$mode}\n")throw new RuntimeException('barrier');fwrite($childPipe,"ENTERED {$mode}\n");fflush($childPipe);if($mode==='seed')AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($childDb,$prefix);else AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($childDb,$prefix);$childDb->close();fwrite($childPipe,"OK {$mode}\n");fclose($childPipe);exit(0);}catch(Throwable){fwrite($childPipe,"ERR {$mode}\n");fclose($childPipe);exit(70);}}
+            fclose($childPipe);stream_set_blocking($parentPipe,true);stream_set_timeout($parentPipe,5);$ready=fgets($parentPipe);$readyMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$readyMeta['timed_out'],"{$mode} READY is bounded.");assertSameValue(1,preg_match('/^READY '.preg_quote($mode,'/').' ([1-9][0-9]*)\n$/D',(string)$ready,$readyMatch),"{$mode} child reports exact MariaDB connection identity.");$childConnectionId=(int)$readyMatch[1];fwrite($parentPipe,"ENTER {$mode}\n");fflush($parentPipe);$entered=fgets($parentPipe);$enteredMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$enteredMeta['timed_out'],"{$mode} ENTERED is bounded.");assertSameValue("ENTERED {$mode}\n",$entered,"{$mode} child entered the controlled fixture attempt.");
+            $observer=$connect($databases[4]);$deadline=hrtime(true)+5_000_000_000;$waitRow=null;
+            do{
+                $wait=$observer->prepare("SELECT requesting.trx_state,requesting.trx_isolation_level,requesting.trx_query,process.STATE process_state FROM information_schema.INNODB_LOCK_WAITS waits JOIN information_schema.INNODB_TRX requesting ON requesting.trx_id=waits.requesting_trx_id JOIN information_schema.INNODB_TRX blocking ON blocking.trx_id=waits.blocking_trx_id JOIN information_schema.PROCESSLIST process ON process.ID=requesting.trx_mysql_thread_id WHERE requesting.trx_mysql_thread_id=? AND blocking.trx_mysql_thread_id=?");
+                $wait->bind_param('ii',$childConnectionId,$blockingConnectionId);$wait->execute();$waitRow=$wait->get_result()->fetch_assoc();$wait->close();if(is_array($waitRow))break;usleep(10_000);
+            }while(hrtime(true)<$deadline);
+            assertSameValue(true,is_array($waitRow),"{$mode} exact child connection is independently observed in MariaDB lock wait.");
+            assertSameValue('LOCK WAIT',$waitRow['trx_state'],"{$mode} transaction is actually waiting.");assertSameValue('SERIALIZABLE',$waitRow['trx_isolation_level'],"{$mode} public fixture transaction uses SERIALIZABLE.");
+            $expectedLockedTable=$mode==='seed'?$prefix.'fm2_pilot_users':$prefix.'fm2_process_tasks';assertSameValue(true,str_contains((string)$waitRow['trx_query'],$expectedLockedTable),"{$mode} waits inside the exact fixture identity table operation.");
             stream_set_blocking($parentPipe,false);$read=[$parentPipe];$write=$except=[];
             assertSameValue(0,stream_select($read,$write,$except,0,200000),"{$mode} waits behind exact SERIALIZABLE identity lock.");
             $fixture->commit();$transaction=false;stream_set_blocking($parentPipe,true);stream_set_timeout($parentPipe,5);$line=fgets($parentPipe);$meta=stream_get_meta_data($parentPipe);
@@ -209,6 +217,7 @@ try {
             $status=0;assertSameValue($childPid,pcntl_waitpid($childPid,$status),"{$mode} child is reaped.");assertSameValue(0,pcntl_wexitstatus($status),"{$mode} child exits cleanly.");$childPid=null;
         }finally{
             if($transaction){try{$fixture->rollback();}catch(Throwable){}}
+            if($observer instanceof mysqli){try{$observer->close();}catch(Throwable){}}
             foreach([$parentPipe,$childPipe]as$pipe)if(is_resource($pipe))fclose($pipe);
             if(is_int($childPid)&&$childPid>0){@posix_kill($childPid,SIGKILL);pcntl_waitpid($childPid,$status);}
         }
