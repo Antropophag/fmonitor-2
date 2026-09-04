@@ -1,11 +1,36 @@
 # PILOT-PREPARE-FORM-001 — открыть форму состава первого распоряжения
 
 - Статус: `APPROVED`
-- Версия: `0.1`
+- Версия: `0.2`
 - Дата: `2026-08-28`
 - Актор: exact active legacy-пользователь с active legacy-ролью и capability `assignment_order.prepare`
 - Публичный seam: HTTP `GET|HEAD /pilot/objects/{positive-id}/assignment-order/prepare`
 - Successor contracts: `PILOT-HTTP-AUTH-001 v0.12`, `PILOT-OBJECT-CARD-001 v0.2`, `ORDER-PREPARE-001..010`, `WORKFORCE-CATALOG-001`, `PROCESS-USER-DIRECTORY-001`
+
+## 0. Утверждённая upload-first поправка v0.2
+
+Версия 0.2 заменяет только противоречащие ей presentation assertions разделов
+4–10. Успешный read-only `GET|HEAD` остаётся тем же RBAC seam и не принимает
+файл, не вызывает command и не сохраняет выбор. Card launch имеет exact текст
+`Загрузить распоряжение`. GET показывает sole `h1` `Загрузить распоряжение`,
+intro `Укажите состав и прикрепите подписанный оригинал.`, breadcrumb current
+`Распоряжение` и compact immutable object summary.
+
+Монтажники передаются в application-owned `<template data-picker-data>` как
+escaped normalized records и выбираются через кнопку `Выбрать монтажников`;
+исходный read-only DOM не содержит state-changing submit. Инженер отображается
+read-only из карточки объекта с ФИО/должностью и пояснением `справочно из
+карточки объекта`; radio и отдельный confirmation checkbox отсутствуют. При
+отсутствии инженера показывается exact safe empty text `Инженер не назначен.
+Вернитесь в карточку объекта.`
+
+Read-only response содержит GET form на canonical path, neutral link `Отмена`
+на карточку и helper `Нужен шаблон?`, но без file input, multipart, CSRF,
+upload/template submit или mutation. Эти controls принадлежат отдельно gated
+HTTP command composition. Eligibility, provenance, ordering, authorization,
+GET/HEAD/error precedence и zero-mutation правила сохраняются; старые exact
+`Состав распоряжения`, native checkbox/radio, confirmation и `Сформировать
+распоряжение` presentation assertions superseded.
 
 ## 1. Цель и единственный acceptance tracer
 
