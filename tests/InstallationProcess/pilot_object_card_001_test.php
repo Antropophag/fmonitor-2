@@ -259,9 +259,14 @@ function pocStructure(array $response, string $why): void
     $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
     foreach ([
         'html lang'=>"count(/html[@lang='ru'])", 'scoped body'=>"count(/html/body[contains(concat(' ',normalize-space(@class),' '),' shlz-scope ')])",
-        'charset'=>"count(//meta[translate(@charset,'UTF-8','utf-8')='utf-8'])", 'stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/shlz.css'])",
-        'skip link'=>"count(//a[@href='#main-content'])", 'main'=>"count(//main[@id='main-content' and @tabindex='-1'])", 'one h1'=>"count(//h1)",
+        'charset'=>"count(//meta[translate(@charset,'UTF-8','utf-8')='utf-8'])", 'shlz stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/shlz.css'])",
+        'pilot stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/pilot.css'])", 'shared shell'=>"count(//div[contains(concat(' ',normalize-space(@class),' '),' fm2-shell ')])",
+        'shared sidebar'=>"count(//aside[contains(concat(' ',normalize-space(@class),' '),' fm2-sidebar ')])", 'shared navigation'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ') and @aria-label='Основная навигация'])",
+        'breadcrumb'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ') and @aria-label='Хлебные крошки']//a[@href='/pilot/objects' and normalize-space(.)='Объекты монтажа'])",
+        'breadcrumb current'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and normalize-space(.)='Объект монтажа № 4512'] | //nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and starts-with(normalize-space(.),'Объект монтажа № ')])",
+        'skip link'=>"count(//a[@href='#main-content'])", 'main'=>"count(//main[contains(concat(' ',normalize-space(@class),' '),' fm2-main ') and @id='main-content' and @tabindex='-1'])", 'one h1'=>"count(//h1)",
     ] as $label=>$query) assertSameValue(1, (int) $xpath->evaluate($query), $why . ' ' . $label);
+    assertSameValue(['/pilot/assets/shlz.css','/pilot/assets/pilot.css'], array_map(static fn(DOMNode $node): string => (string) $node->attributes?->getNamedItem('href')?->nodeValue, iterator_to_array($xpath->query('/html/head/link[@rel="stylesheet"]'))), $why . ' exact shared stylesheet order');
     foreach (['Идентификация','Сроки','Распоряжение и команда','Работы','Последние события'] as $group) {
         $sections = $xpath->query("//section[./*[self::h2 or self::h3][normalize-space(.)='".$group."'] and ./dl]");
         assertSameValue(1, $sections->length, $why . ' definition-list section ' . $group);
@@ -272,8 +277,6 @@ function pocStructure(array $response, string $why): void
         assertSameValue(true, $terms->length > 0, $why . ' has terms ' . $group);
         assertSameValue($terms->length, $definitions->length, $why . ' paired terms and definitions ' . $group);
     }
-    $hrefs = []; foreach ($xpath->query('//*[@href]') as $node) $hrefs[] = $node->getAttribute('href'); sort($hrefs);
-    assertSameValue(['#main-content','/pilot/','/pilot/assets/shlz.css'], $hrefs, $why . ' exact permitted links');
     foreach (['action','formaction','download'] as $attribute) assertSameValue(0, $xpath->query('//*[@'.$attribute.']')->length, $why . ' forbids ' . $attribute);
 }
 
@@ -359,7 +362,7 @@ $readerUser = 'poc_' . $token;
 $readerPassword = 'select-' . $token;
 $userOnlyReader = 'pocu_' . $token;
 $ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pilotCss='';$pocProtectedPaths=[];$pocMutableRoots=[];
-    $admin = pocDb(); $db = null; $server = null; $capable = null; $anonymous = null; $escapeServer = null;
+    $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $anonymous = null; $escapeServer = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
@@ -371,7 +374,7 @@ try {
     $db->query("CREATE TABLE legacy_logs(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,message VARCHAR(255)) ENGINE=InnoDB AUTO_INCREMENT=41");
     $db->query("CREATE TABLE legacy_ci_sessions(id VARCHAR(128) PRIMARY KEY,data BLOB NOT NULL) ENGINE=InnoDB");
     $db->query("INSERT INTO legacy_users_roles VALUES(5,'Active',1),(6,'Inactive',0)");
-    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1)");
+    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1),(25,'Active Permissionless Reader','permissionless@shlz.ru',5,1)");
     $legacy = [
         [4512,'  Москва, ул. Примерная, д. 10  ',' 2 ',' 77-000123 ','2026-10-05 14:30:00','2026-12-18 09:15:00','2026-12-20','2099-01-01','FORBIDDEN-4512'],
         [4513,'Москва, ул. Вторая, д. 7','1','77-000124','2026-10-01',null,'2026-11-30','2099-01-02','FORBIDDEN-4513'],
@@ -411,7 +414,7 @@ try {
     $db->query("ALTER TABLE legacy_fm_maintable ADD ptoactdate VARCHAR(40) NULL, ADD responsstroicontrol VARCHAR(80) NULL");
     $db->query("UPDATE legacy_fm_maintable SET ptoactdate='2026-09-30' WHERE id=4518");
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
-    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']],25=>['email'=>'permissionless@shlz.ru','fullName'=>'Active Permissionless Reader']],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
     assertSameValue(
         [
             ['user_id'=>'18','full_name'=>'Сидоров Сергей Сергеевич'],
@@ -419,6 +422,7 @@ try {
             ['user_id'=>'20','full_name'=>'Inactive'],
             ['user_id'=>'21','full_name'=>'Inactive role'],
             ['user_id'=>'24','full_name'=>'Актор <script>actor-secret</script> &quot;'],
+            ['user_id'=>'25','full_name'=>'Active Permissionless Reader'],
         ],
         $db->query("SELECT CAST(user_id AS CHAR) user_id,full_name FROM {$processPrefix}fm2_pilot_users ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),
         'Local RBAC fixture pins every asserted HTTP identity to its independently fixed expected full name.',
@@ -428,6 +432,14 @@ try {
         [['user_id'=>'18','capability'=>'assignment_order.prepare']],
         $db->query("SELECT CAST(user_id AS CHAR) user_id,capability FROM {$processPrefix}fm2_process_user_capabilities ORDER BY user_id,capability")->fetch_all(MYSQLI_ASSOC),
         'Shared-shell fixture keeps the capable actor separate and grants the broad reader no process capability.',
+    );
+    assertSameValue(
+        ['localPermissions'=>0,'processCapabilities'=>0],
+        [
+            'localPermissions'=>(int)$db->query("SELECT COUNT(*) n FROM {$processPrefix}fm2_pilot_user_roles ur JOIN {$processPrefix}fm2_pilot_role_permissions rp ON rp.role_id=ur.role_id WHERE ur.user_id=25")->fetch_assoc()['n'],
+            'processCapabilities'=>(int)$db->query("SELECT COUNT(*) n FROM {$processPrefix}fm2_process_user_capabilities WHERE user_id=25")->fetch_assoc()['n'],
+        ],
+        'Permissionless actor 25 has an active assigned local role but zero local permissions and zero process capabilities.',
     );
     $db->query("INSERT INTO {$processPrefix}fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
         (1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
@@ -554,10 +566,19 @@ try {
     $aHeadBody = pocRequest($server['port'], 'HEAD', '/pilot/objects/4512', ['Content-Length'=>(string)strlen($ignoredBody)], $ignoredBody);
     assertSameValue(pocApplicationResponse($aHead), pocApplicationResponse($aHeadBody), 'supplied HEAD body is unread and byte-identical to canonical card HEAD application response');
     pocSuccess($a, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Подъезд 2','Плановое начало 2026-10-05','Плановое окончание 2026-12-18','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована','Работы ещё не открыты','Событий пока нет'], 'Example A broad reader without capability');
-    pocStructure($a, 'Example A required DOM');
+    pocStructure($a, 'Example A required shared-shell DOM');
+    $aDocument=pocDocument($a['body']);$aXpath=new DOMXPath($aDocument);
+    assertSameValue(1,(int)$aXpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//a[@href='/pilot/objects' and @aria-current='page'])"),'configured actor19 shared navigation marks object list current');
     pocGroupVisible($a,'Распоряжение и команда',['Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'Example A exact empty current-basis/team consequence');
     pocGroupVisible($a,'Работы',['Работы ещё не открыты'],'Example A exact closed checklist consequence');
     foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability/action ' . $secret);
+
+    $permissionless = pocStart(array_replace($environment, ['REMOTE_USER'=>'permissionless@shlz.ru','FMONITOR_AUTH_USER_ID'=>'25']));
+    $permissionlessCard = pocParity($permissionless['port'], '/pilot/objects/4512');
+    pocSuccess($permissionlessCard, ['Active Permissionless Reader','Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Подъезд 2','Плановое начало 2026-10-05','Плановое окончание 2026-12-18','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована','Работы ещё не открыты','Событий пока нет'],'permissionless active legacy user full card');
+    pocStructure($permissionlessCard, 'permissionless active legacy user required shared-shell DOM');
+    foreach (['assignment_order.prepare','objects.read','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $forbidden) assertSameValue(false,str_contains($permissionlessCard['body'],$forbidden),'permissionless card excludes permission/action '.$forbidden);
+    pocStop($permissionless);$permissionless=null;
 
     // PILOT-PREPARE-FORM-001 v0.2 supersedes only the capable card launch copy.
     // The public card remains a safe GET/HEAD read and the route itself is unchanged.
@@ -678,7 +699,7 @@ try {
     assertSameValue($before, pocSnapshot($db), 'success HEAD 404 and 403 are observationally read-only');
     echo "PASS: PILOT-OBJECT-CARD-001 public HTTP card\n";
 } finally {
-    pocStop($server); pocStop($capable); pocStop($anonymous); pocStop($escapeServer);
+    pocStop($server); pocStop($capable); pocStop($permissionless); pocStop($anonymous); pocStop($escapeServer);
     if ($db instanceof mysqli) $db->close();
     $admin->query("DROP DATABASE IF EXISTS `{$database}`");
     $admin->query("DROP USER IF EXISTS `{$readerUser}`@`%`");
