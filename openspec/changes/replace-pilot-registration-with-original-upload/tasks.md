@@ -10,7 +10,7 @@
 - [x] 1.8 Получить fresh independent Gate 1 review и owner exact-hash approval evidence-reader factory/config amendment; verification: public fresh-connection read-only construction/lifecycle exact и task 2.2 снова разрешена
 - [x] 1.9 Получить fresh independent Gate 1 review и owner exact-hash approval worker `safeLogFile` binding amendment; verification: five-FD real observer и independent evidence reader имеют одну exact pre-created owned `0600` canonical file identity без env/global/default selector, и task 2.2 снова разрешена
 - [x] 1.10 Получить fresh independent Gate 1 review owner-approved `checklistSha256` evidence amendment; verification: exact `aoou-process-v1` shape отдельно фиксирует canonical checklist availability и task 2.2 снова разрешена
-- [ ] 1.11 Получить fresh independent Gate 1 review technical database-setup amendment; verification: version-1 public migration и idempotent fixed verification seed делают isolated MariaDB RED constructible без runtime DDL, private verifier SQL и original-fact fabrication
+- [x] 1.11 Получить fresh independent Gate 1 review technical database-setup amendment; verification: version-1 public migration и idempotent fixed verification seed делают isolated MariaDB RED constructible без runtime DDL, private verifier SQL и original-fact fabrication
 
 ## 2. Minimal RED и test review
 
