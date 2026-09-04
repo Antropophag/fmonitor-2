@@ -232,6 +232,66 @@ try {
     $stdoutLines = array_values(array_filter(explode("\n", trim($result['stdout'])), static fn (string $line): bool => $line !== ''));
     assertSameValue('DELIVERY_EVIDENCE_OK receipts=1 head=' . $lineageHead, $stdoutLines[array_key_last($stdoutLines)] ?? null, "Success must be the terminal nonempty stdout line; evidence=$evidence");
 
+    $bindingCases = [
+        ['name' => 'spec schemaVersion', 'artifact' => 'spec', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
+        ['name' => 'spec sliceId', 'artifact' => 'spec', 'field' => 'sliceId', 'value' => 'OTHER-SLICE-001', 'category' => 'metadata_mismatch'],
+        ['name' => 'red schemaVersion', 'artifact' => 'red', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
+        ['name' => 'red sliceId', 'artifact' => 'red', 'field' => 'sliceId', 'value' => 'OTHER-SLICE-001', 'category' => 'metadata_mismatch'],
+        ['name' => 'test review schemaVersion', 'artifact' => 'testReview', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
+        ['name' => 'test review sliceId', 'artifact' => 'testReview', 'field' => 'sliceId', 'value' => 'OTHER-SLICE-001', 'category' => 'metadata_mismatch'],
+        ['name' => 'green schemaVersion', 'artifact' => 'green', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
+        ['name' => 'green sliceId', 'artifact' => 'green', 'field' => 'sliceId', 'value' => 'OTHER-SLICE-001', 'category' => 'metadata_mismatch'],
+        ['name' => 'code review schemaVersion', 'artifact' => 'codeReview', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
+        ['name' => 'code review sliceId', 'artifact' => 'codeReview', 'field' => 'sliceId', 'value' => 'OTHER-SLICE-001', 'category' => 'metadata_mismatch'],
+        ['name' => 'RED specPath', 'artifact' => 'red', 'field' => 'specPath', 'value' => 'specs/OTHER-SLICE-001.md', 'category' => 'metadata_mismatch'],
+        ['name' => 'RED baseCommit', 'artifact' => 'red', 'field' => 'baseCommit', 'value' => 'ffffffffffffffffffffffffffffffffffffffff', 'category' => 'metadata_mismatch'],
+        ['name' => 'GREEN testReviewRecordPath', 'artifact' => 'green', 'field' => 'testReviewRecordPath', 'value' => 'reviews/tests/OTHER-SLICE-001.md', 'category' => 'metadata_mismatch'],
+        ['name' => 'test review specSha256', 'artifact' => 'testReview', 'field' => 'specSha256', 'value' => 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'category' => 'stale_spec'],
+        ['name' => 'code review specSha256', 'artifact' => 'codeReview', 'field' => 'specSha256', 'value' => 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'category' => 'stale_spec'],
+        ['name' => 'receipt test review specSha256', 'artifact' => null, 'receiptArtifact' => 'testReview', 'field' => 'specSha256', 'value' => 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'category' => 'metadata_mismatch'],
+        ['name' => 'receipt code review specSha256', 'artifact' => null, 'receiptArtifact' => 'codeReview', 'field' => 'specSha256', 'value' => 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'category' => 'metadata_mismatch'],
+    ];
+    foreach ($bindingCases as $caseIndex => $case) {
+        $bindingFixture = sys_get_temp_dir() . '/fmonitor-qgg-binding-' . $caseIndex . '-' . bin2hex(random_bytes(8));
+        try {
+            $setup = qggRun(['git', 'clone', '--quiet', $lineage, $bindingFixture], $root);
+            assertSameValue(0, $setup['status'], "SETUP_FAILURE: {$case['name']} clone failed");
+            foreach ([['git', 'config', 'user.email', 'binding@example.invalid'], ['git', 'config', 'user.name', 'Binding Fixture']] as $command) {
+                $setup = qggRun($command, $bindingFixture);
+                assertSameValue(0, $setup['status'], "SETUP_FAILURE: {$case['name']} Git configuration failed");
+            }
+            $receiptPath = $bindingFixture . '/delivery/evidence/LINEAGE-001/lineage-v1.json';
+            $mutatedReceipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR);
+            if ($case['artifact'] !== null) {
+                $artifactKey = $case['artifact'];
+                $artifactPath = $mutatedReceipt['artifacts'][$artifactKey]['path'];
+                $artifactContents = (string) file_get_contents($bindingFixture . '/' . $artifactPath);
+                assertSameValue(1, preg_match('/\A```delivery-metadata\R([^\r\n]+)/', $artifactContents, $artifactMatch), "SETUP_FAILURE: {$case['name']} metadata block missing");
+                $artifactMetadata = json_decode($artifactMatch[1], true, 32, JSON_THROW_ON_ERROR);
+                $artifactMetadata[$case['field']] = $case['value'];
+                $artifactContents = str_replace($artifactMatch[1], json_encode($artifactMetadata, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $artifactContents);
+                assertSameValue(true, file_put_contents($bindingFixture . '/' . $artifactPath, $artifactContents) !== false, "SETUP_FAILURE: cannot write {$case['name']} mutation");
+                $mutatedReceipt['artifacts'][$artifactKey]['sha256'] = hash('sha256', $artifactContents);
+            } else {
+                $mutatedReceipt['artifacts'][$case['receiptArtifact']][$case['field']] = $case['value'];
+            }
+            assertSameValue(true, file_put_contents($receiptPath, json_encode($mutatedReceipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") !== false, "SETUP_FAILURE: cannot update {$case['name']} receipt");
+            foreach ([['git', 'add', '.'], ['git', 'commit', '--quiet', '-m', 'isolated metadata binding mutation ' . $caseIndex]] as $command) {
+                $setup = qggRun($command, $bindingFixture);
+                assertSameValue(0, $setup['status'], "SETUP_FAILURE: {$case['name']} commit failed");
+            }
+            $result = qggRun(['php', $root . '/tools/delivery/check-evidence.php', '--repo', $bindingFixture], $bindingFixture);
+            $combined = $result['stdout'] . "\n" . $result['stderr'];
+            $evidence = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            assertSameValue(true, $result['status'] !== 0, "{$case['name']} mismatch must fail; evidence=$evidence");
+            assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=' . preg_quote($case['category'], '/') . ' receipt=delivery\/evidence\/LINEAGE-001\/lineage-v1\.json detail=[^\r\n]+$/m', $combined), "RED_ASSERTION: {$case['name']} must produce exactly one {$case['category']}; evidence=$evidence");
+            assertSameValue(1, preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m', $combined), "{$case['name']} must emit exactly one failure; evidence=$evidence");
+            assertSameValue(0, preg_match_all('/^DELIVERY_EVIDENCE_OK /m', $combined), "{$case['name']} must not print success; evidence=$evidence");
+        } finally {
+            qggRemoveFixture($bindingFixture);
+        }
+    }
+
     $metadataFixture = sys_get_temp_dir() . '/fmonitor-qgg-metadata-' . bin2hex(random_bytes(8));
     try {
         $setup = qggRun(['git', 'clone', '--quiet', $lineage, $metadataFixture], $root);
