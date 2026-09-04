@@ -48,6 +48,11 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     public int $actorUserId = 18;
     public string $allowedCapability = 'assignment_order.original.upload';
     public bool $authorizationAvailable = true;
+    public int $authorizationCalls = 0;
+    public ?string $throwAt = null;
+    public string $throwSecret = 'SECRET-PORT-DETAIL';
+    /** @var array<string,int> */ public array $throwOnCall = [];
+    /** @var array<string,int> */ public array $phaseCalls = [];
     public ?string $storageFault = null;
     /** @var list<string> */
     public array $storageEvents = [];
@@ -93,6 +98,7 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
     {
         return json_encode($this->process, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
+    public function trip(string $phase): void { $this->phaseCalls[$phase]=($this->phaseCalls[$phase]??0)+1;if ($this->throwAt === $phase||($this->throwOnCall[$phase]??0)===$this->phaseCalls[$phase]) throw new \RuntimeException($this->throwSecret . ':' . $phase); }
 
     public function dependencies(): AssignmentOrderOriginalDependencies
     {
@@ -101,6 +107,8 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function authorize(int $actorUserId, string $exactCapability): AssignmentOrderOriginalAuthorizationStatus
             {
+                $this->owner->authorizationCalls++;
+                $this->owner->trip('authorizer');
                 if (!$this->owner->authorizationAvailable) {
                     return AssignmentOrderOriginalAuthorizationStatus::UNAVAILABLE;
                 }
@@ -113,6 +121,7 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function find(int $caseId, int $orderId): AssignmentOrderCompositionSnapshot
             {
+                $this->owner->trip('composition');
                 return new AssignmentOrderCompositionSnapshot(
                     AssignmentOrderCompositionLookupStatus::FOUND,
                     $caseId,
@@ -124,49 +133,57 @@ final class InMemoryAssignmentOrderOriginalInitialEnvironment
                 );
             }
         };
-        $clock = new class implements AssignmentOrderOriginalClock {
-            public function nowUtc(): string { return '2026-09-02T09:15:30Z'; }
+        $clock = new class($owner) implements AssignmentOrderOriginalClock {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function nowUtc(): string { $this->owner->trip('clock'); return '2026-09-02T09:15:30Z'; }
         };
         $ids = new class($owner) implements AssignmentOrderOriginalIdSource {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function nextRootId(): AssignmentOrderOriginalIdResult
             {
                 $this->owner->rootIdCalls++;
+                $this->owner->trip('root_id');
                 return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'original-' . str_pad((string) $this->owner->rootIdCalls, 4, '0', STR_PAD_LEFT));
             }
             public function nextRevisionId(): AssignmentOrderOriginalIdResult
             {
                 $this->owner->revisionIdCalls++;
+                $this->owner->trip('revision_id');
                 return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED, 'revision-' . str_pad((string) $this->owner->revisionIdCalls, 4, '0', STR_PAD_LEFT));
             }
         };
-        $inspector = new class implements AssignmentOrderOriginalPdfInspector {
+        $inspector = new class($owner) implements AssignmentOrderOriginalPdfInspector {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function inspect(string $completedBytes): AssignmentOrderOriginalPdfInspection
             {
-                return AssignmentOrderOriginalPdfInspection::passive();
+                $this->owner->trip('inspector'); return AssignmentOrderOriginalPdfInspection::passive();
             }
             public function algorithmId(): string { return 'fmonitor-passive-pdf-v1'; }
         };
         $storage = new InMemoryAssignmentOrderOriginalInitialStorage($owner);
         $repository = new InMemoryAssignmentOrderOriginalInitialRepository($owner);
-        $lifecycle = new class implements AssignmentOrderOriginalLifecycleObserver {
-            public function observe(AssignmentOrderOriginalLifecycleEvent $event): void {}
+        $lifecycle = new class($owner) implements AssignmentOrderOriginalLifecycleObserver {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function observe(AssignmentOrderOriginalLifecycleEvent $event): void { $this->owner->trip('lifecycle'); }
         };
-        $storageObserver = new class implements AssignmentOrderOriginalStorageObserver {
-            public function observe(AssignmentOrderOriginalStorageEvent $event, ?string $opaqueIdentity): void {}
+        $storageObserver = new class($owner) implements AssignmentOrderOriginalStorageObserver {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function observe(AssignmentOrderOriginalStorageEvent $event, ?string $opaqueIdentity): void { $this->owner->trip('storage_observer'); }
         };
-        $faults = new class implements AssignmentOrderOriginalFaultInjector {
-            public function before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint $point): void {}
+        $faults = new class($owner) implements AssignmentOrderOriginalFaultInjector {
+            public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
+            public function before(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalFaultPoint $point): void { $this->owner->trip('fault_injector'); }
         };
         $safeLog = new class($owner) implements AssignmentOrderOriginalSafeLogObserver {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
-            public function record(string $event, array $safeFields): void { $this->owner->safeLogs[]=['event'=>$event,'safeFields'=>$safeFields]; }
+            public function record(string $event, array $safeFields): void { $this->owner->trip('safe_log'); $this->owner->safeLogs[]=['event'=>$event,'safeFields'=>$safeFields]; }
         };
         $delivery = new class($owner) implements AssignmentOrderOriginalResultDeliveryObserver {
             public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
             public function afterCommitBeforeReturn(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult $result): void
             {
                 $this->owner->deliveryCalls++;
+                $this->owner->trip('delivery');
                 $this->owner->repositoryTrace[]='delivery:'.($this->owner->leaseHeld?'held':'released');
                 if ($this->owner->deliveryThrows) throw new \RuntimeException('verifier response loss detail must not escape through domain result');
             }
@@ -184,6 +201,9 @@ final class InMemoryAssignmentOrderOriginalInitialStorage implements AssignmentO
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
     public function beginStage(): AssignmentOrderOriginalPrivateStage
     {
+        $this->owner->trip('fault_injector');
+        $this->owner->trip('storage_observer');
+        $this->owner->trip('stage_begin');
         $this->owner->storageEvents[] = 'STAGE_BEGIN';
         return new InMemoryAssignmentOrderOriginalInitialStage($this->owner);
     }
@@ -208,6 +228,7 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
     public function write(string $chunk): AssignmentOrderOriginalStorageStatus
     {
+        $this->owner->trip('stage_write');
         $this->owner->storageEvents[] = 'STAGE_WRITE:' . strlen($chunk);
         if ($this->owner->storageFault === 'write') return AssignmentOrderOriginalStorageStatus::FAILED;
         $this->bytes .= $chunk;
@@ -215,11 +236,13 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     }
     public function completedBytesForInspection(): string
     {
+        $this->owner->trip('stage_completed');
         $this->owner->storageEvents[] = 'STAGE_DONE';
         return $this->bytes;
     }
     public function finalize(string $sha256, int $byteSize): AssignmentOrderOriginalStorageOutcome
     {
+        $this->owner->trip('stage_finalize');
         $this->owner->storageEvents[] = 'FINALIZE_BEGIN';
         if ($this->owner->storageFault === 'finalize') {
             return new class implements AssignmentOrderOriginalStorageOutcome {
@@ -243,6 +266,7 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
             public function content(): ?AssignmentOrderOriginalPrivateContent { return $this->contentValue; }
             public function release(): AssignmentOrderOriginalStorageStatus
             {
+                $this->owner->trip('lease_release');
                 $this->owner->leaseReleaseCalls++;
                 $this->owner->repositoryTrace[]='release_attempt:'.($this->owner->leaseHeld?'held':'released');
                 if ($this->owner->leaseReleaseFault === 'throw') throw new \RuntimeException('secret lease/path detail');
@@ -260,12 +284,13 @@ final class InMemoryAssignmentOrderOriginalInitialStage implements AssignmentOrd
     }
     public function abort(): AssignmentOrderOriginalStorageStatus
     {
+        $this->owner->trip('stage_abort');
         $this->owner->storageEvents[] = 'ABORT_BEGIN';
         $this->bytes = '';
         $this->owner->storageEvents[] = 'ABORT_DONE';
         return AssignmentOrderOriginalStorageStatus::OK;
     }
-    public function close(): void { $this->owner->storageEvents[] = 'STAGE_CLOSE'; }
+    public function close(): void { $this->owner->trip('stage_close'); $this->owner->storageEvents[] = 'STAGE_CLOSE'; }
 }
 
 final class InMemoryAssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
@@ -273,6 +298,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     public function __construct(private InMemoryAssignmentOrderOriginalInitialEnvironment $owner) {}
     public function findTerminalRequest(string $requestId): AssignmentOrderOriginalResultLookup
     {
+        $this->owner->trip('request_lookup');
         $this->owner->requestLookupCalls++;
         $this->owner->repositoryTrace[]='request_lookup:'.($this->owner->leaseHeld?'held':'released');
         if ($this->owner->acceptedCommitCalls > 0 && $this->owner->unknownResolution !== null) {
@@ -283,6 +309,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function findAcceptedFingerprint(string $fingerprint): AssignmentOrderOriginalResultLookup
     {
+        $this->owner->trip('fingerprint_lookup');
         $this->owner->repositoryTrace[]='fingerprint_lookup:'.($this->owner->leaseHeld?'held':'released');
         return $this->lookup($this->owner->fingerprintResults[$fingerprint] ?? null);
     }
@@ -311,6 +338,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function findLineage(string $rootOriginalId): AssignmentOrderOriginalLineageLookup
     {
+        $this->owner->trip('lineage_lookup');
         $this->owner->repositoryTrace[]='lineage_lookup:'.($this->owner->leaseHeld?'held':'released');
         $commit = $this->owner->acceptedCommit;
         if ($commit !== null && $commit->rootOriginalId === $rootOriginalId) {
@@ -338,6 +366,7 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        $this->owner->trip('commit_accepted');
         $this->owner->acceptedCommitCalls++;
         $this->owner->repositoryTrace[]='commit:'.($this->owner->leaseHeld?'held':'released');
         if ($this->owner->commitRace === 'identical') {
@@ -374,12 +403,14 @@ final class InMemoryAssignmentOrderOriginalInitialRepository implements Assignme
     }
     public function commitAttempt(AssignmentOrderOriginalAttemptCommit $commit): AssignmentOrderOriginalCommitStatus
     {
+        $this->owner->trip('commit_attempt');
         $this->owner->repositoryTrace[]='attempt_commit:'.($this->owner->leaseHeld?'held':'released');
         $this->owner->attemptCommits[] = $commit;
         return $this->owner->attemptCommitStatus;
     }
     public function hasCommittedContent(string $opaqueIdentity): AssignmentOrderOriginalReferenceLookup
     {
+        $this->owner->trip('reference_lookup');
         throw new \LogicException('Not used by initial upload.');
     }
     public function evidenceCanonicalJson(int $caseId, int $orderId): string { return '{}'; }
