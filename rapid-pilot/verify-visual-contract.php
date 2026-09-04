@@ -21,9 +21,9 @@ function verifyRapidPilotVisualContract(string $root):array
 
     $require=static function(bool $condition,string $message)use(&$failures):void{if(!$condition)$failures[]=$message;};
 
-$shlzLinkAt=strpos($view,'<link rel="stylesheet" href="/pilot/assets/shlz.css">');
-$pilotLinkAt=strpos($view,'<link rel="stylesheet" href="/pilot/assets/pilot.css">');
-$require($shlzLinkAt!==false&&$pilotLinkAt!==false&&$shlzLinkAt<$pilotLinkAt,'shlz.css must load before pilot.css');
+$stylesheetPair='<link rel="stylesheet" href="/pilot/assets/shlz.css"><link rel="stylesheet" href="/pilot/assets/pilot.css">';
+$shlzLinkCount=substr_count($view,'<link rel="stylesheet" href="/pilot/assets/shlz.css">');$pilotLinkCount=substr_count($view,'<link rel="stylesheet" href="/pilot/assets/pilot.css">');
+$require($shlzLinkCount>0&&$shlzLinkCount===$pilotLinkCount&&substr_count($view,$stylesheetPair)===$shlzLinkCount,'shlz.css must load before pilot.css in every document branch');
 $require(preg_match('/(?:^|})\s*\.shlz-(?:button|status)\s*(?:,|\{)/m',$css)!==1,'pilot.css must not redefine bare shlz button/status contracts');
 $require(!str_contains($css,'.shlz-button:hover'),'pilot.css must not replace shlz button hover states');
 $require(str_contains($view,'class="fm2-breadcrumb-link"'),'breadcrumbs must use the FMonitor compact link contract');
