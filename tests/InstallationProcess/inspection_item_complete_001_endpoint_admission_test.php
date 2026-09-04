@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__) . "/bootstrap.php";
+spl_autoload_register(static function(string $class):void{$prefix='FMonitor\\IdentityAccess\\';if(!str_starts_with($class,$prefix))return;$file=dirname(__DIR__,2).'/app/IdentityAccess/'.substr($class,strlen($prefix)).'.php';if(is_file($file))require_once$file;});
 function ieaQ(string $s): string
 {
     return "`" . str_replace("`", "``", $s) . "`";
@@ -83,7 +84,7 @@ function ieaStart(array $e): array
         "expose_php=0",
         "-S",
         "127.0.0.1:$p",
-        dirname(__DIR__, 2) . "/public/router.php",
+        dirname(__DIR__) . "/Support/inspection_item_complete_local_auth_router.php",
     ];
     $pipes = [];
     $r = proc_open(
@@ -176,12 +177,14 @@ function ieaRequest(
     array $headers = [],
     string $body = "",
 ): array {
+    global $ieaAuthCookie;
     $s = stream_socket_client("tcp://127.0.0.1:$p", $e, $x, 2);
     if ($s === false) {
         throw new TestFailure("HTTP connect");
     }
     stream_set_timeout($s, 2);
     $raw = "$m $path HTTP/1.1\r\nHost: pilot.example\r\nConnection: close\r\n";
+    if ($ieaAuthCookie !== '') $headers['Cookie'] = isset($headers['Cookie']) ? $headers['Cookie'] . '; ' . $ieaAuthCookie : $ieaAuthCookie;
     foreach ($headers as $k => $v) {
         $raw .= "$k: $v\r\n";
     }
@@ -337,6 +340,7 @@ function ieaGet(int $p, string $path): array
     );
     $context = ieaRequest($p, "GET", $path);
     $after = ieaSnapshot($db, $prefix, $root);
+    $authTrace=array_values(array_filter(explode("\n",(string)file_get_contents($GLOBALS['ieaLocalAuthTrace']))));array_shift($authTrace);assertSameValue(4,count($authTrace),'real LocalAuth callback observed for every request');foreach($authTrace as$line)assertSameValue(['actor'=>'7301','csrfValid'=>true],json_decode($line,true,8,JSON_THROW_ON_ERROR),'LocalAuth produced exact trusted actor and valid CSRF before stale request copy');
     $postJson = json_decode($post["body"], true, 512, JSON_THROW_ON_ERROR);
     $contextJson = json_decode(
         $context["body"],
@@ -606,6 +610,9 @@ $a = ieaDb();
 $db = null;
 $server = null;
 $root = dirname(__DIR__, 2) . "/.test-artifacts/iea-" . $t;
+$sessionRoot = $root . "-session";
+$ieaLocalAuthTrace = $sessionRoot . "/local-auth-trace.jsonl";
+$ieaAuthCookie = '';
 $ieaCleanupFailures = [];
 $ieaLastRouterPid = 0;
 $ieaRouterReaped = false;
@@ -645,8 +652,9 @@ try {
     $db->query(
         "INSERT INTO {$q(
             "fm2_pilot_users",
-        )} VALUES(7301,'Фактический инженер','engineer@example.test','',1,'active',1,'2026-09-01T08:00:00+03:00'),(7302,'Назначенный инженер','assigned@example.test','',1,'active',1,'2026-09-01T08:00:00+03:00')",
+        )} VALUES(7301,'Фактический инженер','inspection.engineer@shlz.ru','',1,'active',1,'2026-09-01T08:00:00+03:00'),(7302,'Назначенный инженер','assigned@example.test','',1,'active',1,'2026-09-01T08:00:00+03:00')",
     );
+    $credentialHash=$db->real_escape_string(password_hash('unused-inspection-password',PASSWORD_BCRYPT));$db->query("INSERT INTO {$q('fm2_pilot_auth_credentials')}(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(7301,'inspection.engineer@shlz.ru','$credentialHash','2026-09-01T08:00:00+03:00','2026-09-01T08:00:00+03:00')");
     $db->query(
         "INSERT INTO {$q(
             "fm2_pilot_roles",
@@ -678,6 +686,9 @@ try {
         )} VALUES(8101,1042,'Иванов','Электромеханик','employed','2024-01-01',NULL,'fixture','2026-09-01T08:00:00+03:00','2026-08-27',NULL,'assign')",
     );
     mkdir($root, 0700, true);
+    mkdir($sessionRoot, 0700, true);
+    $sessionOwner=(new \FMonitor\IdentityAccess\PilotSessionStorageFactory())->create(new \FMonitor\IdentityAccess\PilotSessionStorageConfig($sessionRoot,'inspection_item'),new \FMonitor\IdentityAccess\NativePilotSessionFilesystem(),new \FMonitor\IdentityAccess\SystemPilotSessionClock(),new \FMonitor\IdentityAccess\CsprngPilotSessionEntropy(),new \FMonitor\IdentityAccess\NoOpPilotSessionLifecycleObserver());
+    $createdSession=$sessionOwner->start(null);$authSessionId=(string)$createdSession->currentSessionId();$authPayload=serialize(['auth_user_id'=>7301,'auth_email'=>'inspection.engineer@shlz.ru','auth_csrf'=>str_repeat('c',64)]);assertSameValue('OK',$sessionOwner->writeCommit($authSessionId,$authPayload)->status()->name,'canonical authenticated session fixture');$sessionOwner->close();
     $env = [
         "FMONITOR_DB_HOST" => getenv("FMONITOR_TEST_DB_HOST") ?: "127.0.0.1",
         "FMONITOR_DB_PORT" => getenv("FMONITOR_TEST_DB_PORT") ?: "23306",
@@ -689,14 +700,18 @@ try {
         "FMONITOR_LEGACY_TABLE_PREFIX" => "legacy_",
         "FMONITOR_PROCESS_TABLE_PREFIX" => $p,
         "FMONITOR_ARTIFACT_STORAGE_ROOT" => $root,
+        "FMONITOR_SESSION_STATE_ROOT" => $sessionRoot,
+        "FMONITOR_SESSION_INSTANCE" => "inspection_item",
+        "FMONITOR_TRUSTED_REQUEST_SCHEME" => "https",
+        "FMONITOR_TEST_LOCAL_AUTH_TRACE" => $ieaLocalAuthTrace,
         "FMONITOR_SHLZ_CSS_PATH" =>
             dirname(__DIR__, 3) . "/shlz-ui/packages/styles/dist/shlz.css",
         "FMONITOR_PILOT_CSS_PATH" =>
             dirname(__DIR__, 2) . "/app/PilotHttp/pilot.css",
         "FMONITOR_NOW" => "2026-09-01T09:05:00+03:00",
-        "FMONITOR_AUTH_USER_ID" => "7301",
     ];
     $server = ieaStart($env);
+    $ieaAuthCookie = 'fm2auth=' . $authSessionId;
     $response = ieaGet(
         $server["port"],
         "/pilot/construction-control/objects/4512/sync-context",
@@ -724,6 +739,7 @@ try {
     ieaGuard("database drop", static fn() => $a->query("DROP DATABASE IF EXISTS " . ieaQ($d)), $ieaCleanupFailures);
     ieaGuard("admin close", static fn() => $a->close(), $ieaCleanupFailures);
     ieaGuard("artifact root delete", static fn() => ieaRemoveOwned($root), $ieaCleanupFailures);
+    ieaGuard("session root delete", static fn() => ieaRemoveOwned($sessionRoot), $ieaCleanupFailures);
     ieaGuard("database absence", static function () use ($d, &$ieaCleanupFailures): void {
         $probe = ieaDb();
         try {
@@ -739,6 +755,9 @@ try {
     }, $ieaCleanupFailures);
     ieaGuard("artifact absence", static function () use ($root): void {
         if (file_exists($root)) throw new RuntimeException("owned artifact root remains");
+    }, $ieaCleanupFailures);
+    ieaGuard("session absence", static function () use ($sessionRoot): void {
+        if (file_exists($sessionRoot)) throw new RuntimeException("owned session root remains");
     }, $ieaCleanupFailures);
 }
 if (($finalFailure = ieaFinalFailure($primary, $ieaCleanupFailures)) !== null) {
