@@ -3,6 +3,7 @@
 .fm2-skip:focus{position:fixed;left:16px;top:12px;width:auto;max-width:calc(100vw - 32px);height:auto;overflow:visible;clip-path:none;white-space:normal;background:#fff;padding:10px 14px;border-radius:8px}
 .fm2-shell{display:grid;grid-template-columns:80px minmax(0,1fr);min-height:100vh}
 .fm2-sidebar{position:sticky;top:0;height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;background:var(--fm2-navy);padding:18px 10px;color:#fff}
+.fm2-identity,.fm2-queue-identity{display:grid;gap:.25rem}
 .fm2-logo{display:grid;place-items:center;width:48px;height:48px;color:#fff;text-decoration:none;font-weight:800;font-size:15px;border-radius:12px;background:var(--fm2-blue)}
 .fm2-primary-nav{display:grid;gap:10px;width:100%;margin-top:38px}
 .fm2-nav-item{display:grid;place-items:center;gap:5px;min-height:56px;color:#c5ced8;text-decoration:none;border-radius:12px;font-size:10px}
