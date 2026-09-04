@@ -67,9 +67,18 @@ $tableProperties = static function (mysqli $db, string $table): array {
     $statement->bind_param('s', $table); $statement->execute();
     return array_values($statement->get_result()->fetch_assoc());
 };
-$snapshot = static function (mysqli $db): string {
-    $result = $db->query("SELECT TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() ORDER BY BINARY TABLE_NAME,ORDINAL_POSITION");
-    return json_encode($result->fetch_all(MYSQLI_ASSOC), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+$snapshot = static function (mysqli $db) use ($tableNames,$columns,$keys,$foreignKeys,$checks,$tableProperties): string {
+    $structure=[];
+    foreach($tableNames($db)as$table){
+        $structure[$table]=[
+            'table'=>$tableProperties($db,$table),
+            'columns'=>$columns($db,$table),
+            'keys'=>$keys($db,$table),
+            'foreignKeys'=>$foreignKeys($db,$table,''),
+            'checks'=>$checks($db,$table),
+        ];
+    }
+    return json_encode($structure,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 };
 $stateSnapshot = static function (mysqli $db) use ($tableNames, $quote, $snapshot): string {
     $rows = [];
@@ -191,11 +200,12 @@ try {
         try{
             $fixture->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');$fixture->begin_transaction();$transaction=true;$fixture->query($lockSql);
             $childPid=pcntl_fork();if($childPid===-1)throw new TestFailure('SETUP_FAILURE: contention fork.');
-            if($childPid===0){fclose($parentPipe);try{$childDb=$connect($databases[4]);if($mode==='seed')AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($childDb,$prefix);else AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($childDb,$prefix);$childDb->close();fwrite($childPipe,"OK\n");fclose($childPipe);exit(0);}catch(Throwable){fwrite($childPipe,"ERR\n");fclose($childPipe);exit(70);}}
-            fclose($childPipe);stream_set_blocking($parentPipe,false);$read=[$parentPipe];$write=$except=[];
+            if($childPid===0){fclose($parentPipe);try{$childDb=$connect($databases[4]);stream_set_timeout($childPipe,5);fwrite($childPipe,"READY {$mode}\n");fflush($childPipe);$enter=fgets($childPipe);if($enter!=="ENTER {$mode}\n")throw new RuntimeException('barrier');fwrite($childPipe,"ENTERED {$mode}\n");fflush($childPipe);if($mode==='seed')AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA($childDb,$prefix);else AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($childDb,$prefix);$childDb->close();fwrite($childPipe,"OK {$mode}\n");fclose($childPipe);exit(0);}catch(Throwable){fwrite($childPipe,"ERR {$mode}\n");fclose($childPipe);exit(70);}}
+            fclose($childPipe);stream_set_blocking($parentPipe,true);stream_set_timeout($parentPipe,5);$ready=fgets($parentPipe);$readyMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$readyMeta['timed_out'],"{$mode} READY is bounded.");assertSameValue("READY {$mode}\n",$ready,"{$mode} child opened its independent connection.");fwrite($parentPipe,"ENTER {$mode}\n");fflush($parentPipe);$entered=fgets($parentPipe);$enteredMeta=stream_get_meta_data($parentPipe);assertSameValue(false,$enteredMeta['timed_out'],"{$mode} ENTERED is bounded.");assertSameValue("ENTERED {$mode}\n",$entered,"{$mode} child entered the controlled fixture attempt.");
+            stream_set_blocking($parentPipe,false);$read=[$parentPipe];$write=$except=[];
             assertSameValue(0,stream_select($read,$write,$except,0,200000),"{$mode} waits behind exact SERIALIZABLE identity lock.");
             $fixture->commit();$transaction=false;stream_set_blocking($parentPipe,true);stream_set_timeout($parentPipe,5);$line=fgets($parentPipe);$meta=stream_get_meta_data($parentPipe);
-            assertSameValue(false,$meta['timed_out'],"{$mode} contention child is bounded.");assertSameValue("OK\n",$line,"{$mode} succeeds after lock release.");
+            assertSameValue(false,$meta['timed_out'],"{$mode} contention child is bounded.");assertSameValue("OK {$mode}\n",$line,"{$mode} succeeds after lock release.");
             $status=0;assertSameValue($childPid,pcntl_waitpid($childPid,$status),"{$mode} child is reaped.");assertSameValue(0,pcntl_wexitstatus($status),"{$mode} child exits cleanly.");$childPid=null;
         }finally{
             if($transaction){try{$fixture->rollback();}catch(Throwable){}}
