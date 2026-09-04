@@ -156,9 +156,22 @@ function isdStop($process, array $pipes, int $pid): void
         if (is_resource($p)) { fclose($p); }
     }
     proc_close($process);
-    $end = microtime(true) + 1;
-    while ($pid > 0 && is_dir("/proc/$pid") && microtime(true) < $end) { usleep(20000); }
-    isdAssert(false, $pid > 0 && is_dir("/proc/$pid"), "SETUP_FAILURE: owned process was not reaped");
+    $end = hrtime(true) + 1_000_000_000;
+    while ($pid > 0 && function_exists('posix_kill') && @posix_kill($pid,0) && hrtime(true) < $end) { usleep(20000); }
+    isdAssert(false, $pid > 0 && function_exists('posix_kill') && @posix_kill($pid,0), "SETUP_FAILURE: owned process was not reaped");
+}
+function isdGroupWrapper(): string{return dirname(__DIR__).'/Support/process_group_exec.php';}
+function isdAwaitOwnedGroup($process,array $pipes,int $pid,string $label):void
+{
+    isdAssert(true,$pid>0&&function_exists('posix_getpgid')&&function_exists('posix_kill'),"SETUP_FAILURE: $label process-group primitives unavailable");
+    stream_set_blocking($pipes[3],false);$deadline=hrtime(true)+1_000_000_000;$ready='';
+    do{$ready.=stream_get_contents($pipes[3]);$status=proc_get_status($process);if(str_contains($ready,"\n"))break;if(!($status['running']??false))break;usleep(10000);}while(hrtime(true)<$deadline);
+    $group=@posix_getpgid($pid);
+    if($ready==="READY $pid\n"&&$group===$pid){$release="RELEASE $pid\n";$written=0;while($written<strlen($release)){$count=fwrite($pipes[4],substr($release,$written));if(!is_int($count)||$count<=0)break;$written+=$count;}fflush($pipes[4]);fclose($pipes[3]);fclose($pipes[4]);if($written===strlen($release))return;}
+    if($status['running']??false){proc_terminate($process,15);$end=hrtime(true)+250_000_000;do{usleep(10000);$status=proc_get_status($process);}while(($status['running']??false)&&hrtime(true)<$end);if($status['running']??false)proc_terminate($process,9);$end=hrtime(true)+1_000_000_000;do{usleep(10000);$status=proc_get_status($process);}while(($status['running']??false)&&hrtime(true)<$end);}
+    foreach($pipes as$pipe)if(is_resource($pipe))fclose($pipe);
+    if(!($status['running']??false))proc_close($process);
+    throw new InspectionScheduleTestFailure("SETUP_FAILURE: $label did not establish an owned process group");
 }
 function isdServer(string $root, string $router, string $log, string $nonce, array $env): array
 {
@@ -168,10 +181,11 @@ function isdServer(string $root, string $router, string $log, string $nonce, arr
     fclose($sock);
     $port = (int) substr(strrchr($addr, ":"), 1);
     $env += ["ISD_REPOSITORY_ROOT" => $root, "ISD_REQUEST_LOG" => $log, "ISD_REQUEST_NONCE" => $nonce];
-    $proc = proc_open(["setsid", "--wait", PHP_BINARY, "-S", "127.0.0.1:$port", $router], [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"]], $pipes, $root, $env);
+    $proc = proc_open([PHP_BINARY,isdGroupWrapper(),PHP_BINARY,"-S","127.0.0.1:$port",$router], [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"],3=>["pipe","w"],4=>["pipe","r"]], $pipes, $root, $env);
     if (!is_resource($proc)) { throw new InspectionScheduleTestFailure("SETUP_FAILURE: loopback server did not start"); }
     fclose($pipes[0]);
     $pid = (int) (proc_get_status($proc)["pid"] ?? 0);
+    isdAwaitOwnedGroup($proc,$pipes,$pid,'loopback server');
     $end = microtime(true) + 3;
     do {
         $probe = @fsockopen("127.0.0.1", $port, $e, $m, 0.1);
@@ -187,12 +201,13 @@ function isdServer(string $root, string $router, string $log, string $nonce, arr
 }
 function isdRun(array $command, string $root, array $env, float $timeout = ISD_TIMEOUT): array
 {
-    $proc = proc_open(array_merge(["setsid", "--wait"], $command), [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"]], $pipes, $root, $env);
+    $proc = proc_open(array_merge([PHP_BINARY,isdGroupWrapper()], $command), [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"],3=>["pipe","w"],4=>["pipe","r"]], $pipes, $root, $env);
     if (!is_resource($proc)) { throw new InspectionScheduleTestFailure("SETUP_FAILURE: verifier did not start"); }
     fclose($pipes[0]);
     stream_set_blocking($pipes[1], false);
     stream_set_blocking($pipes[2], false);
     $pid = (int) (proc_get_status($proc)["pid"] ?? 0);
+    isdAwaitOwnedGroup($proc,$pipes,$pid,'verifier');
     $end = microtime(true) + $timeout;
     $out = "";
     $err = "";
@@ -230,9 +245,9 @@ function isdRun(array $command, string $root, array $env, float $timeout = ISD_T
     }
     $closed = proc_close($proc);
     if ($exit === null || $exit < 0) { $exit = $closed; }
-    $end = microtime(true) + 1;
-    while ($pid > 0 && is_dir("/proc/$pid") && microtime(true) < $end) { usleep(20000); }
-    isdAssert(false, $pid > 0 && is_dir("/proc/$pid"), "SETUP_FAILURE: verifier process was not reaped");
+    $end = hrtime(true) + 1_000_000_000;
+    while ($pid > 0 && @posix_kill($pid,0) && hrtime(true) < $end) { usleep(20000); }
+    isdAssert(false, $pid > 0 && @posix_kill($pid,0), "SETUP_FAILURE: verifier process was not reaped");
     return ["status" => $timedOut ? 124 : $exit, "stdout" => $out, "stderr" => $err, "timed_out" => $timedOut];
 }
 function isdInvalid(string $verifier, string $root, array $env, mysqli $db, string $token, string $ar, string $label): void
@@ -480,6 +495,10 @@ try {
     isdAssert(true, $timed["timed_out"], "SETUP_FAILURE: timeout control did not fire");
     isdAssert(124, $timed["status"], "SETUP_FAILURE: timeout status must be 124");
     unlink($slow);
+    $resistant=$ar.'/term-resistant.php';file_put_contents($resistant,"<?php pcntl_signal(SIGTERM,SIG_IGN);usleep(5000000);",LOCK_EX);$started=hrtime(true);$killed=isdRun([PHP_BINARY,$resistant],$root,isdEnvironment(),0.15);isdAssert(true,$killed['timed_out'],'SETUP_FAILURE: TERM-resistant control did not time out');isdAssert(124,$killed['status'],'SETUP_FAILURE: TERM-resistant control reaches group KILL');isdAssert(true,hrtime(true)-$started<2_000_000_000,'SETUP_FAILURE: TERM-resistant group KILL is bounded');unlink($resistant);
+    $missingArgv=isdRun([PHP_BINARY,isdGroupWrapper()],$root,isdEnvironment());isdAssert([70,'',"SETUP_FAILURE: process-group exec failed.\n"],[$missingArgv['status'],$missingArgv['stdout'],$missingArgv['stderr']],'process-group wrapper missing argv fixed failure');
+    $invalidExec=isdRun(['/definitely-missing-isd-executable'], $root, isdEnvironment());isdAssert([70,'',"SETUP_FAILURE: process-group exec failed.\n"],[$invalidExec['status'],$invalidExec['stdout'],$invalidExec['stderr']],'process-group wrapper invalid exec fixed failure');
+    $ungroupedPipes=[];$ungrouped=proc_open([PHP_BINARY,'-r','usleep(5000000);'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$ungroupedPipes,$root,isdEnvironment());if(!is_resource($ungrouped))throw new InspectionScheduleTestFailure('SETUP_FAILURE: ungrouped control start');fclose($ungroupedPipes[0]);$ungroupedStatus=proc_get_status($ungrouped);$ungroupedPid=(int)($ungroupedStatus['pid']??0);isdAssert(true,$ungroupedPid>0&&@posix_getpgid($ungroupedPid)!==$ungroupedPid,'parent rejects launcher without owned group identity');proc_terminate($ungrouped,15);$ungroupedDeadline=hrtime(true)+1_000_000_000;do{usleep(10000);$ungroupedStatus=proc_get_status($ungrouped);}while(($ungroupedStatus['running']??false)&&hrtime(true)<$ungroupedDeadline);if($ungroupedStatus['running']??false)proc_terminate($ungrouped,9);foreach([1,2]as$fd)fclose($ungroupedPipes[$fd]);proc_close($ungrouped);isdAssert(false,@posix_kill($ungroupedPid,0),'rejected ungrouped launcher is reaped by positive-PID cleanup');
     $verifier = $root . "/rapid-pilot/verify-inspection-schedule-duplicate.php";
     if (!is_file($verifier)) {
         $missing = isdRun([PHP_BINARY, "rapid-pilot/verify-inspection-schedule-duplicate.php"], $root, isdEnvironment());
