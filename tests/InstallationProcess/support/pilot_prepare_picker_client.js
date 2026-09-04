@@ -126,8 +126,12 @@ equal(ui.results.children.length, 1, "zero-result grammar has one direct child")
 equal(ui.results.children[0].tagName, "P", "zero-result child is p");
 equal(ui.results.children[0].textContent, "Ничего не найдено. Проверьте ФИО или табельный номер.", "zero-result exact copy");
 equal(ui.meta.textContent, "Найдено: 0", "non-ASCII decimal digits do not enter tab query");
-ui.search.value = "10"; ui.search.dispatch("input");
-equal(ui.results.children.length, 1, "ASCII digit substring matches six-digit tab");
+const tabUi = execute(source, base);
+tabUi.search.value = "10"; tabUi.search.dispatch("input");
+equal(tabUi.results.children.length, 2, "ASCII digit substring matches both literal six-digit tabs");
+tabUi.results.children[0].dispatch("click");
+tabUi.results.children[1].dispatch("click");
+equal(tabUi.inputs.children.map((input) => input.value), ["1042", "3010"], "ASCII tab matches preserve literal fixture ID order");
 
 ui.search.value = "монтажник"; ui.search.dispatch("input");
 equal(ui.results.children.length, 1, "position is excluded from search and produces zero-result p");
