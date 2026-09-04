@@ -58,3 +58,12 @@ Exact hashes before this evidence commit:
 fae262571db508b02175a6c2f52cd67e8867b15b9ad7a572da05e2888f3c7ec8  tests/InstallationProcess/support/pilot_prepare_picker_client.js
 59552423291008f1fa9b42a33a5523a988522c8c8b1841c05d2496a410be7611  tests/InstallationProcess/pilot_prepare_form_001_test.php
 ```
+
+## Exact correction commit confirmation
+
+The production/evidence commit is
+`c1629722ca91e7b753c7470a7e85dd364abda0ef`. From a clean worktree at that
+exact SHA, `2026-09-04T11:09:00+03:00` through
+`2026-09-04T11:09:20+03:00`, the direct v17 picker harness and canonical prepare
+verifier returned their PASS literals, architecture-check passed all 7 rules,
+and diff-check exited zero.
