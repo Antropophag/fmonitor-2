@@ -329,6 +329,31 @@ function pocGroupText(array $response, string $group, string $why): string
     return preg_replace('/\s+/u', ' ', trim((string) $nodes?->item(0)?->textContent)) ?? '';
 }
 
+/** @return array{exit:int,stdout:string,stderr:string,timedOut:bool,pid:int} */
+function pocRunBoundedObserver(array $command, int $timeoutMilliseconds): array
+{
+    $pipes=[];$process=proc_open($command,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));
+    if(!is_resource($process))throw new TestFailure('Resource observer start.');
+    fclose($pipes[0]);stream_set_blocking($pipes[1],false);stream_set_blocking($pipes[2],false);
+    $stdout='';$stderr='';$status=proc_get_status($process);$pid=(int)($status['pid']??0);$deadline=hrtime(true)+$timeoutMilliseconds*1_000_000;$timedOut=false;
+    while($status['running']){$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);if(hrtime(true)>=$deadline){$timedOut=true;break;}usleep(10_000);$status=proc_get_status($process);}
+    if($status['running']){@proc_terminate($process,15);$termDeadline=hrtime(true)+250_000_000;do{$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(10_000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$termDeadline);}
+    if($status['running']){@proc_terminate($process,9);$killDeadline=hrtime(true)+1_000_000_000;do{$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(10_000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$killDeadline);}
+    if($status['running']){foreach([1,2]as$fd)if(is_resource($pipes[$fd]))fclose($pipes[$fd]);throw new TestFailure('Resource observer survived bounded TERM/KILL.');}
+    $stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$reported=(int)($status['exitcode']??-1);$closed=proc_close($process);$exit=$reported>=0?$reported:$closed;
+    return['exit'=>$exit,'stdout'=>$stdout,'stderr'=>$stderr,'timedOut'=>$timedOut,'pid'=>$pid];
+}
+
+function pocAssertBoundedObserverSensitivity(): void
+{
+    if(PHP_OS_FAMILY!=='Darwin')return;
+    $started=hrtime(true);$result=pocRunBoundedObserver([PHP_BINARY,'-r','usleep(5000000);'],50);
+    assertSameValue(true,$result['timedOut'],'deliberately hanging observer reaches bounded timeout');
+    assertSameValue(true,hrtime(true)-$started<1_500_000_000,'deliberately hanging observer terminates within bounded cleanup deadline');
+    assertSameValue(true,$result['pid']>0,'deliberately hanging observer exposes exact owned PID');
+    if(function_exists('posix_kill'))assertSameValue(false,@posix_kill($result['pid'],0),'deliberately hanging observer is terminated and reaped');
+}
+
 /** @return list<string> */
 function pocOpenDescriptorPaths(int $pid): array
 {
@@ -344,19 +369,12 @@ function pocOpenDescriptorPaths(int $pid): array
         return $paths;
     }
     if (PHP_OS_FAMILY !== 'Darwin' || !is_executable('/usr/sbin/lsof')) throw new TestFailure('Unsupported resource-observer platform.');
-    $process = null; $pipes = [];
-    try {
-        $process = proc_open(['/usr/sbin/lsof','-a','-p',(string)$pid,'-Fn'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));
-        if (!is_resource($process)) throw new TestFailure('Darwin resource observer start.');
-        fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);
-        $exit=proc_close($process);$process=null;
-        assertSameValue([0,''],[$exit,$stderr],'Darwin resource observer exact process result');
-        $paths=[];foreach(explode("\n",$stdout)as$line)if(str_starts_with($line,'n')&&strlen($line)>1)$paths[]=substr($line,1);
-        assertSameValue(true,$paths!==[],'Darwin resource observer returns machine-readable name records');
-        return $paths;
-    } finally {
-        if (is_resource($process)) { foreach ([0,1,2] as $fd) if (isset($pipes[$fd])&&is_resource($pipes[$fd])) fclose($pipes[$fd]); proc_terminate($process); proc_close($process); }
-    }
+    $result=pocRunBoundedObserver(['/usr/sbin/lsof','-a','-p',(string)$pid,'-Fn'],2000);
+    assertSameValue(false,$result['timedOut'],'Darwin resource observer completes within monotonic deadline');
+    assertSameValue([0,''],[$result['exit'],$result['stderr']],'Darwin resource observer exact process result');
+    $paths=[];foreach(explode("\n",$result['stdout'])as$line)if(str_starts_with($line,'n')&&strlen($line)>1)$paths[]=substr($line,1);
+    assertSameValue(true,$paths!==[],'Darwin resource observer returns machine-readable name records');
+    return $paths;
 }
 
 /** @return list<array{ID:string}> */
@@ -396,6 +414,7 @@ $ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$p
     $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $crossSource = null; $anonymous = null; $escapeServer = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
+    pocAssertBoundedObserverSensitivity();
     $descriptorControl=@fopen($css,'rb');if(!is_resource($descriptorControl))throw new TestFailure('CSS descriptor sensitivity control open');try{assertSameValue(true,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees deliberately open exact CSS descriptor');}finally{fclose($descriptorControl);}assertSameValue(false,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees exact CSS descriptor close');
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
     pocMigrate($database,$processPrefix);
