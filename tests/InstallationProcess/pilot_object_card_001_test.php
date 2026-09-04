@@ -254,7 +254,7 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     foreach (['<form','<input','<select','<textarea','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
 }
 
-function pocStructure(array $response, string $why): void
+function pocStructure(array $response, int $expectedObjectId, bool $allowPrepare, string $why): void
 {
     $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
     foreach ([
@@ -263,10 +263,17 @@ function pocStructure(array $response, string $why): void
         'pilot stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/pilot.css'])", 'shared shell'=>"count(//div[contains(concat(' ',normalize-space(@class),' '),' fm2-shell ')])",
         'shared sidebar'=>"count(//aside[contains(concat(' ',normalize-space(@class),' '),' fm2-sidebar ')])", 'shared navigation'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ') and @aria-label='Основная навигация'])",
         'breadcrumb'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ') and @aria-label='Хлебные крошки']//a[@href='/pilot/objects' and normalize-space(.)='Объекты монтажа'])",
-        'breadcrumb current'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and normalize-space(.)='Объект монтажа № 4512'] | //nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and starts-with(normalize-space(.),'Объект монтажа № ')])",
+        'breadcrumb current'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and normalize-space(.)='Объект монтажа № {$expectedObjectId}'])",
         'skip link'=>"count(//a[@href='#main-content'])", 'main'=>"count(//main[contains(concat(' ',normalize-space(@class),' '),' fm2-main ') and @id='main-content' and @tabindex='-1'])", 'one h1'=>"count(//h1)",
     ] as $label=>$query) assertSameValue(1, (int) $xpath->evaluate($query), $why . ' ' . $label);
     assertSameValue(['/pilot/assets/shlz.css','/pilot/assets/pilot.css'], array_map(static fn(DOMNode $node): string => (string) $node->attributes?->getNamedItem('href')?->nodeValue, iterator_to_array($xpath->query('/html/head/link[@rel="stylesheet"]'))), $why . ' exact shared stylesheet order');
+    assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//*[@aria-current='page'])"),$why.' exactly one current primary-navigation item');
+    assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//a[@href='/pilot/objects' and @aria-current='page' and normalize-space(.)='Объекты монтажа'])"),$why.' exact object-list primary navigation is current');
+    $expectedAnchors=['#main-content','/pilot/objects','/pilot/objects','/pilot/objects'];
+    if($allowPrepare)$expectedAnchors[]='/pilot/objects/'.$expectedObjectId.'/assignment-order/prepare';
+    $actualAnchors=array_map(static fn(DOMNode $node):string=>(string)$node->attributes?->getNamedItem('href')?->nodeValue,iterator_to_array($xpath->query('//a[@href]')));
+    sort($expectedAnchors,SORT_STRING);sort($actualAnchors,SORT_STRING);
+    assertSameValue($expectedAnchors,$actualAnchors,$why.' exact configured anchor href multiset permits no extra process/action link');
     foreach (['Идентификация','Сроки','Распоряжение и команда','Работы','Последние события'] as $group) {
         $sections = $xpath->query("//section[./*[self::h2 or self::h3][normalize-space(.)='".$group."'] and ./dl]");
         assertSameValue(1, $sections->length, $why . ' definition-list section ' . $group);
@@ -566,9 +573,7 @@ try {
     $aHeadBody = pocRequest($server['port'], 'HEAD', '/pilot/objects/4512', ['Content-Length'=>(string)strlen($ignoredBody)], $ignoredBody);
     assertSameValue(pocApplicationResponse($aHead), pocApplicationResponse($aHeadBody), 'supplied HEAD body is unread and byte-identical to canonical card HEAD application response');
     pocSuccess($a, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Подъезд 2','Плановое начало 2026-10-05','Плановое окончание 2026-12-18','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована','Работы ещё не открыты','Событий пока нет'], 'Example A broad reader without capability');
-    pocStructure($a, 'Example A required shared-shell DOM');
-    $aDocument=pocDocument($a['body']);$aXpath=new DOMXPath($aDocument);
-    assertSameValue(1,(int)$aXpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//a[@href='/pilot/objects' and @aria-current='page'])"),'configured actor19 shared navigation marks object list current');
+    pocStructure($a,4512,false,'Example A required shared-shell DOM');
     pocGroupVisible($a,'Распоряжение и команда',['Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'Example A exact empty current-basis/team consequence');
     pocGroupVisible($a,'Работы',['Работы ещё не открыты'],'Example A exact closed checklist consequence');
     foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability/action ' . $secret);
@@ -576,7 +581,7 @@ try {
     $permissionless = pocStart(array_replace($environment, ['REMOTE_USER'=>'permissionless@shlz.ru','FMONITOR_AUTH_USER_ID'=>'25']));
     $permissionlessCard = pocParity($permissionless['port'], '/pilot/objects/4512');
     pocSuccess($permissionlessCard, ['Active Permissionless Reader','Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Подъезд 2','Плановое начало 2026-10-05','Плановое окончание 2026-12-18','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована','Работы ещё не открыты','Событий пока нет'],'permissionless active legacy user full card');
-    pocStructure($permissionlessCard, 'permissionless active legacy user required shared-shell DOM');
+    pocStructure($permissionlessCard,4512,false,'permissionless active legacy user required shared-shell DOM');
     foreach (['assignment_order.prepare','objects.read','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $forbidden) assertSameValue(false,str_contains($permissionlessCard['body'],$forbidden),'permissionless card excludes permission/action '.$forbidden);
     pocStop($permissionless);$permissionless=null;
 
@@ -585,6 +590,7 @@ try {
     $capable = pocStart(array_replace($environment, ['REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18']));
     $capableCard = pocParity($capable['port'], '/pilot/objects/4512');
     pocSuccess($capableCard, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'Example A capable upload-first launch');
+    pocStructure($capableCard,4512,true,'Example A capable required shared-shell DOM');
     pocGroupVisible($capableCard,'Распоряжение и команда',['Распоряжение ещё не сформировано','Загрузить распоряжение','Подтверждённая команда ещё не сформирована'],'capable upload-first action follows reason before team history');
     $capableDocument = pocDocument($capableCard['body']); $capableXpath = new DOMXPath($capableDocument);
     $prepareAnchors = $capableXpath->query("//a[@href='/pilot/objects/4512/assignment-order/prepare']");
@@ -594,6 +600,7 @@ try {
     assertSameValue(false, str_contains(pocVisible($capableCard['body']), 'Сформировать распоряжение'), 'superseded card action copy is absent');
     foreach ([4514=>'wrong state',4518=>'PTO gate'] as $negativeId=>$negativeWhy) {
         $negativeAction = pocParity($capable['port'], '/pilot/objects/'.$negativeId);
+        pocStructure($negativeAction,$negativeId,false,$negativeWhy.' required shared-shell DOM');
         $negativeDocument = pocDocument($negativeAction['body']); $negativeXpath = new DOMXPath($negativeDocument);
         assertSameValue(0, (int) $negativeXpath->evaluate("count(//a[@href='/pilot/objects/{$negativeId}/assignment-order/prepare'])"), $negativeWhy.' has no canonical prepare href');
         assertSameValue(0, (int) $negativeXpath->evaluate("count(//*[self::a or self::button or self::form or self::input or self::select or self::textarea][normalize-space(.)='Загрузить распоряжение'])"), $negativeWhy.' has no upload-first action/control');
@@ -608,7 +615,7 @@ try {
     pocSuccess($b, ['Объект монтажа № 4513','В работе','77-000124','Москва, ул. Вторая, д. 7','Подъезд 1','Плановое начало 2026-10-01','Плановое окончание 2026-11-30','Зарегистрировано в 1С ДО','Распоряжение № 19-Р от 2026-10-02 · версия 2','Петров Пётр Петрович','1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','Бригадная','Чек-лист: Доступен','installation_opened','2026-10-03T08:15:30+03:00','assignment_order_registered','assignment_order_prepared'], 'Example B opened case');
     foreach (['EVENT-PAYLOAD-SECRET','older_hidden_event','FORBIDDEN-4513','OLD-Р','Старый инженер'] as $secret) assertSameValue(false, str_contains($b['body'], $secret), 'Example B excludes historical/forbidden ' . $secret);
     foreach (['1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','installation_opened','assignment_order_registered','assignment_order_prepared'] as $once) pocCountVisible($b,$once,1,'Example B people/events');
-    pocStructure($b, 'Example B required DOM');
+    pocStructure($b,4513,false,'Example B required shared-shell DOM');
     pocGroupVisible($b, 'Работы', ['Фактическое начало 2026-10-03','Открыто: 2026-10-03T08:15:30+03:00','Открыл пользователь: 18','Чек-лист: Доступен'], 'Example B exact opening audit in Work group');
     foreach (['Фактическое начало 2026-10-03','Открыто: 2026-10-03T08:15:30+03:00','Открыл пользователь: 18'] as $openingFact) pocCountVisible($b,$openingFact,1,'Example B opening fact belongs to exactly one semantic group');
     $team = pocGroupText($b, 'Распоряжение и команда', 'Example B current version-2 team snapshots');
