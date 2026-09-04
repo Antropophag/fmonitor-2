@@ -329,40 +329,51 @@ function pocGroupText(array $response, string $group, string $why): string
     return preg_replace('/\s+/u', ' ', trim((string) $nodes?->item(0)?->textContent)) ?? '';
 }
 
+/** @return list<string> */
+function pocOpenDescriptorPaths(int $pid): array
+{
+    assertSameValue(true, $pid > 0, 'resource observer exact positive PID');
+    if (PHP_OS_FAMILY === 'Linux') {
+        $directory = '/proc/' . $pid . '/fd';
+        assertSameValue(true, is_dir($directory), 'Linux resource observer procfs is available');
+        $paths = [];
+        foreach (glob($directory . '/*') ?: [] as $fd) {
+            $target = @readlink($fd);
+            if (is_string($target)) $paths[] = $target;
+        }
+        return $paths;
+    }
+    if (PHP_OS_FAMILY !== 'Darwin' || !is_executable('/usr/sbin/lsof')) throw new TestFailure('Unsupported resource-observer platform.');
+    $process = null; $pipes = [];
+    try {
+        $process = proc_open(['/usr/sbin/lsof','-a','-p',(string)$pid,'-Fn'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));
+        if (!is_resource($process)) throw new TestFailure('Darwin resource observer start.');
+        fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);
+        $exit=proc_close($process);$process=null;
+        assertSameValue([0,''],[$exit,$stderr],'Darwin resource observer exact process result');
+        $paths=[];foreach(explode("\n",$stdout)as$line)if(str_starts_with($line,'n')&&strlen($line)>1)$paths[]=substr($line,1);
+        assertSameValue(true,$paths!==[],'Darwin resource observer returns machine-readable name records');
+        return $paths;
+    } finally {
+        if (is_resource($process)) { foreach ([0,1,2] as $fd) if (isset($pipes[$fd])&&is_resource($pipes[$fd])) fclose($pipes[$fd]); proc_terminate($process); proc_close($process); }
+    }
+}
+
+/** @return list<array{ID:string}> */
+function pocReaderConnections(mysqli $admin, string $database, string $readerUser): array
+{
+    $escapedDatabase=$admin->real_escape_string($database);$escapedUser=$admin->real_escape_string($readerUser);
+    return $admin->query("SELECT CAST(ID AS CHAR) ID FROM information_schema.PROCESSLIST WHERE DB='{$escapedDatabase}' AND USER='{$escapedUser}' ORDER BY ID")->fetch_all(MYSQLI_ASSOC);
+}
+
 function pocAssertRequestResourcesReleased(array $server, mysqli $admin, string $database, string $readerUser, string $css, string $why): void
 {
     $status = proc_get_status($server['process']);
     $pid = (int) ($status['pid'] ?? 0);
-    assertSameValue(true, $pid > 0 && is_dir('/proc/' . $pid . '/fd'), $why . ' live public HTTP worker is observable');
-    $cssDescriptors = [];
-    foreach (glob('/proc/' . $pid . '/fd/*') ?: [] as $fd) {
-        $target = @readlink($fd);
-        if ($target === $css) $cssDescriptors[] = basename($fd);
-    }
+    assertSameValue(true, $pid > 0 && ($status['running'] ?? false) === true, $why . ' live public HTTP worker is observable');
+    $cssDescriptors = array_values(array_filter(pocOpenDescriptorPaths($pid),static fn(string $path):bool=>$path===$css));
     assertSameValue([], $cssDescriptors, $why . ' releases every card CSS descriptor before response completes');
-    $socketInodes = [];
-    foreach (glob('/proc/' . $pid . '/fd/*') ?: [] as $fd) {
-        $target = @readlink($fd);
-        if (is_string($target) && preg_match('/^socket:\[(\d+)\]$/D', $target, $match) === 1) $socketInodes[$match[1]] = true;
-    }
-    $workerClientPorts = [];
-    foreach (['/proc/net/tcp', '/proc/net/tcp6'] as $tcpTable) {
-        foreach (array_slice(@file($tcpTable, FILE_IGNORE_NEW_LINES) ?: [], 1) as $line) {
-            $fields = preg_split('/\s+/', trim($line));
-            if (count($fields) < 10 || !isset($socketInodes[$fields[9]])) continue;
-            [, $localPortHex] = array_pad(explode(':', $fields[1], 2), 2, '');
-            [, $remotePortHex] = array_pad(explode(':', $fields[2], 2), 2, '');
-            if (hexdec($remotePortHex) === (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306)) $workerClientPorts[] = hexdec($localPortHex);
-        }
-    }
-    $connections = [];
-    if ($workerClientPorts !== []) {
-        $escapedDatabase = $admin->real_escape_string($database);
-        $escapedUser = $admin->real_escape_string($readerUser);
-        $hosts = implode(',', array_map(static fn(int $port): string => "'127.0.0.1:{$port}'", array_unique($workerClientPorts)));
-        $connections = $admin->query("SELECT ID FROM information_schema.PROCESSLIST WHERE DB='{$escapedDatabase}' AND USER='{$escapedUser}' AND HOST IN ({$hosts}) ORDER BY ID")->fetch_all(MYSQLI_ASSOC);
-    }
-    assertSameValue([], $connections, $why . ' releases every card DB connection before response completes');
+    assertSameValue([], pocReaderConnections($admin,$database,$readerUser), $why . ' releases every card DB connection before response completes');
 }
 
 function pocSnapshot(mysqli $db): string
@@ -385,6 +396,7 @@ $ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$p
     $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $crossSource = null; $anonymous = null; $escapeServer = null;
 try {
     $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
+    $descriptorControl=@fopen($css,'rb');if(!is_resource($descriptorControl))throw new TestFailure('CSS descriptor sensitivity control open');try{assertSameValue(true,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees deliberately open exact CSS descriptor');}finally{fclose($descriptorControl);}assertSameValue(false,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees exact CSS descriptor close');
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
     pocMigrate($database,$processPrefix);
     $db = pocDb($database);
@@ -579,11 +591,13 @@ try {
     assertSameValue($requiredReads, $actualReads, 'application principal reads only exact required tables and columns');
     $readerProbe = new mysqli(getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1', $readerUser, $readerPassword, $database, (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306));
     $readerProbe->set_charset('utf8mb4');
+    assertSameValue(1,count(pocReaderConnections($admin,$database,$readerUser)),'PROCESSLIST observer sees deliberately open exact reader connection');
     assertSameValue('4512', (string) $readerProbe->query('SELECT id FROM legacy_fm_maintable WHERE id=4512')->fetch_row()[0], 'SELECT-only principal can read an approved column');
     try { $readerProbe->query("UPDATE {$processPrefix}fm2_installation_cases SET process_state='working' WHERE id=1"); throw new TestFailure('SELECT-only principal unexpectedly wrote process state'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT forbidden_secret FROM legacy_fm_maintable WHERE id=4512'); throw new TestFailure('SELECT-only principal unexpectedly read forbidden legacy column'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT message FROM legacy_logs LIMIT 1'); throw new TestFailure('SELECT-only principal unexpectedly read unrelated table'); } catch (mysqli_sql_exception) {}
     $readerProbe->close();
+    assertSameValue([],pocReaderConnections($admin,$database,$readerUser),'PROCESSLIST observer sees exact reader connection close');
     $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_PROCESS_TABLE_PREFIX'=>$processPrefix,'FMONITOR_SHLZ_CSS_PATH'=>$css,'FMONITOR_PILOT_CSS_PATH'=>$pilotCss,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
     $before = pocSnapshot($db); $server = pocStart($environment);
 
