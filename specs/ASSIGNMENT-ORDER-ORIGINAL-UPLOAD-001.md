@@ -972,6 +972,14 @@ final class AssignmentOrderOriginalMaintenanceVerificationFactory
     ): AssignmentOrderOriginalMaintenanceApplication { /* same maintenance owner */ }
 }
 
+final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException
+{
+    public function __construct()
+    {
+        parent::__construct('Assignment-order original evidence unavailable.', 0, null);
+    }
+}
+
 final readonly class AssignmentOrderOriginalEvidenceReaderConfig
 {
     public function __construct(
@@ -1008,12 +1016,19 @@ interface AssignmentOrderOriginalEvidenceReader
 ```
 
 The evidence factory is a verification composition seam, not a second command
-repository. Config is serializable and exact: host is nonblank; port is
-`1..65535`; database/user are nonblank; password file, private root and safe-log
-file are absolute, non-symlink, verifier-owned paths outside the repository;
-prefix is canonical ASCII `0..25`. Password bytes are read only from the mode
-`0600` file and never appear in result/log/error output. Invalid config fails
-before database/filesystem access.
+repository. Config is serializable and exact: host matches
+`[A-Za-z0-9.:[\]_-]{1,255}`; port is `1..65535`; database matches
+`[A-Za-z0-9_]{1,64}`; user matches `[A-Za-z0-9_.-]{1,32}`; prefix matches
+`[A-Za-z0-9_]{0,25}`. Password file, private root and safe-log file are absolute
+canonical paths outside the repository, contain no NUL/control or `..`
+component and are not symlinks. Private root is an existing owner/root-owned
+directory with mode `0700|0750`; password and safe-log are existing regular
+owner/root-owned files with mode `0600`. Factory never creates/repairs them.
+Password file contains `1..1024` bytes excluding NUL/CR/LF, except one optional
+final LF which is removed; empty result or any other newline is invalid. Password
+bytes never appear in result/log/error output. All scalar/path/metadata checks
+complete before password content or database access; invalid config throws only
+`AssignmentOrderOriginalEvidenceUnavailable`.
 
 `create()` opens one fresh `utf8mb4` MariaDB connection and binds read-only
 production evidence/private-inventory/safe-log adapters. It knows only the exact
@@ -1021,11 +1036,15 @@ canonical original-evidence tables introduced by this change; it MUST NOT query
 `information_schema`, infer schema, issue DDL/DML, use command repository
 objects, or accept test callbacks/selectors. Every canonical method performs a
 fresh read through that connection and returns the closed versioned JSON shape
-defined in section 11. `privateBlobsCanonicalJson()` and
+defined in section 16. `privateBlobsCanonicalJson()` and
 `safeLogsCanonicalJson()` use only the two configured owned paths and redact
-absolute names. `close()` closes every live descriptor/connection exactly once,
-is idempotent, and any read/close failure is typed unavailable to the verifier
-without partial JSON or secret diagnostics.
+absolute names. `close()` attempts every live descriptor/connection exactly
+once and caches its outcome; later calls perform no I/O. If the first close had
+any failure, that call and every later call throw a fresh fixed
+`AssignmentOrderOriginalEvidenceUnavailable`; otherwise every call returns
+normally. Factory construction and every read likewise either return their
+complete declared value or throw only that fixed exception with message/code/
+previous exactly as declared, without partial JSON or secret diagnostics.
 
 ```php
 interface AssignmentOrderOriginalByteStreamFactory

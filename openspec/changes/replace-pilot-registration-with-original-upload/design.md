@@ -64,6 +64,10 @@ reader знает canonical original tables напрямую, не исполь�
 `information_schema`, private SQL из теста, command repository или test
 callbacks. Это делает requests/fingerprints/domain/events/audits/process/blob/log
 snapshots независимыми и одновременно не создаёт второй mutation seam.
+Config grammar, pre-access path ownership/mode checks, no-create safe-log policy
+и optional-final-LF password parsing exact; construction/read/close totality
+выражена одним fixed `AssignmentOrderOriginalEvidenceUnavailable`, а close
+attempts all resources once и кэширует success/failure для idempotent repeats.
 
 ## Risks / Trade-offs
 

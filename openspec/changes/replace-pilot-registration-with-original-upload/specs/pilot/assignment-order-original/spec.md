@@ -189,6 +189,13 @@ config с DB host/port/name/user/password-file, canonical prefix, private root �
 safe-log file. Reader SHALL выполнять только read-only canonical evidence reads,
 не SHALL использовать `information_schema`, private SQL/test callbacks или
 command repository и SHALL закрывать connection/descriptors exactly once.
+Config SHALL иметь exact bounded ASCII scalar grammar, canonical owned
+`0700|0750` private root, existing owned `0600` password/safe-log files, SHALL
+не создавать/repair paths и SHALL принимать password только как `1..1024`
+non-control bytes с одним optional final LF. Construction/read/close failure
+MUST бросать только fixed `AssignmentOrderOriginalEvidenceUnavailable` без
+partial JSON/diagnostics; repeated close MUST не повторять I/O и сохранять
+первый cached outcome.
 
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
@@ -196,7 +203,7 @@ command repository и SHALL закрывать connection/descriptors exactly on
 
 #### Scenario: Evidence config invalid or read fails
 - **WHEN** config/path/password-file/prefix invalid либо evidence read/close падает
-- **THEN** factory/reader fail closed без partial JSON, DDL/DML, schema inference или secret/path diagnostics
+- **THEN** factory/reader бросает exact fixed evidence-unavailable exception без partial JSON, DDL/DML, schema inference или secret/path diagnostics; missing safe-log не создаётся
 
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.
