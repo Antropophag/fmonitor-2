@@ -214,10 +214,11 @@ try {
     $result = AssignmentOrderOriginalSchemaMigration::apply($clean, $prefix);
     assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::APPLIED, $result->status(), 'Clean schema applies.');
     assertSameValue(Contract::VERSION, $result->schemaVersion(), 'Migration reports exact version 1.');
-    assertSameValue(Contract::TABLES, $result->affectedTables(), 'Clean migration reports exact manifest order.');
+    assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'], $result->affectedTables(), 'Clean V4 migration reports manifest order and capability last.');
     $expectedOwnedTables = array_map(static fn ($name) => $prefix . $name, Contract::TABLES);
     sort($expectedOwnedTables, SORT_STRING);
-    assertSameValue($expectedOwnedTables, $tableNames($clean, $prefix . '%'), 'Only exact owned manifest exists.');
+    $actualOwnedTables=array_values(array_filter($tableNames($clean),static fn(string$name):bool=>str_starts_with($name,$prefix.'fm2_assignment_order_original_')));
+    assertSameValue($expectedOwnedTables, $actualOwnedTables, 'Only exact original-owned manifest exists alongside prerequisites.');
     foreach (Contract::columnManifest() as $table => $expected) {
         assertSameValue($expected, $columns($clean, $prefix . $table), "Exact ordered columns for {$table}.");
         assertSameValue(Contract::keys()[$table], $keys($clean, $prefix . $table), "Exact PK/unique/index column order for {$table}.");
@@ -239,12 +240,12 @@ try {
     $partialBefore = $columns($partial, $prefix . Contract::TABLES[0]);
     $partialResult = AssignmentOrderOriginalSchemaMigration::apply($partial, $prefix);
     assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::APPLIED, $partialResult->status(), 'Leading compatible partial reconciles.');
-    assertSameValue(array_slice(Contract::TABLES, 1), $partialResult->affectedTables(), 'Only missing trailing tables are affected.');
+    assertSameValue([...array_slice(Contract::TABLES, 1),'fm2_process_user_capabilities'], $partialResult->affectedTables(), 'Missing trailing tables then V4 capability are affected.');
     assertSameValue($partialBefore, $columns($partial, $prefix . Contract::TABLES[0]), 'Existing leading table is preserved.');
     $partial->close();
 
     $populated = $connect($databases[2]);$prepareV4($populated,$prefix);
-    AssignmentOrderOriginalSchemaMigration::apply($populated, $prefix);
+    $populatedInitial=AssignmentOrderOriginalSchemaMigration::apply($populated, $prefix);assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'],$populatedInitial->affectedTables(),'Populated axis first V4 apply reports schema then capability.');
     $populated->query("INSERT INTO `{$prefix}fm2_assignment_order_original_roots` VALUES ('pop-root',77,88,'pop-revision','pop-composition','" . str_repeat('1',64) . "','2026-09-02 09:00:00.000000')");
     $populated->query("INSERT INTO `{$prefix}fm2_assignment_order_original_revisions` VALUES ('pop-revision','pop-root',1,NULL,'2026-09-01','2026-09-02 09:00:00.000000',18,'" . str_repeat('2',64) . "',327,'pop-content',NULL,'00000000-0000-4000-8000-000000000099','" . str_repeat('3',64) . "','assignment_order_original_accepted')");
     $rowsBefore = json_encode([$populated->query("SELECT * FROM `{$prefix}fm2_assignment_order_original_roots`")->fetch_all(MYSQLI_ASSOC),$populated->query("SELECT * FROM `{$prefix}fm2_assignment_order_original_revisions`")->fetch_all(MYSQLI_ASSOC)], JSON_THROW_ON_ERROR);
@@ -265,14 +266,14 @@ try {
     assertSameValue($expectedConflicts, $conflictResult->affectedTables(), 'Conflict returns every incompatible logical name in binary order.');
     assertSameValue($conflictBefore, $snapshot($conflict), 'Conflict beside five missing trailing tables performs zero DDL.');
 
-    $nearPrefix='near_';$prepareV4($conflict,$nearPrefix);AssignmentOrderOriginalSchemaMigration::apply($conflict,$nearPrefix);
+    $nearPrefix='near_';$prepareV4($conflict,$nearPrefix);$nearInitial=AssignmentOrderOriginalSchemaMigration::apply($conflict,$nearPrefix);assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'],$nearInitial->affectedTables(),'Near axis initial V4 apply reports capability last.');
     $conflict->query("ALTER TABLE `{$nearPrefix}fm2_assignment_order_original_roots` MODIFY current_revision_id VARCHAR(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'wrong-default'");
     $nearBefore=$snapshot($conflict);$nearResult=AssignmentOrderOriginalSchemaMigration::apply($conflict,$nearPrefix);
     assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::CONFLICT,$nearResult->status(),'Opaque-ID collation/default near mismatch conflicts.');
     assertSameValue([Contract::TABLES[0]],$nearResult->affectedTables(),'Collation/default mismatch identifies roots.');
     assertSameValue($nearBefore,$snapshot($conflict),'Collation/default conflict performs zero DDL.');
 
-    $checkPrefix='check_';$prepareV4($conflict,$checkPrefix);AssignmentOrderOriginalSchemaMigration::apply($conflict,$checkPrefix);
+    $checkPrefix='check_';$prepareV4($conflict,$checkPrefix);$checkInitial=AssignmentOrderOriginalSchemaMigration::apply($conflict,$checkPrefix);assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'],$checkInitial->affectedTables(),'CHECK axis initial V4 apply reports capability last.');
     $checkName=$conflict->query("SELECT CONSTRAINT_NAME FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='{$checkPrefix}fm2_assignment_order_original_roots' AND CHECK_CLAUSE LIKE '%composition_sha256%' LIMIT 1")->fetch_assoc()['CONSTRAINT_NAME']??null;
     assertSameValue(true,is_string($checkName)&&preg_match('/^[A-Za-z0-9_$]{1,64}$/D',$checkName)===1,'Material CHECK sensitivity resolves one safe generated name.');
     $conflict->query("ALTER TABLE `{$checkPrefix}fm2_assignment_order_original_roots` DROP CONSTRAINT `{$checkName}`, ADD CONSTRAINT verifier_wrong_hash_check CHECK (composition_sha256 REGEXP '^[0-9A-F]{64}$')");
@@ -287,7 +288,7 @@ try {
     FMonitor2\InstallationProcess\IdentityAccessSchemaMigration::apply($fixture, $prefix);
     FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration::apply($fixture, $prefix);
     FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration::apply($fixture, $prefix);
-    AssignmentOrderOriginalSchemaMigration::apply($fixture, $prefix);
+    $fixtureMigration=AssignmentOrderOriginalSchemaMigration::apply($fixture, $prefix);assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'],$fixtureMigration->affectedTables(),'Fixture setup V4 apply reports schema then capability.');
     $fixtureBaseline = $stateSnapshot($fixture);
     $contendedFixtureCall=static function(string$mode,string$lockSql)use($fixture,$connect,$databases,$prefix,$host,$port,$user,$password,$admin):void{
         $process=null;$pipes=[];$transaction=false;$observer=null;
