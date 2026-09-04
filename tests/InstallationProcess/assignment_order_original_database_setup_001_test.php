@@ -56,11 +56,11 @@ $checkCount = static function (mysqli $db, string $table): int {
     $statement->bind_param('s', $table); $statement->execute();
     return (int) $statement->get_result()->fetch_assoc()['n'];
 };
-$checks = static function (mysqli $db, string $table): array {
-    $statement=$db->prepare('SELECT cc.CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS cc JOIN information_schema.TABLE_CONSTRAINTS tc ON tc.CONSTRAINT_SCHEMA=cc.CONSTRAINT_SCHEMA AND tc.CONSTRAINT_NAME=cc.CONSTRAINT_NAME WHERE tc.TABLE_SCHEMA=DATABASE() AND tc.TABLE_NAME=? ORDER BY BINARY cc.CHECK_CLAUSE');
+$normalizeCheck=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));$value=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$value);while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}return$value;};
+$checks = static function (mysqli $db, string $table) use ($normalizeCheck): array {
+    $statement=$db->prepare('SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY BINARY CHECK_CLAUSE');
     $statement->bind_param('s',$table);$statement->execute();
-    $normalize=static function(string$value):string{$value=strtolower(str_replace(['`',' ',"\n","\r","\t"],'',$value));while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$wrap=true;for($i=0,$n=strlen($value);$i<$n;$i++){if($value[$i]==='(')$depth++;elseif($value[$i]===')')$depth--;if($depth===0&&$i<$n-1){$wrap=false;break;}}if(!$wrap)break;$value=substr($value,1,-1);}return$value;};
-    $result=array_map(static fn(array$row):string=>$normalize($row['CHECK_CLAUSE']),$statement->get_result()->fetch_all(MYSQLI_ASSOC));sort($result,SORT_STRING);return$result;
+    $result=array_map(static fn(array$row):string=>$normalizeCheck($row['CHECK_CLAUSE']),$statement->get_result()->fetch_all(MYSQLI_ASSOC));sort($result,SORT_STRING);return$result;
 };
 $tableProperties = static function (mysqli $db, string $table): array {
     $statement = $db->prepare('SELECT ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?');
@@ -106,6 +106,9 @@ try {
     foreach (Contract::PROJECTIONS as $name => [$expectedHash, $literal]) {
         assertSameValue($expectedHash, hash('sha256', $literal), "{$name} is independently derived from its literal projection.");
     }
+    $approvedNotRegexp="root_original_idnotregexp'[[:cntrl:]/\\\\]'";
+    assertSameValue($approvedNotRegexp,$normalizeCheck("!(`root_original_id` REGEXP '[[:cntrl:]/\\\\]')"),'MariaDB negated REGEXP normalizes to approved NOT REGEXP oracle.');
+    assertSameValue(false,$approvedNotRegexp===$normalizeCheck("!(`root_original_id` REGEXP '[[:cntrl:]/]')"),'Normalizer preserves a materially wrong REGEXP pattern.');
     assertSameValue(true,function_exists('pcntl_fork')&&function_exists('pcntl_waitpid')&&function_exists('pcntl_wexitstatus')&&function_exists('posix_kill')&&defined('SIGKILL'),'Serializable contention verifier requires process control.');
     if (!class_exists(AssignmentOrderOriginalSchemaMigration::class)) {
         throw new TestFailure('INTENDED_RED: approved AssignmentOrderOriginalSchemaMigration production seam is absent.');
@@ -177,7 +180,7 @@ try {
     assertSameValue($nearBefore,$snapshot($conflict),'Collation/default conflict performs zero DDL.');
 
     $checkPrefix='check_';AssignmentOrderOriginalSchemaMigration::apply($conflict,$checkPrefix);
-    $checkName=$conflict->query("SELECT tc.CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS tc JOIN information_schema.CHECK_CONSTRAINTS cc ON cc.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME=tc.CONSTRAINT_NAME WHERE tc.TABLE_SCHEMA=DATABASE() AND tc.TABLE_NAME='{$checkPrefix}fm2_assignment_order_original_roots' AND cc.CHECK_CLAUSE LIKE '%composition_sha256%' LIMIT 1")->fetch_assoc()['CONSTRAINT_NAME']??null;
+    $checkName=$conflict->query("SELECT CONSTRAINT_NAME FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='{$checkPrefix}fm2_assignment_order_original_roots' AND CHECK_CLAUSE LIKE '%composition_sha256%' LIMIT 1")->fetch_assoc()['CONSTRAINT_NAME']??null;
     assertSameValue(true,is_string($checkName)&&preg_match('/^[A-Za-z0-9_$]{1,64}$/D',$checkName)===1,'Material CHECK sensitivity resolves one safe generated name.');
     $conflict->query("ALTER TABLE `{$checkPrefix}fm2_assignment_order_original_roots` DROP CONSTRAINT `{$checkName}`, ADD CONSTRAINT verifier_wrong_hash_check CHECK (composition_sha256 REGEXP '^[0-9A-F]{64}$')");
     $checkBefore=$snapshot($conflict);$checkResult=AssignmentOrderOriginalSchemaMigration::apply($conflict,$checkPrefix);
