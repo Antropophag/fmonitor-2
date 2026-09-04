@@ -6,7 +6,7 @@ final class ProductionObjectCardRenderer implements ObjectCardRenderer,Compatibi
     public function render(HttpUser $user,array $card):string
     {
         [$id,$body]=$this->cardBody($card);
-        $document=PilotView::document($user,'Объект монтажа № '.$id,'Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects']],'Объект монтажа № '.$id),$body);
+        $document=PilotView::document($user,'Объект монтажа № '.$id,'Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects']],'Объект монтажа № '.$id),$body,true);
         return \str_replace('</body>','<script src="/pilot/assets/object-details.js"></script></body>',$document);
     }
 
