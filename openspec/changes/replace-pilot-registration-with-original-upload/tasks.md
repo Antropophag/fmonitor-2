@@ -8,7 +8,7 @@
 - [x] 1.6 Поручить fresh independent Gate 1 reviewer проверить v4 lease-conflict amendment и весь current contract: CAS loser holds lease through fingerprint/current-lineage rereads, releases exactly once, release failure preserves selected result и не пропускает audit; verification: новый immutable review имеет explicit `APPROVED` и reviewer не редактировал artifacts
 - [x] 1.7 Получить новый owner exact-hash approval v4 executable/OpenSpec batch; verification: append-only decision перечисляет новые hashes и только после него Gate 2 tasks разрешены
 - [x] 1.8 Получить fresh independent Gate 1 review и owner exact-hash approval evidence-reader factory/config amendment; verification: public fresh-connection read-only construction/lifecycle exact и task 2.2 снова разрешена
-- [ ] 1.9 Получить fresh independent Gate 1 review и owner exact-hash approval worker `safeLogFile` binding amendment; verification: five-FD real observer и independent evidence reader имеют одну exact pre-created owned `0600` canonical file identity без env/global/default selector, и task 2.2 снова разрешена
+- [x] 1.9 Получить fresh independent Gate 1 review и owner exact-hash approval worker `safeLogFile` binding amendment; verification: five-FD real observer и independent evidence reader имеют одну exact pre-created owned `0600` canonical file identity без env/global/default selector, и task 2.2 снова разрешена
 
 ## 2. Minimal RED и test review
 

@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v4 OWNER-APPROVED; v5 worker safe-log binding amendment ожидает fresh Gate 1 review/owner exact-hash approval**
+Статус: **v5 OWNER-APPROVED**
 Версия: **v5**
 Дата: **2026-09-02**
 
