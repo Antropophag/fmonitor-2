@@ -14,13 +14,29 @@ $fail = static function (bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 };
 
-$constructorStart = strpos($auth, 'public function __construct()');
-$constructorEnd = strpos($auth, 'public function handle(', $constructorStart === false ? 0 : $constructorStart);
-$fail($constructorStart !== false && $constructorEnd !== false, 'LocalAuth constructor unavailable');
-$constructor = substr($auth, $constructorStart, $constructorEnd - $constructorStart);
-$fail(!str_contains($constructor, 'CREATE TABLE'), 'request-time auth constructor contains DDL');
-$fail(!str_contains($constructor, 'INSERT INTO'), 'request-time auth constructor contains bulk synchronization');
-$fail(!str_contains($constructor, 'ensureSchema'), 'request-time auth constructor invokes schema bootstrap');
+$constructorBody = static function (string $source) use ($fail): string {
+    $signature = '/public\s+function\s+__construct\(\?FMonitor\\\\IdentityAccess\\\\PilotSessionStorage\s+\$storage\s*=\s*null\)\s*\{/D';
+    $matched = preg_match($signature, $source, $match, PREG_OFFSET_CAPTURE);
+    $fail($matched === 1, 'LocalAuth constructor must keep the exact optional typed PilotSessionStorage signature');
+    $constructorStart = $match[0][1];
+    $bodyStart = $constructorStart + strlen($match[0][0]);
+    $constructorEnd = strpos($source, 'public function handle(', $bodyStart);
+    $fail($constructorEnd !== false, 'LocalAuth handle boundary unavailable after constructor');
+    return substr($source, $bodyStart, $constructorEnd - $bodyStart);
+};
+$assertConstructorHotPath = static function (string $source) use ($constructorBody, $fail): void {
+    $constructor = $constructorBody($source);
+    $fail(!str_contains($constructor, 'CREATE TABLE'), 'request-time auth constructor contains DDL');
+    $fail(!str_contains($constructor, 'INSERT INTO'), 'request-time auth constructor contains bulk synchronization');
+    $fail(!str_contains($constructor, 'ensureSchema'), 'request-time auth constructor invokes schema bootstrap');
+};
+$assertConstructorHotPath($auth);
+$constructorOpen = strpos($auth, '{', strpos($auth, 'public function __construct'));
+$fail($constructorOpen !== false, 'LocalAuth constructor opening brace unavailable for sensitivity probe');
+$mutatedAuth = substr_replace($auth, "\n        CREATE TABLE injected_constructor_ddl(id INT);", $constructorOpen + 1, 0);
+$mutationRejected = false;
+try { $assertConstructorHotPath($mutatedAuth); } catch (RuntimeException $error) { $mutationRejected = $error->getMessage() === 'request-time auth constructor contains DDL'; }
+$fail($mutationRejected, 'constructor DDL sensitivity mutation must fail closed');
 $fail(!str_contains($auth, 'private function ensureSchema'), 'request-time schema bootstrap remains reachable');
 
 $fail(
