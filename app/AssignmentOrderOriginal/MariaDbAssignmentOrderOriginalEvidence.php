@@ -2,14 +2,6 @@
 declare(strict_types=1);
 namespace FMonitor2\AssignmentOrderOriginal;
 
-final class FMonitorPassivePdfInspector implements AssignmentOrderOriginalPdfInspector{
- public function __construct(){if((int)ini_get('memory_limit')>0&&(int)ini_get('memory_limit')<256)ini_set('memory_limit','256M');}
- public function algorithmId():string{return'fmonitor-passive-pdf-v1';}
- public function inspect(string$b):AssignmentOrderOriginalPdfInspection{
-  try{if(!str_starts_with($b,'%PDF-')||!str_contains($b,'%%EOF')||!str_contains($b,'startxref'))return AssignmentOrderOriginalPdfInspection::invalid();if(str_contains($b,'/Encrypt'))return AssignmentOrderOriginalPdfInspection::unsafe();if(preg_match('~/\b(JavaScript|JS|OpenAction|AA|Launch|EmbeddedFiles|Filespec|FileAttachment|RichMedia|Movie|Sound|URI|GoToR|SubmitForm|ImportData)\b~',$b))return AssignmentOrderOriginalPdfInspection::unsafe();if(str_contains($b,'/LZWDecode')||preg_match('~/Size\s+10000[1-9]~',$b)||preg_match('~/Count\s+0\b~',$b)||substr_count($b,'/Type /Pages')>100||substr_count($b,"1 0 obj")>1||str_contains($b,'/Prev '))return AssignmentOrderOriginalPdfInspection::invalid();if(str_contains($b,'/FlateDecode')){if(preg_match('/stream\n(.*?)\nendstream/s',$b,$m)===1){$x=@gzuncompress($m[1],67108865);if(is_string($x)&&strlen($x)>67108864)return AssignmentOrderOriginalPdfInspection::invalid();}}if(!str_contains($b,'/Catalog')||(!str_contains($b,'/Page ')&&!str_contains($b,'/Type /Page\n')))return AssignmentOrderOriginalPdfInspection::invalid();return AssignmentOrderOriginalPdfInspection::passive();}catch(\Throwable){return new AssignmentOrderOriginalPdfInspection(AssignmentOrderOriginalPdfStatus::INSPECTOR_FAILED);}
- }
-}
-
 final readonly class AssignmentOrderOriginalEvidenceReaderConfig{public function __construct(public string$host,public int$port,public string$database,public string$user,public string$passwordFile,public string$tablePrefix,public string$privateStorageRoot,public string$safeLogFile){} }
 final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException{public function __construct(){parent::__construct('AssignmentOrderOriginalEvidenceUnavailable');}}
 final class AssignmentOrderOriginalEvidenceReader{
