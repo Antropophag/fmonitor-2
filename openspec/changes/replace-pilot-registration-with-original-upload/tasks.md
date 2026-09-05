@@ -23,7 +23,7 @@
 - [x] 1.21 Получить fresh independent Gate 1 review combined release-fault amendment; verification: exact rollback/unknown+release scripts и plain committed/CAS release fault покрывают every safe-log phase без arbitrary list/production selector
 - [x] 1.22 Получить fresh independent Gate 1 review result-write fault amendment; verification: exact pre-write/false/zero/7-byte-short scripts делают publisher RED deterministic без production selector
 - [x] 1.23 Получить fresh independent Gate 1 review maintenance evidence amendment; verification: closed request/audit JSON methods доказывают atomic terminal persistence/replay через approved reader
-- [ ] 1.24 Получить fresh independent Gate 1 review production maintenance authorization amendment; verification: trusted exact principal/capability DTO делает real factory authorized без user-schema grant и runtime selector
+- [x] 1.24 Получить fresh independent Gate 1 review production maintenance authorization amendment; verification: trusted exact principal/capability DTO делает real factory authorized без user-schema grant и runtime selector
 
 ## 2. Minimal RED и test review
 
