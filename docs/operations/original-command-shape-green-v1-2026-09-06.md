@@ -6,4 +6,4 @@ Exact implementation `bca89b4853a7106fac3194d3724f27cba38b3b2f`, before/after sa
 
 Private archive `/Users/antropophag/.local/state/fmonitor2-verification/original-shape-green-aecqm3bs`; evidence JSON SHA256 `67650e2456b6d9720576d0756497a7343969806b86e16a3bb6bc401c585b11e0`. Exact source/test manifest, command exits/timings/raw log hashes included.
 
-Independent shape Gate5 APPROVED: reviews/code/ASSIGNMENT-ORDER-ORIGINAL-COMMAND-SHAPE-001-v1.md, hash9ad8dbe9c0f0d46fab0e18a50bfb25e7e7eaa27c97edd501a624d4e1f46fe559. Observer/resource lifecycle, public-declaration parity, maintenance/storage composition and data-integrity audits remain open; previous scoped approvals remain preserved.
+Independent shape Gate5 requested separately. Observer/resource lifecycle, public-declaration parity, maintenance/storage composition and data-integrity audits remain open; previous scoped approvals remain preserved.
