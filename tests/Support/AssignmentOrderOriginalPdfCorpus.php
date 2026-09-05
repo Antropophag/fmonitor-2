@@ -41,6 +41,18 @@ final class AssignmentOrderOriginalPdfCorpus
         $pdf="%PDF-1.5\n";$offsets=[];foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}$offsets[4]=strlen($pdf);$entries=pack('CNN',0,0,65535);for($i=1;$i<=4;$i++)$entries.=pack('CNN',1,$offsets[$i],0);$pdf.="4 0 obj\n<< /Type /XRef /Size 5 /Root 1 0 R /W [1 4 4] /Length ".strlen($entries)." >>\nstream\n{$entries}\nendstream\nendobj\nstartxref\n{$offsets[4]}\n%%EOF\n";return$pdf;
     }
 
+    public static function xrefStreamGrammar(?string $filter=null,string $payloadBoundary="\nendstream",bool $duplicateLength=false): string
+    {
+        $pdf="%PDF-1.5\n";$offsets=[];
+        foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}
+        $offsets[4]=strlen($pdf);$decoded=pack('CNN',0,0,65535);for($i=1;$i<=4;$i++)$decoded.=pack('CNN',1,$offsets[$i],0);
+        $payload=$filter==='direct'?gzcompress($decoded,9):$decoded;if(!is_string($payload))throw new \RuntimeException('Fixture compression failed.');
+        $filterEntry=match($filter){'direct'=>' /Filter /FlateDecode','array'=>' /Filter [/ASCIIHexDecode]','indirect'=>' /Filter 99 0 R',default=>''};
+        $length=' /Length '.strlen($payload).($duplicateLength?' /Length '.strlen($payload):'');
+        $pdf.="4 0 obj\n<< /Type /XRef /Size 5 /Root 1 0 R /W [1 4 4]{$filterEntry}{$length} >>\nstream\n{$payload}{$payloadBoundary}\nendobj\nstartxref\n{$offsets[4]}\n%%EOF\n";
+        return$pdf;
+    }
+
     public static function xrefStreamWithIndex(bool $overlap): string
     {
         $pdf="%PDF-1.5\n";$offsets=[];foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}$offsets[4]=strlen($pdf);$entries=pack('CNN',0,0,65535);for($i=1;$i<=4;$i++)$entries.=pack('CNN',1,$offsets[$i],0);$index=$overlap?'0 5 0 5':'0 3 3 2';if($overlap)$entries.=$entries;$pdf.="4 0 obj\n<< /Type /XRef /Size 5 /Root 1 0 R /W [1 4 4] /Index [{$index}] /Length ".strlen($entries)." >>\nstream\n{$entries}\nendstream\nendobj\nstartxref\n{$offsets[4]}\n%%EOF\n";return$pdf;
