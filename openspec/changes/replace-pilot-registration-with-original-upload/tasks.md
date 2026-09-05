@@ -26,7 +26,7 @@
 - [x] 1.24 Получить fresh independent Gate 1 review production maintenance authorization amendment; verification: trusted exact principal/capability DTO делает real factory authorized без user-schema grant и runtime selector
 - [x] 1.25 Получить fresh independent Gate 1 review orphan fixture amendment; verification: verification-only same-storage timestamped abandoned/finalized fixture делает eligible maintenance RED constructible без sleep/private edits
 - [x] 1.26 Получить fresh independent Gate 1 review maintenance cursor amendment; verification: versioned JSON+base64url codec/literal/bounds и deleted-position semantics делают pagination RED independent
-- [ ] 1.27 Получить fresh independent Gate 1 review production composition derivation amendment; verification: exact row inputs/identity/JSON/hash делают real worker fingerprint/root evidence independent без schema fallback
+- [x] 1.27 Получить fresh independent Gate 1 review production composition derivation amendment; verification: exact row inputs/identity/JSON/hash делают real worker fingerprint/root evidence independent без schema fallback
 
 ## 2. Minimal RED и test review
 
