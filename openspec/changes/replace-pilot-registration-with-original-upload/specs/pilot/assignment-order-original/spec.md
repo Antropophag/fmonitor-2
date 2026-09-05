@@ -241,6 +241,17 @@ Storage SHALL начать private stage до чтения stream; application �
 - **THEN** invalid path keeps selected result and audits only after abort→stage-close→stream-close; accepted path closes stage→stream before commit, failure selects STORAGE/STREAM failure, forbids commit, retains private orphan and releases lease rolled_back; injected throwing safe-log observer writes nothing/no retry
 - **AND** request301 invalid-inspector abort-failure run has exact request/audit/blob/log JSON, ordered call transcript, empty-log throwing variant and authorization+terminal-lookup-only byte-identical retry
 
+### Requirement: Production safe log fail-closed construction
+`AssignmentOrderOriginalProductionConfig` SHALL require `safeLogFile` in addition to `privateStorageRoot` and `tablePrefix`. Before any database access or private-storage validation/access, `ProductionAssignmentOrderOriginalFactory` MUST resolve and validate `safeLogFile` as an already existing canonical regular file, MUST reject a symlink at the configured path, MUST require ownership by the current effective user and exact permission mode `0600`, and MUST bind the real append-only cleanup/release safe-log observer to that canonical file. The factory MUST NOT create, chmod, chown, replace, truncate or otherwise repair the file.
+
+#### Scenario: Valid production safe-log binding
+- **WHEN** `safeLogFile` names an existing non-symlink regular file owned by the current effective user with exact mode `0600`
+- **THEN** factory construction may proceed to database/private-storage dependencies and cleanup/release diagnostics append exactly one canonical JSON line per emitted event without truncating prior bytes
+
+#### Scenario: Invalid production safe-log fails before resources
+- **WHEN** the configured path is missing, non-canonical, a symlink, not a regular file, owned by another user or has mode other than exact `0600`
+- **THEN** factory construction throws one fixed fail-closed construction error before database access and before private-storage validation/access, does not create or repair any file, and exposes no configured path, secret or underlying exception detail
+
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
 через `AssignmentOrderOriginalEvidenceReaderFactory::create` и exact serializable

@@ -33,6 +33,7 @@
 - [x] 1.31 Получить fresh independent Gate 1 review fingerprint encoding amendment; verification: exact big-endian byte-length format и initial/correction digests делают replay/CAS evidence independent
 - [x] 1.32 Получить fresh independent Gate 1 review worker barrier-event amendment; verification: fingerprint-vs-after-finalize selector делает real CAS и maintenance/lease races causally observable
 - [x] 1.33 Получить fresh independent Gate 1 review shared content identity schema v2 amendment; verification: v1 unique→v2 non-unique populated forward upgrade закрывает same-PDF revision contradiction
+- [ ] 1.34 Получить fresh independent Gate 1 review owner-approved production `safeLogFile` amendment; verification: обязательное config field, existing canonical non-symlink regular current-user-owned exact `0600`, no create/repair, pre-DB/private-storage validation, append-only real cleanup/release logger и fixed redacted construction failure согласованы во всех planning artifacts
 
 ## 2. Minimal RED и test review
 
@@ -55,11 +56,13 @@
 
 - [x] 4.1 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации, real MariaDB setup уже Gate-5-approved
 - [x] 4.2 Поручить fresh independent test reviewer проверить command-matrix sensitivity и zero-public-orphan cleanup; verification: explicit `APPROVED`, reviewer не писал tests/production
+- [ ] 4.3 После Gate 1 обновить executable production safe-log tests, сохранить intended RED и поручить fresh independent Gate 3 reviewer; verification: invalid path/ownership/type/mode/canonical/symlink cases доказывают fail-before-DB/private-storage, valid case доказывает append-only real diagnostics, tests не меняют worker/evidence-reader contract
 
 ## 5. Command minimal GREEN
 
 - [x] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
 - [x] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
+- [ ] 5.3 Реализовать minimal production safe-log GREEN только после approved Gate 3; verification: production config/factory fail closed before DB/private storage and real cleanup/release diagnostics append to the validated file without path/secret leakage
 
 ## 6. Integration и Done
 

@@ -12,6 +12,7 @@ Pilot owner отменил ручной номер распоряжения и �
 - Авторизовать initial upload точным capability `assignment_order.original.upload`, correction — `assignment_order.original.correct`; capabilities явно выдаются active builtin roles `fkr_operator` и `manager`, отображаемой как «Руководитель ФКР», без inference из role name.
 - Сделать complete semantic repeat идемпотентным, metadata collision — conflict, а correction — append-only revision с exact expected revision и обязательной причиной.
 - Определить стабильные command/result DTO, reason codes, retry precedence и полный storage/commit/response-loss contract без public orphan, включая cross-resource content lease, исключающий maintenance delete до разрешения DB outcome.
+- Расширить обязательный production factory config полем `safeLogFile`: factory принимает только уже существующий canonical non-symlink regular file текущего пользователя с exact mode `0600`, не создаёт и не исправляет его, валидирует его до DB/private-storage access и append-only пишет туда cleanup/release diagnostics без secret/path leakage.
 - Не менять в этом slice действующий состав и opening gate. Это отдельные будущие changes `apply-assignment-order-original-to-composition` и `open-installation-from-assignment-order-original`.
 - Не добавлять в этом slice HTTP upload, metadata-read или download. Exact routes, local permissions, projection fields, not-found/forbidden и response headers принадлежат будущему change `expose-assignment-order-original-http`.
 
@@ -27,7 +28,7 @@ Pilot owner отменил ручной номер распоряжения и �
 
 ## Impact
 
-- Planning и будущая реализация затрагивают Assignment Orders application seam, process capabilities, private document storage и immutable metadata/audit persistence.
+- Planning и будущая реализация затрагивают Assignment Orders application seam, process capabilities, private document storage, обязательную production safe-log configuration и immutable metadata/audit persistence.
 - Gate 2 production evidence наблюдается через отдельный read-only factory/config seam с fresh DB connection и owned private/log readers; closed process snapshot имеет отдельный `checklistSha256`, а worker config явно передаёт тот же canonical safe-log path реальному observer, без env/global/default selector; это не mutation/query product surface.
 - Isolated MariaDB Gate 2 setup использует named public schema migration version 1 и verification-only fixed Example-A seed seam; runtime paths не вызывают их, fixture не создаёт original facts и evidence reader остаётся read-only.
 - Canonical `CONTEXT.md`, pilot spec и pilot data model synchronously amended owner-approved original-PDF truth до Gate 1. До executable-spec approval также должны получить явную disposition `docs/installation-process-interface.md`, behavior inventory и активные E2E/RBAC/PDF changes/specs/tests, которые характеризуют реализованный manual number, `confirmRegistration` или `registered`; исторические reviews/evidence не редактируются и помечаются как legacy evidence, а не target behavior.
