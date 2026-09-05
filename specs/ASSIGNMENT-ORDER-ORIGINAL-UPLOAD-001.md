@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v31 GATE 1 REVIEW PENDING — RESULT-WRITE FAULT AMENDMENT**
-Версия: **v31**
+Статус: **v32 GATE 1 REVIEW PENDING — MAINTENANCE EVIDENCE AMENDMENT**
+Версия: **v32**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1432,6 +1432,8 @@ interface AssignmentOrderOriginalEvidenceReader
     public function fingerprintsCanonicalJson(): string;
     public function eventsCanonicalJson(): string;
     public function safeAuditsCanonicalJson(): string;
+    public function maintenanceRequestsCanonicalJson(): string;
+    public function maintenanceAuditsCanonicalJson(): string;
     public function unchangedProcessCanonicalJson(int $caseId, int $orderId): string;
     public function privateBlobsCanonicalJson(): string;
     public function safeLogsCanonicalJson(): string;
@@ -1518,6 +1520,8 @@ requests = {schema:"aoou-requests-v1",items:[{requestId,status,reasonCode,retrya
 fingerprints = {schema:"aoou-fingerprints-v1",items:[{fingerprint,requestId,rootOriginalId,currentRevisionId}]}
 events = {schema:"aoou-events-v1",items:[{eventId,eventType,caseId,orderId,rootOriginalId,revisionId,occurredAt,actorUserId}]}
 safeAudits = {schema:"aoou-audits-v1",items:[{auditId,requestId,actorIdentity,mode,caseId,orderId,status,reasonCode,attemptedAt}]}
+maintenanceRequests = {items:[{attemptedAt,deleted,failed,nextCursor,reasonCode,requestId,retained,retryable,scanned,status,systemPrincipalId}],schema:"aoou-maintenance-requests-v1"}
+maintenanceAudits = {items:[{attemptedAt,auditId,deleted,failed,reasonCode,requestId,retained,retryable,scanned,status,systemPrincipalId}],schema:"aoou-maintenance-audits-v1"}
 unchangedProcess = {schema:"aoou-process-v1",orderCompositionSha256,caseSha256,openingSha256,tasksSha256,checklistSha256,decoySha256}
 privateBlobs = {schema:"aoou-blobs-v1",stages:[{opaqueIdentity,byteSize,createdAtUtc}],finalized:[{opaqueIdentity,sha256,byteSize,finalizedAtUtc}]}
 safeLogs = {schema:"aoou-logs-v1",items:[{sequence,event,correlationId,safeFields}]}
@@ -1532,6 +1536,14 @@ above; a valid target therefore never has an empty checklist projection.
 `decoySha256` includes the explicit empty projection when no other case exists.
 `checklistSha256` is independent from `tasksSha256`; neither digest may stand in
 for the other.
+Maintenance request/audit items use the same recursive binary key sort and are
+ordered by binary request ID/audit ID. Exact item key order after canonical sort
+is request `{attemptedAt,deleted,failed,nextCursor,reasonCode,requestId,retained,
+retryable,scanned,status,systemPrincipalId}` and audit `{attemptedAt,auditId,
+deleted,failed,reasonCode,requestId,retained,retryable,scanned,status,
+systemPrincipalId}`. A terminal maintenance operation must appear atomically in
+both methods or neither; replay changes neither inventory. Reader failures have
+the same fixed evidence-unavailable/no-partial contract.
 `correctionReason` exists only in protected verifier evidence and never
 result/log. MariaDB acceptance MUST use production repository plus this
 read-only evidence adapter on a fresh connection; in-memory Gate 2 may prove

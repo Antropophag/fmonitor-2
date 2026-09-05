@@ -77,6 +77,8 @@ reader знает canonical original tables напрямую, не исполь�
 `information_schema`, private SQL из теста, command repository или test
 callbacks. Это делает requests/fingerprints/domain/events/audits/process/blob/log
 snapshots независимыми и одновременно не создаёт второй mutation seam.
+Separate maintenance request/audit canonical methods expose atomic terminal
+persistence and replay stability without direct verifier SQL.
 Closed `aoou-process-v1` shape содержит отдельный `checklistSha256`
 для canonical checklist identities/availability exact case/order; он не
 выводится из `tasksSha256`, чтобы no-mutation matrix была

@@ -232,7 +232,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Shared MariaDB evidence independently observable
 - **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
-- **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, а после `close()` не оставляет ресурсов
+- **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/maintenance-requests/maintenance-audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, maintenance terminal result+audit появляются atomic-or-neither и replay их не меняет, а после `close()` reader не оставляет ресурсов
 
 #### Scenario: Checklist availability наблюдается отдельно
 - **WHEN** verifier сравнивает process snapshot до и после command attempt
