@@ -37,7 +37,7 @@ final class AssignmentOrderOriginalPortValues
             if ($result->status !== AssignmentOrderOriginalIdStatus::GENERATED) {
                 return null;
             }
-            return $result->id !== null && $result->id !== '' ? $result->id : null;
+            return AssignmentOrderOriginalCommandShape::validId($result->id) ? $result->id : null;
         }
         return null;
     }
