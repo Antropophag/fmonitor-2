@@ -109,3 +109,9 @@ COMMAND-SHAPE-001 v0.2 Gate1 APPROVED e98e37f; public RED194 cases
 all19 affected checks PASS and scoped Gate5 APPROVED9ad8dbe. Current full
 command blockers are observer/acquisition/data-integrity and public-declaration/
 maintenance composition audits. No combined Gate5/VERIFY_OK/launch claim.
+
+## Resource lifecycle corrective gates — 2026-09-06
+
+- [ ] 1.37 Independent Gate1 COMMAND-LIFECYCLE-001 exact failures/observer/ownership/replay/response-loss clarification; data-integrity dependency preserved.
+- [ ] 4.6 Public resource/lifecycle RED and independent Gate3, plus separately reviewed exact existing-test expectation patch for removal of empty probe.
+- [ ] 5.7 Minimal resource owner/lifecycle GREEN, affected real worker/storage regressions and independent scoped Gate5; no combined claim before data/declaration/maintenance corrections.

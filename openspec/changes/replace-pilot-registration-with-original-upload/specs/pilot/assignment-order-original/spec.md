@@ -410,3 +410,17 @@ Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
 the existing schema CHECK. Caller and GENERATED negatives cover both separators;
 no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
 fresh v0.2 independent Gate1 precedes any shape RED.
+
+### Requirement: Once-only command resource lifecycle
+
+Application SHALL соблюдать COMMAND-LIFECYCLE-001: primitive-specific failures,
+actual ordered observer phases, malformed read/finalize rejection, once-only
+cleanup/release and post-commit response loss without false no-fact failure.
+
+#### Scenario: Replay and acquisition failure
+- **WHEN** stored request replay либо acquired-stage failure/replay выбирает outcome
+- **THEN** supplied stream closes once unread for terminal replay; staged outcomes attempt abort/close/stream-close without skips/repetition; selected nonaccepted result сохраняется
+
+#### Scenario: Committed response observer fails
+- **WHEN** post-commit lifecycle/delivery callback throws after lease release attempt
+- **THEN** fixed ResponseDeliveryLost without Result, durable facts unchanged, no resource/commit retry; next authorized same-request call replays

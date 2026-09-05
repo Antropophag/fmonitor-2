@@ -79,3 +79,15 @@ Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
 the existing schema CHECK. Caller and GENERATED negatives cover both separators;
 no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
 fresh v0.2 independent Gate1 precedes any shape RED.
+
+## Command resource lifecycle correction — 2026-09-06
+
+COMMAND-LIFECYCLE-001 задаёт один acquisition/cleanup owner, реальные ordered
+callbacks, typed stream/storage failures, validation returned lease/content и
+once-only release. Terminal replay closes supplied unread stream; fingerprint
+replay performs attempt-all abort/close/close. Extra empty-fingerprint probe
+удаляется по literal execution order; старые expectations получают отдельный
+reviewed patch. Post-commit callback loss не становится no-fact FAILED: fixed
+ResponseDeliveryLost без повторения resources/commit. Actual fresh DB recovery
+и data integrity остаются обязательным отдельным corrective dependency.
+Новый technical Gate1 нужен до RED; нет нового product permission/policy.

@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v63 GATE 1 REREVIEW PENDING — COMMAND SCALAR BOUNDARY**
-Версия: **v63**
+Статус: **v64 GATE 1 REREVIEW PENDING — COMMAND RESOURCE LIFECYCLE**
+Версия: **v64**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -286,6 +286,14 @@ Validation outcomes:
 - concurrent identical corrections: winner `ACCEPTED`, loser после fingerprint lookup `REPLAYED` с result winner.
 
 Upload time никогда не разрешает tie.
+
+`specs/ASSIGNMENT-ORDER-ORIGINAL-COMMAND-LIFECYCLE-001.md` is the normative
+technical clarification for ordered observation, typed acquisition failure,
+once-only resource ownership, replay stream closure, removal of the extra empty
+fingerprint probe, and post-commit response-loss exception. Fresh independent
+Gate1 is required before this correction's RED. It preserves existing product
+outcomes and keeps actual fresh-connection/data-integrity proof mandatory in its
+separate correction before combined approval.
 
 ## 10. Storage/commit/response-loss protocol
 
