@@ -34,9 +34,7 @@
     "ddl|rapid-pilot/docker-bootstrap.php|5136fb6f81f772e6",
     "ddl|rapid-pilot/docker-bootstrap.php|6febaec221f4d01f",
     "ddl|rapid-pilot/docker-bootstrap.php|b51be743c215684f",
-    "ddl|rapid-pilot/import-production-installers.php|77c28ac79dee3630",
-    "ddl|rapid-pilot/import-production-object-details.php|0869fae855bd5c76",
-    "ddl|rapid-pilot/import-production-object-details.php|5e45e35f56e1f931"
+    "ddl|rapid-pilot/import-production-installers.php|77c28ac79dee3630"
   ],
   "dependency_direction": [
     "dependency|app/InstallationProcess/ProductionInstallationProcessFactory.php|084c944362d3a6fc",
@@ -105,8 +103,6 @@
     "rapid-mutation|rapid-pilot/hourly-bitrix-workforce.php|bfc3b83055515c23",
     "rapid-mutation|rapid-pilot/import-production-installers.php|54aaf69eda12d2f7",
     "rapid-mutation|rapid-pilot/import-production-installers.php|77c28ac79dee3630",
-    "rapid-mutation|rapid-pilot/import-production-object-details.php|0869fae855bd5c76",
-    "rapid-mutation|rapid-pilot/import-production-object-details.php|5e45e35f56e1f931",
     "rapid-mutation|rapid-pilot/import-production-object-details.php|5ffb71faff865e6b",
     "rapid-mutation|rapid-pilot/import-production-objects.php|04d9b1a11f711e0d",
     "rapid-mutation|rapid-pilot/import-production-objects.php|068057200fb1ff9f",

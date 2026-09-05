@@ -86,6 +86,7 @@ case "${1:-}" in
       rapid-pilot/verify-deployment-contract.php \
       rapid-pilot/verify-focus-contract.php \
       rapid-pilot/verify-object-queue-filters.php \
+      tests/Verification/characterize_object_detail_import_001_test.php \
       tests/Verification/harness_otiz_canonical_compat_001_test.php \
       rapid-pilot/verify-premium-calculation.php \
       rapid-pilot/verify-visual-contract.php
