@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v26 GATE 1 REREVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
-Версия: **v26**
+Статус: **v27 GATE 1 REREVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
+Версия: **v27**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -199,7 +199,7 @@ pre-CAS observation. B exact result line is:
 Post-race requests evidence is exactly:
 
 ```text
-{"schema":"aoou-requests-v1","items":[{"requestId":"00000000-0000-4000-8000-000000000001","status":"accepted","reasonCode":null,"retryable":false,"rootOriginalId":"original-0001","currentRevisionId":"revision-0001","revisionNumber":1,"documentDate":"2026-09-01","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:15:30Z"},{"requestId":"00000000-0000-4000-8000-000000000101","status":"accepted","reasonCode":null,"retryable":false,"rootOriginalId":"original-0001","currentRevisionId":"revision-0002","revisionNumber":2,"documentDate":"2026-09-02","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:16:00Z"}]}
+{"items":[{"byteSize":327,"currentRevisionId":"revision-0001","documentDate":"2026-09-01","reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000001","retryable":false,"revisionNumber":1,"rootOriginalId":"original-0001","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","status":"accepted","uploadedAt":"2026-09-02T09:15:30Z"},{"byteSize":327,"currentRevisionId":"revision-0002","documentDate":"2026-09-02","reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000101","retryable":false,"revisionNumber":2,"rootOriginalId":"original-0001","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","status":"accepted","uploadedAt":"2026-09-02T09:16:00Z"}],"schema":"aoou-requests-v1"}
 ```
 
 Domain/fingerprint/events inventories contain initial plus exactly one revision-2
