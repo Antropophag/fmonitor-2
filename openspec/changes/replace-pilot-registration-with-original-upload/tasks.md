@@ -48,7 +48,8 @@
 - [x] 3.1 Добавить additive canonical capability/schema migration на актуальном frontier без runtime DDL и без изменения historical registration facts; verification: clean/repeat/populated/conflict migration fixtures GREEN
 - [x] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
 - [x] 3.3 Реализовать schema v2 forward migration минимальным GREEN; verification: approved v2 migration/same-content tests GREEN без изменения command code
-- [ ] 3.4 Получить fresh independent Gate 5 schema-v2 review; verification: APPROVED до resume task5 implementation
+- [x] 3.4 Получить fresh independent Gate 5 schema-v2 review; verification: APPROVED до resume task5 implementation
+  - Exact schema-v2 implementation `4c7df544a186cd0ee8b4e58f37b8868b7735789c`; fresh Gate 5 **APPROVED** at `a54446f294e29362103e23d38c34823b06b5b1be` after append-only corrective cycles.
 
 ## 4. Command matrix RED и test review
 
