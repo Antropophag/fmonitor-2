@@ -51,6 +51,11 @@ final class AssignmentOrderOriginalPdfCorpus
         $pdf="%PDF-1.5\n";$offsets=[];foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}$payload='3 0 << /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>';$offsets[4]=strlen($pdf);$pdf.="4 0 obj\n<< /Type /ObjStm /N 1 /First 4 /Length ".strlen($payload)." >>\nstream\n{$payload}\nendstream\nendobj\n";$offsets[5]=strlen($pdf);$entries=pack('CNN',0,0,65535).pack('CNN',1,$offsets[1],0).pack('CNN',1,$offsets[2],0).pack('CNN',2,4,0).pack('CNN',1,$offsets[4],0).pack('CNN',1,$offsets[5],0);$pdf.="5 0 obj\n<< /Type /XRef /Size 6 /Root 1 0 R /W [1 4 4] /Length ".strlen($entries)." >>\nstream\n{$entries}\nendstream\nendobj\nstartxref\n{$offsets[5]}\n%%EOF\n";return$pdf;
     }
 
+    public static function objectStreamVariant(int $declaredLengthDelta=0,?string $filter=null): string
+    {
+        $pdf="%PDF-1.5\n";$offsets=[];foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}$decoded='3 0 << /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>';$payload=$filter==='FlateDecode'?gzcompress($decoded,9):$decoded;if(!is_string($payload))throw new \RuntimeException('Fixture compression failed.');$declared=strlen($payload)+$declaredLengthDelta;$filterEntry=$filter===null?'':" /Filter /{$filter}";$offsets[4]=strlen($pdf);$pdf.="4 0 obj\n<< /Type /ObjStm /N 1 /First 4{$filterEntry} /Length {$declared} >>\nstream\n{$payload}\nendstream\nendobj\n";$offsets[5]=strlen($pdf);$entries=pack('CNN',0,0,65535).pack('CNN',1,$offsets[1],0).pack('CNN',1,$offsets[2],0).pack('CNN',2,4,0).pack('CNN',1,$offsets[4],0).pack('CNN',1,$offsets[5],0);$pdf.="5 0 obj\n<< /Type /XRef /Size 6 /Root 1 0 R /W [1 4 4] /Length ".strlen($entries)." >>\nstream\n{$entries}\nendstream\nendobj\nstartxref\n{$offsets[5]}\n%%EOF\n";return$pdf;
+    }
+
     /** @return array<string,string> */
     public static function unsafeCases(): array
     {
