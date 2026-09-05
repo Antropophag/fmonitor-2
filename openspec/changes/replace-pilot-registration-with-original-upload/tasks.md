@@ -28,6 +28,7 @@
 - [x] 1.26 Получить fresh independent Gate 1 review maintenance cursor amendment; verification: versioned JSON+base64url codec/literal/bounds и deleted-position semantics делают pagination RED independent
 - [x] 1.27 Получить fresh independent Gate 1 review production composition derivation amendment; verification: exact row inputs/identity/JSON/hash делают real worker fingerprint/root evidence independent без schema fallback
 - [x] 1.28 Получить fresh independent Gate 1 review worker FD amendment; verification: exact socket/range/integer+identity distinctness/lifecycle делает fail-before-command FD RED independent
+- [ ] 1.29 Получить fresh independent Gate 1 review cleanup safe-log amendment; verification: exact correlation/events/phases/canonical evidence делают abort/close failure RED independent
 
 ## 2. Minimal RED и test review
 

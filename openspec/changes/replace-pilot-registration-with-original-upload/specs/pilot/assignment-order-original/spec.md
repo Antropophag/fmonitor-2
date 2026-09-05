@@ -227,6 +227,10 @@ Storage SHALL начать private stage до чтения stream; application �
 - **WHEN** worker выбирает exact `commit_before|commit_unknown_{found,not_found,unavailable}_release_failure`
 - **THEN** base outcome выполняется один раз, затем one release FAILED с exact rolled_back/unknown_* safe log без замены Result; plain release fault покрывает committed и natural CAS-conflict, arbitrary fault lists forbidden
 
+#### Scenario: Cleanup safe logs exact
+- **WHEN** stage abort, stage close или stream close fails
+- **THEN** selected Result preserved, one exact event + only phase field + first12-SHA256(requestId) correlation logged; isolated Example-A canonical JSON lines заданы, payload/path/exception forbidden, log-write failure no retry/no Result change
+
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
 через `AssignmentOrderOriginalEvidenceReaderFactory::create` и exact serializable

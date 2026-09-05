@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v43 GATE 1 REVIEW PENDING — WORKER FD AMENDMENT**
-Версия: **v43**
+Статус: **v44 GATE 1 REVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
+Версия: **v44**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -925,6 +925,30 @@ Failure to acquire a lease maps `FAILED/STORAGE_FAILURE`; the stage is aborted a
 Production storage root comes only from trusted `FMONITOR_ASSIGNMENT_ORDER_ORIGINAL_ROOT`; verifier root is explicit absolute task-owned temp directory. Production bootstrap MUST use no-op lifecycle/delivery observers and cannot select verification composition through env/request/CLI/global/service locator. Verification factory is callable only by tests and still builds the same application implementation.
 
 Every port call is total at the application boundary: adapter Throwable is caught and mapped to its typed `UNAVAILABLE`/`FAILED` outcome without exposing diagnostics. Request/fingerprint/lineage lookup `UNAVAILABLE` maps `FAILED/PERSISTENCE_FAILURE`; order/composition unavailable, clock failure and ID failure map the same. Stream `FAILED` maps `STREAM_FAILURE`; inspector `INSPECTOR_FAILED` and storage outcome `FAILED|LOCKED` map `STORAGE_FAILURE`. Storage observer receives the exact ordered events for operations actually attempted; request-ID replay emits no stream/storage event. Verification fault injector throws only at its named point; production factory binds inert final lifecycle/storage/fault/delivery implementations and exposes no selector.
+
+Safe-log correlation ID for every command attempt is the first 12 lower hex of
+SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup
+failures never replace the selected Result and each failing primitive logs once
+in cleanup order with event/sole safe field:
+
+```text
+ASSIGNMENT_ORDER_ORIGINAL_STAGE_ABORT_FAILED phase=stage_abort
+ASSIGNMENT_ORDER_ORIGINAL_STAGE_CLOSE_FAILED phase=stage_close
+ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED phase=stream_close
+```
+
+No request/file/content/storage identity, path, bytes, SQL, exception or
+diagnostic is logged. Each isolated one-fault Example-A run has exact evidence:
+
+```text
+{"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_ABORT_FAILED","safeFields":{"phase":"stage_abort"},"sequence":1}],"schema":"aoou-logs-v1"}
+{"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_CLOSE_FAILED","safeFields":{"phase":"stage_close"},"sequence":1}],"schema":"aoou-logs-v1"}
+{"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED","safeFields":{"phase":"stream_close"},"sequence":1}],"schema":"aoou-logs-v1"}
+```
+
+Lease release uses the same correlation derivation and specified event/phase.
+Safe-log write failure is best-effort, triggers no second log attempt, never
+changes Result and emits no public diagnostic.
 
 Private content/outcome implementations are constructed only by storage adapters. Repository lookup/result implementations may rehydrate stored application results but cannot create accepted evidence not already represented by a committed `AssignmentOrderOriginalAcceptedCommit`. Repository MUST validate UUID/ID/hash/date/time/size grammar; exact mode/event pairing (`INITIAL→assignment_order_original_accepted`, `CORRECTION→assignment_order_original_corrected`); revision 1/null previous for initial; revision n+1/previous/expected-current for correction; content digest/size identity; and Result derivation before commit. Invalid adapter DTO is `PERSISTENCE_FAILURE`, never partial persistence. `AssignmentOrderOriginalAttemptCommit` allows only non-retryable `REJECTED|CONFLICT`, exact reason/status mapping and no evidence fields.
 
