@@ -96,9 +96,9 @@ final class AssignmentOrderOriginalInitialCompositionReader implements Assignmen
             $caseId,
             $orderId,
             'composition-81-v1',
-            str_repeat('1', 64),
+            '388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',
             [7001, 7002],
-            901,
+            31,
         );
     }
 }

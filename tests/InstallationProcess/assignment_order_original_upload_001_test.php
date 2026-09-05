@@ -22,8 +22,22 @@ use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialRepository;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialStorage;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalInitialStream;
 
-// Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v4, Example A.
+// Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v42, Example A.
 require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialProcessState.php';
+
+$compositionValues=['caseId'=>4512,'compositionIdentity'=>'composition-81-v1','engineerUserId'=>31,'installers'=>[7001,7002],'orderId'=>81];
+$compositionJson=json_encode($compositionValues,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+assertSameValue('{"caseId":4512,"compositionIdentity":"composition-81-v1","engineerUserId":31,"installers":[7001,7002],"orderId":81}',$compositionJson,'Composition canonical JSON is an independent literal.');
+assertSameValue('388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',hash('sha256',$compositionJson),'Composition digest is independently derived.');
+foreach([
+    'case'=>array_replace($compositionValues,['caseId'=>4513]),
+    'identity'=>array_replace($compositionValues,['compositionIdentity'=>'composition-81-v2']),
+    'engineer'=>array_replace($compositionValues,['engineerUserId'=>32]),
+    'installer-member'=>array_replace($compositionValues,['installers'=>[7001,7003]]),
+    'installer-order'=>array_replace($compositionValues,['installers'=>[7002,7001]]),
+    'order'=>array_replace($compositionValues,['orderId'=>82]),
+]as$axis=>$mutation)assertSameValue(false,hash_equals(hash('sha256',$compositionJson),hash('sha256',json_encode($mutation,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE))),"Composition {$axis} mutation changes digest.");
+foreach(['empty'=>[],'duplicate'=>[7001,7001],'nonpositive'=>[0,7002]]as$axis=>$members)assertSameValue(false,$members!==[]&&count($members)===count(array_unique($members))&&min($members)>0,"Composition {$axis} validation rejects invalid members.");
 
 $downstreamFamilies = [
     'orderCompositionSha256',
@@ -123,7 +137,7 @@ assertSameValue('4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc878
 assertSameValue(327, $result->byteSize(), 'Received bytes have the approved independent size.');
 assertSameValue('2026-09-02T09:15:30Z', $result->uploadedAt(), 'Upload time is the fixed server instant.');
 
-$expectedEvidence = '{"schema":"aoou-evidence-v1","caseId":4512,"orderId":81,"roots":[{"rootOriginalId":"original-0001","currentRevisionId":"revision-0001","compositionIdentity":"composition-81-v1","compositionSha256":"1111111111111111111111111111111111111111111111111111111111111111","revisions":[{"revisionId":"revision-0001","revisionNumber":1,"previousRevisionId":null,"documentDate":"2026-09-01","uploadedAt":"2026-09-02T09:15:30Z","actorUserId":18,"pdfSha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"privateContentIdentity":"private-content-0001","correctionReason":null}]}]}';
+$expectedEvidence = '{"schema":"aoou-evidence-v1","caseId":4512,"orderId":81,"roots":[{"rootOriginalId":"original-0001","currentRevisionId":"revision-0001","compositionIdentity":"composition-81-v1","compositionSha256":"388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5","revisions":[{"revisionId":"revision-0001","revisionNumber":1,"previousRevisionId":null,"documentDate":"2026-09-01","uploadedAt":"2026-09-02T09:15:30Z","actorUserId":18,"pdfSha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"privateContentIdentity":"private-content-0001","correctionReason":null}]}]}';
 assertSameValue($expectedEvidence, $repository->evidenceCanonicalJson(4512, 81), 'Immutable original evidence is persisted exactly once.');
 assertSameValue(1, count($repository->accepted), 'Exactly one accepted revision/event transaction is requested.');
 assertSameValue('assignment_order_original_accepted', $repository->accepted[0]->domainEventType, 'Initial upload emits the exact domain event.');
