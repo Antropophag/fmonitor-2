@@ -11,7 +11,7 @@ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalVerificationDatabas
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalVerificationFixtureConflict;
 use FMonitor2\Tests\Support\AssignmentOrderOriginalDatabaseSetupV1 as Contract;
 
-// Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v12, setup Gate 2.
+// Specification: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 v54, schema-v2 setup Gate 2.
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $host = getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1';
 $port = (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306);
@@ -213,7 +213,7 @@ try {
     $clean = $connect($databases[0]);$prepareV4($clean,$prefix);
     $result = AssignmentOrderOriginalSchemaMigration::apply($clean, $prefix);
     assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::APPLIED, $result->status(), 'Clean schema applies.');
-    assertSameValue(Contract::VERSION, $result->schemaVersion(), 'Migration reports exact version 1.');
+    assertSameValue(Contract::VERSION, $result->schemaVersion(), 'Migration reports exact version 2.');
     assertSameValue([...Contract::TABLES,'fm2_process_user_capabilities'], $result->affectedTables(), 'Clean V4 migration reports manifest order and capability last.');
     $expectedOwnedTables = array_map(static fn ($name) => $prefix . $name, Contract::TABLES);
     sort($expectedOwnedTables, SORT_STRING);
@@ -228,6 +228,8 @@ try {
         assertSameValue($expectedChecks,$checks($clean,$prefix.$table),"Every normalized CHECK expression for {$table} is exact.");
         assertSameValue(['InnoDB','utf8mb4_unicode_ci'], $tableProperties($clean, $prefix . $table), "Exact engine and database-default collation for {$table}.");
     }
+    $revisionIndexRows=$clean->query("SELECT INDEX_NAME,NON_UNIQUE,GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',') columns_csv FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$prefix}fm2_assignment_order_original_revisions' GROUP BY INDEX_NAME,NON_UNIQUE HAVING columns_csv='private_content_identity'")->fetch_all(MYSQLI_ASSOC);
+    assertSameValue([["INDEX_NAME"=>Contract::REVISION_CONTENT_INDEX,"NON_UNIQUE"=>'1',"columns_csv"=>'private_content_identity']],$revisionIndexRows,'V2 has exactly one exact-named non-unique content-reference index.');
     $cleanBeforeRepeat = $snapshot($clean);
     $repeat = AssignmentOrderOriginalSchemaMigration::apply($clean, $prefix);
     assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::UNCHANGED, $repeat->status(), 'Exact repeat is unchanged.');

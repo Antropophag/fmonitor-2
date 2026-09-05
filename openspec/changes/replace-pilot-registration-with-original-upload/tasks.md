@@ -41,6 +41,7 @@
 - [x] 2.3 Поручить fresh independent test reviewer проверить exact manifest/equivalence, fixture literals, sensitivity и bounded cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 - [x] 2.4 Исправить initial RED на derived composition hash `388c7d94...` и получить fresh independent Gate 3; verification: old `111...` oracle удалён из active test/support, exact JSON/hash independently sensitivity-tested, historical evidence не редактируется
 - [ ] 2.5 Добавить schema-v2 RED и fresh Gate 3; verification: clean/repeat/populated-v1 upgrade/same-content two-revision/other-drift zero-DDL exact
+  - RED написан и доказан в `docs/operations/assignment-order-original-schema-v2-red-evidence-2026-09-05.md`; fresh independent Gate 3 остаётся незавершённым.
 
 ## 3. Setup minimal GREEN и code review
 

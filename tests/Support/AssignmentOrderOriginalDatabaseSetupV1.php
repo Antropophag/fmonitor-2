@@ -6,7 +6,8 @@ namespace FMonitor2\Tests\Support;
 
 final class AssignmentOrderOriginalDatabaseSetupV1
 {
-    public const VERSION = 1;
+    public const VERSION = 2;
+    public const REVISION_CONTENT_INDEX = 'idx_aoou_revision_content';
     public const TABLES = [
         'fm2_assignment_order_original_roots',
         'fm2_assignment_order_original_revisions',
@@ -85,7 +86,7 @@ final class AssignmentOrderOriginalDatabaseSetupV1
     {
         return [
             self::TABLES[0] => [['INDEX','installation_case_id,assignment_order_id'],['PRIMARY','root_original_id'],['UNIQUE','assignment_order_id'],['UNIQUE','current_revision_id']],
-            self::TABLES[1] => [['INDEX','root_original_id,revision_number'],['PRIMARY','revision_id'],['UNIQUE','operation_fingerprint'],['UNIQUE','previous_revision_id'],['UNIQUE','private_content_identity'],['UNIQUE','request_id'],['UNIQUE','root_original_id,revision_number']],
+            self::TABLES[1] => [['INDEX','private_content_identity'],['INDEX','root_original_id,revision_number'],['PRIMARY','revision_id'],['UNIQUE','operation_fingerprint'],['UNIQUE','previous_revision_id'],['UNIQUE','request_id'],['UNIQUE','root_original_id,revision_number']],
             self::TABLES[2] => [['INDEX','current_revision_id'],['INDEX','installation_case_id,assignment_order_id,attempted_at_utc'],['INDEX','root_original_id'],['PRIMARY','request_id']],
             self::TABLES[3] => [['INDEX','installation_case_id,assignment_order_id,event_id'],['INDEX','revision_id'],['PRIMARY','event_id'],['UNIQUE','root_original_id,revision_id,event_type']],
             self::TABLES[4] => [['INDEX','installation_case_id,assignment_order_id,audit_id'],['PRIMARY','audit_id'],['UNIQUE','request_id,status,reason_code']],
