@@ -307,7 +307,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Barrier event selectable only by verifier
 - **WHEN** worker config выбирает fingerprint-miss или after-private-finalize lifecycle event
-- **THEN** READY/RELEASE блокирует только exact selected event; CAS races use first; isolated lease upload request0400 clock07:00/root0040/revision0040 uses second and exact content-sha256 identity; maintenance clock09/principal/cutoff07:30/limit10/null cursor request0401 while paused proves PARTIAL/LOCKED 1/0/1/0, after accepted upload request0402 proves referenced COMPLETED 1/0/1/0, both request/audits + one upload fact and blob retention via fresh reader; invalid config pre-secret, production selector absent
+- **THEN** READY/RELEASE блокирует только exact selected event; CAS races use first; isolated full INITIAL request0400 fixture (case4512/order81/actor18/date09-01/confirmed/null lineage/canonical PDF/lease-race.pdf/application-pdf) clock07:00/root0040/revision0040 uses second and exact content-sha256 identity; maintenance clock09/principal/cutoff07:30/limit10/null cursor request0401 while paused proves PARTIAL/LOCKED 1/0/1/0, after exact accepted upload request0402 proves referenced COMPLETED 1/0/1/0, both request/audits + one upload fact and blob retention via fresh reader; invalid config pre-secret, production selector absent
 
 #### Scenario: Worker ID sequences deterministic
 - **WHEN** config передаёт root/revision CSV

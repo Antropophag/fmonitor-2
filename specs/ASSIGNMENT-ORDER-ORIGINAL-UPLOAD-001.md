@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v51 GATE 1 REREVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
-Версия: **v51**
+Статус: **v52 GATE 1 REREVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
+Версия: **v52**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1855,6 +1855,14 @@ counts `1/0/1/0` after reference recheck; accepted blob remains byte-identical.
 Fresh reader shows both maintenance request/audit pairs and exactly one upload
 request/root/revision/event referencing the content; no fake storage/repository
 participates.
+
+Request0400 exact Command is `INITIAL`, case 4512, order 81, actor 18,
+documentDate `2026-09-01`, compositionConfirmed true, all root/target/expected/
+reason fields null, upload canonical 327-byte PDF, filename `lease-race.pdf`,
+declared media `application/pdf`. It uses the v42 derived composition identity/
+hash. After RELEASE exact accepted evidence is request0400, root original-0040,
+current revision-0040, revisionNumber 1, documentDate 2026-09-01, canonical PDF
+hash/327 bytes and uploadedAt `2026-09-02T07:00:00Z`; reason null/retryable false.
 
 Maintenance order: scalar shape → exact string-principal authorization → terminal request lookup → clock/cutoff → candidate page → per-candidate lock/reference/delete → atomic result+audit commit. Invalid UUID/cursor/batch outside `1..1000` or cutoff newer than `now-3600s` → `REJECTED/INVALID_COMMAND`; missing exact `assignment_order.original.storage.reconcile` → `REJECTED/AUTHORIZATION_DENIED`; all candidates handled → `COMPLETED`; authorized request hit → `REPLAYED`; one or more locked/per-item failures → `PARTIAL`; repository/audit unavailable → `FAILED/PERSISTENCE_FAILURE`.
 
