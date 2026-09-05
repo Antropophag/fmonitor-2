@@ -31,6 +31,7 @@
 - [x] 1.29 Получить fresh independent Gate 1 review cleanup safe-log amendment; verification: exact correlation/events/phases/canonical evidence делают abort/close failure RED independent
 - [x] 1.30 Получить fresh independent Gate 1 rereview cleanup precedence/fault selectors; verification: close-before-commit mapping, exact invalid/accepted cleanup order и injected log observer закрывают v44/v45 findings
 - [x] 1.31 Получить fresh independent Gate 1 review fingerprint encoding amendment; verification: exact big-endian byte-length format и initial/correction digests делают replay/CAS evidence independent
+- [ ] 1.32 Получить fresh independent Gate 1 review worker barrier-event amendment; verification: fingerprint-vs-after-finalize selector делает real CAS и maintenance/lease races causally observable
 
 ## 2. Minimal RED и test review
 

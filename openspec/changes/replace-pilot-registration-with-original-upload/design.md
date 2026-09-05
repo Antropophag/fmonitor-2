@@ -99,6 +99,9 @@ Additive canonical migration вводит immutable root/revision identities, te
 Four worker channels are distinct non-stdio AF_UNIX SOCK_STREAM endpoints from
 separate socketpairs, validated by integer range and fstat identity before
 secret/command access; directions remain logical over full-duplex sockets.
+Final worker config selects exactly fingerprint-miss or after-private-finalize
+barrier event. The latter causally proves upload-held lease against real
+maintenance LOCKED, then referenced retention after accepted commit.
 
 Executable spec v5 фиксирует namespace `FMonitor2\AssignmentOrderOriginal`, typed application/DTO/result/stream/auth/composition/clock/ID/PDF/staged-storage/repository/observer/evidence/maintenance contracts. Upload и maintenance имеют отдельные production/verification factories и exhaustive dependency bundles; maintenance authorizer принимает string system principal. Production связывает real inspector/private storage/no-op observers и не выбирает verifier composition по environment/request/CLI/global.
 

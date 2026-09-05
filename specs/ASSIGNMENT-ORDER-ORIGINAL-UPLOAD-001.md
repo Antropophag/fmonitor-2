@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v49 GATE 1 REVIEW PENDING — FINGERPRINT ENCODING AMENDMENT**
-Версия: **v49**
+Статус: **v50 GATE 1 REVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
+Версия: **v50**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1795,6 +1795,7 @@ final readonly class AssignmentOrderOriginalWorkerConfig
         public string $revisionIdSequenceCsv,
         public string $inspectorMode,
         public ?string $faultPoint,
+        public string $barrierEvent,
     ) {}
 }
 
@@ -1823,6 +1824,20 @@ All four are validated and set blocking before password content, command read,
 DB/storage/log/barrier access; any failure closes every opened wrapper once and
 uses exact config exit70 channels. Parent owns peer endpoints, closes them in
 finally, and worker closes its four wrappers once before exit.
+
+Serialized worker config has `barrierEvent` as its final required key, exact one
+of `after_fingerprint_miss_before_cas` or
+`after_private_finalize_before_commit`. Lifecycle observer writes READY and
+waits RELEASE only at selected event; it observes but never blocks at the other.
+Invalid/missing/extra value is pre-secret exit70. CAS races select fingerprint-
+miss. Upload/maintenance lease race selects after-private-finalize: READY proves
+finalized content lease held and no commit attempted. While paused, real
+maintenance request `...0401` for that candidate returns `PARTIAL/LOCKED`,
+retryable true, counts `1/0/1/0`; blob remains. After RELEASE upload is ACCEPTED.
+New maintenance request `...0402` returns referenced `COMPLETED`, retryable
+false, counts `1/0/1/0`; accepted blob remains byte-identical. Both maintenance
+result/audit inventories and upload request/domain/event evidence come from the
+fresh reader; no fake storage/repository participates.
 
 Maintenance order: scalar shape → exact string-principal authorization → terminal request lookup → clock/cutoff → candidate page → per-candidate lock/reference/delete → atomic result+audit commit. Invalid UUID/cursor/batch outside `1..1000` or cutoff newer than `now-3600s` → `REJECTED/INVALID_COMMAND`; missing exact `assignment_order.original.storage.reconcile` → `REJECTED/AUTHORIZATION_DENIED`; all candidates handled → `COMPLETED`; authorized request hit → `REPLAYED`; one or more locked/per-item failures → `PARTIAL`; repository/audit unavailable → `FAILED/PERSISTENCE_FAILURE`.
 
