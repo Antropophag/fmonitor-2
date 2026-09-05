@@ -40,6 +40,9 @@ so arbitrary multi-fault configuration remains forbidden.
 Five exact verification publisher scripts cover zero-byte serialization,
 oversize, false and zero outcomes plus one seven-byte short prefix; all preserve
 the committed result for normal same-request replay and production binds none.
+Production maintenance factory binds one trusted exact system-principal/
+reconcile-capability DTO from deployment composition, separate from user roles
+and impossible to select from request payload or mutable global.
 
 ### 6. Idempotency и correction ties
 

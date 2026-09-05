@@ -172,7 +172,11 @@ Storage SHALL начать private stage до чтения stream; application �
 
 #### Scenario: Constructible maintenance composition
 - **WHEN** production или verification собирает maintenance application
-- **THEN** dedicated factory получает string-principal authorizer, clock, candidate-page/digest-lock/delete storage, reference repository, atomic maintenance request/result/audit repository, observers/faults/log; production не выбирает verifier dependencies по runtime input
+- **THEN** dedicated factory получает string-principal authorizer, clock, candidate-page/digest-lock/delete storage, reference repository, atomic maintenance request/result/audit repository, observers/faults/log; production получает trusted exact principal+reconcile-capability DTO, не user grant, и не выбирает verifier dependencies/authorization по request runtime input
+
+#### Scenario: Production maintenance authorization exact
+- **WHEN** configured `test-maintenance-01` requests exact reconcile capability
+- **THEN** byte-equal pair ALLOWED; any principal/capability mismatch DENIED, invalid config throws fixed pre-resource error, не создаёт user capability row и не выводится из role/request/global
 
 #### Scenario: Commit success и обычный ответ
 - **WHEN** private blob finalized, DB commit accepted revision/result/audit и process может вернуть response

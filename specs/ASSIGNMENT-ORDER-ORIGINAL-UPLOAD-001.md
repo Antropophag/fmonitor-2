@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v32 GATE 1 REVIEW PENDING — MAINTENANCE EVIDENCE AMENDMENT**
-Версия: **v32**
+Статус: **v33 GATE 1 REVIEW PENDING — MAINTENANCE AUTHORIZATION AMENDMENT**
+Версия: **v33**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1386,7 +1386,16 @@ final class ProductionAssignmentOrderOriginalMaintenanceFactory
     public static function create(
         \mysqli $database,
         AssignmentOrderOriginalProductionConfig $config,
+        AssignmentOrderOriginalMaintenanceAuthorization $authorization,
     ): AssignmentOrderOriginalMaintenanceApplication { /* production bindings only */ }
+}
+
+final readonly class AssignmentOrderOriginalMaintenanceAuthorization
+{
+    public function __construct(
+        public string $systemPrincipalId,
+        public string $capability,
+    ) {}
 }
 
 final class AssignmentOrderOriginalMaintenanceVerificationFactory
@@ -1395,6 +1404,20 @@ final class AssignmentOrderOriginalMaintenanceVerificationFactory
         AssignmentOrderOriginalMaintenanceDependencies $dependencies,
     ): AssignmentOrderOriginalMaintenanceApplication { /* same maintenance owner */ }
 }
+
+Production maintenance authorization is trusted operator composition, not a
+user/role grant and not stored in `fm2_process_user_capabilities`.
+`systemPrincipalId` matches `[A-Za-z0-9._:-]{1,160}` and `capability` must be
+exactly `assignment_order.original.storage.reconcile`. Factory rejects any
+invalid/other value with `InvalidArgumentException` message exactly
+`Invalid maintenance authorization.` before DB/storage access. The bound
+authorizer returns ALLOWED only when both command principal and requested exact
+capability byte-equal the configured pair; every mismatch is DENIED. Production
+bootstrap must construct the DTO from trusted deployment configuration and
+cannot select it from request/HTTP/CLI command payload or mutable global.
+Canonical TEST-USER verifier principal is `test-maintenance-01` with the exact
+reconcile capability. No wildcard/list/role inference or user capability row is
+created.
 
 final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException
 {
