@@ -58,9 +58,11 @@ final class ObjectDetailSnapshotEngineSchemaMigration
                 foreach ($columns as $name => $type) {
                     $definitions[] = "`{$name}` {$type} NOT NULL";
                 }
-                $connection->query('CREATE TABLE `' . $table . '` ('
+                if ($connection->query('CREATE TABLE `' . $table . '` ('
                     . implode(',', $definitions) . ',PRIMARY KEY (`object_id`))'
-                    . ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `' . $collation . '`');
+                    . ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE `' . $collation . '`') !== true) {
+                    throw new DatabaseUnavailable('Object-detail table creation unavailable.');
+                }
                 $created[] = $table;
                 $observer->observe($member === 'fm2_pilot_object_details'
                     ? ObjectDetailSnapshotSchemaPhase::DETAILS_CREATED
