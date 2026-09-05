@@ -40,14 +40,14 @@
 - [x] 2.2 Поручить RED author написать isolated MariaDB clean/repeat/leading-partial/populated/conflict migration и deterministic seed/repeat/conflict/cleanup tests для exact version-1 setup seams; verification: RED вызван отсутствующими migration/fixture seams, не setup
 - [x] 2.3 Поручить fresh independent test reviewer проверить exact manifest/equivalence, fixture literals, sensitivity и bounded cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 - [x] 2.4 Исправить initial RED на derived composition hash `388c7d94...` и получить fresh independent Gate 3; verification: old `111...` oracle удалён из active test/support, exact JSON/hash independently sensitivity-tested, historical evidence не редактируется
-- [ ] 2.5 Добавить schema-v2 RED и fresh Gate 3; verification: clean/repeat/populated-v1 upgrade/same-content two-revision/other-drift zero-DDL exact
-  - RED написан и доказан в `docs/operations/assignment-order-original-schema-v2-red-evidence-2026-09-05.md`; fresh independent Gate 3 остаётся незавершённым.
+- [x] 2.5 Добавить schema-v2 RED и fresh Gate 3; verification: clean/repeat/populated-v1 upgrade/same-content two-revision/other-drift zero-DDL exact
+  - RED доказан append-only; исходный Gate 3 `b65dd92e5de71e673bbb156185402216474dfb4d`, mysqlnd fixture corrections `becc0ab19cc8271529820a2a720e91bc379d3ff9` и `a9b1e056a6ec7c44da17b845c1696fc5842ba101`, fresh amendment Gate 3 `d939546e54e86dcc559f80dd97c72e63c4a9992a`.
 
 ## 3. Setup minimal GREEN и code review
 
 - [x] 3.1 Добавить additive canonical capability/schema migration на актуальном frontier без runtime DDL и без изменения historical registration facts; verification: clean/repeat/populated/conflict migration fixtures GREEN
 - [x] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
-- [ ] 3.3 Реализовать schema v2 forward migration минимальным GREEN; verification: approved v2 migration/same-content tests GREEN без изменения command code
+- [x] 3.3 Реализовать schema v2 forward migration минимальным GREEN; verification: approved v2 migration/same-content tests GREEN без изменения command code
 - [ ] 3.4 Получить fresh independent Gate 5 schema-v2 review; verification: APPROVED до resume task5 implementation
 
 ## 4. Command matrix RED и test review
