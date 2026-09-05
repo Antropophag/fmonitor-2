@@ -180,7 +180,7 @@ Storage SHALL начать private stage до чтения stream; application �
 
 #### Scenario: Eligible orphan fixture deterministic
 - **WHEN** verifier создаёт canonical abandoned/finalized orphan с timestamp `2026-09-02T07:00:00Z`
-- **THEN** verification-only fixture использует same production storage validation/primitives/locks, exact replay no-op/collision fail-before-mutation, не создаёт DB facts и делает real maintenance age/delete evidence constructible без sleep/private edits/production selector
+- **THEN** verification-only fixture использует same production storage validation/primitives/locks, exact owned-root marker/token+injected clock, fixed conflict/unavailable precedence, exact 15/19 bytes и finalized digest, metadata time не mtime; real-adapter maintenance factory с clock 09:00, cutoff 07:30 даёт ordered two-candidate COMPLETED 2/2/0/0, exact request/audit JSON и stable replay; boundary/newer/future cases наблюдаемы без sleep/private edits/production selector
 
 #### Scenario: Commit success и обычный ответ
 - **WHEN** private blob finalized, DB commit accepted revision/result/audit и process может вернуть response

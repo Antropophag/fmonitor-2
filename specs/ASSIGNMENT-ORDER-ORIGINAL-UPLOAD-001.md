@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v34 GATE 1 REVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
-Версия: **v34**
+Статус: **v35 GATE 1 REREVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
+Версия: **v35**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1432,7 +1432,23 @@ final class AssignmentOrderOriginalPrivateOrphanFixtureFactory
 {
     public static function create(
         string $privateStorageRoot,
+        string $ownershipToken,
+        AssignmentOrderOriginalClock $clock,
     ): AssignmentOrderOriginalPrivateOrphanFixture;
+}
+
+final class AssignmentOrderOriginalPrivateOrphanFixtureConflict extends \RuntimeException {}
+final class AssignmentOrderOriginalPrivateOrphanFixtureUnavailable extends \RuntimeException {}
+
+final class AssignmentOrderOriginalRealMaintenanceVerificationFactory
+{
+    public static function create(
+        \mysqli $database,
+        AssignmentOrderOriginalProductionConfig $config,
+        AssignmentOrderOriginalMaintenanceAuthorization $authorization,
+        AssignmentOrderOriginalClock $clock,
+        AssignmentOrderOriginalFaultInjector $faults,
+    ): AssignmentOrderOriginalMaintenanceApplication;
 }
 
 Production maintenance authorization is trusted operator composition, not a
@@ -1453,16 +1469,56 @@ The private-orphan fixture is verification-only and uses the same production
 storage path validator, ownership/mode checks, filename codec, atomic write/
 rename/fsync primitives, metadata grammar and digest-lock exclusion domain as
 upload/maintenance. It accepts only task-owned root, opaque identity grammar and
-UTC second timestamp not later than the real system clock. `bytes` size is
-`1..20,971,520`; finalized kind computes its own SHA-256 and immutable metadata,
-while abandoned kind creates a closed non-final stage. Exact replay is a no-op;
-same identity with different kind/bytes/time is fixed fixture conflict before
-mutation. It creates no request, audit, event, revision or reference row and
-cannot delete. Canonical eligible fixtures are abandoned `orphan-stage-0001`
-with bytes `stage-orphan-v1` and finalized `orphan-content-0001` with bytes
-`finalized-orphan-v1`, both timestamp `2026-09-02T07:00:00Z`. Production
-bootstrap/application/HTTP cannot construct or select this factory; verifier
-cleans only through maintenance plus revalidated task-owned root removal.
+UTC second timestamp not later than the injected verifier clock. `bytes` size
+is `1..20,971,520`; finalized kind computes its own SHA-256 and immutable
+metadata, while abandoned kind creates a closed non-final stage. Exact replay
+is a no-op; same identity with different kind/bytes/time throws
+`AssignmentOrderOriginalPrivateOrphanFixtureConflict` before mutation; invalid
+shape/root/marker/time/bytes or primitive failure throws
+`AssignmentOrderOriginalPrivateOrphanFixtureUnavailable`. Both exceptions have
+message equal to class basename, code 0 and previous null. Precedence is command
+scalar/identity/bytes grammar → root authority → clock/future → existing
+exact replay/collision → primitive creation. It creates no request, audit,
+event, revision or reference row and cannot delete.
+
+Canonical eligible fixtures are abandoned `orphan-stage-0001` with bytes
+`stage-orphan-v1` and finalized `orphan-content-0001` with bytes
+`finalized-orphan-v1`, both timestamp `2026-09-02T07:00:00Z`. Sizes are exactly
+`15` and `19`; finalized SHA-256 is
+`edebbe397df1e6932d83cbf742512b480524c89bc6e9b6b679fafec5896db24f`.
+Timestamp is stored in owned metadata and is the only candidate-age input;
+filesystem mtime/ctime remain primitive metadata and are ignored.
+
+The fixture root is an absolute canonical directory outside repository
+realpath, pre-created by verifier with owner/root UID and exact mode `0700`, with
+no symlink in root/member graph. Parent pre-creates regular marker
+`.aoou-verifier-owner` mode `0600`, same UID, exact bytes
+`aoou-private-orphan-fixture-v1\n<ownershipToken>\n`, token 32 lower hex.
+Factory realpath/lstat-validates root, every parent/member and marker before any
+write and again before verifier removal. Missing/wrong UID/mode/type/token,
+repo-contained path, symlink/hardlink (`nlink!=1`) or changed identity is fixed
+unavailable; fixture never creates/repairs root/marker and never follows links.
+Production bootstrap/application/HTTP cannot construct or select this factory;
+verifier cleans only through maintenance plus revalidated task-owned root removal.
+
+`AssignmentOrderOriginalRealMaintenanceVerificationFactory` binds real
+production repository/private storage/evidence layout and injects only explicit
+clock/fault ports; it has no fake repository/storage and production cannot
+select it. Canonical example clock is `2026-09-02T09:00:00Z`. Command request is
+`00000000-0000-4000-8000-000000000201`, principal `test-maintenance-01`, cutoff
+`2026-09-02T07:30:00Z`, limit `10`, cursor null. Candidates order by
+`(07:00:00Z,orphan-content-0001)` then `(07:00:00Z,orphan-stage-0001)`. Expected
+Result is `COMPLETED/null/false`, scanned/deleted/retained/failed `2/2/0/0`,
+nextCursor null; same request is `REPLAYED` with identical counts and no new
+delete/audit. Recursively sorted evidence is exactly:
+
+```text
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","deleted":2,"failed":0,"nextCursor":null,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000201","retained":0,"retryable":false,"scanned":2,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-requests-v1"}
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","auditId":1,"deleted":2,"failed":0,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000201","retained":0,"retryable":false,"scanned":2,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-audits-v1"}
+```
+
+Candidate timestamp exactly equal cutoff is eligible; `07:30:00.000001Z` is
+not. Fixture timestamp `09:00:01Z` is future and rejected before mutation.
 
 final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException
 {
