@@ -242,7 +242,7 @@ Storage SHALL начать private stage до чтения stream; application �
 - **AND** request301 invalid-inspector abort-failure run has exact request/audit/blob/log JSON, ordered call transcript, empty-log throwing variant and authorization+terminal-lookup-only byte-identical retry
 
 ### Requirement: Production safe log fail-closed construction
-`AssignmentOrderOriginalProductionConfig` SHALL require `safeLogFile` in addition to `privateStorageRoot` and `tablePrefix`. Before any database access or private-storage validation/access, `ProductionAssignmentOrderOriginalFactory` MUST resolve and validate `safeLogFile` as an already existing canonical regular file, MUST reject a symlink at the configured path, MUST require ownership by the current effective user and exact permission mode `0600`, and MUST bind the real append-only cleanup/release safe-log observer to that canonical file. The factory MUST NOT create, chmod, chown, replace, truncate or otherwise repair the file.
+`AssignmentOrderOriginalProductionConfig` SHALL require `safeLogFile` in addition to `privateStorageRoot` and `tablePrefix`. Before any database access or private-storage validation/access, `ProductionAssignmentOrderOriginalFactory` MUST resolve and validate `safeLogFile` as an already existing canonical regular file, MUST reject a symlink at the configured path, MUST require ownership by the current effective user and exact permission mode `0600`, and MUST bind the real append-only cleanup/release safe-log observer to that canonical file. The retained append descriptor MUST have exact device/inode identity with the final non-following pathname observation and MUST itself be revalidated by `fstat` as regular, current-effective-user-owned and exact `0600` before resource access or write. Any open, `fstat`, identity or attribute mismatch MUST close an opened descriptor and surface only the existing fixed redacted production-configuration error. The factory MUST NOT create, chmod, chown, replace, truncate, append to or otherwise repair/change the file on construction failure. This descriptor-integrity clarification is pending fresh independent technical Gate 1 review and preserves the earlier owner-approved policy/history.
 
 #### Scenario: Valid production safe-log binding
 - **WHEN** `safeLogFile` names an existing non-symlink regular file owned by the current effective user with exact mode `0600`
@@ -251,6 +251,11 @@ Storage SHALL начать private stage до чтения stream; application �
 #### Scenario: Invalid production safe-log fails before resources
 - **WHEN** the configured path is missing, non-canonical, a symlink, not a regular file, owned by another user or has mode other than exact `0600`
 - **THEN** factory construction throws one fixed fail-closed construction error before database access and before private-storage validation/access, does not create or repair any file, and exposes no configured path, secret or underlying exception detail
+
+#### Scenario: Opened descriptor attributes disagree with pathname validation
+- **WHEN** a private verification-only task-owned child calls the real production factory after an unchanged control run, and a test-only native interposer makes only the exact synthetic safe-log pathname observation report matching device/inode plus regular/current-EUID/`0600` while the retained descriptor's real `fstat` has a different mode
+- **THEN** factory construction closes the descriptor and throws the exact fixed redacted production-configuration error with zero database calls, no private-root touch, no safe-log bytes or metadata change and no retained descriptor
+- **AND** selector/interposer are unreachable from production config/environment/request/CLI/global/service locator; every fixture condition is asserted as setup, probabilistic timing is forbidden, and cleanup is bounded to revalidated task-owned child/interposer/fixture artifacts
 
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только

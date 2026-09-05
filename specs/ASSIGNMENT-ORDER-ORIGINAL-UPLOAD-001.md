@@ -970,6 +970,34 @@ already specified single canonical JSON line without truncating or rewriting
 prior bytes. A later append failure remains best-effort observer failure under
 the existing selected-Result rules and exposes no path, secret or exception.
 
+Candidate technical descriptor-integrity amendment, pending fresh independent
+Gate 1 review: the append descriptor actually retained by
+`AssignmentOrderOriginalFileSafeLog` MUST be revalidated with `fstat` before
+any database/private-storage access or diagnostic write. Its opened identity
+MUST match the final non-following pathname observation by exact device and
+inode, and its `fstat` attributes MUST identify a regular file owned by the
+current effective UID with exact permission bits `0600`. Any open, `fstat`,
+identity or attribute mismatch MUST close the opened descriptor when one exists
+and fail construction through the existing fixed redacted
+`AssignmentOrderOriginalProductionConfigurationUnavailable` boundary. It MUST
+NOT create, repair, replace, truncate, append to or otherwise change the
+configured file on this failure.
+
+Gate 2 SHALL observe this requirement through the real public production
+factory in a bounded task-owned child process. A private verification-only
+native interposer may alter only the pathname metadata returned for the exact
+synthetic safe-log fixture so that device/inode still match the real file while
+the pathname observation reports regular/current-EUID/`0600` and the retained
+descriptor's real `fstat` reports a different mode. The interposer and its
+selector MUST remain test-only and MUST NOT be reachable from production
+config, environment, request, CLI, global or service locator. The test MUST
+first prove an unchanged control construction, assert every synthetic
+precondition separately as setup, then prove the mismatch returns the exact
+fixed factory exception with zero database calls, no private-root touch, no
+safe-log bytes or metadata change and no retained descriptor. Cleanup MUST be
+bounded to the revalidated task-owned child, interposer and fixture artifacts;
+setup/control failure is not RED and probabilistic timing loops are forbidden.
+
 Safe-log correlation ID for every command attempt is the first 12 lower hex of
 SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup
 failures never replace the selected Result and each failing primitive logs once
