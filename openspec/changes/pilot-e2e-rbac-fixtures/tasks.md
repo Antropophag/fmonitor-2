@@ -28,6 +28,6 @@ exact contract — revision 3 `proposed-protected-e2e-admission-amendment-2026-0
 
 - [x] 5.1 Получить independent technical readiness и owner approval exact candidate hash.
 - [x] 5.2 Написать literal matrix для public test-support oracle, сохранить missing-oracle RED и получить independent Gate 3 (`reviews/tests/PILOT-E2E-ADMISSION-ORACLE-001-v1.md`).
-- [ ] 5.3 Реализовать минимальный oracle, получить focused GREEN и independent Gate 5 без изменения approved tests.
-- [ ] 5.4 Сохранить свежий real-HTTP mismatch unchanged protected test и отдельно semantic-list acceptance; подготовить unapplied assertion-only patch и получить distinct independent Gate 3.
-- [ ] 5.5 Применить только reviewed patch, запустить полный E2E без skips, сохранить downstream failures и full make verify, получить independent Gate 5 integration.
+- [x] 5.3 Реализовать минимальный oracle, получить focused GREEN и independent Gate 5 без изменения approved tests (`reviews/code/PILOT-E2E-ADMISSION-ORACLE-001-v2.md`; дополнительный class-token regression прошёл собственные RED/Gate3/GREEN).
+- [x] 5.4 Сохранить свежий real-HTTP mismatch unchanged protected test и отдельно semantic-list acceptance; подготовить unapplied assertion-only patch и получить distinct independent Gate 3 (`reviews/tests/PILOT-E2E-ADMISSION-ASSERTIONS-001-v1.md`).
+- [x] 5.5 Применить только reviewed patch, запустить полный E2E без skips, сохранить downstream failures и full make verify, получить independent Gate 5 integration (`reviews/code/PILOT-E2E-ADMISSION-ASSERTIONS-001-v1.md`, scoped APPROVED; SHA `060e880`, full verify FAIL DB/E2E на следующем unchanged card assertion; parent не Done).
