@@ -227,3 +227,13 @@ record не повторяет diagnostic/cleanup и не меняет Result/au
 следующая invocation повторяет binding. Direct opened owner I/O errors сохраняются.
 Технический draft требует independent Gate1, public command RED, Gate3 и Gate5.
 Shared owner scoped Gate5 APPROVED на73c3c229 не закрывает combined command review.
+
+## Command scalar boundary — 2026-09-06
+
+`ASSIGNMENT-ORDER-ORIGINAL-COMMAND-SHAPE-001` конкретизирует existing step1:
+real calendar date, valid UTF-8/raw Cc policy, Unicode trim/code-point lengths,
+normalized correction reason и opaque printable ASCII1..80 IDs. Worker token
+grammar остаётся отдельной. Invalid metadata не достигает authorization/replay;
+stream закрывается один раз без read. Generated malformed IDs fail before finalize.
+Это technical Gate1 amendment; no new product grants/policy. Observers/response
+loss и прочие public API parity проходят отдельный corrective scope.

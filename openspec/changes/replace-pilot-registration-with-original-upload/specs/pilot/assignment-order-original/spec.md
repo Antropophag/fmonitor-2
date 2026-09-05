@@ -389,3 +389,17 @@ Throwable не меняет selected Result, cleanup, required audit или deli
 #### Scenario: Request binding throws before context update
 - **WHEN** request-aware logger useRequest throws
 - **THEN** command lifecycle продолжается, record callbacks этой invocation отсутствуют; следующая invocation снова пытается bind exact request
+
+### Requirement: Exact scalar boundary precedes replay
+
+Application SHALL соблюдать COMMAND-SHAPE-001 до business ports: exact Gregorian
+date, UTF-8/raw controls, Unicode trim/code-point limits и opaque ASCII1..80 IDs.
+Accepted correction SHALL сохранять normalized reason; filename не выбирает path.
+
+#### Scenario: Malformed metadata with stored terminal request
+- **WHEN** request ID существует, но filename/reason/date/lineage нарушает scalar shape
+- **THEN** INVALID_COMMAND, evidence null, business lookup/read/audit calls0 и stream close1; stored result не раскрывается
+
+#### Scenario: Unicode boundary and generated opaque identity
+- **WHEN** normalized reason содержит500 valid code points либо source возвращает malformed GENERATED ID
+- **THEN** valid reason достигает normal correction и сохраняется normalized; malformed generated ID даёт retryable PERSISTENCE_FAILURE до finalize/commit

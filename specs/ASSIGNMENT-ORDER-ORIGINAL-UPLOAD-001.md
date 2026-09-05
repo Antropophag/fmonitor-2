@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v61 GATE 1 REREVIEW PENDING — DIAGNOSTIC FAILURE ISOLATION**
-Версия: **v61**
+Статус: **v62 GATE 1 REREVIEW PENDING — COMMAND SCALAR BOUNDARY**
+Версия: **v62**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -55,6 +55,13 @@ Command {
 Composition не принимается от caller: seam читает immutable snapshot по exact pair `(installationCaseId, assignmentOrderId)`. Требуется минимум один уникальный installer identity и ровно один control engineer identity. `compositionConfirmed=true` означает только человеческое подтверждение соответствия PDF выбранному составу; OCR и проверка подписей не выполняются.
 
 Любая shape/identity ошибка возвращает `REJECTED/INVALID_COMMAND` до чтения upload stream. Несуществующая или не принадлежащая case order identity возвращает `REJECTED/ORDER_NOT_FOUND` с тем же no-mutation contract.
+
+`specs/ASSIGNMENT-ORDER-ORIGINAL-COMMAND-SHAPE-001.md` defines the exact
+technical scalar boundary: calendar validity, UTF-8/control/Unicode-trim and
+code-point bounds, normalized correction persistence, printable ASCII1..80 opaque
+IDs and first-step/no-business-port invalid mapping. This amendment requires
+fresh independent Gate1; prior product authority and replay semantics remain.
+Generated ID values use the same opaque grammar before finalize/commit.
 
 ## 3. Exact execution precedence
 

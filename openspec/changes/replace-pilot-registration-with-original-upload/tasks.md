@@ -80,10 +80,17 @@ Gate1 review, не новое product authority и не разрешение rej
 
 ## Diagnostic isolation gates — 2026-09-06
 
-- [ ] 1.35 Independent Gate1 SAFE-LOG-ISOLATION-001 exact contract; owner scope unchanged.
-- [ ] 4.4 Public-command diagnostic failure RED и independent Gate3, включая result/cleanup/audit/delivery и request reset.
-- [ ] 5.4 Minimal diagnostic boundary GREEN и independent Gate5; direct owner error behavior unchanged.
+- [x] 1.35 Independent Gate1 SAFE-LOG-ISOLATION-001 exact contract; owner scope unchanged.
+- [x] 4.4 Public-command diagnostic failure RED и independent Gate3, включая result/cleanup/audit/delivery и request reset.
+- [x] 5.4 Minimal diagnostic boundary GREEN и independent Gate5; direct owner error behavior unchanged.
 
 Owner component Gate5: `reviews/code/ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001-v1.md`,
 APPROVED implementation73c3c229. Task5.3 remains open for combined G5-SAFELOG-2
 closure after diagnostic isolation; no full command/launch readiness claim.
+
+## Scalar boundary and cumulative corrective gates — 2026-09-06
+
+- [x] 5.5 Dynamic fingerprint/ID/clock correction: RED33cases, Gate3v2 APPROVED, GREEN738b9ad, independent scoped Gate5 APPROVED; observers/shape remain open.
+- [ ] 1.36 Independent Gate1 COMMAND-SHAPE-001 exact Unicode/calendar/opaque-ID and resource semantics; no new product decision.
+- [ ] 4.5 Public shape/generated-ID boundary RED and independent Gate3; invalid before auth/replay plus positive boundary/normalization controls.
+- [ ] 5.6 Minimal scalar boundary GREEN and independent Gate5; observer/public API parity/combined review remain separate.
