@@ -269,6 +269,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 - **WHEN** Gate 2 проверяет clean/repeat/partial/populated/conflict migration и завершает Example-A run
 - **THEN** version-2 manifest exact tables/columns/keys/FKs/checks/equivalence и literal fixture projections/digests определяют independent expected values, `cleanupExampleA` удаляет только byte-validated fixture rows, а test удаляет только separately validated task-owned database
 - **AND** version 2 replaces only v1 UNIQUE(private_content_identity) with non-unique INDEX, preserves populated rows, permits same-content revisions, reports revisions affected, repeats exact, and conflicts on every other drift before DDL
+- **AND** classifier finds sole safe-name v1 unique or exact `idx_aoou_revision_content` v2 index; manifest walk upgrades v1 by one atomic drop+add ALTER at revisions position with post-ALTER phase/re-read/retry v1-or-v2 recovery, then creates suffix and appends capability last; clean/roots+v1-partial/full-populated-v1/mixed-drift/v2-repeat affected orders are exact
 
 #### Scenario: Capability publication fail closed
 - **WHEN** original schema incomplete/fails/revalidation differs, observer fails after exact schema, capability CHECK is ambiguous/non-exact, or final ALTER fails

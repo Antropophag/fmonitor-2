@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v53 GATE 1 REVIEW PENDING — SHARED CONTENT IDENTITY SCHEMA AMENDMENT**
-Версия: **v53**
+Статус: **v54 GATE 1 REREVIEW PENDING — SHARED CONTENT IDENTITY SCHEMA AMENDMENT**
+Версия: **v54**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1107,6 +1107,8 @@ final class AssignmentOrderOriginalSchemaMigrationUnavailable extends \RuntimeEx
 enum AssignmentOrderOriginalSchemaMigrationPhase: string
 {
     case AFTER_SCHEMA_TABLE_CREATED = 'after_schema_table_created';
+    case AFTER_SCHEMA_V2_REVISION_INDEX_ALTER =
+        'after_schema_v2_revision_index_alter';
     case AFTER_SCHEMA_REVALIDATED_BEFORE_CAPABILITIES =
         'after_schema_revalidated_before_capabilities';
     case AFTER_CAPABILITY_ALTER_BEFORE_REVALIDATION =
@@ -1237,6 +1239,29 @@ column/check/FK difference conflicts with zero DDL. Multiple immutable revisions
 MAY and same-content corrections MUST share one byte-identical
 `private_content_identity`; reference lookup is existential across all revisions.
 
+V2 physical non-unique index name is exactly `idx_aoou_revision_content`.
+Classifier requires every other revisions column/key/FK/CHECK exact, then finds
+exactly one index whose ordered columns are only `private_content_identity`:
+UNIQUE with any safe name `[A-Za-z0-9_$]{1,64}` is v1; non-unique with the exact
+v2 name is v2; absent/multiple/wrong columns/uniqueness/name is conflict. V1
+upgrade uses one MariaDB atomic DDL:
+`ALTER TABLE <revisions> DROP INDEX <validated-v1-name>, ADD INDEX
+idx_aoou_revision_content(private_content_identity)`, then invokes
+`AFTER_SCHEMA_V2_REVISION_INDEX_ALTER` with revisions logical name and re-reads
+full exact v2. Query/ALTER/observer/re-read failure throws fixed migration
+unavailable; because the DDL is atomic, durable state is v1 or v2. Retry
+classifies either before further DDL, never rewrites rows, and never adds a
+second index.
+
+Manifest walk accepts only a leading existing subset. Missing revisions is
+created directly v2. Existing v1 revisions is upgraded exactly when the walk
+reaches revisions, before any missing trailing table. `affectedTables` lists
+each logical table once at manifest position: clean is all seven; roots+v1
+revisions partial is revisions then each created trailing table; full populated
+v1 is revisions only; capability is appended last only for separate V4→V5.
+Full/mixed v1 with any other drift returns binary-sorted conflicts and zero DDL.
+Exact v2 populated repeat is UNCHANGED/empty.
+
 The prerequisite `fm2_process_user_capabilities` CHECK has exactly two accepted
 semantic states. V4 is the exact set `assignment_order.prepare`,
 `assignment_order.confirm_registration`, `installation.open`,
@@ -1255,9 +1280,10 @@ output if and only if its candidate classification conflicts. Exact V5 repeats
 unchanged and never appears in `affectedTables()`.
 
 Migration order is: validate prefix → inspect all seven original tables and the
-capability CHECK → return all conflicts without DDL → create only missing
-leading-suffix original tables in manifest order, invoking
-`AFTER_SCHEMA_TABLE_CREATED` with that logical table after each durable CREATE
+capability CHECK → return all conflicts without DDL → walk manifest order,
+creating missing leading-suffix tables directly v2 and upgrading an existing v1
+revisions index at its position; invoke `AFTER_SCHEMA_TABLE_CREATED` after each
+CREATE and `AFTER_SCHEMA_V2_REVISION_INDEX_ALTER` after its atomic ALTER
 → re-read and require the full exact seven-table schema →
 `AFTER_SCHEMA_REVALIDATED_BEFORE_CAPABILITIES` with null table → if and only if
 prior state was exact V4, replace that one safe-named CHECK with exact V5 as the

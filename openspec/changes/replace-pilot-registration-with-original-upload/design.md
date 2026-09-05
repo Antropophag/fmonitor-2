@@ -88,6 +88,10 @@ Additive canonical migration вводит immutable root/revision identities, te
 Schema v2 forward-upgrades only revisions private-content key from unique to
 non-unique index, preserving v1 rows so same-content immutable revisions share
 one content-addressed identity and reference lookup remains existential.
+The manifest walk classifies a sole safe-name v1 unique versus exact named v2
+index, performs one atomic drop+add ALTER at revisions position, observes and
+revalidates it, then creates any suffix and publishes capability last. Retry
+accepts only atomic v1/v2; all other mixed drift conflicts before DDL.
 
 ### 8. HTTP/read/download boundary отложен
 
