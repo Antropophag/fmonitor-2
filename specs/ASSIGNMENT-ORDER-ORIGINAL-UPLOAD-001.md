@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v28 GATE 1 REVIEW PENDING — UNKNOWN-OUTCOME FAULT AMENDMENT**
-Версия: **v28**
+Статус: **v29 GATE 1 REREVIEW PENDING — UNKNOWN-OUTCOME FAULT AMENDMENT**
+Версия: **v29**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -615,7 +615,6 @@ enum AssignmentOrderOriginalFaultPoint: string
     case FINGERPRINT_LOOKUP = 'fingerprint_lookup';
     case LINEAGE_LOOKUP = 'lineage_lookup';
     case COMMIT_BEFORE = 'commit_before';
-    case COMMIT_AFTER_UNKNOWN = 'commit_after_unknown';
     case COMMIT_UNKNOWN_FOUND = 'commit_unknown_found';
     case COMMIT_UNKNOWN_NOT_FOUND = 'commit_unknown_not_found';
     case COMMIT_UNKNOWN_UNAVAILABLE = 'commit_unknown_unavailable';
