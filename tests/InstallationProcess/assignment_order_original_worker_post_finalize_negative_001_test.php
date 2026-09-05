@@ -80,36 +80,57 @@ try {
     ];
     fwrite($pairs[0][0], json_encode($command, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n");
     stream_socket_shutdown($pairs[0][0], STREAM_SHUT_WR);
-    stream_set_blocking($pairs[2][0], false);
-    $barrier = '';
+    foreach ([$pairs[2][0], $pairs[3][0], $pipes[1], $pipes[2]] as $endpoint) stream_set_blocking($endpoint, false);
+    $barrier = $result = $stdout = $stderr = '';
+    $released = false;
+    $exit = null;
     $deadline = microtime(true) + 3.0;
     do {
-        $chunk = fread($pairs[2][0], 4096);
-        if (is_string($chunk)) $barrier .= $chunk;
+        foreach ([[$pairs[2][0], &$barrier], [$pairs[3][0], &$result], [$pipes[1], &$stdout], [$pipes[2], &$stderr]] as [&$channel, &$buffer]) {
+            $chunk = fread($channel, 4096);
+            if (is_string($chunk) && $chunk !== '') $buffer .= $chunk;
+        }
+        unset($channel, $buffer);
+        // Release only to bound the known-bad implementation; this is not a
+        // test-owned finalized fact or lock and cannot make an empty barrier pass.
+        if (!$released && $barrier !== '') {
+            fwrite($pairs[1][0], "RELEASE 00000000-0000-4000-8000-000000000560\n");
+            stream_socket_shutdown($pairs[1][0], STREAM_SHUT_WR);
+            $released = true;
+        }
         $status = proc_get_status($process);
-        if (!$status['running'] || str_contains($barrier, "\n")) break;
+        if (!$status['running']) { $exit = $status['exitcode']; break; }
         usleep(10_000);
     } while (microtime(true) < $deadline);
-    // Release only to bound the known-bad implementation; this is not a
-    // test-owned finalized fact or lock and cannot make an empty barrier pass.
-    if ($barrier !== '') fwrite($pairs[1][0], "RELEASE 00000000-0000-4000-8000-000000000560\n");
-    stream_socket_shutdown($pairs[1][0], STREAM_SHUT_WR);
-    stream_set_blocking($pairs[3][0], true);
-    $result = stream_get_contents($pairs[3][0]);
-    $deadline = microtime(true) + 3.0;
-    while (proc_get_status($process)['running'] && microtime(true) < $deadline) usleep(10_000);
-    $status = proc_get_status($process);
-    if ($status['running']) { proc_terminate($process, 9); throw new TestFailure('Worker exceeded bounded completion deadline.'); }
-    $stdout = stream_get_contents($pipes[1]); $stderr = stream_get_contents($pipes[2]);
+    if ($exit === null) throw new TestFailure('Worker exceeded bounded completion deadline.');
+    foreach ([[$pairs[2][0], &$barrier], [$pairs[3][0], &$result], [$pipes[1], &$stdout], [$pipes[2], &$stderr]] as [&$channel, &$buffer]) {
+        while (($chunk = fread($channel, 4096)) !== false && $chunk !== '') $buffer .= $chunk;
+    }
+    unset($channel, $buffer);
+    proc_close($process); $process = null;
     assertSameValue('', $barrier, 'Unauthorized command emits no post-finalize READY because no actual finalize lifecycle event occurred.');
     $decoded = json_decode(rtrim($result, "\n"), true, 512, JSON_THROW_ON_ERROR);
     assertSameValue(['rejected','authorization_denied',false], [$decoded['status'], $decoded['reasonCode'], $decoded['retryable']], 'Unauthorized worker result remains exact.');
     assertSameValue(['',''], [$stdout,$stderr], 'Negative lifecycle run keeps stdio empty.');
+    assertSameValue(0, $exit, 'Corrected negative lifecycle worker exits successfully.');
     assertSameValue([], array_values(array_diff(scandir($private) ?: [], ['.','..'])), 'No manual finalized metadata, lock or content is fabricated.');
 } finally {
     foreach ($pairs as $pair) foreach ($pair as $endpoint) if (is_resource($endpoint)) fclose($endpoint);
     foreach ($pipes as $pipe) if (is_resource($pipe)) fclose($pipe);
-    if (is_resource($process)) { if (proc_get_status($process)['running']) proc_terminate($process, 9); proc_close($process); }
+    if (is_resource($process)) {
+        $status = proc_get_status($process);
+        if ($status['running']) {
+            proc_terminate($process, 15);
+            $deadline = microtime(true) + 0.5;
+            do { usleep(10_000); $status = proc_get_status($process); } while ($status['running'] && microtime(true) < $deadline);
+        }
+        if ($status['running']) {
+            proc_terminate($process, 9);
+            $deadline = microtime(true) + 0.5;
+            do { usleep(10_000); $status = proc_get_status($process); } while ($status['running'] && microtime(true) < $deadline);
+        }
+        proc_close($process);
+    }
     if ($db instanceof mysqli) $db->close();
     try { $admin->query("DROP DATABASE IF EXISTS `{$database}`"); } catch (Throwable) {}
     $admin->close(); $remove($root);
