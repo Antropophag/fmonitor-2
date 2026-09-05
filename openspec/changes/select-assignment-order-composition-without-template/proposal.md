@@ -74,3 +74,12 @@ registry/event/audit IDs сохраняют UNSIGNED physical type; bounds об�
 public allocator и storage pre-commit/read validation с прежними failure
 outcomes. Новый registry engine change готовит отдельный exact contract; его
 planning не закрывает writer cutover, original reader или optional renderer.
+
+## Counter outcome correction v0.8
+
+Proven lossless registry/event/audit counter overflow сохраняет nonretryable
+allocation_capacity_exhausted после confirmed rollback. Malformed/ambiguous
+native receipt даёт persistence_failure; unknown acknowledgement остаётся
+outcome_unknown. Public allocator возвращает closed allocation result, а не
+невозможный overflowed int. Это уточняет прежний capacity contract и не вводит
+новую policy; P0 release dependencies и full Gate1 остаются открыты.

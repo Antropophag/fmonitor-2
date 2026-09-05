@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.7, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.8, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -536,7 +536,7 @@ interface SelectionTransactionSession
  public function lockedCase():SelectionCaseLookup;
  public function findTerminalRequest(SelectionRequestId $id):SelectionTerminalRequestLookup;
  public function selectionState():SelectionStateLookup;
- public function allocateIdentity(SelectionSourceKind $kind,SelectionInstant $at):SelectionIdentityAllocation;
+ public function allocateIdentity(SelectionSourceKind $kind,SelectionInstant $at):SelectionIdentityAllocationResult;
  public function stageAccepted(SelectionAcceptedPersistence $payload):SelectionStageResult;
  public function stageTerminalAttempt(SelectionTerminalAttemptPersistence $payload):SelectionStageResult;
 }
@@ -567,20 +567,20 @@ DB-generated eventId/auditId отсутствуют в constructors. ID назн
 до признания stage успешным. Generated IDs не входят в external command result.
 
 `SelectionStageStatus` — enum STAGED='staged', REQUEST_RACE='request_race',
-PERSISTENCE_ERROR='persistence_error'. `SelectionStageResult` — final readonly,
+PERSISTENCE_ERROR='persistence_error', CAPACITY_EXHAUSTED='capacity_exhausted'. `SelectionStageResult` — final readonly,
 private constructor, public readonly status и nullable eventId/auditId; factories:
 `accepted(int eventId,int auditId): self` → STAGED с обоими IDs;
 `terminal(int auditId): self` → STAGED с null eventId и auditId;
-`requestRace(): self` и `persistenceError(): self` → соответствующий status,
-оба ID null. При accepted stage eventId и auditId обязательны; terminal stage
+`requestRace(): self`, `persistenceError(): self`, `capacityExhausted(): self`
+→ соответствующий status, оба ID null. При accepted stage eventId и auditId обязательны; terminal stage
 никогда не возвращает eventId. Это receipt staging, не committed success;
 rollback может оставить AUTO_INCREMENT gap, но не acknowledged факт.
 
 `SelectionAuditWriteStatus` — enum COMMITTED='committed', ROLLED_BACK='rolled_back',
-OUTCOME_UNKNOWN='outcome_unknown'. `SelectionAuditWriteResult` — final readonly,
+OUTCOME_UNKNOWN='outcome_unknown', CAPACITY_EXHAUSTED='capacity_exhausted'. `SelectionAuditWriteResult` — final readonly,
 private constructor, public readonly status и nullable auditId; factories
-`committed(int auditId): self`, `rolledBack(): self`, `outcomeUnknown(): self`.
-Только committed несёт valid ID. Receipt factory с ID вне bounds выбрасывает
+`committed(int auditId): self`, `rolledBack(): self`, `outcomeUnknown(): self`,
+`capacityExhausted(): self`. Только committed несёт valid ID. Receipt factory с ID вне bounds выбрасывает
 `InvalidArgumentException('Invalid selection receipt.')` без I/O; production
 stage adapter сначала валидирует DB values и возвращает persistenceError
 без самостоятельного rollback/commit; транзакцией владеет только UoW.
@@ -626,7 +626,8 @@ PERSISTENCE_FAILURE; не является бизнес-отказом.
 | --- | --- | --- | --- |
 | accepted STAGED receipt, exact staged selected result | commit(selected result) | committed(same result) | selected |
 | terminal STAGED receipt, exact rejected/conflict result | commit(terminal result) | committed(same result) | exact rejected/conflict |
-| stage PERSISTENCE_ERROR, query failure, invalid generated ID or wrong receipt shape | rollback(PERSISTENCE_FAILURE) | rolledBack(PERSISTENCE_FAILURE) | failed/persistence_failure |
+| stage PERSISTENCE_ERROR, ambiguous query failure, malformed generated-ID representation or wrong receipt shape | rollback(PERSISTENCE_FAILURE) | rolledBack(PERSISTENCE_FAILURE) | failed/persistence_failure |
+| allocator/stage CAPACITY_EXHAUSTED with lossless proven registry/event/audit counter overflow | rollback(ALLOCATION_CAPACITY_EXHAUSTED) | rolledBack(ALLOCATION_CAPACITY_EXHAUSTED) | failed/allocation_capacity_exhausted, retryable false |
 | stage REQUEST_RACE | callback requestRace(); UoW rolls back | requestRace() | fresh authorized terminal lookup, as section10 |
 | typed state/case/dependency unavailable or malformed while locked | rollback(DEPENDENCY_UNAVAILABLE) | rolledBack(DEPENDENCY_UNAVAILABLE) | failed/dependency_unavailable |
 | proven allocation/revision/version bound exceeded before writes | rollback(ALLOCATION_CAPACITY_EXHAUSTED) | rolledBack(ALLOCATION_CAPACITY_EXHAUSTED) | failed/allocation_capacity_exhausted, retryable false |
@@ -646,9 +647,57 @@ Independent denial/changed-request audit не использует case UoW. Е�
 владеет только своей transaction и pre-commit generated-ID validation:
 committed(valid auditId) → исходный denial/request-conflict result;
 rolledBack() → failed/persistence_failure;
+capacityExhausted() → failed/allocation_capacity_exhausted, retryable false;
 outcomeUnknown() → failed/persistence_outcome_unknown. Malformed receipt или
 thrown writer error, после которого commit нельзя исключить, → outcome_unknown,
 без повторной записи audit. Technical failure/exhaustion не кешируются.
+
+### 9.2 Lossless allocator and generated-counter closure
+
+`SelectionIdentityAllocationStatus` — enum ALLOCATED='allocated',
+CAPACITY_EXHAUSTED='capacity_exhausted', PERSISTENCE_ERROR='persistence_error'.
+`SelectionIdentityAllocationResult` — final readonly с private constructor и
+public readonly status, nullable `SelectionIdentityAllocation $allocation`.
+Factories: `allocated(SelectionIdentityAllocation): self`,
+`capacityExhausted(): self`, `persistenceError(): self`. Только ALLOCATED имеет
+payload. Allocated factory проверяет positive bounded IDs/case/version,
+sourceKind=SELECTION и valid instant; иначе fixed
+`InvalidArgumentException('Invalid selection allocation.')`. Allocation port
+не может вернуть PHP-overflowed ID или внешний mutable status вместо этого типа.
+
+Единственный registry allocator владеет чтением current frontier и фактическим
+ID reservation. Перед int conversion он проверяет canonical unsigned decimal
+server value: digits only, no leading zeros кроме0, comparison по length и
+лексикографическому порядку. Ни float, ни overflowed cast недопустимы. Точно
+доказанный next/generated registry ID >9223372036854775807 → capacityExhausted;
+malformed/zero/negative/ambiguous value, wrong case/source/version, query failure
+без доказанного overflow → persistenceError. Callback переносит соответствующую
+typed rollback cause в UoW; allocation result не является commit acknowledgement.
+
+Event и audit AUTO_INCREMENT counters независимы от registry allocator.
+Storage проверяет их actual generated decimal IDs до constructing int receipt
+и до commit. Доказанный positive decimal >PHP_INT_MAX → stage capacityExhausted;
+ошибочная lexical representation/zero/negative/protocol mismatch → persistenceError.
+Даже если identity/request уже staged, UoW откатывает все business facts; возможен
+только технический AUTO_INCREMENT gap. Independent audit writer при таком же
+proven audit-counter overflow возвращает capacityExhausted только после
+confirmed rollback; uncertain rollback/commit → outcomeUnknown. SQL error text
+сам по себе не является доказательством capacity exhaustion.
+
+Если до обращения к allocator current case version/revision уже на пределе,
+application выбирает capacity rollback до reservation. Если exhausted значение
+получено после native allocation, no acknowledged out-of-range identity возникает:
+public nonretryable capacity result допустим только после confirmed rollback.
+Shape-invalid input IDs остаются invalid_command до этих проверок.
+
+Fixed boundary examples: registry next9223372036854775808 → capacity without
+allocation; event native generated9223372036854775808 → capacity after rollback
+всех staged selected facts; independent denial audit generated9223372036854775808
+→ capacity after its confirmed rollback; native result `not-a-number` → persistence
+failure after confirmed rollback; любой из этих rollback без acknowledgement
+→ outcomeUnknown и стандартная recovery без mutation retry. Last valid generated
+ID9223372036854775807 разрешён, следующий invocation exhausted. Event/audit IDs
+не переиспользуются и не перенумеровываются ради обхода capacity.
 
 Typed verification observer exposes registry ownership, selection, request,
 event and audit snapshots via explicit test configuration; no production fault
@@ -827,7 +876,7 @@ FKR actor заменяет только exact latest ledger selection без acc
 pending choice. После accepted original изменение состава — только отдельный
 forward-only order lifecycle. Legacy prepared row не конвертируется.
 
-## 16. v0.7 technical correction disposition
+## 16. v0.8 technical correction disposition
 
 v0.4 independent review:
 `docs/operations/selection-v04-independent-readiness-2026-09-05.md`.
@@ -849,11 +898,20 @@ independent review; RED и production implementation не начаты.
 MariaDB не разрешает AUTO_INCREMENT column в CHECK. Registry/event/audit IDs
 поэтому сохраняют BIGINT UNSIGNED AUTO_INCREMENT без такого CHECK; все bounds
 остаются обязательны в allocator/storage pre-commit validation, receipt factories
-и read integrity. Invalid generated ID вызывает rollback/persistence_failure,
-как section9.1; invalid persisted ID — unavailable, не success. Не меняются
+и read integrity. Malformed generated-ID representation вызывает rollback/persistence_failure;
+lossless proven positive counter overflow — rollback/allocation_capacity_exhausted,
+как sections9.1/9.2. Invalid persisted ID — unavailable, не success. Не меняются
 ID range, allocation authority, FK types, replay или owner policy.
 Источник: [MariaDB constraints](https://mariadb.com/docs/server/reference/sql-statements/data-definition/constraint);
 local MariaDB11.4.7 data-free DDL probe дал errno1901 для прежнего shape.
 Это schema constructibility correction, не Gate2 RED application behavior.
 Registry engine planning: `canonicalize-assignment-order-identity-registry` и
 `ASSIGNMENT-ORDER-IDENTITY-REGISTRY-001`; его draft не является Gate1 approval.
+
+### v0.8 Generated counter result correction
+
+Independent v0.7 review `selection-v07-generated-id-review-2026-09-05.md` потребовал
+различить proven capacity от malformed storage receipt. Sections9.1/9.2 теперь
+закрывают registry/event/audit mappings и allocator result type. Typed v0.6
+control-flow сохраняется; schema CHECK не возвращён. Full technical Gate1 всё
+ещё требует P0 release dependencies и свежего независимого approval.

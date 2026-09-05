@@ -144,5 +144,9 @@ commit и при чтении; MariaDB AUTO_INCREMENT column MUST NOT получ
 CHECK expression. Invalid ID никогда не становится acknowledged identity.
 
 #### Scenario: Generated ID вне допустимого диапазона
-- **WHEN** storage обнаруживает generated ID вне1..PHP_INT_MAX
-- **THEN** UoW откатывает stage с persistence_failure; success/receipt не выдаётся
+- **WHEN** storage lossless доказывает positive counter overflow вышеPHP_INT_MAX
+- **THEN** UoW после confirmed rollback возвращает nonretryable allocation_capacity_exhausted; success/receipt не выдаётся
+
+#### Scenario: Malformed native counter observation
+- **WHEN** generated-ID observation не является canonical decimal или противоречит allocation protocol
+- **THEN** confirmed rollback даёт persistence_failure; неизвестный acknowledgement остаётся outcome_unknown, не угадывается как capacity
