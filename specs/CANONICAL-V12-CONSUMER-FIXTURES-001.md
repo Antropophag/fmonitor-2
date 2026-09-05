@@ -63,12 +63,16 @@ Shared `ProductionMigrationRunnerCatalogContract` defaults тоже не мен�
    Если v12 absent, existing exact expected successor list дополняется 12 в конце.
    В частности v5 partial `[5,6,7,8,9,10,11,12]`; v7 predecessor
    `[8,9,10,11,12]`; v8 predecessor `[9,10,11,12]`.
-3. В classification race только v11 удалена после full initial run, v12 осталась
-   exact. Winner имеет schemaVersion 12, appliedVersions `[11]`; loser остаётся
-   прежним exact exit70/MIGRATION_FAILED. Direct v11 conflict остаётся v11.
+3. Classification race вызывает отдельный approved family-only verification
+   worker `tests/Support/classification_provenance_barrier_runner.php`, а не
+   полный production CLI. Его winner сохраняет schemaVersion 11,
+   appliedVersions `[11]`; loser сохраняет exact exit70/MIGRATION_FAILED.
+   Direct v11 conflict тоже остаётся v11. Последующий ordinary production CLI
+   repeat, напротив, имеет schemaVersion 12 и appliedVersions `[]`.
 4. Literal full table catalogs дополняются ровно
    `fm2_pilot_object_detail_quarantine` и `fm2_pilot_object_details` в binary
-   sorted порядке с configured prefix. IIC count 31 становится 33. Columns и
+   sorted порядке с configured prefix: после `fm2_pilot_invitations` и до
+   `fm2_pilot_role_permissions`. IIC count 31 становится 33. Columns и
    indexes двух tables берутся из exact manifest schema v0.4. Если существующий
    caller использует shared catalog, он явно выбирает уже существующие
    `columnsV12()` / `indexesV12()` только для full-runner expectations.
