@@ -109,6 +109,43 @@ final class AssignmentOrderOriginalPdfCorpus
         return $base."xref\n4 1\n".sprintf("%010d 00000 n \n",$offset)."trailer\n<< /Size 5 /Root 1 0 R /Prev {$previous} >>\nstartxref\n{$xref}\n%%EOF\n";
     }
 
+    public static function classicTrailerDictionaryVariant(string $key,bool $conflict=false): string
+    {
+        $values=['Root'=>$conflict?'2 0 R':'1 0 R','Size'=>$conflict?'100002':'4'];
+        if(!array_key_exists($key,$values))throw new \InvalidArgumentException('Unsupported classic trailer fixture key.');
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>'],"/{$key} {$values[$key]} ");
+    }
+
+    public static function incrementalPrevVariant(bool $malformed=false): string
+    {
+        $pdf=self::validIncrementalPrev();
+        if(!preg_match('/\/Prev ([0-9]+) >>\nstartxref\n([0-9]+)\n%%EOF\n$/D',$pdf,$match))throw new \RuntimeException('Incremental fixture trailer missing.');
+        $entry=$malformed?'/Prev malformed':"/Prev {$match[1]} /Prev {$match[1]}";
+        return preg_replace('/\/Prev [0-9]+ >>\nstartxref\n[0-9]+\n%%EOF\n$/D',"{$entry} >>\nstartxref\n{$match[2]}\n%%EOF\n",$pdf)??throw new \RuntimeException('Incremental fixture mutation failed.');
+    }
+
+    public static function incrementalRedefinition(): string
+    {
+        $base=self::passiveClassic();if(!preg_match('/startxref\n([0-9]+)\n%%EOF\n$/D',$base,$match))throw new \RuntimeException('Base xref missing.');$previous=(int)$match[1];
+        $objectOffset=strlen($base);$base.="1 0 obj\n<< /Type /Catalog /Pages 2 0 R /Version /1.7 >>\nendobj\n";$xref=strlen($base);
+        return $base."xref\n1 1\n".sprintf("%010d 00000 n \n",$objectOffset)."trailer\n<< /Size 4 /Root 1 0 R /Prev {$previous} >>\nstartxref\n{$xref}\n%%EOF\n";
+    }
+
+    public static function contentStreamObjectTokens(bool $duplicateLength=false): string
+    {
+        $payload="q\n99 0 obj\n<< /Harmless true >>\nendobj\nQ\n";$length='/Length '.strlen($payload).($duplicateLength?' /Length '.strlen($payload):'');
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] /Contents 4 0 R >>',"<< {$length} >>\nstream\n{$payload}endstream"]);
+    }
+
+    public static function objectStreamDictionaryVariant(string $key,bool $conflict=false): string
+    {
+        $pdf="%PDF-1.5\n";$offsets=[];foreach(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>']as$i=>$body){$number=$i+1;$offsets[$number]=strlen($pdf);$pdf.="{$number} 0 obj\n{$body}\nendobj\n";}
+        $decoded='3 0 << /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>';$payload=$key==='Filter'?gzcompress($decoded,9):$decoded;if(!is_string($payload))throw new \RuntimeException('Fixture compression failed.');
+        $exact=['N'=>'1','First'=>'4','Length'=>(string)strlen($payload),'Filter'=>'/FlateDecode'];$other=['N'=>'2','First'=>'5','Length'=>(string)(strlen($payload)+1),'Filter'=>'/ASCIIHexDecode'];if(!array_key_exists($key,$exact))throw new \InvalidArgumentException('Unsupported ObjStm dictionary fixture key.');
+        $filter=$key==='Filter'?' /Filter /FlateDecode /Filter '.($conflict?$other['Filter']:$exact['Filter']):'';$duplicates=$key==='Filter'?'':" /{$key} ".($conflict?$other[$key]:$exact[$key]);$offsets[4]=strlen($pdf);$pdf.="4 0 obj\n<< /Type /ObjStm /N 1 /First 4 /Length ".strlen($payload)."{$filter}{$duplicates} >>\nstream\n{$payload}\nendstream\nendobj\n";
+        $offsets[5]=strlen($pdf);$entries=pack('CNN',0,0,65535).pack('CNN',1,$offsets[1],0).pack('CNN',1,$offsets[2],0).pack('CNN',2,4,0).pack('CNN',1,$offsets[4],0).pack('CNN',1,$offsets[5],0);$pdf.="5 0 obj\n<< /Type /XRef /Size 6 /Root 1 0 R /W [1 4 4] /Length ".strlen($entries)." >>\nstream\n{$entries}\nendstream\nendobj\nstartxref\n{$offsets[5]}\n%%EOF\n";return$pdf;
+    }
+
     public static function escapedActiveName(): string
     {
         return self::classic(['<< /Type /Catalog /Pages 2 0 R /Java#53cript 4 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /Action /S /Named >>']);
@@ -129,6 +166,12 @@ final class AssignmentOrderOriginalPdfCorpus
     {
         $payload="q\nQ\n";$length=$declaredLength??strlen($payload);
         return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] /Contents 4 0 R >>',"<< /Length {$length} >>\nstream\n{$payload}endstream"]);
+    }
+
+    public static function contentStreamDuplicateLength(): string
+    {
+        $payload="q\nQ\n";$length=strlen($payload);
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] /Contents 4 0 R >>',"<< /Length {$length} /Length {$length} >>\nstream\n{$payload}endstream"]);
     }
 
     public static function aggregateFlateContentStreams(int $decodedBytesPerStream): string
