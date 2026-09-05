@@ -19,4 +19,6 @@ assertSameValue(AssignmentOrderOriginalPdfStatus::UNSAFE_PDF,$inspector->inspect
 foreach(Corpus::unsafeCases()as$name=>$bytes)assertSameValue(AssignmentOrderOriginalPdfStatus::UNSAFE_PDF,$inspector->inspect($bytes)->status,"Forbidden {$name} is unsafe.");
 $unsupported=str_replace('/Length ', '/Filter /LZWDecode /Length ',Corpus::xrefStream());assertSameValue(AssignmentOrderOriginalPdfStatus::INVALID_PDF,$inspector->inspect($unsupported)->status,'Unsupported structural filter fails closed.');
 $oversizeGraph=str_replace('/Size 5','/Size 100002',Corpus::xrefStream());assertSameValue(AssignmentOrderOriginalPdfStatus::INVALID_PDF,$inspector->inspect($oversizeGraph)->status,'Object bound fails closed.');
+foreach(['prev_cycle'=>Corpus::prevCycle(),'duplicate_identity'=>Corpus::duplicateIdentity(),'reference_depth'=>Corpus::deepPageTree()]as$name=>$bytes)assertSameValue(AssignmentOrderOriginalPdfStatus::INVALID_PDF,$inspector->inspect($bytes)->status,"{$name} structural bound fails closed.");
+assertSameValue(AssignmentOrderOriginalPdfStatus::INVALID_PDF,$inspector->inspect(Corpus::decompressionBomb())->status,'Aggregate structural decompression bound fails closed.');
 fwrite(STDOUT,"ASSIGNMENT_ORDER_ORIGINAL_UPLOAD_PDF_BOUNDARY_OK\n");
