@@ -24,16 +24,16 @@ function odciFail(string $category, string $message): never
 }
 
 /** @return array{status:int,stdout:string,stderr:string} */
-function odciProcess(array $argv, array $environment = [], float $seconds = 30.0, string $failureCategory = 'SETUP_FAILURE'): array
+function odciProcess(array $argv, array $environment = [], float $seconds = 30.0, string $failureCategory = 'SETUP_FAILURE', bool $processGroup = false): array
 {
     $pipes = [];
     $process = proc_open($argv, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2), $environment === [] ? null : $environment);
     if (!is_resource($process)) odciFail('SETUP_FAILURE', 'process did not start');
-    fclose($pipes[0]); stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);
+    fclose($pipes[0]); stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);$pid=(int)(proc_get_status($process)['pid']??0);if($processGroup){$groupDeadline=hrtime(true)+2000000000;while($pid>0&&function_exists('posix_getpgid')&&posix_getpgid($pid)!==$pid&&hrtime(true)<$groupDeadline)usleep(10000);if($pid<1||!function_exists('posix_getpgid')||posix_getpgid($pid)!==$pid)odciFail('SETUP_FAILURE','worker process-group ownership unavailable');}
     $stdout='';$stderr='';$deadline=hrtime(true)+(int)($seconds*1e9);$status=null;$failure=null;$running=true;
     $read=static function($pipe,string &$bytes):void{$remaining=262145-strlen($bytes);if($remaining<=0)return;$chunk=stream_get_contents($pipe,$remaining);if(is_string($chunk))$bytes.=$chunk;};
     while(true){$read($pipes[1],$stdout);$read($pipes[2],$stderr);if(strlen($stdout)>262144||strlen($stderr)>262144){$failure='child output exceeded 256 KiB';break;}$state=proc_get_status($process);$running=(bool)($state['running']??false);if(!$running){$status=(int)$state['exitcode'];break;}if(hrtime(true)>=$deadline){$failure='child exceeded deadline';break;}usleep(20000);}
-    if($failure!==null){proc_terminate($process,SIGTERM);$term=hrtime(true)+2000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$term){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}if($running)proc_terminate($process,SIGKILL);$reap=hrtime(true)+3000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$reap){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}}
+    if($failure!==null){if($processGroup)posix_kill(-$pid,SIGTERM);else proc_terminate($process,SIGTERM);$term=hrtime(true)+2000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$term){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}if($running){if($processGroup)posix_kill(-$pid,SIGKILL);else proc_terminate($process,SIGKILL);}$reap=hrtime(true)+3000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$reap){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}}
     foreach([1,2] as $fd){stream_set_blocking($pipes[$fd],false);for($i=0;$i<16;$i++){$before=$fd===1?strlen($stdout):strlen($stderr);if($fd===1)$read($pipes[$fd],$stdout);else$read($pipes[$fd],$stderr);$after=$fd===1?strlen($stdout):strlen($stderr);if($after===$before)break;}fclose($pipes[$fd]);}
     if(!odciMayProcClose($running)){static $unreaped=[];$unreaped[]=$process;if($failure!==null&&$failureCategory==='REGRESSION_FAILURE')throw new TestFailure('REGRESSION_FAILURE: '.$failure."\nSETUP_FAILURE: child could not be terminated and reaped within bounded deadline");odciFail('SETUP_FAILURE','child could not be terminated and reaped within bounded deadline');}
     $closed=proc_close($process);if($status===null||$status<0)$status=$closed;
@@ -52,6 +52,13 @@ function odciFailureDecision(?Throwable $behavior,array $cleanup): array
 }
 
 function odciMayProcClose(bool $running): bool { return !$running; }
+
+function odciContainmentProbe(): void
+{
+    $code='if(posix_setsid()<0)exit(91);$p=proc_open([PHP_BINARY,"-r","usleep(30000000);"],[0=>["pipe","r"],1=>["pipe","w"],2=>["pipe","w"]],$x);fclose($x[0]);echo proc_get_status($p)["pid"],"\\n";fflush(STDOUT);usleep(30000000);';$pipes=[];$process=proc_open([PHP_BINARY,'-r',$code],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))odciFail('SETUP_FAILURE','containment probe unavailable');fclose($pipes[0]);$pid=(int)(proc_get_status($process)['pid']??0);$deadline=hrtime(true)+2000000000;while(($line=fgets($pipes[1]))===false&&hrtime(true)<$deadline)usleep(10000);$grandchild=(int)trim((string)$line);if($pid<1||$grandchild<1||posix_getpgid($pid)!==$pid||posix_getpgid($grandchild)!==$pid)odciFail('SETUP_FAILURE','live grandchild group proof failed');posix_kill(-$pid,SIGTERM);$deadline=hrtime(true)+3000000000;while((proc_get_status($process)['running']??false)&&hrtime(true)<$deadline)usleep(10000);if(proc_get_status($process)['running']??false)posix_kill(-$pid,SIGKILL);fclose($pipes[1]);fclose($pipes[2]);if(proc_get_status($process)['running']??false)odciFail('SETUP_FAILURE','containment probe group survived');proc_close($process);$gone=hrtime(true)+2000000000;while(@posix_kill($grandchild,0)&&hrtime(true)<$gone)usleep(10000);assertSameValue(false,@posix_kill($grandchild,0),'live grandchild is reaped by owned process-group termination');
+}
+
+function odciCloseSockets(array &$sockets): void { foreach($sockets as &$socket)if(is_resource($socket)){fclose($socket);$socket=null;} }
 
 function odciDocker(array $arguments, float $seconds = 30.0): array
 {
@@ -137,12 +144,9 @@ function odciSchemaRefusal(mysqli $target,string $prefix,string $manifest,int $p
     $table=$prefix.$member;
     if($drift)$target->query('ALTER TABLE '.odciSqlName($table).' MODIFY captured_at VARCHAR(41) NOT NULL');else$target->query('DROP TABLE '.odciSqlName($table));
     $before=odciSnapshot($target,$prefix);
-    $listener=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);if(!is_resource($listener))odciFail('SETUP_FAILURE','source listener unavailable');stream_set_blocking($listener,false);
-    $address=stream_socket_get_name($listener,false);if(!is_string($address)||preg_match('/:(\d+)$/',$address,$m)!==1)odciFail('SETUP_FAILURE','listener endpoint unavailable');$listenerPort=(int)$m[1];
-    $probe=stream_socket_client('tcp://127.0.0.1:'.$listenerPort,$errno,$error,2);$accepted=null;$deadline=hrtime(true)+2000000000;do{$accepted=@stream_socket_accept($listener,0);if(is_resource($accepted))break;usleep(10000);}while(hrtime(true)<$deadline);
-    if(!is_resource($probe)||!is_resource($accepted))odciFail('SETUP_FAILURE','positive listener control failed');fclose($probe);fclose($accepted);$unexpected=null;
-    try{$result=odciImporter($manifest,$port,$sourceDb,$targetUser,$sourceUser,ODCI_CAPTURE_FIRST,$apply,$listenerPort);odciAssertResult($result,2,"{\"ok\":false,\"reason\":\"OBJECT_DETAIL_SCHEMA_REQUIRED\"}\n",'');$unexpected=@stream_socket_accept($listener,0);if(is_resource($unexpected))odciFail('REGRESSION_FAILURE','schema refusal connected to source');assertSameValue($before,odciSnapshot($target,$prefix),'schema refusal preserves every fixture table shape and row');}
-    finally{if(is_resource($unexpected))fclose($unexpected);if(is_resource($listener))fclose($listener);}
+    $listener=null;$probe=null;$accepted=null;$unexpected=null;
+    try{$listener=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);if(!is_resource($listener))odciFail('SETUP_FAILURE','source listener unavailable');stream_set_blocking($listener,false);$address=stream_socket_get_name($listener,false);if(!is_string($address)||preg_match('/:(\d+)$/',$address,$m)!==1)odciFail('SETUP_FAILURE','listener endpoint unavailable');$listenerPort=(int)$m[1];$probe=stream_socket_client('tcp://127.0.0.1:'.$listenerPort,$errno,$error,2);$deadline=hrtime(true)+2000000000;do{$accepted=@stream_socket_accept($listener,0);if(is_resource($accepted))break;usleep(10000);}while(hrtime(true)<$deadline);if(!is_resource($probe)||!is_resource($accepted))odciFail('SETUP_FAILURE','positive listener control failed');fclose($probe);$probe=null;fclose($accepted);$accepted=null;$result=odciImporter($manifest,$port,$sourceDb,$targetUser,$sourceUser,ODCI_CAPTURE_FIRST,$apply,$listenerPort);odciAssertResult($result,2,"{\"ok\":false,\"reason\":\"OBJECT_DETAIL_SCHEMA_REQUIRED\"}\n",'');$unexpected=@stream_socket_accept($listener,0);if(is_resource($unexpected))odciFail('REGRESSION_FAILURE','schema refusal connected to source');assertSameValue($before,odciSnapshot($target,$prefix),'schema refusal preserves every fixture table shape and row');}
+    finally{$sockets=[&$unexpected,&$accepted,&$probe,&$listener];odciCloseSockets($sockets);}
     if($drift)$target->query('ALTER TABLE '.odciSqlName($table).' MODIFY captured_at VARCHAR(40) NOT NULL');else ObjectDetailSnapshotSchemaMigration::apply($target,$prefix);
 }
 
@@ -173,31 +177,45 @@ function odciAssertExactGrants(array $targetGrants,array $sourceGrants,string $p
     assertSameValue($target,odciGrantFacts($targetGrants),'target has exact table-only SELECT/INSERT allowlist');assertSameValue($source,odciGrantFacts($sourceGrants),'source has exact four-table SELECT-only allowlist');
 }
 
+function odciAcquire(string $token,string $artifactRoot): array
+{
+    if(preg_match('/^[a-f0-9]{12}$/D',$token)!==1)odciFail('SETUP_FAILURE','invalid run token');$root=realpath($artifactRoot);$repo=realpath(dirname(__DIR__,2));if($root===false||$repo===false||is_link($artifactRoot)||!str_starts_with($root,$repo.DIRECTORY_SEPARATOR))odciFail('SETUP_FAILURE','artifact root is not exact repository-owned directory');
+    $child=$root.'/object-detail-'.$token;$container='fm2-odci-'.$token;if(@lstat($child)!==false||odciDocker(['container','inspect',$container])['status']===0)odciFail('SETUP_FAILURE','owned namespace occupied');
+    $inspect=odciDocker(['image','inspect','--format','{{.Id}}',ODCI_IMAGE]);$imageId=trim($inspect['stdout']);if($inspect['status']!==0||preg_match('/^sha256:[a-f0-9]{64}$/D',$imageId)!==1)odciFail('SETUP_FAILURE','expected local MariaDB image unavailable');if(!mkdir($child,0700)||!chmod($child,0700))odciFail('SETUP_FAILURE','artifact child unavailable');
+    $owned=null;
+    try{$create=odciDocker(['create','--name',$container,'--label','fmonitor2.object-detail-token='.$token,'--tmpfs','/var/lib/mysql','-e','MARIADB_ROOT_PASSWORD='.ODCI_ROOT_PASSWORD,'-p','127.0.0.1::3306',$imageId]);if($create['status']!==0)odciFail('SETUP_FAILURE','private container create failed');$containerId=trim($create['stdout']);$volumes=[];$owned=compact('child','container','containerId','imageId','volumes');$storage=odciDocker(['inspect','--format','{{json .Mounts}}|{{json .HostConfig.Tmpfs}}',$container]);if($storage['status']!==0)odciFail('SETUP_FAILURE','container storage inspect failed');[$mountJson,$tmpfsJson]=explode('|',trim($storage['stdout']),2);$mounts=json_decode($mountJson,true,flags:JSON_THROW_ON_ERROR);$tmpfs=json_decode($tmpfsJson,true,flags:JSON_THROW_ON_ERROR);foreach($mounts as $mount)if(($mount['Type']??null)==='volume'&&is_string($mount['Name']??null))$volumes[]=$mount['Name'];$owned['volumes']=$volumes;if($mounts!==[]||!is_array($tmpfs)||array_keys($tmpfs)!==['/var/lib/mysql'])odciFail('SETUP_FAILURE','container storage proof failed');$start=odciDocker(['start',$container]);$portResult=odciDocker(['port',$container,'3306/tcp']);if($start['status']!==0||$portResult['status']!==0||preg_match('/127\.0\.0\.1:(\d+)/',$portResult['stdout'],$m)!==1)odciFail('SETUP_FAILURE','private container start/port failed');$port=(int)$m[1];$identity=odciDocker(['inspect','--format','{{.Id}} {{.Image}} {{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);if($identity['status']!==0||trim($identity['stdout'])!==$containerId.' '.$imageId.' '.$token)odciFail('SETUP_FAILURE','container identity failed');return $owned+['port'=>$port];}
+    catch(Throwable $error){$cleanup=is_array($owned)?odciRelease($owned,$token):odciAttemptAll(['artifact-child'=>function()use($child):void{if(is_dir($child)&&!rmdir($child))throw new RuntimeException();}]);$decision=odciFailureDecision($error,$cleanup);throw new TestFailure($decision['message']);}
+}
+
+function odciRelease(array $owned,string $token): array
+{
+    $container=(string)($owned['container']??'');$containerId=(string)($owned['containerId']??'');$child=(string)($owned['child']??'');$volumes=is_array($owned['volumes']??null)?$owned['volumes']:[];$authorized=false;
+    return odciAttemptAll([
+        'container-ownership'=>function()use($container,$containerId,$token,&$authorized):void{$proof=odciDocker(['inspect','--format','{{.Id}} {{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);if($proof['status']!==0||trim($proof['stdout'])!==$containerId.' '.$token)throw new RuntimeException();$authorized=true;},
+        'container-remove'=>function()use($container,&$authorized):void{if(!$authorized)throw new RuntimeException();if(odciDocker(['rm','-f',$container])['status']!==0)throw new RuntimeException();},
+        'container-absence'=>function()use($container):void{if(odciDocker(['container','inspect',$container])['status']===0)throw new RuntimeException();},
+        'volumes'=>function()use($volumes):void{$failed=false;foreach($volumes as $volume)try{if(odciDocker(['volume','rm',$volume])['status']!==0)$failed=true;}catch(Throwable){$failed=true;}if($failed)throw new RuntimeException();},
+        'manifest'=>function()use($child):void{if(is_file($child.'/manifest.json')&&!unlink($child.'/manifest.json'))throw new RuntimeException();},
+        'artifact-child'=>function()use($child):void{if(is_dir($child)&&!rmdir($child))throw new RuntimeException();},
+    ]);
+}
+
+function odciSupervisorResourceProbe(string $artifactRoot): void
+{
+    $token=bin2hex(random_bytes(6));$owned=odciAcquire($token,$artifactRoot);$failure=null;$cleanup=[];
+    try{$code='if(posix_setsid()<0)exit(91);$p=proc_open([PHP_BINARY,"-r","usleep(30000000);"],[0=>["pipe","r"],1=>["pipe","w"],2=>["pipe","w"]],$x);fclose($x[0]);usleep(30000000);';odciProcess([PHP_BINARY,'-r',$code],[],0.1,'REGRESSION_FAILURE',true);}catch(Throwable $error){$failure=$error;}finally{$cleanup=odciRelease($owned,$token);}
+    assertSameValue(true,$failure instanceof TestFailure&&str_contains($failure->getMessage(),'REGRESSION_FAILURE: child exceeded deadline'),'outer worker timeout probe reaches real grouped termination');assertSameValue([],$cleanup,'parent cleans every owned resource after worker timeout');assertSameValue(false,is_dir($owned['child']),'timeout probe artifact child absent');assertSameValue(true,odciDocker(['container','inspect',$owned['container']])['status']!==0,'timeout probe container absent');
+}
+
 function odciRun(string $token, string $artifactRoot): array
 {
     if (preg_match('/^[a-f0-9]{12}$/D', $token) !== 1) odciFail('SETUP_FAILURE', 'invalid run token');
     $root = realpath($artifactRoot); $repo = realpath(dirname(__DIR__, 2));
     if ($root === false || $repo === false || is_link($artifactRoot) || !str_starts_with($root, $repo . DIRECTORY_SEPARATOR)) odciFail('SETUP_FAILURE', 'artifact root is not an exact repository-owned directory');
-    $child = $root . '/object-detail-' . $token; $container = 'fm2-odci-' . $token;
-    if (@lstat($child) !== false) odciFail('SETUP_FAILURE', 'artifact namespace occupied');
-    $occupied = odciDocker(['container','inspect',$container]);
-    if ($occupied['status'] === 0) odciFail('SETUP_FAILURE', 'container namespace occupied');
-    $inspect = odciDocker(['image','inspect','--format','{{.Id}}',ODCI_IMAGE]);
-    $imageId=trim($inspect['stdout']);if($inspect['status']!==0||preg_match('/^sha256:[a-f0-9]{64}$/D',$imageId)!==1)odciFail('SETUP_FAILURE','expected local MariaDB image is unavailable');
-    $created=false;$db=null;$target=null;$source=null;$targetChild=null;$sourceChild=null;$unexpectedVolumes=[];$behavior=null;$result=null;$cleanupFailures=[];
+    $child = $root . '/object-detail-' . $token; $container = 'fm2-odci-' . $token;$containerId=(string)getenv('FMONITOR_OBJECT_DETAIL_VERIFY_CONTAINER_ID');$imageId=(string)getenv('FMONITOR_OBJECT_DETAIL_VERIFY_IMAGE_ID');$port=(int)getenv('FMONITOR_OBJECT_DETAIL_VERIFY_PORT');
+    if(!is_dir($child)||$containerId===''||preg_match('/^sha256:[a-f0-9]{64}$/D',$imageId)!==1||$port<1)odciFail('SETUP_FAILURE','parent-owned setup context absent');$identity=odciDocker(['inspect','--format','{{.Id}} {{.Image}} {{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);if($identity['status']!==0||trim($identity['stdout'])!==$containerId.' '.$imageId.' '.$token)odciFail('SETUP_FAILURE','parent-owned container identity mismatch');
+    $db=null;$target=null;$source=null;$targetChild=null;$sourceChild=null;$behavior=null;$result=null;$cleanupFailures=[];
     try {
-        mkdir($child, 0700); chmod($child, 0700);
-        $create = odciDocker(['create','--name',$container,'--label','fmonitor2.object-detail-token='.$token,'--tmpfs','/var/lib/mysql','-e','MARIADB_ROOT_PASSWORD='.ODCI_ROOT_PASSWORD,'-p','127.0.0.1::3306',$imageId]);
-        if ($create['status'] !== 0) odciFail('SETUP_FAILURE', 'private MariaDB container create failed'); $containerId = trim($create['stdout']); $created = true;
-        $storage=odciDocker(['inspect','--format','{{json .Mounts}}|{{json .HostConfig.Tmpfs}}',$container]);if($storage['status']!==0)odciFail('SETUP_FAILURE','container storage proof unavailable');
-        [$mountJson,$tmpfsJson]=explode('|',trim($storage['stdout']),2);$mounts=json_decode($mountJson,true,flags:JSON_THROW_ON_ERROR);$tmpfs=json_decode($tmpfsJson,true,flags:JSON_THROW_ON_ERROR);
-        foreach($mounts as $mount)if(($mount['Type']??null)==='volume'&&is_string($mount['Name']??null))$unexpectedVolumes[]=$mount['Name'];
-        if($mounts!==[]||!is_array($tmpfs)||array_keys($tmpfs)!==['/var/lib/mysql'])odciFail('SETUP_FAILURE','container must have zero bind/volume mounts and exact MariaDB tmpfs');
-        $start = odciDocker(['start',$container]); if ($start['status'] !== 0) odciFail('SETUP_FAILURE', 'private MariaDB start failed');
-        $portResult = odciDocker(['port',$container,'3306/tcp']);
-        if ($portResult['status'] !== 0 || preg_match('/127\.0\.0\.1:(\d+)/', $portResult['stdout'], $m) !== 1) odciFail('SETUP_FAILURE', 'private MariaDB endpoint unavailable');
-        $port = (int)$m[1]; $identity = odciDocker(['inspect','--format','{{.Id}} {{.Image}} {{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);
-        if ($identity['status'] !== 0 || trim($identity['stdout']) !== $containerId . ' ' . $imageId . ' ' . $token) odciFail('SETUP_FAILURE', 'container/image identity proof failed');
         $db = odciWait($port); $sourceDb = 'fm2_odci_' . $token; $prefix = 'odci_' . $token . '_';
         $targetUser = 'odcit_' . $token; $sourceUser = 'odcis_' . $token;
         $db->query('CREATE DATABASE fmonitor2_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
@@ -285,15 +303,8 @@ function odciRun(string $token, string $artifactRoot): array
         ];
     } catch(Throwable $error) {$behavior=$error;}
     finally {
-        $owned=false;
         $cleanupFailures=odciAttemptAll([
             'connections'=>function()use(&$targetChild,&$sourceChild,&$target,&$source,&$db):void{$failed=false;foreach([$targetChild,$sourceChild,$target,$source,$db] as $connection)if($connection instanceof mysqli)try{$connection->close();}catch(Throwable){$failed=true;}if($failed)throw new RuntimeException();},
-            'container-ownership'=>function()use($created,$container,$token,&$owned):void{if(!$created)return;$proof=odciDocker(['inspect','--format','{{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);if($proof['status']!==0||trim($proof['stdout'])!==$token)throw new RuntimeException();$owned=true;},
-            'container-remove'=>function()use($created,$container,&$owned):void{if(!$created||!$owned)return;$remove=odciDocker(['rm','-f',$container]);if($remove['status']!==0)throw new RuntimeException();},
-            'container-absence'=>function()use($created,$container):void{if($created&&odciDocker(['container','inspect',$container])['status']===0)throw new RuntimeException();},
-            'volumes'=>function()use(&$unexpectedVolumes):void{$failed=false;foreach(array_unique($unexpectedVolumes) as $volume){try{$removed=odciDocker(['volume','rm',$volume]);if($removed['status']!==0)$failed=true;}catch(Throwable){$failed=true;}}if($failed)throw new RuntimeException();},
-            'manifest'=>function()use($child):void{$path=$child.'/manifest.json';if(is_file($path)&&!unlink($path))throw new RuntimeException();},
-            'artifact-child'=>function()use($child):void{if(is_dir($child)&&!rmdir($child))throw new RuntimeException();},
         ]);
     }
     $decision=odciFailureDecision($behavior,$cleanupFailures);if($decision['exit']!==0)throw new TestFailure($decision['message']);
@@ -320,7 +331,8 @@ try {
     assertSameValue(ODCI_SPEC_SHA256,hash_file('sha256',$spec),'approved spec bytes remain pinned');
     $precedence=odciFailureDecision(new TestFailure('REGRESSION_FAILURE: behavioral probe'),['first-cleanup']);assertSameValue(1,$precedence['exit'],'regression plus cleanup failure retains exit 1');assertSameValue(true,str_contains($precedence['message'],'REGRESSION_FAILURE: behavioral probe')&&str_contains($precedence['message'],'SETUP_FAILURE: cleanup phases failed: first-cleanup'),'regression and cleanup categories are both retained safely');
     $attempts=[];$attemptFailures=odciAttemptAll(['first'=>function()use(&$attempts):void{$attempts[]='first';throw new RuntimeException();},'second'=>function()use(&$attempts):void{$attempts[]='second';throw new RuntimeException();},'third'=>function()use(&$attempts):void{$attempts[]='third';}]);assertSameValue(['first','second','third'],$attempts,'cleanup attempts every independent phase');assertSameValue(['first','second'],$attemptFailures,'cleanup records every failed phase');
-    assertSameValue(false,odciMayProcClose(true),'running child can never enter proc_close');assertSameValue(true,odciMayProcClose(false),'reaped child may enter proc_close');
+    odciContainmentProbe();
+    $listenerProbe=stream_socket_pair(STREAM_PF_UNIX,STREAM_SOCK_STREAM,STREAM_IPPROTO_IP);if(!is_array($listenerProbe))odciFail('SETUP_FAILURE','listener cleanup sensitivity unavailable');$listenerProbeFailure=new RuntimeException('injected setup fault after socket acquisition');try{throw $listenerProbeFailure;}catch(RuntimeException){}finally{odciCloseSockets($listenerProbe);}assertSameValue([false,false],array_map('is_resource',$listenerProbe),'listener setup-fault closes every acquired socket');
     foreach([[[PHP_BINARY,'-r','fwrite(STDOUT,str_repeat("x",262145));'],2.0,'output exceeded'],[[PHP_BINARY,'-r','usleep(500000);'],0.05,'exceeded deadline']] as [$probeArgv,$probeSeconds,$probeNeedle]){$rejected=false;try{odciProcess($probeArgv,[],$probeSeconds,'REGRESSION_FAILURE');}catch(TestFailure $probeFailure){$rejected=str_contains($probeFailure->getMessage(),$probeNeedle);}assertSameValue(true,$rejected,'bounded process cleanup sensitivity: '.$probeNeedle);}
     $broadRejected=false;try{odciGrantFacts(['GRANT ALL PRIVILEGES ON *.* TO `probe`@`%`']);}catch(TestFailure){$broadRejected=true;}assertSameValue(true,$broadRejected,'broad grant sensitivity');
     $delegatingUsageRejected=false;try{odciGrantFacts(['GRANT USAGE ON *.* TO `probe`@`%` WITH GRANT OPTION']);}catch(TestFailure){$delegatingUsageRejected=true;}assertSameValue(true,$delegatingUsageRejected,'delegating USAGE sensitivity');
@@ -328,12 +340,13 @@ try {
     if(@lstat($artifactRoot)===false){if(!mkdir($artifactRoot,0700))odciFail('SETUP_FAILURE','artifact root unavailable');chmod($artifactRoot,0700);}
     $rootState=lstat($artifactRoot);if(!is_array($rootState)||($rootState['mode']&0170000)!==0040000||is_link($artifactRoot)||$rootState['uid']!==posix_geteuid()||($rootState['mode']&0022)!==0||realpath($artifactRoot)!==$artifactRoot)odciFail('SETUP_FAILURE','common artifact root is not trusted');
     $decoy=fopen($decoyPath,'x');if(!is_resource($decoy))odciFail('SETUP_FAILURE','ambient decoy ownership collision');$decoyOwned=true;$decoyBytes="OBJECT_DETAIL_AMBIENT_DECOY\n";if(fwrite($decoy,$decoyBytes)!==strlen($decoyBytes)||!fflush($decoy)){fclose($decoy);odciFail('SETUP_FAILURE','ambient decoy write failed');}fclose($decoy);$decoyIdentity=lstat($decoyPath);
+    odciSupervisorResourceProbe($artifactRoot);assertSameValue(hash('sha256',"OBJECT_DETAIL_AMBIENT_DECOY\n"),hash_file('sha256',$decoyPath),'timeout containment preserves ambient decoy');
     $decoyHash=hash_file('sha256',$decoyPath); $results=[];$tokens=[bin2hex(random_bytes(6)),bin2hex(random_bytes(6))];while($tokens[1]===$tokens[0])$tokens[1]=bin2hex(random_bytes(6));assertSameValue(2,count(array_unique($tokens)),'two distinct explicit per-run tokens');
     foreach ($tokens as $token) {
-        $environment=getenv();if(!is_array($environment))$environment=$_ENV;
-        $environment['FMONITOR_OBJECT_DETAIL_VERIFY_RUN_TOKEN']=$token;
-        $environment['FMONITOR_OBJECT_DETAIL_VERIFY_ARTIFACT_ROOT']=$artifactRoot;
-        $run=odciProcess([PHP_BINARY,__FILE__],$environment,300.0,'REGRESSION_FAILURE');
+        $owned=odciAcquire($token,$artifactRoot);$workerFailure=null;$releaseFailures=[];$run=null;
+        try{$environment=getenv();if(!is_array($environment))$environment=$_ENV;$environment['FMONITOR_OBJECT_DETAIL_VERIFY_RUN_TOKEN']=$token;$environment['FMONITOR_OBJECT_DETAIL_VERIFY_ARTIFACT_ROOT']=$artifactRoot;$environment['FMONITOR_OBJECT_DETAIL_VERIFY_CONTAINER_ID']=$owned['containerId'];$environment['FMONITOR_OBJECT_DETAIL_VERIFY_IMAGE_ID']=$owned['imageId'];$environment['FMONITOR_OBJECT_DETAIL_VERIFY_PORT']=(string)$owned['port'];$workerCode='if(posix_setsid()<0)exit(91);require $argv[1];';$run=odciProcess([PHP_BINARY,'-r',$workerCode,__FILE__],$environment,300.0,'REGRESSION_FAILURE',true);}catch(Throwable $error){$workerFailure=$error;}finally{$releaseFailures=odciRelease($owned,$token);}
+        if($workerFailure!==null){$workerDecision=odciFailureDecision($workerFailure,$releaseFailures);throw new TestFailure($workerDecision['message']);}if(!is_array($run))odciFail('SETUP_FAILURE','worker returned no result');
+        if($releaseFailures!==[]){$run['stderr'].="SETUP_FAILURE: cleanup phases failed: ".implode(',',$releaseFailures)."\n";if($run['status']!==1)$run['status']=2;}
         $results[]=$run;
         assertSameValue($decoyHash,hash_file('sha256',$decoyPath),'ambient artifact decoy survives run');
     }
