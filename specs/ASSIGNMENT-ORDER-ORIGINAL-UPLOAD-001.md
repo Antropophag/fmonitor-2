@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v20 GATE 1 REVIEW PENDING — WORKER COMMAND ENCODING AMENDMENT**
-Версия: **v20**
+Статус: **v21 GATE 1 REREVIEW PENDING — WORKER COMMAND ENCODING AMENDMENT**
+Версия: **v21**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1524,11 +1524,27 @@ allowed; enum backed strings and explicit nulls map directly to Command.
 `bytesBase64` is a JSON string using only RFC 4648 standard alphabet, canonical
 `=` padding, no whitespace/URL alphabet; strict decode must succeed and
 `base64_encode(decoded)===input`. Empty decoded bytes are transport-valid and
-reach application file validation. The complete line bound is checked during
-read before JSON/base64 allocation; a second LF/line, EOF before LF, overlong,
-invalid UTF-8/JSON/key/type/base64 exits `70` through the exact failure channels,
-after config validation but before application/storage/safe-log/barrier calls.
-The byte-stream factory receives only the strict decoded bytes; decoded size
-`20,971,521` remains transport-valid so application proves `FILE_TOO_LARGE`.
+reach application file validation. The worker reads chunks of at most `65536`
+bytes into one line buffer that never exceeds `29,000,000` bytes. It stops at
+the first LF, which must be the last buffered byte, then requires EOF and no
+extra byte within a 5-second monotonic deadline; EOF before LF, any byte after
+LF or deadline is framing failure. Only after complete framing does it validate
+UTF-8, decode JSON, validate exact keys/types and inspect base64 alphabet/padding
+without decoded allocation. `AssignmentOrderOriginalByteStreamFactory::
+fromBase64` is the sole strict decoder: it allocates decoded bytes once,
+requires re-encode equality and returns the stream. No other decoded copy is
+retained by worker bootstrap.
+
+This entire framing/JSON/base64/factory validation occurs after scalar/path
+metadata config validation but before password-file content, DB connection,
+private storage, safe-log, application or barrier access. Any failure exits
+`70` through the exact channels. Decoded size `20,971,521` remains
+transport-valid so application proves `FILE_TOO_LARGE`.
+
+Canonical initial worker command fixture (the final LF after `}` is required):
+
+```json
+{"requestId":"00000000-0000-4000-8000-000000000001","mode":"initial","installationCaseId":4512,"assignmentOrderId":81,"actorUserId":18,"documentDate":"2026-09-01","compositionConfirmed":true,"rootOriginalId":null,"targetRevisionId":null,"expectedCurrentRevisionId":null,"correctionReason":null,"upload":{"bytesBase64":"JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA3MiA3Ml0gPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA0IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgoxODQKJSVFT0YK","originalFilename":"signed-order.pdf","declaredMediaType":"application/pdf"}}
+```
 
 Result pipe carries exactly one canonical JSON line maximum `16384` bytes and no stdout noise. Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.

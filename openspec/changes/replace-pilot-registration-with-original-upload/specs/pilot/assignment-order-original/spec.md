@@ -248,7 +248,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Worker command JSON/base64 exact
 - **WHEN** command FD получает one bounded UTF-8 JSON line
-- **THEN** exact ordered top-level/upload keys с `upload.bytesBase64` и strict canonical RFC4648 round-trip строят Command/stream; malformed/extra/second-line/overlong input даёт exit70 fixed channels до application/storage/log/barrier, empty bytes доходят до file validation, а decoded 20MiB+1 — до `FILE_TOO_LARGE`
+- **THEN** exact literal fixture и ordered top-level/upload keys с `upload.bytesBase64` и strict canonical RFC4648 round-trip строят Command/stream; read идёт chunks <=65536 в buffer <=29000000, final LF требует EOF <=5s, затем UTF8/JSON/keys/base64 и sole decode factory, всё до password/DB; malformed/extra/second-line/overlong input даёт exit70 fixed channels до application/storage/log/barrier, empty bytes доходят до file validation, а decoded 20MiB+1 — до `FILE_TOO_LARGE`
 
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.
