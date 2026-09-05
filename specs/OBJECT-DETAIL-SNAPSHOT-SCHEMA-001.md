@@ -1,6 +1,6 @@
 # OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 — canonical object-detail ownership
 
-Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.2. Дата: 2026-09-05.
+Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.3. Дата: 2026-09-05.
 Canonical version candidate — 12 после свежего чтения registry 1–11 на
 `670e19f6d86fe0172d71eaa36736ec6d857b936e`. Версия не зарезервирована и
 не зарегистрирована; перед approval требуется повторная проверка frontier.
@@ -80,8 +80,8 @@ partial state. Следующий вызов выполняет preflight зан
 member. После ошибочного DDL или unavailable verification нельзя публиковать
 успешную version. Canonical runner на inspected SHA не имеет persisted migration
 ledger: он вычисляет результат обходом registry. Этот slice не создаёт ledger.
-Детальный concurrent-run acceptance остаётся Gate 1 open item; действующий
-runner не доказывает serialization, и draft не утверждает обратное.
+Сериализация этой family определяется разделом 8; действующий runner сам по
+себе её не обеспечивает и не считается доказательством.
 
 ### Public API candidate и exact results
 
@@ -124,7 +124,7 @@ Failure после первой CREATE не откатывает existing table.
 CREATE завершились, но последняя verification недоступна, первый run выдаёт
 техническую ошибку; следующий exact repeat возвращает applied false. Проверка
 failure должна использовать детерминированную public verification composition;
-её exact API остаётся Gate 1 open item, без production runtime selector.
+её contract определён разделом 8, без production runtime selector.
 
 ## 4. Preservation examples
 
@@ -168,8 +168,8 @@ conflict поведения требуется отдельный approved chara
 - Подтвердить candidate version 12 по свежему registry и reconcile OpenSpec
   scheduling перед approval; не регистрировать её из этого draft.
 - Независимо проверить public signature/results, CLI mapping и metadata/
-  collation rules; определить deterministic verification API для interruptions
-  и concurrent-run acceptance без предположения существующего runner lock.
+  collation rules, deterministic verification API и named-lock protocol
+  раздела 8; согласовать их с OpenSpec до Gate 1 approval.
 - Сверить no-source schema path и importer characterization dependency;
   сохранить отдельный blocker на незавершённые importer behavior gates.
 - Получить independent Gate 1 review и требуемое owner approval до RED.
@@ -179,3 +179,57 @@ conflict поведения требуется отдельный approved chara
 Done требует data-free canonical creation, preservation/retry/conflict,
 DDL-free runtime, approved importer regression, всех Gates/reviews и точной
 проверки на integration SHA. Наличие этого draft не является Done.
+
+## 8. Candidate coordination и deterministic failure contract
+
+Это proposed technical refinement для нового independent Gate 1 review, не
+утверждение уже существующего поведения или нового owner approval.
+
+После prefix validation migration получает exact текущую database identity
+через `SELECT DATABASE()` и держит connection-scoped named lock с именем
+lowercase SHA-256 от `object-detail-schema-v1`, NUL, database name, NUL, prefix.
+Lock acquisition использует timeout 5 seconds; только result 1 разрешает
+family inspection/DDL. Timeout, NULL или query failure дают DatabaseUnavailable
+без family mutation. Все callers одной database/prefix используют это имя;
+разные namespaces не сериализуются общим global lock.
+
+Lock held через preflight, CREATE, post-create verification и формирование
+result; release выполняется в finally ровно один раз после successful acquire.
+Release failure не выдаёт success: DatabaseUnavailable сохраняет durable schema
+для последующего retry, caller закрывает connection. При потере connection lock
+не переиспользуется; повтор начинается с нового acquire. `isCompleteCompatible`
+остаётся read-only snapshot check и не означает разрешение последующей DDL.
+
+Для verification предлагается отдельный public
+`ObjectDetailSnapshotSchemaMigrationVerification::apply(mysqli, string,
+ObjectDetailSnapshotSchemaObserver): array`, вызывающий того же migration owner.
+Observer имеет `observe(ObjectDetailSnapshotSchemaPhase $phase): void`.
+Закрытый backed string enum: `LOCK_ACQUIRED='lock_acquired'`,
+`DETAILS_CREATED='details_created'`, `QUARANTINE_CREATED='quarantine_created'`.
+События CREATE emitted только после successful real CREATE, до следующего query.
+Production `apply` всегда связывает inert observer; env/request/CLI/global
+selector отсутствует. Observer Throwable даёт DatabaseUnavailable с cleanup.
+
+Deterministic acceptance examples:
+
+1. Principal с необходимым metadata access и CREATE только на exact details
+   table: первая CREATE durable, вторая получает real DB denial. Наблюдатель
+   admin подтверждает exact details, absent quarantine и preserved decoys.
+   После выдачи нужного права обычный retry создаёт только quarantine.
+2. В isolated verification call observer на QUARANTINE_CREATED закрывает именно
+   переданную test connection. Обе real CREATE уже durable; final inspection
+   действительно недоступна. Вызов не возвращает success. Fresh admin connection
+   доказывает exact complete family; ordinary retry возвращает applied false.
+3. Worker A сообщает READY из LOCK_ACQUIRED и ждёт bounded RELEASE. Только
+   после READY запускается B для той же database/prefix. Пока A held, B не
+   изменяет family. Parent releases A; A creates обе tables, B после acquire
+   видит exact repeat. Results: A applied true/two tables, B false/empty list.
+   Если parent удерживает A дольше B timeout, B получает DatabaseUnavailable
+   без schema changes; после release retry B штатно завершается.
+
+Tests используют только fictional owned namespaces и public migration APIs;
+observer не записывает schema/domain facts. Parent ограничивает IPC/output,
+использует monotonic deadlines и гарантирует terminate/reap/connection close
+перед cleanup. Пропуск события или невозможность доказать lock/fixture state —
+setup failure, не qualifying RED. Exact IPC literals и support harness должны
+пройти Gate 3 до production GREEN.
