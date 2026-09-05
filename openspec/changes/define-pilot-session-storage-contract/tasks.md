@@ -29,7 +29,7 @@ tasks2.3/3.2/4.1, не их полное завершение. Clean Compose sta
 ## 3. Gate 4 — minimal GREEN
 
 - [x] 3.1 Реализовать one IdentityAccess storage/session handler with explicit atomic commit and typed results; filesystem matrix GREEN.
-- [ ] 3.2 Подключить оба consumers, response buffering, Compose compatibility config and task-owned harness; protocol suites host+image GREEN.
+- [x] 3.2 Подключить оба consumers, response buffering, Compose compatibility config and task-owned harness; protocol suites host+image GREEN.
 - [x] 3.3 Добавить ratchet against alternate native session primitives/hardcoded paths/unsafe repair и against owner/event/inspection `@internal` factory calls outside exact owner/inspector classes; architecture targeted fixtures GREEN.
 
 ## 4. Verification, Gate 5 и Done
@@ -37,3 +37,5 @@ tasks2.3/3.2/4.1, не их полное завершение. Clean Compose sta
 - [ ] 4.1 Запустить exact login/user-access/CSP/RBAC tests, host/image, Compose stop/start cookie, lint, architecture, fresh lifecycle and full verify; distinguish setup/regression and prove cleanup.
 - [ ] 4.2 Получить independent code review APPROVED; test changes restart Gate 2.
 - [ ] 4.3 Обновить runbook/status and Done only after Gates 1–5, strict OpenSpec, safe persistent restart and no foreign cleanup.
+
+Append-only evidence accounting 2026-09-05: task 3.2 checked against independent `docs/operations/session-consumer-image-task-accounting-2026-09-05.md`; actual Compose restart and final verification tasks remain open.
