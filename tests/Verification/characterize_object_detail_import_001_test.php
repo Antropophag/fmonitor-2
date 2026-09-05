@@ -7,7 +7,7 @@ require dirname(__DIR__, 2) . '/app/InstallationProcess/ObjectDetailSnapshotSche
 
 use FMonitor2\InstallationProcess\ObjectDetailSnapshotSchemaMigration;
 
-/** CHARACTERIZE-OBJECT-DETAIL-IMPORT-001 v0.2, approved Gate 2 oracle. */
+/** CHARACTERIZE-OBJECT-DETAIL-IMPORT-001 v0.2, Gate 2 RED candidate. */
 const ODCI_SPEC_SHA256 = 'a2e9f65a20bd6e33c740c774094508b32a33faa6e0bdf4ace498e31f024e24c9';
 const ODCI_IMAGE = 'mariadb:11.4.7-noble';
 const ODCI_ROOT_PASSWORD = 'odci_root_private_fixture_only';
@@ -30,16 +30,28 @@ function odciProcess(array $argv, array $environment = [], float $seconds = 30.0
     $process = proc_open($argv, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2), $environment === [] ? null : $environment);
     if (!is_resource($process)) odciFail('SETUP_FAILURE', 'process did not start');
     fclose($pipes[0]); stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);
-    $stdout='';$stderr='';$deadline=hrtime(true)+(int)($seconds*1e9);$status=null;$failure=null;
-    try {
-        while(true){$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);if(strlen($stdout)>262144||strlen($stderr)>262144){$failure='child output exceeded 256 KiB';break;}$state=proc_get_status($process);if(!($state['running']??false)){$status=(int)$state['exitcode'];break;}if(hrtime(true)>=$deadline){$failure='child exceeded deadline';break;}usleep(20000);}
-        if($failure!==null){proc_terminate($process,SIGTERM);$term=hrtime(true)+2000000000;while((proc_get_status($process)['running']??false)&&hrtime(true)<$term){$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(20000);}if(proc_get_status($process)['running']??false)proc_terminate($process,SIGKILL);$reap=hrtime(true)+3000000000;while((proc_get_status($process)['running']??false)&&hrtime(true)<$reap){$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(20000);}if(proc_get_status($process)['running']??false)odciFail('SETUP_FAILURE','child could not be terminated and reaped');}
-    } finally {
-        foreach([1,2] as $fd){stream_set_blocking($pipes[$fd],false);do{$chunk=stream_get_contents($pipes[$fd],262145);if($fd===1)$stdout.=$chunk;else$stderr.=$chunk;}while($chunk!==''&&strlen($stdout)<=262144&&strlen($stderr)<=262144);fclose($pipes[$fd]);}$closed=proc_close($process);if($status===null||$status<0)$status=$closed;
-    }
+    $stdout='';$stderr='';$deadline=hrtime(true)+(int)($seconds*1e9);$status=null;$failure=null;$running=true;
+    $read=static function($pipe,string &$bytes):void{$remaining=262145-strlen($bytes);if($remaining<=0)return;$chunk=stream_get_contents($pipe,$remaining);if(is_string($chunk))$bytes.=$chunk;};
+    while(true){$read($pipes[1],$stdout);$read($pipes[2],$stderr);if(strlen($stdout)>262144||strlen($stderr)>262144){$failure='child output exceeded 256 KiB';break;}$state=proc_get_status($process);$running=(bool)($state['running']??false);if(!$running){$status=(int)$state['exitcode'];break;}if(hrtime(true)>=$deadline){$failure='child exceeded deadline';break;}usleep(20000);}
+    if($failure!==null){proc_terminate($process,SIGTERM);$term=hrtime(true)+2000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$term){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}if($running)proc_terminate($process,SIGKILL);$reap=hrtime(true)+3000000000;while(($running=(bool)(proc_get_status($process)['running']??false))&&hrtime(true)<$reap){$read($pipes[1],$stdout);$read($pipes[2],$stderr);usleep(20000);}}
+    foreach([1,2] as $fd){stream_set_blocking($pipes[$fd],false);for($i=0;$i<16;$i++){$before=$fd===1?strlen($stdout):strlen($stderr);if($fd===1)$read($pipes[$fd],$stdout);else$read($pipes[$fd],$stderr);$after=$fd===1?strlen($stdout):strlen($stderr);if($after===$before)break;}fclose($pipes[$fd]);}
+    if(!odciMayProcClose($running)){static $unreaped=[];$unreaped[]=$process;if($failure!==null&&$failureCategory==='REGRESSION_FAILURE')throw new TestFailure('REGRESSION_FAILURE: '.$failure."\nSETUP_FAILURE: child could not be terminated and reaped within bounded deadline");odciFail('SETUP_FAILURE','child could not be terminated and reaped within bounded deadline');}
+    $closed=proc_close($process);if($status===null||$status<0)$status=$closed;
     if($failure!==null)odciFail($failureCategory,$failure);
     return ['status'=>$status,'stdout'=>$stdout,'stderr'=>$stderr];
 }
+
+function odciAttemptAll(array $phases): array
+{
+    $failures=[];foreach($phases as $name=>$phase){try{$phase();}catch(Throwable){$failures[]=(string)$name;}}return$failures;
+}
+
+function odciFailureDecision(?Throwable $behavior,array $cleanup): array
+{
+    $regression=$behavior!==null&&!str_starts_with($behavior->getMessage(),'SETUP_FAILURE:');$parts=[];if($behavior!==null)$parts[]=$behavior->getMessage();if($cleanup!==[])$parts[]='SETUP_FAILURE: cleanup phases failed: '.implode(',',$cleanup);return['exit'=>$regression?1:($behavior!==null||$cleanup!==[]?2:0),'message'=>implode("\n",$parts)];
+}
+
+function odciMayProcClose(bool $running): bool { return !$running; }
 
 function odciDocker(array $arguments, float $seconds = 30.0): array
 {
@@ -171,7 +183,7 @@ function odciRun(string $token, string $artifactRoot): array
     if ($occupied['status'] === 0) odciFail('SETUP_FAILURE', 'container namespace occupied');
     $inspect = odciDocker(['image','inspect','--format','{{.Id}}',ODCI_IMAGE]);
     $imageId=trim($inspect['stdout']);if($inspect['status']!==0||preg_match('/^sha256:[a-f0-9]{64}$/D',$imageId)!==1)odciFail('SETUP_FAILURE','expected local MariaDB image is unavailable');
-    $created=false;$db=null;$target=null;$source=null;$targetChild=null;$sourceChild=null;$unexpectedVolumes=[];
+    $created=false;$db=null;$target=null;$source=null;$targetChild=null;$sourceChild=null;$unexpectedVolumes=[];$behavior=null;$result=null;$cleanupFailures=[];
     try {
         mkdir($child, 0700); chmod($child, 0700);
         $create = odciDocker(['create','--name',$container,'--label','fmonitor2.object-detail-token='.$token,'--tmpfs','/var/lib/mysql','-e','MARIADB_ROOT_PASSWORD='.ODCI_ROOT_PASSWORD,'-p','127.0.0.1::3306',$imageId]);
@@ -230,6 +242,8 @@ function odciRun(string $token, string $artifactRoot): array
         assertSameValue([['object_id'=>'451301','schema_version'=>'technical-object-detail-v1','content_sha256'=>ODCI_EXPECTED_HASH,'payload_json'=>odciExpectedPayload(),'captured_at'=>ODCI_CAPTURE_FIRST]],$details,'complete fixed detail row');
         assertSameValue([['object_id'=>'451302','code'=>'SOURCE_OBJECT_NOT_FOUND','schema_version'=>'technical-object-detail-v1','content_sha256'=>ODCI_MISSING_HASH,'captured_at'=>ODCI_CAPTURE_FIRST]],$quarantine,'complete fixed quarantine row');
         $accepted = odciSnapshot($target,$prefix);
+        foreach(['fm2_installation_cases','fm2_pilot_generation_sentinel','ambient_sql_decoy'] as $unchanged)assertSameValue($before[$unchanged],$accepted[$unchanged],'clean import preserves '.$unchanged.' shape and rows');
+        foreach(['fm2_pilot_object_details','fm2_pilot_object_detail_quarantine'] as $family)assertSameValue(['ddl'=>$before[$family]['ddl'],'meta'=>$before[$family]['meta']],['ddl'=>$accepted[$family]['ddl'],'meta'=>$accepted[$family]['meta']],'clean import preserves '.$family.' schema');
         $repeat = odciImporter($manifestPath,$port,$sourceDb,$targetUser,$sourceUser,ODCI_CAPTURE_REPEAT,true);
         odciAssertResult($repeat,0,"{\"mode\":\"apply\",\"activeCases\":2,\"sourceRows\":1,\"missingSource\":1,\"schemaVersion\":\"technical-object-detail-v1\",\"created\":0,\"alreadyPresent\":1,\"quarantineCreated\":0,\"quarantinePresent\":1}\n");
         assertSameValue($accepted,odciSnapshot($target,$prefix),'serial replay preserves every stored byte');
@@ -260,25 +274,28 @@ function odciRun(string $token, string $artifactRoot): array
                 odciSchemaRefusal($target,$prefix,$manifestPath,$port,$sourceDb,$targetUser,$sourceUser,$member,$drift,$applyMode);
             }
         }
-        return [
+        $result = [
             'clean'=>'OBJECT_DETAIL_IMPORT clean details=1 quarantine=1 fields=6 hashes=exact',
             'replay'=>'OBJECT_DETAIL_IMPORT replay details_present=1 quarantine_present=1 mutations=0',
             'conflict'=>'OBJECT_DETAIL_IMPORT detail-conflict category=DETAIL_PROJECTION_CONFLICT mutations=0',
             'rejections'=>'OBJECT_DETAIL_IMPORT source-rejections metadata=SOURCE_METADATA_INCOMPLETE dictionary=SOURCE_DICTIONARY_VALUE_UNKNOWN mutations=0',
             'schema'=>'OBJECT_DETAIL_IMPORT schema-precondition modes=2 cases=4 source_connections=0 ddl_privileges=0 dry_run_writes=0',
         ];
-    } finally {
-        foreach([$targetChild,$sourceChild,$target,$source,$db] as $connection)if($connection instanceof mysqli)try{$connection->close();}catch(Throwable){}
-        if ($created) {
-            $proof = odciDocker(['inspect','--format','{{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);
-            if ($proof['status'] !== 0 || trim($proof['stdout']) !== $token) odciFail('SETUP_FAILURE','cleanup ownership proof failed');
-            $remove = odciDocker(['rm','-f',$container]); if ($remove['status'] !== 0) odciFail('SETUP_FAILURE','owned container cleanup failed');
-            if (odciDocker(['container','inspect',$container])['status'] === 0) odciFail('SETUP_FAILURE','owned container survived cleanup');
-        }
-        foreach(array_unique($unexpectedVolumes) as $volume){$removed=odciDocker(['volume','rm',$volume]);if($removed['status']!==0)odciFail('SETUP_FAILURE','unexpected exact owned volume cleanup failed');}
-        if (is_file($child.'/manifest.json')) unlink($child.'/manifest.json');
-        if (is_dir($child) && !rmdir($child)) odciFail('SETUP_FAILURE','owned artifact cleanup failed');
+    } catch(Throwable $error) {$behavior=$error;}
+    finally {
+        $owned=false;
+        $cleanupFailures=odciAttemptAll([
+            'connections'=>function()use(&$targetChild,&$sourceChild,&$target,&$source,&$db):void{$failed=false;foreach([$targetChild,$sourceChild,$target,$source,$db] as $connection)if($connection instanceof mysqli)try{$connection->close();}catch(Throwable){$failed=true;}if($failed)throw new RuntimeException();},
+            'container-ownership'=>function()use($created,$container,$token,&$owned):void{if(!$created)return;$proof=odciDocker(['inspect','--format','{{index .Config.Labels "fmonitor2.object-detail-token"}}',$container]);if($proof['status']!==0||trim($proof['stdout'])!==$token)throw new RuntimeException();$owned=true;},
+            'container-remove'=>function()use($created,$container,&$owned):void{if(!$created||!$owned)return;$remove=odciDocker(['rm','-f',$container]);if($remove['status']!==0)throw new RuntimeException();},
+            'container-absence'=>function()use($created,$container):void{if($created&&odciDocker(['container','inspect',$container])['status']===0)throw new RuntimeException();},
+            'volumes'=>function()use(&$unexpectedVolumes):void{$failed=false;foreach(array_unique($unexpectedVolumes) as $volume){try{$removed=odciDocker(['volume','rm',$volume]);if($removed['status']!==0)$failed=true;}catch(Throwable){$failed=true;}}if($failed)throw new RuntimeException();},
+            'manifest'=>function()use($child):void{$path=$child.'/manifest.json';if(is_file($path)&&!unlink($path))throw new RuntimeException();},
+            'artifact-child'=>function()use($child):void{if(is_dir($child)&&!rmdir($child))throw new RuntimeException();},
+        ]);
     }
+    $decision=odciFailureDecision($behavior,$cleanupFailures);if($decision['exit']!==0)throw new TestFailure($decision['message']);
+    if(!is_array($result))odciFail('SETUP_FAILURE','run completed without result');return$result;
 }
 
 $suppliedToken=getenv('FMONITOR_OBJECT_DETAIL_VERIFY_RUN_TOKEN');
@@ -296,9 +313,12 @@ if ($suppliedToken !== false || $suppliedRoot !== false) {
 
 $spec = dirname(__DIR__,2).'/specs/CHARACTERIZE-OBJECT-DETAIL-IMPORT-001.md';
 $artifactRoot = dirname(__DIR__,2).'/.test-artifacts/object-detail-import';
-$failure=null;$exit=0;$decoyOwned=false;$decoyIdentity=null;$decoyPath=$artifactRoot.'/ambient-decoy.txt';
+$failure=null;$cleanupFailures=[];$decoyOwned=false;$decoyIdentity=null;$decoyPath=$artifactRoot.'/ambient-decoy.txt';
 try {
     assertSameValue(ODCI_SPEC_SHA256,hash_file('sha256',$spec),'approved spec bytes remain pinned');
+    $precedence=odciFailureDecision(new TestFailure('REGRESSION_FAILURE: behavioral probe'),['first-cleanup']);assertSameValue(1,$precedence['exit'],'regression plus cleanup failure retains exit 1');assertSameValue(true,str_contains($precedence['message'],'REGRESSION_FAILURE: behavioral probe')&&str_contains($precedence['message'],'SETUP_FAILURE: cleanup phases failed: first-cleanup'),'regression and cleanup categories are both retained safely');
+    $attempts=[];$attemptFailures=odciAttemptAll(['first'=>function()use(&$attempts):void{$attempts[]='first';throw new RuntimeException();},'second'=>function()use(&$attempts):void{$attempts[]='second';throw new RuntimeException();},'third'=>function()use(&$attempts):void{$attempts[]='third';}]);assertSameValue(['first','second','third'],$attempts,'cleanup attempts every independent phase');assertSameValue(['first','second'],$attemptFailures,'cleanup records every failed phase');
+    assertSameValue(false,odciMayProcClose(true),'running child can never enter proc_close');assertSameValue(true,odciMayProcClose(false),'reaped child may enter proc_close');
     foreach([[[PHP_BINARY,'-r','fwrite(STDOUT,str_repeat("x",262145));'],2.0,'output exceeded'],[[PHP_BINARY,'-r','usleep(500000);'],0.05,'exceeded deadline']] as [$probeArgv,$probeSeconds,$probeNeedle]){$rejected=false;try{odciProcess($probeArgv,[],$probeSeconds,'REGRESSION_FAILURE');}catch(TestFailure $probeFailure){$rejected=str_contains($probeFailure->getMessage(),$probeNeedle);}assertSameValue(true,$rejected,'bounded process cleanup sensitivity: '.$probeNeedle);}
     $broadRejected=false;try{odciGrantFacts(['GRANT ALL PRIVILEGES ON *.* TO `probe`@`%`']);}catch(TestFailure){$broadRejected=true;}assertSameValue(true,$broadRejected,'broad grant sensitivity');
     if (!is_dir(dirname($artifactRoot)) && !mkdir(dirname($artifactRoot),0700)) odciFail('SETUP_FAILURE','artifact parent unavailable');
@@ -319,9 +339,11 @@ try {
     assertSameValue('', $results[0]['stderr'], 'per-token normalized stderr is empty');
     echo $results[0]['stdout'];
     echo "CHARACTERIZATION_OK CHARACTERIZE-OBJECT-DETAIL-IMPORT-001\n";
-} catch (Throwable $e) { $failure=$e; $exit=str_starts_with($e->getMessage(),'SETUP_FAILURE:')?2:1; }
+} catch (Throwable $e) { $failure=$e; }
 finally {
-    if($decoyOwned){$current=@lstat($decoyPath);if(!is_array($current)||!is_array($decoyIdentity)||$current['dev']!==$decoyIdentity['dev']||$current['ino']!==$decoyIdentity['ino']||hash_file('sha256',$decoyPath)!==hash('sha256',"OBJECT_DETAIL_AMBIENT_DECOY\n")){$failure??=new TestFailure('SETUP_FAILURE: ambient decoy identity changed; foreign path preserved');$exit=2;}elseif(!unlink($decoyPath)){$failure??=new TestFailure('SETUP_FAILURE: exact ambient decoy cleanup failed');$exit=2;}}
-    if(!is_dir($artifactRoot)){$failure??=new TestFailure('SETUP_FAILURE: common artifact root was removed');$exit=2;}
+    $cleanupFailures=odciAttemptAll([
+        'ambient-decoy'=>function()use($decoyOwned,$decoyPath,$decoyIdentity):void{if(!$decoyOwned)return;$current=@lstat($decoyPath);if(!is_array($current)||!is_array($decoyIdentity)||$current['dev']!==$decoyIdentity['dev']||$current['ino']!==$decoyIdentity['ino']||hash_file('sha256',$decoyPath)!==hash('sha256',"OBJECT_DETAIL_AMBIENT_DECOY\n"))throw new RuntimeException();if(!unlink($decoyPath))throw new RuntimeException();},
+        'common-root'=>function()use($artifactRoot):void{if(!is_dir($artifactRoot))throw new RuntimeException();},
+    ]);
 }
-if ($failure) { fwrite(STDERR,$failure->getMessage()."\n"); exit($exit); }
+$decision=odciFailureDecision($failure,$cleanupFailures);if($decision['exit']!==0){fwrite(STDERR,$decision['message']."\n");exit($decision['exit']);}
