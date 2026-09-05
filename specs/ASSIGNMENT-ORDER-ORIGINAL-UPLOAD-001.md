@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v54 GATE 1 REREVIEW PENDING — SHARED CONTENT IDENTITY SCHEMA AMENDMENT**
-Версия: **v54**
+Статус: **v55 GATE 1 REREVIEW PENDING — PRODUCTION SAFE-LOG CONFIG AMENDMENT**
+Версия: **v55**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -947,9 +947,28 @@ Release occurs exactly once: after `COMMITTED`; after definite `ROLLED_BACK`; af
 
 Failure to acquire a lease maps `FAILED/STORAGE_FAILURE`; the stage is aborted and closed, no repository commit is attempted. Release is attempt-always. After committed/fresh-lookup-`FOUND`, release failure cannot replace durable accepted/replayed result. After rollback or fresh lookup `NOT_FOUND|UNAVAILABLE`, it preserves the selected retryable persistence result. After `CONFLICT` rereads, typed `FAILED` or Throwable from release MUST preserve the selected provisional replay/conflict/persistence result and MUST NOT skip a required conflict attempt-audit transaction. Every release failure logs exactly once `ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED correlation_id=<12hex> phase=<committed|rolled_back|unknown_found|unknown_not_found|unknown_unavailable|commit_conflict>` with no content identity, digest, path, request data or exception; storage retains the exclusion token for bounded recovery. The business command never deletes/exposes/retries that blob. No response-delivery observer runs before lease release has been attempted.
 
-Production storage root comes only from trusted `FMONITOR_ASSIGNMENT_ORDER_ORIGINAL_ROOT`; verifier root is explicit absolute task-owned temp directory. Production bootstrap MUST use no-op lifecycle/delivery observers and cannot select verification composition through env/request/CLI/global/service locator. Verification factory is callable only by tests and still builds the same application implementation.
+Production storage root comes only from trusted `FMONITOR_ASSIGNMENT_ORDER_ORIGINAL_ROOT`; verifier root is explicit absolute task-owned temp directory. Production bootstrap MUST use no-op lifecycle/storage/delivery observers, MUST bind the real file safe-log observer described below, and cannot select verification composition through env/request/CLI/global/service locator. Verification factory is callable only by tests and still builds the same application implementation.
 
-Every port call is total at the application boundary: adapter Throwable is caught and mapped to its typed `UNAVAILABLE`/`FAILED` outcome without exposing diagnostics. Request/fingerprint/lineage lookup `UNAVAILABLE` maps `FAILED/PERSISTENCE_FAILURE`; order/composition unavailable, clock failure and ID failure map the same. Stream `FAILED` maps `STREAM_FAILURE`; inspector `INSPECTOR_FAILED` and storage outcome `FAILED|LOCKED` map `STORAGE_FAILURE`. Storage observer receives the exact ordered events for operations actually attempted; request-ID replay emits no stream/storage event. Verification fault injector throws only at its named point; production factory binds inert final lifecycle/storage/fault/delivery implementations and exposes no selector.
+Every port call is total at the application boundary: adapter Throwable is caught and mapped to its typed `UNAVAILABLE`/`FAILED` outcome without exposing diagnostics. Request/fingerprint/lineage lookup `UNAVAILABLE` maps `FAILED/PERSISTENCE_FAILURE`; order/composition unavailable, clock failure and ID failure map the same. Stream `FAILED` maps `STREAM_FAILURE`; inspector `INSPECTOR_FAILED` and storage outcome `FAILED|LOCKED` map `STORAGE_FAILURE`. Storage observer receives the exact ordered events for operations actually attempted; request-ID replay emits no stream/storage event. Verification fault injector throws only at its named point; production factory binds inert final lifecycle/storage/fault/delivery implementations plus the real file safe-log observer and exposes no selector.
+
+`AssignmentOrderOriginalProductionConfig::safeLogFile` is a mandatory trusted
+deployment input distinct from the previously approved worker/evidence-reader
+fields of the same name. Before the factory performs any database operation or
+validates/accesses `privateStorageRoot`, it MUST reject a configured path that
+is not absolute and canonical, does not already exist, is a symlink at the
+configured entry, is not a regular file, is not owned by the current effective
+user, or does not have exact permission bits `0600`. The factory MUST NOT
+create, replace, truncate, chmod, chown or otherwise repair the file. Failure
+throws `AssignmentOrderOriginalProductionConfigurationUnavailable` with fixed
+message equal to its class basename, integer code `0`, `previous=null`, and no
+path, secret or underlying exception detail. No database/private-storage call
+is permitted before this validation succeeds.
+
+After validation the factory binds `AssignmentOrderOriginalFileSafeLog` to the
+validated canonical file identity. Each cleanup/release diagnostic appends its
+already specified single canonical JSON line without truncating or rewriting
+prior bytes. A later append failure remains best-effort observer failure under
+the existing selected-Result rules and exposes no path, secret or exception.
 
 Safe-log correlation ID for every command attempt is the first 12 lower hex of
 SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup
@@ -1034,8 +1053,11 @@ final readonly class AssignmentOrderOriginalProductionConfig
     public function __construct(
         public string $privateStorageRoot,
         public string $tablePrefix,
+        public string $safeLogFile,
     ) {}
 }
+
+final class AssignmentOrderOriginalProductionConfigurationUnavailable extends \RuntimeException {}
 
 final readonly class AssignmentOrderOriginalDependencies
 {
