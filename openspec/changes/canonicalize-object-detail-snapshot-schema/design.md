@@ -86,8 +86,11 @@ ingest/characterization, но не schema repair или новую domain logic.
 
 ## Migration Plan
 
-1. После landing predecessors зафиксировать exact version/catalogue и executable
-   schema spec; получить owner approval.
+1. Подготовить data-free executable schema draft по exact manifests; independent
+   dependency review от 2026-09-05 допускает drafting до importer GREEN.
+   Проверить current registry, exact candidate version/catalogue и получить
+   independent Gate 1 и требуемое owner approval. Наличие draft не закрывает
+   importer DML characterization и не разрешает его изменение.
 2. Independent Gate 2 покрывает clean/repeat/both partial/conflicts/collation/
    prefix/preservation и DDL-denied importer; fresh reviewer approves RED.
 3. Реализовать migration и register runner, затем заменить importer CREATE на
@@ -99,3 +102,8 @@ ingest/characterization, но не schema repair или новую domain logic.
 
 Rollback destructive `down()` не имеет. До deployment можно откатить code; после
 применения schema version используется forward fix, а existing rows сохраняются.
+
+Current `CanonicalMigrationApplication` вычисляет version обходом registry и
+не хранит persisted migration ledger. Этот slice не вводит ledger; successful
+result разрешён после complete-family verification. Exact interruption и
+concurrent-run construction остаются открытыми пунктами draft Gate 1.

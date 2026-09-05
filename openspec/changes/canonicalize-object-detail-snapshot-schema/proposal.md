@@ -52,3 +52,8 @@ canonical ownership, а первый `--apply` смешивает schema mutatio
   `seed-test-user-fixtures`/behavior slices.
 - Evidence: `docs/operations/object-detail-schema-evidence.md` и
   `docs/operations/object-detail-import-behavior-evidence.md`.
+- Draft executable contract: `specs/OBJECT-DETAIL-SNAPSHOT-SCHEMA-001.md`.
+  Independent dependency review от 2026-09-05 разрешает drafting data-free
+  schema до importer characterization GREEN; это не разрешение RED или
+  implementation. Candidate v12 сверяется с current registry перед Gate 1,
+  не резервируется и не регистрируется planning документом.

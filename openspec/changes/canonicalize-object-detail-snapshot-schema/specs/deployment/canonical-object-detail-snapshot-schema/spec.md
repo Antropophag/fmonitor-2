@@ -6,6 +6,11 @@ canonical migrations до importer/consumer access и не зависит от �
 
 ## ADDED Requirements
 
+Planning status: `OBJECT-DETAIL-SNAPSHOT-SCHEMA-001` остаётся DRAFT. Его
+подготовка не зависит от GREEN importer characterization; acceptance claims
+о сохранении importer DML зависят. Candidate version сверяется с registry до
+Gate 1, а runtime миграция не разрешена этим planning пакетом.
+
 ### Requirement: Canonical migration owns the complete object-detail family
 
 Canonical production migration sequence SHALL создать exact object-details и
