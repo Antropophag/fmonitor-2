@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v21 GATE 1 REREVIEW PENDING — WORKER COMMAND ENCODING AMENDMENT**
-Версия: **v21**
+Статус: **v22 GATE 1 REVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
+Версия: **v22**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1547,4 +1547,23 @@ Canonical initial worker command fixture (the final LF after `}` is required):
 {"requestId":"00000000-0000-4000-8000-000000000001","mode":"initial","installationCaseId":4512,"assignmentOrderId":81,"actorUserId":18,"documentDate":"2026-09-01","compositionConfirmed":true,"rootOriginalId":null,"targetRevisionId":null,"expectedCurrentRevisionId":null,"correctionReason":null,"upload":{"bytesBase64":"JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA3MiA3Ml0gPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA0IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgoxODQKJSVFT0YK","originalFilename":"signed-order.pdf","declaredMediaType":"application/pdf"}}
 ```
 
-Result pipe carries exactly one canonical JSON line maximum `16384` bytes and no stdout noise. Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
+Result pipe carries exactly one canonical JSON line maximum `16384` bytes
+including one final LF. Keys are always present in this literal order:
+`status,reasonCode,retryable,requestId,rootOriginalId,currentRevisionId,
+revisionNumber,documentDate,sha256,byteSize,uploadedAt`. Status/reason use their
+lower-case PHP backed strings, nulls are explicit, booleans are JSON booleans,
+sizes/revision are unquoted base-10 integers, and strings use
+`JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR`, with no
+whitespace or optional escaping. The encoded object plus LF must fit before any
+result byte is written; serialization/oversize/write failure emits no partial
+result, follows controlled exit 70, and a committed operation remains replayable.
+
+Exact lines for Example A accepted, its retry, and a new-request stale conflict:
+
+```text
+{"status":"accepted","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000001","rootOriginalId":"original-0001","currentRevisionId":"revision-0001","revisionNumber":1,"documentDate":"2026-09-01","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:15:30Z"}
+{"status":"replayed","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000001","rootOriginalId":"original-0001","currentRevisionId":"revision-0001","revisionNumber":1,"documentDate":"2026-09-01","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:15:30Z"}
+{"status":"conflict","reasonCode":"stale_revision","retryable":false,"requestId":"00000000-0000-4000-8000-000000000002","rootOriginalId":null,"currentRevisionId":null,"revisionNumber":null,"documentDate":null,"sha256":null,"byteSize":null,"uploadedAt":null}
+```
+
+Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
