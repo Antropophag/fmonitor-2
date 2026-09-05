@@ -23,6 +23,14 @@
 
 ## 4. Integration, regression, and Done
 
+Supporting fixture contracts после landed v12:
+`CANONICAL-V12-CONSUMER-FIXTURES-001` (11 exact patch targets, technical Gate 1
+approved; independent patch Gate 3 ещё обязателен) и отдельный
+`HARNESS-OTIZ-CANONICAL-V12-001` (exact prepared predecessor, Gate 1 pending).
+Они входят в работу 4.1/4.2 и не завершают parent task по отдельности. Protected
+E2E и importer serial Gate 1 остаются за своими gates; shared catalog defaults
+не меняются. Scope/evidence: `docs/operations/canonical-v12-consumer-fixture-scope-correction-2026-09-05.md`.
+
 - [ ] 4.1 Run the object-detail import characterization and consumer checks against a clean canonical database, including a source-free empty deployment with intentionally absent evidence; verify the contour deploys without external source access and consumers fail closed rather than fabricating premium inputs.
 - [ ] 4.2 Run fresh reset/migration, database tests, characterization tests, architecture checks, golden journey, and `make verify`; verify any failures are classified as environment/setup, expected RED, known baseline regression, or new regression, with no unclassified failure.
 - [ ] 4.3 Assign a different fresh independent code reviewer, record the review under `reviews/code/`, resolve every finding, and verify Gate 5 approval covers canonical ownership, restartability, preservation, DDL-free importer/consumers, and the absence of hidden population or semantic redesign.
