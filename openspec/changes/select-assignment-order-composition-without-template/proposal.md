@@ -38,3 +38,10 @@ integration manifest to include legacy writer cutover and original-reader source
 resolution. It does not change original PDF processing or effective applicability.
 Detailed requirements are in the appended design; exact schema/version and
 executable ports remain Gate1 work, not an approved implementation.
+
+Combined-release clarification 2026-09-05: dateless storage requires exact
+cross-source pending/current rules and a same-identity optional-render public
+path. Legacy preparation's selected-case guard does not complete that path or
+permit an easier direct-only release. These dependencies are part of the
+consolidated executable Gate1/integration package, with no Done claim from
+storage or selector alone.

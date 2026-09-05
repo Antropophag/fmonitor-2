@@ -76,3 +76,19 @@ locking, backfill, compatibility and manifest contracts require executable Gate1
 #### Scenario: Incompatible writer release
 - **WHEN** identity migration/cutover has not proven old-writer exclusion and registry/source completeness
 - **THEN** selection remains unavailable; no runtime backfill, independent allocator or fallback enables it
+
+### Requirement: Cross-source pending history is explicit
+
+Selection state SHALL reconcile the latest registry source and pending ledger;
+absence of ledger rows alone MUST NOT be interpreted as absence of legacy
+unsigned preparation. The executable candidate SHALL define exact legacy
+prepared/original-accepted/registered dispositions and preserve existing facts.
+No compatibility rule approves legacy registration as target applicability.
+
+#### Scenario: Existing unsigned legacy preparation
+- **WHEN** registry history points to an unsigned legacy prepared order and no ledger selection exists
+- **THEN** the command follows the explicitly specified pending-predecessor refusal rather than silently replacing/adopting it; existing domain facts remain unchanged and only approved terminal-attempt/audit facts may be added
+
+#### Scenario: Optional template after direct selection
+- **WHEN** the user requests a template for a stored selection
+- **THEN** the same identity is used by the new optional-render owner without invoking legacy prepare or creating another composition; a legacy compatibility guard is not evidence of successful parity

@@ -86,3 +86,35 @@ note: choose the actual next version only after reading the then-current
 catalogue. No task checkbox advances and no RED/code is authorized here.
 REPLACE_PENDING user-visible correction/history remains a separate explicit
 owner decision in that batch; it is neither silently removed nor approved.
+
+## Combined release compatibility obligations — 2026-09-05
+
+The new ledger is not permission to disable the owner's optional-template path.
+For a selection-owned case, target HTTP must call the new selection owner and
+an optional-render operation that uses that exact immutable identity. It must
+not call legacy prepare to manufacture another order or satisfy its physical
+N-1 predecessor requirement. The legacy guard is a mixed-writer safety condition,
+not successful feature delivery. The same-identity template/artifact persistence
+and public read path must have executable contracts and reviewed implementation
+before direct/optional parity or the parent change can be called complete.
+
+Existing all-legacy prepare behavior needs an explicit regression amendment for
+registry allocation while preserving existing domain result/date/artifact/event
+semantics. The registry writer, original reader source branch and target selection
+writer form one compatible release. Legacy HTTP routing is separately migrated;
+no protected E2E or manual-registration target authority follows from this plan.
+
+State lookup must reconcile the newest registry source with ledger history.
+In particular, latest ledger selection revision0 cannot imply absence of an
+unsigned legacy prepared order. The consolidated Gate1 candidate must state
+pending legacy/no-original, accepted-original legacy and preserved registered
+predecessor outcomes explicitly. No auto-adoption, new original fact, date
+fabrication, hidden render, deletion or silent replacement is allowed. Registered
+legacy is a preservation predecessor only, never the target applicability rule.
+
+Release evidence must include fresh-case direct upload without renderer, optional
+render for the same selection identity, existing historical legacy read/prepare
+preservation, pending legacy rejection without mutations, accepted original plus
+new pending selection preserving applicable crew, and restart with the complete
+registry/source facts. Full make verify and real original-first public golden
+remain mandatory; the independently green selector cannot replace them.
