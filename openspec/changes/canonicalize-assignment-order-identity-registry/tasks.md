@@ -11,9 +11,9 @@
 
 ## 3. Minimal migration engine
 
-- [ ] 3.1 Реализовать только approved engine/facade и typed verification composition; focused matrix GREEN с неизменными expected values.
-- [ ] 3.2 Проверить relevant migration regression, architecture-check, lint и diff-check; сохранить exact SHA и private raw evidence.
-- [ ] 3.3 Получить independent Gate5 engine-only APPROVED; не считать его writer cutover или parent selection Done.
+- [x] 3.1 Реализовать только approved engine/facade и typed verification composition; focused matrix GREEN с неизменными expected values. Implementation `b6f619f41e924c6ae2663d66e22de85cad30d6de`.
+- [x] 3.2 Проверить relevant migration regression, architecture-check, lint и diff-check; сохранить exact SHA и private raw evidence. `assignment-order-identity-registry-green-v1-2026-09-05.md`, шесть focused/regression PASS; architecture7 без baseline growth.
+- [x] 3.3 Получить independent Gate5 engine-only APPROVED; не считать его writer cutover или parent selection Done. `reviews/code/ASSIGNMENT-ORDER-IDENTITY-REGISTRY-001-engine-v1.md`.
 
 ## 4. Required release integration
 
