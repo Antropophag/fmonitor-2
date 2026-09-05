@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v60 GATE 1 REREVIEW PENDING — SHARED SAFE-LOG OWNER**
-Версия: **v60**
+Статус: **v61 GATE 1 REREVIEW PENDING — DIAGNOSTIC FAILURE ISOLATION**
+Версия: **v61**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -971,7 +971,7 @@ already specified single canonical JSON line without truncating or rewriting
 prior bytes. A later append failure remains best-effort observer failure under
 the existing selected-Result rules and exposes no path, secret or exception.
 
-Shared-owner technical amendment, pending fresh independent Gate1:
+Shared-owner technical amendment, independent Gate1 v0.2 approved:
 `specs/ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001.md` is normative for safe-log
 acquisition, retained-descriptor policy, append/close and the behavioral/structural
 proof split. The retained descriptor MUST have matching final pathname
@@ -991,6 +991,13 @@ input flow, private ownership, close on every failure, no pathname reopen/raw
 handle escape, and production factory ordering on the reviewed source SHA.
 Only the combined behavioral GREEN and structural proof can close G5-SAFELOG-2.
 No new production selector, config input, product permission or outcome is added.
+
+`specs/ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-ISOLATION-001.md` is normative for
+the application diagnostic boundary, pending independent Gate1. Request-binding
+or record Throwable must preserve selected Result, cleanup, required audit and
+delivery; failed request binding suppresses diagnostics for that invocation only.
+Direct opened-owner errors remain observable. Shared-owner scoped Gate5 does
+not by itself close combined G5-SAFELOG-2; isolation and combined review remain.
 
 Safe-log correlation ID for every command attempt is the first 12 lower hex of
 SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup

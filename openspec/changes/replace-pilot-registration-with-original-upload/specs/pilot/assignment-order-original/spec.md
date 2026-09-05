@@ -376,3 +376,16 @@ Existing direct Runtime imports SHALL предоставлять owner/policy б
 #### Scenario: Повтор после native close failure
 - **WHEN** первая close попытка возвращает false/warning/Throwable
 - **THEN** owner permanently unusable, fixed failure кешируется; repeated close не делает I/O и повторяет fixed error, destructor не выпускает исключение
+
+### Requirement: Diagnostic failure isolation
+
+Application composition SHALL соблюдать SAFE-LOG-ISOLATION-001: diagnostic
+Throwable не меняет selected Result, cleanup, required audit или delivery.
+
+#### Scenario: Logger throws while reporting cleanup failure
+- **WHEN** cleanup/release failure требует diagnostic и record throws
+- **THEN** underlying record attempted exactly once; selected result и remaining cleanup/audit/delivery сохраняются
+
+#### Scenario: Request binding throws before context update
+- **WHEN** request-aware logger useRequest throws
+- **THEN** command lifecycle продолжается, record callbacks этой invocation отсутствуют; следующая invocation снова пытается bind exact request

@@ -52,3 +52,13 @@ one native attempt and leaves permanently closed usability; повтор не д
 I/O. Runtime direct imports eagerly load owner/policy; class_exists(false) и
 valid control предшествуют negative factory cases. Это поправки по independent
 Gate1 review, не новое product authority и не разрешение rejected mechanisms.
+
+## Diagnostic isolation amendment — 2026-09-06
+
+`ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-ISOLATION-001` задаёт existing best-effort
+контракт через одну guarding boundary при Dependencies construction. Ошибка
+record не повторяет diagnostic/cleanup и не меняет Result/audit/delivery.
+Ошибка useRequest отключает record только текущей invocation без stale correlation;
+следующая invocation повторяет binding. Direct opened owner I/O errors сохраняются.
+Технический draft требует independent Gate1, public command RED, Gate3 и Gate5.
+Shared owner scoped Gate5 APPROVED на73c3c229 не закрывает combined command review.

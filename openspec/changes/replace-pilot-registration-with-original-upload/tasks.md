@@ -56,7 +56,7 @@
 
 - [x] 4.1 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации, real MariaDB setup уже Gate-5-approved
 - [x] 4.2 Поручить fresh independent test reviewer проверить command-matrix sensitivity и zero-public-orphan cleanup; verification: explicit `APPROVED`, reviewer не писал tests/production
-- [ ] 4.3 После fresh Gate1 продемонстрировать public owner/pure-policy missing-behavior RED и получить independent Gate3; verification: stable task-owned files с изначальными modes, literal metadata negatives, exact append/close/correlation и existing factory regression; reviewer явно отделяет behavioral evidence от обязательного source proof, без interval hooks/permission transitions/invented native-FD claims.
+- [x] 4.3 После fresh Gate1 продемонстрировать public owner/pure-policy missing-behavior RED и получить independent Gate3; verification: stable task-owned files с изначальными modes, literal metadata negatives, exact append/close/correlation и existing factory regression; reviewer явно отделяет behavioral evidence от обязательного source proof, без interval hooks/permission transitions/invented native-FD claims.
 
 ## 5. Command minimal GREEN
 
@@ -77,3 +77,13 @@ one native attempt and leaves permanently closed usability; повтор не д
 I/O. Runtime direct imports eagerly load owner/policy; class_exists(false) и
 valid control предшествуют negative factory cases. Это поправки по independent
 Gate1 review, не новое product authority и не разрешение rejected mechanisms.
+
+## Diagnostic isolation gates — 2026-09-06
+
+- [ ] 1.35 Independent Gate1 SAFE-LOG-ISOLATION-001 exact contract; owner scope unchanged.
+- [ ] 4.4 Public-command diagnostic failure RED и independent Gate3, включая result/cleanup/audit/delivery и request reset.
+- [ ] 5.4 Minimal diagnostic boundary GREEN и independent Gate5; direct owner error behavior unchanged.
+
+Owner component Gate5: `reviews/code/ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001-v1.md`,
+APPROVED implementation73c3c229. Task5.3 remains open for combined G5-SAFELOG-2
+closure after diagnostic isolation; no full command/launch readiness claim.
