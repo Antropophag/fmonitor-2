@@ -27,8 +27,14 @@ final class ProtectedE2eAdmissionOracle
                 return false;
             }
             $main = $mains->item(0);
-            if ($xpath->query('.//table | .//*[contains(concat(" ", normalize-space(@class), " "), " shlz-table-wrap ")]', $main)->length !== 0) {
+            if ($xpath->query('.//table', $main)->length !== 0) {
                 return false;
+            }
+            foreach ($xpath->query('.//*[@class]', $main) as $element) {
+                $tokens = preg_split('/[\x09\x0A\x0C\x0D\x20]+/', $element->getAttribute('class'));
+                if (in_array('shlz-table-wrap', $tokens, true)) {
+                    return false;
+                }
             }
             $links = $xpath->query('.//a[@href="/pilot/objects/4512"]', $main);
             if ($links->length !== 1 || self::projectText($links->item(0), $xpath) !== '4512') {
