@@ -15,7 +15,7 @@
 - [x] 1.13 Получить fresh independent Gate 1 review capability-migration recovery amendment; verification: exact V4/V5/conflict classifier, last-step publication, typed unavailable/retry и verification-only phase observer закрывают Gate 5 findings без runtime selector
 - [x] 1.14 Получить fresh independent Gate 1 review worker DSN amendment; verification: exact ordered grammar/mysqli tuple и fail-before-secret invalid mapping делают five-FD RED constructible
 - [x] 1.15 Получить fresh independent Gate 1 review worker failure-output amendment; verification: exact stderr/final-LF, empty result и config-vs-barrier channel policy делают exit-70 RED independent
-- [ ] 1.16 Получить fresh independent Gate 1 review worker ID-sequence amendment; verification: bounded unique CSV grammar, consumption/exhaustion и canonical race literals делают worker RED independent
+- [x] 1.16 Получить fresh independent Gate 1 review worker ID-sequence amendment; verification: bounded unique CSV grammar, consumption/exhaustion и canonical race literals делают worker RED independent
 
 ## 2. Minimal RED и test review
 
