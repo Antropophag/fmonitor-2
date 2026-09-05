@@ -16,6 +16,7 @@
 4. Original command получает уже сохранённую identity. Existing derivation из physical `order_date` и member validity требует явного compatibility решения в Gate 1: дата выбора/шаблона не подменяет documentDate original.
 5. Allowed dependencies: caller → selection API → authorization/catalog/repository/clock ports. Selection не получает renderer port; optional rendering — отдельная операция того же owner. Architecture ratchet проверяет отсутствие bypass и renderer calls в selection.
 6. Пакет не утверждает конкретные permission code, pre-original correction semantics и mutable draft модель. Эти Gate 1 вопросы сначала разрешаются из inherited approved contracts; новое пользовательское поведение при необходимости имеет NEEDS_GRILL disposition, не выводится из legacy implementation.
+7. Existing projection gap доказан в `docs/operations/selection-existing-assignment-projection-gap-2026-09-05.md`: directory фильтрует registered order, но MAX(version) берёт среди всех orders; новая selection скрывает старое назначение. No-application contract охватывает public directory availability/assignments и inspection actor/installer attribution, а не только неизменные interval rows. Изолированный переход на MAX(registered) не является target original applicability. Gate 1 согласует selection visibility с owning lifecycle contract до implementation.
 
 ## Risks / Trade-offs
 

@@ -32,6 +32,10 @@ Selection MUST проверять active actor, exact capability и object/workf
 - **WHEN** selection завершён
 - **THEN** объект остаётся закрыт для работ и checklist; original upload возможен только отдельной командой, а opening — после applicable original отдельным действием
 
+#### Scenario: Новый выбор сохраняет прежнее действующее назначение
+- **WHEN** у объекта уже есть applicable order, а пользователь сохраняет новую неподписанную selection
+- **THEN** directory assignments/availability и inspection engineer/installer attribution прежнего applicable order остаются неизменными; новый MAX(version) не скрывает действующее основание
+
 ### Requirement: Replay и конкурентные selections сохраняют единственную историю
 
 Exact retry SHALL не создавать duplicate version/audit. Конкурентные изменения MUST проверять ожидаемую identity/version и не переписывать ранее сохранённый состав. Exact request/replay/stale и pre-original correction contract SHALL быть определён до Gate 1; последующая смена действующего состава относится к отдельному lifecycle slice.

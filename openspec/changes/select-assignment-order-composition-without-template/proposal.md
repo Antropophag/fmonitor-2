@@ -8,6 +8,7 @@
 - Проверять кадровые/объектные prerequisites и ровно одного инженера до atomic persistence immutable composition identity.
 - Возвращать identity, пригодную для existing original upload; отдельное формирование шаблона остаётся необязательным действием.
 - Сохранить append-only history, exact replay и concurrency protection. Выбор состава не применяет назначения, не открывает работы и не создаёт signed original.
+- Сохранить observable текущие назначения, availability counters и inspection attribution при появлении новой неподписанной selection; запись новых rows не должна скрывать прежний applicable order через общий MAX(version).
 - Зафиксировать exact command API, capability mapping, statuses/audit и draft correction semantics в executable Gate 1 до RED; planning не утверждает неизвестные legacy outcomes.
 
 ## Capabilities
