@@ -1,7 +1,9 @@
 # OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 — canonical object-detail ownership
 
-Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.1. Дата: 2026-09-05.
-Literal canonical migration version и production PHP signature не назначены.
+Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.2. Дата: 2026-09-05.
+Canonical version candidate — 12 после свежего чтения registry 1–11 на
+`670e19f6d86fe0172d71eaa36736ec6d857b936e`. Версия не зарезервирована и
+не зарегистрирована; перед approval требуется повторная проверка frontier.
 Этот draft не разрешает RED, implementation или изменение importer.
 
 ## Простыми словами
@@ -41,8 +43,15 @@ Family содержит только две configured-prefix tables. Поряд
 без prefix length. Secondary indexes, FKs, CHECKs и JSON constraints отсутствуют.
 Engine InnoDB; charset utf8mb4. Target collation — validated database-default
 utf8mb4 collation, явно emitted в DDL; numeric column не имеет collation.
-Exact metadata normalization и allowlist/public lookup для collation должны
-быть закреплены перед Gate 1 approval. SHOW CREATE formatting, cardinality и
+Metadata comparison использует lowercase COLUMN_TYPE; для BIGINT допускается
+отсутствие либо display width `(20)`, без изменения unsigned semantics.
+`COLUMN_DEFAULT` MUST быть SQL NULL, `EXTRA` пустой, generated expression
+отсутствует; nullable/default/auto-increment drift конфликтует.
+Collation проверяется существующим public
+`IdentityAccessDefinitionSchemaMigration::databaseCollation`: database charset
+utf8mb4, ASCII identifier grammar, registered utf8mb4 member либо поддержанный
+MariaDB alias и успешный explicit utf8mb4 COLLATE trial до family DDL.
+SHOW CREATE formatting, cardinality и
 estimated row counts не являются fingerprint fields.
 
 Исходный importer опускал COLLATE и тем самым выбирал charset-default,
@@ -52,7 +61,7 @@ estimated row counts не являются fingerprint fields.
 ## 3. Observable migration outcomes
 
 1. Обе tables absent: после family-wide read-only preflight создать details,
-   затем quarantine; обе пусты, ledger/version публикуется только после
+   затем quarantine; обе пусты, successful version возвращается только после
    проверки полной exact family.
 2. Обе exact: повтор не выполняет DDL/DML; все rows и metadata сохраняются.
 3. Exact details + absent quarantine: создать только quarantine, сохранить
@@ -61,18 +70,61 @@ estimated row counts не являются fingerprint fields.
    every quarantine column byte-equivalent.
 5. Любой incompatible member: `SCHEMA_MIGRATION_CONFLICT` до первой family
    mutation, включая случай absent sibling. Не создавать отсутствующую table,
-   не менять ledger, rows, counters или decoys.
+   не менять rows, counters или decoys.
 
 Conflict evidence на operator seam определяет exact configured table;
-credentials и source data не выводятся. Exact CLI JSON/status/exit mapping
-и direct migration Result должны быть включены в следующую редакцию Gate 1.
+credentials и source data не выводятся. Exact API/mapping приведены ниже.
 
 Разрыв между двумя independently committed CREATE оставляет только exact
 partial state. Следующий вызов выполняет preflight заново и завершает missing
 member. После ошибочного DDL или unavailable verification нельзя публиковать
-успешную ledger version. Детальный failure/retry transcript и concurrent-run
-serialization наследуются canonical runner только после сверки exact contract;
-этот draft не объявляет их доказанными.
+успешную version. Canonical runner на inspected SHA не имеет persisted migration
+ledger: он вычисляет результат обходом registry. Этот slice не создаёт ledger.
+Детальный concurrent-run acceptance остаётся Gate 1 open item; действующий
+runner не доказывает serialization, и draft не утверждает обратное.
+
+### Public API candidate и exact results
+
+```php
+namespace FMonitor2\InstallationProcess;
+final class ObjectDetailSnapshotSchemaMigration
+{
+    public static function apply(\mysqli $connection, string $tablePrefix = ''): array;
+    public static function isCompleteCompatible(\mysqli $connection, string $tablePrefix = ''): bool;
+}
+```
+
+`apply` возвращает только один из двух shapes (порядок keys фиксирован):
+`{applied: bool, schemaVersion: 12, tablesCreated: list<string>}` либо
+`{applied: false, schemaVersion: 12, reason: SCHEMA_MIGRATION_CONFLICT,
+conflictingTables: list<string>}`. Table lists — exact prefixed names,
+отсортированные SORT_STRING. `applied` true ровно при создании хотя бы одной
+table. Exact repeat: empty tablesCreated и applied false.
+
+`isCompleteCompatible` — read-only: true только для полной exact family;
+absent/conflict/inspection unavailable дают false. Она не выполняет DDL/DML.
+Invalid prefix для `apply` бросает `InvalidArgumentException` с fixed message
+`Invalid table prefix.` до query; compatibility query возвращает false.
+SQL/inspection failures `apply` дают `DatabaseUnavailable` без success result.
+
+CLI использует existing CanonicalMigrationApplication mapping:
+conflict — exit 2, exact JSON
+`{"ok":false,"reason":"SCHEMA_MIGRATION_CONFLICT","schemaVersion":12}`;
+database unavailable — exit 69,
+`{"ok":false,"reason":"DATABASE_UNAVAILABLE"}`;
+unexpected failure — exit 70,
+`{"ok":false,"reason":"MIGRATION_FAILED"}`.
+Каждый JSON завершается одним LF; stderr не содержит credentials/source data.
+На базе с exact v1–11 и отсутствующей family успех — exit 0,
+`{"ok":true,"schemaVersion":12,"appliedVersions":[12]}`;
+повтор — тот же JSON с `appliedVersions:[]`.
+
+Failure после первой CREATE не откатывает existing table. Retry заново
+инспектирует обе tables, сохраняет первую и создаёт только вторую. Если обе
+CREATE завершились, но последняя verification недоступна, первый run выдаёт
+техническую ошибку; следующий exact repeat возвращает applied false. Проверка
+failure должна использовать детерминированную public verification composition;
+её exact API остаётся Gate 1 open item, без production runtime selector.
 
 ## 4. Preservation examples
 
@@ -94,7 +146,8 @@ Exact repeat и partial recovery MUST сохранить каждый literal by
 Composed config принимает существующий ASCII prefix grammar с ceiling 25
 bytes; 26 bytes, invalid characters и non-ASCII отклоняются до connection и
 schema access. Longest family basename 34 bytes не расширяет этот ceiling.
-Exact empty-prefix policy наследуется runner и фиксируется перед approval.
+Пустой prefix разрешён, как в current runner; exact grammar
+`^[A-Za-z0-9_]*$`, byte length 0..25.
 
 Тесты используют только enumerated isolated DB/prefix и fictional sentinel
 rows. Другие prefix/unprefixed tables и filesystem decoys неизменны. Cleanup
@@ -112,9 +165,11 @@ conflict поведения требуется отдельный approved chara
 
 ## 7. Gate 1 completion checklist
 
-- Назначить literal migration version/catalogue position по свежему registry.
-- Определить exact public signature/result и CLI mapping, metadata
-  normalization/collation policy, failure/publication/concurrency examples.
+- Подтвердить candidate version 12 по свежему registry и reconcile OpenSpec
+  scheduling перед approval; не регистрировать её из этого draft.
+- Независимо проверить public signature/results, CLI mapping и metadata/
+  collation rules; определить deterministic verification API для interruptions
+  и concurrent-run acceptance без предположения существующего runner lock.
 - Сверить no-source schema path и importer characterization dependency;
   сохранить отдельный blocker на незавершённые importer behavior gates.
 - Получить independent Gate 1 review и требуемое owner approval до RED.
