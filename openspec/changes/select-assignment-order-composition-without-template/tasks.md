@@ -30,3 +30,13 @@ writer cutover, original-reader source discriminator, and fail-closed deployment
 compatibility specified in the appended design decision. This is planning
 progress only; task1.2–1.4 remain unchecked until the complete executable batch
 and required owner decision are approved.
+
+2026-09-05 drafting inputs (not Gate1 approval):
+`docs/operations/selection-identity-storage-contract-candidate-2026-09-05.md`
+and `docs/operations/selection-result-replay-contract-candidate-2026-09-05.md`
+provide concrete storage/cutover and typed replay candidates for tasks1.2/1.3.
+Unresolved: complete audit/ports manifest, precise exhaustion/result mapping,
+legacy version/predecessor compatibility with mandatory same-identity optional
+render, and owner disposition of REPLACE_PENDING/history. Existing manager role
+identity is already owner-evidenced and must not be re-questioned. No new RED,
+production change, task completion or migration version reservation follows.
