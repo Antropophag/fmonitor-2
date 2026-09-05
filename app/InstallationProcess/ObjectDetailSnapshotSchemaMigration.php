@@ -30,7 +30,18 @@ final class ObjectDetailSnapshotSchemaMigration
     public static function apply(\mysqli $connection, string $tablePrefix = ''): array
     {
         self::assertPrefix($tablePrefix);
+        $lock = null;
+        $locked = false;
         try {
+            $database = $connection->query('SELECT DATABASE()')->fetch_column();
+            if (!is_string($database) || $database === '') {
+                throw new DatabaseUnavailable('Object-detail database identity unavailable.');
+            }
+            $lock = hash('sha256', "object-detail-schema-v1\0{$database}\0{$tablePrefix}");
+            if ((string)$connection->query("SELECT GET_LOCK('{$lock}',5)")->fetch_column() !== '1') {
+                throw new DatabaseUnavailable('Object-detail migration lock unavailable.');
+            }
+            $locked = true;
             [$missing, $conflicts, $collation] = self::inspect($connection, $tablePrefix);
             if ($conflicts !== []) {
                 return ['applied'=>false, 'schemaVersion'=>12,
@@ -59,6 +70,16 @@ final class ObjectDetailSnapshotSchemaMigration
             throw $error;
         } catch (\Throwable) {
             throw new DatabaseUnavailable('Object-detail schema unavailable.');
+        } finally {
+            if ($locked) {
+                try {
+                    if ((string)$connection->query("SELECT RELEASE_LOCK('{$lock}')")->fetch_column() !== '1') {
+                        throw new DatabaseUnavailable('Object-detail migration lock release unavailable.');
+                    }
+                } catch (\Throwable) {
+                    throw new DatabaseUnavailable('Object-detail migration lock release unavailable.');
+                }
+            }
         }
     }
 
