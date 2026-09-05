@@ -45,6 +45,9 @@ Document storage finalizes private content и возвращает typed lease �
 Abort/stage-close/stream-close cleanup failures preserve selected Result and
 emit exact one-event/one-phase safe logs with first12-SHA256 request correlation;
 payload/path/exception data is forbidden.
+Before durable accept, stage/stream close instead selects STORAGE/STREAM failure
+and forbids commit; cleanup order remains abort→stage-close→stream-close.
+Three exact cleanup+log-write scripts prove best-effort no-retry logging.
 Verification worker has three one-shot real-repository unknown-outcome scripts:
 durable+FOUND, rollback+NOT_FOUND and durable+UNAVAILABLE followed by normal
 same-request replay; production binds none and exposes no selector.

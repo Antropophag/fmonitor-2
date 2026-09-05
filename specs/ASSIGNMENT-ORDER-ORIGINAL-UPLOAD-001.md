@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v44 GATE 1 REVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
-Версия: **v44**
+Статус: **v45 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
+Версия: **v45**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -644,6 +644,7 @@ enum AssignmentOrderOriginalStorageStatus: string
 enum AssignmentOrderOriginalFaultPoint: string
 {
     case STREAM_READ = 'stream_read';
+    case STREAM_CLOSE = 'stream_close';
     case STAGE = 'stage';
     case STAGE_WRITE = 'stage_write';
     case STAGE_ABORT = 'stage_abort';
@@ -667,6 +668,9 @@ enum AssignmentOrderOriginalFaultPoint: string
     case RESULT_WRITE_FALSE = 'result_write_false';
     case RESULT_WRITE_ZERO = 'result_write_zero';
     case RESULT_WRITE_SHORT_7 = 'result_write_short_7';
+    case STAGE_ABORT_SAFE_LOG_WRITE_FAILURE = 'stage_abort_safe_log_write_failure';
+    case STAGE_CLOSE_SAFE_LOG_WRITE_FAILURE = 'stage_close_safe_log_write_failure';
+    case STREAM_CLOSE_SAFE_LOG_WRITE_FAILURE = 'stream_close_safe_log_write_failure';
     case ATTEMPT_AUDIT_COMMIT = 'attempt_audit_commit';
     case RESPONSE_DELIVERY = 'response_delivery';
     case ORPHAN_REFERENCE_LOOKUP = 'orphan_reference_lookup';
@@ -947,8 +951,24 @@ diagnostic is logged. Each isolated one-fault Example-A run has exact evidence:
 ```
 
 Lease release uses the same correlation derivation and specified event/phase.
-Safe-log write failure is best-effort, triggers no second log attempt, never
-changes Result and emits no public diagnostic.
+Exact precedence is conditional on durable state. Stage-abort failure always
+preserves the validation/stream/storage Result that required abort. Stage-close
+or stream-close failure after a durable accepted/terminal request commit, or
+after a terminal business rejection/conflict needing no commit, preserves that
+Result. If close is the first failure while an accepted candidate is not yet
+durably committed, stage close selects `FAILED/STORAGE_FAILURE`, stream close
+selects `FAILED/STREAM_FAILURE`, repository commit is forbidden, and later
+cleanup failures cannot replace it. Cleanup attempt order is abort (when
+required) → stage close (when stage exists) → stream close; every applicable
+attempt runs exactly once even after an earlier cleanup failure, and safe-log
+items follow that order.
+
+Plain `STREAM_CLOSE` makes exactly that close throw. The three
+`*_SAFE_LOG_WRITE_FAILURE` scripts first make their named cleanup primitive fail
+and then make only its one safe-log write fail; they emit no log bytes, no second
+log attempt, preserve the precedence-selected Result and cannot combine with
+other faults. Plain STAGE_ABORT/STAGE_CLOSE/STREAM_CLOSE cover successful log
+evidence. Production binds none and has no selector.
 
 Private content/outcome implementations are constructed only by storage adapters. Repository lookup/result implementations may rehydrate stored application results but cannot create accepted evidence not already represented by a committed `AssignmentOrderOriginalAcceptedCommit`. Repository MUST validate UUID/ID/hash/date/time/size grammar; exact mode/event pairing (`INITIAL→assignment_order_original_accepted`, `CORRECTION→assignment_order_original_corrected`); revision 1/null previous for initial; revision n+1/previous/expected-current for correction; content digest/size identity; and Result derivation before commit. Invalid adapter DTO is `PERSISTENCE_FAILURE`, never partial persistence. `AssignmentOrderOriginalAttemptCommit` allows only non-retryable `REJECTED|CONFLICT`, exact reason/status mapping and no evidence fields.
 
