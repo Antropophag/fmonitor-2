@@ -69,3 +69,11 @@
 - [ ] 6.1 Запустить focused suites, `make architecture-check`, `git diff --check`, затем `make verify`; verification: literal `VERIFY_OK`, без переклассификации failures
 - [ ] 6.2 Поручить fresh independent code reviewer проверить approved spec/tests, exact grants, parser/storage boundary, DB/filesystem failure protocol, immutable lineage и scope exclusions; verification: `reviews/code/` содержит explicit `APPROVED`, reviewer не был RED author/implementer
 - [ ] 6.3 Интегратор сверяет tasks/spec/reviews/tests и обновляет operations status; verification: slice Done только после Gates 1–5, а `expose-assignment-order-original-http`, composition и opening остаются явно READY/BLOCKED отдельными named future OpenSpec changes
+
+## Shared owner v0.2 technical corrections — 2026-09-06
+
+Exact0600 включает special bits (mask07777). Close caches success/failure after
+one native attempt and leaves permanently closed usability; повтор не делает
+I/O. Runtime direct imports eagerly load owner/policy; class_exists(false) и
+valid control предшествуют negative factory cases. Это поправки по independent
+Gate1 review, не новое product authority и не разрешение rejected mechanisms.

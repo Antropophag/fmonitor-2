@@ -361,3 +361,18 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 #### Scenario: Upload не открывает и не применяет состав
 - **WHEN** initial или correction принята
 - **THEN** изменяется только private original evidence persistence, а composition и opening facts остаются byte-identical; query/HTTP surface не создаётся
+
+### Requirement: Shared safe-log owner не маскирует unavailable dependency или close failure
+
+Exact file mode SHALL проверяться mask07777, включая запрет special bits.
+Owner close SHALL кешировать success/failure после одной native попытки;
+closed-state MUST NOT означать ложное подтверждение kernel close при failure.
+Existing direct Runtime imports SHALL предоставлять owner/policy без autoloader.
+
+#### Scenario: Direct imports перед policy negatives
+- **WHEN** verifier использует existing Runtime/FileStorage direct imports
+- **THEN** оба новых класса уже loaded и valid-owner control проходит до invalid-input assertions; class-not-found не считается policy denial
+
+#### Scenario: Повтор после native close failure
+- **WHEN** первая close попытка возвращает false/warning/Throwable
+- **THEN** owner permanently unusable, fixed failure кешируется; repeated close не делает I/O и повторяет fixed error, destructor не выпускает исключение

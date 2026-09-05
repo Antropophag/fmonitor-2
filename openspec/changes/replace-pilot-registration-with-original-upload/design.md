@@ -209,3 +209,11 @@ Rollback до production facts отключает route/composition. После 
 ## Open Questions
 
 Нет. Applicability к составу и opening не являются вопросами этого change, а явно отложены в отдельные lifecycle slices.
+
+## Shared owner v0.2 technical corrections — 2026-09-06
+
+Exact0600 включает special bits (mask07777). Close caches success/failure after
+one native attempt and leaves permanently closed usability; повтор не делает
+I/O. Runtime direct imports eagerly load owner/policy; class_exists(false) и
+valid control предшествуют negative factory cases. Это поправки по independent
+Gate1 review, не новое product authority и не разрешение rejected mechanisms.
