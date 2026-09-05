@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v52 GATE 1 REREVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
-Версия: **v52**
+Статус: **v53 GATE 1 REVIEW PENDING — SHARED CONTENT IDENTITY SCHEMA AMENDMENT**
+Версия: **v53**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1153,7 +1153,7 @@ final class AssignmentOrderOriginalVerificationFixtureConflict extends \RuntimeE
 final class AssignmentOrderOriginalVerificationFixtureUnavailable extends \RuntimeException {}
 ```
 
-`schemaVersion()` is `1`. `apply()` accepts the same canonical prefix grammar as
+`schemaVersion()` is `2`. `apply()` accepts the same canonical prefix grammar as
 the evidence config. A clean or compatible partial schema returns `APPLIED` and
 the logical table names actually created/reconciled in manifest order; an exact
 repeat returns `UNCHANGED` with an empty list; any non-equivalent existing
@@ -1162,7 +1162,7 @@ binary order and performs no DDL. It never changes historical registration
 facts or prerequisite process rows. No consumer may infer readiness from a
 version row alone.
 
-Version 1 owns these exact logical tables, in this creation/`affectedTables`
+Version 2 owns these exact logical tables, in this creation/`affectedTables`
 order (the validated prefix is prepended). All use InnoDB, `utf8mb4`, database
 default collation; opaque IDs and hashes use `ascii`/`ascii_bin`. `UNSIGNED`,
 nullability, column order and keys below are normative:
@@ -1177,10 +1177,11 @@ fm2_assignment_order_original_revisions:
   revision_id varchar(80) PK; root_original_id varchar(80); revision_number int unsigned;
   previous_revision_id varchar(80) NULL UNIQUE; document_date date;
   uploaded_at_utc datetime(6); actor_user_id bigint unsigned; pdf_sha256 char(64);
-  byte_size int unsigned; private_content_identity varchar(160) UNIQUE;
+  byte_size int unsigned; private_content_identity varchar(160);
   correction_reason varchar(500) NULL; request_id char(36) UNIQUE;
   operation_fingerprint char(64) UNIQUE; event_type varchar(80);
   UNIQUE(root_original_id,revision_number); INDEX(root_original_id,revision_number);
+  INDEX(private_content_identity);
   FK(root_original_id)->roots(root_original_id) RESTRICT;
   FK(previous_revision_id)->revisions(revision_id) RESTRICT
 fm2_assignment_order_original_requests:
@@ -1224,6 +1225,17 @@ order, FKs/actions and CHECK semantics; extra owned columns/keys/checks or
 missing/different members conflict. A compatible partial deployment may contain
 only a leading subset of the ordered complete tables; populated exact tables
 are preserved byte-for-byte.
+
+Historical schema v1 differs only by `UNIQUE(private_content_identity)` on
+revisions. V2 drops that unique key and creates the exact non-unique
+`INDEX(private_content_identity)` without rebuilding/deleting/updating rows.
+Clean/leading-partial creates v2 directly; exact populated v1 upgrades in one
+ALTER and reports `APPLIED`, schemaVersion 2, affectedTables exactly
+`[fm2_assignment_order_original_revisions]` (followed by capability only if its
+separate V4 upgrade also occurs). Exact v2 repeats unchanged. Any other key/
+column/check/FK difference conflicts with zero DDL. Multiple immutable revisions
+MAY and same-content corrections MUST share one byte-identical
+`private_content_identity`; reference lookup is existential across all revisions.
 
 The prerequisite `fm2_process_user_capabilities` CHECK has exactly two accepted
 semantic states. V4 is the exact set `assignment_order.prepare`,

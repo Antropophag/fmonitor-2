@@ -85,6 +85,9 @@ member bytes; initial/correction worked digests are fixed independently.
 ### 7. Persistence owner и schema direction
 
 Additive canonical migration вводит immutable root/revision identities, terminal request results, semantic fingerprint, one-current-leaf CAS, composition hash, dates, digest/size/storage identity, actor и reason. Rejected/conflict result и safe audit сохраняются атомарно; retryable failures не становятся terminal request hits. Existing registration facts не переписываются. Literal migration version назначается по актуальному frontier.
+Schema v2 forward-upgrades only revisions private-content key from unique to
+non-unique index, preserving v1 rows so same-content immutable revisions share
+one content-addressed identity and reference lookup remains existential.
 
 ### 8. HTTP/read/download boundary отложен
 

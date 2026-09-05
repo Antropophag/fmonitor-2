@@ -32,6 +32,7 @@
 - [x] 1.30 Получить fresh independent Gate 1 rereview cleanup precedence/fault selectors; verification: close-before-commit mapping, exact invalid/accepted cleanup order и injected log observer закрывают v44/v45 findings
 - [x] 1.31 Получить fresh independent Gate 1 review fingerprint encoding amendment; verification: exact big-endian byte-length format и initial/correction digests делают replay/CAS evidence independent
 - [x] 1.32 Получить fresh independent Gate 1 review worker barrier-event amendment; verification: fingerprint-vs-after-finalize selector делает real CAS и maintenance/lease races causally observable
+- [ ] 1.33 Получить fresh independent Gate 1 review shared content identity schema v2 amendment; verification: v1 unique→v2 non-unique populated forward upgrade закрывает same-PDF revision contradiction
 
 ## 2. Minimal RED и test review
 
@@ -39,11 +40,14 @@
 - [x] 2.2 Поручить RED author написать isolated MariaDB clean/repeat/leading-partial/populated/conflict migration и deterministic seed/repeat/conflict/cleanup tests для exact version-1 setup seams; verification: RED вызван отсутствующими migration/fixture seams, не setup
 - [x] 2.3 Поручить fresh independent test reviewer проверить exact manifest/equivalence, fixture literals, sensitivity и bounded cleanup; verification: `reviews/tests/` содержит explicit `APPROVED`, reviewer не писал tests/production
 - [x] 2.4 Исправить initial RED на derived composition hash `388c7d94...` и получить fresh independent Gate 3; verification: old `111...` oracle удалён из active test/support, exact JSON/hash independently sensitivity-tested, historical evidence не редактируется
+- [ ] 2.5 Добавить schema-v2 RED и fresh Gate 3; verification: clean/repeat/populated-v1 upgrade/same-content two-revision/other-drift zero-DDL exact
 
 ## 3. Setup minimal GREEN и code review
 
 - [x] 3.1 Добавить additive canonical capability/schema migration на актуальном frontier без runtime DDL и без изменения historical registration facts; verification: clean/repeat/populated/conflict migration fixtures GREEN
 - [x] 3.2 Поручить fresh independent code reviewer проверить setup production diff и GREEN evidence; verification: explicit `APPROVED`, reviewer не был test author/implementer
+- [ ] 3.3 Реализовать schema v2 forward migration минимальным GREEN; verification: approved v2 migration/same-content tests GREEN без изменения command code
+- [ ] 3.4 Получить fresh independent Gate 5 schema-v2 review; verification: APPROVED до resume task5 implementation
 
 ## 4. Command matrix RED и test review
 
