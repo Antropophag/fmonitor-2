@@ -40,3 +40,13 @@ legacy version/predecessor compatibility with mandatory same-identity optional
 render, and owner disposition of REPLACE_PENDING/history. Existing manager role
 identity is already owner-evidenced and must not be re-questioned. No new RED,
 production change, task completion or migration version reservation follows.
+
+Further 2026-09-05 technical drafting: audit/exhaustion candidate and independent
+bounded consistency receipt are committed at7a38f4f. Exact
+allocation_capacity_exhausted is failed/retryable=false and uncached; denial
+attempts use independent audits without terminal lookup/overwrite. Transaction
+ports candidate `docs/operations/selection-transaction-ports-candidate-2026-09-05.md`
+defines one transaction owner, read-only observed-terminal outcome and distinct
+request-race resolution. These must be consolidated into the normative spec;
+closed DTO constructors/lookup payloads, complete schema/fact inventory and
+combined Gate1 review remain required. This note advances no checkbox.
