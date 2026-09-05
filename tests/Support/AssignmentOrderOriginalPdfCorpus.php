@@ -81,9 +81,10 @@ final class AssignmentOrderOriginalPdfCorpus
         return self::classic(['<< /Type /Catalog /Pages 2 0 R /Java#53cript 4 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /Action /S /Named >>']);
     }
 
-    public static function indirectActiveAction(): string
+    public static function indirectActiveAction(bool $reachable=true): string
     {
-        return self::classic(['<< /Type /Catalog /Pages 2 0 R /OpenAction 4 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /Action /S /JavaScript /JS 5 0 R >>','(app.alert\\(1\\))']);
+        $names=$reachable?' /Names 4 0 R':'';
+        return self::classic(["<< /Type /Catalog /Pages 2 0 R{$names} >>",'<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /JavaScript 5 0 R >>','<< /Names [(action) 6 0 R] >>','<< /Type /Action /S /Named >>']);
     }
 
     public static function decompressionBomb(): string
