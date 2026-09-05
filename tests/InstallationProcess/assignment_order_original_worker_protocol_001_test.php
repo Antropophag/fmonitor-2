@@ -18,6 +18,11 @@ $config = $root . '/config.json';
 mkdir($root, 0700);
 file_put_contents($config, "{}\n");
 chmod($config, 0600);
+register_shutdown_function(static function () use ($root, $config): void {
+    foreach ([$root . '/fifo-fd', $config] as $file) if (is_file($file)) @unlink($file);
+    if (is_dir($root . '/directory-fd')) @rmdir($root . '/directory-fd');
+    if (is_dir($root)) @rmdir($root);
+});
 
 /** @return array{exit:int,stdout:string,stderr:string,commandPeer:string,barrier:string,result:string} */
 $invoke = static function (array $arguments, array $descriptorOverrides = []) use ($entry, $config): array {
@@ -101,6 +106,14 @@ foreach ([
 $exactFailure($invoke(['99', '4', '5', '6']), 'Closed command FD');
 $exactFailure($invoke(['3', '4', '5', '6'], [3 => ['file', $config, 'r']]), 'Regular-file command FD');
 $exactFailure($invoke(['3', '4', '5', '6'], [3 => ['file', '/dev/null', 'r+']]), 'Device command FD');
+$directory = $root . '/directory-fd';
+mkdir($directory, 0700);
+$exactFailure($invoke(['3', '4', '5', '6'], [3 => ['file', $directory, 'r']]), 'Directory command FD');
+$fifo = $root . '/fifo-fd';
+if (!function_exists('posix_mkfifo') || !posix_mkfifo($fifo, 0600)) {
+    throw new TestFailure('FIFO fixture construction failed.');
+}
+$exactFailure($invoke(['3', '4', '5', '6'], [3 => ['file', $fifo, 'r+']]), 'FIFO command FD');
 
 // Passing the same inherited endpoint under two different descriptor numbers
 // proves identity validation is `(dev,ino)`, not merely integer distinctness.
@@ -113,5 +126,7 @@ try {
 }
 
 unlink($config);
+unlink($fifo);
+rmdir($directory);
 rmdir($root);
 fwrite(STDOUT, "ASSIGNMENT_ORDER_ORIGINAL_WORKER_PROTOCOL_OK\n");
