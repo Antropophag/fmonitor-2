@@ -242,6 +242,10 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 - **WHEN** worker завершается controlled exit 70
 - **THEN** stderr ровно `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n`, result FD пуст; invalid config не читает command и не пишет barrier, а barrier failure после READY сохраняет только уже записанный exact READY без новых bytes
 
+#### Scenario: Worker ID sequences deterministic
+- **WHEN** config передаёт root/revision CSV
+- **THEN** each имеет `1..1024` unique exact `original-NNNN`/`revision-NNNN` tokens without whitespace/empty/trailing values, валидируется pre-secret, потребляется left-to-right only on requested kind; exhaustion даёт command `FAILED/PERSISTENCE_FAILURE`, а canonical identical/different race sequences фиксированы executable spec
+
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.
 

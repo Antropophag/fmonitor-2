@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v17 GATE 1 REVIEW PENDING — WORKER FAILURE OUTPUT AMENDMENT**
-Версия: **v17**
+Статус: **v18 GATE 1 REVIEW PENDING — WORKER ID SEQUENCE AMENDMENT**
+Версия: **v18**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1494,5 +1494,24 @@ barrier output is empty. A malformed/EOF/timeout barrier failure may occur only
 after its exact `READY <requestId>\n` was already written; it writes no further
 barrier bytes. No SQL, path, DSN, user, password, request, ID, filename,
 exception or diagnostic text appears in any failure channel.
+
+`rootIdSequenceCsv` and `revisionIdSequenceCsv` are non-empty ASCII CSV with
+`1..1024` tokens, total length `1..82943`, no whitespace, empty/trailing token
+or duplicate within one sequence. Root tokens match `original-[0-9]{4}`;
+revision tokens match `revision-[0-9]{4}`. Validation of both complete sequences
+precedes password-file content, command read and all external access; invalid
+input follows the exact config exit-70 channels above. The injected ID source
+consumes only when the application requests that ID kind, strictly left to
+right; unused suffix is allowed, consumption never rewinds, and exhaustion is
+the typed ID dependency failure mapped by the command to
+`FAILED/PERSISTENCE_FAILURE`, not worker exit 70.
+
+Canonical worker fixtures are: initial setup root `original-0001`, revision
+`revision-0001`; two identical correction workers each have unused root
+`original-0099` and revision `revision-0002`; different correction workers have
+unused roots `original-0098`/`original-0097` and revisions
+`revision-0003`/`revision-0004`. Same generated revision in the identical race
+is intentional: winner persists it and loser resolves the winner by fingerprint
+before attempting a distinct accepted fact.
 
 Command pipe carries exactly one UTF-8 JSON line, maximum `29,000,000` bytes: keys match Command, enum backed strings, PDF bytes base64, nulls explicit. Result pipe carries exactly one canonical JSON line maximum `16384` bytes and no stdout noise. Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
