@@ -51,7 +51,7 @@ $toV1=static function(mysqli$db,string$name='legacy_content_key')use($prefix,$so
     if(preg_match('/^[A-Za-z0-9_$]{1,64}$/D',$name)!==1)throw new TestFailure('V1 fixture requires a safe index name.');
     $index=$soleContentIndex($db);
     $db->query('ALTER TABLE '.$quote($prefix.Contract::TABLES[1]).' DROP INDEX '.$quote($index['INDEX_NAME']).', ADD UNIQUE INDEX '.$quote($name).' (private_content_identity)');
-    assertSameValue([$name,'0','private_content_identity'],array_values($soleContentIndex($db)),'Fixture establishes exact historical v1 unique predecessor.');
+    assertSameValue([$name,0,'private_content_identity'],array_values($soleContentIndex($db)),'Fixture establishes exact historical v1 unique predecessor.');
 };
 $toV4=static function(mysqli$db)use($prefix,$quote):void{
     $table=$prefix.'fm2_process_user_capabilities';
@@ -66,7 +66,7 @@ $snapshot=static function(mysqli$db)use($quote):string{
     return json_encode($state,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 };
 $bootstrapV2=static function(mysqli$db)use($prepareV4,$prefix):void{$prepareV4($db);$result=AssignmentOrderOriginalSchemaMigration::apply($db,$prefix);assertSameValue(AssignmentOrderOriginalSchemaMigrationStatus::APPLIED,$result->status(),'Fixture bootstrap applies canonical schema.');};
-$assertV2=static function(mysqli$db,string$claim)use($soleContentIndex):void{assertSameValue([Contract::REVISION_CONTENT_INDEX,'1','private_content_identity'],array_values($soleContentIndex($db)),"{$claim}: exact named non-unique v2 index.");};
+$assertV2=static function(mysqli$db,string$claim)use($soleContentIndex):void{assertSameValue([Contract::REVISION_CONTENT_INDEX,1,'private_content_identity'],array_values($soleContentIndex($db)),"{$claim}: exact named non-unique v2 index.");};
 
 try{
     $probe=$newDb('probe');assertSameValue('1',(string)$probe->query('SELECT 1 ready')->fetch_assoc()['ready'],'Schema-v2 verifier has live isolated MariaDB.');$probe->close();
