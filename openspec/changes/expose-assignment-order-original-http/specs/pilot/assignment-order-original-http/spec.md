@@ -1,6 +1,6 @@
 ## Purpose
 
-Доставить через портал загрузку, историю и скачивание подписанного оригинала распоряжения с сохранением application authorization и неизменяемых доказательств. Пакет предварительный: exact executable HTTP contract и mapping читателей ещё не утверждены.
+Доставить через портал загрузку, историю и скачивание подписанного оригинала распоряжения с сохранением application authorization и неизменяемых доказательств. Mapping читателей одобрен владельцем 2026-09-05; exact executable HTTP contract ещё требует Gate 1.
 
 ## ADDED Requirements
 
@@ -27,11 +27,23 @@
 - **THEN** портал сообщает конфликт; исходные bytes/date/history сохранены
 
 ### Requirement: Авторизованное чтение immutable evidence
-Metadata/history/download SHALL выполняться через read-only application seam и exact local permission `assignment_order.original.read`. Разрешённые role grants MUST быть установлены отдельным Gate 1 решением или доказанным inherited contract; до этого read/download имеют статус NEEDS_GRILL. Runtime MUST проверять доступ к запрошенному объекту/revision до выдачи bytes и не выводить read permission из upload/correct.
+Metadata/history/download SHALL выполняться через read-only application seam и exact local permission `assignment_order.original.read`. Active сотрудник ФКР и Руководитель ФКР SHALL читать распоряжения доступных им объектов; active инженер стройконтроля SHALL читать распоряжения закреплённых за ним объектов; active специалист ОТиЗ SHALL читать все распоряжения. Все эти grants включают прошлые immutable revisions. Административная роль MUST NOT автоматически давать это permission. Runtime MUST проверять explicit permission и соответствующий scope до выдачи bytes и не выводить read permission из upload/correct.
 
 #### Scenario: Чтение сохранённой revision
 - **WHEN** пользователь с утверждённым read permission и доступом к объекту выбирает сохранённую revision
 - **THEN** metadata и скачанные bytes относятся к одной immutable revision; SHA-256 и размер совпадают с accepted evidence, domain history не меняется
+
+#### Scenario: ОТиЗ читает любое распоряжение
+- **WHEN** active специалист ОТиЗ с exact read permission выбирает распоряжение любого объекта, включая прошлую revision
+- **THEN** metadata/history/download доступны независимо от закрепления инженера; чтение не разрешает upload/correction/opening
+
+#### Scenario: Инженер читает только закреплённые объекты
+- **WHEN** инженер с exact read permission запрашивает распоряжение объекта, за которым он не закреплён, и не имеет иной явно разрешающей роли
+- **THEN** metadata и bytes не выдаются, включая прошлые revisions
+
+#### Scenario: Администрирование не даёт document read
+- **WHEN** пользователь имеет только административную роль без explicit original read grant
+- **THEN** metadata/history/download недоступны без раскрытия original evidence
 
 #### Scenario: Недоступный original
 - **WHEN** revision отсутствует, объект недоступен либо private bytes невозможно надёжно прочитать

@@ -12,7 +12,7 @@
 
 1. Владелец записи — AssignmentOrderOriginal application module; HTTP переводит transport DTO в command. Direct SQL в coordinator исключается из нового маршрута, поскольку иначе образуется второй владелец фактов.
 2. Read/download получает отдельный production read-only seam, а не verification evidence reader. Последний раскрывает диагностические inventories и не является пользовательским query API.
-3. Session/RBAC/CSRF admission использует существующий production HTTP контур. Capability mapping для read не наследуется неявно; NEEDS_GRILL блокирует его реализацию до подтверждения grants.
+3. Session/RBAC/CSRF admission использует существующий production HTTP контур. Owner-approved read mapping: `fkr_operator` и `manager` — доступные им объекты; `construction_control_engineer` — закреплённые за ним объекты; `otiz_specialist` — все распоряжения. Каждая ветвь требует active user/role и explicit `assignment_order.original.read`; read включает history revisions. Глобальный scope ОТиЗ нельзя ошибочно ограничивать engineer-assignment predicate. Административные roles автоматически не получают read; несколько roles объединяют только явно выданные полномочия. Точный источник текущего закрепления и SQL/read-port contract фиксируются в executable Gate 1.
 4. Route strings, transport DTO/status mapping и read DTO проектируются совместно в executable Gate 1 `ASSIGNMENT-ORDER-ORIGINAL-HTTP-001`. Это технические решения для независимого review, не перенос legacy registration semantics.
 5. Допустимые зависимости: HTTP → public command/read ports; adapters → storage/repository ports. `make architecture-check` проверяет отсутствие domain SQL/DDL в новом HTTP adapter и отсутствующий импорт verifier factories в runtime.
 
