@@ -113,7 +113,13 @@ function odsRunCli(string $database, string $prefix, bool $unreachable = false):
         'FMONITOR_DB_PASSWORD' => $unreachable ? 'must-not-be-read' : (getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local'),
         'FMONITOR_PROCESS_TABLE_PREFIX' => $prefix,
     ];
-    $command = [PHP_BINARY, dirname(__DIR__, 2) . '/bin/fmonitor2-migrate.php'];
+    // Some PHP hosts omit empty values from proc_open's environment. Preserve
+    // only explicit empty assignments through env; nonempty secrets stay in
+    // the environment and never enter the command arguments.
+    $command = ['/usr/bin/env'];
+    foreach ($environment as $name => $value) if ($value === '') $command[] = $name . '=';
+    $command[] = PHP_BINARY;
+    $command[] = dirname(__DIR__, 2) . '/bin/fmonitor2-migrate.php';
     $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2), $environment);
     if (!is_resource($process)) {
         throw new TestFailure('SETUP_FAILURE: canonical runner did not start');
@@ -204,6 +210,7 @@ try {
         odsCreateExact($connection, 'second_conflict_', 'quarantine');
         $connection->query('ALTER TABLE second_conflict_fm2_pilot_object_detail_quarantine MODIFY code VARCHAR(79) NOT NULL');
         assertSameValue(['exit'=>64,'out'=>"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",'err'=>''], odsRunCli('must_not_be_accessed', str_repeat('p',26), true), 'bounded CLI harness precondition');
+        assertSameValue(['exit'=>69,'out'=>"{\"ok\":false,\"reason\":\"DATABASE_UNAVAILABLE\"}\n",'err'=>''], odsRunCli('must_not_be_accessed', '', true), 'explicit empty prefix survives child environment and reaches valid-config DB boundary');
         echo "PREREQUISITE PASS: isolated MariaDB fixture is writable and observable\n";
 
         assertSameValue(
