@@ -190,6 +190,10 @@ Storage SHALL начать private stage до чтения stream; application �
 - **WHEN** retry lookup тем же request доказывает отсутствие accepted result
 - **THEN** command может заново проверить/reuse verified private blob и выполнить одну новую commit attempt; итогом остаётся не более одного accepted fact
 
+#### Scenario: Real unknown-outcome scripts constructible
+- **WHEN** verification worker выбирает one `commit_unknown_found|not_found|unavailable`
+- **THEN** real repository выполняет ровно durable-commit+fresh-FOUND, rollback+fresh-NOT_FOUND или durable-commit+fresh-UNAVAILABLE; script one-shot, production не может его выбрать, unavailable retry normally replays durable row
+
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
 через `AssignmentOrderOriginalEvidenceReaderFactory::create` и exact serializable

@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v27 GATE 1 REREVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
-Версия: **v27**
+Статус: **v28 GATE 1 REVIEW PENDING — UNKNOWN-OUTCOME FAULT AMENDMENT**
+Версия: **v28**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -616,6 +616,9 @@ enum AssignmentOrderOriginalFaultPoint: string
     case LINEAGE_LOOKUP = 'lineage_lookup';
     case COMMIT_BEFORE = 'commit_before';
     case COMMIT_AFTER_UNKNOWN = 'commit_after_unknown';
+    case COMMIT_UNKNOWN_FOUND = 'commit_unknown_found';
+    case COMMIT_UNKNOWN_NOT_FOUND = 'commit_unknown_not_found';
+    case COMMIT_UNKNOWN_UNAVAILABLE = 'commit_unknown_unavailable';
     case ATTEMPT_AUDIT_COMMIT = 'attempt_audit_commit';
     case RESPONSE_DELIVERY = 'response_delivery';
     case ORPHAN_REFERENCE_LOOKUP = 'orphan_reference_lookup';
@@ -816,6 +819,19 @@ interface AssignmentOrderOriginalFaultInjector
 {
     public function before(AssignmentOrderOriginalFaultPoint $point): void;
 }
+
+The three `COMMIT_UNKNOWN_*` values are verification-only composite real-
+repository scripts, not production fault selectors. `FOUND` durably commits the
+accepted transaction, returns `OUTCOME_UNKNOWN`, then allows exactly one fresh
+terminal-request read on a new connection to observe FOUND. `NOT_FOUND` rolls
+back before returning `OUTCOME_UNKNOWN`, then its one fresh connection proves
+NOT_FOUND. `UNAVAILABLE` durably commits, returns `OUTCOME_UNKNOWN`, then makes
+exactly the one fresh lookup unavailable; the current invocation returns
+`FAILED/PERSISTENCE_OUTCOME_UNKNOWN`, while the next normal same-request worker
+finds the durable row and returns `REPLAYED`. Each script is consumed once and
+cannot affect earlier request/fingerprint reads or later retries. Production
+factory binds no-op faults and cannot select these values by environment,
+request, CLI or config; only verification worker config accepts them.
 
 interface AssignmentOrderOriginalSafeLogObserver
 {
