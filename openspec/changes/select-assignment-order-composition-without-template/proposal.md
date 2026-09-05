@@ -27,7 +27,7 @@ Behavior slice: `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001`. Actors — сотру
 
 В scope: selection persistence и handoff original command. Вне scope: original bytes processing, read grants, opening, применение состава во времени, 1С ДО, изменение protected PILOT-E2E-FLOW-001, новая domain logic в rapid-pilot. Existing prepare/render не удаляется до reviewed integration.
 
-Planning gaps для exact Gate 1: authorization selection vs existing prepare/upload capabilities, изменение ошибочного выбора до original и immutable version identity, physical date compatibility с existing composition hash. Они не заполняются догадками об observed legacy behavior; NEEDS_GRILL только если потребуется новое продуктовое решение сверх approved original workflow.
+Planning gaps для exact Gate 1: authorization selection vs existing prepare/upload capabilities, техническая immutable version identity и physical date compatibility с existing composition hash. Политика append-only replace_pending уже утверждена владельцем 2026-09-05, exact record `owner-e2e-admission-and-pending-selection-approval-2026-09-05-1842Z.md`. Они не заполняются догадками об observed legacy behavior; NEEDS_GRILL только если потребуется новое продуктовое решение сверх approved original workflow.
 
 ## Storage drafting decision — 2026-09-05
 
@@ -45,3 +45,14 @@ path. Legacy preparation's selected-case guard does not complete that path or
 permit an easier direct-only release. These dependencies are part of the
 consolidated executable Gate1/integration package, with no Done claim from
 storage or selector alone.
+
+## Technical correction v0.5 — 2026-09-05
+
+Executable candidate v0.5 закрепляет closed result/lookup factories,
+проверку malformed dependency payload, typed stage/audit receipts вместо
+придуманных AUTO_INCREMENT IDs и полную legacy prepared/registered × original
+normalization. Это технические уточнения утверждённого two-mode workflow.
+Product policy REPLACE_PENDING закрыта; её не нужно пересогласовывать.
+Independent v0.4 review и writer/reader cutover inventory сохраняют P0 blockers:
+exact migration/backfill/receipt, совместимость всех writers, original reader
+и same-identity optional render. Ни одна ветвь ещё не допущена к RED.

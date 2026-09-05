@@ -15,7 +15,7 @@
 3. Persistence order/member snapshots не дублируется новым независимым HTTP writer. При необходимости additive schema change получает exact manifest/version и свои Gates; runtime DDL запрещён.
 4. Original command получает уже сохранённую identity. Existing derivation из physical `order_date` и member validity требует явного compatibility решения в Gate 1: дата выбора/шаблона не подменяет documentDate original.
 5. Allowed dependencies: caller → selection API → authorization/catalog/repository/clock ports. Selection не получает renderer port; optional rendering — отдельная операция того же owner. Architecture ratchet проверяет отсутствие bypass и renderer calls в selection.
-6. Пакет не утверждает конкретные permission code, pre-original correction semantics и mutable draft модель. Эти Gate 1 вопросы сначала разрешаются из inherited approved contracts; новое пользовательское поведение при необходимости имеет NEEDS_GRILL disposition, не выводится из legacy implementation.
+6. Политика pre-original correction уже утверждена exact owner record 1842Z: только новая immutable selection/version, видимая история, без изменения accepted composition. Permission mapping и точные DTO/storage outcomes остаются technical Gate1; mutable draft не вводится. Новые продуктовые вопросы имеют NEEDS_GRILL disposition и откладываются до возвращения владельца.
 7. Existing projection gap доказан в `docs/operations/selection-existing-assignment-projection-gap-2026-09-05.md`: directory фильтрует registered order, но MAX(version) берёт среди всех orders; новая selection скрывает старое назначение. No-application contract охватывает public directory availability/assignments и inspection actor/installer attribution, а не только неизменные interval rows. Изолированный переход на MAX(registered) не является target original applicability. Gate 1 согласует selection visibility с owning lifecycle contract до implementation.
 
 ## Risks / Trade-offs
@@ -84,8 +84,8 @@ selection family, original-reader branch, existing-writer handoff, typed command
 ports/replay/audit and preservation. No migration version is reserved by this
 note: choose the actual next version only after reading the then-current
 catalogue. No task checkbox advances and no RED/code is authorized here.
-REPLACE_PENDING user-visible correction/history remains a separate explicit
-owner decision in that batch; it is neither silently removed nor approved.
+REPLACE_PENDING user-visible correction/history теперь APPROVED exact owner
+record 1842Z; это не blanket technical approval остального batch.
 
 ## Combined release compatibility obligations — 2026-09-05
 
@@ -118,3 +118,24 @@ preservation, pending legacy rejection without mutations, accepted original plus
 new pending selection preserving applicable crew, and restart with the complete
 registry/source facts. Full make verify and real original-first public golden
 remain mandatory; the independently green selector cannot replace them.
+
+## Typed construction correction v0.5
+
+Результат создаётся только `SelectionResult` factories; reason/retryable/success
+комбинации и fixed programming-error исключения заданы executable spec.
+Lookup constructors private; отсутствие и unavailable различаются явно.
+Snapshot carriers пассивны, application owner валидирует malformed values и
+возвращает dependency_unavailable до persistence. Dismissed/out-of-period worker
+даёт отдельный installer_not_employed, не masquerading infrastructure absence.
+Event/audit pre-insert payload не содержит generated ID: storage возвращает
+stage receipt, который не является commit acknowledgement. Observer читает
+persisted envelopes с IDs. Legacy state использует closed enum и truth table;
+transaction state lookup failure остаётся dependency failure, без allocation.
+
+Actual source inventory `docs/operations/selection-writer-reader-cutover-inventory-2026-09-05.md`
+фиксирует одного физического creator, direct HTTP status/artifact writers и
+legacy-only original reader. N-1 не знает registry: простое создание таблиц не
+останавливает старый writer. Нужен отдельно утверждённый concrete cutover;
+режим rolling mixed N-1/N пока не разрешён. No runtime DDL, same-identity
+optional render и public preservation obligations не ослаблены. Это planning,
+не Gate1 APPROVED и не разрешение implementation.

@@ -29,7 +29,7 @@ ledger and shared identity registry/allocator, preserved historical IDs, legacy
 writer cutover, original-reader source discriminator, and fail-closed deployment
 compatibility specified in the appended design decision. This is planning
 progress only; task1.2–1.4 remain unchecked until the complete executable batch
-and required owner decision are approved.
+are technically approved; pending-replacement owner policy is already approved in1842Z record.
 
 2026-09-05 drafting inputs (not Gate1 approval):
 `docs/operations/selection-identity-storage-contract-candidate-2026-09-05.md`
@@ -37,7 +37,7 @@ and `docs/operations/selection-result-replay-contract-candidate-2026-09-05.md`
 provide concrete storage/cutover and typed replay candidates for tasks1.2/1.3.
 Unresolved: complete audit/ports manifest, precise exhaustion/result mapping,
 legacy version/predecessor compatibility with mandatory same-identity optional
-render, and owner disposition of REPLACE_PENDING/history. Existing manager role
+render. Owner disposition of REPLACE_PENDING/history is now APPROVED (1842Z). Existing manager role
 identity is already owner-evidenced and must not be re-questioned. No new RED,
 production change, task completion or migration version reservation follows.
 
@@ -50,3 +50,12 @@ defines one transaction owner, read-only observed-terminal outcome and distinct
 request-race resolution. These must be consolidated into the normative spec;
 closed DTO constructors/lookup payloads, complete schema/fact inventory and
 combined Gate1 review remain required. This note advances no checkbox.
+
+## v0.5 reconciliation state — 2026-09-05
+
+Owner REPLACE_PENDING policy закрыта; повторно её не спрашивать. v0.5 уточняет
+result/lookup closure, validation owner, generated event/audit ID receipts и
+legacy-status truth table по independent v0.4 findings. Fresh independent review
+ещё нужен; tasks1.2–1.4 остаются открытыми, поскольку P0 migration/cutover/
+original-reader/optional-render contracts не завершены. Production/tests для
+selection не написаны. Deadline9 сентября09:00МСК не меняет gates или scope.

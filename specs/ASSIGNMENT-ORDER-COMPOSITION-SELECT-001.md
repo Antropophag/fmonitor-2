@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.4, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.5, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -11,9 +11,9 @@
 открывает работы и не меняет состав в справочнике и у стройконтроля.
 
 Кандидат полностью задаёт как новый выбор (`new_order`), так и append-only
-замену ещё не подписанного выбора (`replace_pending`). Весь batch остаётся
-`OWNER_APPROVAL_REQUIRED`: отсутствие ответа владельца не считается согласием
-и до решения ни одна из ветвей не переходит к RED.
+замену ещё не подписанного выбора (`replace_pending`). Эта продуктовая политика
+утверждена владельцем 2026-09-05 (раздел 15). Технический Gate 1 всего batch
+остаётся незакрытым; до его APPROVED ни одна ветвь не переходит к RED.
 
 ## 1. Actor, граница и Gate
 
@@ -143,9 +143,10 @@ interface AssignmentOrderCompositionResultSerializer
 
 `selected/replayed`: null reason, retryable false, non-null success.
 `rejected/conflict`: retryable false, null success. `failed`: null success,
-retryable true except nonretryable `allocation_capacity_exhausted`. Impossible
-combinations are not constructible. Serializer emits every annotated key in
-that order; enums use lowercase backing values.
+retryable true except nonretryable `allocation_capacity_exhausted`. Serializer emits every annotated key in
+that order; enums use lowercase backing values. Закрытость concrete result
+задаётся следующими factories; произвольная реализация интерфейса не является
+допустимым result production owner.
 
 Success IDs follow section 2; version `1..65535`, revision `1..4294967295`;
 identity exact ASCII `composition-<orderId>-v<version>` (max160 bytes); hash 64
@@ -157,6 +158,42 @@ lowercase hex; date `YYYY-MM-DD`; selectedAt UTC RFC3339 seconds.
 | rejected | invalid_command, authorization_denied, object_not_found, installer_required, control_engineer_required, installer_not_in_catalog, installer_not_employed, control_engineer_not_eligible, object_has_pto_act, object_completed, no_changes |
 | conflict | request_id_conflict, stale_selection, pending_selection_exists, selection_not_found, original_already_accepted |
 | failed | dependency_unavailable, persistence_failure, persistence_outcome_unknown, allocation_capacity_exhausted |
+
+### 3.1 Concrete closed result construction
+
+`SelectionResult` — единственная concrete `final readonly` реализация
+`AssignmentOrderCompositionResult`. Constructor private; public factories:
+
+```php
+final readonly class SelectionResult implements AssignmentOrderCompositionResult
+{
+    private function __construct() {}
+    public static function selected(SelectionRequestId $requestId, SelectionSuccessPayload $payload): self { /* normative factory */ }
+    public static function replayed(SelectionRequestId $requestId, SelectionSuccessPayload $payload): self { /* normative factory */ }
+    public static function rejected(SelectionRequestId $requestId, AssignmentOrderCompositionReason $reason): self { /* normative factory */ }
+    public static function conflict(SelectionRequestId $requestId, AssignmentOrderCompositionReason $reason): self { /* normative factory */ }
+    public static function failed(SelectionRequestId $requestId, AssignmentOrderCompositionReason $reason): self { /* normative factory */ }
+    public function status(): AssignmentOrderCompositionStatus { /* normative accessor */ }
+    public function reasonCode(): ?AssignmentOrderCompositionReason { /* normative accessor */ }
+    public function retryable(): bool { /* normative accessor */ }
+    public function requestId(): SelectionRequestId { /* normative accessor */ }
+    public function success(): ?SelectionSuccessPayload { /* normative accessor */ }
+}
+```
+
+Это syntax-valid declarations, не готовая implementation. Каждая factory
+выбирает exact status по своему имени; reason допускается только из строки
+таблицы раздела 3. Retryable выводится из status/reason и не принимается от
+caller. Success payload допустим только с bounds/formats выше. Нарушение
+factory contract вызывает `InvalidArgumentException('Invalid selection result.')`,
+без I/O и без преобразования в business outcome. Исходный requestId возвращается
+даже для `invalid_command`: result factory не повторяет UUID validation.
+`SelectionSuccessPayload` — пассивный typed carrier; проверку всех его полей
+выполняют selected/replayed factories. Serializer — concrete
+`SelectionResultSerializer`, public `__construct()` без dependencies,
+`serialize(AssignmentOrderCompositionResult): array`; foreign implementation
+интерфейса отклоняется тем же fixed `InvalidArgumentException`. Он не читает
+clock/DB, не меняет результат и не пропускает null keys.
 
 ## 4. Exact canonical bytes
 
@@ -217,15 +254,26 @@ enum SelectionLookupStatus:string
 { case FOUND='found'; case NOT_FOUND='not_found'; case UNAVAILABLE='unavailable'; }
 ```
 
-The following names are concrete readonly classes, each constructed with
-`(SelectionLookupStatus $status, ?T $payload)`: `SelectionCaseLookup` has
-`T=SelectionCasePayload`; `SelectionInstallerBatchLookup` has
-`T=InstallerBatchPayload`; `SelectionEngineerLookup` has `T=EngineerSnapshot`;
-`SelectionInstantLookup` has `T=SelectionInstant`; and
-`SelectionTerminalRequestLookup` has `T=SelectionTerminalRequestRecord`.
-Their constructors accept a non-null payload exactly for `found` and null
-exactly for the other statuses. This paragraph is a normative type table, not
-PHP pseudocode.
+Следующие типы — concrete `final readonly` lookup classes с private
+constructor и public readonly `status: SelectionLookupStatus`, `payload: ?T`:
+
+| Class | T |
+| --- | --- |
+| SelectionCaseLookup | SelectionCasePayload |
+| SelectionInstallerBatchLookup | InstallerBatchPayload |
+| SelectionEngineerLookup | EngineerSnapshot |
+| SelectionInstantLookup | SelectionInstant |
+| SelectionTerminalRequestLookup | SelectionTerminalRequestRecord |
+
+Для каждой строки public factories exact:
+`found(T $payload): self`, `notFound(): self`, `unavailable(): self`.
+`found` задаёт FOUND/non-null, остальные — соответствующий status/null.
+Public `(status, ?payload)` constructor отсутствует, поэтому сочетание
+FOUND/null невозможно. Factory не читает dependencies; payload type checking —
+PHP type system. Значения snapshot проверяет application owner по правилам ниже,
+поэтому malformed dependency payload не становится construction/setup exception.
+Adapter query/schema/transport failure возвращает `unavailable()`, отсутствие
+сущности — `notFound()`; catch-all absence запрещён.
 
 ```php
 final readonly class SelectionCasePayload
@@ -252,22 +300,44 @@ interface SelectionDependencyReader
 interface SelectionClock { public function now(): SelectionInstantLookup; }
 ```
 
-Snapshot text is trimmed nonempty UTF-8: FIO/position ≤300 chars, source ≤80,
-sourceUpdatedAt valid RFC3339 ≤40. Employment status exact `employed`; from is
-valid and ≤ selectionDate; to null or valid ≥from and ≥selectionDate. Requested
-missing IDs and snapshots are numeric-ordered; duplicate/extra/malformed data is
-unavailable. Engineer needs active user/role and exact
-`construction_control_engineer`; inactive/absent is ineligible, infrastructure
-error unavailable.
+Snapshot constructors являются пассивными carriers; они не утверждают
+business eligibility и не выбрасывают validation exception. Application owner
+проверяет каждый полученный payload до использования. Case/object/user/tab IDs
+имеют bounds раздела 2; case objectId должен совпасть с requested ID; PTO — null
+либо реальная calendar date. Snapshot text — trimmed nonempty valid UTF-8:
+FIO/position ≤300 Unicode code points, source ≤80; sourceUpdatedAt — RFC3339
+instant ≤40 bytes; clock — exact UTC `YYYY-MM-DDTHH:MM:SSZ`. Malformed field,
+extra/duplicate/wrong ID, неправильный порядок или broken date period дают
+`failed/dependency_unavailable`, а не exception или отсутствие сущности.
+
+Installer batch — полное разбиение requested IDs на numeric-ascending unique
+snapshots и numeric-ascending unique missingIds, без пересечения; empty arrays
+имеют list shape. Batch-level NOT_FOUND не используется для missing workers:
+такой ответ трактуется как malformed dependency/unavailable. Clock NOT_FOUND
+аналогично unavailable. Case NOT_FOUND — object_not_found; engineer NOT_FOUND —
+control_engineer_not_eligible. Engineer snapshot уже обозначает active user/role
+с exact `construction_control_engineer`; inactive/absent reader возвращает
+notFound, infrastructure failure — unavailable.
+
+Installer employmentStatus допускает `employed` и `dismissed`. EmployedFrom —
+valid calendar date; employedTo — null либо valid date ≥ employedFrom.
+При structurally valid batch отсутствующий ID даёт installer_not_in_catalog;
+`dismissed`, from > selectionDate или non-null to < selectionDate дают
+installer_not_employed. Неизвестный status и отсутствующий required period —
+dependency_unavailable. Поэтому отрицательная eligibility остаётся отдельным
+наблюдаемым business result, а не невозможным FOUND payload. Eligibility использует
+selectionDate; ни document date, ни effective assignment date не создаются.
 
 ```php
 final readonly class SelectionIdentitySummary
 { public function __construct(public int $assignmentOrderId,public int $orderVersion,
   public int $selectionRevision,public string $compositionIdentity,
   public string $compositionSha256,public bool $hasAcceptedOriginal) {} }
+enum SelectionLegacyPhysicalStatus: string
+{ case PREPARED='prepared'; case REGISTERED='registered'; }
 final readonly class LegacyIdentitySummary
 { public function __construct(public int $assignmentOrderId,public int $orderVersion,
-  public string $physicalStatus,public bool $hasAcceptedOriginal) {} }
+  public SelectionLegacyPhysicalStatus $physicalStatus,public bool $hasAcceptedOriginal) {} }
 final readonly class EffectiveOrderIdentity
 { public function __construct(public int $assignmentOrderId,public int $orderVersion) {} }
 final readonly class SelectionStateSnapshot
@@ -284,6 +354,38 @@ with such root. Registry legacy identity is present only when the greatest
 registry version is legacy-owned. Effective order comes from the existing
 effective owner, never from MAX(selection). Original-root inspection failure or
 malformed legacy state makes state unavailable.
+
+### 6.1 Legacy status normalization
+
+State adapter в одном read snapshot проверяет registry/source identity и original
+root до construction `LegacyIdentitySummary`. `hasAcceptedOriginal` означает
+ровно один validated accepted original root для exact case/order; ошибка query,
+duplicate/malformed root или ownership mismatch делает state unavailable.
+Raw physical `status` принимает только literal `prepared` и `registered`.
+Null, unknown text и unsupported source combination не превращаются в бизнес-отказ.
+
+| Valid registry legacy source | Physical status | Accepted original | Cross-source outcome |
+| --- | --- | --- | --- |
+| present, unique matching physical source | prepared | false | pending_selection_exists |
+| present, unique matching physical source | prepared | true | legacy predecessor allows new_order at N+1 |
+| present, unique matching physical source | registered | false | preserved registered predecessor allows new_order at N+1 |
+| present, unique matching physical source | registered | true | legacy predecessor allows new_order at N+1 |
+| orphan/dual/mismatch/unknown status or invalid root | any | any | dependency_unavailable; no allocation |
+
+Эта таблица нормализует только legacy compatibility и не делает registration
+целевым основанием открытия. `replace_pending` никогда не усыновляет legacy row;
+после cross-source refusal/eligibility действуют section10 ledger rules.
+
+`SelectionTransactionSession::selectionState()` возвращает
+`SelectionStateLookup`, такой же closed lookup с `T=SelectionStateSnapshot`.
+Пустая история — FOUND snapshot с null summaries; NOT_FOUND — malformed
+state/unavailable, не отсутствие case. До allocation проверяются все summary
+bounds/identity/hash, связь latest/pending/accepted revisions и current registry
+source. Невозможное сочетание или lookup unavailable → rollback и
+failed/dependency_unavailable. `lockedCase()` аналогично возвращает
+`SelectionCaseLookup`; исчезновение уже resolved case или malformed payload
+внутри транзакции — dependency_unavailable. Эти read failures не являются
+persistence_error и не добавляют terminal request/audit.
 
 ## 7. Registry and dateless ledger schema
 
@@ -431,9 +533,9 @@ interface SelectionTransactionalWork
 { public function run(SelectionTransactionSession $transaction):SelectionTransactionDecision; }
 interface SelectionTransactionSession
 {
- public function lockedCase():SelectionCasePayload;
+ public function lockedCase():SelectionCaseLookup;
  public function findTerminalRequest(SelectionRequestId $id):SelectionTerminalRequestLookup;
- public function selectionState():SelectionStateSnapshot;
+ public function selectionState():SelectionStateLookup;
  public function allocateIdentity(SelectionSourceKind $kind,SelectionInstant $at):SelectionIdentityAllocation;
  public function stageAccepted(SelectionAcceptedPersistence $payload):SelectionStageResult;
  public function stageTerminalAttempt(SelectionTerminalAttemptPersistence $payload):SelectionStageResult;
@@ -453,18 +555,39 @@ The referenced payloads have these exact constructors (normative type table):
 | `SelectionIdentityAllocation` | `int assignmentOrderId, int caseId, int orderVersion, SelectionSourceKind sourceKind, SelectionInstant allocatedAt` |
 | `SelectionAcceptedPersistence` | `SelectionIdentityAllocation allocation, int selectionRevision, AssignmentOrderCompositionMode mode, ?int previousSelectionOrderId, ?int replacesSelectionOrderId, EngineerSnapshot engineer, list<InstallerSnapshot> installers, string selectionDate, SelectionInstant selectedAt, UserId actor, SelectionNormalizedIntent intent, AssignmentOrderCompositionResult selectedResult, SelectionSelectedEvent event, SelectionSafeAttemptAudit audit` |
 | `SelectionTerminalAttemptPersistence` | `SelectionRequestId requestId, SelectionNormalizedIntent intent, AssignmentOrderCompositionResult terminalResult, SelectionSafeAttemptAudit audit` |
-| `SelectionSelectedEvent` | `int eventId, SelectionRequestId requestId, int caseId, int orderId, int orderVersion, int selectionRevision, ?int previousSelectionOrderId, ?int replacesSelectionOrderId, string compositionSha256, SelectionInstant occurredAt, UserId actor` |
-| `SelectionSafeAttemptAudit` | `int auditId, SelectionRequestId requestId, UserId actor, InstallationObjectId objectId, AssignmentOrderCompositionMode mode, AssignmentOrderCompositionStatus status, ?AssignmentOrderCompositionReason reason, SelectionInstant attemptedAt` |
+| `SelectionSelectedEvent` | `SelectionRequestId requestId, int caseId, int orderId, int orderVersion, int selectionRevision, ?int previousSelectionOrderId, ?int replacesSelectionOrderId, string compositionSha256, SelectionInstant occurredAt, UserId actor` |
+| `SelectionSafeAttemptAudit` | `SelectionRequestId requestId, UserId actor, InstallationObjectId objectId, AssignmentOrderCompositionMode mode, AssignmentOrderCompositionStatus status, ?AssignmentOrderCompositionReason reason, SelectionInstant attemptedAt` |
 
 `SelectionSourceKind` is a backed enum `LEGACY_ORDER='legacy_order'` and
 `SELECTION='selection'`; this command allocates only `SELECTION`. Installer list
-in accepted persistence is nonempty, unique and numeric-ascending. Event/audit
-generated IDs use the same positive PHP-int bound as storage.
+in accepted persistence is nonempty, unique and numeric-ascending.
+`SelectionSelectedEvent` и `SelectionSafeAttemptAudit` — pre-insert payloads;
+DB-generated eventId/auditId отсутствуют в constructors. ID назначает storage
+через соответствующий AUTO_INCREMENT; положительный int ≤PHP_INT_MAX проверяется
+до признания stage успешным. Generated IDs не входят в external command result.
 
-`SelectionStageResult` is a closed enum
-`STAGED='staged', REQUEST_RACE='request_race', PERSISTENCE_ERROR='persistence_error'`.
-`SelectionAuditWriteResult` is a closed enum
-`COMMITTED='committed', ROLLED_BACK='rolled_back', OUTCOME_UNKNOWN='outcome_unknown'`.
+`SelectionStageStatus` — enum STAGED='staged', REQUEST_RACE='request_race',
+PERSISTENCE_ERROR='persistence_error'. `SelectionStageResult` — final readonly,
+private constructor, public readonly status и nullable eventId/auditId; factories:
+`accepted(int eventId,int auditId): self` → STAGED с обоими IDs;
+`terminal(int auditId): self` → STAGED с null eventId и auditId;
+`requestRace(): self` и `persistenceError(): self` → соответствующий status,
+оба ID null. При accepted stage eventId и auditId обязательны; terminal stage
+никогда не возвращает eventId. Это receipt staging, не committed success;
+rollback может оставить AUTO_INCREMENT gap, но не acknowledged факт.
+
+`SelectionAuditWriteStatus` — enum COMMITTED='committed', ROLLED_BACK='rolled_back',
+OUTCOME_UNKNOWN='outcome_unknown'. `SelectionAuditWriteResult` — final readonly,
+private constructor, public readonly status и nullable auditId; factories
+`committed(int auditId): self`, `rolledBack(): self`, `outcomeUnknown(): self`.
+Только committed несёт valid ID. Receipt factory с ID вне bounds выбрасывает
+`InvalidArgumentException('Invalid selection receipt.')` без I/O; production
+adapter сначала валидирует DB values и возвращает persistenceError/rolledBack
+после доказанного rollback либо outcomeUnknown при неизвестном commit.
+Public snapshot observer использует `SelectionStoredEvent(int eventId,
+SelectionSelectedEvent payload)` и `SelectionStoredAudit(int auditId,
+SelectionSafeAttemptAudit payload)`; caller не придумывает generated IDs.
+Оба envelopes passive, ID проверяется observer при чтении из storage.
 `SelectionTransactionDecision` is a closed value with constructors
 `commit()`, `rollback()` and `observedTerminal(SelectionTerminalRequestRecord)`.
 `SelectionUnitOfWorkResult` is a closed value with constructors
@@ -597,8 +720,7 @@ actualStart, opening, originals, effective intervals/checklist attribution may n
 
 ## 14. Release-compatibility dependency and Gate status
 
-This full two-mode candidate is **not READY for Gate 1 or RED** until the owner
-approves or revises the replacement decision in section15 and a separate
+This full two-mode candidate is **not READY for Gate 1 or RED** until a separate
 compatibility contract is approved at exact hashes and provides
 registry/backfill/receipt migration, every legacy writer conversion, additive
 original reader, readiness/rollback gates, and optional-render public path that
@@ -612,19 +734,28 @@ then directory/inspection ignore selection exactly as section13.
 After compatibility and independent Gate1 approval: demonstrated RED →
 independent Gate3 → minimal GREEN → regressions/architecture → independent Gate5.
 
-## 15. OWNER_APPROVAL_REQUIRED — pending replacement
+## 15. Approved pending-replacement policy
 
-**OWNER_APPROVAL_REQUIRED; no decision exists.** The exact proposed behavior is
-already integrated into every enum, schema, transaction rule and acceptance row
-above: an FKR actor may append a replacement only for the exact latest ledger
-selection while it has no accepted original; the old selection and any template
-remain immutable and visible in history; the new selection becomes current;
-an original for the replaced identity is not accepted as the current pending
-choice. After accepted original, composition changes only through a new
-forward-only order lifecycle. No legacy prepared row is converted.
+Owner approval: `docs/operations/owner-e2e-admission-and-pending-selection-approval-2026-09-05-1842Z.md`,
+ответ «утверждаю разрешаю». REPLACE_PENDING до принятия original разрешён как
+новая immutable selection/version с видимой прежней историей; accepted-original
+composition этой командой не меняется. Новый owner approval не требуется.
 
-The owner must approve this behavior and user-visible history, reject it, or
-direct a separate slice. Until that answer, neither mode in this combined
-candidate advances to RED and elapsed time is not approval. All other choices
-above are engineering consequences of approved boundaries and need no repeated
-owner decision.
+FKR actor заменяет только exact latest ledger selection без accepted original;
+прежняя selection и template остаются immutable и видимыми. New selection
+становится current. Original для replaced identity не принимается как current
+pending choice. После accepted original изменение состава — только отдельный
+forward-only order lifecycle. Legacy prepared row не конвертируется.
+
+## 16. v0.5 technical correction disposition
+
+v0.4 independent review:
+`docs/operations/selection-v04-independent-readiness-2026-09-05.md`.
+Actual writers/readers:
+`docs/operations/selection-writer-reader-cutover-inventory-2026-09-05.md`.
+Этот revision исправляет result/lookup closure, ownership validation,
+pre-insert generated IDs/typed receipts и legacy-status normalization. Он не
+выдаёт самому себе approval и не снимает P0 prerequisites: exact migration/
+backfill/receipt/writer cutover, original-reader amendment и same-identity
+optional-render contract. Они остаются отдельными technical Gate1 obligations.
+v0.5 требует independent review; RED и production implementation не начаты.

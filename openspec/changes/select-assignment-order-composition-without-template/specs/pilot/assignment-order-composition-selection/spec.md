@@ -92,3 +92,32 @@ No compatibility rule approves legacy registration as target applicability.
 #### Scenario: Optional template after direct selection
 - **WHEN** the user requests a template for a stored selection
 - **THEN** the same identity is used by the new optional-render owner without invoking legacy prepare or creating another composition; a legacy compatibility guard is not evidence of successful parity
+
+### Requirement: Pending replacement сохраняет утверждённую immutable history
+
+Система SHALL разрешать replace_pending только до accepted original для exact
+latest selection; она MUST создавать новую identity/version и сохранять видимость
+предыдущей selection/template. Exact owner approval — 1842Z record2026-09-05.
+
+#### Scenario: Исправление неподписанного выбора
+- **WHEN** ФКР передаёт изменённый состав с current expected revision до original acceptance
+- **THEN** появляется новая immutable selection/version; prior selection/template сохраняются, accepted-original composition не изменяется
+
+### Requirement: Typed results и persistence receipts не допускают выдуманные IDs
+
+Executable v0.5 SHALL закрывать result/lookup combinations public factories.
+Malformed dependency data MUST давать dependency_unavailable, а не отсутствие
+сущности. Event/audit IDs SHALL назначаться storage и наблюдаться typed receipts;
+pre-insert caller MUST NOT конструировать ещё не существующие generated IDs.
+
+#### Scenario: Malformed dependency snapshot
+- **WHEN** reader возвращает extra/duplicate/wrong identity или malformed required snapshot value
+- **THEN** application отклоняет dependency до allocation и terminal persistence; null status/payload combination не создаётся
+
+#### Scenario: Accepted staging ещё не commit
+- **WHEN** storage назначил event/audit IDs и вернул STAGED receipt, затем UoW откатил transaction
+- **THEN** command не сообщает selected и не оставляет committed domain facts; допустим только allocator gap
+
+#### Scenario: Legacy physical status и original root расходятся с supported shapes
+- **WHEN** registry/source inspection находит unknown status, duplicate root или contradictory ownership
+- **THEN** state unavailable; no fallback source, allocation или business pending outcome не подменяет ошибку
