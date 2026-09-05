@@ -34,6 +34,9 @@ Document storage finalizes private content и возвращает typed lease �
 Verification worker has three one-shot real-repository unknown-outcome scripts:
 durable+FOUND, rollback+NOT_FOUND and durable+UNAVAILABLE followed by normal
 same-request replay; production binds none and exposes no selector.
+Four exact combined scripts add one release failure after rollback or each
+unknown branch; plain release fault covers committed and natural CAS-conflict,
+so arbitrary multi-fault configuration remains forbidden.
 
 ### 6. Idempotency и correction ties
 

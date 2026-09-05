@@ -194,6 +194,10 @@ Storage SHALL начать private stage до чтения stream; application �
 - **WHEN** verification worker выбирает one `commit_unknown_found|not_found|unavailable`
 - **THEN** real repository выполняет ровно durable-commit+fresh-FOUND, rollback+fresh-NOT_FOUND или durable-commit+fresh-UNAVAILABLE; script one-shot, production не может его выбрать, unavailable retry normally replays durable row
 
+#### Scenario: Release failure сочетается с commit outcome
+- **WHEN** worker выбирает exact `commit_before|commit_unknown_{found,not_found,unavailable}_release_failure`
+- **THEN** base outcome выполняется один раз, затем one release FAILED с exact rolled_back/unknown_* safe log без замены Result; plain release fault покрывает committed и natural CAS-conflict, arbitrary fault lists forbidden
+
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
 через `AssignmentOrderOriginalEvidenceReaderFactory::create` и exact serializable

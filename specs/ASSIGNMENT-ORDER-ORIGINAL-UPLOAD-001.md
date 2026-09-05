@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v29 GATE 1 REREVIEW PENDING — UNKNOWN-OUTCOME FAULT AMENDMENT**
-Версия: **v29**
+Статус: **v30 GATE 1 REVIEW PENDING — COMBINED RELEASE-FAULT AMENDMENT**
+Версия: **v30**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -618,6 +618,10 @@ enum AssignmentOrderOriginalFaultPoint: string
     case COMMIT_UNKNOWN_FOUND = 'commit_unknown_found';
     case COMMIT_UNKNOWN_NOT_FOUND = 'commit_unknown_not_found';
     case COMMIT_UNKNOWN_UNAVAILABLE = 'commit_unknown_unavailable';
+    case COMMIT_BEFORE_RELEASE_FAILURE = 'commit_before_release_failure';
+    case COMMIT_UNKNOWN_FOUND_RELEASE_FAILURE = 'commit_unknown_found_release_failure';
+    case COMMIT_UNKNOWN_NOT_FOUND_RELEASE_FAILURE = 'commit_unknown_not_found_release_failure';
+    case COMMIT_UNKNOWN_UNAVAILABLE_RELEASE_FAILURE = 'commit_unknown_unavailable_release_failure';
     case ATTEMPT_AUDIT_COMMIT = 'attempt_audit_commit';
     case RESPONSE_DELIVERY = 'response_delivery';
     case ORPHAN_REFERENCE_LOOKUP = 'orphan_reference_lookup';
@@ -831,6 +835,16 @@ finds the durable row and returns `REPLAYED`. Each script is consumed once and
 cannot affect earlier request/fingerprint reads or later retries. Production
 factory binds no-op faults and cannot select these values by environment,
 request, CLI or config; only verification worker config accepts them.
+
+The four `*_RELEASE_FAILURE` values are likewise one-shot verification scripts.
+They perform the exact commit/unknown behavior of their base name and then make
+the one content-lease release return typed FAILED at phase `rolled_back`,
+`unknown_found`, `unknown_not_found` or `unknown_unavailable` respectively.
+Release failure preserves the already selected command Result and emits exactly
+the phase-specific safe-log line defined by the lease contract; no second
+release occurs. Plain `CONTENT_LEASE_RELEASE` covers committed success and, in a
+real different-correction CAS loser, natural `commit_conflict`. No arbitrary
+multi-fault list/string is accepted, and production binds none of these scripts.
 
 interface AssignmentOrderOriginalSafeLogObserver
 {
