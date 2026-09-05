@@ -91,9 +91,9 @@ closure after diagnostic isolation; no full command/launch readiness claim.
 ## Scalar boundary and cumulative corrective gates — 2026-09-06
 
 - [x] 5.5 Dynamic fingerprint/ID/clock correction: RED33cases, Gate3v2 APPROVED, GREEN738b9ad, independent scoped Gate5 APPROVED; observers/shape remain open.
-- [ ] 1.36 Independent Gate1 COMMAND-SHAPE-001 exact Unicode/calendar/opaque-ID and resource semantics; no new product decision.
-- [ ] 4.5 Public shape/generated-ID boundary RED and independent Gate3; invalid before auth/replay plus positive boundary/normalization controls.
-- [ ] 5.6 Minimal scalar boundary GREEN and independent Gate5; observer/public API parity/combined review remain separate.
+- [x] 1.36 Independent Gate1 COMMAND-SHAPE-001 exact Unicode/calendar/opaque-ID and resource semantics; no new product decision.
+- [x] 4.5 Public shape/generated-ID boundary RED and independent Gate3; invalid before auth/replay plus positive boundary/normalization controls.
+- [x] 5.6 Minimal scalar boundary GREEN and independent Gate5; observer/public API parity/combined review remain separate.
 
 ## Scalar boundary v0.2 schema alignment — 2026-09-06
 
@@ -101,3 +101,11 @@ Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
 the existing schema CHECK. Caller and GENERATED negatives cover both separators;
 no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
 fresh v0.2 independent Gate1 precedes any shape RED.
+
+## Scalar boundary completion evidence — 2026-09-06
+
+COMMAND-SHAPE-001 v0.2 Gate1 APPROVED e98e37f; public RED194 cases
+(152fail/42controls), independent Gate3 APPROVED289baeb; GREEN bca89b4853,
+all19 affected checks PASS and scoped Gate5 APPROVED9ad8dbe. Current full
+command blockers are observer/acquisition/data-integrity and public-declaration/
+maintenance composition audits. No combined Gate5/VERIFY_OK/launch claim.
