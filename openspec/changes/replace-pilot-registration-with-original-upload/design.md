@@ -37,6 +37,9 @@ same-request replay; production binds none and exposes no selector.
 Four exact combined scripts add one release failure after rollback or each
 unknown branch; plain release fault covers committed and natural CAS-conflict,
 so arbitrary multi-fault configuration remains forbidden.
+Five exact verification publisher scripts cover zero-byte serialization,
+oversize, false and zero outcomes plus one seven-byte short prefix; all preserve
+the committed result for normal same-request replay and production binds none.
 
 ### 6. Idempotency и correction ties
 

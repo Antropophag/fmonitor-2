@@ -270,6 +270,10 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 - **WHEN** worker публикует command Result
 - **THEN** all 11 keys идут exact order, lower backed enums/explicit nulls/JSON booleans/unquoted integers и fixed JSON flags с one LF; accepted/replayed/stale literals заданы, <=16384 checked before write; serialization/oversize даёт zero bytes, one complete-line fwrite short/failure не retry-ит write, parent отбрасывает bounded prefix unless exact LF+EOF line complete, committed request остаётся replayable
 
+#### Scenario: Result publisher faults deterministic
+- **WHEN** verification worker выбирает serialization/oversize/write-false/write-zero/write-short-7
+- **THEN** first four пишут zero result bytes, short пишет ровно `{"statu` one attempt, all stderr+exit70 и normal same-request retry REPLAYED; production и arbitrary combinations forbidden
+
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.
 

@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v30 GATE 1 REVIEW PENDING — COMBINED RELEASE-FAULT AMENDMENT**
-Версия: **v30**
+Статус: **v31 GATE 1 REVIEW PENDING — RESULT-WRITE FAULT AMENDMENT**
+Версия: **v31**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -622,6 +622,11 @@ enum AssignmentOrderOriginalFaultPoint: string
     case COMMIT_UNKNOWN_FOUND_RELEASE_FAILURE = 'commit_unknown_found_release_failure';
     case COMMIT_UNKNOWN_NOT_FOUND_RELEASE_FAILURE = 'commit_unknown_not_found_release_failure';
     case COMMIT_UNKNOWN_UNAVAILABLE_RELEASE_FAILURE = 'commit_unknown_unavailable_release_failure';
+    case RESULT_SERIALIZATION_FAILURE = 'result_serialization_failure';
+    case RESULT_OVERSIZE = 'result_oversize';
+    case RESULT_WRITE_FALSE = 'result_write_false';
+    case RESULT_WRITE_ZERO = 'result_write_zero';
+    case RESULT_WRITE_SHORT_7 = 'result_write_short_7';
     case ATTEMPT_AUDIT_COMMIT = 'attempt_audit_commit';
     case RESPONSE_DELIVERY = 'response_delivery';
     case ORPHAN_REFERENCE_LOOKUP = 'orphan_reference_lookup';
@@ -845,6 +850,17 @@ the phase-specific safe-log line defined by the lease contract; no second
 release occurs. Plain `CONTENT_LEASE_RELEASE` covers committed success and, in a
 real different-correction CAS loser, natural `commit_conflict`. No arbitrary
 multi-fault list/string is accepted, and production binds none of these scripts.
+
+The five `RESULT_*` cases are verification-worker-only result publisher scripts
+after a durable command Result exists. Serialization failure and oversize force
+their respective pre-write branches and emit zero result bytes. `WRITE_FALSE`
+and `WRITE_ZERO` make the sole writer return false/zero and emit zero bytes.
+`WRITE_SHORT_7` performs exactly one primitive that writes/returns the first
+seven accepted-line bytes `{"statu`, then no second write. All five emit the
+fixed stderr line, exit 70, preserve the committed command outcome and allow a
+normal same-request worker to return exact `REPLAYED`. They cannot combine with
+other faults, affect command/storage/repository behavior, or be selected by
+production; production binds the native one-fwrite result publisher.
 
 interface AssignmentOrderOriginalSafeLogObserver
 {
