@@ -1,7 +1,7 @@
 ## 1. Gate 1 executable specification
 
 - [x] 1.1 Create `specs/CHARACTERIZE-OBJECT-DETAIL-IMPORT-001.md` from repository evidence with literal worked fixtures, operator CLI seam, covered serial outcomes, rejection categories, isolation contract and explicit PILOT_ONLY exclusions; verify every acceptance statement is observable without implementation-derived expected values.
-- [ ] 1.2 Получить fresh technical review и durably record exact owner approval v0.2 serial regression oracle до RED; table-transfer approval уже получено. Проверить private disposable server, canonical v12 setup, exact DDL-denied/schema-precondition/dry-run contract и UNKNOWN exclusions.
+- [x] 1.2 Получить fresh technical review и durably record exact owner approval v0.2 serial regression oracle до RED; table-transfer approval уже получено. Проверить private disposable server, canonical v12 setup, exact DDL-denied/schema-precondition/dry-run contract и UNKNOWN exclusions. Evidence: `docs/operations/object-detail-import-v02-owner-approval-2026-09-05.md`, exact spec hash `a2e9f65a20bd6e33c740c774094508b32a33faa6e0bdf4ace498e31f024e24c9`.
 
 ## 2. Gates 2–3 reviewed RED
 
