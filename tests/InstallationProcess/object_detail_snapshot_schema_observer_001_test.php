@@ -33,6 +33,31 @@ try {
         && enum_exists(ObjectDetailSnapshotSchemaPhase::class),
         'INTENDED_RED: approved observer verification API is missing');
 
+    $phaseType = new ReflectionEnum(ObjectDetailSnapshotSchemaPhase::class);
+    assertSameValue(true, $phaseType->isBacked(), 'phase enum is backed');
+    assertSameValue('string', (string)$phaseType->getBackingType(), 'phase enum backing type');
+    assertSameValue([
+        ['LOCK_ACQUIRED','lock_acquired'],
+        ['DETAILS_CREATED','details_created'],
+        ['QUARANTINE_CREATED','quarantine_created'],
+    ], array_map(static fn(ReflectionEnumBackedCase $case): array => [$case->getName(), $case->getBackingValue()], $phaseType->getCases()), 'phase enum has exactly the three approved cases/values');
+    $observerType = new ReflectionClass(ObjectDetailSnapshotSchemaObserver::class);
+    assertSameValue(['observe'], array_map(static fn(ReflectionMethod $method): string => $method->getName(), $observerType->getMethods()), 'observer interface exact method set');
+    $methodShape = static function (ReflectionMethod $method): array {
+        return [$method->isPublic(), $method->isStatic(), (string)$method->getReturnType(),
+            array_map(static fn(ReflectionParameter $parameter): array => [$parameter->getName(), (string)$parameter->getType(), $parameter->allowsNull(), $parameter->isOptional(), $parameter->isPassedByReference(), $parameter->isVariadic()], $method->getParameters())];
+    };
+    assertSameValue([true,false,'void',[
+        ['phase',ObjectDetailSnapshotSchemaPhase::class,false,false,false,false],
+    ]], $methodShape($observerType->getMethod('observe')), 'observer signature matches public contract');
+    $verificationType = new ReflectionClass(ObjectDetailSnapshotSchemaMigrationVerification::class);
+    assertSameValue(true, $verificationType->isFinal(), 'verification factory is final');
+    assertSameValue([true,true,'array',[
+        ['connection','mysqli',false,false,false,false],
+        ['tablePrefix','string',false,false,false,false],
+        ['observer',ObjectDetailSnapshotSchemaObserver::class,false,false,false,false],
+    ]], $methodShape($verificationType->getMethod('apply')), 'verification apply exact static signature');
+
     $tables = static function (string $prefix) use ($reader): array {
         return array_column($reader->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('{$prefix}fm2_pilot_object_details','{$prefix}fm2_pilot_object_detail_quarantine') ORDER BY BINARY TABLE_NAME")->fetch_all(MYSQLI_ASSOC), 'TABLE_NAME');
     };
