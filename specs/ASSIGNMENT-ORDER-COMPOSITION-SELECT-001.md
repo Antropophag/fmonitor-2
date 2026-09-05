@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.2, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.3, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -24,11 +24,13 @@ creator не являются реализацией пользовательс�
 
 ## 2. Candidate input и authority
 
-Command candidate fields: `requestId`, `installationObjectId`, `actorUserId`,
+Command candidate fields: `requestId`, `mode`, `installationObjectId`, `actorUserId`,
 `installerTabIds`, `controlEngineerUserId`, `expectedSelectionRevision`.
 UUID requestId — canonical lowercase; object/actor/engineer IDs positive;
 installer IDs — непустой unique numeric-sorted набор положительных identities;
 expectedSelectionRevision — nonnegative integer, 0 означает отсутствие selection.
+Mode NEW_ORDER создаёт следующий выбранный состав; REPLACE_PENDING исправляет
+ещё не принятый original-ом выбор. Оба mode сохраняют прежнюю историю.
 Input не содержит PDF/filename/storage path, documentDate original или
 произвольные кадровые snapshots. Actor в HTTP приходит только из session.
 
@@ -134,3 +136,122 @@ deterministic concurrency/unknown-outcome construction.
 GREEN → relevant regression/architecture → fresh independent Gate 5. Затем
 real HTTP direct-upload+optional-template parity и full verify. Ни этот draft,
 ни отдельно сохранённые fixture rows не являются release evidence.
+
+## 7. Closed command/result candidate
+
+Следующий exact contract уточняет candidate fields разделов 2–4; он требует
+independent Gate 1 и не означает ready persistence integration.
+
+```php
+namespace FMonitor2\AssignmentOrderComposition;
+
+enum AssignmentOrderCompositionMode: string
+{
+    case NEW_ORDER = 'new_order';
+    case REPLACE_PENDING = 'replace_pending';
+}
+
+final readonly class SelectAssignmentOrderCompositionCommand
+{
+    /** @param list<int> $installerTabIds */
+    public function __construct(
+        public string $requestId,
+        public AssignmentOrderCompositionMode $mode,
+        public int $installationObjectId,
+        public int $actorUserId,
+        public array $installerTabIds,
+        public ?int $controlEngineerUserId,
+        public int $expectedSelectionRevision,
+    ) {}
+}
+
+interface AssignmentOrderCompositionApplication
+{
+    public function selectAssignmentOrderComposition(
+        SelectAssignmentOrderCompositionCommand $command,
+    ): AssignmentOrderCompositionResult;
+}
+
+interface AssignmentOrderCompositionResult
+{
+    /** @return array<string, int|string|bool|null> */
+    public function toArray(): array;
+}
+```
+
+Result имеет keys ровно в порядке:
+`status, reasonCode, retryable, requestId, caseId, assignmentOrderId,
+assignmentOrderVersion, selectionRevision, compositionIdentity,
+compositionSha256, selectionDate, selectedAt`.
+У SELECTED/REPLAYED reasonCode null, retryable false, остальные fields non-null.
+У REJECTED/CONFLICT/FAILED все fields после requestId null.
+
+| Status | reasonCode | retryable |
+|---|---|---|
+| SELECTED, REPLAYED | null | false |
+| REJECTED | INVALID_COMMAND, AUTHORIZATION_DENIED, OBJECT_NOT_FOUND, INSTALLER_REQUIRED, CONTROL_ENGINEER_REQUIRED, INSTALLER_NOT_IN_CATALOG, INSTALLER_NOT_EMPLOYED, CONTROL_ENGINEER_NOT_ELIGIBLE, OBJECT_HAS_PTO_ACT, OBJECT_COMPLETED, NO_CHANGES | false |
+| CONFLICT | REQUEST_ID_CONFLICT, STALE_SELECTION, ORIGINAL_ALREADY_ACCEPTED, PENDING_SELECTION_EXISTS, SELECTION_NOT_FOUND | false |
+| FAILED | PERSISTENCE_FAILURE, PERSISTENCE_OUTCOME_UNKNOWN, DEPENDENCY_UNAVAILABLE | true |
+
+`caseId/orderId/version/selectionRevision` — positive int. compositionIdentity
+равна `composition-<orderId>-v<orderVersion>`. selectionDate — Moscow calendar
+date единственного accepted clock instant, selectedAt — тот же instant UTC
+RFC3339 second. selectionDate не является date оригинала или датой будущего
+optional render; physical `order_date` compatibility отдельно проверяется
+task 1.3 и не считается разрешённым изменением original contract.
+
+Composition hash — SHA-256 compact JSON с exact key order
+`caseId,compositionIdentity,engineerUserId,installers,orderId`, installer IDs
+unique numeric-sorted. Worked expected input, вычисленный без production:
+
+```json
+{"caseId":4512,"compositionIdentity":"composition-81-v1","engineerUserId":73,"installers":[7001],"orderId":81}
+```
+
+SHA-256: `5c405e5761854b6de09ff2f06f1d72e38203081052b8409cf23fa8d4447fe93a`.
+В isolated fixture с next orderId=81, no selection, clock
+`2026-09-05T09:00:00Z` первый accepted Result содержит version=1,
+selectionRevision=1, selectionDate=`2026-09-05`, selectedAt exact clock и этот
+hash; same-request retry сохраняет все fields кроме status=REPLAYED.
+
+## 8. Exact candidate precedence
+
+1. Shape: canonical request UUID, positive object/actor IDs, nonnegative expected
+   revision, list<int> installers без duplicates/nonpositive IDs; invalid даёт
+   INVALID_COMMAND до dependent reads. Пустой list и null engineer допустимы
+   для следующей business validation, не считаются отсутствующей DTO shape.
+2. Active actor/role/local grant/process capability. Denial до replay и object
+   lookup; unavailable authority — DEPENDENCY_UNAVAILABLE.
+3. Accepted request lookup. Exact stored actor/object/canonical command tuple
+   match даёт REPLAYED до текущих object/clock/catalog checks; mismatch —
+   REQUEST_ID_CONFLICT без evidence disclosure. FAILED не кэшируется terminal.
+4. Object/context lookup; absent — OBJECT_NOT_FOUND, unavailable — dependency
+   failure. Completion, затем PTO запрещают new selection соответствующим code.
+5. Expected revision против latest selection revision (0 если истории нет):
+   mismatch STALE_SELECTION. REPLACE_PENDING без selection даёт
+   SELECTION_NOT_FOUND, с accepted original — ORIGINAL_ALREADY_ACCEPTED.
+   NEW_ORDER при latest selection без accepted original даёт
+   PENDING_SELECTION_EXISTS; иначе допускает новый prospective выбор, не
+   применяя его. Таким образом новая selection поверх applicable order
+   разрешена, но accepted composition не исправляется задним числом.
+6. Empty installers — INSTALLER_REQUIRED; null engineer —
+   CONTROL_ENGINEER_REQUIRED. Получить один clock instant/selectionDate;
+   unavailable clock — DEPENDENCY_UNAVAILABLE. Numeric-sorted installer lookup: первый missing
+   candidate даёт INSTALLER_NOT_IN_CATALOG, не employed на selectionDate —
+   INSTALLER_NOT_EMPLOYED. Active engineer eligibility затем проверяется из
+   canonical directory. Один clock instant используется для всего accepted fact.
+7. REPLACE_PENDING с тем же составом — NO_CHANGES. Новый состав
+   создаёт новую immutable identity/revision с сохранённой replacement link.
+   NEW_ORDER допускает такой же состав как у previous accepted order: это
+   новый prospective документ, не semantic replay предыдущего selection.
+8. Atomic commit selection/order/member snapshots + request result + один
+   selection audit. CAS loser — STALE_SELECTION. Uncertain commit требует fresh
+   lookup той же request identity: found match REPLAYED, proven absent
+   PERSISTENCE_FAILURE, unavailable PERSISTENCE_OUTCOME_UNKNOWN.
+
+Первое сохранение audit: event `assignment_order_composition_selected`,
+actorId, occurredAt, payload с requestId/orderId/orderVersion/selectionRevision/
+previousOrderId и compositionSha256. PreviousOrderId null только без прежней
+selection; no renderer filename/bytes/path либо original date. Rejected/conflict
+safe-audit persistence shape и public observation API остаются частью task 1.3,
+не заменяются fake success или direct private table oracle.
