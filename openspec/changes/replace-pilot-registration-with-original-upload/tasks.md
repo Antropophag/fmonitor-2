@@ -33,7 +33,7 @@
 - [x] 1.31 Получить fresh independent Gate 1 review fingerprint encoding amendment; verification: exact big-endian byte-length format и initial/correction digests делают replay/CAS evidence independent
 - [x] 1.32 Получить fresh independent Gate 1 review worker barrier-event amendment; verification: fingerprint-vs-after-finalize selector делает real CAS и maintenance/lease races causally observable
 - [x] 1.33 Получить fresh independent Gate 1 review shared content identity schema v2 amendment; verification: v1 unique→v2 non-unique populated forward upgrade закрывает same-PDF revision contradiction
-- [ ] 1.34 Получить fresh independent Gate1 shared safe-log owner amendment; verification: SAFE-LOG-OWNER-001 задаёт same owner policy, private opaque acquisition, real-fstat attribute inputs, non-creating open, retained append/close и обязательный behavioral/structural proof split; rejected observer/native candidates заменены без повторения механизмов.
+- [x] 1.34 Получить fresh independent Gate1 shared safe-log owner amendment; verification: SAFE-LOG-OWNER-001 задаёт same owner policy, private opaque acquisition, real-fstat attribute inputs, non-creating open, retained append/close и обязательный behavioral/structural proof split; rejected observer/native candidates заменены без повторения механизмов. v0.2 APPROVED: `safe-log-shared-owner-gate1-review-v02-2026-09-06.md`, spec482b5153.
 
 ## 2. Minimal RED и test review
 
