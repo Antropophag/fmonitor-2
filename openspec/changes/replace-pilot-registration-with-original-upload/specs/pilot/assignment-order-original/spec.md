@@ -88,6 +88,10 @@ Command SHALL возвращать DTO `{status, reasonCode, retryable, requestI
 - **WHEN** loser/new request ID находит accepted fingerprint winner
 - **THEN** Result эхо-ирует loser request ID и копирует прочую winner evidence, но не создаёт loser request/audit/event row; повтор loser снова доказывает fingerprint без domain effect
 
+#### Scenario: Identical race literal oracle
+- **WHEN** A `...0101` и B `...0102` оба READY, parent releases/observes accepted A до release B
+- **THEN** B возвращает exact LF replay line с request B/winner revision-0002 evidence; exact requests inventory содержит только initial+A, а domain/fingerprint/event/audit не содержат B; retry B byte-identical
+
 #### Scenario: Retry принятой correction после смены leaf
 - **WHEN** retry имеет тот же request/fingerprint принятой correction, а её target теперь non-current из-за результата самой этой correction
 - **THEN** lookup возвращает сохранённый `REPLAYED` result до stale/current checks и не создаёт новую revision

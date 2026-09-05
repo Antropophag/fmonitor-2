@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v25 GATE 1 REVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
-Версия: **v25**
+Статус: **v26 GATE 1 REREVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
+Версия: **v26**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -183,6 +183,30 @@ proof rather than hitting step 5; it remains effect-idempotent. In an identical
 two-worker race, evidence inventory contains only the winner accepted request,
 revision and event; loser Result echoes loser ID. A different-race loser still
 commits its specified terminal conflict result/audit.
+
+Canonical identical-race worker A request is
+`00000000-0000-4000-8000-000000000101`; worker B is
+`00000000-0000-4000-8000-000000000102`; both clocks are
+`2026-09-02T09:16:00Z`. Both publish READY before any RELEASE. Parent releases A,
+requires its complete `ACCEPTED` result and fresh evidence proving commit, then
+releases B. Thus A is the deterministic winner without removing B's concurrent
+pre-CAS observation. B exact result line is:
+
+```text
+{"status":"replayed","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000102","rootOriginalId":"original-0001","currentRevisionId":"revision-0002","revisionNumber":2,"documentDate":"2026-09-02","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:16:00Z"}
+```
+
+Post-race requests evidence is exactly:
+
+```text
+{"schema":"aoou-requests-v1","items":[{"requestId":"00000000-0000-4000-8000-000000000001","status":"accepted","reasonCode":null,"retryable":false,"rootOriginalId":"original-0001","currentRevisionId":"revision-0001","revisionNumber":1,"documentDate":"2026-09-01","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:15:30Z"},{"requestId":"00000000-0000-4000-8000-000000000101","status":"accepted","reasonCode":null,"retryable":false,"rootOriginalId":"original-0001","currentRevisionId":"revision-0002","revisionNumber":2,"documentDate":"2026-09-02","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:16:00Z"}]}
+```
+
+Domain/fingerprint/events inventories contain initial plus exactly one revision-2
+winner fact/fingerprint/event keyed to request A; audits contain accepted A and
+no request B; no inventory contains request B. A same-B retry returns the exact
+line above after repeating stream/fingerprint proof and leaves these inventories
+byte-identical.
 
 Новый request correction с тем же PDF/date/composition и только другой reason даёт `REJECTED/NO_CHANGES`. Тот же PDF с новой допустимой date является correction. Correction сравнивает current composition identity/hash с immutable root snapshot: drift даёт `CONFLICT/SEMANTIC_COLLISION` на шаге 6 до stream; caller состав не передаёт. Same-request retry уже accepted operation выигрывает раньше, на шаге 5.
 
