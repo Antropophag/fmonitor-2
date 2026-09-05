@@ -983,20 +983,67 @@ and fail construction through the existing fixed redacted
 NOT create, repair, replace, truncate, append to or otherwise change the
 configured file on this failure.
 
-Gate 2 SHALL observe this requirement through the real public production
-factory in a bounded task-owned child process. A private verification-only
-native interposer may alter only the pathname metadata returned for the exact
-synthetic safe-log fixture so that device/inode still match the real file while
-the pathname observation reports regular/current-EUID/`0600` and the retained
-descriptor's real `fstat` reports a different mode. The interposer and its
-selector MUST remain test-only and MUST NOT be reachable from production
-config, environment, request, CLI, global or service locator. The test MUST
-first prove an unchanged control construction, assert every synthetic
-precondition separately as setup, then prove the mismatch returns the exact
-fixed factory exception with zero database calls, no private-root touch, no
-safe-log bytes or metadata change and no retained descriptor. Cleanup MUST be
-bounded to the revalidated task-owned child, interposer and fixture artifacts;
-setup/control failure is not RED and probabilistic timing loops are forbidden.
+The safe-log owner SHALL expose this verification-only construction contract:
+
+```php
+enum AssignmentOrderOriginalSafeLogConstructionPhase: string
+{
+    case FINAL_PATH_VALIDATED_BEFORE_OPEN = 'final_path_validated_before_open';
+}
+
+interface AssignmentOrderOriginalSafeLogConstructionObserver
+{
+    public function observe(
+        AssignmentOrderOriginalSafeLogConstructionPhase $phase,
+    ): void;
+}
+
+final class AssignmentOrderOriginalProductionFactoryVerification
+{
+    public static function create(
+        \mysqli $database,
+        AssignmentOrderOriginalProductionConfig $config,
+        AssignmentOrderOriginalSafeLogConstructionObserver $observer,
+    ): AssignmentOrderOriginalApplication;
+}
+```
+
+The same production logger owner MUST emit the sole phase exactly once after
+its final non-following pathname observation has passed regular-file,
+current-effective-UID and exact-`0600` validation and captured device/inode,
+and immediately before the real append open. The phase carries no path,
+descriptor, credential or mutable production object. Observer `Throwable` MUST
+fail through the same fixed redacted production-configuration exception before
+open/DB/private-root access. `ProductionAssignmentOrderOriginalFactory::create`
+MUST use the same composition with a final inert observer, accept no observer
+argument, and expose no environment/request/CLI/global/service-locator
+selector. The verification factory is not a second logger implementation.
+
+Gate 2 SHALL call the verification factory in a bounded task-owned child. An
+unchanged inert control with task-owned database/private root MUST complete and
+observe exactly one phase. The mismatch fixture MUST begin as one revalidated
+canonical non-symlink regular current-EUID-owned exact-`0600` inode with fixed
+bytes and metadata. Its observer MUST use only ordinary owner `chmod` on that
+same inode to set exact `0640`, verify that result before returning, and perform
+no other mutation. The real open and retained-descriptor `fstat` then MUST yield
+the same device/inode and real `0640`, causing the exact fixed factory exception
+with zero mismatch-run database calls, no private-root validation/access, no
+diagnostic write, identical bytes, and metadata changed only by that deliberate
+mode transition until cleanup restores `0600`.
+
+The live child MUST inventory `get_resources('stream')` immediately before the
+mismatch factory call and immediately after its exception. It MUST key each
+resource by integer resource ID and call read-only `fstat` on every entry; any
+`fstat === false`, duplicate key, pre-existing exact fixture device/inode, or
+new post-call stream that cannot be accounted for is `SETUP_FAILURE`. Before
+child exit, no post-call stream may have the fixture's exact device/inode, and
+no resource present only after the call may be silently ignored. Cleanup MUST
+revalidate exact task-owned file/root identities, restore `0600`, close only
+enumerated owned resources, and remove only enumerated owned artifacts. Parent
+deadlines MUST be monotonic and bounded with terminate/reap on failure. Setup,
+phase, chmod, inventory or cleanup failure is not RED. Native interposition,
+syscall interception, loader injection, privilege changes, external targets,
+sleeps and probabilistic replacement loops are forbidden.
 
 Safe-log correlation ID for every command attempt is the first 12 lower hex of
 SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup
