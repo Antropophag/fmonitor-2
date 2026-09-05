@@ -43,6 +43,9 @@ the committed result for normal same-request replay and production binds none.
 Production maintenance factory binds one trusted exact system-principal/
 reconcile-capability DTO from deployment composition, separate from user roles
 and impossible to select from request payload or mutable global.
+A verification-only orphan fixture uses the same production private-storage
+validation/primitives/locks to create exact timestamped abandoned/finalized
+candidates without DB facts, sleep, private metadata edits or production selector.
 
 ### 6. Idempotency и correction ties
 

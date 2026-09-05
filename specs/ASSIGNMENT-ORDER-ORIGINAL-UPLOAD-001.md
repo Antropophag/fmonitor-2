@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v33 GATE 1 REVIEW PENDING — MAINTENANCE AUTHORIZATION AMENDMENT**
-Версия: **v33**
+Статус: **v34 GATE 1 REVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
+Версия: **v34**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1405,6 +1405,36 @@ final class AssignmentOrderOriginalMaintenanceVerificationFactory
     ): AssignmentOrderOriginalMaintenanceApplication { /* same maintenance owner */ }
 }
 
+enum AssignmentOrderOriginalPrivateOrphanFixtureKind: string
+{
+    case ABANDONED_STAGE = 'abandoned_stage';
+    case FINALIZED_CONTENT = 'finalized_content';
+}
+
+final readonly class AssignmentOrderOriginalPrivateOrphanFixtureCommand
+{
+    public function __construct(
+        public AssignmentOrderOriginalPrivateOrphanFixtureKind $kind,
+        public string $opaqueIdentity,
+        public string $bytes,
+        public string $createdOrFinalizedAtUtc,
+    ) {}
+}
+
+interface AssignmentOrderOriginalPrivateOrphanFixture
+{
+    public function create(
+        AssignmentOrderOriginalPrivateOrphanFixtureCommand $command,
+    ): void;
+}
+
+final class AssignmentOrderOriginalPrivateOrphanFixtureFactory
+{
+    public static function create(
+        string $privateStorageRoot,
+    ): AssignmentOrderOriginalPrivateOrphanFixture;
+}
+
 Production maintenance authorization is trusted operator composition, not a
 user/role grant and not stored in `fm2_process_user_capabilities`.
 `systemPrincipalId` matches `[A-Za-z0-9._:-]{1,160}` and `capability` must be
@@ -1418,6 +1448,21 @@ cannot select it from request/HTTP/CLI command payload or mutable global.
 Canonical TEST-USER verifier principal is `test-maintenance-01` with the exact
 reconcile capability. No wildcard/list/role inference or user capability row is
 created.
+
+The private-orphan fixture is verification-only and uses the same production
+storage path validator, ownership/mode checks, filename codec, atomic write/
+rename/fsync primitives, metadata grammar and digest-lock exclusion domain as
+upload/maintenance. It accepts only task-owned root, opaque identity grammar and
+UTC second timestamp not later than the real system clock. `bytes` size is
+`1..20,971,520`; finalized kind computes its own SHA-256 and immutable metadata,
+while abandoned kind creates a closed non-final stage. Exact replay is a no-op;
+same identity with different kind/bytes/time is fixed fixture conflict before
+mutation. It creates no request, audit, event, revision or reference row and
+cannot delete. Canonical eligible fixtures are abandoned `orphan-stage-0001`
+with bytes `stage-orphan-v1` and finalized `orphan-content-0001` with bytes
+`finalized-orphan-v1`, both timestamp `2026-09-02T07:00:00Z`. Production
+bootstrap/application/HTTP cannot construct or select this factory; verifier
+cleans only through maintenance plus revalidated task-owned root removal.
 
 final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException
 {
