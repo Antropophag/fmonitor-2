@@ -121,3 +121,18 @@ pre-insert caller MUST NOT конструировать ещё не сущест
 #### Scenario: Legacy physical status и original root расходятся с supported shapes
 - **WHEN** registry/source inspection находит unknown status, duplicate root или contradictory ownership
 - **THEN** state unavailable; no fallback source, allocation или business pending outcome не подменяет ошибку
+
+### Requirement: Clock и rollback reason принадлежат явным владельцам
+
+Invocation SHALL получать один immutable attempt instant до первого требуемого
+audit/terminal fact. Full matching replay MUST NOT читать clock или создавать
+audit. UoW SHALL единолично commit/rollback и переносить closed rollback cause;
+stage receipt MUST NOT самостоятельно завершать transaction.
+
+#### Scenario: Denial audit требует недоступный clock
+- **WHEN** authorization denied, а acquisition attempt instant unavailable
+- **THEN** возвращается dependency_unavailable без confidential lookup и записи audit/terminal facts
+
+#### Scenario: Dependency failure внутри case transaction
+- **WHEN** state lookup unavailable и rollback подтверждён
+- **THEN** UoW возвращает typed dependency cause и application даёт failed/dependency_unavailable, а не persistence_failure

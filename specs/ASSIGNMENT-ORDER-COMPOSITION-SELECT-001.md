@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.5, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.6, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -582,23 +582,73 @@ private constructor, public readonly status и nullable auditId; factories
 `committed(int auditId): self`, `rolledBack(): self`, `outcomeUnknown(): self`.
 Только committed несёт valid ID. Receipt factory с ID вне bounds выбрасывает
 `InvalidArgumentException('Invalid selection receipt.')` без I/O; production
-adapter сначала валидирует DB values и возвращает persistenceError/rolledBack
-после доказанного rollback либо outcomeUnknown при неизвестном commit.
+stage adapter сначала валидирует DB values и возвращает persistenceError
+без самостоятельного rollback/commit; транзакцией владеет только UoW.
+Отдельный independent audit writer проверяет ID перед собственным commit:
+confirmed rollback → rolledBack, uncertain commit → outcomeUnknown.
 Public snapshot observer использует `SelectionStoredEvent(int eventId,
 SelectionSelectedEvent payload)` и `SelectionStoredAudit(int auditId,
 SelectionSafeAttemptAudit payload)`; caller не придумывает generated IDs.
 Оба envelopes passive, ID проверяется observer при чтении из storage.
-`SelectionTransactionDecision` is a closed value with constructors
-`commit()`, `rollback()` and `observedTerminal(SelectionTerminalRequestRecord)`.
-`SelectionUnitOfWorkResult` is a closed value with constructors
-`committed(AssignmentOrderCompositionResult)`,
-`observedTerminal(SelectionTerminalRequestRecord)`, `requestRace()`,
-`rolledBack()` and `outcomeUnknown()`; only its first two carry payloads.
+`SelectionRollbackCause` — closed enum:
+`DEPENDENCY_UNAVAILABLE='dependency_unavailable'`,
+`PERSISTENCE_FAILURE='persistence_failure'`,
+`ALLOCATION_CAPACITY_EXHAUSTED='allocation_capacity_exhausted'`.
+`SelectionTransactionDecision` — final readonly с private constructor и public
+factories `commit(SelectionResult $result)`, `rollback(SelectionRollbackCause
+$cause)`, `requestRace()`, `observedTerminal(SelectionTerminalRequestRecord $record)`.
+`SelectionUnitOfWorkResult` — final readonly с private constructor и public
+factories `committed(SelectionResult $result)`,
+`observedTerminal(SelectionTerminalRequestRecord $record)`, `requestRace()`,
+`rolledBack(SelectionRollbackCause $cause)`, `outcomeUnknown()`.
+Оба closed types имеют `kind(): string` с literal factory name, `result():
+?SelectionResult`, `rollbackCause(): ?SelectionRollbackCause`,
+`terminalRecord(): ?SelectionTerminalRequestRecord`. Только соответствующая
+ветвь несёт указанный payload; остальные getters null. `commit/committed`
+принимают только selected/rejected/conflict, не replayed/failed.
+Недопустимый result вызывает `InvalidArgumentException('Invalid selection decision.')`
+без I/O. Причина не передаётся mutable closure capture или exception side channel.
 
 UoW locks exact case row, rechecks request/state, allocates at most once after
 acceptance, stages exactly one terminal outcome and commits once. Session exposes
-no SQL/connection/commit. Request unique race rolls back then fresh lookup;
-other DB violations are persistence failure. No mutation retry/fake conflict.
+no SQL/connection/commit/rollback. Callback выбирает decision, UoW выполняет
+commit или rollback. Public final outcome возникает только после UoW result.
+`commit(result)` требует exact один успешный stage соответствующего result и
+равный stored terminal result; missing/multiple stage, wrong receipt shape или
+mismatch → rollback(PERSISTENCE_FAILURE). `observedTerminal` запрещён после
+allocation/staging, завершается release/rollback read-only transaction и не
+считается write commit. Unexpected adapter/callback exception → rollback с
+PERSISTENCE_FAILURE; не является бизнес-отказом.
+
+### 9.1 Exhaustive staging/transaction outcome mapping
+
+| Observation | Callback decision / UoW action | UoW result after confirmed action | External result |
+| --- | --- | --- | --- |
+| accepted STAGED receipt, exact staged selected result | commit(selected result) | committed(same result) | selected |
+| terminal STAGED receipt, exact rejected/conflict result | commit(terminal result) | committed(same result) | exact rejected/conflict |
+| stage PERSISTENCE_ERROR, query failure, invalid generated ID or wrong receipt shape | rollback(PERSISTENCE_FAILURE) | rolledBack(PERSISTENCE_FAILURE) | failed/persistence_failure |
+| stage REQUEST_RACE | callback requestRace(); UoW rolls back | requestRace() | fresh authorized terminal lookup, as section10 |
+| typed state/case/dependency unavailable or malformed while locked | rollback(DEPENDENCY_UNAVAILABLE) | rolledBack(DEPENDENCY_UNAVAILABLE) | failed/dependency_unavailable |
+| proven allocation/revision/version bound exceeded before writes | rollback(ALLOCATION_CAPACITY_EXHAUSTED) | rolledBack(ALLOCATION_CAPACITY_EXHAUSTED) | failed/allocation_capacity_exhausted, retryable false |
+| matching already terminal record before allocation/staging | observedTerminal(record) | observedTerminal(same record) | section10 replay mapping |
+| commit acknowledgement unknown or requested rollback cannot be confirmed | no second mutation | outcomeUnknown() | section10 fresh authorized lookup recovery |
+
+REQUEST_RACE receipt возникает только при exact terminal-request unique
+collision. Callback передаёт его отдельным typed requestRace decision; UoW
+допускает такой decision только после matching stage receipt. Иначе выполняется
+rollback(PERSISTENCE_FAILURE). Иной UNIQUE/FK/CHECK fault — PERSISTENCE_ERROR.
+После confirmed rollback requestRace остаётся отдельным UoW outcome.
+Для read-only observedTerminal требуется подтверждённое освобождение transaction;
+если cleanup не подтверждён, UoW возвращает outcomeUnknown, не silent success.
+No blind mutation retry. Никакой stage owner не выполняет rollback сам.
+
+Independent denial/changed-request audit не использует case UoW. Его writer
+владеет только своей transaction и pre-commit generated-ID validation:
+committed(valid auditId) → исходный denial/request-conflict result;
+rolledBack() → failed/persistence_failure;
+outcomeUnknown() → failed/persistence_outcome_unknown. Malformed receipt или
+thrown writer error, после которого commit нельзя исключить, → outcome_unknown,
+без повторной записи audit. Technical failure/exhaustion не кешируются.
 
 Typed verification observer exposes registry ownership, selection, request,
 event and audit snapshots via explicit test configuration; no production fault
@@ -607,14 +657,19 @@ hook or direct-SQL acceptance seam.
 ## 10. Exact precedence and replay
 
 1. Shape/canonicalization; invalid shape performs no dependency/audit.
-2. Authorize; denial/unavailable follow sections5/8.
+2. Authorize. Unavailable → dependency_unavailable без clock/lookup/audit.
+   Denied → acquire attempt instant по правилу ниже, затем independent denial
+   audit без confidential lookup; its confirmed result следует sections5/8/9.
 3. Outer terminal lookup: matching selected→replayed exact success; matching
-   rejected/conflict→stored outcome; tuple or digest mismatch→request_id_conflict
-   without success disclosure; unavailable→dependency_unavailable.
+   rejected/conflict→stored outcome, оба без clock read и нового audit.
+   Tuple/digest mismatch → acquire attempt instant и independent request-conflict
+   audit, без success disclosure; unavailable→dependency_unavailable без clock.
+   Proven no terminal record → acquire attempt instant один раз перед step4.
 4. Resolve object/case. Absent→object_not_found; unavailable→dependency.
    Completed precedes PTO.
 5. Empty installers→installer_required; null engineer→engineer_required.
-6. Read one clock; derive Moscow date. Failure→dependency_unavailable.
+6. Use the already acquired attempt instant; derive Moscow selection date.
+   Второй clock read запрещён.
 7. Installer batch: first numeric missing then first numeric unemployed; engineer
    absent/ineligible next. Infrastructure errors remain dependency failures.
 8. In transaction recheck request, then locked state. Expected revision compares
@@ -643,6 +698,31 @@ hook or direct-SQL acceptance seam.
 12. Unknown commit: reauthorize, fresh independent same-request lookup only.
     matching selected→replayed; stored rejection/conflict→stored; mismatch→request
     conflict; proven absent→persistence_failure; unavailable→outcome_unknown.
+
+### 10.1 One invocation-owned attempt instant
+
+`SelectionClock::now()` вызывается ровно один раз для invocation, которому
+нужно создать любой audit/terminal fact или fresh selection. Значение lazily
+получается в указанных ветвях steps2/3 и сохраняется в invocation-owned immutable
+context; storage/audit writer не читает другой clock. Shape rejection,
+authorization unavailable, terminal lookup unavailable и полный matching
+replay не вызывают clock вообще. Unavailable/NOT_FOUND/malformed instant →
+failed/dependency_unavailable до любых audit/terminal writes, включая denial и
+changed-request conflict; первоначальная бизнес-причина не возвращается как
+успешно audited terminal outcome.
+
+Все attemptedAt, terminal_at_utc, selectedAt, occurredAt и allocatedAt данной
+invocation равны этому UTC instant; selectionDate — его Moscow calendar date.
+Повторная authorization в unknown recovery не читает clock заново. Если recovery
+требует denial/conflict audit, используется тот же сохранённый instant; новый
+внешний invocation получает своё собственное время. Matching recovered terminal
+возвращает stored timestamps, а не attempt instant recovery.
+
+Request-race resolution использует те же authorization/read-only lookup outcomes,
+что unknown recovery: matching selected → replayed, matching terminal rejection/
+conflict → exact stored result, mismatch → request_id_conflict с independent
+audit, proven absence → persistence_failure, unavailable → outcome_unknown.
+После rollback/unknown никакого нового allocation или blind write retry нет.
 
 No minted request ID, fallback source, blind retry or second allocation.
 
@@ -747,7 +827,7 @@ FKR actor заменяет только exact latest ledger selection без acc
 pending choice. После accepted original изменение состава — только отдельный
 forward-only order lifecycle. Legacy prepared row не конвертируется.
 
-## 16. v0.5 technical correction disposition
+## 16. v0.6 technical correction disposition
 
 v0.4 independent review:
 `docs/operations/selection-v04-independent-readiness-2026-09-05.md`.
@@ -758,4 +838,8 @@ pre-insert generated IDs/typed receipts и legacy-status normalization. Он н�
 выдаёт самому себе approval и не снимает P0 prerequisites: exact migration/
 backfill/receipt/writer cutover, original-reader amendment и same-identity
 optional-render contract. Они остаются отдельными technical Gate1 obligations.
-v0.5 требует independent review; RED и production implementation не начаты.
+v0.5 bounded rereview `selection-v05-typed-contract-review-2026-09-05.md`
+закрыл construction findings, но потребовал точный clock placement и перенос
+rollback cause. v0.6 добавляет invocation-owned lazy instant, typed rollback
+cause и полный stage→decision→UoW→public-result mapping. Он требует fresh
+independent review; RED и production implementation не начаты.

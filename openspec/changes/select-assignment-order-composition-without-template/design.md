@@ -139,3 +139,13 @@ legacy-only original reader. N-1 не знает registry: простое соз
 режим rolling mixed N-1/N пока не разрешён. No runtime DDL, same-identity
 optional render и public preservation obligations не ослаблены. Это planning,
 не Gate1 APPROVED и не разрешение implementation.
+
+## Technical flow correction v0.6
+
+По independent v0.5 rereview один invocation-owned clock читается lazily перед
+первым необходимым audit/terminal fact; full matching replay clock не читает.
+Clock failure до persistence даёт dependency_unavailable. Callback/UoW передают
+closed rollback cause; stage не владеет commit/rollback. Полная таблица
+stage→decision→UoW→public outcome закреплена в executable v0.6, включая
+request race, invalid generated receipt и unknown acknowledgement. Это technical
+уточнение прежних outcomes; Gate1 и P0 release dependencies остаются открыты.

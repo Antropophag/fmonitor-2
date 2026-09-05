@@ -59,3 +59,13 @@ legacy-status truth table по independent v0.4 findings. Fresh independent revi
 ещё нужен; tasks1.2–1.4 остаются открытыми, поскольку P0 migration/cutover/
 original-reader/optional-render contracts не завершены. Production/tests для
 selection не написаны. Deadline9 сентября09:00МСК не меняет gates или scope.
+
+## Technical flow correction v0.6
+
+По independent v0.5 rereview один invocation-owned clock читается lazily перед
+первым необходимым audit/terminal fact; full matching replay clock не читает.
+Clock failure до persistence даёт dependency_unavailable. Callback/UoW передают
+closed rollback cause; stage не владеет commit/rollback. Полная таблица
+stage→decision→UoW→public outcome закреплена в executable v0.6, включая
+request race, invalid generated receipt и unknown acknowledgement. Это technical
+уточнение прежних outcomes; Gate1 и P0 release dependencies остаются открыты.
