@@ -24,9 +24,11 @@
 ## 4. Integration, regression, and Done
 
 Supporting fixture contracts после landed v12:
-`CANONICAL-V12-CONSUMER-FIXTURES-001` (11 exact patch targets, technical Gate 1
-approved; independent patch Gate 3 ещё обязателен) и отдельный
-`HARNESS-OTIZ-CANONICAL-V12-001` (exact prepared predecessor, Gate 1 pending).
+`CANONICAL-V12-CONSUMER-FIXTURES-001` (11 exact patch targets, Gates1/3/5
+approved; final11/11 focused PASS на 361ea4d) и отдельный
+`HARNESS-OTIZ-CANONICAL-V12-001` (exact prepared predecessor, Gates1/3/5 approved
+на 26e6cda). Reviews: `reviews/code/CANONICAL-V12-CONSUMER-FIXTURES-001-v1.md`
+и `reviews/code/HARNESS-OTIZ-CANONICAL-V12-001-v1.md`.
 Они входят в работу 4.1/4.2 и не завершают parent task по отдельности. Protected
 E2E и importer serial Gate 1 остаются за своими gates; shared catalog defaults
 не меняются. Scope/evidence: `docs/operations/canonical-v12-consumer-fixture-scope-correction-2026-09-05.md`.
