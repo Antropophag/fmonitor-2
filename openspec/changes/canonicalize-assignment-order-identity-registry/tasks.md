@@ -1,7 +1,7 @@
 ## 1. Executable specification и Gate 1
 
-- [ ] 1.1 Завершить exact registry/receipt schema, source fingerprint, observer/snapshot/deadline contract и literal hashes в ASSIGNMENT-ORDER-IDENTITY-REGISTRY-001; проверить PHP declarations, prefix lengths и OpenSpec strict.
-- [ ] 1.2 Получить independent technical Gate1 exact hashes; reviewer подтверждает observable scope и отсутствие нового продуктового решения, RED ещё отсутствует.
+- [x] 1.1 Завершить exact registry/receipt schema, source fingerprint, observer/snapshot/deadline contract и literal hashes в ASSIGNMENT-ORDER-IDENTITY-REGISTRY-001; проверить PHP declarations, prefix lengths и OpenSpec strict.
+- [x] 1.2 Получить independent technical Gate1 exact hashes; reviewer подтверждает observable scope и отсутствие нового продуктового решения, RED ещё отсутствует. Review: `assignment-order-identity-registry-gate1-review-v01-2026-09-05.md`, exact spec31ffe9a.
 
 ## 2. RED и независимый test review
 
