@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v36 GATE 1 REREVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
-Версия: **v36**
+Статус: **v37 GATE 1 REVIEW PENDING — MAINTENANCE CURSOR AMENDMENT**
+Версия: **v37**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1680,7 +1680,27 @@ final class AssignmentOrderOriginalVerificationWorkerBootstrap
 
 Maintenance order: scalar shape → exact string-principal authorization → terminal request lookup → clock/cutoff → candidate page → per-candidate lock/reference/delete → atomic result+audit commit. Invalid UUID/cursor/batch outside `1..1000` or cutoff newer than `now-3600s` → `REJECTED/INVALID_COMMAND`; missing exact `assignment_order.original.storage.reconcile` → `REJECTED/AUTHORIZATION_DENIED`; all candidates handled → `COMPLETED`; authorized request hit → `REPLAYED`; one or more locked/per-item failures → `PARTIAL`; repository/audit unavailable → `FAILED/PERSISTENCE_FAILURE`.
 
-Candidate page includes `ABANDONED_STAGE` and `FINALIZED_CONTENT`, ordered by binary `(createdOrFinalizedAtUtc, opaqueIdentity)` strictly after cursor, at most batchLimit and timestamp `<= cutoffUtc`; cursor is storage-generated base64url without padding encoding the last pair and is rejected if non-canonical/unknown. Under candidate lock, abandoned stage is deleted directly after age/type revalidation; finalized content first requires repository reference lookup. For every page `scanned = deleted + retained + failed`: successful/already-absent delete increments deleted; referenced or locked increments retained; reference/storage error increments failed. `nextCursor` equals page cursor when more may remain, otherwise null. `PARTIAL/LOCKED` applies when all failures were locks; any storage failure uses `PARTIAL/STORAGE_FAILURE`; both retryable true. `COMPLETED|REPLAYED|REJECTED` retryable false; `FAILED` retryable true. Result+audit are one terminal request transaction except `FAILED`; audit failure means `FAILED/PERSISTENCE_FAILURE` and no terminal result.
+Candidate page includes `ABANDONED_STAGE` and `FINALIZED_CONTENT`, ordered by binary `(createdOrFinalizedAtUtc, opaqueIdentity)` strictly after cursor, at most batchLimit and timestamp `<= cutoffUtc`; cursor is storage-generated canonical encoding of the last pair defined below. Under candidate lock, abandoned stage is deleted directly after age/type revalidation; finalized content first requires repository reference lookup. For every page `scanned = deleted + retained + failed`: successful/already-absent delete increments deleted; referenced or locked increments retained; reference/storage error increments failed. `nextCursor` equals page cursor when more may remain, otherwise null. `PARTIAL/LOCKED` applies when all failures were locks; any storage failure uses `PARTIAL/STORAGE_FAILURE`; both retryable true. `COMPLETED|REPLAYED|REJECTED` retryable false; `FAILED` retryable true. Result+audit are one terminal request transaction except `FAILED`; audit failure means `FAILED/PERSISTENCE_FAILURE` and no terminal result.
+
+Cursor payload is exact compact UTF-8 JSON in key order
+`{"v":1,"at":"<UTC-second>","id":"<opaqueIdentity>"}` with no whitespace/
+extra keys. Its bytes length is `42+idByteLength` (`43..202`), encoded by RFC
+4648 URL-safe base64 (`+`→`-`, `/`→`_`) with all trailing `=` removed; cursor
+length is `58..270` and alphabet `[A-Za-z0-9_-]`. Decoder restores minimal
+padding, strict-decodes, requires UTF-8/exact keys/types, `v===1`, canonical UTC
+second, identity grammar, and byte-equal re-encode. Cursor pair need not still
+exist because prior page deletion is expected; it is solely an exclusive sort
+position. Unsupported version/shape, noncanonical encoding/padding/alphabet or
+invalid pair is `REJECTED/INVALID_COMMAND` before clock/candidate access.
+Canonical cursor after `(2026-09-02T07:00:00Z,orphan-content-0001)` is:
+
+```text
+eyJ2IjoxLCJhdCI6IjIwMjYtMDktMDJUMDc6MDA6MDBaIiwiaWQiOiJvcnBoYW4tY29udGVudC0wMDAxIn0
+```
+
+The payload is 62 bytes and cursor 83 bytes. With batchLimit 1 in the canonical
+two-orphan example, page 1 deletes content and returns exactly this cursor;
+page 2 with a new request ID and this cursor deletes stage and returns null.
 
 Evidence JSON uses recursively key-sorted UTF-8 JSON, integer IDs, UTC strings and arrays ordered by root/revision number/event ID/blob identity. Exact top-level shapes, with no additional keys:
 

@@ -49,6 +49,8 @@ candidates without DB facts, sleep, private metadata edits or production selecto
 Task root has an exact marker/token and must be disjoint from configured
 production root; evidence fixes create/replay/failure inventories and separate
 boundary/newer maintenance request/audit/result runs.
+Maintenance cursor is unpadded canonical base64url of exact versioned JSON
+timestamp/identity pair; it remains a valid exclusive position after deletion.
 
 ### 6. Idempotency и correction ties
 
