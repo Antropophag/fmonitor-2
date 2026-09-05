@@ -14,6 +14,14 @@
 
 ## 2. Gates 2–3 — RED и independent review
 
+2026-09-05 image verification выявила fixture transport gap:
+`PILOT-SESSION-EMPTY-ENV-FIXTURE-001` уточняет доставку present-empty root через
+test child argv и independent setup probe; technical Gate1 и unapplied-patch
+Gate3 approved, runtime policy не меняется. Это supporting correction для
+tasks2.3/3.2/4.1, не их полное завершение. Clean Compose startup отдельно не
+публикует generation из-за missing setup prerequisites; actual restart proof
+не подменяется image/host unit GREEN.
+
 - [x] 2.1 Зафиксировать pre-amendment RED и два CHANGES_REQUIRED review; historical evidence only, old Gate 3 applicability reset by GRILL-009.
 - [x] 2.2 Заменить self-attesting dispatcher на tests, которые вызывают real owner public factory и независимо наблюдают exact backed-enum before/after primitive events, material inode/bytes state, closed-code injected faults, pause/kill crash boundaries, deterministic clock values, entropy failure и immutable result DTO; verification: every normative phase reaches intended RED that production alone can make GREEN.
 - [ ] 2.3 Добавить real LocalAuth+UserAccessView raw HTTP через explicit injected-dependency factory method, включая exact owner-read payload handoff без второго filesystem owner, exact unknown-route `404` before session/config/auth, asset/Host/URI priority, cookie/CSRF/return-to/old-ID/GC и exact CLI/class read-only inspector, который не выдаёт literal basename/session ID, сортирует exact `entryKeySha256`, emits exact canonical envelope/exit codes и fail-closed на duplicate; CLI runner детерминированно доказывает `64|65|70`; плюс actual Compose stop/start preservation; verification: fresh independent Gate 3 APPROVED exact hashes and no test-owned success claims.
