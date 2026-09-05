@@ -3,7 +3,49 @@ declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
 
 function pssPort():int{$s=stream_socket_server('tcp://127.0.0.1:0',$e,$m);if(!is_resource($s))throw new RuntimeException("SETUP_FAILURE: port $m");$n=stream_socket_get_name($s,false);fclose($s);return(int)substr((string)$n,strrpos((string)$n,':')+1);}
-function pssStart(array$extra,?string$router=null):array{$port=pssPort();$root=dirname(__DIR__,2);$pipes=[];$env=array_replace($_ENV,['FMONITOR_DB_HOST'=>getenv('FMONITOR_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_DB_PORT')?:'23306','FMONITOR_DB_USER'=>getenv('FMONITOR_DB_USER')?:'fmonitor2_test','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_test_local','FMONITOR_DB_NAME'=>getenv('FMONITOR_DB_NAME')?:'fmonitor2_test','FMONITOR_PROCESS_TABLE_PREFIX'=>'','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'http'],$extra);$p=proc_open([PHP_BINARY,'-S',"127.0.0.1:$port",$router??$root.'/rapid-pilot/router.php'],[1=>['pipe','w'],2=>['pipe','w']],$pipes,$root,$env);if(!is_resource($p))throw new RuntimeException('SETUP_FAILURE: server');foreach($pipes as$q)stream_set_blocking($q,false);$d=microtime(true)+3;do{usleep(20000);$c=@stream_socket_client("tcp://127.0.0.1:$port",$e,$m,.1);if(is_resource($c)){fclose($c);return[$p,$pipes,$port];}}while(microtime(true)<$d);proc_terminate($p,9);proc_close($p);throw new RuntimeException('SETUP_FAILURE: readiness');}
+function pssEmptyRootProbe(array $prefix,array $environment,string $root):void
+{
+    $code='echo json_encode([getenv("FMONITOR_SESSION_STATE_ROOT"),getenv("FMONITOR_SESSION_STATE_ROOT",true)]);';
+    $pipes=[];$process=proc_open([...$prefix,PHP_BINARY,'-r',$code],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,$root,$environment);
+    if(!is_resource($process))throw new RuntimeException('SETUP_FAILURE: empty-root probe start');
+    $output=[1=>'',2=>''];$exit=null;
+    $drain=static function()use(&$output,$pipes):void{
+        foreach([1,2]as$i){
+            $chunk=stream_get_contents($pipes[$i],4097-strlen($output[$i]));
+            if(!is_string($chunk))throw new RuntimeException('SETUP_FAILURE: empty-root probe read');
+            $output[$i].=$chunk;
+            if(strlen($output[$i])>4096)throw new RuntimeException('SETUP_FAILURE: empty-root probe output limit');
+        }
+    };
+    try{
+        foreach($pipes as$pipe)if(!stream_set_blocking($pipe,false))throw new RuntimeException('SETUP_FAILURE: empty-root probe nonblocking');
+        $deadline=hrtime(true)+3_000_000_000;
+        while(true){
+            $drain();$status=proc_get_status($process);
+            if(!$status['running']){$exit=$status['exitcode'];break;}
+            if(hrtime(true)>=$deadline)throw new RuntimeException('SETUP_FAILURE: empty-root probe timeout');
+            usleep(10000);
+        }
+        $drain();
+    }finally{
+        $status=proc_get_status($process);
+        if($status['running']){
+            proc_terminate($process,15);$deadline=hrtime(true)+500_000_000;
+            do{usleep(10000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$deadline);
+            if($status['running']){
+                proc_terminate($process,9);$deadline=hrtime(true)+2_000_000_000;
+                do{usleep(10000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$deadline);
+            }
+        }
+        $closed=true;foreach($pipes as$pipe)$closed=fclose($pipe)&&$closed;
+        if($status['running'])throw new RuntimeException('SETUP_FAILURE: empty-root probe did not stop');
+        $reaped=proc_close($process);if($exit===null||$exit<0)$exit=$status['exitcode']>=0?$status['exitcode']:$reaped;
+        if(!$closed)throw new RuntimeException('SETUP_FAILURE: empty-root probe pipe cleanup');
+    }
+    assertSameValue([0,'["",""]',''],[$exit,$output[1],$output[2]],'SETUP_FAILURE: child must receive the present-empty session root');
+}
+
+function pssStart(array$extra,?string$router=null):array{$port=pssPort();$root=dirname(__DIR__,2);$pipes=[];$env=array_replace($_ENV,['FMONITOR_DB_HOST'=>getenv('FMONITOR_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_DB_PORT')?:'23306','FMONITOR_DB_USER'=>getenv('FMONITOR_DB_USER')?:'fmonitor2_test','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_test_local','FMONITOR_DB_NAME'=>getenv('FMONITOR_DB_NAME')?:'fmonitor2_test','FMONITOR_PROCESS_TABLE_PREFIX'=>'','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'http'],$extra);$prefix=array_key_exists('FMONITOR_SESSION_STATE_ROOT',$extra)&&$extra['FMONITOR_SESSION_STATE_ROOT']===''?['/usr/bin/env','FMONITOR_SESSION_STATE_ROOT=']:[];if($prefix!==[])pssEmptyRootProbe($prefix,$env,$root);$p=proc_open([...$prefix,PHP_BINARY,'-S',"127.0.0.1:$port",$router??$root.'/rapid-pilot/router.php'],[1=>['pipe','w'],2=>['pipe','w']],$pipes,$root,$env);if(!is_resource($p))throw new RuntimeException('SETUP_FAILURE: server');foreach($pipes as$q)stream_set_blocking($q,false);$d=microtime(true)+3;do{usleep(20000);$c=@stream_socket_client("tcp://127.0.0.1:$port",$e,$m,.1);if(is_resource($c)){fclose($c);return[$p,$pipes,$port];}}while(microtime(true)<$d);proc_terminate($p,9);proc_close($p);throw new RuntimeException('SETUP_FAILURE: readiness');}
 function pssStop(?array&$s):void{if($s===null)return;[$p,$pipes]=$s;if(proc_get_status($p)['running'])proc_terminate($p,15);$d=microtime(true)+.3;while(proc_get_status($p)['running']&&microtime(true)<$d)usleep(10000);if(proc_get_status($p)['running'])proc_terminate($p,9);foreach($pipes as$q){stream_get_contents($q);fclose($q);}proc_close($p);$s=null;}
 function pssRequest(int$port,string$method,string$path,string$host,?string$cookie=null):array{$c=stream_socket_client("tcp://127.0.0.1:$port",$e,$m,2);if(!is_resource($c))throw new RuntimeException("SETUP_FAILURE: request $m");$cookieHeader=$cookie===null?'':"Cookie: $cookie\r\n";fwrite($c,"$method $path HTTP/1.1\r\nHost: $host\r\n{$cookieHeader}Connection: close\r\nContent-Length: 0\r\n\r\n");$raw=stream_get_contents($c);fclose($c);[$h,$b]=array_pad(explode("\r\n\r\n",(string)$raw,2),2,'');$lines=explode("\r\n",$h);$status=array_shift($lines);if(preg_match('#^HTTP/1\.[01] ([0-9]{3})#',(string)$status,$m)!==1)throw new RuntimeException('SETUP_FAILURE: malformed HTTP');$headers=[];foreach($lines as$l){$at=strpos($l,':');if($at!==false)$headers[strtolower(substr($l,0,$at))][]=ltrim(substr($l,$at+1));}return['status'=>(int)$m[1],'headers'=>$headers,'body'=>$b];}
 function pssUnknown404(array$r,string$why):void{assertSameValue(404,$r['status'],$why.' status');$exact=['content-type'=>['text/plain; charset=UTF-8'],'content-length'=>['11'],'cache-control'=>['no-store'],'x-content-type-options'=>['nosniff'],'referrer-policy'=>['no-referrer'],'x-frame-options'=>['DENY'],'content-security-policy'=>["default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"],'permissions-policy'=>['camera=(), microphone=(), geolocation=()'],'cross-origin-opener-policy'=>['same-origin']];foreach($exact as$n=>$v)assertSameValue($v,$r['headers'][$n]??[],$why.' '.$n);assertSameValue("Not found.\n",$r['body'],$why.' body');foreach(['location','set-cookie','www-authenticate','access-control-allow-origin','x-powered-by','server']as$n)assertSameValue([],$r['headers'][$n]??[],$why.' forbids '.$n);$allowed=[...array_keys($exact),'date','connection','host'];assertSameValue([],array_values(array_diff(array_keys($r['headers']),$allowed)),$why.' no unspecified headers');}
