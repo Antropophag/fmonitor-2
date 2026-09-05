@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v39 GATE 1 REVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
-Версия: **v39**
+Статус: **v40 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
+Версия: **v40**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -191,6 +191,19 @@ invalid member or DB read failure returns the existing typed not-found/invalid/
 unavailable outcome at order/composition lookup; no caller/fallback hash or
 legacy slot is accepted. Reader performs no mutation and the same derived
 identity/hash feed fingerprint, immutable root and evidence reader.
+
+Exact source selection is order columns `id`, `installation_case_id`,
+`version_no`, `control_engineer_user_id` selected by `id=assignmentOrderId` and
+requiring exact case equality; member columns are `assignment_order_id`,
+`installer_tab_id`, `change_action`, `valid_from`, `valid_to` for every row with
+that order ID. Version and engineer IDs must be positive. `change_action` must
+be exactly `assign|retain|release`; `assign|retain` rows are included, `release`
+rows are excluded. Every included installer ID is positive and unique,
+`valid_from<=order_date`, and `valid_to` is null or `>=order_date`; violation,
+unknown action or zero included members is `INVALID_COMPOSITION`. No current
+workforce/legacy slot/name/status field participates. Query order is order row
+then all member rows ordered numeric `installer_tab_id`; both reads use the same
+read-only transaction snapshot.
 
 Раздел 3 задаёт полный порядок. На шаге 5 accepted request hit возвращает те же evidence fields со status `REPLAYED`, rejected/conflict hit — исходный terminal status/reason; payload не читается. При miss order/composition/date checks предшествуют stream. После completed bytes шаг 10 ищет accepted fingerprint и возвращает `REPLAYED` независимо от того, стал ли correction target non-current из-за этой operation. Только miss переходит к lineage/CAS.
 

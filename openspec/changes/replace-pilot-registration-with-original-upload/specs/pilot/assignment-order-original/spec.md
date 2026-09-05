@@ -86,6 +86,12 @@ and hash SHALL equal SHA-256 exact compact JSON
 order/installers rows with numeric-sorted unique installer IDs. Example A hash
 is `388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5`;
 caller/legacy/fixed fallback hashes are forbidden.
+Source columns are exact order `id,installation_case_id,version_no,
+control_engineer_user_id` and all exact-order member
+`assignment_order_id,installer_tab_id,change_action,valid_from,valid_to` rows in
+one read snapshot. Positive valid `assign|retain` members are included numeric
+sorted, `release` excluded; unknown action, invalid date/ID/duplicate or empty
+included set is INVALID_COMPOSITION.
 
 #### Scenario: Полный semantic replay
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities
