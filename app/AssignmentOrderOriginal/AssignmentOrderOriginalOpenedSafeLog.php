@@ -86,8 +86,13 @@ final class AssignmentOrderOriginalOpenedSafeLog implements AssignmentOrderOrigi
 
     private static function closeHandle(mixed $handle): void
     {
-        try { if (!is_resource($handle) || @\fclose($handle)!==true) { throw new \RuntimeException(); } }
+        if (!is_resource($handle)) { throw new \RuntimeException('safe log unavailable'); }
+        $warning=false;
+        // Contain native-close warnings as failures; no operation or metadata is replaced.
+        \set_error_handler(static function() use (&$warning): bool { $warning=true;return true; },E_WARNING|E_USER_WARNING);
+        try { if (\fclose($handle)!==true || $warning) { throw new \RuntimeException(); } }
         catch (\Throwable) { throw new \RuntimeException('safe log unavailable'); }
+        finally { \restore_error_handler(); }
     }
 
     private static function lineCount(mixed $handle): int
