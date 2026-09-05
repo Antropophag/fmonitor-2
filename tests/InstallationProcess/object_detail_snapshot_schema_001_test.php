@@ -275,7 +275,11 @@ try {
         assertSameValue(['applied'=>true,'schemaVersion'=>12,'tablesCreated'=>[str_repeat('p',25).'fm2_pilot_object_detail_quarantine',str_repeat('p',25).'fm2_pilot_object_details']], ObjectDetailSnapshotSchemaMigration::apply($connection, str_repeat('p',25)), '25-byte composed prefix succeeds');
         odsAssertExact($connection, str_repeat('p',25), 'details');
         odsAssertExact($connection, str_repeat('p',25), 'quarantine');
+        assertSameValue(true, ObjectDetailSnapshotSchemaMigration::isCompleteCompatible($connection, str_repeat('p',25)), '25-byte family is complete-compatible');
+        assertSameValue([], odsTableState($connection, str_repeat('p',25).'fm2_pilot_object_details')['rows'], '25-byte details is empty');
+        assertSameValue([], odsTableState($connection, str_repeat('p',25).'fm2_pilot_object_detail_quarantine')['rows'], '25-byte quarantine is empty');
         foreach ([str_repeat('p',26), 'bad-prefix', "é"] as $invalid) {
+            $tablesBeforeInvalid = odsRows($connection, 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY BINARY TABLE_NAME');
             try {
                 ObjectDetailSnapshotSchemaMigration::apply($connection, $invalid);
                 throw new TestFailure('invalid prefix was accepted');
@@ -283,6 +287,22 @@ try {
                 assertSameValue('Invalid table prefix.', $error->getMessage(), 'invalid direct prefix has stable diagnostic');
             }
             assertSameValue(false, ObjectDetailSnapshotSchemaMigration::isCompleteCompatible($connection, $invalid), 'invalid compatibility query is false');
+            assertSameValue($tablesBeforeInvalid, odsRows($connection, 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY BINARY TABLE_NAME'), 'invalid prefix creates neither family member or any other table');
+            $sentry = new class extends mysqli {
+                public int $calls = 0;
+                public function __construct() {}
+                public function query(string $query, int $result_mode = MYSQLI_STORE_RESULT): mysqli_result|bool { ++$this->calls; return false; }
+                public function prepare(string $query): mysqli_stmt|false { ++$this->calls; return false; }
+                public function real_escape_string(string $string): string { ++$this->calls; return $string; }
+            };
+            try {
+                ObjectDetailSnapshotSchemaMigration::apply($sentry, $invalid);
+                throw new TestFailure('invalid prefix was accepted by DB sentry');
+            } catch (InvalidArgumentException $error) {
+                assertSameValue('Invalid table prefix.', $error->getMessage(), 'invalid prefix is validated before DB operations');
+            }
+            assertSameValue(false, ObjectDetailSnapshotSchemaMigration::isCompleteCompatible($sentry, $invalid), 'invalid compatibility short-circuits');
+            assertSameValue(0, $sentry->calls, 'invalid prefix performs no query, prepare, or DB escaping');
         }
 
         assertSameValue(['exit'=>64,'out'=>"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",'err'=>''], odsRunCli('must_not_be_accessed', str_repeat('p',26), true), '26-byte runner prefix is rejected before DB access');
