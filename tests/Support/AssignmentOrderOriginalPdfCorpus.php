@@ -69,6 +69,23 @@ final class AssignmentOrderOriginalPdfCorpus
         $pdf=self::passiveClassic();preg_match('/startxref\n([0-9]+)/',$pdf,$match);return str_replace('/Root 1 0 R >>','/Root 1 0 R /Prev '.$match[1].' >>',$pdf);
     }
 
+    public static function validIncrementalPrev(): string
+    {
+        $base=self::passiveClassic();preg_match('/startxref\n([0-9]+)/',$base,$match);$previous=(int)$match[1];
+        $offset=strlen($base);$base.="4 0 obj\n<< /Producer (FMonitor verifier) >>\nendobj\n";$xref=strlen($base);
+        return $base."xref\n4 1\n".sprintf("%010d 00000 n \n",$offset)."trailer\n<< /Size 5 /Root 1 0 R /Prev {$previous} >>\nstartxref\n{$xref}\n%%EOF\n";
+    }
+
+    public static function escapedActiveName(): string
+    {
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R /Java#53cript 4 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /Action /S /Named >>']);
+    }
+
+    public static function indirectActiveAction(): string
+    {
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R /OpenAction 4 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /Action /S /JavaScript /JS 5 0 R >>','(app.alert\\(1\\))']);
+    }
+
     public static function decompressionBomb(): string
     {
         $inflated=str_repeat('A',67_108_865);$compressed=gzcompress($inflated,9);unset($inflated);return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode /Length '.strlen($compressed)." >>\nstream\n{$compressed}\nendstream"]);
