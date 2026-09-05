@@ -96,6 +96,11 @@ positive ID unique across all rows, exact known action and valid dates with
 requires non-null `valid_to<=order_date` and is excluded. Unknown/invalid/
 duplicate or empty included set is INVALID_COMPOSITION. Physical `order_date`
 is current compatibility source for semantic `template_date`, never documentDate.
+Fingerprint tuple encodes each member as unsigned 4-byte big-endian byte length
+plus raw bytes, nullable empty as zero length, integers unpadded decimal and no
+separators. Example initial/correction preimages are 208/250 bytes with exact
+digests `dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d`
+and `719d1773101e3211fb0857ad8fcb375fac10a5c7e08180491181a93a4e30f91e`.
 
 #### Scenario: Полный semantic replay
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities

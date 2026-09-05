@@ -79,6 +79,8 @@ Distinct fingerprint replay echoes the current loser request ID, copies winner
 evidence and persists no loser request/audit/event; identical-race inventory
 therefore contains only the winner fact, while different-race conflict remains
 terminal and audited.
+Fingerprint bytes are exact concatenated 4-byte big-endian lengths plus raw
+member bytes; initial/correction worked digests are fixed independently.
 
 ### 7. Persistence owner и schema direction
 

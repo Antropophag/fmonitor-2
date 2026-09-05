@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v48 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
-Версия: **v48**
+Статус: **v49 GATE 1 REVIEW PENDING — FINGERPRINT ENCODING AMENDMENT**
+Версия: **v49**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -168,6 +168,18 @@ compositionSnapshotIdentity
 compositionSha256
 pdfSha256
 ```
+
+Each tuple member is encoded as 4-byte unsigned big-endian byte length (`pack
+N`) followed by exactly that many raw bytes, concatenated with no separator or
+final marker. Mode/date/IDs/hashes use exact lower-case/ASCII strings; positive
+integer IDs use unpadded base-10 ASCII; nullable identities use zero length and
+no bytes; lengths count UTF-8 bytes, not code points. Member grammar bounds make
+`2^32` overflow impossible. Example A preimage is 208 bytes and fingerprint is
+`dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d`.
+Canonical correction-race preimage (correction, root original-0001,
+target/expected revision-0001, date 2026-09-02, same composition/PDF) is 250
+bytes and fingerprint is
+`719d1773101e3211fb0857ad8fcb375fac10a5c7e08180491181a93a4e30f91e`.
 
 Correction reason, request ID, actor, filename, declared MIME и upload time не входят в fingerprint.
 
