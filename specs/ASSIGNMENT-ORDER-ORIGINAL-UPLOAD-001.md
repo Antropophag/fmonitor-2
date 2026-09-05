@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v35 GATE 1 REREVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
-Версия: **v35**
+Статус: **v36 GATE 1 REREVIEW PENDING — ORPHAN FIXTURE AMENDMENT**
+Версия: **v36**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1434,6 +1434,8 @@ final class AssignmentOrderOriginalPrivateOrphanFixtureFactory
         string $privateStorageRoot,
         string $ownershipToken,
         AssignmentOrderOriginalClock $clock,
+        AssignmentOrderOriginalProductionConfig $productionConfig,
+        AssignmentOrderOriginalFaultInjector $faults,
     ): AssignmentOrderOriginalPrivateOrphanFixture;
 }
 
@@ -1498,6 +1500,10 @@ Factory realpath/lstat-validates root, every parent/member and marker before any
 write and again before verifier removal. Missing/wrong UID/mode/type/token,
 repo-contained path, symlink/hardlink (`nlink!=1`) or changed identity is fixed
 unavailable; fixture never creates/repairs root/marker and never follows links.
+The separately trusted configured production private root must itself pass its
+production validation, and task root realpath must be neither equal to nor an
+ancestor/descendant of that production root; overlap is fixed unavailable before
+fixture-root member reads or writes.
 Production bootstrap/application/HTTP cannot construct or select this factory;
 verifier cleans only through maintenance plus revalidated task-owned root removal.
 
@@ -1517,8 +1523,48 @@ delete/audit. Recursively sorted evidence is exactly:
 {"items":[{"attemptedAt":"2026-09-02T09:00:00Z","auditId":1,"deleted":2,"failed":0,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000201","retained":0,"retryable":false,"scanned":2,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-audits-v1"}
 ```
 
-Candidate timestamp exactly equal cutoff is eligible; `07:30:00.000001Z` is
-not. Fixture timestamp `09:00:01Z` is future and rejected before mutation.
+Candidate timestamp exactly equal cutoff is eligible; the next representable
+fixture second `07:30:01Z` is not. Fixture timestamp `09:00:01Z` is future and
+rejected before mutation.
+
+Immediately after the two canonical fixture creates, the evidence reader's
+exact private blob inventory is:
+
+```text
+{"finalized":[{"byteSize":19,"finalizedAtUtc":"2026-09-02T07:00:00Z","opaqueIdentity":"orphan-content-0001","sha256":"edebbe397df1e6932d83cbf742512b480524c89bc6e9b6b679fafec5896db24f"}],"schema":"aoou-blobs-v1","stages":[{"byteSize":15,"createdAtUtc":"2026-09-02T07:00:00Z","opaqueIdentity":"orphan-stage-0001"}]}
+```
+
+Exact replay leaves it byte-identical. Every invalid/future/collision rejection
+and injected `STAGE|STAGE_WRITE|PRIVATE_FINALIZE` primitive failure throws its
+fixed exception and leaves the before inventory byte-identical; fixture fault
+scripts are one-shot and production cannot select them. After canonical
+maintenance completion/replay the inventory is exactly
+`{"finalized":[],"schema":"aoou-blobs-v1","stages":[]}`.
+
+Boundary and newer sensitivity use separate isolated DB/root runs with the same
+09:00 clock, principal/cutoff/limit/cursor and audit ID 1. Boundary fixture is
+abandoned `boundary-stage-0001`, bytes `boundary-orphan-v1` (18 bytes), timestamp
+`07:30:00Z`, request `...0202`: result/replay is COMPLETED/REPLAYED with
+`scanned=1,deleted=1,retained=0,failed=0,nextCursor=null`; post inventory empty.
+Newer fixture is abandoned `newer-stage-0001`, bytes `newer-orphan-v1` (15
+bytes), timestamp `07:30:01Z`, request `...0203`: result/replay has
+`scanned=0,deleted=0,retained=0,failed=0,nextCursor=null`; post inventory remains:
+
+```text
+{"finalized":[],"schema":"aoou-blobs-v1","stages":[{"byteSize":15,"createdAtUtc":"2026-09-02T07:30:01Z","opaqueIdentity":"newer-stage-0001"}]}
+```
+
+Boundary/newer exact request then audit lines are:
+
+```text
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","deleted":1,"failed":0,"nextCursor":null,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000202","retained":0,"retryable":false,"scanned":1,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-requests-v1"}
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","auditId":1,"deleted":1,"failed":0,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000202","retained":0,"retryable":false,"scanned":1,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-audits-v1"}
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","deleted":0,"failed":0,"nextCursor":null,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000203","retained":0,"retryable":false,"scanned":0,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-requests-v1"}
+{"items":[{"attemptedAt":"2026-09-02T09:00:00Z","auditId":1,"deleted":0,"failed":0,"reasonCode":null,"requestId":"00000000-0000-4000-8000-000000000203","retained":0,"retryable":false,"scanned":0,"status":"completed","systemPrincipalId":"test-maintenance-01"}],"schema":"aoou-maintenance-audits-v1"}
+```
+
+Each run has exactly one request plus audit; replay leaves both byte-identical.
+No boundary/newer run shares DB/root state.
 
 final class AssignmentOrderOriginalEvidenceUnavailable extends \RuntimeException
 {

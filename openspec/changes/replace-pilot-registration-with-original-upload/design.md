@@ -46,6 +46,9 @@ and impossible to select from request payload or mutable global.
 A verification-only orphan fixture uses the same production private-storage
 validation/primitives/locks to create exact timestamped abandoned/finalized
 candidates without DB facts, sleep, private metadata edits or production selector.
+Task root has an exact marker/token and must be disjoint from configured
+production root; evidence fixes create/replay/failure inventories and separate
+boundary/newer maintenance request/audit/result runs.
 
 ### 6. Idempotency и correction ties
 
