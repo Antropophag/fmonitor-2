@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.1, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.2, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -32,12 +32,22 @@ expectedSelectionRevision — nonnegative integer, 0 означает отсут
 Input не содержит PDF/filename/storage path, documentDate original или
 произвольные кадровые snapshots. Actor в HTTP приходит только из session.
 
-Exact selection capability и local/process grant mapping требуют Gate 1
-решения. Inherited actor intent разрешает подготовку direct-upload пути для
-двух ролей ФКР, но не автоматическое разрешение read-only ОТиЗ, инженеру или
-administrator-only. Prepare permission и original-upload process capability
-не считаются взаимозаменяемыми. Unauthorized attempt не читает confidential
+Candidate exact permission: `assignment_order.composition.select`.
+Active builtin roles `fkr_operator` и `manager` получают explicit local grant
+и соответствующий explicit user process capability через approved
+bootstrap/administration mapping. Существующие arbitrary/custom role grants
+не расширяются по display name. Проверки active local user, active assigned
+role, exact local permission и exact process capability обязательны; grant
+не выводится из `prepare`, `original.upload`, `original.correct` или read.
+Отзыв любой обязательной authority блокирует также request replay.
+
+Это proposed technical mapping для inherited двух actors ФКР; новый permission
+не означает автоматическое разрешение read-only ОТиЗ, инженеру или
+administrator-only. Multi-role user получает только явно назначенное union
+permissions, а не wildcard. Unauthorized attempt не читает confidential
 selection и не создаёт order/snapshot; safe audit не раскрывает лишние inputs.
+Additive schema/catalog grant migration и exact seed/revoke behavior должны
+быть включены в Gate 1 batch до реализации этого mapping.
 
 ## 3. Preconditions и selected facts
 
@@ -63,8 +73,15 @@ Authorization предшествует replay lookup. Повтор того же
 новой request identity. Different selection against stale expected revision
 даёт conflict без переписывания winner.
 
-Исправление выбранного состава до original сохраняет историю; exact relation
-selection revision ↔ immutable assignmentOrderId/version требует Gate 1 решения.
+Candidate pre-original correction: новый intent против exact current selection
+revision создаёт новую immutable selection revision и новую order identity,
+сохраняя прежнюю selection/order и связь replacement. Прежняя identity не
+переиспользуется для другого composition hash. UI показывает текущую selection
+и историю выбора; ранее сформированный template остаётся привязанным к старой
+identity и не перезаписывается. Optional template для нового состава требует
+отдельного render нового snapshot. Exact schema relation/version numbering и
+terminal result lookup определяются до Gate 1 approval; это не разрешение
+редактировать старые rows или удалять незагруженные selections.
 После accepted original этот command не исправляет its composition. Новое
 действующее распоряжение и forward-only applicability принадлежат отдельному
 lifecycle contract.
@@ -106,7 +123,8 @@ Original command получает существующий order/composition ide
 private persistence ради создания identity. Optional template использует
 сохранённый snapshot; дата template и original date остаются разными facts.
 
-До Gate 1 закрыть capability/source predicates, complete DTO/result/errors,
+До Gate 1 независимо проверить candidate capability mapping и pre-original
+replacement policy; закрыть source predicates, complete DTO/result/errors,
 schema/persistence manifest, correction version semantics, physical date/hash
 compatibility и effective-projection ownership. Test seams должны наблюдать
 real command и public projections, с независимыми expected literals и
