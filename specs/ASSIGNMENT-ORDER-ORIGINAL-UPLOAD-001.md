@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v22 GATE 1 REVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
-Версия: **v22**
+Статус: **v23 GATE 1 REREVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
+Версия: **v23**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1555,8 +1555,15 @@ lower-case PHP backed strings, nulls are explicit, booleans are JSON booleans,
 sizes/revision are unquoted base-10 integers, and strings use
 `JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR`, with no
 whitespace or optional escaping. The encoded object plus LF must fit before any
-result byte is written; serialization/oversize/write failure emits no partial
-result, follows controlled exit 70, and a committed operation remains replayable.
+result byte is written; serialization/oversize failure therefore writes zero
+result bytes. The worker then performs one `fwrite` primitive with the complete
+line. `false`, zero or a short byte count is write failure: worker performs no
+second result write, closes the FD and follows controlled exit 70. A short write
+may leave an untrusted prefix in the private IPC pipe; the parent buffers at
+most `16384` bytes, requires exactly one complete canonical JSON line ending LF
+followed by EOF, and discards any prefix/extra/malformed input as transport
+failure. It never publishes or decodes a partial Result. A committed operation
+remains replayable with the same request ID.
 
 Exact lines for Example A accepted, its retry, and a new-request stale conflict:
 
