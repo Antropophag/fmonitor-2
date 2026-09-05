@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v46 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
-Версия: **v46**
+Статус: **v47 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
+Версия: **v47**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -613,7 +613,13 @@ final class FMonitorPassivePdfInspector implements AssignmentOrderOriginalPdfIns
 
 Application owns `declaredMediaType`, `%PDF-`, size и stream failure mapping. It calls inspector only after complete bounded acquisition. Real-parser cases MUST include positive literal, malformed/truncated, encrypted, zero-page, each forbidden action family, xref table, xref stream and object stream. Injected inspector is permitted only for ordering/storage/CAS/failure cases where parser semantics is not assertion; its public factories cannot create application Result.
 
-Application MUST call `close()` exactly once in `finally` after first stream ownership. Close failure before accepted commit → `FAILED/STREAM_FAILURE`; after commit it is operational safe-log failure and cannot replace accepted stored result.
+Bounded acquisition/validation is a subroutine that owns stage and stream after
+first read begins. Its `finally` performs required abort, then stage close, then
+stream close exactly once and returns an accepted candidate only after both
+closes succeed. Repository accepted commit is called only after that subroutine
+returns, so post-commit stream/stage close is impossible. Non-accepted cleanup
+returns its selected result after all applicable attempts. Stream close failure
+on an otherwise accepted candidate returns `FAILED/STREAM_FAILURE`.
 
 ### Storage, repository and delivery ports
 
@@ -939,10 +945,11 @@ ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED phase=stream_close
 ```
 
 No request/file/content/storage identity, path, bytes, SQL, exception or
-diagnostic is logged. Each isolated one-fault Example-A run has exact evidence:
+diagnostic is logged. Each isolated close-fault Example-A run has exact
+evidence; abort uses the separate invalid base below:
 
 ```text
-{"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_ABORT_FAILED","safeFields":{"phase":"stage_abort"},"sequence":1}],"schema":"aoou-logs-v1"}
+{"items":[{"correlationId":"d87e745407ea","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_ABORT_FAILED","safeFields":{"phase":"stage_abort"},"sequence":1}],"schema":"aoou-logs-v1"}
 {"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_CLOSE_FAILED","safeFields":{"phase":"stage_close"},"sequence":1}],"schema":"aoou-logs-v1"}
 {"items":[{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED","safeFields":{"phase":"stream_close"},"sequence":1}],"schema":"aoou-logs-v1"}
 ```
@@ -966,6 +973,17 @@ through `AssignmentOrderOriginalVerificationFactory` with the same configured
 primitive failure and a throwing injected `AssignmentOrderOriginalSafeLogObserver`;
 it emits no log bytes/no second attempt and preserves Result. No worker composite
 fault or production selector exists.
+
+Canonical abort-log base is request
+`00000000-0000-4000-8000-000000000301`, Example-A positive 327 bytes, and an
+injected `INVALID_PDF` inspector through `AssignmentOrderOriginalVerificationFactory`.
+Injected storage creates stage `stage-0001`; abort throws, stage close and stream
+close each succeed once. Result remains `REJECTED/INVALID_PDF`, non-retryable;
+one terminal rejected request+audit is committed only after cleanup, with no
+domain event/revision/fingerprint. Private inventory is one abandoned
+`stage-0001` of 327 bytes and no finalized content. Safe log is the exact
+`d87e745407ea` line above. Same-request retry returns stored rejection before
+stream/storage/cleanup/log and leaves audit/private inventory byte-identical.
 
 Private content/outcome implementations are constructed only by storage adapters. Repository lookup/result implementations may rehydrate stored application results but cannot create accepted evidence not already represented by a committed `AssignmentOrderOriginalAcceptedCommit`. Repository MUST validate UUID/ID/hash/date/time/size grammar; exact mode/event pairing (`INITIAL→assignment_order_original_accepted`, `CORRECTION→assignment_order_original_corrected`); revision 1/null previous for initial; revision n+1/previous/expected-current for correction; content digest/size identity; and Result derivation before commit. Invalid adapter DTO is `PERSISTENCE_FAILURE`, never partial persistence. `AssignmentOrderOriginalAttemptCommit` allows only non-retryable `REJECTED|CONFLICT`, exact reason/status mapping and no evidence fields.
 
