@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v37 GATE 1 REVIEW PENDING — MAINTENANCE CURSOR AMENDMENT**
-Версия: **v37**
+Статус: **v38 GATE 1 REREVIEW PENDING — MAINTENANCE CURSOR AMENDMENT**
+Версия: **v38**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1684,9 +1684,12 @@ Candidate page includes `ABANDONED_STAGE` and `FINALIZED_CONTENT`, ordered by bi
 
 Cursor payload is exact compact UTF-8 JSON in key order
 `{"v":1,"at":"<UTC-second>","id":"<opaqueIdentity>"}` with no whitespace/
-extra keys. Its bytes length is `42+idByteLength` (`43..202`), encoded by RFC
+extra keys. Opaque identity is exactly `1..160` ASCII bytes, every byte
+`0x20..0x7E`, with no `/`, backslash or control; double quote remains valid and
+JSON-escapes as `\"`. Payload length is therefore
+`43+idByteLength+doubleQuoteCount` (`44..363`), encoded by RFC
 4648 URL-safe base64 (`+`→`-`, `/`→`_`) with all trailing `=` removed; cursor
-length is `58..270` and alphabet `[A-Za-z0-9_-]`. Decoder restores minimal
+length is `59..484` and alphabet `[A-Za-z0-9_-]`. Decoder restores minimal
 padding, strict-decodes, requires UTF-8/exact keys/types, `v===1`, canonical UTC
 second, identity grammar, and byte-equal re-encode. Cursor pair need not still
 exist because prior page deletion is expected; it is solely an exclusive sort
