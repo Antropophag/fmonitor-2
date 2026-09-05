@@ -43,6 +43,24 @@ Migration SHALL выполнить read-only preflight всей существу
 - **THEN** migration создаёт только пустую details table
 - **AND** existing quarantine rows не изменяются
 
+### Requirement: Concurrent migration callers serialize the family
+
+Migration SHALL сериализовать callers для одной database/prefix на время
+preflight, CREATE и complete-family verification. Lock timeout SHALL давать
+техническую ошибку без schema mutation данным caller. Разные namespaces MUST
+иметь разные lock identities. Success MUST NOT возвращаться при недоступной
+final verification; durable partial/complete schema сохраняется для retry.
+
+#### Scenario: Два creator для одной family
+- **WHEN** два callers одновременно создают одну отсутствующую compatible family
+- **THEN** первый создаёт обе tables; второй после acquire подтверждает exact
+  repeat без duplicate creation; protected rows и decoys неизменны
+
+#### Scenario: Прерывание после real CREATE
+- **WHEN** второй CREATE либо final verification недоступны
+- **THEN** caller не сообщает успех, сохраняет durable exact partial/complete
+  schema; fresh retry завершает missing member либо подтверждает exact repeat
+
 ### Requirement: Incompatible schema fails closed before mutation
 
 Любой несовместимый column/default/generated metadata, primary/index structure,

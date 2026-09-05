@@ -6,6 +6,11 @@
 
 ## 2. RED and independent test review
 
+- [ ] 2.0 После Gate 1 доказать deterministic partial-CREATE failure, final
+  verification failure и two-worker serialization/timeout через approved
+  verification composition и isolated DB privileges; verification: bounded
+  IPC/cleanup, qualifying RED, no production runtime selector.
+
 - [ ] 2.1 Add MariaDB RED tests derived only from the approved executable specification for clean creation, populated repeat, both exact-compatible partial states, incompatible member/decoy isolation, collation, composed prefix 25/26 boundaries, and existing-row preservation; verify overlong/invalid prefix rejection occurs before DB connection/access and all failures are assertion failures rather than environment/setup failures.
 - [ ] 2.2 Add RED characterization proving the importer performs no DDL, succeeds with exact precreated tables under a DDL-denied principal, and fails closed before source mutation when either table is absent or incompatible; verify existing six-field extraction, immutable/hash-repeat, source-change conflict, quarantine, and detail/quarantine coexistence semantics remain unchanged.
 - [ ] 2.3 Assign a fresh independent test reviewer, record the review under `reviews/tests/`, resolve every finding without implementation-derived expected values, and verify Gate 3 approval is explicit before production code changes.

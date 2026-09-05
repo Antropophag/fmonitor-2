@@ -11,6 +11,8 @@ canonical ownership, а первый `--apply` смешивает schema mutatio
   quarantine family до запуска importer или consumers.
 - Принимать clean, populated exact и exact-compatible partial family после
   read-only preflight; несовместимую schema отклонять до mutation.
+- Сериализовать migration callers одной database/prefix на время preflight,
+  CREATE и final verification; независимые namespaces используют разные locks.
 - Удалить `CREATE TABLE IF NOT EXISTS` из importer; absent/incompatible target
   schema должна fail closed, без repair или data writes.
 - Сохранить immutable first-write/hash-conflict import behavior и existing rows,

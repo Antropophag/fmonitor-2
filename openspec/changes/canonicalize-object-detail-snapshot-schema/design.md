@@ -105,5 +105,12 @@ Rollback destructive `down()` не имеет. До deployment можно отк
 
 Current `CanonicalMigrationApplication` вычисляет version обходом registry и
 не хранит persisted migration ledger. Этот slice не вводит ledger; successful
-result разрешён после complete-family verification. Exact interruption и
-concurrent-run construction остаются открытыми пунктами draft Gate 1.
+result разрешён после complete-family verification. Draft v0.3 задаёт
+connection-scoped database/prefix named lock с bounded acquisition, held через
+preflight/CREATE/final verification и release в finally. Dedicated verification
+composition с закрытыми phase events вызывает того же owner; production имеет
+только inert observer без runtime selector. Первый interrupted CREATE
+проверяется table-scoped DDL denial; недоступность final verification после
+обеих CREATE — закрытием owned test connection из phase observer. Два workers
+доказывают serialization и bounded lock timeout. Эти candidates требуют fresh
+Gate 1 review; изменение planning не разрешает production hooks или RED.
