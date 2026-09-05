@@ -86,3 +86,73 @@ VERIFY_OK at exact SHA remains mandatory. Failures are never converted to skips.
 This package asks the owner only to approve this exact protected-fixture
 representation correction after technical review. It does not ask to change
 product policy, weaken gates, approve the remaining legacy journey or publish.
+
+## V3 candidate revision 2 — independently executable verifier seam
+
+This appendix supersedes the gate-method paragraphs above that treated reaching
+a downstream E2E failure as focused GREEN. That is insufficient. The existing
+full E2E must still run unskipped; its status remains separate and mandatory.
+
+New test-support public seam (no application API):
+`FMonitor2\Tests\Support\ProtectedE2eAdmissionOracle::matches(string $html): bool`
+in `tests/Support/ProtectedE2eAdmissionOracle.php`. It returns true precisely for
+the admission representation specified above, false otherwise, without DB,
+network, filesystem mutations or output. Parsing uses DOM with network disabled;
+parser diagnostics do not escape. Expected fixture facts are fixed by this
+candidate, never passed from actual response/renderer output. This deliberately
+fixture-specific oracle is not a general HTML validation library.
+
+Public executable regression:
+`php tests/Verification/protected_e2e_admission_oracle_001_test.php`.
+The independently authored test first asserts the public oracle exists/can be
+called, then exercises the literal matrix below and exits0 only if every result
+matches. Missing oracle produces an explicit intended assertion failure, not an
+uncaught include/class error or environment failure. That is RED for the missing
+verifier behavior only; the existing stale E2E failure remains separate evidence.
+No claim of missing production behavior follows. Test then undergoes independent
+Gate3 before implementing the oracle. Implement minimal oracle, obtain focused
+GREEN, independently review its exact code and test at Gate5. The approved test
+expectations must not change to obtain GREEN.
+
+Independent positive literal HTML (UTF-8):
+
+```html
+<!doctype html><html lang="ru"><body><main id="main-content"><ul><li><a href="/pilot/objects/4512">4512</a><span>77-000123</span><span>Москва, ул. Примерная, д. 10</span><span>Подъезд 2</span><span>2026-10-05 — 2026-12-20</span></li></ul></main></body></html>
+```
+
+This is specification data, not captured renderer output. Expected true for
+that literal and the same literal replacing ul with ol. Expected false for each
+independently derived one-change negative:
+
+- remove the sole object anchor;
+- duplicate the complete object li;
+- change href only to /pilot/objects/4513;
+- change anchor text only to 4513;
+- replace object li tags with div tags;
+- change registration only to 77-000124;
+- change address house only to д. 11;
+- change entrance only to Подъезд 3;
+- change start only to 2026-10-06;
+- change finish only to 2026-12-21;
+- append an empty table inside main;
+- append a div with class tokens x shlz-table-wrap y inside main;
+- move correct anchor to a navigation list outside main and remove it in main.
+
+Membership is scoped to sole main#main-content, exactly one matching li with
+ul/ol parent and one canonical fixture anchor in main. Facts must occur inside
+that same item. Canonical link text and fact text use DOM text with whitespace
+collapsed; registration/address/date literals are matched as separate values,
+entrance as Подъезд 2, so 22 or 20 cannot satisfy entrance2. Extra navigation li
+outside main are allowed. Table and shlz-table-wrap forbidden inside main.
+A second main with that same id is rejected. Add that explicit negative too.
+
+After oracle Gate3/GREEN, prepare the unapplied protected patch that replaces
+all three stale assertions with calls to this exact reviewed oracle on each
+actual response body. Preserve real status checks and all remaining protected
+bytes. The protected patch receives a distinct independent Gate3 against this
+owner-approved amendment and fresh old-fixture mismatch evidence, before it is
+applied. Full E2E still executes entirely; oracle focused GREEN cannot convert
+its downstream failures to success. Independent Gate5 covers integration and
+exact unchanged response/RBAC/cleanup boundaries; full verification remains a
+separate launch blocker until literally GREEN. Any inability to establish these
+gates leaves the protected patch unapplied, without waiver or skip.
