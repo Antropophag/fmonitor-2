@@ -29,9 +29,18 @@ Pilot owner отменил ручной номер распоряжения и �
 ## Impact
 
 - Planning и будущая реализация затрагивают Assignment Orders application seam, process capabilities, private document storage, обязательную production safe-log configuration и immutable metadata/audit persistence.
-- Gate 2 production evidence наблюдается через отдельный read-only factory/config seam с fresh DB connection и owned private/log readers; closed process snapshot имеет отдельный `checklistSha256`, а worker config явно передаёт тот же canonical safe-log path реальному observer, без env/global/default selector; это не mutation/query product surface. Descriptor-integrity RED использует named public verification factory той же production logger composition и единственный phase observer после final pathname validation до open; ordinary owner `chmod 0600→0640` на exact task-owned inode создаёт real retained-`fstat` mismatch. Production factory всегда связывает inert observer. Control, fixed error, zero DB/private-root touch, unchanged bytes/only deliberate mode metadata, live-child `get_resources('stream')`+`fstat` closure proof и bounded cleanup exact; native interposition/interception/loader injection и privilege changes запрещены.
+- Gate 2 production evidence сохраняет existing read-only reader/config/worker contracts. Safe-log descriptor proof теперь задаётся `ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001`: стабильные public-owner и pure-policy tests плюс обязательный exact-SHA structural Gate5 доказывают real fstat/ownership/close/data-flow и factory ordering. Pending interval observer/permission-transition method заменён; rejection history сохранена, rejected mechanisms не повторяются. Public owner не допускает raw-handle/adoption escape и не переоткрывает путь для append.
 - Isolated MariaDB Gate 2 setup использует named public schema migration version 1 и verification-only fixed Example-A seed seam; runtime paths не вызывают их, fixture не создаёт original facts и evidence reader остаётся read-only.
 - Canonical `CONTEXT.md`, pilot spec и pilot data model synchronously amended owner-approved original-PDF truth до Gate 1. До executable-spec approval также должны получить явную disposition `docs/installation-process-interface.md`, behavior inventory и активные E2E/RBAC/PDF changes/specs/tests, которые характеризуют реализованный manual number, `confirmRegistration` или `registered`; исторические reviews/evidence не редактируются и помечаются как legacy evidence, а не target behavior.
 - Вне scope: OCR, signature/stamp verification, malware scanning, JPG/PNG/multi-file upload, обязательный template, 1С ДО integration, HTTP/read/download, смена current composition, sequential-order applicability и opening by original.
 - Следующие slices (создаются отдельным OpenSpec workflow, не здесь): `apply-assignment-order-original-to-composition` определяет prospective sequential orders/ties; `open-installation-from-assignment-order-original` заменяет opening gate и фиксирует immutable opening snapshot.
 - Отдельный future slice `expose-assignment-order-original-http` определяет HTTP upload, metadata query и download, включая exact local permission `assignment_order.original.read`, projection DTO и safe response contract.
+
+## Shared safe-log owner amendment — 2026-09-06
+
+Новый технический contract сохраняет owner-approved file policy и production
+failure boundary. Private-constructor opened owner единолично выполняет normal
+non-creating open, real fstat validation и retained append/close. Existing logger
+остаётся только compatibility facade. Требуются fresh Gate1→RED→Gate3→GREEN→
+Gate5, включая structural proof; feasibility review не считается approval.
+Product authority не расширяется, новые owner decisions не запрашиваются.

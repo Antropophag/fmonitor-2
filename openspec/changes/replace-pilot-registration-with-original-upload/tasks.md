@@ -33,7 +33,7 @@
 - [x] 1.31 Получить fresh independent Gate 1 review fingerprint encoding amendment; verification: exact big-endian byte-length format и initial/correction digests делают replay/CAS evidence independent
 - [x] 1.32 Получить fresh independent Gate 1 review worker barrier-event amendment; verification: fingerprint-vs-after-finalize selector делает real CAS и maintenance/lease races causally observable
 - [x] 1.33 Получить fresh independent Gate 1 review shared content identity schema v2 amendment; verification: v1 unique→v2 non-unique populated forward upgrade закрывает same-PDF revision contradiction
-- [ ] 1.34 Получить fresh independent Gate 1 review revised safe verification amendment; verification: invariant retains existing canonical non-symlink regular current-user-owned exact `0600`, retained descriptor device/inode plus real `fstat` regular/current-EUID/`0600`, close/fixed failure/no mutation before resources; exact public verification factory/enum/phase observer uses same logger owner, production inert, ordinary task-owned `chmod`, live-child complete stream-`fstat` inventory and bounded cleanup replace the automatically rejected native technique while preserving prior approvals/rejection history
+- [ ] 1.34 Получить fresh independent Gate1 shared safe-log owner amendment; verification: SAFE-LOG-OWNER-001 задаёт same owner policy, private opaque acquisition, real-fstat attribute inputs, non-creating open, retained append/close и обязательный behavioral/structural proof split; rejected observer/native candidates заменены без повторения механизмов.
 
 ## 2. Minimal RED и test review
 
@@ -56,13 +56,13 @@
 
 - [x] 4.1 Расширить approved RED на post-template parity, exact process authorization, owned PDF algorithm, staged chunk/abort/events, typed commit/audit, request-ID retry, root/current/target concurrency, five-FD two-worker barrier, maintenance candidate/lock/replay и commit/response-loss faults через approved evidence-reader factory; verification: каждый expected value независим от будущей реализации, real MariaDB setup уже Gate-5-approved
 - [x] 4.2 Поручить fresh independent test reviewer проверить command-matrix sensitivity и zero-public-orphan cleanup; verification: explicit `APPROVED`, reviewer не писал tests/production
-- [ ] 4.3 Только после fresh revised technical Gate 1 добавить deterministic descriptor-integrity RED и поручить fresh independent Gate 3 reviewer; verification: exact public verification factory/phase through same production logger, unchanged inert control and ordinary owner `chmod 0600→0640` prove real retained-`fstat` disagreement, fixed error, zero mismatch DB/private-root/write, unchanged bytes/only deliberate mode, and no retained exact descriptor via exhaustive live-child stream inventories; setup failures distinct, cleanup bounded, native techniques/privilege changes/probabilistic timing/production selector forbidden
+- [ ] 4.3 После fresh Gate1 продемонстрировать public owner/pure-policy missing-behavior RED и получить independent Gate3; verification: stable task-owned files с изначальными modes, literal metadata negatives, exact append/close/correlation и existing factory regression; reviewer явно отделяет behavioral evidence от обязательного source proof, без interval hooks/permission transitions/invented native-FD claims.
 
 ## 5. Command minimal GREEN
 
 - [x] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
 - [x] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
-- [ ] 5.3 Реализовать minimal descriptor-integrity GREEN только после approved Gate 3; verification: production config/factory validates retained descriptor identity and real `fstat` regular/current-EUID/exact-`0600`, closes/fails fixed-redacted before DB/private storage/write on mismatch, and successful cleanup/release diagnostics append only to the validated descriptor without path/secret leakage
+- [ ] 5.3 Реализовать minimal shared-owner GREEN после Gate3; verification: same actual retained fstat handle feeds policy, compatibility logger не имеет alternate I/O, production factory получает owner до DB/private root, fixed errors сохраняются; independent Gate5 включает exact structural proof и только после него закрывает G5-SAFELOG-2.
 
 ## 6. Integration и Done
 

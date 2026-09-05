@@ -1,8 +1,8 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v55 GATE 1 REREVIEW PENDING — PRODUCTION SAFE-LOG CONFIG AMENDMENT**
-Версия: **v55**
-Дата: **2026-09-02**
+Статус: **v60 GATE 1 REREVIEW PENDING — SHARED SAFE-LOG OWNER**
+Версия: **v60**
+Дата: **2026-09-06**
 
 ## Простыми словами
 
@@ -964,86 +964,33 @@ message equal to its class basename, integer code `0`, `previous=null`, and no
 path, secret or underlying exception detail. No database/private-storage call
 is permitted before this validation succeeds.
 
-After validation the factory binds `AssignmentOrderOriginalFileSafeLog` to the
-validated canonical file identity. Each cleanup/release diagnostic appends its
+After validation the factory binds the shared opened safe-log owner defined
+below to the validated canonical file identity; `AssignmentOrderOriginalFileSafeLog`
+remains only a compatibility facade. Each cleanup/release diagnostic appends its
 already specified single canonical JSON line without truncating or rewriting
 prior bytes. A later append failure remains best-effort observer failure under
 the existing selected-Result rules and exposes no path, secret or exception.
 
-Candidate technical descriptor-integrity amendment, pending fresh independent
-Gate 1 review: the append descriptor actually retained by
-`AssignmentOrderOriginalFileSafeLog` MUST be revalidated with `fstat` before
-any database/private-storage access or diagnostic write. Its opened identity
-MUST match the final non-following pathname observation by exact device and
-inode, and its `fstat` attributes MUST identify a regular file owned by the
-current effective UID with exact permission bits `0600`. Any open, `fstat`,
-identity or attribute mismatch MUST close the opened descriptor when one exists
-and fail construction through the existing fixed redacted
-`AssignmentOrderOriginalProductionConfigurationUnavailable` boundary. It MUST
-NOT create, repair, replace, truncate, append to or otherwise change the
-configured file on this failure.
+Shared-owner technical amendment, pending fresh independent Gate1:
+`specs/ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001.md` is normative for safe-log
+acquisition, retained-descriptor policy, append/close and the behavioral/structural
+proof split. The retained descriptor MUST have matching final pathname
+device/inode and real fstat regular/current-effective-UID/exact0600 attributes
+before production factory DB/private-root access or any diagnostic write.
+The owner opens existing files without creation/truncation, retains one opaque
+handle and is the sole append/close owner. Existing FileSafeLog is only a
+compatibility facade with no alternate open/write implementation.
 
-The safe-log owner SHALL expose this verification-only construction contract:
-
-```php
-enum AssignmentOrderOriginalSafeLogConstructionPhase: string
-{
-    case FINAL_PATH_VALIDATED_BEFORE_OPEN = 'final_path_validated_before_open';
-}
-
-interface AssignmentOrderOriginalSafeLogConstructionObserver
-{
-    public function observe(
-        AssignmentOrderOriginalSafeLogConstructionPhase $phase,
-    ): void;
-}
-
-final class AssignmentOrderOriginalProductionFactoryVerification
-{
-    public static function create(
-        \mysqli $database,
-        AssignmentOrderOriginalProductionConfig $config,
-        AssignmentOrderOriginalSafeLogConstructionObserver $observer,
-    ): AssignmentOrderOriginalApplication;
-}
-```
-
-The same production logger owner MUST emit the sole phase exactly once after
-its final non-following pathname observation has passed regular-file,
-current-effective-UID and exact-`0600` validation and captured device/inode,
-and immediately before the real append open. The phase carries no path,
-descriptor, credential or mutable production object. Observer `Throwable` MUST
-fail through the same fixed redacted production-configuration exception before
-open/DB/private-root access. `ProductionAssignmentOrderOriginalFactory::create`
-MUST use the same composition with a final inert observer, accept no observer
-argument, and expose no environment/request/CLI/global/service-locator
-selector. The verification factory is not a second logger implementation.
-
-Gate 2 SHALL call the verification factory in a bounded task-owned child. An
-unchanged inert control with task-owned database/private root MUST complete and
-observe exactly one phase. The mismatch fixture MUST begin as one revalidated
-canonical non-symlink regular current-EUID-owned exact-`0600` inode with fixed
-bytes and metadata. Its observer MUST use only ordinary owner `chmod` on that
-same inode to set exact `0640`, verify that result before returning, and perform
-no other mutation. The real open and retained-descriptor `fstat` then MUST yield
-the same device/inode and real `0640`, causing the exact fixed factory exception
-with zero mismatch-run database calls, no private-root validation/access, no
-diagnostic write, identical bytes, and metadata changed only by that deliberate
-mode transition until cleanup restores `0600`.
-
-The live child MUST inventory `get_resources('stream')` immediately before the
-mismatch factory call and immediately after its exception. It MUST key each
-resource by integer resource ID and call read-only `fstat` on every entry; any
-`fstat === false`, duplicate key, pre-existing exact fixture device/inode, or
-new post-call stream that cannot be accounted for is `SETUP_FAILURE`. Before
-child exit, no post-call stream may have the fixture's exact device/inode, and
-no resource present only after the call may be silently ignored. Cleanup MUST
-revalidate exact task-owned file/root identities, restore `0600`, close only
-enumerated owned resources, and remove only enumerated owned artifacts. Parent
-deadlines MUST be monotonic and bounded with terminate/reap on failure. Setup,
-phase, chmod, inventory or cleanup failure is not RED. Native interposition,
-syscall interception, loader injection, privilege changes, external targets,
-sleeps and probabilistic replacement loops are forbidden.
+The former pending construction-phase observer and interval permission-transition
+fixture are replaced, not retained as additional requirements. Their historical
+rejection/review records remain append-only; no rejected mechanism is retried.
+New direct public-owner/pure-policy tests use stable task-owned inputs.
+Gate3 MUST state that stable-file tests alone cannot establish the native metadata
+source or native FD closure. Gate5 MUST independently prove exact real-fstat
+input flow, private ownership, close on every failure, no pathname reopen/raw
+handle escape, and production factory ordering on the reviewed source SHA.
+Only the combined behavioral GREEN and structural proof can close G5-SAFELOG-2.
+No new production selector, config input, product permission or outcome is added.
 
 Safe-log correlation ID for every command attempt is the first 12 lower hex of
 SHA-256 over exact ASCII requestId; Example A is `11e594f48195`. Cleanup

@@ -244,7 +244,13 @@ Storage SHALL начать private stage до чтения stream; application �
 ### Requirement: Production safe log fail-closed construction
 `AssignmentOrderOriginalProductionConfig` SHALL require `safeLogFile` in addition to `privateStorageRoot` and `tablePrefix`. Before any database access or private-storage validation/access, `ProductionAssignmentOrderOriginalFactory` MUST resolve and validate `safeLogFile` as an already existing canonical regular file, MUST reject a symlink at the configured path, MUST require ownership by the current effective user and exact permission mode `0600`, and MUST bind the real append-only cleanup/release safe-log observer to that canonical file. The retained append descriptor MUST have exact device/inode identity with the final non-following pathname observation and MUST itself be revalidated by `fstat` as regular, current-effective-user-owned and exact `0600` before resource access or write. Any open, `fstat`, identity or attribute mismatch MUST close an opened descriptor and surface only the existing fixed redacted production-configuration error. The factory MUST NOT create, chmod, chown, replace, truncate, append to or otherwise repair/change the file on construction failure. This descriptor-integrity clarification is pending fresh independent technical Gate 1 review and preserves the earlier owner-approved policy/history.
 
-Verification SHALL expose exactly `enum AssignmentOrderOriginalSafeLogConstructionPhase: string { case FINAL_PATH_VALIDATED_BEFORE_OPEN = 'final_path_validated_before_open'; }`, `interface AssignmentOrderOriginalSafeLogConstructionObserver { public function observe(AssignmentOrderOriginalSafeLogConstructionPhase $phase): void; }`, and `final class AssignmentOrderOriginalProductionFactoryVerification { public static function create(\mysqli $database, AssignmentOrderOriginalProductionConfig $config, AssignmentOrderOriginalSafeLogConstructionObserver $observer): AssignmentOrderOriginalApplication; }`. This factory MUST use the same logger owner/composition as production. `ProductionAssignmentOrderOriginalFactory::create(mysqli, config)` always supplies a final inert observer and exposes no selector.
+Verification SHALL использовать public opaque opened-file owner и pure attribute
+policy из `ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001`. Stable-file behavioral
+GREEN MUST дополняться exact-SHA independent structural Gate5 proof native fstat,
+retained ownership/close и factory ordering. Pending construction observer и
+interval permission transition заменены; эти отвергнутые механизмы MUST NOT
+повторяться. Public raw-handle/adoption/opener/metadata-provider escape и
+production selector запрещены.
 
 #### Scenario: Valid production safe-log binding
 - **WHEN** `safeLogFile` names an existing non-symlink regular file owned by the current effective user with exact mode `0600`
@@ -254,11 +260,14 @@ Verification SHALL expose exactly `enum AssignmentOrderOriginalSafeLogConstructi
 - **WHEN** the configured path is missing, non-canonical, a symlink, not a regular file, owned by another user or has mode other than exact `0600`
 - **THEN** factory construction throws one fixed fail-closed construction error before database access and before private-storage validation/access, does not create or repair any file, and exposes no configured path, secret or underlying exception detail
 
-#### Scenario: Opened descriptor attributes disagree with pathname validation
-- **WHEN** `AssignmentOrderOriginalProductionFactoryVerification::create(mysqli, config, observer)` uses the same production logger owner, emits exact enum phase `FINAL_PATH_VALIDATED_BEFORE_OPEN` once after final pathname regular/current-EUID/`0600` validation and device/inode capture but immediately before real open, and a task-owned observer changes that same validated inode from exact `0600` to exact `0640` with ordinary owner `chmod`
-- **THEN** real retained-descriptor `fstat` sees same device/inode and actual `0640`; construction closes it and throws the exact fixed redacted production-configuration error with zero mismatch-run database calls, no private-root touch or diagnostic write, identical bytes and metadata differing only by deliberate mode until bounded cleanup restores `0600`
-- **AND** unchanged inert control completes with one phase; production factory uses final inert observer and has no selector; observer receives only phase and its Throwable maps fixed-redacted before open/resources; live child compares before/after integer-keyed `get_resources('stream')` inventories with successful read-only `fstat` for every entry and proves no exact fixture descriptor remains before exit
-- **AND** setup/phase/chmod/inventory/cleanup failures are `SETUP_FAILURE`; cleanup revalidates exact task-owned identities and parent enforces monotonic bounded terminate/reap; native interposition/interception/loader injection, privilege changes, external targets, sleeps and probabilistic loops are forbidden
+#### Scenario: Stable direct owner and policy verification
+- **WHEN** public owner получает обычные task-owned изначально valid0600 и invalid0640 files, а pure policy получает independently fixed mode/type/UID/device/inode cases
+- **THEN** valid owner сохраняет prior bytes и exact JSON append/close behavior; invalid input отклоняется fixed-redacted без create/repair; tests не заявляют, что stable-file observation сама доказывает использование fstat
+
+#### Scenario: Structural retained-descriptor proof
+- **WHEN** independent Gate5 reviewer проверяет exact implementation SHA после approved behavioral GREEN
+- **THEN** actual fstat retained handle подаёт все approved policy fields, private owner один выполняет append/close без reopen/adoption escape, все failed acquisitions закрывают handle, production factory ordering/fixed exception сохраняются
+- **AND** отсутствие этой proof запрещает APPROVED даже при passing tests; rejected native/observer mechanisms не реализуются
 
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
