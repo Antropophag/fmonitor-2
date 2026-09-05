@@ -23,3 +23,10 @@
 - [ ] 4.2 Получить fresh independent Gate 5; verification: reviewer не автор tests/production, explicit APPROVED охватывает invariants, rollback/replay, history и authorization.
 - [ ] 4.3 Пройти real public HTTP selection → direct original upload и optional-template parity с approved HTTP slice; verification: renderer не требуется для первого пути, upload не открывает работы.
 - [ ] 4.4 Выполнить full make verify и requirement-by-requirement Done audit; verification: literal VERIFY_OK, exact gate/evidence hashes, все artifacts согласованы, direct upload не подменён hidden prepare/render.
+
+Drafting disposition 2026-09-05: task1.3 must include the separate selection
+ledger and shared identity registry/allocator, preserved historical IDs, legacy
+writer cutover, original-reader source discriminator, and fail-closed deployment
+compatibility specified in the appended design decision. This is planning
+progress only; task1.2–1.4 remain unchecked until the complete executable batch
+and required owner decision are approved.

@@ -28,3 +28,61 @@
 ## Migration Plan
 
 Подготовить executable `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001`, coherent disposition existing prepare/HTTP expectations и independent Gate 1. Затем RED → Gate 3 → minimal owner/persistence → relevant regression/architecture → Gate 5. Подключить direct HTTP flow только после approvals. Existing historical prepared/rendered orders и original revisions не переписываются при deployment или rollback к предыдущему коду.
+
+## 2026-09-05 technical storage disposition — pending executable Gate 1
+
+The chosen drafting direction is a separate immutable selection ledger plus
+one canonical assignment-order identity registry/allocator shared by both
+legacy preparation and new selection. This resolves the previously open choice
+of storage owner; it is not an approved schema manifest or implementation gate.
+The preceding no-template/no-application product invariants remain unchanged.
+
+A selection does not create fm2_assignment_orders/fm2_order_installers rows and
+never supplies invented order_date/valid_from/valid_to. Existing effective
+readers therefore cannot see pending B through their MAX(all order versions).
+Their current registered predicate is preserved only as predecessor behavior;
+the target original-applicability owner remains a required separate migration.
+
+The identity registry must own both numeric assignmentOrderId and per-case
+order version, with uniqueness for ID and (caseId,version). Each entry has one
+immutable source-kind discriminator, legacy_order or selection. Identity
+allocation and domain persistence commit in the same transaction under the
+case-scoped serialization boundary; failure cannot leave an acknowledged ID
+without its source fact. Existing historical IDs and case/version pairs are
+preserved exactly as registry metadata, never renumbered or reconstructed as
+new domain events. New IDs come from that one allocator, not independent table
+AUTO_INCREMENT sequences and not MAX()+1 in callers.
+
+The later executable migration contract must define exact shapes, identity
+backfill/validation, next-ID frontier including existing AUTO_INCREMENT gaps,
+collisions, overflow, bounded locking, partial restart and preservation. It must
+cover switching legacy preparation to explicit allocated IDs in the same
+release; enabling selection while an old writer still allocates independently
+is forbidden. Clean deployment stops application writers before migration,
+verifies registry↔source completeness and starts only compatible writers.
+Runtime readiness fails closed on absent/drifted registry; no lazy DDL/backfill
+or duplicate-owner precedence is allowed. Rollback to an incompatible writer
+must be explicitly blocked in the eventual deployment contract.
+
+Original composition lookup resolves registry ownership at the exact numeric
+ID and case inside its read-only snapshot. legacy_order retains the existing
+strict date/member rules; selection reads exact immutable dateless membership.
+Both yield the already approved composition-ID/JSON/hash contract. Missing both
+identity and source is NOT_FOUND; contradictory ownership, orphan source,
+missing registered source, duplicate case/version or unavailable inspection is
+UNAVAILABLE, not fallback. Source validation failures retain a separately
+specified invalid-composition result. This requires an explicit original-reader
+contract amendment before implementation; safe-log work is not changed.
+
+Optional rendering must address the same selection identity and record its own
+immutable template/date/artifact facts without creating effective intervals or
+converting selectionDate into templateDate. Application/opening later consumes
+accepted original + selection identity through the one applicability owner.
+
+Next deliverable is one coherent executable Gate1 batch covering this registry,
+selection family, original-reader branch, existing-writer handoff, typed command
+ports/replay/audit and preservation. No migration version is reserved by this
+note: choose the actual next version only after reading the then-current
+catalogue. No task checkbox advances and no RED/code is authorized here.
+REPLACE_PENDING user-visible correction/history remains a separate explicit
+owner decision in that batch; it is neither silently removed nor approved.

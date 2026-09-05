@@ -28,3 +28,13 @@ Behavior slice: `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001`. Actors — сотру
 В scope: selection persistence и handoff original command. Вне scope: original bytes processing, read grants, opening, применение состава во времени, 1С ДО, изменение protected PILOT-E2E-FLOW-001, новая domain logic в rapid-pilot. Existing prepare/render не удаляется до reviewed integration.
 
 Planning gaps для exact Gate 1: authorization selection vs existing prepare/upload capabilities, изменение ошибочного выбора до original и immutable version identity, physical date compatibility с existing composition hash. Они не заполняются догадками об observed legacy behavior; NEEDS_GRILL только если потребуется новое продуктовое решение сверх approved original workflow.
+
+## Storage drafting decision — 2026-09-05
+
+Separate dateless selection ledger is the selected candidate. A canonical shared
+identity registry/allocator must preserve existing order IDs/case versions and
+serve both new selection and legacy preparation. This expands the exact
+integration manifest to include legacy writer cutover and original-reader source
+resolution. It does not change original PDF processing or effective applicability.
+Detailed requirements are in the appended design; exact schema/version and
+executable ports remain Gate1 work, not an approved implementation.

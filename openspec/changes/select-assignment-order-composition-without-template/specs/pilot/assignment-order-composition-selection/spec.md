@@ -55,3 +55,24 @@ Exact retry SHALL не создавать duplicate version/audit. Конкур�
 #### Scenario: Renderer недоступен
 - **WHEN** после successful selection optional render не может завершиться
 - **THEN** сохранённый состав остаётся доступным для прямой загрузки готового original PDF
+
+### Requirement: Dateless selection and shared identity ownership
+
+The candidate storage contract SHALL keep pending selections outside existing
+dated order/member tables. A single canonical identity registry/allocator SHALL
+serve selection and legacy preparation, preserve existing IDs/case versions and
+prevent cross-source collision. The original reader SHALL resolve one explicit
+source kind and reject contradictory ownership without fallback. Exact migration,
+locking, backfill, compatibility and manifest contracts require executable Gate1.
+
+#### Scenario: Selection without document facts
+- **WHEN** the user saves a selection before any template or signed original
+- **THEN** no order_date or assignment validity interval is invented and the stable ID resolves only to the immutable selection source
+
+#### Scenario: Mixed creator identities
+- **WHEN** compatible legacy preparation and new selection allocate identities concurrently
+- **THEN** their committed IDs and case versions cannot collide, and every acknowledged identity has exactly one matching source fact
+
+#### Scenario: Incompatible writer release
+- **WHEN** identity migration/cutover has not proven old-writer exclusion and registry/source completeness
+- **THEN** selection remains unavailable; no runtime backfill, independent allocator or fallback enables it
