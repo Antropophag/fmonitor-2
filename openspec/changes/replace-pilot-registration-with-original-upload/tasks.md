@@ -94,3 +94,10 @@ closure after diagnostic isolation; no full command/launch readiness claim.
 - [ ] 1.36 Independent Gate1 COMMAND-SHAPE-001 exact Unicode/calendar/opaque-ID and resource semantics; no new product decision.
 - [ ] 4.5 Public shape/generated-ID boundary RED and independent Gate3; invalid before auth/replay plus positive boundary/normalization controls.
 - [ ] 5.6 Minimal scalar boundary GREEN and independent Gate5; observer/public API parity/combined review remain separate.
+
+## Scalar boundary v0.2 schema alignment — 2026-09-06
+
+Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
+the existing schema CHECK. Caller and GENERATED negatives cover both separators;
+no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
+fresh v0.2 independent Gate1 precedes any shape RED.

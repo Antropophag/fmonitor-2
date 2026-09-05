@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-COMMAND-SHAPE-001 — exact command metadata boundary
 
-Версия0.1, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Версия0.2, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -93,10 +93,11 @@ Fixed examples:
 ## 5. Opaque identity grammar
 
 Caller root/target/expected revision IDs and GENERATED ID-source values share
-one storage-safe grammar:1..80 bytes, every byte printable ASCII U+0021..007E.
+one storage-safe grammar:1..80 bytes, every byte printable ASCII U+0021..007E
+except U+002F slash and U+005C backslash, matching the existing schema CHECK.
 No spaces, control, NUL, non-ASCII or implicit trim/case normalization. These are
 opaque identities; no required `original-`/`root-`/`revision-` prefix is imposed.
-Quotes, backslash and punctuation within that printable range are ordinary data,
+Quotes and other allowed punctuation within that printable range are ordinary data,
 never SQL/path syntax. Existing adapters must continue parameter binding.
 Worker sequence tokens retain their separate narrower transport grammar.
 
@@ -107,7 +108,10 @@ rules remain the approved dynamic-port correction; malformed generated data is
 not retried as COLLISION. No change to8 consecutive collision limit.
 
 Boundaries: one printable byte and80 printable bytes are shape-valid; empty,
-81 bytes, space, TAB, NUL, DEL, NBSP and invalidUTF8 are invalid. A shape-valid
+81 bytes, space, TAB, NUL, DEL, NBSP, slash, backslash and invalidUTF8 are invalid.
+`root/0001`, `revision`+backslash+`0001`, single slash and single backslash are
+invalid in caller fields and GENERATED values; neither escaping nor trimming
+converts them to another identity. A shape-valid
 unknown ID reaches trusted lineage lookup and its existing conflict outcome;
 it need not be an existing root to pass scalar validation.
 
@@ -150,3 +154,10 @@ fixtures or user product decision is required.
 Lifecycle/storage callback completeness, response-loss clarification and other
 public declaration parity are separate corrective contracts. This slice does
 not silently decide their outcomes or claim combined original-command approval.
+
+## 8. v0.2 review correction
+
+Independent v0.1 Gate1 identified existing parent schema CHECK excluding slash
+and backslash. Both are now explicitly excluded from the shared scalar grammar
+and negative caller/generated matrix. Existing persisted-ID schema is unchanged;
+no RED or implementation was authored against v0.1.

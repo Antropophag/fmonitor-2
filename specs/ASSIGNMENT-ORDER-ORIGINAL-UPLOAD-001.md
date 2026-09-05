@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v62 GATE 1 REREVIEW PENDING — COMMAND SCALAR BOUNDARY**
-Версия: **v62**
+Статус: **v63 GATE 1 REREVIEW PENDING — COMMAND SCALAR BOUNDARY**
+Версия: **v63**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -59,7 +59,7 @@ Composition не принимается от caller: seam читает immutable
 `specs/ASSIGNMENT-ORDER-ORIGINAL-COMMAND-SHAPE-001.md` defines the exact
 technical scalar boundary: calendar validity, UTF-8/control/Unicode-trim and
 code-point bounds, normalized correction persistence, printable ASCII1..80 opaque
-IDs and first-step/no-business-port invalid mapping. This amendment requires
+IDs excluding slash/backslash and first-step/no-business-port invalid mapping. This amendment requires
 fresh independent Gate1; prior product authority and replay semantics remain.
 Generated ID values use the same opaque grammar before finalize/commit.
 

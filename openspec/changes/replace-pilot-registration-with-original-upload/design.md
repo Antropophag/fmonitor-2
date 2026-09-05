@@ -237,3 +237,10 @@ grammar остаётся отдельной. Invalid metadata не достиг�
 stream закрывается один раз без read. Generated malformed IDs fail before finalize.
 Это technical Gate1 amendment; no new product grants/policy. Observers/response
 loss и прочие public API parity проходят отдельный corrective scope.
+
+## Scalar boundary v0.2 schema alignment — 2026-09-06
+
+Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
+the existing schema CHECK. Caller and GENERATED negatives cover both separators;
+no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
+fresh v0.2 independent Gate1 precedes any shape RED.

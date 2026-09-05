@@ -403,3 +403,10 @@ Accepted correction SHALL сохранять normalized reason; filename не в
 #### Scenario: Unicode boundary and generated opaque identity
 - **WHEN** normalized reason содержит500 valid code points либо source возвращает malformed GENERATED ID
 - **THEN** valid reason достигает normal correction и сохраняется normalized; malformed generated ID даёт retryable PERSISTENCE_FAILURE до finalize/commit
+
+## Scalar boundary v0.2 schema alignment — 2026-09-06
+
+Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
+the existing schema CHECK. Caller and GENERATED negatives cover both separators;
+no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
+fresh v0.2 independent Gate1 precedes any shape RED.
