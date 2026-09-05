@@ -16,7 +16,7 @@
 - [x] 1.14 Получить fresh independent Gate 1 review worker DSN amendment; verification: exact ordered grammar/mysqli tuple и fail-before-secret invalid mapping делают five-FD RED constructible
 - [x] 1.15 Получить fresh independent Gate 1 review worker failure-output amendment; verification: exact stderr/final-LF, empty result и config-vs-barrier channel policy делают exit-70 RED independent
 - [x] 1.16 Получить fresh independent Gate 1 review worker ID-sequence amendment; verification: bounded unique CSV grammar, consumption/exhaustion и canonical race literals делают worker RED independent
-- [ ] 1.17 Получить fresh independent Gate 1 review worker command encoding amendment; verification: exact JSON keys/order, strict base64/framing/bounds и malformed channels делают five-FD command bytes independent
+- [x] 1.17 Получить fresh independent Gate 1 review worker command encoding amendment; verification: exact JSON keys/order, strict base64/framing/bounds и malformed channels делают five-FD command bytes independent
 
 ## 2. Minimal RED и test review
 
