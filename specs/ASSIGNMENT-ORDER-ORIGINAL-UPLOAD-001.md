@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v42 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
-Версия: **v42**
+Статус: **v43 GATE 1 REVIEW PENDING — WORKER FD AMENDMENT**
+Версия: **v43**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1717,6 +1717,20 @@ final class AssignmentOrderOriginalVerificationWorkerBootstrap
     ): int { /* reconstruct adapters and run exactly one command */ }
 }
 ```
+
+The four integer FD arguments are each canonical decimal-backed PHP integers
+`3..65535`, pairwise distinct and distinct from stdin/stdout/stderr. Parent
+creates four separate `AF_UNIX,SOCK_STREAM` socketpairs and passes exactly one
+child endpoint from each; command-read, barrier-read, barrier-write and
+result-write are logical directions over full-duplex sockets, not OS pipe access
+flags. Worker opens each once as `php://fd/<n>` mode `r+`, requires open success,
+`fstat` socket type and pairwise-distinct `(dev,ino)` identities, and then never
+uses the opposite logical direction. FIFO, regular/directory/device, closed FD,
+duplicate integer, dup/alias identity, stdio or out-of-range value is invalid.
+All four are validated and set blocking before password content, command read,
+DB/storage/log/barrier access; any failure closes every opened wrapper once and
+uses exact config exit70 channels. Parent owns peer endpoints, closes them in
+finally, and worker closes its four wrappers once before exit.
 
 Maintenance order: scalar shape → exact string-principal authorization → terminal request lookup → clock/cutoff → candidate page → per-candidate lock/reference/delete → atomic result+audit commit. Invalid UUID/cursor/batch outside `1..1000` or cutoff newer than `now-3600s` → `REJECTED/INVALID_COMMAND`; missing exact `assignment_order.original.storage.reconcile` → `REJECTED/AUTHORIZATION_DENIED`; all candidates handled → `COMPLETED`; authorized request hit → `REPLAYED`; one or more locked/per-item failures → `PARTIAL`; repository/audit unavailable → `FAILED/PERSISTENCE_FAILURE`.
 

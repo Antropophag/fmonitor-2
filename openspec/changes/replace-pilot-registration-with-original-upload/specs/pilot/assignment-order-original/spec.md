@@ -287,6 +287,10 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 - **WHEN** worker завершается controlled exit 70
 - **THEN** stderr ровно `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n`; result FD пуст для every pre-write failure, а one result-fwrite short failure может оставить только bounded discarded prefix; invalid config не читает command и не пишет barrier, а barrier failure после READY сохраняет только уже записанный exact READY без новых bytes
 
+#### Scenario: Worker FD ownership exact
+- **WHEN** bootstrap получает command/barrier-in/barrier-out/result FDs
+- **THEN** each 3..65535 из separate AF_UNIX SOCK_STREAM pair, integers и `(dev,ino)` pairwise distinct, opened once r+ and blocking; stdio/FIFO/file/device/closed/dup/alias/range invalid pre-secret/pre-command с close-once+exit70, logical opposite directions unused
+
 #### Scenario: Worker ID sequences deterministic
 - **WHEN** config передаёт root/revision CSV
 - **THEN** each имеет `1..1024` unique exact `original-NNNN`/`revision-NNNN` tokens without whitespace/empty/trailing values, валидируется pre-secret, потребляется left-to-right only on requested kind; exhaustion даёт command `FAILED/PERSISTENCE_FAILURE`, а canonical identical/different race sequences фиксированы executable spec
