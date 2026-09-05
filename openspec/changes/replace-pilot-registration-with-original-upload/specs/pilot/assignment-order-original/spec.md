@@ -240,7 +240,7 @@ partial JSON/diagnostics; repeated close MUST не повторять I/O и с�
 
 #### Scenario: Worker failure channels exact
 - **WHEN** worker завершается controlled exit 70
-- **THEN** stderr ровно `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n`, result FD пуст; invalid config не читает command и не пишет barrier, а barrier failure после READY сохраняет только уже записанный exact READY без новых bytes
+- **THEN** stderr ровно `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n`; result FD пуст для every pre-write failure, а one result-fwrite short failure может оставить только bounded discarded prefix; invalid config не читает command и не пишет barrier, а barrier failure после READY сохраняет только уже записанный exact READY без новых bytes
 
 #### Scenario: Worker ID sequences deterministic
 - **WHEN** config передаёт root/revision CSV

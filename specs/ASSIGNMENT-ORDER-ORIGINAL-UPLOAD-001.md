@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v23 GATE 1 REREVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
-Версия: **v23**
+Статус: **v24 GATE 1 REREVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
+Версия: **v24**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1488,7 +1488,9 @@ password-file content, DB access, private storage or safe-log write.
 Every worker-controlled exit `70` writes exactly the ASCII bytes
 `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n` to process stderr, once, with the
 single final LF shown and no other stderr bytes. The result FD receives zero
-bytes. Invalid config/DSN/path/FD validation occurs before reading the command
+bytes for every failure before the one result-write primitive; only that
+primitive's short-write failure may leave the bounded untrusted prefix defined
+below. Invalid config/DSN/path/FD validation occurs before reading the command
 FD and before writing any barrier bytes, so command input remains unread and
 barrier output is empty. A malformed/EOF/timeout barrier failure may occur only
 after its exact `READY <requestId>\n` was already written; it writes no further
