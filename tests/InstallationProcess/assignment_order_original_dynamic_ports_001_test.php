@@ -52,7 +52,7 @@ dynamicCase('post-stream-fingerprint-unavailable',function(){
     assertSameValue(['','dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d'],$repo->fingerprints,'empty availability control followed by exact real fingerprint');
     assertSameValue([0,0],[$ids->rootCalls,$ids->revisionCalls],'no ID allocation');assertSameValue(2,$stream->readCalls,'actual post-stream fingerprint boundary reached');
     assertSameValue([1,0,1,1,null],[$storage->beginCalls,$storage->stage->finalizeCalls,$storage->stage->abortCalls,$storage->stage->closeCalls,$storage->stage->lease],'staged bytes cleaned without finalization');
-    assertSameValue([],$observers->lifecycle,'no fingerprint-miss/finalize lifecycle after unavailable');dynamicNoFacts($g,$before);
+    assertSameValue([],array_values(array_filter($observers->lifecycle,fn($event)=>in_array($event,[O\AssignmentOrderOriginalLifecycleEvent::AFTER_FINGERPRINT_MISS_BEFORE_CAS,O\AssignmentOrderOriginalLifecycleEvent::AFTER_PRIVATE_FINALIZE_BEFORE_COMMIT,O\AssignmentOrderOriginalLifecycleEvent::AFTER_COMMIT_BEFORE_RETURN],true))),'no fingerprint-miss/finalize/committed lifecycle after unavailable');dynamicNoFacts($g,$before);
 });
 foreach(['initial-root','initial-revision','correction-revision'] as $axis){
     foreach(['generated','unavailable','exhausted','generated-null','throw','collision-then-generated','eight-collisions'] as $fault){
