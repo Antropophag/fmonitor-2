@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v40 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
-Версия: **v40**
+Статус: **v41 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
+Версия: **v41**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -193,14 +193,20 @@ legacy slot is accepted. Reader performs no mutation and the same derived
 identity/hash feed fingerprint, immutable root and evidence reader.
 
 Exact source selection is order columns `id`, `installation_case_id`,
-`version_no`, `control_engineer_user_id` selected by `id=assignmentOrderId` and
-requiring exact case equality; member columns are `assignment_order_id`,
-`installer_tab_id`, `change_action`, `valid_from`, `valid_to` for every row with
-that order ID. Version and engineer IDs must be positive. `change_action` must
-be exactly `assign|retain|release`; `assign|retain` rows are included, `release`
-rows are excluded. Every included installer ID is positive and unique,
-`valid_from<=order_date`, and `valid_to` is null or `>=order_date`; violation,
-unknown action or zero included members is `INVALID_COMPOSITION`. No current
+`version_no`, `control_engineer_user_id`, `order_date` selected by
+`id=assignmentOrderId` and requiring exact case equality; member columns are
+`assignment_order_id`, `installer_tab_id`, `change_action`, `valid_from`,
+`valid_to` for every row with that order ID. `order_date` is the current
+physical compatibility column for semantic data-model `template_date`; it is
+not uploaded `documentDate`, and a future physical rename preserves this input.
+Version/engineer IDs must be positive. First, every member across all actions
+must belong to the order, have a positive installer ID unique across the full
+row set, recognized exact `assign|retain|release`, and valid ISO dates with
+`valid_from<=valid_to` when valid_to exists. Second, `assign|retain` must cover
+order date (`valid_from<=order_date` and null `valid_to` or
+`valid_to>=order_date`) and are included. `release` requires non-null
+`valid_to<=order_date` and is excluded. Any violation or zero included members
+is `INVALID_COMPOSITION`. No current
 workforce/legacy slot/name/status field participates. Query order is order row
 then all member rows ordered numeric `installer_tab_id`; both reads use the same
 read-only transaction snapshot.
