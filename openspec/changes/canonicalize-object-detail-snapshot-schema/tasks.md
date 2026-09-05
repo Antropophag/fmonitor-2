@@ -18,13 +18,13 @@
 
 - [x] 2.1 Add MariaDB RED tests derived only from the approved executable specification for clean creation, populated repeat, both exact-compatible partial states, incompatible member/decoy isolation, collation, composed prefix 25/26 boundaries, and existing-row preservation; verify overlong/invalid prefix rejection occurs before DB connection/access and all failures are assertion failures rather than environment/setup failures. Evidence: combined schema-engine review `07f58c7dd10700b3a951f792e94b972839dfe876`; importer and integration tasks remain separate.
 - [ ] 2.2 Add RED characterization proving the importer performs no DDL, succeeds with exact precreated tables under a DDL-denied principal, and fails closed before source mutation when either table is absent or incompatible; verify existing six-field extraction, immutable/hash-repeat, source-change conflict, quarantine, and detail/quarantine coexistence semantics remain unchanged.
-- [ ] 2.3 Assign a fresh independent test reviewer, record the review under `reviews/tests/`, resolve every finding without implementation-derived expected values, and verify Gate 3 approval is explicit before production code changes.
+- [x] 2.3 Assign a fresh independent test reviewer, record the review under `reviews/tests/`, resolve every finding without implementation-derived expected values, and verify Gate 3 approval is explicit before production code changes.
 
 ## 3. Minimal GREEN implementation
 
 - [x] 3.1 Implement and register the data-free canonical migration with family-wide preflight and exact-compatible partial recovery; verify all reviewed migration RED tests turn GREEN without schema or data redesign. Evidence: combined schema-engine review `07f58c7dd10700b3a951f792e94b972839dfe876`; importer and integration tasks remain separate.
-- [ ] 3.2 Remove both runtime `CREATE TABLE IF NOT EXISTS` statements from the importer and add the exact fail-closed schema precondition; verify the reviewed DDL-denied importer characterization turns GREEN and no consumer gains schema ownership.
-- [ ] 3.3 Tighten the architecture ratchet to reject object-detail-family DDL outside canonical migrations and reduce the runtime-DDL baseline only for statements actually removed; verify `make architecture-check` passes and a targeted forbidden-DDL fixture is rejected.
+- [x] 3.2 Remove both runtime `CREATE TABLE IF NOT EXISTS` statements from the importer and add the exact fail-closed schema precondition; verify the reviewed DDL-denied importer characterization turns GREEN and no consumer gains schema ownership.
+- [x] 3.3 Tighten the architecture ratchet to reject object-detail-family DDL outside canonical migrations and reduce the runtime-DDL baseline only for statements actually removed; verify `make architecture-check` passes and a targeted forbidden-DDL fixture is rejected.
 
 ## 4. Integration, regression, and Done
 
@@ -42,3 +42,5 @@ E2E и importer serial Gate 1 остаются за своими gates; shared c
 - [ ] 4.2 Run fresh reset/migration, database tests, characterization tests, architecture checks, golden journey, and `make verify`; verify any failures are classified as environment/setup, expected RED, known baseline regression, or new regression, with no unclassified failure.
 - [ ] 4.3 Assign a different fresh independent code reviewer, record the review under `reviews/code/`, resolve every finding, and verify Gate 5 approval covers canonical ownership, restartability, preservation, DDL-free importer/consumers, and the absence of hidden population or semantic redesign.
 - [ ] 4.4 Mark the slice Done only when the approved spec, reviewed RED evidence, minimal GREEN, rapid-pilot data-only adapter, architecture and regression evidence, and both independent approvals are committed or otherwise durably recorded; verify object-detail population remains a separately gated `seed-test-user-fixtures`/behavior slice under the approved GRILL-004 policy.
+
+Append-only 2026-09-05: importer v0.2 owner approval and v6 Gate 3 now recorded; minimal no-DDL/pre-source implementation `c658ac8a02c2a3de5baac8f7db4c281f47da87fe` and ratchet GREEN, evidence `docs/operations/object-detail-import-green-2026-09-05.md`. Task 2.2 remains unchecked as written: its coexistence-semantics clause exceeds the approved PILOT_ONLY serial oracle, where transitions/coexistence are explicitly UNKNOWN. No additional semantics were accepted. Integration/source-free deployment and parent Done remain open.
