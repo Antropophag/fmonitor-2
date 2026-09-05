@@ -156,3 +156,33 @@ its downstream failures to success. Independent Gate5 covers integration and
 exact unchanged response/RBAC/cleanup boundaries; full verification remains a
 separate launch blocker until literally GREEN. Any inability to establish these
 gates leaves the protected patch unapplied, without waiver or skip.
+
+## Candidate revision 3 — exact fact text projection
+
+This appendix replaces the ambiguous “separate values” matching sentence.
+Within the already identified object li, visit descendant text nodes in document
+order. For each node, collapse Unicode whitespace to one ASCII space and trim
+ASCII spaces. Drop empty runs and join remaining runs with one ASCII space.
+This is the fixed test-side fact projection; no required span/div/strong
+structure, CSS classes or source renderer methods are used. Anchor text is
+normalized by the same rule. This projection deliberately does not claim a
+browser layout/visibility oracle.
+
+Each expected literal registration, address, start date, finish date and
+`Подъезд 2` must occur contiguously in the projected text, with neither immediate
+neighbor (if present) being a Unicode letter or number. Literal punctuation is
+not a regex wildcard. Thus house10 cannot match house100; entrance2 cannot
+match entrance20 or22. Unicode matching uses UTF-8; invalid input is false.
+No fact may be supplied by a sibling li or navigation outside main.
+
+Additional fixed positive, independently specified here (not captured output):
+
+```html
+<!doctype html><html lang="ru"><body><nav><ul><li>Навигация</li></ul></nav><main id="main-content"><ul><li><div><a href="/pilot/objects/4512">4512</a><strong>77-000123</strong></div><div>Москва, ул. Примерная, д. 10 · Подъезд 2</div><div>2026-10-05 — 2026-12-20</div></li></ul></main></body></html>
+```
+
+Its normalized text is exactly:
+`4512 77-000123 Москва, ул. Примерная, д. 10 · Подъезд 2 2026-10-05 — 2026-12-20`.
+Expected true. Expected false for each independent replacement in this positive:
+`Подъезд 2`→`Подъезд 22`; `Подъезд 2`→`Подъезд 20`; `д. 10`→`д. 100`.
+These additions supplement every earlier matrix row, never replace or skip one.
