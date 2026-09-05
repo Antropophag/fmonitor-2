@@ -35,6 +35,10 @@ Document storage finalizes private content и возвращает typed lease �
 ### 6. Idempotency и correction ties
 
 После shape/authorization request-ID hit возвращает stored result до stream read и владеет retry identity. При miss stream hash позволяет accepted-operation fingerprint lookup; затем идут expected-current, target-current и no-change checks. Раздельные root/current/target revision IDs делают `STALE_REVISION` и `TARGET_NOT_CURRENT` наблюдаемыми. CAS даёт одного winner; upload time не разрешает tie.
+Distinct fingerprint replay echoes the current loser request ID, copies winner
+evidence and persists no loser request/audit/event; identical-race inventory
+therefore contains only the winner fact, while different-race conflict remains
+terminal and audited.
 
 ### 7. Persistence owner и schema direction
 

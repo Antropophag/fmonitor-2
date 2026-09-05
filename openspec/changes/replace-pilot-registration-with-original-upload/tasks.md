@@ -18,6 +18,7 @@
 - [x] 1.16 Получить fresh independent Gate 1 review worker ID-sequence amendment; verification: bounded unique CSV grammar, consumption/exhaustion и canonical race literals делают worker RED independent
 - [x] 1.17 Получить fresh independent Gate 1 review worker command encoding amendment; verification: exact JSON keys/order, strict base64/framing/bounds и malformed channels делают five-FD command bytes independent
 - [x] 1.18 Получить fresh independent Gate 1 review worker result encoding amendment; verification: exact key order/JSON flags/literals/bounds и no-partial serialization failure делают IPC RED independent
+- [ ] 1.19 Получить fresh independent Gate 1 review cross-request replay amendment; verification: loser request echo, winner evidence и no-loser-row/audit semantics делают identical-race IPC/evidence independent
 
 ## 2. Minimal RED и test review
 

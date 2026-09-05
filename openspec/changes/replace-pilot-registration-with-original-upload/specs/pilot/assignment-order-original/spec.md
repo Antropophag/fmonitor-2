@@ -84,6 +84,10 @@ Command SHALL возвращать DTO `{status, reasonCode, retryable, requestI
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities
 - **THEN** система возвращает исходный `REPLAYED` result без нового эффекта
 
+#### Scenario: Distinct-request replay эхо и persistence
+- **WHEN** loser/new request ID находит accepted fingerprint winner
+- **THEN** Result эхо-ирует loser request ID и копирует прочую winner evidence, но не создаёт loser request/audit/event row; повтор loser снова доказывает fingerprint без domain effect
+
 #### Scenario: Retry принятой correction после смены leaf
 - **WHEN** retry имеет тот же request/fingerprint принятой correction, а её target теперь non-current из-за результата самой этой correction
 - **THEN** lookup возвращает сохранённый `REPLAYED` result до stale/current checks и не создаёт новую revision

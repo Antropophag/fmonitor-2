@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v24 GATE 1 REREVIEW PENDING — WORKER RESULT ENCODING AMENDMENT**
-Версия: **v24**
+Статус: **v25 GATE 1 REVIEW PENDING — CROSS-REQUEST REPLAY AMENDMENT**
+Версия: **v25**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -172,6 +172,17 @@ pdfSha256
 Correction reason, request ID, actor, filename, declared MIME и upload time не входят в fingerprint.
 
 Раздел 3 задаёт полный порядок. На шаге 5 accepted request hit возвращает те же evidence fields со status `REPLAYED`, rejected/conflict hit — исходный terminal status/reason; payload не читается. При miss order/composition/date checks предшествуют stream. После completed bytes шаг 10 ищет accepted fingerprint и возвращает `REPLAYED` независимо от того, стал ли correction target non-current из-за этой operation. Только miss переходит к lineage/CAS.
+
+Every returned Result echoes the current invocation `requestId`. A distinct
+request whose fingerprint matches winner evidence returns `REPLAYED` with the
+loser's current request ID and every other evidence field copied from the
+winner. This fingerprint replay creates no terminal request row, safe audit or
+domain event for the loser and does not change the winner row. Therefore a
+later retry of that distinct loser ID repeats authorized order/stream/fingerprint
+proof rather than hitting step 5; it remains effect-idempotent. In an identical
+two-worker race, evidence inventory contains only the winner accepted request,
+revision and event; loser Result echoes loser ID. A different-race loser still
+commits its specified terminal conflict result/audit.
 
 Новый request correction с тем же PDF/date/composition и только другой reason даёт `REJECTED/NO_CHANGES`. Тот же PDF с новой допустимой date является correction. Correction сравнивает current composition identity/hash с immutable root snapshot: drift даёт `CONFLICT/SEMANTIC_COLLISION` на шаге 6 до stream; caller состав не передаёт. Same-request retry уже accepted operation выигрывает раньше, на шаге 5.
 
