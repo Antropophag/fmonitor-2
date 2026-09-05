@@ -1,6 +1,6 @@
 # OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 — canonical object-detail ownership
 
-Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.3. Дата: 2026-09-05.
+Статус: **DRAFT / GATE 1 NOT APPROVED**. Версия: 0.4. Дата: 2026-09-05.
 Canonical version candidate — 12 после свежего чтения registry 1–11 на
 `670e19f6d86fe0172d71eaa36736ec6d857b936e`. Версия не зарезервирована и
 не зарегистрирована; перед approval требуется повторная проверка frontier.
@@ -89,8 +89,10 @@ ledger: он вычисляет результат обходом registry. Эт
 namespace FMonitor2\InstallationProcess;
 final class ObjectDetailSnapshotSchemaMigration
 {
-    public static function apply(\mysqli $connection, string $tablePrefix = ''): array;
-    public static function isCompleteCompatible(\mysqli $connection, string $tablePrefix = ''): bool;
+    public static function apply(\mysqli $connection, string $tablePrefix = ''): array
+    { /* production implementation supplied at Gate 4 */ }
+    public static function isCompleteCompatible(\mysqli $connection, string $tablePrefix = ''): bool
+    { /* production implementation supplied at Gate 4 */ }
 }
 ```
 
@@ -209,6 +211,36 @@ Observer имеет `observe(ObjectDetailSnapshotSchemaPhase $phase): void`.
 События CREATE emitted только после successful real CREATE, до следующего query.
 Production `apply` всегда связывает inert observer; env/request/CLI/global
 selector отсутствует. Observer Throwable даёт DatabaseUnavailable с cleanup.
+
+Exact constructible verification declarations (тот же namespace):
+
+```php
+namespace FMonitor2\InstallationProcess;
+
+enum ObjectDetailSnapshotSchemaPhase: string
+{
+    case LOCK_ACQUIRED = 'lock_acquired';
+    case DETAILS_CREATED = 'details_created';
+    case QUARANTINE_CREATED = 'quarantine_created';
+}
+
+interface ObjectDetailSnapshotSchemaObserver
+{
+    public function observe(ObjectDetailSnapshotSchemaPhase $phase): void;
+}
+
+final class ObjectDetailSnapshotSchemaMigrationVerification
+{
+    public static function apply(
+        \mysqli $connection,
+        string $tablePrefix,
+        ObjectDetailSnapshotSchemaObserver $observer,
+    ): array { /* same migration owner with supplied verification observer */ }
+}
+```
+
+Bodies выше обозначают места реализации, не mock implementations или
+разрешённые runtime stubs. Tests реализуют observer через public interface.
 
 Deterministic acceptance examples:
 
