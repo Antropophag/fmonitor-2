@@ -55,7 +55,7 @@ $toV1=static function(mysqli$db,string$name='legacy_content_key')use($prefix,$so
 };
 $toV4=static function(mysqli$db)use($prefix,$quote):void{
     $table=$prefix.'fm2_process_user_capabilities';
-    $statement=$db->prepare("SELECT CONSTRAINT_NAME FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? AND CHECK_CLAUSE LIKE '%capability%in%'");$statement->bind_param('s',$table);$statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);
+    $statement=$db->prepare("SELECT CONSTRAINT_NAME,CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=?");$statement->bind_param('s',$table);$statement->execute();$rows=array_values(array_filter($statement->get_result()->fetch_all(MYSQLI_ASSOC),static function(array$row):bool{$normalized=strtolower(str_replace(['`',' ','(',')'],[],(string)$row['CHECK_CLAUSE']));return str_starts_with($normalized,'capabilityin');}));
     assertSameValue(1,count($rows),'Fixture resolves one capability enum CHECK.');$name=(string)$rows[0]['CONSTRAINT_NAME'];assertSameValue(1,preg_match('/^[A-Za-z0-9_$]{1,64}$/D',$name),'Fixture capability CHECK name is safe.');
     $v4="capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')";
     $db->query('ALTER TABLE '.$quote($table).' DROP CONSTRAINT '.$quote($name).', ADD CONSTRAINT '.$quote('v2_fixture_capability_v4').' CHECK ('.$v4.')');
