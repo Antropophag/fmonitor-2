@@ -157,9 +157,10 @@ function odciGrantFacts(array $grants): array
 {
     $facts=[];
     foreach($grants as $grant){
+        if(str_contains($grant,' WITH GRANT OPTION'))odciFail('SETUP_FAILURE','delegating grant rejected');
         if(preg_match('/^GRANT USAGE ON \*\.\* TO /',$grant)===1){$facts[]='USAGE:*.*';continue;}
         if(preg_match('/^GRANT ([A-Z ,]+) ON `([^`]+)`\.`([^`]+)` TO /',$grant,$m)!==1)odciFail('SETUP_FAILURE','unexpected grant form');
-        if(str_contains($m[1],'ALL')||str_contains($grant,' WITH GRANT OPTION'))odciFail('SETUP_FAILURE','broad or delegating grant rejected');
+        if(str_contains($m[1],'ALL'))odciFail('SETUP_FAILURE','broad grant rejected');
         $privileges=array_map('trim',explode(',',$m[1]));sort($privileges,SORT_STRING);$facts[]=implode(',',$privileges).':'.$m[2].'.'.$m[3];
     }
     sort($facts,SORT_STRING);return$facts;
@@ -208,7 +209,7 @@ function odciRun(string $token, string $artifactRoot): array
         $target->query("INSERT INTO ".odciSqlName($prefix.'fm2_pilot_generation_sentinel')." VALUES(1,1,'".str_repeat('a',64)."','".str_repeat('b',64)."')");
         $target->query('CREATE TABLE '.odciSqlName($prefix.'ambient_sql_decoy').'(decoy_key VARCHAR(20) PRIMARY KEY,decoy_value VARCHAR(80) NOT NULL) ENGINE=InnoDB');
         $target->query("INSERT INTO ".odciSqlName($prefix.'ambient_sql_decoy')." VALUES('fixed','OBJECT_DETAIL_SQL_DECOY')");
-        ObjectDetailSnapshotSchemaMigration::apply($target, $prefix);
+        assertSameValue(['applied'=>true,'schemaVersion'=>12,'tablesCreated'=>[$prefix.'fm2_pilot_object_detail_quarantine',$prefix.'fm2_pilot_object_details']],ObjectDetailSnapshotSchemaMigration::apply($target,$prefix),'public v12 precreates exact complete family');
         $source->query('CREATE TABLE fm_fields(id INT PRIMARY KEY,sysname VARCHAR(80),name VARCHAR(80),type INT) ENGINE=InnoDB');
         $source->query('CREATE TABLE fm_view_fields(fields_id INT,views_id INT,status INT,showname VARCHAR(80)) ENGINE=InnoDB');
         $source->query('CREATE TABLE fm_fields_values(field_id INT,id INT,name VARCHAR(80)) ENGINE=InnoDB');
@@ -226,6 +227,7 @@ function odciRun(string $token, string $artifactRoot): array
         assertSameValue($sourceUser.'@%',(string)$sourceChild->query('SELECT CURRENT_USER()')->fetch_column(),'source least-privilege identity');
         $targetGrants = array_column($targetChild->query('SHOW GRANTS')->fetch_all(MYSQLI_NUM),0); $sourceGrants = array_column($sourceChild->query('SHOW GRANTS')->fetch_all(MYSQLI_NUM),0);
         odciAssertExactGrants($targetGrants,$sourceGrants,$prefix,$sourceDb);
+        $compatibilityBefore=odciSnapshot($target,$prefix);assertSameValue(true,ObjectDetailSnapshotSchemaMigration::isCompleteCompatible($targetChild,$prefix),'DDL-denied target principal observes exact complete v12 family');assertSameValue($compatibilityBefore,odciSnapshot($target,$prefix),'read-only compatibility proof preserves every fixture shape and row');
         $hostname = (string)$target->query('SELECT @@hostname')->fetch_column();
         $manifest = ['generation'=>1,'fingerprint'=>str_repeat('a',64),'manifestNonce'=>str_repeat('b',64),'processPrefix'=>$prefix,'dbEndpoint'=>['host'=>'127.0.0.1','port'=>$port,'name'=>'fmonitor2_demo'],'dbServerIdentity'=>$hostname];
         $manifestPath = $child.'/manifest.json'; $bytes = json_encode($manifest,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
@@ -321,6 +323,7 @@ try {
     assertSameValue(false,odciMayProcClose(true),'running child can never enter proc_close');assertSameValue(true,odciMayProcClose(false),'reaped child may enter proc_close');
     foreach([[[PHP_BINARY,'-r','fwrite(STDOUT,str_repeat("x",262145));'],2.0,'output exceeded'],[[PHP_BINARY,'-r','usleep(500000);'],0.05,'exceeded deadline']] as [$probeArgv,$probeSeconds,$probeNeedle]){$rejected=false;try{odciProcess($probeArgv,[],$probeSeconds,'REGRESSION_FAILURE');}catch(TestFailure $probeFailure){$rejected=str_contains($probeFailure->getMessage(),$probeNeedle);}assertSameValue(true,$rejected,'bounded process cleanup sensitivity: '.$probeNeedle);}
     $broadRejected=false;try{odciGrantFacts(['GRANT ALL PRIVILEGES ON *.* TO `probe`@`%`']);}catch(TestFailure){$broadRejected=true;}assertSameValue(true,$broadRejected,'broad grant sensitivity');
+    $delegatingUsageRejected=false;try{odciGrantFacts(['GRANT USAGE ON *.* TO `probe`@`%` WITH GRANT OPTION']);}catch(TestFailure){$delegatingUsageRejected=true;}assertSameValue(true,$delegatingUsageRejected,'delegating USAGE sensitivity');
     if (!is_dir(dirname($artifactRoot)) && !mkdir(dirname($artifactRoot),0700)) odciFail('SETUP_FAILURE','artifact parent unavailable');
     if(@lstat($artifactRoot)===false){if(!mkdir($artifactRoot,0700))odciFail('SETUP_FAILURE','artifact root unavailable');chmod($artifactRoot,0700);}
     $rootState=lstat($artifactRoot);if(!is_array($rootState)||($rootState['mode']&0170000)!==0040000||is_link($artifactRoot)||$rootState['uid']!==posix_geteuid()||($rootState['mode']&0022)!==0||realpath($artifactRoot)!==$artifactRoot)odciFail('SETUP_FAILURE','common artifact root is not trusted');
