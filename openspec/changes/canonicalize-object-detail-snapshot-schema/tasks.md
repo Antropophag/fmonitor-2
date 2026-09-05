@@ -11,13 +11,13 @@
   verification composition и isolated DB privileges; verification: bounded
   IPC/cleanup, qualifying RED, no production runtime selector.
 
-- [ ] 2.1 Add MariaDB RED tests derived only from the approved executable specification for clean creation, populated repeat, both exact-compatible partial states, incompatible member/decoy isolation, collation, composed prefix 25/26 boundaries, and existing-row preservation; verify overlong/invalid prefix rejection occurs before DB connection/access and all failures are assertion failures rather than environment/setup failures.
+- [x] 2.1 Add MariaDB RED tests derived only from the approved executable specification for clean creation, populated repeat, both exact-compatible partial states, incompatible member/decoy isolation, collation, composed prefix 25/26 boundaries, and existing-row preservation; verify overlong/invalid prefix rejection occurs before DB connection/access and all failures are assertion failures rather than environment/setup failures. Evidence: combined schema-engine review `07f58c7dd10700b3a951f792e94b972839dfe876`; importer and integration tasks remain separate.
 - [ ] 2.2 Add RED characterization proving the importer performs no DDL, succeeds with exact precreated tables under a DDL-denied principal, and fails closed before source mutation when either table is absent or incompatible; verify existing six-field extraction, immutable/hash-repeat, source-change conflict, quarantine, and detail/quarantine coexistence semantics remain unchanged.
 - [ ] 2.3 Assign a fresh independent test reviewer, record the review under `reviews/tests/`, resolve every finding without implementation-derived expected values, and verify Gate 3 approval is explicit before production code changes.
 
 ## 3. Minimal GREEN implementation
 
-- [ ] 3.1 Implement and register the data-free canonical migration with family-wide preflight and exact-compatible partial recovery; verify all reviewed migration RED tests turn GREEN without schema or data redesign.
+- [x] 3.1 Implement and register the data-free canonical migration with family-wide preflight and exact-compatible partial recovery; verify all reviewed migration RED tests turn GREEN without schema or data redesign. Evidence: combined schema-engine review `07f58c7dd10700b3a951f792e94b972839dfe876`; importer and integration tasks remain separate.
 - [ ] 3.2 Remove both runtime `CREATE TABLE IF NOT EXISTS` statements from the importer and add the exact fail-closed schema precondition; verify the reviewed DDL-denied importer characterization turns GREEN and no consumer gains schema ownership.
 - [ ] 3.3 Tighten the architecture ratchet to reject object-detail-family DDL outside canonical migrations and reduce the runtime-DDL baseline only for statements actually removed; verify `make architecture-check` passes and a targeted forbidden-DDL fixture is rejected.
 
