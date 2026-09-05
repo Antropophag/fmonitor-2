@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v18 GATE 1 REVIEW PENDING — WORKER ID SEQUENCE AMENDMENT**
-Версия: **v18**
+Статус: **v19 GATE 1 REREVIEW PENDING — WORKER ID SEQUENCE AMENDMENT**
+Версия: **v19**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -1496,7 +1496,7 @@ barrier bytes. No SQL, path, DSN, user, password, request, ID, filename,
 exception or diagnostic text appears in any failure channel.
 
 `rootIdSequenceCsv` and `revisionIdSequenceCsv` are non-empty ASCII CSV with
-`1..1024` tokens, total length `1..82943`, no whitespace, empty/trailing token
+`1..1024` tokens, exact total length `14n-1` for `n` tokens (`13..14335`), no whitespace, empty/trailing token
 or duplicate within one sequence. Root tokens match `original-[0-9]{4}`;
 revision tokens match `revision-[0-9]{4}`. Validation of both complete sequences
 precedes password-file content, command read and all external access; invalid
