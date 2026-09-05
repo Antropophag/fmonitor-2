@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v50 GATE 1 REVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
-Версия: **v50**
+Статус: **v51 GATE 1 REREVIEW PENDING — WORKER BARRIER EVENT AMENDMENT**
+Версия: **v51**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -283,6 +283,12 @@ Upload time никогда не разрешает tie.
 ## 10. Storage/commit/response-loss protocol
 
 Storage private, не web-addressable. Exact phases:
+
+Production finalized content identity is exact
+`content-sha256-<64-lower-hex-pdfSha256>`; identical digest reuses the same
+verified content identity/lease, while byte size mismatch is storage failure.
+Example PDF identity is
+`content-sha256-4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784`.
 
 1. storage `beginStage()` создаёт owned private stage и emits `STAGE_BEGIN`;
 2. application читает stream chunks с `maximumBytes=65536`, обновляет SHA-256/received count и сразу вызывает stage `write(chunk)`; byte `20,971,521` не записывается;
@@ -1830,14 +1836,25 @@ of `after_fingerprint_miss_before_cas` or
 `after_private_finalize_before_commit`. Lifecycle observer writes READY and
 waits RELEASE only at selected event; it observes but never blocks at the other.
 Invalid/missing/extra value is pre-secret exit70. CAS races select fingerprint-
-miss. Upload/maintenance lease race selects after-private-finalize: READY proves
-finalized content lease held and no commit attempted. While paused, real
-maintenance request `...0401` for that candidate returns `PARTIAL/LOCKED`,
-retryable true, counts `1/0/1/0`; blob remains. After RELEASE upload is ACCEPTED.
-New maintenance request `...0402` returns referenced `COMPLETED`, retryable
-false, counts `1/0/1/0`; accepted blob remains byte-identical. Both maintenance
-result/audit inventories and upload request/domain/event evidence come from the
-fresh reader; no fake storage/repository participates.
+miss. Lease race uses a fresh isolated DB/root and upload request
+`00000000-0000-4000-8000-000000000400`, clock `2026-09-02T07:00:00Z`, root/
+revision sequences `original-0040`/`revision-0040`, Example PDF and after-
+private-finalize barrier. READY proves exact finalized identity
+`content-sha256-4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784`
+at 07:00, lease held and no commit attempted.
+
+While paused, real maintenance uses clock `2026-09-02T09:00:00Z`, principal
+`test-maintenance-01`, request `00000000-0000-4000-8000-000000000401`, cutoff
+`2026-09-02T07:30:00Z`, batchLimit 10, cursor null. It returns PARTIAL/LOCKED,
+retryable true, scanned/deleted/retained/failed `1/0/1/0`; exact blob inventory
+is unchanged and terminal maintenance request+audit are visible. After RELEASE
+upload returns ACCEPTED revision 1 with uploadedAt 07:00 and the exact content
+identity. New maintenance request `00000000-0000-4000-8000-000000000402` with
+the same clock/cutoff/limit/cursor returns COMPLETED/null, retryable false,
+counts `1/0/1/0` after reference recheck; accepted blob remains byte-identical.
+Fresh reader shows both maintenance request/audit pairs and exactly one upload
+request/root/revision/event referencing the content; no fake storage/repository
+participates.
 
 Maintenance order: scalar shape → exact string-principal authorization → terminal request lookup → clock/cutoff → candidate page → per-candidate lock/reference/delete → atomic result+audit commit. Invalid UUID/cursor/batch outside `1..1000` or cutoff newer than `now-3600s` → `REJECTED/INVALID_COMMAND`; missing exact `assignment_order.original.storage.reconcile` → `REJECTED/AUTHORIZATION_DENIED`; all candidates handled → `COMPLETED`; authorized request hit → `REPLAYED`; one or more locked/per-item failures → `PARTIAL`; repository/audit unavailable → `FAILED/PERSISTENCE_FAILURE`.
 
@@ -2021,4 +2038,4 @@ Exact lines for Example A accepted, its retry, and a new-request stale conflict:
 {"status":"conflict","reasonCode":"stale_revision","retryable":false,"requestId":"00000000-0000-4000-8000-000000000002","rootOriginalId":null,"currentRevisionId":null,"revisionNumber":null,"documentDate":null,"sha256":null,"byteSize":null,"uploadedAt":null}
 ```
 
-Barrier uses separate FDs: at `AFTER_FINGERPRINT_MISS_BEFORE_CAS` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. Parent must receive both READY lines before writing both RELEASE lines. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
+Barrier uses separate FDs: at the exact configured `barrierEvent` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. For two-worker CAS races parent must receive both READY lines before releases; their v26 deterministic release order applies. A single-worker after-finalize lease race requires its one READY before maintenance. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
