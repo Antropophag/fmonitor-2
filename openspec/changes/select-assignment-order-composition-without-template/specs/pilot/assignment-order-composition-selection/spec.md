@@ -136,3 +136,13 @@ stage receipt MUST NOT самостоятельно завершать transacti
 #### Scenario: Dependency failure внутри case transaction
 - **WHEN** state lookup unavailable и rollback подтверждён
 - **THEN** UoW возвращает typed dependency cause и application даёт failed/dependency_unavailable, а не persistence_failure
+
+### Requirement: Generated identity bounds сохраняются без invalid DDL
+
+Allocator/storage SHALL проверять generated IDs в диапазоне1..PHP_INT_MAX до
+commit и при чтении; MariaDB AUTO_INCREMENT column MUST NOT получать запрещённый
+CHECK expression. Invalid ID никогда не становится acknowledged identity.
+
+#### Scenario: Generated ID вне допустимого диапазона
+- **WHEN** storage обнаруживает generated ID вне1..PHP_INT_MAX
+- **THEN** UoW откатывает stage с persistence_failure; success/receipt не выдаётся

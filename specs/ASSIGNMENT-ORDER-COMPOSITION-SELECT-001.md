@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.6, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.7, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
 
 ## Простыми словами
 
@@ -401,7 +401,7 @@ after its migration gate; this spec does not reserve version13.
 
 | `fm2_assignment_order_identities` | Exact definition |
 | --- | --- |
-| assignment_order_id | BIGINT UNSIGNED PK AUTO_INCREMENT; CHECK 1..PHP_INT_MAX |
+| assignment_order_id | BIGINT UNSIGNED PK AUTO_INCREMENT; allocator/read validation 1..PHP_INT_MAX |
 | installation_case_id | BIGINT UNSIGNED NOT NULL; FK cases RESTRICT/RESTRICT |
 | order_version | SMALLINT UNSIGNED NOT NULL; CHECK 1..65535 |
 | source_kind | VARCHAR(24) ASCII BIN NOT NULL; CHECK legacy_order/selection |
@@ -478,7 +478,7 @@ match replay.
 
 | `fm2_assignment_order_selection_events` | Exact definition |
 | --- | --- |
-| event_id | BIGINT UNSIGNED PK AUTO_INCREMENT CHECK ≤PHP_INT_MAX |
+| event_id | BIGINT UNSIGNED PK AUTO_INCREMENT; pre-commit/read validation 1..PHP_INT_MAX |
 | event_type | VARCHAR(64) ASCII BIN CHECK assignment_order_composition_selected |
 | request_id | CHAR(36) ASCII BIN NOT NULL UNIQUE FK requests |
 | installation_case_id | BIGINT UNSIGNED NOT NULL |
@@ -495,7 +495,7 @@ Event values equal selection/request and contain no member/file/template/date.
 
 | `fm2_assignment_order_selection_audits` | Exact definition |
 | --- | --- |
-| audit_id | BIGINT UNSIGNED PK AUTO_INCREMENT CHECK ≤PHP_INT_MAX |
+| audit_id | BIGINT UNSIGNED PK AUTO_INCREMENT; pre-commit/read validation 1..PHP_INT_MAX |
 | request_id | CHAR(36) ASCII BIN NOT NULL, nonunique index |
 | actor_user_id | BIGINT UNSIGNED NOT NULL |
 | installation_object_id | BIGINT UNSIGNED NOT NULL |
@@ -827,7 +827,7 @@ FKR actor заменяет только exact latest ledger selection без acc
 pending choice. После accepted original изменение состава — только отдельный
 forward-only order lifecycle. Legacy prepared row не конвертируется.
 
-## 16. v0.6 technical correction disposition
+## 16. v0.7 technical correction disposition
 
 v0.4 independent review:
 `docs/operations/selection-v04-independent-readiness-2026-09-05.md`.
@@ -843,3 +843,17 @@ v0.5 bounded rereview `selection-v05-typed-contract-review-2026-09-05.md`
 rollback cause. v0.6 добавляет invocation-owned lazy instant, typed rollback
 cause и полный stage→decision→UoW→public-result mapping. Он требует fresh
 independent review; RED и production implementation не начаты.
+
+### v0.7 AUTO_INCREMENT constructibility correction
+
+MariaDB не разрешает AUTO_INCREMENT column в CHECK. Registry/event/audit IDs
+поэтому сохраняют BIGINT UNSIGNED AUTO_INCREMENT без такого CHECK; все bounds
+остаются обязательны в allocator/storage pre-commit validation, receipt factories
+и read integrity. Invalid generated ID вызывает rollback/persistence_failure,
+как section9.1; invalid persisted ID — unavailable, не success. Не меняются
+ID range, allocation authority, FK types, replay или owner policy.
+Источник: [MariaDB constraints](https://mariadb.com/docs/server/reference/sql-statements/data-definition/constraint);
+local MariaDB11.4.7 data-free DDL probe дал errno1901 для прежнего shape.
+Это schema constructibility correction, не Gate2 RED application behavior.
+Registry engine planning: `canonicalize-assignment-order-identity-registry` и
+`ASSIGNMENT-ORDER-IDENTITY-REGISTRY-001`; его draft не является Gate1 approval.

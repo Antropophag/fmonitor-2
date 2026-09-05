@@ -69,3 +69,11 @@ closed rollback cause; stage не владеет commit/rollback. Полная �
 stage→decision→UoW→public outcome закреплена в executable v0.6, включая
 request race, invalid generated receipt и unknown acknowledgement. Это technical
 уточнение прежних outcomes; Gate1 и P0 release dependencies остаются открыты.
+
+## Schema constructibility correction v0.7
+
+MariaDB AUTO_INCREMENT IDs не могут иметь CHECK на сам ID. В executable v0.7
+registry/event/audit IDs сохраняют UNSIGNED physical type; bounds обеспечивает
+public allocator и storage pre-commit/read validation с прежними failure
+outcomes. Новый registry engine change готовит отдельный exact contract; его
+planning не закрывает writer cutover, original reader или optional renderer.
