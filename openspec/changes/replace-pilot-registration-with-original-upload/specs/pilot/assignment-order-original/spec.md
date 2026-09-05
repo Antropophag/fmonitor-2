@@ -89,11 +89,13 @@ caller/legacy/fixed fallback hashes are forbidden.
 Source columns are exact order `id,installation_case_id,version_no,
 control_engineer_user_id,order_date` and all exact-order member
 `assignment_order_id,installer_tab_id,change_action,valid_from,valid_to` rows in
-one read snapshot. Positive valid `assign|retain` members are included numeric
-sorted; all-action IDs are unique, release requires closed interval ending no
-later than order date and is excluded; unknown action, invalid date/ID/duplicate
-or empty included set is INVALID_COMPOSITION. Physical `order_date` is current
-compatibility source for semantic `template_date`, never documentDate.
+one read snapshot. Before exclusion, every action row requires matching order,
+positive ID unique across all rows, exact known action and valid dates with
+`valid_from<=valid_to` when non-null. `assign|retain` is included only when
+`valid_from<=order_date` and (`valid_to` null or `>=order_date`); `release`
+requires non-null `valid_to<=order_date` and is excluded. Unknown/invalid/
+duplicate or empty included set is INVALID_COMPOSITION. Physical `order_date`
+is current compatibility source for semantic `template_date`, never documentDate.
 
 #### Scenario: Полный semantic replay
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities

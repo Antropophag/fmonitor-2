@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v41 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
-Версия: **v41**
+Статус: **v42 GATE 1 REREVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
+Версия: **v42**
 Дата: **2026-09-02**
 
 ## Простыми словами

@@ -20,6 +20,14 @@ Assignment Orders владеет `submitAssignmentOrderOriginal(Command): Result
 Production composition identity derives from order/version and its canonical
 case/engineer/numeric-sorted installer JSON; Example A SHA-256 is `388c7d94...`,
 with no caller, legacy-slot or fixed-hash fallback.
+Reader selects exact order `id,installation_case_id,version_no,
+control_engineer_user_id,order_date` plus every member's order/id/action/
+valid-from/to in one snapshot. Physical `order_date` is compatibility
+`template_date`, not documentDate. All rows are validated before exclusion:
+positive IDs unique across every action and valid ordered dates; assign/retain
+must cover order date and are included, release must have non-null end no later
+than order date and is excluded. Any invalid row or empty included set fails the
+composition.
 
 Отдельные update-file/update-date endpoints отвергнуты: они допускают partial/mutable history. Sequential composition intentionally отвергается `SEMANTIC_COLLISION` до отдельного slice.
 
