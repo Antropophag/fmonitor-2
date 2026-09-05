@@ -91,4 +91,23 @@ final class AssignmentOrderOriginalPdfCorpus
     {
         $inflated=str_repeat('A',67_108_865);$compressed=gzcompress($inflated,9);unset($inflated);return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>','<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode /Length '.strlen($compressed)." >>\nstream\n{$compressed}\nendstream"]);
     }
+
+    public static function contentStreamLength(?int $declaredLength=null): string
+    {
+        $payload="q\nQ\n";$length=$declaredLength??strlen($payload);
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] /Contents 4 0 R >>',"<< /Length {$length} >>\nstream\n{$payload}endstream"]);
+    }
+
+    public static function aggregateFlateContentStreams(int $decodedBytesPerStream): string
+    {
+        $streams=[];
+        foreach(['A','B']as$byte){$inflated=str_repeat($byte,$decodedBytesPerStream);$compressed=gzcompress($inflated,9);unset($inflated);if(!is_string($compressed))throw new \RuntimeException('Fixture compression failed.');$streams[]='<< /Filter /FlateDecode /Length '.strlen($compressed).">>\nstream\n{$compressed}\nendstream";}
+        return self::classic(['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] /Contents [4 0 R 5 0 R] >>',$streams[0],$streams[1]]);
+    }
+
+    public static function repeatedClassicXrefIdentity(): string
+    {
+        $pdf=self::passiveClassic();$xref=strpos($pdf,"xref\n");if($xref===false)throw new \RuntimeException('Fixture xref missing.');$trailer=strpos($pdf,"trailer\n",$xref);if($trailer===false)throw new \RuntimeException('Fixture trailer missing.');$objectOneOffset=strpos($pdf,"1 0 obj\n");if($objectOneOffset===false)throw new \RuntimeException('Fixture object missing.');
+        return substr($pdf,0,$trailer)."1 1\n".sprintf("%010d 00000 n \n",$objectOneOffset).substr($pdf,$trailer);
+    }
 }
