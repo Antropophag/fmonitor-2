@@ -234,6 +234,7 @@ Storage SHALL начать private stage до чтения stream; application �
 #### Scenario: Cleanup failure precedence constructible
 - **WHEN** invalid path cleanup or valid accepted-candidate close fails
 - **THEN** invalid path keeps selected result and audits only after abort→stage-close→stream-close; accepted path closes stage→stream before commit, failure selects STORAGE/STREAM failure, forbids commit, retains private orphan and releases lease rolled_back; injected throwing safe-log observer writes nothing/no retry
+- **AND** request301 invalid-inspector abort-failure run has exact request/audit/blob/log JSON, ordered call transcript, empty-log throwing variant and authorization+terminal-lookup-only byte-identical retry
 
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только

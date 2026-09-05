@@ -48,6 +48,9 @@ path closes stage then stream before commit; failure selects STORAGE/STREAM,
 forbids commit, retains private orphan and releases lease rolled_back. Invalid
 cleanup order is abort→stage-close→stream-close; a throwing injected safe-log
 observer proves best-effort no-retry behavior without worker composite faults.
+Canonical request301 invalid-inspector run fixes exact request/audit/blob/log
+JSON, full abort→close→audit transcript, empty-log throwing variant and
+authorization+terminal-lookup-only replay inventories.
 Verification worker has three one-shot real-repository unknown-outcome scripts:
 durable+FOUND, rollback+NOT_FOUND and durable+UNAVAILABLE followed by normal
 same-request replay; production binds none and exposes no selector.

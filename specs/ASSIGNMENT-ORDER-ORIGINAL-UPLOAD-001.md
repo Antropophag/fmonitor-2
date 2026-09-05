@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v47 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
-Версия: **v47**
+Статус: **v48 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
+Версия: **v48**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -984,6 +984,27 @@ domain event/revision/fingerprint. Private inventory is one abandoned
 `stage-0001` of 327 bytes and no finalized content. Safe log is the exact
 `d87e745407ea` line above. Same-request retry returns stored rejection before
 stream/storage/cleanup/log and leaves audit/private inventory byte-identical.
+
+The first run exact recursively sorted evidence is:
+
+```text
+{"items":[{"byteSize":null,"currentRevisionId":null,"documentDate":null,"reasonCode":"invalid_pdf","requestId":"00000000-0000-4000-8000-000000000301","retryable":false,"revisionNumber":null,"rootOriginalId":null,"sha256":null,"status":"rejected","uploadedAt":null}],"schema":"aoou-requests-v1"}
+{"items":[{"actorIdentity":"18","attemptedAt":"2026-09-02T09:15:30Z","auditId":1,"caseId":4512,"mode":"initial","orderId":81,"reasonCode":"invalid_pdf","requestId":"00000000-0000-4000-8000-000000000301","status":"rejected"}],"schema":"aoou-audits-v1"}
+{"finalized":[],"schema":"aoou-blobs-v1","stages":[{"byteSize":327,"createdAtUtc":"2026-09-02T09:15:30Z","opaqueIdentity":"stage-0001"}]}
+{"items":[{"correlationId":"d87e745407ea","event":"ASSIGNMENT_ORDER_ORIGINAL_STAGE_ABORT_FAILED","safeFields":{"phase":"stage_abort"},"sequence":1}],"schema":"aoou-logs-v1"}
+```
+
+Exact ordered transcript is `authorize upload → terminal-request NOT_FOUND →
+composition FOUND → clock → lifecycle AFTER_REQUEST_MISS_BEFORE_STREAM →
+stage_begin → stream_read BYTES(327) → stage_write(327) → stream_read EOF →
+stage_done → inspector INVALID_PDF → abort_begin/throw →
+safe_log abort_failed → stage_close → stream_close → commit_attempt rejected+
+audit`. There is no abort_done/finalize/accepted commit/delivery/lease. The
+throwing-safe-log variant has the same Result/request/audit/blob transcript,
+calls safe_log once but its exact safeLogs inventory is
+`{"items":[],"schema":"aoou-logs-v1"}`. Retry transcript is only `authorize
+upload → terminal-request FOUND`; it returns the stored rejection and all four
+inventories above (or empty-log variant) remain byte-identical.
 
 Private content/outcome implementations are constructed only by storage adapters. Repository lookup/result implementations may rehydrate stored application results but cannot create accepted evidence not already represented by a committed `AssignmentOrderOriginalAcceptedCommit`. Repository MUST validate UUID/ID/hash/date/time/size grammar; exact mode/event pairing (`INITIAL→assignment_order_original_accepted`, `CORRECTION→assignment_order_original_corrected`); revision 1/null previous for initial; revision n+1/previous/expected-current for correction; content digest/size identity; and Result derivation before commit. Invalid adapter DTO is `PERSISTENCE_FAILURE`, never partial persistence. `AssignmentOrderOriginalAttemptCommit` allows only non-retryable `REJECTED|CONFLICT`, exact reason/status mapping and no evidence fields.
 
