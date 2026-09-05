@@ -147,6 +147,8 @@ def workforce_ownership_matches(text: str) -> list[tuple[str, int]]:
 
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
+    if rel.startswith("app/AssignmentOrderOriginal/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/IdentityAccess/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/InspectionEvidence/"):

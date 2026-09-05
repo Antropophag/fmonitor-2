@@ -58,8 +58,8 @@
 
 ## 5. Command minimal GREEN
 
-- [ ] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
-- [ ] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
+- [x] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
+- [x] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
 
 ## 6. Integration и Done
 
