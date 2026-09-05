@@ -15,6 +15,10 @@
 - [ ] 1.3 Доказать отдельным no-personal-data review, что manifest не содержит
   production/legacy identifiers, deliverable emails, real documents, source
   payloads или secrets; сохранить review record до Gate 2.
+- [ ] 1.4 Проверить exact Gates 1–5 original command, HTTP, composition
+  applicability и opening-by-original перед golden-path implementation;
+  verification: predecessor evidence существует, legacy registered workflow
+  не принят как target acceptance, read grants не выведены из seed roles.
 
 ## 2. Gate 2 RED и Gate 3 test review
 
@@ -58,9 +62,10 @@
 ## 4. Regression и release evidence
 
 - [ ] 4.1 На fresh owned Compose volumes выполнить `make up`, public login для
-  утверждённых fictional roles, directories/projections и один prepare →
-  register → open journey; проверить exact observable results без production
-  source/network dependency.
+  утверждённых fictional roles, directories/projections и выбор состава →
+  optional template → original upload → отдельное открытие journey;
+  дополнительно direct-upload parity и no-opening-on-upload; проверить exact
+  observable results без production source/network dependency и manual number.
 - [ ] 4.2 Выполнить ordinary restart после user mutations и доказать сохранение
   generation/fixture receipt/process history/counters/artifacts; затем explicit
   reset/recreate и доказать исходный semantic fingerprint в новой generation.

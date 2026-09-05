@@ -2,8 +2,9 @@
 
 Compose `make up` выбран единственным TEST-USER contour, но fresh environment
 пока не имеет утверждённого минимального fictional dataset, который позволяет
-войти под тестовыми ролями и воспроизводимо пройти основной prepare → register →
-open journey без production source и персональных данных. Owner утвердил
+войти под тестовыми ролями и воспроизводимо пройти основной выбор состава →
+необязательный PDF-шаблон → загрузка original → отдельное открытие
+journey без production source и персональных данных. Owner утвердил
 synthetic/native policy и state-preserving restart с отдельным явным reset.
 
 ## What Changes
@@ -27,6 +28,10 @@ synthetic/native policy и state-preserving restart с отдельным явн
 - Не предзаполнять финансовые решения, выплаты, завершение или исторические
   доказательства; точный минимальный scenario catalogue и независимые expected
   fingerprints фиксируются в executable Gate 1 до RED.
+- Golden journey следует утверждённому original-upload pilot contract: ручной
+  номер и registration step не являются приёмкой. Проверяются загрузка после
+  шаблона и прямая загрузка, а также неизменность opening state до отдельной
+  команды открытия.
 
 Behavior slice: `TEST-USER-FIXTURE-SEED-001`. Actor — локальный Compose setup
 operator. Source oracle — approved pilot golden journey, role/capability
@@ -70,3 +75,6 @@ runtime/domain self-seeding, изменение process semantics, автома�
   land. Installation-completion, premium, migrated-evidence,
   migration-quarantine и legacy-active provenance исключены, пока literal
   Gate 1 не начнёт их читать.
+- Для end-to-end приёмки также требуются фактически доставленные original
+  command, HTTP, composition applicability и opening-by-original contracts;
+  зелёный legacy register journey не заменяет эти зависимости.

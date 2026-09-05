@@ -32,12 +32,13 @@ production identifier, document или source credential.
 ### Requirement: Минимальный dataset покрывает роли и journey
 
 Manifest SHALL содержать минимальный набор fictional actors для сотрудника ФКР,
-инженера строительного контроля, руководителя и системного администратора;
+инженера строительного контроля, Руководителя ФКР и системного администратора;
 точные local RBAC roles и capabilities SHALL следовать фактически landed
 identity/access contract. Workforce inputs SHALL включать не менее двух
 трудоустроенных кандидатов и одного явно уволенного rejection candidate.
 Installation-object inputs SHALL включать несколько fictional объектов,
-достаточных для одного clean prepare → register → open journey и отдельных
+достаточных для clean выбор состава → optional template → original upload →
+отдельное открытие journey, direct-upload parity и отдельных
 observable rejection states, без заранее созданного распоряжения, открытия,
 inspection, completion, premium decision или payment fact.
 
@@ -50,9 +51,16 @@ inspection, completion, premium decision или payment fact.
 #### Scenario: Golden journey начинается с основания
 - **WHEN** ФКР открывает seeded eligible installation object
 - **THEN** public projection показывает состояние «Требуется распоряжение» и
-  действие подготовки
+  выбор состава с необязательным формированием шаблона
 - **AND** последующие process facts могут появиться только через публичные
   application commands, а не как прямые seed rows
+
+#### Scenario: Original upload не открывает работы
+- **WHEN** ФКР загружает fictional PDF после шаблона либо напрямую через
+  утверждённый public HTTP route и подтверждает состав и дату
+- **THEN** accepted original сохраняется immutable, а работы остаются закрыты
+- **AND** только отдельная команда с допустимой фактической датой открывает
+  работы; ручной номер и registration status не являются gate
 
 #### Scenario: Rejection fixtures различимы
 - **WHEN** verifier читает seeded workforce/object inputs через публичные
