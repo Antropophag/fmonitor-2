@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-HTTP-001 — original evidence в портале
 
-Версия: 0.1. Дата: 2026-09-05. Статус: **DRAFT / GATE 1 NOT APPROVED**.
+Версия: 0.2. Дата: 2026-09-05. Статус: **DRAFT / GATE 1 NOT APPROVED**.
 Public route/API choices ниже — review candidate, не delivered behavior.
 
 ## Простыми словами
@@ -91,9 +91,42 @@ contract, с enum strings в их canonical serialized form и final LF. Adapter
 | FAILED | 503 |
 
 503 сохраняет retryable/result reason и добавляет `Retry-After: 60`.
-Transport failures до command имеют отдельный закрытый error envelope;
-exact shape и 400/401/403/413/415 precedence — Gate 1 open item, нельзя
-изображать их как domain Result с выдуманным request/evidence.
+### Exact pre-command error candidate
+
+Recognized original routes используют JSON envelope ровно из одного string
+field `error`, final LF, `Content-Type: application/json; charset=UTF-8`,
+`Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, exact byte
+Content-Length и inherited security headers. Поля requestId/evidence не
+добавляются, поскольку domain command ещё не вызван.
+
+После inherited Host/URI/session-initialization failure precedence, порядок:
+unsupported method → authentication → declared transport cap/media admission
+→ bounded multipart shape → CSRF → local exact capability → context resolution
+→ command. Body не читается application adapter до authentication. Web-server
+или PHP предварительное buffering не считается domain stream read и требует
+отдельного bounded deployment proof.
+
+| Условие до command | HTTP | error |
+|---|---:|---|
+| Unsupported method | 405 | METHOD_NOT_ALLOWED |
+| Нет authenticated actor | 401 | AUTHENTICATION_REQUIRED |
+| Total body выше cap | 413 | REQUEST_TOO_LARGE |
+| POST media type не multipart/form-data | 415 | UNSUPPORTED_MEDIA_TYPE |
+| Некорректный multipart/scalar shape | 400 | INVALID_REQUEST |
+| CSRF невалиден/отсутствует | 403 | CSRF_INVALID |
+| Local capability отсутствует | 403 | ACCESS_DENIED |
+| Authorized context отсутствует | 404 | NOT_FOUND |
+| Admission/context dependency недоступна | 503 | SERVICE_UNAVAILABLE |
+
+CSRF field отсутствует при otherwise complete request → CSRF_INVALID;
+duplicate/array csrfToken остаётся malformed shape. Истёкшая/revoked session
+проверяется до CSRF и body shape. 405 включает exact Allow. 503 включает
+`Retry-After: 60`. HEAD возвращает такой же status/headers/Content-Length,
+но пустой body. Unknown routes продолжают inherited plain-text 404; новый
+JSON envelope не меняет весь pilot router.
+
+После вызова command используется только Result mapping выше; pre-command
+envelope не заменяет application rejection/retryable failure.
 
 ## 4. Read authorization
 
@@ -130,7 +163,10 @@ headers reader доказывает digest/size по stored evidence и bytes. �
 `Content-Disposition: attachment; filename="assignment-order-original.pdf"`,
 `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`.
 HEAD проходит те же authorization/integrity checks и даёт те же headers без
-body. Range/conditional-response policy требуется зафиксировать до Gate 1.
+body. Range и conditional request headers не сокращают выдачу: после обычной
+authorization/integrity проверки сервер отдаёт полный 200 (HEAD без body),
+не возвращает 206/304 и не посылает ETag/Last-Modified. Это candidate policy
+для данного private download route, не изменение других assets.
 Read не создаёт domain facts, view markers, corrections или mutation timestamps.
 
 ## 6. Independently fixed examples
@@ -153,7 +189,7 @@ facts остаются в пределах approved command no-mutation contract
 
 ## 7. Gate 1 readiness и Done
 
-До RED закрыть перечисленные exact transport/URI/scope/resolver/read-port/error
+До RED закрыть перечисленные exact transport/URI/scope/resolver/read-port
 contracts, preflight/stream consistency и legacy route disposition. Получить
 independent Gate 1; complete command Gate 5 остаётся implementation predecessor.
 Tests должны проходить real HTTP entrypoint, fictional dataset и независимые
