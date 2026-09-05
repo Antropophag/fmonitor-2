@@ -48,7 +48,43 @@ function aoirCheckKey(string $sql): string
     return $result;
 }
 
+function aoirProveExactFixtureCleanup():void
+{
+    $f=new IdentityRegistryTestDatabase();$admin=$f->connect();
+    $externalDb=$f->name.'_decoy';$externalUser=null;$ownedUser=null;
+    $dbCreated=false;$userCreated=false;$closeAttempted=false;$errors=[];$reader=null;
+    try {
+        $admin->query("CREATE DATABASE `$externalDb`");$dbCreated=true;
+        $admin->query("CREATE TABLE `$externalDb`.marker (id INT PRIMARY KEY,value VARCHAR(30))");
+        $admin->query("INSERT INTO `$externalDb`.marker VALUES(1,'external-owned-marker')");
+        $reader=$f->restricted('SELECT');
+        $ownedUser=explode('@',$reader->query('SELECT CURRENT_USER() n')->fetch_assoc()['n'])[0];
+        $reader->close();$reader=null;
+        assertSameValue(1,preg_match('/^aoir_ro_[0-9a-f]{12}$/D',$ownedUser),'owned account observed through public connection');
+        $externalUser=$ownedUser.'_decoy';
+        $admin->query("CREATE USER `$externalUser`@`%` IDENTIFIED BY 'external-fixture-only'");$userCreated=true;
+        $admin->query("GRANT SELECT ON `$externalDb`.* TO `$externalUser`@`%`");
+        $grants=$admin->query("SHOW GRANTS FOR `$externalUser`@`%`")->fetch_all(MYSQLI_NUM);
+        $closeAttempted=true;$f->close();
+        assertSameValue([['1','external-owned-marker']],$admin->query("SELECT * FROM `$externalDb`.marker")->fetch_all(MYSQLI_NUM),'similarly named external schema survives inner cleanup');
+        assertSameValue($grants,$admin->query("SHOW GRANTS FOR `$externalUser`@`%`")->fetch_all(MYSQLI_NUM),'similarly named external account/grants survive inner cleanup');
+        $q=$admin->prepare('SELECT COUNT(*) n FROM mysql.user WHERE User=?');$q->bind_param('s',$ownedUser);$q->execute();assertSameValue('0',(string)$q->get_result()->fetch_assoc()['n'],'exact owned account removed');$q->close();
+    } catch(Throwable $e) { $errors[]=$e->getMessage(); }
+    if(!$closeAttempted) { try{$f->close();}catch(Throwable $e){$errors[]=$e->getMessage();} }
+    if($reader instanceof mysqli) { try{$reader->close();}catch(Throwable $e){$errors[]=$e->getMessage();} }
+    // Outer owner releases its own decoys only after checking inner preservation.
+    foreach([
+        fn()=>$admin->query("DROP DATABASE IF EXISTS `{$f->name}`"),
+        fn()=>$ownedUser===null?null:$admin->query("DROP USER IF EXISTS `$ownedUser`@`%`"),
+        fn()=>$userCreated?$admin->query("DROP USER `$externalUser`@`%`"):null,
+        fn()=>$dbCreated?$admin->query("DROP DATABASE `$externalDb`"):null,
+        fn()=>$admin->close(),
+    ] as $cleanup) { try{$cleanup();}catch(Throwable $e){$errors[]=$e->getMessage();} }
+    if($errors!==[]) { throw new TestFailure(implode(' | ',$errors)); }
+}
+
 try {
+    aoirProveExactFixtureCleanup();
     foreach (['', str_repeat('p', 25)] as $prefix) {
         aoirSchemaFixture($prefix, static function ($f): void {
             $db = $f->connection; $p = $f->prefix;
@@ -127,6 +163,9 @@ try {
             catch (InvalidArgumentException $e) { assertSameValue('Invalid registry migration configuration.',$e->getMessage(),'fixed invalid prefix error'); }
             assertSameValue($before,$f->allState(),'invalid prefix before mutation');
         }
+        $closed=$f->connect($f->name);$closed->close();
+        try { Migration::apply($closed,str_repeat('p',26));throw new TestFailure('invalid prefix touched closed connection or was accepted'); }
+        catch(InvalidArgumentException $e) { assertSameValue('Invalid registry migration configuration.',$e->getMessage(),'prefix rejected before any access to closed mysqli'); }
         $f->connection->begin_transaction();
         try {
             try { Migration::apply($f->connection); throw new TestFailure('caller transaction accepted'); }
@@ -150,6 +189,19 @@ try {
         finally { $f->connection->query('SET FOREIGN_KEY_CHECKS=1'); }
         aoirExpectedConflict($f);
     });
+    foreach(['0','9223372036854775808'] as $id) {
+        aoirSchemaFixture('',static function($f)use($id):void {
+            $f->seedOrder();$f->connection->query("UPDATE fm2_assignment_orders SET id=$id WHERE id=2");aoirExpectedConflict($f);
+        });
+        aoirSchemaFixture('',static function($f)use($id):void {
+            $f->seedOrder();$f->connection->query('SET FOREIGN_KEY_CHECKS=0');
+            try {
+                $f->connection->query("UPDATE fm2_installation_cases SET id=$id WHERE id=4512");
+                $f->connection->query("UPDATE fm2_assignment_orders SET installation_case_id=$id WHERE id=2");
+            } finally { $f->connection->query('SET FOREIGN_KEY_CHECKS=1'); }
+            aoirExpectedConflict($f);
+        });
+    }
     foreach (["2026-08-27T10:00:00-00:00", "2026-08-27T10:00:00+14:01", "2026-08-27T10:00:00Z trailing"] as $at) {
         aoirSchemaFixture('', static function ($f) use($at):void {
             $f->seedOrder(); $q=$f->connection->prepare('UPDATE fm2_assignment_orders SET prepared_at=?');$q->bind_param('s',$at);$q->execute();$q->close();aoirExpectedConflict($f);
