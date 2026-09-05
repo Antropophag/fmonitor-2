@@ -3,6 +3,7 @@ declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
 require dirname(__DIR__).'/Support/ProductionMigrationRunnerCatalogContract.php';
 // Specification: PRODUCTION-MIGRATION-RUNNER-001 v0.5, examples A-C and failures.
+// Composed successor: owner-approved OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 v0.4, v12.
 
 function pmrDb(?string $db=null):mysqli{$c=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local',$db,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$c->set_charset('utf8mb4');return $c;}
 function pmrRows(mysqli $c,string $sql):array{return $c->query($sql)->fetch_all(MYSQLI_ASSOC);}
@@ -112,7 +113,7 @@ function pmrAssertEngineerCheckNormalizerSensitivity(): void
 
 function pmrCatalog(mysqli $connection, string $prefix): void
 {
-    $contract = ProductionMigrationRunnerCatalogContract::columns();
+    $contract = ProductionMigrationRunnerCatalogContract::columnsV12();
     $like = $connection->real_escape_string($prefix . 'fm2\\_%');
     $tables = pmrRows($connection, "SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$like}' ORDER BY BINARY TABLE_NAME");
 
@@ -121,7 +122,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     assertSameValue(
         $expectedTables,
         array_column($tables, 'TABLE_NAME'),
-        'The catalog must contain exactly the thirty-one approved v1-v11 tables.',
+        'The catalog must contain exactly the thirty-three approved v1-v12 tables.',
     );
     foreach ($tables as $table) {
         assertSameValue('InnoDB', $table['ENGINE'], 'Every approved table must use InnoDB.');
@@ -151,7 +152,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
         return substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $kind . '|' . $row['COLUMNS'];
     }, $indexes);
     sort($indexes);
-    $expectedIndexes = ProductionMigrationRunnerCatalogContract::indexes();
+    $expectedIndexes = ProductionMigrationRunnerCatalogContract::indexesV12();
     sort($expectedIndexes);
     assertSameValue($expectedIndexes, $indexes, 'All primary, unique, secondary and FK-support indexes must match the approved contract.');
 
@@ -353,8 +354,8 @@ try{
  }
 
  $db='t_pmr_a_'.$tok;$dbs[]=$db;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$env=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_'];
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
- $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
+ $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
 
  $completedV4Cases = [
      'whole-wrapper engineer CHECK' => [
@@ -407,7 +408,7 @@ try{
      $admin->query("CREATE DATABASE `{$completedDatabase}` DEFAULT CHARSET=utf8mb4");
      $completedEnvironment = pmrCompletedV4Environment($completedDatabase, $completedPrefix);
      pmrResult(
-         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11]}\n",'stderr'=>''],
+         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],
          pmrRun($completedEnvironment),
          $label . ' fixture setup',
      );
@@ -417,7 +418,7 @@ try{
      $completedBefore = pmrState($completedConnection);
      if ($fixture['accepted']) {
          pmrResult(
-             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[]}\n",'stderr'=>''],
+             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],
              pmrRun($completedEnvironment),
              $label . ' must remain a completed-v6 no-op after the v4 compatibility check',
          );
@@ -463,7 +464,7 @@ try{
  assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'seven v1/v2 tables plus conflicting v3 table remain and v4 stops');
  $c->query('DROP TABLE pilot_fm2_process_user_capabilities');
  $recoveryEnvironment=array_diff_key($ce,['PMR_V4_INVOCATION_MARKER'=>true]);
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[3,4,5,6,7,8,9,10,11]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
  pmrCatalog($c,'pilot_');
  $state=pmrState($c);
  foreach(['legacy_sentinel','unrelated_sentinel'] as $t)assertSameValue($before[$t],$state[$t],$t.' survives recovery');
@@ -471,5 +472,5 @@ try{
 
  $db='t_pmr_fail_'.$tok;$dbs[]=$db;$u='pmr_limited_'.$tok;$users[]=$u;$pw='limited_'.$tok;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY '{$pw}'");$admin->query("GRANT SELECT,CREATE ON `{$db}`.* TO `{$u}`@'%'");$fe=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>$pw]);pmrResult(['exitCode'=>70,'stdout'=>"{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n",'stderr'=>''],pmrRun($fe),'unexpected DDL failure',[$db,$u,$pw,'pilot_','ALTER','denied']);$c=pmrDb($db);assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'v1-v3 DDL remains');$checks=implode(' ',array_column(pmrRows($c,"SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='pilot_fm2_process_user_capabilities'"),'CHECK_CLAUSE'));assertSameValue(false,str_contains($checks,'installation.open'),'v4 did not complete');$c->close();
 
- $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":11,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
+ $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
 }finally{foreach($dbs as $db)$admin->query("DROP DATABASE IF EXISTS `{$db}`");foreach($users as $u)$admin->query("DROP USER IF EXISTS `{$u}`@'%'");foreach($files as $file)if(is_file($file))unlink($file);$admin->close();}
