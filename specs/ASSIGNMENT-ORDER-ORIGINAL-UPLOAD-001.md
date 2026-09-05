@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v38 GATE 1 REREVIEW PENDING — MAINTENANCE CURSOR AMENDMENT**
-Версия: **v38**
+Статус: **v39 GATE 1 REVIEW PENDING — COMPOSITION DERIVATION AMENDMENT**
+Версия: **v39**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -171,6 +171,27 @@ pdfSha256
 
 Correction reason, request ID, actor, filename, declared MIME и upload time не входят в fingerprint.
 
+Production composition reader derives evidence only from the exact
+`fm2_assignment_orders` row belonging to `installationCaseId` and its
+`fm2_order_installers` rows. `compositionIdentity` is literal
+`composition-<assignmentOrderId>-v<versionNo>` with unpadded decimal IDs.
+Canonical compact JSON key order is
+`caseId,compositionIdentity,engineerUserId,installers,orderId`; IDs are JSON
+integers and unique installer IDs are numeric ascending. `compositionSha256` is
+SHA-256 of those UTF-8 bytes. Example A is:
+
+```text
+{"caseId":4512,"compositionIdentity":"composition-81-v1","engineerUserId":31,"installers":[7001,7002],"orderId":81}
+```
+
+Its exact digest is
+`388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5`.
+Missing/mismatched order, invalid version/engineer, empty installers, duplicate/
+invalid member or DB read failure returns the existing typed not-found/invalid/
+unavailable outcome at order/composition lookup; no caller/fallback hash or
+legacy slot is accepted. Reader performs no mutation and the same derived
+identity/hash feed fingerprint, immutable root and evidence reader.
+
 Раздел 3 задаёт полный порядок. На шаге 5 accepted request hit возвращает те же evidence fields со status `REPLAYED`, rejected/conflict hit — исходный terminal status/reason; payload не читается. При miss order/composition/date checks предшествуют stream. После completed bytes шаг 10 ищет accepted fingerprint и возвращает `REPLAYED` независимо от того, стал ли correction target non-current из-за этой operation. Только miss переходит к lineage/CAS.
 
 Every returned Result echoes the current invocation `requestId`. A distinct
@@ -275,7 +296,7 @@ case = 4512
 order = 81
 composition identity = composition-81-v1
 composition = installers [7001,7002], engineer 31
-compositionSha256 = 1111111111111111111111111111111111111111111111111111111111111111
+compositionSha256 = 388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5
 root ID generator first value = original-0001
 revision ID generator values = revision-0001, revision-0002
 positive PDF = section 5 literal, 327 bytes, sha256 4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784
@@ -1203,7 +1224,7 @@ approved prerequisite process migrations and this migration are compatible.
 It inserts the section-12 Example A prerequisites and no original/request/event/
 audit/blob fact: active actor `18` with only the exact upload/correct grants;
 case `4512`; order `81`; composition identity `composition-81-v1`, hash
-`1111111111111111111111111111111111111111111111111111111111111111`, installers
+`388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5`, installers
 `7001,7002` and engineer `31`; fixed case/opening/tasks/checklist/decoy process
 projections used by section 16. The exact canonical projection literals and
 expected SHA-256 values are:

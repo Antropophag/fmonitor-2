@@ -17,6 +17,9 @@ Canonical `CONTEXT.md`, pilot spec и pilot data model уже синхрониз
 ### 2. Один command с двумя modes и optimistic revision
 
 Assignment Orders владеет `submitAssignmentOrderOriginal(Command): Result`. `INITIAL` создаёт root identity и отдельную revision identity; `CORRECTION` передаёт root, target revision и expected current revision. DTO/result/reason codes нормативно закрыты executable spec. Composition берётся production query по order identity, не доверяется HTTP payload.
+Production composition identity derives from order/version and its canonical
+case/engineer/numeric-sorted installer JSON; Example A SHA-256 is `388c7d94...`,
+with no caller, legacy-slot or fixed-hash fallback.
 
 Отдельные update-file/update-date endpoints отвергнуты: они допускают partial/mutable history. Sequential composition intentionally отвергается `SEMANTIC_COLLISION` до отдельного slice.
 

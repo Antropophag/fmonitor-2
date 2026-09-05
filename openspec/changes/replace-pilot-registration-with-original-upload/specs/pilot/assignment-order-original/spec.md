@@ -80,6 +80,13 @@ Command SHALL возвращать DTO `{status, reasonCode, retryable, requestI
 ### Requirement: Semantic replay и collision
 После shape/authorization checks система MUST сначала lookup terminal `requestId` до чтения stream; accepted hit возвращает те же evidence fields со status `REPLAYED`, rejected/conflict hit возвращает исходный terminal status/reason, без payload comparison. При miss система читает/валидирует stream, вычисляет fingerprint из mode, case/order, root/target/expected-current identities, document date, composition identity/hash и PDF SHA-256, затем lookup accepted fingerprint; match возвращает `REPLAYED` даже после смены leaf. Только miss проходит current/stale/no-change validation. Новый intent MUST использовать новый request ID.
 
+Production composition identity SHALL be `composition-<orderId>-v<versionNo>`
+and hash SHALL equal SHA-256 exact compact JSON
+`{caseId,compositionIdentity,engineerUserId,installers,orderId}` from canonical
+order/installers rows with numeric-sorted unique installer IDs. Example A hash
+is `388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5`;
+caller/legacy/fixed fallback hashes are forbidden.
+
 #### Scenario: Полный semantic replay
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities
 - **THEN** система возвращает исходный `REPLAYED` result без нового эффекта
