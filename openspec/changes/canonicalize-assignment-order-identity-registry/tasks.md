@@ -5,9 +5,9 @@
 
 ## 2. RED и независимый test review
 
-- [ ] 2.1 Написать smallest public-seam missing-engine RED с fixed historical IDs/frontier/hash; сохранить intended failure, не setup error.
-- [ ] 2.2 Добавить preflight/partial/repeat/prefix/conflict/rollback/concurrency/cleanup matrix через approved verification API; доказать sensitivity без production source data.
-- [ ] 2.3 Получить independent Gate3 APPROVED exact test hashes; reviewer не автор tests или будущей implementation.
+- [x] 2.1 Написать smallest public-seam missing-engine RED с fixed historical IDs/frontier/hash; сохранить intended failure, не setup error. Record `assignment-order-identity-registry-red-v1-2026-09-05.md`.
+- [x] 2.2 Добавить preflight/partial/repeat/prefix/conflict/rollback/concurrency/cleanup matrix через approved verification API; доказать sensitivity без production source data. Matrix RED v1/v2 и exact external-decoy correction сохранены.
+- [x] 2.3 Получить independent Gate3 APPROVED exact test hashes; reviewer не автор tests или будущей implementation. Reviews tracer-v1 и matrix-v2; implementation после35c421d.
 
 ## 3. Minimal migration engine
 
