@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v45 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
-Версия: **v45**
+Статус: **v46 GATE 1 REREVIEW PENDING — CLEANUP SAFE-LOG AMENDMENT**
+Версия: **v46**
 Дата: **2026-09-02**
 
 ## Простыми словами
@@ -276,9 +276,9 @@ Storage private, не web-addressable. Exact phases:
 2. application читает stream chunks с `maximumBytes=65536`, обновляет SHA-256/received count и сразу вызывает stage `write(chunk)`; byte `20,971,521` не записывается;
 3. на EOF stage предоставляет exact completed bytes inspector-у; invalid input вызывает `abort` и не вызывает finalize;
 4. passive PDF вызывает stage `finalize(sha256,byteSize)` и emits `FINALIZE_BEGIN/DONE`;
-5. DB transaction атомарно сохраняет typed accepted commit, terminal result и domain event;
-6. stage и stream закрываются exactly once в `finally`; после commit нет дополнительного finalize;
-7. delivery observer вызывается после commit и до return.
+5. accepted path закрывает stage, затем stream exactly once while finalized-content lease remains held;
+6. только после successful closes DB transaction атомарно сохраняет typed accepted commit, terminal result и domain event;
+7. lease release и delivery observer вызываются после commit и до return.
 
 Storage adapter emits events: `BEGIN` непосредственно перед primitive, `DONE` только после durable success. Stage/stream/validation failure вызывает `abort`; abort failure оставляет только private non-final stage для storage-owned bounded cleanup и safe log. Request replay, order/date/confirmation rejection не создают stage/event.
 
@@ -668,9 +668,6 @@ enum AssignmentOrderOriginalFaultPoint: string
     case RESULT_WRITE_FALSE = 'result_write_false';
     case RESULT_WRITE_ZERO = 'result_write_zero';
     case RESULT_WRITE_SHORT_7 = 'result_write_short_7';
-    case STAGE_ABORT_SAFE_LOG_WRITE_FAILURE = 'stage_abort_safe_log_write_failure';
-    case STAGE_CLOSE_SAFE_LOG_WRITE_FAILURE = 'stage_close_safe_log_write_failure';
-    case STREAM_CLOSE_SAFE_LOG_WRITE_FAILURE = 'stream_close_safe_log_write_failure';
     case ATTEMPT_AUDIT_COMMIT = 'attempt_audit_commit';
     case RESPONSE_DELIVERY = 'response_delivery';
     case ORPHAN_REFERENCE_LOOKUP = 'orphan_reference_lookup';
@@ -951,24 +948,24 @@ diagnostic is logged. Each isolated one-fault Example-A run has exact evidence:
 ```
 
 Lease release uses the same correlation derivation and specified event/phase.
-Exact precedence is conditional on durable state. Stage-abort failure always
-preserves the validation/stream/storage Result that required abort. Stage-close
-or stream-close failure after a durable accepted/terminal request commit, or
-after a terminal business rejection/conflict needing no commit, preserves that
-Result. If close is the first failure while an accepted candidate is not yet
-durably committed, stage close selects `FAILED/STORAGE_FAILURE`, stream close
-selects `FAILED/STREAM_FAILURE`, repository commit is forbidden, and later
-cleanup failures cannot replace it. Cleanup attempt order is abort (when
-required) → stage close (when stage exists) → stream close; every applicable
-attempt runs exactly once even after an earlier cleanup failure, and safe-log
-items follow that order.
+Stage-abort failure preserves the validation/stream/storage Result that required
+abort. On every non-accepted path cleanup is abort when required → stage close
+when a stage exists → stream close, then terminal rejection/conflict audit;
+all applicable attempts run once and close failures preserve the selected
+non-accepted Result. On a valid accepted candidate, stage close is before stream
+close and both precede DB commit: stage close failure selects
+`FAILED/STORAGE_FAILURE`, stream close failure selects `FAILED/STREAM_FAILURE`,
+commit is forbidden, finalized content remains a private orphan, and lease is
+released once with `rolled_back` phase. Later cleanup failure cannot replace the
+first technical Result. Safe-log items follow attempt order.
 
-Plain `STREAM_CLOSE` makes exactly that close throw. The three
-`*_SAFE_LOG_WRITE_FAILURE` scripts first make their named cleanup primitive fail
-and then make only its one safe-log write fail; they emit no log bytes, no second
-log attempt, preserve the precedence-selected Result and cannot combine with
-other faults. Plain STAGE_ABORT/STAGE_CLOSE/STREAM_CLOSE cover successful log
-evidence. Production binds none and has no selector.
+Plain `STREAM_CLOSE` makes exactly that close throw; existing STAGE_ABORT and
+STAGE_CLOSE selectors cover the other primitives. Successful real-worker
+safe-log writes are MariaDB/storage acceptance. Safe-log write failure is tested
+through `AssignmentOrderOriginalVerificationFactory` with the same configured
+primitive failure and a throwing injected `AssignmentOrderOriginalSafeLogObserver`;
+it emits no log bytes/no second attempt and preserves Result. No worker composite
+fault or production selector exists.
 
 Private content/outcome implementations are constructed only by storage adapters. Repository lookup/result implementations may rehydrate stored application results but cannot create accepted evidence not already represented by a committed `AssignmentOrderOriginalAcceptedCommit`. Repository MUST validate UUID/ID/hash/date/time/size grammar; exact mode/event pairing (`INITIAL→assignment_order_original_accepted`, `CORRECTION→assignment_order_original_corrected`); revision 1/null previous for initial; revision n+1/previous/expected-current for correction; content digest/size identity; and Result derivation before commit. Invalid adapter DTO is `PERSISTENCE_FAILURE`, never partial persistence. `AssignmentOrderOriginalAttemptCommit` allows only non-retryable `REJECTED|CONFLICT`, exact reason/status mapping and no evidence fields.
 

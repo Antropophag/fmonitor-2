@@ -42,12 +42,12 @@ Caller adapter передаёт stream; application/storage boundary счита�
 ### 5. Storage/persistence publication protocol
 
 Document storage finalizes private content и возвращает typed lease из общего с maintenance digest exclusion domain. Lease held через commit/rollback, fresh unknown-outcome lookup и, для CAS `CONFLICT`, через обязательные fingerprint/current-lineage rereads. После выбранного conflict outcome release вызывается exactly once; failure не заменяет outcome, safe-log-ится и оставляет token storage recovery. Non-replay conflict attempt-audit выполняется даже при release failure. Private blob без DB row не public/applicable; maintenance/retry работают только через тот же exclusion domain.
-Abort/stage-close/stream-close cleanup failures preserve selected Result and
-emit exact one-event/one-phase safe logs with first12-SHA256 request correlation;
-payload/path/exception data is forbidden.
-Before durable accept, stage/stream close instead selects STORAGE/STREAM failure
-and forbids commit; cleanup order remains abort→stage-close→stream-close.
-Three exact cleanup+log-write scripts prove best-effort no-retry logging.
+Invalid-path abort/close failures preserve its selected Result and emit exact
+one-event/one-phase safe logs with first12-SHA256 request correlation. Accepted
+path closes stage then stream before commit; failure selects STORAGE/STREAM,
+forbids commit, retains private orphan and releases lease rolled_back. Invalid
+cleanup order is abort→stage-close→stream-close; a throwing injected safe-log
+observer proves best-effort no-retry behavior without worker composite faults.
 Verification worker has three one-shot real-repository unknown-outcome scripts:
 durable+FOUND, rollback+NOT_FOUND and durable+UNAVAILABLE followed by normal
 same-request replay; production binds none and exposes no selector.

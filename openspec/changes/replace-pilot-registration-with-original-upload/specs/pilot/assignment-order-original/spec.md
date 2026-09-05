@@ -229,11 +229,11 @@ Storage SHALL начать private stage до чтения stream; application �
 
 #### Scenario: Cleanup safe logs exact
 - **WHEN** stage abort, stage close или stream close fails
-- **THEN** selected Result preserved, one exact event + only phase field + first12-SHA256(requestId) correlation logged; isolated Example-A canonical JSON lines заданы, payload/path/exception forbidden, log-write failure no retry/no Result change
+- **THEN** non-accepted selected Result preserved; accepted candidate close uses precommit failure mapping; one exact event + only phase field + first12-SHA256(requestId) correlation logged; isolated canonical JSON lines заданы, payload/path/exception forbidden, injected observer log-write failure no retry/no Result change
 
 #### Scenario: Cleanup failure precedence constructible
-- **WHEN** abort/close fails before or after durable/terminal outcome, или named cleanup+safe-log composite runs
-- **THEN** abort preserves original result; precommit stage/stream close selects STORAGE/STREAM failure and forbids commit; durable/terminal result is preserved; abort→stage-close→stream-close each attempted once, log order same, composite log failure writes nothing/no retry/no result change
+- **WHEN** invalid path cleanup or valid accepted-candidate close fails
+- **THEN** invalid path keeps selected result and audits only after abort→stage-close→stream-close; accepted path closes stage→stream before commit, failure selects STORAGE/STREAM failure, forbids commit, retains private orphan and releases lease rolled_back; injected throwing safe-log observer writes nothing/no retry
 
 ### Requirement: Independent evidence reader constructible through public factory
 Verification SHALL строить fresh-connection production evidence reader только
