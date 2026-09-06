@@ -20,3 +20,9 @@
 - [ ] 4.1 Получить отдельно gated all-writer cutover, registry allocator, selection-family и original-reader contracts/implementations; проверить полный live ownership manifest и запрет N-1 writes.
 - [ ] 4.2 Зафиксировать canonical version на фактическом frontier, пройти отдельные RED/Gate3/GREEN/Gate5 registration; не резервировать номер только planning-файлом.
 - [ ] 4.3 Выполнить full make verify и clean deployment/restart preservation на exact SHA; Done/архив только после всех dependencies, literal VERIFY_OK и независимого integration review.
+
+Fresh-scope registration candidate: `SELECTION-CANONICAL-REGISTRATION-001`,
+actual frontier13 atd1bcddc, ordered engines14/15. Old writer conversion and mixed
+rollout prerequisites above superseded by fresh-launch-owner-scope-2026-09-06.
+Native selection and selected-original binding now Gate5 APPROVED. Registration
+still requires its own RED/Gate3/GREEN/Gate5; no checkbox advanced by this note.

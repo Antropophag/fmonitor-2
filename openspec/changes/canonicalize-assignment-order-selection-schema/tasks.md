@@ -19,3 +19,9 @@
 
 - [ ] 4.1 Включать migration только после separately gated all-writer/read/render/readiness/cutover contracts и selection implementation; verification: combined compatibility evidence, actual frontier version и N−1 exclusion.
 - [ ] 4.2 Получить full make verify literal VERIFY_OK и controlled deployment/restart preservation на exact SHA; verification: independent integration review до Done/archive, history/frontier не удаляются.
+
+Fresh-scope registration candidate: `SELECTION-CANONICAL-REGISTRATION-001`,
+actual frontier13 atd1bcddc, ordered engines14/15. Old writer conversion and mixed
+rollout prerequisites above superseded by fresh-launch-owner-scope-2026-09-06.
+Native selection and selected-original binding now Gate5 APPROVED. Registration
+still requires its own RED/Gate3/GREEN/Gate5; no checkbox advanced by this note.
