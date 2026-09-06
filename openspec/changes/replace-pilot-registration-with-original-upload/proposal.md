@@ -168,3 +168,7 @@ MAINTENANCE-001 и parentv74 уточняют существующие public st
 ## Evidence lifecycle corrective scope — 2026-09-06
 
 EVIDENCE-LIFECYCLE-001 уточняет existing read-only evidence contract: exact public config/interface, pre-password validation, fresh read-only connection, fixed failures и once-only close без удаления storage metadata/locks. Canonical JSON и product grants не меняются. Worker declaration/fault-point и private orphan fixture behavior остаются отдельными обязательными исправлениями. Требуются независимые Gates1/3/5.
+
+## Worker ports corrective scope — 2026-09-06
+
+WORKER-PORTS-001 уточняет existing exact WorkerConfig/ByteStreamFactory/bootstrap names, sole strict base64 decoding и3 lookup fault points native repository. Пользовательские outcomes и grants не меняются. Полнота framing/FD behavior и orphan fixture не утверждается. Требуются независимые Gates1/3/5.

@@ -192,3 +192,9 @@ Owner/repository GREEN9c48b44 и отдельный Gate5v1 APPROVED; storage GR
 - [x] 5.11 Minimal evidence reader GREEN, affected regressions и scoped Gate5; worker/fixture/combined command остаются обязательными.
 
 Evidence lifecycle завершён: GREEN4b71e00, independent Gate5 EVIDENCE-LIFECYCLE001v1 APPROVED; все12 affected commands на clean exact SHA, evidence5cdc311a. Worker/fixture/combined command и launch остаются открыты.
+
+## Worker ports corrective gates — 2026-09-06
+
+- [x] 1.43 Independent Gate1 WORKER-PORTS-001 exact existing declarations/decoder/fault wiring.
+- [ ] 4.12 Minimal public-port RED и independent Gate3.
+- [ ] 5.12 Minimal worker-port GREEN, affected regressions/architecture и scoped Gate5; combined command отдельно.
