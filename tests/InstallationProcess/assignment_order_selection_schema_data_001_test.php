@@ -64,9 +64,10 @@ foreach ([
     'index' => 'ALTER TABLE fm2_assignment_order_selections ADD INDEX extra(mode)',
     'check literal' => "ALTER TABLE fm2_assignment_order_selection_events DROP CONSTRAINT fm2_aose_ck_type, ADD CONSTRAINT fm2_aose_ck_type CHECK(event_type='ASSIGNMENT_ORDER_COMPOSITION_SELECTED')",
     'check grouping' => "ALTER TABLE fm2_assignment_order_selections DROP CONSTRAINT fm2_aos_ck_replaces, ADD CONSTRAINT fm2_aos_ck_replaces CHECK(mode='new_order' AND (replaces_selection_order_id IS NULL OR mode='replace_pending') AND replaces_selection_order_id IS NOT NULL)",
-    'FK action' => 'ALTER TABLE fm2_assignment_order_selection_members DROP FOREIGN KEY fm2_aosm_fk_selection, ADD CONSTRAINT fm2_aosm_fk_selection FOREIGN KEY(assignment_order_id) REFERENCES fm2_assignment_order_selections(assignment_order_id) ON DELETE CASCADE ON UPDATE RESTRICT',
+    'FK action' => ['ALTER TABLE fm2_assignment_order_selection_members DROP FOREIGN KEY fm2_aosm_fk_selection',
+        'ALTER TABLE fm2_assignment_order_selection_members ADD CONSTRAINT fm2_aosm_fk_selection FOREIGN KEY(assignment_order_id) REFERENCES fm2_assignment_order_selections(assignment_order_id) ON DELETE CASCADE ON UPDATE RESTRICT'],
 ] as $label => $sql) {
-    Check::run('metadata drift ' . $label, static function (Fixture $f) use ($sql): void { $f->create(); $f->db->query($sql); Check::conflict($f); });
+    Check::run('metadata drift ' . $label, static function (Fixture $f) use ($sql): void { $f->create(); foreach ((array)$sql as $statement) { $f->db->query($statement); } Check::conflict($f); });
 }
 foreach ([
     'composition' => "UPDATE fm2_assignment_order_selections SET composition_sha256=REPEAT('a',64) WHERE assignment_order_id=81",
