@@ -35,3 +35,10 @@ lock связывает selection replacement/upload; HTTP не определя
 для явного подтверждения documentDate из original. Новые grants вводятся через
 identity application/bootstrap, не runtime DDL и не прямой SQL из HTTP. Нет
 launch требования переносить old writer history или поддерживать mixed rollout.
+
+## Operator-first delivery —2026-09-07
+
+Child expose-assignment-order-original-upload-ui доставляет operator submit/form
+на orderId identity. Binary PDF+canonical metadata header заменяет unapproved
+multipart plan для POST. Full GET metadata/history/download требует actual applied
+engineer scope из upcoming composition application owner, без legacy-field fallback.

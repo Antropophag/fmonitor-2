@@ -26,3 +26,8 @@
 Current binding2026-09-07: expose-assignment-order-composition-http доставляет
 первый UI шаг new_order/replace_pending/PDF отдельно; этот change сохраняет полный
 upload/read/download scope и не получает автоматических task completions.
+
+2026-09-07: operator upload/correction/form delivery находится в child
+expose-assignment-order-original-upload-ui. Его binary transport supersedes лишь
+unapproved multipart candidate; general metadata/history/download и assigned-engineer
+scope сохраняются здесь. Parent Done/full VERIFY не уменьшаются и не закрываются.

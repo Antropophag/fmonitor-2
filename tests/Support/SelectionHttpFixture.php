@@ -13,7 +13,7 @@ final class SelectionHttpFixture
     public string $csrf;
     private mixed $server=null;
     private array $cookies=[];
-    public function __construct(bool $enabled=true)
+    public function __construct(bool $enabled=true,?\Closure $extraEnvironment=null)
     {
         $this->original=new SelectedOriginalFixture();$this->csrf=str_repeat('c',64);
         try {
@@ -45,8 +45,9 @@ final class SelectionHttpFixture
                 'FMONITOR_SESSION_INSTANCE'=>'pilot','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'http','FMONITOR_FRESH_ORDER_FLOW'=>$enabled?'1':'0',
                 'FMONITOR_PILOT_CSS_PATH'=>$root.'/rapid-pilot/pilot.css','FMONITOR_SHLZ_CSS_PATH'=>dirname($root).'/shlz-ui/packages/styles/dist/shlz.css',
                 'FMONITOR_ARTIFACT_STORAGE_ROOT'=>$this->original->privateRoot,'PHP_CLI_SERVER_WORKERS'=>'1']);
+            if($extraEnvironment!==null)$env=array_replace($env,$extraEnvironment($this->original));
             $log=$this->original->control.'/http.log';
-            $this->server=proc_open([PHP_BINARY,'-d','display_errors=0','-d','log_errors=1','-S','127.0.0.1:'.$this->port,$root.'/rapid-pilot/router.php'],
+            $this->server=proc_open([PHP_BINARY,'-d','display_errors=0','-d','log_errors=1','-d','post_max_size=22M','-S','127.0.0.1:'.$this->port,$root.'/rapid-pilot/router.php'],
                 [0=>['file','/dev/null','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes,$root,$env);
             if(!is_resource($this->server))throw new \RuntimeException('Fixture server unavailable');
             $deadline=microtime(true)+5;
@@ -61,11 +62,13 @@ final class SelectionHttpFixture
         $h=['Host'=>'127.0.0.1:'.$this->port,'Connection'=>'close','Content-Length'=>(string)strlen($body)];
         if($actor!==null)$h['Cookie']=$this->cookies[$actor];
         if($method==='POST')$h['Content-Type']='application/x-www-form-urlencoded';
-        $h=array_replace($h,$headers);$wire=$method.' '.$path." HTTP/1.1\r\n";
+        $h=array_filter(array_replace($h,$headers),static fn($value)=>$value!==null);$wire=$method.' '.$path." HTTP/1.1\r\n";
         foreach($h as $key=>$value)$wire.=$key.': '.$value."\r\n";
         try{if(fwrite($s,$wire."\r\n".$body)!==strlen($wire."\r\n".$body))throw new \RuntimeException('HTTP fixture short write');
+            stream_socket_shutdown($s,STREAM_SHUT_WR);
             $raw=stream_get_contents($s,24*1024*1024);$meta=stream_get_meta_data($s);if($meta['timed_out'])throw new \RuntimeException('HTTP fixture timeout');
         }finally{fclose($s);}
+        if($raw==='')return ['status'=>0,'headers'=>[],'body'=>'','connectionClosed'=>true];
         [$head,$bytes]=explode("\r\n\r\n",$raw,2);preg_match('#^HTTP/[0-9.]+ ([0-9]{3})#',$head,$match);$responseHeaders=[];
         foreach(explode("\r\n",$head) as $line)if(str_contains($line,':')){[$key,$value]=explode(':',$line,2);$responseHeaders[strtolower($key)]=trim($value);}
         return ['status'=>(int)($match[1]??0),'headers'=>$responseHeaders,'body'=>$bytes];
