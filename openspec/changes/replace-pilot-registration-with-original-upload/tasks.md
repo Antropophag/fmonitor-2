@@ -196,5 +196,7 @@ Evidence lifecycle завершён: GREEN4b71e00, independent Gate5 EVIDENCE-LI
 ## Worker ports corrective gates — 2026-09-06
 
 - [x] 1.43 Independent Gate1 WORKER-PORTS-001 exact existing declarations/decoder/fault wiring.
-- [ ] 4.12 Minimal public-port RED и independent Gate3.
-- [ ] 5.12 Minimal worker-port GREEN, affected regressions/architecture и scoped Gate5; combined command отдельно.
+- [x] 4.12 Minimal public-port RED и independent Gate3.
+- [x] 5.12 Minimal worker-port GREEN, affected regressions/architecture и scoped Gate5; combined command отдельно.
+
+Worker ports завершён: f692c96, independent Gate5 WORKER-PORTS001v1 APPROVED; все11 affected commands на clean exact SHA, evidenceb1038194. Остальные обязательства не отменены.
