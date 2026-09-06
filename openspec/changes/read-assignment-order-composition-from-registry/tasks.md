@@ -1,6 +1,6 @@
 ## 1. Exact contract
 
-- [ ] 1.1 Утвердить ASSIGNMENT-ORDER-REGISTERED-COMPOSITION-READER-001 и coherent artifacts независимым Gate1; verification: exact hashes, constructible public examples, legacy compatibility и disabled boundary.
+- [x] 1.1 Утвердить ASSIGNMENT-ORDER-REGISTERED-COMPOSITION-READER-001 и coherent artifacts независимым Gate1; verification: exact hashes, constructible public examples, legacy compatibility и disabled boundary.
 
 ## 2. RED and review
 
