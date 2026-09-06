@@ -6,8 +6,8 @@
 ## 2. RED and independent test review
 
 - [x] 2.1 Продемонстрировать public-seam missing migration RED после реального approved synthetic registry setup; verification: transcript доказывает behavior failure, attempt-all cleanup и external decoy preservation.
-- [ ] 2.2 Расширить RED на clean/repeat/populated/leading-partial/gap/conflict/permission/lock/child-interruption matrix; verification: fixed snapshots/counts/hashes/counters и registry byte preservation, без runtime/private mutation как action.
-- [ ] 2.3 Получить independent Gate3 APPROVED exact tests/support; verification: reviewer не автор, oracle/data/metadata sensitivity и cleanup подтверждены.
+- [x] 2.2 Расширить RED на clean/repeat/populated/leading-partial/gap/conflict/permission/lock/child-interruption matrix; verification: fixed snapshots/counts/hashes/counters и registry byte preservation, без runtime/private mutation как action.
+- [x] 2.3 Получить independent Gate3 APPROVED exact tests/support; verification: reviewer не автор, oracle/data/metadata sensitivity и cleanup подтверждены.
 
 ## 3. Minimal standalone implementation
 
