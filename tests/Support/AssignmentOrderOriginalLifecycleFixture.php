@@ -48,8 +48,8 @@ final class OriginalLifecycleOutcome implements O\AssignmentOrderOriginalStorage
 {
     public int $statusCalls=0;public int $leaseCalls=0;
     public function __construct(private OriginalLifecycleTrace $trace,public OriginalLifecycleLease $value){}
-    public function status():O\AssignmentOrderOriginalStorageStatus{++$this->statusCalls;return $this->trace->fails('outcome_failed_with_lease')?O\AssignmentOrderOriginalStorageStatus::FAILED:($this->trace->fails('outcome_already')?O\AssignmentOrderOriginalStorageStatus::ALREADY_PRESENT_VERIFIED:O\AssignmentOrderOriginalStorageStatus::OK);}
-    public function lease():?O\AssignmentOrderOriginalPrivateContentLease{++$this->leaseCalls;return $this->trace->fails('outcome_null_lease')?null:$this->value;}
+    public function status():O\AssignmentOrderOriginalStorageStatus{++$this->statusCalls;$this->trace->throwing('outcome_status_throw');if($this->trace->fails('outcome_locked')||$this->trace->fails('outcome_locked_null'))return O\AssignmentOrderOriginalStorageStatus::LOCKED;return $this->trace->fails('outcome_failed_with_lease')?O\AssignmentOrderOriginalStorageStatus::FAILED:($this->trace->fails('outcome_already')?O\AssignmentOrderOriginalStorageStatus::ALREADY_PRESENT_VERIFIED:O\AssignmentOrderOriginalStorageStatus::OK);}
+    public function lease():?O\AssignmentOrderOriginalPrivateContentLease{++$this->leaseCalls;$this->trace->throwing('outcome_lease_throw');return $this->trace->fails('outcome_null_lease')||$this->trace->fails('outcome_locked_null')?null:$this->value;}
 }
 final class OriginalLifecycleStage implements O\AssignmentOrderOriginalPrivateStage
 {
