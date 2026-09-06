@@ -15,9 +15,12 @@
 
 ## 4. Integration and Done
 
-- [ ] 4.1 Подключить reader вместе с separately gated locked original composition validation и combined readiness; verification: original application/direct upload и every writer используют согласованный immutable источник.
+- [x] 4.1 Подключить reader вместе с separately gated locked original composition validation и combined readiness; verification: original application/direct upload и every writer используют согласованный immutable источник.
 - [ ] 4.2 Закрыть integration после full exact-SHA VERIFY_OK и controlled deploy/restart; verification: independent combined review, no launch blockers, только затем Done/archive.
 
 Combined wiring Gate1 теперь задаёт `bind-assignment-order-original-to-selected-composition` /
 `ASSIGNMENT-ORDER-SELECTED-ORIGINAL-BINDING-001`, source73b05d1 APPROVED.
 Task4.1 остаётся открытой до GREEN/Gate5 этого integration binding.
+
+Fresh standalone original binding completed by selected-original binding Gate5;
+legacy writers are not converted. Full integration task4.2 remains open.
