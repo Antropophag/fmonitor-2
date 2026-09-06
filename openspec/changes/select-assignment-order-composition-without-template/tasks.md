@@ -147,3 +147,13 @@ Remaining: real races/interruption/recovery, prefix/readiness and locked origina
 root edges; do not infer these from pure-core or sequential native evidence.
 Cost observation59760 tokens near60k cap: scope frozen for final review/record,
 no extra work added. Time stayed within20min; full native/portal remains open.
+
+Native races/interruption verification source50e44bd, Gate5 reviewe5b7c04 APPROVED:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-races-v1.md`.
+Production unchanged fromc93c27a; existing41 + new6 cases PASS. Archive
+`selection-native-races-evidence-kpmr7mpc` records owned two-worker blocked SQL,
+same-case stale, same-request collision, cross-case allocation, post-commit
+response loss/restart replay, exception/boolean connection interruption and
+fresh absent lookup. Delivery loss is not claimed as native COMMIT-ack loss.
+Prefix/readiness and locked original-root edges/final native audit remain open.
+No source fix was needed; Gate3 approved verification-only/no-op Gate4 extension.
