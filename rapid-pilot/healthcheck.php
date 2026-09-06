@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // PILOT-HEALTHCHECK-SESSION-001: operational anonymous liveness, no process grants.
 set_error_handler(static function():never { throw new RuntimeException('Health unavailable'); });
-$lock=null;$headers=null;
+$lock=null;$headers=null;$stage=null;$output=null;
 try {
     umask(0077);
     $port=getenv('FMONITOR_DEMO_PORT');$port=$port===false?'8092':$port;
@@ -33,17 +33,25 @@ try {
         for($redirects=0;;$redirects++){
             $remaining=($deadline-hrtime(true))/1_000_000_000;if($remaining<=0)throw new RuntimeException();
             $command=['curl','-q','--silent','--noproxy','*','--proto','=http','--max-time',sprintf('%.3f',$remaining),
-                '--cookie',$cookie,'--cookie-jar',$cookie,'--dump-header',$headers,'--output','/dev/null',
-                '--write-out','%{http_code}',$url];
+                '--cookie',$cookie,'--cookie-jar','-','--dump-header',$headers,'--output','/dev/null',$url];
             $process=proc_open($command,[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','w']],$pipes);
             if(!is_resource($process))throw new RuntimeException();
-            $status=stream_get_contents($pipes[1]);fclose($pipes[1]);$exit=proc_close($process);
+            $jar=stream_get_contents($pipes[1]);fclose($pipes[1]);$exit=proc_close($process);
             if($exit!==0)throw new RuntimeException();
+            if(!is_string($jar)||!str_starts_with($jar,'# Netscape HTTP Cookie File')||!str_ends_with($jar,"\n"))throw new RuntimeException();
+            $raw=file_get_contents($headers);
+            if(!is_string($raw)||preg_match_all('#^HTTP/[0-9.]+ ([0-9]{3})[^\r\n]*#m',$raw,$codes)<1)throw new RuntimeException();
+            $status=end($codes[1]);
+            // Curl does not fail on cookie-jar write errors. Own and check persistence.
+            $stage=tempnam($dir,'cookie-');if($stage===false)throw new RuntimeException();
+            $output=fopen($stage,'wb');if($output===false)throw new RuntimeException();
+            if(fwrite($output,$jar)!==strlen($jar)||!fflush($output)||!fsync($output))throw new RuntimeException();
+            if(!fclose($output))throw new RuntimeException();$output=null;
             $owned($cookie,false,0600);
+            if(!rename($stage,$cookie))throw new RuntimeException();$stage=null;
             if($status==='200')break;
             if(!in_array($status,['301','302','303','307','308'],true)||$redirects>=3)throw new RuntimeException();
-            $raw=file_get_contents($headers);
-            if(!is_string($raw)||preg_match_all('/^Location:\s*([^\r\n]+)\r?$/mi',$raw,$matches)!==1)throw new RuntimeException();
+            if(preg_match_all('/^Location:\s*([^\r\n]+)\r?$/mi',$raw,$matches)!==1)throw new RuntimeException();
             $location=trim($matches[1][0]);
             if(str_starts_with($location,'/')&&!str_starts_with($location,'//'))$location=$origin.$location;
             $parts=parse_url($location);
@@ -56,6 +64,8 @@ try {
     $result=0;
 } catch(Throwable) { $result=1; }
 finally {
+    if(is_resource($output))fclose($output);
+    if(is_string($stage)&&is_file($stage))unlink($stage);
     if(is_string($headers)&&is_file($headers))unlink($headers);
     if(is_resource($lock)){flock($lock,LOCK_UN);fclose($lock);}
 }

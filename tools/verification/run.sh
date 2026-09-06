@@ -73,6 +73,7 @@ case "${1:-}" in
     run_files "${db_files[@]}"
     ;;
   characterization)
+    python3 tests/Verification/pilot_healthcheck_cookie_failure_001_test.py || fail REGRESSION_FAILURE "healthcheck cookie persistence"
     python3 tests/Verification/pilot_healthcheck_session_001_test.py || fail REGRESSION_FAILURE "healthcheck session lifecycle"
     run_files \
       rapid-pilot/verify-auth-hot-path.php \
