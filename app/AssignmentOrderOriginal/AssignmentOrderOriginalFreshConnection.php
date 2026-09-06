@@ -14,6 +14,7 @@ final class AssignmentOrderOriginalFreshConnection
             || preg_match('/^[A-Za-z0-9_.-]{1,32}$/D', $c->databaseUser) !== 1
             || preg_match('/^[A-Za-z0-9_]{0,25}$/D', $c->tablePrefix) !== 1) AssignmentOrderOriginalSql::fail();
         $host = $c->databaseHost;
+        if (strcasecmp($host, 'localhost') === 0) AssignmentOrderOriginalSql::fail();
         if (strlen($host) <= 255 && preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,253}[A-Za-z0-9])?$/D', $host) === 1) return $host;
         if (preg_match('/^\[([0-9a-f:]+)\]$/D', $host, $parts) === 1
             && filter_var($parts[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
