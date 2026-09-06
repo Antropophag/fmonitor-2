@@ -2,8 +2,8 @@
 declare(strict_types=1);
 namespace FMonitor2\AssignmentOrderOriginal;
 
-final class AssignmentOrderOriginalPrivateOrphanFixtureUnavailable extends \RuntimeException{}
-final class AssignmentOrderOriginalPrivateOrphanFixtureConflict extends \RuntimeException{}
+final class AssignmentOrderOriginalPrivateOrphanFixtureUnavailable extends \RuntimeException{public function __construct(){parent::__construct('AssignmentOrderOriginalPrivateOrphanFixtureUnavailable',0,null);}}
+final class AssignmentOrderOriginalPrivateOrphanFixtureConflict extends \RuntimeException{public function __construct(){parent::__construct('AssignmentOrderOriginalPrivateOrphanFixtureConflict',0,null);}}
 final class AssignmentOrderOriginalFileState{
  public static function read(string$r):array{$f=$r.'/.aoou-state.json';if(!is_file($f))return['stages'=>[],'finalized'=>[]];$v=json_decode((string)file_get_contents($f),true,512,JSON_THROW_ON_ERROR);if(!is_array($v)||!isset($v['stages'],$v['finalized']))throw new \RuntimeException();return$v;}
  public static function lock(string$f){$h=@fopen($f,'c+b');if(!$h)throw new \RuntimeException();chmod($f,0600);return$h;}
@@ -37,8 +37,15 @@ final class AssignmentOrderOriginalFileStorage implements AssignmentOrderOrigina
  public function inventoryCanonicalJson():string{return json_encode(AssignmentOrderOriginalFileState::read($this->r),JSON_THROW_ON_ERROR);}
 }
 interface AssignmentOrderOriginalPrivateOrphanFixture{public function create(AssignmentOrderOriginalPrivateOrphanFixtureCommand $command):void;}
-final class AssignmentOrderOriginalFileOrphanFixture implements AssignmentOrderOriginalPrivateOrphanFixture{public function __construct(private string$r,private AssignmentOrderOriginalClock$c,private AssignmentOrderOriginalFaultInjector$f){}public function create(AssignmentOrderOriginalPrivateOrphanFixtureCommand$command):void{try{if(!preg_match('/^[a-z0-9][a-z0-9-]{0,79}$/D',$command->opaqueIdentity)||$command->bytes===''||new \DateTimeImmutable($command->createdOrFinalizedAtUtc)>new \DateTimeImmutable($this->c->nowUtc()))throw new \RuntimeException();$this->f->before(AssignmentOrderOriginalFaultPoint::STAGE_WRITE);AssignmentOrderOriginalFileState::mutate($this->r,function(&$s)use($command){$k=$command->kind===AssignmentOrderOriginalPrivateOrphanFixtureKind::ABANDONED_STAGE?'stages':'finalized';foreach($s[$k]as$v)if($v['opaqueIdentity']===$command->opaqueIdentity)throw new AssignmentOrderOriginalPrivateOrphanFixtureConflict();$e=['byteSize'=>strlen($command->bytes),$k==='stages'?'createdAtUtc':'finalizedAtUtc'=>$command->createdOrFinalizedAtUtc,'opaqueIdentity'=>$command->opaqueIdentity];if($k==='finalized')$e['sha256']=hash('sha256',$command->bytes);AssignmentOrderOriginalFileState::atomic($this->r.'/fixture-'.hash('sha256',$command->opaqueIdentity).($k==='finalized'?'.pdf':'.stage'),$command->bytes);$s[$k][]=$e;});}catch(AssignmentOrderOriginalPrivateOrphanFixtureConflict$e){throw$e;}catch(\Throwable){throw new AssignmentOrderOriginalPrivateOrphanFixtureUnavailable();}}}
-final class AssignmentOrderOriginalPrivateOrphanFixtureFactory{public static function create(string$r,string$t,AssignmentOrderOriginalClock$c,AssignmentOrderOriginalProductionConfig$p,AssignmentOrderOriginalFaultInjector$f):AssignmentOrderOriginalPrivateOrphanFixture{try{AssignmentOrderOriginalFileStorage::validateRoot($r);$m=$r.'/.aoou-verifier-owner';if(is_link($m)||!is_file($m)||(fileperms($m)&0777)!==0600||file_get_contents($m)!=="aoou-private-orphan-fixture-v1\n{$t}\n")throw new \RuntimeException();$a=(string)realpath($r);$b=(string)realpath($p->privateStorageRoot);if(!$b||$a===$b||str_starts_with($a,$b.'/')||str_starts_with($b,$a.'/'))throw new \RuntimeException();return new AssignmentOrderOriginalFileOrphanFixture($a,$c,$f);}catch(\Throwable){throw new AssignmentOrderOriginalPrivateOrphanFixtureUnavailable();}}}
+require_once __DIR__.'/AssignmentOrderOriginalFileOrphanFixture.php';
+final class AssignmentOrderOriginalPrivateOrphanFixtureFactory
+{
+ public static function create(string $privateStorageRoot,string $ownershipToken,AssignmentOrderOriginalClock $clock,AssignmentOrderOriginalProductionConfig $productionConfig,AssignmentOrderOriginalFaultInjector $faults):AssignmentOrderOriginalPrivateOrphanFixture
+ {
+  try {$authority=new AssignmentOrderOriginalOrphanFixtureAuthority($privateStorageRoot,$ownershipToken,$productionConfig);return new AssignmentOrderOriginalFileOrphanFixture($privateStorageRoot,$authority,$clock,$faults);}
+  catch(\Throwable){throw new AssignmentOrderOriginalPrivateOrphanFixtureUnavailable();}
+ }
+}
 final class AssignmentOrderOriginalSystemClock implements AssignmentOrderOriginalClock{public function nowUtc():string{return gmdate('Y-m-d\TH:i:s\Z');}}
 final class AssignmentOrderOriginalNoFaults implements AssignmentOrderOriginalFaultInjector{public function before(AssignmentOrderOriginalFaultPoint$p):void{}}
 final class AssignmentOrderOriginalRandomIds implements AssignmentOrderOriginalIdSource{public function nextRootId():AssignmentOrderOriginalIdResult{return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED,'root-'.bin2hex(random_bytes(16)));}public function nextRevisionId():AssignmentOrderOriginalIdResult{return new AssignmentOrderOriginalIdResult(AssignmentOrderOriginalIdStatus::GENERATED,'revision-'.bin2hex(random_bytes(16)));}}

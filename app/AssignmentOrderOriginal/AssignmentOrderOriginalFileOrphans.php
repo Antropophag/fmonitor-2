@@ -41,7 +41,7 @@ final class AssignmentOrderOriginalFileOrphans
                 $this->observer?->observe(AssignmentOrderOriginalStorageEvent::DELETE_BEGIN,$candidate->opaqueIdentity);
                 $this->faults->before(AssignmentOrderOriginalFaultPoint::ORPHAN_DELETE);
                 // With no metadata there is no authority to derive an upload path.
-                if($current!==null) foreach($this->paths($current) as $path) {
+                if($current!==null) foreach(self::paths($this->root,$current) as $path) {
                     clearstatcache(true,$path);
                     if(is_link($path)|| (file_exists($path)&&!is_file($path))) throw new \RuntimeException();
                     if(is_file($path)&&!unlink($path)) throw new \RuntimeException();
@@ -55,7 +55,7 @@ final class AssignmentOrderOriginalFileOrphans
     }
     private static function compare(array $a,array $b):int
     {return strcmp($a[0],$b[0])?:strcmp($a[1],$b[1]);}
-    private static function inventory(array $state):array
+    public static function inventory(array $state):array
     {
         $all=[]; $seen=[];
         foreach(['stages','finalized'] as $key) {
@@ -74,12 +74,12 @@ final class AssignmentOrderOriginalFileOrphans
         }
         return $all;
     }
-    private function paths(AssignmentOrderOriginalOrphanCandidate $item):array
+    public static function paths(string $root,AssignmentOrderOriginalOrphanCandidate $item):array
     {
         $stage=$item->kind===AssignmentOrderOriginalOrphanKind::ABANDONED_STAGE;
-        $paths=[$this->root.'/fixture-'.hash('sha256',$item->opaqueIdentity).($stage?'.stage':'.pdf')];
-        if($stage&&preg_match('/^stage-[0-9]{4,}$/D',$item->opaqueIdentity)) $paths[]=$this->root.'/.stage-'.$item->opaqueIdentity;
-        if(!$stage&&$item->opaqueIdentity==='content-sha256-'.$item->sha256) $paths[]=$this->root.'/content-'.$item->sha256.'.pdf';
+        $paths=[$root.'/fixture-'.hash('sha256',$item->opaqueIdentity).($stage?'.stage':'.pdf')];
+        if($stage&&preg_match('/^stage-[0-9]{4,}$/D',$item->opaqueIdentity)) $paths[]=$root.'/.stage-'.$item->opaqueIdentity;
+        if(!$stage&&$item->opaqueIdentity==='content-sha256-'.$item->sha256) $paths[]=$root.'/content-'.$item->sha256.'.pdf';
         return $paths;
     }
 }
