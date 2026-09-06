@@ -12,7 +12,11 @@ final readonly class MariaDbSelectionFacts implements SelectionDependencyReader,
             if(!$this->sql->idle())throw new \RuntimeException();
             $allowed=$this->sql->snapshot(function()use($actor,$capability){
                 $s=$this->sql;$p=$s->prefix;
-                if(I\MariaDbSchemaInspector::tableExists($s->db,$p.'fm2_pilot_users')) {
+                $hasLocalFamily=false;
+                foreach(I\IdentityAccessDefinitionSchemaMigration::tables() as $table) {
+                    if(I\MariaDbSchemaInspector::tableExists($s->db,$p.$table)){$hasLocalFamily=true;break;}
+                }
+                if($hasLocalFamily) {
                     if(!I\IdentityAccessSchemaMigration::isCompleteCompatible($s->db,$p))throw new \RuntimeException();
                     $rows=$s->rows('SELECT u.user_id FROM '.$s->table('fm2_pilot_users').' u JOIN '.$s->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$s->table('fm2_pilot_roles').' r ON r.role_id=ur.role_id JOIN '.$s->table('fm2_pilot_role_permissions')." rp ON rp.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND BINARY u.activation_state='active' AND r.status=1 AND BINARY r.code IN ('fkr_operator','manager') AND BINARY rp.permission=BINARY ?",[$actor->value,$capability->value]);
                 } else {
