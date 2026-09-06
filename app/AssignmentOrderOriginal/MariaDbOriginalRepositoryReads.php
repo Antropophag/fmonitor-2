@@ -10,7 +10,7 @@ require_once __DIR__.'/MariaDbOriginalStoredReader.php';
 final class AssignmentOrderOriginalRepositoryReads
 {
     public static function read(\mysqli $db, string $prefix, ?AssignmentOrderOriginalPersistenceObserver $observer,
-        string $kind, string|int $key, ?int $order = null): object
+        string $kind, string|int $key, ?int $order = null, ?AssignmentOrderOriginalWorkerFaults $faults = null): object
     {
         try {
             $valid = match ($kind) {
@@ -21,6 +21,13 @@ final class AssignmentOrderOriginalRepositoryReads
             };
             if (!$valid) AssignmentOrderOriginalSql::fail();
             $sql = new AssignmentOrderOriginalSql($db, $prefix);
+            $point=match($kind) {
+                'request'=>AssignmentOrderOriginalFaultPoint::REQUEST_LOOKUP,
+                'fingerprint'=>AssignmentOrderOriginalFaultPoint::FINGERPRINT_LOOKUP,
+                'root','assignment','revision'=>AssignmentOrderOriginalFaultPoint::LINEAGE_LOOKUP,
+                default=>null,
+            };
+            if($point!==null)$faults?->before($point);
             $reader = new AssignmentOrderOriginalStoredReader($sql);
             return $sql->snapshot(fn() => $kind === 'assignment' ? $reader->assignment($key, $order) : $reader->{$kind}($key), $observer);
         } catch (\Throwable) {

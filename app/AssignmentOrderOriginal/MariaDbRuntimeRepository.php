@@ -11,15 +11,15 @@ final class AssignmentOrderOriginalMariaDbRepository implements AssignmentOrderO
 {
     public function __construct(private \mysqli $db, private string $p, private ?AssignmentOrderOriginalWorkerFaults $faults = null, private ?AssignmentOrderOriginalPersistenceObserver $observer = null) {}
     public function findTerminalRequest(string $id): AssignmentOrderOriginalResultLookup
-    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'request', $id); }
+    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'request', $id, null, $this->faults); }
     public function findAcceptedFingerprint(string $fp): AssignmentOrderOriginalResultLookup
-    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'fingerprint', $fp); }
+    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'fingerprint', $fp, null, $this->faults); }
     public function findLineage(string $root): AssignmentOrderOriginalLineageLookup
-    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'root', $root); }
+    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'root', $root, null, $this->faults); }
     public function findLineageForAssignmentOrder(int $caseId, int $orderId): AssignmentOrderOriginalLineageLookup
-    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'assignment', $caseId, $orderId); }
+    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'assignment', $caseId, $orderId, $this->faults); }
     public function findLineageForRevision(string $revisionId): AssignmentOrderOriginalLineageLookup
-    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'revision', $revisionId); }
+    { return AssignmentOrderOriginalRepositoryReads::read($this->db, $this->p, $this->observer, 'revision', $revisionId, null, $this->faults); }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $c): AssignmentOrderOriginalCommitStatus
     { return AssignmentOrderOriginalRepositoryWrites::commit($this->db, $this->p, $c, $this->faults, $this->observer); }
     public function commitAttempt(AssignmentOrderOriginalAttemptCommit $c): AssignmentOrderOriginalCommitStatus
