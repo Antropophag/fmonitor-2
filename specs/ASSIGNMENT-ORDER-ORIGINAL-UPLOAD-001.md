@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v73 GATE 1 PENDING — ATTEMPT AUDIT**
-Версия: **v73**
+Статус: **v74 GATE 1 PENDING — MAINTENANCE OWNER**
+Версия: **v74**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -2183,3 +2183,7 @@ Barrier uses separate FDs: at the exact configured `barrierEvent` child writes `
 ## Аудит каждой попытки — v73
 
 `ASSIGNMENT-ORDER-ORIGINAL-ATTEMPT-AUDIT-001.md` уточняет section9 audit persistence, audit-table v3 и соответствующие reader/dependency contracts. Owner утвердил каждую denied invocation в `original-denied-attempt-owner-approval-2026-09-06.md`. Новая спецификация имеет приоритет только в этой области: existing terminal не переписывается при denied retry, file/storage audit не требует terminal row, unknown denied audit не выполняет confidential recovery lookup. До независимого Gate1/RED/Gate3/GREEN/Gate5 это planned successor. DATA-INTEGRITYv0.7 и parentv72 approvals остаются историческими и не утверждают новый audit behavior. Остальной contract неизменён.
+
+## Maintenance owner — v74
+
+`ASSIGNMENT-ORDER-ORIGINAL-MAINTENANCE-001.md` уточняет реализуемый maintenance/storage public API, resource ownership, invalid-shape audit, replay и commit uncertainty. Требуется independent Gate1 до нового RED. Это не отменяет ATTEMPT-AUDITv0.4 scoped Gate5 и не изменяет пользовательскую policy каждой denied original invocation. HTTP/selection/opening и прочие declaration/fixture gaps остаются отдельными blockers.

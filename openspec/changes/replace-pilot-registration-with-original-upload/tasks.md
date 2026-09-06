@@ -174,3 +174,9 @@ Task5.9 remains open for corrected exact-SHA GREEN and fresh independent Gate5.
 ## Завершение DATA-INTEGRITY — 2026-09-06
 
 Task5.9 и corrective task4.9 завершены: exact implementation4ed122cac564ae22c4505d3799a1059b04fb64a9, independent Gate5v2 APPROVED435da982. Все затронутые behavior checks проходят на этом SHA; исходные три setup failures и historical documentation diff сохранены вместе с успешным same-SHA supplement. Review `reviews/code/ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001-v2.md` фиксирует точную границу. Combined command/VERIFY_OK остаются открыты. Owner утвердил каждую denied invocation: `original-denied-attempt-owner-approval-2026-09-06.md`; новая доставка идёт отдельным change `record-original-submission-attempt-audits`.
+
+## Maintenance owner corrective gates — 2026-09-06
+
+- [x] 1.41 Independent Gate1 MAINTENANCE-001 и parentv74: exact public ports/outcomes/ownership без нового product permission.
+- [ ] 4.10 Minimal public/native/storage maintenance RED, exact legacy compatibility patches и independent Gate3.
+- [ ] 5.10 Minimal maintenance owner/storage GREEN, relevant regressions/architecture и independent Gate5; remaining fixture/evidence/worker parity не закрываются автоматически.

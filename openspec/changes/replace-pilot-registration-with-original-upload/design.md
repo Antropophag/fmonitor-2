@@ -325,3 +325,7 @@ DATA-INTEGRITY Gate5 failure and all unrelated launch blockers remain recorded.
 ## Следующий аудит попыток — 2026-09-06
 
 Owner утвердил каждую denied invocation: `original-denied-attempt-owner-approval-2026-09-06.md`. Change `record-original-submission-attempt-audits` и ATTEMPT-AUDIT-001 уточняют существующий audit contract/schema в parentv73, сохраняя terminal/accepted history. До его Gate5 combined original command не считается завершённым. DATA-INTEGRITY scoped Gate5v2 на4ed122c остаётся действительным в прежней области.
+
+## Maintenance owner corrective scope — 2026-09-06
+
+MAINTENANCE-001 и parentv74 уточняют существующие public storage/maintenance ports, once-only locks/deletion, trusted authorization, scalar/page/result validation и native result+audit. Требуются Gate1→RED→independent Gate3→minimal GREEN→independent Gate5. Схема13/v3 и пользовательский original audit не меняются. Неохваченные private-orphan fixture/evidence/worker declaration gaps не считаются закрытыми.
