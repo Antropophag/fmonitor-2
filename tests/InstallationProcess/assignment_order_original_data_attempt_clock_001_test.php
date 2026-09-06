@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+require dirname(__DIR__).'/Support/AssignmentOrderOriginalIntegrityTestBootstrap.php';
+use FMonitor2\AssignmentOrderOriginal as O;
+use FMonitor2\Tests\Support as S;
+
+function integrityMissingComposition(bool $invalid=false):O\AssignmentOrderCompositionSnapshot
+{return new O\AssignmentOrderCompositionSnapshot($invalid?O\AssignmentOrderCompositionLookupStatus::FOUND:O\AssignmentOrderCompositionLookupStatus::NOT_FOUND,4512,81,null,null,[],null);}
+function integrityAttemptTuple(S\OriginalIntegrityFixture $f,O\AssignmentOrderOriginalResult $r,string $status,string $reason):void
+{assertSameValue([$status,$reason,$status==='failed',$f->command->requestId,null,null,null,null,null,null,null],integrityTuple($r),'exact selected attempt result');assertSameValue(1,$f->stream->closeCalls,'unread stream close once');assertSameValue(0,$f->stream->readCalls,'no upload read');assertSameValue(0,$f->storage->beginCalls,'no stage');assertSameValue([], $f->repository->acceptedCalls,'no accepted commit');assertSameValue(0,$f->ids->rootCalls+$f->ids->revisionCalls,'no allocation');}
+foreach([false,true] as $correction)foreach([false,true] as $invalid)foreach(['2026-09-02T09:15:30Z','1970-01-01T00:00:00Z'] as $at){
+    $name=($correction?'correction':'initial').'-'.($invalid?'invalid':'missing').'-'.$at;
+    integrityCase('lazy-clock-'.$name,function()use($correction,$invalid,$at){$f=new S\OriginalIntegrityFixture(['correction'=>$correction,'composition'=>integrityMissingComposition($invalid),'clock'=>$at,'date'=>'1969-12-31']);$r=$f->run();$reason=$invalid?'invalid_composition':'order_not_found';integrityAttemptTuple($f,$r,'rejected',$reason);assertSameValue(1,$f->clock->calls,'lazy clock once');assertSameValue(1,count($f->repository->attemptCalls),'one attempt call');assertSameValue(1,count($f->repository->attempts),'one durable rejection/audit');assertSameValue($at,$f->repository->attempts[0]->attemptedAt,'exact instant including epoch');assertSameValue(['authorize','request','composition','stream.close','clock','attempt'],$f->trace->calls,'exact early rejection order');});
+}
+foreach([false,true] as $invalid)foreach(['bad-calendar'=>'2026-02-31T00:00:00Z','bad-format'=>'2026-09-02 09:15:30','throw'=>new RuntimeException('clock unavailable')] as $label=>$clock)integrityCase('lazy-clock-failure-'.(int)$invalid.'-'.$label,function()use($invalid,$clock){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition($invalid),'clock'=>$clock]);integrityAttemptTuple($f,$f->run(),'failed','persistence_failure');assertSameValue(1,$f->clock->calls,'bad clock not retried');assertSameValue([], $f->repository->attemptCalls,'no invented timestamp');assertSameValue(0,$f->fresh->opens,'no commit to recover');});
+foreach(['confirmed','future','invalid-pdf','stale-correction'] as $kind)integrityCase('epoch-ordinary-path-'.$kind,function()use($kind){
+    $options=['clock'=>'1970-01-01T00:00:00Z','date'=>'1969-12-31'];
+    if($kind==='confirmed')$options['confirmed']=false;
+    elseif($kind==='future')$options['date']='1970-01-02';
+    elseif($kind==='invalid-pdf')$options['inspector']=new class implements O\AssignmentOrderOriginalPdfInspector{public function algorithmId():string{return 'fmonitor-passive-pdf-v1';}public function inspect(string $completedBytes):O\AssignmentOrderOriginalPdfInspection{return O\AssignmentOrderOriginalPdfInspection::invalid();}};
+    else{$options['correction']=true;$options['expected']='revision-0099';}
+    $f=new S\OriginalIntegrityFixture($options);$r=$f->run();$reason=match($kind){'confirmed'=>'composition_not_confirmed','future'=>'future_document_date','invalid-pdf'=>'invalid_pdf',default=>'stale_revision'};
+    assertSameValue([$kind==='stale-correction'?'conflict':'rejected',$reason,false],array_slice(integrityTuple($r),0,3),'epoch selected terminal');assertSameValue(1,$f->clock->calls,'acquired clock never repeated');assertSameValue(1,count($f->repository->attempts),'epoch still persists audit');assertSameValue('1970-01-01T00:00:00Z',$f->repository->attempts[0]->attemptedAt,'epoch is real data');assertSameValue([], $f->repository->acceptedCalls,'no accepted commit');assertSameValue(0,$f->ids->rootCalls+$f->ids->revisionCalls,'normal terminal before allocation');
+});
+foreach([false,true] as $rejection)integrityCase('epoch-accepted-or-rejected-replay-'.(int)$rejection,function()use($rejection){
+    $f=new S\OriginalIntegrityFixture(['clock'=>'1970-01-01T00:00:00Z','date'=>'1969-12-31','confirmed'=>!$rejection]);$first=$f->run();assertSameValue($rejection?O\AssignmentOrderOriginalStatus::REJECTED:O\AssignmentOrderOriginalStatus::ACCEPTED,$first->status(),'first epoch outcome');$before=$f->repository->evidenceCanonicalJson(4512,81);$prior=$f->command;$stream=new S\OriginalIntegrityStream('different unread retry bytes',$f->trace);
+    $f->command=new O\SubmitAssignmentOrderOriginalCommand($prior->requestId,$prior->mode,4512,81,18,'2099-01-01',true,null,null,null,null,new O\AssignmentOrderOriginalUpload($stream,'retry.txt','application/octet-stream'));
+    $second=$f->run();if($rejection)assertSameValue(integrityTuple($first),integrityTuple($second),'stored rejection reason/evidence exact on replay');assertSameValue($rejection?O\AssignmentOrderOriginalStatus::REJECTED:O\AssignmentOrderOriginalStatus::REPLAYED,$second->status(),'same request replay before new payload/date/clock');assertSameValue(1,$f->clock->calls,'replay no clock');assertSameValue(0,$stream->readCalls,'new stream not read');assertSameValue(1,$stream->closeCalls,'new stream closed once');assertSameValue($before,$f->repository->evidenceCanonicalJson(4512,81),'immutable terminal/audit/inventories on replay');if(!$rejection)assertSameValue('1970-01-01T00:00:00Z',$second->uploadedAt(),'replayed epoch exact');
+});
+$recoveries=[
+    'miss'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND),'failed','persistence_failure'],
+    'unavailable'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE),'failed','persistence_outcome_unknown'],
+    'getter-throw'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,new S\OriginalIntegrityResult(),'result'),'failed','persistence_outcome_unknown'],
+    'found-null'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND),'failed','persistence_outcome_unknown'],
+    'rejected-winner'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,S\OriginalIntegrityResult::rejected()),'rejected','invalid_pdf'],
+    'accepted-winner'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,new S\OriginalIntegrityResult()),'replayed',null],
+];
+foreach([O\AssignmentOrderOriginalCommitStatus::CONFLICT,O\AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN,new RuntimeException('attempt acknowledgement lost')] as $i=>$commit)foreach($recoveries as $name=>[$lookup,$status,$reason])integrityCase('attempt-recovery-'.$i.'-'.$name,function()use($commit,$lookup,$status,$reason){
+    $f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'attemptOutcome'=>$commit,'freshLookup'=>$lookup]);$r=$f->run();
+    if($status==='replayed'){assertSameValue(O\AssignmentOrderOriginalStatus::REPLAYED,$r->status(),'competing accepted terminal replay');assertSameValue('original-0001',$r->rootOriginalId(),'validated winner evidence');}
+    else integrityAttemptTuple($f,$r,$status,$reason);
+    assertSameValue(1,count($f->repository->attemptCalls),'one attempt, no blind retry');assertSameValue([], $f->repository->attempts,'losing attempt creates no terminal fact');assertSameValue([], $f->repository->acceptedCalls,'no accepted writer call');assertSameValue(1,$f->repository->terminalCalls,'no writer reuse for attempt recovery');assertSameValue(1,$f->fresh->opens,'one fresh open');assertSameValue(1,$f->fresh->reader->reads,'one fresh lookup');assertSameValue(1,$f->fresh->reader->closes,'one close');assertSameValue(1,$f->clock->calls,'no recovery clock');assertSameValue(0,$f->observers->deliveryCalls,'attempt never delivers a new accepted fact');
+});
+foreach([false,true] as $logThrows)integrityCase('attempt-recovery-close-failure-log'.(int)$logThrows,function()use($logThrows){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'attemptOutcome'=>O\AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN,'durableAttempt'=>true,'freshClose'=>'failed','logThrows'=>$logThrows]);integrityAttemptTuple($f,$f->run(),'rejected','order_not_found');assertSameValue(1,count($f->repository->attemptCalls),'no duplicate after recovered own terminal');assertSameValue(1,count($f->repository->attempts),'original committed attempt kept');assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED',['phase'=>'authorized_attempt_recovery']]],$f->observers->logs,'exact attempt recovery close diagnostic');});
+integrityCase('confirmed-attempt-rollback-no-recovery',function(){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'attemptOutcome'=>O\AssignmentOrderOriginalCommitStatus::ROLLED_BACK]);integrityAttemptTuple($f,$f->run(),'failed','persistence_failure');assertSameValue(1,count($f->repository->attemptCalls),'one confirmed rollback');assertSameValue([], $f->repository->attempts,'no audit fact');assertSameValue(0,$f->fresh->opens,'confirmed rollback needs no recovery');});
+foreach([false,true] as $logThrows)integrityCase('lazy-clock-after-close-failure-log'.(int)$logThrows,function()use($logThrows){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'closeThrows'=>true,'logThrows'=>$logThrows]);integrityAttemptTuple($f,$f->run(),'rejected','order_not_found');assertSameValue(1,$f->clock->calls,'cleanup failure does not skip lazy clock');assertSameValue(1,count($f->repository->attempts),'cleanup failure cannot skip audit');assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED',['phase'=>'stream_close']]],$f->observers->logs,'existing cleanup event unchanged');});
+$untouched=[
+    'invalid-shape'=>['request'=>'not-a-uuid'],'denied-deferred-policy'=>['authorization'=>O\AssignmentOrderOriginalAuthorizationStatus::DENIED],
+    'authorization-unavailable'=>['authorization'=>O\AssignmentOrderOriginalAuthorizationStatus::UNAVAILABLE],
+    'authorization-throw'=>['authorization'=>new RuntimeException('authorization failure')],
+    'terminal-unavailable'=>['terminal'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE)],
+    'composition-unavailable'=>['composition'=>new O\AssignmentOrderCompositionSnapshot(O\AssignmentOrderCompositionLookupStatus::UNAVAILABLE,4512,81,null,null,[],null)],
+    'terminal-replay'=>['terminal'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,new S\OriginalIntegrityResult())],
+];
+foreach($untouched as $name=>$options)integrityCase('no-speculative-clock-'.$name,function()use($options){$f=new S\OriginalIntegrityFixture($options);$f->run();assertSameValue(0,$f->clock->calls,'no newly speculative invocation clock');assertSameValue([], $f->repository->attemptCalls,'no new out-of-scope audit behavior');assertSameValue(0,$f->fresh->opens,'no newly speculative reader');assertSameValue(1,$f->stream->closeCalls,'supplied stream owned for close');});
+integrityDone('ASSIGNMENT_ORDER_ORIGINAL_DATA_ATTEMPT_CLOCK_OK');

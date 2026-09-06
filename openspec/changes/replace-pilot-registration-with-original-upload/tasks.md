@@ -141,7 +141,7 @@ zero); exact parser delta diffcheck PASS. Evidence6c70f86c; full disclosure in
 
 ## Cumulative persistence corrective gates — 2026-09-06
 
-- [ ] 1.39 Independent Gate1 DATA-INTEGRITY-001 exact complete metadata/lookup/SQL/recovery/authorized-time contracts; denial-cardinality owner choice remains separate.
+- [x] 1.39 Independent Gate1 DATA-INTEGRITY-001 exact complete metadata/lookup/SQL/recovery/authorized-time contracts; denial-cardinality owner choice remains separate.
 - [ ] 4.8 Cumulative public-port and real MariaDB RED, exact compatibility-helper patches, independent Gate3; no fallback old-connection recovery or malformed-as-miss.
 - [ ] 5.9 Minimal data integrity/fresh recovery GREEN, all affected real worker/adapter/resource regressions and independent scoped Gate5; remaining audit/maintenance/declaration/selection gates preserved.
 
@@ -154,3 +154,8 @@ DATA-INTEGRITYv04 Gate1 approved9dbf8f41; later independent step11/diagnostic
 clarifications require v05 fresh Gate1 before formal target/initial/fresh RED.
 Preliminary author diagnostics are not authoritative Gate2 evidence. No data
 integrity production code has changed.
+
+DATA-INTEGRITYv06 exact Gate1 APPROVED ce9a24c6; canonical spec c3d170ec,
+parentv71 4f5be069. Cumulative RED capture now authorized. No data-integrity
+production implementation has begun; every test artifact retains independent
+Gate3 before its implementation.
