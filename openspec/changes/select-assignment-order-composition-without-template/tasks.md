@@ -5,9 +5,9 @@ Current scope2026-09-06: fresh launch без исторических данны
 не требует file/version storage. См. `docs/operations/fresh-launch-owner-scope-2026-09-06.md`.
 
 - [x] 1.1 Сверить selection/prepare persistence с independent inventory; verification: exact seams и renderer coupling описаны, fixture SQL не принят за production путь. Evidence: independent inventory `16ba3e65401ab6b3acb883a96f590bc1e9eb7c3d`, projection gap `412efcb75bd88b454b2ba1ebbf9800937e96856b`, повторное чтение creator/persistence и authorization на base `71eea1b`.
-- [ ] 1.2 Написать `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001` с exact DTO/result/capability/date/composition identity, replay/conflict и correction rules; verification: owner-approved optional template truth соблюдена, все новые решения явно рассмотрены, expected values независимы от implementation.
+- [x] 1.2 Написать `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001` с exact DTO/result/capability/date/composition identity, replay/conflict и correction rules; verification: owner-approved optional template truth соблюдена, все новые решения явно рассмотрены, expected values независимы от implementation.
 - [ ] 1.3 Согласовать fresh selection, original command и HTTP contracts; verification: выбранный состав читается original command и locked validation, новые входы не вызывают старый prepare; PDF storage и перенос старых writers отсутствуют.
-- [ ] 1.4 Получить fresh independent Gate 1; verification: exact hashes APPROVED, unresolved product decisions закрыты владельцем, RED до approval не написан.
+- [x] 1.4 Получить fresh independent Gate 1; verification: exact hashes APPROVED, unresolved product decisions закрыты владельцем, RED до approval не написан.
 
 ## 2. RED и Gate 3
 
