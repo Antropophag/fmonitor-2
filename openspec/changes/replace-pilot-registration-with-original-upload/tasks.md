@@ -129,4 +129,12 @@ remain open. No combined original-command/VERIFY_OK/launch approval.
 
 - [x] 1.38 Independent Gate1 PDF-HISTORY-001 exact lexical/history/filter/structural-budget contract; no new primary data or algorithm-ID substitution.
 - [x] 4.7 Public-inspector RED and independent Gate3; separate exact unapplied legacy-oracle patch with fresh mismatch evidence.
-- [ ] 5.8 Minimal history/name/opaque-stream GREEN, parser/worker regressions, architecture/lint and independent Gate5; combined command remains separate.
+- [x] 5.8 Minimal history/name/opaque-stream GREEN, parser/worker regressions, architecture/lint and independent Gate5; combined command remains separate.
+
+## PDF history completion — 2026-09-06
+
+Implementation e9aca37cbb33f11a7cb63d13c1f06ca41bec35c3; independent scoped
+Gate5 c649554a APPROVED. All26 original scripts+3support+architecture/unit/lint/
+OpenSpec PASS. Historical broad diff diagnostic remains preserved (33/34 commands
+zero); exact parser delta diffcheck PASS. Evidence6c70f86c; full disclosure in
+`original-pdf-history-green-v1-2026-09-06.md`. No combined command/VERIFY_OK claim.
