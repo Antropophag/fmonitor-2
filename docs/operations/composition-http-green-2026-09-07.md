@@ -53,3 +53,24 @@ Canonical8092 остаётся старым image с approved healthcheck; users
 Новые tests сейчас выполнялись focused; inclusion всего native test family в
 canonical full verify требует отдельного integration audit (существующий runner
 собирает InstallationProcess, а standalone native families находятся отдельно).
+
+## Final scoped approval
+
+Source333e6633f825b469d932a69b4fb1d9c51a043081 + corrective source
+bfcf6c03b2cdd4c50f4eb4dba36ce985969d3070 имеют Gate5 APPROVED:
+reviews/code/ASSIGNMENT-ORDER-COMPOSITION-HTTP-001-v2.md. Единственный findingv1:
+HTTP требовал UUIDv4, domain helper допускает1–5. Native v1 HTTP RED303 вместо400,
+fresh Gate3uuid-v1 APPROVED, local HTTP-only regex GREEN; domain policy не менялась.
+http-v4-red.log/http-v4-green.log сохраняют доказательство; final detector
+impeccable-final.json=[] после final markup grouping. Browser final layout inspected
+на source333e663; corrective source изменил только admission UUID grammar.
+
+Browser-template.pdf — verification-only копия пользовательского download,
+100595bytes, SHA256 b3035e0605b524288438a282532d85e1fccb807432ec1a6f376e35c10a62cef4.
+External browser-download-evidence.json подтверждает application private files0.
+Native template renderer layout approvals из handoff переиспользованы.
+
+Пакет уложился в объявленный60min bound, включая corrective reviews и commit.
+Этот change завершает standalone HTTP selection/PDF. Он не означает полного
+портального integration, canonical8092 feature deployment или VERIFY_OK.
+Следующий authorized пакет — original upload/read с date prefill и createForSelections.
