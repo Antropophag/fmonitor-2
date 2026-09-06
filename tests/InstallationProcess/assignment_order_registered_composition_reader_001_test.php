@@ -72,7 +72,7 @@ registeredCase('foreign-case no source authority',static function(Fixture $f):vo
     try{
         $user=explode('@',$restricted->query('SELECT CURRENT_USER() n')->fetch_assoc()['n'])[0];
         assertSameValue(1,preg_match('/^aoir_ro_[0-9a-f]{12}$/D',$user),'exact owned grant target');$database=$f->schema->source->name;
-        $admin->query("REVOKE SELECT ON `$database`.* FROM `$user`@`%`");$admin->query("GRANT SELECT ON `$database`.fm2_assignment_order_identities TO `$user`@`%`");
+        $admin->query("REVOKE SELECT ON `$database`.* FROM `$user`@`%`");$admin->query("GRANT SELECT ON `$database`.fm2_assignment_order_identities TO `$user`@`%`");$restricted->select_db($database);
         try{$restricted->query('SELECT * FROM fm2_assignment_order_selections');throw new TestFailure('source unexpectedly readable');}catch(mysqli_sql_exception $e){assertSameValue(1142,$e->getCode(),'native source read denied');}
         $reader=registeredReader($f,$restricted);assertSameValue(registeredEmpty('not_found',4513),registeredTuple($reader->find(4513,81)),'foreign case never probes denied source');
         assertSameValue(registeredEmpty('unavailable'),registeredTuple($reader->find(4512,81)),'same case observes denied source');
