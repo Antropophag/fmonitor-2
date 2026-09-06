@@ -13,6 +13,10 @@ require_once __DIR__.'/AssignmentOrderOriginalResourceScope.php';
 require_once __DIR__.'/AssignmentOrderOriginalPdfAcquisition.php';
 require_once __DIR__.'/AssignmentOrderOriginalResultSnapshot.php';
 require_once __DIR__.'/AssignmentOrderOriginalCommitProtocol.php';
+require_once __DIR__.'/AssignmentOrderOriginalFreshRecovery.php';
+require_once __DIR__.'/AssignmentOrderOriginalAttemptFinisher.php';
+require_once __DIR__.'/AssignmentOrderOriginalCompositionValues.php';
+require_once __DIR__.'/AssignmentOrderOriginalCandidate.php';
 
 final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApplication
 {
@@ -24,7 +28,7 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
         $d = $this->dependencies;
         if ($d->safeLog instanceof AssignmentOrderOriginalRequestSafeLogObserver) $d->safeLog->useRequest($c->requestId);
         $resources = new AssignmentOrderOriginalResourceScope($d, $c->upload->stream);
-        $at = '1970-01-01T00:00:00Z';
+        $at = null;
         try {
             if (!AssignmentOrderOriginalCommandShape::valid($c)) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::INVALID_COMMAND);
             $capability = $c->mode === AssignmentOrderOriginalMode::INITIAL ? 'assignment_order.original.upload' : 'assignment_order.original.correct';
@@ -39,16 +43,14 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
                 return $result;
             }
             $composition = $this->persistenceCall(fn() => $d->compositions->find($c->installationCaseId, $c->assignmentOrderId));
-            if ($composition->status === AssignmentOrderCompositionLookupStatus::NOT_FOUND) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::ORDER_NOT_FOUND);
-            if ($composition->status === AssignmentOrderCompositionLookupStatus::UNAVAILABLE) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
-            if (!$this->persistenceCall(fn() => $this->validComposition($composition))) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::INVALID_COMPOSITION);
+            AssignmentOrderOriginalCompositionValues::validate($composition, $c->installationCaseId, $c->assignmentOrderId);
             $instant = AssignmentOrderOriginalPortValues::nowUtc($d->clock);
             if ($instant === null) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
             $at = $instant;
             if (!$c->compositionConfirmed) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::COMPOSITION_NOT_CONFIRMED);
             $today = (new \DateTimeImmutable($at))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');
             if ($c->documentDate > $today) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::FUTURE_DOCUMENT_DATE);
-            $line = $c->mode === AssignmentOrderOriginalMode::CORRECTION ? $this->initialLineage($c, $composition) : null;
+            if ($c->mode === AssignmentOrderOriginalMode::CORRECTION) AssignmentOrderOriginalCandidate::root($d->repository, $c, $composition);
             $resources->lifecycle(AssignmentOrderOriginalLifecycleEvent::AFTER_REQUEST_MISS_BEFORE_STREAM);
             [$sha, $size] = AssignmentOrderOriginalPdfAcquisition::inspect($resources, $d->pdfInspector, $c->upload->declaredMediaType);
             $fingerprint = $this->fingerprint($c, $composition, $sha);
@@ -60,17 +62,17 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
                 return $result;
             }
             $resources->lifecycle(AssignmentOrderOriginalLifecycleEvent::AFTER_FINGERPRINT_MISS_BEFORE_CAS);
+            $number = AssignmentOrderOriginalCandidate::number($d->repository, $c, $composition, $sha);
             $root = $c->rootOriginalId;
             if ($c->mode === AssignmentOrderOriginalMode::INITIAL) $root = AssignmentOrderOriginalPortValues::nextId($d->ids, true);
             if ($root === null) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
             $revision = AssignmentOrderOriginalPortValues::nextId($d->ids, false);
             if ($revision === null) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
-            $number = $line === null ? 1 : (int) $this->persistenceCall(fn() => $line->currentRevisionNumber()) + 1;
             $identity = $resources->finalize($sha, $size);
             $resources->closeCandidate();
             $resources->lifecycle(AssignmentOrderOriginalLifecycleEvent::AFTER_PRIVATE_FINALIZE_BEFORE_COMMIT);
-            $result = (new AssignmentOrderOriginalCommitProtocol($d->repository))->execute($c, $composition, $root, $revision, $number, $at, $sha, $size, $identity, $fingerprint, $resources);
-            if (in_array($result->status(), [AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalStatus::CONFLICT], true) && $result->reasonCode() !== null)
+            [$result, $needsAttempt] = (new AssignmentOrderOriginalCommitProtocol($d))->execute($c, $composition, $root, $revision, $number, $at, $sha, $size, $identity, $fingerprint, $resources);
+            if ($needsAttempt && in_array($result->status(), [AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalStatus::CONFLICT], true) && $result->reasonCode() !== null)
                 return $this->finish($c, $result->status(), $result->reasonCode(), $result->retryable(), $at, $resources);
             return $result;
         } catch (AssignmentOrderOriginalResponseDeliveryLost $lost) {
@@ -82,34 +84,19 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
         }
     }
 
-    private function finish(SubmitAssignmentOrderOriginalCommand $c, AssignmentOrderOriginalStatus $status, AssignmentOrderOriginalReason $reason, bool $retry, string $at, AssignmentOrderOriginalResourceScope $resources): AssignmentOrderOriginalResult
+    private function finish(SubmitAssignmentOrderOriginalCommand $c, AssignmentOrderOriginalStatus $status, AssignmentOrderOriginalReason $reason, bool $retry, ?string $at, AssignmentOrderOriginalResourceScope $resources): AssignmentOrderOriginalResult
     {
-        $resources->cleanup();
-        if (!$retry && in_array($status, [AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalStatus::CONFLICT], true) && $at !== '1970-01-01T00:00:00Z') {
-            try { $audit = $this->dependencies->repository->commitAttempt(new AssignmentOrderOriginalAttemptCommit($c->requestId, $c->actorUserId, $c->mode, $c->installationCaseId, $c->assignmentOrderId, $status, $reason, false, $at)); }
-            catch (\Throwable) { $audit = AssignmentOrderOriginalCommitStatus::ROLLED_BACK; }
-            if ($audit !== AssignmentOrderOriginalCommitStatus::COMMITTED) return new AssignmentOrderOriginalResultValue(AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true, $c->requestId);
-        }
-        return new AssignmentOrderOriginalResultValue($status, $reason, $retry, $c->requestId);
-    }
-
-    private function initialLineage(SubmitAssignmentOrderOriginalCommand $c, AssignmentOrderCompositionSnapshot $composition): AssignmentOrderOriginalLineageLookup
-    {
-        [$line, $status, $matches] = $this->persistenceCall(function () use ($c, $composition): array {
-            $line = $this->dependencies->repository->findLineage((string) $c->rootOriginalId);
-            $status = $line->status();
-            return [$line, $status, $status === AssignmentOrderOriginalLookupStatus::FOUND && $line->rootOriginalId() === $c->rootOriginalId && $line->compositionIdentity() === $composition->identity && $line->compositionSha256() === $composition->sha256];
-        });
-        if ($status === AssignmentOrderOriginalLookupStatus::UNAVAILABLE) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
-        if (!$matches) throw AssignmentOrderOriginalSubmissionFailure::conflict(AssignmentOrderOriginalReason::SEMANTIC_COLLISION);
-        return $line;
+        return AssignmentOrderOriginalAttemptFinisher::finish($this->dependencies, $c, $status, $reason, $retry, $at, $resources);
     }
 
     private function lookup(callable $read): array
     {
         return $this->persistenceCall(function () use ($read): array {
             $lookup = $read(); $status = $lookup->status();
-            return [$status, $status === AssignmentOrderOriginalLookupStatus::FOUND ? $lookup->result() : null];
+            $result = $lookup->result();
+            if (($status === AssignmentOrderOriginalLookupStatus::FOUND) !== ($result !== null))
+                throw new \RuntimeException('AssignmentOrderOriginalLookupUnavailable');
+            return [$status, $result];
         });
     }
 
@@ -117,13 +104,6 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
     {
         try { return $read(); }
         catch (\Throwable) { throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE); }
-    }
-
-    private function validComposition(AssignmentOrderCompositionSnapshot $value): bool
-    {
-        return (bool) $value->identity && preg_match('/^[0-9a-f]{64}$/D', (string) $value->sha256) === 1
-            && $value->installerIds !== [] && count($value->installerIds) === count(array_unique($value->installerIds))
-            && min($value->installerIds) > 0 && ($value->controlEngineerUserId ?? 0) > 0;
     }
 
     private function fingerprint(SubmitAssignmentOrderOriginalCommand $c, AssignmentOrderCompositionSnapshot $composition, string $sha): string
