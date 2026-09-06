@@ -4,7 +4,7 @@
 
 ## 2. RED and review
 
-- [ ] 2.1 Доказать native selection→direct original RED через public constructor/application; verification: valid synthetic setup, exact composition и no-template footprint.
+- [x] 2.1 Доказать native selection→direct original RED через public constructor/application; verification: valid synthetic setup, exact composition и no-template footprint.
 - [ ] 2.2 Проверить replaced target и обе стороны replace/upload race; verification: exact outcomes, общий case lock и отсутствие crossed history.
 - [ ] 2.3 Получить independent Gate3; verification: explicit APPROVED для tests/evidence до production изменений.
 
@@ -20,3 +20,9 @@
 
 Gate1 source73b05d1 APPROVED: `docs/operations/selected-original-binding-gate1-2026-09-06.md`.
 Planning-only checkpoint; RED/production ещё не написаны.
+
+First direct-original tracer sourcea0e3784 Gate3 APPROVED:
+`reviews/tests/ASSIGNMENT-ORDER-SELECTED-ORIGINAL-BINDING-001-tracer-v1.md`.
+RED archive `selected-original-red-nuxsw3nd`; both native constructors missing,
+real dependencies/setup/cleanup proven. Full task2.3 remains open for race/correction
+tranches. Next minimal GREEN binds preflight and locked validation together.
