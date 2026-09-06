@@ -12,7 +12,7 @@ Current scope2026-09-06: fresh launch без исторических данны
 ## 2. RED и Gate 3
 
 - [x] 2.1 Доказать RED direct selection при отсутствующем/throwing renderer с exact persisted identity и no-template artifacts; verification: failure вызван отсутствующим behavior, не setup.
-- [ ] 2.2 Доказать RED authorization/eligibility/replay/concurrent stale/atomic persistence cases и no-opening/no-composition-application; verification: public seam, fictional fixtures, fixed expected values, bounded cleanup.
+- [x] 2.2 Доказать RED authorization/eligibility/replay/concurrent stale/atomic persistence cases и no-opening/no-composition-application; verification: public seam, fictional fixtures, fixed expected values, bounded cleanup.
 - [ ] 2.4 Доказать сохранение public projections при новом выборе поверх applicable order; verification: before/after directory assignments, assigned/free counters и inspection attribution byte-equivalent, existing rows-only oracle недостаточен; fresh Gate 3 до correction.
 - [ ] 2.3 Получить fresh independent Gate 3; verification: reviewer не автор тестов, explicit APPROVED до production edits.
 
@@ -157,3 +157,14 @@ response loss/restart replay, exception/boolean connection interruption and
 fresh absent lookup. Delivery loss is not claimed as native COMMIT-ack loss.
 Prefix/readiness and locked original-root edges/final native audit remain open.
 No source fix was needed; Gate3 approved verification-only/no-op Gate4 extension.
+
+Final standalone eight-port native Gate5 APPROVED, testedbe0fe02/sourcec93c27a:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-native-v1.md`.
+Combined56native/architecture/OpenSpec/diff PASS, clean archive
+`selection-native-combined-rny_xymw`, manifest
+236a6c5b71b364d3bc9493ef729b57c0a47b47f3da1ef8c873da89730eb90bd2.
+Task2.2 complete. Original factory/locked reader, public applicable projections,
+PDF/date/audit, HTTP/application/opening remain integration work; effective owner
+must be bound there. Migration frontier13 unchanged. Next: original registry-reader
+and locked validation binding through gates; standalone native audit is not launch
+approval and does not supply full VERIFY_OK.
