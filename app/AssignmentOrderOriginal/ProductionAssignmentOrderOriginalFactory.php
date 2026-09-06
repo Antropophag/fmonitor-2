@@ -21,7 +21,8 @@ final class ProductionAssignmentOrderOriginalFactory
             $clock, new AssignmentOrderOriginalRandomIds(), new FMonitorPassivePdfInspector(),
             new AssignmentOrderOriginalFileStorage($c->privateStorageRoot, new AssignmentOrderOriginalSystemClock(), $faults),
             new AssignmentOrderOriginalMariaDbRepository($db, $c->tablePrefix), new AssignmentOrderOriginalNoOpLifecycle(),
-            new AssignmentOrderOriginalNoOpStorageObserver(), $faults, $safeLog, new AssignmentOrderOriginalNoOpDelivery(), $freshTerminalReaders));
+            new AssignmentOrderOriginalNoOpStorageObserver(), $faults, $safeLog, new AssignmentOrderOriginalNoOpDelivery(), $freshTerminalReaders,
+            new AssignmentOrderOriginalMariaDbAttemptAuditWriter($db, $c->tablePrefix)));
     }
 
     public static function createRecoveryReady(\mysqli $db, AssignmentOrderOriginalProductionConfig $c,

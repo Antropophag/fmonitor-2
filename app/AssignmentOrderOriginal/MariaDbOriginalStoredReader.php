@@ -18,8 +18,12 @@ final readonly class AssignmentOrderOriginalStoredReader
         if (count($rows) > 1) AssignmentOrderOriginalSql::fail();
         $revisions = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_revisions').' WHERE request_id='.$this->sql->quote($id));
         if ($rows === []) {
-            $audits = $this->sql->rows('SELECT request_id FROM '.$this->sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$this->sql->quote($id));
-            if ($revisions !== [] || $audits !== []) AssignmentOrderOriginalSql::fail();
+            $audits = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$this->sql->quote($id));
+            if ($revisions !== []) AssignmentOrderOriginalSql::fail();
+            foreach ($audits as $row) {
+                $audit = AssignmentOrderOriginalAttemptAuditRows::parse($row, $id);
+                if ($audit['status'] !== AssignmentOrderOriginalStatus::FAILED) AssignmentOrderOriginalSql::fail();
+            }
             return new AssignmentOrderOriginalResultLookupValue(AssignmentOrderOriginalLookupStatus::NOT_FOUND);
         }
         if ($rows[0]['request_id'] !== $id) AssignmentOrderOriginalSql::fail();

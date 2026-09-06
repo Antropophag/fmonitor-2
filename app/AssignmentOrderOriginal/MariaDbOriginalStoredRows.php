@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace FMonitor2\AssignmentOrderOriginal;
+require_once __DIR__.'/MariaDbOriginalAttemptAuditRows.php';
 
 /** @internal Lossless SQL rehydration, without synthesizing missing evidence. */
 final class AssignmentOrderOriginalStoredRows
@@ -32,18 +33,13 @@ final class AssignmentOrderOriginalStoredRows
         $result = $request['result'];
         $rows = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$sql->quote($requestId));
         $denial = $result->reasonCode() === AssignmentOrderOriginalReason::AUTHORIZATION_DENIED;
-        if (!$denial && count($rows) !== 1) AssignmentOrderOriginalSql::fail();
-        $found = false;
+        $matches = 0;
         foreach ($rows as $row) {
-            $matches = $row['request_id'] === $requestId && $row['status'] === $result->status()->value
-                && $row['reason_code'] === $result->reasonCode()?->value && $row['mode'] === $request['mode']->value
-                && AssignmentOrderOriginalDataScalar::integer($row['actor_identity']) === $request['actor']
-                && AssignmentOrderOriginalDataScalar::integer($row['installation_case_id']) === $request['case']
-                && AssignmentOrderOriginalDataScalar::integer($row['assignment_order_id']) === $request['order']
-                && AssignmentOrderOriginalDataScalar::sqlUtc($row['attempted_at_utc']) === $request['at'];
-            $found = $found || $matches;
+            $audit = AssignmentOrderOriginalAttemptAuditRows::parse($row, $requestId);
+            if (AssignmentOrderOriginalAttemptAuditRows::matches($audit, $request)) ++$matches;
+            elseif (!AssignmentOrderOriginalAttemptAuditRows::additional($audit)) AssignmentOrderOriginalSql::fail();
         }
-        if (!$found) AssignmentOrderOriginalSql::fail();
+        if ($denial ? $matches < 1 : $matches !== 1) AssignmentOrderOriginalSql::fail();
     }
 
     public static function acceptedRequest(array $request, AssignmentOrderOriginalAcceptedCommit $commit): void
