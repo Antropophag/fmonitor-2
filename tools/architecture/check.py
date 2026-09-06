@@ -23,6 +23,9 @@ SOURCE_SUFFIXES = {".php", ".js", ".sql"}
 IGNORED_PARTS = {"demo", "legacy-migration"}
 DDL = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+(?:TABLE|DATABASE|INDEX|USER)\b", re.I)
 SQL = re.compile(r"\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
+PHP_QUOTED = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"")
+PHP_SELECT_IDENTIFIER = re.compile(r"\bcase\s+SELECT\s*(?==)|::\s*SELECT\b", re.I)
+PHP_DOTTED_ATOM = re.compile(r"(?:[A-Za-z_][A-Za-z0-9_]*\.)+[A-Za-z_][A-Za-z0-9_]*")
 MUTATION_SQL = re.compile(r"\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
 WORKFORCE_MIGRATION_APPLY = re.compile(
     r"\b(?:BitrixWorkforceHistory|WorkforceCatalog)SchemaMigration\s*::\s*apply\s*\("
@@ -164,6 +167,19 @@ def sql_owner(path: Path) -> bool:
     return False
 
 
+def php_sql_detection_line(line: str) -> str:
+    """Ignore PHP identifiers/capability atoms, never SQL literals or fingerprints."""
+    parts: list[str] = []
+    offset = 0
+    for token in PHP_QUOTED.finditer(line):
+        parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:token.start()]))
+        quoted = token.group(0)
+        parts.append("''" if PHP_DOTTED_ATOM.fullmatch(quoted[1:-1]) else quoted)
+        offset = token.end()
+    parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:]))
+    return "".join(parts)
+
+
 def collect() -> dict[str, list[str] | dict[str, int]]:
     violations: dict[str, list[str]] = collections.defaultdict(list)
     hotspot: dict[str, int] = {}
@@ -207,7 +223,8 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                     )
             if DDL.search(line) and not ddl_owner(path):
                 violations["ddl_ownership"].append(finding("ddl", path, number, fingerprint_lines[number - 1], source_normalized=True))
-            if SQL.search(line) and not sql_owner(path):
+            sql_line = php_sql_detection_line(line) if path.suffix == ".php" else line
+            if SQL.search(sql_line) and not sql_owner(path):
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
