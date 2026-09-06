@@ -66,7 +66,7 @@ pdfHistoryStatus('opaque-escaped-duplicate-key',History::image('/DCTDecode /Fil#
 foreach(['/MadeUpFilter','[/MadeUpFilter]','[/ASCIIHexDecode 1]','[]','4 0 R','/DCTDecode /Filter /DCTDecode'] as $index=>$filter)pdfHistoryStatus('bad-opaque-filter-'.$index,History::image($filter,'000000>'),Status::INVALID_PDF);
 pdfHistoryStatus('crypt-filter-unsafe',History::image('/Crypt','000000>'),Status::UNSAFE_PDF);
 pdfHistoryStatus('opaque-short-length',History::image('/ASCIIHexDecode','000000>',-1),Status::INVALID_PDF);
-pdfHistoryStatus('opaque-long-length',History::image('/ASCIIHexDecode','000000>',1),Status::INVALID_PDF);
+pdfHistoryStatus('opaque-long-length',History::image('/ASCIIHexDecode','000000>',2),Status::INVALID_PDF);
 pdfHistoryStatus('structural-lzw-still-invalid',str_replace('/Length ','/Filter /LZWDecode /Length ',Corpus::xrefStream()),Status::INVALID_PDF);
 pdfHistoryStatus('structural-filter-array-still-invalid',Corpus::xrefStreamGrammar('array'),Status::INVALID_PDF);
 pdfHistoryStatus('structural-filter-indirect-still-invalid',Corpus::xrefStreamGrammar('indirect'),Status::INVALID_PDF);
