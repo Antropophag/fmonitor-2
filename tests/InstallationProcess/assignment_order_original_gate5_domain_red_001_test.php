@@ -7,6 +7,7 @@ class_exists(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalVerificat
 require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialProcessState.php';
 require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialFixture.php';
 require dirname(__DIR__) . '/Support/AssignmentOrderOriginalMatrixInputs.php';
+require dirname(__DIR__) . '/Support/AssignmentOrderOriginalDataCompatibility.php';
 
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionLookupStatus;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionReader;
@@ -54,14 +55,14 @@ final class Gate5DomainComposition implements AssignmentOrderCompositionReader
             $caseId,
             $orderId,
             'composition-' . $orderId . '-v1',
-            hash('sha256', 'composition-' . $orderId),
+            [81=>'7c824b76b7999bc74e2c8f1fbda74e6e07f388be9b85851c4eebb0d57ec1aaa0',82=>'9e5c95c9133e9c4fe7858b2d337977368c10647bf2f9a162ec14edc4f102b96e'][$orderId],
             [7001],
             31,
         );
     }
 }
 
-final class Gate5DomainLineage implements AssignmentOrderOriginalLineageLookup
+final class Gate5DomainLineage implements \FMonitor2\Tests\Support\OriginalCompatibilityCompleteLineage
 {
     public function __construct(private AssignmentOrderOriginalLookupStatus $status, private ?AssignmentOrderOriginalAcceptedCommit $commit = null) {}
     public function status(): AssignmentOrderOriginalLookupStatus { return $this->status; }
@@ -71,9 +72,14 @@ final class Gate5DomainLineage implements AssignmentOrderOriginalLineageLookup
     public function compositionIdentity(): ?string { return $this->commit?->compositionIdentity; }
     public function compositionSha256(): ?string { return $this->commit?->compositionSha256; }
     public function containsRevision(string $revisionId): bool { return $revisionId === $this->commit?->newRevisionId; }
+    public function installationCaseId(): ?int { return $this->commit?->installationCaseId; }
+    public function assignmentOrderId(): ?int { return $this->commit?->assignmentOrderId; }
+    public function revisionIds(): array { return $this->commit === null ? [] : [$this->commit->newRevisionId]; }
+    public function currentDocumentDate(): ?string { return $this->commit?->documentDate; }
+    public function currentPdfSha256(): ?string { return $this->commit?->pdfSha256; }
 }
 
-final class Gate5DomainRepository implements AssignmentOrderOriginalRepository
+final class Gate5DomainRepository implements AssignmentOrderOriginalRepository, \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAssignmentLineageRepository
 {
     public AssignmentOrderOriginalLookupStatus $terminalStatus = AssignmentOrderOriginalLookupStatus::NOT_FOUND;
     public AssignmentOrderOriginalLookupStatus $fingerprintStatus = AssignmentOrderOriginalLookupStatus::NOT_FOUND;
@@ -108,6 +114,13 @@ final class Gate5DomainRepository implements AssignmentOrderOriginalRepository
         // choose the requested assignment order when INITIAL supplies ''.
         $commit = reset($this->acceptedByOrder) ?: null;
         return new Gate5DomainLineage($commit ? AssignmentOrderOriginalLookupStatus::FOUND : AssignmentOrderOriginalLookupStatus::NOT_FOUND, $commit);
+    }
+    public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): AssignmentOrderOriginalLineageLookup
+    {
+        ++$this->lineageCalls;
+        $commit = $this->acceptedByOrder[$assignmentOrderId] ?? null;
+        if ($commit !== null && $commit->installationCaseId !== $installationCaseId) throw new LogicException('Wrong fixture pair.');
+        return new Gate5DomainLineage($commit === null ? AssignmentOrderOriginalLookupStatus::NOT_FOUND : AssignmentOrderOriginalLookupStatus::FOUND, $commit);
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
     {
@@ -146,16 +159,22 @@ $command = static fn (string $requestId, int $orderId, AssignmentOrderOriginalMa
     $mode === AssignmentOrderOriginalMode::INITIAL ? null : 'Исправление',
     new AssignmentOrderOriginalUpload($stream, 'signed.pdf', 'application/pdf'),
 );
-$build = static function (Gate5DomainRepository $repository, AssignmentOrderOriginalAuthorizationStatus $auth = AssignmentOrderOriginalAuthorizationStatus::ALLOWED): array {
+$build = static function (Gate5DomainRepository $repository, AssignmentOrderOriginalAuthorizationStatus $auth = AssignmentOrderOriginalAuthorizationStatus::ALLOWED, string $rootId = 'original-0001', string $revisionId = 'revision-0001'): array {
     $storage = new AssignmentOrderOriginalInitialStorage();
     $observers = new AssignmentOrderOriginalInitialObservers();
     $lifecycle = new Gate5DomainLifecycle($storage);
+    $fresh = new \FMonitor2\Tests\Support\OriginalCompatibilityFreshFactory(static fn(string $id) => new \FMonitor2\Tests\Support\AssignmentOrderOriginalInitialResultLookup());
+    $ids = new class($rootId,$revisionId) implements \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdSource {
+        public function __construct(private string $root,private string $revision) {}
+        public function nextRootId(): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult { return new \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdStatus::GENERATED,$this->root); }
+        public function nextRevisionId(): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult { return new \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdStatus::GENERATED,$this->revision); }
+    };
     $app = AssignmentOrderOriginalVerificationFactory::create(new AssignmentOrderOriginalDependencies(
         new AssignmentOrderOriginalMatrixAuthorizer($auth), new Gate5DomainComposition(), new AssignmentOrderOriginalInitialClock(),
-        new AssignmentOrderOriginalInitialIds(), new AssignmentOrderOriginalInitialInspector(), $storage, $repository,
-        $lifecycle, $observers, $observers, $observers, $observers,
+        $ids, new AssignmentOrderOriginalInitialInspector(), $storage, $repository,
+        $lifecycle, $observers, $observers, $observers, $observers, $fresh,
     ));
-    return [$app, $storage, $lifecycle];
+    return [$app, $storage, $lifecycle, $fresh];
 };
 
 $unavailableAuthRepo = new Gate5DomainRepository();
@@ -171,7 +190,7 @@ assertSameValue(0, $authStream->readCalls, 'Authorization unavailable fails befo
 foreach (['terminalStatus', 'fingerprintStatus'] as $index => $property) {
     $repo = new Gate5DomainRepository();
     $repo->{$property} = AssignmentOrderOriginalLookupStatus::UNAVAILABLE;
-    [$app] = $build($repo);
+    [$app, , , $fresh] = $build($repo);
     $stream = new AssignmentOrderOriginalMatrixStream($pdf);
     $result = $app->submitAssignmentOrderOriginal($command(sprintf('00000000-0000-4000-8000-%012d', 502 + $index), 81, $stream));
     assertSameValue([AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true], $resultTuple($result), "{$property} UNAVAILABLE fails closed.");
@@ -182,16 +201,17 @@ foreach ([AssignmentOrderOriginalCommitStatus::ROLLED_BACK, 'throw'] as $index =
     $repo = new Gate5DomainRepository();
     $repo->attemptStatus = $attemptFailure === 'throw' ? AssignmentOrderOriginalCommitStatus::COMMITTED : $attemptFailure;
     $repo->throwAttempt = $attemptFailure === 'throw';
-    [$app] = $build($repo);
+    [$app, , , $fresh] = $build($repo);
     $stream = new AssignmentOrderOriginalMatrixStream($pdf);
     $invalid = new SubmitAssignmentOrderOriginalCommand(sprintf('00000000-0000-4000-8000-%012d', 510 + $index), AssignmentOrderOriginalMode::INITIAL, 4512, 81, 18, '2026-09-01', false, null, null, null, null, new AssignmentOrderOriginalUpload($stream, 'signed.pdf', 'application/pdf'));
     assertSameValue([AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true], $resultTuple($app->submitAssignmentOrderOriginal($invalid)), 'A missing atomic terminal attempt/audit cannot return the unaudited domain result.');
     assertSameValue(1, $repo->attemptCalls, 'Attempt audit persistence is invoked exactly once.');
+    assertSameValue($attemptFailure === 'throw' ? [1,1,1] : [0,0,0], [$fresh->opens,$fresh->reads,$fresh->closes], 'Only ambiguous attempt uses an explicit reliable fresh miss, without writer reread.');
 }
 
 $orders = new Gate5DomainRepository();
-foreach ([[81, '00000000-0000-4000-8000-000000000521'], [82, '00000000-0000-4000-8000-000000000522']] as [$orderId, $requestId]) {
-    [$app, , $lifecycle] = $build($orders);
+foreach ([[81, '00000000-0000-4000-8000-000000000521','original-0001','revision-0001'], [82, '00000000-0000-4000-8000-000000000522','original-0002','revision-0002']] as [$orderId, $requestId,$rootId,$revisionId]) {
+    [$app, , $lifecycle] = $build($orders,AssignmentOrderOriginalAuthorizationStatus::ALLOWED,$rootId,$revisionId);
     $result = $app->submitAssignmentOrderOriginal($command($requestId, $orderId, new AssignmentOrderOriginalMatrixStream($pdf)));
     assertSameValue(AssignmentOrderOriginalStatus::ACCEPTED, $result->status(), "INITIAL is scoped to assignment order {$orderId} independently.");
     assertSameValue(1, $lifecycle->postFinalize, 'Exactly one real post-finalize lifecycle event is emitted for an accepted upload.');

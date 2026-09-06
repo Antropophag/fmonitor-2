@@ -82,6 +82,7 @@ final class OriginalLogIsolationRepository implements O\AssignmentOrderOriginalR
     public array $accepted = [];
     public array $attempts = [];
     private array $terminal = [];
+    private bool $winnerCommitted = false;
     public function __construct(private OriginalLogIsolationTrace $trace, public bool $conflict = false, public bool $auditFails = false) {}
     public function findTerminalRequest(string $requestId): O\AssignmentOrderOriginalResultLookup
     { return isset($this->terminal[$requestId]) ? new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND, $this->terminal[$requestId]) : new AssignmentOrderOriginalInitialResultLookup(); }
@@ -91,16 +92,18 @@ final class OriginalLogIsolationRepository implements O\AssignmentOrderOriginalR
     public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): O\AssignmentOrderOriginalLineageLookup
     {
         $this->trace->add('lineage.read');
-        if (!$this->conflict || $installationCaseId !== 4512 || $assignmentOrderId !== 81) throw new \LogicException('wrong lineage lookup');
+        if ($installationCaseId !== 4512 || $assignmentOrderId !== 81) throw new \LogicException('wrong lineage lookup');
+        if (!$this->winnerCommitted) {if ($this->accepted!==[]) throw new \LogicException('Unexpected second initial fixture request');return new AssignmentOrderOriginalInitialLineageLookup();}
         return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND, [
-            'root_original_id'=>'original-0099', 'current_revision_id'=>'revision-0099', 'current_revision_number'=>1,
+            'root_original_id'=>'original-0099', 'current_revision_id'=>'revision-0099', 'current_revision_number'=>1, 'installation_case_id'=>4512, 'assignment_order_id'=>81,
+            'current_document_date'=>'2026-09-01', 'current_pdf_sha256'=>'4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',
             'composition_identity'=>'composition-81-v1', 'composition_sha256'=>'388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',
         ], ['revision-0099']);
     }
     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit): O\AssignmentOrderOriginalCommitStatus
     {
         $this->trace->add('accepted.commit');
-        if ($this->conflict) return O\AssignmentOrderOriginalCommitStatus::CONFLICT;
+        if ($this->conflict) {$this->winnerCommitted=true;return O\AssignmentOrderOriginalCommitStatus::CONFLICT;}
         $this->accepted[] = $commit;
         $this->terminal[$commit->requestId] = new O\AssignmentOrderOriginalResultValue(O\AssignmentOrderOriginalStatus::ACCEPTED, null, false, $commit->requestId, $commit->rootOriginalId, $commit->newRevisionId, $commit->newRevisionNumber, $commit->documentDate, $commit->pdfSha256, $commit->byteSize, $commit->uploadedAt);
         return O\AssignmentOrderOriginalCommitStatus::COMMITTED;
@@ -115,5 +118,5 @@ final class OriginalLogIsolationRepository implements O\AssignmentOrderOriginalR
     }
     public function hasCommittedContent(string $opaqueIdentity): O\AssignmentOrderOriginalReferenceLookup { throw new \LogicException('unexpected maintenance'); }
     public function evidenceCanonicalJson(int $caseId, int $orderId): string
-    { return json_encode(['preExistingRoot'=>$this->conflict ? ['original-0099','revision-0099',1,'composition-81-v1'] : null, 'newAccepted'=>$this->accepted], JSON_THROW_ON_ERROR); }
+    { return json_encode(['preExistingRoot'=>$this->winnerCommitted ? ['original-0099','revision-0099',1,'composition-81-v1'] : null, 'newAccepted'=>$this->accepted], JSON_THROW_ON_ERROR); }
 }

@@ -52,10 +52,10 @@ try {
     // A transport/schema error is not a compare-and-swap business conflict.
     $repository = new AssignmentOrderOriginalMariaDbRepository($db, 'missing_', null);
     $commit = new AssignmentOrderOriginalAcceptedCommit(
-        '00000000-0000-4000-8000-000000000551', hash('sha256', 'fingerprint'), AssignmentOrderOriginalMode::INITIAL,
+        '00000000-0000-4000-8000-000000000551', 'dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d', AssignmentOrderOriginalMode::INITIAL,
         4512, 81, 18, 'original-0051', 'revision-0051', 1, null, null,
-        'composition-81-v1', hash('sha256', 'composition'), '2026-09-01', '2026-09-02T09:15:30Z',
-        hash('sha256', '%PDF-1.4'), 8, 'content-0051', null, 'assignment_order_original_accepted',
+        'composition-81-v1', '388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5', '2026-09-01', '2026-09-02T09:15:30Z',
+        '4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784', 327, 'content-sha256-4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784', null, 'assignment_order_original_accepted',
     );
     assertSameValue(AssignmentOrderOriginalCommitStatus::ROLLED_BACK, $repository->commitAccepted($commit), 'MariaDB technical failure is distinct from CAS CONFLICT.');
     $db->close();

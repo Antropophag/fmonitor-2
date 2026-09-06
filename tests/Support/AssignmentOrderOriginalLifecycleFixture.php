@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace FMonitor2\Tests\Support;
 use FMonitor2\AssignmentOrderOriginal as O;
+require_once __DIR__.'/AssignmentOrderOriginalDataCompatibility.php';
 
 final class OriginalLifecycleTrace
 {
@@ -84,13 +85,13 @@ final class OriginalLifecycleObservers implements O\AssignmentOrderOriginalLifec
 final class OriginalLifecycleRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
 {
     public int $commitCalls=0;public int $terminalCalls=0;public int $fingerprintCalls=0;public array $accepted=[];public array $attempts=[];public array $winnerFacts=[];
-    private array $terminal=[];
+    private array $terminal=[];private ?O\AssignmentOrderOriginalAcceptedCommit $winnerPlan=null;
     public function __construct(private OriginalLifecycleTrace $trace,private string $mode='normal')
     {
         if(in_array($mode,['terminal_replay','fingerprint_replay'],true)){
             $prior=self::seed($mode==='terminal_replay'?'00000000-0000-4000-8000-000000000001':'00000000-0000-4000-8000-000000000999');
             $this->winnerFacts[]=$prior;$this->terminal[$prior->requestId]=self::result($prior);
-        }elseif(str_starts_with($mode,'conflict_')&&$mode!=='conflict_replay')$this->winnerFacts[]=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099','2026-08-31');
+        }elseif(str_starts_with($mode,'conflict_')&&$mode!=='conflict_replay')$this->winnerPlan=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099','2026-08-31');
     }
     private static function seed(string $request,string $root='original-0001',string $revision='revision-0001',string $date='2026-09-01'):O\AssignmentOrderOriginalAcceptedCommit
     {
@@ -102,11 +103,13 @@ final class OriginalLifecycleRepository implements O\AssignmentOrderOriginalRepo
     public function findTerminalRequest(string $requestId):O\AssignmentOrderOriginalResultLookup
     {
         ++$this->terminalCalls;$this->trace->call('request');
-        if($this->commitCalls>0){
-            if($this->mode==='unknown_recovery_throw')throw new \RuntimeException('fresh recovery unavailable');
-            if($this->mode==='unknown_result_getter_throw')return new class implements O\AssignmentOrderOriginalResultLookup{public function status():O\AssignmentOrderOriginalLookupStatus{return O\AssignmentOrderOriginalLookupStatus::FOUND;}public function result():?O\AssignmentOrderOriginalResult{throw new \RuntimeException('fresh result unavailable');}};
-            if(in_array($this->mode,['unknown_unavailable','commit_throw_unavailable'],true))return new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE);
-        }
+        return isset($this->terminal[$requestId])?new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND,$this->terminal[$requestId]):new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);
+    }
+    public function freshFixtureResult(string $requestId):O\AssignmentOrderOriginalResultLookup
+    {
+        if($this->mode==='unknown_recovery_throw')throw new \RuntimeException('fresh recovery unavailable');
+        if($this->mode==='unknown_result_getter_throw')return new class implements O\AssignmentOrderOriginalResultLookup{public function status():O\AssignmentOrderOriginalLookupStatus{return O\AssignmentOrderOriginalLookupStatus::FOUND;}public function result():?O\AssignmentOrderOriginalResult{throw new \RuntimeException('fresh result unavailable');}};
+        if(in_array($this->mode,['unknown_unavailable','commit_throw_unavailable'],true))return new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE);
         return isset($this->terminal[$requestId])?new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND,$this->terminal[$requestId]):new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);
     }
     public function findAcceptedFingerprint(string $fingerprint):O\AssignmentOrderOriginalResultLookup
@@ -120,14 +123,15 @@ final class OriginalLifecycleRepository implements O\AssignmentOrderOriginalRepo
     public function findLineage(string $rootOriginalId):O\AssignmentOrderOriginalLineageLookup{throw new \LogicException('initial must read exact assignment lineage');}
     public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup
     {
-        $this->trace->call('lineage');if($this->mode==='conflict_lineage_throw')throw new \RuntimeException('lineage reread');
+        $this->trace->call('lineage');if($installationCaseId!==4512||$assignmentOrderId!==81)throw new \LogicException('wrong assignment lookup');if($this->commitCalls===0)return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);if($this->mode==='conflict_lineage_throw')throw new \RuntimeException('lineage reread');
         if($installationCaseId!==4512||$assignmentOrderId!==81||!$this->winnerFacts)throw new \LogicException('unseeded lineage');$c=$this->winnerFacts[0];
-        return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,['root_original_id'=>$c->rootOriginalId,'current_revision_id'=>$c->newRevisionId,'current_revision_number'=>1,'composition_identity'=>$c->compositionIdentity,'composition_sha256'=>$c->compositionSha256,'current_document_date'=>$c->documentDate,'current_pdf_sha256'=>$c->pdfSha256],[$c->newRevisionId]);
+        return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,['installation_case_id'=>$c->installationCaseId,'assignment_order_id'=>$c->assignmentOrderId,'root_original_id'=>$c->rootOriginalId,'current_revision_id'=>$c->newRevisionId,'current_revision_number'=>1,'composition_identity'=>$c->compositionIdentity,'composition_sha256'=>$c->compositionSha256,'current_document_date'=>$c->documentDate,'current_pdf_sha256'=>$c->pdfSha256],[$c->newRevisionId]);
     }
     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit):O\AssignmentOrderOriginalCommitStatus
     {
         ++$this->commitCalls;$this->trace->call('commit');
         if(str_starts_with($this->mode,'conflict_')){
+            if($this->winnerPlan!==null)$this->winnerFacts[]=$this->winnerPlan;
             if($this->mode==='conflict_replay')$this->winnerFacts[]=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099');
             return O\AssignmentOrderOriginalCommitStatus::CONFLICT;
         }
@@ -143,7 +147,7 @@ final class OriginalLifecycleRepository implements O\AssignmentOrderOriginalRepo
 }
 final class OriginalLifecycleFixture
 {
-    public OriginalLifecycleTrace $trace;public OriginalLifecycleStorage $storage;public OriginalLifecycleObservers $observers;public OriginalLifecycleRepository $repository;public OriginalLifecycleStream $stream;public O\AssignmentOrderOriginalApplication $application;
+    public OriginalLifecycleTrace $trace;public OriginalLifecycleStorage $storage;public OriginalLifecycleObservers $observers;public OriginalLifecycleRepository $repository;public OriginalLifecycleStream $stream;public O\AssignmentOrderOriginalApplication $application;public OriginalCompatibilityFreshFactory $fresh;
     public function __construct(private string $pdf,array $faults=[],string $mode='normal')
     {
         $this->trace=$t=new OriginalLifecycleTrace($faults);$this->storage=new OriginalLifecycleStorage($t);$this->observers=new OriginalLifecycleObservers($t);$this->repository=new OriginalLifecycleRepository($t,$mode);
@@ -152,7 +156,8 @@ final class OriginalLifecycleFixture
         $clock=new class($t) implements O\AssignmentOrderOriginalClock{public function __construct(private OriginalLifecycleTrace $t){}public function nowUtc():string{$this->t->call('clock');return '2026-09-02T09:15:30Z';}};
         $ids=new class($t) implements O\AssignmentOrderOriginalIdSource{public function __construct(private OriginalLifecycleTrace $t){}public function nextRootId():O\AssignmentOrderOriginalIdResult{$this->t->call('id.root');return new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,'original-0001');}public function nextRevisionId():O\AssignmentOrderOriginalIdResult{$this->t->call('id.revision');return new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,'revision-0001');}};
         $inspector=new class($t) implements O\AssignmentOrderOriginalPdfInspector{public function __construct(private OriginalLifecycleTrace $t){}public function inspect(string $completedBytes):O\AssignmentOrderOriginalPdfInspection{$this->t->call('inspect');$this->t->throwing('inspector_throw');if($this->t->fails('inspector_failed'))return O\AssignmentOrderOriginalPdfInspection::failed();return $this->t->fails('invalid_pdf')?O\AssignmentOrderOriginalPdfInspection::invalid():O\AssignmentOrderOriginalPdfInspection::passive();}public function algorithmId():string{return 'fmonitor-passive-pdf-v1';}};
-        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($auth,$composition,$clock,$ids,$inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers));
+        $this->fresh=new OriginalCompatibilityFreshFactory(fn(string $id)=>$this->repository->freshFixtureResult($id),fn(string $event)=>$t->call($event));
+        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($auth,$composition,$clock,$ids,$inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers,$this->fresh));
     }
     public function command():O\SubmitAssignmentOrderOriginalCommand
     {$this->stream=new OriginalLifecycleStream($this->pdf,$this->trace);return new O\SubmitAssignmentOrderOriginalCommand('00000000-0000-4000-8000-000000000001',O\AssignmentOrderOriginalMode::INITIAL,4512,81,18,'2026-09-01',true,null,null,null,null,new O\AssignmentOrderOriginalUpload($this->stream,'original.pdf','application/pdf'));}

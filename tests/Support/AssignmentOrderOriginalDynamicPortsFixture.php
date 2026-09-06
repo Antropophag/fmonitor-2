@@ -21,7 +21,7 @@ final class OriginalDynamicClock implements O\AssignmentOrderOriginalClock
     public function __construct(private string|\Throwable $value) {}
     public function nowUtc(): string { ++$this->calls; if($this->value instanceof \Throwable)throw $this->value; return $this->value; }
 }
-final class OriginalDynamicRepository implements O\AssignmentOrderOriginalRepository
+final class OriginalDynamicRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
 {
     public array $fingerprints=[]; public array $accepted=[]; public array $attempts=[];
     public int $lineageCalls=0;
@@ -37,11 +37,13 @@ final class OriginalDynamicRepository implements O\AssignmentOrderOriginalReposi
         ++$this->lineageCalls;
         if(!$this->correction||$rootOriginalId!=='original-0001')throw new \LogicException('unexpected lineage');
         return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,[
-            'root_original_id'=>'original-0001','current_revision_id'=>'revision-0001','current_revision_number'=>1,
+            'root_original_id'=>'original-0001','current_revision_id'=>'revision-0001','current_revision_number'=>1,'installation_case_id'=>4512,'assignment_order_id'=>81,
             'composition_identity'=>'composition-81-v1','composition_sha256'=>'388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',
             'current_document_date'=>'2026-09-01','current_pdf_sha256'=>'4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',
         ],['revision-0001']);
     }
+    public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup
+    {if($installationCaseId!==4512||$assignmentOrderId!==81||$this->accepted!==[])throw new \LogicException('Unexpected initial fixture precheck');return new AssignmentOrderOriginalInitialLineageLookup();}
     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit): O\AssignmentOrderOriginalCommitStatus { $this->accepted[]=$commit; return O\AssignmentOrderOriginalCommitStatus::COMMITTED; }
     public function commitAttempt(O\AssignmentOrderOriginalAttemptCommit $commit): O\AssignmentOrderOriginalCommitStatus { $this->attempts[]=$commit; return O\AssignmentOrderOriginalCommitStatus::COMMITTED; }
     public function hasCommittedContent(string $opaqueIdentity): O\AssignmentOrderOriginalReferenceLookup { throw new \LogicException('unexpected maintenance'); }

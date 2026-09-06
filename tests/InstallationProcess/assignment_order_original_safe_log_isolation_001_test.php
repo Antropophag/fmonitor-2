@@ -76,7 +76,7 @@ foreach(['release_failed','release_throw'] as $fault)foreach([false,true] as $ge
         $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
         $expected=isolationExpected($id,'accepted',null);
         assertSameValue($expected,isolationTuple($result),'full accepted result survives failed release diagnostic');
-        assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','lease.release','log:committed','delivery'],$trace->calls,'acceptance order and exact-once cleanup');
+        assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','lease.release','log:committed','delivery'],$trace->calls,'acceptance order and exact-once cleanup');
         assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>'committed'],$generic?'old-request':$id]],$logger->records,'one unchanged release diagnostic');
         assertSameValue($generic?[]:[$id],$logger->bindings,'generic gets no binding');
         assertSameValue('', $logger->bytes,'no log bytes'); assertSameValue(1,count($repo->accepted),'one accepted commit');
@@ -88,9 +88,10 @@ isolationCase('cas-conflict',function()use($pdf){
     $before=$repo->evidenceCanonicalJson(4512,81);
     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
     assertSameValue(isolationExpected($id,'conflict','initial_already_exists'),isolationTuple($result),'full CAS conflict');
-    assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','fingerprint.read','lineage.read','lease.release','log:commit_conflict','attempt.commit'],$trace->calls,'rereads before release and required audit after diagnostic');
+    assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','fingerprint.read','lineage.read','lease.release','log:commit_conflict','attempt.commit'],$trace->calls,'rereads before release and required audit after diagnostic');
     assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>'commit_conflict'],$id]],$logger->records,'one conflict diagnostic');
-    assertSameValue($before,$repo->evidenceCanonicalJson(4512,81),'existing root unchanged and no acceptance');
+    assertSameValue('{"preExistingRoot":null,"newAccepted":[]}',$before,'rival is not committed before initial precheck');
+    assertSameValue('{"preExistingRoot":["original-0099","revision-0099",1,"composition-81-v1"],"newAccepted":[]}',$repo->evidenceCanonicalJson(4512,81),'concurrent winner published exactly and current command has no acceptance');
     assertSameValue(1,count($repo->attempts),'required conflict audit'); assertSameValue('initial_already_exists',$repo->attempts[0]->reason->value,'conflict audit reason');
     assertSameValue([], $delivery->results,'no conflict delivery'); assertSameValue('', $logger->bytes,'no log bytes');
 });
@@ -99,7 +100,7 @@ isolationCase('binding-failure-accepted',function()use($pdf){
     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
     $expected=isolationExpected($id,'accepted',null);
     assertSameValue($expected,isolationTuple($result),'binding cannot escape or replace acceptance');
-    assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','lease.release','delivery'],$trace->calls,'normal lifecycle despite binding failure');
+    assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','lease.release','delivery'],$trace->calls,'normal lifecycle despite binding failure');
     assertSameValue([$id],$logger->bindings,'binding attempted once'); assertSameValue([], $logger->records,'no stale log callback');
     assertSameValue('', $logger->bytes,'no stale bytes'); assertSameValue(1,count($repo->accepted),'one acceptance');
     assertSameValue([], $repo->attempts,'no attempts'); assertSameValue([$expected],$delivery->results,'delivery preserved');

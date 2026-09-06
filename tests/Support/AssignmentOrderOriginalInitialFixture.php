@@ -33,6 +33,7 @@ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalPrivateStage;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalPrivateStorage;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalReferenceLookup;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalRepository;
+use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAssignmentLineageRepository;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResultDeliveryObserver;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResultLookup;
@@ -232,11 +233,11 @@ final readonly class AssignmentOrderOriginalInitialLineageLookup implements Assi
 
 final readonly class AssignmentOrderOriginalInitialReferenceLookup implements AssignmentOrderOriginalReferenceLookup
 {
-    public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::NOT_FOUND; }
+    public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::FOUND; }
     public function referenced(): ?bool { return false; }
 }
 
-final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
+final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository, AssignmentOrderOriginalAssignmentLineageRepository
 {
     /** @var list<AssignmentOrderOriginalAcceptedCommit> */
     public array $accepted = [];
@@ -255,6 +256,11 @@ final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderO
     }
     public function findLineage(string $rootOriginalId): AssignmentOrderOriginalLineageLookup
     {
+        return new AssignmentOrderOriginalInitialLineageLookup();
+    }
+    public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): AssignmentOrderOriginalLineageLookup
+    {
+        if ($installationCaseId !== 4512 || $assignmentOrderId !== 81 || $this->accepted !== []) throw new \LogicException('Unexpected initial-only fixture lookup.');
         return new AssignmentOrderOriginalInitialLineageLookup();
     }
     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus

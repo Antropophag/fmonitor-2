@@ -16,7 +16,7 @@ final class OriginalShapeComposition implements O\AssignmentOrderCompositionRead
     public function find(int $caseId,int $orderId):O\AssignmentOrderCompositionSnapshot
     {++$this->calls;return new O\AssignmentOrderCompositionSnapshot(O\AssignmentOrderCompositionLookupStatus::FOUND,$caseId,$orderId,'composition-81-v1','388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',[7001,7002],31);}
 }
-final class OriginalShapeRepository implements O\AssignmentOrderOriginalRepository
+final class OriginalShapeRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
 {
     public array $calls=[];
     public OriginalDynamicRepository $inner;
@@ -34,6 +34,7 @@ final class OriginalShapeRepository implements O\AssignmentOrderOriginalReposito
     }
     public function findAcceptedFingerprint(string $fingerprint):O\AssignmentOrderOriginalResultLookup{$this->calls[]='fingerprint';return $this->inner->findAcceptedFingerprint($fingerprint);}
     public function findLineage(string $rootOriginalId):O\AssignmentOrderOriginalLineageLookup{$this->calls[]='lineage';return $this->inner->findLineage($rootOriginalId);}
+    public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup{$this->calls[]='assignment-lineage';return $this->inner->findLineageForAssignmentOrder($installationCaseId,$assignmentOrderId);}
     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit):O\AssignmentOrderOriginalCommitStatus{$this->calls[]='accepted';return $this->inner->commitAccepted($commit);}
     public function commitAttempt(O\AssignmentOrderOriginalAttemptCommit $commit):O\AssignmentOrderOriginalCommitStatus{$this->calls[]='attempt';return $this->inner->commitAttempt($commit);}
     public function hasCommittedContent(string $opaqueIdentity):O\AssignmentOrderOriginalReferenceLookup{throw new \LogicException('unexpected maintenance');}
