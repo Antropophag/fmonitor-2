@@ -15,7 +15,7 @@ try {
     $clock=new class implements C\SelectionClock {public function now():C\SelectionInstantLookup{return C\SelectionInstantLookup::found(new C\SelectionInstant('2026-09-05T09:00:00Z'));}};
     $app=C\AssignmentOrderCompositionFactory::create(new C\SelectionDependencies($p->authorizer,$p->facts,$clock,$p->requests,$p->transactions,$p->freshReaders,$p->audits,$p->terminalAttempts));
     echo 'THREAD '.$db->thread_id."\nPHASE ready\n";fflush(STDOUT);
-    $r=$app->selectAssignmentOrderComposition(F::command((int)$argv[2],0,(int)$argv[4],(int)$argv[3]));
+    $r=$app->selectAssignmentOrderComposition(F::command((int)$argv[2],(int)($argv[6]??0),(int)$argv[4],(int)$argv[3]));
     if(($argv[5]??'')==='hold'&&$r->status()===C\AssignmentOrderCompositionStatus::SELECTED){
         echo "PHASE committed\n";fflush(STDOUT);$read=[STDIN];$write=null;$except=null;
         if(stream_select($read,$write,$except,10)!==1||fgets(STDIN)!=="continue\n")exit(65);
