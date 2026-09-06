@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-SELECTION-SCHEMA-001
 
-Версия0.1, 2026-09-06. DRAFT / independent Gate1 required.
+Версия0.2, 2026-09-06. DRAFT / independent Gate1 required.
 
 ## Простыми словами
 
@@ -74,7 +74,8 @@ connection. Prefix0..25 `[A-Za-z0-9_]*`, PHP64. Invalid prefix для всех s
 apply returns только `['applied'=>true]` при создании хотя бы одной таблицы,
 `['applied'=>false]` для compatible complete repeat, либо
 `['applied'=>false,'reason'=>'SCHEMA_MIGRATION_CONFLICT']` при schema/data/prerequisite
-conflict. SQL/observer/lock/cleanup failure бросает existing DatabaseUnavailable
+conflict. Наблюдаемый самим selection engine SQL/observer/lock/cleanup failure
+бросает existing DatabaseUnavailable
 с message `Assignment order selection schema unavailable.`, code0, previous=null.
 
 isReady после prefix validation возвращает false при любых остальных invalid,
@@ -150,8 +151,12 @@ rowCount canonical decimal string. nextId only events/audits, otherwise null.
 В owned RR read-only snapshot проверить current canonical collation, exact
 registry/receipt metadata и public isBackfillComplete===true. Missing/incomplete/
 incompatible registry либо false public completion proof — conflict, не readiness.
-Native catalog/snapshot query errors — unavailable. Public bool false не трактуется
-как доказательство конкретной причины недоступности. Engine не вызывает registry
+Любой false public completion proof означает только недоказанный prerequisite
+и даёт SCHEMA_MIGRATION_CONFLICT, включая скрытые этим bool API native failures.
+Engine не определяет причину false и не дублирует private registry/source proof.
+Native errors собственных selection catalog/snapshot queries — unavailable;
+это правило не классифицирует failures, скрытые внутри registry bool API.
+Engine не вызывает registry
 apply, не пишет/repair-ит receipt/identities/legacy/frontier.
 
 Всю existing family проверить ДО первого DDL. Absent либо empty exact leading
@@ -254,7 +259,8 @@ request/event/audit/registry echo each; nextId boundaries and no counter reset;
 same-prefix lock timeout5s±2/other-prefix progress; observer exception each phase,
 child stop after durable CREATE; native denied DDL и repeat with denied DML;
 caller transaction protection; release failure via observer releasing its own
-lock; snapshot/read unavailable; attempt-all cleanup and decoy preservation.
+lock; snapshot/read unavailable; registry bool false (включая скрытый native failure)
+→ conflict без DDL; attempt-all cleanup and decoy preservation.
 
 Expected manifest/rows берутся из spec fixtures, не PHP production constants.
 Прежние registry tests/approvals переиспользуются; regression нужен только для

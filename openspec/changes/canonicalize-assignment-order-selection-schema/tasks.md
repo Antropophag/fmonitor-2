@@ -1,7 +1,7 @@
 ## 1. Exact executable contract and Gate 1
 
-- [ ] 1.1 Создать ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 с exact five-table metadata, constraint names, public result/exception/observer/snapshot, populated coherence и interruption contract; verification: independent schema literals, PHP declarations lint и prefix64 bounds.
-- [ ] 1.2 Получить независимый Gate1 exact spec/OpenSpec hashes; verification: APPROVED подтверждает complete registry prerequisite, disabled scope, constructible RED и отсутствие unresolved product semantics.
+- [x] 1.1 Создать ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 с exact five-table metadata, constraint names, public result/exception/observer/snapshot, populated coherence и interruption contract; verification: independent schema literals, PHP declarations lint и prefix64 bounds.
+- [x] 1.2 Получить независимый Gate1 exact spec/OpenSpec hashes; verification: APPROVED подтверждает complete registry prerequisite, disabled scope, constructible RED и отсутствие unresolved product semantics.
 
 ## 2. RED and independent test review
 

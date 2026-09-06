@@ -40,6 +40,11 @@ canonical runner, startup, application factories, protected E2E не меняю�
 
 ## Exact executable contract
 
-ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 v0.1 и normative schema/example JSON fixtures
+ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 v0.2 и normative schema/example JSON fixtures
 задают exact public API, fingerprints и populated-data proof. Это draft technical
 Gate1 batch; никакое planning approval не разрешает RED до независимого verdict.
+
+Registry public completion `false` означает недоказанный prerequisite и fixed
+SCHEMA_MIGRATION_CONFLICT, включая скрытые этим bool API native failures.
+Ошибки собственных selection SQL queries остаются unavailable; private registry
+proof не дублируется и новый registry API не вводится.
