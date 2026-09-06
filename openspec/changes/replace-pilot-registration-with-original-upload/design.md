@@ -329,3 +329,5 @@ Owner утвердил каждую denied invocation: `original-denied-attempt-
 ## Maintenance owner corrective scope — 2026-09-06
 
 MAINTENANCE-001 и parentv74 уточняют существующие public storage/maintenance ports, once-only locks/deletion, trusted authorization, scalar/page/result validation и native result+audit. Требуются Gate1→RED→independent Gate3→minimal GREEN→independent Gate5. Схема13/v3 и пользовательский original audit не меняются. Неохваченные private-orphan fixture/evidence/worker declaration gaps не считаются закрытыми.
+
+MAINTENANCEv0.2 фиксирует passive concrete MariaDB repository constructor и existing persistence-observer phases только для verification. Production selector не добавлен, public application seam прежний.

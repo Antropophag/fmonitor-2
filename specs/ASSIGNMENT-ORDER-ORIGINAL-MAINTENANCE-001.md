@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-MAINTENANCE-001
 
-Версия0.1. DRAFT / independent Gate1 required.
+Версия0.2. DRAFT / independent Gate1 required.
 
 ## Простыми словами
 
@@ -173,3 +173,7 @@ verification factories и exact declaration parity указанного API. Exi
 maintenance/lease tests и source-free fixtures reuse; изменяемые старые expectations
 только через exact unapplied patch+independent Gate3. Gates1→RED→Gate3→GREEN→
 affected regressions/architecture→independent Gate5 обязательны.
+
+## 7. Native repository construction для Gate2
+
+Exact concrete public adapter: `AssignmentOrderOriginalMariaDbMaintenanceRepository` implements MaintenanceRepository. Constructor `(\mysqli $connection, string $tablePrefix = '', ?AssignmentOrderOriginalPersistenceObserver $observer = null)` passive, не делает I/O. Это public persistence port, не второй application mutator. Invalid DTO/prefix → ROLLED_BACK до state SQL/observer; active caller transaction → ROLLED_BACK после одного state SELECT, без observer/control/writes. Reader active/error → UNAVAILABLE без caller transaction control. Verification использует прежние BEFORE_READ_RELEASE/BEFORE_WRITE_BEGIN/BEFORE_NATIVE_COMMIT/AFTER_NATIVE_COMMIT/BEFORE_WRITE_ROLLBACK phases; production передаёт null. Read result копируется до release, read-release failure → UNAVAILABLE. Это уточняет только конструирование уже заявленного adapter для независимых real/zero-SQL tests.
