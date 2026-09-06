@@ -62,12 +62,12 @@
 
 - [x] 5.1 Реализовать `submitAssignmentOrderOriginal` DTO/result, authorization, semantic fingerprint и append-only CAS lineage; verification: approved command/replay/correction tests GREEN при неизменных composition/opening snapshots
 - [x] 5.2 Реализовать bounded staging, exact 20 MiB counter, owned inspector, private finalize lease через commit/unknown/CAS-conflict rereads, exactly-once release/failure mapping, orphan reconciliation в общем exclusion domain и injected outcomes; verification: adversarial/fault/retry/CAS-loser/maintenance-race fixtures GREEN, каждый lease released once либо recovery-owned, accepted blob не удаляется
-- [ ] 5.3 Реализовать minimal shared-owner GREEN после Gate3; verification: same actual retained fstat handle feeds policy, compatibility logger не имеет alternate I/O, production factory получает owner до DB/private root, fixed errors сохраняются; independent Gate5 включает exact structural proof и только после него закрывает G5-SAFELOG-2.
+- [x] 5.3 Реализовать minimal shared-owner GREEN после Gate3; verification: same actual retained fstat handle feeds policy, compatibility logger не имеет alternate I/O, production factory получает owner до DB/private root, fixed errors сохраняются; independent Gate5 включает exact structural proof и только после него закрывает G5-SAFELOG-2.
 
 ## 6. Integration и Done
 
 - [ ] 6.1 Запустить focused suites, `make architecture-check`, `git diff --check`, затем `make verify`; verification: literal `VERIFY_OK`, без переклассификации failures
-- [ ] 6.2 Поручить fresh independent code reviewer проверить approved spec/tests, exact grants, parser/storage boundary, DB/filesystem failure protocol, immutable lineage и scope exclusions; verification: `reviews/code/` содержит explicit `APPROVED`, reviewer не был RED author/implementer
+- [x] 6.2 Поручить fresh independent code reviewer проверить approved spec/tests, exact grants, parser/storage boundary, DB/filesystem failure protocol, immutable lineage и scope exclusions; verification: `reviews/code/` содержит explicit `APPROVED`, reviewer не был RED author/implementer
 - [ ] 6.3 Интегратор сверяет tasks/spec/reviews/tests и обновляет operations status; verification: slice Done только после Gates 1–5, а `expose-assignment-order-original-http`, composition и opening остаются явно READY/BLOCKED отдельными named future OpenSpec changes
 
 ## Shared owner v0.2 technical corrections — 2026-09-06
@@ -209,5 +209,9 @@ Worker ports завершён: f692c96, independent Gate5 WORKER-PORTS001v1 APPR
 ## Worker boundary corrective gates — 2026-09-06
 
 - [x] 1.44 Independent Gate1 WORKER-BOUNDARY001 для3 findings combined review.
-- [ ] 4.14 Public IPC/encoder RED и точный fixture-helper patch, independent Gate3.
-- [ ] 5.14 Minimal worker boundary GREEN, affected regressions и повторный combined Gate5.
+- [x] 4.14 Public IPC/encoder RED и точный fixture-helper patch, independent Gate3.
+- [x] 5.14 Minimal worker boundary GREEN, affected regressions и повторный combined Gate5.
+
+## Combined command Gate5 — 2026-09-06
+
+Combined001v1 CHANGES_REQUESTED при52passing checks выявил3worker boundary gaps. Corrective1217c23RED/Gate3→360db9aGREEN и12affected checks получили combined001v2 **APPROVED**; previous52-check evidence переиспользуется для неизменённых компонентов. G5-SAFELOG-2/command review закрыты. Tasks6.1(fullVERIFY_OK)/6.3(integrationDone) остаются открытыми; selection/HTTP/composition/opening продолжаются по owner-authorized critical path без ложного полного Done.
