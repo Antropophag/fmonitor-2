@@ -78,7 +78,7 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
             [$result, $needsAttempt] = (new AssignmentOrderOriginalCommitProtocol($d))->execute($c, $composition, $root, $revision, $number, $at, $sha, $size, $identity, $fingerprint, $resources);
             if ($needsAttempt && in_array($result->status(), [AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalStatus::CONFLICT], true) && $result->reasonCode() !== null)
                 return $this->finish($c, $result->status(), $result->reasonCode(), $result->retryable(), $at, $resources);
-            return $result;
+            return AssignmentOrderOriginalAttemptDiagnostics::persistence($d, $result);
         } catch (AssignmentOrderOriginalResponseDeliveryLost $lost) {
             throw $lost;
         } catch (AssignmentOrderOriginalSubmissionFailure $failure) {
