@@ -25,3 +25,7 @@
 Actor — вызывающий original command пользователь; oracle — `original-denied-attempt-owner-approval-2026-09-06.md`, parent ORIGINAL-UPLOAD и pre-clock audit contract audit. Release value — полная история отказов при сохранении неизменности оригинала и retryable загрузки. Затрагиваются application finisher/dependencies, MariaDB audit writer/reader, InstallationProcess migration и canonical runner.
 
 Вне scope: UI группировка журнала, новые права, выбор состава, HTTP, открытие, maintenance, Quality Graph и launch approval. Product NEEDS_GRILL отсутствует: политика каждой попытки уже утверждена. Технический Gate1, RED, independent Gate3 и Gate5 обязательны; этот proposal не является их заменой.
+
+ATTEMPT-AUDITv0.3 добавляет обязательную read-only recognition exact capability-v5 в старых migrations3/4, иначе canonical repeat остановится до13. Identities/order и старые v3/v4 contracts сохраняются, grants не меняются; новый literal/name drift остаётся conflict. Это найденная source dependency, не расширение runtime прав.
+
+ATTEMPT-AUDITv0.4 закрывает измеренный identifier1059 при prefix25: единая детерминированная mapping сокращает только два слишком длинных maintenance suffix, FK names ограничены hash-based54 bytes. Короткие существующие tables/history не переименовываются; v2 setup/metadata и maintenance/evidence consumers используют ту же policy. Это обязательный predecessor canonical13, prefix не сужается.

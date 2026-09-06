@@ -29,3 +29,7 @@
 Независимый Gate1 фиксирует exact v3/ports. Затем RED и независимый test review предшествуют schema/application GREEN. Миграция13 выполняет canonical installation original v3 и повторяется без DDL; deployment включается после Gate5. После новых audit rows возможен только forward-compatible rollback приложения; history не удаляется.
 
 ATTEMPT-AUDITv0.2 уточняет active borrowed transaction: после DTO/prefix только один read-only state SELECT, writer ROLLED_BACK без observer/writes/transaction control; migration fixed DatabaseUnavailable до metadata/lock. Caller pending facts сохраняются. Это technical correction по Gate1, не новое product решение.
+
+ATTEMPT-AUDITv0.3 добавляет обязательную read-only recognition exact capability-v5 в старых migrations3/4, иначе canonical repeat остановится до13. Identities/order и старые v3/v4 contracts сохраняются, grants не меняются; новый literal/name drift остаётся conflict. Это найденная source dependency, не расширение runtime прав.
+
+ATTEMPT-AUDITv0.4 закрывает измеренный identifier1059 при prefix25: единая детерминированная mapping сокращает только два слишком длинных maintenance suffix, FK names ограничены hash-based54 bytes. Короткие существующие tables/history не переименовываются; v2 setup/metadata и maintenance/evidence consumers используют ту же policy. Это обязательный predecessor canonical13, prefix не сужается.

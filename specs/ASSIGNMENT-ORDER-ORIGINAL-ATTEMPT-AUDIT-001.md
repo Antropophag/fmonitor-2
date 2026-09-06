@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-ATTEMPT-AUDIT-001
 
-Версия: 0.2. Статус: DRAFT / требуется независимый технический Gate1.
+Версия: 0.4. Статус: DRAFT / требуется независимый технический Gate1.
 
 ## Простыми словами
 
@@ -142,7 +142,8 @@ existing InstallationProcess DatabaseUnavailable без native details.
 Canonical frontier подтверждён 2026-09-06: bin runner1..12; selection spec явно
 не резервирует13, remote integration75a6424 неизменён. Этот slice резервирует
 family original v3 как version13; при смене frontier требуется новый Gate1.
-Migration13 не меняет ранее зарегистрированные migrations1..12.
+Migration13 сохраняет identities/order migrations1..12; только их recognition
+уже установленного exact capability successor уточняется ниже.
 
 Original schema v2 — exact семья из parent v72 / существующего public
 AssignmentOrderOriginalSchemaMigration. V3 отличается только audit table:
@@ -256,3 +257,83 @@ Minimal RED включает по одному real pending-caller-transaction c
 writer и migration, а два writer methods проверяются с exact ROLLED_BACK и
 no observer/no mutation; после отказа caller самостоятельно rollback-ит свой
 synthetic pending факт. New enum/API/permission не требуется.
+
+## 10. v0.3: повтор canonical runner после original capability v5
+
+Проверка source показала обязательный predecessor: shared capability classifier
+сейчас узнаёт лишь v3/v4, поэтому runner после установки original v5 остановится
+на migration3/4 прежде чем достигнет13. Допускается ровно следующий successor:
+existing capability table columns/indexes/no-FK и engineer-position CHECK прежние;
+ровно один capability CHECK с прежними четырьмя v4 значениями плюс
+`assignment_order.original.upload` и `assignment_order.original.correct`, без
+duplicates/extra literal/дополнительных CHECK; имя CHECK ровно
+`ck_fm2_process_user_capability_v5`. Строки/grants не меняются.
+
+Shared ProcessCapabilityChecksClassifier::inspect возвращает для него
+`['state'=>'v5','capabilityConstraint'=>'ck_fm2_process_user_capability_v5']`.
+ProcessUserCapabilitiesSchemaMigration::apply распознаёт его как existing valid
+successor и возвращает прежний repeat result без DDL/DML. Migration4 возвращает
+`['applied'=>false,'schemaVersion'=>4,'constraintsChanged'=>[]]` без downgrade.
+Остальные v3/v4 результаты/invalid cases остаются прежними. Это только schema
+recognition; новые capabilities здесь не выдаются и не публикуются.
+
+Canonical runner никогда не пропускает3/4 или13; проверка всей original family
+остаётся в13. Existing exact capability-v5 при ещё отсутствующей original family
+может пройти3/4 read-only;13 всё равно обязан закончить family preflight/setup
+либо fail-closed. Наличие одной строки/имени constraint не доказывает readiness.
+Minimal additional RED: direct3/4 repeat после public original-v2 setup сохраняет
+rows/catalog, exact v5 recognized; подмена одного нового literal или v5 CHECK
+name даёт conflict/no mutation. Canonical clean→repeat13 — обязательное сквозное
+подтверждение, а не marker-only test. Runtime auth behavior не меняется.
+
+## 11. v0.4: physical identifiers при prefix25
+
+Read-only length inventory и public migration synthetic probe подтвердили
+native1059 (identifier too long): revisions table имеет64 bytes, её generated
+FK name длиннее64; maintenance tables имеют75/73 bytes. Обещание prefix0..25
+сохраняется, исключение для длинного prefix не допускается.
+
+Единственная physical-name mapping policy для schema, runtime maintenance,
+verification fixture и evidence reader:
+
+| Logical suffix | Physical suffix, если prefix+logical длиннее64 bytes |
+|---|---|
+| fm2_assignment_order_original_maintenance_requests | fm2_original_maintenance_requests |
+| fm2_assignment_order_original_maintenance_audits | fm2_original_maintenance_audits |
+
+При длине<=64 сохраняется прежний physical suffix. Для остальных пяти таблиц
+всегда прежний suffix. Prefix всегда сохраняется целиком; никакого hash/truncate
+prefix, ambient schema selection или dual-write. Mapping детерминирована только
+prefix и logical table name, никогда не зависит от table existence/config flag.
+Например prefix15 сокращает requests(65), но сохраняет audits(63); prefix17
+сокращает обе. Все namespace-level declarations логических таблиц и canonical
+JSON schemas остаются прежними. Это техническая коррекция физической адресации,
+не новая domain/schema family.
+
+При создании FK допускаются только явные безопасные имена
+`fk_ao_` + первые48 lowercase hex SHA256(prefix + byte00 + logical-owning-suffix
++ byte00 + local-column). Семантика FK прежняя. Полные существующие v2/v3 tables
+с прежними допустимыми generated FK names распознаются без rename/DDL; имена FK
+не являются частью прежней semantic-equivalence classification. Не нужно
+переименовывать существующую короткую family или её audit IDs/rows.
+
+Existing public v2 setup использует ту же mapping и bounded FK names на новых
+таблицах; его schemaVersion/status, короткие physical names и equivalence
+не меняются. Metadata comparison нормализует mapped referenced table names
+обратно к logical suffix перед сравнением с прежней спецификацией. Так v3 может
+reuse v2 setup при всех0..25 prefix и распознать legacy leading partial,
+оставшийся после1059. Никаких заранее допускаемых конфликтных aliases: если
+существует неканоническая дополнительная physical alias того же logical suffix,
+preflight сообщает conflict до DDL, не выбирает одну из двух по existence.
+
+Minimal additional RED: public v2 setup при prefix25 даёт currently-unavailable
+вместо полного APPLIED; исправленная family повторяется без DDL, все physical
+identifier lengths<=64, canonical requests/audits names exact. FK semantic
+inventory совпадает с прежним contract. Metadata drift/duplicate alias fails
+closed. Public maintenance/evidence consumer smoke на prefix25 должен доказать
+те же logical results без runtime DDL. Existing prefix14/15/16/17 boundary name
+mapping controls — четыре literal пары, не новая поведенческая матрица.
+
+Эта naming correction входит в тот же migration gate до canonical13; новое
+снижение prefix limit или фиктивный canonical success не разрешено. SQL owners
+остаются прежними, общий name-value helper не получает I/O или mutation seam.
