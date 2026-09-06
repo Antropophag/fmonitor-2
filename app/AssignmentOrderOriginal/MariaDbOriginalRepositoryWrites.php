@@ -11,7 +11,7 @@ require_once __DIR__.'/MariaDbOriginalSqlWriteGuard.php';
 final class AssignmentOrderOriginalRepositoryWrites
 {
     public static function commit(\mysqli $db, string $prefix, AssignmentOrderOriginalAcceptedCommit|AssignmentOrderOriginalAttemptCommit $c,
-        ?AssignmentOrderOriginalWorkerFaults $faults, ?AssignmentOrderOriginalPersistenceObserver $observer): AssignmentOrderOriginalCommitStatus
+        ?AssignmentOrderOriginalWorkerFaults $faults, ?AssignmentOrderOriginalPersistenceObserver $observer, bool $selectedCompositions = false): AssignmentOrderOriginalCommitStatus
     {
         $accepted = $c instanceof AssignmentOrderOriginalAcceptedCommit;
         if (!($accepted ? AssignmentOrderOriginalCommitValues::accepted($c) : AssignmentOrderOriginalCommitValues::attempt($c)))
@@ -26,7 +26,7 @@ final class AssignmentOrderOriginalRepositoryWrites
             $owned = true;
             if ($accepted) {
                 $faults?->beforeCommit();
-                AssignmentOrderOriginalSqlWriteGuard::accepted($sql, $c, $observer);
+                AssignmentOrderOriginalSqlWriteGuard::accepted($sql, $c, $observer, $selectedCompositions);
                 (new AssignmentOrderOriginalSqlFacts($sql))->accepted($c);
             } else {
                 $facts = new AssignmentOrderOriginalSqlFacts($sql);
@@ -49,6 +49,7 @@ final class AssignmentOrderOriginalRepositoryWrites
             $unknownMiss = $accepted && $faults !== null && in_array($faults->target,
                 [AssignmentOrderOriginalFaultPoint::COMMIT_UNKNOWN_NOT_FOUND, AssignmentOrderOriginalFaultPoint::COMMIT_UNKNOWN_NOT_FOUND_RELEASE_FAILURE], true);
             if ($commitAttempted || !$rolledBack || ($owned && $unknownMiss)) return AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN;
+            if ($owned && $error instanceof AssignmentOrderOriginalCompositionNotCurrent) return AssignmentOrderOriginalCommitStatus::COMPOSITION_NOT_CURRENT;
             $conflict = $error instanceof AssignmentOrderOriginalWriteConflict
                 || ($error instanceof \mysqli_sql_exception && $error->getCode() === 1062 && ($accepted || !$requestInserted));
             return $owned && $conflict ? AssignmentOrderOriginalCommitStatus::CONFLICT : AssignmentOrderOriginalCommitStatus::ROLLED_BACK;

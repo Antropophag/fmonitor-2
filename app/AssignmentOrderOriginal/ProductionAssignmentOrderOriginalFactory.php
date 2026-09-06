@@ -28,4 +28,8 @@ final class ProductionAssignmentOrderOriginalFactory
     public static function createRecoveryReady(\mysqli $db, AssignmentOrderOriginalProductionConfig $c,
         AssignmentOrderOriginalFreshTerminalReaderFactory $freshTerminalReaders): AssignmentOrderOriginalApplication
     { return self::create($db, $c, $freshTerminalReaders); }
+    public static function createForSelections(\mysqli $db, AssignmentOrderOriginalProductionConfig $config,
+        AssignmentOrderOriginalFreshTerminalReaderFactory $freshTerminalReaders): AssignmentOrderOriginalApplication
+    { return AssignmentOrderSelectedOriginalBinding::create($db,$config,$freshTerminalReaders,new AssignmentOrderOriginalSystemClock()); }
+
 }

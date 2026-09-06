@@ -17,6 +17,8 @@ final class AssignmentOrderOriginalCompositionValues
             throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);
         if ($value->status === AssignmentOrderCompositionLookupStatus::NOT_FOUND)
             throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::ORDER_NOT_FOUND);
+        if ($value->status === AssignmentOrderCompositionLookupStatus::NOT_CURRENT)
+            throw AssignmentOrderOriginalSubmissionFailure::conflict(AssignmentOrderOriginalReason::TARGET_NOT_CURRENT);
         if (!self::content($value)) throw AssignmentOrderOriginalSubmissionFailure::rejected(AssignmentOrderOriginalReason::INVALID_COMPOSITION);
     }
 

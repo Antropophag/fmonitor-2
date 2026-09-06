@@ -26,6 +26,9 @@ final class AssignmentOrderOriginalCommitProtocol
                     $phase = 'committed';
                 } elseif ($status === AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN) {
                     [$result, $phase] = $this->recover($c);
+                } elseif ($status === AssignmentOrderOriginalCommitStatus::COMPOSITION_NOT_CURRENT) {
+                    $result = $this->terminal($c, AssignmentOrderOriginalReason::TARGET_NOT_CURRENT);
+                    $needsAttempt = true;
                 } elseif ($status === AssignmentOrderOriginalCommitStatus::CONFLICT) {
                     $result = $this->conflict($c, $composition, $fingerprint, $sha);
                     $needsAttempt = true;

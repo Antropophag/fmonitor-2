@@ -8,9 +8,16 @@ namespace FMonitor2\AssignmentOrderOriginal;
 final class AssignmentOrderOriginalSqlWriteGuard
 {
     public static function accepted(AssignmentOrderOriginalSql $sql, AssignmentOrderOriginalAcceptedCommit $c,
-        ?AssignmentOrderOriginalPersistenceObserver $observer): void
+        ?AssignmentOrderOriginalPersistenceObserver $observer, bool $selectedCompositions = false): void
     {
-        $composition = AssignmentOrderOriginalSqlComposition::read($sql, $c->installationCaseId, $c->assignmentOrderId, $observer, true);
+        if ($selectedCompositions) {
+            $case = $sql->rows('SELECT id FROM '.$sql->table('fm2_installation_cases').' WHERE id='.$c->installationCaseId.' FOR UPDATE');
+            if (count($case) !== 1) AssignmentOrderOriginalSql::fail();
+            $composition = MariaDbSelectedOriginalComposition::read($sql, $c->installationCaseId, $c->assignmentOrderId, $observer, true);
+            if ($composition->status === AssignmentOrderCompositionLookupStatus::NOT_CURRENT) throw new AssignmentOrderOriginalCompositionNotCurrent();
+        } else {
+            $composition = AssignmentOrderOriginalSqlComposition::read($sql, $c->installationCaseId, $c->assignmentOrderId, $observer, true);
+        }
         if ($composition->status !== AssignmentOrderCompositionLookupStatus::FOUND
             || !AssignmentOrderOriginalCompositionValues::content($composition)
             || $composition->identity !== $c->compositionIdentity || $composition->sha256 !== $c->compositionSha256) AssignmentOrderOriginalSql::fail();
