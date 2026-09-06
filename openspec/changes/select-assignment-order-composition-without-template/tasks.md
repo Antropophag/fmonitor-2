@@ -136,3 +136,14 @@ Remaining native package: eligibility/state/request corruption, real races and
 interruption/recovery, allocation capacity, accepted-payload/session edges and
 prefix/readiness. No full native binding/portal completion claim. Package
 observation23318 tokens, below45k cap; review and fixation included in scope.
+
+Native accepted-persistence/outcomes sourcec93c27a Gate5 APPROVED:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-persistence-v1.md`.
+Pre-write snapshot validation, native eligibility/pending/stale/no_changes/missing
+selection/request-corruption and three counter-exhaustion cases proven. Native41
+PASS archive `selection-native-persistence-green-mqw2elh6`, manifest
+9b13a673900535a43d6996e6d2cf988dff930a482b555055a0d67e12cb3bf73e.
+Remaining: real races/interruption/recovery, prefix/readiness and locked original
+root edges; do not infer these from pure-core or sequential native evidence.
+Cost observation59760 tokens near60k cap: scope frozen for final review/record,
+no extra work added. Time stayed within20min; full native/portal remains open.
