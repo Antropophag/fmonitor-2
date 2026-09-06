@@ -4,8 +4,8 @@
 
 ## 2. RED и independent Gate3
 
-- [ ] 2.1 Написать минимальные public-command/audit-writer/schema RED по примерам контракта и captured exact failure; завершение — падения из-за отсутствующего поведения при работающих controls.
-- [ ] 2.2 Согласовать необходимые exact unapplied compatibility patches после mismatch evidence; завершение — независимый Gate3 для новых tests и каждого изменяемого oracle.
+- [x] 2.1 Написать минимальные public-command/audit-writer/schema RED по примерам контракта и captured exact failure; завершение — падения из-за отсутствующего поведения при работающих controls.
+- [x] 2.2 Согласовать необходимые exact unapplied compatibility patches после mismatch evidence; завершение — независимый Gate3 для новых tests и каждого изменяемого oracle.
 
 ## 3. Минимальный GREEN
 

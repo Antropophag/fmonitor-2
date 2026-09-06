@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
 require dirname(__DIR__).'/Support/ProductionMigrationRunnerCatalogContract.php';
+require dirname(__DIR__).'/Support/ProductionOriginalAuditCatalogV13.php';
 // Specification: PRODUCTION-MIGRATION-RUNNER-001 v0.5, examples A-C and failures.
 // Composed successor: owner-approved OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 v0.4, v12.
 
@@ -113,7 +114,8 @@ function pmrAssertEngineerCheckNormalizerSensitivity(): void
 
 function pmrCatalog(mysqli $connection, string $prefix): void
 {
-    $contract = ProductionMigrationRunnerCatalogContract::columnsV12();
+    ProductionOriginalAuditCatalogV13::assertNormalizerSensitivity();
+    $contract = ProductionOriginalAuditCatalogV13::columns();
     $like = $connection->real_escape_string($prefix . 'fm2\\_%');
     $tables = pmrRows($connection, "SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$like}' ORDER BY BINARY TABLE_NAME");
 
@@ -122,7 +124,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     assertSameValue(
         $expectedTables,
         array_column($tables, 'TABLE_NAME'),
-        'The catalog must contain exactly the thirty-three approved v1-v12 tables.',
+        'The catalog must contain exactly the forty approved v1-v13 tables.',
     );
     foreach ($tables as $table) {
         assertSameValue('InnoDB', $table['ENGINE'], 'Every approved table must use InnoDB.');
@@ -138,7 +140,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
                 $type = 'json';
             }
             $textual = str_starts_with($type, 'varchar(') || str_starts_with($type, 'char(') || str_starts_with($type, 'enum(') || $type === 'text' || $type === 'longtext' || $type === 'json';
-            assertSameValue($textual ? 'utf8mb4' : null, $column['CHARACTER_SET_NAME'], $column['COLUMN_NAME'] . ' character contract.');
+            assertSameValue(ProductionOriginalAuditCatalogV13::charset($table,$column['COLUMN_NAME'],$textual), $column['CHARACTER_SET_NAME'], $column['COLUMN_NAME'] . ' character contract.');
             return [$column['COLUMN_NAME'], $type, $column['IS_NULLABLE'], $column['EXTRA']];
         }, $actual);
         assertSameValue($expected, $actual, $table . ' exact types, nullability, order and extras.');
@@ -152,37 +154,39 @@ function pmrCatalog(mysqli $connection, string $prefix): void
         return substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $kind . '|' . $row['COLUMNS'];
     }, $indexes);
     sort($indexes);
-    $expectedIndexes = ProductionMigrationRunnerCatalogContract::indexesV12();
+    $expectedIndexes = ProductionOriginalAuditCatalogV13::indexes();
     sort($expectedIndexes);
     assertSameValue($expectedIndexes, $indexes, 'All primary, unique, secondary and FK-support indexes must match the approved contract.');
 
     $foreignKeys = pmrRows($connection, "SELECT k.TABLE_NAME,k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE k JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.TABLE_NAME=k.TABLE_NAME AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME WHERE k.CONSTRAINT_SCHEMA=DATABASE() AND k.TABLE_NAME LIKE '{$like}' ORDER BY k.TABLE_NAME,k.COLUMN_NAME,k.CONSTRAINT_NAME");
     $foreignKeys = array_map(static fn (array $row): string => substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $row['COLUMN_NAME'] . '|' . substr((string) $row['REFERENCED_TABLE_NAME'], strlen($prefix)) . '|' . $row['REFERENCED_COLUMN_NAME'] . '|' . $row['DELETE_RULE'], $foreignKeys);
-    assertSameValue(ProductionMigrationRunnerCatalogContract::foreignKeys(), $foreignKeys, 'All seventeen foreign-key column mappings and delete rules must match the approved contract.');
+    sort($foreignKeys,SORT_STRING);
+    assertSameValue(ProductionOriginalAuditCatalogV13::foreignKeys(), $foreignKeys, 'All canonical v13 foreign-key column mappings and delete rules must match the approved contract.');
 
     $checks = pmrRows($connection, "SELECT tc.TABLE_NAME,tc.CONSTRAINT_NAME,cc.CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS cc JOIN information_schema.TABLE_CONSTRAINTS tc ON tc.CONSTRAINT_SCHEMA=cc.CONSTRAINT_SCHEMA AND tc.TABLE_NAME=cc.TABLE_NAME AND tc.CONSTRAINT_NAME=cc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME LIKE '{$like}' ORDER BY tc.TABLE_NAME,cc.CHECK_CLAUSE");
     $checks = array_map(static function (array $check) use ($prefix): array {
         $clause = stripos((string) $check['CHECK_CLAUSE'], 'position_snapshot') !== false
             ? pmrNormalizeEngineerCheck((string) $check['CHECK_CLAUSE'])
             : pmrNormalizeCheck((string) $check['CHECK_CLAUSE']);
+        if(str_starts_with(substr((string)$check['TABLE_NAME'],strlen($prefix)),'fm2_assignment_order_original_'))$clause=ProductionOriginalAuditCatalogV13::normalizeOriginal((string)$check['CHECK_CLAUSE']);
         return [
             'table' => substr((string) $check['TABLE_NAME'], strlen($prefix)),
-            'constraint' => $check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability' ? $check['CONSTRAINT_NAME'] : null,
+            'constraint' => $check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability_v5' ? $check['CONSTRAINT_NAME'] : null,
             'clause' => $clause,
         ];
     }, $checks);
-    assertSameValue(ProductionMigrationRunnerCatalogContract::checks(), $checks, 'All fifteen normalized CHECK tuples and the normative v4 constraint name must match literally, with no extras.');
+    assertSameValue(ProductionOriginalAuditCatalogV13::checks(), ProductionOriginalAuditCatalogV13::sortChecks($checks), 'All normalized CHECK tuples and the normative v5 constraint name must match literally, with no extras.');
 }
 function pmrState(mysqli $c):array{$s=[];foreach(pmrRows($c,'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME') as $r){$t=$r['TABLE_NAME'];$q='`'.str_replace('`','``',$t).'`';$s[$t]=['create'=>pmrRows($c,"SHOW CREATE TABLE {$q}")[0]['Create Table'],'rows'=>pmrRows($c,"SELECT * FROM {$q}")];}return $s;}
 
-function pmrReplaceCompletedV4Checks(mysqli $connection, string $prefix, string $capabilityExpression, string $engineerExpression): void
+function pmrReplaceCompletedV5Checks(mysqli $connection, string $prefix, string $capabilityExpression, string $engineerExpression): void
 {
     $table = $prefix . 'fm2_process_user_capabilities';
     $checks = pmrRows($connection, "SELECT tc.CONSTRAINT_NAME,cc.CHECK_CLAUSE FROM information_schema.TABLE_CONSTRAINTS tc JOIN information_schema.CHECK_CONSTRAINTS cc ON cc.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND cc.TABLE_NAME=tc.TABLE_NAME AND cc.CONSTRAINT_NAME=tc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME='{$table}' ORDER BY tc.CONSTRAINT_NAME");
     $capabilityName = null;
     $engineerName = null;
     foreach ($checks as $check) {
-        if ($check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability') {
+        if ($check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability_v5') {
             $capabilityName = $check['CONSTRAINT_NAME'];
         } elseif (stripos((string) $check['CHECK_CLAUSE'], 'position_snapshot') !== false) {
             $engineerName = $check['CONSTRAINT_NAME'];
@@ -190,13 +194,13 @@ function pmrReplaceCompletedV4Checks(mysqli $connection, string $prefix, string 
     }
     foreach ([$capabilityName, $engineerName] as $name) {
         if (!is_string($name) || preg_match('/^[A-Za-z0-9_$]{1,64}$/D', $name) !== 1) {
-            throw new TestFailure('Completed-v4 fixture must find two safe exact CHECK identifiers.');
+            throw new TestFailure('Completed-v5 fixture must find two safe exact CHECK identifiers.');
         }
     }
-    $connection->query("ALTER TABLE `{$table}` DROP CONSTRAINT `{$capabilityName}`, DROP CONSTRAINT `{$engineerName}`, ADD CONSTRAINT `ck_fm2_process_user_capability` CHECK ({$capabilityExpression}), ADD CONSTRAINT `fixture_engineer_position` CHECK ({$engineerExpression})");
+    $connection->query("ALTER TABLE `{$table}` DROP CONSTRAINT `{$capabilityName}`, DROP CONSTRAINT `{$engineerName}`, ADD CONSTRAINT `ck_fm2_process_user_capability_v5` CHECK ({$capabilityExpression}), ADD CONSTRAINT `fixture_engineer_position` CHECK ({$engineerExpression})");
 }
 
-function pmrCompletedV4Environment(string $database, string $prefix): array
+function pmrCompletedV5Environment(string $database, string $prefix): array
 {
     return [
         'FMONITOR_DB_HOST' => getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1',
@@ -354,73 +358,73 @@ try{
  }
 
  $db='t_pmr_a_'.$tok;$dbs[]=$db;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$env=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_'];
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
- $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
+ $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
 
- $completedV4Cases = [
+ $completedV5Cases = [
      'whole-wrapper engineer CHECK' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "(capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> ''))",
          'accepted' => true,
      ],
      'permuted exact capability IN literals' => [
-         'capability' => "capability IN ('installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.confirm_registration')",
+         'capability' => "capability IN ('installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.confirm_registration','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => true,
      ],
      'quoted whitespace near-match' => [
-         'capability' => "capability IN ('assignment_order. prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
+         'capability' => "capability IN ('assignment_order. prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => false,
      ],
      'quoted capability case near-match' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','Installation.open','construction_control_engineer')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','Installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => false,
      ],
      'quoted engineer case near-match' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'Construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => false,
      ],
      'extra capability literal' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','unexpected.capability')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','unexpected.capability','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => false,
      ],
      'duplicate capability literal' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.prepare')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
          'accepted' => false,
      ],
      'engineer (A OR B) AND C parse tree' => [
-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
+         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
          'engineer' => "(capability <> 'construction_control_engineer' OR position_snapshot IS NOT NULL) AND trim(position_snapshot) <> ''",
          'accepted' => false,
      ],
  ];
  $completedIndex = 0;
- foreach ($completedV4Cases as $label => $fixture) {
+ foreach ($completedV5Cases as $label => $fixture) {
      $completedIndex++;
      $completedDatabase = 't_pmr_v4_' . $completedIndex . '_' . $tok;
      $completedPrefix = 'completed_' . $completedIndex . '_';
      $dbs[] = $completedDatabase;
      $admin->query("CREATE DATABASE `{$completedDatabase}` DEFAULT CHARSET=utf8mb4");
-     $completedEnvironment = pmrCompletedV4Environment($completedDatabase, $completedPrefix);
+     $completedEnvironment = pmrCompletedV5Environment($completedDatabase, $completedPrefix);
      pmrResult(
-         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],
+         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],
          pmrRun($completedEnvironment),
          $label . ' fixture setup',
      );
      $completedConnection = pmrDb($completedDatabase);
-     pmrReplaceCompletedV4Checks($completedConnection, $completedPrefix, $fixture['capability'], $fixture['engineer']);
+     pmrReplaceCompletedV5Checks($completedConnection, $completedPrefix, $fixture['capability'], $fixture['engineer']);
      $completedConnection->query("INSERT INTO {$completedPrefix}fm2_process_user_capabilities VALUES (700{$completedIndex},'construction_control_engineer','Sentinel engineer')");
      $completedBefore = pmrState($completedConnection);
      if ($fixture['accepted']) {
          pmrResult(
-             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],
+             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[]}\n",'stderr'=>''],
              pmrRun($completedEnvironment),
-             $label . ' must remain a completed-v6 no-op after the v4 compatibility check',
+             $label . ' must remain a completed-v13 no-op after exact capability successor recognition',
          );
      } else {
          $completedMarker = dirname(__DIR__,2).'/.test-artifacts/pmr-v4-nearmatch-'.$completedIndex.'-'.$tok;
@@ -464,7 +468,7 @@ try{
  assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'seven v1/v2 tables plus conflicting v3 table remain and v4 stops');
  $c->query('DROP TABLE pilot_fm2_process_user_capabilities');
  $recoveryEnvironment=array_diff_key($ce,['PMR_V4_INVOCATION_MARKER'=>true]);
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
  pmrCatalog($c,'pilot_');
  $state=pmrState($c);
  foreach(['legacy_sentinel','unrelated_sentinel'] as $t)assertSameValue($before[$t],$state[$t],$t.' survives recovery');
@@ -472,5 +476,5 @@ try{
 
  $db='t_pmr_fail_'.$tok;$dbs[]=$db;$u='pmr_limited_'.$tok;$users[]=$u;$pw='limited_'.$tok;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY '{$pw}'");$admin->query("GRANT SELECT,CREATE ON `{$db}`.* TO `{$u}`@'%'");$fe=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>$pw]);pmrResult(['exitCode'=>70,'stdout'=>"{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n",'stderr'=>''],pmrRun($fe),'unexpected DDL failure',[$db,$u,$pw,'pilot_','ALTER','denied']);$c=pmrDb($db);assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'v1-v3 DDL remains');$checks=implode(' ',array_column(pmrRows($c,"SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='pilot_fm2_process_user_capabilities'"),'CHECK_CLAUSE'));assertSameValue(false,str_contains($checks,'installation.open'),'v4 did not complete');$c->close();
 
- $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
+ $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
 }finally{foreach($dbs as $db)$admin->query("DROP DATABASE IF EXISTS `{$db}`");foreach($users as $u)$admin->query("DROP USER IF EXISTS `{$u}`@'%'");foreach($files as $file)if(is_file($file))unlink($file);$admin->close();}

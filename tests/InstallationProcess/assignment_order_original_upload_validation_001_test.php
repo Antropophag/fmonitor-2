@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
 
+use FMonitor2\AssignmentOrderOriginal as O;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAuthorizationStatus;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionLookupStatus;
 use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionReader;
@@ -54,6 +55,13 @@ $build = static function (
     $repository = new AssignmentOrderOriginalInitialRepository($state);
     $storage = new AssignmentOrderOriginalInitialStorage();
     $observers = new AssignmentOrderOriginalInitialObservers();
+    $attemptAudits = new class implements O\AssignmentOrderOriginalAttemptAuditWriter {
+        public array $rows = [];
+        public function recordDenied(O\AssignmentOrderOriginalSafeAttemptAudit $audit): O\AssignmentOrderOriginalAuditWriteStatus
+        { $this->rows[] = $audit; return O\AssignmentOrderOriginalAuditWriteStatus::COMMITTED; }
+        public function appendFailure(O\AssignmentOrderOriginalSafeAttemptAudit $audit): O\AssignmentOrderOriginalAuditWriteStatus
+        { throw new LogicException('File-failure audit is outside this fixture.'); }
+    };
     $application = AssignmentOrderOriginalVerificationFactory::create(
         new AssignmentOrderOriginalDependencies(
             $authorizer,
@@ -68,9 +76,11 @@ $build = static function (
             $observers,
             $observers,
             $observers,
+            null,
+            $attemptAudits,
         ),
     );
-    return [$application, $authorizer, $stream];
+    return [$application, $authorizer, $stream, $attemptAudits];
 };
 
 $resultVector = static fn ($result): array => [
@@ -94,7 +104,7 @@ $postTemplateResult = $postTemplate->submitAssignmentOrderOriginal(new SubmitAss
 assertSameValue($resultVector($directResult), $resultVector($postTemplateResult), 'Direct and post-template inputs have identical command semantics.');
 assertSameValue(AssignmentOrderOriginalStatus::ACCEPTED, $postTemplateResult->status(), 'Post-template parity accepts the same original evidence.');
 
-[$deniedInitial, $initialAuth, $deniedInitialStream] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
+[$deniedInitial, $initialAuth, $deniedInitialStream, $initialAudits] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
 $deniedInitialResult = $deniedInitial->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(
     '00000000-0000-4000-8000-000000000013', AssignmentOrderOriginalMode::INITIAL,
     4512, 81, 18, '2026-09-01', true, null, null, null, null,
@@ -103,8 +113,10 @@ $deniedInitialResult = $deniedInitial->submitAssignmentOrderOriginal(new SubmitA
 assertSameValue([AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalReason::AUTHORIZATION_DENIED, false], [$deniedInitialResult->status(), $deniedInitialResult->reasonCode(), $deniedInitialResult->retryable()], 'Denied initial upload has exact terminal result.');
 assertSameValue([[18, 'assignment_order.original.upload']], $initialAuth->calls, 'Initial mode asks only for exact upload capability.');
 assertSameValue(0, $deniedInitialStream->readCalls, 'Unauthorized initial upload is denied before stream read.');
+assertSameValue(1, count($initialAudits->rows), 'Initial denial now records one attempt audit.');
+assertSameValue(['00000000-0000-4000-8000-000000000013',18,'initial'], [$initialAudits->rows[0]->requestId,$initialAudits->rows[0]->actorUserId,$initialAudits->rows[0]->mode->value], 'Initial denial audit identity independent.');
 
-[$deniedCorrection, $correctionAuth, $deniedCorrectionStream] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
+[$deniedCorrection, $correctionAuth, $deniedCorrectionStream, $correctionAudits] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
 $deniedCorrectionResult = $deniedCorrection->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(
     '00000000-0000-4000-8000-000000000014', AssignmentOrderOriginalMode::CORRECTION,
     4512, 81, 18, '2026-09-01', true, 'original-0001', 'revision-0001', 'revision-0001', 'Исправлен файл',
@@ -113,6 +125,8 @@ $deniedCorrectionResult = $deniedCorrection->submitAssignmentOrderOriginal(new S
 assertSameValue([AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalReason::AUTHORIZATION_DENIED, false], [$deniedCorrectionResult->status(), $deniedCorrectionResult->reasonCode(), $deniedCorrectionResult->retryable()], 'Denied correction has exact terminal result.');
 assertSameValue([[18, 'assignment_order.original.correct']], $correctionAuth->calls, 'Correction mode asks only for exact correction capability.');
 assertSameValue(0, $deniedCorrectionStream->readCalls, 'Unauthorized correction is denied before stream read.');
+assertSameValue(1, count($correctionAudits->rows), 'Correction denial now records one attempt audit.');
+assertSameValue(['00000000-0000-4000-8000-000000000014',18,'correction'], [$correctionAudits->rows[0]->requestId,$correctionAudits->rows[0]->actorUserId,$correctionAudits->rows[0]->mode->value], 'Correction denial audit identity independent.');
 
 $submitInitial = static function (object $application, AssignmentOrderOriginalMatrixStream $stream, string $requestId, string $date, bool $confirmed, string $filename, string $mediaType) {
     return $application->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(

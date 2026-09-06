@@ -123,7 +123,7 @@ isolationCase('real-audit-failure-remains',function()use($pdf){
     extract(isolationGraph('abort_failed',true,auditFails:true)); $id='00000000-0000-4000-8000-000000000301';
     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
     assertSameValue(isolationExpected($id,'failed','persistence_failure',true),isolationTuple($result),'real audit failure must not become selected rejection');
-    assertSameValue(['stage.abort','log:stage_abort','stage.close','stream.close','attempt.commit'],$trace->calls,'audit actually attempted after logger failure');
+    assertSameValue(['stage.abort','log:stage_abort','stage.close','stream.close','attempt.commit','log:terminal'],$trace->calls,'audit attempted after cleanup logger failure and failed audit diagnostic attempted once');
     assertSameValue([], $repo->attempts,'failed audit not persisted');
 });
 if($failures!==[])throw new TestFailure('Diagnostic isolation failed '.count($failures).' cases: '.implode(',',$failures));
