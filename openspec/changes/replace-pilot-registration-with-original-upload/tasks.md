@@ -200,3 +200,8 @@ Evidence lifecycle завершён: GREEN4b71e00, independent Gate5 EVIDENCE-LI
 - [x] 5.12 Minimal worker-port GREEN, affected regressions/architecture и scoped Gate5; combined command отдельно.
 
 Worker ports завершён: f692c96, independent Gate5 WORKER-PORTS001v1 APPROVED; все11 affected commands на clean exact SHA, evidenceb1038194. Остальные обязательства не отменены.
+
+## Orphan fixture corrective gates — 2026-09-06
+
+- [x] 4.13 Existing approved parentv74 section16: targeted fixture RED и independent Gate3 ORPHAN-FIXTURE001v1.
+- [ ] 5.13 Minimal fixture replay/authority/exclusion GREEN, related regressions/architecture и scoped Gate5.
