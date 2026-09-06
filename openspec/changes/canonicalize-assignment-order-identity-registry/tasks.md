@@ -26,3 +26,9 @@ actual frontier13 atd1bcddc, ordered engines14/15. Old writer conversion and mix
 rollout prerequisites above superseded by fresh-launch-owner-scope-2026-09-06.
 Native selection and selected-original binding now Gate5 APPROVED. Registration
 still requires its own RED/Gate3/GREEN/Gate5; no checkbox advanced by this note.
+
+Canonical registration focused RED/Gate3 sourcefbbb41e APPROVED:
+`reviews/tests/SELECTION-CANONICAL-REGISTRATION-001-v1.md`, archive
+`selection-canonical-red-bs93mb9p`. Six CLI cases reach currentv13; setup/cleanup
+pass. Next: registry14/selection15 registration and scoped canonical-consumer
+expectation updates before overall GREEN/Gate5. Runner remainsv13 at checkpoint.
