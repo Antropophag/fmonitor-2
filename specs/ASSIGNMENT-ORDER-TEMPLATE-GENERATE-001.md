@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-TEMPLATE-GENERATE-001
 
-Версия0.1, 2026-09-06. Candidate Gate1.
+Версия0.2, 2026-09-06. Candidate Gate1.
 
 ## Простыми словами
 
@@ -78,6 +78,29 @@ generation target. Generated PDF не проходит отдельный storag
 Renderer failure не создаёт audit успеха и не меняет дату последнего формирования.
 Отказы не создают generation facts; existing transport security audit остаётся
 своим owner. Неопределённый commit не повторяется автоматически и bytes не выдаёт.
+
+### Exact object input и renderer boundary
+
+Object source — existing MariaDbLegacyInstallationObject::getInstallationObjectSnapshot
+для legacy_installation_object_id locked case. Поля fm_maintable: ordadr_address →
+address, entrance → entrance, regnumber → objectRegistrationNumber, workdatestart →
+plannedStartDate. plannedFinishDate — workdateendadjusted, если его normalized date
+не null; иначе plan_finish_date. Используется existing date normalization adapter:
+null/blank/zero date → null; malformed nonempty value → dependency_unavailable,
+не fallback к другому полю. Отсутствующий object при existing case также unavailable.
+Address/entrance/regnumber обязаны быть trimmed nonempty UTF8; оба normalized planned
+поля обязаны быть valid YYYY-MM-DD для existing renderer. Missing required value →
+dependency_unavailable до render. Новые даты или текст вместо пропусков не выдумываются.
+
+Renderer result — PHP list ровно из одного array. Точный набор ключей (порядок
+ключей несущественен): type,filename,mediaType,bytes; extra/missing keys запрещены.
+Значения: type='order', filename='Распоряжение о закреплении монтажников.pdf',
+mediaType='application/pdf'; bytes — string длиной20..20971520, начинается с
+%PDF-1.[4-7] и newline, заканчивается %%EOF с optional trailing whitespace.
+Zero/multiple artifacts, non-list, wrong scalar type/value или exception →
+render_failure. Это bounded result-envelope check, не повторение original PDF
+security parser. Продукционный renderer отвечает за структуру PDF и проверяется
+реальным text extraction/visual QA; verification не подменяет его fake PDF header.
 
 ## 3. Единственный persisted fact и read projection
 
