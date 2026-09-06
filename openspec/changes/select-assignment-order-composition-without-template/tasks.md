@@ -19,7 +19,7 @@ Current scope2026-09-06: fresh launch без исторических данны
 ## 3. Minimal GREEN
 
 - [ ] 3.1 Реализовать production selection owner и persistence handoff; verification: approved selection matrix GREEN без renderer dependency и private caller writes.
-- [ ] 3.2 Подключить optional rendering к сохранённой identity; verification: PDF выдаётся без хранения файлов/версий, сохраняются дата последнего формирования и audit; render failure не разрушает selection, direct upload работает без render.
+- [x] 3.2 Подключить optional rendering к сохранённой identity; verification: PDF выдаётся без хранения файлов/версий, сохраняются дата последнего формирования и audit; render failure не разрушает selection, direct upload работает без render.
 
 ## 4. Review и integration
 
@@ -190,3 +190,10 @@ Archive `template-generation-green-berixc_1`: template/render/original/selection
 architecture/lints/diff PASS; actual3-page PDF visual/text QA outside repository.
 App stores only process_events audit/date, no PDF files/versions. Remaining
 refusal/projection-integrity/rollback/capacity cases precede full task3.2 closure.
+
+Final template command Gate5 APPROVED: `reviews/code/ASSIGNMENT-ORDER-TEMPLATE-GENERATE-001-v1.md`.
+Source7d9888b, finalboundary evidence2ed8e11 (21+2 PASS), archive
+`template-boundaries-final-wzb8fbb_`; prior render/original/selection/architecture
+and real3-page PDF QA retained. Task3.2 complete. HTTP/UI activation and full portal
+VERIFY/deploy remain open. Owner requested session restart after this Gate5;
+no further feature work starts in this session.
