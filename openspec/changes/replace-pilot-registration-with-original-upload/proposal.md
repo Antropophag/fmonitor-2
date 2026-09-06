@@ -103,3 +103,17 @@ Algorithm ID прежний; public constant приводится к declared AP
 reachable-only и content-as-structural-budget test oracles получают отдельный
 reviewed patch после exact Gate1. Это technical correction, не запуск нового
 format workflow, renderer или доступ к primary documents.
+
+## Cumulative data integrity and fresh recovery — 2026-09-06
+
+DATA-INTEGRITY-001 bundles passive port validation, complete lineage metadata,
+canonical composition derivation, read-only consistent MariaDB snapshots,
+request/revision/root/event/audit/fingerprint backing and pre-SQL commit DTO
+validation. Unknown commit recovery owns a new lazy read-only connection;
+compatibility construction remains explicitly degraded and launch requires
+recovery-ready wiring. Authorized early rejection/epoch timestamps use the same
+confirmed/unknown outcome rules. Historical request replay preserves its own
+revision after a later correction. Exact read metadata/observer/factory contracts
+receive fresh Gate1 and cumulative RED/Gate3 before minimal implementation.
+Denied-invocation audit cardinality stays deferred to owner; no new product
+policy, DDL, registry cutover, HTTP or maintenance behavior is inferred.

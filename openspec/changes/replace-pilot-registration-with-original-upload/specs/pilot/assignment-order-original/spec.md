@@ -438,3 +438,21 @@ bytes, and opaque image/content payloads are not structurally decompressed.
 #### Scenario: Name-looking data and opaque images
 - **WHEN** valid metadata contains marker text in strings/comments or distinct prefix Names, or a correctly framed supported opaque image filter
 - **THEN** no false active-name match or structural-only filter rejection; actual active tokens/invalid framing still fail closed
+
+### Requirement: Total persistence values and genuine fresh recovery
+
+The command and MariaDB adapters SHALL obey DATA-INTEGRITY-001's closed lookup,
+complete lineage, immutable historical evidence and pre-SQL validation contracts.
+Fresh recovery SHALL use its owned new connection and never reuse the writer.
+
+#### Scenario: Corrupt stored evidence or contradictory port value
+- **WHEN** a FOUND result has invalid identity/evidence/backing or its status and payload contradict
+- **THEN** fail typed persistence unavailable without repair, new mutation or false replay
+
+#### Scenario: Historical request after correction
+- **WHEN** an authorized earlier accepted request is retried after a newer correction
+- **THEN** replay the earlier request's own validated revision, independently of the current root pointer
+
+#### Scenario: Unknown commit with unusable writer
+- **WHEN** commit outcome cannot be confirmed and the borrowed write connection is unusable
+- **THEN** perform one owned fresh read; validated found/miss/unavailable selects the exact stored/failure/unknown outcome and closes once

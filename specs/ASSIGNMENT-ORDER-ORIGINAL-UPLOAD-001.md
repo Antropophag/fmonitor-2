@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v65 GATE 1 REREVIEW PENDING — PDF HISTORY AND LEXICAL NAMES**
-Версия: **v65**
+Статус: **v66 GATE 1 REREVIEW PENDING — TOTAL DATA INTEGRITY AND FRESH RECOVERY**
+Версия: **v66**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -9,6 +9,24 @@
 Сотрудник ФКР или Руководитель ФКР передаёт системе один подписанный PDF-оригинал распоряжения. Система проверяет файл, дату и выбранный ранее состав, сохраняет неизменяемое доказательство и позволяет исправить ошибочный файл или дату только новой версией с причиной. Повтор запроса не создаёт дубль, а сбой не оставляет видимого полурезультата.
 
 Этот slice заканчивается на публичной application-команде и private persistence. Он не создаёт HTTP-форму, экран чтения или скачивание, не применяет новый состав и не открывает работы.
+
+## Cumulative data-integrity correction — v66, Gate1 required
+
+`ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001.md` is the exact technical amendment
+for closed lookup/result/complete-lineage/composition validation, consistent
+MariaDB read/backing checks, pre-SQL AcceptedCommit/AttemptCommit validation,
+explicit lazy fresh-reader dependency and authorized attempt clock/recovery.
+Its exact metadata extension, constructor additions, observer grammar and
+confirmed-versus-unknown outcome distinctions supplement the declarations below.
+In particular, stored historical request evidence remains tied to its own
+revision after later corrections; it never follows the mutable current pointer.
+No ordinary writer-connection reread can stand in for fresh unknown recovery.
+
+This package does not choose repeated-denial audit cardinality, introduce
+retryable audit-only persistence or waive any remaining maintenance/storage/
+selection/launch gate. Product audit choice remains deferred for owner return.
+The earlier PDF-HISTORY scoped Gate5 is complete at e9aca37; this new v66
+amendment requires its own Gate1/RED/Gate3/GREEN/Gate5 before implementation.
 
 ## 1. Идентификатор, actors и публичный seam
 
