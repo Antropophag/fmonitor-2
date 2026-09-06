@@ -52,13 +52,21 @@ final class OriginalShapeFixture
     public AssignmentOrderOriginalInitialInspector $inspector;
     public AssignmentOrderOriginalInitialObservers $observers;
     public O\AssignmentOrderOriginalApplication $application;
+    public array $auditRows=[];
     public function __construct(string $pdf,private bool $correction=false,bool $terminalHit=false,bool $denied=false,?string $generatedRoot='original-0001',?string $generatedRevision=null)
     {
         $this->authorizer=new OriginalShapeAuthorizer($denied);$this->compositions=new OriginalShapeComposition();
         $this->repository=new OriginalShapeRepository($terminalHit,$correction);$this->clock=new OriginalDynamicClock('2026-09-02T09:15:30Z');
         $this->ids=new OriginalDynamicIds([new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,$generatedRoot)],[new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,$generatedRevision??($correction?'revision-0002':'revision-0001'))]);
         $this->storage=new OriginalDynamicStorage();$this->stream=new OriginalDynamicStream($pdf);$this->inspector=new AssignmentOrderOriginalInitialInspector();$this->observers=new AssignmentOrderOriginalInitialObservers();
-        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($this->authorizer,$this->compositions,$this->clock,$this->ids,$this->inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers));
+        $audits=new class($this) implements O\AssignmentOrderOriginalAttemptAuditWriter {
+            public function __construct(private OriginalShapeFixture $fixture){}
+            public function recordDenied(O\AssignmentOrderOriginalSafeAttemptAudit $audit):O\AssignmentOrderOriginalAuditWriteStatus
+            {$this->fixture->auditRows[]=$audit;return O\AssignmentOrderOriginalAuditWriteStatus::COMMITTED;}
+            public function appendFailure(O\AssignmentOrderOriginalSafeAttemptAudit $audit):O\AssignmentOrderOriginalAuditWriteStatus
+            {throw new \LogicException('Unexpected file audit in scalar fixture');}
+        };
+        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($this->authorizer,$this->compositions,$this->clock,$this->ids,$this->inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers,null,$audits));
     }
     public function command(array $changes=[],string $filename='original.pdf'):O\SubmitAssignmentOrderOriginalCommand
     {
@@ -66,5 +74,5 @@ final class OriginalShapeFixture
         return new O\SubmitAssignmentOrderOriginalCommand(...array_replace($values,$changes));
     }
     public function businessCounters():array
-    {return [count($this->authorizer->calls),count($this->repository->calls),$this->compositions->calls,$this->clock->calls,$this->storage->beginCalls,$this->ids->rootCalls,$this->ids->revisionCalls,$this->inspector->inspected,count($this->observers->lifecycle),count($this->observers->storage),$this->observers->deliveryCalls];}
+    {return [count($this->authorizer->calls),count($this->repository->calls),$this->compositions->calls,$this->clock->calls,$this->storage->beginCalls,$this->ids->rootCalls,$this->ids->revisionCalls,$this->inspector->inspected,count($this->observers->lifecycle),count($this->observers->storage),$this->observers->deliveryCalls,count($this->auditRows)];}
 }
