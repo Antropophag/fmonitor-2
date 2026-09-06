@@ -18,6 +18,8 @@ use FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration;
 use FMonitor2\InstallationProcess\ClassificationProvenanceSchemaMigration;
 use FMonitor2\InstallationProcess\ObjectDetailSnapshotSchemaMigration;
 use FMonitor2\InstallationProcess\OriginalAttemptAuditSchemaMigration;
+use FMonitor2\InstallationProcess\AssignmentOrderIdentityRegistryMigration;
+use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaMigration;
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -108,6 +110,8 @@ $migrations = [
         ),
     12 => ObjectDetailSnapshotSchemaMigration::class,
     13 => OriginalAttemptAuditSchemaMigration::class,
+    14 => AssignmentOrderIdentityRegistryMigration::class,
+    15 => AssignmentOrderSelectionSchemaMigration::class,
 ];
 $databasePreflight = static function () use ($connection, $tablePrefix): int {
     try {
