@@ -1,0 +1,7 @@
+# Evidence lifecycle — доставка2026-09-06
+
+GREEN4b71e00f1d23f1ad1e5ad621c22fe8fe8476722b и independent Gate5 APPROVED. Reader больше не удаляет storage metadata/locks, проверяет config/password перед новым read-only connection, закрывает owned resources once и возвращает exact fixed exception. Публичный config/interface исправлен. Canonical projections не изменялись.
+
+RED27cases1PASS26FAIL получил Gate3; все27 GREEN. Три legacy fixtures имели noncanonical /var alias вместо /private/var. Exact compatibility patch получил Gate3 до применения: canonical temp base, explicit owned empty-storage cleanup в maintenance после reader/database shutdown. Их исходные failures сохранены в original-evidence-legacy-compatibility-k9w3zol0; итог все12checksPASS clean exactSHA, manifest5cdc311ac307560bcacbb4541a2fd542409ef328c8f5e030262664a67fb10908 в original-evidence-lifecycle-green-gymghvjm под /Users/antropophag/.local/state/fmonitor2-verification.
+
+Первоначальный declaration пакет был до RED пересмотрен из-за обнаруженного destructive close: evidence behavior+declarations получили отдельный Gate1. Worker/fault-point и orphan fixture не включались. Наблюдение расхода380034 минус213202=166832 против90k за~13мин; после него завершены review/records, поэтому это не финальная стоимость. Расширение при overrun остановлено. Persistent goal ACTIVE, без token budget. Полного VERIFY_OK нет, CI/publication запреты прежние. Риск09-09 09:00 МСК высокий.

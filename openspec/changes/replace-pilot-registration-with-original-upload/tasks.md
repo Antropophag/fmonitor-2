@@ -188,5 +188,7 @@ Owner/repository GREEN9c48b44 и отдельный Gate5v1 APPROVED; storage GR
 ## Evidence lifecycle corrective gates — 2026-09-06
 
 - [x] 1.42 Independent Gate1 EVIDENCE-LIFECYCLE-001: read-only construction/read/close и exact existing declarations.
-- [ ] 4.11 Minimal evidence lifecycle RED и exact historical fixture-cleanup patch; independent Gate3.
-- [ ] 5.11 Minimal evidence reader GREEN, affected regressions и scoped Gate5; worker/fixture/combined command остаются обязательными.
+- [x] 4.11 Minimal evidence lifecycle RED и exact historical fixture-cleanup patch; independent Gate3.
+- [x] 5.11 Minimal evidence reader GREEN, affected regressions и scoped Gate5; worker/fixture/combined command остаются обязательными.
+
+Evidence lifecycle завершён: GREEN4b71e00, independent Gate5 EVIDENCE-LIFECYCLE001v1 APPROVED; все12 affected commands на clean exact SHA, evidence5cdc311a. Worker/fixture/combined command и launch остаются открыты.
