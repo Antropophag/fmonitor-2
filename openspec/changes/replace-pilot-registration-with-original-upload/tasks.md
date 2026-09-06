@@ -184,3 +184,9 @@ Task5.9 и corrective task4.9 завершены: exact implementation4ed122cac5
 ## Завершение maintenance — 2026-09-06
 
 Owner/repository GREEN9c48b44 и отдельный Gate5v1 APPROVED; storage GREEN4de0cb9 и Gate5 STORAGE001v1 APPROVED. Exact historical compatibility patch получил Gate3v1 до применения. Все12 affected commands на clean4de0cb9 проходят, evidence b93f56f99e92eca5c7cc708c8e503a0680959fc36dea1a705436a765b56f8190. Tasks4.10/5.10 закрыты совокупностью этих scoped approvals. Fixture/evidence/worker parity, combined command, VERIFY_OK и запуск остаются отдельными обязательными результатами.
+
+## Evidence lifecycle corrective gates — 2026-09-06
+
+- [x] 1.42 Independent Gate1 EVIDENCE-LIFECYCLE-001: read-only construction/read/close и exact existing declarations.
+- [ ] 4.11 Minimal evidence lifecycle RED и exact historical fixture-cleanup patch; independent Gate3.
+- [ ] 5.11 Minimal evidence reader GREEN, affected regressions и scoped Gate5; worker/fixture/combined command остаются обязательными.
