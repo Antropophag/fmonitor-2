@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.9, 2026-09-06. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.10, 2026-09-06. **DRAFT / GATE 1 CONSTRUCTION AMENDMENT**.
 
 Controlling owner amendment: section17. Fresh launch без исторических данных;
 legacy migration/mixed-writer compatibility clauses предыдущей версии не входят
@@ -36,6 +36,34 @@ interface AssignmentOrderCompositionApplication
 HTTP/CLI/экран вызывают этот метод. Direct SQL, fixture, renderer, legacy
 prepare и private repository method не реализуют действие. Имя
 `selectAssignmentOrderComposition` сохраняется.
+
+### Public construction
+
+В том же namespace `FMonitor2\AssignmentOrderComposition`:
+
+```php
+final readonly class SelectionDependencies
+{
+    public function __construct(
+        public SelectionAuthorizer $authorizer,
+        public SelectionDependencyReader $facts,
+        public SelectionClock $clock,
+        public SelectionTerminalRequestReader $requests,
+        public SelectionUnitOfWork $transactions,
+        public SelectionFreshTerminalReaderFactory $freshReaders,
+        public SelectionAttemptAuditWriter $audits,
+    ) {}
+}
+final class AssignmentOrderCompositionFactory
+{
+    public static function create(SelectionDependencies $dependencies): AssignmentOrderCompositionApplication { /* normative composition */ }
+}
+```
+
+Factory только собирает application, не вызывает ports и не выполняет I/O.
+Все ports уже определены sections5/6/9; production и verification вызывают один
+public command owner через этот factory. Native adapters/wiring проходят свои
+проверки до интеграции; это construction contract, не approval runtime binding.
 
 Документ — единый кандидат Gate 1. До независимого `APPROVED`, выполнения
 release-compatibility условий раздела 14 и продемонстрированного RED код и тесты
@@ -721,7 +749,7 @@ hook or direct-SQL acceptance seam.
    Proven no terminal record → acquire attempt instant один раз перед step4.
 4. Resolve object/case. Absent→object_not_found; unavailable→dependency.
    Completed precedes PTO.
-5. Empty installers→installer_required; null engineer→engineer_required.
+5. Empty installers→installer_required; null engineer→control_engineer_required.
 6. Use the already acquired attempt instant; derive Moscow selection date.
    Второй clock read запрещён.
 7. Installer batch: first numeric missing then first numeric unemployed; engineer
