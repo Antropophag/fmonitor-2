@@ -35,6 +35,8 @@ final class MariaDbSelectionSession implements SelectionTransactionSession
     public function stageTerminalAttempt(SelectionTerminalAttemptPersistence $payload): SelectionStageResult
     {
         return $this->stage(function()use($payload){
+            if(!$payload->terminalResult instanceof SelectionResult
+                ||!in_array($payload->terminalResult->status(),[AssignmentOrderCompositionStatus::REJECTED,AssignmentOrderCompositionStatus::CONFLICT],true))throw new \RuntimeException('Terminal selection result required.');
             if($this->allocationAttempted||$payload->requestId->value!==$payload->terminalResult->requestId()->value||$payload->intent->objectId!==$this->objectId)throw new \RuntimeException();
             $w=new MariaDbSelectionWrites($this->sql);$w->request($payload->intent,$payload->terminalResult,$payload->audit);
             $id=$w->audit($payload->audit);$this->staged=$payload->terminalResult;return SelectionStageResult::terminal($id);
