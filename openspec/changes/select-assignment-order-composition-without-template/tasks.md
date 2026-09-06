@@ -168,3 +168,7 @@ PDF/date/audit, HTTP/application/opening remain integration work; effective owne
 must be bound there. Migration frontier13 unchanged. Next: original registry-reader
 and locked validation binding through gates; standalone native audit is not launch
 approval and does not supply full VERIFY_OK.
+
+On-demand PDF task3.2 candidate: `ASSIGNMENT-ORDER-TEMPLATE-GENERATE-001`.
+Reuses existing renderer and fm2_process_events for date/audit projection; no PDF
+files/versions/new schema. Gate1 pending; no implementation or checkbox advance.
