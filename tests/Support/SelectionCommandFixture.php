@@ -20,6 +20,7 @@ final class SelectionCommandFixture implements C\SelectionAuthorizer, C\Selectio
     public ?C\SelectionTerminalRequestLookup $requestResponse=null; public ?C\SelectionTerminalRequestLookup $freshResponse=null;
     public ?C\SelectionIdentityAllocationResult $allocationResponse=null; public ?C\SelectionStageResult $stageResponse=null;
     public ?C\SelectionAuditWriteResult $auditResponse=null; public string $outcome='normal';
+    public ?C\SelectionUnitOfWorkResult $terminalOutcome=null;
     private bool $inside = false; private bool $fresh=false; private mixed $staged = null;
     public function __construct()
     {
@@ -112,8 +113,9 @@ final class SelectionCommandFixture implements C\SelectionAuthorizer, C\Selectio
     }
     public function execute(C\SelectionTerminalAttemptPersistence $payload): C\SelectionUnitOfWorkResult
     {
-        $this->trace[]='terminal-without-case';$this->store($payload->terminalResult,$payload->intent,$payload->audit);
-        return C\SelectionUnitOfWorkResult::committed($payload->terminalResult);
+        $this->trace[]='terminal-without-case';if($this->terminalOutcome!==null)return $this->terminalOutcome;
+        $this->store($payload->terminalResult,$payload->intent,$payload->audit);
+        return $this->outcome==='unknown-committed'?C\SelectionUnitOfWorkResult::outcomeUnknown():C\SelectionUnitOfWorkResult::committed($payload->terminalResult);
     }
     public function append(C\SelectionSafeAttemptAudit $audit): C\SelectionAuditWriteResult
     { $this->trace[]='independent-audit';if($this->auditResponse!==null)return $this->auditResponse;$this->audits[]=$audit;return C\SelectionAuditWriteResult::committed(count($this->audits)); }

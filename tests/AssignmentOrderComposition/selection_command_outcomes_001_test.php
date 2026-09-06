@@ -64,5 +64,15 @@ $cases['reauthorize unknown result before disclosure']=static function():void{
     outcomeCheck($f->app()->selectAssignmentOrderComposition(outcomeCommand()),'rejected','authorization_denied');assertSameValue(false,in_array('fresh-open',$f->trace,true),'revoked recovery cannot open confidential reader');
     assertSameValue([1,1,2],[$f->clockCalls,count($f->requests),count($f->audits)],'denial uses original attempt instant and retains committed terminal');
 };
+foreach(['rollback','capacity','race','unknown-committed'] as $kind){$cases['no-case terminal '.$kind]=static function()use($kind):void{
+    $f=new F();$f->caseExists=false;
+    if($kind==='unknown-committed')$f->outcome=$kind;
+    else $f->terminalOutcome=match($kind){'race'=>C\SelectionUnitOfWorkResult::requestRace(),'capacity'=>C\SelectionUnitOfWorkResult::rolledBack(C\SelectionRollbackCause::ALLOCATION_CAPACITY_EXHAUSTED),default=>C\SelectionUnitOfWorkResult::rolledBack(C\SelectionRollbackCause::PERSISTENCE_FAILURE)};
+    $r=$f->app()->selectAssignmentOrderComposition(outcomeCommand());
+    outcomeCheck($r,$kind==='unknown-committed'?'rejected':'failed',match($kind){'unknown-committed'=>'object_not_found','capacity'=>'allocation_capacity_exhausted',default=>'persistence_failure'},in_array($kind,['rollback','race'],true));
+    assertSameValue([0,1],[$f->allocations,$f->clockCalls],'no-case recovery never allocates or reacquires clock');
+    if(in_array($kind,['race','unknown-committed'],true))assertSameValue(1,count(array_filter($f->trace,static fn($x)=>$x==='fresh-close')),'no-case fresh reader closed');
+    if($kind!=='unknown-committed')noFacts($f);else assertSameValue([1,1],[count($f->requests),count($f->audits)],'unknown committed no-case facts recovered');
+};}
 $failed=0;foreach($cases as $name=>$test){try{assertSameValue(true,is_callable([C\AssignmentOrderCompositionFactory::class,'create']),'RED_ASSERTION: public selection application factory is missing');$test();echo "PASS $name\n";}catch(Throwable $e){$failed++;echo "FAIL $name: ".$e->getMessage()."\n";}}
 echo 'SELECTION_COMMAND_OUTCOMES passed='.(count($cases)-$failed).' failed='.$failed."\n";exit($failed===0?0:1);
