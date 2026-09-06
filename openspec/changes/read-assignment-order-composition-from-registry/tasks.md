@@ -4,8 +4,8 @@
 
 ## 2. RED and review
 
-- [ ] 2.1 Написать public reader tests на synthetic registry/selection/legacy fixtures; verification: intended RED, fixed hashes/statuses, nondisclosure/consistent snapshot, resources и preservation.
-- [ ] 2.2 Получить independent Gate3; verification: APPROVED exact tests/support и terminal RED evidence без setup failures.
+- [x] 2.1 Написать public reader tests на synthetic registry/selection/legacy fixtures; verification: intended RED, fixed hashes/statuses, nondisclosure/consistent snapshot, resources и preservation.
+- [x] 2.2 Получить independent Gate3; verification: APPROVED exact tests/support и terminal RED evidence без setup failures.
 
 ## 3. Unwired implementation
 
