@@ -1,11 +1,34 @@
 """ASSIGNMENT-ORDER-SELECTION-NATIVE-001: narrow SQL owner, public CLI."""
 import unittest
-import test_php_select_tokens as cli
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
 
 
 class SelectionNativeOwnerTest(unittest.TestCase):
     def inspect(self, source, filename):
-        return cli.PhpSelectTokensTest().inspect(source, 'app/AssignmentOrderComposition/' + filename)
+        with tempfile.TemporaryDirectory(prefix='fm2-selection-owner-') as directory:
+            root = Path(directory)
+            tool = root / 'tools/architecture'
+            tool.mkdir(parents=True)
+            shutil.copyfile(REPO / 'tools/architecture/check.py', tool / 'check.py')
+            # Independent empty debt: repository baseline entries cannot satisfy this test.
+            baseline = {'ddl_ownership': [], 'sql_ownership': [], 'dependency_direction': [],
+                        'rapid_pilot_boundary': [], 'hotspots': {}, 'public_seams': []}
+            (tool / 'baseline.json').write_text(json.dumps(baseline), encoding='utf-8')
+            target = root / 'app/AssignmentOrderComposition' / filename
+            target.parent.mkdir(parents=True)
+            target.write_text(source, encoding='utf-8')
+            result = subprocess.run([sys.executable, str(tool / 'check.py'), '--json'],
+                                    cwd=root, capture_output=True, text=True, timeout=30)
+            self.assertEqual('', result.stderr)
+            self.assertIn(result.returncode, (0, 1))
+            return result.returncode, json.loads(result.stdout)
 
     def test_mariadb_binding_owns_dml(self):
         for sql in ('SELECT id FROM facts', 'INSERT INTO facts VALUES(1)', 'UPDATE facts SET id=2'):
