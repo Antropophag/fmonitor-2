@@ -26,6 +26,7 @@ final readonly class MariaDbSelectionWrites
     public function accepted(SelectionAcceptedPersistence $p): SelectionStageResult
     {
         $r=$p->selectedResult;if(!$r instanceof SelectionResult||$r->status()!==AssignmentOrderCompositionStatus::SELECTED)throw new \RuntimeException();
+        self::validateSnapshots($p);
         self::validateTerminal($p->intent,$r,$p->audit);$s=$r->success();$a=$p->allocation;$e=$p->event;
         [$identity,$hash]=SelectionIntent::composition($a->caseId,$a->assignmentOrderId,$a->orderVersion,$p->engineer->userId,$p->intent->installers);
         if([$s->caseId,$s->assignmentOrderId,$s->assignmentOrderVersion,$s->selectionRevision,$s->compositionIdentity,$s->compositionSha256,$s->selectedAt,$s->selectionDate]!==[$a->caseId,$a->assignmentOrderId,$a->orderVersion,$p->selectionRevision,$identity,$hash,$p->selectedAt->utcRfc3339Seconds,$p->selectionDate]
@@ -38,4 +39,18 @@ final readonly class MariaDbSelectionWrites
         $this->sql->insert('fm2_assignment_order_selection_events',['event_type'=>'assignment_order_composition_selected','request_id'=>$e->requestId->value,'installation_case_id'=>$e->caseId,'assignment_order_id'=>$e->orderId,'assignment_order_version'=>$e->orderVersion,'selection_revision'=>$e->selectionRevision,'previous_selection_order_id'=>$e->previousSelectionOrderId,'replaces_selection_order_id'=>$e->replacesSelectionOrderId,'composition_sha256'=>$e->compositionSha256,'occurred_at_utc'=>MariaDbSelectionSql::time($e->occurredAt),'actor_user_id'=>$e->actor->value]);
         $event=$this->sql->generatedId();return SelectionStageResult::accepted($event,$this->audit($p->audit));
     }
+    private static function validateSnapshots(SelectionAcceptedPersistence $p): void
+    {
+        if(!SelectionScalar::utc($p->selectedAt->utcRfc3339Seconds)
+            ||$p->selectionDate!==SelectionScalar::selectionDate($p->selectedAt)
+            ||!SelectionScalar::text($p->engineer->fio,300)||!SelectionScalar::text($p->engineer->position,300)
+            ||!array_is_list($p->installers)||$p->installers===[])throw new \RuntimeException('Invalid accepted selection snapshot.');
+        foreach($p->installers as $m) {
+            if(!$m instanceof InstallerSnapshot||$m->tabId<1||!SelectionScalar::text($m->fio,300)||!SelectionScalar::text($m->position,300)
+                ||$m->employmentStatus!=='employed'||!SelectionScalar::date($m->employedFrom)||$m->employedFrom>$p->selectionDate
+                ||($m->employedTo!==null&&(!SelectionScalar::date($m->employedTo)||$m->employedTo<$m->employedFrom||$m->employedTo<$p->selectionDate))
+                ||!SelectionScalar::text($m->workforceSource,80)||!SelectionScalar::sourceInstant($m->workforceSourceUpdatedAt))throw new \RuntimeException('Invalid accepted installer snapshot.');
+        }
+    }
+
 }
