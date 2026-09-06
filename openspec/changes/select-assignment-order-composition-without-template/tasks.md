@@ -172,3 +172,8 @@ approval and does not supply full VERIFY_OK.
 On-demand PDF task3.2 candidate: `ASSIGNMENT-ORDER-TEMPLATE-GENERATE-001`.
 Reuses existing renderer and fm2_process_events for date/audit projection; no PDF
 files/versions/new schema. Gate1 pending; no implementation or checkbox advance.
+
+Template generation Gate1 v0.2 sourceaa95ede APPROVED:
+`docs/operations/template-generation-gate1-v2-2026-09-06.md`. Exact renderer
+envelope/object-date precedence closed. Existing process_events audit/date
+projection only; next RED/Gate3, no new schema or template storage.
