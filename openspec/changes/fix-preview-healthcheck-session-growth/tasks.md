@@ -3,6 +3,6 @@
 - [x] 1.2 Написать native HTTP tests, доказать RED, получить independent Gate3.
 ## 2. Implementation
 - [x] 2.1 Minimal GREEN CLI/Compose, focused regression и architecture-check.
-- [ ] 2.2 Independent Gate5, evidence и commit.
+- [x] 2.2 Independent Gate5, evidence и commit.
 ## 3. Operations
-- [ ] 3.1 Подключить approved healthcheck в owned preview, проверить устойчивый login без session growth; записать ограничения health и commit.
+- [x] 3.1 Подключить approved healthcheck в owned preview, проверить устойчивый login без session growth; записать ограничения health и commit.
