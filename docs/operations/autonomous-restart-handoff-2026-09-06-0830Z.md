@@ -1,5 +1,48 @@
 # Autonomous restart handoff — 2026-09-06 08:30 UTC
 
+## Owner steering after checkpoint: control cost and scope
+
+The owner challenged the disproportionate overnight token expenditure and
+explicitly requested these working-mode corrections in the new-session prompt.
+This is current user steering, not a proposal awaiting another confirmation.
+
+- Start with a short critical-path assessment from actual repository evidence:
+  what prevents the full requested launch, what is already proven, and what can
+  be deferred as an optional improvement. Preserve all explicit launch behavior
+  and mandatory gates; do not silently redefine success or waive a requirement.
+- Before each bounded work package, state its concrete launch contribution,
+  completion evidence, estimated effort and a practical time/token spending
+  limit. Track actual use where observable. Treat estimates as estimates. Do not
+  attach a persistent-goal token budget unless the user explicitly gives one.
+- When a package exceeds its stated limit or cycles through the same unresolved
+  finding, stop expanding that package and reassess the approach. Report the
+  overrun and choose a simpler conforming solution or another independent
+  critical-path task. Do not spend indefinitely on the same component or mark
+  it complete merely to fit the limit. Technical choices remain autonomous.
+- Keep spec amendments and tests proportional to the concrete missing behavior
+  or demonstrated defect. No exhaustive new matrix, API expansion, abstraction,
+  refactor or documentation package solely for completeness. Required tests and
+  explicit accepted contracts still stand; do not weaken existing oracles.
+- Reuse existing exact approvals and completed verification evidence within
+  their actual scope. Repeat checks only for relevant changes, failures,
+  unresolved concerns or an explicit gate. Run focused checks during iteration
+  and the required integration suite when the candidate is ready.
+- Give independent reviewers a bounded scope and concise context. Default to
+  one independent reviewer per gate; multiple reviewers require distinct useful
+  scopes. Do not send the whole history or restart reviews without new evidence.
+  Reviewer/author independence and recorded verdicts remain mandatory.
+- Do not begin speculative harness tuning or global agent-configuration changes.
+  First use fewer repeated reads, smaller tool output, focused verification and
+  compact handoffs. Any harness work must address a measured bottleneck and have
+  a bounded expected payoff toward this launch.
+- Report delivered user-visible behavior and remaining launch blockers, not test
+  counts or document volume as substitutes for progress. Keep the Wednesday
+  2026-09-09 09:00 Europe/Moscow deadline visible and flag schedule risk candidly.
+
+The prior uncontrolled working mode must not resume. These instructions do not
+grant launch approval, remove gates, reopen owner approvals or authorize changing
+the persistent objective to a smaller result.
+
 User requested a suitable point for session restart. This is that checkpoint.
 Do not start more work in the old session. Goal remains ACTIVE, not achieved and
 not blocked. All known test runner handles are terminal; three separately tasked
