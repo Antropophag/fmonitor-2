@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v64 GATE 1 REREVIEW PENDING — COMMAND RESOURCE LIFECYCLE**
-Версия: **v64**
+Статус: **v65 GATE 1 REREVIEW PENDING — PDF HISTORY AND LEXICAL NAMES**
+Версия: **v65**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -117,6 +117,12 @@ JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIg
 ```
 
 Expected byte size: `327`. Expected SHA-256: `4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784`. Эти literals являются oracle; verifier не вычисляет expected value через production service.
+
+`specs/ASSIGNMENT-ORDER-ORIGINAL-PDF-HISTORY-001.md` defines the technical
+all-history/Name-token/opaque-stream clarification for the same owned algorithm.
+Fresh independent Gate1 precedes its RED. Prior reachable-only unsafe-name oracle
+and ordinary-content structural-budget fixtures require a separately reviewed
+patch; their old bytes/reviews remain historical, not active policy authority.
 
 ## 6. Exact result DTO и matrix
 

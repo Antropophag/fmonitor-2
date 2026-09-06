@@ -124,3 +124,9 @@ All31 original/supporting checks PASS, final evidence17ced5d57b. Scoped Gate5
 5af44f12 + immutable regression completion912fda99 APPROVED. Fresh DB recovery,
 data-integrity/audit, remaining public API/maintenance and all-revisions PDF scan
 remain open. No combined original-command/VERIFY_OK/launch approval.
+
+## PDF history corrective gates — 2026-09-06
+
+- [ ] 1.38 Independent Gate1 PDF-HISTORY-001 exact lexical/history/filter/structural-budget contract; no new primary data or algorithm-ID substitution.
+- [ ] 4.7 Public-inspector RED and independent Gate3; separate exact unapplied legacy-oracle patch with fresh mismatch evidence.
+- [ ] 5.8 Minimal history/name/opaque-stream GREEN, parser/worker regressions, architecture/lint and independent Gate5; combined command remains separate.

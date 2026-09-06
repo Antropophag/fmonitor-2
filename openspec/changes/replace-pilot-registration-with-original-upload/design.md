@@ -256,3 +256,15 @@ reviewed patch. Post-commit callback loss не становится no-fact FAIL
 ResponseDeliveryLost без повторения resources/commit. Actual fresh DB recovery
 и data integrity остаются обязательным отдельным corrective dependency.
 Новый technical Gate1 нужен до RED; нет нового product permission/policy.
+
+## PDF history and lexical correction — 2026-09-06
+
+PDF-HISTORY-001 делает existing all-revision scan независимым от current graph:
+каждый selected historical dictionary/object-stream member проверяется по exact
+PDF Name tokens. Strings/comments/hex/prefix names не становятся active names.
+Structural raw/Flate decoding остаётся bounded/cached; image/content payloads
+opaque, их framing/dictionary/filter shape проверяются без decoding/OCR.
+Algorithm ID прежний; public constant приводится к declared API. Старые
+reachable-only и content-as-structural-budget test oracles получают отдельный
+reviewed patch после exact Gate1. Это technical correction, не запуск нового
+format workflow, renderer или доступ к primary documents.

@@ -424,3 +424,17 @@ cleanup/release and post-commit response loss without false no-fact failure.
 #### Scenario: Committed response observer fails
 - **WHEN** post-commit lifecycle/delivery callback throws after lease release attempt
 - **THEN** fixed ResponseDeliveryLost without Result, durable facts unchanged, no resource/commit retry; next authorized same-request call replays
+
+### Requirement: Full PDF history and exact lexical names
+
+Inspector SHALL соблюдать PDF-HISTORY-001: all selected revisions/object-stream
+members are scanned, exact decoded Name tokens are distinguished from literal
+bytes, and opaque image/content payloads are not structurally decompressed.
+
+#### Scenario: Older or unreachable active dictionary
+- **WHEN** selected historical/unreachable dictionary contains an exact forbidden Name
+- **THEN** UNSAFE_PDF even when current page graph is passive; benign history remains allowed
+
+#### Scenario: Name-looking data and opaque images
+- **WHEN** valid metadata contains marker text in strings/comments or distinct prefix Names, or a correctly framed supported opaque image filter
+- **THEN** no false active-name match or structural-only filter rejection; actual active tokens/invalid framing still fail closed
