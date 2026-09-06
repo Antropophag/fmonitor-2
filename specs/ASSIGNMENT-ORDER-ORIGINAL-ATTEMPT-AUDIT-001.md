@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-ATTEMPT-AUDIT-001
 
-Версия: 0.1. Статус: DRAFT / требуется независимый технический Gate1.
+Версия: 0.2. Статус: DRAFT / требуется независимый технический Gate1.
 
 ## Простыми словами
 
@@ -233,3 +233,26 @@ affected checks + architecture→independent Gate5. Existing test expectations
 Полный VERIFY_OK, combined command, HTTP и launch остаются отдельными gates.
 
 Exact verification declarations в InstallationProcess: enum OriginalAttemptAuditSchemaPhase:string с BEFORE_AUDIT_ALTER=before_audit_alter и AFTER_AUDIT_ALTER=after_audit_alter; interface OriginalAttemptAuditSchemaObserver::observe(OriginalAttemptAuditSchemaPhase $phase):void; final OriginalAttemptAuditSchemaMigrationVerification::apply(\mysqli $connection,string $tablePrefix,OriginalAttemptAuditSchemaObserver $observer):array. Fixed unavailable message: `Original attempt audit schema unavailable.`. Production/verification methods static.
+
+## 9. v0.2: уже активная borrowed transaction
+
+Для обоих writer methods после passive DTO/prefix validation и до observer,
+quoting, isolation, BEGIN и любых writes выполняется единственный read-only
+`SELECT @@in_transaction active`. Exact0 разрешает обычный путь. Exact1 даёт
+ROLLED_BACK: writer не владеет transaction и не пытался записать свою операцию;
+caller transaction и её pending facts остаются неизменными. Observer0,
+BEGIN/COMMIT/ROLLBACK/DDL/DML0. Ошибка/невалидный ответ этого запроса тоже даёт
+ROLLED_BACK без следующих SQL; это не неизвестный исход собственной записи,
+поскольку собственная запись ещё не начиналась. Invalid DTO остаётся вообще
+без SQL, включая state SELECT.
+
+Migration после prefix validation первым SQL выполняет тот же state SELECT.
+Exact1 либо ошибка/невалидный ответ бросает fixed DatabaseUnavailable из §6
+до metadata/named-lock/observer/DDL/DML/transaction control. Caller transaction
+сохраняется. Exact0 разрешает database identity read, named lock и остальной
+preflight. Schema conflict остаётся только доказанным metadata mismatch.
+
+Minimal RED включает по одному real pending-caller-transaction control для
+writer и migration, а два writer methods проверяются с exact ROLLED_BACK и
+no observer/no mutation; после отказа caller самостоятельно rollback-ит свой
+synthetic pending факт. New enum/API/permission не требуется.

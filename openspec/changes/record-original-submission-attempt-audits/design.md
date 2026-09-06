@@ -27,3 +27,5 @@
 ## Migration Plan
 
 Независимый Gate1 фиксирует exact v3/ports. Затем RED и независимый test review предшествуют schema/application GREEN. Миграция13 выполняет canonical installation original v3 и повторяется без DDL; deployment включается после Gate5. После новых audit rows возможен только forward-compatible rollback приложения; history не удаляется.
+
+ATTEMPT-AUDITv0.2 уточняет active borrowed transaction: после DTO/prefix только один read-only state SELECT, writer ROLLED_BACK без observer/writes/transaction control; migration fixed DatabaseUnavailable до metadata/lock. Caller pending facts сохраняются. Это technical correction по Gate1, не новое product решение.
