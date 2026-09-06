@@ -1,6 +1,6 @@
 ## 1. Контракт и Gate1
 
-- [ ] 1.1 Зафиксировать executable ATTEMPT-AUDIT-001 и согласованное supersession parent audit section, подтвердить frontier13; завершение — независимый exact-hash Gate1 APPROVED с уже записанным owner approval каждой попытки.
+- [x] 1.1 Зафиксировать executable ATTEMPT-AUDIT-001 и согласованное supersession parent audit section, подтвердить frontier13; завершение — независимый exact-hash Gate1 APPROVED с уже записанным owner approval каждой попытки.
 
 ## 2. RED и independent Gate3
 
