@@ -1,6 +1,6 @@
 ## 1. Contract
 
-- [ ] 1.1 Утвердить executable ASSIGNMENT-ORDER-SELECTED-ORIGINAL-BINDING-001; verification: independent Gate1 exact hash, stale outcomes и lock owner однозначны.
+- [x] 1.1 Утвердить executable ASSIGNMENT-ORDER-SELECTED-ORIGINAL-BINDING-001; verification: independent Gate1 exact hash, stale outcomes и lock owner однозначны.
 
 ## 2. RED and review
 
@@ -17,3 +17,6 @@
 
 - [ ] 4.1 Зафиксировать exact-SHA regression/architecture/OpenSpec evidence; verification: все команды terminal PASS, baseline unchanged.
 - [ ] 4.2 Получить independent Gate5 и связать parent tasks; verification: explicit APPROVED, standalone binding не подменяет full portal VERIFY_OK/deploy.
+
+Gate1 source73b05d1 APPROVED: `docs/operations/selected-original-binding-gate1-2026-09-06.md`.
+Planning-only checkpoint; RED/production ещё не написаны.
