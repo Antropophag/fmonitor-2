@@ -1,5 +1,11 @@
 ## Why
 
+Current scope2026-09-06: чистый запуск без исторических данных/PDF. Optional PDF
+выдаётся без хранения файлов/версий; сохраняются дата последнего формирования
+и аудит. Старые writer migration/N−1 compatibility и template storage исключены
+из launch prerequisites. Controlling record: `docs/operations/fresh-launch-owner-scope-2026-09-06.md`.
+Датированные notes ниже отражают прежний migration planning и superseded в этой части.
+
 Владелец разрешил загрузку готового оригинала без шаблона. Independent inventory `docs/operations/assignment-order-direct-upload-seam-inventory-2026-09-05.md` показывает, что существующий public creator всегда вызывает renderer; original command требует уже сохранённый order/composition. Поэтому прямой пользовательский путь пока отсутствует.
 
 ## What Changes
@@ -19,7 +25,8 @@
 
 ### Modified Capabilities
 
-Нет изменений main capabilities; integration с existing prepare path требует отдельного exact Gate 1 disposition.
+Нет изменений main capabilities; новый портал использует selection owner,
+старый prepare path не переносится ради backward compatibility.
 
 ## Impact
 

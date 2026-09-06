@@ -1,5 +1,9 @@
 ## Purpose
 
+Controlling scope2026-09-06: fresh launch без исторических данных/PDF согласно
+`docs/operations/fresh-launch-owner-scope-2026-09-06.md`. Датированные требования
+legacy migration/mixed-writer compatibility ниже не являются launch obligations.
+
 Сохранять выбранный состав распоряжения как самостоятельное основание для загрузки оригинала без обязательного формирования PDF-шаблона. Пакет planning-only; exact executable selection contract требует Gate 1.
 
 ## ADDED Requirements
@@ -50,7 +54,11 @@ Exact retry SHALL не создавать duplicate version/audit. Конкур�
 
 ### Requirement: Необязательный шаблон использует сохранённый состав
 
-При последующем запросе шаблона система SHALL использовать ту же immutable composition identity; renderer failure MUST NOT удалять выбор или вынуждать менять состав. Generated template не является signed original или gate открытия.
+При запросе шаблона система SHALL использовать ту же immutable composition
+identity и сегодняшнюю дату Europe/Moscow; renderer failure MUST NOT удалять
+выбор или вынуждать менять состав. PDF SHALL выдаваться без хранения файлов или
+версий. Сохраняются дата последнего успешного формирования и append-only audit.
+Повторный запрос формирует PDF заново. Template не является signed original или gate открытия.
 
 #### Scenario: Renderer недоступен
 - **WHEN** после successful selection optional render не может завершиться
@@ -97,11 +105,12 @@ No compatibility rule approves legacy registration as target applicability.
 
 Система SHALL разрешать replace_pending только до accepted original для exact
 latest selection; она MUST создавать новую identity/version и сохранять видимость
-предыдущей selection/template. Exact owner approval — 1842Z record2026-09-05.
+предыдущей selection и audit формирования. Template PDF не хранится.
+Exact selection owner approval — 1842Z record2026-09-05.
 
 #### Scenario: Исправление неподписанного выбора
 - **WHEN** ФКР передаёт изменённый состав с current expected revision до original acceptance
-- **THEN** появляется новая immutable selection/version; prior selection/template сохраняются, accepted-original composition не изменяется
+- **THEN** появляется новая immutable selection/version; prior selection/audit сохраняются, accepted-original composition не изменяется
 
 ### Requirement: Typed results и persistence receipts не допускают выдуманные IDs
 

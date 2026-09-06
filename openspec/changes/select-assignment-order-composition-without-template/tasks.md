@@ -1,8 +1,12 @@
 ## 1. Evidence и executable Gate 1
 
+Current scope2026-09-06: fresh launch без исторических данных/PDF. Старые notes
+о legacy writer migration/N−1 совместимости superseded; новый optional PDF
+не требует file/version storage. См. `docs/operations/fresh-launch-owner-scope-2026-09-06.md`.
+
 - [x] 1.1 Сверить selection/prepare persistence с independent inventory; verification: exact seams и renderer coupling описаны, fixture SQL не принят за production путь. Evidence: independent inventory `16ba3e65401ab6b3acb883a96f590bc1e9eb7c3d`, projection gap `412efcb75bd88b454b2ba1ebbf9800937e96856b`, повторное чтение creator/persistence и authorization на base `71eea1b`.
 - [ ] 1.2 Написать `ASSIGNMENT-ORDER-COMPOSITION-SELECT-001` с exact DTO/result/capability/date/composition identity, replay/conflict и correction rules; verification: owner-approved optional template truth соблюдена, все новые решения явно рассмотрены, expected values независимы от implementation.
-- [ ] 1.3 Согласовать existing prepare, original command и HTTP contracts; verification: выбранный состав читается original command без обхода renderer или mutation назначений, необходимые schema changes отдельно специфицированы.
+- [ ] 1.3 Согласовать fresh selection, original command и HTTP contracts; verification: выбранный состав читается original command и locked validation, новые входы не вызывают старый prepare; PDF storage и перенос старых writers отсутствуют.
 - [ ] 1.4 Получить fresh independent Gate 1; verification: exact hashes APPROVED, unresolved product decisions закрыты владельцем, RED до approval не написан.
 
 ## 2. RED и Gate 3
@@ -15,7 +19,7 @@
 ## 3. Minimal GREEN
 
 - [ ] 3.1 Реализовать production selection owner и persistence handoff; verification: approved selection matrix GREEN без renderer dependency и private caller writes.
-- [ ] 3.2 Подключить optional rendering к сохранённой identity; verification: render failure не разрушает selection, старые rendered orders/history byte-preserved, direct upload работает без render.
+- [ ] 3.2 Подключить optional rendering к сохранённой identity; verification: PDF выдаётся без хранения файлов/версий, сохраняются дата последнего формирования и audit; render failure не разрушает selection, direct upload работает без render.
 
 ## 4. Review и integration
 

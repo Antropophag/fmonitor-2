@@ -94,7 +94,10 @@ getWorkQueue(actorId, filters)
 
 ### `fm2_order_artifacts`
 
-Метаданные сформированных файлов конкретной версии. Байты и файловая стратегия остаются за `DocumentRenderer`/хранилищем документов.
+Таблица прежнего контракта, не используемая для новых PDF-шаблонов. По решению
+владельца2026-09-06 шаблоны выдаются без хранения файла/версии; сохраняются только
+дата последнего успешного формирования и append-only audit actor/time/identity.
+Исторических данных для переноса нет; новая template-storage family не нужна.
 
 | Поле | Назначение |
 |---|---|
@@ -103,7 +106,9 @@ getWorkQueue(actorId, filters)
 | `filename`, `media_type`, `byte_size` | воспроизводимые метаданные файла |
 | `sha256` | контроль неизменности содержимого |
 
-Generated template artifact отличается от подписанного original evidence и никогда им не перезаписывается. Точная additive schema original lineage назначается change `replace-pilot-registration-with-original-upload`; literal migration version выбирается только на актуальном frontier.
+Подписанный original evidence хранится отдельно и неизменно. Точная additive
+schema original lineage назначается change `replace-pilot-registration-with-original-upload`;
+literal migration version выбирается только на актуальном frontier.
 
 ### Original evidence lineage
 

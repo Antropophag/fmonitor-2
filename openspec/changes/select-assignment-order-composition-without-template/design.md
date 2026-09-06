@@ -1,5 +1,11 @@
 ## Context
 
+Controlling owner correction2026-09-06: исторических данных/PDF нет; fresh startup
+связывает только новые seams. Legacy writer migration и mixed-generation cutover
+из прежних notes ниже не входят в текущий launch scope. Новые PDF выдаются без
+file/version storage, остаются generation date и audit. Authority:
+`docs/operations/fresh-launch-owner-scope-2026-09-06.md`.
+
 См. proposal и independent seam inventory `16ba3e65401ab6b3acb883a96f590bc1e9eb7c3d`. `InstallationProcess::prepareAssignmentOrder` вызывает renderer до persistence. `submitAssignmentOrderOriginal` читает существующий order/composition. Fixtures с direct SQL не доказывают production direct upload.
 
 ## Goals / Non-Goals
@@ -74,8 +80,8 @@ UNAVAILABLE, not fallback. Source validation failures retain a separately
 specified invalid-composition result. This requires an explicit original-reader
 contract amendment before implementation; safe-log work is not changed.
 
-Optional rendering must address the same selection identity and record its own
-immutable template/date/artifact facts without creating effective intervals or
+Optional rendering must address the same selection identity and record only
+generation date and append-only audit, without PDF storage, effective intervals or
 converting selectionDate into templateDate. Application/opening later consumes
 accepted original + selection identity through the one applicability owner.
 
@@ -94,8 +100,8 @@ For a selection-owned case, target HTTP must call the new selection owner and
 an optional-render operation that uses that exact immutable identity. It must
 not call legacy prepare to manufacture another order or satisfy its physical
 N-1 predecessor requirement. The legacy guard is a mixed-writer safety condition,
-not successful feature delivery. The same-identity template/artifact persistence
-and public read path must have executable contracts and reviewed implementation
+not successful feature delivery. The same-identity on-demand PDF/date/audit
+response path must have executable contracts and reviewed implementation
 before direct/optional parity or the parent change can be called complete.
 
 Existing all-legacy prepare behavior needs an explicit regression amendment for

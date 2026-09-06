@@ -1,6 +1,11 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.8, 2026-09-05. **DRAFT / GATE 1 NOT APPROVED**.
+Версия 0.9, 2026-09-06. **DRAFT / GATE 1 NOT APPROVED**.
+
+Controlling owner amendment: section17. Fresh launch без исторических данных;
+legacy migration/mixed-writer compatibility clauses предыдущей версии не входят
+в launch scope. Optional PDF не хранится. Existing schema/reader approvals
+сохраняются в своих scope; этот amended selection contract требует полного Gate1.
 
 ## Простыми словами
 
@@ -811,7 +816,8 @@ Missing registered source, dual/source mismatch, malformed snapshot/hash,
 duplicate ownership/query failure→unavailable; never precedence/fallback. Original
 root/request gets no invented FK/physical row. This changes no original authority
 or revision rules. Optional renderer later reads this same immutable source and
-persists only artifact/template facts.
+returns PDF without storing template files/versions; only generation date and
+append-only audit are persisted.
 
 ## 13. Acceptance matrix — approved synthetic only
 
@@ -871,7 +877,7 @@ Owner approval: `docs/operations/owner-e2e-admission-and-pending-selection-appro
 composition этой командой не меняется. Новый owner approval не требуется.
 
 FKR actor заменяет только exact latest ledger selection без accepted original;
-прежняя selection и template остаются immutable и видимыми. New selection
+прежняя selection и audit формирования остаются immutable и видимыми. New selection
 становится current. Original для replaced identity не принимается как current
 pending choice. После accepted original изменение состава — только отдельный
 forward-only order lifecycle. Legacy prepared row не конвертируется.
@@ -915,3 +921,29 @@ Independent v0.7 review `selection-v07-generated-id-review-2026-09-05.md` пот
 закрывают registry/event/audit mappings и allocator result type. Typed v0.6
 control-flow сохраняется; schema CHECK не возвращён. Full technical Gate1 всё
 ещё требует P0 release dependencies и свежего независимого approval.
+
+## 17. Fresh launch и PDF без хранения — controlling owner amendment
+
+Authority: `docs/operations/fresh-launch-owner-scope-2026-09-06.md` и
+`docs/operations/selection-template-no-storage-owner-approval-2026-09-06.md`.
+Исторических данных/PDF нет. Требования previous sections о переносе истории,
+registry-aware old prepare writer, mixed N−1/N compatibility и сохранении старых
+template artifacts не являются prerequisites текущего запуска.
+
+Fresh startup использует единственного нового selection writer. Старые
+prepare/registration/direct signed-original входы исключаются из нового portal
+flow; их совместимая переделка не требуется. Режимы new_order/replace_pending,
+immutable новые selection/original facts и их audit остаются обязательными.
+
+Optional render использует ту же identity, формирует PDF с сегодняшней датой
+Europe/Moscow и выдаёт в ответе без сохранения bytes, файлов или версий.
+Повторный запрос формирует PDF заново. Сохраняются дата последнего успешного
+формирования для original-date prefill и append-only audit actor/time/identity.
+Новая artifact-storage family/migration исключена. Signed originals/corrections
+хранятся неизменно; template generation не задаёт окончательную document date.
+
+Consolidated Gate1 теперь требует exact new-writer/original locked-validation,
+on-demand PDF/date/audit, fresh bootstrap и HTTP/application/opening contracts.
+Existing approved registry/schema/registered-reader components переиспользуются;
+их synthetic historical cases не превращаются в новые launch obligations.
+Full exact-SHA VERIFY_OK, CI, deployment/restart и golden path остаются обязательными.
