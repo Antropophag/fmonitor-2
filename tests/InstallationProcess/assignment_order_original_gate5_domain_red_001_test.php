@@ -175,7 +175,7 @@ foreach (['terminalStatus', 'fingerprintStatus'] as $index => $property) {
     $stream = new AssignmentOrderOriginalMatrixStream($pdf);
     $result = $app->submitAssignmentOrderOriginal($command(sprintf('00000000-0000-4000-8000-%012d', 502 + $index), 81, $stream));
     assertSameValue([AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true], $resultTuple($result), "{$property} UNAVAILABLE fails closed.");
-    assertSameValue(0, $stream->readCalls, "{$property} UNAVAILABLE is detected before stream.");
+    assertSameValue($property === 'terminalStatus' ? 0 : 2, $stream->readCalls, "{$property} UNAVAILABLE is detected at its exact terminal/pre-stream or fingerprint/post-stream boundary.");
 }
 
 foreach ([AssignmentOrderOriginalCommitStatus::ROLLED_BACK, 'throw'] as $index => $attemptFailure) {

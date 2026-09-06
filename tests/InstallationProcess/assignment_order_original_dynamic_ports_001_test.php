@@ -49,7 +49,7 @@ dynamicCase('post-stream-fingerprint-unavailable',function(){
     $g=dynamicGraph([dynamicId('generated','original-0001')],[dynamicId('generated','revision-0001')],unavailable:true);extract($g);$before=$repo->evidenceCanonicalJson(4512,81);
     $result=$app->submitAssignmentOrderOriginal($command);
     assertSameValue(dynamicFailure($request),dynamicTuple($result),'real fingerprint unavailable is persistence failure');
-    assertSameValue(['','dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d'],$repo->fingerprints,'empty availability control followed by exact real fingerprint');
+    assertSameValue(['dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d'],$repo->fingerprints,'only the exact real post-stream fingerprint is queried');
     assertSameValue([0,0],[$ids->rootCalls,$ids->revisionCalls],'no ID allocation');assertSameValue(2,$stream->readCalls,'actual post-stream fingerprint boundary reached');
     assertSameValue([1,0,1,1,null],[$storage->beginCalls,$storage->stage->finalizeCalls,$storage->stage->abortCalls,$storage->stage->closeCalls,$storage->stage->lease],'staged bytes cleaned without finalization');
     assertSameValue([],array_values(array_filter($observers->lifecycle,fn($event)=>in_array($event,[O\AssignmentOrderOriginalLifecycleEvent::AFTER_FINGERPRINT_MISS_BEFORE_CAS,O\AssignmentOrderOriginalLifecycleEvent::AFTER_PRIVATE_FINALIZE_BEFORE_COMMIT,O\AssignmentOrderOriginalLifecycleEvent::AFTER_COMMIT_BEFORE_RETURN],true))),'no fingerprint-miss/finalize/committed lifecycle after unavailable');dynamicNoFacts($g,$before);
@@ -87,7 +87,7 @@ foreach(['missing-Z'=>'2026-09-02T09:15:30','space'=>'2026-09-02 09:15:30','frac
         $result=$app->submitAssignmentOrderOriginal($command);
         assertSameValue(dynamicFailure($request),dynamicTuple($result),'invalid/unavailable clock fails before stage');
         assertSameValue([1,0,0,0],[$clock->calls,$storage->beginCalls,$ids->rootCalls,$ids->revisionCalls],'one clock, no stage or IDs');
-        assertSameValue([''],$repo->fingerprints,'no real fingerprint lookup after invalid clock');assertSameValue(0,$stream->readCalls,'clock rejection before any stream read');
+        assertSameValue([],$repo->fingerprints,'invalid clock precedes every fingerprint lookup');assertSameValue(0,$stream->readCalls,'clock rejection before any stream read');
         assertSameValue([],$observers->storage,'no storage events');assertSameValue([],$observers->lifecycle,'no lifecycle events');dynamicNoFacts($g,$before);
     });
 }
