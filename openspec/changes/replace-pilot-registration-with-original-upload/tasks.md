@@ -112,6 +112,15 @@ maintenance composition audits. No combined Gate5/VERIFY_OK/launch claim.
 
 ## Resource lifecycle corrective gates — 2026-09-06
 
-- [ ] 1.37 Independent Gate1 COMMAND-LIFECYCLE-001 exact failures/observer/ownership/replay/response-loss clarification; data-integrity dependency preserved.
-- [ ] 4.6 Public resource/lifecycle RED and independent Gate3, plus separately reviewed exact existing-test expectation patch for removal of empty probe.
-- [ ] 5.7 Minimal resource owner/lifecycle GREEN, affected real worker/storage regressions and independent scoped Gate5; no combined claim before data/declaration/maintenance corrections.
+- [x] 1.37 Independent Gate1 COMMAND-LIFECYCLE-001 exact failures/observer/ownership/replay/response-loss clarification; data-integrity dependency preserved.
+- [x] 4.6 Public resource/lifecycle RED and independent Gate3, plus separately reviewed exact existing-test expectation patch for removal of empty probe.
+- [x] 5.7 Minimal resource owner/lifecycle GREEN, affected real worker/storage regressions and independent scoped Gate5; no combined claim before data/declaration/maintenance corrections.
+
+## Resource lifecycle completion — 2026-09-06
+
+Gate1 4ac2e79; RED95cases; independent main Gate3v2 74da9a7 and separate
+empty-probe patch Gate3 4c1d9ed; GREEN d7ed54d03041605200887c607ce6b3ce81f579be.
+All31 original/supporting checks PASS, final evidence17ced5d57b. Scoped Gate5
+5af44f12 + immutable regression completion912fda99 APPROVED. Fresh DB recovery,
+data-integrity/audit, remaining public API/maintenance and all-revisions PDF scan
+remain open. No combined original-command/VERIFY_OK/launch approval.
