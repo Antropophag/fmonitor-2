@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.2, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.3, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -277,10 +277,13 @@ Inside one owned READ COMMITTED write transaction, lock/read the authoritative
 legacy order and its members using the same section5/6 composition derivation,
 without starting a nested reader transaction. Initial and correction commits
 must both match that valid current composition identity/hash and exact case/order.
-A valid changed composition, missing requested order/case, or a valid current
-composition now invalid for acceptance gives CONFLICT after confirmed rollback;
-malformed SQL row identity/protocol/query gives ROLLED_BACK after confirmed
-rollback. These checks precede root/current-pointer mutation. No self-consistent
+A changed composition, missing requested order/case, or current composition now
+invalid for acceptance gives ROLLED_BACK after confirmed rollback; malformed SQL
+row identity/protocol/query does likewise. These are unacknowledged persistence
+attempts, not a fabricated domain conflict cause. The existing generic CONFLICT
+return cannot identify those authoritative-source changes through fingerprint/
+lineage alone, so it is reserved for actual root/current/unique-winner states
+resolved by the exact rereads below. These checks precede root/current-pointer mutation. No self-consistent
 but fabricated DTO composition hash is sufficient. Registered-source routing
 remains its later compatibility slice; this package locks the existing declared
 legacy source only.
@@ -294,7 +297,14 @@ Valid current drift/unique winner produces CONFLICT after confirmed
 rollback; malformed stored state or invalid DTO relation produces ROLLED_BACK
 after confirmed rollback. Insert immutable revision/request/event/audit and apply
 exact current-pointer CAS atomically; no update/delete of historical evidence.
-Initial uniqueness collision is CONFLICT only after confirmed rollback. No blind
+Initial uniqueness collision is CONFLICT only after confirmed rollback. On
+application initial CONFLICT, validated accepted-fingerprint FOUND wins as replay;
+a valid miss is followed by the explicit case/order lineage query. Only a complete
+valid FOUND root for that case/order selects INITIAL_ALREADY_EXISTS. NOT_FOUND,
+UNAVAILABLE or malformed lineage is PERSISTENCE_FAILURE, never invented existing
+original. Correction CONFLICT keeps its validated fingerprint/current-lineage
+stale/target/no-change precedence. NO_CHANGES remains CONFLICT at the repository
+and becomes the exact rejected reason after that correction reread. No blind
 commit retry. Distinguish before-commit error with confirmed rollback from commit
 acknowledgement uncertainty; rollback after a lost acknowledgement cannot prove
 that the preceding commit did not succeed.

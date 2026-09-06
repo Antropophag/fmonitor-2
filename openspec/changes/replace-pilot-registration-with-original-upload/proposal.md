@@ -123,3 +123,9 @@ original denial-audit presence without selecting repeated-denial cardinality,
 and pins authoritative composition locking/NO_CHANGES, separate storage clocks
 and actual worker safe-log acquisition before secret/DB access. No product audit
 policy is decided. The previous v0.1 Gate1 rejection remains immutable.
+
+DATA-INTEGRITY v0.3 reserves generic commit CONFLICT for actual root/current/
+unique-winner states resolvable by fingerprint/lineage. Authoritative composition
+change/disappearance is confirmed ROLLED_BACK, with no invented business reason.
+Initial CONFLICT plus fingerprint/lineage misses is PERSISTENCE_FAILURE, never
+false INITIAL_ALREADY_EXISTS; correction NO_CHANGES reread remains exact.
