@@ -22,7 +22,7 @@ final class ProductionPilotHttpEntrypointFactory
         require_once __DIR__.'/PilotE2ECoordinator.php';
         $owner=PilotSessionRequestOwner::native($environment);
         $application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms,$checklists,$owner,$environment);
-        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
+        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),new FreshOrderHttpCoordinator($application,$environment),$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter());
     }
 
     public static function createWithSessionStorageDependencies(
@@ -38,7 +38,7 @@ final class ProductionPilotHttpEntrypointFactory
         $reads=new PilotHttpApplication($identity,new ProductionPilotShellRenderer(),$dependencies,$cards,$dependencies,$lists,$dependencies,$forms,$dependencies,$checklists,new ProductionLocalObjectListAuthorization($environment),new ProductionLocalObjectListAuthorization($environment,'assignment_order.prepare'));
         $owner=PilotSessionRequestOwner::bind(new LazyPilotSessionStorage($environment,$filesystem,$clock,$entropy,$observer));
         require_once __DIR__.'/PilotE2ECoordinator.php';$application=new PilotE2ECoordinator($reads,$identity,$dependencies,$cards,$lists,$forms,$checklists,$owner,$environment);
-        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),$application,$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter(),self::localAuth($owner));
+        return new PilotHttpEntrypoint(new PilotHttpRequestFactory(),new FreshOrderHttpCoordinator($application,$environment),$dependencies,new RandomCorrelationIdSource(),new ErrorLogUnexpectedFailureReporter(),self::localAuth($owner));
     }
     private static function localAuth(\FMonitor\IdentityAccess\PilotSessionStorage$owner):\Closure{return static function(array&$server)use($owner):void{if(\is_string($server['REMOTE_USER']??null)&&$server['REMOTE_USER']!=='')return;$path=\parse_url((string)($server['REQUEST_URI']??''),PHP_URL_PATH);if(!\is_string($path)||!PilotRouteAdmission::isKnown($path))return;require_once \dirname(__DIR__,2).'/rapid-pilot/LocalAuth.php';(new \RapidPilotLocalAuth($owner))->handle($path);foreach(['REMOTE_USER','FMONITOR_AUTH_USER_ID','FMONITOR_AUTH_CSRF']as$name)if(\is_string($_SERVER[$name]??null))$server[$name]=$_SERVER[$name];};}
 }

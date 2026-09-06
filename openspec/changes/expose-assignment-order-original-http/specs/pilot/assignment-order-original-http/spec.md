@@ -20,7 +20,7 @@
 
 #### Scenario: Повтор после потери ответа
 - **WHEN** принятый запрос повторён с той же identity действующим authorized actor
-- **THEN** портал показывает сохранённый результат без новой revision или повторного domain audit
+- **THEN** портал показывает сохранённый результат без новой revision; accepted replay следует approved original command audit policy
 
 #### Scenario: Устаревшее исправление
 - **WHEN** actor исправляет уже сменившуюся current revision новым intent
@@ -55,3 +55,11 @@ Metadata/history/download SHALL выполняться через read-only appl
 #### Scenario: Неподдерживаемый upload
 - **WHEN** transport содержит несколько файлов, неподдерживаемый media type либо превышает утверждённые transport bounds
 - **THEN** HTTP adapter отклоняет transport без accepted fact; application received-byte limit остаётся `20,971,520` и не ослабляется
+
+### Requirement: Approved selected-original binding
+Fresh HTTP SHALL вызывать approved createForSelections original factory. Optional
+PDF SHALL использовать approved on-demand owner, без файлов/версий и hidden prepare.
+
+#### Scenario: Прямой оригинал после выбора
+- **WHEN** состав сохранён native selection без формирования PDF
+- **THEN** original HTTP использует эту identity и разрешает ввод documentDate по оригиналу; template не требуется
