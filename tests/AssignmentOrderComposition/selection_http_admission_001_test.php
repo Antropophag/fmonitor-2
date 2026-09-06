@@ -22,6 +22,7 @@ try {
         'nested key'=>['POST',A::PATH,$valid.'&installerTabIds%5Bx%5D=7001',18,[],400],
         'malformed percent'=>['POST',A::PATH,$valid.'&requestId=%ZZ',18,[],400],
         'bad number'=>['POST',A::PATH,A::body(array_replace($base,['expectedSelectionRevision'=>'01'])),18,[],400],
+        'non-v4 request'=>['POST',A::PATH,A::body(array_replace($base,['requestId'=>'11111111-1111-1111-8111-000000000301'])),18,[],400],
         'missing engineer'=>['POST',A::PATH,A::body($withoutEngineer),18,[],422],
         'missing confirmation'=>['POST',A::PATH,A::body($withoutConfirmation),18,[],422],
         'unconfirmed engineer'=>['POST',A::PATH,A::body(array_replace($base,['controlEngineerConfirmed'=>'no'])),18,[],400],

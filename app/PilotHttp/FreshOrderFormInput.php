@@ -28,7 +28,7 @@ final class FreshOrderFormInput
         if(!isset($f['controlEngineerUserId'])||$f['controlEngineerUserId']==='')return ['error'=>422,'reason'=>'control_engineer_required'];
         if(!isset($f['controlEngineerConfirmed']))return ['error'=>422,'reason'=>'confirmation_required'];
         $engineer=self::positive($f['controlEngineerUserId']);$mode=C\AssignmentOrderCompositionMode::tryFrom($f['mode']??'');$revision=$f['expectedSelectionRevision']??null;
-        if($engineer===null||$f['controlEngineerConfirmed']!=='yes'||$mode===null||!C\SelectionScalar::uuid($f['requestId']??'')
+        if($engineer===null||$f['controlEngineerConfirmed']!=='yes'||$mode===null||preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$f['requestId']??'')!==1
             ||!is_string($revision)||preg_match('/^(0|[1-9][0-9]*)$/D',$revision)!==1||strlen($revision)>10||(int)$revision>4294967295)return ['error'=>400,'reason'=>'invalid_request'];
         $ids=[];foreach($f['installerTabIds']??[] as $v){$id=self::positive($v);if($id===null)return ['error'=>400,'reason'=>'invalid_request'];$ids[]=new C\InstallerTabId($id);}
         return ['command'=>new C\SelectAssignmentOrderCompositionCommand(new C\SelectionRequestId($f['requestId']),$mode,new C\InstallationObjectId($object),new C\UserId($actor),new C\InstallerTabIdList($ids),new C\UserId($engineer),new C\SelectionRevision((int)$revision))];
