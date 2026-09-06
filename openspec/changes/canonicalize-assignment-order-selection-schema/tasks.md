@@ -31,3 +31,10 @@ Canonical registration focused RED/Gate3 sourcefbbb41e APPROVED:
 `selection-canonical-red-bs93mb9p`. Six CLI cases reach currentv13; setup/cleanup
 pass. Next: registry14/selection15 registration and scoped canonical-consumer
 expectation updates before overall GREEN/Gate5. Runner remainsv13 at checkpoint.
+
+Canonical registration v14registry/v15selection sourceea2fca9 Gate5 APPROVED:
+`reviews/code/SELECTION-CANONICAL-REGISTRATION-001-v1.md`. Archive
+`selection-canonical-green-bsswpvq5`: focused6/PMR/originalAudit21/architecture/lint/diff PASS.
+ConsumerGate3 confirms oldmetadata plus exactnew7tables, no skippedchecks.
+Actual frontier now15. Preview and runtime routes not switched; full VERIFY/deploy
+and fresh old-writer exclusion remain integration work.
