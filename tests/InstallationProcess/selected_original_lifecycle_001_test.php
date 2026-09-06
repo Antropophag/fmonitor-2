@@ -73,7 +73,10 @@ $tests=[
         $f->selection->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=18 AND capability='assignment_order.original.upload'");
         $f->selection->db->query('RENAME TABLE fm2_assignment_order_selections TO fixture_missing_selection');$input=new Input('never read');$r=$f->app()->submitAssignmentOrderOriginal(selectedOriginalCommand($input));
         assertSameValue(['rejected','authorization_denied',0,1],[$r->status()->value,$r->reasonCode()?->value,$input->reads,$input->closes],'original authority precedes confidential selected lookup');
-        $rows=$f->selection->rows();assertSameValue([0,1],[count($rows['fm2_assignment_order_original_requests']),count($rows['fm2_assignment_order_original_audits'])],'denied invocation audit without cached request');
+        $rows=$f->selection->rows();assertSameValue([1,1],[count($rows['fm2_assignment_order_original_requests']),count($rows['fm2_assignment_order_original_audits'])],'inherited original denial contract: first terminal and audit');
+        $terminal=$rows['fm2_assignment_order_original_requests'];$again=new Input('unread denial');$r=$f->app()->submitAssignmentOrderOriginal(selectedOriginalCommand($again));
+        assertSameValue(['rejected','authorization_denied',0,1],[$r->status()->value,$r->reasonCode()?->value,$again->reads,$again->closes],'every denied invocation audited without confidential lookup');
+        $rows=$f->selection->rows();assertSameValue($terminal,$rows['fm2_assignment_order_original_requests'],'denial terminal not overwritten');assertSameValue(2,count($rows['fm2_assignment_order_original_audits']),'second invocation adds independent audit');
     },
 ];
 $failed=0;foreach($tests as $name=>$test){$f=null;$errors=[];try{$f=new F();assertSameValue('selected',$f->selection->app()->selectAssignmentOrderComposition(S::command())->status()->value,'native initial selection');echo "SETUP_OK $name\n";$test($f);}catch(Throwable $e){$errors[]=$e->getMessage();}
