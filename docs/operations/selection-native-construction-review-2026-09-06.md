@@ -1,6 +1,7 @@
 # Independent Gate 1 review — ASSIGNMENT-ORDER-SELECTION-NATIVE-001
 
 - Verdict: **APPROVED**
+- Reviewer: `/root/selection_native_review` (`gpt-5.6-sol`, `low`; separately tasked, not author)
 - Review scope: native construction contract only; no production or test authorship
 - Candidate commit: `2b25ad66461978302014e29cf8c978cd0c40b487`
 - Candidate spec SHA-256: `0e53e27441d2f1317b1c18088f12165a1f12be79c4d10c578d85077581770f09`
