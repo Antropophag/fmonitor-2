@@ -294,3 +294,9 @@ unique-winner states resolvable by fingerprint/lineage. Authoritative compositio
 change/disappearance is confirmed ROLLED_BACK, with no invented business reason.
 Initial CONFLICT plus fingerprint/lineage misses is PERSISTENCE_FAILURE, never
 false INITIAL_ALREADY_EXISTS; correction NO_CHANGES reread remains exact.
+
+DATA-INTEGRITY v0.4 distinguishes root-query semantic foreign ownership from
+assignment-query echo corruption. Its optional read-only revision-owner query
+preserves the existing unknown-target versus foreign-target reasons and runs
+only after current/expected agreement and current-root membership miss, including
+post-CAS reclassification. No new domain fact or product policy is introduced.

@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.3, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.4, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -128,19 +128,53 @@ infer missing case/order/list from caller data or accept absent current evidence
 
 Required invariants: root/current/every member ID grammar; unique revision IDs;
 current revision is the last member; current number equals the contiguous
-revision count; current date/hash valid; echoed case/order positive and exact;
-root lookup root equals its argument; assignment-order lookup ownership equals
-both arguments; exact composition identity binds that order. NOT_FOUND and
+revision count; current date/hash valid; case/order positive and internally coherent; exact
+composition identity binds the returned order. Query echo and semantic ownership
+are distinct: root lookup root equals its sole rootId argument; assignment-order
+lookup ownership equals both queried case/order arguments. NOT_FOUND and
 UNAVAILABLE expose null metadata and empty membership. `containsRevision` must
 agree with the immutable member list for current/target IDs used by this command.
 
 Validate before semantic drift, stale target, missing target or NO_CHANGES
 selection. Corrupt FOUND is PERSISTENCE_FAILURE; only valid but differing root
 composition/current/target relations select existing business conflict reasons.
-No fallback `findLineage('')` is allowed. Initial conflict recovery uses the
-explicit assignment-order lineage query; an adapter without it fails persistence
-rather than selecting an arbitrary root. Latest revision overflow is persistence
+For `findLineage(rootId)`, a complete internally valid FOUND with the requested
+root but different case/order/composition is real foreign ownership and selects
+CONFLICT/SEMANTIC_COLLISION before stream. A different returned rootId is a
+protocol failure. Valid root NOT_FOUND also selects SEMANTIC_COLLISION; root
+UNAVAILABLE or malformed metadata is PERSISTENCE_FAILURE. For
+`findLineageForAssignmentOrder(caseId,orderId)`, mismatched returned case/order is
+protocol failure because those are the actual query keys. Only exact complete
+FOUND can select INITIAL_ALREADY_EXISTS; miss/unavailable/malformed yields
+persistence failure. No fallback `findLineage('')` is allowed; an adapter without
+the required assignment-query extension fails persistence rather than selecting
+an arbitrary root. Latest revision overflow is persistence
 failure, never a wrapped number or acknowledged conflict.
+
+The existing foreign-target versus absent-target distinction needs one additional
+read-only query, without changing the base repository interface:
+
+```php
+interface AssignmentOrderOriginalRevisionLineageRepository
+{
+    public function findLineageForRevision(string $revisionId): AssignmentOrderOriginalLineageLookup;
+}
+```
+
+The production MariaDB repository implements it. After validated current lineage
+and expected-current equality, if target is in the current complete revision list,
+no revision-owner query occurs: noncurrent target selects TARGET_NOT_CURRENT,
+current target permits the no-change/accept checks. If target is absent, call
+findLineageForRevision(targetId) exactly once. Valid NOT_FOUND selects
+TARGET_NOT_FOUND. UNAVAILABLE/Throwable, base-only FOUND, malformed complete
+metadata or FOUND that does not contain the queried revision is persistence
+failure. Complete valid FOUND containing target with a different root selects
+SEMANTIC_COLLISION. FOUND same root despite the current complete list omitting
+target is contradictory snapshot data and fails persistence. Missing optional
+query interface on this required path is persistence failure, never absence.
+No target query precedes the stale-expected check or an accepted fingerprint hit.
+Apply this identical target helper/order during normal correction and post-CAS
+conflict reclassification, never substituting latest unrelated root metadata.
 
 ## 5. Composition protocol versus invalid business content
 
@@ -236,8 +270,12 @@ not changed by this reader; corrupt backing returns unavailable.
 
 ## 8. MariaDB lineage and reference reads
 
-Lineage queries own one consistent snapshot, explicitly select all matching roots
-(no LIMIT1 hiding duplicates) and all ordered revisions. Validate exact ownership,
+Root, assignment and revision-owner lineage queries own one consistent snapshot.
+The revision-owner query starts from the exact revisionId, returns NOT_FOUND only
+for its genuine absence, and otherwise validates that revision's full owning root
+and chain; a dangling revision/missing root is UNAVAILABLE, not an inner-join miss.
+All lineage queries explicitly select matching roots (no LIMIT1 hiding duplicates)
+and all ordered revisions. Validate exact ownership,
 root composition, current pointer, unique IDs, contiguous positive numbers,
 previous chain, valid scalar evidence and selected current metadata. A root row
 with a missing revision is UNAVAILABLE, not absence via an inner join. Validate
@@ -534,7 +572,9 @@ is permitted. No native/permission rejection mechanism is retried.
 One cumulative matrix covers result lookup6combinations at request/fingerprint/
 fresh stages; every result status/reason/evidence grammar/getter failure including stored
 INVALID_COMMAND; lineage
-complete/incomplete/ownership/membership/corruption; composition ownership/list/
+complete/incomplete/query-echo versus semantic ownership/membership/corruption;
+foreign/absent/same-root historical targets with exact revision-owner call
+precedence in normal and post-CAS paths; composition ownership/list/
 identity/hash and SQL numeric/date/action rules; consistent snapshot race; every
 AcceptedCommit mode/scalar/relationship invalid with zero-SQL proof; every
 AttemptCommit status/reason/retry/time invalid; malformed request/revision/root/
