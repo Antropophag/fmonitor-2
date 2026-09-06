@@ -117,3 +117,11 @@ Full native Gate5 remains open: denial/conflict/eligibility, locked-state and
 request corruption, races/rollback/unknown, capacity, session echoes/ambient,
 prefix/readiness matrix still require their RED/Gate3/GREEN reviews. No HTTP
 binding, migration reservation, full VERIFY_OK or launch claim follows.
+
+Native denial-audit follow-up source373a9d1 Gate5 APPROVED:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-denial-v1.md`.
+Audit-only metadata readiness removes confidential-ledger dependency; native12
+PASS archive `selection-native-denial-green-t9q9_wr_`, manifest
+698edcdab77ab6f21c92eab58ed98ebef9406dd83b65cf8633042984d7aac12b.
+Denial/revoke/restore/conflict checks delivered; other native obligations above
+remain open. Package observation32842 tokens at measurement, within45k cap.
