@@ -35,14 +35,16 @@ class PhpSelectTokensTest(unittest.TestCase):
         self.assertEqual((0, True, []), (code, result["ok"], result["errors"]))
 
     def test_03_capability_atom_is_not_sql(self):
-        code, result = self.inspect('<?php\n$capability = "assignment_order.composition.select";\n')
-        self.assertEqual((0, True, []), (code, result["ok"], result["errors"]))
+        for atom in ('"assignment_order.composition.select"', "'assignment_order.composition.select'"):
+            with self.subTest(atom=atom):
+                code, result = self.inspect('<?php\n$capability = ' + atom + ';\n')
+                self.assertEqual((0, True, []), (code, result["ok"], result["errors"]))
 
     def test_04_same_line_sql_still_rejected(self):
         source = "<?php\nenum Capability:string { case SELECT='assignment_order.composition.select'; } $db->query('SELECT id FROM accounts');\n"
         code, result = self.inspect(source)
         self.assertEqual(1, code)
-        self.assertTrue(any("sql_ownership: new violation" in error for error in result["errors"]))
+        self.assertEqual(["sql_ownership: new violation (1x): sql|app/AssignmentOrderComposition/SelectionCapability.php|1394e4e45c5841e7"], result["errors"])
 
     def test_05_actual_sql_and_fragments_still_rejected(self):
         for expression in ("'SELECT id FROM accounts'", "'SELECT'.' id FROM accounts'", "'UPDATE accounts SET flag=1'", "'INSERT INTO accounts VALUES(1)'", "'DELETE FROM accounts'"):
