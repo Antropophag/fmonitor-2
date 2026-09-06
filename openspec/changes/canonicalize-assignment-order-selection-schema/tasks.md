@@ -11,9 +11,9 @@
 
 ## 3. Minimal standalone implementation
 
-- [ ] 3.1 Реализовать disabled schema engine и public verification composition после Gate3; verification: approved test matrix GREEN, registry/legacy unchanged, no runtime/canonical callers.
-- [ ] 3.2 Проверить relevant registry/predecessor regressions, architecture-check, lint/OpenSpec/diff; verification: exact SHA/log manifest, no architecture baseline growth, no version registration.
-- [ ] 3.3 Получить independent Gate5 engine-only APPROVED; verification: metadata/data proof, ownership/recovery/failure/lock и disabled binding проверены на exact SHA.
+- [x] 3.1 Реализовать disabled schema engine и public verification composition после Gate3; verification: approved test matrix GREEN, registry/legacy unchanged, no runtime/canonical callers.
+- [x] 3.2 Проверить relevant registry/predecessor regressions, architecture-check, lint/OpenSpec/diff; verification: exact SHA/log manifest, no architecture baseline growth, no version registration.
+- [x] 3.3 Получить independent Gate5 engine-only APPROVED; verification: metadata/data proof, ownership/recovery/failure/lock и disabled binding проверены на exact SHA.
 
 ## 4. Integration dependency and Done
 
