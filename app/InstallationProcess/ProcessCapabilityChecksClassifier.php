@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace FMonitor2\InstallationProcess;
 
+require_once __DIR__.'/ProcessCapabilityVersions.php';
+
 final class ProcessCapabilityChecksClassifier
 {
-    /** @return array{state: 'v3'|'v4', capabilityConstraint: string}|null */
+    /** @return array{state: 'v3'|'v4'|'v5', capabilityConstraint: string}|null */
     public static function inspect(\mysqli $connection, string $table): ?array
     {
         $statement = $connection->prepare('SELECT CONSTRAINT_NAME,CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY CONSTRAINT_NAME');
@@ -41,13 +43,15 @@ final class ProcessCapabilityChecksClassifier
             return null;
         }
 
+        if ($candidate['version'] === 'v5' && $candidate['name'] !== 'ck_fm2_process_user_capability_v5') return null;
+
         return [
             'state' => $candidate['version'],
             'capabilityConstraint' => $candidate['name'],
         ];
     }
 
-    /** @return 'v3'|'v4'|null */
+    /** @return 'v3'|'v4'|'v5'|null */
     private static function capabilityVersion(string $check): ?string
     {
         $check = self::stripOptionalWholeExpressionParentheses($check);
@@ -68,17 +72,7 @@ final class ProcessCapabilityChecksClassifier
             return null;
         }
 
-        sort($capabilities, SORT_STRING);
-        $v3 = ['assignment_order.prepare', 'construction_control_engineer'];
-        $v4 = ['assignment_order.confirm_registration', 'assignment_order.prepare', 'construction_control_engineer', 'installation.open'];
-        sort($v3, SORT_STRING);
-        sort($v4, SORT_STRING);
-
-        return match ($capabilities) {
-            $v3 => 'v3',
-            $v4 => 'v4',
-            default => null,
-        };
+        return ProcessCapabilityVersions::classify($capabilities);
     }
 
     private static function isEngineerPositionCheck(string $check): bool
