@@ -90,3 +90,14 @@ native receipt даёт persistence_failure; unknown acknowledgement остаё�
 outcome_unknown. Public allocator возвращает closed allocation result, а не
 невозможный overflowed int. Это уточняет прежний capacity contract и не вводит
 новую policy; P0 release dependencies и full Gate1 остаются открыты.
+
+## Actual fresh-core checkpoint — 2026-09-06
+
+Controlling fresh scope supersedes dated legacy compatibility prerequisites.
+v0.11 construction/no-case terminal route Gate1 APPROVED; pure application core
+Gate3v2 and Gate5 APPROVED (reviews/tests/ASSIGNMENT-ORDER-COMPOSITION-SELECT-001-core-v2.md,
+reviews/code/ASSIGNMENT-ORDER-COMPOSITION-SELECT-001-core-v1.md).
+73core cases GREEN, source74ba2d0. Native adapters/SQL/UoW/races и wiring ещё
+не доставлены: tasks2.2/2.3/3.1/4.x не объявляются полностью закрытыми по core
+approval. Следующий пакет — native binding того же public command owner, без
+legacy writer migration и без PDF storage. Existing approved schema/readers reuse.
