@@ -7,11 +7,11 @@ final class RegisteredCompositionTestFixture
 {
     public readonly SelectionSchemaTestDatabase $schema;
     public readonly \mysqli $db;
-    public function __construct(string $kind = 'selection')
+    public function __construct(string $kind = 'selection', string $prefix = '')
     {
-        $this->schema = new SelectionSchemaTestDatabase(); $this->db = $this->schema->db;
+        $this->schema = new SelectionSchemaTestDatabase($prefix); $this->db = $this->schema->db;
         try {
-            \assertSameValue(['applied'=>true], AssignmentOrderSelectionSchemaMigration::apply($this->db), 'approved native selection schema prerequisite');
+            \assertSameValue(['applied'=>true], AssignmentOrderSelectionSchemaMigration::apply($this->db, $prefix), 'approved native selection schema prerequisite');
             if ($kind === 'selection') { $this->schema->populate(); }
             if ($kind === 'legacy') { $this->legacy(); }
         } catch (\Throwable $error) {

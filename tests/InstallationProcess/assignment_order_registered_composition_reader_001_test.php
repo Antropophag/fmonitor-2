@@ -7,17 +7,17 @@ use FMonitor2\Tests\Support\RegisteredCompositionTestFixture as Fixture;
 
 // ASSIGNMENT-ORDER-REGISTERED-COMPOSITION-READER-001 v0.1; exact public factory/reader only.
 $passed=0;$failed=0;
-function registeredCase(string $name, callable $test, string $kind='selection'):void
+function registeredCase(string $name, callable $test, string $kind='selection',string $prefix=''):void
 {
     global $passed,$failed;$f=null;$errors=[];
-    try{$f=new Fixture($kind);$test($f);}catch(Throwable $e){$errors[]=$e->getMessage();}
+    try{$f=new Fixture($kind,$prefix);$test($f);}catch(Throwable $e){$errors[]=$e->getMessage();}
     if($f!==null){try{$f->close();}catch(Throwable $e){$errors[]='CLEANUP: '.$e->getMessage();}}
     if($errors===[]){$passed++;echo "PASS $name\n";}else{$failed++;echo "FAIL $name: ".implode(' | ',$errors)."\n";}
 }
 function registeredReader(Fixture $f, ?mysqli $db=null):O\AssignmentOrderCompositionReader
 {
     assertSameValue(true,is_callable([O\AssignmentOrderRegisteredCompositionReaderFactory::class,'create']),'RED_ASSERTION: registered composition reader is missing after native registry/schema setup');
-    return O\AssignmentOrderRegisteredCompositionReaderFactory::create($db??$f->db);
+    return O\AssignmentOrderRegisteredCompositionReaderFactory::create($db??$f->db,$f->schema->prefix);
 }
 function registeredTuple(O\AssignmentOrderCompositionSnapshot $s):array
 {return[$s->status->value,$s->installationCaseId,$s->assignmentOrderId,$s->identity,$s->sha256,$s->installerIds,$s->controlEngineerUserId];}
@@ -33,6 +33,9 @@ foreach(['selection','legacy'] as $kind){
         assertSameValue(registeredFound(),registeredTuple($reader->find(4512,81)),'repeat read stable');
     },$kind);
 }
+registeredCase('valid prefix25 dispatch',static function(Fixture $f):void{
+    $before=$f->state();assertSameValue(registeredFound(),registeredTuple(registeredReader($f)->find(4512,81)),'full nonempty prefix honored');assertSameValue($before,$f->state(),'prefixed read preserves all facts');
+},'selection',str_repeat('p',25));
 registeredCase('absent registry and absent sources',static function(Fixture $f):void{
     $before=$f->state();assertSameValue(registeredEmpty('not_found',4512,99),registeredTuple(registeredReader($f)->find(4512,99)),'true absence');assertSameValue($before,$f->state(),'absence no repair');
 },'empty');
@@ -43,6 +46,13 @@ foreach([
     'wrong discriminator'=>['selection',"UPDATE fm2_assignment_order_identities SET source_kind='legacy_order' WHERE assignment_order_id=81"],
     'wrong version'=>['selection',"UPDATE fm2_assignment_order_identities SET order_version=3 WHERE assignment_order_id=81"],
     'wrong source case'=>['selection',"SET FOREIGN_KEY_CHECKS=0","UPDATE fm2_assignment_order_selections SET installation_case_id=4513 WHERE assignment_order_id=81","SET FOREIGN_KEY_CHECKS=1"],
+    'registry allocated instant mismatch'=>['selection',"UPDATE fm2_assignment_order_identities SET allocated_at_utc='2026-09-02 07:00:01.000000' WHERE assignment_order_id=81"],
+    'selection instant subsecond'=>['selection',"UPDATE fm2_assignment_order_identities SET allocated_at_utc='2026-09-02 07:00:00.123456' WHERE assignment_order_id=81","UPDATE fm2_assignment_order_selections SET selected_at_utc='2026-09-02 07:00:00.123456' WHERE assignment_order_id=81"],
+    'selection Moscow date'=>['selection',"UPDATE fm2_assignment_order_selections SET selection_date='2026-09-03' WHERE assignment_order_id=81"],
+    'selection revision zero'=>['selection',"SET check_constraint_checks=OFF","UPDATE fm2_assignment_order_selections SET selection_revision=0 WHERE assignment_order_id=81","SET check_constraint_checks=ON"],
+    'selection pending mode invariant'=>['selection',"SET check_constraint_checks=OFF","UPDATE fm2_assignment_order_selections SET mode='replace_pending' WHERE assignment_order_id=81","SET check_constraint_checks=ON"],
+    'selection first predecessor'=>['selection',"UPDATE fm2_assignment_order_selections SET previous_selection_order_id=82 WHERE assignment_order_id=81"],
+    'selection header snapshot'=>['selection',"UPDATE fm2_assignment_order_selections SET control_engineer_fio_snapshot=CONCAT(CHAR(9),'bad') WHERE assignment_order_id=81"],
     'wrong hash'=>['selection',"UPDATE fm2_assignment_order_selections SET composition_sha256=REPEAT('a',64) WHERE assignment_order_id=81"],
     'member period'=>['selection',"UPDATE fm2_assignment_order_selection_members SET employed_from_snapshot='2026-09-03' WHERE assignment_order_id=81"],
     'member source instant'=>['selection',"UPDATE fm2_assignment_order_selection_members SET workforce_source_updated_at_snapshot='2026-02-31T00:00:00Z' WHERE assignment_order_id=81"],
@@ -80,8 +90,10 @@ registeredCase('foreign-case no source authority',static function(Fixture $f):vo
 });
 registeredCase('invalid prefix before connection use',static function(Fixture $f):void{
     $closed=$f->schema->source->connect();$closed->close();registeredReader($f);
-    try{O\AssignmentOrderRegisteredCompositionReaderFactory::create($closed,str_repeat('p',26));throw new TestFailure('invalid prefix accepted');}
-    catch(InvalidArgumentException $e){assertSameValue('Invalid registered composition reader configuration.',$e->getMessage(),'fixed prefix outcome');}
+    foreach([str_repeat('p',26),'bad-prefix'] as $prefix){
+        try{O\AssignmentOrderRegisteredCompositionReaderFactory::create($closed,$prefix);throw new TestFailure('invalid prefix accepted');}
+        catch(InvalidArgumentException $e){assertSameValue('Invalid registered composition reader configuration.',$e->getMessage(),'fixed prefix outcome');}
+    }
 });
 registeredCase('invalid IDs and closed connection',static function(Fixture $f):void{
     $closed=$f->schema->source->connect();$closed->close();$reader=registeredReader($f,$closed);
