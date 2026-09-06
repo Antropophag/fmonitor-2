@@ -9,9 +9,9 @@
 
 ## 3. Unwired implementation
 
-- [ ] 3.1 Реализовать минимальный standalone registered reader после Gate3; verification: approved tests GREEN, existing interface, no factory/writer/runner wiring.
-- [ ] 3.2 Проверить relevant legacy composition regressions, architecture, lint, OpenSpec и diff; verification: clean exact-SHA terminal evidence, unchanged legacy expectations и baseline.
-- [ ] 3.3 Получить independent Gate5 reader-only; verification: APPROVED exact source/evidence с explicit remaining wiring dependencies.
+- [x] 3.1 Реализовать минимальный standalone registered reader после Gate3; verification: approved tests GREEN, existing interface, no factory/writer/runner wiring.
+- [x] 3.2 Проверить relevant legacy composition regressions, architecture, lint, OpenSpec и diff; verification: clean exact-SHA terminal evidence, unchanged legacy expectations и baseline.
+- [x] 3.3 Получить independent Gate5 reader-only; verification: APPROVED exact source/evidence с explicit remaining wiring dependencies.
 
 ## 4. Integration and Done
 
