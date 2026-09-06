@@ -11,7 +11,7 @@ Current scope2026-09-06: fresh launch без исторических данны
 
 ## 2. RED и Gate 3
 
-- [ ] 2.1 Доказать RED direct selection при отсутствующем/throwing renderer с exact persisted identity и no-template artifacts; verification: failure вызван отсутствующим behavior, не setup.
+- [x] 2.1 Доказать RED direct selection при отсутствующем/throwing renderer с exact persisted identity и no-template artifacts; verification: failure вызван отсутствующим behavior, не setup.
 - [ ] 2.2 Доказать RED authorization/eligibility/replay/concurrent stale/atomic persistence cases и no-opening/no-composition-application; verification: public seam, fictional fixtures, fixed expected values, bounded cleanup.
 - [ ] 2.4 Доказать сохранение public projections при новом выборе поверх applicable order; verification: before/after directory assignments, assigned/free counters и inspection attribution byte-equivalent, existing rows-only oracle недостаточен; fresh Gate 3 до correction.
 - [ ] 2.3 Получить fresh independent Gate 3; verification: reviewer не автор тестов, explicit APPROVED до production edits.
@@ -101,3 +101,19 @@ reviews/code/ASSIGNMENT-ORDER-COMPOSITION-SELECT-001-core-v1.md).
 не доставлены: tasks2.2/2.3/3.1/4.x не объявляются полностью закрытыми по core
 approval. Следующий пакет — native binding того же public command owner, без
 legacy writer migration и без PDF storage. Existing approved schema/readers reuse.
+
+
+## Native tracer checkpoint — 2026-09-06
+
+Native source21b4ad0: eight bindings assembled for approved tracer; real new_order,
+replace_pending, silent replay и no-case terminal GREEN. Gate5v2 APPROVED:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-tracer-v2.md`.
+Authority corrections have own RED/Gate3; SQL ownership narrowed to MariaDb files,
+baseline unchanged. Exact clean archive `selection-native-authority-green-5hgvkalc`
+manifest ec4898324447d863557e76568abf713917a24f732873a147cc3f409cee2468f2:
+8native cases/architecture/lints/diff PASS. Core73, reader15, tool35 reused at
+unchanged sources as recorded by reviews. Task2.1 now has native persistence proof.
+Full native Gate5 remains open: denial/conflict/eligibility, locked-state and
+request corruption, races/rollback/unknown, capacity, session echoes/ambient,
+prefix/readiness matrix still require their RED/Gate3/GREEN reviews. No HTTP
+binding, migration reservation, full VERIFY_OK or launch claim follows.
