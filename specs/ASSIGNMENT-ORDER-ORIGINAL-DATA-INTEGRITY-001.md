@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.4, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.5, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -173,8 +173,35 @@ SEMANTIC_COLLISION. FOUND same root despite the current complete list omitting
 target is contradictory snapshot data and fails persistence. Missing optional
 query interface on this required path is persistence failure, never absence.
 No target query precedes the stale-expected check or an accepted fingerprint hit.
-Apply this identical target helper/order during normal correction and post-CAS
-conflict reclassification, never substituting latest unrelated root metadata.
+Normal correction target/current/no-change resolution is parent step11: after
+stream/inspection and accepted-fingerprint miss, before ID allocation and private
+finalize. STALE_REVISION, TARGET_NOT_FOUND, TARGET_NOT_CURRENT, SEMANTIC_COLLISION
+or NO_CHANGES selected there abort/close the acquired stage and close stream once,
+then persist one terminal attempt. Finalize0, lease0, acceptedCommit0, allocation0.
+A protocol/lookup failure there performs the same cleanup but no terminal attempt.
+Root/composition drift checks already required before stream stay earlier.
+
+INITIAL also performs step11: after fingerprint miss, call the explicit
+assignment-lineage query once before allocation/finalize. Exact complete FOUND
+selects INITIAL_ALREADY_EXISTS with stage/stream cleanup and terminal attempt;
+valid NOT_FOUND allows allocation/finalize/commit. UNAVAILABLE, malformed,
+base-only FOUND, wrong query echo or missing query interface fails persistence
+with cleanup and no finalized content. No blind reliance on later unique SQL
+failure replaces this precheck.
+
+Post-CAS reclassification is a distinct race path after a previously valid
+candidate. Initial NF precheck can race with a winner before commit: conflict
+rereads fingerprint then assignment lineage, with section9 exact mapping. A
+correction candidate has already proved expected=current=target and immutable
+membership before finalize. After CAS conflict, fingerprint winner may replay;
+changed current selects STALE_REVISION. If current is still expected, its target
+must remain that same current member. Omitted/moved target or changed immutable
+evidence is corruption/persistence, not a new global target-owner lookup. Do not
+manufacture post-CAS foreign/absent-target fixtures by changing immutable command
+or lineage state. Post-CAS tests cover reachable winner/stale/unchanged-valid/
+corrupt states and assert zero revision-owner queries. Direct repository
+NO_CHANGES DTO defense remains separately testable; normal public NO_CHANGES
+never reaches AcceptedCommit or finalize.
 
 ## 5. Composition protocol versus invalid business content
 
@@ -340,9 +367,12 @@ application initial CONFLICT, validated accepted-fingerprint FOUND wins as repla
 a valid miss is followed by the explicit case/order lineage query. Only a complete
 valid FOUND root for that case/order selects INITIAL_ALREADY_EXISTS. NOT_FOUND,
 UNAVAILABLE or malformed lineage is PERSISTENCE_FAILURE, never invented existing
-original. Correction CONFLICT keeps its validated fingerprint/current-lineage
-stale/target/no-change precedence. NO_CHANGES remains CONFLICT at the repository
-and becomes the exact rejected reason after that correction reread. No blind
+original. Correction CONFLICT keeps the reachable validated fingerprint/current-lineage
+winner/stale/unchanged-valid precedence from section4. An unchanged internally
+valid root/current after a non-fingerprint collision selects the existing
+SEMANTIC_COLLISION; corruption is persistence failure. A direct no-op correction
+DTO remains CONFLICT at the repository defense, while normal public NO_CHANGES
+is selected before commit. It is not a forced reachable post-CAS scenario. No blind
 commit retry. Distinguish before-commit error with confirmed rollback from commit
 acknowledgement uncertainty; rollback after a lost acknowledgement cannot prove
 that the preceding commit did not succeed.
@@ -505,9 +535,14 @@ Denied audit policy remains unchanged and explicitly incomplete pending owner.
 ## 12. Exact diagnostics and verification ownership
 
 New fresh-reader close failure emits exactly
-`ORIGINAL_FRESH_READER_CLOSE_FAILED` with sole fields
-`{requestCorrelation,phase}`; correlation retains the approved request hash codec,
-phase is exactly `accepted_commit_recovery` or `authorized_attempt_recovery`.
+`ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED` through the existing
+safe-log observer with sole supplied safeFields `{phase}`. Phase is exactly
+`accepted_commit_recovery` or `authorized_attempt_recovery`. The existing opened
+owner supplies correlationId once in its unchanged envelope (first12 lowerhex
+SHA256(requestId)); no requestCorrelation key or duplicate raw request data is
+introduced. Example accepted-recovery close failure on a fresh log:
+
+`{"correlationId":"11e594f48195","event":"ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED","safeFields":{"phase":"accepted_commit_recovery"},"sequence":1}`
 Best-effort logging Throwable never changes selected read/result/cleanup. Generic
 persistence/audit-only diagnostic policy remains outside this bounded addition.
 
@@ -573,8 +608,9 @@ One cumulative matrix covers result lookup6combinations at request/fingerprint/
 fresh stages; every result status/reason/evidence grammar/getter failure including stored
 INVALID_COMMAND; lineage
 complete/incomplete/query-echo versus semantic ownership/membership/corruption;
-foreign/absent/same-root historical targets with exact revision-owner call
-precedence in normal and post-CAS paths; composition ownership/list/
+normal foreign/absent/same-root historical targets before finalize, initial
+precheck and reachable initial/correction post-CAS races with exact query calls;
+no unreachable post-CAS foreign-target mutation fixture; composition ownership/list/
 identity/hash and SQL numeric/date/action rules; consistent snapshot race; every
 AcceptedCommit mode/scalar/relationship invalid with zero-SQL proof; every
 AttemptCommit status/reason/retry/time invalid; malformed request/revision/root/

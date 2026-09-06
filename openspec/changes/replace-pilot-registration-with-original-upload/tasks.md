@@ -149,3 +149,8 @@ DATA-INTEGRITYv03 Gate1 was approved (66a62e40); unchanged result/composition RE
 authoring began without implementation. The independent lineage-ownership and
 revision-owner feasibility findings require v04 fresh Gate1 before lineage RED;
 the old approval/reviews remain unchanged.
+
+DATA-INTEGRITYv04 Gate1 approved9dbf8f41; later independent step11/diagnostic
+clarifications require v05 fresh Gate1 before formal target/initial/fresh RED.
+Preliminary author diagnostics are not authoritative Gate2 evidence. No data
+integrity production code has changed.

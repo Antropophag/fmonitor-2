@@ -135,3 +135,9 @@ assignment-query echo corruption. Its optional read-only revision-owner query
 preserves the existing unknown-target versus foreign-target reasons and runs
 only after current/expected agreement and current-root membership miss, including
 post-CAS reclassification. No new domain fact or product policy is introduced.
+
+DATA-INTEGRITY v0.5 pins step11 before allocation/finalize for normal INITIAL
+absence and correction target/no-change checks. Post-CAS tests use only reachable
+winner/stale/unchanged/corrupt states; no moved foreign target after a validated
+candidate. Fresh-close diagnostics use the existing correlationId envelope,
+sole phase field and ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED.
