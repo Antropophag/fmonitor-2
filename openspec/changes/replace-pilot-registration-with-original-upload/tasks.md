@@ -204,4 +204,4 @@ Worker ports завершён: f692c96, independent Gate5 WORKER-PORTS001v1 APPR
 ## Orphan fixture corrective gates — 2026-09-06
 
 - [x] 4.13 Existing approved parentv74 section16: targeted fixture RED и independent Gate3 ORPHAN-FIXTURE001v1.
-- [ ] 5.13 Minimal fixture replay/authority/exclusion GREEN, related regressions/architecture и scoped Gate5.
+- [x] 5.13 Minimal fixture replay/authority/exclusion GREEN, related regressions/architecture и scoped Gate5.
