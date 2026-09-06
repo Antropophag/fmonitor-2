@@ -1,0 +1,453 @@
+--- a/tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
+@@ -14,7 +14,7 @@
+ $pre=['authorize','request','composition','clock','lifecycle:after_request_miss_before_stream'];
+ $begin=['storage:stage_begin:null','stage.begin'];
+ $read=[...$begin,'stream.read:65536','stage.write:327','storage:stage_write:null','stream.read:65536','storage:stage_done:null','stage.completed','inspect'];
+-$identity=[LIFECYCLE_FP,'lifecycle:after_fingerprint_miss_before_cas','id.root','id.revision'];
++$identity=[LIFECYCLE_FP,'lifecycle:after_fingerprint_miss_before_cas','lineage','id.root','id.revision'];
+ $finalize=['storage:finalize_begin:null','stage.finalize','storage:finalize_done:private-content-0001'];
+ $close=['storage:stage_close:null','stage.close','stream.close'];
+ $candidate=[...$pre,...$read,...$identity,...$finalize,...$close,'lifecycle:after_private_finalize_before_commit'];
+@@ -83,14 +83,14 @@
+ $commits=[
+  'normal'=>['accepted',null,false,'committed',[],1],
+  'rolled_back'=>['failed','persistence_failure',true,'rolled_back',[],0],
+- 'unknown_found'=>['accepted',null,false,'unknown_found',['request'],1],
+- 'unknown_not_found'=>['failed','persistence_failure',true,'unknown_not_found',['request'],0],
+- 'unknown_unavailable'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['request'],1],
+- 'unknown_recovery_throw'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['request'],1],
+- 'unknown_result_getter_throw'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['request'],1],
+- 'commit_throw_found'=>['accepted',null,false,'unknown_found',['request'],1],
+- 'commit_throw_not_found'=>['failed','persistence_failure',true,'unknown_not_found',['request'],0],
+- 'commit_throw_unavailable'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['request'],1],
++ 'unknown_found'=>['accepted',null,false,'unknown_found',['fresh.open','fresh.read','fresh.close'],1],
++ 'unknown_not_found'=>['failed','persistence_failure',true,'unknown_not_found',['fresh.open','fresh.read','fresh.close'],0],
++ 'unknown_unavailable'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['fresh.open','fresh.read','fresh.close'],1],
++ 'unknown_recovery_throw'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['fresh.open','fresh.read','fresh.close'],1],
++ 'unknown_result_getter_throw'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['fresh.open','fresh.read','fresh.close'],1],
++ 'commit_throw_found'=>['accepted',null,false,'unknown_found',['fresh.open','fresh.read','fresh.close'],1],
++ 'commit_throw_not_found'=>['failed','persistence_failure',true,'unknown_not_found',['fresh.open','fresh.read','fresh.close'],0],
++ 'commit_throw_unavailable'=>['failed','persistence_outcome_unknown',true,'unknown_unavailable',['fresh.open','fresh.read','fresh.close'],1],
+  'conflict_replay'=>['replayed',null,false,'commit_conflict',[LIFECYCLE_FP],0],
+  'conflict_none'=>['conflict','initial_already_exists',false,'commit_conflict',[LIFECYCLE_FP,'lineage'],0],
+  'conflict_fingerprint_throw'=>['failed','persistence_failure',true,'commit_conflict',[LIFECYCLE_FP],0],
+--- a/tests/InstallationProcess/assignment_order_original_gate5_domain_red_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_gate5_domain_red_001_test.php
+@@ -7,6 +7,7 @@
+ require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialProcessState.php';
+ require dirname(__DIR__) . '/Support/AssignmentOrderOriginalInitialFixture.php';
+ require dirname(__DIR__) . '/Support/AssignmentOrderOriginalMatrixInputs.php';
++require dirname(__DIR__) . '/Support/AssignmentOrderOriginalDataCompatibility.php';
+ 
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionLookupStatus;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionReader;
+@@ -54,14 +55,14 @@
+             $caseId,
+             $orderId,
+             'composition-' . $orderId . '-v1',
+-            hash('sha256', 'composition-' . $orderId),
++            [81=>'7c824b76b7999bc74e2c8f1fbda74e6e07f388be9b85851c4eebb0d57ec1aaa0',82=>'9e5c95c9133e9c4fe7858b2d337977368c10647bf2f9a162ec14edc4f102b96e'][$orderId],
+             [7001],
+             31,
+         );
+     }
+ }
+ 
+-final class Gate5DomainLineage implements AssignmentOrderOriginalLineageLookup
++final class Gate5DomainLineage implements \FMonitor2\Tests\Support\OriginalCompatibilityCompleteLineage
+ {
+     public function __construct(private AssignmentOrderOriginalLookupStatus $status, private ?AssignmentOrderOriginalAcceptedCommit $commit = null) {}
+     public function status(): AssignmentOrderOriginalLookupStatus { return $this->status; }
+@@ -71,9 +72,14 @@
+     public function compositionIdentity(): ?string { return $this->commit?->compositionIdentity; }
+     public function compositionSha256(): ?string { return $this->commit?->compositionSha256; }
+     public function containsRevision(string $revisionId): bool { return $revisionId === $this->commit?->newRevisionId; }
+-}
+-
+-final class Gate5DomainRepository implements AssignmentOrderOriginalRepository
++    public function installationCaseId(): ?int { return $this->commit?->installationCaseId; }
++    public function assignmentOrderId(): ?int { return $this->commit?->assignmentOrderId; }
++    public function revisionIds(): array { return $this->commit === null ? [] : [$this->commit->newRevisionId]; }
++    public function currentDocumentDate(): ?string { return $this->commit?->documentDate; }
++    public function currentPdfSha256(): ?string { return $this->commit?->pdfSha256; }
++}
++
++final class Gate5DomainRepository implements AssignmentOrderOriginalRepository, \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAssignmentLineageRepository
+ {
+     public AssignmentOrderOriginalLookupStatus $terminalStatus = AssignmentOrderOriginalLookupStatus::NOT_FOUND;
+     public AssignmentOrderOriginalLookupStatus $fingerprintStatus = AssignmentOrderOriginalLookupStatus::NOT_FOUND;
+@@ -109,6 +115,13 @@
+         $commit = reset($this->acceptedByOrder) ?: null;
+         return new Gate5DomainLineage($commit ? AssignmentOrderOriginalLookupStatus::FOUND : AssignmentOrderOriginalLookupStatus::NOT_FOUND, $commit);
+     }
++    public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): AssignmentOrderOriginalLineageLookup
++    {
++        ++$this->lineageCalls;
++        $commit = $this->acceptedByOrder[$assignmentOrderId] ?? null;
++        if ($commit !== null && $commit->installationCaseId !== $installationCaseId) throw new LogicException('Wrong fixture pair.');
++        return new Gate5DomainLineage($commit === null ? AssignmentOrderOriginalLookupStatus::NOT_FOUND : AssignmentOrderOriginalLookupStatus::FOUND, $commit);
++    }
+     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
+     {
+         $this->acceptedByOrder[$commit->assignmentOrderId] = $commit;
+@@ -146,16 +159,22 @@
+     $mode === AssignmentOrderOriginalMode::INITIAL ? null : 'Исправление',
+     new AssignmentOrderOriginalUpload($stream, 'signed.pdf', 'application/pdf'),
+ );
+-$build = static function (Gate5DomainRepository $repository, AssignmentOrderOriginalAuthorizationStatus $auth = AssignmentOrderOriginalAuthorizationStatus::ALLOWED): array {
++$build = static function (Gate5DomainRepository $repository, AssignmentOrderOriginalAuthorizationStatus $auth = AssignmentOrderOriginalAuthorizationStatus::ALLOWED, string $rootId = 'original-0001', string $revisionId = 'revision-0001'): array {
+     $storage = new AssignmentOrderOriginalInitialStorage();
+     $observers = new AssignmentOrderOriginalInitialObservers();
+     $lifecycle = new Gate5DomainLifecycle($storage);
++    $fresh = new \FMonitor2\Tests\Support\OriginalCompatibilityFreshFactory(static fn(string $id) => new \FMonitor2\Tests\Support\AssignmentOrderOriginalInitialResultLookup());
++    $ids = new class($rootId,$revisionId) implements \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdSource {
++        public function __construct(private string $root,private string $revision) {}
++        public function nextRootId(): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult { return new \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdStatus::GENERATED,$this->root); }
++        public function nextRevisionId(): \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult { return new \FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdResult(\FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalIdStatus::GENERATED,$this->revision); }
++    };
+     $app = AssignmentOrderOriginalVerificationFactory::create(new AssignmentOrderOriginalDependencies(
+         new AssignmentOrderOriginalMatrixAuthorizer($auth), new Gate5DomainComposition(), new AssignmentOrderOriginalInitialClock(),
+-        new AssignmentOrderOriginalInitialIds(), new AssignmentOrderOriginalInitialInspector(), $storage, $repository,
+-        $lifecycle, $observers, $observers, $observers, $observers,
++        $ids, new AssignmentOrderOriginalInitialInspector(), $storage, $repository,
++        $lifecycle, $observers, $observers, $observers, $observers, $fresh,
+     ));
+-    return [$app, $storage, $lifecycle];
++    return [$app, $storage, $lifecycle, $fresh];
+ };
+ 
+ $unavailableAuthRepo = new Gate5DomainRepository();
+@@ -171,7 +190,7 @@
+ foreach (['terminalStatus', 'fingerprintStatus'] as $index => $property) {
+     $repo = new Gate5DomainRepository();
+     $repo->{$property} = AssignmentOrderOriginalLookupStatus::UNAVAILABLE;
+-    [$app] = $build($repo);
++    [$app, , , $fresh] = $build($repo);
+     $stream = new AssignmentOrderOriginalMatrixStream($pdf);
+     $result = $app->submitAssignmentOrderOriginal($command(sprintf('00000000-0000-4000-8000-%012d', 502 + $index), 81, $stream));
+     assertSameValue([AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true], $resultTuple($result), "{$property} UNAVAILABLE fails closed.");
+@@ -182,16 +201,17 @@
+     $repo = new Gate5DomainRepository();
+     $repo->attemptStatus = $attemptFailure === 'throw' ? AssignmentOrderOriginalCommitStatus::COMMITTED : $attemptFailure;
+     $repo->throwAttempt = $attemptFailure === 'throw';
+-    [$app] = $build($repo);
++    [$app, , , $fresh] = $build($repo);
+     $stream = new AssignmentOrderOriginalMatrixStream($pdf);
+     $invalid = new SubmitAssignmentOrderOriginalCommand(sprintf('00000000-0000-4000-8000-%012d', 510 + $index), AssignmentOrderOriginalMode::INITIAL, 4512, 81, 18, '2026-09-01', false, null, null, null, null, new AssignmentOrderOriginalUpload($stream, 'signed.pdf', 'application/pdf'));
+     assertSameValue([AssignmentOrderOriginalStatus::FAILED, AssignmentOrderOriginalReason::PERSISTENCE_FAILURE, true], $resultTuple($app->submitAssignmentOrderOriginal($invalid)), 'A missing atomic terminal attempt/audit cannot return the unaudited domain result.');
+     assertSameValue(1, $repo->attemptCalls, 'Attempt audit persistence is invoked exactly once.');
++    assertSameValue($attemptFailure === 'throw' ? [1,1,1] : [0,0,0], [$fresh->opens,$fresh->reads,$fresh->closes], 'Only ambiguous attempt uses an explicit reliable fresh miss, without writer reread.');
+ }
+ 
+ $orders = new Gate5DomainRepository();
+-foreach ([[81, '00000000-0000-4000-8000-000000000521'], [82, '00000000-0000-4000-8000-000000000522']] as [$orderId, $requestId]) {
+-    [$app, , $lifecycle] = $build($orders);
++foreach ([[81, '00000000-0000-4000-8000-000000000521','original-0001','revision-0001'], [82, '00000000-0000-4000-8000-000000000522','original-0002','revision-0002']] as [$orderId, $requestId,$rootId,$revisionId]) {
++    [$app, , $lifecycle] = $build($orders,AssignmentOrderOriginalAuthorizationStatus::ALLOWED,$rootId,$revisionId);
+     $result = $app->submitAssignmentOrderOriginal($command($requestId, $orderId, new AssignmentOrderOriginalMatrixStream($pdf)));
+     assertSameValue(AssignmentOrderOriginalStatus::ACCEPTED, $result->status(), "INITIAL is scoped to assignment order {$orderId} independently.");
+     assertSameValue(1, $lifecycle->postFinalize, 'Exactly one real post-finalize lifecycle event is emitted for an accepted upload.');
+--- a/tests/InstallationProcess/assignment_order_original_gate5_mariadb_red_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_gate5_mariadb_red_001_test.php
+@@ -52,10 +52,10 @@
+     // A transport/schema error is not a compare-and-swap business conflict.
+     $repository = new AssignmentOrderOriginalMariaDbRepository($db, 'missing_', null);
+     $commit = new AssignmentOrderOriginalAcceptedCommit(
+-        '00000000-0000-4000-8000-000000000551', hash('sha256', 'fingerprint'), AssignmentOrderOriginalMode::INITIAL,
++        '00000000-0000-4000-8000-000000000551', 'dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d', AssignmentOrderOriginalMode::INITIAL,
+         4512, 81, 18, 'original-0051', 'revision-0051', 1, null, null,
+-        'composition-81-v1', hash('sha256', 'composition'), '2026-09-01', '2026-09-02T09:15:30Z',
+-        hash('sha256', '%PDF-1.4'), 8, 'content-0051', null, 'assignment_order_original_accepted',
++        'composition-81-v1', '388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5', '2026-09-01', '2026-09-02T09:15:30Z',
++        '4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784', 327, 'content-sha256-4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784', null, 'assignment_order_original_accepted',
+     );
+     assertSameValue(AssignmentOrderOriginalCommitStatus::ROLLED_BACK, $repository->commitAccepted($commit), 'MariaDB technical failure is distinct from CAS CONFLICT.');
+     $db->close();
+--- a/tests/InstallationProcess/assignment_order_original_safe_log_isolation_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_safe_log_isolation_001_test.php
+@@ -76,7 +76,7 @@
+         $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
+         $expected=isolationExpected($id,'accepted',null);
+         assertSameValue($expected,isolationTuple($result),'full accepted result survives failed release diagnostic');
+-        assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','lease.release','log:committed','delivery'],$trace->calls,'acceptance order and exact-once cleanup');
++        assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','lease.release','log:committed','delivery'],$trace->calls,'acceptance order and exact-once cleanup');
+         assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>'committed'],$generic?'old-request':$id]],$logger->records,'one unchanged release diagnostic');
+         assertSameValue($generic?[]:[$id],$logger->bindings,'generic gets no binding');
+         assertSameValue('', $logger->bytes,'no log bytes'); assertSameValue(1,count($repo->accepted),'one accepted commit');
+@@ -88,9 +88,10 @@
+     $before=$repo->evidenceCanonicalJson(4512,81);
+     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
+     assertSameValue(isolationExpected($id,'conflict','initial_already_exists'),isolationTuple($result),'full CAS conflict');
+-    assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','fingerprint.read','lineage.read','lease.release','log:commit_conflict','attempt.commit'],$trace->calls,'rereads before release and required audit after diagnostic');
++    assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','fingerprint.read','lineage.read','lease.release','log:commit_conflict','attempt.commit'],$trace->calls,'rereads before release and required audit after diagnostic');
+     assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>'commit_conflict'],$id]],$logger->records,'one conflict diagnostic');
+-    assertSameValue($before,$repo->evidenceCanonicalJson(4512,81),'existing root unchanged and no acceptance');
++    assertSameValue('{"preExistingRoot":null,"newAccepted":[]}',$before,'rival is not committed before initial precheck');
++    assertSameValue('{"preExistingRoot":["original-0099","revision-0099",1,"composition-81-v1"],"newAccepted":[]}',$repo->evidenceCanonicalJson(4512,81),'concurrent winner published exactly and current command has no acceptance');
+     assertSameValue(1,count($repo->attempts),'required conflict audit'); assertSameValue('initial_already_exists',$repo->attempts[0]->reason->value,'conflict audit reason');
+     assertSameValue([], $delivery->results,'no conflict delivery'); assertSameValue('', $logger->bytes,'no log bytes');
+ });
+@@ -99,7 +100,7 @@
+     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
+     $expected=isolationExpected($id,'accepted',null);
+     assertSameValue($expected,isolationTuple($result),'binding cannot escape or replace acceptance');
+-    assertSameValue(['fingerprint.read','stage.close','stream.close','accepted.commit','lease.release','delivery'],$trace->calls,'normal lifecycle despite binding failure');
++    assertSameValue(['fingerprint.read','lineage.read','stage.close','stream.close','accepted.commit','lease.release','delivery'],$trace->calls,'normal lifecycle despite binding failure');
+     assertSameValue([$id],$logger->bindings,'binding attempted once'); assertSameValue([], $logger->records,'no stale log callback');
+     assertSameValue('', $logger->bytes,'no stale bytes'); assertSameValue(1,count($repo->accepted),'one acceptance');
+     assertSameValue([], $repo->attempts,'no attempts'); assertSameValue([$expected],$delivery->results,'delivery preserved');
+--- a/tests/InstallationProcess/assignment_order_original_worker_transport_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_worker_transport_001_test.php
+@@ -41,7 +41,7 @@
+ $nextNumber=$revisionNumber+1;$resultA=$finish($workerA);$resultB=$finish($workerB);$acceptedRace='{"status":"accepted","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000101","rootOriginalId":"original-0001","currentRevisionId":"revision-0070","revisionNumber":'.$nextNumber.',"documentDate":"2026-09-01","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:17:00Z"}' . "\n";$replayedRace=str_replace(['"status":"accepted"','000000000101'],['"status":"replayed"','000000000102'],$acceptedRace);assertSameValue([0,'',$acceptedRace],[$resultA['exit'],$resultA['stderr'],$resultA['result']],'Identical A exact deterministic winner channels.');assertSameValue([0,'',$replayedRace],[$resultB['exit'],$resultB['stderr'],$resultB['result']],'Identical B exact replay channels and loser request echo.');$afterRace=$snapshot();$raceIds=[$raceA['requestId'],$raceB['requestId']];assertSameValue([1,$raceA['requestId'],'accepted'],[count($itemsFor($afterRace['requests']['items'],$raceIds)),($itemsFor($afterRace['requests']['items'],$raceIds)[0]['requestId']??null),($itemsFor($afterRace['requests']['items'],$raceIds)[0]['status']??null)],'Identical race publishes only winner request.');assertSameValue([1,$raceA['requestId'],'accepted'],[count($itemsFor($afterRace['audits']['items'],$raceIds)),($itemsFor($afterRace['audits']['items'],$raceIds)[0]['requestId']??null),($itemsFor($afterRace['audits']['items'],$raceIds)[0]['status']??null)],'Identical race publishes only winner audit.');assertSameValue([1,$raceA['requestId'],'revision-0070'],[count($itemsFor($afterRace['fingerprints']['items'],$raceIds)),($itemsFor($afterRace['fingerprints']['items'],$raceIds)[0]['requestId']??null),($itemsFor($afterRace['fingerprints']['items'],$raceIds)[0]['currentRevisionId']??null)],'Identical race publishes only winner fingerprint.');assertSameValue([0,1],[count($itemsFor($afterRace['events']['items'],$raceIds)),count(array_filter($afterRace['events']['items'],static fn(array$item):bool=>($item['revisionId']??null)==='revision-0070'))],'Identical loser has no event and winner has exactly one.');assertSameValue([$beforeRace['process'],$beforeRace['blobs'],0],[$afterRace['process'],$afterRace['blobs'],count($itemsFor($afterRace['logs']['items'],$raceIds))],'Identical race changes no process/blob/log evidence and leaves no loser orphan.');assertSameValue(false,str_contains(json_encode([$afterRace['domain'],$afterRace['fingerprints'],$afterRace['events'],$afterRace['audits'],$afterRace['blobs']],JSON_THROW_ON_ERROR),$raceB['requestId']),'Identical loser identity appears in no protected/public/blob evidence.');$currentRevision='revision-0070';$revisionNumber=$nextNumber;
+ $differentBase=$raceBase;$differentBase['targetRevisionId']=$differentBase['expectedCurrentRevisionId']=$currentRevision;$differentBase['correctionReason']='Concurrent different correction';$differentA=$differentBase;$differentA['requestId']='00000000-0000-4000-8000-000000000103';$differentA['documentDate']='2026-09-02';$differentB=$differentBase;$differentB['requestId']='00000000-0000-4000-8000-000000000104';$differentB['documentDate']='2026-08-29';$configA=$raceConfig;$configA['revisionIdSequenceCsv']='revision-0071';$configB=$raceConfig;$configB['revisionIdSequenceCsv']='revision-0072';$configB['faultPoint']='content_lease_release';$beforeDifferent=$snapshot();$workerA=$start($configA,json_encode($differentA,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\n",'different-a');$workerB=$start($configB,json_encode($differentB,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\n",'different-b');
+ $assertFingerprintBarrier($beforeDifferent,'2026-09-02T09:17:00Z','Different workers READY');
+-$differentNumber=$revisionNumber+1;$resultA=$finish($workerA);$resultB=$finish($workerB);$differentAccepted='{"status":"accepted","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000103","rootOriginalId":"original-0001","currentRevisionId":"revision-0071","revisionNumber":'.$differentNumber.',"documentDate":"2026-09-02","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:17:00Z"}' . "\n";$differentConflict='{"status":"conflict","reasonCode":"stale_revision","retryable":false,"requestId":"00000000-0000-4000-8000-000000000104","rootOriginalId":null,"currentRevisionId":null,"revisionNumber":null,"documentDate":null,"sha256":null,"byteSize":null,"uploadedAt":null}' . "\n";assertSameValue([0,'',$differentAccepted],[$resultA['exit'],$resultA['stderr'],$resultA['result']],'Different A exact deterministic winner channels.');assertSameValue([0,'',$differentConflict],[$resultB['exit'],$resultB['stderr'],$resultB['result']],'Different B exact stale loser channels despite release failure.');$afterDifferent=$snapshot();$differentIds=[$differentA['requestId'],$differentB['requestId']];$newRequests=$itemsFor($afterDifferent['requests']['items'],$differentIds);$newAudits=$itemsFor($afterDifferent['audits']['items'],$differentIds);assertSameValue([['00000000-0000-4000-8000-000000000103','accepted',null],['00000000-0000-4000-8000-000000000104','conflict','stale_revision']],array_map(static fn(array$item):array=>[$item['requestId'],$item['status'],$item['reasonCode']],$newRequests),'Different race exact accepted+conflict requests.');assertSameValue([['00000000-0000-4000-8000-000000000103','accepted',null],['00000000-0000-4000-8000-000000000104','conflict','stale_revision']],array_map(static fn(array$item):array=>[$item['requestId'],$item['status'],$item['reasonCode']],$newAudits),'Different race exact accepted+conflict audits.');assertSameValue([1,$differentA['requestId'],'revision-0071'],[count($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)),($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)[0]['requestId']??null),($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)[0]['currentRevisionId']??null)],'Different loser publishes no fingerprint/revision.');assertSameValue([0,1],[count($itemsFor($afterDifferent['events']['items'],$differentIds)),count(array_filter($afterDifferent['events']['items'],static fn(array$item):bool=>($item['revisionId']??null)==='revision-0071'))],'Different loser publishes no event and winner one event.');$loserCorrelation=substr(hash('sha256',$differentB['requestId']),0,12);$loserLogs=array_values(array_filter($afterDifferent['logs']['items'],static fn(array$item):bool=>($item['correlationId']??null)===$loserCorrelation));assertSameValue([['correlationId'=>$loserCorrelation,'event'=>'ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED','safeFields'=>['phase'=>'commit_conflict'],'sequence'=>$loserLogs[0]['sequence']??null]],$loserLogs,'Different loser emits exactly one redacted commit_conflict release log.');assertSameValue([$beforeDifferent['process'],$beforeDifferent['blobs']],[$afterDifferent['process'],$afterDifferent['blobs']],'Different race changes no process/blob evidence and leaves no orphan.');assertSameValue(false,str_contains(json_encode([$afterDifferent['domain'],$afterDifferent['fingerprints'],$afterDifferent['events'],$afterDifferent['blobs']],JSON_THROW_ON_ERROR),$differentB['requestId']),'Different loser identity appears only in terminal request/audit/log, never domain/blob evidence.');$reader->close();$reader=null;
++$differentNumber=$revisionNumber+1;$resultA=$finish($workerA);$resultB=$finish($workerB);$differentAccepted='{"status":"accepted","reasonCode":null,"retryable":false,"requestId":"00000000-0000-4000-8000-000000000103","rootOriginalId":"original-0001","currentRevisionId":"revision-0071","revisionNumber":'.$differentNumber.',"documentDate":"2026-09-02","sha256":"4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784","byteSize":327,"uploadedAt":"2026-09-02T09:17:00Z"}' . "\n";$differentConflict='{"status":"conflict","reasonCode":"stale_revision","retryable":false,"requestId":"00000000-0000-4000-8000-000000000104","rootOriginalId":null,"currentRevisionId":null,"revisionNumber":null,"documentDate":null,"sha256":null,"byteSize":null,"uploadedAt":null}' . "\n";assertSameValue([0,'',$differentAccepted],[$resultA['exit'],$resultA['stderr'],$resultA['result']],'Different A exact deterministic winner channels.');assertSameValue([0,'',$differentConflict],[$resultB['exit'],$resultB['stderr'],$resultB['result']],'Different B exact stale loser channels despite release failure.');$afterDifferent=$snapshot();$differentIds=[$differentA['requestId'],$differentB['requestId']];$newRequests=$itemsFor($afterDifferent['requests']['items'],$differentIds);$newAudits=$itemsFor($afterDifferent['audits']['items'],$differentIds);assertSameValue([['00000000-0000-4000-8000-000000000103','accepted',null],['00000000-0000-4000-8000-000000000104','conflict','stale_revision']],array_map(static fn(array$item):array=>[$item['requestId'],$item['status'],$item['reasonCode']],$newRequests),'Different race exact accepted+conflict requests.');assertSameValue([['00000000-0000-4000-8000-000000000103','accepted',null],['00000000-0000-4000-8000-000000000104','conflict','stale_revision']],array_map(static fn(array$item):array=>[$item['requestId'],$item['status'],$item['reasonCode']],$newAudits),'Different race exact accepted+conflict audits.');assertSameValue([1,$differentA['requestId'],'revision-0071'],[count($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)),($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)[0]['requestId']??null),($itemsFor($afterDifferent['fingerprints']['items'],$differentIds)[0]['currentRevisionId']??null)],'Different loser publishes no fingerprint/revision.');assertSameValue([0,1],[count($itemsFor($afterDifferent['events']['items'],$differentIds)),count(array_filter($afterDifferent['events']['items'],static fn(array$item):bool=>($item['revisionId']??null)==='revision-0071'))],'Different loser publishes no event and winner one event.');$loserCorrelation=substr(hash('sha256',$differentB['requestId']),0,12);$loserLogs=array_values(array_filter($afterDifferent['logs']['items'],static fn(array$item):bool=>($item['correlationId']??null)===$loserCorrelation));assertSameValue([],$loserLogs,'Same-PDF loser detects stale state in step11 before finalize, so owns no lease or release diagnostic; real post-finalize release failure is separately covered by DATA-WORKER-001.');assertSameValue([$beforeDifferent['process'],$beforeDifferent['blobs']],[$afterDifferent['process'],$afterDifferent['blobs']],'Different race changes no process/blob evidence and leaves no orphan.');assertSameValue(false,str_contains(json_encode([$afterDifferent['domain'],$afterDifferent['fingerprints'],$afterDifferent['events'],$afterDifferent['blobs']],JSON_THROW_ON_ERROR),$differentB['requestId']),'Different loser identity appears only in terminal request/audit/log, never domain/blob evidence.');$reader->close();$reader=null;
+ require dirname(__DIR__).'/Support/assignment_order_original_isolated_races.php';
+ fwrite(STDOUT,"ASSIGNMENT_ORDER_ORIGINAL_WORKER_TRANSPORT_OK\n");
+ }finally{foreach($liveWorkers as$worker)$reapWorker($worker);$liveWorkers=[];if($reader!==null)try{$reader->close();}catch(Throwable){}if($db instanceof mysqli){try{AssignmentOrderOriginalVerificationDatabaseFixture::cleanupExampleA($db,$prefix);}catch(Throwable){}$db->close();}try{$admin->query("DROP DATABASE IF EXISTS `{$database}`");}catch(Throwable){}$admin->close();$cleanupOwnedRoot($control);}
+--- /dev/null
++++ b/tests/Support/AssignmentOrderOriginalDataCompatibility.php
+@@ -0,0 +1,38 @@
++<?php
++
++declare(strict_types=1);
++namespace FMonitor2\Tests\Support;
++use FMonitor2\AssignmentOrderOriginal as O;
++
++// Test-only compatibility markers never define/alias a production symbol.
++if(interface_exists(O\AssignmentOrderOriginalCompleteLineageLookup::class)){
++    interface OriginalCompatibilityCompleteLineage extends O\AssignmentOrderOriginalCompleteLineageLookup {}
++}else{
++    interface OriginalCompatibilityCompleteLineage extends O\AssignmentOrderOriginalLineageLookup,O\AssignmentOrderOriginalCurrentEvidenceLookup {}
++}
++if(interface_exists(O\AssignmentOrderOriginalFreshTerminalReaderFactory::class)){
++    interface OriginalCompatibilityFreshFactoryPort extends O\AssignmentOrderOriginalFreshTerminalReaderFactory {}
++    interface OriginalCompatibilityFreshReaderPort extends O\AssignmentOrderOriginalFreshTerminalReader {}
++}else{
++    interface OriginalCompatibilityFreshFactoryPort {}
++    interface OriginalCompatibilityFreshReaderPort {}
++}
++final class OriginalCompatibilityFreshFactory implements OriginalCompatibilityFreshFactoryPort
++{
++    public int $opens=0;public int $reads=0;public int $closes=0;
++    public function __construct(private \Closure $lookup,private ?\Closure $trace=null){}
++    public function event(string $event):void{if($this->trace!==null)($this->trace)($event);}
++    public function open():O\AssignmentOrderOriginalFreshTerminalReaderOpenResult
++    {++$this->opens;$this->event('fresh.open');return O\AssignmentOrderOriginalFreshTerminalReaderOpenResult::opened(new OriginalCompatibilityFreshReader($this));}
++    public function readFixture(string $requestId):O\AssignmentOrderOriginalResultLookup
++    {++$this->reads;$this->event('fresh.read');return ($this->lookup)($requestId);}
++}
++final class OriginalCompatibilityFreshReader implements OriginalCompatibilityFreshReaderPort
++{
++    private bool $read=false;private bool $closed=false;
++    public function __construct(private OriginalCompatibilityFreshFactory $factory){}
++    public function findTerminalRequest(string $requestId):O\AssignmentOrderOriginalResultLookup
++    {if($this->read||$this->closed)return new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE);$this->read=true;return $this->factory->readFixture($requestId);}
++    public function close():O\AssignmentOrderOriginalFreshReaderCloseStatus
++    {if(!$this->closed){$this->closed=true;++$this->factory->closes;$this->factory->event('fresh.close');}return O\AssignmentOrderOriginalFreshReaderCloseStatus::CLOSED;}
++}
+--- a/tests/Support/AssignmentOrderOriginalDynamicPortsFixture.php
++++ b/tests/Support/AssignmentOrderOriginalDynamicPortsFixture.php
+@@ -21,7 +21,7 @@
+     public function __construct(private string|\Throwable $value) {}
+     public function nowUtc(): string { ++$this->calls; if($this->value instanceof \Throwable)throw $this->value; return $this->value; }
+ }
+-final class OriginalDynamicRepository implements O\AssignmentOrderOriginalRepository
++final class OriginalDynamicRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
+ {
+     public array $fingerprints=[]; public array $accepted=[]; public array $attempts=[];
+     public int $lineageCalls=0;
+@@ -37,11 +37,13 @@
+         ++$this->lineageCalls;
+         if(!$this->correction||$rootOriginalId!=='original-0001')throw new \LogicException('unexpected lineage');
+         return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,[
+-            'root_original_id'=>'original-0001','current_revision_id'=>'revision-0001','current_revision_number'=>1,
++            'root_original_id'=>'original-0001','current_revision_id'=>'revision-0001','current_revision_number'=>1,'installation_case_id'=>4512,'assignment_order_id'=>81,
+             'composition_identity'=>'composition-81-v1','composition_sha256'=>'388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',
+             'current_document_date'=>'2026-09-01','current_pdf_sha256'=>'4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',
+         ],['revision-0001']);
+     }
++    public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup
++    {if($installationCaseId!==4512||$assignmentOrderId!==81||$this->accepted!==[])throw new \LogicException('Unexpected initial fixture precheck');return new AssignmentOrderOriginalInitialLineageLookup();}
+     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit): O\AssignmentOrderOriginalCommitStatus { $this->accepted[]=$commit; return O\AssignmentOrderOriginalCommitStatus::COMMITTED; }
+     public function commitAttempt(O\AssignmentOrderOriginalAttemptCommit $commit): O\AssignmentOrderOriginalCommitStatus { $this->attempts[]=$commit; return O\AssignmentOrderOriginalCommitStatus::COMMITTED; }
+     public function hasCommittedContent(string $opaqueIdentity): O\AssignmentOrderOriginalReferenceLookup { throw new \LogicException('unexpected maintenance'); }
+--- a/tests/Support/AssignmentOrderOriginalInitialFixture.php
++++ b/tests/Support/AssignmentOrderOriginalInitialFixture.php
+@@ -33,6 +33,7 @@
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalPrivateStorage;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalReferenceLookup;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalRepository;
++use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAssignmentLineageRepository;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResult;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResultDeliveryObserver;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalResultLookup;
+@@ -232,11 +233,11 @@
+ 
+ final readonly class AssignmentOrderOriginalInitialReferenceLookup implements AssignmentOrderOriginalReferenceLookup
+ {
+-    public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::NOT_FOUND; }
++    public function status(): AssignmentOrderOriginalLookupStatus { return AssignmentOrderOriginalLookupStatus::FOUND; }
+     public function referenced(): ?bool { return false; }
+ }
+ 
+-final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository
++final class AssignmentOrderOriginalInitialRepository implements AssignmentOrderOriginalRepository, AssignmentOrderOriginalAssignmentLineageRepository
+ {
+     /** @var list<AssignmentOrderOriginalAcceptedCommit> */
+     public array $accepted = [];
+@@ -255,6 +256,11 @@
+     }
+     public function findLineage(string $rootOriginalId): AssignmentOrderOriginalLineageLookup
+     {
++        return new AssignmentOrderOriginalInitialLineageLookup();
++    }
++    public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): AssignmentOrderOriginalLineageLookup
++    {
++        if ($installationCaseId !== 4512 || $assignmentOrderId !== 81 || $this->accepted !== []) throw new \LogicException('Unexpected initial-only fixture lookup.');
+         return new AssignmentOrderOriginalInitialLineageLookup();
+     }
+     public function commitAccepted(AssignmentOrderOriginalAcceptedCommit $commit): AssignmentOrderOriginalCommitStatus
+--- a/tests/Support/AssignmentOrderOriginalLifecycleFixture.php
++++ b/tests/Support/AssignmentOrderOriginalLifecycleFixture.php
+@@ -2,6 +2,7 @@
+ declare(strict_types=1);
+ namespace FMonitor2\Tests\Support;
+ use FMonitor2\AssignmentOrderOriginal as O;
++require_once __DIR__.'/AssignmentOrderOriginalDataCompatibility.php';
+ 
+ final class OriginalLifecycleTrace
+ {
+@@ -84,13 +85,13 @@
+ final class OriginalLifecycleRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
+ {
+     public int $commitCalls=0;public int $terminalCalls=0;public int $fingerprintCalls=0;public array $accepted=[];public array $attempts=[];public array $winnerFacts=[];
+-    private array $terminal=[];
++    private array $terminal=[];private ?O\AssignmentOrderOriginalAcceptedCommit $winnerPlan=null;
+     public function __construct(private OriginalLifecycleTrace $trace,private string $mode='normal')
+     {
+         if(in_array($mode,['terminal_replay','fingerprint_replay'],true)){
+             $prior=self::seed($mode==='terminal_replay'?'00000000-0000-4000-8000-000000000001':'00000000-0000-4000-8000-000000000999');
+             $this->winnerFacts[]=$prior;$this->terminal[$prior->requestId]=self::result($prior);
+-        }elseif(str_starts_with($mode,'conflict_')&&$mode!=='conflict_replay')$this->winnerFacts[]=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099','2026-08-31');
++        }elseif(str_starts_with($mode,'conflict_')&&$mode!=='conflict_replay')$this->winnerPlan=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099','2026-08-31');
+     }
+     private static function seed(string $request,string $root='original-0001',string $revision='revision-0001',string $date='2026-09-01'):O\AssignmentOrderOriginalAcceptedCommit
+     {
+@@ -102,11 +103,13 @@
+     public function findTerminalRequest(string $requestId):O\AssignmentOrderOriginalResultLookup
+     {
+         ++$this->terminalCalls;$this->trace->call('request');
+-        if($this->commitCalls>0){
+-            if($this->mode==='unknown_recovery_throw')throw new \RuntimeException('fresh recovery unavailable');
+-            if($this->mode==='unknown_result_getter_throw')return new class implements O\AssignmentOrderOriginalResultLookup{public function status():O\AssignmentOrderOriginalLookupStatus{return O\AssignmentOrderOriginalLookupStatus::FOUND;}public function result():?O\AssignmentOrderOriginalResult{throw new \RuntimeException('fresh result unavailable');}};
+-            if(in_array($this->mode,['unknown_unavailable','commit_throw_unavailable'],true))return new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE);
+-        }
++        return isset($this->terminal[$requestId])?new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND,$this->terminal[$requestId]):new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);
++    }
++    public function freshFixtureResult(string $requestId):O\AssignmentOrderOriginalResultLookup
++    {
++        if($this->mode==='unknown_recovery_throw')throw new \RuntimeException('fresh recovery unavailable');
++        if($this->mode==='unknown_result_getter_throw')return new class implements O\AssignmentOrderOriginalResultLookup{public function status():O\AssignmentOrderOriginalLookupStatus{return O\AssignmentOrderOriginalLookupStatus::FOUND;}public function result():?O\AssignmentOrderOriginalResult{throw new \RuntimeException('fresh result unavailable');}};
++        if(in_array($this->mode,['unknown_unavailable','commit_throw_unavailable'],true))return new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE);
+         return isset($this->terminal[$requestId])?new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND,$this->terminal[$requestId]):new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);
+     }
+     public function findAcceptedFingerprint(string $fingerprint):O\AssignmentOrderOriginalResultLookup
+@@ -120,14 +123,15 @@
+     public function findLineage(string $rootOriginalId):O\AssignmentOrderOriginalLineageLookup{throw new \LogicException('initial must read exact assignment lineage');}
+     public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup
+     {
+-        $this->trace->call('lineage');if($this->mode==='conflict_lineage_throw')throw new \RuntimeException('lineage reread');
++        $this->trace->call('lineage');if($installationCaseId!==4512||$assignmentOrderId!==81)throw new \LogicException('wrong assignment lookup');if($this->commitCalls===0)return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND);if($this->mode==='conflict_lineage_throw')throw new \RuntimeException('lineage reread');
+         if($installationCaseId!==4512||$assignmentOrderId!==81||!$this->winnerFacts)throw new \LogicException('unseeded lineage');$c=$this->winnerFacts[0];
+-        return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,['root_original_id'=>$c->rootOriginalId,'current_revision_id'=>$c->newRevisionId,'current_revision_number'=>1,'composition_identity'=>$c->compositionIdentity,'composition_sha256'=>$c->compositionSha256,'current_document_date'=>$c->documentDate,'current_pdf_sha256'=>$c->pdfSha256],[$c->newRevisionId]);
++        return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND,['installation_case_id'=>$c->installationCaseId,'assignment_order_id'=>$c->assignmentOrderId,'root_original_id'=>$c->rootOriginalId,'current_revision_id'=>$c->newRevisionId,'current_revision_number'=>1,'composition_identity'=>$c->compositionIdentity,'composition_sha256'=>$c->compositionSha256,'current_document_date'=>$c->documentDate,'current_pdf_sha256'=>$c->pdfSha256],[$c->newRevisionId]);
+     }
+     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit):O\AssignmentOrderOriginalCommitStatus
+     {
+         ++$this->commitCalls;$this->trace->call('commit');
+         if(str_starts_with($this->mode,'conflict_')){
++            if($this->winnerPlan!==null)$this->winnerFacts[]=$this->winnerPlan;
+             if($this->mode==='conflict_replay')$this->winnerFacts[]=self::seed('00000000-0000-4000-8000-000000000999','original-0099','revision-0099');
+             return O\AssignmentOrderOriginalCommitStatus::CONFLICT;
+         }
+@@ -143,7 +147,7 @@
+ }
+ final class OriginalLifecycleFixture
+ {
+-    public OriginalLifecycleTrace $trace;public OriginalLifecycleStorage $storage;public OriginalLifecycleObservers $observers;public OriginalLifecycleRepository $repository;public OriginalLifecycleStream $stream;public O\AssignmentOrderOriginalApplication $application;
++    public OriginalLifecycleTrace $trace;public OriginalLifecycleStorage $storage;public OriginalLifecycleObservers $observers;public OriginalLifecycleRepository $repository;public OriginalLifecycleStream $stream;public O\AssignmentOrderOriginalApplication $application;public OriginalCompatibilityFreshFactory $fresh;
+     public function __construct(private string $pdf,array $faults=[],string $mode='normal')
+     {
+         $this->trace=$t=new OriginalLifecycleTrace($faults);$this->storage=new OriginalLifecycleStorage($t);$this->observers=new OriginalLifecycleObservers($t);$this->repository=new OriginalLifecycleRepository($t,$mode);
+@@ -152,7 +156,8 @@
+         $clock=new class($t) implements O\AssignmentOrderOriginalClock{public function __construct(private OriginalLifecycleTrace $t){}public function nowUtc():string{$this->t->call('clock');return '2026-09-02T09:15:30Z';}};
+         $ids=new class($t) implements O\AssignmentOrderOriginalIdSource{public function __construct(private OriginalLifecycleTrace $t){}public function nextRootId():O\AssignmentOrderOriginalIdResult{$this->t->call('id.root');return new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,'original-0001');}public function nextRevisionId():O\AssignmentOrderOriginalIdResult{$this->t->call('id.revision');return new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,'revision-0001');}};
+         $inspector=new class($t) implements O\AssignmentOrderOriginalPdfInspector{public function __construct(private OriginalLifecycleTrace $t){}public function inspect(string $completedBytes):O\AssignmentOrderOriginalPdfInspection{$this->t->call('inspect');$this->t->throwing('inspector_throw');if($this->t->fails('inspector_failed'))return O\AssignmentOrderOriginalPdfInspection::failed();return $this->t->fails('invalid_pdf')?O\AssignmentOrderOriginalPdfInspection::invalid():O\AssignmentOrderOriginalPdfInspection::passive();}public function algorithmId():string{return 'fmonitor-passive-pdf-v1';}};
+-        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($auth,$composition,$clock,$ids,$inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers));
++        $this->fresh=new OriginalCompatibilityFreshFactory(fn(string $id)=>$this->repository->freshFixtureResult($id),fn(string $event)=>$t->call($event));
++        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($auth,$composition,$clock,$ids,$inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers,$this->fresh));
+     }
+     public function command():O\SubmitAssignmentOrderOriginalCommand
+     {$this->stream=new OriginalLifecycleStream($this->pdf,$this->trace);return new O\SubmitAssignmentOrderOriginalCommand('00000000-0000-4000-8000-000000000001',O\AssignmentOrderOriginalMode::INITIAL,4512,81,18,'2026-09-01',true,null,null,null,null,new O\AssignmentOrderOriginalUpload($this->stream,'original.pdf','application/pdf'));}
+--- a/tests/Support/AssignmentOrderOriginalLogIsolationFixture.php
++++ b/tests/Support/AssignmentOrderOriginalLogIsolationFixture.php
+@@ -82,6 +82,7 @@
+     public array $accepted = [];
+     public array $attempts = [];
+     private array $terminal = [];
++    private bool $winnerCommitted = false;
+     public function __construct(private OriginalLogIsolationTrace $trace, public bool $conflict = false, public bool $auditFails = false) {}
+     public function findTerminalRequest(string $requestId): O\AssignmentOrderOriginalResultLookup
+     { return isset($this->terminal[$requestId]) ? new O\AssignmentOrderOriginalResultLookupValue(O\AssignmentOrderOriginalLookupStatus::FOUND, $this->terminal[$requestId]) : new AssignmentOrderOriginalInitialResultLookup(); }
+@@ -91,16 +92,18 @@
+     public function findLineageForAssignmentOrder(int $installationCaseId, int $assignmentOrderId): O\AssignmentOrderOriginalLineageLookup
+     {
+         $this->trace->add('lineage.read');
+-        if (!$this->conflict || $installationCaseId !== 4512 || $assignmentOrderId !== 81) throw new \LogicException('wrong lineage lookup');
++        if ($installationCaseId !== 4512 || $assignmentOrderId !== 81) throw new \LogicException('wrong lineage lookup');
++        if (!$this->winnerCommitted) {if ($this->accepted!==[]) throw new \LogicException('Unexpected second initial fixture request');return new AssignmentOrderOriginalInitialLineageLookup();}
+         return new O\AssignmentOrderOriginalMariaDbLineage(O\AssignmentOrderOriginalLookupStatus::FOUND, [
+-            'root_original_id'=>'original-0099', 'current_revision_id'=>'revision-0099', 'current_revision_number'=>1,
++            'root_original_id'=>'original-0099', 'current_revision_id'=>'revision-0099', 'current_revision_number'=>1, 'installation_case_id'=>4512, 'assignment_order_id'=>81,
++            'current_document_date'=>'2026-09-01', 'current_pdf_sha256'=>'4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',
+             'composition_identity'=>'composition-81-v1', 'composition_sha256'=>'388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',
+         ], ['revision-0099']);
+     }
+     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit): O\AssignmentOrderOriginalCommitStatus
+     {
+         $this->trace->add('accepted.commit');
+-        if ($this->conflict) return O\AssignmentOrderOriginalCommitStatus::CONFLICT;
++        if ($this->conflict) {$this->winnerCommitted=true;return O\AssignmentOrderOriginalCommitStatus::CONFLICT;}
+         $this->accepted[] = $commit;
+         $this->terminal[$commit->requestId] = new O\AssignmentOrderOriginalResultValue(O\AssignmentOrderOriginalStatus::ACCEPTED, null, false, $commit->requestId, $commit->rootOriginalId, $commit->newRevisionId, $commit->newRevisionNumber, $commit->documentDate, $commit->pdfSha256, $commit->byteSize, $commit->uploadedAt);
+         return O\AssignmentOrderOriginalCommitStatus::COMMITTED;
+@@ -115,5 +118,5 @@
+     }
+     public function hasCommittedContent(string $opaqueIdentity): O\AssignmentOrderOriginalReferenceLookup { throw new \LogicException('unexpected maintenance'); }
+     public function evidenceCanonicalJson(int $caseId, int $orderId): string
+-    { return json_encode(['preExistingRoot'=>$this->conflict ? ['original-0099','revision-0099',1,'composition-81-v1'] : null, 'newAccepted'=>$this->accepted], JSON_THROW_ON_ERROR); }
++    { return json_encode(['preExistingRoot'=>$this->winnerCommitted ? ['original-0099','revision-0099',1,'composition-81-v1'] : null, 'newAccepted'=>$this->accepted], JSON_THROW_ON_ERROR); }
+ }
+--- a/tests/Support/AssignmentOrderOriginalShapeFixture.php
++++ b/tests/Support/AssignmentOrderOriginalShapeFixture.php
+@@ -16,7 +16,7 @@
+     public function find(int $caseId,int $orderId):O\AssignmentOrderCompositionSnapshot
+     {++$this->calls;return new O\AssignmentOrderCompositionSnapshot(O\AssignmentOrderCompositionLookupStatus::FOUND,$caseId,$orderId,'composition-81-v1','388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5',[7001,7002],31);}
+ }
+-final class OriginalShapeRepository implements O\AssignmentOrderOriginalRepository
++final class OriginalShapeRepository implements O\AssignmentOrderOriginalRepository,O\AssignmentOrderOriginalAssignmentLineageRepository
+ {
+     public array $calls=[];
+     public OriginalDynamicRepository $inner;
+@@ -34,6 +34,7 @@
+     }
+     public function findAcceptedFingerprint(string $fingerprint):O\AssignmentOrderOriginalResultLookup{$this->calls[]='fingerprint';return $this->inner->findAcceptedFingerprint($fingerprint);}
+     public function findLineage(string $rootOriginalId):O\AssignmentOrderOriginalLineageLookup{$this->calls[]='lineage';return $this->inner->findLineage($rootOriginalId);}
++    public function findLineageForAssignmentOrder(int $installationCaseId,int $assignmentOrderId):O\AssignmentOrderOriginalLineageLookup{$this->calls[]='assignment-lineage';return $this->inner->findLineageForAssignmentOrder($installationCaseId,$assignmentOrderId);}
+     public function commitAccepted(O\AssignmentOrderOriginalAcceptedCommit $commit):O\AssignmentOrderOriginalCommitStatus{$this->calls[]='accepted';return $this->inner->commitAccepted($commit);}
+     public function commitAttempt(O\AssignmentOrderOriginalAttemptCommit $commit):O\AssignmentOrderOriginalCommitStatus{$this->calls[]='attempt';return $this->inner->commitAttempt($commit);}
+     public function hasCommittedContent(string $opaqueIdentity):O\AssignmentOrderOriginalReferenceLookup{throw new \LogicException('unexpected maintenance');}
