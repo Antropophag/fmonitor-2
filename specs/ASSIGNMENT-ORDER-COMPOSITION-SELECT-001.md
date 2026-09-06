@@ -942,8 +942,11 @@ Europe/Moscow и выдаёт в ответе без сохранения bytes,
 Новая artifact-storage family/migration исключена. Signed originals/corrections
 хранятся неизменно; template generation не задаёт окончательную document date.
 
-Consolidated Gate1 теперь требует exact new-writer/original locked-validation,
-on-demand PDF/date/audit, fresh bootstrap и HTTP/application/opening contracts.
+Selection Gate1 проверяет exact standalone selection command/new-writer contract
+для fresh contour на approved registry/schema. Он не требует заранее реализовать
+PDF/HTTP/opening или backward-compatible writers. Original locked-validation,
+on-demand PDF/date/audit, fresh bootstrap и HTTP/application/opening проходят
+свои gates до связывания и полного запуска; изолированные approvals не заменяют их.
 Existing approved registry/schema/registered-reader components переиспользуются;
 их synthetic historical cases не превращаются в новые launch obligations.
 Full exact-SHA VERIFY_OK, CI, deployment/restart и golden path остаются обязательными.
