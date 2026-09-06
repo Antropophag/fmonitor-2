@@ -75,4 +75,12 @@ integrityCase('correction-post-CAS-fingerprint-winner',function(){
     $f=new S\OriginalIntegrityFixture(['correction'=>true,'acceptedOutcome'=>O\AssignmentOrderOriginalCommitStatus::CONFLICT,'fingerprints'=>[new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND),new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,$winner)]]);$r=$f->run();
     assertSameValue(O\AssignmentOrderOriginalStatus::REPLAYED,$r->status(),'racing identical correction replays');assertSameValue(1,count($f->repository->acceptedCalls),'one CAS attempt');assertSameValue([], $f->repository->accepted,'no loser accepted fact');assertSameValue([], $f->repository->attempts,'no loser terminal');assertSameValue([], $f->repository->revisionQueries,'no global owner query after winner');assertSameValue(1,$f->storage->stage->lease->releaseCalls,'release after winner snapshot');assertSameValue(0,$f->observers->deliveryCalls,'loser replay no commit callback');
 });
+foreach([O\AssignmentOrderOriginalLookupStatus::NOT_FOUND,O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE] as $status){
+    foreach(['root'=>'original-0001','revision'=>'revision-0001','number'=>1,'identity'=>'composition-81-v1','hash'=>str_repeat('a',64),
+        'date'=>'2026-09-01','sha'=>str_repeat('a',64),'case'=>4512,'order'=>81,'ids'=>['revision-0001']] as $field=>$payload)integrityCase('negative-lineage-single-payload-'.$status->value.'-'.$field,function()use($status,$field,$payload){
+        $line=S\OriginalIntegrityLineage::absent($status);$line->values[$field]=$payload;
+        $f=new S\OriginalIntegrityFixture(['correction'=>true,'lineage'=>$line]);integrityFailure($f,$f->run());
+        assertSameValue(1,$line->gets[$field]??0,'negative-state metadata field is read once for closure validation');assertSameValue([], $f->repository->revisionQueries,'no target query after contradictory negative metadata');
+    });
+}
 integrityDone('ASSIGNMENT_ORDER_ORIGINAL_DATA_LINEAGE_OK');

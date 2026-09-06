@@ -45,4 +45,10 @@ foreach([false,true] as $correction){
     foreach(['null'=>null,'short'=>'abcd','uppercase'=>str_repeat('A',64),'plausible-wrong'=>str_repeat('a',64)] as $name=>$hash)integrityCase($prefix.'-composition-hash-'.$name,function()use($correction,$hash){$f=new S\OriginalIntegrityFixture(['correction'=>$correction,'composition'=>integrityComposition(['hash'=>$hash])]);integrityCompositionRejected($f,$f->run(),O\AssignmentOrderOriginalReason::INVALID_COMPOSITION);});
     integrityCase($prefix.'-composition-getter-throw',function()use($correction){$f=new S\OriginalIntegrityFixture(['correction'=>$correction,'composition'=>new RuntimeException('composition query')]);integrityFailure($f,$f->run());assertSameValue(0,$f->clock->calls,'query failure no clock');});
 }
+foreach([false,true] as $correction)foreach([O\AssignmentOrderCompositionLookupStatus::NOT_FOUND,O\AssignmentOrderCompositionLookupStatus::UNAVAILABLE] as $status){
+    foreach(['case-other'=>['case'=>9999],'case-zero'=>['case'=>0],'order-other'=>['order'=>82],'order-zero'=>['order'=>0]] as $name=>$changes)integrityCase('negative-echo-'.(int)$correction.'-'.$status->value.'-'.$name,function()use($correction,$status,$changes){
+        $snapshot=integrityComposition($changes+['status'=>$status,'identity'=>null,'hash'=>null,'ids'=>[],'engineer'=>null]);
+        $f=new S\OriginalIntegrityFixture(['correction'=>$correction,'composition'=>$snapshot]);integrityFailure($f,$f->run());assertSameValue(0,$f->clock->calls,'negative snapshot echo corruption does not become business absence');
+    });
+}
 integrityDone('ASSIGNMENT_ORDER_ORIGINAL_DATA_COMPOSITION_OK');
