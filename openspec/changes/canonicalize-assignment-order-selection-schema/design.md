@@ -1,6 +1,6 @@
 ## Context
 
-Registry engine Gate5 APPROVED наb6f619f, canonical runner пока1–12.
+Registry engine Gate5 APPROVED наb6f619f, canonical runner сейчас1–13.
 Selection v0.8 требует пять dateless tables, общий allocator и отдельный
 release-compatibility gate. Source evidence — независимый
 `selection-compatibility-next-package-review-2026-09-06.md`.
@@ -58,3 +58,10 @@ application state changes, renderer/artifact family или новая product po
 4. Canonical registration только после всех compatibility dependencies и отдельного
    gate на actual frontier. Rollback после facts только forward-compatible;
    историю и registry frontier не удалять/не понижать.
+
+## Exact standalone contract v0.1
+
+ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 и два normative JSON fixtures фиксируют
+five-table metadata, AST-sensitive fingerprints, populated example, read-only
+coherence, phases/lock/recovery/public snapshots. Canonical registration не
+входит в engine. Gate1 required до RED. No arbitrary row ceiling; proof O(rows).

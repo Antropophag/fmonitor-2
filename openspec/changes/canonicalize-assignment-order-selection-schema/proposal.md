@@ -37,3 +37,9 @@ Public standalone seam, metadata inspection, migration tests и independent revi
 canonical runner, startup, application factories, protected E2E не меняются.
 Технический scope не требует нового продуктового решения. Full selection Gate1
 остаётся закрыт до остальных exact compatibility contracts.
+
+## Exact executable contract
+
+ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 v0.1 и normative schema/example JSON fixtures
+задают exact public API, fingerprints и populated-data proof. Это draft technical
+Gate1 batch; никакое planning approval не разрешает RED до независимого verdict.

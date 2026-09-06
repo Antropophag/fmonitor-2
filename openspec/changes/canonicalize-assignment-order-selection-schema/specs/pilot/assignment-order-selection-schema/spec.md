@@ -56,3 +56,9 @@ Production deployment authority и N−1 exclusion не выводятся из 
 #### Scenario: Completed standalone verification
 - **WHEN** focused migration tests и независимый Gate5 пройдены
 - **THEN** canonical runner сохраняет прежний frontier; ни selection, ни legacy allocator не переключается, full selection Gate1/release gates остаются отдельными
+
+## Exact executable contract
+
+ASSIGNMENT-ORDER-SELECTION-SCHEMA-001 v0.1 и normative schema/example JSON fixtures
+задают exact public API, fingerprints и populated-data proof. Это draft technical
+Gate1 batch; никакое planning approval не разрешает RED до независимого verdict.
