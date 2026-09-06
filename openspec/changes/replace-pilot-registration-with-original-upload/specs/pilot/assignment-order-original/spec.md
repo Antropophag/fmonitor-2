@@ -456,3 +456,9 @@ Fresh recovery SHALL use its owned new connection and never reuse the writer.
 #### Scenario: Unknown commit with unusable writer
 - **WHEN** commit outcome cannot be confirmed and the borrowed write connection is unusable
 - **THEN** perform one owned fresh read; validated found/miss/unavailable selects the exact stored/failure/unknown outcome and closes once
+
+DATA-INTEGRITY v0.2 treats stored INVALID_COMMAND as unavailable, requires only
+original denial-audit presence without selecting repeated-denial cardinality,
+and pins authoritative composition locking/NO_CHANGES, separate storage clocks
+and actual worker safe-log acquisition before secret/DB access. No product audit
+policy is decided. The previous v0.1 Gate1 rejection remains immutable.

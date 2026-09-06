@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.1, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.2, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -32,6 +32,12 @@ PHP integers1..PHP_INT_MAX. Revision number is1..4294967295, the exact existing
 unsigned INT schema range; next revision beyond it fails persistence before
 allocation/finalization/commit. No float, decimal exponent, sign or padded SQL
 string is cast into a plausible value.
+The once-per-invocation clock means the application-owned Dependencies clock.
+Storage owns its own stage/finalization timestamps and must use a separate
+adapter clock instance; it may not consume that application clock behind the
+command's back. Production and worker composition bind separate clock objects
+(the worker may give both the same fixed instant), preserving timestamp values
+without extra calls to the application clock.
 
 Root/revision IDs retain SHAPE-001 printable ASCII1..80 excluding slash and
 backslash. Composition identity is exactly
@@ -66,11 +72,15 @@ one of:
 | REJECTED | one rejected reason below | all null |
 | CONFLICT | one conflict reason below | all null |
 
-Rejected reasons: AUTHORIZATION_DENIED, INVALID_COMMAND, ORDER_NOT_FOUND,
+Rejected reasons: AUTHORIZATION_DENIED, ORDER_NOT_FOUND,
 COMPOSITION_NOT_CONFIRMED, INVALID_COMPOSITION, FILE_TOO_LARGE, NOT_PDF,
 INVALID_PDF, UNSAFE_PDF, FUTURE_DOCUMENT_DATE, NO_CHANGES.
 Conflict reasons: SEMANTIC_COLLISION, STALE_REVISION, TARGET_NOT_FOUND,
 TARGET_NOT_CURRENT, INITIAL_ALREADY_EXISTS.
+REJECTED/INVALID_COMMAND is not valid stored history: SHAPE-001 rejects before
+reliable identity/audit ownership and writes no terminal/audit. Such a stored row
+or AttemptCommit is invalid despite the broader physical CHECK. Public invalid
+command responses remain valid non-stored Results.
 FAILED/REPLAYED are not newly persisted terminal facts. The historical table
 CHECK admits REPLAYED syntactically, but the parent replay paths write no new
 terminal; a stored REPLAYED row is an unavailable representation, not silently
@@ -213,8 +223,14 @@ it MUST NOT be forced equal to the root's latest current_revision_id. Historical
 replay remains valid while later revisions/current pointer advance. Root and
 historical chain integrity are verified without rewriting that earlier response.
 
-REJECTED/CONFLICT requires exactly one matching safe audit with exact identity,
-status/reason and attemptedAt; no accepted evidence fields. No revision/event may
+Non-denial REJECTED/CONFLICT requires exactly one matching safe audit with exact
+identity, status/reason and attemptedAt; no accepted evidence fields. A stored
+AUTHORIZATION_DENIED terminal requires presence of its original matching safe
+audit (same terminal attemptedAt and safe identity); this package does not impose
+an upper cardinality or reject additional denial-attempt rows. The inherited
+first terminal+audit atomicity requires that original backing under either
+future repeated-denial policy. Validation/creation/cardinality of additional
+denial attempts is deferred, never inferred from the current UNIQUE constraint. No revision/event may
 claim that same request as an accepted operation. Denial cardinality handling is
 not changed by this reader; corrupt backing returns unavailable.
 
@@ -242,7 +258,12 @@ SQL escaping/query or fault callback, validate every scalar/status/mode
 relationship. Invalid DTO returns ROLLED_BACK with zero DB calls and zero owned
 resource mutation. Existing caller transaction is never committed or rolled back;
 valid DTO against active borrowed transaction returns ROLLED_BACK without writes.
-No schema change or auto-repair belongs to these methods.
+No schema change or auto-repair belongs to these methods. These are real
+MariaDB adapter validation rules. The application lease boundary retains
+COMMAND-LIFECYCLE001§4: pure verification storage/repository ports may use a valid
+synthetic opaque identity. Do not change their approved FINALIZE_DONE/evidence
+oracles merely to imitate a filesystem filename. Only fixtures crossing the real
+MariaDB persistence adapter must provide its canonical digest-bound identity.
 
 Accepted scalar checks: section2 identities/hashes/date/time/size, positive
 case/order/actor, exact privateContentIdentity digest binding, canonical
@@ -252,10 +273,24 @@ null and exact event `assignment_order_original_accepted`. CORRECTION requires
 number2..4294967295, valid previous=expected, distinct new revision ID and exact
 event `assignment_order_original_corrected`. Event/mode disagreement is invalid.
 
-Inside one owned READ COMMITTED write transaction, lock/validate exact root and
-current revision before correction mutation. Root case/order/composition match,
+Inside one owned READ COMMITTED write transaction, lock/read the authoritative
+legacy order and its members using the same section5/6 composition derivation,
+without starting a nested reader transaction. Initial and correction commits
+must both match that valid current composition identity/hash and exact case/order.
+A valid changed composition, missing requested order/case, or a valid current
+composition now invalid for acceptance gives CONFLICT after confirmed rollback;
+malformed SQL row identity/protocol/query gives ROLLED_BACK after confirmed
+rollback. These checks precede root/current-pointer mutation. No self-consistent
+but fabricated DTO composition hash is sufficient. Registered-source routing
+remains its later compatibility slice; this package locks the existing declared
+legacy source only.
+
+Lock/validate exact root and current revision before correction mutation. Root case/order/composition match,
 previous=expected=current, number=current+1 and no current evidence NO_CHANGES
-must hold. Valid current drift/unique winner produces CONFLICT after confirmed
+must hold. Same current date and PDF hash is a valid NO_CHANGES business state:
+return CONFLICT after confirmed rollback so the existing application reread can
+select REJECTED/NO_CHANGES; do not insert a revision or classify corruption.
+Valid current drift/unique winner produces CONFLICT after confirmed
 rollback; malformed stored state or invalid DTO relation produces ROLLED_BACK
 after confirmed rollback. Insert immutable revision/request/event/audit and apply
 exact current-pointer CAS atomically; no update/delete of historical evidence.
@@ -331,7 +366,10 @@ final class AssignmentOrderOriginalMariaDbFreshTerminalReaderFactory
 ```
 
 OpenResult has exactly the two static constructions: OPENED/non-null and
-UNAVAILABLE/null, no clone/serialization alternative. Config construction is
+UNAVAILABLE/null. Clone is private; __serialize/__unserialize throw exactly
+LogicException with message `AssignmentOrderOriginalFreshReaderOpenResultNotSerializable`,
+code0, previousnull, without adopting/serializing a reader. No alternative raw
+construction/adoption route is exposed. Config construction is
 passive/lazy. Host/port/database/user/prefix/password path and password bytes use
 the parent's exact evidence-reader/worker connection grammar, with explicit
 mysqli host/user/password/database/port and utf8mb4; no DSN/query reinterpretation.
@@ -339,10 +377,13 @@ mysqli host/user/password/database/port and utf8mb4; no DSN/query reinterpretati
 failure is typed unavailable with no raw exception; a partially opened native
 connection is owned and closed once before unavailable is returned.
 
-Add one optional trailing promoted dependency
+Add one optional trailing constructor argument
 `?AssignmentOrderOriginalFreshTerminalReaderFactory $freshTerminalReaders = null`
 to the existing Dependencies constructor, preserving all12 existing names/order.
-Absence installs an explicit unavailable factory. The application recovery owner
+The readonly public dependency property has concrete type
+AssignmentOrderOriginalFreshTerminalReaderFactory and is initialized once from
+the argument or an explicit unavailable factory. The nullable constructor
+argument is not promoted then reassigned; no readonly property is written twice. The application recovery owner
 uses this dependency directly; it does not ask the ordinary writer repository
 for a fresh-looking lookup. Reader is one-shot: second find or find-after-close
 returns UNAVAILABLE without SQL; repeated close returns cached CLOSED/FAILED
@@ -387,7 +428,12 @@ database is available; actual readiness still requires the fresh connection prob
 private-root validation/composition, and no provider open until unknown recovery.
 Later launch readiness must reject degraded construction. Worker wiring supplies
 a trusted lazy provider from already validated canonical DSN/user/password-file
-inputs; it does not change safe-log-before-secret ordering. Proof requires a new
+inputs; it must acquire the existing actual safe-log owner before password content or
+any DB call. The current worker's later safe-log construction is a known source
+defect corrected by moving that same approved acquisition earlier; it does not
+introduce a new native/permission testing mechanism. Invalid safe-log worker
+configuration must prove password/provider/DB access0 through the approved public
+worker/config boundary and fixed failure transport. Proof requires a new
 server connection ID and matching configured target, including recovery when the
 writer is unusable after committed acknowledgement loss.
 
@@ -440,9 +486,10 @@ interface AssignmentOrderOriginalPersistenceObserver
 }
 ```
 
-MariaDbCompositionReader adds optional trailing `?PersistenceObserver $observer =
-null`; MariaDbRepository preserves db,p,existing faults then adds optional trailing
-`?PersistenceObserver $observer = null`. Production default is a no-op. These are
+AssignmentOrderOriginalMariaDbCompositionReader adds optional trailing
+`?AssignmentOrderOriginalPersistenceObserver $observer = null` to its db,p
+constructor; AssignmentOrderOriginalMariaDbRepository preserves db,p,existing faults then adds optional trailing
+`?AssignmentOrderOriginalPersistenceObserver $observer = null`. Production default is a no-op. These are
 observations of owned adapter execution, not SQL/domain write APIs. No domain
 payload, credentials, SQL or exception is passed to observe().
 
@@ -475,12 +522,15 @@ is permitted. No native/permission rejection mechanism is retried.
 ## 13. Complete Gate2 matrix and delivery gates
 
 One cumulative matrix covers result lookup6combinations at request/fingerprint/
-fresh stages; every result status/reason/evidence grammar/getter failure; lineage
+fresh stages; every result status/reason/evidence grammar/getter failure including stored
+INVALID_COMMAND; lineage
 complete/incomplete/ownership/membership/corruption; composition ownership/list/
 identity/hash and SQL numeric/date/action rules; consistent snapshot race; every
 AcceptedCommit mode/scalar/relationship invalid with zero-SQL proof; every
 AttemptCommit status/reason/retry/time invalid; malformed request/revision/root/
 event/audit/fingerprint backing including valid historical replay after correction;
+non-denial exact audit backing and denial original-audit presence without a
+cardinality choice; authoritative composition drift/NO_CHANGES with zero writes;
 reference lookup closure; fresh real connection found/miss/unavailable/close/
 write-unusable proof; authorized epoch/lazy-time/unknown race and all unchanged
 normal/denial/replay controls. Every negative has nearby independent valid control.

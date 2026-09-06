@@ -117,3 +117,9 @@ revision after a later correction. Exact read metadata/observer/factory contract
 receive fresh Gate1 and cumulative RED/Gate3 before minimal implementation.
 Denied-invocation audit cardinality stays deferred to owner; no new product
 policy, DDL, registry cutover, HTTP or maintenance behavior is inferred.
+
+DATA-INTEGRITY v0.2 treats stored INVALID_COMMAND as unavailable, requires only
+original denial-audit presence without selecting repeated-denial cardinality,
+and pins authoritative composition locking/NO_CHANGES, separate storage clocks
+and actual worker safe-log acquisition before secret/DB access. No product audit
+policy is decided. The previous v0.1 Gate1 rejection remains immutable.
