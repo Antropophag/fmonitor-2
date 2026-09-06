@@ -166,7 +166,7 @@ RED and canonical-worker-path exact compatibility patch now have independent
 Gate3 approvals; the unchanged identical-correction race still demonstrates
 missing winner replay precedence. No combined command or launch approval.
 
-- [ ] 1.40 Independent Gate1 DATA-INTEGRITYv0.7 / parentv72 TCP-only driver-special hostname and concurrent winner reread clarification.
+- [x] 1.40 Independent Gate1 DATA-INTEGRITYv0.7 / parentv72 TCP-only driver-special hostname and concurrent winner reread clarification.
 - [ ] 4.9 Additional transport RED/G3, negative membership and canonical worker fixture amendments after failed Gate5; retain exact existing race results.
 
 Task5.9 remains open for corrected exact-SHA GREEN and fresh independent Gate5.
