@@ -25,3 +25,12 @@ d9fe7f3c47e66d059138117f99609493b8a00b1d4e4166582b3185a8037d5f1e  specs/ASSIGNME
 
 Archive `/Users/antropophag/.local/state/fmonitor2-verification/selection-command-outcomes-red-e3nn1la6`.
 Commands: PHP tracer и outcomes suites. Reviewer не менял файлы и не повторял run.
+
+## Independent clarification after local preview
+
+Reviewer `/root/selection_core_gate3` withdrew only the request to test malformed
+UoW RETURN echoes at application level. Sections9/9.1 require UoW to reject bad
+echoes before mutation and return rolledBack(PERSISTENCE_FAILURE); a wrong
+committed/observed return violates that port contract. No application mapping
+is normative, so no invented recovery oracle or extra Gate1 amendment is added.
+Valid observedTerminal, specified recovery and denied-clock gaps still require RED.
