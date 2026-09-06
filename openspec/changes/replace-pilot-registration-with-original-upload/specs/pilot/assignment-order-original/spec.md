@@ -495,3 +495,7 @@ fingerprint reread preserves concurrent-identical correction replay before stale
 selection. Existing old worker race outcomes remain unchanged. Independent
 Gate1 precedes added transport RED/G3 and the minimal correction; original
 DATA-INTEGRITY Gate5 failure and all unrelated launch blockers remain recorded.
+
+## Следующий аудит попыток — 2026-09-06
+
+Owner утвердил каждую denied invocation: `original-denied-attempt-owner-approval-2026-09-06.md`. Change `record-original-submission-attempt-audits` и ATTEMPT-AUDIT-001 уточняют существующий audit contract/schema в parentv73, сохраняя terminal/accepted history. До его Gate5 combined original command не считается завершённым. DATA-INTEGRITY scoped Gate5v2 на4ed122c остаётся действительным в прежней области.

@@ -143,7 +143,7 @@ zero); exact parser delta diffcheck PASS. Evidence6c70f86c; full disclosure in
 
 - [x] 1.39 Independent Gate1 DATA-INTEGRITY-001 exact complete metadata/lookup/SQL/recovery/authorized-time contracts; denial-cardinality owner choice remains separate.
 - [x] 4.8 Cumulative public-port and real MariaDB RED, exact compatibility-helper patches, independent Gate3; no fallback old-connection recovery or malformed-as-miss.
-- [ ] 5.9 Minimal data integrity/fresh recovery GREEN, all affected real worker/adapter/resource regressions and independent scoped Gate5; remaining audit/maintenance/declaration/selection gates preserved.
+- [x] 5.9 Minimal data integrity/fresh recovery GREEN, all affected real worker/adapter/resource regressions and independent scoped Gate5; remaining audit/maintenance/declaration/selection gates preserved.
 
 DATA-INTEGRITYv03 Gate1 was approved (66a62e40); unchanged result/composition RED
 authoring began without implementation. The independent lineage-ownership and
@@ -167,6 +167,10 @@ Gate3 approvals; the unchanged identical-correction race still demonstrates
 missing winner replay precedence. No combined command or launch approval.
 
 - [x] 1.40 Independent Gate1 DATA-INTEGRITYv0.7 / parentv72 TCP-only driver-special hostname and concurrent winner reread clarification.
-- [ ] 4.9 Additional transport RED/G3, negative membership and canonical worker fixture amendments after failed Gate5; retain exact existing race results.
+- [x] 4.9 Additional transport RED/G3, negative membership and canonical worker fixture amendments after failed Gate5; retain exact existing race results.
 
 Task5.9 remains open for corrected exact-SHA GREEN and fresh independent Gate5.
+
+## Завершение DATA-INTEGRITY — 2026-09-06
+
+Task5.9 и corrective task4.9 завершены: exact implementation4ed122cac564ae22c4505d3799a1059b04fb64a9, independent Gate5v2 APPROVED435da982. Все затронутые behavior checks проходят на этом SHA; исходные три setup failures и historical documentation diff сохранены вместе с успешным same-SHA supplement. Review `reviews/code/ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001-v2.md` фиксирует точную границу. Combined command/VERIFY_OK остаются открыты. Owner утвердил каждую denied invocation: `original-denied-attempt-owner-approval-2026-09-06.md`; новая доставка идёт отдельным change `record-original-submission-attempt-audits`.

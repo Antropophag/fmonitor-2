@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v72 GATE 1 REREVIEW PENDING — TCP TRANSPORT AND CONCURRENT REPLAY**
-Версия: **v72**
+Статус: **v73 GATE 1 PENDING — ATTEMPT AUDIT**
+Версия: **v73**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -2179,3 +2179,7 @@ Exact lines for Example A accepted, its retry, and a new-request stale conflict:
 ```
 
 Barrier uses separate FDs: at the exact configured `barrierEvent` child writes `READY <requestId>\n`, flushes, then waits at most 5 monotonic seconds for exact `RELEASE <requestId>\n`; malformed/EOF/timeout returns exit `70`, no commit and redacted stderr. For two-worker CAS races parent must receive both READY lines before releases; their v26 deterministic release order applies. A single-worker after-finalize lease race requires its one READY before maintenance. Child exits `0` only after one valid Result line, otherwise nonzero. Parent bounds all reads/waits, closes the evidence reader, closes pipes, terminates then reaps every child in `finally`, restores faults, validates every cleanup target again and removes only its owned prefix/root/config/password/safe-log artifacts; safe-log removal occurs only after reader close and child termination/reaping.
+
+## Аудит каждой попытки — v73
+
+`ASSIGNMENT-ORDER-ORIGINAL-ATTEMPT-AUDIT-001.md` уточняет section9 audit persistence, audit-table v3 и соответствующие reader/dependency contracts. Owner утвердил каждую denied invocation в `original-denied-attempt-owner-approval-2026-09-06.md`. Новая спецификация имеет приоритет только в этой области: existing terminal не переписывается при denied retry, file/storage audit не требует terminal row, unknown denied audit не выполняет confidential recovery lookup. До независимого Gate1/RED/Gate3/GREEN/Gate5 это planned successor. DATA-INTEGRITYv0.7 и parentv72 approvals остаются историческими и не утверждают новый audit behavior. Остальной contract неизменён.
