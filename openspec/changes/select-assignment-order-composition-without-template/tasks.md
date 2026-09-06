@@ -125,3 +125,14 @@ PASS archive `selection-native-denial-green-t9q9_wr_`, manifest
 698edcdab77ab6f21c92eab58ed98ebef9406dd83b65cf8633042984d7aac12b.
 Denial/revoke/restore/conflict checks delivered; other native obligations above
 remain open. Package observation32842 tokens at measurement, within45k cap.
+
+Native terminal-stage/transaction follow-up sourcebd2f26c Gate5 APPROVED:
+`reviews/code/ASSIGNMENT-ORDER-SELECTION-NATIVE-001-transaction-v1.md`.
+Terminal-only stage rejects selected results before mutation; no-stage/double-stage,
+wrong audit echo, typed rollback, no-case reason and ambient transaction checks
+PASS. Native19 archive `selection-native-transaction-green-7nz1mera`, manifest
+94181e2372382acf2436199c7006983153b183647632e918b42a745cc81198f6.
+Remaining native package: eligibility/state/request corruption, real races and
+interruption/recovery, allocation capacity, accepted-payload/session edges and
+prefix/readiness. No full native binding/portal completion claim. Package
+observation23318 tokens, below45k cap; review and fixation included in scope.
