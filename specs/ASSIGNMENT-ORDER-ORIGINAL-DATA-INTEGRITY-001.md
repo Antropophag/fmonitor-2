@@ -145,8 +145,9 @@ protocol failure. Valid root NOT_FOUND also selects SEMANTIC_COLLISION; root
 UNAVAILABLE or malformed metadata is PERSISTENCE_FAILURE. For
 `findLineageForAssignmentOrder(caseId,orderId)`, mismatched returned case/order is
 protocol failure because those are the actual query keys. Only exact complete
-FOUND can select INITIAL_ALREADY_EXISTS; miss/unavailable/malformed yields
-persistence failure. No fallback `findLineage('')` is allowed; an adapter without
+FOUND can select INITIAL_ALREADY_EXISTS. During post-CAS resolution,
+miss/unavailable/malformed yields persistence failure; the normal initial
+precheck below instead allows a valid NOT_FOUND to proceed. No fallback `findLineage('')` is allowed; an adapter without
 the required assignment-query extension fails persistence rather than selecting
 an arbitrary root. Latest revision overflow is persistence
 failure, never a wrapped number or acknowledged conflict.
