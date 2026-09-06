@@ -3,6 +3,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap.php';
 
 use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaMigration as Migration;
+use FMonitor2\InstallationProcess\AssignmentOrderIdentityRegistryMigration as Registry;
 use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaMigrationVerification as Verification;
 use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaObserver as Observer;
 use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaPhase as Phase;
@@ -61,9 +62,14 @@ foreach (['charset', 'isolation', 'database', 'transaction'] as $kind) {
 foreach ([false, true] as $populated) {
     Check::run($populated ? 'repeat with DML denied' : 'native DDL denied', static function (Fixture $f) use ($populated): void {
         if ($populated) { $f->create(); $f->populate(); }
-        $before = $f->state(); $restricted = $f->source->restricted('SELECT');
+        $before = $f->state(); $restricted = $f->source->restricted('SELECT,REFERENCES');
         try {
             $restricted->query('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            assertSameValue(true, Registry::isBackfillComplete($restricted), 'restricted principal can prove prerequisite before target action');
+            try {
+                $restricted->query("UPDATE other_prefix_marker SET value='forbidden' WHERE id=1");
+                throw new TestFailure('Fixture unexpectedly permits DML');
+            } catch (mysqli_sql_exception $error) { assertSameValue(1142, $error->getCode(), 'actual native DML denial'); }
             Check::missing();
             if ($populated) {
                 assertSameValue(['applied' => false], Migration::apply($restricted), 'read-only grants sufficient for repeat');
