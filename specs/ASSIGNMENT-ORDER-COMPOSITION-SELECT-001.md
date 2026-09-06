@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-SELECT-001 — выбор состава без шаблона
 
-Версия 0.10, 2026-09-06. **DRAFT / GATE 1 CONSTRUCTION AMENDMENT**.
+Версия 0.11, 2026-09-06. **DRAFT / GATE 1 TERMINAL ROUTE AMENDMENT**.
 
 Controlling owner amendment: section17. Fresh launch без исторических данных;
 legacy migration/mixed-writer compatibility clauses предыдущей версии не входят
@@ -52,6 +52,7 @@ final readonly class SelectionDependencies
         public SelectionUnitOfWork $transactions,
         public SelectionFreshTerminalReaderFactory $freshReaders,
         public SelectionAttemptAuditWriter $audits,
+        public SelectionTerminalAttemptUnitOfWork $terminalAttempts,
     ) {}
 }
 final class AssignmentOrderCompositionFactory
@@ -579,7 +580,23 @@ interface SelectionCloseableTerminalRequestReader extends SelectionTerminalReque
 { public function close():void; }
 interface SelectionAttemptAuditWriter
 { public function append(SelectionSafeAttemptAudit $audit):SelectionAuditWriteResult; }
+interface SelectionTerminalAttemptUnitOfWork
+{ public function execute(SelectionTerminalAttemptPersistence $payload):SelectionUnitOfWorkResult; }
 ```
+
+`SelectionTerminalAttemptUnitOfWork` обслуживает только authorized case-NOT_FOUND
+ветку после acquisition attempt instant. Она атомарно сохраняет terminal request
+с `rejected/object_not_found` и один matching audit без case lock, allocation,
+selection/member/event facts. CaseId0 или fictional case не создаются. Payload
+использует прежние normalized intent/result/audit types. Wrong result/reason/
+request/intent/audit echoes отклоняются до mutation как persistence failure.
+Successful commit → committed(exact result); already observed terminal до mutation
+→ observedTerminal(record); exact request-key race → requestRace(); confirmed
+rollback → rolledBack(PERSISTENCE_FAILURE либо доказанный ALLOCATION_CAPACITY_EXHAUSTED);
+unconfirmed commit/rollback → outcomeUnknown(). Эти ветви используют существующие
+section9.1/10 replay/recovery mappings без blind retry или нового clock.
+Другие SQL faults не являются request race. Writer не принимает произвольные
+case-independent business outcomes и не изменяет existing terminal/audit.
 
 The referenced payloads have these exact constructors (normative type table):
 
@@ -747,7 +764,8 @@ hook or direct-SQL acceptance seam.
    Tuple/digest mismatch → acquire attempt instant и independent request-conflict
    audit, без success disclosure; unavailable→dependency_unavailable без clock.
    Proven no terminal record → acquire attempt instant один раз перед step4.
-4. Resolve object/case. Absent→object_not_found; unavailable→dependency.
+4. Resolve object/case. Absent→object_not_found через
+   SelectionTerminalAttemptUnitOfWork; unavailable→dependency.
    Completed precedes PTO.
 5. Empty installers→installer_required; null engineer→control_engineer_required.
 6. Use the already acquired attempt instant; derive Moscow selection date.
