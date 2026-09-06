@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v70 GATE 1 REREVIEW PENDING — TOTAL DATA INTEGRITY AND FRESH RECOVERY**
-Версия: **v70**
+Статус: **v71 GATE 1 REREVIEW PENDING — TOTAL DATA INTEGRITY AND FRESH RECOVERY**
+Версия: **v71**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -10,7 +10,7 @@
 
 Этот slice заканчивается на публичной application-команде и private persistence. Он не создаёт HTTP-форму, экран чтения или скачивание, не применяет новый состав и не открывает работы.
 
-## Cumulative data-integrity correction — v70, Gate1 required
+## Cumulative data-integrity correction — v71, Gate1 required
 
 `ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001.md` is the exact technical amendment
 for closed lookup/result/complete-lineage/composition validation, consistent
@@ -25,7 +25,7 @@ No ordinary writer-connection reread can stand in for fresh unknown recovery.
 This package does not choose repeated-denial audit cardinality, introduce
 retryable audit-only persistence or waive any remaining maintenance/storage/
 selection/launch gate. Product audit choice remains deferred for owner return.
-The earlier PDF-HISTORY scoped Gate5 is complete at e9aca37; this new v70
+The earlier PDF-HISTORY scoped Gate5 is complete at e9aca37; this new v71
 amendment requires its own Gate1/RED/Gate3/GREEN/Gate5 before implementation.
 
 ## 1. Идентификатор, actors и публичный seam

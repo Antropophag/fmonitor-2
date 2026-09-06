@@ -306,3 +306,8 @@ absence and correction target/no-change checks. Post-CAS tests use only reachabl
 winner/stale/unchanged/corrupt states; no moved foreign target after a validated
 candidate. Fresh-close diagnostics use the existing correlationId envelope,
 sole phase field and ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED.
+
+DATA-INTEGRITY v0.6 maps unresolved correction CONFLICT with fingerprint miss
+and unchanged valid matching lineage to PERSISTENCE_FAILURE. A generic unique
+collision proves no semantic mismatch; winner/stale outcomes still require their
+positive reread evidence.

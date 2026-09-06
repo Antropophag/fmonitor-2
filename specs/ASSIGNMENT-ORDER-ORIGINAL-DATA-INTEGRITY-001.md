@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.5, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.6, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -370,8 +370,11 @@ valid FOUND root for that case/order selects INITIAL_ALREADY_EXISTS. NOT_FOUND,
 UNAVAILABLE or malformed lineage is PERSISTENCE_FAILURE, never invented existing
 original. Correction CONFLICT keeps the reachable validated fingerprint/current-lineage
 winner/stale/unchanged-valid precedence from section4. An unchanged internally
-valid root/current after a non-fingerprint collision selects the existing
-SEMANTIC_COLLISION; corruption is persistence failure. A direct no-op correction
+valid matching root/current/target after fingerprint miss does not prove any
+semantic collision: return retryable PERSISTENCE_FAILURE. A generic uniqueness
+or adapter collision cannot manufacture a business reason from unchanged
+metadata. Corruption likewise fails persistence. Winner fingerprint replay and
+changed-current STALE_REVISION remain separate positively proven outcomes. A direct no-op correction
 DTO remains CONFLICT at the repository defense, while normal public NO_CHANGES
 is selected before commit. It is not a forced reachable post-CAS scenario. No blind
 commit retry. Distinguish before-commit error with confirmed rollback from commit
