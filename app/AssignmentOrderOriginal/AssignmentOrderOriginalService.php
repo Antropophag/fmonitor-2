@@ -62,7 +62,11 @@ final class AssignmentOrderOriginalService implements AssignmentOrderOriginalApp
                 return $result;
             }
             $resources->lifecycle(AssignmentOrderOriginalLifecycleEvent::AFTER_FINGERPRINT_MISS_BEFORE_CAS);
-            $number = AssignmentOrderOriginalCandidate::number($d->repository, $c, $composition, $sha);
+            $number = AssignmentOrderOriginalCandidate::number($d->repository, $c, $composition, $sha, $fingerprint);
+            if ($number instanceof AssignmentOrderOriginalResult) {
+                $resources->cleanup();
+                return $number;
+            }
             $root = $c->rootOriginalId;
             if ($c->mode === AssignmentOrderOriginalMode::INITIAL) $root = AssignmentOrderOriginalPortValues::nextId($d->ids, true);
             if ($root === null) throw AssignmentOrderOriginalSubmissionFailure::technical(AssignmentOrderOriginalReason::PERSISTENCE_FAILURE);

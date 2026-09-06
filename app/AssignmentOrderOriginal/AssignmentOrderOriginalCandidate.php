@@ -27,7 +27,7 @@ final class AssignmentOrderOriginalCandidate
     }
 
     public static function number(AssignmentOrderOriginalRepository $repository, SubmitAssignmentOrderOriginalCommand $c,
-        AssignmentOrderCompositionSnapshot $composition, string $sha): int
+        AssignmentOrderCompositionSnapshot $composition, string $sha, string $fingerprint): int|AssignmentOrderOriginalResult
     {
         if ($c->mode === AssignmentOrderOriginalMode::INITIAL) {
             $line = self::assignment($repository, $c);
@@ -36,7 +36,15 @@ final class AssignmentOrderOriginalCandidate
             return 1;
         }
         $line = self::root($repository, $c, $composition);
-        if ($line->current !== $c->expectedCurrentRevisionId) self::conflict(AssignmentOrderOriginalReason::STALE_REVISION);
+        if ($line->current !== $c->expectedCurrentRevisionId) {
+            $winner = $repository->findAcceptedFingerprint($fingerprint);
+            $status = $winner->status();
+            $result = $winner->result();
+            if (($status === AssignmentOrderOriginalLookupStatus::FOUND) !== ($result !== null)
+                || $status === AssignmentOrderOriginalLookupStatus::UNAVAILABLE) self::fail();
+            if ($result !== null) return AssignmentOrderOriginalResultSnapshot::copy($result, $c->requestId, forceReplay: true);
+            self::conflict(AssignmentOrderOriginalReason::STALE_REVISION);
+        }
         if (!in_array($c->targetRevisionId, $line->ids, true)) {
             if (!$repository instanceof AssignmentOrderOriginalRevisionLineageRepository) self::fail();
             $owner = AssignmentOrderOriginalLineageSnapshot::read($repository->findLineageForRevision($c->targetRevisionId), queryRevision: $c->targetRevisionId);
