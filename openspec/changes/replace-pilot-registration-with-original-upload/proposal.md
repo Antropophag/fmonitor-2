@@ -172,3 +172,7 @@ EVIDENCE-LIFECYCLE-001 уточняет existing read-only evidence contract: ex
 ## Worker ports corrective scope — 2026-09-06
 
 WORKER-PORTS-001 уточняет existing exact WorkerConfig/ByteStreamFactory/bootstrap names, sole strict base64 decoding и3 lookup fault points native repository. Пользовательские outcomes и grants не меняются. Полнота framing/FD behavior и orphan fixture не утверждается. Требуются независимые Gates1/3/5.
+
+## Worker boundary corrections after combined Gate5 — 2026-09-06
+
+WORKER-BOUNDARY001 закрывает3конкретных findings: config resource admission до command, native EOF/barrier deadlines и actual result-size guard через pure encoder. Product outcomes/grants прежние; расширения worker/FD kinds и harness tuning нет. Требуются independent Gates1/3/5; прежние scoped approvals сохраняются.

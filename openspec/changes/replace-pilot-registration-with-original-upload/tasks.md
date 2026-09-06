@@ -205,3 +205,9 @@ Worker ports завершён: f692c96, independent Gate5 WORKER-PORTS001v1 APPR
 
 - [x] 4.13 Existing approved parentv74 section16: targeted fixture RED и independent Gate3 ORPHAN-FIXTURE001v1.
 - [x] 5.13 Minimal fixture replay/authority/exclusion GREEN, related regressions/architecture и scoped Gate5.
+
+## Worker boundary corrective gates — 2026-09-06
+
+- [x] 1.44 Independent Gate1 WORKER-BOUNDARY001 для3 findings combined review.
+- [ ] 4.14 Public IPC/encoder RED и точный fixture-helper patch, independent Gate3.
+- [ ] 5.14 Minimal worker boundary GREEN, affected regressions и повторный combined Gate5.
