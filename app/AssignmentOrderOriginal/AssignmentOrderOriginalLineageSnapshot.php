@@ -43,12 +43,12 @@ final readonly class AssignmentOrderOriginalLineageSnapshot
                 if (!is_string($id) || !AssignmentOrderOriginalCommandShape::validId($id) || isset($seen[$id])) self::fail();
                 $seen[$id] = true;
             }
-            foreach (array_unique(array_filter([$current, $target, $queryRevision], static fn($id) => $id !== null)) as $id)
-                if ($source->containsRevision($id) !== in_array($id, $ids, true)) self::fail();
             if (($queryRoot !== null && $root !== $queryRoot) || ($queryCase !== null && $caseId !== $queryCase)
                 || ($queryOrder !== null && $orderId !== $queryOrder)
                 || ($queryRevision !== null && !in_array($queryRevision, $ids, true))) self::fail();
         }
+        foreach (array_unique(array_filter([$current, $target, $queryRevision], static fn($id) => $id !== null)) as $id)
+            if ($source->containsRevision($id) !== in_array($id, $ids, true)) self::fail();
         return new self($status, $root, $current, $number, $composition, $hash, $date, $sha, $caseId, $orderId, $ids);
     }
 

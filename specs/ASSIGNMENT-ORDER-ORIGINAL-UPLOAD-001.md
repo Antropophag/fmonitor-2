@@ -1,7 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
-Статус: **v71 GATE 1 REREVIEW PENDING — TOTAL DATA INTEGRITY AND FRESH RECOVERY**
-Версия: **v71**
+Статус: **v72 GATE 1 REREVIEW PENDING — TCP TRANSPORT AND CONCURRENT REPLAY**
+Версия: **v72**
 Дата: **2026-09-06**
 
 ## Простыми словами
@@ -2074,7 +2074,11 @@ value is lower-case canonical IPv6, passes `filter_var(...,
 FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)`, and is byte-equal to
 `inet_ntop(inet_pton(inner))`; only the brackets are removed for mysqli. Zone
 IDs, raw/unbalanced/nested brackets, raw colon, trailing dot and `p:` persistent
-prefix are invalid. `port` is canonical decimal `1..65535` without leading
+prefix are invalid. The exact nine-byte hostname whose ASCII case-fold equals
+`localhost` is also invalid in every case variant, before password-file content
+or any database call: mysqlnd interprets it as a Unix socket and ignores the TCP
+port. Use an explicit TCP hostname or IP such as `127.0.0.1`; the adapter never
+rewrites the supplied hostname or falls back to an ambient socket. `port` is canonical decimal `1..65535` without leading
 zero, and `database` matches `[A-Za-z0-9_]{1,64}`. `databaseUser` matches
 `[A-Za-z0-9_.-]{1,32}` and the password-file grammar is the evidence-config
 grammar already defined above. Worker parsing produces exactly the mysqli tuple

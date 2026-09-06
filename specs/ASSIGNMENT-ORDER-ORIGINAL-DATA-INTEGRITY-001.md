@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-ORIGINAL-DATA-INTEGRITY-001 — total persistence contracts
 
-Version0.6, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
+Version0.7, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Authority and scope
 
@@ -180,6 +180,14 @@ finalize. STALE_REVISION, TARGET_NOT_FOUND, TARGET_NOT_CURRENT, SEMANTIC_COLLISI
 or NO_CHANGES selected there abort/close the acquired stage and close stream once,
 then persist one terminal attempt. Finalize0, lease0, acceptedCommit0, allocation0.
 A protocol/lookup failure there performs the same cleanup but no terminal attempt.
+If that fresh step11 current read first observes expected-current drift after an
+earlier accepted-fingerprint miss, re-read the exact same fingerprint once before
+selecting STALE_REVISION. A closed, validated ACCEPTED winner replays under the
+current request with cleanup and no allocation/finalize/terminal attempt. A valid
+miss permits STALE_REVISION; unavailable or malformed data fails persistence.
+This preserves the parent's concurrent-identical-correction contract when a
+winner commits between the initial fingerprint read/barrier and the fresh
+current read. No extra fingerprint query occurs on an unchanged-current path.
 Root/composition drift checks already required before stream stay earlier.
 
 INITIAL also performs step11: after fingerprint miss, call the explicit
@@ -455,6 +463,10 @@ construction/adoption route is exposed. Config construction is
 passive/lazy. Host/port/database/user/prefix/password path and password bytes use
 the parent's exact evidence-reader/worker connection grammar, with explicit
 mysqli host/user/password/database/port and utf8mb4; no DSN/query reinterpretation.
+The parent's v72 TCP-only host grammar applies to both this factory and worker:
+reject the exact nine-byte ASCII-case-insensitive `localhost` token before reading
+password content or calling mysqli. No public config classifier, protocol option,
+host rewrite, socket fallback or new dependency is introduced.
 `open()` validates and reads the password only then. Any construction/open/query
 failure is typed unavailable with no raw exception; a partially opened native
 connection is owned and closed once before unavailable is returned.
@@ -629,3 +641,38 @@ Fresh independent Gate1 for this exact API/observer grammar precedes
 demonstrated public/real-adapter RED→independent Gate3→minimal
 GREEN→all affected original/support checks+architecture/lint→independent Gate5.
 No partial component success closes the persistent launch goal.
+
+## 14. v0.7 transport and concurrent-replay verification clarification
+
+This technical revision preserves the existing product outcomes and all v0.6
+matrices. The additional negative-membership RED/G3 record remains authoritative;
+negative lookup membership is checked only for known invocation target/current/
+query-revision IDs, never an invented probe. Earlier failing Gate5 evidence stays
+immutable. The three old worker fixtures require their separately reviewed exact
+canonical-temporary-path patch without changing any result/race oracle.
+
+TCP-only rejection is observable at the public fresh-reader factory through a
+task-owned local Unix listener. The test starts a separate PHP child with
+`-d mysqli.default_socket=<exact-owned-canonical-socket>`, asserts that startup
+setting, then invokes the public factory using synthetic credentials in its own
+existing canonical0600 file and host `localhost`, `LOCALHOST` or `LocalHost`.
+The listener sends no MySQL greeting, accepts and immediately closes a connection
+if one arrives, and counts accepted connections. Current code returns typed
+UNAVAILABLE but contacts that socket once; corrected validation must return the
+same typed UNAVAILABLE with zero socket connections. A separate direct-mysqli
+sensitivity child on the same listener must produce one accepted connection and
+a caught connection failure, preventing an inactive trap from passing. Existing
+real127.0.0.1 fresh-connection/SELECT-only controls stay unchanged.
+
+The listener is created only at a new, short canonical task-owned temporary path;
+no system socket is touched. Parent uses stream_select and monotonic deadlines
+for listener, child output and completion, with bounded termination/reaping and
+identity-checked finally cleanup. No sleeps, native-function interception, OS
+permission failure, global mutable override, private method call or real database
+credentials are used. No greeting means no authentication bytes are requested.
+Child stdio protocol carries fixed typed outcome and startup-setting validation
+only, never raw native errors, credential bytes or paths. Source Gate5 separately
+proves host validation precedes password content and mysqli_init/real_connect;
+connection counting alone does not prove credential access ordering. This is
+external transport observation through an owned socket, not a new production
+observer or public configuration seam.

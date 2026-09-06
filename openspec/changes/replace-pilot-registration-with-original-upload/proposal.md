@@ -146,3 +146,13 @@ DATA-INTEGRITY v0.6 maps unresolved correction CONFLICT with fingerprint miss
 and unchanged valid matching lineage to PERSISTENCE_FAILURE. A generic unique
 collision proves no semantic mismatch; winner/stale outcomes still require their
 positive reread evidence.
+
+DATA-INTEGRITY v0.7 / ORIGINAL-UPLOAD v72 technical correction: reject every
+ASCII case variant of exact `localhost` before password/DB access so a configured
+TCP port cannot become an ambient Unix socket. A task-owned Unix listener and
+bounded public-factory child provide the new RED sensor; no public API is added.
+If fresh step11 current has changed since the initial fingerprint miss, one exact
+fingerprint reread preserves concurrent-identical correction replay before stale
+selection. Existing old worker race outcomes remain unchanged. Independent
+Gate1 precedes added transport RED/G3 and the minimal correction; original
+DATA-INTEGRITY Gate5 failure and all unrelated launch blockers remain recorded.

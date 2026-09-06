@@ -18,7 +18,7 @@ $password = getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_lo
 $token = bin2hex(random_bytes(8));
 $database = 't_aoou_barrier_' . $token;
 $prefix = 'lease_';
-$root = sys_get_temp_dir() . '/aoou-barrier-negative-' . $token;
+$root = (realpath(sys_get_temp_dir()) ?: throw new RuntimeException('Synthetic temporary directory unavailable')) . '/aoou-barrier-negative-' . $token;
 $private = $root . '/private';
 $config = $root . '/config.json';
 $passwordFile = $root . '/password';
@@ -36,7 +36,7 @@ $remove = static function (string $path) use (&$remove): void {
 
 try {
     assertSameValue(1, preg_match('/^t_aoou_barrier_[0-9a-f]{16}$/D', $database), 'Cleanup database is independently bounded.');
-    assertSameValue(1, preg_match('#^' . preg_quote(sys_get_temp_dir(), '#') . '/aoou-barrier-negative-[0-9a-f]{16}$#D', $root), 'Cleanup root is independently bounded.');
+    assertSameValue(1, preg_match('#^' . preg_quote((realpath(sys_get_temp_dir()) ?: throw new RuntimeException('Synthetic temporary directory unavailable')), '#') . '/aoou-barrier-negative-[0-9a-f]{16}$#D', $root), 'Cleanup root is independently bounded.');
     $admin->query("CREATE DATABASE `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     mkdir($root, 0700); mkdir($private, 0700);
     file_put_contents($passwordFile, $password . "\n"); chmod($passwordFile, 0600);

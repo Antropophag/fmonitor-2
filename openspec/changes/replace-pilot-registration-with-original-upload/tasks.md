@@ -142,7 +142,7 @@ zero); exact parser delta diffcheck PASS. Evidence6c70f86c; full disclosure in
 ## Cumulative persistence corrective gates — 2026-09-06
 
 - [x] 1.39 Independent Gate1 DATA-INTEGRITY-001 exact complete metadata/lookup/SQL/recovery/authorized-time contracts; denial-cardinality owner choice remains separate.
-- [ ] 4.8 Cumulative public-port and real MariaDB RED, exact compatibility-helper patches, independent Gate3; no fallback old-connection recovery or malformed-as-miss.
+- [x] 4.8 Cumulative public-port and real MariaDB RED, exact compatibility-helper patches, independent Gate3; no fallback old-connection recovery or malformed-as-miss.
 - [ ] 5.9 Minimal data integrity/fresh recovery GREEN, all affected real worker/adapter/resource regressions and independent scoped Gate5; remaining audit/maintenance/declaration/selection gates preserved.
 
 DATA-INTEGRITYv03 Gate1 was approved (66a62e40); unchanged result/composition RED
@@ -159,3 +159,14 @@ DATA-INTEGRITYv06 exact Gate1 APPROVED ce9a24c6; canonical spec c3d170ec,
 parentv71 4f5be069. Cumulative RED capture now authorized. No data-integrity
 production implementation has begun; every test artifact retains independent
 Gate3 before its implementation.
+
+Implementation94a17bf exact full affected run completed:45commands42PASS3FAIL;
+all751 new cases pass, but Gate5v1 requests changes. Negative-membership12case
+RED and canonical-worker-path exact compatibility patch now have independent
+Gate3 approvals; the unchanged identical-correction race still demonstrates
+missing winner replay precedence. No combined command or launch approval.
+
+- [ ] 1.40 Independent Gate1 DATA-INTEGRITYv0.7 / parentv72 TCP-only driver-special hostname and concurrent winner reread clarification.
+- [ ] 4.9 Additional transport RED/G3, negative membership and canonical worker fixture amendments after failed Gate5; retain exact existing race results.
+
+Task5.9 remains open for corrected exact-SHA GREEN and fresh independent Gate5.
