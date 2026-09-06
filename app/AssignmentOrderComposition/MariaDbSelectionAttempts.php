@@ -28,7 +28,7 @@ final readonly class MariaDbSelectionAttempts implements SelectionTerminalAttemp
     {
         $owned=false;
         try {
-            if(!$this->sql->ready())return SelectionAuditWriteResult::rolledBack();
+            if(!$this->sql->readyAudit())return SelectionAuditWriteResult::rolledBack();
             if(!$this->sql->db->begin_transaction())return SelectionAuditWriteResult::rolledBack();$owned=true;
             $id=(new MariaDbSelectionWrites($this->sql))->audit($a);
             if(!$this->sql->db->commit())return SelectionAuditWriteResult::outcomeUnknown();$owned=false;return SelectionAuditWriteResult::committed($id);

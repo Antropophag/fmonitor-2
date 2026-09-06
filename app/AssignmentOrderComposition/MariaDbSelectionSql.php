@@ -28,6 +28,20 @@ final readonly class MariaDbSelectionSql
     {
         return $this->idle() && \FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaMigration::isReady($this->db,$this->prefix);
     }
+    /** Independent attempt audits must never inspect confidential ledger rows. */
+    public function readyAudit(): bool
+    {
+        if(!$this->idle())return false;
+        $collation=\FMonitor2\InstallationProcess\MariaDbAssignmentOrderIdentityRegistryCatalog::collation($this->db);
+        if($collation===null)return false;
+        $definitions=\FMonitor2\InstallationProcess\AssignmentOrderSelectionDefinitionSchemaMigration::tables($this->prefix);
+        foreach($definitions as $definition) {
+            if($definition['name']===$this->prefix.'fm2_assignment_order_selection_audits') {
+                return \FMonitor2\InstallationProcess\MariaDbAssignmentOrderSelectionSchemaCatalog::shape($this->db,$definition,$collation)!==null;
+            }
+        }
+        return false;
+    }
     public function snapshot(callable $read): mixed
     {
         if(!$this->idle())throw new \RuntimeException('Ambient selection transaction.');
