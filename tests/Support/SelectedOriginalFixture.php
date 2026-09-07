@@ -10,13 +10,13 @@ final class SelectedOriginalFixture implements O\AssignmentOrderOriginalClock
     public readonly SelectionNativeFixture $selection;
     public string $control='';public string $privateRoot='';public string $safeLog='';
     public int $clockCalls=0;private bool $ownsControl=false;
-    public function __construct()
+    public function __construct(public readonly string $prefix = '')
     {
-        $this->selection=new SelectionNativeFixture();
+        $this->selection=new SelectionNativeFixture($prefix);
         try {
             $db=$this->selection->db;
-            I\OriginalAttemptAuditSchemaMigration::apply($db);
-            foreach(['assignment_order.original.upload','assignment_order.original.correct'] as $cap)$this->selection->schema->insert('fm2_process_user_capabilities',['user_id'=>18,'capability'=>$cap,'position_snapshot'=>null]);
+            I\OriginalAttemptAuditSchemaMigration::apply($db,$prefix);
+            foreach(['assignment_order.original.upload','assignment_order.original.correct'] as $cap)$this->selection->schema->insert($prefix.'fm2_process_user_capabilities',['user_id'=>18,'capability'=>$cap,'position_snapshot'=>null]);
             $directory='/Users/antropophag/.local/state/fmonitor2-verification/selected-original-fixture-'.bin2hex(random_bytes(6));
             if(!mkdir($directory,0700))throw new \RuntimeException('Private fixture creation failed.');$this->ownsControl=true;$this->control=(string)realpath($directory);
             $this->privateRoot=$this->control.'/private';if(!mkdir($this->privateRoot,0700))throw new \RuntimeException();
@@ -24,7 +24,7 @@ final class SelectedOriginalFixture implements O\AssignmentOrderOriginalClock
             file_put_contents($this->control.'/password',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local');chmod($this->control.'/password',0600);
             O\AssignmentOrderOriginalFileStorage::validateRoot($this->privateRoot);
             \assertSameValue(O\AssignmentOrderOriginalPdfStatus::PASSIVE_PDF,(new O\FMonitorPassivePdfInspector())->inspect(self::pdf())->status,'approved real PDF parser prerequisite');
-            \assertSameValue(O\AssignmentOrderOriginalAuthorizationStatus::ALLOWED,(new O\AssignmentOrderOriginalMariaDbAuthorizer($db,''))->authorize(18,'assignment_order.original.upload'),'real original authorization prerequisite');
+            \assertSameValue(O\AssignmentOrderOriginalAuthorizationStatus::ALLOWED,(new O\AssignmentOrderOriginalMariaDbAuthorizer($db,$prefix))->authorize(18,'assignment_order.original.upload'),'real original authorization prerequisite');
             $fresh=$this->fresh()->open();
             try{\assertSameValue(O\AssignmentOrderOriginalFreshReaderOpenStatus::OPENED,$fresh->status,'real fresh reader prerequisite');}
             finally{if($fresh->reader!==null)\assertSameValue(O\AssignmentOrderOriginalFreshReaderCloseStatus::CLOSED,$fresh->reader->close(),'fresh prerequisite closes');}
@@ -32,9 +32,9 @@ final class SelectedOriginalFixture implements O\AssignmentOrderOriginalClock
     }
     public static function pdf():string {return AssignmentOrderOriginalPdfCorpus::passiveClassic();}
     public function nowUtc():string {$this->clockCalls++;return '2026-09-05T09:00:00Z';}
-    public function config():O\AssignmentOrderOriginalProductionConfig {return new O\AssignmentOrderOriginalProductionConfig($this->privateRoot,'',$this->safeLog);}
+    public function config():O\AssignmentOrderOriginalProductionConfig {return new O\AssignmentOrderOriginalProductionConfig($this->privateRoot,$this->prefix,$this->safeLog);}
     public function fresh():O\AssignmentOrderOriginalFreshTerminalReaderFactory {
-        return new O\AssignmentOrderOriginalMariaDbFreshTerminalReaderFactory(new O\AssignmentOrderOriginalFreshReaderConfig(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306),$this->selection->schema->source->name,getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',$this->control.'/password',''));
+        return new O\AssignmentOrderOriginalMariaDbFreshTerminalReaderFactory(new O\AssignmentOrderOriginalFreshReaderConfig(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306),$this->selection->schema->source->name,getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',$this->control.'/password',$this->prefix));
     }
     public function app(bool $production=false,?O\AssignmentOrderOriginalPersistenceObserver $observer=null):O\AssignmentOrderOriginalApplication {
         $factory=$production?O\ProductionAssignmentOrderOriginalFactory::class:O\AssignmentOrderSelectedOriginalVerificationFactory::class;$method=$production?'createForSelections':'create';
