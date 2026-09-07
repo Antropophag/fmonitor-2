@@ -74,6 +74,22 @@ behavior. Both fixture modes report cleanup success.
 
 ## Delivery status
 
+Deployed code: `330bb419f1ca0eb5ef275660f4749abbf88e6eba`.
+Image: `sha256:ba802ec993862adcbc32b4984e373a3bbd794dcb8b7793e2aaf808473e810920`.
+The container is running and healthy. SHA-256 comparison of all 717 committed
+runtime files in app/bin/public/rapid-pilot matches the running container.
+The previous image remains tagged `fmonitor2-manual:checkpoint-00870b8` for rollback.
+The pilot service was recreated without replacing its state volume or restarting
+MariaDB. Safe aggregate checks found 381 installation cases, 1264 workforce
+entries and one local user. The owner's assignments were not changed by the agent.
+
+The original deployed headless navigation reproduction now exits 0 with
+`navStable=true`: objects, Users, Roles, calendar, object card and return paths
+all retain the same four currently authorized links. Business-role assignment and
+removal were verified by real browser clicks on synthetic data, not on the owner's
+account. Independent focused reviews are recorded in
+`reviews/code/local-navigation-permissions-manual-2026-09-07.md` and
+`reviews/code/local-role-assignment-manual-2026-09-07.md`.
+
 This record is focused manual-pilot evidence, not a full production approval.
-The role-assignment fix, deployed browser receipt, full business journey and
-remaining integration gates must be evidenced before their completion is claimed.
+The full business journey and remaining integration gates remain outstanding.
