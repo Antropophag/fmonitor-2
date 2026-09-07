@@ -31,3 +31,7 @@ Two separate discovered conditions are not concealed by this patch:
 
 Independent Gate5/test-only commit and exact final full verify follow. No remote
 mutation, publication, preview image switch or Bitrix run performed.
+
+Test-only source commit `1c3ae46`; final manifest сверяет все13 current test hashes
+и реально записанные exit0 results, PHP lint13PASS. Некоторые старые verifiers
+не печатают буквальное PASS; успех определяется exit status, а не magic word.
