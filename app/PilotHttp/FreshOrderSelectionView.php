@@ -24,6 +24,7 @@ final class FreshOrderSelectionView
             $names=implode(', ',array_column($latest['installers'],'fullName'));
             $body.='<section class="fm2-order-surface"><div class="fm2-order-team"><div><h2>Выбранный состав · распоряжение '.$e($latest['version']).'</h2><p>'.$e($names).'</p><p>Инженер строительного контроля: '.$e($latest['engineer']['fullName']).'</p><p>'.($pending?'Ожидается подписанный оригинал.':'Подписанный оригинал принят.').'</p>';
             if($model['lastTemplateDate']!==null)$body.='<p>Последнее формирование шаблона: <time datetime="'.$e($model['lastTemplateDate']).'">'.$e($model['lastTemplateDate']).'</time></p>';
+            if(isset($model['originalSubmission']))$body.='<p><a class="shlz-link" href="'.OriginalUploadView::path($id,$latest['orderId']).'/submit">'.($model['originalSubmission']['mode']==='initial'?'Загрузить оригинал':'Исправить оригинал').'</a></p>';
             $body.='<form method="post" action="/pilot/objects/'.$id.'/assignment-orders/'.$latest['orderId'].'/template">'.self::hidden(['csrfToken'=>$csrf]).'<button class="shlz-button" type="submit">Скачать PDF-шаблон</button></form></div></div></section>';
         }
         $body.='<form class="fm2-order-form" method="post" action="'.$path.'">'.self::hidden(['csrfToken'=>$csrf,'requestId'=>$request,'mode'=>$mode,'expectedSelectionRevision'=>$model['selectionRevision']]);

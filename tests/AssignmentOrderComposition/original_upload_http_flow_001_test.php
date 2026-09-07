@@ -35,7 +35,7 @@ try {
     $next=F::json($f->post($correction),201);assertSameValue(['accepted',2,'2026-09-02',$result['rootOriginalId']],[$next['status'],$next['revisionNumber'],$next['documentDate'],$next['rootOriginalId']],'append-only correction');
     assertSameValue(true,in_array($accepted['fm2_assignment_order_original_revisions'][0],$native->rows()['fm2_assignment_order_original_revisions'],true),'revision1 preserved');
     A::rowsPreserved($before,$native->rows(),$allowed);
-    $correction['requestId']=$f->fields(3)['requestId'];$stale=F::json($f->post($correction),409);assertSameValue('stale_revision',$stale['reasonCode'],'stale correction exact native reason');
+    $correction['requestId']=$f->fields(3)['requestId'];$correction['documentDate']='2026-09-03';$stale=F::json($f->post($correction),409);assertSameValue('stale_revision',$stale['reasonCode'],'stale correction exact native reason');
     // New pending selection must not prevent historical accepted-root correction.
     assertSameValue(303,$f->http->request('POST',A::PATH,A::body(A::input($f->http,8,1,7002,'new_order')))['status'],'next pending selected through HTTP');
     $correction['requestId']=$f->fields(4)['requestId'];$correction['targetRevisionId']=$correction['expectedCurrentRevisionId']=$next['currentRevisionId'];$correction['documentDate']='2026-09-03';

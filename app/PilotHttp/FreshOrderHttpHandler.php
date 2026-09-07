@@ -18,6 +18,11 @@ final readonly class FreshOrderHttpHandler
             if($r->method!=='POST'){
                 $model=$resources->query->readSelectionPortal($object,$actor);
                 if($model['status']!=='found')return $this->domainError($r,$model,$object);
+                if($model['latest']!==null){
+                    $original=\FMonitor2\AssignmentOrderOriginal\ProductionAssignmentOrderOriginalSubmissionFactory::create($resources->db,$resources->prefix)->readSubmissionForm($actor,$object,$model['latest']['orderId']);
+                    if($original['status']==='found')$model['originalSubmission']=$original;
+                    elseif($original['reasonCode']==='SERVICE_UNAVAILABLE')throw new \RuntimeException();
+                }
                 return self::response($r,200,FreshOrderSelectionView::render($resources->user($actor),$model,$csrf));
             }
             $decoded=FreshOrderFormInput::parse($r,$order!==null);

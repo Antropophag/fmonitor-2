@@ -6,6 +6,18 @@ final class FreshOrderHttpCoordinator extends PilotHttpCoordinator
     public function __construct(private readonly PilotHttpCoordinator $next,private readonly EnvironmentSource $environment) {}
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
+        $original=preg_match('#^/pilot/objects/([1-9][0-9]*)/assignment-orders/([1-9][0-9]*)/originals(/submit)?$#D',$r->path,$originalIds)===1;
+        if($original){
+            if($this->environment->read('FMONITOR_FRESH_ORDER_FLOW')!=='1')return OriginalUploadHttpHandler::error($r,404,'NOT_FOUND');
+            $object=FreshOrderFormInput::positive($originalIds[1]);$order=FreshOrderFormInput::positive($originalIds[2]);
+            if($object===null||$order===null)return OriginalUploadHttpHandler::error($r,400,'INVALID_REQUEST');
+            return (new OriginalUploadHttpHandler($this->environment))->handle($r,$object,$order,isset($originalIds[3]));
+        }
+        if($r->path==='/pilot/assets/original-upload.js'){
+            if(!in_array($r->method,['GET','HEAD'],true))return OriginalUploadHttpHandler::error($r,405,'METHOD_NOT_ALLOWED',['Allow'=>'GET, HEAD']);
+            $bytes=file_get_contents(__DIR__.'/original-upload.js');
+            return $bytes===false?OriginalUploadHttpHandler::error($r,503,'SERVICE_UNAVAILABLE'):FreshOrderHttpHandler::response($r,200,$bytes,['Content-Type'=>'text/javascript; charset=UTF-8']);
+        }
         $new=preg_match('#^/pilot/objects/([1-9][0-9]*)/(?:assignment-order/selection|assignment-orders/([1-9][0-9]*)/template)$#D',$r->path,$m)===1;
         if($this->environment->read('FMONITOR_FRESH_ORDER_FLOW')!=='1')return $new?FreshOrderHttpHandler::response($r,404,"Not found.\n",['Content-Type'=>'text/plain; charset=UTF-8']):$this->next->handle($r);
         $handler=new FreshOrderHttpHandler($this->environment);

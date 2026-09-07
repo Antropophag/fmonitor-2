@@ -99,7 +99,7 @@ if ($path === '/pilot/assets/shlz-behaviors.js') {
     echo $bytes;
     exit;
 }
-if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue|navigation)\.js$#D', $path, $script) === 1) {
+if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue|navigation|original-upload)\.js$#D', $path, $script) === 1) {
     $filename = $script[1] . '.js';
     $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -263,7 +263,7 @@ if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
 }
 $entrypoint = require dirname(__DIR__) . '/app/PilotHttp/production-entrypoint.php';
 
-$response = $entrypoint->handle($_SERVER);
+$originalFormHead = ($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' && is_string($path) && preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/submit$#D', $path) === 1; $response = $entrypoint->handle($originalFormHead ? array_replace($_SERVER, ['REQUEST_METHOD'=>'GET']) : $_SERVER);
 if ($path === '/pilot/admin/users/invite') $response = RapidPilotUserAccessView::invitationResponse($response);
 $body = $response->body;
 $headers = $response->headers;
@@ -283,4 +283,4 @@ http_response_code($response->status);
 header_remove('X-Powered-By');
 header_remove('Server');
 foreach ($headers as $name => $value) header($name . ': ' . $value);
-echo $body;
+if (!$originalFormHead) echo $body;

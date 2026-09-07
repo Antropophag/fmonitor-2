@@ -8,6 +8,7 @@ final class OriginalHttpFixture
     public const FORM=self::POST.'/submit';
     public function __construct()
     {
+        \assertSameValue('4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',hash('sha256',base64_decode(AssignmentOrderOriginalRemainingMatrix::POSITIVE_PDF_BASE64,true)),'SETUP_OK exact normative PDF');
         $this->http=new SelectionHttpFixture(true,static fn(SelectedOriginalFixture $o)=>[
             'FMONITOR_ORIGINAL_SAFE_LOG_FILE'=>$o->safeLog,'FMONITOR_ORIGINAL_DB_PASSWORD_FILE'=>$o->control.'/password']);
         try {
@@ -30,7 +31,7 @@ final class OriginalHttpFixture
     public static function header(array $fields):string
     { return base64_encode(json_encode($fields,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS)); }
     public function post(array $fields,?string $bytes=null,array $headers=[],?int $actor=18,string $path=self::POST):array
-    { return $this->http->request('POST',$path,$bytes??SelectedOriginalFixture::pdf(),$actor,array_replace(['Content-Type'=>'application/pdf','X-FMonitor-Original'=>self::header($fields)],$headers)); }
+    { return $this->http->request('POST',$path,$bytes??base64_decode(AssignmentOrderOriginalRemainingMatrix::POSITIVE_PDF_BASE64,true),$actor,array_replace(['Content-Type'=>'application/pdf','X-FMonitor-Original'=>self::header($fields)],$headers)); }
     public static function json(array $response,int $status):array
     {
         \assertSameValue($status,$response['status'],'HTTP response status');\assertSameValue('application/json; charset=UTF-8',$response['headers']['content-type']??null,'JSON media');
