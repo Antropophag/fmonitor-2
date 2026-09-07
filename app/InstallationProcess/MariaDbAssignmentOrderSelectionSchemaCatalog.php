@@ -16,13 +16,15 @@ final class MariaDbAssignmentOrderSelectionSchemaCatalog
         if ($properties === []) { return null; }
         AssignmentOrderSelectionSchemaValues::require($properties === [['ENGINE' => 'InnoDB','TABLE_COLLATION' => $collation,'TABLE_TYPE' => 'BASE TABLE']]);
         $columns = MariaDbAssignmentOrderSelectionSchemaSql::rows($db, 'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,CHARACTER_SET_NAME,COLLATION_NAME,GENERATION_EXPRESSION FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY ORDINAL_POSITION', [$table]);
+        $expectedColumns = array_column($expected['columns'], null, 'name');
         $actual = [];
         foreach ($columns as $row) {
             AssignmentOrderSelectionSchemaValues::require($row['GENERATION_EXPRESSION'] === null || $row['GENERATION_EXPRESSION'] === '');
+            $expectedCollation = $expectedColumns[$row['COLUMN_NAME']]['collation'] ?? null;
             $actual[] = ['name' => $row['COLUMN_NAME'], 'type' => preg_replace('/^(tinyint|smallint|int|bigint)\([0-9]+\)/', '$1', strtolower($row['COLUMN_TYPE'])),
                 'nullable' => $row['IS_NULLABLE'] === 'YES', 'default' => $row['COLUMN_DEFAULT'] === 'NULL' ? null : $row['COLUMN_DEFAULT'],
                 'extra' => $row['EXTRA'], 'charset' => $row['CHARACTER_SET_NAME'],
-                'collation' => $row['CHARACTER_SET_NAME'] === 'utf8mb4' && $row['COLLATION_NAME'] === $collation ? '@collation' : $row['COLLATION_NAME']];
+                'collation' => $expectedCollation === '@collation' && $row['COLLATION_NAME'] === $collation ? '@collation' : $row['COLLATION_NAME']];
         }
         AssignmentOrderSelectionSchemaValues::require($actual === $expected['columns']);
         self::indexes($db, $table, $expected['indexes']);
