@@ -84,7 +84,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         $needsCommand=$capPrepare||($card['order']!==null&&$card['order']['status']==='prepared'&&$capRegister)||($card['order']!==null&&$card['order']['status']==='registered'&&!$card['opened']&&$capOpen);
         if($needsCommand){[$session,$headers]=$this->session($r,$user,true);$card['csrfToken']=$this->token($session,$user,$id);$card['processRevision']=$this->revision($session,$id);}
         else{[$session]=$this->session($r,$user,false);}
-        $card['canPrepare']=$capPrepare;$card['canRegister']=$capRegister;$card['canOpen']=$capOpen;$card['flash']=$flash;$card['openedByName']=$card['opened']?$this->actorName((int)$card['openedByUserId']):null;
+        $card['canPrepare']=$capPrepare;$card['canRegister']=$capRegister;$card['canOpen']=$capOpen;$card['flash']=$flash;$card['openedByName']=$card['opened']?$this->actorName((int)$card['openedByUserId']):null;$trustedCsrf=$r->server['FMONITOR_AUTH_CSRF']??null;if($capOpen&&\is_string($trustedCsrf)&&\strlen($trustedCsrf)===64&&isset($card['confirmedOriginal'])){$bytes=\random_bytes(16);$bytes[6]=\chr((\ord($bytes[6])&15)|64);$bytes[8]=\chr((\ord($bytes[8])&63)|128);$hex=\bin2hex($bytes);$card['openingCsrf']=$trustedCsrf;$card['openingRequestId']=\substr($hex,0,8).'-'.\substr($hex,8,4).'-'.\substr($hex,12,4).'-'.\substr($hex,16,4).'-'.\substr($hex,20);}
         return $this->response(200,$this->cards->render($user,$card),['Content-Type'=>'text/html; charset=UTF-8']+$headers,$r->method);
     }
 

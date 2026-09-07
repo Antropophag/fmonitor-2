@@ -1,8 +1,8 @@
 # RESTORE-PILOT-HTTP-ARCHITECTURE-OWNERSHIP — независимый review session/user-admin extraction
 
-Дата: 2026-09-07  
+Дата: 2026-09-07
 Reviewer: `/root/architecture_diagnosis` (не авторил session implementation,
-tests или implementation evidence)  
+tests или implementation evidence)
 Verdict: **APPROVED**
 
 ## Scope и exact artifacts
