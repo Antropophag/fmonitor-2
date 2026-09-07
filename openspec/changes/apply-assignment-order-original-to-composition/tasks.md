@@ -1,6 +1,6 @@
 ## 1. Contract and schema prerequisite
 
-- [ ] 1.1 Получить independent Gate1 для ASSIGNMENT-ORDER-COMPOSITION-APPLY-001 и согласованных design/delta, с записанным verdict и exact spec SHA.
+- [x] 1.1 Получить independent Gate1 для ASSIGNMENT-ORDER-COMPOSITION-APPLY-001 и согласованных design/delta, с записанным verdict и exact spec SHA.
 - [ ] 1.2 Определить exact additive application storage на actual frontier, провести отдельные schema Gates1–5 и проверить native compatible readiness/preservation без runtime DDL.
 
 ## 2. Native application and read interface
