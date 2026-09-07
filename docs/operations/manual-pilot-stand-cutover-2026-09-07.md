@@ -68,3 +68,11 @@ page; safe query count381. Direct imported card200. No real object was opened or
 modified for this verification. One configured owner user remains; owner assigns
 roles/invites colleagues himself. Stand is available for this manual preparation;
 full on-stand operational journey awaits those accounts and owner feedback.
+
+## Closing restart checkpoint
+
+The later UI regression reported by the owner has been repaired and verified using
+real headless Chromium clicks/screenshots. Latest status, exact deployed source,
+image, limitations, approvals and restart instructions are authoritative in
+[UI repair restart handoff](autonomous-ui-repair-restart-handoff-2026-09-07-1120Z.md).
+Earlier intermediate success statements in this file do not imply full pilot readiness.

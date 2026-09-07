@@ -109,3 +109,13 @@ Production-ready, full gates, CI или VERIFY_OK заявлять только 
 сам. Разрешение охватывает локальную замену стенда и необходимые deployment/startup
 действия, но не расширяет полномочия на production import, Bitrix write, remote PR/CI
 или объявление full production readiness без оставшихся доказательств.
+
+## Browser verification preference — owner2026-09-07
+
+Use headless Playwright for browser/UI checks. Owner explicitly prefers invisible
+browser automation and authorized switching away from Computer Use. Do not use or
+move the owner's real Safari/Chrome windows for routine testing. Check real clicks,
+layout screenshots, console/network failures and the ordinary flow; HTTP200 alone
+is insufficient. Preserve the already-designed rapid-pilot UI when integrating
+native seams; do not replace it with simplified unstyled templates. After the
+current UI repair, prepare a restart handoff and continuation prompt as requested.
