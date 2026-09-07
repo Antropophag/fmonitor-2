@@ -28,3 +28,11 @@ Application SHALL оставлять неизвестную дату приём�
 #### Scenario: Unknown start with full current employed snapshot
 - **WHEN** текущий employed status подтверждён полным снимком и остальные условия соблюдены
 - **THEN** отсутствие даты само по себе не блокирует application и sync day не подставляется.
+
+### Requirement: Transaction guard for separate opening
+Readonly application owner SHALL подтверждать последнее применённое основание под
+caller-owned opening transaction, блокируя case до чтения current application.
+
+#### Scenario: Application changed before opening commit
+- **WHEN** opening прочитал payload, а до его transaction применили более новый fact
+- **THEN** `confirmCurrent` возвращает `changed`, и opening не записывает начало работ.

@@ -33,7 +33,7 @@ final readonly class MariaDbTemplateSource
     {
         $object=(new I\MariaDbLegacyInstallationObject($this->sql->db,$this->sql->prefix))->getInstallationObjectSnapshot($source['objectId']);
         foreach(['address','entrance','objectRegistrationNumber'] as $key)if(!is_string($object[$key]??null)||!SelectionScalar::text($object[$key],500))throw new \RuntimeException();
-        foreach(['plannedStartDate','plannedFinishDate'] as $key)if(!is_string($object[$key]??null)||!SelectionScalar::date($object[$key]))throw new \RuntimeException();
+        foreach(['plannedStartDate','plannedFinishDate'] as $key)if($object[$key]!==null&&(!is_string($object[$key])||!SelectionScalar::date($object[$key])))throw new \RuntimeException();
         $h=$source['header'];$members=array_map(static fn($m)=>['tabId'=>MariaDbSelectionSql::number($m['installer_tab_id']),'fullName'=>$m['fio_snapshot'],'position'=>$m['position_snapshot']],$source['members']);
         return ['assignmentOrderVersion'=>$source['version'],'assignmentOrderDate'=>$date,'organizationType'=>count($members)===1?'individual':'brigade','installationObjectSnapshot'=>$object,'installers'=>$members,
             'controlEngineer'=>['userId'=>MariaDbSelectionSql::number($h['control_engineer_user_id']),'fullName'=>$h['control_engineer_fio_snapshot'],'position'=>$h['control_engineer_position_snapshot']]];

@@ -1,6 +1,6 @@
 # BITRIX-WORKFORCE-DELIVERY-001
 
-Версия0.2,2026-09-07. Gate1 candidate; no tests/implementation approval yet.
+Версия0.3,2026-09-07. Manual-pilot live compatibility amendment.
 
 ## Простыми словами
 
@@ -117,13 +117,15 @@ optional next,time. time, if present, is object and is ignored. Error envelope m
 contain error:string plus optional error_description:string and time:object, no result;
 it yields api_failed without exposing payload. Other shapes → schema_invalid.
 
-result must be a list of objects with exactly all10 selected fields. List length
+result must be a list of objects with all required selected fields. Bitrix может
+не вернуть optional fallback `UF_XING`, когда значение не задано; только это
+отсутствующее поле нормализуется в выбранной записи как explicit `null`. List length
 is checked by pagination only: >50 or any overfull/short page is pagination_invalid
 (unless the body/person limits already selected limit_exceeded). ID is positive
 PHPint or canonical positive decimal string fitting PHPint; ACTIVE is boolean.
 UF_DEPARTMENT is a nonempty list<=100 of positive PHPints or canonical decimal
 strings fitting PHPint. Other selected values are null or UTF8 strings<=4096bytes.
-No invented defaults for missing selected fields; missing/unknown/wrong types fail.
+No invented defaults for other missing selected fields; missing/unknown/wrong types fail.
 Each person must belong to at least one configured department, otherwise scope_invalid.
 Employee-number/name/date semantic normalization remains a separate port; no rows
 are skipped or converted to dismissed because a value is unknown.
@@ -170,3 +172,16 @@ Gate1→native TLS RED→independent Gate3→minimal GREEN→regression/architec
 Normalization/publication/unknown employment eligibility/freshness/scheduler each
 retain their own gates. Actual Bitrix run/import/remote mutation forbidden this session.
 Full goal/HTTP/application/opening/VERIFY/CI/deployment remain unclosed.
+
+## 7. Manual-pilot live amendment evidence
+
+Read-only user.get был отдельно разрешён владельцем2026-09-07. Первый live ответ
+получил HTTP200, корректный envelope и50 строк; безопасная схема сохранена вне
+репозитория в
+`/Users/antropophag/.local/state/fmonitor2/manual-pilot-20260907/bitrix-schema-summary.json`.
+В49 строках Bitrix не включил только `UF_XING`; остальные выбранные поля были
+присутствующими и имели ожидаемые типы, включая строковый `UF_EMPLOYMENT_DATE`.
+Поэтому v0.3 разрешает только omission `UF_XING` → `null`; обязательность остальных
+полей, fail-closed pagination/scope и отсутствие частичного batch не меняются.
+Формальные повторные Gate1/3/5 отложены текущим manual-pilot delivery mode; это
+не является production-ready claim.

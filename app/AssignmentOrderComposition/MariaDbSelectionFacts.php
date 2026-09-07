@@ -50,11 +50,18 @@ final readonly class MariaDbSelectionFacts implements SelectionDependencyReader,
     public function findInstallers(InstallerTabIdSet $ids,SelectionInstant $at): SelectionInstallerBatchLookup
     {
         try{return $this->sql->snapshot(function()use($ids){
-            $found=[];$missing=[];$catalog=new I\MariaDbWorkforceCatalog($this->sql->db,$this->sql->prefix);
-            foreach($ids->ascendingUniqueIds as $id){$r=$catalog->findInstallerSnapshot($id->value);if($r===null){$missing[]=$id->value;continue;}
-                $found[]=new InstallerSnapshot($r['tabId'],$r['fullName'],$r['position'],$r['status'],$r['employedFrom'],$r['employedTo'],$r['source'],$r['sourceUpdatedAt']);}
+            $found=[];$missing=[];$s=$this->sql;
+            foreach($ids->ascendingUniqueIds as $id){$rows=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_catalog').' WHERE installer_tab_id=?',[$id->value]);if($rows===[]){$missing[]=$id->value;continue;}if(count($rows)!==1)throw new \RuntimeException();$r=$rows[0];$proof=$this->fullProof($r);
+                $found[]=new InstallerSnapshot((int)$r['installer_tab_id'],$r['fio'],$r['position'],$r['employment_status'],$r['employed_from'],$r['employed_to'],$r['workforce_source'],$r['workforce_source_updated_at'],$r['authority_system']??null,$r['delivery_system']??null,isset($r['delivery_person_id'])?(int)$r['delivery_person_id']:null,$r['reconciliation_state']??null,$proof);}
             return SelectionInstallerBatchLookup::found(new InstallerBatchPayload($found,$missing));
         });}catch(\Throwable){return SelectionInstallerBatchLookup::unavailable();}
+    }
+    private function fullProof(array$r):?array
+    {
+        if($r['employed_from']!==null)return null;foreach(['last_successful_sync_run_id','last_successful_sync_at']as$k)if(!isset($r[$k]))return null;$s=$this->sql;
+        $runs=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_sync_runs').' WHERE run_id=?',[$r['last_successful_sync_run_id']]);$meta=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_sync_metadata').' WHERE singleton_id=1');if(count($runs)!==1||count($meta)!==1)return null;$run=$runs[0];$m=$meta[0];
+        if($run['status']!=='completed'||$run['failure_code']!==null||$run['observed_at']!==$r['last_successful_sync_at']||$m['last_successful_run_id']!==$r['last_successful_sync_run_id']||$m['last_successful_at']!==$r['last_successful_sync_at'])return null;
+        return['runId'=>$run['run_id'],'observedAt'=>$run['observed_at'],'normalizedChecksum'=>$run['normalized_checksum'],'deliveredCount'=>(int)$run['delivered_count'],'pageCount'=>(int)$run['page_count']];
     }
     public function findEngineer(UserId $id,SelectionInstant $at): SelectionEngineerLookup
     {

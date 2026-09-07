@@ -1,0 +1,48 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';
+require_once dirname(__DIR__,2).'/app/AssignmentOrderOriginal/AssignmentOrderOriginalRuntime.php';
+use FMonitor2\Tests\Support\SelectedOriginalFixture as F;
+use FMonitor2\AssignmentOrderComposition as C;
+use FMonitor2\AssignmentOrderOriginal as O;
+use FMonitor2\InstallationProcess as I;
+$f=new F('ma_');
+try {
+    $f->selection->db->query('UPDATE ma_fm_maintable SET id=94512 WHERE id=4512');
+    $f->selection->db->query('UPDATE ma_fm2_installation_cases SET legacy_installation_object_id=94512 WHERE id=4512');
+    $selected=$f->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command(1,0,7001,94512));
+    assertSameValue('selected',$selected->status()->value,'selected');
+    assertSameValue(['applied'=>true],I\AssignmentOrderApplicationSchemaMigration::apply($f->selection->db,'ma_'),'application schema');
+    $f->selection->schema->insert('ma_fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'assignment_order.composition.apply']);
+    $original=$f->app()->submitAssignmentOrderOriginal(F::command(new O\AssignmentOrderOriginalMemoryStream(F::pdf())));
+    assertSameValue(O\AssignmentOrderOriginalStatus::ACCEPTED,$original->status(),'original accepted');
+    $clock=new class implements C\SelectionClock { public function now():C\SelectionInstantLookup{return C\SelectionInstantLookup::found(new C\SelectionInstant('2026-09-05T10:00:00Z'));}};
+    $app=C\ProductionAssignmentOrderApplicationFactory::create($f->selection->db,'ma_',$clock);
+    $command=new C\ApplyAssignmentOrderOriginalCommand('33333333-3333-4333-8333-000000000001',94512,81,(string)$original->currentRevisionId(),0,18);
+    $applied=$app->applyAssignmentOrderOriginal($command);
+    assertSameValue('applied',$applied->status,'application accepted');
+    $reader=C\AssignmentOrderApplicationReaderFactory::create($f->selection->db,'ma_');
+    $current=$reader->readCurrent(94512);assertSameValue('found',$current->status,'current found');
+    assertSameValue([1,81,[7001]],[$current->value['application']['sequence'],$current->value['application']['orderId'],$current->value['application']['installerTabIds']],'current payload');
+    $replay=$app->applyAssignmentOrderOriginal($command);assertSameValue('replayed',$replay->status,'replayed');
+    $corrected=$f->app()->submitAssignmentOrderOriginal(new O\SubmitAssignmentOrderOriginalCommand('22222222-2222-4222-8222-000000000002',O\AssignmentOrderOriginalMode::CORRECTION,4512,81,18,'2026-09-03',true,$original->rootOriginalId(),$original->currentRevisionId(),$original->currentRevisionId(),'Исправлена дата оригинала',new O\AssignmentOrderOriginalUpload(new O\AssignmentOrderOriginalMemoryStream(F::pdf()),'signed.pdf','application/pdf')));
+    assertSameValue(O\AssignmentOrderOriginalStatus::ACCEPTED,$corrected->status(),'correction accepted');
+    $reapplied=$app->applyAssignmentOrderOriginal(new C\ApplyAssignmentOrderOriginalCommand('33333333-3333-4333-8333-000000000002',94512,81,(string)$corrected->currentRevisionId(),1,18));
+    assertSameValue(['applied','reapplication',2],[$reapplied->status,$reapplied->application['kind'],$reapplied->application['sequence']],'reapplication accepted');
+    assertSameValue(2,count($reader->readHistory(94512)->value['items']),'immutable history');
+    I\ChecklistTemplateSchemaMigration::apply($f->selection->db,'ma_');
+    $payload='{"sections":[{"id":1,"name":"Проверка открытия","items":[{"id":28,"name":"Работа","weight":2}]}]}';
+    $f->selection->schema->insert('ma_fm2_checklist_template_snapshots',['snapshot_version'=>'manual-opening-smoke-v1','captured_at'=>'2026-09-01 00:00:00','valid_from'=>'2026-09-01 00:00:00','validity_scope'=>'active_baseline_and_future_native_only','source_label'=>'synthetic opening smoke','content_sha256'=>hash('sha256',$payload),'payload_json'=>$payload,'created_at'=>'2026-09-01 00:00:00']);
+    $f->selection->schema->insert('ma_fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'installation.open']);
+    $opening=C\ProductionOriginalOpeningFactory::create($f->selection->db,'ma_',$clock);
+    $bad=$opening->openInstallation(94512,'2026-09-02',$reapplied->application['applicationId'],18);
+    assertSameValue(false,$bad['accepted'],'before original date rejected');
+    $opened=$opening->openInstallation(94512,'2026-09-04',$reapplied->application['applicationId'],18);
+    assertSameValue(['accepted'=>true,'processState'=>'working','actualStartDate'=>'2026-09-04','applicationId'=>$reapplied->application['applicationId']],$opened,'native opening from applied original');
+    $again=$opening->openInstallation(94512,'2026-09-04',$reapplied->application['applicationId'],18);
+    assertSameValue('already_open',$again['reasonCode'],'opening duplicate creates no second transition');
+    $case=$f->selection->db->query('SELECT process_state,actual_start_date FROM ma_fm2_installation_cases WHERE id=4512')->fetch_assoc();
+    assertSameValue(['process_state'=>'working','actual_start_date'=>'2026-09-04'],$case,'case opened');
+    assertSameValue(1,(int)$f->selection->db->query("SELECT COUNT(*) n FROM ma_fm2_checklist_template_associations WHERE subject_kind='operational_case' AND subject_id='4512'")->fetch_assoc()['n'],'immutable checklist association');
+    echo "PASS manual original application/reapplication/opening/template preservation smoke\n";
+} finally {$f->close();}

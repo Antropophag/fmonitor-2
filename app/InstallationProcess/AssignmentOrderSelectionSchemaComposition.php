@@ -30,7 +30,8 @@ final class AssignmentOrderSelectionSchemaComposition
                 foreach (['fio_snapshot','position_snapshot'] as $key) { AssignmentOrderSelectionSchemaValues::text($member[$key], 300); }
                 AssignmentOrderSelectionSchemaValues::text($member['workforce_source_snapshot'], 80);
                 AssignmentOrderSelectionSchemaValues::sourceInstant($member['workforce_source_updated_at_snapshot']);
-                AssignmentOrderSelectionSchemaValues::require($member['employment_status_snapshot'] === 'employed' && $member['employed_from_snapshot'] <= $header['selection_date']
+                $from=$member['employed_from_snapshot'];
+                AssignmentOrderSelectionSchemaValues::require($member['employment_status_snapshot'] === 'employed' && ($from===null?self::fullProof($member):$from <= $header['selection_date'])
                     && ($member['employed_to_snapshot'] === null || $member['employed_to_snapshot'] >= $header['selection_date']));
                 $ids[] = (int)$member['installer_tab_id'];
             }
@@ -57,4 +58,6 @@ final class AssignmentOrderSelectionSchemaComposition
         }
         return $byId;
     }
+    private static function fullProof(array$m):bool
+    {try{$f=json_decode((string)($m['full_snapshot_json']??''),true,512,JSON_THROW_ON_ERROR);return($m['employment_proof_kind']??null)==='full_current'&&($m['authority_system_snapshot']??null)==='1c_zup'&&($m['delivery_system_snapshot']??null)==='bitrix24'&&(int)($m['delivery_person_id_snapshot']??0)>0&&($m['reconciliation_state_snapshot']??null)==='delivered'&&is_array($f)&&array_keys($f)===['runId','observedAt','normalizedChecksum','deliveredCount','pageCount']&&preg_match('/^[0-9a-f-]{36}$/D',(string)$f['runId'])===1&&preg_match('/^[0-9a-f]{64}$/D',(string)$f['normalizedChecksum'])===1&&(int)$f['deliveredCount']>=1&&(int)$f['pageCount']>=1;}catch(\Throwable){return false;}}
 }

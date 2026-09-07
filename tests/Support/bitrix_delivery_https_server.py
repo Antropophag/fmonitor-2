@@ -68,6 +68,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if mode=='reordered':out={k:out[k] for k in reversed(out)};out['result']=[dict(reversed(list(x.items()))) for x in rows]
         if mode=='unknown_envelope':out['unexpected']=True
         if mode=='missing_field':del rows[0]['UF_EMPLOYMENT_DATE']
+        if mode=='missing_optional_uf_xing':del rows[0]['UF_XING']
         if mode=='unknown_field':rows[0]['unexpected']=1
         if mode=='wrong_active':rows[0]['ACTIVE']='Y'
         if mode=='wrong_id':rows[0]['ID']='01'

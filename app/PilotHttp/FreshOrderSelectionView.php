@@ -37,6 +37,7 @@ final class FreshOrderSelectionView
         foreach($model['engineers'] as $candidate)$body.='<label class="shlz-choice"><input class="shlz-radio" type="radio" name="controlEngineerUserId" value="'.$candidate['userId'].'"'.($candidate['userId']===$engineer?' checked':'').' required><span>'.$e($candidate['fullName']).' · '.$e($candidate['position']).'</span></label>';
         if($model['engineers']===[])$body.='<p>Нет доступных инженеров строительного контроля.</p>';
         $body.='<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="controlEngineerConfirmed" value="yes" required><span>Подтверждаю выбор инженера строительного контроля</span></label></fieldset>';
+        $body.='<p><a class="shlz-link" href="/pilot/objects/'.$id.'/execution">Применить состав и открыть работы</a></p>';
         $body.='<div class="fm2-order-actions"><a class="shlz-link" href="/pilot/objects/'.$id.'">К объекту</a><button class="shlz-button shlz-button--primary" type="submit">'.($pending?'Заменить ожидающий состав':'Сохранить состав').'</button></div></form>';
         return PilotView::document($user,'Выбор состава','Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects'],['Объект № '.$id,'/pilot/objects/'.$id]],'Выбор состава'),$body);
     }

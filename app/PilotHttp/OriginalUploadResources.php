@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
 use FMonitor2\AssignmentOrderOriginal as O;
 require_once \dirname(__DIR__).'/AssignmentOrderOriginal/AssignmentOrderOriginalRuntime.php';
+foreach(['AssignmentOrderOriginalHistoryStatus','AssignmentOrderOriginalHistoryPage','AssignmentOrderOriginalHistoryLookup','AssignmentOrderOriginalPreparedDownload','AssignmentOrderOriginalDownloadLookup','AssignmentOrderOriginalHistoryReader','MariaDbOriginalSql','MariaDbOriginalApplicationReferenceSource','MariaDbOriginalHistorySource','OriginalPreparedPdfBytes','MariaDbOriginalHistoryReader','AssignmentOrderOriginalHistoryConfigurationUnavailable','AssignmentOrderOriginalHistoryReaderFactory']as$file)require_once \dirname(__DIR__).'/AssignmentOrderOriginal/'.$file.'.php';
 final class OriginalUploadResources
 {
     public readonly FreshOrderHttpResources $native;
@@ -23,5 +24,7 @@ final class OriginalUploadResources
         return O\ProductionAssignmentOrderOriginalFactory::createForSelections($this->native->db,
             new O\AssignmentOrderOriginalProductionConfig($this->value('FMONITOR_ARTIFACT_STORAGE_ROOT'),$this->native->prefix,$this->value('FMONITOR_ORIGINAL_SAFE_LOG_FILE')),$fresh);
     }
+    public function history():O\AssignmentOrderOriginalHistoryReader
+    { return O\AssignmentOrderOriginalHistoryReaderFactory::create($this->native->db,$this->value('FMONITOR_ARTIFACT_STORAGE_ROOT'),$this->native->prefix); }
     public function close():void { $this->native->close(); }
 }

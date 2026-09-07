@@ -60,6 +60,9 @@ final class InstallationCompletionSchemaMigration
                 $connection, $table, $definition['manifest'], $collation,
             )) {
                 $forms[$name] = 'exact';
+            } elseif ($name === InstallationCompletionDefinitionSchemaMigration::CORRECTIONS
+                && InstallationCompletionDetailsSchemaMigration::isCompleteCompatible($connection, $prefix)) {
+                $forms[$name] = 'successor';
             } else {
                 $forms[$name] = 'conflict';
                 $conflicting[] = $table;

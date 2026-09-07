@@ -140,16 +140,12 @@ final class PilotCaseImporter
                 continue;
             }
             $row = $rows[$id];
-            $start = self::date($row['workdatestart']);
-            $adjustedFinish = self::date($row['workdateendadjusted']);
-            $finish = $adjustedFinish ?? self::date($row['plan_finish_date']);
             $pto = self::date($row['ptoactdate']);
             $completed = self::date($row['workdatefinish']);
             $reasons = [];
             if (trim((string) $row['ordadr_address']) === ''
                 || trim((string) $row['entrance']) === ''
                 || trim((string) $row['regnumber']) === ''
-                || $start === null || $finish === null
             ) $reasons[] = 'LEGACY_OBJECT_REQUIRED_DATA_MISSING';
             if ($pto !== null) $reasons[] = 'ORDER_HAS_PTO_ACT';
             if ($completed !== null) $reasons[] = 'LEGACY_INSTALLATION_ALREADY_COMPLETED';

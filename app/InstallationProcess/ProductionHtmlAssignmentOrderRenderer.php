@@ -106,8 +106,8 @@ HTML;
             && $this->isNonblankString($object['address'] ?? null)
             && $this->isNonblankString($object['entrance'] ?? null)
             && $this->isNonblankString($object['objectRegistrationNumber'] ?? null)
-            && $this->isDate($object['plannedStartDate'] ?? null)
-            && $this->isDate($object['plannedFinishDate'] ?? null)
+            && (array_key_exists('plannedStartDate',$object)&&($object['plannedStartDate']===null||$this->isDate($object['plannedStartDate'])))
+            && (array_key_exists('plannedFinishDate',$object)&&($object['plannedFinishDate']===null||$this->isDate($object['plannedFinishDate'])))
             && is_array($installers)
             && array_is_list($installers)
             && count($installers) > 0
@@ -158,7 +158,7 @@ HTML;
 
     private function displayDate(string $value): string
     {
-        return \DateTimeImmutable::createFromFormat('!Y-m-d', $value)->format('d.m.Y');
+        return $value === '' ? '—' : \DateTimeImmutable::createFromFormat('!Y-m-d', $value)->format('d.m.Y');
     }
 
     private function organizationLabel(string $value): string

@@ -7,6 +7,11 @@ final class MariaDbAssignmentOrderSelectionSchemaCatalog
     public static function shape(\mysqli $db, array $expected, string $collation): ?array
     {
         $table = $expected['name'];
+        $suffix='fm2_assignment_order_selection_members';
+        if(str_ends_with($table,$suffix)){
+            $prefix=substr($table,0,-strlen($suffix));$columns=MariaDbAssignmentOrderSelectionSchemaSql::rows($db,'SELECT COLUMN_NAME,IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
+            foreach($columns as$row)if($row['COLUMN_NAME']==='employment_proof_kind'){$expected=AssignmentOrderSelectionUnknownEmploymentSchemaMigration::definition($prefix,$collation);break;}
+        }
         $properties = MariaDbAssignmentOrderSelectionSchemaSql::rows($db, 'SELECT ENGINE,TABLE_COLLATION,TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', [$table]);
         if ($properties === []) { return null; }
         AssignmentOrderSelectionSchemaValues::require($properties === [['ENGINE' => 'InnoDB','TABLE_COLLATION' => $collation,'TABLE_TYPE' => 'BASE TABLE']]);

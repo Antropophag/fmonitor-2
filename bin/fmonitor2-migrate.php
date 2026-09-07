@@ -90,29 +90,8 @@ try {
     finishMigrationRunner(['ok' => false, 'reason' => 'DATABASE_UNAVAILABLE'], 69);
 }
 
-$migrations = [
-    1 => ProductionProcessSchemaMigration::class,
-    2 => WorkforceCatalogSchemaMigration::class,
-    3 => ProcessUserCapabilitiesSchemaMigration::class,
-    4 => ProcessCommandCapabilitiesSchemaMigration::class,
-    5 => BitrixWorkforceHistorySchemaMigration::class,
-    6 => IdentityAccessSchemaMigration::class,
-    7 => ChecklistTemplateSchemaMigration::class,
-    8 => InspectionEvidenceSchemaMigration::class,
-    9 => InspectionPlanningSchemaMigration::class,
-    10 => InstallationCompletionSchemaMigration::class,
-    11 => static fn (mysqli $connection, string $prefix): array =>
-        ClassificationProvenanceSchemaMigration::apply(
-            $connection,
-            $prefix,
-            static function (): void {
-            },
-        ),
-    12 => ObjectDetailSnapshotSchemaMigration::class,
-    13 => OriginalAttemptAuditSchemaMigration::class,
-    14 => AssignmentOrderIdentityRegistryMigration::class,
-    15 => AssignmentOrderSelectionSchemaMigration::class,
-];
+$migrations = \FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();
+
 $databasePreflight = static function () use ($connection, $tablePrefix): int {
     try {
         IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);

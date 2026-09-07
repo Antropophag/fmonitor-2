@@ -27,17 +27,20 @@ final class MariaDbLegacyInstallationObject
             throw new \RuntimeException('Legacy installation object not found.');
         }
 
-        $adjustedFinishDate = self::optionalDate($row['workdateendadjusted']);
+        $adjustedFinishDate = self::plannedDate($row['workdateendadjusted']);
 
         return [
             'address' => trim((string) $row['ordadr_address']),
             'entrance' => trim((string) $row['entrance']),
             'objectRegistrationNumber' => trim((string) $row['regnumber']),
-            'plannedStartDate' => self::optionalDate($row['workdatestart']),
-            'plannedFinishDate' => $adjustedFinishDate ?? self::optionalDate($row['plan_finish_date']),
+            'plannedStartDate' => self::plannedDate($row['workdatestart']),
+            'plannedFinishDate' => $adjustedFinishDate ?? self::plannedDate($row['plan_finish_date']),
             'ptoActDate' => self::optionalDate($row['ptoactdate']),
         ];
     }
+
+    private static function plannedDate(mixed $value): ?string
+    { try { return self::optionalDate($value); } catch (\RuntimeException) { return null; } }
 
     private static function optionalDate(mixed $value): ?string
     {

@@ -32,7 +32,10 @@ final class DeliveryPage
         foreach ($envelope['result'] as $person) {
             if (!$person instanceof \stdClass) self::fail();
             $fields = get_object_vars($person);
-            if (count($fields) !== count(self::FIELDS) || array_diff(self::FIELDS, array_keys($fields)) !== []) self::fail();
+            $required=array_values(array_diff(self::FIELDS,['UF_XING']));
+            if (array_diff(array_keys($fields),self::FIELDS)!==[]||array_diff($required,array_keys($fields))!==[]
+                ||count($fields)<count(self::FIELDS)-1||count($fields)>count(self::FIELDS))self::fail();
+            if(!array_key_exists('UF_XING',$fields))$fields['UF_XING']=null;
             $id = self::positive($fields['ID']);
             if (!is_bool($fields['ACTIVE']) || !is_array($fields['UF_DEPARTMENT']) || !array_is_list($fields['UF_DEPARTMENT'])
                 || count($fields['UF_DEPARTMENT']) < 1 || count($fields['UF_DEPARTMENT']) > 100) self::fail();

@@ -11,7 +11,7 @@ require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
 require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
-$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+if(getenv('FMONITOR_LIVE_CLOCK')==='1')putenv('FMONITOR_NOW='.(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM));$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
 if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
     http_response_code(400);
@@ -271,7 +271,7 @@ if ($response->status === 200 && is_string($path) && str_starts_with((string) ($
     $body = RapidPilotUserAccessView::enhance($body, $path);
     $body = RapidPilotObjectDetails::enhance($body, $path);
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $completionCard) === 1) $body = RapidPilotCompletionFlow::enhanceCard($body, (int) $completionCard[1]);
-    if (preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
+    if (preg_match('#^/pilot/(?:objects|construction-control/objects)/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
     $body = RapidPilotCompletionFlow::paintStatuses($body);
     if ($path === '/pilot/construction-control') $body = RapidPilotInspectionSchedule::enhanceControl($body);
     $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);

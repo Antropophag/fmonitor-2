@@ -11,6 +11,7 @@ require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceSchema
 require_once dirname(__DIR__).'/app/InstallationProcess/InstallationCompletionDefinitionSchemaMigration.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbInstallationCompletionSchemaFingerprint.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/InstallationCompletionSchemaMigration.php';
+require_once dirname(__DIR__).'/app/InstallationProcess/InstallationCompletionDetailsSchemaMigration.php';
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
 $host=getenv('FMONITOR_DB_HOST')?:getenv('FMONITOR_DEMO_DB_HOST')?:'127.0.0.1';$user=getenv('FMONITOR_DB_USER')?:getenv('FMONITOR_DEMO_DB_USER')?:'';$password=getenv('FMONITOR_DB_PASSWORD')?:getenv('FMONITOR_DEMO_DB_PASSWORD')?:'';$port=(int)(getenv('FMONITOR_DB_PORT')?:getenv('FMONITOR_DEMO_DB_PORT')?:3306);$adminUser=getenv('FMONITOR_TEST_DB_ADMIN_USER')?:$user;$adminPassword=getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:$password;$database='t_completion_flow_'.bin2hex(random_bytes(5));$admin=new mysqli($host,$adminUser,$adminPassword,'',$port);$admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");$escapedUser=$admin->real_escape_string($user);$admin->query("GRANT ALL PRIVILEGES ON `{$database}`.* TO `{$escapedUser}`@'%'");$db=new mysqli($host,$user,$password,$database,$port);$db->set_charset('utf8mb4');
 $prefix='completion_'.bin2hex(random_bytes(5)).'_';$previousDatabase=getenv('FMONITOR_DB_NAME');putenv('FMONITOR_DB_NAME='.$database);putenv('FMONITOR_PROCESS_TABLE_PREFIX='.$prefix);
@@ -19,7 +20,7 @@ $ok=static function(bool$value,string$message):void{if(!$value)throw new Runtime
 try{
  $db->query("CREATE TABLE `{$prefix}fm2_installation_cases`(id BIGINT PRIMARY KEY,legacy_installation_object_id BIGINT UNIQUE,process_state VARCHAR(40))");
  \FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration::apply($db,$prefix);
- \FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$prefix);
+ \FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$prefix);\FMonitor2\InstallationProcess\InstallationCompletionDetailsSchemaMigration::apply($db,$prefix);
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(7,4512,'working')");
  $shell='<div class="fm2-object-workspace"><section class="fm2-next-action" aria-label="Ближайшее действие"><div><h2>Работы открыты</h2></div><div class="fm2-action-stack"><a href="/pilot/objects/4512/checklist">Открыть чек-лист</a></div></section></div>';
  $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES(8,4513,'needs_assignment_order')");

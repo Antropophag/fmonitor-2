@@ -5,5 +5,8 @@ namespace FMonitor2\AssignmentOrderComposition;
 final readonly class InstallerSnapshot
 { public function __construct(public int $tabId,public string $fio,
   public string $position,public string $employmentStatus,
-  public string $employedFrom,public ?string $employedTo,
-  public string $workforceSource,public string $workforceSourceUpdatedAt) {} }
+  public ?string $employedFrom,public ?string $employedTo,
+  public string $workforceSource,public string $workforceSourceUpdatedAt,
+  public ?string $authoritySystem=null,public ?string $deliverySystem=null,
+  public ?int $deliveryPersonId=null,public ?string $reconciliationState=null,
+  public ?array $fullSnapshot=null) {} }

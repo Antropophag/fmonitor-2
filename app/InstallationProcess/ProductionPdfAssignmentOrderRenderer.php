@@ -191,7 +191,7 @@ final class ProductionPdfAssignmentOrderRenderer
         $object=$input['installationObjectSnapshot']??null;$installers=$input['installers']??null;$documentInstallers=$input['documentInstallers']??$installers;$engineer=$input['controlEngineer']??null;
         $valid=isset($input['assignmentOrderVersion'])&&is_int($input['assignmentOrderVersion'])&&$input['assignmentOrderVersion']>0
             &&$this->isDate($input['assignmentOrderDate']??null)&&in_array($input['organizationType']??null,['individual','brigade'],true)
-            &&is_array($object)&&$this->nonblank($object['address']??null)&&$this->nonblank($object['entrance']??null)&&$this->nonblank($object['objectRegistrationNumber']??null)&&$this->isDate($object['plannedStartDate']??null)&&$this->isDate($object['plannedFinishDate']??null)
+            &&is_array($object)&&$this->nonblank($object['address']??null)&&$this->nonblank($object['entrance']??null)&&$this->nonblank($object['objectRegistrationNumber']??null)&&(array_key_exists('plannedStartDate',$object)&&($object['plannedStartDate']===null||$this->isDate($object['plannedStartDate'])))&&(array_key_exists('plannedFinishDate',$object)&&($object['plannedFinishDate']===null||$this->isDate($object['plannedFinishDate'])))
             &&is_array($installers)&&array_is_list($installers)&&$installers!==[]&&$this->validInstallers($installers)
             &&is_array($documentInstallers)&&array_is_list($documentInstallers)&&$documentInstallers!==[]&&$this->validDocumentInstallers($documentInstallers)
             &&is_array($engineer)&&isset($engineer['userId'])&&is_int($engineer['userId'])&&$engineer['userId']>0&&$this->nonblank($engineer['fullName']??null)&&$this->nonblank($engineer['position']??null);
@@ -201,7 +201,7 @@ final class ProductionPdfAssignmentOrderRenderer
     private function validDocumentInstallers(array $installers):bool{if(!$this->validInstallers($installers))return false;foreach($installers as$x)if(isset($x['workStatus'])&&!in_array($x['workStatus'],['Работа','Перемещён'],true))return false;return true;}
     private function nonblank(mixed $v):bool{return is_string($v)&&trim($v)!=='';}
     private function isDate(mixed $v):bool{if(!is_string($v)||preg_match('/^\d{4}-\d{2}-\d{2}$/D',$v)!==1)return false;$d=\DateTimeImmutable::createFromFormat('!Y-m-d',$v);return $d!==false&&$d->format('Y-m-d')===$v;}
-    private function displayDate(string $v):string{return \DateTimeImmutable::createFromFormat('!Y-m-d',$v)->format('d.m.Y');}
+    private function displayDate(string $v):string{return $v===''?'—':\DateTimeImmutable::createFromFormat('!Y-m-d',$v)->format('d.m.Y');}
     private function day(string $v):string{return substr($v,8,2);}
     private function month(string $v):string{return ['01'=>'января','02'=>'февраля','03'=>'марта','04'=>'апреля','05'=>'мая','06'=>'июня','07'=>'июля','08'=>'августа','09'=>'сентября','10'=>'октября','11'=>'ноября','12'=>'декабря'][substr($v,5,2)];}
     private function organizationLabel(string $v):string{return $v==='individual'?'индивидуальная':'бригадная';}

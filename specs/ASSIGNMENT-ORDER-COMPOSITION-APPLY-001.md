@@ -276,6 +276,14 @@ Corruption → unavailable, не пропуск строк и не fallback к s
 correction или изменение кадрового каталога не делает прошлый application unavailable.
 Reader emits no audit/log/stdout/stderr и не обновляет cursor/last-viewed metadata.
 
+Для separate opening owner decision2026-09-07 добавляет transaction guard
+`confirmCurrent(int objectId,int applicationId):string`. Caller уже владеет write
+transaction; reader первым блокирует case по objectId, затем проверяет последнее
+application по maximum sequence. Результат exact `matched`, `changed` или
+`unavailable`. Opening читает payload до transaction, а перед записью case вызывает
+этот guard вместе с original `confirmCurrent`; raw application-table SQL не переходит
+к opening owner. `readCurrent` сохраняет idle-only readonly contract.
+
 ## 7. Reasons и validation order
 
 rejected: invalid_command, authorization_denied, object_not_found,

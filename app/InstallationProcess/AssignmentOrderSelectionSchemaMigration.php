@@ -12,6 +12,6 @@ final class AssignmentOrderSelectionSchemaMigration
     {
         AssignmentOrderSelectionSchemaValues::prefix($tablePrefix);
         try { AssignmentOrderSelectionSchemaMigrationVerification::snapshot($connection, $tablePrefix); return true; }
-        catch (\Throwable) { return false; }
+        catch (\Throwable) { return AssignmentOrderSelectionUnknownEmploymentSchemaMigration::isReady($connection,$tablePrefix); }
     }
 }

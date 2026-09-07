@@ -9,7 +9,7 @@ final class MariaDbInspectionCaseDirectory
     private ?int $order = null;
     private array $snapshots = [];
 
-    public function __construct(private readonly \mysqli $db, private readonly string $prefix)
+    public function __construct(private readonly \mysqli $db, private readonly string $prefix, private readonly ?array $appliedComposition = null)
     {
     }
 
@@ -29,9 +29,15 @@ final class MariaDbInspectionCaseDirectory
             return null;
         }
 
-        $this->order = $row['order_id'] === null ? null : (int) $row['order_id'];
+        $applied = $this->appliedComposition;
+        if ($applied !== null && (int) ($applied['application']['caseId'] ?? 0) !== $id) {
+            return null;
+        }
+        $this->order = $applied === null && $row['order_id'] !== null ? (int) $row['order_id'] : null;
         $installerIds = [];
-        if ($this->order !== null) {
+        if ($applied !== null) {
+            $installerIds = array_map('intval', (array) ($applied['application']['installerTabIds'] ?? []));
+        } elseif ($this->order !== null) {
             $installers = $this->db->prepare(
                 'SELECT installer_tab_id FROM '.$this->table('fm2_order_installers')
                 .' WHERE assignment_order_id=? AND valid_to IS NULL ORDER BY installer_tab_id'
@@ -58,15 +64,30 @@ final class MariaDbInspectionCaseDirectory
             'state' => $row['process_state'],
             'revision' => $revision,
             'templateId' => $associationRow === null ? 0 : (int) $associationRow['template_snapshot_id'],
-            'assignedControlEngineerUserId' => $row['control_engineer_user_id'] === null
-                ? null
-                : (int) $row['control_engineer_user_id'],
+            'assignedControlEngineerUserId' => $applied !== null
+                ? (int) ($applied['application']['engineerUserId'] ?? 0)
+                : ($row['control_engineer_user_id'] === null ? null : (int) $row['control_engineer_user_id']),
             'registeredInstallerTabIds' => $installerIds,
         ];
     }
 
     public function installer(int $id): ?array
     {
+        if ($this->appliedComposition !== null) {
+            foreach ((array) ($this->appliedComposition['selectedInstallers'] ?? []) as $selected) {
+                if ((int) ($selected['tabId'] ?? 0) !== $id) continue;
+                $eligibility = [];
+                foreach ((array) ($this->appliedComposition['eligibility'] ?? []) as $candidate) {
+                    if ((int) ($candidate['tabId'] ?? 0) === $id) {$eligibility = $candidate; break;}
+                }
+                return $this->snapshots[$id] = [
+                    'tabId'=>$id,'fullName'=>(string)($selected['fullName']??''),'position'=>(string)($selected['position']??''),
+                    'employmentStatus'=>(string)($eligibility['employmentStatus']??'unknown'),'dismissalEffectiveAt'=>$eligibility['employedTo']??null,
+                    'sourceUpdatedAt'=>(string)($eligibility['sourceUpdatedAt']??''),
+                ];
+            }
+            return null;
+        }
         if ($this->order === null) {
             return null;
         }

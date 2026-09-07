@@ -13,10 +13,16 @@ final class MariaDbInspectionTransaction
     {
     }
 
-    public function begin(int $id): void
+    public function begin(int $id,string $now): void
     {
         $this->db->begin_transaction();
         $this->open = true;
+        $initialize=$this->db->prepare(
+            'INSERT IGNORE INTO '.$this->table('fm2_checklist_revisions')
+            .'(installation_case_id,revision_no,updated_at) VALUES(?,0,?)'
+        );
+        $initialize->bind_param('is',$id,$now);
+        $initialize->execute();
         $statement = $this->db->prepare(
             'SELECT revision_no FROM '.$this->table('fm2_checklist_revisions')
             .' WHERE installation_case_id=? FOR UPDATE'

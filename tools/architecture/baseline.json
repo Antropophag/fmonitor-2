@@ -362,6 +362,7 @@
     "app/IdentityAccess/PilotSessionStorageTypes.php::open",
     "app/InstallationProcess/InstallationProcess.php::confirmOrderRegistration",
     "app/InstallationProcess/InstallationProcess.php::openInstallation",
-    "app/InstallationProcess/InstallationProcess.php::prepareAssignmentOrder"
+    "app/InstallationProcess/InstallationProcess.php::prepareAssignmentOrder",
+    "app/InstallationProcess/MariaDbInstallationCompletion.php::record"
   ]
 }

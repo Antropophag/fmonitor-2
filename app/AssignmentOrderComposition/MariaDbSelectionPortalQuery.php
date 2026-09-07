@@ -38,10 +38,11 @@ final readonly class MariaDbSelectionPortalQuery implements AssignmentOrderSelec
                 $workers=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_catalog').' ORDER BY installer_tab_id');$installers=[];
                 $today=(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format('Y-m-d');
                 foreach($workers as $w){
-                    if(!in_array($w['employment_status'],['employed','dismissed'],true)||!SelectionScalar::date($w['employed_from'])
+                    if(!in_array($w['employment_status'],['employed','dismissed'],true)||($w['employed_from']!==null&&!SelectionScalar::date($w['employed_from']))
                         ||($w['employed_to']!==null&&!SelectionScalar::date($w['employed_to']))||!SelectionScalar::sourceInstant($w['workforce_source_updated_at'])
                         ||!SelectionScalar::text($w['fio'],300)||!SelectionScalar::text($w['position'],300)||!SelectionScalar::text($w['workforce_source'],80))throw new \RuntimeException();
-                    if($w['employment_status']!=='employed'||$w['employed_from']>$today||($w['employed_to']!==null&&$w['employed_to']<$today))continue;
+                    $proof=$w['employed_from']===null?$this->fullProof($s,$w):null;$snapshot=new InstallerSnapshot((int)$w['installer_tab_id'],$w['fio'],$w['position'],$w['employment_status'],$w['employed_from'],$w['employed_to'],$w['workforce_source'],$w['workforce_source_updated_at'],$w['authority_system']??null,$w['delivery_system']??null,isset($w['delivery_person_id'])?(int)$w['delivery_person_id']:null,$w['reconciliation_state']??null,$proof);
+                    if($w['employment_status']!=='employed'||($w['employed_from']!==null&&$w['employed_from']>$today)||($w['employed_to']!==null&&$w['employed_to']<$today)||($w['employed_from']===null&&!SelectionEmploymentProof::full($snapshot)))continue;
                     $installers[]=['tabId'=>MariaDbSelectionSql::number($w['installer_tab_id']),'fullName'=>$w['fio'],'position'=>$w['position'],
                         'source'=>$w['workforce_source'],'updatedAt'=>$w['workforce_source_updated_at']];
                 }
@@ -58,4 +59,6 @@ final readonly class MariaDbSelectionPortalQuery implements AssignmentOrderSelec
             return $result;
         }catch(\Throwable){return ['status'=>'failed','reasonCode'=>'dependency_unavailable'];}
     }
+    private function fullProof(MariaDbSelectionSql$s,array$r):?array
+    {if(!isset($r['last_successful_sync_run_id'],$r['last_successful_sync_at']))return null;$runs=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_sync_runs').' WHERE run_id=?',[$r['last_successful_sync_run_id']]);$meta=$s->rows('SELECT * FROM '.$s->table('fm2_workforce_sync_metadata').' WHERE singleton_id=1');if(count($runs)!==1||count($meta)!==1)return null;$run=$runs[0];$m=$meta[0];if($run['status']!=='completed'||$run['failure_code']!==null||$run['observed_at']!==$r['last_successful_sync_at']||$m['last_successful_run_id']!==$r['last_successful_sync_run_id']||$m['last_successful_at']!==$r['last_successful_sync_at'])return null;return['runId'=>$run['run_id'],'observedAt'=>$run['observed_at'],'normalizedChecksum'=>$run['normalized_checksum'],'deliveredCount'=>(int)$run['delivered_count'],'pageCount'=>(int)$run['page_count']];}
 }

@@ -18,12 +18,12 @@ final class LocalRoleCatalog
             'fkr_operator' => [
                 'name' => 'Сотрудник ФКР',
                 'description' => 'Распоряжения, состав и открытие работ.',
-                'permissions' => ['objects.read','installers.read','assignment_order_artifact.read','assignment_order.prepare','assignment_order.confirm_registration','installation.open'],
+                'permissions' => ['objects.read','installers.read','assignment_order_artifact.read','checklist.read','assignment_order.prepare','assignment_order.composition.select','assignment_order.composition.apply','assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct','installation.open','installation.completion.pto.record','installation.completion.declaration.record','installation.completion.pto.correct','installation.completion.declaration.correct'],
             ],
             'construction_control_engineer' => [
                 'name' => 'Инженер строительного контроля',
                 'description' => 'Инспекции и чек-листы назначенных объектов.',
-                'permissions' => ['objects.read','construction_control.read','checklist.read','checklist.edit','assignment_order_artifact.read','construction_control_engineer'],
+                'permissions' => ['objects.read','construction_control.read','checklist.read','checklist.edit','inspection.item.complete','inspection.photo.revoke','assignment_order.original.read','assignment_order_artifact.read','construction_control_engineer'],
             ],
             'construction_control_coordinator' => [
                 'name' => 'Координатор строительного контроля',
@@ -33,12 +33,12 @@ final class LocalRoleCatalog
             'otiz_specialist' => [
                 'name' => 'Специалист ОТиЗ',
                 'description' => 'Расчёт, проверка и учёт премий.',
-                'permissions' => ['objects.read','installers.read','otiz.manage'],
+                'permissions' => ['objects.read','installers.read','checklist.read','assignment_order.original.read','otiz.manage'],
             ],
             'manager' => [
-                'name' => 'Руководитель',
-                'description' => 'Сводный контроль без процессных изменений.',
-                'permissions' => ['objects.read','installers.read','management.read'],
+                'name' => 'Руководитель ФКР',
+                'description' => 'Распоряжения, открытие, документальное завершение и контроль работ.',
+                'permissions' => ['objects.read','installers.read','management.read','construction_control.read','checklist.read','assignment_order.prepare','assignment_order.composition.select','assignment_order.composition.apply','assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct','installation.open','installation.completion.pto.record','installation.completion.declaration.record','installation.completion.pto.correct','installation.completion.declaration.correct'],
             ],
             'access_administrator' => [
                 'name' => 'Администратор доступа',
