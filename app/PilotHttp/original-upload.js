@@ -6,6 +6,9 @@
   const fields = form.querySelector('[data-original-fields]');
   const button = form.querySelector('[data-original-submit]');
   const status = form.querySelector('[data-original-status]');
+  const fileInput = field('original');
+  const fileDrop = form.querySelector('[data-file-drop]');
+  const fileName = form.querySelector('[data-file-name]');
   let busy = false;
   const renew = () => { if (!busy) field('requestId').value = crypto.randomUUID(); };
   const messages = {
@@ -36,6 +39,11 @@
     return btoa(binary);
   };
   fields.disabled = false;
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    fileDrop.classList.toggle('fm2-file-drop--selected', Boolean(file));
+    fileName.textContent = file ? file.name : 'PDF, не более 20 МиБ';
+  });
   form.addEventListener('input', renew);
   form.addEventListener('change', renew);
   form.addEventListener('submit', async event => {

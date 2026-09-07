@@ -30,7 +30,7 @@ final class PilotRouteAdmission
             '/pilot/users', '/pilot/admin/users', '/pilot/admin/roles',
             '/pilot/admin/users/invite',
         ], true)
-            || \preg_match('#^/pilot/objects/[1-9][0-9]*(?:/assignment-order/(?:prepare|selection)|/assignment-orders/[1-9][0-9]*/(?:registration|template|originals(?:/(?:submit|history|[A-Za-z0-9][A-Za-z0-9._:-]{0,79}/download))?|artifacts/(?:order|appendix|signed_original))|/control-engineer|/execution|/open|/checklist(?:/operations|/photos)?)?$#D', $path) === 1
+            || \preg_match('#^/pilot/objects/[1-9][0-9]*(?:/assignment-order/(?:prepare|selection|installers)|/assignment-orders/[1-9][0-9]*/(?:registration|template|originals(?:/(?:submit|history|[A-Za-z0-9][A-Za-z0-9._:-]{0,79}/download))?|artifacts/(?:order|appendix|signed_original))|/control-engineer|/execution|/open|/checklist(?:/operations|/photos)?)?$#D', $path) === 1
             || \preg_match('#^/pilot/construction-control/objects/[1-9][0-9]*(?:/sync-context|/checklist(?:/operations|/photos)?)?$#D', $path) === 1
             || \preg_match('#^/pilot/admin/users/[1-9][0-9]*/(?:status|roles(?:/[1-9][0-9]*)?)$#D', $path) === 1;
     }

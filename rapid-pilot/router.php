@@ -99,7 +99,7 @@ if ($path === '/pilot/assets/shlz-behaviors.js') {
     echo $bytes;
     exit;
 }
-if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue|navigation|original-upload)\.js$#D', $path, $script) === 1) {
+if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|selection-picker|users|control-queue|navigation|original-upload)\.js$#D', $path, $script) === 1) {
     $filename = $script[1] . '.js';
     $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }

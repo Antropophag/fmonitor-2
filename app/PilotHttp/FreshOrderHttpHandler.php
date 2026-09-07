@@ -43,6 +43,11 @@ final readonly class FreshOrderHttpHandler
         }catch(\Throwable){return $this->error($r,503,'dependency_unavailable',$object);}
         finally{if($resources!==null)$resources->close();}
     }
+    public function searchInstallers(PilotHttpRequest $r,int $object):PilotHttpResponse
+    {
+        if(!\in_array($r->method,['GET','HEAD'],true))return self::response($r,405,"Method not allowed.\n",['Allow'=>'GET, HEAD','Content-Type'=>'text/plain; charset=UTF-8']);$actor=FreshOrderFormInput::positive($r->server['FMONITOR_AUTH_USER_ID']??null);if($actor===null)return self::response($r,303,'',['Location'=>'/pilot/login']);$resources=null;
+        try{$resources=new FreshOrderHttpResources($this->environment);$query=[];\parse_str((string)($r->server['QUERY_STRING']??''),$query);if(!\is_array($query)||\array_diff(array_keys($query),['q','page'])!==[]||!\is_string($query['q']??null)||isset($query['page'])&&(!\is_string($query['page'])||!ctype_digit($query['page'])))return self::response($r,400,"Bad request.\n",['Content-Type'=>'text/plain; charset=UTF-8']);$page=isset($query['page'])&&ctype_digit($query['page'])?(int)$query['page']:1;$result=$resources->query->searchEligibleInstallers($actor,$query['q'],$page);if($result['status']!=='found')return $this->error($r,$result['status']==='failed'?503:($result['reasonCode']==='authorization_denied'?403:400),$result['reasonCode'],$object);return self::response($r,200,json_encode(['items'=>$result['items'],'page'=>$result['page'],'hasMore'=>$result['hasMore']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),['Content-Type'=>'application/json; charset=UTF-8']);}catch(\Throwable){return $this->error($r,503,'dependency_unavailable',$object);}finally{if($resources!==null)$resources->close();}
+    }
     private function domainError(PilotHttpRequest $r,array $result,int $object,?array $retry=null):PilotHttpResponse
     {
         $reason=$result['reasonCode'];$status=match(true){$result['status']==='failed'=>503,$result['status']==='conflict'=>409,

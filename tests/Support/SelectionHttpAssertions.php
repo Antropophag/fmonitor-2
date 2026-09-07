@@ -16,6 +16,7 @@ final class SelectionHttpAssertions
         \assertSameValue(1,$forms->length,'one real selection/retry form');$pairs=[];
         foreach($forms->item(0)->getElementsByTagName('input') as $input){
             if($input->hasAttribute('disabled'))continue;$name=$input->getAttribute('name');if($name==='')continue;
+            if($name==='installerTabIds[]'&&array_key_exists($name,$choices))continue;
             $type=$input->getAttribute('type');$value=$input->getAttribute('value');
             if(in_array($type,['checkbox','radio'],true)){
                 $checked=array_key_exists($name,$choices)?in_array($value,$choices[$name],true):$input->hasAttribute('checked');
@@ -23,6 +24,7 @@ final class SelectionHttpAssertions
             }elseif(in_array($type,['submit','button','file'],true))continue;
             $pairs[]=rawurlencode($name).'='.rawurlencode($value);
         }
+        foreach($choices['installerTabIds[]']??[]as$value)$pairs[]=rawurlencode('installerTabIds[]').'='.rawurlencode((string)$value);
         return implode('&',$pairs);
     }
     public static function input(SelectionHttpFixture $f,int $request=1,int $revision=0,int $installer=7001,string $mode='new_order'):array

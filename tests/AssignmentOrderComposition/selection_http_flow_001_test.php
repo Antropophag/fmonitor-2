@@ -10,7 +10,8 @@ $f=null;
 try {
     $f=new F();$native=$f->original->selection;$before=$native->rows();$files=$f->original->privateFiles();
     $form=$f->request('GET',A::PATH);assertSameValue(200,$form['status'],'INTENDED_RED native selection form missing after real session setup');A::html($form);
-    foreach(['7001','7002','Инженер теста','synthetic-hr','2026-09-01','shlz-checkbox','shlz-radio'] as $marker)assertSameValue(true,str_contains($form['body'],$marker),'candidate/provenance/public control '.$marker);
+    foreach(['Инженер теста','data-installer-dialog','data-installer-search','data-installer-results','data-search-url="/pilot/objects/4512/assignment-order/installers"','shlz-checkbox','shlz-radio'] as $marker)assertSameValue(true,str_contains($form['body'],$marker),'lazy picker/public control '.$marker);
+    foreach(['Монтажник 7001','Монтажник 7002','synthetic-hr']as$marker)assertSameValue(false,str_contains($form['body'],$marker),'initial form does not dump catalogue '.$marker);
     assertSameValue(['0','new_order'],[A::field($form['body'],'expectedSelectionRevision'),A::field($form['body'],'mode')],'empty form exact intent');
     assertSameValue(1,preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',A::field($form['body'],'requestId')),'fresh request key');
     assertSameValue($before,$native->rows(),'GET writes no facts');
