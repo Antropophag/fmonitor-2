@@ -211,3 +211,15 @@ stand a6d3a7f остаётся healthy. Последний handoff:
 Единственный tracked WIP — broader demoCLI bootstrap; он НЕ reviewed/GREEN,
 architecture check на нём FAIL7SQL+hotspot. Private backup сохранён. Полный verify
 не перезапускался; global goal ACTIVE. Старые handoff ниже по актуальности.
+
+## Продолжение после сна — 2026-09-08
+
+Активное продолжение: [stabilization-after-sleep-2026-09-08.md](stabilization-after-sleep-2026-09-08.md).
+Стенд по-прежнему source `a6d3a7f`; реальные данные и volumes сохраняются.
+Исправлены и независимо reviewed migration18 collation (`58e2595`) и
+migration10 multi-prefix FK collision (`f3e6239`). Current demo bootstrap body
+и whole caller с обязательными children PASS; новый exact-SHA verify ещё должен
+быть завершён. После
+первого VERIFY_OK следующий план:
+[Quality Graph inventory](quality-graph-after-verify-inventory-2026-09-08.md).
+Глобальная цель ACTIVE; более новые runtime/source proof дописываются в этот отчёт.

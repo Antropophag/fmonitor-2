@@ -17,6 +17,10 @@
 | checklist progress/photos | retained and updated | browser journey доказывает 41 монтажный пункт, 7 фото, 85% и reload принятой проекции; `checklist_bulk_online_sequence_manual_test.php` отдельно доказывает durable pending до первого ответа и продолжение predecessor sequence после reload |
 | completion | expanded | акт ПТО + обязательная декларация, 100% после reload |
 | fresh connection durable projection | retained | final MariaDB reconnect and exact counts/state |
+| bootstrap v4/exact-eight catalogue and split prefixes | superseded prerequisite | literal canonical19 catalogue plus three imported-source tables in one generation prefix; active configured-email actor and exact roles/grants; historical split generations are not rewritten |
+| bootstrap prepare→manual registration→open walkthrough | superseded representation | current composition selection supplies launcher mutation/restart/reset proof; mandatory protected child supplies original/correction→atomic application+opening→checklist→completion proof |
+| bootstrap marker/nonce, occupied reset, prefix collision and foreign cleanup | retained | two independent table-comment anchors remain required even in the shared prefix; forged filesystem owner without matching DB nonce never authorizes DROP |
+| predecessor `fm2pilot` cookie attributes and ordinary-router Origin matrix | retained by delegation | mandatory protected child and focused HTTP/auth contracts retain the production browser/session policy; current demo FreshOrder uses its launcher-owned random hidden CSRF plus exact loopback Host/Origin admission and does not manufacture the predecessor cookie |
 
 Уточнение route oracle: canonical rapid root — `/`, он отвечает 302 на
 `/pilot/objects`. `/pilot/` остаётся compatibility shell с 200 и ссылкой на

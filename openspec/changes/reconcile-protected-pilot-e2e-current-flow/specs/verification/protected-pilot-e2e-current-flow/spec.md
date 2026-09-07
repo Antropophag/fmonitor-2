@@ -4,6 +4,22 @@
 
 ## ADDED Requirements
 
+### Requirement: Demo bootstrap SHALL validate current prerequisites and delegate the full journey
+The demo bootstrap verifier SHALL require the literal canonical v19 catalogue,
+the three imported-source tables in the same generation namespace, and an active
+configured-email local actor with exact roles and permissions. It SHALL retain
+launcher ownership, nonce, foreign-data cleanup and permission checks. Its own
+durable mutation MAY stop at current composition selection only while the
+mandatory protected child proves the complete current business journey.
+
+#### Scenario: Legacy bootstrap journey is superseded without losing coverage
+- **WHEN** the demo generation starts, is restarted, reset and cleaned up
+- **THEN** the verifier does not invoke manual registration or require v4/eight tables
+- **AND** current selection persists across restart and reset returns to the initial projection
+- **AND** a missing canonical v19 table makes `status` incomplete despite an intact ready marker
+- **AND** both independent nonce anchors and foreign data remain protected in the shared namespace
+- **AND** the mandatory protected child proves original/correction, atomic opening, checklist and completion
+
 ### Requirement: Защищённый E2E SHALL проходить актуальный основной маршрут
 Verifier SHALL через реальные HTTP/browser-compatible представления пройти очередь, выбрать объект и состав, при необходимости сформировать inline PDF-шаблон, загрузить и подтвердить original, исправить original, вернуться в карточку, выполнить явный атомарный `open_confirmed`, закрыть 41 монтажный пункт и фото до 85%, затем акт ПТО и обязательную декларацию до 100%.
 

@@ -73,6 +73,17 @@ active local identity с exact configured email. Нельзя подставля
 произвольного `REMOTE_USER`. Marker ownership, failure atomicity, foreign data,
 permissions и запреты reset/cleanup во время работы сохраняются.
 
+Current composition требует один generation namespace для native и imported
+source tables. Новые поколения используют общий process/legacy prefix; два
+разных nonce anchor table comments сохраняются. Исторические dual-prefix demo
+generations не переписываются и не мигрируют автоматически.
+
+Bootstrap verifier независимо перечисляет полный literal canonical19 catalogue,
+проверяет active local users, role assignments и exact permissions. `status`
+перепроверяет фактический catalogue: одного `ready.json` version19 недостаточно.
+Для launcher persistence bootstrap выполняет current composition selection;
+полный current flow остаётся обязательным protected child.
+
 Старые v4/exact-eight-table и manual-registration representation assertions
 superseded текущим pilot flow. Их security/history смысл не удаляется: protected
 current E2E и retained child contracts проверяют original/opening/checklist flow;
