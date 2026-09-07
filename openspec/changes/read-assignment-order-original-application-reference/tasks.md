@@ -6,4 +6,4 @@
 - [x] 2.2 Original/selection regression, architecture/lint/diff, native worker cleanup evidence.
 - [x] 2.3 Independent Gate5 и commit; parent application/HTTP read scope остаются отдельно.
 
-- [ ] 2.4 Исправить discovered clone issuer sharing: native RED/Gate3, own/foreign proof GREEN, regression и supplemental Gate5.
+- [x] 2.4 Исправить discovered clone issuer sharing: native RED/Gate3, own/foreign proof GREEN, regression и supplemental Gate5.
