@@ -19,6 +19,8 @@ final class FreshOrderHttpCoordinator extends PilotHttpCoordinator
             return $bytes===false?OriginalUploadHttpHandler::error($r,503,'SERVICE_UNAVAILABLE'):FreshOrderHttpHandler::response($r,200,$bytes,['Content-Type'=>'text/javascript; charset=UTF-8']);
         }
         $new=\preg_match('#^/pilot/objects/([1-9][0-9]*)/(?:assignment-order/selection|assignment-orders/([1-9][0-9]*)/template)$#D',$r->path,$m)===1;
+        $ownedLegacy=\preg_match('#^/pilot/objects/[1-9][0-9]*/(?:assignment-order/prepare|assignment-orders/[1-9][0-9]*/(?:registration|artifacts/(?:order|appendix|signed_original))|control-engineer|open)$#D',$r->path)===1;
+        if(!$new&&!$ownedLegacy)return $this->next->handle($r);
         if($this->environment->read('FMONITOR_FRESH_ORDER_FLOW')!=='1')return $new?FreshOrderHttpHandler::response($r,404,"Not found.\n",['Content-Type'=>'text/plain; charset=UTF-8']):$this->next->handle($r);
         $handler=new FreshOrderHttpHandler($this->environment);
         if($new){$object=FreshOrderFormInput::positive($m[1]);$order=isset($m[2])?FreshOrderFormInput::positive($m[2]):null;
