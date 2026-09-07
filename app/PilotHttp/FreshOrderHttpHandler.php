@@ -33,7 +33,7 @@ final readonly class FreshOrderHttpHandler
                 $result=$resources->template($model['caseId'],$order,$actor);
                 if($result['status']!=='generated')return $this->domainError($r,$result,$object);
                 return self::response($r,200,$result['bytes'],['Content-Type'=>'application/pdf',
-                    'Content-Disposition'=>'attachment; filename="assignment-order.pdf"; filename*=UTF-8\'\''.\rawurlencode($result['filename'])]);
+                    'Content-Disposition'=>'inline; filename="assignment-order.pdf"; filename*=UTF-8\'\''.\rawurlencode($result['filename'])]);
             }
             $command=FreshOrderFormInput::command($f,$object,$actor);
             if(isset($command['error']))return $this->error($r,$command['error'],$command['reason'],$object);

@@ -25,7 +25,7 @@ try {
     A::rowsPreserved($before,$after,$allowed);assertSameValue($files,$f->original->privateFiles(),'selection creates no files');
     assertSameValue(303,$f->request('POST',A::PATH,$submitted)['status'],'semantic HTTP replay');assertSameValue($after,$native->rows(),'replay silent');
     $form=$f->request('GET',A::PATH);A::html($form);assertSameValue(['1','replace_pending'],[A::field($form['body'],'expectedSelectionRevision'),A::field($form['body'],'mode')],'pending form exact intent');
-    assertSameValue(true,str_contains($form['body'],'/assignment-orders/81/template'),'optional PDF separate endpoint');
+    assertSameValue(true,str_contains($form['body'],'/assignment-orders/81/template'),'optional PDF separate endpoint');assertSameValue(1,preg_match('#<form[^>]+action="/pilot/objects/4512/assignment-orders/81/template"[^>]+target="_blank"#',$form['body']),'template opens in a separate browsing context');
     assertSameValue(303,$f->request('POST',A::PATH,A::body(A::input($f,2,1,7002,'replace_pending')))['status'],'pending replacement');
     $read=O\AssignmentOrderRegisteredCompositionReaderFactory::create($native->db)->find(4512,82);
     assertSameValue(['found',82,[7002]],[$read->status->value,$read->assignmentOrderId,$read->installerIds],'replacement immutable identity');
@@ -36,7 +36,7 @@ try {
     $pdf=$f->request('POST','/pilot/objects/4512/assignment-orders/82/template',http_build_query(['csrfToken'=>$f->csrf]));
     assertSameValue(200,$pdf['status'],'real native template HTTP');assertSameValue('application/pdf',$pdf['headers']['content-type']??null,'PDF media');
     assertSameValue((string)strlen($pdf['body']),$pdf['headers']['content-length']??null,'exact PDF length');assertSameValue(true,str_starts_with($pdf['body'],'%PDF-'),'real PDF');
-    assertSameValue(true,str_contains($pdf['headers']['content-disposition']??'',"filename*=UTF-8''"),'RFC5987 attachment');
+    assertSameValue(true,str_starts_with($pdf['headers']['content-disposition']??'','inline;'),'template opens inline instead of triggering a download');assertSameValue(true,str_contains($pdf['headers']['content-disposition']??'',"filename*=UTF-8''"),'RFC5987 inline filename');
     TemplateGenerationFixture::pdfMarker($pdf['body'],'Монтажник 7002');TemplateGenerationFixture::pdfMarker($pdf['body'],'Инженер теста');
     assertSameValue(['status'=>'found','date'=>$today],C\ProductionAssignmentOrderTemplateFactory::dateReader($native->db)->find(4512,82),'authorized HTTP generated date');
     A::rowsPreserved($prePdf,$native->rows(),['fm2_process_events']);assertSameValue($files,$f->original->privateFiles(),'PDF not stored');
