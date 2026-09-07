@@ -7,10 +7,10 @@ merge и branch-protection mutation не выполнялись.
 ## Исходное состояние
 
 Локальный Quality Graph ref:
-`f07548135fe930e7a8fb9bb97271c9f05a8ebfc1`. Сравниваемый stabilization HEAD:
-`8c0cc63f0454b0a620dafa399d5d2462d8447feb`. Общий merge-base:
+`f07548135fe930e7a8fb9bb97271c9f05a8ebfc1`. Сравниваемый exact verification
+candidate: `ccc8dfbfd24765f509ae7e95113fb7ea8f0ee6b4`. Общий merge-base:
 `2bff0a0e6baaab61679321001c57cbc916609295`; от него QG lineage содержит105
-commit, stabilization линия до указанного SHA —1108. Ref не является ancestor текущего HEAD.
+commit, candidate линия до указанного SHA —1112. Ref не является ancestor candidate.
 
 Текущий HEAD не содержит основных QG-файлов. Их источник следует читать через
 `git show f07548135fe930e7a8fb9bb97271c9f05a8ebfc1:<path>`:
@@ -26,7 +26,17 @@ commit, stabilization линия до указанного SHA —1108. Ref не
   `quality_graph_publisher.py`;
 - `tests/Verification/quality_graph_governance_001_test.php`,
   `quality_graph_publisher_001_test.php`, `quality_graph_toolchain_001_test.php`,
-  `quality_graph_publisher_provenance_001_test.py`.
+  `quality_graph_publisher_provenance_001_test.py`,
+  `quality_graph_runner_security_001_test.php`;
+- `pyproject.toml`, `uv.lock` для exact v0.1.7 toolchain.
+
+Минимальный controlled import состоит именно из перечисленных spec/OpenSpec,
+graph/manifest/generated publisher, трёх workflows, трёх repository checkers,
+пяти verifier files и pinned Python toolchain. Два существующих файла нельзя
+заменять ref-версиями целиком: в текущем `Makefile` нужно добавить только QG
+phony/help и public targets с вызовом graph checker из `architecture-check`, а в
+текущем `.gitignore` — только `.venv/` и `.quality-graph/.cache/`. Текущие verify,
+deployment и test seams сохраняются.
 
 Это требует полноценной reconciliation QG lineage с exact post-VERIFY candidate,
 а не простого включения workflow-файлов.
@@ -63,10 +73,15 @@ validation. Повторно спрашивать эти продуктовые 
    focused approvals `reviews/tests/QUALITY-GRAPH-GOVERNANCE-001-v34.md`, `v35.md`
    и `QUALITY-GRAPH-GOVERNANCE-001-publisher-provenance-v2.md` покрывают отдельные
    metadata/runner/publisher slices, не whole current integration.
-3. Исправить post-review evidence envelope. Ref разрешает весь
-   `docs/operations/`, тогда как spec допускает только code-review record,
-   receipt chain, OpenSpec task status и точно названные parity/final-verification
-   evidence. Нужны отдельные RED, Gate3 и GREEN.
+3. Reconcile post-review evidence envelope. Промежуточный Gate5 finding относился
+   к более раннему checker, разрешавшему весь `docs/operations/`. Exact final ref
+   уже использует literal allowlist в `tools/delivery/check-evidence.php`: только
+   `quality-graph-governance-final-verification-2026-09-04.md` и
+   `quality-graph-representative-pr-phase-a-2026-09-03.md`, плюс exact code-review,
+   receipt-chain и OpenSpec tasks paths. Это fail-closed улучшение, но список
+   привязан к старой линии и не включает будущую phase-B evidence. Для current
+   lineage нужны честный RED, fresh Gate3 и минимальная GREEN current exact
+   allowlist; произвольный directory/pattern allowance запрещён.
 4. Создать immutable `delivery/evidence/<slice>/*.json` receipt для exact
    integrated implementation. Связать spec, exhaustive Git-derived test diff,
    RED, independent test review, GREEN, exhaustive implementation diff, exact
@@ -90,6 +105,27 @@ validation. Повторно спрашивать эти продуктовые 
    branch. До этого она остаётся явно incomplete. После появления topology нужно
    доказать реальный `workflow_run` watch/publish, dashboard/check provenance и
    same-head isolation. Затем можно отдельно предложить required-check cutover.
+
+Один возможный способ сохранить прозрачную ancestry — сначала провести bounded
+controlled-import package, затем focused evidence-envelope correction. Это не
+отдельное требование владельца и не обязательная декомпозиция. Координатор может
+выбрать один вертикальный governance seam, если он обеспечивает реальный RED на
+current candidate base, независимый Gate3 до реализации, GREEN после approval,
+fresh Gate5 exact implementation commit и полный Git-derived receipt. Нельзя
+подменять behavioral RED тестом, который лишь сравнивает hashes импортируемых
+файлов и зеркалит реализацию.
+
+Targeted проверки после авторизации соответствующих стадий:
+
+- `php -l tools/delivery/check-evidence.php` и `check-quality-graph.php`;
+- `php tests/Verification/quality_graph_governance_001_test.php`;
+- `php tests/Verification/quality_graph_publisher_001_test.php`;
+- `php tests/Verification/quality_graph_runner_security_001_test.php`;
+- `uv run python tests/Verification/quality_graph_publisher_provenance_001_test.py`;
+- после `uv sync --frozen` — `quality_graph_toolchain_001_test.php` и
+  `make quality-graph-validate`;
+- затем `make delivery-evidence-check`, `make architecture-check`, полный
+  `make verify` и `git diff --check` на exact reviewed lineage.
 
 ## Ограничения
 

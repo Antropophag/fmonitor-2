@@ -96,3 +96,37 @@ PASS exit0 за144.03s. Лог `runtime/bootstrap-whole-002.log`, SHA256
 2. Только после literal VERIFY_OK — exact image, backup/migration19/deployment,
    restart/golden доказательства и дальнейшая CI/Quality Graph интеграция в рамках
    исходных разрешений. Глобальная цель остаётся ACTIVE.
+
+## Exact-SHA full verify — запущен
+
+Reviewed implementation commit `97519bb`, последующий documentation/task-status
+commit — candidate `ccc8dfbfd24765f509ae7e95113fb7ea8f0ee6b4`.
+Clean checkout `/Users/antropophag/code/fmonitor-2-verify-stabilization` переведён
+с795ac3e на этот SHA; tracked/untracked status перед запуском пустой. Pinned
+TCPDF6.11.4 сохранён. Запущен ровно `make verify` с `/opt/homebrew/bin` в PATH.
+
+Private log: `runtime/verify-ccc8dfb-001.log`; receipt:
+`runtime/verify-ccc8dfb-001.json` (source, checkout, command, start time; final
+exit/time добавляются runner после завершения). Первые stages test-db-reset,
+migrate и architecture-check PASS. Итог ещё не получен; не запускать параллельный
+DB/full verify поверх активного прогона. Наличие этого checkpoint не завершает цель
+и не даёт права объявить VERIFY_OK до literal результата.
+
+## Full verify ccc8dfb — завершён, один setup failure
+
+`make verify` завершился exit2 за1169.41s; log SHA256
+`f89fe3aadd0cc7fd4ded53b576abc13a957add538d1d40cb16bc7bbc01a166cb`.
+PASS: test-db-reset, migrate, architecture-check, lint, unit-test, db-test,
+e2e-test, diff-check. Единственный FAIL — characterization-test:
+`rapid-pilot/verify-checklist-current-crew.php` не загрузил
+`InspectionPhotoContentIndexSchemaMigration` перед `ChecklistSync::ensureSchema()`.
+Это setup failure отдельного verifier, не новая ошибка domain behavior.
+
+Исправление — один require canonical `app/autoload.php` в verifier. Историческая
+v8 fixture и assertions current crew202 / historical item installer101 не менялись.
+Focused run PASS0.2s; log `runtime/checklist-current-crew-autoload-green-001.log`,
+SHA256 `883381616a1484cecd6828431a22231f02b3682c2910243ffc2090916d782ff7`.
+Independent supplemental test/code reviews APPROVED:
+`reviews/{tests,code}/CHECKLIST-CURRENT-CREW-AUTOLOAD-SUPPLEMENTAL-2026-09-08.md`.
+Далее новый commit с этим fix и новый полный exact-SHA verify. CCC не объявляется
+VERIFY_OK; установленный a6d3a7f и данные владельца остаются прежними.
