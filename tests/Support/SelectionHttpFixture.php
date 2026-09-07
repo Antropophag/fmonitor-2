@@ -47,7 +47,10 @@ final class SelectionHttpFixture
                 'FMONITOR_ARTIFACT_STORAGE_ROOT'=>$this->original->privateRoot,'PHP_CLI_SERVER_WORKERS'=>'1']);
             if($extraEnvironment!==null)$env=array_replace($env,$extraEnvironment($this->original));
             $log=$this->original->control.'/http.log';
-            $this->server=proc_open([PHP_BINARY,'-d','display_errors=0','-d','log_errors=1','-d','post_max_size=22M','-S','127.0.0.1:'.$this->port,$root.'/rapid-pilot/router.php'],
+            // PHP proc_open drops empty environment values; env preserves explicit empty prefixes.
+            $command=['env'];foreach($env as $key=>$value)if($value==='')$command[]=$key.'=';
+            array_push($command,PHP_BINARY,'-d','display_errors=0','-d','log_errors=1','-d','post_max_size=22M','-S','127.0.0.1:'.$this->port,$root.'/rapid-pilot/router.php');
+            $this->server=proc_open($command,
                 [0=>['file','/dev/null','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes,$root,$env);
             if(!is_resource($this->server))throw new \RuntimeException('Fixture server unavailable');
             $deadline=microtime(true)+5;
