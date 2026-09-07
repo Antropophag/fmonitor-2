@@ -194,9 +194,9 @@ $db->close();
 $migration = hoccRun(['make', '--no-print-directory', 'migrate'], $root, $environment);
 $migrationEvidence = json_encode($migration, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 assertSameValue(
-    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":18,\"appliedVersions\":[]}\n", 'stderr'=>''],
+    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":19,\"appliedVersions\":[]}\n", 'stderr'=>''],
     $migration,
-    "SETUP_FAILURE: prepared canonical v18 must return the exact no-op process result; evidence=$migrationEvidence",
+    "SETUP_FAILURE: prepared canonical v19 must return the exact no-op process result; evidence=$migrationEvidence",
 );
 
 $canonicalTables = [

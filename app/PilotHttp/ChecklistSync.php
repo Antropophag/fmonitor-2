@@ -4,7 +4,7 @@ require_once __DIR__.'/MariaDbInstallationCaseIdResolver.php';require_once __DIR
 foreach(['InspectionEvidenceClock','InspectionRecording','InspectionEvidenceView','InspectionEvidenceApplication','CompleteInspectionItem','ItemCompletionResult','InstallerEvidence','ItemCompletionEvidence','InspectionItemCommandPolicy','ItemCompletionEvidenceCodec','InspectionEvidence','MariaDbInspectionAuthorization','MariaDbInspectionTransaction','MariaDbInspectionCaseDirectory','MariaDbInspectionTemplateDirectory','MariaDbInspectionEvidenceWriter','MariaDbInspectionEvidenceReader','MariaDbChecklistMutationFacts','MariaDbInspectionEvidenceEnvironment','ProductionInspectionEvidenceConfig','ProductionInspectionEvidenceFactory']as$file)require_once \dirname(__DIR__).'/InspectionEvidence/'.$file.'.php';
 foreach(['AssignmentOrderApplicationReadResult','AssignmentOrderApplicationReader','AssignmentOrderApplicationPayload','MariaDbAssignmentOrderApplicationSql','MariaDbAssignmentOrderApplicationReader','AssignmentOrderApplicationReaderFactory']as$file)require_once \dirname(__DIR__).'/AssignmentOrderComposition/'.$file.'.php';
 
-use FMonitor2\InspectionEvidence\{CompleteInspectionItem,InspectionEvidenceClock,InspectionRecording,MariaDbChecklistMutationFacts,ProductionInspectionEvidenceConfig,ProductionInspectionEvidenceFactory};use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
+use FMonitor2\InspectionEvidence\{CompleteInspectionItem,InspectionEvidenceClock,InspectionRecording,MariaDbChecklistMutationFacts,ProductionInspectionEvidenceConfig,ProductionInspectionEvidenceFactory};use FMonitor2\InstallationProcess\{InspectionEvidenceSchemaMigration,InspectionPhotoContentIndexSchemaMigration};
 final class ChecklistSync
 {
     private const SECTION_ITEMS=[1=>[28,29,30,31,32,33,34,35,36],2=>[37,38,39,40,41],3=>[1,2,3,4,5,6],4=>[7,8,9,10],5=>[11,12,13,14,15],6=>[16,17,18,19,20,21],7=>[22,23,24,25,26,27],8=>[42]];
@@ -26,7 +26,7 @@ final class ChecklistSync
     }
     public function ensureSchema():void
     {
-        if (!InspectionEvidenceSchemaMigration::isCompleteCompatible($this->db, $this->prefix)) {
+        if (!InspectionPhotoContentIndexSchemaMigration::isCompleteCompatible($this->db, $this->prefix) && !InspectionEvidenceSchemaMigration::isCompleteCompatible($this->db, $this->prefix)) {
             throw new PilotHttpInfrastructureUnavailable('INSPECTION_EVIDENCE_SCHEMA_REQUIRED');
         }
     }

@@ -15,7 +15,7 @@ final class ProductionPilotMigrationCatalogue
             5=>BitrixWorkforceHistorySchemaMigration::class,
             6=>IdentityAccessSchemaMigration::class,
             7=>ChecklistTemplateSchemaMigration::class,
-            8=>InspectionEvidenceSchemaMigration::class,
+            8=>static fn(\mysqli $db,string $prefix):array=>InspectionPhotoContentIndexSchemaMigration::isCompleteCompatible($db,$prefix)?['applied'=>false,'schemaVersion'=>8,'tablesCreated'=>[],'tablesUpgraded'=>[]]:InspectionEvidenceSchemaMigration::apply($db,$prefix),
             9=>InspectionPlanningSchemaMigration::class,
             10=>InstallationCompletionSchemaMigration::class,
             11=>static fn(\mysqli $db,string $prefix):array=>ClassificationProvenanceSchemaMigration::apply($db,$prefix,static function():void{}),
@@ -26,6 +26,7 @@ final class ProductionPilotMigrationCatalogue
             16=>AssignmentOrderApplicationSchemaMigration::class,
             17=>InstallationCompletionDetailsSchemaMigration::class,
             18=>AssignmentOrderSelectionUnknownEmploymentSchemaMigration::class,
+            19=>InspectionPhotoContentIndexSchemaMigration::class,
         ];
     }
 }
