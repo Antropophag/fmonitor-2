@@ -28,10 +28,10 @@ final class AssignmentOrderOriginalStoredRows
             'at' => self::time($row['attempted_at_utc'])];
     }
 
-    public static function audit(AssignmentOrderOriginalSql $sql, string $requestId, array $request): void
+    public static function audit(AssignmentOrderOriginalSql $sql, string $requestId, array $request, bool $lock = false): void
     {
         $result = $request['result'];
-        $rows = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$sql->quote($requestId));
+        $rows = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$sql->quote($requestId).($lock ? ' FOR UPDATE' : ''));
         $denial = $result->reasonCode() === AssignmentOrderOriginalReason::AUTHORIZATION_DENIED;
         $matches = 0;
         foreach ($rows as $row) {
@@ -54,9 +54,9 @@ final class AssignmentOrderOriginalStoredRows
         if ($actual !== $expected) AssignmentOrderOriginalSql::fail();
     }
 
-    public static function event(AssignmentOrderOriginalSql $sql, AssignmentOrderOriginalAcceptedCommit $commit): void
+    public static function event(AssignmentOrderOriginalSql $sql, AssignmentOrderOriginalAcceptedCommit $commit, bool $lock = false): void
     {
-        $rows = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_events').' WHERE revision_id='.$sql->quote($commit->newRevisionId));
+        $rows = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_events').' WHERE revision_id='.$sql->quote($commit->newRevisionId).($lock ? ' FOR UPDATE' : ''));
         if (count($rows) !== 1) AssignmentOrderOriginalSql::fail();
         $row = $rows[0];
         if ([$row['event_type'], $row['root_original_id'], $row['revision_id'], self::integer($row['installation_case_id']),

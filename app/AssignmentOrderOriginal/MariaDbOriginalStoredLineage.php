@@ -7,9 +7,10 @@ namespace FMonitor2\AssignmentOrderOriginal;
 /** @internal Verifies every immutable revision and its atomic backing in one snapshot. */
 final class AssignmentOrderOriginalStoredLineage
 {
-    public static function load(AssignmentOrderOriginalSql $sql, string $where): AssignmentOrderOriginalMariaDbLineage
+    public static function load(AssignmentOrderOriginalSql $sql, string $where, bool $lock = false): AssignmentOrderOriginalMariaDbLineage
     {
-        $roots = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_roots').' WHERE '.$where);
+        $suffix = $lock ? ' FOR UPDATE' : '';
+        $roots = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_roots').' WHERE '.$where.$suffix);
         if (count($roots) > 1) AssignmentOrderOriginalSql::fail();
         if ($roots === []) return new AssignmentOrderOriginalMariaDbLineage(AssignmentOrderOriginalLookupStatus::NOT_FOUND);
         $root = $roots[0];
@@ -19,18 +20,18 @@ final class AssignmentOrderOriginalStoredLineage
         $root['assignment_order_id'] = AssignmentOrderOriginalStoredRows::integer($root['assignment_order_id']);
         $created = AssignmentOrderOriginalStoredRows::time($root['created_at_utc']);
         $revisions = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_revisions')
-            .' WHERE root_original_id='.$sql->quote($root['root_original_id']).' ORDER BY revision_number');
+            .' WHERE root_original_id='.$sql->quote($root['root_original_id']).' ORDER BY revision_number'.$suffix);
         $ids = []; $previous = null;
         foreach ($revisions as $index => $row) {
             $commit = self::commit($root, $row);
             if ($commit->newRevisionNumber !== $index + 1 || $commit->previousRevisionId !== $previous
                 || in_array($commit->newRevisionId, $ids, true) || ($index === 0 && $commit->uploadedAt !== $created)) AssignmentOrderOriginalSql::fail();
-            $requests = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_requests').' WHERE request_id='.$sql->quote($commit->requestId));
+            $requests = $sql->rows('SELECT * FROM '.$sql->table('fm2_assignment_order_original_requests').' WHERE request_id='.$sql->quote($commit->requestId).$suffix);
             if (count($requests) !== 1) AssignmentOrderOriginalSql::fail();
             $request = AssignmentOrderOriginalStoredRows::request($requests[0]);
             AssignmentOrderOriginalStoredRows::acceptedRequest($request, $commit);
-            AssignmentOrderOriginalStoredRows::audit($sql, $commit->requestId, $request);
-            AssignmentOrderOriginalStoredRows::event($sql, $commit);
+            AssignmentOrderOriginalStoredRows::audit($sql, $commit->requestId, $request, $lock);
+            AssignmentOrderOriginalStoredRows::event($sql, $commit, $lock);
             $ids[] = $commit->newRevisionId;
             $previous = $commit->newRevisionId;
             $root['current_document_date'] = $commit->documentDate;

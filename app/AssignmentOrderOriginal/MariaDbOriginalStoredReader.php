@@ -10,15 +10,16 @@ require_once __DIR__.'/MariaDbOriginalStoredLineage.php';
 /** @internal Backing-aware reads inside the caller's explicitly owned snapshot. */
 final readonly class AssignmentOrderOriginalStoredReader
 {
-    public function __construct(private AssignmentOrderOriginalSql $sql) {}
+    public function __construct(private AssignmentOrderOriginalSql $sql, private bool $lock = false) {}
 
     public function request(string $id): AssignmentOrderOriginalResultLookup
     {
-        $rows = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_requests').' WHERE request_id='.$this->sql->quote($id));
+        $suffix = $this->lock ? ' FOR UPDATE' : '';
+        $rows = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_requests').' WHERE request_id='.$this->sql->quote($id).$suffix);
         if (count($rows) > 1) AssignmentOrderOriginalSql::fail();
-        $revisions = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_revisions').' WHERE request_id='.$this->sql->quote($id));
+        $revisions = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_revisions').' WHERE request_id='.$this->sql->quote($id).$suffix);
         if ($rows === []) {
-            $audits = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$this->sql->quote($id));
+            $audits = $this->sql->rows('SELECT * FROM '.$this->sql->table('fm2_assignment_order_original_audits').' WHERE request_id='.$this->sql->quote($id).$suffix);
             if ($revisions !== []) AssignmentOrderOriginalSql::fail();
             foreach ($audits as $row) {
                 $audit = AssignmentOrderOriginalAttemptAuditRows::parse($row, $id);
@@ -29,7 +30,7 @@ final readonly class AssignmentOrderOriginalStoredReader
         if ($rows[0]['request_id'] !== $id) AssignmentOrderOriginalSql::fail();
         $request = AssignmentOrderOriginalStoredRows::request($rows[0]);
         $result = $request['result'];
-        AssignmentOrderOriginalStoredRows::audit($this->sql, $id, $request);
+        AssignmentOrderOriginalStoredRows::audit($this->sql, $id, $request, $this->lock);
         if ($result->status() === AssignmentOrderOriginalStatus::ACCEPTED) {
             if (count($revisions) !== 1 || $revisions[0]['revision_id'] !== $result->currentRevisionId()
                 || $revisions[0]['root_original_id'] !== $result->rootOriginalId()) AssignmentOrderOriginalSql::fail();
@@ -55,7 +56,7 @@ final readonly class AssignmentOrderOriginalStoredReader
 
     public function root(string $id): AssignmentOrderOriginalMariaDbLineage
     {
-        $line = AssignmentOrderOriginalStoredLineage::load($this->sql, 'root_original_id='.$this->sql->quote($id));
+        $line = AssignmentOrderOriginalStoredLineage::load($this->sql, 'root_original_id='.$this->sql->quote($id), $this->lock);
         if ($line->status() === AssignmentOrderOriginalLookupStatus::NOT_FOUND) {
             foreach (['revisions', 'requests'] as $table) {
                 if ($this->sql->rows('SELECT root_original_id FROM '.$this->sql->table('fm2_assignment_order_original_'.$table)
@@ -67,7 +68,7 @@ final readonly class AssignmentOrderOriginalStoredReader
 
     public function assignment(int $caseId, int $orderId): AssignmentOrderOriginalMariaDbLineage
     {
-        return AssignmentOrderOriginalStoredLineage::load($this->sql, 'installation_case_id='.$caseId.' AND assignment_order_id='.$orderId);
+        return AssignmentOrderOriginalStoredLineage::load($this->sql, 'installation_case_id='.$caseId.' AND assignment_order_id='.$orderId, $this->lock);
     }
 
     public function revision(string $id): AssignmentOrderOriginalMariaDbLineage
