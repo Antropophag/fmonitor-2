@@ -19,9 +19,11 @@ final class MariaDbPilotLegacyObjectSchemaReadiness
         $expected = [
             'id|bigint(20) unsigned|NO', 'ordadr_address|varchar(500)|YES',
             'entrance|varchar(80)|YES', 'regnumber|varchar(120)|YES',
-            'workdatestart|varchar(40)|YES', 'workdateendadjusted|varchar(40)|YES',
+            'workdatestart|varchar(40)|YES', 'workdatestartadjusted|varchar(40)|YES', 'workdateendadjusted|varchar(40)|YES',
             'plan_finish_date|varchar(40)|YES', 'workdatefinish|varchar(40)|YES',
             'ptoactdate|varchar(40)|YES', 'responsstroicontrol|varchar(80)|YES',
+            'floors|varchar(40)|YES','weight|varchar(40)|YES','speed|varchar(40)|YES',
+            'pittype|varchar(40)|YES','pitmaterial|varchar(40)|YES','paired|varchar(40)|YES',
         ];
         if ($actual !== $expected) throw new DatabaseUnavailable('Pilot legacy object schema is unavailable.');
     }

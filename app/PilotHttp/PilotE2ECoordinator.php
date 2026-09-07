@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
-require_once __DIR__.'/MariaDbConstructionControlQueue.php';
 use FMonitor2\InstallationProcess\ArtifactUnavailableException;
 use FMonitor2\InstallationProcess\ArtifactIntegrityException;
 use FMonitor2\InstallationProcess\ArtifactNotFoundException;
