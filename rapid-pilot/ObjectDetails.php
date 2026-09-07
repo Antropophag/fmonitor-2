@@ -63,7 +63,7 @@ final class RapidPilotObjectDetails
 
     private static function identityFacts(string $identity):array
     {
-        $document=new DOMDocument();$previous=libxml_use_internal_errors(true);$document->loadHTML('<?xml encoding="utf-8"?>'.$identity,LIBXML_HTML_NOIMPLIED|LIBXML_HTML_NODEFDTD);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new DOMXPath($document);$address=trim($xpath->query('//header/div/p')?->item(0)?->textContent??'');$registrationText=trim($xpath->query('//header/div/span')?->item(0)?->textContent??'');preg_match('/([0-9]+)$/u',$registrationText,$match);$status=$xpath->query('(//header//span[contains(@class,"shlz-status")])[last()]')?->item(0);$statusHtml=$status?$document->saveHTML($status):'';return['address'=>$address,'registration'=>$match[1]??$registrationText,'status'=>is_string($statusHtml)?$statusHtml:''];
+        $document=new DOMDocument();$previous=libxml_use_internal_errors(true);$document->loadHTML('<?xml encoding="utf-8"?>'.$identity,LIBXML_HTML_NOIMPLIED|LIBXML_HTML_NODEFDTD);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new DOMXPath($document);$address=trim($xpath->query('//header/div/p')?->item(0)?->textContent??'');$registrationText=trim($xpath->query('//header/div/span')?->item(0)?->textContent??'');$registration=preg_replace('/^Регистрационный номер\s+/u','',$registrationText)??$registrationText;$status=$xpath->query('(//header//span[contains(@class,"shlz-status")])[last()]')?->item(0);$statusHtml=$status?$document->saveHTML($status):'';return['address'=>$address,'registration'=>$registration,'status'=>is_string($statusHtml)?$statusHtml:''];
     }
 
     private static function read(int $objectId): ?array
