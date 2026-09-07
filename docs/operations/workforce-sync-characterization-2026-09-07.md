@@ -49,3 +49,25 @@ epic or rely on fictional happy paths as proof of live Bitrix readiness.
 Parent application/opening and full original HTTP remain prerequisites on their
 own critical path. Native original history/download dependency is now Gate5 approved.
 No full VERIFY_OK or launch approval follows from this characterization.
+
+## Public documentation check —2026-09-07
+
+Official user.get documentation confirms scalar `sort=ID` and `order=ASC`,
+`select` as an array, and fixed50-record pages with start offsets. The old epic's
+`order[ID]=ASC` candidate must not be copied into an executable transport contract.
+Unspecified sorting defaults to ascending ID: the earlier phrase about missing
+stable ordering means the adapter does not explicitly request it, not proof that
+Bitrix currently returns unsorted pages. Inaccessible/nonexistent selected fields
+can be omitted without API error, so transport validation must distinguish missing
+required delivery fields without silently inventing values.
+[Official user.get](https://apidocs.bitrix24.ru/api-reference/user/user-get.html).
+
+The official scope table includes EMAIL, UF_XING, UF_EMPLOYMENT_DATE and
+UF_DEPARTMENT in user_basic, whose methods cannot add/update users. Separate
+user.userfield scope concerns custom fields; no new broad permission is inferred
+for the already listed system fields.
+[Official User Scope](https://apidocs.bitrix24.ru/api-reference/user/user-scope.html).
+
+This check used only public documentation, not the configured portal/webhook.
+It supports planning an explicit delivery contract but does not prove actual current
+payload completeness, credential scopes, staffing or live synchronization success.
