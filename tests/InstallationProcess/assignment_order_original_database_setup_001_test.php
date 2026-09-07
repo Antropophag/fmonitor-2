@@ -334,6 +334,7 @@ try {
     assertSameValue([['user_id'=>'18','phone'=>''],['user_id'=>'31','phone'=>'']],$fixture->query("SELECT user_id,phone FROM `{$prefix}fm2_pilot_users` WHERE user_id IN (18,31) ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),'Complete literal users oracle includes phone.');
     assertSameValue([['role_id'=>'5301','description'=>'TEST-USER'],['role_id'=>'5302','description'=>'TEST-USER']],$fixture->query("SELECT role_id,description FROM `{$prefix}fm2_pilot_roles` WHERE role_id IN (5301,5302) ORDER BY role_id")->fetch_all(MYSQLI_ASSOC),'Complete literal roles oracle includes description.');
     assertSameValue([['user_id'=>'18','role_id'=>'5301','origin'=>'TEST-USER'],['user_id'=>'31','role_id'=>'5302','origin'=>'TEST-USER']],$fixture->query("SELECT user_id,role_id,origin FROM `{$prefix}fm2_pilot_user_roles` WHERE user_id IN (18,31) ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),'Complete literal role-assignment oracle includes origin.');
+    assertSameValue([['role_id'=>'5301','permission'=>'assignment_order.original.correct'],['role_id'=>'5301','permission'=>'assignment_order.original.upload']],$fixture->query("SELECT role_id,permission FROM `{$prefix}fm2_pilot_role_permissions` WHERE role_id=5301 ORDER BY BINARY permission")->fetch_all(MYSQLI_ASSOC),'Fixture seeds exact active local original permissions.');
     assertSameValue(
         [
             ['user_id'=>'18','capability'=>'assignment_order.original.correct','position_snapshot'=>null],
