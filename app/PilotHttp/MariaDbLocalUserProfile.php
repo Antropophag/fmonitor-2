@@ -21,7 +21,7 @@ final readonly class MariaDbLocalUserProfile
         $statement->execute();
         $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         if (\count($rows) !== 1 || \trim((string) $rows[0]['full_name']) === '') return null;
-        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email']);
+        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email'], AccessPolicy::forUser($this->connection,$this->tablePrefix,(int)$rows[0]['user_id']));
     }
     public function readPrincipal(string $principal): ?HttpUser
     {
