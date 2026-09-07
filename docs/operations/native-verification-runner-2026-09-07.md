@@ -22,3 +22,12 @@ unit дополненNode с агрегированным failure. List unit/db 
 набор, который выполняется. Новые19 native PHP входят в db,3command PHP+Node в unit.
 Полный реальный canonical run, architecture и independent Gate5 — следующие gates;
 никакого runtime/schema/deployment/remote изменения этот change не делает.
+
+## Gate5 feedback
+
+Reviewer нашёл Bash3.2/set-u edge для existing empty Node/unit/db inventories.
+`reviews/code/VERIFICATION-NATIVE-SUITES-001.md`: CHANGES_REQUESTED; требуется
+новая sensitivity case/RED/Gate3 и guarded empty-array expansion. Текущий real
+canonical sourcea8e6e92 уже исполнил все22nativePHP+Node безfailure;
+`native-members-observed.json` фиксирует23 наблюдения. Полный run ещё не завершён.
+До terminal source/tests сохраняются неизменными;7-test GREEN не закрывает этот edge.
