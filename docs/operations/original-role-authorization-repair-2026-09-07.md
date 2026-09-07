@@ -35,3 +35,19 @@ allowing browser checks with the same trusted-loopback transport as the stand.
 This is focused manual-pilot evidence. Full original verification matrices and
 normal production gates are not established by these tests. Full golden-path
 completion remains unproven beyond the recorded successful actions.
+
+## Deployed receipt
+
+Source `778d39045db35b786ce5539d5aa68af2fd512bf9`, image
+`sha256:972b26e842042b4779553a09829d46c3fc4fe219c28cdb0ad887163b2705a15c`.
+Pilot is healthy. All 719 runtime file hashes match the exact committed source.
+The same read-only native authorizer probe against the owner's actual account
+changed from DENIED before deployment to ALLOWED after deployment for both upload
+and correction. The agent changed no owner role assignment or original document.
+The preceding image remains available as `fmonitor2-manual:checkpoint-46c1334`.
+
+The continuing synthetic browser run accepted original, correction, application,
+reapplication and opening, then stopped at checklist initialization. A separate
+real-stand GET `/pilot/assets/checklist.js` returned 503 because the router still
+required an obsolete source-string splice. That blocker is being repaired
+separately; this receipt does not claim the checklist golden path passed.

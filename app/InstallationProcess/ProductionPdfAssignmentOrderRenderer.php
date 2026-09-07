@@ -16,7 +16,8 @@ final class ProductionPdfAssignmentOrderRenderer
         $engineer=$input['controlEngineer'];
         $date=$this->displayDate((string)$input['assignmentOrderDate']);
 
-        $pdf=new \TCPDF('P','mm','A4',true,'UTF-8',false);
+        $pdf=new class('P','mm','A4',true,'UTF-8',false) extends \TCPDF {public function usePassiveFMonitorProfile():void{$this->tcpdflink=false;$this->ZoomMode='passive';}};
+        $pdf->usePassiveFMonitorProfile();
         $pdf->SetCreator('FMonitor 2.0');
         $pdf->SetAuthor('АО «Щербинский лифтостроительный завод»');
         $pdf->SetTitle('Распоряжение о закреплении монтажников');

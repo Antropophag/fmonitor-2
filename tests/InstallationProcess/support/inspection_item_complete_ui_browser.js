@@ -63,22 +63,29 @@ Object.assign(root.dataset, fixture.rootDataset);
 const section = element("section");
 section.dataset.checkSection = "1";
 section.dataset.sectionWeight = "100";
-const item = element("item");
-item.dataset.checkItem = "28";
-item.dataset.weight = "1";
-const toggle = element("item>.fm2-check-toggle");
-toggle.disabled = !fixture.controls.item;
-const installer = element("item>[data-installer-edit]");
-installer.disabled = !fixture.controls.installer;
+const itemCount = fixture.bulkItemCount || 1;
+const items = Array.from({length: itemCount}, (_, index) => {
+    const current = element(`item-${index}`);
+    current.dataset.checkItem = String(28 + index);
+    current.dataset.weight = "1";
+    const currentToggle = element(`item-${index}>.fm2-check-toggle`);
+    currentToggle.disabled = !fixture.controls.item;
+    const currentInstaller = element(`item-${index}>[data-installer-edit]`);
+    currentInstaller.disabled = !fixture.controls.installer;
+    current.querySelector = selector => selector === ".fm2-check-toggle" ? currentToggle :
+        selector === "[data-installer-edit]" ? currentInstaller : element(`item-${index}>${selector}`);
+    return current;
+});
+const item = items[0];
+const toggle = element("item-0>.fm2-check-toggle");
+const installer = element("item-0>[data-installer-edit]");
 const photo = element("photo");
 photo.disabled = !fixture.controls.photo;
 const bulk = element("section>[data-check-all]");
 bulk.disabled = !fixture.controls.bulk;
-section.items = [item];
+section.items = items;
 section.photos = [photo];
 
-item.querySelector = selector => selector === ".fm2-check-toggle" ? toggle :
-    selector === "[data-installer-edit]" ? installer : element(`item>${selector}`);
 section.querySelector = selector => selector === "[data-check-all]" ? bulk :
     element(`section>${selector}`);
 root.querySelector = selector => {
@@ -133,7 +140,8 @@ const context = {
     location: {href: "https://pilot.example/pilot/objects/4512/checklist"},
     fetch: async (url, options) => {
         sent.push({url, body: options.body ? JSON.parse(options.body) : null});
-        return {json: async () => ({status: "accepted", revision: 1})};
+        await new Promise(resolve => setTimeout(resolve, 2));
+        return {json: async () => ({status: "accepted", revision: sent.length})};
     },
     setTimeout, clearTimeout, queueMicrotask, console,
 };
@@ -142,6 +150,7 @@ vm.runInNewContext(fixture.source, context, {filename: "checklist.js"});
 
 setTimeout(async () => {
     await bulk.activate();
+    if (fixture.activateBulkConfirm) await element("bulk-dialog>[data-bulk-confirm]").activate();
     await installer.activate();
     await photo.activate("change");
     await toggle.activate();
@@ -149,5 +158,6 @@ setTimeout(async () => {
     process.stdout.write(JSON.stringify({
         persistedTypes: persisted.map(operation => operation.type),
         sentTypes: sent.map(request => request.body?.type).filter(Boolean),
+        sentBaseRevisions: sent.map(request => request.body?.baseRevision).filter(Number.isInteger),
     }));
 }, 20);
