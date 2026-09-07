@@ -130,3 +130,132 @@ Independent supplemental test/code reviews APPROVED:
 `reviews/{tests,code}/CHECKLIST-CURRENT-CREW-AUTOLOAD-SUPPLEMENTAL-2026-09-08.md`.
 Далее новый commit с этим fix и новый полный exact-SHA verify. CCC не объявляется
 VERIFY_OK; установленный a6d3a7f и данные владельца остаются прежними.
+
+## Следующий exact-SHA прогон — 4990cf1
+
+Supplemental fix/reviews и результаты первого full сохранены в
+`4990cf1afd90813c60f155297f427eb822ae78e9`. Verification checkout чистый и переведён
+на этот SHA. Пересоздан только disposable `fmonitor2-test` tmpfs; новый
+`make verify` запущен через private `runtime/run-exact-verify.py`.
+Текущие log/receipt: `runtime/verify-4990cf1-001.log` и `.json`. Receipt после
+завершения содержит exitCode, seconds и literalVerifyOk. Во время записи этого
+checkpoint прошли подготовка/migrate/architecture/lint/unit; DB stage ещё выполняется.
+Не запускать второй DB/full прогон поверх него.
+
+Private preparation после VERIFY: `runtime/live-deployment-readonly.cjs` выполняет
+read-only owner checks и сохраняет auth storageState для проверки после restart;
+`runtime/image-full-golden-20260908/` готовит isolated exact-image golden. Эти
+новые helpers пока НЕ выполнялись; перед использованием прочитать их и проверить
+exact target/source/image, учитывать актуальную финальную версию. Рабочий стенд
+по-прежнему a6d3a7f, deployment до первого literal VERIFY_OK не выполнялся.
+
+## Первый literal VERIFY_OK и exact image
+
+`4990cf1afd90813c60f155297f427eb822ae78e9`: полный `make verify` exit0 за1182.39s,
+все9 stages PASS, terminal literal `VERIFY_OK`. Начало2026-09-07T21:49:03Z,
+окончание22:08:46Z (8сентября01:08МСК). Log SHA256:
+`b6c7c983c20d85e3552450fc7a4a31f2c735bdf06aacf31586819ed0b52895db`.
+Verification checkout после прогона по-прежнему чистый.
+
+Из exact git archive собран `fmonitor2-manual:verify-4990cf1`, image
+`sha256:2bc0b0803182e0ac522fdfb6a90f60d8d4ed5ac0a90cdbdaf601e77cd78977ac`.
+OCI revision совпадает с SHA; Linux/arm64. Все736 runtime files в app/bin/public/
+rapid-pilot побайтно совпали с архивом. Archive SHA256
+`91d37d45043e45d4ba2ea54077b1bd7802eecbb0e1ae58eaa32eb16c2ca4e300`;
+image runtime manifest SHA256
+`1da185cf3dd1f4cd864a49da22490bc367ac3ea972a802ff56a6ddd1fb5b23b6`.
+Build/manifest evidence: `runtime/build-4990cf1-verified/`.
+
+До backup/deployment установленный source всё ещё a6d3a7f. Подготовлен и прошёл
+core-only headless read baseline на1450/966, session navigation, installers и
+construction control:14 protected GET routes, original966 download, desktop/mobile
+screenshots, zero errors/overflow/business writes. Evidence:
+`runtime/live-core-before-4990cf1/`; storageState сохранён0600 для reuse после
+обновления/restart. Это явно `scope=core`, не глобальное отсутствие ошибок UI.
+
+### Выявленный неблокирующий OTIZ visual defect
+
+Full read-only helper на старомa6 обнаружил CSP `style-src-attr` violations на
+`/pilot/otiz`: `rapid-pilot/Otiz.php` выводит inline `width:0.00%` для fund track.
+Hash этого литерала совпал с browser CSP report;368 violations возникают ДО
+скриншота, сам screenshot не добавляет их. Числа/страницы доступны, core routes
+ошибок не имеют; новых бизнес-изменений тест не делал. Это pre-existing visual
+limitation, отложенная по owner stabilization scope; CSP не ослаблялась, full
+helper FAIL не скрывается. Diagnosis result SHA256
+`d774ecad6fa345d6619cbb5c4703fb7d3a3f74513e01882ef26ef7a53040a979`.
+
+### Exact-image golden preparation
+
+Первый image golden001 выявил только test mount setup: host bind directory в
+Docker виден какuid0 при processuid501, native session owner правильно вернул
+ROOT_INVALID. Изолированная fixture переведена в собственный labelled Docker
+volume сuid10001, как рабочий runtime; live volumes не менялись.
+Image golden002 выполнил41items/7photos/85%/distinct opener/100%, но дополнительный
+network-origin probe ошибочно счёл local `data:` resources с origin `null`
+внешним сервером. Probe исправлен: HTTP(S) только exact candidate origin,
+data/blob/about учитываются отдельно, неизвестные схемы не принимаются. Original
+functional assertions не менялись; final image golden003 выполняется отдельно.
+
+## Установленный runtime — новая актуальная точка
+
+**Installed source: `4990cf1afd90813c60f155297f427eb822ae78e9`.**
+Image `fmonitor2-manual:verify-4990cf1`, immutable ID
+`sha256:2bc0b0803182e0ac522fdfb6a90f60d8d4ed5ac0a90cdbdaf601e77cd78977ac`.
+URL остаётся http://127.0.0.1:8092/pilot/objects, существующий owner вход.
+Старыйa6d3a7f сохранён только как rollback image/история; не откатывать к нему
+по старым handoff.
+
+Fresh populated backup:
+`runtime/backup-before-4990cf1-20260907T223945Z/`.
+- SQL1,466,272bytes, SHA256 `6018157778dece8d0342203148e234bfe9363e81893f6efa717ec87eae30ddf0`.
+- State718,469bytes, SHA256 `861d046dc996cb623c9a70e88edcb1c6528c58785d3b124ce8ddd542ddf05798`.
+- Manifest SHA256 `fa3760d7a818f6ad185b031a88b532093291a4ccc3088c3c9bb69b85ce206245`.
+
+Остановлен/пересоздан только pilot. MariaDB container и постоянные volumes
+`fmonitor2-manual_mariadb-data` / `fmonitor2-manual_pilot-state` сохранены.
+Startup сообщил exact `schemaVersion:19, appliedVersions:[19]`, затем healthy.
+Бизнес-data dump до/после побайтно одинаковый: SHA256
+`cc540205c588016fdaf53d7d13751c2720c23d504e32f28fb338539881e02d07`.
+Исключена только transient `fm2_pilot_auth_attempts`, которая по существующей
+политике очищается при успешном login. Все10 файлов в artifact storage совпали
+по именам/размерам/SHA256. После второго restart business dump также exact.
+
+Core headless proof на15 GET маршрутах после update PASS, включая cookie,
+сохранённую ЕЩЁ НАa6d3a7f; повторный login не выполнялся. После отдельного restart
+того же image/container — снова PASS с той же auth cookie,15GET, zero business
+mutations/HTTP/browser errors/mobile overflow. Startup второго restart —
+`schemaVersion:19, appliedVersions:[]`. Desktop/mobile screenshots сохранены;
+mobile1450 дополнительно просмотрен визуально. Реальный1450 уже находится в
+документарном закрытии85%; это сохранённое состояние, не действие теста.
+
+Evidence hashes:
+- post-update core result: `6f21110fd006d2793be018c5aa1e7a6d0470a11afca2b04e1965523fec1df7f2`;
+- post-restart core result: `a37fa68fba913ae415d57089f87cf9aed3a7d5a864cfc0a857eb5eb0f7e1eafe`;
+- restart proof: `5aac0dc3ded0bf5734067a2508448ccbd84c0869f642120641e71ac13267ff30`;
+- data/artifact preservation: `ff3ba393fe8ce35c104aa9a80b98ce75dc21cb27610f718079d5c4d16bd242e9`.
+
+### Exact-image golden: PASS
+
+Final private image golden body004 PASS27.83s:41items,7photos,85%, distinct opener,
+100%, errors0. HTTP traffic —407requests, только `http://127.0.0.1:18192`,
+привязанный к проверенному container image/revision. Chrome PDF viewer resources
+(`chrome:`/`chrome-extension:`) и blob учитываются отдельно как browser-local;
+они не считаются вторым application server. Это исправление дополнительного
+probe, не ослабление functional assertions. Previous calibration failures001–003
+и artifacts сохранены, не превращались задним числом в PASS.
+
+Body является private exact-source derivative с единственным исключением уже
+GREEN retained child loop;41/7/85/100/fresh facts и cleanup assertions сохранены.
+Все retained contracts отдельно прошли в полном exact-SHA make verify и исходных
+whole caller attempts. Никаких committed skip flags нет. Log hash:
+`167f6fa5b7e2c3322bb1c9a3c674257d2c2943bbde5d5d07434920f4df8b5157`.
+Private body SHA256 `fa748de3d5eb2b70ae2ee8c1f49db214ed9b322eb5b1672d2bad1687d7e9f1b1`;
+image browser derivative SHA256
+`5560eb55600c35c017c25ad84bca0b0f2c5fc1762bf1bbea1a9dd8e01b77a654`.
+Synthetic DB/container/labelled volume очищены только по собственному ownership.
+Owner objects1450/966 не изменялись.
+
+Неблокирующее ограничение OTIZ fund-track CSP, описанное выше, остаётся явно
+отложенным. Core PASS не означает отсутствие этого известного visual defect.
+Дальше — ранее разрешённая CI/Quality Graph интеграция с новыми текущими evidence/
+reviews/receipt/parity. Global goal ACTIVE; CI/production readiness ещё не заявлена.

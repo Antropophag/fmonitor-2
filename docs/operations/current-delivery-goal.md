@@ -223,3 +223,18 @@ migration10 multi-prefix FK collision (`f3e6239`). Current demo bootstrap body
 первого VERIFY_OK следующий план:
 [Quality Graph inventory](quality-graph-after-verify-inventory-2026-09-08.md).
 Глобальная цель ACTIVE; более новые runtime/source proof дописываются в этот отчёт.
+
+Первый полный literal **VERIFY_OK получен** на exact source
+`4990cf1afd90813c60f155297f427eb822ae78e9`; все stages PASS. Image4990cf1 собран
+и736 runtime files совпали с archive; deployment/restart/final golden ещё
+выполняются. Evidence и честно отложенный неблокирующий OTIZ fund-track CSP defect
+описаны в `stabilization-after-sleep-2026-09-08.md`. Глобальная цель остаётся ACTIVE.
+
+**Актуальный установленный стенд теперь source4990cf1**, image
+`sha256:2bc0b0803182e0ac522fdfb6a90f60d8d4ed5ac0a90cdbdaf601e77cd78977ac`.
+Fresh backup, migration19, побайтная сохранность бизнес-данных/10artifacts,
+old-cookie continuity после update и отдельного restart, а также isolated
+exact-image golden41/7/85/100 подтверждены. Всё в
+`stabilization-after-sleep-2026-09-08.md`. A6 теперь rollback/история, не текущий
+runtime. Следующий этап — CI/Quality Graph по подготовленному inventory;
+известный OTIZ fund-track CSP defect остаётся неблокирующим backlog. Цель ACTIVE.

@@ -28,5 +28,5 @@
 - [x] 4.2 Добавить preflight checkout-local TCPDF 6.11.4 и существующих headless browser prerequisites; проверить, что missing dependency классифицируется как setup failure до behavioral test.
 - [x] 4.3 Запустить protected verifier и bootstrap caller на изолированной DB; сохранить GREEN log, exact protected SHA и cleanup evidence.
 - [x] 4.4 Получить независимый code/test review final diff; проверить APPROVED verdict, сохранность retained matrix и отсутствие runtime/baseline changes.
-- [ ] 4.5 Запустить полный `make verify` на чистом exact SHA; только literal `VERIFY_OK` закрывает этот change, а deployment/restart/golden/CI readiness остаются отдельными общими gates.
+- [x] 4.5 Запустить полный `make verify` на чистом exact SHA; только literal `VERIFY_OK` закрывает этот change, а deployment/restart/golden/CI readiness остаются отдельными общими gates.
 - [x] 4.6 Reconcile demo bootstrap verifier с canonical19/shared-namespace/local-actor prerequisites: exact catalogue, roles/grants, factual `status`, current selection persistence и явная superseded mapping вместо manual registration; не ослаблять nonce/foreign cleanup/permission assertions. Verification: author static checks, затем отдельный DB run и independent review.
