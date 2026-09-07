@@ -85,14 +85,14 @@ Whole original bootstrap002 с неизменёнными deadlines и всем�
 PASS exit0 за144.03s. Лог `runtime/bootstrap-whole-002.log`, SHA256
 `9f7ed5164ea7d95e7280d7f4e1f781acf03fdb8e98758213b9e088d16517feaf`.
 `tools/architecture/check`: `ARCHITECTURE CHECK PASSED (7 rules)`;
-`git diff --check`: PASS. Final independent bootstrap review выполняется на exact
-source/test hashes; этот результат не подменяет ещё не запущенный full verify.
+`git diff --check`: PASS. Final independent bootstrap test/code review APPROVED:
+`reviews/{tests,code}/PILOT-DEMO-BOOTSTRAP-CURRENT-INDEPENDENT-2026-09-08.md`.
+Этот результат не подменяет ещё не запущенный full verify.
 
 ## Следующие обязательные результаты
 
-1. Завершить migration10 correction с focused RED/GREEN и independent review.
-2. Whole demo bootstrap с retained children, exact stable-byte review и commit.
-3. Clean prepared verify checkout на этот SHA, pinned vendor, полный `make verify`.
-4. Только после literal VERIFY_OK — exact image, backup/migration19/deployment,
+1. Зафиксировать reviewed candidate, перевести clean prepared verify checkout
+   на его SHA с pinned vendor и выполнить полный `make verify`.
+2. Только после literal VERIFY_OK — exact image, backup/migration19/deployment,
    restart/golden доказательства и дальнейшая CI/Quality Graph интеграция в рамках
    исходных разрешений. Глобальная цель остаётся ACTIVE.
