@@ -13,16 +13,30 @@ final class MariaDbInspectionTransaction
     {
     }
 
-    public function begin(int $id,string $now): void
+    public function begin(int $id,callable $now): void
     {
+        // Choose the lock before opening a repeatable-read snapshot; replay reads
+        // must see any operation committed while this command waited for its lock.
+        $probe = $this->db->prepare(
+            'SELECT revision_no FROM '.$this->table('fm2_checklist_revisions')
+            .' WHERE installation_case_id=?'
+        );
+        $probe->bind_param('i', $id);
+        $probe->execute();
+        $needsInitialization = $probe->get_result()->fetch_assoc() === null;
         $this->db->begin_transaction();
         $this->open = true;
-        $initialize=$this->db->prepare(
-            'INSERT IGNORE INTO '.$this->table('fm2_checklist_revisions')
-            .'(installation_case_id,revision_no,updated_at) VALUES(?,0,?)'
-        );
-        $initialize->bind_param('is',$id,$now);
-        $initialize->execute();
+        if ($needsInitialization) {
+            $case = $this->db->prepare(
+                'SELECT id FROM '.$this->table('fm2_installation_cases').' WHERE id=? FOR UPDATE'
+            );
+            $case->bind_param('i', $id);
+            $case->execute();
+            if ($case->get_result()->fetch_assoc() === null) {
+                $this->revision = null;
+                return;
+            }
+        }
         $statement = $this->db->prepare(
             'SELECT revision_no FROM '.$this->table('fm2_checklist_revisions')
             .' WHERE installation_case_id=? FOR UPDATE'
@@ -30,6 +44,17 @@ final class MariaDbInspectionTransaction
         $statement->bind_param('i', $id);
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc();
+        if ($row === null) {
+            $initializedAt = $now();
+            $initialize=$this->db->prepare(
+                'INSERT IGNORE INTO '.$this->table('fm2_checklist_revisions')
+                .'(installation_case_id,revision_no,updated_at) VALUES(?,0,?)'
+            );
+            $initialize->bind_param('is',$id,$initializedAt);
+            $initialize->execute();
+            $statement->execute();
+            $row = $statement->get_result()->fetch_assoc();
+        }
         $this->revision = $row === null ? null : (int) $row['revision_no'];
     }
 

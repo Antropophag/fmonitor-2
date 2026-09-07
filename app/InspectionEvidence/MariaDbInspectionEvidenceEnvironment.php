@@ -35,7 +35,7 @@ final class MariaDbInspectionEvidenceEnvironment
 
     public function beginCommand(int $id): void
     {
-        $this->tx->begin($id,$this->now());
+        $this->tx->begin($id,fn():string=>$this->now());
     }
 
     public function commitCommand(): void
