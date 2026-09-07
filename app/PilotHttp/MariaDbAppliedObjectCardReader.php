@@ -11,7 +11,7 @@ final readonly class MariaDbAppliedObjectCardReader implements ObjectCardReader
         $s->execute([$this->prefix.'fm2_assignment_order_applications']);$exists=$s->get_result()->fetch_row()!==null;$s->close();
         if(!$exists)return $this->previous->read($id);
         $lookup=C\AssignmentOrderApplicationReaderFactory::create($this->db,$this->prefix)->readCurrent($id);
-        if($lookup->status==='not_found')return $this->previous->read($id);
+        if($lookup->status==='not_found'){ $card=$this->previous->read($id);if($card!==null){$q=$this->db->prepare('SELECT 1 FROM `'.$this->prefix.'fm2_pilot_object_details` WHERE object_id=? AND content_sha256=SHA2(payload_json,256)');$q->execute([$id]);if($q->get_result()->fetch_row()!==null)$card['dataOrigin']='migration_native';$q->close();}return $card;}
         if($lookup->status!=='found'||$lookup->value===null)throw new PilotHttpInfrastructureUnavailable();
         $v=$lookup->value;$a=$v['application'];
         $object=(new \FMonitor2\InstallationProcess\MariaDbLegacyInstallationObject($this->db,$this->legacyPrefix))->getInstallationObjectSnapshot($id);

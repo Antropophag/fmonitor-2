@@ -41,7 +41,7 @@ foreach([400,500,600]as$weight){
 foreach([
     [$prepare,'Загрузить распоряжение'],
 ]as[$markup,$label])$require(preg_match('/class="shlz-button shlz-button--primary[^"]*"[^>]*>'.preg_quote($label,'/').'</u',$markup)===1,"primary action lacks shlz-button--primary: {$label}");
-$require(!str_contains($card,'>Открыть работы<')&&!str_contains($card,'>Загрузить оригинал<'),'future original/open controls must not precede their application slices');
+// Native original application/opening is delivered; its controls are checked by the HTTP flow smoke.
 
 foreach(['Подготовить расчёт','Подтвердить расчёт','Отметить выплаты выполненными']as$label){$at=strpos($otiz,$label);$before=$at===false?'':substr($otiz,max(0,$at-700),700);$require($at!==false&&str_contains($before,'class="shlz-button shlz-button--primary"'),"OTIZ primary action lacks shlz-button--primary: {$label}");}
 $require(str_contains($otiz,'class="fm2-breadcrumb-link"'),'OTIZ breadcrumbs must use the FMonitor compact link contract');
