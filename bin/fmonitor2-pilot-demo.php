@@ -208,7 +208,7 @@ function demoRunning(array $config): bool
 function demoHttp(int $port, string $path,string $method='GET'): array
 {
     $socket = @stream_socket_client("tcp://127.0.0.1:{$port}", $errno, $error, .5);
-    if ($socket === false) return [0, ''];
+    if ($socket === false) return [0, '', []];
     fwrite($socket, "{$method} {$path} HTTP/1.1\r\nHost: 127.0.0.1:{$port}\r\nConnection: close\r\n\r\n");
     stream_set_timeout($socket, 2); $raw = stream_get_contents($socket); fclose($socket);
     if (!is_string($raw) || preg_match('/^HTTP\/1\.[01] (\d{3})/', $raw, $match) !== 1) return [0, '', []];
@@ -270,6 +270,7 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
     } while (!$ok && microtime(true) < $deadline && proc_get_status($server)['running']);
     if (!$ok) {
         $shlzSmokeFailure=$queueStatus===200&&!$graphOk;
+        try{$shlzSmokeFailure=$shlzSmokeFailure||demoShlzGraph($config['shlz'],$config['repo'])!==$config['shlzMembers'];}catch(Throwable){$shlzSmokeFailure=true;}
         proc_terminate($server);proc_close($server);
         if($shlzSmokeFailure)demoFailure('SHLZ_ASSETS_UNAVAILABLE',78);
         demoFailure();

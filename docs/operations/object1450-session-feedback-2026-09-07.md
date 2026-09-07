@@ -72,3 +72,8 @@ the necessary authentication session was created. The stand remains at
 http://127.0.0.1:8092/pilot/objects. Full VERIFY_OK remains unfinished, with
 bootstrap fixture/deadline diagnostics continuing separately. Do not revert this
 installed hotfix to6aa39aa based on an older checkpoint.
+
+Follow-up read-only observation: object1450 advanced to `Монтажные работы` after
+the initial ready-state proof. Card/queue agreed; installation filter included it,
+ready_to_open and needs_assignment_order excluded it. No opening was issued by
+the verification script. Private evidence: feedback-a6d3a7f-live-filters.json.
