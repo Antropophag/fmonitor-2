@@ -68,9 +68,18 @@ if ($path === '/pilot/assets/shlz-icons.svg') {
     echo $bytes;
     exit;
 }
+if (is_string($path) && preg_match('#^/pilot/assets/file-types/([a-z0-9-]+)\.svg$#D', $path, $fileIcon) === 1) {
+    $asset = dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/file-types/' . $fileIcon[1] . '.svg';
+    if (!is_file($asset)) $asset = dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/file-types/file-generic.svg';
+    $bytes = file_get_contents($asset);
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: image/svg+xml'); header('Content-Length: '.strlen($bytes));
+    header('Cache-Control: public, max-age=3600'); header('X-Content-Type-Options: nosniff');
+    echo $bytes; exit;
+}
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
-    $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'files/file-pdf-default.svg' : 'interface/download.svg';
-    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/normalized/' . $icon);
+    $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'file-types/file-pdf-default.svg' : 'icons/download.svg';
+    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/' . $icon);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));

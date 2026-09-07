@@ -8,7 +8,7 @@ final readonly class OriginalHistoryHttpHandler
     public function __construct(private EnvironmentSource $environment){}
     public function handle(PilotHttpRequest $r,int $object,int $order,?string $revision=null):PilotHttpResponse
     {
-        if(!in_array($r->method,['GET','HEAD'],true))return OriginalUploadHttpHandler::error($r,405,'METHOD_NOT_ALLOWED',['Allow'=>'GET, HEAD']);
+        if(!\in_array($r->method,['GET','HEAD'],true))return OriginalUploadHttpHandler::error($r,405,'METHOD_NOT_ALLOWED',['Allow'=>'GET, HEAD']);
         $actor=FreshOrderFormInput::positive($r->server['FMONITOR_AUTH_USER_ID']??null);
         if($actor===null)return OriginalUploadHttpHandler::error($r,403,'ACCESS_DENIED');
         $resources=null;
@@ -41,10 +41,14 @@ final readonly class OriginalHistoryHttpHandler
     private function historyHtml(HttpUser $user,array $history):string
     {
         $e=PilotView::e(...);$object=(int)$history['objectId'];$order=(int)$history['orderId'];$rows='';
-        foreach($history['revisions']as$revision){$reason=$revision['correctionReason']===null?'':' · '.$e($revision['correctionReason']);$href=OriginalUploadView::path($object,$order).'/'.$e($revision['revisionId']).'/download';
-            $rows.='<li><strong>Редакция '.(int)$revision['revisionNumber'].'</strong> от '.$e($revision['documentDate']).$reason.' <a class="shlz-link" href="'.$href.'">Скачать PDF</a></li>';}
-        if($rows==='')$rows='<li>Принятых редакций пока нет.</li>';
-        $body='<div class="fm2-page-header"><div><h1>История оригинала</h1><p>Распоряжение '.$e((string)$history['orderVersion']).'</p></div></div><section class="fm2-order-surface"><ol>'.$rows.'</ol></section>';
+        foreach($history['revisions']as$revision){
+            $href=OriginalUploadView::path($object,$order).'/'.$revision['revisionId'].'/download';
+            $modified=(new \DateTimeImmutable($revision['uploadedAt']))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('d.m.Y, H:i');
+            $rows.=PilotDocumentView::row('Подписанный оригинал.pdf',$href,'application/pdf',(int)$revision['byteSize'],'Редакция '.(int)$revision['revisionNumber'],'Загружен '.$modified);
+            $rows.='<p class="fm2-document-note">Дата распоряжения: '.$e($revision['documentDate']).($revision['correctionReason']===null?'':' · '.$e($revision['correctionReason'])).'</p>';
+        }
+        if($rows==='')$rows='<p>Принятых редакций пока нет.</p>';
+        $body='<div class="fm2-page-header"><div><h1>История оригинала</h1><p>Распоряжение '.$e((string)$history['orderVersion']).'</p></div></div><section class="fm2-order-surface fm2-order-team"><div class="shlz-document-list">'.$rows.'</div></section>';
         $body.='<p><a class="shlz-link" href="'.OriginalUploadView::path($object,$order).'/submit">К оригиналу распоряжения</a></p>';
         return PilotView::document($user,'История оригинала','Объекты монтажа',PilotView::breadcrumb([['Объекты монтажа','/pilot/objects'],['Объект № '.$object,'/pilot/objects/'.$object]],'История оригинала'),$body);
     }

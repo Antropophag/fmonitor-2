@@ -18,12 +18,13 @@ final readonly class MariaDbAppliedObjectCardReader implements ObjectCardReader
         $s=$this->db->prepare('SELECT process_state,actual_start_date,opened_at,opened_by_user_id FROM `'.$this->prefix.'fm2_installation_cases` WHERE id=?');
         $s->execute([$a['caseId']]);$case=$s->get_result()->fetch_assoc();$s->close();if($case===null)throw new PilotHttpInfrastructureUnavailable();
         $opened=$case['actual_start_date']!==null&&$case['opened_at']!==null&&$case['opened_by_user_id']!==null;
-        $installers=array_map(static fn($person)=>$person+['status'=>'employed'],$v['selectedInstallers']);
+        $installers=\array_map(static fn($person)=>$person+['status'=>'employed'],$v['selectedInstallers']);
+        $revision=$this->db->prepare('SELECT v.byte_size,v.revision_number,v.uploaded_at_utc FROM `'.$this->prefix.'fm2_assignment_order_original_revisions` v JOIN `'.$this->prefix.'fm2_assignment_order_original_roots` r ON r.root_original_id=v.root_original_id WHERE v.revision_id=? AND r.assignment_order_id=? LIMIT 2');$revision->execute([$a['originalRevisionId'],$a['orderId']]);$original=$revision->get_result()->fetch_all(MYSQLI_ASSOC);$revision->close();if(\count($original)!==1)throw new PilotHttpInfrastructureUnavailable();$artifacts=[['type'=>'signed_original','filename'=>'Подписанный оригинал.pdf','mediaType'=>'application/pdf','size'=>(int)$original[0]['byte_size'],'revisionNumber'=>(int)$original[0]['revision_number'],'uploadedAt'=>\str_replace(' ','T',$original[0]['uploaded_at_utc']).'Z','href'=>'/pilot/objects/'.$id.'/assignment-orders/'.$a['orderId'].'/originals/'.$a['originalRevisionId'].'/download']];
         return ['id'=>$id,'address'=>$object['address'],'entrance'=>$object['entrance'],'registrationNumber'=>$object['objectRegistrationNumber'],
             'plannedStartDate'=>$object['plannedStartDate'],'plannedFinishDate'=>$object['plannedFinishDate'],
-            'status'=>$opened?'В работе':'Готов к открытию','applicationId'=>$a['applicationId'],
-            'order'=>['version'=>$a['orderVersion'],'status'=>'applied','orderDate'=>$a['documentDate'],'preparedAt'=>$a['appliedAt'],'registrationNumber'=>null,
-                'organizationType'=>count($installers)===1?'individual':'brigade','engineer'=>$v['selectedEngineer'],'installers'=>$installers],
+            'status'=>$case['process_state']==='needs_assignment_change'?'Требуется изменение':($opened?'Монтажные работы':'Готов к открытию'),'applicationId'=>$a['applicationId'],
+            'order'=>['version'=>$a['orderVersion'],'status'=>'applied','orderDate'=>$a['documentDate'],'preparedAt'=>$a['appliedAt'],'registrationNumber'=>null,'artifacts'=>$artifacts,
+                'organizationType'=>\count($installers)===1?'individual':'brigade','engineer'=>$v['selectedEngineer'],'installers'=>$installers],
             'controlEngineer'=>$v['selectedEngineer'],'opened'=>$opened,'actualStartDate'=>$case['actual_start_date'],'openedAt'=>$case['opened_at'],
             'openedByUserId'=>$opened?(int)$case['opened_by_user_id']:null,'actualStartDateUnknownAtCutover'=>false,'activeCaseProvenance'=>null,'dataOrigin'=>'native',
             'events'=>[['type'=>'Состав применён','occurredAt'=>$a['appliedAt'],'actorId'=>$a['appliedBy']]],'hasPtoAct'=>$object['ptoActDate']!==null];

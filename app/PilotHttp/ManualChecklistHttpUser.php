@@ -10,7 +10,7 @@ final class ManualChecklistHttpUser
         [$db,$prefix]=$d->commandResources();$profile=(new MariaDbLocalUserProfile($db,$prefix))->read($id);
         if($profile===null)return null;
         $permissions=AccessPolicy::forUser($db,$prefix,$id);
-        if(!(new MariaDbChecklistRoleAccess($db,$prefix))->allowed($id)&&!in_array('inspection.item.complete',$permissions,true)&&!in_array('checklist.read',$permissions,true))return null;
+        if(!(new MariaDbChecklistRoleAccess($db,$prefix))->allowed($id)&&!\in_array('inspection.item.complete',$permissions,true)&&!\in_array('checklist.read',$permissions,true))return null;
         return new HttpUser($profile->id,$profile->displayName,$profile->email,$permissions);
     }
 }

@@ -54,7 +54,7 @@ final class RapidPilotCompletionFlow
         catch(Throwable){return$html;}
         $complete=isset($facts['pto_act'],$facts['declaration']);$status=self::status($progress,$complete);
         $paint=$complete?'shlz-status--bright-green':($progress>=85?'shlz-status--orange':'shlz-status--blue');
-        $html=preg_replace('#<span class="shlz-status [^"]*">(?:В работе|Изменяющее распоряжение подготовлено)</span>#','<span class="shlz-status '.$paint.'">'.$status.'</span>',$html,1)??$html;
+        $html=preg_replace('#<span class="shlz-status [^"]*">(?:В работе|Монтажные работы|Изменяющее распоряжение подготовлено)</span>#','<span class="shlz-status '.$paint.'">'.$status.'</span>',$html,1)??$html;
         $html=preg_replace_callback('#<section class="fm2-next-action"[^>]*>.*?</section>#s',static function(array$match)use($objectId,$progress,$facts):string{
             preg_match('#<div class="fm2-action-stack">.*?</div>#s',$match[0],$actions);
             $current=$progress<85?$match[0]:self::currentAction($objectId,$progress,$facts,(string)($_SERVER['FMONITOR_AUTH_CSRF']??''),$actions[0]??'');
