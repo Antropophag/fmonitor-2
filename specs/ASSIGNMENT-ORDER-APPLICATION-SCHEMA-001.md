@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-APPLICATION-SCHEMA-001
 
-Версия0.1,2026-09-07. Gate1 candidate.
+Версия0.2,2026-09-07. Gate1 candidate.
 
 ## Простыми словами
 
@@ -114,7 +114,7 @@ Migration never synthesizes applications to fill missing rows. Stable applicatio
 snapshot format is defined in APPLY-001; physical JSON carries selectedInstallers/
 selectedEngineer separately from eligibility and header fields.
 
-### fm2_assignment_order_application_attempts
+### fm2_assignment_application_attempts
 
 | name | type | nullable |
 |---|---|---|
