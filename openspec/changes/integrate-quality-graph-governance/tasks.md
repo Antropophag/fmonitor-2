@@ -1,9 +1,9 @@
-> Current-line continuation 2026-09-08: baseline `b5fca7d4df56404a4ac4eba802d497066a42b6c8`.
-> Approved v0.6 requirements and exact release pins are reused from local ref
-> `f07548135fe930e7a8fb9bb97271c9f05a8ebfc1`; historical implementation/Gate2/3
-> checkmarks do not constitute current-line proof and are reset below. Source
-> history remains unchanged at that ref. Fresh RED/review/GREEN/receipt ancestry
-> is required before representative PR validation. Working stand4990cf1 is isolated.
+> Продолжение в текущей линии 2026-09-08: база `b5fca7d4df56404a4ac4eba802d497066a42b6c8`.
+> Утверждённая v0.6 и exact release pins переиспользуются из local ref
+> `f07548135fe930e7a8fb9bb97271c9f05a8ebfc1`; прежние отметки implementation/Gates2–3
+> не являются доказательством текущей линии и сняты ниже. История источника
+> остаётся неизменной. До representative PR нужны новые RED/review/GREEN/receipt
+> с корректным Git ancestry. Рабочий стенд4990cf1 изолирован от этих изменений.
 
 ## 1. Gate 1 — executable specification и аудит baseline
 
@@ -13,8 +13,8 @@
 
 ## 2. Gates 2–3 — RED и независимый test review
 
-- [ ] 2.1 Написать минимальные тесты публичной repository-owned governance команды для valid lineage, exact test/implementation sets, missing evidence, hash drift, reviewer non-independence, Git gate chronology, reviewed-commit mismatch, path escape, immutable supersession, duplicate IDs и stale graph provenance; проверить, что setup исправен.
-- [ ] 2.2 Продемонстрировать intended RED до implementation, сохранить точную команду, exit code и релевантный вывод в `docs/operations/quality-graph-governance-red-evidence.md`.
+- [x] 2.1 Написать минимальные тесты публичной repository-owned governance команды для valid lineage, exact test/implementation sets, missing evidence, hash drift, reviewer non-independence, Git gate chronology, reviewed-commit mismatch, path escape, immutable supersession, duplicate IDs и stale graph provenance; проверить, что setup исправен.
+- [x] 2.2 Продемонстрировать intended RED до implementation, сохранить точную команду, exit code и релевантный вывод в `docs/operations/quality-graph-governance-red-evidence.md`.
 - [ ] 2.3 Поручить отдельному агенту независимый Gate 3 review спецификации, тестов и RED; сохранить независимые review records с reviewer identity и verdict `APPROVED` до GREEN.
 
 ## 3. Gate 4 — минимальный lineage governance
