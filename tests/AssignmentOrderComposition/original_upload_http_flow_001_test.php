@@ -8,8 +8,12 @@ try {
     $f=new F();$native=$f->http->original->selection;$today=(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format('Y-m-d');
     $before=$native->rows();$form=$f->http->request('GET',F::FORM);
     assertSameValue(200,$form['status'],'INTENDED_RED original submission form missing after native selection');
-    assertSameValue(true,str_contains($form['headers']['content-security-policy']??'',"connect-src 'self'"),'same-origin upload permitted by form CSP');
-    assertSameValue(false,str_contains($form['headers']['content-security-policy']??'','worker-src'),'upload does not inherit worker policy');
+    $csp="default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+    assertSameValue($csp,$form['headers']['content-security-policy']??null,'exact narrow form CSP');
+    $head=$f->http->request('HEAD',F::FORM);assertSameValue(200,$head['status'],'HEAD status');
+    foreach(['content-type','content-length','cache-control','x-content-type-options','content-security-policy','referrer-policy','x-frame-options','permissions-policy','cross-origin-opener-policy'] as $header)
+        assertSameValue($form['headers'][$header]??null,$head['headers'][$header]??null,'GET/HEAD header parity '.$header);
+    assertSameValue('',$head['body'],'HEAD emits no bytes');
     assertSameValue($today,A::field($form['body'],'documentDate'),'direct original defaults today');
     assertSameValue('initial',A::field($form['body'],'mode'),'initial form');
     assertSameValue(true,str_contains($form['body'],'Монтажник 7001'),'selected immutable crew visible');

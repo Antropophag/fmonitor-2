@@ -35,6 +35,8 @@ final class OriginalHttpFixture
     {
         \assertSameValue($status,$response['status'],'HTTP response status');\assertSameValue('application/json; charset=UTF-8',$response['headers']['content-type']??null,'JSON media');
         \assertSameValue('no-store',$response['headers']['cache-control']??null,'no-store');\assertSameValue('nosniff',$response['headers']['x-content-type-options']??null,'nosniff');
+        \assertSameValue(\FMonitor2\PilotHttp\PilotRouteCsp::BASE,$response['headers']['content-security-policy']??null,'original JSON retains BASE CSP');
+        if($status===503)\assertSameValue('60',$response['headers']['retry-after']??null,'retry delay');
         \assertSameValue((string)strlen($response['body']),$response['headers']['content-length']??null,'exact content length');\assertSameValue("\n",substr($response['body'],-1),'final LF');
         return json_decode($response['body'],true,512,JSON_THROW_ON_ERROR);
     }

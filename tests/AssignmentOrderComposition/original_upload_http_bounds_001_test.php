@@ -14,6 +14,9 @@ try {
         assertSameValue([0,true],[$r['status'],$r['connectionClosed']??false],'native malformed frame closed without timeout');
         assertSameValue(303,$f->http->request('GET','/pilot/login')['status'],'server healthy after framing rejection');assertSameValue($before,$native->rows(),'framing never reaches command');
     }
+    $before=$native->rows();$frame=$f->post($fields,null,['Transfer-Encoding'=>'chunked']);
+    assertSameValue([0,true],[$frame['status'],$frame['connectionClosed']??false],'malformed chunked frame closed before PHP');
+    assertSameValue(303,$f->http->request('GET','/pilot/login')['status'],'server healthy after malformed chunking');assertSameValue($before,$native->rows(),'chunking rejection no command');
     $before=$native->rows();$r=$f->post($fields,str_repeat('x',20971521));assertSameValue(['error'=>'REQUEST_TOO_LARGE'],F::json($r,413),'exact one byte over HTTP cap');assertSameValue($before,$native->rows(),'oversize no native facts');
     foreach([
         ['not_pdf','not a PDF',[]],
