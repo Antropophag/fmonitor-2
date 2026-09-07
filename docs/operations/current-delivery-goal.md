@@ -119,3 +119,10 @@ layout screenshots, console/network failures and the ordinary flow; HTTP200 alon
 is insufficient. Preserve the already-designed rapid-pilot UI when integrating
 native seams; do not replace it with simplified unstyled templates. After the
 current UI repair, prepare a restart handoff and continuation prompt as requested.
+
+## Последний checkpoint после замечаний владельца
+
+Актуальный handoff: [restart-handoff-after-manual-feedback-2026-09-07.md](restart-handoff-after-manual-feedback-2026-09-07.md).
+Переходной промпт: [continue-after-manual-feedback-2026-09-07.txt](continue-after-manual-feedback-2026-09-07.txt).
+Глобальная цель остаётся ACTIVE без token budget. В новой сессии использовать этот
+handoff вместо прежней точки UI repair; все сабагенты — gpt-5.6-sol / low.

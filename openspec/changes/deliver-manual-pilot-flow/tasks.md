@@ -8,13 +8,15 @@
 
 ## 2. Clean stand deployment and owner handoff
 
-- [ ] 2.1 Зафиксировать current source/image и имена прежних preview volumes; проверить, что резерв не удаляется и не подключается к новому generation.
+- [x] 2.1 Зафиксировать current source/image и имена прежних preview volumes; проверить, что резерв не удаляется и не подключается к новому generation.
 - [x] 2.2 Остановить/удалить разрешённый прежний preview-контур и поднять clean manual stand; проверить container health, canonical18/startup migrations и пустую очередь.
 - [ ] 2.3 Создать только настроенную owner-admin учётную запись и проверить login/logout; пароль не публиковать, остальных пользователей не импортировать.
 - [x] 2.4 Опубликовать разрешённый private workforce batch через native owner; проверить count/provenance/full-proof, отсутствие FMonitor-user writes и сохранение unknown employedFrom=null.
 - [ ] 2.5 Настроить hourly read-only workforce schedule и проверить один успешный bounded run/restart без Bitrix write methods.
 - [ ] 2.6 Пройти на реальном стенде login → object setup → selection → original → application → opening → checklist/photo/corrections → ПТО/declaration →100% → restart; сохранить URL/source/image и observed evidence.
 - [ ] 2.7 Передать владельцу URL, способ входа без пароля, короткий маршрут и точный список ограничений; замечания владельца сделать первым приоритетом и повторять затронутый сценарий.
+
+- [x] 2.8 Импортировать381 eligible unopened objects из private SHA-verified snapshot без пользователей/истории/ограничения плановых дат; проверить реальные карточки.
 
 ## 3. Explicitly deferred production integration
 
@@ -25,5 +27,3 @@
 Done manual-pilot milestone: задачи2.1–2.7 подтверждены реальным стендом и владелец
 может пройти маршрут. Задачи3.x остаются открытыми и не блокируют ручной показ, но
 обязательны для последующей production integration.
-
-- [x] 2.8 Импортировать381 eligible unopened objects из private SHA-verified snapshot без пользователей/истории/ограничения плановых дат; проверить реальные карточки.
