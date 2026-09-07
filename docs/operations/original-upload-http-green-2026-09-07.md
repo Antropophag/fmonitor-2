@@ -53,3 +53,50 @@ Gate5 APPROVED production `7cb79d04121b2c96544eb4448d2a26d3e0505829`:
 visual/focus и Impeccable[]. Самостоятельно повторил Node client/diff-check.
 Browser correction/retry/final layout остаются открытыми;4/6 tasks complete.
 Literal `make verify` source7cb79d0 выполняется отдельно, результат пока неизвестен.
+
+## Browser completion and integration qualification — supplement
+
+Фактический browser blocker разрешён без перезапуска/изменения browser settings:
+file picker принадлежит `/System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/com.apple.appkit.xpc.openAndSavePanelService.xpc`.
+В CUA `getApp` этого helper получает правильный target для GoTo/Return/Cancel.
+Клавиши в Chrome при открытом helper адресуют другой процесс. Старый backend64247
+штатно остановлен, control удалён, evidence `qa-original-cleanup.json` сохранён.
+
+Новый backend60575, source `6daea29`, isolated fictional native fixture. Root выполнил
+реальный Chrome login, отказался сохранять password, увидел initial suggested date
+2026-09-06 от approved native template clock. Native file chooser выбрал327-byte
+normative PDF; пользовательская дата2026-09-01 → принят original revision1.
+Correction form предложила2026-09-01; выбран тот же PDF, дата2026-09-02 и причина
+«Исправлена дата по подписанному оригиналу». Временный rename task-owned synthetic
+private root вызвал настоящий503: браузер показал честное сообщение о retry и
+сохранил форму/File. После восстановления directory повторная кнопка без изменения
+ввода привела к revision2date2026-09-02. Нет ложного success или потери correction.
+Root просмотрел финальные layout/keyboard-focus screenshots и AX в CUA; screenshots
+не экспортированы в repo. Tab закрыта, чужие tabs/settings не менялись.
+
+Backend41765 exit0; `qa-original-v2-final.json` и `qa-original-v2-cleanup.json`
+подтверждают1root/2revisions, даты01→02, исходный reasonnull/новая RU reason,
+обе327bytes SHA4028af…, process tasks0, template event1, portClosed=true и
+controlRemoved=true. RED worktree удалён; overlay сохранён внешним patch.
+Все CUA/test server handles этого original пакета завершены.
+
+`make verify` source7cb79d0 завершился exit2 с
+`FULL_VERIFICATION_FAILURE count=4 stages=unit-test,db-test,characterization-test,e2e-test`.
+Первый выявленный regression —113 unqualified global calls — исправлен механически
+в source `6daea29`, по inherited PILOT-HTTP-AUTH-001/unchanged approved tokenizer,
+новая независимая Gate3 запись приложена. `global-qualification-green.log` PASS;
+все8 HTTP suites (original5+selection3) повторены после исправления и PASS
+в `*-qualified-green.log`. Qualification Gate5 и supplementary original Gate5
+записываются независимо; прошлый review не подменяет этот integration audit.
+
+Остальные full-verification failures сохраняются открытыми:13 db verifiers,
+calendar projection characterization, OTIZ compatibility harness и protected E2E.
+Многие schema/fixture expectations всё ещё требуют terminal12 при canonical15;
+причина каждого проверяется отдельно. Tests не ослаблены, E2E не изменён,
+нет literal VERIFY_OK, remote/publication/deployment не выполнялись.
+
+Qualification Gate5 и supplementary original Gate5 APPROVED: review records
+`PILOT-HTTP-AUTH-001-original-http-global-calls.md` и
+`ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-HTTP-001-v2.md` в reviews/code.
+`architecture-qualified.log`: PASS7rules. Scoped original upload UI6/6 tasks done;
+parent history/download и launch integration продолжают оставаться открытыми.
