@@ -45,7 +45,7 @@ final class SelectionHttpFixture
                 'FMONITOR_SESSION_INSTANCE'=>'pilot','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'http','FMONITOR_FRESH_ORDER_FLOW'=>$enabled?'1':'0',
                 'FMONITOR_PILOT_CSS_PATH'=>$root.'/rapid-pilot/pilot.css','FMONITOR_SHLZ_CSS_PATH'=>dirname($root).'/shlz-ui/packages/styles/dist/shlz.css',
                 'FMONITOR_ARTIFACT_STORAGE_ROOT'=>$this->original->privateRoot,'PHP_CLI_SERVER_WORKERS'=>'1']);
-            if($extraEnvironment!==null)$env=array_replace($env,$extraEnvironment($this->original));
+            if($extraEnvironment!==null)$env=array_replace($env,$extraEnvironment($this->original,$this->port));
             $log=$this->original->control.'/http.log';
             // PHP proc_open drops empty environment values; env preserves explicit empty prefixes.
             $command=['env'];foreach($env as $key=>$value)if($value==='')$command[]=$key.'=';

@@ -13,7 +13,7 @@ final class OriginalHttpFixture
             'FMONITOR_ORIGINAL_SAFE_LOG_FILE'=>$o->safeLog,'FMONITOR_ORIGINAL_DB_PASSWORD_FILE'=>$o->control.'/password']);
         try {
             $f=$this->http->original->selection;
-            foreach([1,3] as $role)foreach(['assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct'] as $cap)$f->schema->insert('fm2_pilot_role_permissions',['role_id'=>$role,'permission'=>$cap]);
+            foreach([1,3] as $role)foreach(['assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct'] as $cap)$f->db->query("INSERT IGNORE INTO fm2_pilot_role_permissions(role_id,permission) VALUES($role,'$cap')");
             foreach(['assignment_order.original.upload','assignment_order.original.correct'] as $cap)$f->schema->insert('fm2_process_user_capabilities',['user_id'=>31,'capability'=>$cap,'position_snapshot'=>null]);
             $form=$this->http->request('GET',SelectionHttpAssertions::PATH);
             \assertSameValue(200,$form['status'],'SETUP_OK existing native selection form');

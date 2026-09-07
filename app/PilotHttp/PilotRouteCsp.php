@@ -16,6 +16,7 @@ final class PilotRouteCsp
         if($status<200||$status>=300||!\str_starts_with(\strtolower($contentType),'text/html'))return self::BASE;
         if($method==='POST')return $path==='/pilot/login'&&$status===200?self::SCRIPT:self::BASE;
         if(!\in_array($method,['GET','HEAD'],true))return self::BASE;
+        if(\preg_match('#^/pilot/objects/[1-9][0-9]*/execution$#D',$path)===1)return self::SCRIPT;
         if(\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/selection$#D',$path)===1)return self::ORIGINAL;
         if(\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/submit$#D',$path)===1)return self::ORIGINAL;
         if(\preg_match('#^/pilot/objects/[1-9][0-9]*/checklist$#D',$path)===1||\preg_match('#^/pilot/construction-control/objects/[1-9][0-9]*/checklist$#D',$path)===1)return self::CHECKLIST;

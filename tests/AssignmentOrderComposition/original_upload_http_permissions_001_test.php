@@ -37,8 +37,14 @@ $run('correction requires correct independently',static function(F $f)use($revok
     $revoke($f,'assignment_order.original.upload');
     assertSameValue(200,$f->http->request('GET',F::FORM)['status'],'correction form does not require upload');
     $native->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=18 AND capability='assignment_order.original.correct'");
-    $before=$native->rows();$result=F::json($f->post($fields),403);assertSameValue(['rejected','authorization_denied'],[$result['status'],$result['reasonCode']],'native correct grant remains mandatory');
-    A::rowsPreserved($before,$native->rows(),['fm2_assignment_order_original_requests','fm2_assignment_order_original_audits']);
+    $before=$native->rows();$result=F::json($f->post($fields),201);assertSameValue('accepted',$result['status'],'active local correction role authorizes native command without legacy process capability');
+    A::rowsPreserved($before,$native->rows(),['fm2_assignment_order_original_roots','fm2_assignment_order_original_revisions','fm2_assignment_order_original_requests','fm2_assignment_order_original_fingerprints','fm2_assignment_order_original_events','fm2_assignment_order_original_audits']);
+});
+$run('active local upload role is native authority',static function(F $f):void{
+    $native=$f->http->original->selection;$native->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=18 AND capability IN('assignment_order.original.upload','assignment_order.original.correct')");assertSameValue('accepted',F::json($f->post($f->fields()),201)['status'],'FKR role upload succeeds without legacy process capability');
+});
+$run('inactive and administrative roles do not gain original authority',static function(F $f):void{
+    $native=$f->http->original->selection;$native->db->query("UPDATE fm2_pilot_roles SET status=0 WHERE role_id=1");assertSameValue(['error'=>'ACCESS_DENIED'],F::json($f->post($f->fields()),403),'inactive FKR role denied');$native->db->query("UPDATE fm2_pilot_roles SET status=1 WHERE role_id=1");$native->db->query("UPDATE fm2_pilot_users SET status=0 WHERE user_id=18");assertSameValue([303,'/pilot/login'],($r=$f->post($f->fields()))?[$r['status'],$r['headers']['location']??null]:[],'inactive FKR user returns to login');assertSameValue(['error'=>'ACCESS_DENIED'],F::json($f->post($f->fields(),null,[],99),403),'administrator has no implicit upload authority');
 });
 $run('wrong object and order have no fallback',static function(F $f):void{
     $native=$f->http->original->selection;$before=$native->rows();

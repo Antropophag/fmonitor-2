@@ -19,7 +19,7 @@ try {
     assertSameValue(true,str_contains($form['body'],'/pilot/assets/original-upload.js'),'real client asset wired');
     assertSameValue(200,$f->http->request('GET','/pilot/assets/original-upload.js')['status'],'client asset served');
     foreach(['csrfToken','requestId','mode','rootOriginalId','targetRevisionId','expectedCurrentRevisionId'] as $name)A::field($form['body'],$name);
-    $fields=$f->fields();$fields['requestId']='22222222-2222-1222-8222-000000000001';$fields['documentDate']='2026-09-01';$r=F::json($f->post($fields,null,[],31),201);assertSameValue('accepted',$r['status'],'manager has local and native capability');
+    $native->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=31 AND capability IN('assignment_order.original.upload','assignment_order.original.correct')");$fields=$f->fields();$fields['requestId']='22222222-2222-1222-8222-000000000001';$fields['documentDate']='2026-09-01';$r=F::json($f->post($fields,null,[],31),201);assertSameValue('accepted',$r['status'],'manager local role is native authority without legacy process capabilities');
     $form=$f->http->request('GET',F::FORM,'',31);assertSameValue('2026-09-01',A::field($form['body'],'documentDate'),'correction defaults original date, not template');
     echo "PASS native yesterday template prefill/manager/form asset contract\n";
 }finally{if($f!==null)$f->close();}

@@ -33,6 +33,7 @@ final class SelectionNativeFixture
                 $this->schema->insert($prefix.'fm2_pilot_user_roles',['user_id'=>$user,'role_id'=>$role,'origin'=>'bootstrap','assigned_at'=>'2026-09-01T06:00:00Z']);
             }
             $this->schema->insert($prefix.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'assignment_order.composition.select']);
+            foreach(['assignment_order.original.upload','assignment_order.original.correct']as$permission)$this->schema->insert($prefix.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>$permission]);
             foreach ([7001,7002] as $id) {
                 $this->schema->insert($prefix.'fm2_workforce_catalog',['installer_tab_id'=>$id,'fio'=>"Монтажник $id",'position'=>'Монтажник','employment_status'=>'employed','employed_from'=>'2020-01-01','employed_to'=>null,'workforce_source'=>'synthetic-hr','workforce_source_updated_at'=>'2026-09-01T06:00:00Z']);
             }
