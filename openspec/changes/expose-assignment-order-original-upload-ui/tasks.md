@@ -4,5 +4,5 @@
 ## 2. Delivery
 - [x] 2.1 Minimal query/adapter/JS GREEN, no domain writer duplication.
 - [ ] 2.2 Regression/architecture/visual/focus/Impeccable/lints/diff.
-- [ ] 2.3 Independent Gate5/evidence/source commit.
+- [x] 2.3 Independent Gate5/evidence/source commit.
 - [ ] 2.4 Browser direct-upload/correction/date-pre-fill QA and cleanup record.
