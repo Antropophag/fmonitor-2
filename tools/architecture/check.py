@@ -24,8 +24,13 @@ IGNORED_PARTS = {"demo", "legacy-migration"}
 DDL = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+(?:TABLE|DATABASE|INDEX|USER)\b", re.I)
 SQL = re.compile(r"\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
 PHP_QUOTED = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"")
-PHP_SELECT_IDENTIFIER = re.compile(r"\bcase\s+SELECT\s*(?==)|::\s*SELECT\b", re.I)
+PHP_SELECT_IDENTIFIER = re.compile(r"\$SELECT\b|\bcase\s+SELECT\s*(?==)|::\s*SELECT\b", re.I)
 PHP_DOTTED_ATOM = re.compile(r"(?:[A-Za-z_][A-Za-z0-9_]*\.)+[A-Za-z_][A-Za-z0-9_]*")
+PHP_HTML_SELECT_ATOM = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:shlz-(?:field--select|select(?:[-_][A-Za-z0-9_-]+)?)"
+    r"|data-shlz-select(?:[-_][A-Za-z0-9_-]+)?)(?![A-Za-z0-9_-])"
+)
+PHP_HTML_SELECT_TAG = re.compile(r"</?select(?=[\s/>])", re.I)
 MUTATION_SQL = re.compile(r"\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
 WORKFORCE_MIGRATION_APPLY = re.compile(
     r"\b(?:BitrixWorkforceHistory|WorkforceCatalog)SchemaMigration\s*::\s*apply\s*\("
@@ -170,14 +175,16 @@ def sql_owner(path: Path) -> bool:
 
 
 def php_sql_detection_line(line: str) -> str:
-    """Ignore PHP identifiers/capability atoms, never SQL literals or fingerprints."""
+    """Ignore PHP/component identifiers without changing SQL or fingerprints."""
     parts: list[str] = []
     offset = 0
     for token in PHP_QUOTED.finditer(line):
         parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:token.start()]))
         quoted = token.group(0)
         is_select_key = quoted[1:-1].lower() == "select" and re.match(r"[^\S\r\n]*=>", line[token.end():]) is not None
-        parts.append("''" if is_select_key or PHP_DOTTED_ATOM.fullmatch(quoted[1:-1]) else quoted)
+        parts.append("''" if is_select_key or PHP_DOTTED_ATOM.fullmatch(quoted[1:-1])
+                     else PHP_HTML_SELECT_TAG.sub("<HTML_COMPONENT_TAG",
+                         PHP_HTML_SELECT_ATOM.sub("HTML_COMPONENT_TOKEN", quoted)))
         offset = token.end()
     parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:]))
     return "".join(parts)

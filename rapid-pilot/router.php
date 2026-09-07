@@ -11,6 +11,7 @@ require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
 require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
+require_once __DIR__ . '/FileTypeAsset.php';
 if(getenv('FMONITOR_LIVE_CLOCK')==='1')putenv('FMONITOR_NOW='.(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM));$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
 if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
@@ -68,15 +69,7 @@ if ($path === '/pilot/assets/shlz-icons.svg') {
     echo $bytes;
     exit;
 }
-if (is_string($path) && preg_match('#^/pilot/assets/file-types/([a-z0-9-]+)\.svg$#D', $path, $fileIcon) === 1) {
-    $asset = dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/file-types/' . $fileIcon[1] . '.svg';
-    if (!is_file($asset)) $asset = dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/file-types/file-generic.svg';
-    $bytes = file_get_contents($asset);
-    if (!is_string($bytes)) { http_response_code(404); exit; }
-    header('Content-Type: image/svg+xml'); header('Content-Length: '.strlen($bytes));
-    header('Cache-Control: public, max-age=3600'); header('X-Content-Type-Options: nosniff');
-    echo $bytes; exit;
-}
+if (is_string($path) && RapidPilotFileTypeAsset::matches($path)) RapidPilotFileTypeAsset::handle($path);
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'file-types/file-pdf-default.svg' : 'icons/download.svg';
     $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/' . $icon);

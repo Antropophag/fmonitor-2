@@ -65,5 +65,39 @@ class PhpSelectTokensTest(unittest.TestCase):
         self.assertTrue(any("rapid_pilot_boundary: new violation" in error for error in result["errors"]))
 
 
+    def test_08_select_variable_is_not_sql(self):
+        code, result = self.inspect("<?php\n$select = $renderer->render(); echo $select;\n")
+        self.assertEqual((0, True, []), (code, result["ok"], result["errors"]))
+
+    def test_09_public_select_markup_is_not_sql(self):
+        for markup in (
+            '<div class="shlz-field shlz-field--select shlz-select-root" data-shlz-select>',
+            '<span data-shlz-select-value></span><button class="shlz-select__option" aria-selected="true">',
+            '<select name="status"><option>Готово</option></select>',
+        ):
+            with self.subTest(markup=markup):
+                code, result = self.inspect("<?php\n$markup = '" + markup + "';\n")
+                self.assertEqual((0, True, []), (code, result["ok"], result["errors"]))
+
+    def test_10_markup_does_not_hide_sql(self):
+        for sql in (
+            "SELECT id FROM accounts", "SELECT", "UPDATE accounts SET flag=1",
+            "INSERT INTO accounts VALUES(1)", "DELETE FROM accounts",
+        ):
+            with self.subTest(sql=sql):
+                source = "<?php\n$select = '<div class=\"shlz-field--select\" data-shlz-select>'; $db->query(" + json.dumps(sql) + ");\n"
+                code, result = self.inspect(source)
+                self.assertEqual(1, code)
+                self.assertTrue(any("sql_ownership: new violation" in error for error in result["errors"]))
+        code, result = self.inspect("<?php\n$db->query(\"SELECT id FROM accounts WHERE widget='shlz-select-root'\");\n")
+        self.assertEqual(1, code)
+        self.assertTrue(any("sql_ownership: new violation" in error for error in result["errors"]))
+
+    def test_11_native_html_does_not_hide_sql(self):
+        code, result = self.inspect("<?php\n$db->query(\"SELECT id FROM accounts WHERE widget='<select></select>'\");\n")
+        self.assertEqual(1, code)
+        self.assertTrue(any("sql_ownership: new violation" in error for error in result["errors"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
