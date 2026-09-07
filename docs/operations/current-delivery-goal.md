@@ -183,3 +183,21 @@ FAIL unit/db/characterization/e2e; причины и текущие исправ
 Агенты/тестовые процессы остановлены; WIP сохранён в worktree и private backup.
 Native list/shell и photo19 focused GREEN; card/E2E, reviews/frontier checks и
 новый полный exact-SHA verify остаются незавершёнными. Глобальная цель ACTIVE.
+
+## Новые замечания владельца во время продолжения стабилизации
+
+Владелец сообщил о расхождении статуса объекта1450 (карточка «Готов к открытию»,
+список «Требуется распоряжение») и повторных потерях авторизации. Эти manual
+findings имеют приоритет перед новым полным verify. Исправления и независимые
+reviews: `object1450-session-feedback-2026-09-07.md`. Подготовлен отдельный hotfix
+от установленного6aa39aa, без преждевременной миграции photo19; exact deployment
+и сохранность данных должны быть подтверждены отдельно. Общая стабилизация и
+persistent goal остаются ACTIVE; bootstrap CSS diagnostic и полный VERIFY_OK
+по-прежнему не завершены.
+
+Hotfix установлен и проверен: source `a6d3a7fee363b14ec08a643ad74b63797e2298ed`,
+image `sha256:71294ca170fc6cac7b5fc1ebe1f4182c7184cf5a69f3e265bad2e48d53d93f18`.
+Object1450 card/queue status совпадает; fresh login сохраняется после command
+page и8 read-only переходов. БД/state backups сохранены, photo19 не устанавливалась.
+Подробности и hashes — в `object1450-session-feedback-2026-09-07.md`. Старый6aa39aa
+теперь только rollback image/история, не актуальный стенд.
