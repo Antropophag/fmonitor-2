@@ -28,6 +28,11 @@ application; same-day sequential order решается append sequence, а не
 
 Accepted request identity хранится вместе с immutable backing и unique fingerprint;
 case lock сериализует новые факты и конкуренцию с original/case commands.
+Accepted lookup повторяется после case/current authority lock до sequence checks;
+pre-lock hint не решает concurrent replay. Global request UUID race разных cases
+разрешается только после confirmed rollback fresh authorized lookup. Current IAM и
+workforce proof удерживаются native locking reads до commit; metadata перед catalog,
+стабильный порядок IDs, READ COMMITTED, без session wait-policy overrides.
 Повтор выполняет authorization перед раскрытием old payload. Unknown commit не
 повторяется внутри вызова; новый healthy call читает accepted request outcome.
 

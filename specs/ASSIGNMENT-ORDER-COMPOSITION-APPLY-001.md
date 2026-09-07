@@ -1,6 +1,6 @@
 # ASSIGNMENT-ORDER-COMPOSITION-APPLY-001
 
-Версия0.1,2026-09-07. Gate1 candidate; executable approval ещё нет.
+Версия0.2,2026-09-07. Gate1 candidate; executable approval ещё нет.
 
 ## Простыми словами
 
@@ -55,7 +55,7 @@ originalRevisionId, originalRevisionNumber, documentDate, compositionIdentity,
 compositionSha256, engineerUserId, installerTabIds, previousApplicationId,
 kind, appliedAt, appliedBy`.
 kind initial/new_order/reapplication. appliedAt UTC RFC3339 seconds from owner clock;
-installerTabIds ascending unique numeric ints from immutable selected composition.
+installerTabIds — 1..500 ascending unique numeric ints from immutable selected composition.
 No names, email, private file identity/bytes, tokens or configurable paths in result.
 
 ## 2. Preconditions, order и authority
@@ -79,6 +79,26 @@ role и exact permission необходимы одновременно. Missing/
 family → dependency_unavailable, healthy absent grant → authorization_denied.
 Replays тоже требуют текущую authorization; revoked actor не получает old payload.
 Engineer должен сейчас быть active local construction_control_engineer user.
+
+Authoritative observation point — завершение всех current locking reads и проверок
+под owner write transaction. Owner использует READ COMMITTED и fresh locking reads,
+не прежний consistent snapshot. Case lock берётся первым. Затем защищаются от
+изменения participating local user/role/grant rows (actor и selected engineer),
+workforce singleton metadata, referenced completed run и selected catalog rows.
+Users/roles/installer IDs читаются в стабильном ascending порядке; metadata до
+catalog rows. Все положительные authority/eligibility proof rows удерживаются
+до commit/rollback. Эти native row locks совместимы с обычными IAM UPDATE/DELETE
+и sync publication; case lock от таких writers сам по себе не защищает.
+
+Если revoke/dismissal/change уже committed до получения соответствующих locks,
+используются новые facts: deny exact reason или unavailable для несогласованного
+proof. Если writer начинает изменение после authoritative read, он ждёт release;
+application может commit по защищённому прежнему proof, затем writer изменяет
+current state. Сохранённый application доказывает состояние в момент своего
+решения, не вечное право/трудоустройство. Следующая команда видит новое состояние.
+Confirmed deadlock/lock timeout rollback → failed/persistence_failure; no blind retry.
+Не менять session wait-policy или чужую transaction ради этого протокола.
+
 
 Case отсутствует → object_not_found; чужой/несуществующий order или original →
 original_not_found. Target — самый новый accepted selected order по orderVersion;
@@ -167,6 +187,25 @@ Fingerprint — SHA256 UTF8 JSON array
 attempt audit фиксирует replay. Другой fingerprint → conflict/request_id_conflict,
 без раскрытия prior result. History/backing must be coherent before replay.
 
+Pre-lock accepted lookup — только оптимизация/preflight hint, не окончательный
+вердикт. После case lock и current locked authorization MUST повторить accepted
+request lookup ДО expectedApplicationSequence и любых live original/lifecycle/
+eligibility refusals. Найденный exact fingerprint + coherent immutable backing →
+replayed с прежним payload; другой fingerprint → request_id_conflict; повреждённый
+backing → dependency_unavailable. Если accepted request отсутствует, только тогда
+проверяются expected sequence и подготовленный original reference.
+
+Для canonical same UUID/object конкуренции оба callers могут сначала получить miss:
+после first commit второй видит accepted row под case lock и replay, а не
+application_changed. Если одинаковый UUID одновременно использован для разных
+objects/cases, global unique accepted identity не допускает два fact. Proven race
+именно этого unique key после confirmed rollback разрешается fresh authorized
+accepted lookup: exact matching → replay, different → request_id_conflict,
+missing/corrupt/failed lookup → dependency_unavailable. Другие constraint/SQL ошибки
+не маскируются под request conflict. Terminal audit сохраняется отдельной owned
+transaction после proven race rollback; её failure mapping остаётся обычным.
+
+
 Каждая syntactically valid authorized/rejected/replayed попытка получает отдельный
 append-only audit: attempt identity, requestId, actorId, objectId, orderId,
 status/reason, attemptedAt; без names/raw error/credentials. Healthy authorization
@@ -248,13 +287,22 @@ conflict: request_id_conflict, application_changed, original_changed, target_not
 failed: dependency_unavailable, persistence_failure, persistence_outcome_unknown,
 allocation_capacity_exhausted.
 
-Precedence: scalar→idle/runtime/clock/authority→authorized accepted-request lookup→
-locked case/authority→expected sequence→current original/target→completion/PTO→
+Precedence: scalar→idle/runtime/clock/authority→authorized preflight request/original reads→
+locked case/current authority→authoritative locked accepted-request lookup→
+expected sequence→current original/target→completion/PTO→
 calendar/lifecycle→current crew eligibility→append commit. Replay не переоценивает
 старую crew eligibility или current document state, но требует нынешнюю authority
 и целостность своего immutable backing. Audit persistence failures override business result.
 
 ## 8. Independent examples and evidence
+
+Два одинаковых UUID с pre-lock miss: один applied/seq1, второй replayed/seq1,
+ровно1application/1process event/2attempt audits. Два разных UUID expected0:
+один applied/seq1, второй application_changed. Revocation committed до locked
+read → authorization_denied даже для replay; revocation начатая после защищённого
+read ждёт application commit, затем новые вызовы denied. Аналогично dismissal:
+до proof read → installer_not_employed; после него — применяется прежний held proof,
+а следующий command читает dismissed. Это различные ожидаемые serial orders.
 
 Native fixture создаёт synthetic case501, active FKR11 с exact apply permission,
 engineer21 и installers101/102 через существующие approved selection+original seams.
