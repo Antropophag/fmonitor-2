@@ -34,9 +34,9 @@ Private evidence: `~/.local/state/fmonitor2/manual-pilot-20260907/runtime/direct
 Запущен `PATH=/opt/homebrew/bin:$PATH make verify` на чистом detached worktree
 `/Users/antropophag/code/fmonitor-2-verify-6aa39aa` указанного выше SHA.
 Лог: `~/.local/state/fmonitor2/manual-pilot-20260907/runtime/verify-6aa39aa.log`.
-При записи этой точки процесс ещё работал: exec session `30319`, PID `52546`.
-Перед продолжением проверить PID и хвост лога; не перезапускать уже живой прогон
-и не менять его зависимости/БД посреди исполнения.
+Прогон завершился с exit 2; exec session `30319`, PID `52546` больше не активны.
+Итог: `FULL_VERIFICATION_FAILURE count=4 stages=unit-test,db-test,characterization-test,e2e-test`.
+Прошли setup, migrate, architecture, lint и diff-check. Не считать старую сессию живой.
 
 Уже прошли test-db-reset, migrate, architecture-check, lint. Unit suite упала
 на `PDF renderer dependency is unavailable`; связанные PDF/HTTP тесты в DB suite
@@ -44,14 +44,55 @@ Private evidence: `~/.local/state/fmonitor2/manual-pilot-20260907/runtime/direct
 прогоном подготовить TCPDF 6.11.4, pinned commit
 `fbbaf14cfae8fe646f154f7c530d15ec25764040`, и autoload из
 `rapid-pilot/tcpdf-autoload.php`, как в Dockerfile. Допустимо скопировать проверенный
-main-workspace vendor и сверить версию/хеш autoload. Текущий checkout не менять.
-Итогового
-вердикта ещё нет; после завершения дописать результат и перечень оставшихся причин.
+main-workspace vendor и сверить версию/хеш autoload. После завершения полного
+прогона vendor скопирован, source checkout по-прежнему чистый; focused PDF renderer
+уже GREEN. Все десять связанных focused проверок прошли, лог
+`runtime/pdf-dependency-focused.log`, terminal `FOCUSED_FAILURES []`.
 
-Параллельные агенты только читают: verify_triage проверяет зависимости PDF,
-architecture_diagnosis сверяет старые UI assertions с актуальными контрактами,
-auth_review сверяет фото revoke/reupload с owner retention decision. Они не меняют
-тестовую БД и не вмешиваются в прогон. Все агенты gpt-5.6-sol / low;
+Остальные причины полного FAIL: docker bootstrap конфликт DEMO/DB переменных,
+старые card/list/shell expectations, protected E2E и его demo-bootstrap caller,
+характеризация identical photo reupload после revoke. Bootstrap environment fix
+прошёл focused, но выявил зависание cleanup дочерних PHP workers; переключён на
+существующий process-group wrapper, после чего PASS с exit0 и без оставшихся
+процессов на 18092. После reviewer finding cleanup дополнительно проверяет всю
+process group даже после выхода leader; повторный focused PASS. Независимый review
+APPROVED. Исправление и registration identity сохранены в source commit `b662e1e`.
+
+Card module oracle прошёл независимый review, но focused card далее выявил
+следующее расхождение visible literal/order `77-000123`; whole card пока FAIL.
+Разбор выявил два отдельных вопроса: native card поменял порядок identity/status
+относительно старого oracle, а RapidPilotObjectDetails действительно обрезал полный
+регистрационный номер до последних цифр. Root исправил presentation prefix parsing;
+новый `object_card_registration_identity_test.php` показал RED `77-000123`→`000123`,
+затем GREEN для полного номера, ведущих нулей, букв/слеша и escaping. Visual/focus/
+detector проверки прошли; независимый review APPROVED. На стенд пока не установлено.
+Подготовлены OpenSpec changes `reconcile-pilot-queue-shell-verifiers`,
+`reconcile-protected-pilot-e2e-current-flow`, `allow-identical-photo-reupload-after-revoke`.
+Они не означают законченной реализации. Worktree содержит параллельную работу;
+не собирать его целиком без review и фиксации exact commit.
+
+Уточнение scope UI tests: `public/router.php` проверяет native adapter seam,
+`rapid-pilot/router.php` дополнительно собирает manual-pilot фильтры/пагинацию,
+root redirect и полную карточку. Нельзя переносить ожидания второго на первый и
+объявлять их отсутствие новым product defect. Native list test сохраняет свой
+unfiltered reader/cap500/501/ignored-query контракт, обновляя только текущие
+table/copy/date/identity assertions; manual q/status/page/50-row поведение остаётся
+в отдельных rapid checks/E2E. Аналогично native shell root compatibility body
+отличается от actual manual root redirect. Review первоначального слишком широкого
+test reconciliation отклонён; агент уточняет package. Новая архитектурная миграция
+ради такого расхождения не нужна.
+
+Protected E2E replacement пока не APPROVED. Review выявил и потребовал устранить
+tautological PDF check, общие cookies пользователей, недостаточный child cleanup,
+fixture role collision и потерю browser failure evidence. Переработанный test
+выполняет обязательные retained contracts плюс current browser flow; diagnostic
+итерации пока исправляют setup/selector ошибки. Отсутствие пропусков не заменяет
+конкретного полного GREEN и финального независимого review.
+
+Параллельные агенты: verify_triage реализует current protected E2E reconciliation,
+architecture_diagnosis обновляет queue/shell assertions, auth_review готовит
+schema/reupload тесты до production implementation и отдельно рецензирует bootstrap.
+DB focused execution координируется root. Все агенты gpt-5.6-sol / low;
 автор не рецензирует собственную реализацию.
 
 ## После прогона
