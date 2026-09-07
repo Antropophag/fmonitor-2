@@ -28,7 +28,9 @@ try {
     assertSameValue(303,$f->http->request('POST',$path,http_build_query($fields))['status'],'opening through HTTP');
     $page=$f->http->request('GET',$path);assertSameValue(true,str_contains($page['body'],'Перейти к чек-листу'),'checklist link after opening');
     $card=$f->http->request('GET','/pilot/objects/4512');if($card['status']!==200)copy($f->http->original->control.'/http.log','/tmp/fm2-manual-card-error.log');assertSameValue(200,$card['status'],'native applied object card');
+    assertSameValue(true,str_contains($card['body'],'/pilot/objects/4512/assignment-orders/81/originals/'.$accepted['currentRevisionId'].'/download'),'document component retains native original download route');
     assertSameValue(false,str_contains($card['body'],'Зарегистрировано в 1С ДО'),'no fabricated registration');assertSameValue(true,str_contains($card['body'],'Ход работ'),'completion panel visible on actual card');
+    assertSameValue(true,str_contains($card['body'],'Монтажник 7001'),'applied installer remains visible in enhanced Team tab');assertSameValue(true,str_contains($card['body'],'Подписанный оригинал.pdf'),'accepted native original remains visible in enhanced Documents tab');assertSameValue(false,str_contains($card['body'],'Подписанный оригинал</dt><dd>Ожидается'),'enhancement does not replace accepted original with pending status');
     $denied=$f->http->request('POST',$path,http_build_query($fields),99);assertSameValue(403,$denied['status'],'admin does not inherit FKR action');
     echo "PASS manual HTTP original -> application -> opening -> current object card\n";
 }finally{$f->close();putenv($oldNow===false?'FMONITOR_NOW':'FMONITOR_NOW='.$oldNow);}

@@ -39,12 +39,12 @@ try {
     $before=$native->rows();assertSameValue(['error'=>'ACCESS_DENIED'],F::json($f->post($fields),403),'local revoke');assertSameValue($before,$native->rows(),'local revoke before core');
     $native->schema->insert('fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'assignment_order.original.upload']);
     $native->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=18 AND capability='assignment_order.original.upload'");
-    $r=F::json($f->post($fields),403);assertSameValue(['rejected','authorization_denied'],[$r['status'],$r['reasonCode']],'native cap independently required');
-    assertSameValue(1,count($native->rows()['fm2_assignment_order_original_requests']),'approved original first-denial terminal preserved');
-    $r=F::json($f->post($fields),403);assertSameValue('authorization_denied',$r['reasonCode'],'repeat native denial');
-    assertSameValue(2,count($native->rows()['fm2_assignment_order_original_audits']),'approved repeated-denial audit');
+    $r=F::json($f->post($fields),201);assertSameValue('accepted',$r['status'],'active local role remains native authority without stale process capability');
+    assertSameValue(1,count($native->rows()['fm2_assignment_order_original_requests']),'accepted terminal preserved');
+    $r=F::json($f->post($fields),200);assertSameValue('replayed',$r['status'],'repeat local-role-authorized upload replays');
+    assertSameValue(1,count($native->rows()['fm2_assignment_order_original_audits']),'accepted replay remains audit-silent');
     $log=file_get_contents($f->http->original->control.'/http.log');assertSameValue(true,str_contains($log,'FMONITOR_ORIGINAL_HTTP_REJECT status=403 reason=CSRF_INVALID'),'safe transport audit');
     foreach([$f->http->csrf,'signed.pdf',$json] as $secret)assertSameValue(false,str_contains($log,$secret),'no metadata/token/filename in log');
-    echo "PASS local/native grant and audit separation\n";
+    echo "PASS local role authority and audit separation\n";
 }finally{if($f!==null)$f->close();}
 exit($failures===[]?0:1);

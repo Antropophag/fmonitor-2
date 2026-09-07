@@ -7,6 +7,8 @@ const fixture = JSON.parse(fs.readFileSync(0, "utf8"));
 const listeners = new Map();
 const sent = [];
 const persisted = [];
+let queuedAtFirstSend = null;
+let acceptedRevision = 0;
 
 class Classes {
     toggle() {}
@@ -103,6 +105,8 @@ function idbResult(value) {
 const stores = {
     meta: new Map(), operations: new Map(), photoBlobs: new Map(),
 };
+if (fixture.deviceId) stores.meta.set("deviceInstallationId", fixture.deviceId);
+for (const operation of fixture.initialOperations || []) stores.operations.set(operation.id, {...operation});
 const database = {
     objectStoreNames: {contains: name => Object.hasOwn(stores, name)},
     transaction(name) {
@@ -140,8 +144,11 @@ const context = {
     location: {href: "https://pilot.example/pilot/objects/4512/checklist"},
     fetch: async (url, options) => {
         sent.push({url, body: options.body ? JSON.parse(options.body) : null});
+        if (queuedAtFirstSend === null) queuedAtFirstSend = stores.operations.size;
         await new Promise(resolve => setTimeout(resolve, 2));
-        return {json: async () => ({status: "accepted", revision: sent.length})};
+        const status = fixture.networkOutcomes?.[sent.length - 1] || "accepted";
+        if (status === "accepted") acceptedRevision += 1;
+        return {json: async () => ({status, revision: acceptedRevision, message: status === "accepted" ? "" : "synthetic stop"})};
     },
     setTimeout, clearTimeout, queueMicrotask, console,
 };
@@ -158,6 +165,11 @@ setTimeout(async () => {
     process.stdout.write(JSON.stringify({
         persistedTypes: persisted.map(operation => operation.type),
         sentTypes: sent.map(request => request.body?.type).filter(Boolean),
+        sentBodies: sent.map(request => request.body).filter(Boolean),
         sentBaseRevisions: sent.map(request => request.body?.baseRevision).filter(Number.isInteger),
+        queuedAtFirstSend,
+        finalOperationStatuses: [...stores.operations.values()].map(operation => operation.status),
+        storedBaseRevisions: [...stores.operations.values()].map(operation => operation.baseRevision),
+        syncBannerState: element("root>[data-sync-banner]").dataset.state,
     }));
 }, 20);

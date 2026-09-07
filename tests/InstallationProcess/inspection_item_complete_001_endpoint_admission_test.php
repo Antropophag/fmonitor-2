@@ -497,7 +497,7 @@ function ieaAssertItemOnlyUiContract(array $page): void
         "controlEngineer" => ["userId" => 7302],
     ];
     $assigned = $renderer->render(
-        new \FMonitor2\PilotHttp\HttpUser(7302, "Assigned", "assigned@example.test"),
+        new \FMonitor2\PilotHttp\HttpUser(7302, "Assigned", "assigned@example.test", ["inspection.item.complete"]),
         $case,
     );
     $legacyRole = $renderer->render(

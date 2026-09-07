@@ -30,7 +30,10 @@ try {
         assertSameValue('replace_pending',A::field($r['body'],'mode'),'retry same mode');
         $retryBody=A::submission($r['body']);parse_str($retryBody,$actualIntent);$expectedIntent=$retry;ksort($actualIntent);ksort($expectedIntent);
         assertSameValue($expectedIntent,$actualIntent,'rendered retry preserves entire intent including crew/engineer/confirmation/CSRF');
-        assertSameValue(503,$f->request('GET',A::PATH)['status'],'partial read source unavailable, not empty catalog');
+        $portal=$f->request('GET',A::PATH);assertSameValue(200,$portal['status'],'selection portal does not eagerly read the installer catalogue');
+        assertSameValue(false,str_contains($portal['body'],'Монтажник 7002'),'unavailable catalogue is not embedded beyond the saved current selection');
+        assertSameValue(true,str_contains($portal['body'],'data-installer-search'),'portal retains the bounded lazy-search control');
+        assertSameValue(503,$f->request('GET','/pilot/objects/4512/assignment-order/installers?q=Mo&page=1')['status'],'catalogue dependency failure remains visible at the search seam');
     } finally { $native->db->query('RENAME TABLE fixture_displaced_workforce TO fm2_workforce_catalog'); }
     assertSameValue(303,$f->request('POST',A::PATH,$retryBody)['status'],'same rendered intent resumes when dependency restored');
     $native->db->query('RENAME TABLE fm2_process_events TO fixture_displaced_events');

@@ -70,7 +70,7 @@ $tests=[
         $rows=$f->selection->rows();assertSameValue([0,0,0],[count($rows['fm2_assignment_order_original_roots']),count($rows['fm2_assignment_order_original_revisions']),count($rows['fm2_assignment_order_original_events'])],'no accepted original under unavailable source');
     },
     'selection grant never grants original upload'=>static function(F $f):void {
-        $f->selection->db->query("DELETE FROM fm2_process_user_capabilities WHERE user_id=18 AND capability='assignment_order.original.upload'");
+        $f->selection->db->query("DELETE FROM fm2_pilot_role_permissions WHERE role_id=1 AND permission='assignment_order.original.upload'");
         $f->selection->db->query('RENAME TABLE fm2_assignment_order_selections TO fixture_missing_selection');$input=new Input('never read');$r=$f->app()->submitAssignmentOrderOriginal(selectedOriginalCommand($input));
         assertSameValue(['rejected','authorization_denied',0,1],[$r->status()->value,$r->reasonCode()?->value,$input->reads,$input->closes],'original authority precedes confidential selected lookup');
         $rows=$f->selection->rows();assertSameValue([1,1],[count($rows['fm2_assignment_order_original_requests']),count($rows['fm2_assignment_order_original_audits'])],'inherited original denial contract: first terminal and audit');

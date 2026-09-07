@@ -10,13 +10,14 @@ const bytes = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(318, 32)]);
 const file = new File([bytes], 'подписанный.pdf', { type: 'application/pdf' });
 const initial = '22222222-2222-4222-8222-000000000001';
 const fields = Object.fromEntries(Object.entries({csrfToken:'c'.repeat(64), requestId:initial, mode:'initial',documentDate:'2026-09-01',rootOriginalId:'',targetRevisionId:'',expectedCurrentRevisionId:'',correctionReason:''}).map(([k,v])=>[k,{value:v}]));
-fields.compositionConfirmed={checked:true,value:'true'}; fields.original={files:[file]};
-const fieldset={disabled:true}, button={disabled:false}, status={textContent:''};
+fields.compositionConfirmed={checked:true,value:'true'}; fields.original={files:[file],addEventListener:(name,fn)=>{callbacks[`file:${name}`]=fn;}};
+const fieldset={disabled:true}, button={disabled:false}, status={textContent:''}, fileName={textContent:'PDF, не более 20 МиБ'};
+const fileDrop={classList:{selected:false,toggle(name,value){assert.equal(name,'fm2-file-drop--selected');this.selected=value;}}};
 Object.defineProperty(status,'innerHTML',{set(){throw new Error('unsafe HTML assignment');}});
 const form={action:'http://127.0.0.1/pilot/objects/4512/assignment-orders/81/originals',dataset:{returnUrl:'/pilot/objects/4512/assignment-orders/81/originals/submit'},
  elements:{namedItem:name=>fields[name]},reportValidity:()=>true,checkValidity:()=>true,
  addEventListener:(name,fn)=>{callbacks[name]=fn;},getAttribute(name){return name==='action'?this.action:null;},
- querySelector(selector){return {'[data-original-fields]':fieldset,'[data-original-submit]':button,'[data-original-status]':status}[selector]??null;}};
+ querySelector(selector){return {'[data-original-fields]':fieldset,'[data-original-submit]':button,'[data-original-status]':status,'[data-file-drop]':fileDrop,'[data-file-name]':fileName}[selector]??null;}};
 const location={assign:value=>navigations.push(value),replace:value=>navigations.push(value)};
 Object.defineProperty(location,'href',{get:()=>form.action,set:value=>navigations.push(value)});
 let counter=1, rejectPending, resultProvider=()=>new Promise((resolve,reject)=>{rejectPending=reject;});
@@ -30,6 +31,7 @@ assert.equal(fs.existsSync(source),true,'INTENDED_RED upload client missing afte
 vm.runInNewContext(fs.readFileSync(source,'utf8'),context,{filename:'original-upload.js'});
 assert.equal(fieldset.disabled,false,'JS enables the honest disabled fallback');
 assert.equal(typeof callbacks.submit,'function','submit handler bound');
+callbacks['file:change']();assert.equal(fileDrop.classList.selected,true,'selected file activates file-drop feedback');assert.equal(fileName.textContent,file.name,'selected filename is shown');
 const event=()=>({preventDefault(){this.prevented=true;}});
 callbacks.submit(event());
 await settle();

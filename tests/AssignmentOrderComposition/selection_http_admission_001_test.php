@@ -34,12 +34,13 @@ try {
         'legacy prepare POST'=>['POST','/pilot/objects/4512/assignment-order/prepare',$valid,18,[],410],
         'legacy registration'=>['POST','/pilot/objects/4512/assignment-orders/81/registration',$valid,18,[],410],
         'legacy engineer'=>['POST','/pilot/objects/4512/control-engineer',$valid,18,[],410],
-        'legacy opening'=>['POST','/pilot/objects/4512/open',$valid,18,[],410],
+        'legacy opening'=>['POST','/pilot/objects/4512/open',$valid,18,[],303],
         'legacy artifact'=>['GET','/pilot/objects/4512/assignment-orders/81/artifacts/order','',18,[],410],
     ];
     foreach($cases as $name=>[$method,$path,$body,$actor,$headers,$status]){
         try{$before=$native->rows();$r=$f->request($method,$path,$body,$actor,$headers);assertSameValue($status,$r['status'],'INTENDED_RED '.$name);assertSameValue($before,$native->rows(),'admission no domain facts '.$name);
             if($name==='legacy prepare GET')assertSameValue(A::PATH,$r['headers']['location']??null,'existing card link reaches new wizard');
+            if($name==='legacy opening')assertSameValue('/pilot/objects/4512/execution',$r['headers']['location']??null,'legacy opening reaches separate native execution step');
             if($status>=400)assertSameValue(false,str_contains($r['body'],$f->csrf),'error does not disclose CSRF');
             echo "PASS $name\n";
         }catch(Throwable $error){$failures[]=$name;echo "FAIL $name: ".$error->getMessage()."\n";}
