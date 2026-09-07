@@ -50,4 +50,19 @@ checks. Original, template, application and opening writers remain unchanged.
 
 Independent focused review: `reviews/code/selection-picker-manual-2026-09-07.md`.
 This repair does not establish full production gates or full golden-path completion.
-Deployed source/image and live browser receipt follow after installation.
+
+## Deployed receipt
+
+Deployed source: `46c1334d1d4325f963cd7df3ba913039b9678849`.
+Image: `sha256:2abc5fa229a595fd3e72110b72a6c3bea68fd075281e2b72e2fb3341736e27fe`.
+Container healthy; all 719 committed runtime file hashes match the running image.
+Only the pilot service was recreated; existing volumes and MariaDB were retained.
+The preceding image is preserved as `fmonitor2-manual:checkpoint-330bb41`.
+The optional workforce profile was not started.
+
+Private `runtime/selection-live.cjs` repeated real owner login and read-only
+selection/modal actions on the populated stand: HTTP 200, page load 510 ms,
+11,682 HTML bytes, no selected inputs on that unopened composition, one modal,
+zero search requests on modal open, search returned 17 matching records, zero page
+errors and zero HTTP failures. No real composition or document was submitted.
+Synthetic browser proof above covers selection persistence and successful upload.
