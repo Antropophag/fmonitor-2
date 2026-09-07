@@ -66,3 +66,15 @@ checks and changed-JS detector pass. Independent focused reviews are recorded in
 `reviews/code/generated-template-passive-pdf-manual-2026-09-07.md`.
 Full gates, make verify, CI, other approved sections and production readiness
 remain outstanding; the overall goal remains active.
+
+## Deployed receipt
+
+Source: `c81f562a7684ef7ec7a5a91b4bf4b6c7873e9d27`.
+Image: `sha256:79a44e2b5e29ff8d9d94634fa59179d10f56d48f011389f06de2ce4eb775ab16`.
+Pilot healthy; all 719 committed runtime file hashes match the running image.
+The same generated-template/passive-inspector probe also passes inside that image,
+using synthetic input and no database mutation. Real-stand checklist asset now
+returns HTTP 200. Owner headless login/list/card/navigation/mobile smoke passes
+with seven currently authorized navigation links, zero page errors, zero failed
+HTTP responses and no mobile document overflow. The optional worker remains off;
+MariaDB and existing data volumes were retained.
