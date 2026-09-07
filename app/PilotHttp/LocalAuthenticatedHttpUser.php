@@ -13,6 +13,6 @@ final readonly class LocalAuthenticatedHttpUser
         [$db,$prefix]=$dependencies->commandResources();
         $profile=(new MariaDbLocalUserProfile($db,$prefix))->read((int)$trustedActor);
         if($profile===null||!$dependencies->hasCapability($profile->id,$requiredPermission))return null;
-        return new HttpUser($profile->id,$profile->displayName,$profile->email,[$requiredPermission]);
+        return $profile;
     }
 }

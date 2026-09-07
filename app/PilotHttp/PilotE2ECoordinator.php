@@ -25,7 +25,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     ) { parent::__construct($identity,new ProductionPilotShellRenderer(),$dependencies); }
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
-        $this->cspMethod=$r->method;$this->cspPath=$r->path;$sessionRoute=\in_array($r->path,['/pilot/login','/pilot/admin/users','/pilot/admin/users/invite'],true);if($this->sessionStorage!==null&&$sessionRoute)return $this->sessionResponse($r);$canonicalLocalRead=\in_array($r->method,['GET','HEAD'],true)&&($r->path==='/pilot/objects'||\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/prepare$#D',$r->path)===1);if($canonicalLocalRead||!$this->dependencies->pilotUiConfigured()||!$this->dependencies->prepareCommandConfigured()||!$this->dependencies->e2eConfigured())return $this->reads->handle($r);
+        $this->cspMethod=$r->method;$this->cspPath=$r->path;$sessionRoute=$r->path==='/pilot/login'||$this->ownerUserAccessPath($r->path);if($this->sessionStorage!==null&&$sessionRoute)return $this->sessionResponse($r);$canonicalLocalRead=\in_array($r->method,['GET','HEAD'],true)&&($r->path==='/pilot/objects'||\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/prepare$#D',$r->path)===1);if($canonicalLocalRead||!$this->dependencies->pilotUiConfigured()||!$this->dependencies->prepareCommandConfigured()||!$this->dependencies->e2eConfigured())return $this->reads->handle($r);
         if($r->path==='/pilot/users')return $this->redirect('/pilot/admin/users');
         if(\preg_match('#^/pilot/construction-control/objects/([1-9][0-9]*)/sync-context$#D',$r->path,$syncMatch)===1&&self::positive($syncMatch[1]))return $this->syncContext($r,(int)$syncMatch[1]);
         if(\preg_match('#^/pilot/(?:objects|construction-control/objects)/([1-9][0-9]*)/checklist(?:/operations|/photos)?$#D',$r->path,$checklistMatch)===1&&self::positive($checklistMatch[1]))return $this->checklist($r,(int)$checklistMatch[1],\str_starts_with($r->path,'/pilot/construction-control/'));
@@ -224,9 +224,13 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     private function validRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
         $origin=$r->server['HTTP_ORIGIN']??null;$fetch=$r->server['HTTP_SEC_FETCH_SITE']??null;
-        $trustedDemo=self::trustedDemo($r);$expectedOrigin=($trustedDemo?'http://':'https://').$r->host;
-        $originAllowed=$origin===null||$origin===$expectedOrigin||($trustedDemo&&$origin==='null');
-        return $s['actor']===$u->id&&$originAllowed&&($fetch===null||$fetch==='same-origin');
+        $trustedDemo=self::trustedDemo($r);$scheme=$this->ownerSessionState!==null?$this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME'):($trustedDemo?'http':'https');
+        if(!\in_array($scheme,['http','https'],true))return false;
+        $expectedOrigin=$scheme.'://'.$r->host;
+        // A same-origin browser form may suppress Origin under the page's no-referrer policy.
+        $ownerSameOrigin=$this->ownerSessionState!==null&&$origin==='null'&&$fetch==='same-origin';
+        $originAllowed=$origin===null||$origin===$expectedOrigin||($trustedDemo&&$origin==='null')||$ownerSameOrigin;
+        return ($this->ownerSessionState!==null?($s['auth_user_id']??null):($s['actor']??null))===$u->id&&$originAllowed&&($fetch===null||$fetch==='same-origin');
     }
     private function validChecklistRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
@@ -255,14 +259,50 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     private function response(int $status,string $body,array $extra=[],string $method='GET'):PilotHttpResponse{$type=(string)($extra['Content-Type']??'text/plain; charset=UTF-8');$csp=PilotRouteCsp::forResponse($this->cspMethod,$this->cspPath,$status,$type,$body);$headers=$extra+['Content-Type'=>'text/plain; charset=UTF-8','X-Content-Type-Options'=>'nosniff','Referrer-Policy'=>'no-referrer','X-Frame-Options'=>'DENY','Content-Security-Policy'=>$csp,'Permissions-Policy'=>'camera=(), microphone=(), geolocation=()','Cross-Origin-Opener-Policy'=>'same-origin','Cache-Control'=>'no-store'];$headers['Content-Length']=(string)\strlen($body);return new PilotHttpResponse($status,$headers,$method==='HEAD'?'':$body);}
     private function sessionResponse(PilotHttpRequest$r):PilotHttpResponse
     {
-        if(!$this->knownPath($r->path))return$this->response(303,'',['Location'=>'/pilot/login'],$r->method);$scheme=$this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME');if(!\in_array($scheme,['http','https'],true))return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);$cookieName=\preg_match('/:(\d{1,5})$/D',$r->host,$m)===1?'fm2auth_'.$m[1]:'fm2auth';$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($r->server['HTTP_COOKIE']??''),$cookie)===1)$incoming=$cookie[1];$started=$this->sessionStorage->start($incoming);if($started->status()===\FMonitor\IdentityAccess\PilotSessionOperationStatus::UNAVAILABLE)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);$payload=$started->sessionPayload();$state=$payload===null?[]:(new PilotSessionPayloadCodec())->decode($payload);if($state===null){$line='PILOT_SESSION_UNAVAILABLE category=payload_invalid correlation_id='.\bin2hex(\random_bytes(6))."\n";@\file_put_contents('php://stderr',$line);return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}$id=$started->currentSessionId();if($id===null){$anonymous=$this->sessionStorage->start(null);$id=$anonymous->currentSessionId();if($id===null)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}$csrf=$state['auth_csrf']??null;$reused=\is_string($csrf)&&\preg_match('/^[0-9a-f]{64}$/D',$csrf)===1;$userAccess=\in_array($r->path,['/pilot/admin/users','/pilot/admin/users/invite'],true)&&\in_array($r->method,['GET','POST'],true);if($userAccess&&$reused&&\is_int($state['auth_user_id']??null)&&\is_string($state['auth_email']??null))return$this->ownerUserAccess($r,$id,$state);if(!$reused){$csrf=\bin2hex(\random_bytes(32));$committed=$this->sessionStorage->writeCommit($id,$this->sessionBytes(['auth_csrf'=>$csrf]));if($committed->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
+        if(!$this->knownPath($r->path))return$this->response(303,'',['Location'=>'/pilot/login'],$r->method);$scheme=$this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME');if(!\in_array($scheme,['http','https'],true))return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);$cookieName=\preg_match('/:(\d{1,5})$/D',$r->host,$m)===1?'fm2auth_'.$m[1]:'fm2auth';$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($r->server['HTTP_COOKIE']??''),$cookie)===1)$incoming=$cookie[1];$started=$this->sessionStorage->start($incoming);if($started->status()===\FMonitor\IdentityAccess\PilotSessionOperationStatus::UNAVAILABLE)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);$payload=$started->sessionPayload();$state=$payload===null?[]:(new PilotSessionPayloadCodec())->decode($payload);if($state===null){$line='PILOT_SESSION_UNAVAILABLE category=payload_invalid correlation_id='.\bin2hex(\random_bytes(6))."\n";@\file_put_contents('php://stderr',$line);return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}$id=$started->currentSessionId();if($id===null){$anonymous=$this->sessionStorage->start(null);$id=$anonymous->currentSessionId();if($id===null)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}$csrf=$state['auth_csrf']??null;$reused=\is_string($csrf)&&\preg_match('/^[0-9a-f]{64}$/D',$csrf)===1;$userAccess=$this->ownerUserAccessPath($r->path);if($userAccess&&$reused&&\is_int($state['auth_user_id']??null)&&\is_string($state['auth_email']??null))return$this->ownerUserAccess($r,$id,$state);if(!$reused){$csrf=\bin2hex(\random_bytes(32));$committed=$this->sessionStorage->writeCommit($id,$this->sessionBytes(['auth_csrf'=>$csrf]));if($committed->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);}
         if($r->path==='/pilot/login'){$body=PilotSessionView::login($csrf);$headers=['Content-Type'=>'text/html; charset=UTF-8'];if(!$reused){$secure=$scheme==='https'?'; Secure':'';$headers['Set-Cookie']=$cookieName.'='.$id.'; Max-Age=604800; Path=/pilot; HttpOnly; SameSite=Strict'.$secure;}return$this->response(200,$body,$headers,$r->method);}return$this->reads->handle($r);
     }
-    private function ownerUserAccess(PilotHttpRequest$r,string$id,array$state):PilotHttpResponse
+    private function ownerUserAccessPath(string $path):bool
     {
-        $this->ownerSessionState=$state;try{$server=$r->server+['FMONITOR_AUTH_USER_ID'=>(string)$state['auth_user_id'],'FMONITOR_AUTH_CSRF'=>(string)$state['auth_csrf']];$request=new PilotHttpRequest($r->method,$r->path,$r->host,(string)$state['auth_email'],$server,$r->body);$response=$this->users($request,[]);if($r->method==='POST'&&\in_array($response->status,[201,400],true)){$flash=$response->status===201&&\preg_match('#^Invitation: (/pilot/activate\?token=[A-Za-z0-9_-]{43})\n$#D',$response->body,$match)===1?['kind'=>'success','url'=>(($this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME')==='https'?'https':'http').'://'.$r->host.$match[1])]:['kind'=>'error'];$this->ownerSessionState['fm2_invitation_flash']=$flash;$commit=$this->sessionStorage->writeCommit($id,$this->sessionBytes($this->ownerSessionState));if($commit->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);return$this->response(303,'',['Location'=>'/pilot/admin/users'],$r->method);}if($response->status!==200)return$response;$body=$response->body;$flash=$this->ownerSessionState['fm2_invitation_flash']??null;if(\is_array($flash)&&($flash['kind']??null)==='success'&&\is_string($flash['url']??null)){$body=PilotSessionView::withInvitationFeedback($body,$flash['url']);unset($this->ownerSessionState['fm2_invitation_flash']);}$commit=$this->sessionStorage->writeCommit($id,$this->sessionBytes($this->ownerSessionState));if($commit->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)return$this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);return$this->response(200,$body,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);}finally{$this->ownerSessionState=null;}
+        return \in_array($path,['/pilot/admin/users','/pilot/admin/users/invite'],true)
+            || \preg_match('#^/pilot/admin/users/[1-9][0-9]*/roles(?:/[1-9][0-9]*)?$#D',$path)===1;
+    }
+    private function ownerUserAccess(PilotHttpRequest $r,string $id,array $state):PilotHttpResponse
+    {
+        $this->ownerSessionState=$state;
+        try {
+            $server=$r->server+['FMONITOR_AUTH_USER_ID'=>(string)$state['auth_user_id'],'FMONITOR_AUTH_CSRF'=>(string)$state['auth_csrf']];
+            $request=new PilotHttpRequest($r->method,$r->path,$r->host,(string)$state['auth_email'],$server,$r->body);
+            $roleRoute=[];
+            \preg_match('#^/pilot/admin/users/([1-9][0-9]*)/roles(?:/([1-9][0-9]*))?$#D',$r->path,$roleRoute);
+            $response=$this->users($request,$roleRoute);
+            if($r->path==='/pilot/admin/users/invite'&&$r->method==='POST'&&\in_array($response->status,[201,400],true)) {
+                $flash=$response->status===201&&\preg_match('#^Invitation: (/pilot/activate\?token=[A-Za-z0-9_-]{43})\n$#D',$response->body,$match)===1
+                    ? ['kind'=>'success','url'=>(($this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME')==='https'?'https':'http').'://'.$r->host.$match[1])]
+                    : ['kind'=>'error'];
+                $this->ownerSessionState['fm2_invitation_flash']=$flash;
+                $response=$this->response(303,'',['Location'=>'/pilot/admin/users'],$r->method);
+            }
+            if($response->status===200) {
+                $body=$response->body;
+                $flash=$this->ownerSessionState['fm2_invitation_flash']??null;
+                if(\is_array($flash)&&($flash['kind']??null)==='success'&&\is_string($flash['url']??null)) {
+                    $body=PilotSessionView::withInvitationFeedback($body,$flash['url']);
+                    unset($this->ownerSessionState['fm2_invitation_flash']);
+                }
+                $response=$this->response(200,$body,['Content-Type'=>'text/html; charset=UTF-8'],$r->method);
+            }
+            if($this->ownerSessionState!==$state) {
+                $commit=$this->sessionStorage->writeCommit($id,$this->sessionBytes($this->ownerSessionState));
+                if($commit->status()!==\FMonitor\IdentityAccess\PilotSessionOperationStatus::OK)
+                    return $this->response(503,"Service unavailable.\n",['Retry-After'=>'60'],$r->method);
+            }
+            return $response;
+        } finally {
+            $this->ownerSessionState=null;
+        }
     }
     private function sessionBytes(array$state):string{$bytes=(new PilotSessionPayloadCodec())->encode($state);if($bytes===null)throw new PilotHttpInfrastructureUnavailable();return$bytes;}
-    private function knownPath(string$path):bool{return \in_array($path,['/pilot','/pilot/login','/pilot/admin/users','/pilot/admin/users/invite','/pilot/objects','/pilot/'],true)||\str_starts_with($path,'/pilot/assets/');}
+    private function knownPath(string$path):bool{return $this->ownerUserAccessPath($path)||\in_array($path,['/pilot','/pilot/login','/pilot/admin/users','/pilot/admin/users/invite','/pilot/objects','/pilot/'],true)||\str_starts_with($path,'/pilot/assets/');}
     private function json(int $status,array $payload):PilotHttpResponse{return $this->response($status,\json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),['Content-Type'=>'application/json; charset=UTF-8']);}
 }
