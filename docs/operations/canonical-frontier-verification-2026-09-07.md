@@ -35,3 +35,14 @@ mutation, publication, preview image switch or Bitrix run performed.
 Test-only source commit `1c3ae46`; final manifest сверяет все13 current test hashes
 и реально записанные exit0 results, PHP lint13PASS. Некоторые старые verifiers
 не печатают буквальное PASS; успех определяется exit status, а не magic word.
+
+## Independent review and full-run outcome
+
+Gate5 APPROVED scoped13consumer patch: `reviews/code/VERIFICATION-CANONICAL-FRONTIER-015.md`.
+Full `make verify` clean-start source `9c65afdb27b2bb4e0d37cd06e1881280a5052337`
+completed exit2: migration/architecture/lint/unit/characterization/diff PASS;
+db and E2E FAIL solely on protected E2E launch-label requirement and its inherited
+bootstrap invocation. `full-verify-final-summary.json` records exact stages,
+failed verifiers and all23native members passing on the corrected runner.
+No VERIFY_OK. Task2.1 still open for dependent bootstrap/E2E, change not archived.
+RED worktree removed after terminal checks; final overlay patch retained externally.
