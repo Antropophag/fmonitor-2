@@ -47,6 +47,7 @@ services:
       FMONITOR_DB_USER: fmonitor2_demo
       FMONITOR_DB_PASSWORD: fmonitor2_demo_local
       FMONITOR_BITRIX_CONFIG: /run/secrets/bitrix-workforce
+      FMONITOR_SESSION_STATE_ROOT: /home/fmonitor/.local/state/fmonitor2
     volumes:
       - pilot-state:/home/fmonitor/.local/state/fmonitor2:ro
     secrets:

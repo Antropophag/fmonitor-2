@@ -1,17 +1,18 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/app/autoload.php';
-use FMonitor2\Workforce\{BitrixWorkforceDeliveryConfig,BitrixWorkforceDeliveryFactory};
+use FMonitor2\Workforce\{BitrixWorkforceDeliveryConfig,BitrixWorkforceDeliveryFactory,WorkerConfiguration};
 use FMonitor2\InstallationProcess\MariaDbWorkforceSynchronization;
 
 // Operator-invoked native sync. Credentials are read from a private token file, never printed.
-$db=null;
+$db=null;$stagedToken=null;
 try {
     $required=static function(string $name):string{$v=getenv($name);if(!is_string($v)||$v==='')throw new RuntimeException('CONFIGURATION_INVALID');return $v;};
-    $id=filter_var($required('FMONITOR_BITRIX_WEBHOOK_USER_ID'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
-    $departments=json_decode($required('FMONITOR_BITRIX_DEPARTMENT_IDS_JSON'),true,8,JSON_THROW_ON_ERROR);
+    $privateConfig=getenv('FMONITOR_BITRIX_CONFIG');
+    if(is_string($privateConfig)&&$privateConfig!==''){$values=WorkerConfiguration::fromFile($privateConfig);$stagedToken=WorkerConfiguration::stageToken($values['token']);$origin=$values['origin'];$id=$values['webhookUserId'];$departments=$values['departmentIds'];$tokenFile=$stagedToken;}
+    else{$origin=$required('FMONITOR_BITRIX_ORIGIN');$id=filter_var($required('FMONITOR_BITRIX_WEBHOOK_USER_ID'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$departments=json_decode($required('FMONITOR_BITRIX_DEPARTMENT_IDS_JSON'),true,8,JSON_THROW_ON_ERROR);$tokenFile=$required('FMONITOR_BITRIX_TOKEN_FILE');}
     if($id===false||!is_array($departments))throw new RuntimeException('CONFIGURATION_INVALID');
-    $config=new BitrixWorkforceDeliveryConfig($required('FMONITOR_BITRIX_ORIGIN'),$id,$required('FMONITOR_BITRIX_TOKEN_FILE'),$departments,
+    $config=new BitrixWorkforceDeliveryConfig($origin,$id,$tokenFile,$departments,
         caFile:getenv('FMONITOR_BITRIX_CA_FILE')?:null);
     $client=BitrixWorkforceDeliveryFactory::create($config);
     $prefix=getenv('FMONITOR_PROCESS_TABLE_PREFIX');if(!is_string($prefix)||!preg_match('/^[A-Za-z0-9_]{0,25}$/D',$prefix))throw new RuntimeException('CONFIGURATION_INVALID');
@@ -25,5 +26,5 @@ try {
     echo json_encode($result,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES),"\n";
     $exit=$result['status']==='completed'?0:1;
 }catch(Throwable){echo "{\"status\":\"failed\",\"reason\":\"SYNC_UNAVAILABLE\"}\n";$exit=1;}
-finally{if($db instanceof mysqli)try{$db->close();}catch(Throwable){}}
+finally{if($db instanceof mysqli)try{$db->close();}catch(Throwable){}if(is_string($stagedToken))@unlink($stagedToken);}
 exit($exit);
