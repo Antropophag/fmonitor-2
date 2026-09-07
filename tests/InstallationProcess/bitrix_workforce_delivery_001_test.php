@@ -9,7 +9,7 @@ function bwdOutcome(array $result,string $status,?string $reason,int $pages,int 
 $tests=[
 'complete pages request and repeat'=>static function(F $f):void{
     $f->client(['origin'=>'https://127.0.0.1:'.$f->port.'/']);[$result,$records]=$f->fetch();bwdOutcome($result,'complete',null,2,2,51);assertSameValue(array_map('bwdPerson',range(1,51)),$records,'independent exact selected raw records');$requests=$f->requests();assertSameValue(2,count($requests),'one native request per full page');
-    foreach($requests as $i=>$q){assertSameValue('/rest/7/FAKE_TOKEN_123456789/user.get',$q['path'],'origin slash joins once');assertSameValue('POST',$q['method'],'readonly method request');assertSameValue(['sort'=>'ID','order'=>'ASC','FILTER'=>['UF_DEPARTMENT'=>[71]],'start'=>$i*50,'select'=>['ID','ACTIVE','LAST_NAME','NAME','SECOND_NAME','WORK_POSITION','EMAIL','UF_XING','UF_DEPARTMENT','UF_EMPLOYMENT_DATE']],$q['request'],'exact requested params no ACTIVE/admin extras');}
+    foreach($requests as $i=>$q){assertSameValue('/rest/7/FAKE_TOKEN_123456789/user.get',$q['path'],'origin slash joins once');assertSameValue('POST',$q['method'],'readonly method request');$headers=array_change_key_case($q['headers']);assertSameValue(['application/json','application/json','HTTP/1.1'],[$headers['content-type']??null,$headers['accept']??null,$q['version']],'exact native HTTP headers/version');assertSameValue(['sort'=>'ID','order'=>'ASC','FILTER'=>['UF_DEPARTMENT'=>[71]],'start'=>$i*50,'select'=>['ID','ACTIVE','LAST_NAME','NAME','SECOND_NAME','WORK_POSITION','EMAIL','UF_XING','UF_DEPARTMENT','UF_EMPLOYMENT_DATE']],$q['request'],'exact requested params no ACTIVE/admin extras');}
     $f->scenario('raw_nulls');[$rawResult,$rawRows]=$f->fetch();bwdOutcome($rawResult,'complete',null,2,2,51);$expected=bwdPerson(1);$expected=array_replace($expected,['LAST_NAME'=>'  Работник  ','NAME'=>null,'SECOND_NAME'=>null,'WORK_POSITION'=>'  Монтажник  ','EMAIL'=>null,'UF_XING'=>' 1 ','UF_DEPARTMENT'=>['71'],'UF_EMPLOYMENT_DATE'=>'unparsed source date']);assertSameValue($expected,$rawRows[0],'raw nullable strings are preserved for later normalization');
     foreach(['reordered'=>51,'fifty'=>50,'zero'=>0] as $mode=>$total){$f->scenario($mode);[$next,$rows]=$f->fetch();bwdOutcome($next,'complete',null,$total===51?2:1,$total===51?2:1,$total);assertSameValue($total===0?[]:array_map('bwdPerson',range(1,$total)),$rows,'complete alternate page shape');}assertSameValue(51,count($records),'previous result not live');
 },
@@ -21,7 +21,7 @@ $tests=[
 },
 'HTTP API failures and retry'=>static function(F $f):void{
     $f->client();foreach(['401','403','404','500','api_error'] as $mode){$f->scenario($mode);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed',in_array($mode,['401','403'],true)?'authorization_failed':($mode==='api_error'?'api_failed':'transport_failed'),0,1);assertSameValue(null,$rows,'error bodies not returned');}
-    $f->scenario('retry_then_ok');$start=hrtime(true);[$r,$rows]=$f->fetch();bwdOutcome($r,'complete',null,2,4,51);assertSameValue(true,hrtime(true)-$start>=3_000_000_000,'native retry backoff is not skipped');assertSameValue(51,count($rows),'retried page is complete');
+    $f->scenario('retry_then_ok');$start=hrtime(true);[$r,$rows]=$f->fetch();bwdOutcome($r,'complete',null,2,4,51);assertSameValue(true,hrtime(true)-$start>=3_000_000_000,'native retry backoff is not skipped');assertSameValue(51,count($rows),'retried page is complete');$retry=array_values(array_filter($f->requests(),fn($q)=>$q['mode']==='retry_then_ok'));foreach([1=>1.0,2=>2.0] as $i=>$base){$delay=$retry[$i]['at']-$retry[$i-1]['at'];assertSameValue(true,$delay>=$base&&$delay<=$base+0.50,'backoff plus <=250ms jitter with 250ms native scheduling tolerance');}
     foreach(['429','502','503','504'] as $mode){$f->scenario($mode);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','transport_failed',0,3);assertSameValue(null,$rows,'retry exhaustion no data');}
     $f->scenario('second_failure');[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','transport_failed',1,4);assertSameValue(null,$rows,'partial first page never exposed');
 },
@@ -29,6 +29,15 @@ $tests=[
     $f->scenario('429');$f->client(['deadlineSeconds'=>1]);$start=hrtime(true);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','deadline_exceeded',0,1);assertSameValue(true,hrtime(true)-$start<900_000_000,'unfittable delay rejected without sleeping');assertSameValue(null,$rows,'deadline no data');
     $f->scenario('request_timeout');$f->client(['requestTimeoutSeconds'=>1,'deadlineSeconds'=>10]);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','transport_failed',0,1);assertSameValue(null,$rows,'read timeout is not connect retry');
     $f->scenario('connect_timeout');$f->client(['deadlineSeconds'=>10]);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','transport_failed',0,3);assertSameValue(null,$rows,'connect retry exhaustion');assertSameValue(3,count(file($f->root.'/connect-timeouts.jsonl',FILE_SKIP_EMPTY_LINES)),'three actual stalled native TLS connections');
+},
+'unsupported runtime fails before request'=>static function(F $f):void{
+    foreach(['curl_init','posix_geteuid'] as $disabled){$f->client([], $disabled);[$r,$rows]=$f->fetch();bwdOutcome($r,'failed','configuration_unavailable',0,0);assertSameValue(null,$rows,'unsupported real PHP runtime no batch');}
+},
+'deadline after native success'=>static function(F $f):void{
+    $f->scenario('paused_success');$f->client(['deadlineSeconds'=>1]);[$r,$rows]=$f->fetch(true);bwdOutcome($r,'failed','deadline_exceeded',0,1);assertSameValue(null,$rows,'expired native attempt never returns success');
+},
+'deadline before ordinary error'=>static function(F $f):void{
+    $f->scenario('paused_error');$f->client(['deadlineSeconds'=>1]);[$r,$rows]=$f->fetch(true);bwdOutcome($r,'failed','deadline_exceeded',0,1);assertSameValue(null,$rows,'expired native attempt takes precedence over authorization error');
 },
 'limits'=>static function(F $f):void{
     $f->client();foreach(['exact_body'=>[1,0],'exact_cumulative'=>[32,1600]] as $mode=>[$pages,$total]){$f->scenario($mode);[$r,$rows]=$f->fetch();bwdOutcome($r,'complete',null,$pages,$pages,$total);assertSameValue($total,count($rows),'inclusive exact body bound');}

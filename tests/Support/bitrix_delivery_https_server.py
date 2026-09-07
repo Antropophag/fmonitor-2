@@ -41,8 +41,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try:request=json.loads(raw)
         except Exception:self.reply(400,'{}');return
         config=json.loads((root/'scenario.json').read_text());mode=config['mode'];start=request.get('start',0)
-        log({'method':'POST','path':self.path,'request':request,'headers':dict(self.headers),'at':time.monotonic(),'mode':mode})
+        log({'method':'POST','path':self.path,'request':request,'headers':dict(self.headers),'version':self.request_version,'at':time.monotonic(),'mode':mode})
         count=sum(1 for line in (root/'requests.jsonl').read_text().splitlines() if json.loads(line).get('mode')==mode)
+        if mode in ['paused_success','paused_error']:
+            (root/'pause-ready').write_text('1');until=time.monotonic()+3
+            while not (root/'pause-release').exists() and time.monotonic()<until:time.sleep(.001)
+            if not (root/'pause-release').exists():self.reply(500,'{}');return
+            self.reply(200 if mode=='paused_success' else 401,'{"result":[],"total":0}');return
         if mode=='redirect':self.reply(302,'{}',{'Location':f'https://127.0.0.1:{self.server.server_port}/trap'});return
         if mode in ['401','403','404','500','429','502','503','504']:
             self.reply(int(mode),'FAKE_TOKEN_123456789 Работник tab1@example.invalid');return

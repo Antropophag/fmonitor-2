@@ -49,3 +49,30 @@ Primary logs only external:
 /Users/antropophag/.local/state/fmonitor2-verification/bitrix-delivery-20260907.
 No new migration/publication/normalization, cron wiring, credentials, real Bitrix call,
 preview change or remote mutation. User requested a session-restart checkpoint here.
+
+## Дополнение после перезапуска — RED v5
+
+HEAD при восстановлении: `0800095eb364096fc6ff7911fb514a8b8d8be629`.
+Persistent goal восстановлена из handoff без token budget; ограничения сохранены.
+Независимый Gate3 `/root/bitrix_gate3` (sol low) вернул CHANGES_REQUESTED;
+исходный review сохранён в reviews/tests/BITRIX-WORKFORCE-DELIVERY-001.md.
+
+Тесты дополнены проверкой runtime prerequisites, реальными PHP workers с
+`disable_functions=curl_init` и `disable_functions=posix_geteuid` (без подмены
+native функций), exact HTTP headers/version и верхней границей retry timing
+с явным 250ms допуском на native scheduling сверх contract jitter 250ms.
+Два deadline сценария приостанавливают только task-owned PHP worker сигналом
+SIGSTOP после фактического получения запроса сервером. Сервер освобождает ответ,
+worker возобновляется SIGCONT через1150ms при budget1s; finally гарантирует resume.
+Это проверяет expired native success/error без вмешательства в Curl или clock.
+
+RED v5: прежняя команда; внешний `red-v5.log`, exit1,12 SETUP_OK,
+12 CLEANUP_OK,12 intended missing-factory failures. Новые проверки остаются
+позади отсутствующей factory и требуют фактического GREEN. PHP lint3,
+Python AST syntax и diff-check PASS. Production код не добавлялся.
+
+SHA256 v5:
+- driver `e9e3e105af67ca8a465e4ff21c5f3d9cf3f4a1712e576381922a2c3bf02c5c16`
+- fixture `1bda63f9be863da275ae480ba8183f38c6f35d6c0b36da29e533dd143378e628`
+- worker `8ffd797eb549940ac74e4f25dc0338e02479ea9d2d38850800f88e1e3b6aa3b7`
+- server `7e3fa98d26ded7128afe6610be3e5487110bc762fbe0ee22abec89435da220f4`

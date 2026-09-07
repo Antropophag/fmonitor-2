@@ -4,6 +4,7 @@ require dirname(__DIR__,2).'/app/autoload.php';
 use FMonitor2\Workforce as W;
 $settings=json_decode(file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);$exit=0;
 try{
+    if(($settings['disabledFunction']??null)!==null&&function_exists($settings['disabledFunction']))throw new RuntimeException();
     $client=W\BitrixWorkforceDeliveryFactory::create(new W\BitrixWorkforceDeliveryConfig(...$settings['config']));
     echo "PHASE ready\n";fflush(STDOUT);$step=0;$prior=[];
     while(true){$read=[STDIN];$write=null;$except=null;if(stream_select($read,$write,$except,15)!==1)throw new RuntimeException();$line=fgets(STDIN);if($line==="stop\n")break;if($line!=="fetch\n")throw new RuntimeException();$step++;
