@@ -301,8 +301,8 @@ try {
     assertSameValue('', $runner['stderr'], 'Canonical runner setup keeps stderr empty.');
     $runnerResult = json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR);
     assertSameValue([1,2,3,4,5,6,7], array_slice($runnerResult['appliedVersions'], 0, 7), 'Landed prerequisites v1-v7 must apply before inspection evidence.');
-    assertSameValue(12, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v12 after proven v1-v7.');
-    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
+    assertSameValue(15, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v15 after proven v1-v7.');
+    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
     iesAssertRuntimeDoesNotOwnDdl();
 
     $db = new mysqli($host, $user, $password, $database, $port); $db->set_charset('utf8mb4');
@@ -312,7 +312,7 @@ try {
     $db->query("INSERT INTO fm2_checklist_photos VALUES(51,1,1,'77777777-7777-4777-8777-777777777777','".str_repeat('a',64)."','image/png',4,'a.png','a.bin',2,'d','s',NULL)");
     $db->query('ALTER TABLE fm2_checklist_operations AUTO_INCREMENT=90');$db->query('ALTER TABLE fm2_checklist_photos AUTO_INCREMENT=100');
     $before = iesState($db, '');
-    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion'=>12,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
+    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion'=>15,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
     assertSameValue(['applied'=>false,'schemaVersion'=>8,'tablesCreated'=>[],'tablesUpgraded'=>[]], iesApply($db, ''), 'G2-02 direct seam exact repeat is a no-op.');
     assertSameValue($before, iesState($db, ''), 'G2-02 repeat preserves metadata, rows and allocators.');
     $db->query('DROP TABLE fm2_pilot_completion_fact_corrections');$db->query('DROP TABLE fm2_pilot_completion_facts');

@@ -30,3 +30,7 @@ Rapid-pilot меняется только в verifier; architecture baseline н�
 
 Gate1→13consumers/support edits→pre-registration RED→Gate3→current native GREEN
 →Gate5/commit→full VERIFY. Не менять source/tests во время текущего fullrun a8e6e92.
+
+Inherited v13 CHECK transition проверяется точной test-only заменой old clause
+на approved v5 clause при сохранении whole-table DDL и всех rows. Это не
+исключение таблицы из preservation; остальные metadata bytes остаются exact.

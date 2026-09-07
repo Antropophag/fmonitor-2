@@ -329,7 +329,7 @@ try {
         $runnerDatabase = 'fm2_ods_runner_' . bin2hex(random_bytes(5));
         $admin->query('CREATE DATABASE ' . odsQuote($runnerDatabase) . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
         try {
-            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner registers and applies sequential v12');
+            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":15,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner registers and applies through sequential v15');
             $runnerConnection = odsConnect($runnerDatabase);
             try {
                 odsAssertExact($runnerConnection, '', 'details');
@@ -337,7 +337,7 @@ try {
                 assertSameValue([], odsTableState($runnerConnection, 'fm2_pilot_object_details')['rows'], 'runner creates empty details');
                 assertSameValue([], odsTableState($runnerConnection, 'fm2_pilot_object_detail_quarantine')['rows'], 'runner creates empty quarantine');
             } finally { $runnerConnection->close(); }
-            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner exact v12 repeat');
+            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":15,\"appliedVersions\":[]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner exact v15 repeat');
         } finally {
             $admin->query('DROP DATABASE IF EXISTS ' . odsQuote($runnerDatabase));
         }

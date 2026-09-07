@@ -1,6 +1,6 @@
 # VERIFICATION-CANONICAL-FRONTIER-015
 
-Версия0.1,2026-09-07. Gate1 required.
+Версия0.2,2026-09-07. Narrow inherited CHECK-transition Gate1 re-review required.
 
 ## Простыми словами
 
@@ -44,6 +44,20 @@ history/counters/prefix/permission/interruption/invariant assertions.
 существующего approved composed catalog proof в production_migration_runner_001_test.
 Если proof делегирован approved engine readiness, это делегирование явно
 записывается; прежние table checks не заменяются общей readiness boolean.
+
+### Approved v13 predecessor CHECK transition
+
+При полном переходе v1-v4/partialv5 →15 migration13 уже нормативно заменяет
+`ck_fm2_process_user_capability` на `ck_fm2_process_user_capability_v5`, дополняя
+исходный literal allowlist ровно `assignment_order.original.upload` и
+`assignment_order.original.correct`. Основание — existing original-audit13
+approval и `ProductionOriginalAuditCatalogV13::checks()` test-only oracle.
+
+Для этого единственного CHECK verifier ожидает точную literal замену имени и
+двух значений. До замены проверяется единственное вхождение старого exact clause;
+сравнение всего остального SHOW CREATE TABLE и всех rows сохраняется. Таблица
+не исключается из preservation assertion, не вводится универсальная нормализация
+или допуск других metadata changes. Нового production permission grant здесь нет.
 
 ## Bounded files
 

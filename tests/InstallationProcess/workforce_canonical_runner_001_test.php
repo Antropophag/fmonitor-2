@@ -307,8 +307,20 @@ try {
     $cleanTables = array_column(wcrRows($connection, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$prefix25}fm2\\_%' ORDER BY BINARY TABLE_NAME"), 'TABLE_NAME');
     assertSameValue(
         [
-            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n", 'stderr' => ''],
+            'result' => ['exitCode' => 0, 'stdout' => "{\"ok\":true,\"schemaVersion\":15,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}\n", 'stderr' => ''],
             'tables' => array_map(static fn (string $table): string => $prefix25 . $table, [
+                'fm2_assignment_order_id_receipts',
+                'fm2_assignment_order_identities',
+                'fm2_assignment_order_original_audits',
+                'fm2_assignment_order_original_events',
+                'fm2_assignment_order_original_requests',
+                'fm2_assignment_order_original_revisions',
+                'fm2_assignment_order_original_roots',
+                'fm2_assignment_order_selection_audits',
+                'fm2_assignment_order_selection_events',
+                'fm2_assignment_order_selection_members',
+                'fm2_assignment_order_selection_requests',
+                'fm2_assignment_order_selections',
                 'fm2_assignment_orders',
                 'fm2_checklist_operation_installers',
                 'fm2_checklist_operations',
@@ -320,6 +332,8 @@ try {
                 'fm2_migration_classification_provenance',
                 'fm2_order_artifacts',
                 'fm2_order_installers',
+                'fm2_original_maintenance_audits',
+                'fm2_original_maintenance_requests',
                 'fm2_pilot_auth_attempts',
                 'fm2_pilot_auth_credentials',
                 'fm2_pilot_completion_fact_corrections',
@@ -356,7 +370,7 @@ try {
     $connection->query("INSERT INTO `{$prefix25}fm2_workforce_observations` (sync_run_id,delivery_person_id,employee_number,full_name,position,employment_status,employed_from,dismissal_effective_at,authority_system,delivery_system,source_modified_at,reconciliation_state,observed_at,dismissal_time_quality) VALUES ('11111111-1111-1111-1111-111111111111',1042,1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup','bitrix','2026-09-02T07:59:00+03:00','delivered','2026-09-02T08:01:00+03:00','observed_only')");
     $connection->query("UPDATE `{$prefix25}fm2_workforce_sync_metadata` SET last_successful_run_id='11111111-1111-1111-1111-111111111111',last_successful_at='2026-09-02T08:02:00+03:00' WHERE singleton_id=1");
     $repeatBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated v8 repeat must report no applied versions.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":15,\"appliedVersions\":[]}\n"], wcrRun($environment), 'Completed populated v8 repeat must report no applied versions.');
     assertSameValue($repeatBefore, wcrState($connection), 'Completed repeat preserves every v1-v5 definition and row byte-for-byte.');
     $connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$prefix25}fm2_pilot_completion_facts`");
 
@@ -366,11 +380,18 @@ try {
     $connection->query("INSERT INTO `{$partialPrefix}fm2_workforce_sync_runs` (run_id,status,started_at) VALUES ('22222222-2222-2222-2222-222222222222','started','2026-09-02T10:00:00+03:00')");
     $connection->query("DROP TABLE `{$partialPrefix}fm2_workforce_observations`");
     $partialBefore = wcrState($connection);
-    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[5,6,7,8,9,10,11,12]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover v5 and landed v6-v12 successors.');
+    wcrAssertResult([0, "{\"ok\":true,\"schemaVersion\":15,\"appliedVersions\":[5,6,7,8,9,10,11,12,13,14,15]}\n"], wcrRun(wcrEnvironment($database, $partialPrefix)), 'Compatible v5 partial state must recover v5 and landed v6-v15 successors.');
     wcrAssertExactV5($connection, $partialPrefix);
     $partialAfter = wcrState($connection);
     foreach ($partialBefore as $table => $state) {
-        assertSameValue($state, $partialAfter[$table], "Partial recovery preserves existing table {$table} and its rows.");
+        if ($table === $partialPrefix . 'fm2_process_user_capabilities') {
+            // Original-audit v13 changes precisely this inherited v4 CHECK, preserving all rows and other DDL.
+            $oldCheck = "CONSTRAINT `ck_fm2_process_user_capability` CHECK (`capability` in ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer'))";
+            $newCheck = "CONSTRAINT `ck_fm2_process_user_capability_v5` CHECK (`capability` in ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct'))";
+            assertSameValue(1, substr_count($state['create'], $oldCheck), 'Exact single predecessor capability CHECK before canonical upgrade.');
+            $state['create'] = str_replace($oldCheck, $newCheck, $state['create']);
+        }
+        assertSameValue($state, $partialAfter[$table], "Partial recovery preserves existing table {$table} and its rows except the exact approved v13 CHECK transition.");
     }
     $connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_facts`");
 
