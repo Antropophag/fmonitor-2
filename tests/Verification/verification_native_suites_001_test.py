@@ -99,6 +99,27 @@ class NativeSuites(unittest.TestCase):
         self.assertEqual([f'php\t{p}' for p in UNIT], self.calls())
         self.assertIn('REGRESSION_FAILURE: ' + CLIENT, result.stderr)
 
+    def test_empty_node_inventory_is_allowed(self):
+        (self.root / CLIENT).unlink()
+        result = self.run_cli('list', 'unit')
+        self.assertEqual(0, result.returncode, 'INTENDED_RED Bash3 empty Node array: ' + result.stderr)
+        self.assertEqual(''.join(f'php\t{p}\n' for p in UNIT), result.stdout)
+        self.assertFalse(self.invocations.exists(), 'empty Node list remains read-only')
+        result = self.run_cli('unit')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([f'php\t{p}' for p in UNIT], self.calls())
+
+    def test_empty_php_and_node_inventories_are_allowed(self):
+        for name in UNIT + DB + [CLIENT]:
+            (self.root / name).unlink()
+        for suite in ['unit', 'db']:
+            result = self.run_cli('list', suite)
+            self.assertEqual(0, result.returncode, 'INTENDED_RED Bash3 empty PHP array: ' + result.stderr)
+            self.assertEqual('', result.stdout)
+            result = self.run_cli(suite)
+            self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([], self.calls(), 'empty suite runs no test files')
+
     def test_missing_directory_and_bad_arguments_fail_closed(self):
         for args in [('list',), ('list', 'other'), ('list', 'unit', 'extra')]:
             result = self.run_cli(*args)

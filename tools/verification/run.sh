@@ -76,19 +76,20 @@ while IFS= read -r file; do
 done < <(find tests/AssignmentOrderComposition -maxdepth 1 -type f -name '*test.php' -print | LC_ALL=C sort)
 while IFS= read -r file; do node_files+=("$file"); done \
   < <(find tests/Verification -maxdepth 1 -type f -name '*_test.mjs' -print | LC_ALL=C sort)
+# Bash 3.2 with nounset requires guarded expansion for declared empty arrays.
 sorted_files=()
-while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' "${unit_files[@]}" | LC_ALL=C sort)
-unit_files=("${sorted_files[@]}"); sorted_files=()
-while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' "${db_files[@]}" | LC_ALL=C sort)
-db_files=("${sorted_files[@]}")
+while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${unit_files[@]+"${unit_files[@]}"} | LC_ALL=C sort)
+unit_files=(${sorted_files[@]+"${sorted_files[@]}"}); sorted_files=()
+while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${db_files[@]+"${db_files[@]}"} | LC_ALL=C sort)
+db_files=(${sorted_files[@]+"${sorted_files[@]}"})
 
 if [[ "${1:-}" == list ]]; then
   test "$#" -eq 2 || fail SETUP_FAILURE "usage: tools/verification/run.sh list unit|db"
   case "$2" in
     unit)
-      for file in "${unit_files[@]}"; do printf 'php\t%s\n' "$file"; done
-      for file in "${node_files[@]}"; do printf 'node\t%s\n' "$file"; done ;;
-    db) for file in "${db_files[@]}"; do printf 'php\t%s\n' "$file"; done ;;
+      for file in ${unit_files[@]+"${unit_files[@]}"}; do printf 'php\t%s\n' "$file"; done
+      for file in ${node_files[@]+"${node_files[@]}"}; do printf 'node\t%s\n' "$file"; done ;;
+    db) for file in ${db_files[@]+"${db_files[@]}"}; do printf 'php\t%s\n' "$file"; done ;;
     *) fail SETUP_FAILURE "unknown list suite '$2'; expected unit|db" ;;
   esac
   exit 0
@@ -98,8 +99,8 @@ fi
 case "${1:-}" in
   unit)
     unit_failed=0
-    (run_files "${unit_files[@]}") || unit_failed=1
-    for file in "${node_files[@]}"; do
+    (run_files ${unit_files[@]+"${unit_files[@]}"}) || unit_failed=1
+    for file in ${node_files[@]+"${node_files[@]}"}; do
       printf 'VERIFY %s\n' "$file"
       if ! node "$file"; then
         printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
@@ -110,7 +111,7 @@ case "${1:-}" in
     ;;
   db)
     require_db
-    run_files "${db_files[@]}"
+    run_files ${db_files[@]+"${db_files[@]}"}
     ;;
   characterization)
     python3 tests/Verification/pilot_healthcheck_cookie_failure_001_test.py || fail REGRESSION_FAILURE "healthcheck cookie persistence"

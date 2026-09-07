@@ -31,3 +31,13 @@ Reviewer нашёл Bash3.2/set-u edge для existing empty Node/unit/db invent
 canonical sourcea8e6e92 уже исполнил все22nativePHP+Node безfailure;
 `native-members-observed.json` фиксирует23 наблюдения. Полный run ещё не завершён.
 До terminal source/tests сохраняются неизменными;7-test GREEN не закрывает этот edge.
+
+## Empty inventory correction
+
+Full sourcea8e6e92 terminal exit2: failed db/characterization/E2E only;unitPASS.
+Все22nativePHP+Node реально выполнены безfailure.9-test harness расширен emptyNode
+и emptyPHP+Node cases, RED2fail/7pass, independent Gate3v2 APPROVED. Guarded Bash3
+array expansion сохраняет set-u и nonempty arguments;9testsGREEN в
+`empty-inventory-green.log`, bash-n/diffPASS. Current complete unit/db lists
+сохранены в `unit-list-final.tsv`/`db-list-final.tsv`; нет исключений legacy tests.
+Full repeat после следующих canonical expectation repairs остаётся launch gate.
