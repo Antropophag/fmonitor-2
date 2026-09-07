@@ -1023,6 +1023,7 @@
 .fm2-registration span { color: var(--fm2-muted); font-size: 12px; }
 .fm2-registration strong { font-size: 22px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 
+.fm2-object-data { container-type: inline-size; }
 .fm2-object-layout { display: grid; grid-template-columns: minmax(270px,320px) minmax(0,1fr); align-items: start; gap: 16px; padding-block-start: 16px; }
 .fm2-static-passport { position: sticky; inset-block-start: 18px; overflow: hidden; background: var(--fm2-surface); border-radius: 12px; }
 .fm2-passport-heading { padding: 17px 18px 13px; border-block-end: 1px solid var(--fm2-border); }
@@ -1690,7 +1691,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-assignment-files{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px}.fm2-document-empty{white-space:nowrap}
 @media(max-width:760px){.fm2-assignment-version{align-items:flex-start;grid-template-columns:1fr}.fm2-assignment-files{justify-content:flex-start}}
 .fm2-object-workspace > .fm2-completion { display: block; margin: 0 22px 24px; padding: 14px 16px; border: 1px solid var(--shlz-color-border, #d9dde3); border-radius: var(--fm2-radius); background: #fff; }
-.fm2-object-workspace > .fm2-completion-action { display: grid; align-items: end; grid-template-columns: minmax(180px, .55fr) minmax(0, 1.45fr); }
+.fm2-object-workspace > .fm2-completion-action { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr); container-type: inline-size; }
 .fm2-completion-action > .fm2-completion-form { margin: 0; padding: 0; border: 0; }
 .fm2-completion-action > .fm2-action-stack { grid-column: 1 / -1; justify-content: flex-start; }
 .fm2-completion > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-block-end: 10px; }
@@ -1712,8 +1713,18 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-completion-steps small, .fm2-completion-steps div > span { color: #6c737e; font-size: 11px; }
 .fm2-completion-steps .is-done > span { border-color: #2f7a45; background: #2f7a45; color: #fff; }
 .fm2-completion-steps .is-current > span { border-color: #303640; color: #303640; }
-.fm2-completion-form { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr) auto; align-items: end; gap: 16px; margin-block-start: 24px; padding-block-start: 20px; border-block-start: 1px solid #e4e7eb; }
-.fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: minmax(180px, 320px) auto; justify-content: start; }
+.fm2-completion-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-inline-size: 0; align-items: end; gap: 16px; margin-block-start: 24px; padding-block-start: 20px; border-block-start: 1px solid #e4e7eb; }
+.fm2-completion-form > .shlz-field { min-inline-size: 0; }
+.fm2-completion-form > .shlz-button { grid-column: 1 / -1; justify-self: start; max-inline-size: 100%; overflow-wrap: normal; }
+.fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: minmax(0, 320px); justify-content: start; }
+@container (max-width: 520px) { .fm2-completion-form { grid-template-columns: minmax(0, 1fr); } }
+@container (max-width: 720px) {
+  .fm2-object-layout { grid-template-columns: minmax(0, 1fr); }
+  .fm2-static-passport { position: static; }
+  .fm2-card-header { flex-direction: column; align-items: flex-start; }
+  .fm2-object-title__line { flex-wrap: wrap; }
+  .fm2-registration { inline-size: 100%; min-inline-size: 0; padding: 12px 0 0; border-block-start: 1px solid var(--fm2-border); border-inline-start: 0; }
+}
 .fm2-check-closeout { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 24px; }
 .fm2-check-closeout__copy { display: grid; gap: 9px; min-width: 0; }
 .fm2-check-closeout__copy > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
