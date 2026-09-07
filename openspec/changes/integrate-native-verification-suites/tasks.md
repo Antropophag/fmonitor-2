@@ -5,4 +5,4 @@
 ## 2. Delivery
 - [x] 2.1 Минимальный runner GREEN: scheduler harness PASS, прежние suites сохранены.
 - [x] 2.2 Выполнить real canonical native suites, architecture/lint/diff и зафиксировать logs.
-- [ ] 2.3 Получить independent Gate5 и commit; Done только после полного выполнения этих checks.
+- [x] 2.3 Получить independent Gate5 и commit; Done только после полного выполнения этих checks.

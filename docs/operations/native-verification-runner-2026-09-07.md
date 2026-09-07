@@ -41,3 +41,12 @@ array expansion сохраняет set-u и nonempty arguments;9testsGREEN в
 `empty-inventory-green.log`, bash-n/diffPASS. Current complete unit/db lists
 сохранены в `unit-list-final.tsv`/`db-list-final.tsv`; нет исключений legacy tests.
 Full repeat после следующих canonical expectation repairs остаётся launch gate.
+
+## Independent closure
+
+Gate5 v2 APPROVED corrected source63264d7: independent9scheduler/Bash3 syntax/
+argv conservation/diff checks, bytewise unchanged unit/db inventory106/96.
+Reviewer лично проверил real sourcea8 log:23newmembers exactly once/no failures,
+unitPASS/fullterminalFAIL3stages. Scope runner6/6 tasks complete, не archived.
+Final exact-source fullVERIFY после consumer repairs остаётся общей integration
+обязанностью; этот review не является launch approval.
