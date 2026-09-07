@@ -18,7 +18,7 @@ final class FreshOrderHttpResources
     private function value(string $name):string { return (string)($this->environment->read($name)?:''); }
     public function connect():\mysqli
     {
-        $port=filter_var($this->value('FMONITOR_DB_PORT'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>65535]]);
+        $port=\filter_var($this->value('FMONITOR_DB_PORT'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>65535]]);
         if($port===false||$this->value('FMONITOR_DB_HOST')===''||$this->value('FMONITOR_DB_NAME')==='')throw new \RuntimeException();
         $db=new \mysqli($this->value('FMONITOR_DB_HOST'),$this->value('FMONITOR_DB_USER'),$this->value('FMONITOR_DB_PASSWORD'),$this->value('FMONITOR_DB_NAME'),$port);
         if(!$db->set_charset('utf8mb4')){$db->close();throw new \RuntimeException();}return $db;

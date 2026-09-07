@@ -7,21 +7,21 @@ final class FreshOrderSelectionView
     public static function path(int $id):string { return '/pilot/objects/'.$id.'/assignment-order/selection'; }
     public static function hidden(array $fields):string
     {
-        $html='';foreach($fields as $name=>$value)foreach(is_array($value)?$value:[$value] as $item){
-            $key=$name.(is_array($value)?'[]':'');$html.='<input type="hidden" name="'.PilotView::e($key).'" value="'.PilotView::e($item).'">';
+        $html='';foreach($fields as $name=>$value)foreach(\is_array($value)?$value:[$value] as $item){
+            $key=$name.(\is_array($value)?'[]':'');$html.='<input type="hidden" name="'.PilotView::e($key).'" value="'.PilotView::e($item).'">';
         }return $html;
     }
     public static function render(HttpUser $user,array $model,string $csrf):string
     {
         $e=PilotView::e(...);$id=$model['objectId'];$path=self::path($id);$latest=$model['latest'];$object=$model['object'];
-        $bytes=random_bytes(16);$bytes[6]=chr((ord($bytes[6])&15)|64);$bytes[8]=chr((ord($bytes[8])&63)|128);$hex=bin2hex($bytes);
-        $request=substr($hex,0,8).'-'.substr($hex,8,4).'-'.substr($hex,12,4).'-'.substr($hex,16,4).'-'.substr($hex,20);
+        $bytes=\random_bytes(16);$bytes[6]=\chr((\ord($bytes[6])&15)|64);$bytes[8]=\chr((\ord($bytes[8])&63)|128);$hex=\bin2hex($bytes);
+        $request=\substr($hex,0,8).'-'.\substr($hex,8,4).'-'.\substr($hex,12,4).'-'.\substr($hex,16,4).'-'.\substr($hex,20);
         $pending=$latest!==null&&!$latest['hasAcceptedOriginal'];$mode=$pending?'replace_pending':'new_order';
-        $chosen=$latest===null?[]:array_column($latest['installers'],'tabId');$engineer=$latest['engineer']['userId']??null;
+        $chosen=$latest===null?[]:\array_column($latest['installers'],'tabId');$engineer=$latest['engineer']['userId']??null;
         $body='<div class="fm2-page-header"><div><h1>Выбор состава распоряжения</h1><p>Сохраните состав. PDF-шаблон можно скачать отдельно.</p></div></div>';
         $body.='<section class="fm2-order-object"><strong>Объект монтажа № '.$id.'</strong><span>'.$e($object['address']).', подъезд '.$e($object['entrance']).' · '.$e($object['objectRegistrationNumber']).'</span><small>Плановый период: '.$e($object['plannedStartDate']).' — '.$e($object['plannedFinishDate']).'</small></section>';
         if($latest!==null){
-            $names=implode(', ',array_column($latest['installers'],'fullName'));
+            $names=\implode(', ',\array_column($latest['installers'],'fullName'));
             $body.='<section class="fm2-order-surface"><div class="fm2-order-team"><div><h2>Выбранный состав · распоряжение '.$e($latest['version']).'</h2><p>'.$e($names).'</p><p>Инженер строительного контроля: '.$e($latest['engineer']['fullName']).'</p><p>'.($pending?'Ожидается подписанный оригинал.':'Подписанный оригинал принят.').'</p>';
             if($model['lastTemplateDate']!==null)$body.='<p>Последнее формирование шаблона: <time datetime="'.$e($model['lastTemplateDate']).'">'.$e($model['lastTemplateDate']).'</time></p>';
             if(isset($model['originalSubmission']))$body.='<p><a class="shlz-link" href="'.OriginalUploadView::path($id,$latest['orderId']).'/submit">'.($model['originalSubmission']['mode']==='initial'?'Загрузить оригинал':'Исправить оригинал').'</a></p>';
@@ -30,7 +30,7 @@ final class FreshOrderSelectionView
         $body.='<form class="fm2-order-form" method="post" action="'.$path.'">'.self::hidden(['csrfToken'=>$csrf,'requestId'=>$request,'mode'=>$mode,'expectedSelectionRevision'=>$model['selectionRevision']]);
         $body.='<fieldset class="fm2-order-surface"><legend>Монтажники</legend>';
         foreach($model['installers'] as $worker){
-            $body.='<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="installerTabIds[]" value="'.$worker['tabId'].'"'.(in_array($worker['tabId'],$chosen,true)?' checked':'').'><span>'.$e($worker['fullName']).' · '.$e($worker['position']).' · '.$worker['tabId'].'</span></label><p>Источник: '.$e($worker['source']).' · Актуально на: '.$e($worker['updatedAt']).'</p>';
+            $body.='<label class="shlz-choice"><input class="shlz-checkbox" type="checkbox" name="installerTabIds[]" value="'.$worker['tabId'].'"'.(\in_array($worker['tabId'],$chosen,true)?' checked':'').'><span>'.$e($worker['fullName']).' · '.$e($worker['position']).' · '.$worker['tabId'].'</span></label><p>Источник: '.$e($worker['source']).' · Актуально на: '.$e($worker['updatedAt']).'</p>';
         }
         if($model['installers']===[])$body.='<p>Нет допустимых монтажников в кадровом каталоге.</p>';
         $body.='</fieldset><fieldset class="fm2-order-surface"><legend>Инженер строительного контроля</legend>';

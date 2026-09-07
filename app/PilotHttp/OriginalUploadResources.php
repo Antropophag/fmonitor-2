@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
 use FMonitor2\AssignmentOrderOriginal as O;
-require_once dirname(__DIR__).'/AssignmentOrderOriginal/AssignmentOrderOriginalRuntime.php';
+require_once \dirname(__DIR__).'/AssignmentOrderOriginal/AssignmentOrderOriginalRuntime.php';
 final class OriginalUploadResources
 {
     public readonly FreshOrderHttpResources $native;

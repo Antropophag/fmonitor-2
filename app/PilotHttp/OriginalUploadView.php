@@ -9,10 +9,10 @@ final class OriginalUploadView
     {
         $e=PilotView::e(...);$object=$model['objectId'];$path=self::path($object,$model['orderId']);$current=$model['current'];
         $title=$current===null?'Загрузить оригинал':'Исправить оригинал';
-        $b=random_bytes(16);$b[6]=chr((ord($b[6])&15)|64);$b[8]=chr((ord($b[8])&63)|128);$h=bin2hex($b);
-        $request=substr($h,0,8).'-'.substr($h,8,4).'-'.substr($h,12,4).'-'.substr($h,16,4).'-'.substr($h,20);
+        $b=\random_bytes(16);$b[6]=\chr((\ord($b[6])&15)|64);$b[8]=\chr((\ord($b[8])&63)|128);$h=\bin2hex($b);
+        $request=\substr($h,0,8).'-'.\substr($h,8,4).'-'.\substr($h,12,4).'-'.\substr($h,16,4).'-'.\substr($h,20);
         $body='<div class="fm2-page-header"><div><h1>'.$title.'</h1><p>Объект монтажа № '.$object.' · распоряжение '.$model['orderVersion'].'</p></div></div>';
-        $body.='<section class="fm2-order-surface"><div class="fm2-order-team"><div><h2>Выбранный состав</h2><p>'.$e(implode(', ',array_column($model['composition']['installers'],'fullName'))).'</p><p>Инженер строительного контроля: '.$e($model['composition']['engineer']['fullName']).'</p></div></div></section>';
+        $body.='<section class="fm2-order-surface"><div class="fm2-order-team"><div><h2>Выбранный состав</h2><p>'.$e(\implode(', ',\array_column($model['composition']['installers'],'fullName'))).'</p><p>Инженер строительного контроля: '.$e($model['composition']['engineer']['fullName']).'</p></div></div></section>';
         if($current!==null)$body.='<p>Принятый оригинал: редакция '.$current['revisionNumber'].' от '.$e($current['documentDate']).'. Предыдущий файл и дата сохранятся.</p>';
         $body.='<form data-original-upload-form data-return-url="'.$path.'/submit" action="'.$path.'">';
         $body.=FreshOrderSelectionView::hidden(['csrfToken'=>$csrf,'requestId'=>$request,'mode'=>$model['mode'],'rootOriginalId'=>$current['rootId']??'',
