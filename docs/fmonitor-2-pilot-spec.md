@@ -115,6 +115,14 @@ Exact command contract, 20 МиБ (`20,971,520` received bytes), PDF safety, rep
 
 Не редактирует прежний состав. Создаёт последовательное распоряжение, действующее только вперёд; старый документ и checklist attribution не переписываются. Exact applicability/tie semantics принадлежат change `apply-assignment-order-original-to-composition`.
 
+По подтверждению владельца2026-09-07 до открытия разрешено отдельное повторное
+применение исправленного оригинала с сохранением прежнего application fact.
+Назначение при неизвестной дате приёма разрешено по подтверждённому текущему
+статусу «трудоустроен» из полного кадрового снимка, без выдуманной даты.
+Оба решения зафиксированы в
+[`owner decision`](operations/composition-reapply-unknown-employment-owner-decision-2026-09-07.md);
+exact application/eligibility contracts и implementation проходят отдельные gates.
+
 ## 8. Экраны первого инкремента
 
 1. Очередь объектов ФКР.

@@ -63,3 +63,20 @@ reviews/code/BITRIX-WORKFORCE-DELIVERY-001.md. Findings нет. Reviewer сам�
 повторил12/12native tests и подтвердил отсутствие оставшихся fixture directories
 и PHP/Python workers. Bitrix change6/6tasks и checker change4/4tasks завершены.
 Это не full verification/CI/deployment/live Bitrix или launch approval.
+
+## Новый полный exact-SHA run — terminal FAIL
+
+Clean-start `make verify` на `1ef0f90abe1965bda3d53d827d667970f6844ab3`,
+HEAD и clean worktree сохранены на всём run. Exit2. Reset/migrate15/architecture7/
+lint/unit/characterization/diff PASS. DB и E2E stages FAIL только вследствие
+pilot_demo_bootstrap_001_test.php и protected pilot_e2e_flow_001_test.php:
+старое ожидание «launch action visible Сформировать распоряжение» и manual
+registration flow. Новых regressions не найдено. Bitrix native suite выполнена
+каноническим unit runner и прошла; literal VERIFY_OK отсутствует.
+
+External make-verify-1ef0f90.log SHA256
+`a85815083c0d76216ecbcc92a7cf0524aa2fcc3b3dc157690f08d6658ef2df45`;
+make-verify-1ef0f90-summary.json содержит stages/exact failed files.
+Protected E2E SHA256 остаётся
+`8f0d3626401b4a638bb56be40e17129626f1fc320ceeda6be798e3079294909b`.
+Review/slice completion не означает full integration или launch readiness.

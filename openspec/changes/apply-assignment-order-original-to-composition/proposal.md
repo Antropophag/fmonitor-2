@@ -31,11 +31,23 @@ canonical version только на actual frontier после gated engine/comm
 автоматическое opening, официальный premium calculation, изменение protected E2E.
 Read-only original evidence dependency может разрабатываться независимо.
 
-## NEEDS_GRILL
+## Owner decision — 2026-09-07
 
-Владельцу задан один новый вопрос: после application, но ДО открытия original
-исправлен на другую дату — допускается ли отдельное повторное применение новой
-revision с сохранением прежнего application fact, либо applied date фиксируется.
-Нельзя заранее выбрать UNIQUE/order или correction semantics, пока ответа нет.
-Дата действия нового распоряжения уже утверждена как documentDate и повторно
-не спрашивается. После открытия history/checklist не переписываются.
+Ранее вопрос повторного применения после correction до opening был NEEDS_GRILL.
+Владелец явно подтвердил: разрешить отдельное повторное применение исправленного
+оригинала с сохранением прежнего application fact. Загрузка/исправление сами
+ничего не применяют. После открытия history/checklist не переписываются.
+Дата действия нового распоряжения уже утверждена как documentDate.
+
+Также разрешено назначение по подтверждённому текущему employed status полного
+кадрового снимка при неизвестной дате приёма; дата остаётся неизвестной. Это
+не отменяет отдельные gates normalization/publication/catalog/eligibility и не
+задаёт freshness threshold. Controlling record:
+`docs/operations/composition-reapply-unknown-employment-owner-decision-2026-09-07.md`.
+
+## Next planning frontier
+
+Конкретный owner blocker снят. Следом создаются executable application contract,
+design/delta/tasks и проводится independent Gate1. UNIQUE/order, correction
+applicability, schema/version и code ещё не выбраны/не утверждены. Read-only
+application-reference и history/download dependencies уже прошли свои gates.
