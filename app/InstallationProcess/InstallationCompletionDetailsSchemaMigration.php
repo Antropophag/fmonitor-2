@@ -17,9 +17,10 @@ final class InstallationCompletionDetailsSchemaMigration
     public static function isCompleteCompatible(\mysqli $db,string $prefix=''):bool
     {
         try{
-            IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);$collation=IdentityAccessDefinitionSchemaMigration::databaseCollation($db);$definitions=InstallationCompletionDefinitionSchemaMigration::definitions($prefix,$collation);$root=InstallationCompletionDefinitionSchemaMigration::ROOT;$corrections=InstallationCompletionDefinitionSchemaMigration::CORRECTIONS;$manifest=$definitions[$corrections]['manifest'];
-            array_splice($manifest['columns'],6,0,[['name'=>'details','type'=>'varchar(500)','nullable'=>'YES','default'=>null,'extra'=>'','generated'=>'NEVER','generationExpression'=>null,'charset'=>'utf8mb4','collation'=>$collation]]);
-            return MariaDbInstallationCompletionSchemaFingerprint::matches($db,$prefix.$root,$definitions[$root]['manifest'],$collation)&&MariaDbInstallationCompletionSchemaFingerprint::matches($db,$prefix.$corrections,$manifest,$collation);
+            IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);$collation=IdentityAccessDefinitionSchemaMigration::databaseCollation($db);$definitions=InstallationCompletionDefinitionSchemaMigration::definitions($prefix,$collation);$historical=$prefix===''?$definitions:InstallationCompletionDefinitionSchemaMigration::definitions($prefix,$collation,true);$root=InstallationCompletionDefinitionSchemaMigration::ROOT;$corrections=InstallationCompletionDefinitionSchemaMigration::CORRECTIONS;$manifests=[$definitions[$corrections]['manifest'],$historical[$corrections]['manifest']];
+            foreach($manifests as&$manifest)array_splice($manifest['columns'],6,0,[['name'=>'details','type'=>'varchar(500)','nullable'=>'YES','default'=>null,'extra'=>'','generated'=>'NEVER','generationExpression'=>null,'charset'=>'utf8mb4','collation'=>$collation]]);unset($manifest);
+            $rootReady=MariaDbInstallationCompletionSchemaFingerprint::matches($db,$prefix.$root,$definitions[$root]['manifest'],$collation);$correctionsReady=false;foreach($manifests as$manifest)$correctionsReady=$correctionsReady||MariaDbInstallationCompletionSchemaFingerprint::matches($db,$prefix.$corrections,$manifest,$collation);
+            return $rootReady&&$correctionsReady;
         }catch(\Throwable){return false;}
     }
 }

@@ -26,7 +26,7 @@ final class InstallationCompletionSchemaMigration
             $connection->query($definitions[$name]['ddl']);
             if ($name === $corrections) {
                 InstallationCompletionDefinitionSchemaMigration::removeRedundantSupportingIndex(
-                    $connection, $tablePrefix . $corrections,
+                    $connection, $tablePrefix . $corrections, $tablePrefix,
                 );
             }
             $created[] = $tablePrefix . $name;
@@ -50,6 +50,8 @@ final class InstallationCompletionSchemaMigration
         IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);
         $collation = IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
         $definitions = InstallationCompletionDefinitionSchemaMigration::definitions($prefix, $collation);
+        $historicalDefinitions = $prefix === '' ? $definitions
+            : InstallationCompletionDefinitionSchemaMigration::definitions($prefix, $collation, true);
         $forms = [];
         $conflicting = [];
         foreach ($definitions as $name => $definition) {
@@ -58,6 +60,8 @@ final class InstallationCompletionSchemaMigration
                 $forms[$name] = 'absent';
             } elseif (MariaDbInstallationCompletionSchemaFingerprint::matches(
                 $connection, $table, $definition['manifest'], $collation,
+            ) || MariaDbInstallationCompletionSchemaFingerprint::matches(
+                $connection, $table, $historicalDefinitions[$name]['manifest'], $collation,
             )) {
                 $forms[$name] = 'exact';
             } elseif ($name === InstallationCompletionDefinitionSchemaMigration::CORRECTIONS

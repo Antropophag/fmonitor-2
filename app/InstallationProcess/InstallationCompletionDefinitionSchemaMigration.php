@@ -10,9 +10,9 @@ final class InstallationCompletionDefinitionSchemaMigration
     public const ROOT = 'fm2_pilot_completion_facts';
     public const CORRECTIONS = 'fm2_pilot_completion_fact_corrections';
 
-    public static function definitions(string $prefix, string $collation): array
+    public static function definitions(string $prefix, string $collation, bool $historicalSymbols = false): array
     {
-        $schemas = self::schemas($prefix);
+        $schemas = self::schemas($prefix, $historicalSymbols);
         $result = [];
         foreach ($schemas as $name => $schema) {
             $result[$name] = [
@@ -23,7 +23,7 @@ final class InstallationCompletionDefinitionSchemaMigration
         return $result;
     }
 
-    public static function removeRedundantSupportingIndex(\mysqli $connection, string $table): void
+    public static function removeRedundantSupportingIndex(\mysqli $connection, string $table, string $prefix): void
     {
         $state = (int) $connection->query(
             'SELECT @@SESSION.FOREIGN_KEY_CHECKS value',
@@ -31,14 +31,15 @@ final class InstallationCompletionDefinitionSchemaMigration
         $connection->query('SET FOREIGN_KEY_CHECKS=0');
         try {
             $connection->query(
-                "ALTER TABLE `{$table}` DROP INDEX `fk_completion_correction_previous`",
+                'ALTER TABLE `' . $table . '` DROP INDEX `'
+                    . self::foreignKeySymbol($prefix, 'fk_completion_correction_previous') . '`',
             );
         } finally {
             $connection->query('SET FOREIGN_KEY_CHECKS=' . $state);
         }
     }
 
-    private static function schemas(string $prefix): array
+    private static function schemas(string $prefix, bool $historicalSymbols): array
     {
         $column = static fn(string $name, string $type, bool $nullable = false,
             ?string $default = null, string $extra = ''): array =>
@@ -82,9 +83,9 @@ final class InstallationCompletionDefinitionSchemaMigration
                     $index('root_history', false, ['root_fact_id', 'id']),
                 ],
                 'foreignKeys' => [
-                    ['name'=>'fk_completion_correction_root','columns'=>['root_fact_id'],
+                    ['name'=>self::foreignKeySymbol($prefix, 'fk_completion_correction_root', $historicalSymbols),'columns'=>['root_fact_id'],
                         'target'=>$prefix.self::ROOT,'targetColumns'=>['id']],
-                    ['name'=>'fk_completion_correction_previous',
+                    ['name'=>self::foreignKeySymbol($prefix, 'fk_completion_correction_previous', $historicalSymbols),
                         'columns'=>['previous_correction_id','root_fact_id','previous_version_no'],
                         'target'=>$prefix.self::CORRECTIONS,
                         'targetColumns'=>['id','root_fact_id','version_no']],
@@ -97,6 +98,11 @@ final class InstallationCompletionDefinitionSchemaMigration
                 ],
             ],
         ];
+    }
+
+    private static function foreignKeySymbol(string $prefix, string $historical, bool $forceHistorical = false): string
+    {
+        return $prefix === '' || $forceHistorical ? $historical : $prefix . $historical;
     }
 
     private static function renderTable(string $table, array $schema, string $collation): string
