@@ -64,3 +64,29 @@ Actual recovery waits for Gate5. Before/after native read-only snapshots contain
 all SHOWCREATE and sorted rows, manifest and old session hashes; raw snapshots
 remain external0600. Fresh smoke-login occurs after preservation comparison.
 Runtime recipe SHA256 a2b0f21a60ce63b865d0cb05a99bb857d486697d2909d8bd230ae23465a5667d.
+
+## Actual preview recovery
+
+Independent Gate5 APPROVED in reviews/code/PILOT-LOCAL-TRUSTED-SCHEME-001.md
+for source87c618d4eba3b69b06b36a4d3556eb7d5f55a920 and pinned external recipe.
+Only pilot service recreated with --no-deps --no-build --pull never; same image
+sha256:8fa07372e5076ca5d488a8c8cde42257d832c9fb7a199e0813e95d78a829ec8b,
+same named pilot-state volume and existing readonly healthcheck mount. MariaDB
+service/volume untouched. External compose.override.yaml now persists runtime-only
+entrypoint mount, without bootstrap/migration/import calls.
+
+Before operation: private full-state tar, exact all-table rows/DDL snapshot and
+container config +oldoverride backups. After recreation BEFORE smoke:
+51tables exact rows/DDL, active manifest exact (no nonce refresh),3308old session
+files exact,0new sessions, healthy. No restore or data rewrite was needed.
+External preservation-summary.json and state-after-before-smoke.json prove this.
+
+Fresh task-owned authenticated smoke: login200→objects200, roles200, users200
+(12456bytes actual page), objects200. All3308preexisting sessions remain exact.
+After normal login all DB rows remain exact; the sole DDL metadata difference is
+AUTO_INCREMENT on auth_attempts, whose before/after rows both remain empty.
+No domain/auth rows were overwritten or added by recovery. smoke-summary.json
+and routes-before-recovery.json/routes.json retain the observed503→200 result.
+
+Source reference-reader and original HTTP features are NOT deployed by this
+configuration recovery; preview still runs oldimage. No fullVERIFY/launch claim.

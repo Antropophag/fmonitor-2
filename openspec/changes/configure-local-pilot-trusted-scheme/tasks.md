@@ -3,5 +3,5 @@
 - [x] 1.2 Native config→router RED, missing/forwarded control и independent Gate3.
 ## 2. Delivery
 - [x] 2.1 Literal Compose http GREEN и связанные session regression/config/architecture checks.
-- [ ] 2.2 Independent Gate5 и source/evidence commit.
-- [ ] 2.3 Existing preview configuration-only recovery; exact image/DB/session preservation и authenticated Users200 evidence.
+- [x] 2.2 Independent Gate5 и source/evidence commit.
+- [x] 2.3 Existing preview configuration-only recovery; exact image/DB/session preservation и authenticated Users200 evidence.
