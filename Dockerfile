@@ -7,7 +7,7 @@ RUN git clone --branch 6.11.4 --depth 1 https://github.com/tecnickcom/TCPDF.git 
 
 FROM alpine/git:2.49.1 AS shlz-ui
 
-ARG SHLZ_UI_REVISION=a0a8ca6df60b84aa1fe10a1cb500de32dacd4516
+ARG SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
 RUN git clone https://github.com/Antropophag/shlz-ui.git /shlz-ui \
     && git -C /shlz-ui checkout --detach "${SHLZ_UI_REVISION}" \
     && test "$(git -C /shlz-ui rev-parse HEAD)" = "${SHLZ_UI_REVISION}"
