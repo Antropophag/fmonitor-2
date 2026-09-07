@@ -201,3 +201,13 @@ Object1450 card/queue status совпадает; fresh login сохраняет�
 page и8 read-only переходов. БД/state backups сохранены, photo19 не устанавливалась.
 Подробности и hashes — в `object1450-session-feedback-2026-09-07.md`. Старый6aa39aa
 теперь только rollback image/история, не актуальный стенд.
+
+## Безопасный restart перед сном — последняя точка продолжения
+
+Владелец запросил безопасный перезапуск. Агенты и тестовые процессы завершены,
+stand a6d3a7f остаётся healthy. Последний handoff:
+[restart-handoff-before-sleep-2026-09-07.md](restart-handoff-before-sleep-2026-09-07.md).
+Промпт: [continue-after-sleep-2026-09-07.txt](continue-after-sleep-2026-09-07.txt).
+Единственный tracked WIP — broader demoCLI bootstrap; он НЕ reviewed/GREEN,
+architecture check на нём FAIL7SQL+hotspot. Private backup сохранён. Полный verify
+не перезапускался; global goal ACTIVE. Старые handoff ниже по актуальности.
