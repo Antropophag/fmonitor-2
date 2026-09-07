@@ -119,3 +119,15 @@ Synthetic DB127.0.0.1:23306 root/fmonitor2_test_root_local; preview DB не тр
 Read AGENTS/PRODUCT/CONTEXT/pilot contracts/process. ../fmonitor read-only;
 public ../shlz-ui exports only. Goal ACTIVE без budget; next work is concrete
 new planning/gates using the newly confirmed owner answers, not repeated questions.
+
+## Subsequent controlling owner priority —2026-09-07
+
+После этого checkpoint владелец потребовал ускорение: сначала работающий пилот
+для ручного тестирования, затем точечные исправления по его замечаниям. Он отдельно
+потребовал внести новый срок в правила и цели. Теперь первым читать
+`docs/operations/current-delivery-goal.md`: manual pilot до22:00МСК2026-09-07,
+первый сквозной показ ориентирован на17:00МСК. Для этого этапа прежняя обязательная
+последовательность всех Gates1–5 не блокирует реализацию/показ; несущественные
+микросценарии и полная архитектурная миграция идут после ручной обратной связи.
+История, server authorization и сохранность данных остаются обязательными.
+Не продолжать старый checklist микрогейтов автоматически без этого нового приоритета.

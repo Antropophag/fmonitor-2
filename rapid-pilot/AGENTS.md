@@ -4,6 +4,12 @@ This directory is an isolated workspace for the fast functional FMonitor 2.0 pil
 
 ## Delivery mode
 
+- For the current manual-test pilot, first read `../docs/operations/current-delivery-goal.md`
+  (repository-relative `docs/operations/current-delivery-goal.md`). The owner's
+  2026-09-07 acceleration/deadline instruction takes precedence over older full-gate
+  prerequisites below. Deliver working flows using existing code and focused checks;
+  preserve application ownership, authorization, append-only history and user data.
+
 - Rapid-pilot is a UX reference, behavioral oracle, and temporary strangler/adapter.
 - Do not add new domain logic here. State-changing behavior moves behind an explicit public application seam through the repository SSD + TDD gates.
 - Allowed direct work is limited to characterization, presentation, observability, wiring to approved seams, and critical fixes. A critical behavior fix still follows `docs/development-process.md`.
