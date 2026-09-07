@@ -10,7 +10,7 @@
 
 - [x] 2.1 Зафиксировать current source/image и имена прежних preview volumes; проверить, что резерв не удаляется и не подключается к новому generation.
 - [x] 2.2 Остановить/удалить разрешённый прежний preview-контур и поднять clean manual stand; проверить container health, canonical18/startup migrations и пустую очередь.
-- [ ] 2.3 Создать только настроенную owner-admin учётную запись и проверить login/logout; пароль не публиковать, остальных пользователей не импортировать.
+- [x] 2.3 Создать только настроенную owner-admin учётную запись и проверить login/logout; пароль не публиковать, остальных пользователей не импортировать. Проверка продолжения2026-09-07: login/logout и перенаправление защищённого экрана после выхода PASS; private `continue-login-logout.json`.
 - [x] 2.4 Опубликовать разрешённый private workforce batch через native owner; проверить count/provenance/full-proof, отсутствие FMonitor-user writes и сохранение unknown employedFrom=null.
 - [ ] 2.5 Настроить hourly read-only workforce schedule и проверить один успешный bounded run/restart без Bitrix write methods.
 - [ ] 2.6 Пройти на реальном стенде login → object setup → selection → original → application → opening → checklist/photo/corrections → ПТО/declaration →100% → restart; сохранить URL/source/image и observed evidence.

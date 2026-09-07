@@ -126,3 +126,12 @@ current UI repair, prepare a restart handoff and continuation prompt as requeste
 Переходной промпт: [continue-after-manual-feedback-2026-09-07.txt](continue-after-manual-feedback-2026-09-07.txt).
 Глобальная цель остаётся ACTIVE без token budget. В новой сессии использовать этот
 handoff вместо прежней точки UI repair; все сабагенты — gpt-5.6-sol / low.
+
+## Продолжение и новые ручные замечания после checkpoint
+
+См. `continuation-verification-2026-09-07.md`: runtime670ebc9 установлен с
+исправленными декларацией и стабильным отображением всего bulk checklist batch.
+Источник, image, независимые review, focused evidence и последний полный FAIL
+зафиксированы там. Этот более новый отчёт дополняет исходный restart handoff;
+не откатывать установленный runtime или данные владельца к прежнему checkpoint.
+Глобальная цель остаётся ACTIVE. Новые ручные замечания по-прежнему первыми.
