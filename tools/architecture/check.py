@@ -176,7 +176,8 @@ def php_sql_detection_line(line: str) -> str:
     for token in PHP_QUOTED.finditer(line):
         parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:token.start()]))
         quoted = token.group(0)
-        parts.append("''" if PHP_DOTTED_ATOM.fullmatch(quoted[1:-1]) else quoted)
+        is_select_key = quoted[1:-1].lower() == "select" and re.match(r"[^\S\r\n]*=>", line[token.end():]) is not None
+        parts.append("''" if is_select_key or PHP_DOTTED_ATOM.fullmatch(quoted[1:-1]) else quoted)
         offset = token.end()
     parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:]))
     return "".join(parts)
