@@ -175,3 +175,11 @@ proof; затем перейти к подготовленной CI-интегр
 не являются поводом откатывать runtime. Владелец отложил перезапуск сессии и прямо
 разрешил продолжать автономно до возвращения. Полный verify на exact SHA завершён:
 FAIL unit/db/characterization/e2e; причины и текущие исправления — в checkpoint.
+
+## Перезапуск после возвращения владельца
+
+Последняя точка продолжения: [restart-handoff-stabilization-2026-09-07.md](restart-handoff-stabilization-2026-09-07.md).
+Промпт: [continue-stabilization-2026-09-07.txt](continue-stabilization-2026-09-07.txt).
+Агенты/тестовые процессы остановлены; WIP сохранён в worktree и private backup.
+Native list/shell и photo19 focused GREEN; card/E2E, reviews/frontier checks и
+новый полный exact-SHA verify остаются незавершёнными. Глобальная цель ACTIVE.
