@@ -14,6 +14,9 @@ final class MariaDbOriginalApplicationReferenceReader implements AssignmentOrder
         $this->source = new MariaDbOriginalApplicationReferenceSource($sql);
     }
 
+    /** A copied reader is a distinct issuer on the same borrowed connection. */
+    public function __clone() { $this->issued = new \WeakMap(); }
+
     public function readCurrent(int $objectId, int $orderId): AssignmentOrderOriginalApplicationReferenceLookup
     {
         if ($objectId <= 0 || $orderId <= 0)
