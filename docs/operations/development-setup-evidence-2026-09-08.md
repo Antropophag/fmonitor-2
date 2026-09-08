@@ -57,3 +57,30 @@ backup/recovery delivery remain separate work; #27 is addressed for install/star
 Raw local logs: `/tmp/fmonitor23-clean-setup2.log`, `/tmp/fmonitor23-repeat.log`,
 `/tmp/fmonitor23-unit.log`, `/tmp/fmonitor23-full.log`. They are local evidence,
 not committed primary data. CI links and final full result will be appended.
+
+## Clean-home and browser follow-up
+
+The first /tmp full run failed the inherited OS-account-home filesystem guard and
+was stopped. A new empty clone was prepared under
+`/Users/antropophag/.local/state/fmonitor23-clean/fmonitor-2`. Setup now rejects
+outside-home checkouts early, using POSIX account data, without weakening guards.
+Independent setup acceptance now8/8; code/test reviewv3 APPROVED1225c397.
+Fresh setup (d5b3b67a) and repeat (1225c397) succeeded. The same7,916-file byte/mode
+hash above was preserved. Unit77/0 in5.838s. The full run was restarted for the
+browser-mode correction below; no full PASS is claimed from the interrupted run.
+
+First Linux Actions34224764309 exposed a PDF popup difference after removal of
+system Chrome. A DB-free independent probe confirmed default headless-shell opens
+an empty popup URL, while `channel: 'chromium'` opens the expected inline PDF URL.
+Both report pinned Chromium151.0.7922.34. The helper now selects the full bundled
+Chromium new-headless mode; all PDF/browser assertions remain unchanged.
+[Playwright mode documentation](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+
+README startup smoke on sourcef4ab8bd: isolated Compose projectfmonitor23-start,
+port18092, fresh volumes, image revision label exact. HTTP login200 and headless
+Playwright login reached `/pilot/objects` with heading «Объекты монтажа». Owned
+containers/volumes and private random-password files were removed afterward;
+existing manual stand stayed healthy and source checkout remained clean. The
+browser driver for this ancillary smoke was host Node26.8.1; pinned Node22.22.0
+is used for the setup and full-suite acceptance runs. With custom Compose ports,
+`make up` still prints its default8092 URL; the actual smoke URL was18092.

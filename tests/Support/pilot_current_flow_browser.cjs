@@ -204,7 +204,7 @@ async function completeDocuments(ownerPage) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: 'chromium' });
   const ownerContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   const ownerPage = await ownerContext.newPage();
   monitor(ownerPage);
