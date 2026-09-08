@@ -2,6 +2,7 @@
 unit	php	tests/AssignmentOrderComposition/selection_command_outcomes_001_test.php
 unit	php	tests/AssignmentOrderComposition/selection_command_recovery_001_test.php
 unit	php	tests/AssignmentOrderComposition/selection_command_tracer_001_test.php
+unit	php	tests/Deployment/bitrix_startup_config_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_attempt_audit_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_command_shape_001_test.php

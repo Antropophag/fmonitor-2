@@ -43,6 +43,7 @@
   "tests/AssignmentOrderComposition/selection_unknown_employment_manual_pilot_test.php": "integration",
   "tests/AssignmentOrderComposition/template_generation_001_test.php": "integration",
   "tests/AssignmentOrderComposition/template_generation_boundaries_001_test.php": "integration",
+  "tests/Deployment/bitrix_startup_config_001_test.php": "governance",
   "tests/InstallationProcess/artifact_store_001_test.php": "integration",
   "tests/InstallationProcess/assignment_order_identity_registry_001_test.php": "integration",
   "tests/InstallationProcess/assignment_order_identity_registry_concurrency_001_test.php": "integration",

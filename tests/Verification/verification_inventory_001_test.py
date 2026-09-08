@@ -102,7 +102,10 @@ class Inventory(native.NativeSuites):
             'php\ttests/Verification/quality_graph_ci_setup_001_test.php\n',
         ]
         added_by_suite = {
-            'unit': ['python3\ttests/Verification/development_setup_001_test.py\n'],
+            'unit': [
+                'python3\ttests/Verification/development_setup_001_test.py\n',
+                'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
+            ],
             'characterization': added,
         }
         for suite, digest in expected.items():
