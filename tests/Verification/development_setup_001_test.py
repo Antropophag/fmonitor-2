@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import unittest
 import sys
+import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -65,6 +66,9 @@ esac
         self._stub("rg", "exit 0\n")
         self._stub("docker", "exit 0\n")
         self._stub("npm", """
+case "$*" in
+  --version|-v) echo '10.9.4'; exit 0 ;;
+esac
 case "${NPM_FAILURE:-0}:$*" in
   1:*build*) exit 71 ;;
 esac
@@ -92,7 +96,7 @@ exit 0
                     TRACE=str(self.trace), GIT_HEAD=self.git_head,
                     GIT_DIRTY="1" if self.git_dirty else "0",
                     NPM_FAILURE="1" if self.npm_failure else "0",
-                    REAL_PYTHON=sys.executable)
+                    REAL_PYTHON=sys.executable, PYTHONDONTWRITEBYTECODE="1")
 
     def script(self, *args):
         script = self.root / "tools/delivery/setup.sh"
@@ -160,6 +164,7 @@ exit 0
                 key, value = line.split("=", 1)
                 values[key] = value.strip("'\"")
         required = {"PHP_VERSION": "8.5", "NODE_VERSION": "22.22.0",
+                    "NPM_VERSION": "10.9.4",
                     "PYTHON_VERSION": "3.12.11", "SHLZ_UI_REVISION": PIN,
                     "PHP_EXTENSIONS": "mysqli,pcntl,dom,mbstring,curl"}
         self.assertEqual(required, {key: values.get(key) for key in required})
@@ -176,6 +181,20 @@ exit 0
         self.assertEqual([], self.mutation_calls())
         self.assertFalse((self.parent / "shlz-ui").exists())
         self.assertFalse((self.root / "vendor").exists())
+
+    def test_malformed_manifest_is_rejected_without_command_substitution_or_writes(self):
+        sentinel = self.parent / "manifest-injection-sentinel"
+        manifest = self.root / "tools/delivery/dependencies.env"
+        self.assertTrue(manifest.is_file(), "DEV-SETUP-001 manifest fixture is missing")
+        with manifest.open("a") as stream:
+            stream.write(f"EXTRA=$(touch {sentinel})\n")
+        before = self.fingerprint(self.root)
+        result = self.script("--check")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("SETUP_FAILURE", result.stderr)
+        self.assertFalse(sentinel.exists(), "manifest command substitution executed")
+        self.assertEqual(before, self.fingerprint(self.root), "--check wrote inside checkout")
+        self.assertEqual([], self.mutation_calls())
 
     def test_check_rejects_mismatched_existing_tree_without_repair(self):
         shlz = self.complete_existing_dependencies()
@@ -217,6 +236,30 @@ exit 0
         self.assertTrue(any(line.startswith("npm\t") and "run build" in line
                             for line in self.calls()), self.calls())
         self.assertFalse((self.parent / "shlz-ui").exists())
+
+    def test_zip_adapter_lists_and_extracts_unicode_entry_without_mutation(self):
+        adapter = self.root / "tools/delivery/zip-tools/unzip"
+        self.assertTrue(adapter.is_file(),
+                        "INTENDED_RED DEV-SETUP-001 portable unzip adapter is missing")
+        archive = self.parent / "unicode.zip"
+        entry = "icons/лифт-№1.svg"
+        payload = b"<svg>\x00fixed bytes</svg>\n"
+        with zipfile.ZipFile(archive, "w") as bundle:
+            bundle.writestr(entry, payload)
+        before = hashlib.sha256(archive.read_bytes()).hexdigest()
+        listed = subprocess.run([str(adapter), "-Z1", str(archive)], env=self.env(),
+                                capture_output=True, timeout=10)
+        self.assertEqual(0, listed.returncode, listed.stderr.decode(errors="replace"))
+        self.assertEqual((entry + "\n").encode(), listed.stdout)
+        extracted = subprocess.run([str(adapter), "-p", str(archive), entry], env=self.env(),
+                                  capture_output=True, timeout=10)
+        self.assertEqual(0, extracted.returncode, extracted.stderr.decode(errors="replace"))
+        self.assertEqual(payload, extracted.stdout)
+        unsupported = subprocess.run([str(adapter), "-x", str(archive)], env=self.env(),
+                                     capture_output=True, timeout=10)
+        self.assertNotEqual(0, unsupported.returncode)
+        self.assertTrue(unsupported.stderr)
+        self.assertEqual(before, hashlib.sha256(archive.read_bytes()).hexdigest())
 
 
 if __name__ == "__main__":

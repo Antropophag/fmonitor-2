@@ -39,8 +39,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--tcpdf', action='store_true')
+    parser.add_argument('--env', action='store_true')
     args = parser.parse_args()
     values = pins()
+    if args.env:
+        for key, value in values.items():
+            if not re.fullmatch(r'[A-Z_]+', key) or not re.fullmatch(r'[a-zA-Z0-9/:.,_-]+', value):
+                raise ValueError(f'invalid export: {key}')
+            print(f'{key}={value}')
+        return 0
     if args.tcpdf:
         print(values['TCPDF_VERSION'], values['TCPDF_REVISION'])
         return 0

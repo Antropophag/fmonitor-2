@@ -11,12 +11,13 @@ for tool in bash git make php node npm python3 rg docker cc curl tar; do
 done
 case "$(uname -s)" in Linux|Darwin) ;; *) fail 'supported hosts: Linux and macOS' ;; esac
 # This is repository-owned configuration, never a user-supplied environment file.
-source tools/delivery/dependencies.env
+pin_exports=$(python3 tools/delivery/render-dependencies.py --env) || fail 'invalid dependency manifest'
+eval "$pin_exports"
 php -r 'if (PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION !== $argv[1]) exit(1); foreach(explode(",", $argv[2]) as $e) if (!extension_loaded($e)) {fwrite(STDERR,"missing PHP extension: $e\n"); exit(1);}' "$PHP_VERSION" "$PHP_EXTENSIONS" \
     || fail "PHP $PHP_VERSION with $PHP_EXTENSIONS required"
 [[ "$(node --version)" == "v$NODE_VERSION" ]] || fail "Node $NODE_VERSION required; found $(node --version)"
 [[ "$(python3 --version)" == "Python $PYTHON_VERSION" ]] || fail "Python $PYTHON_VERSION required; found $(python3 --version)"
-npm --version >/dev/null || fail 'npm is unavailable'
+[[ "$(npm --version)" == "$NPM_VERSION" ]] || fail "npm $NPM_VERSION required; found $(npm --version)"
 docker info >/dev/null 2>&1 || fail 'Docker daemon unavailable; start Docker'
 docker compose version >/dev/null || fail 'Docker Compose v2 required'
 python3 tools/delivery/render-dependencies.py --check
@@ -40,7 +41,7 @@ if [[ ! -e ../shlz-ui ]]; then
     git clone https://github.com/Antropophag/shlz-ui.git "$work/shlz-ui"
     git -C "$work/shlz-ui" checkout --detach "$SHLZ_UI_REVISION"
     npm --prefix "$work/shlz-ui" ci --no-audit --no-fund
-    npm --prefix "$work/shlz-ui" run generate
+    PATH="$PWD/tools/delivery/zip-tools:$PATH" npm --prefix "$work/shlz-ui" run generate
     npm --prefix "$work/shlz-ui" run build:packages
     check_shlz "$work/shlz-ui"
     publish_dependency "$work/shlz-ui" ../shlz-ui
@@ -62,9 +63,9 @@ fi
 check_tcpdf
 # Install browser binaries after preserving/checking source trees. Linux may need sudo.
 if [[ "$(uname -s)" == Linux ]]; then
-    node ../shlz-ui/node_modules/playwright/cli.js install --with-deps chromium chrome
+    node ../shlz-ui/node_modules/playwright/cli.js install --with-deps chromium
 else
-    node ../shlz-ui/node_modules/playwright/cli.js install chromium chrome
+    node ../shlz-ui/node_modules/playwright/cli.js install chromium
 fi
 make test-tools
 docker build --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" -t fmonitor2-pilot:latest .

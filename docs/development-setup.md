@@ -12,7 +12,7 @@
 
 - Bash, Git, GNU Make, `rg` (ripgrep), `curl` и `tar`;
 - PHP `8.5.x` с расширениями `mysqli`, `pcntl`, `dom`, `mbstring`, `curl`;
-- Node.js `22.22.0` и npm;
+- Node.js `22.22.0` и его npm `10.9.4`;
 - Python `3.12.11`;
 - Docker Engine или Docker Desktop, запущенный daemon и Docker Compose v2;
 - C compiler `cc` (обычно Clang или GCC), нужный npm-зависимостям с native addon.
@@ -56,16 +56,15 @@ make setup
 
 `make setup` устанавливает закреплённые PHP-зависимости, создаёт sibling checkout
 `../shlz-ui` атомарно, устанавливает его npm-зависимости, формирует публичные
-exports/packages, ставит браузеры Playwright `chromium` и `chrome` и может собрать
+exports/packages, ставит закреплённый версией Playwright Chromium и может собрать
 кэшируемые Docker images пилота и тестов. На Linux
 Playwright использует `--with-deps` и может запросить `sudo` для системных
-библиотек. На macOS разрешение на установку Google Chrome может потребоваться
-отдельно; следуйте сообщению setup и повторите команду.
+библиотек. Системный Chrome не требуется и не изменяется.
 
 Команда безопасна для повторного запуска. Если `vendor` или `../shlz-ui` уже
 существуют, setup принимает их только в закреплённом, чистом и полностью готовом
 состоянии. При отличающемся commit, локальных изменениях, отсутствующих exports
-или браузерах команда завершается с конкретной подсказкой и не переписывает
+команда завершается с конкретной подсказкой и не переписывает
 существующий каталог. Сохраните нужные изменения сами, удалите или переместите
 неподходящий каталог и повторите `make setup`.
 
@@ -137,3 +136,15 @@ make test
 
 Исторический migration demo сохранён в [`app/demo/`](../app/demo/) и Git history;
 это справочный артефакт, а не текущий маршрут запуска пилота.
+
+## Изменение версий
+
+Меняйте runtime/UI pins в `tools/delivery/dependencies.env`, TCPDF — через
+`composer.lock`, затем выполните `python3 tools/delivery/render-dependencies.py`.
+Dockerfile и Compose сохраняются в репозитории как сгенерированные файлы для
+обычных `docker build`/`docker compose`; шаблоны лежат в `tools/delivery/*.in`.
+`make doctor` и fast CI отклоняют расхождение с этими источниками.
+
+Для генерации UI setup использует локальный read-only ZIP adapter на Python: он
+поддерживает кириллические имена архивов, которые не читает системный unzip macOS.
+PATH изменяется только для этой команды; системные утилиты и исходники UI сохраняются.

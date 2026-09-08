@@ -29,6 +29,7 @@ OS-доступ достаточен; команды не создают domain 
 ```text
 PHP_VERSION=8.5
 NODE_VERSION=22.22.0
+NPM_VERSION=10.9.4
 PYTHON_VERSION=3.12.11
 SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
 PHP_EXTENSIONS=mysqli,pcntl,dom,mbstring,curl
@@ -42,8 +43,8 @@ Before any clone, checkout, package installation, generation or Docker build, ev
 entry point validates Linux or macOS and the availability/compatibility of `bash`,
 `git`, `make`, `php`, `node`, `npm`, `python3`, `rg`, `docker`, `cc`, `curl`, and
 `tar`. PHP must be in the
-8.5 series and provide the extensions needed by the repository; Node and Python must
-equal their exact pins. Docker daemon and Compose must be usable. An unavailable or
+8.5 series and provide the extensions needed by the repository; Node, npm and Python
+must equal their exact pins. Docker daemon and Compose must be usable. An unavailable or
 incompatible prerequisite fails immediately with `SETUP_FAILURE`; no dependency
 destination or source checkout has been mutated at that point.
 
@@ -78,6 +79,14 @@ artifacts there, then publishes it to the final destination with one atomic rena
 Failure before that rename leaves the final destination absent; a concurrent process
 that populated the destination is never overwritten.
 
+For reproducible `shlz-ui` generation on Linux and macOS, setup may put the repository
+adapter `tools/delivery/zip-tools/unzip` first in `PATH` only for the npm generation
+command. Its public CLI supports exactly `unzip -Z1 ARCHIVE` (one UTF-8 entry name per
+line) and `unzip -p ARCHIVE ENTRY` (the exact uncompressed entry bytes on stdout).
+Unsupported or malformed arguments and absent archive entries fail nonzero with a
+diagnostic. The adapter uses the pinned local Python runtime and does not modify the
+archive, destination, or `shlz-ui` source.
+
 After dependencies are valid, setup may perform the repository's repeatable cached
 test/pilot Docker builds. A second successful `make setup` revalidates and reuses the
 existing dependencies: it does not clone or build `shlz-ui` again. Any sentinel user
@@ -100,6 +109,9 @@ used.
 4. During a fresh setup, the trace npm executable fails while building `shlz-ui` in
    its temporary sibling. Setup reports `SETUP_FAILURE` and `../shlz-ui` remains
    absent.
+5. A temporary ZIP contains a Unicode entry name and fixed binary payload. The public
+   adapter lists that exact name and `-p` emits the exact payload; unsupported
+   arguments fail without changing the ZIP.
 
 Gate 1 -> focused intended RED for the missing public script/targets -> independent
 Gate 3 -> minimal implementation -> focused GREEN -> independent Gate 5. Catalog,
