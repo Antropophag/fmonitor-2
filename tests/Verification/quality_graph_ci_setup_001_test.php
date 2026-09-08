@@ -1,7 +1,58 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
-function qcsRun(array$c,string$cwd,array$env=[]):array{$p=proc_open($c,[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$q,$cwd,array_replace(getenv(),$env));if(!is_resource($p))throw new TestFailure('SETUP_FAILURE: child');$o=(string)stream_get_contents($q[1]);$e=(string)stream_get_contents($q[2]);fclose($q[1]);fclose($q[2]);return['exit'=>proc_close($p),'out'=>$o,'err'=>$e];}
+/** Drain both child streams concurrently; verbose Docker builds must not deadlock. */
+function qcsRun(array $command, string $cwd, array $env = [], float $timeoutSeconds = 900): array
+{
+    $process = proc_open($command, [0 => ['file', '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $cwd, array_replace(getenv(), $env));
+    if (!is_resource($process)) {
+        throw new TestFailure('SETUP_FAILURE: child');
+    }
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+    $output = [1 => '', 2 => ''];
+    $deadline = hrtime(true) + (int) ($timeoutSeconds * 1_000_000_000);
+    $exit = null;
+    try {
+        while (true) {
+            $status = proc_get_status($process);
+            if (!$status['running'] && $exit === null) {
+                $exit = $status['exitcode'];
+            }
+            $read = array_filter($pipes, static fn ($pipe) => !feof($pipe));
+            if ($read === [] && !$status['running']) {
+                break;
+            }
+            if (hrtime(true) >= $deadline) {
+                throw new TestFailure('SETUP_FAILURE: child deadline exceeded');
+            }
+            if ($read === []) {
+                usleep(10_000);
+                continue;
+            }
+            $write = $except = null;
+            if (stream_select($read, $write, $except, 0, 100_000) === false) {
+                throw new TestFailure('SETUP_FAILURE: child stream selection');
+            }
+            foreach ($read as $key => $pipe) {
+                $chunk = fread($pipe, 65536);
+                if ($chunk === false) {
+                    throw new TestFailure('SETUP_FAILURE: child stream read');
+                }
+                $output[$key] .= $chunk;
+            }
+        }
+    } finally {
+        foreach ($pipes as $pipe) {
+            fclose($pipe);
+        }
+        if (proc_get_status($process)['running']) {
+            proc_terminate($process, 9);
+        }
+        $closedExit = proc_close($process);
+    }
+    return ['exit' => $exit ?? $closedExit, 'out' => $output[1], 'err' => $output[2]];
+}
 function qcsRemove(string$p):void{$i=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($p,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::CHILD_FIRST);foreach($i as$f)$f->isDir()&&!$f->isLink()?rmdir($f->getPathname()):unlink($f->getPathname());rmdir($p);}
 $root=dirname(__DIR__,2);$tmp=sys_get_temp_dir().'/qcs-'.bin2hex(random_bytes(12));mkdir($tmp.'/tools/verification',0700,true);foreach(['InstallationProcess','AssignmentOrderComposition','Verification']as$d)mkdir($tmp.'/tests/'.$d,0700,true);copy($root.'/tools/verification/run.sh',$tmp.'/tools/verification/run.sh');file_put_contents($tmp.'/tests/InstallationProcess/unit_sample_test.php',"<?php echo 'unit';");file_put_contents($tmp.'/tests/InstallationProcess/db_sample_test.php',"<?php /* FMONITOR_TEST_DB */");$bin=$tmp.'/bin';mkdir($bin,0700);foreach(['dirname','find','sort','php','python3','bash']as$n){$p=trim((string)shell_exec('command -v '.escapeshellarg($n)));if($p!=='')symlink($p,$bin.'/'.$n);}
 $tag=null;try{$r=qcsRun(['bash','tools/verification/run.sh','list','unit'],$tmp,['PATH'=>$bin]);assertSameValue([1,'',"SETUP_FAILURE: required command unavailable: rg\n"],array_values($r),'RED_ASSERTION: missing rg fails explicitly before any list output/classification');
