@@ -1,8 +1,8 @@
-# QUALITY-GRAPH-GOVERNANCE-001 v0.6
-
 ```delivery-metadata
 {"schemaVersion":1,"kind":"spec","sliceId":"QUALITY-GRAPH-GOVERNANCE-001","author":"agent:/root"}
 ```
+
+# QUALITY-GRAPH-GOVERNANCE-001 v0.6
 
 Status: APPROVED; base contract review `quality-graph-governance-gate1-rereview-v6.md`, publisher amendment review `quality-graph-governance-gate1-publisher-amendment-review.md`.
 
