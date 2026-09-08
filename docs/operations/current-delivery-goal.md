@@ -302,3 +302,11 @@ schedule/manual/release — full. Branch protection сохраняется. См
 если блокируют ручную работу. #25 актуализирован: поставка в43 завершена, связь
 с открытым37 остаётся отдельно. Evidence: [development setup](development-setup-evidence-2026-09-08.md).
 Стенд и пользовательские данные сохраняются; этот PR не выполняет deployment.
+
+## Integration sharding — owner2026-09-08
+
+Владелец одобрил две параллельные integration jobs и завершение изменения через
+проверенный PR/merge. См. [решение и границы](integration-sharding-owner-decision-2026-09-08.md).
+Это отдельное разрешение на данное изменение CI-матрицы; остальные permissions,
+branch protection и состав обязательных проверок сохраняются. Кеш fixtures и
+дальнейшая микрооптимизация не продолжаются. Стенд и данные не менять.

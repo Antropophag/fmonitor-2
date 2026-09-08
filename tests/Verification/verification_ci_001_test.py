@@ -36,8 +36,10 @@ class VerificationCI(unittest.TestCase):
         self.bin = self.root / 'trace-bin'
         self.bin.mkdir()
         self.trace = self.root / 'trace.log'
+        self.db_trace = self.root / 'db-trace.log'
         php = self.bin / 'php'
-        php.write_text('#!/bin/sh\nif [ "$1" = -r ]; then exit 0; fi\n'
+        php.write_text('#!/bin/sh\nif [ "$1" = -r ]; then '
+                       'test -z "${DB_TRACE:-}" || printf "probe\\n" >> "$DB_TRACE"; exit 0; fi\n'
                        'printf "php\\t%s\\n" "$1" >> "$TRACE"\n'
                        'printf "child-output:%s\\n" "$1"\n'
                        'test "$1" != "$FAIL_FILE" || exit 7\n')
@@ -46,12 +48,31 @@ class VerificationCI(unittest.TestCase):
         node.write_text(php.read_text().replace('php\\t', 'node\\t'))
         node.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.bin) + os.pathsep + os.environ['PATH'],
-                        TRACE=str(self.trace), FAIL_FILE='')
+                        TRACE=str(self.trace), DB_TRACE=str(self.db_trace), FAIL_FILE='')
         # Deliberately failing synthetic categories must not pollute the real CI report.
         self.env.pop('GITHUB_STEP_SUMMARY', None)
 
     def write_mapping(self):
         (self.root / 'tools/verification/categories.json').write_text(json.dumps(self.mapping))
+
+    def add_integration_inventory(self):
+        paths = [
+            'tests/AssignmentOrderComposition/zeta_test.php',
+            'tests/InstallationProcess/alpha_test.php',
+            'tests/Verification/middle_test.mjs',
+            'tests/InstallationProcess/gamma_test.php',
+            'tests/AssignmentOrderComposition/beta_test.php',
+        ]
+        runtimes = ['php', 'node', 'node', 'php', 'php']
+        for path in paths:
+            (self.root / path).write_text('fixture')
+        with (self.root / 'tools/verification/suites.tsv').open('a') as out:
+            for runtime, path in zip(runtimes, paths):
+                out.write(f'db\t{runtime}\t{path}\n')
+        self.mapping.update(dict.fromkeys(paths, 'integration'))
+        self.runtimes.update(zip(paths, runtimes))
+        self.write_mapping()
+        return paths
 
     def cli(self, *args, root=None, env=None):
         target = root or self.root
@@ -129,6 +150,78 @@ class VerificationCI(unittest.TestCase):
             observed += result.stdout.splitlines()
         self.assertEqual(5, len(set(observed)))
         self.assertFalse(self.trace.exists())
+        self.assertFalse(self.db_trace.exists())
+
+    def test_integration_shards_are_stable_disjoint_complete_sorted_partitions(self):
+        self.add_integration_inventory()
+        unsharded = self.cli('list', 'integration')
+        self.assertEqual(0, unsharded.returncode, unsharded.stderr)
+        # The established unsharded category preserves catalogue order.
+        self.assertEqual([f'{self.runtimes[p]}\t{p}' for p in [self.paths[2],
+                         'tests/AssignmentOrderComposition/zeta_test.php',
+                         'tests/InstallationProcess/alpha_test.php',
+                         'tests/Verification/middle_test.mjs',
+                         'tests/InstallationProcess/gamma_test.php',
+                         'tests/AssignmentOrderComposition/beta_test.php']],
+                         unsharded.stdout.splitlines())
+
+        full = sorted(unsharded.stdout.splitlines(), key=lambda row: row.split('\t')[1])
+        first = self.cli('list', 'integration', '--shard', '1/2')
+        second = self.cli('list', 'integration', '--shard', '2/2')
+        self.assertEqual(0, first.returncode, first.stderr)
+        self.assertEqual(0, second.returncode, second.stderr)
+        self.assertEqual(full[::2], first.stdout.splitlines())
+        self.assertEqual(full[1::2], second.stdout.splitlines())
+        self.assertEqual(set(full), set(first.stdout.splitlines()) | set(second.stdout.splitlines()))
+        self.assertFalse(set(first.stdout.splitlines()) & set(second.stdout.splitlines()))
+        self.assertFalse(self.trace.exists(), 'listing must not probe the DB or invoke runtimes')
+        self.assertFalse(self.db_trace.exists(), 'listing must not probe the DB')
+
+        catalog = self.root / 'tools/verification/suites.tsv'
+        catalog.write_text(''.join(reversed(catalog.read_text().splitlines(keepends=True))))
+        self.assertEqual(first.stdout, self.cli('list', 'integration', '--shard', '1/2').stdout)
+        self.assertEqual(second.stdout, self.cli('list', 'integration', '--shard', '2/2').stdout)
+
+    def test_real_integration_shards_partition_current_inventory_once(self):
+        full = self.cli('list', 'integration', root=ROOT)
+        first = self.cli('list', 'integration', '--shard', '1/2', root=ROOT)
+        second = self.cli('list', 'integration', '--shard', '2/2', root=ROOT)
+        for result in [full, first, second]:
+            self.assertEqual(0, result.returncode, result.stderr)
+        expected = sorted(full.stdout.splitlines(), key=lambda row: row.split('\t')[1])
+        self.assertTrue(first.stdout.splitlines())
+        self.assertTrue(second.stdout.splitlines())
+        self.assertEqual(expected[::2], first.stdout.splitlines())
+        self.assertEqual(expected[1::2], second.stdout.splitlines())
+        combined = first.stdout.splitlines() + second.stdout.splitlines()
+        self.assertEqual(len(expected), len(combined))
+        self.assertEqual(len(combined), len(set(combined)))
+        self.assertEqual(set(expected), set(combined))
+
+    def test_sharded_run_attempts_every_assigned_file_and_reports_failure(self):
+        self.add_integration_inventory()
+        selected = self.cli('list', 'integration', '--shard', '1/2')
+        self.assertEqual(0, selected.returncode, selected.stderr)
+        selected_paths = [row.split('\t')[1] for row in selected.stdout.splitlines()]
+        env = dict(self.env, FAIL_FILE=selected_paths[0])
+        result = self.cli('run', 'integration', '--shard', '1/2', env=env)
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual(selected.stdout.splitlines(), self.trace.read_text().splitlines())
+        for path in selected_paths:
+            self.assertIn('child-output:' + path, result.stdout)
+        self.assertIn('exit=7', result.stdout)
+        self.assertIn('REGRESSION_FAILURE', result.stderr)
+
+    def test_invalid_shards_are_rejected_before_any_runtime(self):
+        for args in [('list', 'integration', '--shard', '0/2'),
+                     ('list', 'integration', '--shard', '2/1'),
+                     ('run', 'integration', '--shard', '1/3'),
+                     ('run', 'integration', '--shard', 'first'),
+                     ('run', 'unit', '--shard', '1/2')]:
+            result = self.cli(*args)
+            self.assertNotEqual(0, result.returncode, args)
+            self.assertFalse(self.trace.exists(), args)
+            self.assertFalse(self.db_trace.exists(), args)
 
     def test_invalid_mapping_or_catalog_fails_before_execution(self):
         valid = dict(self.mapping)
@@ -189,6 +282,41 @@ class VerificationCI(unittest.TestCase):
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn('inner-ok', result.stdout)
+
+    def test_make_forwards_integration_shard_without_leaking_make_controls(self):
+        shutil.copy(ROOT / 'Makefile', self.root / 'Makefile')
+        added = self.add_integration_inventory()
+        full_paths = sorted([self.paths[2]] + added)
+        expected_paths = full_paths[::2]
+        self.assertGreater(len(full_paths), len(expected_paths))
+        php = self.bin / 'php'
+        php.write_text('#!/bin/sh\n'
+                       'if [ "$1" = -r ]; then '
+                       'test -z "${DB_TRACE:-}" || printf "probe\\n" >> "$DB_TRACE"; exit 0; fi\n'
+                       'test -z "${CATEGORY:-}${SHARD:-}${MAKEFLAGS:-}${MFLAGS:-}${MAKEOVERRIDES:-}" '
+                       '|| { echo "make-control environment leaked" >&2; exit 7; }\n'
+                       'printf "php\\t%s\\n" "$1" >> "$TRACE"\n')
+        php.chmod(0o700)
+        result = subprocess.run(['make', '--no-print-directory', 'test',
+                                 'CATEGORY=integration', 'SHARD=1/2'], cwd=self.root,
+                                env=dict(self.env, MAKEFLAGS='-k', MFLAGS='-k',
+                                         MAKEOVERRIDES='FMONITOR_TEST_OVERRIDE=1'),
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual([f'{self.runtimes[path]}\t{path}' for path in expected_paths],
+                         self.trace.read_text().splitlines())
+
+    def test_workflow_runs_two_isolated_integration_shards_and_aggregates_them(self):
+        workflow = (ROOT / '.github/workflows/repository-verification.yml').read_text()
+        integration = workflow.split('\n  integration:\n', 1)[1].split('\n  e2e:\n', 1)[0]
+        self.assertIn('name: Integration (${{ matrix.shard }}/2)', integration)
+        self.assertIn('fail-fast: false', integration)
+        self.assertIn('shard: [1, 2]', integration)
+        self.assertIn('runs-on: ubuntu-latest', integration)
+        self.assertIn('run: make test-db-reset migrate', integration)
+        self.assertIn('make test CATEGORY=integration SHARD=${{ matrix.shard }}/2', integration)
+        self.assertIn('if: always()\n      run: make test-env-down', integration)
+        self.assertIn('"integration":"${{ needs.integration.result }}"', workflow)
 
     def test_aggregate_requires_exact_expected_evidence(self):
         good = dict.fromkeys(['plan', 'fast'] + CATEGORIES, 'success')

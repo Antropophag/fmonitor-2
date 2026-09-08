@@ -92,3 +92,12 @@ Production runner/assertions не изменены; независимый revie
 `reviews/tests/VERIFICATION-PR-CYCLE-001-summary-isolation.md`. Финальная
 готовность PR определяется проверками его текущего head, не переносится
 автоматически с8f8470d; ссылка и актуальный результат также ведутся в PR43.
+
+## Две integration jobs — owner2026-09-08
+
+Более новое [решение владельца](integration-sharding-owner-decision-2026-09-08.md)
+разрешает стандартную matrix из двух изолированных integration jobs. Все прочие
+категории и правила full/docs-only сохраняются. Обе части обязательны для full,
+ошибка любой блокирует verify; fail-fast выключен. Одноимённая category локально
+без SHARD продолжает выполнять весь список. Дополнительная подготовка второй VM
+увеличивает runner time; фактическое ожидание и сумму jobs измерять отдельно.
