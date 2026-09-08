@@ -255,3 +255,14 @@ VERIFY_OK; независимый Gate5v3 APPROVED и первая реальн�
 PASS, полная parity ещё ожидает завершения. Более новая точка — тот же
 [CI checkpoint](quality-graph-current-checkpoint-2026-09-08.md). Stand4990cf1 сохраняется,
 main/PR10/protection/Bitrix/import не менялись; global goal ACTIVE.
+
+## Безопасный перезапуск CI/Linux — последняя точка
+
+Владелец запросил перезапуск. Читать [новый handoff](restart-handoff-ci-linux-2026-09-08.md)
+и [промпт продолжения](continue-ci-linux-2026-09-08.txt). CI cleanHEAD62fd8ba — новый
+14-test REDv5, без новой implementation и без G3approval (capacity error). Оба
+GitHub-прогона PR37 завершеныFAIL; причины и готовые тестовые исправления сохранены.
+Локальных тестов/активных агентов нет, testDB остановлен, stand4990cf1 healthy.
+Publisher имеет отдельную подтверждённую несовместимость с разрешёнными правами;
+новые права/pins/merge не разрешены. Последний get_goal показывает BLOCKED, а не
+COMPLETE: цель и её исходный объём сохраняются, готовность CI не объявлять.
