@@ -37,3 +37,15 @@ Superseding Gate3 APPROVED на неизменённом corrected test hash66a1
 и shell wrapper, удаление SHARD из childenv, обычная integration matrix[1,2].
 Focused verification_ci15 PASS. Реальный read-only list:177 =89+88, union exact,
 пересечений нет. Снимки списков сохранены вне репозитория для сверки actual CI.
+
+На133afcc0 локально PASS: verification_ci15, inventory15,
+HARNESS-FULL-AGGREGATION-001 (включая обязательный отказ при failed stage),
+architecture7/7, Python compile, bash syntax, diff-check. Предметные tests,
+каталог и category mapping не изменялись. TestDB и пользовательский stand не
+поднимались/перезапускались: локальная проверка использует synthetic traced runtimes.
+
+Independent Gate5 APPROVED на133afcc08adac7bd0a93c7c42309deb73d36ca4b:
+`reviews/code/INTEGRATION-SHARDING-001.md`. Reviewer повторил15/15 focused tests,
+проверил неизменённый Gate3 hash, реальное деление177=89+88, compile/diff.
+Следующий commit содержит только review/evidence; actual CI и union логов остаются
+обязательными внешними доказательствами на итоговом head перед merge.
