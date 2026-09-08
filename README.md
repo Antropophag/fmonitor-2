@@ -14,7 +14,6 @@ Python 3.12.11, Git, Make, Bash, ripgrep и запущенный Docker с Compo
 ```bash
 git clone https://github.com/Antropophag/fmonitor-2.git fmonitor-2
 cd fmonitor-2
-make doctor
 make setup
 cp .env.example .env
 # Задайте в .env уникальный FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD.

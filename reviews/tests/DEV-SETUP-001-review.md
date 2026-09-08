@@ -23,3 +23,14 @@ Docker or browser compatibility. Clean-checkout and full-suite evidence is requi
 separately. Implementation/configuration work overlapped fixture review; this is
 not evidence of a strictly sequential pre-implementation Gate 3. Independent final
 code review remains required; production deployment is outside this change.
+
+## Follow-up review — parser and ZIP portability
+
+Root independently reviewed the additional test-author changes on f4ab8bd:
+malformed manifest must not create its sentinel; the ZIP adapter must list and
+return exact Unicode-named entry bytes, reject unsupported modes, and preserve
+archive bytes. The inventory amendment removes exactly one new member before
+checking the unchanged frozen baseline hash. Npm10.9.4 matches the pinned Node
+image. APPROVED. Genuine RED and subsequent GREEN7/7 + inventory15/15 are recorded
+in the author evidence. Browser change selects pinned Chromium and changes no
+assertions; independent code re-review v2 covers it.

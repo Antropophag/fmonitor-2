@@ -50,7 +50,6 @@ PHP-пакеты закреплены [`composer.lock`](../composer.lock); ср�
 ```bash
 git clone https://github.com/Antropophag/fmonitor-2.git fmonitor-2
 cd fmonitor-2
-make doctor
 make setup
 ```
 
