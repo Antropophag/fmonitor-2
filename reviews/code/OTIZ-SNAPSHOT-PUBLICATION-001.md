@@ -104,6 +104,30 @@ Full CI is still pending and must be recorded separately. This Gate 5 approval
 does not claim CI completion, deployment, archive readiness, A02/A03 resolution,
 or production financial readiness.
 
+## Supplemental CI-fixture review
+
+The first CI run, PR 61 run `34279763684` at head `167cbaa9`, exposed a
+verification-harness fixture defect: miniature repositories used by the
+inventory and CI self-tests did not create the newly mandatory `tests/Otiz`
+directory. The correction changes only three verifier tests. Both miniature
+repository builders now create that directory; the inventory test additionally
+proves that an unregistered OTIZ test fails closed and adds the three registered
+OTIZ database suites to the exact historical membership expectation. Existing
+members and digest-sensitive expectations remain present. No production source,
+runtime behavior, category assignment, runner implementation, or failure policy
+changed.
+
+Independent review found the correction narrowly matches the concrete CI
+failure and preserves sensitivity. Both focused Python suites pass, Python
+compilation and `git diff --check` pass. Gate 5 remains **APPROVED** with these
+supplemental verifier-only files:
+
+```text
+9961dcb36fefba605517a40d994480bd7b2791a5c966c4946fc3212d3a4c521b  tests/Verification/verification_inventory_001_test.py
+d924887be0f088548a65445e2cb01d0f07c653d909b95353f091bd8e1b46b293  tests/Verification/verification_native_suites_001_test.py
+de1da7bc9d1c66e60f4ad1adaeed8d55fcdfd34b931498e862001e22293a270e  tests/Verification/verification_ci_001_test.py
+```
+
 ## Exact reviewed hashes
 
 ```text

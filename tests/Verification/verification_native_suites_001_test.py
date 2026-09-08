@@ -25,6 +25,7 @@ class NativeSuites(unittest.TestCase):
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('// FMONITOR_TEST_DB\n' if name.endswith('/d_test.php') else '// scheduler fixture\n')
+        (self.root / "tests/Otiz").mkdir(parents=True, exist_ok=True)
         self.write_catalog()
         self.bin = self.root / 'trace-bin'
         self.bin.mkdir()

@@ -17,6 +17,7 @@ class Inventory(native.NativeSuites):
     def test_unknown_file_fails_before_execution(self):
         (self.bin / 'rg').symlink_to(shutil.which('rg'))
         for name in ['tests/InstallationProcess/unregistered_test.php',
+                     'tests/Otiz/unregistered_test.php',
                      'tests/AssignmentOrderComposition/unregistered_test.php',
                      'tests/Verification/unregistered_test.mjs']:
             with self.subTest(path=name):
@@ -107,6 +108,9 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
             ],
             'db': [
+                'php\ttests/Otiz/snapshot_publication_001_test.php\n',
+                'php\ttests/Otiz/snapshot_publication_http_001_test.php\n',
+                'php\ttests/Otiz/runtime_schema_001_test.php\n',
                 'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
                 'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
             ],

@@ -78,3 +78,13 @@ Root просмотрел accepted.png: действующая оболочка 
 Остаётся один полный CI на кандидате; после его принятия следующий
 архитектурный этап #33. Политика rounding/выплат, прочие Otiz actions и весь UI
 не переписаны. Production deployment этого среза не выполнялся.
+
+## Первый CI и исправление инфраструктуры
+
+PR61, head167cbaa9, run34279763684: unit и E2E PASS; fast/governance обнаружили
+недостающий tests/Otiz в synthetic mini-repos самого test runner. Исправлены только
+создатели этих fixtures, добавлен unknown-Otiz fail-closed сценарий и три точных
+новых entries в проверку membership (исторические digest сохранены).
+Обе focused Python suites:15+15tests PASS. Независимый supplemental review APPROVED
+в том же Gate5 record. Результат integration и финального повторного CI фиксируется
+по фактическим Actions; первый failed run не объявляется VERIFY_OK.
