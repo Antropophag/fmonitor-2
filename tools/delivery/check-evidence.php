@@ -113,13 +113,20 @@ function deliveryFirstBlobCommit(string $repository, string $path, string $hash,
     return $matches[0];
 }
 
-function deliveryAncestor(string $repository, string $older, string $newer, string $receipt): void
+function deliveryIsAncestor(string $repository, string $older, string $newer, string $receipt): bool
 {
-    if ($older === $newer) deliveryFailure('gate_order', $receipt, 'required gate commits are equal');
     $process = proc_open(['git', 'merge-base', '--is-ancestor', $older, $newer], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $repository);
     if (!is_resource($process)) deliveryFailure('invalid_input', $receipt, 'git ancestry check did not start');
     foreach ($pipes as $pipe) fclose($pipe);
-    if (proc_close($process) !== 0) deliveryFailure('gate_order', $receipt, "$older is not an ancestor of $newer");
+    $status = proc_close($process);
+    if ($status > 1) deliveryFailure('commit_mismatch', $receipt, 'git ancestry input is invalid');
+    return $status === 0;
+}
+
+function deliveryAncestor(string $repository, string $older, string $newer, string $receipt): void
+{
+    if ($older === $newer) deliveryFailure('gate_order', $receipt, 'required gate commits are equal');
+    if (!deliveryIsAncestor($repository, $older, $newer, $receipt)) deliveryFailure('gate_order', $receipt, "$older is not an ancestor of $newer");
 }
 
 function deliveryDiffSet(string $repository, string $from, string $to, ?string $pathspec, array $excluded, string $receipt): array
@@ -145,7 +152,32 @@ function deliveryDiffSet(string $repository, string $from, string $to, ?string $
 
 function deliveryEnvelope(string $repository, string $green, string $head, string $receipt, string $codeReviewPath, string $change): void
 {
-    $changedAfterReview = array_filter(explode("\0", deliveryGit($repository, ['diff', '--no-renames', '--name-only', '-z', $green . '..' . $head], $receipt)));
+    $touched = [];
+    $commits = array_filter(explode("\n", deliveryGit($repository, ['rev-list', '--parents', "$green..$head"], $receipt)));
+    foreach ($commits as $line) {
+        $parents = explode(' ', $line);
+        $commit = array_shift($parents);
+        $parent = $parents[0] ?? null;
+        // A synthetic PR merge may list base-main first. Compare the merge to
+        // its already-reviewed feature parent, while still checking every new
+        // side-branch commit below; reviewed feature files are not new changes.
+        if (count($parents) > 1) {
+            foreach ($parents as $candidate) {
+                if (deliveryIsAncestor($repository, $green, $candidate, $receipt)) {
+                    $parent = $candidate;
+                    break;
+                }
+            }
+        }
+        $arguments = $parent === null
+            ? ['ls-tree', '-r', '--name-only', '-z', $commit]
+            : ['diff', '--no-renames', '--name-only', '-z', $parent, $commit];
+        foreach (explode("\0", deliveryGit($repository, $arguments, $receipt)) as $path) {
+            if ($path !== '') $touched[$path] = true;
+        }
+    }
+    $changedAfterReview = array_keys($touched);
+    sort($changedAfterReview, SORT_STRING);
     $allowedOperationsEvidence = [
         'docs/operations/quality-graph-publisher-phase-b-2026-09-08.md',
         'docs/operations/quality-graph-governance-final-verification-2026-09-08.md',
