@@ -3,10 +3,14 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 [[ "${GITHUB_ACTIONS:-}" == true ]] || { echo 'SETUP_FAILURE: ci-setup requires a dedicated GitHub runner' >&2; exit 1; }
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends ripgrep
+command -v rg >/dev/null || { echo 'SETUP_FAILURE: required command unavailable: rg' >&2; exit 1; }
 php -r 'if (PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600) exit(1); foreach (["mysqli", "pcntl", "dom", "mbstring"] as $extension) if (!extension_loaded($extension)) exit(1);'
 [[ "$(node --version)" == v22.22.0 ]]
 docker info >/dev/null
 docker compose version
+make test-tools
 [[ ! -e vendor/tecnickcom/tcpdf && ! -e ../shlz-ui ]] || { echo 'SETUP_FAILURE: dependency destinations must be absent' >&2; exit 1; }
 mkdir -p vendor/tecnickcom
 git clone --branch 6.11.4 --depth 1 https://github.com/tecnickcom/TCPDF.git vendor/tecnickcom/tcpdf
