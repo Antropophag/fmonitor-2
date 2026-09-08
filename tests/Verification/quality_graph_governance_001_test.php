@@ -284,18 +284,44 @@ try {
         foreach (['lineage-v2', 'lineage-v3'] as $id) { $next = $source; $next['receiptId'] = $id; $next['supersedes'] = 'lineage-v1'; file_put_contents($copy . "/delivery/evidence/LINEAGE-001/$id.json", json_encode($next, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n"); }
     }, 'invalid_history');
 
-    $mutation('omitted-git-derived-test', static function (string $copy, Closure $read, Closure $write) use ($redPath, $testReviewPath, $greenPath, $codeReviewPath): void {
-        foreach ([$redPath, $testReviewPath, $greenPath, $codeReviewPath] as $path) { [$contents, $json, $data] = $read($copy, $path); $data['tests'] = []; $write($copy, $path, $contents, $json, $data); }
-        $receiptPath = $copy . '/delivery/evidence/LINEAGE-001/lineage-v1.json'; $receipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR); $receipt['artifacts']['tests'] = [];
-        foreach (['red' => $redPath, 'testReview' => $testReviewPath, 'green' => $greenPath, 'codeReview' => $codeReviewPath] as $key => $path) $receipt['artifacts'][$key]['sha256'] = hash_file('sha256', $copy . '/' . $path);
-        file_put_contents($receiptPath, json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
-    }, 'metadata_mismatch');
+    $completenessCase = static function (string $kind) use ($root): void {
+        $copy = sys_get_temp_dir() . '/fmonitor-qgg-completeness-' . $kind . '-' . bin2hex(random_bytes(8));
+        if (!mkdir($copy, 0700, true)) throw new TestFailure("SETUP_FAILURE: $kind fixture root");
+        try {
+            $git = static function (array $args) use ($copy): string { $r = qggRun(['git', ...$args], $copy); assertSameValue(0, $r['status'], 'SETUP_FAILURE: completeness git ' . json_encode($r)); return trim($r['stdout']); };
+            $write = static function (string $path, string $bytes) use ($copy): void { $target=$copy.'/'.$path;if(!is_dir(dirname($target))&&!mkdir(dirname($target),0700,true))throw new TestFailure('SETUP_FAILURE: completeness directory');file_put_contents($target,$bytes); };
+            $meta = static fn(array $data):string => "```delivery-metadata\n".json_encode($data,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n```\nfixture\n";
+            $git(['init','--quiet']);$git(['config','user.email','complete@example.invalid']);$git(['config','user.name','Completeness Fixture']);$write('README.md',"base\n");$git(['add','.']);$git(['commit','--quiet','-m','base']);$base=$git(['rev-parse','HEAD']);
+            $specPath='specs/COMPLETE-001.md';$testPath='tests/declared.php';$extraTest='tests/omitted.php';$redPath='docs/red.md';$testReviewPath='reviews/tests/COMPLETE-001.md';$greenPath='docs/green.md';$implementationPath='src/declared.txt';$extraImplementation='src/omitted.txt';$codeReviewPath='reviews/code/COMPLETE-001.md';
+            $spec=$meta(['schemaVersion'=>1,'kind'=>'spec','sliceId'=>'COMPLETE-001','author'=>'agent:/spec']);$write($specPath,$spec);$write($testPath,$kind==='exact-bytes'?"\x00 leading test\ntrailing-no-lf ":"<?php echo 'declared';\n");if($kind==='test')$write($extraTest,"<?php echo 'omitted';\n");$specHash=hash('sha256',$spec);$tests=[['path'=>$testPath,'status'=>'A','sha256'=>hash_file('sha256',$copy.'/'.$testPath)]];
+            $write($redPath,$meta(['schemaVersion'=>1,'kind'=>'red','sliceId'=>'COMPLETE-001','author'=>'agent:/test','specPath'=>$specPath,'specSha256'=>$specHash,'baseCommit'=>$base,'tests'=>$tests,'command'=>'php tests/declared.php','observedFailure'=>'fixture red','recordedAt'=>'2026-09-08T00:00:00Z']));$git(['add','.']);$git(['commit','--quiet','-m','red']);$redCommit=$git(['rev-parse','HEAD']);
+            $write($testReviewPath,$meta(['schemaVersion'=>1,'kind'=>'test-review','sliceId'=>'COMPLETE-001','reviewer'=>'agent:/test-reviewer','verdict'=>'APPROVED','specSha256'=>$specHash,'tests'=>$tests,'redCommit'=>$redCommit,'recordedAt'=>'2026-09-08T00:01:00Z']));$git(['add','.']);$git(['commit','--quiet','-m','test review']);
+            $write($implementationPath,$kind==='exact-bytes'?"\xff leading implementation\ntrailing-no-lf ":"declared implementation\n");if($kind==='implementation')$write($extraImplementation,"omitted implementation\n");$implementationFiles=[['path'=>$implementationPath,'status'=>'A','sha256'=>hash_file('sha256',$copy.'/'.$implementationPath)]];
+            $write($greenPath,$meta(['schemaVersion'=>1,'kind'=>'green','sliceId'=>'COMPLETE-001','author'=>'agent:/implementation','specSha256'=>$specHash,'tests'=>$tests,'testReviewRecordPath'=>$testReviewPath,'implementationFiles'=>$implementationFiles,'commands'=>['php tests/declared.php'],'recordedAt'=>'2026-09-08T00:02:00Z']));$git(['add','.']);$git(['commit','--quiet','-m','green']);$implementationCommit=$git(['rev-parse','HEAD']);
+            $write($codeReviewPath,$meta(['schemaVersion'=>1,'kind'=>'code-review','sliceId'=>'COMPLETE-001','reviewer'=>'agent:/code-reviewer','verdict'=>'APPROVED','specSha256'=>$specHash,'tests'=>$tests,'implementationCommit'=>$implementationCommit,'implementationFiles'=>$implementationFiles,'recordedAt'=>'2026-09-08T00:03:00Z']));$git(['add','.']);$git(['commit','--quiet','-m','code review']);
+            $receipt=['schemaVersion'=>1,'sliceId'=>'COMPLETE-001','change'=>'complete-fixture','receiptId'=>'complete-v1','supersedes'=>null,'baseCommit'=>$base,'authors'=>['spec'=>'agent:/spec','test'=>'agent:/test','implementation'=>'agent:/implementation'],'artifacts'=>['spec'=>['path'=>$specPath,'sha256'=>$specHash],'tests'=>$tests,'red'=>['path'=>$redPath,'sha256'=>hash_file('sha256',$copy.'/'.$redPath)],'testReview'=>['path'=>$testReviewPath,'sha256'=>hash_file('sha256',$copy.'/'.$testReviewPath),'reviewer'=>'agent:/test-reviewer','verdict'=>'APPROVED','specSha256'=>$specHash],'green'=>['path'=>$greenPath,'sha256'=>hash_file('sha256',$copy.'/'.$greenPath)],'codeReview'=>['path'=>$codeReviewPath,'sha256'=>hash_file('sha256',$copy.'/'.$codeReviewPath),'reviewer'=>'agent:/code-reviewer','verdict'=>'APPROVED','specSha256'=>$specHash,'reviewedCommit'=>$implementationCommit]]];$write('delivery/evidence/COMPLETE-001/complete-v1.json',json_encode($receipt,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n");$git(['add','.']);$git(['commit','--quiet','-m','receipt']);
+            $result=qggRun(['php',$root.'/tools/delivery/check-evidence.php','--repo',$copy],$copy);$combined=$result['stdout']."\n".$result['stderr'];$evidence=json_encode($result,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
+            if($kind==='exact-bytes') { assertSameValue(0,$result['status'],"RED_ASSERTION: binary and whitespace artifact bytes must hash exactly; evidence=$evidence");assertSameValue(1,preg_match_all('/^DELIVERY_EVIDENCE_OK receipts=1 head=[0-9a-f]{40}$/m',$combined),"Exact-byte lineage success marker; evidence=$evidence");assertSameValue(0,preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m',$combined),"Exact-byte lineage no failure"); }
+            else { assertSameValue(true,$result['status']!==0,"Omitted Git-derived $kind path must fail; evidence=$evidence");assertSameValue(1,preg_match_all('/^DELIVERY_EVIDENCE_FAILURE category=metadata_mismatch receipt=delivery\/evidence\/COMPLETE-001\/complete-v1\.json detail=[^\r\n]+$/m',$combined),"RED_ASSERTION: omitted Git-derived $kind path must produce exactly one metadata_mismatch; evidence=$evidence");assertSameValue(1,preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m',$combined),"Omitted $kind one failure");assertSameValue(0,preg_match_all('/^DELIVERY_EVIDENCE_OK /m',$combined),"Omitted $kind no success"); }
+        } finally { qggRemoveFixture($copy); }
+    };
+    $completenessCase('test');
+    $completenessCase('implementation');
+    $completenessCase('exact-bytes');
 
-    $mutation('omitted-git-derived-implementation', static function (string $copy, Closure $read, Closure $write) use ($greenPath, $codeReviewPath): void {
-        foreach ([$greenPath, $codeReviewPath] as $path) { [$contents, $json, $data] = $read($copy, $path); $data['implementationFiles'] = []; $write($copy, $path, $contents, $json, $data); }
-        $receiptPath = $copy . '/delivery/evidence/LINEAGE-001/lineage-v1.json'; $receipt = json_decode((string) file_get_contents($receiptPath), true, 32, JSON_THROW_ON_ERROR); $receipt['artifacts']['green']['sha256'] = hash_file('sha256', $copy . '/' . $greenPath); $receipt['artifacts']['codeReview']['sha256'] = hash_file('sha256', $copy . '/' . $codeReviewPath);
-        file_put_contents($receiptPath, json_encode($receipt, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
-    }, 'metadata_mismatch');
+    $mutation('modified-receipt-leaf', static function (string $copy): void {
+        $path=$copy.'/delivery/evidence/LINEAGE-001/lineage-v1.json';$bytes=(string)file_get_contents($path);assertSameValue(true,file_put_contents($path,rtrim($bytes,"\n")." \n")!==false,'SETUP_FAILURE: receipt leaf byte edit');
+    }, 'invalid_history');
+
+    $aggregate=sys_get_temp_dir().'/fmonitor-qgg-aggregate-'.bin2hex(random_bytes(8));
+    if(!mkdir($aggregate,0700,true))throw new TestFailure('SETUP_FAILURE: aggregate root');
+    try{
+        foreach([['git','init','--quiet'],['git','config','user.email','aggregate@example.invalid'],['git','config','user.name','Aggregate Fixture']]as$command){$setup=qggRun($command,$aggregate);assertSameValue(0,$setup['status'],'SETUP_FAILURE: aggregate git');}
+        foreach(['AAA-001/a.json','ZZZ-001/z.json']as$relative){$target=$aggregate.'/delivery/evidence/'.$relative;if(!is_dir(dirname($target))&&!mkdir(dirname($target),0700,true))throw new TestFailure('SETUP_FAILURE: aggregate directory');file_put_contents($target,"{malformed\n");}
+        foreach([['git','add','.'],['git','commit','--quiet','-m','two malformed receipts']]as$command){$setup=qggRun($command,$aggregate);assertSameValue(0,$setup['status'],'SETUP_FAILURE: aggregate commit');}
+        $result=qggRun(['php',$root.'/tools/delivery/check-evidence.php','--repo',$aggregate],$aggregate);$combined=$result['stdout']."\n".$result['stderr'];$evidence=json_encode($result,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
+        assertSameValue(true,$result['status']!==0,"Malformed receipt aggregation must fail; evidence=$evidence");assertSameValue(1,preg_match_all('/DELIVERY_EVIDENCE_FAILURE category=invalid_schema receipt=delivery\/evidence\/AAA-001\/a\.json[^\r\n]*\nDELIVERY_EVIDENCE_FAILURE category=invalid_schema receipt=delivery\/evidence\/ZZZ-001\/z\.json/m',$combined),"RED_ASSERTION: all malformed receipts must be reported once in bytewise path order; evidence=$evidence");assertSameValue(2,preg_match_all('/^DELIVERY_EVIDENCE_FAILURE /m',$combined),"Two malformed receipts produce two failures");assertSameValue(0,preg_match_all('/^DELIVERY_EVIDENCE_OK /m',$combined),"Aggregate failure no success");
+    }finally{qggRemoveFixture($aggregate);}
 
     $bindingCases = [
         ['name' => 'spec schemaVersion', 'artifact' => 'spec', 'field' => 'schemaVersion', 'value' => 2, 'category' => 'invalid_schema'],
