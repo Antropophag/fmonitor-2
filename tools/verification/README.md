@@ -65,3 +65,27 @@ setup и не равна wall-clock параллельных jobs. Измере�
 [verification-ci-matrix-2026-09-08.md](../../docs/operations/verification-ci-matrix-2026-09-08.md).
 CI fast всегда обязателен; docs-only имеет явный DOCS_VERIFY_OK. Код, тесты,
 конфигурация, неизвестный путь и release/schedule/manual требуют full VERIFY_OK.
+
+## Две части integration в CI
+
+GitHub Actions запускает integration как matrix из двух отдельных VM, каждая
+со своей MariaDB и обязательным teardown. Полный список валидируется перед
+делением, сортируется по пути и распределяется через один: `1/2` и `2/2`.
+Обе части обязательны; ошибка любой не даёт успешного verify.
+
+```sh
+# Только просмотр списка, без подключения к БД:
+python3 tools/verification/ci.py list integration --shard 1/2
+python3 tools/verification/ci.py list integration --shard 2/2
+
+# В уже подготовленном изолированном test contour:
+make test CATEGORY=integration SHARD=1/2
+```
+
+Без SHARD прежняя команда исполняет всю integration category. Selector разрешён
+только для integration и только `1/2` либо `2/2`. Локально части можно выполнить
+последовательно на одной testDB; для параллельного запуска нужны разные контуры
+и порты. SHARD не передаётся во вложенные тестовые make-команды.
+
+Решение владельца и границы:
+[integration-sharding-owner-decision-2026-09-08.md](../../docs/operations/integration-sharding-owner-decision-2026-09-08.md).

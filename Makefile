@@ -101,7 +101,7 @@ verify: test
 
 ifneq ($(strip $(CATEGORY)),)
 test:
-	@bash tools/verification/run.sh category "$(CATEGORY)"
+	@bash tools/verification/run.sh category "$(CATEGORY)" $(if $(strip $(SHARD)),--shard "$(SHARD)")
 else
 test:
 	@set +e; failures=""; failed_count=0; setup_failed=0; setup_cause=""; \

@@ -99,8 +99,9 @@ run_selected() {
 }
 
 if [[ "${1:-}" == category ]]; then
-  test "$#" -eq 2 || fail SETUP_FAILURE "usage: run.sh category unit|integration|e2e|governance"
-  exec python3 tools/verification/ci.py run "$2"
+  [[ "$#" -eq 2 || "$#" -eq 4 ]] || fail SETUP_FAILURE "usage: run.sh category CATEGORY [--shard 1/2|2/2]"
+  shift
+  exec python3 tools/verification/ci.py run "$@"
 fi
 
 suite="${1:-}"
