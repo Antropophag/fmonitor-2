@@ -39,106 +39,89 @@ require_db() {
     || fail SETUP_FAILURE "test MariaDB is unavailable; run make test-env-up"
 }
 
-run_files() {
-  local file
-  local failures=()
-  for file in "$@"; do
-    printf 'VERIFY %s\n' "$file"
-    if ! php "$file"; then
-      printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
-      failures+=("$file")
-    fi
+# Explicit inventory: validate everything before printing a list or executing tests.
+load_inventory() {
+  local directory line group runtime file extra key
+  local seen=$'\n' registered=$'\n'
+  local catalog=tools/verification/suites.tsv
+  for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification; do
+    test -d "$directory" || fail SETUP_FAILURE "missing verification directory: $directory"
   done
-  if ((${#failures[@]} > 0)); then
-    fail REGRESSION_FAILURE "${#failures[@]} verifier(s) failed"
-  fi
+  test -f "$catalog" || fail SETUP_FAILURE "missing verification catalog: $catalog"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    IFS=$'\t' read -r group runtime file extra <<< "$line"
+    [[ "$line" == "$group"$'\t'"$runtime"$'\t'"$file" ]] \
+      || fail SETUP_FAILURE "invalid catalog row: $line"
+    case "$group" in unit|db|characterization|e2e) ;; *) fail SETUP_FAILURE "unknown catalog suite: $group" ;; esac
+    case "$runtime" in php|node|python3) ;; *) fail SETUP_FAILURE "unknown catalog runtime: $runtime" ;; esac
+    [[ "$file" =~ ^(tests|rapid-pilot)/[a-zA-Z0-9_./-]+$ && "$file" != *..* ]] \
+      || fail SETUP_FAILURE "invalid catalog path: $file"
+    test -f "$file" || fail SETUP_FAILURE "missing catalog file: $file"
+    key="$group"$'\t'"$file"
+    [[ "$seen" != *$'\n'"$key"$'\n'* ]] || fail SETUP_FAILURE "duplicate catalog member: $key"
+    seen+="$key"$'\n'
+    registered+="$file"$'\n'
+    if [[ "$group" == "$suite" ]]; then
+      selected_runtimes+=("$runtime")
+      selected_files+=("$file")
+    fi
+  done < "$catalog"
+  for file in tests/InstallationProcess/*test.php tests/AssignmentOrderComposition/*test.php tests/Verification/*_test.mjs; do
+    test -f "$file" || continue
+    [[ "$registered" == *$'\n'"$file"$'\n'* ]] \
+      || fail SETUP_FAILURE "unregistered verifier: $file; add it to $catalog"
+  done
 }
 
-command -v rg >/dev/null || fail SETUP_FAILURE "required command unavailable: rg"
+run_selected() {
+  local index runtime file started status failures=0
+  for ((index=0; index<${#selected_files[@]}; index++)); do
+    runtime="${selected_runtimes[$index]}"
+    file="${selected_files[$index]}"
+    printf 'VERIFY %s\n' "$file"
+    started=$SECONDS
+    "$runtime" "$file"
+    status=$?
+    printf 'VERIFY_TIMING suite=%s runtime=%s file=%s seconds=%s exit=%s\n' \
+      "$suite" "$runtime" "$file" "$((SECONDS - started))" "$status"
+    if ((status != 0)); then
+      printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
+      failures=$((failures + 1))
+      # Retain the existing characterization Python prerequisite fail-fast.
+      if [[ "$suite" == characterization && "$runtime" == python3 ]]; then
+        fail REGRESSION_FAILURE "$file"
+      fi
+    fi
+  done
+  ((failures == 0)) || fail REGRESSION_FAILURE "$failures verifier(s) failed"
+  return 0
+}
 
-for required_directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification; do
-  test -d "$required_directory" || fail SETUP_FAILURE "missing verification directory: $required_directory"
-done
-unit_files=()
-db_files=()
-node_files=()
-while IFS= read -r file; do
-  if rg -q 'FMONITOR_TEST_DB|new mysqli' "$file"; then
-    db_files+=("$file")
-  else
-    unit_files+=("$file")
-  fi
-done < <(find tests/InstallationProcess -maxdepth 1 -type f -name '*test.php' -print | sort)
-while IFS= read -r file; do
-  case "$file" in
-    tests/AssignmentOrderComposition/selection_command_outcomes_001_test.php|tests/AssignmentOrderComposition/selection_command_recovery_001_test.php|tests/AssignmentOrderComposition/selection_command_tracer_001_test.php)
-      unit_files+=("$file") ;;
-    *) db_files+=("$file") ;;
-  esac
-done < <(find tests/AssignmentOrderComposition -maxdepth 1 -type f -name '*test.php' -print | LC_ALL=C sort)
-while IFS= read -r file; do node_files+=("$file"); done \
-  < <(find tests/Verification -maxdepth 1 -type f -name '*_test.mjs' -print | LC_ALL=C sort)
-# Bash 3.2 with nounset requires guarded expansion for declared empty arrays.
-sorted_files=()
-while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${unit_files[@]+"${unit_files[@]}"} | LC_ALL=C sort)
-unit_files=(${sorted_files[@]+"${sorted_files[@]}"}); sorted_files=()
-while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${db_files[@]+"${db_files[@]}"} | LC_ALL=C sort)
-db_files=(${sorted_files[@]+"${sorted_files[@]}"})
+suite="${1:-}"
+if [[ "$suite" == list ]]; then
+  test "$#" -eq 2 || fail SETUP_FAILURE "usage: tools/verification/run.sh list unit|db|characterization|e2e"
+  suite="$2"
+  case "$suite" in unit|db|characterization|e2e) ;; *) fail SETUP_FAILURE "unknown list suite: $suite" ;; esac
+fi
+selected_runtimes=()
+selected_files=()
+load_inventory
 
 if [[ "${1:-}" == list ]]; then
-  test "$#" -eq 2 || fail SETUP_FAILURE "usage: tools/verification/run.sh list unit|db"
-  case "$2" in
-    unit)
-      for file in ${unit_files[@]+"${unit_files[@]}"}; do printf 'php\t%s\n' "$file"; done
-      for file in ${node_files[@]+"${node_files[@]}"}; do printf 'node\t%s\n' "$file"; done ;;
-    db) for file in ${db_files[@]+"${db_files[@]}"}; do printf 'php\t%s\n' "$file"; done ;;
-    *) fail SETUP_FAILURE "unknown list suite '$2'; expected unit|db" ;;
-  esac
+  for ((index=0; index<${#selected_files[@]}; index++)); do
+    printf '%s\t%s\n' "${selected_runtimes[$index]}" "${selected_files[$index]}"
+  done
   exit 0
 fi
 
-
-case "${1:-}" in
-  unit)
-    unit_failed=0
-    (run_files ${unit_files[@]+"${unit_files[@]}"}) || unit_failed=1
-    for file in ${node_files[@]+"${node_files[@]}"}; do
-      printf 'VERIFY %s\n' "$file"
-      if ! node "$file"; then
-        printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
-        unit_failed=1
-      fi
-    done
-    if ((unit_failed)); then fail REGRESSION_FAILURE "unit suite failures"; fi
+case "$suite" in
+  unit|characterization)
+    run_selected
     ;;
-  db)
+  db|e2e)
     require_db
-    run_files ${db_files[@]+"${db_files[@]}"}
-    ;;
-  characterization)
-    python3 tests/Verification/pilot_healthcheck_cookie_failure_001_test.py || fail REGRESSION_FAILURE "healthcheck cookie persistence"
-    python3 tests/Verification/pilot_healthcheck_session_001_test.py || fail REGRESSION_FAILURE "healthcheck session lifecycle"
-    run_files \
-      rapid-pilot/verify-auth-hot-path.php \
-      rapid-pilot/verify-calendar-projections.php \
-      rapid-pilot/verify-checklist-current-crew.php \
-      tests/Verification/characterize_inspection_schedule_duplicate_001_test.php \
-      tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php \
-      tests/Verification/characterize_inspection_photo_revoke_001_test.php \
-      tests/Verification/characterize_inspection_photo_rejections_001_test.php \
-      tests/Verification/characterize_inspection_photo_upload_001_test.php \
-      rapid-pilot/verify-completion-flow.php \
-      rapid-pilot/verify-deployment-contract.php \
-      rapid-pilot/verify-focus-contract.php \
-      rapid-pilot/verify-object-queue-filters.php \
-      tests/Verification/characterize_object_detail_import_001_test.php \
-      tests/Verification/harness_otiz_canonical_compat_001_test.php \
-      rapid-pilot/verify-premium-calculation.php \
-      rapid-pilot/verify-visual-contract.php
-    ;;
-  e2e)
-    require_db
-    run_files tests/InstallationProcess/pilot_e2e_flow_001_test.php
+    run_selected
     ;;
   lint)
     while IFS= read -r file; do php -l "$file" >/dev/null || fail REGRESSION_FAILURE "$file syntax"; done \
