@@ -261,5 +261,6 @@
   "tests/Verification/quality_graph_ci_setup_001_test.php": "integration",
   "tests/Verification/verification_ci_001_test.py": "governance",
   "tests/Verification/verification_inventory_001_test.py": "governance",
-  "tests/Verification/development_setup_001_test.py": "governance"
+  "tests/Verification/development_setup_001_test.py": "governance",
+  "tests/Verification/batched_schema_snapshot_001_test.php": "integration"
 }

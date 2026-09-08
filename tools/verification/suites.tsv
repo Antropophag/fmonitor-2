@@ -262,3 +262,4 @@ characterization	php	tests/Verification/harness_fresh_test_lifecycle_001_test.ph
 characterization	php	tests/Verification/quality_graph_ci_setup_001_test.php
 unit	python3	tests/Verification/development_setup_001_test.py
 db	php	tests/InstallationProcess/invitation_reissue_http_001_test.php
+db	php	tests/Verification/batched_schema_snapshot_001_test.php
