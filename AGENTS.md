@@ -1,15 +1,14 @@
 # FMonitor 2.0 constitution
 
-## Current priority — manual pilot today
+## Current priority — architecture transition
 
-- Before planning, implementing, testing or resuming the autonomous goal, read
-  `docs/operations/current-delivery-goal.md`. Owner2026-09-07 requires a working
-  manual-test pilot by **2026-09-07 22:00 Europe/Moscow**, first end-to-end stand
-  targeted for17:00. This priority overrides older mandatory full-gate sequencing
-  for the manual-pilot milestone; keep history, authorization and data preservation.
-- Deliver the usable flow first, then fix the owner's manual-test findings. Reuse
-  existing code/approvals, use focused smoke checks, and defer rare-case matrices
-  and complete architectural migration. Parallel agents use **gpt-5.6-sol / low**.
+- Before planning, implementing, testing or resuming work, read
+  `docs/operations/current-delivery-goal.md`. Owner2026-09-08 sets the order:
+  **#32 → first complete OTIZ slice #24 → #33**. The pilot works and checks are
+  accelerated; architecture does not wait for all manual findings to be closed.
+- Only confirmed manual-work blockers or data/access risks interrupt this order.
+  Preserve history, authorization, the working stand and independent review.
+  Parallel agents use **gpt-5.6-sol / low**.
 
 ## Continuing rules
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__).'/app/autoload.php';
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceReconciliation.php';
 require_once __DIR__ . '/legacy-migration/MigratedEvidenceDecisionLedger.php';
 require_once __DIR__ . '/legacy-migration/OtizMigratedEvidenceInputs.php';
@@ -17,6 +18,7 @@ require_once __DIR__ . '/legacy-migration/MigrationQuarantineDecisionLedger.php'
 final class RapidPilotOtiz
 {
     private mysqli $db;
+    private \FMonitor2\Otiz\MariaDbSnapshotStore $snapshotStore;
     private string $prefix;
     private int $userId;
     private string $userName;
@@ -39,10 +41,10 @@ final class RapidPilotOtiz
         $this->userId = (int) $user['user_id']; $this->userName = (string) $user['full_name'];
         if (!\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($this->db,$this->prefix,$this->userId),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE)) $this->fail(403, 'Раздел доступен сотрудникам ОТиЗ и администраторам.');
         $this->csrf = (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? '');
-        $this->ensureSchema();
+        $this->snapshotStore=new \FMonitor2\Otiz\MariaDbSnapshotStore($this->db,$this->prefix);
         $this->decisionLedger = new MigratedEvidenceDecisionLedger($this->db, $this->prefix);
-        $this->decisionLedger->ensureSchema();
-        $this->quarantineLedger=new MigrationQuarantineDecisionLedger($this->db,$this->prefix);$this->quarantineLedger->ensureSchema();
+        \FMonitor2\InstallationProcess\OtizEvidenceSchemaMigration::assertReady($this->db,$this->prefix);
+        $this->quarantineLedger=new MigrationQuarantineDecisionLedger($this->db,$this->prefix);
     }
 
     public static function matches(string $path): bool { return preg_match('#^/pilot/otiz(?:/|$)#D', $path) === 1; }
@@ -88,7 +90,13 @@ final class RapidPilotOtiz
         if ($path === '/pilot/otiz/calculate') {
             $date = (string) ($_POST['reportDate'] ?? '');
             if (!$this->validDate($date)) $this->redirect('/pilot/otiz/payments?error=date');
-            $id = $this->calculate($date); $this->redirect('/pilot/otiz/snapshots/' . $id . '?created=1');
+            try { $id = $this->publication()->buildAndPublish($this->userId,$date,(string)($_POST['operationId']??'')); }
+            catch(DomainException $error) {
+                if($error->getMessage()==='FORBIDDEN')$this->fail(403,'Недостаточно прав.');
+                $message=match($error->getMessage()){'OPERATION_CONFLICT'=>'Этот запрос уже использован для другой даты. Откройте форму расчёта заново.','INVALID_OPERATION_ID'=>'Обновите страницу и повторите подготовку расчёта.','INVALID_DATE'=>'Проверьте дату расчёта.',default=>throw $error};
+                $this->fail(409,$message);
+            }
+            $this->redirect('/pilot/otiz/snapshots/' . $id . '?created=1');
         }
         if ($path === '/pilot/otiz/reconciliation/decisions') {
             $snapshotId = filter_var($_POST['snapshotId'] ?? null, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
@@ -114,14 +122,16 @@ final class RapidPilotOtiz
             try{$result=$this->quarantineLedger->decide(['operationId'=>(string)($_POST['operationId']??''),'sourceLocator'=>(string)($_POST['sourceLocator']??''),'sourceCutoffAt'=>(string)($_POST['sourceCutoffAt']??''),'sourceDigest'=>(string)($_POST['sourceDigest']??''),'classificationVersion'=>(string)($_POST['classificationVersion']??''),'quarantineCode'=>(string)($_POST['quarantineCode']??''),'outcome'=>(string)($_POST['outcome']??''),'reason'=>(string)($_POST['reason']??''),'actorUserId'=>$this->userId,'occurredAt'=>$this->now()]);$this->redirect('/pilot/otiz/reconciliation/quarantine?decision='.$result['status']);}catch(InvalidArgumentException){$this->redirect('/pilot/otiz/reconciliation/quarantine?decisionError=invalid');}catch(DomainException$e){$this->redirect('/pilot/otiz/reconciliation/quarantine?decisionError='.(str_contains($e->getMessage(),'STALE')?'stale':'forbidden'));}
         }
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/accept$#D', $path, $m) === 1) {
-            $id = (int) $m[1]; $this->db->begin_transaction();
-            $row = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1 FOR UPDATE")->fetch_assoc();
-            if (!is_array($row)) { $this->db->rollback(); $this->fail(404, 'Срез не найден.'); }
-            if ($row['status'] !== 'draft') { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=immutable'); }
-            $count = (int) $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND severity='blocker' AND state='open'")->fetch_assoc()['n'];
-            if ($count > 0) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?error=blockers'); }
-            $now = $this->now(); $s = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_otiz_snapshots` SET status='accepted',accepted_at=?,accepted_by_user_id=? WHERE id=? AND status='draft'"); $s->bind_param('sii', $now, $this->userId, $id); $s->execute();
-            $this->event($id, null, 'snapshot_accepted', ['hash' => $row['content_hash']]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $id . '?accepted=1');
+            $id=(int)$m[1];
+            try { $this->publication()->accept($this->userId,$id); }
+            catch(DomainException $error) {
+                $reason=$error->getMessage();
+                if($reason==='NOT_FOUND')$this->fail(404,'Срез не найден.');
+                if($reason==='FORBIDDEN')$this->fail(403,'Недостаточно прав.');
+                $code=match($reason){'IMMUTABLE'=>'immutable','BLOCKERS'=>'blockers','SNAPSHOT_INCOMPLETE'=>'incomplete',default=>throw $error};
+                $this->redirect('/pilot/otiz/snapshots/'.$id.'?error='.$code);
+            }
+            $this->redirect('/pilot/otiz/snapshots/'.$id.'?accepted=1');
         }
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/closures$#D', $path, $m) === 1) {
             $snapshotId = (int) $m[1];
@@ -166,45 +176,21 @@ final class RapidPilotOtiz
         $this->fail(404, 'Команда не найдена.');
     }
 
-    private function calculate(string $date): int
+    private function publication(): \FMonitor2\Otiz\SnapshotPublication
     {
-        $previous = $this->db->query("SELECT id FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE status='accepted' AND report_date<'" . $this->db->real_escape_string($date) . "' ORDER BY report_date DESC,id DESC LIMIT 1")->fetch_assoc();
-        $previousId = is_array($previous) ? (int) $previous['id'] : null; $now = $this->now();
-        $rulesVersion=PremiumCalculation::VERSION;$s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshots`(report_date,status,previous_snapshot_id,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(?,'draft',?,?,?, ?,NULL,NULL,0,0,0,'pending')"); $s->bind_param('sissi', $date, $previousId,$rulesVersion, $now, $this->userId); $s->execute(); $snapshotId = (int) $s->insert_id;
-        $legacyPrefix=(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:$this->prefix);if(preg_match('/^[A-Za-z0-9_]+$/D',$legacyPrefix)!==1)throw new RuntimeException('Invalid legacy table prefix');
-        $objects = (new NativeOperationalPremiumInputs($this->db,$this->prefix,$legacyPrefix))->forDate($date); $totalPool = 0; $totalClosed = 0; $payload = [];
-        foreach ($objects as $o) {
-            $progress=(int)$o['progress'];$previousProgress=0;$q=$this->db->query("SELECT so.current_progress_bp FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` so JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` s ON s.id=so.snapshot_id AND s.status='accepted' WHERE so.object_id=".(int)$o['id']." AND s.report_date<'".$this->db->real_escape_string($date)."' ORDER BY s.report_date DESC,s.id DESC LIMIT 1");$r=$q->fetch_assoc();if(is_array($r))$previousProgress=(int)$r['current_progress_bp'];
-            $blocked=$o['issues']!==[];$calculation=$blocked?null:PremiumCalculation::calculate($o['operands'],['closures'=>$this->closureEvidence((int)$o['id'],$date),'actualPayouts'=>[]],[]);
-            $empty=['fundCents'=>0,'accruedCents'=>0,'closedBeforeCents'=>$this->closedBefore((int)$o['id'],$date),'poolCents'=>0,'remainingFundCents'=>0,'distributableCents'=>0];$amounts=$calculation['amounts']??$empty;
-            $daysLate=(int)($calculation['formulaTrace'][2]['daysLate']??0);$kss=(int)($calculation['kssBp']??0);$fund=(int)$amounts['fundCents'];$accrued=(int)$amounts['accruedCents'];$closed=(int)$amounts['closedBeforeCents'];$pool=(int)$amounts['poolCents'];$remaining=(int)$amounts['remainingFundCents'];
-            $state = $blocked ? 'blocked' : ($pool === 0 ? 'no_new_amount' : ($o['pto'] !== null && $progress === 10000 && $remaining === 0 ? 'completed' : 'ready'));
-            $inputs = ['address' => $o['address'], 'deadline' => $o['deadline'], 'pto' => $o['pto'], 'daysLate' => $daysLate,
-                'calculationOperandsSource' => 'native_operational_facts', 'calculationOperandsLabel' => 'Подтверждённые native facts FMonitor 2',
-                'premiumCalculation'=>$calculation,'blockers'=>$o['issues']];
-            $stmt = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_objects`(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $distributed = (int)($amounts['distributableCents']??0); $undistributed = $pool - $distributed; $progressDate = $date; $json = json_encode($inputs, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-            $stmt->bind_param('iissiisiiiiiiiiiiss', $snapshotId, $o['id'], $o['reg'], $o['address'], $previousProgress, $progress, $progressDate, $o['premium'], $o['shaft'], $kss, $accrued, $fund, $closed, $remaining, $pool, $distributed, $undistributed, $state, $json); $stmt->execute();
-            foreach($o['issues'] as $issue)$this->issue($snapshotId,$o['id'],'blocker',$issue['code'],$issue['message'],$issue['owner']);
-            if ($daysLate > 0) $this->issue($snapshotId, $o['id'], 'warning', 'DEADLINE_PENALTY', "Просрочка {$daysLate} календ. дн.; Ксс уменьшен до " . number_format($kss / 10000, 2, ',', ' '), 'ОТиЗ');
-            $members = $o['team']; $weights = array_sum(array_column($members, 'weight'));
-            foreach ($members as $member) {
-                $amount = ($distributed > 0 && $weights > 0) ? intdiv($distributed * $member['weight'], $weights) : 0;
-                $share = $weights > 0 ? intdiv(10000 * $member['weight'], $weights) : 0; $employment = $member['employment'] ?? 'employed'; $basis = $member['basis'] ?? 'Распоряжение № ' . $o['id'] . '-Р';
-                $a = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_allocations`(snapshot_id,object_id,tab_id,full_name,position_name,contribution_bp,base_ktu_bp,adjustment_ktu_bp,effective_ktu_bp,share_bp,amount_cents,employment_status,participation_basis) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                $zero = 0;$baseKtu=10000;$effectiveKtu=10000;$contribution=(int)($member['contribution']??$member['weight']); $a->bind_param('iisssiiiiiiss', $snapshotId, $o['id'], $member['tab'], $member['name'], $member['position'], $contribution, $baseKtu, $zero, $effectiveKtu, $share, $amount, $employment, $basis); $a->execute();
-            }
-            $totalPool += $pool; $totalClosed += $closed; $payload[] = [$o['id'], $progress, $kss, $pool, $closed, $state];
-        }
-        $hash = hash('sha256', json_encode([$date, PremiumCalculation::VERSION, $payload], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-        $u = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_otiz_snapshots` SET total_pool_cents=?,total_closed_cents=?,total_available_cents=?,content_hash=? WHERE id=?"); $u->bind_param('iiisi', $totalPool, $totalClosed, $totalPool, $hash, $snapshotId); $u->execute();
-        $this->event($snapshotId, null, 'draft_calculated', ['reportDate' => $date, 'hash' => $hash]); return $snapshotId;
+        $legacyPrefix=(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:$this->prefix);
+        if(preg_match('/^[A-Za-z0-9_]+$/D',$legacyPrefix)!==1)throw new RuntimeException('Invalid legacy table prefix');
+        $inputs=new \FMonitor2\Otiz\MariaDbNativePremiumInputs($this->db,$this->prefix,$legacyPrefix);
+        return new \FMonitor2\Otiz\SnapshotPublication(
+             $this->snapshotStore,
+            $inputs->forDate(...), fn():string=>$this->now());
     }
 
     private function queue(): never
     {
+        $operationId=vsprintf('%s%s-%s-%s-%s-%s%s%s',str_split(bin2hex(random_bytes(16)),4));
         $latest = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY id DESC LIMIT 1")->fetch_assoc();
-        $cards = '<section class="fm2-otiz-start"><div><h1>Подготовка выплат</h1><p>Выберите дату, проверьте начисления по объектам и подготовьте реестр к выплате.</p></div><form method="post" action="/pilot/otiz/calculate" class="fm2-otiz-date"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><label class="shlz-field"><span class="shlz-field__label">Рассчитать по состоянию на</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="reportDate" value="2026-08-31" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Подготовить расчёт</button></form></section>';
+        $cards = '<section class="fm2-otiz-start"><div><h1>Подготовка выплат</h1><p>Выберите дату, проверьте начисления по объектам и подготовьте реестр к выплате.</p></div><form method="post" action="/pilot/otiz/calculate" class="fm2-otiz-date"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="operationId" value="' . $operationId . '"><label class="shlz-field"><span class="shlz-field__label">Рассчитать по состоянию на</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="reportDate" value="2026-08-31" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Подготовить расчёт</button></form></section>';
         $cards .= $this->primaryTabs('payments');
         if (is_array($latest)) {
             $closed = (int)$this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id=".(int)$latest['id'])->fetch_assoc()['n'];
@@ -225,6 +211,7 @@ final class RapidPilotOtiz
         $flash = isset($_GET['created']) ? 'Расчёт подготовлен. Проверьте суммы и замечания по объектам.' : (isset($_GET['accepted']) ? 'Расчёт подтверждён и готов к оформлению выплаты.' : (($_GET['paid']??'')==='1' ? 'Выплаты отмечены выполненными и учтены по объектам.' : (($_GET['paid']??'')==='duplicate' ? 'Эти выплаты уже были отмечены выполненными.' : (isset($_GET['closed']) ? 'Удержание добавлено к выплате по объекту.' : (isset($_GET['reversed']) ? 'Предыдущая отметка о выплате отменена.' : '')))));
         $body = '<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><ol><li><a class="fm2-breadcrumb-link" href="/pilot/otiz/payments">Подготовка выплат</a></li><li><span aria-current="page">Расчёт на ' . $this->date($s['report_date']) . '</span></li></ol></nav>'.$this->primaryTabs('payments');
         if ($flash !== '') $body .= '<p class="fm2-alert" role="status">' . $this->e($flash) . '</p>';
+        if (($_GET['error']??'')==='incomplete') $body .= '<p role="alert">Расчёт не завершён. Подготовьте новый расчёт перед принятием.</p>';
         if (isset($_GET['error'])) $body .= '<p class="fm2-otiz-error" role="alert">Действие не выполнено. Устраните замечания по объектам и проверьте доступную сумму.</p>';
         $acceptedActions='<a class="shlz-link" href="/pilot/otiz/snapshots/'.$id.'/export.xlsx">Скачать реестр XLSX</a>'.($payable>0?'<form method="post" action="/pilot/otiz/snapshots/'.$id.'/payments/complete"><input type="hidden" name="csrfToken" value="'.$this->e($this->csrf).'"><button class="shlz-button shlz-button--primary" type="submit">Отметить выплаты выполненными</button><small>Сумма выплаты — '.$this->rub($payable).'</small></form>':'<span class="shlz-status shlz-status--green">Выплаты выполнены</span>');
         $snapshotStatus = $s['status'] === 'draft' ? 'На проверке' : ($payable === 0 ? 'Выплаты выполнены' : 'Готовы к выплате');
@@ -550,24 +537,12 @@ final class RapidPilotOtiz
         $inputs=json_decode((string)($object['inputs_json']??''),true);$calculation=is_array($inputs)?($inputs['premiumCalculation']??null):null;if(!is_array($calculation))return 0;$progressAmount=0;foreach($calculation['formulaTrace']??[]as$step)if(($step['step']??'')==='progress')$progressAmount=(int)($step['resultCents']??0);return max(0,$progressAmount-(int)($object['accrued_cents']??0));
     }
 
-    private function ensureSchema(): void
-    {
-        self::bootstrap($this->db, $this->prefix);
-    }
-
     public static function bootstrap(mysqli $db, string $prefix): void
     {
         if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) throw new RuntimeException('Invalid pilot table prefix');
         \FMonitor2\InstallationProcess\MariaDbPilotLegacyObjectSchemaReadiness::assertOtizReady($db, $prefix);
     }
 
-    private function closedBefore(int $objectId, string $date): int { return (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE object_id={$objectId} AND closed_on<='" . $this->db->real_escape_string($date) . "'")->fetch_assoc()['n']; }
-    private function closureEvidence(int $objectId,string $date):array
-    {
-        $rows=$this->db->query("SELECT id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,reverses_payment_closure_id FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE object_id={$objectId} AND closed_on<='".$this->db->real_escape_string($date)."' ORDER BY id")->fetch_all(MYSQLI_ASSOC);$evidence=[];
-        foreach($rows as$row){$canonical=json_encode($row,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$evidence[]=['amountCents'=>(int)$row['paid_cents']+(int)$row['discipline_cents']+(int)$row['deadline_cents'],'closedOn'=>(string)$row['closed_on'],'source'=>['label'=>'Принятое закрытие ОТиЗ','locator'=>'fm2_pilot_otiz_payment_closures/'.(int)$row['id'],'contentSha256'=>hash('sha256',$canonical)]];}return$evidence;
-    }
-    private function issue(int $snapshotId,int $objectId,string $severity,string $code,string $message,string $owner): void { $s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_snapshot_issues`(snapshot_id,object_id,severity,issue_code,message,owner_role,state) VALUES(?,?,?,?,?,?,'open')"); $s->bind_param('iissss',$snapshotId,$objectId,$severity,$code,$message,$owner); $s->execute(); }
     private function event(?int $snapshotId,?int $objectId,string $type,array $payload): void { $json=json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$now=$this->now();$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_events`(snapshot_id,object_id,event_type,payload_json,actor_user_id,occurred_at) VALUES(?,?,?,?,?,?)");$s->bind_param('iissis',$snapshotId,$objectId,$type,$json,$this->userId,$now);$s->execute(); }
     private function snapshotRow(int $id): array { $row=$this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1")->fetch_assoc(); if(!is_array($row))$this->fail(404,'Расчёт не найден.'); return $row; }
     private function validDate(string $value): bool { $d=DateTimeImmutable::createFromFormat('!Y-m-d',$value);return$d!==false&&$d->format('Y-m-d')===$value&&$value<='2026-12-31'; }

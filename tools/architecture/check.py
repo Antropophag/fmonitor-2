@@ -155,6 +155,8 @@ def workforce_ownership_matches(text: str) -> list[tuple[str, int]]:
 
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
+    if rel.startswith("app/Otiz/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderComposition/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderOriginal/"):
@@ -194,6 +196,17 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
     violations: dict[str, list[str]] = collections.defaultdict(list)
     hotspot: dict[str, int] = {}
     public_seams: list[str] = []
+    # These legacy adapters are invoked by ordinary OTIZ requests. Their directory
+    # exclusion cannot exempt reachable ledger/projection methods from DDL ownership.
+    for relative in (
+        "rapid-pilot/legacy-migration/MigratedEvidenceDecisionLedger.php",
+        "rapid-pilot/legacy-migration/MigratedEvidenceProjectionStore.php",
+        "rapid-pilot/legacy-migration/MigrationQuarantineDecisionLedger.php",
+    ):
+        path = ROOT / relative
+        for number, line in enumerate(path.read_text().splitlines(), 1):
+            if DDL.search(line):
+                violations["ddl_ownership"].append(finding("ddl", path, number, line))
     for path in files():
         rel = path.relative_to(ROOT).as_posix()
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -238,6 +251,10 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
+        if rel.startswith("app/Otiz/"):
+            for number, line in enumerate(lines, 1):
+                if re.search(r"(?:FMonitor2\\PilotHttp|FMonitor2\\RapidPilot|app/PilotHttp|rapid-pilot)", line):
+                    violations["dependency_direction"].append(finding("dependency", path, number, line))
         if rel.startswith(("app/InstallationProcess/", "app/InspectionEvidence/", "app/IdentityAccess/")):
             forbidden_terms = r"(?:FMonitor2\\PilotHttp|FMonitor2\\RapidPilot|app/PilotHttp|rapid-pilot)"
             if rel.startswith("app/InstallationProcess/"):
