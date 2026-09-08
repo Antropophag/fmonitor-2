@@ -17,7 +17,7 @@ final class SelectedOriginalFixture implements O\AssignmentOrderOriginalClock
             $db=$this->selection->db;
             I\OriginalAttemptAuditSchemaMigration::apply($db,$prefix);
             foreach(['assignment_order.original.upload','assignment_order.original.correct'] as $cap)$this->selection->schema->insert($prefix.'fm2_process_user_capabilities',['user_id'=>18,'capability'=>$cap,'position_snapshot'=>null]);
-            $directory='/Users/antropophag/.local/state/fmonitor2-verification/selected-original-fixture-'.bin2hex(random_bytes(6));
+            $directory=rtrim(sys_get_temp_dir(),DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'selected-original-fixture-'.bin2hex(random_bytes(12));
             if(!mkdir($directory,0700))throw new \RuntimeException('Private fixture creation failed.');$this->ownsControl=true;$this->control=(string)realpath($directory);
             $this->privateRoot=$this->control.'/private';if(!mkdir($this->privateRoot,0700))throw new \RuntimeException();
             $this->safeLog=$this->control.'/safe.log';file_put_contents($this->safeLog,'');chmod($this->safeLog,0600);
