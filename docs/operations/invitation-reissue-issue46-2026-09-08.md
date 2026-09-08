@@ -65,3 +65,12 @@ canonical migrate оба прошли. Первый browser запуск не и
 отложена по manual-pilot exception; она не объявляется задним числом выполненной.
 Полный make test/Actions, публикация PR, merge и установка на стенд в этом локальном
 проходе не выполнялись; production readiness и закрытие issue не заявлены.
+
+## Точный локальный результат
+
+Код и тесты: `1a3555c82c559647f85016e25ff10e7cd6e8c115`. Оба независимых review
+на этом SHA — APPROVED. Реестр тестов после добавления нового db member сначала
+дал RED baseline drift; точное включение одного нового member в existing guard
+сохранило старый digest и дало GREEN15/15. Тестовая MariaDB и browser fixture
+остановлены; volumes сохранены. Последующий commit содержит только этот checkpoint,
+review records и статус задач. Полная интеграционная задача4.1 остаётся открытой.
