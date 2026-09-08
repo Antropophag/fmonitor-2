@@ -42,3 +42,26 @@ The clean detached verification checkout is running `make verify` at exact
 first immutable receipt and actual representative PR evidence are pending.
 No remote mutation, merge, branch-protection change or trusted publisher parity
 has been claimed. Subsequent completed results are appended below.
+
+## History-fixed full run and canonical binding
+
+Exact3f9514b passed all nine stages with literal VERIFY_OK, exit0,
+1288.17seconds. Start `2026-09-08T00:56:12.230278+00:00`, finish
+`2026-09-08T01:17:40.366377+00:00`. Private `verify-3f9514b-001.log` SHA-256
+`357df9d92c0f5e49ee5bdd28ebb256682115bb590790d7bc438ab89e92432ad8`.
+
+Before issuing the first receipt, the original approved specification was found
+to put its H1 before the required metadata fence. The strict checker was retained.
+[Canonical format reconciliation](quality-graph-governance-canonical-format-2026-09-08.md)
+moves only that heading; reversing the permutation exactly restores approved189111.
+The canonical digest is `5722160a2b7feffb82dc331c8ae80f0769844cffe1ba27e78b32480bb6ab0c5b`.
+[REDv4](quality-graph-governance-current-red-v4-2026-09-08.md) explicitly reuses genuine
+historical RED, and [independent Gate3v4](../../reviews/tests/QUALITY-GRAPH-GOVERNANCE-CURRENT-v4-2026-09-08.md)
+approves the unchanged eight tests and new binding. No fresh RED execution was invented.
+
+Current exact canonical GREEN is `d7edbc4185bbd73103915897a819a36a561bd47a`;
+[GREENv3](quality-graph-governance-current-green-v3-2026-09-08.md) truthfully declares
+an empty latest implementation delta. Its commit binds the entire existing tree.
+All six governance suites/compiler validation pass; executable files are byte-identical
+to3f9514b. A fresh full make verify is running at exactd7edbc4 before final Gate5v3.
+No real receipt, remote publication or publisher parity has yet been claimed.
