@@ -10,12 +10,12 @@
 - [x] 2.1 Добавить additive publication receipt через каноническую миграцию на актуальном frontier; проверить повторное применение, сохранность accepted/draft history и отсутствие фиктивного backfill.
 - [x] 2.2 Реализовать buildAndPublish и accept в app/Otiz с одной транзакцией публикации, replay receipt и проверкой полноты; focused tests GREEN, rollback и concurrent visibility подтверждены на MariaDB.
 - [x] 2.3 Перенести нужные native readers/формулы без изменения расчёта; удалить calculate/closedBefore/closureEvidence/issue и SQL acceptance из Otiz.php по ADR. Проверить старые и новые callers, отсутствие второй реализации и сохранение формул на независимых примерах.
-- [ ] 2.4 Подключить существующие POST формы к application owner, сохранить operation identity при повторе; проверить обычный маршрут calculate → snapshot → accept → export, роли, CSRF и отображение incomplete.
-- [ ] 2.5 Создать и зарегистрировать additive evidence/quarantine ledger migrations, проверить необходимые projection tables и все транзитивные ensureSchema вызовы оставшихся routes (включая rebuildDecisionState). Удалить runtime DDL, сохранив readiness-проверки, и покрыть достижимый migration tooling checker-ом. Проверить GET/POST с DML-only account и readiness failure без нужной схемы; baseline не расширять.
+- [x] 2.4 Подключить существующие POST формы к application owner, сохранить operation identity при повторе; проверить обычный маршрут calculate → snapshot → accept → export, роли, CSRF и отображение incomplete.
+- [x] 2.5 Создать и зарегистрировать additive evidence/quarantine ledger migrations, проверить необходимые projection tables и все транзитивные ensureSchema вызовы оставшихся routes (включая rebuildDecisionState). Удалить runtime DDL, сохранив readiness-проверки, и покрыть достижимый migration tooling checker-ом. Проверить GET/POST с DML-only account и readiness failure без нужной схемы; baseline не расширять.
 
 ## 3. Verification and Done
 
-- [ ] 3.1 Выполнить focused regression ОТиЗ, syntax, `git diff --check`, `make architecture-check`, headless browser smoke в изолированном контуре. Сохранить время build, source и результаты без запуска на данных владельца.
-- [ ] 3.2 Получить независимый Gate5 review production diff/spec/approved tests/evidence, включая перечень реально удалённого кода и оставшихся временных adapters; сохранить явный verdict.
+- [x] 3.1 Выполнить focused regression ОТиЗ, syntax, `git diff --check`, `make architecture-check`, headless browser smoke в изолированном контуре. Сохранить время build, source и результаты без запуска на данных владельца.
+- [x] 3.2 Получить независимый Gate5 review production diff/spec/approved tests/evidence, включая перечень реально удалённого кода и оставшихся временных adapters; сохранить явный verdict.
 - [ ] 3.3 Провести один полный CI по согласованной матрице на кандидате; зафиксировать результат. Не дублировать local-full → CI-full. Если CI не запускался, явно оставить gate pending.
 - [ ] 3.4 Сверить Done: A01 RED→GREEN, один application owner, удалён заменённый путь, нет runtime DDL, сохранены UI/доступ/история, reviews и проверки завершены. A02/A03 и последующие #24 slices остаются открытыми; #33 следующий. Архивировать только после Done, не по наличию planning artifacts.

@@ -1,0 +1,62 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const [port,modulePath,artifacts,resultPath]=process.argv.slice(2);
+const require=createRequire(import.meta.url);
+const {chromium}=require(modulePath);
+const result={consoleErrors:[],pageErrors:[],failedRequests:[],responses:[]};
+let browser;
+try {
+  browser=await chromium.launch({headless:true});
+  const context=await browser.newContext({acceptDownloads:true});
+  const page=await context.newPage();
+  page.on('console',message=>{if(message.type()==='error')result.consoleErrors.push(message.text());});
+  page.on('pageerror',error=>result.pageErrors.push(error.message));
+  page.on('requestfailed',request=>result.failedRequests.push({url:new URL(request.url()).pathname,error:request.failure()?.errorText||''}));
+  page.on('response',response=>{if(response.status()>=400)result.responses.push({url:new URL(response.url()).pathname,status:response.status()});});
+  await page.goto(`http://127.0.0.1:${port}/pilot/login`);
+  await page.locator('input[name="email"]').fill('test31@shlz.ru');
+  await page.locator('button[type="submit"]').click();
+  await page.locator('input[name="password"]').fill('Synthetic-Otiz-Browser-2026!');
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL(/\/pilot\/objects/);
+  await page.goto(`http://127.0.0.1:${port}/pilot/otiz/payments`);
+  const operation=await page.locator('input[name="operationId"]').inputValue();
+  result.operationIdPresent=/^[a-f0-9-]{36}$/.test(operation);
+  await page.locator('input[name="reportDate"]').fill('2026-09-08');
+  let intercepted=false;
+  await page.route('**/pilot/otiz/calculate',async route=>{
+    if(intercepted)return route.continue();
+    intercepted=true;
+    const response=await route.fetch();
+    result.lostResponseStatus=response.status();
+    await route.abort('failed');
+  });
+  await page.getByRole('button',{name:'Подготовить расчёт'}).click();
+  await page.waitForTimeout(300);
+  await page.unroute('**/pilot/otiz/calculate');
+  await page.goto(`http://127.0.0.1:${port}/pilot/otiz/payments`);
+  result.operationIdRestored=(await page.locator('input[name="operationId"]').inputValue())===operation;
+  result.reportDateRestored=(await page.locator('input[name="reportDate"]').inputValue())==='2026-09-08';
+  await page.getByRole('button',{name:'Подготовить расчёт'}).click();
+  await page.waitForURL(/\/pilot\/otiz\/snapshots\/\d+\?created=1/);
+  result.snapshotUrl=page.url().replace(`http://127.0.0.1:${port}`,'');
+  result.objectRows=await page.locator('.fm2-otiz-object-row').count();
+  await page.screenshot({path:path.join(artifacts,'draft.png'),fullPage:true});
+  await page.getByRole('button',{name:'Подтвердить расчёт'}).click();
+  await page.waitForURL(/accepted=1/);
+  const downloadPromise=page.waitForEvent('download');
+  await page.getByRole('link',{name:'Скачать реестр XLSX'}).click();
+  const download=await downloadPromise;const xlsx=path.join(artifacts,'otiz.xlsx');await download.saveAs(xlsx);
+  result.xlsxBytes=fs.statSync(xlsx).size;result.xlsxFilename=download.suggestedFilename();
+  await page.screenshot({path:path.join(artifacts,'accepted.png'),fullPage:true});
+  result.consoleErrors=result.consoleErrors.filter(message=>!message.includes('favicon'));
+  result.failedRequests=result.failedRequests.filter(item=>!(item.url==='/pilot/otiz/calculate'&&item.error.includes('FAILED')));
+  result.failedRequests=result.failedRequests.filter(item=>!(item.url.endsWith('/export.xlsx')&&item.error.includes('ERR_ABORTED')));
+  if(!result.operationIdPresent||!result.operationIdRestored||!result.reportDateRestored||result.objectRows<1||result.consoleErrors.length||result.pageErrors.length||result.failedRequests.length||result.responses.length)throw new Error(`browser assertions failed: ${JSON.stringify(result)}`);
+  fs.writeFileSync(resultPath,JSON.stringify(result,null,2),{mode:0o600});
+  console.log('OTIZ_BROWSER_CLICK_FLOW_OK');
+} catch(error) {
+  result.failure=error.stack||String(error);fs.writeFileSync(resultPath,JSON.stringify(result,null,2),{mode:0o600});throw error;
+} finally {if(browser)await browser.close();}
