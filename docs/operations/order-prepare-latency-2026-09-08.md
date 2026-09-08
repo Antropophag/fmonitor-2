@@ -83,7 +83,25 @@ selection_unknown_employment_manual_pilot, docker_bootstrap_manual_pilot.
 Ни один существующий тест или assertion не ослаблен. Timing probe запускается
 явно; wall-clock проверки не добавлены в обязательный общий CI.
 
-Изменение production, code review, CI и установка фиксируются ниже после фактического
-выполнения. Повторная ручная проверка владельцем не выполнена агентом и остаётся
+Повторная ручная проверка владельцем не выполнена агентом и остаётся
 отдельным критерием issue. Архитектурное устранение повторных SQL/readiness-проверок
 и production runtime не входят в этот транспортный fix.
+
+## Кандидат и независимые проверки
+
+Production/probe commit: `0266baaaaf2225188e8984363af4c73b37d5dc11`.
+Gate3 и Gate5 APPROVED; записи `reviews/tests/ORDER-PREPARE-LATENCY-001.md`
+и `reviews/code/ORDER-PREPARE-LATENCY-001.md`. Производственный diff — только
+comment и `nodelay` в DB relay; адреса, bind, порты, credentials и порядок startup
+сохранены. Runtime-код относительно установленного1fd20d34 дополнительно содержит
+ранее вмердженное изменение router из main; новый fix его не редактирует.
+
+`make architecture-check`: PASS7rules. `PILOT-E2E-FLOW-001` — полный текущий
+protected browser journey PASS на изолированной БД23350. JS/shell syntax и
+`git diff --check` PASS. Полный authoritative CI и установка следуют отдельно.
+
+SHA256 сырых синтетических browser timings:
+
+- direct: `1ac76db4acf5a57cb13d7640436331720c1f5869c82b7732cb26cf6a676b2ed8`;
+- old proxy RED: `3bba9b4a18a1d6053cf827eb105ff5d61e2c1359a571a4e61df0d9069467d2bc`;
+- candidate proxy GREEN: `df07d8a753f7ae5e842241ce3c8abc577883ac233cd0133421e020166385e15e`.
