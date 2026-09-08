@@ -78,13 +78,17 @@ def run_category(category):
         check = subprocess.run(['php', '-r', '$c=@new mysqli(getenv("FMONITOR_TEST_DB_HOST"),getenv("FMONITOR_TEST_DB_ADMIN_USER"),getenv("FMONITOR_TEST_DB_ADMIN_PASSWORD"),null,(int)getenv("FMONITOR_TEST_DB_PORT")); exit($c->connect_errno===0?0:1);'], cwd=ROOT)
         if check.returncode:
             raise ValueError('test MariaDB unavailable; run make test-db-reset migrate')
+    # Harness tests invoke make themselves; outer category selection is not theirs.
+    runtime_env = dict(os.environ)
+    for name in ['CATEGORY', 'MAKEFLAGS', 'MFLAGS', 'MAKEOVERRIDES']:
+        runtime_env.pop(name, None)
     started = time.monotonic()
     results = []
     for runtime, path in items:
         print(f'VERIFY {path}', flush=True)
         before = time.monotonic()
         try:
-            status = subprocess.run([runtime, path], cwd=ROOT).returncode
+            status = subprocess.run([runtime, path], cwd=ROOT, env=runtime_env).returncode
         except OSError as error:
             print(f'REGRESSION_FAILURE: {path}: {error}', file=sys.stderr)
             status = 127

@@ -170,6 +170,24 @@ class VerificationCI(unittest.TestCase):
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=node .*exit=0')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=python3 .*exit=0')
 
+    def test_make_category_does_not_leak_into_nested_make(self):
+        shutil.copy(ROOT / 'Makefile', self.root / 'Makefile')
+        (self.root / 'inner.mk').write_text(
+            'ifneq ($(strip $(CATEGORY)),)\n$(error category leaked into nested make)\nendif\n'
+            '.PHONY: nested\nnested:\n\t@echo inner-ok\n')
+        php = self.bin / 'php'
+        php.write_text('#!/bin/sh\n'
+                       'test -z "${CATEGORY:-}${MAKEFLAGS:-}${MFLAGS:-}${MAKEOVERRIDES:-}" '
+                       '|| { echo "make-control environment leaked" >&2; exit 7; }\n'
+                       'make --no-print-directory -f inner.mk nested || exit 7\n')
+        php.chmod(0o700)
+        result = subprocess.run(['make', '--no-print-directory', 'test', 'CATEGORY=unit'],
+                                cwd=self.root, env=dict(self.env, MAKEFLAGS='-k', MFLAGS='-k',
+                                    MAKEOVERRIDES='FMONITOR_TEST_OVERRIDE=1'),
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn('inner-ok', result.stdout)
+
     def test_aggregate_requires_exact_expected_evidence(self):
         good = dict.fromkeys(['plan', 'fast'] + CATEGORIES, 'success')
         result = self.cli('aggregate', '--full', 'true', '--results', json.dumps(good))

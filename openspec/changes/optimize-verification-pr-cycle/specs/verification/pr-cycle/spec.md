@@ -36,6 +36,7 @@
 - **THEN** DOCS_VERIFY_OK, без заявления full verification.
 
 ### Requirement: Canonical test command
+Категорийный запуск SHALL очищать управляющие переменные родительского make (CATEGORY, MAKEFLAGS, MFLAGS, MAKEOVERRIDES) перед исполнением тестов. Вложенный make внутри harness-теста SHALL исполнять свой явно заданный target без повторного выбора внешней категории. Сама выбранная категория сохраняется аргументом runner.
 По решению владельца основная команда SHALL называться `make test` и сохранять девять этапов и отказ при любой ошибке. `make verify` SHALL оставаться совместимым alias без повторного исполнения. `make fresh-test` SHALL выполнять test и обязательный teardown; fresh-test-verify остаётся alias. Исторический VERIFY_OK сохраняется как маркер evidence. CI и текущие инструкции SHALL использовать test.
 
 #### Scenario: Test and compatibility alias
