@@ -4,6 +4,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap.php';
 require dirname(__DIR__) . '/Support/LocalRbacFixture.php';
 require dirname(__DIR__) . '/Support/PilotObjectReadRbacFixture.php';
+require dirname(__DIR__) . '/Support/PilotSafeAuthorizationLog.php';
 
 // Specification: PILOT-OBJECT-LIST-001 v0.1.
 // Specification: PILOT-OBJECT-READ-RBAC-FIXTURES-001 v1.
@@ -12,6 +13,7 @@ require dirname(__DIR__) . '/Support/PilotObjectReadRbacFixture.php';
 use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
 use FMonitor2\Tests\Support\HttpReadOnlyFilesystemGuard;
 use FMonitor2\Tests\Support\TaskOwnedArtifactRoot;
+use FMonitor2\Tests\Support\PilotSafeAuthorizationLog;
 
 function polDb(?string $database = null): mysqli
 {
@@ -155,9 +157,8 @@ function polUnavailable(array $environment,mysqli $db,string $category,string $w
     $probe=polStart($environment);
     try{$response=polReadOnly($db,fn()=>polRequest($probe['port'],'GET','/pilot/objects'),$why);polAuthorizationError($response,503,"Service unavailable.\n",$why,true);$id=(string)polHeader($response,'x-correlation-id');}
     finally{$log=polStop($probe);}
-    preg_match_all('/^FMONITOR_AUTHORIZATION_UNAVAILABLE category=([A-Z_]+) correlation_id=([0-9a-f]{12})$/m',str_replace("\r",'',$log),$events,PREG_SET_ORDER);
-    assertSameValue(1,count($events),$why.' exactly one safe logger event');assertSameValue($category,$events[0][1]??null,$why.' safe logger category');assertSameValue($id,$events[0][2]??null,$why.' response/log correlation equality');
-    foreach(['SELECT','INSERT','UPDATE','DELETE','fm2_','objects.read','user_id','password','FMONITOR_DB_','legacy_','/home/','4512']as$secret)assertSameValue(false,str_contains($log,$secret),$why.' logger redacts '.$secret);
+    $events=PilotSafeAuthorizationLog::events($log);
+    assertSameValue(1,count($events),$why.' exactly one safe logger event');assertSameValue($category,$events[0]['category']??null,$why.' safe logger category');assertSameValue($id,$events[0]['correlationId']??null,$why.' response/log correlation equality');
 }
 
 function polDocument(string $html): DOMDocument
@@ -212,6 +213,9 @@ function polReadOnly(mysqli $db, callable $request, string $why): mixed
 $token = bin2hex(random_bytes(6)); $database = 't_pol_' . $token; $reader = 'pol_' . $token; $denialReader='pold_'.$token;$listReadFaultReader='polf_'.$token; $password = 'select-' . $token;
 $foreignDatabase='foreign_pol_'.$token;$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$foreignPath='';$foreignBefore=[];$css='';$polProtectedPaths=[];$polMutableRoots=[];$cleanupAttempts=[]; $admin = polDb(); $db = null;$listFaultDb=null; $server = null;
 try {
+    $parserControl="FMONITOR_AUTHORIZATION_UNAVAILABLE category=AUTHORIZATION_READ_FAILED correlation_id=4512abcdef00\n[Mon Sep  8 00:00:00 2026] PHP 8.5.0 Development Server (http://127.0.0.1:4512) started\n[Mon Sep  8 00:00:00 2026] 127.0.0.1:4512 Accepted\n[Mon Sep  8 00:00:00 2026] 127.0.0.1:4512 [503]: GET /pilot/objects\n[Mon Sep  8 00:00:00 2026] 127.0.0.1:4512 Closed without sending a request; it was probably just an unused speculative preconnection\n[Mon Sep  8 00:00:00 2026] 127.0.0.1:4512 Closing\n";
+    assertSameValue([['category'=>'AUTHORIZATION_READ_FAILED','correlationId'=>'4512abcdef00']],PilotSafeAuthorizationLog::events($parserControl),'safe logger accepts legal correlation/transport 4512 collisions and exact PHP transport grammar');
+    foreach(["4512\n","SELECT 4512\n","/home/runner/4512\n","[SECRET4512] 127.0.0.1:4512 Accepted\n","FMONITOR_AUTHORIZATION_UNAVAILABLE category=AUTHORIZATION_READ_FAILED correlation_id=4512abcdef00\nunexpected\n"]as$leak){try{PilotSafeAuthorizationLog::events($leak);throw new TestFailure('safe logger parser accepted leak');}catch(TestFailure$e){assertSameValue(false,$e->getMessage()==='safe logger parser accepted leak','safe logger parser rejects unexpected stderr/leak');}}
     $ownership=TaskOwnedArtifactRoot::create('pol',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$foreignPath=$ownership['parent'].'/foreign-'.$token;$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);mkdir($foreignPath,0700);file_put_contents($foreignPath.'/keep','foreign-bytes');scandir($foreignPath);$foreignBefore=[polStableStat($foreignPath),polStableStat($foreignPath.'/keep'),hash_file('sha256',$foreignPath.'/keep')];file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$polProtectedPaths=[$protectedArtifactRoot,$css,$foreignPath];$polMutableRoots=[$mutableRoot];
     $admin->query("CREATE DATABASE `{$foreignDatabase}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE TABLE `{$foreignDatabase}`.sentinel(id INT PRIMARY KEY,payload VARCHAR(40))");$admin->query("INSERT INTO `{$foreignDatabase}`.sentinel VALUES(1,'foreign-db-bytes')");
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4"); $db=polDb($database);
