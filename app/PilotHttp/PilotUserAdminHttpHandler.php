@@ -13,7 +13,7 @@ final class PilotUserAdminHttpHandler
     public function handle(PilotHttpRequest $request, array $route, PilotUserAdminSession $session): PilotHttpResponse
     {
         $isInvite = $request->path === '/pilot/admin/users/invite';
-        $isReissue = preg_match('#^/pilot/admin/users/([1-9][0-9]*)/invitation$#D', $request->path, $invitationRoute) === 1;
+        $isReissue = \preg_match('#^/pilot/admin/users/([1-9][0-9]*)/invitation$#D', $request->path, $invitationRoute) === 1;
         $isCommand = $route !== [] || $isInvite || $isReissue;
         $allow = $isCommand ? 'POST' : 'GET, HEAD';
         if (!\in_array($request->method, \explode(', ', $allow), true)) return $this->response($request, 405, "Method not allowed.\n", ['Allow' => $allow]);
