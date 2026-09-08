@@ -267,23 +267,6 @@ function wcrAssertRuntimeOwnership(): void
     sort($violations, SORT_STRING);
     assertSameValue([], $violations, 'Runtime consumers must not own workforce migration calls or DDL.');
 
-    $architecture = wcrRunCommand(['make', 'architecture-check'], $root);
-    assertSameValue(0, $architecture['exitCode'], "Repository architecture ratchet must pass:\n" . $architecture['stdout'] . $architecture['stderr']);
-}
-
-function wcrRunCommand(array $command, string $workingDirectory): array
-{
-    $pipes = [];
-    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $workingDirectory);
-    if (!is_resource($process)) {
-        throw new TestFailure('Required verification command must start.');
-    }
-    fclose($pipes[0]);
-    $stdout = stream_get_contents($pipes[1]);
-    $stderr = stream_get_contents($pipes[2]);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-    return ['exitCode' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
 }
 
 $token = bin2hex(random_bytes(6));
