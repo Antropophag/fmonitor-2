@@ -10,6 +10,7 @@ require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceOperat
 require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceDefinitionSchemaMigration.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/InspectionEvidenceSchemaMigration.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/MariaDbPilotLegacyObjectSchemaReadiness.php';
+require_once dirname(__DIR__).'/app/autoload.php';
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -38,6 +39,7 @@ $dbPassword = getenv('FMONITOR_VERIFY_DB_PASSWORD') ?: 'fmonitor2_demo_local';
 $db = new mysqli($dbHost, $dbUser, $dbPassword, $dbName, $dbPort);
 $db->set_charset('utf8mb4');
 $tables = [
+    'fm2_otiz_publications',
     'fm2_pilot_otiz_events',
     'fm2_pilot_otiz_payment_closures',
     'fm2_pilot_otiz_snapshot_evidence',
@@ -74,6 +76,7 @@ $expect = static function (bool $condition, string $message): void {
 
 $run = static function (string $path, string $method = 'GET', array $post = [], string $email = 'otiz.verify@shlz.ru', string $csrf = 'verified-csrf-token') use ($prefix, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword): array {
     $worker = <<<'PHP'
+require getcwd() . '/app/autoload.php';
 require getcwd() . '/app/InstallationProcess/DatabaseUnavailable.php';
 require getcwd() . '/app/InstallationProcess/MariaDbSchemaInspector.php';
 require getcwd() . '/app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php';
@@ -139,17 +142,20 @@ try {
     $db->query("INSERT INTO `{$prefix}fm2_checklist_template_snapshots` VALUES(7301,'{$templateHash}','{$templatePayload}')");
     $db->query("INSERT INTO `{$prefix}fm2_pilot_object_details` VALUES(7001,'{$objectHash}','{$objectPayloadSql}','2026-08-01T09:00:00+03:00')");
     require_once __DIR__ . '/Otiz.php';
-    seedCurrentOtizSchema($db,$prefix);
+    $publicationMigration=\FMonitor2\InstallationProcess\OtizPublicationSchemaMigration::apply($db,$prefix);
+    if(($publicationMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ publication fixture migration conflict');
+    $evidenceMigration=\FMonitor2\InstallationProcess\OtizEvidenceSchemaMigration::apply($db,$prefix);
+    if(($evidenceMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ evidence fixture migration conflict');
     RapidPilotOtiz::bootstrap($db, $prefix);
 
     $unauthorized = $run('/pilot/otiz', email: 'viewer.verify@shlz.ru');
     $expect(str_contains($unauthorized['stdout'], 'Раздел доступен'), 'authorization rejects a user outside OTIZ');
-    $csrfFailure = $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'wrong', 'reportDate' => '2026-09-15']);
+    $csrfFailure = $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'wrong', 'reportDate' => '2026-09-15', 'operationId'=>'81000000-0000-4000-8000-000000000001']);
     $expect(str_contains($csrfFailure['stdout'], 'Недопустимый запрос'), 'CSRF rejects a mutating request: '.json_encode($csrfFailure,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => 'not-a-date']);
+    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => 'not-a-date', 'operationId'=>'81000000-0000-4000-8000-000000000002']);
     $expect((int) $db->query("SELECT COUNT(*) n FROM `{$prefix}fm2_pilot_otiz_snapshots`")->fetch_assoc()['n'] === 0, 'malformed report date creates no snapshot');
 
-    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-08-31']);
+    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-08-31', 'operationId'=>'81000000-0000-4000-8000-000000000003']);
     $blockedId = (int) $db->query("SELECT MAX(id) id FROM `{$prefix}fm2_pilot_otiz_snapshots`")->fetch_assoc()['id'];
     $expect($blockedId > 0, 'calculation creates a deterministic draft');
     $run("/pilot/otiz/snapshots/{$blockedId}/accept", 'POST', ['csrfToken' => 'verified-csrf-token']);
@@ -158,7 +164,7 @@ try {
 
     $db->query("INSERT INTO `{$prefix}fm2_checklist_operations`(installation_case_id,client_operation_id,device_installation_id,operation_type,section_id,item_id,actor_user_id,device_time,server_received_at,base_revision,accepted_revision,payload_json,template_snapshot_id,template_snapshot_version,template_content_sha256) VALUES(7001,'74000000-0000-4000-8000-000000000001','75000000-0000-4000-8000-000000000001','item_completed',1,1,101,'2026-09-01T10:00:00+03:00','2026-09-01T10:01:00+03:00',0,1,'{}',7301,'fixture','{$templateHash}')");
     $db->query("INSERT INTO `{$prefix}fm2_checklist_operation_installers` VALUES('74000000-0000-4000-8000-000000000001',7201,'Монтажник Проверочный','Монтажник','employed',NULL,'2026-09-01','completion')");
-    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-09-15']);
+    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-09-15', 'operationId'=>'81000000-0000-4000-8000-000000000004']);
     $acceptedId = (int) $db->query("SELECT MAX(id) id FROM `{$prefix}fm2_pilot_otiz_snapshots`")->fetch_assoc()['id'];
     $run("/pilot/otiz/snapshots/{$acceptedId}/accept", 'POST', ['csrfToken' => 'verified-csrf-token']);
     $snapshotBefore = $db->query("SELECT * FROM `{$prefix}fm2_pilot_otiz_snapshots` WHERE id={$acceptedId}")->fetch_assoc();
@@ -202,7 +208,7 @@ try {
     $expect($reversalCount === 1, 'reversal is append-only and idempotent');
 
     $run($closurePath, 'POST', ['csrfToken' => 'verified-csrf-token', 'objectId' => $objectId, 'paid' => '999999.00', 'discipline' => '100.00', 'deadline' => '999999.00', 'basis' => 'Discipline hold for next period']);
-    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-09-30']);
+    $run('/pilot/otiz/calculate', 'POST', ['csrfToken' => 'verified-csrf-token', 'reportDate' => '2026-09-30', 'operationId'=>'81000000-0000-4000-8000-000000000005']);
     $nextId = (int) $db->query("SELECT MAX(id) id FROM `{$prefix}fm2_pilot_otiz_snapshots`")->fetch_assoc()['id'];
     $closedBefore = (int) $db->query("SELECT closed_before_cents FROM `{$prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$nextId} AND object_id={$objectId}")->fetch_assoc()['closed_before_cents'];
     $expect($closedBefore === 10000, 'next calculation subtracts only the recorded discipline hold; spoofed payment and deadline fields are ignored');

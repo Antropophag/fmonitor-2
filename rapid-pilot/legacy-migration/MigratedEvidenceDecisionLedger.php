@@ -16,9 +16,7 @@ final class MigratedEvidenceDecisionLedger
 
     public function ensureSchema():void
     {
-        $p=$this->prefix;
-        $this->db->query("CREATE TABLE IF NOT EXISTS `{$p}fm2_migrated_evidence_decisions`(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,operation_id CHAR(36) NOT NULL,request_sha256 CHAR(64) NOT NULL,snapshot_id BIGINT UNSIGNED NOT NULL,snapshot_sha256 CHAR(64) NOT NULL,projection_sha256 CHAR(64) NOT NULL,source_locator VARCHAR(500) NOT NULL,issue_code VARCHAR(80) NOT NULL,outcome VARCHAR(40) NOT NULL,target_locator VARCHAR(500) NULL,reason VARCHAR(1000) NOT NULL,actor_user_id BIGINT UNSIGNED NOT NULL,occurred_at VARCHAR(40) NOT NULL,UNIQUE KEY uq_operation(operation_id),KEY ix_snapshot_issue(snapshot_id,issue_code,id),KEY ix_actor(actor_user_id,id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        (new MigratedEvidenceProjectionStore($this->db,$p))->ensureSchema();
+        \FMonitor2\InstallationProcess\OtizEvidenceSchemaMigration::assertReady($this->db,$this->prefix);
     }
 
     public function decide(array $command):array

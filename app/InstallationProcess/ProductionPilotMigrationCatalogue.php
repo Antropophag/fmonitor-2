@@ -27,6 +27,8 @@ final class ProductionPilotMigrationCatalogue
             17=>InstallationCompletionDetailsSchemaMigration::class,
             18=>AssignmentOrderSelectionUnknownEmploymentSchemaMigration::class,
             19=>InspectionPhotoContentIndexSchemaMigration::class,
+            20=>OtizPublicationSchemaMigration::class,
+            21=>OtizEvidenceSchemaMigration::class,
         ];
     }
 }
