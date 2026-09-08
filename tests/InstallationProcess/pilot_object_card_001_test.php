@@ -25,6 +25,26 @@ function pocDb(?string $database = null): mysqli
     return $db;
 }
 
+function pocMigrate(string $database, string $prefix): void
+{
+    $environment = [
+        'FMONITOR_DB_HOST' => getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1',
+        'FMONITOR_DB_PORT' => getenv('FMONITOR_TEST_DB_PORT') ?: '23306',
+        'FMONITOR_DB_NAME' => $database,
+        'FMONITOR_DB_USER' => getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root',
+        'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local',
+        'FMONITOR_PROCESS_TABLE_PREFIX' => $prefix,
+    ];
+    $command = ['/usr/bin/env', '-i'];
+    foreach ($environment as $name => $value) $command[] = $name . '=' . $value;
+    $command = [...$command, PHP_BINARY, dirname(__DIR__, 2) . '/bin/fmonitor2-migrate.php'];
+    $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2));
+    if (!is_resource($process)) throw new TestFailure('canonical migration start');
+    fclose($pipes[0]); $stdout=stream_get_contents($pipes[1]); $stderr=stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+    $exit=proc_close($process); $result=json_decode(trim($stdout),true);
+    assertSameValue([0,true,''],[$exit,$result['ok']??null,$stderr],'canonical migration prepares shared-shell fixture');
+}
+
 function pocPort(): int
 {
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
@@ -169,11 +189,13 @@ function pocResponseWithoutVolatileDate(array $response): array
     return $response;
 }
 
-function pocSecurity(array $response, string $why): void
+function pocSecurity(array $response, string $why, bool $scripted = false): void
 {
     $fixed = [
         'x-content-type-options'=>'nosniff', 'referrer-policy'=>'no-referrer', 'x-frame-options'=>'DENY',
-        'content-security-policy'=>"default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        'content-security-policy'=>$scripted
+            ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+            : "default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
         'permissions-policy'=>'camera=(), microphone=(), geolocation=()', 'cross-origin-opener-policy'=>'same-origin', 'cache-control'=>'no-store',
     ];
     foreach ($fixed as $name => $value) assertSameValue($value, pocHeader($response, $name), $why . ' ' . $name);
@@ -214,39 +236,88 @@ function pocSuccess(array $response, array $orderedVisible, string $why): void
     assertSameValue(200, $response['status'], $why . ' status');
     assertSameValue('text/html; charset=UTF-8', pocHeader($response, 'content-type'), $why . ' media type');
     assertSameValue((string) strlen($response['body']), pocHeader($response, 'content-length'), $why . ' length');
-    pocSecurity($response, $why);
+    pocSecurity($response, $why, true);
+    $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
+    $scripts = $xpath->query('//script');
+    assertSameValue(2, $scripts->length, $why . ' has exactly two approved external scripts');
+    foreach ([['/pilot/assets/navigation.js',['src'=>'/pilot/assets/navigation.js']],['/pilot/assets/object-details.js',['src'=>'/pilot/assets/object-details.js','type'=>'module']]] as $index => [$source,$expectedAttributes]) {
+        $script = $scripts->item($index);
+        $attributes=[];foreach($script?->attributes??[]as$attribute)$attributes[$attribute->name]=$attribute->value;ksort($attributes);assertSameValue($expectedAttributes,$attributes,$why . ' exact approved script attributes: ' . $source);
+        assertSameValue($source, $script?->getAttribute('src'), $why . ' exact ordered script source');
+        assertSameValue('', trim((string) $script?->textContent), $why . ' script has no inline content: ' . $source);
+    }
+    assertSameValue(0, $xpath->query('//@*[starts-with(translate(name(),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"on")]')->length, $why . ' forbids inline event handlers');
+    assertSameValue(0, $xpath->query('//*[@href[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")] or @src[starts-with(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"javascript:")]]')->length, $why . ' forbids javascript URLs');
     $visible = pocVisible($response['body']); $offset = 0;
     foreach ($orderedVisible as $literal) { $found = mb_strpos($visible, $literal, $offset); assertSameValue(true, $found !== false, $why . ' visible literal/order: ' . $literal); $offset = $found + mb_strlen($literal); }
     assertSameValue(1, substr_count(strtolower($response['body']), '<!doctype html>'), $why . ' one doctype');
-    foreach (['<form','<input','<select','<textarea','<script','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
+    foreach (['<form','<input','<select','<textarea','<style','<button'] as $forbidden) assertSameValue(false, str_contains(strtolower($response['body']), $forbidden), $why . ' forbids ' . $forbidden);
 }
 
-function pocStructure(array $response, string $why): void
+function pocStructure(array $response, int $expectedObjectId, bool $allowPrepare, string $why, bool $allowChecklist=false): void
 {
     $document = pocDocument($response['body']); $xpath = new DOMXPath($document);
     foreach ([
         'html lang'=>"count(/html[@lang='ru'])", 'scoped body'=>"count(/html/body[contains(concat(' ',normalize-space(@class),' '),' shlz-scope ')])",
-        'charset'=>"count(//meta[translate(@charset,'UTF-8','utf-8')='utf-8'])", 'stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/shlz.css'])",
-        'skip link'=>"count(//a[@href='#main-content'])", 'main'=>"count(//main[@id='main-content' and @tabindex='-1'])", 'one h1'=>"count(//h1)",
+        'charset'=>"count(//meta[translate(@charset,'UTF-8','utf-8')='utf-8'])", 'shlz stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/shlz.css'])",
+        'pilot stylesheet'=>"count(//link[@rel='stylesheet' and @href='/pilot/assets/pilot.css'])", 'shared shell'=>"count(//div[contains(concat(' ',normalize-space(@class),' '),' fm2-shell ')])",
+        'shared sidebar'=>"count(//aside[contains(concat(' ',normalize-space(@class),' '),' fm2-sidebar ')])", 'shared navigation'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ') and @aria-label='Основная навигация'])",
+        'breadcrumb'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ') and @aria-label='Хлебные крошки']//a[@href='/pilot/objects' and normalize-space(.)='Объекты монтажа'])",
+        'breadcrumb current'=>"count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-breadcrumb ')]//span[@aria-current='page' and normalize-space(.)='Объект монтажа № {$expectedObjectId}'])",
+        'skip link'=>"count(//a[@href='#main-content'])", 'main'=>"count(//main[contains(concat(' ',normalize-space(@class),' '),' fm2-main ') and @id='main-content' and @tabindex='-1'])", 'one h1'=>"count(//h1)",
     ] as $label=>$query) assertSameValue(1, (int) $xpath->evaluate($query), $why . ' ' . $label);
-    foreach (['Идентификация','Сроки','Распоряжение и команда','Работы','Последние события'] as $group) {
-        $sections = $xpath->query("//section[./*[self::h2 or self::h3][normalize-space(.)='".$group."'] and ./dl]");
-        assertSameValue(1, $sections->length, $why . ' definition-list section ' . $group);
+    assertSameValue(['/pilot/assets/shlz.css','/pilot/assets/pilot.css'], array_map(static fn(DOMNode $node): string => (string) $node->attributes?->getNamedItem('href')?->nodeValue, iterator_to_array($xpath->query('/html/head/link[@rel="stylesheet"]'))), $why . ' exact shared stylesheet order');
+    assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//*[@aria-current='page'])"),$why.' exactly one current primary-navigation item');
+    assertSameValue(1,(int)$xpath->evaluate("count(//nav[contains(concat(' ',normalize-space(@class),' '),' fm2-primary-nav ')]//a[@href='/pilot/objects' and @aria-current='page' and normalize-space(.)='Объекты монтажа'])"),$why.' exact object-list primary navigation is current');
+    $expectedAnchors=[
+        ['logo','/pilot/objects','FMonitor'],
+        ['skip','#main-content','Перейти к содержанию'],
+        ['primary-navigation','/pilot/objects','Объекты монтажа'],
+        ['breadcrumb','/pilot/objects','Объекты монтажа'],
+    ];
+    if($allowPrepare)$expectedAnchors[]=['process-action','/pilot/objects/'.$expectedObjectId.'/assignment-order/prepare','Загрузить распоряжение'];
+    if($allowChecklist)$expectedAnchors[]=['process-action','/pilot/objects/'.$expectedObjectId.'/checklist','Открыть чек-лист'];
+    $actualAnchors=[];
+    foreach($xpath->query('//a[@href]')as$anchor){
+        $role=str_contains(' '.$anchor->getAttribute('class').' ',' fm2-logo ')?'logo':($anchor->getAttribute('href')==='#main-content'?'skip':(
+            $xpath->query("ancestor::nav[@aria-label='Основная навигация']",$anchor)->length===1?'primary-navigation':(
+                $xpath->query("ancestor::nav[@aria-label='Хлебные крошки']",$anchor)->length===1?'breadcrumb':'process-action'
+            )
+        ));
+        $actualAnchors[]=[$role,$anchor->getAttribute('href'),trim((string)preg_replace('/\s+/u',' ',$anchor->textContent))];
+    }
+    usort($expectedAnchors,static fn(array $a,array $b):int=>$a<=>$b);usort($actualAnchors,static fn(array $a,array $b):int=>$a<=>$b);
+    assertSameValue($expectedAnchors,$actualAnchors,$why.' exact configured anchor role/href/label set permits no missing or extra link');
+    foreach (['Сроки работ','Команда объекта','Распоряжение'] as $group) {
+        $sections = $xpath->query("//section[./*[self::h2 or self::h3][normalize-space(.)='".$group."']]");
+        assertSameValue(1, $sections->length, $why . ' current panel ' . $group);
         $definitionLists = $xpath->query('./dl', $sections->item(0));
-        assertSameValue(1, $definitionLists->length, $why . ' one definition list ' . $group);
+        if($group==='Распоряжение'&&$definitionLists->length===0)continue;assertSameValue(1, $definitionLists->length, $why . ' exact definition list ' . $group);
         $terms = $xpath->query('./dt', $definitionLists->item(0));
         $definitions = $xpath->query('./dd', $definitionLists->item(0));
         assertSameValue(true, $terms->length > 0, $why . ' has terms ' . $group);
         assertSameValue($terms->length, $definitions->length, $why . ' paired terms and definitions ' . $group);
     }
-    $hrefs = []; foreach ($xpath->query('//*[@href]') as $node) $hrefs[] = $node->getAttribute('href'); sort($hrefs);
-    assertSameValue(['#main-content','/pilot/','/pilot/assets/shlz.css'], $hrefs, $why . ' exact permitted links');
     foreach (['action','formaction','download'] as $attribute) assertSameValue(0, $xpath->query('//*[@'.$attribute.']')->length, $why . ' forbids ' . $attribute);
 }
 
 function pocCountVisible(array $response, string $literal, int $count, string $why): void
 {
     assertSameValue($count, substr_count(pocVisible($response['body']), $literal), $why . ' exact cardinality ' . $literal);
+}
+
+function pocIdentityFields(array $response,int $id,string $addressAndEntrance,string $registration,string $status,string $why):void
+{
+    $xpath=new DOMXPath(pocDocument($response['body']));$header="//header[contains(concat(' ',normalize-space(@class),' '),' fm2-object-identity ')]";
+    assertSameValue(1,$xpath->query($header."//h1[normalize-space(.)='Объект монтажа № {$id}']")->length,$why.' exact object h1');
+    assertSameValue(1,$xpath->query($header."/div[1]/p[normalize-space(.)=".pocXPathLiteral($addressAndEntrance)."]")->length,$why.' exact address and entrance field');
+    assertSameValue(1,$xpath->query($header."/div[1]/span[normalize-space(.)=".pocXPathLiteral('Регистрационный номер '.$registration)."]")->length,$why.' exact registration field');
+    assertSameValue(1,$xpath->query($header."//*[contains(concat(' ',normalize-space(@class),' '),' fm2-object-badges ')]/span[contains(concat(' ',normalize-space(@class),' '),' shlz-status ') and normalize-space(.)=".pocXPathLiteral($status)."]")->length,$why.' exact canonical status badge');
+}
+
+function pocXPathLiteral(string $value):string
+{
+    return !str_contains($value,"'")?"'".$value."'":'concat('.implode(",\"'\",",array_map(static fn(string $part):string=>"'".$part."'",explode("'",$value))).')';
 }
 
 function pocGroupVisible(array $response, string $group, array $orderedVisible, string $why): void
@@ -274,40 +345,69 @@ function pocGroupText(array $response, string $group, string $why): string
     return preg_replace('/\s+/u', ' ', trim((string) $nodes?->item(0)?->textContent)) ?? '';
 }
 
+/** @return array{exit:int,stdout:string,stderr:string,timedOut:bool,pid:int} */
+function pocRunBoundedObserver(array $command, int $timeoutMilliseconds): array
+{
+    $pipes=[];$process=proc_open($command,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));
+    if(!is_resource($process))throw new TestFailure('Resource observer start.');
+    fclose($pipes[0]);stream_set_blocking($pipes[1],false);stream_set_blocking($pipes[2],false);
+    $stdout='';$stderr='';$status=proc_get_status($process);$pid=(int)($status['pid']??0);$deadline=hrtime(true)+$timeoutMilliseconds*1_000_000;$timedOut=false;
+    while($status['running']){$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);if(hrtime(true)>=$deadline){$timedOut=true;break;}usleep(10_000);$status=proc_get_status($process);}
+    if($status['running']){@proc_terminate($process,15);$termDeadline=hrtime(true)+250_000_000;do{$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(10_000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$termDeadline);}
+    if($status['running']){@proc_terminate($process,9);$killDeadline=hrtime(true)+1_000_000_000;do{$stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);usleep(10_000);$status=proc_get_status($process);}while($status['running']&&hrtime(true)<$killDeadline);}
+    if($status['running']){foreach([1,2]as$fd)if(is_resource($pipes[$fd]))fclose($pipes[$fd]);throw new TestFailure('Resource observer survived bounded TERM/KILL.');}
+    $stdout.=stream_get_contents($pipes[1]);$stderr.=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$reported=(int)($status['exitcode']??-1);$closed=proc_close($process);$exit=$reported>=0?$reported:$closed;
+    return['exit'=>$exit,'stdout'=>$stdout,'stderr'=>$stderr,'timedOut'=>$timedOut,'pid'=>$pid];
+}
+
+function pocAssertBoundedObserverSensitivity(): void
+{
+    if(PHP_OS_FAMILY!=='Darwin')return;
+    $started=hrtime(true);$result=pocRunBoundedObserver([PHP_BINARY,'-r','usleep(5000000);'],50);
+    assertSameValue(true,$result['timedOut'],'deliberately hanging observer reaches bounded timeout');
+    assertSameValue(true,hrtime(true)-$started<1_500_000_000,'deliberately hanging observer terminates within bounded cleanup deadline');
+    assertSameValue(true,$result['pid']>0,'deliberately hanging observer exposes exact owned PID');
+    if(function_exists('posix_kill'))assertSameValue(false,@posix_kill($result['pid'],0),'deliberately hanging observer is terminated and reaped');
+}
+
+/** @return list<string> */
+function pocOpenDescriptorPaths(int $pid): array
+{
+    assertSameValue(true, $pid > 0, 'resource observer exact positive PID');
+    if (PHP_OS_FAMILY === 'Linux') {
+        $directory = '/proc/' . $pid . '/fd';
+        assertSameValue(true, is_dir($directory), 'Linux resource observer procfs is available');
+        $paths = [];
+        foreach (glob($directory . '/*') ?: [] as $fd) {
+            $target = @readlink($fd);
+            if (is_string($target)) $paths[] = $target;
+        }
+        return $paths;
+    }
+    if (PHP_OS_FAMILY !== 'Darwin' || !is_executable('/usr/sbin/lsof')) throw new TestFailure('Unsupported resource-observer platform.');
+    $result=pocRunBoundedObserver(['/usr/sbin/lsof','-a','-p',(string)$pid,'-Fn'],2000);
+    assertSameValue(false,$result['timedOut'],'Darwin resource observer completes within monotonic deadline');
+    assertSameValue([0,''],[$result['exit'],$result['stderr']],'Darwin resource observer exact process result');
+    $paths=[];foreach(explode("\n",$result['stdout'])as$line)if(str_starts_with($line,'n')&&strlen($line)>1)$paths[]=substr($line,1);
+    assertSameValue(true,$paths!==[],'Darwin resource observer returns machine-readable name records');
+    return $paths;
+}
+
+/** @return list<array{ID:string}> */
+function pocReaderConnections(mysqli $admin, string $database, string $readerUser): array
+{
+    $escapedDatabase=$admin->real_escape_string($database);$escapedUser=$admin->real_escape_string($readerUser);
+    return $admin->query("SELECT CAST(ID AS CHAR) ID FROM information_schema.PROCESSLIST WHERE DB='{$escapedDatabase}' AND USER='{$escapedUser}' ORDER BY ID")->fetch_all(MYSQLI_ASSOC);
+}
+
 function pocAssertRequestResourcesReleased(array $server, mysqli $admin, string $database, string $readerUser, string $css, string $why): void
 {
     $status = proc_get_status($server['process']);
     $pid = (int) ($status['pid'] ?? 0);
-    assertSameValue(true, $pid > 0 && is_dir('/proc/' . $pid . '/fd'), $why . ' live public HTTP worker is observable');
-    $cssDescriptors = [];
-    foreach (glob('/proc/' . $pid . '/fd/*') ?: [] as $fd) {
-        $target = @readlink($fd);
-        if ($target === $css) $cssDescriptors[] = basename($fd);
-    }
+    assertSameValue(true, $pid > 0 && ($status['running'] ?? false) === true, $why . ' live public HTTP worker is observable');
+    $cssDescriptors = array_values(array_filter(pocOpenDescriptorPaths($pid),static fn(string $path):bool=>$path===$css));
     assertSameValue([], $cssDescriptors, $why . ' releases every card CSS descriptor before response completes');
-    $socketInodes = [];
-    foreach (glob('/proc/' . $pid . '/fd/*') ?: [] as $fd) {
-        $target = @readlink($fd);
-        if (is_string($target) && preg_match('/^socket:\[(\d+)\]$/D', $target, $match) === 1) $socketInodes[$match[1]] = true;
-    }
-    $workerClientPorts = [];
-    foreach (['/proc/net/tcp', '/proc/net/tcp6'] as $tcpTable) {
-        foreach (array_slice(@file($tcpTable, FILE_IGNORE_NEW_LINES) ?: [], 1) as $line) {
-            $fields = preg_split('/\s+/', trim($line));
-            if (count($fields) < 10 || !isset($socketInodes[$fields[9]])) continue;
-            [, $localPortHex] = array_pad(explode(':', $fields[1], 2), 2, '');
-            [, $remotePortHex] = array_pad(explode(':', $fields[2], 2), 2, '');
-            if (hexdec($remotePortHex) === (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306)) $workerClientPorts[] = hexdec($localPortHex);
-        }
-    }
-    $connections = [];
-    if ($workerClientPorts !== []) {
-        $escapedDatabase = $admin->real_escape_string($database);
-        $escapedUser = $admin->real_escape_string($readerUser);
-        $hosts = implode(',', array_map(static fn(int $port): string => "'127.0.0.1:{$port}'", array_unique($workerClientPorts)));
-        $connections = $admin->query("SELECT ID FROM information_schema.PROCESSLIST WHERE DB='{$escapedDatabase}' AND USER='{$escapedUser}' AND HOST IN ({$hosts}) ORDER BY ID")->fetch_all(MYSQLI_ASSOC);
-    }
-    assertSameValue([], $connections, $why . ' releases every card DB connection before response completes');
+    assertSameValue([], pocReaderConnections($admin,$database,$readerUser), $why . ' releases every card DB connection before response completes');
 }
 
 function pocSnapshot(mysqli $db): string
@@ -320,15 +420,20 @@ function pocSnapshot(mysqli $db): string
 
 
 $token = bin2hex(random_bytes(6));
+$processPrefix = 'poc_';
 $database = 't_poc_' . $token;
 $readerUser = 'poc_' . $token;
 $readerPassword = 'select-' . $token;
 $userOnlyReader = 'pocu_' . $token;
-$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pocProtectedPaths=[];$pocMutableRoots=[];
-    $admin = pocDb(); $db = null; $server = null; $anonymous = null; $escapeServer = null;
+$identityOnlyReader = 'poci_' . $token;
+$ownership=[];$ownerRoot='';$mutableRoot='';$protectedArtifactRoot='';$css='';$pilotCss='';$pocProtectedPaths=[];$pocMutableRoots=[];
+    $admin = pocDb(); $db = null; $server = null; $capable = null; $permissionless = null; $crossSource = null; $anonymous = null; $escapeServer = null;
 try {
-    $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));$css=(string)realpath($css);$pocProtectedPaths=[$protectedArtifactRoot,$css];$pocMutableRoots=[$mutableRoot];
+    $ownership=TaskOwnedArtifactRoot::create('poc',$token);$ownerRoot=$ownership['root'];$mutableRoot=$ownerRoot.'/mutable';$protectedArtifactRoot=$ownerRoot.'/protected-artifact-store';$css=$mutableRoot.'/shlz.css';$pilotCss=$mutableRoot.'/pilot.css';mkdir($mutableRoot,0700);mkdir($protectedArtifactRoot,0700);file_put_contents($protectedArtifactRoot.'/sentinel','immutable-production-artifact');file_put_contents($css,file_get_contents(dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'));file_put_contents($pilotCss,file_get_contents(dirname(__DIR__,2).'/rapid-pilot/pilot.css'));$css=(string)realpath($css);$pilotCss=(string)realpath($pilotCss);$pocProtectedPaths=[$protectedArtifactRoot,$css,$pilotCss];$pocMutableRoots=[$mutableRoot];
+    pocAssertBoundedObserverSensitivity();
+    $descriptorControl=@fopen($css,'rb');if(!is_resource($descriptorControl))throw new TestFailure('CSS descriptor sensitivity control open');try{assertSameValue(true,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees deliberately open exact CSS descriptor');}finally{fclose($descriptorControl);}assertSameValue(false,in_array($css,pocOpenDescriptorPaths((int)getmypid()),true),'resource observer sees exact CSS descriptor close');
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4");
+    pocMigrate($database,$processPrefix);
     $db = pocDb($database);
     $db->query("CREATE TABLE legacy_users_roles(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(120),status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $db->query("CREATE TABLE legacy_users(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),email VARCHAR(300),role_id BIGINT UNSIGNED,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -336,7 +441,7 @@ try {
     $db->query("CREATE TABLE legacy_logs(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,message VARCHAR(255)) ENGINE=InnoDB AUTO_INCREMENT=41");
     $db->query("CREATE TABLE legacy_ci_sessions(id VARCHAR(128) PRIMARY KEY,data BLOB NOT NULL) ENGINE=InnoDB");
     $db->query("INSERT INTO legacy_users_roles VALUES(5,'Active',1),(6,'Inactive',0)");
-    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1)");
+    $db->query("INSERT INTO legacy_users VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(19,'No Capability Reader','reader@shlz.ru',5,1),(20,'Inactive','inactive@shlz.ru',5,0),(21,'Inactive role','role-inactive@shlz.ru',6,1),(22,'Duplicate A','duplicate@shlz.ru',5,1),(23,'Duplicate B','duplicate@shlz.ru',5,1),(24,'Актор <script>actor-secret</script> &quot;','escape@shlz.ru',5,1),(25,'Active Permissionless Reader','permissionless@shlz.ru',5,1),(26,'Legacy Inactive Local Active','legacy-inactive@shlz.ru',5,0),(27,'Legacy Role Inactive Local Active','legacy-role-inactive@shlz.ru',6,1),(28,'Legacy Active Local Inactive','local-inactive@shlz.ru',5,1),(29,'Legacy Active Local Missing','local-missing@shlz.ru',5,1)");
     $legacy = [
         [4512,'  Москва, ул. Примерная, д. 10  ',' 2 ',' 77-000123 ','2026-10-05 14:30:00','2026-12-18 09:15:00','2026-12-20','2099-01-01','FORBIDDEN-4512'],
         [4513,'Москва, ул. Вторая, д. 7','1','77-000124','2026-10-01',null,'2026-11-30','2099-01-02','FORBIDDEN-4513'],
@@ -344,6 +449,7 @@ try {
         [4515,'Москва, ул. Четвёртая, д. 9','4','77-000126','2026-10-03','2026-12-02',null,null,'FORBIDDEN-4515'],
         [4516,'Москва, ул. Пятая, д. 11','5','77-000127','2026-10-04','2026-12-03',null,null,'FORBIDDEN-4516'],
         [4517,'Улица <img src=x onerror=object-secret> & "дом"','<b>7</b>','REG<&"-4517','2026-10-06','2026-12-22',null,null,'FORBIDDEN-4517'],
+        [4518,'PTO action must be hidden','8','77-PTO','2026-10-07','2026-12-23',null,null,'FORBIDDEN-4518'],
         [4599,'Legacy only must be hidden','9','77-HIDDEN','2026-10-01','2026-11-01',null,null,'FORBIDDEN-4599'],
         [4600,'Invalid imported','   ','77-BAD','2026-10-01','2026-11-01',null,null,'FORBIDDEN-4600'],
         [4610,'Corrupt state','10','77-C10','2026-10-01','2026-11-01',null,null,'SECRET-4610'],
@@ -372,10 +478,40 @@ try {
     ];
     $statement = $db->prepare('INSERT INTO legacy_fm_maintable VALUES(?,?,?,?,?,?,?,?,?)');
     foreach ($legacy as $row) { $statement->bind_param('issssssss', ...$row); $statement->execute(); }
+    $db->query("ALTER TABLE legacy_fm_maintable ADD ptoactdate VARCHAR(40) NULL, ADD responsstroicontrol VARCHAR(80) NULL");
+    $db->query("UPDATE legacy_fm_maintable SET ptoactdate='2026-09-30' WHERE id=4518");
     $db->query("INSERT INTO legacy_logs(message) VALUES('sentinel log')"); $db->query("INSERT INTO legacy_ci_sessions VALUES('sentinel','opaque')");
-    ProductionProcessSchemaMigration::apply($db);
-    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','status'=>0],21=>['email'=>'role-inactive@shlz.ru','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','permissions'=>['objects.read']]]);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,'');
-    $db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
+    \FMonitor2\Tests\Support\LocalRbacFixture::install($db,[18=>['email'=>'sidorov@shlz.ru','fullName'=>'Сидоров Сергей Сергеевич','permissions'=>['objects.read']],19=>['email'=>'reader@shlz.ru','fullName'=>'No Capability Reader','permissions'=>['objects.read']],20=>['email'=>'inactive@shlz.ru','fullName'=>'Inactive','status'=>0],21=>['email'=>'role-inactive@shlz.ru','fullName'=>'Inactive role','roleActive'=>0,'permissions'=>['objects.read']],24=>['email'=>'escape@shlz.ru','fullName'=>'Актор <script>actor-secret</script> &quot;','permissions'=>['objects.read']],25=>['email'=>'permissionless@shlz.ru','fullName'=>'Active Permissionless Reader'],26=>['email'=>'legacy-inactive@shlz.ru','fullName'=>'Legacy Inactive Local Active'],27=>['email'=>'legacy-role-inactive@shlz.ru','fullName'=>'Legacy Role Inactive Local Active'],28=>['email'=>'local-inactive@shlz.ru','fullName'=>'Legacy Active Local Inactive','status'=>0]],$processPrefix);\FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration::apply($db,$processPrefix);
+    assertSameValue(
+        [
+            ['user_id'=>'18','full_name'=>'Сидоров Сергей Сергеевич'],
+            ['user_id'=>'19','full_name'=>'No Capability Reader'],
+            ['user_id'=>'20','full_name'=>'Inactive'],
+            ['user_id'=>'21','full_name'=>'Inactive role'],
+            ['user_id'=>'24','full_name'=>'Актор <script>actor-secret</script> &quot;'],
+            ['user_id'=>'25','full_name'=>'Active Permissionless Reader'],
+            ['user_id'=>'26','full_name'=>'Legacy Inactive Local Active'],
+            ['user_id'=>'27','full_name'=>'Legacy Role Inactive Local Active'],
+            ['user_id'=>'28','full_name'=>'Legacy Active Local Inactive'],
+        ],
+        $db->query("SELECT CAST(user_id AS CHAR) user_id,full_name FROM {$processPrefix}fm2_pilot_users ORDER BY user_id")->fetch_all(MYSQLI_ASSOC),
+        'Local RBAC fixture pins every asserted HTTP identity to its independently fixed expected full name.',
+    );
+    $db->query("INSERT INTO {$processPrefix}fm2_process_user_capabilities(user_id,capability,position_snapshot) VALUES(18,'assignment_order.prepare',NULL)");
+    assertSameValue(
+        [['user_id'=>'18','capability'=>'assignment_order.prepare']],
+        $db->query("SELECT CAST(user_id AS CHAR) user_id,capability FROM {$processPrefix}fm2_process_user_capabilities ORDER BY user_id,capability")->fetch_all(MYSQLI_ASSOC),
+        'Shared-shell fixture keeps the capable actor separate and grants the broad reader no process capability.',
+    );
+    assertSameValue(
+        ['localPermissions'=>0,'processCapabilities'=>0],
+        [
+            'localPermissions'=>(int)$db->query("SELECT COUNT(*) n FROM {$processPrefix}fm2_pilot_user_roles ur JOIN {$processPrefix}fm2_pilot_role_permissions rp ON rp.role_id=ur.role_id WHERE ur.user_id=25")->fetch_assoc()['n'],
+            'processCapabilities'=>(int)$db->query("SELECT COUNT(*) n FROM {$processPrefix}fm2_process_user_capabilities WHERE user_id=25")->fetch_assoc()['n'],
+        ],
+        'Permissionless actor 25 has an active assigned local role but zero local permissions and zero process capabilities.',
+    );
+    $db->query("INSERT INTO {$processPrefix}fm2_installation_cases(id,legacy_installation_object_id,process_state,actual_start_date,opened_at,opened_by_user_id,created_at,updated_at,lock_version) VALUES
         (1,4512,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (2,4513,'working','2026-10-03','2026-10-03T08:15:30+03:00',18,'2026-08-20T09:00:00+03:00','2026-10-03T08:15:30+03:00',4),
         (3,4514,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-10-02T09:00:00+03:00',2),
@@ -384,6 +520,7 @@ try {
         (6,4600,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (7,4601,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (8,4517,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-10-06T09:00:00+03:00',1),
+        (9,4518,'needs_assignment_order',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (10,4610,'invented_state',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (11,4611,'working','2026-10-03',NULL,18,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
         (12,4612,'assignment_order_prepared',NULL,NULL,NULL,'2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1),
@@ -433,37 +570,50 @@ try {
         [351,35,1,'registered','2026-02-28','C35-Р',73,'Инженер','Должность','individual','Impossible opening calendar date','35','77-C35','2026-02-28','2026-03-31'],
         [371,37,1,'registered','2024-02-29','C37-Р',73,'Инженер','Должность','individual','Valid leap calendar dates','37','77-C37','2024-02-29','2024-03-31'],
     ];
-    $order = $db->prepare("INSERT INTO fm2_assignment_orders(id,installation_case_id,version_no,kind,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at,prepared_by_user_id) VALUES(?,?,?,'initial',?,?,?,?,?,?,?,?,?,?,?,?,'2026-10-01T09:00:00+03:00',18)");
+    $order = $db->prepare("INSERT INTO {$processPrefix}fm2_assignment_orders(id,installation_case_id,version_no,kind,status,order_date,registration_number,control_engineer_user_id,control_engineer_fio_snapshot,control_engineer_position_snapshot,organization_form,object_address_snapshot,entrance_snapshot,object_registration_number_snapshot,planned_start_date_snapshot,planned_finish_date_snapshot,prepared_at,prepared_by_user_id) VALUES(?,?,?,'initial',?,?,?,?,?,?,?,?,?,?,?,?,'2026-10-01T09:00:00+03:00',18)");
     foreach ($orders as $row) { $order->bind_param('iiisssissssssss', ...$row); $order->execute(); }
-    $installer = $db->prepare("INSERT INTO fm2_order_installers VALUES(?,?,?,?,?,'2024-01-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00','2026-10-01',NULL,'add')");
+    $installer = $db->prepare("INSERT INTO {$processPrefix}fm2_order_installers VALUES(?,?,?,?,?,'2024-01-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00','2026-10-01',NULL,'add')");
     foreach ([[21,1057,'Смирнов Алексей Олегович','Монтажник','employed'],[21,1042,'Иванов Иван Иванович','Монтажник','employed'],[31,2014,'Предварительный Монтажник','Монтажник','employed'],[41,2015,'Готовый Монтажник','Монтажник','employed'],[51,2016,'Действующий Монтажник','Монтажник','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     foreach ([[81,9002,'Монтажник <script>installer-secret</script> & "Б"','Монтажник','employed'],[81,9001,'Альфа & <b>А</b>','Монтажник','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     foreach ([[241,2401,'   ','Монтажник','employed'],[251,2501,'Монтажник','   ','employed'],[261,0,'Монтажник','Должность','employed'],[271,2701,'Монтажник','Должность','invented_status'],[311,3101,'Монтажник','Должность','employed'],[321,3201,'Монтажник','Должность','employed'],[331,3301,'Монтажник','Должность','employed'],[341,3401,'Монтажник','Должность','employed'],[351,3501,'Монтажник','Должность','employed'],[371,3701,'Монтажник','Должность','employed']] as $row) { $installer->bind_param('iisss', ...$row); $installer->execute(); }
     $events = [[2,'older_hidden_event','2026-10-01T08:00:00+03:00'],[2,'assignment_order_prepared','2026-10-02T09:00:00+03:00'],[2,'assignment_order_registered','2026-10-02T15:10:00+03:00'],[2,'installation_opened','2026-10-03T08:15:30+03:00']];
-    $event = $db->prepare("INSERT INTO fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(?,?,?,18,'{\"secret\":\"EVENT-PAYLOAD-SECRET\"}')");
+    $event = $db->prepare("INSERT INTO {$processPrefix}fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(?,?,?,18,'{\"secret\":\"EVENT-PAYLOAD-SECRET\"}')");
     foreach ($events as $row) { $event->bind_param('iss', ...$row); $event->execute(); }
     $events = [[20,'durable_oldest','2099-12-31T23:59:59+03:00'],[20,'durable_second','2026-01-01T00:00:00+03:00'],[20,'durable_third','2025-01-01T00:00:00+03:00'],[20,'durable_newest','2024-01-01T00:00:00+03:00'],[28,'   ','2026-10-01T10:00:00+03:00'],[29,'valid_event','not-rfc3339'],[36,'impossible_calendar_event','2026-02-30T08:00:00+03:00'],[37,'valid_leap_event','2024-02-29T08:30:00+03:00']];
     foreach ($events as $row) { $event->bind_param('iss', ...$row); $event->execute(); }
-    $db->query("INSERT INTO fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(30,'valid_event','2026-10-01T10:00:00+03:00',0,'{}')");
+    $db->query("INSERT INTO {$processPrefix}fm2_process_events(installation_case_id,event_type,occurred_at,actor_user_id,payload_json) VALUES(30,'valid_event','2026-10-01T10:00:00+03:00',0,'{}')");
 
     $admin->query("CREATE USER `{$readerUser}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $requiredReads = [
         'legacy_users'=>['id','name','email','role_id','status'],
         'legacy_users_roles'=>['id','status'],
-        'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date'],
-        'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
-        'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
-        'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
-        'fm2_process_events'=>['id','installation_case_id','event_type','occurred_at','actor_user_id'],
+        'legacy_fm_maintable'=>['id','ordadr_address','entrance','regnumber','workdatestart','workdateendadjusted','plan_finish_date','ptoactdate','responsstroicontrol'],
+        $processPrefix.'fm2_installation_cases'=>['id','legacy_installation_object_id','process_state','actual_start_date','opened_at','opened_by_user_id'],
+        $processPrefix.'fm2_assignment_orders'=>['id','installation_case_id','version_no','kind','status','previous_assignment_order_id','order_date','registration_number','registration_source','control_engineer_user_id','control_engineer_fio_snapshot','control_engineer_position_snapshot','organization_form','object_address_snapshot','entrance_snapshot','object_registration_number_snapshot','planned_start_date_snapshot','planned_finish_date_snapshot','prepared_at'],
+        $processPrefix.'fm2_order_installers'=>['assignment_order_id','installer_tab_id','fio_snapshot','position_snapshot','employment_status_snapshot'],
+        $processPrefix.'fm2_process_events'=>['id','installation_case_id','event_type','occurred_at','actor_user_id','payload_json'],
+        $processPrefix.'fm2_process_user_capabilities'=>['user_id','capability','position_snapshot'],
+        $processPrefix.'fm2_migration_classification_provenance'=>['legacy_object_id','category','output_kind','output_id'],
     ];
     foreach ($requiredReads as $table => $columns) {
         $quotedColumns = implode(',', array_map(static fn(string $column): string => '`' . $column . '`', $columns));
         $admin->query("GRANT SELECT ({$quotedColumns}) ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     }
-    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables()as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
+    foreach(\FMonitor2\Tests\Support\LocalRbacFixture::tables($processPrefix)as$table)$admin->query("GRANT SELECT ON `{$database}`.`{$table}` TO `{$readerUser}`@`%`");
     $admin->query("CREATE USER `{$userOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users` TO `{$userOnlyReader}`@`%`");
     $admin->query("GRANT SELECT ON `{$database}`.`legacy_users_roles` TO `{$userOnlyReader}`@`%`");
+    $admin->query("CREATE USER `{$identityOnlyReader}`@`%` IDENTIFIED BY '{$readerPassword}'");
+    foreach ([
+        'legacy_users'=>['id','name','email','role_id','status'],
+        'legacy_users_roles'=>['id','status'],
+        $processPrefix.'fm2_pilot_users'=>['user_id','full_name','email','status','activation_state'],
+        $processPrefix.'fm2_pilot_roles'=>['role_id','status'],
+        $processPrefix.'fm2_pilot_user_roles'=>['user_id','role_id'],
+    ] as $table=>$columns) {
+        $quotedColumns=implode(',',array_map(static fn(string $column):string=>'`'.$column.'`',$columns));
+        $admin->query("GRANT SELECT ({$quotedColumns}) ON `{$database}`.`{$table}` TO `{$identityOnlyReader}`@`%`");
+    }
     $privilegeRows = $admin->query("SELECT TABLE_NAME,COLUMN_NAME,PRIVILEGE_TYPE FROM information_schema.COLUMN_PRIVILEGES WHERE GRANTEE=\"'{$readerUser}'@'%'\" AND TABLE_SCHEMA='{$database}' ORDER BY TABLE_NAME,COLUMN_NAME")->fetch_all(MYSQLI_ASSOC);
     $actualReads = [];
     foreach ($privilegeRows as $privilegeRow) {
@@ -476,12 +626,14 @@ try {
     assertSameValue($requiredReads, $actualReads, 'application principal reads only exact required tables and columns');
     $readerProbe = new mysqli(getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1', $readerUser, $readerPassword, $database, (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306));
     $readerProbe->set_charset('utf8mb4');
+    assertSameValue(1,count(pocReaderConnections($admin,$database,$readerUser)),'PROCESSLIST observer sees deliberately open exact reader connection');
     assertSameValue('4512', (string) $readerProbe->query('SELECT id FROM legacy_fm_maintable WHERE id=4512')->fetch_row()[0], 'SELECT-only principal can read an approved column');
-    try { $readerProbe->query("UPDATE fm2_installation_cases SET process_state='working' WHERE id=1"); throw new TestFailure('SELECT-only principal unexpectedly wrote process state'); } catch (mysqli_sql_exception) {}
+    try { $readerProbe->query("UPDATE {$processPrefix}fm2_installation_cases SET process_state='working' WHERE id=1"); throw new TestFailure('SELECT-only principal unexpectedly wrote process state'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT forbidden_secret FROM legacy_fm_maintable WHERE id=4512'); throw new TestFailure('SELECT-only principal unexpectedly read forbidden legacy column'); } catch (mysqli_sql_exception) {}
     try { $readerProbe->query('SELECT message FROM legacy_logs LIMIT 1'); throw new TestFailure('SELECT-only principal unexpectedly read unrelated table'); } catch (mysqli_sql_exception) {}
     $readerProbe->close();
-    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_SHLZ_CSS_PATH'=>$css,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
+    assertSameValue([],pocReaderConnections($admin,$database,$readerUser),'PROCESSLIST observer sees exact reader connection close');
+    $environment = ['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$database,'FMONITOR_DB_USER'=>$readerUser,'FMONITOR_DB_PASSWORD'=>$readerPassword,'FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_','FMONITOR_PROCESS_TABLE_PREFIX'=>$processPrefix,'FMONITOR_SHLZ_CSS_PATH'=>$css,'FMONITOR_PILOT_CSS_PATH'=>$pilotCss,'REMOTE_USER'=>'reader@shlz.ru','FMONITOR_AUTH_USER_ID'=>'19'];
     $before = pocSnapshot($db); $server = pocStart($environment);
 
     $a = pocRequest($server['port'], 'GET', '/pilot/objects/4512');
@@ -496,59 +648,108 @@ try {
     assertSameValue(pocApplicationResponse($a), pocApplicationResponse($aBody), 'supplied GET body is unread and byte-identical to canonical card GET representation and application headers');
     $aHeadBody = pocRequest($server['port'], 'HEAD', '/pilot/objects/4512', ['Content-Length'=>(string)strlen($ignoredBody)], $ignoredBody);
     assertSameValue(pocApplicationResponse($aHead), pocApplicationResponse($aHeadBody), 'supplied HEAD body is unread and byte-identical to canonical card HEAD application response');
-    pocSuccess($a, ['Объект монтажа № 4512','Требуется распоряжение','77-000123','Москва, ул. Примерная, д. 10','Подъезд 2','Плановое начало 2026-10-05','Плановое окончание 2026-12-18','Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована','Работы ещё не открыты','Событий пока нет'], 'Example A broad reader without capability');
-    pocStructure($a, 'Example A required DOM');
-    pocGroupVisible($a,'Распоряжение и команда',['Распоряжение ещё не сформировано','Подтверждённая команда ещё не сформирована'],'Example A exact empty current-basis/team consequence');
-    pocGroupVisible($a,'Работы',['Работы ещё не открыты'],'Example A exact closed checklist consequence');
-    foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability ' . $secret);
+    pocSuccess($a, ['Объект монтажа № 4512','Москва, ул. Примерная, д. 10, подъезд 2','Регистрационный номер 77-000123','Требуется распоряжение','Загрузите распоряжение','05.10.2026','18.12.2026','Команда объекта','Монтажники','Ещё не назначены','Распоряжение не сформировано','Не назначен инженер стройконтроля','Событий пока нет'], 'Example A broad reader without capability');
+    $aDocument=pocDocument($a['body']);$aXpath=new DOMXPath($aDocument);foreach(['2026-10-05'=>'05.10.2026','2026-12-18'=>'18.12.2026']as$machine=>$visible)assertSameValue(1,$aXpath->query("//time[@datetime='$machine' and normalize-space(.)='$visible']")->length,'Example A exact machine and visible date '.$machine);foreach(['Сроки работ','Команда объекта','Распоряжение','Проблемы','Последние события']as$heading)assertSameValue(1,$aXpath->query("//h2[normalize-space(.)='$heading']")->length,'Example A exact current panel '.$heading);
+    pocStructure($a,4512,false,'Example A required shared-shell DOM');
+    pocIdentityFields($a,4512,'Москва, ул. Примерная, д. 10, подъезд 2','77-000123','Требуется распоряжение','Example A identity');
+    pocGroupVisible($a,'Команда объекта',['Инженер стройконтроля','Не назначен','Монтажники','Ещё не назначены'],'Example A exact empty team consequence');
+    assertSameValue(1,$aXpath->query("//section[./h2[normalize-space(.)='Распоряжение']]//div[contains(concat(' ',normalize-space(@class),' '),' fm2-quiet-empty ')][strong[normalize-space(.)='Распоряжение не сформировано'] and span[normalize-space(.)='Шаблон появится после выбора монтажников.']]")->length,'Example A exact empty document consequence');
+    foreach (['FORBIDDEN-4512','2099-01-01','assignment_order.prepare','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $secret) assertSameValue(false, str_contains($a['body'], $secret), 'Example A excludes forbidden source/capability/action ' . $secret);
+
+    foreach ([26=>'legacy inactive with active local directory identity',27=>'legacy role inactive with active local directory identity'] as $actorId=>$why) {
+        $principal=$actorId===26?'legacy-inactive@shlz.ru':'legacy-role-inactive@shlz.ru';
+        $crossSource=pocStart(array_replace($environment,['REMOTE_USER'=>$principal,'FMONITOR_AUTH_USER_ID'=>(string)$actorId]));
+        try { $localDirectory=pocParity($crossSource['port'],'/pilot/objects/4512');pocSuccess($localDirectory,['Объект монтажа № 4512','Требуется распоряжение'],$why.' uses active local profile precedence');pocStructure($localDirectory,4512,false,$why.' shared-shell DOM'); }
+        finally { pocStop($crossSource);$crossSource=null; }
+    }
+    $identityOnlyEnvironment=array_replace($environment,['FMONITOR_DB_USER'=>$identityOnlyReader,'REMOTE_USER'=>'legacy-inactive@shlz.ru','FMONITOR_AUTH_USER_ID'=>'26']);
+    $crossSource=pocStart($identityOnlyEnvironment);
+    try { pocError(pocParity($crossSource['port'],'/pilot/objects/4512'),503,"Service unavailable.\n",'local authorization facts unavailable without local-table privilege'); }
+    finally { pocStop($crossSource);$crossSource=null; }
+
+    foreach ([28=>['local-inactive@shlz.ru','Legacy Active Local Inactive'],29=>['local-missing@shlz.ru','Legacy Active Local Missing']] as $actorId=>[$principal,$expectedName]) {
+        $crossSource=pocStart(array_replace($environment,['REMOTE_USER'=>$principal,'FMONITOR_AUTH_USER_ID'=>(string)$actorId]));
+        try {$legacyDirectory=pocParity($crossSource['port'],'/pilot/objects/4512');pocSuccess($legacyDirectory,[$expectedName,'Объект монтажа № 4512','Требуется распоряжение'],'native directory falls back to active legacy identity actor '.$actorId);pocStructure($legacyDirectory,4512,false,'native legacy fallback actor '.$actorId.' shared-shell DOM');}
+        finally { pocStop($crossSource);$crossSource=null; }
+    }
+
+    $permissionless = pocStart(array_replace($environment, ['REMOTE_USER'=>'permissionless@shlz.ru','FMONITOR_AUTH_USER_ID'=>'25']));
+    $permissionlessCard = pocParity($permissionless['port'], '/pilot/objects/4512');
+    pocSuccess($permissionlessCard, ['Active Permissionless Reader','Объект монтажа № 4512','Москва, ул. Примерная, д. 10, подъезд 2','Регистрационный номер 77-000123','Требуется распоряжение','05.10.2026','18.12.2026','Распоряжение не сформировано','Событий пока нет'],'permissionless active legacy user full card');
+    pocStructure($permissionlessCard,4512,false,'permissionless active legacy user required shared-shell DOM');
+    foreach (['assignment_order.prepare','objects.read','Загрузить распоряжение','/pilot/objects/4512/assignment-order/prepare'] as $forbidden) assertSameValue(false,str_contains($permissionlessCard['body'],$forbidden),'permissionless card excludes permission/action '.$forbidden);
+    pocStop($permissionless);$permissionless=null;
+
+    // PILOT-PREPARE-FORM-001 v0.2 supersedes only the capable card launch copy.
+    // The public card remains a safe GET/HEAD read and the route itself is unchanged.
+    $capable = pocStart(array_replace($environment, ['REMOTE_USER'=>'sidorov@shlz.ru','FMONITOR_AUTH_USER_ID'=>'18']));
+    $capableCard = pocParity($capable['port'], '/pilot/objects/4512');
+    pocSuccess($capableCard, ['Объект монтажа № 4512','Москва, ул. Примерная, д. 10, подъезд 2','Регистрационный номер 77-000123','Требуется распоряжение','Загрузите распоряжение','Загрузить распоряжение','Распоряжение не сформировано'],'Example A capable upload-first launch');
+    pocStructure($capableCard,4512,true,'Example A capable required shared-shell DOM');
+    $capableDocument = pocDocument($capableCard['body']); $capableXpath = new DOMXPath($capableDocument);
+    assertSameValue(1,$capableXpath->query("//section[contains(concat(' ',normalize-space(@class),' '),' fm2-next-action ')][div/h2[normalize-space(.)='Загрузите распоряжение']]")->length,'capable exact current next-action panel');
+    assertSameValue(1,$capableXpath->query("//section[./h2[normalize-space(.)='Распоряжение']]//div[contains(concat(' ',normalize-space(@class),' '),' fm2-quiet-empty ')][strong[normalize-space(.)='Распоряжение не сформировано']]")->length,'capable exact empty document panel');
+    $prepareAnchors = $capableXpath->query("//a[@href='/pilot/objects/4512/assignment-order/prepare']");
+    assertSameValue(1, $prepareAnchors->length, 'capable card has exactly one canonical prepare anchor regardless of label');
+    assertSameValue('Загрузить распоряжение', trim((string) $prepareAnchors->item(0)?->textContent), 'sole canonical prepare anchor has exact upload-first label');
+    assertSameValue(1, (int) $capableXpath->evaluate("count(//section[contains(concat(' ',normalize-space(@class),' '),' fm2-next-action ')]//*[self::a or self::button or self::form or self::input or self::select or self::textarea])"), 'capable next-step area has no additional process-action link or control');
+    assertSameValue(false, str_contains(pocVisible($capableCard['body']), 'Сформировать распоряжение'), 'superseded card action copy is absent');
+    foreach ([4514=>'wrong state',4518=>'PTO gate'] as $negativeId=>$negativeWhy) {
+        $negativeAction = pocParity($capable['port'], '/pilot/objects/'.$negativeId);
+        pocStructure($negativeAction,$negativeId,false,$negativeWhy.' required shared-shell DOM');
+        $negativeDocument = pocDocument($negativeAction['body']); $negativeXpath = new DOMXPath($negativeDocument);
+        assertSameValue(0, (int) $negativeXpath->evaluate("count(//a[@href='/pilot/objects/{$negativeId}/assignment-order/prepare'])"), $negativeWhy.' has no canonical prepare href');
+        assertSameValue(0, (int) $negativeXpath->evaluate("count(//*[self::a or self::button or self::form or self::input or self::select or self::textarea][normalize-space(.)='Загрузить распоряжение'])"), $negativeWhy.' has no upload-first action/control');
+    }
+    pocStop($capable); $capable = null;
 
     $b = pocRequest($server['port'], 'GET', '/pilot/objects/4513');
     pocAssertRequestResourcesReleased($server, $admin, $database, $readerUser, $css, 'Example B GET request scope');
     $bHead = pocRequest($server['port'], 'HEAD', '/pilot/objects/4513');
     pocAssertRequestResourcesReleased($server, $admin, $database, $readerUser, $css, 'Example B HEAD request scope');
     pocAssertParityResponses($b, $bHead, '/pilot/objects/4513');
-    pocSuccess($b, ['Объект монтажа № 4513','В работе','77-000124','Москва, ул. Вторая, д. 7','Подъезд 1','Плановое начало 2026-10-01','Плановое окончание 2026-11-30','Зарегистрировано в 1С ДО','Распоряжение № 19-Р от 2026-10-02 · версия 2','Петров Пётр Петрович','1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','Бригадная','Чек-лист: Доступен','installation_opened','2026-10-03T08:15:30+03:00','assignment_order_registered','assignment_order_prepared'], 'Example B opened case');
-    foreach (['EVENT-PAYLOAD-SECRET','older_hidden_event','FORBIDDEN-4513','OLD-Р','Старый инженер'] as $secret) assertSameValue(false, str_contains($b['body'], $secret), 'Example B excludes historical/forbidden ' . $secret);
-    foreach (['1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','installation_opened','assignment_order_registered','assignment_order_prepared'] as $once) pocCountVisible($b,$once,1,'Example B people/events');
-    pocStructure($b, 'Example B required DOM');
-    pocGroupVisible($b, 'Работы', ['Фактическое начало 2026-10-03','Открыто: 2026-10-03T08:15:30+03:00','Открыл пользователь: 18','Чек-лист: Доступен'], 'Example B exact opening audit in Work group');
-    foreach (['Фактическое начало 2026-10-03','Открыто: 2026-10-03T08:15:30+03:00','Открыл пользователь: 18'] as $openingFact) pocCountVisible($b,$openingFact,1,'Example B opening fact belongs to exactly one semantic group');
-    $team = pocGroupText($b, 'Распоряжение и команда', 'Example B current version-2 team snapshots');
-    foreach (['Распоряжение № 19-Р от 2026-10-02 · версия 2','Петров Пётр Петрович','Инженер строительного контроля','1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','Бригадная'] as $literal) assertSameValue(1, substr_count($team, $literal), 'Example B exact current team value cardinality ' . $literal);
-    assertSameValue(2, substr_count($team, 'Монтажник'), 'Example B one persisted position for each of two installers');
-    assertSameValue(2, substr_count($team, 'employed'), 'Example B one persisted snapshot status for each of two installers');
+    pocSuccess($b, ['Объект монтажа № 4513','Москва, ул. Вторая, д. 7, подъезд 1','Регистрационный номер 77-000124','Монтажные работы','Открыть чек-лист','01.10.2026','30.11.2026','03.10.2026','Команда объекта','Не назначен','Иванов Иван Иванович','Смирнов Алексей Олегович','Распоряжение','Последние события'], 'Example B opened case');
+    foreach (['EVENT-PAYLOAD-SECRET','FORBIDDEN-4513','OLD-Р','Старый инженер'] as $secret) assertSameValue(false, str_contains($b['body'], $secret), 'Example B excludes payload/forbidden/historical snapshot ' . $secret);
+    foreach (['1042','Иванов Иван Иванович','1057','Смирнов Алексей Олегович','Монтажные работы открыты','Оригинал распоряжения применён','Шаблон распоряжения сформирован'] as $once) pocCountVisible($b,$once,1,'Example B people/events');
+    pocStructure($b,4513,false,'Example B required shared-shell DOM',true);
+    pocIdentityFields($b,4513,'Москва, ул. Вторая, д. 7, подъезд 1','77-000124','Монтажные работы','Example B identity');
+    pocGroupVisible($b,'Сроки работ',['Плановое начало','01.10.2026','Плановое окончание','30.11.2026','Фактическое начало','03.10.2026'],'Example B exact localized dates');
+    $team = pocGroupText($b, 'Команда объекта', 'Example B current version-2 team snapshots');
+    foreach (['Инженер стройконтроля','Не назначен','Иванов Иван Иванович · таб. 1042 · Монтажник','Смирнов Алексей Олегович · таб. 1057 · Монтажник'] as $literal) assertSameValue(1, substr_count($team, $literal), 'Example B exact current team value cardinality ' . $literal);
     foreach (['OLD-Р','Старый инженер'] as $historical) assertSameValue(false, str_contains($team, $historical), 'Example B historical version-1 value cannot leak into current team ' . $historical);
+    pocGroupVisible($b,'Распоряжение',['Дата распоряжения','02.10.2026','Версия','2','Подписанный оригинал','Ожидается'],'Example B exact current document facts');
     $eventGroup = pocGroupText($b, 'Последние события', 'Example B exact newest-three event tuples');
     $eventTuples = [
-        ['installation_opened','2026-10-03T08:15:30+03:00','18'],
-        ['assignment_order_registered','2026-10-02T15:10:00+03:00','18'],
-        ['assignment_order_prepared','2026-10-02T09:00:00+03:00','18'],
+        ['2026-10-03T08:15:30+03:00','Монтажные работы открыты','Сидоров Сергей Сергеевич'],
+        ['2026-10-02T15:10:00+03:00','Оригинал распоряжения применён','Сидоров Сергей Сергеевич'],
+        ['2026-10-02T09:00:00+03:00','Шаблон распоряжения сформирован','Сидоров Сергей Сергеевич'],
+        ['2026-10-01T08:00:00+03:00','older_hidden_event','Сидоров Сергей Сергеевич'],
     ];
     $offset = -1;
     foreach ($eventTuples as $tuple) foreach ($tuple as $field) { $position = strpos($eventGroup, $field, $offset + 1); assertSameValue(true, $position !== false && $position > $offset, 'Example B complete event tuple fields newest-first ' . implode(' / ', $tuple)); $offset = $position; }
-    foreach (['installation_opened','assignment_order_registered','assignment_order_prepared','2026-10-03T08:15:30+03:00','2026-10-02T15:10:00+03:00','2026-10-02T09:00:00+03:00'] as $field) assertSameValue(1, substr_count($eventGroup, $field), 'Example B event field cardinality ' . $field);
-    assertSameValue(3, substr_count($eventGroup, '18'), 'Example B actor ID occurs once in each of exactly three event rows');
-    assertSameValue(1, substr_count(pocVisible($b['body']), 'В работе'), 'Example B main status appears exactly once');
-    assertSameValue(1, substr_count(pocVisible($b['body']), 'Зарегистрировано в 1С ДО'), 'Example B document status appears exactly once and only in its semantic group');
+    foreach (['Монтажные работы открыты','Оригинал распоряжения применён','Шаблон распоряжения сформирован','older_hidden_event','2026-10-03T08:15:30+03:00','2026-10-02T15:10:00+03:00','2026-10-02T09:00:00+03:00','2026-10-01T08:00:00+03:00'] as $field) assertSameValue(1, substr_count($eventGroup, $field), 'Example B event field cardinality ' . $field);
+    $bDocument=pocDocument($b['body']);$bXpath=new DOMXPath($bDocument);assertSameValue(1,$bXpath->query("//header[contains(concat(' ',normalize-space(@class),' '),' fm2-object-identity ')]//*[contains(concat(' ',normalize-space(@class),' '),' fm2-object-badges ')]/span[contains(concat(' ',normalize-space(@class),' '),' shlz-status ') and normalize-space(.)='Монтажные работы']")->length,'Example B exact canonical status badge');
     $spoofed = pocParity($server['port'], '/pilot/objects/4512', ['X-Remote-User'=>'spoof@example.test','Remote-User'=>'spoof2@example.test']);
     pocSuccess($spoofed, ['No Capability Reader','Объект монтажа № 4512'], 'spoof headers ignored on otherwise successful card');
     foreach (['spoof@example.test','spoof2@example.test'] as $spoofPrincipal) assertSameValue(false, str_contains(pocVisible($spoofed['body']), $spoofPrincipal), 'spoof principal absent from successful card');
     foreach ([
-        4514=>['status'=>'Распоряжение подготовлено','team'=>['Ожидается номер 1С ДО','Петров Пётр Петрович','Инженер строительного контроля','2014','Предварительный Монтажник'],'work'=>['Работы ещё не открыты']],
-        4515=>['status'=>'Готов к открытию','team'=>['Распоряжение № 12-Р от 2026-10-01 · версия 1','Зарегистрировано в 1С ДО','Петров Пётр Петрович','2015','Готовый Монтажник'],'work'=>['Работы ещё не открыты']],
-        4516=>['status'=>'Требуется изменение','team'=>['Распоряжение № 13-Р от 2026-10-01 · версия 1','Зарегистрировано в 1С ДО','Петров Пётр Петрович','2016','Действующий Монтажник'],'work'=>['Фактическое начало 2026-10-04','Открыто: 2026-10-04T08:00:00+03:00','Чек-лист: Доступен']],
+        4514=>['status'=>'Требуется распоряжение','team'=>['Инженер стройконтроля','Не назначен','Предварительный Монтажник · таб. 2014 · Монтажник'],'document'=>['Дата распоряжения','01.10.2026','Версия','1','Подписанный оригинал','Ожидается'],'actual'=>['Фактическое начало','Не зафиксировано']],
+        4515=>['status'=>'Готов к открытию','team'=>['Инженер стройконтроля','Не назначен','Готовый Монтажник · таб. 2015 · Монтажник'],'document'=>['Дата распоряжения','01.10.2026','Версия','1','Подписанный оригинал','Ожидается'],'actual'=>['Фактическое начало','Не зафиксировано']],
+        4516=>['status'=>'Требуется изменение','team'=>['Инженер стройконтроля','Не назначен','Действующий Монтажник · таб. 2016 · Монтажник'],'document'=>['Дата распоряжения','01.10.2026','Версия','1','Подписанный оригинал','Ожидается'],'actual'=>['Фактическое начало','04.10.2026']],
     ] as $id=>$expected) {
         $state=pocRequest($server['port'],'GET','/pilot/objects/'.$id);
         pocSuccess($state,[$expected['status']],'state '.$id);
-        pocGroupVisible($state,'Распоряжение и команда',$expected['team'],'state '.$id.' exact current-basis/team consequence');
-        pocGroupVisible($state,'Работы',$expected['work'],'state '.$id.' exact checklist/opening consequence');
-        if ($id === 4514) assertSameValue(false,str_contains(pocGroupText($state,'Распоряжение и команда','prepared preliminary team'),'Зарегистрировано в 1С ДО'),'prepared state has no registered basis');
-        if ($id === 4515) assertSameValue(false,str_contains(pocGroupText($state,'Работы','ready closed checklist'),'Чек-лист: Доступен'),'ready state keeps checklist closed');
+        pocStructure($state,$id,false,'state '.$id.' required shared-shell DOM',$id===4516);
+        pocGroupVisible($state,'Команда объекта',$expected['team'],'state '.$id.' exact current team snapshots');
+        pocGroupVisible($state,'Распоряжение',$expected['document'],'state '.$id.' exact current document facts');
+        pocGroupVisible($state,'Сроки работ',$expected['actual'],'state '.$id.' exact current opening date');
+        if ($id === 4514) assertSameValue(false,str_contains(pocGroupText($state,'Распоряжение','prepared document'),'Зарегистрировано в 1С ДО'),'prepared state has no fictional registered basis');
+        if ($id === 4515) assertSameValue(false,str_contains(pocGroupText($state,'Сроки работ','ready closed dates'),'04.10.2026'),'ready state has no fictional actual start');
     }
 
     $escapeServer = pocStart(array_replace($environment, ['REMOTE_USER'=>'escape@shlz.ru']));
     $escaped = pocParity($escapeServer['port'], '/pilot/objects/4517');
-    pocSuccess($escaped,['Актор <script>actor-secret</script> &quot;','REG<&"-4517','Улица <img src=x onerror=object-secret> & "дом"','Подъезд <b>7</b>','Инженер <svg onload=engineer-secret> & "И"','9001','Альфа & <b>А</b>','9002','Монтажник <script>installer-secret</script> & "Б"'],'adversarial values remain exact visible text');
+    pocSuccess($escaped,['Актор <script>actor-secret</script> &quot;','Объект монтажа № 4517','Улица <img src=x onerror=object-secret> & "дом", подъезд <b>7</b>','Регистрационный номер REG<&"-4517','Альфа & <b>А</b> · таб. 9001 · Монтажник','Монтажник <script>installer-secret</script> & "Б" · таб. 9002 · Монтажник'],'adversarial values remain exact visible text');
     foreach (['<script>actor-secret</script>','<img src=x onerror=object-secret>','<svg onload=engineer-secret>','<script>installer-secret</script>','<b>А</b>'] as $rawMarkup) assertSameValue(false,str_contains($escaped['body'],$rawMarkup),'adversarial markup escaped '.$rawMarkup);
 
     foreach (['/pilot/objects/0','/pilot/objects/01','/pilot/objects/-1','/pilot/objects/+1','/pilot/objects/9223372036854775808','/pilot/objects/4512/','/pilot/objects//4512','/pilot/objects/4512/extra','/pilot/objects/%34%35%31%32','/pilot/objects/4512%2fextra','/pilot/objects/%204512','/pilot/objects/4512%20','/pilot/objects/%D9%A1','/pilot/objects/4512%5Cextra','/pilot/objects/./4512','/pilot/objects/4512/..','/pilot/objects/4512%00','/pilot/objects/%FF'] as $path) pocError(pocParity($server['port'],$path),404,"Not found.\n",'invalid route '.$path);
@@ -560,16 +761,16 @@ try {
     for($sample=0;$sample<3;$sample++) assertSameValue($availability[0],serialize(pocApplicationResponse(pocRequest($server['port'],'GET','/pilot/objects/4999'))),'repeated unknown nondisclosure sample '.$sample);
     foreach ([4610=>'unknown process state',4611=>'opening gate mismatch',4612=>'immutable snapshot mismatch',4613=>'cancelled current basis',4614=>'multiple current registered versions'] as $id=>$label) { pocError(pocParity($server['port'],'/pilot/objects/'.$id),503,"Service unavailable.\n",$label); pocAssertRequestResourcesReleased($server, $admin, $database, $readerUser, $css, $label . ' failure request scope'); }
     $durableEvents = pocRequest($server['port'],'GET','/pilot/objects/4620');
-    pocSuccess($durableEvents,['durable_newest','2024-01-01T00:00:00+03:00','durable_third','2025-01-01T00:00:00+03:00','durable_second','2026-01-01T00:00:00+03:00'],'durable append order is newest event id first despite timestamps');
-    assertSameValue(false,str_contains($durableEvents['body'],'durable_oldest'),'durable event limit excludes oldest id rather than newest timestamp');
+    pocSuccess($durableEvents,['2024-01-01T00:00:00+03:00','durable_newest','2025-01-01T00:00:00+03:00','durable_third','2026-01-01T00:00:00+03:00','durable_second','2099-12-31T23:59:59+03:00','durable_oldest'],'durable append order is newest event id first despite timestamps');
+    foreach(['durable_newest','durable_third','durable_second','durable_oldest']as$durableType)pocCountVisible($durableEvents,$durableType,1,'current five-row history retains durable event '.$durableType);
     foreach ([4621=>'blank engineer name',4622=>'blank engineer position',4623=>'nonpositive engineer id',4624=>'blank installer name',4625=>'blank installer position',4626=>'nonpositive installer id',4627=>'unexpected installer snapshot status',4628=>'blank event type',4629=>'invalid event RFC3339 timestamp',4630=>'nonpositive event actor id',4631=>'invalid opening RFC3339 timestamp',4632=>'higher cancelled version cannot fall back to older registered basis',4633=>'prepared order must have null registration number',4634=>'registered number must already be normalized'] as $id=>$label) pocError(pocParity($server['port'],'/pilot/objects/'.$id),503,"Service unavailable.\n",$label);
     $impossibleCalendarResponses = [];
     foreach ([4635=>'impossible calendar opening RFC3339 timestamp',4636=>'impossible calendar event RFC3339 timestamp'] as $id=>$label) $impossibleCalendarResponses[$label] = pocParity($server['port'],'/pilot/objects/'.$id);
     $validLeap = pocParity($server['port'],'/pilot/objects/4637');
-    pocSuccess($validLeap,['Объект монтажа № 4637','В работе','Фактическое начало 2024-02-29','Открыто: 2024-02-29T08:00:00+03:00','valid_leap_event','2024-02-29T08:30:00+03:00'],'valid leap-day opening and event timestamps remain successful');
+    pocSuccess($validLeap,['Объект монтажа № 4637','Монтажные работы','Открыть чек-лист','Фактическое начало','29.02.2024','2024-02-29T08:30:00+03:00','valid_leap_event'],'valid leap-day opening and event timestamps remain successful');
     assertSameValue([503,503],array_column(array_values($impossibleCalendarResponses),'status'),'both impossible calendar RFC3339 projections fail closed');
     foreach ($impossibleCalendarResponses as $label=>$response) pocError($response,503,"Service unavailable.\n",$label);
-    foreach (['Фактическое начало 2026-10-03','Открыто: 2026-10-03T08:15:30+03:00','Открыл пользователь: 18'] as $openingFact) pocCountVisible($b, $openingFact, 1, 'Example B opening facts occur only in Work group');
+    assertSameValue(1,$bXpath->query("//section[./h2[normalize-space(.)='Сроки работ']]//time[@datetime='2026-10-03' and normalize-space(.)='03.10.2026']")->length,'Example B actual-start fact belongs to exact dates panel');
     $invalidPrefix = pocStart(array_replace($environment,['FMONITOR_LEGACY_TABLE_PREFIX'=>'legacy_;DROP_TABLE_']));
     try { pocError(pocParity($invalidPrefix['port'],'/pilot/objects/4512'),503,"Service unavailable.\n",'invalid legacy table prefix fails closed before identifier use'); } finally { pocStop($invalidPrefix); }
     $repeatA=pocRequest($server['port'],'GET','/pilot/objects/4513'); $repeatB=pocRequest($server['port'],'GET','/pilot/objects/4513'); assertSameValue(pocResponseWithoutVolatileDate($repeatA),pocResponseWithoutVolatileDate($repeatB),'repeated committed reads deterministic except volatile SAPI Date');
@@ -585,7 +786,8 @@ try {
     pocStop($server); $server = null; $anonymous = pocStart(array_diff_key($environment, ['REMOTE_USER'=>true]));
     pocError(pocParity($anonymous['port'],'/pilot/objects/4512'),401,"Authentication required.\n",'missing identity precedes CSS DB and object reads');
     pocStop($anonymous); $anonymous = null;
-    foreach (['inactive@shlz.ru','role-inactive@shlz.ru','duplicate@shlz.ru'] as $principal) { $forbidden = pocStart(array_replace($environment, ['REMOTE_USER'=>$principal])); try { pocError(pocParity($forbidden['port'],'/pilot/objects/4512'),403,"Access denied.\n",'forbidden exact identity '.$principal); } finally { pocStop($forbidden); } }
+    foreach (['inactive@shlz.ru','duplicate@shlz.ru'] as $principal) { $forbidden = pocStart(array_replace($environment, ['REMOTE_USER'=>$principal])); try { pocError(pocParity($forbidden['port'],'/pilot/objects/4512'),403,"Access denied.\n",'forbidden exact identity '.$principal); } finally { pocStop($forbidden); } }
+    $localDirectoryWithoutRoleGrant=pocStart(array_replace($environment,['REMOTE_USER'=>'role-inactive@shlz.ru']));try{$localProfile=pocParity($localDirectoryWithoutRoleGrant['port'],'/pilot/objects/4512');pocSuccess($localProfile,['Inactive role','Объект монтажа № 4512'],'standalone native directory admission uses active local profile without route-capability inference');}finally{pocStop($localDirectoryWithoutRoleGrant);}
     $malformed = pocStart(array_replace($environment, ['REMOTE_USER'=>' reader@shlz.ru ']));
     try { pocError(pocRequest($malformed['port'],'GET','/pilot/objects/4512'),401,"Authentication required.\n",'malformed identity'); } finally { pocStop($malformed); }
     $brokenCss = array_replace($environment, ['FMONITOR_SHLZ_CSS_PATH'=>dirname($css).'/missing-shlz.css']);
@@ -601,10 +803,11 @@ try {
     assertSameValue($before, pocSnapshot($db), 'success HEAD 404 and 403 are observationally read-only');
     echo "PASS: PILOT-OBJECT-CARD-001 public HTTP card\n";
 } finally {
-    pocStop($server); pocStop($anonymous); pocStop($escapeServer);
+    pocStop($server); pocStop($capable); pocStop($permissionless); pocStop($crossSource); pocStop($anonymous); pocStop($escapeServer);
     if ($db instanceof mysqli) $db->close();
     $admin->query("DROP DATABASE IF EXISTS `{$database}`");
     $admin->query("DROP USER IF EXISTS `{$readerUser}`@`%`");
-    $admin->query("DROP USER IF EXISTS `{$userOnlyReader}`@`%`"); $admin->close();
+    $admin->query("DROP USER IF EXISTS `{$userOnlyReader}`@`%`");
+    $admin->query("DROP USER IF EXISTS `{$identityOnlyReader}`@`%`"); $admin->close();
     if($ownership!==[])TaskOwnedArtifactRoot::cleanup($ownership,'poc',$token);
 }

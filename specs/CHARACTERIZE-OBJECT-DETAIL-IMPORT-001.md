@@ -1,13 +1,26 @@
-# CHARACTERIZE-OBJECT-DETAIL-IMPORT-001 v0.1
+# CHARACTERIZE-OBJECT-DETAIL-IMPORT-001 v0.2
 
 Status: `DRAFT / OWNER_APPROVAL_REQUIRED` for Gate 1. This is an explicitly
 `PILOT_ONLY` characterization of the current rapid-pilot operator importer. It
 does not approve production-linked test data, target import semantics, runtime
 DDL, premium rules, quarantine lifecycle, authorization or concurrency.
 
-Technical consistency: `READY_FOR_OWNER_REVIEW` on 2026-09-01 after read-only
+Historical v0.1 technical consistency: `READY_FOR_OWNER_REVIEW` on 2026-09-01 after read-only
 review by fresh separately tasked agent `object_detail_gate1_consistency_v3`.
 This is not product-owner approval.
+
+Текущий v0.2: `TECHNICAL_REVIEW_PENDING / OWNER_APPROVAL_REQUIRED`.
+Authority review: `docs/operations/object-detail-import-authority-reconciliation-review-2026-09-05.md`.
+Уже утверждённый перенос таблиц не пересогласуется; exact serial regression
+oracle требует отдельного Gate 1. Предыдущие review относятся к прежним hashes.
+
+## Простыми словами
+
+Проверка запускает настоящий importer только на вымышленных данных в отдельном
+одноразовом сервере MariaDB. Она доказывает сохранение результата, повторов и
+отказов при удалении создания таблиц из importer. Таблицы заранее создаёт
+штатный migration owner. Эта проверка не наполняет тестовый портал и не
+утверждает правила обработки реальных данных или спорных переходов quarantine.
 
 ## Actor and intent
 
@@ -21,8 +34,13 @@ HTTP authorization, CSRF boundary or audit event exists in this slice.
 
 - Stable future verifier entry point:
   `php tests/Verification/characterize_object_detail_import_001_test.php`.
-- Every behavioral action SHALL run the real child process
-  `php rapid-pilot/import-production-object-details.php --captured-at=<value> --page-size=1 --apply`.
+- Every behavioral action SHALL run the real child process with one exact argv:
+  apply — `php rapid-pilot/import-production-object-details.php --captured-at=<value> --page-size=1 --apply`;
+  dry-run — `php rapid-pilot/import-production-object-details.php --captured-at=<value> --page-size=1`.
+  Clean/replay/conflict/source-rejection serial scenarios use apply. The schema
+  refusal matrix runs each case once with each argv form; dry-run preservation
+  uses only the second form. Capture is the first fixed value except serial
+  replay, which uses the repeat value.
 - The child SHALL receive a private active-generation manifest, a private
   synthetic legacy-source database, the real target generation guard and the
   literal local-pilot acknowledgement through environment inputs.
@@ -88,15 +106,19 @@ its fixed SHA-256 is
 2. The run derives target SQL prefix `odci_<token>_`, private source database
    `fm2_odci_<token>`, and exact artifact child `object-detail-<token>` below the
    validated root. It owns only the exact source tables, target fixture tables
-   and artifact files enumerated by the Gate 2 test. Wildcard discovery or
+   and artifact files enumerated below. Wildcard discovery or
    cleanup is forbidden.
 3. Before mutation the test SHALL refuse any occupied exact owned SQL name,
    source database or artifact child. It SHALL NOT reuse, repair, truncate,
    rename, drop or inspect rows in an occupied namespace.
-4. The test SHALL precreate the current exact details/quarantine tables and
-   fingerprint every target fixture structure before each CLI call. Runtime
-   `CREATE TABLE IF NOT EXISTS` remains observed debt, not approved ownership;
-   this slice neither removes it nor accepts structural drift.
+4. The test SHALL precreate details/quarantine through public
+   `ObjectDetailSnapshotSchemaMigration::apply` v12 and independently fingerprint
+   every target fixture structure before each CLI call. Exact schema is defined
+   by approved `OBJECT-DETAIL-SNAPSHOT-SCHEMA-001` v0.4, including database-default
+   collation. Test code SHALL NOT duplicate family CREATE DDL. Test-only negative
+   fixtures may remove an exact owned member or introduce the drift below.
+   Runtime `CREATE TABLE IF NOT EXISTS` remains debt until the separately reviewed
+   schema-transfer correction removes it; no drift is accepted.
 5. Each child execution SHALL leave independently observable process evidence:
    exact argv/exit status, stdout/stderr, target full-row snapshots and schema
    fingerprints. Exit status or a verifier-authored summary alone is
@@ -113,6 +135,105 @@ its fixed SHA-256 is
 
 Generated tokens, prefixes, database/table names, paths, process ids, credentials,
 SQL and stack traces SHALL NOT enter normalized stdout.
+
+### Private server and privilege contract
+
+Каждый run создаёт собственный disposable MariaDB container с именем
+`fm2-odci-<token>` и label `fmonitor2.object-detail-token=<token>`, без bind mounts,
+production credentials или persistent/shared volumes. Используется локально
+доступный MariaDB image по immutable image ID, записанному в private run evidence;
+подмена tag во время run невозможна. Имя container и artifact child должны быть
+свободны до создания. Target — только `fmonitor2_demo` внутри этого нового
+container; source — `fm2_odci_<token>` внутри того же private server. Host port
+назначается Docker на `127.0.0.1`; connection endpoint сверяется с exact container
+ID/label/port до создания SQL fixtures. Подключение к shared `fmonitor2_demo`
+или существующему test-db server в этом verifier запрещено.
+
+Generation sentinel содержит singleton 1, generation 1, fingerprint 64 ASCII
+`a`, manifest_nonce 64 ASCII `b`. Private manifest повторяет эти значения,
+`processPrefix=odci_<token>_`, exact target endpoint и фактический `@@hostname`.
+Существующий generation guard остаётся включённым. Synthetic setup включает
+только named source tables `fm_fields`, `fm_view_fields`, `fm_fields_values`,
+`fm_maintable`, target cases/sentinel, v12 family и один unrelated SQL decoy.
+
+Source child principal имеет только SELECT на четыре exact source tables.
+Target child principal имеет только SELECT на exact cases/sentinel/family/decoy
+и INSERT на две family tables; CREATE/ALTER/DROP/UPDATE/DELETE отсутствуют.
+Metadata inspection поддерживается table SELECT. Setup проверяет CURRENT_USER
+и SHOW GRANTS отдельными соединениями; роли/global schema grants запрещены,
+кроме USAGE. Privileged setup connection не передаётся importer.
+Private evidence сохраняет exact child exit/stdout/stderr и independent snapshots;
+секреты не включаются в argv или вывод. Cleanup закрывает connections, reap-ит
+children, проверяет ID/label и удаляет только собственный container, затем только
+перечисленные artifact files/child directory. Общий parent и decoys сохраняются.
+Любая ошибка proof/cleanup — SETUP_FAILURE либо REGRESSION_FAILURE, никогда skip.
+
+### Exact artifact inventory and deadlines
+
+Единственный file в `object-detail-<token>` — `manifest.json` (0600); child
+directory имеет 0700. Все argv/exit/stdout/stderr, schema/rows/grants snapshots,
+image/container IDs и assertion evidence хранятся в памяти verifier и проверяются
+до cleanup; отдельные transcript/snapshot/credential files не создаются.
+«Сохраняет evidence» здесь означает наблюдаемое test-side evidence во время run,
+а не оставленный dump после успешного завершения. Durable Gate records содержат
+только normalized result, команды, exact code/spec hashes и safe failure category.
+Meta-test заранее создаёт ambient `ambient-decoy.txt` в artifact root с exact
+ASCII bytes `OBJECT_DETAIL_AMBIENT_DECOY` плюс LF. Verifier проверяет его до и
+после run, не изменяет/удаляет и отказывается при несовпадении. Meta-test удаляет
+свой decoy только после обоих runs и после проверки его identity/bytes; общий
+root не удаляется. Дополнительные artifact files запрещены.
+
+Все deadlines используют monotonic clock: Docker inspect/create/start/port и
+обычные admin CLI operations — 30 seconds на process; server health readiness —
+90 seconds от start; каждый importer child — 20 seconds; listener control —
+2 seconds. Child stdout/stderr имеют отдельный ceiling 256 KiB, весь verifier —
+300 seconds на один token. Для cleanup SIGTERM grace 2 seconds, затем SIGKILL
+и reap deadline 3 seconds; каждый exact Docker remove/absence proof — 30 seconds.
+Ни один timeout не допускает бесконечного ожидания; cleanup использует свой
+bounded budget после истечения behavioral deadline. Startup/readiness/control
+timeout — SETUP_FAILURE. Importer timeout/output overflow после healthy fixture
+— REGRESSION_FAILURE. Ошибка terminate/reap/container/artifact cleanup —
+SETUP_FAILURE с сохранением ранее установленной regression classification в
+safe stderr (при наличии regression exit остаётся 1, иначе 2). При незавершённом
+cleanup success запрещён. Test-side SQL connections задают connect timeout
+5 seconds; внешний child deadline ограничивает importer SQL calls без изменения
+его existing connection API.
+
+### Schema precondition and no-DDL regression axis
+
+Этот axis конкретизирует уже утверждённый runtime boundary schema v0.4. В обоих
+режимах apply и dry-run, после успешного generation guard, но до source connection
+и target DML importer требует полную exact v12 family через read-only public
+`ObjectDetailSnapshotSchemaMigration::isCompleteCompatible`.
+Absent, incompatible или unavailable inspection даёт exit `2`, stdout ровно
+`{"ok":false,"reason":"OBJECT_DETAIL_SCHEMA_REQUIRED"}` плюс LF, stderr пуст.
+Отказ не создаёт/исправляет schema, не пишет rows и не подключается к source.
+Существующие ошибки arguments/generation остаются вне нового mapping.
+
+Независимые cases, каждый в apply и dry-run: absent details; absent quarantine;
+details `captured_at VARCHAR(41) NOT NULL` при exact sibling; quarantine
+`captured_at VARCHAR(41) NOT NULL` при exact sibling. Перед каждым вызовом
+сохраняется полная schema/row snapshot, после — byte-equivalent snapshot.
+Никаких present/missing source transitions этим не утверждается.
+
+Zero source connection доказывается собственным loopback TCP listener, чей
+bound ephemeral port передаётся в source env. Listener готов до child; остаётся
+listening до exit/reap child, затем nonblocking accept подтверждает пустую queue.
+Отдельный положительный setup probe устанавливает connection к тому же listener,
+которую observer принимает и закрывает до behavioral call. Невозможность
+доказать listener/child state — SETUP_FAILURE. Случайная задержка/сон не oracle.
+
+Все clean/replay/conflict/source-rejection cases ниже выполняются с указанным
+DDL-denied child principal. Перед schema-transfer GREEN отдельный qualifying RED
+MUST показать отказ реального importer из-за его CREATE на exact migrated family
+либо нарушение exact pre-source refusal; отсутствие будущего verifier само по
+себе не является RED для удаления production DDL.
+
+Dry-run на clean exact fixture имеет exit 0, stderr пуст, stdout ровно
+`{"mode":"dry-run","activeCases":2,"sourceRows":1,"missingSource":1,"schemaVersion":"technical-object-detail-v1","writes":0}`
+плюс LF; rows/schema остаются прежними. Он также не выполняет DDL.
+Normalized milestone перед final CHARACTERIZATION_OK:
+`OBJECT_DETAIL_IMPORT schema-precondition modes=2 cases=4 source_connections=0 ddl_privileges=0 dry_run_writes=0`.
 
 ## Clean accepted detail and missing-source quarantine
 
@@ -214,8 +335,9 @@ acceptance assertion.
   quarantine resolution/history/retention; actor/run audit; target authorization;
   semantic/range validation; consumer hash verification; production cutover and
   privacy; premium meaning; additional fields including `lift_type`.
-- Separate schema-ownership slice: exact production DDL, DDL-denied importer,
-  missing/incompatible schema precondition and removal of runtime DDL.
+- Separate schema-ownership implementation: exact production DDL and removal
+  of runtime DDL. The approved shared regression axis above supplies its
+  DDL-denied/precondition proof without changing serial DML semantics.
 
 GRILL-004 blocks only population/provenance of the first test-user contour. It
 does not block these private fictional fixtures and this characterization does
@@ -223,8 +345,8 @@ not authorize copying production identifiers or data.
 
 ## Stable transcript
 
-Normalized stdout SHALL contain the four milestone lines above in specification
-order followed by exactly:
+Normalized stdout SHALL contain the four serial milestone lines above in
+specification order, then the schema-precondition milestone, followed by exactly:
 
 `CHARACTERIZATION_OK CHARACTERIZE-OBJECT-DETAIL-IMPORT-001`
 
@@ -253,7 +375,7 @@ Gate 2 RED by themselves. Expected first focused command:
 The slice is done only after every mandatory gate in
 `docs/development-process.md` completes:
 
-1. this exact v0.1 contract receives explicit owner `APPROVED` for Gate 1;
+1. this exact v0.2 contract receives explicit owner `APPROVED` for Gate 1;
 2. focused intended RED is demonstrated for the missing executable oracle;
 3. a fresh separately tasked test reviewer records `APPROVED`, pinning spec,
    test and expected-transcript hashes but not future verifier implementation;
@@ -263,7 +385,9 @@ The slice is done only after every mandatory gate in
    `make verify` introduce no new regression;
 6. a different fresh code reviewer records `APPROVED` and pins verifier hash.
 
-Done does not change importer, consumer, product behavior or production schema;
+Done does not redesign importer serial DML, consumer or product behavior;
+the shared no-DDL/precondition axis is implemented under the separate approved
+schema-transfer change and receives its own demonstrated RED and reviews.
 does not approve any excluded/UNKNOWN behavior; and does not authorize test-data
 population. This draft completes task 1.1 only after consistency review; RED is
 forbidden until task 1.2 owner approval is durably recorded.

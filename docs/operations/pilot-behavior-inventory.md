@@ -220,3 +220,20 @@
 ## Read-only capabilities
 
 Object queue/filtering (`rapid-pilot/ObjectQueue.php`, `verify-object-queue-filters.php`), calendar (`rapid-pilot/Calendar.php`, `verify-calendar-projections.php`), construction-control queue (`app/PilotHttp/ConstructionControlView.php`), installer directory (`app/PilotHttp/InstallerDirectoryView.php`, `verify-installer-directory-pagination.php`) and OTIZ history/export are projections. They consume owned facts; they do not become bounded contexts or own state transitions.
+
+## PB-14 — hourly Bitrix workforce sync (characterization 2026-09-07)
+
+- **Mission:** получить полный кадровый снимок и публиковать current catalog/history.
+- **Status:** `UNKNOWN / PREDECESSOR_ONLY` для точного поведения adapter; не executable approval и не целевой writer.
+- **Actor / intent:** CLI cron с внешним Bitrix config и DB credentials.
+- **Preconditions:** parsed config с baseUrl/departments, ровно один active manifest, существующая workforce schema.
+- **State change / facts:** script сам вставляет started run, material observations, upsert catalog, missing reconciliation, completed/failed run и metadata; собственного native application seam нет.
+- **Observable result:** JSON counts/runId; при failure PHP exception. В этом проходе script не запускался: это read-only code characterization.
+- **Rejected cases:** HTTP!=200, malformed result, empty normalized catalog, duplicate tab/name/position/person errors; full total/next consistency и bounded pagination source не проверяет.
+- **Authorization:** внешний webhook +DB principal; exact native system application authorization ещё не определена этим adapter.
+- **Idempotency / concurrency:** новый random runId каждый запуск; named run lock, stored terminal replay и explicit unknown-commit recovery не обнаружены.
+- **Source:** `rapid-pilot/hourly-bitrix-workforce.php`, SHA256 `0ce1cb3b62418d64aeb05f8bba8a52cc6605011e75a1b5768df1f8f218c6e212`, inspected at HEAD eec882f274902c3d4842aa73d4665411b0a855aa.
+- **Verifier:** native executable delivery/normalization/publication tests отсутствуют; `BITRIX-WORKFORCE-HISTORY-001` явно EPIC/NOT EXECUTABLE, schema-only gates не доказывают sync.
+- **Tables:** `fm2_workforce_catalog`, `fm2_workforce_observations`, `fm2_workforce_sync_runs`, `fm2_workforce_sync_metadata`.
+- **Target context:** Workforce ingestion/publication owning application; thin scheduled adapter после отдельных gates.
+- **Known contradiction:** `employed_from` на первом upsert получает день sync, а не source employment date; контракт требует null для неизвестного. Native selection при этом требует date-string. Новый вопрос владельцу об unknown-start eligibility задан, ответа ещё нет; фиктивная дата не является допустимым решением.

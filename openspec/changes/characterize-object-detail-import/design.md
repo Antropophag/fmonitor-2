@@ -11,13 +11,14 @@ apply сейчас выполняет DDL до transactional DML.
 
 - Executable serial oracle через настоящий CLI child process.
 - Independently calculated payload/hash/count assertions и full-family snapshots.
-- Private source database plus isolated target generation/prefix across two DB
-  connections, deterministic rerun и bounded cleanup.
+- Новый disposable MariaDB server на каждый run, private source и target
+  `fmonitor2_demo` с isolated generation/prefix, deterministic rerun и cleanup.
 - Canonical characterization-stage integration без изменения importer.
 
 **Non-Goals:**
 
-- Canonical migration, DDL-denied importer и schema compatibility RED.
+- Реализация canonical migration и production no-DDL correction (принадлежит
+  `canonicalize-object-detail-snapshot-schema`, использующему shared RED oracle).
 - Target application module или product command: actor остаётся operator.
 - Concurrent race, transitions, reconciliation, integrity hardening и cutover.
 
@@ -31,10 +32,12 @@ implementation не докажет wiring, guard и transaction boundary.
 
 ### 2. Harness owns fixtures, importer remains untouched
 
-Test setup создаёт минимальные legacy metadata/dictionary/main tables, guarded
-target generation/cases и текущую exact object-detail family. Это допустимый
-test DDL owner; runtime DDL не считается одобренным и удаляется в следующем
-schema-ownership slice.
+Test setup создаёт минимальные synthetic metadata/dictionary/main tables и guarded
+target generation/cases. Family создаётся только public v12 migration owner;
+duplicate family CREATE в harness запрещён. Negative fixtures удаляют exact
+member либо меняют captured_at на VARCHAR(41), как в v0.2 spec. Importer child
+получает только exact SELECT/INSERT grants; privileged setup principal отделён.
+Runtime DDL удаляется отдельно gated schema-ownership fix.
 
 ### 3. Expected evidence is independently constructed
 
@@ -59,15 +62,16 @@ test-owned random identifiers, не behavioral values.
 
 Verification code владеет только oracle fixtures и зависит от public CLI/DB
 contracts. Rapid-pilot остаётся observed strangler adapter; application modules
-и consumers не меняются. Architecture baseline не должен расти: production DDL,
-SQL ownership и rapid-pilot mutation counts остаются прежними.
+и consumers не меняются. Architecture baseline не должен расти. Его уменьшение
+принадлежит schema-transfer change после фактического удаления двух CREATE.
 
 ## Risks / Trade-offs
 
 - [Fixture accidentally reproduces importer logic] → literal worked example и
   independent hash construction reviewed before GREEN.
-- [Auto-committed runtime DDL pollutes failure evidence] → precreate exact family,
-  fingerprint it and clean private namespace; DDL denial deferred explicitly.
+- [Auto-committed runtime DDL pollutes failure evidence] → canonical precreate,
+  DDL-denied child, full independent snapshots; no-DDL RED обязателен отдельно
+  от missing-verifier meta-test.
 - [Failure leaks schema artifacts] → collision refusal plus `finally` cleanup and
   second clean run.
 - [Exception text varies] → pin stable domain category/token and exit outcome,
@@ -83,6 +87,13 @@ SQL ownership и rapid-pilot mutation counts остаются прежними.
 3. Implement only verifier/runner registration, then run focused and canonical
    characterization suites twice.
 4. Run architecture/regression verification and obtain fresh Gate 5 review.
+
+Shared axis v0.2 требует apply/dry-run exact family precondition после generation
+guard и до source connection/DML. Refusal: exit 2, fixed JSON
+OBJECT_DETAIL_SCHEMA_REQUIRED, empty stderr. Zero source access наблюдается
+готовым owned loopback listener с independently proven control connection.
+Точный protocol, bounded execution/cleanup следуют executable spec. Serial
+cases идут под DDL-denied principal; engine GREEN не закрывает этот oracle.
 
 Rollback removes verifier registration and test-only files; production importer,
 schema and data are unchanged by this characterization slice.

@@ -33,11 +33,12 @@ renderer создаёт disabled item «Моя работа» для всех ca
    navigation landmark exact visible/accessibility label и root destination/
    current marker. Это ловит hidden duplicate, переименование и icon-only
    замену. Другие links/content route `/pilot/` вне navigation не запрещаются.
-3. **Configured route set фиксирован контрактом.** Root и по одному успешному
-   representation каждого перечисленного family доказывают единый renderer;
-   GET/HEAD, minimal/broad actor, repeat/zero-write проверяются без нового
-   authorization owner. Альтернатива — один renderer unit probe — не доказывает
-   canonical HTTP wiring всех callers.
+3. **Deep renderer seam плюс HTTP sentinels.** Exhaustive renderer oracle
+   проверяет все десять current-state representations, exact siblings,
+   accessibility и icon bytes. Root и object-list дают canonical HTTP/GET/HEAD/
+   RBAC/zero-write sentinels; existing route-specific HTTP tests доказывают
+   wiring остальных callers. Восемь дополнительных DB/server fixture stacks
+   отклонены как дублирующий setup без новой наблюдаемой гарантии.
 4. **Transport поведение наследуется и остаётся отдельным oracle.** Existing
    suites сохраняют exact `/pilot` redirect и `401/403/404/405/503` status,
    body и application-controlled headers. Navigation RED не создаёт собственную
@@ -62,8 +63,9 @@ renderer создаёт disabled item «Моя работа» для всех ca
 
 1. Получить fresh independent Gate 1 review этого exact planning/executable
    contract и explicit owner approval reviewed hashes.
-2. Написать focused public HTTP/DOM RED и получить fresh independent test
-   approval до production edit.
+2. Написать exhaustive shared-renderer DOM RED, подтвердить root/object-list
+   HTTP sentinels и existing route-specific wiring tests, затем получить fresh
+   independent test approval до production edit.
 3. Удалить item только в shared presentation composition и получить focused
    GREEN; затем обновить downstream object-list predecessor assertion без
    ослабления RBAC matrix.

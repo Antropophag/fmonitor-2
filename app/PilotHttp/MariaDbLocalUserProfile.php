@@ -21,6 +21,14 @@ final readonly class MariaDbLocalUserProfile
         $statement->execute();
         $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         if (\count($rows) !== 1 || \trim((string) $rows[0]['full_name']) === '') return null;
-        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email']);
+        return new HttpUser((int) $rows[0]['user_id'], (string) $rows[0]['full_name'], (string) $rows[0]['email'], AccessPolicy::forUser($this->connection,$this->tablePrefix,(int)$rows[0]['user_id']));
+    }
+    public function readPrincipal(string $principal): ?HttpUser
+    {
+        if($principal===''||\strlen($principal)>300)return null;$table=$this->tablePrefix.'fm2_pilot_users';
+        $statement=$this->connection->prepare("SELECT user_id,full_name,email FROM `{$table}` WHERE BINARY email=BINARY ? AND status=1 AND BINARY activation_state=BINARY 'active' LIMIT 2");
+        $statement->bind_param('s',$principal);$statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        if(\count($rows)!==1||\trim((string)$rows[0]['full_name'])==='')return null;
+        return new HttpUser((int)$rows[0]['user_id'],(string)$rows[0]['full_name'],(string)$rows[0]['email'],AccessPolicy::forUser($this->connection,$this->tablePrefix,(int)$rows[0]['user_id']));
     }
 }

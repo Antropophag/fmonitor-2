@@ -76,6 +76,14 @@ change остаётся `BLOCKED_PREDECESSORS`.
    вызывает seed; `rapid-pilot` не получает новую fixture/domain ownership;
    canonical migrations не seed-ят rows. Existing debt baseline не расширяется.
 
+8. **Golden path использует owner-approved original workflow.** Fictional
+   объект начинается до выбора распоряжения; пользователь выбирает состав,
+   может сформировать шаблон, загружает synthetic PDF через real public HTTP
+   seam и отдельно открывает работы. Для direct-upload parity используется
+   отдельный eligible объект либо новая чистая generation. Upload не создаёт
+   opening/composition facts. Seed не формирует original revisions прямым SQL
+   и не переводит дело в `registered` для облегчения теста.
+
 ## Risks / Trade-offs
 
 - [Exact identity/access schema ещё меняется] → держать role/table literals вне
@@ -102,6 +110,9 @@ change остаётся `BLOCKED_PREDECESSORS`.
 2. Создать executable `TEST-USER-FIXTURE-SEED-001` с literal manifest,
    independent fingerprints, secret/redaction contract, public seams и reset
    target matrix; получить owner approval.
+   Golden-path acceptance дополнительно ждёт original command/HTTP,
+   composition applicability и opening-by-original с их Gates 1–5; статус
+   каждого predecessor устанавливается по exact evidence, не по имени change.
 3. Свежий RED-author доказывает missing seed-once/restart/reset behavior; другой
    свежий reviewer утверждает тест до production changes.
 4. Реализовать minimal setup owner/adapter, не меняя domain semantics; сделать

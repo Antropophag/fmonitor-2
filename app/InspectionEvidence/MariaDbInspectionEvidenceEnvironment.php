@@ -13,11 +13,11 @@ final class MariaDbInspectionEvidenceEnvironment
     private readonly MariaDbInspectionEvidenceWriter $writer;
     private readonly MariaDbInspectionEvidenceReader $reader;
 
-    public function __construct(\mysqli $db, string $prefix, private readonly InspectionEvidenceClock $clock)
+    public function __construct(\mysqli $db, string $prefix, private readonly InspectionEvidenceClock $clock, ?array $appliedComposition = null)
     {
         $this->auth = new MariaDbInspectionAuthorization($db, $prefix);
         $this->tx = new MariaDbInspectionTransaction($db, $prefix);
-        $this->cases = new MariaDbInspectionCaseDirectory($db, $prefix);
+        $this->cases = new MariaDbInspectionCaseDirectory($db, $prefix, $appliedComposition);
         $this->templates = new MariaDbInspectionTemplateDirectory($db, $prefix);
         $this->writer = new MariaDbInspectionEvidenceWriter($db, $prefix, $this->cases);
         $this->reader = new MariaDbInspectionEvidenceReader($db, $prefix);
@@ -35,7 +35,7 @@ final class MariaDbInspectionEvidenceEnvironment
 
     public function beginCommand(int $id): void
     {
-        $this->tx->begin($id);
+        $this->tx->begin($id,fn():string=>$this->now());
     }
 
     public function commitCommand(): void

@@ -29,8 +29,9 @@ password/RBAC, production volume data migration.
    Tombstone unlink is same-lock bounded GC, not rollback/security success.
 5. Both LocalAuth and UserAccessView depend on adapter; architecture rejects
    `session_save_path/session_start` elsewhere and hardcoded session paths.
-6. Router retains static-asset/outer Host/URI priority. Unknown non-assets retain
-   predecessor auth behavior.
+6. Router retains static-asset/outer Host/URI priority. Unknown `/pilot/*`
+   routes resolve to inherited 404 before session/config/auth; only known
+   login-required routes may redirect to `/pilot/login`.
 7. Production never cleans roots. Tests use task-owned roots/processes and
    attempt-all finally cleanup; Compose restart verifier uses persistent volume
    and fixed clock below GC lifetime.
@@ -88,6 +89,15 @@ password/RBAC, production volume data migration.
     bootstrap path. Its explicit `createWithSessionStorageDependencies` sibling
     builds the same graph for verifier-owned raw HTTP with only the four ports
     replaced; no environment/request/Compose value can select it.
+12. A successful `start` result is the sole owner-to-HTTP handoff for committed
+    session bytes. `ownerStarted` accepts the current ID and exact opaque
+    payload (empty for a new session), and `sessionPayload()` is non-null only
+    for that result. The HTTP adapter decodes this in memory; it cannot reopen
+    the committed path or invoke native session loading. The adapter uses one
+    bounded whole-array PHP `serialize` codec with classes disabled on decode;
+    malformed or unsafe shapes fail before application dispatch as exact
+    `PAYLOAD_INVALID`/503. Payload is secret material and is excluded from
+    events, logs, inspection and error responses.
 
 Owning module — IdentityAccess session infrastructure. HTTP buffers/maps typed
 results; domain modules/rapid-pilot do not own filesystem policy.
@@ -107,7 +117,7 @@ results; domain modules/rapid-pilot do not own filesystem policy.
 ## Migration Plan
 
 Amended Gate 1 exact handler/file-lock/stage-tombstone-rename plus public
-factory/ports/events/results/inspector PHP signatures → fresh independent
+factory/ports/events/results/session-payload handoff/inspector PHP signatures → fresh independent
 review and fresh exact-hash owner approval →
 replacement RED per primitive/crash phase through the real owner → independent
 test review → adapter + both consumers + Compose config → host/image/restart/

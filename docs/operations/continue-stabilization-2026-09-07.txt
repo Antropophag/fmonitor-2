@@ -1,0 +1,11 @@
+Продолжай автономную стабилизацию FMonitor 2.0 до VERIFY_OK в /Users/antropophag/code/fmonitor-2.
+
+Сначала прочитай AGENTS.md, docs/operations/current-delivery-goal.md и полностью docs/operations/restart-handoff-stabilization-2026-09-07.md. Затем PRODUCT.md, CONTEXT.md, pilot spec/data model и development-process по правилам проекта. Проверь persistent goal: существующую ACTIVE цель не заменяй и не завершай ради checkpoint.
+
+Рабочий стенд source6aa39aa healthy на http://127.0.0.1:8092/pilot/objects. Последующие b662e1e/67667cf и closing docs не означают новый deployment. В worktree сохранены незавершённые UI tests, protected E2E и photo migration19/frontier consumers; не делай reset/checkout/clean поверх них. Private WIP backup указан в handoff. Все прежние test processes остановлены, полный verify6aa39aa завершился FAIL4 stages; старые session30319/PID52546 не возобновлять.
+
+Продолжить: standalone card verifier, current protected E2E browser fixture, supplemental/code review photo19, review/run16current-frontier consumers (есть один пропущенный expected18 в original-attempt-audit test). List/shell и photo focused checks уже GREEN. После focused GREEN и независимых reviews — commit кандидата, подготовленный vendor/TCPDF6.11.4, полный exact-SHA make verify. Не запускать весь прогон заново до устранения известных причин.
+
+Все сабагенты model gpt-5.6-sol / reasoning low / fork none; распараллеливай независимую работу, автор не рецензирует себя. Сохраняй различие native public/router и rapid adapter: фильтры50/page и root / redirect принадлежат rapid; /pilot/ остается compatibility200. Не возвращай старый UI или ручной номер/применение состава ради тестов. Уточнённый flow original+confirmation→card→explicit open_confirmed должен сохраняться.
+
+Object966 — реальные данные владельца, только read-only. Headless Playwright, без окон владельца. История/оригиналы/очереди/volumes сохраняются, секреты вне repo. CI publication до первого literal VERIFY_OK, PR10 merge, real Bitrix/import ограничения не отменены. Новые features/address enrichment — backlog. Цель остаётся ACTIVE до полного доказанного результата.

@@ -113,7 +113,7 @@ function iesState(mysqli $db, string $prefix): array
     return $state;
 }
 
-function iesAssertFinal(mysqli $db, string $prefix): void
+function iesAssertFinal(mysqli $db, string $prefix, bool $currentContentIndex = false): void
 {
     $expected = [
         'fm2_checklist_revisions' => [
@@ -134,6 +134,14 @@ function iesAssertFinal(mysqli $db, string $prefix): void
         ],
     ];
     $state = iesState($db, $prefix);
+    if ($currentContentIndex) {
+        // Only full-current-runner callers use v19; direct v8 fixtures remain unchanged.
+        $expected['fm2_checklist_photos']['indexes'] = array_map(
+            static fn(string $index):string => str_starts_with($index, 'installation_case_id|0|')
+                ? 'installation_case_id|1|' . substr($index, strlen('installation_case_id|0|')) : $index,
+            $expected['fm2_checklist_photos']['indexes'],
+        );
+    }
     foreach ($expected as $base => $manifest) {
         $actual = $state[$prefix . $base];
         $columns = array_map(static fn(array $c): string => implode('|', [$c['COLUMN_NAME'],$c['COLUMN_TYPE'],$c['IS_NULLABLE'],$c['COLUMN_DEFAULT'] === null ? 'NULL' : (string)$c['COLUMN_DEFAULT'],$c['EXTRA'],$c['IS_GENERATED'],$c['GENERATION_EXPRESSION'] === null ? 'NULL' : (string)$c['GENERATION_EXPRESSION']]), $actual['columns']);
@@ -301,19 +309,22 @@ try {
     assertSameValue('', $runner['stderr'], 'Canonical runner setup keeps stderr empty.');
     $runnerResult = json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR);
     assertSameValue([1,2,3,4,5,6,7], array_slice($runnerResult['appliedVersions'], 0, 7), 'Landed prerequisites v1-v7 must apply before inspection evidence.');
-    assertSameValue(11, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v11 after proven v1-v7.');
-    assertSameValue([1,2,3,4,5,6,7,8,9,10,11], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
+    assertSameValue(19, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v19 after proven v1-v7.');
+    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
     iesAssertRuntimeDoesNotOwnDdl();
 
     $db = new mysqli($host, $user, $password, $database, $port); $db->set_charset('utf8mb4');
-    iesAssertFinal($db, '');
+    iesAssertFinal($db, '', true);
     $db->query("INSERT INTO fm2_checklist_revisions VALUES(1,9,'sentinel')");
     $db->query("INSERT INTO fm2_checklist_operations VALUES(41,1,'55555555-5555-4555-8555-555555555555','66666666-6666-4666-8666-666666666666','item_completed',1,1,2,'d','s',8,9,'{}',NULL,NULL,NULL)");
     $db->query("INSERT INTO fm2_checklist_photos VALUES(51,1,1,'77777777-7777-4777-8777-777777777777','".str_repeat('a',64)."','image/png',4,'a.png','a.bin',2,'d','s',NULL)");
     $db->query('ALTER TABLE fm2_checklist_operations AUTO_INCREMENT=90');$db->query('ALTER TABLE fm2_checklist_photos AUTO_INCREMENT=100');
     $before = iesState($db, '');
-    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion'=>11,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
-    assertSameValue(['applied'=>false,'schemaVersion'=>8,'tablesCreated'=>[],'tablesUpgraded'=>[]], iesApply($db, ''), 'G2-02 direct seam exact repeat is a no-op.');
+    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion' => 19,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
+    assertSameValue(['applied'=>false,'schemaVersion'=>8,'reason'=>'SCHEMA_MIGRATION_CONFLICT','conflictingTables'=>['fm2_checklist_photos']], iesApply($db, ''), 'Literal v8 does not relabel the v19 content index as historical v8.');
+    assertSameValue(true, iesApply($db, 'v8_repeat_')['applied'], 'Dedicated literal v8 fixture is created.');
+    assertSameValue(['applied'=>false,'schemaVersion'=>8,'tablesCreated'=>[],'tablesUpgraded'=>[]], iesApply($db, 'v8_repeat_'), 'G2-02 historical direct v8 repeat remains a no-op.');
+    iesAssertFinal($db, 'v8_repeat_');
     assertSameValue($before, iesState($db, ''), 'G2-02 repeat preserves metadata, rows and allocators.');
     $db->query('DROP TABLE fm2_pilot_completion_fact_corrections');$db->query('DROP TABLE fm2_pilot_completion_facts');
 
@@ -346,7 +357,7 @@ try {
     assertSameValue(true, iesApply($db, 'target_')['applied'], 'G2-16 exact target prefix applies independently.');
     assertSameValue($decoy, iesState($db, 'decoy_'), 'G2-16 decoy family is byte-identical.');
     iesAssertFinal($db, 'target_');
-    $prefix25=str_repeat('a',25);$prefixRun=iesRunRunner($database,$prefix25);assertSameValue(0,$prefixRun['exitCode'],'G2-11 25-byte prefix accepted.');iesAssertFinal($db,$prefix25);
+    $prefix25=str_repeat('a',25);$prefixRun=iesRunRunner($database,$prefix25);assertSameValue(0,$prefixRun['exitCode'],'G2-11 25-byte prefix accepted.');iesAssertFinal($db,$prefix25,true);
     $prefix26=iesRunRunner($database,str_repeat('b',26),true);assertSameValue(['exitCode'=>64,'stdout'=>"{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n",'stderr'=>''],$prefix26,'G2-11 26-byte prefix rejected before deliberately unreachable DB access.');
 
     iesAssertRuntimePreconditions($db,$host,$port,$database);

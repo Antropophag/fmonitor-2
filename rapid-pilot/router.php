@@ -10,8 +10,9 @@ require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
 require_once __DIR__ . '/CompletionFlow.php';
 require_once __DIR__ . '/InspectionSchedule.php';
-require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
-$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
+require_once __DIR__ . '/FileTypeAsset.php';
+if(getenv('FMONITOR_LIVE_CLOCK')==='1')putenv('FMONITOR_NOW='.(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM));$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
 if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
     http_response_code(400);
@@ -68,9 +69,10 @@ if ($path === '/pilot/assets/shlz-icons.svg') {
     echo $bytes;
     exit;
 }
+if (is_string($path) && RapidPilotFileTypeAsset::matches($path)) RapidPilotFileTypeAsset::handle($path);
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
-    $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'files/file-pdf-default.svg' : 'interface/download.svg';
-    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/normalized/' . $icon);
+    $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'file-types/file-pdf-default.svg' : 'icons/download.svg';
+    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/' . $icon);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -99,16 +101,10 @@ if ($path === '/pilot/assets/shlz-behaviors.js') {
     echo $bytes;
     exit;
 }
-if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|users|control-queue|navigation)\.js$#D', $path, $script) === 1) {
+if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|selection-picker|users|control-queue|navigation|original-upload)\.js$#D', $path, $script) === 1) {
     $filename = $script[1] . '.js';
     $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }
-    if ($filename === 'checklist.js') {
-        $broken = 'request.onerror=()=>{paintSync("error","Локальное хранилище недоступно");restoreSection()}';
-        $fixed = 'request.onerror=()=>{paintSync("error","Локальное хранилище недоступно");render();restoreSection()}';
-        if (substr_count($bytes, $broken) !== 1) { http_response_code(503); exit; }
-        $bytes = str_replace($broken, $fixed, $bytes);
-    }
     if ($filename === 'users.js') $bytes = str_replace("(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))", "(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))||(filter==='uf-invited'&&row.classList.contains('fm2-user-row--invited'))", $bytes);
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -210,7 +206,7 @@ if (is_string($path) && str_starts_with($path, '/pilot/assets/')) {
     echo "Not found.\n";
     exit;
 }
-try {
+\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotCompletionFlow::blocksLegacyCompletion((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path)||RapidPilotOtiz::matches((string)$path));try {
     (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
 } catch (Throwable) {
     $body = "Service unavailable.\n";
@@ -263,7 +259,7 @@ if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
 }
 $entrypoint = require dirname(__DIR__) . '/app/PilotHttp/production-entrypoint.php';
 
-$response = $entrypoint->handle($_SERVER);
+$originalFormHead = ($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' && is_string($path) && preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/submit$#D', $path) === 1; $response = $entrypoint->handle($originalFormHead ? array_replace($_SERVER, ['REQUEST_METHOD'=>'GET']) : $_SERVER);
 if ($path === '/pilot/admin/users/invite') $response = RapidPilotUserAccessView::invitationResponse($response);
 $body = $response->body;
 $headers = $response->headers;
@@ -271,7 +267,7 @@ if ($response->status === 200 && is_string($path) && str_starts_with((string) ($
     $body = RapidPilotUserAccessView::enhance($body, $path);
     $body = RapidPilotObjectDetails::enhance($body, $path);
     if (preg_match('#^/pilot/objects/([1-9][0-9]*)$#D', $path, $completionCard) === 1) $body = RapidPilotCompletionFlow::enhanceCard($body, (int) $completionCard[1]);
-    if (preg_match('#^/pilot/objects/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
+    if (preg_match('#^/pilot/(?:objects|construction-control/objects)/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
     $body = RapidPilotCompletionFlow::paintStatuses($body);
     if ($path === '/pilot/construction-control') $body = RapidPilotInspectionSchedule::enhanceControl($body);
     $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);
@@ -283,4 +279,4 @@ http_response_code($response->status);
 header_remove('X-Powered-By');
 header_remove('Server');
 foreach ($headers as $name => $value) header($name . ': ' . $value);
-echo $body;
+if (!$originalFormHead) echo $body;

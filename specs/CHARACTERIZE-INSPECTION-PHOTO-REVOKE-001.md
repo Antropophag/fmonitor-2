@@ -1,6 +1,6 @@
-# CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 v0.1
+# CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 v0.2
 
-Status: approved by the TEST-USER-READY pilot-behavior-inventory mission for Gate 1. This is an explicitly `PILOT_ONLY` executable characterization contract for the observed rapid-pilot revoke and identical-content re-upload behavior. It is not product-owner approval of target revoke authorization, reason or confirmation requirements, completion correction, re-upload policy, blob retention, concurrency semantics, or user-visible messages.
+Status: v0.1 was approved as `PILOT_ONLY` evidence of the observed SQL uniqueness failure. That historical milestone remains recorded below but is superseded for active verification by the owner's later `APPROVED_PERMANENT_RETENTION` decision GRILL-007. Version 0.2 changes only identical-content re-upload to the approved target outcome; upload, revoke, replay and already-revoked behavior retain their prior characterization. Updated tests require fresh independent Gate 3 review before implementation.
 
 ## Actor and intent
 
@@ -17,7 +17,7 @@ A discovery/test agent needs a deterministic oracle proving how the rapid pilot 
 
 1. The caller SHALL supply `FMONITOR_PHOTO_REVOKE_VERIFY_RUN_TOKEN` as exactly 12 lowercase hexadecimal characters. The verifier exclusively owns SQL prefix `photo_revoke_<token>_` and storage child `photo-revoke-<token>` beneath the exact `FMONITOR_PHOTO_REVOKE_VERIFY_ARTIFACT_ROOT`. It SHALL reject an occupied owned SQL or storage namespace before mutation, SHALL never discover, mutate or clean another valid token's namespace, and SHALL use no fallback or sibling location. `/tmp` is forbidden.
 2. The verifier SHALL create the exact verification-only schema and fixture rows directly. It SHALL NOT invoke `ChecklistSync::ensureSchema` or any production runtime DDL path.
-3. The fixture contains one unique `working` installation case at revision `0`, one immutable template association effective before both commands, section `3`, and fixed actor, canonical client/device UUIDs, operation UUIDs, device times and injected server-receipt times. The upload and revoke use different operation UUIDs. The fresh already-revoked attempt and identical-content re-upload each use another different operation UUID.
+3. The fixture contains one unique `working` installation case at revision `0`, one immutable template association effective before both commands, section `3`, and fixed actor, canonical client/device UUIDs, operation UUIDs, device times and injected server-receipt times. The upload and revoke use different operation UUIDs. The fresh already-revoked attempt, identical-content re-upload and active-identical duplicate probe each use another different operation UUID.
 4. The accepted-upload input is the independently fixed literal 1x1 PNG used by `CHARACTERIZE-INSPECTION-PHOTO-UPLOAD-001`:
    - base64: `iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=`
    - decoded byte size: `68`
@@ -71,43 +71,43 @@ Stable milestone: `PHOTO_REVOKE already-revoked rejected revision=2 active=0 mut
 
 Exact rejection copy is presentation-only and SHALL NOT be asserted.
 
-### Identical-content re-upload throws the observed SQL uniqueness failure
+### Identical-content re-upload is accepted as a new retained fact
 
 - **GIVEN** the same committed revision-`2` state and retained fixed-hash blob
 - **AND** a new `photo_uploaded` envelope uses a fresh client operation UUID but the same case, section, fixed PNG bytes, MIME, size, original name and SHA-256
 - **WHEN** it is submitted through `ChecklistSync::accept(...)`
-- **THEN** the public seam throws the observed MariaDB integrity-constraint exception classified by SQLSTATE `23000` and vendor error code `1062`
-- **AND** the assertion SHALL NOT depend on an environment-generated constraint/index name or translated exception message
-- **AND** projection remains revision `2` with no active photos
-- **AND** no operation, photo row, revision or other database fact is added or changed
-- **AND** exactly one owned blob remains with the same fixed SHA-256
+- **THEN** the public seam returns `accepted` revision `3` without SQL exception
+- **AND** projection reports revision `3` with exactly one active section-3 photo whose photo id and upload operation id differ from the revoked photo
+- **AND** SQL audit proves exactly two photo rows: the entire first row remains byte-identical to the post-revoke snapshot, and the second has the new upload identity with the same content metadata/storage name
+- **AND** operation history contains exactly three facts ordered by accepted revision: original `photo_uploaded`, `photo_revoked`, new `photo_uploaded`
+- **AND** exactly one owned physical blob remains with the same fixed SHA-256
 
-Stable milestone: `PHOTO_REVOKE identical-reupload sql-unique-violation revision=2 active=0 mutations=0 blobs=1`.
+Stable milestone: `PHOTO_REVOKE identical-reupload accepted revision=3 active=1 photo_rows=2 revoked_rows=1 operations=3 blobs=1`.
 
-This is an observed pilot failure, not approval to reject identical bytes in the target product. GRILL-007 owns the target revoke, re-upload and retention decisions.
+Historical v0.1 milestone `PHOTO_REVOKE identical-reupload sql-unique-violation revision=2 active=0 mutations=0 blobs=1` remains provenance of the predecessor defect and is not an active success expectation. GRILL-007 authorizes the v0.2 target result and permanent retention.
 
 ## Transcript contract
 
 Normalized stdout SHALL contain the four stable milestones above in specification order, each terminated by LF, followed by exactly one terminal line:
 
-`CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 transcript_sha256=60f1a4c65be2a4cedd05f170b243d34283560f480f37a2965fec7aeadd62b784`
+`CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 transcript_sha256=09b498760d9ed265d35372bdd6630e1959bb3073abf2ac2692ef0371d0ccfe0c`
 
-The transcript SHA-256 is independently the hash of the four milestone lines, each terminated by LF, in the order shown. No token, UUID, path, table or constraint name, volatile row id, timestamp, exception text or translated pilot message may appear in normalized stdout.
+The v0.2 transcript SHA-256 is independently the hash of the four active milestone lines, each terminated by LF, in the order shown. The v0.1 transcript hash `60f1a4c65be2a4cedd05f170b243d34283560f480f37a2965fec7aeadd62b784` remains historical provenance only. No token, UUID, path, table or constraint name, volatile row id, timestamp, exception text or translated pilot message may appear in normalized stdout.
 
 ## Classification boundaries
 
-- `PILOT_ONLY`, characterized here and not promoted: accepted revision `2` for this exact upload/revoke sequence; mutable `revoked_at`; the current operation payload shape; sequential duplicate classification; new-operation already-revoked rejection; unconditional SQL uniqueness failure on identical-content re-upload; retained content-addressed blob; hard-coded section `3`; stale-base handling; exact persistence schema and exact messages.
-- `PRODUCT_ACCEPTED`, inherited context only: only current photo evidence contributes to readiness; original accepted evidence and audit history must not be silently erased; state-changing inspection evidence belongs behind an explicit application seam. This characterization uses the temporary public `ChecklistSync` oracle and does not define the target command contract.
-- `UNKNOWN` and excluded: who may revoke; current-assignment and supervisor rules; mandatory reason and confirmation; what happens when the last active photo of an already completed section is revoked; whether identical bytes may be uploaded again as a new fact; revoked-blob retention/deletion; queued revoke after reassignment; correction/undo behavior.
-- Also excluded: exact target authorization, HTTP/CSRF behavior, last-photo completion consistency, concurrent exact replay, concurrent different-operation revoke, target re-upload policy, target blob-retention approval, UI local-hide behavior, captions/image dimensions, numeric photo limit and exact user-visible messages.
+- `PILOT_ONLY`, characterized here and not promoted: accepted revision `2` for this exact upload/revoke sequence; mutable `revoked_at`; the current operation payload shape; sequential duplicate classification; new-operation already-revoked rejection; hard-coded section `3`; stale-base handling; exact persistence schema and exact messages. The v0.1 SQL uniqueness failure remains historical evidence, not an active requirement.
+- `PRODUCT_ACCEPTED`: only current photo evidence contributes to readiness; original accepted/revoked evidence and audit history must not be silently erased; identical bytes after revoke create a new evidence identity while one content-addressed blob may be reused; active and revoked evidence/blobs have permanent retention; state-changing inspection evidence belongs behind an explicit application seam. Authorization remains governed by GRILL-007 and existing upload/revoke contracts.
+- `UNKNOWN` and excluded: supervisor readiness-correction command details, queued revoke after reassignment and correction/undo behavior beyond GRILL-007.
+- Also excluded: HTTP/CSRF presentation changes, concurrent exact revoke replay, concurrent different-operation revoke, UI local-hide behavior, captions/image dimensions, numeric photo limit and exact user-visible messages. Same-case concurrent identical upload and authorization preservation belong to the target slice rather than this deterministic sequential transcript.
 
 ## Failure classification
 
 - `SETUP_FAILURE` with exit `2`: unavailable MariaDB or storage root; invalid/missing environment; occupied owned namespace detected before mutation; verification schema/fixture construction failure; inability to create/read the fixed fixture blob; or cleanup infrastructure failure before a behavioral assertion can be evaluated.
 - Qualifying Gate 2 `RED`: the focused verifier/meta-test is absent, or the healthy isolated oracle violates one exact acceptance statement in this specification.
-- `REGRESSION_FAILURE` with exit `1`: unexpected result/exception classification or revision; projection/SQL/blob/history mismatch; failed zero-mutation fingerprint; nondeterministic transcript; owned namespace leak; or decoy damage.
+- `REGRESSION_FAILURE` with exit `1`: unexpected result/exception classification or revision; any SQL exception in identical re-upload; projection/SQL/blob/history mismatch; failed required immutable-row or zero-mutation fingerprint; nondeterministic transcript; owned namespace leak; or decoy damage.
 
-Environment/setup failure SHALL never be reported as RED or as a rapid-pilot behavior regression. The expected MariaDB uniqueness exception in the final scenario is a characterized behavioral result and SHALL be caught by the verifier; it is not setup failure.
+Environment/setup failure SHALL never be reported as RED or as a rapid-pilot behavior regression. The predecessor MariaDB uniqueness exception is no longer expected; on v0.2 canonical schema it is `REGRESSION_FAILURE`.
 
 ## RED evidence required for Gate 2
 
@@ -121,4 +121,4 @@ The qualifying RED must fail because this focused verifier/expectation is absent
 
 This slice is done only after every mandatory gate in `docs/development-process.md` completes: this Gate 1 contract remains approved under the pilot-behavior-inventory mission; intended focused RED is demonstrated; a fresh separately tasked test reviewer records `APPROVED`; minimal verifier/meta-test GREEN proves all four milestones, deterministic replay, SQL/blob/history fingerprints, exact cleanup and decoy preservation; existing photo upload, rejection, limit/concurrency and checklist characterizations remain green; `make architecture-check`, relevant regression, `make verify` and diff checks introduce no new regression; and a fresh separately tasked code reviewer records `APPROVED`.
 
-Done does not implement or approve target `InspectionRecording::revokePhoto`, target authorization, reason/confirmation, completion correction, re-upload policy, blob retention, concurrency behavior, production schema or UI behavior. This v0.1 file completes characterization Gate 1 only.
+Done does not implement supervisor correction, change upload/revoke authorization, weaken reason/confirmation, or approve UI behavior. Version 0.2 advances only after updated tests receive independent Gate 3 approval, canonical schema and target behavior are GREEN, relevant regressions/architecture pass, and independent code review approves exact artifacts.

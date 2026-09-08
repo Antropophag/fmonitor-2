@@ -54,8 +54,14 @@ run_files() {
   fi
 }
 
+command -v rg >/dev/null || fail SETUP_FAILURE "required command unavailable: rg"
+
+for required_directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification; do
+  test -d "$required_directory" || fail SETUP_FAILURE "missing verification directory: $required_directory"
+done
 unit_files=()
 db_files=()
+node_files=()
 while IFS= read -r file; do
   if rg -q 'FMONITOR_TEST_DB|new mysqli' "$file"; then
     db_files+=("$file")
@@ -63,16 +69,55 @@ while IFS= read -r file; do
     unit_files+=("$file")
   fi
 done < <(find tests/InstallationProcess -maxdepth 1 -type f -name '*test.php' -print | sort)
+while IFS= read -r file; do
+  case "$file" in
+    tests/AssignmentOrderComposition/selection_command_outcomes_001_test.php|tests/AssignmentOrderComposition/selection_command_recovery_001_test.php|tests/AssignmentOrderComposition/selection_command_tracer_001_test.php)
+      unit_files+=("$file") ;;
+    *) db_files+=("$file") ;;
+  esac
+done < <(find tests/AssignmentOrderComposition -maxdepth 1 -type f -name '*test.php' -print | LC_ALL=C sort)
+while IFS= read -r file; do node_files+=("$file"); done \
+  < <(find tests/Verification -maxdepth 1 -type f -name '*_test.mjs' -print | LC_ALL=C sort)
+# Bash 3.2 with nounset requires guarded expansion for declared empty arrays.
+sorted_files=()
+while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${unit_files[@]+"${unit_files[@]}"} | LC_ALL=C sort)
+unit_files=(${sorted_files[@]+"${sorted_files[@]}"}); sorted_files=()
+while IFS= read -r file; do test -z "$file" || sorted_files+=("$file"); done < <(printf '%s\n' ${db_files[@]+"${db_files[@]}"} | LC_ALL=C sort)
+db_files=(${sorted_files[@]+"${sorted_files[@]}"})
+
+if [[ "${1:-}" == list ]]; then
+  test "$#" -eq 2 || fail SETUP_FAILURE "usage: tools/verification/run.sh list unit|db"
+  case "$2" in
+    unit)
+      for file in ${unit_files[@]+"${unit_files[@]}"}; do printf 'php\t%s\n' "$file"; done
+      for file in ${node_files[@]+"${node_files[@]}"}; do printf 'node\t%s\n' "$file"; done ;;
+    db) for file in ${db_files[@]+"${db_files[@]}"}; do printf 'php\t%s\n' "$file"; done ;;
+    *) fail SETUP_FAILURE "unknown list suite '$2'; expected unit|db" ;;
+  esac
+  exit 0
+fi
+
 
 case "${1:-}" in
   unit)
-    run_files "${unit_files[@]}"
+    unit_failed=0
+    (run_files ${unit_files[@]+"${unit_files[@]}"}) || unit_failed=1
+    for file in ${node_files[@]+"${node_files[@]}"}; do
+      printf 'VERIFY %s\n' "$file"
+      if ! node "$file"; then
+        printf 'REGRESSION_FAILURE: %s\n' "$file" >&2
+        unit_failed=1
+      fi
+    done
+    if ((unit_failed)); then fail REGRESSION_FAILURE "unit suite failures"; fi
     ;;
   db)
     require_db
-    run_files "${db_files[@]}"
+    run_files ${db_files[@]+"${db_files[@]}"}
     ;;
   characterization)
+    python3 tests/Verification/pilot_healthcheck_cookie_failure_001_test.py || fail REGRESSION_FAILURE "healthcheck cookie persistence"
+    python3 tests/Verification/pilot_healthcheck_session_001_test.py || fail REGRESSION_FAILURE "healthcheck session lifecycle"
     run_files \
       rapid-pilot/verify-auth-hot-path.php \
       rapid-pilot/verify-calendar-projections.php \
@@ -86,6 +131,7 @@ case "${1:-}" in
       rapid-pilot/verify-deployment-contract.php \
       rapid-pilot/verify-focus-contract.php \
       rapid-pilot/verify-object-queue-filters.php \
+      tests/Verification/characterize_object_detail_import_001_test.php \
       tests/Verification/harness_otiz_canonical_compat_001_test.php \
       rapid-pilot/verify-premium-calculation.php \
       rapid-pilot/verify-visual-contract.php
@@ -106,6 +152,6 @@ case "${1:-}" in
     printf 'RED_ASSERTION: expected failing behavior observed in %s\n' "$2"
     ;;
   *)
-    fail SETUP_FAILURE "unknown suite '${1:-}'; expected unit|db|characterization|e2e|lint|red"
+    fail SETUP_FAILURE "unknown suite '${1:-}'; expected unit|db|characterization|e2e|lint|red|list"
     ;;
 esac

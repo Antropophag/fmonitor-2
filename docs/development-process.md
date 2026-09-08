@@ -1,6 +1,17 @@
 # SSD + TDD delivery process
 
-This is the mandatory path from a product decision to merged FMonitor 2.0 code. SSD means Specification-Driven Development.
+## Current owner-authorized delivery mode —2026-09-07
+
+Read [current delivery goal](operations/current-delivery-goal.md) before choosing
+work or verification. For the manual-test pilot due2026-09-07 22:00Europe/Moscow,
+that newer owner decision overrides the sequential full-gate prerequisite below.
+Implement the working user flow, perform focused checks of ordinary behavior,
+authorization and history preservation, deliver the stand, then fix manual feedback.
+Rare-case matrices and full architectural migration follow that feedback. Existing
+gates remain recorded; deferred work is not approved or complete by implication.
+The full process below remains the standard for final production integration.
+
+The following is the normal path from a product decision to production-integrated FMonitor 2.0 code, subject to the explicit owner-authorized manual-pilot mode above. SSD means Specification-Driven Development.
 
 ## OpenSpec lifecycle
 

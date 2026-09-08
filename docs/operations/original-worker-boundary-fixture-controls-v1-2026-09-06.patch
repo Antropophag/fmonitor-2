@@ -1,0 +1,20 @@
+--- a/tests/Support/AssignmentOrderOriginalIntegrityWorker.php
++++ b/tests/Support/AssignmentOrderOriginalIntegrityWorker.php
+@@ -9,7 +9,7 @@
+     private mixed $process=null;private array $pairs=[];private array $pipes=[];private bool $released=false;
+     private array $buffers=['ready'=>'','result'=>'','stdout'=>'','stderr'=>''];private ?int $exit=null;
+     private int $started;
+-    public function __construct(OriginalIntegrityDatabase $fixture,array $command,array $changes=[])
++    public function __construct(OriginalIntegrityDatabase $fixture,array $command,array $changes=[],bool $keepCommandOpen=false,bool $sendCommand=true)
+     {
+         $this->started=hrtime(true);$this->request=$command['requestId'];
+         $config=['databaseDsn'=>"host={$fixture->host};port={$fixture->port};database={$fixture->database};charset=utf8mb4",'databaseUser'=>$fixture->user,'databasePasswordFile'=>$fixture->passwordFile,'tablePrefix'=>$fixture->prefix,
+@@ -23,7 +23,7 @@
+             if(!is_resource($this->process))throw new \RuntimeException('SETUP_FAILURE: worker child');
+             foreach($this->pairs as $pair)fclose($pair[1]);
+             $input=json_encode($command,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\n";
+-            if(fwrite($this->pairs[0][0],$input)!==strlen($input))throw new \RuntimeException('SETUP_FAILURE: worker command write');stream_socket_shutdown($this->pairs[0][0],STREAM_SHUT_WR);
++            if($sendCommand&&fwrite($this->pairs[0][0],$input)!==strlen($input))throw new \RuntimeException('SETUP_FAILURE: worker command write');if(!$keepCommandOpen)stream_socket_shutdown($this->pairs[0][0],STREAM_SHUT_WR);
+             foreach($this->channels() as $channel)stream_set_blocking($channel,false);
+         }catch(\Throwable $e){$this->stop();throw $e;}
+     }

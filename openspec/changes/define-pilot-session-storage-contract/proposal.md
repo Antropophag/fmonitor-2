@@ -46,10 +46,12 @@ multi-instance isolation и session write failures не имеют общего 
   implementations, а verifier детерминированно доказывает exit `65`
   и `70` без env/request/argv dependency selector.
 - Публичный immutable result DTO является единственным machine-readable
-  результатом операций, а read-only Compose inspector показывает canonical
+  результатом операций и для successful `start` передаёт HTTP adapter-у
+  прочитанный opaque session payload; adapter не читает session filesystem
+  напрямую. Read-only Compose inspector показывает canonical
   metadata/digests volume под стабильными SHA-256 ключами полных basename, не
   раскрывая literal basename/session ID и не выполняя mutation.
-- Сохранить approved cookie/CSRF/redirect/session-ID/GC semantics и route priority.
+- Сохранить approved cookie/CSRF/session-ID/GC semantics и уточнить route priority: любой неизвестный `/pilot/*` возвращает `404` до session/config/auth; `303 /pilot/login` применяется только к известным login-required маршрутам.
 - **Actor:** anonymous/authenticated browser and deployment operator. **Source
   oracle:** both current session owners, Compose volume, CSP login verifier.
   **Target seam:** local-auth/user-access HTTP exchange + configured storage

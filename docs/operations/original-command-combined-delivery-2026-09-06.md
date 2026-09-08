@@ -1,0 +1,7 @@
+# Combined original-command delivery — 2026-09-06
+
+Combined Gate5v2 APPROVED на360db9a2f863de117fb0ef2e2fd93c2b79832fa8. Review reviews/code/ASSIGNMENT-ORDER-ORIGINAL-COMBINED-001-v2.md. Approved body теперь включает command/persistence/recovery/audit/PDF/storage/maintenance/evidence/worker-port/fixture и3worker boundary corrections.
+
+Clean52checks на8e3825b всеPASS, но Gate5v1 выявил3реальных пробела. WORKER-BOUNDARYv01 получилGate1,13case RED1PASS12FAIL с exact helper-only controls получилGate3. GREEN360db9a: child EOF/barrier5s, pre-command full config metadata, pure encoder<=16384 beforewrite. Все12affected checksPASS clean exactSHA, evidence74cb69b3bd8f038e3856c2e439d06508e190983e16fd7a2380e87d6a10009efa. Неизменённые компоненты не прогонялись повторно без причины: retained52-check manifest3d72656fe0ffb7e4b435a864f2d895999010475b3293598e43c92e5e654f3dbc.
+
+Worker correction limit20мин/200k от961533; наблюдение1039480=+77947 до final review/records, не final cost. Combined review package до этого961533-900514=61019 в180k. Full VERIFY_OK отсутствует, задачиintegration/Done открыты, никаких push/deploy/PR изменений. Дальше criticalpath: selection обеmodes +registry/schema/source/render/cutover, HTTP, composition application и отдельное opening, fictional bootstrap/goldenpath, full exactSHA VERIFY_OK/CI/clean deploy/restart и ноль launch blockers. Deadline09-09 09:00МСК, riskHIGH. Persistent goal ACTIVE без token budget.

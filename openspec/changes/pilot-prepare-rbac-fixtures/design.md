@@ -74,7 +74,13 @@ protocol, PDF renderer или production persistence.
    DB/process/artifact/session/file mutation,
    а также application admission до authorization/domain/form work. Он не
    заявляет, что transport не читал body, и не вводит hidden
-   request-body observation seam.
+    request-body observation seam.
+7. **Upload-first GET не становится upload command.** Fixture проверяет
+   presentation v0.2, но GET/HEAD остаётся read-only. Installer picker имеет
+   exact six-field inert-record schema, fail-closed parser и bounded
+   keyboard/ARIA/DOM-only contract; engineer остаётся selectable radio
+   с explicit confirmation по product truth. File, CSRF, multipart и submit
+   принадлежат отдельной command composition.
 
 Owning production area — PilotHttp route composition, вызывающая stable
 IdentityAccess authorization seam before existing process-capability/form read.

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__).'/app/autoload.php';
 require_once dirname(__DIR__).'/app/PilotHttp/PilotHttp.php';
 require_once dirname(__DIR__).'/app/PilotHttp/ChecklistSync.php';
 require_once dirname(__DIR__).'/app/InstallationProcess/DatabaseUnavailable.php';

@@ -20,6 +20,18 @@ final class MariaDbProcessUserDirectory
     public function actorCanConfirmOrderRegistration(int $actorId): bool { return $this->has($actorId, 'assignment_order.confirm_registration'); }
     public function actorCanOpenInstallation(int $actorId): bool { return $this->has($actorId, 'installation.open'); }
 
+    /** @return array{id:int,name:string,email:string}|null */
+    public function findActiveLegacyIdentity(string $principal): ?array
+    {
+        $users = $this->legacyTablePrefix . 'users'; $roles = $this->legacyTablePrefix . 'users_roles';
+        $statement = $this->connection->prepare("SELECT u.id,u.name,u.email FROM `{$users}` u JOIN `{$roles}` r ON r.id=u.role_id WHERE BINARY u.email=BINARY ? AND u.status=1 AND r.status=1 LIMIT 2");
+        $statement->bind_param('s', $principal); $statement->execute(); $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        if (\count($rows) !== 1) return null; $row = $rows[0];
+        $id = \filter_var($row['id'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+        if ($id === false || \trim((string) $row['name']) === '' || $row['email'] !== $principal) return null;
+        return ['id'=>(int) $id,'name'=>(string) $row['name'],'email'=>(string) $row['email']];
+    }
+
     public function actorCanReadAssignmentOrderArtifact(int $actorId): bool
     {
         if ($this->usesLocalRoles()) return $this->hasLocalPermission($actorId, 'assignment_order_artifact.read');

@@ -10,9 +10,9 @@ $source = file_get_contents($sourcePath);
 if (!is_string($source)) throw new RuntimeException('Bootstrap source unavailable');
 
 $required = [
-    '$processPrefix = \'fm2d_\' . $fingerprint . \'_g\' . $generation . \'_\';' => '$processPrefix = (string) getenv(\'FMONITOR_BOOTSTRAP_PROCESS_PREFIX\');',
-    '$legacyPrefix = \'fm2l_\' . $fingerprint . \'_g\' . $generation . \'_\';' => '$legacyPrefix = (string) getenv(\'FMONITOR_BOOTSTRAP_LEGACY_PREFIX\');',
-    '$db = new mysqli(\'127.0.0.1\', \'fmonitor2_demo\', \'fmonitor2_demo_local\', \'fmonitor2_demo\', 23306);' => '$db = new mysqli((string) getenv(\'FMONITOR_DB_HOST\'), (string) getenv(\'FMONITOR_DB_USER\'), (string) getenv(\'FMONITOR_DB_PASSWORD\'), (string) getenv(\'FMONITOR_DB_NAME\'), (int) getenv(\'FMONITOR_DB_PORT\'));',
+    '$prefix=(string)(getenv(\'FMONITOR_BOOTSTRAP_PROCESS_PREFIX\')?:$defaultPrefix);' => '$prefix=(string)(getenv(\'FMONITOR_BOOTSTRAP_PROCESS_PREFIX\')?:$defaultPrefix);',
+    '$legacy=(string)(getenv(\'FMONITOR_BOOTSTRAP_LEGACY_PREFIX\')?:$prefix);' => '$legacy=(string)(getenv(\'FMONITOR_BOOTSTRAP_LEGACY_PREFIX\')?:$prefix);',
+    '$cfg=[\'host\'=>(string)(getenv(\'FMONITOR_DB_HOST\')?:\'127.0.0.1\'),\'port\'=>(int)(getenv(\'FMONITOR_DB_PORT\')?:23306),\'name\'=>(string)(getenv(\'FMONITOR_DB_NAME\')?:\'fmonitor2_demo\'),\'user\'=>(string)(getenv(\'FMONITOR_DB_USER\')?:\'fmonitor2_demo\'),\'password\'=>(string)(getenv(\'FMONITOR_DB_PASSWORD\')?:\'\')];' => '$cfg=[\'host\'=>(string)(getenv(\'FMONITOR_DB_HOST\')?:\'127.0.0.1\'),\'port\'=>(int)(getenv(\'FMONITOR_DB_PORT\')?:23306),\'name\'=>(string)(getenv(\'FMONITOR_DB_NAME\')?:\'fmonitor2_demo\'),\'user\'=>(string)(getenv(\'FMONITOR_DB_USER\')?:\'fmonitor2_demo\'),\'password\'=>(string)(getenv(\'FMONITOR_DB_PASSWORD\')?:\'\')];',
 ];
 foreach ($required as $needle => $replacement) {
     if (substr_count($source, $needle) !== 1) throw new RuntimeException('Bootstrap configuration seam changed');

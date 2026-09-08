@@ -1,44 +1,6 @@
 <?php declare(strict_types=1);
 namespace FMonitor2\PilotHttp;
-
-final class MariaDbPilotUserDirectory
-{
-    public function __construct(private readonly \mysqli $db, private readonly string $prefix) {}
-
-    public function read(): array
-    {
-        try {
-            $users=$this->db->query("SELECT user_id,full_name,email,phone,status,activation_state,source_updated_at FROM `{$this->prefix}fm2_pilot_users` ORDER BY status DESC,full_name,user_id")->fetch_all(MYSQLI_ASSOC);
-            $roles=$this->db->query("SELECT r.role_id,r.code,r.name,r.status,r.source_updated_at,COUNT(ur.user_id) user_count FROM `{$this->prefix}fm2_pilot_roles` r LEFT JOIN `{$this->prefix}fm2_pilot_user_roles` ur ON ur.role_id=r.role_id GROUP BY r.role_id,r.code,r.name,r.status,r.source_updated_at ORDER BY r.status DESC,r.name,r.role_id")->fetch_all(MYSQLI_ASSOC);
-            $assignments=$this->db->query("SELECT ur.user_id,ur.role_id,r.name,r.status FROM `{$this->prefix}fm2_pilot_user_roles` ur JOIN `{$this->prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id ORDER BY r.name,r.role_id")->fetch_all(MYSQLI_ASSOC);
-        } catch (\Throwable $error) { throw new PilotHttpInfrastructureUnavailable('',0,$error); }
-        $byUser=[];foreach($assignments as$row)$byUser[(int)$row['user_id']][]=['id'=>(int)$row['role_id'],'name'=>(string)$row['name'],'active'=>(int)$row['status']===1];
-        $normalizedUsers=[];foreach($users as$row)$normalizedUsers[]=['id'=>(int)$row['user_id'],'name'=>(string)$row['full_name'],'email'=>(string)$row['email'],'phone'=>(string)$row['phone'],'active'=>(int)$row['status']===1&&$row['activation_state']==='active','updatedAt'=>(string)$row['source_updated_at'],'roles'=>$byUser[(int)$row['user_id']]??[]];
-        $normalizedRoles=[];foreach($roles as$row)$normalizedRoles[]=['id'=>(int)$row['role_id'],'code'=>(string)$row['code'],'name'=>(string)$row['name'],'active'=>(int)$row['status']===1,'userCount'=>(int)$row['user_count'],'updatedAt'=>(string)$row['source_updated_at'],'permissions'=>AccessPolicy::rolePermissions($this->db,$this->prefix,(int)$row['role_id'])];
-        return ['users'=>$normalizedUsers,'roles'=>$normalizedRoles];
-    }
-
-    public function changeRole(int $userId,int $roleId,string $action,int $actorId,string $occurredAt):bool
-    {
-        if(!\in_array($action,['attach','detach'],true))return false;
-        $user=$this->one("SELECT user_id FROM `{$this->prefix}fm2_pilot_users` WHERE user_id=?",$userId);$role=$this->one("SELECT role_id,code,status FROM `{$this->prefix}fm2_pilot_roles` WHERE role_id=?",$roleId);
-        if($user===null||$role===null||($action==='attach'&&(int)$role['status']!==1))return false;
-        $isSuper=AccessPolicy::grants(AccessPolicy::forUser($this->db,$this->prefix,$actorId),'access.superadminister');
-        if(($role['code']==='user'&&$action==='detach')||($role['code']==='superadministrator'&&!$isSuper))return false;
-        $this->db->begin_transaction();try{
-            $existing=$this->db->prepare("SELECT user_id FROM `{$this->prefix}fm2_pilot_user_roles` WHERE user_id=? AND role_id=? FOR UPDATE");$existing->bind_param('ii',$userId,$roleId);$existing->execute();$present=$existing->get_result()->num_rows===1;
-            if(($action==='attach'&&$present)||($action==='detach'&&!$present)){$this->db->commit();return true;}
-            if($action==='detach'&&$role['code']==='superadministrator'){$count=$this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_user_roles` ur JOIN `{$this->prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$this->prefix}fm2_pilot_users` u ON u.user_id=ur.user_id WHERE r.code='superadministrator' AND u.status=1 FOR UPDATE")->fetch_assoc();if((int)$count['n']<=1){$this->db->rollback();return false;}}
-            if($action==='attach'){$statement=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(?,?,'administrator',?,?)");$statement->bind_param('iisi',$userId,$roleId,$occurredAt,$actorId);}else{$statement=$this->db->prepare("DELETE FROM `{$this->prefix}fm2_pilot_user_roles` WHERE user_id=? AND role_id=?");$statement->bind_param('ii',$userId,$roleId);}$statement->execute();
-            $event=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_user_role_events`(user_id,role_id,action,occurred_at,actor_user_id) VALUES(?,?,?,?,?)");$eventAction=$action==='attach'?'role_attached':'role_detached';$event->bind_param('iissi',$userId,$roleId,$eventAction,$occurredAt,$actorId);$event->execute();$this->db->commit();return true;
-        }catch(\Throwable $error){$this->db->rollback();throw new PilotHttpInfrastructureUnavailable('',0,$error);}
-    }
-    public function inviteUser(string $email,string $fullName,int $actorId,string $occurredAt):?array
-    {
-        $email=\mb_strtolower(\trim($email));$fullName=\trim($fullName);if(\filter_var($email,FILTER_VALIDATE_EMAIL)===false||\preg_match('/^[^@]+@shlz\.ru$/D',$email)!==1||$fullName===''||\mb_strlen($fullName)>300)return null;$this->db->begin_transaction();try{$q=$this->db->prepare("SELECT user_id FROM `{$this->prefix}fm2_pilot_users` WHERE email=? FOR UPDATE");$q->bind_param('s',$email);$q->execute();if($q->get_result()->fetch_assoc()!==null){$this->db->rollback();return null;}$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_users`(full_name,email,phone,status,activation_state,session_version,source_updated_at) VALUES(?,?,'',1,'invited',1,?)");$s->bind_param('sss',$fullName,$email,$occurredAt);$s->execute();$userId=(int)$this->db->insert_id;$c=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(?,?,NULL,NULL,?)");$c->bind_param('iss',$userId,$email,$occurredAt);$c->execute();$role=(int)$this->db->query("SELECT role_id FROM `{$this->prefix}fm2_pilot_roles` WHERE code='user'")->fetch_assoc()['role_id'];$g=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(?,?,'administrator',?,?)");$g->bind_param('iisi',$userId,$role,$occurredAt,$actorId);$g->execute();$token=\rtrim(\strtr(\base64_encode(\random_bytes(32)),'+/','-_'),'=');$hash=\hash('sha256',$token,true);$i=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_invitations`(user_id,token_hash,expires_at,created_by_user_id,created_at) VALUES(?,?,DATE_ADD(NOW(6),INTERVAL 24 HOUR),?,NOW(6))");$i->bind_param('isi',$userId,$hash,$actorId);$i->execute();$this->db->commit();return['userId'=>$userId,'token'=>$token];}catch(\Throwable$error){$this->db->rollback();throw new PilotHttpInfrastructureUnavailable('',0,$error);}
-    }
-    private function one(string $sql,int $id):?array{$statement=$this->db->prepare($sql);$statement->bind_param('i',$id);$statement->execute();$rows=$statement->get_result()->fetch_all(MYSQLI_ASSOC);return \count($rows)===1?$rows[0]:null;}
-}
+require_once __DIR__.'/MariaDbPilotUserDirectory.php';
 
 final class ProductionUserDirectoryRenderer
 {

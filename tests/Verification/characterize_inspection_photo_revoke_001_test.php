@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
 
-/** CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 v0.1, Gate 2 RED. */
-const CIPRV_SPEC_SHA256 = '143665e8734fd86649622bc71c6da2331d2a4f3a5e2380a31f6eabae2729f154';
+/** CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 v0.2, pending renewed Gate 3 review. */
+const CIPRV_SPEC_SHA256 = '4d3d5c63607036db4532dde59e10948d20cbfa3d0cec5f2d08be1b5b1ea3494e';
 const CIPRV_TIMEOUT_SECONDS = 15.0;
 
 function ciprvConfig(): array
@@ -174,6 +174,7 @@ function ciprvFixture(): array
             'revoke'=>['client_operation_id'=>'1494b408-d4da-40d2-8612-d871144b1302', 'kind'=>'photo_revoked', 'base_revision'=>1, 'device_time'=>'2026-08-31T10:01:00+03:00', 'server_receipt_time'=>'2026-08-31 07:01:01.000000'],
             'fresh_revoke'=>['client_operation_id'=>'6c0058e5-f093-4759-8561-d117f026a751', 'kind'=>'photo_revoked', 'base_revision'=>2, 'device_time'=>'2026-08-31T10:02:00+03:00', 'server_receipt_time'=>'2026-08-31 07:02:01.000000'],
             'identical_reupload'=>['client_operation_id'=>'8818b508-7ba4-4861-a2e8-ff48d8e17089', 'kind'=>'photo_uploaded', 'base_revision'=>2, 'device_time'=>'2026-08-31T10:03:00+03:00', 'server_receipt_time'=>'2026-08-31 07:03:01.000000'],
+            'active_duplicate'=>['client_operation_id'=>'d82f64f1-9cff-4aa3-8dd8-8532304f0771','kind'=>'photo_uploaded','base_revision'=>3,'device_time'=>'2026-08-31T10:04:00+03:00','server_receipt_time'=>'2026-08-31 07:04:01.000000'],
         ],
     ];
 }
@@ -191,7 +192,7 @@ function ciprvAssertFixture(array $fixture): void
     foreach ($fixture['envelopes'] as $name=>$envelope) {
         assertSameValue(1, preg_match('/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/D', $envelope['client_operation_id']), "$name operation id must be a literal UUIDv4");
     }
-    assertSameValue(4, count(array_unique(array_column($fixture['envelopes'], 'client_operation_id'))), 'All logical command envelopes must own distinct operation UUIDs');
+    assertSameValue(5, count(array_unique(array_column($fixture['envelopes'], 'client_operation_id'))), 'All logical command envelopes must own distinct operation UUIDs');
 }
 
 function ciprvReadAudit(string $path): array
@@ -210,8 +211,8 @@ function ciprvAssertAudit(array $audit, string $token, array $fixture): void
     assertSameValue(1, $audit['protocol_version'] ?? null, 'Audit protocol version must remain exact');
     assertSameValue($token, $audit['run_token'] ?? null, 'Audit must identify its isolated run');
     assertSameValue($fixture, $audit['fixture'] ?? null, 'Verifier must consume all test-owned literals unchanged');
-    assertSameValue(5, $audit['accept_call_count'] ?? null, 'Four scenarios must prove all five public accept invocations, including upload then revoke');
-    assertSameValue(5, $audit['projection_call_count'] ?? null, 'Accepted upload and every resulting scenario state must be observed through public projection');
+    assertSameValue(6, $audit['accept_call_count'] ?? null, 'All scenarios must prove six public accept invocations, including active duplicate');
+    assertSameValue(6, $audit['projection_call_count'] ?? null, 'Accepted upload and every resulting scenario state must be observed through public projection');
     $photoId = $audit['scenarios']['upload_then_revoke']['upload_projection']['photos'][0]['id'] ?? null;
     assertSameValue(true, is_int($photoId) && $photoId > 0, 'Accepted upload projection must expose one positive integer photo id');
     $uploadPayload = [
@@ -220,7 +221,7 @@ function ciprvAssertAudit(array $audit, string $token, array $fixture): void
         'size'=>$fixture['png']['size'],
         'originalName'=>$fixture['png']['filename'],
     ];
-    $revokePayload = ['photoId'=>$photoId];
+    $revokePayload = ['photoId'=>$photoId,'reason'=>'Replacement evidence required'];
     $uploadPhoto = [
         'id'=>$photoId,
         'sectionId'=>$fixture['common']['section'],
@@ -248,6 +249,10 @@ function ciprvAssertAudit(array $audit, string $token, array $fixture): void
         'server_received_at'=>$fixture['envelopes']['upload']['server_receipt_time'],
         'revoked_at'=>$fixture['envelopes']['revoke']['server_receipt_time'],
     ];
+    $reuploadPhotoId=$audit['scenarios']['identical_reupload']['projection']['photos'][0]['id']??null;
+    assertSameValue(true,is_int($reuploadPhotoId)&&$reuploadPhotoId>$photoId,'Identical re-upload must expose a new positive photo id');
+    $reuploadPhoto=$photoRow;$reuploadPhoto['id']=$reuploadPhotoId;$reuploadPhoto['upload_operation_id']=$fixture['envelopes']['identical_reupload']['client_operation_id'];$reuploadPhoto['device_time']=$fixture['envelopes']['identical_reupload']['device_time'];$reuploadPhoto['server_received_at']=$fixture['envelopes']['identical_reupload']['server_receipt_time'];$reuploadPhoto['revoked_at']=null;
+    $activeReuploadPhoto=$uploadPhoto;$activeReuploadPhoto['id']=$reuploadPhotoId;$activeReuploadPhoto['clientOperationId']=$fixture['envelopes']['identical_reupload']['client_operation_id'];$activeReuploadPhoto['deviceTime']=$fixture['envelopes']['identical_reupload']['device_time'];$activeReuploadPhoto['serverReceivedAt']=$fixture['envelopes']['identical_reupload']['server_receipt_time'];
     $history = [
         [
             'installation_case_id'=>$fixture['common']['installation_case_db_id'],
@@ -276,6 +281,16 @@ function ciprvAssertAudit(array $audit, string $token, array $fixture): void
             'payload'=>$revokePayload,
         ],
     ];
+    $reuploadHistory=$history;
+    $reuploadHistory[]=[
+            'installation_case_id'=>$fixture['common']['installation_case_db_id'],
+            'client_operation_id'=>$fixture['envelopes']['identical_reupload']['client_operation_id'],
+            'device_installation_id'=>$fixture['common']['device_id'],
+            'operation_type'=>'photo_uploaded','section_id'=>$fixture['common']['section'],
+            'actor_user_id'=>$fixture['common']['actor_id'],'device_time'=>$fixture['envelopes']['identical_reupload']['device_time'],
+            'server_received_at'=>$fixture['envelopes']['identical_reupload']['server_receipt_time'],
+            'base_revision'=>2,'accepted_revision'=>3,'payload'=>$uploadPayload,
+    ];
     assertSameValue([
         'upload_then_revoke'=>[
             'accept_calls'=>[
@@ -299,15 +314,21 @@ function ciprvAssertAudit(array $audit, string $token, array $fixture): void
             'fingerprint_unchanged'=>true,
         ],
         'identical_reupload'=>[
-            'accept_calls'=>[['kind'=>'photo_uploaded', 'operation_id'=>$fixture['envelopes']['identical_reupload']['client_operation_id'], 'exception'=>['sqlstate'=>'23000', 'vendor_code'=>1062]]],
-            'projection'=>['revision'=>2, 'photos'=>[]],
-            'fingerprint_unchanged'=>true,
+            'accept_calls'=>[['kind'=>'photo_uploaded', 'operation_id'=>$fixture['envelopes']['identical_reupload']['client_operation_id'], 'result'=>['status'=>'accepted','revision'=>3]]],
+            'projection'=>['revision'=>3, 'photos'=>[$activeReuploadPhoto]],
+            'photos'=>[$photoRow,$reuploadPhoto],
+            'history'=>$reuploadHistory,
             'blob'=>['count'=>1, 'sha256s'=>[$fixture['png']['sha256']]],
         ],
-    ], $audit['scenarios'] ?? null, 'Audit must prove exact public-seam results, projections, SQL/blob/history facts and SQL exception classification');
+        'active_duplicate'=>[
+            'accept_calls'=>[['kind'=>'photo_uploaded','operation_id'=>$fixture['envelopes']['active_duplicate']['client_operation_id'],'result'=>['status'=>'duplicate','revision'=>3]]],
+            'projection'=>['revision'=>3,'photos'=>[$activeReuploadPhoto]],
+            'fingerprint_unchanged'=>true,
+        ],
+    ], $audit['scenarios'] ?? null, 'Audit must prove exact public-seam results, projections, SQL/blob/history facts and accepted identical re-upload');
     $fingerprints = $audit['zero_mutation_fingerprints'] ?? null;
     assertSameValue(true, is_array($fingerprints), 'Audit must expose zero-mutation fingerprints');
-    assertSameValue(['replay','already_revoked','identical_reupload'], array_keys($fingerprints), 'Audit fingerprint scenarios must remain exact and ordered');
+    assertSameValue(['replay','already_revoked','active_duplicate'], array_keys($fingerprints), 'Only zero-mutation scenarios expose exact fingerprints');
     foreach ($fingerprints as $name=>$pair) {
         assertSameValue(['before','after'], array_keys($pair), "$name fingerprint must expose before and after");
         assertSameValue($pair['before'], $pair['after'], "$name must preserve the complete SQL/blob fingerprint");
@@ -397,9 +418,9 @@ try {
         "PHOTO_REVOKE accepted revision=2 active=0 photo_rows=1 revoked_rows=1 operations=2 blobs=1\n"
         . "PHOTO_REVOKE replay duplicate revision=2 active=0 mutations=0\n"
         . "PHOTO_REVOKE already-revoked rejected revision=2 active=0 mutations=0\n"
-        . "PHOTO_REVOKE identical-reupload sql-unique-violation revision=2 active=0 mutations=0 blobs=1\n";
-    assertSameValue('60f1a4c65be2a4cedd05f170b243d34283560f480f37a2965fec7aeadd62b784', hash('sha256', $milestones), 'Specification transcript SHA-256 must be independently reproducible');
-    $expectedStdout = $milestones . "CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 transcript_sha256=60f1a4c65be2a4cedd05f170b243d34283560f480f37a2965fec7aeadd62b784\n";
+        . "PHOTO_REVOKE identical-reupload accepted revision=3 active=1 photo_rows=2 revoked_rows=1 operations=3 blobs=1\n";
+    assertSameValue('09b498760d9ed265d35372bdd6630e1959bb3073abf2ac2692ef0371d0ccfe0c', hash('sha256', $milestones), 'Specification transcript SHA-256 must be independently reproducible');
+    $expectedStdout = $milestones . "CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 transcript_sha256=09b498760d9ed265d35372bdd6630e1959bb3073abf2ac2692ef0371d0ccfe0c\n";
     assertSameValue($expectedStdout, $runs['first']['stdout'], 'First run must emit the exact stable transcript');
     assertSameValue($runs['first']['stdout'], $runs['second']['stdout'], 'Distinct-token runs must emit byte-identical normalized stdout');
 

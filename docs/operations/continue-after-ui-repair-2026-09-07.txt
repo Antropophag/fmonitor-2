@@ -1,0 +1,21 @@
+Возобнови в новой сессии автономную работу над FMonitor 2.0 в /Users/antropophag/code/fmonitor-2. Предыдущая сессия остановилась на завершённом checkpoint по моему запросу; теперь продолжай глобальную цель.
+
+Сначала проверь persistent goal. Если отсутствует, создай без token_budget точную цель:
+Довести портал FMonitor 2.0 от фактического состояния repository и remote до проверяемой готовности к запуску в тестовую эксплуатацию, соблюдая все delivery gates, append-only evidence, exact-SHA verification, CI, clean deployment/restart/golden-path и отсутствие launch blockers
+
+Цель остаётся ACTIVE до полного доказанного результата. Checkpoint и синтетический golden до100% не означают завершение цели.
+
+Все сабагенты, включая вложенных: model gpt-5.6-sol, reasoning_effort low. В spawn_agent явно указывай fork_turns none и передавай ограниченную задачу/контекст/пути. Не используй наследующий модель fork_turns all вместе с override. Независимую полезную работу распараллеливай; автор не рецензирует себя.
+
+Перед планированием прочитай AGENTS.md, docs/operations/current-delivery-goal.md, PRODUCT.md, CONTEXT.md, pilot spec/data model, docs/development-process.md и полностью:
+docs/operations/restart-handoff-after-manual-feedback-2026-09-07.md
+
+Ветка codex/remove-pilot-work-navigation-v2. Runtime source 711b9a5af99faa51a59d17af750b78a426dcf372; последующие closing-коммиты содержат handoff/review/docs. Образ sha256:16582809d95c4eb6a2ad86c46f1879fe3c34845a0c05f0dab10fd8d65e2f2d33. Project fmonitor2-manual; URL http://127.0.0.1:8092/pilot/objects. Сверь git status/HEAD, image label и контейнер. Не откатывай более новые изменения или данные владельца.
+
+Приоритет — новые замечания ручного тестирования и рабочий пилот до 22:00 МСК 7 сентября 2026. Сохраняй дизайн rapid-pilot и public shlz-ui components. Используй единые статусы из CONTEXT/InstallationStatusLabels. Команда и документы открытого объекта берутся из native application/original facts. Массовая отметка сохраняет/отображает весь pending batch до первого ответа; сохраняй его протокол ревизий и точные attempted payload.
+
+Проверки браузера — headless Playwright, реальные Safari/Chrome не трогать. Данные, оригиналы, историю, браузерные очереди и volumes сохранять. Secrets/primary evidence вне repo. Вход — прежняя настроенная owner-admin; роли/приглашения назначаю я. Объект966 содержит мои реальные данные, не используй его для тестовых мутаций. Старые volumes — отключённый резерв.
+
+Последний make verify завершился FAIL; лог и исправленные/оставшиеся причины перечислены в handoff. Процесс больше не работает: старые session74931/PID95317 не возобновлять. Не возвращай ручную регистрацию или упрощённый UI ради protected E2E; не меняй его молча. Native hourly worker подготовлен, но выключен. Реальные Bitrix calls/imports, PR10 merge и CI publication остаются ограничены current goal; этот промпт не даёт новых внешних разрешений.
+
+Переиспользуй approvals, код и private evidence. Не запускай заново старый Gate3 Bitrix. Сначала актуальные замечания и проверка установленного состояния, затем оставшиеся готовые integration задачи. Не объявляй production-ready/VERIFY_OK без полного подтверждения.

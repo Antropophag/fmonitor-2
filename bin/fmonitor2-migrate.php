@@ -16,6 +16,10 @@ use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
 use FMonitor2\InstallationProcess\InspectionPlanningSchemaMigration;
 use FMonitor2\InstallationProcess\InstallationCompletionSchemaMigration;
 use FMonitor2\InstallationProcess\ClassificationProvenanceSchemaMigration;
+use FMonitor2\InstallationProcess\ObjectDetailSnapshotSchemaMigration;
+use FMonitor2\InstallationProcess\OriginalAttemptAuditSchemaMigration;
+use FMonitor2\InstallationProcess\AssignmentOrderIdentityRegistryMigration;
+use FMonitor2\InstallationProcess\AssignmentOrderSelectionSchemaMigration;
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'FMonitor2\\InstallationProcess\\';
@@ -86,25 +90,8 @@ try {
     finishMigrationRunner(['ok' => false, 'reason' => 'DATABASE_UNAVAILABLE'], 69);
 }
 
-$migrations = [
-    1 => ProductionProcessSchemaMigration::class,
-    2 => WorkforceCatalogSchemaMigration::class,
-    3 => ProcessUserCapabilitiesSchemaMigration::class,
-    4 => ProcessCommandCapabilitiesSchemaMigration::class,
-    5 => BitrixWorkforceHistorySchemaMigration::class,
-    6 => IdentityAccessSchemaMigration::class,
-    7 => ChecklistTemplateSchemaMigration::class,
-    8 => InspectionEvidenceSchemaMigration::class,
-    9 => InspectionPlanningSchemaMigration::class,
-    10 => InstallationCompletionSchemaMigration::class,
-    11 => static fn (mysqli $connection, string $prefix): array =>
-        ClassificationProvenanceSchemaMigration::apply(
-            $connection,
-            $prefix,
-            static function (): void {
-            },
-        ),
-];
+$migrations = \FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();
+
 $databasePreflight = static function () use ($connection, $tablePrefix): int {
     try {
         IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
