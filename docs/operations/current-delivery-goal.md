@@ -238,3 +238,12 @@ exact-image golden41/7/85/100 подтверждены. Всё в
 `stabilization-after-sleep-2026-09-08.md`. A6 теперь rollback/история, не текущий
 runtime. Следующий этап — CI/Quality Graph по подготовленному inventory;
 известный OTIZ fund-track CSP defect остаётся неблокирующим backlog. Цель ACTIVE.
+
+## Текущая CI-цепочка после стабилизации — 2026-09-08
+
+При продолжении CI читать [актуальный checkpoint](quality-graph-current-checkpoint-2026-09-08.md).
+Работа изолирована в `../fmonitor-2-quality-current-20260908`; canonical source d7edbc4
+проходит последний exact-SHA verify, после которого нужны независимый Gate5, первая
+квитанция и реальные PR/Actions proofs. Stand4990cf1 остаётся healthy и сохраняется.
+Никаких remote mutations/merge/protection changes пока нет. Цель ACTIVE; checkpoint
+не заменяет фактический финальный результат и не разрешает обход отсутствующей phaseB.
