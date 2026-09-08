@@ -237,3 +237,12 @@ Object queue/filtering (`rapid-pilot/ObjectQueue.php`, `verify-object-queue-filt
 - **Tables:** `fm2_workforce_catalog`, `fm2_workforce_observations`, `fm2_workforce_sync_runs`, `fm2_workforce_sync_metadata`.
 - **Target context:** Workforce ingestion/publication owning application; thin scheduled adapter после отдельных gates.
 - **Known contradiction:** `employed_from` на первом upsert получает день sync, а не source employment date; контракт требует null для неизвестного. Native selection при этом требует date-string. Новый вопрос владельцу об unknown-start eligibility задан, ответа ещё нет; фиктивная дата не является допустимым решением.
+
+## INVITATION-REISSUE-001 — перевыпуск приглашения, 2026-09-08
+
+- **Status:** `ACCEPTED`, решение владельца и #46; контракт в OpenSpec change `reissue-user-invitations`.
+- **Predecessor evidence:** CLI отзывал неиспользованные токены и создавал новый на 24 часа; UI терял одноразовый flash, повторный email отклонялся, маршрута перевыпуска не было.
+- **Actor / seam:** активный access.administer → IdentityAccess\ReissueUserInvitation::reissue; HTTP POST /pilot/admin/users/{id}/invitation и CLI — адаптеры.
+- **Facts:** старые строки сохранены с revoked_at; новая строка имеет hash, срок и автора. Роли/учётная запись не меняются; последняя ссылка единственная действующая.
+- **Verifier:** tests/InstallationProcess/invitation_reissue_http_001_test.php; RED missing action → GREEN, включая CSRF, rollback и два параллельных процесса.
+- **Delivery status:** локальный срез; установленный стенд не изменён. См. invitation-reissue-issue46-2026-09-08.md.

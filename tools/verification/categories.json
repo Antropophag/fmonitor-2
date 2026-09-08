@@ -142,6 +142,7 @@
   "tests/InstallationProcess/installation_completion_runtime_ddl_001_test.php": "integration",
   "tests/InstallationProcess/installation_completion_schema_001_test.php": "integration",
   "tests/InstallationProcess/installation_status_labels_manual_test.php": "unit",
+  "tests/InstallationProcess/invitation_reissue_http_001_test.php": "integration",
   "tests/InstallationProcess/legacy_object_snapshot_001_test.php": "integration",
   "tests/InstallationProcess/local_rbac_auth_contract_001_test.php": "unit",
   "tests/InstallationProcess/local_rbac_objects_route_admission_001_test.php": "integration",
