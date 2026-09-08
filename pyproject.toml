@@ -9,4 +9,3 @@ dev = [
   "quality-graph-cli==0.1.7",
   "quality-graph-github==0.1.7",
 ]
-
