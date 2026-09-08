@@ -1,0 +1,39 @@
+# Retained full Make harness; stays required throughout Quality Graph parity.
+name: Repository verification baseline
+'on':
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: mysqli, pcntl, dom, mbstring
+        coverage: none
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.8.15
+        python-version: 3.12.11
+        enable-cache: 'false'
+    - name: Install locked Quality Graph toolchain
+      run: 'uv sync --frozen
+
+        printf "%s/.venv/bin\n" "$GITHUB_WORKSPACE" >> "$GITHUB_PATH"'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.22.0
+    - name: Prepare exact repository verification dependencies
+      run: make ci-setup
+    - name: Run retained full harness
+      run: make fresh-test-verify

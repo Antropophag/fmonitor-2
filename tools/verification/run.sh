@@ -107,6 +107,7 @@ case "${1:-}" in
         unit_failed=1
       fi
     done
+    bash tools/delivery/test.sh || unit_failed=1
     if ((unit_failed)); then fail REGRESSION_FAILURE "unit suite failures"; fi
     ;;
   db)

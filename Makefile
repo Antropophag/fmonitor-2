@@ -4,7 +4,7 @@ COMPOSE := docker compose
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint verify fresh-test-verify
+	characterization-test e2e-test architecture-check lint verify fresh-test-verify delivery-evidence-check quality-graph-validate governance-test ci-setup
 
 help:
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
@@ -90,6 +90,7 @@ e2e-test: test-env-up
 
 architecture-check:
 	@tools/architecture/check
+	@$(MAKE) --no-print-directory quality-graph-validate
 
 lint:
 	@bash tools/verification/run.sh lint
@@ -172,3 +173,16 @@ fresh-test-verify:
 	printf 'FRESH_TEST_VERIFY_FAILURE verify_status=%s teardown_status=%s\n' "$$verify_status" "$$teardown_status"; \
 	if [ $$verify_status -ne 0 ]; then exit $$verify_status; fi; \
 	exit $$teardown_status
+
+# Offline delivery lineage; historical slices without receipts are not onboarded.
+delivery-evidence-check:
+	@php tools/delivery/check-evidence.php
+
+quality-graph-validate:
+	@php tools/delivery/check-quality-graph.php
+
+governance-test:
+	@bash tools/delivery/test.sh
+
+ci-setup:
+	@bash tools/delivery/ci-setup.sh

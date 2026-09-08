@@ -9,3 +9,5 @@ node_modules/
 .local/
 __pycache__/
 *.pyc
+.venv/
+.quality-graph/cache/
