@@ -212,7 +212,6 @@ db	php	tests/InstallationProcess/persistence_prepare_001_test.php
 db	php	tests/InstallationProcess/persistence_registration_001_test.php
 db	php	tests/InstallationProcess/pilot_case_import_001_test.php
 db	php	tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
-db	php	tests/InstallationProcess/pilot_e2e_flow_001_test.php
 db	php	tests/InstallationProcess/pilot_http_auth_001_test.php
 db	php	tests/InstallationProcess/pilot_local_trusted_scheme_001_test.php
 db	php	tests/InstallationProcess/pilot_object_card_001_test.php
@@ -256,3 +255,7 @@ characterization	php	rapid-pilot/verify-premium-calculation.php
 characterization	php	rapid-pilot/verify-visual-contract.php
 e2e	php	tests/InstallationProcess/pilot_e2e_flow_001_test.php
 characterization	python3	tests/Verification/verification_inventory_001_test.py
+characterization	python3	tests/Verification/verification_ci_001_test.py
+characterization	php	tests/Verification/harness_full_aggregation_001_test.php
+characterization	php	tests/Verification/harness_fresh_test_lifecycle_001_test.php
+characterization	php	tests/Verification/quality_graph_ci_setup_001_test.php
