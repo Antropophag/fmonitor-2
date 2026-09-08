@@ -142,3 +142,32 @@ Local archive refs v4-* и private generator-v3/evidence сохранены. Н�
 fixture ещё не опубликован. Forced actual verify-stage failure требует отдельного
 reviewed fault-control seam; SKIP не считается propagated failure.
 Publisher proposal ожидает owner решения, реализация не начиналась.
+
+
+### CSS fixture Linux failure — исправление опубликовано
+
+Eacc4d4 оба real runs34199261119/34199261130 завершились FAIL только db-test.
+Bootstrap запускал CSS child, который вернул exit0 с cleanup warnings Permission
+denied root-owner-allowed. Остальные8stages PASS. Причина — test fixture ownership
+helper: undeclared mariadb:10.11 и early return по Docker stderr после возможного
+успешного chown. Standalone cached CSS PASS не отменяет этот реальный defect.
+
+Test-only repair a18d798, независимый G3v7CHANGES_REQUESTED (5aeea65), уточнение
+6b30c1b: restoration owner/modes завершается до diagnostic assertion. Private
+Linux реальные chown/nonroot probes: exact old RED255, fixed quiet/noisy-provision/
+noisy-restore PASS. HTTP assertions и строгий stderr bootstrap сохранены.
+G3v8 APPROVED f430988; final CSS и полный bootstrap focused PASS, logs сохранены.
+Нового full LOCAL verify не было: актуальный полный прогон будет в GitHub.
+
+GREENv5 e29b4377d17fd511614170675775bf32536a0db0 честно имеет пустой latest
+implementation delta; reviewer отдельно проверил cumulative test-only repair.
+G5v5 APPROVED160721f. Receipt-v5 supersedesv4, обе старыеv3/v4 неизменны.
+Checker PASS на9f530017ab769de4e6e1647cadb990281e34c0e9. Обе разрешённые ветки
+fast-forward опубликованы на9f53001; PR37 OPEN/DRAFT, main/PR10/protection не тронуты.
+Новые actual runs: baseline34202284141 и graph34202284144, head9f53001, ожидаются.
+
+Рабочий stand4990cf1 сохраняется. Тестовая DB остановлена. После текущего CI fix
+следующей задачей владелец назначил issue25 (GitHub body/title обновлены и readback
+подтверждён); reorganization ещё не реализуется. Publisher proposal по-прежнему
+pending, owner approval не получено. Negative fixtures v4 остаются local-only и
+не подходят автоматически для новогоv5 receipt chain.
