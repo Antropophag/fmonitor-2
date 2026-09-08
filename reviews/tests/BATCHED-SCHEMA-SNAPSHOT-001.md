@@ -87,3 +87,79 @@ reproduces the parent's qualifying RED without using the active baseline databas
 3f625f729f14f29cdef6921e7f0ad4ac5673276b807716fd24cfc23da17e72ec  openspec/changes/optimize-integration-fixture-prerequisites/design.md
 fcf261aaca6b907b50fdece358e7dbfbac3d9da545eeb57b285ed3181ff9423d  openspec/changes/optimize-integration-fixture-prerequisites/tasks.md
 ```
+
+---
+
+## Superseding Gate 3 rereview — corrected freshness seam
+
+- Date: `2026-09-08`
+- Scope: only the required table-property freshness correction and cleanup revision
+- Corrected test SHA-256: `ad6055e31cc8c66ecaf7e94eee0d0d123d92ba45e9b76acc24fe1849505216b2`
+- Verdict: `APPROVED`
+
+The corrected test closes the sole blocking finding. After the original literal
+snapshot and the existing family mutations, it converts the retained `child` table
+to `utf8mb4_bin` and performs another independent `BatchedSchemaSnapshot::read`.
+It then requires the exact fresh table tuple `['InnoDB', 'utf8mb4_bin']`, requires
+the affected `parent_code` column to report `utf8mb4_bin`, and requires the
+unmodified `parent` table to retain `['InnoDB', 'utf8mb4_unicode_ci']`. This detects
+stale table-property values, stale column collation, and incorrect cross-table
+grouping without expanding the requested matrix.
+
+Cleanup is also stronger: the test connection closes in the outer `finally`; a
+nested `finally` still attempts the bounded database drop; and a final nested block
+closes the admin connection even if cleanup fails. The original random-name guard
+and quoted exact cleanup target remain unchanged.
+
+All coverage confirmed in the initial review remains intact. The helper is still
+absent, so the corrected verifier retains the qualifying intended RED before any
+database connection:
+
+```text
+$ php -l tests/Verification/batched_schema_snapshot_001_test.php
+No syntax errors detected in tests/Verification/batched_schema_snapshot_001_test.php
+
+$ php tests/Verification/batched_schema_snapshot_001_test.php
+exit 255
+TestFailure: INTENDED_RED: batched schema snapshot test-support helper is absent.
+```
+
+Gate 3 is approved for the minimal `BatchedSchemaSnapshot` implementation. The
+planned real-matrix old/new equivalence remains a Gate 4/measurement proof and is
+not replaced by this approval.
+
+---
+
+## Companion inventory correction review
+
+- Date: `2026-09-08`
+- Scope: `verification_inventory_001_test.py` baseline membership and the existing
+  suite/category registration for this verifier
+- Python verifier SHA-256: `99f7e7b2263eb81bad5f40e27b0716bfabd251a93fe65bbf14c178b6ea3cb947`
+- `suites.tsv` SHA-256: `12c7ce3beeb53be900ca5ead1bb454370f16866d5efe96ab7e560500703675e1`
+- `categories.json` SHA-256: `39a2cc1a42e1e3032eed3f35580b8d7566d8c7aa609a191d37d82715ab511b4e`
+- Verdict: `APPROVED`
+
+The correction adds the exact registered line
+`php\ttests/Verification/batched_schema_snapshot_001_test.php` to the existing
+`added_by_suite['db']` list. It leaves the immutable historical DB digest unchanged.
+The existing loop first requires each additive line exactly once, removes that
+literal line, restores the separately accounted E2E member, and only then compares
+the historical digest. Therefore the update accepts precisely the new intended DB
+member while continuing to detect removal, duplication, relocation, runtime drift,
+or unrelated baseline membership changes.
+
+The registration remains coherent and singular: `suites.tsv` assigns the PHP
+verifier to `db`, while `categories.json` assigns the same path to `integration`.
+No test execution category, production source, or unrelated inventory allowance
+changed.
+
+Independent no-database verification:
+
+```text
+$ python3 tests/Verification/verification_inventory_001_test.py
+Ran 15 tests in 5.565s
+OK
+```
+
+No findings remain in this companion correction.

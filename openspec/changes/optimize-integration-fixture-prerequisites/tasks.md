@@ -1,12 +1,12 @@
 ## 1. Измерения и контракт наблюдателя
 
 - [x] 1.1 Сохранить три baseline прогона тяжёлого теста и фазовый профиль fixtures; свести длительности в operational report.
-- [ ] 1.2 Написать независимый DB regression точной формы и свежести snapshot, получить RED и отдельный Gate3 review.
+- [x] 1.2 Написать независимый DB regression точной формы и свежести snapshot, получить RED и отдельный Gate3 review.
 
 ## 2. Пакетное чтение
 
 - [ ] 2.1 Реализовать пять свежих metadata запросов с прежней нормализацией; regression GREEN и эквивалентность старому snapshot на полном matrix.
-- [ ] 2.2 Подключить helper только в schema snapshot; три after прогона, сохранённые assertions, schema/data isolation и cleanup.
+- [x] 2.2 Подключить helper только в schema snapshot; три after прогона, сохранённые assertions, schema/data isolation и cleanup.
 
 ## 3. Поставка
 

@@ -68,3 +68,32 @@ DDL. `php .../batched_schema_snapshot_001_test.php` даёт intended RED255:
 Первое независимое Gate3 CHANGES_REQUESTED указало на отсутствие freshness-проверки
 collation существующей таблицы; добавлены ALTER CONVERT и точные table/column
 expectations, а также finally закрытие соединения. История review сохраняется.
+
+## Реализация и обычные after-прогоны
+
+`tests/Support/BatchedSchemaSnapshot.php` выполняет пять свежих SELECT:
+таблицы/свойства, колонки, индексы, FK и CHECK. В исходном database-setup тесте
+заменён только schema snapshot closure; все data reads, matrices и assertions
+сохранены. GROUP BY включает бинарную идентичность TABLE_NAME, чтобы не объединять
+case-distinct таблицы. Boolean CHECK normalizer остаётся прежним callable.
+
+Независимый literal regression GREEN. Первое полное сравнение502 schema snapshot
+старого и нового наблюдателя — все побайтно равны; metadata portion73.002с против5.171с.
+После binary GROUP BY уточнения выполняется финальное сравнение на exact helper.
+
+Три обычных after прогона без profiling:13.287с,13.503с,13.350с, все PASS.
+Медиана13.350с против82.736с до: экономия69.386с (83.9%), ускорение6.20раз для
+одного тяжёлого файла. Это локальное измерение, не обещание6-кратного ускорения CI.
+Каждый запуск использует прежние отдельные owned DB и неизменённую матрицу.
+
+Inventory guard сначала корректно отверг незарегистрированное в baseline-additions
+расширение. Новый verifier явно добавлен в added_by_suite['db'] с assert exactly-once;
+прежний baseline digest сохранён. Focused inventory15 и CI-matrix9 PASS.
+Независимый companion review этой правки фиксируется отдельно в Gate3 record.
+
+## Остаток issue55
+
+Этот срез не меняет общий schema bootstrap/seed, workforce nested architecture-check,
+реальные TLS/retry waits, количество CI jobs или caches. Исследование этих затрат
+остаётся в issue55. PDF probe caching отложен по результату фазового измерения;
+проверки не удалены. Полная задача55 этим срезом автоматически не закрывается.
