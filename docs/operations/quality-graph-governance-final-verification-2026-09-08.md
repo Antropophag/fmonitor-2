@@ -108,3 +108,35 @@ ref (GitHub commit API confirmed f07548135fe930e7a8fb9bb97271c9f05a8ebfc1):
 
 Actual representative PR/Actions proof is the next step. No base merge, protection
 change, publisher phaseB or global CI cutover is implied by these local PASS results.
+
+## Linux candidate после restart —3e1bfbb
+
+Exact implementation/GREENv4: `3e1bfbb039b27fb99ffbc815f03417d8f40a6f1f`.
+REDv6, независимый Gate3v6 и focused GREENv4 подтверждены; новый Gate5 и receipt
+пока ожидаются. Installed pilot4990cf1 не менялся.
+
+Первый полный прогон `verify-3e1bfbb-001` остановлен root через SIGTERM после
+обнаружения второго make verify, запущенного code reviewer на той же disposable
+БД20s позднее. Root run:06:53:12Z..06:59:38Z,386.21s,exit-15, literalVerifyOk=false.
+Его log SHA-256 `d0be9faec25ddfea703d068c527eccc4924b45c800935353c3c62df0a81925c2`.
+Reviewer run также остановлен без teardown; его partial log SHA-256
+`bc14109c5419efe59df19ad55eb957ad878ca3b9a34789408851cd04a98551d2`.
+Отсутствующий TCPDF в reviewer worktree вызвал setup-related test failures;
+ни один partial run не является итоговым PASS или доказательством domain defect.
+
+После подтверждения отсутствия обоих process trees запущен отдельный
+`verify-3e1bfbb-002` в clean verify-stabilization checkout. Reviewer больше не
+запускает тесты, root владеет единственным full verification и testDB.
+Итог второго запуска дописывается только после завершения.
+
+## Linux candidate exact full verify — PASS
+
+Повторный isolated `make verify` на exact
+`3e1bfbb039b27fb99ffbc815f03417d8f40a6f1f` завершился exit0, все9stages PASS,
+literal `VERIFY_OK`, HEAD неизменен. Start2026-09-08T07:00:16.627458+00:00,
+finish2026-09-08T07:21:18.026584+00:00, elapsed1261.37s.
+Private `verify-3e1bfbb-002.log` SHA-256
+`21a9c5e5c5d9e887b192d09c3d3d77864af86a9f7c94863a1d9c99baa398ba9f`;
+отдельная execution receipt `verify-3e1bfbb-002.json` подтверждает isolation.
+Прежний остановленный001 не переименован и не считается PASS.
+Независимому code reviewer передан этот результат для финального Gate5v4.

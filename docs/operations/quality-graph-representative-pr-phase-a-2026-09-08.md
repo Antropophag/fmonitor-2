@@ -48,3 +48,33 @@ PublisherphaseB requires topology onmain; no merge/protection change is authoriz
 by this experiment, and no missing/skipped result is converted to PASS.
 
 Subsequent completed observations are recorded below without rewriting primary evidence.
+
+## Linux findings и продолжение после restart
+
+Оба initial run34178683041/34178683097 завершились FAILURE на unit-test;
+остальные8verification stages PASS. Ранее отмеченный PASS setup step не означал
+полноту зависимостей: отсутствовали rg и owned test PHP image. Graph validation
+и delivery evidence действительно PASS; полной positive parity пока нет.
+Source Linux repair3e1bfbb проходит новый exact-SHA make verify; remote refs
+пока остаются прежними. Новая receipt-v4 должна supersede неизменную v3.
+
+Read-only independent phase-A audit `agent:/root/linux_test_review` уточнил
+negative fixtures для superseding chain:
+
+- graph-drift: одна M quality-graph.yml, expected generated-drift validation FAIL;
+- empty-receipt-root: удалить все receipt JSON (v3+v4), expected missing_receipt;
+  удаление только v3 даёт invalid_history, только v4 не доказывает missing_receipt;
+- committed spec mutation: expected commit_mismatch от history envelope guard,
+  а не заявленный hash_mismatch/stale_spec. Последние остаются local fixtures.
+
+Ни один новый negative fixture ещё не опубликован. Private generator v3 подготовлен,
+но не выполнен. Архивирование exact positive/fixture/merge refs и сохранение actual
+run provenance остаются обязательными до любых ранее разрешённых leased ref moves.
+
+Forced repository-stage failure по существующим PR workflows ещё не достижим:
+source/workflow fault нарушает lineage до запуска verify node. Нельзя записать
+SKIP как propagated stage failure. Нужен отдельный reviewed fault-control seam
+либо разрешённый способ задания test-only environment; текущий Linux repair
+не добавляет его самовольно. Полная phaseA matrix поэтому остаётся незавершённой
+даже после будущего positive PASS. Publisher phaseB также остаётся отдельным
+незавершённым доказательством по pending owner proposal.
