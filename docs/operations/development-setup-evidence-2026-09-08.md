@@ -1,5 +1,10 @@
 # Issue23 — clean development setup evidence
 
+Это хронологический журнал подготовки и найденных ограничений. Итоговая квитанция
+с exact source, полным локальным результатом и Linux Actions опубликована в
+[PR44](https://github.com/Antropophag/fmonitor-2/pull/44). Статусы running/pending
+ниже относятся к моментам проверки; актуальный результат смотрите в PR и checks.
+
 Implementation source: `f4ab8bd77b96c67769574d27f7103497b89cc40f`, based on
 main `321fde662d26d467c16030e1c82687f8ce56b63d` (merge PR43).
 Independent code review: [APPROVED](../../reviews/code/DEV-SETUP-001-review-v2.md).
