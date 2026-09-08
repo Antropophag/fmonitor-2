@@ -77,13 +77,15 @@ function psaRootOwnerAllowed(string $base): void
         if ($createdRoot !== null) {
             clearstatcache();
             $owners = [lstat($createdRoot)['uid'], lstat($createdRoot.'/shlz.css')['uid']];
+            $restoreQuietlySucceeded = true;
             if ($owners !== [$euid,$euid]) {
-                assertSameValue(true, psaDockerOwner($createdRoot, $euid), 'restore docker-provisioned fixture ownership');
+                $restoreQuietlySucceeded = psaDockerOwner($createdRoot, $euid);
             }
             clearstatcache();
             assertSameValue([$euid,$euid], [lstat($createdRoot)['uid'], lstat($createdRoot.'/shlz.css')['uid']], 'restored fixture exact owners');
             assertSameValue(true, chmod($createdRoot.'/shlz.css', 0600), 'restore fixture file mode');
             assertSameValue(true, chmod($createdRoot, 0700), 'restore fixture directory mode');
+            assertSameValue(true, $restoreQuietlySucceeded, 'restore docker-provisioned fixture ownership');
         }
     }
 }
