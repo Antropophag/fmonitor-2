@@ -13,7 +13,8 @@ final class PilotUserAdminHttpHandler
     public function handle(PilotHttpRequest $request, array $route, PilotUserAdminSession $session): PilotHttpResponse
     {
         $isInvite = $request->path === '/pilot/admin/users/invite';
-        $isCommand = $route !== [] || $isInvite;
+        $isReissue = preg_match('#^/pilot/admin/users/([1-9][0-9]*)/invitation$#D', $request->path, $invitationRoute) === 1;
+        $isCommand = $route !== [] || $isInvite || $isReissue;
         $allow = $isCommand ? 'POST' : 'GET, HEAD';
         if (!\in_array($request->method, \explode(', ', $allow), true)) return $this->response($request, 405, "Method not allowed.\n", ['Allow' => $allow]);
         try { $principal = $this->identity->resolve($request->serverIdentity); }
@@ -35,6 +36,7 @@ final class PilotUserAdminHttpHandler
             $request = new PilotHttpRequest($request->method, $request->path, $request->host, $request->serverIdentity, $request->server, (string) \file_get_contents('php://input'));
             [$state] = $session->open($request, $actor, false);
             if ($state === null || !$session->validRequest($request, $state, $actor)) return $this->response($request, 403, "Invalid request.\n");
+            if ($isReissue) return $this->reissue($request, (int) $invitationRoute[1], $actor, new \FMonitor2\IdentityAccess\MariaDbReissueUserInvitation($db, $prefix), $session, $state);
             if ($isInvite) return $this->invite($request, $actor, $directory, $session, $state, $now);
             return $this->changeRole($request, $route, $actor, $directory, $session, $state, $now);
         } catch (PilotHttpInfrastructureUnavailable|CssAssetUnavailable) {
@@ -62,6 +64,17 @@ final class PilotUserAdminHttpHandler
         $created = $directory->inviteUser($fields['email'][0] ?? '', $fields['fullName'][0] ?? '', $actor->id, $now);
         if ($created === null) return $this->response($request, 400, "Bad request.\n");
         return $this->response($request, 201, "Invitation: /pilot/activate?token={$created['token']}\n", ['Content-Type' => 'text/plain; charset=UTF-8']);
+    }
+
+    private function reissue(PilotHttpRequest $request, int $userId, HttpUser $actor, \FMonitor2\IdentityAccess\ReissueUserInvitation $application, PilotUserAdminSession $session, array &$state): PilotHttpResponse
+    {
+        try { $fields = $session->body($request, ['csrfToken']); }
+        catch (InvalidCsrfRequest) { return $this->response($request, 403, "Invalid request.\n"); }
+        if ($fields === null || !$session->consume($state, $fields['csrfToken'][0] ?? '', $actor, $userId)) return $this->response($request, 403, "Invalid request.\n");
+        $result = $application->reissue($actor->id, $userId);
+        if ($result['status'] === 'access_denied') return $this->response($request, 403, "Access denied.\n");
+        if ($result['status'] !== 'issued') return $this->response($request, 400, "User is not awaiting activation.\n");
+        return $this->response($request, 201, "Invitation: /pilot/activate?token={$result['token']}\n", ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 
     private function changeRole(PilotHttpRequest $request, array $route, HttpUser $actor, MariaDbPilotUserDirectory $directory, PilotUserAdminSession $session, array &$state, string $now): PilotHttpResponse

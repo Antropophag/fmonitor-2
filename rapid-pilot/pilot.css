@@ -1266,10 +1266,11 @@
 .fm2-user-toolbar .fm2-installer-filters { padding: 0; border: 0; }
 .fm2-user-table th:nth-child(1) { inline-size: 17%; }
 .fm2-user-table th:nth-child(2) { inline-size: 18%; }
-.fm2-user-table th:nth-child(3) { inline-size: 10%; }
+.fm2-user-table th:nth-child(3) { inline-size: 13%; }
 .fm2-user-table th:nth-child(4) { inline-size: 24%; }
-.fm2-user-table th:nth-child(5) { inline-size: 22%; }
-.fm2-user-table th:nth-child(6) { inline-size: 9%; }
+.fm2-user-table th:nth-child(5) { inline-size: 12%; }
+.fm2-user-table th:nth-child(6) { inline-size: 16%; }
+.fm2-invitation-reissue { min-inline-size: 140px; white-space: normal; word-break: normal; }
 .fm2-user-table :is(th, td) { padding-inline: 16px; }
 .fm2-role-stack { display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center; padding-block: 4px; }
 .fm2-role-stack form { margin: 0; }
