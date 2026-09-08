@@ -247,3 +247,11 @@ runtime. Следующий этап — CI/Quality Graph по подготов�
 квитанция и реальные PR/Actions proofs. Stand4990cf1 остаётся healthy и сохраняется.
 Никаких remote mutations/merge/protection changes пока нет. Цель ACTIVE; checkpoint
 не заменяет фактический финальный результат и не разрешает обход отсутствующей phaseB.
+
+Финальный local source `d7edbc4185bbd73103915897a819a36a561bd47a` получил literal
+VERIFY_OK; независимый Gate5v3 APPROVED и первая реальная квитанция PASS. Создан
+[черновик PR37](https://github.com/Antropophag/fmonitor-2/pull/37); baseline и Quality Graph
+выполняют полные команды на одном head5a09256. Проверки graph/evidence в GitHub уже
+PASS, полная parity ещё ожидает завершения. Более новая точка — тот же
+[CI checkpoint](quality-graph-current-checkpoint-2026-09-08.md). Stand4990cf1 сохраняется,
+main/PR10/protection/Bitrix/import не менялись; global goal ACTIVE.

@@ -33,30 +33,51 @@ Stabilization/deployment/restart/golden evidence is in
 ## Active work and next steps
 
 Clean verification checkout: `/Users/antropophag/code/fmonitor-2-verify-stabilization`.
-A full exactd7edbc4 `make verify` is currently running. Primary evidence stays under
-`~/.local/state/fmonitor2/quality-graph-current-20260908/`; check
-`verify-d7edbc4-001.json` for an actual completed result before claiming PASS.
+Exactd7edbc4 completed all9stages with literal VERIFY_OK, exit0,1193.45s
+(2026-09-08T01:32:44Z..01:52:37Z). Private `verify-d7edbc4-001.json` and log SHA-256
+`357df9d92c0f5e49ee5bdd28ebb256682115bb590790d7bc438ab89e92432ad8` are the final local proof.
+The disposable test DB was torn down afterward; manual volumes remain untouched.
 
-After literal finalVERIFY_OK: independent Gate5 by `agent:/root/migration18_collation`
-at `reviews/code/QUALITY-GRAPH-GOVERNANCE-CURRENT-v3-2026-09-08.md`, then first immutable
-receipt `delivery/evidence/QUALITY-GRAPH-GOVERNANCE-001/qg-current-20260908-v3.json`.
-Use private `derive-green-receipt-v3.py`, which derives raw committed bindings;
-root never authors the independent approval. No earlier receipt was issued.
-Run the real `make delivery-evidence-check` after committing the receipt.
+Independent Gate5v3 APPROVED by `agent:/root/migration18_collation`, committed0f26076,
+record `reviews/code/QUALITY-GRAPH-GOVERNANCE-CURRENT-v3-2026-09-08.md`, SHA-256
+`39db9593785c105913eb096dd8c0fffb063a5f56c6a2b601cd6e7755e581dda0`.
+First immutable receipt `delivery/evidence/QUALITY-GRAPH-GOVERNANCE-001/qg-current-20260908-v3.json`
+was committed2fa68e8; no older receipt existed. Actual `make delivery-evidence-check`
+and graph validation PASS at `5a09256df11f8a62d965eb932db4cd04a9790207`.
 
-No remote mutation has occurred at this checkpoint. SSH read access works and
-new canonical/disposable PR branch names were absent. After approval, create one
-unmerged draft representative PR againstmain, retaining baseline verification.
-For negative cases use isolated commit trees and preserve every old/case/merge head
-under unique immutable archive refs before moving the owned disposable PR ref with
-an exact-old lease. Canonical branch, main, PR10 and branch protection stay untouched.
-Private `prepare-parity-fixture-v2.py` prepares only isolated objects, never publishes;
-its safety conditions and exact hashes are recorded privately.
+## Actual GitHub phase A now running
 
-Actual positive/negative Actions results must be recorded honestly. PublisherphaseB
-is unavailable while its topology is absent frommain; local tests are not aggregate
-parity. Forced-stage and publisher negative rows remain unproved. Do not invent
-APPROVED metadata for faulty fixtures or call a skipped verify node a failure proof.
+Published canonical branch `codex/quality-governance-current-20260908` and separate
+disposable PR branch `codex/qg-parity-20260908`; both initially5a09256.
+[PR37](https://github.com/Antropophag/fmonitor-2/pull/37) is OPEN/DRAFT againstmain2bff0a0e.
+No merge, protection change, PR10 action, issue edit/closure or runtime deployment.
+Canonical branch may receive only permitted evidence commits while PR head stays fixed
+for each run. The current full comparison includes accumulated pilot history; the PR
+is explicitly a CI experiment and not approval to merge1130commits.
+
+- Baseline run: https://github.com/Antropophag/fmonitor-2/actions/runs/34178683041
+- Graph run: https://github.com/Antropophag/fmonitor-2/actions/runs/34178683097
+- Same initial head5a09256/PR37/attempt1; PR API merge73af27535c50ebbcf3e8a47fa38779c436329fde.
+- Both Linux dependency setup steps PASS; both full repository commands are running.
+- Graph validation and real delivery-evidence nodes PASS; two Resultv0 artifacts
+  downloaded and exact node/repository/PR/head/run/attempt/digest verified.
+- Graph digest95ab7381b6ce103c5ab3cce6fbb54826cf227470f4a7288894e30d74949ea325.
+
+Read CI worktree `docs/operations/quality-graph-representative-pr-phase-a-2026-09-08.md`
+for subsequent results. Primary evidence is private under
+`~/.local/state/fmonitor2/quality-graph-current-20260908/github-pr37/positive-5a09256/`.
+Wait for actual completed baseline/graph/verify artifacts before claiming positive parity.
+Then prepare negative heads with private `prepare-parity-fixture-v2.py` (guarded to
+reviewedCommitd7 and receipt-v3; logic independently reviewed). It only prepares isolated
+Git objects using a temporary index; do not run with Python optimization. Preserve each
+positive/case/executed-merge head under a unique immutable remote archive ref before
+any exact-old leased move of the owned disposable PR ref. Keep canonical/main/PR10
+unchanged and restore the PR to a valid reviewed head. No fabricated fixture approvals.
+
+PublisherphaseB remains unavailable while topology is absent frommain; local fixtures
+are supporting evidence only. Forced-stage and publisher negative rows are unproved;
+a source fault rejected by lineage is not a verify-node failure. Report partial rows
+and concrete limits honestly instead of declaring full aggregate/cutover readiness.
 
 Global goal remains ACTIVE. New owner manual findings are first priority. Once
 current authorized CI work permits additional backlog work, issue27 (stale README)
