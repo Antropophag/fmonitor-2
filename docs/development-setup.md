@@ -11,7 +11,7 @@
 Нужны:
 
 - Bash, Git, GNU Make, `rg` (ripgrep), `curl` и `tar`;
-- PHP `8.5.x` с расширениями `mysqli`, `pcntl`, `dom`, `mbstring`, `curl`;
+- PHP `8.5.x` с расширениями `mysqli`, `pcntl`, `dom`, `mbstring`, `curl`, `posix`;
 - Node.js `22.22.0` и его npm `10.9.4`;
 - Python `3.12.11`;
 - Docker Engine или Docker Desktop, запущенный daemon и Docker Compose v2;
@@ -47,7 +47,13 @@ PHP-пакеты закреплены [`composer.lock`](../composer.lock); ср�
 
 ## Установка checkout
 
+Checkout должен находиться внутри домашнего каталога пользователя ОС. Защитные
+тесты не допускают `/tmp` или подмену `$HOME`; `make doctor` обнаруживает это
+до установки. Для нового контура используйте отдельный родительский каталог:
+
 ```bash
+mkdir -p ~/code/fmonitor-dev
+cd ~/code/fmonitor-dev
 git clone https://github.com/Antropophag/fmonitor-2.git fmonitor-2
 cd fmonitor-2
 make setup

@@ -12,6 +12,8 @@ Python 3.12.11, Git, Make, Bash, ripgrep и запущенный Docker с Compo
 [docs/development-setup.md](docs/development-setup.md).
 
 ```bash
+mkdir -p ~/code/fmonitor-dev
+cd ~/code/fmonitor-dev
 git clone https://github.com/Antropophag/fmonitor-2.git fmonitor-2
 cd fmonitor-2
 make setup

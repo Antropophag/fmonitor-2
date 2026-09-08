@@ -48,6 +48,13 @@ must equal their exact pins. Docker daemon and Compose must be usable. An unavai
 incompatible prerequisite fails immediately with `SETUP_FAILURE`; no dependency
 destination or source checkout has been mutated at that point.
 
+The checkout's canonical real path must be a descendant of the OS account home
+reported for the effective user by `posix_getpwuid(posix_geteuid())['dir']`; `$HOME`
+is not an authority for this check. A checkout elsewhere fails during the same
+preflight with `SETUP_FAILURE` naming the home/path constraint, before any clone,
+package operation or build. This preserves the inherited read-only-filesystem and
+task-owned-artifact guards used by the repository test suites.
+
 ## Check-only behavior
 
 `--check` and `make doctor` perform the complete prerequisite and existing-dependency
@@ -112,6 +119,8 @@ used.
 5. A temporary ZIP contains a Unicode entry name and fixed binary payload. The public
    adapter lists that exact name and `-p` emits the exact payload; unsupported
    arguments fail without changing the ZIP.
+6. A complete checkout fixture located outside the effective OS account home fails
+   setup with the home/path diagnostic and no dependency or build mutation.
 
 Gate 1 -> focused intended RED for the missing public script/targets -> independent
 Gate 3 -> minimal implementation -> focused GREEN -> independent Gate 5. Catalog,

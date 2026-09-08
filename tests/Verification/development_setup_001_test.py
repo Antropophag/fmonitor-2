@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import sys
 import zipfile
+import pwd
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,7 +17,9 @@ PIN = "9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b"
 
 class DevelopmentSetup(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="fmonitor-dev-setup-")
+        account_state = Path(pwd.getpwuid(os.geteuid()).pw_dir) / ".local/state"
+        account_state.mkdir(parents=True, exist_ok=True)
+        self.temp = tempfile.TemporaryDirectory(prefix="fmonitor-dev-setup-", dir=account_state)
         self.addCleanup(self.temp.cleanup)
         self.parent = Path(self.temp.name)
         self.root = self.parent / "fmonitor-2"
@@ -38,6 +41,7 @@ class DevelopmentSetup(unittest.TestCase):
         self.git_head = PIN
         self.git_dirty = False
         self.npm_failure = False
+        self.real_php = shutil.which("php")
         self._write_stubs()
 
     def _stub(self, name, body):
@@ -49,6 +53,7 @@ class DevelopmentSetup(unittest.TestCase):
     def _write_stubs(self):
         self._stub("php", """
 case "$*" in
+  *posix_getpwuid*posix_geteuid*) exec "${REAL_PHP}" "$@" ;;
   *PHP_VERSION_ID*|*extension_loaded*) exit 0 ;;
   *getTCPDFVersion*) exit 0 ;;
   --version|-v) echo 'PHP 8.5.0'; exit 0 ;;
@@ -96,7 +101,8 @@ exit 0
                     TRACE=str(self.trace), GIT_HEAD=self.git_head,
                     GIT_DIRTY="1" if self.git_dirty else "0",
                     NPM_FAILURE="1" if self.npm_failure else "0",
-                    REAL_PYTHON=sys.executable, PYTHONDONTWRITEBYTECODE="1")
+                    REAL_PYTHON=sys.executable, REAL_PHP=self.real_php or "",
+                    PYTHONDONTWRITEBYTECODE="1")
 
     def script(self, *args):
         script = self.root / "tools/delivery/setup.sh"
@@ -181,6 +187,31 @@ exit 0
         self.assertEqual([], self.mutation_calls())
         self.assertFalse((self.parent / "shlz-ui").exists())
         self.assertFalse((self.root / "vendor").exists())
+
+    def test_checkout_outside_os_account_home_fails_before_mutation(self):
+        account_home = Path(pwd.getpwuid(os.geteuid()).pw_dir).resolve()
+        self.assertIsNotNone(self.real_php, "SETUP_FAILURE test host lacks real PHP")
+        self.complete_existing_dependencies()
+        foreign_temp = tempfile.TemporaryDirectory(prefix="fmonitor-dev-setup-foreign-")
+        self.addCleanup(foreign_temp.cleanup)
+        foreign_parent = Path(foreign_temp.name)
+        checkout = foreign_parent / "fmonitor-2"
+        shutil.copytree(self.root, checkout)
+        shlz = foreign_parent / "shlz-ui"
+        shutil.copytree(self.parent / "shlz-ui", shlz)
+        if checkout == account_home or account_home in checkout.parents:
+            self.skipTest("fixture checkout unexpectedly lies inside OS account home")
+        before = self.fingerprint(shlz)
+        environment = self.env()
+        script = checkout / "tools/delivery/setup.sh"
+        self.assertTrue(script.is_file(), "DEV-SETUP-001 public setup script is missing")
+        result = subprocess.run(["/bin/bash", str(script)], cwd=checkout, env=environment,
+                                capture_output=True, text=True, timeout=20)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("SETUP_FAILURE", result.stderr)
+        self.assertRegex(result.stderr.lower(), r"home|checkout|path")
+        self.assertEqual(before, self.fingerprint(shlz))
+        self.assertEqual([], self.mutation_calls())
 
     def test_malformed_manifest_is_rejected_without_command_substitution_or_writes(self):
         sentinel = self.parent / "manifest-injection-sentinel"

@@ -15,6 +15,8 @@ pin_exports=$(python3 tools/delivery/render-dependencies.py --env) || fail 'inva
 eval "$pin_exports"
 php -r 'if (PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION !== $argv[1]) exit(1); foreach(explode(",", $argv[2]) as $e) if (!extension_loaded($e)) {fwrite(STDERR,"missing PHP extension: $e\n"); exit(1);}' "$PHP_VERSION" "$PHP_EXTENSIONS" \
     || fail "PHP $PHP_VERSION with $PHP_EXTENSIONS required"
+php -r '$account = posix_getpwuid(posix_geteuid()); $accountHome = realpath($account["dir"] ?? ""); $checkout = realpath(getcwd()); exit(is_string($accountHome) && $accountHome !== "/" && is_string($checkout) && str_starts_with($checkout, $accountHome.DIRECTORY_SEPARATOR) ? 0 : 1);' \
+    || fail 'checkout must be inside the OS account home (not /tmp); see docs/development-setup.md'
 [[ "$(node --version)" == "v$NODE_VERSION" ]] || fail "Node $NODE_VERSION required; found $(node --version)"
 [[ "$(python3 --version)" == "Python $PYTHON_VERSION" ]] || fail "Python $PYTHON_VERSION required; found $(python3 --version)"
 [[ "$(npm --version)" == "$NPM_VERSION" ]] || fail "npm $NPM_VERSION required; found $(npm --version)"

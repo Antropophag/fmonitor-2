@@ -87,3 +87,19 @@ suite passes 15/15. Current additive-review hashes are:
 89e40761a2794aea384bd17b6113cdb94fface97110a3eb6c7fc02d5d453fe15  tests/Verification/development_setup_001_test.py
 7986319885c422172860bb9996e559a960119975b52cf80d9a5b0d9fff09314a  tests/Verification/verification_inventory_001_test.py
 ```
+
+## OS-account-home preflight RED
+
+The additive home-boundary fixture keeps ordinary setup fixtures below the effective
+OS account home and copies one complete fixture to the system temporary directory.
+Only the PHP `posix_getpwuid(posix_geteuid())` probe delegates to the host PHP binary.
+Before implementation, the foreign checkout completed successfully and therefore
+failed the intended public result assertion:
+
+```text
+$ python3 -m unittest tests.Verification.development_setup_001_test.DevelopmentSetup.test_checkout_outside_os_account_home_fails_before_mutation
+AssertionError: 0 == 0
+Ran 1 test in 1.886s
+FAILED (failures=1)
+EXIT=1
+```

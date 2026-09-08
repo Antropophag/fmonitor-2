@@ -34,3 +34,13 @@ checking the unchanged frozen baseline hash. Npm10.9.4 matches the pinned Node
 image. APPROVED. Genuine RED and subsequent GREEN7/7 + inventory15/15 are recorded
 in the author evidence. Browser change selects pinned Chromium and changes no
 assertions; independent code re-review v2 covers it.
+
+## Home-boundary prerequisite — follow-up
+
+Root reviewed the separately authored home-boundary example: it constructs a
+complete checkout outside the effective account home and delegates the home probe
+to real PHP/OS account lookup, while external mutations remain traced. It requires
+failure before mutations and preserved sibling bytes. Normal fixture setup now
+uses an owned temporary directory under the OS account home. APPROVED; this adds
+preflight coverage without changing the inherited filesystem guard assertions.
+The author captured true RED (unexpected success before the preflight existed).
