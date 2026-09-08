@@ -47,6 +47,8 @@ class VerificationCI(unittest.TestCase):
         node.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.bin) + os.pathsep + os.environ['PATH'],
                         TRACE=str(self.trace), FAIL_FILE='')
+        # Deliberately failing synthetic categories must not pollute the real CI report.
+        self.env.pop('GITHUB_STEP_SUMMARY', None)
 
     def write_mapping(self):
         (self.root / 'tools/verification/categories.json').write_text(json.dumps(self.mapping))

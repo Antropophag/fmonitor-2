@@ -49,3 +49,46 @@ E2E job ≤300с, full wall-clock ≤960с. Полный timeout остаётс�
 а превышение бюджета требует анализа, не выключения теста. Эти бюджеты основаны
 на успешном baseline17м10с и первых поэтапных измерениях; окончательные actual
 durations и сумма runner minutes публикуются в PR43 по терминальному Actions.
+
+## Первый полный GREEN новой матрицы
+
+Exact source `8f8470de34306a995a7c416167f054f15f9f32f0`,
+[run34219121040](https://github.com/Antropophag/fmonitor-2/actions/runs/34219121040):
+все семь jobs SUCCESS, терминальный literal VERIFY_OK. GitHub сообщил
+MERGEABLE/CLEAN. Baseline и новый run используют один образ hosted runner:
+Ubuntu24.04, version20260831.293.1, и прежние закреплённые PHP/Node/Python/UI/PDF
+зависимости. Это разные VM одинаковой конфигурации, не один физический сервер.
+
+| Показатель | Baseline PR41 | Новый PR43 |
+|---|---:|---:|
+| Ожидание от первого start до последнего completion | 17м10с | 10м59с |
+| Сумма длительностей всех jobs | 17м10с | 18м17с |
+| Fast job | внутри full | 2м10с |
+| Unit job | внутри full | 46с |
+| Governance job | внутри full | 36с |
+| Integration job, включая setup/cleanup | внутри full | 10м37с |
+| E2E job, включая setup/cleanup | внутри full | 3м53с |
+
+Ожидание сократилось на6м11с (36.0%); runner time вырос на1м07с (6.5%).
+Параллельные VM ускоряют получение результата ценой дополнительной подготовки.
+Не складывать это с отменёнными отладочными попытками как стоимость одного
+успешного запуска; затраты отладки не скрываются и видны в истории PR.
+
+Внутри категорий: unit77/0fail —4.556с; integration175/0fail —485.494с;
+governance7/0fail —9.933с; E2E1/0fail —77.899с. В полном логе ровно один
+`VERIFY tests/InstallationProcess/pilot_e2e_flow_001_test.php`. Сам bootstrap
+теперь11.414с против107.883с в baseline, где он повторял пять самостоятельных
+контрактов. Все пять контрактов сохранены отдельно; защищённый E2E побайтно
+совпадает с main. Все начальные бюджеты соблюдены.
+
+Docs-only PR здесь отдельно не публиковался: его выбор/агрегация проверены
+публичным CLI на реальных Git histories, а fast job измерен на этом полном PR.
+Ожидаемое ожидание docs-only — примерно fast2м10с плюс короткий итоговый job,
+а не новый независимо измеренный docs-only workflow.
+
+После этого proof в тестовом fixture изолирован GITHUB_STEP_SUMMARY, чтобы
+намеренно failing synthetic categories не загрязняли настоящий CI report.
+Production runner/assertions не изменены; независимый review:
+`reviews/tests/VERIFICATION-PR-CYCLE-001-summary-isolation.md`. Финальная
+готовность PR определяется проверками его текущего head, не переносится
+автоматически с8f8470d; ссылка и актуальный результат также ведутся в PR43.
