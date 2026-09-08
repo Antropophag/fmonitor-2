@@ -78,3 +78,24 @@ SKIP как propagated stage failure. Нужен отдельный reviewed fau
 не добавляет его самовольно. Полная phaseA matrix поэтому остаётся незавершённой
 даже после будущего positive PASS. Publisher phaseB также остаётся отдельным
 незавершённым доказательством по pending owner proposal.
+
+## Actual repaired-setup runs eacc4d4 — FAIL db-test
+
+Same-head eacc4d42b8690f2529117e50aee7fd96658af566/attempt1:
+baseline34199261119 и graph34199261130 завершились FAILURE только на db-test,
+остальные8verification stages PASS. Graph declaration/evidence nodes PASS.
+Обе полные repository команды действительно выполнялись; это наблюдаемая
+одинаковая propagation реального db-test failure, а не skipped verify node.
+Это не выдаётся за заранее управляемый forced-failure fixture из matrix.
+
+Конкретная причина — inherited pilot_shlz_assets внутри pilot_demo_bootstrap:
+child exit0, но cleanup временного root-owner-allowed выдаёт Permission denied
+в stderr. Standalone CSS позже PASS. Old helper применял chown через undeclared
+mariadb:10.11 и объединял transport diagnostics с mutation outcome; ранний return
+обходил restoration. Реальные логи и private Linux real-chown reproduction
+сохранены; correction REDv7/v8 и independent review следуют append-only.
+
+Private directory `github-pr37/positive-eacc4d4` содержит baseline-failed.log,
+graph-run-terminal.log, exact run metadata, positive merge archive и локальные
+negative fixture evidence. Новые negative commits остаются local-only;
+PR head не двигался на них. Publisher phaseB не выполнялась.
