@@ -171,3 +171,33 @@ fast-forward опубликованы на9f53001; PR37 OPEN/DRAFT, main/PR10/pr
 подтверждён); reorganization ещё не реализуется. Publisher proposal по-прежнему
 pending, owner approval не получено. Negative fixtures v4 остаются local-only и
 не подходят автоматически для новогоv5 receipt chain.
+
+
+### Итог Linux CI fix — оба actual runs PASS
+
+Head9f530017ab769de4e6e1647cadb990281e34c0e9 / PR37 / attempt1:
+- baseline34202284141 SUCCESS, все9stages PASS, literal VERIFY_OK/FRESH_TEST_VERIFY_OK;
+- graph34202284144 SUCCESS, все9stages PASS и3Resultv0 passed с exact provenance.
+
+Private baseline log SHA2564a54b66a6d1df1e4cb8652c4f9fa8e369c69f6fe040e0535d2eb73c70b66bc48;
+graph log SHA256d642060f0f8f4c76e44960be4a113482d3decb6d67d705b4a7ba93dfc21ffa10.
+Private positive-parity-proof.json в github-pr37/positive-9f53001 фиксирует9stages,
+head/run/attempt;3downloaded Resultv0 прошли exact repository/PR/head/run/attempt/digest
+проверку. Synthetic mergeee9bd18fa9626a9769a9693a4d71b830443a4cd0 сохранён localref,
+его tree равен9f53001. Это positive runner parity; полная negative matrix и phaseB
+не объявляются завершёнными. CI fixture cleanup defect устранён.
+
+### Новый приоритет владельца — сначала порядок в Git
+
+После CI PASS владелец попросил сначала синхронизировать локальный и удалённый Git,
+разобраться с PR37/merge, и только потом двигаться дальше. Резерв всех refs создан
+и проверен: private ~/.local/state/fmonitor2/git-tidy-20260908/before-tidy-082515.bundle.
+Primary branch опубликована fast-forward; canonical CI branch имеет правильный
+upstream и совпадает с origin. Main и PR10/37 пока не merged/closed.
+
+Независимый read-only анализ подтвердил: primary и CI расходятся отb5fca7d;
+primary имеет6unique ops-only commits, CI36. Простое объединение не конфликтует
+по Git, но инвалидирует старую receiptv5 из-за reachability4операционных файлов.
+Путь без переписывания истории: отдельный pilot-baseline PR из primary вmain,
+затем отдельная интеграцияCI с новым post-merge GREEN/Gate5/receipt и явным решением
+по publisher. Подготовка pilot PR не означает merge authorization.
