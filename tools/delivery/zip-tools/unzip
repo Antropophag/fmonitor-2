@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Read-only ZIP operations used by pinned shlz-ui generation, including UTF-8 names."""
+import sys
+import zipfile
+
+try:
+    args = sys.argv[1:]
+    if len(args) == 2 and args[0] == '-Z1':
+        with zipfile.ZipFile(args[1]) as archive:
+            for name in archive.namelist():
+                print(name)
+    elif len(args) == 3 and args[0] == '-p':
+        with zipfile.ZipFile(args[1]) as archive:
+            sys.stdout.buffer.write(archive.read(args[2]))
+    else:
+        raise ValueError('supported operations: unzip -Z1 ARCHIVE or unzip -p ARCHIVE ENTRY')
+except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+    print(f'SETUP_FAILURE: ZIP source: {error}', file=sys.stderr)
+    sys.exit(1)

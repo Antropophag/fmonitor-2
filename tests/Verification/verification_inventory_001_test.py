@@ -101,13 +101,17 @@ class Inventory(native.NativeSuites):
             'php\ttests/Verification/harness_fresh_test_lifecycle_001_test.php\n',
             'php\ttests/Verification/quality_graph_ci_setup_001_test.php\n',
         ]
+        added_by_suite = {
+            'unit': ['python3\ttests/Verification/development_setup_001_test.py\n'],
+            'characterization': added,
+        }
         for suite, digest in expected.items():
             result = subprocess.run(['/bin/bash', str(native.ROOT / 'tools/verification/run.sh'),
                                      'list', suite], cwd=native.ROOT, capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
             output = result.stdout
-            if suite == 'characterization':
-                for line in added:
+            if suite in added_by_suite:
+                for line in added_by_suite[suite]:
                     self.assertEqual(1, output.splitlines().count(line.strip()), 'new contract runs in full harness')
                     output = output.replace(line, '')
             if suite == 'db':
