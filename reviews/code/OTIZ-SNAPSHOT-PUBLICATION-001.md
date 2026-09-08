@@ -159,3 +159,36 @@ ea53e74d242fc97983d772e01c83b2781b182e61cee83458e4a905d22ed7f6ae  tests/Otiz/run
 1a92c462e7f8d2a9c2258b83c2771b27699081c040bf49a593c92d58dad86450  tests/Otiz/snapshot_publication_browser_001_test.mjs
 d3b2369f21b5a4aea02a19be575c0c6ca93ed157d24aa00c79b8dc5aec349884  tests/Support/OtizBrowserFixture.php
 ```
+
+## Supplemental canonical-frontier compatibility review
+
+The remaining first-run CI failures were stale v19 fixtures after the production
+catalogue acquired v20/v21. Eight files contain the bounded correction.
+`PilotDemoDatabase` now expects the real v21 result and inventories all 13 OTIZ
+tables. The demo launcher writes and validates v21 ready markers. Its existing
+public bootstrap test asserts the exact sorted 62-table catalogue and literal
+marker; before the launcher fix this new assertion produced the valid RED
+expected 21, actual 19.
+
+The real canonical-compatibility harness advances its no-op result to v21, and
+the quality-graph toy repository creates the mandatory `tests/Otiz` directory.
+The workforce fixture adds the same 13 exact table names; inspection evidence
+corrects only its contradictory terminal scalar; installation completion avoids
+recreating an OTIZ family already produced by canonical migration while retaining
+literal creation/manifest checks in isolated readiness-drift scenarios.
+
+These changes preserve behavioral and fail-closed assertions. They add no
+runtime DDL, command, domain fact or permission. Demo bootstrap, canonical
+compatibility, quality graph and all three schema fixtures pass; syntax and
+`git diff --check` pass. Gate 5 remains **APPROVED**:
+
+```text
+ef452ec1bf1c74b11d87150cfba7f6e13d1f456cce20000ca3ed60331b50144c  app/demo/PilotDemoDatabase.php
+b47e9d89498aae81c5b764c9906082ae075098dc0ed03c3818a0491160baec2b  bin/fmonitor2-pilot-demo.php
+adbe3dcd6ed4e2d1dfeafacf1f83d4555f7a65b25e23a3dcfe39ff8e70f603f4  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+e7394a6f98cbd488a49ebfe1b0db46e970145438ba6c2aa2525bd1645605ea3a  tests/InstallationProcess/inspection_evidence_schema_001_test.php
+81fec07b511ec82e4fae8176d529fb04a4e24331e0b111ac0c03e045a1490672  tests/InstallationProcess/installation_completion_runtime_ddl_001_test.php
+45e4d870e4135f5036996b93a3bf118b400bb00f398b85ed2cbe85208cbacdcb  tests/InstallationProcess/workforce_canonical_runner_001_test.php
+ec263e3a304074cfb07786faa95e441d25711fc3b0cc6fb76f90d9c062404279  tests/Verification/harness_otiz_canonical_compat_001_test.php
+4c8d6afbe437dfede307caebeeb9dcf33fd53ab01bd7b7c3d0fb0ab9ff677433  tests/Verification/quality_graph_ci_setup_001_test.php
+```

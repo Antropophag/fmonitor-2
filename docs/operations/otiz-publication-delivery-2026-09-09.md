@@ -88,3 +88,12 @@ PR61, head167cbaa9, run34279763684: unit и E2E PASS; fast/governance обнар
 Обе focused Python suites:15+15tests PASS. Независимый supplemental review APPROVED
 в том же Gate5 record. Результат integration и финального повторного CI фиксируется
 по фактическим Actions; первый failed run не объявляется VERIFY_OK.
+
+
+Первый integration завершился FAIL в6 прежних fixture checks: два пропущенных
+terminal21 ожидания/инвентаря, повторное создание уже канонических OTIZ tables,
+старый demo provisioning/ready marker19, hocc no-op19 и toy directory inventory.
+Все три новых OTIZ теста в GitHub PASS. Исправления прошли focused GREEN и
+независимый supplemental Gate5 APPROVED. Для ready marker дополнительно сохранён
+RED expected21/actual19; после исправления весь demo launch/walkthrough/persistence/
+reset/cleanup тест PASS. Повторный полный CI проверяет собранный исправленный head.

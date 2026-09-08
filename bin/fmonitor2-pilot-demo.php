@@ -123,7 +123,7 @@ function demoProvision(array $config, int $generation): array
         demoWriteJson($directory . '/owner.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'nonce'=>$nonce, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy]);
 
         PilotDemoDatabase::provision($db, $process, $legacy, $config['fingerprint'], $generation, $nonce, DEMO_NOW);
-        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>19, 'objectId'=>4512]);
+        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>21, 'objectId'=>4512]);
         return ['generation'=>$generation, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy, 'artifactRoot'=>$directory . '/artifacts'];
     } catch (Throwable $error) {
         throw $error;
@@ -137,7 +137,7 @@ function demoGeneration(array $config, int $generation): ?array
     $directory = $config['root'] . '/generations/' . $generation;
     $owner = demoReadJson($directory . '/owner.json');
     $ready = demoReadJson($directory . '/ready.json');
-    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 19) return null;
+    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 21) return null;
     if (($owner['generation'] ?? null) !== $generation || ($ready['generation'] ?? null) !== $generation
         || ($owner['processPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'process')
         || ($owner['legacyPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'legacy')
