@@ -97,3 +97,20 @@ Inventory guard сначала корректно отверг незареги�
 реальные TLS/retry waits, количество CI jobs или caches. Исследование этих затрат
 остаётся в issue55. PDF probe caching отложен по результату фазового измерения;
 проверки не удалены. Полная задача55 этим срезом автоматически не закрывается.
+
+Финальная сверка на helper из287ebf60 завершена: 502 из502 schema snapshots
+побайтно совпали с old closure из102e6056; полный matrix exit0/OK.
+Суммарные schema интервалы: old72.241с,
+batched5.324с.
+SHA256 финального phase evidence `3011359be842789ba35368d64bda8f6f363e7c546e90fb096476a92f54425fbd`.
+Временный executable profiler удалён из worktree; генератор сохранён вне репозитория.
+Architecture7/7 PASS, literal regression и inventory15/CI-matrix9 PASS.
+
+Independent Gate5 APPROVED на287ebf6031b889fc63d718e03b6944bef81e0b54:
+`reviews/code/BATCHED-SCHEMA-SNAPSHOT-001.md`. Reviewer повторил literal DB regression,
+inventory15, PHP lint и diff-check — PASS. Финальная сверка и cleanup дополнены
+после начала review; исходники helper/test больше не менялись. Остаточных owned
+fixture databases в отдельной MariaDB после проверок0.
+
+Следующий commit содержит только review/evidence/task accounting. Полный CI на
+итоговом head и измерения jobs будут приложены к PR после фактического выполнения.
