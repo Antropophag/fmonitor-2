@@ -33,6 +33,13 @@ architecture review. CI and local verification must run the checker without
    observability, characterization, critical fixes, and wiring to application
    seams remain permitted when they do not introduce these ownership violations.
 
+## Local gate
+
+`make architecture-check` first runs the existing HTTP global-call qualification
+contract, then the structural checker below. This prevents a green local structural
+check from hiding violations in a new `app/PilotHttp` adapter. The token-based HTTP
+oracle remains defined once in its existing test; no second implementation is added.
+
 ## Usage and interpretation
 
 ```sh

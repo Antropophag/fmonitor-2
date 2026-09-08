@@ -192,3 +192,46 @@ e7394a6f98cbd488a49ebfe1b0db46e970145438ba6c2aa2525bd1645605ea3a  tests/Installa
 ec263e3a304074cfb07786faa95e441d25711fc3b0cc6fb76f90d9c062404279  tests/Verification/harness_otiz_canonical_compat_001_test.php
 4c8d6afbe437dfede307caebeeb9dcf33fd53ab01bd7b7c3d0fb0ab9ff677433  tests/Verification/quality_graph_ci_setup_001_test.php
 ```
+
+## Supplemental namespace-qualification review
+
+CI run `34281317284` passed fast checks and exposed one remaining governance
+violation in the PilotHttp compatibility alias: the global `dirname` and
+`class_alias` calls were unqualified inside a namespaced source tree. Prefixing
+both calls with `\` is the complete change. It does not alter class identity,
+autoload behavior, authorization semantics or production state.
+
+The focused global-call test passes, the complete local governance category
+passes all nine members with zero failures, and `git diff --check` passes. Gate 5
+remains **APPROVED** for the corrected compatibility alias:
+
+```text
+a26141039f4b4ff0987b984890121c6fa2d27ad670c32a9641a81f5da73fea1c  app/PilotHttp/AccessPolicy.php
+```
+
+## Supplemental recurrence-prevention review
+
+The qualification miss recurred because the lower-level structural checker did
+not own the existing HTTP global-call convention, local review omitted the
+separate governance test, and truncated CI-log triage hid the second occurrence.
+The prevention change addresses those exact causes without duplicating its
+oracle. `make architecture-check` now runs the existing
+`pilot_http_auth_001_global_calls_test.php` before the structural checker.
+`AGENTS.md` requires that focused test for every `app/PilotHttp/*.php` change and
+requires a complete failed-job/`REGRESSION_FAILURE` inventory before excerpts.
+The guardrail documentation states the same composite gate and accurately
+retains the lower-level checker's narrower meaning.
+
+A temporary unqualified global call in an owned PilotHttp probe made the new
+composite gate fail; the probe was removed in `finally`. The clean composite
+gate then reported the HTTP qualification PASS followed by all seven
+architecture rules PASS. The full local governance category also passed all
+nine members. This is an enforcement change only; it adds no runtime behavior
+or second token scanner. Gate 5 remains **APPROVED**:
+
+```text
+36f0e005c966872e3932aea0dbab2a66c5e4755cc3cee49b13b8b63a572937c0  Makefile
+00c36ad2c1bc6e9d20e0267262bf07bc283dd5f269296bcba7db6ac38e7faeb3  AGENTS.md
+f749258de05ef9af008ed1977d74cfe7aed1a616d3f93d6cb7b2f38b99871569  docs/architecture/guardrails.md
+a26141039f4b4ff0987b984890121c6fa2d27ad670c32a9641a81f5da73fea1c  app/PilotHttp/AccessPolicy.php
+```

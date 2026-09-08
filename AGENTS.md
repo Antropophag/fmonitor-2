@@ -20,6 +20,16 @@
 - `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.
 - Check changed boundaries and focused user flows while delivering the manual pilot. Run `make verify` before declaring final production integration complete; an intermediate manual-test stand follows the current delivery goal.
 
+## Focused verification and CI failure triage
+
+- Changes to `app/PilotHttp/*.php`, including compatibility aliases, must pass
+  `php tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php` before
+  commit/push. `make architecture-check` includes this HTTP qualification check;
+  the lower-level `tools/architecture/check` alone covers only its own rules.
+- When CI fails, first collect the complete failed-job and `REGRESSION_FAILURE`
+  inventory. Inspect every failure before pushing a correction; use bounded log
+  excerpts only after the complete inventory is known. Record unresolved failures.
+
 ## Navigation
 
 - Current goal, deadline and delivery mode: `docs/operations/current-delivery-goal.md`

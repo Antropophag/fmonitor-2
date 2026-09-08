@@ -97,3 +97,21 @@ terminal21 ожидания/инвентаря, повторное создан�
 независимый supplemental Gate5 APPROVED. Для ready marker дополнительно сохранён
 RED expected21/actual19; после исправления весь demo launch/walkthrough/persistence/
 reset/cleanup тест PASS. Повторный полный CI проверяет собранный исправленный head.
+
+
+## Предотвращение повторного пропуска HTTP-соглашения
+
+Во втором CI run34281317284 fast, unit, E2E и оба integration shards PASS.
+Единственный оставшийся governance FAIL — неквалифицированные dirname/class_alias
+в новом совместимом `app/PilotHttp/AccessPolicy.php`. Эта ошибка присутствовала
+и в первом логе, но была пропущена при чтении усечённого хвоста. Два вызова
+исправлены без изменения политики доступа; полный local governance9tests PASS.
+
+По вопросу владельца о повторении ошибки устранён пробел локальной проверки:
+`make architecture-check` теперь сначала вызывает существующий HTTP token oracle,
+затем структурный checker. Отдельной реализации правила нет. Отрицательная проба
+с временным unqualified strlen остановила make; файл удалён в finally. Положительный
+прогон: HTTP qualification PASS и architecture7rules PASS. После изменения Make
+повторён governance:9tests,0failures. AGENTS закрепляет path-trigger для HTTP-файлов
+и полный перечень CI failures до чтения ограниченных фрагментов. Независимый review
+подтвердил это изменение. Следующий CI head включает защиту и исправленные вызовы.
