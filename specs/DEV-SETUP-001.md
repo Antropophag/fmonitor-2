@@ -32,7 +32,7 @@ NODE_VERSION=22.22.0
 NPM_VERSION=10.9.4
 PYTHON_VERSION=3.12.11
 SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
-PHP_EXTENSIONS=mysqli,pcntl,dom,mbstring,curl
+PHP_EXTENSIONS=mysqli,pcntl,dom,mbstring,curl,posix
 ```
 
 TCPDF version and immutable source revision are read from the sole

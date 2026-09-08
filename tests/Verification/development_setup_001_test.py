@@ -17,8 +17,7 @@ PIN = "9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b"
 
 class DevelopmentSetup(unittest.TestCase):
     def setUp(self):
-        account_state = Path(pwd.getpwuid(os.geteuid()).pw_dir) / ".local/state"
-        account_state.mkdir(parents=True, exist_ok=True)
+        account_state = Path(pwd.getpwuid(os.geteuid()).pw_dir)
         self.temp = tempfile.TemporaryDirectory(prefix="fmonitor-dev-setup-", dir=account_state)
         self.addCleanup(self.temp.cleanup)
         self.parent = Path(self.temp.name)
@@ -172,7 +171,7 @@ exit 0
         required = {"PHP_VERSION": "8.5", "NODE_VERSION": "22.22.0",
                     "NPM_VERSION": "10.9.4",
                     "PYTHON_VERSION": "3.12.11", "SHLZ_UI_REVISION": PIN,
-                    "PHP_EXTENSIONS": "mysqli,pcntl,dom,mbstring,curl"}
+                    "PHP_EXTENSIONS": "mysqli,pcntl,dom,mbstring,curl,posix"}
         self.assertEqual(required, {key: values.get(key) for key in required})
         self.assertNotIn("TCPDF_VERSION", values)
         self.assertNotIn("TCPDF_REVISION", values)

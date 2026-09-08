@@ -52,4 +52,3 @@ Clean-checkout installation and the full `make test` are integration-readiness
 evidence, not prerequisites to this code-review verdict. They were still running
 or pending and are not claimed here. Any final integration/production readiness
 claim must cite their actual results on the exact candidate.
-
