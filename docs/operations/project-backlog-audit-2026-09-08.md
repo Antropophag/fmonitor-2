@@ -55,3 +55,7 @@ OpenSpec `explicit-verification-inventory`, контракт VERIFICATION-INVENT
 - `bash -n tools/verification/run.sh`, `git diff --check`, `openspec validate explicit-verification-inventory`: PASS.
 - Gate3 APPROVED после исправления пяти замечаний; история первого CHANGES_REQUESTED сохранена в reviews/tests/VERIFICATION-INVENTORY-001.md.
 - Новый full make verify и deployment не выполнялись; прежний GitHub SUCCESS не является evidence новой ветки. Независимый Gate5 и architecture result фиксируются отдельно.
+
+Дополнительная совместимость на b7ff4e1: старое ожидание missing-rg в QUALITY-GRAPH-CI-SETUP-001 заменено проверкой точных unit/db списков без rg и явного отказа без каталога. Image/tooling/provenance проверки сохранены; отдельный Gate3 APPROVED и реальный Docker test GREEN (`QUALITY-GRAPH-CI-SETUP-001 PASSED`). Финальный inventory rerun: 15 PASS, 4.402с. `make architecture-check`: ARCHITECTURE CHECK PASSED (7 rules). GitHub issue25 назначена Antropophag и остаётся OPEN; код локальный, push/merge/deployment не выполнялись.
+
+Итог первого среза: независимый Gate5 APPROVED на exact b7ff4e1 против d5f8f2d; запись reviews/code/VERIFICATION-INVENTORY-001.md. Reviewer повторил inventory15, native9 и реальный CI setup — PASS. Все 4 задачи OpenSpec выполнены. Это завершение среза inventory/timing, не завершение #25, не full VERIFY_OK и не разрешение новой CI-матрицы.
