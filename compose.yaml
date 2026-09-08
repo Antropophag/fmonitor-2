@@ -36,7 +36,6 @@ services:
     restart: unless-stopped
 
   workforce-sync:
-    profiles: ["bitrix"]
     image: fmonitor2-pilot
     pull_policy: never
     user: "0:0"

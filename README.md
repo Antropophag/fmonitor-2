@@ -6,25 +6,28 @@
 
 ## Быстрый старт
 
-Поддерживаются Linux и macOS. Нужны PHP 8.5, Node.js 22.22.0, npm,
-Python 3.12.11, Git, Make, Bash, ripgrep и запущенный Docker с Compose v2.
-Полный список расширений PHP, версии зависимостей и подсказки по установке:
-[docs/development-setup.md](docs/development-setup.md).
+Для запуска стенда на Linux или macOS нужны Git, Make и запущенный Docker
+с Compose v2. PHP, Node.js, Composer и соседние репозитории на хосте не нужны:
+закреплённые зависимости собираются внутри Docker.
 
 ```bash
-mkdir -p ~/code/fmonitor-dev
-cd ~/code/fmonitor-dev
-git clone https://github.com/Antropophag/fmonitor-2.git fmonitor-2
+git clone https://github.com/Antropophag/fmonitor-2.git
 cd fmonitor-2
-make setup
 cp .env.example .env
-# Задайте в .env уникальный FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD.
+# Заполните пароль администратора, вебхук Bitrix и ID отделов в .env.
 make up
 ```
 
-Пилот будет доступен на <http://127.0.0.1:8092/>. `make setup` можно запускать
-повторно: существующие dependency checkout и `vendor` не заменяются молча.
-Команда не запускает БД, не меняет `.env` и пользовательские данные.
+`make up` поднимает пилот вместе с кадровой синхронизацией Bitrix. Пилот доступен
+на <http://127.0.0.1:8092/>. Настройка вебхука, безопасные ошибки и обновление
+конфигурации описаны в [инструкции Bitrix](docs/bitrix-startup.md).
+`make down` останавливает контейнеры, сохраняя данные.
+
+Для **разработки и локальных тестов** нужны дополнительные инструменты:
+PHP 8.5, Node.js 22.22.0, npm, Python 3.12.11, Bash и ripgrep.
+Выполните `make setup` по [инструкции разработки](docs/development-setup.md).
+Эта команда не запускает БД, не меняет `.env` и не заменяет существующие
+dependency checkout и `vendor` молча.
 
 Основной ручной маршрут: загрузить или исправить подписанный оригинал распоряжения,
 вернуться в карточку и отдельным явным действием открыть работы с фактической

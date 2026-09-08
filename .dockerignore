@@ -8,3 +8,6 @@ docs
 tools
 *.md
 .local
+.env
+.env.*
+!.env.example
