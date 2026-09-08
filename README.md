@@ -41,3 +41,13 @@ http://127.0.0.1:8092/fmonitor-2/app/demo/
 ```
 
 The demo uses its own `fmonitor2_demo` database. It does not write to the legacy production application.
+
+## Проверки
+
+Основная полная команда — `make test`; `make fresh-test` дополнительно останавливает
+тестовое окружение после прогона. Для быстрой локальной обратной связи:
+`make test CATEGORY=unit`. Полный CI выполняется один раз по согласованной матрице,
+без обязательного предварительного полного локального прогона.
+
+Состав категорий, подготовка testDB и focused-команды:
+[инструкция проверок](tools/verification/README.md).

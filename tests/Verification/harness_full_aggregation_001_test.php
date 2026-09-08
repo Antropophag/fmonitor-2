@@ -12,7 +12,7 @@ function hfaWriteExecutable(string $path, string $contents): void
     }
 }
 
-function hfaRun(string $root, string $overlay, string $bin, string $log): array
+function hfaRun(string $root, string $overlay, string $bin, string $log, string $target = 'test'): array
 {
     $environment = getenv();
     if (!is_array($environment)) {
@@ -21,7 +21,7 @@ function hfaRun(string $root, string $overlay, string $bin, string $log): array
     $environment['PATH'] = $bin . PATH_SEPARATOR . ($environment['PATH'] ?? '');
     $environment['HFA_STAGE_LOG'] = $log;
     $process = proc_open(
-        ['make', '--no-print-directory', '-f', 'Makefile', '-f', $overlay, 'verify'],
+        ['make', '--no-print-directory', '-f', 'Makefile', '-f', $overlay, $target],
         [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
         $pipes,
         $root,
@@ -183,6 +183,11 @@ SH);
     assertSameValue(0, hfaExactLineCount($result, 'FULL_VERIFICATION_FAILURE count=1 stages=db-test'), "Successful verification must not print a failure summary; evidence=$evidence");
     assertSameValue(1, hfaExactLineCount($result, 'VERIFY_OK'), "RED_ASSERTION: successful verification must print exactly one terminal VERIFY_OK; evidence=$evidence");
     assertSameValue(true, str_ends_with(trim($result['stdout']), 'VERIFY_OK'), "RED_ASSERTION: VERIFY_OK must be the terminal stdout line; evidence=$evidence");
+    file_put_contents($log, '');
+    $aliasResult = hfaRun($root, $overlay, $bin, $log, 'verify');
+    assertSameValue(0, $aliasResult['status'], 'legacy verify alias succeeds');
+    assertSameValue($expected, file($log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), 'alias executes each stage once');
+    assertSameValue(1, hfaExactLineCount($aliasResult, 'VERIFY_OK'), 'alias has one terminal marker');
 
     file_put_contents($log, '');
     hfaWriteOverlay($overlay, ['test-db-reset' => 'FAIL']);

@@ -94,15 +94,26 @@ class Inventory(native.NativeSuites):
         # SHA256 of public list output on d5f8f2d; characterization/e2e
         # transcribed from its fixed command list, before implementation.
         expected = {'unit': 'ae1c98c70c549d1ba5f4600a0ed7b77d929eab5e0212f5ee6323e0438f0cef2c', 'db': 'ecb69ca1c8c3b80db2656a661adafb74e53b64dd86c05c7ca396362617c95f5f', 'characterization': 'ce1532ec45715e0d73244798d71d67f2b023397a8d0ef58b6bd9c043120625f3', 'e2e': '3e71f81948cc72b01a99713489fea493a4db50542356967099d9953569718abe'}
-        added = 'python3\ttests/Verification/verification_inventory_001_test.py\n'
+        added = [
+            'python3\ttests/Verification/verification_inventory_001_test.py\n',
+            'python3\ttests/Verification/verification_ci_001_test.py\n',
+            'php\ttests/Verification/harness_full_aggregation_001_test.php\n',
+            'php\ttests/Verification/harness_fresh_test_lifecycle_001_test.php\n',
+            'php\ttests/Verification/quality_graph_ci_setup_001_test.php\n',
+        ]
         for suite, digest in expected.items():
             result = subprocess.run(['/bin/bash', str(native.ROOT / 'tools/verification/run.sh'),
                                      'list', suite], cwd=native.ROOT, capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
             output = result.stdout
             if suite == 'characterization':
-                self.assertEqual(1, output.splitlines().count(added.strip()), 'new contract runs in full harness')
-                output = output.replace(added, '')
+                for line in added:
+                    self.assertEqual(1, output.splitlines().count(line.strip()), 'new contract runs in full harness')
+                    output = output.replace(line, '')
+            if suite == 'db':
+                e2e = 'php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php'
+                self.assertNotIn(e2e, output.splitlines(), 'E2E has only its own stage')
+                output = '\n'.join(sorted(output.splitlines() + [e2e])) + '\n'
             self.assertEqual(digest, hashlib.sha256(output.encode()).hexdigest(), suite + ' baseline drift')
 
 if __name__ == '__main__':

@@ -98,6 +98,11 @@ run_selected() {
   return 0
 }
 
+if [[ "${1:-}" == category ]]; then
+  test "$#" -eq 2 || fail SETUP_FAILURE "usage: run.sh category unit|integration|e2e|governance"
+  exec python3 tools/verification/ci.py run "$2"
+fi
+
 suite="${1:-}"
 if [[ "$suite" == list ]]; then
   test "$#" -eq 2 || fail SETUP_FAILURE "usage: tools/verification/run.sh list unit|db|characterization|e2e"
