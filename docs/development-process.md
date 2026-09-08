@@ -1,6 +1,16 @@
 # SSD + TDD delivery process
 
-## Current owner-authorized delivery mode —2026-09-07
+## Current architecture priority —2026-09-08
+
+The owner sets #32 → the first complete OTIZ build/publication slice of #24 → #33.
+Read the latest decision at the top of [current delivery goal](operations/current-delivery-goal.md).
+Only confirmed manual-work blockers or data/access risks interrupt this order.
+For A01 retain specification → demonstrated RED → independent test review →
+implementation → focused regression/architecture checks → independent code review.
+Use the approved verification matrix below; do not restart duplicate full runs.
+The historical manual-pilot exception below does not postpone this migration.
+
+## Historical owner-authorized delivery mode —2026-09-07
 
 Read [current delivery goal](operations/current-delivery-goal.md) before choosing
 work or verification. For the manual-test pilot due2026-09-07 22:00Europe/Moscow,

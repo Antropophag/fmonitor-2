@@ -92,6 +92,7 @@ e2e-test: test-env-up
 	@bash tools/verification/run.sh e2e
 
 architecture-check:
+	@php tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php
 	@tools/architecture/check
 
 lint:

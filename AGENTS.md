@@ -1,15 +1,14 @@
 # FMonitor 2.0 constitution
 
-## Current priority — manual pilot today
+## Current priority — architecture transition
 
-- Before planning, implementing, testing or resuming the autonomous goal, read
-  `docs/operations/current-delivery-goal.md`. Owner2026-09-07 requires a working
-  manual-test pilot by **2026-09-07 22:00 Europe/Moscow**, first end-to-end stand
-  targeted for17:00. This priority overrides older mandatory full-gate sequencing
-  for the manual-pilot milestone; keep history, authorization and data preservation.
-- Deliver the usable flow first, then fix the owner's manual-test findings. Reuse
-  existing code/approvals, use focused smoke checks, and defer rare-case matrices
-  and complete architectural migration. Parallel agents use **gpt-5.6-sol / low**.
+- Before planning, implementing, testing or resuming work, read
+  `docs/operations/current-delivery-goal.md`. Owner2026-09-08 sets the order:
+  **#32 → first complete OTIZ slice #24 → #33**. The pilot works and checks are
+  accelerated; architecture does not wait for all manual findings to be closed.
+- Only confirmed manual-work blockers or data/access risks interrupt this order.
+  Preserve history, authorization, the working stand and independent review.
+  Parallel agents use **gpt-5.6-sol / low**.
 
 ## Continuing rules
 
@@ -20,6 +19,16 @@
 - `rapid-pilot/` is a behavioral oracle and temporary adapter, not a destination for new domain logic. Follow its local boundary instructions.
 - `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.
 - Check changed boundaries and focused user flows while delivering the manual pilot. Run `make verify` before declaring final production integration complete; an intermediate manual-test stand follows the current delivery goal.
+
+## Focused verification and CI failure triage
+
+- Changes to `app/PilotHttp/*.php`, including compatibility aliases, must pass
+  `php tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php` before
+  commit/push. `make architecture-check` includes this HTTP qualification check;
+  the lower-level `tools/architecture/check` alone covers only its own rules.
+- When CI fails, first collect the complete failed-job and `REGRESSION_FAILURE`
+  inventory. Inspect every failure before pushing a correction; use bounded log
+  excerpts only after the complete inventory is known. Record unresolved failures.
 
 ## Navigation
 

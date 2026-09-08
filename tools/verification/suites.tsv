@@ -263,3 +263,6 @@ characterization	php	tests/Verification/quality_graph_ci_setup_001_test.php
 unit	python3	tests/Verification/development_setup_001_test.py
 db	php	tests/InstallationProcess/invitation_reissue_http_001_test.php
 db	php	tests/Verification/batched_schema_snapshot_001_test.php
+db	php	tests/Otiz/snapshot_publication_001_test.php
+db	php	tests/Otiz/snapshot_publication_http_001_test.php
+db	php	tests/Otiz/runtime_schema_001_test.php

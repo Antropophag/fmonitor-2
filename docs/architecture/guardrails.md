@@ -12,7 +12,7 @@ architecture review. CI and local verification must run the checker without
 1. **DDL ownership.** Production `CREATE`, `ALTER`, `DROP`, and `TRUNCATE` are
    owned only by `app/InstallationProcess/*SchemaMigration.php`. Existing
    runtime DDL remains baseline debt and new runtime schema-on-demand DDL fails.
-2. **SQL ownership.** New business persistence SQL is confined to MariaDB
+2. **SQL ownership.** New business persistence SQL, including the Otiz module, is confined to MariaDB
    adapters, schema migrations, and the named persistence/import adapters in
    `app/InstallationProcess`; HTTP may use named MariaDB read adapters. Existing
    SQL in HTTP and rapid-pilot is debt, not precedent.
@@ -33,6 +33,13 @@ architecture review. CI and local verification must run the checker without
    observability, characterization, critical fixes, and wiring to application
    seams remain permitted when they do not introduce these ownership violations.
 
+## Local gate
+
+`make architecture-check` first runs the existing HTTP global-call qualification
+contract, then the structural checker below. This prevents a green local structural
+check from hiding violations in a new `app/PilotHttp` adapter. The token-based HTTP
+oracle remains defined once in its existing test; no second implementation is added.
+
 ## Usage and interpretation
 
 ```sh
@@ -43,9 +50,10 @@ tools/architecture/check --json
 Exit `0` means the architecture did not regress. Exit `1` identifies a policy
 regression. Exit `2` means setup/baseline failure. Findings use stable hashes of
 normalized source lines, so unrelated line movement does not invalidate the
-baseline. Test/verifier/profile and demo files are excluded; migration tooling
-under `rapid-pilot/legacy-migration` is excluded because it is not runtime
-product behavior.
+baseline. Test/verifier/profile and demo files are excluded; migration tooling under `rapid-pilot/legacy-migration` remains excluded from
+the general legacy SQL ratchet. The three decision-ledger/projection adapters
+called by OTIZ are explicitly scanned for runtime DDL despite that directory
+exclusion (ADR0002); this named inventory is not a general PHP call-graph proof.
 
 When a deliberate new public seam or exceptional hotspot growth is approved,
 record the reason in an ADR, then run `tools/architecture/check --write-baseline`
