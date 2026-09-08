@@ -83,3 +83,62 @@ Global goal remains ACTIVE. New owner manual findings are first priority. Once
 current authorized CI work permits additional backlog work, issue27 (stale README)
 is the smallest safe next task; its old manual12-Р/apply sequence is obsolete.
 No issue has been edited or closed.
+
+## Продолжение после CI/Linux restart
+
+Owner возобновил работу по handoff CI/Linux. Stand4990cf1 и MariaDB healthy,
+данные/volumes/runtime не менялись. `get_goal` в новой сессии вернул `goal:null`;
+новая цель взамен сохранённой не создавалась, completion не заявлен.
+
+CI branch: `codex/quality-governance-current-20260908` в соседнем worktree.
+Reproduced qcsRun sequential-pipe deadlock на1MiB stderr; исправлено concurrent
+nonblocking чтение с deadline. REDv6 `8519c555bc22fd0f7379c40f149e1316fe1a21ec`
+содержит полный14-test set и actual exit255 на отсутствующем rg.
+Независимый `agent:/root/linux_test_review` дал Gate3v6 APPROVED; commit535800a.
+
+Implementation/GREENv4 `3e1bfbb` добавляет только CI test tooling: test-only PHP
+Dockerfile, make test-tools, явную установку ripgrep и precondition runner.
+Focused CI setup, governance, architecture, object-list, CSS, original boundary
+PASS. Один первый ручной CSS запуск без test-local DB env был setup FAIL;
+исправлен invocation, повтор PASS, оба лога сохранены. Production не менялась.
+
+Exact clean checkout `/Users/antropophag/code/fmonitor-2-verify-stabilization`
+запустил `make verify` на3e1bfbb; raw log `verify-3e1bfbb-001.log` в private root.
+Итог ещё ожидается. Независимый `agent:/root/linux_code_review` выполняет Gate5;
+нового Gate5 approval/receipt-v4/remote rerun ещё нет, receipt-v3 неизменна.
+
+В source включено конкретное pending proposal check-only inline publisher:
+`docs/operations/quality-graph-check-only-publisher-owner-proposal-2026-09-08.md`.
+Это не изменение publisher и не разрешение новых permissions/pins/merge.
+Owner decision запрошено отдельно; до ответа зависимая implementation не начинается.
+Owner вопрос о классификации verify был только вопросом: объяснены9stages,
+неточная unit/db классификация и отсутствие общего type/mutation analyzer;
+реорганизация suites не выполнялась и не добавлена в текущий repair scope.
+
+
+### Linux repair local chain завершена; real CI повторён
+
+Exact3e1bfbb039b27fb99ffbc815f03417d8f40a6f1f получил literal VERIFY_OK:
+все9stages PASS,07:00:16Z..07:21:18Z,1261.37s, private verify-3e1bfbb-002.log
+SHA21a9c5e5c5d9e887b192d09c3d3d77864af86a9f7c94863a1d9c99baa398ba9f.
+Предыдущий001 и concurrent reviewer run остановлены из-за общей testDB;
+их logs неизменны, ни один не считается PASS. Тестовая БД после002 остановлена.
+
+Независимый Gate5v4 APPROVED committed49a88b6. Новая immutable receipt-v4
+committedeacc4d42b8690f2529117e50aee7fd96658af566 supersedesv3;
+реальный checker PASS receipts=1. Raw evidence в CI final-verification record.
+Обе разрешённые branch refs fast-forward опубликованы наeacc4d4; main/PR10/
+protection/publisher permissions/runtime не менялись. PR37 всё ещё OPEN/DRAFT.
+
+Новые same-head runs: baseline34199261119 и graph34199261130, attempt1,
+оба выполняются. Graph validation и SSD/TDD evidence PASS; обе dependency setup
+завершены, оба full harness запущены. Synthetic mergea46528ff7c59bf7f57b91aa721ceda5c61c93d69
+сохранён в local refs/qg-parity-archive/20260908/positive-merge-a46528ff,
+его tree равенeacc4d4. Final parity ещё не объявлена.
+
+Три отрицательных fixture подготовлены и locally дали ожидаемые failures:
+graph-driftd610400c, empty-receipt-roote289609f, post-review-spec30f2f073.
+Local archive refs v4-* и private generator-v3/evidence сохранены. Ни один negative
+fixture ещё не опубликован. Forced actual verify-stage failure требует отдельного
+reviewed fault-control seam; SKIP не считается propagated failure.
+Publisher proposal ожидает owner решения, реализация не начиналась.
