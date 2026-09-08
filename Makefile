@@ -5,9 +5,11 @@ TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools
+	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools setup doctor
 
 help:
+	@echo "make setup  Подготовить закреплённые зависимости (без изменения существующих)"
+	@echo "make doctor Проверить инструменты и существующие зависимости"
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
 	@echo "make up-bitrix  Поднять пилот и часовую синхронизацию Bitrix (нужен ../fmonitor)"
 	@echo "make import-production  Загрузить не начатые объекты, пользователей и роли production"
@@ -187,8 +189,13 @@ fresh-test:
 	if [ $$verify_status -ne 0 ]; then exit $$verify_status; fi; \
 	exit $$teardown_status
 
-ci-setup:
-	@bash tools/delivery/ci-setup.sh
+setup:
+	@bash tools/delivery/setup.sh
+
+doctor:
+	@bash tools/delivery/setup.sh --check
+
+ci-setup: setup
 
 test-tools:
 	docker build --label "org.opencontainers.image.revision=$$(git rev-parse HEAD)" \

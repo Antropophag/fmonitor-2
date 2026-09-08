@@ -259,3 +259,4 @@ characterization	python3	tests/Verification/verification_ci_001_test.py
 characterization	php	tests/Verification/harness_full_aggregation_001_test.php
 characterization	php	tests/Verification/harness_fresh_test_lifecycle_001_test.php
 characterization	php	tests/Verification/quality_graph_ci_setup_001_test.php
+unit	python3	tests/Verification/development_setup_001_test.py
