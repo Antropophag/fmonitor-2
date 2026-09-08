@@ -71,8 +71,18 @@ def plan(base, event):
                       'categories': CATEGORIES if full else []}, ensure_ascii=True))
 
 
-def run_category(category):
+def category_items(category, shard=None):
+    if shard is not None and (category != 'integration' or shard not in ['1/2', '2/2']):
+        raise ValueError('shard must be 1/2 or 2/2 and is only supported for integration')
     items = [(runtime, path) for group, runtime, path in inventory() if group == category]
+    if shard is not None:
+        offset = 0 if shard == '1/2' else 1
+        items = sorted(items, key=lambda item: item[1])[offset::2]
+    return items
+
+
+def run_category(category, shard=None):
+    items = category_items(category, shard)
     if category in ['integration', 'e2e']:
         # run.sh category supplies the same explicit defaults used by local test stages.
         check = subprocess.run(['php', '-r', '$c=@new mysqli(getenv("FMONITOR_TEST_DB_HOST"),getenv("FMONITOR_TEST_DB_ADMIN_USER"),getenv("FMONITOR_TEST_DB_ADMIN_PASSWORD"),null,(int)getenv("FMONITOR_TEST_DB_PORT")); exit($c->connect_errno===0?0:1);'], cwd=ROOT)
@@ -80,7 +90,7 @@ def run_category(category):
             raise ValueError('test MariaDB unavailable; run make test-db-reset migrate')
     # Harness tests invoke make themselves; outer category selection is not theirs.
     runtime_env = dict(os.environ)
-    for name in ['CATEGORY', 'MAKEFLAGS', 'MFLAGS', 'MAKEOVERRIDES']:
+    for name in ['CATEGORY', 'SHARD', 'MAKEFLAGS', 'MFLAGS', 'MAKEOVERRIDES']:
         runtime_env.pop(name, None)
     started = time.monotonic()
     results = []
@@ -99,11 +109,13 @@ def run_category(category):
             print(f'REGRESSION_FAILURE: {path}', file=sys.stderr)
     duration = time.monotonic() - started
     failures = sum(status != 0 for _, _, status in results)
-    print(f'CATEGORY_RESULT category={category} tests={len(results)} failures={failures} seconds={duration:.3f}', flush=True)
+    shard_field = f' shard={shard}' if shard is not None else ''
+    print(f'CATEGORY_RESULT category={category} tests={len(results)} failures={failures} seconds={duration:.3f}{shard_field}', flush=True)
     summary = os.environ.get('GITHUB_STEP_SUMMARY')
     if summary:
         with open(summary, 'a') as out:
-            out.write(f'\n### {category}: {len(results)} tests, {failures} failures, {duration:.1f}s\n\n')
+            label = f'{category} ({shard})' if shard is not None else category
+            out.write(f'\n### {label}: {len(results)} tests, {failures} failures, {duration:.1f}s\n\n')
             out.write('| Slowest test | Seconds | Exit |\n|---|---:|---:|\n')
             for path, elapsed, status in sorted(results, key=lambda item: item[1], reverse=True)[:10]:
                 out.write(f'| `{path}` | {elapsed:.3f} | {status} |\n')
@@ -126,7 +138,9 @@ def main():
     selection.add_argument('--base', default='')
     selection.add_argument('--event', required=True)
     for name in ['list', 'run']:
-        commands.add_parser(name).add_argument('category', choices=CATEGORIES)
+        category = commands.add_parser(name)
+        category.add_argument('category', choices=CATEGORIES)
+        category.add_argument('--shard', choices=['1/2', '2/2'])
     aggregation = commands.add_parser('aggregate')
     aggregation.add_argument('--full', choices=['true', 'false'], required=True)
     aggregation.add_argument('--results', required=True)
@@ -135,11 +149,10 @@ def main():
         if args.command == 'plan':
             plan(args.base, args.event)
         elif args.command == 'list':
-            for group, runtime, path in inventory():
-                if group == args.category:
-                    print(f'{runtime}\t{path}')
+            for runtime, path in category_items(args.category, args.shard):
+                print(f'{runtime}\t{path}')
         elif args.command == 'run':
-            return run_category(args.category)
+            return run_category(args.category, args.shard)
         else:
             aggregate(args.full, args.results)
     except (OSError, ValueError, TypeError) as error:

@@ -31,3 +31,9 @@ workflow11:55, сумма elapsed jobs18:39. Модель двух VM даёт �
 сравнение с полным validated списком. RED15:5intended failures/10PASS на hash
 `66a189937d55b9f0a1d9701cc8bd7ab3f89f02453657f17eb96683d89a22bc26`.
 История verdicts сохраняется в `reviews/tests/INTEGRATION-SHARDING-001.md`.
+
+Superseding Gate3 APPROVED на неизменённом corrected test hash66a1899…2bc26.
+Минимальная реализация: общий category_items для list/run, optional SHARD в Make
+и shell wrapper, удаление SHARD из childenv, обычная integration matrix[1,2].
+Focused verification_ci15 PASS. Реальный read-only list:177 =89+88, union exact,
+пересечений нет. Снимки списков сохранены вне репозитория для сверки actual CI.

@@ -102,3 +102,71 @@ uniqueness from the validated full list rather than a permanent 177 count. Then
 capture a fresh independent RED and obtain a new Gate 3 review before runner,
 Makefile, or workflow implementation begins. Any byte change invalidates the
 SHA-256 reviewed here.
+
+---
+
+## Narrow rereview — corrected test artifact
+
+- Дата: `2026-09-08`
+- Reviewer: тот же независимый агент `/root/shard_test_review`; reviewer did not
+  author or edit the corrected test
+- Superseded test SHA-256:
+  `b48e23d6a96fa87f9786acbdf4cce7de4554c4c4b7c34aa4e1e2628b5d5f0e72`
+- Reviewed corrected test SHA-256:
+  `66a189937d55b9f0a1d9701cc8bd7ab3f89f02453657f17eb96683d89a22bc26`
+- Superseding verdict: `APPROVED`
+
+This rereview is limited to the three blocking findings above. No runner,
+Makefile, workflow, or unrelated test change was reviewed as implementation.
+
+### Closure of blocking findings
+
+1. **Make shard selection — closed.** The corrected case adds five integration
+   entries to the existing one, sorts all six paths, derives the exact `1/2`
+   alternating subset, proves it is smaller than the full category, and requires
+   the trace to equal only that subset. Ignoring `SHARD` can no longer pass. The
+   child runtimes still reject leaked `CATEGORY`, `SHARD`, `MAKEFLAGS`, `MFLAGS`,
+   or `MAKEOVERRIDES`.
+
+2. **Observable pre-runtime DB probe — closed.** The fake `php -r` branch now
+   appends to the separate `DB_TRACE` marker. Category listing, both valid shard
+   listings, and every invalid selector require that marker to remain absent,
+   independently of the test-file runtime trace. An implementation that probes
+   MariaDB before listing or before rejecting invalid input is now detected.
+
+3. **Automatic inventory growth — closed.** The repository composition case is
+   renamed for the current inventory and no longer contains a literal 177 count.
+   It derives the expected size from the validated unsharded output, checks both
+   shards are nonempty, compares the ordered alternating slices, and proves equal
+   combined/full cardinality, no duplicates, and complete union. Legitimate new
+   validated entries therefore enter exactly one shard without requiring this
+   test to be edited. The current 177-entry fact remains external evidence.
+
+### Fresh independently reproduced RED
+
+```text
+$ sha256sum tests/Verification/verification_ci_001_test.py
+66a189937d55b9f0a1d9701cc8bd7ab3f89f02453657f17eb96683d89a22bc26  tests/Verification/verification_ci_001_test.py
+
+$ python3 tests/Verification/verification_ci_001_test.py
+Ran 15 tests in 13.831s
+FAILED (failures=5)
+```
+
+Ten existing tests pass. The same five new contract cases remain RED for the
+intended absent behavior: `ci.py` rejects `--shard`, the current Make route runs
+the full category and leaks Make controls, and the workflow is still the single
+integration job. No database was required. The new DB-probe marker does not
+exist for list or invalid-selector cases, confirming those paths remain
+pre-runtime in the reviewed baseline.
+
+### Superseding verdict
+
+`APPROVED`
+
+The corrected exact artifact closes all three prior findings without widening
+the authorized design. Gate 3 passes for SHA-256
+`66a189937d55b9f0a1d9701cc8bd7ab3f89f02453657f17eb96683d89a22bc26`.
+Minimal runner, Makefile, and standard GitHub matrix implementation may proceed
+without changing these test bytes. Any further test-byte change requires fresh
+independent review and RED reproduction.
