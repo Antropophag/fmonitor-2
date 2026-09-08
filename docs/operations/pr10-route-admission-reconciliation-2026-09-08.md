@@ -79,3 +79,14 @@ Reviewer отдельно воспроизвёл оба cookie-входа на �
 `pilot_route_csp_completion_flow_001_test.php`,
 `pilot_http_auth_001_global_calls_test.php`; PHP lint router PASS.
 Тест запускает свои loopback HTTP servers; рабочий стенд не используется.
+
+Финальная локальная проверка на merge commit
+`dc599b9044f899ce8c9cb61016ea56e674625f75`: architecture7/7 PASS,
+`git diff --check origin/main HEAD` PASS, strict OpenSpec validation PASS.
+Полный local→CI дубль не выполняется: полный authoritative прогон будет в Actions
+на итоговом head согласно принятой матрице.
+
+Independent Gate5 APPROVED для `dc599b9044f899ce8c9cb61016ea56e674625f75`
+против main73a9dd17: `reviews/code/PILOT-SESSION-STORAGE-001-pr10-reconciliation-2026-09-08.md`.
+Reviewer повторил raw HTTP, completion CSP, global-call и lint — PASS.
+Следующий commit добавляет только review/evidence, без изменений runtime/test.
