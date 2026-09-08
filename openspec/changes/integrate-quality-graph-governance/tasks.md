@@ -30,12 +30,12 @@
 - [ ] 4.2 Добавить untrusted PR runner с read-only permissions, exact pins и content-addressed Result v0 artifacts; проверить node/PR/head/run/attempt/graphDigest provenance на representative PR run.
 - [ ] 4.3 Добавить repository-owned trusted publisher только для upstream `watch`/`publish`, с `actions: read`, `contents: read`, `checks: write`, base-branch topology, без checkout, `issue_comment`, command job и approval/write surfaces; проверить rejection missing/stale/mismatched results и fail-closed allowlisted comparison с generated v0.1.7 publisher.
 - [x] 4.4 Расширить architecture policy проверками запрета floating refs, mixed toolchain versions, обхода repository commands и небезопасных publisher permissions; выполнить `make architecture-check`.
-- [ ] 4.5 Выполнить focused suites и `make verify`, сохранить GREEN commands/results и exact head commit в operations evidence.
+- [x] 4.5 Выполнить focused suites и `make verify`, сохранить GREEN commands/results и exact head commit в operations evidence.
 
 ## 5. Gate 5 — независимый code review
 
-- [ ] 5.1 Поручить отдельному от test reviewer и implementation author агенту независимый Gate 5 review executable spec, approved tests, production/tooling diff, security boundary и GREEN evidence; сохранить `reviews/code/QUALITY-GRAPH-GOVERNANCE-001.md` с exact reviewed implementation commit и `APPROVED`.
-- [ ] 5.2 При изменении тестов после Gate 5 вернуться к Gate 2/3; иначе проверить lineage receipt самого slice публичной governance командой.
+- [x] 5.1 Поручить отдельному от test reviewer и implementation author агенту независимый Gate 5 review executable spec, approved tests, production/tooling diff, security boundary и GREEN evidence; сохранить `reviews/code/QUALITY-GRAPH-GOVERNANCE-001.md` с exact reviewed implementation commit и `APPROVED`.
+- [x] 5.2 При изменении тестов после Gate 5 вернуться к Gate 2/3; иначе проверить lineage receipt самого slice публичной governance командой.
 
 ## 6. Representative PR и dual-run parity
 
@@ -46,5 +46,5 @@
 
 ## 7. Done definition
 
-- [ ] 7.1 Выполнить `make architecture-check`, `make verify`, graph validation и lineage governance для exact reviewed implementation commit плюс допустимого evidence envelope; проверить все результаты GREEN и связаны одной Git-derived provenance chain.
+- [x] 7.1 Выполнить `make architecture-check`, `make verify`, graph validation и lineage governance для exact reviewed implementation commit плюс допустимого evidence envelope; проверить все результаты GREEN и связаны одной Git-derived provenance chain.
 - [ ] 7.2 Подтвердить, что PR не смержен, branch protection не изменён, старый CI/harness сохранён, approvals disabled, а незавершённая publisher parity не представлена как завершённая миграция.

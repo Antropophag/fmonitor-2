@@ -79,3 +79,32 @@ assertions are recorded by the distinct timestamps/receipts.
 
 The final independent code reviewer has received this exact result. Gate5 record,
 first real immutable receipt validation and representative PR proofs follow.
+
+## Final independent review and real receipt — PASS
+
+[Gate5v3](../../reviews/code/QUALITY-GRAPH-GOVERNANCE-CURRENT-v3-2026-09-08.md)
+is APPROVED for exactd7edbc4, authored independently by
+`agent:/root/migration18_collation`. Record SHA-256
+`39db9593785c105913eb096dd8c0fffb063a5f56c6a2b601cd6e7755e581dda0`.
+The first immutable receipt is
+[receipt-v3](../../delivery/evidence/QUALITY-GRAPH-GOVERNANCE-001/qg-current-20260908-v3.json),
+SHA-256 `76461350bc382cc518975fc5dfca375e37c6210127a46e4aff6b409884b3bdf5`. No v1/v2 receipt existed;
+this first leaf correctly uses supersedes:null.
+
+Actual `make delivery-evidence-check` returned exit0 and
+`DELIVERY_EVIDENCE_OK receipts=1 head=2fa68e87b590260277b5c558cf3c10e1039b5872`.
+The private log is `real-receipt-v3-validation-001.log`. The command verified
+current canonical spec, eight raw test hashes, refreshed records, strict ancestry,
+empty exact latest delta, full reviewed commit binding and permitted envelope.
+Disposable local test DB teardown completed; the manual pilot was not redeployed.
+
+Inherited owner decisions remain available at the immutable published historical
+ref (GitHub commit API confirmed f07548135fe930e7a8fb9bb97271c9f05a8ebfc1):
+
+- [Initial owner approval](https://github.com/Antropophag/fmonitor-2/blob/f07548135fe930e7a8fb9bb97271c9f05a8ebfc1/docs/operations/quality-graph-governance-owner-approval-2026-09-02.md).
+- [Complete Git-set/chronology approval](https://github.com/Antropophag/fmonitor-2/blob/f07548135fe930e7a8fb9bb97271c9f05a8ebfc1/docs/operations/quality-graph-governance-v05-owner-approval-2026-09-02.md).
+- [Minimal publisher decision](https://github.com/Antropophag/fmonitor-2/blob/f07548135fe930e7a8fb9bb97271c9f05a8ebfc1/docs/operations/quality-graph-custom-publisher-owner-decision-2026-09-03.md).
+- [v0.6 Gate1 review](https://github.com/Antropophag/fmonitor-2/blob/f07548135fe930e7a8fb9bb97271c9f05a8ebfc1/docs/operations/quality-graph-governance-gate1-rereview-v6.md).
+
+Actual representative PR/Actions proof is the next step. No base merge, protection
+change, publisher phaseB or global CI cutover is implied by these local PASS results.
