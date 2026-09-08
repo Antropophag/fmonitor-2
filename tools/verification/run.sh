@@ -54,6 +54,8 @@ run_files() {
   fi
 }
 
+command -v rg >/dev/null || fail SETUP_FAILURE "required command unavailable: rg"
+
 for required_directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification; do
   test -d "$required_directory" || fail SETUP_FAILURE "missing verification directory: $required_directory"
 done

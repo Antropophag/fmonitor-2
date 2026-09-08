@@ -1,10 +1,11 @@
 .DEFAULT_GOAL := help
 
 COMPOSE := docker compose
+TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint verify fresh-test-verify
+	characterization-test e2e-test architecture-check lint verify fresh-test-verify ci-setup test-tools
 
 help:
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
@@ -172,3 +173,10 @@ fresh-test-verify:
 	printf 'FRESH_TEST_VERIFY_FAILURE verify_status=%s teardown_status=%s\n' "$$verify_status" "$$teardown_status"; \
 	if [ $$verify_status -ne 0 ]; then exit $$verify_status; fi; \
 	exit $$teardown_status
+
+ci-setup:
+	@bash tools/delivery/ci-setup.sh
+
+test-tools:
+	docker build --label "org.opencontainers.image.revision=$$(git rev-parse HEAD)" \
+		-t "$(TEST_TOOL_IMAGE)" -f tools/verification/Dockerfile.test tools/verification
