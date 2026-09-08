@@ -55,3 +55,17 @@ Independent Gate3 APPROVED до изменения:
 `reviews/tests/WORKFORCE-ARCHITECTURE-DEDUP-001.md`; итоговый SHA256 теста
 `1d864afb89d9e06762528182073462e15562e247372f104f5ba711c35a1c1be7`
 совпадает с заранее reviewed deletion hash.
+
+## Сохранённый обязательный gate
+
+На8599929d: standalone `make architecture-check` — PASS7/7;
+`harness_full_aggregation_001_test.php` — PASS, включая nonzero/no VERIFY_OK при
+architecture failure; `verification_ci_001_test.py` —9PASS, включая fail-closed
+fast/aggregate и состав категорий. PHP lint и diff-check PASS.
+Makefile, workflow, CI selector/aggregator и inventory не менялись.
+
+Independent Gate5 APPROVED на8599929dbd76ebfac18fad00ed84b7496ca6e57d:
+`reviews/code/WORKFORCE-ARCHITECTURE-DEDUP-001.md`. Reviewed source hash совпадает
+с предварительным Gate3. Отдельная test DB после проверок не содержит fixture DB
+и task-owned Compose удалён. Следующий commit добавляет только review/evidence;
+полный Actions и его CI timing будут приложены к PR на точном опубликованном head.
