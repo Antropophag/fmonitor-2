@@ -25,15 +25,16 @@ class NativeSuites(unittest.TestCase):
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('// FMONITOR_TEST_DB\n' if name.endswith('/d_test.php') else '// scheduler fixture\n')
+        self.write_catalog()
         self.bin = self.root / 'trace-bin'
         self.bin.mkdir()
-        for name in ['dirname', 'find', 'sort', 'rg']:
+        for name in ['dirname', 'find', 'sort']:
             executable = shutil.which(name)
             self.assertIsNotNone(executable, f'SETUP_OK {name}')
             (self.bin / name).symlink_to(executable)
         self.trace = self.root / 'calls.log'
         self.invocations = self.root / 'interpreter-invocations.log'
-        for name in ['php', 'node']:
+        for name in ['php', 'node', 'python3']:
             script = self.bin / name
             script.write_text('#!/bin/sh\n'
                               f'printf "{name}\\t%s\\n" "$1" >> "$INVOCATIONS"\n'
@@ -43,6 +44,13 @@ class NativeSuites(unittest.TestCase):
                               'exit 0\n')
             script.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.bin), TRACE=str(self.trace), INVOCATIONS=str(self.invocations), FAIL_PATHS='')
+
+    def write_catalog(self, unit=UNIT, db=DB, clients=(CLIENT,)):
+        rows = [('unit', 'php', p) for p in unit]
+        rows += [('unit', 'node', p) for p in clients]
+        rows += [('db', 'php', p) for p in db]
+        (self.root / 'tools/verification/suites.tsv').write_text(
+            ''.join('\t'.join(row) + '\n' for row in rows))
 
     def run_cli(self, *arguments, failures=()):
         env = dict(self.env, FAIL_PATHS=''.join(f'|{p}|' for p in failures))
@@ -72,7 +80,7 @@ class NativeSuites(unittest.TestCase):
         for path in UNIT + [CLIENT]:
             self.assertIn('VERIFY ' + path + '\n', result.stdout)
 
-    def test_db_discovers_new_native_filename(self):
+    def test_db_executes_registered_native_filename(self):
         result = self.run_cli('db')
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual([f'php\t{p}' for p in DB], self.calls(),
@@ -101,6 +109,7 @@ class NativeSuites(unittest.TestCase):
 
     def test_empty_node_inventory_is_allowed(self):
         (self.root / CLIENT).unlink()
+        self.write_catalog(clients=())
         result = self.run_cli('list', 'unit')
         self.assertEqual(0, result.returncode, 'INTENDED_RED Bash3 empty Node array: ' + result.stderr)
         self.assertEqual(''.join(f'php\t{p}\n' for p in UNIT), result.stdout)
@@ -112,6 +121,7 @@ class NativeSuites(unittest.TestCase):
     def test_empty_php_and_node_inventories_are_allowed(self):
         for name in UNIT + DB + [CLIENT]:
             (self.root / name).unlink()
+        self.write_catalog(unit=(), db=(), clients=())
         for suite in ['unit', 'db']:
             result = self.run_cli('list', suite)
             self.assertEqual(0, result.returncode, 'INTENDED_RED Bash3 empty PHP array: ' + result.stderr)

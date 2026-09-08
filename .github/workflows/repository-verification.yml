@@ -1,19 +1,49 @@
-# Complete baseline harness for the pilot; no Quality Graph runtime or publisher.
-name: Repository verification baseline
+# One authoritative CI run; category inventories also back make test.
+name: Repository verification
 'on':
   pull_request:
-    branches:
-    - main
+    branches: [main]
   workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * *'
+  release:
+    types: [published]
 permissions:
   contents: read
+concurrency:
+  group: repository-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  verify:
+  plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 5
+    outputs:
+      full: ${{ steps.policy.outputs.full }}
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - name: Select checks conservatively
+      id: policy
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.sha }}
+        EVENT: ${{ github.event_name }}
+      run: |
+        python3 tools/verification/ci.py plan --base "$BASE_REF" --event "$EVENT" > /tmp/test-plan.json
+        cat /tmp/test-plan.json
+        python3 -c 'import json; p=json.load(open("/tmp/test-plan.json")); print("full="+str(p["full"]).lower())' >> "$GITHUB_OUTPUT"
+        printf '\n### Selected checks\n\n```json\n' >> "$GITHUB_STEP_SUMMARY"
+        cat /tmp/test-plan.json >> "$GITHUB_STEP_SUMMARY"
+        printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
+  fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
     - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
@@ -35,9 +65,178 @@ jobs:
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
         node-version: 22.22.0
-    - name: Prepare exact repository verification dependencies
+    - name: Prepare lightweight test dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ripgrep
+    - name: Syntax, architecture and verification policy
+      run: |
+        make lint architecture-check
+        python3 tests/Verification/verification_ci_001_test.py
+        git diff --check
+  unit:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: mysqli, pcntl, dom, mbstring
+        coverage: none
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.8.15
+        python-version: 3.12.11
+        enable-cache: 'false'
+    - name: Select pinned Python
+      run: |
+        uv python install 3.12.11
+        dirname "$(uv python find --no-project 3.12.11)" >> "$GITHUB_PATH"
+    - name: Verify pinned Python
+      run: python3 -c 'import sys; assert sys.version_info[:3] == (3, 12, 11)'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.22.0
+    - name: Prepare lightweight test dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ripgrep
+    - name: Run unit category once
+      run: make test CATEGORY=unit
+  integration:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: mysqli, pcntl, dom, mbstring
+        coverage: none
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.8.15
+        python-version: 3.12.11
+        enable-cache: 'false'
+    - name: Select pinned Python
+      run: |
+        uv python install 3.12.11
+        dirname "$(uv python find --no-project 3.12.11)" >> "$GITHUB_PATH"
+    - name: Verify pinned Python
+      run: python3 -c 'import sys; assert sys.version_info[:3] == (3, 12, 11)'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.22.0
+    - name: Prepare pinned integration dependencies
       run: make ci-setup
-    - name: Verify repository-owned test tooling
-      run: php tests/Verification/quality_graph_ci_setup_001_test.php
-    - name: Run retained full harness
-      run: make fresh-test-verify
+    - name: Prepare isolated test database
+      run: make test-db-reset migrate
+    - name: Run integration category once
+      run: make test CATEGORY=integration
+    - name: Tear down isolated test database
+      if: always()
+      run: make test-env-down
+  e2e:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: mysqli, pcntl, dom, mbstring
+        coverage: none
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.8.15
+        python-version: 3.12.11
+        enable-cache: 'false'
+    - name: Select pinned Python
+      run: |
+        uv python install 3.12.11
+        dirname "$(uv python find --no-project 3.12.11)" >> "$GITHUB_PATH"
+    - name: Verify pinned Python
+      run: python3 -c 'import sys; assert sys.version_info[:3] == (3, 12, 11)'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.22.0
+    - name: Prepare pinned integration dependencies
+      run: make ci-setup
+    - name: Prepare isolated test database
+      run: make test-db-reset migrate
+    - name: Run e2e category once
+      run: make test CATEGORY=e2e
+    - name: Tear down isolated test database
+      if: always()
+      run: make test-env-down
+  governance:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: mysqli, pcntl, dom, mbstring
+        coverage: none
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.8.15
+        python-version: 3.12.11
+        enable-cache: 'false'
+    - name: Select pinned Python
+      run: |
+        uv python install 3.12.11
+        dirname "$(uv python find --no-project 3.12.11)" >> "$GITHUB_PATH"
+    - name: Verify pinned Python
+      run: python3 -c 'import sys; assert sys.version_info[:3] == (3, 12, 11)'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: 22.22.0
+    - name: Prepare lightweight test dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ripgrep
+    - name: Run governance category once
+      run: make test CATEGORY=governance
+  verify:
+    if: always()
+    needs: [plan, fast, unit, integration, e2e, governance]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - name: Require every expected result
+      env:
+        FULL: ${{ needs.plan.outputs.full }}
+        RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}"}'
+      run: python3 tools/verification/ci.py aggregate --full "$FULL" --results "$RESULTS"

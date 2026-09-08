@@ -5,7 +5,7 @@ TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
 .PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint verify fresh-test-verify ci-setup test-tools
+	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools
 
 help:
 	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
@@ -20,8 +20,9 @@ help:
 	@echo "make migrate          Применить canonical production migrations к test DB"
 	@echo "make unit-test/db-test/characterization-test/e2e-test"
 	@echo "make architecture-check  Проверить machine-checkable boundaries"
-	@echo "make verify           Полная clean-checkout проверка"
-	@echo "make fresh-test-verify  Полная проверка с обязательным test-env teardown"
+	@echo "make test CATEGORY=unit|integration|e2e|governance  Выбранная категория"
+	@echo "make test             Полная clean-checkout проверка"
+	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
 
 _bitrix-secret:
 	@mkdir -p .local
@@ -95,7 +96,13 @@ architecture-check:
 lint:
 	@bash tools/verification/run.sh lint
 
-verify:
+verify: test
+
+ifneq ($(strip $(CATEGORY)),)
+test:
+	@bash tools/verification/run.sh category "$(CATEGORY)"
+else
+test:
 	@set +e; failures=""; failed_count=0; setup_failed=0; setup_cause=""; \
 	record_failure() { \
 		failed_stage="$$1"; \
@@ -104,7 +111,9 @@ verify:
 	}; \
 	run_stage() { \
 		stage_name="$$1"; shift; \
+		stage_started=$$(date +%s); \
 		"$$@"; stage_status=$$?; \
+		printf 'VERIFY_STAGE_TIMING stage=%s seconds=%s exit=%s\n' "$$stage_name" "$$(( $$(date +%s) - stage_started ))" "$$stage_status"; \
 		if [ $$stage_status -eq 0 ]; then \
 			printf 'VERIFY_STAGE %s PASS\n' "$$stage_name"; \
 		else \
@@ -157,9 +166,13 @@ verify:
 	fi; \
 	printf 'VERIFY_OK\n'
 
-fresh-test-verify:
+endif
+
+fresh-test-verify: fresh-test
+
+fresh-test:
 	@set +e; \
-	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') verify; \
+	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test CATEGORY=; \
 	verify_status=$$?; \
 	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test-env-down; \
 	teardown_status=$$?; \
