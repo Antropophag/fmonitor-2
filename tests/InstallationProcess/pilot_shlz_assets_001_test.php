@@ -23,8 +23,70 @@ function psaRemoveTree(string $root): void { if(!is_dir($root))return;$it=new Re
 function psaConcurrent(int $port,array $requests): array { $s=[];foreach($requests as$i=>[$method,$route]){$s[$i]=stream_socket_client("tcp://127.0.0.1:$port",$e,$m,5);fwrite($s[$i],"$method $route HTTP/1.1\r\nHost: assets.example\r\nConnection: close\r\n\r\n");stream_socket_shutdown($s[$i],STREAM_SHUT_WR);}$out=[];foreach($s as$i=>$socket){$raw='';while(!feof($socket))$raw.=(string)fread($socket,65536);fclose($socket);$out[$i]=psaParse($raw);}return $out; }
 function psaDb(?string $name=null): mysqli { $d=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local',$name,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$d->set_charset('utf8mb4');return $d; }
 function psaDirectoryPermissionCase(string $root,int $mode,string $why): void { mkdir($root,0700);psaWriteGraph($root,['shlz.css'=>'.permission{}']);$server=null;try{assertSameValue(true,chmod($root,$mode),$why.' setup');$server=psaStart($root.'/shlz.css');psaError(psaRequest($server['port'],'GET','/pilot/assets/shlz.css'),503,$why,['retry-after'=>'60']);}finally{psaStop($server);chmod($root,0700);} }
-function psaDockerOwner(string $root,int $uid): bool { if(!is_executable('/usr/bin/docker'))return false;$p=proc_open(['/usr/bin/docker','run','--rm','--network','none','--entrypoint=/bin/sh','-v',$root.':/fixture','mariadb:10.11','-c','chown -R '.$uid.':'.$uid.' /fixture'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($p))return false;$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);return proc_close($p)===0&&$out===''&&$err===''; }
-function psaRootOwnerAllowed(string $base): void { $candidate=null;$dockerOwned=false;$euid=function_exists('posix_geteuid')?posix_geteuid():0;if($euid===0){$root=$base.'/root-owner-allowed';mkdir($root,0700);file_put_contents($root.'/shlz.css','.root-owner{}');chmod($root.'/shlz.css',0400);chmod($root,0500);$candidate=$root.'/shlz.css';}else{foreach([getenv('FMONITOR_TEST_ROOT_OWNED_SHLZ_PATH')?:'',dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css']as$path){$file=@lstat($path);$dir=@lstat(dirname($path));if(is_array($file)&&is_array($dir)&&$file['uid']===0&&$dir['uid']===0&&($file['mode']&0170000)===0100000&&($dir['mode']&0170000)===0040000){$candidate=$path;break;}}if($candidate===null&&is_readable('/var/run/docker.sock')){$root=$base.'/root-owner-allowed';mkdir($root,0700);file_put_contents($root.'/shlz.css','.root-owner{}');chmod($root.'/shlz.css',0444);chmod($root,0555);if(psaDockerOwner($root,0)){$candidate=$root.'/shlz.css';$dockerOwned=true;}}}if($candidate===null)return;$server=null;try{$rootStat=lstat(dirname($candidate));$fileStat=lstat($candidate);assertSameValue([0,0],[$rootStat['uid'],$fileStat['uid']],'root-owned fixture exact owner');$server=psaStart($candidate);psaGetHead($server['port'],'/pilot/assets/shlz.css',(string)file_get_contents($candidate));}finally{psaStop($server);if($dockerOwned)assertSameValue(true,psaDockerOwner(dirname($candidate),$euid),'restore docker-provisioned fixture ownership');if(str_starts_with($candidate,$base.'/')){chmod($candidate,0600);chmod(dirname($candidate),0700);}} }
+function psaDockerOwner(string $root, int $uid): bool
+{
+    if (!is_executable('/usr/bin/docker')) return false;
+    $process = proc_open(['/usr/bin/docker', 'run', '--rm', '--pull=never', '--network', 'none', '--entrypoint=/bin/sh', '-v', $root.':/fixture', 'fmonitor2-php-test:latest', '-c', 'chown -R '.$uid.':'.$uid.' /fixture'], [0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
+    if (!is_resource($process)) return false;
+    $out = stream_get_contents($pipes[1]);
+    $err = stream_get_contents($pipes[2]);
+    fclose($pipes[1]); fclose($pipes[2]);
+    return proc_close($process) === 0 && $out === '' && $err === '';
+}
+function psaRootOwnerAllowed(string $base): void
+{
+    $candidate = null;
+    $createdRoot = null;
+    $server = null;
+    $euid = function_exists('posix_geteuid') ? posix_geteuid() : 0;
+    // Restoration covers fixture creation and every possibly partial chown.
+    try {
+        if ($euid === 0) {
+            $createdRoot = $base.'/root-owner-allowed';
+            mkdir($createdRoot, 0700);
+            file_put_contents($createdRoot.'/shlz.css', '.root-owner{}');
+            chmod($createdRoot.'/shlz.css', 0400);
+            chmod($createdRoot, 0500);
+            $candidate = $createdRoot.'/shlz.css';
+        } else {
+            foreach ([getenv('FMONITOR_TEST_ROOT_OWNED_SHLZ_PATH') ?: '', dirname(__DIR__,3).'/shlz-ui/packages/styles/dist/shlz.css'] as $path) {
+                $file = @lstat($path); $dir = @lstat(dirname($path));
+                if (is_array($file) && is_array($dir) && $file['uid'] === 0 && $dir['uid'] === 0 && ($file['mode'] & 0170000) === 0100000 && ($dir['mode'] & 0170000) === 0040000) {
+                    $candidate = $path;
+                    break;
+                }
+            }
+            if ($candidate === null && is_readable('/var/run/docker.sock')) {
+                $createdRoot = $base.'/root-owner-allowed';
+                mkdir($createdRoot, 0700);
+                file_put_contents($createdRoot.'/shlz.css', '.root-owner{}');
+                chmod($createdRoot.'/shlz.css', 0444);
+                chmod($createdRoot, 0555);
+                assertSameValue(true, psaDockerOwner($createdRoot, 0), 'SETUP_FAILURE: provision root-owned CSS fixture with make test-tools image');
+                $candidate = $createdRoot.'/shlz.css';
+            }
+        }
+        if ($candidate === null) return;
+        clearstatcache();
+        $rootStat = lstat(dirname($candidate)); $fileStat = lstat($candidate);
+        assertSameValue([0,0], [$rootStat['uid'],$fileStat['uid']], 'root-owned fixture exact owner');
+        $server = psaStart($candidate);
+        psaGetHead($server['port'], '/pilot/assets/shlz.css', (string) file_get_contents($candidate));
+    } finally {
+        psaStop($server);
+        if ($createdRoot !== null) {
+            clearstatcache();
+            $owners = [lstat($createdRoot)['uid'], lstat($createdRoot.'/shlz.css')['uid']];
+            if ($owners !== [$euid,$euid]) {
+                assertSameValue(true, psaDockerOwner($createdRoot, $euid), 'restore docker-provisioned fixture ownership');
+            }
+            clearstatcache();
+            assertSameValue([$euid,$euid], [lstat($createdRoot)['uid'], lstat($createdRoot.'/shlz.css')['uid']], 'restored fixture exact owners');
+            assertSameValue(true, chmod($createdRoot.'/shlz.css', 0600), 'restore fixture file mode');
+            assertSameValue(true, chmod($createdRoot, 0700), 'restore fixture directory mode');
+        }
+    }
+}
 function psaInRequestMutation(string $root): void
 {
     $probe = \FMonitor2\Tests\Support\ShlzManifestCaptureProbe::run(dirname(__DIR__, 2));
