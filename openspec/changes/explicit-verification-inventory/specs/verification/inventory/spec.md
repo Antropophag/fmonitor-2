@@ -29,3 +29,7 @@ Runner SHALL сохранять VERIFY строки, ошибки и поряд�
 #### Scenario: Successful duration
 - **WHEN** тест завершается успешно
 - **THEN** записаны его путь, группа, интерпретатор, неотрицательная длительность и exit=0.
+
+#### Scenario: CI setup compatibility
+- **WHEN** QUALITY-GRAPH-CI-SETUP-001 запускает list без rg с явными unit/db fixtures
+- **THEN** оба списка полны и успешны; без каталога возникает явный SETUP_FAILURE до вывода. Это заменяет прежний missing-rg отказ, сохраняет гарантию отсутствия ложной классификации. Проверки image provenance и инструментов остаются без изменений.

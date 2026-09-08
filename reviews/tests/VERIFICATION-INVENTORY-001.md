@@ -61,3 +61,27 @@ exit 1
 This is qualifying RED. Catalog validation cases fail because the unchanged runner returns success; unknown files fail because they are silently accepted; repository characterization listing fails because the old CLI supports only unit/db; timing fails because no `VERIFY_TIMING` record exists. Other inherited cases fail because the isolated PATH intentionally lacks `rg`, demonstrating that the planned inventory removes that dependency. Setup is otherwise operational and the timing fixture reaches all five trace interpreters.
 
 No blocking test findings remain. Gate 3 is `APPROVED`; Gate 4 may implement the reviewed inventory, validation and timing behavior without changing these expectations.
+
+## Gate 3 restart for QUALITY-GRAPH-CI-SETUP-001 compatibility
+
+- Reviewed production base: commit `115d46c55cbc5544a2266491bfb16686274126e4`; no implementation change was made for this restart.
+- Reviewed amended test: `tests/Verification/quality_graph_ci_setup_001_test.php` in the working tree.
+- RED evidence: `/tmp/fmonitor25-ci-new-red.log`
+- Verdict: `APPROVED`
+
+The amended compatibility scenario correctly replaces the superseded expectation that `rg` must be absent and cause failure. Its isolated fixture now supplies one explicit unit member and one explicit DB member, deliberately omits `rg` from PATH, and requires exact successful list output for both groups. This detects retaining the content-scanning prerequisite, dropping either historic classification, changing the public list format, or executing a partial list. It then removes only the catalog and requires the exact pre-output `SETUP_FAILURE` diagnostic, preserving fail-closed setup behavior.
+
+The rest of QUALITY-GRAPH-CI-SETUP-001 is unchanged: the public `make test-tools` image build, unique tag ownership, exact source-revision label, PHP/extensions, root build precondition, `setpriv` non-root execution, network isolation, and ownership-checked cleanup assertions remain intact. The fixture still uses a unique temporary directory and image tag and cleans both in `finally`.
+
+The captured old-runner execution is qualifying RED:
+
+```text
+explicit inventory remains complete without rg: unit
+Expected: exit 0 and the exact registered unit list
+Actual:   exit 1, SETUP_FAILURE: required command unavailable: rg
+Process exit: 255
+```
+
+This failure occurs at the changed compatibility assertion for the intended reason. The temporary fixture, runner invocation and PHP assertion harness are operational; Docker/image assertions are intentionally not reached until the new scheduler contract is satisfied.
+
+No blocking findings remain in this Gate 2 amendment. The compatibility test may be made GREEN against commit `115d46c` without altering its reviewed expectations; the implementation Gate 5 remains pending until that regression is green and reviewed.
