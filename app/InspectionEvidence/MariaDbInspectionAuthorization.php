@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\InspectionEvidence;
 
-use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
+use FMonitor2\InstallationProcess\{InspectionEvidenceSchemaMigration,InspectionPhotoContentIndexSchemaMigration};
 
 final class MariaDbInspectionAuthorization
 {
@@ -35,7 +35,7 @@ final class MariaDbInspectionAuthorization
 
     public function schemaAvailable(): bool
     {
-        return InspectionEvidenceSchemaMigration::isCompleteCompatible($this->db, $this->prefix);
+        return InspectionPhotoContentIndexSchemaMigration::isCompleteCompatible($this->db, $this->prefix) || InspectionEvidenceSchemaMigration::isCompleteCompatible($this->db, $this->prefix);
     }
 
     private function table(string $name): string

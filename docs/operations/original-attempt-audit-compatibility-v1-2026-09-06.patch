@@ -1,0 +1,423 @@
+--- a/tests/InstallationProcess/assignment_order_original_data_attempt_clock_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_data_attempt_clock_001_test.php
+@@ -46,12 +46,12 @@
+ integrityCase('confirmed-attempt-rollback-no-recovery',function(){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'attemptOutcome'=>O\AssignmentOrderOriginalCommitStatus::ROLLED_BACK]);integrityAttemptTuple($f,$f->run(),'failed','persistence_failure');assertSameValue(1,count($f->repository->attemptCalls),'one confirmed rollback');assertSameValue([], $f->repository->attempts,'no audit fact');assertSameValue(0,$f->fresh->opens,'confirmed rollback needs no recovery');});
+ foreach([false,true] as $logThrows)integrityCase('lazy-clock-after-close-failure-log'.(int)$logThrows,function()use($logThrows){$f=new S\OriginalIntegrityFixture(['composition'=>integrityMissingComposition(),'closeThrows'=>true,'logThrows'=>$logThrows]);integrityAttemptTuple($f,$f->run(),'rejected','order_not_found');assertSameValue(1,$f->clock->calls,'cleanup failure does not skip lazy clock');assertSameValue(1,count($f->repository->attempts),'cleanup failure cannot skip audit');assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_STREAM_CLOSE_FAILED',['phase'=>'stream_close']]],$f->observers->logs,'existing cleanup event unchanged');});
+ $untouched=[
+-    'invalid-shape'=>['request'=>'not-a-uuid'],'denied-deferred-policy'=>['authorization'=>O\AssignmentOrderOriginalAuthorizationStatus::DENIED],
++    'invalid-shape'=>['request'=>'not-a-uuid'],'denied-audit-required'=>['authorization'=>O\AssignmentOrderOriginalAuthorizationStatus::DENIED],
+     'authorization-unavailable'=>['authorization'=>O\AssignmentOrderOriginalAuthorizationStatus::UNAVAILABLE],
+     'authorization-throw'=>['authorization'=>new RuntimeException('authorization failure')],
+     'terminal-unavailable'=>['terminal'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE)],
+     'composition-unavailable'=>['composition'=>new O\AssignmentOrderCompositionSnapshot(O\AssignmentOrderCompositionLookupStatus::UNAVAILABLE,4512,81,null,null,[],null)],
+     'terminal-replay'=>['terminal'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,new S\OriginalIntegrityResult())],
+ ];
+-foreach($untouched as $name=>$options)integrityCase('no-speculative-clock-'.$name,function()use($options){$f=new S\OriginalIntegrityFixture($options);$f->run();assertSameValue(0,$f->clock->calls,'no newly speculative invocation clock');assertSameValue([], $f->repository->attemptCalls,'no new out-of-scope audit behavior');assertSameValue(0,$f->fresh->opens,'no newly speculative reader');assertSameValue(1,$f->stream->closeCalls,'supplied stream owned for close');});
++foreach($untouched as $name=>$options)integrityCase('no-speculative-clock-'.$name,function()use($name,$options){$f=new S\OriginalIntegrityFixture($options);$f->run();assertSameValue($name==='denied-audit-required'?1:0,$f->clock->calls,'denial obtains its now-required audit instant; other early paths remain clock-free');assertSameValue([], $f->repository->attemptCalls,'no new out-of-scope audit behavior');assertSameValue(0,$f->fresh->opens,'no newly speculative reader');assertSameValue(1,$f->stream->closeCalls,'supplied stream owned for close');});
+ integrityDone('ASSIGNMENT_ORDER_ORIGINAL_DATA_ATTEMPT_CLOCK_OK');
+--- a/tests/InstallationProcess/assignment_order_original_safe_log_isolation_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_safe_log_isolation_001_test.php
+@@ -123,7 +123,7 @@
+     extract(isolationGraph('abort_failed',true,auditFails:true)); $id='00000000-0000-4000-8000-000000000301';
+     $result=$app->submitAssignmentOrderOriginal(isolationCommand($id,new S\OriginalLogIsolationStream($pdf,$trace,false)));
+     assertSameValue(isolationExpected($id,'failed','persistence_failure',true),isolationTuple($result),'real audit failure must not become selected rejection');
+-    assertSameValue(['stage.abort','log:stage_abort','stage.close','stream.close','attempt.commit'],$trace->calls,'audit actually attempted after logger failure');
++    assertSameValue(['stage.abort','log:stage_abort','stage.close','stream.close','attempt.commit','log:terminal'],$trace->calls,'audit attempted after cleanup logger failure and failed audit diagnostic attempted once');
+     assertSameValue([], $repo->attempts,'failed audit not persisted');
+ });
+ if($failures!==[])throw new TestFailure('Diagnostic isolation failed '.count($failures).' cases: '.implode(',',$failures));
+--- a/tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
+@@ -55,12 +55,12 @@
+  'observer:after_request_miss_before_stream'=>['persistence_failure',[...$pre,'stream.close'],0,0,0],
+  'observer:after_fingerprint_miss_before_cas'=>['persistence_failure',[...$pre,...$read,LIFECYCLE_FP,'lifecycle:after_fingerprint_miss_before_cas',...$cleanup],1,1,0],
+ ];
+-foreach($failMatrix as $fault=>[$reason,$trace,$aborts,$closes,$finalizes])lifeCase($fault,function()use($pdf,$fault,$reason,$trace,$aborts,$closes,$finalizes){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed',$reason,true),lifeTuple($r),'primitive-specific full failure');assertSameValue($trace,$f->trace->calls,'literal failed acquisition trace');lifeCounts($f,$aborts,$closes,$finalizes,0);lifeNoFacts($f,$before);});
++foreach($failMatrix as $fault=>[$reason,$trace,$aborts,$closes,$finalizes])lifeCase($fault,function()use($pdf,$fault,$reason,$trace,$aborts,$closes,$finalizes){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed',$reason,true),lifeTuple($r),'primitive-specific full failure');assertSameValue([...$trace,'log:'.(in_array($reason,['stream_failure','storage_failure'],true)?'file_failure':'submission')],$f->trace->calls,'literal acquisition trace followed by required diagnostic');lifeCounts($f,$aborts,$closes,$finalizes,0);lifeNoFacts($f,$before);});
+ foreach(['outcome_failed_with_lease','outcome_null_lease','lease_bad_status','lease_status_throw','lease_null_content','lease_content_throw','content_bad_id','content_bad_sha','content_bad_size','content_id_throw','content_sha_throw','content_size_throw'] as $fault){
+- lifeCase($fault,function()use($pdf,$fault,$pre,$read,$identity,$cleanup){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'invalid finalize/lease/content maps storage failure');$release=$fault==='outcome_null_lease'?0:1;assertSameValue([...$pre,...$read,...$identity,'storage:finalize_begin:null','stage.finalize',...$cleanup,...($release?['lease.release']:[])],$f->trace->calls,'invalid finalize cleanup/release without DONE or commit');lifeCounts($f,1,1,1,$release);assertSameValue(1,$f->storage->stage->outcome->leaseCalls,'inspect returned lease even for non-success outcome');lifeNoFacts($f,$before);});
++ lifeCase($fault,function()use($pdf,$fault,$pre,$read,$identity,$cleanup){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'invalid finalize/lease/content maps storage failure');$release=$fault==='outcome_null_lease'?0:1;assertSameValue([...$pre,...$read,...$identity,'storage:finalize_begin:null','stage.finalize',...$cleanup,...($release?['lease.release']:[]),'log:file_failure'],$f->trace->calls,'invalid finalize cleanup/release without DONE or commit');lifeCounts($f,1,1,1,$release);assertSameValue(1,$f->storage->stage->outcome->leaseCalls,'inspect returned lease even for non-success outcome');lifeNoFacts($f,$before);});
+ }
+ foreach(['outcome_status_throw'=>[1,0,0],'outcome_lease_throw'=>[1,1,0],'outcome_locked'=>[1,1,1],'outcome_locked_null'=>[1,1,0]] as $fault=>[$statusGets,$leaseGets,$release]){
+- lifeCase($fault,function()use($pdf,$fault,$statusGets,$leaseGets,$release,$pre,$read,$identity,$cleanup){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'outcome getter/LOCKED failure is storage failure');assertSameValue([...$pre,...$read,...$identity,'storage:finalize_begin:null','stage.finalize',...$cleanup,...($release?['lease.release']:[])],$f->trace->calls,'no finalize DONE/commit/audit/delivery and release only returned lease');lifeCounts($f,1,1,1,$release);$out=$f->storage->stage->outcome;assertSameValue([$statusGets,$leaseGets],[$out->statusCalls,$out->leaseCalls],'status then lease getter each attempted once until throw');if(!$release)assertSameValue([0,0],[$out->value->statusCalls,$out->value->contentCalls],'inaccessible/unreturned lease not inspected or adopted');lifeNoFacts($f,$before);});
++ lifeCase($fault,function()use($pdf,$fault,$statusGets,$leaseGets,$release,$pre,$read,$identity,$cleanup){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'outcome getter/LOCKED failure is storage failure');assertSameValue([...$pre,...$read,...$identity,'storage:finalize_begin:null','stage.finalize',...$cleanup,...($release?['lease.release']:[]),'log:file_failure'],$f->trace->calls,'no finalize DONE/commit/audit/delivery and release only returned lease');lifeCounts($f,1,1,1,$release);$out=$f->storage->stage->outcome;assertSameValue([$statusGets,$leaseGets],[$out->statusCalls,$out->leaseCalls],'status then lease getter each attempted once until throw');if(!$release)assertSameValue([0,0],[$out->value->statusCalls,$out->value->contentCalls],'inaccessible/unreturned lease not inspected or adopted');lifeNoFacts($f,$before);});
+ }
+ $late=[
+  'observer:finalize_done'=>['storage_failure',[...$pre,...$read,...$identity,...$finalize,...$cleanup,'lease.release'],1],
+@@ -69,7 +69,7 @@
+  'stream_close_throw'=>['stream_failure',[...$pre,...$read,...$identity,...$finalize,...$close,'log:stream_close',...$abort,'lease.release'],1],
+  'observer:after_private_finalize_before_commit'=>['persistence_failure',[...$candidate,'lease.release'],0],
+ ];
+-foreach($late as $fault=>[$reason,$trace,$aborts])lifeCase($fault,function()use($pdf,$fault,$reason,$trace,$aborts){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed',$reason,true),lifeTuple($r),'late failure result');assertSameValue($trace,$f->trace->calls,'no repeated close/abort after ownership transfer');lifeCounts($f,$aborts,1,1,1);lifeNoFacts($f,$before);});
++foreach($late as $fault=>[$reason,$trace,$aborts])lifeCase($fault,function()use($pdf,$fault,$reason,$trace,$aborts){$f=new S\OriginalLifecycleFixture($pdf,[$fault]);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed',$reason,true),lifeTuple($r),'late failure result');assertSameValue([...$trace,'log:'.(in_array($reason,['stream_failure','storage_failure'],true)?'file_failure':'submission')],$f->trace->calls,'no repeated close/abort; default unavailable attempt writer is diagnosed');lifeCounts($f,$aborts,1,1,1);lifeNoFacts($f,$before);});
+ foreach(['rejected','fingerprint_replay'] as $mode)foreach([[],['abort_failed'],['abort_throw'],['stage_close_throw'],['stream_close_throw'],['observer:abort_begin','abort_throw','stage_close_throw','stream_close_throw','log_throw'],['observer:abort_done'],['observer:stage_close']] as $index=>$faults){
+  lifeCase($mode.'-cleanup-'.$index,function()use($pdf,$mode,$faults,$index,$pre,$read){$f=new S\OriginalLifecycleFixture($pdf,[...$faults,...($mode==='rejected'?['invalid_pdf']:[])],$mode==='rejected'?'normal':$mode);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());$expected=$mode==='rejected'?lifeExpected('rejected','invalid_pdf'):lifeExpected('replayed');assertSameValue($expected,lifeTuple($r),'selected rejected/replay preserved through all cleanup failures');
+     $trace=[...$pre,...$read,...($mode==='fingerprint_replay'?[LIFECYCLE_FP]:[]),'storage:abort_begin:null','stage.abort'];$logs=[];
+@@ -97,8 +97,8 @@
+  'conflict_lineage_throw'=>['failed','persistence_failure',true,'commit_conflict',[LIFECYCLE_FP,'lineage'],0],
+  'conflict_result_getter_throw'=>['failed','persistence_failure',true,'commit_conflict',[LIFECYCLE_FP],0],
+ ];
+-foreach($commits as $mode=>[$status,$reason,$retry,$phase,$recovery,$facts])foreach(['release_failed','release_throw'] as $releaseFault)lifeCase('commit-'.$mode.'-'.$releaseFault,function()use($pdf,$mode,$status,$reason,$retry,$phase,$recovery,$facts,$candidate,$releaseFault){$f=new S\OriginalLifecycleFixture($pdf,[$releaseFault,'log_throw'],$mode);$r=$f->application->submitAssignmentOrderOriginal($f->command());$winner=$mode==='conflict_replay';assertSameValue(lifeExpected($status,$reason,$retry,$winner?'original-0099':'original-0001',$winner?'revision-0099':'revision-0001'),lifeTuple($r),'selected commit/recovery result preserved');assertSameValue([...$candidate,'commit',...$recovery,'lease.release','log:'.$phase,...($status==='accepted'?['lifecycle:after_commit_before_return','delivery']:[]),...($status==='conflict'?['audit']:[])],$f->trace->calls,'exact reread/release/log/lifecycle/delivery/audit order');lifeCounts($f,0,1,1,1);assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>$phase]]],$f->observers->logs,'one phase-aware release diagnostic despite log throw');assertSameValue($facts,count($f->repository->accepted),'fixture-confirmed committed facts');assertSameValue(1,$f->repository->commitCalls,'no blind commit retry');assertSameValue($status==='conflict'?1:0,count($f->repository->attempts),'only required conflict audit');});
+-lifeCase('accepted-close-first-failure-preserved',function()use($pdf,$pre,$read,$identity,$finalize){$f=new S\OriginalLifecycleFixture($pdf,['stage_close_throw','abort_failed','stream_close_throw','release_failed','log_throw']);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'first candidate failure survives later cleanup/release/log faults');assertSameValue([...$pre,...$read,...$identity,...$finalize,'storage:stage_close:null','stage.close','log:stage_close','storage:abort_begin:null','stage.abort','log:stage_abort','stream.close','log:stream_close','lease.release','log:rolled_back'],$f->trace->calls,'actual exceptional attempt order without repeated closes');lifeCounts($f,1,1,1,1);lifeNoFacts($f,$before);});
++foreach($commits as $mode=>[$status,$reason,$retry,$phase,$recovery,$facts])foreach(['release_failed','release_throw'] as $releaseFault)lifeCase('commit-'.$mode.'-'.$releaseFault,function()use($pdf,$mode,$status,$reason,$retry,$phase,$recovery,$facts,$candidate,$releaseFault){$f=new S\OriginalLifecycleFixture($pdf,[$releaseFault,'log_throw'],$mode);$r=$f->application->submitAssignmentOrderOriginal($f->command());$winner=$mode==='conflict_replay';assertSameValue(lifeExpected($status,$reason,$retry,$winner?'original-0099':'original-0001',$winner?'revision-0099':'revision-0001'),lifeTuple($r),'selected commit/recovery result preserved');assertSameValue([...$candidate,'commit',...$recovery,'lease.release','log:'.$phase,...($status==='accepted'?['lifecycle:after_commit_before_return','delivery']:[]),...($status==='conflict'?['audit']:[]),...($status==='failed'?['log:submission']:[])],$f->trace->calls,'exact reread/release/log/lifecycle/delivery/audit order');lifeCounts($f,0,1,1,1);assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_CONTENT_LEASE_RELEASE_FAILED',['phase'=>$phase]],...($status==='failed'?[[$reason==='persistence_outcome_unknown'?'ASSIGNMENT_ORDER_ORIGINAL_PERSISTENCE_UNKNOWN':'ASSIGNMENT_ORDER_ORIGINAL_PERSISTENCE_FAILED',['phase'=>'submission']]]:[])],$f->observers->logs,'one release diagnostic plus required submission diagnostic despite logger failure');assertSameValue($facts,count($f->repository->accepted),'fixture-confirmed committed facts');assertSameValue(1,$f->repository->commitCalls,'no blind commit retry');assertSameValue($status==='conflict'?1:0,count($f->repository->attempts),'only required conflict audit');});
++lifeCase('accepted-close-first-failure-preserved',function()use($pdf,$pre,$read,$identity,$finalize){$f=new S\OriginalLifecycleFixture($pdf,['stage_close_throw','abort_failed','stream_close_throw','release_failed','log_throw']);$before=$f->repository->evidenceCanonicalJson(4512,81);$r=$f->application->submitAssignmentOrderOriginal($f->command());assertSameValue(lifeExpected('failed','storage_failure',true),lifeTuple($r),'first candidate failure survives later cleanup/release/log faults');assertSameValue([...$pre,...$read,...$identity,...$finalize,'storage:stage_close:null','stage.close','log:stage_close','storage:abort_begin:null','stage.abort','log:stage_abort','stream.close','log:stream_close','lease.release','log:rolled_back','log:file_failure'],$f->trace->calls,'actual exceptional attempt order and audit diagnostic without repeated closes');lifeCounts($f,1,1,1,1);lifeNoFacts($f,$before);});
+ foreach(['observer:after_commit_before_return','delivery_throw'] as $fault)lifeCase('response-loss-'.$fault,function()use($pdf,$fault,$candidate){
+     $f=new S\OriginalLifecycleFixture($pdf,[$fault]);$command=$f->command();$stream=$f->stream;$returned=null;$caught=null;try{$returned=$f->application->submitAssignmentOrderOriginal($command);}catch(Throwable $e){$caught=$e;}
+     assertSameValue(null,$returned,'response-loss invocation returns no Result');assertSameValue(true,$caught!==null,'fixed response-loss exception is observable');assertSameValue('FMonitor2\\AssignmentOrderOriginal\\AssignmentOrderOriginalResponseDeliveryLost',get_class($caught),'fixed exception class');assertSameValue(['Assignment order original response delivery lost.',0,null],[$caught->getMessage(),$caught->getCode(),$caught->getPrevious()],'fixed redacted exception values');
+--- a/tests/InstallationProcess/assignment_order_original_upload_validation_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_upload_validation_001_test.php
+@@ -4,6 +4,7 @@
+ 
+ require dirname(__DIR__) . '/bootstrap.php';
+ 
++use FMonitor2\AssignmentOrderOriginal as O;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderOriginalAuthorizationStatus;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionLookupStatus;
+ use FMonitor2\AssignmentOrderOriginal\AssignmentOrderCompositionReader;
+@@ -54,6 +55,13 @@
+     $repository = new AssignmentOrderOriginalInitialRepository($state);
+     $storage = new AssignmentOrderOriginalInitialStorage();
+     $observers = new AssignmentOrderOriginalInitialObservers();
++    $attemptAudits = new class implements O\AssignmentOrderOriginalAttemptAuditWriter {
++        public array $rows = [];
++        public function recordDenied(O\AssignmentOrderOriginalSafeAttemptAudit $audit): O\AssignmentOrderOriginalAuditWriteStatus
++        { $this->rows[] = $audit; return O\AssignmentOrderOriginalAuditWriteStatus::COMMITTED; }
++        public function appendFailure(O\AssignmentOrderOriginalSafeAttemptAudit $audit): O\AssignmentOrderOriginalAuditWriteStatus
++        { throw new LogicException('File-failure audit is outside this fixture.'); }
++    };
+     $application = AssignmentOrderOriginalVerificationFactory::create(
+         new AssignmentOrderOriginalDependencies(
+             $authorizer,
+@@ -68,9 +76,11 @@
+             $observers,
+             $observers,
+             $observers,
++            null,
++            $attemptAudits,
+         ),
+     );
+-    return [$application, $authorizer, $stream];
++    return [$application, $authorizer, $stream, $attemptAudits];
+ };
+ 
+ $resultVector = static fn ($result): array => [
+@@ -94,7 +104,7 @@
+ assertSameValue($resultVector($directResult), $resultVector($postTemplateResult), 'Direct and post-template inputs have identical command semantics.');
+ assertSameValue(AssignmentOrderOriginalStatus::ACCEPTED, $postTemplateResult->status(), 'Post-template parity accepts the same original evidence.');
+ 
+-[$deniedInitial, $initialAuth, $deniedInitialStream] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
++[$deniedInitial, $initialAuth, $deniedInitialStream, $initialAudits] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
+ $deniedInitialResult = $deniedInitial->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(
+     '00000000-0000-4000-8000-000000000013', AssignmentOrderOriginalMode::INITIAL,
+     4512, 81, 18, '2026-09-01', true, null, null, null, null,
+@@ -103,8 +113,10 @@
+ assertSameValue([AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalReason::AUTHORIZATION_DENIED, false], [$deniedInitialResult->status(), $deniedInitialResult->reasonCode(), $deniedInitialResult->retryable()], 'Denied initial upload has exact terminal result.');
+ assertSameValue([[18, 'assignment_order.original.upload']], $initialAuth->calls, 'Initial mode asks only for exact upload capability.');
+ assertSameValue(0, $deniedInitialStream->readCalls, 'Unauthorized initial upload is denied before stream read.');
++assertSameValue(1, count($initialAudits->rows), 'Initial denial now records one attempt audit.');
++assertSameValue(['00000000-0000-4000-8000-000000000013',18,'initial'], [$initialAudits->rows[0]->requestId,$initialAudits->rows[0]->actorUserId,$initialAudits->rows[0]->mode->value], 'Initial denial audit identity independent.');
+ 
+-[$deniedCorrection, $correctionAuth, $deniedCorrectionStream] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
++[$deniedCorrection, $correctionAuth, $deniedCorrectionStream, $correctionAudits] = $build(AssignmentOrderOriginalAuthorizationStatus::DENIED, $pdf);
+ $deniedCorrectionResult = $deniedCorrection->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(
+     '00000000-0000-4000-8000-000000000014', AssignmentOrderOriginalMode::CORRECTION,
+     4512, 81, 18, '2026-09-01', true, 'original-0001', 'revision-0001', 'revision-0001', 'Исправлен файл',
+@@ -113,6 +125,8 @@
+ assertSameValue([AssignmentOrderOriginalStatus::REJECTED, AssignmentOrderOriginalReason::AUTHORIZATION_DENIED, false], [$deniedCorrectionResult->status(), $deniedCorrectionResult->reasonCode(), $deniedCorrectionResult->retryable()], 'Denied correction has exact terminal result.');
+ assertSameValue([[18, 'assignment_order.original.correct']], $correctionAuth->calls, 'Correction mode asks only for exact correction capability.');
+ assertSameValue(0, $deniedCorrectionStream->readCalls, 'Unauthorized correction is denied before stream read.');
++assertSameValue(1, count($correctionAudits->rows), 'Correction denial now records one attempt audit.');
++assertSameValue(['00000000-0000-4000-8000-000000000014',18,'correction'], [$correctionAudits->rows[0]->requestId,$correctionAudits->rows[0]->actorUserId,$correctionAudits->rows[0]->mode->value], 'Correction denial audit identity independent.');
+ 
+ $submitInitial = static function (object $application, AssignmentOrderOriginalMatrixStream $stream, string $requestId, string $date, bool $confirmed, string $filename, string $mediaType) {
+     return $application->submitAssignmentOrderOriginal(new SubmitAssignmentOrderOriginalCommand(
+--- /dev/null
++++ b/tests/Support/ProductionOriginalAuditCatalogV13.php
+@@ -0,0 +1,74 @@
++<?php
++
++declare(strict_types=1);
++use FMonitor2\Tests\Support\AssignmentOrderOriginalDatabaseSetupV1 as OriginalV2Contract;
++require_once __DIR__.'/AssignmentOrderOriginalDatabaseSetupV1.php';
++
++/** TEST-only extension from immutable v2 literals plus ATTEMPT-AUDIT-001 v0.4. */
++final class ProductionOriginalAuditCatalogV13
++{
++    public static function columns():array
++    {
++        $result=ProductionMigrationRunnerCatalogContract::columnsV12();
++        foreach(OriginalV2Contract::columnManifest() as $table=>$columns)foreach($columns as [$name,$type,$nullable,$charset,$collation,$default,$extra])
++            $result[$table][]=[$name,preg_replace('/^(bigint|int|smallint|tinyint)\(\d+\)/','$1',$type),$nullable,$extra];
++        return $result;
++    }
++    public static function charset(string $table,string $column,bool $textual):?string
++    {
++        foreach(OriginalV2Contract::columnManifest()[$table]??[] as $row)if($row[0]===$column)return $row[3];
++        return $textual?'utf8mb4':null;
++    }
++    public static function indexes():array
++    {
++        $result=ProductionMigrationRunnerCatalogContract::indexesV12();
++        foreach(OriginalV2Contract::keys() as $table=>$keys)foreach($keys as [$kind,$columns]){
++            if($table==='fm2_assignment_order_original_audits'&&$kind==='UNIQUE')$kind='INDEX';
++            $result[]=$table.'|'.$kind.'|'.$columns;
++        }
++        return $result;
++    }
++    public static function foreignKeys():array
++    {
++        $result=ProductionMigrationRunnerCatalogContract::foreignKeys();
++        foreach(OriginalV2Contract::foreignKeys() as $table=>$keys)if($table!=='fm2_assignment_order_original_audits')foreach($keys as [$column,$ref,$refColumn,$rules])
++            $result[]=$table.'|'.$column.'|'.$ref.'|'.$refColumn.'|'.explode('/',$rules)[1];
++        sort($result,SORT_STRING);return $result;
++    }
++    public static function checks():array
++    {
++        $result=ProductionMigrationRunnerCatalogContract::checks();
++        foreach($result as &$row)if($row['constraint']==='ck_fm2_process_user_capability'){
++            $row['constraint']='ck_fm2_process_user_capability_v5';
++            $row['clause']="capabilityin('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')";
++        }unset($row);
++        foreach(OriginalV2Contract::checks() as $table=>$checks)foreach($checks as $check){
++            if($table==='fm2_assignment_order_original_audits'){
++                if($check==="statusin('accepted','rejected','conflict')")$check="statusin('accepted','rejected','conflict','failed')";
++                elseif(str_contains($check,"status='accepted'"))$check=substr($check,0,-1)."or(status='failed'andreason_codein('stream_failure','storage_failure')))";
++            }
++            $result[]=['table'=>$table,'constraint'=>null,'clause'=>$check];
++        }
++        return self::sortChecks($result);
++    }
++    public static function sortChecks(array $checks):array
++    {usort($checks,static fn($a,$b)=>[$a['table'],$a['clause'],$a['constraint']]<=>[$b['table'],$b['clause'],$b['constraint']]);return $checks;}
++    public static function assertNormalizerSensitivity():void
++    {
++        foreach(['author ization_denied','author`ization_denied'] as $literal)
++            assertSameValue("reason_code='".$literal."'",self::normalizeOriginal("`reason_code` = '".$literal."'"),'test-side CHECK normalizer preserves quoted bytes');
++    }
++    public static function normalizeOriginal(string $value):string
++    {
++$validateBooleanLexical=static function(string$value):void{$depth=0;$quoted=false;for($i=0,$length=strlen($value);$i<$length;$i++){$char=$value[$i];if($quoted){if($char==="\\"){if($i+1>=$length)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: invalid lexical structure.');$i++;continue;}if($char==="'"){if($i+1<$length&&$value[$i+1]==="'"){$i++;continue;}$quoted=false;}continue;}if($char==="'"){$quoted=true;continue;}if($char==='('){$depth++;continue;}if($char===')'){if($depth===0)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: invalid lexical structure.');$depth--;continue;}if($char===';')throw new TestFailure('CHECK_NORMALIZATION_FAILURE: invalid lexical structure.');}if($quoted||$depth!==0)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: invalid lexical structure.');};
++$foldUnquotedAscii=static function(string$value,bool$compact=false):string{$folded='';$quoted=false;for($i=0,$length=strlen($value);$i<$length;$i++){$char=$value[$i];if($quoted){$folded.=$char;if($char==="\\"&&$i+1<$length){$folded.=$value[++$i];continue;}if($char==="'"&&$i+1<$length&&$value[$i+1]==="'"){$folded.=$value[++$i];continue;}if($char==="'")$quoted=false;continue;}if($char==="'"){$quoted=true;$folded.=$char;continue;}if($char==='`'||($compact&&in_array($char,[' ',"\n","\r","\t"],true)))continue;$ord=ord($char);$folded.=$ord>=65&&$ord<=90?chr($ord+32):$char;}return$folded;};
++$stripBooleanOuter=static function(string$value):string{while(str_starts_with($value,'(')&&str_ends_with($value,')')){$depth=0;$quote=false;$whole=true;for($i=0,$n=strlen($value);$i<$n;$i++){$char=$value[$i];if($quote){if($char==="\\"){$i++;continue;}if($char==="'"){if($i+1<$n&&$value[$i+1]==="'"){$i++;continue;}$quote=false;}continue;}if($char==="'"){$quote=true;continue;}if($char==='(')$depth++;elseif($char===')')$depth--;if($depth===0&&$i<$n-1){$whole=false;break;}if($depth<0)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: unbalanced expression.');}if($quote||$depth!==0)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: malformed expression.');if(!$whole)break;$value=trim(substr($value,1,-1));}return$value;};
++$splitBoolean=static function(string$value,string$operator):array{$parts=[];$start=0;$depth=0;$quote=false;$between=false;for($i=0,$n=strlen($value);$i<$n;){$char=$value[$i];if($quote){if($char==="\\"){$i+=2;continue;}if($char==="'"){if($i+1<$n&&$value[$i+1]==="'"){$i+=2;continue;}$quote=false;}$i++;continue;}if($char==="'"){$quote=true;$i++;continue;}if($char==='('){$depth++;$i++;continue;}if($char===')'){$depth--;$i++;continue;}if($depth===0&&preg_match('/\G([a-z_][a-z0-9_]*)/A',$value,$match,0,$i)===1){$word=$match[1];$length=strlen($word);if($word==='between')$between=true;if($word===$operator){if($operator==='and'&&$between){$between=false;}else{$parts[]=trim(substr($value,$start,$i-$start));$start=$i+$length;}}$i+=$length;continue;}$i++;}if($parts===[])return[$value];$parts[]=trim(substr($value,$start));return$parts;};
++$parseBoolean=null;
++$parseBoolean=static function(string$value)use(&$parseBoolean,$stripBooleanOuter,$splitBoolean,$foldUnquotedAscii):array{$value=$stripBooleanOuter(trim($value));$or=$splitBoolean($value,'or');if(count($or)>1)return['or',array_map($parseBoolean,$or)];$and=$splitBoolean($value,'and');if(count($and)>1)return['and',array_map($parseBoolean,$and)];$atom=$foldUnquotedAscii($value,true);$atom=str_replace("'[[:cntrl:]/\\\\\\\\]'","'[[:cntrl:]/\\\\]'",$atom);$atom=(string)preg_replace("/!\\(([^()]+)regexp('[^']*')\\)/","$1notregexp$2",$atom);if($atom===''||str_contains($atom,';')||str_contains($atom,'xor'))throw new TestFailure('CHECK_NORMALIZATION_FAILURE: unsupported atom.');return['atom',$atom];};
++$serializeBoolean=null;
++$serializeBoolean=static function(array$node,bool$insideOr=false)use(&$serializeBoolean):string{if($node[0]==='atom')return$node[1];if(!in_array($node[0],['and','or'],true)||!isset($node[1])||count($node[1])<2)throw new TestFailure('CHECK_NORMALIZATION_FAILURE: unsupported AST.');if($node[0]==='and'){$value=implode('and',array_map(static fn(array$child):string=>$serializeBoolean($child,false),$node[1]));return$insideOr?'('.$value.')':$value;}return'('.implode('or',array_map(static fn(array$child):string=>$serializeBoolean($child,true),$node[1])).')';};
++$normalizeCheck=static function(string$value)use($validateBooleanLexical,$foldUnquotedAscii,$serializeBoolean,$parseBoolean):string{$validateBooleanLexical($value);return$serializeBoolean($parseBoolean($foldUnquotedAscii($value)));};
++        return $normalizeCheck($value);
++    }
++}
+--- a/tests/InstallationProcess/production_migration_runner_001_test.php
++++ b/tests/InstallationProcess/production_migration_runner_001_test.php
+@@ -2,6 +2,7 @@
+ declare(strict_types=1);
+ require dirname(__DIR__).'/bootstrap.php';
+ require dirname(__DIR__).'/Support/ProductionMigrationRunnerCatalogContract.php';
++require dirname(__DIR__).'/Support/ProductionOriginalAuditCatalogV13.php';
+ // Specification: PRODUCTION-MIGRATION-RUNNER-001 v0.5, examples A-C and failures.
+ // Composed successor: owner-approved OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 v0.4, v12.
+ 
+@@ -113,7 +114,8 @@
+ 
+ function pmrCatalog(mysqli $connection, string $prefix): void
+ {
+-    $contract = ProductionMigrationRunnerCatalogContract::columnsV12();
++    ProductionOriginalAuditCatalogV13::assertNormalizerSensitivity();
++    $contract = ProductionOriginalAuditCatalogV13::columns();
+     $like = $connection->real_escape_string($prefix . 'fm2\\_%');
+     $tables = pmrRows($connection, "SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$like}' ORDER BY BINARY TABLE_NAME");
+ 
+@@ -122,7 +124,7 @@
+     assertSameValue(
+         $expectedTables,
+         array_column($tables, 'TABLE_NAME'),
+-        'The catalog must contain exactly the thirty-three approved v1-v12 tables.',
++        'The catalog must contain exactly the forty approved v1-v13 tables.',
+     );
+     foreach ($tables as $table) {
+         assertSameValue('InnoDB', $table['ENGINE'], 'Every approved table must use InnoDB.');
+@@ -138,7 +140,7 @@
+                 $type = 'json';
+             }
+             $textual = str_starts_with($type, 'varchar(') || str_starts_with($type, 'char(') || str_starts_with($type, 'enum(') || $type === 'text' || $type === 'longtext' || $type === 'json';
+-            assertSameValue($textual ? 'utf8mb4' : null, $column['CHARACTER_SET_NAME'], $column['COLUMN_NAME'] . ' character contract.');
++            assertSameValue(ProductionOriginalAuditCatalogV13::charset($table,$column['COLUMN_NAME'],$textual), $column['CHARACTER_SET_NAME'], $column['COLUMN_NAME'] . ' character contract.');
+             return [$column['COLUMN_NAME'], $type, $column['IS_NULLABLE'], $column['EXTRA']];
+         }, $actual);
+         assertSameValue($expected, $actual, $table . ' exact types, nullability, order and extras.');
+@@ -152,37 +154,39 @@
+         return substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $kind . '|' . $row['COLUMNS'];
+     }, $indexes);
+     sort($indexes);
+-    $expectedIndexes = ProductionMigrationRunnerCatalogContract::indexesV12();
++    $expectedIndexes = ProductionOriginalAuditCatalogV13::indexes();
+     sort($expectedIndexes);
+     assertSameValue($expectedIndexes, $indexes, 'All primary, unique, secondary and FK-support indexes must match the approved contract.');
+ 
+     $foreignKeys = pmrRows($connection, "SELECT k.TABLE_NAME,k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE k JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.TABLE_NAME=k.TABLE_NAME AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME WHERE k.CONSTRAINT_SCHEMA=DATABASE() AND k.TABLE_NAME LIKE '{$like}' ORDER BY k.TABLE_NAME,k.COLUMN_NAME,k.CONSTRAINT_NAME");
+     $foreignKeys = array_map(static fn (array $row): string => substr((string) $row['TABLE_NAME'], strlen($prefix)) . '|' . $row['COLUMN_NAME'] . '|' . substr((string) $row['REFERENCED_TABLE_NAME'], strlen($prefix)) . '|' . $row['REFERENCED_COLUMN_NAME'] . '|' . $row['DELETE_RULE'], $foreignKeys);
+-    assertSameValue(ProductionMigrationRunnerCatalogContract::foreignKeys(), $foreignKeys, 'All seventeen foreign-key column mappings and delete rules must match the approved contract.');
++    sort($foreignKeys,SORT_STRING);
++    assertSameValue(ProductionOriginalAuditCatalogV13::foreignKeys(), $foreignKeys, 'All canonical v13 foreign-key column mappings and delete rules must match the approved contract.');
+ 
+     $checks = pmrRows($connection, "SELECT tc.TABLE_NAME,tc.CONSTRAINT_NAME,cc.CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS cc JOIN information_schema.TABLE_CONSTRAINTS tc ON tc.CONSTRAINT_SCHEMA=cc.CONSTRAINT_SCHEMA AND tc.TABLE_NAME=cc.TABLE_NAME AND tc.CONSTRAINT_NAME=cc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME LIKE '{$like}' ORDER BY tc.TABLE_NAME,cc.CHECK_CLAUSE");
+     $checks = array_map(static function (array $check) use ($prefix): array {
+         $clause = stripos((string) $check['CHECK_CLAUSE'], 'position_snapshot') !== false
+             ? pmrNormalizeEngineerCheck((string) $check['CHECK_CLAUSE'])
+             : pmrNormalizeCheck((string) $check['CHECK_CLAUSE']);
++        if(str_starts_with(substr((string)$check['TABLE_NAME'],strlen($prefix)),'fm2_assignment_order_original_'))$clause=ProductionOriginalAuditCatalogV13::normalizeOriginal((string)$check['CHECK_CLAUSE']);
+         return [
+             'table' => substr((string) $check['TABLE_NAME'], strlen($prefix)),
+-            'constraint' => $check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability' ? $check['CONSTRAINT_NAME'] : null,
++            'constraint' => $check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability_v5' ? $check['CONSTRAINT_NAME'] : null,
+             'clause' => $clause,
+         ];
+     }, $checks);
+-    assertSameValue(ProductionMigrationRunnerCatalogContract::checks(), $checks, 'All fifteen normalized CHECK tuples and the normative v4 constraint name must match literally, with no extras.');
++    assertSameValue(ProductionOriginalAuditCatalogV13::checks(), ProductionOriginalAuditCatalogV13::sortChecks($checks), 'All normalized CHECK tuples and the normative v5 constraint name must match literally, with no extras.');
+ }
+ function pmrState(mysqli $c):array{$s=[];foreach(pmrRows($c,'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME') as $r){$t=$r['TABLE_NAME'];$q='`'.str_replace('`','``',$t).'`';$s[$t]=['create'=>pmrRows($c,"SHOW CREATE TABLE {$q}")[0]['Create Table'],'rows'=>pmrRows($c,"SELECT * FROM {$q}")];}return $s;}
+ 
+-function pmrReplaceCompletedV4Checks(mysqli $connection, string $prefix, string $capabilityExpression, string $engineerExpression): void
++function pmrReplaceCompletedV5Checks(mysqli $connection, string $prefix, string $capabilityExpression, string $engineerExpression): void
+ {
+     $table = $prefix . 'fm2_process_user_capabilities';
+     $checks = pmrRows($connection, "SELECT tc.CONSTRAINT_NAME,cc.CHECK_CLAUSE FROM information_schema.TABLE_CONSTRAINTS tc JOIN information_schema.CHECK_CONSTRAINTS cc ON cc.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND cc.TABLE_NAME=tc.TABLE_NAME AND cc.CONSTRAINT_NAME=tc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME='{$table}' ORDER BY tc.CONSTRAINT_NAME");
+     $capabilityName = null;
+     $engineerName = null;
+     foreach ($checks as $check) {
+-        if ($check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability') {
++        if ($check['CONSTRAINT_NAME'] === 'ck_fm2_process_user_capability_v5') {
+             $capabilityName = $check['CONSTRAINT_NAME'];
+         } elseif (stripos((string) $check['CHECK_CLAUSE'], 'position_snapshot') !== false) {
+             $engineerName = $check['CONSTRAINT_NAME'];
+@@ -190,13 +194,13 @@
+     }
+     foreach ([$capabilityName, $engineerName] as $name) {
+         if (!is_string($name) || preg_match('/^[A-Za-z0-9_$]{1,64}$/D', $name) !== 1) {
+-            throw new TestFailure('Completed-v4 fixture must find two safe exact CHECK identifiers.');
+-        }
+-    }
+-    $connection->query("ALTER TABLE `{$table}` DROP CONSTRAINT `{$capabilityName}`, DROP CONSTRAINT `{$engineerName}`, ADD CONSTRAINT `ck_fm2_process_user_capability` CHECK ({$capabilityExpression}), ADD CONSTRAINT `fixture_engineer_position` CHECK ({$engineerExpression})");
+-}
+-
+-function pmrCompletedV4Environment(string $database, string $prefix): array
++            throw new TestFailure('Completed-v5 fixture must find two safe exact CHECK identifiers.');
++        }
++    }
++    $connection->query("ALTER TABLE `{$table}` DROP CONSTRAINT `{$capabilityName}`, DROP CONSTRAINT `{$engineerName}`, ADD CONSTRAINT `ck_fm2_process_user_capability_v5` CHECK ({$capabilityExpression}), ADD CONSTRAINT `fixture_engineer_position` CHECK ({$engineerExpression})");
++}
++
++function pmrCompletedV5Environment(string $database, string $prefix): array
+ {
+     return [
+         'FMONITOR_DB_HOST' => getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1',
+@@ -354,73 +358,73 @@
+  }
+ 
+  $db='t_pmr_a_'.$tok;$dbs[]=$db;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$env=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_'];
+- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
+- $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
+-
+- $completedV4Cases = [
++ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
++ $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[]}\n",'stderr'=>''],pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
++
++ $completedV5Cases = [
+      'whole-wrapper engineer CHECK' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "(capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> ''))",
+          'accepted' => true,
+      ],
+      'permuted exact capability IN literals' => [
+-         'capability' => "capability IN ('installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.confirm_registration')",
++         'capability' => "capability IN ('installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.confirm_registration','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => true,
+      ],
+      'quoted whitespace near-match' => [
+-         'capability' => "capability IN ('assignment_order. prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
++         'capability' => "capability IN ('assignment_order. prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => false,
+      ],
+      'quoted capability case near-match' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','Installation.open','construction_control_engineer')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','Installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => false,
+      ],
+      'quoted engineer case near-match' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'Construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => false,
+      ],
+      'extra capability literal' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','unexpected.capability')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','unexpected.capability','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => false,
+      ],
+      'duplicate capability literal' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.prepare')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.prepare','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "capability <> 'construction_control_engineer' OR (position_snapshot IS NOT NULL AND trim(position_snapshot) <> '')",
+          'accepted' => false,
+      ],
+      'engineer (A OR B) AND C parse tree' => [
+-         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer')",
++         'capability' => "capability IN ('assignment_order.prepare','assignment_order.confirm_registration','installation.open','construction_control_engineer','assignment_order.original.upload','assignment_order.original.correct')",
+          'engineer' => "(capability <> 'construction_control_engineer' OR position_snapshot IS NOT NULL) AND trim(position_snapshot) <> ''",
+          'accepted' => false,
+      ],
+  ];
+  $completedIndex = 0;
+- foreach ($completedV4Cases as $label => $fixture) {
++ foreach ($completedV5Cases as $label => $fixture) {
+      $completedIndex++;
+      $completedDatabase = 't_pmr_v4_' . $completedIndex . '_' . $tok;
+      $completedPrefix = 'completed_' . $completedIndex . '_';
+      $dbs[] = $completedDatabase;
+      $admin->query("CREATE DATABASE `{$completedDatabase}` DEFAULT CHARSET=utf8mb4");
+-     $completedEnvironment = pmrCompletedV4Environment($completedDatabase, $completedPrefix);
++     $completedEnvironment = pmrCompletedV5Environment($completedDatabase, $completedPrefix);
+      pmrResult(
+-         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],
++         ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],
+          pmrRun($completedEnvironment),
+          $label . ' fixture setup',
+      );
+      $completedConnection = pmrDb($completedDatabase);
+-     pmrReplaceCompletedV4Checks($completedConnection, $completedPrefix, $fixture['capability'], $fixture['engineer']);
++     pmrReplaceCompletedV5Checks($completedConnection, $completedPrefix, $fixture['capability'], $fixture['engineer']);
+      $completedConnection->query("INSERT INTO {$completedPrefix}fm2_process_user_capabilities VALUES (700{$completedIndex},'construction_control_engineer','Sentinel engineer')");
+      $completedBefore = pmrState($completedConnection);
+      if ($fixture['accepted']) {
+          pmrResult(
+-             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[]}\n",'stderr'=>''],
++             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[]}\n",'stderr'=>''],
+              pmrRun($completedEnvironment),
+-             $label . ' must remain a completed-v6 no-op after the v4 compatibility check',
++             $label . ' must remain a completed-v13 no-op after exact capability successor recognition',
+          );
+      } else {
+          $completedMarker = dirname(__DIR__,2).'/.test-artifacts/pmr-v4-nearmatch-'.$completedIndex.'-'.$tok;
+@@ -464,7 +468,7 @@
+  assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'seven v1/v2 tables plus conflicting v3 table remain and v4 stops');
+  $c->query('DROP TABLE pilot_fm2_process_user_capabilities');
+  $recoveryEnvironment=array_diff_key($ce,['PMR_V4_INVOCATION_MARKER'=>true]);
+- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
++ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
+  pmrCatalog($c,'pilot_');
+  $state=pmrState($c);
+  foreach(['legacy_sentinel','unrelated_sentinel'] as $t)assertSameValue($before[$t],$state[$t],$t.' survives recovery');
+@@ -472,5 +476,5 @@
+ 
+  $db='t_pmr_fail_'.$tok;$dbs[]=$db;$u='pmr_limited_'.$tok;$users[]=$u;$pw='limited_'.$tok;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY '{$pw}'");$admin->query("GRANT SELECT,CREATE ON `{$db}`.* TO `{$u}`@'%'");$fe=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>$pw]);pmrResult(['exitCode'=>70,'stdout'=>"{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n",'stderr'=>''],pmrRun($fe),'unexpected DDL failure',[$db,$u,$pw,'pilot_','ALTER','denied']);$c=pmrDb($db);assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'v1-v3 DDL remains');$checks=implode(' ',array_column(pmrRows($c,"SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='pilot_fm2_process_user_capabilities'"),'CHECK_CLAUSE'));assertSameValue(false,str_contains($checks,'installation.open'),'v4 did not complete');$c->close();
+ 
+- $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":12,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
++ $db='t_pmr_empty_'.$tok;$dbs[]=$db;$u='pmr_empty_'.$tok;$users[]=$u;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$admin->query("CREATE USER `{$u}`@'%' IDENTIFIED BY ''");$admin->query("GRANT ALL PRIVILEGES ON `{$db}`.* TO `{$u}`@'%'");$ee=array_replace($env,['FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>$u,'FMONITOR_DB_PASSWORD'=>'','FMONITOR_PROCESS_TABLE_PREFIX'=>'']);pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":13,\"appliedVersions\":[1,2,3,4,5,6,7,8,9,10,11,12,13]}\n",'stderr'=>''],pmrRun($ee,['ignored-'.$tok],'ignored-'.$tok),'valid empty password/prefix');$c=pmrDb($db);pmrCatalog($c,'');$c->close();echo "PASS: PRODUCTION-MIGRATION-RUNNER-001 CLI contract\n";
+ }finally{foreach($dbs as $db)$admin->query("DROP DATABASE IF EXISTS `{$db}`");foreach($users as $u)$admin->query("DROP USER IF EXISTS `{$u}`@'%'");foreach($files as $file)if(is_file($file))unlink($file);$admin->close();}

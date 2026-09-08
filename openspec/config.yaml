@@ -5,7 +5,8 @@ context: |
   All artifacts must be written in ru.
   Keep OpenSpec structural headings and SHALL/MUST keywords in English.
   Product truth lives in PRODUCT.md and CONTEXT.md. Pilot behavior contracts live in docs/fmonitor-2-pilot-spec.md and docs/fmonitor-2-pilot-data-model.md.
-  OpenSpec is the lifecycle for new migration slices; it does not replace the mandatory SSD + TDD gates in docs/development-process.md.
+  Before planning or implementation, read docs/operations/current-delivery-goal.md: the owner-authorized manual-pilot priority and deadline override older full-gate prerequisites for this milestone.
+  OpenSpec tracks delivery work and deferred gates honestly; docs/development-process.md retains the full process for final production integration.
   Each state-changing capability has exactly one public application seam. Preserve append-only domain history.
   rapid-pilot is a behavioral oracle and temporary adapter; do not add new domain logic there.
 
@@ -19,11 +20,11 @@ rules:
   design:
     - "State the owning module, allowed dependencies, persistence owner, rapid-pilot adapter, and architecture-check impact."
   tasks:
-    - "Encode the mandatory order: executable spec approval, RED, independent test review, minimal GREEN, regression and architecture checks, independent code review."
+    - "Follow docs/operations/current-delivery-goal.md for the manual-pilot milestone; track focused delivery checks and explicitly deferred gates separately. For final production integration retain the full SSD/TDD order."
     - "Keep one vertical behavior slice per change and include characterization plus a clear Done definition."
 
 operations:
   apply:
     guidance:
-      - "Never mark implementation tasks complete before the corresponding project gate is approved and recorded."
+      - "Record actual implementation and focused verification separately from formal gate approval; never mark a deferred gate approved or claim production readiness without its evidence."
       - "Keep READY work moving while unrelated NEEDS_GRILL decisions await the owner."

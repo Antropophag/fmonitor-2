@@ -94,7 +94,10 @@ getWorkQueue(actorId, filters)
 
 ### `fm2_order_artifacts`
 
-Метаданные сформированных файлов конкретной версии. Байты и файловая стратегия остаются за `DocumentRenderer`/хранилищем документов.
+Таблица прежнего контракта, не используемая для новых PDF-шаблонов. По решению
+владельца2026-09-06 шаблоны выдаются без хранения файла/версии; сохраняются только
+дата последнего успешного формирования и append-only audit actor/time/identity.
+Исторических данных для переноса нет; новая template-storage family не нужна.
 
 | Поле | Назначение |
 |---|---|
@@ -103,7 +106,9 @@ getWorkQueue(actorId, filters)
 | `filename`, `media_type`, `byte_size` | воспроизводимые метаданные файла |
 | `sha256` | контроль неизменности содержимого |
 
-Generated template artifact отличается от подписанного original evidence и никогда им не перезаписывается. Точная additive schema original lineage назначается change `replace-pilot-registration-with-original-upload`; literal migration version выбирается только на актуальном frontier.
+Подписанный original evidence хранится отдельно и неизменно. Точная additive
+schema original lineage назначается change `replace-pilot-registration-with-original-upload`;
+literal migration version выбирается только на актуальном frontier.
 
 ### Original evidence lineage
 
@@ -229,7 +234,7 @@ Composite ProcessUserDirectory читает активность и ФИО из 
 4. Correction только добавляет новую revision с причиной; исходные bytes/facts не обновляются.
 5. Upload/correction не меняет composition intervals, case state, actual start или checklist availability.
 6. Целевое открытие возможно только отдельной командой при наличии применимого original, минимум одного монтажника и одного инженера; exact переключение legacy gate принадлежит `open-installation-from-assignment-order-original`.
-7. Монтажник должен существовать в актуальном кадровом каталоге на дату распоряжения.
+7. Монтажник проверяется по интеграционному кадровому каталогу и известным ограничениям трудового периода. По решению владельца2026-09-07 неизвестная дата приёма сама по себе не запрещает назначение при подтверждённом текущем статусе «трудоустроен» из полного кадрового снимка; дата остаётся неизвестной. Exact переход текущих eligibility-проверок принадлежит отдельному gated срезу.
 8. Инженер должен быть активным пользователем допустимой роли.
 9. После Акта ПТО обычные команды формирования и открытия запрещены.
 10. Изменение состава создаёт новую версию; предыдущая остаётся неизменной.

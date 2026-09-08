@@ -1,0 +1,23 @@
+# Test review: ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-HTTP-001 — v2
+
+- Reviewer: `/root/original_gate3`, independently tasked agent; not the test or implementation author.
+- Test author: root implementation agent and predecessor checkpoint author.
+- Reviewed commit: base `5d407ff57614e34040fccbc6e38ac7bc4545e2e8` plus amended tests identified below; no production implementation present.
+- Specification: v0.3; independent Gate 1 v3 APPROVED, unchanged.
+- Public seam: actual loopback HTTP/router/native session and original application resources; client DOM events with isolated fetch.
+- Verdict: `APPROVED`.
+
+## Evidence and artifact identity
+
+This is an independent closing review of the four blocking findings in `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-HTTP-001.md`; that record remains preserved. Re-read all amended tests, new permissions test and shared response helper, verified test hashes against the external manifest, and inspected RED output. The six suite commands and SHA-256 identities are in `/Users/antropophag/.local/state/fmonitor2-verification/original-http-20260907/amended-red-20260907T000419Z.json`. One subsequent test-only setup correction supersedes the permissions hash there: final `original_upload_http_permissions_001_test.php` SHA-256 is `3ca3aae9e7ecc67deba32b26230ebbc17ad543895416a524d62c7166945fdfaa`, with rerun evidence `permissions-final-red-v2.log` in the same external directory.
+
+The four original PHP suites remain intended missing-route RED (exit 255), client remains missing-asset RED (exit 1), and the new permissions suite has seven isolated groups failing for missing routes/response contracts (exit 1). Its wrong-context case gets the predecessor plain-text 404 instead of the specified JSON 404, a sensitive intended failure. The final permissions correction moves the baseline snapshot after fixture grant mutations and before the native denial command, eliminating an otherwise false row-preservation failure. No production behavior was added to obtain RED. `checkpoint-selection-regression.log` records existing native selection/replay/template HTTP PASS after the fixture changes. These executions were performed by root; this reviewer inspected their output and artifact hashes rather than claiming another execution.
+
+## Findings closed
+
+1. **Authorization/context:** isolated tests distinguish initial upload, correction and form read permissions; correct-only cannot initial-upload and upload-only cannot correct; correction form works without upload permission; revoked native correction capability still yields the native denial envelope. Local correction rejection preserves facts and bytes. Wrong object/order, overflowing identity and revoked native session have explicit HTTP expectations and unchanged-fact checks. This closes the boundary sensitivity gap without replacing inherited authorization tests.
+2. **Transport/order:** canonical decimal violation `0327` and Transfer-Encoding identity reach the current PHP router and deliberately fail its absent route, establishing reachable adapter RED. Malformed chunked transport follows the characterized pre-PHP closed/healthy/unchanged-facts contract. Combined malformed shape plus invalid CSRF expects shape rejection; semantically equivalent escaped JSON is rejected as noncanonical. This closes the requested representative canonical encoding and admission ordering cases.
+3. **Response policy:** successful form CSP is literal and narrow; HEAD has matching selected GET headers and zero bytes. Shared original JSON assertions require the existing approved BASE policy, and all real 503 responses require Retry-After 60. Failed form and POST response paths call this helper. The BASE constant is inherited policy evidence; the newly extended form policy has an independent literal expectation.
+4. **Client/correction:** real HTTP missing correction reason requires native `rejected/invalid_command` with unchanged revisions. Client event checks now cover exact correction lineage/reason, 200 replay navigation, Russian 4xx feedback/new intent, and unchanged 503 retry retaining File and metadata. Existing network loss and in-flight suppression checks remain intact.
+
+No remaining blocking findings in the bounded amended test review. Existing fixed corpus/hash/date, append-only and no-apply/no-open assertions retain their independence. Setup isolation remains as recorded in v1. Gate 4 may begin with these approved expectations. Actual GREEN, relevant regression, real browser/visual/focus evidence, architecture verification and independent Gate 5 remain required; this approval does not claim they have happened. The reviewer created only this review record.

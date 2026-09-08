@@ -2,25 +2,16 @@
 
 declare(strict_types=1);
 
-use FMonitor2\InstallationProcess\PilotCaseImporter;
-use FMonitor2\InstallationProcess\ProcessCommandCapabilitiesSchemaMigration;
-use FMonitor2\InstallationProcess\ProcessUserCapabilitiesSchemaMigration;
-use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
-use FMonitor2\InstallationProcess\WorkforceCatalogSchemaMigration;
+use FMonitor2\demo\PilotDemoDatabase;
+use FMonitor2\demo\PilotDemoProcess;
 use FMonitor2\PilotHttp\NativePhpFclosePrimitive;
 use FMonitor2\PilotHttp\NativePhpStreamCloser;
 use FMonitor2\PilotHttp\PhpCssDescriptorOpener;
 use FMonitor2\PilotHttp\ShlzCssManifest;
 
+require_once dirname(__DIR__) . '/app/autoload.php';
 require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
 require_once dirname(__DIR__) . '/rapid-pilot/verify-visual-contract.php';
-
-spl_autoload_register(static function (string $class): void {
-    $prefix = 'FMonitor2\\InstallationProcess\\';
-    if (!str_starts_with($class, $prefix)) return;
-    $path = dirname(__DIR__) . '/app/InstallationProcess/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
-    if (is_file($path)) require_once $path;
-});
 
 const DEMO_NOW = '2026-08-29T12:00:00+03:00';
 
@@ -36,9 +27,10 @@ function demoFailure(string $reason = 'STARTUP_FAILED', int $code = 70): never
     demoFinish(['ok' => false, 'reason' => $reason], $code);
 }
 
+// Current native actions require one namespace; historical split generations stay untouched.
 function demoPrefix(string $fingerprint, int $generation, string $kind): string
 {
-    return ($kind === 'process' ? 'fm2d_' : 'fm2l_') . $fingerprint . '_g' . $generation . '_';
+    return 'fm2d_' . $fingerprint . '_g' . $generation . '_';
 }
 
 function demoWriteJson(string $path, array $value): void
@@ -130,24 +122,8 @@ function demoProvision(array $config, int $generation): array
         $nonce=bin2hex(random_bytes(16));
         demoWriteJson($directory . '/owner.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'nonce'=>$nonce, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy]);
 
-        $db->query("CREATE TABLE `{$legacy}fm_maintable` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120),workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40),workdatefinish VARCHAR(40),ptoactdate VARCHAR(40),responsstroicontrol VARCHAR(80)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE `{$legacy}users_roles` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("CREATE TABLE `{$legacy}users` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,email VARCHAR(300) NOT NULL,role_id BIGINT UNSIGNED NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $db->query("INSERT INTO `{$legacy}users_roles` VALUES(5,'ФКР',1),(8,'Строительный контроль',1)");
-        $db->query("INSERT INTO `{$legacy}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
-        $db->query("INSERT INTO `{$legacy}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
-        foreach ([ProductionProcessSchemaMigration::class, WorkforceCatalogSchemaMigration::class, ProcessUserCapabilitiesSchemaMigration::class, ProcessCommandCapabilitiesSchemaMigration::class] as $migration) {
-            $result = $migration::apply($db, $process);
-            if (isset($result['reason'])) throw new RuntimeException();
-        }
-        $marker=$db->real_escape_string(demoMarkerValue($config['fingerprint'],$generation,$nonce));
-        $db->query("ALTER TABLE `{$process}fm2_installation_cases` COMMENT='{$marker}'");
-        $db->query("ALTER TABLE `{$legacy}fm_maintable` COMMENT='{$marker}'");
-        $db->query("INSERT INTO `{$process}fm2_process_user_capabilities` VALUES(18,'assignment_order.prepare',NULL),(18,'assignment_order.confirm_registration',NULL),(18,'installation.open',NULL),(73,'construction_control_engineer','Инженер строительного контроля')");
-        $db->query("INSERT INTO `{$process}fm2_workforce_catalog` VALUES(1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-27T18:15:00+03:00'),(2088,'Петров Пётр Петрович','Электромеханик по лифтам','employed','2025-01-10',NULL,'one_c_zup_via_bitrix','2026-08-27T18:15:00+03:00')");
-        $import = (new PilotCaseImporter($db, $process, $legacy))->import([4512], DEMO_NOW);
-        if (($import['imported'] ?? null) !== [4512]) throw new RuntimeException();
-        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>4, 'objectId'=>4512]);
+        PilotDemoDatabase::provision($db, $process, $legacy, $config['fingerprint'], $generation, $nonce, DEMO_NOW);
+        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>19, 'objectId'=>4512]);
         return ['generation'=>$generation, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy, 'artifactRoot'=>$directory . '/artifacts'];
     } catch (Throwable $error) {
         throw $error;
@@ -161,7 +137,7 @@ function demoGeneration(array $config, int $generation): ?array
     $directory = $config['root'] . '/generations/' . $generation;
     $owner = demoReadJson($directory . '/owner.json');
     $ready = demoReadJson($directory . '/ready.json');
-    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 4) return null;
+    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 19) return null;
     if (($owner['generation'] ?? null) !== $generation || ($ready['generation'] ?? null) !== $generation
         || ($owner['processPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'process')
         || ($owner['legacyPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'legacy')
@@ -171,11 +147,11 @@ function demoGeneration(array $config, int $generation): ?array
     if($artifactInfo===false||($artifactInfo['mode']&0777)!==0755||($artifactInfo['uid']??null)!==posix_geteuid())return null;
     $db = demoConnect($config);
     try {
-        $expected = ['fm2_assignment_orders','fm2_installation_cases','fm2_order_artifacts','fm2_order_installers','fm2_process_events','fm2_process_tasks','fm2_process_user_capabilities','fm2_workforce_catalog'];
+        $expected = PilotDemoDatabase::TABLES;
         $tables = demoTables($db, (string) $owner['processPrefix']);
         $requiredTables=array_map(static fn(string $suffix): string => $owner['processPrefix'] . $suffix, $expected);
         if(array_diff($requiredTables,$tables)!==[])return null;
-        if (count(demoTables($db, (string) $owner['legacyPrefix'])) !== 3) return null;
+        if (count($tables) !== count(PilotDemoDatabase::TABLES) + 3) return null;
         $marker=demoMarkerValue($config['fingerprint'],$generation,$owner['nonce']);
         if(demoDatabaseMarker($db,$owner['processPrefix'].'fm2_installation_cases')!==$marker
             ||demoDatabaseMarker($db,$owner['legacyPrefix'].'fm_maintable')!==$marker)return null;
@@ -201,20 +177,26 @@ function demoRunning(array $config): bool
     $pid = (int) ($pidData['pid'] ?? 0);
     if (($pidData['fingerprint'] ?? null) !== $config['fingerprint'] || $pid < 2) return false;
     if (!@posix_kill($pid, 0)) { @unlink($config['root'] . '/server.json'); return false; }
-    $command = @file_get_contents('/proc/' . $pid . '/cmdline');
-    return is_string($command) && str_contains($command, 'fmonitor2-pilot-demo.php');
+    return PilotDemoProcess::isLauncher($pid);
 }
 
 function demoHttp(int $port, string $path,string $method='GET'): array
 {
     $socket = @stream_socket_client("tcp://127.0.0.1:{$port}", $errno, $error, .5);
-    if ($socket === false) return [0, ''];
+    if ($socket === false) return [0, '', []];
     fwrite($socket, "{$method} {$path} HTTP/1.1\r\nHost: 127.0.0.1:{$port}\r\nConnection: close\r\n\r\n");
     stream_set_timeout($socket, 2); $raw = stream_get_contents($socket); fclose($socket);
     if (!is_string($raw) || preg_match('/^HTTP\/1\.[01] (\d{3})/', $raw, $match) !== 1) return [0, '', []];
     [$head,$body]=array_pad(explode("\r\n\r\n",$raw,2),2,'');$headers=[];
     foreach(array_slice(explode("\r\n",$head),1)as$line)if(str_contains($line,':')){[$name,$value]=explode(':',$line,2);$headers[strtolower($name)]=trim($value);}
     return [(int) $match[1],$body,$headers];
+}
+
+function demoConfiguredActor(array $config,array $generation):int
+{
+    $db=demoConnect($config);
+    try{return PilotDemoDatabase::configuredActor($db,$generation['processPrefix'],$config['remoteUser']);}
+    finally{$db->close();}
 }
 
 function demoServe(array $config, array $generation, bool $initialSmoke, bool $activate): never
@@ -228,18 +210,21 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
         'FMONITOR_DB_USER'=>$config['user'], 'FMONITOR_DB_PASSWORD'=>$config['password'], 'FMONITOR_PROCESS_TABLE_PREFIX'=>$generation['processPrefix'],
         'FMONITOR_LEGACY_TABLE_PREFIX'=>$generation['legacyPrefix'], 'FMONITOR_ARTIFACT_STORAGE_ROOT'=>$generation['artifactRoot'],
         'FMONITOR_SHLZ_CSS_PATH'=>$config['shlz'], 'FMONITOR_PILOT_CSS_PATH'=>$config['pilotCss'], 'FMONITOR_NOW'=>DEMO_NOW,
-        'FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:' . $config['port'], 'REMOTE_USER'=>$config['remoteUser'],
+        'FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:' . $config['port'], 'REMOTE_USER'=>$config['remoteUser'],'FMONITOR_AUTH_USER_ID'=>(string)demoConfiguredActor($config,$generation),
+        'FMONITOR_FRESH_ORDER_FLOW'=>'1','FMONITOR_AUTH_CSRF'=>bin2hex(random_bytes(32)),
+        'FMONITOR_SESSION_STATE_ROOT'=>$config['root'].'/generations/'.$generation['generation'],'FMONITOR_SESSION_INSTANCE'=>'pilot',
         'FMONITOR_DEMO_LOOPBACK'=>'1','FMONITOR_DEMO_LOOPBACK_NONCE'=>bin2hex(random_bytes(16)),
     ]);
     $pipes = [];
-    $server = proc_open([PHP_BINARY, '-S', '127.0.0.1:' . $config['port'], $config['repo'] . '/public/router.php'], [0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']], $pipes, $config['repo'], $environment);
+    $server = proc_open([PHP_BINARY, '-S', '127.0.0.1:' . $config['port'], $config['repo'] . '/app/demo/router.php'], [0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']], $pipes, $config['repo'], $environment);
     if (!is_resource($server)) demoFailure();
     $ok = false; $deadline = microtime(true) + 5;
     do {
         usleep(50000);
         [$queueStatus, $queue] = demoHttp($config['port'], '/pilot/objects');
         [$cardStatus, $card] = demoHttp($config['port'], '/pilot/objects/4512');
-        [$formStatus, $form] = demoHttp($config['port'], '/pilot/objects/4512/assignment-order/prepare');
+        [$formStatus, $form] = demoHttp($config['port'], '/pilot/objects/4512/assignment-order/selection');
+        [$prepareStatus,,$prepareHeaders] = demoHttp($config['port'], '/pilot/objects/4512/assignment-order/prepare');
         [$foreignStatus] = demoHttp($config['port'], '/pilot/objects/4999');
         [$pilotStatus,$pilotBytes,$pilotHeaders]=demoHttp($config['port'],'/pilot/assets/pilot.css');
         [$repeatStatus,$repeatQueue]=demoHttp($config['port'],'/pilot/objects');
@@ -262,14 +247,15 @@ function demoServe(array $config, array $generation, bool $initialSmoke, bool $a
             && $cardStatus === 200 && str_contains($card,'77-000123') && str_contains($card,'Москва, ул. Примерная, д. 10')
             && str_contains($card,'2026-10-05') && str_contains($card,'2026-12-20')
             && (!$initialSmoke || (str_contains($card, 'Требуется распоряжение') && str_contains($card, '/pilot/objects/4512/assignment-order/prepare')
-                && $formStatus === 200 && str_contains($form,'name="installerTabIds[]"') && str_contains($form,'value="1042"')
-                && str_contains($form,'value="2088"')
-                && str_contains($form,'name="controlEngineerUserId"') && preg_match('/<option[^>]*value="73"[^>]*selected/D',$form)===1
-                && preg_match('/<(?:button|input)[^>]*type="submit"(?![^>]*disabled)[^>]*>/D',$form)===1))
+                && $prepareStatus === 303 && ($prepareHeaders['location']??null) === '/pilot/objects/4512/assignment-order/selection'
+                && $formStatus === 200 && str_contains($form,'data-installer-search')
+                && str_contains($form,'name="controlEngineerUserId"') && str_contains($form,'value="73"')
+                && str_contains($form,'Сохранить состав')))
             && $foreignStatus === 404;
     } while (!$ok && microtime(true) < $deadline && proc_get_status($server)['running']);
     if (!$ok) {
         $shlzSmokeFailure=$queueStatus===200&&!$graphOk;
+        try{$shlzSmokeFailure=$shlzSmokeFailure||demoShlzGraph($config['shlz'],$config['repo'])!==$config['shlzMembers'];}catch(Throwable){$shlzSmokeFailure=true;}
         proc_terminate($server);proc_close($server);
         if($shlzSmokeFailure)demoFailure('SHLZ_ASSETS_UNAVAILABLE',78);
         demoFailure();
@@ -337,12 +323,7 @@ try {
                 || ($owner['legacyPrefix'] ?? null) !== demoPrefix($fingerprint, $number, 'legacy')) continue;
             $db = demoConnect($config);
             $marker=is_string($owner['nonce']??null)?demoMarkerValue($fingerprint,$number,$owner['nonce']):'';
-            if($marker===''||demoDatabaseMarker($db,$owner['processPrefix'].'fm2_installation_cases')!==$marker
-                ||demoDatabaseMarker($db,$owner['legacyPrefix'].'fm_maintable')!==$marker){$db->close();continue;}
-            $db->query('SET FOREIGN_KEY_CHECKS=0');
-            try {
-                foreach ([(string)$owner['processPrefix'], (string)$owner['legacyPrefix']] as $prefix) foreach (demoTables($db, $prefix) as $table) $db->query("DROP TABLE `{$table}`");
-            } finally { $db->query('SET FOREIGN_KEY_CHECKS=1'); }
+            if(!PilotDemoDatabase::removeGeneration($db,$owner['processPrefix'],$marker)){$db->close();continue;}
             $db->close(); demoRemoveTree($directory); $removed++;
         }
         @unlink($config['root'] . '/active.json');

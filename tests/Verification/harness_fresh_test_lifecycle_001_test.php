@@ -21,6 +21,7 @@ function hftlRun(
     string $verifyResult,
     string $teardownResult,
     bool $parallel,
+    string $target,
 ): array {
     $environment = getenv();
     if (!is_array($environment)) {
@@ -39,7 +40,7 @@ function hftlRun(
         [
             'make', '--no-print-directory', '-f', 'Makefile', '-f', $overlay,
             "VERIFY_RESULT=$verifyResult", "TEARDOWN_RESULT=$teardownResult",
-            'fresh-test-verify',
+            $target,
         ],
         [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
         $pipes,
@@ -113,8 +114,8 @@ printf '\n' >> "$HFTL_DOCKER_LOG"
 exit 97
 SH, true);
     hftlWrite($overlay, <<<'MAKE'
-.PHONY: verify test-env-down
-verify:
+.PHONY: test test-env-down
+test:
 	@lifecycle-stage verify $(VERIFY_RESULT)
 test-env-down:
 	@lifecycle-stage test-env-down $(TEARDOWN_RESULT)
@@ -127,11 +128,11 @@ MAKE);
         'dual-failure' => ['FAIL', 'FAIL', 2, 'FRESH_TEST_VERIFY_FAILURE verify_status=2 teardown_status=2', true],
     ];
 
-    foreach ([false, true] as $parallel) {
+    foreach ([[false, 'fresh-test'], [true, 'fresh-test'], [false, 'fresh-test-verify']] as [$parallel, $target]) {
         foreach ($scenarios as $name => [$verifyResult, $teardownResult, $outerStatus, $terminal, $teardownSetupFailure]) {
             hftlWrite($log, '');
             hftlWrite($dockerLog, '');
-            $result = hftlRun($root, $overlay, $bin, $log, $dockerLog, $verifyResult, $teardownResult, $parallel);
+            $result = hftlRun($root, $overlay, $bin, $log, $dockerLog, $verifyResult, $teardownResult, $parallel, $target);
             $observed = hftlObserved($log);
             $dockerInvocations = hftlObserved($dockerLog);
             $mode = $parallel ? 'MAKEFLAGS=-j4' : 'normal';

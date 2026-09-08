@@ -6,6 +6,7 @@ final class PilotRouteCsp
 {
     public const BASE="default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
     public const SCRIPT="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+    public const ORIGINAL="default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
     public const CHECKLIST="default-src 'none'; style-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self'; img-src 'self' blob:; font-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
     public const WORKER="default-src 'self'; connect-src 'self'";
 
@@ -15,15 +16,19 @@ final class PilotRouteCsp
         if($status<200||$status>=300||!\str_starts_with(\strtolower($contentType),'text/html'))return self::BASE;
         if($method==='POST')return $path==='/pilot/login'&&$status===200?self::SCRIPT:self::BASE;
         if(!\in_array($method,['GET','HEAD'],true))return self::BASE;
+        if(\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/history$#D',$path)===1)return self::SCRIPT;
+        if(\preg_match('#^/pilot/objects/[1-9][0-9]*/execution$#D',$path)===1)return self::SCRIPT;
+        if(\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/selection$#D',$path)===1)return self::ORIGINAL;
+        if(\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/submit$#D',$path)===1)return self::ORIGINAL;
         if(\preg_match('#^/pilot/objects/[1-9][0-9]*/checklist$#D',$path)===1||\preg_match('#^/pilot/construction-control/objects/[1-9][0-9]*/checklist$#D',$path)===1)return self::CHECKLIST;
         if(\in_array($path,['/pilot/login','/pilot/','/pilot/objects','/pilot/construction-control','/pilot/installers','/pilot/admin/users','/pilot/admin/roles','/pilot/calendar','/pilot/calendar/','/pilot/otiz','/pilot/otiz/','/pilot/otiz/objects','/pilot/otiz/payments','/pilot/otiz/history','/pilot/otiz/reconciliation','/pilot/otiz/reconciliation/quarantine','/pilot/otiz/active-baselines','/pilot/otiz/historical-replay'],true))return self::SCRIPT;
-        return \preg_match('#^/pilot/objects/[1-9][0-9]*$#D',$path)===1||\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/prepare$#D',$path)===1||\preg_match('#^/pilot/otiz/snapshots/[1-9][0-9]*$#D',$path)===1?self::SCRIPT:self::BASE;
+        return \preg_match('#^/pilot/objects/[1-9][0-9]*$#D',$path)===1||\preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-order/(?:prepare|selection)$#D',$path)===1||\preg_match('#^/pilot/otiz/snapshots/[1-9][0-9]*$#D',$path)===1?self::SCRIPT:self::BASE;
     }
 
     public static function forResponse(string$method,string$path,int$status,string$contentType,string$body):string
     {
         $policy=self::classify($method,$path,$status,$contentType);
-        if(($policy===self::SCRIPT||$policy===self::CHECKLIST)&&\preg_match('#<script\b[^>]*\bsrc=["\']/pilot/[^"\']+["\'][^>]*>#i',$body)!==1)return self::BASE;
+        if(($policy===self::SCRIPT||$policy===self::CHECKLIST||$policy===self::ORIGINAL)&&\preg_match('#<script\b[^>]*\bsrc=["\']/pilot/[^"\']+["\'][^>]*>#i',$body)!==1)return self::BASE;
         return $policy;
     }
 

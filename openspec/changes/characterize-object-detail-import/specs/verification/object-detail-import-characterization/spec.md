@@ -6,6 +6,31 @@
 
 ## ADDED Requirements
 
+Gate 1 candidate — executable v0.2, fresh technical review/owner approval pending.
+Historical v0.1 review не утверждает новый hash.
+
+### Requirement: Canonical schema is required before source access
+
+Verifier SHALL создавать exact family через landed public v12 migration в новом
+private disposable MariaDB server. Importer SHALL работать с independently
+checked SELECT/INSERT-only target principal без DDL grants. Shared production
+correction принадлежит `canonicalize-object-detail-snapshot-schema`.
+
+#### Scenario: Apply and dry-run encounter absent or incompatible family
+- **WHEN** details или quarantine absent либо captured_at exact member имеет
+  VARCHAR(41) вместо VARCHAR(40), в apply и dry-run
+- **THEN** после generation guard, до source connection и target DML возвращается
+  exit 2, fixed OBJECT_DETAIL_SCHEMA_REQUIRED JSON plus LF, empty stderr
+- **AND** owned listener доказывает zero source connections, rows/schema/decoys
+  сохраняются и никакой repair не выполняется
+
+#### Scenario: Exact migrated schema supports data-only execution
+- **WHEN** complete exact family precreated и child не имеет DDL grants
+- **THEN** serial characterization outcomes ниже сохраняются; dry-run сообщает
+  writes=0 и не изменяет rows/schema
+- **AND** real-importer qualifying RED precedes minimal production correction;
+  missing-verifier meta-test не заменяет этот RED
+
 ### Requirement: Characterization exercises the real operator seam
 
 Characterization SHALL запускать реальный object-detail import CLI как migration

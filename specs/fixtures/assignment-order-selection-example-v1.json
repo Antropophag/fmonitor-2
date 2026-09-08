@@ -1,0 +1,273 @@
+{
+  "schema": "assignment-order-selection-example-v1",
+  "registryAdditions": [
+    {
+      "assignment_order_id": "81",
+      "installation_case_id": "4512",
+      "order_version": "1",
+      "source_kind": "selection",
+      "allocated_at_utc": "2026-09-02 07:00:00.000000"
+    },
+    {
+      "assignment_order_id": "82",
+      "installation_case_id": "4512",
+      "order_version": "2",
+      "source_kind": "selection",
+      "allocated_at_utc": "2026-09-02 08:00:00.000000"
+    }
+  ],
+  "nextIds": {
+    "registry": "90",
+    "fm2_assignment_order_selection_events": "9",
+    "fm2_assignment_order_selection_audits": "11"
+  },
+  "rows": {
+    "fm2_assignment_order_selections": [
+      {
+        "assignment_order_id": "81",
+        "installation_case_id": "4512",
+        "order_version": "1",
+        "selection_revision": "1",
+        "mode": "new_order",
+        "previous_selection_order_id": null,
+        "replaces_selection_order_id": null,
+        "composition_identity": "composition-81-v1",
+        "composition_sha256": "5c405e5761854b6de09ff2f06f1d72e38203081052b8409cf23fa8d4447fe93a",
+        "control_engineer_user_id": "73",
+        "control_engineer_fio_snapshot": "Инженер теста",
+        "control_engineer_position_snapshot": "Инженер",
+        "selection_date": "2026-09-02",
+        "selected_at_utc": "2026-09-02 07:00:00.000000",
+        "selected_by_user_id": "18"
+      },
+      {
+        "assignment_order_id": "82",
+        "installation_case_id": "4512",
+        "order_version": "2",
+        "selection_revision": "2",
+        "mode": "replace_pending",
+        "previous_selection_order_id": "81",
+        "replaces_selection_order_id": "81",
+        "composition_identity": "composition-82-v2",
+        "composition_sha256": "1e6e0030b9f3cca92c36a741f87331f652490391ae773386673dc32f838d8bda",
+        "control_engineer_user_id": "73",
+        "control_engineer_fio_snapshot": "Инженер теста",
+        "control_engineer_position_snapshot": "Инженер",
+        "selection_date": "2026-09-02",
+        "selected_at_utc": "2026-09-02 08:00:00.000000",
+        "selected_by_user_id": "18"
+      }
+    ],
+    "fm2_assignment_order_selection_members": [
+      {
+        "assignment_order_id": "81",
+        "installer_tab_id": "7001",
+        "fio_snapshot": "Монтажник теста",
+        "position_snapshot": "Монтажник",
+        "employment_status_snapshot": "employed",
+        "employed_from_snapshot": "2020-01-01",
+        "employed_to_snapshot": null,
+        "workforce_source_snapshot": "synthetic-hr",
+        "workforce_source_updated_at_snapshot": "2026-09-01T06:00:00Z"
+      },
+      {
+        "assignment_order_id": "82",
+        "installer_tab_id": "7002",
+        "fio_snapshot": "Монтажник два",
+        "position_snapshot": "Монтажник",
+        "employment_status_snapshot": "employed",
+        "employed_from_snapshot": "2020-01-01",
+        "employed_to_snapshot": null,
+        "workforce_source_snapshot": "synthetic-hr",
+        "workforce_source_updated_at_snapshot": "2026-09-01T06:00:00Z"
+      }
+    ],
+    "fm2_assignment_order_selection_requests": [
+      {
+        "request_id": "00000000-0000-4000-8000-000000000001",
+        "operation_fingerprint": "62ee3be1c62ff977fc0e508a4743d85b8f5bc83386b3b8b0c26f542d321aff6c",
+        "actor_user_id": "18",
+        "control_engineer_user_id": "73",
+        "expected_selection_revision": "0",
+        "installation_object_id": "4512",
+        "installer_tab_ids_json": "[7001]",
+        "mode": "new_order",
+        "status": "selected",
+        "reason_code": null,
+        "retryable": "0",
+        "case_id": "4512",
+        "assignment_order_id": "81",
+        "assignment_order_version": "1",
+        "selection_revision": "1",
+        "composition_identity": "composition-81-v1",
+        "composition_sha256": "5c405e5761854b6de09ff2f06f1d72e38203081052b8409cf23fa8d4447fe93a",
+        "selection_date": "2026-09-02",
+        "selected_at_utc": "2026-09-02 07:00:00.000000",
+        "terminal_at_utc": "2026-09-02 07:00:00.000000"
+      },
+      {
+        "request_id": "00000000-0000-4000-8000-000000000002",
+        "operation_fingerprint": "32f0d1e68835117ca22d93c8c044a9e40144180eff67facf0889e2ecddf31690",
+        "actor_user_id": "18",
+        "control_engineer_user_id": "73",
+        "expected_selection_revision": "1",
+        "installation_object_id": "4512",
+        "installer_tab_ids_json": "[7002]",
+        "mode": "replace_pending",
+        "status": "selected",
+        "reason_code": null,
+        "retryable": "0",
+        "case_id": "4512",
+        "assignment_order_id": "82",
+        "assignment_order_version": "2",
+        "selection_revision": "2",
+        "composition_identity": "composition-82-v2",
+        "composition_sha256": "1e6e0030b9f3cca92c36a741f87331f652490391ae773386673dc32f838d8bda",
+        "selection_date": "2026-09-02",
+        "selected_at_utc": "2026-09-02 08:00:00.000000",
+        "terminal_at_utc": "2026-09-02 08:00:00.000000"
+      },
+      {
+        "request_id": "00000000-0000-4000-8000-000000000004",
+        "operation_fingerprint": "823da644b01c38d6e3a5588e5c31bad65dc5cd998e4f4d8a827efba4f4ca25e1",
+        "actor_user_id": "18",
+        "control_engineer_user_id": null,
+        "expected_selection_revision": "2",
+        "installation_object_id": "4512",
+        "installer_tab_ids_json": "[7001]",
+        "mode": "new_order",
+        "status": "rejected",
+        "reason_code": "control_engineer_required",
+        "retryable": "0",
+        "case_id": null,
+        "assignment_order_id": null,
+        "assignment_order_version": null,
+        "selection_revision": null,
+        "composition_identity": null,
+        "composition_sha256": null,
+        "selection_date": null,
+        "selected_at_utc": null,
+        "terminal_at_utc": "2026-09-02 11:00:00.000000"
+      }
+    ],
+    "fm2_assignment_order_selection_events": [
+      {
+        "event_id": "1",
+        "event_type": "assignment_order_composition_selected",
+        "request_id": "00000000-0000-4000-8000-000000000001",
+        "installation_case_id": "4512",
+        "assignment_order_id": "81",
+        "assignment_order_version": "1",
+        "selection_revision": "1",
+        "previous_selection_order_id": null,
+        "replaces_selection_order_id": null,
+        "composition_sha256": "5c405e5761854b6de09ff2f06f1d72e38203081052b8409cf23fa8d4447fe93a",
+        "occurred_at_utc": "2026-09-02 07:00:00.000000",
+        "actor_user_id": "18"
+      },
+      {
+        "event_id": "2",
+        "event_type": "assignment_order_composition_selected",
+        "request_id": "00000000-0000-4000-8000-000000000002",
+        "installation_case_id": "4512",
+        "assignment_order_id": "82",
+        "assignment_order_version": "2",
+        "selection_revision": "2",
+        "previous_selection_order_id": "81",
+        "replaces_selection_order_id": "81",
+        "composition_sha256": "1e6e0030b9f3cca92c36a741f87331f652490391ae773386673dc32f838d8bda",
+        "occurred_at_utc": "2026-09-02 08:00:00.000000",
+        "actor_user_id": "18"
+      }
+    ],
+    "fm2_assignment_order_selection_audits": [
+      {
+        "audit_id": "1",
+        "request_id": "00000000-0000-4000-8000-000000000001",
+        "actor_user_id": "18",
+        "installation_object_id": "4512",
+        "mode": "new_order",
+        "status": "selected",
+        "reason_code": null,
+        "attempted_at_utc": "2026-09-02 07:00:00.000000"
+      },
+      {
+        "audit_id": "2",
+        "request_id": "00000000-0000-4000-8000-000000000002",
+        "actor_user_id": "18",
+        "installation_object_id": "4512",
+        "mode": "replace_pending",
+        "status": "selected",
+        "reason_code": null,
+        "attempted_at_utc": "2026-09-02 08:00:00.000000"
+      },
+      {
+        "audit_id": "3",
+        "request_id": "00000000-0000-4000-8000-000000000003",
+        "actor_user_id": "19",
+        "installation_object_id": "4512",
+        "mode": "new_order",
+        "status": "rejected",
+        "reason_code": "authorization_denied",
+        "attempted_at_utc": "2026-09-02 09:00:00.000000"
+      },
+      {
+        "audit_id": "4",
+        "request_id": "00000000-0000-4000-8000-000000000003",
+        "actor_user_id": "19",
+        "installation_object_id": "4512",
+        "mode": "new_order",
+        "status": "rejected",
+        "reason_code": "authorization_denied",
+        "attempted_at_utc": "2026-09-02 09:01:00.000000"
+      },
+      {
+        "audit_id": "5",
+        "request_id": "00000000-0000-4000-8000-000000000001",
+        "actor_user_id": "18",
+        "installation_object_id": "4512",
+        "mode": "new_order",
+        "status": "conflict",
+        "reason_code": "request_id_conflict",
+        "attempted_at_utc": "2026-09-02 10:00:00.000000"
+      },
+      {
+        "audit_id": "6",
+        "request_id": "00000000-0000-4000-8000-000000000004",
+        "actor_user_id": "18",
+        "installation_object_id": "4512",
+        "mode": "new_order",
+        "status": "rejected",
+        "reason_code": "control_engineer_required",
+        "attempted_at_utc": "2026-09-02 11:00:00.000000"
+      }
+    ]
+  },
+  "expected": {
+    "fm2_assignment_order_selections": {
+      "rowCount": "2",
+      "rowsSha256": "361a127b63534791bdec2f9a2090096ff5cb47865ebd25b098a6bb79567da43a",
+      "nextId": null
+    },
+    "fm2_assignment_order_selection_members": {
+      "rowCount": "2",
+      "rowsSha256": "44da6d57c26e3536e1d6949b6d81fbaebc30eea6f18ec4ef7fb8092e07038570",
+      "nextId": null
+    },
+    "fm2_assignment_order_selection_requests": {
+      "rowCount": "3",
+      "rowsSha256": "f4df198eeb1db961d4cee96eba1ce5b5eda14fb7afcc57f8710867fafc952546",
+      "nextId": null
+    },
+    "fm2_assignment_order_selection_events": {
+      "rowCount": "2",
+      "rowsSha256": "41bffbaaaeb5006570cfa5f5332c4297b787f8e6df19d0408a7fbe9a0fa69100",
+      "nextId": "9"
+    },
+    "fm2_assignment_order_selection_audits": {
+      "rowCount": "6",
+      "rowsSha256": "c5f753e9e1a8c93f69a93f79975c48e80067d30ae9b5acbdb1a0e65fe30ee667",
+      "nextId": "11"
+    }
+  }
+}

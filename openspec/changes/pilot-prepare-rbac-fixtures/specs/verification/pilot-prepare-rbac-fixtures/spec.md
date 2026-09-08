@@ -58,6 +58,13 @@ invocations и делегировать exact input/output bytes без изме
 Manual reconstructed composition graph и test-owned replacement renderer MUST
 NOT быть доказательством canonical wiring.
 
+Успешный GET/HEAD SHALL использовать upload-first read-only representation
+`PILOT-PREPARE-FORM-001 v0.2` и SHALL NOT разрешать file/CSRF/multipart/submit
+command в этом fixture slice. Exact picker record/parser/asset/keyboard contract
+наследуется целиком. Invalid source record SHALL дать server-side `503` до
+successful representation; post-delivery DOM/client rejection SHALL сохранить
+уже отданный status, visible fallback, zero hidden IDs и zero mutation.
+
 Public seam SHALL иметь exact PHP shape:
 
 ```php

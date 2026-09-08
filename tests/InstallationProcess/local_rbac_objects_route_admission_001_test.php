@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
+require dirname(__DIR__) . '/Support/TaskOwnedArtifactRoot.php';
 
 // Approved seam: a raw GET /pilot/objects. These probes deliberately make all
 // downstream CSS/business reads unusable; an admission result must precede them.
@@ -57,6 +58,20 @@ function lraGet(int $port, string $target, array $requestHeaders = []): array
 }
 
 $token = bin2hex(random_bytes(5));
+$cssToken = bin2hex(random_bytes(6));
+$cssOwnership = \FMonitor2\Tests\Support\TaskOwnedArtifactRoot::create('lra', $cssToken);
+register_shutdown_function(static function() use ($cssOwnership, $cssToken): void {
+    try { \FMonitor2\Tests\Support\TaskOwnedArtifactRoot::cleanup($cssOwnership, 'lra', $cssToken); } catch (Throwable) {}
+});
+$cssPath = $cssOwnership['root'] . '/shlz.css';
+$publicCssPath = dirname(__DIR__, 3) . '/shlz-ui/packages/styles/shlz.css';
+$publicCssBytes = file_get_contents($publicCssPath);
+if (!is_string($publicCssBytes) || file_put_contents($cssPath, $publicCssBytes, LOCK_EX) !== strlen($publicCssBytes)) {
+    throw new TestFailure('SETUP_FAILURE: create byte-exact task-owned public shlz.css fixture');
+}
+if (realpath($cssPath) !== $cssPath || hash_file('sha256', $cssPath) !== hash('sha256', $publicCssBytes)) {
+    throw new TestFailure('SETUP_FAILURE: task-owned public shlz.css identity mismatch');
+}
 $database = 't_lra_' . $token;
 $reader = 'lra_' . $token;
 $authReader = 'lra_auth_' . $token;
@@ -94,7 +109,7 @@ register_shutdown_function(static function() use ($admin, $database, $reader, $a
 
 $base = [
     'FMONITOR_AUTH_USER_ID' => '7301',
-    'FMONITOR_SHLZ_CSS_PATH' => dirname(__DIR__, 2) . '/rapid-pilot/pilot.css',
+    'FMONITOR_SHLZ_CSS_PATH' => $cssPath,
     'FMONITOR_DB_HOST' => $dbHost, 'FMONITOR_DB_PORT' => (string) $dbPort,
     'FMONITOR_DB_NAME' => $database, 'FMONITOR_DB_USER' => $reader,
     'FMONITOR_DB_PASSWORD' => $password, 'FMONITOR_LEGACY_TABLE_PREFIX' => 'legacy_',
@@ -102,6 +117,7 @@ $base = [
 ];
 $authOnly = $base;
 $authOnly['FMONITOR_DB_USER'] = $authReader;
+$authOnly['FMONITOR_SHLZ_CSS_PATH'] = $cssOwnership['root'] . '/unavailable/shlz.css';
 
 // A real positive route invocation prevents an always-deny implementation from
 // satisfying all negative examples and proves the protected handler runs for

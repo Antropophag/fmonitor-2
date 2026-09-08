@@ -19,3 +19,15 @@
 - [ ] 4.1 Запустить demo/golden DB+E2E, architecture, lint и full verify; verification: RBAC failures исчезли, combined-PDF остаётся отдельно классифицирован без ослабления.
 - [ ] 4.2 Получить independent code review APPROVED; test changes возвращают Gate 2.
 - [ ] 4.3 Обновить operations status и Done только после Gates 1–5, strict OpenSpec и durable evidence.
+
+## 5. Утверждённая поправка admission — 2026-09-05
+
+Authority: `docs/operations/owner-e2e-admission-and-pending-selection-approval-2026-09-05-1842Z.md`;
+exact contract — revision 3 `proposed-protected-e2e-admission-amendment-2026-09-05.md`.
+Исторические отметки выше не доказывают завершение этой поправки.
+
+- [x] 5.1 Получить independent technical readiness и owner approval exact candidate hash.
+- [x] 5.2 Написать literal matrix для public test-support oracle, сохранить missing-oracle RED и получить independent Gate 3 (`reviews/tests/PILOT-E2E-ADMISSION-ORACLE-001-v1.md`).
+- [x] 5.3 Реализовать минимальный oracle, получить focused GREEN и independent Gate 5 без изменения approved tests (`reviews/code/PILOT-E2E-ADMISSION-ORACLE-001-v2.md`; дополнительный class-token regression прошёл собственные RED/Gate3/GREEN).
+- [x] 5.4 Сохранить свежий real-HTTP mismatch unchanged protected test и отдельно semantic-list acceptance; подготовить unapplied assertion-only patch и получить distinct independent Gate 3 (`reviews/tests/PILOT-E2E-ADMISSION-ASSERTIONS-001-v1.md`).
+- [x] 5.5 Применить только reviewed patch, запустить полный E2E без skips, сохранить downstream failures и full make verify, получить independent Gate 5 integration (`reviews/code/PILOT-E2E-ADMISSION-ASSERTIONS-001-v1.md`, scoped APPROVED; SHA `060e880`, full verify FAIL DB/E2E на следующем unchanged card assertion; parent не Done).

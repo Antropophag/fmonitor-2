@@ -1,0 +1,4 @@
+const fs=require('fs');const path=require('path');
+const moduleRoot=process.env.FMONITOR_TEST_PLAYWRIGHT_MODULE||path.resolve(__dirname,'../../../shlz-ui/node_modules/playwright');
+const {chromium}=require(moduleRoot);
+(async()=>{const browser=await chromium.launch({headless:true});try{const page=await browser.newPage();await page.setContent(fs.readFileSync(process.argv[2],'utf8'));await page.addScriptTag({path:process.argv[3]});const state=async()=>page.locator('[data-control-row]').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.dataset.objectId,{completed:row.dataset.completed,hidden:row.hidden}])));const before=await state();await page.locator('[data-show-completed]').check();const after=await state();process.stdout.write(JSON.stringify({before,after}));}finally{await browser.close();}})().catch(error=>{process.stderr.write(error.stack||String(error));process.exit(1);});

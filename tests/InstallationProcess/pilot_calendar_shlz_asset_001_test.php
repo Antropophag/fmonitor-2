@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
 $dockerfile = (string) file_get_contents($root . '/Dockerfile');
-$revision = 'a0a8ca6df60b84aa1fe10a1cb500de32dacd4516';
+$revision = '9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b';
 if (!str_contains($dockerfile, "ARG SHLZ_UI_REVISION={$revision}")) {
     throw new RuntimeException('Pilot image is not pinned to the approved Calendar Grid export revision.');
 }

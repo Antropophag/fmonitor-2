@@ -1,14 +1,16 @@
 .DEFAULT_GOAL := help
 
 COMPOSE := docker compose
+TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
-.PHONY: help up up-bitrix down logs ps reset import-production _bitrix-secret \
+.PHONY: help up down logs ps reset import-production \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
-	characterization-test e2e-test architecture-check lint verify fresh-test-verify
+	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools setup doctor
 
 help:
-	@echo "make up     Собрать и поднять пилот на http://127.0.0.1:8092/"
-	@echo "make up-bitrix  Поднять пилот и часовую синхронизацию Bitrix (нужен ../fmonitor)"
+	@echo "make setup  Подготовить закреплённые зависимости (без изменения существующих)"
+	@echo "make doctor Проверить инструменты и существующие зависимости"
+	@echo "make up     Поднять пилот с Bitrix на http://127.0.0.1:8092/ (настройки в .env)"
 	@echo "make import-production  Загрузить не начатые объекты, пользователей и роли production"
 	@echo "make down   Остановить пилот, сохранив данные"
 	@echo "make logs   Показать логи"
@@ -19,21 +21,22 @@ help:
 	@echo "make migrate          Применить canonical production migrations к test DB"
 	@echo "make unit-test/db-test/characterization-test/e2e-test"
 	@echo "make architecture-check  Проверить machine-checkable boundaries"
-	@echo "make verify           Полная clean-checkout проверка"
-	@echo "make fresh-test-verify  Полная проверка с обязательным test-env teardown"
-
-_bitrix-secret:
-	@mkdir -p .local
-	@php rapid-pilot/export-legacy-bitrix-secret.php ../fmonitor/application/controllers/Integration.php .local/bitrix-workforce.json
+	@echo "make test CATEGORY=unit|integration|e2e|governance  Выбранная категория"
+	@echo "make test             Полная clean-checkout проверка"
+	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
 
 up:
 	@docker info >/dev/null 2>&1 || { echo "Docker daemon недоступен. Запустите Docker внутри WSL или включите WSL integration в Docker Desktop." >&2; exit 1; }
-	$(COMPOSE) up --build --detach --wait
-	@echo "FMonitor 2.0: http://127.0.0.1:8092/"
-
-up-bitrix: _bitrix-secret
-	@docker info >/dev/null 2>&1 || { echo "Docker daemon недоступен. Запустите Docker внутри WSL или включите WSL integration в Docker Desktop." >&2; exit 1; }
-	$(COMPOSE) --profile bitrix up --build --detach --wait
+	@test -f .env || { echo "Bitrix: .env не найден. Скопируйте .env.example в .env и заполните настройки." >&2; exit 1; }
+	@mkdir -p .local && chmod 700 .local
+	docker build --tag fmonitor2-pilot .
+	@docker run --rm --network none --user "$$(id -u):$$(id -g)" --entrypoint php \
+		--mount "type=bind,src=$$(pwd)/.env,dst=/run/fmonitor/input.env,readonly" \
+		--mount "type=bind,src=$$(pwd)/.local,dst=/run/fmonitor/output" \
+		fmonitor2-pilot bin/fmonitor2-prepare-bitrix-config.php /run/fmonitor/input.env /run/fmonitor/output/bitrix-workforce.json
+	@$(COMPOSE) config --quiet 2>/dev/null || { echo "Проверьте синтаксис .env и обязательные настройки стенда по .env.example." >&2; exit 1; }
+	$(COMPOSE) up --detach --wait pilot mariadb
+	$(COMPOSE) up --detach --wait --no-deps --force-recreate workforce-sync
 	@echo "FMonitor 2.0 с Bitrix sync: http://127.0.0.1:8092/"
 
 import-production:
@@ -94,7 +97,13 @@ architecture-check:
 lint:
 	@bash tools/verification/run.sh lint
 
-verify:
+verify: test
+
+ifneq ($(strip $(CATEGORY)),)
+test:
+	@bash tools/verification/run.sh category "$(CATEGORY)"
+else
+test:
 	@set +e; failures=""; failed_count=0; setup_failed=0; setup_cause=""; \
 	record_failure() { \
 		failed_stage="$$1"; \
@@ -103,7 +112,9 @@ verify:
 	}; \
 	run_stage() { \
 		stage_name="$$1"; shift; \
+		stage_started=$$(date +%s); \
 		"$$@"; stage_status=$$?; \
+		printf 'VERIFY_STAGE_TIMING stage=%s seconds=%s exit=%s\n' "$$stage_name" "$$(( $$(date +%s) - stage_started ))" "$$stage_status"; \
 		if [ $$stage_status -eq 0 ]; then \
 			printf 'VERIFY_STAGE %s PASS\n' "$$stage_name"; \
 		else \
@@ -156,9 +167,13 @@ verify:
 	fi; \
 	printf 'VERIFY_OK\n'
 
-fresh-test-verify:
+endif
+
+fresh-test-verify: fresh-test
+
+fresh-test:
 	@set +e; \
-	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') verify; \
+	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test CATEGORY=; \
 	verify_status=$$?; \
 	$(MAKE) --no-print-directory $(foreach file,$(MAKEFILE_LIST),-f '$(file)') test-env-down; \
 	teardown_status=$$?; \
@@ -172,3 +187,15 @@ fresh-test-verify:
 	printf 'FRESH_TEST_VERIFY_FAILURE verify_status=%s teardown_status=%s\n' "$$verify_status" "$$teardown_status"; \
 	if [ $$verify_status -ne 0 ]; then exit $$verify_status; fi; \
 	exit $$teardown_status
+
+setup:
+	@bash tools/delivery/setup.sh
+
+doctor:
+	@bash tools/delivery/setup.sh --check
+
+ci-setup: setup
+
+test-tools:
+	docker build --label "org.opencontainers.image.revision=$$(git rev-parse HEAD)" \
+		-t "$(TEST_TOOL_IMAGE)" -f tools/verification/Dockerfile.test tools/verification

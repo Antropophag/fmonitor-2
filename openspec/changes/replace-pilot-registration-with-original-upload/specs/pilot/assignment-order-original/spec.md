@@ -80,9 +80,39 @@ Command SHALL возвращать DTO `{status, reasonCode, retryable, requestI
 ### Requirement: Semantic replay и collision
 После shape/authorization checks система MUST сначала lookup terminal `requestId` до чтения stream; accepted hit возвращает те же evidence fields со status `REPLAYED`, rejected/conflict hit возвращает исходный terminal status/reason, без payload comparison. При miss система читает/валидирует stream, вычисляет fingerprint из mode, case/order, root/target/expected-current identities, document date, composition identity/hash и PDF SHA-256, затем lookup accepted fingerprint; match возвращает `REPLAYED` даже после смены leaf. Только miss проходит current/stale/no-change validation. Новый intent MUST использовать новый request ID.
 
+Production composition identity SHALL be `composition-<orderId>-v<versionNo>`
+and hash SHALL equal SHA-256 exact compact JSON
+`{caseId,compositionIdentity,engineerUserId,installers,orderId}` from canonical
+order/installers rows with numeric-sorted unique installer IDs. Example A hash
+is `388c7d94b3cf91235dabddf26398ac05f754d3d12a0b41a7a91ac3d5370faba5`;
+caller/legacy/fixed fallback hashes are forbidden.
+Source columns are exact order `id,installation_case_id,version_no,
+control_engineer_user_id,order_date` and all exact-order member
+`assignment_order_id,installer_tab_id,change_action,valid_from,valid_to` rows in
+one read snapshot. Before exclusion, every action row requires matching order,
+positive ID unique across all rows, exact known action and valid dates with
+`valid_from<=valid_to` when non-null. `assign|retain` is included only when
+`valid_from<=order_date` and (`valid_to` null or `>=order_date`); `release`
+requires non-null `valid_to<=order_date` and is excluded. Unknown/invalid/
+duplicate or empty included set is INVALID_COMPOSITION. Physical `order_date`
+is current compatibility source for semantic `template_date`, never documentDate.
+Fingerprint tuple encodes each member as unsigned 4-byte big-endian byte length
+plus raw bytes, nullable empty as zero length, integers unpadded decimal and no
+separators. Example initial/correction preimages are 208/250 bytes with exact
+digests `dd356db041181636ce1ecfc619f9055a625d81250e59ad3543c9f5cd5b582a7d`
+and `719d1773101e3211fb0857ad8fcb375fac10a5c7e08180491181a93a4e30f91e`.
+
 #### Scenario: Полный semantic replay
 - **WHEN** новый request имеет полный fingerprint ранее принятой operation, включая root, target и expected-current revision identities
 - **THEN** система возвращает исходный `REPLAYED` result без нового эффекта
+
+#### Scenario: Distinct-request replay эхо и persistence
+- **WHEN** loser/new request ID находит accepted fingerprint winner
+- **THEN** Result эхо-ирует loser request ID и копирует прочую winner evidence, но не создаёт loser request/audit/event row; повтор loser снова доказывает fingerprint без domain effect
+
+#### Scenario: Identical race literal oracle
+- **WHEN** A `...0101` и B `...0102` оба READY, parent releases/observes accepted A до release B
+- **THEN** B возвращает exact LF replay line с request B/winner revision-0002 evidence; exact requests inventory содержит только initial+A, а domain/fingerprint/event/audit не содержат B; retry B byte-identical
 
 #### Scenario: Retry принятой correction после смены leaf
 - **WHEN** retry имеет тот же request/fingerprint принятой correction, а её target теперь non-current из-за результата самой этой correction
@@ -164,7 +194,19 @@ Storage SHALL начать private stage до чтения stream; application �
 
 #### Scenario: Constructible maintenance composition
 - **WHEN** production или verification собирает maintenance application
-- **THEN** dedicated factory получает string-principal authorizer, clock, candidate-page/digest-lock/delete storage, reference repository, atomic maintenance request/result/audit repository, observers/faults/log; production не выбирает verifier dependencies по runtime input
+- **THEN** dedicated factory получает string-principal authorizer, clock, candidate-page/digest-lock/delete storage, reference repository, atomic maintenance request/result/audit repository, observers/faults/log; production получает trusted exact principal+reconcile-capability DTO, не user grant, и не выбирает verifier dependencies/authorization по request runtime input
+
+#### Scenario: Production maintenance authorization exact
+- **WHEN** configured `test-maintenance-01` requests exact reconcile capability
+- **THEN** byte-equal pair ALLOWED; any principal/capability mismatch DENIED, invalid config throws fixed pre-resource error, не создаёт user capability row и не выводится из role/request/global
+
+#### Scenario: Eligible orphan fixture deterministic
+- **WHEN** verifier создаёт canonical abandoned/finalized orphan с timestamp `2026-09-02T07:00:00Z`
+- **THEN** verification-only fixture использует same production storage validation/primitives/locks, exact owned-root marker/token+injected clock и disjointness с configured production root, fixed conflict/unavailable precedence, exact 15/19 bytes/digest и pre/post blob inventories, metadata time не mtime; real-adapter maintenance factory с clock 09:00, cutoff 07:30 даёт ordered two-candidate COMPLETED 2/2/0/0, exact request/audit JSON и stable replay; separate exact boundary 07:30:00/newer 07:30:01/future/primitive-failure runs наблюдаемы без sleep/private edits/production selector
+
+#### Scenario: Maintenance cursor exact
+- **WHEN** batch 1 завершается на `(07:00:00Z,orphan-content-0001)`
+- **THEN** `nextCursor` равен exact 83-byte base64url literal versioned JSON pair; next request ищет strictly after pair без requirement её existence; invalid version/shape/alphabet/padding/re-encode/pair даёт INVALID_COMMAND before clock/candidates
 
 #### Scenario: Commit success и обычный ответ
 - **WHEN** private blob finalized, DB commit accepted revision/result/audit и process может вернуть response
@@ -182,9 +224,294 @@ Storage SHALL начать private stage до чтения stream; application �
 - **WHEN** retry lookup тем же request доказывает отсутствие accepted result
 - **THEN** command может заново проверить/reuse verified private blob и выполнить одну новую commit attempt; итогом остаётся не более одного accepted fact
 
+#### Scenario: Real unknown-outcome scripts constructible
+- **WHEN** verification worker выбирает one `commit_unknown_found|not_found|unavailable`
+- **THEN** real repository выполняет ровно durable-commit+fresh-FOUND, rollback+fresh-NOT_FOUND или durable-commit+fresh-UNAVAILABLE; script one-shot, production не может его выбрать, unavailable retry normally replays durable row
+
+#### Scenario: Release failure сочетается с commit outcome
+- **WHEN** worker выбирает exact `commit_before|commit_unknown_{found,not_found,unavailable}_release_failure`
+- **THEN** base outcome выполняется один раз, затем one release FAILED с exact rolled_back/unknown_* safe log без замены Result; plain release fault покрывает committed и natural CAS-conflict, arbitrary fault lists forbidden
+
+#### Scenario: Cleanup safe logs exact
+- **WHEN** stage abort, stage close или stream close fails
+- **THEN** non-accepted selected Result preserved; accepted candidate close uses precommit failure mapping; one exact event + only phase field + first12-SHA256(requestId) correlation logged; isolated canonical JSON lines заданы, payload/path/exception forbidden, injected observer log-write failure no retry/no Result change
+
+#### Scenario: Cleanup failure precedence constructible
+- **WHEN** invalid path cleanup or valid accepted-candidate close fails
+- **THEN** invalid path keeps selected result and audits only after abort→stage-close→stream-close; accepted path closes stage→stream before commit, failure selects STORAGE/STREAM failure, forbids commit, retains private orphan and releases lease rolled_back; injected throwing safe-log observer writes nothing/no retry
+- **AND** request301 invalid-inspector abort-failure run has exact request/audit/blob/log JSON, ordered call transcript, empty-log throwing variant and authorization+terminal-lookup-only byte-identical retry
+
+### Requirement: Production safe log fail-closed construction
+`AssignmentOrderOriginalProductionConfig` SHALL require `safeLogFile` in addition to `privateStorageRoot` and `tablePrefix`. Before any database access or private-storage validation/access, `ProductionAssignmentOrderOriginalFactory` MUST resolve and validate `safeLogFile` as an already existing canonical regular file, MUST reject a symlink at the configured path, MUST require ownership by the current effective user and exact permission mode `0600`, and MUST bind the real append-only cleanup/release safe-log observer to that canonical file. The retained append descriptor MUST have exact device/inode identity with the final non-following pathname observation and MUST itself be revalidated by `fstat` as regular, current-effective-user-owned and exact `0600` before resource access or write. Any open, `fstat`, identity or attribute mismatch MUST close an opened descriptor and surface only the existing fixed redacted production-configuration error. The factory MUST NOT create, chmod, chown, replace, truncate, append to or otherwise repair/change the file on construction failure. This descriptor-integrity clarification is pending fresh independent technical Gate 1 review and preserves the earlier owner-approved policy/history.
+
+Verification SHALL использовать public opaque opened-file owner и pure attribute
+policy из `ASSIGNMENT-ORDER-ORIGINAL-SAFE-LOG-OWNER-001`. Stable-file behavioral
+GREEN MUST дополняться exact-SHA independent structural Gate5 proof native fstat,
+retained ownership/close и factory ordering. Pending construction observer и
+interval permission transition заменены; эти отвергнутые механизмы MUST NOT
+повторяться. Public raw-handle/adoption/opener/metadata-provider escape и
+production selector запрещены.
+
+#### Scenario: Valid production safe-log binding
+- **WHEN** `safeLogFile` names an existing non-symlink regular file owned by the current effective user with exact mode `0600`
+- **THEN** factory construction may proceed to database/private-storage dependencies and cleanup/release diagnostics append exactly one canonical JSON line per emitted event without truncating prior bytes
+
+#### Scenario: Invalid production safe-log fails before resources
+- **WHEN** the configured path is missing, non-canonical, a symlink, not a regular file, owned by another user or has mode other than exact `0600`
+- **THEN** factory construction throws one fixed fail-closed construction error before database access and before private-storage validation/access, does not create or repair any file, and exposes no configured path, secret or underlying exception detail
+
+#### Scenario: Stable direct owner and policy verification
+- **WHEN** public owner получает обычные task-owned изначально valid0600 и invalid0640 files, а pure policy получает independently fixed mode/type/UID/device/inode cases
+- **THEN** valid owner сохраняет prior bytes и exact JSON append/close behavior; invalid input отклоняется fixed-redacted без create/repair; tests не заявляют, что stable-file observation сама доказывает использование fstat
+
+#### Scenario: Structural retained-descriptor proof
+- **WHEN** independent Gate5 reviewer проверяет exact implementation SHA после approved behavioral GREEN
+- **THEN** actual fstat retained handle подаёт все approved policy fields, private owner один выполняет append/close без reopen/adoption escape, все failed acquisitions закрывают handle, production factory ordering/fixed exception сохраняются
+- **AND** отсутствие этой proof запрещает APPROVED даже при passing tests; rejected native/observer mechanisms не реализуются
+
+### Requirement: Independent evidence reader constructible through public factory
+Verification SHALL строить fresh-connection production evidence reader только
+через `AssignmentOrderOriginalEvidenceReaderFactory::create` и exact serializable
+config с DB host/port/name/user/password-file, canonical prefix, private root и
+safe-log file. Reader SHALL выполнять только read-only canonical evidence reads,
+не SHALL использовать `information_schema`, private SQL/test callbacks или
+command repository и SHALL закрывать connection/descriptors exactly once.
+Config SHALL иметь exact bounded ASCII scalar grammar, canonical owned
+`0700|0750` private root, existing owned `0600` password/safe-log files, SHALL
+не создавать/repair paths и SHALL принимать password только как `1..1024`
+bytes exact ASCII `0x20..0x7E` с одним optional final LF, удаляемым до проверки.
+TAB, DEL, non-ASCII и другие newline MUST отклоняться. Construction/read/close failure
+MUST бросать только fixed `AssignmentOrderOriginalEvidenceUnavailable` без
+partial JSON/diagnostics; repeated close MUST не повторять I/O и сохранять
+первый cached outcome.
+
+#### Scenario: Isolated MariaDB setup конструируем
+- **WHEN** Gate 2 готовит task-owned database/prefix для real repository/reader/worker evidence
+- **THEN** public `AssignmentOrderOriginalSchemaMigration::apply` version 1 создаёт/проверяет только owned original schema с exact `APPLIED|UNCHANGED|CONFLICT`, а verification-only `AssignmentOrderOriginalVerificationDatabaseFixture::seedExampleA` idempotently добавляет fixed prerequisites без original facts; runtime consumers не вызывают migration/fixture
+
+#### Scenario: Fixture conflict fail closed
+- **WHEN** Example-A prerequisite identity уже занята другими values
+- **THEN** fixture до DML бросает fixed `AssignmentOrderOriginalVerificationFixtureConflict`, не принимает SQL/callback и не создаёт original evidence
+
+#### Scenario: Exact schema и bounded cleanup наблюдаемы
+- **WHEN** Gate 2 проверяет clean/repeat/partial/populated/conflict migration и завершает Example-A run
+- **THEN** version-2 manifest exact tables/columns/keys/FKs/checks/equivalence и literal fixture projections/digests определяют independent expected values, `cleanupExampleA` удаляет только byte-validated fixture rows, а test удаляет только separately validated task-owned database
+- **AND** version 2 replaces only v1 UNIQUE(private_content_identity) with non-unique INDEX, preserves populated rows, permits same-content revisions, reports revisions affected, repeats exact, and conflicts on every other drift before DDL
+- **AND** classifier finds sole safe-name v1 unique or exact `idx_aoou_revision_content` v2 index; manifest walk upgrades v1 by one atomic drop+add ALTER at revisions position with post-ALTER phase/re-read/retry v1-or-v2 recovery, then creates suffix and appends capability last; clean/roots+v1-partial/full-populated-v1/mixed-drift/v2-repeat affected orders are exact
+
+#### Scenario: Capability publication fail closed
+- **WHEN** original schema incomplete/fails/revalidation differs, observer fails after exact schema, capability CHECK is ambiguous/non-exact, or final ALTER fails
+- **THEN** V5 upload/correct grants are never published before full exact schema; per-created-table and pre/post-capability phases make implicit-commit failures deterministic; conflicts return binary-complete `affectedTables`, technical failures throw exact fixed migration-unavailable, and post-ALTER fresh reread resolves durable V5 or leaves only safe full-schema+V4-or-V5 unknown recovery
+
+#### Scenario: Shared MariaDB evidence independently observable
+- **WHEN** Gate 2 выполняет upload/replay/CAS/fault/maintenance через real production adapters
+- **THEN** новый reader на fresh connection возвращает closed canonical requests/fingerprints/domain/events/audits/maintenance-requests/maintenance-audits/process/blob/log snapshots, где process shape содержит отдельные `tasksSha256` и `checklistSha256`, maintenance terminal result+audit появляются atomic-or-neither и replay их не меняет, а после `close()` reader не оставляет ресурсов
+
+#### Scenario: Checklist availability наблюдается отдельно
+- **WHEN** verifier сравнивает process snapshot до и после command attempt
+- **THEN** exact `aoou-process-v1` shape содержит `checklistSha256`, выведенный только из target case opening state (`available` только при `working` + all opening fields, иначе `blocked_until_opening`); valid target всегда даёт ровно одну case-owned checklist identity, missing/mismatched case/order даёт fixed evidence-unavailable без partial JSON; original/order/task facts не являются inputs и `tasksSha256` не заменяет этот digest
+
+#### Scenario: Unrelated decoy facts наблюдаемы
+- **WHEN** reader строит `decoySha256` для exact target case
+- **THEN** digest покрывает every other prefixed installation-case `{caseId,processState-as-marker}` в numeric case order, включая empty projection, без original tables и fixture callback
+
+#### Scenario: Evidence config invalid or read fails
+- **WHEN** config/path/password-file/prefix invalid либо evidence read/close падает
+- **THEN** factory/reader бросает exact fixed evidence-unavailable exception без partial JSON, DDL/DML, schema inference или secret/path diagnostics; missing safe-log не создаётся
+
+#### Scenario: Worker и evidence reader имеют одну safe-log identity
+- **WHEN** verification запускает five-FD worker для real commit/release fault evidence
+- **THEN** exact serializable worker config содержит `safeLogFile`, worker валидирует его как заранее созданный owned `0600` canonical regular file по тем же path rules, пишет в него через real safe-log observer, а reader config использует ту же canonical path identity; worker не создаёт/repair file и не выбирает path через env/global/default/private-root convention/callback, а parent закрывает reader и terminate/reap children до repeat-validation и удаления только task-owned safe-log artifact
+
+#### Scenario: Worker DSN однозначно строит mysqli
+- **WHEN** five-FD worker читает exact `host=...;port=...;database=...;charset=utf8mb4`
+- **THEN** bounded grammar однозначно строит `(host,user,password,database,port)` и `set_charset('utf8mb4')`; host есть либо colon/bracket-free hostname/IPv4 token, либо balanced canonical lower-case IPv6 с filter+inet round-trip; `p:`, raw colon, bad brackets/zone/trailing-dot, invalid/extra/reordered/socket/alternate-charset input даёт exit 70 + fixed stderr до secret/DB/storage/log access
+
+#### Scenario: Worker failure channels exact
+- **WHEN** worker завершается controlled exit 70
+- **THEN** stderr ровно `ASSIGNMENT_ORDER_ORIGINAL_WORKER_FAILED\n`; result FD пуст для every pre-write failure, а one result-fwrite short failure может оставить только bounded discarded prefix; invalid config не читает command и не пишет barrier, а barrier failure после READY сохраняет только уже записанный exact READY без новых bytes
+
+#### Scenario: Worker FD ownership exact
+- **WHEN** bootstrap получает command/barrier-in/barrier-out/result FDs
+- **THEN** each 3..65535 из separate AF_UNIX SOCK_STREAM pair, integers и `(dev,ino)` pairwise distinct, opened once r+ and blocking; stdio/FIFO/file/device/closed/dup/alias/range invalid pre-secret/pre-command с close-once+exit70, logical opposite directions unused
+
+#### Scenario: Barrier event selectable only by verifier
+- **WHEN** worker config выбирает fingerprint-miss или after-private-finalize lifecycle event
+- **THEN** READY/RELEASE блокирует только exact selected event; CAS races use first; isolated full INITIAL request0400 fixture (case4512/order81/actor18/date09-01/confirmed/null lineage/canonical PDF/lease-race.pdf/application-pdf) clock07:00/root0040/revision0040 uses second and exact content-sha256 identity; maintenance clock09/principal/cutoff07:30/limit10/null cursor request0401 while paused proves PARTIAL/LOCKED 1/0/1/0, after exact accepted upload request0402 proves referenced COMPLETED 1/0/1/0, both request/audits + one upload fact and blob retention via fresh reader; invalid config pre-secret, production selector absent
+
+#### Scenario: Worker ID sequences deterministic
+- **WHEN** config передаёт root/revision CSV
+- **THEN** each имеет `1..1024` unique exact `original-NNNN`/`revision-NNNN` tokens without whitespace/empty/trailing values, валидируется pre-secret, потребляется left-to-right only on requested kind; exhaustion даёт command `FAILED/PERSISTENCE_FAILURE`, а canonical identical/different race sequences фиксированы executable spec
+
+#### Scenario: Worker command JSON/base64 exact
+- **WHEN** command FD получает one bounded UTF-8 JSON line
+- **THEN** exact literal fixture и ordered top-level/upload keys с `upload.bytesBase64` и strict canonical RFC4648 round-trip строят Command/stream; read идёт chunks <=65536 в buffer <=29000000, final LF требует EOF <=5s, затем UTF8/JSON/keys/base64 и sole decode factory, всё до password/DB; malformed/extra/second-line/overlong input даёт exit70 fixed channels до application/storage/log/barrier, empty bytes доходят до file validation, а decoded 20MiB+1 — до `FILE_TOO_LARGE`
+
+#### Scenario: Worker result JSON exact
+- **WHEN** worker публикует command Result
+- **THEN** all 11 keys идут exact order, lower backed enums/explicit nulls/JSON booleans/unquoted integers и fixed JSON flags с one LF; accepted/replayed/stale literals заданы, <=16384 checked before write; serialization/oversize даёт zero bytes, one complete-line fwrite short/failure не retry-ит write, parent отбрасывает bounded prefix unless exact LF+EOF line complete, committed request остаётся replayable
+
+#### Scenario: Result publisher faults deterministic
+- **WHEN** verification worker выбирает serialization/oversize/write-false/write-zero/write-short-7
+- **THEN** first four пишут zero result bytes, short пишет ровно `{"statu` one attempt, all stderr+exit70 и normal same-request retry REPLAYED; production и arbitrary combinations forbidden
+
 ### Requirement: Scope boundary следующего lifecycle
 Принятый original SHALL NOT в этом slice менять current assignment composition, case state, actual start или checklist availability. Sequential-order applicability/ties принадлежат будущему change `apply-assignment-order-original-to-composition`; замена opening gate и immutable opening snapshot принадлежат `open-installation-from-assignment-order-original`; HTTP upload, metadata-read и download принадлежат `expose-assignment-order-original-http`, где exact local read capability SHALL быть `assignment_order.original.read` и не SHALL наследоваться из upload/correct/display role.
 
 #### Scenario: Upload не открывает и не применяет состав
 - **WHEN** initial или correction принята
 - **THEN** изменяется только private original evidence persistence, а composition и opening facts остаются byte-identical; query/HTTP surface не создаётся
+
+### Requirement: Shared safe-log owner не маскирует unavailable dependency или close failure
+
+Exact file mode SHALL проверяться mask07777, включая запрет special bits.
+Owner close SHALL кешировать success/failure после одной native попытки;
+closed-state MUST NOT означать ложное подтверждение kernel close при failure.
+Existing direct Runtime imports SHALL предоставлять owner/policy без autoloader.
+
+#### Scenario: Direct imports перед policy negatives
+- **WHEN** verifier использует existing Runtime/FileStorage direct imports
+- **THEN** оба новых класса уже loaded и valid-owner control проходит до invalid-input assertions; class-not-found не считается policy denial
+
+#### Scenario: Повтор после native close failure
+- **WHEN** первая close попытка возвращает false/warning/Throwable
+- **THEN** owner permanently unusable, fixed failure кешируется; repeated close не делает I/O и повторяет fixed error, destructor не выпускает исключение
+
+### Requirement: Diagnostic failure isolation
+
+Application composition SHALL соблюдать SAFE-LOG-ISOLATION-001: diagnostic
+Throwable не меняет selected Result, cleanup, required audit или delivery.
+
+#### Scenario: Logger throws while reporting cleanup failure
+- **WHEN** cleanup/release failure требует diagnostic и record throws
+- **THEN** underlying record attempted exactly once; selected result и remaining cleanup/audit/delivery сохраняются
+
+#### Scenario: Request binding throws before context update
+- **WHEN** request-aware logger useRequest throws
+- **THEN** command lifecycle продолжается, record callbacks этой invocation отсутствуют; следующая invocation снова пытается bind exact request
+
+### Requirement: Exact scalar boundary precedes replay
+
+Application SHALL соблюдать COMMAND-SHAPE-001 до business ports: exact Gregorian
+date, UTF-8/raw controls, Unicode trim/code-point limits и opaque ASCII1..80 IDs.
+Accepted correction SHALL сохранять normalized reason; filename не выбирает path.
+
+#### Scenario: Malformed metadata with stored terminal request
+- **WHEN** request ID существует, но filename/reason/date/lineage нарушает scalar shape
+- **THEN** INVALID_COMMAND, evidence null, business lookup/read/audit calls0 и stream close1; stored result не раскрывается
+
+#### Scenario: Unicode boundary and generated opaque identity
+- **WHEN** normalized reason содержит500 valid code points либо source возвращает malformed GENERATED ID
+- **THEN** valid reason достигает normal correction и сохраняется normalized; malformed generated ID даёт retryable PERSISTENCE_FAILURE до finalize/commit
+
+## Scalar boundary v0.2 schema alignment — 2026-09-06
+
+Opaque IDs retain1..80 printable ASCII bytes but exclude slash/backslash under
+the existing schema CHECK. Caller and GENERATED negatives cover both separators;
+no identity rewrite/escaping is substituted. v0.1 Gate1 rejection is preserved;
+fresh v0.2 independent Gate1 precedes any shape RED.
+
+### Requirement: Once-only command resource lifecycle
+
+Application SHALL соблюдать COMMAND-LIFECYCLE-001: primitive-specific failures,
+actual ordered observer phases, malformed read/finalize rejection, once-only
+cleanup/release and post-commit response loss without false no-fact failure.
+
+#### Scenario: Replay and acquisition failure
+- **WHEN** stored request replay либо acquired-stage failure/replay выбирает outcome
+- **THEN** supplied stream closes once unread for terminal replay; staged outcomes attempt abort/close/stream-close without skips/repetition; selected nonaccepted result сохраняется
+
+#### Scenario: Committed response observer fails
+- **WHEN** post-commit lifecycle/delivery callback throws after lease release attempt
+- **THEN** fixed ResponseDeliveryLost without Result, durable facts unchanged, no resource/commit retry; next authorized same-request call replays
+
+### Requirement: Full PDF history and exact lexical names
+
+Inspector SHALL соблюдать PDF-HISTORY-001: all selected revisions/object-stream
+members are scanned, exact decoded Name tokens are distinguished from literal
+bytes, and opaque image/content payloads are not structurally decompressed.
+
+#### Scenario: Older or unreachable active dictionary
+- **WHEN** selected historical/unreachable dictionary contains an exact forbidden Name
+- **THEN** UNSAFE_PDF even when current page graph is passive; benign history remains allowed
+
+#### Scenario: Name-looking data and opaque images
+- **WHEN** valid metadata contains marker text in strings/comments or distinct prefix Names, or a correctly framed supported opaque image filter
+- **THEN** no false active-name match or structural-only filter rejection; actual active tokens/invalid framing still fail closed
+
+### Requirement: Total persistence values and genuine fresh recovery
+
+The command and MariaDB adapters SHALL obey DATA-INTEGRITY-001's closed lookup,
+complete lineage, immutable historical evidence and pre-SQL validation contracts.
+Fresh recovery SHALL use its owned new connection and never reuse the writer.
+
+#### Scenario: Corrupt stored evidence or contradictory port value
+- **WHEN** a FOUND result has invalid identity/evidence/backing or its status and payload contradict
+- **THEN** fail typed persistence unavailable without repair, new mutation or false replay
+
+#### Scenario: Historical request after correction
+- **WHEN** an authorized earlier accepted request is retried after a newer correction
+- **THEN** replay the earlier request's own validated revision, independently of the current root pointer
+
+#### Scenario: Unknown commit with unusable writer
+- **WHEN** commit outcome cannot be confirmed and the borrowed write connection is unusable
+- **THEN** perform one owned fresh read; validated found/miss/unavailable selects the exact stored/failure/unknown outcome and closes once
+
+DATA-INTEGRITY v0.2 treats stored INVALID_COMMAND as unavailable, requires only
+original denial-audit presence without selecting repeated-denial cardinality,
+and pins authoritative composition locking/NO_CHANGES, separate storage clocks
+and actual worker safe-log acquisition before secret/DB access. No product audit
+policy is decided. The previous v0.1 Gate1 rejection remains immutable.
+
+DATA-INTEGRITY v0.3 reserves generic commit CONFLICT for actual root/current/
+unique-winner states resolvable by fingerprint/lineage. Authoritative composition
+change/disappearance is confirmed ROLLED_BACK, with no invented business reason.
+Initial CONFLICT plus fingerprint/lineage misses is PERSISTENCE_FAILURE, never
+false INITIAL_ALREADY_EXISTS; correction NO_CHANGES reread remains exact.
+
+DATA-INTEGRITY v0.4 distinguishes root-query semantic foreign ownership from
+assignment-query echo corruption. Its optional read-only revision-owner query
+preserves the existing unknown-target versus foreign-target reasons and runs
+only after current/expected agreement and current-root membership miss, including
+post-CAS reclassification. No new domain fact or product policy is introduced.
+
+DATA-INTEGRITY v0.5 pins step11 before allocation/finalize for normal INITIAL
+absence and correction target/no-change checks. Post-CAS tests use only reachable
+winner/stale/unchanged/corrupt states; no moved foreign target after a validated
+candidate. Fresh-close diagnostics use the existing correlationId envelope,
+sole phase field and ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED.
+
+DATA-INTEGRITY v0.6 maps unresolved correction CONFLICT with fingerprint miss
+and unchanged valid matching lineage to PERSISTENCE_FAILURE. A generic unique
+collision proves no semantic mismatch; winner/stale outcomes still require their
+positive reread evidence.
+
+DATA-INTEGRITY v0.7 / ORIGINAL-UPLOAD v72 technical correction: reject every
+ASCII case variant of exact `localhost` before password/DB access so a configured
+TCP port cannot become an ambient Unix socket. A task-owned Unix listener and
+bounded public-factory child provide the new RED sensor; no public API is added.
+If fresh step11 current has changed since the initial fingerprint miss, one exact
+fingerprint reread preserves concurrent-identical correction replay before stale
+selection. Existing old worker race outcomes remain unchanged. Independent
+Gate1 precedes added transport RED/G3 and the minimal correction; original
+DATA-INTEGRITY Gate5 failure and all unrelated launch blockers remain recorded.
+
+## Следующий аудит попыток — 2026-09-06
+
+Owner утвердил каждую denied invocation: `original-denied-attempt-owner-approval-2026-09-06.md`. Change `record-original-submission-attempt-audits` и ATTEMPT-AUDIT-001 уточняют существующий audit contract/schema в parentv73, сохраняя terminal/accepted history. До его Gate5 combined original command не считается завершённым. DATA-INTEGRITY scoped Gate5v2 на4ed122c остаётся действительным в прежней области.
+
+## Maintenance owner corrective scope — 2026-09-06
+
+MAINTENANCE-001 и parentv74 уточняют существующие public storage/maintenance ports, once-only locks/deletion, trusted authorization, scalar/page/result validation и native result+audit. Требуются Gate1→RED→independent Gate3→minimal GREEN→independent Gate5. Схема13/v3 и пользовательский original audit не меняются. Неохваченные private-orphan fixture/evidence/worker declaration gaps не считаются закрытыми.
+
+## Evidence lifecycle corrective scope — 2026-09-06
+
+EVIDENCE-LIFECYCLE-001 уточняет existing read-only evidence contract: exact public config/interface, pre-password validation, fresh read-only connection, fixed failures и once-only close без удаления storage metadata/locks. Canonical JSON и product grants не меняются. Worker declaration/fault-point и private orphan fixture behavior остаются отдельными обязательными исправлениями. Требуются независимые Gates1/3/5.
+
+## Worker ports corrective scope — 2026-09-06
+
+WORKER-PORTS-001 уточняет existing exact WorkerConfig/ByteStreamFactory/bootstrap names, sole strict base64 decoding и3 lookup fault points native repository. Пользовательские outcomes и grants не меняются. Полнота framing/FD behavior и orphan fixture не утверждается. Требуются независимые Gates1/3/5.
+
+## Worker boundary corrections after combined Gate5 — 2026-09-06
+
+WORKER-BOUNDARY001 закрывает3конкретных findings: config resource admission до command, native EOF/barrier deadlines и actual result-size guard через pure encoder. Product outcomes/grants прежние; расширения worker/FD kinds и harness tuning нет. Требуются independent Gates1/3/5; прежние scoped approvals сохраняются.

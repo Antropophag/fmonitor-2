@@ -1,100 +1,17 @@
 <?php
-
 declare(strict_types=1);
-
-use FMonitor2\InstallationProcess\PilotCaseImporter;
-use FMonitor2\InstallationProcess\WorkforceHistorySchemaReadiness;
-use FMonitor2\InstallationProcess\ProductionProcessSchemaMigration;
-use FMonitor2\InstallationProcess\MariaDbPilotLegacyObjectSchemaReadiness;
-
-require_once __DIR__ . '/Otiz.php';
-require_once __DIR__ . '/IdentityBootstrap.php';
-require_once __DIR__ . '/CompletionFlow.php';
-
-$root = dirname(__DIR__);
-$home = getenv('HOME');
-if (!is_string($home) || $home === '') throw new RuntimeException('Home directory unavailable');
-
-spl_autoload_register(static function (string $class) use ($root): void {
-    $prefix = 'FMonitor2\\InstallationProcess\\';
-    if (!str_starts_with($class, $prefix)) return;
-    $path = $root . '/app/InstallationProcess/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
-    if (is_file($path)) require_once $path;
-});
-
-$fingerprint = substr(hash('sha256', (string) realpath($root)), 0, 8);
-$stateRoot = $home . '/.local/state/fmonitor2/pilot-demo/' . $fingerprint;
-$manifestPath = $stateRoot . '/active.json';
-
-$generation = 1;
-$processPrefix = 'fm2d_' . $fingerprint . '_g' . $generation . '_';
-$legacyPrefix = 'fm2l_' . $fingerprint . '_g' . $generation . '_';
-$generationRoot = $stateRoot . '/generations/' . $generation;
-$artifactRoot = $generationRoot . '/artifacts';
-$manifestNonce = bin2hex(random_bytes(32));
-$fixtureMode = getenv('FMONITOR_PILOT_FIXTURE_MODE');
-if ($fixtureMode === false) $fixtureMode = '';
-if (!in_array($fixtureMode, ['', 'test-fixtures'], true)) throw new RuntimeException('Invalid fixture mode');
-$withTestFixtures = $fixtureMode === 'test-fixtures';
-if (!is_dir($artifactRoot) && !mkdir($artifactRoot, 0755, true)) throw new RuntimeException('State directory unavailable');
-
-$db = new mysqli('127.0.0.1', 'fmonitor2_demo', 'fmonitor2_demo_local', 'fmonitor2_demo', 23306);
-$db->set_charset('utf8mb4');
-$serverIdentity=(string)$db->query('SELECT @@hostname AS identity')->fetch_assoc()['identity'];
-$migrationFailed = false;
-try {
-    require_once __DIR__ . '/InspectionSchedule.php';
-    try {
-        RapidPilotInspectionSchedule::assertSchemaReady($db, $processPrefix);
-        RapidPilotCompletionFlow::assertSchemaReady($db, $processPrefix);
-    } catch (Throwable) {
-        $migrationFailed = true;
-    }
-    if (!$migrationFailed) try {
-        MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db, $legacyPrefix);
-    } catch (Throwable) {
-        $migrationFailed = true;
-    }
-    if (!$migrationFailed && $withTestFixtures) {
-        $db->query("INSERT IGNORE INTO `{$legacyPrefix}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
-    }
-
-    foreach ($migrationFailed ? [] : [ProductionProcessSchemaMigration::class] as $migration) {
-        $result = $migration::apply($db, $processPrefix);
-        if (isset($result['reason'])) throw new RuntimeException('Schema migration failed');
-    }
-    if (!$migrationFailed) WorkforceHistorySchemaReadiness::assertReady($db, $processPrefix);
-    if (!$migrationFailed) {
-    MariaDbPilotLegacyObjectSchemaReadiness::assertGenerationSentinelReady($db, $processPrefix);
-    $sentinel=$db->prepare("INSERT INTO `{$processPrefix}fm2_pilot_generation_sentinel` VALUES(1,?,?,?) ON DUPLICATE KEY UPDATE generation=VALUES(generation),fingerprint=VALUES(fingerprint),manifest_nonce=VALUES(manifest_nonce)");$sentinel->bind_param('iss',$generation,$fingerprint,$manifestNonce);$sentinel->execute();
-    $bootstrapEmails=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS')?:'');
-    $bootstrapPassword=(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD')?:'');
-    RapidPilotIdentityBootstrap::apply($db,$processPrefix,$bootstrapEmails,$bootstrapPassword);
-    RapidPilotOtiz::bootstrap($db, $processPrefix);
-    if ($withTestFixtures) (new PilotCaseImporter($db, $processPrefix, $legacyPrefix))->import([4512], '2026-08-29T12:00:00+03:00');
-    }
-} finally {
-    $db->close();
-}
-
-if ($migrationFailed) {
-    echo "{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n";
-    exit(70);
-}
-
-$manifest = json_encode([
-    'fingerprint' => $fingerprint,
-    'generation' => $generation,
-    'processPrefix' => $processPrefix,
-    'legacyPrefix' => $legacyPrefix,
-    'port' => 8092,
-    'state' => 'ready',
-    'mode' => $withTestFixtures ? 'test-fixtures' : 'native-only',
-    'manifestNonce' => $manifestNonce,
-    'dbEndpoint' => ['host'=>'127.0.0.1','port'=>23306,'name'=>'fmonitor2_demo'],
-    'dbServerIdentity' => $serverIdentity,
-], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-$temporaryManifest = $manifestPath . '.new';
-if (file_put_contents($temporaryManifest, $manifest, LOCK_EX) === false || !rename($temporaryManifest, $manifestPath)) {
-    throw new RuntimeException('Manifest unavailable');
-}
+use FMonitor2\InstallationProcess\{WorkforceHistorySchemaReadiness,MariaDbPilotLegacyObjectSchemaReadiness,PilotLegacyObjectSchemaMigration,PilotGenerationSentinelSchemaMigration,PilotOtizSchemaMigration,MariaDbPilotStartupState};
+require_once __DIR__.'/IdentityBootstrap.php';require_once __DIR__.'/CompletionFlow.php';require_once __DIR__.'/InspectionSchedule.php';
+$root=dirname(__DIR__);$home=getenv('HOME');if(!is_string($home)||$home==='')throw new RuntimeException('Home directory unavailable');
+spl_autoload_register(static function(string$class)use($root):void{$p='FMonitor2\\InstallationProcess\\';if(str_starts_with($class,$p)){$f=$root.'/app/InstallationProcess/'.str_replace('\\','/',substr($class,strlen($p))).'.php';if(is_file($f))require_once$f;}});
+$fingerprint=substr(hash('sha256',(string)realpath($root)),0,8);$defaultPrefix='fm2p_'.$fingerprint.'_g1_';$prefix=(string)(getenv('FMONITOR_BOOTSTRAP_PROCESS_PREFIX')?:$defaultPrefix);$legacy=(string)(getenv('FMONITOR_BOOTSTRAP_LEGACY_PREFIX')?:$prefix);if($legacy!==$prefix||preg_match('/^[A-Za-z0-9_]{1,25}$/D',$prefix)!==1)throw new RuntimeException('Pilot prefix unavailable');
+$stateRoot=$home.'/.local/state/fmonitor2/pilot-demo/'.$fingerprint;$generationRoot=$stateRoot.'/generations/1';$manifestPath=$stateRoot.'/active.json';foreach([$stateRoot,$generationRoot,$generationRoot.'/artifacts',$generationRoot.'/sessions']as$dir){if(!is_dir($dir)&&!mkdir($dir,0700,true))throw new RuntimeException('State directory unavailable');if(is_link($dir)||!chmod($dir,0700))throw new RuntimeException('State directory unavailable');}
+$cfg=['host'=>(string)(getenv('FMONITOR_DB_HOST')?:'127.0.0.1'),'port'=>(int)(getenv('FMONITOR_DB_PORT')?:23306),'name'=>(string)(getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo'),'user'=>(string)(getenv('FMONITOR_DB_USER')?:'fmonitor2_demo'),'password'=>(string)(getenv('FMONITOR_DB_PASSWORD')?:'')];mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$db=new mysqli($cfg['host'],$cfg['user'],$cfg['password'],$cfg['name'],$cfg['port']);$db->set_charset('utf8mb4');$failed=false;
+try{foreach([PilotLegacyObjectSchemaMigration::class,PilotGenerationSentinelSchemaMigration::class,PilotOtizSchemaMigration::class]as$m){$r=$m::apply($db,$prefix);if(isset($r['reason']))throw new RuntimeException();}WorkforceHistorySchemaReadiness::assertReady($db,$prefix);RapidPilotInspectionSchedule::assertSchemaReady($db,$prefix);RapidPilotCompletionFlow::assertSchemaReady($db,$prefix);MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db,$prefix);
+ $manifest=is_file($manifestPath)&&!is_link($manifestPath)?json_decode((string)file_get_contents($manifestPath),true):null;$sentinel=MariaDbPilotStartupState::sentinel($db,$prefix);
+ if(is_array($manifest)){$nonce=$manifest['manifestNonce']??null;if(($manifest['fingerprint']??null)!==$fingerprint||($manifest['generation']??null)!==1||($manifest['processPrefix']??null)!==$prefix||($manifest['legacyPrefix']??null)!==$prefix||!is_string($nonce)||preg_match('/^[0-9a-f]{64}$/D',$nonce)!==1||!is_array($sentinel)||$sentinel['fingerprint']!==$fingerprint||(int)$sentinel['generation']!==1||$sentinel['manifest_nonce']!==$nonce)throw new RuntimeException();}
+ elseif(is_array($sentinel)){$nonce=$sentinel['manifest_nonce'];if($sentinel['fingerprint']!==$fingerprint||(int)$sentinel['generation']!==1||preg_match('/^[0-9a-f]{64}$/D',$nonce)!==1)throw new RuntimeException();}
+ else{$configured=trim((string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS')?:''));if($configured===''||str_contains($configured,','))throw new RuntimeException();$nonce=bin2hex(random_bytes(32));RapidPilotIdentityBootstrap::apply($db,$prefix,$configured,(string)(getenv('FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD')?:''));if(MariaDbPilotStartupState::userCount($db,$prefix)!==1)throw new RuntimeException();MariaDbPilotStartupState::initialize($db,$prefix,$fingerprint,$nonce);}
+ $secret=$generationRoot.'/database-password';$safeLog=$generationRoot.'/original-safe.log';if(!is_file($secret)){if(file_put_contents($secret,$cfg['password'],LOCK_EX)===false||!chmod($secret,0600))throw new RuntimeException();}elseif(is_link($secret)||($st=lstat($secret))===false||($st['mode']&0777)!==0600||file_get_contents($secret)!==$cfg['password'])throw new RuntimeException();if(!is_file($safeLog)){if(file_put_contents($safeLog,'',LOCK_EX)===false||!chmod($safeLog,0600))throw new RuntimeException();}elseif(is_link($safeLog)||($st=lstat($safeLog))===false||($st['mode']&0777)!==0600)throw new RuntimeException();
+ $value=['fingerprint'=>$fingerprint,'generation'=>1,'processPrefix'=>$prefix,'legacyPrefix'=>$prefix,'port'=>(int)(getenv('FMONITOR_DEMO_PORT')?:8092),'state'=>'ready','mode'=>'native-only','manifestNonce'=>$nonce,'dbEndpoint'=>['host'=>$cfg['host'],'port'=>$cfg['port'],'name'=>$cfg['name']],'dbServerIdentity'=>MariaDbPilotStartupState::serverIdentity($db)];$bytes=json_encode($value,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$tmp=$manifestPath.'.new';if(file_put_contents($tmp,$bytes,LOCK_EX)===false||!chmod($tmp,0600)||!rename($tmp,$manifestPath))throw new RuntimeException();
+}catch(Throwable){$failed=true;}finally{$db->close();}if($failed){echo"{\"ok\":false,\"reason\":\"MIGRATION_FAILED\"}\n";exit(70);}

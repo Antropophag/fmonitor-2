@@ -1,0 +1,142 @@
+# One authoritative CI run; category inventories also back make test.
+name: Repository verification
+'on':
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * *'
+  release:
+    types: [published]
+permissions:
+  contents: read
+concurrency:
+  group: repository-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      full: ${{ steps.policy.outputs.full }}
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - name: Select checks conservatively
+      id: policy
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.sha }}
+        EVENT: ${{ github.event_name }}
+      run: |
+        python3 tools/verification/ci.py plan --base "$BASE_REF" --event "$EVENT" > /tmp/test-plan.json
+        cat /tmp/test-plan.json
+        python3 -c 'import json; p=json.load(open("/tmp/test-plan.json")); print("full="+str(p["full"]).lower())' >> "$GITHUB_OUTPUT"
+        printf '\n### Selected checks\n\n```json\n' >> "$GITHUB_STEP_SUMMARY"
+        cat /tmp/test-plan.json >> "$GITHUB_STEP_SUMMARY"
+        printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
+  fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: ./.github/actions/setup-runtime
+    - name: Syntax, architecture and verification policy
+      run: |
+        make lint architecture-check
+        python3 tools/delivery/render-dependencies.py --check
+        python3 tests/Verification/development_setup_001_test.py
+        python3 tests/Verification/verification_ci_001_test.py
+        git diff --check
+  unit:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: ./.github/actions/setup-runtime
+    - name: Run unit category once
+      run: make test CATEGORY=unit
+  integration:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: ./.github/actions/setup-runtime
+    - name: Prepare pinned integration dependencies
+      run: make ci-setup
+    - name: Prepare isolated test database
+      run: make test-db-reset migrate
+    - name: Run integration category once
+      run: make test CATEGORY=integration
+    - name: Tear down isolated test database
+      if: always()
+      run: make test-env-down
+  e2e:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: ./.github/actions/setup-runtime
+    - name: Prepare pinned integration dependencies
+      run: make ci-setup
+    - name: Prepare isolated test database
+      run: make test-db-reset migrate
+    - name: Run e2e category once
+      run: make test CATEGORY=e2e
+    - name: Tear down isolated test database
+      if: always()
+      run: make test-env-down
+  governance:
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - uses: ./.github/actions/setup-runtime
+    - name: Run governance category once
+      run: make test CATEGORY=governance
+  verify:
+    if: always()
+    needs: [plan, fast, unit, integration, e2e, governance]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - name: Require every expected result
+      env:
+        FULL: ${{ needs.plan.outputs.full }}
+        RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}"}'
+      run: python3 tools/verification/ci.py aggregate --full "$FULL" --results "$RESULTS"

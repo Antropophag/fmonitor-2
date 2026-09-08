@@ -1,6 +1,17 @@
 # SSD + TDD delivery process
 
-This is the mandatory path from a product decision to merged FMonitor 2.0 code. SSD means Specification-Driven Development.
+## Current owner-authorized delivery mode —2026-09-07
+
+Read [current delivery goal](operations/current-delivery-goal.md) before choosing
+work or verification. For the manual-test pilot due2026-09-07 22:00Europe/Moscow,
+that newer owner decision overrides the sequential full-gate prerequisite below.
+Implement the working user flow, perform focused checks of ordinary behavior,
+authorization and history preservation, deliver the stand, then fix manual feedback.
+Rare-case matrices and full architectural migration follow that feedback. Existing
+gates remain recorded; deferred work is not approved or complete by implication.
+The full process below remains the standard for final production integration.
+
+The following is the normal path from a product decision to production-integrated FMonitor 2.0 code, subject to the explicit owner-authorized manual-pilot mode above. SSD means Specification-Driven Development.
 
 ## OpenSpec lifecycle
 
@@ -70,3 +81,16 @@ The slice is complete only with an `APPROVED` code review and green relevant tes
 ## Independence
 
 An independent review is performed by a different human or separately tasked agent that did not author the reviewed artifact. The reviewer receives the normative specification and the artifact under review, forms findings independently, and records a verdict. Self-review and a second pass by the same author are useful preparation but do not satisfy either review gate.
+
+## Owner-approved verification matrix — 2026-09-08
+
+The owner approved the [PR matrix](operations/verification-ci-matrix-2026-09-08.md)
+and selected `make test` as the canonical full command. `make verify` remains a
+compatibility alias. Local focused evidence and independent review precede one
+authoritative CI run; local-full followed by CI-full is not a mandatory sequence.
+Code, tests, CI, policy/spec and unknown changes require all categories. A narrow
+text-only documentation allowlist requires the fast checks and explicitly reports
+DOCS_VERIFY_OK, never full VERIFY_OK. Schedule, release and manual CI run full.
+This supersedes earlier assumptions requiring duplicate full execution, preserving
+Gates 1–5, exact source, authorization, append-only history and fail-closed results.
+No branch protection or publisher permission changes are implied.

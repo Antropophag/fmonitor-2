@@ -25,6 +25,13 @@ command responses, compatibility composition без configured shared navigation
 redirect/error responses и screens, не использующие shared navigation, остаются
 вне DOM-removal scope.
 
+Verification SHALL prove the shared composition once across all ten enumerated
+current states with exact sibling/accessibility/icon bytes, use real root and
+object-list HTTP responses as canonical sentinels, and reuse existing
+route-specific HTTP tests to prove the other callers still reach the same
+shared renderer. It SHALL NOT duplicate eight database/server fixture stacks
+whose only new assertion would inspect the same navigation output.
+
 #### Scenario: Item отсутствует на рабочей очереди
 - **WHEN** авторизованный actor успешно открывает exact `GET /pilot/`
 - **THEN** shared navigation не содержит text/accessibility label `Моя работа`
@@ -43,6 +50,12 @@ redirect/error responses и screens, не использующие shared naviga
   и `HEAD`
 - **THEN** HTML representation для `GET` не содержит удалённый item
 - **AND** `HEAD` сохраняет inherited status/header semantics и empty body
+
+#### Scenario: Остальные route callers сохраняют wiring
+- **WHEN** existing route-specific HTTP tests успешно достигают card, prepare,
+  checklist, construction-control, installer и administration views
+- **THEN** exhaustive shared-renderer oracle применяется к их exact current navigation states
+- **AND** route-specific tests сохраняют собственные content/admission checks без нового дублирующего server fixture
 
 ### Requirement: Удаление не зависит от полномочий actor
 Отсутствие item SHALL быть одинаковым для любого actor, уже допущенного к
@@ -81,4 +94,3 @@ persistence либо создавать audit/domain facts.
 - **THEN** exact inherited status, plain-text body, redaction/security headers и
   `Allow`/`Retry-After`/correlation header where applicable сохраняются
 - **AND** removal не превращает response в successful HTML shell
-

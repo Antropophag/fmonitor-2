@@ -10,6 +10,7 @@ final class ProductionInspectionEvidenceFactory
         \mysqli $connection,
         ProductionInspectionEvidenceConfig $config,
         ?InspectionEvidenceClock $clock = null,
+        ?array $appliedComposition = null,
     ): InspectionEvidenceApplication {
         if (!$connection->set_charset('utf8mb4')) {
             throw new \RuntimeException('Inspection evidence initialization failed.');
@@ -19,6 +20,7 @@ final class ProductionInspectionEvidenceFactory
             $connection,
             $config->processTablePrefix,
             $clock ?? new SystemInspectionEvidenceClock(),
+            $appliedComposition,
         ));
     }
 

@@ -8,6 +8,27 @@ declare(strict_types=1);
  */
 final class ProductionMigrationRunnerCatalogContract
 {
+    /** Explicit v12 extension; default v1-v11 callers remain unchanged. */
+    public static function columnsV12(): array
+    {
+        return self::columns() + [
+            'fm2_pilot_object_details' => self::parseColumns(
+                'object_id:bigint unsigned:NO:;schema_version:varchar(80):NO:;content_sha256:char(64):NO:;payload_json:longtext:NO:;captured_at:varchar(40):NO:'
+            ),
+            'fm2_pilot_object_detail_quarantine' => self::parseColumns(
+                'object_id:bigint unsigned:NO:;code:varchar(80):NO:;schema_version:varchar(80):NO:;content_sha256:char(64):NO:;captured_at:varchar(40):NO:'
+            ),
+        ];
+    }
+
+    public static function indexesV12(): array
+    {
+        return [...self::indexes(),
+            'fm2_pilot_object_details|PRIMARY|object_id',
+            'fm2_pilot_object_detail_quarantine|PRIMARY|object_id',
+        ];
+    }
+
     /** @return array<string, list<array{0:string,1:string,2:string,3:string}>> */
     public static function columns(): array
     {

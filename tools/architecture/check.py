@@ -23,6 +23,14 @@ SOURCE_SUFFIXES = {".php", ".js", ".sql"}
 IGNORED_PARTS = {"demo", "legacy-migration"}
 DDL = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+(?:TABLE|DATABASE|INDEX|USER)\b", re.I)
 SQL = re.compile(r"\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
+PHP_QUOTED = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"")
+PHP_SELECT_IDENTIFIER = re.compile(r"\$SELECT\b|\bcase\s+SELECT\s*(?==)|::\s*SELECT\b", re.I)
+PHP_DOTTED_ATOM = re.compile(r"(?:[A-Za-z_][A-Za-z0-9_]*\.)+[A-Za-z_][A-Za-z0-9_]*")
+PHP_HTML_SELECT_ATOM = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:shlz-(?:field--select|select(?:[-_][A-Za-z0-9_-]+)?)"
+    r"|data-shlz-select(?:[-_][A-Za-z0-9_-]+)?)(?![A-Za-z0-9_-])"
+)
+PHP_HTML_SELECT_TAG = re.compile(r"</?select(?=[\s/>])", re.I)
 MUTATION_SQL = re.compile(r"\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b", re.I)
 WORKFORCE_MIGRATION_APPLY = re.compile(
     r"\b(?:BitrixWorkforceHistory|WorkforceCatalog)SchemaMigration\s*::\s*apply\s*\("
@@ -47,6 +55,17 @@ MUTATING_METHOD = re.compile(
     r"\bpublic\s+function\s+(prepare|confirm|open|close|record|accept|reject|"
     r"schedule|complete|reverse|assign|register|create|update|delete|block|unblock)"
     r"[A-Za-z0-9_]*\s*\(", re.I
+)
+NATIVE_SESSION_CALL = re.compile(
+    r"\b(?:session_save_path|session_start|session_regenerate_id|session_write_close|session_destroy)\s*\("
+)
+SESSION_COMPATIBILITY_ROOT = re.compile(
+    r"/home/fmonitor/\.local/state/fmonitor2/sessions"
+)
+UNSAFE_SESSION_REPAIR = re.compile(r"\b(?:chmod|chown)\s*\(")
+SESSION_INTERNAL_FACTORY = re.compile(
+    r"\b(?P<class>PilotSessionOperationResult|PilotSessionFilesystemEvent|PilotSessionInspectionResult)"
+    r"::(?P<method>owner[A-Za-z0-9_]+|inspector[A-Za-z0-9_]+)\s*\("
 )
 
 
@@ -136,6 +155,10 @@ def workforce_ownership_matches(text: str) -> list[tuple[str, int]]:
 
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
+    if rel.startswith("app/AssignmentOrderComposition/"):
+        return path.name.startswith("MariaDb")
+    if rel.startswith("app/AssignmentOrderOriginal/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/IdentityAccess/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/InspectionEvidence/"):
@@ -149,6 +172,22 @@ def sql_owner(path: Path) -> bool:
     if rel.startswith("app/PilotHttp/"):
         return path.name.startswith("MariaDb")
     return False
+
+
+def php_sql_detection_line(line: str) -> str:
+    """Ignore PHP/component identifiers without changing SQL or fingerprints."""
+    parts: list[str] = []
+    offset = 0
+    for token in PHP_QUOTED.finditer(line):
+        parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:token.start()]))
+        quoted = token.group(0)
+        is_select_key = quoted[1:-1].lower() == "select" and re.match(r"[^\S\r\n]*=>", line[token.end():]) is not None
+        parts.append("''" if is_select_key or PHP_DOTTED_ATOM.fullmatch(quoted[1:-1])
+                     else PHP_HTML_SELECT_TAG.sub("<HTML_COMPONENT_TAG",
+                         PHP_HTML_SELECT_ATOM.sub("HTML_COMPONENT_TOKEN", quoted)))
+        offset = token.end()
+    parts.append(PHP_SELECT_IDENTIFIER.sub("PHP_IDENTIFIER", line[offset:]))
+    return "".join(parts)
 
 
 def collect() -> dict[str, list[str] | dict[str, int]]:
@@ -171,9 +210,31 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
         if len(lines) >= 150:
             hotspot[rel] = len(lines)
         for number, line in enumerate(lines, 1):
+            session_matches = list(NATIVE_SESSION_CALL.finditer(line))
+            compatibility_matches = list(SESSION_COMPATIBILITY_ROOT.finditer(line))
+            repair_matches = list(UNSAFE_SESSION_REPAIR.finditer(line)) if compatibility_matches else []
+            session_matches += repair_matches if repair_matches else compatibility_matches
+            for match in session_matches:
+                violations["session_storage_ownership"].append(
+                    finding("session-owner", path, number, match.group(0))
+                )
+            for match in SESSION_INTERNAL_FACTORY.finditer(line):
+                factory_class = match.group("class")
+                allowed = (
+                    factory_class in {"PilotSessionOperationResult", "PilotSessionFilesystemEvent"}
+                    and rel == "app/IdentityAccess/FilesystemPilotSessionStorage.php"
+                ) or (
+                    factory_class == "PilotSessionInspectionResult"
+                    and rel == "app/IdentityAccess/PilotSessionStorageInspector.php"
+                )
+                if not allowed:
+                    violations["session_storage_ownership"].append(
+                        finding("session-internal-factory", path, number, match.group(0))
+                    )
             if DDL.search(line) and not ddl_owner(path):
                 violations["ddl_ownership"].append(finding("ddl", path, number, fingerprint_lines[number - 1], source_normalized=True))
-            if SQL.search(line) and not sql_owner(path):
+            sql_line = php_sql_detection_line(line) if path.suffix == ".php" else line
+            if SQL.search(sql_line) and not sql_owner(path):
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
@@ -200,6 +261,8 @@ def compare(current: dict, baseline: dict) -> list[str]:
     errors: list[str] = []
     for item in current.get("workforce_migration_ownership", []):
         errors.append(f"workforce_migration_ownership: forbidden production owner: {item}")
+    for item in current.get("session_storage_ownership", []):
+        errors.append(f"session_storage_ownership: forbidden production owner: {item}")
     for rule in ("ddl_ownership", "sql_ownership", "dependency_direction", "rapid_pilot_boundary"):
         old = collections.Counter(baseline.get(rule, []))
         new = collections.Counter(current.get(rule, []))

@@ -1,0 +1,74 @@
+--- a/tests/Support/AssignmentOrderOriginalShapeFixture.php
++++ b/tests/Support/AssignmentOrderOriginalShapeFixture.php
+@@ -52,13 +52,21 @@
+     public AssignmentOrderOriginalInitialInspector $inspector;
+     public AssignmentOrderOriginalInitialObservers $observers;
+     public O\AssignmentOrderOriginalApplication $application;
++    public array $auditRows=[];
+     public function __construct(string $pdf,private bool $correction=false,bool $terminalHit=false,bool $denied=false,?string $generatedRoot='original-0001',?string $generatedRevision=null)
+     {
+         $this->authorizer=new OriginalShapeAuthorizer($denied);$this->compositions=new OriginalShapeComposition();
+         $this->repository=new OriginalShapeRepository($terminalHit,$correction);$this->clock=new OriginalDynamicClock('2026-09-02T09:15:30Z');
+         $this->ids=new OriginalDynamicIds([new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,$generatedRoot)],[new O\AssignmentOrderOriginalIdResult(O\AssignmentOrderOriginalIdStatus::GENERATED,$generatedRevision??($correction?'revision-0002':'revision-0001'))]);
+         $this->storage=new OriginalDynamicStorage();$this->stream=new OriginalDynamicStream($pdf);$this->inspector=new AssignmentOrderOriginalInitialInspector();$this->observers=new AssignmentOrderOriginalInitialObservers();
+-        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($this->authorizer,$this->compositions,$this->clock,$this->ids,$this->inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers));
++        $audits=new class($this) implements O\AssignmentOrderOriginalAttemptAuditWriter {
++            public function __construct(private OriginalShapeFixture $fixture){}
++            public function recordDenied(O\AssignmentOrderOriginalSafeAttemptAudit $audit):O\AssignmentOrderOriginalAuditWriteStatus
++            {$this->fixture->auditRows[]=$audit;return O\AssignmentOrderOriginalAuditWriteStatus::COMMITTED;}
++            public function appendFailure(O\AssignmentOrderOriginalSafeAttemptAudit $audit):O\AssignmentOrderOriginalAuditWriteStatus
++            {throw new \LogicException('Unexpected file audit in scalar fixture');}
++        };
++        $this->application=O\AssignmentOrderOriginalVerificationFactory::create(new O\AssignmentOrderOriginalDependencies($this->authorizer,$this->compositions,$this->clock,$this->ids,$this->inspector,$this->storage,$this->repository,$this->observers,$this->observers,$this->observers,$this->observers,$this->observers,null,$audits));
+     }
+     public function command(array $changes=[],string $filename='original.pdf'):O\SubmitAssignmentOrderOriginalCommand
+     {
+@@ -66,5 +74,5 @@
+         return new O\SubmitAssignmentOrderOriginalCommand(...array_replace($values,$changes));
+     }
+     public function businessCounters():array
+-    {return [count($this->authorizer->calls),count($this->repository->calls),$this->compositions->calls,$this->clock->calls,$this->storage->beginCalls,$this->ids->rootCalls,$this->ids->revisionCalls,$this->inspector->inspected,count($this->observers->lifecycle),count($this->observers->storage),$this->observers->deliveryCalls];}
++    {return [count($this->authorizer->calls),count($this->repository->calls),$this->compositions->calls,$this->clock->calls,$this->storage->beginCalls,$this->ids->rootCalls,$this->ids->revisionCalls,$this->inspector->inspected,count($this->observers->lifecycle),count($this->observers->storage),$this->observers->deliveryCalls,count($this->auditRows)];}
+ }
+--- a/tests/InstallationProcess/assignment_order_original_command_shape_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_command_shape_001_test.php
+@@ -29,7 +29,7 @@
+         $f=new S\OriginalShapeFixture($pdf,$correction,$hit);$before=$f->repository->evidenceCanonicalJson(4512,81);$command=$f->command($changes,$filename);
+         $result=$f->application->submitAssignmentOrderOriginal($command);
+         assertSameValue(shapeExpected(),shapeTuple($result),'invalid scalar full result before stored replay');
+-        assertSameValue([0,0,0,0,0,0,0,null,0,0,0],$f->businessCounters(),'zero business ports including auth/audit/inspector');
++        assertSameValue([0,0,0,0,0,0,0,null,0,0,0,0],$f->businessCounters(),'zero business ports including auth/audit/inspector');
+         assertSameValue([0,1],[$f->stream->readCalls,$f->stream->closeCalls],'unread stream closed once');
+         assertSameValue($before,$f->repository->evidenceCanonicalJson(4512,81),'stored evidence and pending facts unchanged');
+     });
+@@ -42,7 +42,7 @@
+ }
+ shapeCase('valid-leap-day',function()use($pdf){$f=new S\OriginalShapeFixture($pdf);$r=$f->application->submitAssignmentOrderOriginal($f->command(['documentDate'=>'2024-02-29']));assertSameValue(shapeAccepted(date:'2024-02-29'),shapeTuple($r),'real leap day persists unchanged');});
+ foreach(['rootOriginalId','targetRevisionId','expectedCurrentRevisionId'] as $field)foreach(['one'=>'!','80bytes'=>str_repeat('a',80),'quotes'=>"a'\"`:-_b"] as $label=>$id){
+-    shapeCase('valid-opaque-'.$field.'-'.$label,function()use($pdf,$field,$id){$f=new S\OriginalShapeFixture($pdf,true,denied:true);$r=$f->application->submitAssignmentOrderOriginal($f->command([$field=>$id]));assertSameValue(shapeExpected(reason:'authorization_denied'),shapeTuple($r),'valid opaque grammar reaches authorization without invented lineage');assertSameValue([[18,'assignment_order.original.correct']],$f->authorizer->calls,'exact authorization attempted');assertSameValue([],$f->repository->calls,'denial before lookup');});
++    shapeCase('valid-opaque-'.$field.'-'.$label,function()use($pdf,$field,$id){$f=new S\OriginalShapeFixture($pdf,true,denied:true);$r=$f->application->submitAssignmentOrderOriginal($f->command([$field=>$id]));assertSameValue(shapeExpected(reason:'authorization_denied'),shapeTuple($r),'valid opaque grammar reaches authorization without invented lineage');assertSameValue([[18,'assignment_order.original.correct']],$f->authorizer->calls,'exact authorization attempted');assertSameValue([],$f->repository->calls,'denial before lookup');assertSameValue(1,count($f->auditRows),'one required denial audit after valid scalar admission');assertSameValue(['00000000-0000-4000-8000-000000000001',18,'correction'],[$f->auditRows[0]->requestId,$f->auditRows[0]->actorUserId,$f->auditRows[0]->mode->value],'exact denial audit caller without original metadata');});
+ }
+ foreach([false,true] as $correction){shapeCase('valid-changed-metadata-replay-'.(int)$correction,function()use($pdf,$correction){$f=new S\OriginalShapeFixture($pdf,$correction,true);$before=$f->repository->evidenceCanonicalJson(4512,81);$changes=$correction?['correctionReason'=>'Другая допустимая причина']:[];$r=$f->application->submitAssignmentOrderOriginal($f->command($changes,'другое.pdf'));assertSameValue(shapeAccepted(status:'replayed'),shapeTuple($r),'shape-valid changed metadata retains terminal replay');assertSameValue(['terminal'],$f->repository->calls,'only terminal lookup');assertSameValue([0,1],[$f->stream->readCalls,$f->stream->closeCalls],'replay closes unread supplied stream');assertSameValue($before,$f->repository->evidenceCanonicalJson(4512,81),'replay has no evidence mutation');});}
+ foreach(['initial-root','correction-revision'] as $axis)foreach($badIds as $label=>$id){
+--- a/tests/InstallationProcess/assignment_order_original_data_recovery_001_test.php
++++ b/tests/InstallationProcess/assignment_order_original_data_recovery_001_test.php
+@@ -29,8 +29,8 @@
+     foreach([O\AssignmentOrderOriginalFreshTerminalReaderOpenResult::class,O\AssignmentOrderOriginalFreshReaderConfig::class,O\AssignmentOrderOriginalMariaDbFreshTerminalReaderFactory::class] as $name)assertSameValue(true,class_exists($name),'INTENDED_RED: required fresh reader class '.$name);
+     assertSameValue(['opened','unavailable'],array_map(fn($s)=>$s->value,O\AssignmentOrderOriginalFreshReaderOpenStatus::cases()),'closed open states');
+     assertSameValue(['closed','failed'],array_map(fn($s)=>$s->value,O\AssignmentOrderOriginalFreshReaderCloseStatus::cases()),'closed close states');
+-    $parameters=(new ReflectionClass(O\AssignmentOrderOriginalDependencies::class))->getConstructor()->getParameters();$last=end($parameters);
+-    assertSameValue('freshTerminalReaders',$last->getName(),'exact trailing dependency name');assertSameValue(true,$last->isDefaultValueAvailable(),'source-compatible optional factory');assertSameValue(null,$last->getDefaultValue(),'missing explicit factory is degraded');
++    $parameters=(new ReflectionClass(O\AssignmentOrderOriginalDependencies::class))->getConstructor()->getParameters();$last=$parameters[12];assertSameValue(['freshTerminalReaders','attemptAudits'],array_map(fn($p)=>$p->getName(),array_slice($parameters,12)),'exact optional tail preserves fresh provider position before audit writer');
++    assertSameValue('freshTerminalReaders',$last->getName(),'exact fresh dependency name at its preserved position');assertSameValue(true,$last->isDefaultValueAvailable(),'source-compatible optional factory');assertSameValue(null,$last->getDefaultValue(),'missing explicit factory is degraded');
+ });
+ foreach([O\AssignmentOrderOriginalCommitStatus::OUTCOME_UNKNOWN,new RuntimeException('unconfirmed native commit')] as $i=>$commit)integrityCase('fresh-found-after-ambiguous-'.$i,function()use($commit){$f=integrityRecoveryFixture(['acceptedOutcome'=>$commit]);$r=$f->run();assertSameValue(['accepted',null,false,'00000000-0000-4000-8000-000000000001','original-0001','revision-0001',1,'2026-09-01','4028af3714fa07d2f20e758649532faef11b4818c99a2b8dc0c88170a0dc8784',327,'2026-09-02T09:15:30Z'],integrityTuple($r),'confirmed fresh stored accepted result');integrityRecoveryOwnership($f);assertSameValue(1,$f->observers->deliveryCalls,'accepted recovery delivery once');});
+ foreach(['unavailable','throw'] as $kind)integrityCase('fresh-open-'.$kind,function()use($kind){$f=integrityRecoveryFixture(['freshOpen'=>$kind]);integrityRecoveryFailure($f,$f->run(),'persistence_outcome_unknown');integrityRecoveryOwnership($f,false);});
+@@ -50,7 +50,7 @@
+     $lookup=match($read){'found'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,new S\OriginalIntegrityResult()),'miss'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::NOT_FOUND),default=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::UNAVAILABLE)};
+     $f=integrityRecoveryFixture(['freshLookup'=>$lookup,'freshClose'=>$close,'logThrows'=>$logThrows,'durableAccepted'=>$read!=='miss']);$r=$f->run();
+     if($read==='found')assertSameValue(O\AssignmentOrderOriginalStatus::ACCEPTED,$r->status(),'reader close failure cannot undo validated accepted read');else integrityRecoveryFailure($f,$r,$read==='miss'?'persistence_failure':'persistence_outcome_unknown');
+-    integrityRecoveryOwnership($f);assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED',['phase'=>'accepted_commit_recovery']]],$f->observers->logs,'one exact safe observer event with existing envelope-owned correlation');
++    integrityRecoveryOwnership($f);assertSameValue([['ASSIGNMENT_ORDER_ORIGINAL_FRESH_READER_CLOSE_FAILED',['phase'=>'accepted_commit_recovery']],...($read==='found'?[]:[[$read==='miss'?'ASSIGNMENT_ORDER_ORIGINAL_PERSISTENCE_FAILED':'ASSIGNMENT_ORDER_ORIGINAL_PERSISTENCE_UNKNOWN',['phase'=>'submission']]])],$f->observers->logs,'one close diagnostic and required unconfirmed-outcome diagnostic; accepted outcome has no failure log');
+ });
+ integrityCase('fresh-snapshot-before-close',function(){$v=new S\OriginalIntegrityResult();$f=integrityRecoveryFixture(['freshLookup'=>new S\OriginalIntegrityLookup(O\AssignmentOrderOriginalLookupStatus::FOUND,$v),'mutateOnClose'=>$v]);$r=$f->run();assertSameValue('2026-09-02T09:15:30Z',$r->uploadedAt(),'reader-backed source cannot change selected immutable result after close');assertSameValue('mutated-after-reader-close',$v->values['at'],'close mutation actually occurred');integrityRecoveryOwnership($f);foreach($v->gets as $count)assertSameValue(1,$count,'no late/repeated getter');});
+ integrityCase('fresh-accepted-response-loss',function(){$f=integrityRecoveryFixture(['deliveryThrows'=>true]);$caught=null;try{$f->run();}catch(Throwable $e){$caught=$e;}assertSameValue(O\AssignmentOrderOriginalResponseDeliveryLost::class,$caught===null?null:get_class($caught),'confirmed fresh acceptance retains response-loss exception');assertSameValue(['Assignment order original response delivery lost.',0,null],[$caught->getMessage(),$caught->getCode(),$caught->getPrevious()],'fixed nonconfidential response-loss shape');integrityRecoveryOwnership($f);assertSameValue(1,count($f->repository->accepted),'accepted fact remains');});

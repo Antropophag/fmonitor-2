@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
 require_once dirname(__DIR__) . '/app/PilotHttp/ChecklistSync.php';
+require_once dirname(__DIR__) . '/app/autoload.php';
 
 use FMonitor2\PilotHttp\ChecklistSync;
 use FMonitor2\PilotHttp\HttpUser;
+use FMonitor2\InstallationProcess\InspectionPhotoContentIndexSchemaMigration;
+use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-const PHOTO_REVOKE_TRANSCRIPT_HASH = '60f1a4c65be2a4cedd05f170b243d34283560f480f37a2965fec7aeadd62b784';
+const PHOTO_REVOKE_TRANSCRIPT_HASH = '09b498760d9ed265d35372bdd6630e1959bb3073abf2ac2692ef0371d0ccfe0c';
 
 function photoRevokeAssert(bool $condition, string $message): void
 {
@@ -175,27 +178,27 @@ try {
     }
     $ownsNamespace = true;
 
+    if(!class_exists(InspectionPhotoContentIndexSchemaMigration::class))throw new RuntimeException('canonical photo content-index migration v19 is absent');
     $ddl = [
         'fm2_installation_cases' => 'id BIGINT PRIMARY KEY,legacy_installation_object_id BIGINT NOT NULL,process_state VARCHAR(80) NOT NULL',
-        'fm2_assignment_orders' => 'id BIGINT PRIMARY KEY,installation_case_id BIGINT NOT NULL,version_no INT NOT NULL,status VARCHAR(40) NOT NULL',
+        'fm2_assignment_orders' => 'id BIGINT PRIMARY KEY,installation_case_id BIGINT NOT NULL,version_no INT NOT NULL,status VARCHAR(40) NOT NULL,control_engineer_user_id BIGINT NOT NULL',
         'fm2_order_installers' => 'assignment_order_id BIGINT NOT NULL,installer_tab_id BIGINT NOT NULL,fio_snapshot VARCHAR(300) NOT NULL,position_snapshot VARCHAR(300) NOT NULL,employment_status_snapshot VARCHAR(40) NOT NULL,workforce_source_updated_at_snapshot VARCHAR(40) NOT NULL',
         'fm2_workforce_catalog' => 'installer_tab_id BIGINT PRIMARY KEY,fio VARCHAR(300) NOT NULL,position VARCHAR(300) NOT NULL,employment_status VARCHAR(40) NOT NULL,dismissal_effective_at VARCHAR(40) NULL,workforce_source_updated_at VARCHAR(40) NOT NULL',
         'fm2_checklist_template_snapshots' => 'id BIGINT PRIMARY KEY,snapshot_version VARCHAR(80) NOT NULL,valid_from DATETIME NOT NULL,content_sha256 CHAR(64) NOT NULL',
         'fm2_checklist_template_associations' => 'subject_kind VARCHAR(40) NOT NULL,subject_id VARCHAR(160) NOT NULL,effective_at DATETIME NOT NULL,template_snapshot_id BIGINT NOT NULL,template_snapshot_version VARCHAR(80) NOT NULL,template_content_sha256 CHAR(64) NOT NULL',
-        'fm2_checklist_revisions' => 'installation_case_id BIGINT PRIMARY KEY,revision_no BIGINT NOT NULL,updated_at VARCHAR(40) NOT NULL',
-        'fm2_checklist_operations' => 'id BIGINT AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT NOT NULL,client_operation_id CHAR(36) NOT NULL UNIQUE,device_installation_id CHAR(36) NOT NULL,operation_type VARCHAR(40) NOT NULL,section_id TINYINT NOT NULL,item_id SMALLINT NULL,actor_user_id BIGINT NOT NULL,device_time VARCHAR(40) NOT NULL,server_received_at VARCHAR(40) NOT NULL,base_revision BIGINT NOT NULL,accepted_revision BIGINT NOT NULL,payload_json TEXT NOT NULL,template_snapshot_id BIGINT NULL,template_snapshot_version VARCHAR(80) NULL,template_content_sha256 CHAR(64) NULL',
-        'fm2_checklist_operation_installers' => 'client_operation_id CHAR(36) NOT NULL,installer_tab_id BIGINT NOT NULL,fio_snapshot VARCHAR(300) NOT NULL,position_snapshot VARCHAR(300) NOT NULL,employment_status_snapshot VARCHAR(40) NOT NULL,dismissal_effective_at_snapshot VARCHAR(40) NULL,workforce_source_updated_at_snapshot VARCHAR(40) NOT NULL,assignment_source VARCHAR(40) NOT NULL,PRIMARY KEY(client_operation_id,installer_tab_id)',
-        'fm2_checklist_photos' => 'id BIGINT AUTO_INCREMENT PRIMARY KEY,installation_case_id BIGINT NOT NULL,section_id TINYINT NOT NULL,upload_operation_id CHAR(36) NOT NULL UNIQUE,sha256 CHAR(64) NOT NULL,mime_type VARCHAR(40) NOT NULL,byte_size INT NOT NULL,original_name VARCHAR(255) NOT NULL,storage_name VARCHAR(255) NOT NULL,actor_user_id BIGINT NOT NULL,device_time VARCHAR(40) NOT NULL,server_received_at VARCHAR(40) NOT NULL,revoked_at VARCHAR(40) NULL,UNIQUE KEY unique_active_content(installation_case_id,section_id,sha256)',
     ];
     try {
         foreach ($ddl as $table => $definition) {
             $db->query("CREATE TABLE `{$prefix}{$table}`({$definition}) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
+        $v8=InspectionEvidenceSchemaMigration::apply($db,$prefix);if(($v8['applied']??null)!==true||($v8['schemaVersion']??null)!==8)throw new RuntimeException('canonical inspection evidence v8 fixture did not apply');
+        $migration=InspectionPhotoContentIndexSchemaMigration::apply($db,$prefix);if($migration!==['applied'=>true,'schemaVersion'=>19,'indexesChanged'=>[$prefix.'fm2_checklist_photos.installation_case_id']])throw new RuntimeException('canonical photo content-index migration v19 did not apply exact successor');
         $common = $fixture['common'];
         $caseId = (int) $common['installation_case_db_id'];
         $legacyId = (int) $common['legacy_object_id'];
         $templateHash = str_repeat('a', 64);
         $db->query("INSERT INTO `{$prefix}fm2_installation_cases` VALUES({$caseId},{$legacyId},'working')");
+        $db->query("INSERT INTO `{$prefix}fm2_assignment_orders` VALUES(81,{$caseId},1,'registered',".(int)$common['actor_id'].")");
         $db->query("INSERT INTO `{$prefix}fm2_checklist_template_snapshots` VALUES(91,'photo-revoke-v1','2026-08-01 00:00:00','{$templateHash}')");
         $db->query("INSERT INTO `{$prefix}fm2_checklist_template_associations` VALUES('operational_case','{$caseId}','2026-08-02 00:00:00',91,'photo-revoke-v1','{$templateHash}')");
         $db->query("INSERT INTO `{$prefix}fm2_checklist_revisions` VALUES({$caseId},0,'2026-08-31 07:00:00.000000')");
@@ -213,7 +216,7 @@ try {
 
     $bytes = base64_decode((string) $fixture['png']['base64'], true);
     photoRevokeAssert(is_string($bytes), 'fixture PNG is not valid base64');
-    $actor = new HttpUser((int) $common['actor_id'], 'Photo revoke verifier', 'photo-revoke-verifier@example.invalid');
+    $actor = new HttpUser((int) $common['actor_id'], 'Photo revoke verifier', 'photo-revoke-verifier@example.invalid',['inspection.photo.revoke']);
     $base = [
         'deviceInstallationId' => $common['device_id'],
         'sectionId' => (int) $common['section'],
@@ -235,7 +238,7 @@ try {
     $revoke = $base + [
         'clientOperationId' => $revokeEnvelope['client_operation_id'], 'type' => 'photo_revoked',
         'deviceTime' => $revokeEnvelope['device_time'], 'baseRevision' => (int) $revokeEnvelope['base_revision'],
-        'photoId' => $photoId,
+        'photoId' => $photoId,'reason'=>'Replacement evidence required',
     ];
     $revokeSync = new ChecklistSync($db, $prefix, $privateRoot, $revokeEnvelope['server_receipt_time']);
     $revokeResult = $revokeSync->accept($legacyId, $actor, $revoke);
@@ -254,7 +257,7 @@ try {
     $fresh = $base + [
         'clientOperationId' => $freshEnvelope['client_operation_id'], 'type' => 'photo_revoked',
         'deviceTime' => $freshEnvelope['device_time'], 'baseRevision' => (int) $freshEnvelope['base_revision'],
-        'photoId' => $photoId,
+        'photoId' => $photoId,'reason'=>'Fresh revoke must remain rejected',
     ];
     $before = photoRevokeFingerprint($db, $prefix, $privateRoot);
     $freshSync = new ChecklistSync($db, $prefix, $privateRoot, $freshEnvelope['server_receipt_time']);
@@ -269,23 +272,19 @@ try {
         'sha256' => $fixture['png']['sha256'], 'mime' => $fixture['png']['mime'],
         'size' => (int) $fixture['png']['size'], 'originalName' => $fixture['png']['filename'],
     ];
-    $before = photoRevokeFingerprint($db, $prefix, $privateRoot);
-    $sqlException = null;
     $reuploadSync = new ChecklistSync($db, $prefix, $privateRoot, $reuploadEnvelope['server_receipt_time']);
-    try {
-        $reuploadSync->accept($legacyId, $actor, $reupload, $bytes);
-    } catch (mysqli_sql_exception $exception) {
-        $sqlException = ['sqlstate' => $exception->getSqlState(), 'vendor_code' => $exception->getCode()];
-    }
+    $reuploadResult = $reuploadSync->accept($legacyId, $actor, $reupload, $bytes);
     $reuploadProjection = photoRevokeProjection($reuploadSync->projection($legacyId));
-    $fingerprints['identical_reupload'] = ['before' => $before, 'after' => photoRevokeFingerprint($db, $prefix, $privateRoot)];
+    $reuploadPhotos = photoRevokePhotos($db, $prefix);
+    $reuploadHistory = photoRevokeHistory($db, $prefix);
+    $activeEnvelope=$fixture['envelopes']['active_duplicate'];$activeDuplicate=$base+['clientOperationId'=>$activeEnvelope['client_operation_id'],'type'=>'photo_uploaded','deviceTime'=>$activeEnvelope['device_time'],'baseRevision'=>(int)$activeEnvelope['base_revision'],'sha256'=>$fixture['png']['sha256'],'mime'=>$fixture['png']['mime'],'size'=>(int)$fixture['png']['size'],'originalName'=>$fixture['png']['filename']];$before=photoRevokeFingerprint($db,$prefix,$privateRoot);$activeSync=new ChecklistSync($db,$prefix,$privateRoot,$activeEnvelope['server_receipt_time']);$activeResult=$activeSync->accept($legacyId,$actor,$activeDuplicate,$bytes);$activeProjection=photoRevokeProjection($activeSync->projection($legacyId));$fingerprints['active_duplicate']=['before'=>$before,'after'=>photoRevokeFingerprint($db,$prefix,$privateRoot)];
 
     $audit = [
         'protocol_version' => 1,
         'run_token' => $runToken,
         'fixture' => $fixture,
-        'accept_call_count' => 5,
-        'projection_call_count' => 5,
+        'accept_call_count' => 6,
+        'projection_call_count' => 6,
         'scenarios' => [
             'upload_then_revoke' => [
                 'accept_calls' => [
@@ -309,15 +308,21 @@ try {
                 'fingerprint_unchanged' => $fingerprints['already_revoked']['before'] === $fingerprints['already_revoked']['after'],
             ],
             'identical_reupload' => [
-                'accept_calls' => [['kind' => 'photo_uploaded', 'operation_id' => $reuploadEnvelope['client_operation_id'], 'exception' => $sqlException]],
+                'accept_calls' => [['kind' => 'photo_uploaded', 'operation_id' => $reuploadEnvelope['client_operation_id'], 'result' => $reuploadResult]],
                 'projection' => $reuploadProjection,
-                'fingerprint_unchanged' => $fingerprints['identical_reupload']['before'] === $fingerprints['identical_reupload']['after'],
+                'photos' => $reuploadPhotos,
+                'history' => $reuploadHistory,
                 'blob' => photoRevokeBlobs($privateRoot),
             ],
+            'active_duplicate'=>['accept_calls'=>[['kind'=>'photo_uploaded','operation_id'=>$activeEnvelope['client_operation_id'],'result'=>$activeResult]],'projection'=>$activeProjection,'fingerprint_unchanged'=>$fingerprints['active_duplicate']['before']===$fingerprints['active_duplicate']['after']],
         ],
         'zero_mutation_fingerprints' => $fingerprints,
     ];
-    photoRevokeAssert($sqlException === ['sqlstate' => '23000', 'vendor_code' => 1062], 'identical re-upload did not throw the characterized SQL uniqueness failure');
+    photoRevokeAssert($reuploadResult === ['status'=>'accepted','revision'=>3], 'identical re-upload was not accepted at revision 3');
+    photoRevokeAssert($reuploadProjection['revision']===3&&count($reuploadProjection['photos'])===1, 'identical re-upload projection is not one active photo at revision 3');
+    photoRevokeAssert(count($reuploadPhotos)===2&&$reuploadPhotos[0]===$photos[0]&&$reuploadPhotos[1]['id']!==$photoId&&$reuploadPhotos[1]['upload_operation_id']===$reuploadEnvelope['client_operation_id'], 'identical re-upload did not preserve revoked row and append new identity');
+    photoRevokeAssert(count($reuploadHistory)===3&&$reuploadHistory[2]['operation_type']==='photo_uploaded'&&$reuploadHistory[2]['accepted_revision']===3, 'identical re-upload history is not append-only revision 3');
+    photoRevokeAssert($activeResult===['status'=>'duplicate','revision'=>3]&&$activeProjection===$reuploadProjection&&$fingerprints['active_duplicate']['before']===$fingerprints['active_duplicate']['after'],'active identical photo did not remain idempotent');
     foreach ($fingerprints as $pair) {
         photoRevokeAssert($pair['before'] === $pair['after'], 'zero-mutation scenario changed owned state');
     }
@@ -328,7 +333,7 @@ try {
         "PHOTO_REVOKE accepted revision=2 active=0 photo_rows=1 revoked_rows=1 operations=2 blobs=1\n"
         . "PHOTO_REVOKE replay duplicate revision=2 active=0 mutations=0\n"
         . "PHOTO_REVOKE already-revoked rejected revision=2 active=0 mutations=0\n"
-        . "PHOTO_REVOKE identical-reupload sql-unique-violation revision=2 active=0 mutations=0 blobs=1\n";
+        . "PHOTO_REVOKE identical-reupload accepted revision=3 active=1 photo_rows=2 revoked_rows=1 operations=3 blobs=1\n";
     photoRevokeAssert(hash('sha256', $milestones) === PHOTO_REVOKE_TRANSCRIPT_HASH, 'milestone transcript drifted');
     echo $milestones;
     echo 'CHARACTERIZATION_OK CHARACTERIZE-INSPECTION-PHOTO-REVOKE-001 transcript_sha256=' . PHOTO_REVOKE_TRANSCRIPT_HASH . "\n";

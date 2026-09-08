@@ -1,43 +1,55 @@
 # FMonitor 2.0
 
-Standalone development repository for the new installation-management process. The legacy production application remains in `../fmonitor`; the corporate design system remains in `../shlz-ui`.
+Репозиторий нового процесса управления монтажом FMonitor. Legacy-приложение
+остаётся в `../fmonitor`, публичные UI-экспорты поставляет закреплённый checkout
+`../shlz-ui`.
 
-## Current state
+## Быстрый старт
 
-- Product truth: `PRODUCT.md` and `CONTEXT.md`.
-- Pilot contract: `docs/fmonitor-2-pilot-spec.md`.
-- Process/data contract: `docs/fmonitor-2-pilot-data-model.md`.
-- Executable demo: `app/demo/`.
-- Required engineering workflow: `docs/development-process.md`.
-
-The copied demo is a migration baseline, not evidence that its existing behavior has passed the new SSD + TDD gates. New behavior and corrections must enter through the required workflow; review records are created only by real independent reviews and are never backfilled.
-
-## Run the production pilot locally
-
-With the saved MariaDB service available on `127.0.0.1:23306` and the sibling
-`../shlz-ui` checkout present, run from this repository:
+Для запуска стенда на Linux или macOS нужны Git, Make и запущенный Docker
+с Compose v2. PHP, Node.js, Composer и соседние репозитории на хосте не нужны:
+закреплённые зависимости собираются внутри Docker.
 
 ```bash
-php bin/fmonitor2-pilot-demo.php
+git clone https://github.com/Antropophag/fmonitor-2.git
+cd fmonitor-2
+cp .env.example .env
+# Заполните пароль администратора, вебхук Bitrix и ID отделов в .env.
+make up
 ```
 
-Open the printed URL. Choose object 4512, installer 1042 and the preselected
-engineer 73; prepare and download both documents, register number `12-Р`, then
-open the work with actual start date `2026-08-29`. Stop with Ctrl+C. Use
-`status`, `reset`, or `cleanup` as the single command argument when needed.
+`make up` поднимает пилот вместе с кадровой синхронизацией Bitrix. Пилот доступен
+на <http://127.0.0.1:8092/>. Настройка вебхука, безопасные ошибки и обновление
+конфигурации описаны в [инструкции Bitrix](docs/bitrix-startup.md).
+`make down` останавливает контейнеры, сохраняя данные.
 
-## Run the legacy migration demo
+Для **разработки и локальных тестов** нужны дополнительные инструменты:
+PHP 8.5, Node.js 22.22.0, npm, Python 3.12.11, Bash и ripgrep.
+Выполните `make setup` по [инструкции разработки](docs/development-setup.md).
+Эта команда не запускает БД, не меняет `.env` и не заменяет существующие
+dependency checkout и `vendor` молча.
 
-The saved MariaDB container is exposed on `127.0.0.1:23306`. From `~/code`, serve both this repository and sibling `shlz-ui`:
+Основной ручной маршрут: загрузить или исправить подписанный оригинал распоряжения,
+вернуться в карточку и отдельным явным действием открыть работы с фактической
+датой начала. Ручной номер/регистрация распоряжения в пилоте отсутствует.
+
+## Проверки
 
 ```bash
-php -S 127.0.0.1:8092 -t /home/antropophag/code
+make test CATEGORY=unit
+make test
 ```
 
-Then open:
+Первая команда даёт быструю обратную связь. Полный `make test` пересоздаёт
+одноразовую БД из `compose.test.yaml`; по умолчанию она занимает порт `23306`.
+Не запускайте два полных прогона одновременно с одной test DB. Актуальное
+свидетельство проверки установки публикуется отдельно:
+[docs/operations/development-setup-evidence-2026-09-08.md](docs/operations/development-setup-evidence-2026-09-08.md).
 
-```text
-http://127.0.0.1:8092/fmonitor-2/app/demo/
-```
+## Документы
 
-The demo uses its own `fmonitor2_demo` database. It does not write to the legacy production application.
+- Продукт и границы: [PRODUCT.md](PRODUCT.md), [CONTEXT.md](CONTEXT.md).
+- Контракт пилота: [docs/fmonitor-2-pilot-spec.md](docs/fmonitor-2-pilot-spec.md).
+- Модель процесса: [docs/fmonitor-2-pilot-data-model.md](docs/fmonitor-2-pilot-data-model.md).
+- Процесс разработки: [docs/development-process.md](docs/development-process.md).
+- Исторический migration demo: [app/demo/](app/demo/).
