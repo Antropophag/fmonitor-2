@@ -106,7 +106,10 @@ class Inventory(native.NativeSuites):
                 'python3\ttests/Verification/development_setup_001_test.py\n',
                 'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
             ],
-            'db': ['php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n'],
+            'db': [
+                'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
+                'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
+            ],
             'characterization': added,
         }
         for suite, digest in expected.items():

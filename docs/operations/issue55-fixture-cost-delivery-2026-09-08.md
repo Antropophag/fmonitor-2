@@ -1,0 +1,116 @@
+# Issue55 — измерение и ускорение снимков схемы
+
+## Объём и основание
+
+Владелец разрешил после завершения CI/merge PR10 автономно продолжить issue55.
+PR10 имеет полный SUCCESS в [run34255531489](https://github.com/Antropophag/fmonitor-2/actions/runs/34255531489)
+на35c137ad и вмерджен как102e6056. PR37 закрыт, ветка сохранена; открытых PR перед началом55 нет.
+База новой работы —102e6056, отдельный worktree/branch, test Compose project
+`fmonitor2-issue55`, loopback DB порт23365. Стенд8092 и его volumes не затрагиваются.
+
+## Проверенная первая гипотеза
+
+На одной машине PHP8.5.10/MariaDB11.4.7 последовательно выполнены три прогона:
+
+| Файл | Before1 | Before2 | Before3 |
+|---|---:|---:|---:|
+| template_generation | 2.535с | 2.442с | 2.742с |
+| template_generation_boundaries | 23.594с | 23.528с | 23.442с |
+| original_history_download | 26.539с | 27.148с | 27.360с |
+
+Все PASS. Отдельный временный фазовый профиль21 template-сценария:
+selection5.477с, native migrations4.700с, original migration/seed3.749с,
+сценарии2.826с, native seed/readiness1.944с, registry migration/seed1.519с,
+PDF renderer probe1.104с, parser probe0.017с. Остальные фазы меньше0.2с каждая.
+Профиль21.779с — отдельный instrumented прогон, не один из baseline.
+Поэтому кеширование PDF prerequisites отложено: потенциальный выигрыш около1с
+на этом файле не решает длительность CI. Никакой кеш или shared DB не внедрён.
+
+## Выбранный срез
+
+Read-only анализ полного database-setup теста выявил484 state snapshot и23таблицы
+в его fixture DB. Каждый state snapshot структурно выполняет140 запросов:
+два перечня таблиц, пять семейств metadata на каждую таблицу и23свежих row reads.
+Это статический расчёт, не SQL trace. Предлагается пять database-wide metadata
+SELECT вместо115 per-table; каждый snapshot остаётся свежим, row reads сохраняются.
+
+Сохраняются все поля/нормализация/порядок columns/keys/FK/checks, вся матрица
+мутаций и zero-DML/DDL/foreign-data assertions. Временное сравнение прежнего и
+пакетного наблюдателя на полном тесте дополнит независимый literal-schema regression.
+
+## Evidence
+
+Первичные redacted логи, benchmark script и временная инструментализация:
+`~/.local/state/fmonitor2/issue55-20260908/` (вне репозитория).
+Изменения production source отсутствуют. Runtime checks и редкие сценарии не
+исключаются из CI; матрица/permissions/publisher не меняются.
+
+Фактические after-замеры, независимые review и CI дописываются по получении;
+эта запись сама по себе не заявляет завершения55 или ускорения полного CI.
+
+## Baseline тяжёлого теста
+
+Три последовательных неизменённых прогона `assignment_order_original_database_setup_001_test.php`
+на102e6056:85.392с,82.736с,81.874с, все exit0/`ASSIGNMENT_ORDER_ORIGINAL_DATABASE_SETUP_001_OK`.
+Медиана82.736с. Между прогонами не выполнялись другие DB тесты.
+Предметные файлы после profiling template восстановлены побайтно.
+
+Для сравнения CI: последний зелёный run34255531489 имеет integration13м53с,
+E2E3м46с и wall-clock всего workflow14м13с (17:10:54–17:25:07UTC).
+Эти числа относятся к baseline PR10, не к ещё не опубликованной оптимизации.
+
+## RED и независимая проверка наблюдателя
+
+Новый `tests/Verification/batched_schema_snapshot_001_test.php` использует
+буквальную схему двух таблиц, полные ожидаемые metadata и повторные чтения после
+DDL. `php .../batched_schema_snapshot_001_test.php` даёт intended RED255:
+новый test-support helper отсутствует. Production код не менялся.
+Первое независимое Gate3 CHANGES_REQUESTED указало на отсутствие freshness-проверки
+collation существующей таблицы; добавлены ALTER CONVERT и точные table/column
+expectations, а также finally закрытие соединения. История review сохраняется.
+
+## Реализация и обычные after-прогоны
+
+`tests/Support/BatchedSchemaSnapshot.php` выполняет пять свежих SELECT:
+таблицы/свойства, колонки, индексы, FK и CHECK. В исходном database-setup тесте
+заменён только schema snapshot closure; все data reads, matrices и assertions
+сохранены. GROUP BY включает бинарную идентичность TABLE_NAME, чтобы не объединять
+case-distinct таблицы. Boolean CHECK normalizer остаётся прежним callable.
+
+Независимый literal regression GREEN. Первое полное сравнение502 schema snapshot
+старого и нового наблюдателя — все побайтно равны; metadata portion73.002с против5.171с.
+После binary GROUP BY уточнения выполняется финальное сравнение на exact helper.
+
+Три обычных after прогона без profiling:13.287с,13.503с,13.350с, все PASS.
+Медиана13.350с против82.736с до: экономия69.386с (83.9%), ускорение6.20раз для
+одного тяжёлого файла. Это локальное измерение, не обещание6-кратного ускорения CI.
+Каждый запуск использует прежние отдельные owned DB и неизменённую матрицу.
+
+Inventory guard сначала корректно отверг незарегистрированное в baseline-additions
+расширение. Новый verifier явно добавлен в added_by_suite['db'] с assert exactly-once;
+прежний baseline digest сохранён. Focused inventory15 и CI-matrix9 PASS.
+Независимый companion review этой правки фиксируется отдельно в Gate3 record.
+
+## Остаток issue55
+
+Этот срез не меняет общий schema bootstrap/seed, workforce nested architecture-check,
+реальные TLS/retry waits, количество CI jobs или caches. Исследование этих затрат
+остаётся в issue55. PDF probe caching отложен по результату фазового измерения;
+проверки не удалены. Полная задача55 этим срезом автоматически не закрывается.
+
+Финальная сверка на helper из287ebf60 завершена: 502 из502 schema snapshots
+побайтно совпали с old closure из102e6056; полный matrix exit0/OK.
+Суммарные schema интервалы: old72.241с,
+batched5.324с.
+SHA256 финального phase evidence `3011359be842789ba35368d64bda8f6f363e7c546e90fb096476a92f54425fbd`.
+Временный executable profiler удалён из worktree; генератор сохранён вне репозитория.
+Architecture7/7 PASS, literal regression и inventory15/CI-matrix9 PASS.
+
+Independent Gate5 APPROVED на287ebf6031b889fc63d718e03b6944bef81e0b54:
+`reviews/code/BATCHED-SCHEMA-SNAPSHOT-001.md`. Reviewer повторил literal DB regression,
+inventory15, PHP lint и diff-check — PASS. Финальная сверка и cleanup дополнены
+после начала review; исходники helper/test больше не менялись. Остаточных owned
+fixture databases в отдельной MariaDB после проверок0.
+
+Следующий commit содержит только review/evidence/task accounting. Полный CI на
+итоговом head и измерения jobs будут приложены к PR после фактического выполнения.

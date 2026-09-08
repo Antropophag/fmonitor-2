@@ -76,17 +76,8 @@ $tableProperties = static function (mysqli $db, string $table): array {
     $statement->bind_param('s', $table); $statement->execute();
     return array_values($statement->get_result()->fetch_assoc());
 };
-$snapshot = static function (mysqli $db) use ($tableNames,$columns,$keys,$foreignKeys,$checks,$tableProperties): string {
-    $structure=[];
-    foreach($tableNames($db)as$table){
-        $structure[$table]=[
-            'table'=>$tableProperties($db,$table),
-            'columns'=>$columns($db,$table),
-            'keys'=>$keys($db,$table),
-            'foreignKeys'=>$foreignKeys($db,$table,''),
-            'checks'=>$checks($db,$table),
-        ];
-    }
+$snapshot = static function (mysqli $db) use ($normalizeCheck): string {
+    $structure = FMonitor2\Tests\Support\BatchedSchemaSnapshot::read($db, $normalizeCheck);
     return json_encode($structure,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 };
 $stateSnapshot = static function (mysqli $db) use ($tableNames, $quote, $snapshot): string {
