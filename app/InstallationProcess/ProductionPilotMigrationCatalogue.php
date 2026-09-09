@@ -29,6 +29,7 @@ final class ProductionPilotMigrationCatalogue
             19=>InspectionPhotoContentIndexSchemaMigration::class,
             20=>OtizPublicationSchemaMigration::class,
             21=>OtizEvidenceSchemaMigration::class,
+            22=>PilotLegacyObjectSchemaMigration::class,
         ];
     }
 }

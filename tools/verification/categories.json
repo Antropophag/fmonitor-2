@@ -265,5 +265,17 @@
   "tests/Verification/verification_ci_001_test.py": "governance",
   "tests/Verification/verification_inventory_001_test.py": "governance",
   "tests/Verification/development_setup_001_test.py": "governance",
-  "tests/Verification/batched_schema_snapshot_001_test.php": "integration"
+  "tests/Verification/batched_schema_snapshot_001_test.php": "integration",
+  "tests/Runtime/production_runtime_contract_001_test.php": "unit",
+  "tests/Runtime/migration_concurrency_lock_001_test.php": "integration",
+  "tests/Runtime/production_schema_frontier_001_test.php": "integration",
+  "tests/Runtime/runtime_storage_001_test.php": "integration",
+  "tests/Runtime/production_runtime_compose_001_test.php": "e2e",
+  "tests/Runtime/production_schema_preflight_001_test.php": "integration",
+  "tests/Runtime/production_readiness_schema_001_test.php": "integration",
+  "tests/Runtime/production_runtime_browser_001_test.php": "e2e",
+  "tests/Runtime/production_process_readiness_001_test.php": "integration",
+  "tests/Runtime/session_contention_001_test.php": "integration",
+  "tests/Runtime/migration_parallel_runners_001_test.php": "integration",
+  "tests/Verification/architecture_guard_001_test.py": "unit"
 }

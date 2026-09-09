@@ -18,7 +18,7 @@ final class NativePilotSessionFilesystem implements PilotSessionFilesystemPrimit
     public function link(string$a,string$b):PilotSessionPrimitiveResult{return@link($a,$b)?PilotSessionPrimitiveResult::ok(null):PilotSessionPrimitiveResult::nativeFalse();}
     public function rename(string$a,string$b):PilotSessionPrimitiveResult{return@rename($a,$b)?PilotSessionPrimitiveResult::ok(null):PilotSessionPrimitiveResult::nativeFalse();}
     public function unlink(string$p):PilotSessionPrimitiveResult{return@unlink($p)?PilotSessionPrimitiveResult::ok(null):PilotSessionPrimitiveResult::nativeFalse();}
-    public function flock(PilotSessionFileHandle$h,int$o):PilotSessionPrimitiveResult{return@flock($this->resource($h),$o)?PilotSessionPrimitiveResult::ok(null):PilotSessionPrimitiveResult::nativeFalse();}
+    public function flock(PilotSessionFileHandle$h,int$o):PilotSessionPrimitiveResult{$blocked=0;if(@flock($this->resource($h),$o,$blocked))return PilotSessionPrimitiveResult::ok(null);return$blocked===1?PilotSessionPrimitiveResult::wouldBlock():PilotSessionPrimitiveResult::nativeFalse();}
     public function close(PilotSessionFileHandle$h):PilotSessionPrimitiveResult{$id=spl_object_id($h);$r=$this->resource($h);unset($this->handles[$id]);return@fclose($r)?PilotSessionPrimitiveResult::ok(null):PilotSessionPrimitiveResult::nativeFalse();}
     public function list(string$d):PilotSessionPrimitiveResult{$v=@scandir($d);return$v===false?PilotSessionPrimitiveResult::nativeFalse():PilotSessionPrimitiveResult::ok(array_values(array_diff($v,['.','..'])));}
     public function mtime(string$p):PilotSessionPrimitiveResult{$v=@filemtime($p);return$v===false?PilotSessionPrimitiveResult::nativeFalse():PilotSessionPrimitiveResult::ok($v);}

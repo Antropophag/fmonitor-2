@@ -30,6 +30,8 @@ def pins():
         raise ValueError('invalid TCPDF source revision')
     if not values['PHP_IMAGE'].startswith('php:' + values['PHP_VERSION'] + '-'):
         raise ValueError('PHP image/runtime mismatch')
+    if not values['PHP_FPM_IMAGE'].startswith('php:' + values['PHP_VERSION'] + '-fpm-'):
+        raise ValueError('PHP FPM image/runtime mismatch')
     if not values['NODE_IMAGE'].startswith('node:' + values['NODE_VERSION'] + '-'):
         raise ValueError('Node image/runtime mismatch')
     return values
@@ -52,6 +54,7 @@ def main():
         print(values['TCPDF_VERSION'], values['TCPDF_REVISION'])
         return 0
     targets = {'Dockerfile.pilot.in': 'Dockerfile',
+               'Dockerfile.runtime.in': 'deploy/runtime/Dockerfile',
                'Dockerfile.test.in': 'tools/verification/Dockerfile.test',
                'compose.yaml.in': 'compose.yaml', 'compose.test.yaml.in': 'compose.test.yaml'}
     for template, target in targets.items():

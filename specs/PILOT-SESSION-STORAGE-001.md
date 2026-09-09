@@ -63,9 +63,15 @@ caller supplies a new session ID.
 
 ## 3. Locks and primitive outcomes
 
-Every read/write/regenerate/destroy of ID acquires its hash lock file with
-exclusive `flock(LOCK_EX|LOCK_NB)` retrying monotonic-time until 2.000 seconds;
-timeout → `LOCK_TIMEOUT`. Lock file follows exact ownership/mode rules.
+Every read/write/regenerate/destroy of ID uses its hash lock file with
+exclusive `flock(LOCK_EX|LOCK_NB)`. Actual WOULD_BLOCK may be retried up to the
+2.000-second monotonic deadline; a still-busy lock yields LOCK_TIMEOUT.
+Only read/start may proceed successfully after observed contention: it reads
+fresh bytes under the acquired lock. Write/regenerate/destroy retain their
+operation failure after observed contention even if they later acquire the lock;
+no caller-supplied stale payload is published. Permanent primitive failures do
+not become retry successes. See the production runtime extension below.
+Lock files follow exact ownership/mode rules.
 Multiple IDs acquire locks in binary ascending lock filename order. Operations
 return typed `OK`, `NOT_FOUND`, `INVALID`, `UNAVAILABLE(category, correlation)`;
 warnings/false/Throwable are captured and never emitted.
@@ -312,6 +318,7 @@ enum PilotSessionPrimitiveOutcome: string
 {
     case OK = 'ok';
     case NATIVE_FALSE = 'false';
+    case WOULD_BLOCK = 'would_block';
     case WARNING = 'warning';
     case EXCEPTION = 'exception';
     case SHORT_IO = 'short_io';
@@ -459,6 +466,11 @@ final readonly class PilotSessionPrimitiveResult
         /* return the immutable FALSE value */
     }
 
+    public static function wouldBlock(): self
+    {
+        /* native flock reported would-block; null value and failure code */
+    }
+
     public static function warning(PilotSessionPrimitiveFailureCode $failureCode): self
     {
         /* validate the safe code and return the immutable WARNING value */
@@ -478,7 +490,7 @@ final readonly class PilotSessionPrimitiveResult
 
 There is no other public constructor or named factory. The DTO exposes exact accessors
 `outcome(): PilotSessionPrimitiveOutcome`
-(`OK|NATIVE_FALSE|WARNING|EXCEPTION|SHORT_IO`), `value(): mixed`, and
+(`OK|NATIVE_FALSE|WOULD_BLOCK|WARNING|EXCEPTION|SHORT_IO`), `value(): mixed`, and
 `failureCode(): ?PilotSessionPrimitiveFailureCode`. The owner validates each `ok`
 or `shortIo` value against the operation whose result it consumes;
 `nativeFalse` carries
@@ -919,3 +931,25 @@ Pre-amendment Gate 3 reviews do not apply. The v2 exact-hash approval remains
 historical and is insufficient only for this newly exact public PHP API; this
 DRAFT does not authorize replacement Gate 2 until a fresh independent Gate 1
 review and fresh owner approval of the v10 hashes.
+
+
+## Production runtime extension — transient lock contention (#33)
+
+The native filesystem port distinguishes actual `flock` contention using PHP's
+third `wouldBlock` argument. It returns `WOULD_BLOCK` only when that native flag
+is 1; the additive `wouldBlock()` result carries null value and failureCode.
+Unclassified native false, warnings and exceptions remain permanent failures;
+no native diagnostic or path is exposed.
+
+For `start(existingId)`, a WOULD_BLOCK result is retryable within the existing
+2.000-second monotonic deadline. Once the lock is acquired, the owner reads fresh
+committed bytes and may return OK. It must not return READ_FAILED solely because
+another process held the lock briefly. A lock held beyond the deadline still
+returns LOCK_TIMEOUT, and unsafe files or genuine I/O failures still fail closed.
+
+Caller-supplied write/regenerate payloads are not refreshed by waiting for a lock.
+Their existing fail-closed outcome after observed contention remains unchanged;
+this extension does not introduce stale payload replay, CAS semantics, or
+request-wide locking. The storage format and existing session identities remain
+unchanged. The production runtime must keep concurrency; globally serializing
+FPM or hiding transient errors in browser assertions is not a substitute.

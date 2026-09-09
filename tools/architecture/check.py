@@ -51,6 +51,24 @@ WORKFORCE_TABLE_ASSIGNMENT = re.compile(
     r"(?:fm2_workforce_|workforce_(?:catalog|observations|sync_runs|sync_metadata))[^;]*;",
     re.I,
 )
+RUNTIME_SCHEMA_APPLY = re.compile(
+    r"\b(?:[A-Za-z_][A-Za-z0-9_]*\\)*[A-Za-z_][A-Za-z0-9_]*SchemaMigration\s*::\s*apply\s*\(",
+    re.S,
+)
+RUNTIME_VARIABLE_APPLY = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\s*::\s*apply\s*\(", re.S)
+RUNTIME_CANONICAL_RUN = re.compile(r"\bCanonicalMigrationApplication\s*::\s*run\s*\(", re.S)
+RUNTIME_MIGRATION_IMPORT = re.compile(
+    r"\buse\s+(?:[A-Za-z_][A-Za-z0-9_]*\\)*[A-Za-z_][A-Za-z0-9_]*SchemaMigration"
+    r"(?:\s+as\s+(?P<alias>[A-Za-z_][A-Za-z0-9_]*))?\s*;",
+    re.I,
+)
+RUNTIME_CANONICAL_ASSIGNMENT = re.compile(
+    r"\$(?P<variable>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*"
+    r"(?:[A-Za-z_][A-Za-z0-9_]*\\)*CanonicalMigrationApplication\s*::\s*class\s*;",
+)
+RUNTIME_STARTUP_REFERENCE = re.compile(
+    r"(?:bin/fmonitor2-migrate\.php|rapid-pilot/(?:docker-bootstrap|start)\.php)"
+)
 MUTATING_METHOD = re.compile(
     r"\bpublic\s+function\s+(prepare|confirm|open|close|record|accept|reject|"
     r"schedule|complete|reverse|assign|register|create|update|delete|block|unblock)"
@@ -153,6 +171,24 @@ def workforce_ownership_matches(text: str) -> list[tuple[str, int]]:
     return sorted(set(matches), key=lambda item: item[1])
 
 
+def runtime_migration_matches(text: str) -> list[tuple[int, str]]:
+    matches = [(match.start(), match.group(0)) for pattern in (
+        RUNTIME_SCHEMA_APPLY, RUNTIME_VARIABLE_APPLY, RUNTIME_CANONICAL_RUN,
+        RUNTIME_STARTUP_REFERENCE,
+    ) for match in pattern.finditer(text)]
+    for imported in RUNTIME_MIGRATION_IMPORT.finditer(text):
+        alias = imported.group("alias")
+        if alias is None:
+            continue
+        invocation = re.compile(rf"\b{re.escape(alias)}\s*::\s*apply\s*\(", re.S)
+        matches.extend((match.start(), match.group(0)) for match in invocation.finditer(text, imported.end()))
+    for assignment in RUNTIME_CANONICAL_ASSIGNMENT.finditer(text):
+        variable = re.escape(assignment.group("variable"))
+        invocation = re.compile(rf"\${variable}\s*::\s*run\s*\(", re.S)
+        matches.extend((match.start(), match.group(0)) for match in invocation.finditer(text, assignment.end()))
+    return sorted(set(matches), key=lambda item: item[0])
+
+
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
     if rel.startswith("app/Otiz/"):
@@ -204,6 +240,8 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
         "rapid-pilot/legacy-migration/MigrationQuarantineDecisionLedger.php",
     ):
         path = ROOT / relative
+        if not path.is_file():
+            continue
         for number, line in enumerate(path.read_text().splitlines(), 1):
             if DDL.search(line):
                 violations["ddl_ownership"].append(finding("ddl", path, number, line))
@@ -220,6 +258,12 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 )
         if not production_file(path):
             continue
+        if rel.startswith("app/Runtime/") or rel == "public/runtime.php":
+            for offset, evidence in runtime_migration_matches(text):
+                number = text.count("\n", 0, offset) + 1
+                violations["ddl_ownership"].append(
+                    finding("runtime-migration", path, number, evidence, source_normalized=True)
+                )
         if len(lines) >= 150:
             hotspot[rel] = len(lines)
         for number, line in enumerate(lines, 1):
