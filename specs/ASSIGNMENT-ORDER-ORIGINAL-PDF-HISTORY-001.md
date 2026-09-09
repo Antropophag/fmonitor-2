@@ -1,5 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-PDF-HISTORY-001 — all history and exact PDF names
 
+Owner2026-09-09 correction: [PDF-NAVIGATION-UPLOAD-001](PDF-NAVIGATION-UPLOAD-001.md) supersedes the blanket URI/OpenAction prohibition below for ordinary links and explicit page destinations. All other restrictions remain in force.
+
 Версия0.1, 2026-09-06. **DRAFT / INDEPENDENT GATE1 REQUIRED**.
 
 ## 1. Scope and authority

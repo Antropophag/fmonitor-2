@@ -312,3 +312,4 @@ db	php	tests/Jobs/durable_queue_connection_loss_001_test.php
 db	php	tests/Otiz/object_register_paging_001_test.php
 db	php	tests/Otiz/object_register_paging_http_001_test.php
 e2e	php	tests/Support/ObjectRegisterPagingBrowserFixture.php
+unit	php	tests/InstallationProcess/pdf_navigation_upload_001_test.php
