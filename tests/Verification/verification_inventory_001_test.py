@@ -175,6 +175,7 @@ class Inventory(native.NativeSuites):
             ],
             'characterization': added,
             'e2e': [
+                'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php\n',
                 'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',
                 'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',
                 'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php\n',

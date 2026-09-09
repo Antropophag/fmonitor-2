@@ -295,6 +295,7 @@
   "tests/Runtime/runtime_jobs_recovery_001_test.php": "integration",
   "tests/Runtime/runtime_recovery_001_test.php": "integration",
   "tests/Runtime/runtime_recovery_forward_update_001_test.php": "integration",
+  "tests/Runtime/runtime_settlement_compatibility_001_test.php": "e2e",
   "tests/Runtime/runtime_storage_001_test.php": "integration",
   "tests/Runtime/session_contention_001_test.php": "integration",
   "tests/Runtime/yii2_readiness_001_test.php": "integration",
