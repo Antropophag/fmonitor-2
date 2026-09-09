@@ -307,7 +307,7 @@ class VerificationCI(unittest.TestCase):
                          self.trace.read_text().splitlines())
 
     def test_workflow_runs_two_isolated_integration_shards_and_aggregates_them(self):
-        workflow = (ROOT / '.github/workflows/repository-verification.yml').read_text()
+        workflow = (ROOT / '.github/workflows/quality-graph.yml').read_text()
         integration = workflow.split('\n  integration:\n', 1)[1].split('\n  e2e:\n', 1)[0]
         self.assertIn('name: Integration (${{ matrix.shard }}/2)', integration)
         self.assertIn('fail-fast: false', integration)

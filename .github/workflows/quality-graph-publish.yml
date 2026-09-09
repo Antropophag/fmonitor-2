@@ -1,0 +1,295 @@
+# Repository-owned trusted wrapper around pinned stock Quality Graph 0.1.7.
+name: Quality Graph Publisher
+'on':
+  workflow_run:
+    workflows: [Quality Graph]
+    types: [completed]
+permissions: {}
+concurrency:
+  group: quality-graph-publish-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      checks: write
+      issues: write
+      pull-requests: write
+    steps:
+    - name: Admit exact current result artifacts
+      if: github.event.action == 'completed'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        sed 's/^  //' <<'PY' | python3
+          #!/usr/bin/env python3
+          """Fail-closed read-only admission guard for stock Quality Graph publication."""
+
+          from __future__ import annotations
+
+          import json
+          import os
+          import re
+          import sys
+          from pathlib import Path
+          from typing import Any
+          from urllib.error import HTTPError, URLError
+          from urllib.parse import quote, urlencode
+          from urllib.request import Request, urlopen
+
+          EXPECTED_NODES = frozenset({
+              "plan", "fast", "unit", "integration", "e2e", "governance", "verify",
+          })
+          ARTIFACT_RE = re.compile(
+              r"^quality-result-(?P<node>[a-z][a-z0-9-]{0,62})-(?P<attempt>[1-9][0-9]*)$"
+          )
+          PER_PAGE = 100
+          MAX_PAGES = 1_000
+          MAX_RESPONSE_BYTES = 20 * 1024 * 1024
+
+
+          class PreflightFailure(ValueError):
+              """Represent one bounded admission failure."""
+
+
+          def fail(detail: str) -> int:
+              bounded = " ".join(str(detail).split())[:500]
+              print(f"QUALITY_GRAPH_PREFLIGHT_FAILURE detail={bounded}", file=sys.stderr)
+              return 1
+
+
+          def required_environment(name: str) -> str:
+              value = os.environ.get(name)
+              if not value:
+                  raise PreflightFailure(f"missing environment {name}")
+              return value
+
+
+          def object_value(value: Any, context: str) -> dict[str, Any]:
+              if not isinstance(value, dict):
+                  raise PreflightFailure(f"{context} must be an object")
+              return value
+
+
+          def integer_value(value: Any, context: str, *, minimum: int = 0) -> int:
+              if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
+                  raise PreflightFailure(f"{context} must be an integer >= {minimum}")
+              return value
+
+
+          def string_value(value: Any, context: str) -> str:
+              if not isinstance(value, str) or not value:
+                  raise PreflightFailure(f"{context} must be a non-empty string")
+              return value
+
+
+          def read_json_bytes(value: bytes, context: str) -> dict[str, Any]:
+              try:
+                  return object_value(json.loads(value), context)
+              except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                  raise PreflightFailure(f"{context} is malformed JSON") from error
+
+
+          def api_get(base_url: str, repository: str, token: str, path: str) -> dict[str, Any]:
+              url = f"{base_url.rstrip('/')}/repos/{quote(repository, safe='/')}{path}"
+              request = Request(
+                  url,
+                  method="GET",
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {token}",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              try:
+                  with urlopen(request, timeout=30) as response:
+                      content_length = response.headers.get("Content-Length")
+                      if content_length is not None and integer_text(content_length) > MAX_RESPONSE_BYTES:
+                          raise PreflightFailure("API response exceeds size limit")
+                      body = response.read(MAX_RESPONSE_BYTES + 1)
+              except (HTTPError, URLError, TimeoutError, OSError) as error:
+                  raise PreflightFailure(f"GitHub GET failed: {type(error).__name__}") from error
+              if len(body) > MAX_RESPONSE_BYTES:
+                  raise PreflightFailure("API response exceeds size limit")
+              return read_json_bytes(body, "GitHub API response")
+
+
+          def integer_text(value: str) -> int:
+              try:
+                  parsed = int(value)
+              except ValueError as error:
+                  raise PreflightFailure("invalid API Content-Length") from error
+              if parsed < 0:
+                  raise PreflightFailure("invalid API Content-Length")
+              return parsed
+
+
+          def event_identity(path: Path, repository: str) -> tuple[int, int, str]:
+              try:
+                  data = read_json_bytes(path.read_bytes(), "workflow event")
+              except OSError as error:
+                  raise PreflightFailure("workflow event is unavailable") from error
+              if data.get("action") != "completed":
+                  raise PreflightFailure("workflow event action is not completed")
+              run = object_value(data.get("workflow_run"), "workflow_run")
+              if run.get("event") != "pull_request" or run.get("status") != "completed":
+                  raise PreflightFailure("workflow run is not a completed pull_request run")
+              event_repository = object_value(run.get("repository"), "workflow_run.repository")
+              if string_value(event_repository.get("full_name"), "event repository") != repository:
+                  raise PreflightFailure("event repository does not match GITHUB_REPOSITORY")
+              return (
+                  integer_value(run.get("id"), "event run id", minimum=1),
+                  integer_value(run.get("run_attempt"), "event run attempt", minimum=1),
+                  string_value(run.get("head_sha"), "event head SHA"),
+              )
+
+
+          def validate_run(api_run: dict[str, Any], repository: str, run_id: int,
+                           attempt: int, head_sha: str) -> None:
+              api_repository = object_value(api_run.get("repository"), "API run repository")
+              observed = (
+                  integer_value(api_run.get("id"), "API run id", minimum=1),
+                  integer_value(api_run.get("run_attempt"), "API run attempt", minimum=1),
+                  string_value(api_run.get("head_sha"), "API run head SHA"),
+                  string_value(api_repository.get("full_name"), "API run repository name"),
+              )
+              if observed != (run_id, attempt, head_sha, repository):
+                  raise PreflightFailure("API run identity does not match completed event")
+              if api_run.get("event") != "pull_request" or api_run.get("status") != "completed":
+                  raise PreflightFailure("API run is not a completed pull_request run")
+
+
+          def artifact_pages(base_url: str, repository: str, token: str, run_id: int) -> list[dict[str, Any]]:
+              artifacts: list[dict[str, Any]] = []
+              expected_total: int | None = None
+              seen_ids: set[int] = set()
+              for page in range(1, MAX_PAGES + 1):
+                  query = urlencode({"per_page": PER_PAGE, "page": page})
+                  response = api_get(base_url, repository, token,
+                                     f"/actions/runs/{run_id}/artifacts?{query}")
+                  total = integer_value(response.get("total_count"), "artifact total_count")
+                  if expected_total is None:
+                      expected_total = total
+                  elif total != expected_total:
+                      raise PreflightFailure("artifact total_count changed during pagination")
+                  page_items = response.get("artifacts")
+                  if not isinstance(page_items, list):
+                      raise PreflightFailure("artifact page must contain an artifacts array")
+                  for raw in page_items:
+                      item = object_value(raw, "artifact descriptor")
+                      identity = integer_value(item.get("id"), "artifact id", minimum=1)
+                      if identity in seen_ids:
+                          raise PreflightFailure("artifact pagination repeated an id")
+                      seen_ids.add(identity)
+                      artifacts.append(item)
+                  if len(artifacts) > expected_total:
+                      raise PreflightFailure("artifact pages exceed total_count")
+                  if len(page_items) < PER_PAGE:
+                      if len(artifacts) != expected_total:
+                          raise PreflightFailure("artifact pagination ended before total_count")
+                      return artifacts
+              raise PreflightFailure("artifact pagination did not terminate")
+
+
+          def validate_artifacts(artifacts: list[dict[str, Any]], current_attempt: int) -> None:
+              seen: set[tuple[str, int]] = set()
+              current: set[str] = set()
+              for item in artifacts:
+                  name = string_value(item.get("name"), "artifact name")
+                  match = ARTIFACT_RE.fullmatch(name)
+                  if match is None:
+                      if name.startswith("quality-result-"):
+                          raise PreflightFailure("invalid Quality Graph artifact name")
+                      continue
+                  node = match.group("node")
+                  attempt = int(match.group("attempt"))
+                  if node not in EXPECTED_NODES:
+                      raise PreflightFailure(f"artifact targets unknown node {node}")
+                  if item.get("expired") is True:
+                      raise PreflightFailure(f"expired Quality Graph artifact {name}")
+                  if item.get("expired") is not False:
+                      raise PreflightFailure(f"artifact expiration state is invalid for {name}")
+                  key = (node, attempt)
+                  if key in seen:
+                      raise PreflightFailure(f"duplicate node attempt artifact {name}")
+                  seen.add(key)
+                  if attempt > current_attempt:
+                      raise PreflightFailure(f"future attempt artifact {name}")
+                  if attempt == current_attempt:
+                      current.add(node)
+              missing = EXPECTED_NODES - current
+              if missing:
+                  raise PreflightFailure(f"missing current artifacts: {','.join(sorted(missing))}")
+
+
+          def validate_reporting_job(base_url: str, repository: str, token: str,
+                                     run_id: int, current_attempt: int) -> None:
+              expected_total: int | None = None
+              seen_ids: set[int] = set()
+              reporting: list[dict[str, Any]] = []
+              for page in range(1, MAX_PAGES + 1):
+                  query = urlencode({"filter": "latest", "per_page": PER_PAGE, "page": page})
+                  response = api_get(base_url, repository, token,
+                                     f"/actions/runs/{run_id}/jobs?{query}")
+                  total = integer_value(response.get("total_count"), "jobs total_count")
+                  if expected_total is None:
+                      expected_total = total
+                  elif total != expected_total:
+                      raise PreflightFailure("jobs total_count changed during pagination")
+                  page_items = response.get("jobs")
+                  if not isinstance(page_items, list):
+                      raise PreflightFailure("jobs page must contain a jobs array")
+                  for raw in page_items:
+                      item = object_value(raw, "job")
+                      identity = integer_value(item.get("id"), "job id", minimum=1)
+                      if identity in seen_ids:
+                          raise PreflightFailure("jobs pagination repeated an id")
+                      seen_ids.add(identity)
+                      if item.get("name") == "quality-results":
+                          reporting.append(item)
+                  if len(seen_ids) > expected_total:
+                      raise PreflightFailure("jobs pages exceed total_count")
+                  if len(page_items) < PER_PAGE:
+                      if len(seen_ids) != expected_total:
+                          raise PreflightFailure("jobs pagination ended before total_count")
+                      break
+              else:
+                  raise PreflightFailure("jobs pagination did not terminate")
+              if len(reporting) != 1:
+                  raise PreflightFailure("expected exactly one current reporting job")
+              job = reporting[0]
+              if integer_value(job.get("run_attempt"), "reporting attempt", minimum=1) != current_attempt:
+                  raise PreflightFailure("reporting job is from another attempt")
+              if job.get("status") != "completed" or job.get("conclusion") != "success":
+                  raise PreflightFailure("current reporting job did not complete successfully")
+
+
+          def main() -> int:
+              try:
+                  repository = required_environment("GITHUB_REPOSITORY")
+                  api_url = required_environment("GITHUB_API_URL")
+                  token = required_environment("GITHUB_TOKEN")
+                  event_path = Path(required_environment("GITHUB_EVENT_PATH"))
+                  run_id, attempt, head_sha = event_identity(event_path, repository)
+                  api_run = api_get(api_url, repository, token, f"/actions/runs/{run_id}")
+                  validate_run(api_run, repository, run_id, attempt, head_sha)
+                  artifacts = artifact_pages(api_url, repository, token, run_id)
+                  validate_artifacts(artifacts, attempt)
+                  validate_reporting_job(api_url, repository, token, run_id, attempt)
+              except (PreflightFailure, ValueError, TypeError) as error:
+                  return fail(str(error))
+              print(f"QUALITY_GRAPH_PREFLIGHT_OK nodes={len(EXPECTED_NODES)}")
+              return 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+        PY
+    - name: Publish trusted Quality Graph state
+      uses: alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef
+      with:
+        operation: publish

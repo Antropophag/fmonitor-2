@@ -1,5 +1,31 @@
 # Проверки проекта
 
+## Quality Graph текущего CI
+
+`.github/workflows/quality-graph.yml` сохраняет прежний единственный набор
+plan/fast/categories/verify. Итоговый read-only job формирует семь native reports
+из GitHub outcomes, не запускает тесты повторно и честно показывает docs-only
+пропуски. Integration node соответствует aggregate двух существующих shards.
+Штатный publisher работает после завершения CI: обновляет итог, комментарий и
+свои метки с разрешёнными владельцем правами. Непрерывный watch не включён.
+
+Перед publisher read-only preflight отвергает отсутствующие, повторные и
+неактуальные artifacts текущей попытки; старые artifacts сохраняются, когда
+текущий набор полон. Ошибка preflight видна как failed publisher job; она не
+выдаётся за успешно опубликованную проверку. Канонический verify сохранён.
+
+Подготовка локального compiler toolchain: `uv sync --frozen --python 3.12.11`.
+Проверка: `make quality-graph-validate`. После согласованного изменения graph,
+report/preflight или workflow выполнить
+`.venv/bin/python tools/delivery/render-current-quality-graph.py`, затем validate.
+Этот renderer сохраняет текущие категории и формирует только интеграцию reports,
+publisher и manifest. Не запускать `qg generate` поверх текущего workflow:
+штатный генератор не сохраняет нашу full/docs-only матрицу и matrix shards.
+
+При изменении декларации штатный publisher читает topology из base branch.
+Первый bootstrap PR подтверждает CI, а реальную публикацию проверяют отдельным
+representative PR после merge. До такой проверки готовность publisher не заявляется.
+
 Основная команда — `make test`. Она выполняет полный набор, собирает отказы
 всех девяти этапов и возвращает ненулевой код при любой ошибке.
 `make fresh-test` дополнительно гарантирует teardown disposable testDB.

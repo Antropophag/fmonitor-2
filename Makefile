@@ -197,6 +197,11 @@ doctor:
 
 ci-setup: setup
 
+.PHONY: quality-graph-validate
+quality-graph-validate:
+	python3 tools/delivery/check-current-quality-graph.py
+	.venv/bin/python tools/delivery/render-current-quality-graph.py --check
+
 test-tools:
 	docker build --label "org.opencontainers.image.revision=$$(git rev-parse HEAD)" \
 		-t "$(TEST_TOOL_IMAGE)" -f tools/verification/Dockerfile.test tools/verification
