@@ -87,7 +87,7 @@ jobs:
         persist-credentials: 'false'
         fetch-depth: '0'
     - name: TEST ONLY delay old head before report publication
-      run: sleep 75
+      run: sleep 1
     - name: Render native Quality Graph reports
       id: reports
       env:
