@@ -27,7 +27,8 @@ Restore использует отдельный detached worktree. Сбой оч
   приложения не меняется, нового пакета нет.
 - Deployment/readiness/backup/restore приложения: неприменимо; восстанавливается
   только source worktree, не БД/файлы приложения. Production пути не используются.
-- Verification inventory: добавить один CLI test в suites.tsv и categories.json;
+- Verification inventory: добавить один CLI test в suites.tsv и categories.json,
+  явно учесть его как добавление к историческому baseline в inventory test;
   governance focused planner test плюс test нового seam, один authoritative full CI.
 - Architecture: новый tools/delivery CLI; нет новой доменной границы.
 

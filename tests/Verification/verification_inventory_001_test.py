@@ -106,6 +106,7 @@ class Inventory(native.NativeSuites):
         ]
         added_by_suite = {
             'unit': [
+                'python3\ttests/Verification/review_source_001_test.py\n',
                 'python3\ttests/Usage/usage_aggregation_001_test.py\n',
                 'python3\ttests/Verification/change_verification_001_test.py\n',
                 'python3\ttests/Verification/quality_graph_current_report_001_test.py\n',

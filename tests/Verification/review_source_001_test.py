@@ -16,6 +16,7 @@ class ReviewSource(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='review source ')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        (self.root / 'unrelated owner data').write_bytes(b'owner data\x00\xff')
         self.repo = self.root / 'source repo'
         self.repo.mkdir()
         self.git('init', '-q')
@@ -61,6 +62,25 @@ class ReviewSource(unittest.TestCase):
         return (self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain=v1', '-uall'),
                 index.read_bytes(), self.git('diff', '--binary'), self.git('diff', '--cached', '--binary'))
 
+    def protected_state(self):
+        # Existing source, snapshot and unrelated files must survive every rejection.
+        marker = self.root / 'unrelated owner data'
+        files = []
+        for root in (self.repo, self.snapshot):
+            if not root.exists():
+                continue
+            for path in sorted(root.rglob('*')):
+                if '.git' in path.relative_to(root).parts:
+                    continue
+                if path.is_symlink():
+                    value = ('symlink', os.readlink(path))
+                elif path.is_file():
+                    value = ('file', path.read_bytes(), path.stat().st_mode & 0o777)
+                else:
+                    value = ('directory',)
+                files.append((str(path), value))
+        return self.source_state(), files, marker.read_bytes()
+
     def test_roundtrip_all_changes_and_source_unchanged(self):
         (self.repo / 'text.txt').write_text('staged\n')
         self.git('add', 'text.txt')
@@ -99,11 +119,15 @@ class ReviewSource(unittest.TestCase):
     def test_clean_snapshot_and_repeat_refuse_existing_outputs(self):
         self.capture()
         saved = (self.snapshot / 'source.patch').read_bytes()
+        protected = self.protected_state()
         self.capture(ok=False)
+        self.assertEqual(protected, self.protected_state())
         self.assertEqual(saved, (self.snapshot / 'source.patch').read_bytes())
         self.restore()
         (self.destination / 'owner').write_text('keep')
+        protected = self.protected_state()
         self.restore(ok=False)
+        self.assertEqual(protected, self.protected_state())
         self.assertEqual('keep', (self.destination / 'owner').read_text())
         self.assertEqual('base\n', (self.destination / 'text.txt').read_text())
 
@@ -114,12 +138,30 @@ class ReviewSource(unittest.TestCase):
         self.assertFalse(target.exists())
         self.assertEqual(before, self.source_state())
 
+    def test_restore_rejects_source_and_snapshot_descendants(self):
+        self.capture()
+        alias = self.root / 'source alias'
+        alias.symlink_to(self.repo, target_is_directory=True)
+        registrations = self.git('worktree', 'list', '--porcelain')
+        for destination in (self.repo / 'nested restore', alias / 'nested alias restore',
+                            self.snapshot / 'nested restore'):
+            with self.subTest(destination=str(destination)):
+                protected = self.protected_state()
+                self.cli('restore', '--snapshot', self.snapshot, '--output', destination, ok=False)
+                self.assertFalse(destination.exists())
+                self.assertEqual(protected, self.protected_state())
+                self.assertEqual(registrations, self.git('worktree', 'list', '--porcelain'))
+
     def test_capture_rejects_non_git_and_existing_owner_directory(self):
+        protected = self.protected_state()
         self.cli('capture', '--repo', self.root, '--output', self.snapshot, ok=False)
+        self.assertEqual(protected, self.protected_state())
         self.assertFalse(self.snapshot.exists())
         self.snapshot.mkdir()
         (self.snapshot / 'owner').write_bytes(b'untouched')
+        protected = self.protected_state()
         self.capture(ok=False)
+        self.assertEqual(protected, self.protected_state())
         self.assertEqual([self.snapshot / 'owner'], list(self.snapshot.iterdir()))
         self.assertEqual(b'untouched', (self.snapshot / 'owner').read_bytes())
 
@@ -143,7 +185,9 @@ class ReviewSource(unittest.TestCase):
                                   'repository': ('repository', str(self.root/'absent'))}[mutation]
                     manifest[key] = value
                     manifest_path.write_text(json.dumps(manifest))
+                protected = self.protected_state()
                 self.restore(ok=False)
+                self.assertEqual(protected, self.protected_state())
                 self.assertFalse(self.destination.exists())
 
     def test_apply_failure_cleans_only_created_worktree(self):
@@ -155,7 +199,9 @@ class ReviewSource(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text())
         manifest['patch_sha256'] = hashlib.sha256(patch).hexdigest()
         manifest_path.write_text(json.dumps(manifest))
+        protected = self.protected_state()
         self.restore(ok=False)
+        self.assertEqual(protected, self.protected_state())
         self.assertFalse(self.destination.exists())
         self.assertEqual(before, self.git('worktree', 'list', '--porcelain'))
         self.assertTrue(self.repo.exists())

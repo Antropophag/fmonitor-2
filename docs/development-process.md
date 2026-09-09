@@ -6,10 +6,10 @@ Read the short [current delivery goal](operations/current-delivery-goal.md).
 It owns the work queue; this document owns gates and the execution protocol.
 Historical exceptions below apply only to their stated milestone.
 
-## Compact execution protocol — #78, 2026-09-09
+## Compact execution protocol — #82, 2026-09-10
 
 Quality takes precedence over token efficiency, which takes precedence over time.
-Root owns analysis, scope, the complete acceptance matrix and key decisions. In
+Keep the most capable model in the primary session. Root owns analysis, scope, the complete acceptance matrix and key decisions. In
 normal mode root authors specifications and tests; a separate executor implements
 and independent agents review. Only explicit owner authorization for the current
 assignment enables autonomous delegation of spec/tests. Record its scope and
@@ -43,7 +43,7 @@ it is distinct from Git checkpoint granularity. A review identifies either a
 commit or a retained reconstructible source snapshot: base commit plus binary
 patch including additions/deletions/modes and a SHA-256 digest. Keep the snapshot
 outside the repository, record its location/digest and restore/check it before
-review. A later grouped commit must match the reviewed artifact bytes; enumerate
+review; use [review-source capture/restore](../tools/delivery/review-source.md). A later grouped commit must match the reviewed artifact bytes; enumerate
 any additional review/documentation files. Changed code or tests require review
 of the delta. CI still runs on the final exact committed candidate.
 
@@ -55,7 +55,7 @@ records remain available; supersede them with a pointer instead of loading them
 at each start. Use [the compact handoff template](../tools/delivery/handoff-template.md).
 
 Before Gate 2, compute the [repository-owned Quality Graph change verification
-plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The executor reads
+plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The test author reads
 its required obligations and executable commands before writing RED tests.
 Unresolved coverage blocks Gate 2. A generated plan is not acceptance approval,
 RED evidence or a replacement for independent review. Regenerate and review when
