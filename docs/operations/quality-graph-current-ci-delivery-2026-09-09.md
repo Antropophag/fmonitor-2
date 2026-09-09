@@ -66,3 +66,22 @@ supplemental Gate3 и Gate5 нет. У владельца запрошено р�
 codex/qg-current-25-20260909, checkout fmonitor-2-close-24-25-20260909.
 После gates: один полный CI, bootstrap merge, реальная positive/negative publisher
 matrix на disposable PR, затем архив/закрытие25. Stand/data и66 не изменялись.
+
+## Кандидат после восстановления reviews
+
+Owner восстановил лимиты и разрешил выбирать модель по сложности. Supplemental
+Gate3 APPROVED4db9c6e7 после проверки duplicate на второй странице; implementation
+735456630c72362335c3f57f451f8baff6ad01ea проверяет весь jobs endpoint и ровно один
+успешный quality-results текущего attempt. Failed/cancelled source categories
+остаются допустимым входом при успешной доставке их отчётов.
+
+Независимый Gate5 APPROVED на73545663: reviews/code/QUALITY-GRAPH-CURRENT-CI-001.md.
+Finalunit83/0 за40.984с; oldCI15/0, report9/0, workflow5/0, preflight PASS;
+HTTPqualification+architecture7 PASS, OpenSpec73/0, diff-check PASS.
+Parsed YAML comparison подтверждает сохранение исходных7jobs: fast дополнен
+только3командами graph validation, остальные6jobs byte-equivalent по структуре.
+Inline publisher Bash из parsed YAML реально исполнен на missing-env fixture:
+получен stable preflight failure без IndentationError.
+
+Кандидат готов к authoritative CI/bootstrap PR. После bootstrap merge остаётся
+реальный representative publisher proof. Наличие Gate5 не закрывает25 заранее.
