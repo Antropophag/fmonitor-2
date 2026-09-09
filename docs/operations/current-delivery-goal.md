@@ -1,35 +1,40 @@
-# Текущая цель поставки
+# Текущая цель поставки: продолжить Yii2 #76
 
-Решение владельца 2026-09-09: выполнить [#78](https://github.com/Antropophag/fmonitor-2/issues/78)
-перед продолжением Yii2 #76. Эта свежая сессия явно авторизована владельцем.
-В scope #78 входит вычисление Quality Graph обязательного executable verification
-plan для change **до Gate 2**. Критерии gates сохраняются.
+## Завершённый приоритет #78 — owner2026-09-09
 
-## Состояние и граница паузы
+[PR80](https://github.com/Antropophag/fmonitor-2/pull/80) MERGED,
+main merge `a29918a77b2fe899b52eec5200756b85739fe02f`.
+Exact candidate `6b27c4e0b4555114a1456845dbdcfaeed8880a11`:
+[Actions34396325240](https://github.com/Antropophag/fmonitor-2/actions/runs/34396325240)
+SUCCESS, literal VERIFY_OK, независимые Gate 3/Gate 5 APPROVED.
+Quality Graph теперь выдаёт обязательный executable verification plan до Gate 2;
+инструкция — [change verification](../../tools/delivery/change-verification.md).
 
-- PR77 (Yii2 foundation) и PR79 (авторизация/роли) MERGED;
-  базовый main этой работы: `d9811cdd5e4521457a1d61277069fe3d0793f3fe`.
-- Финансовый #70: `codex/yii2-otiz-settlement-70`, commit `9b039afd`,
-  checkout `../fmonitor-2-yii2-otiz-20260909`. Локальные денежные/concurrency
-  checks GREEN по прежнему checkpoint; HTTP wiring и delivery незавершены.
-- #78: `codex/quality-obligations-78`, checkout `../fmonitor-2-quality-78`.
-  Старые checkout/WIP и работающий стенд сохраняются.
+Владелец явно отказал в сравнительном прогоне astra/medium: продолжаем
+**gpt-5.6-sol / low** для исполнителей и reviewers. Сравнение других моделей не
+выполнялось и не считается проверенным. Пилоты document review и изолированной
+реализации CLI завершены на одинаковых входах/критериях; ограничения измерений и
+результаты — [отчёт #78](token-optimization-78.md). Денежная экономия не заявляется.
 
-## Условия завершения #78
+## Следующая работа
 
-Воспроизводимые агрегаты usage, короткий рабочий контекст, обязательный план
-проверок и независимые reviews. Экономию на завершённых сопоставимых задачах
-подтвердить измерением; сокращение текста само по себе не доказывает экономию
-токенов. Ограничения billing и сравнения указывать явно.
+Продолжить #76 с сохранённых веток, сначала сверив их с актуальным origin/main.
+PR77 (foundation) и PR79 (авторизация/роли) уже MERGED. Финансовый #70 сохранён:
+`codex/yii2-otiz-settlement-70`, checkout `../fmonitor-2-yii2-otiz-20260909`,
+HEAD `9b039afd76d56028e9e268626fb8e6c01a4215b7`, clean при проверке после #78.
+Локальные денежные/concurrency checks были GREEN по прежнему checkpoint;
+HTTP wiring и полный delivery #70 не завершены. История —
+[Yii2 checkpoint](yii2-progress-2026-09-09.md).
 
-После завершения #78 вернуть приоритет #76 и продолжить с сохранённых веток,
-сначала сверив их с актуальным main. Новый migration slice до этого не начинать.
-Для проверок и распределения ролей читать [delivery process](../development-process.md).
+Новый срез получает короткий handoff и обязательный план проверок по
+[delivery process](../development-process.md). Сохранять независимость review,
+полномочия, денежные инварианты, append-only историю и один full CI кандидата.
+Работающий стенд, данные и старые WIP во время #78 не изменялись.
+Старый основной checkout содержит чужой WIP; продолжать из чистого актуального
+worktree. Текущий checkout #78: `../fmonitor-2-quality-78`.
 
 ## История по необходимости
 
-[Прежний документ целиком](delivery-goal-history-through-2026-09-09.md) сохраняет
-решения, исключения и evidence; читать нужный раздел при восстановлении истории.
-[Yii2 checkpoint](yii2-progress-2026-09-09.md) описывает foundation и старые WIP;
-актуальные merge-состояния указаны выше. Полномочия, append-only история,
-денежные инварианты и независимость review остаются обязательными.
+[Прежняя длинная цель целиком](delivery-goal-history-through-2026-09-09.md)
+сохраняет решения и evidence. Читать соответствующий раздел при восстановлении
+истории; источник текущего приоритета — этот короткий документ.
