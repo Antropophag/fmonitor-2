@@ -107,11 +107,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY alter collected plan artifact for wrong-head
+    - name: TEST ONLY alter collected plan artifact for wrong-digest
       if: always()
       env:
         FILE: ${{ steps.collect-plan.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'headSha'"'"']='"'"'0'"'"'*40; p.write_text(json.dumps(v,indent=2,sort_keys=True)+'"'"'\n'"'"')'
+      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'graphDigest'"'"']='"'"'0'"'"'*64; p.write_text(json.dumps(v,indent=2,sort_keys=True)+'"'"'\n'"'"')'
     - name: Upload plan
       if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
