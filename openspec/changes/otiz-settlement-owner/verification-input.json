@@ -13,7 +13,33 @@
     "tests/InstallationProcess/otiz_settlement_schema_001_test.php",
     "tests/Yii2/yii2_otiz_settlement_001_test.php",
     "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
-    "tests/Yii2/otiz_settlement_browser.mjs"
+    "tests/Yii2/otiz_settlement_browser.mjs",
+    "tests/InstallationProcess/assignment_order_original_attempt_audit_schema_001_test.php",
+    "tests/InstallationProcess/checklist_template_schema_001_test.php",
+    "tests/InstallationProcess/classification_provenance_schema_001_test.php",
+    "tests/InstallationProcess/identity_access_schema_001_test.php",
+    "tests/InstallationProcess/inspection_evidence_schema_001_test.php",
+    "tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php",
+    "tests/InstallationProcess/inspection_photo_content_index_schema_001_test.php",
+    "tests/InstallationProcess/inspection_planning_schema_001_test.php",
+    "tests/InstallationProcess/installation_completion_schema_001_test.php",
+    "tests/InstallationProcess/object_detail_snapshot_schema_001_test.php",
+    "tests/InstallationProcess/pilot_case_import_001_test.php",
+    "tests/InstallationProcess/pilot_demo_bootstrap_001_test.php",
+    "tests/InstallationProcess/pilot_e2e_flow_001_test.php",
+    "tests/InstallationProcess/pilot_http_auth_001_test.php",
+    "tests/InstallationProcess/production_migration_runner_001_test.php",
+    "tests/InstallationProcess/selection_canonical_registration_001_test.php",
+    "tests/InstallationProcess/workforce_canonical_runner_001_test.php",
+    "tests/Jobs/jobs_schema_001_test.php",
+    "tests/Otiz/runtime_schema_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tests/Runtime/production_process_readiness_001_test.php",
+    "tests/Runtime/production_readiness_schema_001_test.php",
+    "tests/Runtime/production_runtime_browser_001_test.php",
+    "tests/Runtime/production_schema_frontier_001_test.php",
+    "tests/Runtime/yii2_readiness_001_test.php",
+    "tests/Verification/harness_otiz_canonical_compat_001_test.php"
   ],
   "acceptances": [
     {
@@ -59,6 +85,17 @@
       "seam": "Browser: protected accepted snapshot -> Yii login -> discipline -> complete -> reverse -> rendered snapshot/history; DML runtime",
       "tests": [
         "tests/Yii2/yii2_otiz_settlement_browser_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "current-canonical-frontier-regressions",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "Existing public canonical migration CLI, current readiness and demo bootstrap; historical direct migration versions unchanged",
+      "tests": [
+        "tests/Runtime/production_schema_frontier_001_test.php",
+        "tests/InstallationProcess/production_migration_runner_001_test.php",
+        "tests/Otiz/runtime_schema_001_test.php"
       ]
     }
   ]
