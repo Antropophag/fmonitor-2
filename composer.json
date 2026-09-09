@@ -1,8 +1,30 @@
 {
     "name": "shlz/fmonitor-2",
-    "description": "FMonitor 2.0 installation process pilot",
+    "description": "FMonitor 2.0 Yii2 application",
     "license": "proprietary",
     "require": {
-        "tecnickcom/tcpdf": "^6.10"
+        "tecnickcom/tcpdf": "6.11.4",
+        "php": ">=8.4 <8.6",
+        "yiisoft/yii2": "2.0.55"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        },
+        "platform": {
+            "php": "8.4.0"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "files": [
+            "app/autoload.php"
+        ]
     }
 }

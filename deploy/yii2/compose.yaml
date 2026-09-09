@@ -1,0 +1,28 @@
+name: fmonitor2-yii2
+
+services:
+  php:
+    image: ${FMONITOR_YII_IMAGE:-fmonitor2-yii2:local}
+    build:
+      context: ../..
+      dockerfile: deploy/yii2/Dockerfile
+    environment:
+      FMONITOR_YII_RUNTIME_PATH: /var/lib/fmonitor/yii
+    tmpfs:
+      - /var/lib/fmonitor/yii:uid=10001,gid=10001,mode=0700
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    image: ${FMONITOR_YII_IMAGE:-fmonitor2-yii2:local}
+    command: [nginx, -c, /workspace/fmonitor-2/deploy/yii2/nginx.conf, -g, 'daemon off;']
+    depends_on:
+      - php
+    ports:
+      - '127.0.0.1:${FMONITOR_YII_HTTP_PORT:-18076}:8080'
+    tmpfs:
+      - /tmp:uid=10001,gid=10001,mode=0700
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
