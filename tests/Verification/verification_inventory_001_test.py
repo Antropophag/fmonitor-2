@@ -153,6 +153,8 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Runtime/runtime_storage_001_test.php\n',
                 'php\ttests/Runtime/production_schema_preflight_001_test.php\n',
                 'php\ttests/Runtime/production_readiness_schema_001_test.php\n',
+                'python3\ttests/Runtime/yii2_runtime_001_test.py\n',
+                'php\ttests/Runtime/yii2_readiness_001_test.php\n',
                 'php\ttests/Runtime/production_process_readiness_001_test.php\n',
                 'php\ttests/Runtime/initial_owner_provisioning_001_test.php\n',
                 'php\ttests/Runtime/runtime_dml_privilege_probe_001_test.php\n',

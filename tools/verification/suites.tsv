@@ -275,6 +275,8 @@ db	php	tests/Runtime/runtime_storage_001_test.php
 e2e	php	tests/Runtime/production_runtime_compose_001_test.php
 db	php	tests/Runtime/production_schema_preflight_001_test.php
 db	php	tests/Runtime/production_readiness_schema_001_test.php
+db	python3	tests/Runtime/yii2_runtime_001_test.py
+db	php	tests/Runtime/yii2_readiness_001_test.php
 e2e	php	tests/Runtime/production_runtime_browser_001_test.php
 db	php	tests/Runtime/production_process_readiness_001_test.php
 db	php	tests/Runtime/initial_owner_provisioning_001_test.php
