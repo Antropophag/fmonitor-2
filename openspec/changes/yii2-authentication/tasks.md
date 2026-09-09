@@ -18,7 +18,7 @@
 
 ## 4. Review и поставка
 
-- [ ] 4.1 Получить независимый Gate5 на exact source и focused evidence.
+- [x] 4.1 Получить независимый Gate5 на exact source и focused evidence (`reviews/code/YII2-AUTH-001-delivery.md`, source `694a2020`).
 - [ ] 4.2 Выполнить один full exact-source CI и merge по принятой матрице без переключения рабочего стенда.
 - [ ] 4.3 Записать фактические GREEN/evidence и следующий invitation/admin slice; #71/#76 остаются открыты до полного объёма.
 
