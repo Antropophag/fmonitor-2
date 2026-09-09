@@ -21,7 +21,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
         private readonly PrepareFormRenderer $forms,
         private readonly ProductionChecklistRenderer $checklists,
         private readonly ?\FMonitor\IdentityAccess\PilotSessionStorage $sessionStorage = null,
-        ?EnvironmentSource $sessionEnvironment = null,
+        private readonly ?EnvironmentSource $sessionEnvironment = null,
     ) { parent::__construct($identity,new ProductionPilotShellRenderer(),$dependencies);$this->userAccess=new PilotUserAccessHttpHandler($reads,$identity,$dependencies,$sessionStorage,$sessionEnvironment); }
     public function handle(PilotHttpRequest $r):PilotHttpResponse
     {
@@ -204,7 +204,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     }
     private function session(PilotHttpRequest $r,HttpUser $user,bool $create):array
     {
-        $cookieName=self::commandCookieName($r);$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($r->server['HTTP_COOKIE']??''),$match)===1)$incoming=$match[1];$this->commandSession??=new PilotCommandSession($this->sessionStorage);if(!$this->commandSession->open($incoming,$cookieName,!self::trustedDemo($r),$user->id,$create))return[null,[]];return[$this->commandSession->state(),$this->commandSession->headers()];
+        $cookieName=$this->commandCookieName($r);$incoming=null;if(\preg_match('/(?:^|;\s*)'.\preg_quote($cookieName,'/').'=([A-Za-z0-9,-]{16,128})(?:;|$)/',(string)($r->server['HTTP_COOKIE']??''),$match)===1)$incoming=$match[1];$this->commandSession??=new PilotCommandSession($this->sessionStorage);if(!$this->commandSession->open($incoming,$cookieName,$this->requestScheme($r)==='https',$user->id,$create))return[null,[]];return[$this->commandSession->state(),$this->commandSession->headers()];
     }
     private function token(array &$s,HttpUser $u,int $id):string{$t=\bin2hex(\random_bytes(16));$s['tokens'][$t]=['actor'=>$u->id,'id'=>$id,'at'=>\time()];$this->storeSessionState($s);return $t;}
     private function validToken(array $s,string $token,HttpUser $u,int $id):bool{$x=$s['tokens'][$token]??null;return \is_array($x)&&($x['actor']??null)===$u->id&&($x['id']??null)===$id&&\time()-(int)($x['at']??0)<=1800;}
@@ -213,7 +213,7 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     private function validRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
         $origin=$r->server['HTTP_ORIGIN']??null;$fetch=$r->server['HTTP_SEC_FETCH_SITE']??null;
-        $trustedDemo=self::trustedDemo($r);$scheme=$trustedDemo?'http':'https';
+        $trustedDemo=self::trustedDemo($r);$scheme=$this->requestScheme($r);
         if(!\in_array($scheme,['http','https'],true))return false;
         $expectedOrigin=$scheme.'://'.$r->host;
         // A same-origin browser form may suppress Origin under the page's no-referrer policy.
@@ -222,8 +222,17 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
     }
     private function validChecklistRequest(PilotHttpRequest $r,array $s,HttpUser $u):bool
     {
-        $expected=(self::trustedDemo($r)?'http://':'https://').$r->host;
+        $expected=$this->requestScheme($r).'://'.$r->host;
         return ($s['actor']??null)===$u->id&&($r->server['HTTP_ORIGIN']??null)===$expected&&($r->server['HTTP_SEC_FETCH_SITE']??null)==='same-origin';
+    }
+    private function requestScheme(PilotHttpRequest $r):string
+    {
+        $configured=$this->sessionEnvironment?->read('FMONITOR_TRUSTED_REQUEST_SCHEME');
+        if(PHP_SAPI!=='cli-server'&&\is_string($configured)) {
+            if(!\in_array($configured,['http','https'],true))throw new PilotHttpInfrastructureUnavailable();
+            return $configured;
+        }
+        return self::trustedDemo($r)?'http':'https';
     }
     private static function trustedDemo(PilotHttpRequest $r):bool
     {
@@ -232,9 +241,9 @@ final class PilotE2ECoordinator extends PilotHttpCoordinator
             &&\is_string($trustedHost)&&\preg_match('/^127\.0\.0\.1:([1-9][0-9]{3,4})$/D',$trustedHost,$parts)===1
             &&(int)$parts[1]>=1024&&(int)$parts[1]<=65535&&$r->host===$trustedHost;
     }
-    private static function commandCookieName(PilotHttpRequest $r):string
+    private function commandCookieName(PilotHttpRequest $r):string
     {
-        return self::trustedDemo($r)&&\preg_match('/:(\d{1,5})$/D',$r->host,$match)===1?'fm2pilot_'.$match[1]:'fm2pilot';
+        return $this->requestScheme($r)==='http'&&\preg_match('/:(\d{1,5})$/D',$r->host,$match)===1?'fm2pilot_'.$match[1]:'fm2pilot';
     }
     private function body(PilotHttpRequest $r,array $allowed):?array{$type=(string)($r->server['CONTENT_TYPE']??'');$length=$r->server['CONTENT_LENGTH']??null;if(!\preg_match('#^application/x-www-form-urlencoded(?:;\s*charset=UTF-8)?$#iD',$type)||!\is_string($length)||!\ctype_digit($length)||(int)$length>16384||(int)$length!==\strlen($r->body))return null;$out=[];$nextInstaller=0;foreach(\explode('&',$r->body)as$part){if($part==='')continue;$pair=\explode('=',$part,2);if(\preg_match('/%(?![0-9A-Fa-f]{2})/',($pair[0]??'').($pair[1]??''))===1)return null;$key=\rawurldecode(\str_replace('+',' ',$pair[0]));$value=\rawurldecode(\str_replace('+',' ',$pair[1]??''));if(\preg_match('/^installerTabIds\[([0-9]+)\]$/D',$key,$m)===1){if((int)$m[1]!==$nextInstaller++||$nextInstaller>500)return null;$key='installerTabIds[]';}if(!\in_array($key,$allowed,true)||!\mb_check_encoding($key,'UTF-8')||!\mb_check_encoding($value,'UTF-8'))return null;$out[$key][]=$value;if($key==='installerTabIds[]'&&\count($out[$key])>500)return null;}if(!isset($out['csrfToken'])||\count($out['csrfToken'])!==1)throw new InvalidCsrfRequest();foreach($out as$key=>$values)if($key!=='installerTabIds[]'&&\count($values)!==1)return null;return $out;}
     private function flashRedirect(array &$s,string $path,string $message,?string $field=null,bool $suppressOpen=false,array$selected=[]):PilotHttpResponse{if($selected===[]&&isset($s['pendingSelection']))$selected=$s['pendingSelection'];unset($s['pendingSelection']);$s['flash'][$path]=['message'=>$message,'field'=>$field,'suppressOpen'=>$suppressOpen,'selected'=>$selected];$this->storeSessionState($s);return$this->redirect($path);}

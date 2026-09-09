@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const [port,modulePath,artifacts,resultPath]=process.argv.slice(2);
+const [port,modulePath,artifacts,resultPath,configuredReportDate]=process.argv.slice(2);
+const reportDate=configuredReportDate||'2026-09-08';
 const require=createRequire(import.meta.url);
 const {chromium}=require(modulePath);
 const result={consoleErrors:[],pageErrors:[],failedRequests:[],responses:[]};
@@ -24,7 +25,7 @@ try {
   await page.goto(`http://127.0.0.1:${port}/pilot/otiz/payments`);
   const operation=await page.locator('input[name="operationId"]').inputValue();
   result.operationIdPresent=/^[a-f0-9-]{36}$/.test(operation);
-  await page.locator('input[name="reportDate"]').fill('2026-09-08');
+  await page.locator('input[name="reportDate"]').fill(reportDate);
   let intercepted=false;
   await page.route('**/pilot/otiz/calculate',async route=>{
     if(intercepted)return route.continue();
@@ -38,7 +39,7 @@ try {
   await page.unroute('**/pilot/otiz/calculate');
   await page.goto(`http://127.0.0.1:${port}/pilot/otiz/payments`);
   result.operationIdRestored=(await page.locator('input[name="operationId"]').inputValue())===operation;
-  result.reportDateRestored=(await page.locator('input[name="reportDate"]').inputValue())==='2026-09-08';
+  result.reportDateRestored=(await page.locator('input[name="reportDate"]').inputValue())===reportDate;
   await page.getByRole('button',{name:'Подготовить расчёт'}).click();
   await page.waitForURL(/\/pilot\/otiz\/snapshots\/\d+\?created=1/);
   result.snapshotUrl=page.url().replace(`http://127.0.0.1:${port}`,'');

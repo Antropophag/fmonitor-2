@@ -1,0 +1,105 @@
+x-runtime-environment: &runtime-environment
+  FMONITOR_DB_HOST: db
+  FMONITOR_DB_PORT: "3306"
+  FMONITOR_DB_NAME: "${FMONITOR_DB_NAME:?Set FMONITOR_DB_NAME}"
+  FMONITOR_DB_USER: "${FMONITOR_DB_USER:?Set FMONITOR_DB_USER}"
+  FMONITOR_DB_PASSWORD: "${FMONITOR_DB_PASSWORD:?Set FMONITOR_DB_PASSWORD}"
+  FMONITOR_PROCESS_TABLE_PREFIX: "${FMONITOR_PROCESS_TABLE_PREFIX:?Set FMONITOR_PROCESS_TABLE_PREFIX}"
+  FMONITOR_LEGACY_TABLE_PREFIX: "${FMONITOR_LEGACY_TABLE_PREFIX:?Set FMONITOR_LEGACY_TABLE_PREFIX}"
+  FMONITOR_SESSION_STATE_ROOT: /home/fmonitor/.local/state/fmonitor2
+  FMONITOR_SESSION_INSTANCE: "${FMONITOR_SESSION_INSTANCE:?Set FMONITOR_SESSION_INSTANCE}"
+  FMONITOR_ARTIFACT_STORAGE_ROOT: /home/fmonitor/.local/state/fmonitor2/artifacts
+  FMONITOR_ORIGINAL_DB_PASSWORD_FILE: /run/fmonitor-secrets/database-password
+  FMONITOR_ORIGINAL_SAFE_LOG_FILE: /home/fmonitor/.local/state/fmonitor2/log/original-safe.jsonl
+  FMONITOR_TRUSTED_REQUEST_HOST: "${FMONITOR_TRUSTED_REQUEST_HOST:?Set FMONITOR_TRUSTED_REQUEST_HOST}"
+  FMONITOR_TRUSTED_REQUEST_SCHEME: "${FMONITOR_TRUSTED_REQUEST_SCHEME:?Set FMONITOR_TRUSTED_REQUEST_SCHEME}"
+
+x-image: &image
+  image: "${FMONITOR_RUNTIME_IMAGE:-fmonitor2-runtime}"
+  build:
+    context: ../..
+    dockerfile: deploy/runtime/Dockerfile
+
+x-app: &app
+  <<: *image
+  environment: *runtime-environment
+  volumes:
+    - state:/home/fmonitor/.local/state/fmonitor2
+    - secrets:/run/fmonitor-secrets
+
+services:
+  db:
+    image: mariadb:11.4.7-noble
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MARIADB_DATABASE: "${FMONITOR_DB_NAME:?Set FMONITOR_DB_NAME}"
+      MARIADB_ROOT_PASSWORD: "${FMONITOR_MIGRATION_DB_PASSWORD:?Set FMONITOR_MIGRATION_DB_PASSWORD}"
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 15s
+    restart: unless-stopped
+
+  prepare:
+    <<: *app
+    command: ["php", "bin/fmonitor2-runtime-prepare.php"]
+    profiles: ["deployment"]
+    restart: "no"
+
+  migrate:
+    <<: *app
+    environment:
+      <<: *runtime-environment
+      FMONITOR_DB_USER: "${FMONITOR_MIGRATION_DB_USER:?Set FMONITOR_MIGRATION_DB_USER}"
+      FMONITOR_DB_PASSWORD: "${FMONITOR_MIGRATION_DB_PASSWORD:?Set FMONITOR_MIGRATION_DB_PASSWORD}"
+    command: ["php", "bin/fmonitor2-migrate.php"]
+    profiles: ["deployment"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  php:
+    <<: *app
+    command: ["php-fpm", "-F", "--fpm-config", "deploy/runtime/php-fpm.conf"]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "SCRIPT_FILENAME=/workspace/fmonitor-2/public/runtime.php SCRIPT_NAME=/health/ready REQUEST_METHOD=GET REQUEST_URI=/health/ready SERVER_PROTOCOL=HTTP/1.1 HTTP_HOST=$${FMONITOR_TRUSTED_REQUEST_HOST} cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q '\"ok\":true'"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    stop_signal: SIGQUIT
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+  web:
+    <<: *image
+    environment:
+      FMONITOR_TRUSTED_REQUEST_HOST: "${FMONITOR_TRUSTED_REQUEST_HOST:?Set FMONITOR_TRUSTED_REQUEST_HOST}"
+    command: ["nginx", "-c", "/workspace/fmonitor-2/deploy/runtime/nginx.conf", "-g", "daemon off;"]
+    ports:
+      - "127.0.0.1:${FMONITOR_HTTP_PORT:-8093}:8080"
+    depends_on:
+      php:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --header \"Host: $${FMONITOR_TRUSTED_REQUEST_HOST}\" http://127.0.0.1:8080/health/ready >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    stop_signal: SIGQUIT
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+volumes:
+  database:
+  state:
+  secrets:

@@ -44,7 +44,7 @@ load_inventory() {
   local directory line group runtime file extra key
   local seen=$'\n' registered=$'\n'
   local catalog=tools/verification/suites.tsv
-  for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification tests/Otiz; do
+  for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification tests/Otiz tests/Runtime; do
     test -d "$directory" || fail SETUP_FAILURE "missing verification directory: $directory"
   done
   test -f "$catalog" || fail SETUP_FAILURE "missing verification catalog: $catalog"
@@ -67,7 +67,7 @@ load_inventory() {
       selected_files+=("$file")
     fi
   done < "$catalog"
-  for file in tests/InstallationProcess/*test.php tests/AssignmentOrderComposition/*test.php tests/Verification/*_test.mjs tests/Otiz/*test.php; do
+  for file in tests/InstallationProcess/*test.php tests/AssignmentOrderComposition/*test.php tests/Verification/*_test.mjs tests/Otiz/*test.php tests/Runtime/*test.php; do
     test -f "$file" || continue
     [[ "$registered" == *$'\n'"$file"$'\n'* ]] \
       || fail SETUP_FAILURE "unregistered verifier: $file; add it to $catalog"

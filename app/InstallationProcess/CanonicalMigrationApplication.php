@@ -18,6 +18,39 @@ final class CanonicalMigrationApplication
         int $reportFromVersion = 1,
         ?callable $databasePreflight = null,
     ): array {
+        $lockName = null;
+        $outcome = ['exitCode'=>70, 'result'=>['ok'=>false,'reason'=>'MIGRATION_FAILED']];
+        try {
+            $lockName = MariaDbMigrationLock::acquire($connection, $tablePrefix);
+            if ($lockName === null) {
+                return ['exitCode'=>75, 'result'=>['ok'=>false,'reason'=>'MIGRATION_LOCK_UNAVAILABLE']];
+            }
+            $outcome = self::runLocked($connection, $tablePrefix, $migrations, $reportFromVersion, $databasePreflight);
+        } catch (DatabaseUnavailable) {
+            $outcome = ['exitCode'=>69, 'result'=>['ok'=>false,'reason'=>'DATABASE_UNAVAILABLE']];
+        } catch (\Throwable) {
+            $outcome = ['exitCode'=>70, 'result'=>['ok'=>false,'reason'=>'MIGRATION_FAILED']];
+        } finally {
+            if ($lockName !== null) {
+                try {
+                    MariaDbMigrationLock::release($connection, $lockName);
+                } catch (\Throwable) {
+                    if ($outcome['exitCode'] === 0) {
+                        $outcome = ['exitCode'=>70, 'result'=>['ok'=>false,'reason'=>'MIGRATION_FAILED']];
+                    }
+                }
+            }
+        }
+        return $outcome;
+    }
+
+    private static function runLocked(
+        \mysqli $connection,
+        string $tablePrefix,
+        array $migrations,
+        int $reportFromVersion,
+        ?callable $databasePreflight,
+    ): array {
         $appliedVersions = [];
         try {
             $versions = array_keys($migrations);

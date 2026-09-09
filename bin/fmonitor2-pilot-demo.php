@@ -123,7 +123,7 @@ function demoProvision(array $config, int $generation): array
         demoWriteJson($directory . '/owner.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'nonce'=>$nonce, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy]);
 
         PilotDemoDatabase::provision($db, $process, $legacy, $config['fingerprint'], $generation, $nonce, DEMO_NOW);
-        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>21, 'objectId'=>4512]);
+        demoWriteJson($directory . '/ready.json', ['fingerprint'=>$config['fingerprint'], 'generation'=>$generation, 'schemaVersion'=>22, 'objectId'=>4512]);
         return ['generation'=>$generation, 'processPrefix'=>$process, 'legacyPrefix'=>$legacy, 'artifactRoot'=>$directory . '/artifacts'];
     } catch (Throwable $error) {
         throw $error;
@@ -137,7 +137,7 @@ function demoGeneration(array $config, int $generation): ?array
     $directory = $config['root'] . '/generations/' . $generation;
     $owner = demoReadJson($directory . '/owner.json');
     $ready = demoReadJson($directory . '/ready.json');
-    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 21) return null;
+    if (($owner['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['fingerprint'] ?? null) !== $config['fingerprint'] || ($ready['schemaVersion'] ?? null) !== 22) return null;
     if (($owner['generation'] ?? null) !== $generation || ($ready['generation'] ?? null) !== $generation
         || ($owner['processPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'process')
         || ($owner['legacyPrefix'] ?? null) !== demoPrefix($config['fingerprint'], $generation, 'legacy')
@@ -151,7 +151,7 @@ function demoGeneration(array $config, int $generation): ?array
         $tables = demoTables($db, (string) $owner['processPrefix']);
         $requiredTables=array_map(static fn(string $suffix): string => $owner['processPrefix'] . $suffix, $expected);
         if(array_diff($requiredTables,$tables)!==[])return null;
-        if (count($tables) !== count(PilotDemoDatabase::TABLES) + 3) return null;
+        if (count($tables) !== count(PilotDemoDatabase::TABLES) + 2) return null;
         $marker=demoMarkerValue($config['fingerprint'],$generation,$owner['nonce']);
         if(demoDatabaseMarker($db,$owner['processPrefix'].'fm2_installation_cases')!==$marker
             ||demoDatabaseMarker($db,$owner['legacyPrefix'].'fm_maintable')!==$marker)return null;
