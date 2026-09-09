@@ -6,24 +6,46 @@ Read the short [current delivery goal](operations/current-delivery-goal.md).
 It owns the work queue; this document owns gates and the execution protocol.
 Historical exceptions below apply only to their stated milestone.
 
-## Compact execution protocol — #78, 2026-09-09
+## Compact execution protocol — #82, 2026-09-10
 
-One executor owns a vertical slice through its reviewable PR candidate. Give it
-only the issue, exact base/worktree, normative specification, relevant boundary
-instructions and verification plan. Use a fresh context for each substantial
-slice and each independent review; full conversation forks are unnecessary.
-Parallel agents remain **gpt-5.6-sol / low**. This is the selected operating mode,
-not a measured claim that this model is cheapest; change the model rule explicitly
-only after comparable completed-slice evidence supports it.
+Quality takes precedence over token efficiency, which takes precedence over time.
+Keep the most capable model in the primary session. Root owns analysis, scope, the complete acceptance matrix and key decisions. In
+normal mode root authors specifications and tests; a separate executor implements
+and independent agents review. Only explicit owner authorization for the current
+assignment enables autonomous delegation of spec/tests. Record its scope and
+actual authors in the delivery record; historical permission is not inherited.
+Executors and reviewers use **gpt-5.6-sol / low**, with fresh, bounded contexts.
+Root checks candidate completeness before dispatch; reviewers validate prepared
+requirements rather than discover missing parts of the assignment.
 
-The coordinating agent resolves scope and decisions, integrates independently
-reviewed work and reports outcomes. It reads the complete findings and changed
-boundaries; it need not re-read every intermediate artifact. A review returns one
-complete findings list, severity, affected locations, required corrections and
-verdict. Review fixes as a diff against the reviewed source; broaden only for a
-new risk. Keep test authorship and implementation authorship explicit so Gate 3
-and Gate 5 retain independence. A reviewer may review both stages if it authored
-neither artifact. Batch independent read-only tool calls and inspect all results.
+Before Gate 2, cover the whole bounded slice in the normative spec: public seam,
+observable result, persisted facts, rejections with no new facts, permissions,
+replay/concurrency, user return path and material adjacent flows. Check schema
+frontier consumers (including `rapid-pilot/verify-*`), fixtures/table inventories,
+runtime dependencies, deployment/readiness, backup/restore and verification
+inventory. Record relevant impacts and briefly justify inapplicable groups in the
+design; a tooling-only change does not require a database ceremony.
+
+Give the executor/reviewer the issue, exact base/worktree, spec, applicable rules,
+verification plan and complete candidate. Review returns one complete findings
+list with severity, locations, corrections and verdict for the agreed scope.
+Review corrections against that source; broaden only for changed scope or new
+risk. After a second return for foreseeable incompleteness, root rebuilds the
+entire matrix and candidate before another dispatch. Assertions, form fields and
+editorial corrections belong to their vertical slice, not separate microreviews.
+Keep Gates 3/5 independent; one reviewer may serve both if it authored neither.
+Batch independent read-only calls and inspect every result.
+
+Commits mark meaningful stages, with related fixes and review records grouped at
+an appropriate checkpoint. There is no per-assertion or per-verdict commit rule
+and no mechanical commit quota. Append-only domain history remains mandatory;
+it is distinct from Git checkpoint granularity. A review identifies either a
+commit or a retained reconstructible source snapshot: base commit plus binary
+patch including additions/deletions/modes and a SHA-256 digest. Keep the snapshot
+outside the repository, record its location/digest and restore/check it before
+review; use [review-source capture/restore](../tools/delivery/review-source.md). A later grouped commit must match the reviewed artifact bytes; enumerate
+any additional review/documentation files. Changed code or tests require review
+of the delta. CI still runs on the final exact committed candidate.
 
 The normative spec owns behavior. OpenSpec owns lifecycle, scope and task state;
 link to the spec instead of copying acceptance matrices. Review records own RED,
@@ -33,7 +55,7 @@ records remain available; supersede them with a pointer instead of loading them
 at each start. Use [the compact handoff template](../tools/delivery/handoff-template.md).
 
 Before Gate 2, compute the [repository-owned Quality Graph change verification
-plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The executor reads
+plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The test author reads
 its required obligations and executable commands before writing RED tests.
 Unresolved coverage blocks Gate 2. A generated plan is not acceptance approval,
 RED evidence or a replacement for independent review. Regenerate and review when
@@ -42,8 +64,13 @@ focused local checks do not waive integration, E2E or governance categories.
 
 Run meaningful focused checks locally; repeat only after relevant changes,
 failures or new risk. One full exact-source CI validates the candidate; avoid a
-second local-full run without cause. Report all failed checks before corrections.
-Measure tokens, elapsed time and rework separately for completed comparable
+second local-full run without cause. Collect the complete failed-job and REGRESSION_FAILURE inventory and inspect
+every failure before corrections. A same-source retry needs a recorded reason;
+retain previous failures rather than treating reruns as diagnosis.
+Report elapsed time, review/return counts and reasons, repeated checks, delivered
+result and remaining blockers. Distinguish implemented code, open PR, green CI
+and merge; report material scope growth promptly. Measure tokens and money only
+when actual measurements exist. Measure elapsed time and rework for comparable
 slices; keep raw journals private and never infer billing from cached-token counts.
 
 ## Historical owner-authorized delivery mode —2026-09-07
@@ -92,7 +119,8 @@ Approved cross-cutting invariants are inherited by every slice and are not resub
 
 ## Gate 2: red test
 
-Write the smallest test that proves one acceptance statement. Run it before implementation and retain the command and relevant failure output in the test-review record.
+Use small deterministic tests to cover the complete agreed slice matrix.
+Incremental RED runs are allowed; submit the complete candidate to Gate 3. Run it before implementation and retain the command and relevant failure output in the test-review record.
 
 The test must:
 
@@ -112,7 +140,8 @@ The reviewer checks traceability, seam choice, sensitivity, expected-value indep
 
 ## Gate 4: minimal implementation
 
-Write only enough production code to make the independently reviewed test pass. Run the focused test after each change, then the relevant suite. Record the commands and results for code review. Refactoring beyond the slice waits for review or a separately specified slice.
+Write only enough production code to make the independently reviewed test pass. Run focused tests after a coherent correction affecting behavior or test risk,
+then the relevant suite. Record the commands and results for code review. Refactoring beyond the slice waits for review or a separately specified slice.
 
 The gate passes when the reviewed test and relevant regression suite are green with no changes to the approved expectation.
 
@@ -122,7 +151,7 @@ A reviewer other than the implementation author reviews the specification, appro
 
 The reviewer checks specification conformance, invariant enforcement at every entry point, audit/history behavior, security, integration boundaries, maintainability, and whether the test would catch a plausible regression. Test changes discovered here restart at Gate 2 and require a new independent test approval.
 
-The slice is complete only with an `APPROVED` code review and green relevant tests. A review record names the reviewer, reviewed commit, verdict, findings, and verification evidence; approval cannot be inferred from silence.
+The slice is complete only with an `APPROVED` code review and green relevant tests. A review record names the reviewer, reviewed commit or reconstructible source snapshot, verdict, findings, and verification evidence; approval cannot be inferred from silence.
 
 ## Independence
 

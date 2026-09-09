@@ -1,9 +1,11 @@
 # Handoff: <issue / slice>
 
+- Mode / authorization / artifact authors: <current assignment; no inherited autonomy>.
 - Role: executor | independent test reviewer | independent code reviewer.
 - Outcome and scope: <one sentence; explicit exclusions only when necessary>.
 - Worktree / branch / base / candidate: <exact locations and SHA>.
 - Read: <normative spec, relevant boundary rules, change verification plan>.
+- Candidate completeness: <whole acceptance matrix and relevant dependency impact>.
 - Evidence: <review records and exact-source CI; deferred/failed gates explicit>.
 - Next action: <one concrete action and completion criterion>.
 - Open decisions / blockers: <complete list, or none>.
