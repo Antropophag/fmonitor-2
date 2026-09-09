@@ -489,7 +489,6 @@ final class RapidPilotOtiz
         \FMonitor2\InstallationProcess\MariaDbPilotLegacyObjectSchemaReadiness::assertOtizReady($db, $prefix);
     }
 
-    private function event(?int $snapshotId,?int $objectId,string $type,array $payload): void { $json=json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$now=$this->now();$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_events`(snapshot_id,object_id,event_type,payload_json,actor_user_id,occurred_at) VALUES(?,?,?,?,?,?)");$s->bind_param('iissis',$snapshotId,$objectId,$type,$json,$this->userId,$now);$s->execute(); }
     private function snapshotRow(int $id): array { $row=$this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1")->fetch_assoc(); if(!is_array($row))$this->fail(404,'Расчёт не найден.'); return $row; }
     private function validDate(string $value): bool { $d=DateTimeImmutable::createFromFormat('!Y-m-d',$value);return$d!==false&&$d->format('Y-m-d')===$value&&$value<='2026-12-31'; }
     private function money(string $value): int { $value=str_replace([' ', ','],['','.'],trim($value));if(!preg_match('/^\d{1,9}(?:\.\d{1,2})?$/D',$value))return-1;return(int)round((float)$value*100); }
