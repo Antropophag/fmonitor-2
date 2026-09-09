@@ -6,6 +6,9 @@
   `docs/operations/current-delivery-goal.md`; it owns the current queue and pause state.
 - Preserve history, authorization, the working stand and independent review.
   Parallel agents use **gpt-5.6-sol / low**.
+- Authorship: root writes specifications and tests unless the owner explicitly
+  enables autonomous mode for the current assignment; separate sol/low agents
+  implement and independently review. Record that authorization and actual authors.
 - Use the compact execution/review workflow in `docs/development-process.md`.
   Before Gate 2, obtain and read the required change verification plan.
 
