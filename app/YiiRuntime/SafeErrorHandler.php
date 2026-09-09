@@ -19,10 +19,17 @@ final class SafeErrorHandler extends ErrorHandler
     protected function renderException($exception): void
     {
         $response = Yii::$app->response;
+        $status = $this->status($exception);
+        if ($status >= 500) {
+            $response->headers->removeAll();
+            $response->cookies->removeAll();
+            header_remove('Location');
+            header_remove('Set-Cookie');
+        }
         $response->isSent = false;
         $response->stream = null;
         $response->format = Response::FORMAT_JSON;
-        $response->statusCode = $this->status($exception);
+        $response->statusCode = $status;
         $response->data = ['ok' => false, 'reason' => match ($response->statusCode) {
             404 => 'NOT_FOUND', 405 => 'METHOD_NOT_ALLOWED',
             400 => 'BAD_REQUEST', 403 => 'ACCESS_DENIED',

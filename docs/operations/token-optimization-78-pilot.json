@@ -1,0 +1,116 @@
+{
+  "arms": {
+    "long": {
+      "aggregate": {
+        "context": {
+          "average_input_tokens": 40518.7,
+          "maximum_input_tokens": 57970,
+          "maximum_window_tokens": 828400,
+          "peak_utilization": 0.069978,
+          "samples": 10
+        },
+        "incomplete": false,
+        "legacy_counter_resets": 0,
+        "model_calls": 10,
+        "model_calls_basis": "response_ids",
+        "sessions": 1,
+        "tokens": {
+          "cache_write_input": 0,
+          "cached_input": 367744,
+          "input": 405187,
+          "output": 2933,
+          "reasoning_output": 905,
+          "total": 408120
+        },
+        "tool_calls": 9,
+        "turns": {
+          "average_duration_ms": 123201.0,
+          "completed": 1,
+          "duration_ms": 123201
+        }
+      },
+      "completion_event": true,
+      "files": {
+        "accepted": 1,
+        "skipped_lines": 0,
+        "skipped_usage_records": 0
+      },
+      "findings": 0,
+      "first_timestamp": "2026-09-09T18:55:34.868Z",
+      "last_timestamp": "2026-09-09T18:57:38.039Z",
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "review_verdict": "APPROVED"
+    },
+    "short": {
+      "aggregate": {
+        "context": {
+          "average_input_tokens": 29836.5,
+          "maximum_input_tokens": 39843,
+          "maximum_window_tokens": 828400,
+          "peak_utilization": 0.048096,
+          "samples": 6
+        },
+        "incomplete": false,
+        "legacy_counter_resets": 0,
+        "model_calls": 6,
+        "model_calls_basis": "response_ids",
+        "sessions": 1,
+        "tokens": {
+          "cache_write_input": 0,
+          "cached_input": 160256,
+          "input": 179019,
+          "output": 2062,
+          "reasoning_output": 647,
+          "total": 181081
+        },
+        "tool_calls": 5,
+        "turns": {
+          "average_duration_ms": 82798.0,
+          "completed": 1,
+          "duration_ms": 82798
+        }
+      },
+      "completion_event": true,
+      "files": {
+        "accepted": 1,
+        "skipped_lines": 0,
+        "skipped_usage_records": 0
+      },
+      "findings": 0,
+      "first_timestamp": "2026-09-09T18:58:14.373Z",
+      "last_timestamp": "2026-09-09T18:59:37.139Z",
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "review_verdict": "APPROVED"
+    }
+  },
+  "inputs": {
+    "base": "d9811cdd5e4521457a1d61277069fe3d0793f3fe",
+    "sha256": {
+      "AGENTS.md": "508f66ae035a9c701bb961a92db9b48a9829fe4c76d1f9f55c2c45a4526a3dd9",
+      "docs/development-process.md": "4b71f843bfe582d0b37953867946e0eb5211d93757829761ed0d409a4a759f95",
+      "docs/operations/current-delivery-goal.md": "9dfba46de312b2f7ed87b7830859be2a529487b36c031f9c1bdd941dc35c787c",
+      "docs/operations/delivery-goal-history-through-2026-09-09.md": "201117ead4654f382d41b19142358f26992524473530f679daad6918aa3a9fea",
+      "tools/delivery/handoff-template.md": "4acab484fd6a6929cf609779f53852f1eafe9a5df1da2a99ae7ca2d554715ce9"
+    }
+  },
+  "limitations": [
+    "One pair of completed document reviews, not a full implementation/PR experiment.",
+    "Same requested and observed model/effort; no cross-model pricing comparison.",
+    "Tool choices and stochastic output were not fixed; sequential runs had different concurrent machine load.",
+    "Logged input includes cached input; reasoning is part of output; billing unavailable.",
+    "Both reviewers used identical document hashes and criteria, independently returned APPROVED with no findings."
+  ],
+  "requested_effort": "low",
+  "requested_model": "gpt-5.6-sol",
+  "scope": "paired independent document review, identical frozen hashes and criteria"
+}

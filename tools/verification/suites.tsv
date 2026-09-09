@@ -321,3 +321,7 @@ unit	php	tests/InstallationProcess/pdf_navigation_upload_001_test.php
 unit	python3	tests/Verification/quality_graph_current_report_001_test.py
 unit	python3	tests/Verification/quality_graph_current_workflow_001_test.py
 unit	python3	tests/Verification/quality_graph_preflight_001_test.py
+db	php	tests/Yii2/yii2_authentication_001_test.php
+db	php	tests/Yii2/yii2_session_failure_001_test.php
+unit	python3	tests/Usage/usage_aggregation_001_test.py
+unit	python3	tests/Verification/change_verification_001_test.py

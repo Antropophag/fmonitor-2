@@ -106,6 +106,8 @@ class Inventory(native.NativeSuites):
         ]
         added_by_suite = {
             'unit': [
+                'python3\ttests/Usage/usage_aggregation_001_test.py\n',
+                'python3\ttests/Verification/change_verification_001_test.py\n',
                 'python3\ttests/Verification/quality_graph_current_report_001_test.py\n',
                 'python3\ttests/Verification/quality_graph_current_workflow_001_test.py\n',
                 'python3\ttests/Verification/quality_graph_preflight_001_test.py\n',
@@ -158,6 +160,8 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Runtime/production_readiness_schema_001_test.php\n',
                 'python3\ttests/Runtime/yii2_runtime_001_test.py\n',
                 'php\ttests/Runtime/yii2_readiness_001_test.php\n',
+                'php\ttests/Yii2/yii2_authentication_001_test.php\n',
+                'php\ttests/Yii2/yii2_session_failure_001_test.php\n',
                 'php\ttests/Runtime/production_process_readiness_001_test.php\n',
                 'php\ttests/Runtime/initial_owner_provisioning_001_test.php\n',
                 'php\ttests/Runtime/runtime_dml_privilege_probe_001_test.php\n',
