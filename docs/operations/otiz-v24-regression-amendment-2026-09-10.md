@@ -33,3 +33,9 @@ migration versions remain untouched. Independent review failure was reproduced
 by reviewer; corrected focused command
 `php tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php`
 now passes both existing- and missing-revision concurrency cases (exit0).
+
+Full focused execution found the workforce runner's exact25-byte-prefix inventory
+also needed the same two additions. Root updated only those table literals;
+`php tests/InstallationProcess/workforce_canonical_runner_001_test.php` now passes
+its complete public-runner matrix. Historical data/DDL/prefix rejection assertions
+remain intact. Output retained at `/tmp/fm2-root-workforce-frontier.log`.

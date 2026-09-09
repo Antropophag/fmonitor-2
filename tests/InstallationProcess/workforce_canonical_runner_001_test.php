@@ -327,6 +327,8 @@ try {
                 'fm2_original_maintenance_audits',
                 'fm2_original_maintenance_requests',
                 'fm2_otiz_publications',
+                'fm2_otiz_settlement_locks',
+                'fm2_otiz_settlement_operations',
                 'fm2_outbox_attempt_events',
                 'fm2_outbox_intents',
                 'fm2_pilot_auth_attempts',
