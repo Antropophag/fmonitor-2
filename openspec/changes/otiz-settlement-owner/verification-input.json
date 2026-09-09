@@ -1,0 +1,36 @@
+{
+  "change": "otiz-settlement-owner",
+  "planned_paths": [
+    "app/Otiz/MariaDbOtizSettlement.php",
+    "app/Otiz/OtizSettlement.php",
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "config/yii/web.php",
+    "rapid-pilot/Otiz.php",
+    "tests/Otiz/settlement_owner_001_test.php",
+    "tests/Otiz/settlement_concurrency_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "authorized-http-commands",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "POST /pilot/otiz/snapshots/{snapshotId}/objects/{objectId}/discipline, POST /pilot/otiz/snapshots/{snapshotId}/payments/complete and POST /pilot/otiz/closures/{closureId}/reverse",
+      "tests": ["tests/Yii2/yii2_otiz_settlement_001_test.php"]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "cross-snapshot-budget-replay-and-reversal",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "FMonitor2\\Otiz\\OtizSettlement public commands",
+      "tests": ["tests/Otiz/settlement_owner_001_test.php"]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "concurrent-serialization-and-atomic-failure",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "FMonitor2\\Otiz\\OtizSettlement public commands from concurrent processes",
+      "tests": ["tests/Otiz/settlement_concurrency_001_test.php"]
+    }
+  ]
+}
