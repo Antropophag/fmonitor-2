@@ -83,3 +83,40 @@ This Gate 5 approval reviews the implementation; it does not claim those platfor
 results, production readiness, merge completion, or closure of #25.
 
 Blocking changes: None.
+
+## Supplemental Gate 5 — inventory compatibility correction
+
+- Triggering source: `4221646f6b189b38ad60dcec8f4fc71330fbc2b4`, PR 73 run
+  `34349144148`
+- Reviewed correction: `028ad2c435affda4a4323e37cb0c58697e9d9ef7`
+- Approved supplemental Gate 3:
+  `reviews/tests/QUALITY-GRAPH-INVENTORY-COMPAT-001.md`
+- Verdict: **APPROVED**
+
+No blocking findings. The terminal first full CI run completed all nine jobs and
+isolated one governance failure in
+`test_repository_baseline_membership`; `verify` then failed as required. Fast,
+unit, E2E, both integration shards and `quality-results` succeeded. The seven
+actual Result artifacts retained the exact head/run/attempt and reported
+governance and verify as failed while the other five nodes remained passed. This
+is correct fail-closed behavior and supplies real negative transport evidence.
+
+The correction adds exactly three literal `unit` entries to the compatibility
+allowlist for the three newly registered Quality Graph contract tests. Every path
+already occurs exactly once in `tools/verification/suites.tsv` and
+`tools/verification/categories.json`; it now occurs exactly once in
+`added_by_suite['unit']`. No baseline hash or assertion changes, category moves,
+wildcards, production source, manifest, declaration, workflow, report, preflight
+or publisher changes are present in `4221646f..028ad2c4`.
+
+Independent verification on `028ad2c4`:
+
+- `python3 tests/Verification/verification_inventory_001_test.py` — 15 tests,
+  PASS.
+- Exact occurrence inspection — one catalog, one category and one compatibility
+  entry for each of the three test paths.
+- `git diff --check 4221646f..028ad2c4` — PASS.
+
+The correction is suitable for the authoritative CI rerun. A successful rerun is
+still required before claiming full exact-head CI success; this supplemental
+approval does not convert run `34349144148` into a green run.

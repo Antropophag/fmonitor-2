@@ -85,3 +85,23 @@ Inline publisher Bash из parsed YAML реально исполнен на miss
 
 Кандидат готов к authoritative CI/bootstrap PR. После bootstrap merge остаётся
 реальный representative publisher proof. Наличие Gate5 не закрывает25 заранее.
+
+## Первый полный CI и correction
+
+PR73, exacthead4221646f, Actions34349144148 завершён FAILURE. Полный список
+терминальных jobs и REGRESSION_FAILURE собран до correction push. Исходный отказ
+ровно один: verification_inventory_001_test.py/test_repository_baseline_membership
+не учитывал3новых QGunit-теста в added_by_suite. verify отказал вслед за governance.
+Fast, unit, обе integration части, E2E и quality-results — SUCCESS.
+
+Семь реально загруженных Result artifacts проверены pinned parser: exacthead/run/
+attempt1, governance+verify=failed, остальные5passed; collection не скрыла отказ.
+Raw inventory/logs/parsed artifacts: /tmp/fmonitor-qg-ci-inventory.json,
+/tmp/fmonitor-qg-ci-first-full.log, /tmp/fmonitor-qg-ci-first-results/.
+
+Локальный полный governance9 воспроизвёл только тот же отказ. Correction028ad2c4
+добавляет3literal entries; прежние baselinehashes и assertion exactpresence1
+сохранены. Focusedinventory15/0, независимый testreview APPROVED:
+reviews/tests/QUALITY-GRAPH-INVENTORY-COMPAT-001.md. Production и workflow bytes
+не изменились. Повторный exact-head CI обязателен; старый FAILURE не объявляется
+успешным по локальному исправлению.
