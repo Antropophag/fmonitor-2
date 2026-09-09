@@ -1743,4 +1743,3 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 /* Register controls wrap as a group while preserving the shared field geometry. */
 .fm2-otiz-register-toolbar { flex-wrap: wrap; }
 .fm2-otiz-register-toolbar .shlz-field { min-inline-size: 160px; }
-.fm2-shell .fm2-nav-text,.fm2-shell .fm2-logo-name{display:block}.fm2-shell .fm2-logout{display:flex;inline-size:auto;padding-inline:10px;gap:6px}.fm2-shell .fm2-logout-text{position:static;inline-size:auto;block-size:auto;clip-path:none;overflow:visible}
