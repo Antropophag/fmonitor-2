@@ -44,3 +44,37 @@ v23 database.
 This approval covers verification registration and migration-frontier compatibility
 only. Pending Jobs behavior tests may remain RED until their separately reviewed
 production implementations land.
+
+## PR64 first-CI demo/calendar correction addendum
+
+GitHub Actions run `34315020151` at head
+`49b7540bd39b9fb46b0c15d85fa392b085c402af` had exactly two failures in the complete
+inventory `/tmp/pr64-49b7540b-failure-inventory.log`: the calendar verifier still
+required terminal v22, and demo status became incomplete because its read-only
+catalogue remained at 63 names while provisioning/marker already used v23.
+
+Pre-correction hashes:
+
+```text
+12e0c3c313c260f76841a69709ee4e7753aec0876a3ad89dcbebfe2bbeb43e89  app/demo/PilotDemoDatabase.php
+6b99acf4fb90aa4a07e0123a5a8f2776d6cc576bb57bb08d35084685e602903a  rapid-pilot/verify-calendar-projections.php
+fcfc98cde1cb6629bbefbea8a77a9fac20560884ef656e4af547b5cfaee1a9e0  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+```
+
+The independently reviewed demo test first changed only its literal expected
+catalogue/marker to v23 and reproduced the causal RED: expected ready generation1,
+observed incomplete/null. The production correction adds exactly the six reviewed
+Jobs names to the read-only demo catalogue and changes its comment to v23. Calendar
+changes only the terminal version/list expectation.
+
+Reviewed final hashes:
+
+```text
+c7f7ed3917cf5323cb4f706b12fcdd6cc48fca74c314687b94eae4e9dc045a97  app/demo/PilotDemoDatabase.php
+f52a390e79d21d01dd8df8237c1e4b44ca9e64f6215e5e9341295d2b3d59b970  rapid-pilot/verify-calendar-projections.php
+fdfff010053c5b3832bfe8f325a9f1035c4ef12be3739e580cfb79fc651c01ae  tests/InstallationProcess/pilot_demo_bootstrap_001_test.php
+```
+
+Calendar verification and the complete demo public launch/walkthrough/persistence/
+reset/cleanup test are GREEN; PHP syntax and `git diff --check` pass. **Bounded Gate3
+and Gate5 verdict: APPROVED.** Authoritative PR CI rerun remains required.

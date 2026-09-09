@@ -11,7 +11,7 @@ use RuntimeException;
 /** Owns fictional, disposable demo generations only; never used by runtime HTTP or imports. */
 final class PilotDemoDatabase
 {
-    /** Canonical v22 table identities; status checks only read, never run migrations. */
+    /** Canonical v23 table identities; status checks only read, never run migrations. */
     public const TABLES = [
         'fm2_pilot_otiz_snapshots', 'fm2_pilot_otiz_snapshot_objects', 'fm2_pilot_otiz_snapshot_allocations',
         'fm2_pilot_otiz_snapshot_issues', 'fm2_pilot_otiz_snapshot_evidence', 'fm2_pilot_otiz_payment_closures',
@@ -33,7 +33,8 @@ final class PilotDemoDatabase
         'fm2_pilot_users', 'fm2_pilot_user_roles', 'fm2_pilot_user_role_events', 'fm2_pilot_user_status_events',
         'fm2_process_events', 'fm2_process_tasks', 'fm2_process_user_capabilities', 'fm2_workforce_catalog',
         'fm2_workforce_observations', 'fm2_workforce_sync_metadata', 'fm2_workforce_sync_runs',
-        'fm_maintable',
+        'fm2_jobs', 'fm2_job_events', 'fm2_outbox_intents', 'fm2_outbox_attempt_events',
+        'fm2_scheduler_slots', 'fm2_worker_heartbeats', 'fm_maintable',
     ];
 
     public static function provision(mysqli $db, string $process, string $legacy, string $fingerprint, int $generation, string $nonce, string $now): void
