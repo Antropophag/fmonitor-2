@@ -53,7 +53,7 @@ the exact pre-implementation hashes and RED output are preserved in
 | `tools/delivery/change-verification.py` | `cbf030e867064e33dcb0646b270c361728581f234bd73ff94e1f081cd31b8449` |
 | `tools/delivery/change-verification.md` | `274d8e5167bebce395ea8bb8afd0eb2ec8027d043fd49bb3755f2dc0d8b139f9` |
 | `openspec/changes/compute-change-verification-obligations/verification-input.json` | `3244545455e0547e64aadd4c80a2d2687d470c80d102c1736df09fa7a0e39077` |
-| `openspec/changes/compute-change-verification-obligations/proposal.md` | `e93cb151844c4cbbd1467df50fde29c733dfdddc7044b1fa9a7a57ee0f2fd180` |
+| `openspec/changes/compute-change-verification-obligations/proposal.md` | `236e886e37e3bc143d2fa3cabd9c0daf2d999e67630307db26165e1c8946e0c0` |
 | `openspec/changes/compute-change-verification-obligations/design.md` | `d032e683b2aad4b04bb767d34bb79258959a302fb7bcd606a6467b550b3c3e9e` |
 | `openspec/changes/compute-change-verification-obligations/tasks.md` | `2ea71a2dbe5b07c3de5a7670111c67d421ea2d75360f39195869198e3aa9d2ee` |
 | `openspec/changes/compute-change-verification-obligations/specs/verification/change-obligations/spec.md` | `9c350736495cd1f29acaa043241f97a28a9dafd70b90fcd45dd997b04c0487c7` |
@@ -154,3 +154,15 @@ Reviewed metadata SHA-256:
 
 Validation: strict JSON parse and `git diff --check` both exit 0. No production
 implementation or test expectation changed in this closeout.
+
+## Whitespace-only proposal closeout
+
+Commit `f0f7e23bb83f1d606c16794cdb4a6a0fccd68119` removes exactly one
+extra blank line at the end of
+`openspec/changes/compute-change-verification-obligations/proposal.md` relative
+to its parent. The reviewed proposal SHA-256 is now
+`236e886e37e3bc143d2fa3cabd9c0daf2d999e67630307db26165e1c8946e0c0`.
+`git show --check` and full `git diff --check
+d9811cdd5e4521457a1d61277069fe3d0793f3fe..HEAD` pass. This is formatting
+only; implementation, specifications, tests, policy, and behavior are unchanged,
+so the Gate 5 **APPROVED** verdict stands without another test run.
