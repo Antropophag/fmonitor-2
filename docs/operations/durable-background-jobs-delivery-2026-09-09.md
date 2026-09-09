@@ -53,3 +53,24 @@ Issue36 will separately prove backup/restore/update of v23 Jobs state. Product
 notification triggers/templates, operator UI30 and real external activation remain
 separate work. Existing primary8092 and retained8093 were untouched; the older8093
 synthetic OTIZ lineage limitation remains documented in the overnight checkpoint.
+
+## First full CI and bounded correction
+
+PR64 head49b7540b full Actions34315020151 failed only two executables in
+Integration2/2; the other six executing groups succeeded, including E2E and
+Integration1/2. The verify aggregate correctly failed. Full log and complete failure
+inventory were collected before edits at `/tmp/pr64-49b7540b-full.log` and
+`/tmp/pr64-49b7540b-failure-inventory.log`.
+
+The calendar verifier still asserted terminal22. Demo provisioning/ready markers
+already used23, but its read-only table-name catalogue remained63 entries, so status
+reported incomplete. Independent Gate3 approved literal verifier/test frontier23
+updates and exactly six Jobs names in the demo catalogue. Local demo RED reproduced
+ready→incomplete/null before that source change. Calendar and complete public demo
+launch/walkthrough/persistence/reset/cleanup now pass; syntax/diff and architecture7
+rules pass. Corrected full CI is still required.
+
+This correction changes only the disposable demo table-name catalogue in production
+source. Earlier exact116f65c4 image remains the workforce/daemon evidence source;
+queue/outbox/worker/scheduler/native workforce/runtime configuration files are
+unchanged. The old image must not be labelled as the later corrected source.
