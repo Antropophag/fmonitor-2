@@ -48,3 +48,25 @@ This approval deliberately fail-closes at canonical v22. Once #34 lands migratio
 AUTO_INCREMENT inventories, the deferred jobs/outbox statement and the complete
 recovery test require fresh independent review. The v22 constants must not be
 silently edited or treated as approval for v23 worker/outbox recovery.
+
+## Operational v22 drill addendum
+
+Private evidence `/tmp/fmonitor2-restore36-drill.x3XUZm` was reviewed with directory
+mode 0700 and evidence files mode 0600. The final summary records exact source/image
+identity, v22/63-table bundle hashes, `RESTORE_COMPLETED`, ready health, exact source
+state preservation, owner-session progress 100/private PDF 327 bytes, engineer
+session access to seven photos, and three successful append requests ending at
+revision 61 with 41 items. All DB dumps remain identical except the three expected
+append-only checklist tables.
+
+An earlier PDF 503 was reproduced on both source and restore and traced to the
+source browser fixture adding legacy `fm2_assignment_orders.id=81` after native
+selection/registry order 81. The registered-composition reader correctly requires
+the opposite source family to be empty. Removing only that invalid synthetic OTIZ
+shim before the final bundle restored the same public PDF read on source and target;
+the final PDF assertion is therefore not vacuous and the failure was not restore
+drift.
+
+Tasks 4.1 and 4.2 are supported by the final evidence. Restored OTIZ remains pending
+a separate valid legacy case. The shared #33 fixture requires its own reviewed
+correction and a post-OTIZ native original-read regression.

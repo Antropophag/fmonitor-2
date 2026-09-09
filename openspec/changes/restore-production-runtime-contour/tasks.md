@@ -18,8 +18,8 @@
 
 ## 4. Synthetic restore и update drill
 
-- [ ] 4.1 Поднять task-owned populated source contour существующим production browser fixture, создать bundle и сохранить primary evidence вне repository; проверить точные source/image/bundle identities и elapsed timestamps.
-- [ ] 4.2 Восстановить bundle в новый project/DB/state volumes и сравнить exact ordered users/roles/domain/history rows, PDF/photo/session hashes и связи; проверить existing-cookie authorized read и новую append-only command.
+- [x] 4.1 Поднять task-owned populated source contour существующим production browser fixture, создать bundle и сохранить primary evidence вне repository; проверить точные source/image/bundle identities и elapsed timestamps.
+- [x] 4.2 Восстановить bundle в новый project/DB/state volumes и сравнить exact ordered users/roles/domain/history rows, PDF/photo/session hashes и связи; проверить existing-cookie authorized read и новую append-only command.
 - [ ] 4.3 Собрать второй reviewed exact image, выполнить отдельные migrations и recreate web/php; проверить readiness, existing session/private files/history и новый browser write после update.
 - [ ] 4.4 Проверить additive-compatible image rollback без удаления schema/history; отдельным failure case зафиксировать, что incompatible migration требует restore-forward и не допускает blind DB downgrade.
 

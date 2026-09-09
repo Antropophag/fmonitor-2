@@ -10,9 +10,9 @@ final class SelectedOriginalFixture implements O\AssignmentOrderOriginalClock
     public readonly SelectionNativeFixture $selection;
     public string $control='';public string $privateRoot='';public string $safeLog='';
     public int $clockCalls=0;private bool $ownsControl=false;
-    public function __construct(public readonly string $prefix = '')
+    public function __construct(public readonly string $prefix = '', ?\Closure $beforeRegistry = null)
     {
-        $this->selection=new SelectionNativeFixture($prefix);
+        $this->selection=new SelectionNativeFixture($prefix, $beforeRegistry);
         try {
             $db=$this->selection->db;
             I\OriginalAttemptAuditSchemaMigration::apply($db,$prefix);
