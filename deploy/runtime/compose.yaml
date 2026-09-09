@@ -99,6 +99,58 @@ services:
     stop_grace_period: 60s
     restart: unless-stopped
 
+  jobs-worker:
+    <<: *app
+    profiles: ["jobs"]
+    command: ["php", "bin/fmonitor2-jobs.php", "worker"]
+    environment:
+      <<: *runtime-environment
+      FMONITOR_BITRIX_ORIGIN: "${FMONITOR_BITRIX_ORIGIN:-}"
+      FMONITOR_BITRIX_WEBHOOK_USER_ID: "${FMONITOR_BITRIX_WEBHOOK_USER_ID:-}"
+      FMONITOR_BITRIX_DEPARTMENT_IDS_JSON: "${FMONITOR_BITRIX_DEPARTMENT_IDS_JSON:-}"
+      FMONITOR_BITRIX_TOKEN_FILE: /run/fmonitor-secrets/bitrix-token
+      FMONITOR_BITRIX_CA_FILE: "${FMONITOR_BITRIX_CA_HOST_FILE:+/run/fmonitor-secrets/bitrix-ca.pem}"
+    volumes:
+      - state:/home/fmonitor/.local/state/fmonitor2
+      - secrets:/run/fmonitor-secrets
+      - type: bind
+        source: "${FMONITOR_BITRIX_TOKEN_HOST_FILE:-/dev/null}"
+        target: /run/fmonitor-secrets/bitrix-token
+        read_only: true
+      - type: bind
+        source: "${FMONITOR_BITRIX_CA_HOST_FILE:-/dev/null}"
+        target: /run/fmonitor-secrets/bitrix-ca.pem
+        read_only: true
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "bin/fmonitor2-jobs.php", "health"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 15s
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+  jobs-scheduler:
+    <<: *app
+    profiles: ["jobs"]
+    command: ["php", "bin/fmonitor2-jobs.php", "scheduler"]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "bin/fmonitor2-jobs.php", "health"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 15s
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    restart: unless-stopped
+
 volumes:
   database:
   state:

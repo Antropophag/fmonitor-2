@@ -147,3 +147,11 @@ Root applied the exact test-only patch to Jobs without replacing its reviewed v2
 frontier. There the browser hash is
 `b460561892bb07322628c026a262ad5fe5ba76c3385c71147de9b6a410c5713d`;
 the three helper hashes are identical. Integration run is recorded separately.
+
+Root v23 integration: `FMONITOR_TEST_DB_ADMIN_PASSWORD=<synthetic local value> php
+tests/Runtime/production_runtime_browser_001_test.php` PASS, exit0, exact reviewed
+Jobs browser hashb4605618. Full native41-item/7-photo85→100 journey, restart and
+row/private-file/session preservation, separate legacy OTIZ calculation/replay/accept/
+XLSX, then native original327 read all passed through nginx/FPM. Local log:
+`/tmp/fmonitor-jobs-valid-browser.log`. This is a focused runtime regression; full
+repository CI remains pending.

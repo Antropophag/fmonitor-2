@@ -1,0 +1,3 @@
+<?php
+declare(strict_types=1);
+$mode=$argv[1]??'';$arrival=getenv('JOBS_PROTOCOL_ARRIVAL');if(is_string($arrival)&&$arrival!=='')file_put_contents($arrival,(string)getmypid(),LOCK_EX);posix_kill(posix_getppid(),SIGTERM);if($mode==='no-read'){sleep(10);exit(0);}stream_get_contents(STDIN);$outputs=['invalid'=>'not-json','list'=>'[]','unknown'=>'{"status":"unknown"}','extra'=>'{"status":"completed","result":{},"extra":1}','wrong-result'=>'{"status":"completed","result":[]}','invalid-code'=>'{"status":"retryable","failureCode":"bad-code"}','secret-result'=>'{"status":"completed","result":{"password":"forbidden"}}'];if(isset($outputs[$mode])){echo$outputs[$mode],"\n";exit(0);}if($mode==='oversize'){echo str_repeat('x',70000);exit(0);}exit(70);

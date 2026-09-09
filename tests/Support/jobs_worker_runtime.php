@@ -1,0 +1,5 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__,2).'/app/autoload.php';use FMonitor2\Jobs\{JobWorkerProcess,MariaDbJobQueue,MariaDbWorkerHeartbeat};
+$db=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_USER'),getenv('FMONITOR_TEST_DB_PASSWORD'),getenv('FMONITOR_TEST_DB_NAME'),(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$clock=static fn():string=>trim(file_get_contents(getenv('JOBS_CLOCK_FILE')));$tokens=[str_repeat('a',64),str_repeat('b',64)];$prefix=getenv('FMONITOR_PROCESS_TABLE_PREFIX');$queue=new MariaDbJobQueue($db,$prefix,$clock,static function()use(&$tokens):string{return array_shift($tokens);},['test.blocking'=>[1]]);$command=static fn(array$job):array=>[PHP_BINARY,dirname(__DIR__).'/Support/jobs_blocking_handler.php'];$grace=(int)(getenv('JOBS_GRACE_SECONDS')?:5);$worker=new JobWorkerProcess($queue,new MariaDbWorkerHeartbeat($db,$prefix),['test.blocking'=>[1=>$command]],$clock,'runtime-worker',1,50_000,$grace);exit($worker->run()['exitCode']);
+

@@ -69,7 +69,7 @@ function prbSeed(SelectedOriginalFixture $fixture,string $password):void
 {
     $native=$fixture->selection;$db=$native->db;$p=$native->prefix;
     $migration=CanonicalMigrationApplication::run($db,$p,ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0,true,22,true],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null,InspectionPhotoContentIndexSchemaMigration::isCompleteCompatible($db,$p)],'fixture canonical v22');
+    assertSameValue([0,true,23,true],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null,InspectionPhotoContentIndexSchemaMigration::isCompleteCompatible($db,$p)],'fixture canonical v23');
     $db->query("UPDATE `{$p}fm_maintable` SET ordadr_address='Москва, Тестовая улица, 1',entrance='2',regnumber='77-000123',workdatestart='2026-09-05',plan_finish_date='2026-12-20' WHERE id=4512");
     $db->query("UPDATE `{$p}fm2_workforce_catalog` SET reconciliation_state='delivered'");
     foreach(range(7003,7027)as$tab)$native->schema->insert($p.'fm2_workforce_catalog',['installer_tab_id'=>$tab,'fio'=>'Монтажник '.$tab,'position'=>'Монтажник','employment_status'=>'employed','reconciliation_state'=>'delivered','employed_from'=>'2020-01-01','employed_to'=>null,'workforce_source'=>'synthetic-hr','workforce_source_updated_at'=>'2026-09-01T06:00:00Z']);

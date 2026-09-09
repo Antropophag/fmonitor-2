@@ -193,6 +193,8 @@ def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
     if rel == "app/RuntimeRestore/RuntimeRecovery.php":
         return True
+    if rel.startswith("app/Jobs/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/Otiz/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderComposition/"):
@@ -260,7 +262,7 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 )
         if not production_file(path):
             continue
-        if rel.startswith("app/Runtime/") or rel == "public/runtime.php":
+        if rel.startswith(("app/Runtime/", "app/Jobs/")) or rel == "public/runtime.php":
             for offset, evidence in runtime_migration_matches(text):
                 number = text.count("\n", 0, offset) + 1
                 violations["ddl_ownership"].append(
@@ -295,9 +297,15 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
             sql_line = php_sql_detection_line(line) if path.suffix == ".php" else line
             if SQL.search(sql_line) and not sql_owner(path):
                 violations["sql_ownership"].append(finding("sql", path, number, fingerprint_lines[number - 1], source_normalized=True))
+            if rel.startswith("app/Jobs/"):
+                owned = {"fm2_jobs", "fm2_job_events", "fm2_outbox_intents",
+                         "fm2_outbox_attempt_events", "fm2_scheduler_slots", "fm2_worker_heartbeats"}
+                for table in re.findall(r"\bfm2_[A-Za-z0-9_]+\b", sql_line):
+                    if table not in owned:
+                        violations["sql_ownership"].append(finding("jobs-foreign-table", path, number, table))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
-        if rel.startswith("app/Otiz/"):
+        if rel.startswith(("app/Otiz/", "app/Jobs/")):
             for number, line in enumerate(lines, 1):
                 if re.search(r"(?:FMonitor2\\PilotHttp|FMonitor2\\RapidPilot|app/PilotHttp|rapid-pilot)", line):
                     violations["dependency_direction"].append(finding("dependency", path, number, line))
