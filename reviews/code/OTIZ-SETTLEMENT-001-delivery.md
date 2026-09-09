@@ -68,3 +68,19 @@ post-review integration gate and is not represented as already complete.
 None.
 
 Summary: Standards 0 findings; Spec 0 findings.
+
+## Verification-catalogue carry-forward
+
+The approval carries forward to `275523761032dc742ee8809403a3a3c919562977`.
+After the reviewed production candidate and review records, this commit changes
+only `tests/Verification/verification_ci_001_test.py`: its exact expected E2E
+list now includes the already registered
+`yii2_otiz_settlement_browser_001_test.php` and
+`runtime_settlement_compatibility_001_test.php`. Both entries already exist in
+`tools/verification/suites.tsv` and are classified as E2E in
+`tools/verification/categories.json`; no entry is removed or reordered. The
+previously failing method is GREEN, the complete development-setup suite reports
+8 PASS, and the regenerated exact-head verification plan reports
+`CHANGE_VERIFICATION_OK`. This setup-only correction introduces no production,
+specification, or business-test change. Verdict remains **APPROVED**, with no
+additional finding.
