@@ -61,3 +61,10 @@ prototype it exits `255`: expected the retained heading `Выплаты на 30.
 actual `false`. The strengthened test also requires snapshot status, object and
 money values, navigation/export, complete discipline fields, Yii CSRF and
 operation IDs. The prototype is not claimed as test-first work or a candidate.
+
+The corrected oracle scopes `_csrf`, `operationId` and business inputs to their
+exact closure/complete forms, and proves the complete form excludes discipline
+inputs. After the successful closure redirect it requires the retained flash,
+object, amount, basis, artifact and a reverse form whose own action contains
+CSRF, operation UUID and reversal basis. The fresh run remains exit `255` at the
+earlier missing retained heading, before these downstream assertions.
