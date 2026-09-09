@@ -58,3 +58,7 @@ PR68 MERGED, main c25c1f1111444221adfcaa0998cb758349ec94ba, full Actions34332358
 В чат выведены три нерешённых продуктовых вопроса: брать исходныйT из карточки в момент расчёта или отдельно подтверждать ФКР; нужен ли audited globalwaiver; сохранять ли literalExcel новую сумму без прироста прогресса. Примерпоследнего: fund100000,completed100%,kss0.9,paid90000→ещё9000 в новом расчёте. Первичный анализ CT/EE/AN: /tmp/fm2-otiz-progress-paid-recon.md; workbook не изменялся.
 
 Уже утверждены: календарные дни/1%вдень; penalty после ранее выплаченного; coefficientfloor0; FKR вводитmandatoryPDF+дату+новыйсрок; PTO дажепослерепорта; largest-remainder allocation. Предложенное обращение с legacydeadlineholds ещё требует точногоreview, не объявлять новую бизнеснормуутверждённой по одному текстуагента. Никаких backfill, stand/volume или реальных финансовых/внешних действий не выполнялось.
+
+## Saved continuation
+
+Main c25c1f11 integrated in planning branch via812f960e; archive17 cherry-pick276e8fff. Final Gate1 addendum resolves capability/frontier/atomic-supersession technical findings but retains three product choices. No66 source or executable tests authored. Recurrence research: otiz-excel-recurring-payment-analysis-2026-09-09.md. All bounded agents finished; no active tests or user-contour changes.

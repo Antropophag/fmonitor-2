@@ -1,3 +1,9 @@
+## Current continuation: issue66 after PR68 (2026-09-09)
+
+Issue17 is complete: PR68 merged c25c1f11, Actions34332358012 SUCCESS/VERIFY_OK on exact69d2edd1. Continue in `/Users/antropophag/code/fmonitor-2-otiz-excel-20260909`, branch `codex/otiz-excel-66`; main with17 is integrated. Archive17 metadata is retained in this branch for publication with66.
+
+Issue66 has OpenSpec/spec/research and independent Gate1 CHANGES_REQUESTED for three owner choices: originalT current-card capture versus explicit FKR confirmation; globalEU2 waiver; repeated new money on unchanged inputs after prior payment. Questions were sent in chat. No response is not approval of a recommended option. No66 source/tests implemented. Next: incorporate answers, final Gate1, RED/review/implementation. See docs/operations/otiz-excel-delivery-2026-09-09.md. No new overnight Goal, stand or volume mutation. Independent PR67 runtime startup is outside this task.
+
 ## Уточнение очереди — owner2026-09-09
 
 В ходе #17 владелец предоставил рабочую Excel-книгу ОТиЗ и поручил реализовать её просрочку и справки отдельным PR. Следующая задача **#66 после #17, затем #26**. Issue66 содержит literal формулу и принятые исключения: kss floor0, справку/PDF вводит ФКР, дата акта применяется даже после report date как в Excel. Новые денежные правила не входят в #17. Источник и разбор: docs/operations/otiz-overdue-workbook-analysis-2026-09-09.md; workbook остаётся private в Downloads.
