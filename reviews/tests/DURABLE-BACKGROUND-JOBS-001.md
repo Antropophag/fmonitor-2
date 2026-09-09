@@ -77,11 +77,11 @@ guessed result and bounded invalid/oversized/non-reading handler behavior.
 
 ## Explicit exclusions
 
-At the time of the initial aggregate, operator failed-job listing and Jobs health
-were pending; the addendum below now records their bounded Gate 3 approval. This
-aggregate does **not** approve their production Gate 5, deployment
-CLI/service/Compose wiring, production handler enablement or live external
-transport. `MariaDbOperatorJobs::retry` production code is approved only as used by
+At the time of the initial aggregate, operator/health and runtime wiring were
+pending; addenda below now record their bounded Gate 3 approvals, and operator/
+health has a separate Gate 5 record. This aggregate does **not** approve deployment
+CLI/service/Compose production implementation, production handler enablement or live
+external transport. `MariaDbOperatorJobs::retry` production code is approved only as used by
 the reviewed outbox recovery contract. Remaining production surfaces require
 independent Gate 5 evidence.
 
@@ -105,3 +105,27 @@ irrelevant, and includes a separate healthy process-heartbeat control.
 **Gate 3 verdict: APPROVED.** Production listing/health Gate 5 is recorded in
 `reviews/code/DURABLE-JOBS-OPERATOR-HEALTH-001.md`; deployment runtime wiring
 remains pending.
+
+## Production runtime wiring Gate 3 addendum
+
+```text
+82256aa8c5d52b8719bcc289b75992c7a93fd1e87f79c0a6913cbd7850690505  specs/JOBS-RUNTIME-WIRING-001.md
+55c5121571442bce8816b270660e2d6d11514b9de928f23334e8798b32827637  tests/Jobs/jobs_runtime_contract_001_test.php
+fa80e8a88b611387dcc404f8261d2ba0b32ad7a55981616a22c9da0921bfc0de  tests/Jobs/jobs_runtime_cli_001_test.php
+e7350c0947f798687dae9fce8c3b1d40490ef374755245adafc97f4d99d3a277  tests/Jobs/jobs_runtime_handler_validation_001_test.php
+d4df49f5d048f38c665909361b3594d0fd250ac7f87b8d4917a29bcc56525b25  tests/Jobs/jobs_runtime_workforce_cli_001_test.php
+07c0ed02ff7ea63cd14350a13da3f613abd61314fe8d38b660a43ee057ca4741  tests/Jobs/legacy_workforce_once_delegation_001_test.php
+31c92ed7f9293eb34c8d215fccb454817e078e9fba664d6c6d070fcf839655f3  tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php
+```
+
+The reviewed RED package covers resolved default/jobs Compose profiles, exact role
+commands, shared image, SIGTERM/60-second grace and worker-only read-only Bitrix
+secrets. Public one-shot CLI outcomes have closed stdout/stderr and invalid/config
+zero-mutation controls. Internal dispatch rejects malformed/type/version/shape
+before unreachable DB/transport access. The verified local HTTPS workforce handler
+uses the exact scheduler payload under a DML-only principal and redacts token, PII
+and paths. The legacy `--once` adapter has explicit negative mode/prefix controls.
+
+**Gate 3 verdict: APPROVED.** Production runtime-wiring Gate 5 is recorded in
+`reviews/code/DURABLE-JOBS-RUNTIME-WIRING-001.md`; built-image daemon/HTTPS Compose
+execution and full CI remain pending.

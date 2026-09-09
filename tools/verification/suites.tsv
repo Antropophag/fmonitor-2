@@ -302,3 +302,5 @@ db	php	tests/Jobs/workforce_job_handler_001_test.php
 db	php	tests/Jobs/workforce_job_idempotency_001_test.php
 db	php	tests/Jobs/workforce_scheduler_001_test.php
 db	php	tests/Jobs/workforce_scheduler_concurrency_001_test.php
+db	php	tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php
+db	php	tests/Jobs/durable_queue_connection_loss_001_test.php

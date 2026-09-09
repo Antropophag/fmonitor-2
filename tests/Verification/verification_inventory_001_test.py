@@ -112,6 +112,8 @@ class Inventory(native.NativeSuites):
                 'python3\ttests/Verification/architecture_guard_001_test.py\n',
             ],
             'db': [
+                'php\ttests/Jobs/durable_queue_connection_loss_001_test.php\n',
+                'php\ttests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php\n',
                 'php\ttests/Jobs/durable_queue_001_test.php\n',
                 'php\ttests/Jobs/durable_queue_concurrency_001_test.php\n',
                 'php\ttests/Jobs/jobs_extensions_schema_001_test.php\n',

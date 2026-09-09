@@ -27,6 +27,10 @@ builds existing verified Bitrix client from explicit origin/user/departments/tok
 file/optional CA and delegates `MariaDbWorkforceJobHandler`; child opens its own DB
 connection. `outbox.dispatch` without configured production transport returns exact
 permanent `OUTBOX_TRANSPORT_UNCONFIGURED`, performs no network and leaks no intent.
+For `workforce.sync`, payload `runIdentity` is the immutable original scheduler
+identity and remains unchanged on an operator-linked retry. The claimed job's
+`jobIdentity` is the current execution-family identity; both are valid UUIDs and may
+differ. The handler passes the current `jobIdentity` to the native idempotent owner.
 
 All modes require direct canonical `FMONITOR_DB_*` and process prefix, no demo
 manifest/generation/default DB endpoint. Worker/scheduler use DML-only principal,
@@ -44,13 +48,22 @@ exact `MariaDbOperatorJobs` shapes. Invalid invocation writes only
 same `FMONITOR_RUNTIME_IMAGE`, both under profile `jobs`; default config/start for
 db/php/web is unchanged and jobs services are inactive unless profile selected.
 Neither publishes a port. Both use runtime DML config/state, `stop_signal: SIGTERM`,
-60s grace, no startup migration/bootstrap. Workforce private token/CA are explicit
-read-only external mounts/config; absent config prevents external handler call.
+60s grace, no startup migration/bootstrap. Only the worker receives Workforce private token/optional CA as explicit read-only
+external mounts/config; the scheduler receives no transport configuration or secrets.
+Absent worker transport config prevents the external handler call.
 
 Scheduler records `scheduler:<FMONITOR_SESSION_INSTANCE>` heartbeat at start and at
 least each 60 seconds even within one immutable hourly slot. Worker uses
 `worker:<instance>`. Slot rows remain immutable schedule history; health freshness
 comes from role heartbeats, not slot timestamps or files.
+
+The historical `rapid-pilot/workforce-worker.sh --once` command remains a thin
+compatibility adapter to the existing native `bin/fmonitor2-sync-workforce.php`.
+It requires the explicit process prefix, invokes the native CLI exactly once, and
+preserves its exit and output. It no longer discovers pilot manifests, loops,
+sleeps, or writes a filesystem readiness marker; invocations without `--once` are
+invalid. Missing explicit prefix, no arguments, or any other argument exits 64 with
+the same closed `CONFIGURATION_INVALID` JSON and never invokes the native CLI.
 
 ## Executable acceptance
 

@@ -112,3 +112,16 @@ The focused fixture is GREEN, all 54 architecture unit tests pass, and the actua
 architecture check remains seven rules with no errors. **Addendum verdict:
 APPROVED.** Jobs runtime may read deployment readiness but cannot invoke migration
 owners.
+
+## Connection-loss characterization
+
+```text
+6b839c29530c0fb7b0ce0b10bad5bee249fd7f694e115cd493d510bdc8e4add2  tests/Jobs/durable_queue_connection_loss_001_test.php
+87916d84262adb0e903e6c8792d81da1ba5328c17dc11b30431bf614ec1ec2dd  tests/Support/jobs_connection_loss_worker.php
+```
+
+A task-owned DML connection is observed by exact thread id while blocked in the
+event trigger after its uncommitted job insert. Killing only that connection rolls
+back job and event, and a new connection creates the same identity. A separate
+event `SIGNAL` fixture returns closed `JOBS_UNAVAILABLE` and preserves the prior
+rows. The supplemental test passes without production changes.
