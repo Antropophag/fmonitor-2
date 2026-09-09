@@ -145,6 +145,27 @@ class ChangeVerification(unittest.TestCase):
         self.assertIn(("app/PilotHttp/Untracked.php", "untracked"), actual)
         self.assertIn(("tests/InstallationProcess/action_001_test.php", "deleted"), actual)
 
+    def test_registered_legacy_verifier_is_required_but_arbitrary_script_is_rejected(self):
+        legacy = "rapid-pilot/verify-calendar-projections.php"
+        (self.root / "rapid-pilot").mkdir()
+        (self.root / legacy).write_text("<?php // registered verifier\n")
+        self.policy["boundaries"].append({"name": "legacy", "patterns": ["rapid-pilot/**"], "categories": ["integration"], "tests": []})
+        self.write_json(".quality-graph/verification-policy.json", self.policy)
+        inventory = json.loads((self.root / "tools/verification/categories.json").read_text())
+        inventory[legacy] = "integration"
+        self.write_json("tools/verification/categories.json", inventory)
+        result = self.plan()
+        self.assertEqual(0, result.returncode, "INTENDED_RED: registered legacy verifier must remain in the plan: " + result.stderr)
+        commands = json.loads((self.root / "plan.json").read_text())["commands"]
+        self.assertEqual(1, sum(command["argv"] == ["php", legacy] for command in commands))
+        self.assertIn({"argv": ["php", legacy], "phase": "focused", "rationale": "changed registered test"}, commands)
+        arbitrary = "rapid-pilot/arbitrary.php"
+        (self.root / arbitrary).write_text("<?php // not registered\n")
+        self.input["acceptances"][0]["tests"] = [arbitrary]
+        self.write_json("change.json", self.input)
+        result = self.plan()
+        self.assertNotEqual(0, result.returncode, "an unregistered arbitrary script is not a test")
+
     def test_unknown_ambiguous_empty_and_bad_mappings_fail_closed(self):
         cases = []
         bad = dict(self.input, planned_paths=["mystery/file.xyz"]); cases.append((bad, self.policy))
