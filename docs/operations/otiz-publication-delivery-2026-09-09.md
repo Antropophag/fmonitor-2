@@ -115,3 +115,28 @@ reset/cleanup тест PASS. Повторный полный CI проверяе
 повторён governance:9tests,0failures. AGENTS закрепляет path-trigger для HTTP-файлов
 и полный перечень CI failures до чтения ограниченных фрагментов. Независимый review
 подтвердил это изменение. Следующий CI head включает защиту и исправленные вызовы.
+
+
+## Финальная сверка поставки — 2026-09-09
+
+Исторические pending-статусы выше описывают моменты до завершения CI.
+[PR61](https://github.com/Antropophag/fmonitor-2/pull/61) MERGED, merge commit
+`eb88ed2f7edb4ad609662e9268e1d8defcb18ceb`. Проверенный exact head
+`4fcebfdf45e3f986681f33c8474b6070436a7e28`,
+[Actions34282154511](https://github.com/Antropophag/fmonitor-2/actions/runs/34282154511)
+SUCCESS; все восемь jobs успешны, полный VERIFY_OK зафиксирован в PR.
+Статус и head повторно прочитаны через GitHub CLI при этой сверке.
+
+Done первого среза подтверждён: A01 RED→GREEN, единственный application owner
+`SnapshotPublication` для build/publish/accept, удаление прежних calculate/helpers
+и SQL acceptance, миграции20/21 и readiness-only legacy adapters, сохранение
+UI/ролей/истории, Gate3v3 и Gate5 с supplemental reviews.
+Основные критерии первого сценария #24 выполнены. Полный перенос всех
+rapid-pilot routes и новая финансовая формула не являются результатом PR61.
+
+Сохраняющийся архитектурный объём: closures, payments/complete и reverse в
+`rapid-pilot/Otiz.php`, session composition через `RapidPilotLocalAuth` в
+`ProductionPilotHttpEntrypointFactory`, прочие временные UI/read adapters ADR0002.
+Закрытие первого OpenSpec change не объявляет этот объём реализованным.
+Формула/справки #66, A02/A03 и эксплуатационные доказательства не получают
+автоматического approval от данного документационного завершения.

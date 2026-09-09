@@ -17,5 +17,9 @@
 
 - [x] 3.1 Выполнить focused regression ОТиЗ, syntax, `git diff --check`, `make architecture-check`, headless browser smoke в изолированном контуре. Сохранить время build, source и результаты без запуска на данных владельца.
 - [x] 3.2 Получить независимый Gate5 review production diff/spec/approved tests/evidence, включая перечень реально удалённого кода и оставшихся временных adapters; сохранить явный verdict.
-- [ ] 3.3 Провести один полный CI по согласованной матрице на кандидате; зафиксировать результат. Не дублировать local-full → CI-full. Если CI не запускался, явно оставить gate pending.
-- [ ] 3.4 Сверить Done: A01 RED→GREEN, один application owner, удалён заменённый путь, нет runtime DDL, сохранены UI/доступ/история, reviews и проверки завершены. A02/A03 и последующие #24 slices остаются открытыми; #33 следующий. Архивировать только после Done, не по наличию planning artifacts.
+- [x] 3.3 Провести один полный CI по согласованной матрице на кандидате; зафиксировать результат. Не дублировать local-full → CI-full. Если CI не запускался, явно оставить gate pending.
+- [x] 3.4 Сверить Done: A01 RED→GREEN, один application owner, удалён заменённый путь, нет runtime DDL, сохранены UI/доступ/история, reviews и проверки завершены. A02/A03 и последующие #24 slices остаются открытыми; #33 следующий. Архивировать только после Done, не по наличию planning artifacts.
+
+Финальная сверка2026-09-09: PR61 MERGED, Actions34282154511 SUCCESS на
+4fcebfdf45e3f986681f33c8474b6070436a7e28; подтверждения и пределы Done —
+`docs/operations/otiz-publication-delivery-2026-09-09.md`, раздел финальной сверки.
