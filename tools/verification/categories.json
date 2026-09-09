@@ -306,6 +306,7 @@
   "tests/Verification/characterize_inspection_schedule_duplicate_001_test.php": "integration",
   "tests/Verification/characterize_object_detail_import_001_test.php": "integration",
   "tests/Verification/development_setup_001_test.py": "governance",
+  "tests/Verification/yii2_dependency_setup_001_test.py": "governance",
   "tests/Verification/harness_fresh_test_lifecycle_001_test.php": "governance",
   "tests/Verification/harness_full_aggregation_001_test.php": "governance",
   "tests/Verification/harness_otiz_canonical_compat_001_test.php": "integration",

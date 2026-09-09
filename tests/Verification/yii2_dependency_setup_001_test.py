@@ -49,7 +49,7 @@ class Yii2DependencySetup(unittest.TestCase):
                       "INTENDED_RED YII2-DEPENDENCY-001 pinned Composer bootstrap")
         self.assertRegex(combined, r"sha256|shasum",
                          "INTENDED_RED YII2-DEPENDENCY-001 Composer digest verification")
-        self.assertRegex(combined, r"composer(?:\.phar)?[^\n]*install[^\n]*--no-interaction",
+        self.assertRegex(combined, r"php[^\n]*install[^\n]*--no-interaction",
                          "INTENDED_RED YII2-DEPENDENCY-001 locked non-interactive install")
         self.assertNotIn("git clone --branch \"$TCPDF_VERSION\"", setup)
         self.assertNotIn("cat rapid-pilot/tcpdf-autoload.php", setup)
@@ -92,7 +92,11 @@ case "$1" in -o|--output) out="$2"; shift 2;; *) shift;; esac; done
 printf '%s' "${CURL_PAYLOAD}" > "$out"
 """)
             self._executable(binary / "php", """printf '%s\\n' "$*" >> "$TRACE"
-case "$*" in *install*) mkdir -p "${COMPOSER_VENDOR_DIR:?}"; printf '<?php\\n' > "$COMPOSER_VENDOR_DIR/autoload.php"; test "${INSTALL_FAIL:-0}" = 0 || exit 71;; esac
+case "$*" in
+*check-platform-reqs*) test "${PLATFORM_FAIL:-0}" = 0 || exit 72;;
+*InstalledVersions*) test "${GRAPH_FAIL:-0}" = 0 || exit 73;;
+*install*) mkdir -p "${COMPOSER_VENDOR_DIR:?}"; printf '<?php\\n' > "$COMPOSER_VENDOR_DIR/autoload.php"; test "${INSTALL_FAIL:-0}" = 0 || exit 71;;
+esac
 """)
             environment = dict(os.environ, PATH=str(binary) + ":/usr/bin:/bin",
                                TRACE=str(trace), CURL_PAYLOAD="corrupt", INSTALL_FAIL="0")
@@ -100,7 +104,8 @@ case "$*" in *install*) mkdir -p "${COMPOSER_VENDOR_DIR:?}"; printf '<?php\\n' >
                                  env=environment, capture_output=True, text=True, timeout=10)
             self.assertNotEqual(0, bad.returncode)
             self.assertFalse((checkout / "vendor").exists())
-            self.assertFalse(trace.exists() and trace.read_text().strip(),
+            self.assertNotIn("composer-2.10.3.phar",
+                             trace.read_text() if trace.exists() else "",
                              "unverified Composer payload was executed")
 
             (checkout / "vendor").mkdir()
@@ -133,6 +138,25 @@ case "$*" in *install*) mkdir -p "${COMPOSER_VENDOR_DIR:?}"; printf '<?php\\n' >
                                       cwd=checkout, env=environment,
                                       capture_output=True, text=True, timeout=10)
             self.assertEqual(0, repeated.returncode, repeated.stdout + repeated.stderr)
+            self.assertEqual(complete, self._fingerprint(checkout / "vendor"))
+
+            environment["PLATFORM_FAIL"] = "1"
+            trace.write_text("")
+            incompatible = subprocess.run(["/bin/bash", "tools/delivery/setup-composer.sh"],
+                                          cwd=checkout, env=environment,
+                                          capture_output=True, text=True, timeout=10)
+            self.assertNotEqual(0, incompatible.returncode)
+            self.assertIn("check-platform-reqs", trace.read_text())
+            self.assertEqual(complete, self._fingerprint(checkout / "vendor"))
+
+            environment["PLATFORM_FAIL"] = "0"
+            environment["GRAPH_FAIL"] = "1"
+            trace.write_text("")
+            stale = subprocess.run(["/bin/bash", "tools/delivery/setup-composer.sh"],
+                                   cwd=checkout, env=environment,
+                                   capture_output=True, text=True, timeout=10)
+            self.assertNotEqual(0, stale.returncode)
+            self.assertIn("InstalledVersions", trace.read_text())
             self.assertEqual(complete, self._fingerprint(checkout / "vendor"))
 
     def test_check_is_read_only_and_allows_missing_installations(self):

@@ -23,7 +23,7 @@ class DevelopmentSetup(unittest.TestCase):
         self.parent = Path(self.temp.name)
         self.root = self.parent / "fmonitor-2"
         self.root.mkdir()
-        for relative in ["composer.lock", "Makefile", "rapid-pilot/tcpdf-autoload.php",
+        for relative in ["composer.json", "composer.lock", "app/autoload.php", "Makefile",
                          "Dockerfile", "compose.yaml", "compose.test.yaml",
                          "tools/verification/Dockerfile.test", "deploy/runtime/Dockerfile"]:
             source = ROOT / relative
@@ -54,7 +54,12 @@ class DevelopmentSetup(unittest.TestCase):
 case "$*" in
   *posix_getpwuid*posix_geteuid*) exec "${REAL_PHP}" "$@" ;;
   *PHP_VERSION_ID*|*extension_loaded*) exit 0 ;;
-  *getTCPDFVersion*) exit 0 ;;
+  *Yii::getVersion*|*getTCPDFVersion*) exit 0 ;;
+  *composer-2.10.3.phar*install*)
+    mkdir -p "${COMPOSER_VENDOR_DIR}"
+    printf '<?php // Composer fixture\n' > "${COMPOSER_VENDOR_DIR}/autoload.php"
+    ;;
+  *composer-2.10.3.phar*validate*) exit 0 ;;
   --version|-v) echo 'PHP 8.5.0'; exit 0 ;;
 esac
 echo 'PHP 8.5.0'
@@ -69,6 +74,13 @@ esac
 """)
         self._stub("rg", "exit 0\n")
         self._stub("docker", "exit 0\n")
+        self._stub("curl", """
+out=''; while [ "$#" -gt 0 ]; do
+  case "$1" in -o|--output) out="$2"; shift 2;; *) shift;; esac
+done
+printf 'composer fixture\n' > "$out"
+""")
+        self._stub("sha256sum", "echo '7a2d379d5b8ffdaa028580ef26494c36d2feef4b178d3dd1473a4dbc5e17c8d6  $1'\n")
         self._stub("npm", """
 case "$*" in
   --version|-v) echo '10.9.4'; exit 0 ;;

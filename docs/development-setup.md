@@ -41,9 +41,16 @@ make doctor
 
 Единый источник версий runtime и UI —
 [`tools/delivery/dependencies.env`](../tools/delivery/dependencies.env).
-PHP-пакеты закреплены [`composer.lock`](../composer.lock); среди них TCPDF.
+PHP-пакеты закреплены [`composer.lock`](../composer.lock): Yii2 и TCPDF устанавливаются
+одним настоящим Composer autoloader. Lightweight bootstrap
+`bash tools/delivery/setup-composer.sh` скачивает закреплённый Composer phar,
+проверяет SHA-256 и устанавливает lock; установленный системный Composer не требуется.
+CI вызывает тот же lightweight bootstrap без повторной сборки Docker/shlz в каждом job.
 Не подбирайте близкую версию вручную и не используйте произвольный HEAD
-`shlz-ui`: setup проверяет точный commit из `dependencies.env`.
+`shlz-ui`: setup проверяет точный commit из `dependencies.env`. Старый vendor с
+отдельным git checkout TCPDF и искусственным autoloader не обновляется молча:
+для перехода используйте чистый checkout. Режим `setup-composer.sh --check`
+не скачивает и не изменяет файлы.
 
 ## Установка checkout
 
@@ -153,3 +160,12 @@ Dockerfile и Compose сохраняются в репозитории как с
 Для генерации UI setup использует локальный read-only ZIP adapter на Python: он
 поддерживает кириллические имена архивов, которые не читает системный unzip macOS.
 PATH изменяется только для этой команды; системные утилиты и исходники UI сохраняются.
+
+
+## Yii2 migration contour
+
+Основной development runtime пока сохраняет PHP8.5. Изолированный Yii2 runtime
+проверяется на PHP8.4 по [ADR0003](adr/0003-yii2-application-framework.md) и
+[инструкции запуска](../deploy/yii2/README.md). Оба entrypoint используют общий
+Composer lock. Наличие foundation health не означает, что весь интерфейс уже
+перенесён; фактический прогресс — [Yii2 checkpoint](operations/yii2-progress-2026-09-09.md).

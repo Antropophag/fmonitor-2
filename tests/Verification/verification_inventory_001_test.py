@@ -112,6 +112,7 @@ class Inventory(native.NativeSuites):
                 'php\ttests/InstallationProcess/pdf_navigation_upload_001_test.php\n',
                 'php\ttests/InstallationProcess/pilot_jobs_startup_001_test.php\n',
                 'python3\ttests/Verification/development_setup_001_test.py\n',
+                'python3\ttests/Verification/yii2_dependency_setup_001_test.py\n',
                 'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
                 'php\ttests/Runtime/production_runtime_contract_001_test.php\n',
                 'python3\ttests/Verification/architecture_guard_001_test.py\n',
