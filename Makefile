@@ -36,7 +36,7 @@ up:
 		fmonitor2-pilot bin/fmonitor2-prepare-bitrix-config.php /run/fmonitor/input.env /run/fmonitor/output/bitrix-workforce.json
 	@$(COMPOSE) config --quiet 2>/dev/null || { echo "Проверьте синтаксис .env и обязательные настройки стенда по .env.example." >&2; exit 1; }
 	$(COMPOSE) up --detach --wait pilot mariadb
-	$(COMPOSE) up --detach --wait --no-deps --force-recreate workforce-sync
+	$(COMPOSE) up --detach --wait --no-deps --force-recreate workforce-sync workforce-scheduler
 	@echo "FMonitor 2.0 с Bitrix sync: http://127.0.0.1:8092/"
 
 import-production:

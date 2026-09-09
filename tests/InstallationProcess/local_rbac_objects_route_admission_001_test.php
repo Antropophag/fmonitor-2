@@ -57,6 +57,32 @@ function lraGet(int $port, string $target, array $requestHeaders = []): array
     return ['status'=>(int)($match[1]??0), 'headers'=>$headers, 'body'=>$body];
 }
 
+function lraLogOutsideValidatedCorrelation(string $log, string $category, string $correlation): string
+{
+    assertSameValue(true, in_array($category, ['AUTHORIZATION_CONFIGURATION_INVALID', 'AUTHORIZATION_SCHEMA_INVALID', 'AUTHORIZATION_READ_FAILED'], true), 'redaction oracle category is validated');
+    assertSameValue(1, preg_match('/^[0-9a-f]{12}$/D', $correlation), 'redaction oracle correlation is validated');
+    $event = "FMONITOR_AUTHORIZATION_UNAVAILABLE category={$category} correlation_id={$correlation}";
+    $lines = explode("\n", str_replace("\r", '', $log));
+    $events = 0;
+    foreach ($lines as &$line) {
+        if ($line !== $event) continue;
+        $line = "FMONITOR_AUTHORIZATION_UNAVAILABLE category={$category} correlation_id=<validated-opaque>";
+        $events++;
+    }
+    unset($line);
+    assertSameValue(1, $events, 'redaction oracle masks exactly one validated correlation field');
+    return implode("\n", $lines);
+}
+
+$opaqueCorrelationFixture = 'abc701defabc';
+$opaqueCorrelationLog = "FMONITOR_AUTHORIZATION_UNAVAILABLE category=AUTHORIZATION_READ_FAILED correlation_id={$opaqueCorrelationFixture}\n";
+$opaqueCorrelationSurface = lraLogOutsideValidatedCorrelation($opaqueCorrelationLog, 'AUTHORIZATION_READ_FAILED', $opaqueCorrelationFixture);
+assertSameValue(0, preg_match('/(?<!\d)(?:7301|701|702)(?!\d)/', $opaqueCorrelationSurface), 'validated opaque correlation cannot impersonate a leaked role identifier');
+foreach (['actor_role_id=701', 'actor_role_id=702', 'actor_user_id=7301', 'untrusted_reference='.$opaqueCorrelationFixture] as $actualLeak) {
+    $actualLeakSurface = lraLogOutsideValidatedCorrelation($opaqueCorrelationLog.$actualLeak."\n", 'AUTHORIZATION_READ_FAILED', $opaqueCorrelationFixture);
+    assertSameValue(1, preg_match('/(?<!\d)(?:7301|701|702)(?!\d)/', $actualLeakSurface), 'actual leaked identity outside the validated field remains visible: '.$actualLeak);
+}
+
 $token = bin2hex(random_bytes(5));
 $cssToken = bin2hex(random_bytes(6));
 $cssOwnership = \FMonitor2\Tests\Support\TaskOwnedArtifactRoot::create('lra', $cssToken);
@@ -242,6 +268,7 @@ function lraUnavailable(array $environment, string $expectedCategory, string $la
     assertSameValue(1, count($events), $label.' emits exactly one strict unavailable event');
     assertSameValue($expectedCategory, $events[0][1] ?? null, $label.' emits exactly the expected safe category');
     assertSameValue($correlation, $events[0][2] ?? null, $label.' external/internal correlation agrees');
+    $logOutsideCorrelation = lraLogOutsideValidatedCorrelation($log, $expectedCategory, $correlation);
 
     preg_match_all('/\bAUTHORIZATION_[A-Z_]+\b/', $log, $categoryTokens);
     assertSameValue([$expectedCategory], $categoryTokens[0] ?? [], $label.' emits no extra authorization categories');
@@ -306,7 +333,7 @@ function lraUnavailable(array $environment, string $expectedCategory, string $la
             $label.' log redacts schema/error fragment '.$fragment
         );
     }
-    assertSameValue(0, preg_match('/(?<!\d)(?:7301|701|702)(?!\d)/', $log), $label.' log redacts user and role identifiers');
+    assertSameValue(0, preg_match('/(?<!\d)(?:7301|701|702)(?!\d)/', $logOutsideCorrelation), $label.' log redacts user and role identifiers outside the validated opaque correlation');
     assertSameValue(0, preg_match('/\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b/i', $log), $label.' log contains no email value');
     assertSameValue(
         0,
