@@ -27,11 +27,11 @@ final class WebResponse
         /** @var Response $response */
         $response = $event->sender;
         header_remove('X-Powered-By');
-        $response->headers->set('Cache-Control', 'no-store');
+        if (!$response->headers->has('Cache-Control')) $response->headers->set('Cache-Control', 'no-store');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Referrer-Policy', 'no-referrer');
         $response->headers->set('X-Frame-Options', 'DENY');
-        $response->headers->set('Content-Security-Policy', "default-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+        $response->headers->set('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
     }

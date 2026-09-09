@@ -51,6 +51,7 @@ final class Yii2AuthFixture
             'FMONITOR_YII_SESSION_PATH' => $this->sessionPath,
             'FMONITOR_YII_SESSION_COOKIE' => 'fm2yii_test',
             'FMONITOR_YII_COOKIE_VALIDATION_KEY' => str_repeat('fixture-cookie-key-', 3),
+            'FMONITOR_YII_IDENTITY_KEY' => str_repeat('fixture-identity-key-', 3),
             'FMONITOR_YII_RUNTIME_PATH' => $this->temporaryRoot . '/runtime',
             'FMONITOR_TRUSTED_REQUEST_HOST' => 'fmonitor.example.test',
             'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'http',

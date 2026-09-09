@@ -10,12 +10,13 @@ final class MariaDbYiiLocalIdentityStore extends Component
 {
     public Connection|string $db = 'db';
     public string $tablePrefix = '';
+    public string $identityKey = '';
 
     public function init(): void
     {
         parent::init();
-        $this->db = \Yii::$app->get($this->db);
-        if (!$this->db instanceof Connection || strlen($this->tablePrefix) > 32 || preg_match('/^[A-Za-z0-9_]*$/D', $this->tablePrefix) !== 1) throw new \RuntimeException('Identity configuration unavailable.');
+        if (is_string($this->db)) $this->db = \Yii::$app->get($this->db);
+        if (!$this->db instanceof Connection || strlen($this->tablePrefix) > 32 || preg_match('/^[A-Za-z0-9_]*$/D', $this->tablePrefix) !== 1 || strlen($this->identityKey)<32) throw new \RuntimeException('Identity configuration unavailable.');
     }
 
     public function findById(mixed $id): ?YiiLocalIdentity
@@ -61,7 +62,7 @@ final class MariaDbYiiLocalIdentityStore extends Component
         return ['roles'=>array_map(static fn(array$r):array=>['id'=>(int)$r['role_id'],'code'=>(string)$r['code'],'name'=>(string)$r['name'],'active'=>(int)$r['status']===1,'userCount'=>(int)$r['user_count'],'updatedAt'=>(string)$r['source_updated_at'],'permissions'=>$byRole[(int)$r['role_id']]??[]],$roles)];
     }
 
-    private function identity(array $row): YiiLocalIdentity { return new YiiLocalIdentity((int)$row['user_id'],(string)$row['full_name'],(string)$row['email'],(int)$row['session_version']); }
+    private function identity(array $row): YiiLocalIdentity { $id=(int)$row['user_id'];$version=(int)$row['session_version'];return new YiiLocalIdentity($id,(string)$row['full_name'],(string)$row['email'],hash_hmac('sha256',$id.':'.$version,$this->identityKey)); }
     private function rawTable(string $name): string { return $this->tablePrefix.$name; }
     private function table(string $name): string { return $this->db->quoteTableName($this->rawTable($name)); }
 }

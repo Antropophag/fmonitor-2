@@ -17,10 +17,10 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'scriptUrl' => '/yii.php',
             'baseUrl' => '',
         ],
-        'db' => static function(): yii\db\Connection {$host=getenv('FMONITOR_DB_HOST');$port=getenv('FMONITOR_DB_PORT');$name=getenv('FMONITOR_DB_NAME');$user=getenv('FMONITOR_DB_USER');$password=getenv('FMONITOR_DB_PASSWORD');if(!is_string($host)||$host===''||!is_string($port)||filter_var($port,FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>65535]])===false||!is_string($name)||$name===''||!is_string($user)||$user===''||!is_string($password)||$password==='')throw new \RuntimeException('Database configuration unavailable.');return new yii\db\Connection(['dsn'=>'mysql:host='.$host.';port='.$port.';dbname='.$name,'username'=>$user,'password'=>$password,'charset'=>'utf8mb4']);},
         'localIdentity' => [
             'class' => MariaDbYiiLocalIdentityStore::class,
             'tablePrefix' => getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: '',
+            'identityKey' => getenv('FMONITOR_YII_IDENTITY_KEY') ?: '',
         ],
         'canonicalAccess' => ['class' => YiiCanonicalAccessChecker::class],
         'session' => [
@@ -59,7 +59,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
                 'GET pilot/admin/roles' => 'roles/index',
-                'GET pilot/assets/<name:(shlz|pilot)>.css' => 'pilot-asset/css',
+                ...(require __DIR__ . '/assets.php'),
             ],
         ],
     ],

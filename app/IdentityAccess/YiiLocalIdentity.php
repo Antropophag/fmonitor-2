@@ -8,10 +8,10 @@ use yii\web\IdentityInterface;
 
 final readonly class YiiLocalIdentity implements IdentityInterface
 {
-    public function __construct(public int $id, public string $displayName, public string $email, private int $sessionVersion) {}
+    public function __construct(public int $id, public string $displayName, public string $email, private string $authKey) {}
     public static function findIdentity($id): ?self { return Yii::$app->localIdentity->findById($id); }
     public static function findIdentityByAccessToken($token, $type = null): ?self { return null; }
     public function getId(): int { return $this->id; }
-    public function getAuthKey(): string { return (string) $this->sessionVersion; }
+    public function getAuthKey(): string { return $this->authKey; }
     public function validateAuthKey($authKey): bool { return is_string($authKey) && hash_equals($this->getAuthKey(), $authKey); }
 }
