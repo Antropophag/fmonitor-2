@@ -21,10 +21,14 @@ NODES = ("plan", "fast", "unit", "integration", "e2e", "governance", "verify")
 
 
 class Fixture:
-    def __init__(self, run: dict[str, object], pages: dict[int, object], errors: dict[str, int] | None = None):
+    def __init__(self, run: dict[str, object], pages: dict[int, object], errors: dict[str, int] | None = None,
+                 job_pages: dict[int, object] | None = None):
         self.run = run
         self.pages = pages
         self.errors = errors or {}
+        self.job_pages = job_pages or {
+            1: {"total_count": 1, "jobs": [reporting_job()]},
+        }
         self.trace: list[dict[str, object]] = []
 
 
@@ -49,6 +53,15 @@ def current() -> list[dict[str, object]]:
     return [artifact(100 + index, node) for index, node in enumerate(NODES)]
 
 
+def reporting_job(identity: int = 700, *, name: str = "quality-results",
+                  attempt: int = ATTEMPT, status: str = "completed",
+                  conclusion: str | None = "success") -> dict[str, object]:
+    return {
+        "id": identity, "name": name, "run_attempt": attempt,
+        "status": status, "conclusion": conclusion,
+    }
+
+
 def event(path: Path, *, action: str = "completed", **run_changes: object) -> None:
     workflow = run_value(**run_changes)
     path.write_text(json.dumps({"action": action, "workflow_run": workflow}) + "\n")
@@ -68,6 +81,11 @@ def serve(fixture: Fixture) -> tuple[ThreadingHTTPServer, threading.Thread]:
                 page = int(next((part.split("=", 1)[1] for part in query.split("&")
                                  if part.startswith("page=")), "1"))
                 payload = fixture.pages.get(page, {"total_count": 0, "artifacts": []})
+            elif self.path.startswith(f"/repos/{REPOSITORY}/actions/runs/{RUN_ID}/jobs?"):
+                query = self.path.partition("?")[2]
+                page = int(next((part.split("=", 1)[1] for part in query.split("&")
+                                 if part.startswith("page=")), "1"))
+                payload = fixture.job_pages.get(page, {"total_count": 0, "jobs": []})
             else:
                 self.send_response(404); self.end_headers(); return
             body = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
@@ -118,6 +136,12 @@ def execute(name: str, fixture: Fixture, *, should_pass: bool, event_changes: di
         raise AssertionError(f"RED_ASSERTION: {name} used a non-GET API request: {fixture.trace}")
     if fixture.trace and any(item.get("authorization") != "Bearer fixture-token" for item in fixture.trace):
         raise AssertionError(f"RED_ASSERTION: {name} omitted exact bearer authentication")
+    if should_pass:
+        jobs_requests = [str(item["path"]) for item in fixture.trace if "/jobs?" in str(item["path"])]
+        if not jobs_requests or not all("filter=latest" in path for path in jobs_requests):
+            raise AssertionError(
+                f"RED_ASSERTION: {name} must read current jobs with filter=latest: {fixture.trace}"
+            )
     return name
 
 
@@ -147,6 +171,42 @@ def main() -> None:
     filler = [{"id": 1000+i, "name": f"unrelated-{i}", "expired": False} for i in range(100)]
     execute("pagination", Fixture(run, {1: {"total_count": 107, "artifacts": filler},
                                          2: {"total_count": 107, "artifacts": current()}}), should_pass=True)
+    job_filler = [reporting_job(2000+i, name=f"unrelated-{i}") for i in range(100)]
+    execute("reporting job pagination", Fixture(
+        run,
+        {1: {"total_count": 7, "artifacts": current()}},
+        job_pages={
+            1: {"total_count": 101, "jobs": job_filler},
+            2: {"total_count": 101, "jobs": [reporting_job()]},
+        },
+    ), should_pass=True)
+
+    artifact_page = {1: {"total_count": 7, "artifacts": current()}}
+    reporting_negative = {
+        "reporting failed": [reporting_job(conclusion="failure")],
+        "reporting cancelled": [reporting_job(conclusion="cancelled")],
+        "reporting in progress": [reporting_job(status="in_progress", conclusion=None)],
+        "reporting missing": [reporting_job(name="unrelated")],
+        "reporting old attempt": [reporting_job(attempt=ATTEMPT - 1)],
+        "reporting duplicate": [reporting_job(), reporting_job(701)],
+    }
+    for name, jobs in reporting_negative.items():
+        negative.append((name, Fixture(
+            run,
+            artifact_page,
+            job_pages={1: {"total_count": len(jobs), "jobs": jobs}},
+        ), None))
+    first_page_jobs = [reporting_job()] + [
+        reporting_job(3000+i, name=f"unrelated-duplicate-probe-{i}") for i in range(99)
+    ]
+    negative.append(("reporting duplicate on second page", Fixture(
+        run,
+        artifact_page,
+        job_pages={
+            1: {"total_count": 101, "jobs": first_page_jobs},
+            2: {"total_count": 101, "jobs": [reporting_job(3999)]},
+        },
+    ), None))
     api_path = f"/repos/{REPOSITORY}/actions/runs/{RUN_ID}"
     negative.append(("API error", Fixture(run, {}, {api_path: 503}), None))
     negative.append(("malformed API JSON", Fixture(b"{" , {}), None))  # type: ignore[arg-type]

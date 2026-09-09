@@ -57,6 +57,14 @@ Run/head/repository из API сверяются с event; PR head/run/digest и 
 проверяются штатным publisher. HTTP error, malformed API JSON или цикл pagination
 не дают успех. Success печатает QUALITY_GRAPH_PREFLIGHT_OK nodes=7.
 
+Дополнительно GitHub jobs endpoint `filter=latest` подтверждает один job
+`quality-results` текущего attempt с status=completed/conclusion=success.
+Это необходимо, потому что сбой загрузки/проверки reports после успешных семи
+исходных jobs не должен превращаться в зелёную сводку. Неполный, failed,
+cancelled, отсутствующий, дублированный либо старый reporting job отвергается.
+Ошибки исходных категорий допускаются: при успешном quality-results их native
+failed/cancelled результаты публикуются штатно. Jobs читаются с полной pagination.
+
 При отклонении guard publisher не вызывается; trusted workflow становится failed,
 не публикует новый success и не меняет комментарии/метки. Обычный verify остаётся
 независимым gate. Это validation integration вокруг штатного publisher,
@@ -139,6 +147,12 @@ Command/approval endpoints не подключаются; результат т�
 - **WHEN** повторяется событие того же завершённого запуска
 - **THEN** штатная сводка и итог сходятся к тому же результату без новых
   противоречивых approvals; история реальных запусков сохраняется.
+
+#### Scenario: Reporting failed after successful verification
+- **WHEN** исходные jobs успешны, но стадия сбора/загрузки результатов отказала
+  либо отменена, даже если часть или весь набор artifacts уже доступен
+- **THEN** текущий запуск не публикуется как успешный; ошибка reporting/publisher
+  видна, ранний успешный verify не заменяет завершённую доставку результатов.
 
 ### Requirement: Actual verification before completion
 

@@ -76,6 +76,12 @@ Command/approval endpoints не подключаются; результат т�
 - **THEN** штатная сводка и итог сходятся к тому же результату без новых
   противоречивых approvals; история реальных запусков сохраняется.
 
+#### Scenario: Reporting failed after successful verification
+- **WHEN** исходные jobs успешны, но стадия сбора/загрузки результатов отказала
+  либо отменена, даже если часть или весь набор artifacts уже доступен
+- **THEN** текущий запуск не публикуется как успешный; ошибка reporting/publisher
+  видна, ранний успешный verify не заменяет завершённую доставку результатов.
+
 ### Requirement: Actual verification before completion
 
 Завершение #25 SHALL подтверждаться независимыми reviews, полным exact-head CI
