@@ -1,3 +1,13 @@
+## Yii2 foundation поставлен — 2026-09-09
+
+PR77 MERGED, main8b810490; exact candidate84a299f2, Actions34367636220 SUCCESS,
+literal VERIFY_OK, независимые Gate3/Gate5 APPROVED. Первый operational срез
+архивирован как2026-09-09-yii2-runtime-foundation. Следующие активные ветки:
+`fmonitor-2-yii2-auth-20260909` (login/logout/roles) и
+`fmonitor-2-yii2-otiz-20260909` (финансовый owner #70). Подробности —
+[yii2-progress-2026-09-09.md](yii2-progress-2026-09-09.md).
+Полный #76 остаётся целью; первый каркас не закрывает #24/#70/#71.
+
 ## Упрощение Yii2-перехода — owner2026-09-09
 
 Владелец разрешил не сохранять тестовые данные и пользователей и подтвердил:

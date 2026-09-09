@@ -14,8 +14,8 @@
 ## 3. Поставка
 
 - [x] 3.1 Получить независимый Gate5 на точный source и evidence.
-- [ ] 3.2 Один полный exact-source CI, PR и merge после GREEN.
-- [ ] 3.3 Записать фактические результаты и следующий real read-route slice; этап2 #76 остаётся открытым до HTML/assets/auth parity.
+- [x] 3.2 Один полный exact-source CI, PR и merge после GREEN.
+- [x] 3.3 Записать фактические результаты и следующий real read-route slice; этап2 #76 остаётся открытым до HTML/assets/auth parity.
 
 Done: все пункты GREEN, reviewers независимы, текущий стенд сохранён. Archive только
 по фактической готовности этого operational slice, не всего #76.
