@@ -65,3 +65,34 @@ The recipe was executed in the existing runtime image with a synthetic token:
 initial publication passed, existing-file refusal passed, a symlink victim remained
 unchanged, and no staging directory leaked. Private evidence is retained at
 `/var/folders/yc/548th18156s39y3kx0xc05tc0000gn/T/fm2-token-atomic-a61qb1u4`.
+
+## Exact-image integration addendum
+
+Reviewed operational identities:
+
+```text
+source: 116f65c4cc0bc15991bb749126dbcb87e63ee6f0
+candidate: a2b6dcdc7d8518416ac7748a53ed245cd936a63a
+image: sha256:ab51b9f4b2e9175f1679741b3ea4ee1bae044564d2d9cea23217dcd413874428
+OCI revision: 116f65c4cc0bc15991bb749126dbcb87e63ee6f0
+browser test: b460561892bb07322628c026a262ad5fe5ba76c3385c71147de9b6a410c5713d
+```
+
+Private evidence root `/private/tmp/fm2-jobs-image-smoke-lDdNnV` is mode0700 and
+all contained files are mode0600. Safe summaries prove clean build input, exact OCI
+identity, canonical migrations1–23, exact DML-only grants with no table/column
+privileges, host-local verified TLS pagination, 51 Workforce rows, one completed
+run/job and one schedule slot, current worker/scheduler role heartbeats and healthy
+public status. Restart preserves counts/history and returns healthy status; SIGTERM
+stops both services with exit0. Final `down --volumes` removed project containers,
+network and volumes, and the local TLS process was reaped.
+
+The first harness network failure is retained as failed evidence and was not reused
+as success; the final result comes from a fresh isolated contour. No live external
+endpoint was called. The v23 production browser regression also passes after the
+reviewed distinct legacy OTIZ fixture correction, including post-OTIZ native private
+PDF access.
+
+**Integration verdict: APPROVED.** Source and built-image evidence close the bounded
+runtime-wiring Gate5. Repository full CI remains pending and is not implied by this
+approval.
