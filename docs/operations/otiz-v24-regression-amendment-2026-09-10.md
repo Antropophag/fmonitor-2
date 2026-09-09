@@ -39,3 +39,10 @@ also needed the same two additions. Root updated only those table literals;
 `php tests/InstallationProcess/workforce_canonical_runner_001_test.php` now passes
 its complete public-runner matrix. Historical data/DDL/prefix rejection assertions
 remain intact. Output retained at `/tmp/fm2-root-workforce-frontier.log`.
+
+The isolated legacy OTIZ verifier provisions a private partial schema rather than
+the complete catalogue. Its setup now explicitly invokes the approved settlement
+migration before requests and cleans both new tables afterward. No runtime DDL or
+business assertion changes were made. Faithful full-privilege disposable harness
+rerun passed HARNESS-OTIZ-CANONICAL-COMPAT-001 (exit0); databases/users removed.
+DML-only runtime evidence remains in the separate owner/browser/image tests.

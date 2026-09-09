@@ -39,6 +39,8 @@ $dbPassword = getenv('FMONITOR_VERIFY_DB_PASSWORD') ?: 'fmonitor2_demo_local';
 $db = new mysqli($dbHost, $dbUser, $dbPassword, $dbName, $dbPort);
 $db->set_charset('utf8mb4');
 $tables = [
+    'fm2_otiz_settlement_operations',
+    'fm2_otiz_settlement_locks',
     'fm2_otiz_publications',
     'fm2_pilot_otiz_events',
     'fm2_pilot_otiz_payment_closures',
@@ -146,6 +148,8 @@ try {
     if(($publicationMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ publication fixture migration conflict');
     $evidenceMigration=\FMonitor2\InstallationProcess\OtizEvidenceSchemaMigration::apply($db,$prefix);
     if(($evidenceMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ evidence fixture migration conflict');
+    $settlementMigration=\FMonitor2\InstallationProcess\OtizSettlementSchemaMigration::apply($db,$prefix);
+    if(($settlementMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ settlement fixture migration conflict');
     RapidPilotOtiz::bootstrap($db, $prefix);
 
     $unauthorized = $run('/pilot/otiz', email: 'viewer.verify@shlz.ru');
