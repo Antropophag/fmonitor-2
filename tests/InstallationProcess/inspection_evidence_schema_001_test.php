@@ -309,8 +309,8 @@ try {
     assertSameValue('', $runner['stderr'], 'Canonical runner setup keeps stderr empty.');
     $runnerResult = json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR);
     assertSameValue([1,2,3,4,5,6,7], array_slice($runnerResult['appliedVersions'], 0, 7), 'Landed prerequisites v1-v7 must apply before inspection evidence.');
-    assertSameValue(23, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v23 after proven v1-v7.');
-    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
+    assertSameValue(24, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v24 after proven v1-v7.');
+    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
     iesAssertRuntimeDoesNotOwnDdl();
 
     $db = new mysqli($host, $user, $password, $database, $port); $db->set_charset('utf8mb4');
@@ -320,7 +320,7 @@ try {
     $db->query("INSERT INTO fm2_checklist_photos VALUES(51,1,1,'77777777-7777-4777-8777-777777777777','".str_repeat('a',64)."','image/png',4,'a.png','a.bin',2,'d','s',NULL)");
     $db->query('ALTER TABLE fm2_checklist_operations AUTO_INCREMENT=90');$db->query('ALTER TABLE fm2_checklist_photos AUTO_INCREMENT=100');
     $before = iesState($db, '');
-    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion' => 23,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
+    $repeat=iesRunRunner($database);assertSameValue(0,$repeat['exitCode'],'G2-02 repeat runner exits zero.');assertSameValue(['ok'=>true,'schemaVersion' => 24,'appliedVersions'=>[]],json_decode($repeat['stdout'],true,flags:JSON_THROW_ON_ERROR),'G2-02 repeat runner omits terminal migrations.');
     assertSameValue(['applied'=>false,'schemaVersion'=>8,'reason'=>'SCHEMA_MIGRATION_CONFLICT','conflictingTables'=>['fm2_checklist_photos']], iesApply($db, ''), 'Literal v8 does not relabel the v19 content index as historical v8.');
     assertSameValue(true, iesApply($db, 'v8_repeat_')['applied'], 'Dedicated literal v8 fixture is created.');
     assertSameValue(['applied'=>false,'schemaVersion'=>8,'tablesCreated'=>[],'tablesUpgraded'=>[]], iesApply($db, 'v8_repeat_'), 'G2-02 historical direct v8 repeat remains a no-op.');

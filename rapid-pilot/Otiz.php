@@ -71,6 +71,7 @@ final class RapidPilotOtiz
     public function handle(string $path): never
     {
         $method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        if ($method === 'POST' && (preg_match('#^/pilot/otiz/snapshots/\d+/(?:closures|payments/complete)$#D',$path)===1||preg_match('#^/pilot/otiz/closures/\d+/reverse$#D',$path)===1)) $this->settlementCommand($path);
         if ($method === 'POST') $this->command($path);
         if ($path === '/pilot/otiz' || $path === '/pilot/otiz/' || $path === '/pilot/otiz/objects') $this->objects();
         if ($path === '/pilot/otiz/payments') $this->queue();
@@ -82,6 +83,19 @@ final class RapidPilotOtiz
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)$#D', $path, $m) === 1) $this->snapshot((int) $m[1]);
         if (preg_match('#^/pilot/otiz/snapshots/(\d+)/export\.xlsx$#D', $path, $m) === 1) $this->export((int) $m[1]);
         http_response_code(404); echo "Not found.\n"; exit;
+    }
+
+    private function settlementCommand(string $path): never
+    {
+        if($this->csrf===''||!hash_equals($this->csrf,(string)($_POST['csrfToken']??'')))$this->fail(403,'Недопустимый запрос.');
+        require_once dirname(__DIR__).'/vendor/autoload.php';require_once dirname(__DIR__).'/vendor/yiisoft/yii2/Yii.php';
+        $db=new \yii\db\Connection(['dsn'=>'mysql:host='.(getenv('FMONITOR_DB_HOST')?:'127.0.0.1').';port='.(getenv('FMONITOR_DB_PORT')?:'23306').';dbname='.(getenv('FMONITOR_DB_NAME')?:'fmonitor2_demo'),'username'=>getenv('FMONITOR_DB_USER')?:'fmonitor2_demo','password'=>getenv('FMONITOR_DB_PASSWORD')?:'fmonitor2_demo_local','charset'=>'utf8mb4']);$db->open();$owner=new \FMonitor2\Otiz\OtizSettlement($db,$this->prefix,fn():string=>$this->now());
+        try{
+            if(preg_match('#^/pilot/otiz/snapshots/(\d+)/closures$#D',$path,$m)===1){$sid=(int)$m[1];$c=$this->money((string)($_POST['discipline']??''));$owner->recordDiscipline($this->userId,$sid,(int)($_POST['objectId']??0),$c,trim((string)($_POST['basis']??'')),trim((string)($_POST['artifact']??'')),$this->commandOperation());$this->redirect('/pilot/otiz/snapshots/'.$sid.'?closed=1');}
+            if(preg_match('#^/pilot/otiz/snapshots/(\d+)/payments/complete$#D',$path,$m)===1){$sid=(int)$m[1];$r=$owner->completeSnapshotPayments($this->userId,$sid,$this->commandOperation());$this->redirect('/pilot/otiz/snapshots/'.$sid.'?paid='.($r['status']==='no_change'?'duplicate':'1'));}
+            if(preg_match('#^/pilot/otiz/closures/(\d+)/reverse$#D',$path,$m)===1){$cid=(int)$m[1];$r=$owner->reverse($this->userId,$cid,trim((string)($_POST['basis']??'')),$this->commandOperation());$sid=(new \FMonitor2\Otiz\MariaDbOtizSettlementView($db,$this->prefix))->snapshotForClosure((int)$r['closureId']);if($sid===false)throw new RuntimeException('Settlement projection unavailable');$this->redirect('/pilot/otiz/snapshots/'.$sid.'?reversed=1');}
+        }catch(DomainException){if(preg_match('#snapshots/(\d+)/closures#',$path,$m))$this->redirect('/pilot/otiz/snapshots/'.$m[1].'?error=closure');if(preg_match('#snapshots/(\d+)/payments#',$path,$m))$this->redirect('/pilot/otiz/snapshots/'.$m[1].'?error=payment');$this->redirect('/pilot/otiz?error=reverse-basis');}finally{$db->close();}
+        $this->fail(404,'Команда не найдена.');
     }
 
     private function command(string $path): never
@@ -133,46 +147,6 @@ final class RapidPilotOtiz
             }
             $this->redirect('/pilot/otiz/snapshots/'.$id.'?accepted=1');
         }
-        if (preg_match('#^/pilot/otiz/snapshots/(\d+)/closures$#D', $path, $m) === 1) {
-            $snapshotId = (int) $m[1];
-            $objectId = (int) ($_POST['objectId'] ?? 0); $discipline = $this->money((string) ($_POST['discipline'] ?? '0')); $basis = trim((string) ($_POST['basis'] ?? ''));
-            $paid = 0; $deadline = 0; $sum = $discipline;
-            if ($discipline <= 0 || $basis === '' || mb_strlen($basis) > 500) $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure');
-            $artifact = trim((string) ($_POST['artifact'] ?? '')); if (mb_strlen($artifact) > 300) $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure');
-            $this->db->begin_transaction();
-            $snapshot = $this->db->query("SELECT status FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$snapshotId} LIMIT 1 FOR UPDATE")->fetch_assoc();
-            if (!is_array($snapshot)) { $this->db->rollback(); $this->fail(404, 'Срез не найден.'); }
-            if ($snapshot['status'] !== 'accepted') { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=accept-first'); }
-            $object = $this->db->query("SELECT pool_cents,calculation_state FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$snapshotId} AND object_id={$objectId} LIMIT 1 FOR UPDATE")->fetch_assoc();
-            $closed = (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$snapshotId} AND object_id={$objectId}")->fetch_assoc()['n'];
-            if (!is_array($object) || $object['calculation_state'] === 'blocked' || $sum > (int) $object['pool_cents'] - $closed) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?error=closure'); }
-            $now = $this->now(); $date = substr($now, 0, 10); $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_payment_closures`(snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at,reverses_payment_closure_id) VALUES(?,?,?,?,?,?,?,?,?,?,NULL)"); $artifact = trim((string) ($_POST['artifact'] ?? '')); $s->bind_param('iisiiissis', $snapshotId, $objectId, $date, $paid, $discipline, $deadline, $basis, $artifact, $this->userId, $now); $s->execute();
-            $this->event($snapshotId, $objectId, 'payment_closure_recorded', ['closureId' => $s->insert_id, 'closedCents' => $sum]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?closed=1');
-        }
-        if (preg_match('#^/pilot/otiz/snapshots/(\d+)/payments/complete$#D', $path, $m) === 1) {
-            $snapshotId=(int)$m[1];$this->db->begin_transaction();
-            $snapshot=$this->db->query("SELECT status FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$snapshotId} LIMIT 1 FOR UPDATE")->fetch_assoc();
-            if(!is_array($snapshot)){$this->db->rollback();$this->fail(404,'Срез не найден.');}
-            if($snapshot['status']!=='accepted'){$this->db->rollback();$this->redirect('/pilot/otiz/snapshots/'.$snapshotId.'?error=payment');}
-            $objects=$this->db->query("SELECT object_id,pool_cents,calculation_state FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$snapshotId} ORDER BY object_id FOR UPDATE")->fetch_all(MYSQLI_ASSOC);
-            $date=substr($this->now(),0,10);$discipline=0;$deadline=0;$basis='Выплаты выполнены по подтверждению ОТиЗ';$artifact='';$now=$this->now();$count=0;$total=0;
-            $insert=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_payment_closures`(snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at,reverses_payment_closure_id) VALUES(?,?,?,?,?,?,?,?,?,?,NULL)");
-            foreach($objects as$object){if($object['calculation_state']==='blocked')continue;$objectId=(int)$object['object_id'];$closed=(int)$this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$snapshotId} AND object_id={$objectId}")->fetch_assoc()['n'];$paid=max(0,(int)$object['pool_cents']-$closed);if($paid===0)continue;$insert->bind_param('iisiiissis',$snapshotId,$objectId,$date,$paid,$discipline,$deadline,$basis,$artifact,$this->userId,$now);$insert->execute();$this->event($snapshotId,$objectId,'payment_completed',['closureId'=>$insert->insert_id,'paidCents'=>$paid,'scope'=>'snapshot']);$count++;$total+=$paid;}
-            if($count===0){$this->db->rollback();$this->redirect('/pilot/otiz/snapshots/'.$snapshotId.'?paid=duplicate');}
-            $this->event($snapshotId,null,'snapshot_payments_completed',['objectCount'=>$count,'paidCents'=>$total]);$this->db->commit();$this->redirect('/pilot/otiz/snapshots/'.$snapshotId.'?paid=1');
-        }
-        if (preg_match('#^/pilot/otiz/closures/(\d+)/reverse$#D', $path, $m) === 1) {
-            $closureId = (int) $m[1]; $basis = trim((string) ($_POST['basis'] ?? ''));
-            if ($basis === '' || mb_strlen($basis) > 500) $this->redirect('/pilot/otiz?error=reverse-basis');
-            $this->db->begin_transaction();
-            $closure = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE id={$closureId} LIMIT 1 FOR UPDATE")->fetch_assoc();
-            if (!is_array($closure) || (int) $closure['reverses_payment_closure_id'] > 0) { $this->db->rollback(); $this->fail(404, 'Запись не найдена.'); }
-            $exists = (int) $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE reverses_payment_closure_id={$closureId}")->fetch_assoc()['n'];
-            if ($exists > 0) { $this->db->rollback(); $this->redirect('/pilot/otiz/snapshots/' . $closure['snapshot_id'] . '?error=reversed'); }
-            $snapshotId = (int) $closure['snapshot_id']; $objectId = (int) $closure['object_id']; $date = substr($this->now(), 0, 10); $paid = -(int) $closure['paid_cents']; $discipline = -(int) $closure['discipline_cents']; $deadline = -(int) $closure['deadline_cents']; $artifact = ''; $now = $this->now();
-            $s = $this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_payment_closures`(snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at,reverses_payment_closure_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)"); $s->bind_param('iisiiissisi', $snapshotId, $objectId, $date, $paid, $discipline, $deadline, $basis, $artifact, $this->userId, $now, $closureId); $s->execute();
-            $this->event($snapshotId, $objectId, 'payment_closure_reversed', ['closureId' => $closureId, 'reversalId' => $s->insert_id]); $this->db->commit(); $this->redirect('/pilot/otiz/snapshots/' . $snapshotId . '?reversed=1');
-        }
         $this->fail(404, 'Команда не найдена.');
     }
 
@@ -193,7 +167,7 @@ final class RapidPilotOtiz
         $cards = '<section class="fm2-otiz-start"><div><h1>Подготовка выплат</h1><p>Выберите дату, проверьте начисления по объектам и подготовьте реестр к выплате.</p></div><form method="post" action="/pilot/otiz/calculate" class="fm2-otiz-date"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="operationId" value="' . $operationId . '"><label class="shlz-field"><span class="shlz-field__label">Рассчитать по состоянию на</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="reportDate" value="2026-08-31" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Подготовить расчёт</button></form></section>';
         $cards .= $this->primaryTabs('payments');
         if (is_array($latest)) {
-            $closed = (int)$this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id=".(int)$latest['id'])->fetch_assoc()['n'];
+            $closed=(new \FMonitor2\Otiz\MariaDbRapidOtizSettlementView($this->db,$this->prefix))->closedForSnapshotObjects((int)$latest['id']);
             $paymentDone = $latest['status'] === 'accepted' && (int)$latest['total_pool_cents'] > 0 && $closed >= (int)$latest['total_pool_cents'];
             $label = $paymentDone ? 'Выплаты выполнены' : ($latest['status'] === 'accepted' ? 'Готов к выплате' : 'Требует проверки');
             $description = $paymentDone ? 'Выплата зафиксирована и уже учтена в экономике объектов.' : ($latest['status'] === 'accepted' ? 'Начисления проверены. Можно выгрузить реестр и зафиксировать выплату.' : 'Проверьте объекты и устраните замечания перед оформлением реестра.');
@@ -207,13 +181,13 @@ final class RapidPilotOtiz
     {
         $s = $this->snapshotRow($id); $objects = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` WHERE snapshot_id={$id} ORDER BY FIELD(calculation_state,'blocked','ready','no_new_amount','completed'),regnumber")->fetch_all(MYSQLI_ASSOC);
         $blockers = (int) $this->db->query("SELECT COUNT(*) n FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND severity='blocker' AND state='open'")->fetch_assoc()['n'];
-        $payable=0;$deadlinePenalty=0;$closedByObject=[];foreach($objects as$object){$closed=(int)$this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$id} AND object_id=".(int)$object['object_id'])->fetch_assoc()['n'];$closedByObject[(int)$object['object_id']]=$closed;if($object['calculation_state']!=='blocked')$payable+=max(0,(int)$object['pool_cents']-$closed);$deadlinePenalty+=$this->deadlinePenalty($object);}
+        $settlementView=new \FMonitor2\Otiz\MariaDbRapidOtizSettlementView($this->db,$this->prefix);$payable=0;$deadlinePenalty=0;$closedByObject=[];foreach($objects as$object){$closed=$settlementView->closedForObject((int)$object['object_id']);$closedByObject[(int)$object['object_id']]=$closed;if($object['calculation_state']!=='blocked')$payable+=max(0,(int)$object['accrued_cents']-$closed);$deadlinePenalty+=$this->deadlinePenalty($object);}
         $flash = isset($_GET['created']) ? 'Расчёт подготовлен. Проверьте суммы и замечания по объектам.' : (isset($_GET['accepted']) ? 'Расчёт подтверждён и готов к оформлению выплаты.' : (($_GET['paid']??'')==='1' ? 'Выплаты отмечены выполненными и учтены по объектам.' : (($_GET['paid']??'')==='duplicate' ? 'Эти выплаты уже были отмечены выполненными.' : (isset($_GET['closed']) ? 'Удержание добавлено к выплате по объекту.' : (isset($_GET['reversed']) ? 'Предыдущая отметка о выплате отменена.' : '')))));
         $body = '<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><ol><li><a class="fm2-breadcrumb-link" href="/pilot/otiz/payments">Подготовка выплат</a></li><li><span aria-current="page">Расчёт на ' . $this->date($s['report_date']) . '</span></li></ol></nav>'.$this->primaryTabs('payments');
         if ($flash !== '') $body .= '<p class="fm2-alert" role="status">' . $this->e($flash) . '</p>';
         if (($_GET['error']??'')==='incomplete') $body .= '<p role="alert">Расчёт не завершён. Подготовьте новый расчёт перед принятием.</p>';
         if (isset($_GET['error'])) $body .= '<p class="fm2-otiz-error" role="alert">Действие не выполнено. Устраните замечания по объектам и проверьте доступную сумму.</p>';
-        $acceptedActions='<a class="shlz-link" href="/pilot/otiz/snapshots/'.$id.'/export.xlsx">Скачать реестр XLSX</a>'.($payable>0?'<form method="post" action="/pilot/otiz/snapshots/'.$id.'/payments/complete"><input type="hidden" name="csrfToken" value="'.$this->e($this->csrf).'"><button class="shlz-button shlz-button--primary" type="submit">Отметить выплаты выполненными</button><small>Сумма выплаты — '.$this->rub($payable).'</small></form>':'<span class="shlz-status shlz-status--green">Выплаты выполнены</span>');
+        $acceptedActions='<a class="shlz-link" href="/pilot/otiz/snapshots/'.$id.'/export.xlsx">Скачать реестр XLSX</a>'.($payable>0?'<form method="post" action="/pilot/otiz/snapshots/'.$id.'/payments/complete"><input type="hidden" name="csrfToken" value="'.$this->e($this->csrf).'"><input type="hidden" name="operationId" value="'.$this->operationId().'"><button class="shlz-button shlz-button--primary" type="submit">Отметить выплаты выполненными</button><small>Сумма выплаты — '.$this->rub($payable).'</small></form>':'<span class="shlz-status shlz-status--green">Выплаты выполнены</span>');
         $snapshotStatus = $s['status'] === 'draft' ? 'На проверке' : ($payable === 0 ? 'Выплаты выполнены' : 'Готовы к выплате');
         $body .= '<header class="fm2-otiz-snapshot-head"><div><div class="fm2-otiz-title-line"><h1>Выплаты на ' . $this->date($s['report_date']) . '</h1><span class="shlz-status ' . ($s['status'] === 'accepted' ? 'shlz-status--green' : 'shlz-status--orange') . '">' . $snapshotStatus . '</span></div><p>Расчёт подготовлен ' . $this->dateTime($s['calculated_at']) . '. Проверьте начисления и замечания по каждому объекту.</p></div><div class="fm2-otiz-actions">' . ($s['status'] === 'draft' ? '<form method="post" action="/pilot/otiz/snapshots/' . $id . '/accept"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><button class="shlz-button shlz-button--primary" type="submit"' . ($blockers > 0 ? ' disabled' : '') . '>Подтвердить расчёт</button></form>' : $acceptedActions) . '</div></header>';
         $body .= '<section class="fm2-otiz-summary" aria-label="Итоги расчёта"><div><span>К выплате</span><strong>' . $this->rub($payable) . '</strong></div><div><span>Удержано за сроки</span><strong>' . $this->rub($deadlinePenalty) . '</strong></div><div><span>Требуют внимания</span><strong>' . $blockers . '</strong></div><div><span>Объекты</span><strong>' . count($objects) . '</strong></div></section>';
@@ -221,7 +195,7 @@ final class RapidPilotOtiz
         foreach ($objects as $o) {
             $issues = $this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND object_id=" . (int) $o['object_id'] . " ORDER BY FIELD(severity,'blocker','warning')")->fetch_all(MYSQLI_ASSOC);
             $issueHtml = ''; foreach ($issues as $issue) $issueHtml .= '<li><b>' . ($issue['severity'] === 'blocker' ? 'Нужно исправить' : 'Обратите внимание') . ':</b> ' . $this->e($issue['message']) . ' <span>Ответственный: ' . $this->e($issue['owner_role']) . '</span></li>';
-            $objectClosed=$closedByObject[(int)$o['object_id']]??0;$objectPayable=max(0,(int)$o['pool_cents']-$objectClosed);$paymentDone=(int)$o['pool_cents']>0&&$objectPayable===0;
+            $objectClosed=$closedByObject[(int)$o['object_id']]??0;$objectPayable=max(0,(int)$o['accrued_cents']-$objectClosed);$paymentDone=(int)$o['accrued_cents']>0&&$objectPayable===0;
             $status = $o['calculation_state'] === 'blocked' ? ['shlz-status--orange','Требует данных'] : ($o['calculation_state'] === 'no_new_amount' ? ['','Нет новой суммы'] : ($o['calculation_state'] === 'completed' || $paymentDone ? ['shlz-status--green','Выплата выполнена'] : ['shlz-status--blue','Готов к выплате']));
             $body .= '<tr class="fm2-otiz-object-row"><td><details><summary><strong>' . $this->e($o['regnumber']) . '</strong><small>' . $this->e($o['address']) . '</small></summary><div class="fm2-otiz-detail">' . $this->calculationTrace($o) . $this->allocation($id, (int) $o['object_id']) . ($issueHtml !== '' ? '<ul class="fm2-otiz-issues">' . $issueHtml . '</ul>' : '') . $this->closureForm($s, $o) . '</div></details></td><td><strong>' . $this->percent((int) $o['previous_progress_bp']) . ' → ' . $this->percent((int) $o['current_progress_bp']) . '</strong><small>+' . $this->percent(max(0, (int) $o['current_progress_bp'] - (int) $o['previous_progress_bp'])) . '</small></td><td>' . number_format((int) $o['kss_bp'] / 10000, 2, ',', ' ') . '</td><td><strong>'.$this->rub($this->deadlinePenalty($o)).'</strong></td><td>' . $this->rub((int) $o['closed_before_cents']) . '</td><td><strong>' . $this->rub($objectPayable) . '</strong></td><td><span class="shlz-status ' . $status[0] . '">' . $status[1] . '</span></td></tr>';
         }
@@ -471,10 +445,10 @@ final class RapidPilotOtiz
     private function closureForm(array $snapshot, array $object): string
     {
         $snapshotId = (int) $snapshot['id']; $objectId = (int) $object['object_id'];
-        $closed = (int) $this->db->query("SELECT COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) n FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE snapshot_id={$snapshotId} AND object_id={$objectId}")->fetch_assoc()['n'];
-        $available = max(0, (int) $object['pool_cents'] - $closed);
+        $closed=(new \FMonitor2\Otiz\MariaDbRapidOtizSettlementView($this->db,$this->prefix))->closedForObject($objectId);
+        $available = max(0, (int) $object['accrued_cents'] - $closed);
         if ($snapshot['status'] !== 'accepted' || $object['calculation_state'] === 'blocked') return '';
-        $deadlineReduction=$this->deadlinePenalty($object);$disciplineForm=$available>0?'<details class="fm2-otiz-close"><summary>Добавить дисциплинарное удержание</summary><form method="post" action="/pilot/otiz/snapshots/' . (int) $snapshot['id'] . '/closures"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="objectId" value="' . (int) $object['object_id'] . '"><label class="shlz-field"><span class="shlz-field__label">Сумма удержания, ₽</span><input class="shlz-input" name="discipline" inputmode="decimal" value="0" required></label><label class="shlz-field"><span class="shlz-field__label">Основание удержания</span><input class="shlz-input" name="basis" required placeholder="ПВР или служебная записка"></label><label class="shlz-field"><span class="shlz-field__label">Документ</span><input class="shlz-input" name="artifact" placeholder="Номер документа (необязательно)"></label><button class="shlz-button" type="submit">Добавить удержание</button><small>Доступно для удержания не более ' . $this->rub($available) . '</small></form></details>':'<p class="fm2-otiz-paid-note">Выплата по объекту выполнена.</p>';
+        $deadlineReduction=$this->deadlinePenalty($object);$disciplineForm=$available>0?'<details class="fm2-otiz-close"><summary>Добавить дисциплинарное удержание</summary><form method="post" action="/pilot/otiz/snapshots/' . (int) $snapshot['id'] . '/closures"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="operationId" value="'.$this->operationId().'"><input type="hidden" name="objectId" value="' . (int) $object['object_id'] . '"><label class="shlz-field"><span class="shlz-field__label">Сумма удержания, ₽</span><input class="shlz-input" name="discipline" inputmode="decimal" value="0" required></label><label class="shlz-field"><span class="shlz-field__label">Основание удержания</span><input class="shlz-input" name="basis" required placeholder="ПВР или служебная записка"></label><label class="shlz-field"><span class="shlz-field__label">Документ</span><input class="shlz-input" name="artifact" placeholder="Номер документа (необязательно)"></label><button class="shlz-button" type="submit">Добавить удержание</button><small>Доступно для удержания не более ' . $this->rub($available) . '</small></form></details>':'<p class="fm2-otiz-paid-note">Выплата по объекту выполнена.</p>';
         return '<div class="fm2-otiz-settlement"><div class="fm2-otiz-system-money" aria-label="Расчёт выплаты"><div><span>Начислено за работы</span><strong>'.$this->rub((int)$object['accrued_cents']+$deadlineReduction).'</strong></div><div><span>Удержано за сроки</span><strong>'.$this->rub($deadlineReduction).'</strong></div><p>Итого по объекту — '.$this->rub((int)$object['accrued_cents']).'.</p></div>'.$disciplineForm.'</div>';
     }
 
@@ -483,7 +457,7 @@ final class RapidPilotOtiz
         $rows = $this->db->query("SELECT c.*,o.regnumber,o.accrued_cents,o.inputs_json FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` c JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o ON o.snapshot_id=c.snapshot_id AND o.object_id=c.object_id WHERE c.snapshot_id={$snapshotId} ORDER BY c.id DESC")->fetch_all(MYSQLI_ASSOC);
         if ($rows === []) return '';
         $html = '<section class="fm2-otiz-ledger"><h2>Выполненные выплаты и удержания</h2><div class="fm2-table-wrap"><table class="shlz-table fm2-queue-table"><thead><tr><th>Дата</th><th>Объект</th><th>Выплачено</th><th>Удержано по дисциплине</th><th>Удержано за сроки</th><th>Основание</th><th></th></tr></thead><tbody>';
-        foreach ($rows as $r) { $reversal = (int) $r['reverses_payment_closure_id'] > 0; $deadline=(int)$r['deadline_cents'];if((int)$r['paid_cents']!==0)$deadline+=(int)($r['paid_cents']>0?1:-1)*$this->deadlinePenalty($r);$html .= '<tr><td>' . $this->date($r['closed_on']) . '</td><td>' . $this->e($r['regnumber']) . '</td><td>' . $this->rub((int) $r['paid_cents']) . '</td><td>' . $this->rub((int) $r['discipline_cents']) . '</td><td>' . $this->rub($deadline) . '</td><td>' . $this->e($r['basis']) . ($reversal ? '<small>Сторно записи № ' . (int) $r['reverses_payment_closure_id'] . '</small>' : '') . '</td><td>' . (!$reversal ? '<form class="fm2-otiz-reverse" method="post" action="/pilot/otiz/closures/' . (int) $r['id'] . '/reverse"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input class="shlz-input" name="basis" aria-label="Основание сторно" placeholder="Причина сторно" required><button class="shlz-button shlz-button--text shlz-button--sm" type="submit">Сторнировать</button></form>' : '') . '</td></tr>'; }
+        foreach ($rows as $r) { $reversal = (int) $r['reverses_payment_closure_id'] > 0; $deadline=(int)$r['deadline_cents'];if((int)$r['paid_cents']!==0)$deadline+=(int)($r['paid_cents']>0?1:-1)*$this->deadlinePenalty($r);$html .= '<tr><td>' . $this->date($r['closed_on']) . '</td><td>' . $this->e($r['regnumber']) . '</td><td>' . $this->rub((int) $r['paid_cents']) . '</td><td>' . $this->rub((int) $r['discipline_cents']) . '</td><td>' . $this->rub($deadline) . '</td><td>' . $this->e($r['basis']) . ($reversal ? '<small>Сторно записи № ' . (int) $r['reverses_payment_closure_id'] . '</small>' : '') . '</td><td>' . (!$reversal ? '<form class="fm2-otiz-reverse" method="post" action="/pilot/otiz/closures/' . (int) $r['id'] . '/reverse"><input type="hidden" name="csrfToken" value="' . $this->e($this->csrf) . '"><input type="hidden" name="operationId" value="'.$this->operationId().'"><input class="shlz-input" name="basis" aria-label="Основание сторно" placeholder="Причина сторно" required><button class="shlz-button shlz-button--text shlz-button--sm" type="submit">Сторнировать</button></form>' : '') . '</td></tr>'; }
         return $html . '</tbody></table></div></section>';
     }
 
@@ -515,10 +489,11 @@ final class RapidPilotOtiz
         \FMonitor2\InstallationProcess\MariaDbPilotLegacyObjectSchemaReadiness::assertOtizReady($db, $prefix);
     }
 
-    private function event(?int $snapshotId,?int $objectId,string $type,array $payload): void { $json=json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$now=$this->now();$s=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_otiz_events`(snapshot_id,object_id,event_type,payload_json,actor_user_id,occurred_at) VALUES(?,?,?,?,?,?)");$s->bind_param('iissis',$snapshotId,$objectId,$type,$json,$this->userId,$now);$s->execute(); }
     private function snapshotRow(int $id): array { $row=$this->db->query("SELECT * FROM `{$this->prefix}fm2_pilot_otiz_snapshots` WHERE id={$id} LIMIT 1")->fetch_assoc(); if(!is_array($row))$this->fail(404,'Расчёт не найден.'); return $row; }
     private function validDate(string $value): bool { $d=DateTimeImmutable::createFromFormat('!Y-m-d',$value);return$d!==false&&$d->format('Y-m-d')===$value&&$value<='2026-12-31'; }
     private function money(string $value): int { $value=str_replace([' ', ','],['','.'],trim($value));if(!preg_match('/^\d{1,9}(?:\.\d{1,2})?$/D',$value))return-1;return(int)round((float)$value*100); }
+    private function commandOperation():string{return(string)($_POST['operationId']??'');}
+    private function operationId():string{$b=random_bytes(16);$b[6]=chr((ord($b[6])&15)|64);$b[8]=chr((ord($b[8])&63)|128);return vsprintf('%s%s-%s-%s-%s-%s%s%s',str_split(bin2hex($b),4));}
     private function percent(int $bp): string { return number_format($bp/100,0,',',' ') . '%'; }
     private function rub(int $cents): string { $sign=$cents<0?'−':'';return$sign.number_format(abs($cents)/100,2,',',' ').' ₽'; }
     private function date(string $value): string { return preg_match('/^(\d{4})-(\d{2})-(\d{2})/D',$value,$m)===1?$m[3].'.'.$m[2].'.'.$m[1]:$this->e($value); }

@@ -376,6 +376,8 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Runtime/production_runtime_compose_001_test.php',
             'php\ttests/Runtime/production_runtime_browser_001_test.php',
             'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
+            'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php',
+            'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php',
         ], e2e.stdout.splitlines())
 
 

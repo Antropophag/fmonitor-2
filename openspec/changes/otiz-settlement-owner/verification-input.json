@@ -1,0 +1,131 @@
+{
+  "change": "otiz-settlement-owner",
+  "planned_paths": [
+    "app/Otiz/MariaDbOtizSettlement.php",
+    "app/Otiz/OtizSettlement.php",
+    "app/InstallationProcess/OtizSettlementSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "config/yii/web.php",
+    "rapid-pilot/Otiz.php",
+    "tests/Otiz/settlement_owner_001_test.php",
+    "tests/Otiz/settlement_concurrency_001_test.php",
+    "tests/InstallationProcess/otiz_settlement_schema_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
+    "tests/Yii2/otiz_settlement_browser.mjs",
+    "tests/InstallationProcess/assignment_order_original_attempt_audit_schema_001_test.php",
+    "tests/InstallationProcess/checklist_template_schema_001_test.php",
+    "tests/InstallationProcess/classification_provenance_schema_001_test.php",
+    "tests/InstallationProcess/identity_access_schema_001_test.php",
+    "tests/InstallationProcess/inspection_evidence_schema_001_test.php",
+    "tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php",
+    "tests/InstallationProcess/inspection_photo_content_index_schema_001_test.php",
+    "tests/InstallationProcess/inspection_planning_schema_001_test.php",
+    "tests/InstallationProcess/installation_completion_schema_001_test.php",
+    "tests/InstallationProcess/object_detail_snapshot_schema_001_test.php",
+    "tests/InstallationProcess/pilot_case_import_001_test.php",
+    "tests/InstallationProcess/pilot_demo_bootstrap_001_test.php",
+    "tests/InstallationProcess/pilot_e2e_flow_001_test.php",
+    "tests/InstallationProcess/pilot_http_auth_001_test.php",
+    "tests/InstallationProcess/production_migration_runner_001_test.php",
+    "tests/InstallationProcess/selection_canonical_registration_001_test.php",
+    "tests/InstallationProcess/workforce_canonical_runner_001_test.php",
+    "tests/Jobs/jobs_schema_001_test.php",
+    "tests/Otiz/runtime_schema_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tests/Runtime/production_process_readiness_001_test.php",
+    "tests/Runtime/production_readiness_schema_001_test.php",
+    "tests/Runtime/production_runtime_browser_001_test.php",
+    "tests/Runtime/production_schema_frontier_001_test.php",
+    "tests/Runtime/yii2_readiness_001_test.php",
+    "tests/Verification/harness_otiz_canonical_compat_001_test.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV24.php",
+    "tests/Runtime/runtime_jobs_recovery_001_test.php",
+    "tests/Runtime/runtime_recovery_forward_update_001_test.php",
+    "tools/delivery/Dockerfile.runtime.in",
+    "deploy/runtime/Dockerfile",
+    "tests/Runtime/runtime_settlement_compatibility_001_test.php",
+    "app/demo/PilotDemoDatabase.php",
+    "bin/fmonitor2-pilot-demo.php",
+    "rapid-pilot/verify-otiz-workflow.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "authorized-http-commands",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "POST /pilot/otiz/snapshots/{snapshotId}/closures, POST /pilot/otiz/snapshots/{snapshotId}/payments/complete and POST /pilot/otiz/closures/{closureId}/reverse",
+      "tests": [
+        "tests/Yii2/yii2_otiz_settlement_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "canonical-additive-schema-lifecycle",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "ProductionPilotMigrationCatalogue canonical deployment application",
+      "tests": [
+        "tests/InstallationProcess/otiz_settlement_schema_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "cross-snapshot-budget-replay-and-reversal",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "FMonitor2\\Otiz\\OtizSettlement public commands",
+      "tests": [
+        "tests/Otiz/settlement_owner_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "concurrent-serialization-and-atomic-failure",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "FMonitor2\\Otiz\\OtizSettlement public commands from concurrent processes",
+      "tests": [
+        "tests/Otiz/settlement_concurrency_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "browser-settlement-and-retained-return",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "Browser: protected accepted snapshot -> Yii login -> discipline -> complete -> reverse -> rendered snapshot/history; DML runtime",
+      "tests": [
+        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "current-canonical-frontier-regressions",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "Existing public canonical migration CLI, current readiness and demo bootstrap; historical direct migration versions unchanged",
+      "tests": [
+        "tests/Runtime/production_schema_frontier_001_test.php",
+        "tests/InstallationProcess/production_migration_runner_001_test.php",
+        "tests/Otiz/runtime_schema_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "canonical-v24-recovery-preserves-settlement",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "bin/fmonitor2-runtime-recovery.php backup/restore using current image; historical exact v22/v23 images -> current canonical migration",
+      "tests": [
+        "tests/Runtime/runtime_jobs_recovery_001_test.php",
+        "tests/Runtime/runtime_recovery_forward_update_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "locked-runtime-and-retained-compatibility-owner",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "Built deploy/runtime image -> public/runtime.php -> legacy login/CSRF -> POST /pilot/otiz/snapshots/302/payments/complete",
+      "tests": [
+        "tests/Runtime/runtime_settlement_compatibility_001_test.php"
+      ]
+    }
+  ]
+}

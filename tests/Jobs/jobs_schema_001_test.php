@@ -38,7 +38,7 @@ try {
     assertSameValue(false, JobsSchemaMigration::isReady($db, $prefix), 'absent schema is not ready');
     assertSameValue([], $tables($db), 'readiness does not create tables');
     $result = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0, true, 23, range(1, 23)], [
+    assertSameValue([0, true, 24, range(1, 24)], [
         $result['exitCode'], $result['result']['ok'] ?? null,
         $result['result']['schemaVersion'] ?? null, $result['result']['appliedVersions'] ?? null,
     ], 'canonical runner installs the new Jobs frontier');
@@ -77,7 +77,7 @@ try {
     assertSameValue($before, [$tables($db), $rows($db)], 'other prefix repeat preserves populated first family');
     assertSameValue(false, JobsSchemaMigration::apply($db, $prefix)['applied'], 'populated migration repeat is no-op');
     $repeat = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0, 23, []], [$repeat['exitCode'], $repeat['result']['schemaVersion'] ?? null,
+    assertSameValue([0, 24, []], [$repeat['exitCode'], $repeat['result']['schemaVersion'] ?? null,
         $repeat['result']['appliedVersions'] ?? null], 'canonical repeat applies no version');
     assertSameValue($before, [$tables($db), $rows($db)], 'repeat preserves exact rows, history and table inventory');
 

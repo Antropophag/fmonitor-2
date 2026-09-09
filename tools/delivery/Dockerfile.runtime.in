@@ -1,9 +1,4 @@
-FROM @GIT_IMAGE@ AS tcpdf
-
-ARG TCPDF_REVISION=@TCPDF_REVISION@
-RUN git clone --branch @TCPDF_VERSION@ --depth 1 https://github.com/tecnickcom/TCPDF.git /tcpdf \
-    && test "$(git -C /tcpdf rev-parse HEAD)" = "${TCPDF_REVISION}" \
-    && rm -rf /tcpdf/.git
+FROM composer:@COMPOSER_VERSION@ AS composer
 
 FROM @GIT_IMAGE@ AS shlz-ui
 
@@ -22,8 +17,8 @@ RUN npm ci --no-audit --no-fund \
 
 FROM @PHP_FPM_IMAGE@
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client \
-    && docker-php-ext-install -j"$(nproc)" mysqli pcntl \
+    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip \
+    && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pcntl \
     && groupadd --gid 10001 fmonitor \
     && useradd --uid 10001 --gid 10001 --home-dir /home/fmonitor --create-home --shell /usr/sbin/nologin fmonitor \
     && mkdir -p /home/fmonitor/.local/state/fmonitor2/artifacts /run/fmonitor-secrets /var/log/fmonitor /tmp/nginx-client-body /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi \
@@ -33,9 +28,11 @@ RUN apt-get update \
 
 WORKDIR /workspace/fmonitor-2
 COPY --from=shlz-ui-build /shlz-ui /workspace/shlz-ui
-COPY --from=tcpdf /tcpdf ./vendor/tecnickcom/tcpdf
-COPY rapid-pilot/tcpdf-autoload.php ./vendor/autoload.php
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+COPY composer.json composer.lock ./
 COPY app ./app
+RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
+    && composer check-platform-reqs --no-dev
 COPY bin ./bin
 COPY public ./public
 COPY rapid-pilot ./rapid-pilot

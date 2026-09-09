@@ -11,11 +11,12 @@ use RuntimeException;
 /** Owns fictional, disposable demo generations only; never used by runtime HTTP or imports. */
 final class PilotDemoDatabase
 {
-    /** Canonical v23 table identities; status checks only read, never run migrations. */
+    /** Canonical v24 table identities; status checks only read, never run migrations. */
     public const TABLES = [
         'fm2_pilot_otiz_snapshots', 'fm2_pilot_otiz_snapshot_objects', 'fm2_pilot_otiz_snapshot_allocations',
         'fm2_pilot_otiz_snapshot_issues', 'fm2_pilot_otiz_snapshot_evidence', 'fm2_pilot_otiz_payment_closures',
-        'fm2_pilot_otiz_events', 'fm2_otiz_publications', 'fm2_migrated_evidence_decisions',
+        'fm2_pilot_otiz_events', 'fm2_otiz_publications', 'fm2_otiz_settlement_locks',
+        'fm2_otiz_settlement_operations', 'fm2_migrated_evidence_decisions',
         'fm2_migrated_evidence_projection', 'fm2_migrated_evidence_conflicts',
         'fm2_migrated_evidence_decision_state', 'fm2_migration_quarantine_decisions',
         'fm2_assignment_application_attempts', 'fm2_assignment_orders', 'fm2_assignment_order_applications',
@@ -54,7 +55,7 @@ final class PilotDemoDatabase
         $db->query("INSERT INTO `{$legacy}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
         $db->query("INSERT INTO `{$legacy}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
         $migration=CanonicalMigrationApplication::run($db,$process,ProductionPilotMigrationCatalogue::migrations());
-        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>23,'appliedVersions'=>range(1,23)]])throw new RuntimeException();
+        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>24,'appliedVersions'=>range(1,24)]])throw new RuntimeException();
         $marker=$db->real_escape_string("fmonitor2-demo:{$fingerprint}:{$generation}:{$nonce}");
         $db->query("ALTER TABLE `{$process}fm2_installation_cases` COMMENT='{$marker}'");
         $db->query("ALTER TABLE `{$legacy}fm_maintable` COMMENT='{$marker}'");

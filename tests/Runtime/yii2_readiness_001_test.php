@@ -167,7 +167,7 @@ try {
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $db = new mysqli($host, $user, $password, $database, $port);
     $migrated = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0, true, 23], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], 'SETUP_FAILURE: fixture reaches canonical v23');
+    assertSameValue([0, true, 24], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], 'SETUP_FAILURE: fixture reaches canonical v24');
     $db->query('CREATE TABLE readiness_ambient(id INT NOT NULL PRIMARY KEY, marker VARCHAR(40) NOT NULL) ENGINE=InnoDB');
     $db->query("INSERT INTO readiness_ambient VALUES(1,'preserve yii readiness')");
     $environment = [

@@ -39,6 +39,8 @@ $dbPassword = getenv('FMONITOR_VERIFY_DB_PASSWORD') ?: 'fmonitor2_demo_local';
 $db = new mysqli($dbHost, $dbUser, $dbPassword, $dbName, $dbPort);
 $db->set_charset('utf8mb4');
 $tables = [
+    'fm2_otiz_settlement_operations',
+    'fm2_otiz_settlement_locks',
     'fm2_otiz_publications',
     'fm2_pilot_otiz_events',
     'fm2_pilot_otiz_payment_closures',
@@ -74,7 +76,13 @@ $expect = static function (bool $condition, string $message): void {
     echo "ok - {$message}\n";
 };
 
-$run = static function (string $path, string $method = 'GET', array $post = [], string $email = 'otiz.verify@shlz.ru', string $csrf = 'verified-csrf-token') use ($prefix, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword): array {
+$operationSequence = 0;
+$run = static function (string $path, string $method = 'GET', array $post = [], string $email = 'otiz.verify@shlz.ru', string $csrf = 'verified-csrf-token') use ($prefix, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword, &$operationSequence): array {
+    // Valid synthetic submissions include the operation identity supplied by real forms.
+    // Deliberately provided invalid IDs are preserved; runtime rejection is tested separately.
+    if ($method === 'POST' && preg_match('#^/pilot/otiz/(?:snapshots/\\d+/(?:closures|payments/complete)|closures/\\d+/reverse)$#D', $path) === 1 && !array_key_exists('operationId', $post)) {
+        $post['operationId'] = sprintf('91000000-0000-4000-8000-%012d', ++$operationSequence);
+    }
     $worker = <<<'PHP'
 require getcwd() . '/app/autoload.php';
 require getcwd() . '/app/InstallationProcess/DatabaseUnavailable.php';
@@ -146,6 +154,8 @@ try {
     if(($publicationMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ publication fixture migration conflict');
     $evidenceMigration=\FMonitor2\InstallationProcess\OtizEvidenceSchemaMigration::apply($db,$prefix);
     if(($evidenceMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ evidence fixture migration conflict');
+    $settlementMigration=\FMonitor2\InstallationProcess\OtizSettlementSchemaMigration::apply($db,$prefix);
+    if(($settlementMigration['reason']??null)==='SCHEMA_MIGRATION_CONFLICT')throw new RuntimeException('OTIZ settlement fixture migration conflict');
     RapidPilotOtiz::bootstrap($db, $prefix);
 
     $unauthorized = $run('/pilot/otiz', email: 'viewer.verify@shlz.ru');
