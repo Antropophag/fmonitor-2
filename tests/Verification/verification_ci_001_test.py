@@ -375,6 +375,7 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php',
             'php\ttests/Runtime/production_runtime_compose_001_test.php',
             'php\ttests/Runtime/production_runtime_browser_001_test.php',
+            'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
         ], e2e.stdout.splitlines())
 
 

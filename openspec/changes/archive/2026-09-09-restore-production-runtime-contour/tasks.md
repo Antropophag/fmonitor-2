@@ -27,9 +27,18 @@
 
 - [x] 5.1 Обновить #27 production runbook exact backup/restore/update/rollback командами, private evidence policy и NEEDS_GRILL для retention/RPO/RTO; проверить docs references и отсутствие secrets.
 - [x] 5.2 Записать безопасный публичный drill report: фактическая длительность, bundle/source/image IDs, exact сверки и ограничения; primary dump/archive оставить вне repository mode 0600.
-- [ ] 5.3 Получить независимый Gate 5 review production diff, tests и evidence; выполнить focused restore/runtime/browser проверки, architecture check и один полный CI по принятой матрице.
-- [ ] 5.4 Сверить Done: source contour не изменён, восстановленный contour проходит exact data/file/auth/session checks и update drill, cleanup ограничен task-owned targets, рабочий stand и volumes не затронуты.
+- [x] 5.3 Получить независимый Gate 5 review production diff, tests и evidence; выполнить focused restore/runtime/browser проверки, architecture check и один полный CI по принятой матрице.
+- [x] 5.4 Сверить Done: source contour не изменён, восстановленный contour проходит exact data/file/auth/session checks и update drill, cleanup ограничен task-owned targets, рабочий stand и volumes не затронуты.
 
 ## 6. Deferred после #34
 
 - [x] 6.1 После завершения #34 создать отдельный OpenSpec slice для worker quiesce, pending/leased jobs, outbox dedup/retry и unknown external delivery без реальных sends; до этого не помечать background recovery проверенным.
+
+## Завершение — 2026-09-09
+
+Полный Actions34325719485: все8 jobs SUCCESS, literal VERIFY_OK на source
+`81c38b6901303a82d0bc7f966954e1ab0c2925c5`. PR65 штатно merged в
+`41e394986f006f3a18beea39d7b19ea97d7f01ce`; issue36 CLOSED. Независимые
+reviews и exact-image drill сохранены в delivery report и reviews/code.
+Source DB остановлен, его volumes и восстановленный target сохранены.
+Пользовательские стенды не переключались; retention/RPO/RTO остаются решениями владельца.

@@ -64,3 +64,43 @@ therefore approves the bounded, exception-safe diagnostic source on the exact ha
 above; it does not claim a new browser GREEN or identify the cause of `ERR_ABORTED`.
 The next same-source Linux CI occurrence must supply attribution before any lifecycle
 fix is chosen.
+
+## PR68 mainline merge metadata review
+
+Main advanced to `c25c1f1111444221adfcaa0998cb758349ec94ba`; it was merged into
+startup/diagnostics parent `788812593fbcbe6c59018ed583af1c1b78cd9795`. Review was
+bounded to the one manual verification-inventory conflict and the automatically
+merged CI/suite/category metadata. Verdict: **APPROVED**.
+
+The resolved `tools/verification/suites.tsv` is the exact set union of both parents,
+with no duplicate, added or missing row. `categories.json` is the exact key/value
+union; the parents have no conflicting category value. Both governed expectation
+tests contain the startup Python Compose E2E and upstream PHP object-register paging
+browser fixture exactly once. The manual `added_by_suite['e2e']` resolution therefore
+preserves both parents rather than choosing either side.
+
+Reviewed merge-result hashes:
+
+```text
+9cd3b6e13c899ecc6215978cd409439aa8ae6074cf5bf549d7a877ed14b3e38a  tests/Verification/verification_inventory_001_test.py
+546c196b0fe16af525d0ed1931e1b773afac1cd6dcd271095ba6a36746d554f2  tests/Verification/verification_ci_001_test.py
+95bc10fbbd91f27ccc6d78e053fb81db047cd9193d541da931749c3dea8c4f72  tools/verification/suites.tsv
+41018bc786e98c4c1e0629506d42d8ac518a39025e4bad26331744406d46cf78  tools/verification/categories.json
+```
+
+Focused merge checks reported by the root integrator:
+
+```text
+python3 tests/Verification/verification_inventory_001_test.py
+Ran 15 tests in 9.394s — OK
+
+python3 tests/Verification/verification_ci_001_test.py
+Ran 15 tests in 42.165s — OK
+
+git diff --check
+exit 0, no output
+```
+
+No upstream product implementation was reviewed or changed by this addendum. The
+merge preserves the newer owner queue `#17 → #66 → #26`; this bounded integration
+only continues the already confirmed startup blocker correction.

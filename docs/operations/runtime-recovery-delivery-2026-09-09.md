@@ -79,3 +79,22 @@ Target http://127.0.0.1:18196/ is retained for review. Primary8092, older8093,
 reviewed8095 and older restore18094 were untouched. The task-owned source DB is stopped with volumes retained; target18196 is retained.
 Authoritative CI remains before Done.
 Retention, RPO and RTO remain owner decisions; this technical proof chooses none.
+
+
+## Завершение после рестарта — 2026-09-09
+
+PR65 https://github.com/Antropophag/fmonitor-2/pull/65 штатно MERGED
+2026-09-09T07:57:44Z, merge `41e394986f006f3a18beea39d7b19ea97d7f01ce`.
+Issue36 CLOSED. Уже запущенный Actions34325719485 завершился SUCCESS:
+все8 jobs GREEN, literal VERIFY_OK на exact head
+`81c38b6901303a82d0bc7f966954e1ab0c2925c5`. Полный лог сохранён вне repo:
+`/tmp/pr65-81c38b69-green.log`. Повторный полный прогон не запускался.
+
+Оба OpenSpec change синхронизированы с main specs и архивированы после merge;
+strict validation:10 specs PASS, оба change PASS перед архивированием.
+Архивные metadata сохраняются отдельным локальным commit после проверенного PR65;
+это не дополнительная публикация в main. Reviews остаются неизменными.
+Никаких runtime/DB/volume изменений в этой сессии не выполнялось.
+Retention/RPO/RTO не утверждены; новая автономная очередь не запускалась.
+Goal API после рестарта вернул null; активная либо завершённая глобальная Goal
+не заявляется. Следующие технические срезы ждут нового поручения владельца.
