@@ -141,7 +141,7 @@ def finding(rule: str, path: Path, line_no: int, evidence: str, *, source_normal
 
 def ddl_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
-    return rel.startswith("app/InstallationProcess/") and path.name.endswith("SchemaMigration.php")
+    return (rel.startswith("app/InstallationProcess/") and path.name.endswith("SchemaMigration.php")) or rel == "app/RuntimeRestore/RuntimeRecovery.php"
 
 
 def workforce_migration_owner(path: Path) -> bool:
@@ -191,6 +191,8 @@ def runtime_migration_matches(text: str) -> list[tuple[int, str]]:
 
 def sql_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
+    if rel == "app/RuntimeRestore/RuntimeRecovery.php":
+        return True
     if rel.startswith("app/Otiz/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderComposition/"):
