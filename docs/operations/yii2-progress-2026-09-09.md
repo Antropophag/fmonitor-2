@@ -8,7 +8,21 @@ forced re-login and recreation of disposable test users/data. No legacy session
 bridge is required. Current checkout fmonitor-2-yii2-76-20260909 began clean from
 origin/main414ac0a7; previous WIP checkouts and stand preserved.
 
-## Candidate ready for CI
+## PR77 merged — 2026-09-09T15:16:40Z
+
+PR https://github.com/Antropophag/fmonitor-2/pull/77 MERGED.
+Exact candidate84a299f20ea3920081992a4b8f4f654830c1cba4, full Actions34367636220
+SUCCESS, verify job102523687342 printed literal VERIFY_OK. All categories and
+Quality Graph SUCCESS, independent Gate3/Gate5 APPROVED. Main merge commit
+8b8104908a77ec399809a16026740843aa53a990. No working-stand switch.
+Foundation lifecycle can archive; stage2 user route/auth and entire #76 remain open.
+
+Auth branch codex/yii2-authentication-76-20260909 has base contract4e083473 and
+late-session fault test5c9c9873 independently reviewed. Late write fault exposes
+retained success Location with503; implementation is correcting it. Financial
+#70 has separate planning/test branch codex/yii2-otiz-settlement-70.
+
+## Candidate ready for CI (historical checkpoint)
 
 Foundation production reviewed at42fca6af by foundation_tests, APPROVED.
 Dependency bootstrap reviewed at e24a1532 by root (different author), APPROVED.

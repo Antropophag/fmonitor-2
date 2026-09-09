@@ -46,8 +46,8 @@ records every attempted outcome in `fm2_pilot_auth_attempts`, and then calls
 unchanged. Verify them with PHP `password_verify()`: Yii 2's current
 `Security::validatePassword()` validates bcrypt-shaped hashes before calling PHP and
 therefore cannot admit the existing Argon2id hashes. New invitation activation
-continues to generate `PASSWORD_ARGON2ID` hashes. Yii Security remains the owner of
-request CSRF and general random values; it does not justify rehashing credentials.
+continues to generate `PASSWORD_ARGON2ID` hashes. Yii Request owns request CSRF;
+Yii Security supplies general random values. Neither justifies rehashing credentials.
 
 Authorization remains a fresh read of canonical FMonitor facts, not a second copy
 in Yii RBAC tables. A narrow `CheckAccessInterface` adapter delegates
@@ -181,4 +181,3 @@ retired internal assertion under the owner decision.
 - [`yii\rbac\CheckAccessInterface`](https://www.yiiframework.com/doc/api/2.0/yii-rbac-checkaccessinterface): the narrow adapter accepted by `User::can()`.
 - [`yii\filters\AccessControl`](https://www.yiiframework.com/doc/api/2.0/yii-filters-accesscontrol): controller admission and guest/authenticated denial behavior.
 - [`yii\base\Security`](https://www.yiiframework.com/doc/api/2.0/yii-base-security): password helpers; its current bcrypt-shaped validation guard is why existing Argon2id verification stays on PHP's native password API.
-
