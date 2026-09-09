@@ -23,4 +23,3 @@ Gate 2 сейчас зависит от ручного выбора focused test
 Новый seam `tools/delivery/change-verification.py`, policy в `.quality-graph/`,
 нормативная executable spec и isolated contract test. Регистрация теста в
 существующем inventory выполняется интегратором отдельно.
-
