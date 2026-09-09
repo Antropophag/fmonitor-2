@@ -39,3 +39,9 @@ Root independently reviewed new expectations for per-sample context windows, mis
 Root independently inspected supplemental expected totals and observed RED at line88 (total omits input/output-only record). Correct independent total is 250+32=282. Legacy known per-call input100 remains a context sample with unknown window; peak among known windows is80/400=0.2. Implementation correction approved; all earlier canary/deduplication checks retained.
 - tests/Usage/USAGE-AGGREGATION-001.md: `2641a858c8751a4b395c5ca571372625d3e15843e90e875195739c48a80410e6`
 - tests/Usage/usage_aggregation_001_test.py: `3bb968e67898173d647f4708dbd4d9c60ff979691cf8ef5ddb64a0211a236cf3`
+
+## Discovery privacy and identifier fallback Gate 3 - APPROVED
+
+Root independently reproduced committed6f8fecb8 CLI failures: locked directory returned exit0; child path through locked parent returned exit1 and leaked canary path in traceback (uid501). Revised public tests retain null/empty call_id fallback and exercise directory, blocked-parent child, nested traversal, and direct unreadable file with effective-permission checks/restoration. Root observed RED at line95: expected four unique valid tool IDs, actual two. This is a new confirmed privacy/measurement risk after the earlier successful CI; a corrected candidate requires fresh CI.
+- tests/Usage/USAGE-AGGREGATION-001.md: `3f361a7a22191c4f5a078eafffa80376c04c0affe3e489bbe08d21232078861d`
+- tests/Usage/usage_aggregation_001_test.py: `9c7ea1f5f7cf4ce12756b68b6743283d040f1b80f0bc8d78f510b192e12ed7da`

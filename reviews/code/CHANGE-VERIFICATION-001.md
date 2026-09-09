@@ -166,3 +166,36 @@ to its parent. The reviewed proposal SHA-256 is now
 d9811cdd5e4521457a1d61277069fe3d0793f3fe..HEAD` pass. This is formatting
 only; implementation, specifications, tests, policy, and behavior are unchanged,
 so the Gate 5 **APPROVED** verdict stands without another test run.
+
+## Implementation-pilot metadata addendum
+
+Verdict: **APPROVED** with no findings for this bounded evidence update.
+
+The public JSON export and report agree arithmetically. Executor plus reviewer
+totals are long: 2,254,515 input, 20,614 output, 43 responses, 39 tool calls and
+814,122 ms; short: 1,134,085 input, 15,637 output, 32 responses, 28 tool calls
+and 621,880 ms. Each arm records one correction round, final independent
+APPROVED, the same frozen specification/test/planner inputs, and the same passing
+public probes. Cached input remains a subset of input and reasoning a subset of
+output. The separately reported shared probe review is 167,366 input and 1,219
+output; it is excluded from both arm totals, while the retained probe context in
+the long reviewer's correction turn is explicitly disclosed.
+
+The report limits the result to one paired isolated CLI implementation and
+correction task. It excludes coordinator work and the production privacy fix,
+and makes no billing, quota, cross-model, causal, full-product-PR, or deployment
+claim. It truthfully records the earlier successful CI on `6f8fecb8` as
+historical evidence superseded by a confirmed privacy-risk correction requiring
+a fresh full exact-source CI. #78 remains open for broader product-PR and model
+comparison evidence.
+
+Reviewed metadata SHA-256:
+
+- `docs/operations/token-optimization-78-implementation-pilot.json`:
+  `5bb32d4c9c8bbc0640c3709461c53f251c934601bb500c6ee507ee6a7682eaa4`
+- `docs/operations/token-optimization-78.md`:
+  `3a8a3bda5ac4f9803a76ba64f675df4087eb4fbd17394cdb59f6e8c8d9c04d48`
+
+Validation: strict JSON parsing and `git diff --check` both exit 0. No
+implementation, policy, specification, or test expectation was changed by this
+review.

@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+import stat
 import sys
 from typing import Any
 
@@ -152,9 +154,10 @@ def parse_file(path: Path) -> tuple[str, dict[str, Any], int, int]:
                 if isinstance(turn_id, str) and turn_id and isinstance(duration, int) and not isinstance(duration, bool) and duration >= 0:
                     completed_turns.setdefault(turn_id, duration)
             elif row_type == "response_item" and payload.get("type") in {"function_call", "custom_tool_call"}:
-                call_id = payload.get("call_id", payload.get("id"))
-                if isinstance(call_id, str) and call_id:
-                    tool_calls.add(call_id)
+                for candidate in (payload.get("call_id"), payload.get("id")):
+                    if isinstance(candidate, str) and candidate:
+                        tool_calls.add(candidate)
+                        break
 
     context_inputs: list[int] = []
     context_ratios: list[float] = []
@@ -247,8 +250,33 @@ def finalize(role: dict[str, Any]) -> None:
     role["turns"]["average_duration_ms"] = round(role["turns"]["duration_ms"] / completed, 3) if completed else None
 
 
+def discover_jsonl(source: Path) -> list[Path]:
+    mode = source.stat().st_mode
+    if stat.S_ISREG(mode):
+        with source.open("rb"):
+            pass
+        return [source]
+    if not stat.S_ISDIR(mode):
+        raise OSError("unsupported input type")
+
+    paths: list[Path] = []
+
+    def traversal_error(error: OSError) -> None:
+        raise error
+
+    with os.scandir(source):
+        pass
+    for directory, _, filenames in os.walk(source, onerror=traversal_error, followlinks=False):
+        for filename in filenames:
+            if filename.endswith(".jsonl"):
+                candidate = Path(directory) / filename
+                if candidate.is_file():
+                    paths.append(candidate)
+    return sorted(paths)
+
+
 def aggregate(source: Path) -> dict[str, Any]:
-    paths = [source] if source.is_file() else sorted(path for path in source.rglob("*.jsonl") if path.is_file())
+    paths = discover_jsonl(source)
     roles = {name: empty_role() for name in ("main", "subagents", "unknown")}
     skipped_lines = 0
     skipped_usage = 0
@@ -280,9 +308,6 @@ def main() -> int:
     parser.add_argument("--pretty", action="store_true")
     arguments = parser.parse_args()
     source = Path(arguments.input)
-    if not source.exists() or not (source.is_file() or source.is_dir()):
-        print("usage aggregation failed: input is not a readable file or directory", file=sys.stderr)
-        return 2
     try:
         report = aggregate(source)
     except (OSError, UnicodeError):

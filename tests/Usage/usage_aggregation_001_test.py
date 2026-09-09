@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import os
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,6 +47,8 @@ with tempfile.TemporaryDirectory(prefix="fm2-usage-spec-") as temporary:
         {"type": "response_item", "payload": {"type": "function_call", "call_id": "tool-a", "arguments": CANARY}},
         {"type": "response_item", "payload": {"type": "function_call", "call_id": "tool-a", "arguments": CANARY}},
         {"type": "response_item", "payload": {"type": "custom_tool_call", "call_id": "tool-b", "input": CANARY}},
+        {"type": "response_item", "payload": {"type": "function_call", "call_id": None, "id": "tool-c"}},
+        {"type": "response_item", "payload": {"type": "custom_tool_call", "call_id": "", "id": "tool-d"}},
         {"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "turn-a", "duration_ms": 2500, "summary": CANARY}},
         {"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "turn-a", "duration_ms": 2500}},
         {"type": "response_item", "payload": {"type": "message", "content": CANARY}},
@@ -89,7 +92,7 @@ with tempfile.TemporaryDirectory(prefix="fm2-usage-spec-") as temporary:
         "input": 250, "cached_input": 200, "cache_write_input": 0,
         "output": 32, "reasoning_output": 12, "total": 282,
     }
-    assert main["tool_calls"] == 2
+    assert main["tool_calls"] == 4
     assert main["turns"] == {"completed": 1, "duration_ms": 2500, "average_duration_ms": 2500.0}
     assert main["context"] == {
         "samples": 3, "maximum_input_tokens": 140, "average_input_tokens": 83.333,
@@ -127,5 +130,50 @@ assert missing.returncode == 2
 assert missing.stdout == ""
 assert missing.stderr == "usage aggregation failed: input is not a readable file or directory\n"
 assert CANARY not in missing.stderr
+
+if hasattr(os, "geteuid") and os.geteuid() != 0:
+    with tempfile.TemporaryDirectory(prefix="fm2-usage-unreadable-") as temporary:
+        unreadable = Path(temporary) / ("private-" + CANARY)
+        unreadable.mkdir()
+        child = unreadable / ("child-" + CANARY + ".jsonl")
+        child.write_text("{}\n", encoding="utf-8")
+        try:
+            unreadable.chmod(0)
+            parent_locked = not os.access(unreadable, os.R_OK | os.X_OK)
+            unreadable.chmod(0o700)
+            child.chmod(0)
+            file_locked = not os.access(child, os.R_OK)
+            child.chmod(0o600)
+            if not parent_locked or not file_locked:
+                print("USAGE_AGGREGATION_001_PERMISSION_CASES_SKIPPED")
+            else:
+                cases = (
+                    (unreadable, 0, 0o600),
+                    (child, 0, 0o600),
+                    (Path(temporary), 0, 0o600),
+                    (child, 0o700, 0),
+                )
+                for target, directory_mode, child_mode in cases:
+                    unreadable.chmod(0o700)
+                    child.chmod(child_mode)
+                    unreadable.chmod(directory_mode)
+                    try:
+                        denied = subprocess.run(
+                            [sys.executable, str(COMMAND), "--input", str(target)],
+                            text=True,
+                            capture_output=True,
+                            check=False,
+                        )
+                    finally:
+                        unreadable.chmod(0o700)
+                        child.chmod(0o600)
+                    assert denied.returncode == 2
+                    assert denied.stdout == ""
+                    assert denied.stderr == "usage aggregation failed: input is not a readable file or directory\n"
+                    assert CANARY not in denied.stderr
+                    assert "Traceback" not in denied.stderr
+        finally:
+            unreadable.chmod(0o700)
+            child.chmod(0o600)
 
 print("USAGE_AGGREGATION_001_OK")

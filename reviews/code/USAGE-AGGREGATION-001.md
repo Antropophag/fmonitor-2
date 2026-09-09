@@ -51,3 +51,30 @@ Final artifact hashes:
 - tools/usage/baseline-78.json: `1935ee03ef3b7eb4135a925a70a697175aa67898133c4dd4b0b6199778ace098`
 - tests/Usage/USAGE-AGGREGATION-001.md: `2641a858c8751a4b395c5ca571372625d3e15843e90e875195739c48a80410e6`
 - tests/Usage/usage_aggregation_001_test.py: `3bb968e67898173d647f4708dbd4d9c60ff979691cf8ef5ddb64a0211a236cf3`
+
+## Post-pilot discovery/privacy correction - APPROVED
+
+Reviewer root independently reproduced two committed-source6f8fecb8 failures:
+an unreadable directory returned a false empty success; a child path through an
+unreadable parent leaked the input path in a traceback. The paired implementation
+pilot also exposed invalid call_id masking a valid fallback id. These are new
+confirmed risks after CI34393067126 succeeded, not a reason to reuse that CI for
+the corrected source.
+
+Author usage_baseline first amended public specification/tests, received root
+Gate3 approval with captured RED, then corrected discovery/traversal and identifier
+selection. Root inspected the complete correction diff: all discovery is inside
+the stable error boundary; explicit traversal propagates errors instead of
+silently skipping blocked subdirectories; identifier selection takes the first
+valid nonempty string. No raw errors or input paths reach output.
+
+Independent verification: `python3 tests/Usage/usage_aggregation_001_test.py` ->
+USAGE_AGGREGATION_001_OK; shared isolated public CLI probe -> failures=[],passed=true.
+The four permission cases execute under non-root uid501 and restore permissions.
+Author also reproduced the literal private baseline without aggregate drift.
+A fresh exact-source CI is required because executable code/tests changed.
+
+Reviewed correction hashes:
+- tools/usage/aggregate.py: `538f7245ae4e262d8bb386c835ca2aaf81aafbaa722ef5f88ed51070f9b42ad6`
+- tests/Usage/USAGE-AGGREGATION-001.md: `3f361a7a22191c4f5a078eafffa80376c04c0affe3e489bbe08d21232078861d`
+- tests/Usage/usage_aggregation_001_test.py: `9c7ea1f5f7cf4ce12756b68b6743283d040f1b80f0bc8d78f510b192e12ed7da`

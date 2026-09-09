@@ -53,8 +53,8 @@ account/billing-разбивки; сырые session logs сами по себе
 ## Статус доказательств
 
 Реализация и независимые Gate 3/Gate 5 reviews завершены. Ниже измерена пара
-законченных document-review задач. Полный цикл implementation/PR и сравнение
-моделей этим пилотом не измерены; не переносить результат на них автоматически.
+законченных document-review задач. Полный продуктовый PR и сравнение
+моделей этими пилотами не измерены; не переносить результат на них автоматически.
 Полный exact-source CI кандидата остаётся отдельным обязательным доказательством.
 
 ## Direct document-size measurement
@@ -133,7 +133,60 @@ Primary logs remain private. Full safe aggregates and frozen hashes:
   architecture (7 rules + HTTP qualification), OpenSpec validation and diff check PASS.
 - Full CI and PR identity will be recorded after the frozen candidate is pushed.
 
-#78 remains open for a decision on extending the pilot to completed implementation
-slices and comparative model data. No model-rule change or return to #76 is
+#78 remains open for full product-PR and comparative model data; the isolated
+implementation pilot below completes the narrower implementation-task comparison. No model-rule change or return to #76 is
 inferred from this narrower review experiment. Working stand and financial WIP
 remain preserved.
+
+## First CI and a subsequent confirmed privacy finding
+
+[Actions34393067126](https://github.com/Antropophag/fmonitor-2/actions/runs/34393067126)
+passed on `6f8fecb8949b4d2c69b1ae699625c2ce0bf44408`: all categories, literal
+VERIFY_OK and stock Quality Graph publication SUCCESS in draft PR80.
+
+The subsequent isolated implementation pilot exposed an input-discovery privacy
+failure in the usage tool, reproduced independently in that candidate. A locked
+directory could report zero usage; an inaccessible ancestor could leak a path in
+a traceback. Invalid call_id also masked a valid fallback id. These were fixed
+through new RED/Gate3 and independent Gate5; the updated tool passes real permission
+and common public-CLI probes. A new full CI is warranted by this executable change
+and new confirmed risk; the earlier successful run is historical evidence only.
+
+## Completed isolated implementation pilot
+
+Two disposable repositories started at the identical synthetic base
+`f4948e726cb393262901d0377cfc6481f7c6e41d`. Both received the same frozen public
+specification, test and required verification planner. Only the long-context
+author loaded the historical goal. Each implemented the missing CLI, recorded
+RED, passed the fixed test and planner tests, then corrected one independent
+review batch. Both final candidates passed the identical additional public probe
+and independent Gate5. Their implementations are experimental and were not merged
+into FMonitor; the experiment instead exposed the privacy defect corrected above.
+
+| Completed executor + code-review metric | Long startup | Short startup |
+| --- | ---: | ---: |
+| Logged input tokens | 2,254,515 | 1,134,085 |
+| Cached input (included above) | 2,128,384 | 1,062,400 |
+| Uncached input | 126,131 | 71,685 |
+| Output tokens | 20,614 | 15,637 |
+| Reasoning (included in output) | 6,203 | 3,621 |
+| Unique logged responses | 43 | 32 |
+| Logged tool calls | 39 | 28 |
+| Sum of completed-turn durations, ms | 814,122 | 621,880 |
+| Correction rounds / final verdict | 1 / APPROVED | 1 / APPROVED |
+
+Both executor and reviewer roles are measured separately in
+[token-optimization-78-implementation-pilot.json](token-optimization-78-implementation-pilot.json).
+The shared probe Gate3 (167,366 input, 1,219 output tokens) is reported separately,
+not silently charged to one arm; its context nevertheless remains in the long
+reviewer's later turn. Coordinator work and the production-candidate fix are
+excluded from arm totals. Tool choices, generated code and findings differed;
+this is an observed completed-task pair, not proof that context size alone caused
+the entire difference. Durations sum completed turns and include tool waits,
+not the wall-clock critical path. Raw journals stay private; local source bundles
+preserve the disposable candidates without storing their conversation logs.
+
+This extends the pilot beyond document review to an isolated implementation and
+correction cycle, under the same public checks. Full product-PR cost, other
+models/reasoning levels, billing and quota remain unmeasured. The selected sol/low
+rule is retained; there is no evidence here for replacing it with another model.
