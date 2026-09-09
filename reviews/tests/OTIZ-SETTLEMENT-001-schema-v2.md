@@ -4,7 +4,7 @@
 - Reviewer: separately tasked agent `/root/settlement_review`
 - Test author: executor `/root/settlement`; reviewer authored neither test nor production
 - Reviewed exact candidate: `0b802126fcd420bad74bf3c9bca4d6f48037940f`
-- Correction baseline: `2b0ca215c4f74965d286eb586d650fc191c94bb3`
+- Correction baseline: `2b0ca215cb685bb1c0e1162f3bc5e8b343bd1b60`
 - Public seam: `CanonicalMigrationApplication::run()` with the production catalogue
 - Verdict: **APPROVED**
 
