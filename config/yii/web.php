@@ -48,6 +48,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
         ],
         'errorHandler' => ['class' => SafeErrorHandler::class],
         'urlManager' => [
+            'cache' => false,
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'enableStrictParsing' => true,

@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("baseline.json")
-SOURCE_ROOTS = ("app", "rapid-pilot", "bin", "public")
+SOURCE_ROOTS = ("app", "rapid-pilot", "bin", "public", "config")
 SOURCE_SUFFIXES = {".php", ".js", ".sql"}
 IGNORED_PARTS = {"demo", "legacy-migration"}
 DDL = re.compile(r"\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+(?:TABLE|DATABASE|INDEX|USER)\b", re.I)
@@ -95,7 +95,8 @@ def files() -> list[Path]:
             continue
         result.extend(
             p for p in base.rglob("*")
-            if p.is_file() and p.suffix in SOURCE_SUFFIXES and not any(x in IGNORED_PARTS for x in p.relative_to(ROOT).parts)
+            if p.is_file() and (p.suffix in SOURCE_SUFFIXES or p == ROOT / "bin/yii")
+            and not any(x in IGNORED_PARTS for x in p.relative_to(ROOT).parts)
         )
     return sorted(result)
 
@@ -262,7 +263,7 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                 )
         if not production_file(path):
             continue
-        if rel.startswith(("app/Runtime/", "app/Jobs/")) or rel == "public/runtime.php":
+        if rel.startswith(("app/Runtime/", "app/Jobs/", "app/YiiRuntime/Controllers/", "config/yii/")) or rel in {"public/runtime.php", "public/yii.php"}:
             for offset, evidence in runtime_migration_matches(text):
                 number = text.count("\n", 0, offset) + 1
                 violations["ddl_ownership"].append(
@@ -307,7 +308,7 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
                         violations["sql_ownership"].append(finding("jobs-foreign-table", path, number, table))
             if rel.startswith("rapid-pilot/") and (DDL.search(line) or MUTATION_SQL.search(line)):
                 violations["rapid_pilot_boundary"].append(finding("rapid-mutation", path, number, fingerprint_lines[number - 1], source_normalized=True))
-        if rel.startswith(("app/Otiz/", "app/Jobs/")):
+        if rel.startswith(("app/Otiz/", "app/Jobs/", "app/YiiRuntime/", "config/yii/")) or rel in {"public/yii.php", "bin/yii"}:
             for number, line in enumerate(lines, 1):
                 if re.search(r"(?:FMonitor2\\PilotHttp|FMonitor2\\RapidPilot|app/PilotHttp|rapid-pilot)", line):
                     violations["dependency_direction"].append(finding("dependency", path, number, line))

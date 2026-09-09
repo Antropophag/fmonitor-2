@@ -91,12 +91,13 @@ try{
     assertSameValue(200,$emailForm['status'],'normal email form before write fault');
     $passwordForm=ysfRequest($server,'POST','/pilot/login',['_csrf'=>ysfCsrf($emailForm['body']),'email'=>$fixture->email],$passwordCookies);
     assertSameValue(200,$passwordForm['status'],'normal password form before write fault');
-    $passwordCsrf=ysfCsrf($passwordForm['body']);$port=$server['port'];ysfStop($server);
+    $passwordCsrf=ysfCsrf($passwordForm['body']);$fixture->seedFailedAttempts(2);$port=$server['port'];ysfStop($server);
 
     $server=ysfStart($root,$environment,$port,'write');
     $writeFailure=ysfRequest($server,'POST','/pilot/login',['_csrf'=>$passwordCsrf,'email'=>$fixture->email,'password'=>$fixture->password],$passwordCookies);
     ysfSafeFailure($writeFailure,$fixture,[...array_values($passwordCookies),$environment['FMONITOR_YII_COOKIE_VALIDATION_KEY'],$environment['FMONITOR_DB_PASSWORD']],'late session write failure');
     ysfAssertMarker($marker,'write');
+    assertSameValue(2,$fixture->attemptCount(false),'INTENDED_RED: failed attempts survive late session write failure');
     ysfStop($server);@unlink($marker);
 
     $server=ysfStart($root,$environment,$port);$logoutCookies=[];

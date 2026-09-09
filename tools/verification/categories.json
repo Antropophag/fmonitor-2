@@ -283,8 +283,6 @@
   "tests/Runtime/migration_parallel_runners_001_test.php": "integration",
   "tests/Runtime/production_process_readiness_001_test.php": "integration",
   "tests/Runtime/production_readiness_schema_001_test.php": "integration",
-  "tests/Runtime/yii2_runtime_001_test.py": "integration",
-  "tests/Runtime/yii2_readiness_001_test.php": "integration",
   "tests/Runtime/production_runtime_browser_001_test.php": "e2e",
   "tests/Runtime/production_runtime_compose_001_test.php": "e2e",
   "tests/Runtime/production_runtime_contract_001_test.php": "unit",
@@ -296,6 +294,8 @@
   "tests/Runtime/runtime_recovery_forward_update_001_test.php": "integration",
   "tests/Runtime/runtime_storage_001_test.php": "integration",
   "tests/Runtime/session_contention_001_test.php": "integration",
+  "tests/Runtime/yii2_readiness_001_test.php": "integration",
+  "tests/Runtime/yii2_runtime_001_test.py": "integration",
   "tests/Support/ObjectRegisterPagingBrowserFixture.php": "e2e",
   "tests/Verification/architecture_guard_001_test.py": "unit",
   "tests/Verification/batched_schema_snapshot_001_test.php": "integration",
@@ -306,7 +306,6 @@
   "tests/Verification/characterize_inspection_schedule_duplicate_001_test.php": "integration",
   "tests/Verification/characterize_object_detail_import_001_test.php": "integration",
   "tests/Verification/development_setup_001_test.py": "governance",
-  "tests/Verification/yii2_dependency_setup_001_test.py": "governance",
   "tests/Verification/harness_fresh_test_lifecycle_001_test.php": "governance",
   "tests/Verification/harness_full_aggregation_001_test.php": "governance",
   "tests/Verification/harness_otiz_canonical_compat_001_test.php": "integration",
@@ -318,5 +317,8 @@
   "tests/Verification/quality_graph_current_workflow_001_test.py": "unit",
   "tests/Verification/quality_graph_preflight_001_test.py": "unit",
   "tests/Verification/verification_ci_001_test.py": "governance",
-  "tests/Verification/verification_inventory_001_test.py": "governance"
+  "tests/Verification/verification_inventory_001_test.py": "governance",
+  "tests/Verification/yii2_dependency_setup_001_test.py": "governance",
+  "tests/Yii2/yii2_authentication_001_test.php": "integration",
+  "tests/Yii2/yii2_session_failure_001_test.php": "integration"
 }

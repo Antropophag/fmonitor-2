@@ -31,3 +31,12 @@ The fixture uses a unique DB and temporary storage, with same-port process resta
 
 None in the test. Production must cancel success headers/cookies and emit the safe
 failure before delivery; auth author may now implement that fix and rerun both suites.
+
+## Supplemental Gate3 — failed-attempt state
+
+Root reviewed the two-line fixture extension: seed2 failed attempts after the normal
+password form, trigger the already-proven late write failure, then require count2.
+Root repeated intended RED on the current pre-fix controller:503 is safe, but count
+is0. This independently proves success cleanup occurred before durable admission.
+Final test hash3c641c51f73e67b6ff904e50d90a9400c32909496d84bf21d0f7a92ceff6847b.
+Verdict `APPROVED`; fix may move bucket cleanup after successful Yii Session close.

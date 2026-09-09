@@ -1,6 +1,6 @@
 (() => {
   const root = document.documentElement;
-  const storageKey = 'fmonitor-rapid-pilot-ready';
+  const storageKey = 'fmonitor-yii-ready';
   let shouldShow = true;
 
   if (window.location.pathname === '/pilot/login') {
