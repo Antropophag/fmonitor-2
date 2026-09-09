@@ -86,7 +86,34 @@ Inline publisher Bash из parsed YAML реально исполнен на miss
 Кандидат готов к authoritative CI/bootstrap PR. После bootstrap merge остаётся
 реальный representative publisher proof. Наличие Gate5 не закрывает25 заранее.
 
-## Первый полный CI и correction
+## Authoritative CI and bootstrap delivered
+
+PR73 MERGED: f34320ad2f488a02fbe64b4f10863f47f0d97ddf.
+Actions34350407125 SUCCESS на exactb6512ba8f370ceb8bfbc388b60785346da647fd0,
+все9jobsSUCCESS, literalVERIFY_OK. Первый failure34349144148 сохранён в истории.
+Trusted topology установлена на main. DraftPR74 TEST ONLY — DO NOT MERGE
+проверяет фактическую publisher matrix.
+
+P0 — настоящий docs-only head452b70e73b26a711e58305062424029f6abeda44,
+source34351537845 attempt1 SUCCESS. Publisher34351827368 SUCCESS: stock check,
+comment5601910947, триpassed и четыреskipped, ownedfailurelabel отсутствует.
+Повтор publisher34351827368 attempt2 SUCCESS сохраняет тот же commentID/body
+SHA2562a2eebab6b8e7a9811baf5732758bcc612d5162247174a6851d2781c64ba9ea7.
+Stock0.1.7 создаёт дополнительный completed check того же успешного результата;
+уникальный CheckRunID между повторениями не обещается. История checkIDs сохранена.
+
+Synthetic F1 head51f7c96c99602e70a5496fc58167a6495d447273:
+source34352469527 FAILURE, quality-resultsSUCCESS; publisher34352612973 SUCCESS
+публикует именно checkFAILURE, добавляет quality-graph:failed. Для следующих
+проверок сохранности чужих меток к draftPR добавлена стандартная documentation.
+Synthetic outcomes не выдаются за выполнение production tests.
+
+Матрица продолжается;25 ещё открыта. Private evidence:
+/Users/antropophag/.local/state/fmonitor2/qg-phase-b-20260909/.
+Генератор и evidence collector проверены независимым reviewer; operational limits
+и hashes сохранены в /tmp/fmonitor-qg-phase-b-review.md.
+
+## Historical first CI details
 
 PR73, exacthead4221646f, Actions34349144148 завершён FAILURE. Полный список
 терминальных jobs и REGRESSION_FAILURE собран до correction push. Исходный отказ

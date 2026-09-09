@@ -9,13 +9,17 @@
 - [x] 2.1 Добавить report CLI и declaration/compiler validation; focused full/docs-only/negative tests GREEN.
 - [x] 2.2 Подключить pinned collect к нынешнему CI без повтора категорий; проверить workflow/old matrix tests.
 - [x] 2.3 Подключить штатный trusted publisher с явно разрешёнными permissions; transport matrix GREEN без PR execution.
-- [ ] 2.4 Выполнить focused regression/architecture, независимый Gate5 и один полный CI на exact head; сохранить результаты.
+- [x] 2.4 Выполнить focused regression/architecture, независимый Gate5 и один полный CI на exact head; сохранить результаты.
 
 ## 3. Actual delivery
 
-- [ ] 3.1 Выполнить reviewed bootstrap merge и проверить реальный positive publisher run на representative PR, exact source/digest/attempt/check/comment/labels.
-- [ ] 3.2 Проверить actual negative matrix: failed command, missing/malformed/duplicate/stale evidence, повтор события и changed head; сохранить URLs и expected/actual results.
-- [ ] 3.3 Сверить Done, сохранить retained/deferred boundaries честно, синхронизировать specs/архив и закрыть #25 связанными PR после всех доказательств.
+- [x] 3.1 Выполнить reviewed bootstrap merge и проверить реальный positive publisher run на representative PR, exact source/digest/attempt/check/comment/labels.
+- [x] 3.2 Проверить actual negative matrix: failed command, missing/malformed/duplicate/stale evidence, повтор события и changed head; сохранить URLs и expected/actual results.
+- [x] 3.3 Сверить Done, сохранить retained/deferred boundaries честно, синхронизировать specs/архив и подготовить финальный закрывающий PR после всех доказательств.
+
+GitHub closure — отдельный завершающий шаг доставки: финальный PR содержит
+Closes #25 и закрывает issue только после успешного CI и merge. Подготовленный
+архив или checked tasks сами по себе не объявляют GitHub issue закрытой.
 
 Checkpoint: первичный Gate3 APPROVED в9185c5f0. Supplemental reporting-job
 admission RED в1f50b8b2 требует нового независимого approval; исходный reviewer

@@ -77,10 +77,10 @@ Independent checks on reviewed commit `73545663`:
 The unrelated uncommitted owner-resume edit to
 `docs/operations/current-delivery-goal.md` is excluded from this verdict.
 
-Full exact-head GitHub CI and the actual post-bootstrap publisher positive/negative
-matrix remain required by the specification before issue #25 can be completed.
-This Gate 5 approval reviews the implementation; it does not claim those platform
-results, production readiness, merge completion, or closure of #25.
+At this implementation-review checkpoint, full exact-head GitHub CI and the actual
+post-bootstrap publisher positive/negative matrix were still required by the
+specification. Their later evidence is reviewed separately below; this initial
+Gate 5 verdict did not claim those platform results or closure of #25.
 
 Blocking changes: None.
 
@@ -117,6 +117,75 @@ Independent verification on `028ad2c4`:
   entry for each of the three test paths.
 - `git diff --check 4221646f..028ad2c4` — PASS.
 
-The correction is suitable for the authoritative CI rerun. A successful rerun is
-still required before claiming full exact-head CI success; this supplemental
-approval does not convert run `34349144148` into a green run.
+The correction was suitable for the authoritative CI rerun. This supplemental
+approval did not convert run `34349144148` into a green run; the later successful
+rerun is reviewed separately below.
+
+## Actual GitHub proof review
+
+- Bootstrap merge: PR 73 / `f34320ad2f488a02fbe64b4f10863f47f0d97ddf`
+- Authoritative full CI: run `34350407125`, exact head
+  `b6512ba8f370ceb8bfbc388b60785346da647fd0`
+- Publisher matrix: disposable draft PR 74, closed without merge
+- Evidence: outside-repository immutable snapshots under
+  `/Users/antropophag/.local/state/fmonitor2/qg-phase-b-20260909/`
+- Verdict: **APPROVED WITH RECORDED EVIDENCE LIMITS**
+
+No blocking finding. The post-correction full CI has nine successful jobs and the
+literal terminal `VERIFY_OK`. The representative real docs-only run publishes
+plan, fast and verify as passed and the four test categories as skipped. All seven
+artifacts match the source head, run, attempt and graph digest. Stock publication
+creates the successful Quality Graph check and the managed dashboard comment.
+
+Replaying the publisher converges on managed comment `5601910947` with the same
+comment bytes. Stock 0.1.7 creates another successful Check Run on replay, so this
+review does not claim a stable Check Run ID. A synthetic failed unit category is
+published as a failed unit and verify result, a failed stock check and the owned
+`quality-graph:failed` label. The next successful publication removes that owned
+label while preserving the independently added `documentation` label. The F1
+snapshot alone is not cited as proof that F1 preserved the foreign label because
+that label was added after F1 publication.
+
+Missing-current evidence is rejected by preflight before the writer and creates no
+new Quality Graph check. Malformed Result JSON, wrong head and wrong digest reach
+the unmodified stock publisher and produce failed Quality Graph checks rather than
+success. The downloaded plan fixtures independently confirm malformed bytes, a
+forty-zero head and a sixty-four-zero digest respectively.
+
+The attempted duplicate upload leaves seven unique artifacts because GitHub rejects
+the second same-name upload and marks `quality-results` failed. Preflight then
+rejects publication through the independently specified reporting-job guard. This
+case proves the integration handles the actual duplicate-upload failure safely; it
+does not claim GitHub stored duplicate artifact descriptors or independently replace
+the bounded stock defect reproduction recorded in issue 69.
+
+The first stale rerun returned zero artifacts and proves only missing-on-rerun
+rejection. A separately reviewed synthetic fixture supplies the actual stale case:
+source run `34355501023` is attempt 2, while exactly seven uploaded artifact names
+end in `-1`; the downloaded Result retains the same head, workflow run and graph
+digest but has `runAttempt: 1`. Preflight rejects the complete set as lacking all
+current-attempt artifacts, the writer does not run, and no new check or dashboard
+update is produced.
+
+Changed-head handling is also demonstrated. Old source run `34356441771` was
+captured in progress at head `9e6b3590`; the new-head run for `94480442` was created
+at `13:21:38Z`, before the old run completed at `13:22:32Z`, and waited behind it
+under the non-cancelling concurrency group. When the old publisher processed the
+event, the current PR head was already `94480442`, so it produced no old-head
+Quality Graph check. The new-head run then produced one successful check bound to
+`94480442`. The immediate PR read
+that still returned the old head is retained under the explicit API-lag filename
+`f9-immediate-pr-read-old-head.json` and is not used as post-supersession proof.
+
+The negative fixtures are clearly marked `TEST ONLY — DO NOT MERGE`, use the graph
+and trusted publisher from merged main, and prove transport behavior rather than
+product-test success. PR 74's final snapshot records it closed while still draft at
+head `94480442`; none of its synthetic workflow changes entered main.
+
+These results satisfy the specification's bootstrap, exact-head full CI, real
+publisher positive/replay, failed category, missing, malformed, wrong provenance,
+duplicate-upload, stale-attempt and superseded-head evidence requirements. The
+documented limits prevent F2, F7, API lag or synthetic jobs from being presented as
+stronger proof than they provide.
+
+Blocking changes: None.
