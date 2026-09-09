@@ -12,6 +12,10 @@ runs:
         php-version: ${{ env.PHP_VERSION }}
         extensions: ${{ env.PHP_EXTENSIONS }}
         coverage: none
+        tools: none
+    - name: Install locked Composer dependencies
+      shell: bash
+      run: bash tools/delivery/setup-composer.sh
     - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
       with:
         version: ${{ env.UV_VERSION }}

@@ -23,11 +23,10 @@ php -r '$account = posix_getpwuid(posix_geteuid()); $accountHome = realpath($acc
 docker info >/dev/null 2>&1 || fail 'Docker daemon unavailable; start Docker'
 docker compose version >/dev/null || fail 'Docker Compose v2 required'
 python3 tools/delivery/render-dependencies.py --check
-read -r TCPDF_VERSION TCPDF_REVISION <<< "$(python3 tools/delivery/render-dependencies.py --tcpdf)"
 source tools/delivery/setup-dependencies.sh
 # Validate all existing destinations before the first installation/build.
 check_shlz ../shlz-ui
-check_tcpdf
+bash tools/delivery/setup-composer.sh --check
 if [[ "${1:-}" == --check ]]; then
     printf 'SETUP_CHECK_OK (missing dependencies, if any, will be installed by make setup)\n'
     exit 0
@@ -49,20 +48,7 @@ if [[ ! -e ../shlz-ui ]]; then
     publish_dependency "$work/shlz-ui" ../shlz-ui
     rm -rf -- "$work"; work=''
 fi
-if [[ ! -e vendor/tecnickcom/tcpdf ]]; then
-    mkdir -p vendor/tecnickcom
-    work=$(mktemp -d vendor/tecnickcom/.tcpdf-setup.XXXXXXXX)
-    git clone --branch "$TCPDF_VERSION" --depth 1 https://github.com/tecnickcom/TCPDF.git "$work/tcpdf"
-    check_git "$work/tcpdf" "$TCPDF_REVISION"
-    publish_dependency "$work/tcpdf" vendor/tecnickcom/tcpdf
-    rm -rf -- "$work"; work=''
-fi
-if [[ ! -e vendor/autoload.php ]]; then
-    # Exclusive creation preserves any pre-existing autoloader, including a racing writer.
-    (set -o noclobber; cat rapid-pilot/tcpdf-autoload.php > vendor/autoload.php) \
-        || fail 'vendor/autoload.php appeared during setup; preserved, rerun setup'
-fi
-check_tcpdf
+bash tools/delivery/setup-composer.sh
 # Install browser binaries after preserving/checking source trees. Linux may need sudo.
 if [[ "$(uname -s)" == Linux ]]; then
     node ../shlz-ui/node_modules/playwright/cli.js install --with-deps chromium
@@ -72,4 +58,4 @@ fi
 make test-tools
 docker build --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" -t fmonitor2-pilot:latest .
 printf 'SETUP_OK source=%s php=%s node=%s python=%s tcpdf=%s shlz-ui=%s\n' \
-    "$(git rev-parse HEAD)" "$(php -r 'echo PHP_VERSION;')" "$NODE_VERSION" "$PYTHON_VERSION" "$TCPDF_REVISION" "$SHLZ_UI_REVISION"
+    "$(git rev-parse HEAD)" "$(php -r 'echo PHP_VERSION;')" "$NODE_VERSION" "$PYTHON_VERSION" "6.11.4" "$SHLZ_UI_REVISION"

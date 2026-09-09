@@ -263,6 +263,7 @@ characterization	php	tests/Verification/harness_full_aggregation_001_test.php
 characterization	php	tests/Verification/harness_fresh_test_lifecycle_001_test.php
 characterization	php	tests/Verification/quality_graph_ci_setup_001_test.php
 unit	python3	tests/Verification/development_setup_001_test.py
+unit	python3	tests/Verification/yii2_dependency_setup_001_test.py
 db	php	tests/InstallationProcess/invitation_reissue_http_001_test.php
 db	php	tests/Verification/batched_schema_snapshot_001_test.php
 db	php	tests/Otiz/snapshot_publication_001_test.php
@@ -275,6 +276,8 @@ db	php	tests/Runtime/runtime_storage_001_test.php
 e2e	php	tests/Runtime/production_runtime_compose_001_test.php
 db	php	tests/Runtime/production_schema_preflight_001_test.php
 db	php	tests/Runtime/production_readiness_schema_001_test.php
+db	python3	tests/Runtime/yii2_runtime_001_test.py
+db	php	tests/Runtime/yii2_readiness_001_test.php
 e2e	php	tests/Runtime/production_runtime_browser_001_test.php
 db	php	tests/Runtime/production_process_readiness_001_test.php
 db	php	tests/Runtime/initial_owner_provisioning_001_test.php

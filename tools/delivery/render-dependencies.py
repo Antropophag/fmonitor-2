@@ -14,7 +14,7 @@ def pins():
     for line in (ROOT / 'tools/delivery/dependencies.env').read_text().splitlines():
         if not line or line.startswith('#'):
             continue
-        if not re.fullmatch(r'[A-Z_]+=[a-zA-Z0-9/:.,_-]+', line):
+        if not re.fullmatch(r'[A-Z][A-Z0-9_]*=[a-zA-Z0-9/:.,_-]+', line):
             raise ValueError('invalid dependency manifest line')
         key, value = line.split('=', 1)
         if key in values:
@@ -46,7 +46,7 @@ def main():
     values = pins()
     if args.env:
         for key, value in values.items():
-            if not re.fullmatch(r'[A-Z_]+', key) or not re.fullmatch(r'[a-zA-Z0-9/:.,_-]+', value):
+            if not re.fullmatch(r'[A-Z][A-Z0-9_]*', key) or not re.fullmatch(r'[a-zA-Z0-9/:.,_-]+', value):
                 raise ValueError(f'invalid export: {key}')
             print(f'{key}={value}')
         return 0

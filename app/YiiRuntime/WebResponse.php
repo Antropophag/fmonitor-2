@@ -1,0 +1,36 @@
+<?php
+declare(strict_types=1);
+
+namespace FMonitor2\YiiRuntime;
+
+use Yii;
+use yii\base\Event;
+use yii\web\Response;
+
+/** HTTP policy applied through the framework response lifecycle. */
+final class WebResponse
+{
+    public static function secure(Event $event): void
+    {
+        /** @var Response $response */
+        $response = $event->sender;
+        header_remove('X-Powered-By');
+        $response->headers->set('Cache-Control', 'no-store');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Referrer-Policy', 'no-referrer');
+        $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('Content-Security-Policy', "default-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+    }
+
+    public static function head(Event $event): void
+    {
+        if (!Yii::$app->request->getIsHead()) return;
+        /** @var Response $response */
+        $response = $event->sender;
+        $response->headers->set('Content-Length', (string) strlen($response->content ?? ''));
+        $response->content = '';
+        $response->stream = null;
+    }
+}

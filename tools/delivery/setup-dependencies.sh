@@ -16,22 +16,6 @@ check_shlz() {
         [[ -f "$path/$artifact" ]] || fail "$path missing $artifact; existing tree preserved; use a fresh parent directory"
     done
 }
-check_tcpdf() {
-    local path
-    for path in vendor vendor/tecnickcom vendor/autoload.php; do
-        [[ ! -L "$path" ]] || fail "$path is a symlink; existing paths preserved; use a fresh checkout"
-    done
-    if [[ -e vendor/tecnickcom/tcpdf || -L vendor/tecnickcom/tcpdf ]]; then
-        check_git vendor/tecnickcom/tcpdf "$TCPDF_REVISION"
-        [[ -f vendor/tecnickcom/tcpdf/tcpdf.php ]] || fail 'existing TCPDF is incomplete; use a fresh checkout'
-        if [[ -e vendor/autoload.php ]]; then
-            php -r 'require "vendor/autoload.php"; exit(TCPDF_STATIC::getTCPDFVersion() === $argv[1] ? 0 : 1);' "$TCPDF_VERSION" \
-                || fail 'existing vendor/autoload.php does not load the pinned TCPDF; preserved'
-        fi
-    elif [[ -e vendor/autoload.php || -L vendor/autoload.php ]]; then
-        fail 'vendor/autoload.php exists without pinned TCPDF; vendor preserved; use a fresh checkout'
-    fi
-}
 publish_dependency() {
     # Directory publication is guarded by a shared parent lock across worktrees.
     local source="$1" destination="$2" guard
