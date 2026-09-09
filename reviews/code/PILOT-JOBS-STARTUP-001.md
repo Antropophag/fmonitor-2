@@ -94,3 +94,70 @@ PASS: PILOT-JOBS-STARTUP-001 isolated root Compose delivery and restart
 Integration verdict: **APPROVED** for PILOT-JOBS-STARTUP-001 on the exact hashes in
 this record. Full CI and installation on the preserved main stand remain separate
 delivery steps.
+
+## Governance inventory expectation correction
+
+The first full CI run found exactly two governance expectation failures after the
+two approved tests were registered. `verification_inventory_001_test.py` observed
+the new unit membership fingerprint instead of its preserved baseline, and
+`verification_ci_001_test.py` observed the new E2E member before the prior exact
+three-entry list. No test execution, mapping, partition or fail-closed check failed.
+The fast job repeated only the same exact E2E-list expectation failure.
+
+The bounded correction adds exactly these existing registered members to the
+tests' explicit expectation lists:
+
+```text
+unit  php      tests/InstallationProcess/pilot_jobs_startup_001_test.php
+e2e   python3  tests/Deployment/pilot_jobs_compose_001_test.py
+```
+
+`verification_inventory_001_test.py` still requires each new member exactly once,
+removes only that named line, and compares the remaining suite output to the same
+pre-existing SHA-256 baselines. `verification_ci_001_test.py` still compares the
+complete ordered E2E list exactly; it now contains four literal members. No digest,
+partition, uniqueness, runtime dispatch or error expectation was relaxed.
+
+Pre-change RED evidence from `/tmp/fm2-startup-governance.log`:
+
+```text
+verification_inventory_001_test.py::test_repository_baseline_membership
+expected ae1c98c70c549d1ba5f4600a0ed7b77d929eab5e0212f5ee6323e0438f0cef2c
+actual   f87205bfcef1888f45c41541f4c6af762978a05375ad03b0cb90138af8be08e7
+
+verification_ci_001_test.py::test_real_composition_keeps_contracts_once
+expected prior three E2E rows; actual added only
+python3\ttests/Deployment/pilot_jobs_compose_001_test.py
+```
+
+Reviewed correction hashes pending independent owner review:
+
+```text
+894faf635586d347b6c1eaf559d5d2fb5769f586001e7dccee9cd1bce9c15ca8  tests/Verification/verification_inventory_001_test.py
+68e9c5570f89350fdbc775f08243b0ee550fddbd43176c6ca05cbf57b3e29ec4  tests/Verification/verification_ci_001_test.py
+```
+
+Focused GREEN after the two expectation-only edits:
+
+```text
+python3 tests/Verification/verification_inventory_001_test.py
+Ran 15 tests ... OK
+
+python3 tests/Verification/verification_ci_001_test.py
+Ran 15 tests ... OK
+
+git diff --check
+exit 0, no output
+```
+
+This addendum records the correction and evidence; the production implementation
+review remains independent of these governance-test edits. The root agent must
+independently review the two changed governance expectations before integration.
+
+Independent correction review by `/root`: **APPROVED**. The three added literal
+rows exactly match the two new suite registrations. The inventory still asserts
+each addition occurs once before comparing the unchanged historical fingerprint;
+the CI test still requires the complete ordered E2E list. No existing member,
+assertion or failure behavior is removed. The focused15+15 GREEN evidence above
+is sufficient for these expectation-only edits; remaining first-run CI groups
+must be inventoried before the corrected candidate is pushed.

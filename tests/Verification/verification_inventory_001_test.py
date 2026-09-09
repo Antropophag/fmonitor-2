@@ -106,6 +106,7 @@ class Inventory(native.NativeSuites):
         ]
         added_by_suite = {
             'unit': [
+                'php\ttests/InstallationProcess/pilot_jobs_startup_001_test.php\n',
                 'python3\ttests/Verification/development_setup_001_test.py\n',
                 'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
                 'php\ttests/Runtime/production_runtime_contract_001_test.php\n',
@@ -157,6 +158,7 @@ class Inventory(native.NativeSuites):
             ],
             'characterization': added,
             'e2e': [
+                'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',
                 'php\ttests/Runtime/production_runtime_compose_001_test.php\n',
                 'php\ttests/Runtime/production_runtime_browser_001_test.php\n',
             ],

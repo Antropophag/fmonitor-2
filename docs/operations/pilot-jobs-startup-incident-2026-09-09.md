@@ -48,3 +48,19 @@ completion; the final exact test rerun also passed via
 inventory so CI exercises the root deployment as well as the separate runtime.
 Full CI and installation on the corporate stand remain pending. No retained stand
 or its volumes were changed; all smoke resources belong to isolated test projects.
+
+## First authoritative CI and inventory correction
+
+PR67 run34329817588 on832e57f9 completed with unit, both integration shards and
+E2E successful. The new real root Compose smoke passed on Linux in42.331s.
+Complete failure inventory: fast failed `verification_ci_001_test.py`'s ordered
+E2E expectation; governance failed that same test and
+`verification_inventory_001_test.py`'s historical suite membership check. Verify
+correctly rejected the failed fast/governance evidence. No other job failed.
+
+The correction adds exactly the two newly registered test names to the existing
+explicit membership checks. Historical fingerprints, uniqueness and complete-list
+assertions remain. Both affected governance files pass15/15 locally; `/root`
+independently approved the three literal-row changes authored by the reviewer.
+The complete first-run failures were inspected before pushing this correction.
+Production code, new deployment regressions and their reviewed hashes are unchanged.
