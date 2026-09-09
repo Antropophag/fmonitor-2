@@ -337,7 +337,7 @@ try {
                 assertSameValue([], odsTableState($runnerConnection, 'fm2_pilot_object_details')['rows'], 'runner creates empty details');
                 assertSameValue([], odsTableState($runnerConnection, 'fm2_pilot_object_detail_quarantine')['rows'], 'runner creates empty quarantine');
             } finally { $runnerConnection->close(); }
-            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":24,\"appliedVersions\":[]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner exact v23 repeat');
+            assertSameValue(['exit'=>0,'out'=>"{\"ok\":true,\"schemaVersion\":24,\"appliedVersions\":[]}\n",'err'=>''], odsRunCli($runnerDatabase, ''), 'production runner exact v24 repeat');
         } finally {
             $admin->query('DROP DATABASE IF EXISTS ' . odsQuote($runnerDatabase));
         }

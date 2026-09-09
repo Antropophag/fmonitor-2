@@ -25,3 +25,11 @@ These are compatibility amendments for an approved migration, not a claim of new
 behavioral RED. Independent review must verify they preserve all old guarantees.
 All changed registered tests remain required by the regenerated plan and the full
 exact-source CI. Remaining focused runs will be recorded before delivery.
+
+Review a38716ff identified one additional complete inventory in the inspection
+MariaDB test. Root added the same two settlement tables and changed its diagnostic
+to71. The reviewed current-catalogue v23 labels are corrected to24; historical
+migration versions remain untouched. Independent review failure was reproduced
+by reviewer; corrected focused command
+`php tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php`
+now passes both existing- and missing-revision concurrency cases (exit0).
