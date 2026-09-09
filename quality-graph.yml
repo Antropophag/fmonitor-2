@@ -1,0 +1,70 @@
+version: 0
+provider:
+  name: github
+  configuration:
+    default-branch: main
+    runtime:
+      action: alchemmist/quality-graph@caf5366a04ca01b230f1df5585d0fbd9693d7bef
+      upload-artifact-action: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+profiles:
+  default:
+    runner: ubuntu-latest
+    permissions:
+      contents: read
+labels:
+  enabled: true
+  failing:
+    name: quality-graph:failed
+    color: b60205
+    description: Quality Graph reports a blocking failure
+    create: true
+nodes:
+  plan:
+    title: plan
+    run: python3 tools/verification/ci.py plan --base "$BASE_REF" --event "$EVENT"
+    results:
+      native: .quality-graph/reports/plan.json
+    policy: &blocking
+      blocking: true
+      approvals: {findings: false, files: false, node: false}
+  fast:
+    title: fast
+    run: make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && git diff --check
+    results:
+      native: .quality-graph/reports/fast.json
+    policy: *blocking
+  unit:
+    title: unit
+    needs: [plan]
+    run: make test CATEGORY=unit
+    results:
+      native: .quality-graph/reports/unit.json
+    policy: *blocking
+  integration:
+    title: Integration
+    needs: [plan]
+    run: make test CATEGORY=integration
+    results:
+      native: .quality-graph/reports/integration.json
+    policy: *blocking
+  e2e:
+    title: e2e
+    needs: [plan]
+    run: make test CATEGORY=e2e
+    results:
+      native: .quality-graph/reports/e2e.json
+    policy: *blocking
+  governance:
+    title: governance
+    needs: [plan]
+    run: make test CATEGORY=governance
+    results:
+      native: .quality-graph/reports/governance.json
+    policy: *blocking
+  verify:
+    title: verify
+    needs: [plan, fast, unit, integration, e2e, governance]
+    run: python3 tools/verification/ci.py aggregate --full "$FULL" --results "$RESULTS"
+    results:
+      native: .quality-graph/reports/verify.json
+    policy: *blocking
