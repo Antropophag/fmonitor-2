@@ -39,7 +39,7 @@ services:
     image: fmonitor2-pilot
     pull_policy: never
     user: "0:0"
-    entrypoint: ["rapid-pilot/workforce-worker.sh"]
+    entrypoint: ["php", "rapid-pilot/jobs-entrypoint.php", "worker"]
     environment:
       FMONITOR_DB_HOST: mariadb
       FMONITOR_DB_PORT: "3306"
@@ -48,6 +48,7 @@ services:
       FMONITOR_DB_PASSWORD: fmonitor2_demo_local
       FMONITOR_BITRIX_CONFIG: /run/secrets/bitrix-workforce
       FMONITOR_SESSION_STATE_ROOT: /home/fmonitor/.local/state/fmonitor2
+      FMONITOR_SESSION_INSTANCE: pilot
     volumes:
       - pilot-state:/home/fmonitor/.local/state/fmonitor2:ro
     secrets:
@@ -58,11 +59,43 @@ services:
       mariadb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/workforce-ready"]
+      test: ["CMD", "php", "rapid-pilot/jobs-entrypoint.php", "health"]
       interval: 5s
       timeout: 3s
       retries: 24
       start_period: 10s
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+  workforce-scheduler:
+    image: fmonitor2-pilot
+    pull_policy: never
+    user: "0:0"
+    entrypoint: ["php", "rapid-pilot/jobs-entrypoint.php", "scheduler"]
+    environment:
+      FMONITOR_DB_HOST: mariadb
+      FMONITOR_DB_PORT: "3306"
+      FMONITOR_DB_NAME: fmonitor2_demo
+      FMONITOR_DB_USER: fmonitor2_demo
+      FMONITOR_DB_PASSWORD: fmonitor2_demo_local
+      FMONITOR_SESSION_STATE_ROOT: /home/fmonitor/.local/state/fmonitor2
+      FMONITOR_SESSION_INSTANCE: pilot
+    volumes:
+      - pilot-state:/home/fmonitor/.local/state/fmonitor2:ro
+    depends_on:
+      pilot:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "rapid-pilot/jobs-entrypoint.php", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 10s
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
     restart: unless-stopped
 
   mariadb:
