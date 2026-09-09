@@ -168,10 +168,12 @@ current-attempt artifacts, the writer does not run, and no new check or dashboar
 update is produced.
 
 Changed-head handling is also demonstrated. Old source run `34356441771` was
-captured in progress at head `9e6b3590`; the new head `94480442` started before the
-old run completed. When the old publisher processed the event, the current PR head
-was already `94480442`, so it produced no old-head Quality Graph check. The new-head
-run then produced one successful check bound to `94480442`. The immediate PR read
+captured in progress at head `9e6b3590`; the new-head run for `94480442` was created
+at `13:21:38Z`, before the old run completed at `13:22:32Z`, and waited behind it
+under the non-cancelling concurrency group. When the old publisher processed the
+event, the current PR head was already `94480442`, so it produced no old-head
+Quality Graph check. The new-head run then produced one successful check bound to
+`94480442`. The immediate PR read
 that still returned the old head is retained under the explicit API-lag filename
 `f9-immediate-pr-read-old-head.json` and is not used as post-supersession proof.
 
