@@ -43,6 +43,7 @@ try {
     $eventCount=(int)$db->query("SELECT COUNT(*) n FROM {$prefix}fm2_pilot_otiz_events")->fetch_assoc()['n'];
     assertSameValue($second,$service->completeSnapshotPayments(501,102,$op2),'exact replay returns saved result');
     assertSameValue([2,$eventCount],[(int)$db->query("SELECT COUNT(*) n FROM {$prefix}fm2_pilot_otiz_payment_closures")->fetch_assoc()['n'],(int)$db->query("SELECT COUNT(*) n FROM {$prefix}fm2_pilot_otiz_events")->fetch_assoc()['n']],'replay adds no money/event facts');
+    $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=51 AND permission='otiz.manage'");try{$service->completeSnapshotPayments(501,102,$op2);throw new TestFailure('revoked actor replayed prior success');}catch(DomainException$e){assertSameValue('FORBIDDEN',$e->getMessage(),'INTENDED_RED: exact replay rechecks current authority before returning saved success');}$db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions VALUES(51,'otiz.manage')");
     $noopOp='00000000-0000-4000-8000-000000000105';$beforeNoop=[(int)$db->query("SELECT COUNT(*) n FROM {$prefix}fm2_pilot_otiz_payment_closures")->fetch_assoc()['n'],(int)$db->query("SELECT COUNT(*) n FROM {$prefix}fm2_pilot_otiz_events")->fetch_assoc()['n']];
     $noop=$service->completeSnapshotPayments(501,102,$noopOp);assertSameValue(['no_change',0,0],[$noop['status'],$noop['objectCount'],$noop['paidCents']],'exhausted accepted snapshot is successful no-op');
     assertSameValue($noop,$service->completeSnapshotPayments(501,102,$noopOp),'successful no-op has stable replay result');

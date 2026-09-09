@@ -29,3 +29,13 @@
 
 This record captures author evidence for independent Gate 3. It does not approve
 the tests or authorize implementation.
+
+## Revoked replay admission
+
+- Command: `php tests/Otiz/settlement_owner_001_test.php`.
+- Result against Gate 4 candidate `42001adc`: exit `255` at
+  `revoked actor replayed prior success`.
+- The fixture first records a successful operation, removes the actor's current
+  exact `otiz.manage` permission, and retries the identical operation UUID and
+  fingerprint. Returning the saved success is the missing-behavior failure;
+  current authority requires `FORBIDDEN` before replay disclosure.
