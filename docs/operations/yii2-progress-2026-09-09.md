@@ -8,6 +8,17 @@ forced re-login and recreation of disposable test users/data. No legacy session
 bridge is required. Current checkout fmonitor-2-yii2-76-20260909 began clean from
 origin/main414ac0a7; previous WIP checkouts and stand preserved.
 
+## Candidate ready for CI
+
+Foundation production reviewed at42fca6af by foundation_tests, APPROVED.
+Dependency bootstrap reviewed at e24a1532 by root (different author), APPROVED.
+Prepared readiness HTTP/CLI and all three infrastructure failures GREEN with exact
+DB/row/private-tree no-write proof; dependency5/5, development-setup8/8,
+verification-inventory15/15, verification-CI15/15, lint and architecture checks PASS.
+Auth/roles has its own branch/worktree and approved initial RED at4e083473;
+implementation is proceeding independently. Next foundation gate is full exact-source
+CI and merge. Earlier WIP descriptions below retain chronology.
+
 ## Foundation
 
 Planning/initial RED: 4b6e5907. Dependency RED/review record: 7ef110e4.

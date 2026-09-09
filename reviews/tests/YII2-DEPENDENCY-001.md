@@ -27,3 +27,14 @@ No production/user directory or network is touched by the behavioral fixtures.
 None. Existing DEV-SETUP-001 behavioral regression must also pass after its fixture
 is adapted to the new dependency bootstrap; real Composer install/platform checks
 remain required evidence beyond the stubbed error paths.
+
+## Supplemental review — e24a1532
+
+Root independently approved existing-vendor platform failure before implementation:
+pre-fix suite5 tests/1 intended failure (setup incorrectly returned0). Final test
+also rejects stale graph metadata and preserves the existing tree. A root-run
+isolated guard-removal mutation demonstrates graph expectation sensitivity (1 failure
+at expected nonzero vs0); it is mutation evidence, not an original chronological RED.
+Final test SHA256: 500b0054481f32d5651c1e86031fdbf44d2aff956b15d5f47d78c31d04d56515.
+Both explicitly reviewed fixture/regex corrections keep acceptance values unchanged.
+Verdict: `APPROVED` for final test version; real install supplements stubbed probes.
