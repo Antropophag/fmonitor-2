@@ -34,4 +34,3 @@ PASS: OTIZ-SETTLEMENT-001 concurrent financial basis, reversal and rollback
 
 `git diff --check 7252600d..42001adc` passed. The setup-only test amendment is
 approved and does not restart Gate 2 for the unchanged business expectations.
-
