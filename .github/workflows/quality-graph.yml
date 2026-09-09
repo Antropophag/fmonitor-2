@@ -6,7 +6,7 @@ permissions:
   contents: read
 concurrency:
   group: qg-phase-b-${{ github.event.pull_request.number }}-${{ github.workflow }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   plan:
     name: plan
@@ -86,6 +86,8 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
+    - name: TEST ONLY delay old head before report publication
+      run: sleep 75
     - name: Render native Quality Graph reports
       id: reports
       env:
@@ -107,16 +109,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind plan to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-plan.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload plan
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-plan-1
+        name: quality-result-plan-${{ github.run_attempt }}
         path: ${{ steps.collect-plan.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -135,16 +132,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind fast to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-fast.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload fast
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-fast-1
+        name: quality-result-fast-${{ github.run_attempt }}
         path: ${{ steps.collect-fast.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -163,16 +155,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind unit to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-unit.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload unit
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-unit-1
+        name: quality-result-unit-${{ github.run_attempt }}
         path: ${{ steps.collect-unit.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -191,16 +178,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind integration to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-integration.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload Integration
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-integration-1
+        name: quality-result-integration-${{ github.run_attempt }}
         path: ${{ steps.collect-integration.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -219,16 +201,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind e2e to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-e2e.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload e2e
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-e2e-1
+        name: quality-result-e2e-${{ github.run_attempt }}
         path: ${{ steps.collect-e2e.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -247,16 +224,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind governance to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-governance.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload governance
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-governance-1
+        name: quality-result-governance-${{ github.run_attempt }}
         path: ${{ steps.collect-governance.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
@@ -275,16 +247,11 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
-    - name: TEST ONLY bind verify to previous attempt
-      if: always()
-      env:
-        FILE: ${{ steps.collect-verify.outputs.result-path }}
-      run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ['"'"'FILE'"'"']); v=json.loads(p.read_text()); v['"'"'provenance'"'"']['"'"'runAttempt'"'"']=1; p.write_text(json.dumps(v)+'"'"'\n'"'"')'
     - name: Upload verify
-      if: always() && github.run_attempt > 1 # TEST ONLY old attempt payload
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: quality-result-verify-1
+        name: quality-result-verify-${{ github.run_attempt }}
         path: ${{ steps.collect-verify.outputs.result-path }}
         if-no-files-found: error
         retention-days: 7
