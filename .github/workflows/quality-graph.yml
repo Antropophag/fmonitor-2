@@ -107,8 +107,13 @@ jobs:
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
+    - name: TEST ONLY alter collected plan artifact for malformed
+      if: always()
+      env:
+        FILE: ${{ steps.collect-plan.outputs.result-path }}
+      run: python3 -c 'from pathlib import Path; Path(__import__('"'"'os'"'"').environ['"'"'FILE'"'"']).write_text('"'"'{'"'"')'
     - name: Upload plan
-      if: ${{ false }} # TEST ONLY missing current artifact
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-plan-${{ github.run_attempt }}
