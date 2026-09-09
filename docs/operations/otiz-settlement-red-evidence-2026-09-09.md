@@ -39,3 +39,13 @@ the tests or authorize implementation.
   exact `otiz.manage` permission, and retries the identical operation UUID and
   fingerprint. Returning the saved success is the missing-behavior failure;
   current authority requires `FORBIDDEN` before replay disclosure.
+
+## Yii HTTP settlement route
+
+- Command: `php tests/Yii2/yii2_otiz_settlement_001_test.php`.
+- Result: exit `255` at the intended public-route assertion.
+- Expected: HTTP `303` to `/pilot/otiz/snapshots/301?closed=1`; actual: HTTP
+  `404` with no `Location` because the Yii route/controller is absent.
+- Setup completed canonical v24, authenticated an active actor with exact current
+  `otiz.manage`, and submitted valid Yii CSRF plus the retained legacy form path
+  `/pilot/otiz/snapshots/301/closures`. No closure or event existed beforehand.
