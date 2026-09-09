@@ -1,14 +1,50 @@
 # SSD + TDD delivery process
 
-## Current architecture priority —2026-09-08
+## Current delivery priority
 
-The owner sets #32 → the first complete OTIZ build/publication slice of #24 → #33.
-Read the latest decision at the top of [current delivery goal](operations/current-delivery-goal.md).
-Only confirmed manual-work blockers or data/access risks interrupt this order.
-For A01 retain specification → demonstrated RED → independent test review →
-implementation → focused regression/architecture checks → independent code review.
-Use the approved verification matrix below; do not restart duplicate full runs.
-The historical manual-pilot exception below does not postpone this migration.
+Read the short [current delivery goal](operations/current-delivery-goal.md).
+It owns the work queue; this document owns gates and the execution protocol.
+Historical exceptions below apply only to their stated milestone.
+
+## Compact execution protocol — #78, 2026-09-09
+
+One executor owns a vertical slice through its reviewable PR candidate. Give it
+only the issue, exact base/worktree, normative specification, relevant boundary
+instructions and verification plan. Use a fresh context for each substantial
+slice and each independent review; full conversation forks are unnecessary.
+Parallel agents remain **gpt-5.6-sol / low**. This is the selected operating mode,
+not a measured claim that this model is cheapest; change the model rule explicitly
+only after comparable completed-slice evidence supports it.
+
+The coordinating agent resolves scope and decisions, integrates independently
+reviewed work and reports outcomes. It reads the complete findings and changed
+boundaries; it need not re-read every intermediate artifact. A review returns one
+complete findings list, severity, affected locations, required corrections and
+verdict. Review fixes as a diff against the reviewed source; broaden only for a
+new risk. Keep test authorship and implementation authorship explicit so Gate 3
+and Gate 5 retain independence. A reviewer may review both stages if it authored
+neither artifact. Batch independent read-only tool calls and inspect all results.
+
+The normative spec owns behavior. OpenSpec owns lifecycle, scope and task state;
+link to the spec instead of copying acceptance matrices. Review records own RED,
+GREEN and findings evidence. One delivery record links exact source, reviews and
+CI; a handoff contains only current state, next action and these links. Historical
+records remain available; supersede them with a pointer instead of loading them
+at each start. Use [the compact handoff template](../tools/delivery/handoff-template.md).
+
+Before Gate 2, compute the [repository-owned Quality Graph change verification
+plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The executor reads
+its required obligations and executable commands before writing RED tests.
+Unresolved coverage blocks Gate 2. A generated plan is not acceptance approval,
+RED evidence or a replacement for independent review. Regenerate and review when
+scope or bound inputs change. Existing full-CI selection remains authoritative;
+focused local checks do not waive integration, E2E or governance categories.
+
+Run meaningful focused checks locally; repeat only after relevant changes,
+failures or new risk. One full exact-source CI validates the candidate; avoid a
+second local-full run without cause. Report all failed checks before corrections.
+Measure tokens, elapsed time and rework separately for completed comparable
+slices; keep raw journals private and never infer billing from cached-token counts.
 
 ## Historical owner-authorized delivery mode —2026-09-07
 

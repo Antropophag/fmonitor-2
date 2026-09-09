@@ -1,14 +1,13 @@
 # FMonitor 2.0 constitution
 
-## Current priority — architecture transition
+## Current priority
 
-- Before planning, implementing, testing or resuming work, read
-  `docs/operations/current-delivery-goal.md`. Owner2026-09-08 sets the order:
-  **#32 → first complete OTIZ slice #24 → #33**. The pilot works and checks are
-  accelerated; architecture does not wait for all manual findings to be closed.
-- Only confirmed manual-work blockers or data/access risks interrupt this order.
-  Preserve history, authorization, the working stand and independent review.
+- Before planning, implementing, testing or resuming, read
+  `docs/operations/current-delivery-goal.md`; it owns the current queue and pause state.
+- Preserve history, authorization, the working stand and independent review.
   Parallel agents use **gpt-5.6-sol / low**.
+- Use the compact execution/review workflow in `docs/development-process.md`.
+  Before Gate 2, obtain and read the required change verification plan.
 
 ## Continuing rules
 
