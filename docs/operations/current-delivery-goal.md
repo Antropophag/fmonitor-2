@@ -1,3 +1,29 @@
+## Checkpoint #25 — reviewer service limit, 2026-09-09
+
+#24 закрыта PR72. #25 implementation1e7ac621, supplemental RED1f50b8b2,
+fast-command correction13dc0769. Подробный restart state:
+[quality-graph-current-ci-delivery-2026-09-09.md](quality-graph-current-ci-delivery-2026-09-09.md).
+Намеренно RED новый reporting-job admission: ждёт независимый supplemental Gate3,
+затем implementation и Gate5. Сервис gpt-5.6-sol reviewers вернул usage limit;
+разрешение другой модели запрошено у владельца и пока не получено. CI/bootstrap
+и actual publisher matrix не выполнены. Не объявлять25 completed; сохранены
+исходные approvals и история, новая проверка не самоодобряется.
+
+## #24 закрыта, #25 реализуется — 2026-09-09
+
+Первый сценарий #24 закрыт через PR72 (merge8fd20da9), после полного
+Actions34344955631 на head7d43c2e7:8jobsSUCCESS, literalVERIFY_OK и независимый
+archive review. Продолжения выделены в #70 (выплаты/удержания/сторно) и #71
+(LocalAuth); остальная карта временных adapters сохраняется в ADR0002/#18.
+
+#25: branch `codex/qg-current-25-20260909` в прежнем isolated close24-25 checkout.
+Change `integrate-current-quality-graph`: Gate3 APPROVED, implementation идёт.
+Штатные publisher writes разрешены владельцем. В stock0.1.7 и0.1.10 подтверждён
+приём неверного attempt/duplicate artifacts; upstream issue
+https://github.com/alchemmist/quality-graph/issues/69 создан по поручению владельца.
+Перед штатным writer добавляется read-only preflight; publisher не патчится.
+Полный CI и реальная GitHub publisher matrix текущего среза ещё pending.
+
 ## Штатный publisher разрешён — owner2026-09-09
 
 После обсуждения альтернатив владелец выбрал штатный publisher Quality Graph:

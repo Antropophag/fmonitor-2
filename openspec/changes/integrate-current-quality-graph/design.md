@@ -63,9 +63,12 @@ inline в trusted workflow; checker сравнивает bytes с tested file.
 При отказе publisher job failed, stock writes не выполняются. Не обещается
 stock completed-failure check при раннем preflight rejection: видимая ошибка —
 publisher workflow, canonical verify сохранён.
-Watch сопоставляет live titles; matrix integration остаётся aggregate node,
-live integration может оставаться waiting до terminal native results. Это предел
-визуализации прогресса, не полноты итоговой проверки двух shards.
+Публикация запускается только по completed event, штатным operation=publish.
+Stock0.1.7 watch ожидает отдельный job для каждого graph title; aggregate matrix
+integration не имеет такого job и может не завершить polling после конца CI.
+Поэтому live watch не подключается: результат появляется после завершения CI,
+две integration части учитываются его исходным aggregate. Проверки полноты
+не зависят от live визуализации; дополнительные polling jobs отсутствуют.
 
 Сначала spec/RED/Gate3, затем implementation/focused/Gate5 и один полный CI.
 После reviewed bootstrap merge выполнить isolated representative PR positive и
