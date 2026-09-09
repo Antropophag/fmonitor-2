@@ -156,9 +156,9 @@ def validate_argv(argv):
         raise ValueError("unsupported argv runtime")
 
 
-def test_argv(path, runtimes):
+def test_argv(path, runtimes, trusted_registered=False):
     target = repo_path(path)
-    if not path.startswith("tests/"):
+    if not path.startswith("tests/") and not trusted_registered:
         raise ValueError(f"test path outside tests: {path}")
     runtime = runtimes.get(target.suffix)
     if runtime not in {"python3", "php", "node"}:
@@ -212,7 +212,7 @@ def build(base_ref, input_name):
     effective_tests = []
     for path in effective:
         if path in inventory:
-            test_argv(path, policy["runtimes"])
+            test_argv(path, policy["runtimes"], trusted_registered=True)
             effective_tests.append(path)
             required_categories.add(inventory[path])
     seen_acceptance = set()
@@ -258,7 +258,7 @@ def build(base_ref, input_name):
     for test in sorted(boundary_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "changed boundary obligation")
     for test in effective_tests:
-        add(test_argv(test, policy["runtimes"]), "focused", "changed registered test")
+        add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
     for category in sorted(required_categories):
         for argv in policy["category_argv"].get(category, []):
             add(argv, "focused", f"required {category} category obligation")
