@@ -94,3 +94,13 @@ accept the strictly validated opaque field and retain detection of all three
 fixture IDs, including the same correlation text on an untrusted additional line.
 The real GET/DB admission test passes independently. Browser assertions remain
 unchanged; the earlier unattributed aborted-request failure remains recorded.
+
+Run34333015344 onf8054020 passed every group except E2E and its dependent
+aggregate. The root Compose smoke passed again; both shared-browser wrappers
+failed with `net::ERR_ABORTED`. Local diagnostic attempts encountered different
+pre-browser/slow-navigation timeouts and do not reproduce that cancellation.
+The next candidate adds independently reviewed, bounded failure-only browser
+context (method/path/resource/page/action/closed state) and preserves every original
+error and success assertion. No query, headers, body, DEBUG journal or temporary
+retained-contract bypass ships. The purpose is Linux attribution, not an assumed
+lifecycle fix or an unqualified GREEN claim.

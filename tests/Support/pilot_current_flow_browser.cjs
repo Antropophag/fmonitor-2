@@ -5,12 +5,32 @@ const crypto = require('crypto');
 const [port, moduleRoot, artifactRoot, resultPath] = process.argv.slice(2);
 const { chromium } = require(moduleRoot);
 const base = `http://127.0.0.1:${port}`;
-const output = { errors: [], downloads: 0 };
+const output = { errors: [], requestFailures: [], downloads: 0 };
+const pageActions = new WeakMap();
 
-function monitor(page) {
+function markAction(page, action) {
+  pageActions.set(page, action);
+}
+
+function monitor(page, pageName) {
+  pageActions.set(page, 'created');
   page.on('console', message => { if (message.type() === 'error') output.errors.push(message.text()); });
   page.on('pageerror', error => output.errors.push(error.message));
-  page.on('requestfailed', request => output.errors.push(request.failure()?.errorText));
+  page.on('requestfailed', request => {
+    output.errors.push(request.failure()?.errorText);
+    try {
+      if (output.requestFailures.length >= 20) return;
+      output.requestFailures.push({
+        errorText: (request.failure()?.errorText || '').slice(0, 120),
+        method: request.method(),
+        pathname: new URL(request.url()).pathname.slice(0, 240),
+        resourceType: request.resourceType(),
+        pageName,
+        action: pageActions.get(page) || null,
+        pageClosed: page.isClosed(),
+      });
+    } catch {}
+  });
   page.on('response', async response => {
     if (response.status() >= 400) {
       let body = '';
@@ -64,9 +84,11 @@ async function verifyInlineTemplate(page, context) {
     await route.fulfill({ response, body: bytes });
   });
   const popupPromise = page.waitForEvent('popup');
+  markAction(page, 'template-popup-open');
   await page.getByRole('button', { name: 'Сформировать шаблон', exact: true }).click();
   const popup = await popupPromise;
-  monitor(popup);
+  monitor(popup, 'template-popup');
+  markAction(popup, 'template-popup-load');
   await popup.waitForURL(/\/assignment-orders\/\d+\/template$/);
   await page.waitForTimeout(300);
   await context.unroute('**/assignment-orders/*/template');
@@ -80,7 +102,9 @@ async function verifyInlineTemplate(page, context) {
   output.templateBytes = bytes.length;
   output.templateSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
   fs.writeFileSync(path.join(artifactRoot, 'template.pdf'), bytes, { mode: 0o600 });
+  markAction(popup, 'template-popup-close');
   await popup.close();
+  markAction(page, 'template-popup-closed');
 }
 
 async function uploadAndCorrect(page) {
@@ -120,7 +144,7 @@ async function verifyOriginalDownload(page, context) {
 async function openAsDistinctActor(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
-  monitor(page);
+  monitor(page, 'distinct-actor');
   const actions = [];
   page.on('request', request => {
     if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/execution')) actions.push(new URLSearchParams(request.postData() || '').get('action'));
@@ -136,13 +160,14 @@ async function openAsDistinctActor(browser) {
   await page.waitForURL('**/pilot/objects/4512');
   if (JSON.stringify(actions) !== '["open_confirmed"]') throw new Error('Opening used an extra application request');
   output.separateOpener = true;
+  markAction(page, 'distinct-context-close');
   await context.close();
 }
 
 async function completeChecklist(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
-  monitor(page);
+  monitor(page, 'checklist');
   let acceptedItems = 0;
   let acceptedPhotos = 0;
   let acceptedSections = 0;
@@ -180,7 +205,9 @@ async function completeChecklist(browser) {
     await waitObserved(() => acceptedPhotos === section, `accepted checklist photo count ${section}`);
     await waitObserved(() => acceptedSections === section, `accepted checklist section count ${section}`);
   }
+  markAction(page, 'checklist-reload');
   await page.reload();
+  markAction(page, 'checklist-reload-complete');
   await page.waitForFunction(() => document.querySelector('[data-total-progress]')?.textContent === '85');
   const projection = JSON.parse(Buffer.from(await page.locator('[data-checklist]').getAttribute('data-projection'), 'base64').toString('utf8'));
   output.workProgress = 85;
@@ -188,6 +215,7 @@ async function completeChecklist(browser) {
   output.photos = projection.photos.length;
   output.checklistAcceptedTrace = acceptedTrace;
   await page.screenshot({ path: path.join(artifactRoot, 'checklist-85.png'), fullPage: true });
+  markAction(page, 'checklist-context-close');
   await context.close();
 }
 
@@ -198,7 +226,9 @@ async function completeDocuments(ownerPage) {
   await ownerPage.getByRole('button', { name: 'Завершить работы', exact: true }).click();
   await ownerPage.getByRole('progressbar', { name: 'Готовность работ' }).waitFor();
   output.finalProgress = await ownerPage.getByRole('progressbar', { name: 'Готовность работ' }).getAttribute('aria-valuenow');
+  markAction(ownerPage, 'completion-reload');
   await ownerPage.reload();
+  markAction(ownerPage, 'completion-reload-complete');
   if (await ownerPage.getByRole('progressbar', { name: 'Готовность работ' }).getAttribute('aria-valuenow') !== '100') throw new Error('Completion lost');
   await ownerPage.screenshot({ path: path.join(artifactRoot, 'card-100.png'), fullPage: true });
 }
@@ -207,7 +237,7 @@ async function completeDocuments(ownerPage) {
   const browser = await chromium.launch({ headless: true, channel: 'chromium' });
   const ownerContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   const ownerPage = await ownerContext.newPage();
-  monitor(ownerPage);
+  monitor(ownerPage, 'owner');
   try {
     await ownerPage.goto(`${base}/`);
     await login(ownerPage, 'test18@shlz.ru');
@@ -232,6 +262,7 @@ async function completeDocuments(ownerPage) {
     output.errorDetails = output.errors;
     output.errors = output.errors.length;
     fs.writeFileSync(resultPath, JSON.stringify(output, null, 2), { mode: 0o600 });
+    markAction(ownerPage, 'owner-context-close');
     await ownerContext.close();
     await browser.close();
   }
