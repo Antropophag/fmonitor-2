@@ -323,12 +323,14 @@ reviewed image; при rollback остановить новые jobs services и
 outbox rows. Старый `rapid-pilot/workforce-worker.sh --once` лишь делегирует native
 operator sync с explicit prefix; прежнего loop/manifest/ready-file пути больше нет.
 
-Согласованное restore-доказательство развивается в #36. Простой SQL dump из раздела5
-не является проверенной самостоятельной restore-процедурой: на MariaDB11.4 DDL
-roundtrip исторической completion schema добавляет implicit FK index и не проходит
-строгую readiness. Технический restore использует data-only dump и canonical schema
-из exact source image с сохранением AUTO_INCREMENT; его v23-проверка, jobs recovery
-и окончательная инструкция должны завершиться до заявления production restore readiness.
+Проверенные backup/restore/update команды и граница HTTP-only rollback описаны в
+[runtime recovery runbook](runtime-recovery-runbook.md), фактические результаты —
+в [delivery evidence](runtime-recovery-delivery-2026-09-09.md). Простой SQL dump из
+раздела5 не является самостоятельной проверенной restore-процедурой: на MariaDB11.4
+DDL roundtrip исторической completion schema добавляет implicit FK index и не
+проходит строгую readiness. Recovery использует data-only dump и canonical schema
+из exact source image, сохраняет AUTO_INCREMENT и не запускает Jobs при restore.
+Политики retention/RPO/RTO остаются решениями владельца.
 
 ## Known limits
 

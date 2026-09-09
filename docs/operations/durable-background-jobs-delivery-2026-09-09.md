@@ -6,11 +6,12 @@ No production external transport has been enabled. Main user stand was not switc
 
 ## Source and exact image
 
-Reviewed runtime source `116f65c4cc0bc15991bb749126dbcb87e63ee6f0`, clean archive build;
-image `sha256:ab51b9f4b2e9175f1679741b3ea4ee1bae044564d2d9cea23217dcd413874428`,
-OCI revision equal to that source. Later commit `a2b6dcdc7d8518416ac7748a53ed245cd936a63a`
-changes only four shared browser fixture files and their independent review record;
-`git diff116f65c4..a2b6dcdc -- app bin public rapid-pilot deploy` is empty.
+Final reviewed runtime source `088b51be2c9fd2f49eb24acab1988e723b08edb6`,
+clean archive build; image
+`sha256:fe8344a9f2ff472889f040bdecf3d180757d55da5a12df52ab9084c0d5b46c12`,
+OCI revision equal to that source. The later source includes the bounded calendar
+frontier and disposable demo catalogue correction; Jobs/runtime behavior remains
+the independently reviewed implementation.
 
 ## Executed checks
 
@@ -41,14 +42,17 @@ The fixture now registers legacy order80 on separate case4520 before identity ba
 it no longer adds an invalid opposite-source row over native selection81. This does
 not claim the native #24 deadline input gap is resolved.
 
-Private primary smoke evidence: `/private/tmp/fm2-jobs-image-smoke-lDdNnV`
+Final private primary smoke evidence: `/private/tmp/fm2-jobs-image-smoke-088b-bGxakl`
 (directory0700/files0600). Focused root browser log:
 `/tmp/fmonitor-jobs-valid-browser.log`. Payloads/tokens/dumps remain outside git.
 
-## Remaining integration
+## Final integration
 
 Independent bounded source reviews and exact-image/browser integration review are
-approved. One full CI on the exact published candidate remains before merge.
+approved. PR64 was merged as `619a8f7d27f907d37adbf0cc9122557be9879f13`
+at 05:50:42Z. Full Actions run `34315902017` on exact candidate
+`088b51be2c9fd2f49eb24acab1988e723b08edb6` completed all eight groups successfully
+and ended `VERIFY_OK`; retained log is `/tmp/pr64-088b51be-green.log`.
 Issue36 will separately prove backup/restore/update of v23 Jobs state. Product
 notification triggers/templates, operator UI30 and real external activation remain
 separate work. Existing primary8092 and retained8093 were untouched; the older8093
@@ -68,9 +72,14 @@ reported incomplete. Independent Gate3 approved literal verifier/test frontier23
 updates and exactly six Jobs names in the demo catalogue. Local demo RED reproduced
 ready→incomplete/null before that source change. Calendar and complete public demo
 launch/walkthrough/persistence/reset/cleanup now pass; syntax/diff and architecture7
-rules pass. Corrected full CI is still required.
+rules pass. Corrected full CI passed as recorded above.
 
 This correction changes only the disposable demo table-name catalogue in production
-source. Earlier exact116f65c4 image remains the workforce/daemon evidence source;
-queue/outbox/worker/scheduler/native workforce/runtime configuration files are
-unchanged. The old image must not be labelled as the later corrected source.
+source. The final exact088b51be image was rebuilt and the isolated Compose/TLS/DML smoke
+was repeated successfully. The earlier116f65c4 evidence remains historical and is
+not labelled as the final source. Retained stand8095 launch is a separate operational
+step. It subsequently passed on exact088 image as project
+`fmonitor2-runtime-jobs-night09`: web/php/db are healthy, jobs profile remains off,
+and the retained native/legacy OTIZ plus restart/session/file checks passed. Private
+handoff is outside git at
+`/Users/antropophag/.local/state/fmonitor2/runtime-jobs-night09/HANDOFF.md`.
