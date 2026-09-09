@@ -1,5 +1,9 @@
 FROM composer:2.10.3@sha256:d8f6343d3fae98107426bc49163ccad46ef85aabd4a27d80a74401fab4aba332 AS composer
 
+FROM alpine/git:2.49.1 AS shlz-ui
+ARG SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
+RUN git clone https://github.com/Antropophag/shlz-ui.git /shlz-ui && git -C /shlz-ui checkout --detach "${SHLZ_UI_REVISION}"
+
 FROM php:8.4-fpm-bookworm@sha256:075b11566518bfa979bb9f2fe2e5359148326d659b15a2f414c2c305a0479a4e
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx unzip \
@@ -15,6 +19,7 @@ WORKDIR /workspace/fmonitor-2
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 COPY composer.json composer.lock ./
 COPY app ./app
+COPY --from=shlz-ui /shlz-ui/packages/styles/dist/shlz.css ./app/YiiRuntime/Assets/shlz.css
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
     && composer check-platform-reqs --no-dev
 COPY config ./config
