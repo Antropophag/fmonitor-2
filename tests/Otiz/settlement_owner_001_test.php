@@ -9,7 +9,6 @@ require dirname(__DIR__, 2) . '/vendor/yiisoft/yii2/Yii.php';
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
 use FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue;
 use FMonitor2\Otiz\OtizSettlement;
-use FMonitor2\InstallationProcess\OtizSettlementSchemaMigration;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $host=getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1';$port=(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306);
@@ -19,13 +18,11 @@ try {
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $db=new mysqli($host,$user,$password,$database,$port);$prefix='settle_';
     $migration=CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0,true,23],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null],'SETUP_FAILURE: isolated canonical DB reaches v23');
+    assertSameValue([0,true,24],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null],'SETUP_FAILURE: isolated canonical DB reaches v24');
     $db->query('CREATE TABLE settlement_ambient(id INT NOT NULL PRIMARY KEY,marker VARCHAR(30) NOT NULL) ENGINE=InnoDB');
     $db->query("INSERT INTO settlement_ambient VALUES(1,'preserve')");
-    assertSameValue(true,class_exists(OtizSettlementSchemaMigration::class),'INTENTIONAL_RED: OTIZ-SETTLEMENT-001 public ledger migration is absent after canonical setup');
     assertSameValue(true,class_exists(OtizSettlement::class),'INTENTIONAL_RED: OTIZ-SETTLEMENT-001 public application owner is absent after valid isolated DB setup');
     $yii=new yii\db\Connection(['dsn'=>"mysql:host={$host};port={$port};dbname={$database}",'username'=>$user,'password'=>$password,'charset'=>'utf8mb4']);$yii->open();
-    OtizSettlementSchemaMigration::apply($yii,$prefix);
     foreach(['recordDiscipline','completeSnapshotPayments','reverse']as$method)assertSameValue(true,method_exists(OtizSettlement::class,$method),"public operation {$method}");
     $db->query("INSERT INTO {$prefix}fm2_pilot_users(user_id,full_name,email,status,activation_state,source_updated_at)VALUES(501,'ОТиЗ','otiz501@example.test',1,'active','2026-09-09T10:00:00+03:00')");
     $db->query("INSERT INTO {$prefix}fm2_pilot_roles(role_id,code,name,description,status,source_updated_at)VALUES(51,'otiz','ОТиЗ','Settlement test',1,'2026-09-09T10:00:00+03:00')");
