@@ -20,11 +20,13 @@ rules:
   design:
     - "State the owning module, allowed dependencies, persistence owner, rapid-pilot adapter, and architecture-check impact."
   tasks:
+    - "Before Gate 2, create verification-input.json for the change and compute/read the mandatory executable Quality Graph plan using tools/delivery/change-verification.md. Independent review checks acceptance mapping completeness; unresolved obligations block Gate 2."
     - "Follow docs/operations/current-delivery-goal.md for the manual-pilot milestone; track focused delivery checks and explicitly deferred gates separately. For final production integration retain the full SSD/TDD order."
     - "Keep one vertical behavior slice per change and include characterization plus a clear Done definition."
 
 operations:
   apply:
     guidance:
+      - "Consume the generated change verification plan before writing RED tests. Recompute when scope or bound inputs change; check freshness before executing. A plan never substitutes for RED evidence or independent approval."
       - "Record actual implementation and focused verification separately from formal gate approval; never mark a deferred gate approved or claim production readiness without its evidence."
       - "Keep READY work moving while unrelated NEEDS_GRILL decisions await the owner."

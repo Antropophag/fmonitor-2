@@ -1,0 +1,190 @@
+{
+  "arms": {
+    "long": {
+      "duration_sum_ms": 814122,
+      "final_verdict": "APPROVED",
+      "model_calls": 43,
+      "review_correction_rounds": 1,
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 2128384,
+        "input": 2254515,
+        "output": 20614,
+        "reasoning_output": 6203,
+        "total": 2275129
+      },
+      "tool_calls": 39
+    },
+    "short": {
+      "duration_sum_ms": 621880,
+      "final_verdict": "APPROVED",
+      "model_calls": 32,
+      "review_correction_rounds": 1,
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 1062400,
+        "input": 1134085,
+        "output": 15637,
+        "reasoning_output": 3621,
+        "total": 1149722
+      },
+      "tool_calls": 28
+    }
+  },
+  "candidates": {
+    "long": {
+      "bundle_sha256": "d5713f0280da64ef089ea95482aff5e802948406193d814eee3d2c06cb66e419",
+      "common_probe": "passed; no failures",
+      "correction_rounds": 1,
+      "final_sha": "0c39398cf30b0b3b9d8a2036e43e1c4491085bbf",
+      "final_verdict": "APPROVED",
+      "primary_test": "USAGE_AGGREGATION_001_OK",
+      "required_planner_tests": 10
+    },
+    "short": {
+      "bundle_sha256": "a69fd93a9bea3ddcb919ed5facbb9201ba677fbf0b95b1fee5ab79ab154090df",
+      "common_probe": "passed; no failures",
+      "correction_rounds": 1,
+      "final_sha": "394f6cbd0e78a7124c6662485404115ea2446768",
+      "final_verdict": "APPROVED",
+      "primary_test": "USAGE_AGGREGATION_001_OK",
+      "required_planner_tests": 10
+    }
+  },
+  "frozen_base": "f4948e726cb393262901d0377cfc6481f7c6e41d",
+  "frozen_hashes": {
+    ".local/common-probe.py": "03c98fd37f534bc188ff277d43c900cd4df3f957943e9e74bf7e2baac15fb105",
+    "tests/Usage/USAGE-AGGREGATION-001.md": "2641a858c8751a4b395c5ca571372625d3e15843e90e875195739c48a80410e6",
+    "tests/Usage/usage_aggregation_001_test.py": "3bb968e67898173d647f4708dbd4d9c60ff979691cf8ef5ddb64a0211a236cf3"
+  },
+  "limitations": [
+    "One paired isolated CLI task, not a full product PR or cross-model comparison.",
+    "Both authors consumed identical frozen spec/tests and the same required plan; only long author loaded historical goal.",
+    "Independent reviewers used short contexts; common probe Gate3 cost is shared and separately reported.",
+    "Coordinator preparation, messaging, and main-project hardening are excluded from arm metrics.",
+    "Durations sum active completed turns, not wall-clock critical path; runs overlap and include tool waiting.",
+    "No verified billing or quota data; cached input is included in input and reasoning in output.",
+    "One correction round in each arm; both passed identical fixed tests and common probes and independent final review.",
+    "Shared probe-review direct tokens are separated; its context remains in the long reviewer subsequent correction turn, so reviewer totals are not a pure controlled causal estimate."
+  ],
+  "scope": "isolated CLI implementation and independent correction review; no production deployment",
+  "shared_probe_review": {
+    "context": {
+      "average_input_tokens": 41841.5,
+      "maximum_input_tokens": 42679,
+      "maximum_window_tokens": 828400,
+      "peak_utilization": 0.05152,
+      "samples": 4
+    },
+    "incomplete": false,
+    "legacy_counter_resets": 0,
+    "model_calls": 4,
+    "model_calls_basis": "response_ids",
+    "sessions": 1,
+    "tokens": {
+      "cache_write_input": 0,
+      "cached_input": 162176,
+      "input": 167366,
+      "output": 1219,
+      "reasoning_output": 426,
+      "total": 168585
+    },
+    "tool_calls": 3,
+    "turns": {
+      "average_duration_ms": 46750.0,
+      "completed": 1,
+      "duration_ms": 46750
+    }
+  },
+  "source_template": "6f8fecb8949b4d2c69b1ae699625c2ce0bf44408; copied planning/spec/test inputs, aggregate.py absent",
+  "streams": {
+    "long_executor": {
+      "basis": "unique logged response IDs; summed completed-turn metrics",
+      "completed_turns": 2,
+      "duration_ms": 627825,
+      "maximum_input_tokens": 73034,
+      "model_calls": 31,
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 1722368,
+        "input": 1801147,
+        "output": 15871,
+        "reasoning_output": 4939,
+        "total": 1817018
+      },
+      "tool_calls": 29
+    },
+    "long_reviewer": {
+      "basis": "unique logged response IDs; summed completed-turn metrics",
+      "completed_turns": 2,
+      "duration_ms": 186297,
+      "maximum_input_tokens": 47293,
+      "model_calls": 12,
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 406016,
+        "input": 453368,
+        "output": 4743,
+        "reasoning_output": 1264,
+        "total": 458111
+      },
+      "tool_calls": 10
+    },
+    "short_executor": {
+      "basis": "unique logged response IDs; summed completed-turn metrics",
+      "completed_turns": 2,
+      "duration_ms": 466682,
+      "maximum_input_tokens": 45863,
+      "model_calls": 22,
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 738816,
+        "input": 789779,
+        "output": 11716,
+        "reasoning_output": 2232,
+        "total": 801495
+      },
+      "tool_calls": 20
+    },
+    "short_reviewer": {
+      "basis": "unique logged response IDs; summed completed-turn metrics",
+      "completed_turns": 2,
+      "duration_ms": 155198,
+      "maximum_input_tokens": 41174,
+      "model_calls": 10,
+      "observed_efforts": [
+        "low"
+      ],
+      "observed_models": [
+        "gpt-5.6-sol"
+      ],
+      "tokens": {
+        "cache_write_input": 0,
+        "cached_input": 323584,
+        "input": 344306,
+        "output": 3921,
+        "reasoning_output": 1389,
+        "total": 348227
+      },
+      "tool_calls": 8
+    }
+  }
+}

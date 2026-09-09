@@ -1,0 +1,43 @@
+{
+  "billing": {
+    "available": false,
+    "reason": "local logs contain no verified tariff or billing breakdown"
+  },
+  "checkpoint": {
+    "first_timestamp_utc": "2026-09-09T14:18:10.540Z",
+    "last_timestamp_utc": "2026-09-09T16:11:59.156Z",
+    "matching_private_files": 1,
+    "scope": "one main-session prefix through the unique cumulative token fingerprint"
+  },
+  "context": {
+    "maximum_input_tokens": 438293,
+    "maximum_window_tokens": 828400,
+    "peak_utilization": 0.529084
+  },
+  "format_version": "fmonitor-usage-baseline-78-v1",
+  "limitations": [
+    "unique logged response IDs do not independently prove provider request count",
+    "the checkpoint prefix contains no attributable model or reasoning-effort setting",
+    "later settings in the same file cannot verify the issue's gpt-6-astra/medium attribution",
+    "the prefix contains no completed-turn duration records",
+    "tool calls are unique logged call IDs",
+    "this historical checkpoint is not a completed-task before/after comparison"
+  ],
+  "model_calls": 261,
+  "model_calls_basis": "response_ids",
+  "role": "main",
+  "skipped_lines": 0,
+  "tokens": {
+    "cached_input": 62058240,
+    "input": 62781751,
+    "output": 125468,
+    "reasoning_output": 68047,
+    "total": 62907219,
+    "uncached_input": 723511
+  },
+  "tool_calls": 261,
+  "turns": {
+    "completed": 0,
+    "duration_ms": null
+  }
+}

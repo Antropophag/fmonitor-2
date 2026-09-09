@@ -1,0 +1,51 @@
+{
+  "acceptances": [
+    {
+      "acceptance_id": "required-plan-cli",
+      "seam": "change-verification.py plan/check/run",
+      "spec_id": "CHANGE-VERIFICATION-001",
+      "spec_path": "specs/CHANGE-VERIFICATION-001.md",
+      "tests": [
+        "tests/Verification/change_verification_001_test.py"
+      ]
+    },
+    {
+      "acceptance_id": "private-usage-aggregate",
+      "seam": "aggregate.py --input",
+      "spec_id": "USAGE-AGGREGATION-001",
+      "spec_path": "tests/Usage/USAGE-AGGREGATION-001.md",
+      "tests": [
+        "tests/Usage/usage_aggregation_001_test.py"
+      ]
+    }
+  ],
+  "change": "compute-change-verification-obligations",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "AGENTS.md",
+    "docs/development-process.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/delivery-goal-history-through-2026-09-09.md",
+    "docs/operations/token-optimization-78.md",
+    "openspec/changes/compute-change-verification-obligations/design.md",
+    "openspec/changes/compute-change-verification-obligations/proposal.md",
+    "openspec/changes/compute-change-verification-obligations/specs/verification/change-obligations/spec.md",
+    "openspec/changes/compute-change-verification-obligations/tasks.md",
+    "openspec/changes/compute-change-verification-obligations/verification-input.json",
+    "openspec/config.yaml",
+    "reviews/code/DELIVERY-CONTEXT-078.md",
+    "reviews/tests/CHANGE-VERIFICATION-001.md",
+    "reviews/tests/USAGE-AGGREGATION-001.md",
+    "specs/CHANGE-VERIFICATION-001.md",
+    "tests/Usage/USAGE-AGGREGATION-001.md",
+    "tests/Usage/usage_aggregation_001_test.py",
+    "tests/Verification/change_verification_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tools/delivery/change-verification.md",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/handoff-template.md",
+    "tools/usage/aggregate.py",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ]
+}
