@@ -67,3 +67,8 @@ instead of BACKUP_CREATED; parent255. Captured output:
 `/tmp/fm2-root-v23-forward-red.log`. No claim of current24 GREEN or old-image
 rejection execution is made yet: those assertions remain downstream of the
 missing current inventory adaptation. Default test execution covers both profiles.
+
+The acceptance seam now explicitly names both historical exact v22/v23 images,
+matching the reviewed test and normative supplement. The historical-image build
+message also names the selected historical version instead of always saying22.
+No behavior or existing RED evidence changed in this mapping correction.

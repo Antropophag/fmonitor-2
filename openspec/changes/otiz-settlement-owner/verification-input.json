@@ -43,7 +43,10 @@
     "app/RuntimeRestore/RuntimeRecovery.php",
     "app/RuntimeRestore/RuntimeRecoverySchemaV24.php",
     "tests/Runtime/runtime_jobs_recovery_001_test.php",
-    "tests/Runtime/runtime_recovery_forward_update_001_test.php"
+    "tests/Runtime/runtime_recovery_forward_update_001_test.php",
+    "tools/delivery/Dockerfile.runtime.in",
+    "deploy/runtime/Dockerfile",
+    "tests/Runtime/runtime_settlement_compatibility_001_test.php"
   ],
   "acceptances": [
     {
@@ -106,10 +109,19 @@
       "spec_id": "OTIZ-SETTLEMENT-001",
       "acceptance_id": "canonical-v24-recovery-preserves-settlement",
       "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
-      "seam": "bin/fmonitor2-runtime-recovery.php backup/restore using current image; historical exact v22 image -> current canonical migration",
+      "seam": "bin/fmonitor2-runtime-recovery.php backup/restore using current image; historical exact v22/v23 images -> current canonical migration",
       "tests": [
         "tests/Runtime/runtime_jobs_recovery_001_test.php",
         "tests/Runtime/runtime_recovery_forward_update_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "locked-runtime-and-retained-compatibility-owner",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "Built deploy/runtime image -> public/runtime.php -> legacy login/CSRF -> POST /pilot/otiz/snapshots/302/payments/complete",
+      "tests": [
+        "tests/Runtime/runtime_settlement_compatibility_001_test.php"
       ]
     }
   ]

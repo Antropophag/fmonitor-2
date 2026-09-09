@@ -50,3 +50,17 @@ then forward migrations; current tooling rejects a mismatched version/inventory
 before target mutation. Existing v22 forward-update rehearsal must reach24 and
 retain old rows/AUTO_INCREMENT values/private bytes. This is required adaptation
 of the existing recovery boundary, not a new retention/RPO/RTO policy.
+
+## Temporary runtime compatibility dependencies
+
+The retained rapid HTTP adapter calls the same settlement owner while migration
+continues. Its runtime image must carry the exact shared Composer lock and real
+production dependencies (Yii2 and TCPDF), pass Composer platform validation, and
+provide mysqli/pdo_mysql/pcntl. Existing nginx/FPM, shlz assets and private storage
+configuration remain supported; no fake autoloader or alternate financial writer
+may mask a missing dependency. A disposable image test uses DML-only credentials
+through actual legacy login/CSRF and the retained complete-payment URL. With an
+older100000 closure for the same object and a150000 accepted snapshot it must append
+only50000, one receipt and two events; identical replay adds nothing. The retained
+screen must then report completion, using the same global financial basis. No stand
+switch is implied by making this compatibility image reproducible.
