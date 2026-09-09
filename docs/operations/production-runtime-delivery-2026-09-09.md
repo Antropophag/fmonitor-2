@@ -49,3 +49,26 @@ Independent approval and exact file hashes:
 reviews/code/PRODUCTION-RUNTIME-CI-CORRECTION-001.md. Corrected full CI remains
 required; earlier e2e success is evidence, not a claim that the corrected head
 has already passed full verification.
+
+## Итог CI, интеграции и отдельного развёртывания
+
+Полный [Actions34297488145](https://github.com/Antropophag/fmonitor-2/actions/runs/34297488145)
+для source `c2521466a63ceb08f79f39cf84991421fcab9728`: все8 jobs SUCCESS,
+literal VERIFY_OK. [PR62](https://github.com/Antropophag/fmonitor-2/pull/62)
+слит штатно 2026-09-09T01:19:18Z, merge `eceebdbb4abb74b7ac4bda3d63739af4554938a3`.
+Финальный полный лог сохранён вне git: `/tmp/pr62-c2521466-green.log`.
+
+Из этого source собран и сохранён отдельный contour `fmonitor2-runtime-night09`,
+URL `http://127.0.0.1:8093/`, image tag `fmonitor2-runtime:night09-c2521466`,
+immutable image ID `sha256:f322b63572f3c1f3e7e83b339be42d0a7a25fb4b56bacb3ded018b67eb2c105b`.
+Web и FPM используют один ID; db/php/web healthy, live/ready возвращают200.
+OCI labels не добавлены: provenance подтверждён clean-source build и image ID.
+Для наблюдения synthetic fixtures retained test override также публикует DB только
+на loopback30902; production compose этого mapping не содержит. FPM9000 внутренний.
+
+Retained browser прошёл41/7/85→100, correction/download, отдельное открытие,
+сохранение точных history/session/artifact bytes после restart и чтение с прежней
+authenticated cookie. Seeded OTIZ build/replay/accept/XLSX также прошёл; ограничение
+native inputs выше сохраняется. Private handoff и evidence:
+`/Users/antropophag/.local/state/fmonitor2/runtime-night09/HANDOFF.md`
+(directory0700, config/evidence0600). Основной manual stand8092 и volumes не менялись.

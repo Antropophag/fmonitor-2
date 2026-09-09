@@ -4,24 +4,23 @@
 остаётся в `../fmonitor`, публичные UI-экспорты поставляет закреплённый checkout
 `../shlz-ui`.
 
-## Быстрый старт
+## Production запуск
 
 Для запуска стенда на Linux или macOS нужны Git, Make и запущенный Docker
 с Compose v2. PHP, Node.js, Composer и соседние репозитории на хосте не нужны:
 закреплённые зависимости собираются внутри Docker.
 
-```bash
-git clone https://github.com/Antropophag/fmonitor-2.git
-cd fmonitor-2
-cp .env.example .env
-# Заполните пароль администратора, вебхук Bitrix и ID отделов в .env.
-make up
-```
+Единственная актуальная последовательность clean production setup —
+[production runtime runbook](docs/operations/production-runtime-runbook.md). Она
+фиксирует exact source/image, создаёт private environment вне checkout, отдельно
+выполняет migrations, выдаёт DML-only account, явно создаёт первого owner-admin и
+только затем запускает nginx/PHP-FPM.
 
-`make up` поднимает пилот вместе с кадровой синхронизацией Bitrix. Пилот доступен
-на <http://127.0.0.1:8092/>. Настройка вебхука, безопасные ошибки и обновление
-конфигурации описаны в [инструкции Bitrix](docs/bitrix-startup.md).
-`make down` останавливает контейнеры, сохраняя данные.
+Прежние `make up`, порт `8092`, demo bootstrap и Bitrix worker относятся к
+историческому rapid-pilot contour. Они сохраняются для совместимости и расследования,
+но не являются production quickstart. [Инструкция Bitrix](docs/bitrix-startup.md)
+описывает этот исторический opt-in adapter; реальная синхронизация не включается
+production setup автоматически.
 
 Для **разработки и локальных тестов** нужны дополнительные инструменты:
 PHP 8.5, Node.js 22.22.0, npm, Python 3.12.11, Bash и ripgrep.

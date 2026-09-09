@@ -275,6 +275,8 @@
   "tests/Runtime/production_readiness_schema_001_test.php": "integration",
   "tests/Runtime/production_runtime_browser_001_test.php": "e2e",
   "tests/Runtime/production_process_readiness_001_test.php": "integration",
+  "tests/Runtime/initial_owner_provisioning_001_test.php": "integration",
+  "tests/Runtime/runtime_dml_privilege_probe_001_test.php": "integration",
   "tests/Runtime/session_contention_001_test.php": "integration",
   "tests/Runtime/migration_parallel_runners_001_test.php": "integration",
   "tests/Verification/architecture_guard_001_test.py": "unit"
