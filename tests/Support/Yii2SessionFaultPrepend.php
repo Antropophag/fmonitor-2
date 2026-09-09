@@ -1,0 +1,34 @@
+<?php
+declare(strict_types=1);
+
+/** Test-only decorator over PHP's native file session handler. */
+final class Yii2SessionFaultHandler extends SessionHandler
+{
+    private function reached(string $operation): void
+    {
+        $marker = getenv('FMONITOR_TEST_SESSION_FAULT_MARKER');
+        if (!is_string($marker) || $marker === '') throw new RuntimeException('Missing test fault marker.');
+        file_put_contents($marker, $operation . "\n", FILE_APPEND | LOCK_EX);
+    }
+
+    public function write(string $id, string $data): bool
+    {
+        if (getenv('FMONITOR_TEST_SESSION_FAULT') === 'write') {
+            $this->reached('write');
+            return false;
+        }
+        return parent::write($id, $data);
+    }
+
+    public function destroy(string $id): bool
+    {
+        if (getenv('FMONITOR_TEST_SESSION_FAULT') === 'destroy') {
+            $this->reached('destroy');
+            return false;
+        }
+        return parent::destroy($id);
+    }
+}
+
+session_set_save_handler(new Yii2SessionFaultHandler(), true);
+
