@@ -20,16 +20,16 @@
 
 - [x] 4.1 Поднять task-owned populated source contour существующим production browser fixture, создать bundle и сохранить primary evidence вне repository; проверить точные source/image/bundle identities и elapsed timestamps.
 - [x] 4.2 Восстановить bundle в новый project/DB/state volumes и сравнить exact ordered users/roles/domain/history rows, PDF/photo/session hashes и связи; проверить existing-cookie authorized read и новую append-only command.
-- [ ] 4.3 Собрать второй reviewed exact image, выполнить отдельные migrations и recreate web/php; проверить readiness, existing session/private files/history и новый browser write после update.
-- [ ] 4.4 Проверить additive-compatible image rollback без удаления schema/history; отдельным failure case зафиксировать, что incompatible migration требует restore-forward и не допускает blind DB downgrade.
+- [x] 4.3 Собрать второй reviewed exact image, выполнить отдельные migrations и recreate web/php; проверить readiness, existing session/private files/history и новый browser write после update.
+- [x] 4.4 Проверить additive-compatible image rollback без удаления schema/history; отдельным failure case зафиксировать, что incompatible migration требует restore-forward и не допускает blind DB downgrade.
 
 ## 5. Runbook, review и Done
 
-- [ ] 5.1 Обновить #27 production runbook exact backup/restore/update/rollback командами, private evidence policy и NEEDS_GRILL для retention/RPO/RTO; проверить docs references и отсутствие secrets.
-- [ ] 5.2 Записать безопасный публичный drill report: фактическая длительность, bundle/source/image IDs, exact сверки и ограничения; primary dump/archive оставить вне repository mode 0600.
+- [x] 5.1 Обновить #27 production runbook exact backup/restore/update/rollback командами, private evidence policy и NEEDS_GRILL для retention/RPO/RTO; проверить docs references и отсутствие secrets.
+- [x] 5.2 Записать безопасный публичный drill report: фактическая длительность, bundle/source/image IDs, exact сверки и ограничения; primary dump/archive оставить вне repository mode 0600.
 - [ ] 5.3 Получить независимый Gate 5 review production diff, tests и evidence; выполнить focused restore/runtime/browser проверки, architecture check и один полный CI по принятой матрице.
 - [ ] 5.4 Сверить Done: source contour не изменён, восстановленный contour проходит exact data/file/auth/session checks и update drill, cleanup ограничен task-owned targets, рабочий stand и volumes не затронуты.
 
 ## 6. Deferred после #34
 
-- [ ] 6.1 После завершения #34 создать отдельный OpenSpec slice для worker quiesce, pending/leased jobs, outbox dedup/retry и unknown external delivery без реальных sends; до этого не помечать background recovery проверенным.
+- [x] 6.1 После завершения #34 создать отдельный OpenSpec slice для worker quiesce, pending/leased jobs, outbox dedup/retry и unknown external delivery без реальных sends; до этого не помечать background recovery проверенным.
