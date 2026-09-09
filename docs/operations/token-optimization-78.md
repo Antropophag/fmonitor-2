@@ -133,9 +133,9 @@ Primary logs remain private. Full safe aggregates and frozen hashes:
   architecture (7 rules + HTTP qualification), OpenSpec validation and diff check PASS.
 - Full CI and PR identity will be recorded after the frozen candidate is pushed.
 
-#78 remains open for full product-PR and comparative model data; the isolated
-implementation pilot below completes the narrower implementation-task comparison. No model-rule change or return to #76 is
-inferred from this narrower review experiment. Working stand and financial WIP
+The isolated implementation pilot below completes the bounded implementation-task
+comparison. Broader measurements are not inferred from it; the owner decision and
+return to #76 are recorded in the closeout below. Working stand and financial WIP
 remain preserved.
 
 ## First CI and a subsequent confirmed privacy finding
@@ -190,3 +190,29 @@ This extends the pilot beyond document review to an isolated implementation and
 correction cycle, under the same public checks. Full product-PR cost, other
 models/reasoning levels, billing and quota remain unmeasured. The selected sol/low
 rule is retained; there is no evidence here for replacing it with another model.
+
+## Owner decision and completed delivery — 2026-09-09
+
+The owner explicitly declined the proposed astra/medium comparison and instructed
+continued low operation. The selected executor/reviewer rule remains
+**gpt-5.6-sol / low**. The cross-model experiment is owner-deferred, not silently
+marked measured or approved. The completed document-review and CLI implementation
+pairs supply the bounded task comparison; they do not establish full product-PR
+cost, billing savings or the cheapest model.
+
+[PR80](https://github.com/Antropophag/fmonitor-2/pull/80) is MERGED as
+`a29918a77b2fe899b52eec5200756b85739fe02f`. Corrected exact source
+`6b27c4e0b4555114a1456845dbdcfaeed8880a11` passed
+[Actions34396325240](https://github.com/Antropophag/fmonitor-2/actions/runs/34396325240):
+all categories and publisher SUCCESS; verify job102619664906 emitted literal
+VERIFY_OK at2026-09-09T19:47:53.5579801Z. This is the integration evidence for
+OpenSpec task3.1; its earlier unchecked box is the pre-CI snapshot, not evidence
+that another identical full test run is needed. The earlier run34393067126 applies
+only to the superseded6f8fecb8 candidate.
+
+#78's authorized delivery is complete: reproducible private-source aggregates,
+selected compact process/model rule, two completed paired pilots, required
+pre-Gate2 executable plans, independent reviews and full corrected-source CI.
+Priority returns to #76. Financial #70 remains clean at
+`9b039afd76d56028e9e268626fb8e6c01a4215b7`; its unfinished wiring is preserved.
+The working stand and primary data were not changed.
