@@ -19,7 +19,8 @@ class Inventory(native.NativeSuites):
         for name in ['tests/InstallationProcess/unregistered_test.php',
                      'tests/Otiz/unregistered_test.php',
                      'tests/AssignmentOrderComposition/unregistered_test.php',
-                     'tests/Verification/unregistered_test.mjs']:
+                     'tests/Verification/unregistered_test.mjs',
+                     'tests/Runtime/unregistered_test.php']:
             with self.subTest(path=name):
                 path = self.root / name
                 path.write_text('unregistered fixture')
@@ -106,6 +107,8 @@ class Inventory(native.NativeSuites):
             'unit': [
                 'python3\ttests/Verification/development_setup_001_test.py\n',
                 'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
+                'php\ttests/Runtime/production_runtime_contract_001_test.php\n',
+                'python3\ttests/Verification/architecture_guard_001_test.py\n',
             ],
             'db': [
                 'php\ttests/Otiz/snapshot_publication_001_test.php\n',
@@ -113,8 +116,20 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Otiz/runtime_schema_001_test.php\n',
                 'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
                 'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
+                'php\ttests/Runtime/migration_concurrency_lock_001_test.php\n',
+                'php\ttests/Runtime/production_schema_frontier_001_test.php\n',
+                'php\ttests/Runtime/runtime_storage_001_test.php\n',
+                'php\ttests/Runtime/production_schema_preflight_001_test.php\n',
+                'php\ttests/Runtime/production_readiness_schema_001_test.php\n',
+                'php\ttests/Runtime/production_process_readiness_001_test.php\n',
+                'php\ttests/Runtime/session_contention_001_test.php\n',
+                'php\ttests/Runtime/migration_parallel_runners_001_test.php\n',
             ],
             'characterization': added,
+            'e2e': [
+                'php\ttests/Runtime/production_runtime_compose_001_test.php\n',
+                'php\ttests/Runtime/production_runtime_browser_001_test.php\n',
+            ],
         }
         for suite, digest in expected.items():
             result = subprocess.run(['/bin/bash', str(native.ROOT / 'tools/verification/run.sh'),

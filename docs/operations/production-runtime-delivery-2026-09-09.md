@@ -28,3 +28,24 @@ Root and independent reviewer inspected the unobscured completed card. OTIZ acce
 OTIZ transport parity uses a dedicated synthetic registered-order fixture. A completed native selection/original/application journey currently has no legacy registered-order row and is omitted by the existing OTIZ input reader; canonical completion evidence is also required by the prepared successor contract. This existing #24 gap is not fixed or disguised here. Its public RED and approved test live in the separate native-OTIZ worktree. A02/A03 payment/rounding questions remain unchanged.
 
 #27 completes a single clean-install/operator route and explicit initial-owner provisioning; that CLI is not part of #33. #34 jobs planning is isolated in its own worktree. No real external notifications, new production imports, main-stand switch, branch-protection bypass, SLA/RPO/RTO or retention promises occurred.
+
+## First authoritative CI and correction
+
+PR62: https://github.com/Antropophag/fmonitor-2/pull/62 . First exact-head run
+34295367260 on3cedf5cb completed FAILURE. Plan/unit/e2e PASS; fast/governance and
+both integration shards failed, with final verify correctly failing upstream.
+Complete inventories were captured before correction publication in
+/tmp/pr62-fast.log, /tmp/pr62-governance.log, /tmp/pr62-integration1.log and
+/tmp/pr62-integration2.log.
+
+Corrections preserve each individual migration's original version assertions;
+only current canonical terminal/applied-version expectations advance to22.
+Synthetic verifier corpora now contain the new runtime files/directories and
+reviewed explicit inventory membership. Empty-prefix import uses the canonical
+v22 object table. Fictional demo provisioning/ready markers now match v22 and
+verify its seven-column legacy upgrade; production startup still never uses demo.
+All18 affected integration executables and38 focused governance cases PASS.
+Independent approval and exact file hashes:
+reviews/code/PRODUCTION-RUNTIME-CI-CORRECTION-001.md. Corrected full CI remains
+required; earlier e2e success is evidence, not a claim that the corrected head
+has already passed full verification.

@@ -25,7 +25,7 @@ class DevelopmentSetup(unittest.TestCase):
         self.root.mkdir()
         for relative in ["composer.lock", "Makefile", "rapid-pilot/tcpdf-autoload.php",
                          "Dockerfile", "compose.yaml", "compose.test.yaml",
-                         "tools/verification/Dockerfile.test"]:
+                         "tools/verification/Dockerfile.test", "deploy/runtime/Dockerfile"]:
             source = ROOT / relative
             if source.is_file():
                 target = self.root / relative

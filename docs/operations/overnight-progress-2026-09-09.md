@@ -77,3 +77,15 @@ runtime_tests reports expanded production browser GREEN including restart/admin/
 Important existing #24 technical gap, NOT fixed or hidden by #33: newly completed native UI journey has no row in legacy fm2_assignment_orders; MariaDbNativePremiumInputs still requires status=registered there. Current original/selection/application owners persist separate canonical families. OTIZ acceptance tail explicitly seeds the established legacy registered order/installer fixture, and proves transport/runtime parity only. It does NOT prove automatic native UI-to-OTIZ eligibility. Carry this into PR limitations and next #24 technical slice; formulas/payment rules A02/A03 remain separate.
 
 Root authoritative source is still uncommitted codex/production-runtime-33 at baseline eb88ed2f. No PR/push/CI/merge/deployment of main stand. Completed native tests are registered in verification catalogs; supplemental browser drivers are invoked by their harness. Next: final exact persistence/OTIZ test review, preserve visual evidence, commit #33 candidate, full CI and normal integration, then #27/#34/#36 and remaining technical queue. Original checkout has only a pointer to this authoritative checkpoint; WIP and manual stand8092 preserved.
+
+## CI correction publication
+
+PR62 OPEN/DRAFT. First run34295367260 on3cedf5cb terminalFAIL; allfailed job/file
+inventories collected. Corrected current terminal-v22 fixtures and demo
+compatibility;18 affected integration executables and38 governance cases PASS,
+independent CI-correction review APPROVED. Root commits/pushes correction next.
+#27 code in operations worktree has full Gate3/Gate5 APPROVED, no commit yet;
+merge current #33 corrections into it before its CI because verification fixtures
+and inventory changed. Do not repeat the old shared-DB credential speculation:
+explicit fmonitor2_test_root_local test override works and shared testDB stayed
+healthy. Main stand remains untouched. Goal ACTIVE, more backlog follows.

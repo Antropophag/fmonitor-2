@@ -35,11 +35,11 @@ foreach(['fresh','upgrade','registry_only','registry_conflict','selection_confli
         if(str_ends_with($axis,'conflict')){
             $version=$axis==='registry_conflict'?14:15;assertSameValue([2,['ok'=>false,'reason'=>'SCHEMA_MIGRATION_CONFLICT','schemaVersion'=>$version]],$result,'first failing engine controls report');assertSameValue($before,selectionCanonicalRows($db),'conflict creates no later family or facts');
         }else{
-            $versions=$axis==='fresh'?range(1,21):($axis==='registry_only'?[15,16,17,18,19,20,21]:[14,15,16,17,18,19,20,21]);assertSameValue([0,['ok'=>true,'schemaVersion' => 21,'appliedVersions'=>$versions]],$result,'RED_ASSERTION: canonical runner must register both engines');
+            $versions=$axis==='fresh'?range(1,22):($axis==='registry_only'?[15,16,17,18,19,20,21,22]:[14,15,16,17,18,19,20,21,22]);assertSameValue([0,['ok'=>true,'schemaVersion' => 22,'appliedVersions'=>$versions]],$result,'RED_ASSERTION: canonical runner must register both engines');
             assertSameValue(true,I\AssignmentOrderIdentityRegistryMigration::isBackfillComplete($db,$prefix),'registry readiness');assertSameValue(true,I\AssignmentOrderSelectionSchemaMigration::isReady($db,$prefix),'selection readiness');
             $after=selectionCanonicalRows($db);foreach($before as $table=>$rows)assertSameValue($rows,$after[$table],'predecessor facts preserved');
             foreach(['fm2_assignment_order_identities','fm2_assignment_order_selections','fm2_assignment_order_selection_members','fm2_assignment_order_selection_requests','fm2_assignment_order_selection_events','fm2_assignment_order_selection_audits'] as $table)assertSameValue([],$after[$prefix.$table],'no domain facts minted');
-            assertSameValue([0,['ok'=>true,'schemaVersion' => 21,'appliedVersions'=>[]]],selectionCanonicalRun($name,$prefix),'complete repeat noop');assertSameValue($after,selectionCanonicalRows($db),'repeat immutable rows/receipt');
+            assertSameValue([0,['ok'=>true,'schemaVersion' => 22,'appliedVersions'=>[]]],selectionCanonicalRun($name,$prefix),'complete repeat noop');assertSameValue($after,selectionCanonicalRows($db),'repeat immutable rows/receipt');
         }
     }catch(Throwable $e){$errors[]=$e->getMessage();}
     if($db!==null)try{$db->close();}catch(Throwable $e){$errors[]='connection cleanup: '.$e->getMessage();}

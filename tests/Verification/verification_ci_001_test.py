@@ -21,7 +21,7 @@ class VerificationCI(unittest.TestCase):
         shutil.copy(ROOT / 'tools/verification/run.sh', tool)
         if (ROOT / 'tools/verification/ci.py').exists():
             shutil.copy(ROOT / 'tools/verification/ci.py', tool)
-        for directory in ['InstallationProcess', 'AssignmentOrderComposition', 'Verification', 'Otiz']:
+        for directory in ['InstallationProcess', 'AssignmentOrderComposition', 'Verification', 'Otiz', 'Runtime']:
             (self.root / 'tests' / directory).mkdir(parents=True)
         self.paths = [f'tests/InstallationProcess/{name}_test.php' for name in ['a', 'b', 'c', 'd', 'e']]
         for path in self.paths:
@@ -370,7 +370,11 @@ class VerificationCI(unittest.TestCase):
         for name in children[:-1]:
             self.assertNotIn(name + '_001_test.php', bootstrap, 'independent children must not rerun')
         e2e = self.cli('list', 'e2e', root=ROOT)
-        self.assertEqual(['php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php'], e2e.stdout.splitlines())
+        self.assertEqual([
+            'php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php',
+            'php\ttests/Runtime/production_runtime_compose_001_test.php',
+            'php\ttests/Runtime/production_runtime_browser_001_test.php',
+        ], e2e.stdout.splitlines())
 
 
 if __name__ == '__main__':
