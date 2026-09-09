@@ -46,3 +46,9 @@ migration before requests and cleans both new tables afterward. No runtime DDL o
 business assertion changes were made. Faithful full-privilege disposable harness
 rerun passed HARNESS-OTIZ-CANONICAL-COMPAT-001 (exit0); databases/users removed.
 DML-only runtime evidence remains in the separate owner/browser/image tests.
+
+После удаления server-side UUID fallback синтетический helper валидных financial
+POST в verifier передаёт собственные детерминированные v4 IDs, как реальные формы.
+Явно переданные невалидные IDs не исправляются. Проверки malformed money, over-close,
+истории и экспорта не изменены; missing/invalid HTTP IDs отдельно проверяются через
+реальный runtime test. Повторный изолированный harness после финального кода GREEN.

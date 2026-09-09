@@ -10,7 +10,7 @@
 
 ## 3. Adapters and removal
 
-- [ ] 3.1 Wire Yii HTTP and temporary rapid compatibility routes to the application seam; verify authorization, CSRF, exact redirects/errors and unchanged UI/browser flow.
+- [x] 3.1 Wire Yii HTTP and temporary rapid compatibility routes to the application seam; verify authorization, CSRF, exact redirects/errors and unchanged UI/browser flow.
 - [x] 3.2 Delete replaced closure/payment/reverse SQL, transaction and event helpers from rapid-pilot and pass architecture checks without baseline expansion.
 
 ## 4. Delivery
@@ -23,6 +23,6 @@
 
 Фактические результаты и ссылки на независимые reviews собраны в
 `docs/operations/otiz-settlement-delivery-2026-09-10.md`.
-Пункт3.1 закрывается после GREEN объединённой финальной коррекции;
-пункт4.2 — только после финального review, exact-source CI и merge.
+Объединённая финальная коррекция прошла HTTP/browser/container GREEN.
+Пункт4.2 — только после финального review, exact-source CI и merge.
 #76 остаётся открытым для остальных частей перехода на Yii2.

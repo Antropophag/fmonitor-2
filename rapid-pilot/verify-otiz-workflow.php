@@ -76,7 +76,13 @@ $expect = static function (bool $condition, string $message): void {
     echo "ok - {$message}\n";
 };
 
-$run = static function (string $path, string $method = 'GET', array $post = [], string $email = 'otiz.verify@shlz.ru', string $csrf = 'verified-csrf-token') use ($prefix, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword): array {
+$operationSequence = 0;
+$run = static function (string $path, string $method = 'GET', array $post = [], string $email = 'otiz.verify@shlz.ru', string $csrf = 'verified-csrf-token') use ($prefix, $dbHost, $dbPort, $dbName, $dbUser, $dbPassword, &$operationSequence): array {
+    // Valid synthetic submissions include the operation identity supplied by real forms.
+    // Deliberately provided invalid IDs are preserved; runtime rejection is tested separately.
+    if ($method === 'POST' && preg_match('#^/pilot/otiz/(?:snapshots/\\d+/(?:closures|payments/complete)|closures/\\d+/reverse)$#D', $path) === 1 && !array_key_exists('operationId', $post)) {
+        $post['operationId'] = sprintf('91000000-0000-4000-8000-%012d', ++$operationSequence);
+    }
     $worker = <<<'PHP'
 require getcwd() . '/app/autoload.php';
 require getcwd() . '/app/InstallationProcess/DatabaseUnavailable.php';

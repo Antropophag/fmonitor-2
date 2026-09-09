@@ -58,8 +58,10 @@ publication/HTTP/register, premium-calculation, architecture и qualification.
 Оба container recovery теста GREEN, включая exact v22/v23 forward-переходы.
 Runtime package/compatibility, renderer drift и production packaging — GREEN.
 
-Объединённая финальная коррекция повторяет три непосредственно затронутых
-HTTP/browser/container теста перед замораживанием кандидата. Обязательный план:
+Объединённая финальная коррекция `c1a7c614` прошла три непосредственно затронутых
+HTTP/browser/container теста, architecture PASS7 и изолированный compatibility
+harness. Последний runtime log: `fmonitor-runtime-settlement-bd743569f4.log`
+в приватном временном каталоге. Код заморожен для финального review. Обязательный план:
 `openspec/changes/otiz-settlement-owner/verification-input.json`; генерируемый файл
 `.local/verification/otiz-settlement-owner-plan.json`. План не заменяет approvals.
 
