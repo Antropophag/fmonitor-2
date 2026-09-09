@@ -7,7 +7,7 @@
       ]
     },
     "defaultBranch": "main",
-    "graphDigest": "774c60276bd7053e3b02b18942cde0cd8117531c01ad38e23d8f945ecad6ce98",
+    "graphDigest": "ed77954b8e7e5aa796e0384c741919ba3e3b74813e65e9dd4e99c643422c4b56",
     "graphVersion": 0,
     "labels": {
       "enabled": true,
@@ -66,7 +66,7 @@
           "path": ".quality-graph/reports/fast.json"
         },
         "step": {
-          "run": "make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && git diff --check"
+          "run": "make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check"
         },
         "title": "fast"
       },
@@ -231,12 +231,12 @@
   },
   "fileSha256": {
     ".github/workflows/quality-graph-publish.yml": "2d19a2dc452c58088d19383a7242f445f23fa827654793a8df23d70534f4bb2c",
-    ".github/workflows/quality-graph.yml": "786277382684e89665abf204550c1266f2014830a8066c1b4aaf9114e0148a1c",
-    "quality-graph.yml": "7aac596550131ddb583b6af2f6f996ea1369e1972a602b8ea51546a10a1e2b74",
+    ".github/workflows/quality-graph.yml": "b0e033ae55b8522c8b3fe02d10d337728d35c90efaacf7aad3c53ceb7f7f1503",
+    "quality-graph.yml": "282eae6d6aa3476020136e3ab9ade7437fe2bc7df992103ccbb1e77404d05abc",
     "tools/delivery/quality-graph-preflight.py": "5b09ea7c6dd9499a8c0cc1bfeba717b562028958bb7542e44841072c4cb9d6e4",
     "tools/delivery/quality-graph-report.py": "8cee33501b7a3a82c205c07afce5c818630e2002d0fe4c9797ff3af0c281754b"
   },
-  "graphDigest": "774c60276bd7053e3b02b18942cde0cd8117531c01ad38e23d8f945ecad6ce98",
+  "graphDigest": "ed77954b8e7e5aa796e0384c741919ba3e3b74813e65e9dd4e99c643422c4b56",
   "schemaVersion": 1,
-  "selfDigest": "32b7a1168c2b4a89bb90f76c38ae31bfc3c76bce91812148995138380a289335"
+  "selfDigest": "83304f3af45b68b5f58f7960bd46bf19336e533fb31c94a059b9bc6a831cc7f2"
 }

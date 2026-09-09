@@ -110,12 +110,19 @@ def quality_results(digest: str) -> str:
 
 def expected() -> dict[str, str]:
     graph_text = (ROOT / "quality-graph.yml").read_text()
-    project = compile_graph(Graph.from_yaml(graph_text))
+    graph = Graph.from_yaml(graph_text)
+    project = compile_graph(graph)
     compiled_manifest = next(f.content for f in project.files if str(f.path) == ".quality-graph/manifest.json")
     workflow_path = ROOT / ".github/workflows/quality-graph.yml"
     current_workflow = workflow_path.read_text()
     prefix = current_workflow.split("\n  quality-results:\n", 1)[0] + "\n"
     workflow = prefix + quality_results(project.graph_digest)
+    jobs = yaml.safe_load(workflow)['jobs']
+    fast_commands = [line.strip() for step in jobs['fast']['steps']
+                     for line in step.get('run', '').splitlines() if line.strip()]
+    declared_fast = next(node.step.run for node in graph.nodes if node.id == 'fast')
+    if declared_fast != ' && '.join(fast_commands):
+        raise ValueError('graph fast command differs from the actual CI job')
     values = {path: (ROOT / path).read_text() for path in BOUNDARIES
               if path not in {".github/workflows/quality-graph.yml",
                               ".github/workflows/quality-graph-publish.yml"}}

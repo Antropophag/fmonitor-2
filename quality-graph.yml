@@ -29,7 +29,7 @@ nodes:
       approvals: {findings: false, files: false, node: false}
   fast:
     title: fast
-    run: make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && git diff --check
+    run: make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check
     results:
       native: .quality-graph/reports/fast.json
     policy: *blocking
