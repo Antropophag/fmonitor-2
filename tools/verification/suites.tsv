@@ -279,6 +279,9 @@ db	php	tests/Runtime/initial_owner_provisioning_001_test.php
 db	php	tests/Runtime/runtime_dml_privilege_probe_001_test.php
 db	php	tests/Runtime/session_contention_001_test.php
 db	php	tests/Runtime/migration_parallel_runners_001_test.php
+db	php	tests/Runtime/runtime_recovery_001_test.php
+db	php	tests/Runtime/runtime_jobs_recovery_001_test.php
+db	php	tests/Runtime/runtime_recovery_forward_update_001_test.php
 unit	python3	tests/Verification/architecture_guard_001_test.py
 db	php	tests/Jobs/durable_queue_001_test.php
 db	php	tests/Jobs/durable_queue_concurrency_001_test.php

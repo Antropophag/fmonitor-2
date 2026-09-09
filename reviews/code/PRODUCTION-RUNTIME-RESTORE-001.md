@@ -70,3 +70,24 @@ drift.
 Tasks 4.1 and 4.2 are supported by the final evidence. Restored OTIZ remains pending
 a separate valid legacy case. The shared #33 fixture requires its own reviewed
 correction and a post-OTIZ native original-read regression.
+
+## Jobs merge architecture addendum
+
+The merge of #34 into the restore branch preserves both exact architecture
+allowances without broadening other owners: `RuntimeRecovery.php` remains the named
+restore SQL/DDL owner, while only `MariaDb*` files under `app/Jobs` own the six Jobs
+fact families. Jobs foreign-table, Pilot/Rapid dependency and runtime→migration
+checks remain active.
+
+```text
+merge: 1eeff17603c78dc4fa780312173f0838a7dcc215
+planning head: f4f864f3ab6f86bda9bfdc378cf2eabc7c335c40
+56682c602321f3888967fe56f2f90061707bd684c52e50a6daab462a06790be9  tools/architecture/check.py
+3d98afb5fa1f13c77f9c021df75670cfe575f42dbdc3af0be33a5e603be48516  tools/architecture/tests/test_jobs_native_owner.py
+e6e9e3f074c82c052b78bec9dd4a2af5edb122bcd3896cc7e59d1a09fea8dad6  tools/architecture/tests/test_runtime_no_migrations.py
+```
+
+Focused architecture tests pass 10/10 and the current checker returns exact
+`{ok:true,rules:7,errors:[]}`. **Merge-resolution verdict: APPROVED.** This addendum
+does not approve the still-pending v23 recovery executable or change the exact-v22
+approval above.

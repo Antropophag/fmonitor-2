@@ -96,3 +96,23 @@ PDF access.
 **Integration verdict: APPROVED.** Source and built-image evidence close the bounded
 runtime-wiring Gate5. Repository full CI remains pending and is not implied by this
 approval.
+
+## Final source 088 exact-image re-smoke
+
+The final source was rebuilt and exercised in a fresh contour; this supplements the
+earlier source116 smoke without erasing it.
+
+```text
+source/OCI revision: 088b51be2c9fd2f49eb24acab1988e723b08edb6
+image: sha256:fe8344a9f2ff472889f040bdecf3d180757d55da5a12df52ab9084c0d5b46c12
+evidence: /private/tmp/fm2-jobs-image-smoke-088b-bGxakl
+```
+
+The evidence root is mode0700 and every file is mode0600. Safe summaries prove
+canonical migration23, exact DML-only privileges, two verified local TLS requests,
+51 catalogue rows, one completed run/job and one slot, three job events, fresh role
+heartbeats and healthy status before and after process restart. Both jobs services
+exited0 on SIGTERM. Final cleanup removed containers, network and all three volumes;
+the exact image is deliberately retained. No live external endpoint was used.
+
+**Re-smoke verdict: APPROVED.** Full CI remains a separate pending gate.

@@ -2,10 +2,40 @@
 
 declare(strict_types=1);
 
-if(getenv('FMONITOR_RECOVERY_CONTAINER_TEST')!=='1'&&trim((string)shell_exec('command -v mariadb-dump'))===''){
-    $checkout=dirname(__DIR__,2);$tag='fmonitor2-runtime:restore-test-'.bin2hex(random_bytes(6));$run=static function(array$command,string$cwd):int{$process=proc_open($command,[0=>['file','/dev/null','r'],1=>STDOUT,2=>STDERR],$pipes,$cwd,getenv());if(!is_resource($process))return70;return proc_close($process);};
-    try{if($run(['docker','build','--file','deploy/runtime/Dockerfile','--tag',$tag,'.'],$checkout)!==0)exit(70);$command=['docker','run','--rm','--add-host','host.docker.internal:host-gateway','--volume',$checkout.'/tests:/workspace/fmonitor-2/tests:ro','--env','FMONITOR_RECOVERY_CONTAINER_TEST=1','--env','FMONITOR_TEST_DB_HOST=host.docker.internal','--env','FMONITOR_TEST_DB_PORT='.(getenv('FMONITOR_TEST_DB_PORT')?:'23306'),'--env','FMONITOR_TEST_DB_ADMIN_USER='.(getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root'),'--env','FMONITOR_TEST_DB_ADMIN_PASSWORD='.(getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local'),'--entrypoint','php',$tag,'tests/Runtime/runtime_recovery_001_test.php'];exit($run($command,$checkout));}
-    finally{$run(['docker','image','rm',$tag],$checkout);}
+if (getenv('FMONITOR_RECOVERY_CONTAINER_TEST') !== '1') {
+    $checkout = dirname(__DIR__, 2);
+    $revision = 'f22d80a609d52a194c1fd68b1db7ab7273740f28';
+    $control = (realpath(sys_get_temp_dir()) ?: throw new RuntimeException('Temporary root unavailable')) . '/fmonitor-v22-oracle-' . bin2hex(random_bytes(6));
+    mkdir($control, 0700); mkdir($control . '/source', 0700);
+    $tag = 'fmonitor2-runtime:v22-oracle-' . bin2hex(random_bytes(6));
+    $run = static function (array $command, string $cwd): int {
+        $process = proc_open($command, [0=>['file','/dev/null','r'],1=>STDOUT,2=>STDERR], $pipes, $cwd, getenv());
+        return is_resource($process) ? proc_close($process) : 70;
+    };
+    $status = (static function () use ($checkout, $revision, $control, $tag, $run): int {
+    try {
+        foreach ([
+            ['git','archive','--format=tar','--output=' . $control . '/source.tar',$revision],
+            ['tar','-xf',$control . '/source.tar','-C',$control . '/source'],
+            ['docker','build','--file',$control . '/source/deploy/runtime/Dockerfile','--label','org.opencontainers.image.revision=' . $revision,'--tag',$tag,$control . '/source'],
+        ] as $command) if ($run($command, $checkout) !== 0) return 70;
+        $inspect = proc_open(['docker','image','inspect','--format','{{index .Config.Labels "org.opencontainers.image.revision"}}',$tag], [0=>['file','/dev/null','r'],1=>['pipe','w'],2=>STDERR], $pipes, $checkout);
+        if (!is_resource($inspect)) return 70;
+        $observed = trim(stream_get_contents($pipes[1])); fclose($pipes[1]);
+        if (proc_close($inspect) !== 0 || $observed !== $revision) return 70;
+        return $run(['docker','run','--rm','--add-host','host.docker.internal:host-gateway',
+            '--volume',$control . '/source/tests:/workspace/fmonitor-2/tests:ro',
+            '--env','FMONITOR_RECOVERY_CONTAINER_TEST=1','--env','FMONITOR_TEST_DB_HOST=host.docker.internal',
+            '--env','FMONITOR_TEST_DB_PORT=' . (getenv('FMONITOR_TEST_DB_PORT') ?: '23306'),
+            '--env','FMONITOR_TEST_DB_ADMIN_USER=' . (getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root'),
+            '--env','FMONITOR_TEST_DB_ADMIN_PASSWORD=' . (getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local'),
+            '--entrypoint','php',$tag,'tests/Runtime/runtime_recovery_001_test.php'], $checkout);
+    } finally {
+        $run(['docker','image','rm',$tag], $checkout);
+        $run(['rm','-rf','--',$control], $checkout);
+    }
+    })();
+    exit($status);
 }
 
 require dirname(__DIR__) . '/bootstrap.php';

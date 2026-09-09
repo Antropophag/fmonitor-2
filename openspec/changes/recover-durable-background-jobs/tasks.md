@@ -1,10 +1,10 @@
 ## 1. Gate 1–3 и exact v23 oracle
 
 - [x] 1.1 Получить независимый Gate1 review `PRODUCTION-JOBS-RECOVERY-001`: exact 69/39 inventory, ordered quiesce, zero-transition restore, fake-only resume и forward-only compatibility; verification: review record содержит hashes и verdict APPROVED.
-- [ ] 1.2 Добавить независимо authored public RED для v23 backup/restore exact Jobs rows/history/state/AUTO values; verification: RED причинно падает на отсутствующем v23 recovery contract, а не setup.
-- [ ] 1.3 Добавить preflight RED для wrong frontier, missing/extra Jobs table и omitted/extra AUTO key; verification: каждый case возвращает `BUNDLE_INVALID` с zero target DDL/state.
-- [ ] 1.4 Добавить fake-only resume RED для pending/no-job sweep, delivered/dead exclusion, unexpired/expired/attempt5 leases, stale token, ambiguous provider identity и linked retry; verification: transport fake фиксирует только явно разрешённые calls и domain facts неизменны.
-- [ ] 1.5 Получить independent Gate3 всех executable artifacts; verification: `reviews/tests/PRODUCTION-JOBS-RECOVERY-001.md` фиксирует exact hashes, demonstrated RED и bounded approval.
+- [x] 1.2 Добавить независимо authored public RED для v23 backup/restore exact Jobs rows/history/state/AUTO values; verification: RED причинно падает на отсутствующем v23 recovery contract, а не setup.
+- [x] 1.3 Добавить preflight RED для wrong frontier, missing/extra Jobs table и omitted/extra AUTO key; verification: каждый case возвращает `BUNDLE_INVALID` с zero target DDL/state.
+- [x] 1.4 Добавить fake-only resume RED для pending/no-job sweep, delivered/dead exclusion, unexpired/expired/attempt5 leases, stale token, ambiguous provider identity и linked retry; verification: transport fake фиксирует только явно разрешённые calls и domain facts неизменны.
+- [x] 1.5 Получить independent Gate3 всех executable artifacts; verification: `reviews/tests/PRODUCTION-JOBS-RECOVERY-001.md` фиксирует exact hashes, demonstrated RED и bounded approval.
 
 ## 2. V23 backup и restore без transition
 

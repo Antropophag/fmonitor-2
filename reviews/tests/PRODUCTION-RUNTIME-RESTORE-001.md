@@ -56,3 +56,41 @@ Current reviewed hashes are recorded in
 `reviews/code/PRODUCTION-RUNTIME-RESTORE-001.md`. The renewed test is GREEN and
 Gate 3 remains **APPROVED for exact v22 only**. A v23/post-#34 package requires new
 review.
+
+## Historical v22 executable binding Gate 5 — 2026-09-09
+
+Verdict: **APPROVED** for preserving this exact v22 oracle after canonical v23.
+
+The launcher archives exact commit
+`f22d80a609d52a194c1fd68b1db7ab7273740f28`, builds its production runtime
+Dockerfile with the same OCI revision label, and refuses to run unless image
+inspection returns that literal revision. It mounts the archived commit's own
+`tests/` directory read-only, so both the application and executable oracle come
+from f22 rather than the current frontier. The test body after the launcher is
+also byte-identical to f22: SHA-256
+`190f199b615808c9ba4dd8dc67b404ed74a63e6ac6177a094d562ae761d1145b`.
+
+The outer launcher captures the child status inside a closure. Its `finally`
+therefore removes the task-owned image tag and archive directory before the outer
+`exit`; this corrects the historical launcher's `exit`-inside-`try` cleanup leak.
+Only the configured test DB host, port, admin user and password cross into the
+container, and the DB host is explicitly mapped to `host.docker.internal`.
+
+Focused evidence:
+
+```text
+FMONITOR_TEST_DB_ADMIN_PASSWORD=fmonitor2_test_root_local \
+  php tests/Runtime/runtime_recovery_001_test.php
+PASS: PRODUCTION-RUNTIME-RESTORE-001 backup/restore/corruption contract
+exit 0
+```
+
+Evidence log: `/tmp/fmonitor-v22-historical-binding-exact-green.log`. After the
+run, no `v22-oracle-*` image tag or `fmonitor-v22-oracle-*` control directory
+remained. The current-frontier binding independently failed at expected schema22
+versus23, demonstrating why the historical source binding is required. Current
+v23 recovery remains a separate `PRODUCTION-JOBS-RECOVERY-001` gate.
+
+```text
+3ea32b704f29ecb06439f270fbfbf4acff32a23d260b9d2d3541262cfdc9b0fd  tests/Runtime/runtime_recovery_001_test.php
+```
