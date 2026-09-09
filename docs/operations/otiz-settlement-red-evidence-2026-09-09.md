@@ -43,9 +43,14 @@ the tests or authorize implementation.
 ## Yii HTTP settlement route
 
 - Command: `php tests/Yii2/yii2_otiz_settlement_001_test.php`.
-- Result: exit `255` at the intended public-route assertion.
-- Expected: HTTP `303` to `/pilot/otiz/snapshots/301?closed=1`; actual: HTTP
-  `404` with no `Location` because the Yii route/controller is absent.
+- Result after completing the three-command/admission/parsing matrix: exit `255`
+  at the first absent protected route.
+- Expected for anonymous `GET /pilot/otiz/snapshots/301`: HTTP `303` to
+  `/pilot/login`; actual: HTTP `404` with no `Location` because the Yii
+  compatibility route/controller is absent.
 - Setup completed canonical v24, authenticated an active actor with exact current
   `otiz.manage`, and submitted valid Yii CSRF plus the retained legacy form path
-  `/pilot/otiz/snapshots/301/closures`. No closure or event existed beforehand.
+  `/pilot/otiz/snapshots/301/closures`. The remaining assertions cover the real
+  authenticated snapshot/form/redirect flow, all three commands, current exact
+  permission, CSRF, malformed inputs, exact receipt/closure values and ignored
+  arbitrary paid/deadline fields.
