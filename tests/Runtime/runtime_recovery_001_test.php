@@ -1,9 +1,12 @@
 <?php
 
 declare(strict_types=1);
+require_once dirname(__DIR__).'/Support/RecoveryContainerNetwork.php';
+use FMonitor2\Tests\Support\RecoveryContainerNetwork;
 
 if (getenv('FMONITOR_RECOVERY_CONTAINER_TEST') !== '1') {
     $checkout = dirname(__DIR__, 2);
+    $network = RecoveryContainerNetwork::forHost(getenv('FMONITOR_TEST_DB_HOST') ?: '127.0.0.1');
     $revision = 'f22d80a609d52a194c1fd68b1db7ab7273740f28';
     $control = (realpath(sys_get_temp_dir()) ?: throw new RuntimeException('Temporary root unavailable')) . '/fmonitor-v22-oracle-' . bin2hex(random_bytes(6));
     mkdir($control, 0700); mkdir($control . '/source', 0700);
@@ -12,7 +15,7 @@ if (getenv('FMONITOR_RECOVERY_CONTAINER_TEST') !== '1') {
         $process = proc_open($command, [0=>['file','/dev/null','r'],1=>STDOUT,2=>STDERR], $pipes, $cwd, getenv());
         return is_resource($process) ? proc_close($process) : 70;
     };
-    $status = (static function () use ($checkout, $revision, $control, $tag, $run): int {
+    $status = (static function () use ($checkout, $revision, $control, $tag, $run, $network): int {
     try {
         foreach ([
             ['git','archive','--format=tar','--output=' . $control . '/source.tar',$revision],
@@ -23,9 +26,9 @@ if (getenv('FMONITOR_RECOVERY_CONTAINER_TEST') !== '1') {
         if (!is_resource($inspect)) return 70;
         $observed = trim(stream_get_contents($pipes[1])); fclose($pipes[1]);
         if (proc_close($inspect) !== 0 || $observed !== $revision) return 70;
-        return $run(['docker','run','--rm','--add-host','host.docker.internal:host-gateway',
+        return $run(['docker','run','--rm',...$network['arguments'],
             '--volume',$control . '/source/tests:/workspace/fmonitor-2/tests:ro',
-            '--env','FMONITOR_RECOVERY_CONTAINER_TEST=1','--env','FMONITOR_TEST_DB_HOST=host.docker.internal',
+            '--env','FMONITOR_RECOVERY_CONTAINER_TEST=1','--env','FMONITOR_TEST_DB_HOST=' . $network['databaseHost'],
             '--env','FMONITOR_TEST_DB_PORT=' . (getenv('FMONITOR_TEST_DB_PORT') ?: '23306'),
             '--env','FMONITOR_TEST_DB_ADMIN_USER=' . (getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root'),
             '--env','FMONITOR_TEST_DB_ADMIN_PASSWORD=' . (getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local'),

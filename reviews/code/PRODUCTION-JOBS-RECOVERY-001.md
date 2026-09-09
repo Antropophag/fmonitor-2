@@ -46,3 +46,23 @@ PHP syntax and `git diff --check` pass; the exact test image tag was cleaned. Th
 approval closes the bounded source behavior. A retained exact-image operational
 drill, runbook update and authoritative repository CI remain required before final
 production-integration/Done claims.
+
+## Recovery test-container portability addendum
+
+The production recovery implementation is unchanged. All three recovery launchers
+now use one test-only topology selector so a host-loopback MariaDB remains private:
+native Linux uses Docker host networking and the original DB host; Darwin retains
+the existing `host.docker.internal` gateway alias. Unsupported platforms fail setup
+explicitly.
+
+```text
+7ae03cec1dcb2c323cf1587dd111118d60442aa3cb05f75db882a965c0688b70  tests/Support/RecoveryContainerNetwork.php
+e943b2e71e5f8d5f92e5bc8dc9c0bdb06a3cb0865e86e1bd2ac5df2d96bac9ec  tests/Runtime/runtime_recovery_001_test.php
+9ed90f9328c738bc49da155ea93df7a789e1b9ba6aa96c427d0206dc80dbe2f8  tests/Runtime/runtime_jobs_recovery_001_test.php
+1b3cf0751c3239a2d2b4c459b87d2128b08a5aa3630a603a810c88ce34df530d  tests/Runtime/runtime_recovery_forward_update_001_test.php
+```
+
+The v22 body below its launcher is unchanged. Exact-tag/image cleanup remains
+bounded. A Linux container SELECT1 probe through host networking passed without
+widening the DB bind, followed by all three full tests GREEN; evidence is under
+`/tmp/fmonitor-recovery-portability/`. **Test portability verdict: APPROVED.**
