@@ -12,10 +12,11 @@
 - Command: `php tests/Otiz/settlement_concurrency_001_test.php`.
 - Result: exit `255` on `INTENDED_RED: concurrent exact reversal replay returns the same successful outcome`.
 - Expected: `[true, true]`; actual on two consecutive runs: `[false, true]` and `[true, false]`.
-- The test-only `osc_delay_reversal` trigger holds the winning reversal insert for
-  400 ms. Both workers start from one barrier, so the losing command observes no
-  receipt before waiting for the same financial-object lock. The side that wins
-  scheduling may vary; exactly one command incorrectly returns a refusal.
+- A third test connection holds a write table lock on the operation receipts.
+  After releasing both workers, the coordinator queries `PROCESSLIST` until both
+  database connections are observed waiting in their receipt lookup, then releases
+  the table lock. Both commands therefore observe the same missing-receipt start;
+  exactly one currently returns a refusal after the financial-object lock.
 
 ## Canonical settlement schema
 
