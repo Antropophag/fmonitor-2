@@ -307,3 +307,6 @@ db	php	tests/Jobs/workforce_scheduler_001_test.php
 db	php	tests/Jobs/workforce_scheduler_concurrency_001_test.php
 db	php	tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php
 db	php	tests/Jobs/durable_queue_connection_loss_001_test.php
+db	php	tests/Otiz/object_register_paging_001_test.php
+db	php	tests/Otiz/object_register_paging_http_001_test.php
+e2e	php	tests/Support/ObjectRegisterPagingBrowserFixture.php
