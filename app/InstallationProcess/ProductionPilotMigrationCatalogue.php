@@ -30,6 +30,7 @@ final class ProductionPilotMigrationCatalogue
             20=>OtizPublicationSchemaMigration::class,
             21=>OtizEvidenceSchemaMigration::class,
             22=>PilotLegacyObjectSchemaMigration::class,
+            23=>JobsSchemaMigration::class,
         ];
     }
 }

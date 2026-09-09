@@ -12,7 +12,7 @@ final class SelectionSchemaTestDatabase
     public readonly array $manifest;
     public readonly array $example;
 
-    public function __construct(public readonly string $prefix = '')
+    public function __construct(public readonly string $prefix = '', ?\Closure $beforeRegistry = null)
     {
         $this->source = new IdentityRegistryTestDatabase($prefix);
         $this->db = $this->source->connection;
@@ -21,6 +21,7 @@ final class SelectionSchemaTestDatabase
             $this->manifest = json_decode(file_get_contents(dirname(__DIR__, 2) . '/specs/fixtures/assignment-order-selection-schema-v1.json'), true, 512, JSON_THROW_ON_ERROR)['tables'];
             $this->example = json_decode(file_get_contents(dirname(__DIR__, 2) . '/specs/fixtures/assignment-order-selection-example-v1.json'), true, 512, JSON_THROW_ON_ERROR);
             $this->db->query("INSERT INTO `{$prefix}fm2_installation_cases` (id,legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,4512,'needs_assignment_order','2026-08-20T09:00:00+03:00','2026-08-20T09:00:00+03:00',1)");
+            $beforeRegistry?->__invoke($this->db, $prefix);
             \assertSameValue(['applied' => true], AssignmentOrderIdentityRegistryMigration::apply($this->db, $prefix), 'approved registry setup');
             \assertSameValue(true, AssignmentOrderIdentityRegistryMigration::isBackfillComplete($this->db, $prefix), 'registry setup complete');
         } catch (\Throwable $failure) {

@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1);require dirname(__DIR__).'/bootstrap.php';require dirname(__DIR__,2).'/app/autoload.php';
+use FMonitor2\Jobs\MariaDbJobQueue;
+[$name,$prefix,$arrival,$identity]=array_slice($argv,1)+array_fill(0,4,'');$host=getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1';$port=(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306);$db=new mysqli($host,(string)getenv('JOBS_LOSS_DB_USER'),(string)getenv('JOBS_LOSS_DB_PASSWORD'),$name,$port);file_put_contents($arrival,(string)$db->thread_id,LOCK_EX);try{$queue=new MariaDbJobQueue($db,$prefix,static fn():string=>'2026-09-09T10:00:00.000000Z',static fn():string=>str_repeat('a',64),['test.loss'=>[1]]);$queue->enqueue(['jobType'=>'test.loss','payloadVersion'=>1,'payload'=>['case'=>'connection-loss'],'availableAtUtc'=>'2026-09-09T10:00:00.000000Z','idempotencyKey'=>$identity,'actor'=>['type'=>'system','id'=>'connection-loss-test']]);echo "UNEXPECTED_SUCCESS\n";exit(2);}catch(Throwable){echo "CONNECTION_LOST\n";exit(70);}

@@ -11,9 +11,9 @@ final class SelectionNativeFixture
     public readonly SelectionSchemaTestDatabase $schema;
     public readonly \mysqli $db;
     public int $clockCalls = 0;
-    public function __construct(public readonly string $prefix = '')
+    public function __construct(public readonly string $prefix = '', ?\Closure $beforeRegistry = null)
     {
-        $this->schema = new SelectionSchemaTestDatabase($prefix);
+        $this->schema = new SelectionSchemaTestDatabase($prefix, $beforeRegistry);
         $this->db = $this->schema->db;
         try {
             \assertSameValue(['applied'=>true], I\AssignmentOrderSelectionSchemaMigration::apply($this->db,$prefix), 'approved selection schema');

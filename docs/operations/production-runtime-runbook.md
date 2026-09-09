@@ -1,8 +1,8 @@
 # Production runtime: clean setup, restart and update
 
 Это canonical operator path для production runtime. Нужны Git, Docker Engine и
-Compose v2. TLS завершается внешним trusted proxy. Команды не включают реальные
-imports, Bitrix/email sends или background workers. Перед production claim всё ещё
+Compose v2. TLS завершается внешним trusted proxy. Базовые разделы1–6 не включают
+background workers; раздел7 описывает их явное подключение с approved конфигурацией. Перед production claim всё ещё
 нужны согласованные integration/CI evidence для выбранного exact source.
 
 ## 1. Clean checkout и private environment
@@ -167,20 +167,176 @@ docker compose --file deploy/runtime/compose.yaml stop web php
 
 ## 6. Reviewed update
 
-1. Сделать DB и platform volume snapshots; записать old source/image identity.
+1. Остановить writers, включая включённые jobs services; сделать согласованные DB и
+   platform volume snapshots и записать old source/image identity.
 2. Получить clean checkout reviewed commit и собрать новый unique image tag.
 3. Загрузить тот же private environment, изменить только
-   `FMONITOR_RUNTIME_IMAGE`, выполнить one-shot `migrate`, затем recreate `php web`.
+   `FMONITOR_RUNTIME_IMAGE`, выполнить one-shot `migrate`, затем recreate `php web`
+   и ранее включённые jobs services из того же image.
 4. Проверить live/ready, login, основной browser flow и сохранённые данные.
 5. При rollback остановить new `web/php` и вернуть previous exact image. Не удалять
    additive schema/history и не выполнять `down --volumes`.
+
+## 7. Фоновые задания — явный профиль jobs
+
+Canonical v23 добавляет очередь, историю попыток, outbox, слоты scheduler и process
+heartbeats. Миграция выполняется прежней отдельной командой; worker и scheduler
+работают под тем же проверенным DML-only account и schema не исправляют.
+По умолчанию профиль выключен: обычный `up php web` его не запускает.
+
+Для кадрового транспорта оператор задаёт approved `FMONITOR_BITRIX_ORIGIN`,
+`FMONITOR_BITRIX_WEBHOOK_USER_ID`, `FMONITOR_BITRIX_DEPARTMENT_IDS_JSON` и абсолютный
+`FMONITOR_BITRIX_TOKEN_HOST_FILE` вне repository. Token — regular file mode0600,
+доступный в контейнере runtime UID10001; deployment operator обеспечивает это
+ownership до запуска. Для private CA дополнительно задаётся
+`FMONITOR_BITRIX_CA_HOST_FILE`; для обычного trusted TLS он не нужен. Worker получает
+эти файлы через read-only mounts. Scheduler не получает Bitrix configuration/files.
+Отсутствующий или некорректный transport config не разрешает внешний запрос.
+
+Для нового shell сначала загрузить private runtime environment. Создать отдельный
+файл настроек (однократно) и заменить фиктивные значения approved значениями; token
+в этом файле не хранится:
+
+```sh
+FMONITOR_PRIVATE_ROOT="${FMONITOR_PRIVATE_ROOT:-$HOME/.local/state/fmonitor2-production}"
+FMONITOR_PRIVATE_ENV="$FMONITOR_PRIVATE_ROOT/runtime.env"
+FMONITOR_JOBS_ENV="$FMONITOR_PRIVATE_ROOT/jobs.env"
+umask 077
+test ! -e "$FMONITOR_JOBS_ENV" && cat >"$FMONITOR_JOBS_ENV" <<'ENV'
+FMONITOR_BITRIX_ORIGIN='https://approved-portal.example.invalid'
+FMONITOR_BITRIX_WEBHOOK_USER_ID='7'
+FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[71]'
+FMONITOR_BITRIX_TOKEN_HOST_FILE="${FMONITOR_PRIVATE_ROOT}/bitrix-token"
+FMONITOR_BITRIX_CA_HOST_FILE=''
+ENV
+chmod 600 "$FMONITOR_JOBS_ENV"
+# Отредактировать private jobs.env: origin, webhook user и departments выше фиктивные.
+set -a; . "$FMONITOR_PRIVATE_ENV"; . "$FMONITOR_JOBS_ENV"; set +a
+```
+
+Token source — уже утверждённый private файл, содержащий только токен. Следующий
+одноразовый шаг копирует его без вывода значений и без сети; существующий destination
+не перезаписывается. Указать абсолютный `FMONITOR_APPROVED_TOKEN_SOURCE`:
+
+```sh
+docker run --rm --interactive --network none --user 0:0 --entrypoint php \
+  --mount "type=bind,source=$FMONITOR_APPROVED_TOKEN_SOURCE,target=/input/token,readonly" \
+  --mount "type=bind,source=$FMONITOR_PRIVATE_ROOT,target=/output" \
+  "$FMONITOR_RUNTIME_IMAGE" <<'PHP'
+<?php
+umask(0077);
+$stage = null;
+$status = 0;
+try {
+    $source = @fopen('/input/token', 'rb');
+    $stat = $source === false ? false : fstat($source);
+    if ($stat === false || ($stat['mode'] & 0170000) !== 0100000 || $stat['size'] < 1 || $stat['size'] > 1024) {
+        throw new RuntimeException();
+    }
+    $bytes = stream_get_contents($source, 1025);
+    fclose($source);
+    if (!is_string($bytes) || preg_match('/^[A-Za-z0-9_-]{1,256}(?:\r?\n)?$/D', $bytes) !== 1) {
+        throw new RuntimeException();
+    }
+    $candidate = '/output/.token-stage-'.bin2hex(random_bytes(16));
+    if (!mkdir($candidate, 0700)) throw new RuntimeException();
+    $stage = $candidate;
+    $file = $stage.'/token';
+    $handle = fopen($file, 'x');
+    if ($handle === false || fwrite($handle, $bytes) !== strlen($bytes)) throw new RuntimeException();
+    fclose($handle);
+    unset($bytes);
+    if (!chmod($file, 0600) || !chown($file, 10001) || !chgrp($file, 10001)) throw new RuntimeException();
+    // Atomic publication: link fails if any destination entry already exists.
+    if (!@link($file, '/output/bitrix-token')) throw new RuntimeException();
+} catch (Throwable $error) {
+    fwrite(STDERR, "Token staging failed; destination was not overwritten.\n");
+    $status = 1;
+} finally {
+    if ($stage !== null) {
+        @unlink($stage.'/token');
+        @rmdir($stage);
+    }
+}
+exit($status);
+PHP
+```
+
+Если требуется private CA, задать её абсолютный host path в `jobs.env` и обеспечить
+читаемость runtime UID10001; файл CA не является token secret. Повторно загрузить
+private environment после редактирования. Не печатать expanded Compose config.
+
+```sh
+docker compose --file deploy/runtime/compose.yaml --profile jobs up --detach --wait --wait-timeout 60 jobs-worker jobs-scheduler
+docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-worker   php bin/fmonitor2-jobs.php health
+```
+
+Scheduler ставит кадровое задание на последний наступивший московский слот HH:07;
+повтор не создаёт второе задание, после простоя нет массового hourly backfill.
+Outbox sweep ставит отдельные delivery jobs только для committed intents. Production
+email transport не установлен: он возвращает `OUTBOX_TRANSPORT_UNCONFIGURED` без
+отправки; продуктовые триггеры/шаблоны и подключение sender остаются в #11/#13.
+Ночной smoke использует только локальный HTTPS fixture, а не реальный портал.
+
+Worker и scheduler записывают `worker:<instance>` и `scheduler:<instance>` heartbeat
+в БД. Команда `health` читает их и очередь, игнорируя старый ready-file; exit0 означает
+здоровое состояние, exit70 — устаревший heartbeat, проблемную очередь или недоступную
+инфраструктуру. Counter `deadJobs` сохраняет видимость терминальных failed rows;
+ручной повтор не удаляет исходную историю. Для operator list/retry требуется доступ
+deployment operator к private runtime configuration; authority из CLI arguments
+не принимается.
+
+```sh
+docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-worker   php bin/fmonitor2-jobs.php list-failed --page 1 --limit 20
+
+# Выбрать jobId из показанного safe JSON; значение вводит deployment operator.
+IFS= read -r FMONITOR_FAILED_JOB_ID
+FMONITOR_RETRY_OPERATION_ID="$(docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-worker php -r '$h=bin2hex(random_bytes(16));$h[12]="4";$h[16]=dechex((hexdec($h[16])&3)|8);echo substr($h,0,8)."-".substr($h,8,4)."-".substr($h,12,4)."-".substr($h,16,4)."-".substr($h,20,12);')"
+FMONITOR_JOBS_NOW_UTC="$(date -u +%Y-%m-%dT%H:%M:%S.000000Z)"
+docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-worker   php bin/fmonitor2-jobs.php retry --job-id "$FMONITOR_FAILED_JOB_ID"   --operation-id "$FMONITOR_RETRY_OPERATION_ID" --now-utc "$FMONITOR_JOBS_NOW_UTC"
+```
+
+Для разового scheduler diagnostic используется тот же текущий UTC instant:
+
+```sh
+docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-scheduler \
+  php bin/fmonitor2-jobs.php schedule-once --now-utc "$FMONITOR_JOBS_NOW_UTC"
+```
+
+Retry создаёт linked job, не запускает handler inline и не меняет старый terminal
+result. Повтор operation id возвращает тот же linked job. Lease равен5 минутам;
+heartbeat продлевает его с cadence60 секунд. Retryable failures получают задержки
+1м/5м/15м/1ч, пятая попытка становится dead. Кадровый owner распознаёт уже завершённую
+job family; outbox сохраняет общий provider idempotency reference между попытками и
+ручными циклами, но не обещает exactly-once при неизвестном ответе провайдера.
+
+Остановка перед согласованным backup/update:
+
+```sh
+docker compose --file deploy/runtime/compose.yaml --profile jobs stop jobs-scheduler jobs-worker web php
+```
+
+SIGTERM прекращает новые claims. Worker даёт активному child55 секунд, затем завершает
+и reaps его; неизвестный результат не объявляется success и lease становится доступен
+после expiry. Container grace60 секунд. После update включать jobs только из того же
+reviewed image; при rollback остановить новые jobs services и сохранить все queue/
+outbox rows. Старый `rapid-pilot/workforce-worker.sh --once` лишь делегирует native
+operator sync с explicit prefix; прежнего loop/manifest/ready-file пути больше нет.
+
+Согласованное restore-доказательство развивается в #36. Простой SQL dump из раздела5
+не является проверенной самостоятельной restore-процедурой: на MariaDB11.4 DDL
+roundtrip исторической completion schema добавляет implicit FK index и не проходит
+строгую readiness. Технический restore использует data-only dump и canonical schema
+из exact source image с сохранением AUTO_INCREMENT; его v23-проверка, jobs recovery
+и окончательная инструкция должны завершиться до заявления production restore readiness.
 
 ## Known limits
 
 - TLS/proxy configuration находится вне этого Compose contour.
 - Initial-owner CLI работает только для clean identity state или exact replay; это
   не repair/reset/password-change tool.
-- Real Bitrix imports, email sends и background job scheduler не включаются.
+- Jobs включаются только явно через профиль и approved external configuration;
+  реальные Bitrix imports и email sends ночью не выполняются.
 - Runtime не переносит legacy data автоматически и не удаляет старые volumes.
 - Full production claim зависит от фактически завершённых review/CI/deployment
   evidence для exact source/image; этот runbook сам по себе их не создаёт.
