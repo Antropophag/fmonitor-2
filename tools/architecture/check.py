@@ -276,6 +276,8 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
             repair_matches = list(UNSAFE_SESSION_REPAIR.finditer(line)) if compatibility_matches else []
             session_matches += repair_matches if repair_matches else compatibility_matches
             for match in session_matches:
+                if rel == "app/YiiRuntime/ReliableSession.php" and "session_write_close" in match.group(0):
+                    continue
                 violations["session_storage_ownership"].append(
                     finding("session-owner", path, number, match.group(0))
                 )

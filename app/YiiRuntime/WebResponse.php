@@ -10,6 +10,18 @@ use yii\web\Response;
 /** HTTP policy applied through the framework response lifecycle. */
 final class WebResponse
 {
+    public static function closeAndSecure(Event $event): void
+    {
+        self::closeSession($event);
+        self::secure($event);
+    }
+
+    public static function closeSession(Event $event): void
+    {
+        if (!Yii::$app->has('session', true) || !Yii::$app->session->isActive) return;
+        Yii::$app->session->close();
+    }
+
     public static function secure(Event $event): void
     {
         /** @var Response $response */

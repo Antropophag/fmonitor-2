@@ -49,10 +49,12 @@ final class Yii2AuthFixture
             'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local',
             'FMONITOR_PROCESS_TABLE_PREFIX' => $this->prefix,
             'FMONITOR_YII_SESSION_PATH' => $this->sessionPath,
+            'FMONITOR_YII_SESSION_COOKIE' => 'fm2yii_test',
             'FMONITOR_YII_COOKIE_VALIDATION_KEY' => str_repeat('fixture-cookie-key-', 3),
             'FMONITOR_YII_RUNTIME_PATH' => $this->temporaryRoot . '/runtime',
             'FMONITOR_TRUSTED_REQUEST_HOST' => 'fmonitor.example.test',
             'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'http',
+            'FMONITOR_SHLZ_CSS_PATH' => dirname($this->repositoryRoot) . '/shlz-ui/packages/styles/dist/shlz.css',
         ];
     }
 
@@ -96,6 +98,18 @@ final class Yii2AuthFixture
     {
         $statement = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_role_permissions` SET permission=? WHERE role_id=9201");
         $statement->bind_param('s', $permission); $statement->execute();
+    }
+
+    public function removeCredential(): void
+    {
+        $this->db->query("DELETE FROM `{$this->prefix}fm2_pilot_auth_credentials` WHERE user_id=9101");
+    }
+
+    public function restoreCredential(): void
+    {
+        $now='2026-09-09T12:00:00+03:00';$email=$this->email;$hash=$this->passwordHash;
+        $statement=$this->db->prepare("INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(9101,?,?,?,?)");
+        $statement->bind_param('ssss',$email,$hash,$now,$now);$statement->execute();
     }
 
     public function currentHash(): string
