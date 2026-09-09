@@ -17,6 +17,13 @@ try {
     $db=$fixture->db;$p=$fixture->prefix;$hash=str_repeat('d',64);
     $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(id,report_date,status,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(301,'2026-09-30','accepted','premium-calculation-v1','2026-10-01T09:00:00+03:00',9101,'2026-10-01T10:00:00+03:00',9101,100000,0,100000,'{$hash}')");
     $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshot_objects(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES(301,7301,'BROWSER-1','Synthetic browser object',0,10000,'2026-09-30',100000,10000,10000,100000,100000,0,100000,100000,100000,0,'ready','{}')");
+    $trace=json_encode(['premiumCalculation'=>['formulaTrace'=>[['step'=>'fund','resultCents'=>100000],['step'=>'progress','resultCents'=>100000],['step'=>'pool','resultCents'=>100000]],'exclusions'=>[]]],JSON_THROW_ON_ERROR);
+    $statement=$db->prepare("UPDATE {$p}fm2_pilot_otiz_snapshot_objects SET inputs_json=? WHERE snapshot_id=301 AND object_id=7301");
+    $statement->bind_param('s',$trace);$statement->execute();
+    $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshot_allocations(snapshot_id,object_id,tab_id,full_name,position_name,contribution_bp,base_ktu_bp,adjustment_ktu_bp,effective_ktu_bp,share_bp,amount_cents,employment_status,participation_basis) VALUES(301,7301,'7001','Browser Installer','Installer',10000,10000,0,10000,10000,100000,'employed','Recorded work')");
+    $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshot_issues(snapshot_id,object_id,severity,issue_code,message,owner_role) VALUES(301,7301,'warning','BROWSER_WARNING','Synthetic warning retained','OTIZ owner')");
+    $allocationsBefore=$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_allocations")->fetch_all(MYSQLI_ASSOC);
+    $issuesBefore=$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_issues")->fetch_all(MYSQLI_ASSOC);
     $snapshotBefore=$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshots")->fetch_all(MYSQLI_ASSOC);
     $objectBefore=$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_objects")->fetch_all(MYSQLI_ASSOC);
     $dmlUser='yos_browser_'.bin2hex(random_bytes(5));$dmlPassword=bin2hex(random_bytes(20));
@@ -37,10 +44,23 @@ try {
     $browser=proc_open([getenv('FMONITOR_TEST_NODE_BINARY')?:'node',__DIR__.'/otiz_settlement_browser.mjs',$artifacts.'/config.json'],[0=>['file','/dev/null','r'],1=>['file',$artifacts.'/browser.log','a'],2=>['file',$artifacts.'/browser.log','a']],$pipes,$root);
     if(!is_resource($browser))throw new TestFailure('SETUP_FAILURE: browser process');
     $deadline=microtime(true)+60;
-    do{$state=proc_get_status($browser);if(!$state['running'])break;usleep(20000);}while(microtime(true)<$deadline);
+    $invalidObserved=false;
+    do {
+        $state=proc_get_status($browser);
+        if (!$invalidObserved && is_file($artifacts.'/invalid-complete')) {
+            $counts=[];
+            foreach (['fm2_pilot_otiz_payment_closures','fm2_pilot_otiz_events','fm2_otiz_settlement_operations'] as $table) $counts[]=(int)$db->query("SELECT COUNT(*) FROM {$p}{$table}")->fetch_column();
+            assertSameValue([0,0,0],$counts,'native over-budget rejection preserves money/events/receipts before valid actions');
+            file_put_contents($artifacts.'/invalid-observed','ok');
+            $invalidObserved=true;
+        }
+        if (!$state['running']) break;
+        usleep(20000);
+    } while(microtime(true)<$deadline);
     if($state['running']){proc_terminate($browser,9);throw new TestFailure('SETUP_FAILURE: browser deadline');}
     $exit=$state['exitcode'];proc_close($browser);$browser=null;
     assertSameValue(0,$exit,'browser exit; evidence '.$artifacts.'; '.file_get_contents($artifacts.'/browser.log'));
+    assertSameValue(true,$invalidObserved,'native invalid submission observed independently before success');
     $observed=json_decode(file_get_contents($artifacts.'/result.json'),true,flags:JSON_THROW_ON_ERROR);
     $rows=$db->query("SELECT id,paid_cents,discipline_cents,deadline_cents,basis,artifact,reverses_payment_closure_id,created_by_user_id FROM {$p}fm2_pilot_otiz_payment_closures ORDER BY id")->fetch_all(MYSQLI_ASSOC);
     assertSameValue(3,count($rows),'one closure per rendered command');
@@ -53,6 +73,8 @@ try {
     assertSameValue(['payment_closure_recorded','payment_completed','snapshot_payments_completed','payment_closure_reversed'],array_column($db->query("SELECT event_type FROM {$p}fm2_pilot_otiz_events ORDER BY id")->fetch_all(MYSQLI_ASSOC),'event_type'),'four canonical audit events');
     assertSameValue($snapshotBefore,$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshots")->fetch_all(MYSQLI_ASSOC),'accepted snapshot unchanged');
     assertSameValue($objectBefore,$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_objects")->fetch_all(MYSQLI_ASSOC),'accepted object calculation unchanged');
+    assertSameValue($allocationsBefore,$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_allocations")->fetch_all(MYSQLI_ASSOC),'worker allocation remains unchanged');
+    assertSameValue($issuesBefore,$db->query("SELECT * FROM {$p}fm2_pilot_otiz_snapshot_issues")->fetch_all(MYSQLI_ASSOC),'existing issue remains unchanged');
     echo 'PASS: OTIZ-SETTLEMENT-001 real Yii browser forms; artifacts '.$artifacts."\n";
 } finally {
     if(is_resource($browser)){proc_terminate($browser,9);proc_close($browser);}

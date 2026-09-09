@@ -47,3 +47,22 @@ for registration; required categories now include e2e, governance, integration,
 unit, plus mandatory full CI. Inventory initially failed only on the expected new
 e2e membership; adding explicit membership preserved its historical digest.
 `python3 tests/Verification/verification_inventory_001_test.py`: all15 PASS.
+
+## Review correction to 67384d39
+
+Root added representative stored formulaTrace (fund/progress/pool=100000), one
+worker allocation (КТУ1.00, amount100000) and an open warning. Native browser
+assertions expose the original details and verify these semantics; final DB
+comparison includes unchanged allocations/issues as well as snapshot/objects.
+
+Before the valid commands the browser submits an over-budget discipline200000
+from its actual rendered form. It verifies the retained error. A bounded private
+file rendezvous then lets the parent independently query the isolated DB and
+assert closure/event/receipt counts remain exactly[0,0,0] before any valid command.
+No production probe endpoint or instrumentation is added. Successful commands
+still have their own three form UUIDs and the original monetary oracle.
+
+Fresh command is unchanged; exit255 remains the intended requested-snapshot
+login return failure. Full output: `/tmp/fm2-root-browser-red-20260910-v2.log`.
+Money grouping whitespace accepts the legacy NBSP and ordinary space without
+changing expected numeric values or rendered application markup.

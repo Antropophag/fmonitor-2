@@ -27,7 +27,7 @@ try {
   assert.equal(new URL(page.url()).pathname, '/pilot/otiz/snapshots/301', 'login returns to the requested snapshot');
   assert.equal(await page.locator('h1').innerText(), 'Выплаты на 30.09.2026');
   assert.equal(await page.locator('.fm2-otiz-object-row').count(), 1);
-  assert.match(await page.locator('.fm2-otiz-summary').innerText(), /1 000,00/);
+  assert.match(await page.locator('.fm2-otiz-summary').innerText(), /1\s000,00/);
 
   async function formFor(action) {
     const form = page.locator(`form[action="${action}"]`);
@@ -52,6 +52,29 @@ try {
     assert.equal(new URL(page.url()).search, query);
     assert.ok((await page.locator('[role="status"]').allTextContents()).includes(message));
   }
+  result.stage = 'retained details and invalid native form';
+  const invalid = await formFor('/pilot/otiz/snapshots/301/closures');
+  // Opening the discipline form also exposes the existing object details.
+  await page.locator('.fm2-otiz-trace > summary').click();
+  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /Премиальный фонд/);
+  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /Начислено за прогресс/);
+  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /1\s000,00/);
+  assert.match(await page.locator('.fm2-otiz-allocation').innerText(), /Browser Installer/);
+  assert.match(await page.locator('.fm2-otiz-allocation').innerText(), /КТУ 1,00/);
+  assert.match(await page.locator('.fm2-otiz-issues').innerText(), /Synthetic warning retained/);
+  assert.match(await page.locator('.fm2-otiz-issues').innerText(), /OTIZ owner/);
+  await invalid.locator('[name="discipline"]').fill('2000.00');
+  await invalid.locator('[name="basis"]').fill('Over budget must reject');
+  await Promise.all([page.waitForNavigation(), invalid.locator('button[type="submit"]').click()]);
+  assert.equal(new URL(page.url()).search, '?error=closure');
+  assert.match(await page.locator('[role="alert"]').innerText(), /Действие не выполнено/);
+  assert.equal(await page.locator('.fm2-otiz-ledger tbody tr').count(), 0);
+  fs.writeFileSync(path.join(config.artifacts, 'invalid-complete'), 'ready', {mode: 0o600});
+  const checkpointDeadline = Date.now() + 3000;
+  while (!fs.existsSync(path.join(config.artifacts, 'invalid-observed')) && Date.now() < checkpointDeadline) await new Promise(resolve => setTimeout(resolve, 10));
+  assert.ok(fs.existsSync(path.join(config.artifacts, 'invalid-observed')), 'parent independently observed rejection counts');
+  result.rejectedOperation = result.operations.pop();
+
   result.stage = 'discipline form';
   const discipline = await formFor('/pilot/otiz/snapshots/301/closures');
   await discipline.locator('[name="discipline"]').fill('100.00');
