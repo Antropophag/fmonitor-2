@@ -11,7 +11,7 @@ ADR0002 назначает `app/Otiz` владельцем closures/reversals и
 ## Decisions
 
 - `OtizSettlement` владеет ровно `recordDiscipline`, `completeSnapshotPayments` и `reverse`; общий append helper остаётся private.
-- Additive migration создаёт per-object ledger lock row и operation receipt с unique actor+operation UUID/fingerprint. Транзакция сначала блокирует financial object, затем accepted snapshot/object и closure rows в постоянном порядке.
+- Additive migration создаёт per-object ledger lock row и operation receipt с unique actor+operation UUID/fingerprint. Проверка accepted-среза блокирует snapshot; затем команды блокируют финансовые объекты в сортированном порядке и перечитывают остаток. Сторно блокирует финансовый объект и исходную closure, не захватывая snapshot. Это сохраняет единый порядок между пересекающимися финансовыми операциями.
 - Budget читается как accepted snapshot object's immutable accrued minus global signed closures for object. Альтернатива snapshot pool rejected: она повторно вычитает closed-before и не сериализует snapshots.
 - Yii DB/Transaction используется целиком; mysqli и Yii DB не смешиваются в одной atomic operation.
 - Bulk блокирует sorted financial objects, повторно считает каждый budget и фиксируется all-or-nothing; concurrent snapshots могут успешно добавить100000+50000.
