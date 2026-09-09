@@ -32,6 +32,15 @@
 
 - [x] 5.1 Обновить production runbook точными v23 backup/restore/quiesce/resume командами и private evidence policy; verification: docs check не содержит secrets и сохраняет NEEDS_GRILL retention/RPO/RTO.
 - [x] 5.2 Выполнить isolated Compose drill без real transport; verification: exact source/image IDs, elapsed, bundle hashes, rows/state/AI и safe recovery outcomes сохранены private mode0600.
-- [ ] 5.3 Выполнить focused recovery/Jobs/runtime/browser regression checks, architecture check и полный approved CI matrix; verification: результаты привязаны к exact candidate SHA без reset рабочего stand/volumes.
+- [x] 5.3 Выполнить focused recovery/Jobs/runtime/browser regression checks, architecture check и полный approved CI matrix; verification: результаты привязаны к exact candidate SHA без reset рабочего stand/volumes.
 - [x] 5.4 Получить independent Gate5 production diff/evidence; verification: `reviews/code/PRODUCTION-JOBS-RECOVERY-001.md` содержит findings, reviewed SHA и APPROVED.
-- [ ] 5.5 Сверить Done: v22 history preserved, v23 exact restored, restore zero-transition, fake resume deterministic, DML-only, cross-version fail-closed, no real sends/downgrade; verification: OpenSpec strict valid и все пункты1–5 фактически завершены.
+- [x] 5.5 Сверить Done: v22 history preserved, v23 exact restored, restore zero-transition, fake resume deterministic, DML-only, cross-version fail-closed, no real sends/downgrade; verification: OpenSpec strict valid и все пункты1–5 фактически завершены.
+
+## Завершение — 2026-09-09
+
+Полный Actions34325719485: все8 jobs SUCCESS, literal VERIFY_OK на source
+`81c38b6901303a82d0bc7f966954e1ab0c2925c5`. PR65 штатно merged в
+`41e394986f006f3a18beea39d7b19ea97d7f01ce`; issue36 CLOSED. Независимые
+reviews и exact-image drill сохранены в delivery report и reviews/code.
+Source DB остановлен, его volumes и восстановленный target сохранены.
+Пользовательские стенды не переключались; retention/RPO/RTO остаются решениями владельца.
