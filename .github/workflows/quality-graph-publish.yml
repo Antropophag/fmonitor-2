@@ -226,6 +226,48 @@ jobs:
                   raise PreflightFailure(f"missing current artifacts: {','.join(sorted(missing))}")
 
 
+          def validate_reporting_job(base_url: str, repository: str, token: str,
+                                     run_id: int, current_attempt: int) -> None:
+              expected_total: int | None = None
+              seen_ids: set[int] = set()
+              reporting: list[dict[str, Any]] = []
+              for page in range(1, MAX_PAGES + 1):
+                  query = urlencode({"filter": "latest", "per_page": PER_PAGE, "page": page})
+                  response = api_get(base_url, repository, token,
+                                     f"/actions/runs/{run_id}/jobs?{query}")
+                  total = integer_value(response.get("total_count"), "jobs total_count")
+                  if expected_total is None:
+                      expected_total = total
+                  elif total != expected_total:
+                      raise PreflightFailure("jobs total_count changed during pagination")
+                  page_items = response.get("jobs")
+                  if not isinstance(page_items, list):
+                      raise PreflightFailure("jobs page must contain a jobs array")
+                  for raw in page_items:
+                      item = object_value(raw, "job")
+                      identity = integer_value(item.get("id"), "job id", minimum=1)
+                      if identity in seen_ids:
+                          raise PreflightFailure("jobs pagination repeated an id")
+                      seen_ids.add(identity)
+                      if item.get("name") == "quality-results":
+                          reporting.append(item)
+                  if len(seen_ids) > expected_total:
+                      raise PreflightFailure("jobs pages exceed total_count")
+                  if len(page_items) < PER_PAGE:
+                      if len(seen_ids) != expected_total:
+                          raise PreflightFailure("jobs pagination ended before total_count")
+                      break
+              else:
+                  raise PreflightFailure("jobs pagination did not terminate")
+              if len(reporting) != 1:
+                  raise PreflightFailure("expected exactly one current reporting job")
+              job = reporting[0]
+              if integer_value(job.get("run_attempt"), "reporting attempt", minimum=1) != current_attempt:
+                  raise PreflightFailure("reporting job is from another attempt")
+              if job.get("status") != "completed" or job.get("conclusion") != "success":
+                  raise PreflightFailure("current reporting job did not complete successfully")
+
+
           def main() -> int:
               try:
                   repository = required_environment("GITHUB_REPOSITORY")
@@ -237,6 +279,7 @@ jobs:
                   validate_run(api_run, repository, run_id, attempt, head_sha)
                   artifacts = artifact_pages(api_url, repository, token, run_id)
                   validate_artifacts(artifacts, attempt)
+                  validate_reporting_job(api_url, repository, token, run_id, attempt)
               except (PreflightFailure, ValueError, TypeError) as error:
                   return fail(str(error))
               print(f"QUALITY_GRAPH_PREFLIGHT_OK nodes={len(EXPECTED_NODES)}")
