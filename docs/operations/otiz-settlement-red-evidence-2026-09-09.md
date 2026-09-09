@@ -54,3 +54,10 @@ the tests or authorize implementation.
   authenticated snapshot/form/redirect flow, all three commands, current exact
   permission, CSRF, malformed inputs, exact receipt/closure values and ignored
   arbitrary paid/deadline fields.
+
+The strengthened semantic GET parity test was written after an uncommitted
+simplified GET prototype exposed the earlier oracle's weakness. Against that
+prototype it exits `255`: expected the retained heading `Выплаты на 30.09.2026`,
+actual `false`. The strengthened test also requires snapshot status, object and
+money values, navigation/export, complete discipline fields, Yii CSRF and
+operation IDs. The prototype is not claimed as test-first work or a candidate.
