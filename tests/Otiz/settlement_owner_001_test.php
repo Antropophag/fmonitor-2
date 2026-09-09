@@ -80,6 +80,7 @@ try {
     $unchanged=$db->query("SELECT paid_cents,discipline_cents,deadline_cents,basis,artifact FROM {$prefix}fm2_pilot_otiz_payment_closures WHERE id={$original}")->fetch_assoc();
     assertSameValue([70000,20000,10000,'Historical mixed closure','artifact-7'],[(int)$unchanged['paid_cents'],(int)$unchanged['discipline_cents'],(int)$unchanged['deadline_cents'],$unchanged['basis'],$unchanged['artifact']],'reversal does not rewrite original');
     $yii->close();
+    echo "PASS: OTIZ-SETTLEMENT-001 A02 settlement, replay, denial and reversal\n";
 } finally {
     if($db instanceof mysqli)$db->close();
     $admin->query("DROP DATABASE IF EXISTS `{$database}`");$admin->close();
