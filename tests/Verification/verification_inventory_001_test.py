@@ -151,6 +151,8 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Otiz/runtime_schema_001_test.php\n',
                 'php\ttests/Otiz/settlement_owner_001_test.php\n',
                 'php\ttests/Otiz/settlement_concurrency_001_test.php\n',
+                'php\ttests/InstallationProcess/otiz_settlement_schema_001_test.php\n',
+                'php\ttests/Yii2/yii2_otiz_settlement_001_test.php\n',
                 'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
                 'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
                 'php\ttests/Runtime/migration_concurrency_lock_001_test.php\n',
@@ -173,6 +175,7 @@ class Inventory(native.NativeSuites):
             ],
             'characterization': added,
             'e2e': [
+                'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',
                 'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',
                 'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php\n',
                 'php\ttests/Runtime/production_runtime_compose_001_test.php\n',

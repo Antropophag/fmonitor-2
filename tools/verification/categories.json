@@ -184,6 +184,7 @@
   "tests/InstallationProcess/order_prepare_010_test.php": "unit",
   "tests/InstallationProcess/original_upload_return_to_card_manual_test.php": "unit",
   "tests/InstallationProcess/otiz_current_progress_001_test.php": "integration",
+  "tests/InstallationProcess/otiz_settlement_schema_001_test.php": "integration",
   "tests/InstallationProcess/pdf_navigation_upload_001_test.php": "unit",
   "tests/InstallationProcess/persistence_open_001_test.php": "integration",
   "tests/InstallationProcess/persistence_prepare_001_test.php": "integration",
@@ -276,8 +277,8 @@
   "tests/Otiz/object_register_paging_001_test.php": "integration",
   "tests/Otiz/object_register_paging_http_001_test.php": "integration",
   "tests/Otiz/runtime_schema_001_test.php": "integration",
-  "tests/Otiz/settlement_owner_001_test.php": "integration",
   "tests/Otiz/settlement_concurrency_001_test.php": "integration",
+  "tests/Otiz/settlement_owner_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_http_001_test.php": "integration",
   "tests/Runtime/initial_owner_provisioning_001_test.php": "integration",
@@ -324,5 +325,7 @@
   "tests/Verification/verification_inventory_001_test.py": "governance",
   "tests/Verification/yii2_dependency_setup_001_test.py": "governance",
   "tests/Yii2/yii2_authentication_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_settlement_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "e2e",
   "tests/Yii2/yii2_session_failure_001_test.php": "integration"
 }

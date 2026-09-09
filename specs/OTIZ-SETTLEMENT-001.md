@@ -11,3 +11,27 @@ Budget legacy object равен `max(0, accepted accrued - global signed closure
 Success имеет operation fingerprint receipt; exact replay стабилен. Successful zero bulk хранит receipt `no_change` без closure/event; refusal не хранит facts. Reverse копирует exact paid/discipline/historical deadline с обратным знаком, новым basis, пустым artifact и unique link; original неизменен.
 
 Outcomes: `recorded`, `completed`, `no_change`, `reversed`; errors `FORBIDDEN`, `INVALID_COMMAND`, `NOT_FOUND`, `SNAPSHOT_NOT_ACCEPTED`, `OBJECT_BLOCKED`, `AMOUNT_UNAVAILABLE`, `OPERATION_CONFLICT`, `ALREADY_REVERSED`. Формулы/#66/allocation/UI/publication не меняются. Полный normative delta — в OpenSpec change.
+
+## Retained browser journey — task 3.1
+
+The accepted snapshot screen retains its existing heading/date/status, object
+rows, calculation details/allocations/issues, financial summary, navigation,
+export link and closure history. The three existing forms submit POST with their
+own valid Yii CSRF token and distinct canonical operation UUIDs. A guest opening
+an accepted snapshot signs in through Yii and returns to that snapshot. A
+successful browser submission returns to the same snapshot, showing the existing
+success message and the appended result. Invalid commands show the retained
+error without adding facts. A completed budget hides the complete-payment action;
+a reversal releases the appropriate amount and appears as a linked negative row.
+No new UI display of the optional artifact is required; it remains persisted.
+
+Executable browser example: one accepted object accrued100000 cents, no earlier
+closures. Submit discipline10000 with basis, complete the remaining90000, then
+reverse the discipline. Preserve the first two rows and append a third row with
+paid0/discipline-10000/deadline0 linked to the first. Exactly three receipts and
+four events record these commands; signed closed total is90000. Rendered forms,
+not synthetic POST payloads, supply operation IDs and CSRF. Runtime credentials
+have SELECT/INSERT/UPDATE/DELETE only; setup/cleanup use a disposable admin fixture.
+This supplements the existing A02/concurrency and denial matrices, not replaces
+these independently reviewed contracts. The legacy renderer is the parity oracle;
+its calculation formulas and accepted snapshot facts remain unchanged.

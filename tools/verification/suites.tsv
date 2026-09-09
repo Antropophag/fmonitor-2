@@ -271,6 +271,8 @@ db	php	tests/Otiz/snapshot_publication_http_001_test.php
 db	php	tests/Otiz/runtime_schema_001_test.php
 db	php	tests/Otiz/settlement_owner_001_test.php
 db	php	tests/Otiz/settlement_concurrency_001_test.php
+db	php	tests/InstallationProcess/otiz_settlement_schema_001_test.php
+db	php	tests/Yii2/yii2_otiz_settlement_001_test.php
 unit	php	tests/Runtime/production_runtime_contract_001_test.php
 db	php	tests/Runtime/migration_concurrency_lock_001_test.php
 db	php	tests/Runtime/production_schema_frontier_001_test.php
@@ -325,3 +327,4 @@ db	php	tests/Yii2/yii2_authentication_001_test.php
 db	php	tests/Yii2/yii2_session_failure_001_test.php
 unit	python3	tests/Usage/usage_aggregation_001_test.py
 unit	python3	tests/Verification/change_verification_001_test.py
+e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php
