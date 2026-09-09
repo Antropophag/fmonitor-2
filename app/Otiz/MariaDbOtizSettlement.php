@@ -64,12 +64,12 @@ final class MariaDbOtizSettlement
         if($this->db->getTransaction()!==null)throw new \LogicException('Settlement owns the outer transaction');
         $hash=hash('sha256',json_encode($fingerprint,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
         $this->db->createCommand('SET TRANSACTION ISOLATION LEVEL READ COMMITTED')->execute();$transaction=$this->db->beginTransaction();
-        try{
-            $this->authorize($actor);$saved=$this->receipt($actor,$operationId);if($saved!==false){if(!hash_equals((string)$saved['request_sha256'],$hash))$this->fail('OPERATION_CONFLICT');$transaction->commit();return json_decode((string)$saved['result_json'],true,flags:JSON_THROW_ON_ERROR);}
+        $admitted=false;try{
+            $this->authorize($actor);$admitted=true;$saved=$this->receipt($actor,$operationId);if($saved!==false){if(!hash_equals((string)$saved['request_sha256'],$hash))$this->fail('OPERATION_CONFLICT');$transaction->commit();return json_decode((string)$saved['result_json'],true,flags:JSON_THROW_ON_ERROR);}
             $result=$work();$json=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);$status=(string)$result['status'];$now=($this->clock)();
             $this->db->createCommand("INSERT INTO `{$this->prefix}fm2_otiz_settlement_operations`(actor_user_id,operation_id,request_sha256,status,result_json,created_at)VALUES(:a,:o,:h,:s,:r,:t)",[':a'=>$actor,':o'=>$operationId,':h'=>$hash,':s'=>$status,':r'=>$json,':t'=>$now])->execute();$transaction->commit();return$result;
         }catch(IntegrityException$e){$transaction->rollBack();if((int)($e->errorInfo[1]??0)!==1062||!str_contains($e->getMessage(),'fm2_otiz_settlement_operations'))throw$e;$saved=$this->receipt($actor,$operationId);if($saved!==false&&hash_equals((string)$saved['request_sha256'],$hash))return json_decode((string)$saved['result_json'],true,flags:JSON_THROW_ON_ERROR);$this->fail('OPERATION_CONFLICT');}
-        catch(DomainException$e){if($transaction->isActive)$transaction->rollBack();$saved=$this->receipt($actor,$operationId);if($saved!==false){if(!hash_equals((string)$saved['request_sha256'],$hash))$this->fail('OPERATION_CONFLICT');return json_decode((string)$saved['result_json'],true,flags:JSON_THROW_ON_ERROR);}throw$e;}
+        catch(DomainException$e){if($transaction->isActive)$transaction->rollBack();if($admitted){$saved=$this->receipt($actor,$operationId);if($saved!==false){if(!hash_equals((string)$saved['request_sha256'],$hash))$this->fail('OPERATION_CONFLICT');return json_decode((string)$saved['result_json'],true,flags:JSON_THROW_ON_ERROR);}}throw$e;}
         catch(\Throwable$e){if($transaction->isActive)$transaction->rollBack();throw$e;}
     }
 
