@@ -75,7 +75,7 @@ try {
         $db = new mysqli($host, $user, $password, $database, $port);
         $prefix = 'ready_';
         $migrated = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-        assertSameValue([0, true, 22], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches v22");
+        assertSameValue([0, true, 23], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches v23");
         $db->query('CREATE TABLE readiness_ambient(id INT NOT NULL PRIMARY KEY, marker VARCHAR(40) NOT NULL) ENGINE=InnoDB');
         $db->query("INSERT INTO readiness_ambient VALUES(1,'preserve readiness')");
         $storage = $temporaryRoot . '/fmonitor-readiness-' . $token;

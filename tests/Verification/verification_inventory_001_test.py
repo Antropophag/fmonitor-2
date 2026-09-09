@@ -20,7 +20,8 @@ class Inventory(native.NativeSuites):
                      'tests/Otiz/unregistered_test.php',
                      'tests/AssignmentOrderComposition/unregistered_test.php',
                      'tests/Verification/unregistered_test.mjs',
-                     'tests/Runtime/unregistered_test.php']:
+                     'tests/Runtime/unregistered_test.php',
+                     'tests/Jobs/unregistered_test.php']:
             with self.subTest(path=name):
                 path = self.root / name
                 path.write_text('unregistered fixture')
@@ -111,6 +112,28 @@ class Inventory(native.NativeSuites):
                 'python3\ttests/Verification/architecture_guard_001_test.py\n',
             ],
             'db': [
+                'php\ttests/Jobs/durable_queue_001_test.php\n',
+                'php\ttests/Jobs/durable_queue_concurrency_001_test.php\n',
+                'php\ttests/Jobs/jobs_extensions_schema_001_test.php\n',
+                'php\ttests/Jobs/jobs_runtime_cli_001_test.php\n',
+                'php\ttests/Jobs/jobs_runtime_contract_001_test.php\n',
+                'php\ttests/Jobs/jobs_runtime_handler_validation_001_test.php\n',
+                'php\ttests/Jobs/jobs_runtime_workforce_cli_001_test.php\n',
+                'php\ttests/Jobs/jobs_schema_001_test.php\n',
+                'php\ttests/Jobs/jobs_schema_check_literals_001_test.php\n',
+                'php\ttests/Jobs/legacy_workforce_once_delegation_001_test.php\n',
+                'php\ttests/Jobs/operator_health_001_test.php\n',
+                'php\ttests/Jobs/outbox_delivery_lifecycle_001_test.php\n',
+                'php\ttests/Jobs/transactional_outbox_001_test.php\n',
+                'php\ttests/Jobs/worker_grace_expiry_001_test.php\n',
+                'php\ttests/Jobs/worker_lease_loss_process_001_test.php\n',
+                'php\ttests/Jobs/worker_protocol_001_test.php\n',
+                'php\ttests/Jobs/worker_signal_runtime_001_test.php\n',
+                'php\ttests/Jobs/worker_stale_settlement_001_test.php\n',
+                'php\ttests/Jobs/workforce_job_handler_001_test.php\n',
+                'php\ttests/Jobs/workforce_job_idempotency_001_test.php\n',
+                'php\ttests/Jobs/workforce_scheduler_001_test.php\n',
+                'php\ttests/Jobs/workforce_scheduler_concurrency_001_test.php\n',
                 'php\ttests/Otiz/snapshot_publication_001_test.php\n',
                 'php\ttests/Otiz/snapshot_publication_http_001_test.php\n',
                 'php\ttests/Otiz/runtime_schema_001_test.php\n',

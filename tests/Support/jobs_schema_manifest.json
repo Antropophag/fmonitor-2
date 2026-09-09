@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 23,
+  "tables": {
+    "fm2_jobs": {
+      "columns": [
+        {
+          "name": "job_id",
+          "type": "bigint unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "job_type",
+          "type": "varchar(80)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "payload_version",
+          "type": "smallint unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "payload_json",
+          "type": "longtext",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_bin"
+        },
+        {
+          "name": "idempotency_key",
+          "type": "char(36)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "fingerprint",
+          "type": "char(64)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "actor_json",
+          "type": "longtext",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_bin"
+        },
+        {
+          "name": "available_at_utc",
+          "type": "char(27)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)",
+          "nullable": false,
+          "default": "'ready'",
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "attempt",
+          "type": "tinyint unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "worker_id",
+          "type": "varchar(80)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "lease_token",
+          "type": "char(64)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "leased_at_utc",
+          "type": "char(27)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "lease_expires_at_utc",
+          "type": "char(27)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "heartbeat_at_utc",
+          "type": "char(27)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "created_at_utc",
+          "type": "char(27)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "completed_at_utc",
+          "type": "char(27)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "failure_code",
+          "type": "varchar(80)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "result_json",
+          "type": "longtext",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_bin"
+        },
+        {
+          "name": "retry_of_job_id",
+          "type": "bigint unsigned",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": null,
+          "collation": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "columns": [
+            "job_id"
+          ],
+          "unique": true,
+          "type": "BTREE"
+        },
+        {
+          "name": "@prefixjobs_uq_identity",
+          "columns": [
+            "job_type",
+            "idempotency_key"
+          ],
+          "unique": true,
+          "type": "BTREE"
+        },
+        {
+          "name": "@prefixjobs_ix_ready",
+          "columns": [
+            "status",
+            "available_at_utc",
+            "job_id"
+          ],
+          "unique": false,
+          "type": "BTREE"
+        },
+        {
+          "name": "@prefixjobs_ix_expiry",
+          "columns": [
+            "status",
+            "lease_expires_at_utc",
+            "job_id"
+          ],
+          "unique": false,
+          "type": "BTREE"
+        },
+        {
+          "name": "@prefixjobs_ix_retry",
+          "columns": [
+            "retry_of_job_id"
+          ],
+          "unique": false,
+          "type": "BTREE"
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "@prefixjobs_fk_retry",
+          "columns": [
+            "retry_of_job_id"
+          ],
+          "target": "fm2_jobs",
+          "referenced": [
+            "job_id"
+          ],
+          "update": "RESTRICT",
+          "delete": "RESTRICT"
+        }
+      ],
+      "checks": [
+        "status IN ('ready','leased','completed','dead')",
+        "attempt BETWEEN 0 AND 5",
+        "payload_version BETWEEN 1 AND 65535",
+        "JSON_VALID(payload_json)",
+        "JSON_VALID(actor_json)",
+        "result_json IS NULL OR JSON_VALID(result_json)"
+      ],
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci"
+    },
+    "fm2_job_events": {
+      "columns": [
+        {
+          "name": "event_id",
+          "type": "bigint unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "job_id",
+          "type": "bigint unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "event_type",
+          "type": "varchar(24)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "attempt",
+          "type": "tinyint unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": null,
+          "collation": null
+        },
+        {
+          "name": "occurred_at_utc",
+          "type": "char(27)",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "worker_id",
+          "type": "varchar(80)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "lease_token",
+          "type": "char(64)",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "charset": "ascii",
+          "collation": "ascii_bin"
+        },
+        {
+          "name": "details_json",
+          "type": "longtext",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_bin"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "columns": [
+            "event_id"
+          ],
+          "unique": true,
+          "type": "BTREE"
+        },
+        {
+          "name": "@prefixjob_events_ix_job",
+          "columns": [
+            "job_id",
+            "event_id"
+          ],
+          "unique": false,
+          "type": "BTREE"
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "@prefixjob_events_fk_job",
+          "columns": [
+            "job_id"
+          ],
+          "target": "fm2_jobs",
+          "referenced": [
+            "job_id"
+          ],
+          "update": "RESTRICT",
+          "delete": "RESTRICT"
+        }
+      ],
+      "checks": [
+        "attempt BETWEEN 0 AND 5",
+        "JSON_VALID(details_json)"
+      ],
+      "engine": "InnoDB",
+      "collation": "utf8mb4_unicode_ci"
+    }
+  }
+}

@@ -21,7 +21,7 @@ class VerificationCI(unittest.TestCase):
         shutil.copy(ROOT / 'tools/verification/run.sh', tool)
         if (ROOT / 'tools/verification/ci.py').exists():
             shutil.copy(ROOT / 'tools/verification/ci.py', tool)
-        for directory in ['InstallationProcess', 'AssignmentOrderComposition', 'Verification', 'Otiz', 'Runtime']:
+        for directory in ['InstallationProcess', 'AssignmentOrderComposition', 'Verification', 'Otiz', 'Runtime', 'Jobs']:
             (self.root / 'tests' / directory).mkdir(parents=True)
         self.paths = [f'tests/InstallationProcess/{name}_test.php' for name in ['a', 'b', 'c', 'd', 'e']]
         for path in self.paths:
