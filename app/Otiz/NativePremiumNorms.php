@@ -28,19 +28,44 @@ final class NativePremiumNorms
         10=>[936,1001,1235,1703,1833,1898],
     ];
 
+    private const PASSENGER_BANDS = [[240,500],[525,800],[900,1200],[1275,1600]];
+    private const CARGO_CAPACITIES = [500,1000,1500,2500,3500,5000];
+    private const SHAFT = [
+        'железобетон'=>10000,'железобетон и металл'=>10000,
+        'кирпич'=>11500,'кирпич и металл'=>11500,
+        'металлокаркас и стекло'=>12500,'металлокаркас + стекло'=>12500,
+    ];
+
+    /** Read-side catalogue, derived from the same normative cells as premiumCents(). */
+    public function premiumBands(): array
+    {
+        $rows=[];
+        foreach (self::PASSENGER as $floors=>$amounts) foreach ($amounts as $index=>$amount) {
+            [$from,$to]=self::PASSENGER_BANDS[$index];
+            $rows[]=['type'=>'passenger','floors'=>$floors,'from'=>$from,'to'=>$to,'premiumCents'=>$amount*100000];
+        }
+        foreach (self::CARGO as $floors=>$amounts) foreach ($amounts as $index=>$amount) {
+            $capacity=self::CARGO_CAPACITIES[$index];
+            $rows[]=['type'=>'cargo','floors'=>$floors,'from'=>$capacity,'to'=>$capacity,'premiumCents'=>$amount*100000];
+        }
+        return $rows;
+    }
+
+    public function shaftRules(): array { return self::SHAFT; }
+
     public function premiumCents(?string $type, int $floors, int $capacity): ?int
     {
         if ($type === null && $capacity >= 240 && $capacity <= 1600) $type = 'passenger';
         if ($type === 'passenger') {
             if (!isset(self::PASSENGER[$floors])) return null;
-            foreach ([[240,500],[525,800],[900,1200],[1275,1600]] as $index => [$from,$to]) {
+            foreach (self::PASSENGER_BANDS as $index => [$from,$to]) {
                 if ($capacity >= $from && $capacity <= $to) return self::PASSENGER[$floors][$index] * 100000;
             }
             return null;
         }
         if ($type === 'cargo') {
             if (!isset(self::CARGO[$floors])) return null;
-            $index = array_search($capacity, [500,1000,1500,2500,3500,5000], true);
+            $index = array_search($capacity, self::CARGO_CAPACITIES, true);
             return $index === false ? null : self::CARGO[$floors][$index] * 100000;
         }
         return null;
@@ -51,10 +76,6 @@ final class NativePremiumNorms
         $value = mb_strtolower(trim($material), 'UTF-8');
         $value = preg_replace('/\s*\+\s*/u', ' + ', $value) ?? $value;
         $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
-        return [
-            'железобетон'=>10000,'железобетон и металл'=>10000,
-            'кирпич'=>11500,'кирпич и металл'=>11500,
-            'металлокаркас и стекло'=>12500,'металлокаркас + стекло'=>12500,
-        ][$value] ?? null;
+        return self::SHAFT[$value] ?? null;
     }
 }

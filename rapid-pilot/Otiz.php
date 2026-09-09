@@ -240,70 +240,42 @@ final class RapidPilotOtiz
     private function objects(): never
     {
         $legacyPrefix=(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:$this->prefix);
-        if(preg_match('/^[A-Za-z0-9_]+$/D',$legacyPrefix)!==1)throw new RuntimeException('Invalid legacy table prefix');
-        $rows = $this->db->query("SELECT l.id object_id,l.regnumber,l.ordadr_address address,d.payload_json,d.captured_at,
-            so.snapshot_id,so.report_date,so.current_progress_bp,so.progress_fact_date,so.accrued_cents,so.pool_cents,so.kss_bp,so.calculation_state,so.inputs_json,
-            COALESCE(c.paid_cents,0) paid_cents,
-            COALESCE(c.discipline_cents,0) discipline_cents,
-            COALESCE(c.deadline_cents,0) deadline_cents,
-            COALESCE(sc.closed_cents,0) snapshot_closed_cents
-            FROM `{$legacyPrefix}fm_maintable` l
-            LEFT JOIN `{$this->prefix}fm2_pilot_object_details` d ON d.object_id=l.id
-            LEFT JOIN (
-                SELECT candidate.*,snapshot.report_date
-                FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` candidate
-                JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` snapshot ON snapshot.id=candidate.snapshot_id
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` newer
-                    JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` ns ON ns.id=newer.snapshot_id
-                    WHERE newer.object_id=candidate.object_id AND (ns.report_date>snapshot.report_date OR (ns.report_date=snapshot.report_date AND ns.id>snapshot.id))
-                )
-            ) so ON so.object_id=l.id
-            LEFT JOIN (
-                SELECT object_id,SUM(paid_cents) paid_cents,SUM(discipline_cents) discipline_cents,SUM(deadline_cents) deadline_cents
-                FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` GROUP BY object_id
-            ) c ON c.object_id=l.id
-            LEFT JOIN (
-                SELECT snapshot_id,object_id,SUM(paid_cents+discipline_cents+deadline_cents) closed_cents
-                FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` GROUP BY snapshot_id,object_id
-            ) sc ON sc.object_id=l.id AND sc.snapshot_id=so.snapshot_id
-            ORDER BY so.snapshot_id IS NULL,FIELD(so.calculation_state,'blocked','ready','no_new_amount','completed'),l.regnumber,l.id")->fetch_all(MYSQLI_ASSOC);
-
-        $currentProgress=(new \FMonitor2\PilotHttp\MariaDbOtizCurrentProgress($this->db,$this->prefix))->read(array_map('intval',array_column($rows,'object_id')));$norms=new NativePremiumNorms();$fund = $earned = $paid = $penalties = $balance = $blocked = $calculated = 0;
-        foreach ($rows as &$row) {
-            $live=$currentProgress[(int)$row['object_id']]??null;$row['display_progress_bp']=$live['progressBp']??$row['current_progress_bp'];$row['display_progress_date']=$live['factDate']??$row['progress_fact_date'];$payload=is_string($row['payload_json'])?json_decode($row['payload_json'],true):null;$fields=is_array($payload)?($payload['fields']??[]):[];
-            $floors=filter_var($fields['floors']['raw']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$capacity=filter_var($fields['weight']['raw']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
-            $material=trim((string)($fields['pitmaterial']['display']??''));$typeText=mb_strtolower((string)($fields['lift_type']['display']??''),'UTF-8');$type=str_contains($typeText,'груз')?'cargo':(str_contains($typeText,'пассаж')?'passenger':null);
-            $premium=$floors===false||$capacity===false?null:$norms->premiumCents($type,(int)$floors,(int)$capacity);$shaft=$norms->shaftBasisPoints($material);
-            $row['premium_cents']=$premium;$row['shaft_bp']=$shaft;$row['fund_cents']=$premium!==null&&$shaft!==null?intdiv($premium*$shaft,10000):null;
-            if($row['fund_cents']!==null){$fund+=(int)$row['fund_cents'];$calculated++;}
-            $earned += (int) ($row['accrued_cents']??0);
-            $paid += (int) $row['paid_cents'];
-            $row['deadline_penalty_cents']=$this->deadlinePenalty($row);
-            $penalties += (int) $row['discipline_cents'] + (int)$row['deadline_penalty_cents'];
-            $balance += max(0, (int)($row['fund_cents']??0) - (int) $row['paid_cents'] - (int) $row['discipline_cents'] - (int) $row['deadline_cents']);
-            if ($row['calculation_state'] === 'blocked') $blocked++;
-        }unset($row);
+        try {
+            $result=(new \FMonitor2\Otiz\ObjectRegister($this->db,$this->prefix,$legacyPrefix))->read($this->userId,$_GET);
+        } catch (DomainException $error) {
+            match($error->getMessage()) {
+                'REGISTER_QUERY_INVALID'=>$this->fail(400,'Проверьте поиск, состояние и параметры страницы.'),
+                'REGISTER_PAGE_NOT_FOUND'=>$this->fail(404,'Страница не найдена. Измените номер страницы или фильтры.'),
+                'REGISTER_FORBIDDEN'=>$this->fail(403,'Недостаточно прав для просмотра ОТиЗ.'),
+                default=>throw $error,
+            };
+        }
+        $rows=$result['rows'];$query=$result['query'];$summary=$result['summary'];
+        $fund=$summary['fund'];$earned=$summary['earned'];$paid=$summary['paid'];
+        $penalties=$summary['penalties'];$balance=$summary['balance'];$blocked=$summary['blocked'];$calculated=$summary['calculated'];
 
         $body = '<header class="fm2-page-header fm2-otiz-register-head"><div><h1>Экономика объектов</h1><p>Фонд премии, начисления, выплаты и удержания по каждому объекту.</p></div><p class="fm2-otiz-asof">План — по карточкам объектов · начисления — по последнему расчёту</p></header>';
         $body .= $this->primaryTabs('objects');
-        $body .= '<section class="fm2-otiz-register-summary" aria-label="Финансовая сводка"><div><span>Фонд премии</span><strong>'.$this->rub($fund).'</strong><small>'.$calculated.' из '.count($rows).' объектов рассчитаны</small></div><div><span>Заработано объёмом</span><strong>'.$this->rub($earned).'</strong><small>По подтверждённому прогрессу</small></div><div><span>Выплачено монтажникам</span><strong>'.$this->rub($paid).'</strong><small>'.($fund > 0 ? number_format($paid * 100 / $fund, 1, ',', ' ').'% фонда' : 'Нет фонда').'</small></div><div><span>Удержано</span><strong>'.$this->rub($penalties).'</strong><small>Дисциплина и сроки</small></div><div class="fm2-otiz-register-summary__balance"><span>Остаток фонда</span><strong>'.$this->rub($balance).'</strong><small>'.$blocked.' начатых объектов требуют данных</small></div></section>';
+        $body .= '<section class="fm2-otiz-register-summary" aria-label="Финансовая сводка"><div><span>Фонд премии</span><strong>'.$this->rub($fund).'</strong><small>'.$calculated.' из '.$summary['total'].' объектов рассчитаны</small></div><div><span>Заработано объёмом</span><strong>'.$this->rub($earned).'</strong><small>По подтверждённому прогрессу</small></div><div><span>Выплачено монтажникам</span><strong>'.$this->rub($paid).'</strong><small>'.($fund > 0 ? number_format($paid * 100 / $fund, 1, ',', ' ').'% фонда' : 'Нет фонда').'</small></div><div><span>Удержано</span><strong>'.$this->rub($penalties).'</strong><small>Дисциплина и сроки</small></div><div class="fm2-otiz-register-summary__balance"><span>Остаток фонда</span><strong>'.$this->rub($balance).'</strong><small>'.$blocked.' начатых объектов требуют данных</small></div></section>';
 
-        $body .= '<section class="fm2-list-surface fm2-otiz-register"><div class="fm2-otiz-register-toolbar"><label class="shlz-field"><span class="shlz-field__label">Найти объект</span><span class="shlz-field__control"><input class="shlz-input" type="search" data-otiz-search placeholder="Регномер или адрес"></span></label><label class="shlz-field"><span class="shlz-field__label">Состояние</span><span class="shlz-field__control"><select class="shlz-select" data-otiz-state><option value="">Все состояния</option><option value="planned">Расчёт не подготовлен</option><option value="ready">Готов к расчёту</option><option value="blocked">Требует данных</option><option value="no_new_amount">Без новой суммы</option><option value="completed">Выплата выполнена</option><option value="missing_norm">Нет норматива</option></select></span></label><span class="fm2-result-count" data-otiz-count>'.count($rows).' объектов</span></div><div class="shlz-table-wrap"><table class="shlz-table fm2-otiz-register-table"><caption class="shlz-visually-hidden">Экономика объектов ОТиЗ</caption><thead class="shlz-table__head"><tr><th class="shlz-table__cell" scope="col">Объект</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Прогресс</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Фонд премии</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Кшах</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Заработано</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Выплачено</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Удержано</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Остаток фонда</th><th class="shlz-table__cell" scope="col">Состояние</th></tr></thead><tbody>';
-        $nativeStateSelect='<label class="shlz-field"><span class="shlz-field__label">Состояние</span><span class="shlz-field__control"><select class="shlz-select" data-otiz-state><option value="">Все состояния</option><option value="planned">Расчёт не подготовлен</option><option value="ready">Готов к расчёту</option><option value="blocked">Требует данных</option><option value="no_new_amount">Без новой суммы</option><option value="completed">Выплата выполнена</option><option value="missing_norm">Нет норматива</option></select></span></label>';
-        $body=str_replace($nativeStateSelect,$this->stateFilterSelect(),$body);
+        $body .= '<section class="fm2-list-surface fm2-otiz-register"><form method="get" action="/pilot/otiz" class="fm2-otiz-register-toolbar"><label class="shlz-field"><span class="shlz-field__label">Найти объект</span><span class="shlz-field__control"><input class="shlz-input" type="search" name="q" value="'.$this->e($query['q']).'" maxlength="120" data-otiz-search placeholder="Регномер или адрес"></span></label>';
+        $body .= $this->registerSelect('state','Состояние',[''=>'Все состояния','planned'=>'Расчёт не подготовлен','ready'=>'Готов к расчёту','blocked'=>'Требует данных','no_new_amount'=>'Без новой суммы','completed'=>'Выплата выполнена','missing_norm'=>'Нет норматива'],$query['state']);
+        $body .= $this->registerSelect('sort','Порядок',['default'=>'По состоянию расчёта','regnumber_asc'=>'Регномер: по возрастанию','regnumber_desc'=>'Регномер: по убыванию'],$query['sort']);
+        $body .= $this->registerSelect('pageSize','На странице',[25=>'25 объектов',50=>'50 объектов',100=>'100 объектов'],(string)$query['pageSize']);
+        $body .= '<button class="shlz-button" type="submit">Показать</button><span class="fm2-result-count" data-otiz-count>'.$result['total'].' объектов</span></form><div class="shlz-table-wrap"><table class="shlz-table fm2-otiz-register-table"><caption class="shlz-visually-hidden">Экономика объектов ОТиЗ</caption><thead class="shlz-table__head"><tr><th class="shlz-table__cell" scope="col">Объект</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Прогресс</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Фонд премии</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Кшах</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Заработано</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Выплачено</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Удержано</th><th class="shlz-table__cell shlz-table__cell--numeric" scope="col">Остаток фонда</th><th class="shlz-table__cell" scope="col">Состояние</th></tr></thead><tbody>';
         foreach ($rows as $row) {
-            $state = $row['fund_cents']===null?'missing_norm':($row['snapshot_id']===null?'planned':(string)$row['calculation_state']);
-            if ($state === 'ready' && (int)$row['pool_cents'] > 0 && (int)$row['snapshot_closed_cents'] >= (int)$row['pool_cents']) $state = 'completed';
+            $state = $row['state'];
             $status = $state === 'missing_norm'?['shlz-status--orange','Нет норматива']:($state === 'planned'?['shlz-status--neutral','Расчёт не подготовлен']:($state === 'blocked' ? ['shlz-status--orange','Требует данных'] : ($state === 'completed' ? ['shlz-status--green','Выплата выполнена'] : ($state === 'no_new_amount' ? ['shlz-status--neutral','Без новой суммы'] : ['shlz-status--blue','Готов к расчёту']))));
             $rowPaid=(int)$row['paid_cents'];$rowPenalty=(int)$row['discipline_cents']+(int)($row['deadline_penalty_cents']??0);$rowBalance=max(0,(int)$row['fund_cents']-$rowPaid-$rowPenalty);
             $settled=(int)$row['fund_cents']>0?min(100,($rowPaid+$rowPenalty)*100/(int)$row['fund_cents']):0;
             $snapshotDate=$row['report_date']!==null?'Расчёт от '.$this->date($row['report_date']):'Расчёт ещё не подготовлен';$progressDate=$row['display_progress_date']!==null?'На '.$this->date($row['display_progress_date']):'Прогресс не подтверждён';
             $money=fn(?int$value):string=>$value===null?'<span class="shlz-table__empty">—</span>':'<strong>'.$this->rub($value).'</strong>';
             $penaltyBreakdown='<small class="fm2-penalty-breakdown"><span>Дисциплина: '.$this->rub((int)$row['discipline_cents']).'</span><span>Сроки: '.$this->rub((int)($row['deadline_penalty_cents']??0)).'</span></small>';
-            $body .= '<tr class="shlz-table__row" data-otiz-row data-state="'.$this->e($state).'" data-search="'.$this->e(mb_strtolower($row['regnumber'].' '.$row['address'])).'"><td class="shlz-table__cell"><a class="shlz-link" href="/pilot/objects/'.(int)$row['object_id'].'"><strong>'.$this->e($row['regnumber']?:'Объект №'.$row['object_id']).'</strong></a><small>'.$this->e($row['address']?:'Адрес не указан').'</small><small>'.$snapshotDate.'</small></td><td class="shlz-table__cell shlz-table__cell--numeric"><strong>'.$this->percent((int)($row['display_progress_bp']??0)).'</strong><small>'.$progressDate.'</small></td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['fund_cents']).($row['premium_cents']!==null?'<small>База '.$this->rub((int)$row['premium_cents']).'</small>':'<small>Не найдена норма</small>').'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.($row['shaft_bp']!==null?'<strong>'.number_format((int)$row['shaft_bp']/10000,2,',',' ').'</strong>':'<span class="shlz-table__empty">—</span>').'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['snapshot_id']!==null?(int)$row['accrued_cents']:null).($row['snapshot_id']!==null?'<small>Коэффициент сроков '.number_format((int)$row['kss_bp']/10000,2,',',' ').'</small>':'').'</td><td class="shlz-table__cell shlz-table__cell--numeric fm2-money-positive"><strong>'.$this->rub($rowPaid).'</strong></td><td class="shlz-table__cell shlz-table__cell--numeric fm2-money-negative"><strong>'.$this->rub($rowPenalty).'</strong>'.$penaltyBreakdown.'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['fund_cents']!==null?$rowBalance:null).($row['fund_cents']!==null?'<span class="fm2-fund-track" aria-label="Использовано '.number_format($settled,0,',',' ').'% фонда"><i style="width:'.number_format($settled,2,'.','').'%"></i></span>':'').'</td><td class="shlz-table__cell"><span class="shlz-status '.$status[0].'">'.$status[1].'</span></td></tr>';
+            $body .= '<tr class="shlz-table__row" data-otiz-row data-state="'.$this->e($state).'" data-search="'.$this->e(mb_strtolower($row['regnumber'].' '.$row['address'])).'"><td class="shlz-table__cell"><a class="shlz-link" href="/pilot/objects/'.(int)$row['object_id'].'"><strong>'.$this->e($row['regnumber']?:'Объект №'.$row['object_id']).'</strong></a><small>'.$this->e($row['address']?:'Адрес не указан').'</small><small>'.$snapshotDate.'</small></td><td class="shlz-table__cell shlz-table__cell--numeric"><strong>'.$this->percent((int)($row['display_progress_bp']??0)).'</strong><small>'.$progressDate.'</small></td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['fund_cents']).($row['premium_cents']!==null?'<small>База '.$this->rub((int)$row['premium_cents']).'</small>':'<small>Не найдена норма</small>').'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.($row['shaft_bp']!==null?'<strong>'.number_format((int)$row['shaft_bp']/10000,2,',',' ').'</strong>':'<span class="shlz-table__empty">—</span>').'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['snapshot_id']!==null?(int)$row['accrued_cents']:null).($row['snapshot_id']!==null?'<small>Коэффициент сроков '.number_format((int)$row['kss_bp']/10000,2,',',' ').'</small>':'').'</td><td class="shlz-table__cell shlz-table__cell--numeric fm2-money-positive"><strong>'.$this->rub($rowPaid).'</strong></td><td class="shlz-table__cell shlz-table__cell--numeric fm2-money-negative"><strong>'.$this->rub($rowPenalty).'</strong>'.$penaltyBreakdown.'</td><td class="shlz-table__cell shlz-table__cell--numeric">'.$money($row['fund_cents']!==null?$rowBalance:null).($row['fund_cents']!==null?'<svg class="fm2-fund-track" role="img" aria-label="Использовано '.number_format($settled,0,',',' ').'% фонда" viewBox="0 0 100 4" preserveAspectRatio="none"><rect class="fm2-fund-track-fill" width="'.number_format($settled,2,'.','').'" height="4"/></svg>':'').'</td><td class="shlz-table__cell"><span class="shlz-status '.$status[0].'">'.$status[1].'</span></td></tr>';
         }
-        $body .= '</tbody></table><div class="fm2-otiz-register-empty" data-otiz-empty hidden><h2>Объекты не найдены</h2><p>Измените запрос или статус — данные расчётов не меняются.</p></div></div></section>';
+        $body .= '</tbody></table><div class="fm2-otiz-register-empty" data-otiz-empty'.($rows!==[]?' hidden':'').'><h2>Объекты не найдены</h2><p>Измените запрос или статус — данные расчётов не меняются.</p></div></div></section>';
+        $pagerQuery=['q'=>$query['q'],'state'=>$query['state'],'sort'=>$query['sort'],'pageSize'=>$query['pageSize']];
+        $body .= $this->pager('/pilot/otiz',$result['page'],$result['pages'],$result['total'],$result['pageSize'],$pagerQuery,'Страницы объектов ОТиЗ');
         $this->page('Экономика объектов', $body);
     }
 
@@ -321,11 +293,11 @@ final class RapidPilotOtiz
         return $html.'</div></nav>';
     }
 
-    private function stateFilterSelect(): string
+    private function registerSelect(string $name,string $label,array $options,string $selected): string
     {
-        $options=[''=>'Все состояния','planned'=>'Расчёт не подготовлен','ready'=>'Готов к расчёту','blocked'=>'Требует данных','no_new_amount'=>'Без новой суммы','completed'=>'Выплата выполнена','missing_norm'=>'Нет норматива'];$buttons='';
-        foreach($options as$value=>$label)$buttons.='<button class="shlz-select__option" type="button" role="option" aria-selected="'.($value===''?'true':'false').'" data-value="'.$this->e($value).'">'.$this->e($label).'</button>';
-        return'<div class="shlz-field shlz-field--select shlz-select-root" data-shlz-select><span class="shlz-field__label" id="otiz-state-label">Состояние</span><button class="shlz-field__control shlz-select__trigger shlz-select__trigger--selected" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="otiz-state-options" aria-labelledby="otiz-state-label otiz-state-value"><span id="otiz-state-value" data-shlz-select-value>Все состояния</span><svg class="shlz-select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button><div class="shlz-select__listbox" id="otiz-state-options" role="listbox" aria-labelledby="otiz-state-label" hidden>'.$buttons.'</div><input type="hidden" name="state" value="" data-otiz-state></div>';
+        $id='otiz-'.$name;$buttons='';
+        foreach($options as $value=>$text)$buttons.='<button class="shlz-select__option" type="button" role="option" aria-selected="'.((string)$value===$selected?'true':'false').'" data-value="'.$this->e((string)$value).'">'.$this->e($text).'</button>';
+        return '<div class="shlz-field shlz-field--select shlz-select-root" data-shlz-select><span class="shlz-field__label" id="'.$id.'-label">'.$label.'</span><button class="shlz-field__control shlz-select__trigger shlz-select__trigger--selected" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="'.$id.'-options" aria-labelledby="'.$id.'-label '.$id.'-value"><span id="'.$id.'-value" data-shlz-select-value>'.$this->e($options[$selected]).'</span><svg class="shlz-select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button><div class="shlz-select__listbox" id="'.$id.'-options" role="listbox" aria-labelledby="'.$id.'-label" hidden>'.$buttons.'</div><input type="hidden" name="'.$name.'" value="'.$this->e($selected).'" data-otiz-'.$name.'></div>';
     }
 
     private function reconciliation(): never
