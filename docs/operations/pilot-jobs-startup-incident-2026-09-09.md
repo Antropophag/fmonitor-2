@@ -64,3 +64,33 @@ assertions remain. Both affected governance files pass15/15 locally; `/root`
 independently approved the three literal-row changes authored by the reviewer.
 The complete first-run failures were inspected before pushing this correction.
 Production code, new deployment regressions and their reviewed hashes are unchanged.
+
+## Same-source E2E failures retained
+
+Run34330765302 onbb6874e5 passed fast, governance, unit and both integration
+shards. Attempt1 failed only `production_runtime_browser_001_test.php` after its
+flow reached100%, because its collector recorded one unattributed `net::ERR_ABORTED`.
+The collector omits URL/resource/page context, so a navigation/close cancellation
+is a hypothesis rather than an established cause. The unchanged failed-job rerun
+passed that browser test. No browser error assertion was suppressed.
+
+Attempt2 instead failed only `pilot_e2e_flow_001_test.php` through
+`local_rbac_objects_route_admission_001_test.php`: the numeric identity-redaction
+oracle returned1. Its raw authorization log was not included in the failure output.
+Inspection demonstrated a deterministic oracle defect: the legitimate12-hex opaque
+correlation `abc701defabc` matches its forbidden role701 expression. Production
+generates correlations with `bin2hex(random_bytes(6))`; the contract explicitly
+allows12-hex opaque correlations. The correction must distinguish the exact
+validated correlation field while retaining detection of actual IDs elsewhere.
+
+The root Compose/HTTPS/restart regression passed all three CI executions. Both
+failed-attempt inventories and their aggregate refusals were inspected; they are
+not reported as clean full CI. Primary failed logs remain outside the repository,
+with immutable attempts available in PR67's Actions history.
+
+The numeric-oracle correction is test-only and independently approved in
+`reviews/tests/LOCAL-RBAC-AUTH-CONTRACT-001.md`. Its new deterministic assertions
+accept the strictly validated opaque field and retain detection of all three
+fixture IDs, including the same correlation text on an untrusted additional line.
+The real GET/DB admission test passes independently. Browser assertions remain
+unchanged; the earlier unattributed aborted-request failure remains recorded.
