@@ -8,23 +8,23 @@
 
 ## 2. V23 backup и restore без transition
 
-- [ ] 2.1 Добавить отдельный `RuntimeRecoverySchemaV23` с literal 69 tables, 39 AUTO families и `deferred=[]`, не изменяя V22; verification: independent manifests совпадают, а v22 hashes/contract остаются exact.
-- [ ] 2.2 Подключить fail-closed выбор exact current source-image recovery contract; verification: v23 принимает только exact v23 manifest, v22/v23 mismatch отказывает до target mutation.
+- [x] 2.1 Добавить отдельный `RuntimeRecoverySchemaV23` с literal 69 tables, 39 AUTO families и `deferred=[]`, не изменяя V22; verification: independent manifests совпадают, а v22 hashes/contract остаются exact.
+- [x] 2.2 Подключить fail-closed выбор exact current source-image recovery contract; verification: v23 принимает только exact v23 manifest, v22/v23 mismatch отказывает до target mutation.
 - [ ] 2.3 Расширить backup attestation/runbook ordered stop `jobs-scheduler` → `jobs-worker` → `web/php`; verification: graceful и forced-worker private evidence сохраняют соответственно terminal либо unknown leased state.
-- [ ] 2.4 Восстановить все шесть Jobs tables и AUTO values через существующий standard data-only pipeline без вызова Jobs seams; verification: exact before/after rows/history/counters равны и transport/queue spies имеют zero calls.
+- [x] 2.4 Восстановить все шесть Jobs tables и AUTO values через существующий standard data-only pipeline без вызова Jobs seams; verification: exact before/after rows/history/counters равны и transport/queue spies имеют zero calls.
 - [ ] 2.5 Разделить terminal schema/storage readiness и operational JobsHealth; verification: valid restore со stale heartbeat/expired lease/dead backlog возвращает `RESTORE_COMPLETED`, затем health честно unhealthy.
 
 ## 3. Явный recovery после restore
 
-- [ ] 3.1 После explicit start выполнить pending-intent sweep и repeat; verification: committed pending/no-job получает один dispatch, delivered/dead не получают jobs.
-- [ ] 3.2 Проверить lease recovery через public queue: unexpired exclusion, attempts1–4 reclaim/new token/old stale, attempt5 expired/dead/no6; verification: append-only event sequence и rows exact.
-- [ ] 3.3 Проверить ambiguous outbox fake retry и authorized linked recovery; verification: один intent-wide provider reference, ни одного повторного domain fact и никаких real sends.
-- [ ] 3.4 Выполнить resume под DML-only principal; verification: queue/outbox flows GREEN, MariaDB CREATE denied, public evidence не содержит payload/token/provider bytes.
+- [x] 3.1 После explicit start выполнить pending-intent sweep и repeat; verification: committed pending/no-job получает один dispatch, delivered/dead не получают jobs.
+- [x] 3.2 Проверить lease recovery через public queue: unexpired exclusion, attempts1–4 reclaim/new token/old stale, attempt5 expired/dead/no6; verification: append-only event sequence и rows exact.
+- [x] 3.3 Проверить ambiguous outbox fake retry и authorized linked recovery; verification: один intent-wide provider reference, ни одного повторного domain fact и никаких real sends.
+- [x] 3.4 Выполнить resume под DML-only principal; verification: queue/outbox flows GREEN, MariaDB CREATE denied, public evidence не содержит payload/token/provider bytes.
 
 ## 4. Forward update и rollback boundary
 
-- [ ] 4.1 Восстановить approved v22 bundle exact v22 image и снять rows/state/35 AUTO snapshot; verification: v22 recovery остается GREEN без правки `RuntimeRecoverySchemaV22`.
-- [ ] 4.2 Применить migration23 и доказать additive preservation; verification: прежние 63 tables/rows/state/AUTO exact, шесть Jobs tables exact и initially empty.
+- [x] 4.1 Восстановить approved v22 bundle exact v22 image и снять rows/state/35 AUTO snapshot; verification: v22 recovery остается GREEN без правки `RuntimeRecoverySchemaV22`.
+- [x] 4.2 Применить migration23 и доказать additive preservation; verification: прежние 63 tables/rows/state/AUTO exact, шесть Jobs tables exact и initially empty.
 - [ ] 4.3 Создать populated v23 bundle, восстановить его exact v23 image и выполнить fake-only resume; verification: 69/39 snapshot и recovery matrix GREEN.
 - [ ] 4.4 Проверить v23 bundle через v22 tooling и rollback boundary; verification: `BUNDLE_INVALID`/zero mutation, no downgrade, jobs services stopped и pending/leased/ambiguous full-contour rollback не заявлен.
 

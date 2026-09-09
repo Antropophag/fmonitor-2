@@ -46,7 +46,7 @@ Test author: runtime_tests. Independent reviewer: runtime_review.
 Verdict: **APPROVED**.
 
 ```text
-ded9c1f9cc6e37502a22262a3c2420b9ba10cd729045d090027c787108e29744  tests/Runtime/runtime_jobs_recovery_001_test.php
+181779c898de26ba797df7bcc3f9317a5d5c3ceaf95f4b77acf56085b83c0125  tests/Runtime/runtime_jobs_recovery_001_test.php
 11368043aea14cb27e05629b0db9cce1a679c75e19123b7b570cc62427f8b47c  specs/PRODUCTION-JOBS-RECOVERY-001.md
 ```
 
@@ -67,3 +67,9 @@ unchanged non-Jobs facts.
 The demonstrated RED occurs after valid v23 migration and fixture setup: expected
 `BACKUP_CREATED`, observed `BACKUP_FAILED`/70 with empty stderr because current
 recovery remains v22-only. No production code was changed by the test author.
+
+The final test-only harness amendment replaced an exhausted finite token list with
+deterministic unique counter hashes and moved launcher exit after exact-tag cleanup.
+It changed no lease expectation. Final execution is GREEN with exact output
+`PASS: PRODUCTION-JOBS-RECOVERY-001 v23 exact backup/restore contract`, exit0 and no
+remaining task image tag; evidence is `/tmp/fmonitor-v23-recovery-final-green.log`.
