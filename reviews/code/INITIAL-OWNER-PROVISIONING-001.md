@@ -116,3 +116,29 @@ git diff --check: PASS
 
 **Integrated verdict: APPROVED.** #27 preserves the merged #33 verification and
 governance topology. Authoritative branch CI remains required after commit.
+
+## Integrated CI environment addendum — 2026-09-09
+
+GitHub Actions run `34299969447` had one implementation-owned failure in the
+complete inventory recorded outside the repository at
+`/tmp/pr63-53ef6828-failure-inventory.log`: integration shard 2 expected the
+missing-configuration outcome `64`, but an inherited `FMONITOR_DB_PASSWORD`
+changed it to `70`. The failure was independently reproduced with
+`FMONITOR_DB_PASSWORD=SYNTHETIC_PARENT_POISON` as recorded in
+`/tmp/pr63-parent-env-repro.log`.
+
+Reviewed test SHA-256:
+
+```text
+9816548239b6e6a64d27e31e66410f782f90942cb4f3ffa9116717fd2c512a1c  tests/Runtime/initial_owner_provisioning_001_test.php
+```
+
+The test now removes inherited CLI-owned `FMONITOR_DB_*`, process-prefix and
+bootstrap-password variables before applying each explicit child environment.
+Both ordinary and concurrent child paths use that boundary. A poisoning
+regression proves that an intentionally omitted DB password still returns exact
+`CONFIGURATION_INVALID`/64, and `finally` restores the parent environment exactly.
+The independent focused test is GREEN. Production source is unchanged.
+
+**Verdict: APPROVED.** This is a test-isolation correction for the integrated CI
+environment and does not alter the previously reviewed provisioning behavior.
