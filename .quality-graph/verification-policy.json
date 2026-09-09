@@ -39,7 +39,7 @@
     {
       "categories": ["unit", "governance"],
       "name": "dependency-or-runtime",
-      "patterns": [".dockerignore", ".env.example", "composer.json", "composer.lock", "package.json", "package-lock.json", "pyproject.toml", "uv.lock", "compose*.yaml", "docker-compose*.yml", "Dockerfile*", "bin/**"],
+      "patterns": [".dockerignore", ".env.example", "composer.json", "composer.lock", "package.json", "package-lock.json", "pyproject.toml", "uv.lock", "compose*.yaml", "docker-compose*.yml", "Dockerfile*", "bin/**", "deploy/**"],
       "tests": []
     }
   ],
