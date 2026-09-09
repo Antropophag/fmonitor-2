@@ -27,8 +27,17 @@
 
 ## 5. Integration, restart and Done
 
-- [ ] 5.1 На изолированной MariaDB выполнить prepare → locked migrate → runtime check → web start, пройти headless browser smoke существующих composite routes и сохранить source/image digest, commands, console/network failures и focused results
+- [x] 5.1 На изолированной MariaDB выполнить prepare → locked migrate → runtime check → web start, пройти headless browser smoke существующих composite routes и сохранить source/image digest, commands, console/network failures и focused results
 - [x] 5.2 Сохранить domain fact/history, session и private artifact, перезапустить web/app с теми же DB/volumes и доказать их чтение/authorization и совместимое ownership; existing generated pilot Dockerfile/compose и текущий stand не переключать
 - [x] 5.3 Выполнить syntax/config checks, `git diff --check`, focused installation/runtime suites и `make architecture-check`; затем получить независимый Gate5 review spec/tests/production diff/evidence с явным verdict
-- [ ] 5.4 Запустить один полный CI `make test` по согласованной матрице и зафиксировать результат; не дублировать local-full и не заявлять production readiness без GREEN
-- [ ] 5.5 Сверить Done: штатный nginx→FPM HTTP, один image для web/CLI, direct explicit config, external secrets/private storage, DML-only runtime без bootstrap/DDL, separate whole-catalogue lock и v22, route parity, health/graceful stop/restart persistence, Gate3/Gate5 и CI завершены; deployment рабочего contour и admin provisioning остаются отдельными авторизованными операциями
+- [x] 5.4 Запустить один полный CI `make test` по согласованной матрице и зафиксировать результат; не дублировать local-full и не заявлять production readiness без GREEN
+- [x] 5.5 Сверить Done: штатный nginx→FPM HTTP, один image для web/CLI, direct explicit config, external secrets/private storage, DML-only runtime без bootstrap/DDL, separate whole-catalogue lock и v22, route parity, health/graceful stop/restart persistence, Gate3/Gate5 и CI завершены; deployment рабочего contour и admin provisioning остаются отдельными авторизованными операциями
+
+## Фактическое завершение — 2026-09-09
+
+PR62 слит штатно: merge `eceebdbb4abb74b7ac4bda3d63739af4554938a3`. Полный
+Actions34297488145 для `c2521466a63ceb08f79f39cf84991421fcab9728`: все 8 jobs
+SUCCESS, literal VERIFY_OK. Отдельный retained contour `fmonitor2-runtime-night09`
+на8093 здоров; image `sha256:f322b63572f3c1f3e7e83b339be42d0a7a25fb4b56bacb3ded018b67eb2c105b`.
+Подробности и ограничения: `docs/operations/production-runtime-delivery-2026-09-09.md`.
+Старый стенд8092 сохранён; provisioning #27 и native OTIZ inputs #24 — отдельные срезы.

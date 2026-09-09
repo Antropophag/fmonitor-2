@@ -122,6 +122,8 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Runtime/production_schema_preflight_001_test.php\n',
                 'php\ttests/Runtime/production_readiness_schema_001_test.php\n',
                 'php\ttests/Runtime/production_process_readiness_001_test.php\n',
+                'php\ttests/Runtime/initial_owner_provisioning_001_test.php\n',
+                'php\ttests/Runtime/runtime_dml_privilege_probe_001_test.php\n',
                 'php\ttests/Runtime/session_contention_001_test.php\n',
                 'php\ttests/Runtime/migration_parallel_runners_001_test.php\n',
             ],

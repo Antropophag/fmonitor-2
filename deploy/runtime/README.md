@@ -20,8 +20,13 @@ docker compose --file deploy/runtime/compose.yaml config --quiet
 docker compose --file deploy/runtime/compose.yaml up --detach --wait db
 docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm prepare
 docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm migrate
+docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm \
+  -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare \
+  bin/fmonitor2-provision-initial-admin.php --email owner@shlz.ru
 docker compose --file deploy/runtime/compose.yaml up --detach --wait php web
 ```
 
 Web публикуется на `127.0.0.1:${FMONITOR_HTTP_PORT:-8093}`. PHP-FPM остаётся только
 во внутренней Compose network. Health: `/health/live` и `/health/ready`.
+Provisioning выполняется один раз после migrations. Exact повтор с теми же
+email/password безопасен; существующих пользователей command не повышает и не repair-ит.
