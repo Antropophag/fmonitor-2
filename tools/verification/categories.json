@@ -276,6 +276,8 @@
   "tests/Otiz/object_register_paging_001_test.php": "integration",
   "tests/Otiz/object_register_paging_http_001_test.php": "integration",
   "tests/Otiz/runtime_schema_001_test.php": "integration",
+  "tests/Otiz/settlement_owner_001_test.php": "integration",
+  "tests/Otiz/settlement_concurrency_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_http_001_test.php": "integration",
   "tests/Runtime/initial_owner_provisioning_001_test.php": "integration",

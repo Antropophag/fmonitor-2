@@ -147,6 +147,8 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Otiz/snapshot_publication_001_test.php\n',
                 'php\ttests/Otiz/snapshot_publication_http_001_test.php\n',
                 'php\ttests/Otiz/runtime_schema_001_test.php\n',
+                'php\ttests/Otiz/settlement_owner_001_test.php\n',
+                'php\ttests/Otiz/settlement_concurrency_001_test.php\n',
                 'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
                 'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
                 'php\ttests/Runtime/migration_concurrency_lock_001_test.php\n',
