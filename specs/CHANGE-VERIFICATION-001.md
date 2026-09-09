@@ -78,3 +78,9 @@ acceptance имеет `spec_path`, стабильные `spec_id` и `acceptance
 и test `tests/InstallationProcess/action_001_test.php` focused command равна
 `["php","tests/InstallationProcess/action_001_test.php"]`; boundary policy может
 добавить обязательный auth test. Integration содержит `["make","test"]`.
+
+Deployment files under `deploy/` belong to the explicit dependency-or-runtime
+boundary, with unit/governance obligations and mandatory full CI. Planned changes
+to either retained-runtime or Yii deployment files must not be classified as
+unknown, nor excluded from the effective change. The generic unknown-path refusal
+continues to apply outside declared policy boundaries.

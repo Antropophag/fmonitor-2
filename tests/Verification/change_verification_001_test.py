@@ -105,6 +105,32 @@ class ChangeVerification(unittest.TestCase):
         self.assertEqual(0, self.plan().returncode)
         self.assertEqual(first, (self.root / "plan.json").read_bytes(), "canonical plan is deterministic")
 
+    def test_repository_policy_maps_deployment_sources(self):
+        """Use the real policy through the public CLI, in a disposable repository."""
+        policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
+        inventory = json.loads((ROOT / "tools/verification/categories.json").read_text())
+        inventory["tests/InstallationProcess/action_001_test.php"] = "integration"
+        commands = [command for values in policy["category_argv"].values() for command in values]
+        paths = [command[1] for command in commands]
+        paths += [test for boundary in policy["boundaries"] for test in boundary["tests"]]
+        for relative in paths:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text("fixture\n")
+        self.write_json(".quality-graph/verification-policy.json", policy)
+        self.write_json("tools/verification/categories.json", inventory)
+        self.input["planned_paths"] = ["deploy/runtime/Dockerfile", "deploy/runtime/compose.yaml", "deploy/yii2/Dockerfile"]
+        self.write_json("change.json", self.input)
+        result = self.plan()
+        self.assertEqual(0, result.returncode, "INTENDED_RED: deployment must have an explicit verification boundary: " + result.stderr)
+        plan = json.loads((self.root / "plan.json").read_text())
+        selected = {item["path"]: item["name"] for item in plan["boundaries"]}
+        for relative in self.input["planned_paths"]:
+            self.assertEqual("dependency-or-runtime", selected[relative])
+        self.assertTrue({"unit", "governance"}.issubset(plan["required_categories"]))
+        self.assertIn({"argv": ["make", "test"], "phase": "integration", "rationale": "mandatory full CI for code, test, policy or unknown impact"}, plan["commands"])
+
     def test_git_snapshot_includes_committed_staged_unstaged_untracked_and_deleted(self):
         self.git("add", "app/PilotHttp/Action.php")
         self.git("commit", "-qm", "committed change")
