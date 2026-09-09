@@ -70,7 +70,7 @@ REDs were corrected, and adds regression/acceptance barriers:
 
 ```text
 716300076cfda350c08d52e41c2238eb8b6f95eb82579a50e21483afe5ab8074  tests/Runtime/production_runtime_browser_001_test.php
-8609694185659f9d3e12d8178882fbcabe21237ad90a2004e5b68b1eb28dc1aa  tests/Runtime/production_runtime_restart_browser.mjs
+d37786e11392f628cfbdc5a44bba5b9f8dfc1b0353cfd77c4629fb8b1b6f26d0  tests/Runtime/production_runtime_restart_browser.mjs
 ff39308e04cae6a5d4efa75a2f96b0215c613ade258d6777b3eef774f7bd4d30  tests/Runtime/production_runtime_admin_browser.mjs
 bc140203a54fb29e080b59c0cb55d0051e23362f90f55bcb286cc2aa9c806b9a  tests/Otiz/snapshot_publication_browser_001_test.mjs
 ```
@@ -99,3 +99,9 @@ An opt-in `FMONITOR_TEST_KEEP_RUNTIME_EVIDENCE=1` preserves only the already-pri
 removed. Default cleanup is unchanged. The restart driver saves a full-page synthetic
 completion screenshot after verifying 100% and authorized PDF access. Syntax and
 diff checks pass; these evidence-only changes do not alter assertions or production.
+
+The exact-source retained run passed and the corrected post-restart screenshot was
+visually inspected after waiting for the preloader to detach. It clearly shows the
+synthetic completed object card, accepted documents, and 100% progress without an
+overlay. Screenshot SHA-256:
+`68e5a9247de14da768911dcad27de714f923e837b9d13d7f72574e00eb447c28`.

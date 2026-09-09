@@ -1,3 +1,11 @@
+# Publication checkpoint
+
+#33 candidate code d7bac8dd is independently APPROVED FOR CI. Final retained browser run PASS and visual QA passed (screenshot68e5a924); PHP lint and architecture47/47 plus actual7rules all PASS. See production-runtime-delivery-2026-09-09.md. Root is committing review/evidence metadata and the screenshot wait, then creates draft PR/full CI. No production source changed after d7bac8dd.
+
+#27 implementation now active in /Users/antropophag/code/fmonitor-2-operations-20260909, branch codex/runtime-operations-27; runtime_plan owns it, runtime_review independent. Native OTIZ and jobs worktrees have fast-forwarded to d7bac8dd with their own future planning retained. Current root browser/lint sessions are terminal PASS; no test project remains. Goal ACTIVE; main stand8092 preserved. Remaining #33: full CI, image digest and isolated persistent contour, normal merge/integration. Do not mark global goal complete after this PR.
+
+---
+
 # Current checkpoint before candidate publication
 
 Goal ACTIVE; #33 code and focused acceptance complete, final exact-source review/CI/publication remain. Branch codex/production-runtime-33 in /Users/antropophag/code/fmonitor-2-runtime-20260909. All 47 architecture policy fixture tests pass, actual checker remains7 rules/no baseline change. Runtime tests cover configuration/storage, v22 and all process schema families, two real migration runners, FPM/nginx graceful stop, complete41-item/7-photo browser journey, exact restart history/session/files, admin flags and seeded OTIZ. Independent aggregate Gate3 and bounded Gate5 records are under reviews/. Root is staging the candidate; consult git for current SHA rather than historical entries below.

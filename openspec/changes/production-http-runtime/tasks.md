@@ -29,6 +29,6 @@
 
 - [ ] 5.1 На изолированной MariaDB выполнить prepare → locked migrate → runtime check → web start, пройти headless browser smoke существующих composite routes и сохранить source/image digest, commands, console/network failures и focused results
 - [x] 5.2 Сохранить domain fact/history, session и private artifact, перезапустить web/app с теми же DB/volumes и доказать их чтение/authorization и совместимое ownership; existing generated pilot Dockerfile/compose и текущий stand не переключать
-- [ ] 5.3 Выполнить syntax/config checks, `git diff --check`, focused installation/runtime suites и `make architecture-check`; затем получить независимый Gate5 review spec/tests/production diff/evidence с явным verdict
+- [x] 5.3 Выполнить syntax/config checks, `git diff --check`, focused installation/runtime suites и `make architecture-check`; затем получить независимый Gate5 review spec/tests/production diff/evidence с явным verdict
 - [ ] 5.4 Запустить один полный CI `make test` по согласованной матрице и зафиксировать результат; не дублировать local-full и не заявлять production readiness без GREEN
 - [ ] 5.5 Сверить Done: штатный nginx→FPM HTTP, один image для web/CLI, direct explicit config, external secrets/private storage, DML-only runtime без bootstrap/DDL, separate whole-catalogue lock и v22, route parity, health/graceful stop/restart persistence, Gate3/Gate5 и CI завершены; deployment рабочего contour и admin provisioning остаются отдельными авторизованными операциями
