@@ -63,6 +63,16 @@ function rscField(string $html,string $name):string {
     if(preg_match('/<input\\b[^>]*\\bname="'.preg_quote($name,'/').'"[^>]*\\bvalue="([^"]*)"/s',$html,$match)!==1)throw new TestFailure('rendered field missing: '.$name);
     return html_entity_decode($match[1],ENT_QUOTES|ENT_HTML5,'UTF-8');
 }
+function rscForm(string $html,string $action):array {
+    preg_match_all('/<form\\b([^>]*)>(.*?)<\/form>/s',$html,$forms,PREG_SET_ORDER);
+    $matches=[];
+    foreach($forms as $form)if(preg_match('/\\baction="'.preg_quote($action,'/').'"/',$form[1])===1)$matches[]=$form;
+    assertSameValue(1,count($matches),'one retained form '.$action);
+    assertSameValue(1,preg_match('/\\bmethod="post"/i',$matches[0][1]),'retained POST form');
+    $operation=rscField($matches[0][2],'operationId');
+    assertSameValue(1,preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$operation),'canonical retained form operation');
+    return ['csrfToken'=>rscField($matches[0][2],'csrfToken'),'operationId'=>$operation];
+}
 $fixture=null;$server=null;$accountCreated=false;
 $private=sys_get_temp_dir().'/runtime-otiz-'.bin2hex(random_bytes(5));
 $account='runtime_otiz_'.bin2hex(random_bytes(5));$password=bin2hex(random_bytes(20));
@@ -91,9 +101,22 @@ try {
     $page=rscRequest($port,'POST','/pilot/login',['csrfToken'=>rscField($page['body'],'csrfToken'),'email'=>$fixture->email],$cookies);
     $login=rscRequest($port,'POST','/pilot/login',['csrfToken'=>rscField($page['body'],'csrfToken'),'email'=>$fixture->email,'password'=>$fixture->password],$cookies);assertSameValue(303,$login['status'],'real retained authentication');
     $page=rscRequest($port,'GET','/pilot/otiz/snapshots/302',[],$cookies);assertSameValue(200,$page['status'],'retained accepted snapshot');
-    $csrf=rscField($page['body'],'csrfToken');$operation='90000000-0000-4000-8000-000000000002';
+    $completeForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/payments/complete');
+    $disciplineForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/closures');
+    $oldPage=rscRequest($port,'GET','/pilot/otiz/snapshots/301',[],$cookies);
+    $reverseForm=rscForm($oldPage['body'],'/pilot/otiz/closures/401/reverse');
+    assertSameValue(3,count(array_unique([$completeForm['operationId'],$disciplineForm['operationId'],$reverseForm['operationId']])),'three distinct retained form operations');
+    $csrf=$completeForm['csrfToken'];$operation=$completeForm['operationId'];
     $counts=static fn():array=>[(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_pilot_otiz_payment_closures")->fetch_column(),(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_pilot_otiz_events")->fetch_column(),(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_otiz_settlement_operations")->fetch_column()];
     $before=$counts();$denied=rscRequest($port,'POST','/pilot/otiz/snapshots/302/payments/complete',['csrfToken'=>'invalid','operationId'=>$operation],$cookies);assertSameValue(403,$denied['status'],'retained CSRF refusal');assertSameValue($before,$counts(),'CSRF adds no facts');
+    foreach ([[],['operationId'=>'malformed']] as $invalidOperation) {
+        foreach ([['/pilot/otiz/snapshots/302/payments/complete',['csrfToken'=>$completeForm['csrfToken']]],['/pilot/otiz/snapshots/302/closures',['csrfToken'=>$disciplineForm['csrfToken'],'objectId'=>'7301','discipline'=>'1.00','basis'=>'Invalid operation']],['/pilot/otiz/closures/401/reverse',['csrfToken'=>$reverseForm['csrfToken'],'basis'=>'Invalid operation']]] as [$path,$fields]) {
+            $rejected=rscRequest($port,'POST',$path,$fields+$invalidOperation,$cookies);
+            assertSameValue(303,$rejected['status'],'invalid operation retains error redirect');
+            assertSameValue(true,str_contains((string)$rejected['location'],'error='),'invalid operation is not replaced by a fresh UUID');
+            assertSameValue($before,$counts(),'missing/malformed operation appends no money/event/receipt');
+        }
+    }
     $paid=rscRequest($port,'POST','/pilot/otiz/snapshots/302/payments/complete',['csrfToken'=>$csrf,'operationId'=>$operation],$cookies);
     assertSameValue([303,'/pilot/otiz/snapshots/302?paid=1'],[$paid['status'],$paid['location']],'retained route reaches canonical owner in built runtime');
     assertSameValue([2,2,1],$counts(),'one new closure, two events and one receipt');

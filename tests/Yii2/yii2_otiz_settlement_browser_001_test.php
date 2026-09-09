@@ -62,6 +62,12 @@ try {
     assertSameValue(0,$exit,'browser exit; evidence '.$artifacts.'; '.file_get_contents($artifacts.'/browser.log'));
     assertSameValue(true,$invalidObserved,'native invalid submission observed independently before success');
     $observed=json_decode(file_get_contents($artifacts.'/result.json'),true,flags:JSON_THROW_ON_ERROR);
+    $xlsx=(string)file_get_contents($artifacts.'/snapshot.xlsx');
+    assertSameValue('PK',substr($xlsx,0,2),'download is an actual XLSX archive');
+    $archive=new PharData($artifacts.'/snapshot.xlsx');
+    $xml='';
+    foreach(new RecursiveIteratorIterator($archive) as $entry)if($entry->isFile()&&str_ends_with($entry->getFilename(),'.xml'))$xml.=$entry->getContent();
+    foreach (['Объекты','Работники','Метаданные','BROWSER-1','Browser Installer','2026-09-30','premium-calculation-v1'] as $text) assertSameValue(true,str_contains($xml,$text),'retained workbook contains '.$text);
     $rows=$db->query("SELECT id,paid_cents,discipline_cents,deadline_cents,basis,artifact,reverses_payment_closure_id,created_by_user_id FROM {$p}fm2_pilot_otiz_payment_closures ORDER BY id")->fetch_all(MYSQLI_ASSOC);
     assertSameValue(3,count($rows),'one closure per rendered command');
     assertSameValue([[0,10000,0],[90000,0,0],[0,-10000,0]],array_map(static fn(array $r):array=>[(int)$r['paid_cents'],(int)$r['discipline_cents'],(int)$r['deadline_cents']],$rows),'literal accrued100000 discipline10000 paid90000 reversal-10000 oracle');

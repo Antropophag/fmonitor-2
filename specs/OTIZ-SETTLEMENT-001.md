@@ -64,3 +64,24 @@ older100000 closure for the same object and a150000 accepted snapshot it must ap
 only50000, one receipt and two events; identical replay adds nothing. The retained
 screen must then report completion, using the same global financial basis. No stand
 switch is implied by making this compatibility image reproducible.
+
+### Финальные требования к перенесённым элементам
+
+Все три сохранённые формы временного rapid-входа передают свой непустой canonical
+operationId. Отсутствующий/невалидный идентификатор не заменяется новым UUID на
+сервере: команда отклоняется без финансовых фактов, событий и receipt.
+
+Ссылки нового Yii-экрана на objects/payments/history и XLSX должны работать.
+Эти промежуточные Yii-страницы навигации читают существующие финансовые данные,
+показывают ссылки на доступные срезы и не создают новый владелец записи.
+Перенос publication/calculate/accept в эти страницы не входит в #70: прежние
+native-действия сохраняются; новые страницы не показывают неработающие формы.
+Базовый `/pilot/otiz` также обслуживается, чтобы прежний error redirect сторно
+возвращал работающий экран с сообщением, а не404. Navigation/export и чтение
+истории не изменяют финансовые факты.
+
+Сохраняется интерпретация уже записанного отображения: resultBp показывается
+процентом (8500→85%), formulaTrace сохраняет admission/exclusions note, история
+содержит дату и все три денежных компонента. Для legacy allocation с равными
+base/effective/contribution и основанием «коэффициент 1,00» отображается КТУ1,00,
+как в прежнем renderer. Расчёт, распределение и принятые факты не переписываются.

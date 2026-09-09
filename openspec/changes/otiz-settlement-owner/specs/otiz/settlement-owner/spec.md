@@ -48,4 +48,3 @@ Actor+operationId SHALL иметь fingerprint/stable result. Exact replay не 
 #### Scenario: Concurrent reversal
 - **WHEN** два commands сторнируют один original
 - **THEN** один добавляет reversal, другой получает exact replay либо `ALREADY_REVERSED`
-

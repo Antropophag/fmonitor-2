@@ -9,7 +9,7 @@ const result = {stage: 'startup', operations: [], pageErrors: [], badResponses: 
 let browser;
 try {
   browser = await chromium.launch({headless: true});
-  const context = await browser.newContext();
+  const context = await browser.newContext({acceptDownloads: true});
   const page = await context.newPage();
   page.setDefaultTimeout(7000);
   page.on('pageerror', error => result.pageErrors.push(error.message));
@@ -28,6 +28,21 @@ try {
   assert.equal(await page.locator('h1').innerText(), 'Выплаты на 30.09.2026');
   assert.equal(await page.locator('.fm2-otiz-object-row').count(), 1);
   assert.match(await page.locator('.fm2-otiz-summary').innerText(), /1\s000,00/);
+
+  result.stage = 'financial navigation and export';
+  for (const destination of ['/pilot/otiz/objects','/pilot/otiz/payments','/pilot/otiz/history']) {
+    const [response] = await Promise.all([page.waitForResponse(response => new URL(response.url()).pathname === destination && response.request().method() === 'GET'), page.locator(`a[href="${destination}"]`).first().click()]);
+    assert.equal(response.status(), 200, 'financial navigation route ' + destination);
+    await page.waitForURL(url => url.pathname === destination);
+    assert.ok(await page.locator('h1').innerText(), 'financial destination has a real page');
+    const back = page.locator('a[href="/pilot/otiz/snapshots/301"]').first();
+    assert.ok(await back.count(), 'financial read page returns to existing snapshot');
+    await Promise.all([page.waitForURL(url => url.pathname === '/pilot/otiz/snapshots/301'), back.click()]);
+  }
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('a[href="/pilot/otiz/snapshots/301/export.xlsx"]').click()]);
+  assert.equal(download.suggestedFilename(), 'FMonitor-OTIZ-2026-09-30-v301.xlsx');
+  await download.saveAs(path.join(config.artifacts, 'snapshot.xlsx'));
+  result.xlsxFilename = download.suggestedFilename();
 
   async function formFor(action) {
     const form = page.locator(`form[action="${action}"]`);
