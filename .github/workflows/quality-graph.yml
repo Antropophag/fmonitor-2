@@ -108,7 +108,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload plan
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: ${{ false }} # TEST ONLY missing current artifact
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-plan-${{ github.run_attempt }}
@@ -131,7 +131,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload fast
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-fast-${{ github.run_attempt }}
@@ -154,7 +154,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload unit
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-unit-${{ github.run_attempt }}
@@ -177,7 +177,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload Integration
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-integration-${{ github.run_attempt }}
@@ -200,7 +200,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload e2e
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-e2e-${{ github.run_attempt }}
@@ -223,7 +223,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload governance
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-governance-${{ github.run_attempt }}
@@ -246,7 +246,7 @@ jobs:
         approval-files: 'false'
         approval-node: 'false'
     - name: Upload verify
-      if: always() && github.run_attempt == 1 # TEST ONLY stale-only on rerun
+      if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: quality-result-verify-${{ github.run_attempt }}
