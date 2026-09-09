@@ -84,3 +84,31 @@ previously failing method is GREEN, the complete development-setup suite reports
 `CHANGE_VERIFICATION_OK`. This setup-only correction introduces no production,
 specification, or business-test change. Verdict remains **APPROVED**, with no
 additional finding.
+
+## PR CI correction carry-forward
+
+The approval further carries forward through `1e6339f7bca51826aed36332faee463c31b6c2d7`.
+The failed PR run `34412982874` had one primary regression only: the calendar
+verifier still expected the previous terminal catalogue v23. Commit `f748c3f4`
+changes that fixture's exact expectation to v24 and appends migration 24 while
+preserving its calendar data, DOM, determinism, and overflow assertions; its
+focused execution is GREEN.
+
+The required-plan regeneration then exposed a planner defect for that already
+registered verifier outside `tests/`. The root-authored test at `d3b2c67d` is
+independently **APPROVED at Gate 3**: through the public CLI it requires the
+inventory-registered rapid verifier exactly once with its PHP argv and focused
+rationale, and separately proves an arbitrary unregistered sibling script is
+still rejected. Its RED failed at the intended `test path outside tests` guard
+after valid setup.
+
+The minimal implementation at `1e6339f7` permits an outside-`tests/` path only at
+the two call sites where membership in the loaded verification inventory has
+already been established. Acceptance mappings and boundary tests retain the
+original path restriction; repository-path, runtime, inventory-category, argv,
+and fail-closed boundary validation remain unchanged. All 12 planner tests pass,
+including the new positive and negative cases. The full PR plan against
+`origin/main` was regenerated at this exact head and independently returns
+`CHANGE_VERIFICATION_OK`. No settlement, financial, HTTP, schema, recovery, or
+runtime packaging byte changed. Verdict remains **APPROVED**, with no additional
+finding; a new exact-head full CI remains required.
