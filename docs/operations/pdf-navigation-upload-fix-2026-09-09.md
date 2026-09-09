@@ -24,3 +24,16 @@ This is a local manual-pilot correction. Full CI/production integration and an
 update on the user's work machine are separate delivery steps, not claimed by
 these focused checks. Private evidence is not committed. Review records are under
 reviews/tests and reviews/code with the same specification identifier.
+
+## CI inventory correction
+
+PR69 source107a3472, Actions34340489068: plan, fast, unit, both integration shards
+and e2e SUCCESS. Complete failures: governance -> sole REGRESSION_FAILURE
+`tests/Verification/verification_inventory_001_test.py`; verify -> aggregate
+missing governance success. The new test was registered in suites/categories but
+omitted from the inventory test's explicit post-baseline additions.
+
+Locally reproduced unit baseline drift (expected ae1c98c..., actual d3fcb048...).
+Add only the new PDF test to `added_by_suite['unit']`: original baseline hashes and
+all existing membership checks remain unchanged; the new test must occur once.
+No PDF implementation or acceptance expectations change in this CI correction.
