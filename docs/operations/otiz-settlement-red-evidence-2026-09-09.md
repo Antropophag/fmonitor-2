@@ -68,3 +68,29 @@ inputs. After the successful closure redirect it requires the retained flash,
 object, amount, basis, artifact and a reverse form whose own action contains
 CSRF, operation UUID and reversal basis. The fresh run remains exit `255` at the
 earlier missing retained heading, before these downstream assertions.
+
+## Root-authored GET form correction — 2026-09-10
+
+Owner changed authorship: root now writes specifications/tests; separately tasked
+agents retain implementation and independent review. Earlier authorship remains
+historical. This correction addresses review `eda63661` without changing UI scope.
+
+The exact-action DOM form must use POST and contain one enabled, hidden, nonempty
+CSRF control and one canonical lowercase v4 operation UUID. Successful complete
+and reverse requests now use the CSRF token from their own rendered form; an
+unrelated token elsewhere cannot satisfy the public request. Discipline already
+submits its own token. Visible artifact text is no longer required because the
+legacy renderer does not show it; persisted artifact checks remain unchanged.
+
+Command: `php tests/Yii2/yii2_otiz_settlement_001_test.php`.
+Before run: regenerated required plan, `check` printed `CHANGE_VERIFICATION_OK`.
+Actual run: exit `255` against the unchanged uncommitted prototype, at line 44:
+
+```text
+TestFailure: snapshot semantic parity preserves Выплаты на 30.09.2026
+Expected: true
+Actual: false
+```
+
+This remains intended missing retained-UI RED, with the downstream form assertions
+reviewable in source. No production correction was made by the test author.
