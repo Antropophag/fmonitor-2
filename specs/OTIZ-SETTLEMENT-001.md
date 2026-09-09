@@ -35,3 +35,18 @@ have SELECT/INSERT/UPDATE/DELETE only; setup/cleanup use a disposable admin fixt
 This supplements the existing A02/concurrency and denial matrices, not replaces
 these independently reviewed contracts. The legacy renderer is the parity oracle;
 its calculation formulas and accepted snapshot facts remain unchanged.
+
+## Canonical v24 delivery and recovery
+
+The complete current catalogue ends at24. Public full-catalogue migration/setup
+checks advance to24; direct historical migrations keep their original versions.
+Current recovery uses exact v24/71-table/39-AUTO_INCREMENT inventory, adding only
+settlement locks and receipts to v23. Both new tables, closure/event history and
+existing domain/Jobs rows survive backup/restore exactly; backup creates no domain
+transition, restore starts no worker or delivery. Quiesce/identity/private-storage
+rules inherit PRODUCTION-JOBS-RECOVERY-001 unchanged. Historical v22/v23 profiles
+and primary evidence remain immutable. Old bundles use their exact source image,
+then forward migrations; current tooling rejects a mismatched version/inventory
+before target mutation. Existing v22 forward-update rehearsal must reach24 and
+retain old rows/AUTO_INCREMENT values/private bytes. This is required adaptation
+of the existing recovery boundary, not a new retention/RPO/RTO policy.

@@ -39,7 +39,11 @@
     "tests/Runtime/production_runtime_browser_001_test.php",
     "tests/Runtime/production_schema_frontier_001_test.php",
     "tests/Runtime/yii2_readiness_001_test.php",
-    "tests/Verification/harness_otiz_canonical_compat_001_test.php"
+    "tests/Verification/harness_otiz_canonical_compat_001_test.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV24.php",
+    "tests/Runtime/runtime_jobs_recovery_001_test.php",
+    "tests/Runtime/runtime_recovery_forward_update_001_test.php"
   ],
   "acceptances": [
     {
@@ -96,6 +100,16 @@
         "tests/Runtime/production_schema_frontier_001_test.php",
         "tests/InstallationProcess/production_migration_runner_001_test.php",
         "tests/Otiz/runtime_schema_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-001",
+      "acceptance_id": "canonical-v24-recovery-preserves-settlement",
+      "spec_path": "specs/OTIZ-SETTLEMENT-001.md",
+      "seam": "bin/fmonitor2-runtime-recovery.php backup/restore using current image; historical exact v22 image -> current canonical migration",
+      "tests": [
+        "tests/Runtime/runtime_jobs_recovery_001_test.php",
+        "tests/Runtime/runtime_recovery_forward_update_001_test.php"
       ]
     }
   ]
