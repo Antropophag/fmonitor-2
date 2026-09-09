@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 namespace FMonitor2\AssignmentOrderOriginal;
+require_once __DIR__.'/FMonitorPdfNavigation.php';
 
 /** @internal Byte lexer; string/comment contents never become PDF Name tokens. */
 final class FMonitorPdfLexical
@@ -56,15 +57,21 @@ final class FMonitorPdfLexical
     /** @return array{body:string,unsafe:bool,end:int,next:int,stream:bool} */
     public static function view(string $bytes, int $cursor = 0, bool $physical = false, bool $dictionary = false): array
     {
-        $out = ''; $unsafe = false; $stack = ''; $depth = 0; $last = null;
+        $out = ''; $unsafe = false; $stack = ''; $depth = 0; $last = null; $entryEnds = []; $entryKeys = [];
         while (($token = self::next($bytes, $cursor)) !== null) {
             $value = $token['value'];
+            $key = $depth > 0 && $stack[$depth - 1] === 'd' && $token['start'] >= ($entryEnds[$depth] ?? 0);
+            if ($key && $token['kind'] === 'name') {
+                $entryKeys[$depth] = $value;
+                $entryEnds[$depth] = FMonitorPdfValue::end($bytes, $cursor);
+            }
+            $uriActionType = !$key && $depth > 0 && ($entryKeys[$depth] ?? null) === 'S';
             if ($physical && $token['kind'] === 'word' && in_array($value, ['stream','endobj'], true)) {
                 if ($depth !== 0 || ($value === 'stream' && $last !== '>>')) throw new \UnexpectedValueException('Invalid PDF object boundary.');
                 return ['body'=>trim($out),'unsafe'=>$unsafe,'end'=>$token['start'],'next'=>$cursor,'stream'=>$value === 'stream'];
             }
             if ($token['kind'] === 'delimiter') {
-                if ($value === '<<' || $value === '[') $stack[$depth++] = $value === '<<' ? 'd' : 'a';
+                if ($value === '<<' || $value === '[') { $stack[$depth++] = $value === '<<' ? 'd' : 'a'; unset($entryEnds[$depth], $entryKeys[$depth]); }
                 elseif ($value === '>>' || $value === ']') {
                     if ($depth === 0 || $stack[--$depth] !== ($value === '>>' ? 'd' : 'a')) throw new \UnexpectedValueException('Unbalanced PDF value.');
                 } else throw new \UnexpectedValueException('Invalid PDF delimiter.');
@@ -72,7 +79,7 @@ final class FMonitorPdfLexical
                 && preg_match('/^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/D', $value) !== 1) {
                 throw new \UnexpectedValueException('Invalid PDF value.');
             }
-            $unsafe = $unsafe || $token['unsafe']; $out .= $token['text'].' '; $last = $value;
+            $unsafe = $unsafe || ($token['unsafe'] && !FMonitorPdfNavigation::allowed($value, $bytes, $cursor, $key, $uriActionType)); $out .= $token['text'].' '; $last = $value;
             if ($dictionary && $token['kind'] === 'delimiter' && $value === '>>' && $depth === 0) return ['body'=>trim($out),'unsafe'=>$unsafe,'end'=>$cursor,'next'=>$cursor,'stream'=>false];
         }
         if ($physical || $dictionary || $depth !== 0) throw new \UnexpectedValueException('Incomplete PDF value.');

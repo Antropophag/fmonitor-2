@@ -184,6 +184,7 @@
   "tests/InstallationProcess/order_prepare_010_test.php": "unit",
   "tests/InstallationProcess/original_upload_return_to_card_manual_test.php": "unit",
   "tests/InstallationProcess/otiz_current_progress_001_test.php": "integration",
+  "tests/InstallationProcess/pdf_navigation_upload_001_test.php": "unit",
   "tests/InstallationProcess/persistence_open_001_test.php": "integration",
   "tests/InstallationProcess/persistence_prepare_001_test.php": "integration",
   "tests/InstallationProcess/persistence_registration_001_test.php": "integration",

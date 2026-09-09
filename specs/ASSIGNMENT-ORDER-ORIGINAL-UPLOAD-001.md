@@ -1,5 +1,7 @@
 # ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-001 — безопасный приём оригинала распоряжения
 
+Owner2026-09-09 correction: [PDF-NAVIGATION-UPLOAD-001](PDF-NAVIGATION-UPLOAD-001.md) supersedes the blanket URI/OpenAction prohibition below for ordinary links and explicit page destinations. All other restrictions remain in force.
+
 Статус: **v74 GATE 1 PENDING — MAINTENANCE OWNER**
 Версия: **v74**
 Дата: **2026-09-06**
