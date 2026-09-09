@@ -29,3 +29,13 @@ Browser `/tmp/fm2-page17-browser-green.log`: desktop/mobile, keyboard, URL/page 
 Final30k `/tmp/fm2-page17-benchmark-final-with-baseline.json`: first1.374s/last1.782s/search1.328s, missing_norm4.061–5.186s между frozen runs;50/50/1/1 rows,8MiB peak, Questions raw9/9/9/8. Exact old SQL-only baseline30k:1.567s,9.18MB DB bytes,68MiB peak; это не полныйHTTP. Старый диагностическийHTTP был43.8MB и падал при128MiB. Все result digests совпадают между оптимизациями. Полный отчёт и EXPLAIN: otiz-pagination-performance-2026-09-09.md.
 
 Полный CI, merge и архив #17 ещё ожидаются. Все изменения только в source/test checkout; пользовательские стенды/volumes не менялись. План #66 ведётся отдельно `/Users/antropophag/code/fmonitor-2-otiz-excel-20260909`; без реализации/CI/merge заявлений.
+
+## Публикация кандидата
+
+Commit `69d2edd1547fb42585714a69911ec3ca957683e9`, clean/pushed branch. Draft PR68: https://github.com/Antropophag/fmonitor-2/pull/68 . Один полный Actions34332358012 запущен на exacthead; результата/VERIFY_OK ещё не заявляем. Пока CI идёт, #66 planning в отдельном checkout; вопросы о globalwaiver и источнике исходногоT отправлены владельцу. Эту запись не пушить поверх проверяемого кандидата до завершения CI.
+
+## Завершение #17 — 2026-09-09
+
+PR68 штатно MERGED2026-09-09T09:12:13Z, merge `c25c1f1111444221adfcaa0998cb758349ec94ba`; issue17 CLOSED. Exacthead69d2edd1547fb42585714a69911ec3ca957683e9, Actions34332358012 все8 jobs SUCCESS/literal VERIFY_OK (`/tmp/pr68-69d2edd1-green.log`). OpenSpec paginate-otiz-object-register синхронизирован и архивирован после fullGREEN/merge; strict specs11PASS. Архивные metadata сохраняются локально для следующего PR. Никаких deployment/stand/volume изменений не выполнялось.
+
+Следующий рабочий checkout #66: /Users/antropophag/code/fmonitor-2-otiz-excel-20260909. План/spec создан, Gate1 условный: ждём ответы о current plan_finish_date из карточки (T) и global waiver; settled certificate/calculation semantics сохраняются. Другой открытый PR67 относится к независимому runtime startup fix, его не менять/не merge-ить по этому поручению.

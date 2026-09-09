@@ -379,3 +379,9 @@ strict validation:10 specs PASS, оба change PASS перед архивиро�
 Retention/RPO/RTO не утверждены; новая автономная очередь не запускалась.
 Goal API после рестарта вернул null; активная либо завершённая глобальная Goal
 не заявляется. Следующие технические срезы ждут нового поручения владельца.
+
+## Завершение #17 — 2026-09-09
+
+PR68 штатно MERGED2026-09-09T09:12:13Z, merge `c25c1f1111444221adfcaa0998cb758349ec94ba`; issue17 CLOSED. Exacthead69d2edd1547fb42585714a69911ec3ca957683e9, Actions34332358012 все8 jobs SUCCESS/literal VERIFY_OK (`/tmp/pr68-69d2edd1-green.log`). OpenSpec paginate-otiz-object-register синхронизирован и архивирован после fullGREEN/merge; strict specs11PASS. Архивные metadata сохраняются локально для следующего PR. Никаких deployment/stand/volume изменений не выполнялось.
+
+Следующий рабочий checkout #66: /Users/antropophag/code/fmonitor-2-otiz-excel-20260909. План/spec создан, Gate1 условный: ждём ответы о current plan_finish_date из карточки (T) и global waiver; settled certificate/calculation semantics сохраняются. Другой открытый PR67 относится к независимому runtime startup fix, его не менять/не merge-ить по этому поручению.

@@ -18,5 +18,13 @@
 
 - [x] 4.1 Снять after30k measurements и EXPLAIN первой/последней страницы/фильтров; проверка: bounded rows/memory, сравнительный отчёт, индексы обоснованы фактом.
 - [x] 4.2 Выполнить focused regression и независимый Gate5; проверка: exact SHA/hashes APPROVED и честные ограничения.
-- [ ] 4.3 Опубликовать PR и дождаться полного CI на exact source; проверка: все required jobs GREEN/literal VERIFY_OK, no bypass.
-- [ ] 4.4 Штатно интегрировать, зафиксировать Done и архив; проверка: merge SHA, сохранённые данные/история/stand, все tasks фактически завершены.
+- [x] 4.3 Опубликовать PR и дождаться полного CI на exact source; проверка: все required jobs GREEN/literal VERIFY_OK, no bypass.
+- [x] 4.4 Штатно интегрировать, зафиксировать Done и архив; проверка: merge SHA, сохранённые данные/история/stand, все tasks фактически завершены.
+
+## Завершение — 2026-09-09
+
+PR68 merged `c25c1f1111444221adfcaa0998cb758349ec94ba`; issue17 CLOSED.
+Actions34332358012:8 jobs SUCCESS/literal VERIFY_OK на exact source
+`69d2edd1547fb42585714a69911ec3ca957683e9`. Нормативные требования
+синхронизированы с main specs; review history и primary evidence сохранены.
+Стенды и пользовательские volumes не изменялись. Последующий #66 — отдельный срез.
