@@ -1,0 +1,84 @@
+{
+  "change": "yii2-inspection-journey",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/YiiRuntime/Views/checklist.php",
+    "app/YiiRuntime/Assets/checklist.js",
+    "app/YiiRuntime/Assets/checklist-sw.js",
+    "app/YiiRuntime/WebResponse.php",
+    "app/InspectionEvidence/YiiChecklist.php",
+    "app/InspectionEvidence/MariaDbYiiChecklist.php",
+    "app/PilotHttp/ChecklistSync.php",
+    "config/yii/web.php",
+    "config/yii/assets.php",
+    "tests/Support/InspectionPhotoIdentityFixture.php",
+    "rapid-pilot/verify-checklist-photo-upload.php",
+    "rapid-pilot/verify-checklist-photo-rejections.php",
+    "rapid-pilot/verify-checklist-photo-revoke.php",
+    "rapid-pilot/verify-checklist-photo-limit-concurrency.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A1-A3-A5-A6-A8-A9",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "Yii HTTP checklist journey",
+      "tests": [
+        "tests/Yii2/yii2_inspection_journey_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A4",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "Yii HTTP checklist journey",
+      "tests": [
+        "tests/Yii2/yii2_inspection_concurrency_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A7",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "Yii HTTP checklist journey",
+      "tests": [
+        "tests/Yii2/yii2_inspection_browser_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A4-inherited-native-owner",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "InspectionRecording completeItem inherited contract",
+      "tests": [
+        "tests/InstallationProcess/inspection_item_complete_001_rejections_test.php",
+        "tests/InstallationProcess/inspection_item_complete_001_precedence_test.php",
+        "tests/InstallationProcess/inspection_item_complete_001_http_wiring_test.php",
+        "tests/InstallationProcess/inspection_item_complete_001_replay_test.php",
+        "tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A2-A8-A9-configured-db-current-projection",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "YiiChecklist configured DB and real HTTP projection",
+      "tests": [
+        "tests/Yii2/yii2_inspection_boundaries_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A9-existing-schema-photo-admission-fixtures",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "existing legacy ChecklistSync public commands on isolated authenticated fixture",
+      "tests": [
+        "tests/InstallationProcess/inspection_evidence_schema_001_test.php",
+        "tests/Verification/characterize_inspection_photo_upload_001_test.php",
+        "tests/Verification/characterize_inspection_photo_rejections_001_test.php",
+        "tests/Verification/characterize_inspection_photo_revoke_001_test.php",
+        "tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php"
+      ]
+    }
+  ]
+}

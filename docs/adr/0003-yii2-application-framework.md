@@ -30,3 +30,26 @@ Production не переключается при появлении карка�
 старые compatibility assertions становятся историей, новые проверяют публичные
 Yii lifecycle и запрет обхода admission. Прежнее требование сохранности sessions
 выше superseded этим решением; неизвестные нетестовые материалы не удаляются.
+
+## Применение к inspection journey #76 — кандидат 2026-09-10
+
+Общая операция `InspectionEvidence\YiiChecklist::accept`, реализованная
+`MariaDbYiiChecklist::accept` через внутренний `MariaDbYiiChecklistMutation` trait, переносит прежние checklist mutations из HTTP
+в один application owner. `ChecklistSync` остаётся тонким adapter к тому же owner;
+`item_completed` делегируется уже принятому `InspectionRecording::completeItem`.
+Для старого adapter сохраняется переданное mysqli-соединение, новый Yii путь
+использует Yii DAO; разные соединения не смешиваются в одной атомарной операции.
+Это перенос ownership из ADR0003, без новой предметной политики или инфраструктуры.
+
+Для явного state-changing имени предложена регистрация ровно двух записей
+interface/implementation в существующем public_seams baseline. SQL/dependency,
+hotspot и прочие allowances не расширяются; полная регенерация baseline не
+выполняется. Принятие этого дополнения требует явного независимого рассмотрения
+owner boundary в обычном Gate5 всего среза, до merge; отдельный аудит не вводится.
+Переименование метода ради ухода от scanner не считается исправлением.
+
+Independent Gate5 на snapshot e93a1e3b явно одобрил единственного owner и ровно
+две public_seams записи; см. reviews/code/YII2-INSPECTION-JOURNEY-001.md.
+Выявленные DAO/projection дефекты исправляются в том же срезе и не отменяют
+требований к соединению или истории. Одобрение registration не является
+одобрением дефектного кода или переключения стенда.

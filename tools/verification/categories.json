@@ -352,5 +352,9 @@
   "tests/Yii2/yii2_user_access_001_test.php": "integration",
   "tests/Yii2/yii2_user_access_browser_001_test.php": "e2e",
   "tests/Yii2/yii2_user_access_concurrency_001_test.php": "integration",
-  "tests/Yii2/yii2_user_access_edges_001_test.php": "integration"
+  "tests/Yii2/yii2_user_access_edges_001_test.php": "integration",
+  "tests/Yii2/yii2_inspection_journey_001_test.php": "integration",
+  "tests/Yii2/yii2_inspection_concurrency_001_test.php": "integration",
+  "tests/Yii2/yii2_inspection_browser_001_test.php": "e2e",
+  "tests/Yii2/yii2_inspection_boundaries_001_test.php": "integration"
 }

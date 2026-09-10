@@ -7,6 +7,8 @@ require_once dirname(__DIR__) . '/app/PilotHttp/ChecklistSync.php';
 
 use FMonitor2\PilotHttp\ChecklistSync;
 use FMonitor2\PilotHttp\HttpUser;
+require_once dirname(__DIR__).'/tests/Support/InspectionPhotoIdentityFixture.php';
+use FMonitor2\Tests\Support\InspectionPhotoIdentityFixture;
 use FMonitor2\PilotHttp\PilotHttpInfrastructureUnavailable;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -80,6 +82,7 @@ $tables = [
     'fm2_assignment_orders',
     'fm2_installation_cases',
 ];
+$tables = array_merge(InspectionPhotoIdentityFixture::tables(), $tables);
 $db = null;
 $exit = 0;
 $failure = null;
@@ -112,6 +115,7 @@ try {
         throw new UnexpectedValueException('SETUP_FAILURE: private photo artifact directory cannot be created', 2);
     }
     $ownsNamespace = true;
+    InspectionPhotoIdentityFixture::seed($db,$prefix);
 
     $ddl = [
         'fm2_installation_cases' => 'id BIGINT PRIMARY KEY,legacy_installation_object_id BIGINT NOT NULL,process_state VARCHAR(80) NOT NULL',

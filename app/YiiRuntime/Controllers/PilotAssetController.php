@@ -14,9 +14,9 @@ final class PilotAssetController extends PilotController
     {
         $root = dirname(__DIR__) . '/Assets';
         $map = [];
-        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js'] as $file) {
+        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js','checklist.js','control-queue.js'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/javascript; charset=UTF-8',3600];
-        }foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
+        }$map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
         }$map['favicon.svg'] = [$root . '/favicon.svg','image/svg+xml; charset=UTF-8',31536000];
         if (preg_match('/^fonts\/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$/D', $path, $m) === 1) {
@@ -34,6 +34,7 @@ final class PilotAssetController extends PilotController
         $r->headers->set('Cache-Control', 'public, max-age=' . $entry[2] . ($entry[2] === 31536000 ? ', immutable' : ''));
         $r->headers->set('X-Content-Type-Options', 'nosniff');
         $r->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        if($path==='checklist-sw.js')$r->headers->set('Service-Worker-Allowed','/pilot/');
         $r->content = $bytes;
         return$r;
     }

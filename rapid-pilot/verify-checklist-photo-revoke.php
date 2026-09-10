@@ -8,6 +8,8 @@ require_once dirname(__DIR__) . '/app/autoload.php';
 
 use FMonitor2\PilotHttp\ChecklistSync;
 use FMonitor2\PilotHttp\HttpUser;
+require_once dirname(__DIR__).'/tests/Support/InspectionPhotoIdentityFixture.php';
+use FMonitor2\Tests\Support\InspectionPhotoIdentityFixture;
 use FMonitor2\InstallationProcess\InspectionPhotoContentIndexSchemaMigration;
 use FMonitor2\InstallationProcess\InspectionEvidenceSchemaMigration;
 
@@ -147,6 +149,7 @@ $tables = [
     'fm2_checklist_revisions', 'fm2_checklist_template_associations', 'fm2_checklist_template_snapshots',
     'fm2_workforce_catalog', 'fm2_order_installers', 'fm2_assignment_orders', 'fm2_installation_cases',
 ];
+$tables = array_merge(InspectionPhotoIdentityFixture::tables(), $tables);
 $db = null;
 $failure = null;
 $exit = 0;
@@ -177,6 +180,7 @@ try {
         throw new UnexpectedValueException('SETUP_FAILURE: private photo-revoke artifact directory cannot be created', 2);
     }
     $ownsNamespace = true;
+    InspectionPhotoIdentityFixture::seed($db,$prefix,(int)$fixture['common']['actor_id'],true);
 
     if(!class_exists(InspectionPhotoContentIndexSchemaMigration::class))throw new RuntimeException('canonical photo content-index migration v19 is absent');
     $ddl = [

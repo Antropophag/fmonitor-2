@@ -1381,6 +1381,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-check-section.needs-photo .fm2-section-work-state { background: #fff0cf; color: #9a6200; }
 .fm2-check-section-body { display: none; padding: 0 16px 18px; }
 .fm2-check-section.is-open .fm2-check-section-body { display: block; }
+.fm2-check-content > .fm2-check-section:first-child .fm2-check-section-body { display: block; }
 .fm2-check-items { border-block-start: 1px solid #edf0f4; }
 .fm2-check-item { display: grid; border-block-end: 1px solid #edf0f4; background: #fff; }
 .fm2-check-toggle { display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 12px; align-items: center; inline-size: 100%; min-block-size: 58px; padding: 9px 2px 5px; border: 0; background: transparent; color: inherit; text-align: start; cursor: pointer; }

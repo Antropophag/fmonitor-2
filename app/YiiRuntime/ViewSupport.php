@@ -20,6 +20,7 @@ final class ViewSupport
             $initials .= mb_strtoupper(mb_substr($part, 0, 1));
         }
         $canAdmin = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'access.administer');
+        $canControl = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'construction_control.read');
         $view->beginPage();
         ?><!doctype html>
 <html lang="ru">
@@ -46,6 +47,7 @@ final class ViewSupport
                     <svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-5 8 5v12H4Zm5 0v-6h6v6"/></svg>
                     <span class="fm2-nav-text">Объекты монтажа</span>
                 </a>
+                <?php if ($canControl): ?><a class="fm2-nav-item" href="/pilot/construction-control" aria-label="Стройконтроль"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M6 16V8h12v8M9 8V5h6v3"/></svg><span class="fm2-nav-text">Стройконтроль</span></a><?php endif ?>
                 <?php if ($canAdmin): ?>
                     <span class="fm2-nav-group">Администрирование</span>
                     <a class="fm2-nav-item" href="/pilot/admin/users" aria-label="Пользователи"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 2h2.8l.6 2.5 2 .8 2.2-1.3 2 2-1.3 2.2.8 2 2.3.6v2.8l-2.3.6-.8 2 1.3 2.2-2 2-2.2-1.3-2 .8-.6 2.5h-2.8l-.6-2.5-2-.8-2.2 1.3-2-2 1.3-2.2-.8-2-2.3-.6v-2.8l2.3-.6.8-2L3.8 6l2-2L8 5.3l2-.8.6-2.5Z"/></svg><span class="fm2-nav-text">Пользователи</span></a>
