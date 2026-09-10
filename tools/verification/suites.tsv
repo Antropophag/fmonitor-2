@@ -353,3 +353,6 @@ db	php	tests/Yii2/yii2_preopening_uncertain_commit_001_test.php
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py
 db	php	tests/Yii2/yii2_preopening_concurrency_001_test.php
 db	php	tests/Yii2/yii2_preopening_routes_001_test.php
+db	php	tests/Yii2/yii2_inspection_journey_001_test.php
+db	php	tests/Yii2/yii2_inspection_concurrency_001_test.php
+e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php
