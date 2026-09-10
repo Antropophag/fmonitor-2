@@ -121,6 +121,8 @@ class Inventory(native.NativeSuites):
                 'python3\ttests/Verification/architecture_guard_001_test.py\n',
             ],
             'db': [
+                'php\ttests/Yii2/yii2_user_access_001_test.php\n',
+                'php\ttests/Yii2/yii2_user_access_concurrency_001_test.php\n',
                 'php\ttests/Otiz/object_register_paging_001_test.php\n',
                 'php\ttests/Otiz/object_register_paging_http_001_test.php\n',
                 'php\ttests/Jobs/durable_queue_connection_loss_001_test.php\n',
@@ -176,6 +178,7 @@ class Inventory(native.NativeSuites):
             ],
             'characterization': added,
             'e2e': [
+                'php\ttests/Yii2/yii2_user_access_browser_001_test.php\n',
                 'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php\n',
                 'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',
                 'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',

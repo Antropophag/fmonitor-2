@@ -330,3 +330,6 @@ unit	python3	tests/Verification/change_verification_001_test.py
 unit	python3	tests/Verification/review_source_001_test.py
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php
 e2e	php	tests/Runtime/runtime_settlement_compatibility_001_test.php
+db	php	tests/Yii2/yii2_user_access_001_test.php
+db	php	tests/Yii2/yii2_user_access_concurrency_001_test.php
+e2e	php	tests/Yii2/yii2_user_access_browser_001_test.php

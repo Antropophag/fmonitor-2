@@ -329,5 +329,8 @@
   "tests/Yii2/yii2_authentication_001_test.php": "integration",
   "tests/Yii2/yii2_otiz_settlement_001_test.php": "integration",
   "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "e2e",
-  "tests/Yii2/yii2_session_failure_001_test.php": "integration"
+  "tests/Yii2/yii2_session_failure_001_test.php": "integration",
+  "tests/Yii2/yii2_user_access_001_test.php": "integration",
+  "tests/Yii2/yii2_user_access_browser_001_test.php": "e2e",
+  "tests/Yii2/yii2_user_access_concurrency_001_test.php": "integration"
 }
