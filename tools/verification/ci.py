@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import importlib.util
 
 ROOT = Path(__file__).resolve().parents[2]
 CATEGORIES = ['unit', 'integration', 'e2e', 'governance']
@@ -23,13 +24,19 @@ def harness_run(argv, environment):
         summary = json.loads(result.stdout)
     except json.JSONDecodeError as error:
         raise ValueError(f'delivery harness returned invalid JSON: {error}') from error
-    if os.environ.get('GITHUB_ACTIONS') == 'true':
+    module_spec = importlib.util.spec_from_file_location('fmonitor_delivery_harness', harness)
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    record = module.hydrate_summary(summary)
+    if environment.get('GITHUB_ACTIONS') == 'true':
         for name in ['stdout_path', 'stderr_path']:
             stream = sys.stderr if name == 'stderr_path' else sys.stdout
-            print(Path(summary[name]).read_text(errors='replace'), end='', file=stream)
-    elif summary.get('excerpt'):
-        print(summary['excerpt'], end='' if summary['excerpt'].endswith('\n') else '\n')
-    return summary
+            print(Path(record[name]).read_text(errors='replace'), end='', file=stream)
+    else:
+        print(json.dumps(summary, ensure_ascii=True, sort_keys=True, separators=(',', ':')))
+        if record['outcome'] != 'GREEN' and record.get('excerpt'):
+            print(record['excerpt'], end='' if record['excerpt'].endswith('\n') else '\n')
+    return record
 
 
 def strict_object(pairs):

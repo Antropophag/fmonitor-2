@@ -222,7 +222,7 @@ class VerificationCI(unittest.TestCase):
         selected = self.cli('list', 'integration', '--shard', '1/2')
         self.assertEqual(0, selected.returncode, selected.stderr)
         selected_paths = [row.split('\t')[1] for row in selected.stdout.splitlines()]
-        env = dict(self.env, FAIL_FILE=selected_paths[0])
+        env = dict(self.env, FAIL_FILE=selected_paths[0], GITHUB_ACTIONS='true')
         result = self.cli('run', 'integration', '--shard', '1/2', env=env)
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(selected.stdout.splitlines(), self.trace.read_text().splitlines())
@@ -272,14 +272,21 @@ class VerificationCI(unittest.TestCase):
             out.write(f'unit\tpython3\t{py}\n')
         self.mapping[py] = 'unit'
         self.write_mapping()
-        env = dict(self.env, FAIL_FILE=self.paths[0])
+        env = dict(self.env, FAIL_FILE=self.paths[0], GITHUB_ACTIONS='false')
         result = subprocess.run(['/bin/bash', str(self.root / 'tools/verification/run.sh'), 'category', 'unit'],
                                 cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
         self.assertNotEqual(0, result.returncode)
         self.assertTrue(self.trace.exists(), result.stderr)
         self.assertEqual([f'{self.runtimes[p]}\t{p}' for p in self.paths[:2]] + [f'python3\t{py}'], self.trace.read_text().splitlines())
+        records=[(p,json.loads(p.read_text())) for p in Path(self.evidence_home).glob('records/*.json')]
         for path in self.paths[:2] + [py]:
-            self.assertIn('child-output:' + path, result.stdout)
+            self.assertIn(path,result.stdout)
+            matches=[(p,r) for p,r in records if r['argv'][-1]==path]
+            self.assertEqual(1,len(matches))
+            record_path,record=matches[0]
+            self.assertIn('child-output:'+path,Path(record['stdout_path']).read_text())
+            self.assertIn(str(record_path.resolve()),result.stdout,'interactive results keep evidence navigation')
+        self.assertIn('child-output:'+self.paths[0],result.stdout,'failure diagnostics remain visible')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*exit=7')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=node .*exit=0')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=python3 .*exit=0')
@@ -300,7 +307,10 @@ class VerificationCI(unittest.TestCase):
                                     MAKEOVERRIDES='FMONITOR_TEST_OVERRIDE=1'),
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn('inner-ok', result.stdout)
+        records=[json.loads(p.read_text()) for p in Path(self.evidence_home).glob('records/*.json')]
+        nested=[r for r in records if r['argv'][-1]==self.paths[0]]
+        self.assertEqual(1,len(nested))
+        self.assertIn('inner-ok',Path(nested[0]['stdout_path']).read_text())
 
     def test_make_forwards_integration_shard_without_leaking_make_controls(self):
         shutil.copy(ROOT / 'Makefile', self.root / 'Makefile')

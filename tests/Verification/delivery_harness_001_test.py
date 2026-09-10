@@ -51,17 +51,23 @@ class Harness(unittest.TestCase):
     def run_check(self, code, *options, env=None):
         result = self.cli('run', *options, '--', sys.executable, '-c', code, env=env)
         self.assertTrue(result.stdout.strip().startswith('{'), 'INTENDED_RED structured harness result absent: ' + result.stderr)
-        return result, json.loads(result.stdout)
+        summary = json.loads(result.stdout)
+        record = json.loads(Path(summary['record_path']).read_text())
+        return result, {**record, **summary}
 
     def test_capture_full_bytes_and_compact_summary(self):
         result, summary = self.run_check('import sys; print("x"*100000); sys.stderr.write("stderr-evidence\\n")')
         self.assertEqual(0, result.returncode)
         self.assertEqual('GREEN', summary['outcome'])
+        delivered=json.loads(result.stdout)
+        self.assertEqual({'id','outcome','record_path'},set(delivered),'GREEN delivery contains only identity/outcome/evidence navigation')
+        self.assertLess(len(result.stdout.encode()),len(delivered['record_path'].encode())+180)
         self.assertEqual('x'*100000+'\n', Path(summary['stdout_path']).read_text())
         self.assertEqual('stderr-evidence\n', Path(summary['stderr_path']).read_text())
         self.assertLess(len(result.stdout.encode()), 10000)
         self.assertGreaterEqual(summary['output_bytes'], 100000)
         record = json.loads(Path(summary['record_path']).read_text())
+        self.assertEqual(len(result.stdout.encode()),record['summary_bytes'])
         for field in ['argv', 'cwd', 'source', 'environment', 'started_at', 'duration_seconds', 'exit_code', 'reason']:
             self.assertIn(field, record)
         self.assertFalse(Path(summary['record_path']).is_relative_to(self.repo))
@@ -109,6 +115,29 @@ class Harness(unittest.TestCase):
             try: os.killpg(process.pid,signal.SIGKILL)
             except ProcessLookupError: pass
             process.communicate()
+
+    def test_ci_domain_unknown_words_are_not_outcome_markers(self):
+        logs = [
+            'ASSIGNMENT_ORDER_UNKNOWN_EMPLOYMENT_SCHEMA_COLLATION_001_OK\n',
+            'OBJECT_DETAIL_IMPORT source-rejections metadata=SOURCE_METADATA_INCOMPLETE dictionary=SOURCE_DICTIONARY_VALUE_UNKNOWN mutations=0\nCHARACTERIZATION_OK CHARACTERIZE-OBJECT-DETAIL-IMPORT-001\n',
+            'Domain reason SETUP_FAILURE is data; UNKNOWN is an allowed domain value.\n',
+        ]
+        for log in logs:
+            with self.subTest(log=log):
+                result, data=self.run_check('import sys; sys.stdout.write('+repr(log)+')')
+                self.assertEqual(0,result.returncode)
+                self.assertEqual('GREEN',data['outcome'],'INTENDED_RED domain output misclassified as control marker')
+                self.assertEqual(log,Path(data['stdout_path']).read_text())
+
+    def test_explicit_marker_wins_after_domain_words_and_remains_visible(self):
+        for marker in ['UNKNOWN','SETUP_FAILURE']:
+            with self.subTest(marker=marker):
+                log='DOMAIN_UNKNOWN_SETUP_FAILURE_OK\n'+'x'*20000+'\n  '+marker+': actual unavailable dependency\n'+'y'*20000+'\n'
+                result,data=self.run_check('import sys; sys.stderr.write('+repr(log)+'); raise SystemExit(7)','--intended-red','actual unavailable')
+                self.assertEqual(7,result.returncode)
+                self.assertEqual(marker,data['outcome'])
+                self.assertIn(marker+': actual unavailable',data['excerpt'])
+                self.assertEqual(log,Path(data['stderr_path']).read_text())
 
     def test_pipeline_and_redirect_preserve_child_failure(self):
         output = self.outer / 'redirect.json'
@@ -410,6 +439,115 @@ class Harness(unittest.TestCase):
         (self.repo/'tests/Verification/untracked.py').write_text('print("bad")   \n')
         bad=self.prepare();self.assertNotEqual(0,bad.returncode)
         self.assertIn('whitespace',(bad.stdout+bad.stderr).lower())
+
+    def mapped_run(self, test, red=False):
+        options=['--intended-red','NEW_BEHAVIOR_RED'] if red else []
+        result=self.cli('run',*options,'--','python3',test)
+        self.assertEqual(7 if red else 0,result.returncode,result.stderr)
+        return json.loads(result.stdout)['record_path']
+
+    def mixed_mapping(self, new_tests):
+        value=json.loads((self.repo/self.input).read_text())
+        value['acceptances'][0]['tests']=[self.test,*new_tests]
+        value['acceptances'][0]['gate3_expected']={self.test:'GREEN',**{t:'INTENDED_RED' for t in new_tests}}
+        self.write(self.input,value)
+
+    def reviewer_with(self, records, gate='3'):
+        args=['prepare','--input',self.input,'--base',self.base,'--role','reviewer','--gate',gate]
+        for path in records:args+=['--evidence',path]
+        return self.cli(*args)
+
+    def test_mixed_gate3_new_red_and_existing_green_regression(self):
+        new='tests/Verification/new_behavior_test.py'
+        (self.repo/new).write_text('print("NEW_BEHAVIOR_RED"); raise SystemExit(7)\n')
+        self.mixed_mapping([new])
+        records=[self.mapped_run(new,red=True),self.mapped_run(self.test)]
+        prepared=self.reviewer_with(records)
+        self.assertEqual(0,prepared.returncode,'INTENDED_RED valid mixed Gate3 refused: '+prepared.stderr)
+        package=json.loads(prepared.stdout)
+        self.assertEqual({'GREEN','INTENDED_RED'},{e['outcome'] for e in package['evidence']})
+        self.assertEqual('NOT_REVIEWED',package['approval'])
+        self.assertNotEqual(0,self.reviewer_with(records[:1]).returncode,'all mapped commands remain required')
+        self.assertNotEqual(0,self.reviewer_with(records,gate='5').returncode,'Gate5 still requires all GREEN')
+
+    def test_gate3_cannot_replace_new_behavior_red_with_arbitrary_green(self):
+        new='tests/Verification/new_behavior_test.py';other='tests/Verification/other_behavior_test.py'
+        (self.repo/new).write_text('print("unexpected green")\n')
+        (self.repo/other).write_text('print("NEW_BEHAVIOR_RED"); raise SystemExit(7)\n')
+        self.mixed_mapping([new,other])
+        records=[self.mapped_run(self.test),self.mapped_run(new),self.mapped_run(other,red=True)]
+        rejected=self.reviewer_with(records)
+        self.assertNotEqual(0,rejected.returncode,'one RED does not excuse GREEN for another RED obligation')
+        self.assertIn('evidence',(rejected.stderr+rejected.stdout).lower())
+        value=json.loads((self.repo/self.input).read_text());value['acceptances'][0]['gate3_expected']={t:'GREEN' for t in [self.test,new,other]};self.write(self.input,value)
+        (self.repo/other).write_text('print("green regression")\n')
+        records=[self.mapped_run(t) for t in [self.test,new,other]]
+        self.assertNotEqual(0,self.reviewer_with(records).returncode,'all GREEN cannot satisfy Gate3 RED proof')
+        self.assertEqual(0,self.reviewer_with(records,gate='5').returncode,'same all-GREEN package can satisfy Gate5 completeness')
+
+    def verification(self,*args):
+        return subprocess.run([sys.executable,'tools/delivery/change-verification.py',*args],cwd=self.repo,env=self.env,text=True,capture_output=True,timeout=30)
+
+    def test_prepare_returned_external_plan_works_with_downstream_commands(self):
+        (self.repo/'tests/Verification/change_verification_001_test.py').write_text('print("governance fixture OK")\n')
+        result=self.prepare();self.assertEqual(0,result.returncode,result.stderr)
+        returned=json.loads(result.stdout)['plan']
+        self.assertTrue(Path(returned).is_absolute())
+        self.assertFalse(Path(returned).is_relative_to(self.repo))
+        checked=self.verification('check','--plan',returned)
+        self.assertEqual(0,checked.returncode,'INTENDED_RED prepare plan unusable downstream: '+checked.stderr)
+        (self.repo/'specs/EXAMPLE.md').write_text('updated acceptance contract\n')
+        self.assertNotEqual(0,self.verification('check','--plan',returned).returncode)
+        refreshed=self.verification('refresh','--plan',returned)
+        self.assertEqual(0,refreshed.returncode,refreshed.stderr)
+        self.assertEqual(0,self.verification('check','--plan',returned).returncode)
+        executed=self.verification('run','--plan',returned,'--phase','focused')
+        self.assertEqual(0,executed.returncode,executed.stderr)
+        self.assertTrue(all(x['outcome']=='GREEN' for x in json.loads(executed.stdout)['results']))
+        untrusted=self.outer/'untrusted-plan.json';untrusted.write_bytes(Path(returned).read_bytes())
+        self.assertNotEqual(0,self.verification('check','--plan',str(untrusted)).returncode)
+        traversal=str(Path(returned).parent/'..'/Path(returned).parent.name/'verification-plan.json')
+        self.assertNotEqual(0,self.verification('check','--plan',traversal).returncode)
+        escape=Path(returned).parent/'escape.json';escape.symlink_to(untrusted)
+        self.assertNotEqual(0,self.verification('check','--plan',str(escape)).returncode)
+        tampered=json.loads(Path(returned).read_text());tampered['input']='../private-input.json'
+        (self.outer/'private-input.json').write_text('PRIVATE_SENTINEL')
+        Path(returned).write_text(json.dumps(tampered))
+        rejected=self.verification('refresh','--plan',returned)
+        self.assertNotEqual(0,rejected.returncode)
+        self.assertNotIn('PRIVATE_SENTINEL',rejected.stdout+rejected.stderr)
+
+    def test_active_bindings_survive_interleaved_worktrees(self):
+        linked=self.outer/'worktree-b'
+        self.git('worktree','add','--detach',str(linked),self.base)
+        env=self.fake_gh(False)
+        def call(root,*args,payload=None):
+            return subprocess.run([sys.executable,str(root/'tools/delivery/harness.py'),*args],cwd=root,env=env,input=json.dumps(payload) if payload else None,text=True,capture_output=True,timeout=30)
+        try:
+            packages=[]
+            for root,name in [(self.repo,'task-a'),(linked,'task-b')]:
+                value=json.loads((root/self.input).read_text());value['change']=name;(root/self.input).write_text(json.dumps(value)+'\n')
+                prepared=call(root,'prepare','--input',self.input,'--base',self.base,'--role','root')
+                self.assertEqual(0,prepared.returncode,prepared.stderr);packages.append(json.loads(prepared.stdout))
+            for index,root in enumerate([self.repo,linked]):
+                result=call(root,'hook',payload={'hook_event_name':'SessionStart','source':'resume','session_id':'worktree-'+str(index),'cwd':str(root)})
+                self.assertEqual(0,result.returncode,result.stderr)
+                context=json.loads(result.stdout)['hookSpecificOutput']['additionalContext']
+                self.assertIn(packages[index]['package_path'],context,'INTENDED_RED other worktree overwrote binding')
+                self.assertNotIn(packages[1-index]['package_path'],context)
+            states=[]
+            for root in [self.repo,linked]:
+                result=call(root,'state');self.assertEqual(0,result.returncode,result.stderr)
+                states.append(json.loads(result.stdout)['active_binding'])
+            self.assertNotEqual(states[0]['plan'],states[1]['plan'])
+            for index,name in enumerate(['task-a','task-b']):
+                self.assertEqual(name,json.loads(Path(states[index]['plan']).read_text())['change'])
+                self.assertEqual(packages[index]['package_path'],states[index]['package_path'])
+                worktree=[self.repo,linked][index]
+                checked=subprocess.run([sys.executable,str(worktree/'tools/delivery/change-verification.py'),'check','--plan',states[index]['plan']],cwd=worktree,env=env,text=True,capture_output=True,timeout=30)
+                self.assertEqual(0,checked.returncode,'INTENDED_RED namespaced active plan unusable downstream: '+checked.stderr)
+        finally:
+            self.git('worktree','remove','--force',str(linked))
 
     def test_reviewer_cannot_dispatch_without_evidence(self):
         result = self.cli('prepare', '--input', self.input, '--base', self.base, '--role', 'reviewer')

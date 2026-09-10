@@ -105,3 +105,68 @@ The earlier six short focused logs measured 6,860 raw stream bytes versus 8,547
 bytes of diagnostic JSON including metadata. Thus metadata has overhead for
 short logs; the verbose-log reduction is not universal output savings. Both
 experiments are preserved in `/tmp/fmonitor-harness-measurements-comparison.json`.
+
+## First full CI — observed failure, 2026-09-10
+
+PR89 candidate `98c6eceeac8d606e0215b1d59354d2d2c9f5d8b4` ran full
+[CI34496967157](https://github.com/Antropophag/fmonitor-2/actions/runs/34496967157).
+Plan, fast, unit, governance, E2E and Integration(2/2) passed. Integration(1/2)
+reported two failures among 125 tests, so final verify correctly failed:
+
+- `assignment_order_unknown_employment_schema_collation_001_test.php`
+- `characterize_object_detail_import_001_test.php`
+
+Complete failed-job/REGRESSION_FAILURE inventory and full failed logs were saved
+in `/tmp/fmonitor-harness-ci-34496967157.json` and `-failed.log` before correction.
+Both child streams reported successful behavior; the harness incorrectly treated
+UNKNOWN inside domain identifiers as its control outcome. The correction
+distinguishes explicit line markers from ordinary domain text. A public CLI RED
+replays both actual strings and protects late real setup/unknown markers, their
+precedence and complete logs. Gate3 delta approved; corrected source requires
+new independent Gate5 delta and a new full CI. The failed run is retained and
+is not reclassified as successful; product code/tests and the stand are unchanged.
+
+## Owner follow-up — bounded PR89 corrections
+
+Mixed Gate3 expectations are attached to the existing acceptance mapping, while
+Gate5 remains all GREEN. Prepared external plans are supported by the existing
+verification commands, preserving strict repository paths. Mutable bindings and
+active plans are isolated per concrete worktree. GREEN output contains only
+identity, outcome and retained-record navigation; metadata and streams stay local.
+
+On the same six archived streams (SHA-256 equality checked), the actual updated
+planner/runner delivered 1,504 bytes versus 8,547 before, for 6,860 raw bytes.
+Program/report: `/tmp/pr89-measure-short-replay.py` and
+`/tmp/pr89-short-replay-measurement.json`. Original product tests were not
+re-executed for this formatting replay. Token usage remains UNKNOWN.
+
+First complete local `make test` on artifact source
+`ee0a059d04c4a78816ba664922c77bb84e7aabc94f2fecfbc68ec20aea1d613b`
+passed 359 leaf checks plus architecture/lint and literal VERIFY_OK in 1976s.
+Record: `/tmp/pr89-local-full-first-result.json`. Pinned runtimes and isolated
+Compose project `fmonitor2-harness-pr89`, port23307 preserved the existing23306 DB
+and stand. This is evidence for that snapshot, not the final corrected commit.
+
+Independent Gate5 subsequently found the generated namespaced active-plan name
+was outside the resolver's filename allowlist. The new public-seam RED uses each
+worktree's actual returned state plan with `check --plan`; Gate3 approved that
+correction. Only the exact generated 20-hex name grammar is admitted, retaining
+containment and source-path guards. A final local full run and full GitHub CI on
+the final committed source remain required; no merge/deployment is authorized.
+
+## Final correction checkpoint — before final committed runs
+
+Gate5 delta APPROVED the final source
+`62d35eb0c17a7a1ab3a4fd73b04bc7dc25a6675241f6e7b0c76a43b48f020584`,
+package `~/.local/share/fmonitor-2/delivery-harness/packages/20260910T172504Z-d7d428e534/`.
+Final focused evidence `/tmp/pr89-final-fixes-focused.json`: planner16, harness24,
+CI contracts16, native10, inventory16 and architecture guard all GREEN. The real
+current worktree's returned active plan passed refresh/check in
+`/tmp/pr89-real-active-plan-check.json`. Final native startup/resume/worktree
+binding proof is `/tmp/pr89-final-native-smoke.json`. Gate3 approvals are retained
+for the exact final contract/tests; package preparation itself remains NOT_REVIEWED.
+
+Only the appended independent code review, this dated delivery record and task
+metadata differ after the reviewed snapshot. Code/tests are compared byte-for-byte
+before the final commit. The subsequent full local run and GitHub CI report their
+results outside this commit; this record does not predict their outcomes.

@@ -5,6 +5,7 @@ import fnmatch
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import re
 import subprocess
 import sys
 
@@ -24,6 +25,41 @@ def strict_object(pairs):
 
 def load_json(relative):
     return json.loads(repo_path(relative).read_text(), object_pairs_hook=strict_object)
+
+
+def plan_path(value):
+    """Resolve only generated plan artifacts outside the repository."""
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise ValueError("invalid plan path")
+    lexical = PurePosixPath(value)
+    if ".." in lexical.parts:
+        raise ValueError("unsafe plan path traversal")
+    if not lexical.is_absolute():
+        return repo_path(value)
+    import harness
+    candidate = Path(value)
+    if candidate.is_symlink():
+        raise ValueError("plan artifact cannot be a symlink")
+    resolved = candidate.resolve()
+    home = harness.evidence_home()
+    allowed = False
+    for directory in (home / "packages", home / "state"):
+        try:
+            resolved.relative_to(directory.resolve())
+            allowed = True
+        except ValueError:
+            continue
+    supported_name = (resolved.name == "verification-plan.json"
+                      or re.fullmatch(r"active-verification-plan-[0-9a-f]{20}\.json", resolved.name))
+    if not allowed or not supported_name:
+        raise ValueError("plan artifact is outside trusted evidence directories")
+    if not resolved.is_file():
+        raise ValueError("plan artifact is unavailable")
+    return resolved
+
+
+def load_plan(value):
+    return json.loads(plan_path(value).read_text(), object_pairs_hook=strict_object)
 
 
 def repo_path(value):
@@ -256,7 +292,8 @@ def build(base_ref, input_name):
     normalized_acceptances = []
     required = {"spec_id", "acceptance_id", "spec_path", "seam", "tests"}
     for acceptance in acceptances:
-        if not isinstance(acceptance, dict) or set(acceptance) != required:
+        if (not isinstance(acceptance, dict) or not required <= set(acceptance)
+                or not set(acceptance) <= required | {"gate3_expected"}):
             raise ValueError("malformed acceptance mapping")
         identity = (acceptance["spec_id"], acceptance["acceptance_id"])
         if any(not isinstance(acceptance[key], str) or not acceptance[key] for key in ["spec_id", "acceptance_id", "spec_path", "seam"]):
@@ -278,7 +315,16 @@ def build(base_ref, input_name):
             acceptance_tests.append(test)
             if test in inventory:
                 required_categories.add(inventory[test])
-        normalized_acceptances.append({**acceptance, "tests": sorted(tests)})
+        expected = acceptance.get("gate3_expected")
+        if expected is not None:
+            if (not isinstance(expected, dict) or set(expected) != set(tests)
+                    or any(value not in {"INTENDED_RED", "GREEN"} for value in expected.values())):
+                raise ValueError("invalid Gate 3 expected outcomes")
+        normalized = {key: acceptance[key] for key in required}
+        normalized["tests"] = sorted(tests)
+        if expected is not None:
+            normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
+        normalized_acceptances.append(normalized)
     commands = []
     command_keys = set()
     def add(argv, phase, rationale):
@@ -329,7 +375,7 @@ def build(base_ref, input_name):
 
 
 def checked_plan(plan_name):
-    plan = load_json(plan_name)
+    plan = load_plan(plan_name)
     if not isinstance(plan, dict) or plan.get("version") != 1:
         raise ValueError("invalid plan")
     expected = build(plan.get("base_ref"), plan.get("input"))
@@ -364,12 +410,12 @@ def main():
             checked_plan(args.plan)
             print("CHANGE_VERIFICATION_OK")
         elif args.command == "refresh":
-            old = load_json(args.plan)
+            old = load_plan(args.plan)
             if not isinstance(old, dict):
                 raise ValueError("invalid plan")
             refreshed = build(old.get("base_ref"), old.get("input"))
             changed = old.get("commands") != refreshed.get("commands")
-            repo_path(args.plan).write_text(canonical(refreshed))
+            plan_path(args.plan).write_text(canonical(refreshed))
             print(canonical({"obligations_changed": changed}), end="")
         else:
             plan = checked_plan(args.plan)
@@ -384,16 +430,20 @@ def main():
                     summary = json.loads(result.stdout)
                 except json.JSONDecodeError as error:
                     raise ValueError(f"harness returned invalid result: {error}") from error
-                results.append({"argv": command["argv"], "outcome": summary["outcome"],
-                                "exit_code": summary["exit_code"], "record_path": summary["record_path"],
-                                "excerpt": summary["excerpt"]})
+                import harness
+                record = harness.hydrate_summary(summary)
+                item = {"argv": command["argv"], "outcome": record["outcome"],
+                        "exit_code": record["exit_code"], "record_path": record["record_path"]}
+                if record["outcome"] != "GREEN":
+                    item["excerpt"] = record["excerpt"]
+                results.append(item)
                 if result.returncode and not args.diagnostic:
                     print(canonical({"results": results}), end="")
                     return result.returncode
             failures = [item for item in results if item["outcome"] != "GREEN"]
             print(canonical({"results": results}), end="")
             if failures:
-                return failures[0]["exit_code"] or 1
+                return failures[0].get("exit_code", 1) or 1
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         print(f"SETUP_FAILURE: {error}", file=sys.stderr)
         return 1

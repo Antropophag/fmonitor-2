@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import signal
 import stat
@@ -160,6 +161,19 @@ def _records():
     return list(records.values())
 
 
+def hydrate_summary(summary):
+    """Load omitted GREEN metadata from the canonical retained record."""
+    if not isinstance(summary, dict) or not all(key in summary for key in ("id", "outcome", "record_path")):
+        raise ValueError("invalid harness summary")
+    path = Path(summary["record_path"])
+    if not path.is_absolute() or path.parent.resolve() != (evidence_home() / "records").resolve():
+        raise ValueError("harness record path is outside the evidence store")
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if record.get("id") != summary["id"] or record.get("outcome") != summary["outcome"]:
+        raise ValueError("harness summary does not match retained record")
+    return {**record, **summary}
+
+
 def _auto_reason(argv, cwd, source, fixture, environment):
     previous = [r for r in _records() if r.get("argv") == argv and r.get("cwd") == cwd]
     if not previous:
@@ -179,18 +193,27 @@ def _excerpt(stdout, stderr, outcome, marker):
     if len(combined) <= 4096:
         return combined.decode("utf-8", errors="replace")
     pieces = [combined[:1536], combined[-1536:]]
-    needles = [b"SETUP_FAILURE", b"UNKNOWN", b"REGRESSION_FAILURE", b"AssertionError", b"FAIL", b"ERROR"]
+    positions = [position for _, position in explicit_outcome_markers(combined)]
+    needles = [b"REGRESSION_FAILURE", b"AssertionError", b"FAIL", b"ERROR"]
     if marker:
         needles.append(marker.encode())
     for needle in needles:
         position = combined.find(needle)
         if position >= 0:
-            pieces.insert(1, combined[max(0, position - 256):position + 768])
+            positions.append(position)
+    for position in sorted(set(positions)):
+        pieces.insert(-1, combined[max(0, position - 256):position + 768])
     value = b"\n... compacted; full logs retained ...\n".join(pieces)[:4080]
     decoded = value.decode("utf-8", errors="replace")
     while len(decoded.encode("utf-8")) > 4096:
         decoded = decoded[:-1]
     return decoded
+
+
+def explicit_outcome_markers(content):
+    """Return protocol markers at line starts without matching domain words."""
+    pattern = re.compile(br"(?m)^[ \t]*(SETUP_FAILURE|UNKNOWN)(?=[:]|[ \t]*(?:\r?$))")
+    return [(match.group(1).decode("ascii"), match.start(1)) for match in pattern.finditer(content)]
 
 
 def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
@@ -220,9 +243,10 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
             raw_exit = process.returncode
             child_exit = 128 + (-raw_exit) if raw_exit < 0 else raw_exit
             text = stdout + b"\n" + stderr
-            if b"SETUP_FAILURE" in text:
+            explicit = {name for name, _ in explicit_outcome_markers(text)}
+            if "SETUP_FAILURE" in explicit:
                 outcome = "SETUP_FAILURE"
-            elif b"UNKNOWN" in text:
+            elif "UNKNOWN" in explicit:
                 outcome = UNKNOWN
             elif raw_exit < 0:
                 outcome = "INTERRUPTED"
@@ -277,15 +301,13 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
               "exit_code": child_exit, "raw_child_returncode": raw_exit,
               "outcome": outcome, "stdout_path": str(stdout_path),
               "stderr_path": str(stderr_path), "output_bytes": len(stdout) + len(stderr)}
+    if outcome == "GREEN":
+        summary = {"id": identifier, "outcome": outcome, "record_path": str(record_path)}
+    else:
+        summary = {key: record[key] for key in ("id", "outcome", "exit_code", "stdout_path", "stderr_path", "output_bytes")}
+        summary.update({"record_path": str(record_path), "excerpt": excerpt})
+    record["summary_bytes"] = len((canonical(summary) + "\n").encode())
     _write_json(record_path, record)
-    summary = {key: record[key] for key in ("id", "outcome", "exit_code", "stdout_path", "stderr_path", "output_bytes")}
-    summary.update({"record_path": str(record_path), "excerpt": excerpt})
-    summary["summary_bytes"] = 0
-    while True:
-        size = len((canonical(summary) + "\n").encode())
-        if summary["summary_bytes"] == size:
-            break
-        summary["summary_bytes"] = size
     print(canonical(summary))
     return child_exit, summary
 

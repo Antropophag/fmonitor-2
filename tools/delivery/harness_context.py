@@ -46,7 +46,7 @@ def _source(helpers, root):
 
 
 def _state_file(helpers):
-    identity = hashlib.sha256(str(helpers.ROOT).encode()).hexdigest()[:20]
+    identity = _worktree_key(helpers)
     path = helpers.evidence_home() / "state" / ("github-" + identity + ".json")
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -96,10 +96,10 @@ def _compute_state(helpers):
         except (OSError, TypeError, json.JSONDecodeError):
             pass
     state = {"source": source, "head": head, "dirty": dirty, "github": github,
-             "ci": ci, "deployment": "UNKNOWN"}
+             "ci": ci, "deployment": "UNKNOWN", "active_binding": _active_binding(helpers)}
     state["next_action"] = ("merged; await the next owner task" if github.get("state") == "MERGED"
                             else "prepare/review exact source before publication")
-    live_path = helpers.evidence_home() / "state" / ("live-" + hashlib.sha256(str(root).encode()).hexdigest()[:20] + ".json")
+    live_path = helpers.evidence_home() / "state" / ("live-" + _worktree_key(helpers) + ".json")
     live_path.write_text(json.dumps(state, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     return state
 
@@ -162,11 +162,23 @@ def _append_hook_event(helpers, event):
         helpers.append_event("review_return", payload, identity=identity.rsplit(":", 1)[0] + ":return")
 
 
+def _worktree_realpath(helpers):
+    return str(Path(helpers.ROOT).resolve())
+
+
+def _worktree_key(helpers):
+    return hashlib.sha256(_worktree_realpath(helpers).encode()).hexdigest()[:20]
+
+
+def _binding_path(helpers):
+    return helpers.evidence_home() / "state" / ("active-binding-" + _worktree_key(helpers) + ".json")
+
+
 def _active_binding(helpers):
-    path = helpers.evidence_home() / "state" / "active-binding.json"
+    path = _binding_path(helpers)
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-        if value.get("repository") == str(helpers.ROOT):
+        if value.get("worktree") == _worktree_realpath(helpers):
             return value
     except (OSError, TypeError, json.JSONDecodeError):
         pass
@@ -180,12 +192,12 @@ def _refresh_active_binding(helpers):
     module = _load_change_verification(helpers.ROOT)
     plan = module.build(active["base"], active["input"])
     state_dir = helpers.evidence_home() / "state"
-    refreshed = state_dir / "active-verification-plan.json"
+    refreshed = state_dir / ("active-verification-plan-" + _worktree_key(helpers) + ".json")
     refreshed.write_text(module.canonical(plan), encoding="utf-8")
     active.update(source=_source(helpers, helpers.ROOT), plan=str(refreshed),
                   contracts=sorted({item["spec_path"] for item in plan["acceptances"]}),
                   obligation_count=len(plan["commands"]), refreshed_at=_now())
-    binding_path = state_dir / "active-binding.json"
+    binding_path = _binding_path(helpers)
     temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
     temporary.write_text(json.dumps(active, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     os.replace(temporary, binding_path)
@@ -427,6 +439,18 @@ def _mapped_commands(plan):
             if item.get("rationale") == "acceptance mapping"}
 
 
+def _gate_expectations(plan, gate):
+    if gate == "5":
+        return {command: "GREEN" for command in _mapped_commands(plan)}
+    by_test = {}
+    for acceptance in plan.get("acceptances", []):
+        declared = acceptance.get("gate3_expected")
+        for test in acceptance.get("tests", []):
+            by_test[test] = declared[test] if declared is not None else "INTENDED_RED"
+    return {tuple(item["argv"]): by_test[item["argv"][-1]]
+            for item in plan.get("commands", []) if item.get("rationale") == "acceptance mapping"}
+
+
 def _normalized_argv(argv):
     if not argv:
         return tuple()
@@ -436,7 +460,7 @@ def _normalized_argv(argv):
     return (first, *argv[1:])
 
 
-def _validate_evidence(path, source, mapped, gate):
+def _validate_evidence(path, source, expectations):
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
@@ -449,11 +473,12 @@ def _validate_evidence(path, source, mapped, gate):
         current_environment = None
     if current_environment is not None and record.get("environment") != current_environment:
         raise ValueError("evidence environment does not match current environment")
-    expected = "INTENDED_RED" if gate == "3" else "GREEN"
-    if record.get("outcome") != expected:
-        raise ValueError(f"Gate {gate} evidence must be {expected}")
-    if _normalized_argv(record.get("argv", [])) not in mapped:
+    argv = _normalized_argv(record.get("argv", []))
+    expected = expectations.get(argv)
+    if expected is None:
         raise ValueError("evidence does not cover a mapped acceptance")
+    if record.get("outcome") != expected:
+        raise ValueError(f"evidence outcome must be {expected} for this mapped acceptance")
     return {"record": str(path), "argv": record["argv"], "outcome": record["outcome"], "source": source}
 
 
@@ -517,14 +542,17 @@ def command_prepare(args, helpers):
     missing = sorted({test for item in plan_value["acceptances"] for test in item["tests"]
                       if not (root / test).is_file()})
     evidence = []
-    mapped = _mapped_commands(plan_value)
+    expectations = _gate_expectations(plan_value, args.gate)
+    mapped = set(expectations)
     for value in getattr(args, "evidence", None) or []:
-        evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, mapped, args.gate))
+        evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, expectations))
     covered = {_normalized_argv(item["argv"]) for item in evidence}
     if args.role == "reviewer" and mapped - covered:
         raise ValueError("reviewer evidence does not cover every mapped acceptance test")
     if args.role == "reviewer" and (missing or not evidence):
         raise ValueError("reviewer package requires existing mapped tests and current Gate evidence")
+    if args.role == "reviewer" and args.gate == "3" and "INTENDED_RED" not in expectations.values():
+        raise ValueError("Gate 3 requires at least one intended RED acceptance")
     if getattr(args, "previous", None) and not getattr(args, "findings", None):
         raise ValueError("previous snapshot requires findings")
     snapshot_path = package_dir / "snapshot"
@@ -550,9 +578,10 @@ def command_prepare(args, helpers):
         _delta(root, previous, snapshot_path, delta)
         result["delta"] = str(delta)
     Path(result["package_path"]).write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-    binding_path = helpers.evidence_home() / "state" / "active-binding.json"
+    binding_path = _binding_path(helpers)
     binding_path.parent.mkdir(parents=True, exist_ok=True)
-    binding = {"repository": str(root), "input": args.input, "base": args.base,
+    binding = {"repository": str(root), "worktree": _worktree_realpath(helpers),
+               "input": args.input, "base": args.base,
                "source": source, "plan": str(plan_path), "package_path": result["package_path"],
                "contracts": contracts, "prepared_at": _now()}
     temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)

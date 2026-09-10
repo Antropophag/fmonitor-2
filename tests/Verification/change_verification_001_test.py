@@ -294,6 +294,48 @@ class ChangeVerification(unittest.TestCase):
         self.assertIn("integration", plan["required_categories"])
         self.assertIn(["php", "tests/Runtime/runtime_storage_001_test.php"], [x["argv"] for x in plan["commands"]])
 
+    def test_gate3_expectations_are_part_of_existing_mapping_and_strict(self):
+        acceptance=self.input['acceptances'][0]
+        acceptance['gate3_expected']={acceptance['tests'][0]:'GREEN'}
+        self.write_json('change.json',self.input)
+        result=self.plan()
+        self.assertEqual(0,result.returncode,'INTENDED_RED expected outcomes cannot be mapped: '+result.stderr)
+        plan=json.loads((self.root/'plan.json').read_text())
+        self.assertEqual(acceptance['gate3_expected'],plan['acceptances'][0]['gate3_expected'])
+        acceptance['gate3_expected']={acceptance['tests'][0]:'INTENDED_RED'}
+        self.write_json('change.json',self.input)
+        self.assertNotEqual(0,self.cli('check','--plan','plan.json').returncode)
+        self.assertEqual(0,self.cli('refresh','--plan','plan.json').returncode)
+        for bad in [{}, {'tests/other.php':'GREEN'}, {acceptance['tests'][0]:'APPROVED'}, []]:
+            acceptance['gate3_expected']=bad;self.write_json('change.json',self.input)
+            self.assertNotEqual(0,self.plan().returncode,'malformed intent cannot bypass RED')
+
+    def test_six_short_success_logs_have_compact_diagnostic_delivery(self):
+        (self.root/'app/PilotHttp/Action.php').write_text('before\n')
+        files=['tests/InstallationProcess/log_'+str(i)+'_test.py' for i in range(6)]
+        log=''.join('case %02d checked ... ok\n'%i for i in range(50))+'Ran 50 checks\nOK\n'
+        for path in files:(self.root/path).write_text('print('+repr(log)+',end="")\n')
+        self.input['planned_paths']=files
+        self.input['acceptances'][0]['tests']=files
+        self.write_json('change.json',self.input)
+        for boundary in self.policy['boundaries']:
+            if boundary['name']=='tests':boundary['categories']=['governance']
+        self.policy['category_argv']['governance']=[['python3',files[0]]]
+        self.write_json('.quality-graph/verification-policy.json',self.policy)
+        self.assertEqual(0,self.plan().returncode)
+        external=tempfile.TemporaryDirectory(prefix='short-output-evidence-');self.addCleanup(external.cleanup)
+        env=dict(os.environ,FMONITOR_HARNESS_HOME=external.name)
+        result=self.cli('run','--plan','plan.json','--phase','focused','--diagnostic',env=env)
+        self.assertEqual(0,result.returncode,result.stderr)
+        results=json.loads(result.stdout)['results']
+        self.assertEqual(6,len(results))
+        self.assertTrue(all(r['outcome']=='GREEN' for r in results))
+        records=[json.loads(Path(r['record_path']).read_text()) for r in results]
+        raw=sum(r['output_bytes'] for r in records)
+        self.assertEqual(6*len(log.encode()),raw)
+        self.assertLess(len(result.stdout.encode()),raw,'INTENDED_RED metadata/success logs inflate delivered output')
+        for r in records:self.assertEqual(log,Path(r['stdout_path']).read_text())
+
     def test_harness_diagnostic_retains_all_selected_results(self):
         self.assertEqual(0, self.plan().returncode)
         external = tempfile.TemporaryDirectory(prefix='diagnostic-executables-'); self.addCleanup(external.cleanup)

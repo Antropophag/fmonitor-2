@@ -87,12 +87,14 @@ run_selected() {
     outcome="$($harness_python -c 'import json,sys;print(json.loads(sys.argv[1])["outcome"])' "$summary")"
     [[ "$outcome" == GREEN || "$status" -ne 0 ]] || status=1
     "$harness_python" -c 'import json,os,sys
-d=json.loads(sys.argv[1])
+d=json.loads(sys.argv[1]); r=json.load(open(d["record_path"]));
+assert r["id"]==d["id"] and r["outcome"]==d["outcome"]
 if os.environ.get("GITHUB_ACTIONS")=="true":
-    sys.stdout.write(open(d["stdout_path"],errors="replace").read())
-    sys.stderr.write(open(d["stderr_path"],errors="replace").read())
+    sys.stdout.write(open(r["stdout_path"],errors="replace").read())
+    sys.stderr.write(open(r["stderr_path"],errors="replace").read())
 else:
-    print(d.get("excerpt", ""), end="" if d.get("excerpt", "").endswith("\n") else "\n")' "$summary"
+    print(sys.argv[1])
+    if r["outcome"]!="GREEN": print(d.get("excerpt", ""), end="" if d.get("excerpt", "").endswith("\n") else "\n")' "$summary"
     printf 'VERIFY_TIMING suite=%s runtime=%s file=%s seconds=%s exit=%s\n' \
       "$suite" "$runtime" "$file" "$((SECONDS - started))" "$status"
     if ((status != 0)); then

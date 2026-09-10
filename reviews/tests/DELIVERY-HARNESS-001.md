@@ -109,6 +109,18 @@ Both requested sensitivities are now present. The fixture puts a foreign `UserPr
 
 The focused test still fails only because the public `install` command is absent, so `install-red-v2.log` is qualifying RED. Gate 3 is approved for this bounded native fallback. This does not approve its implementation or replace the required real installed-client smoke and independent Gate 5.
 
+## Gate 3 — CI outcome marker grammar
+
+- CI evidence: `/tmp/fmonitor-harness-ci-34496967157.json` and `/tmp/fmonitor-harness-ci-34496967157-failed.log`
+- RED: `/tmp/fmonitor-harness-baseline/ci-marker-red.log`
+- Verdict: **APPROVED**
+
+The real CI inventory isolates two false harness failures in Integration 1: successful product suites emitted domain identifiers containing `UNKNOWN`; verify failed only as a consequence. All other jobs were GREEN. The correction keeps product tests and their output unchanged.
+
+The contract now limits control markers to a line prefix, optional horizontal indentation, and `:` or end-of-line. The executable tests pin both exact CI domain strings and ordinary prose as GREEN, then place real UNKNOWN and SETUP_FAILURE marker lines after domain words and 20 KiB of noise. They require marker precedence over intended RED/child exit and require the exact late diagnostic in the compact excerpt while preserving the full stderr bytes. The four current failures are qualifying runner RED, including the prior bug where an earlier domain `SETUP_FAILURE` substring masks a later explicit UNKNOWN marker.
+
+This bounded spec/test delta is approved. Implementation must honor both spaces and tabs as horizontal indentation; independent Gate 5 delta and a new full exact-source CI are still required.
+
 ## Gate 3 real consumer-owner correction
 
 - Test: `tests/Verification/change_verification_001_test.py::test_harness_refresh_and_confirmed_consumers`
@@ -128,3 +140,37 @@ The focused failure names all five absent consumers for the first real owner and
 Each existing runner contract adds one bounded synthetic case whose executable prints `SETUP_FAILURE` and exits zero. The native suite and CI category must still return nonzero; selected commands/results remain visible. This directly protects the already approved rule that a setup outcome cannot become GREEN through a zero child exit, at both aggregation layers. Existing runner expectations and semantic scope are unchanged.
 
 Both focused cases currently pass because the executor draft already contains the corresponding correction. Despite the historical `*-red.log` filenames, their contents are GREEN regression evidence and are not represented here as RED or as implementation/Gate 5 approval.
+
+## PR89 bounded corrections — Gate 3
+
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T161944Z-b7d8f1c0df/package.json`
+- Base: `98c6eceeac8d606e0215b1d59354d2d2c9f5d8b4`
+- Plan SHA-256: `51588b37413b49b00de8788b79ad0677943eea94be5bbeefad1cf7fef4fb60ed`
+- RED: `/tmp/pr89-fixes-harness-red.log`, `/tmp/pr89-fixes-planner-red.log`, `/tmp/pr89-fixes-short-ci-red.log`
+- Verdict: **APPROVED**
+
+The bounded matrix is complete for the requested corrections:
+
+1. Optional `gate3_expected` remains inside each existing acceptance mapping, has exactly the mapped test keys and only GREEN/INTENDED_RED values, becomes plan-bound input, and defaults conservatively to all intended RED. Mixed Gate 3 requires every command's declared outcome and at least one actual RED; one RED cannot substitute for a different RED obligation, all-GREEN cannot pass Gate 3, and Gate 5 still requires all GREEN.
+2. The exact absolute plan returned by `prepare` must support check, stale rejection, refresh, recheck and focused run. Tests reject an untrusted copy, lexical parent traversal, symlink escape and a tampered source-input traversal without leaking the external sentinel. Repo-relative source/spec/test/input validation remains unchanged.
+3. Two linked worktrees prepare interleaved distinct changes into a shared evidence home. Resume context and `state.active_binding` must return only each canonical worktree's package/mutable plan; dispatcher Git-common-dir authorization remains shared. This directly detects the observed overwrite class.
+4. GREEN CLI delivery is limited to `id`, `outcome` and `record_path`; retained records still carry complete provenance, paths, byte counts and summary size. Six short successful commands must deliver less diagnostic JSON than their unchanged saved streams. Existing failure excerpts and CI full-stream assertions remain.
+
+The five harness failures, two planner failures and one short-output failure are qualifying missing/incorrect behavior, not setup failures. The `record_path.resolve()` adjustment only canonicalizes the macOS `/var` alias in an assertion and changes no expectation. The earlier real-CI UNKNOWN marker defect has separate approved tests/evidence and is not used to explain these RED cases. No product behavior, architecture migration, approval automation, merge or deployment enters this scope. Implementation may proceed; full locally available regression, independent Gate 5 and a new exact-source full CI remain mandatory.
+
+### Nested make retained-output assertion
+
+- Test: `tests/Verification/verification_ci_001_test.py::test_make_category_does_not_leak_into_nested_make`
+- Evidence: `/tmp/pr89-nested-make-retained-output.log`
+- Verdict: **APPROVED**
+
+The existing success and make-environment leak guards are unchanged. The literal `inner-ok` is now required in the full retained stdout of the unique runner record whose argv names the exact mapped PHP test, rather than in compact interactive stdout. This preserves the behavioral assertion while conforming to the approved successful-output contract; it neither weakens the nested-make check nor hides failures.
+
+### Namespaced active-plan public seam
+
+- Test: `tests/Verification/delivery_harness_001_test.py::Harness.test_active_bindings_survive_interleaved_worktrees`
+- RED record: `1789060470415731000-86c58e226a9c4eb69963fa22f60d361f`
+- RED summary: `/tmp/pr89-active-plan-red.json`
+- Verdict: **APPROVED**
+
+For each independently prepared linked worktree, the test now passes its own `state.active_binding.plan` to the actual `change-verification.py check --plan` CLI from that worktree and requires success. Existing distinct plan/change/package and resume-context assertions remain. The focused run fails exactly because the trusted resolver rejects the generated namespaced state filename; the harness correctly records that expected failure as INTENDED_RED with no source drift. This directly covers the Gate 5 HIGH finding without broadening path trust or architecture scope. Implementation may admit only the exact generated 20-hex active-plan filename grammar; a fresh Gate 5 delta remains required.
