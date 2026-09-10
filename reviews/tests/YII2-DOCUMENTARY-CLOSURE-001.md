@@ -121,3 +121,22 @@ None.
 The delta makes the existing A4 rule observable at both material stages. It changes the private fixture case to `needs_assignment_change` after 85% and again after both documentary roots exist, requires the public card to remain readable and fact-preserving, and rejects all four mutation forms. `finally` restores `working`, so subsequent cases remain isolated. The retained HTTP RED proves the pre-PTO stage already hides record forms and then fails for the intended missing behavior—`correct_pto` remains visible in the nonworking post-document stage—while the unchanged concurrency and browser paths remain green.
 
 This bounded test delta is approved for implementation. The prior Gate 5 approval remains valid only for source `d3dbc47c...`; the production correction requires a new exact-source GREEN and independent Gate 5 delta review.
+
+## Gate 3 A7 CI-roster alignment review
+
+- Reviewer: Codex independent reviewer `/root/documentary_gate3`; authored neither the specification/tests nor the implementation.
+- Scope: one expected E2E roster literal in `tests/Verification/verification_ci_001_test.py`; no product assertion, suite routing, category assignment or production change.
+- RED predecessor: base commit `7aea9393fac2970c08d08b4b7a8f6e40840db366` plus snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T194712Z-3ac7eaf02d/snapshot`, patch SHA-256 `22068ff09bda580aa8ab417c04948482b801140aa5db9feac5fed4e125b0a42e`, source digest `5fb695c6bae3ed84f5b2c4746333ddc58561e3405056664630490974e4fd82ff`, plan SHA-256 `31e101144ba34be9b38e1163e3530e88a9758611b678be1aeba9211e7e7f9592`.
+- Corrected source: the same base plus snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T194801Z-2e5dcfb59e/snapshot`, patch SHA-256 `6ec70896901cb7455e3bd623bd03ee052c1829f18386aa9fc3bdd6df58ae9c8a`, source digest `dc9ac4f7174279fb066b193ce4df5d59998332e5f2f2a7ef0dadd3b8ff270db0`, plan SHA-256 `24b9213d5b9613459c41b3c52ff5981b291a8d33b9ade410a7252cfbe063b669`.
+- Evidence: `verification_ci_001_test.py` record `1789069483334595000-af1564d1ed9c43e1a4cc2e493090c8d2` is intended RED only because `test_real_composition_keeps_contracts_once` expected 13 E2E rows while the real suite returned the already registered documentary browser as row 14. Corrected record `1789069633889502000-afff3f2d89e148ef8363f4cd2c54b92a` is GREEN, 16/16, on exact source `dc9ac4f7...`; neither record has source drift.
+- Verdict: `APPROVED`.
+
+### Findings
+
+None.
+
+### Disposition
+
+The added literal `php\ttests/Yii2/yii2_documentary_browser_001_test.php` exactly matches the existing E2E member in `tools/verification/suites.tsv`, its `e2e` category in `tools/verification/categories.json`, and the approved inventory allowance. It appears once in the corrected expected list. The RED is a stale compatibility expectation exposed by the first full CI, not missing domain behavior or a new acceptance requirement. All routing, partition, execution, continuation and aggregation assertions remain unchanged.
+
+This bounded A7 test-alignment delta is approved. A new full CI on the committed correction remains required.

@@ -29,3 +29,13 @@ Exact-source GREEN: HTTP1789068471692036000-9e3a240b113d46588fee95da0e7fbfa9; co
 Предыдущие focused inventory/planner/architecture-guard/storage/Compose smoke и adjacent card/queue/inspection GREEN сохраняются для неизменённых соответствующих границ; полный CI на exact committed candidate остаётся обязательным. Это не общий GREEN cache и не waiver CI.
 
 Root просмотрел desktop/mobile из browser evidence; механический detector по трём изменённым views вернул []. Последняя правка условий не меняет working-case layout. До PR: ~58 минут с18:33UTC; Gate3 два возврата, затем approved helper/observer/A4 deltas; Gate5 первоначальный и A4 delta APPROVED. Время/повторы после CI будут отражены closing metadata. Token/cost telemetry UNKNOWN. Стенд не переключался.
+
+## Первый full CI — полный перечень результатов
+
+[CI34520977300](https://github.com/Antropophag/fmonitor-2/actions/runs/34520977300) на exact commit `7aea9393fac2970c08d08b4b7a8f6e40840db366` завершился FAILURE. Unit, E2E, обе Integration shards, plan и quality-results SUCCESS. Fast и governance: единственное failing assertion `verification_ci_001_test.py::test_real_composition_keeps_contracts_once` — ожидаемый literal E2E list не содержит нового documentary browser member. Verify failed как агрегатор этих двух результатов. Полные логи всех проверочных jobs собраны вне repo: `/private/tmp/fmonitor-pr91-ci-34520977300/`; единственный runner REGRESSION_FAILURE — verification_ci_001_test.py. Новые HTTP/concurrency/browser имеют literal PASS в CI. До получения полного inventory исправлений не было.
+
+Коррекция A7 обновляет только literal ожидаемый состав CI, не ослабляет uniqueness/coverage assertions и не меняет production/test routing. Независимый delta review и новый full exact-source CI обязательны; первый failure не переклассифицируется.
+
+## Исправленный состав CI
+
+A7 test-alignment и verification-only Gate5 APPROVED: corrected source `dc9ac4f7174279fb066b193ce4df5d59998332e5f2f2a7ef0dadd3b8ff270db0`, package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T194801Z-2e5dcfb59e/`. CI contract16/16 GREEN1789069633889502000-afff3f2d89e148ef8363f4cd2c54b92a. Единственное изменение исполняемого test-кода — добавлен ожидаемый documentary browser member; production bytes совпадают с первым кандидатом7aea9393. После snapshot добавлены только review/этот delivery appendix. Новый полный CI обязателен для correction commit.
