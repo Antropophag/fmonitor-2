@@ -10,7 +10,9 @@
   enables autonomous mode for the current assignment; separate sol/low agents
   implement and independently review. Record that authorization and actual authors.
 - Use the compact execution/review workflow in `docs/development-process.md`.
-  Before Gate 2, obtain and read the required change verification plan.
+  For implementation or continuation, use `python3 tools/delivery/harness.py state`
+  and the active role package prepared by `harness.py prepare`; repository Codex
+  hooks supply this route automatically on task start and resume.
 
 ## Continuing rules
 

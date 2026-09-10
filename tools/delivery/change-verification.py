@@ -131,6 +131,26 @@ def validate_policy(policy):
             raise ValueError("invalid boundary tests")
         for test in boundary["tests"]:
             test_argv(test, runtimes)
+    consumers = policy.get("consumers", [])
+    if not isinstance(consumers, list):
+        raise ValueError("invalid consumer obligations")
+    seen_owners = set()
+    for consumer in consumers:
+        if not isinstance(consumer, dict) or set(consumer) != {"owners", "tests"}:
+            raise ValueError("malformed consumer obligation")
+        owners, tests = consumer["owners"], consumer["tests"]
+        if (not isinstance(owners, list) or not owners or len(owners) != len(set(owners))
+                or not isinstance(tests, list) or not tests or len(tests) != len(set(tests))):
+            raise ValueError("consumer obligation requires unique owners and tests")
+        for owner in owners:
+            if not isinstance(owner, str) or not owner:
+                raise ValueError("invalid consumer owner pattern")
+            repo_path(owner)
+            if owner in seen_owners:
+                raise ValueError("duplicate consumer owner")
+            seen_owners.add(owner)
+        for test in tests:
+            test_argv(test, runtimes)
 
 
 def validate_policy_inventory(policy, inventory):
@@ -147,6 +167,10 @@ def validate_policy_inventory(policy, inventory):
             registered = inventory.get(test)
             if registered is not None and registered not in boundary["categories"]:
                 raise ValueError(f"boundary test category mismatch: {test} is {registered}")
+    for consumer in policy.get("consumers", []):
+        for test in consumer["tests"]:
+            if test not in inventory:
+                raise ValueError(f"consumer test is not registered: {test}")
 
 
 def validate_argv(argv):
@@ -209,6 +233,16 @@ def build(base_ref, input_name):
     if not isinstance(inventory, dict) or any(v not in CATEGORIES for v in inventory.values()):
         raise ValueError("invalid category inventory")
     validate_policy_inventory(policy, inventory)
+    consumer_tests = set()
+    for path in effective:
+        matches = [consumer for consumer in policy.get("consumers", [])
+                   if any(fnmatch.fnmatchcase(path, owner) for owner in consumer["owners"])]
+        if len(matches) > 1:
+            raise ValueError(f"ambiguous consumer obligation: {path}")
+        if matches:
+            consumer_tests.update(matches[0]["tests"])
+    for test in consumer_tests:
+        required_categories.add(inventory[test])
     effective_tests = []
     for path in effective:
         if path in inventory:
@@ -257,6 +291,8 @@ def build(base_ref, input_name):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping")
     for test in sorted(boundary_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "changed boundary obligation")
+    for test in sorted(consumer_tests):
+        add(test_argv(test, policy["runtimes"]), "focused", "confirmed consumer obligation")
     for test in effective_tests:
         add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
     for category in sorted(required_categories):
@@ -314,6 +350,9 @@ def main():
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--plan", required=True)
     run_parser.add_argument("--phase", choices=["focused", "integration"], required=True)
+    run_parser.add_argument("--diagnostic", action="store_true")
+    refresh_parser = commands.add_parser("refresh")
+    refresh_parser.add_argument("--plan", required=True)
     args = parser.parse_args()
     try:
         if args.command == "plan":
@@ -324,15 +363,37 @@ def main():
         elif args.command == "check":
             checked_plan(args.plan)
             print("CHANGE_VERIFICATION_OK")
+        elif args.command == "refresh":
+            old = load_json(args.plan)
+            if not isinstance(old, dict):
+                raise ValueError("invalid plan")
+            refreshed = build(old.get("base_ref"), old.get("input"))
+            changed = old.get("commands") != refreshed.get("commands")
+            repo_path(args.plan).write_text(canonical(refreshed))
+            print(canonical({"obligations_changed": changed}), end="")
         else:
             plan = checked_plan(args.plan)
+            results = []
             for command in plan["commands"]:
                 if command["phase"] != args.phase:
                     continue
-                print("VERIFY " + " ".join(command["argv"]), flush=True)
-                status = subprocess.run(command["argv"], cwd=ROOT).returncode
-                if status:
-                    return status
+                harness = ROOT / "tools/delivery/harness.py"
+                result = subprocess.run([sys.executable, str(harness), "run", "--", *command["argv"]],
+                                        cwd=ROOT, capture_output=True, text=True)
+                try:
+                    summary = json.loads(result.stdout)
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"harness returned invalid result: {error}") from error
+                results.append({"argv": command["argv"], "outcome": summary["outcome"],
+                                "exit_code": summary["exit_code"], "record_path": summary["record_path"],
+                                "excerpt": summary["excerpt"]})
+                if result.returncode and not args.diagnostic:
+                    print(canonical({"results": results}), end="")
+                    return result.returncode
+            failures = [item for item in results if item["outcome"] != "GREEN"]
+            print(canonical({"results": results}), end="")
+            if failures:
+                return failures[0]["exit_code"] or 1
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         print(f"SETUP_FAILURE: {error}", file=sys.stderr)
         return 1

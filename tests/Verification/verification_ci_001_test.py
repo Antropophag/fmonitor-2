@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,11 @@ class VerificationCI(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='fmonitor-ci-contract-')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        shutil.copytree(ROOT / 'tools/delivery', self.root / 'tools/delivery')
+        evidence = tempfile.TemporaryDirectory(prefix='fmonitor-runner-evidence-')
+        self.addCleanup(evidence.cleanup)
+        self.evidence_home = evidence.name
+        (self.root / '.gitignore').write_text('*.log\n__pycache__/\n')
         tool = self.root / 'tools/verification'
         tool.mkdir(parents=True)
         shutil.copy(ROOT / 'tools/verification/run.sh', tool)
@@ -51,6 +57,10 @@ class VerificationCI(unittest.TestCase):
                         TRACE=str(self.trace), DB_TRACE=str(self.db_trace), FAIL_FILE='')
         # Deliberately failing synthetic categories must not pollute the real CI report.
         self.env.pop('GITHUB_STEP_SUMMARY', None)
+        self.env.update(FMONITOR_HARNESS_HOME=self.evidence_home, FMONITOR_HARNESS_PYTHON=sys.executable)
+        for args in [('init','-q'),('config','user.email','fixture@example.invalid'),('config','user.name','Fixture'),('add','.'),('commit','-qm','runner fixture')]:
+            subprocess.run(['git',*args],cwd=self.root,check=True,capture_output=True)
+
 
     def write_mapping(self):
         (self.root / 'tools/verification/categories.json').write_text(json.dumps(self.mapping))
@@ -96,6 +106,15 @@ class VerificationCI(unittest.TestCase):
         self.git('add', '.')
         self.git('commit', '-qm', 'change')
         return base
+
+    def test_setup_outcome_with_zero_child_exit_fails_category(self):
+        php=self.bin/'php'
+        php.write_text(php.read_text().replace('#!/bin/sh\n', '#!/bin/sh\necho "SETUP_FAILURE: synthetic unavailable dependency"\n'))
+        result=self.cli('run','unit')
+        self.assertNotEqual(0,result.returncode,'INTENDED_RED setup outcome became green category')
+        self.assertIn('CATEGORY_RESULT',result.stdout)
+        self.assertIn(self.paths[0],result.stdout)
+        self.assertIn(self.paths[1],result.stdout)
 
     def test_docs_plan_is_explicit_and_code_unknown_are_full(self):
         base = self.history('docs/operations/note.md')

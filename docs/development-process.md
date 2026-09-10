@@ -8,6 +8,13 @@ Historical exceptions below apply only to their stated milestone.
 
 ## Compact execution protocol — #82, 2026-09-10
 
+The executable entry point is `python3 tools/delivery/harness.py`: `state`
+resolves live source/PR/CI, `prepare` refreshes the repository-owned verification
+plan and builds a bounded role/review package, and `run` retains full logs while
+returning a compact result. Codex project hooks route ordinary implementation and
+resume prompts to this process. They do not run checks, approve reviews, or start
+delivery work for an ordinary read-only question.
+
 Quality takes precedence over token efficiency, which takes precedence over time.
 Keep the most capable model in the primary session. Root owns analysis, scope, the complete acceptance matrix and key decisions. In
 normal mode root authors specifications and tests; a separate executor implements
@@ -26,9 +33,10 @@ runtime dependencies, deployment/readiness, backup/restore and verification
 inventory. Record relevant impacts and briefly justify inapplicable groups in the
 design; a tooling-only change does not require a database ceremony.
 
-Give the executor/reviewer the issue, exact base/worktree, spec, applicable rules,
-verification plan and complete candidate. Review returns one complete findings
-list with severity, locations, corrections and verdict for the agreed scope.
+Use the prepared executor/reviewer package for the issue, exact source, spec,
+applicable rules, verification plan, evidence and complete candidate. Review
+returns one complete findings list with severity, locations, corrections and
+verdict for the agreed scope.
 Review corrections against that source; broaden only for changed scope or new
 risk. After a second return for foreseeable incompleteness, root rebuilds the
 entire matrix and candidate before another dispatch. Assertions, form fields and
@@ -54,9 +62,10 @@ CI; a handoff contains only current state, next action and these links. Historic
 records remain available; supersede them with a pointer instead of loading them
 at each start. Use [the compact handoff template](../tools/delivery/handoff-template.md).
 
-Before Gate 2, compute the [repository-owned Quality Graph change verification
-plan](../tools/delivery/change-verification.md) from the accepted contract and intended boundary changes. The test author reads
-its required obligations and executable commands before writing RED tests.
+Before Gate 2, run harness `prepare` for the accepted contract and intended
+boundary changes; it refreshes the [repository-owned Quality Graph change
+verification plan](../tools/delivery/change-verification.md). The test author
+reads its required obligations and executable commands before writing RED tests.
 Unresolved coverage blocks Gate 2. A generated plan is not acceptance approval,
 RED evidence or a replacement for independent review. Regenerate and review when
 scope or bound inputs change. Existing full-CI selection remains authoritative;

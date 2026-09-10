@@ -75,14 +75,24 @@ load_inventory() {
 }
 
 run_selected() {
-  local index runtime file started status failures=0
+  local index runtime file started status failures=0 summary harness_python outcome
+  harness_python="${FMONITOR_HARNESS_PYTHON:-python3}"
   for ((index=0; index<${#selected_files[@]}; index++)); do
     runtime="${selected_runtimes[$index]}"
     file="${selected_files[$index]}"
     printf 'VERIFY %s\n' "$file"
     started=$SECONDS
-    "$runtime" "$file"
+    summary="$("$harness_python" tools/delivery/harness.py run -- "$runtime" "$file")"
     status=$?
+    outcome="$($harness_python -c 'import json,sys;print(json.loads(sys.argv[1])["outcome"])' "$summary")"
+    [[ "$outcome" == GREEN || "$status" -ne 0 ]] || status=1
+    "$harness_python" -c 'import json,os,sys
+d=json.loads(sys.argv[1])
+if os.environ.get("GITHUB_ACTIONS")=="true":
+    sys.stdout.write(open(d["stdout_path"],errors="replace").read())
+    sys.stderr.write(open(d["stderr_path"],errors="replace").read())
+else:
+    print(d.get("excerpt", ""), end="" if d.get("excerpt", "").endswith("\n") else "\n")' "$summary"
     printf 'VERIFY_TIMING suite=%s runtime=%s file=%s seconds=%s exit=%s\n' \
       "$suite" "$runtime" "$file" "$((SECONDS - started))" "$status"
     if ((status != 0)); then
@@ -134,8 +144,17 @@ case "$suite" in
       < <(find app bin public rapid-pilot tests tools -type f -name '*.php' -print | sort)
     ;;
   red)
-    test -n "${2:-}" || fail SETUP_FAILURE "usage: tools/verification/run.sh red <test-file>"
-    if php "$2"; then
+    test -n "${2:-}" || fail SETUP_FAILURE "usage: tools/verification/run.sh red <test-file> [expected-marker]"
+    marker="${3:-RED_ASSERTION}"
+    harness_python="${FMONITOR_HARNESS_PYTHON:-python3}"
+    summary="$("$harness_python" tools/delivery/harness.py run --intended-red "$marker" -- php "$2")"
+    status=$?
+    outcome="$($harness_python -c 'import json,sys;print(json.loads(sys.argv[1])["outcome"])' "$summary")"
+    if [[ "$outcome" != INTENDED_RED ]]; then
+      [[ "$status" -ne 0 ]] || fail RED_ASSERTION "expected failure but $2 passed"
+      fail REGRESSION_FAILURE "$2 did not produce intended RED marker $marker (outcome $outcome)"
+    fi
+    if [[ "$status" -eq 0 ]]; then
       fail RED_ASSERTION "expected failure but $2 passed"
     fi
     printf 'RED_ASSERTION: expected failing behavior observed in %s\n' "$2"

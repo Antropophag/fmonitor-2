@@ -1,59 +1,184 @@
 {
   "boundaries": [
     {
-      "categories": ["governance"],
+      "categories": [
+        "governance"
+      ],
       "name": "pilot-http",
-      "patterns": ["app/PilotHttp/**"],
-      "tests": ["tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php"]
+      "patterns": [
+        "app/PilotHttp/**"
+      ],
+      "tests": [
+        "tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php"
+      ]
     },
     {
-      "categories": ["integration"],
+      "categories": [
+        "integration"
+      ],
       "name": "persistence",
-      "patterns": ["app/Infrastructure/Persistence/**", "migrations/**"],
-      "tests": ["tests/Runtime/runtime_storage_001_test.php"]
+      "patterns": [
+        "app/Infrastructure/Persistence/**",
+        "migrations/**"
+      ],
+      "tests": [
+        "tests/Runtime/runtime_storage_001_test.php"
+      ]
     },
     {
-      "categories": ["integration"],
+      "categories": [
+        "integration"
+      ],
       "name": "otiz-money",
-      "patterns": ["app/Otiz/**"],
-      "tests": ["tests/Otiz/snapshot_publication_001_test.php"]
+      "patterns": [
+        "app/Otiz/**"
+      ],
+      "tests": [
+        "tests/Otiz/snapshot_publication_001_test.php"
+      ]
     },
     {
-      "categories": ["unit", "governance"],
+      "categories": [
+        "unit",
+        "governance"
+      ],
       "name": "application-code",
-      "patterns": ["app/AssignmentOrderComposition/**", "app/AssignmentOrderOriginal/**", "app/IdentityAccess/**", "app/InspectionEvidence/**", "app/InstallationProcess/**", "app/Jobs/**", "app/RapidPilot/**", "app/Runtime/**", "app/RuntimeRestore/**", "app/Workforce/**", "app/YiiRuntime/**", "app/demo/**", "config/**", "commands/**", "rapid-pilot/**", "web/**"],
+      "patterns": [
+        "app/AssignmentOrderComposition/**",
+        "app/AssignmentOrderOriginal/**",
+        "app/IdentityAccess/**",
+        "app/InspectionEvidence/**",
+        "app/InstallationProcess/**",
+        "app/Jobs/**",
+        "app/RapidPilot/**",
+        "app/Runtime/**",
+        "app/RuntimeRestore/**",
+        "app/Workforce/**",
+        "app/YiiRuntime/**",
+        "app/demo/**",
+        "config/**",
+        "commands/**",
+        "rapid-pilot/**",
+        "web/**"
+      ],
       "tests": []
     },
     {
-      "categories": ["governance"],
+      "categories": [
+        "governance"
+      ],
       "name": "tests",
-      "patterns": ["tests/**"],
+      "patterns": [
+        "tests/**"
+      ],
       "tests": []
     },
     {
-      "categories": ["governance"],
+      "categories": [
+        "governance"
+      ],
       "name": "delivery-policy",
-      "patterns": [".quality-graph/**", ".github/**", "tools/**", "specs/**", "openspec/**", "docs/**", "reviews/**", "AGENTS.md", "CONTEXT.md", "PRODUCT.md", "README.md", "Makefile", "quality-graph.yml"],
+      "patterns": [
+        ".quality-graph/**",
+        ".github/**",
+        "tools/**",
+        "specs/**",
+        "openspec/**",
+        "docs/**",
+        "reviews/**",
+        "AGENTS.md",
+        "CONTEXT.md",
+        "PRODUCT.md",
+        "README.md",
+        "Makefile",
+        "quality-graph.yml",
+        ".codex/**",
+        ".agents/**"
+      ],
       "tests": []
     },
     {
-      "categories": ["unit", "governance"],
+      "categories": [
+        "unit",
+        "governance"
+      ],
       "name": "dependency-or-runtime",
-      "patterns": [".dockerignore", ".env.example", "composer.json", "composer.lock", "package.json", "package-lock.json", "pyproject.toml", "uv.lock", "compose*.yaml", "docker-compose*.yml", "Dockerfile*", "bin/**", "deploy/**"],
+      "patterns": [
+        ".dockerignore",
+        ".env.example",
+        "composer.json",
+        "composer.lock",
+        "package.json",
+        "package-lock.json",
+        "pyproject.toml",
+        "uv.lock",
+        "compose*.yaml",
+        "docker-compose*.yml",
+        "Dockerfile*",
+        "bin/**",
+        "deploy/**"
+      ],
       "tests": []
     }
   ],
   "category_argv": {
-    "e2e": [["python3", "tests/Deployment/pilot_jobs_compose_001_test.py"]],
-    "governance": [["python3", "tests/Verification/change_verification_001_test.py"]],
-    "integration": [["php", "tests/Runtime/runtime_storage_001_test.php"]],
-    "unit": [["python3", "tests/Verification/architecture_guard_001_test.py"]]
+    "e2e": [
+      [
+        "python3",
+        "tests/Deployment/pilot_jobs_compose_001_test.py"
+      ]
+    ],
+    "governance": [
+      [
+        "python3",
+        "tests/Verification/change_verification_001_test.py"
+      ]
+    ],
+    "integration": [
+      [
+        "php",
+        "tests/Runtime/runtime_storage_001_test.php"
+      ]
+    ],
+    "unit": [
+      [
+        "python3",
+        "tests/Verification/architecture_guard_001_test.py"
+      ]
+    ]
   },
-  "full_argv": ["make", "test"],
-  "full_categories": ["unit", "integration", "e2e", "governance"],
+  "consumers": [
+    {
+      "owners": [
+        "app/InspectionEvidence/**",
+        "app/PilotHttp/ChecklistSync.php"
+      ],
+      "tests": [
+        "tests/InstallationProcess/inspection_evidence_schema_001_test.php",
+        "tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php",
+        "tests/Verification/characterize_inspection_photo_rejections_001_test.php",
+        "tests/Verification/characterize_inspection_photo_revoke_001_test.php",
+        "tests/Verification/characterize_inspection_photo_upload_001_test.php"
+      ]
+    }
+  ],
+  "full_argv": [
+    "make",
+    "test"
+  ],
+  "full_categories": [
+    "unit",
+    "integration",
+    "e2e",
+    "governance"
+  ],
   "graph": "quality-graph.yml",
   "inventory": "tools/verification/categories.json",
-  "runtimes": {".mjs": "node", ".php": "php", ".py": "python3"},
+  "runtimes": {
+    ".mjs": "node",
+    ".php": "php",
+    ".py": "python3"
+  },
   "spec": "specs/CHANGE-VERIFICATION-001.md",
   "version": 1
 }
