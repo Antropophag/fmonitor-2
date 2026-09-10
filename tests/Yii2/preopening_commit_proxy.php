@@ -4,8 +4,21 @@ declare(strict_types=1);
 $listen=stream_socket_server('tcp://127.0.0.1:0',$errno,$error);
 if(!is_resource($listen))exit(1);
 $address=stream_socket_get_name($listen,false);echo substr($address,strrpos($address,':')+1)."\n";flush();
-pcntl_async_signals(true);pcntl_signal(SIGCHLD,static function(){while(pcntl_waitpid(-1,$status,WNOHANG)>0){}});
-while($client=stream_socket_accept($listen,60)) {
+$acceptInterrupted = false;
+pcntl_async_signals(true);
+pcntl_signal(SIGCHLD, static function () use (&$acceptInterrupted): void {
+    $acceptInterrupted = true;
+    while (pcntl_waitpid(-1, $status, WNOHANG) > 0) {}
+});
+while (true) {
+    $acceptInterrupted = false;
+    $client = @stream_socket_accept($listen, 60);
+    if (!is_resource($client)) {
+        // A completed Yii connection may interrupt accept while the next request is arriving.
+        if ($acceptInterrupted) continue;
+        fwrite(STDERR, "Proxy accept timed out or failed.\n");
+        break;
+    }
     $pid=pcntl_fork();if($pid===-1)exit(2);if($pid>0){fclose($client);continue;}
     fclose($listen);
     $backend=stream_socket_client('tcp://'.getenv('FMONITOR_TEST_DB_HOST').':'.getenv('FMONITOR_TEST_DB_PORT'),$errno,$error,5);

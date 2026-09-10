@@ -59,3 +59,73 @@ Root сверил19 прежних spec/test artifacts с восстановле
 `make architecture-check` и независимого Gate5. Duplicate local full не запускался.
 Yii HTTP/browser и соседние Yii authorization results будут добавлены после
 полного inventory. Этот record не подтверждает завершение всего #76.
+
+## Полный заключительный test delta одобрен
+
+Fresh independent CLI reviewer gpt-5.6-sol/low, session
+`01a08a8a-82ee-7c41-97b7-60ee6c560d09`, проверил все8test deltas в exact snapshot
+`76-preopening-final-group-gate3`, base401a2345, patch
+`31f32b4f87f412aa8154fe92869d52bc07f53dde26204a6d6e394a99e30a4dab`.
+Verdict PASS, findings нет. Свежий процесс потребовался из-за лимита collaboration
+threads; self-review не использовался. Vendor в restored source скопирован,
+не symlink, чтобы Composer не загрузил app из другого checkout.
+
+Root полная проверка выявила недостающую форму строгих IDs и несколько mappings:
+malformed081 реально принимался как81; missingselectionobject422вместо404;
+engineer read-unavailable403вместо503; compatibility infra422вместо503.
+Все добавленные expectations следуют унаследованному контракту и имеют retainedRED.
+Также одобрены постоянные openingactor/time, harnessEINTR/response-lifetime fixes,
+state-correct installerfield assertion и stylesheet load qualification.
+
+Actual `make architecture-check` PASS после явного переименования resource метода
+selectAssignmentOrderComposition (два прежних lexical SELECT falsepositives,
+checker/baseline не ослаблялись). CSS URLrule исправлен после real404proof;
+реальный HTTP теперь200, MIME и SHA совпадают, stylesheet-aware browser PASS.
+Финальные approved corrections ещё завершаются; Gate5 и CI не заявляются.
+
+## Gate4 завершён, Gate5 pending
+
+Approved final-group fixes implemented separate sol/low executors. Все12 новых
+срезовых suites имеют GREEN evidence (10HTTP PHP, browser, actual PDF image),
+15native neighbors,5Yii/readiness neighbors и6QualityGraph obligations проверены.
+Latest affected logs: `76-final-mapping-green-*.log`,
+`76-final-template-split-{routes,http}.log`; final actual architecture
+`76-final-architecture-check.log` PASS7rules +PILOT-HTTP-AUTH.
+Восемь final-group test deltas повторно byte-matched к approved snapshot31f32.
+
+Template выделен в AssignmentOrderTemplateController; остальные final controller
+families сохранены. Фиксированные transport grammar/mappings, постоянная
+opening attribution и unavailable read обработаны без изменения native owners.
+Новых требований/полировки после frozen matrix не добавлялось.
+Браузер доказал полный путь, retries/history/download и загрузку stylesheet;
+root visual findings закрыты одним пакетом плюс исправлением asset URL delivery.
+
+Gate5/CI/merge пока не пройдены. Локальный full не запускался.
+
+## Gate5 correction candidate
+
+ЕдинственныйMEDIUM поUIadmission исправлен отдельным executor через shared
+AssignmentOrderOriginalAccessQuery/MariaDbAssignmentOrderOriginalAccessQuery.
+Corrected deltaGate3 PASS (d1b73b7c snapshot) дополнительно защищает raw POST
+без original.read дляFKR/manager. Testbytes сверены с approved source.
+Affected original transport/authorization/browser GREEN, actualarchitecture
+7rules+HTTPauth PASS. Бounded independent Gate5 correction review ещё впереди.
+
+Admission correction final boundary: новый grants SQL использует явную
+Yii Connection/DAO; mysqli остаётся только у целых прежних native readers.
+Raw write-only safeguards и actual architecture GREEN. Снимок ff07 не направлялся
+наreview из-за найденного root нарушения DAO; исправленный snapshot следует далее.
+
+После второгоGate5return root пересобрал полный admission caller matrix;
+independent Gate3 PASS bc34b913. Cardиform unavailable mappings исправлены,
+полнаяматрицаGET/HEAD +rawpositives иactualarchitecture GREEN. Последняя
+correction ограничена двумяветвями, ожидает bounded Gate5.
+
+## Gate5 APPROVED, CI pending
+
+Последний независимый correction review APPROVED безfindings, snapshot
+`76-preopening-gate5-final`, patch
+`2ea96645170c3d0f792588b72c682f98a286fd075034c87d809706508de3d5ab`.
+Передcommit53артефакта сравнены с восстановленнымsource: bytes/modes совпали.
+Дополнительные изменения послеreview — только code-review/delivery/current-goal
+документы. Production/test bytes не менялись. Следующийшаг одинexact-source CI.

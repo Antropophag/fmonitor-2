@@ -69,6 +69,22 @@ foreach([false,true] as $correct) {
         if($correct)assertSameValue('reapplication',$after[1]['kind'],'explicit reapplication lineage');
         assertSameValue(['working','2026-09-03','18'],array_map(static fn($key)=>$f->rows('fm2_installation_cases')[0][$key],['process_state','actual_start_date','opened_by_user_id']),'durable opening');
         $before=$f->facts();assertSameValue(303,$f->form('/pilot/objects/4512/execution',$open,$cookies)['status'],'exact compound replay');assertSameValue($before,$f->facts(),'replay immutable');$f->noLegacy();
+        // Opening attribution is a durable fact, not an inference from the most recent eight events.
+        $openedAt=$f->rows('fm2_installation_cases')[0]['opened_at'];
+        for ($i = 0; $i < 9; $i++) {
+            $f->insert($f->p.'fm2_process_events', ['installation_case_id'=>6101, 'event_type'=>'inspection_scheduled',
+                'occurred_at'=>$openedAt, 'actor_user_id'=>97, 'payload_json'=>'{}']);
+        }
+        $f->db->query("UPDATE {$f->p}fm2_pilot_users SET full_name='Открывший <Автор>',status=0 WHERE user_id=18");
+        $viewer=[];assertSameValue(303,$f->login($viewer,95)['status'],'independent current viewer');
+        $beforeRead=$f->facts();$openedPage=$f->request('GET','/pilot/objects/4512',[],$viewer);
+        assertSameValue(200,$openedPage['status'],'opened card beyond recent history window');
+        assertSameValue(1,preg_match('/data-opening-actor[^>]*>\s*Открывший &lt;Автор&gt;\s*</u',$openedPage['body']),'INTENDED_RED durable opening actor survives history window and inactive author');
+        $openedAt=$f->rows('fm2_installation_cases')[0]['opened_at'];
+        assertSameValue(1,preg_match('/<time\b(?=[^>]*data-opening-time)(?=[^>]*datetime="'.preg_quote($openedAt,'/').'")[^>]*>/',$openedPage['body']),'exact stored opening instant remains visible');
+        assertSameValue(false,str_contains($openedPage['body'],'Открывший <Автор>'),'opening actor escaped');
+        assertSameValue($beforeRead,$f->facts(),'opening attribution read writes no facts');
+
     } finally {if($f instanceof PreopeningFixture)$f->close();}
 }
 foreach(['selection','application']as$intervening) {

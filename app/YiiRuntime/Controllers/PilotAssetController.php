@@ -14,9 +14,9 @@ final class PilotAssetController extends PilotController
     {
         $root = dirname(__DIR__) . '/Assets';
         $map = [];
-        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js'] as $file) {
+        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/javascript; charset=UTF-8',3600];
-        }foreach (['shlz.css','pilot.css'] as $file) {
+        }foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
         }$map['favicon.svg'] = [$root . '/favicon.svg','image/svg+xml; charset=UTF-8',31536000];
         if (preg_match('/^fonts\/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$/D', $path, $m) === 1) {

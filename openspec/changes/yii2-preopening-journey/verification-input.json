@@ -1,6 +1,8 @@
 {
   "change": "yii2-preopening-journey",
   "planned_paths": [
+    "app/AssignmentOrderOriginal/AssignmentOrderOriginalAccessQuery.php",
+    "app/AssignmentOrderOriginal/MariaDbAssignmentOrderOriginalAccessQuery.php",
     "app/IdentityAccess/AuthorizeLocalActor.php",
     "app/IdentityAccess/MariaDbYiiLocalIdentityStore.php",
     "app/InstallationProcess/MariaDbYiiObjectCard.php",
@@ -13,8 +15,10 @@
     "app/YiiRuntime/Assets/PreopeningAssetBundle.php",
     "app/YiiRuntime/Assets/object-details.js",
     "app/YiiRuntime/Assets/original-upload.js",
+    "app/YiiRuntime/Assets/preopening.css",
     "app/YiiRuntime/Assets/preopening.js",
     "app/YiiRuntime/Assets/selection-picker.js",
+    "app/YiiRuntime/Controllers/AssignmentOrderTemplateController.php",
     "app/YiiRuntime/Controllers/ExecutionController.php",
     "app/YiiRuntime/Controllers/ObjectCardController.php",
     "app/YiiRuntime/Controllers/OriginalController.php",
@@ -33,6 +37,7 @@
     "app/YiiRuntime/Views/object-card.php",
     "app/YiiRuntime/Views/original-history.php",
     "app/YiiRuntime/Views/original.php",
+    "app/YiiRuntime/Views/preopening-error.php",
     "app/YiiRuntime/Views/selection.php",
     "app/YiiRuntime/WebResponse.php",
     "config/yii/assets.php",

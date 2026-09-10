@@ -8,6 +8,10 @@ try {
  assertSameValue('selected',$f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command())->status()->value,'native selected fixture');
  $accepted=$f->nativeOriginal('2026-09-01');assertSameValue('accepted',$accepted->status()->value,'native original fixture');
  $f->start();$cookies=[];assertSameValue(303,$f->login($cookies)['status'],'FKR login');$page=$f->request('GET','/pilot/objects/4512/execution',[],$cookies);assertSameValue(200,$page['status'],'INTENDED_RED Yii execution route');$f->noLegacy();
+ $missingSelection=['_csrf'=>$f->token($cookies),'requestId'=>'11111111-1111-4111-8111-000000000077','mode'=>'new_order','expectedSelectionRevision'=>'0','controlEngineerUserId'=>'73','controlEngineerConfirmed'=>'yes','installerTabIds'=>[7001]];
+ $selectedBefore=$f->rows('fm2_assignment_order_selections');$casesBefore=$f->rows('fm2_installation_cases');$filesBefore=$f->base->privateFiles();
+ assertSameValue(404,$f->form('/pilot/objects/9999/assignment-order/selection',$missingSelection,$cookies)['status'],'INTENDED_RED native missing selection object maps404');
+ assertSameValue($selectedBefore,$f->rows('fm2_assignment_order_selections'),'missing object creates no selected facts');assertSameValue($casesBefore,$f->rows('fm2_installation_cases'),'missing object never creates or changes a case');assertSameValue($filesBefore,$f->base->privateFiles(),'missing object preserves private evidence');
  $open=['_csrf'=>$f->token($cookies),'action'=>'open_confirmed','requestId'=>'33333333-3333-4333-8333-000000000010','orderId'=>'81','revisionId'=>$accepted->currentRevisionId(),'sequence'=>'0','actualStartDate'=>'2026-09-02'];
  foreach([
   [array_replace($open,['_csrf'=>'wrong']),400,'native CSRF'],

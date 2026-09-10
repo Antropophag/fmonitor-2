@@ -7,8 +7,10 @@ foreach([18,97] as $actorId) {
 try {
  $f=new PreopeningFixture(dirname(__DIR__,2));$f->start();$cookies=[];assertSameValue(303,$f->login($cookies,$actorId)['status'],'native FKR login');
  $page=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue(200,$page['status'],'INTENDED_RED Yii selection portal');$f->noLegacy();
- foreach(['installerTabIds','controlEngineerUserId','controlEngineerConfirmed','requestId','expectedSelectionRevision','_csrf']as$name)assertSameValue(true,str_contains($page['body'],$name),'complete selection form '.$name);
+ foreach(['data-main-selection','controlEngineerUserId','controlEngineerConfirmed','requestId','expectedSelectionRevision','_csrf']as$name)assertSameValue(true,str_contains($page['body'],$name),'complete selection form '.$name);
  $before=$f->facts();$pdfBefore=$f->base->privateFiles();$saved=$f->selection($cookies);assertSameValue([303,'/pilot/objects/4512/assignment-order/selection'],[$saved['status'],$saved['headers']['location'][0]??null],'selection return');$f->noLegacy();
+ $selectedFacts=$f->facts();$selectedPage=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue(200,$selectedPage['status'],'persisted selection form');
+ assertSameValue(1,preg_match('/<input\b(?=[^>]*\bname="installerTabIds\[\]")(?=[^>]*\bvalue="7001")[^>]*>/',$selectedPage['body']),'persisted installer has real submitted field');assertSameValue($selectedFacts,$f->facts(),'selection form read adds no facts');
  $selections=$f->rows('fm2_assignment_order_selections');assertSameValue(1,count($selections),'one selection');assertSameValue(['81','73'],[$selections[0]['assignment_order_id'],$selections[0]['control_engineer_user_id']],'selected identity engineer');
  assertSameValue([0,0],[count($f->rows('fm2_assignment_order_applications')),count($f->rows('fm2_assignment_order_original_revisions'))],'selection no application or original');assertSameValue($pdfBefore,$f->base->privateFiles(),'selection no PDF storage');
  $history=$f->facts();assertSameValue(303,$f->selection($cookies)['status'],'selection exact replay');assertSameValue($history,$f->facts(),'selection replay exact history');

@@ -5,5 +5,5 @@
 - [x] Подтянуть merged yii2-object-queue predecessor и сформировать Quality Graph plan.
 ## 2. Delivery
 - [x] Root RED на реальные Yii routes + полный независимый Gate3 (corrected PASS).
-- [ ] Отдельный executor implementation + focused GREEN/visual/actual architecture.
+- [x] Отдельный executor implementation + focused GREEN/visual/actual architecture.
 - [ ] Независимый Gate5, exact-source full CI и merge.

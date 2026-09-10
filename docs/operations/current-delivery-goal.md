@@ -18,8 +18,11 @@ application; fixture lineage ordering и сохранение Original UUID vers
 Native15 +6additional obligations +production PDF image имеют GREEN evidence;
 один initial native phase timeout сохранён вместе с diagnostic/canonical PASS.
 
-Следующий шаг: завершить readable controllers/forms и прежний shlz UI,
-полный focused HTTP failure inventory → grouped corrections → desktop/mobile
-visual → actual architecture → independent Gate5 → один full exact-source CI
-и merge. Current production WIP не объявлять GREEN; весь #76 не закрывать
+Заключительный полный8-file test delta также получил independent Gate3 PASS
+(snapshot31f32b4f, fresh CLI sol/low); утверждённые исправления завершены; focused/actual architecture GREEN.
+
+Следующий шаг: exact-source independent Gate5 → один full CI и merge.
+Gate4 GREEN; Gate5/CI ещё не завершены; весь #76 не закрывать
 после этого среза. Checklist/photos/completion/console/cutover идут далее.
+
+Gate5 final APPROVED (snapshot2ea96645). Далее одинexact-source CI и merge.

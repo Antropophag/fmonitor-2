@@ -5,14 +5,22 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime;
 
 use FMonitor2\InstallationProcess\MariaDbYiiInspectionPlanning;
+use FMonitor2\InstallationProcess\MariaDbYiiObjectCard;
+use FMonitor2\InstallationProcess\MariaDbYiiObjectCardProjection;
 use FMonitor2\InstallationProcess\MariaDbYiiObjectQueue;
 use FMonitor2\InstallationProcess\MariaDbYiiObjectQueueProjection;
 use FMonitor2\InstallationProcess\YiiInspectionPlanning;
+use FMonitor2\InstallationProcess\YiiObjectCard;
 use FMonitor2\InstallationProcess\YiiObjectQueue;
 use yii\db\Connection;
 
 final class InstallationProcessFactory
 {
+    public static function card(Connection $db, string $prefix, string $legacyPrefix): YiiObjectCard
+    {
+        $projection = new MariaDbYiiObjectCardProjection($db, $prefix, new MariaDbYiiObjectQueueProjection($db, $prefix));
+        return new YiiObjectCard(new MariaDbYiiObjectCard($db, $prefix, $legacyPrefix, $projection));
+    }
     public static function queue(Connection $db, string $prefix, string $legacyPrefix): YiiObjectQueue
     {
         $projection = new MariaDbYiiObjectQueueProjection($db, $prefix);

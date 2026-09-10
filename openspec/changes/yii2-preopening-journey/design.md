@@ -72,3 +72,14 @@ clauses must be enumerated in the new normative spec, not inferred from filename
 Finish matrix/impact → merged predecessor → plan/root RED → independent Gate3 →
 separate implementation → focused/visual/architecture → independent Gate5 → fullCI.
 Working stand remains preserved until a later concrete, verified cutover step.
+
+## Rebuilt admission caller matrix after second Gate5 return
+
+Root перепроверил весь bounded admission candidate, а не только последний if.
+Card/selection: allowed →200сдопустимыми ссылками, denied →200без них,
+unavailable →503. Form/history: allowed →обычныйread, denied →403,
+unavailable →503. Raw initial/correction не зависят от original.read и сохраняют
+write-only admission. GET/HEAD имеют одинаковые status/integrity без тела HEAD.
+Existingtests покрывают allowed/denied/raw; новый общий faultcase проверяет
+GET/HEAD всех четырёхread consumers при недоступном grants source и zero repair.
+Новыхпредметных правил это уточнение не вводит.
