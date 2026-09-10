@@ -170,3 +170,33 @@ Only the appended independent code review, this dated delivery record and task
 metadata differ after the reviewed snapshot. Code/tests are compared byte-for-byte
 before the final commit. The subsequent full local run and GitHub CI report their
 results outside this commit; this record does not predict their outcomes.
+
+## Public CLI exit correction — latest bounded owner request
+
+CI34508656112 succeeded on old commit26ccd6bf, but does not validate this new
+runner correction. A public zero-exit child printing an explicit SETUP_FAILURE
+or UNKNOWN marker now requires a nonzero CLI result while retaining child0 and
+raw0 separately. Gate3 approved the bounded public-seam RED. Existing marker
+grammar, INTENDED_RED, nonzero failures, signals/timeouts and pipeline semantics
+remain unchanged; downstream outcome guards that consume child provenance stay.
+
+The prior exact26ccd6bf local full run failed two historical runtime tests. Its
+complete inventory is `/tmp/pr89-final-local-failure-inventory.json`; it remains
+FAILED. Isolated v23 replay on the same source passed (`/tmp/pr89-v23-repro-summary.json`),
+so the original READINESS_FAILED cause remains UNKNOWN. The nginx evidence showed
+all required route/method records in a different order. Product code and those
+fixtures were not changed or weakened as part of this narrowly authorized fix.
+
+## Public-exit final review checkpoint
+
+Gate3 and Gate5 approved the bounded fail-closed CLI delta on source
+`956023e48ce0689a7b9b79a36c5ab8793d2578f4a91e7dd93f711ed2d4b9b14a`,
+package `~/.local/share/fmonitor-2/delivery-harness/packages/20260910T181614Z-5f5add9d23/`.
+Focused harness25, planner16, CI caller16, native10, inventory16, actual
+architecture-check and architecture guard passed. Direct public scenario matrix
+`/tmp/pr89-public-exit-scenarios.json` confirms marker child0/CLI1/raw0, domain
+GREEN/0 and unchanged failure/INTENDED_RED/pipeline7, signal143/raw-15 and
+timeout124/raw-15. Downstream outcome guards remain because they consume retained
+child provenance. The new committed source still requires its own full GitHub CI;
+no future CI outcome is recorded in this checked commit. Only review/task/delivery
+metadata follows the reviewed snapshot; code/tests are compared before commit.

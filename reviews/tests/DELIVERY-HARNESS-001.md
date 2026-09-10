@@ -174,3 +174,15 @@ The existing success and make-environment leak guards are unchanged. The literal
 - Verdict: **APPROVED**
 
 For each independently prepared linked worktree, the test now passes its own `state.active_binding.plan` to the actual `change-verification.py check --plan` CLI from that worktree and requires success. Existing distinct plan/change/package and resume-context assertions remain. The focused run fails exactly because the trusted resolver rejects the generated namespaced state filename; the harness correctly records that expected failure as INTENDED_RED with no source drift. This directly covers the Gate 5 HIGH finding without broadening path trust or architecture scope. Implementation may admit only the exact generated 20-hex active-plan filename grammar; a fresh Gate 5 delta remains required.
+
+## Public runner fail-closed exit — Gate 3
+
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T180757Z-3d5861a5b5/package.json`
+- Base: `26ccd6bf465ba42ee96095ee68351b46597bcabe`
+- Plan SHA-256: `50c6048dcbafdb6841402f295267492c72601314df9ea89932be62b1a6016179`
+- RED: `/tmp/pr89-public-exit-red.json`, record `1789063636197703000-d144c84e97e8420183564546bf3cec8a`
+- Verdict: **APPROVED**
+
+The new public-CLI test independently exercises both explicit zero-exit control outcomes. For each SETUP_FAILURE and UNKNOWN marker, it requires the exact outcome, a nonzero harness process status, retained `exit_code=0` and `raw_child_returncode=0`, and a separate `cli_exit_code` equal to the public process status. This prevents false success without rewriting child provenance.
+
+The contract is bounded and internally consistent: GREEN alone returns zero; any non-GREEN control/regression/interruption returns nonzero; a zero child becomes CLI 1 only at the public boundary; existing nonzero child codes, including intended RED, remain unchanged. Existing domain-UNKNOWN GREEN, pipeline exit, signal, timeout and intended-RED tests retain their prior semantics. The two current assertion failures are qualifying intended RED for the public exit defect, not product or setup failures. Implementation may change only runner exit selection/recording and directly related readers; focused checks, independent Gate 5, full locally available regression and a new full exact-source CI remain required.

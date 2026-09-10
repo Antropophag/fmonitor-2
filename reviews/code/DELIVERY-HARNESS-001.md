@@ -123,3 +123,23 @@ The linked-worktree test now sends each worktree's returned `state.active_bindin
 All six focused commands are GREEN on exact source `62d35eb…`: the five mapped suites and architecture guard in `/tmp/pr89-final-fixes-focused.json`. The package correctly links the prior reviewed snapshot and findings and supplies a reproducible delta. The final spec/test bytes retain the independent Gate 3 approvals; the R1 sentence merely consolidates the already approved three-field GREEN transport contract. No product behavior or broader architecture changed.
 
 Native startup/task/resume/worktree-binding proof remains current in `/tmp/pr89-final-native-smoke.json`; the planner-only resolver correction does not alter its integration files. The first local full run's 359 checks plus `VERIFY_OK` apply to prior source `ee0a059d…` and are preserved honestly. This exact candidate is **APPROVED** for final commit. Completion still requires a new full local regression and full GitHub CI on that final commit SHA; neither future result is predicted here. Merge and deployment remain unauthorized.
+
+## Public runner fail-closed exit — Gate 5 delta
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T181614Z-5f5add9d23/package.json`
+- Previous snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T172504Z-d7d428e534/snapshot`
+- Restored source: `/private/tmp/fmonitor-pr89-exit-gate5-review`
+- Candidate source identity: `956023e48ce0689a7b9b79a36c5ab8793d2578f4a91e7dd93f711ed2d4b9b14a`
+- Plan SHA-256: `2f6dda5814d7b18b8b477446da643d538c58a083b22dc678aff45dabfe3c60de`
+- Package approval: `NOT_REVIEWED`
+- Verdict: **APPROVED**
+
+The implementation changes only public exit selection and provenance recording. `cli_exit` is zero exactly for GREEN; every other outcome returns the existing nonzero child code, or 1 when the child actually exited zero. Retained `exit_code` and `raw_child_returncode` remain child facts, while `cli_exit_code` records the public harness status. The failure summary exposes both child and CLI exits; GREEN keeps its approved three-field delivery.
+
+`/tmp/pr89-public-exit-scenarios.json` confirms the full affected matrix: explicit SETUP_FAILURE/UNKNOWN with child/raw 0 return CLI 1; domain UNKNOWN text remains GREEN/0; ordinary failure, intended RED and pipefail preserve 7; SIGTERM preserves child/CLI 143 with raw -15; timeout preserves 124 with raw -15. Marker grammar and outcome precedence are unchanged.
+
+Existing downstream guards remain necessary and correct because they interpret retained child provenance as well as outcome. CI converts a non-GREEN child 0 to effective category failure, while the native shell independently rejects non-GREEN even if a future boundary regression returned zero. No guard was removed and no product expectation was weakened.
+
+All five mapped suites are GREEN on exact source `956023e4…` (harness 25, planner 16, CI 16, native 10, inventory 16). The actual architecture check and architecture guard are GREEN in `/tmp/pr89-exit-architecture*.json`. The package links the prior reviewed snapshot and bounded findings and remains `NOT_REVIEWED`; this independent verdict supplies approval.
+
+This public-exit delta is **APPROVED** for commit. The historical local run with two unrelated failures remains FAILED, the isolated v23 pass does not invent a cause, and old CI 34508656112 is not evidence for this source. Completion requires the latest requested focused/governance/architecture matrix and a new full exact-source GitHub CI after commit. Merge and deployment remain unauthorized.

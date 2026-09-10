@@ -287,6 +287,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
     source_drift = end_source_state["digest"] != source or end_fixture_digest != fixture_digest
     if source_drift and outcome not in {"SETUP_FAILURE", "INTERRUPTED"}:
         outcome = UNKNOWN
+    cli_exit = 0 if outcome == "GREEN" else (child_exit or 1)
     stdout_path.write_bytes(stdout); stderr_path.write_bytes(stderr)
     os.chmod(stdout_path, 0o600); os.chmod(stderr_path, 0o600)
     selected_reason = reason or _auto_reason(argv, str(ROOT), source, fixture_digest, environment)
@@ -298,18 +299,19 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
               "end_fixture": end_fixture_digest, "source_drift": source_drift,
               "reason": selected_reason, "started_at": started_wall,
               "finished_at": time.time(), "duration_seconds": duration,
-              "exit_code": child_exit, "raw_child_returncode": raw_exit,
+              "exit_code": child_exit, "cli_exit_code": cli_exit,
+              "raw_child_returncode": raw_exit,
               "outcome": outcome, "stdout_path": str(stdout_path),
               "stderr_path": str(stderr_path), "output_bytes": len(stdout) + len(stderr)}
     if outcome == "GREEN":
         summary = {"id": identifier, "outcome": outcome, "record_path": str(record_path)}
     else:
-        summary = {key: record[key] for key in ("id", "outcome", "exit_code", "stdout_path", "stderr_path", "output_bytes")}
+        summary = {key: record[key] for key in ("id", "outcome", "exit_code", "cli_exit_code", "stdout_path", "stderr_path", "output_bytes")}
         summary.update({"record_path": str(record_path), "excerpt": excerpt})
     record["summary_bytes"] = len((canonical(summary) + "\n").encode())
     _write_json(record_path, record)
     print(canonical(summary))
-    return child_exit, summary
+    return cli_exit, summary
 
 
 def report():

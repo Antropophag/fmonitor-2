@@ -91,6 +91,17 @@ class Harness(unittest.TestCase):
         self.assertTrue(result.stdout.strip().startswith('{'), 'INTENDED_RED structured setup outcome absent: '+result.stderr)
         self.assertEqual('SETUP_FAILURE', json.loads(result.stdout)['outcome'])
 
+    def test_public_cli_rejects_zero_exit_control_markers_without_rewriting_child(self):
+        for marker in ['SETUP_FAILURE','UNKNOWN']:
+            with self.subTest(marker=marker):
+                result,data=self.run_check('print('+repr(marker+': unavailable')+')')
+                self.assertEqual(marker,data['outcome'])
+                self.assertNotEqual(0,result.returncode,'INTENDED_RED public runner returned success for '+marker)
+                record=json.loads(Path(data['record_path']).read_text())
+                self.assertEqual(0,record['exit_code'],'actual child exit must not become synthetic CLI exit')
+                self.assertEqual(0,record['raw_child_returncode'])
+                self.assertEqual(result.returncode,record['cli_exit_code'])
+
     def test_parent_interruption_and_zero_exit_setup_are_not_green(self):
         import signal
         import time
