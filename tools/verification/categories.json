@@ -281,6 +281,7 @@
   "tests/Otiz/settlement_owner_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_001_test.php": "integration",
   "tests/Otiz/snapshot_publication_http_001_test.php": "integration",
+  "tests/Runtime/activation_proxy_log_001_test.py": "e2e",
   "tests/Runtime/initial_owner_provisioning_001_test.php": "integration",
   "tests/Runtime/migration_concurrency_lock_001_test.php": "integration",
   "tests/Runtime/migration_parallel_runners_001_test.php": "integration",

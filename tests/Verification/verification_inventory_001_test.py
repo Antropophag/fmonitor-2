@@ -179,6 +179,7 @@ class Inventory(native.NativeSuites):
             ],
             'characterization': added,
             'e2e': [
+                'python3\ttests/Runtime/activation_proxy_log_001_test.py\n',
                 'php\ttests/Yii2/yii2_user_access_browser_001_test.php\n',
                 'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php\n',
                 'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',

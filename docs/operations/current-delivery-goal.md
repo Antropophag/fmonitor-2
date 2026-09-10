@@ -17,3 +17,12 @@ PR77/79/83 уже MERGED. Весь #76 ещё не завершён; рабоч�
 Closure metadata #82 группируется со следующим содержательным checkpoint.
 
 [Предыдущая цель до #82](delivery-goal-before-82-main.md).
+
+## Объединённый кандидат #76
+
+Yii user access и activation proxy log privacy имеют независимые Gate3/Gate5
+APPROVED. Их изменения объединяются в этом основном checkout перед одним
+полным exact-source CI. Приватность подтверждена на реальном nginx при502,
+административные действия — owner/HTTP/browser/concurrency и actual architecture.
+Стенд остаётся сохранённым; полный #76 ещё не завершён. После поставки пакета
+продолжить перенос очереди объектов и оставшихся process routes.
