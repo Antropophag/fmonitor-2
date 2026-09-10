@@ -13,7 +13,7 @@ RUN npm ci --no-audit --no-fund \
     && npm run generate \
     && npm run build:packages
 
-FROM php:8.4-fpm-bookworm@sha256:075b11566518bfa979bb9f2fe2e5359148326d659b15a2f414c2c305a0479a4e
+FROM php:8.4-fpm-bookworm@sha256:075b11566518bfa979bb9f2fe2e5359148326d659b15a2f414c2c305a0479a4e AS runtime-base
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx unzip \
     && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pcntl \
@@ -24,6 +24,7 @@ RUN apt-get update \
     && chmod 0700 /var/lib/fmonitor/yii \
     && rm -rf /var/lib/apt/lists/*
 
+FROM runtime-base
 WORKDIR /workspace/fmonitor-2
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 COPY composer.json composer.lock ./

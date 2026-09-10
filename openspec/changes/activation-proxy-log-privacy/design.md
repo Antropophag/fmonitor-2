@@ -37,3 +37,23 @@ Activation upstream failures диагностируются по safe access sta
 application/health observations; подробный nginx request error на этом path скрыт,
 поскольку включает bearer query. На обычном path подробная диагностика сохранена.
 Default image build — CI path; local cache override отдельно отмечается evidence.
+
+## Complete acceptance traceability
+
+Один executable test покрывает один составной acceptance целиком. Его обязательные
+проверки: syntax → real nginx -t; access → GET/POST stdout/canaries/JSON;
+error → activation stderr; diagnostics → invalid config + ordinary upstream;
+parity → unchanged FastCGI handoff; setup → verified cache/default runtime-base;
+isolation → owned-container context and deterministic failure-before-ID probe.
+
+Попытка отдельных JSON entries для этих строк была отвергнута самим planner:
+`duplicate test mapping`. Нормативный CHANGE-VERIFICATION-001 прямо запрещает
+один test path в двух mappings. Поэтому вход сохраняет составной acceptance,
+а эта карта раскрывает все его проверки без фиктивных wrapper tests или изменения
+планировщика. Команды существующих runtime regressions входят в тот же mapping.
+
+Cleanup now retains unique name plus ownership label before Docker creation.
+The same cleanup context is exercised by an intentional client failure after
+real docker create, without assigning its returned ID; an unrelated labelled
+fixture survives. Non-owned names are never removed. This closes the observed
+pre-assignment failure window without touching the stand.

@@ -1,13 +1,13 @@
 ## 1. Prepare
 
-- [x] 1.1 Root: full specification and dependency impact.
-- [ ] 1.2 Required plan, real nginx RED and independent Gate3.
+- [x] 1.1 Root: полная спецификация и анализ зависимостей.
+- [x] 1.2 Обязательный plan, real nginx RED и независимый Gate3.
 
 ## 2. Implement
 
-- [ ] 2.1 Separate executor: configs and lightweight base stage.
-- [ ] 2.2 Real nginx GREEN, relevant focused checks and independent Gate5.
+- [x] 2.1 Отдельный исполнитель: конфигурации и лёгкий base stage.
+- [x] 2.2 Real nginx GREEN, связанные focused checks и независимый Gate5.
 
 ## 3. Deliver
 
-- [ ] 3.1 Integrate with Yii user access, authoritative CI and merge.
+- [ ] 3.1 Объединение с Yii user access, authoritative CI и merge.

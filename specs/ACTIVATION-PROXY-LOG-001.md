@@ -13,7 +13,12 @@ Real `nginx -t` и HTTP через конфигурации `deploy/yii2/nginx.c
 явно заданный FPM upstream. Никакой БД, user/session/domain операции. В isolated
 проверке php:9000 разрешается в loopback без FPM и гарантированно даёт502.
 
-| ID | Действие | Наблюдаемый результат |
+Одна acceptance `private-and-diagnosable-activation-proxy` объединяет следующие
+семь обязательных проверок одного executable сценария. Все они сохраняются;
+это не семь отдельных запусков. Group mapping соответствует ограничению
+CHANGE-VERIFICATION-001: один test path не принадлежит двум mappings.
+
+| Проверка | Действие | Наблюдаемый результат |
 | --- | --- | --- |
 | syntax | nginx -t на каждом конфиге | exit0; конфигурация исполнима текущим runtime nginx. |
 | access | GET и POST `/pilot/activate?token=A` с token B в Referer, token C в User-Agent и token D в POST body | HTTP502 при недоступном upstream; stdout содержит одну JSON запись на запрос с method, uri `/pilot/activate`, status502, request_id (32 hex), request_time, upstream_status и upstream_response_time. Ни A/B/C/D, ни query, ни request headers/body в записи нет. |

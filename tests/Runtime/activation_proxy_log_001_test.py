@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """ACTIVATION-PROXY-LOG-001: real nginx syntax, failed upstream and private logs."""
+from contextlib import contextmanager
 import hashlib
 import http.client
 import json
@@ -74,8 +75,57 @@ def request(port, method, path, headers=None, body=None):
             connection.close()
 
 
+OWNER_LABEL = 'fmonitor.activation-proxy-test'
+
+
+@contextmanager
+def owned_container(name, marker):
+    # Ownership survives a client failure before Docker returns a container ID.
+    try:
+        yield
+    finally:
+        observed = run(['docker', 'inspect', name, '--format',
+                        '{{.Id}} {{ index .Config.Labels "' + OWNER_LABEL + '" }}'])
+        if observed.returncode:
+            if 'No such' not in observed.stderr:
+                require(observed, 'own container lookup')
+        else:
+            parts = observed.stdout.strip().split()
+            if len(parts) != 2 or parts[1] != marker or not re.fullmatch('[0-9a-f]{64}', parts[0]):
+                raise RuntimeError('SETUP_FAILURE: refusing cleanup of a non-owned container')
+            require(run(['docker', 'rm', '--force', parts[0]]), 'own container cleanup')
+
+
+def verify_failed_start_cleanup(image_id):
+    class SimulatedClientFailure(Exception):
+        pass
+    name = 'fm2-log-cleanup-' + uuid.uuid4().hex[:12]
+    marker = uuid.uuid4().hex
+    other = 'fm2-log-unrelated-' + uuid.uuid4().hex[:12]
+    other_marker = uuid.uuid4().hex
+    with owned_container(other, other_marker):
+        other_id = require(run(['docker', 'create', '--pull=never', '--name', other,
+                                '--label', OWNER_LABEL + '=' + other_marker,
+                                image_id, 'true']), 'unrelated fixture container')
+        try:
+            with owned_container(name, marker):
+                # Simulate the precise window: created by daemon, no ID assigned by caller.
+                require(run(['docker', 'create', '--pull=never', '--name', name,
+                             '--label', OWNER_LABEL + '=' + marker, image_id, 'true']),
+                        'pre-assignment fixture container')
+                raise SimulatedClientFailure()
+        except SimulatedClientFailure:
+            pass
+        check(run(['docker', 'inspect', name]).returncode != 0,
+              'pre-assignment start failure removes created container')
+        check(require(run(['docker', 'inspect', other, '--format', '{{.Id}}']),
+                      'unrelated fixture survives') == other_id,
+              'failure cleanup preserves unrelated container')
+
+
 def inspect_family(image_id, family, evidence):
-    container = None
+    container_name = 'fm2-log-test-' + uuid.uuid4().hex[:12]
+    owner_marker = uuid.uuid4().hex
     config = ROOT / 'deploy' / family / 'nginx.conf'
     text = config.read_text()
     normal = location(text, r'/')
@@ -98,8 +148,9 @@ def inspect_family(image_id, family, evidence):
     check(invalid.returncode != 0 and 'fixture_invalid_directive' in invalid.stderr,
           family + ': invalid configuration remains diagnosable')
     tokens = {letter: 'ACTIVATE_' + letter + '_' + uuid.uuid4().hex for letter in 'ABCD'}
-    try:
-        container = require(run(['docker', 'run', '--detach', '--name', 'fm2-log-test-' + uuid.uuid4().hex[:12],
+    with owned_container(container_name, owner_marker):
+        container = require(run(['docker', 'run', '--detach', '--name', container_name,
+                                 '--label', OWNER_LABEL + '=' + owner_marker,
                                  '--publish', '127.0.0.1::8080', *common, image_id,
                                  '-c', '/tmp/candidate-nginx.conf', '-g', 'daemon off;']), family + ' nginx start')
         port = int(require(run(['docker', 'port', container, '8080/tcp']), 'published port').rsplit(':', 1)[1])
@@ -155,14 +206,12 @@ def inspect_family(image_id, family, evidence):
                 check(valid, family + ': operational timing ' + key)
             check(not any(key in record for key in ['request', 'request_uri', 'args', 'query_string', 'referer', 'user_agent', 'cookie', 'authorization', 'body']), family + ': private request fields omitted')
         check(len(set(ids)) == 3, family + ': independently generated request IDs')
-    finally:
-        if container:
-            require(run(['docker', 'rm', '--force', container]), 'own container cleanup')
 
 
 def main():
     evidence = Path(tempfile.mkdtemp(prefix='fmonitor-activation-proxy-'))
     image_id = image()
+    verify_failed_start_cleanup(image_id)
     for family in ['yii2', 'runtime']:
         inspect_family(image_id, family, evidence)
     (evidence / 'summary.json').write_text(json.dumps({'image': image_id, 'failures': FAILURES}, indent=2))
