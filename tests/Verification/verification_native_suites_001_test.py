@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +21,11 @@ class NativeSuites(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='fmonitor-runner-contract-')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        shutil.copytree(ROOT / 'tools/delivery', self.root / 'tools/delivery')
+        evidence = tempfile.TemporaryDirectory(prefix='fmonitor-runner-evidence-')
+        self.addCleanup(evidence.cleanup)
+        self.evidence_home = evidence.name
+        (self.root / '.gitignore').write_text('*.log\n__pycache__/\n')
         shutil.copytree(ROOT / 'tools/verification', self.root / 'tools/verification')
         for name in UNIT + DB + [CLIENT]:
             path = self.root / name
@@ -31,7 +37,7 @@ class NativeSuites(unittest.TestCase):
         self.write_catalog()
         self.bin = self.root / 'trace-bin'
         self.bin.mkdir()
-        for name in ['dirname', 'find', 'sort']:
+        for name in ['dirname', 'find', 'sort', 'git']:
             executable = shutil.which(name)
             self.assertIsNotNone(executable, f'SETUP_OK {name}')
             (self.bin / name).symlink_to(executable)
@@ -47,6 +53,10 @@ class NativeSuites(unittest.TestCase):
                               'exit 0\n')
             script.chmod(0o700)
         self.env = dict(os.environ, PATH=str(self.bin), TRACE=str(self.trace), INVOCATIONS=str(self.invocations), FAIL_PATHS='')
+        self.env.update(FMONITOR_HARNESS_HOME=self.evidence_home, FMONITOR_HARNESS_PYTHON=sys.executable)
+        for args in [('init','-q'),('config','user.email','fixture@example.invalid'),('config','user.name','Fixture'),('add','.'),('commit','-qm','runner fixture')]:
+            subprocess.run(['git',*args],cwd=self.root,check=True,capture_output=True)
+
 
     def write_catalog(self, unit=UNIT, db=DB, clients=(CLIENT,)):
         rows = [('unit', 'php', p) for p in unit]
@@ -62,6 +72,14 @@ class NativeSuites(unittest.TestCase):
 
     def calls(self):
         return self.trace.read_text().splitlines() if self.trace.exists() else []
+
+    def test_setup_outcome_with_zero_child_exit_fails_suite(self):
+        php=self.bin/'php'
+        php.write_text(php.read_text().replace('#!/bin/sh\n', '#!/bin/sh\necho "SETUP_FAILURE: synthetic unavailable dependency"\n'))
+        result=self.run_cli('unit')
+        self.assertNotEqual(0,result.returncode,'INTENDED_RED setup outcome became green suite')
+        self.assertIn('REGRESSION_FAILURE',result.stderr)
+        self.assertEqual(len(UNIT)+1,len(self.calls()),'all selected commands still execute')
 
     def test_list_membership_without_execution(self):
         before = sorted(str(p.relative_to(self.root)) for p in self.root.rglob('*'))

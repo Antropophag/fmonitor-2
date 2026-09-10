@@ -5,6 +5,7 @@ import fnmatch
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import re
 import subprocess
 import sys
 
@@ -24,6 +25,41 @@ def strict_object(pairs):
 
 def load_json(relative):
     return json.loads(repo_path(relative).read_text(), object_pairs_hook=strict_object)
+
+
+def plan_path(value):
+    """Resolve only generated plan artifacts outside the repository."""
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise ValueError("invalid plan path")
+    lexical = PurePosixPath(value)
+    if ".." in lexical.parts:
+        raise ValueError("unsafe plan path traversal")
+    if not lexical.is_absolute():
+        return repo_path(value)
+    import harness
+    candidate = Path(value)
+    if candidate.is_symlink():
+        raise ValueError("plan artifact cannot be a symlink")
+    resolved = candidate.resolve()
+    home = harness.evidence_home()
+    allowed = False
+    for directory in (home / "packages", home / "state"):
+        try:
+            resolved.relative_to(directory.resolve())
+            allowed = True
+        except ValueError:
+            continue
+    supported_name = (resolved.name == "verification-plan.json"
+                      or re.fullmatch(r"active-verification-plan-[0-9a-f]{20}\.json", resolved.name))
+    if not allowed or not supported_name:
+        raise ValueError("plan artifact is outside trusted evidence directories")
+    if not resolved.is_file():
+        raise ValueError("plan artifact is unavailable")
+    return resolved
+
+
+def load_plan(value):
+    return json.loads(plan_path(value).read_text(), object_pairs_hook=strict_object)
 
 
 def repo_path(value):
@@ -131,6 +167,26 @@ def validate_policy(policy):
             raise ValueError("invalid boundary tests")
         for test in boundary["tests"]:
             test_argv(test, runtimes)
+    consumers = policy.get("consumers", [])
+    if not isinstance(consumers, list):
+        raise ValueError("invalid consumer obligations")
+    seen_owners = set()
+    for consumer in consumers:
+        if not isinstance(consumer, dict) or set(consumer) != {"owners", "tests"}:
+            raise ValueError("malformed consumer obligation")
+        owners, tests = consumer["owners"], consumer["tests"]
+        if (not isinstance(owners, list) or not owners or len(owners) != len(set(owners))
+                or not isinstance(tests, list) or not tests or len(tests) != len(set(tests))):
+            raise ValueError("consumer obligation requires unique owners and tests")
+        for owner in owners:
+            if not isinstance(owner, str) or not owner:
+                raise ValueError("invalid consumer owner pattern")
+            repo_path(owner)
+            if owner in seen_owners:
+                raise ValueError("duplicate consumer owner")
+            seen_owners.add(owner)
+        for test in tests:
+            test_argv(test, runtimes)
 
 
 def validate_policy_inventory(policy, inventory):
@@ -147,6 +203,10 @@ def validate_policy_inventory(policy, inventory):
             registered = inventory.get(test)
             if registered is not None and registered not in boundary["categories"]:
                 raise ValueError(f"boundary test category mismatch: {test} is {registered}")
+    for consumer in policy.get("consumers", []):
+        for test in consumer["tests"]:
+            if test not in inventory:
+                raise ValueError(f"consumer test is not registered: {test}")
 
 
 def validate_argv(argv):
@@ -209,6 +269,16 @@ def build(base_ref, input_name):
     if not isinstance(inventory, dict) or any(v not in CATEGORIES for v in inventory.values()):
         raise ValueError("invalid category inventory")
     validate_policy_inventory(policy, inventory)
+    consumer_tests = set()
+    for path in effective:
+        matches = [consumer for consumer in policy.get("consumers", [])
+                   if any(fnmatch.fnmatchcase(path, owner) for owner in consumer["owners"])]
+        if len(matches) > 1:
+            raise ValueError(f"ambiguous consumer obligation: {path}")
+        if matches:
+            consumer_tests.update(matches[0]["tests"])
+    for test in consumer_tests:
+        required_categories.add(inventory[test])
     effective_tests = []
     for path in effective:
         if path in inventory:
@@ -222,7 +292,8 @@ def build(base_ref, input_name):
     normalized_acceptances = []
     required = {"spec_id", "acceptance_id", "spec_path", "seam", "tests"}
     for acceptance in acceptances:
-        if not isinstance(acceptance, dict) or set(acceptance) != required:
+        if (not isinstance(acceptance, dict) or not required <= set(acceptance)
+                or not set(acceptance) <= required | {"gate3_expected"}):
             raise ValueError("malformed acceptance mapping")
         identity = (acceptance["spec_id"], acceptance["acceptance_id"])
         if any(not isinstance(acceptance[key], str) or not acceptance[key] for key in ["spec_id", "acceptance_id", "spec_path", "seam"]):
@@ -244,7 +315,16 @@ def build(base_ref, input_name):
             acceptance_tests.append(test)
             if test in inventory:
                 required_categories.add(inventory[test])
-        normalized_acceptances.append({**acceptance, "tests": sorted(tests)})
+        expected = acceptance.get("gate3_expected")
+        if expected is not None:
+            if (not isinstance(expected, dict) or set(expected) != set(tests)
+                    or any(value not in {"INTENDED_RED", "GREEN"} for value in expected.values())):
+                raise ValueError("invalid Gate 3 expected outcomes")
+        normalized = {key: acceptance[key] for key in required}
+        normalized["tests"] = sorted(tests)
+        if expected is not None:
+            normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
+        normalized_acceptances.append(normalized)
     commands = []
     command_keys = set()
     def add(argv, phase, rationale):
@@ -257,6 +337,8 @@ def build(base_ref, input_name):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping")
     for test in sorted(boundary_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "changed boundary obligation")
+    for test in sorted(consumer_tests):
+        add(test_argv(test, policy["runtimes"]), "focused", "confirmed consumer obligation")
     for test in effective_tests:
         add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
     for category in sorted(required_categories):
@@ -293,7 +375,7 @@ def build(base_ref, input_name):
 
 
 def checked_plan(plan_name):
-    plan = load_json(plan_name)
+    plan = load_plan(plan_name)
     if not isinstance(plan, dict) or plan.get("version") != 1:
         raise ValueError("invalid plan")
     expected = build(plan.get("base_ref"), plan.get("input"))
@@ -314,6 +396,9 @@ def main():
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--plan", required=True)
     run_parser.add_argument("--phase", choices=["focused", "integration"], required=True)
+    run_parser.add_argument("--diagnostic", action="store_true")
+    refresh_parser = commands.add_parser("refresh")
+    refresh_parser.add_argument("--plan", required=True)
     args = parser.parse_args()
     try:
         if args.command == "plan":
@@ -324,15 +409,41 @@ def main():
         elif args.command == "check":
             checked_plan(args.plan)
             print("CHANGE_VERIFICATION_OK")
+        elif args.command == "refresh":
+            old = load_plan(args.plan)
+            if not isinstance(old, dict):
+                raise ValueError("invalid plan")
+            refreshed = build(old.get("base_ref"), old.get("input"))
+            changed = old.get("commands") != refreshed.get("commands")
+            plan_path(args.plan).write_text(canonical(refreshed))
+            print(canonical({"obligations_changed": changed}), end="")
         else:
             plan = checked_plan(args.plan)
+            results = []
             for command in plan["commands"]:
                 if command["phase"] != args.phase:
                     continue
-                print("VERIFY " + " ".join(command["argv"]), flush=True)
-                status = subprocess.run(command["argv"], cwd=ROOT).returncode
-                if status:
-                    return status
+                harness = ROOT / "tools/delivery/harness.py"
+                result = subprocess.run([sys.executable, str(harness), "run", "--", *command["argv"]],
+                                        cwd=ROOT, capture_output=True, text=True)
+                try:
+                    summary = json.loads(result.stdout)
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"harness returned invalid result: {error}") from error
+                import harness
+                record = harness.hydrate_summary(summary)
+                item = {"argv": command["argv"], "outcome": record["outcome"],
+                        "exit_code": record["exit_code"], "record_path": record["record_path"]}
+                if record["outcome"] != "GREEN":
+                    item["excerpt"] = record["excerpt"]
+                results.append(item)
+                if result.returncode and not args.diagnostic:
+                    print(canonical({"results": results}), end="")
+                    return result.returncode
+            failures = [item for item in results if item["outcome"] != "GREEN"]
+            print(canonical({"results": results}), end="")
+            if failures:
+                return failures[0].get("exit_code", 1) or 1
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         print(f"SETUP_FAILURE: {error}", file=sys.stderr)
         return 1

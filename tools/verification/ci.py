@@ -7,9 +7,36 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import importlib.util
 
 ROOT = Path(__file__).resolve().parents[2]
 CATEGORIES = ['unit', 'integration', 'e2e', 'governance']
+
+
+def harness_run(argv, environment):
+    harness = ROOT / 'tools/delivery/harness.py'
+    python = os.environ.get('FMONITOR_HARNESS_PYTHON', sys.executable)
+    result = subprocess.run([python, str(harness), 'run', '--', *argv], cwd=ROOT,
+                            env=environment, capture_output=True, text=True)
+    if not result.stdout.strip():
+        raise ValueError(result.stderr.strip() or 'delivery harness returned no result')
+    try:
+        summary = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError(f'delivery harness returned invalid JSON: {error}') from error
+    module_spec = importlib.util.spec_from_file_location('fmonitor_delivery_harness', harness)
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    record = module.hydrate_summary(summary)
+    if environment.get('GITHUB_ACTIONS') == 'true':
+        for name in ['stdout_path', 'stderr_path']:
+            stream = sys.stderr if name == 'stderr_path' else sys.stdout
+            print(Path(record[name]).read_text(errors='replace'), end='', file=stream)
+    else:
+        print(json.dumps(summary, ensure_ascii=True, sort_keys=True, separators=(',', ':')))
+        if record['outcome'] != 'GREEN' and record.get('excerpt'):
+            print(record['excerpt'], end='' if record['excerpt'].endswith('\n') else '\n')
+    return record
 
 
 def strict_object(pairs):
@@ -98,8 +125,9 @@ def run_category(category, shard=None):
         print(f'VERIFY {path}', flush=True)
         before = time.monotonic()
         try:
-            status = subprocess.run([runtime, path], cwd=ROOT, env=runtime_env).returncode
-        except OSError as error:
+            summary = harness_run([runtime, path], runtime_env)
+            status = summary['exit_code'] if summary.get('outcome') == 'GREEN' else (summary['exit_code'] or 1)
+        except (OSError, ValueError, KeyError, TypeError) as error:
             print(f'REGRESSION_FAILURE: {path}: {error}', file=sys.stderr)
             status = 127
         elapsed = time.monotonic() - before

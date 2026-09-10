@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,11 @@ class VerificationCI(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='fmonitor-ci-contract-')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        shutil.copytree(ROOT / 'tools/delivery', self.root / 'tools/delivery')
+        evidence = tempfile.TemporaryDirectory(prefix='fmonitor-runner-evidence-')
+        self.addCleanup(evidence.cleanup)
+        self.evidence_home = evidence.name
+        (self.root / '.gitignore').write_text('*.log\n__pycache__/\n')
         tool = self.root / 'tools/verification'
         tool.mkdir(parents=True)
         shutil.copy(ROOT / 'tools/verification/run.sh', tool)
@@ -51,6 +57,10 @@ class VerificationCI(unittest.TestCase):
                         TRACE=str(self.trace), DB_TRACE=str(self.db_trace), FAIL_FILE='')
         # Deliberately failing synthetic categories must not pollute the real CI report.
         self.env.pop('GITHUB_STEP_SUMMARY', None)
+        self.env.update(FMONITOR_HARNESS_HOME=self.evidence_home, FMONITOR_HARNESS_PYTHON=sys.executable)
+        for args in [('init','-q'),('config','user.email','fixture@example.invalid'),('config','user.name','Fixture'),('add','.'),('commit','-qm','runner fixture')]:
+            subprocess.run(['git',*args],cwd=self.root,check=True,capture_output=True)
+
 
     def write_mapping(self):
         (self.root / 'tools/verification/categories.json').write_text(json.dumps(self.mapping))
@@ -96,6 +106,15 @@ class VerificationCI(unittest.TestCase):
         self.git('add', '.')
         self.git('commit', '-qm', 'change')
         return base
+
+    def test_setup_outcome_with_zero_child_exit_fails_category(self):
+        php=self.bin/'php'
+        php.write_text(php.read_text().replace('#!/bin/sh\n', '#!/bin/sh\necho "SETUP_FAILURE: synthetic unavailable dependency"\n'))
+        result=self.cli('run','unit')
+        self.assertNotEqual(0,result.returncode,'INTENDED_RED setup outcome became green category')
+        self.assertIn('CATEGORY_RESULT',result.stdout)
+        self.assertIn(self.paths[0],result.stdout)
+        self.assertIn(self.paths[1],result.stdout)
 
     def test_docs_plan_is_explicit_and_code_unknown_are_full(self):
         base = self.history('docs/operations/note.md')
@@ -203,7 +222,7 @@ class VerificationCI(unittest.TestCase):
         selected = self.cli('list', 'integration', '--shard', '1/2')
         self.assertEqual(0, selected.returncode, selected.stderr)
         selected_paths = [row.split('\t')[1] for row in selected.stdout.splitlines()]
-        env = dict(self.env, FAIL_FILE=selected_paths[0])
+        env = dict(self.env, FAIL_FILE=selected_paths[0], GITHUB_ACTIONS='true')
         result = self.cli('run', 'integration', '--shard', '1/2', env=env)
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(selected.stdout.splitlines(), self.trace.read_text().splitlines())
@@ -253,14 +272,21 @@ class VerificationCI(unittest.TestCase):
             out.write(f'unit\tpython3\t{py}\n')
         self.mapping[py] = 'unit'
         self.write_mapping()
-        env = dict(self.env, FAIL_FILE=self.paths[0])
+        env = dict(self.env, FAIL_FILE=self.paths[0], GITHUB_ACTIONS='false')
         result = subprocess.run(['/bin/bash', str(self.root / 'tools/verification/run.sh'), 'category', 'unit'],
                                 cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
         self.assertNotEqual(0, result.returncode)
         self.assertTrue(self.trace.exists(), result.stderr)
         self.assertEqual([f'{self.runtimes[p]}\t{p}' for p in self.paths[:2]] + [f'python3\t{py}'], self.trace.read_text().splitlines())
+        records=[(p,json.loads(p.read_text())) for p in Path(self.evidence_home).glob('records/*.json')]
         for path in self.paths[:2] + [py]:
-            self.assertIn('child-output:' + path, result.stdout)
+            self.assertIn(path,result.stdout)
+            matches=[(p,r) for p,r in records if r['argv'][-1]==path]
+            self.assertEqual(1,len(matches))
+            record_path,record=matches[0]
+            self.assertIn('child-output:'+path,Path(record['stdout_path']).read_text())
+            self.assertIn(str(record_path.resolve()),result.stdout,'interactive results keep evidence navigation')
+        self.assertIn('child-output:'+self.paths[0],result.stdout,'failure diagnostics remain visible')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*exit=7')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=node .*exit=0')
         self.assertRegex(result.stdout, r'VERIFY_TIMING .*runtime=python3 .*exit=0')
@@ -281,7 +307,10 @@ class VerificationCI(unittest.TestCase):
                                     MAKEOVERRIDES='FMONITOR_TEST_OVERRIDE=1'),
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn('inner-ok', result.stdout)
+        records=[json.loads(p.read_text()) for p in Path(self.evidence_home).glob('records/*.json')]
+        nested=[r for r in records if r['argv'][-1]==self.paths[0]]
+        self.assertEqual(1,len(nested))
+        self.assertIn('inner-ok',Path(nested[0]['stdout_path']).read_text())
 
     def test_make_forwards_integration_shard_without_leaking_make_controls(self):
         shutil.copy(ROOT / 'Makefile', self.root / 'Makefile')

@@ -19,7 +19,7 @@ class ChangeVerification(unittest.TestCase):
             (self.root / relative).mkdir(parents=True, exist_ok=True)
         source = ROOT / "tools/delivery/change-verification.py"
         if source.exists():
-            shutil.copy2(source, self.root / "tools/delivery/change-verification.py")
+            shutil.copytree(ROOT / "tools/delivery", self.root / "tools/delivery", dirs_exist_ok=True)
         (self.root / "specs/CHANGE-VERIFICATION-001.md").write_text("contract\n")
         (self.root / "specs/EXAMPLE-001.md").write_text("acceptance contract\n")
         (self.root / "quality-graph.yml").write_text("version: 1\n")
@@ -293,6 +293,96 @@ class ChangeVerification(unittest.TestCase):
         plan = json.loads((self.root / "plan.json").read_text())
         self.assertIn("integration", plan["required_categories"])
         self.assertIn(["php", "tests/Runtime/runtime_storage_001_test.php"], [x["argv"] for x in plan["commands"]])
+
+    def test_gate3_expectations_are_part_of_existing_mapping_and_strict(self):
+        acceptance=self.input['acceptances'][0]
+        acceptance['gate3_expected']={acceptance['tests'][0]:'GREEN'}
+        self.write_json('change.json',self.input)
+        result=self.plan()
+        self.assertEqual(0,result.returncode,'INTENDED_RED expected outcomes cannot be mapped: '+result.stderr)
+        plan=json.loads((self.root/'plan.json').read_text())
+        self.assertEqual(acceptance['gate3_expected'],plan['acceptances'][0]['gate3_expected'])
+        acceptance['gate3_expected']={acceptance['tests'][0]:'INTENDED_RED'}
+        self.write_json('change.json',self.input)
+        self.assertNotEqual(0,self.cli('check','--plan','plan.json').returncode)
+        self.assertEqual(0,self.cli('refresh','--plan','plan.json').returncode)
+        for bad in [{}, {'tests/other.php':'GREEN'}, {acceptance['tests'][0]:'APPROVED'}, []]:
+            acceptance['gate3_expected']=bad;self.write_json('change.json',self.input)
+            self.assertNotEqual(0,self.plan().returncode,'malformed intent cannot bypass RED')
+
+    def test_six_short_success_logs_have_compact_diagnostic_delivery(self):
+        (self.root/'app/PilotHttp/Action.php').write_text('before\n')
+        files=['tests/InstallationProcess/log_'+str(i)+'_test.py' for i in range(6)]
+        log=''.join('case %02d checked ... ok\n'%i for i in range(50))+'Ran 50 checks\nOK\n'
+        for path in files:(self.root/path).write_text('print('+repr(log)+',end="")\n')
+        self.input['planned_paths']=files
+        self.input['acceptances'][0]['tests']=files
+        self.write_json('change.json',self.input)
+        for boundary in self.policy['boundaries']:
+            if boundary['name']=='tests':boundary['categories']=['governance']
+        self.policy['category_argv']['governance']=[['python3',files[0]]]
+        self.write_json('.quality-graph/verification-policy.json',self.policy)
+        self.assertEqual(0,self.plan().returncode)
+        external=tempfile.TemporaryDirectory(prefix='short-output-evidence-');self.addCleanup(external.cleanup)
+        env=dict(os.environ,FMONITOR_HARNESS_HOME=external.name)
+        result=self.cli('run','--plan','plan.json','--phase','focused','--diagnostic',env=env)
+        self.assertEqual(0,result.returncode,result.stderr)
+        results=json.loads(result.stdout)['results']
+        self.assertEqual(6,len(results))
+        self.assertTrue(all(r['outcome']=='GREEN' for r in results))
+        records=[json.loads(Path(r['record_path']).read_text()) for r in results]
+        raw=sum(r['output_bytes'] for r in records)
+        self.assertEqual(6*len(log.encode()),raw)
+        self.assertLess(len(result.stdout.encode()),raw,'INTENDED_RED metadata/success logs inflate delivered output')
+        for r in records:self.assertEqual(log,Path(r['stdout_path']).read_text())
+
+    def test_harness_diagnostic_retains_all_selected_results(self):
+        self.assertEqual(0, self.plan().returncode)
+        external = tempfile.TemporaryDirectory(prefix='diagnostic-executables-'); self.addCleanup(external.cleanup)
+        directory = Path(external.name)
+        runner = directory / 'php'
+        runner.write_text('#!/bin/sh\necho "assertion failure: $1"\ncase "$1" in *action_001*) exit 7;; *global_calls*) exit 8;; *) exit 0;; esac\n')
+        runner.chmod(0o700)
+        env = dict(os.environ, PATH=str(directory)+os.pathsep+os.environ['PATH'], FMONITOR_HARNESS_HOME=str(directory/'evidence'))
+        result = self.cli('run', '--plan', 'plan.json', '--phase', 'focused', '--diagnostic', env=env)
+        self.assertNotEqual(0, result.returncode)
+        self.assertTrue(result.stdout.strip().startswith('{'), 'INTENDED_RED structured diagnostic missing: '+result.stderr)
+        inventory = json.loads(result.stdout)['results']
+        self.assertEqual([7,8,0], [r['exit_code'] for r in inventory])
+        self.assertEqual(['REGRESSION_FAILURE','REGRESSION_FAILURE','GREEN'], [r['outcome'] for r in inventory])
+        self.assertIn('action_001_test.php', result.stdout, 'INTENDED_RED diagnostic results missing')
+        self.assertIn('pilot_http_auth_001_global_calls_test.php', result.stdout)
+        self.assertIn('runtime_storage_001_test.php', result.stdout)
+        records = [json.loads(p.read_text()) for p in (directory/'evidence').rglob('*.json')]
+        checks = [r for r in records if 'exit_code' in r and 'argv' in r]
+        self.assertEqual([7, 8, 0], [r['exit_code'] for r in sorted(checks, key=lambda r:r['started_at'])])
+
+    def test_harness_refresh_and_confirmed_consumers(self):
+        consumers = {
+            'tests/InstallationProcess/inspection_evidence_schema_001_test.php',
+            'tests/Verification/characterize_inspection_photo_upload_001_test.php',
+            'tests/Verification/characterize_inspection_photo_rejections_001_test.php',
+            'tests/Verification/characterize_inspection_photo_revoke_001_test.php',
+            'tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php',
+        }
+        shutil.copy2(ROOT / '.quality-graph/verification-policy.json', self.root / '.quality-graph/verification-policy.json')
+        shutil.copy2(ROOT / 'tools/verification/categories.json', self.root / 'tools/verification/categories.json')
+        (self.root / 'app/PilotHttp/Action.php').write_text('before\n')
+        for owner in ['app/InspectionEvidence/MariaDbYiiChecklist.php', 'app/InspectionEvidence/MariaDbYiiChecklistAdmission.php', 'app/PilotHttp/ChecklistSync.php']:
+            self.assertTrue((ROOT / owner).is_file(), 'consumer evidence must name a real owner')
+            self.input['planned_paths'] = [owner]
+            self.write_json('change.json', self.input)
+            result = self.plan(); self.assertEqual(0, result.returncode, result.stderr)
+            paths = {x['argv'][1] for x in json.loads((self.root / 'plan.json').read_text())['commands']}
+            self.assertTrue(consumers <= paths, 'INTENDED_RED confirmed consumers absent: '+repr(consumers-paths))
+        self.input['planned_paths'] = ['app/PilotHttp/LocalView.php']
+        self.write_json('change.json', self.input)
+        result = self.cli('refresh', '--plan', 'plan.json')
+        self.assertEqual(0, result.returncode, 'INTENDED_RED automatic refresh absent: '+result.stderr)
+        paths = {x['argv'][1] for x in json.loads((self.root / 'plan.json').read_text())['commands']}
+        self.assertFalse(consumers & paths, 'local presentation must not inherit shared-owner checks')
+        self.assertIn('obligations_changed', result.stdout)
+        self.assertEqual(0, self.cli('check', '--plan', 'plan.json').returncode)
 
     def test_changed_registered_test_schedules_itself(self):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")

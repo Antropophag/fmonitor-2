@@ -1,0 +1,29 @@
+{
+  "change": "automatic-delivery-harness",
+  "planned_paths": [
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness.py",
+    "tools/verification/run.sh",
+    ".quality-graph/verification-policy.json",
+    "tools/delivery/harness_context.py",
+    ".codex/hooks.json",
+    "AGENTS.md",
+    ".agents/skills/openspec-apply-change/SKILL.md",
+    "docs/operations/current-delivery-goal.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-HARNESS-001",
+      "acceptance_id": "R1-R4",
+      "spec_path": "specs/DELIVERY-HARNESS-001.md",
+      "seam": "delivery CLI and Codex hooks",
+      "tests": [
+        "tests/Verification/delivery_harness_001_test.py",
+        "tests/Verification/change_verification_001_test.py",
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Verification/verification_inventory_001_test.py",
+        "tests/Verification/verification_native_suites_001_test.py"
+      ]
+    }
+  ]
+}

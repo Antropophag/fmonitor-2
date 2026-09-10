@@ -90,6 +90,11 @@ Implement tasks from an OpenSpec change.
 
 6. **Implement tasks (loop until done or blocked)**
 
+   In this repository, first read the active package supplied by
+   `python3 tools/delivery/harness.py prepare` (or prepare the executor role when
+   none is active). Use `harness.py state` for live source/PR/CI; do not copy
+   mutable delivery facts from `current-delivery-goal.md`.
+
    For each pending task:
    - Show which task is being worked on
    - Make the code changes required

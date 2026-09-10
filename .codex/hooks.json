@@ -1,0 +1,66 @@
+{
+  "description": "FMonitor delivery context and local measurement receipts.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tools/delivery/harness.py\" hook",
+            "timeout": 10,
+            "additionalContextLimit": 1200,
+            "statusMessage": "Loading current FMonitor delivery context"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tools/delivery/harness.py\" hook",
+            "timeout": 10,
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tools/delivery/harness.py\" hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tools/delivery/harness.py\" hook",
+            "timeout": 10,
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/tools/delivery/harness.py\" hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
