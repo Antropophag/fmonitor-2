@@ -139,3 +139,9 @@ inventory отмечают поставку конкретных capabilities, �
 на Yii, golden flows и rehearsal GREEN, затем согласованное переключение.
 Следующий active slice yii2-object-queue: GET/HEAD objects + schedule POST;
 планирование не объявлено реализованным до его Gates3/5 и CI.
+
+PR86 mergedf804f3f6 (source58023c82, Actions34439847358 SUCCESS/VERIFY_OK)
+добавил Yii GET/HEAD /pilot/objects и POST inspection-schedule с owners
+YiiObjectQueue/YiiInspectionPlanning, full canonical readiness без HTTP DDL и
+проверенной native навигацией. Старый stand adapter сохраняется до cutover.
+Следующий active slice — yii2-preopening-journey; пока planning, не GREEN.

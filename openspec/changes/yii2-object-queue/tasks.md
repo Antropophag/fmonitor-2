@@ -8,4 +8,4 @@
 - [x] Focused GREEN, actual architecture-check, UI desktop/mobile.
 - [x] Independent Gate5 APPROVED.
 ## 3. Delivery
-- [ ] Exact-source full CI и merge; связать evidence и обновить migration inventory.
+- [x] Exact-source full CI и merge; связать evidence и обновить migration inventory.

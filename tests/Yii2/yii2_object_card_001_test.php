@@ -1,0 +1,44 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/PreopeningFixture.php';
+// YII2-PREOPENING-JOURNEY-001: actual Yii card read, identity/permission and original lineage.
+$f=null;
+try {
+ $f=new PreopeningFixture(dirname(__DIR__,2));$f->start();$p=$f->p;$guest=[];$before=$f->facts();
+ $r=$f->request('GET','/pilot/objects/4512',[],$guest);assertSameValue([303,'/pilot/login'],[$r['status'],$r['headers']['location'][0]??null],'INTENDED_RED native Yii card route');assertSameValue($before,$f->facts(),'guest card no facts');
+ $reader=[];assertSameValue(303,$f->login($reader,95)['status'],'read-only actor login');$before=$f->facts();
+ $r=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(200,$r['status'],'reader card');
+ foreach(['TEST-4512','Вымышленный объект','Требуется распоряжение','2026','/pilot/objects','/pilot/logout']as$text)assertSameValue(true,str_contains($r['body'],$text),'card truthful content '.$text);
+ assertSameValue(false,str_contains($r['body'],'name="action" value="open_confirmed"'),'read-only no opening form');assertSameValue(false,str_contains($r['body'],'href="/pilot/objects/4512/assignment-order/prepare"'),'read-only no selection command');
+ $head=$f->request('HEAD','/pilot/objects/4512',[],$reader);assertSameValue([200,''],[$head['status'],$head['body']],'card HEAD');assertSameValue('no-store',$head['headers']['cache-control'][0]??null,'card private no-store');assertSameValue($before,$f->facts(),'read/HEAD zero domain/schema facts');$f->noLegacy();
+ foreach(['/pilot/objects/0','/pilot/objects/04512','/pilot/objects/-1','/pilot/objects/9223372036854775808','/pilot/objects/4512/extra']as$path){$before=$f->facts();assertSameValue(404,$f->request('GET',$path,[],$reader)['status'],'strict card route '.$path);assertSameValue($before,$f->facts(),'bad path no facts');}
+ foreach(['POST','PUT','PATCH','DELETE']as$method){$before=$f->facts();assertSameValue(405,$f->request($method,'/pilot/objects/4512',[],$reader)['status'],'card method gate');assertSameValue($before,$f->facts(),'wrong card method no facts');}
+ $missing=$f->request('GET','/pilot/objects/9999',[],$reader);assertSameValue(404,$missing['status'],'unknown card');
+ $f->db->query("UPDATE {$p}fm2_pilot_role_permissions SET permission='Objects.Read' WHERE role_id=5 AND permission='objects.read'");$before=$f->facts();
+ foreach([4512,9999]as$id)assertSameValue(403,$f->request('GET','/pilot/objects/'.$id,[],$reader,['X-FMonitor-Auth-User-Id: 18'])['status'],'exact card permission before existence');assertSameValue($before,$f->facts(),'card denial preserves state');
+ $f->db->query("UPDATE {$p}fm2_pilot_role_permissions SET permission='objects.read' WHERE role_id=5 AND permission='Objects.Read'");
+ $legacy=$f->rows('fm_maintable')[0];
+ foreach([
+  ["UPDATE {$p}fm2_installation_cases SET legacy_installation_object_id=9999 WHERE id=6101","UPDATE {$p}fm2_installation_cases SET legacy_installation_object_id=4512 WHERE id=6101",404,'unimported current identity'],
+  ["UPDATE {$p}fm_maintable SET id=4513 WHERE id=4512","UPDATE {$p}fm_maintable SET id=4512 WHERE id=4513",404,'dangling legacy identity'],
+  ["UPDATE {$p}fm_maintable SET regnumber='' WHERE id=4512","UPDATE {$p}fm_maintable SET regnumber='TEST-4512' WHERE id=4512",404,'missing required identity'],
+ ]as[$change,$restore,$status,$label]){$f->db->query($change);try{$before=$f->facts();assertSameValue($status,$f->request('GET','/pilot/objects/4512',[],$reader)['status'],$label);assertSameValue($before,$f->facts(),'failed card no repair');}finally{$f->db->query($restore);}}
+ $f->db->query("UPDATE {$p}fm_maintable SET workdateendadjusted='2026-12-15' WHERE id=4512");$before=$f->facts();$adjusted=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(200,$adjusted['status'],'adjusted date card');assertSameValue(true,str_contains($adjusted['body'],'datetime="2026-12-15"'),'adjusted finish precedes baseline');assertSameValue($before,$f->facts(),'date read no writes');
+ $f->db->query("UPDATE {$p}fm_maintable SET workdatestart=NULL,workdateendadjusted=NULL,plan_finish_date=NULL WHERE id=4512");$unknown=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(200,$unknown['status'],'unknown dates stay readable');assertSameValue(true,str_contains($unknown['body'],'Неизвестно'),'unknown dates not fabricated');
+ $restore=$f->db->prepare("UPDATE {$p}fm_maintable SET workdatestart=?,workdateendadjusted=?,plan_finish_date=? WHERE id=4512");$restore->execute([$legacy['workdatestart'],$legacy['workdateendadjusted'],$legacy['plan_finish_date']]);
+ $detail=$f->rows('fm2_pilot_object_details')[0];
+ foreach(['absent','corrupt']as$kind){if($kind==='absent')$f->db->query("UPDATE {$p}fm2_pilot_object_details SET object_id=4513 WHERE object_id=4512");else $f->db->query("UPDATE {$p}fm2_pilot_object_details SET payload_json='null' WHERE object_id=4512");try{$before=$f->facts();$r=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(200,$r['status'],'detail failure does not invent fatal card');assertSameValue(true,str_contains($r['body'],'технических данных')&&(str_contains($r['body'],'недоступна')||str_contains($r['body'],'повреждена')),'truthful detail unavailable notice');assertSameValue($before,$f->facts(),'detail read no repair');}finally{if($kind==='absent')$f->db->query("UPDATE {$p}fm2_pilot_object_details SET object_id=4512 WHERE object_id=4513");else{$q=$f->db->prepare("UPDATE {$p}fm2_pilot_object_details SET payload_json=? WHERE object_id=4512");$q->execute([$detail['payload_json']]);}}}
+ $actor=[];assertSameValue(303,$f->login($actor)['status'],'FKR login');$initial=$f->request('GET','/pilot/objects/4512',[],$actor);assertSameValue(200,$initial['status'],'FKR initial card');assertSameValue(true,str_contains($initial['body'],'/assignment-order/prepare')||str_contains($initial['body'],'/assignment-order/selection'),'current selection entry available');
+ $selected=$f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command());assertSameValue('selected',$selected->status()->value,'native selection prerequisite');
+ $accepted=$f->nativeOriginal('2026-09-01');assertSameValue('accepted',$accepted->status()->value,'native original prerequisite');
+ $before=$f->facts();$files=$f->base->privateFiles();$ready=$f->request('GET','/pilot/objects/4512',[],$actor);assertSameValue(200,$ready['status'],'ready original card');
+ foreach(['Готов к открытию','Монтажник 7001','Инженер теста','name="action" value="open_confirmed"','name="orderId" value="81"','name="revisionId" value="'.$accepted->currentRevisionId().'"','name="sequence" value="0"','name="actualStartDate"']as$text)assertSameValue(true,str_contains($ready['body'],$text),'native ready card '.$text);
+ assertSameValue($before,$f->facts(),'ready read does not apply/open');assertSameValue($files,$f->base->privateFiles(),'card does not touch PDF bytes');
+ $readonly=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(200,$readonly['status'],'reader sees ready facts');assertSameValue(false,str_contains($readonly['body'],'name="action" value="open_confirmed"'),'ready original does not grant opening');
+ $f->db->query("UPDATE {$p}fm2_pilot_users SET full_name='Исторический <Автор>' WHERE user_id=18");$history=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(true,str_contains($history['body'],'Исторический &lt;Автор&gt;'),'historical actor name escaped');assertSameValue(false,str_contains($history['body'],'Исторический <Автор>'),'no actor markup injection');
+ $f->db->query("UPDATE {$p}fm2_pilot_users SET status=0 WHERE user_id=18");$inactive=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(true,str_contains($inactive['body'],'Исторический &lt;Автор&gt;'),'inactive historical author remains named');
+ $f->db->query("UPDATE {$p}fm2_pilot_users SET full_name='' WHERE user_id=18");$email=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(true,str_contains($email['body'],$f->emails[18]),'historical email fallback');
+ $f->db->query("UPDATE {$p}fm2_pilot_users SET email='' WHERE user_id=18");$missingName=$f->request('GET','/pilot/objects/4512',[],$reader);assertSameValue(true,str_contains($missingName['body'],'Пользователь недоступен · ID 18'),'historical ID fallback, not viewer');
+ $f->db->query("UPDATE {$p}fm2_installation_cases SET opened_at='2026-09-10T09:00:00+03:00' WHERE legacy_installation_object_id=4512");$before=$f->facts();assertSameValue(503,$f->request('GET','/pilot/objects/4512',[],$reader)['status'],'partial opening tuple fails closed');assertSameValue($before,$f->facts(),'no opening repair');
+ echo "PASS: YII2-PREOPENING-JOURNEY-001 card auth, facts, original and HEAD\n";
+}finally{if($f instanceof PreopeningFixture)$f->close();}

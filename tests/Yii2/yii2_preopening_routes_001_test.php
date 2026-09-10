@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/PreopeningFixture.php';
+// YII2-PREOPENING-JOURNEY-001: every route family, HEAD and retained compatibility owners.
+$f=null;
+try {
+    $f=new PreopeningFixture(dirname(__DIR__,2));$f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command());$original=$f->nativeOriginal();$f->start();$cookies=[];$f->login($cookies);
+    $base='/pilot/objects/4512';$order=$base.'/assignment-orders/81';
+    assertSameValue(200,$f->request('GET',$base,[],$cookies)['status'],'INTENDED_RED full Yii route matrix');
+    $reads=[$base,$base.'/assignment-order/selection',$base.'/assignment-order/installers?q=7001&page=1',$order.'/originals/submit',$order.'/originals/history',$order.'/originals/'.$original->currentRevisionId().'/download',$base.'/execution'];
+    foreach($reads as$path){$before=$f->facts();$files=$f->base->privateFiles();$get=$f->request('GET',$path,[],$cookies);$head=$f->request('HEAD',$path,[],$cookies);assertSameValue([200,200,''],[$get['status'],$head['status'],$head['body']],'GET/HEAD '.$path);assertSameValue($get['headers']['content-type'],$head['headers']['content-type'],'HEAD representation type');assertSameValue('no-store',$head['headers']['cache-control'][0]??null,'private HEAD');assertSameValue($before,$f->facts(),'read no domain/schema writes');assertSameValue($files,$f->base->privateFiles(),'read no file changes');}
+    foreach(['GET','HEAD']as$method){$r=$f->request($method,$base.'/assignment-order/prepare',[],$cookies);assertSameValue([303,$base.'/assignment-order/selection'],[$r['status'],$r['headers']['location'][0]??null],'prepare compatibility redirect');if($method==='HEAD')assertSameValue('',$r['body'],'redirect HEAD');}
+    foreach(['/originals/submit','/originals/history','/originals/'.$original->currentRevisionId().'/download','/template']as$suffix)
+        foreach(['0','081','-81','9223372036854775808']as$id)assertSameValue(404,$f->request('GET',$base.'/assignment-orders/'.$id.$suffix,[],$cookies)['status'],'strict order identity');
+    foreach([$base.'/extra',$base.'/assignment-order/selection/extra',$order.'/originals/history/extra',$order.'/originals/a%2Fb/download',$order.'/originals/%00/download',$base.'/assignment-orders/81%2F82/originals/submit']as$path)assertSameValue(404,$f->request('GET',$path,[],$cookies)['status'],'strict extra/encoded route');
+    foreach([$base.'/assignment-order/selection',$order.'/template',$order.'/originals',$base.'/execution']as$path){$guest=[];$r=$f->request('POST',$path,[],$guest,['Content-Type: application/pdf','X-CSRF-Token: spoof'],'not accepted');assertSameValue(303,$r['status'],'guest command admission '.$path);assertSameValue(true,str_starts_with($r['headers']['location'][0]??'','/pilot/login'),'guest safe return');}
+    foreach(['order','appendix','signed_original']as$type){$before=$f->facts();assertSameValue(410,$f->form($order.'/artifacts/'.$type,['_csrf'=>$f->token($cookies)],$cookies)['status'],'obsolete physical artifact writer');assertSameValue($before,$f->facts(),'retired writer zero facts');}
+    $apply=['_csrf'=>$f->token($cookies),'action'=>'apply','requestId'=>'44444444-4444-4444-8444-000000000055','orderId'=>'81','revisionId'=>$original->currentRevisionId(),'sequence'=>'0'];
+    $reader=[];$f->login($reader,95);$denied=array_replace($apply,['_csrf'=>$f->token($reader)]);$before=$f->facts();assertSameValue(403,$f->form($base.'/execution',$denied,$reader)['status'],'compat apply denied');assertSameValue($before,$f->facts(),'compat denial no facts');
+    $applied=$f->form($base.'/execution',$apply,$cookies);assertSameValue([303,$base.'/execution'],[$applied['status'],$applied['headers']['location'][0]??null],'compat apply return');$applications=$f->rows('fm2_assignment_order_applications');assertSameValue(1,count($applications),'compat one application');
+    $open=['_csrf'=>$f->token($cookies),'action'=>'open','applicationId'=>$applications[0]['application_id'],'actualStartDate'=>'2026-09-02'];$before=$f->facts();assertSameValue(403,$f->form($base.'/execution',array_replace($open,['_csrf'=>$f->token($reader)]),$reader)['status'],'compat open denied');assertSameValue($before,$f->facts(),'compat opening denial no facts');
+    $opened=$f->form($base.'/execution',$open,$cookies);assertSameValue([303,$base.'/execution'],[$opened['status'],$opened['headers']['location'][0]??null],'compat open return');assertSameValue($applications,$f->rows('fm2_assignment_order_applications'),'compat opening reuses applied facts');assertSameValue('working',$f->rows('fm2_installation_cases')[0]['process_state'],'compat durable opening');$f->noLegacy();
+    echo "PASS: YII2-PREOPENING-JOURNEY-001 full routes, HEAD, strict identities and compatibility\n";
+}finally{if($f instanceof PreopeningFixture)$f->close();}

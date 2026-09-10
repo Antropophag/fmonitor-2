@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),c=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const {chromium}=require(c.playwright),browser=await chromium.launch({headless:true});
+const check=(value,message)=>{if(!value)throw new Error(message);};
+try {
+ const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
+ const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));const assetFailures=[];page.on('response',r=>{if(new URL(r.url()).pathname.startsWith('/pilot/assets/')&&r.status()>=400)assetFailures.push(r.status()+' '+r.url());});
+ await page.goto(c.origin+'/pilot/login');await page.locator('[name=email]').fill(c.email);await page.locator('[name=email]').locator('xpath=ancestor::form').locator('button[type=submit]').click();await page.locator('[name=password]').fill(c.password);
+ await Promise.all([page.waitForResponse(r=>r.url().endsWith('/pilot/login')&&r.status()===303),page.locator('[name=password]').locator('xpath=ancestor::form').locator('button[type=submit]').click()]);
+ const card=await page.goto(c.origin+'/pilot/objects/4512');check(card.status()===200,'INTENDED_RED Yii preopening browser card');
+ const policy=card.headers()['content-security-policy'];const directives=new Map(policy.split(';').map(x=>x.trim().split(/\s+/)).filter(x=>x[0]).map(([key,...values])=>[key,values]));for(const key of ['script-src','connect-src'])check(JSON.stringify(directives.get(key))===JSON.stringify(["'self'"]),'exact '+key+' policy');for(const forbidden of ['unsafe-inline','unsafe-eval','blob:','worker-src'])check(!policy.includes(forbidden),'no broadened CSP '+forbidden);
+ await page.locator('a[href$="/assignment-order/prepare"],a[href$="/assignment-order/selection"]').first().click();await page.waitForURL(c.origin+'/pilot/objects/4512/assignment-order/selection');
+ const selection=page.locator('[data-selection-picker]');await selection.locator('[data-dialog-open]').focus();await page.keyboard.press('Enter');await page.locator('[data-installer-dialog][open]').waitFor();await page.locator('[data-installer-search]').fill('7001');await page.locator('[data-result-id="7001"] input[type=checkbox]').focus();await page.keyboard.press('Space');await page.locator('[data-dialog-apply]').focus();await page.keyboard.press('Enter');
+ await selection.locator('[name=controlEngineerUserId][value="73"]').check();await selection.locator('[name=controlEngineerConfirmed]').focus();await page.keyboard.press('Space');
+ await Promise.all([page.waitForResponse(r=>r.url().endsWith('/assignment-order/selection')&&r.request().method()==='POST'&&r.status()===303),selection.getByRole('button',{name:'Сохранить состав',exact:true}).click()]);await page.waitForURL(c.origin+'/pilot/objects/4512/assignment-order/selection');
+ const templateResponse=context.waitForEvent('response',r=>r.url().endsWith('/template')&&r.request().method()==='POST');await page.getByRole('button',{name:'Сформировать шаблон',exact:true}).click();const template=await templateResponse;check(template.status()===200,'real template POST200');for(const other of context.pages())if(other!==page)await other.close();
+ await page.locator('a[href$="/originals/submit"]').first().click();await page.locator('[data-original-upload-form]').waitFor();const originalUrl=page.url();
+ let lost=true,firstReceipt=null,resolveLost;const lostDone=new Promise(resolve=>{resolveLost=resolve;});
+ await page.route('**/originals',async route=>{
+  if(lost&&route.request().method()==='POST'){
+   lost=false;const accepted=await route.fetch();check(accepted.status()===201,'server accepted before simulated response loss');firstReceipt=await accepted.json();await route.abort('failed');resolveLost();
+  } else await route.continue();
+ });
+ let form=page.locator('[data-original-upload-form]');await form.locator('[name=original]').setInputFiles({name:'signed.pdf',mimeType:'application/pdf',buffer:Buffer.from(c.pdf,'base64')});await form.locator('[name=documentDate]').fill('2026-09-01');await form.locator('[name=compositionConfirmed]').check();const intent=await form.locator('[name=requestId]').inputValue();
+ await form.locator('[data-original-submit]').click();await lostDone;await page.waitForFunction(()=>{const b=document.querySelector('[data-original-submit]'),s=document.querySelector('[data-original-status]');return b&&!b.disabled&&s&&s.textContent.length>0;});
+ check(page.url()===originalUrl,'network failure is not false success');check(await form.locator('[name=requestId]').inputValue()===intent,'network retry retains intent');check(await form.locator('[name=original]').evaluate(e=>e.files.length)===1,'network retry retains file');
+ await Promise.all([page.waitForResponse(r=>r.url().endsWith('/originals')&&r.request().method()==='POST'&&r.status()===200),form.locator('[data-original-submit]').click()]);await page.waitForURL(c.origin+'/pilot/objects/4512');await page.getByText('Готов к открытию',{exact:true}).first().waitFor();
+ await page.setViewportSize({width:390,height:844});await page.goto(originalUrl);check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile original form overflow');form=page.locator('[data-original-upload-form]');await form.locator('[name=original]').setInputFiles({name:'corrected.pdf',mimeType:'application/pdf',buffer:Buffer.from(c.pdf2,'base64')});await form.locator('[name=documentDate]').fill('2026-09-02');await form.locator('[name=correctionReason]').fill('Уточнена дата и файл');await form.locator('[name=compositionConfirmed]').check();
+ const correctedResponse=page.waitForResponse(r=>r.url().endsWith('/originals')&&r.request().method()==='POST'&&r.status()===201);await form.locator('[data-original-submit]').click();const corrected=await (await correctedResponse).json();await page.waitForURL(c.origin+'/pilot/objects/4512');
+ await page.goto(originalUrl);await page.locator('a[href$="/originals/history"]').first().click();await page.getByRole('heading',{name:'История оригинала',exact:true}).waitFor();
+ for(const [revision,encoded] of [[firstReceipt.currentRevisionId,c.pdf],[corrected.currentRevisionId,c.pdf2]]){const [download]=await Promise.all([page.waitForEvent('download'),page.locator('a[href$="/'+revision+'/download"]').click()]);check(download.suggestedFilename()==='assignment-order-original.pdf','safe downloaded filename');const file=await download.path();check(fs.readFileSync(file).equals(Buffer.from(encoded,'base64')),'browser exact historical bytes');}
+ await page.goto(c.origin+'/pilot/objects/4512');
+ const opening=page.locator('form').filter({has:page.locator('[name=action][value=open_confirmed]')});await opening.locator('[name=actualStartDate]').fill('2026-09-03');
+ await Promise.all([page.waitForResponse(r=>r.url().endsWith('/execution')&&r.request().method()==='POST'&&r.status()===303),opening.getByRole('button',{name:'Открыть работы',exact:true}).click()]);await page.waitForURL(c.origin+'/pilot/objects/4512');
+ await page.waitForFunction(()=>!document.querySelector('[name=action][value=open_confirmed]'));
+ check(await page.locator('[name=action][value=open_confirmed]').count()===0,'opened card no repeated opening form');await page.setViewportSize({width:1440,height:1000});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'desktop overflow');await page.screenshot({path:c.artifacts+'/preopening-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile overflow');await page.screenshot({path:c.artifacts+'/preopening-mobile.png',fullPage:true});
+ check(pageErrors.length===0,'no uncaught browser errors: '+pageErrors.join(','));check(assetFailures.length===0,'assets all served: '+assetFailures.join(','));const logout=page.getByRole('button',{name:'Выйти',exact:true});check(await logout.isVisible(),'mobile logout');await logout.click();await page.waitForURL(c.origin+'/pilot/login');
+ fs.writeFileSync(c.result,JSON.stringify({firstReceipt,corrected,intent,networkRetry:true,assetFailures}));
+} finally {await browser.close();}
