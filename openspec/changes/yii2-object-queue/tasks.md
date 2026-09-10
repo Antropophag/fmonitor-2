@@ -4,8 +4,8 @@
 - [x] Root: полные owner/HTTP/browser/concurrency RED tests.
 - [x] Independent Gate3 APPROVED по reconstructible snapshot.
 ## 2. Implementation
-- [ ] Separate executor: Yii DAO owners, controllers, views/assets.
-- [ ] Focused GREEN, actual architecture-check, UI desktop/mobile.
-- [ ] Independent Gate5 APPROVED.
+- [x] Separate executor: Yii DAO owners, controllers, views/assets.
+- [x] Focused GREEN, actual architecture-check, UI desktop/mobile.
+- [x] Independent Gate5 APPROVED.
 ## 3. Delivery
 - [ ] Exact-source full CI и merge; связать evidence и обновить migration inventory.

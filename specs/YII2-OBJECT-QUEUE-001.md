@@ -151,3 +151,9 @@ authority выбрасывает DomainException('ACCESS_DENIED'); transport о�
 Это сохраняет принятую read-owner convention YiiUserAccess::directory и позволяет
 проверять допуск независимо от HTTP. Ошибки данных/фильтров/readiness остаются
 инфраструктурными исключениями, отображаемыми Yii safe503.
+
+Shell contract уточнение по текущему incumbent: для access.administer навигация
+сохраняет работающие ссылки «Пользователи»/«Роли», objects.read сам эти ссылки не
+даёт. На mobile ссылки основной навигации остаются доступными и именованными,
+logout видим и возвращает в login; пустые кликабельные квадраты не являются
+сохранённым интерфейсом. Существующие semantic status variants сохраняются.

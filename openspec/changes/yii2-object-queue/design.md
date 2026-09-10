@@ -77,3 +77,11 @@ persistence; config/yii и тестовые fixtures используют одн
 InstallationProcess не конструирует свои concrete MariaDb adapters и не знает
 YiiRuntime factory; зависимость направлена от composition root внутрь модуля.
 Test setup не навязывает db-only Component constructor application owner.
+
+## Implemented readiness comparison
+Final Yii metadata adapter сравнивает canonical metadata с public manifests,
+общими с существующими mysqli predicates; literal schemas не дублированы.
+Публичные current-manifest accessors v17/v19 вынесены к существующим schema owners.
+Старые mysqli comparators не переписаны; совпадение результатов подтверждается
+public readiness parity/fault tests. Полная унификация transport normalization
+не нужна для этого среза и не выдаётся за выполненную переработку всей schema library.

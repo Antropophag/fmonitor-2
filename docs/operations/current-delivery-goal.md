@@ -14,8 +14,13 @@ specs/YII2-OBJECT-QUEUE-001.md. Root пишет spec/tests, sol/low реализ
 patch67a44277411854c551025c901e9f27126365b03613b21445720227d6d8082170.
 [Review](../../reviews/tests/YII2-OBJECT-QUEUE-001.md). ADR0004 accepted, разрешена
 ровно регистрация YiiInspectionPlanning::scheduleInspection, без иных allowances.
-Следующий шаг: отдельный исполнитель реализует Yii DAO owners/controller/UI;
-root сохраняет test authorship, затем focused GREEN и независимый Gate5.
+Implementation,21 drift controls и все focused flows GREEN; final UI root просмотрен.
+Gate5 APPROVED после full manifest correction: snapshot76-queue-gate5-corrected,
+patchf717528cfdc8f0fab5915cd4b5d2627af5d4879940e4a0f55dac6bf002bd4c9c.
+Следующий шаг: grouped implementation commit → один exact-source full CI → merge.
+[Code review](../../reviews/code/YII2-OBJECT-QUEUE-001.md).
+После поставки продолжать yii2-preopening-journey в отдельном
+../fmonitor-2-yii2-preopening-76: draft proposal/preparation, не implementation.
 
 Working stand и исторический WIP сохраняются. #76 ещё не завершён, runtime.php
 ещё использует rapid. Переключение — отдельный эксплуатационный шаг после

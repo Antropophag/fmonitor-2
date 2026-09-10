@@ -235,3 +235,138 @@ Root сверил code/spec/test/OpenSpec bytes с восстановленны�
 этот review record, не поведенческие ожидания. Private browser fixture audit
 через existing oracle подтвердил51 admitted row и настоящую page2:
 /tmp/76-queue-browser-fixture-count-green.log.
+
+## Gate4 visual discovery → root test delta
+
+Первый desktop/mobile просмотр выявил пустую mobile navigation, невидимый logout
+и потерю users/roles navigation при access.administer; semantic status variants
+также потеряны. Это нарушение существующего shell contract. Root добавил negative
+role visibility и реальные mobile navigation→users→roles→queue→logout assertions.
+HTTP RED255 /tmp/76-queue-shell-red.log (missing admin navigation); browser RED255
+/tmp/76-queue-shell-browser-red.log (mobile navigation inaccessible). Production
+UI frozen до независимого Gate3 delta; остальные owner/HTTP/concurrency/readiness
+сценарии ранее GREEN, это не объявление полного Gate5.
+
+Также root исправил oracle retention поля status: наблюдается selected option
+для native select либо value hidden input, а не несуществующая семантика value
+attribute у select. Новый oracle не позволяет фиктивным value attr скрыть
+сброшенный выбор. Устранённая причина отражена честно; business expectation тот же.
+
+## Independent Gate 3 shell delta review — sol/low, 2026-09-10
+
+Reviewed only the visual-QA test delta from reconstructible snapshot
+`/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-queue-gate3-shell`,
+base `dd503a104fa9dfb299e15be810cc6affb88f7856`, patch SHA-256
+`c152a2e7ef4d053d47fd1308488961695ec41f57b7deb12a2725a490a6e08d18`,
+restored at `/private/tmp/fmonitor-76-queue-gate3-shell`. Scope was limited to the
+six-line normative shell clarification and changes in
+`yii2_object_queue_001_test.php` and `object_queue_browser.mjs`; no Gate 5
+production review was performed.
+
+### Complete delta findings
+
+None. The HTTP assertions distinguish an authorized `access.administer` shell
+from an objects-only role while preserving queue access. The browser assertions
+observe accessible names and visibility at the mobile viewport, exercise the real
+users and roles destinations, return to the queue, and require a visible working
+logout ending at login. These checks are sensitive to the visual-QA regressions
+and do not grant admin navigation through `objects.read`. The corrected status
+retention oracle reads the selected option of a native select (or the value of a
+hidden input), so a fictitious `value` attribute on `select` can no longer satisfy
+the expectation.
+
+Independently reproduced with the snapshot's copied vendor and
+`FMONITOR_TEST_PLAYWRIGHT_MODULE=/Users/antropophag/code/shlz-ui/node_modules/playwright`:
+
+- `php tests/Yii2/yii2_object_queue_001_test.php` → 255 at the intended missing
+  `/pilot/admin/users` authorized navigation assertion;
+- `php tests/Yii2/yii2_object_queue_browser_001_test.php` → 255 at the intended
+  inaccessible mobile «Объекты монтажа» navigation assertion.
+
+Both failures occur after valid setup and existing route behavior. No full suite
+or unrelated focused suite was run.
+
+**Gate 3 shell delta verdict: APPROVED.** The two changed tests may proceed to
+the corresponding production correction. The existing exact architecture
+approval for `InstallationProcess\YiiInspectionPlanning::scheduleInspection`
+is unchanged; this shell delta adds no application seam or policy.
+
+## Gate5 exact-readiness finding → root Gate2 delta
+
+Normative contract unchanged. tests/Yii2/QueueReadinessFaults.php adds21 actual
+structural controls to the existing public readiness test: planning same-count wrong
+CHECK; completion type/null/default/column+table collation/unique index/CHECK/FK
+reference+delete rule; evidence type/auto_increment/null/default/charset/collation/
+engine/index columns+ignored state/extra CHECK/generated column. Names or constraint
+counts intentionally remain unchanged where needed. Planning has zero canonical
+FKs, so extra FK is already covered; same-count wrong FK applies to completion's
+real existing FKs, not an invented planning constraint.
+
+Before each fault old public family predicate is true; after fault false; exact
+restoration returns true. Yii queue owner and real HTTP must reject with unchanged
+complete rows/schema. Fixed planning comparator must also prevent scheduling under
+wrong CHECK. The test collects the whole shallow-comparison failure list rather
+than stopping at the first mismatch. Existing valid-schema200 remains required.
+
+All21 fixture-only controls passed /tmp/76-queue-all-drift-fixture-probe-4.log.
+Preparatory failures retained: /tmp/76-queue-exact-readiness-probe.log and
+/tmp/76-queue-all-drift-fixture-probe{,-2,-3}.log. Canonical correction schema omits
+its redundant composite FK index. MariaDB COPY ALTER cannot preserve that shape
+without temporary support: fixture now adds exactly readiness_fixture_support,
+performs the intended ALTER with FK checks on, then removes only that setup index
+under temporarily disabled checks and restores the original session setting BEFORE
+any application/HTTP observation. FK replacement uses separate DROP/ADD statements
+because the engine rejects reuse of the same FK symbol in one ALTER. These are
+isolated test setup controls; no production readiness repair is introduced.
+
+After refreshed CHANGE_VERIFICATION_OK, qualified command
+php tests/Yii2/yii2_queue_readiness_001_test.php exited255 solely at
+INTENDED_RED exact manifest parity. Full log:
+/tmp/76-queue-exact-readiness-intended-red.log. All21 old predicates detected drift,
+restoration succeeded, but current Yii owner admitted and HTTP returned200 for
+every new case. Thus setup failure is not claimed as RED. Production comparator
+remains frozen pending independent Gate3 delta; no extra code commit.
+
+## Independent Gate 3 exact-readiness delta review — sol/low, 2026-09-10
+
+Reviewed only the Gate 2 readiness delta from reconstructible snapshot
+`/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-queue-gate3-exact-readiness`,
+base `dd503a104fa9dfb299e15be810cc6affb88f7856`, patch SHA-256
+`71eb933787f5de2c67d40e8dfe6a6075bfaf698d0be7cdc4fdf03bd9e11efbe5`,
+restored at `/private/tmp/fmonitor-76-queue-gate3-exact-readiness`. Scope is
+`tests/Yii2/QueueReadinessFaults.php` and the integration of that helper into
+`yii2_queue_readiness_001_test.php`; the normative contract and production code
+are unchanged.
+
+### Complete delta findings
+
+None. The 21 controls cover the missing exact-manifest dimensions across the
+actual planning, completion-v17 and evidence-v19 families: full column metadata,
+table engine/collation, index definition/visibility, CHECK expression and FK
+target/rule. Same-name and same-count substitutions make the tests sensitive to
+the shallow comparator identified at Gate 5. Each case first proves the canonical
+public mysqli predicate is ready, proves that predicate rejects the introduced
+fault, then requires the public Yii queue owner and real HTTP route to reject
+without changing rows or schema, restores the exact family, and proves readiness
+again. The planning wrong-CHECK case also requires the mutation owner to reject.
+
+The temporary completion support index is confined to fixture DDL preparation.
+It is removed, and the original `FOREIGN_KEY_CHECKS` session value is restored,
+before any owner or HTTP observation. Separate FK drop/add statements preserve
+the intended same-symbol replacement. The fixture-only GREEN probe and the
+per-case old-predicate/restore assertions demonstrate that MariaDB DDL mechanics
+do not substitute for or cause the intended runtime failure.
+
+Independent reproduction on the exact snapshot:
+`php tests/Yii2/yii2_queue_readiness_001_test.php` exited 255 after exactly 21
+`READINESS_PROBE` records. Every new case reported current
+`ownerUnavailable=false, HTTP=200`; execution failed only at
+`INTENDED_RED exact manifest parity must reject every structural drift` after the
+complete failure list was collected. Setup, old-predicate detection and all
+restores succeeded. `git diff --check` for the two test files was clean. No full
+suite was run.
+
+**Gate 3 exact-readiness delta verdict: APPROVED.** The implementation may now
+replace the shallow Yii comparison with full comparison against the existing
+shared manifest alternatives and return the resulting production delta to Gate 5.
+No new public seam, baseline allowance or architecture decision is introduced.

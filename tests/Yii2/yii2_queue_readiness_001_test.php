@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/ObjectQueueFixture.php';
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/ObjectQueueFixture.php';require __DIR__.'/QueueReadinessFaults.php';
 // YII2-OBJECT-QUEUE-001: real canonical DB, old public readiness oracle versus Yii public owners.
 $f=null;
 try {
@@ -32,6 +32,7 @@ try {
   try{$before=$f->facts();assertSameValue(503,$h->request('GET','/pilot/objects',[],$cookies)['status'],'queue family drift '.$suffix);assertSameValue($before,$f->facts(),'family drift not repaired');}
   finally{$f->db->query("ALTER TABLE $table DROP COLUMN unexpected");}
  }
+ QueueReadinessFaults::verify($f,$cookies);
  assertSameValue(200,$h->request('GET','/pilot/objects',[],$cookies)['status'],'restored canonical schema usable');
  echo "PASS: YII2-OBJECT-QUEUE-001 Yii readiness parity and zero repair\n";
 }finally{if($f instanceof ObjectQueueFixture)$f->close();}

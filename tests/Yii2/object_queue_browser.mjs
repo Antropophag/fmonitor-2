@@ -31,6 +31,13 @@ try {
  await page.locator('[data-inspection-schedule]').first().click();await page.locator('dialog[open]').waitFor();await page.keyboard.press('Escape');
  check(await page.locator('dialog[open]').count()===0,'Escape closes dialog');
  await page.getByRole('link',{name:'Сбросить',exact:true}).click();await page.waitForURL(c.origin+'/pilot/objects');check(await page.locator('[name=q]').inputValue()==='','reset clears query');
+ const nav=page.getByRole('navigation',{name:'Основная навигация'});
+ for(const name of ['Объекты монтажа','Пользователи','Роли'])check(await nav.getByRole('link',{name,exact:true}).isVisible(),'mobile navigation remains accessible: '+name);
+ await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/pilot/admin/users'&&r.status()===200),nav.getByRole('link',{name:'Пользователи',exact:true}).click()]);
+ await page.waitForURL(c.origin+'/pilot/admin/users');
+ await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/pilot/admin/roles'&&r.status()===200),page.getByRole('navigation',{name:'Основная навигация'}).getByRole('link',{name:'Роли',exact:true}).click()]);
+ await page.waitForURL(c.origin+'/pilot/admin/roles');await page.goto(c.origin+'/pilot/objects');
+ const logout=page.getByRole('button',{name:'Выйти',exact:true});check(await logout.isVisible(),'mobile logout visible');await logout.click();await page.waitForURL(c.origin+'/pilot/login');
  check(assetFailures.length===0,'assets loaded: '+assetFailures.join(','));
  fs.writeFileSync(c.result,JSON.stringify({scheduled:true,desktop:true,mobile:true,assetFailures}));
 } finally {await browser.close();}

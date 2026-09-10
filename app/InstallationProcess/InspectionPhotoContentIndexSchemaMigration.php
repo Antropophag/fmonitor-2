@@ -6,6 +6,21 @@ namespace FMonitor2\InstallationProcess;
 final class InspectionPhotoContentIndexSchemaMigration
 {
     private const TABLE='fm2_checklist_photos';
+    public static function currentDefinitions(string $prefix, string $collation): array
+    {
+        $result = [];
+        foreach (InspectionEvidenceDefinitionSchemaMigration::definitions($prefix, $collation) as $name => $definition) {
+            $manifest = $definition['final'];
+            if ($name === self::TABLE) {
+                foreach ($manifest['indexes'] as &$index) {
+                    if ($index['name'] === 'installation_case_id') $index['nonUnique'] = 1;
+                }
+                unset($index);
+            }
+            $result[$name] = $manifest;
+        }
+        return $result;
+    }
     public static function apply(\mysqli $db,string $prefix=''):array
     {
         IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);$table=$prefix.self::TABLE;
