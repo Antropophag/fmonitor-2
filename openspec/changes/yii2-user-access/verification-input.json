@@ -1,1 +1,53 @@
-{"change":"yii2-user-access","planned_paths":["app/IdentityAccess/YiiUserAccess.php","app/YiiRuntime/Controllers/UserAccessController.php","app/YiiRuntime/Views/users.php","app/YiiRuntime/Views/activate.php","config/yii/web.php","config/yii/assets.php","tests/Yii2/yii2_user_access_001_test.php","tests/Yii2/yii2_user_access_concurrency_001_test.php","tests/Yii2/yii2_user_access_browser_001_test.php","tests/Verification/verification_inventory_001_test.py","tools/verification/categories.json","tools/verification/suites.tsv"],"acceptances":[{"spec_id":"YII2-USER-ACCESS-001","acceptance_id":"whole-owner-http-matrix","spec_path":"specs/YII2-USER-ACCESS-001.md","seam":"YiiUserAccess and real Yii HTTP","tests":["tests/Yii2/yii2_user_access_001_test.php","tests/Yii2/yii2_user_access_concurrency_001_test.php","tests/Yii2/yii2_user_access_browser_001_test.php"]}]}
+{
+  "change": "yii2-user-access",
+  "planned_paths": [
+    "app/IdentityAccess/MariaDbUserAccessDirectory.php",
+    "app/IdentityAccess/MariaDbUserAccessTransaction.php",
+    "app/IdentityAccess/MariaDbUserActivation.php",
+    "app/IdentityAccess/MariaDbUserInvitations.php",
+    "app/IdentityAccess/MariaDbUserRoleChanges.php",
+    "app/IdentityAccess/MariaDbUserStatusChanges.php",
+    "app/IdentityAccess/YiiUserAccess.php",
+    "app/YiiRuntime/Assets/UserAccessAssetBundle.php",
+    "app/YiiRuntime/Assets/users.js",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "app/YiiRuntime/Controllers/UserAccessController.php",
+    "app/YiiRuntime/Views/activate.php",
+    "app/YiiRuntime/Views/users.php",
+    "config/yii/assets.php",
+    "config/yii/web.php",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tests/Yii2/yii2_user_access_001_test.php",
+    "tests/Yii2/yii2_user_access_browser_001_test.php",
+    "tests/Yii2/yii2_user_access_concurrency_001_test.php",
+    "tests/Yii2/yii2_user_access_edges_001_test.php",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-USER-ACCESS-001",
+      "acceptance_id": "whole-owner-http-matrix",
+      "spec_path": "specs/YII2-USER-ACCESS-001.md",
+      "seam": "YiiUserAccess and real Yii HTTP",
+      "tests": [
+        "tests/Yii2/yii2_user_access_001_test.php",
+        "tests/Yii2/yii2_user_access_concurrency_001_test.php",
+        "tests/Yii2/yii2_user_access_browser_001_test.php",
+        "tests/Yii2/yii2_user_access_edges_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-USER-ACCESS-001",
+      "acceptance_id": "shared-yii-csrf-auth-and-otiz-regression",
+      "spec_path": "specs/YII2-USER-ACCESS-001.md",
+      "seam": "existing Yii login/logout/session and Otiz HTTP/browser",
+      "tests": [
+        "tests/Yii2/yii2_authentication_001_test.php",
+        "tests/Yii2/yii2_session_failure_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php"
+      ]
+    }
+  ]
+}

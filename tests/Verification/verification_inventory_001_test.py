@@ -122,6 +122,7 @@ class Inventory(native.NativeSuites):
             ],
             'db': [
                 'php\ttests/Yii2/yii2_user_access_001_test.php\n',
+                'php\ttests/Yii2/yii2_user_access_edges_001_test.php\n',
                 'php\ttests/Yii2/yii2_user_access_concurrency_001_test.php\n',
                 'php\ttests/Otiz/object_register_paging_001_test.php\n',
                 'php\ttests/Otiz/object_register_paging_http_001_test.php\n',

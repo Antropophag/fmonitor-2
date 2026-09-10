@@ -41,3 +41,15 @@ Raw invitation URL существует только в ответе/session fla
 console/jobs и cutover ещё впереди. Этот срез закрывает administrative family.
 Mutable projections сохраняют append-only audit и invitation lineage. Login
 redirect на objects остаётся прежним; перенести queue — следующий process slice.
+
+## Final internal structure
+
+Public YiiUserAccess interface remains unchanged. It composes a shared
+MariaDbUserAccessTransaction (connection, serial transaction, clock and exact
+permission/privileged-count reads) and internal MariaDB collaborators for
+Directory, Invitations, Activation, RoleChanges and StatusChanges. SQL lives only
+in the permitted MariaDb-prefixed adapters. This is one deep module with a stable
+external interface; controllers and tests do not know its internal collaborators.
+Each file stays below the existing hotspot threshold through coherent responsibility
+separation, not baseline expansion. Yii Html dropdown helpers and explicit data
+hooks replace raw select tokens without changing the rendered control semantics.

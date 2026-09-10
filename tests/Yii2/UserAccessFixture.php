@@ -27,6 +27,8 @@ final class UserAccessFixture
             $hash=$this->auth->passwordHash;$s=$this->db->prepare("INSERT INTO {$p}fm2_pilot_auth_credentials(user_id,email_normalized,password_hash,password_set_at,updated_at) VALUES(?,?,?,'2026-09-10','2026-09-10')");$s->bind_param('iss',$id,$email,$hash);$s->execute();
             $role=$id===9402?9211:9210;$this->db->query("INSERT INTO {$p}fm2_pilot_user_roles(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES($id,$role,'fixture','2026-09-10',9101)");
         }
+        $this->db->query("UPDATE {$p}fm2_pilot_users SET phone='+7 (900) 111-22-33' WHERE user_id=9403");
+        $this->db->query("INSERT INTO {$p}fm2_pilot_user_roles(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(9403,9212,'fixture','2026-09-10',9101),(9403,9213,'fixture','2026-09-10',9101)");
         $this->dmlUser='yua_'.bin2hex(random_bytes(5));$this->dmlPassword=bin2hex(random_bytes(20));
         $this->db->query("CREATE USER '{$this->dmlUser}'@'%' IDENTIFIED BY '{$this->dmlPassword}'");
         $this->db->query("GRANT SELECT,INSERT,UPDATE,DELETE ON `{$this->auth->database}`.* TO '{$this->dmlUser}'@'%'");
@@ -41,13 +43,14 @@ final class UserAccessFixture
     public function rows(string $name):array{return $this->db->query("SELECT * FROM {$this->p}{$name} ORDER BY 1,2")->fetch_all(MYSQLI_ASSOC);}
     public function facts():array{$result=[];foreach(['users','auth_credentials','roles','user_roles','role_permissions','invitations','user_role_events','user_status_events']as$n)$result[$n]=$this->rows('fm2_pilot_'.$n);return$result;}
     public function user(int $id):array{$s=$this->db->prepare("SELECT * FROM {$this->p}fm2_pilot_users WHERE user_id=?");$s->bind_param('i',$id);$s->execute();return$s->get_result()->fetch_assoc()??[];}
-    public function start():void
+    public function start(?string $fault=null,?int $port=null):void
     {
-        $listener=stream_socket_server('tcp://127.0.0.1:0',$error,$message);if(!is_resource($listener))throw new TestFailure('SETUP_FAILURE: listener');$address=(string)stream_socket_get_name($listener,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($listener);
+        if($port===null){$listener=stream_socket_server('tcp://127.0.0.1:0',$error,$message);if(!is_resource($listener))throw new TestFailure('SETUP_FAILURE: listener');$address=(string)stream_socket_get_name($listener,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($listener);}
         $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with((string)$key,'FMONITOR_'))unset($env[$key]);$env=array_replace($env,$this->environment(),['FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:'.$port]);
         $trace=$this->artifacts.'/includes.json';$entry=$this->root.'/public/yii.php';$router=$this->artifacts.'/router.php';
         file_put_contents($router,'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(get_included_files()));}); require '.var_export($entry,true).';');
-        $process=proc_open([PHP_BINARY,'-d','display_errors=0','-S','127.0.0.1:'.$port,$router],[0=>['file','/dev/null','r'],1=>['file',$this->artifacts.'/server.log','a'],2=>['file',$this->artifacts.'/server.log','a']],$pipes,$this->root,$env);
+        $command=[PHP_BINARY,'-d','display_errors=0'];if($fault!==null){$env['FMONITOR_TEST_SESSION_FAULT']=$fault;$env['FMONITOR_TEST_SESSION_FAULT_MARKER']=$this->artifacts.'/session-fault.log';$command[]='-d';$command[]='auto_prepend_file='.$this->root.'/tests/Support/Yii2SessionFaultPrepend.php';}array_push($command,'-S','127.0.0.1:'.$port,$router);
+        $process=proc_open($command,[0=>['file','/dev/null','r'],1=>['file',$this->artifacts.'/server.log','a'],2=>['file',$this->artifacts.'/server.log','a']],$pipes,$this->root,$env);
         if(!is_resource($process))throw new TestFailure('SETUP_FAILURE: server');$this->server=['process'=>$process,'port'=>$port];
         $deadline=microtime(true)+5;do{$s=@fsockopen('127.0.0.1',$port,$code,$message,.1);if(is_resource($s)){fclose($s);return;}usleep(20000);}while(microtime(true)<$deadline);throw new TestFailure('SETUP_FAILURE: server startup');
     }
@@ -65,5 +68,6 @@ final class UserAccessFixture
     public function page(array &$cookies):array{return$this->request('GET','/pilot/admin/users',[],$cookies);}
     public function post(string $path,array $fields,array &$cookies):array{$form=$this->page($cookies);assertSameValue(200,$form['status'],'working admin return page');return$this->request('POST',$path,['_csrf'=>$this->csrf($form['body'])]+$fields,$cookies);}
     public function noLegacy():void{$paths=json_decode((string)file_get_contents($this->artifacts.'/includes.json'),true,flags:JSON_THROW_ON_ERROR);foreach($paths as$p){assertSameValue(false,str_contains($p,'/rapid-pilot/'),'Yii route has no rapid runtime load');assertSameValue(false,preg_match('#/app/PilotHttp/(?:PilotUser|PilotSession|MariaDbPilotUserDirectory|MariaDbLocalAuthRepository|MariaDbUserStatusApplication)#',$p)===1,'no old HTTP/auth/application adapter on migrated request');}}
-    public function close():void{if($this->server!==null){proc_terminate($this->server['process']);proc_close($this->server['process']);$this->server=null;}$this->db->query("DROP USER IF EXISTS '{$this->dmlUser}'@'%'");$this->auth->close();}
+    public function stop():void{if($this->server!==null){proc_terminate($this->server['process']);proc_close($this->server['process']);$this->server=null;}}
+    public function close():void{$this->stop();$this->db->query("DROP USER IF EXISTS '{$this->dmlUser}'@'%'");$this->auth->close();}
 }

@@ -18,10 +18,13 @@ IdentityAccess application owner, а не контроллеру. Рабочий
   `/{id}/roles/{roleId}`, `/{id}/status`; GET/POST `/pilot/activate`.
 - `directory` возвращает users/roles с нормализованными данными, при отсутствии
   полномочия бросает DomainException `ACCESS_DENIED`; секреты/hash не возвращает.
+  Users: id/name/email/phone/active/invited/invitationValid/updatedAt/roles/permissions
+  (effective exact permissions). Memberships: id/name/active; global roles имеют
+  id/code/name/active/userCount/updatedAt/permissions, как нынешний directory.
 - Прикладные результаты команд: `issued` (userId/token), `activated`, `changed`,
   `unchanged`, `invalid`, `access_denied`; activation password validation может
-  вернуть `invalid_password` с понятной причиной. `invitation` возвращает email
-  только для действующей ссылки, иначе null. Infrastructure failure throws и HTTP503.
+  вернуть `invalid_password` с понятной причиной. `invitation` возвращает
+  `[email => string]` только для действующей ссылки, иначе null. Infrastructure failure throws и HTTP503.
 - Источники поведения: current UserDirectoryView + RapidPilotUserAccessView,
   MariaDbPilotUserDirectory, MariaDbReissueUserInvitation, MariaDbUserStatusApplication,
   RapidPilotLocalAuth::activationPage; роли/права из canonical local IdentityAccess.
@@ -32,7 +35,7 @@ IdentityAccess application owner, а не контроллеру. Рабочий
 | ID | Команда / условия | Результат и persisted facts / return |
 | --- | --- | --- |
 | read | active actor с exact `access.administer` | 200 HTML: имя/email/телефон, active/invited/blocked, роли и итоговые permissions только активных ролей, invitation-valid flag; поиск и фильтры статуса/роли, формы всех перечисленных команд, ссылки users↔roles и POST logout; данные HTML escaped. Read не меняет identity/audit. HEAD пустой с теми же headers. |
-| admission | guest GET, active без права, inactive role, near-match/revoked permission, spoofed actor fields/headers | guest303 login с safe return; остальные403 без protected data/facts; actor только Yii identity. Владелец заново проверяет active actor/role/exact permission внутри транзакции для каждой команды. DB/schema failure503 без SQL/secrets/cookie/redirect. |
+| admission | guest GET, active без права, inactive role, near-match/revoked permission, spoofed actor fields/headers | guest303 login с safe return; остальные403 без protected data/facts; actor только Yii identity. Владелец заново проверяет active actor/role/exact permission внутри транзакции для каждой административной команды, прежде чем отклонять некорректные поля или самоцель; недоступность этого источника не подменяется invalid/access_denied. DB/schema failure503 без SQL/secrets/cookie/redirect. |
 | request | command GET/HEAD, missing/invalid/stale CSRF, malformed scalar fields | 405 для wrong method, 400 для CSRF/type rejection, no identity/audit facts. Yii Request/Session владеют CSRF; успешная administrative mutation ротирует session-bound CSRF, повтор той же формы400 без повторной записи. Это сохраняет одноразовость прежних административных форм без старого session/CSRF framework. Existing login/logout/OTIZ CSRF flows остаются работоспособны. |
 | invite | normalized corporate email, nonblank fullName≤300 chars, отсутствующий email, active default `user` role | одна invited/status1 identity, credential с null hash, одна default-role assignment с actor/time, один invitation с hash 32-byte CSPRNG token (base64url43), expiry24h и creator/time. HTTP303 users; ссылка показывается один раз через session flash и не появляется при следующем чтении. Raw token не хранится в DB/log. |
 | invite-reject | внешний/невалидный email, пустое/длинное имя, duplicate email | invalid; HTTP303 users с понятной ошибкой; никаких частичных users/credentials/assignments/invitations. Concurrent duplicate invite даёт ровно одну identity/ссылку; другой результат invalid. |
