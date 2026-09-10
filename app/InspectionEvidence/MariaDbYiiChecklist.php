@@ -5,6 +5,7 @@ namespace FMonitor2\InspectionEvidence;
 final class MariaDbYiiChecklist implements YiiChecklist
 {
     use MariaDbYiiChecklistRead;
+    use MariaDbYiiChecklistAdmission;
     use MariaDbYiiChecklistMutation;
     use MariaDbYiiChecklistPhoto;
     use MariaDbYiiChecklistPersistence;

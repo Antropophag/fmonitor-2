@@ -10,7 +10,12 @@
     "app/InspectionEvidence/MariaDbYiiChecklist.php",
     "app/PilotHttp/ChecklistSync.php",
     "config/yii/web.php",
-    "config/yii/assets.php"
+    "config/yii/assets.php",
+    "tests/Support/InspectionPhotoIdentityFixture.php",
+    "rapid-pilot/verify-checklist-photo-upload.php",
+    "rapid-pilot/verify-checklist-photo-rejections.php",
+    "rapid-pilot/verify-checklist-photo-revoke.php",
+    "rapid-pilot/verify-checklist-photo-limit-concurrency.php"
   ],
   "acceptances": [
     {
@@ -60,6 +65,19 @@
       "seam": "YiiChecklist configured DB and real HTTP projection",
       "tests": [
         "tests/Yii2/yii2_inspection_boundaries_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A9-existing-schema-photo-admission-fixtures",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "existing legacy ChecklistSync public commands on isolated authenticated fixture",
+      "tests": [
+        "tests/InstallationProcess/inspection_evidence_schema_001_test.php",
+        "tests/Verification/characterize_inspection_photo_upload_001_test.php",
+        "tests/Verification/characterize_inspection_photo_rejections_001_test.php",
+        "tests/Verification/characterize_inspection_photo_revoke_001_test.php",
+        "tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php"
       ]
     }
   ]

@@ -7,7 +7,7 @@ trait MariaDbYiiChecklistMutation
         {
             $type=(string)($o['type']??'');
     if($type==='item_completed')return$this->completeItem($objectId,$actorId,$o);
-            $access=$this->access($actorId,$objectId);
+            $access=$this->commandAccess($actorId,$objectId,$type);
     if(!($access['exists']??false))return['status'=>'not_found'];
     $opened=(bool)($access['opened']??false);
     $role=(bool)($access['roleAccess']??false);

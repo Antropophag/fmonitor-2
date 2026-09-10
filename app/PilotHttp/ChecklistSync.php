@@ -40,7 +40,8 @@ final class ChecklistSync
             if($this->inspectionRecording===null)$this->loadAppliedComposition($objectId);
             return $this->completeItem($objectId,$actor,$operation);
         }
-        return $this->shared()->accept($objectId,$actor->id,$operation,$bytes);
+        try{return $this->shared()->accept($objectId,$actor->id,$operation,$bytes);}
+        catch(\FMonitor2\InspectionEvidence\ChecklistInfrastructureUnavailable $failure){throw new PilotHttpInfrastructureUnavailable('CHECKLIST_INFRASTRUCTURE_UNAVAILABLE',0,$failure);}
     }
     private function shared():\FMonitor2\InspectionEvidence\MariaDbYiiChecklist
     {

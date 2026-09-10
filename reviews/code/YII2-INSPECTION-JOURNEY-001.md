@@ -97,3 +97,41 @@ No tests were rerun because this is a confirmed whitespace-only correction to th
 ## Verdict
 
 **APPROVED.** The whitespace delta may be folded into the implementation checkpoint. Prior Gate 5 approval remains applicable; full CI and PR publication remain separate.
+
+# YII2-INSPECTION-JOURNEY-001 — CI fixture Gate 3 and production Gate 5 delta review
+
+Reviewer: separately tasked `/root/inspection_reviewer`; reviewer authored neither fixtures nor production.
+
+Frozen source: `/private/tmp/fmonitor-76-inspection-ci-final`, base `6c60ab0fe94f8c8e6af40c3e9c561137fe13f970`. Retained patch `/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-inspection-ci-final/source.patch` independently matches SHA-256 `fcfe1435ac001821b96ec10a7051a9136190fa5d24046a7977c043a3e2ee18ee`. Compared production to `6c60ab0f` and the fixture delta to previously approved snapshot `c932f05a485e10af63b972907182b72dfdd2c1e4b3459bff6341c372072ef613`. Plan: `ci-final-review-plan.json` in the external delivery directory.
+
+## Gate 3 fixture-classification findings
+
+No findings.
+
+`InspectionPhotoIdentityFixture::seed` now wraps every preparation failure in `UnexpectedValueException` with code 2 and a stable `SETUP_FAILURE` message while retaining the original throwable as `previous`. The wrapper does not catch verifier behavior after fixture preparation. Each verifier sets `ownsNamespace=true` before calling `seed`, and its existing `finally` still drops all fixture tables and removes its private artifact directory. The supplied classification RED proves the old code reported CREATE denial as exit 1; the same probe is GREEN with exit 2 and unchanged expected message/hash after the wrapper.
+
+**Gate 3 verdict: APPROVED.** The fixture-catch delta is correct, sensitive, cleanup-safe, and does not change behavior assertions or expected transcripts.
+
+## Gate 5 production-delta findings
+
+No findings.
+
+The new private `commandAccess` uses only the canonical installation case and active local identity/role/capability facts needed for a command. It no longer depends on `fm_maintable` or page metadata, while the public page `access`, projection, queue, and engineer fallback remain unchanged. Blocked/invited users still fail before replay and transaction work.
+
+Formal current assignment is evaluated lazily only for `completion_retracted` and `photo_revoked`. It selects the latest application when present, otherwise the latest registered assignment order by version/id. Photo revoke still requires both formal assignment and exact `inspection.photo.revoke`; retraction still requires formal assignment plus a matching accepted operation. Other photo/section/correction commands retain their existing active-role admission and do not acquire an assignment restriction.
+
+The correction also restores two concrete old-adapter contracts. Photo original names reject control characters again. Filesystem creation/write failures use the typed module exception; `ChecklistSync` alone translates that type to `PilotHttpInfrastructureUnavailable`, while Yii's controller continues to render infrastructure failures as retryable. Generic SQL/schema errors continue through the established outer failure paths rather than being mislabeled as deterministic rejection.
+
+The five originally failed CI suites now pass together on the corrected source: schema runtime, upload/rejections, revoke, and photo-limit concurrency. The named valid logs also show the configured-DB/projection/authorization boundary suite, full HTTP, concurrency, browser eleven-revision journey, legacy adapter smoke, and post-split architecture check GREEN. The empty stdout-only upload/rejection artifacts were ignored as instructed and are not cited as evidence. The earlier ambient-catalogue parallel orchestration failure is not treated as a product result.
+
+Affected unchanged relationships inspected: canonical identity definitions/cleanup, `MariaDbYiiChecklist` facade traits, public page access and queue fallback, assignment application/order schemas, mutation authorization branches, photo persistence and exception mapping, `ChecklistSync` outer compatibility contract, the five verifier assertions/transcript constants, approved boundary/browser tests, and architecture seam inventory.
+
+**Gate 5 verdict: APPROVED.** The production delta resolves the CI failures without weakening authorization, history, concurrency, namespace, or transport semantics. The previously approved public seam/baseline remains unchanged.
+
+## Command accounting
+
+Review commands were read-only: digest/base/diff inventory, exact fixture and production diffs, full reads of admission/mutation/photo/adapter relationships, plan, and only the named valid RED/GREEN logs. No passing test, full suite, CI, push, stand, or primary data was rerun or touched.
+
+## Overall verdict
+
+**APPROVED.** Both the Gate 3 fixture-classification delta and the Gate 5 production correction may advance on retained snapshot `fcfe1435ac001821b96ec10a7051a9136190fa5d24046a7977c043a3e2ee18ee`. Full exact-source CI and PR/merge/deployment remain separate.

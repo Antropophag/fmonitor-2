@@ -128,3 +128,52 @@ traits, которые unstaged diff не видел. Root удалил толь
 тестов. Это nonsemantic commit preparation, не новая реализация/root code policy.
 2 агента/13 запусков заданий,105 suite invocations/83 повтора;2 review returns.
 Исправление включено в тот же implementation checkpoint до PR/единственного CI.
+
+## PR и единственный full CI
+
+PR88 OPEN, exact committed source6c60ab0fe94f8c8e6af40c3e9c561137fe13f970.
+Actions34478973062 запущен на том же head; full local0/full CI1, повторов CI0.
+Проверенный source состоит из двух содержательных commits (tests752b62a4 +
+implementation6c60ab0f); whitespace cleanup включена до PR. Post-commit status
+updates локальны и не выдаются за source, проверяемый CI.
+
+## Первый CI: полный failure inventory
+
+CI34478973062/source6c60ab0f FAILURE: integration1/2 job102876743769 и
+integration2/2 job102876743854; verify102880119531 и synthetic QualityGraph
+производны от integration. Fast/unit/governance/e2e SUCCESS. Ровно5 suites:
+inspection_evidence_schema_001, characterize_inspection_photo_upload_001,
+photo_rejections_001, photo_revoke_001, photo_limit_concurrency_001. Полные
+per-job logs сохранены как ci-integration-1.log/2.log и ci-verify.log.
+
+Причины: new command owner затребовал UI fm_maintable; старые photo fixtures
+не содержали active identity facts. Fixture prerequisites исправляет root,
+production admission — отдельный executor после Gate3. Все assertions сохраняются.
+5 локальных RED подтверждают UI coupling после корректной identity setup.
+Новый полный CI будет только на исправленном reviewed source; same-source rerun0.
+На текущей точке2 агента/14 заданий,110 local suite invocations27 разных suites,
+83 повтора; CI1 failed. Эти5 local RED — первые локальные запуски этих suites.
+
+CI fixture delta Gate3 APPROVED c932f05a; assertions/hashes/concurrency/cleanup
+сохранены. 2 агента/16 заданий (CI diagnosis14, fixture review15, correction16).
+Исполнитель реализует mutation admission без UI-зависимости; все5 исходных
+failures проверяются вместе до следующего Gate5. CI повторно ещё не запускался.
+
+## CI correction: Gates3/5 APPROVED
+
+Reviewer одобрил fixture classification и production delta вместе на snapshot
+`fcfe1435ac001821b96ec10a7051a9136190fa5d24046a7977c043a3e2ee18ee`, base6c60ab0f.
+Все16 изменённых artifacts совпали с reviewed bytes/modes до закрывающих записей.
+Дополнительно внесены только verdicts и delivery/current-goal metadata.
+
+Command admission больше не требует fm_maintable; formal assignment проверяется
+лениво для revoke/retraction. Filename control validation и typed storage failure
+сохранены; fixture CREATE denial имеет прежние SETUP_FAILURE/exit2. Все5 failed
+suites и affected boundaries/HTTP/concurrency/browser/legacy/architecture GREEN.
+
+Итого2 агента/17 заданий,132 local suite invocations27 разных suites,105 повторов;
+2 review returns. Добавились20 executor suites и2 root classification RED/GREEN.
+Первый local parallel upload входит в счётчик, но ambient-catalogue interference
+не считается product evidence; последующие photo wrappers запускались последовательно.
+Пустые stdout-only logs и exit последней команды не используются как verdict.
+Full local0; CI1 failed, второй full CI запускается на новом commit, same-source retry0.

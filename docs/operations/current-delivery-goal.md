@@ -32,3 +32,17 @@ Root — анализ/spec/tests; отдельные исполнители и �
 после проверенного кандидата, репетиции upgrade/rollback, сохранности БД/PDF/фото,
 сессий, накопленных offline actions и jobs. Checklist/photos/offline, completion,
 оставшиеся runtime/console и общий cutover ещё не завершены; #76 не закрывать.
+
+## Публикация кандидата
+
+[PR88](https://github.com/Antropophag/fmonitor-2/pull/88) OPEN, source
+`6c60ab0fe94f8c8e6af40c3e9c561137fe13f970`;
+[CI34478973062](https://github.com/Antropophag/fmonitor-2/actions/runs/34478973062)
+FAILED (первый full run): обе integration shards,5 suites; остальные категории
+GREEN. Исправление fixture/admission dependency → Gates3/5 delta → full CI нового
+кандидата. Не повторять CI на прежнем source без причины.
+Эта post-commit запись локальна; код ещё не merged/deployed.
+
+Исправление всех5 CI failures получило Gates3/5 APPROVED и focused GREEN.
+Следующий шаг — второй full CI нового source, затем merge PR88. Первый failed
+run34478973062 сохраняется; рабочий стенд не переключать.

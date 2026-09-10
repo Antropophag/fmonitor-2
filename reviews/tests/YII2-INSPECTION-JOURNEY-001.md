@@ -230,3 +230,67 @@ The retained patch digest, exact delta, plan, and `inspection-owner-authorizatio
 ## Verdict
 
 **APPROVED.** The assertion delta correctly captures current active-account authorization at the public owner, including replay and zero transaction/fact mutation. It may join the coherent DAO/projection/fallback correction for fresh Gate 5 review.
+
+## CI integration correction fixture delta — Gate3 pending
+
+Full CI34478973062/source6c60ab0f produced exactly5 failed suites: inspection
+evidence schema and four photo characterization wrappers. Both complete
+integration job logs were retained; verify/QualityGraph failures are derived.
+Root adds canonical active identity/engineer prerequisites to the four private
+photo namespaces, including exact revoke permission only for revoke fixture;
+owned cleanup inventory includes all canonical identity tables. Existing schema
+fixture gets the real engineer role. No expected result/hash/history/concurrency
+assertion changed. No fm_maintable or irrelevant installer/assignment columns
+are invented to satisfy commands. New helper is test data only, not tracking.
+
+All5 local unchanged assertions remain RED after identity setup: schema/upload/
+rejection/revoke fail on missing private fm_maintable; limit child stops before
+behavior on that same deterministic command path. This is the unwanted UI data
+dependency, not missing auth setup now. Production correction must separate
+command admission and resolve formal assignment only where operation requires it.
+Plan expanded/read before fixture edits; CI failure inventory complete before
+any correction. First full run is retained, no same-source CI retry requested.
+
+# YII2-INSPECTION-JOURNEY-001 — Gate 3 CI fixture/admission delta
+
+Reviewer: separately tasked `/root/inspection_reviewer`; reviewer authored neither fixtures nor production.
+
+Reviewed only the coherent CI fixture/admission test delta on frozen checkout `/private/tmp/fmonitor-76-inspection-ci-fixtures`, base `6c60ab0fe94f8c8e6af40c3e9c561137fe13f970`. Retained patch `/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-inspection-ci-fixtures/source.patch` independently matches SHA-256 `c932f05a485e10af63b972907182b72dfdd2c1e4b3459bff6341c372072ef613`. Plan: `ci-fixture-plan.json` in the external delivery directory.
+
+## Findings
+
+No findings.
+
+`InspectionPhotoIdentityFixture` creates the exact tables returned by `IdentityAccessDefinitionSchemaMigration::definitions`, requires a private nonempty prefix and positive actor, and seeds one active user with one active `construction_control_engineer` role. It grants no unrelated permissions; only the revoke verifier receives exact `inspection.photo.revoke`. The four verifiers call it only after proving namespace ownership. Their cleanup inventory prepends the identity tables in reverse definition/dependency order, so user-role and credential foreign keys are removed before role/user tables; existing checklist cleanup, artifact cleanup, concurrency child handling, assertions, transcripts, hashes, and expected facts are unchanged.
+
+Changing the schema test fixture role code from synthetic `inspection_fixture` to canonical `construction_control_engineer` supplies the same role admission used by the migrated owner while retaining its exact item-completion permission. It does not grant broad checklist or photo permissions and does not alter the schema/runtime assertions.
+
+The supplied five final RED logs show that canonical active identity/role setup now succeeds and execution reaches the shared command path. Upload, rejection, revoke, and schema runtime cases fail on the absent legacy object/UI-access dependency; the concurrency parent reaches the same child path. This is the intended source-backed admission separation risk. Missing child stderr is not treated as independent evidence. Earlier setup errors are excluded.
+
+Affected unchanged relationships inspected: canonical identity schema definitions and foreign keys, active-role/capability queries, frozen `MariaDbYiiChecklist::access/roleAccess/accept`, unchanged `ChecklistSync` photo command prerequisites, formal revoke/assigned checks, each verifier’s namespace guard and cleanup, and schema-test runtime fixture order.
+
+## Command accounting
+
+Review commands were read-only: digest verification, exact base/diff inventory, complete fixture delta, relevant verifier setup/cleanup, plan, and supplied RED logs. Registration evidence was already GREEN and was not rerun. No previous passing test, full matrix, architecture check, CI, stand, or primary data was rerun or touched.
+
+## Verdict
+
+**APPROVED.** The fixture delta is semantically faithful, isolated, cleanup-complete, and produces qualifying RED for separating command admission from UI/object access while preserving active-user and revoke authorization. The executor may implement the bounded correction; production remains subject to fresh Gate 5 review.
+
+## Fixture setup-error classification delta
+
+After real photo rejections reached all4 unchanged assertions, controlled DDL
+denial exposed helper setup misclassification: expected exit2, actual1 with
+CREATE denied. Root wrapped only canonical identity fixture preparation into
+UnexpectedValueException(code2/SETUP_FAILURE); prefix-owned cleanup remains.
+Same public rejection wrapper GREEN after correction, assertions/hash unchanged.
+This fixture delta will receive Gate3 with the complete CI correction review.
+The earlier concurrent local photo wrappers interfered with whole ambient table
+catalogue assertions; those runs are not used as product-defect evidence.
+Photo wrappers run sequentially thereafter; stderr is captured with exit codes.
+
+## CI fixture classification Gate3 APPROVED
+
+Independent reviewer approved exact snapshot fcfe1435ac001821b96ec10a7051a9136190fa5d24046a7977c043a3e2ee18ee.
+Full combined Gate3/Gate5 record is linked in ../code/YII2-INSPECTION-JOURNEY-001.md.
+No expected assertion changed or passing check rerun by reviewer.

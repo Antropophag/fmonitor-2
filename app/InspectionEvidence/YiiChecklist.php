@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace FMonitor2\InspectionEvidence;
 
+final class ChecklistInfrastructureUnavailable extends \RuntimeException {}
+
 interface YiiChecklist
 {
     public function access(int $actorId,int $objectId):array;
