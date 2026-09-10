@@ -5,6 +5,42 @@ require __DIR__.'/PreopeningFixture.php';
 use FMonitor2\AssignmentOrderComposition as C;
 use FMonitor2\AssignmentOrderOriginal as O;
 // YII2-PREOPENING-JOURNEY-001: current card versions reach the unchanged compound owner.
+// Public read-owner regression: a new pending selection cannot inherit an older applied original.
+$f = null;
+$cardDb = null;
+try {
+    $f = new PreopeningFixture(dirname(__DIR__, 2));
+    assertSameValue('selected', $f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command())->status()->value, 'prior selection');
+    $original = $f->nativeOriginal();
+    assertSameValue('accepted', $original->status()->value, 'prior original');
+    $applied = C\ProductionAssignmentOrderApplicationFactory::create($f->db, $f->p)->applyAssignmentOrderOriginal(
+        new C\ApplyAssignmentOrderOriginalCommand('44444444-4444-4444-8444-000000000091', 4512, 81, $original->currentRevisionId(), 0, 18)
+    );
+    assertSameValue('applied', $applied->status, 'prior application');
+    $environment = $f->environment();
+    $cardDb = new yii\db\Connection([
+        'dsn' => 'mysql:host='.$environment['FMONITOR_DB_HOST'].';port='.$environment['FMONITOR_DB_PORT'].';dbname='.$f->database,
+        'username' => $f->dmlUser, 'password' => $f->dmlPassword, 'charset' => 'utf8mb4',
+    ]);
+    $reader = FMonitor2\YiiRuntime\InstallationProcessFactory::card($cardDb, $f->p, $f->p);
+    assertSameValue('Готов к открытию', $reader->read(18, 4512)['status'], 'prior applied original is ready');
+    $next = new C\SelectAssignmentOrderCompositionCommand(
+        new C\SelectionRequestId('11111111-1111-4111-8111-000000000091'), C\AssignmentOrderCompositionMode::NEW_ORDER,
+        new C\InstallationObjectId(4512), new C\UserId(18), new C\InstallerTabIdList([new C\InstallerTabId(7002)]),
+        new C\UserId(73), new C\SelectionRevision(1)
+    );
+    assertSameValue('selected', $f->base->selection->app()->selectAssignmentOrderComposition($next)->status()->value, 'new pending selection');
+    $before = $f->facts();
+    $files = $f->base->privateFiles();
+    $pending = $reader->read(18, 4512);
+    assertSameValue('Требуется распоряжение', $pending['status'], 'INTENDED_RED pending selection cannot inherit applied readiness');
+    assertSameValue(false, isset($pending['confirmedOriginal']), 'pending selection has no confirmed opening basis');
+    assertSameValue($before, $f->facts(), 'public card read preserves prior application and all facts');
+    assertSameValue($files, $f->base->privateFiles(), 'public card read preserves original bytes');
+} finally {
+    if ($cardDb instanceof yii\db\Connection) $cardDb->close();
+    if ($f instanceof PreopeningFixture) $f->close();
+}
 foreach([false,true] as $correct) {
     $f=null;
     try {

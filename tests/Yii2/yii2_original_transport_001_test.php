@@ -36,6 +36,8 @@ try {
   array_merge($wire,['Transfer-Encoding: chunked']),
   array_merge($wire,['Content-Length: 3']),
  ]as$framing){$before=$f->facts();$badFrame=$f->wire('POST',$path,$framing,$pdf,$cookies);assertSameValue(false,$badFrame['timedOut'],'malformed wire bounded');assertSameValue(true,in_array($badFrame['status'],[0,400],true),'bad framing rejected by server or transport');assertSameValue($before,$f->facts(),'framing no command facts');}
+ // Original transport inherits UUID versions 1–5; selection/opening keep their separate v4 contract.
+ $meta['requestId']='22222222-2222-1222-8222-000000000001';
  $response=$f->upload($cookies,$meta,$pdf);assertSameValue(201,$response['status'],'accepted original');$receipt=json_decode($response['body'],true,flags:JSON_THROW_ON_ERROR);
  assertSameValue(['status','reasonCode','retryable','requestId','rootOriginalId','currentRevisionId','revisionNumber','documentDate','sha256','byteSize','uploadedAt'],array_keys($receipt),'canonical native Result keys');assertSameValue(['accepted',null,false,1,'2026-09-01',hash('sha256',$pdf),strlen($pdf)],[$receipt['status'],$receipt['reasonCode'],$receipt['retryable'],$receipt['revisionNumber'],$receipt['documentDate'],$receipt['sha256'],$receipt['byteSize']],'exact received PDF receipt');
  assertSameValue(json_encode($receipt,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS|JSON_THROW_ON_ERROR)."\n",$response['body'],'canonical receipt bytes and terminal LF');

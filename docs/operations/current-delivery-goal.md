@@ -1,28 +1,25 @@
-# Текущая цель: путь до открытия на Yii2 — #76
+# Текущая цель: #76 — Yii2 путь до открытия
 
-Поручение владельца2026-09-10: автономно без остановок, сначала #82, затем #76.
-#82 завершена PR84. #76 после этого: PR85 users/activation/proxy privacy и
-PR86 queue/inspection planning MERGED; source58023c82, mergef804f3f6,
-Actions34439847358 SUCCESS/VERIFY_OK.
-[Последняя поставка](yii2-object-queue-delivery-2026-09-10.md).
+Владелец2026-09-10: #82 завершена первой (PR84), затем продолжать #76 автономно.
+PR85 и PR86 уже merged с exact-source VERIFY_OK; рабочий стенд сохранён.
 
-Актуальный checkout ../fmonitor-2-yii2-preopening-76, ветка
-codex/yii2-preopening-76-20260910, base main после PR86. OpenSpec
-yii2-preopening-journey: root подготовил normative matrix, verification input и
-двенадцать HTTP/browser/image tests. Все12 intended RED подтверждены; Gate3 first RETURN (6 coverage groups),
-после grouped correction independent PASS. См. reviews/tests/YII2-PREOPENING-JOURNEY-001.md.
-Следующий этап — отдельный implementation executor.
-[Подготовка и проверенные boundaries](yii2-preopening-preparation-2026-09-10.md).
+Checkout `/Users/antropophag/code/fmonitor-2-yii2-preopening-76`, branch
+`codex/yii2-preopening-76-20260910`. Исторический dirty
+`/Users/antropophag/code/fmonitor-2` не менять.
 
-Далее: root завершает полную matrix/impact и Quality Graph plan до Gate2, пишет
-тесты. Separate sol/low executor и независимые reviews по development-process.
-Путь: карточка→selection→optional template POST→raw original/correction/history/
-exact download→open_confirmed→карточка. Card reader изPilotHttp переносится на
-Yii DAO; уже module-owned portal/submission/history/command APIs переиспользуются
-целиком с их idle mysqli/собственными snapshots/transactions. Нет outer Yii TX
-вокруг native owner и нет нового HTTP/PilotHttp framework.
+Исходный [handoff перезапуска](session-restart-2026-09-10.md) сохранён как checkpoint.
+Актуальное продвижение: [delivery record](yii2-preopening-delivery-2026-09-10.md).
+OpenSpec `yii2-preopening-journey`: Gate4 продолжается отдельными sol/low
+исполнителями, root владеет tests/spec и проверкой полноты.
 
-Working stand и исторический WIP сохранены; runtime.php ещёна rapid router.
-Весь #76 не завершён: remaining process/inspection/Otiz/CLI, runtime retirement,
-rehearsal/rollback и конкретное согласованное переключение остаются.
-[Предыдущая цель](delivery-goal-before-preopening-76.md).
+Corrected Gate3 прежних12tests и оба root delta Gate3 PASS: pending после
+application; fixture lineage ordering и сохранение Original UUID versions1–5.
+[Review evidence](../../reviews/tests/YII2-PREOPENING-JOURNEY-001.md).
+Native15 +6additional obligations +production PDF image имеют GREEN evidence;
+один initial native phase timeout сохранён вместе с diagnostic/canonical PASS.
+
+Следующий шаг: завершить readable controllers/forms и прежний shlz UI,
+полный focused HTTP failure inventory → grouped corrections → desktop/mobile
+visual → actual architecture → independent Gate5 → один full exact-source CI
+и merge. Current production WIP не объявлять GREEN; весь #76 не закрывать
+после этого среза. Checklist/photos/completion/console/cutover идут далее.

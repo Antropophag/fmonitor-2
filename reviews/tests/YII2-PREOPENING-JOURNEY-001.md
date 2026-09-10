@@ -70,3 +70,195 @@ None in the agreed correction scope or added test/helper scope.
 ## Verdict
 
 **PASS — Gate 3 correction review passes.** The corrected twelve-test candidate is complete and sufficiently sensitive for the bounded Yii2 pre-opening journey. It preserves the native owners' whole mysqli boundaries, tests the new Yii transport rather than replacing it with direct SQL command assertions, and records the required adjacent regression obligations. Production implementation may proceed against this exact reviewed source.
+
+## Дополнение root после перезапуска — pending после application
+
+При проверке полноты Gate4 root обнаружил дефект существующего normative
+требования: новое pending распоряжение наследовало готовность прежнего применённого
+оригинала. В начало `yii2_preopening_lineage_001_test.php` добавлен независимый
+пример через public `YiiObjectCard::read`: реальные native selection → original →
+application → новое распоряжение с другим монтажником; карточка требует
+распоряжение, не отдаёт confirmedOriginal и не меняет facts/private bytes.
+Спецификация и прежние HTTP expectations не изменены.
+
+RED: `php tests/Yii2/yii2_preopening_lineage_001_test.php`, exit255,
+`/tmp/76-preopening-pending-lineage-red.log`: expected «Требуется распоряжение»,
+actual «Готов к открытию». Все предварительные native команды и прежняя ready
+карточка прошли. Это intended behavioral RED после исправления отдельной причины503
+(optional legacy provenance table); отсутствие таблицы не выдаётся за этот RED.
+Дополнение ожидает независимого delta Gate3; прежний PASS сохранён выше.
+
+# Gate 3 DELTA review — #76 pending selection lineage
+
+Источник review: восстановленный snapshot
+`/private/tmp/fmonitor-76-preopening-pending-delta-gate3`, base
+`036b095bce71c23188f8e62d5f2b871641fdf19f`; постоянный snapshot
+`/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-preopening-pending-delta-gate3`,
+SHA-256 patch
+`105a8701f842b7dd6999abca9431938f2b4d3b430e0b19adba7519a43d287406`
+(manifest и bytes проверены). Автор review независим: не писал спецификацию,
+рассматриваемый тест или production implementation.
+
+Согласованный DELTA scope — только 36 добавленных root строк
+`tests/Yii2/yii2_preopening_lineage_001_test.php:8-43`. Остальные изменения
+restored source являются WIP Gate 4 context и не оценивались как Gate 5.
+Предыдущие исправленные Gate 3 artifacts сохранены; спецификация и прежние
+expectations не менялись.
+
+## Проверка delta
+
+- Traceability точная. Нормативная спецификация
+  `specs/YII2-PREOPENING-JOURNEY-001.md:120-123` прямо требует, чтобы новый
+  pending selection не наследовал readiness старого original/application.
+  Пример воспроизводит именно эту последовательность через настоящие public
+  owners: accepted selection 81 → accepted original → applied application →
+  `new_order` 82 с другим монтажником → `YiiObjectCard::read`.
+- Public seam выбран верно. Предметные setup-переходы выполняются неизменёнными
+  native application owners, а наблюдаемое ожидание проверяется через новый
+  публичный read owner `YiiObjectCard::read(actorId, objectId)`, заявленный в
+  спецификации. Test не подменяет пользовательскую команду прямым SQL.
+- Ожидания независимы и чувствительны. До смены выбора карточка обязана быть
+  «Готов к открытию»; после смены — «Требуется распоряжение» без
+  `confirmedOriginal`. Это поймает как ошибочное наследование status, так и
+  утечку старого opening basis при внешне правильном status.
+- История и read-only поведение покрыты: снимки всех facts и private files после
+  успешного нового выбора сравниваются после read. Старое application/original
+  сохраняются, а read не получает возможности чинить или переписывать их.
+- Изоляция и очистка достаточны: новый `PreopeningFixture`, отдельное Yii DB
+  connection с DML runtime identity, закрытие обоих ресурсов в `finally`.
+  Используются фиксированные UUID, actor/object/order/revision и состав.
+- RED валиден. `/tmp/76-preopening-pending-lineage-red.log` завершился exit 255
+  ровно на `tests/Yii2/yii2_preopening_lineage_001_test.php:36`: expected
+  «Требуется распоряжение», actual «Готов к открытию». Предшествующие assertions
+  selection/original/application, первоначальной ready-card и нового pending
+  selection прошли; setup failure в этом результате отсутствует.
+- Snapshot delta подтверждён: `git diff --numstat` показывает `36 0` только для
+  рассматриваемого test-добавления, `git diff --check` чист.
+- Quality Graph plan повторно сгенерирован с pinned base
+  `f804f3f6fa7baa7264a51b6e503c13f48406f2d7` и текущим
+  `verification-input.json`; `check` вернул `CHANGE_VERIFICATION_OK`, SHA-256
+  нового plan
+  `797fb4afe9cfa86672e84399069e3683a799361fb028c84260b5dd81afc96845`.
+  Для контроля также восстановлен предыдущий corrected Gate 3 snapshot: его plan
+  повторил сохранённый SHA-256
+  `816cc4eedf53b08d2cd53a25f5a448c2f085f4fae6c68a64507465867d87ec67`.
+  Между прежним и новым plans списки acceptance mappings, required categories и
+  commands идентичны; verification obligations не потеряны.
+
+## Findings
+
+Нет findings в согласованном DELTA scope.
+
+## Verdict
+
+**PASS — Gate 3 DELTA проходит.** Добавленный пример точно фиксирует уже
+нормативное правило pending lineage, использует public read seam, имеет
+самостоятельно определённые ожидания и доказанный intended RED. Реализация может
+исправлять это поведение без изменения утверждённых ожиданий; production WIP
+по-прежнему требует отдельного Gate 5.
+
+## Исправление fixture ordering — root, delta review pending
+
+Executor обнаружил ошибку оснастки в original transport: `rows()` сортировал
+`fm2_assignment_order_original_revisions` по первому столбцу (opaque revision_id),
+а transport/http/lineage/browser assertions сравнивали редакции последовательно.
+Лексикографический порядок случайных identities не является порядком редакций.
+Исходный failure был выведен только в transcript executor; отдельного полного
+log нет, поэтому он не заявляется retained intended RED.
+
+Root изменил только выбор `ORDER BY` в `PreopeningFixture::rows()` для этой
+таблицы на `root_original_id,revision_number,revision_id`. Проверки receipt IDs,
+полных неизменяемых строк, дат и PDF hashes не удалены и не ослаблены.
+Остальные таблицы и общий `facts()` snapshot не менялись.
+
+Независимый от HTTP native probe selection → original → correction проверяет
+полную исходную строку, номера1/2 и обе полученные identities: GREEN.
+Постоянные script/output:
+`/Users/antropophag/.local/state/fmonitor2/deliveries/76-preopening-20260910/76-original-lineage-order-probe.{php,log}`.
+Это исправление setup nondeterminism, не новое предметное поведение и не новый
+production RED. Independent delta Gate3 ещё обязателен до финального approval.
+
+## Сохранение original UUID contract — root, delta review pending
+
+Predecessor `OriginalUploadInput` допускает UUID versions1–5, в отличие от
+selection/opening(v4). Новая OriginalMetadata ошибочно принимала толькоv4.
+Root изменил requestId существующего initial-success примера на валидныйv1;
+все прежние receipt/history/replay/bytes assertions сохранены.
+
+Intended HTTP RED: `php tests/Yii2/yii2_original_transport_001_test.php`, exit255,
+`/tmp/76-original-uuid-v1-red-stable.log`, line41: accepted original expected201,
+actual400. Все предыдущие admission/metadata/framing cases прошли. Более ранний
+запуск во время переключения controllers остановился на временном404 формы и
+не считается UUID RED. Native unchanged contract разрешаетv1; production parser
+не должен сужать его доv4. Вместе с fixture ordering направляется на delta Gate3.
+
+# Независимый Gate 3 DELTA review — #76 fixture ordering и original UUID
+
+Источник review: восстановленный exact-source checkout
+`/private/tmp/fmonitor-76-preopening-fixture-uuid-gate3`, base
+`036b095bce71c23188f8e62d5f2b871641fdf19f`, постоянный snapshot
+`/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-preopening-fixture-uuid-gate3`,
+SHA-256 patch `91940893cdd4f434ba17cc827f9068939e72fb0d73ba791e2e57b1c641e97093`.
+Автор review не писал спецификацию, рассматриваемые тестовые изменения или
+production implementation.
+
+Scope review ограничен изменениями после уже одобренного snapshot
+`76-preopening-pending-delta-gate3`: ordering в `PreopeningFixture::rows()` и
+UUID существующего initial-success примера в
+`yii2_original_transport_001_test.php`. Прежний 36-строчный pending-lineage тест
+не изменён. Остальной production WIP не рассматривался как Gate 5.
+
+## Проверка delta
+
+- Traceability точная: `ASSIGNMENT-ORDER-ORIGINAL-UPLOAD-HTTP-001` нормативно
+  допускает canonical lowercase UUID versions 1–5, а
+  `AssignmentOrderOriginalDataScalar::uuid()` реализует ту же унаследованную
+  грамматику. Значение `22222222-2222-1222-8222-000000000001` является валидным
+  UUIDv1 с допустимым variant. Отдельные v4-контракты selection/opening не
+  затронуты.
+- Public seam и чувствительность сохранены: изменён requestId уже существующего
+  успешного real Yii raw-upload сценария. Все admission/framing проверки до него,
+  canonical 11-field receipt, exact response bytes, replay, correction, history,
+  download, authorization, immutable rows, dates и PDF hashes остаются на месте.
+  Тест поймает именно ошибочное сужение original parser до UUIDv4.
+- RED валиден: `/tmp/76-original-uuid-v1-red-stable.log`, exit 255, строка 41:
+  expected HTTP 201, actual 400 на `accepted original`; предшествующие случаи
+  прошли. Это behavioral RED, не setup failure.
+- Fixture deterministic: для `fm2_assignment_order_original_revisions` порядок
+  теперь следует предметной lineage tuple
+  `root_original_id, revision_number, revision_id`; opaque случайный
+  `revision_id` используется только как стабильный tie-breaker. Для всех других
+  таблиц прежний `ORDER BY 1` сохранён. SQL использует только внутренний
+  allowlisted suffix branch, поэтому новая строка order не принимает внешний
+  ввод.
+- Изменение helper не ослабляет expectations: callers по-прежнему сравнивают
+  полные immutable rows/facts, identities, revision numbers, document dates,
+  hashes и bytes. Native probe
+  `76-original-lineage-order-probe.{php,log}` подтверждает initial/correction,
+  полную исходную строку и revisions 1/2; GREEN. Transcript-only прежний
+  nondeterministic failure корректно не заявлен retained RED.
+- `git diff --cached --check` чист; оба PHP-файла проходят `php -l`.
+- Quality Graph перегенерирован с pinned base
+  `f804f3f6fa7baa7264a51b6e503c13f48406f2d7` и текущим расширенным
+  `verification-input.json`; `check` вернул `CHANGE_VERIFICATION_OK`. Plan digest:
+  `1614fda505dddc9eecef80df1ea032a1fbcf1e9202e50d329b14087581d0de0c`.
+  Все staged production paths покрыты `planned_paths`; дополнительные paths —
+  явно ожидаемые existing-capability dependencies/role DAO. В сравнении с ранее
+  одобренным delta-plan digest
+  `797fb4afe9cfa86672e84399069e3683a799361fb028c84260b5dd81afc96845`
+  acceptance mappings идентичны (2), required categories идентичны
+  (`e2e`, `governance`, `integration`, `unit`), commands идентичны (39, включая
+  focused Yii/native neighbors, четыре category obligations и integration
+  `make test`). Обязательства не потеряны.
+
+## Findings
+
+Нет findings в согласованном DELTA scope.
+
+## Verdict
+
+**PASS — Gate 3 DELTA проходит.** Fixture ordering является узким исправлением
+детерминизма без ослабления assertions; UUIDv1-пример точно фиксирует
+унаследованный original UUID v1–5 contract и имеет доказанный intended RED.
+Production implementation может исправлять parser против этих ожиданий.
+Production WIP остаётся Gate 4 и требует отдельного Gate 5.

@@ -154,7 +154,9 @@ final class PreopeningFixture
     }
     public function rows(string $suffix): array
     {
-        return $this->db->query('SELECT * FROM `'.$this->p.$suffix.'` ORDER BY 1')->fetch_all(MYSQLI_ASSOC);
+        // Original identities are opaque; lineage order comes from root + revision number.
+        $order = $suffix === 'fm2_assignment_order_original_revisions' ? 'root_original_id,revision_number,revision_id' : '1';
+        return $this->db->query('SELECT * FROM `'.$this->p.$suffix.'` ORDER BY '.$order)->fetch_all(MYSQLI_ASSOC);
     }
     public function facts(): array
     {
