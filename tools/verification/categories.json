@@ -360,5 +360,7 @@
   "tests/Verification/delivery_harness_001_test.py": "unit",
   "tests/Yii2/yii2_documentary_http_001_test.php": "integration",
   "tests/Yii2/yii2_documentary_concurrency_001_test.php": "integration",
-  "tests/Yii2/yii2_documentary_browser_001_test.php": "e2e"
+  "tests/Yii2/yii2_documentary_browser_001_test.php": "e2e",
+  "tests/Yii2/yii2_installer_directory_http_001_test.php": "integration",
+  "tests/Yii2/yii2_installer_directory_browser_001_test.php": "e2e"
 }

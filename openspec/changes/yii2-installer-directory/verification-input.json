@@ -1,0 +1,22 @@
+{
+  "change": "yii2-installer-directory",
+  "planned_paths": [
+    "app/Workforce/MariaDbYiiInstallerDirectory.php",
+    "app/YiiRuntime/Controllers/InstallerDirectoryController.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Assets/InstallerDirectoryAssetBundle.php",
+    "config/yii/web.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-INSTALLER-DIRECTORY-001",
+      "acceptance_id": "A1-A7",
+      "spec_path": "specs/YII2-INSTALLER-DIRECTORY-001.md",
+      "seam": "GET|HEAD /pilot/installers through real Yii HTTP and browser",
+      "tests": [
+        "tests/Yii2/yii2_installer_directory_http_001_test.php",
+        "tests/Yii2/yii2_installer_directory_browser_001_test.php"
+      ]
+    }
+  ]
+}

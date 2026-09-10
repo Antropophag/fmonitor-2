@@ -1,23 +1,22 @@
-# Текущая цель — №76, документарное закрытие Yii2
+# Текущая цель — №76, справочник монтажников Yii2
 
-Владелец подтвердил продолжение №76 после поставки harness PR89. Текущий срез:
-85% монтажа → акт ПТО → декларация → исправления с причиной/историей → возврат
-в карточку/очередь. Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-documentary-76`,
-branch `codex/yii2-documentary-76-20260910`. Фактический source/PR/CI получать
-через `python3 tools/delivery/harness.py state`, роль/обязательства — через prepare.
+Владелец поручил продолжить рефакторинг №76. Предыдущий документарный срез
+поставлен PR #91: exact commit `47bb6b438d667ef807ff273b9efa4577e8780bd6`,
+Quality Graph CI 34522776165 SUCCESS, merge
+`aa4d20f30edb4b5e9c7de7abad8ac2d016ec4952`.
 
-[Контракт](../../specs/YII2-DOCUMENTARY-CLOSURE-001.md),
-[OpenSpec](../../openspec/changes/yii2-documentary-closure/),
-[delivery record](yii2-documentary-delivery-2026-09-10.md),
-[независимый Gate3](../../reviews/tests/YII2-DOCUMENTARY-CLOSURE-001.md).
-Root пишет spec/tests; sol/low executor реализует; независимый sol/low reviewer
-проверяет Gates3/5. Применяется compact execution protocol #82 и harness PR89.
+Следующий bounded slice — read-only `/pilot/installers`: сохранить поиск,
+status/availability filters, 50-row pagination, текущие зарегистрированные
+закрепления, authorization, HEAD/failure contracts и responsive UI, переведя
+маршрут на Yii2 controller/query/view без runtime-загрузки rapid-pilot.
 
-После целого кандидата, focused GREEN и Gate5 — PR и один full exact-source CI.
-№76 включает оставшиеся каталоги/runtime/console и общий cutover; этот срез их
-не закрывает. Стенд, чужие worktrees/WIP и все append-only факты сохраняются.
-Deployment требует отдельной авторизации после upgrade/rollback evidence для
-БД/PDF/фото, пользователей/сессий, offline actions и jobs.
+[OpenSpec](../../openspec/changes/yii2-installer-directory/) создаёт planning
+input. До реализации root обязан подготовить verification input/harness package,
+написать нормативный spec и intended RED; отдельный sol/low reviewer решает
+Gate 3, отдельный sol/low executor реализует, независимый sol/low reviewer решает
+Gate 5. Фактические source/PR/CI всегда получать через harness state.
 
-[Предыдущий указатель](current-delivery-goal-before-documentary-2026-09-10.md)
-сохранён байт-в-байт как история поручения harness.
+Карточка монтажника, новые conflict/staleness rules, workforce sync/import,
+checklist/photo/offline, ОТиЗ, console/runtime retirement и общий cutover остаются
+в следующих срезах №76. Рабочий rapid-pilot stand не переключается. Deployment
+требует отдельной авторизации после общего upgrade/rollback evidence.
