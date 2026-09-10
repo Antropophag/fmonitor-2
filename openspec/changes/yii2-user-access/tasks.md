@@ -12,5 +12,5 @@
 
 ## 3. Deliver
 
-- [ ] 3.1 Один authoritative exact-source CI и merge.
-- [ ] 3.2 Evidence и следующий полный process slice #76; stand не переключён.
+- [x] 3.1 Один authoritative exact-source CI и merge.
+- [x] 3.2 Evidence и следующий полный process slice #76; stand не переключён.

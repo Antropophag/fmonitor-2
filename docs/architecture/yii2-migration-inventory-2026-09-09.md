@@ -119,3 +119,23 @@ GREEN → independent code review. Keep external denial/history/atomicity/HTTP o
 Internal class-name, custom session filesystem and hand-router assertions are not
 silently disabled: inventory them for explicit replacement alongside the owning slice.
 No current inventory or historic approval proves final readiness.
+
+## Проверенное продвижение —2026-09-10
+
+PR85 merged907cb0a3 (exact source41066c68, Actions34431377731 SUCCESS/VERIFY_OK)
+перенёс на Yii /pilot/admin/users, /pilot/users, invite/reissue/role/status и
+/pilot/activate. Application owner IdentityAccess\YiiUserAccess, внутренние
+MariaDb adapters используют одну Yii Connection/transaction; реальные HTTP trace
+и browser/concurrency подтверждены независимыми reviews. Proxy activation token
+не попадает в nginx query/referrer diagnostics при502; обычная диагностика сохранена.
+
+Ранее PR79 перенёс native Yii login/logout/roles и session admission, PR83 —
+settlement owner и Yii OTIZ read/export/payment/reversal routes. Эти строки
+inventory отмечают поставку конкретных capabilities, а не полное завершение
+этапов3/5 или удаление всего прежнего runtime.
+
+Старые users/auth/OTIZ handlers пока нужны сохранённому старому stand: runtime.php
+остаётся на rapid router. Критерий удаления — все входы рабочего контура переведены
+на Yii, golden flows и rehearsal GREEN, затем согласованное переключение.
+Следующий active slice yii2-object-queue: GET/HEAD objects + schedule POST;
+планирование не объявлено реализованным до его Gates3/5 и CI.

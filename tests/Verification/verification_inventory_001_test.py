@@ -122,6 +122,11 @@ class Inventory(native.NativeSuites):
             ],
             'db': [
                 'php\ttests/Yii2/yii2_user_access_001_test.php\n',
+                'php\ttests/Yii2/yii2_queue_readiness_001_test.php\n',
+                'php\ttests/Yii2/yii2_object_queue_lineage_001_test.php\n',
+                'php\ttests/Yii2/yii2_inspection_planning_concurrency_001_test.php\n',
+                'php\ttests/Yii2/yii2_inspection_planning_001_test.php\n',
+                'php\ttests/Yii2/yii2_object_queue_001_test.php\n',
                 'php\ttests/Yii2/yii2_user_access_edges_001_test.php\n',
                 'php\ttests/Yii2/yii2_user_access_concurrency_001_test.php\n',
                 'php\ttests/Otiz/object_register_paging_001_test.php\n',
@@ -181,6 +186,7 @@ class Inventory(native.NativeSuites):
             'e2e': [
                 'python3\ttests/Runtime/activation_proxy_log_001_test.py\n',
                 'php\ttests/Yii2/yii2_user_access_browser_001_test.php\n',
+                'php\ttests/Yii2/yii2_object_queue_browser_001_test.php\n',
                 'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php\n',
                 'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',
                 'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',

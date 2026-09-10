@@ -10,4 +10,4 @@
 
 ## 3. Deliver
 
-- [ ] 3.1 Объединение с Yii user access, authoritative CI и merge.
+- [x] 3.1 Объединение с Yii user access, authoritative CI и merge.
