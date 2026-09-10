@@ -38,3 +38,14 @@ delta без findings: union registries, tightened E2E oracle, RED/GREEN sensiti
 Dispositions дописаны в существующие reviews/tests и reviews/code
 `ACTIVATION-PROXY-LOG-001.md`; новый микросрез не создавался.
 Теперь готов один окончательный checkpoint для authoritative CI.
+
+## Поставка подтверждена
+
+PR85 MERGED907cb0a3b05ff5248ee097dd3a271b385c3dcc7b,2026-09-10T03:07:13Z.
+Exact candidate41066c687e94f19b46bf32cd1b09e2c8f3c2e8b9.
+Actions34431377731 SUCCESS; все категории и итоговый Quality Graph SUCCESS,
+verify job102729223978 вывел VERIFY_OK. Первый полный CI без повторного запуска
+(02:56:17Z →03:07:13Z до merge:10м56с).
+Локальный лог /tmp/76-pr85-verify.log; working stand сохранён.
+Следующий срез yii2-object-queue находится в ../fmonitor-2-yii2-queue-76.
+#76 целиком не завершён; closure этих двух срезов не означает cutover.

@@ -335,3 +335,9 @@ db	php	tests/Yii2/yii2_user_access_concurrency_001_test.php
 e2e	php	tests/Yii2/yii2_user_access_browser_001_test.php
 db	php	tests/Yii2/yii2_user_access_edges_001_test.php
 e2e	python3	tests/Runtime/activation_proxy_log_001_test.py
+db	php	tests/Yii2/yii2_object_queue_001_test.php
+db	php	tests/Yii2/yii2_inspection_planning_001_test.php
+db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php
+e2e	php	tests/Yii2/yii2_object_queue_browser_001_test.php
+db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php
+db	php	tests/Yii2/yii2_queue_readiness_001_test.php

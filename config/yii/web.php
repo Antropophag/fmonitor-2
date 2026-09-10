@@ -62,6 +62,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/login' => 'auth/login',
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
+                'GET,HEAD pilot/objects' => 'object-queue/index',
+                'GET,HEAD,POST pilot/objects/<id:[1-9]\\d*>/inspection-schedule' => 'object-queue/schedule',
                 'GET pilot/admin/roles' => 'roles/index',
                 'GET,HEAD pilot/admin/users' => 'user-access/index',
                 'GET,HEAD pilot/users' => 'user-access/index',

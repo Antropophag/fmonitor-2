@@ -380,6 +380,7 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php',
             'php\ttests/Yii2/yii2_user_access_browser_001_test.php',
             'python3\ttests/Runtime/activation_proxy_log_001_test.py',
+            'php\ttests/Yii2/yii2_object_queue_browser_001_test.php',
         ], e2e.stdout.splitlines())
 
 

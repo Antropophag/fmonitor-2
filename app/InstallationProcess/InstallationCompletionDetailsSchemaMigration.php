@@ -5,6 +5,31 @@ namespace FMonitor2\InstallationProcess;
 /** Additive completion-correction requisites storage; NULL inherits prior effective details. */
 final class InstallationCompletionDetailsSchemaMigration
 {
+    public static function currentDefinitions(string $prefix, string $collation): array
+    {
+        $definitions = InstallationCompletionDefinitionSchemaMigration::definitions($prefix, $collation);
+        $historical = InstallationCompletionDefinitionSchemaMigration::definitions($prefix, $collation, true);
+        $details = [
+            'name'=>'details', 'type'=>'varchar(500)', 'nullable'=>'YES', 'default'=>null,
+            'extra'=>'', 'generated'=>'NEVER', 'generationExpression'=>null,
+            'charset'=>'utf8mb4', 'collation'=>$collation,
+        ];
+        foreach ([&$definitions, &$historical] as &$set) {
+            $columns = &$set[InstallationCompletionDefinitionSchemaMigration::CORRECTIONS]['manifest']['columns'];
+            array_splice($columns, 6, 0, [$details]);
+            unset($columns);
+        }
+        unset($set);
+        return [
+            InstallationCompletionDefinitionSchemaMigration::ROOT=>[
+                $definitions[InstallationCompletionDefinitionSchemaMigration::ROOT]['manifest'],
+            ],
+            InstallationCompletionDefinitionSchemaMigration::CORRECTIONS=>[
+                $definitions[InstallationCompletionDefinitionSchemaMigration::CORRECTIONS]['manifest'],
+                $historical[InstallationCompletionDefinitionSchemaMigration::CORRECTIONS]['manifest'],
+            ],
+        ];
+    }
     public static function apply(\mysqli $db,string $prefix=''):array
     {
         IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);$table=$prefix.InstallationCompletionDefinitionSchemaMigration::CORRECTIONS;

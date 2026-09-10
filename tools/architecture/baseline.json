@@ -363,6 +363,7 @@
     "app/InstallationProcess/InstallationProcess.php::confirmOrderRegistration",
     "app/InstallationProcess/InstallationProcess.php::openInstallation",
     "app/InstallationProcess/InstallationProcess.php::prepareAssignmentOrder",
-    "app/InstallationProcess/MariaDbInstallationCompletion.php::record"
+    "app/InstallationProcess/MariaDbInstallationCompletion.php::record",
+    "app/InstallationProcess/YiiInspectionPlanning.php::scheduleInspection"
   ]
 }

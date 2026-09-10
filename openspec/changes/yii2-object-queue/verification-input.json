@@ -1,0 +1,65 @@
+{
+  "change": "yii2-object-queue",
+  "planned_paths": [
+    "app/InstallationProcess/InspectionPhotoContentIndexSchemaMigration.php",
+    "app/InstallationProcess/InstallationCompletionDetailsSchemaMigration.php",
+    "app/InstallationProcess/MariaDbExactSchemaFingerprint.php",
+    "app/InstallationProcess/MariaDbInspectionPlanningSchemaFingerprint.php",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
+    "app/InstallationProcess/MariaDbYiiSchemaFingerprint.php",
+    "app/InstallationProcess/YiiInspectionPlanning.php",
+    "app/InstallationProcess/YiiObjectQueue.php",
+    "app/YiiRuntime/Assets/ObjectQueueAssetBundle.php",
+    "app/YiiRuntime/Assets/inspection-schedule.js",
+    "app/YiiRuntime/Assets/object-queue.js",
+    "app/YiiRuntime/Controllers/ObjectQueueController.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
+    "app/YiiRuntime/Views/objects.php",
+    "config/yii/assets.php",
+    "config/yii/web.php",
+    "tests/Verification/verification_ci_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tests/Yii2/QueueReadinessFaults.php",
+    "tests/Yii2/yii2_inspection_planning_001_test.php",
+    "tests/Yii2/yii2_inspection_planning_concurrency_001_test.php",
+    "tests/Yii2/yii2_object_queue_001_test.php",
+    "tests/Yii2/yii2_object_queue_browser_001_test.php",
+    "tests/Yii2/yii2_object_queue_lineage_001_test.php",
+    "tests/Yii2/yii2_queue_readiness_001_test.php",
+    "tools/architecture/baseline.json",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OBJECT-QUEUE-001",
+      "acceptance_id": "whole-queue-planning-matrix",
+      "spec_path": "specs/YII2-OBJECT-QUEUE-001.md",
+      "seam": "YiiObjectQueue, YiiInspectionPlanning and real Yii HTTP/browser",
+      "tests": [
+        "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/Yii2/yii2_inspection_planning_001_test.php",
+        "tests/Yii2/yii2_inspection_planning_concurrency_001_test.php",
+        "tests/Yii2/yii2_object_queue_browser_001_test.php",
+        "tests/Yii2/yii2_object_queue_lineage_001_test.php",
+        "tests/Yii2/yii2_queue_readiness_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "YII2-OBJECT-QUEUE-001",
+      "acceptance_id": "yii-neighbor-regression",
+      "spec_path": "specs/YII2-OBJECT-QUEUE-001.md",
+      "seam": "real Yii auth/users/Otiz and readiness",
+      "tests": [
+        "tests/Yii2/yii2_authentication_001_test.php",
+        "tests/Yii2/yii2_user_access_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php",
+        "tests/Runtime/yii2_readiness_001_test.php",
+        "tests/AssignmentOrderComposition/original_ready_queue_manual_test.php"
+      ]
+    }
+  ]
+}

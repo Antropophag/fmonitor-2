@@ -174,3 +174,10 @@ verdicts (one return, one approval). Root preparation also caught/fixed visual a
 actual architecture problems before Gate5; they are reported above rather than
 counted as independent verdicts. Tokens/cost not measured. Code and all requested
 focused gates are complete; combined proxy privacy integration/full CI/merge remain.
+
+## Поставка завершена
+
+Полный объединённый CI34431377731 SUCCESS/VERIFY_OK с первого запуска,
+PR85 MERGED907cb0a3 (source41066c68).
+[Единая integration evidence](yii2-user-access-proxy-integration-2026-09-10.md).
+Ранее перечисленные pending CI/merge superseded этой записью; stand сохранён.
