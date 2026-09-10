@@ -354,6 +354,8 @@
   "public_seams": [
     "app/InspectionEvidence/InspectionEvidence.php::completeItem",
     "app/InspectionEvidence/InspectionRecording.php::completeItem",
+    "app/InspectionEvidence/MariaDbYiiChecklistMutation.php::accept",
+    "app/InspectionEvidence/YiiChecklist.php::accept",
     "app/IdentityAccess/FilesystemPilotSessionStorage.php::close",
     "app/IdentityAccess/NativePilotSessionFilesystem.php::close",
     "app/IdentityAccess/NativePilotSessionFilesystem.php::open",

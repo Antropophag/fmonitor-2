@@ -37,3 +37,8 @@ Views/assets сохраняют DOM/offline protocol; shell/карточка о�
 Gates1–3 полного кандидата → отдельный executor → focused GREEN → independent
 Gate5 → один full exact-source CI. Рабочий стенд не переключать; upgrade/rollback,
 sessions/offline/jobs и deployment проверяются и согласуются отдельно по #76.
+
+Public seam ownership: новый accept остаётся видим checker. Минимальное
+предложение baseline содержит только interface/implementation этого owner;
+обоснование в существующем ADR0003. Independent Gate5 проверяет ownership и
+точный baseline delta вместе с кодом, без нового аудита или ослабления правил.

@@ -6,4 +6,4 @@
 ## 2. Delivery
 - [x] Root RED на реальные Yii routes + полный независимый Gate3 (corrected PASS).
 - [x] Отдельный executor implementation + focused GREEN/visual/actual architecture.
-- [ ] Независимый Gate5, exact-source full CI и merge.
+- [x] Независимый Gate5, exact-source full CI и merge.

@@ -13,7 +13,10 @@
   PR87 (preopening) merged. Повторять их review/CI без новых входов не требуется.
 - Следующий пользовательский срез: открытый объект → checklist → фиксация пункта
   → обновлённая проекция и возврат пользователя, с сохранением соседних сценариев
-  и offline/replay контракта. До Gate3 root готовит целый bounded кандидат.
+  и offline/replay контракта. Gate3 полного кандидата APPROVED;
+  Исправления Yii DAO/current projection/owner auth получили Gate3 и focused GREEN;
+  Gate5 delta APPROVED; следующий шаг —
+  final exact-source CI/merge. [Delivery record](yii2-inspection-delivery-2026-09-10.md).
 
 Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-inspection-76`,
 branch `codex/yii2-inspection-76-20260910`, создан от указанного main.

@@ -356,3 +356,4 @@ db	php	tests/Yii2/yii2_preopening_routes_001_test.php
 db	php	tests/Yii2/yii2_inspection_journey_001_test.php
 db	php	tests/Yii2/yii2_inspection_concurrency_001_test.php
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php
+db	php	tests/Yii2/yii2_inspection_boundaries_001_test.php

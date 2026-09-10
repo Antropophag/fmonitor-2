@@ -52,6 +52,15 @@
         "tests/InstallationProcess/inspection_item_complete_001_replay_test.php",
         "tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php"
       ]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A2-A8-A9-configured-db-current-projection",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "YiiChecklist configured DB and real HTTP projection",
+      "tests": [
+        "tests/Yii2/yii2_inspection_boundaries_001_test.php"
+      ]
     }
   ]
 }

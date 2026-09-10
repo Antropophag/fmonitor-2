@@ -120,3 +120,113 @@ The three supplied correction logs are qualifying RED for the same missing Yii c
 ## Verdict
 
 **APPROVED.** The coherent correction resolves every prior valid Gate 3 finding. Gate 3 may advance for retained snapshot `5dd2f1c94de1a18b4f825a16f400383a5c23fdee09815306dbad964baa908871`; implementation and Gate 5 remain separate.
+
+## Gate4 browser instrumentation delta — pending independent review
+
+Executor diagnostic `browser-context-probe3.log` showed only first bulk item
+being sent, successors/photo/section queued, while async waitForFunction returned.
+Root independently reproduced installed Playwright: `waitForFunction(async()=>false,
+{}, {timeout:250})` resolved false in33ms, not timeout. Root replaced all five
+async IndexedDB predicates with explicit awaited polling of the real stores;
+retention, identity, accepted section and request-order assertions remain.
+Root also added existing capability-gated shell entry assertion after visually
+checking desktop/mobile and unchanged PilotView navigation. No HTTP reason API
+or domain expectation changed. This delta requires independent Gate3 approval
+before final Gate5; prior approved tests stay approved outside this delta.
+
+# YII2-INSPECTION-JOURNEY-001 — independent Gate 3 browser instrumentation delta
+
+Reviewer: separately tasked `/root/inspection_reviewer`; reviewer did not author the test or production implementation.
+
+Scope: only the `tests/Yii2/inspection_browser.mjs` delta from approved tests checkpoint `752b62a42682f7775697939b0afa353cb89531e9`. Restored source: `/private/tmp/fmonitor-76-inspection-browser-delta`; retained patch `/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-inspection-browser-delta/source.patch`, independently verified SHA-256 `8e74075a493ffc42bb753c48b5c868a514e8ca1b3951faec7e539715dd77ae64`. This is not a Gate 5 production review.
+
+## Findings
+
+No findings.
+
+`pollLocal` explicitly awaits fresh IndexedDB transactions until the predicate becomes true or a 30-second deadline expires. On timeout it throws with the last observed operation identities/types/statuses, so the replacement cannot silently convert an unmet condition into success. Each replaced wait retains its original sensitivity: durable item presence; the same `offlineId` in conflict, rejected, retryable and accepted states; durable photo bytes; and accepted section completion. The operation identity, injected response sequence, explicit sync clicks, persisted revision/fact audit, and item -> photo -> section order assertions are unchanged.
+
+The added shell assertion is observable and capability-relevant: unchanged `app/YiiRuntime/ViewSupport.php` renders exactly one `Стройконтроль` link in `Основная навигация` when `canControl` is true, and the browser fixture logs in the authorized construction-control engineer before checking it. It does not inspect implementation-only markup or weaken the subsequent queue assertions.
+
+Affected unchanged relationships inspected: `app/YiiRuntime/Assets/checklist.js` IndexedDB record/status and sync behavior, `app/YiiRuntime/Assets/checklist-sw.js`, `tests/Yii2/yii2_inspection_browser_001_test.php` persisted audit and timeout wrapper, `tests/Yii2/InspectionFixture.php` authorized identity and queue fixtures, and `app/YiiRuntime/ViewSupport.php` shell capability gate. The supplied `browser-context-probe3.log` concretely demonstrates the prior async `waitForFunction` instrumentation returning before its IndexedDB predicate; the separate minimal Playwright probe shows an async false predicate resolving false in about 33 ms despite a 250 ms timeout. No service-worker cause is assumed.
+
+## Evidence and command accounting
+
+`executor-browser-corrected-1.log` is GREEN for the corrected browser test, including the mixed queue and persisted audit. The unchanged HTTP and concurrency cohorts remain GREEN in `executor-http-5.log` and `executor-concurrency-2.log`. `browser-delta-plan.json` binds the exact amended browser source and retains the agreed verification obligations. No passing command was rerun during this review because the supplied evidence resolves the concrete instrumentation risk and introduces no new one.
+
+## Verdict
+
+**APPROVED.** The browser instrumentation correction preserves the approved assertions and makes their asynchronous IndexedDB waits fail closed. Gate 3 remains valid for this test delta. Production implementation still requires its separate Gate 5 review.
+
+## Gate5 correction regression delta — pending Gate3
+
+Root added one boundaries suite for the two confirmed findings and two browser
+assertions for the related legacy engineer fallback. Valid injected Yii DB is
+opened before poisoning unrelated environment; the owner constructor fails
+INTENDED_RED with mysqli_sql_exception. This is not a setup failure. New DAO
+assertions observe framework query/transaction events and full rollback facts.
+Projection uses a canonical literal registered case and public native completeItem
+prerequisite, then workforce drift: expected snapshot employed/display dismissed,
+actual employed/employed+NULL. Browser reaches exact legacy-engineer fallback
+assertion RED. Two earlier fixture setup errors (required planned date, wrong
+association column name) were corrected and are not claimed as projection RED.
+Fixture current-crew succession adds a new order and preserves previous records.
+
+# YII2-INSPECTION-JOURNEY-001 — Gate 3 correction regression review
+
+Reviewer: separately tasked `/root/inspection_reviewer`; reviewer authored neither tests nor production.
+
+Reviewed only the coherent regression-test delta from Gate 5 snapshot `e93a1e3be66730397b438dc08a40c43b9240dcbc50c15f3872b0a612c839ba9f`. Frozen checkout `/private/tmp/fmonitor-76-inspection-gate5-correction-tests`, base `752b62a42682f7775697939b0afa353cb89531e9`; retained patch `/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-inspection-gate5-correction-tests/source.patch`, independently verified SHA-256 `1084a0bc953c4da411118272e4b0b4d3b944add16ae6142c00c4a78f5bd3c71c`. Plan: `correction-plan.json` in the delivery evidence directory.
+
+## Findings
+
+No findings.
+
+`yii2_inspection_boundaries_001_test.php` supplies a valid observable `yii\db\Connection`, proves it works before constructing the target, corrupts only unrelated `FMONITOR_DB_*` discovery inputs, and then requires owner reads and writes to increment that supplied component's command counter. Yii transaction events distinguish one commit and one rollback, while before/after canonical DB facts prove failed persistence does not commit the photo operation. The fixture uses public `YiiChecklist::projection/accept` behavior and a public native `InspectionRecording::completeItem` prerequisite; it does not bind to a planned internal correction.
+
+The projection scenario fixes the expected values independently: accepted installer rows remain `employed` and keep their recorded name; the current workforce catalog changes installer 7001 to `dismissed`; the HTTP projection must expose historical `employmentStatusSnapshot=employed` with display `employmentStatus=dismissed`, dismissal date, and current membership. A second registered order then detaches 7001 and requires the immutable accepted snapshot plus `currentlyAssigned=false`. Exact operation/personnel inventories before and after reads prevent a passing implementation from rewriting history.
+
+The two browser assertions are also sensitive. Fixture objects 4513/4514 have no application; their distinct legacy engineer IDs 94/73 test fallback, while object 4512 already proves a latest application overrides conflicting legacy data. The assertions therefore catch the frozen `engineer()` implementation that only reads applications and do not duplicate the existing queue/filter matrix.
+
+Affected unchanged relationships inspected: canonical case/order/workforce/checklist schemas in `PreopeningFixture`; `ProductionInspectionEvidenceFactory` public seam; prior `ChecklistSync::crew/projection`; frozen `MariaDbYiiChecklistRead::crew/engineer/projection`; frozen Yii owner constructor/query/transaction paths; unchanged `MariaDbConstructionControlQueue` application → event → legacy fallback; browser queue fixture and PHP audit wrapper.
+
+## RED and command accounting
+
+The final combined RED contains both intended failures after valid setup: environment discovery raises `mysqli_sql_exception` despite the working injected Yii connection, and projection returns stored `employed`/NULL instead of current `dismissed`/date. The projection-only RED confirms the second independently. The browser RED reaches the legacy-engineer assertion only after the complete mixed eleven-revision journey, then fails because the fallback is absent. The two earlier fixture setup failures are excluded from qualifying evidence. Registration evidence is GREEN and was accepted without rerun. No prior passing behavior test, registration test, production check, stand, or primary data was rerun or touched in this review.
+
+## Verdict
+
+**APPROVED.** The regression delta correctly and independently captures both Gate 5 findings and the affected engineer fallback parity. The executor may implement one bounded correction; production remains subject to a fresh Gate 5 delta review. The previously approved two-entry public-seam baseline is unchanged and was not reopened.
+
+## Public-owner authorization regression delta
+
+Source inspection: access read user status/activation but roleAccess omitted
+active user conjunction; HTTP guard masked this at transport. Root added blocked
+and invited exact replay assertions to the same supplied-DB scenario. RED on
+corrected DAO source: expected forbidden, actual duplicate; projection passes.
+This preserves existing current authorization at public application seam.
+No API or policy expansion; pending independent Gate3 delta approval.
+
+# YII2-INSPECTION-JOURNEY-001 — Gate 3 public-owner authorization delta
+
+Reviewer: separately tasked `/root/inspection_reviewer`; reviewer authored neither tests nor production.
+
+Reviewed only the eight-line authorization delta to the previously approved `yii2_inspection_boundaries_001_test.php`. Frozen checkout `/private/tmp/fmonitor-76-inspection-owner-auth-tests`, base `752b62a42682f7775697939b0afa353cb89531e9`; retained patch `/Users/antropophag/.local/state/fmonitor2/review-snapshots/76-inspection-owner-auth-tests/source.patch`, independently verified SHA-256 `4807cee10fd45a0d7169463aec9f34bd29ed83663b6f54394e404b52f47d4789`. Plan: `owner-auth-plan.json` in the delivery evidence directory.
+
+## Findings
+
+No findings.
+
+The delta exercises the public `YiiChecklist::accept` owner directly after a successful first photo, so the repeated payload is a real replay that would otherwise return `duplicate`. Its two fixtures independently invalidate account status (`status=0, activation_state=active`) and activation (`status=1, activation_state=invited`). Each requires `forbidden`, exact full DB-fact equivalence, and unchanged Yii transaction-event counts, then restores the actor in `finally`; a failure in the first case does not contaminate the second.
+
+This is sensitive to the concrete frozen defect. The owner access query selects status/activation but does not enforce them, `roleAccess()` joins role membership without active-account predicates, and non-item `accept()` relies on that role boolean before duplicate detection. The supplied RED therefore reaches the intended public seam and reports expected `forbidden`, actual `duplicate`. The HTTP identity layer does not satisfy the application-owner invariant on its own.
+
+Affected unchanged relationships inspected: `MariaDbYiiChecklistRead::access/permissions/roleAccess`, `MariaDbYiiChecklistMutation::accept`, canonical active-account predicates in `MariaDbChecklistRoleAccess`/Yii identity storage, and `InspectionRecording::completeItem` current-authorization precedence. The delta adds no typed-reason API, does not reopen the approved architecture baseline, and stays within A1/A5/A9 current authorization.
+
+## Evidence and command accounting
+
+The retained patch digest, exact delta, plan, and `inspection-owner-authorization-red.log` were inspected. No prior passing check, registration test, broader matrix, Gate 5 code, stand, or primary data was rerun or touched.
+
+## Verdict
+
+**APPROVED.** The assertion delta correctly captures current active-account authorization at the public owner, including replay and zero transaction/fact mutation. It may join the coherent DAO/projection/fallback correction for fresh Gate 5 review.

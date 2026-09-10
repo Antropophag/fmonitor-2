@@ -31,7 +31,8 @@ final class WebResponse
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Referrer-Policy', 'no-referrer');
         $response->headers->set('X-Frame-Options', 'DENY');
-        $response->headers->set('Content-Security-Policy', "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+        $checklist=preg_match('#^pilot/(?:objects|construction-control/objects)/[1-9][0-9]*/checklist$#D',Yii::$app->request->pathInfo)===1;
+        $response->headers->set('Content-Security-Policy', $checklist?"default-src 'none'; script-src 'self'; worker-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'":"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
     }

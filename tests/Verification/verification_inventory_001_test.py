@@ -124,6 +124,7 @@ class Inventory(native.NativeSuites):
                 'php\ttests/Yii2/yii2_preopening_concurrency_001_test.php\n',
                 'php\ttests/Yii2/yii2_inspection_concurrency_001_test.php\n',
                 'php\ttests/Yii2/yii2_inspection_journey_001_test.php\n',
+                'php\ttests/Yii2/yii2_inspection_boundaries_001_test.php\n',
                 'php\ttests/Yii2/yii2_preopening_routes_001_test.php\n',
 
                 'php\ttests/Yii2/yii2_preopening_uncertain_commit_001_test.php\n',

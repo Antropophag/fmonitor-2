@@ -1,8 +1,8 @@
 ## 1. Полный кандидат и независимые gates
 
 - [x] 1.1 Root завершает нормативный контракт/verification plan, fixtures и весь RED кандидат A1–A9; independent Gate3 APPROVED по восстановленному snapshot.
-- [ ] 1.2 Отдельный sol/low executor переносит целый inspection journey; approved focused HTTP/browser/native/architecture checks GREEN без ослабления tests.
-- [ ] 1.3 Independent Gate5 проверяет полный production candidate; исправления по delta и затронутым неизменённым связям, итог APPROVED.
+- [x] 1.2 Отдельный sol/low executor переносит целый inspection journey; approved focused HTTP/browser/native/architecture checks GREEN без ослабления tests.
+- [x] 1.3 Independent Gate5 проверяет полный production candidate; исправления по delta и затронутым неизменённым связям, итог APPROVED.
 
 ## 2. Поставка
 
