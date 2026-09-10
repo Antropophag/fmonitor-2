@@ -111,7 +111,7 @@ final class ProductionPdfAssignmentOrderRenderer
 
     private function renderLogo(\TCPDF $pdf): void
     {
-        $asset=dirname(__DIR__,2).'/rapid-pilot/assets/shlz-logo.jpg.base64';
+        $asset=__DIR__.'/assets/shlz-logo.jpg.base64';
         $encoded=is_file($asset)?file_get_contents($asset):false;
         $bytes=is_string($encoded)?base64_decode(trim($encoded),true):false;
         if(!is_string($bytes)||$bytes==='')throw new \RuntimeException('PDF logo asset is unavailable.');

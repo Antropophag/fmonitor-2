@@ -40,3 +40,12 @@ reviewed spec/test checkpoint dd503a10 в03:31:51Z. Окончательное �
 Рабочий stand и исторический WIP сохранены. Runtime.php ещё на прежнем router;
 весь #76 не завершён. Далее карточка/состав/оригинал/открытие по draft
 ../fmonitor-2-yii2-preopening-76, остальные process/Otiz/CLI и cutover остаются.
+
+## Поставка подтверждена
+
+PR86 MERGED f804f3f6fa7baa7264a51b6e503c13f48406f2d7 в2026-09-10T05:18:13Z.
+Exact source58023c823fb0552fb6f6e2521e56f8bacbd7b55e; Actions34439847358 SUCCESS,
+все категории и итоговый workflow GREEN с первого полного запуска. Verify
+job102754180837 вывел VERIFY_OK в05:17:03Z; /tmp/76-pr86-verify.log.
+От создания worktree до merge2ч18м18с; два содержательных commits.
+Выше pending CI/merge superseded этой записью. Stand сохранён.

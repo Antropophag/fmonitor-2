@@ -1,27 +1,28 @@
-# Текущая цель: очередь объектов и планирование на Yii2 — #76
+# Текущая цель: #76 — Yii2 путь до открытия
 
-Владелец2026-09-10 поручил автономно без промежуточных остановок: сначала #82,
-затем #76. #82 завершена PR84; следующий пакет #76 завершён PR85
-(merge907cb0a3, source41066c68, Actions34431377731 SUCCESS/VERIFY_OK).
-[Evidence поставки](yii2-user-access-proxy-integration-2026-09-10.md).
+Владелец2026-09-10: #82 завершена первой (PR84), затем продолжать #76 автономно.
+PR85 и PR86 уже merged с exact-source VERIFY_OK; рабочий стенд сохранён.
 
-Актуальный checkout ../fmonitor-2-yii2-queue-76, ветка
-codex/yii2-object-queue-76-20260910. OpenSpec yii2-object-queue, контракт
-specs/YII2-OBJECT-QUEUE-001.md. Root пишет spec/tests, sol/low реализует и
-независимо review; полный процесс docs/development-process.md.
+Checkout `/Users/antropophag/code/fmonitor-2-yii2-preopening-76`, branch
+`codex/yii2-preopening-76-20260910`. Исторический dirty
+`/Users/antropophag/code/fmonitor-2` не менять.
 
-Полная матрица и RED tests Gate3 APPROVED: snapshot76-queue-gate3-composed,
-patch67a44277411854c551025c901e9f27126365b03613b21445720227d6d8082170.
-[Review](../../reviews/tests/YII2-OBJECT-QUEUE-001.md). ADR0004 accepted, разрешена
-ровно регистрация YiiInspectionPlanning::scheduleInspection, без иных allowances.
-Implementation,21 drift controls и все focused flows GREEN; final UI root просмотрен.
-Gate5 APPROVED после full manifest correction: snapshot76-queue-gate5-corrected,
-patchf717528cfdc8f0fab5915cd4b5d2627af5d4879940e4a0f55dac6bf002bd4c9c.
-Следующий шаг: grouped implementation commit → один exact-source full CI → merge.
-[Code review](../../reviews/code/YII2-OBJECT-QUEUE-001.md).
-После поставки продолжать yii2-preopening-journey в отдельном
-../fmonitor-2-yii2-preopening-76: draft proposal/preparation, не implementation.
+Исходный [handoff перезапуска](session-restart-2026-09-10.md) сохранён как checkpoint.
+Актуальное продвижение: [delivery record](yii2-preopening-delivery-2026-09-10.md).
+OpenSpec `yii2-preopening-journey`: Gate4 продолжается отдельными sol/low
+исполнителями, root владеет tests/spec и проверкой полноты.
 
-Working stand и исторический WIP сохраняются. #76 ещё не завершён, runtime.php
-ещё использует rapid. Переключение — отдельный эксплуатационный шаг после
-проверенного полного кандидата. [Предыдущая цель](delivery-goal-before-queue-76.md).
+Corrected Gate3 прежних12tests и оба root delta Gate3 PASS: pending после
+application; fixture lineage ordering и сохранение Original UUID versions1–5.
+[Review evidence](../../reviews/tests/YII2-PREOPENING-JOURNEY-001.md).
+Native15 +6additional obligations +production PDF image имеют GREEN evidence;
+один initial native phase timeout сохранён вместе с diagnostic/canonical PASS.
+
+Заключительный полный8-file test delta также получил independent Gate3 PASS
+(snapshot31f32b4f, fresh CLI sol/low); утверждённые исправления завершены; focused/actual architecture GREEN.
+
+Следующий шаг: exact-source independent Gate5 → один full CI и merge.
+Gate4 GREEN; Gate5/CI ещё не завершены; весь #76 не закрывать
+после этого среза. Checklist/photos/completion/console/cutover идут далее.
+
+Gate5 final APPROVED (snapshot2ea96645). Далее одинexact-source CI и merge.

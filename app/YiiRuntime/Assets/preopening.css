@@ -1,0 +1,38 @@
+.fm2-main {
+  --fm2-muted: #566171;
+}
+
+.fm2-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-block-end: 12px;
+  color: var(--fm2-muted);
+  font-size: 12px;
+}
+
+.fm2-object-dashboard .fm2-object-installer {
+  grid-template-columns: minmax(0, 1fr) minmax(72px, .45fr) auto;
+}
+
+.fm2-object-dashboard .fm2-object-installer > * {
+  min-inline-size: 0;
+}
+
+.fm2-object-dashboard .fm2-object-installer .shlz-status {
+  justify-self: end;
+}
+
+@media (max-width: 680px) {
+  .fm2-main {
+    padding-block-end: calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .fm2-main :is(a, button, input, select, textarea, [tabindex]) {
+    scroll-margin-block: 88px;
+  }
+
+  .fm2-object-dashboard .fm2-object-installer {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

@@ -381,6 +381,8 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Yii2/yii2_user_access_browser_001_test.php',
             'python3\ttests/Runtime/activation_proxy_log_001_test.py',
             'php\ttests/Yii2/yii2_object_queue_browser_001_test.php',
+            'php\ttests/Yii2/yii2_preopening_browser_001_test.php',
+            'python3\ttests/Yii2/yii2_preopening_package_001_test.py',
         ], e2e.stdout.splitlines())
 
 

@@ -139,3 +139,34 @@ inventory отмечают поставку конкретных capabilities, �
 на Yii, golden flows и rehearsal GREEN, затем согласованное переключение.
 Следующий active slice yii2-object-queue: GET/HEAD objects + schedule POST;
 планирование не объявлено реализованным до его Gates3/5 и CI.
+
+PR86 mergedf804f3f6 (source58023c82, Actions34439847358 SUCCESS/VERIFY_OK)
+добавил Yii GET/HEAD /pilot/objects и POST inspection-schedule с owners
+YiiObjectQueue/YiiInspectionPlanning, full canonical readiness без HTTP DDL и
+проверенной native навигацией. Старый stand adapter сохраняется до cutover.
+Следующий active slice — yii2-preopening-journey; пока planning, не GREEN.
+
+## Preopening: явная временная native composition
+
+Срез `yii2-preopening-journey` находится в Gate4, не поставлен. Yii transport
+использует целиком существующие public owners; перенесённый reader карточки
+`InstallationProcess\YiiObjectCard` использует Yii DAO. Маршруты и методы
+нормативно перечислены в `specs/YII2-PREOPENING-JOURNEY-001.md`.
+
+| Семейство Yii маршрутов | Сохраняемый owning-module boundary | Условие удаления native соединения |
+|---|---|---|
+| selection/installers/template | AssignmentOrderComposition selection portal, composition application, template application | Целый owner вместе с transaction/snapshot/recovery и его executable contracts мигрирован на Yii DAO |
+| originals submit/upload/history/download | AssignmentOrderOriginal submission query, original application, history reader/prepared download | Целая original DB/recovery boundary перенесена с сохранением fresh terminal reader, lease и immutable bytes |
+| execution open_confirmed/apply/open | AssignmentOrderComposition confirmed opening/application и InstallationProcess opening | Вся атомарная команда перенесена на одно Yii соединение, включая audit/history/replay |
+
+Request-scoped composition `YiiRuntime\PreopeningResources` владеет borrowed
+idle mysqli connection и закрывает его после вызова. Owners самостоятельно
+начинают и заканчивают свои snapshots/transactions. Yii HTTP не открывает внешнюю
+транзакцию, не выполняет часть записи через DAO и не повторяет mutation после
+неопределённого результата. Существующие command owners не дублируются.
+
+PDF renderer получает тот же logo asset из owning package
+`app/InstallationProcess/assets/shlz-logo.jpg.base64`; exact hash и реальный PDF
+в production image проверяет `yii2_preopening_package_001_test.py`.
+Прежние stand adapters удаляются по общему критерию cutover выше; этот срез
+не переключает рабочий стенд и не объявляет весь #76 завершённым.

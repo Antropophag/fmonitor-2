@@ -54,6 +54,16 @@ final class MariaDbYiiLocalIdentityStore extends Component
         return $value !== false;
     }
 
+    /** @return list<string> */
+    public function activeRoleCodes(int $userId): array
+    {
+        $rows = $this->db->createCommand(
+            'SELECT DISTINCT r.code FROM '.$this->table('fm2_pilot_users').' u JOIN '.$this->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$this->table('fm2_pilot_roles')." r ON r.role_id=ur.role_id WHERE u.user_id=:id AND u.status=1 AND BINARY u.activation_state=BINARY 'active' AND r.status=1 ORDER BY r.code",
+            [':id' => $userId],
+        )->queryColumn();
+        return array_values(array_map('strval', $rows));
+    }
+
     /** @return array{roles:list<array>} */
     public function roles(): array
     {
