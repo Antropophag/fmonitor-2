@@ -1,27 +1,23 @@
-# Текущая цель и очередь — 2026-09-10
+# Текущая цель — №76, документарное закрытие Yii2
 
-Владелец поручил ограниченный инкремент системного delivery harness: измерения,
-компактный runner, актуальное состояние, подготовленные role/review packages и
-узкие подтверждённые consumer obligations. Результат — проверенный PR без merge
-и deployment. Продуктовую миграцию #76 и полный архитектурный аудит в этот scope
-не включать.
+Владелец подтвердил продолжение №76 после поставки harness PR89. Текущий срез:
+85% монтажа → акт ПТО → декларация → исправления с причиной/историей → возврат
+в карточку/очередь. Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-documentary-76`,
+branch `codex/yii2-documentary-76-20260910`. Фактический source/PR/CI получать
+через `python3 tools/delivery/harness.py state`, роль/обязательства — через prepare.
 
-После завершения harness вернуться к следующему согласованному срезу #76:
-документарное закрытие — 85% монтажа → акт ПТО → декларация → исправления с
-причиной и историей → возврат в карточку/очередь. Этот срез требует собственного
-целого кандидата и Gates 1–5; в рамках harness его не начинать. Сохранить
-пользовательский WIP, рабочий стенд, историю и авторизацию.
+[Контракт](../../specs/YII2-DOCUMENTARY-CLOSURE-001.md),
+[OpenSpec](../../openspec/changes/yii2-documentary-closure/),
+[delivery record](yii2-documentary-delivery-2026-09-10.md),
+[независимый Gate3](../../reviews/tests/YII2-DOCUMENTARY-CLOSURE-001.md).
+Root пишет spec/tests; sol/low executor реализует; независимый sol/low reviewer
+проверяет Gates3/5. Применяется compact execution protocol #82 и harness PR89.
 
-Фактические HEAD/worktree, PR, CI и merge определяет
-`python3 tools/delivery/harness.py state` с привязкой к точному source. Текущий
-контекст и role package готовит тот же harness; датированные delivery records
-остаются историческими снимками и не подменяют live state.
+После целого кандидата, focused GREEN и Gate5 — PR и один full exact-source CI.
+№76 включает оставшиеся каталоги/runtime/console и общий cutover; этот срез их
+не закрывает. Стенд, чужие worktrees/WIP и все append-only факты сохраняются.
+Deployment требует отдельной авторизации после upgrade/rollback evidence для
+БД/PDF/фото, пользователей/сессий, offline actions и jobs.
 
-- Контракт: [DELIVERY-HARNESS-001](../../specs/DELIVERY-HARNESS-001.md)
-- OpenSpec change: [automatic-delivery-harness](../../openspec/changes/automatic-delivery-harness/)
-- Процесс: [development-process.md](../development-process.md)
-- Предыдущий точный снимок этой страницы:
-  [current-delivery-goal-2026-09-10-before-delivery-harness.md](current-delivery-goal-2026-09-10-before-delivery-harness.md)
-
-Deployment требует отдельной авторизации и свидетельств upgrade/rollback,
-сохранности данных, сессий, offline actions и jobs. Harness не меняет стенд.
+[Предыдущий указатель](current-delivery-goal-before-documentary-2026-09-10.md)
+сохранён байт-в-байт как история поручения harness.

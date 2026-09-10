@@ -1,0 +1,33 @@
+{
+  "change": "yii2-documentary-closure",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/CompletionController.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Views/completion.php",
+    "app/InstallationProcess/MariaDbYiiCompletionQuery.php",
+    "config/yii/web.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueueProjection.php",
+    "app/YiiRuntime/Models/CompletionForm.php",
+    "app/YiiRuntime/Views/checklist.php",
+    "app/InstallationProcess/MariaDbYiiObjectCardProjection.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-DOCUMENTARY-CLOSURE-001",
+      "acceptance_id": "A1-A7",
+      "spec_path": "specs/YII2-DOCUMENTARY-CLOSURE-001.md",
+      "seam": "Yii HTTP documentary closure and real browser",
+      "tests": [
+        "tests/Yii2/yii2_documentary_http_001_test.php",
+        "tests/Yii2/yii2_documentary_concurrency_001_test.php",
+        "tests/Yii2/yii2_documentary_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_documentary_http_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_documentary_concurrency_001_test.php": "GREEN",
+        "tests/Yii2/yii2_documentary_browser_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
