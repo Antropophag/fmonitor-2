@@ -378,6 +378,8 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
             'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php',
             'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php',
+            'php\ttests/Yii2/yii2_user_access_browser_001_test.php',
+            'python3\ttests/Runtime/activation_proxy_log_001_test.py',
         ], e2e.stdout.splitlines())
 
 

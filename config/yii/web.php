@@ -7,6 +7,7 @@ use FMonitor2\YiiRuntime\ReliableSession;
 use FMonitor2\IdentityAccess\YiiCanonicalAccessChecker;
 use FMonitor2\IdentityAccess\YiiLocalIdentity;
 use FMonitor2\IdentityAccess\MariaDbYiiLocalIdentityStore;
+use FMonitor2\IdentityAccess\YiiUserAccess;
 use yii\helpers\ArrayHelper;
 
 return ArrayHelper::merge(require __DIR__ . '/common.php', [
@@ -16,6 +17,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'cookieValidationKey' => getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY') ?: '',
             'scriptUrl' => '/yii.php',
             'baseUrl' => '',
+            'enableCsrfCookie' => false,
         ],
         'localIdentity' => [
             'class' => MariaDbYiiLocalIdentityStore::class,
@@ -23,6 +25,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'identityKey' => getenv('FMONITOR_YII_IDENTITY_KEY') ?: '',
         ],
         'canonicalAccess' => ['class' => YiiCanonicalAccessChecker::class],
+        'userAccess' => ['class'=>YiiUserAccess::class,'tablePrefix'=>getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''],
         'session' => [
             'class' => ReliableSession::class,
             'name' => (static function(): string {$name=getenv('FMONITOR_YII_SESSION_COOKIE');return is_string($name)&&preg_match('/^[A-Za-z][A-Za-z0-9_]{1,63}$/D',$name)===1?$name:'fm2yii';})(),
@@ -60,6 +63,14 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
                 'GET pilot/admin/roles' => 'roles/index',
+                'GET,HEAD pilot/admin/users' => 'user-access/index',
+                'GET,HEAD pilot/users' => 'user-access/index',
+                'GET,HEAD,POST pilot/admin/users/invite' => 'user-access/invite',
+                'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/invitation' => 'user-access/reissue',
+                'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/roles' => 'user-access/role',
+                'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/roles/<roleId:[1-9]\\d*>' => 'user-access/role',
+                'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/status' => 'user-access/status',
+                'GET,POST pilot/activate' => 'user-access/activate',
                 'GET pilot/otiz' => 'otiz-settlement/index',
                 'GET pilot/otiz/objects' => 'otiz-settlement/objects',
                 'GET pilot/otiz/payments' => 'otiz-settlement/payments',

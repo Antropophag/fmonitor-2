@@ -1,0 +1,26 @@
+{
+  "change": "activation-proxy-log-privacy",
+  "planned_paths": [
+    "deploy/yii2/nginx.conf",
+    "deploy/runtime/nginx.conf",
+    "deploy/yii2/Dockerfile",
+    "tests/Runtime/activation_proxy_log_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ACTIVATION-PROXY-LOG-001",
+      "acceptance_id": "private-and-diagnosable-activation-proxy",
+      "spec_path": "specs/ACTIVATION-PROXY-LOG-001.md",
+      "seam": "nginx -t and complete activation/ordinary HTTP-log contract on both configurations",
+      "tests": [
+        "tests/Runtime/activation_proxy_log_001_test.py",
+        "tests/Runtime/production_runtime_contract_001_test.php",
+        "tests/Runtime/yii2_runtime_001_test.py",
+        "tests/Verification/yii2_dependency_setup_001_test.py"
+      ]
+    }
+  ]
+}

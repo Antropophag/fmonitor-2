@@ -1,1 +1,1 @@
-<?php declare(strict_types=1);return ['GET,HEAD pilot/assets/<path:(?:shlz|pilot)\.css|favicon\.svg|navigation\.js|preloader\.js|fonts/golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2>'=>'pilot-asset/file'];
+<?php declare(strict_types=1);return ['GET,HEAD pilot/assets/<path:(?:shlz|pilot)\.css|favicon\.svg|navigation\.js|preloader\.js|users\.js|fonts/golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2>'=>'pilot-asset/file'];

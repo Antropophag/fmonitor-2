@@ -109,3 +109,18 @@ Snapshots/RED logs сохранены также постоянно вне repo:
 После review добавлены/обновлены только записи verdict/evidence и checkbox 2.2;
 reviewed code, tests, registrations и инструкции сверены с восстановленным
 кандидатом. Фактическая поставка подтверждается ссылкой на PR/CI после завершения.
+
+## Delivered
+
+[PR84](https://github.com/Antropophag/fmonitor-2/pull/84) MERGED
+2026-09-09T23:58:06Z, merge `8c4468738a96953055d35fe6c05bd0c5d26539e4`.
+Exact candidate `11ecb84677b40f7c29ed5b72a49bf260af30956f`,
+[Actions34418478143](https://github.com/Antropophag/fmonitor-2/actions/runs/34418478143)
+SUCCESS, literal VERIFY_OK (verify job 102690554700). Один full CI, все категории
+с первого запуска; повторов CI и скрытых failures нет. #82 CLOSED.
+От создания worktree (02:21:11) до merge (02:58:06) прошло 36м55с.
+До review около 26 минут; остальное включало CI/merge. Два содержательных коммита.
+Сравнение ограничено разным масштабом задач; токены/денежная экономия не измерены.
+Закрывающие metadata записаны после merge и группируются с последующей работой,
+а не порождают отдельный микрокоммит/повтор полного CI неизменённого кода.
+Следующий приоритет по текущему поручению — #76.
