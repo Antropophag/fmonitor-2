@@ -255,3 +255,48 @@ deterministic at the real nginx/Docker seam, independently expected, and isolate
 from the production stand. Minimal Gate 4 implementation may proceed. Any later
 change to the approved spec, test, verification input or bound source restarts
 the applicable gate review.
+
+---
+
+## Combined integration Gate 3 disposition — 2026-09-10
+
+- Reviewer: independently tasked agent `/root/review76_proxy`
+- Combined committed head: `97ab6cbe1079d7070399e41b57c65ae75d37af3d`
+- Integration snapshot patch SHA-256: `8ae7e80bc7a96025558461c8bdd1d542441c13d64863d8a2640357aedd64fc6d`
+- Reviewed test delta SHA-256: `f331583d11ae6aed1d11d67aad7d6ad383b9616bba0e1b6f6c0d8eee08dd6c70`
+- Verdict: **APPROVED**
+
+No findings. The combined registry retains every prior E2E member and adds the
+two independently approved paths for Yii user-access browser coverage and the
+activation proxy real-nginx test. The two-line exact-list correction in
+`tests/Verification/verification_ci_001_test.py:381-382` restores the existing
+fail-closed composition oracle without changing its seam or weakening its exact
+comparison.
+
+The original full run failed only because the exact expected list was stale;
+after adding the two retained registry members, all 15 CI-policy tests pass.
+Sensitivity was independently demonstrated in an isolated checkout by moving the
+proxy test consistently from E2E to integration in both registries: the public
+CLI remained valid while this exact oracle failed on the missing E2E member.
+Restoring the approved classification returned it to GREEN. Evidence:
+
+```text
+/tmp/76-combined-ci-policy.log                    # stale-list failure
+/tmp/76-combined-ci-policy-green.log              # 15/15 GREEN
+/tmp/76-combined-ci-policy-intended-red.log       # exact category mutation RED
+/tmp/76-combined-ci-policy-restored-green.log     # restored GREEN
+/tmp/76-combined-inventory.log                    # 15/15 GREEN
+```
+
+The supplied combined plan checks at digest
+`c39179b0e785ad11488fa0c7402a10a0d83c988a8348739cacf3fcaeb4815139`.
+Because the older local privacy plan was correctly stale after integration, the
+reviewer regenerated its approved input against the current combined source;
+that plan checks at digest
+`7fc1fd4df1b94ddf92771bdda34ca6ba74b958dfaf0befb19aa057fa394b2caa`
+and retains the `ACTIVATION-PROXY-LOG-001` composed acceptance plus the merged
+CI-oracle obligation.
+
+This bounded integration correction is **APPROVED** at Gate 3. No approved
+feature expectation changed; the delta keeps the existing inventory oracle
+current and demonstrably sensitive before the one authoritative combined CI run.

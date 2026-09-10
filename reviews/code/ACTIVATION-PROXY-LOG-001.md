@@ -120,3 +120,32 @@ isolation and build-topology contract, and the approved test catches the origina
 access/error log leaks at both nginx boundaries. This slice may be combined with
 the separately approved Yii admin candidate for one authoritative CI run. Any
 later production or approved-test change requires review of that delta.
+
+---
+
+## Combined integration Gate 5 disposition — 2026-09-10
+
+- Reviewer: independently tasked agent `/root/review76_proxy`
+- Combined committed head: `97ab6cbe1079d7070399e41b57c65ae75d37af3d`
+- Integration snapshot patch SHA-256: `8ae7e80bc7a96025558461c8bdd1d542441c13d64863d8a2640357aedd64fc6d`
+- Verdict: **APPROVED**
+
+No findings. The merge retained the complete union of both approved registry
+groups. The admin candidate has no `app/` or `config/` delta from its approved
+`83049f45` source. The proxy production bytes still match the prior Gate 5:
+
+```text
+d8943f7efb3ad57e75601ed842540af065548470af4c3a63445f1c8bacbbc670  deploy/yii2/nginx.conf
+daa60fe26c77c4572418f7c24fa05be1e357eb733cdc6e1fe2948ee934356b6e  deploy/runtime/nginx.conf
+e986bb91b290f3fd4f4f8f5e89051dd77e50a62c3e1cee5c2252f937b4e30585  deploy/yii2/Dockerfile
+```
+
+The only post-merge source delta is the reviewed two-line exact E2E expectation
+addition. Inventory passes 15/15, the CI-policy suite passes 15/15, both feature
+plans check against the combined source, and actual architecture passes all seven
+rules plus HTTP qualification. No production, feature-test, specification or
+acceptance behavior changed during integration.
+
+The combined integration checkpoint is **APPROVED** at Gate 5. The exact
+candidate may proceed to the single authoritative full CI run; this disposition
+does not claim that CI or deployment has already completed.
