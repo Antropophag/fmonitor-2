@@ -358,3 +358,6 @@ db	php	tests/Yii2/yii2_inspection_concurrency_001_test.php
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php
 db	php	tests/Yii2/yii2_inspection_boundaries_001_test.php
 unit	python3	tests/Verification/delivery_harness_001_test.py
+db	php	tests/Yii2/yii2_documentary_http_001_test.php
+db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php
+e2e	php	tests/Yii2/yii2_documentary_browser_001_test.php

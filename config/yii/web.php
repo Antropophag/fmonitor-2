@@ -79,6 +79,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'pilot/objects/<id:[1-9]\\d*>/checklist/photos' => 'checklist/photo',
                 'pilot/construction-control/objects/<id:[1-9]\\d*>/checklist/photos' => 'checklist/photo',
                 'GET,HEAD pilot/objects/<id:[1-9]\\d*>' => 'object-card/view',
+                'POST pilot/objects/<id:[1-9]\\d*>/completion' => 'completion/index',
+                'pilot/objects/<id:[1-9]\\d*>/completion' => 'completion/method',
                 'GET,HEAD pilot/objects/<id:[1-9]\\d*>/assignment-order/prepare' => 'object-card/prepare',
                 'POST pilot/objects/<id:[1-9]\\d*>/assignment-order/prepare' => 'object-card/gone',
                 'GET,HEAD,POST pilot/objects/<id:[1-9]\\d*>/assignment-order/selection' => 'selection/index',

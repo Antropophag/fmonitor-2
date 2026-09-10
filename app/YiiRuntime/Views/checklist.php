@@ -34,10 +34,10 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span>Для действий требуются открытые работы и полномочия.</span>
 </div>
 <?php endif?>
-<main class="fm2-check-layout"<?=$enabled?'':' inert'?>>
+<main class="fm2-check-layout">
 <div class="fm2-check-content">
 <?php foreach($sections as$sectionId=>[$title,$items]):$weight=array_sum(array_column($items,2));?>
-<section class="fm2-check-section<?=$sectionId===1?' is-open':''?>" data-check-section="<?=$sectionId?>" data-section-weight="<?=$weight?>">
+<section class="fm2-check-section<?=$sectionId===1?' is-open':''?>" data-check-section="<?=$sectionId?>" data-section-weight="<?=$weight?>"<?=$enabled?'':' inert'?>>
 <button class="fm2-check-section-head fm2-section-toggle" type="button" aria-expanded="false">
 <span class="fm2-section-title">
 <strong>

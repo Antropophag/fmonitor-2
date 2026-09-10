@@ -51,6 +51,7 @@ final readonly class MariaDbYiiObjectQueueProjection
         }$progress = min(85, $progress);
         $pto = isset($facts['pto_act']);
         $done = $pto && isset($facts['declaration']);
+        $object['completionProgress'] = $done ? 100 : $progress;
         $object['status'] = $done ? 'Работы завершены' : ($progress >= 85 ? 'Документарное закрытие' : 'Монтажные работы');
         $object['nextStep'] = $done ? 'Монтаж закрыт актом ПТО и декларацией' : ($progress < 85 ? 'Продолжить монтажные работы' : ($pto ? 'Добавить декларацию' : 'Зафиксировать дату акта ПТО'));
     }

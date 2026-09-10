@@ -1,0 +1,17 @@
+{
+  "change": "yii2-documentary-closure-ci-roster",
+  "planned_paths": [
+    "tests/Verification/verification_ci_001_test.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-DOCUMENTARY-CLOSURE-001",
+      "acceptance_id": "A7-CI-E2E-membership",
+      "spec_path": "specs/YII2-DOCUMENTARY-CLOSURE-001.md",
+      "seam": "canonical CI list e2e category",
+      "tests": [
+        "tests/Verification/verification_ci_001_test.py"
+      ]
+    }
+  ]
+}

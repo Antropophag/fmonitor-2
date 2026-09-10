@@ -49,6 +49,7 @@ final readonly class MariaDbYiiObjectCardProjection
             $card = $this->completion->decorate([$card + ['nextStep' => 'Продолжить монтажные работы']], $actorId)[0];
             if ($state === 'needs_assignment_change') { $card['status'] = 'Требуется изменение'; }
         }
+        $card['completionWritable'] = $state === 'working';
         unset($card['caseId'], $card['nextStep']);
         return $this->actorNames($card);
     }
