@@ -242,6 +242,22 @@ def canonical(value):
     return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":")) + "\n"
 
 
+def agent_harness_path(path):
+    patterns = (
+        "tools/delivery/*", "tools/verification/ci.py", "tools/verification/suites.tsv",
+        "tools/verification/categories.json", ".github/workflows/quality-graph.yml",
+        ".quality-graph/verification-policy.json", "tests/Verification/delivery_harness*_test.py",
+        "tests/Verification/*hardening*_test.py",
+        "tests/Verification/change_verification_001_test.py",
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Verification/verification_inventory_001_test.py", "specs/DELIVERY-HARNESS*.md",
+        "openspec/changes/*delivery-harness*/**", "openspec/changes/hardening/**",
+        "specs/HARDENING.md", "reviews/tests/*HARNESS*.md",
+        "reviews/code/*HARNESS*.md", "AGENTS.md", "docs/operations/current-delivery-goal.md",
+    )
+    return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
+
+
 def validate_observable_dimensions(acceptance, tests):
     seam_kind = acceptance.get("seam_kind")
     dimensions = acceptance.get("observable_dimensions")
@@ -387,7 +403,12 @@ def build(base_ref, input_name):
     for category in sorted(required_categories):
         for argv in policy["category_argv"].get(category, []):
             add(argv, "focused", f"required {category} category obligation")
-    add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
+    change_name = change["change"].casefold()
+    agent_change = "harness" in change_name or "hardening" in change_name
+    if agent_change and effective and all(agent_harness_path(path) for path in effective):
+        commands = [item for item in commands if item["rationale"] == "acceptance mapping"]
+    else:
+        add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
     if not commands:
         raise ValueError("empty verification plan")
     for item in commands:

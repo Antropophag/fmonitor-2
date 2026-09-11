@@ -47,7 +47,7 @@ artifacts for these chains:
 
 - `prepare -> returned plan -> check -> refresh -> run`;
 - `hook -> active binding -> context -> downstream plan`;
-- `runner -> verification wrapper -> CI aggregate`;
+- `bounded agent entry point -> harness-only CI routing/result`;
 - `Gate 3 evidence -> reviewer package`.
 
 Plans are accepted only from the worktree's trusted external packages/state area;
@@ -61,21 +61,24 @@ Preparing B MUST NOT overwrite A; state/resume for each worktree returns only it
 own binding. Repeated same-input prepare in one unchanged worktree is idempotent in
 meaning and does not conflict with another worktree.
 
-## R3 — Canonical verification composition
+## R3 — Product/agent verification boundary
 
-Adding or removing a suite MUST update one canonical machine-readable roster from
-which dependent composition is derived, or trigger a deterministic consistency
+Adding or removing a product suite MUST update one canonical machine-readable roster
+from which dependent composition is derived, or trigger a deterministic consistency
 failure across inventory/categories/suites, verification plan and CI composition.
-The bounded fast/governance check MUST reproduce PR #91: adding an E2E suite by the
-supported registration path while leaving dependent composition stale is RED before
-full CI; synchronization is GREEN and includes every suite exactly once.
+The bounded roster check MUST reproduce PR #91 before starting the product matrix:
+adding an E2E suite by the supported registration path while leaving dependent
+composition stale is RED; synchronization is GREEN and includes every suite exactly
+once.
 
 Literal assertions MAY remain for independent ordering, mandatory category,
 uniqueness and coverage invariants, but MUST NOT be a second manually maintained
-copy of the complete roster. Metadata-only correction MAY reuse exact mapped
-product E2E evidence only when its source/fixtures/environment are unchanged and the
-existing evidence protocol permits reuse; publish candidate still requires its
-normal exact-source full CI.
+copy of the complete roster. Agent delivery-harness tests MUST NOT appear in product
+`suites.tsv` or `categories.json`. An explicit bounded agent entry point MAY list
+only harness/tooling tests and MUST reject or omit product DB, migration, PDF,
+runtime and E2E commands. A harness-only pull request MUST route to that entry point
+and skip the product unit/integration/e2e/governance matrix; a mixed or product diff
+remains fail-closed on the normal product route.
 
 ## R4 — Deterministic orchestration fault sensitivity
 
@@ -104,7 +107,10 @@ Gate 3 reviewer may return APPROVED.
 Для единственного pre-implementation Gate 3 этого schema change разрешён bootstrap
 input прежней формы: он MUST включать полный target verification input с dimensions
 в review sources, явно называться `*-gate3`, не может использоваться для Gate 5 и
-не считается соответствующим R5. После появления parser support любой новый или
+не считается соответствующим R5. Его disposable review-only planner MUST оставить
+в package только mapped acceptance commands и MUST исключить product full/category
+commands; этот bootstrap-код не переносится в candidate. После появления parser
+support любой новый или
 Gate 5 infrastructure package MUST использовать только полный target input; bootstrap
 исключение прекращает действовать. Это позволяет независимо одобрить RED до изменения
 production parser, не превращая отсутствующую функцию в setup/environment failure.

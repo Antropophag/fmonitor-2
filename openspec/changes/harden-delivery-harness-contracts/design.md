@@ -21,7 +21,7 @@
 
 ### 1. Владельцем остаётся delivery tooling
 
-`tools/delivery/` владеет runner records, active bindings, package/plan lifecycle и hook context. Verification runner остаётся владельцем состава и запуска suite. Разрешённые зависимости — Python standard library, Git/GitHub CLI как уже наблюдаемые внешние seams и существующие repository verification files. Persistence owner — внешний `FMONITOR_HARNESS_HOME`; repository хранит только код и deterministic fixtures.
+`tools/delivery/` владеет runner records, active bindings, package/plan lifecycle и hook context. Product verification runner продолжает владеть только product suite membership. Отдельный bounded harness entry point явно перечисляет agent-cycle tests и не импортирует product roster. Разрешённые зависимости — Python standard library, Git/GitHub CLI как уже наблюдаемые внешние seams и существующие repository verification files. Persistence owner — внешний `FMONITOR_HARNESS_HOME`; repository хранит только код и deterministic fixtures.
 
 Альтернатива — вынести новый orchestration framework — отвергнута как лишний новый seam и non-goal issue #90.
 
@@ -37,11 +37,11 @@ Multi-worktree и lifecycle tests создают bounded temporary Git repositor
 
 Альтернатива — monkeypatch внутренних helpers — допустима только для отдельных fault cases, но не является доказательством end-to-end interoperability.
 
-### 4. Roster получает каноническую derivation boundary
+### 4. Product roster и agent harness разделены
 
-Канонический registry должен быть существующим machine-readable источником состава suite; CI composition и тестовые ожидания выводятся из него общей публичной функцией/командой либо сравниваются с ним отдельным fast consistency check. Literal expectations сохраняются лишь для независимых инвариантов порядка/кратности, а не как вторая вручную поддерживаемая копия полного списка.
+Канонический product registry остаётся machine-readable источником product suite composition; тестовые ожидания выводятся из него либо сравниваются отдельным fast consistency check. Literal expectations сохраняются лишь для независимых инвариантов порядка/кратности, а не как вторая вручную поддерживаемая копия полного списка. Agent harness tests перечисляются отдельным коротким bounded entry point и намеренно отсутствуют в product `suites.tsv`/`categories.json`.
 
-Альтернатива — удалить literal roster assertion — отвергнута, потому что потеряет гарантию PR #91. Альтернатива — обновлять все копии вручную — сохраняет исходный класс дефекта.
+Альтернатива — регистрировать agent harness как characterization/governance product suites — отвергнута: она необоснованно связывает агентский цикл с DB/PDF/E2E и повторяет ошибку текущей поставки. Альтернатива — обновлять все roster-копии вручную — сохраняет исходный класс дефекта.
 
 ### 5. Fault injection ограничен orchestration boundaries
 
@@ -57,7 +57,7 @@ Infrastructure input перечисляет dimensions со значениями
 
 - [E2E orchestration tests могут стать медленными] → Использовать маленькие synthetic repos, bounded subprocess deadlines и разделение fast contract/focused broader chain.
 - [Fault injection станет связан с форматированием source] → Мутировать явные behavioral seams или structured fixture registries; каждый fault держать минимальным и именованным.
-- [Derivation roster может скрыть общий дефект источника] → Сохранить независимые invariants: обязательные категории, uniqueness, порядок фаз и точное однократное включение.
+- [Derivation roster может скрыть общий дефект источника] → Сохранить независимые product invariants: обязательные категории, uniqueness, порядок фаз и точное однократное включение; agent contour проверять отдельным manifest test.
 - [Восстановленный harness в историческом dirty checkout отличается от main] → Реализация начинается только после binding exact source и сверки с финальными PR89 blobs; публикация выполняется из отдельного чистого worktree.
 
 ## Migration Plan
@@ -65,5 +65,5 @@ Infrastructure input перечисляет dimensions со значениями
 1. Зафиксировать spec и RED для public runner matrix и PR #91 roster regression.
 2. После независимого Gate 3 review реализовать минимальные runner/registry corrections.
 3. Добавить end-to-end chains и fault sensitivity, сохраняя каждый шаг bounded.
-4. Запустить focused suites через harness, затем canonical full CI для exact candidate source и независимый Gate 5 review.
+4. Запустить только bounded agent-harness contour локально и в отдельном CI/fast job, затем независимый Gate 5 review; product full suite не запускать.
 5. Rollback — удалить hardening commit(s); внешний append-only evidence не удаляется и не переинтерпретируется.

@@ -24,7 +24,8 @@ class DeliveryHarnessHardening(unittest.TestCase):
         self.outer = Path(self.tmp.name)
         self.repo = self.outer / 'repo'
         self.repo.mkdir()
-        for name in ['tools/delivery', 'tools/verification', '.quality-graph', 'specs', 'tests', 'rapid-pilot', 'app']:
+        for name in ['tools/delivery', 'tools/verification', '.quality-graph', '.codex',
+                     'specs', 'tests', 'rapid-pilot', 'app']:
             shutil.copytree(ROOT / name, self.repo / name)
         for name in ['docs/operations']:
             (self.repo / name).mkdir(parents=True)
@@ -147,6 +148,10 @@ class DeliveryHarnessHardening(unittest.TestCase):
                                 '--role', 'root', '--gate', '3')
         self.assertEqual(0, prepared.returncode, 'INTENDED_RED prepare lifecycle failed: ' + prepared.stderr)
         package = json.loads(prepared.stdout)
+        prepared_plan = json.loads(Path(package['plan']).read_text())
+        argv = [item['argv'] for item in prepared_plan['commands']]
+        self.assertNotIn(['make', 'test'], argv,
+                         'INTENDED_RED agent plan includes product full suite')
         for action in ['check', 'refresh']:
             result = self.command(sys.executable, 'tools/delivery/change-verification.py', action,
                                   '--plan', package['plan'])
@@ -194,6 +199,14 @@ class DeliveryHarnessHardening(unittest.TestCase):
             pass
 
     def test_roster_consistency_fails_before_ci_and_recovers(self):
+        product_catalog = (self.repo / 'tools/verification/suites.tsv').read_text()
+        product_categories = json.loads((self.repo / 'tools/verification/categories.json').read_text())
+        for agent_test in ['tests/Verification/delivery_harness_hardening_001_test.py',
+                           'tests/Verification/delivery_harness_mutation_001_test.py']:
+            self.assertNotIn(agent_test, product_catalog,
+                             'INTENDED_RED agent harness leaked into product suites')
+            self.assertNotIn(agent_test, product_categories,
+                             'INTENDED_RED agent harness leaked into product categories')
         baseline = self.command(sys.executable, 'tools/verification/ci.py', 'verify-roster')
         self.assertEqual(0, baseline.returncode, 'INTENDED_RED public roster check absent: ' + baseline.stderr)
         suite = 'tests/Verification/synthetic_new_e2e_test.py'
@@ -210,31 +223,72 @@ class DeliveryHarnessHardening(unittest.TestCase):
         listed = self.command(sys.executable, 'tools/verification/ci.py', 'list', 'e2e')
         self.assertEqual(1, listed.stdout.splitlines().count(f'python3\t{suite}'))
 
-    def test_runner_wrapper_and_ci_aggregate_form_one_public_chain(self):
-        suite = self.acceptance_test
-        mini = self.outer / 'mini'; mini.mkdir()
-        shutil.copytree(self.repo / 'tools', mini / 'tools')
-        shutil.copytree(self.repo / '.quality-graph', mini / '.quality-graph')
-        for name in ['tests/InstallationProcess', 'tests/AssignmentOrderComposition',
-                     'tests/Verification', 'tests/Otiz', 'tests/Runtime', 'tests/Jobs']:
-            (mini / name).mkdir(parents=True)
-        (mini / suite).write_text('print("HARDENING_OK")\n')
-        (mini / 'tools/verification/suites.tsv').write_text(f'unit\tpython3\t{suite}\n')
-        (mini / 'tools/verification/categories.json').write_text(json.dumps({suite: 'unit'}) + '\n')
-        subprocess.run(['git', 'init', '-q'], cwd=mini, check=True)
-        subprocess.run(['git', 'add', '.'], cwd=mini, check=True)
-        subprocess.run(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
-                        'commit', '-qm', 'fixture'], cwd=mini, check=True)
-        wrapper = self.command(sys.executable, 'tools/verification/ci.py', 'run', 'unit', cwd=mini)
-        self.assertEqual(0, wrapper.returncode, wrapper.stdout + wrapper.stderr)
-        self.assertIn('CATEGORY_RESULT category=unit tests=1 failures=0', wrapper.stdout)
-        wrapper_conclusion = 'success' if wrapper.returncode == 0 else 'failure'
-        results = {'plan': 'success', 'fast': 'success', 'unit': wrapper_conclusion,
-                   'integration': 'success', 'e2e': 'success', 'governance': 'success'}
-        aggregate = self.command(sys.executable, 'tools/verification/ci.py', 'aggregate',
-                                 '--full', 'true', '--results', json.dumps(results), cwd=mini)
-        self.assertEqual(0, aggregate.returncode, aggregate.stderr)
-        self.assertEqual('VERIFY_OK', aggregate.stdout.strip())
+    def test_bounded_agent_entry_point_excludes_product_execution(self):
+        result = self.command(sys.executable, 'tools/delivery/verify.py', 'list')
+        self.assertEqual(0, result.returncode, 'INTENDED_RED bounded harness entry point absent: ' + result.stderr)
+        commands = result.stdout.splitlines()
+        self.assertEqual([
+            'python3 tests/Verification/delivery_harness_001_test.py',
+            'python3 tests/Verification/change_verification_001_test.py',
+            'python3 tests/Verification/verification_ci_001_test.py',
+            'python3 tests/Verification/verification_inventory_001_test.py',
+            'python3 tests/Verification/delivery_harness_hardening_001_test.py',
+            'python3 tests/Verification/delivery_harness_mutation_001_test.py',
+        ], commands)
+        forbidden = ('make test', 'CATEGORY=', 'test-db', 'migrate', 'tests/Runtime/',
+                     'tests/InstallationProcess/', 'tests/Yii2/', 'tests/Otiz/')
+        self.assertFalse(any(token in line for token in forbidden for line in commands))
+
+    def test_ci_plan_routes_harness_only_diff_away_from_product_matrix(self):
+        (self.repo / 'tools/delivery/harness.py').write_text(
+            (self.repo / 'tools/delivery/harness.py').read_text() + '\n# bounded harness change\n')
+        self.git('add', 'tools/delivery/harness.py')
+        self.git('commit', '-qm', 'harness change')
+        result = self.command(sys.executable, 'tools/verification/ci.py', 'plan',
+                              '--base', self.base, '--event', 'pull_request')
+        self.assertEqual(0, result.returncode, result.stderr)
+        harness_plan = json.loads(result.stdout)
+        self.assertEqual('harness', harness_plan.get('mode'),
+                         'INTENDED_RED harness diff routed to product matrix')
+        self.assertFalse(harness_plan['full'])
+        target = self.repo / 'app/InstallationProcess/ProductionPdfAssignmentOrderRenderer.php'
+        target.write_text(target.read_text() + '\n// product change\n')
+        self.git('add', 'app/InstallationProcess/ProductionPdfAssignmentOrderRenderer.php')
+        self.git('commit', '-qm', 'product change')
+        product = json.loads(self.command(sys.executable, 'tools/verification/ci.py', 'plan',
+                                          '--base', self.base, '--event', 'pull_request').stdout)
+        self.assertEqual('full', product.get('mode'))
+        self.assertTrue(product['full'])
+
+    def test_workflow_runs_only_bounded_job_for_harness_mode(self):
+        workflow = (ROOT / '.github/workflows/quality-graph.yml').read_text()
+        self.assertIn('\n  harness:\n', workflow,
+                      'INTENDED_RED harness-only CI job absent')
+        harness_job = workflow.split('\n  harness:\n', 1)[1].split('\n  unit:\n', 1)[0]
+        self.assertIn("if: needs.plan.outputs.mode == 'harness'", harness_job)
+        self.assertIn('run: python3 tools/delivery/verify.py', harness_job)
+        for forbidden in ['setup-runtime', 'make test', 'test-db', 'migrate', 'CATEGORY=']:
+            self.assertNotIn(forbidden, harness_job)
+        next_job = {'fast': 'harness', 'unit': 'integration', 'integration': 'e2e',
+                    'e2e': 'governance', 'governance': 'verify'}
+        for job, following in next_job.items():
+            section = workflow.split(f'\n  {job}:\n', 1)[1].split(f'\n  {following}:\n', 1)[0]
+            expected = "mode != 'harness'" if job == 'fast' else "full == 'true'"
+            self.assertIn(expected, section)
+
+    def test_change_verification_plan_excludes_product_full_for_agent_scope(self):
+        value = self.input_value()
+        acceptance = value['acceptances'][0]
+        acceptance.pop('seam_kind')
+        acceptance.pop('observable_dimensions')
+        input_name = self.write_input(value, 'legacy-agent-input.json')
+        output = 'openspec/changes/hardening/agent-plan.json'
+        result = self.plan(input_name, output)
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads((self.repo / output).read_text())
+        argv = [item['argv'] for item in plan['commands']]
+        self.assertNotIn(['make', 'test'], argv,
+                         'INTENDED_RED agent verification plan includes product full suite')
 
 
 if __name__ == '__main__':

@@ -65,20 +65,24 @@ Active binding, live state и generated plan SHALL иметь namespace конк
 - **WHEN** один worktree повторяет prepare с тем же input, base и неизменным source
 - **THEN** binding остаётся логически тем же и не создаёт конфликт с соседними worktrees
 
-### Requirement: Verification registries согласуются до full CI
-Добавление или удаление suite SHALL иметь один канонический roster либо deterministic local consistency contract, покрывающий inventory, categories, suites, plan и ожидаемую CI composition. Рассинхронизация MUST падать в bounded fast/governance verification до публикации, не ослабляя uniqueness, coverage или full CI assertions.
+### Requirement: Product registries согласуются без включения agent harness
+Добавление или удаление product suite SHALL иметь один канонический roster либо deterministic local consistency contract, покрывающий inventory, categories, suites, plan и ожидаемую CI composition. Рассинхронизация MUST падать в bounded fast/governance verification до запуска product matrix. Agent delivery-harness tests MUST NOT регистрироваться в product `suites.tsv`/`categories.json` и MUST NOT запускать product unit/DB/E2E как собственное acceptance evidence.
 
 #### Scenario: Regression PR #91 воспроизводится локально
 - **WHEN** новый E2E suite зарегистрирован поддерживаемым способом, но dependent expected composition оставлена устаревшей
-- **THEN** bounded local verification завершается ненулевым кодом до full CI и указывает рассинхронизированный contract
+- **THEN** bounded roster verification завершается ненулевым кодом до запуска product matrix и указывает рассинхронизированный contract
 
 #### Scenario: Синхронизированный roster GREEN
 - **WHEN** новый suite и все derived либо проверяемые dependent registries согласованы
-- **THEN** inventory, fast, governance, plan и aggregate composition проходят, а suite присутствует ровно один раз
+- **THEN** product inventory и derived composition проходят, suite присутствует ровно один раз, а agent-harness tests отсутствуют в product roster
 
-#### Scenario: Metadata correction переиспользует допустимое evidence
-- **WHEN** меняется только verification metadata, а source, fixtures и environment ранее выполненного продуктового E2E не изменились и evidence protocol разрешает reuse
-- **THEN** исправление доказывает metadata contract без обязательного повторного продуктового E2E, сохраняя exact mapping и полный CI для публикуемого source
+#### Scenario: Agent harness проверяется отдельным bounded контуром
+- **WHEN** меняются только delivery harness, его contracts, hooks либо agent-cycle tests
+- **THEN** локальная и CI-проверка выполняет только явно перечисленные harness/governance команды с bounded timeout и не поднимает product DB/PDF/runtime/E2E среду
+
+#### Scenario: Product behavior не затронут
+- **WHEN** diff ограничен agent delivery harness и его отдельным verification contour
+- **THEN** product full matrix не является обязательством этого change; существующие product suites и их CI semantics остаются неизменными
 
 ### Requirement: Критические orchestration faults наблюдаемы
 Ограниченный deterministic fault-injection contract SHALL доказывать, что тестовый набор становится RED при мутациях public exit semantics, outcome guard, plan confinement, worktree namespace, control-marker parsing, acceptance-evidence mapping и suite-registry synchronization.

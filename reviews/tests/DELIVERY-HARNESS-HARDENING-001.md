@@ -60,3 +60,15 @@ The unchanged approved test bytes now map `architecture_guard_001_test.py` as an
 explicit GREEN acceptance. All six argv/source/environment records match, both new
 tests remain INTENDED_RED before implementation, four regressions are GREEN, and
 bootstrap/full inputs carry the same expectation set.
+
+## Owner-corrected product/agent boundary rereview
+
+- Reviewed pre-implementation source: `845987bb80aeb57fab0dad9f23638304b91329b7ab46a5bada1e8756a8c4176f`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T091755Z-7bc92c25c7/package.json`.
+- Verdict: `APPROVED`.
+
+The final plan contains exactly six mapped harness/tooling commands and no product,
+full, category or architecture command. Final tests independently prove committed
+harness-vs-product routing, bounded workflow wiring, product-roster exclusion and
+the legacy planner's forbidden `make test` RED. All exact-source outcomes and
+snapshot hashes match; the disposable bootstrap is review-only and non-candidate.
