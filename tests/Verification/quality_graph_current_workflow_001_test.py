@@ -54,7 +54,7 @@ class CurrentGraphWorkflow(unittest.TestCase):
         self.assertIn("shard: [1, 2]", workflow)
         self.assertIn("fail-fast: false", workflow)
         self.assertIn('"integration":"${{ needs.integration.result }}"', workflow)
-        self.assertIn('ci.py aggregate --full "$FULL" --results "$RESULTS"', workflow)
+        self.assertIn('ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS"', workflow)
         self.assertEqual(4, workflow.count("if: needs.plan.outputs.full == 'true'"))
         self.assertNotIn("checks: write", workflow)
         self.assertNotIn("issues: write", workflow)
@@ -72,7 +72,8 @@ class CurrentGraphWorkflow(unittest.TestCase):
         report = workflow.split("\n  quality-results:\n", 1)[1]
         self.assertIn("always()", report)
         self.assertIn("github.event_name == 'pull_request'", report)
-        self.assertIn("needs: [plan, fast, unit, integration, e2e, governance, verify]", report)
+        self.assertIn("needs.plan.outputs.mode != 'harness'", report)
+        self.assertIn("needs: [plan, fast, harness, unit, integration, e2e, governance, verify]", report)
         self.assertNotIn("continue-on-error: true", report)
         self.assertIn("id: reports", report)
         for node in NODES:

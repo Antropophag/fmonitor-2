@@ -7,25 +7,30 @@ checks; полный matrix выполняется один раз паралл�
 стоимость и отдельно встретил недоступную PDF renderer dependency; повторный
 локальный full run не является способом исправления этой среды.
 
-# Текущая цель — №76, справочник монтажников Yii2
+# Текущая цель — №76, фоновые процессы через Yii2 console
 
 Владелец поручил продолжить рефакторинг №76. Предыдущий документарный срез
 поставлен PR #91: exact commit `47bb6b438d667ef807ff273b9efa4577e8780bd6`,
 Quality Graph CI 34522776165 SUCCESS, merge
 `aa4d20f30edb4b5e9c7de7abad8ac2d016ec4952`.
 
-Следующий bounded slice — read-only `/pilot/installers`: сохранить поиск,
-status/availability filters, 50-row pagination, текущие зарегистрированные
-закрепления, authorization, HEAD/failure contracts и responsive UI, переведя
-маршрут на Yii2 controller/query/view без runtime-загрузки rapid-pilot.
+Справочник монтажников поставлен PR #92, harness hardening — PR #93. Следующий
+bounded slice — production `worker`, `scheduler` и jobs `health`: сохранить
+durable queue/lease/retry/deduplication, heartbeat, безопасную Bitrix-конфигурацию
+и restart behavior, переведя entrypoints на общий Yii2 console runtime без
+production-загрузки `rapid-pilot/jobs-entrypoint.php`.
 
-[OpenSpec](../../openspec/changes/yii2-installer-directory/) создаёт planning
+[OpenSpec](../../openspec/changes/yii2-jobs-console/) создаёт planning
 input. До реализации root обязан подготовить verification input/harness package,
 написать нормативный spec и intended RED; отдельный sol/low reviewer решает
 Gate 3, отдельный sol/low executor реализует, независимый sol/low reviewer решает
 Gate 5. Фактические source/PR/CI всегда получать через harness state.
 
-Карточка монтажника, новые conflict/staleness rules, workforce sync/import,
-checklist/photo/offline, ОТиЗ, console/runtime retirement и общий cutover остаются
+Imports/migrations, web runtime retirement, карточка монтажника, новые
+conflict/staleness rules, checklist/photo/offline, ОТиЗ и общий cutover остаются
 в следующих срезах №76. Рабочий rapid-pilot stand не переключается. Deployment
 требует отдельной авторизации после общего upgrade/rollback evidence.
+
+Кандидат поставки — PR #96; exact-source Quality Graph `34593480014` GREEN и
+`VERIFY_OK`. После merge этот документ становится checkpoint; следующий срез
+№76 начинать от актуального main, сохраняя историю failures/reviews этого среза.

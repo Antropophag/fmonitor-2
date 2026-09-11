@@ -27,9 +27,9 @@ try{
     $expected=['workforce-sync'=>'worker','workforce-scheduler'=>'scheduler'];$commands=[];
     foreach($expected as$serviceName=>$mode){
         $service=$model['services'][$serviceName]??null;assertSameValue(true,is_array($service),'ordinary root topology contains '.$serviceName);
-        assertSameValue(['php','rapid-pilot/jobs-entrypoint.php',$mode],$service['entrypoint']??null,$serviceName.' invokes exact pilot Jobs adapter mode');
+        assertSameValue(['php','bin/yii','jobs/'.$mode,'--interactive=0'],$service['entrypoint']??null,$serviceName.' invokes exact Yii Jobs mode');
         assertSameValue(['SIGTERM',true],[$service['stop_signal']??null,in_array($service['stop_grace_period']??null,['60s','1m0s'],true)],$serviceName.' preserves native graceful shutdown');
-        assertSameValue(['CMD','php','rapid-pilot/jobs-entrypoint.php','health'],$service['healthcheck']['test']??null,$serviceName.' health uses native Jobs through the same pilot adapter');
+        assertSameValue(['CMD','php','bin/yii','jobs/health','--interactive=0'],$service['healthcheck']['test']??null,$serviceName.' health uses native Jobs through Yii console');
         assertSameValue(false,str_contains(json_encode($service,JSON_THROW_ON_ERROR),'/tmp/workforce-ready'),$serviceName.' has no stale file readiness');
         $commands[$mode]=$service['entrypoint'];
     }

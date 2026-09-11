@@ -62,8 +62,8 @@ def quality_results(digest: str) -> str:
              ("integration", "Integration"), ("e2e", "e2e"),
              ("governance", "governance"), ("verify", "verify")]
     value = """  quality-results:
-    if: always() && github.event_name == 'pull_request'
-    needs: [plan, fast, unit, integration, e2e, governance, verify]
+    if: always() && github.event_name == 'pull_request' && needs.plan.outputs.mode != 'harness'
+    needs: [plan, fast, harness, unit, integration, e2e, governance, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

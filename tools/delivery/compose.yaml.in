@@ -38,7 +38,7 @@ services:
     image: fmonitor2-pilot
     pull_policy: never
     user: "0:0"
-    entrypoint: ["php", "rapid-pilot/jobs-entrypoint.php", "worker"]
+    entrypoint: ["php", "bin/yii", "jobs/worker", "--interactive=0"]
     environment:
       FMONITOR_DB_HOST: mariadb
       FMONITOR_DB_PORT: "3306"
@@ -58,7 +58,7 @@ services:
       mariadb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php", "rapid-pilot/jobs-entrypoint.php", "health"]
+      test: ["CMD", "php", "bin/yii", "jobs/health", "--interactive=0"]
       interval: 5s
       timeout: 3s
       retries: 24
@@ -71,7 +71,7 @@ services:
     image: fmonitor2-pilot
     pull_policy: never
     user: "0:0"
-    entrypoint: ["php", "rapid-pilot/jobs-entrypoint.php", "scheduler"]
+    entrypoint: ["php", "bin/yii", "jobs/scheduler", "--interactive=0"]
     environment:
       FMONITOR_DB_HOST: mariadb
       FMONITOR_DB_PORT: "3306"
@@ -88,7 +88,7 @@ services:
       mariadb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php", "rapid-pilot/jobs-entrypoint.php", "health"]
+      test: ["CMD", "php", "bin/yii", "jobs/health", "--interactive=0"]
       interval: 5s
       timeout: 3s
       retries: 24

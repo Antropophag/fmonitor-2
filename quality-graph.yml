@@ -64,7 +64,7 @@ nodes:
   verify:
     title: verify
     needs: [plan, fast, unit, integration, e2e, governance]
-    run: python3 tools/verification/ci.py aggregate --full "$FULL" --results "$RESULTS"
+    run: python3 tools/verification/ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS"
     results:
       native: .quality-graph/reports/verify.json
     policy: *blocking

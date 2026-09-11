@@ -206,8 +206,9 @@ def main() -> None:
     require("common.php" in web_config.read_text(encoding="utf-8"), "web config must compose common config")
     require("common.php" in console_config.read_text(encoding="utf-8"), "console config must compose common config")
 
+    console_bootstrap = ROOT / "bin" / "fmonitor2-yii.php"
     framework_source = "\n".join(
-        path.read_text(encoding="utf-8") for path in (web_entry, console_entry, common, web_config, console_config)
+        path.read_text(encoding="utf-8") for path in (web_entry, console_entry, console_bootstrap, common, web_config, console_config)
     )
     require("yii\\web\\Application" in framework_source, "web lifecycle must be owned by Yii Application")
     require("yii\\console\\Application" in framework_source, "console lifecycle must be owned by Yii Application")
