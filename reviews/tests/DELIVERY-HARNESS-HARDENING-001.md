@@ -49,3 +49,14 @@ schema/roster behavior. Gate 4 may proceed without changing approved expectation
 The final test bytes reproduce healthy RED for missing dimensions/roster behavior,
 retain mapped GREEN regressions, cover R1–R5 through public seams, and exercise all
 seven declared mutations. This approval supersedes the earlier changed-test gap.
+
+## Final six-command mapping rereview
+
+- Reviewed pre-implementation source: `c89469836eada102bdc8f7ec8f3f6e83e7be6edbeb002090b0fad58e595a0887`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T075336Z-c291b617a9/package.json`.
+- Verdict: `APPROVED`.
+
+The unchanged approved test bytes now map `architecture_guard_001_test.py` as an
+explicit GREEN acceptance. All six argv/source/environment records match, both new
+tests remain INTENDED_RED before implementation, four regressions are GREEN, and
+bootstrap/full inputs carry the same expectation set.
