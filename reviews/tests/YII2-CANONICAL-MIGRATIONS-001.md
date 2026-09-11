@@ -600,3 +600,49 @@ source, including the jobs console contract. No normative expected value,
 public seam, rejection, durability, redaction or lifecycle assertion changed.
 Gate 3 remains approved for this delta. This is not a Gate 5 or CI-success
 decision.
+
+---
+
+# Independent Gate 3 final post-CI test-delta review — 2026-09-11
+
+- Reviewer: independently tasked agent `/root/gate3_migrations`
+- Failed CI run: `34609680703`
+- Prepared root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T145224Z-a9bd5584aa/package.json`
+- Exact source digest: `01a5d0ec2859eac03b7f549e51ce94b99999bd5aaf892b2c901ad97f0010b43f`
+- Head commit plus retained dirty test delta: `6eab260f4b9e0b492962c8ed0b2f0fe7fb637019`
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T145224Z-a9bd5584aa/snapshot/source.patch`
+- Snapshot patch SHA-256: `f681456f8aa5c46628d355593529a2e5b60fe01502d7a0a3ec01e691e896b3f9`
+- Verification plan SHA-256: `c3467110b9fcd78bbd835d1e4ce4fd9ac75b7da114667d243eb69431007884c8`
+- Changed test SHA-256: `eba817a5d0f7c828d7bfe982452f73bcb21b5eaa51130ce1ea91479fa00c9362`
+- Verdict: **DELTA APPROVED**
+
+The sole delta in
+`tests/Deployment/yii2_canonical_migrations_package_001_test.py:11-14`
+removes the undeclared PyYAML dependency that caused
+`ModuleNotFoundError: No module named 'yaml'` and reads the Compose source with
+the Python standard library. Its regex is bounded from the exact top-level
+`  migrate:` service header to the next top-level service header; it does not
+accept a matching command from another service or an unrelated part of the
+file. Within that bounded body it requires the exact literal command:
+
+```text
+command: ["php", "bin/yii", "schema-migrate/run", "--interactive=0"]
+```
+
+Independent sensitivity checks confirmed that replacing `bin/yii`, changing
+`schema-migrate/run`, or changing `--interactive=0` makes the assertion fail.
+The remaining Make caller, production-root inventory, forbidden runtime owners,
+host/image load trace, image build/presence and closed output assertions are
+unchanged. No expectation was weakened and no production dependency was added.
+
+The current focused evidence is
+`/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789138373409079000-648471dc63a54043b56ba36765861586.json`.
+It reports GREEN, exit 0, source
+`01a5d0ec2859eac03b7f549e51ce94b99999bd5aaf892b2c901ad97f0010b43f`
+and `source_drift=false`; stdout is the expected package-test PASS and stderr is
+empty. Fixture remains `UNKNOWN` and is not interpreted as full CI or deployment
+approval.
+
+Gate 3 is **DELTA APPROVED** for this exact test-only correction. The previous
+Gate 5 approval does not automatically cover the new test bytes; any required
+final candidate/source reconciliation and exact-source CI remain root-owned.

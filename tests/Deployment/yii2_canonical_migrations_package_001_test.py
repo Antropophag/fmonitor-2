@@ -8,11 +8,10 @@ import secrets
 import shutil
 import subprocess
 import tempfile
-import yaml
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-compose = yaml.safe_load((ROOT / "deploy/runtime/compose.yaml").read_text(encoding="utf-8"))
-command = compose["services"]["migrate"]["command"]
-assert command == ["php", "bin/yii", "schema-migrate/run", "--interactive=0"], f"INTENDED_RED: migrate service uses Yii route: {command}"
+compose = (ROOT / "deploy/runtime/compose.yaml").read_text(encoding="utf-8")
+migrate_service = re.search(r"(?ms)^  migrate:\n(?P<body>.*?)(?=^  [a-zA-Z0-9_-]+:\n)", compose)
+assert migrate_service and 'command: ["php", "bin/yii", "schema-migrate/run", "--interactive=0"]' in migrate_service.group("body"), "migrate service uses the exact Yii route"
 makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
 migrate = re.search(r"(?ms)^migrate:\n(?P<body>(?:\t.*\n)+)", makefile)
 assert migrate and "bin/yii schema-migrate/run --interactive=0" in migrate.group("body"), "INTENDED_RED: make migrate uses Yii route"
