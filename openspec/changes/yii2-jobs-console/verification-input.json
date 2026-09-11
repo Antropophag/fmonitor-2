@@ -1,0 +1,41 @@
+{
+  "change": "yii2-jobs-console",
+  "planned_paths": [
+    "app/YiiRuntime/Commands/JobsController.php",
+    "app/Jobs/YiiJobsRuntimeEnvironment.php",
+    "bin/fmonitor2-yii.php",
+    "config/yii/console.php",
+    "compose.yaml"
+    ,"tools/delivery/compose.yaml.in"
+    ,"tools/delivery/Dockerfile.pilot.in"
+    ,"Dockerfile"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-JOBS-CONSOLE-001",
+      "acceptance_id": "A1-A6",
+      "spec_path": "specs/YII2-JOBS-CONSOLE-001.md",
+      "seam": "production Yii2 console jobs/worker|jobs/scheduler|jobs/health and compose restart",
+      "tests": [
+        "tests/Yii2/yii2_jobs_console_001_test.php",
+        "tests/Yii2/yii2_jobs_console_db_001_test.php",
+        "tests/Deployment/pilot_jobs_compose_001_test.py",
+        "tests/Jobs/jobs_runtime_cli_001_test.php",
+        "tests/Jobs/worker_signal_runtime_001_test.php",
+        "tests/Jobs/worker_lease_loss_process_001_test.php",
+        "tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php",
+        "tests/Jobs/outbox_delivery_lifecycle_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_jobs_console_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_jobs_console_db_001_test.php": "INTENDED_RED",
+        "tests/Deployment/pilot_jobs_compose_001_test.py": "GREEN",
+        "tests/Jobs/jobs_runtime_cli_001_test.php": "GREEN",
+        "tests/Jobs/worker_signal_runtime_001_test.php": "GREEN",
+        "tests/Jobs/worker_lease_loss_process_001_test.php": "GREEN",
+        "tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php": "GREEN",
+        "tests/Jobs/outbox_delivery_lifecycle_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
