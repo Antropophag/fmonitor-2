@@ -1,0 +1,59 @@
+{
+  "change": "yii2-canonical-migrations",
+  "planned_paths": [
+    "app/YiiRuntime/Commands/SchemaMigrateController.php",
+    "app/YiiRuntime/CanonicalMigrationConsole.php",
+    "bin/yii",
+    "bin/fmonitor2-yii.php",
+    "bin/fmonitor2-migrate.php",
+    "config/yii/console.php",
+    "Makefile",
+    "deploy/runtime/compose.yaml",
+    "tools/delivery/Dockerfile.runtime.in",
+    "tests/Runtime/production_runtime_contract_001_test.php",
+    "tests/Verification/verification_ci_001_test.py",
+    "tests/Yii2/yii2_jobs_console_001_test.php",
+    "tests/InstallationProcess/pilot_http_auth_001_test.php",
+    "tests/Yii2/yii2_canonical_migrations_001_test.php",
+    "tests/Yii2/yii2_canonical_migrations_db_001_test.php",
+    "tests/Yii2/yii2_canonical_migrations_ownership_001_test.php",
+    "tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php",
+    "tests/Yii2/yii2_canonical_migrations_alias_001_test.php",
+    "tests/Support/YiiMigrationThrowingCatalogue.php",
+    "tests/Deployment/yii2_canonical_migrations_package_001_test.py",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A1", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "php bin/yii schema-migrate/run CLI transport",
+      "tests": ["tests/Yii2/yii2_canonical_migrations_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_canonical_migrations_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A2", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "Yii controller delegates the canonical migration owner",
+      "tests": ["tests/Yii2/yii2_canonical_migrations_ownership_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_canonical_migrations_ownership_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A3", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "fresh repeat upgrade restart and conflict through php bin/yii",
+      "tests": ["tests/Yii2/yii2_canonical_migrations_db_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_canonical_migrations_db_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A4", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "canonical database lock and restart reached from Yii command",
+      "tests": ["tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A5", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "compatibility alias production callers and packaged load closure",
+      "tests": ["tests/Yii2/yii2_canonical_migrations_alias_001_test.php", "tests/Deployment/yii2_canonical_migrations_package_001_test.py"],
+      "gate3_expected": {"tests/Yii2/yii2_canonical_migrations_alias_001_test.php": "GREEN", "tests/Deployment/yii2_canonical_migrations_package_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CANONICAL-MIGRATIONS-001", "acceptance_id": "A6", "spec_path": "specs/YII2-CANONICAL-MIGRATIONS-001.md", "seam": "registered verification inventory and canonical migration stage",
+      "tests": ["tests/Verification/harness_canonical_migration_stage_001_test.php", "tests/InstallationProcess/production_migration_runner_001_test.php", "tests/Deployment/pilot_jobs_compose_001_test.py", "tests/Verification/change_verification_001_test.py", "tests/Runtime/runtime_storage_001_test.php", "tests/Verification/architecture_guard_001_test.py", "tests/Verification/development_setup_001_test.py", "tests/Runtime/production_runtime_contract_001_test.php", "tests/Verification/verification_ci_001_test.py", "tests/Yii2/yii2_jobs_console_001_test.php", "tests/InstallationProcess/pilot_http_auth_001_test.php"],
+      "gate3_expected": {"tests/Verification/harness_canonical_migration_stage_001_test.php": "GREEN", "tests/InstallationProcess/production_migration_runner_001_test.php": "GREEN", "tests/Deployment/pilot_jobs_compose_001_test.py": "GREEN", "tests/Verification/change_verification_001_test.py": "GREEN", "tests/Runtime/runtime_storage_001_test.php": "GREEN", "tests/Verification/architecture_guard_001_test.py": "GREEN", "tests/Verification/development_setup_001_test.py": "GREEN", "tests/Runtime/production_runtime_contract_001_test.php": "GREEN", "tests/Verification/verification_ci_001_test.py": "GREEN", "tests/Yii2/yii2_jobs_console_001_test.php": "GREEN", "tests/InstallationProcess/pilot_http_auth_001_test.php": "GREEN"}
+    }
+  ]
+}

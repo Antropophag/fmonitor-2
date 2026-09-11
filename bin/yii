@@ -2,4 +2,5 @@
 <?php
 declare(strict_types=1);
 
+$_SERVER['argv'] = $argv;
 exit(require __DIR__ . '/fmonitor2-yii.php');

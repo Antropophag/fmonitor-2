@@ -365,3 +365,9 @@ db	php	tests/Yii2/yii2_installer_directory_http_001_test.php
 e2e	php	tests/Yii2/yii2_installer_directory_browser_001_test.php
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php
 db	php	tests/Yii2/yii2_jobs_console_db_001_test.php
+db	php	tests/Yii2/yii2_canonical_migrations_001_test.php
+db	php	tests/Yii2/yii2_canonical_migrations_db_001_test.php
+unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php
+db	php	tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php
+db	php	tests/Yii2/yii2_canonical_migrations_alias_001_test.php
+e2e	python3	tests/Deployment/yii2_canonical_migrations_package_001_test.py

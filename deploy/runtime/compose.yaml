@@ -56,7 +56,7 @@ services:
       <<: *runtime-environment
       FMONITOR_DB_USER: "${FMONITOR_MIGRATION_DB_USER:?Set FMONITOR_MIGRATION_DB_USER}"
       FMONITOR_DB_PASSWORD: "${FMONITOR_MIGRATION_DB_PASSWORD:?Set FMONITOR_MIGRATION_DB_PASSWORD}"
-    command: ["php", "bin/fmonitor2-migrate.php"]
+    command: ["php", "bin/yii", "schema-migrate/run", "--interactive=0"]
     profiles: ["deployment"]
     depends_on:
       db:
