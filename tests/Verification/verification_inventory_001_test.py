@@ -1,8 +1,9 @@
 """VERIFICATION-INVENTORY-001: isolated public CLI; no Docker or live DB."""
 import re
-import hashlib
+import json
 import subprocess
 import shutil
+import sys
 import unittest
 import verification_native_suites_001_test as native
 from verification_native_suites_001_test import UNIT, DB, CLIENT
@@ -94,145 +95,28 @@ class Inventory(native.NativeSuites):
         self.assertEqual([f'python3\t{py}'], self.calls(), 'retain Python fail-fast')
 
     def test_repository_baseline_membership(self):
-        # SHA256 of public list output on d5f8f2d; characterization/e2e
-        # transcribed from its fixed command list, before implementation.
-        expected = {'unit': 'ae1c98c70c549d1ba5f4600a0ed7b77d929eab5e0212f5ee6323e0438f0cef2c', 'db': 'ecb69ca1c8c3b80db2656a661adafb74e53b64dd86c05c7ca396362617c95f5f', 'characterization': 'ce1532ec45715e0d73244798d71d67f2b023397a8d0ef58b6bd9c043120625f3', 'e2e': '3e71f81948cc72b01a99713489fea493a4db50542356967099d9953569718abe'}
-        added = [
-            'python3\ttests/Verification/verification_inventory_001_test.py\n',
-            'python3\ttests/Verification/verification_ci_001_test.py\n',
-            'php\ttests/Verification/harness_full_aggregation_001_test.php\n',
-            'php\ttests/Verification/harness_fresh_test_lifecycle_001_test.php\n',
-            'php\ttests/Verification/quality_graph_ci_setup_001_test.php\n',
-        ]
-        added_by_suite = {
-            'unit': [
-                'python3\ttests/Verification/delivery_harness_001_test.py\n',
-                'python3\ttests/Verification/review_source_001_test.py\n',
-                'python3\ttests/Usage/usage_aggregation_001_test.py\n',
-                'python3\ttests/Verification/change_verification_001_test.py\n',
-                'python3\ttests/Verification/quality_graph_current_report_001_test.py\n',
-                'python3\ttests/Verification/quality_graph_current_workflow_001_test.py\n',
-                'python3\ttests/Verification/quality_graph_preflight_001_test.py\n',
-                'php\ttests/InstallationProcess/pdf_navigation_upload_001_test.php\n',
-                'php\ttests/InstallationProcess/pilot_jobs_startup_001_test.php\n',
-                'python3\ttests/Verification/development_setup_001_test.py\n',
-                'python3\ttests/Verification/yii2_dependency_setup_001_test.py\n',
-                'php\ttests/Deployment/bitrix_startup_config_001_test.php\n',
-                'php\ttests/Runtime/production_runtime_contract_001_test.php\n',
-                'python3\ttests/Verification/architecture_guard_001_test.py\n',
-            ],
-            'db': [
-                'php\ttests/Yii2/yii2_documentary_http_001_test.php\n',
-                'php\ttests/Yii2/yii2_documentary_concurrency_001_test.php\n',
-                'php\ttests/Yii2/yii2_installer_directory_http_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_concurrency_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_concurrency_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_journey_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_boundaries_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_routes_001_test.php\n',
+        roster = subprocess.run([sys.executable, str(native.ROOT / 'tools/verification/ci.py'),
+                                 'verify-roster'], cwd=native.ROOT,
+                                capture_output=True, text=True)
+        self.assertEqual(0, roster.returncode, 'INTENDED_RED verify-roster unavailable: ' + roster.stderr)
+        summary = json.loads(roster.stdout)
+        self.assertEqual('GREEN', summary['status'])
 
-                'php\ttests/Yii2/yii2_preopening_uncertain_commit_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_lineage_001_test.php\n',
-                'php\ttests/Yii2/yii2_object_card_001_test.php\n',
-                'php\ttests/Yii2/yii2_original_transport_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_authorization_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_failures_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_http_001_test.php\n',
-                'php\ttests/Yii2/yii2_selection_input_001_test.php\n',
-
-                'php\ttests/Yii2/yii2_user_access_001_test.php\n',
-                'php\ttests/Yii2/yii2_queue_readiness_001_test.php\n',
-                'php\ttests/Yii2/yii2_object_queue_lineage_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_planning_concurrency_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_planning_001_test.php\n',
-                'php\ttests/Yii2/yii2_object_queue_001_test.php\n',
-                'php\ttests/Yii2/yii2_user_access_edges_001_test.php\n',
-                'php\ttests/Yii2/yii2_user_access_concurrency_001_test.php\n',
-                'php\ttests/Otiz/object_register_paging_001_test.php\n',
-                'php\ttests/Otiz/object_register_paging_http_001_test.php\n',
-                'php\ttests/Jobs/durable_queue_connection_loss_001_test.php\n',
-                'php\ttests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php\n',
-                'php\ttests/Jobs/durable_queue_001_test.php\n',
-                'php\ttests/Jobs/durable_queue_concurrency_001_test.php\n',
-                'php\ttests/Jobs/jobs_extensions_schema_001_test.php\n',
-                'php\ttests/Jobs/jobs_runtime_cli_001_test.php\n',
-                'php\ttests/Jobs/jobs_runtime_contract_001_test.php\n',
-                'php\ttests/Jobs/jobs_runtime_handler_validation_001_test.php\n',
-                'php\ttests/Jobs/jobs_runtime_workforce_cli_001_test.php\n',
-                'php\ttests/Jobs/jobs_schema_001_test.php\n',
-                'php\ttests/Jobs/jobs_schema_check_literals_001_test.php\n',
-                'php\ttests/Jobs/legacy_workforce_once_delegation_001_test.php\n',
-                'php\ttests/Jobs/operator_health_001_test.php\n',
-                'php\ttests/Jobs/outbox_delivery_lifecycle_001_test.php\n',
-                'php\ttests/Jobs/transactional_outbox_001_test.php\n',
-                'php\ttests/Jobs/worker_grace_expiry_001_test.php\n',
-                'php\ttests/Jobs/worker_lease_loss_process_001_test.php\n',
-                'php\ttests/Jobs/worker_protocol_001_test.php\n',
-                'php\ttests/Jobs/worker_signal_runtime_001_test.php\n',
-                'php\ttests/Jobs/worker_stale_settlement_001_test.php\n',
-                'php\ttests/Jobs/workforce_job_handler_001_test.php\n',
-                'php\ttests/Jobs/workforce_job_idempotency_001_test.php\n',
-                'php\ttests/Jobs/workforce_scheduler_001_test.php\n',
-                'php\ttests/Jobs/workforce_scheduler_concurrency_001_test.php\n',
-                'php\ttests/Otiz/snapshot_publication_001_test.php\n',
-                'php\ttests/Otiz/snapshot_publication_http_001_test.php\n',
-                'php\ttests/Otiz/runtime_schema_001_test.php\n',
-                'php\ttests/Otiz/settlement_owner_001_test.php\n',
-                'php\ttests/Otiz/settlement_concurrency_001_test.php\n',
-                'php\ttests/InstallationProcess/otiz_settlement_schema_001_test.php\n',
-                'php\ttests/Yii2/yii2_otiz_settlement_001_test.php\n',
-                'php\ttests/InstallationProcess/invitation_reissue_http_001_test.php\n',
-                'php\ttests/Verification/batched_schema_snapshot_001_test.php\n',
-                'php\ttests/Runtime/migration_concurrency_lock_001_test.php\n',
-                'php\ttests/Runtime/production_schema_frontier_001_test.php\n',
-                'php\ttests/Runtime/runtime_storage_001_test.php\n',
-                'php\ttests/Runtime/production_schema_preflight_001_test.php\n',
-                'php\ttests/Runtime/production_readiness_schema_001_test.php\n',
-                'python3\ttests/Runtime/yii2_runtime_001_test.py\n',
-                'php\ttests/Runtime/yii2_readiness_001_test.php\n',
-                'php\ttests/Yii2/yii2_authentication_001_test.php\n',
-                'php\ttests/Yii2/yii2_session_failure_001_test.php\n',
-                'php\ttests/Runtime/production_process_readiness_001_test.php\n',
-                'php\ttests/Runtime/initial_owner_provisioning_001_test.php\n',
-                'php\ttests/Runtime/runtime_dml_privilege_probe_001_test.php\n',
-                'php\ttests/Runtime/session_contention_001_test.php\n',
-                'php\ttests/Runtime/migration_parallel_runners_001_test.php\n',
-                'php\ttests/Runtime/runtime_recovery_001_test.php\n',
-                'php\ttests/Runtime/runtime_jobs_recovery_001_test.php\n',
-                'php\ttests/Runtime/runtime_recovery_forward_update_001_test.php\n',
-            ],
-            'characterization': added,
-            'e2e': [
-                'php\ttests/Yii2/yii2_documentary_browser_001_test.php\n',
-                'php\ttests/Yii2/yii2_installer_directory_browser_001_test.php\n',
-                'python3\ttests/Runtime/activation_proxy_log_001_test.py\n',
-                'php\ttests/Yii2/yii2_user_access_browser_001_test.php\n',
-                'php\ttests/Yii2/yii2_object_queue_browser_001_test.php\n',
-                'php\ttests/Yii2/yii2_preopening_browser_001_test.php\n',
-                'php\ttests/Yii2/yii2_inspection_browser_001_test.php\n',
-                'python3\ttests/Yii2/yii2_preopening_package_001_test.py\n',
-                'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php\n',
-                'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php\n',
-                'python3\ttests/Deployment/pilot_jobs_compose_001_test.py\n',
-                'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php\n',
-                'php\ttests/Runtime/production_runtime_compose_001_test.php\n',
-                'php\ttests/Runtime/production_runtime_browser_001_test.php\n',
-            ],
-        }
-        for suite, digest in expected.items():
+        expected = {suite: [] for suite in ['unit', 'db', 'characterization', 'e2e']}
+        catalog = native.ROOT / 'tools/verification/suites.tsv'
+        for raw in catalog.read_text().splitlines():
+            if not raw or raw.startswith('#'):
+                continue
+            suite, runtime, path = raw.split('\t')
+            expected[suite].append(f'{runtime}\t{path}')
+        for suite, lines in expected.items():
             result = subprocess.run(['/bin/bash', str(native.ROOT / 'tools/verification/run.sh'),
-                                     'list', suite], cwd=native.ROOT, capture_output=True, text=True)
+                                     'list', suite], cwd=native.ROOT,
+                                    capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
-            output = result.stdout
-            if suite in added_by_suite:
-                for line in added_by_suite[suite]:
-                    self.assertEqual(1, output.splitlines().count(line.strip()), 'new contract runs in full harness')
-                    output = output.replace(line, '')
-            if suite == 'db':
-                e2e = 'php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php'
-                self.assertNotIn(e2e, output.splitlines(), 'E2E has only its own stage')
-                output = '\n'.join(sorted(output.splitlines() + [e2e])) + '\n'
-            self.assertEqual(digest, hashlib.sha256(output.encode()).hexdigest(), suite + ' baseline drift')
+            self.assertEqual(lines, result.stdout.splitlines())
+            self.assertEqual(len(lines), len(set(lines)), suite + ' duplicates')
+        self.assertEqual(sum(map(len, expected.values())), summary['tests'])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

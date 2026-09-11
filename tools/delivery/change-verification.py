@@ -12,6 +12,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ".quality-graph/verification-policy.json"
 CATEGORIES = {"unit", "integration", "e2e", "governance"}
+OBSERVABLE_DIMENSIONS = {
+    "stdout", "stderr", "exit_status", "retained_evidence", "filesystem_effects",
+    "idempotence", "failure_semantics", "caller_interoperability",
+    "worktree_concurrency_isolation", "verification_registry_synchronization",
+}
 
 
 def strict_object(pairs):
@@ -237,6 +242,56 @@ def canonical(value):
     return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":")) + "\n"
 
 
+def agent_harness_path(path):
+    patterns = (
+        "tools/delivery/*", "tools/verification/ci.py", "tools/verification/suites.tsv",
+        "tools/verification/categories.json", ".github/workflows/quality-graph.yml",
+        ".quality-graph/verification-policy.json", "tests/Verification/delivery_harness*_test.py",
+        "tests/Verification/*hardening*_test.py",
+        "tests/Verification/change_verification_001_test.py",
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Verification/verification_inventory_001_test.py", "specs/DELIVERY-HARNESS*.md",
+        "openspec/changes/*delivery-harness*/**", "openspec/changes/hardening/**",
+        "specs/HARDENING.md", "reviews/tests/*HARNESS*.md",
+        "reviews/code/*HARNESS*.md", "AGENTS.md", "docs/operations/current-delivery-goal.md",
+    )
+    return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
+
+
+def validate_observable_dimensions(acceptance, tests):
+    seam_kind = acceptance.get("seam_kind")
+    dimensions = acceptance.get("observable_dimensions")
+    if seam_kind is None and dimensions is None:
+        return None
+    if seam_kind not in {"public_cli", "infrastructure", "domain"}:
+        raise ValueError("invalid acceptance seam kind")
+    if seam_kind == "domain" and dimensions is None:
+        return {"seam_kind": seam_kind}
+    if not isinstance(dimensions, dict) or set(dimensions) != OBSERVABLE_DIMENSIONS:
+        raise ValueError("observable dimensions must be complete")
+    normalized = {}
+    for name in sorted(dimensions):
+        value = dimensions[name]
+        if not isinstance(value, dict):
+            raise ValueError("observable dimensions must be mappings")
+        status = value.get("status")
+        if status == "covered":
+            evidence = value.get("tests")
+            if (set(value) != {"status", "tests"} or not isinstance(evidence, list)
+                    or not evidence or len(evidence) != len(set(evidence))
+                    or not set(evidence) <= set(tests)):
+                raise ValueError("observable dimensions require mapped tests")
+            normalized[name] = {"status": status, "tests": sorted(evidence)}
+        elif status == "not_applicable":
+            reason = value.get("reason")
+            if set(value) != {"status", "reason"} or not isinstance(reason, str) or not reason.strip():
+                raise ValueError("observable dimensions require a reason")
+            normalized[name] = {"status": status, "reason": reason}
+        else:
+            raise ValueError("observable dimensions require covered or not_applicable status")
+    return {"seam_kind": seam_kind, "observable_dimensions": normalized}
+
+
 def build(base_ref, input_name):
     policy = load_json(POLICY)
     validate_policy(policy)
@@ -292,8 +347,9 @@ def build(base_ref, input_name):
     normalized_acceptances = []
     required = {"spec_id", "acceptance_id", "spec_path", "seam", "tests"}
     for acceptance in acceptances:
+        optional = {"gate3_expected", "seam_kind", "observable_dimensions"}
         if (not isinstance(acceptance, dict) or not required <= set(acceptance)
-                or not set(acceptance) <= required | {"gate3_expected"}):
+                or not set(acceptance) <= required | optional):
             raise ValueError("malformed acceptance mapping")
         identity = (acceptance["spec_id"], acceptance["acceptance_id"])
         if any(not isinstance(acceptance[key], str) or not acceptance[key] for key in ["spec_id", "acceptance_id", "spec_path", "seam"]):
@@ -322,6 +378,9 @@ def build(base_ref, input_name):
                 raise ValueError("invalid Gate 3 expected outcomes")
         normalized = {key: acceptance[key] for key in required}
         normalized["tests"] = sorted(tests)
+        dimension_contract = validate_observable_dimensions(acceptance, tests)
+        if dimension_contract:
+            normalized.update(dimension_contract)
         if expected is not None:
             normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
         normalized_acceptances.append(normalized)
@@ -344,7 +403,12 @@ def build(base_ref, input_name):
     for category in sorted(required_categories):
         for argv in policy["category_argv"].get(category, []):
             add(argv, "focused", f"required {category} category obligation")
-    add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
+    change_name = change["change"].casefold()
+    agent_change = "harness" in change_name or "hardening" in change_name
+    if agent_change and effective and all(agent_harness_path(path) for path in effective):
+        commands = [item for item in commands if item["rationale"] == "acceptance mapping"]
+    else:
+        add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
     if not commands:
         raise ValueError("empty verification plan")
     for item in commands:

@@ -1,5 +1,15 @@
 # FMonitor 2.0 constitution
 
+## Owner verification decision — 2026-09-11
+
+- Never run the canonical full `make test` / `make verify` suite locally during
+  delivery tasks. Use bounded focused/fast local checks and one parallel
+  exact-source GitHub CI run for the full matrix. A user must explicitly override
+  this decision before any future local full-suite run.
+- A local full run interrupted on 2026-09-11 demonstrated excessive serial cost
+  and an environment-only missing PDF renderer dependency; neither condition may
+  be treated as a reason to repeat the local full suite.
+
 ## Current priority
 
 - Before planning, implementing, testing or resuming, read

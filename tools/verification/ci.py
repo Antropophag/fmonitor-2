@@ -11,6 +11,19 @@ import importlib.util
 
 ROOT = Path(__file__).resolve().parents[2]
 CATEGORIES = ['unit', 'integration', 'e2e', 'governance']
+HARNESS_CORE = [
+    'tools/delivery/*', 'tests/Verification/delivery_harness*_test.py',
+    'tests/Verification/change_verification_001_test.py',
+    'tests/Verification/verification_ci_001_test.py',
+    'tests/Verification/verification_inventory_001_test.py',
+    'specs/DELIVERY-HARNESS*.md', 'openspec/changes/*delivery-harness*/**',
+]
+HARNESS_METADATA = HARNESS_CORE + [
+    '.github/workflows/quality-graph.yml', '.quality-graph/verification-policy.json',
+    'tools/verification/ci.py', 'tools/verification/suites.tsv',
+    'tools/verification/categories.json', 'reviews/tests/*HARNESS*.md',
+    'reviews/code/*HARNESS*.md', 'AGENTS.md', 'docs/operations/current-delivery-goal.md',
+]
 
 
 def harness_run(argv, environment):
@@ -79,9 +92,19 @@ def docs_only(path):
             and path != 'docs/development-process.md')
 
 
+def matches_any(path, patterns):
+    import fnmatch
+    return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
+
+
+def harness_only(paths):
+    return (bool(paths) and any(matches_any(path, HARNESS_CORE) for path in paths)
+            and all(matches_any(path, HARNESS_METADATA) for path in paths))
+
+
 def plan(base, event):
     files = []
-    reason = 'event-requires-full'
+    reason = 'event-requires-full'; mode = 'full'
     if event == 'pull_request':
         reason = 'unknown-base'
         if base:
@@ -92,10 +115,15 @@ def plan(base, event):
                                        resolved.stdout.strip() + '...HEAD', '--'], cwd=ROOT, capture_output=True)
                 if diff.returncode == 0:
                     files = [p.decode('utf-8', errors='surrogateescape') for p in diff.stdout.split(b'\0') if p]
-                    reason = 'docs-only' if files and all(docs_only(p) for p in files) else 'code-or-unknown-impact'
-    full = reason != 'docs-only'
+                    if files and all(docs_only(p) for p in files):
+                        reason = 'docs-only'; mode = 'docs'
+                    elif harness_only(files):
+                        reason = 'agent-harness-only'; mode = 'harness'
+                    else:
+                        reason = 'code-or-unknown-impact'; mode = 'full'
+    full = mode == 'full'
     print(json.dumps({'full': full, 'reason': reason, 'files': files,
-                      'categories': CATEGORIES if full else []}, ensure_ascii=True))
+                      'categories': CATEGORIES if full else [], 'mode': mode}, ensure_ascii=True))
 
 
 def category_items(category, shard=None):
@@ -106,6 +134,15 @@ def category_items(category, shard=None):
         offset = 0 if shard == '1/2' else 1
         items = sorted(items, key=lambda item: item[1])[offset::2]
     return items
+
+
+def verify_roster():
+    items = inventory()
+    counts = {category: 0 for category in CATEGORIES}
+    for category, _, _ in items:
+        counts[category] += 1
+    print(json.dumps({'status': 'GREEN', 'tests': len(items), 'categories': counts},
+                     ensure_ascii=True, sort_keys=True))
 
 
 def run_category(category, shard=None):
@@ -150,13 +187,23 @@ def run_category(category, shard=None):
     return 1 if failures else 0
 
 
-def aggregate(full, raw):
+def aggregate(full, raw, mode=None):
     results = json.loads(raw, object_pairs_hook=strict_object)
-    expected = dict.fromkeys(['plan', 'fast'], 'success')
-    expected.update(dict.fromkeys(CATEGORIES, 'success' if full == 'true' else 'skipped'))
+    if mode is None:
+        expected = dict.fromkeys(['plan', 'fast'], 'success')
+        expected.update(dict.fromkeys(CATEGORIES, 'success' if full == 'true' else 'skipped'))
+        if results != expected:
+            raise ValueError(f'incomplete or failed CI evidence: expected={expected}, actual={results}')
+        print('VERIFY_OK' if full == 'true' else 'DOCS_VERIFY_OK')
+        return
+    if mode not in {'full', 'docs', 'harness'}:
+        raise ValueError('invalid verification mode')
+    expected = {'plan': 'success', 'fast': 'skipped' if mode == 'harness' else 'success',
+                'harness': 'success' if mode == 'harness' else 'skipped'}
+    expected.update(dict.fromkeys(CATEGORIES, 'success' if mode == 'full' else 'skipped'))
     if results != expected:
         raise ValueError(f'incomplete or failed CI evidence: expected={expected}, actual={results}')
-    print('VERIFY_OK' if full == 'true' else 'DOCS_VERIFY_OK')
+    print({'full': 'VERIFY_OK', 'docs': 'DOCS_VERIFY_OK', 'harness': 'HARNESS_VERIFY_OK'}[mode])
 
 
 def main():
@@ -171,7 +218,9 @@ def main():
         category.add_argument('--shard', choices=['1/2', '2/2'])
     aggregation = commands.add_parser('aggregate')
     aggregation.add_argument('--full', choices=['true', 'false'], required=True)
+    aggregation.add_argument('--mode', choices=['full', 'docs', 'harness'])
     aggregation.add_argument('--results', required=True)
+    commands.add_parser('verify-roster')
     args = parser.parse_args()
     try:
         if args.command == 'plan':
@@ -181,8 +230,10 @@ def main():
                 print(f'{runtime}\t{path}')
         elif args.command == 'run':
             return run_category(args.category, args.shard)
+        elif args.command == 'aggregate':
+            aggregate(args.full, args.results, args.mode)
         else:
-            aggregate(args.full, args.results)
+            verify_roster()
     except (OSError, ValueError, TypeError) as error:
         print(f'SETUP_FAILURE: {error}', file=sys.stderr)
         return 1
