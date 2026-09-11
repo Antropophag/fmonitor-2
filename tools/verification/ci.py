@@ -108,6 +108,15 @@ def category_items(category, shard=None):
     return items
 
 
+def verify_roster():
+    items = inventory()
+    counts = {category: 0 for category in CATEGORIES}
+    for category, _, _ in items:
+        counts[category] += 1
+    print(json.dumps({'status': 'GREEN', 'tests': len(items), 'categories': counts},
+                     ensure_ascii=True, sort_keys=True))
+
+
 def run_category(category, shard=None):
     items = category_items(category, shard)
     if category in ['integration', 'e2e']:
@@ -172,6 +181,7 @@ def main():
     aggregation = commands.add_parser('aggregate')
     aggregation.add_argument('--full', choices=['true', 'false'], required=True)
     aggregation.add_argument('--results', required=True)
+    commands.add_parser('verify-roster')
     args = parser.parse_args()
     try:
         if args.command == 'plan':
@@ -181,8 +191,10 @@ def main():
                 print(f'{runtime}\t{path}')
         elif args.command == 'run':
             return run_category(args.category, args.shard)
-        else:
+        elif args.command == 'aggregate':
             aggregate(args.full, args.results)
+        else:
+            verify_roster()
     except (OSError, ValueError, TypeError) as error:
         print(f'SETUP_FAILURE: {error}', file=sys.stderr)
         return 1
