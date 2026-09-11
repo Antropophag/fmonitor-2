@@ -13,5 +13,5 @@
 ## 3. Gate 5 и поставка
 
 - [x] 3.1 Получить независимый Gate 5 `APPROVED` на exact source.
-- [ ] 3.2 Опубликовать PR и получить один full exact-source CI GREEN.
-- [ ] 3.3 Обновить append-only delivery/handoff state, не объявляя общий #76 или deployment завершёнными.
+- [x] 3.2 Опубликовать PR и получить один full exact-source CI GREEN.
+- [x] 3.3 Обновить append-only delivery/handoff state, не объявляя общий #76 или deployment завершёнными.

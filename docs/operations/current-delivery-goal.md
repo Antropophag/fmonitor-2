@@ -30,3 +30,7 @@ Imports/migrations, web runtime retirement, карточка монтажник�
 conflict/staleness rules, checklist/photo/offline, ОТиЗ и общий cutover остаются
 в следующих срезах №76. Рабочий rapid-pilot stand не переключается. Deployment
 требует отдельной авторизации после общего upgrade/rollback evidence.
+
+Кандидат поставки — PR #96; exact-source Quality Graph `34593480014` GREEN и
+`VERIFY_OK`. После merge этот документ становится checkpoint; следующий срез
+№76 начинать от актуального main, сохраняя историю failures/reviews этого среза.

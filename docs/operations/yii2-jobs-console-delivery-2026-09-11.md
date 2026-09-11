@@ -13,6 +13,14 @@ outbox deduplication, architecture and verification graph. Gate 5 record:
 `reviews/code/YII2-JOBS-CONSOLE-001.md`. Full CI, merge and deployment are not
 implied until recorded below.
 
+PR #96 candidate `0e0cbdfb` passed Quality Graph run `34593480014`: plan,
+fast, unit, both integration shards, e2e, governance, verify and quality-results
+all succeeded. Earlier runs `34591495897` and `34592086087` remain retained
+failure evidence: first exposed unsynchronized category inventory; second exposed
+the legacy startup expectation, split console-bootstrap assertion and stale
+Quality Graph renderer contract. Each complete inventory was corrected and
+independently reviewed before the next push.
+
 The pilot image now installs the locked Composer vendor and carries Yii config;
 production worker/scheduler/health no longer enter through rapid-pilot. Imports,
 migrations, web retirement, common cutover and deployment remain outside this slice.
