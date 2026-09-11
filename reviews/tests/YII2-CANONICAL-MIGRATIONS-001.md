@@ -646,3 +646,46 @@ approval.
 Gate 3 is **DELTA APPROVED** for this exact test-only correction. The previous
 Gate 5 approval does not automatically cover the new test bytes; any required
 final candidate/source reconciliation and exact-source CI remain root-owned.
+
+---
+
+# Independent Gate 3 CI-flake test-delta review — 2026-09-11
+
+- Reviewer: independently tasked agent `/root/gate3_migrations`
+- Failed CI run: `34613115068`
+- Prepared root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T151114Z-f691764404/package.json`
+- Exact source digest: `4702966713965f143d08fd15468a9d10101001338e086aa2b2d73c5e0f069f99`
+- Head commit plus retained test/mapping delta: `3bf59cd6bdfaf3278c576a950515dba39ee63b24`
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T151114Z-f691764404/snapshot/source.patch`
+- Snapshot patch SHA-256: `c57d223877aef65d145ceedd70a54b4b2a21e160b5fc26208b389c748144fcd6`
+- Verification plan SHA-256: `13decd114c7e3a0f3c1e2c8b713db0e9314898242b8f3c5c4f09590327d99a90`
+- Verdict: **DELTA APPROVED**
+
+The executable delta in
+`tests/InstallationProcess/pilot_http_auth_001_test.php:43` changes only the
+deadline after the test has observed ready resources and written the release
+marker: `microtime(true) + 10` becomes `microtime(true) + 30`. The independent
+pre-ready deadline remains 10 seconds, so a process that never opens its
+resources still fails promptly. The longer post-release bound accommodates the
+observed shared-runner scheduling delay without converting the wait to an
+unbounded or unconditional sleep.
+
+All substantive expectations remain unchanged and execute after the marker:
+the exact 404 response, empty reports, repeat-close no-op, disappearance of the
+request-scoped mysqli connection, clean child exit/stdout/stderr, and owned
+marker/process cleanup. A missing `resource-after` marker still fails after the
+bounded deadline; the delta does not mask a deadlock or resource leak.
+
+The verification input adds this adjacent test to the A6 focused inventory and
+expects GREEN without removing any existing mapped command. The exact-source
+record is
+`/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789139474994672000-9b589b54bd294135997293dd9082fe97.json`.
+It reports GREEN, exit 0, duration 11.414 seconds, source
+`4702966713965f143d08fd15468a9d10101001338e086aa2b2d73c5e0f069f99`
+and `source_drift=false`, with the expected PASS output and empty stderr. That
+duration independently supports the diagnosed fixed-10-second scheduling flake.
+
+Fixture remains recorded as `UNKNOWN` and is not treated as full CI or
+deployment approval. Gate 3 is **DELTA APPROVED** for this bounded test-only
+stabilization; final source reconciliation and a new exact-source CI result
+remain root-owned.
