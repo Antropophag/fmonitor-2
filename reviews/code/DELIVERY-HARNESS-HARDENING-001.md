@@ -27,3 +27,16 @@ architecture guard have exact-source GREEN retained records, and no remaining
 specification, security, isolation, roster, compatibility or CI-strictness finding
 remains. Later owner documentation prohibiting local full runs does not change the
 reviewed production implementation or approved test bytes.
+
+## Product/agent boundary rereview
+
+- Reviewed commit: `3377691d`.
+- Reviewed source: `87b136bf8458037815e9880cf1bcb68e7eb1561cce9b16706d009072f0c1e68f`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T092427Z-25797a8c82/package.json`.
+- Verdict: `APPROVED`.
+
+The corrected candidate removes agent tests from product registries, keeps mixed
+or product diffs fail-closed on the product route, supplies a six-command bounded
+entry point and harness-only workflow route, and contains six exact-source GREEN
+mapped records. No product DB, PDF, runtime, migration or E2E execution is required
+as evidence for issue #90.
