@@ -15,3 +15,15 @@
 The final-byte Gate 3 restart is now recorded in the test review. A fresh exact-source
 Gate 5 package must include all five mapped GREEN records plus architecture GREEN;
 approval is not inferred from the earlier review.
+
+## Fresh rereview
+
+- Reviewed source: `f9812a9ccaa4c9024e64a0ac2422df3c55d0780a10e00850c05e9841dbfc7d31`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T075813Z-a9167c458e/package.json`.
+- Verdict: `APPROVED`.
+
+The final-byte Gate 3 approval is present, all six mapped commands including the
+architecture guard have exact-source GREEN retained records, and no remaining
+specification, security, isolation, roster, compatibility or CI-strictness finding
+remains. Later owner documentation prohibiting local full runs does not change the
+reviewed production implementation or approved test bytes.

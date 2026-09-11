@@ -21,5 +21,5 @@
 ## 4. Интеграция и Done
 
 - [x] 4.1 Запустить через delivery harness все focused hardening tests и релевантные fast/governance/verification suites; сохранить exact-source records и отдельно перечислить фактические GREEN, INTENDED_RED и любые deferred checks.
-- [ ] 4.2 Получить независимый Gate 5 review spec, approved tests, implementation diff и evidence; устранить findings и сохранить `APPROVED` record в `reviews/code/`.
+- [x] 4.2 Получить независимый Gate 5 review spec, approved tests, implementation diff и evidence; устранить findings и сохранить `APPROVED` record в `reviews/code/`.
 - [ ] 4.3 Выполнить canonical `make test`/CI для точного publish candidate согласно verification matrix, подтвердить отсутствие ослабления полного CI и закрыть Done только когда 14/14 задач, OpenSpec strict validation и exact-source CI GREEN.
