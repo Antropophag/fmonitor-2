@@ -9,6 +9,7 @@
     ,"tools/delivery/compose.yaml.in"
     ,"tools/delivery/Dockerfile.pilot.in"
     ,"Dockerfile"
+    ,"tools/verification/categories.json"
   ],
   "acceptances": [
     {

@@ -362,5 +362,7 @@
   "tests/Yii2/yii2_documentary_concurrency_001_test.php": "integration",
   "tests/Yii2/yii2_documentary_browser_001_test.php": "e2e",
   "tests/Yii2/yii2_installer_directory_http_001_test.php": "integration",
-  "tests/Yii2/yii2_installer_directory_browser_001_test.php": "e2e"
+  "tests/Yii2/yii2_installer_directory_browser_001_test.php": "e2e",
+  "tests/Yii2/yii2_jobs_console_001_test.php": "unit",
+  "tests/Yii2/yii2_jobs_console_db_001_test.php": "integration"
 }

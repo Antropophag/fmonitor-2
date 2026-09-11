@@ -73,3 +73,24 @@ All eight mapped checks are GREEN against committed source `aa80513cb0dacdf0a63b
 - `php tests/Jobs/outbox_delivery_lifecycle_001_test.php` — `1789123991353972000-2d00cbfca9da4dd8ba981f6acc1af427`
 
 Gate 5 remains approved for commit `fc2c7992baac1c342ce4e1d36549b47c16e4f607`. This appended review record is the only post-commit byte created by this comparison. Full CI, PR/merge, deployment and stand cutover remain separate and `UNKNOWN`.
+
+---
+
+## Post-Gate 5 CI policy delta review — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Scope: only `tools/verification/categories.json` and the corresponding planned-path binding in `openspec/changes/yii2-jobs-console/verification-input.json`; production and test bytes are unchanged and excluded from this delta review
+- Reviewed exact source digest: `36affbeb73195d4c2fcf3bdeb3be75f1ebebbbdbdc57d9752a7f8f037fc6ce5d`
+- Failed full CI inventory: run `34591495897`; every category failure was attributed to the absent explicit mappings for the two already-reviewed tests
+- Verdict: `CI_POLICY_DELTA APPROVED`
+
+### Findings
+
+None. `tests/Yii2/yii2_jobs_console_001_test.php` is correctly classified as `unit`, matching its existing `unit` suite registration and its bounded filesystem/CLI/Compose-configuration checks. `tests/Yii2/yii2_jobs_console_db_001_test.php` is correctly classified as `integration`, matching its existing `db` suite registration and isolated MariaDB-backed subprocess behavior. Each test appears exactly once in the explicit category map, and adding `tools/verification/categories.json` to the change's planned paths correctly makes this policy mutation part of the generated verification boundary. JSON syntax and inventory synchronization are valid; no category is skipped, duplicated or weakened.
+
+### Evidence
+
+- `python3 tests/Verification/verification_ci_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789124449442843000-d1b659b33d4145f08b358c2787c08129.json`; exact source `36affbeb73195d4c2fcf3bdeb3be75f1ebebbbdbdc57d9752a7f8f037fc6ce5d`, no drift. Its 16 checks include complete/disjoint category partitioning, stable integration shards, invalid-mapping fail-closed behavior and real composition uniqueness.
+- `python3 tests/Verification/verification_inventory_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789124449442833000-cefd65ab2bc446dd9804429031c068ef.json`; same exact source, no drift. Its 16 checks include explicit membership, unknown-file rejection, category execution and repository baseline inventory.
+
+This approval covers only the two-file CI policy correction. It preserves the earlier Gate 5 production approval but does not convert failed CI run `34591495897` into GREEN. A new full exact-source CI run remains required; merge, deployment and stand cutover remain `UNKNOWN`.
