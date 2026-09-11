@@ -10,6 +10,13 @@
     ,"tools/delivery/Dockerfile.pilot.in"
     ,"Dockerfile"
     ,"tools/verification/categories.json"
+    ,"tests/InstallationProcess/pilot_jobs_startup_001_test.php"
+    ,"tests/Runtime/yii2_runtime_001_test.py"
+    ,"quality-graph.yml"
+    ,".github/workflows/quality-graph.yml"
+    ,".quality-graph/current-ci-manifest.json"
+    ,"tools/delivery/render-current-quality-graph.py"
+    ,"tests/Verification/quality_graph_current_workflow_001_test.py"
   ],
   "acceptances": [
     {

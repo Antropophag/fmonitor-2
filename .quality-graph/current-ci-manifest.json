@@ -7,7 +7,7 @@
       ]
     },
     "defaultBranch": "main",
-    "graphDigest": "ed77954b8e7e5aa796e0384c741919ba3e3b74813e65e9dd4e99c643422c4b56",
+    "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
     "graphVersion": 0,
     "labels": {
       "enabled": true,
@@ -206,7 +206,7 @@
           "path": ".quality-graph/reports/verify.json"
         },
         "step": {
-          "run": "python3 tools/verification/ci.py aggregate --full \"$FULL\" --results \"$RESULTS\""
+          "run": "python3 tools/verification/ci.py aggregate --full \"$FULL\" --mode \"$MODE\" --results \"$RESULTS\""
         },
         "title": "verify"
       }
@@ -231,12 +231,12 @@
   },
   "fileSha256": {
     ".github/workflows/quality-graph-publish.yml": "b97ec4c135f3a62184eba237507d00bab2a3a7b59c21cbce28000ea048ace263",
-    ".github/workflows/quality-graph.yml": "b0e033ae55b8522c8b3fe02d10d337728d35c90efaacf7aad3c53ceb7f7f1503",
-    "quality-graph.yml": "282eae6d6aa3476020136e3ab9ade7437fe2bc7df992103ccbb1e77404d05abc",
+    ".github/workflows/quality-graph.yml": "afa221a797bc5490d3baf4c5179f9967b75b034fb70e34d0e4051abecfc53b0a",
+    "quality-graph.yml": "f8b54f7a22f4ea297a9e0d7d0170d0a842917d7120f1a4723f32ad3d59ae2dc8",
     "tools/delivery/quality-graph-preflight.py": "a33b227522d91db9a0f5f6a6bea0744df688f3e11ba614a45a7b7ee1b87ab23a",
     "tools/delivery/quality-graph-report.py": "8cee33501b7a3a82c205c07afce5c818630e2002d0fe4c9797ff3af0c281754b"
   },
-  "graphDigest": "ed77954b8e7e5aa796e0384c741919ba3e3b74813e65e9dd4e99c643422c4b56",
+  "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
   "schemaVersion": 1,
-  "selfDigest": "6783354789b1a843f8ac05214ad19b9e30026f57a02fc008aade80cd3bf0f23e"
+  "selfDigest": "56b2ae4d67042f91fdb2db0437134f332d81f945cd873d6a3150ef43f503189c"
 }

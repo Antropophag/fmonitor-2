@@ -94,3 +94,40 @@ None. `tests/Yii2/yii2_jobs_console_001_test.php` is correctly classified as `un
 - `python3 tests/Verification/verification_inventory_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789124449442833000-cefd65ab2bc446dd9804429031c068ef.json`; same exact source, no drift. Its 16 checks include explicit membership, unknown-file rejection, category execution and repository baseline inventory.
 
 This approval covers only the two-file CI policy correction. It preserves the earlier Gate 5 production approval but does not convert failed CI run `34591495897` into GREEN. A new full exact-source CI run remains required; merge, deployment and stand cutover remain `UNKNOWN`.
+
+---
+
+## Complete CI correction tooling-delta review — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Scope: `quality-graph.yml`, `tools/delivery/render-current-quality-graph.py`, generated `.github/workflows/quality-graph.yml`, generated `.quality-graph/current-ci-manifest.json`, and verification-input path bindings; production Jobs code is unchanged
+- Reviewed exact source digest: `749b9df2c0ff0ea6ecc6a809e89a89815754649bfabd593ebb9081497025d495`
+- CI failure inventory: run `34592086087`
+- Tooling verdict: `CI_TOOLING_DELTA APPROVED`
+- Overall delivery status: blocked on the companion Gate 3 test-sensitivity finding; this tooling verdict does not waive it
+
+### Findings
+
+None in the tooling delta. The graph now passes plan mode to the fail-closed aggregate command, preserving full/results inputs. The renderer makes `quality-results` depend on `harness` and explicitly suppresses it when plan mode is `harness`, preventing a second/reporting path from interpreting intentionally skipped category jobs as publishable results. The generated workflow carries the exact renderer output; manifest graph digest, boundary file hashes and self-digest are synchronized. Verification input binds all changed tests, graph declaration, renderer, generated workflow and generated manifest.
+
+The startup-oracle expectations and Yii lifecycle-source correction accurately follow the already approved production boundary. No production behavior, permissions, approval flags, category count, integration sharding, fail-closed aggregation or publisher authority is weakened. `git diff --check` passed. Direct renderer execution in this checkout lacked the optional `qg_github` module, so generated integrity is supported by the exact-source GREEN current-workflow test and its public drift checker rather than reported as a local renderer command success.
+
+### Evidence
+
+- Startup oracle GREEN: `1789125378097115000-7e807893173d489e8fd060d60fa6eb99`
+- Yii runtime lifecycle GREEN: `1789125379772668000-8b0a2aec635847b3b1ab5614c9ad7495`
+- Generated graph/workflow/manifest validation GREEN: `1789125380849879000-6dbe6f4b2df54a56a5e4303ff0a2ae81`
+- CI selection/aggregation GREEN: `1789125381869405000-baf8e2dfb82a408487941a2037ac40f6`
+- Verification inventory GREEN: `1789125410109900000-6b39dcc93eae4bd29c5bacd139e51926`
+
+All records are exact source `749b9df2c0ff0ea6ecc6a809e89a89815754649bfabd593ebb9081497025d495` with no drift. The failed CI run remains historical failure evidence, not GREEN. A new full exact-source CI run is required after the companion test correction and independent rereview.
+
+---
+
+## CI tooling approval confirmation — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Exact source after companion test correction: `bbc0e1b3c692aee2f0e2c33bb6e8e47aea9f6cfcd9a2a9e85b8959f6756741a0`
+- Verdict: `CI_TOOLING_DELTA APPROVED`
+
+The only change since the prior tooling approval is the independently reviewed test assertion for the already implemented harness-mode guard. No graph declaration, renderer, generated workflow/manifest, production code or runtime test byte changed. Exact-source record `1789125539453626000-9db9c708d74d471e896eb4571a16b971` is GREEN and closes the companion Gate 3 sensitivity blocker. The complete CI correction delta is therefore approved for a new full exact-source CI run; earlier failed runs remain failures, and merge/deployment remain `UNKNOWN`.

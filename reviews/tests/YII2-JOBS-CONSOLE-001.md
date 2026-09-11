@@ -194,6 +194,51 @@ The full prior Gate 3 behavior matrix remains approved for this corrected exact 
 
 ---
 
+## Post-Gate 5 CI correction test-delta review — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Scope: changed expectations in `tests/InstallationProcess/pilot_jobs_startup_001_test.php`, `tests/Runtime/yii2_runtime_001_test.py`, and `tests/Verification/quality_graph_current_workflow_001_test.py`; production Yii/Jobs tests and implementation remain unchanged
+- Reviewed exact source digest: `749b9df2c0ff0ea6ecc6a809e89a89815754649bfabd593ebb9081497025d495`
+- CI failure inventory: run `34592086087`
+- Verdict: `CHANGES_REQUESTED`
+
+### Finding
+
+1. **HIGH — The workflow test does not assert the essential harness-mode publication guard.** Locations: `tools/delivery/render-current-quality-graph.py:65`; `tests/Verification/quality_graph_current_workflow_001_test.py:67-83`. The correction changes `quality-results.if` to include `needs.plan.outputs.mode != 'harness'` and adds `harness` to `needs`, but the test asserts only `always()`, pull-request event and the new dependency list. Because drift validation deliberately treats the renderer as authority, the renderer and generated workflow can regress together by dropping the mode predicate; all current assertions and generated-hash checks would still pass, and `quality-results` would again run during harness mode against skipped category results. Correction: assert the exact harness exclusion (at minimum `needs.plan.outputs.mode != 'harness'`) within the `quality-results` block, alongside the dependency assertion, then rerun the focused workflow test on the rebound source.
+
+### Corrected expectations confirmed
+
+- The startup test now expects the exact approved Yii worker/scheduler entrypoints and health command while retaining signal, grace, stale-readiness and runtime lifecycle assertions; it does not weaken behavior.
+- Adding `bin/fmonitor2-yii.php` to the Yii lifecycle source set makes the existing `yii\\console\\Application` ownership assertion observe the real delegated bootstrap rather than the thin `bin/yii` wrapper.
+- The aggregate command assertion correctly requires both `--mode "$MODE"` and the existing full/results inputs.
+
+### Evidence
+
+The changed startup, runtime and current-workflow tests are exact-source GREEN in records `1789125378097115000-7e807893173d489e8fd060d60fa6eb99`, `1789125379772668000-8b0a2aec635847b3b1ab5614c9ad7495`, and `1789125380849879000-6dbe6f4b2df54a56a5e4303ff0a2ae81`. Verification CI and inventory are GREEN in records `1789125381869405000-baf8e2dfb82a408487941a2037ac40f6` and `1789125410109900000-6b39dcc93eae4bd29c5bacd139e51926`. All five records match source `749b9df2c0ff0ea6ecc6a809e89a89815754649bfabd593ebb9081497025d495` at start/end with no drift. GREEN does not close the missing sensitivity assertion above.
+
+### Required change
+
+Add the one exact harness-mode exclusion assertion and submit the rebound test delta for focused Gate 3 rereview. No other test changes are requested.
+
+---
+
+## CI workflow test-sensitivity rereview — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Scope: sole correction in `tests/Verification/quality_graph_current_workflow_001_test.py`
+- Exact source digest: `bbc0e1b3c692aee2f0e2c33bb6e8e47aea9f6cfcd9a2a9e85b8959f6756741a0`
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The `quality-results`-scoped assertion now explicitly requires `needs.plan.outputs.mode != 'harness'` alongside the harness dependency. A renderer/generated-workflow regression that republishes skipped category outcomes during harness mode is therefore observable even if both generated artifacts drift together. The aggregate-mode and all prior reporting, permissions, node-count and artifact expectations remain intact.
+
+### Evidence
+
+`python3 tests/Verification/quality_graph_current_workflow_001_test.py` is GREEN on the exact source with no drift: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789125539453626000-9db9c708d74d471e896eb4571a16b971.json` (5 tests, 0 failures). The sole prior Gate 3 finding is resolved; no further test changes are required for this CI correction delta.
+
+---
+
 ## Gate 3 rereview v5 — 2026-09-11
 
 - Reviewer: `/root/gate3_yii2_jobs_console`
