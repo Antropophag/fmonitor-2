@@ -37,3 +37,15 @@ The aggregate conclusion is derived from the real wrapper return code, timeout
 retains exact raw `-SIGTERM` provenance beside normalized exit `124`, the snapshot
 hash matches its manifest, and both intended REDs are attributable to the missing
 schema/roster behavior. Gate 4 may proceed without changing approved expectations.
+
+## Final-byte Gate 3 restart after Gate 5 finding
+
+- Reviewed pre-implementation source: `bb1fdcf9642f96fd9eac0411e61098b9e311e3547714dabf3ea48c77ead359e7`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T074922Z-2138ddb24f/package.json`.
+- Final hardening test SHA-256: `e3450ee339dde5bdaf1b4acadf21ec739e14f63044045a5cf4f9e8a88392b73a`.
+- Final mutation test SHA-256: `66b519785eb91575487a31c2980afe2fad31e369663a1fee89be63f9aa797f28`.
+- Verdict: `APPROVED`.
+
+The final test bytes reproduce healthy RED for missing dimensions/roster behavior,
+retain mapped GREEN regressions, cover R1–R5 through public seams, and exercise all
+seven declared mutations. This approval supersedes the earlier changed-test gap.
