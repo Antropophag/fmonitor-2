@@ -40,3 +40,15 @@ or product diffs fail-closed on the product route, supplies a six-command bounde
 entry point and harness-only workflow route, and contains six exact-source GREEN
 mapped records. No product DB, PDF, runtime, migration or E2E execution is required
 as evidence for issue #90.
+
+## Bounded CI portability rereview
+
+- Reviewed commit: `1140fd3f`.
+- Reviewer verdict: `APPROVED`.
+- Exact-source GitHub run: `34585102114`.
+
+The private temporary `rg` fallback is created only when the host lacks the binary,
+is used only as an unexecuted inventory fixture target, requires no network/install,
+and is removed automatically. The bounded run completed with `plan` PASS (5s),
+`harness` PASS (59s), `verify` PASS (5s); fast, unit, integration, e2e, governance
+and quality-results were SKIPPED.

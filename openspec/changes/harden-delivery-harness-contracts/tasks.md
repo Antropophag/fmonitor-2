@@ -22,4 +22,4 @@
 
 - [x] 4.1 Запустить через delivery harness только bounded agent-cycle tests и roster consistency check; сохранить exact-source records и доказать отсутствие product DB/PDF/runtime/E2E команд.
 - [x] 4.2 Получить независимый Gate 5 rereview обновлённых spec, approved tests, implementation diff и bounded evidence; устранить findings и сохранить `APPROVED` record в `reviews/code/`.
-- [ ] 4.3 Выполнить отдельную bounded exact-source CI/fast проверку harness без product full matrix; закрыть Done только когда 14/14 задач, OpenSpec strict validation и этот check GREEN.
+- [x] 4.3 Выполнить отдельную bounded exact-source CI/fast проверку harness без product full matrix; закрыть Done только когда 14/14 задач, OpenSpec strict validation и этот check GREEN.
