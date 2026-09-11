@@ -77,7 +77,7 @@ migrate:
 	FMONITOR_DB_NAME="$${FMONITOR_TEST_DB_NAME:-fmonitor2_test}" \
 	FMONITOR_DB_USER="$${FMONITOR_TEST_DB_USER:-fmonitor2_test}" \
 	FMONITOR_DB_PASSWORD="$${FMONITOR_TEST_DB_PASSWORD:-fmonitor2_test_local}" \
-	FMONITOR_PROCESS_TABLE_PREFIX= php bin/fmonitor2-migrate.php
+	FMONITOR_PROCESS_TABLE_PREFIX= php bin/yii schema-migrate/run --interactive=0
 
 unit-test:
 	@bash tools/verification/run.sh unit

@@ -174,8 +174,10 @@ MAKE);
     hcmWrite($bin . '/php', <<<'SH'
 #!/bin/sh
 set -eu
-[ "$#" -eq 1 ]
-[ "$1" = bin/fmonitor2-migrate.php ]
+[ "$#" -eq 3 ]
+[ "$1" = bin/yii ]
+[ "$2" = schema-migrate/run ]
+[ "$3" = --interactive=0 ]
 [ "${FMONITOR_DB_HOST:-}" = 127.0.0.1 ]
 [ "${FMONITOR_DB_PORT:-}" = 23306 ]
 [ "${FMONITOR_DB_NAME:-}" = fmonitor2_test ]
