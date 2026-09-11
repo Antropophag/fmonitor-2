@@ -24,6 +24,7 @@
       "spec_path": "specs/DELIVERY-HARNESS-HARDENING-001.md",
       "seam": "delivery CLI, hooks and canonical verification composition",
       "tests": [
+        "tests/Verification/architecture_guard_001_test.py",
         "tests/Verification/change_verification_001_test.py",
         "tests/Verification/delivery_harness_001_test.py",
         "tests/Verification/delivery_harness_hardening_001_test.py",
@@ -31,6 +32,7 @@
         "tests/Verification/verification_ci_001_test.py"
       ],
       "gate3_expected": {
+        "tests/Verification/architecture_guard_001_test.py": "GREEN",
         "tests/Verification/change_verification_001_test.py": "GREEN",
         "tests/Verification/delivery_harness_001_test.py": "GREEN",
         "tests/Verification/delivery_harness_hardening_001_test.py": "INTENDED_RED",
