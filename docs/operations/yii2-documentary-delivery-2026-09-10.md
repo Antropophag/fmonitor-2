@@ -39,3 +39,16 @@ Root просмотрел desktop/mobile из browser evidence; механиче
 ## Исправленный состав CI
 
 A7 test-alignment и verification-only Gate5 APPROVED: corrected source `dc9ac4f7174279fb066b193ce4df5d59998332e5f2f2a7ef0dadd3b8ff270db0`, package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260910T194801Z-2e5dcfb59e/`. CI contract16/16 GREEN1789069633889502000-afff3f2d89e148ef8363f4cd2c54b92a. Единственное изменение исполняемого test-кода — добавлен ожидаемый documentary browser member; production bytes совпадают с первым кандидатом7aea9393. После snapshot добавлены только review/этот delivery appendix. Новый полный CI обязателен для correction commit.
+
+## Поставка
+
+Исправленный exact commit `47bb6b438d667ef807ff273b9efa4577e8780bd6`
+прошёл полный Quality Graph CI
+[34522776165](https://github.com/Antropophag/fmonitor-2/actions/runs/34522776165):
+plan, fast, unit, обе Integration shards, e2e, governance, verify,
+quality-results и итоговый Quality Graph — SUCCESS. PR #91 merged
+2026-09-10 20:04:57 UTC как
+`aa4d20f30edb4b5e9c7de7abad8ac2d016ec4952`.
+
+Документарный срез завершён. Общий #76, старый рабочий stand и cutover не
+завершены этим merge; следующий bounded slice — `yii2-installer-directory`.

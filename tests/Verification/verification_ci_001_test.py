@@ -414,6 +414,7 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Yii2/yii2_preopening_package_001_test.py',
             'php\ttests/Yii2/yii2_inspection_browser_001_test.php',
             'php\ttests/Yii2/yii2_documentary_browser_001_test.php',
+            'php\ttests/Yii2/yii2_installer_directory_browser_001_test.php',
         ], e2e.stdout.splitlines())
 
 

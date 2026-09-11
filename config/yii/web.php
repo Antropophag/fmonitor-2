@@ -46,7 +46,12 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'accessChecker' => 'canonicalAccess',
         ],
         'response' => [
-            'on beforeSend' => WebResponse::closeAndSecure(...),
+            'on beforeSend' => static function ($event): void {
+                WebResponse::closeAndSecure($event);
+                if ($event->sender->statusCode === 503) {
+                    $event->sender->headers->set('Retry-After', '60');
+                }
+            },
             'on afterPrepare' => WebResponse::head(...),
         ],
         'errorHandler' => ['class' => SafeErrorHandler::class],
@@ -63,6 +68,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
                 'GET,HEAD pilot/objects' => 'object-queue/index',
+                'GET,HEAD pilot/installers' => 'installer-directory/index',
+                'pilot/installers' => 'installer-directory/index',
                 'GET,HEAD pilot/construction-control' => 'checklist/queue',
                 'GET,HEAD pilot/objects/<id:[1-9]\\d*>/checklist' => 'checklist/view',
                 'GET,HEAD pilot/construction-control/objects/<id:[1-9]\\d*>/checklist' => 'checklist/control',
