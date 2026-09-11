@@ -104,7 +104,7 @@ foreach (array_keys($explicit) as $missing) {
 }
 
 assertSameValue(true, (bool) preg_match('/\bmigrate:/i', $compose), 'compose exposes a separate migration service');
-assertSameValue(true, str_contains($compose, 'bin/fmonitor2-migrate.php'), 'migration service invokes the canonical deployment entrypoint');
+assertSameValue(true, str_contains($compose, 'bin/yii') && str_contains($compose, 'schema-migrate/run'), 'migration service invokes the canonical Yii deployment entrypoint');
 assertSameValue(true, (bool) preg_match('/(?:restart:\s*["\']?no|profiles?:)/i', $compose), 'migration command is a one-shot deployment operation');
 assertSameValue(true, (bool) preg_match('/(?:volume|type:\s*volume)/i', $compose), 'runtime declares persistent state independently from the image');
 assertSameValue(true, str_contains($compose, 'FMONITOR_SESSION_STATE_ROOT'), 'runtime explicitly mounts and configures durable authenticated session state');

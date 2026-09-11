@@ -564,3 +564,39 @@ All other mapped tests are GREEN on the same source:
 Fixture identity remains recorded as `UNKNOWN`; it is not treated as final
 environmental approval. This verdict approves only the lifecycle-closure test
 delta. Production correction and Gate 5 rereview remain pending.
+
+---
+
+# Independent Gate 3 post-CI test-delta review — 2026-09-11
+
+- Reviewer: independently tasked agent `/root/gate3_migrations`
+- Frozen package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T141950Z-89cb7cf9e8/package.json`
+- Exact source digest: `e7e6e0af7c0980161c808819d348a53effdfa1773f8c908bf244bbc70cc513e1`
+- Base commit: `a567818d8355c719047f9396f044a4b4a3b442d3`
+- Snapshot patch SHA-256: `31411b1e27301e50e3ac820f83074146b4ab778921d63eb8acb5c740338525b9`
+- Delta patch SHA-256: `60b8798bc1fb38cb567356d3b91c4ba0d02d21ff87cc619523886923fd9d755d`
+- Verification plan SHA-256: `a36625bdb9d7c1f12131fc0850d7b3046c5d1e3c10fd1b553671b3c1eda06f19`
+- Verdict: **DELTA APPROVED**
+
+The post-CI test corrections are limited to adjacent expectations exposed by
+failed run `34606125088`:
+
+- `tests/Runtime/production_runtime_contract_001_test.php:107` now expects the
+  already normative production migration caller `bin/yii schema-migrate/run`
+  instead of the retired direct legacy script. The separate one-shot and
+  persistent-runtime assertions are unchanged.
+- `tests/Verification/verification_ci_001_test.py:418` adds the registered
+  canonical migration package test to the independently enumerated E2E suite.
+  It does not remove or relax any prior inventory item.
+
+Both expectations are direct consequences of approved A5 and the registered
+verification category. Their exact-source records are GREEN:
+
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136338841543000-7fc45c9e766e4458b65e1a2d449159cd.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136339532281000-2c1e5272d94a4ea4bf2649cbbee72ce0.json`
+
+The remaining approved migration and adjacent tests are also GREEN on the same
+source, including the jobs console contract. No normative expected value,
+public seam, rejection, durability, redaction or lifecycle assertion changed.
+Gate 3 remains approved for this delta. This is not a Gate 5 or CI-success
+decision.

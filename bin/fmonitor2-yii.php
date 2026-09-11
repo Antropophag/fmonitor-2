@@ -12,6 +12,7 @@ require dirname(__DIR__) . '/vendor/yiisoft/yii2/Yii.php';
 try {
     return (new yii\console\Application(require dirname(__DIR__) . '/config/yii/console.php'))->run();
 } catch (\Throwable) {
-    echo "{\"ok\":false,\"reason\":\"CONFIGURATION_INVALID\"}\n";
+    $field = in_array('schema-migrate/run', $argv, true) ? 'reason' : 'error';
+    echo json_encode(['ok' => false, $field => 'CONFIGURATION_INVALID'], JSON_THROW_ON_ERROR), "\n";
     return 64;
 }

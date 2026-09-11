@@ -34,6 +34,7 @@ COPY app ./app
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
     && composer check-platform-reqs --no-dev
 COPY bin ./bin
+COPY config ./config
 COPY public ./public
 COPY rapid-pilot ./rapid-pilot
 COPY deploy/runtime ./deploy/runtime

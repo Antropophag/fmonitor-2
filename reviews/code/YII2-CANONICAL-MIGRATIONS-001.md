@@ -207,3 +207,80 @@ Gate 5 is **APPROVED** for exact source
 G5-1 and G5-2 are closed, and no new findings were identified. This approval
 authorizes progression to the separately required exact-source GitHub CI and
 publication workflow; it does not itself approve CI, deployment or merge.
+
+---
+
+# Independent Gate 5 post-CI correction review — 2026-09-11
+
+- Reviewer: independently tasked agent `/root/gate3_migrations`
+- Correction author: root/executor correction after CI failure inventory
+- Failed prior run: `34606125088`
+- Frozen package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T141950Z-89cb7cf9e8/package.json`
+- Exact source digest: `e7e6e0af7c0980161c808819d348a53effdfa1773f8c908bf244bbc70cc513e1`
+- Base commit: `a567818d8355c719047f9396f044a4b4a3b442d3`
+- Snapshot patch SHA-256: `31411b1e27301e50e3ac820f83074146b4ab778921d63eb8acb5c740338525b9`
+- Correction delta SHA-256: `60b8798bc1fb38cb567356d3b91c4ba0d02d21ff87cc619523886923fd9d755d`
+- Verification plan SHA-256: `a36625bdb9d7c1f12131fc0850d7b3046c5d1e3c10fd1b553671b3c1eda06f19`
+- Gate 3 test-delta verdict: `DELTA APPROVED`
+- Verdict: **APPROVED**
+
+## Correction assessment
+
+`tools/delivery/Dockerfile.runtime.in:37-41` now copies `config/`, and the
+generated `deploy/runtime/Dockerfile` matches that template. This closes the
+generated-source drift reported by the failed CI run while preserving the
+previously reviewed built-image Composer/Yii/mysqli and transitive-load
+contract.
+
+`bin/fmonitor2-yii.php:12-18` preserves the shared bootstrap while selecting the
+historical closed failure envelope by route family: migration invocations emit
+`{"ok":false,"reason":"CONFIGURATION_INVALID"}`, whereas jobs and other Yii
+console invocations retain `{"ok":false,"error":"CONFIGURATION_INVALID"}`.
+Both forms remain fixed JSON with no exception, environment, path or stack detail
+and exit 64. The exact migration CLI matrix and the independent jobs console
+contract are GREEN, including malformed migration argument forms and existing
+jobs behavior. No command owns a second bootstrap or application seam.
+
+The production-runtime caller expectation and E2E inventory corrections received
+the Gate 3 delta approval appended above. The verification input now includes
+the template and four adjacent regression paths, mapping them under A6 without
+removing any prior acceptance or category. The OpenSpec Gate 5 task reflects the
+earlier independent approval; publication and CI-success tasks remain open.
+
+## Exact-source evidence
+
+All sixteen mapped focused records report GREEN, exit 0,
+`source_drift=false`, and exact source
+`e7e6e0af7c0980161c808819d348a53effdfa1773f8c908bf244bbc70cc513e1`:
+
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136154391583000-c19d3383ca1b46b582e4c521a45c4b50.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136164912690000-d674b7124f8043a6b85acd56086589db.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136167415311000-89e0f337ae7d4110a6555a594b8c1fdc.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136169498067000-b6db02c2b89e4638b6fb2816fc436394.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136174370740000-73c33a25f2d04749a1bc244f36b5d12d.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136176702049000-18dc6f87737a48e99a0c37eccce7bfd5.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136211708410000-a915a18bffd44d8d8e146e4d175d6ef4.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136212389798000-42ad2fa97d4046418ed90eca4aa47781.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136246633342000-761774dde49643c2ac38bb82b8b92772.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136291294873000-8ed9df7893be4eb4b0f708e4e4e96306.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136308009866000-e023fd49450047ba8bd2608fe25c8d44.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136310498808000-1f1dd8449ba14083a8584acb3b0238f3.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136328540850000-f0de6d7f1ab4469faf8e99febe36bf13.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136338841543000-7fc45c9e766e4458b65e1a2d449159cd.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136339532281000-2c1e5272d94a4ea4bf2649cbbee72ce0.json`
+- `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789136369963997000-45808535879049a298d9daef052fc0df.json`
+
+This inventory covers the canonical package/load boundary, harness stage, CLI,
+alias, concurrency, full schema oracle, lifecycle owner, legacy compatibility,
+jobs Compose, verification planner, runtime storage, architecture, generated
+development setup, production runtime contract, E2E inventory and jobs console.
+No prior Gate 5 behavior regressed. Fixture remains recorded as `UNKNOWN` and is
+not treated as CI or deployment approval.
+
+## Post-CI correction decision
+
+Gate 5 is **APPROVED** for exact source
+`e7e6e0af7c0980161c808819d348a53effdfa1773f8c908bf244bbc70cc513e1`.
+The known failed-run causes are corrected with no new findings. A new
+exact-source full GitHub CI result is still required; the failed run is not
+superseded by this review, and CI, deployment and merge are not approved here.
