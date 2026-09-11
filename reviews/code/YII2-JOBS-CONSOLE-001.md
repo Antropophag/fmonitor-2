@@ -40,3 +40,36 @@ All eight mapped records are GREEN on exact source `94901a00df86be6d92f0da646289
 - `php tests/Jobs/outbox_delivery_lifecycle_001_test.php` — record `1789123663286709000-d4a341c77e8542728bbc14bed2ffe9b7`
 
 Gate 5 is approved for this exact source. Full exact-source CI, PR/merge, deployment, stand cutover and completion of issue #76 remain separate and `UNKNOWN`; this verdict does not imply them.
+
+---
+
+## Committed-candidate comparison — 2026-09-11
+
+- Reviewer: `/root/gate3_yii2_jobs_console`
+- Reviewed commit: `fc2c7992baac1c342ce4e1d36549b47c16e4f607`
+- Exact committed source digest: `aa80513cb0dacdf0a63b0096e9c06d06c35781a597e2c407a614ca7f77e6c62c`
+- Reconstructible source: base commit `fc2c7992baac1c342ce4e1d36549b47c16e4f607` plus empty snapshot patch `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T105326Z-a2a83ea653/snapshot/source.patch`, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Comparison delta: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T105326Z-a2a83ea653/delta.patch`, SHA-256 `c642be02f5d11269c374ee9a8b9af3af58e36b6f19dfedd38a2abd9f70873c4a`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T105326Z-a2a83ea653/package.json`, SHA-256 `e8b437912cb00c0f17ae4dfa73cfd4f6bba16b05d0d8ad766e89bfd9d1cc6532`
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T105326Z-a2a83ea653/verification-plan.json`, SHA-256 `a6c935f32bff38c1b69c9dffae9980cd1858265fb3b94fc9956d50798547afce`
+- Prior approved Gate 5 snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260911T104901Z-4a6e70beee/snapshot`, source `94901a00df86be6d92f0da6462894c8548559584a5ea30386930e373f8d9764b`
+- Verdict: `APPROVED`
+
+### Findings
+
+None. Comparing the generated-plan content bindings confirms that all production files, tests, templates, generated files, normative specification and verification inventory are byte-identical to the previously approved Gate 5 candidate, including the final heartbeat fixture correction. The only changed or added bound bytes are the Gate 5 review record, delivery record and OpenSpec Gate 5 task-state update. The verification-input binding remains coherent with the committed planned-path set. These metadata changes accurately preserve authorship, exact-source review history, deferred CI/deployment state and the bounded scope; they do not alter runtime or test behavior.
+
+### Exact-source evidence
+
+All eight mapped checks are GREEN against committed source `aa80513cb0dacdf0a63b0096e9c06d06c35781a597e2c407a614ca7f77e6c62c`, with identical start/end source and no drift:
+
+- `php tests/Yii2/yii2_jobs_console_001_test.php` — `1789123982783088000-53d9d6ba3b3d4e95a186a5e8590f6c34`
+- `php tests/Yii2/yii2_jobs_console_db_001_test.php` — `1789123984992826000-c228ea7b42db4eea85d794758cfaaaf8`
+- `python3 tests/Deployment/pilot_jobs_compose_001_test.py` — `1789123900734966000-f42a50755a2a4e8d92f921b3f0c211ad`
+- `php tests/Jobs/jobs_runtime_cli_001_test.php` — `1789123987438514000-caa4a6c53c844cbdb2f0e538bbf381a2`
+- `php tests/Jobs/worker_signal_runtime_001_test.php` — `1789123988935517000-127d3917bc9b4aa6ad55562c99babe88`
+- `php tests/Jobs/worker_lease_loss_process_001_test.php` — `1789123900787260000-fcb9c8629e254902a88298f84a3e43ce`
+- `php tests/Jobs/jobs_runtime_workforce_retry_cli_001_test.php` — `1789123989962581000-39c052ec9f5a4935b33aef28405c43bf`
+- `php tests/Jobs/outbox_delivery_lifecycle_001_test.php` — `1789123991353972000-2d00cbfca9da4dd8ba981f6acc1af427`
+
+Gate 5 remains approved for commit `fc2c7992baac1c342ce4e1d36549b47c16e4f607`. This appended review record is the only post-commit byte created by this comparison. Full CI, PR/merge, deployment and stand cutover remain separate and `UNKNOWN`.
