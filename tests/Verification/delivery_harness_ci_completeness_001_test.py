@@ -232,6 +232,55 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertEqual([synthetic, 'unit', 'mariadb'],
                          [mismatch[0]['path'], mismatch[0]['category'], mismatch[0]['dependency']])
 
+    def test_preflight_observes_services_and_dependencies_instead_of_copying_profile(self):
+        repo, base, _, environment = self.fixture_repo()
+        synthetic = 'tests/Verification/synthetic_observed_environment_test.py'
+        (repo / synthetic).write_text('import ci_missing_dependency\nprint("PASS")\n')
+        with (repo / 'tools/verification/suites.tsv').open('a') as stream:
+            stream.write(f'db\tpython3\t{synthetic}\n')
+        categories = json.loads((repo / 'tools/verification/categories.json').read_text())
+        categories[synthetic] = 'integration'
+        (repo / 'tools/verification/categories.json').write_text(json.dumps(categories, sort_keys=True) + '\n')
+        policy_path = repo / '.quality-graph/verification-policy.json'
+        policy = json.loads(policy_path.read_text())
+        policy['declared_python_imports'] = sorted(set(policy.get('declared_python_imports', [])) |
+                                                   {'ci_missing_dependency'})
+        policy['service_probes'] = {
+            'mariadb': ['python3', '-c', 'raise SystemExit(17)'],
+            'docker': ['python3', '-c', 'raise SystemExit(18)'],
+            'browser': ['python3', '-c', 'raise SystemExit(19)'],
+        }
+        policy_path.write_text(json.dumps(policy, sort_keys=True) + '\n')
+        input_name = self.write_input(repo, test=synthetic)
+        planned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, planned.returncode, planned.stderr)
+        blocked = self.command(repo, environment, sys.executable,
+                               'tools/delivery/change-verification.py', 'preflight', '--plan', plan_name)
+        self.assertNotEqual(0, blocked.returncode,
+                            'INTENDED_RED required services/dependencies were copied, not observed')
+        value = json.loads(blocked.stdout)
+        self.assertFalse(value['publication_ready'])
+        self.assertEqual({'SERVICE_UNAVAILABLE', 'DEPENDENCY_UNAVAILABLE'},
+                         {item['code'] for item in value['failures']})
+        command = next(item for item in value['evidence'] if item['argv'][-1] == synthetic)
+        self.assertNotIn('mariadb', command['available_services'])
+        self.assertFalse(command['profile_compatible'])
+        self.assertEqual('probe', command['observation_method'])
+
+        (repo / 'ci_missing_dependency.py').write_text('READY = True\n')
+        policy['service_probes']['mariadb'] = ['python3', '-c', 'raise SystemExit(0)']
+        policy_path.write_text(json.dumps(policy, sort_keys=True) + '\n')
+        replanned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, replanned.returncode, replanned.stderr)
+        observed = self.command(repo, environment, sys.executable,
+                                'tools/delivery/change-verification.py', 'preflight', '--plan', plan_name)
+        self.assertEqual(0, observed.returncode, observed.stdout + observed.stderr)
+        observed_value = json.loads(observed.stdout)
+        command = next(item for item in observed_value['evidence'] if item['argv'][-1] == synthetic)
+        self.assertIn('mariadb', command['available_services'])
+        self.assertIn('ci_missing_dependency', command['available_dependencies']['python'])
+        self.assertTrue(command['profile_compatible'])
+
     def test_source_identity_mutations_and_repeat_preflight_are_observable(self):
         repo, base, _, environment = self.fixture_repo()
         def state():
