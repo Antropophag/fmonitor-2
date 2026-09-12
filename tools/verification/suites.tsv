@@ -375,6 +375,7 @@ unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php
 db	php	tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php
 db	php	tests/Yii2/yii2_canonical_migrations_alias_001_test.php
 e2e	python3	tests/Deployment/yii2_canonical_migrations_package_001_test.py
+characterization	python3	tests/Verification/delivery_harness_ci_completeness_001_test.py
 db	php	tests/Yii2/yii2_workforce_sync_console_001_test.php
 db	php	tests/Yii2/yii2_workforce_sync_db_001_test.php
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php
