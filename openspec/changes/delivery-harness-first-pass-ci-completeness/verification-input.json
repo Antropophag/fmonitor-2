@@ -18,6 +18,7 @@
     "tools/delivery/change-verification.py",
     "tools/delivery/harness.py",
     "tools/delivery/harness_context.py",
+    "tools/delivery/probe-environment.py",
     "tools/delivery/verify.py",
     "tools/verification/categories.json",
     "tools/verification/ci.py",

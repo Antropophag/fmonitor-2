@@ -95,6 +95,11 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertIn('mariadb', profiles['integration']['services'])
         prerequisites = policy.get('test_prerequisites', {})
         self.assertEqual(['mariadb'], prerequisites['tests/Yii2/yii2_imports_workforce_001_test.php']['services'])
+        probes = policy.get('service_probes', {})
+        for service in ['mariadb', 'browser', 'container']:
+            self.assertEqual(['python3', 'tools/delivery/probe-environment.py', 'service', service],
+                             probes.get(service),
+                             f'INTENDED_RED shipped {service} probe is not an observation')
 
     def test_plan_commands_are_typed_and_environment_bound(self):
         planner = load('ci_complete_planner', 'tools/delivery/change-verification.py')
@@ -267,7 +272,9 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertFalse(command['profile_compatible'])
         self.assertEqual('probe', command['observation_method'])
 
-        (repo / 'ci_missing_dependency.py').write_text('READY = True\n')
+        third_party = repo.parent / 'site-packages'; third_party.mkdir()
+        (third_party / 'ci_missing_dependency.py').write_text('READY = True\n')
+        environment['PYTHONPATH'] = str(third_party)
         policy['service_probes']['mariadb'] = ['python3', '-c', 'raise SystemExit(0)']
         policy_path.write_text(json.dumps(policy, sort_keys=True) + '\n')
         replanned, _, plan_name = self.plan(repo, environment, base, input_name)
@@ -280,6 +287,35 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertIn('mariadb', command['available_services'])
         self.assertIn('ci_missing_dependency', command['available_dependencies']['python'])
         self.assertTrue(command['profile_compatible'])
+
+    def test_shipped_service_probes_do_not_claim_absent_services(self):
+        policy = json.loads((ROOT / '.quality-graph/verification-policy.json').read_text())
+        tools = {'mariadb': ('mysqladmin', 'ping'), 'container': ('docker', 'info'),
+                 'browser': ('node', 'playwright')}
+        with tempfile.TemporaryDirectory(prefix='fmonitor-probe-tools-') as directory:
+            bindir = Path(directory)
+            for tool, _ in tools.values():
+                executable = bindir / tool
+                executable.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$FMONITOR_PROBE_TRACE"\nexit "$FMONITOR_PROBE_EXIT"\n')
+                executable.chmod(0o700)
+            for service, argv in policy.get('service_probes', {}).items():
+                with self.subTest(service=service):
+                    self.assertEqual(['python3', 'tools/delivery/probe-environment.py', 'service', service],
+                                     argv, f'INTENDED_RED {service} probe bypasses public observer')
+                    trace = bindir / f'{service}.trace'
+                    environment = dict(os.environ, PATH=str(bindir) + os.pathsep + os.environ['PATH'],
+                                       FMONITOR_PROBE_TRACE=str(trace), FMONITOR_PROBE_EXIT='0')
+                    available = subprocess.run(argv, cwd=ROOT, env=environment, text=True,
+                                               capture_output=True, timeout=10)
+                    self.assertEqual(0, available.returncode, available.stdout + available.stderr)
+                    self.assertIn(f'{service}=AVAILABLE', available.stdout)
+                    self.assertTrue(trace.is_file(), f'{service} probe did not invoke {tools[service][0]}')
+                    self.assertIn(tools[service][1], trace.read_text())
+                    environment['FMONITOR_PROBE_EXIT'] = '23'
+                    unavailable = subprocess.run(argv, cwd=ROOT, env=environment, text=True,
+                                                 capture_output=True, timeout=10)
+                    self.assertNotEqual(0, unavailable.returncode)
+                    self.assertIn(f'{service}=UNAVAILABLE', unavailable.stdout + unavailable.stderr)
 
     def test_source_identity_mutations_and_repeat_preflight_are_observable(self):
         repo, base, _, environment = self.fixture_repo()
