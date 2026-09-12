@@ -29,4 +29,4 @@
 - [x] 5.1 Выполнить generated bounded harness/verification plan и fast checks, подтвердить отсутствие локального `make test`/`make verify` и отсутствие product DB/PDF/E2E исполнения вне явно моделируемых synthetic environments.
 - [x] 5.2 Выполнить `openspec validate delivery-harness-first-pass-ci-completeness --strict` и проверить, что все tasks/acceptances и exact executable source отражены в package.
 - [x] 5.3 Получить независимый Gate 5 `APPROVED` на complete candidate и bounded evidence; изменения tests после review возвращают Gate 2/3.
-- [ ] 5.4 Только после Gate 5 подготовить publication package, открыть PR и выполнить один exact-head GitHub Quality Graph; Done требует GREEN/VERIFY_OK, сохранённых исторических failures и отсутствия merge/deployment без отдельной авторизации.
+- [x] 5.4 Только после Gate 5 подготовить publication package, открыть PR и выполнить один exact-head GitHub Quality Graph; Done требует GREEN/VERIFY_OK, сохранённых исторических failures и отсутствия merge/deployment без отдельной авторизации.
