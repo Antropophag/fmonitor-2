@@ -177,3 +177,38 @@ Run `34709119564` remains historical RED. Fresh exact-source CI for this correct
 `APPROVED`
 
 Gate 5 passes for final corrected candidate `303c758b3dcc50b7118a3d9ac04955d394d50691fdb907df8aa9cf160fdfc972` / executable source `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`. Publication and a fresh authoritative exact-source CI remain required.
+
+---
+
+## Final latest-main integrated Gate 5 rereview — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T181813Z-41c8bc3902/package.json`.
+- Integrated clean commit: `5edcb398890d3bb7484c2e19587ecca4ef3ebd45`, merging latest `origin/main` `b6fe81c3bec74a9dcfad54bc12f4b1063359ed6e` (PR #103 OTIZ and already merged PR #106).
+- Exact candidate source: `1ecf97e74bb0af0f73e628816502b843266cc2e5fbc0c61d9d4c3b29e22bd292`.
+- Exact executable source: `e15d4be8a69405ef8f52ce11aab286519624ea85d6edaf5a7143756d89300410`.
+- Verification plan SHA-256: `00983a4192452bd67c770903aabeb18de147010bf044a5afc1d26fdecf651be6`.
+- Clean snapshot: base commit `5edcb398890d3bb7484c2e19587ecca4ef3ebd45`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+### Findings
+
+No findings.
+
+### Integration assessment
+
+The only merge conflict was `tests/Verification/delivery_harness_ci_completeness_001_test.py`, where both sides contained the approved `.gitignore` fixture correction. The resolved file is byte-identical to latest main, including main's ordering, and has no PR diff. This preserves the governance correction without duplicating or rewriting it.
+
+The exact diff from latest `origin/main` contains only 15 #39 paths: the active-queue implementation/spec/OpenSpec/test and verification registrations, its independently approved browser-oracle delta, the #39 Gate 3/code review history, and the appended harness Gate 3 historical record. No OTIZ production, rapid adapter, route, runtime, deployment, Node-classifier, or governance-test implementation appears in the PR diff. PR #103 and #106 content is inherited byte-for-byte from main rather than redelivered by #39.
+
+The #39 production behavior is unchanged from all prior approvals: one indexed no-`pto_act` predicate is reused by `COUNT` and `SELECT` before page validation and `LIMIT/OFFSET`. Exact permission enforcement, read-only operation, append-only history, SQL safety/performance, activity ordering/latest engineer projection and server-side exclusion remain intact. The browser oracle continues to prove that documentary closeout is absent and cannot be resurrected by client controls.
+
+All 15 focused commands in the integrated package are GREEN. Every record starts and ends at candidate source `1ecf97e74bb0af0f73e628816502b843266cc2e5fbc0c61d9d4c3b29e22bd292`, reports `source_drift=false`, and binds executable source `e15d4be8a69405ef8f52ce11aab286519624ea85d6edaf5a7143756d89300410`. The evidence covers the #39 HTTP/browser acceptance, inherited queue boundaries/journey, schema/photo controls, verification CI/inventory, jobs composition, change verification, runtime storage and architecture guard.
+
+Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789236823160464000-ddfcd55b232d4a839553ea5d9902929f.json` is bound to the same source pair and reports `outcome=GREEN`, an empty failure inventory and `publication_ready=true`. `git diff --check origin/main..HEAD` is clean and the package snapshot hash matches its manifest.
+
+The GitHub PR currently points to an older published head until this integrated commit/review is published. Fresh authoritative exact-source CI has not yet qualified this candidate; harness CI and deployment remain `UNKNOWN` and are not treated as GREEN, merge approval, or deployment authorization.
+
+### Final verdict
+
+`APPROVED`
+
+Gate 5 passes for the latest-main integrated candidate `1ecf97e74bb0af0f73e628816502b843266cc2e5fbc0c61d9d4c3b29e22bd292` / executable source `e15d4be8a69405ef8f52ce11aab286519624ea85d6edaf5a7143756d89300410`. Publication and fresh exact-source CI remain required.
