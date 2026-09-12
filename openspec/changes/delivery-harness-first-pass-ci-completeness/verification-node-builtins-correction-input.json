@@ -1,0 +1,34 @@
+{
+  "change": "delivery-harness-node-builtins-correction",
+  "planned_paths": [
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/specs/delivery/first-pass-ci-completeness/spec.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/tasks.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/verification-node-builtins-correction-input.json",
+    "reviews/code/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "reviews/tests/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "specs/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "tests/Verification/delivery_harness_ci_completeness_001_test.py",
+    "tools/delivery/change-verification.py"
+  ],
+  "acceptances": [{
+    "spec_id": "DELIVERY-HARNESS-CI-COMPLETENESS-001",
+    "acceptance_id": "R2-canonical-node-builtins",
+    "spec_path": "specs/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "seam": "change-verification preflight over an isolated Node test fixture",
+    "seam_kind": "infrastructure",
+    "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"],
+    "gate3_expected": {"tests/Verification/delivery_harness_ci_completeness_001_test.py": "INTENDED_RED"},
+    "observable_dimensions": {
+      "stdout": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "stderr": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "exit_status": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "retained_evidence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "idempotence": {"status": "not_applicable", "reason": "Read-only classification does not write durable state."},
+      "failure_semantics": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+      "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Classification does not coordinate worktrees."},
+      "verification_registry_synchronization": {"status": "not_applicable", "reason": "Verification registry composition is unchanged."}
+    }
+  }]
+}

@@ -189,3 +189,58 @@ The correction input maps the single acceptance to the full test file and record
 `APPROVED`
 
 The R2 repository-local sibling import correction may proceed to Gate 4 against exact executable source `c8132788ece5a553951547f212c71f6fd9c31397993b59c17933a78746f7c322`. Any change to this specification/test expectation requires a new Gate 2/3 review; Gate 5, exact-source CI, merge and deployment remain separate decisions.
+
+## Rereview 2026-09-12 — canonical Node.js built-ins correction
+
+- Independent reviewer: separately tasked agent `/root/issue39_gate3`, acting as Gate 3 reviewer for the second issue #99 correction; authored none of the reviewed specification delta, correction input, test, or implementation.
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T171920Z-182bdb82ea/package.json`.
+- Exact reviewed source: reconstructible snapshot over base `6680decf97d26e3fefa154fe2b509c81aa2d47f5`, candidate source `33bb6357f9fd2f1d11af25667390f0a646a19346b922ce1d1665ac67c92b1800`, executable source `7ecc364b4f9676859cc5811191c3abc2d6a33756a36b54ebf6d9ec311b014ed0`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T171920Z-182bdb82ea/snapshot/source.patch`, SHA-256 `735224a1c692d323c92b888f6db3e359f0fddb83515b37d9f16a090a93ed66e8` (matches `snapshot/manifest.json`).
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T171920Z-182bdb82ea/verification-plan.json`, SHA-256 `184980256a00d61970af4266ae99ba387f7758acaed581cb6a649bda7de14040`.
+- Correction binding: `openspec/changes/delivery-harness-first-pass-ci-completeness/verification-node-builtins-correction-input.json`, acceptance `R2-canonical-node-builtins`.
+
+### Finding
+
+1. **HIGH — the test does not preserve the normative bare Node package rejection boundary.** Locations: `specs/DELIVERY-HARNESS-CI-COMPLETENESS-001.md` R2 Node clarification; OpenSpec scenario `Node.js built-in import`; `tests/Verification/delivery_harness_ci_completeness_001_test.py:318-342`. The new fixture proves only that `node:fs` and `node:module` must be admitted. No test in the suite imports a bare Node package and requires `UNDECLARED_TEST_DEPENDENCY`. Existing negative import coverage is Python-only (`yaml` and `ci_missing_dependency`) and cannot catch a language-specific implementation that skips all Node dependency validation. Such an implementation would make the new test GREEN and leave all 15 prior tests GREEN while violating the explicit requirement that undeclared bare Node packages remain blocked. Correction: in the same isolated repository/public preflight test, add a distinct `.mjs` fixture importing a bare package absent from `declared_node_dependencies`; require nonzero admission, `publication_ready=false`, and an exact failure naming the test path, unit category, dependency, and `UNDECLARED_TEST_DEPENDENCY`. Keep the canonical `node:` positive assertions unchanged, then capture a fresh exact-source intended RED and regenerate the reviewer package.
+
+### Evidence assessment
+
+The positive half is otherwise well formed. It registers an isolated real Node command, imports two independently chosen canonical built-ins using ESM syntax, executes plan/preflight through the public serialized seam, and requires exit zero, `publication_ready=true`, and no failures. The built-in modules are provided by Node itself, so the expected result is independent of the planned classifier implementation.
+
+Full-suite record `1789233512380743000-2945d72dccc64d96b59fc81823bdee82` is source-bound at start and end to candidate `33bb6357f9fd2f1d11af25667390f0a646a19346b922ce1d1665ac67c92b1800` and executable source `7ecc364b4f9676859cc5811191c3abc2d6a33756a36b54ebf6d9ec311b014ed0`, with `source_drift=false` and a concrete fixture digest. Fifteen existing tests are GREEN and the only failure is the new positive fixture, where preflight incorrectly reports both `node:fs` and `node:module` as `UNDECLARED_TEST_DEPENDENCY`; there are no setup errors. This is valid intended RED for built-in admission, but it cannot compensate for the absent Node-specific negative assertion.
+
+The specification and OpenSpec delta are coherent, the correction is tooling-only and appropriately excludes product/database/deployment behavior, `openspec validate delivery-harness-first-pass-ci-completeness --strict` is GREEN, `git diff --check` is clean, and package hashes match. Harness reports CI and deployment `UNKNOWN`; neither is treated as GREEN or approval.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 is blocked. Add the bounded bare-package negative case, retain the current canonical `node:` positive case, capture fresh source-bound intended RED, and resubmit one complete correction package for independent Gate 3 review.
+
+## Rereview 2026-09-12 — canonical Node.js built-ins correction, negative-boundary fix
+
+- Correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172152Z-9ed0c9b545/package.json`.
+- Corrected exact source: reconstructible snapshot over base `6680decf97d26e3fefa154fe2b509c81aa2d47f5`, candidate source `bc948be037f46f33fef179e1d3cadcbd6a33e65351e25308e4bcee46a04bbdae`, executable source `530aa06ed8cea126650e40077520bca4c2bcb02c979387c42878ff48f16298bd`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172152Z-9ed0c9b545/snapshot/source.patch`, SHA-256 `dc83a0f83380b34a2a1e0c6dd656e239724cae277e02ef182d6b33bc48b7a2d8` (matches `snapshot/manifest.json`).
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172152Z-9ed0c9b545/verification-plan.json`, SHA-256 `9d701efcc9fe98727c8e51c0c3c81b509d69458d7f7dad1663f92d53690e386b`.
+- Independence is unchanged: this reviewer authored none of the corrected specification, input, test, or intended RED evidence.
+
+### Prior finding resolution
+
+The prior HIGH finding is resolved. `test_preflight_rejects_undeclared_bare_node_package` creates a separate isolated `.mjs` command importing `ci-missing-node-package`, leaves `declared_node_dependencies` unchanged, registers it as unit, and invokes the same public plan/preflight seam as the positive test. It requires a nonzero exit, `publication_ready=false`, and exactly one `UNDECLARED_TEST_DEPENDENCY` tuple containing the synthetic path, bare dependency name, and `unit` category. This fails if implementation admits all Node imports or exempts bare specifiers along with canonical `node:` built-ins.
+
+The positive `node:fs`/`node:module` case remains unchanged and complementary: it requires zero exit, publication readiness, and an empty failure inventory. Together the pair distinguishes the exact normative boundary rather than prescribing a particular parser or classifier implementation.
+
+### Findings and evidence
+
+No new findings.
+
+Fresh full-suite record `1789233664319399000-28b831d230d748a68b31012bd15a564b` is `INTENDED_RED`, bound at start and end to candidate `bc948be037f46f33fef179e1d3cadcbd6a33e65351e25308e4bcee46a04bbdae` and executable source `530aa06ed8cea126650e40077520bca4c2bcb02c979387c42878ff48f16298bd`, with `source_drift=false` and a concrete fixture digest. Sixteen tests, including the new bare-package rejection, are GREEN. The sole failure is the unchanged positive built-in test, where current preflight reports `node:fs` and `node:module` as undeclared; there are zero errors and no unrelated failures. This is clean intended RED for the missing built-in classification.
+
+The spec/OpenSpec/input remain coherent and bounded to R2 Node dependency classification. `openspec validate delivery-harness-first-pass-ci-completeness --strict` is GREEN, `git diff --check` is clean, and snapshot/plan hashes match. CI and deployment remain `UNKNOWN` and are not treated as GREEN or authorization.
+
+### Correction verdict
+
+`APPROVED`
+
+Gate 4 may proceed for the canonical Node built-ins correction against exact executable source `530aa06ed8cea126650e40077520bca4c2bcb02c979387c42878ff48f16298bd`. Gate 5, exact-source CI, merge and deployment remain separate decisions; later expectation changes require a new Gate 2/3 review.
