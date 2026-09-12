@@ -57,3 +57,9 @@ Fresh evidence/package and the second independent verdict supersede the first ve
 - Source: `61189af91f9958358fe0b6564cdf932626bce0e4e614a43a34953fbd926a7d00`
 - Plan SHA-256: `3d64201a9a088cda285227376d08b60b1b181fdfc987b4ac1e3cc32ee3bb9080`
 - Verdict: `APPROVED`; no blocking findings. Gate 4 may proceed without changing approved expectations.
+
+## Final test-only delta review after Gate 4 fixture corrections
+
+- Reconstructed source on current `origin/main`: `f87aedf34f371c9a3a1efa1176a8e1ceb1ca5cac4c13c1ebe984447a2a53839a`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T140947Z-b43bef5b48/package.json`.
+- Verdict: `APPROVED`; no blocking findings. Production candidate was explicitly outside this verdict.
