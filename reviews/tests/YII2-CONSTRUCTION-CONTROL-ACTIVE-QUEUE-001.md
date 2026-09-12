@@ -89,3 +89,36 @@ Harness issue #99 currently cannot construct the standard current-source Gate 3 
 `APPROVED`
 
 The narrow repeat-GET test correction is approved for exact source `562e2924620ec0401558bda3aa12b22adc1fa2d327ebd15cb00f8f78a4f0416e`. This verdict does not approve the production implementation (Gate 5), CI, or deployment, and does not broaden beyond the reviewed assertion delta.
+
+---
+
+## Gate 3 post-CI browser-oracle delta review — 2026-09-12
+
+- Review scope: only the post-CI expectation delta in `tests/Yii2/inspection_browser.mjs` and its acceptance mapping in `openspec/changes/exclude-documentary-closure-from-construction-control/verification-input.json`; this reviewer authored neither.
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172943Z-dfe871c4ee/package.json`.
+- Exact reviewed source: committed base/head `b1d35f6d0bc6fae5fabf6b6fed505818c6a46454` plus reconstructible snapshot, candidate source `2d362e127a276241bfb09621a545f140889a6072001920a013ad5680ceec2258`, executable source `51f29917d20a143bc1806dbbd9eab190a4aedb055a754c773830f29f63f9b0ef`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172943Z-dfe871c4ee/snapshot/source.patch`, SHA-256 `6ef5e5e187f31bb57cd23e8066a52b87ba4ec1753b3b411c3559d6b6e26f1959` (matches `snapshot/manifest.json`).
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172943Z-dfe871c4ee/verification-plan.json`, SHA-256 `4d0bff52f3f45fec240eb05d05b90404d35f72d034744a8bbece366ad288dfad`.
+- Triggering CI: GitHub Actions run `34706862367`, exact commit `b1d35f6d0bc6fae5fabf6b6fed505818c6a46454`, overall `failure`.
+
+### Findings
+
+No findings in the reviewed browser-oracle delta.
+
+### Assessment
+
+The previous browser expectation contradicted the already approved normative rule by requiring documentary case 4514 to remain server-rendered and allowing the completed toggle to reveal it. The corrected assertions derive directly from `YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001`: exact initial server rows are `[4513,4512]`, 4514 is absent, mine/all still expose the active rows appropriate to those controls, the completed toggle cannot resurrect 4514, searching for excluded `QUEUE-4514` produces the empty state, and searching for active `QUEUE-4513` finds exactly one row. This is sensitive both to server-side leakage of documentary closeout and to accidental removal of the retained ownership/search controls. The production filter, normative specification and previously approved HTTP acceptance expectations are unchanged.
+
+The verification input now maps `active-queue-browser-controls` to the real browser wrapper `tests/Yii2/yii2_inspection_browser_001_test.php`, declares expected GREEN, and retains the HTTP/history acceptance separately. The wrapper executes the changed `.mjs` against the real Yii2 browser fixture, so the mapping reaches the changed oracle rather than a lexical substitute.
+
+All 15 generated focused commands are retained GREEN at candidate source `2d362e127a276241bfb09621a545f140889a6072001920a013ad5680ceec2258` and executable source `51f29917d20a143bc1806dbbd9eab190a4aedb055a754c773830f29f63f9b0ef`, each with `source_drift=false`. Records span IDs `1789234190867090000-94e00b66b4a44fcc8288cdaca2cb4eec` through `1789234405584218000-7d6dc23382b340a8acddb507732e34fd`. In particular, browser record `1789234198906063000-ac2406bb354a4dddb717c36105e90811` exits zero and reports `PASS: YII2-INSPECTION-JOURNEY-001 browser`; the active-queue HTTP, inspection journey/boundaries, schema, photo consumers, e2e composition, runtime, architecture, inventory and governance focused controls are also GREEN.
+
+The triggering CI inventory must be reported precisely. Run `34706862367` did contain the relevant e2e failure `tests/Yii2/yii2_inspection_browser_001_test.php` at `only-working queue sorted no activity first`, which this delta corrects. It also contained two distinct unrelated failures: governance `tests/Verification/delivery_harness_ci_completeness_001_test.py` (`evidence source does not match current source`) and integration shard 1 `tests/InstallationProcess/assignment_order_original_database_setup_001_test.php` (lock-wait witness false). Therefore that CI run remains RED and is not treated as exact-source qualification, even though those two failures are outside this browser-oracle delta review.
+
+Legacy verification plan v1 requires intended RED and cannot construct the standard reviewer package for this already-GREEN post-implementation correction. Consequently the supplied package is role `root`, has `approval=NOT_REVIEWED`, and embeds no evidence. These facts remain UNKNOWN/not approval. This independent narrow verdict instead relies on the reconstructible exact-source snapshot, the exact two-file diff, the triggering CI failure, and the separately retained source-bound GREEN records. A fresh exact-source full CI is still required after all CI findings are resolved.
+
+### Delta verdict
+
+`APPROVED`
+
+The browser-oracle test delta is approved for candidate source `2d362e127a276241bfb09621a545f140889a6072001920a013ad5680ceec2258`. This does not approve or green CI run `34706862367`, the two unrelated CI failures, merge, deployment, or any production change beyond the previously reviewed implementation.
