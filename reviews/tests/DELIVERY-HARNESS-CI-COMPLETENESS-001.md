@@ -138,3 +138,22 @@ The external `PYTHONPATH` correction is otherwise adequate: it prevents reposito
 ### Required changes
 
 Add deterministic positive and negative fixtures for each shipped probe. Provide controlled fake service dependencies/endpoints (for example PATH-injected executables or an explicit probe fixture seam) and assert AVAILABLE only in the positive fixture and UNAVAILABLE only in the negative fixture, including matching exit status and output. Do not rely on whatever services happen to exist on the reviewer machine. Capture a new exact-source intended RED and regenerate the Gate 3 package.
+
+## Rereview 2026-09-12 — deterministic shipped probes
+
+- Reviewed source: base `e1936f461f575dcfb7ce46baee12825b8772428a` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T145547Z-31136275f0/snapshot/source.patch`, SHA-256 `6388ba4565ea449fc694fc1153f48733b4cc8ab6d40d63a090ebcef6f0d80d9d`
+- Candidate source: `5306bb40a132b0e15f6fdb2637546525d21e86c4a3933d91f3b947f19cfd6bbe`
+- Executable source: `eedb7e3fda082e5e8de2688f5f0f78b7a74ede7ce1163925bc894e2ba59b1191`
+- Evidence: external record `1789224895769861000-8136ba31b83b498ca2ff153a8d897431`, typed acceptance `INTENDED_RED`, exit 1; five focused failures, zero errors
+- Prior finding disposition: resolved. Each shipped service probe now has deterministic positive and negative observations through PATH-injected fake tools, and the external `PYTHONPATH` dependency case remains covered.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The corrected probe test controls `mysqladmin`, `docker` and `node` independently, requires the public observer to invoke `ping`, `info` and `playwright` respectively, and verifies exit zero/`AVAILABLE` for a successful tool followed by nonzero/`UNAVAILABLE` for the same tool returning 23. It no longer trusts ambient machine state or the probe's outcome alone, so both an always-success and an always-unavailable implementation are detected. The Python positive fixture remains outside the repository and is discoverable only through injected `PYTHONPATH`, exercising interpreter resolution rather than repository-root coincidence.
+
+The retained intended RED is setup-correct: prior scenarios remain GREEN; the five reported failures arise from the current constant-success shipped policy and missing third-party Python resolution, with no errors or unrelated regression.
+
+### Required changes
+
+None. Gate 4 correction may proceed against exact executable source `eedb7e3fda082e5e8de2688f5f0f78b7a74ede7ce1163925bc894e2ba59b1191`. Any further specification or test change requires another independent Gate 3 review.
