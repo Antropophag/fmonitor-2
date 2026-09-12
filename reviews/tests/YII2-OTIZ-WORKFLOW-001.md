@@ -77,3 +77,12 @@ Fresh evidence/package and the second independent verdict supersede the first ve
 - Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T152311Z-7ad7e6490a/package.json`.
 - Evidence: 13/13 expected outcomes, including populated page-two active/historical reads, authenticated object/calendar fallback and the test-owned location-independent oracle.
 - Verdict: `APPROVED`; no blocking findings. Production implementation explicitly excluded.
+
+## PR #103 CI correction Gate 3 — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172112Z-7919ca80ea/package.json`.
+- Reconstructible snapshot: base `885a55f1ec1e36dca3ba4e52cd0013e5e5b32608`, patch SHA-256 `3af02fba6f495974148f5b11c7130186563c129c18dac74561d178c1a5f84347`; source `f0c173a8fdd93a7ec910a290ae69fe5d5f8b4892428e3398a2f8661e68c9da5d`, executable source `26c39028e9f1ce0853f1f8214335d19bcf0a24c8c956c40f00e9e4341d7ed623`.
+- Original CI `34706549891` is retained RED evidence for exactly five regression failures: jobs Compose keys, production Compose keys, real OTIZ DDL inventory, current v24 recovery prepare, and historical v22/v23 forward prepare. No fabricated current RED is claimed; this correction closes existing regression expectations and therefore maps the five tests to GREEN.
+- The reviewed tests retain exact outcomes and strengthen coverage of real `app/Otiz` owners, required Yii keys, nonempty Yii session bytes/modes, historical rows/AUTO_INCREMENT, explicit current-image prepare and replay no-op. The bounded restart poll still requires HTTP 200 and does not prepare or mutate state.
+- Evidence: all five mapped records in the reviewer package are `GREEN` with no source drift; preflight `1789233570809498000-c56c3427931a400aa27b493ce4caa03a` is `GREEN`.
+- Verdict: `APPROVED`; no findings.

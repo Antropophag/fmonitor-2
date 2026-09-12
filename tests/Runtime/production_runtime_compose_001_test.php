@@ -147,7 +147,14 @@ try {
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'exec', '-T', 'php', 'sh', '-c', 'test "$(id -u)" = 10001 && touch /home/fmonitor/.local/state/fmonitor2/runtime-restart-sentinel'], $environment, $root), 'runtime UID and persistent state write');
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'restart', 'php', 'web'], $environment, $root), 'runtime process restart');
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'exec', '-T', 'php', 'test', '-f', '/home/fmonitor/.local/state/fmonitor2/runtime-restart-sentinel'], $environment, $root), 'state survives process restart');
-    assertSameValue(200, runtimeHttp($port, '/health/ready')['status'], 'readiness recovers after process restart without migration/bootstrap');
+    // Compose restart returns before nginx necessarily accepts HTTP connections.
+    $restartDeadline = microtime(true) + 30;
+    do {
+        $restartedReadiness = @runtimeHttp($port, '/health/ready');
+        if ($restartedReadiness['status'] === 200) break;
+        usleep(100000);
+    } while (microtime(true) < $restartDeadline);
+    assertSameValue(200, $restartedReadiness['status'], 'readiness recovers after process restart without migration/bootstrap');
 
     $nginxFixture=tempnam(sys_get_temp_dir(),'fm2-nginx-drain-');if(!is_string($nginxFixture))throw new TestFailure('SETUP_FAILURE: nginx drain fixture');
     $nginxSource=file_get_contents($root.'/deploy/runtime/nginx.conf');$fixtureLocation="        location = /__runtime_nginx_drain {\n            include /etc/nginx/fastcgi_params;\n            fastcgi_param SCRIPT_FILENAME /tmp/runtime-nginx-drain.php;\n            fastcgi_param SCRIPT_NAME /__runtime_nginx_drain;\n            fastcgi_param HTTP_HOST \$http_host;\n            fastcgi_pass php:9000;\n        }\n\n";$nginxFixtureSource=str_replace(['pid /tmp/nginx.pid;','listen 8080;','        location / {'],['pid /tmp/nginx-drain.pid;','listen 8081;',$fixtureLocation.'        location / {'],(string)$nginxSource);file_put_contents($nginxFixture,$nginxFixtureSource,LOCK_EX);chmod($nginxFixture,0600);

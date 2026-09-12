@@ -1,4 +1,15 @@
-# Текущая цель — №76, workforce sync через Yii2 console
+# Текущая цель — PR #103 до merge
+
+Владелец 2026-09-12 поручил исправить PR #103 и довести его до merge.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`;
+change `yii2-otiz-workflow`, spec `YII2-OTIZ-WORKFLOW-001`.
+Пять CI regression failures исправлены в fixtures/runtime delivery sequence;
+история и evidence — [delivery record](yii2-otiz-workflow-delivery-2026-09-12.md).
+Фактические source/PR/CI получать через `python3 tools/delivery/harness.py state`.
+Следующий шаг: независимые correction Gates 3/5, один full exact-source CI,
+merge при GREEN. Deployment остаётся `UNKNOWN` и не входит в поручение.
+
+# Предыдущий указатель — №76, workforce sync через Yii2 console
 
 Владелец 2026-09-12 поручил автономно довести следующий не-OTIZ срез №76 до PR merge-ready. Рабочий checkout: `/Users/antropophag/code/fmonitor-2-yii2-workforce-sync-76`, branch `codex/yii2-workforce-sync-76-20260912`.
 
