@@ -1,0 +1,25 @@
+{
+  "change": "yii2-imports-workforce",
+  "planned_paths": [
+    "app/YiiRuntime/Commands/CaseImportController.php",
+    "app/YiiRuntime/CaseImportConsole.php",
+    "bin/fmonitor2-import-cases.php",
+    "bin/fmonitor2-yii.php",
+    "config/yii/console.php",
+    "tests/InstallationProcess/pilot_case_import_001_test.php",
+    "tests/Support/yii_case_import_test_entrypoint.php",
+    "tests/Support/YiiCaseImportThrowingOwner.php",
+    "tests/Yii2/yii2_imports_workforce_001_test.php",
+    "tests/Yii2/yii2_case_import_db_001_test.php",
+    "tests/Yii2/yii2_imports_workforce_ownership_001_test.php",
+    "tests/Deployment/yii2_imports_workforce_package_001_test.py",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A1","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"closed php bin/yii case-import/run transport","tests":["tests/Yii2/yii2_imports_workforce_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_imports_workforce_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A2","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"full PILOT-CASE-IMPORT-001 oracle redirected through Yii","tests":["tests/Yii2/yii2_case_import_db_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_case_import_db_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A3","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"single owner connection and compatibility alias","tests":["tests/Yii2/yii2_imports_workforce_ownership_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_imports_workforce_ownership_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A4","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"production package load closure and verification inventory","tests":["tests/Deployment/yii2_imports_workforce_package_001_test.py","tests/Verification/architecture_guard_001_test.py","tests/Verification/verification_ci_001_test.py"],"gate3_expected":{"tests/Deployment/yii2_imports_workforce_package_001_test.py":"INTENDED_RED","tests/Verification/architecture_guard_001_test.py":"GREEN","tests/Verification/verification_ci_001_test.py":"GREEN"}}
+  ]
+}

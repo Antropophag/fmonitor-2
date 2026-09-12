@@ -9,10 +9,16 @@ require dirname(__DIR__) . '/app/autoload.php';
 require dirname(__DIR__) . '/vendor/autoload.php';
 require dirname(__DIR__) . '/vendor/yiisoft/yii2/Yii.php';
 
+$GLOBALS['FMONITOR2_RAW_ARGV'] = $argv;
+if (($argv[1] ?? null) === 'case-import/run') {
+    $argv = [$argv[0], 'case-import/run', '--interactive=0'];
+    $_SERVER['argv'] = $argv;
+}
+
 try {
     return (new yii\console\Application(require dirname(__DIR__) . '/config/yii/console.php'))->run();
 } catch (\Throwable) {
-    $field = in_array('schema-migrate/run', $argv, true) ? 'reason' : 'error';
+    $field = count($argv) === 1 || in_array('schema-migrate/run', $argv, true) || in_array('case-import/run', $argv, true) ? 'reason' : 'error';
     echo json_encode(['ok' => false, $field => 'CONFIGURATION_INVALID'], JSON_THROW_ON_ERROR), "\n";
     return 64;
 }
