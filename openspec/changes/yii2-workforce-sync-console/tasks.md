@@ -13,4 +13,4 @@
 ## 3. Gate 5 и delivery
 
 - [x] 3.1 Независимый sol/low reviewer проверяет exact production diff и bounded evidence; verification: append-only code review содержит полный findings list и `APPROVED` либо точный correction scope.
-- [ ] 3.2 Root подтверждает reviewed bytes, task completeness и exact source, готовит PR через harness; verification: source/PR binding известен, один GitHub full CI запускается для кандидата, UNKNOWN не объявляется GREEN и deployment остаётся отдельным неавторизованным шагом.
+- [x] 3.2 Root подтверждает reviewed bytes, task completeness и exact source, готовит PR через harness; verification: source/PR binding известен, один GitHub full CI запускается для кандидата, UNKNOWN не объявляется GREEN и deployment остаётся отдельным неавторизованным шагом.
