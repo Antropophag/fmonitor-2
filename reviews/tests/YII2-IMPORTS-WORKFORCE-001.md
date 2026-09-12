@@ -125,3 +125,18 @@ The corrected candidate closes most prior findings: the full established oracle 
 All four mapped candidate tests independently produce intended RED at the absent controller/adapter/package guards. Both mapped governance tests are independently GREEN. No setup failure and no local full-suite run occurred.
 
 **Gate 3 verdict: REJECTED.** Gate 4 remains closed for these two complete-candidate omissions. Add the narrow assertions, capture a fresh exact source package, and request rereview. Task 1.3 remains unchecked; no reviewer package is prepared.
+
+## CI classification delta review — APPROVED, 2026-09-12
+
+- Reviewer: independent Codex reviewer `/root/gate3_imports_workforce`; authored neither the correction nor the test
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T100324Z-98cbc2e222/package.json`
+- Exact source: base/head `4b0af3d230725a5ff9377d474b7eab7b5efd9579` plus snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T100324Z-98cbc2e222/snapshot`, patch SHA-256 `e21fe310615c5d468c56f632e0a7b3325909f1975dac9478260b4a5391c5d4d8`, harness source `81785d0970d220c0303a0c8f83134c1cb41922aa4dfa364c810983180a1eafff`
+- Reviewed delta: only `tests/Yii2/yii2_imports_workforce_001_test.php` changes from `unit` to `integration` in `tools/verification/categories.json` and from `unit` to `db` in `tools/verification/suites.tsv`; specification, test and production bytes are unchanged
+
+### Complete findings
+
+None.
+
+The classification matches the executable boundary. The transport test's unknown-Throwable/redaction path connects to the prepared MariaDB service before injecting `YiiCaseImportThrowingOwner`; it therefore requires the DB fixture and cannot run reliably in the no-DB unit shard. The `integration` policy category and `db` executable suite route it to the existing MariaDB-backed shard without weakening or omitting the test. Independent focused checks are GREEN: `verification_ci_001_test.py` (16 cases) and `change_verification_001_test.py`. The reported integration/e2e evidence remains separate; no local full suite was run.
+
+**Gate 3 delta verdict: APPROVED.** The prior case-import Gate 3 approval remains valid with this classification-only correction. Gate 5/CI must review and validate the final committed source; UNKNOWN is not approval.

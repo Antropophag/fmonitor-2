@@ -72,3 +72,16 @@ The earlier missing-vendor failure and symlink-source-drift records remain retai
 ### Final verdict
 
 **APPROVED.** Gate 5 passes for the exact corrected executor package above. Task 3.1 is complete; root may prepare the merge-ready commit/PR and obtain one exact-source full CI run.
+
+## Gate 5 CI-classification delta review — APPROVED, 2026-09-12
+
+- Reviewer: independent Codex reviewer `/root/gate5_case_import_final`; authored neither the correction nor the tests
+- Reviewed production commit: `4b0af3d230725a5ff9377d474b7eab7b5efd9579`
+- Gate 3 delta package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T100324Z-98cbc2e222/package.json`
+- Pre-review harness source: `ce485d76fbbfb6181c72afa944d5f6792ef28ab7cbb213e7b84b53a169cf1f62`
+
+Complete findings: none. Since `4b0af3d2`, the reviewed functional delta only moves `tests/Yii2/yii2_imports_workforce_001_test.php` from policy category `unit` to `integration` and executable suite `unit` to `db`; the remaining change is the append-only independent Gate 3 approval record. Production, specification, OpenSpec verification input and executable/support test bytes are unchanged. The classification is correct because the test's unknown-`Throwable`/redaction path connects to the prepared MariaDB service before injecting the owner failure; the change preserves execution and all A1–A4 obligations rather than weakening coverage.
+
+Independent Standards and Spec axes both APPROVED with no findings. Bounded evidence is GREEN: verification inventory `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789207811884920000-72af1eae479240cdac538b119c2121f5.json`; change-verification graph `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789207811879290000-9ee5ace89e7c498aaed22decd3c3bbd4.json`. Prior exact-production focused evidence remains valid because production/spec/test bytes did not change. No DB or local full-suite rerun was needed or performed.
+
+**APPROVED.** Gate 5 accepts this classification-only delta. Final committed-source packaging and exact-source CI remain required; current CI/merge/deployment status is not inferred from this review.
