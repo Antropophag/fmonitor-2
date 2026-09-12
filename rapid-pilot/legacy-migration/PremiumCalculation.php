@@ -1,4 +1,3 @@
 <?php
 declare(strict_types=1);
-require_once dirname(__DIR__,2).'/app/autoload.php';
-class_alias(\FMonitor2\Otiz\PremiumCalculation::class, 'PremiumCalculation');
+require_once dirname(__DIR__,2).'/app/Otiz/LegacyPremiumCalculation.php';

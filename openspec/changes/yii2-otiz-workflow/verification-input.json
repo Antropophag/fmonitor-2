@@ -1,0 +1,55 @@
+{
+  "change": "yii2-otiz-workflow",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Views/otiz",
+    "app/YiiRuntime/Assets/OtizAssetBundle.php",
+    "config/yii/web.php",
+    "rapid-pilot/router.php",
+    "rapid-pilot/Otiz.php",
+    "app/PilotHttp/PilotRouteCsp.php",
+    "tools/architecture/check",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv",
+    "tests/Yii2/yii2_otiz_workflow_001_test.php",
+    "tests/Yii2/yii2_otiz_commands_001_test.php",
+    "tests/Yii2/yii2_otiz_decisions_001_test.php",
+    "tests/Yii2/yii2_otiz_publication_browser_001_test.php",
+    "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php",
+    "tests/Support/included_files_probe.php",
+    "tests/Otiz/snapshot_publication_001_test.php",
+    "tests/Otiz/snapshot_publication_http_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OTIZ-WORKFLOW-001",
+      "acceptance_id": "A1-A4-complete-yii2-otiz-workflow",
+      "spec_path": "specs/YII2-OTIZ-WORKFLOW-001.md",
+      "seam": "public/yii.php GET/POST /pilot/otiz route inventory and complete calculate → inspect → accept → export → payment → reverse/reconciliation journey",
+      "tests": [
+        "tests/Yii2/yii2_otiz_workflow_001_test.php",
+        "tests/Yii2/yii2_otiz_commands_001_test.php",
+        "tests/Yii2/yii2_otiz_decisions_001_test.php",
+        "tests/Yii2/yii2_otiz_publication_browser_001_test.php",
+        "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php",
+        "tests/Otiz/snapshot_publication_001_test.php",
+        "tests/Otiz/snapshot_publication_http_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_otiz_workflow_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_commands_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_decisions_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "INTENDED_RED",
+        "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php": "GREEN",
+        "tests/Otiz/snapshot_publication_001_test.php": "GREEN",
+        "tests/Otiz/snapshot_publication_http_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

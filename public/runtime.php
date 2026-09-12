@@ -37,6 +37,10 @@ try {
     }
     unset($_SERVER['REMOTE_USER'], $_SERVER['FMONITOR_AUTH_USER_ID'], $_SERVER['FMONITOR_AUTH_CSRF']);
     $_SERVER['FMONITOR_TRUSTED_REQUEST_HOST'] = $configuration->value('FMONITOR_TRUSTED_REQUEST_HOST');
+    if (preg_match('#^/pilot/otiz(?:/|$)#D', (string)$path) === 1 || $path === '/pilot/assets/otiz.js') {
+        require __DIR__.'/yii.php';
+        exit;
+    }
     require dirname(__DIR__) . '/rapid-pilot/router.php';
 } catch (Throwable) {
     while (ob_get_level() > $level) ob_end_clean();
