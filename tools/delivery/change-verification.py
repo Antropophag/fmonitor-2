@@ -456,9 +456,10 @@ def build(base_ref, input_name):
             for argv in relation.get("consumers", []):
                 add(argv, "focused", "generated consumer obligation", "boundary")
     agent_change = "harness" in change_name or "hardening" in change_name
-    if agent_change and effective and all(agent_harness_path(path) for path in effective):
+    if agent_change and effective and (typed or all(agent_harness_path(path) for path in effective)):
         commands = [item for item in commands if item["rationale"] in
-                    {"acceptance mapping", "generated source obligation", "generated consumer obligation"}]
+                    {"acceptance mapping", "generated source obligation", "generated consumer obligation"}
+                    or (item.get("purpose") == "category" and not item.get("environment", {}).get("services"))]
     else:
         add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
     if not commands:
@@ -655,7 +656,7 @@ def preflight(plan_name):
                 if not standard and name not in declared:
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
-                elif name in declared and not standard and not (ROOT / (name + ".py")).is_file():
+                elif name in declared and module is None and not (ROOT / (name + ".py")).is_file():
                     failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
         if path.endswith(".php") and target.is_file() and re.search(r'\bmysqli\b', target.read_text(errors="ignore")):
