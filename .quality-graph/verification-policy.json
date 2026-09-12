@@ -193,6 +193,8 @@
     "tests/Yii2/yii2_imports_workforce_001_test.php": {"services": ["mariadb"]}
   },
   "declared_python_imports": [],
+  "declared_php_dependencies": [],
+  "declared_node_dependencies": [],
   "runtimes": {
     ".mjs": "node",
     ".php": "php",

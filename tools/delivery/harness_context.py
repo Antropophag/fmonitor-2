@@ -482,11 +482,19 @@ def _validate_evidence(path, source, expectations, plan_commands=None, executabl
         expected = "GREEN"
     if expected is None:
         raise ValueError("evidence does not cover a plan-owned command")
+    if plan_command is not None:
+        if record.get("command_id") != plan_command.get("id"):
+            raise ValueError("evidence command identity does not match plan")
+        if record.get("purpose") != plan_command.get("purpose"):
+            raise ValueError("evidence purpose does not match plan")
+        if record.get("command_environment") != plan_command.get("environment"):
+            raise ValueError("evidence command environment does not match plan")
     if record.get("outcome") != expected:
         raise ValueError(f"evidence outcome must be {expected} for this mapped acceptance")
     return {"record": str(path), "argv": record["argv"], "outcome": record["outcome"],
             "source": record.get("source"), "executable_source": record.get("executable_source"),
-            "purpose": (plan_command or {}).get("purpose", "acceptance")}
+            "purpose": record.get("purpose"), "command_id": record.get("command_id"),
+            "command_environment": record.get("command_environment")}
 
 
 def _dependency_workspaces(args, helpers, plan):
@@ -501,14 +509,29 @@ def _dependency_workspaces(args, helpers, plan):
         path = lexical.resolve()
         manifest = json.loads(path.read_text(encoding="utf-8"))
         identity = manifest.get("identity")
-        if not isinstance(identity, str) or not identity:
+        if not isinstance(identity, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity):
             raise ValueError("dependency workspace identity is required")
         root = Path(manifest.get("root", ""))
+        allowed_root = Path(manifest.get("allowed_root", ""))
+        lock = Path(manifest.get("lock", ""))
         consumers = manifest.get("consumers")
-        if not root.is_absolute() or not root.is_dir() or root.is_symlink():
+        if (not root.is_absolute() or not root.is_dir() or root.is_symlink()
+                or not allowed_root.is_absolute() or not allowed_root.is_dir()
+                or allowed_root.is_symlink() or not lock.is_absolute() or not lock.is_file()
+                or lock.is_symlink()):
             raise ValueError("dependency workspace root is unavailable or unsafe")
-        if not isinstance(consumers, list) or not consumers or any(not (helpers.ROOT / item).is_file() for item in consumers):
+        try:
+            root.resolve().relative_to(allowed_root.resolve())
+            lock.resolve().relative_to(allowed_root.resolve())
+        except ValueError as error:
+            raise ValueError("dependency workspace escapes allowed root") from error
+        plan_consumers = {item["argv"][-1] for item in plan.get("commands", [])}
+        if (not isinstance(consumers, list) or not consumers
+                or any(item not in plan_consumers for item in consumers)):
             raise ValueError("dependency workspace consumers are unavailable")
+        derived_identity = "sha256:" + hashlib.sha256(lock.read_bytes()).hexdigest()
+        if identity != derived_identity:
+            raise ValueError("dependency workspace lock identity mismatch")
         content = helpers.fixture_identity(str(root))
         state = helpers.evidence_home() / "state" / ("workspace-" + hashlib.sha256(str(path).encode()).hexdigest() + ".json")
         if state.exists():
@@ -518,7 +541,8 @@ def _dependency_workspaces(args, helpers, plan):
         else:
             state.parent.mkdir(parents=True, exist_ok=True)
             state.write_text(json.dumps({"identity": identity, "content": content}) + "\n")
-        result.append({"manifest": str(path), "root": str(root.resolve()), "identity": identity,
+        result.append({"manifest": str(path), "root": str(root.resolve()),
+                       "allowed_root": str(allowed_root.resolve()), "lock": str(lock.resolve()), "identity": identity,
                        "content": content, "consumers": sorted(consumers)})
     return result
 
@@ -609,10 +633,27 @@ def command_prepare(args, helpers):
     if historical_red:
         mapped_delta = next((key for key in expectations if key[-1] == test_delta), None)
         old = json.loads(Path(historical_red).read_text())
-        if mapped_delta is None or old.get("outcome") != "INTENDED_RED" or _normalized_argv(old.get("argv", [])) != mapped_delta:
+        current = next((item for item in evidence if _normalized_argv(item["argv"]) == mapped_delta), None)
+        current_record = json.loads(Path(current["record"]).read_text()) if current else {}
+        acceptance = next((item for item in plan_value["acceptances"] if test_delta in item["tests"]), None)
+        if (mapped_delta is None or acceptance is None or current is None
+                or old.get("outcome") != "INTENDED_RED"
+                or _normalized_argv(old.get("argv", [])) != mapped_delta
+                or old.get("acceptance_id") != acceptance["acceptance_id"]
+                or current_record.get("acceptance_id") != acceptance["acceptance_id"]
+                or old.get("command_id") != current_record.get("command_id")
+                or old.get("purpose") != "acceptance" or current_record.get("purpose") != "acceptance"):
             raise ValueError("historical RED does not match test delta acceptance")
+        base_blob = old.get("command_blob")
+        current_blob = current_record.get("command_blob")
+        if not all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                   for value in (base_blob, current_blob)) or base_blob == current_blob:
+            raise ValueError("test delta requires distinct exact test blobs")
+        delta_sha256 = hashlib.sha256((base_blob + "\0" + current_blob).encode()).hexdigest()
         lineage = {"test": test_delta, "historical_red": str(Path(historical_red).resolve()),
-                   "historical_source": old.get("source"), "current_executable_source": executable_source}
+                   "historical_source": old.get("source"), "current_executable_source": executable_source,
+                   "acceptance_id": acceptance["acceptance_id"], "base_blob": base_blob,
+                   "current_blob": current_blob, "delta_sha256": delta_sha256}
     workspaces = _dependency_workspaces(args, helpers, plan_value)
     if getattr(args, "previous", None) and not getattr(args, "findings", None):
         raise ValueError("previous snapshot requires findings")

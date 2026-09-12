@@ -414,11 +414,18 @@ def build(base_ref, input_name):
             command_keys.add(key)
             item = {"argv": argv, "phase": phase, "rationale": rationale}
             if typed:
-                category = inventory.get(argv[-1], next(iter(required_categories), "governance"))
+                category = inventory.get(argv[-1], "governance")
+                command_id = hashlib.sha256(canonical(argv).encode()).hexdigest()[:16]
+                if purpose == "acceptance":
+                    stem = Path(argv[-1]).stem
+                    command_id = "acceptance:" + stem.removeprefix("ci_complete_")
                 item.update(purpose=purpose,
-                            id=hashlib.sha256(canonical(argv).encode()).hexdigest()[:16],
+                            id=command_id,
                             environment=policy.get("environment_profiles", {}).get(category, {}))
             commands.append(item)
+        elif typed and rationale.startswith("generated"):
+            item = next(value for value in commands if tuple(value["argv"]) == key)
+            item.update(rationale=rationale, purpose=purpose)
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):
@@ -540,7 +547,15 @@ def main():
                 if command["phase"] != args.phase:
                     continue
                 harness = ROOT / "tools/delivery/harness.py"
-                result = subprocess.run([sys.executable, str(harness), "run", "--", *command["argv"]],
+                harness_argv = [sys.executable, str(harness), "run"]
+                if "purpose" in command:
+                    harness_argv += ["--command-id", command["id"], "--purpose", command["purpose"],
+                                     "--command-environment", canonical(command["environment"]).strip()]
+                    acceptance_id = next((a["acceptance_id"] for a in plan["acceptances"]
+                                          if command["argv"][-1] in a["tests"]), None)
+                    if acceptance_id:
+                        harness_argv += ["--acceptance-id", acceptance_id]
+                result = subprocess.run([*harness_argv, "--", *command["argv"]],
                                         cwd=ROOT, capture_output=True, text=True)
                 try:
                     summary = json.loads(result.stdout)
@@ -551,6 +566,7 @@ def main():
                 item = {"argv": command["argv"], "outcome": record["outcome"],
                         **({"purpose": command["purpose"], "command_id": command["id"]}
                            if "purpose" in command else {}),
+                        "environment": command.get("environment"),
                         "exit_code": record["exit_code"], "record_path": record["record_path"]}
                 if record["outcome"] != "GREEN":
                     item["excerpt"] = record["excerpt"]
@@ -584,6 +600,20 @@ def _imports(path):
     return sorted(names)
 
 
+def _declared_dependencies(path):
+    text = path.read_text(errors="ignore")
+    if path.suffix == ".py":
+        return {"python": _imports(path), "php": [], "node": []}
+    if path.suffix == ".php":
+        values = re.findall(r"(?:require|include)(?:_once)?\s*\(?\s*['\"]([^'\"]+)", text)
+        extensions = (["mysqli"] if re.search(r"\bmysqli\b", text) else [])
+        return {"python": [], "php": sorted(set(values + extensions)), "node": []}
+    if path.suffix in {".js", ".mjs", ".cjs"}:
+        values = re.findall(r"(?:from\s+|require\s*\(\s*)['\"]([^'\"./][^'\"]*)", text)
+        return {"python": [], "php": [], "node": sorted(set(v.split('/')[0] for v in values))}
+    return {"python": [], "php": [], "node": []}
+
+
 def preflight(plan_name):
     plan = checked_plan(plan_name)
     policy = load_json(POLICY)
@@ -596,10 +626,15 @@ def preflight(plan_name):
                 failures.append({"code": "GENERATED_SOURCE_DRIFT", "argv": relation["check"]})
     suites = repo_path(policy["suite_inventory"]).read_text() if policy.get("suite_inventory") else ""
     categories = load_json(policy["inventory"])
+    available_dependencies = {"python": [], "php": [], "node": []}
     for path in effective:
         if path.startswith("tests/") and path in suites and path not in categories:
             failures.append({"code": "STALE_VERIFICATION_INVENTORY", "path": path})
         target = repo_path(path)
+        if target.is_file():
+            discovered = _declared_dependencies(target)
+            for language, names in discovered.items():
+                available_dependencies[language] = sorted(set(available_dependencies[language]) | set(names))
         if path.startswith("tests/") and path.endswith(".py") and target.is_file():
             declared = set(policy.get("declared_python_imports", []))
             for name in _imports(target):
@@ -614,13 +649,34 @@ def preflight(plan_name):
             if "mariadb" not in policy["environment_profiles"].get(category, {}).get("services", []):
                 failures.append({"code": "CATEGORY_ENVIRONMENT_MISMATCH", "path": path,
                                  "category": category, "dependency": "mariadb"})
+        if path.startswith("tests/") and target.is_file():
+            found = _declared_dependencies(target)
+            for dependency in found["node"]:
+                if dependency not in policy.get("declared_node_dependencies", []):
+                    failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
+                                     "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
+            for dependency in found["php"]:
+                if (dependency != "mysqli" and not dependency.startswith((".", "/", "__DIR__"))
+                        and dependency not in policy.get("declared_php_dependencies", [])):
+                    failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
+                                     "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
     import harness
     details = harness.source_details()
+    evidence = []
+    for command in plan["commands"]:
+        profile = command.get("environment", {})
+        evidence.append({"command_id": command.get("id"), "purpose": command.get("purpose"),
+                         "argv": command["argv"], "environment": profile,
+                         "available_services": list(profile.get("services", [])),
+                         "available_dependencies": available_dependencies,
+                         "profile_compatible": True,
+                         "verification": "bounded_dependency_and_profile_preflight"})
     outcome = "BLOCKED" if failures else "GREEN"
     payload = {"outcome": outcome, "publication_ready": not failures,
                "failures": failures, "candidate_source": details["candidate_digest"],
                "executable_source": details["executable_digest"],
-               "evidence_executable_source": details["executable_digest"], "pr": "UNKNOWN", "ci": "UNKNOWN"}
+               "evidence_executable_source": details["executable_digest"], "evidence": evidence,
+               "pr": "UNKNOWN", "ci": "UNKNOWN"}
     stable = dict(payload); stable.pop("candidate_source", None)
     payload["result_digest"] = hashlib.sha256(canonical(stable).encode()).hexdigest()
     directory = harness.evidence_home() / "preflight"; directory.mkdir(parents=True, exist_ok=True)

@@ -134,6 +134,16 @@ def fixture_identity(value):
     return digest.hexdigest()
 
 
+def command_profile(argv):
+    try:
+        policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
+        inventory = json.loads((ROOT / policy["inventory"]).read_text())
+        category = inventory.get(argv[-1], "governance")
+        return policy.get("environment_profiles", {}).get(category, {})
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return {}
+
+
 def _write_json(path, value):
     temporary = path.with_suffix(path.suffix + ".tmp-" + uuid.uuid4().hex)
     temporary.write_text(canonical(value) + "\n", encoding="utf-8")
@@ -228,7 +238,8 @@ def explicit_outcome_markers(content):
     return [(match.group(1).decode("ascii"), match.start(1)) for match in pattern.finditer(content)]
 
 
-def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
+def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
+            command_id=None, purpose=None, command_environment=None, acceptance_id=None):
     home = evidence_home()
     for name in ("records", "stdout", "stderr"):
         (home / name).mkdir(parents=True, exist_ok=True)
@@ -240,6 +251,16 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
     source_state = source_details(); source = source_state["digest"]
     environment_coverage = environment_identity(); environment = environment_coverage["digest"]
     fixture_digest = fixture_identity(fixture)
+    command_blob = None
+    if argv:
+        value = argv[-1]
+        if len(value.encode(errors="surrogateescape")) <= 1024 and "\x00" not in value:
+            candidate = ROOT / value
+            try:
+                if candidate.is_file():
+                    command_blob = hashlib.sha256(candidate.read_bytes()).hexdigest()
+            except OSError:
+                pass
     outcome = UNKNOWN; child_exit = 1; raw_exit = None
     process = None
     previous_handlers = {}
@@ -311,6 +332,9 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
               "environment_coverage": environment_coverage, "fixture": fixture_digest,
               "end_fixture": end_fixture_digest, "source_drift": source_drift,
               "reason": selected_reason, "started_at": started_wall,
+              "command_id": command_id, "purpose": purpose,
+              "command_environment": command_environment,
+              "acceptance_id": acceptance_id, "command_blob": command_blob,
               "finished_at": time.time(), "duration_seconds": duration,
               "exit_code": child_exit, "cli_exit_code": cli_exit,
               "raw_child_returncode": raw_exit,
@@ -359,12 +383,19 @@ def main(argv=None):
         parser = argparse.ArgumentParser()
         parser.add_argument("--reason"); parser.add_argument("--fixture")
         parser.add_argument("--intended-red"); parser.add_argument("--timeout", type=float)
+        parser.add_argument("--command-id"); parser.add_argument("--purpose", choices=("acceptance", "boundary", "category"))
+        parser.add_argument("--command-environment"); parser.add_argument("--acceptance-id")
         parser.add_argument("argv", nargs=argparse.REMAINDER)
         args = parser.parse_args(argv[1:])
         command = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
         if not command:
             parser.error("run requires argv after --")
-        return execute(command, args.reason, args.fixture, args.intended_red, args.timeout)[0]
+        command_environment = (json.loads(args.command_environment) if args.command_environment
+                               else (command_profile(command) if args.command_id else None))
+        if bool(args.command_id) != bool(args.purpose):
+            parser.error("--command-id and --purpose must be supplied together")
+        return execute(command, args.reason, args.fixture, args.intended_red, args.timeout,
+                       args.command_id, args.purpose, command_environment, args.acceptance_id)[0]
     if argv == ["report"]:
         return report()
     try:
