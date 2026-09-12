@@ -68,3 +68,34 @@ Harness still reports CI, GitHub publication state, and deployment as `UNKNOWN`.
 `APPROVED`
 
 Gate 5 remains approved for integrated candidate source `25ba903be880fd35b3768cb05319c87dc1995182e72b0b8582eb3856bc5c0bf5` and executable source `f19289742dfaba0493cce48b914328da01fe6f8f6915dcd2536aab89b65bdfe3`.
+
+---
+
+## Final post-#104 integrated Gate 5 rereview — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T165736Z-070ac754af/package.json`.
+- Integrated commit: `676fa5b3551c3a9d9eabf51e3d453e13d03ecc22`, merging current `origin/main` `6680decf97d26e3fefa154fe2b509c81aa2d47f5` (including reviewed harness correction PR #104).
+- Exact candidate source: `1c9e720256a928130ca926d1dc9a74006aea8eedc67b97c16cbb1e8ca1750ba0`.
+- Exact executable source: `1abbc89d113bd271443cfe56e6468c53e92aa0bd6550d1d4d4e851cf4ae14c7c`.
+- Verification plan SHA-256: `5e0f480bd80c0f2c51a754669d0ed434b32736b460a8aee553d6bd2d7b401bbc`.
+- The clean integrated source is the snapshot base commit; its empty patch SHA-256 is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+### Findings
+
+No findings.
+
+### Assessment
+
+The diff against current `origin/main` remains exactly the 13 issue #39 paths. The #104 merge changes only the already independently reviewed delivery-harness sibling-import behavior on main and produces no conflict or byte change in the #39 production implementation, specification, acceptance test, or OpenSpec contract. The server-side queue continues to apply its single indexed no-`pto_act` predicate identically in `COUNT` and `SELECT`, before page validation and `LIMIT/OFFSET`. The prior conclusions for authorization, read-only operation, append-only history, SQL safety/performance, retained ordering/projection, and absence of OTIZ, `rapid-pilot`, route/controller/view, schema, or deployment scope remain valid.
+
+All 13 focused records embedded in the package are GREEN. Every record starts and ends at candidate source `1c9e720256a928130ca926d1dc9a74006aea8eedc67b97c16cbb1e8ca1750ba0`, reports `source_drift=false`, and is bound to executable source `1abbc89d113bd271443cfe56e6468c53e92aa0bd6550d1d4d4e851cf4ae14c7c`. The set covers the acceptance, schema, four photo characterizations, verification CI/inventory, Yii2 inspection boundaries/journey, change verification, runtime storage, and architecture guard.
+
+Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789232075718250000-934e37a351ca424191982ef31cea1a6e.json` is bound to the same candidate/executable sources, reports `outcome=GREEN`, an empty failure inventory and `publication_ready=true`. It also preserves `pr=UNKNOWN` and `ci=UNKNOWN`. `git diff --check origin/main..HEAD` is clean and the package snapshot hash matches its manifest.
+
+Harness GitHub/CI and deployment state remain `UNKNOWN`; they are not treated as GREEN, merge approval, or deployment authorization. The authoritative full exact-source CI remains a subsequent publication gate.
+
+### Final rereview verdict
+
+`APPROVED`
+
+Gate 5 remains approved for final integrated candidate `1c9e720256a928130ca926d1dc9a74006aea8eedc67b97c16cbb1e8ca1750ba0` / executable source `1abbc89d113bd271443cfe56e6468c53e92aa0bd6550d1d4d4e851cf4ae14c7c`.
