@@ -162,3 +162,34 @@ The final environment correction removes fabricated availability. Shipped policy
 - `openspec validate delivery-harness-first-pass-ci-completeness --strict` — valid.
 - Prior bounded compatibility suites are present as exact typed GREEN evidence in the final package; architecture guard is also exact typed GREEN.
 - No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN`; this approval authorizes publication/CI progression under the delivery process, not merge or deployment.
+
+## Repository-local sibling import correction Gate 5 — 2026-09-12
+
+- Independent reviewer: separately tasked agent `/root/issue39_gate5`; authored none of this correction's specification, OpenSpec input, test, implementation, or Gate 3 correction review.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T164958Z-8ea0e94070/package.json`.
+- Exact source: reconstructible dirty snapshot over base `04f9bcb58be4b19c97993666952c3558e8922c6a`, candidate source `fbec0e621d0ec5c37524971f27e0b82a584945270048504ca58b5249bf73bad7`, executable source `11dc24e09f62f4c571f681b5c076e8ed48124e8cec4fdee9762cb9f7c09dae7a`.
+- Snapshot patch SHA-256: `cfe5c0c0634682b535497b5e078079b4505d2c620132eeed84dd26404e599227` (matches `snapshot/manifest.json`).
+- Verification plan SHA-256: `56f675d411cf80425cc6e0bf1b6edea5e68b8355758c0a3c81be1f4d9c24dccc`.
+- Gate 3 correction approval: final section of `reviews/tests/DELIVERY-HARNESS-CI-COMPLETENESS-001.md`, acceptance `R2-repository-local-python-import`.
+
+### Findings
+
+No findings.
+
+### Assessment
+
+The implementation is confined to the Python dependency classifier in `tools/delivery/change-verification.py`. `_repository_local_sibling()` derives the candidate only from the current test file's parent directory and the imported top-level module name. It resolves the candidate with `strict=True` and then requires the resolved path to be beneath the resolved repository `ROOT` before accepting a regular file. Consequently an actual adjacent helper is accepted as repository source, while a missing path returns false, an external undeclared import remains governed by the existing declaration rule, and a sibling symlink escaping the repository fails containment. The helper is used consistently both for rejection classification and observed dependency evidence; it does not suppress declared-but-unavailable failures or broaden third-party declarations.
+
+The normative spec, OpenSpec scenario, correction input and implementation agree on this bounded R2 exception. The complete diff contains only the seven declared correction paths: lifecycle/spec/test-review inputs, the acceptance test, and the classifier. It changes no product runtime, authorization, domain history, service probes, dependency-workspace policy, CI configuration, or deployment behavior.
+
+Acceptance record `1789231737313366000-aa26327d4a18490e937999d2d29a5dc2` is GREEN, starts and ends at candidate source `fbec0e621d0ec5c37524971f27e0b82a584945270048504ca58b5249bf73bad7`, records executable source `11dc24e09f62f4c571f681b5c076e8ed48124e8cec4fdee9762cb9f7c09dae7a`, and reports `source_drift=false`. Its output is the complete suite: 15/15 tests GREEN, including the new real preflight sibling-import scenario and retained external undeclared, missing declared dependency, service observation, package, lineage, workspace realpath/symlink, repeat and worktree-isolation controls.
+
+Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789231791433050000-0ec4aef838fd49b69e1ba203c8fbe65d.json` is bound to the same candidate/executable sources, has an empty failure inventory, `outcome=GREEN`, and `publication_ready=true`; its PR and CI fields remain explicitly `UNKNOWN`. `openspec validate delivery-harness-first-pass-ci-completeness --strict` is GREEN, `git diff --check` is clean, and package snapshot/plan hashes match.
+
+Harness reports CI, GitHub publication state, and deployment as `UNKNOWN`. None is treated as GREEN, merge approval, or deployment authorization.
+
+### Verdict
+
+`APPROVED`
+
+Gate 5 passes for repository-local sibling import correction candidate `fbec0e621d0ec5c37524971f27e0b82a584945270048504ca58b5249bf73bad7` / executable source `11dc24e09f62f4c571f681b5c076e8ed48124e8cec4fdee9762cb9f7c09dae7a`. It may proceed to publication and exact-source CI; deployment remains outside this approval.

@@ -626,6 +626,15 @@ def _declared_dependencies(path):
     return {"python": [], "php": [], "node": []}
 
 
+def _repository_local_sibling(path, name):
+    candidate = path.parent / (name + ".py")
+    try:
+        candidate.resolve(strict=True).relative_to(ROOT.resolve())
+    except (FileNotFoundError, ValueError):
+        return False
+    return candidate.is_file()
+
+
 def preflight(plan_name):
     plan = checked_plan(plan_name)
     policy = load_json(POLICY)
@@ -653,10 +662,11 @@ def preflight(plan_name):
                 module = importlib.util.find_spec(name)
                 origin = getattr(module, "origin", "") if module else ""
                 standard = origin in {"built-in", "frozen"} or (origin and origin.startswith(sysconfig.get_paths()["stdlib"]) and "site-packages" not in origin)
-                if not standard and name not in declared:
+                local_sibling = _repository_local_sibling(target, name)
+                if not standard and not local_sibling and name not in declared:
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
-                elif name in declared and module is None and not (ROOT / (name + ".py")).is_file():
+                elif name in declared and module is None and not local_sibling and not (ROOT / (name + ".py")).is_file():
                     failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
         if path.endswith(".php") and target.is_file() and re.search(r'\bmysqli\b', target.read_text(errors="ignore")):
@@ -688,7 +698,8 @@ def preflight(plan_name):
                 available = True
                 if language == "python":
                     module = importlib.util.find_spec(name)
-                    available = module is not None or (ROOT / (name + ".py")).is_file()
+                    available = (module is not None or _repository_local_sibling(target, name)
+                                 or (ROOT / (name + ".py")).is_file())
                 if available:
                     available_dependencies[language].append(name)
         available_services = sorted(service for service in profile.get("services", [])

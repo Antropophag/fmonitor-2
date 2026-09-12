@@ -26,6 +26,10 @@
 - **WHEN** новый Python test импортирует пакет, отсутствующий в declared CI dependencies
 - **THEN** dependency preflight завершается ненулево до push и называет import и целевую CI category
 
+#### Scenario: Repository-local sibling import
+- **WHEN** Python test импортирует существующий module из своего repository test directory
+- **THEN** dependency preflight принимает module как source dependency без объявления его third-party package
+
 #### Scenario: Unit test требует MariaDB
 - **WHEN** test обращается к MariaDB до проверяемого assertion, но зарегистрирован в unit category без DB service
 - **THEN** catalog/preflight отклоняет category mismatch даже если developer environment предоставляет MariaDB

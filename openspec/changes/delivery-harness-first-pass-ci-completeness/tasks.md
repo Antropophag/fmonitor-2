@@ -30,3 +30,9 @@
 - [x] 5.2 Выполнить `openspec validate delivery-harness-first-pass-ci-completeness --strict` и проверить, что все tasks/acceptances и exact executable source отражены в package.
 - [x] 5.3 Получить независимый Gate 5 `APPROVED` на complete candidate и bounded evidence; изменения tests после review возвращают Gate 2/3.
 - [x] 5.4 Только после Gate 5 подготовить publication package, открыть PR и выполнить один exact-head GitHub Quality Graph; Done требует GREEN/VERIFY_OK, сохранённых исторических failures и отсутствия merge/deployment без отдельной авторизации.
+
+## 6. Correction — repository-local Python import
+
+- [x] 6.1 Связать owner-approved #99 correction с verification input и сохранить intended RED на локальном sibling import
+- [x] 6.2 Получить независимый Gate 3, реализовать relative source-module detection и выполнить focused GREEN
+- [ ] 6.3 Получить независимый Gate 5 и поставить correction отдельным PR/CI до продолжения #39

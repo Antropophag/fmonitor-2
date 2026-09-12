@@ -288,6 +288,33 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertIn('ci_missing_dependency', command['available_dependencies']['python'])
         self.assertTrue(command['profile_compatible'])
 
+    def test_preflight_accepts_repository_local_sibling_python_import(self):
+        repo, base, _, environment = self.fixture_repo()
+        helper = repo / 'tests/Verification/ci_local_helper.py'
+        helper.write_text('VALUE = "LOCAL_SOURCE"\n')
+        synthetic = 'tests/Verification/synthetic_local_import_test.py'
+        (repo / synthetic).write_text(
+            'import ci_local_helper\n'
+            'assert ci_local_helper.VALUE == "LOCAL_SOURCE"\n'
+            'print("PASS")\n'
+        )
+        with (repo / 'tools/verification/suites.tsv').open('a') as stream:
+            stream.write(f'unit\tpython3\t{synthetic}\n')
+        categories = json.loads((repo / 'tools/verification/categories.json').read_text())
+        categories[synthetic] = 'unit'
+        (repo / 'tools/verification/categories.json').write_text(json.dumps(categories, sort_keys=True) + '\n')
+        input_name = self.write_input(repo, test=synthetic)
+        planned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, planned.returncode, planned.stderr)
+        preflight = self.command(repo, environment, sys.executable,
+                                 'tools/delivery/change-verification.py', 'preflight', '--plan', plan_name)
+        self.assertEqual(0, preflight.returncode,
+                         'INTENDED_RED repository-local sibling import rejected: '
+                         + preflight.stdout + preflight.stderr)
+        payload = json.loads(preflight.stdout)
+        self.assertTrue(payload['publication_ready'])
+        self.assertEqual([], payload['failures'])
+
     def test_shipped_service_probes_do_not_claim_absent_services(self):
         policy = json.loads((ROOT / '.quality-graph/verification-policy.json').read_text())
         tools = {'mariadb': ('mysqladmin', 'ping'), 'container': ('docker', 'info'),
