@@ -36,3 +36,37 @@
 ## Required correction path
 
 These findings expose missing normative behavior and test sensitivity, so corrections require returning to Gate 2, extending the acceptance tests, capturing a new intended RED for the exact corrected test source, and obtaining a fresh independent Gate 3 approval before implementation and Gate 5 rereview.
+
+## Rereview 2026-09-12 — corrected complete candidate
+
+- Reviewer: Codex agent `/root/issue99_gate5` (independent Gate 5 rereviewer)
+- Reviewed commit: `9ad10ad8b2504674210404b57e82e07d7ced954d`
+- Implementation correction: `f460affc8abd786c42f6211413bb49127e921f4a`
+- Gate 3 sensitivity approval: `a91c50c7`
+- Candidate source: `47df15cb5d71c25e0509dea84407ab0e62af5ff5981b1f2174722f4f5f718cd2`
+- Executable source: `3c6cf69530ba208cb00371da9c48956cbebd0977e0bcab8a4fbe178eac02ea3a`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T143831Z-b42bc9196e/package.json`
+- Exact evidence: acceptance record `1789223843851525000-f666d1ed38504a128b08dbd501fdbfea`, generated consumer record `1789223870943462000-3e7d2befaf4843238a1c7210f292861d`, generator record `1789223903361884000-bd47d6dfee7a4acda56dfc834cac0b3b`; all GREEN and bound to the candidate/executable sources above
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Resolved.** Deduplication now upgrades a duplicate command to generated-consumer provenance. The exact package plan retains `verification_ci_001_test.py` alongside the acceptance and generator checks.
+2. **Partially resolved; one blocking defect remains.** The preflight payload enumerates every plan command, but the environment evidence is not observed and therefore cannot support publication readiness.
+3. **Resolved.** Retained records own and reviewer preparation verifies command id, purpose and declared command environment. All three package records match their plan obligations exactly.
+4. **Resolved for the reviewed contract.** Workspace preparation now verifies a SHA-256 lock identity, containment beneath the declared allowed realpath, manifest immutability and plan-owned consumers.
+5. **Resolved.** Test-delta lineage binds the same acceptance and command identity and retains distinct base/current blob digests plus a deterministic delta digest.
+
+### Remaining finding
+
+1. **Blocking — preflight claims observed CI-environment compatibility without observing it.** `tools/delivery/change-verification.py:657-674` constructs `available_services` by copying the services required by each command's target profile, calls imported/referenced module names `available_dependencies`, and hard-codes `profile_compatible: true`. It performs no service probe and no category-equivalent execution. Consequently a plan requiring MariaDB/browser/container would report those services as available even when none exists, and `publication_ready` can still become true from declared wishes rather than actual environment evidence. This directly violates R2's requirement to record actually available services/dependencies and to refuse richer/non-equivalent environments, and R7's fail-closed publication rule. Replace the synthesized fields with bounded observed probes (or `UNKNOWN` when equivalence cannot be established), compare observations against each command profile, and include incompatibility/missing observation in the blocking failure inventory.
+
+The strengthened test at `tests/Verification/delivery_harness_ci_completeness_001_test.py:198-207` checks only that these fields have list/dict shapes and cover plan ids. It therefore remains GREEN when `available_services` is copied from the target and compatibility is unconditional. This acceptance sensitivity gap must return to Gate 2/3 before another implementation correction.
+
+### Rereview verification
+
+- `python3 tests/Verification/delivery_harness_ci_completeness_001_test.py` — 12 tests GREEN in 25.973s.
+- `python3 tools/delivery/render-dependencies.py --check` — GREEN.
+- Package inspection confirms all three retained records have matching command id, purpose, command environment, candidate source, executable source and GREEN outcome.
+- Prior bounded compatibility evidence remains GREEN: `change_verification_001_test.py` 16 tests, `delivery_harness_001_test.py` 25 tests, `delivery_harness_hardening_001_test.py` 9 tests and `verification_ci_001_test.py` 16 tests.
+- No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN` and are not approval.
