@@ -34,6 +34,8 @@ $environment = array_replace($processEnvironment, [
     'FMONITOR_PROCESS_TABLE_PREFIX' => 'runtime_',
     'FMONITOR_LEGACY_TABLE_PREFIX' => 'runtime_',
     'FMONITOR_SESSION_INSTANCE' => 'production',
+    'FMONITOR_YII_COOKIE_VALIDATION_KEY' => 'compose-test-cookie-key-' . $token,
+    'FMONITOR_YII_IDENTITY_KEY' => 'compose-test-identity-key-' . $token,
     'FMONITOR_TRUSTED_REQUEST_HOST' => '127.0.0.1:' . $port,
     'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'http',
 ]);

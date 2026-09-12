@@ -174,9 +174,19 @@ docker compose --file deploy/runtime/compose.yaml stop web php
 1. Остановить writers, включая включённые jobs services; сделать согласованные DB и
    platform volume snapshots и записать old source/image identity.
 2. Получить clean checkout reviewed commit и собрать новый unique image tag.
-3. Загрузить тот же private environment, изменить только
-   `FMONITOR_RUNTIME_IMAGE`, выполнить one-shot `migrate`, затем recreate `php web`
-   и ранее включённые jobs services из того же image.
+3. Пока writers остаются остановленными, загрузить тот же private
+   environment, изменить только `FMONITOR_RUNTIME_IMAGE` на reviewed current
+   image и из него сначала выполнить public storage `prepare`, затем
+   one-shot `migrate`:
+
+   ```sh
+   docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm prepare
+   docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm migrate
+   ```
+
+   `prepare` добавляет новые обязательные private storage paths и не заменяет
+   существующие session/artifact bytes. После обеих one-shot команд recreate
+   `php web` и ранее включённые jobs services из того же image.
 4. Проверить live/ready, login, основной browser flow и сохранённые данные.
 5. При rollback остановить new `web/php` и вернуть previous exact image. Не удалять
    additive schema/history и не выполнять `down --volumes`.

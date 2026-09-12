@@ -55,3 +55,7 @@
 5. После актуализации от main запустить один exact-source Quality Graph CI. Deployment не выполнять.
 
 Rollback до общего cutover — вернуть Yii2 route wiring к предыдущему merged source; новые snapshot/events не удалять и не переписывать. Благодаря сохранённому application owner факты совместимы с прежним adapter.
+
+## PR #103 regression correction
+
+CI `34706549891` выявил пять смежных regression failures: два Compose fixtures без обязательных Yii keys, DDL inventory по прежнему wrapper вместо implementation, два recovery scenarios без текущего public prepare. Коррекция сохраняет production owners и fail-closed readiness. Fixtures явно задают тестовые ключи; inventory охватывает перенесённые implementations; historical-image restore и additive DB migrations дополняются явным current-image prepare с проверкой сохранности старых bytes/modes/rows/AUTO_INCREMENT. Текущий round-trip включает непустой Yii session file. Runbook фиксирует тот же prepare step при остановленных writers. Это закрытие уже принятой runtime-composition/adjacency обязанности, без изменения recovery format или domain contracts.
