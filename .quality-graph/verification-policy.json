@@ -173,7 +173,33 @@
     "governance"
   ],
   "graph": "quality-graph.yml",
+  "suite_inventory": "tools/verification/suites.tsv",
   "inventory": "tools/verification/categories.json",
+  "generated_sources": [
+    {
+      "inputs": ["tools/delivery/Dockerfile.runtime.in", "tools/delivery/dependencies.env", "tools/delivery/render-dependencies.py"],
+      "artifacts": ["deploy/runtime/Dockerfile"],
+      "check": ["python3", "tools/delivery/render-dependencies.py", "--check"],
+      "consumers": [["python3", "tests/Verification/verification_ci_001_test.py"]]
+    }
+  ],
+  "environment_profiles": {
+    "unit": {"services": [], "languages": ["python3", "php", "node"]},
+    "integration": {"services": ["mariadb"], "languages": ["python3", "php", "node"]},
+    "e2e": {"services": ["mariadb", "browser", "container"], "languages": ["python3", "php", "node"]},
+    "governance": {"services": [], "languages": ["python3", "php", "node"]}
+  },
+  "test_prerequisites": {
+    "tests/Yii2/yii2_imports_workforce_001_test.php": {"services": ["mariadb"]}
+  },
+  "declared_python_imports": [],
+  "declared_php_dependencies": [],
+  "declared_node_dependencies": [],
+  "service_probes": {
+    "mariadb": ["python3", "tools/delivery/probe-environment.py", "service", "mariadb"],
+    "browser": ["python3", "tools/delivery/probe-environment.py", "service", "browser"],
+    "container": ["python3", "tools/delivery/probe-environment.py", "service", "container"]
+  },
   "runtimes": {
     ".mjs": "node",
     ".php": "php",

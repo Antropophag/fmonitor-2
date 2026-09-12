@@ -1,0 +1,54 @@
+{
+  "change": "delivery-harness-first-pass-ci-completeness",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/design.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/proposal.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/specs/delivery/first-pass-ci-completeness/spec.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/tasks.md",
+    "openspec/changes/delivery-harness-first-pass-ci-completeness/verification-input.json",
+    "reviews/code/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "reviews/tests/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "specs/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+    "tests/Verification/delivery_harness_ci_completeness_001_test.py",
+    "tests/Verification/delivery_harness_001_test.py",
+    "tests/Verification/change_verification_001_test.py",
+    "tests/Verification/delivery_harness_hardening_001_test.py",
+    "tests/Verification/verification_ci_001_test.py",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness.py",
+    "tools/delivery/harness_context.py",
+    "tools/delivery/probe-environment.py",
+    "tools/delivery/verify.py",
+    "tools/verification/categories.json",
+    "tools/verification/ci.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-HARNESS-CI-COMPLETENESS-001",
+      "acceptance_id": "R1-R7",
+      "spec_path": "specs/DELIVERY-HARNESS-CI-COMPLETENESS-001.md",
+      "seam": "generated verification plan, role package, evidence and pre-publication admission",
+      "seam_kind": "infrastructure",
+      "tests": [
+        "tests/Verification/delivery_harness_ci_completeness_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/delivery_harness_ci_completeness_001_test.py": "INTENDED_RED"
+      },
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "retained_evidence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "worktree_concurrency_isolation": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"]}
+      }
+    }
+  ]
+}
