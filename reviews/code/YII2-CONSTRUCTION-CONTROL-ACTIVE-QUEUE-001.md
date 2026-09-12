@@ -140,3 +140,40 @@ PR #105 still points to the older failed source until publication. Run `34706862
 `APPROVED`
 
 Gate 5 passes for stacked candidate `adb8593303e911ad34d123592f293d4c21a81b2112a29e2f95974457b128dbaa` / executable source `bdf71007c23522295fa3f00797420622afa6e63d4e214d28b748c0e613d49801`. Publication and fresh authoritative exact-source CI remain required.
+
+---
+
+## Final governance-fixture correction Gate 5 rereview — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T180853Z-204d815306/package.json`.
+- Source snapshot: committed head `8212f0b974ac7bfb50f60b537570148a19872ca3` plus reconstructible patch SHA-256 `7bf18e7197c25fae1dca419052e40a557510863a8fa3d8f6ed8437015491bf8a` (matches `snapshot/manifest.json`).
+- Exact candidate source: `303c758b3dcc50b7118a3d9ac04955d394d50691fdb907df8aa9cf160fdfc972`.
+- Exact executable source: `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`.
+- Verification plan SHA-256: `7c89b97fa1c729917f534e1e8aa356d84bf9b9535e41257c6b2fba7729df4f57`.
+- Independent Gate 3 approval: final `.gitignore` fixture-correction section in `reviews/tests/DELIVERY-HARNESS-CI-COMPLETENESS-001.md`.
+
+### Findings
+
+No findings.
+
+### Assessment
+
+The only executable delta after the prior stacked Gate 5 approval is one test-fixture line: `fixture_repo()` copies the repository's real `.gitignore` before initializing and committing each disposable repository. The fixture already copies the repository verification policy, tests, tools and governing files; inheriting the real ignore policy makes its candidate-source classification match the real checkout. Generated Python `__pycache__/` and `*.pyc` bytes can no longer appear as spurious untracked source between current GREEN evidence and reviewer preparation.
+
+This correction does not weaken source identity or fail-closed behavior. R4 still requires distinct historical/current test blob hashes, a delta digest and acceptance continuity. R5 still mutates executable harness bytes and a deliberately non-ignored unknown path and requires the corresponding source identities to change. The correction changes no production code, public behavior, authorization, domain history, dependency admission, service observation, CI policy or deployment behavior.
+
+The complete stacked #39 diff otherwise remains the already reviewed active-queue production predicate, approved browser oracle, verification registration/review artifacts and approved harness Node built-in correction. The current branch's PR delta from its merge base contains the same #39 paths and browser correction; the dirty snapshot adds only the one-line governance fixture and its Gate 3 record. The active queue still uses one indexed no-`pto_act` predicate in both count and selection before pagination, with no OTIZ/rapid/route scope.
+
+Historical CI run `34709119564` remains accurately classified as failure: all product categories were GREEN and only governance failed because Python cache output changed the disposable candidate source. The current correction addresses that exact failure mechanism; it does not relabel the historical run as GREEN.
+
+All 16 focused commands in the final package are GREEN. Every record starts and ends at candidate source `303c758b3dcc50b7118a3d9ac04955d394d50691fdb907df8aa9cf160fdfc972`, reports `source_drift=false`, and binds executable source `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`. This includes the 17/17 harness completeness suite as record `1789236290928284000-81b604643b0848e8bb6d47d3525204c0`, plus the #39 HTTP/browser, inherited boundary/journey, schema/photo, deployment-composition, governance, runtime and architecture controls.
+
+Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789236246270503000-8e2fabed88ef4024bc96cd62b4404143.json` is bound to the same source pair and reports `outcome=GREEN`, an empty failure inventory and `publication_ready=true`. `git diff --check` is clean and the package snapshot hash matches its manifest.
+
+Run `34709119564` remains historical RED. Fresh exact-source CI for this corrected candidate is not yet GREEN; harness CI/deployment remain `UNKNOWN` and are not treated as approval, merge readiness, or deployment authorization.
+
+### Final rereview verdict
+
+`APPROVED`
+
+Gate 5 passes for final corrected candidate `303c758b3dcc50b7118a3d9ac04955d394d50691fdb907df8aa9cf160fdfc972` / executable source `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`. Publication and a fresh authoritative exact-source CI remain required.

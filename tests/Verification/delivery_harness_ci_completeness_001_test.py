@@ -28,7 +28,7 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         for name in ['tools/delivery', 'tools/verification', '.quality-graph', '.codex',
                      'specs', 'tests/Verification', 'deploy/runtime', 'openspec/changes']:
             shutil.copytree(ROOT / name, repo / name)
-        for name in ['AGENTS.md', 'quality-graph.yml']:
+        for name in ['.gitignore', 'AGENTS.md', 'quality-graph.yml']:
             shutil.copy2(ROOT / name, repo / name)
         (repo / 'docs/operations').mkdir(parents=True)
         shutil.copy2(ROOT / 'docs/development-process.md', repo / 'docs/development-process.md')
