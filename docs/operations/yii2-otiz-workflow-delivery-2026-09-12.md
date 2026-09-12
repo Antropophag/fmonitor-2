@@ -27,4 +27,10 @@ their categories, and verify rejected the failed aggregate. The complete
 inventory was inspected. The correction registers all new tests; local
 `ci.py verify-roster` reports GREEN with 389 tests.
 
+Historical correction run `34702874922` passed unit but failed governance/fast
+because the explicit e2e composition assertion had not added the newly registered
+publication browser test. The full failure was inspected; the expected ordered
+list is updated and `verification_ci_001_test.py` plus roster validation pass
+locally. Remaining jobs on that obsolete source are not reused as approval.
+
 Deployment: `UNKNOWN` and not authorized.
