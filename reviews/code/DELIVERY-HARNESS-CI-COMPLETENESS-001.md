@@ -70,3 +70,37 @@ The strengthened test at `tests/Verification/delivery_harness_ci_completeness_00
 - Package inspection confirms all three retained records have matching command id, purpose, command environment, candidate source, executable source and GREEN outcome.
 - Prior bounded compatibility evidence remains GREEN: `change_verification_001_test.py` 16 tests, `delivery_harness_001_test.py` 25 tests, `delivery_harness_hardening_001_test.py` 9 tests and `verification_ci_001_test.py` 16 tests.
 - No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN` and are not approval.
+
+## Final rereview 2026-09-12 — observed-environment correction
+
+- Reviewer: Codex agent `/root/issue99_gate5` (independent Gate 5 rereviewer)
+- Reviewed commit: `85a9ff997afafd9b5219fe6a925b8173ec57c7d2`
+- Environment implementation: `a22b5e4df4fae2d900b83804f930bbd69f740aed`
+- Gate 3 sensitivity approval: `145e9f6b`
+- Candidate source: `f8d941b874fe4007ba62ad3cf4e016f6ed983340c66d51b69d471b06b112a87f`
+- Executable source: `a9f0c383f82046afeaa063bfa65523719ca905dd904bddcbea842acdae8a5fe8`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T144951Z-b38cd952e6/package.json`
+- Exact evidence: acceptance `1789224518350044000-76fe563fcb974ac696fd02c89c83dac6`, generated consumer `1789224546686528000-856eb816d8b945bdb0bb4fce4c7693cc`, generator `1789224580430584000-1c212f8f5a80483aabde0ed1c0043ea6`; all typed GREEN on the exact candidate/executable source above
+- Verdict: `CHANGES_REQUESTED`
+
+### Disposition
+
+The five findings from the initial Gate 5 remain structurally resolved: the exact plan retains all three obligations, retained evidence is typed, workspace and lineage contracts remain confined/bound, and preflight now executes configured probes and blocks a configured failing probe. The last environment-observation finding is improved but not completely resolved because the repository's real probes and installed-dependency classification still fabricate or contradict availability.
+
+### Findings
+
+1. **Blocking — the shipped service probes do not observe the named services.** `.quality-graph/verification-policy.json:198-202` defines the MariaDB, browser and container probes as `python3 -c 'raise SystemExit(0)'`. `tools/delivery/change-verification.py:640-643` executes those commands, but unconditional success is then treated as proof that each external service exists. Any integration/e2e plan will therefore report absent MariaDB/browser/container services as available and may become publication-ready. This is exactly the fabricated availability forbidden by R2/R7 and the remaining Gate 5 finding. Use bounded probes that actually observe each service, or omit/unavailable-mark a service when no safe probe exists; a missing probe for a required service must block/return UNKNOWN rather than imply success.
+
+2. **Blocking — an installed, declared third-party Python dependency is rejected as unavailable.** At `tools/delivery/change-verification.py:651-660`, `find_spec(name)` can successfully resolve an installed site-package, but `standard` remains false and the `elif` checks only for a repository-root `name.py`; it consequently appends `DEPENDENCY_UNAVAILABLE`. Later, lines 685-692 correctly include that same resolved module in `available_dependencies`. The record can thus claim a dependency is observed while the candidate is blocked as if it were absent. Accept a declared dependency when `find_spec` succeeds in the target profile, retain its observed origin/identity, and fail only when neither the environment nor an allowed fixture/workspace supplies it.
+
+The new sensitivity test replaces the repository probes with synthetic failing/succeeding commands and supplies the successful Python dependency as a root-level fixture. It therefore does not exercise either shipped-policy false positive above.
+
+### Verification
+
+- `python3 tests/Verification/delivery_harness_ci_completeness_001_test.py` — 13 tests GREEN in 27.574s.
+- `python3 tools/delivery/render-dependencies.py --check` — GREEN.
+- Direct package inspection — `EXACT_EVIDENCE_OK`: all three records match command id, purpose, command environment, candidate source, executable source and GREEN outcome.
+- Prior bounded compatibility suites remain covered by the preceding rereview evidence and no related implementation outside the environment planner changed.
+- No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN` and are not approval.
+
+Both findings affect normative behavior and test sensitivity. Return to Gate 2/3 for shipped-policy and installed-module cases before the next implementation correction and Gate 5 rereview.
