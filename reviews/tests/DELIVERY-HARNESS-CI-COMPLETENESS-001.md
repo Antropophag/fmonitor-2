@@ -99,3 +99,23 @@ The retained result is a valid intended RED: the original eight tests remain GRE
 ### Required changes
 
 None. Gate 4 correction may proceed against exact executable source `cebbb62eaced98220f9ca7db798394b92b563eea261b06e3e94530e25d5940bf`. Any further spec or test change requires another independent Gate 3 review.
+
+## Rereview 2026-09-12 — observed environment sensitivity delta
+
+- Reviewed source: base `4cdc276e2c36d3d78d677843e986062f42e3bf74` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T144304Z-d19ac42ff6/snapshot/source.patch`, SHA-256 `da99e780938d653180525fa3722161c7ae54fb5aed139c25f3f873512e43024e`
+- Candidate source: `74da9b27dcf3f1b7deef3833cb7e373bc39a08386d42ba7178dbf80b16bcbee1`
+- Executable source: `d69fb45e3fe9beddf58bb1ca7edfe50a92a68bbfad330e36093f7271f89b856d`
+- Evidence: external record `1789224149932063000-14c981e0f41a44f2936e426a1e6c6b61`, typed acceptance `INTENDED_RED`, exit 1; 12 existing tests GREEN, one focused test FAIL, zero ERROR
+- Review input: remaining Gate 5 environment-observation finding in `reviews/code/DELIVERY-HARNESS-CI-COMPLETENESS-001.md`
+- Acceptance continuity: normative R2/R7 is unchanged; this delta makes its actual category-environment observation requirement sensitive.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The new test uses the public plan/preflight seam in a disposable repository. Its integration-profile command independently declares a Python dependency and requires MariaDB; deterministic failing probes and an absent module must block publication with exactly `SERVICE_UNAVAILABLE` and `DEPENDENCY_UNAVAILABLE`, must omit MariaDB from observed availability, must mark the profile incompatible and must identify the observation method as a probe. The positive half then supplies the module and a successful MariaDB probe and requires GREEN evidence containing both observed facts. This distinguishes actual observation from copying the target profile and catches the precise Gate 5 defect without relying on production services.
+
+The retained result is an intended RED rather than setup failure: all 12 prior tests remain GREEN, the new test reaches its first admission assertion, and current implementation incorrectly returns zero exactly as the Gate 5 finding predicts.
+
+### Required changes
+
+None. Gate 4 correction may proceed against exact executable source `d69fb45e3fe9beddf58bb1ca7edfe50a92a68bbfad330e36093f7271f89b856d`. Any further specification or test change requires another independent Gate 3 review.
