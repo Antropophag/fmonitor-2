@@ -4,7 +4,7 @@
 
 Срез переносит ручной workforce sync на `php bin/yii workforce-sync/run --interactive=0`, оставляет прежний entrypoint тонким alias и объединяет manual/jobs composition без изменения Bitrix/workforce domain owners. [Контракт](../../specs/YII2-WORKFORCE-SYNC-CONSOLE-001.md), [OpenSpec](../../openspec/changes/yii2-workforce-sync-console/), [delivery record](yii2-workforce-sync-console-delivery-2026-09-12.md).
 
-Gate 3 и Gate 5 APPROVED; focused checks GREEN. Кандидат — PR #101. Фактические commit/PR/CI проверять через `python3 tools/delivery/harness.py state`. Один full exact-source CI требуется до merge-ready; stand/deployment и общий #76 этим срезом не закрываются. Параллельный OTIZ checkout и его WIP не затрагиваются.
+Gate 3 и Gate 5 APPROVED; focused checks GREEN. Кандидат — PR #101. Первый CI `34698699427` выявил четыре исправленные regression groups и один отдельно перепроверенный browser timeout; correction Gate 3/5 APPROVED. Фактические commit/PR/CI проверять через `python3 tools/delivery/harness.py state`. Новый exact-source CI требуется до merge-ready; stand/deployment и общий #76 этим срезом не закрываются. Параллельный OTIZ checkout и его WIP не затрагиваются.
 
 # Предыдущий указатель — история
 

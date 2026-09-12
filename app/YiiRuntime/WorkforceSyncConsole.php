@@ -1,15 +1,13 @@
 <?php
 declare(strict_types=1);
-
 namespace FMonitor2\YiiRuntime;
-
 use FMonitor2\Jobs\JobsRuntimeConfiguration;
 use FMonitor2\Jobs\MariaDbWorkforceJobHandler;
 use FMonitor2\Workforce\BitrixWorkforceDeliveryConfig;
+use FMonitor2\Workforce\BitrixWorkforceDeliveryConfigurationUnavailable;
 use FMonitor2\Workforce\BitrixWorkforceDeliveryFactory;
 use FMonitor2\Workforce\WorkerConfiguration;
 use mysqli;
-
 final class WorkforceSyncConsole
 {
     /** @return array{exitCode:int,result:array<string,mixed>} */
@@ -24,7 +22,6 @@ final class WorkforceSyncConsole
             if (is_string($stagedToken)) @unlink($stagedToken);
             return ['exitCode' => 64, 'result' => ['ok' => false, 'reason' => 'CONFIGURATION_INVALID']];
         }
-
         try {
             $result = self::owner($database, $prefix)->run($delivery, self::uuid());
             return ['exitCode' => ($result['status'] ?? null) === 'completed' ? 0 : 1, 'result' => $result];
@@ -35,17 +32,18 @@ final class WorkforceSyncConsole
             if (is_string($stagedToken)) @unlink($stagedToken);
         }
     }
-
     public static function runJob(array $job, JobsRuntimeConfiguration $configuration): array
     {
-        [$delivery, $database, $prefix] = self::composeForJob($configuration);
+        try { [$delivery, $database, $prefix] = self::composeForJob($configuration); }
+        catch (BitrixWorkforceDeliveryConfigurationUnavailable | \JsonException | \InvalidArgumentException $error) {
+            throw new \InvalidArgumentException('Invalid workforce configuration.', 0, $error);
+        }
         try {
             return (new MariaDbWorkforceJobHandler(self::owner($database, $prefix), $delivery))->handle($job);
         } finally {
             $database->close();
         }
     }
-
     /** @return array{0:object,1:\mysqli,2:string,3:?string} */
     private static function composeFromEnvironment(): array
     {
@@ -56,7 +54,6 @@ final class WorkforceSyncConsole
         $user = self::required('FMONITOR_DB_USER');
         $password = self::explicit('FMONITOR_DB_PASSWORD');
         $stagedToken = null;
-
         $private = getenv('FMONITOR_BITRIX_CONFIG');
         if (is_string($private) && $private !== '') {
             $values = WorkerConfiguration::fromFile($private);
@@ -76,7 +73,6 @@ final class WorkforceSyncConsole
         }
         return [$delivery, $database, $prefix, $stagedToken];
     }
-
     /** @return array{0:object,1:\mysqli,2:string} */
     private static function composeForJob(JobsRuntimeConfiguration $configuration): array
     {
@@ -88,7 +84,6 @@ final class WorkforceSyncConsole
         $database = self::openDatabase($configuration->value('FMONITOR_DB_HOST'), $configuration->value('FMONITOR_DB_USER'), $configuration->value('FMONITOR_DB_PASSWORD'), $configuration->value('FMONITOR_DB_NAME'), $configuration->port());
         return [$delivery, $database, $configuration->prefix()];
     }
-
     private static function openDatabase(string $host, string $user, string $password, string $name, int $port): mysqli
     {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -101,46 +96,31 @@ final class WorkforceSyncConsole
             throw $error;
         }
     }
-
     private static function owner(mysqli $database, string $prefix): object
-    {
-        return new \FMonitor2\InstallationProcess\MariaDbWorkforceSynchronization($database, $prefix);
-    }
-
-    private static function required(string $name): string
-    {
+    { return new \FMonitor2\InstallationProcess\MariaDbWorkforceSynchronization($database, $prefix); }
+    private static function required(string $name): string {
         $value = getenv($name);
         if (!is_string($value) || $value === '' || str_contains($value, "\0")) throw new \InvalidArgumentException();
         return $value;
     }
-
-    private static function explicit(string $name): string
-    {
+    private static function explicit(string $name): string {
         $value = getenv($name);
         if (!is_string($value) || str_contains($value, "\0")) throw new \InvalidArgumentException();
         return $value;
     }
-
-    private static function optional(string $name): ?string
-    {
+    private static function optional(string $name): ?string {
         $value = getenv($name);
         return is_string($value) && $value !== '' ? $value : null;
     }
-
-    private static function port(string $value): int
-    {
+    private static function port(string $value): int {
         if (preg_match('/^[1-9][0-9]{0,4}$/D', $value) !== 1 || (int) $value > 65535) throw new \InvalidArgumentException();
         return (int) $value;
     }
-
-    private static function prefix(mixed $value): string
-    {
+    private static function prefix(mixed $value): string {
         if (!is_string($value) || preg_match('/^[A-Za-z0-9_]{0,25}$/D', $value) !== 1) throw new \InvalidArgumentException();
         return $value;
     }
-
-    private static function positiveInteger(string $value): int
-    {
+    private static function positiveInteger(string $value): int {
         if (preg_match('/^[1-9][0-9]*$/D', $value) !== 1 || strlen($value) > 18) throw new \InvalidArgumentException();
         return (int) $value;
     }

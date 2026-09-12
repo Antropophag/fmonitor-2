@@ -19,7 +19,7 @@ final class WorkforceSyncController extends Controller
 
     private function finish(array $result, int $exitCode): int
     {
-        $this->stdout(json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
+        echo json_encode($result, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), "\n";
         return $exitCode;
     }
 }

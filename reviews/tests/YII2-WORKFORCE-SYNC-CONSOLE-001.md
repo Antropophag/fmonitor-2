@@ -158,3 +158,32 @@ The focused correction plan includes the ownership test plus the affected consol
 `APPROVED`
 
 The Gate 5 resource-close correction may proceed to implementation against this exact reviewed test delta. The changed test must be GREEN on the corrected exact source before independent Gate 5 rereview.
+
+---
+
+## Gate 3 delta review — CI legacy-alias compatibility — 2026-09-12
+
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T143643Z-5238378e70/package.json`.
+- Exact reviewed source: reconstructible dirty snapshot over base commit `1304647ea68f68405f831d9bffbe9a4a0a68e8cf`, source digest `a0a63025f040d13e88df1f6c6be7ebbffa939acc88e1e67febf0e086adb64439`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T143643Z-5238378e70/snapshot/source.patch`, SHA-256 `6fa38be3dfde3409d4d974be804c167cea9e9c7377bbe09239568ad4bc43c772`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T143643Z-5238378e70/verification-plan.json`, SHA-256 `ae88006716bcfc77e1e0d23c556fd13b920c1e85633b0e8ffdb17e333678dfef`.
+- Delta binding: `openspec/changes/yii2-workforce-sync-console/verification-gate5-correction-input.json`, acceptance `A3-ci-compatibility`.
+- Review scope: normative A3 failure-envelope correction, its assertions in `tests/Yii2/yii2_workforce_sync_console_001_test.php`, and verification classification/inventory changes. This reviewer authored none of them.
+
+### Findings
+
+No findings.
+
+The amended A3 restores the inherited public compatibility boundary without weakening the new Yii seam: the retained alias must collapse failures to exit `1`, stdout `{"status":"failed","reason":"SYNC_UNAVAILABLE"}\n`, and empty stderr, while direct Yii keeps A1's precise closed reasons. The test uses equivalent inputs to distinguish those transports: direct assertions already require configuration `64`, DB-unavailable `69`, and unexpected composition `70`; the new alias assertions require the single legacy envelope for representative configuration and DB-unavailable failures. This will catch a transparent launcher that leaks Yii's new failure protocol, which is the CI-discovered regression, without changing success/repeat or durable behavior.
+
+The test's integration classification is correct. It starts real subprocesses, the Throwable case connects to the test MariaDB service, and its suite entry is now `db` while `tools/verification/categories.json` classifies it as `integration`. The updated A3 mapping also retains the existing legacy workforce CLI and jobs handler validation controls alongside jobs workforce/retry and ownership coverage.
+
+Retained record `1789223790017961000-02ea4aa93add4e03bcea71f410f70b96` is `INTENDED_RED`, bound at start and end to source `a0a63025f040d13e88df1f6c6be7ebbffa939acc88e1e67febf0e086adb64439`, with `source_drift=false`. All preceding transport/configuration assertions pass; it fails specifically because the current alias returns direct Yii's exit `69`/`DATABASE_UNAVAILABLE` instead of the required legacy exit `1`/`SYNC_UNAVAILABLE`. This is the intended missing compatibility behavior, not setup failure.
+
+`openspec validate yii2-workforce-sync-console --strict` and `git diff --check` are GREEN for the reviewed inputs. OTIZ remains outside the contract delta and planned implementation paths. Harness reports PR #101 open; CI and deployment remain `UNKNOWN` and are not treated as GREEN or authorization.
+
+### Delta verdict
+
+`APPROVED`
+
+Implementation may proceed against this exact reviewed contract/test delta. The changed test and its focused plan must be GREEN on the corrected exact source before the independent Gate 5 rereview.

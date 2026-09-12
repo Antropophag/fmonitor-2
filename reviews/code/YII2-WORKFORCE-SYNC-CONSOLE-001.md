@@ -53,3 +53,34 @@ Harness PR/CI and deployment state remains `UNKNOWN`; it is not treated as GREEN
 `APPROVED`
 
 Gate 5 passes for exact source `62e74430c30add595027e6d7488fa9883dc150fe401758e027708644d29a5530`. Publication still requires root confirmation of reviewed bytes and subsequent exact-source PR/CI handling; deployment remains separately unauthorized.
+
+---
+
+## Gate 5 CI-correction rereview — 2026-09-12
+
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T144528Z-35a76324db/package.json`.
+- Corrected exact source: reconstructible dirty snapshot over base commit `1304647ea68f68405f831d9bffbe9a4a0a68e8cf`, source digest `a360a295a8873b062ebccbe8bace5e51cd873c2670919d55df950753fcde1f88`.
+- Snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T144528Z-35a76324db/snapshot/source.patch`, SHA-256 `5e0bac53a33d89cc32ba1e506a196fefec20ca7509ecd990ce93429d3d8ace9d` (matches `snapshot/manifest.json`).
+- Reviewed delta: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T144528Z-35a76324db/delta.patch`, SHA-256 `0599697a2e439d738424f9e0218e422771ae9c8b07d1358e46033387a9137b08`.
+- Gate 3 approval: `reviews/tests/YII2-WORKFORCE-SYNC-CONSOLE-001.md`, “Gate 3 delta review — CI legacy-alias compatibility”, exact source `a0a63025f040d13e88df1f6c6be7ebbffa939acc88e1e67febf0e086adb64439`, verdict `APPROVED`.
+- Review scope: the complete post-CI correction delta, including the amended A3 compatibility contract/test, alias failure adapter, jobs invalid-configuration classification, Yii output compatibility, integration inventory, and the shared composition hotspot reduction. Reviewer independence is unchanged.
+
+### Assessment
+
+No findings.
+
+The retained alias now buffers the exact shared Yii route, passes successful output through unchanged, and collapses every nonzero terminal result to the inherited exit `1` / `{"status":"failed","reason":"SYNC_UNAVAILABLE"}\n` / empty-stderr envelope. The direct Yii command retains A1's precise exit `64`, `69`, and `70` reasons. The controller's direct `echo` preserves exact JSON output while avoiding the CI/browser runtime incompatibility encountered through Yii's console output helper; no diagnostic, exception, credential, token, PII, SQL, or path is introduced into either transport.
+
+`WorkforceSyncConsole::runJob()` now translates Bitrix configuration, JSON, and validation failures back to `InvalidArgumentException`, preserving the handler's established invalid-configuration envelope; DB and unexpected runtime failures remain outside that catch and retain retryable job classification. The shared owner, immutable job identity, lease/retry/deduplication behavior, manual UUID, partial-initialization close-before-rethrow, outer terminal cleanup, and append-only workforce/history behavior are unchanged. The 147-line composition remains a single bounded Yii runtime adapter with no added SQL or second owner.
+
+The approved transport test now distinguishes the legacy alias failure contract from direct Yii outcomes and is correctly classified `db` / `integration` because its Throwable case uses MariaDB. The A3 verification mapping adds the unchanged legacy worker CLI and jobs handler validation controls. No production or verification path adds OTIZ, `rapid-pilot`, web/session ownership, schema, schedule, stand, or deployment scope.
+
+All twelve package records are `GREEN`, have exit code 0, no source drift, and are bound at start and end to exact source `a360a295a8873b062ebccbe8bace5e51cd873c2670919d55df950753fcde1f88`: workforce transport, DB success/repeat, ownership/resource release, package closure, jobs workforce/retry, legacy workforce CLI, jobs handler validation, Bitrix delivery, workforce synchronization/history, architecture guard, and verification-CI inventory. The previously failing `php tests/Runtime/production_runtime_browser_001_test.php` was separately rerun at the same exact source and is `GREEN` in record `1789224215183569000-5f18e25659d946e08fcc589c736e4fcc` with no source drift. `git diff --check`, PHP syntax checks for all three changed production PHP files, and `openspec validate yii2-workforce-sync-console --strict` are GREEN.
+
+Harness identifies PR #101 as open at commit `1304647ea68f68405f831d9bffbe9a4a0a68e8cf`, while the reviewed correction is a dirty exact-source snapshot over that commit. Harness CI and deployment remain `UNKNOWN`; this review does not claim the correction is pushed, CI-GREEN, merged, or authorized for deployment.
+
+### Rereview verdict
+
+`APPROVED`
+
+Gate 5 passes for corrected exact source `a360a295a8873b062ebccbe8bace5e51cd873c2670919d55df950753fcde1f88`. Root must still confirm reviewed bytes, publish the correction, and obtain terminal exact-commit CI before merge-ready status. Deployment remains separately unauthorized; OTIZ remains excluded.

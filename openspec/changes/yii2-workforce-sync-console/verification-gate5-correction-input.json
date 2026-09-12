@@ -1,16 +1,5 @@
 {
-  "change": "yii2-workforce-sync-console-gate5-resource-close",
-  "planned_paths": [
-    "app/YiiRuntime/WorkforceSyncConsole.php",
-    "tests/Yii2/yii2_workforce_sync_ownership_001_test.php",
-    "openspec/changes/yii2-workforce-sync-console/verification-gate5-correction-input.json"
-  ],
-  "acceptances": [{
-    "spec_id": "YII2-WORKFORCE-SYNC-CONSOLE-001",
-    "acceptance_id": "A2-partial-initialization-close",
-    "spec_path": "specs/YII2-WORKFORCE-SYNC-CONSOLE-001.md",
-    "seam": "workforce console database resource ownership during partial initialization",
-    "tests": ["tests/Yii2/yii2_workforce_sync_ownership_001_test.php"],
-    "gate3_expected": {"tests/Yii2/yii2_workforce_sync_ownership_001_test.php": "INTENDED_RED"}
-  }]
+  "change": "yii2-workforce-sync-console-ci-contract-correction",
+  "planned_paths": ["specs/YII2-WORKFORCE-SYNC-CONSOLE-001.md", "tests/Yii2/yii2_workforce_sync_console_001_test.php", "tools/verification/suites.tsv", "tools/verification/categories.json", "openspec/changes/yii2-workforce-sync-console/verification-input.json", "openspec/changes/yii2-workforce-sync-console/verification-gate5-correction-input.json", "bin/fmonitor2-sync-workforce.php", "app/Jobs/JobHandlerRuntime.php", "app/YiiRuntime/WorkforceSyncConsole.php"],
+  "acceptances": [{"spec_id": "YII2-WORKFORCE-SYNC-CONSOLE-001", "acceptance_id": "A3-ci-compatibility", "spec_path": "specs/YII2-WORKFORCE-SYNC-CONSOLE-001.md", "seam": "legacy failure envelope and integration-classified Throwable coverage", "tests": ["tests/Yii2/yii2_workforce_sync_console_001_test.php"], "gate3_expected": {"tests/Yii2/yii2_workforce_sync_console_001_test.php": "INTENDED_RED"}}]
 }

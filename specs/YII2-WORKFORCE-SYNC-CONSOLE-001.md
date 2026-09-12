@@ -23,7 +23,7 @@ Configuration принимается из абсолютного private `FMONIT
 
 ## A3. Alias, jobs и package closure
 
-Retained `bin/fmonitor2-sync-workforce.php` является тонким launcher того же Yii route. Делегирование проверяется direct success → alias unchanged repeat на одной isolated database и exact terminal parity на одинаковых invalid-configuration/DB-unavailable inputs. Domain transport failures остаются результатом одного неизменённого owner и его independent oracle. Scheduled workforce job переиспользует ту же composition, сохраняя jobs lease/retry/deduplication contract.
+Retained `bin/fmonitor2-sync-workforce.php` является тонким launcher того же Yii route. Делегирование проверяется direct success → alias unchanged repeat на одной isolated database. Для failure alias сохраняет исторический public envelope: exit `1`, `{"status":"failed","reason":"SYNC_UNAVAILABLE"}\n`, пустой stderr; direct Yii command сохраняет точные причины из A1. Domain transport failures остаются результатом одного неизменённого owner и его independent oracle. Scheduled workforce job переиспользует ту же composition, сохраняя jobs lease/retry/deduplication и configuration-failure contract.
 
 Command load set содержит Yii controller/composition и канонические workforce owners, но не `rapid-pilot`, demo, web/session, OTIZ или вторую legacy composition/autoloader. Ordinary web startup не запускает sync; production artifact содержит command closure. Schema, schedule, stand и deployment не изменяются.
 
