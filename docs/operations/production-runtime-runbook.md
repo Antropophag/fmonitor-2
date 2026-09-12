@@ -21,6 +21,8 @@ FMONITOR_SOURCE_REVISION="$(git rev-parse HEAD)"
 FMONITOR_DB_PASSWORD="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 FMONITOR_MIGRATION_DB_PASSWORD="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+FMONITOR_YII_COOKIE_VALIDATION_KEY="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+FMONITOR_YII_IDENTITY_KEY="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
 
 printf '%s\n' \
   "COMPOSE_PROJECT_NAME=fmonitor2-production" \
@@ -34,12 +36,14 @@ printf '%s\n' \
   "FMONITOR_PROCESS_TABLE_PREFIX=fm2_" \
   "FMONITOR_LEGACY_TABLE_PREFIX=fm2_" \
   "FMONITOR_SESSION_INSTANCE=production" \
+  "FMONITOR_YII_COOKIE_VALIDATION_KEY=$FMONITOR_YII_COOKIE_VALIDATION_KEY" \
+  "FMONITOR_YII_IDENTITY_KEY=$FMONITOR_YII_IDENTITY_KEY" \
   "FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:8093" \
   "FMONITOR_TRUSTED_REQUEST_SCHEME=http" \
   "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=$FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD" \
   >"$FMONITOR_PRIVATE_ENV"
 chmod 600 "$FMONITOR_PRIVATE_ENV"
-unset FMONITOR_DB_PASSWORD FMONITOR_MIGRATION_DB_PASSWORD FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD
+unset FMONITOR_DB_PASSWORD FMONITOR_MIGRATION_DB_PASSWORD FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD FMONITOR_YII_COOKIE_VALIDATION_KEY FMONITOR_YII_IDENTITY_KEY
 set -a; . "$FMONITOR_PRIVATE_ENV"; set +a
 ```
 
@@ -170,9 +174,19 @@ docker compose --file deploy/runtime/compose.yaml stop web php
 1. Остановить writers, включая включённые jobs services; сделать согласованные DB и
    platform volume snapshots и записать old source/image identity.
 2. Получить clean checkout reviewed commit и собрать новый unique image tag.
-3. Загрузить тот же private environment, изменить только
-   `FMONITOR_RUNTIME_IMAGE`, выполнить one-shot `migrate`, затем recreate `php web`
-   и ранее включённые jobs services из того же image.
+3. Пока writers остаются остановленными, загрузить тот же private
+   environment, изменить только `FMONITOR_RUNTIME_IMAGE` на reviewed current
+   image и из него сначала выполнить public storage `prepare`, затем
+   one-shot `migrate`:
+
+   ```sh
+   docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm prepare
+   docker compose --file deploy/runtime/compose.yaml --profile deployment run --rm migrate
+   ```
+
+   `prepare` добавляет новые обязательные private storage paths и не заменяет
+   существующие session/artifact bytes. После обеих one-shot команд recreate
+   `php web` и ранее включённые jobs services из того же image.
 4. Проверить live/ready, login, основной browser flow и сохранённые данные.
 5. При rollback остановить new `web/php` и вернуть previous exact image. Не удалять
    additive schema/history и не выполнять `down --volumes`.

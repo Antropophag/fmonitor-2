@@ -51,21 +51,12 @@ final class RapidPilotOtiz
 
     public static function currentUserCanAccess(): bool
     {
-        $prefix = (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX');
-        $userId = filter_var($_SERVER['FMONITOR_AUTH_USER_ID'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1 || $userId === false) return false;
-        try {
-            $db = new mysqli(getenv('FMONITOR_DB_HOST') ?: '127.0.0.1', getenv('FMONITOR_DB_USER') ?: 'fmonitor2_demo', getenv('FMONITOR_DB_PASSWORD') ?: 'fmonitor2_demo_local', getenv('FMONITOR_DB_NAME') ?: 'fmonitor2_demo', (int) (getenv('FMONITOR_DB_PORT') ?: '23306'));
-            $db->set_charset('utf8mb4'); $statement = $db->prepare("SELECT user_id FROM `{$prefix}fm2_pilot_users` WHERE user_id=? AND status=1 LIMIT 1");
-            $statement->bind_param('i', $userId); $statement->execute();$row=$statement->get_result()->fetch_assoc();$allowed=is_array($row)&&\FMonitor2\PilotHttp\AccessPolicy::grants(\FMonitor2\PilotHttp\AccessPolicy::forUser($db,$prefix,(int)$row['user_id']),\FMonitor2\PilotHttp\AccessPolicy::OTIZ_MANAGE); $db->close(); return $allowed;
-        } catch (Throwable) { return false; }
+        return \FMonitor2\PilotHttp\OtizNavigation::currentUserCanAccess();
     }
 
     public static function decorateNavigation(string $html, bool $active): string
     {
-        $current = $active ? ' aria-current="page"' : '';
-        $icon = '<svg class="fm2-nav-icon fm2-nav-icon--shlz" viewBox="0 0 24 25" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-bar-chart-square-plus"/></svg>';
-        return preg_replace('#<span class="fm2-nav-group">Управление</span><span class="fm2-nav-item fm2-nav-item--muted" aria-disabled="true"><svg[^>]*>.*?</svg><span class="fm2-nav-text">Расчёты ОТиЗ</span></span>#s', '<span class="fm2-nav-group">ОТиЗ</span><a class="fm2-nav-item" href="/pilot/otiz"' . $current . '>' . $icon . '<span class="fm2-nav-text">Расчёты ОТиЗ</span></a><span class="fm2-nav-group">Управление</span>', $html) ?? $html;
+        return \FMonitor2\PilotHttp\OtizNavigation::decorate($html,$active);
     }
 
     public function handle(string $path): never

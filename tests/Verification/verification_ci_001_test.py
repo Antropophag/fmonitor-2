@@ -406,6 +406,7 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Runtime/production_runtime_browser_001_test.php',
             'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
             'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php',
+            'php\ttests/Yii2/yii2_otiz_publication_browser_001_test.php',
             'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php',
             'php\ttests/Yii2/yii2_user_access_browser_001_test.php',
             'python3\ttests/Runtime/activation_proxy_log_001_test.py',

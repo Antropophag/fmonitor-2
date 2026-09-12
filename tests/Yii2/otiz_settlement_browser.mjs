@@ -19,7 +19,7 @@ try {
   const snapshot = `${config.origin}/pilot/otiz/snapshots/301`;
   result.stage = 'protected snapshot login return';
   await page.goto(snapshot);
-  assert.equal(new URL(page.url()).pathname, '/pilot/login', 'guest enters Yii login');
+  assert.equal(new URL(page.url()).pathname, '/pilot/otiz/login', 'guest enters explicit Yii OTIZ login');
   await page.locator('input[name="email"]').fill(config.email);
   await Promise.all([page.waitForNavigation(), page.locator('button[type="submit"]').click()]);
   await page.locator('input[name="password"]').fill(config.password);

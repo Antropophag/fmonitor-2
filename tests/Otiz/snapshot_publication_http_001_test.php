@@ -7,7 +7,7 @@ use FMonitor2\InstallationProcess\PilotOtizSchemaMigration;
 
 // OTIZ-SNAPSHOT-PUBLICATION-001 / A01. Only disposable fixture DB and server.
 $p='otiz_http_'.bin2hex(random_bytes(5)).'_';
-$f=new SelectionHttpFixture(true,static fn():array=>['FMONITOR_LEGACY_TABLE_PREFIX'=>'invalid-prefix!'],$p);
+    $f=new SelectionHttpFixture(true,static fn():array=>['FMONITOR_LEGACY_TABLE_PREFIX'=>'invalid-prefix!'],$p,dirname(__DIR__,2).'/tests/Support/OtizOracleRouter.php');
 try{
     $db=$f->original->selection->db;
     PilotOtizSchemaMigration::apply($db,$p);

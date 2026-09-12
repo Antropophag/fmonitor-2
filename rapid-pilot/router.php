@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/ObjectDetails.php';
 require_once __DIR__ . '/LocalAuth.php';
-require_once __DIR__ . '/Otiz.php';
 require_once __DIR__ . '/Calendar.php';
 require_once __DIR__ . '/Shell.php';
 require_once __DIR__ . '/ObjectQueue.php';
@@ -147,16 +146,6 @@ if ($path === '/pilot/assets/installer-directory.js') {
     echo $bytes;
     exit;
 }
-if ($path === '/pilot/assets/otiz.js') {
-    $bytes = file_get_contents(__DIR__ . '/otiz.js');
-    if (!is_string($bytes)) { http_response_code(404); exit; }
-    header('Content-Type: text/javascript; charset=UTF-8');
-    header('Content-Length: ' . strlen($bytes));
-    header('Cache-Control: no-store');
-    header('X-Content-Type-Options: nosniff');
-    echo $bytes;
-    exit;
-}
 if ($path === '/pilot/assets/calendar.js') {
     $bytes = file_get_contents(__DIR__ . '/calendar.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
@@ -206,7 +195,7 @@ if (is_string($path) && str_starts_with($path, '/pilot/assets/')) {
     echo "Not found.\n";
     exit;
 }
-\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path)||RapidPilotOtiz::matches((string)$path));try {
+\FMonitor2\PilotHttp\PilotRouteAdmission::rejectIfUnknown((string)$path,RapidPilotInspectionSchedule::matches((string)$path)||RapidPilotCompletionFlow::matches((string)$path)||RapidPilotObjectQueue::matches((string)$path)||RapidPilotCalendar::matches((string)$path));try {
     (new RapidPilotLocalAuth())->handle(is_string($path) ? $path : '/');
 } catch (Throwable) {
     $body = "Service unavailable.\n";
@@ -240,11 +229,6 @@ if (is_string($path) && RapidPilotCalendar::matches($path)) {
     require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
     (new RapidPilotCalendar())->handle();
 }
-if (is_string($path) && RapidPilotOtiz::matches($path)) {
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
-    (new RapidPilotOtiz())->handle($path);
-}
 $localServerAddress = $_SERVER['SERVER_ADDR'] ?? $_SERVER['SERVER_NAME'] ?? null;
 if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
     $demoNonce = getenv('FMONITOR_DEMO_LOOPBACK_NONCE');
@@ -270,7 +254,7 @@ if ($response->status === 200 && is_string($path) && str_starts_with((string) ($
     if (preg_match('#^/pilot/(?:objects|construction-control/objects)/([1-9][0-9]*)/checklist$#D', $path, $completionChecklist) === 1) $body = RapidPilotCompletionFlow::enhanceChecklist($body, (int) $completionChecklist[1]);
     $body = RapidPilotCompletionFlow::paintStatuses($body);
     if ($path === '/pilot/construction-control') $body = RapidPilotInspectionSchedule::enhanceControl($body);
-    $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, RapidPilotOtiz::currentUserCanAccess(), false);
+    $body = RapidPilotShell::decorate($body, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), false, false, false);
     $body = str_replace('</head>', '<link rel="icon" type="image/svg+xml" href="/pilot/assets/favicon.svg"></head>', $body);
     $headers['Content-Length'] = (string) strlen($body);
 }

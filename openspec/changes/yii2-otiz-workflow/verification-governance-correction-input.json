@@ -1,0 +1,14 @@
+{
+  "change": "yii2-otiz-workflow-governance-correction",
+  "planned_paths": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OTIZ-WORKFLOW-001",
+      "acceptance_id": "A6-PR103-governance-isolation",
+      "spec_path": "specs/YII2-OTIZ-WORKFLOW-001.md",
+      "seam": "real harness prepare/preflight CLI in isolated git fixture with repository ignore rules",
+      "tests": ["tests/Verification/delivery_harness_ci_completeness_001_test.py"],
+      "gate3_expected": {"tests/Verification/delivery_harness_ci_completeness_001_test.py": "GREEN"}
+    }
+  ]
+}

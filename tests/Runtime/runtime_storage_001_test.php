@@ -101,7 +101,7 @@ try {
     $environment = runtimeStorageEnvironment($taskRoot, $token);
     $first = runtimeStorageRun($prepare, $environment, $repo);
     assertSameValue([0, "{\"ok\":true}\n", ''], [$first['exit'], $first['stdout'], $first['stderr']], 'prepare creates fresh runtime resources without DB access');
-    foreach ([$environment['FMONITOR_SESSION_STATE_ROOT'], $environment['FMONITOR_ARTIFACT_STORAGE_ROOT'], dirname($environment['FMONITOR_ORIGINAL_DB_PASSWORD_FILE']), dirname($environment['FMONITOR_ORIGINAL_SAFE_LOG_FILE'])] as $directory) {
+    foreach ([$environment['FMONITOR_SESSION_STATE_ROOT'], $environment['FMONITOR_SESSION_STATE_ROOT'] . '/yii-sessions', $environment['FMONITOR_ARTIFACT_STORAGE_ROOT'], dirname($environment['FMONITOR_ORIGINAL_DB_PASSWORD_FILE']), dirname($environment['FMONITOR_ORIGINAL_SAFE_LOG_FILE'])] as $directory) {
         assertSameValue([true, 0700, posix_geteuid(), posix_getegid()], [is_dir($directory), fileperms($directory) & 0777, fileowner($directory), filegroup($directory)], "prepared private directory {$directory} owned by the executing runtime identity");
     }
     assertSameValue([$environment['FMONITOR_DB_PASSWORD'], 0600], [file_get_contents($environment['FMONITOR_ORIGINAL_DB_PASSWORD_FILE']), fileperms($environment['FMONITOR_ORIGINAL_DB_PASSWORD_FILE']) & 0777], 'prepare writes exact no-LF private DB credential');
