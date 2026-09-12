@@ -104,3 +104,32 @@ The new sensitivity test replaces the repository probes with synthetic failing/s
 - No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN` and are not approval.
 
 Both findings affect normative behavior and test sensitivity. Return to Gate 2/3 for shipped-policy and installed-module cases before the next implementation correction and Gate 5 rereview.
+
+## Final Gate 5 approval — 2026-09-12
+
+- Reviewer: Codex agent `/root/issue99_gate5` (independent Gate 5 reviewer)
+- Reviewed commit: `a8aac6bb822618a99b09fe2e049b099b117af45b`
+- Final implementation correction: `e69a19dc2f4d2959610586de01caa451564d9998`
+- Gate 3 sensitivity approval: `b3e79854`
+- Candidate source: `31e9fe915cc390d19d48e7bd6dcc4edc0e919c4f0fa07d1b08a3d9a0bb294b01`
+- Executable source: `8cae209dc2e485615c61b5a29f218a7ba680e5a7b692db0a849c7579ad981999`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T150517Z-59cfcd1833/package.json`
+- Exact evidence records: acceptance `1789225374560661000-0d1b621c74fc427f936792241987c13c`, change verification `1789225407256704000-d148bcdb331f4c2a9121555d13de9935`, harness compatibility `1789225423169380000-a8a0d6e76c194ddb96869e7567e850dd`, generated consumer `1789225455127614000-540891afc4a6456198d9ae13e5c1fb66`, architecture guard `1789225487582458000-cafe83769d9f4592bc092005163e8a3d`, generator `1789225505757824000-ff77dcf9ead545f69f4d0c5d5bb93348`
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+All previous Gate 5 findings are resolved. The exact generated plan retains the acceptance, generated consumer, generator and applicable bounded category obligations. Retained evidence owns and matches command id, purpose, environment, candidate source and executable source. Dependency workspace confinement and immutable lock identity remain enforced. Test-delta lineage remains bound to exact distinct test blobs and one acceptance.
+
+The final environment correction removes fabricated availability. Shipped policy routes MariaDB, container and browser observations through `tools/delivery/probe-environment.py`; the observer executes `mysqladmin ping`, `docker info` and Node Playwright resolution with a bounded timeout and fail-closed nonzero result. Deterministic fake-tool tests prove both positive and negative outcomes invoke the intended external command. Required failed probes add `SERVICE_UNAVAILABLE`, make the profile incompatible and block publication. A declared module supplied through external `PYTHONPATH` is now accepted through successful `find_spec`, retained in observed dependencies and no longer contradicted by `DEPENDENCY_UNAVAILABLE`.
+
+### Verification
+
+- `python3 tests/Verification/delivery_harness_ci_completeness_001_test.py` — 14 tests GREEN in 32.750s, including shipped probe positive/negative observation and external `PYTHONPATH` dependency resolution.
+- `python3 tools/delivery/render-dependencies.py --check` — GREEN.
+- Exact plan/package audit — `SIX_EXACT_EVIDENCE_OK`: plan command ids equal evidence command ids, and every retained record matches candidate source, executable source, purpose, declared environment and GREEN outcome.
+- `openspec validate delivery-harness-first-pass-ci-completeness --strict` — valid.
+- Prior bounded compatibility suites are present as exact typed GREEN evidence in the final package; architecture guard is also exact typed GREEN.
+- No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN`; this approval authorizes publication/CI progression under the delivery process, not merge or deployment.
