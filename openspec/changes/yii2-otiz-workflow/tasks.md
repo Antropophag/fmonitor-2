@@ -18,8 +18,8 @@
 
 - [x] 3.1 Удалить только заменённые production route dispatch/includes/assets `RapidPilotOtiz`, сохранив characterization/verifiers; проверить dependency scan, architecture checks и отсутствие runtime load на каждом перенесённом URL.
 - [x] 3.2 Выполнить bounded focused/fast checks из verification plan, `git diff --check` и обязательные visual/focus проверки для изменённого frontend; записать команды, source digest и результаты без локального full `make test`/`make verify`.
-- [ ] 3.3 Получить независимый sol/low Gate 5 по полному reconstructible candidate; исправить полный findings list, повторно проверить затронутые boundaries и добиться явного `APPROVED`.
-- [ ] 3.4 Актуализировать candidate от текущего `origin/main` после параллельного imports/workforce slice, разрешая только фактические roster/web-config пересечения; повторно выполнить harness prepare и review изменившейся дельты.
+- [x] 3.3 Получить независимый sol/low Gate 5 по полному reconstructible candidate; исправить полный findings list, повторно проверить затронутые boundaries и добиться явного `APPROVED`.
+- [x] 3.4 Актуализировать candidate от текущего `origin/main` после параллельного imports/workforce slice, разрешая только фактические roster/web-config пересечения; повторно выполнить harness prepare и review изменившейся дельты.
 - [ ] 3.5 Создать PR и запустить один exact-source Quality Graph CI; проверить все jobs и `REGRESSION_FAILURE` inventory, получить `VERIFY_OK`, merge only reviewed matching source и записать delivery checkpoint. Deployment оставить `UNKNOWN` без отдельной авторизации.
 
 ## 4. Done definition

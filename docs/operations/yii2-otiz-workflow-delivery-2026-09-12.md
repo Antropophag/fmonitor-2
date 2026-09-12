@@ -16,7 +16,8 @@ include evidence excludes `RapidPilotOtiz` for every OTIZ route.
 Focused evidence: mapped application/HTTP/browser tests GREEN; architecture-check
 7 rules GREEN; visual contract GREEN; deployment Compose/restart focused check
 GREEN. Full local `make test`/`make verify` intentionally not run under owner
-decision 2026-09-11. Gate 5, exact commit, PR and CI are pending and MUST be
-recorded below before merge-ready status.
+decision 2026-09-11. Final independent Gate 5 is `APPROVED` on reviewed source
+`3354d333fc0f95a040424b4d3f415cfc439610df37d9b173eb928befb8212721`.
+PR and exact-source CI remain pending before merge-ready status.
 
 Deployment: `UNKNOWN` and not authorized.
