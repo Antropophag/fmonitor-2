@@ -36,3 +36,9 @@
 - [x] 6.1 Связать owner-approved #99 correction с verification input и сохранить intended RED на локальном sibling import
 - [x] 6.2 Получить независимый Gate 3, реализовать relative source-module detection и выполнить focused GREEN
 - [ ] 6.3 Получить независимый Gate 5 и поставить correction отдельным PR/CI до продолжения #39
+
+## 7. Correction — canonical Node.js built-ins
+
+- [x] 7.1 Связать owner-approved #99 correction с verification input и сохранить intended RED для `node:` import
+- [x] 7.2 Получить независимый Gate 3, реализовать built-in classification и выполнить focused GREEN
+- [ ] 7.3 Получить независимый Gate 5 и поставить correction отдельным PR/CI до продолжения #39

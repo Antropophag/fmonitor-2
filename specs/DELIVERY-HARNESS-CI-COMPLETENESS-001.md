@@ -46,6 +46,10 @@ undeclared package. Preflight MUST разрешать такой sibling import 
 его имени в список third-party dependencies и продолжать отклонять отсутствующий
 либо внешний незаявленный import.
 
+Node.js import с обязательным префиксом `node:` MUST считаться встроенным runtime
+module, а не внешним package. Preflight MUST разрешать такие imports без записи в
+third-party allowlist и продолжать отклонять незаявленные bare package imports.
+
 ## R3 — Typed plan-owned evidence
 
 Каждая command obligation имеет стабильный id и purpose `acceptance`, `boundary`

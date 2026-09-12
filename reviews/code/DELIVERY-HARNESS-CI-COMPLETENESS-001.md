@@ -193,3 +193,34 @@ Harness reports CI, GitHub publication state, and deployment as `UNKNOWN`. None 
 `APPROVED`
 
 Gate 5 passes for repository-local sibling import correction candidate `fbec0e621d0ec5c37524971f27e0b82a584945270048504ca58b5249bf73bad7` / executable source `11dc24e09f62f4c571f681b5c076e8ed48124e8cec4fdee9762cb9f7c09dae7a`. It may proceed to publication and exact-source CI; deployment remains outside this approval.
+
+## Canonical Node.js built-ins correction Gate 5 — 2026-09-12
+
+- Independent reviewer: separately tasked agent `/root/issue39_gate5`; authored none of this correction's specification, OpenSpec input, test, implementation, or Gate 3 review.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T172530Z-fbbfd71db5/package.json`.
+- Exact source: reconstructible dirty snapshot over base `6680decf97d26e3fefa154fe2b509c81aa2d47f5`, candidate source `1f01e71f77036e1de42e23dbc37e947866b0e59e76b303a4152d444b340bf5ca`, executable source `016a7524f18f7cfe7e16d5b4018106854ccb99a3937839988f2f8d0f1e513b2b`.
+- Snapshot patch SHA-256: `7664b1465b10d5a6099053a55dc98ff44a91ada3c1924b7a977fa933bcb9249e` (matches `snapshot/manifest.json`).
+- Verification plan SHA-256: `3ae8c17b1ae8804ed454e5ee17061ba40366284317dea408a3665dd8a44d3352`.
+- Gate 3 correction approval: final Node.js negative-boundary section of `reviews/tests/DELIVERY-HARNESS-CI-COMPLETENESS-001.md`, acceptance `R2-canonical-node-builtins`.
+
+### Findings
+
+No findings.
+
+### Assessment
+
+The implementation changes one Node dependency-classification condition. Only dependency specifiers beginning with the canonical `node:` prefix bypass the third-party allowlist. Every bare package specifier continues through the existing exact membership check against `declared_node_dependencies`; undeclared bare packages still produce `UNDECLARED_TEST_DEPENDENCY` with path, dependency and category. Python/PHP classification, service observation, source identity, evidence admission and dependency-workspace confinement are untouched.
+
+The normative R2 delta, OpenSpec scenario, correction input and implementation are coherent and bounded to tooling. The positive acceptance uses real `.mjs` imports of `node:fs` and `node:module` and requires GREEN publication admission. Its complementary negative fixture imports the distinct bare package `ci-missing-node-package` and requires nonzero admission, `publication_ready=false`, and the exact fail-closed diagnostic. This pair prevents an implementation from exempting all Node imports or weakening the bare-package boundary.
+
+Acceptance record `1789233880935893000-5ffc0e0fba8b4e55b8cf640a64049667` is GREEN, starts and ends at candidate source `1f01e71f77036e1de42e23dbc37e947866b0e59e76b303a4152d444b340bf5ca`, records executable source `016a7524f18f7cfe7e16d5b4018106854ccb99a3937839988f2f8d0f1e513b2b`, and reports `source_drift=false`. Its complete output is 17/17 GREEN, including both new Node positive/negative controls and all retained harness completeness scenarios.
+
+Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789233930265270000-c5e67727c097400ba38485767bef3030.json` is bound to the same candidate/executable sources, reports `outcome=GREEN`, `publication_ready=true`, and an empty failure inventory. `openspec validate delivery-harness-first-pass-ci-completeness --strict` is GREEN, `git diff --check` is clean, and the package snapshot hash matches its manifest.
+
+Harness and preflight retain PR/CI and deployment as `UNKNOWN`; none is treated as GREEN, merge approval, or deployment authorization.
+
+### Verdict
+
+`APPROVED`
+
+Gate 5 passes for the canonical Node.js built-ins correction candidate `1f01e71f77036e1de42e23dbc37e947866b0e59e76b303a4152d444b340bf5ca` / executable source `016a7524f18f7cfe7e16d5b4018106854ccb99a3937839988f2f8d0f1e513b2b`. It may proceed to publication and exact-source CI; deployment remains outside this approval.

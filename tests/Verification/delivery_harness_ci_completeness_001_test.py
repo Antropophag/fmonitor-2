@@ -315,6 +315,53 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertTrue(payload['publication_ready'])
         self.assertEqual([], payload['failures'])
 
+    def test_preflight_accepts_canonical_node_builtin_imports(self):
+        repo, base, _, environment = self.fixture_repo()
+        synthetic = 'tests/Verification/synthetic_node_builtins_test.mjs'
+        (repo / synthetic).write_text(
+            "import fs from 'node:fs';\n"
+            "import {createRequire} from 'node:module';\n"
+            "if(typeof fs.readFileSync !== 'function' || typeof createRequire !== 'function') process.exit(1);\n"
+        )
+        with (repo / 'tools/verification/suites.tsv').open('a') as stream:
+            stream.write(f'unit\tnode\t{synthetic}\n')
+        categories = json.loads((repo / 'tools/verification/categories.json').read_text())
+        categories[synthetic] = 'unit'
+        (repo / 'tools/verification/categories.json').write_text(json.dumps(categories, sort_keys=True) + '\n')
+        input_name = self.write_input(repo, test=synthetic)
+        planned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, planned.returncode, planned.stderr)
+        preflight = self.command(repo, environment, sys.executable,
+                                 'tools/delivery/change-verification.py', 'preflight', '--plan', plan_name)
+        self.assertEqual(0, preflight.returncode,
+                         'INTENDED_RED canonical Node built-in rejected: '
+                         + preflight.stdout + preflight.stderr)
+        payload = json.loads(preflight.stdout)
+        self.assertTrue(payload['publication_ready'])
+        self.assertEqual([], payload['failures'])
+
+    def test_preflight_rejects_undeclared_bare_node_package(self):
+        repo, base, _, environment = self.fixture_repo()
+        synthetic = 'tests/Verification/synthetic_undeclared_node_package_test.mjs'
+        (repo / synthetic).write_text("import missing from 'ci-missing-node-package';\nconsole.log(missing);\n")
+        with (repo / 'tools/verification/suites.tsv').open('a') as stream:
+            stream.write(f'unit\tnode\t{synthetic}\n')
+        categories = json.loads((repo / 'tools/verification/categories.json').read_text())
+        categories[synthetic] = 'unit'
+        (repo / 'tools/verification/categories.json').write_text(json.dumps(categories, sort_keys=True) + '\n')
+        input_name = self.write_input(repo, test=synthetic)
+        planned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, planned.returncode, planned.stderr)
+        preflight = self.command(repo, environment, sys.executable,
+                                 'tools/delivery/change-verification.py', 'preflight', '--plan', plan_name)
+        self.assertNotEqual(0, preflight.returncode)
+        payload = json.loads(preflight.stdout)
+        failures = [item for item in payload['failures']
+                    if item['code'] == 'UNDECLARED_TEST_DEPENDENCY']
+        self.assertEqual([[synthetic,'ci-missing-node-package','unit']],
+                         [[item['path'],item['dependency'],item['category']] for item in failures])
+        self.assertFalse(payload['publication_ready'])
+
     def test_shipped_service_probes_do_not_claim_absent_services(self):
         policy = json.loads((ROOT / '.quality-graph/verification-policy.json').read_text())
         tools = {'mariadb': ('mysqladmin', 'ping'), 'container': ('docker', 'info'),
