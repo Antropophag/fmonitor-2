@@ -57,3 +57,19 @@ RED determinism and setup isolation are adequate for the five currently asserted
 3. Add repeated same-source admission and two-worktree external-state isolation tests, including no source/dependency mutation on rejection.
 4. Complete the dependency workspace negative matrix and add a corrected PR fixture that becomes publication-ready while PR/CI remain `UNKNOWN`.
 5. Capture a clean intended RED for the corrected exact source and regenerate the reviewer package before the next rereview.
+
+## Rereview 2026-09-12 — third Gate 3 candidate
+
+- Reviewed source: base `5cda4eb9a25e84c1d8474ceab29e3e4a2f8002e0` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T133459Z-1f9cbf1669/snapshot/source.patch`, SHA-256 `21bd20d3c4cb5714de76fa9db359daaf5b6d0e34482163b6a08e8ae6a315f978`
+- Candidate source: `2a2c2dbdedb0a82f697a5abcfed5f550019b78f393a7740164a9fc309ba0dfce`
+- Evidence: external record `1789220078475949000-40aefd4122074ff2a6885bc1317ca02c`, `INTENDED_RED`, exit 1; 12 tests report `FAIL`, zero `ERROR`
+- Prior findings disposition: all blocking findings from the initial review and first rereview are resolved. Plans are written to a repository-local path; acceptance/category commands are self-contained; PR #98/#100 failures reach their intended assertions; the corrected PR #98 fixture verifies repeatable GREEN, unchanged candidate bytes and PR/CI `UNKNOWN`; R4 exercises valid current-GREEN/historical-RED/test-delta lineage and rejects unrelated RED; R5 mutates lifecycle, executable and unknown paths; R6 covers accepted manifest plus symlink, missing identity/root, unauthorized consumer and mutable workspace rejection; separate worktrees prove binding/plan isolation.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The corrected tests are traceable to R1–R7, use the public serialized CLI/package seams for the material integration behavior, derive concrete failure inventories from issue #99 rather than current implementation, and are deterministic and isolated in disposable repositories and external evidence homes. The retained RED fails for absent planned behavior: typed policy/plan schema, preflight, typed evidence, source split, dependency workspace validation, test-delta lineage and worktree-scoped evidence.
+
+### Required changes
+
+None. Gate 4 may proceed against exact candidate source `2a2c2dbdedb0a82f697a5abcfed5f550019b78f393a7740164a9fc309ba0dfce`; any test/spec change requires a new Gate 3 review.
