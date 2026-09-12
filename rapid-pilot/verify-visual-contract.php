@@ -16,6 +16,7 @@ function verifyRapidPilotVisualContract(string $root):array
     $calendar=(string)file_get_contents($root.'/rapid-pilot/Calendar.php');
     $objectDetails=(string)file_get_contents($root.'/rapid-pilot/ObjectDetails.php');
     $rapidRouter=(string)file_get_contents($root.'/rapid-pilot/router.php');
+    $otizOracleRouter=(string)file_get_contents($root.'/rapid-pilot/otiz-oracle-router.php');
     $router=(string)file_get_contents($root.'/public/router.php');
     $failures=[];
 
@@ -45,7 +46,8 @@ foreach([
 
 foreach(['Подготовить расчёт','Подтвердить расчёт','Отметить выплаты выполненными']as$label){$at=strpos($otiz,$label);$before=$at===false?'':substr($otiz,max(0,$at-700),700);$require($at!==false&&str_contains($before,'class="shlz-button shlz-button--primary"'),"OTIZ primary action lacks shlz-button--primary: {$label}");}
 $require(str_contains($otiz,'class="fm2-breadcrumb-link"'),'OTIZ breadcrumbs must use the FMonitor compact link contract');
-$require(str_contains($rapidRouter,"RapidPilotOtiz::matches"),'rapid-pilot router must expose the OTIZ surface');
+$require(str_contains($otizOracleRouter,"RapidPilotOtiz::matches"),'dedicated rapid-pilot oracle router must expose the OTIZ surface');
+$require(!str_contains($rapidRouter,"RapidPilotOtiz"),'production rapid-pilot router must not load or dispatch the OTIZ owner');
 $require(str_contains($otiz,'PilotView::document'),'OTIZ must reuse the canonical rapid-pilot shell');
 $require(str_contains($calendar,'class="shlz-calendar-grid fm2-calendar-grid" data-shlz-calendar-grid'),'calendar must consume the public shlz Calendar Grid root');
 $require(str_contains($calendar,'scope="row"')&&str_contains($calendar,'scope="col"')&&str_contains($calendar,'headers="calendar-row-'),'calendar must retain native table header relationships');
