@@ -39,3 +39,32 @@ The following focused records are also GREEN and source-bound without drift to t
 `APPROVED`
 
 Gate 5 passes for exact source `4389e19a3392b99b68c88bef984c26827e382768889996f9f5f726817bcde325`. Publication and the mandatory full exact-source CI remain subsequent delivery gates; deployment remains unauthorized/unknown.
+
+---
+
+## Post-main-merge Gate 5 rereview — 2026-09-12
+
+- Integrated reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T162639Z-e57c0a64d1/package.json`.
+- Integrated commit: `ff0182df28d06cdc8c7c32c8a22f4fca87add1ed`, merging current `origin/main` `04f9bcb58be4b19c97993666952c3558e8922c6a` into the issue branch.
+- Exact candidate source: `25ba903be880fd35b3768cb05319c87dc1995182e72b0b8582eb3856bc5c0bf5`.
+- Exact executable source: `f19289742dfaba0493cce48b914328da01fe6f8f6915dcd2536aab89b65bdfe3`.
+- Verification plan SHA-256: `446b9ac1cf33b9b9bf8918d8c058d7987c42d75290cd1c49c8de8862f9e32732`.
+- The prepared snapshot is the clean integrated commit itself: base commit `ff0182df28d06cdc8c7c32c8a22f4fca87add1ed`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+### Findings
+
+No findings.
+
+### Integration assessment
+
+The diff from current `origin/main` contains exactly the 13 issue #39 paths declared by the package. The merge brought in issue #99 harness/registry changes without a production, specification, or acceptance-test conflict. The production delta remains the previously approved five-line queue change: the same server-side no-`pto_act` predicate is applied to `COUNT` and `SELECT` before page validation and `LIMIT/OFFSET`. Authorization, read-only behavior, append-only completion history, indexed SQL execution, ordering/projection, and exclusion of OTIZ, `rapid-pilot`, route/controller/view, schema, and deployment scope remain unchanged from the initial Gate 5 assessment.
+
+All 13 focused plan commands in the integrated package are GREEN. Every retained record starts and ends at candidate source `25ba903be880fd35b3768cb05319c87dc1995182e72b0b8582eb3856bc5c0bf5`, reports `source_drift=false`, and names executable source `f19289742dfaba0493cce48b914328da01fe6f8f6915dcd2536aab89b65bdfe3`. They cover the active-queue acceptance, inspection schema, four photo characterizations, verification CI/inventory, Yii2 inspection boundaries/journey, change verification, runtime storage, and architecture guard. `git diff --check origin/main..HEAD` is clean.
+
+Harness still reports CI, GitHub publication state, and deployment as `UNKNOWN`. These are not treated as GREEN, approval, or deployment authorization; the mandatory full exact-source CI remains outstanding.
+
+### Rereview verdict
+
+`APPROVED`
+
+Gate 5 remains approved for integrated candidate source `25ba903be880fd35b3768cb05319c87dc1995182e72b0b8582eb3856bc5c0bf5` and executable source `f19289742dfaba0493cce48b914328da01fe6f8f6915dcd2536aab89b65bdfe3`.
