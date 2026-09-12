@@ -375,5 +375,9 @@
   "tests/Yii2/yii2_case_import_db_001_test.php": "integration",
   "tests/Yii2/yii2_imports_workforce_001_test.php": "integration",
   "tests/Yii2/yii2_imports_workforce_ownership_001_test.php": "unit",
-  "tests/Verification/delivery_harness_ci_completeness_001_test.py": "governance"
+  "tests/Verification/delivery_harness_ci_completeness_001_test.py": "governance",
+  "tests/Yii2/yii2_workforce_sync_console_001_test.php": "integration",
+  "tests/Yii2/yii2_workforce_sync_db_001_test.php": "integration",
+  "tests/Yii2/yii2_workforce_sync_ownership_001_test.php": "unit",
+  "tests/Deployment/yii2_workforce_sync_package_001_test.py": "unit"
 }
