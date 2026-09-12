@@ -389,5 +389,8 @@
   "tests/Yii2/yii2_otiz_decisions_001_test.php": "integration",
   "tests/Yii2/yii2_otiz_evidence_reads_001_test.php": "integration",
   "tests/Yii2/yii2_otiz_guest_return_001_test.php": "integration",
-  "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "e2e"
+  "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "e2e",
+  "tests/Runtime/yii2_production_web_cutover_001_test.php": "integration",
+  "tests/Runtime/yii2_production_web_cutover_architecture_001_test.php": "unit",
+  "tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php": "integration"
 }

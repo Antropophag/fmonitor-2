@@ -390,3 +390,6 @@ db	php	tests/Yii2/yii2_workforce_sync_console_001_test.php
 db	php	tests/Yii2/yii2_workforce_sync_db_001_test.php
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php
 unit	python3	tests/Deployment/yii2_workforce_sync_package_001_test.py
+db	php	tests/Runtime/yii2_production_web_cutover_001_test.php
+unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php
+db	php	tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php

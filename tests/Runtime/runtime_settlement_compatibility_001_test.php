@@ -98,14 +98,10 @@ try {
     if(!is_resource($server))throw new TestFailure('SETUP_FAILURE: test HTTP server');
     $ready=false;$deadline=microtime(true)+5;do{$socket=@fsockopen('127.0.0.1',$port,$errno,$error,.1);if(is_resource($socket)){fclose($socket);$ready=true;break;}usleep(20000);}while(microtime(true)<$deadline);
     assertSameValue(true,$ready,'test HTTP listener ready');
-    $cookies=[];$page=rscRequest($port,'GET','/pilot/login',[],$cookies);assertSameValue(200,$page['status'],'retained login in packaged runtime');
-    $page=rscRequest($port,'POST','/pilot/login',['csrfToken'=>rscField($page['body'],'csrfToken'),'email'=>$fixture->email],$cookies);
-    $login=rscRequest($port,'POST','/pilot/login',['csrfToken'=>rscField($page['body'],'csrfToken'),'email'=>$fixture->email,'password'=>$fixture->password],$cookies);assertSameValue(303,$login['status'],'real retained authentication');
-    $page=rscRequest($port,'GET','/pilot/otiz/snapshots/302',[],$cookies);assertSameValue([303,'/pilot/otiz/login'],[$page['status'],$page['location']],'OTIZ requests explicit Yii re-login');
-    $yiiLoginPath=$page['location'];$page=rscRequest($port,'GET',$yiiLoginPath,[],$cookies);assertSameValue(200,$page['status'],'Yii login form after retained session');
-    $page=rscRequest($port,'POST',$yiiLoginPath,['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email],$cookies);
-    $login=rscRequest($port,'POST',$yiiLoginPath,['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email,'password'=>$fixture->password],$cookies);assertSameValue(303,$login['status'],'explicit Yii authentication');
-    $page=rscRequest($port,'GET','/pilot/otiz/snapshots/302',[],$cookies);assertSameValue(200,$page['status'],'retained accepted snapshot after Yii re-login');
+    $cookies=[];$page=rscRequest($port,'GET','/pilot/otiz/login',[],$cookies);assertSameValue(200,$page['status'],'Yii login in packaged runtime');
+    $page=rscRequest($port,'POST','/pilot/otiz/login',['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email],$cookies);
+    $login=rscRequest($port,'POST','/pilot/otiz/login',['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email,'password'=>$fixture->password],$cookies);assertSameValue(303,$login['status'],'real Yii authentication');
+    $page=rscRequest($port,'GET','/pilot/otiz/snapshots/302',[],$cookies);assertSameValue(200,$page['status'],'retained accepted snapshot through the single Yii session');
     $completeForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/payments/complete');
     $disciplineForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/closures');
     $oldPage=rscRequest($port,'GET','/pilot/otiz/snapshots/301',[],$cookies);

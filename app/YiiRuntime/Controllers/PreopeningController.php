@@ -15,7 +15,10 @@ abstract class PreopeningController extends PilotController
     {
         return ['access' => [
             'class' => AccessControl::class,
-            'rules' => [['allow' => true, 'roles' => ['@']]],
+            'rules' => [
+                ['allow' => true, 'actions' => ['gone'], 'roles' => ['?', '@']],
+                ['allow' => true, 'roles' => ['@']],
+            ],
             'denyCallback' => function (): void {
                 Yii::$app->user->setReturnUrl(Yii::$app->request->url);
                 Yii::$app->response->statusCode = 303;
