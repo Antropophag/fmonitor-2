@@ -157,3 +157,35 @@ The retained intended RED is setup-correct: prior scenarios remain GREEN; the fi
 ### Required changes
 
 None. Gate 4 correction may proceed against exact executable source `eedb7e3fda082e5e8de2688f5f0f78b7a74ede7ce1163925bc894e2ba59b1191`. Any further specification or test change requires another independent Gate 3 review.
+
+## Rereview 2026-09-12 — repository-local sibling Python import correction
+
+- Independent reviewer: separately tasked agent `/root/issue39_gate3`, acting in a new Gate 3 role for issue #99; authored none of the reviewed specification delta, correction input, test, or implementation.
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T164508Z-c0755394fb/package.json`.
+- Exact reviewed source: reconstructible snapshot over base `04f9bcb58be4b19c97993666952c3558e8922c6a`, candidate source `faca18d1d588d843769531958877ef9ba0dabb695f4d93aa72841fb179d2546b`, executable source `c8132788ece5a553951547f212c71f6fd9c31397993b59c17933a78746f7c322`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T164508Z-c0755394fb/snapshot/source.patch`, SHA-256 `f1ff84cc76c73b5e0bd57cd0022ef88ca1c38d7635c7f777da8665c4631df1f8` (matches `snapshot/manifest.json`).
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T164508Z-c0755394fb/verification-plan.json`, SHA-256 `00704f7b4a19afe84c63944fe25ca8ba865f241fb3fcf29201ae968e6ab0572c`.
+- Correction binding: `openspec/changes/delivery-harness-first-pass-ci-completeness/verification-local-import-correction-input.json`, acceptance `R2-repository-local-python-import`.
+- Scope is the R2 clarification only: an existing Python module adjacent to the test and reachable under the standard script invocation is repository source, while absent or external undeclared imports remain blocked.
+
+### Findings
+
+None.
+
+### Assessment
+
+The normative R2 delta and OpenSpec scenario agree and are bounded: they do not introduce a new dependency declaration mechanism or relax the existing third-party/category policy. The positive exception is limited to a module that physically exists in the same repository test directory and is available under Python's normal test-script resolution. Missing modules and externally resolved modules still require the existing declared dependency contract.
+
+The added `test_preflight_accepts_repository_local_sibling_python_import` is sensitive at the public serialized seam. In a disposable repository it writes `tests/Verification/ci_local_helper.py` beside `synthetic_local_import_test.py`, registers the test as unit, leaves `ci_local_helper` absent from declared third-party imports, generates the real plan, and invokes `change-verification.py preflight`. It requires exit zero, `publication_ready=true`, and an empty failure inventory. A classifier that continues treating all non-stdlib imports as packages fails this case.
+
+The retained surrounding R2 tests preserve the negative boundary. The PR #98 fixture imports externally available but undeclared `yaml` and requires exact `UNDECLARED_TEST_DEPENDENCY`; the observed-environment fixture requires a declared-but-absent module to produce `DEPENDENCY_UNAVAILABLE`, then accepts the same external module only after it is both declared and made resolvable through an injected external `PYTHONPATH`. Thus an implementation that broadly ignores imports, treats every resolvable module as repository source, or admits an absent module cannot satisfy the complete suite while passing the new sibling case.
+
+Full-suite record `1789231453859219000-99fcb57565504e1ca8b14e738b54cacd` is `INTENDED_RED`, source-bound at start and end to candidate `faca18d1d588d843769531958877ef9ba0dabb695f4d93aa72841fb179d2546b` and executable source `c8132788ece5a553951547f212c71f6fd9c31397993b59c17933a78746f7c322`, with `source_drift=false` and a concrete fixture digest. Fourteen existing tests are GREEN; the only failure is the new sibling-import case, where preflight returns `BLOCKED` with exact `UNDECLARED_TEST_DEPENDENCY`, dependency `ci_local_helper`, category `unit`, and the synthetic test path. There are zero setup errors and no unrelated regression failures, so this is the intended missing classification behavior.
+
+The correction input maps the single acceptance to the full test file and records the observable preflight dimensions. Repository/package bindings contain the exact spec, OpenSpec, test and planned implementation boundary. `openspec validate delivery-harness-first-pass-ci-completeness --strict` is GREEN, `git diff --check` is clean, and package snapshot/plan hashes match. Harness reports CI and deployment `UNKNOWN`; neither is treated as GREEN, approval, merge, or deployment authorization.
+
+### Verdict
+
+`APPROVED`
+
+The R2 repository-local sibling import correction may proceed to Gate 4 against exact executable source `c8132788ece5a553951547f212c71f6fd9c31397993b59c17933a78746f7c322`. Any change to this specification/test expectation requires a new Gate 2/3 review; Gate 5, exact-source CI, merge and deployment remain separate decisions.

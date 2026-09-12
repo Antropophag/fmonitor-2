@@ -40,6 +40,12 @@ Undeclared Python/PHP/Node dependency и test, обращающийся к Maria
 dependency/service и category. Evidence MUST фиксировать фактически доступные
 services/dependencies; GREEN более богатой среды не подтверждает узкий CI profile.
 
+Python module, расположенный в том же repository test directory и доступный
+стандартному запуску test script, MUST считаться source dependency, а не внешним
+undeclared package. Preflight MUST разрешать такой sibling import без добавления
+его имени в список third-party dependencies и продолжать отклонять отсутствующий
+либо внешний незаявленный import.
+
 ## R3 — Typed plan-owned evidence
 
 Каждая command obligation имеет стабильный id и purpose `acceptance`, `boundary`
