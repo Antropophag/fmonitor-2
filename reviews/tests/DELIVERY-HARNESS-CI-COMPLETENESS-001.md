@@ -119,3 +119,22 @@ The retained result is an intended RED rather than setup failure: all 12 prior t
 ### Required changes
 
 None. Gate 4 correction may proceed against exact executable source `d69fb45e3fe9beddf58bb1ca7edfe50a92a68bbfad330e36093f7271f89b856d`. Any further specification or test change requires another independent Gate 3 review.
+
+## Rereview 2026-09-12 — shipped probes and Python resolution delta
+
+- Reviewed source: base `dce4ecc8963ab7a54af2296b2877ad576ca62a4d` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T145314Z-bb16c09cfd/snapshot/source.patch`, SHA-256 `76917336979d9a7c3a9392a217c989e27804222242fb5610493cb8b329a6ab36`
+- Candidate source: `14302217306044ddd7564867694251ae20220a6564d1d64c2334443fb01e794f`
+- Executable source: `4a51a50784a47c8b913049a5a78ef9eba11c16695d05e86a01514acf31e559ad`
+- Evidence: external record `1789224752483902000-7acb00d992ba4f4fb93c998986394d33`, typed acceptance `INTENDED_RED`, exit 1; five focused failures, zero errors
+- Acceptance continuity: normative R2/R7 is unchanged; the delta targets shipped service probes and Python dependency resolution.
+- Verdict: `CHANGES_REQUESTED`
+
+### Findings
+
+1. **Blocking — shipped service probes are not sensitive to false unavailability.** `test_shipped_service_probes_do_not_claim_absent_services` accepts either exit zero plus `service=AVAILABLE` or any nonzero exit plus `service=UNAVAILABLE`, based solely on the probe's own return code. A shipped probe that unconditionally prints `mariadb=UNAVAILABLE`/`browser=UNAVAILABLE`/`container=UNAVAILABLE` and exits 1 passes all three subtests without performing a real check. The exact policy-argv assertion proves only that the wrapper script is called, not that its service-specific observations work. This can permanently block valid publication candidates and does not establish the requested AVAILABLE/UNAVAILABLE behavior based on real checks.
+
+The external `PYTHONPATH` correction is otherwise adequate: it prevents repository-root coincidence and requires the positive dependency to be found through interpreter resolution. The retained RED is clean and reaches the intended missing contracts; it does not cure the probe sensitivity gap.
+
+### Required changes
+
+Add deterministic positive and negative fixtures for each shipped probe. Provide controlled fake service dependencies/endpoints (for example PATH-injected executables or an explicit probe fixture seam) and assert AVAILABLE only in the positive fixture and UNAVAILABLE only in the negative fixture, including matching exit status and output. Do not rely on whatever services happen to exist on the reviewer machine. Capture a new exact-source intended RED and regenerate the Gate 3 package.
