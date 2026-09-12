@@ -30,6 +30,10 @@
 - **WHEN** Python test импортирует существующий module из своего repository test directory
 - **THEN** dependency preflight принимает module как source dependency без объявления его third-party package
 
+#### Scenario: Node.js built-in import
+- **WHEN** JavaScript test импортирует runtime module через canonical `node:` specifier
+- **THEN** dependency preflight принимает built-in без объявления его third-party package
+
 #### Scenario: Unit test требует MariaDB
 - **WHEN** test обращается к MariaDB до проверяемого assertion, но зарегистрирован в unit category без DB service
 - **THEN** catalog/preflight отклоняет category mismatch даже если developer environment предоставляет MariaDB

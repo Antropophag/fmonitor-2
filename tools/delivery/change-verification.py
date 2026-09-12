@@ -677,7 +677,8 @@ def preflight(plan_name):
         if path.startswith("tests/") and target.is_file():
             found = _declared_dependencies(target)
             for dependency in found["node"]:
-                if dependency not in policy.get("declared_node_dependencies", []):
+                if (not dependency.startswith("node:")
+                        and dependency not in policy.get("declared_node_dependencies", [])):
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
                                      "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
             for dependency in found["php"]:
