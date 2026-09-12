@@ -4,6 +4,10 @@ unit	php	tests/AssignmentOrderComposition/selection_command_recovery_001_test.ph
 unit	php	tests/AssignmentOrderComposition/selection_command_tracer_001_test.php
 unit	php	tests/Deployment/bitrix_startup_config_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_attempt_audit_001_test.php
+unit	python3	tests/Deployment/yii2_imports_workforce_package_001_test.py
+unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php
+db	php	tests/Yii2/yii2_case_import_db_001_test.php
+db	php	tests/Yii2/yii2_imports_workforce_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_command_lifecycle_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_command_shape_001_test.php
 unit	php	tests/InstallationProcess/assignment_order_original_data_attempt_clock_001_test.php

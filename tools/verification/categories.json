@@ -370,5 +370,9 @@
   "tests/Yii2/yii2_canonical_migrations_ownership_001_test.php": "unit",
   "tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php": "integration",
   "tests/Yii2/yii2_canonical_migrations_alias_001_test.php": "integration",
-  "tests/Deployment/yii2_canonical_migrations_package_001_test.py": "e2e"
+  "tests/Deployment/yii2_canonical_migrations_package_001_test.py": "e2e",
+  "tests/Deployment/yii2_imports_workforce_package_001_test.py": "unit",
+  "tests/Yii2/yii2_case_import_db_001_test.php": "integration",
+  "tests/Yii2/yii2_imports_workforce_001_test.php": "integration",
+  "tests/Yii2/yii2_imports_workforce_ownership_001_test.php": "unit"
 }
