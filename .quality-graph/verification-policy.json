@@ -58,8 +58,9 @@
         "app/demo/**",
         "config/**",
         "commands/**",
-        "rapid-pilot/**",
-        "web/**"
+      "rapid-pilot/**",
+      "public/**",
+      "web/**"
       ],
       "tests": []
     },

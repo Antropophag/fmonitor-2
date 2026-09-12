@@ -4,11 +4,13 @@ namespace FMonitor2\YiiRuntime\Controllers;
 
 use DomainException;
 use InvalidArgumentException;
+use FMonitor2\YiiRuntime\OtizEvidenceHtml;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
+use yii\web\ServiceUnavailableHttpException;
 
 final class OtizEvidenceController extends PilotController
 {
@@ -27,7 +29,7 @@ final class OtizEvidenceController extends PilotController
                 'allow' => true, 'roles' => ['otiz.manage'],
             ]], 'denyCallback' => function (): void {
                 if (Yii::$app->user->isGuest) {
-                    Yii::$app->user->setReturnUrl(Yii::$app->request->url);
+                    Yii::$app->user->setReturnUrl(str_contains(Yii::$app->request->pathInfo,'quarantine')?'/pilot/otiz/reconciliation/quarantine':'/pilot/otiz/reconciliation');
                     Yii::$app->response->statusCode = 303;
                     Yii::$app->response->headers->set('Location', '/pilot/login');
                     return;
@@ -48,13 +50,7 @@ final class OtizEvidenceController extends PilotController
             'scope' => Yii::$app->request->get('scope') === 'unresolved' ? 'unresolved' : '',
         ];
         $model = (new \MigratedEvidenceProjectionStore($this->db(), $this->prefix()))->reconciliation($filters, $this->page(), 50);
-        $body = '<h1>Сверка перенесённых свидетельств</h1>'.$this->nav();
-        foreach ($model['rows'] as $row) {
-            $snapshot=(int)($row['snapshotId']??0);$body .= '<article id="snapshot-'.$snapshot.'"><h2>Объект '.(int)($row['legacyObjectId']??0).'</h2><p>'.$this->e(implode(', ', $row['conflictCodes']??[])).'</p></article>';
-        }
-        foreach($model['options']as$code)$body.='<span>'.$this->e((string)$code).'</span>';
-        if ($model['rows'] === []) $body .= '<p>По выбранным фильтрам ничего нет</p>';
-        return $this->pageHtml('Сверка свидетельств', $body);
+        return OtizEvidenceHtml::reconciliation($model,$filters,Yii::$app->request->csrfToken);
     }
 
     public function actionQuarantine(): string
@@ -64,16 +60,14 @@ final class OtizEvidenceController extends PilotController
             'category' => (string) Yii::$app->request->get('category', ''),
             'code' => (string) Yii::$app->request->get('code', ''),
         ], $this->page());
-        $body='<h1>Pre-import quarantine</h1>'.$this->nav();
-        foreach ($model['rows'] as $row) $body.='<article><h2>'.$this->e($row['reference']).'</h2><p>'.$this->e(implode(', ', $row['quarantineCodes'])).'</p></article>';
-        if ($model['rows'] === []) $body.='<p>Нет записей quarantine</p>';
-        return $this->pageHtml('Pre-import quarantine', $body);
+        $history=[];foreach((new \MigrationQuarantineDecisionLedger($this->db(),$this->prefix()))->all()as$d)$history[$d['source_locator'].'|'.$d['source_cutoff_at'].'|'.$d['source_digest'].'|'.$d['classification_version'].'|'.$d['quarantine_code']][]=$d;
+        return OtizEvidenceHtml::quarantine($model,$history,Yii::$app->request->csrfToken);
     }
 
     public function actionActiveBaselines(): string
     {
         $this->loadEvidenceOwners();
-        $model=(new \LegacyActiveBaselineReadModel($this->db(),$this->prefix()))->read([], $this->page());
+        $model=(new \LegacyActiveBaselineReadModel($this->db(),$this->prefix()))->read(['state'=>$this->oneOf('state',['ready','blocked']),'coverage'=>$this->oneOf('coverage',['both','partial','none'])], $this->page());
         $body='<h1>Active baselines</h1>'.$this->nav();
         foreach($model['rows'] as$row)$body.='<article>'.$this->e((string)($row['regnumber']??'')).'</article>';
         if($model['rows']===[])$body.='<p>Нет active baselines</p>';
@@ -84,7 +78,7 @@ final class OtizEvidenceController extends PilotController
     {
         $this->loadEvidenceOwners();
         try{$model=\HistoricalPremiumReplayReadModel::page($this->db(),$this->prefix(),$this->page(),50);}
-        catch(\Throwable){$model=['rows'=>[],'total'=>0];}
+        catch(\Throwable$e){throw new ServiceUnavailableHttpException('Historical replay temporarily unavailable',0,$e);}
         $body='<h1>Historical replay</h1>'.$this->nav();
         foreach($model['rows'] as$row)$body.='<article>'.$this->e((string)($row['regnumber']??'')).'</article>';
         $body.='<p>'.($model['rows']===[]?'Нет historical replay':'Нет подтверждённого пересчёта без полного evidence').'</p>';

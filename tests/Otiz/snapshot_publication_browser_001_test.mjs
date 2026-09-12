@@ -56,6 +56,9 @@ try {
   const [download,exportResponse]=await Promise.all([downloadPromise,exportResponsePromise]);const xlsx=path.join(artifacts,'otiz.xlsx');await download.saveAs(xlsx);
   result.xlsxBytes=fs.statSync(xlsx).size;result.xlsxFilename=download.suggestedFilename();result.xlsxContentType=exportResponse.headers()['content-type'];result.xlsxDisposition=exportResponse.headers()['content-disposition'];
   await page.screenshot({path:path.join(artifacts,'accepted.png'),fullPage:true});
+  const discipline=page.locator('form[action$="/closures"]').first();await discipline.locator('input[name="discipline"]').fill('100.00');await discipline.locator('input[name="basis"]').fill('Generated journey discipline');await Promise.all([page.waitForURL(/closed=1/),discipline.locator('button[type="submit"]').click()]);
+  const complete=page.locator('form[action$="/payments/complete"]');await Promise.all([page.waitForURL(/paid=1/),complete.locator('button[type="submit"]').click()]);
+  const reverse=page.locator('form[action*="/closures/"][action$="/reverse"]').first();await reverse.locator('input[name="basis"]').fill('Generated journey reversal');await Promise.all([page.waitForURL(/reversed=1/),reverse.locator('button[type="submit"]').click()]);result.generatedSettlementCompleted=true;
   result.consoleErrors=result.consoleErrors.filter(message=>!message.includes('favicon'));
   result.failedRequests=result.failedRequests.filter(item=>!(item.url==='/pilot/otiz/calculate'&&item.error.includes('FAILED')));
   result.failedRequests=result.failedRequests.filter(item=>!(item.url.endsWith('/export.xlsx')&&item.error.includes('ERR_ABORTED')));

@@ -20,7 +20,7 @@ $fixture=new SelectionHttpFixture(true,static function($original)use($prefix,$dm
     $escaped=$admin->real_escape_string($dmlPassword);$admin->query("CREATE USER '{$dmlUser}'@'{$dmlHost}' IDENTIFIED BY '{$escaped}'");
     $database=str_replace('`','``',$original->selection->schema->source->name);$admin->query("GRANT SELECT,INSERT,UPDATE,DELETE ON `{$database}`.* TO '{$dmlUser}'@'{$dmlHost}'");
     return['FMONITOR_NOW'=>'2026-09-08T15:00:00+03:00','FMONITOR_DB_USER'=>$dmlUser,'FMONITOR_DB_PASSWORD'=>$dmlPassword];
-},$prefix);
+},$prefix,dirname(__DIR__,2).'/rapid-pilot/otiz-oracle-router.php');
     $db=$fixture->original->selection->db;
     $db->query("INSERT IGNORE INTO `{$prefix}fm2_pilot_role_permissions`(role_id,permission)VALUES(3,'otiz.manage'),(3,'objects.read')");
     $password='Synthetic-Otiz-Browser-2026!';$hash=password_hash($password,PASSWORD_ARGON2ID);

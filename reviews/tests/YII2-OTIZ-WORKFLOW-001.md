@@ -63,3 +63,10 @@ Fresh evidence/package and the second independent verdict supersede the first ve
 - Reconstructed source on current `origin/main`: `f87aedf34f371c9a3a1efa1176a8e1ceb1ca5cac4c13c1ebe984447a2a53839a`.
 - Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T140947Z-b43bef5b48/package.json`.
 - Verdict: `APPROVED`; no blocking findings. Production candidate was explicitly outside this verdict.
+
+## Expanded Gate 5 correction matrix
+
+- Genuine test-only source: `9b56014276e3526d81ff95e88543b0f037f88906cb6f09938c3fd3f604a82b3e` on current main `a8ba73a926d1031c8b039555d0b6c3f142abd991`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T145237Z-94265b4777/package.json`.
+- Evidence: 12/12 expected outcomes, including direct fallback dependency RED, public runtime GREEN, HTTP concurrency/rollback, safe guest return, rendered decision UI and generated-snapshot settlement/reversal.
+- Verdict: `APPROVED`; no blocking findings. Standalone `otiz-oracle-router.php` requires no production hooks.
