@@ -108,6 +108,9 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
                 if item['argv'] == ['python3', 'tools/delivery/render-dependencies.py', '--check']]
         self.assertEqual([['python3', 'tools/delivery/render-dependencies.py', '--check']], argv,
                          'INTENDED_RED generated-source check omitted')
+        self.assertIn(['python3', 'tests/Verification/verification_ci_001_test.py'],
+                      [item['argv'] for item in plan['commands']],
+                      'INTENDED_RED exact plan dropped generated-source consumer during dedupe')
 
     def test_source_identity_separates_executable_and_lifecycle_metadata(self):
         harness = load('ci_complete_harness', 'tools/delivery/harness.py')
@@ -195,6 +198,14 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertEqual('UNKNOWN', first_value['ci'])
         self.assertEqual(first_value['result_digest'], second_value['result_digest'])
         self.assertNotEqual(first_value['record_path'], second_value['record_path'])
+        self.assertIn('evidence', first_value,
+                      'INTENDED_RED publication readiness lacks plan-owned evidence')
+        self.assertEqual({item['id'] for item in json.loads(corrected_path.read_text())['commands']},
+                         {item['command_id'] for item in first_value['evidence']})
+        for item in first_value['evidence']:
+            self.assertIn(item['purpose'], {'acceptance', 'boundary', 'category'})
+            self.assertIsInstance(item['available_services'], list)
+            self.assertIsInstance(item['available_dependencies'], dict)
         after = subprocess.run(['git', 'status', '--porcelain'], cwd=repo, text=True,
                                capture_output=True, check=True).stdout
         self.assertEqual(before, after, 'preflight changed candidate source')
@@ -246,9 +257,14 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         repo, base, _, environment = self.fixture_repo()
         outside = repo.parent / 'dependencies'; outside.mkdir()
         vendor = outside / 'vendor'; vendor.mkdir(); (vendor / 'autoload.php').write_text('<?php')
+        lock = outside / 'composer.lock'; lock.write_text('{"packages":[]}\n')
+        import hashlib
+        lock_digest = hashlib.sha256(lock.read_bytes()).hexdigest()
         manifest = outside / 'workspace.json'
         manifest.write_text(json.dumps({'version': 1, 'root': str(vendor.resolve()),
-            'identity': 'lock:fixture', 'consumers': ['tests/Verification/change_verification_001_test.py']}) + '\n')
+            'allowed_root': str(outside.resolve()), 'lock': str(lock.resolve()),
+            'identity': 'sha256:' + lock_digest,
+            'consumers': ['tests/Verification/ci_complete_acceptance.py']}) + '\n')
         input_name = self.write_input(repo, workspaces=[str(manifest)])
         accepted = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'prepare',
                                 '--input', input_name, '--base', base, '--role', 'root',
@@ -261,11 +277,23 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertNotEqual(0, rejected.returncode, 'INTENDED_RED workspace symlink escape admitted')
         cases = {
             'missing-identity.json': {'version': 1, 'root': str(vendor.resolve()),
+                                      'allowed_root': str(outside.resolve()), 'lock': str(lock.resolve()),
                                       'consumers': ['tests/Verification/ci_complete_acceptance.py']},
             'unauthorized-consumer.json': {'version': 1, 'root': str(vendor.resolve()),
-                'identity': 'lock:fixture', 'consumers': ['tests/Verification/other.py']},
+                'allowed_root': str(outside.resolve()), 'lock': str(lock.resolve()),
+                'identity': 'sha256:' + lock_digest, 'consumers': ['tests/Verification/other.py']},
             'missing-root.json': {'version': 1, 'root': str(outside / 'missing'),
-                'identity': 'lock:fixture', 'consumers': ['tests/Verification/ci_complete_acceptance.py']},
+                'allowed_root': str(outside.resolve()), 'lock': str(lock.resolve()),
+                'identity': 'sha256:' + lock_digest,
+                'consumers': ['tests/Verification/ci_complete_acceptance.py']},
+            'wrong-lock.json': {'version': 1, 'root': str(vendor.resolve()),
+                'allowed_root': str(outside.resolve()), 'lock': str(lock.resolve()),
+                'identity': 'sha256:' + ('0' * 64),
+                'consumers': ['tests/Verification/ci_complete_acceptance.py']},
+            'outside-root.json': {'version': 1, 'root': str(vendor.resolve()),
+                'allowed_root': str((outside / 'allowed').resolve()), 'lock': str(lock.resolve()),
+                'identity': 'sha256:' + lock_digest,
+                'consumers': ['tests/Verification/ci_complete_acceptance.py']},
         }
         for name, value in cases.items():
             with self.subTest(workspace=name):
@@ -306,6 +334,13 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         self.assertTrue(all('purpose' in item for item in records),
                         'INTENDED_RED executed records lose evidence purpose')
         self.assertTrue(any(item['purpose'] == 'category' for item in records))
+        for item in records:
+            retained = json.loads(Path(item['record_path']).read_text())
+            self.assertIn('command_id', retained,
+                          'INTENDED_RED retained evidence has no record-owned command identity')
+            self.assertEqual(item['command_id'], retained['command_id'])
+            self.assertEqual(item['purpose'], retained['purpose'])
+            self.assertEqual(item['environment'], retained['command_environment'])
         argv = [sys.executable, 'tools/delivery/harness.py', 'prepare', '--input', input_name,
                 '--base', base, '--role', 'reviewer', '--gate', '3']
         for item in records:
@@ -324,12 +359,17 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         input_name = self.write_input(repo, test=test)
         (repo / test).write_text('print("EXPECTED_DELTA_RED")\nraise SystemExit(1)\n')
         historical = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'run',
-                                  '--intended-red', 'EXPECTED_DELTA_RED', '--', sys.executable, test)
+                                  '--command-id', 'acceptance:delta', '--purpose', 'acceptance',
+                                  '--acceptance-id', 'fixture', '--intended-red', 'EXPECTED_DELTA_RED',
+                                  '--', sys.executable, test)
         self.assertNotEqual(0, historical.returncode)
+        self.assertTrue(historical.stdout.strip(),
+                        'INTENDED_RED runner rejected command identity instead of retaining typed RED')
         historical_record = json.loads(historical.stdout)['record_path']
         (repo / test).write_text('print("CI_COMPLETE_DELTA_GREEN")\n')
         current = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'run',
-                               '--', sys.executable, test)
+                               '--command-id', 'acceptance:delta', '--purpose', 'acceptance',
+                               '--acceptance-id', 'fixture', '--', sys.executable, test)
         self.assertEqual(0, current.returncode)
         current_record = json.loads(current.stdout)['record_path']
         accepted = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'prepare',
@@ -337,8 +377,15 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
                                 '--evidence', current_record, '--historical-red', historical_record,
                                 '--test-delta', test)
         self.assertEqual(0, accepted.returncode, 'INTENDED_RED valid test-delta lineage rejected: ' + accepted.stderr)
+        lineage = json.loads(accepted.stdout)['test_delta_lineage']
+        self.assertEqual('fixture', lineage['acceptance_id'])
+        self.assertEqual(64, len(lineage['base_blob']))
+        self.assertEqual(64, len(lineage['current_blob']))
+        self.assertNotEqual(lineage['base_blob'], lineage['current_blob'])
+        self.assertEqual(64, len(lineage['delta_sha256']))
         unrelated = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'run',
-                                 '--intended-red', 'OTHER_RED', '--', sys.executable, '-c',
+                                 '--command-id', 'acceptance:delta', '--purpose', 'acceptance',
+                                 '--acceptance-id', 'other-acceptance', '--intended-red', 'OTHER_RED', '--', sys.executable, '-c',
                                  'print("OTHER_RED");raise SystemExit(1)')
         mismatch = self.command(repo, environment, sys.executable, 'tools/delivery/harness.py', 'prepare',
                                 '--input', input_name, '--base', base, '--role', 'reviewer', '--gate', '3',
