@@ -357,6 +357,7 @@
   "tests/Yii2/yii2_inspection_concurrency_001_test.php": "integration",
   "tests/Yii2/yii2_inspection_browser_001_test.php": "e2e",
   "tests/Yii2/yii2_inspection_boundaries_001_test.php": "integration",
+  "tests/Yii2/yii2_construction_control_active_queue_001_test.php": "integration",
   "tests/Verification/delivery_harness_001_test.py": "unit",
   "tests/Yii2/yii2_documentary_http_001_test.php": "integration",
   "tests/Yii2/yii2_documentary_concurrency_001_test.php": "integration",

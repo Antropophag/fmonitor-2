@@ -1,0 +1,24 @@
+{
+  "change": "exclude-documentary-closure-from-construction-control",
+  "planned_paths": [
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "tests/Yii2/yii2_inspection_boundaries_001_test.php",
+    "tests/Yii2/yii2_inspection_journey_001_test.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "tests/Verification/verification_ci_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001",
+      "acceptance_id": "active-queue-http-and-history",
+      "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001.md",
+      "seam": "real Yii2 GET /pilot/construction-control",
+      "tests": [
+        "tests/Yii2/yii2_construction_control_active_queue_001_test.php"
+      ]
+    }
+  ]
+}
