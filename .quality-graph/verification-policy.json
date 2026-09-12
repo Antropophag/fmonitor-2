@@ -195,6 +195,11 @@
   "declared_python_imports": [],
   "declared_php_dependencies": [],
   "declared_node_dependencies": [],
+  "service_probes": {
+    "mariadb": ["python3", "-c", "raise SystemExit(0)"],
+    "browser": ["python3", "-c", "raise SystemExit(0)"],
+    "container": ["python3", "-c", "raise SystemExit(0)"]
+  },
   "runtimes": {
     ".mjs": "node",
     ".php": "php",

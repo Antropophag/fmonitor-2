@@ -206,6 +206,13 @@ def validate_policy(policy):
                 raise ValueError(f"invalid environment profile: {category}")
     if "generated_sources" in policy and not isinstance(policy["generated_sources"], list):
         raise ValueError("invalid generated source obligations")
+    probes = policy.get("service_probes", {})
+    if not isinstance(probes, dict):
+        raise ValueError("invalid service probes")
+    for service, argv in probes.items():
+        if not isinstance(service, str) or not service:
+            raise ValueError("invalid service probe name")
+        validate_argv(argv)
 
 
 def validate_policy_inventory(policy, inventory):
@@ -337,7 +344,11 @@ def build(base_ref, input_name):
     required_categories = set()
     boundary_tests = set()
     for path in effective:
-        boundary = boundary_for(path, policy)
+        declared_modules = {name + ".py" for name in policy.get("declared_python_imports", [])}
+        if path in declared_modules:
+            boundary = {"name": "declared-test-dependency", "categories": ["governance"], "tests": []}
+        else:
+            boundary = boundary_for(path, policy)
         selected.append({"name": boundary["name"], "path": path})
         required_categories.update(boundary["categories"])
         boundary_tests.update(boundary["tests"])
@@ -626,15 +637,15 @@ def preflight(plan_name):
                 failures.append({"code": "GENERATED_SOURCE_DRIFT", "argv": relation["check"]})
     suites = repo_path(policy["suite_inventory"]).read_text() if policy.get("suite_inventory") else ""
     categories = load_json(policy["inventory"])
-    available_dependencies = {"python": [], "php": [], "node": []}
+    observed_services = {}
+    for service, argv in policy.get("service_probes", {}).items():
+        probe = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)
+        observed_services[service] = probe.returncode == 0
     for path in effective:
         if path.startswith("tests/") and path in suites and path not in categories:
             failures.append({"code": "STALE_VERIFICATION_INVENTORY", "path": path})
         target = repo_path(path)
-        if target.is_file():
-            discovered = _declared_dependencies(target)
-            for language, names in discovered.items():
-                available_dependencies[language] = sorted(set(available_dependencies[language]) | set(names))
+        discovered = _declared_dependencies(target) if target.is_file() else {"python": [], "php": [], "node": []}
         if path.startswith("tests/") and path.endswith(".py") and target.is_file():
             declared = set(policy.get("declared_python_imports", []))
             for name in _imports(target):
@@ -643,6 +654,9 @@ def preflight(plan_name):
                 standard = origin in {"built-in", "frozen"} or (origin and origin.startswith(sysconfig.get_paths()["stdlib"]) and "site-packages" not in origin)
                 if not standard and name not in declared:
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
+                                     "dependency": name, "category": categories.get(path, "UNKNOWN")})
+                elif name in declared and not standard and not (ROOT / (name + ".py")).is_file():
+                    failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
         if path.endswith(".php") and target.is_file() and re.search(r'\bmysqli\b', target.read_text(errors="ignore")):
             category = categories.get(path, "UNKNOWN")
@@ -665,12 +679,29 @@ def preflight(plan_name):
     evidence = []
     for command in plan["commands"]:
         profile = command.get("environment", {})
+        target = repo_path(command["argv"][-1]) if command["argv"][-1].startswith(("tests/", "tools/")) else None
+        discovered = _declared_dependencies(target) if target and target.is_file() else {"python": [], "php": [], "node": []}
+        available_dependencies = {"python": [], "php": [], "node": []}
+        for language, names in discovered.items():
+            for name in names:
+                available = True
+                if language == "python":
+                    module = importlib.util.find_spec(name)
+                    available = module is not None or (ROOT / (name + ".py")).is_file()
+                if available:
+                    available_dependencies[language].append(name)
+        available_services = sorted(service for service in profile.get("services", [])
+                                    if observed_services.get(service, False))
+        missing_services = sorted(set(profile.get("services", [])) - set(available_services))
+        for service in missing_services:
+            failures.append({"code": "SERVICE_UNAVAILABLE", "command_id": command.get("id"),
+                             "service": service})
         evidence.append({"command_id": command.get("id"), "purpose": command.get("purpose"),
                          "argv": command["argv"], "environment": profile,
-                         "available_services": list(profile.get("services", [])),
+                         "available_services": available_services,
                          "available_dependencies": available_dependencies,
-                         "profile_compatible": True,
-                         "verification": "bounded_dependency_and_profile_preflight"})
+                         "profile_compatible": not missing_services,
+                         "observation_method": "probe"})
     outcome = "BLOCKED" if failures else "GREEN"
     payload = {"outcome": outcome, "publication_ready": not failures,
                "failures": failures, "candidate_source": details["candidate_digest"],
