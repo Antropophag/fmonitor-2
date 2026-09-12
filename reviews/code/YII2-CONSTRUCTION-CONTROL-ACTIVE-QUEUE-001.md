@@ -99,3 +99,44 @@ Harness GitHub/CI and deployment state remain `UNKNOWN`; they are not treated as
 `APPROVED`
 
 Gate 5 remains approved for final integrated candidate `1c9e720256a928130ca926d1dc9a74006aea8eedc67b97c16cbb1e8ca1750ba0` / executable source `1abbc89d113bd271443cfe56e6468c53e92aa0bd6550d1d4d4e851cf4ae14c7c`.
+
+---
+
+## Stacked PR #105 post-CI correction Gate 5 rereview — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T174140Z-b544cf49e0/package.json`.
+- Exact committed source: `6e86031ffb2815d3e60362844f681dc870434c1c`, clean snapshot with empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Candidate source: `adb8593303e911ad34d123592f293d4c21a81b2112a29e2f95974457b128dbaa`.
+- Executable source: `bdf71007c23522295fa3f00797420622afa6e63d4e214d28b748c0e613d49801`.
+- Verification plan SHA-256: `52ffbf8b234fd8e85e031cb5f0f87b114e59c9409d173d81080483acd24b25e2`.
+- Base: current `origin/main` `6680decf97d26e3fefa154fe2b509c81aa2d47f5`.
+
+### Findings
+
+No findings.
+
+### Full-diff assessment
+
+The 22-path stacked diff is the union of three already bounded components: the previously approved #39 active-queue slice, its independently Gate 3-approved browser-oracle correction, and the separately Gate 3/Gate 5-approved canonical Node built-ins correction from PR #106. The merge commit introduces no conflict between them. Production behavior remains limited to the one `MariaDbYiiChecklistRead::queue()` predicate: no accepted `pto_act`, identically applied to total and selection before page pagination. Authorization, read-only/history, indexed SQL, ordering/projection and the exclusion of OTIZ, `rapid-pilot`, route/controller/view, schema and deployment scope remain intact.
+
+The browser delta corrects an obsolete inherited oracle rather than product behavior. It now requires exact active rows `[4513,4512]`, server absence of documentary case 4514, a completed toggle that cannot resurrect it, empty search for the excluded case, and successful search/mine/all behavior among eligible rows. Gate 3 approved this exact delta in `reviews/tests/YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001.md`; the real browser record `1789234630258184000-94f7b2a850ea4ea39d8f0596ee51219a` is GREEN on the reviewed candidate.
+
+The stacked Node correction is orthogonal harness tooling: only canonical `node:` specifiers are exempted, while undeclared bare packages remain fail-closed. Its independent Gate 3/Gate 5 approvals remain applicable and its 17-case completeness suite is included GREEN as record `1789234665559941000-5c8fddf7ab7849da8089f5c53c7c9f52`.
+
+### Historical CI failure inventory and correction evidence
+
+GitHub Actions run `34706862367` at old commit `b1d35f6d0bc6fae5fabf6b6fed505818c6a46454` remains a historical failure and is not reclassified. Its three primary failure groups are fully accounted for:
+
+1. `yii2_inspection_browser_001_test.php` failed on the stale `only-working queue sorted no activity first` oracle; the exact corrected browser test is GREEN as noted above.
+2. `delivery_harness_ci_completeness_001_test.py` failed on governance evidence lineage; the stacked, separately approved harness correction is now GREEN on exact source.
+3. `assignment_order_original_database_setup_001_test.php` reported a false lock-wait witness. A fresh bounded reviewer rerun on this exact candidate is GREEN: record `1789234983968034000-730f76bdbfb6404f8a0bd5e1b338fb5a`. No assignment production/test correction is present in the diff, consistent with a non-reproducing witness rather than a hidden scope change.
+
+All 16 focused commands in the prepared package are GREEN, start and end at candidate source `adb8593303e911ad34d123592f293d4c21a81b2112a29e2f95974457b128dbaa`, bind executable source `bdf71007c23522295fa3f00797420622afa6e63d4e214d28b748c0e613d49801`, and report `source_drift=false`. Preflight record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/preflight/1789234620880351000-8225070a9246427d9d4499b1f41aa09a.json` is bound to the same source pair, reports GREEN, an empty failure inventory and `publication_ready=true`. `git diff --check origin/main..HEAD` is clean and the package snapshot hash matches its manifest.
+
+PR #105 still points to the older failed source until publication. Run `34706862367` remains RED; new exact-source CI has not run. Harness CI and deployment are therefore `UNKNOWN`, not GREEN, merge approval, or deployment authorization.
+
+### Rereview verdict
+
+`APPROVED`
+
+Gate 5 passes for stacked candidate `adb8593303e911ad34d123592f293d4c21a81b2112a29e2f95974457b128dbaa` / executable source `bdf71007c23522295fa3f00797420622afa6e63d4e214d28b748c0e613d49801`. Publication and fresh authoritative exact-source CI remain required.
