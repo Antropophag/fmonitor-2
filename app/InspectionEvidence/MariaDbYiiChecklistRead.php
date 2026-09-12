@@ -56,10 +56,11 @@ trait MariaDbYiiChecklistRead
         {
             if(!in_array('construction_control.read',$this->permissions($actorId),true))throw new \DomainException();
     $offset=($page-1)*$size;
-    $total=(int)$this->one("SELECT COUNT(*) n FROM {$this->t('fm2_installation_cases')} WHERE process_state='working'")['n'];
+    $active="c.process_state='working' AND NOT EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
+    $total=(int)$this->one("SELECT COUNT(*) n FROM {$this->t('fm2_installation_cases')} c WHERE $active")['n'];
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
-    $sql="SELECT c.id case_id,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,(EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') AND EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='declaration')) completed,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE c.process_state='working' ORDER BY last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id LIMIT $size OFFSET $offset";
+    $sql="SELECT c.id case_id,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,(EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') AND EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='declaration')) completed,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE $active ORDER BY last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id LIMIT $size OFFSET $offset";
     $rows=$this->all($sql);
     foreach($rows as&$r)
         {$r['id']=(int)$r['object_id'];

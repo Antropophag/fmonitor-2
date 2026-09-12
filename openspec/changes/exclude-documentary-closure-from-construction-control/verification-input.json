@@ -1,0 +1,52 @@
+{
+  "change": "exclude-documentary-closure-from-construction-control",
+  "planned_paths": [
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "tests/Yii2/yii2_inspection_boundaries_001_test.php",
+    "tests/Yii2/yii2_inspection_journey_001_test.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "tests/Verification/verification_ci_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001",
+      "acceptance_id": "active-queue-http-and-history",
+      "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001.md",
+      "seam": "real Yii2 GET /pilot/construction-control",
+      "tests": [
+        "tests/Yii2/yii2_construction_control_active_queue_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_construction_control_active_queue_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001",
+      "acceptance_id": "active-queue-browser-controls",
+      "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001.md",
+      "seam": "real browser over Yii2 GET /pilot/construction-control",
+      "seam_kind": "infrastructure",
+      "tests": [
+        "tests/Yii2/yii2_inspection_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_inspection_browser_001_test.php": "GREEN"
+      },
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "stderr": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "retained_evidence": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Browser projection read does not coordinate worktrees."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Yii2/yii2_inspection_browser_001_test.php"]}
+      }
+    }
+  ]
+}

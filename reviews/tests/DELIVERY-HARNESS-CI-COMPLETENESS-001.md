@@ -244,3 +244,30 @@ The spec/OpenSpec/input remain coherent and bounded to R2 Node dependency classi
 `APPROVED`
 
 Gate 4 may proceed for the canonical Node built-ins correction against exact executable source `530aa06ed8cea126650e40077520bca4c2bcb02c979387c42878ff48f16298bd`. Gate 5, exact-source CI, merge and deployment remain separate decisions; later expectation changes require a new Gate 2/3 review.
+
+## Rereview 2026-09-12 — synthetic repository `.gitignore` fixture correction
+
+- Independent reviewer: separately tasked agent `/root/issue39_gate3`; authored neither the fixture correction nor the harness implementation.
+- Review scope: the one-line change in `tests/Verification/delivery_harness_ci_completeness_001_test.py` that copies the repository `.gitignore` into every disposable `fixture_repo()` before its initial commit.
+- Triggering exact CI runs: `34706862367` and `34709119564`; both reproduce `test_gate3_test_delta_links_historical_red_and_rejects_mismatch` failing at reviewer prepare with `SETUP_FAILURE: evidence source does not match current source`.
+- Reviewed current source: head `8212f0b974ac7bfb50f60b537570148a19872ca3` plus the exact one-line working-tree delta, harness candidate digest `42d2502624ae6e87c0b17321fa523c2a14d62dc09e82383a8874d708557fdcce`, executable digest `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8` before this appended review metadata.
+
+### Findings
+
+None.
+
+### Assessment
+
+The correction matches the source-identity contract rather than weakening it. `fixture_repo()` intends to model a real repository and already copies `AGENTS.md`, the verification policy/catalogs, specs, tests, delivery tools and other source inputs before `git init`/commit. Copying the real repository `.gitignore` makes the disposable repository apply the same classification to generated Python cache bytes: `__pycache__/` and `*.pyc` are not candidate/executable source in either environment. Without that policy file, importing copied Python modules can create a new untracked cache path between the current GREEN record and reviewer `prepare`, producing a false source mismatch unrelated to R4 lineage.
+
+Sensitivity is preserved. The R4 test still creates a historical failing test blob, records typed intended RED, replaces it with a distinct GREEN blob, records current evidence, requires reviewer prepare to expose different 64-character base/current blob digests and a delta digest, and rejects a historical RED from another acceptance. The R5 tests still mutate `tools/delivery/harness.py` and a non-ignored unknown `unexpected-policy-byte.txt`, requiring executable identity to change, while lifecycle-only review metadata preserves only the executable digest. Copying `.gitignore` therefore does not hide the executable or unknown-path mutations that the contract requires the suite to detect.
+
+The supplied reviewer package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T174140Z-b544cf49e0/package.json` predates this test delta: its bound test SHA-256 is `f14dcbe761866bfb3761fda0ef71190c6f2636b5cdd137c6ccd1b142e292cc0d`, while the reviewed corrected test SHA-256 is `ba0cf89f20bcaa9ec7f98540754174a68bb46ef17bcbef2ab363db4881df74e6`. It is not treated as approval or evidence for the changed bytes.
+
+Instead, fresh bounded harness record `1789236148975317000-8622b089be934d56b1c4d01aa8df21fa` runs the entire `delivery_harness_ci_completeness_001_test.py` on the corrected source, is GREEN with 17/17 tests passing, is bound to candidate `42d2502624ae6e87c0b17321fa523c2a14d62dc09e82383a8874d708557fdcce` and executable source `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`, and reports `source_drift=false`. Its fixture label resolves as `missing:/Users/antropophag/code/fmonitor-2-issue39/disposable-git-fixture`; that label is not used as positive fixture attestation. Determinism and isolation instead come from the inspected `TemporaryDirectory`-owned `fixture_repo()` setup and the complete GREEN run. The earlier package state, CI and deployment remain `UNKNOWN`/not approval, and both cited CI runs remain historical failures rather than GREEN qualification.
+
+### Verdict
+
+`APPROVED`
+
+The `.gitignore` fixture correction is approved for exact executable source `748bbc17907c17cb3e6f020a23bfa7df2504ed9c2b2496324679000555a026c8`. This narrow Gate 3 verdict does not approve CI, production behavior, merge or deployment; the final committed candidate still requires exact-source independent Gate 5/CI handling appropriate to its complete delta.
