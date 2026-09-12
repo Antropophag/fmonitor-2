@@ -73,3 +73,29 @@ None. The corrected tests are traceable to R1–R7, use the public serialized CL
 ### Required changes
 
 None. Gate 4 may proceed against exact candidate source `2a2c2dbdedb0a82f697a5abcfed5f550019b78f393a7740164a9fc309ba0dfce`; any test/spec change requires a new Gate 3 review.
+
+## Rereview 2026-09-12 — post-Gate-5 sensitivity delta
+
+- Reviewed source: base `13ed2015801c45aff3ab391425899b5b4e2884a9` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T140900Z-a212e904d2/snapshot/source.patch`, SHA-256 `c15899403fd0a72a774745e1e5318791227015ebf89c41bc27efc7583adbcae3`
+- Candidate source: `9bfeb6412c7fcb9bc1a4d5bc3684f35cf8516e10193cc7f38c8502cf9658714d`
+- Executable source: `cebbb62eaced98220f9ca7db798394b92b563eea261b06e3e94530e25d5940bf`
+- Evidence: external record `1789222112921275000-aa8d6681748745219d0b65c7aad79496`, `INTENDED_RED`, exit 1; eight existing tests GREEN and four corrected sensitivity tests FAIL, zero ERROR
+- Review input: Gate 5 findings in `reviews/code/DELIVERY-HARNESS-CI-COMPLETENESS-001.md`
+- Acceptance continuity: normative `DELIVERY-HARNESS-CI-COMPLETENESS-001` R1–R7 is unchanged; the delta strengthens tests for behavior already required by R1–R4, R6 and R7.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The delta independently detects every Gate 5 gap at the public seam:
+
+- the exact repository plan must retain the generated-source verification consumer after deduplication;
+- a GREEN publication decision must contain plan-owned evidence for every command id, with typed purpose and observed services/dependencies;
+- retained records, not package inference, must own matching command id, purpose and environment;
+- dependency manifests must bind an allowed realpath, verifiable lock digest and an authorized plan consumer, rejecting missing/wrong/mutable/outside inputs;
+- Gate 3 lineage must expose distinct exact base/current blobs, a delta digest and the unchanged acceptance id, and reject a historical RED from another acceptance.
+
+The retained result is a valid intended RED: the original eight tests remain GREEN, the four affected tests fail at the newly asserted missing contracts, and there are no setup errors or unrelated regression failures. Fixtures remain deterministic, disposable and isolated from production systems.
+
+### Required changes
+
+None. Gate 4 correction may proceed against exact executable source `cebbb62eaced98220f9ca7db798394b92b563eea261b06e3e94530e25d5940bf`. Any further spec or test change requires another independent Gate 3 review.
