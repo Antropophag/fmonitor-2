@@ -71,6 +71,35 @@ The strengthened test at `tests/Verification/delivery_harness_ci_completeness_00
 - Prior bounded compatibility evidence remains GREEN: `change_verification_001_test.py` 16 tests, `delivery_harness_001_test.py` 25 tests, `delivery_harness_hardening_001_test.py` 9 tests and `verification_ci_001_test.py` 16 tests.
 - No local `make test` or `make verify` was run. PR/CI remain `UNKNOWN` and are not approval.
 
+## Post-merge conflict-resolution Gate 5 — 2026-09-12
+
+- Reviewer: Codex agent `/root/issue99_gate5` (independent Gate 5 reviewer)
+- Reviewed merge commit: `552a00f316013ae7cf08b63cbae673d2ad7260f0`
+- First parent / approved #99 branch: `dde74b61679b68bffa51d3ffba37db42008bf72c`
+- Second parent / main with #76 workforce sync: `6e4bf6bb3a6e923999fc06216af9a6e2abe697bb`
+- Candidate source: `9882d35f4ff4a1797374dbb4c59c1a2b8fc8da95ff795f7c1269ca826aafe784`
+- Executable source: `4d9f6e9dbc64e78763597e3420195742a94bbbfa38b4b546627bbc4606103bbe`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T152522Z-13e725cf58/package.json`
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The merge has exactly the two recorded conflict paths: `tools/verification/categories.json` and `tools/verification/suites.tsv`. Their resolution is the union of both parents. It retains the #99 harness acceptance as `governance` / `characterization`, and all four #76 workforce-sync registrations: console and DB as integration/db, ownership as unit/php, and deployment package as unit/python3. No entry is duplicated or lost.
+
+All 23 non-conflicting paths brought from main are byte-identical to the second parent, including the complete #76 production, command, configuration, specification, test and review changes. All 16 non-conflicting #99 paths are byte-identical to the first parent. The merge therefore preserves both histories without rewriting either implementation. The previously approved #99 source behavior and all prior findings dispositions remain valid; the registry-only conflict delta is additionally covered by current composition tests and exact-source evidence.
+
+### Verification
+
+- Merge-parent blob comparison — `MAIN_PATHS_BYTE_IDENTICAL 23 BAD []` and `ISSUE99_PATHS_BYTE_IDENTICAL 16 BAD []`.
+- Registry inspection confirms the #99 entry plus all four #76 workforce-sync entries in both `categories.json` and `suites.tsv` with matching classifications.
+- `python3 tests/Verification/delivery_harness_ci_completeness_001_test.py` — 14 tests GREEN in 41.436s.
+- `python3 tests/Verification/verification_ci_001_test.py` — 16 tests GREEN in 36.409s, including inventory partition/composition checks.
+- `python3 tools/delivery/render-dependencies.py --check` — GREEN.
+- Exact package inspection — `SIX_EXACT_EVIDENCE_OK`: every plan command has one typed GREEN record with matching candidate source, executable source, id, purpose and environment.
+- No local `make test` or `make verify` was run. PR #102 is open; CI state for merge commit `552a00f3` is still `UNKNOWN` and is not approval.
+
 ## Final rereview 2026-09-12 — observed-environment correction
 
 - Reviewer: Codex agent `/root/issue99_gate5` (independent Gate 5 rereviewer)
