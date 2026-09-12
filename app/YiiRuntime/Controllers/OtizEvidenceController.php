@@ -31,7 +31,7 @@ final class OtizEvidenceController extends PilotController
                 if (Yii::$app->user->isGuest) {
                     Yii::$app->user->setReturnUrl(str_contains(Yii::$app->request->pathInfo,'quarantine')?'/pilot/otiz/reconciliation/quarantine':'/pilot/otiz/reconciliation');
                     Yii::$app->response->statusCode = 303;
-                    Yii::$app->response->headers->set('Location', '/pilot/login');
+                    Yii::$app->response->headers->set('Location', '/pilot/otiz/login');
                     return;
                 }
                 throw new ForbiddenHttpException();

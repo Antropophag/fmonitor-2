@@ -36,6 +36,8 @@
 
 7. **Проверка строится от публичной границы.** Root создаёт нормативный refactor contract и intended RED для реального Yii2/public runtime: success, unauthorized/forbidden, bad CSRF, blockers, replay/concurrency, no-fact rejection, navigation/return, export и runtime dependency. DB fingerprints используются как evidence, но не заменяют HTTP seam.
 
+8. **OTIZ использует явный Yii2 login и подготовленный durable session state.** Production router сохраняет legacy `/pilot/login` за rapid runtime, поэтому OTIZ guest redirect идёт на `/pilot/otiz/login`, не пытаясь переносить или подделывать rapid cookie. Deployment prepare создаёт `yii-sessions` в общем закрытом state volume, а Compose требует отдельные cookie-validation и identity keys. Известные Yii HTTP exceptions сохраняют status; неожиданные ошибки остаются безопасным 503.
+
 ## Risks / Trade-offs
 
 - [Существующий `OtizSettlementController` плотный и смешивает HTML] → вынести views только настолько, насколько нужно полному route slice; не превращать migration в общий UI rewrite.

@@ -2,11 +2,19 @@
   "change": "yii2-otiz-workflow",
   "planned_paths": [
     "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Controllers/OtizPublicationController.php",
+    "app/YiiRuntime/Controllers/OtizEvidenceController.php",
+    "app/YiiRuntime/Controllers/AuthController.php",
+    "app/YiiRuntime/Views/login.php",
+    "app/Runtime/RuntimeStoragePaths.php",
     "app/YiiRuntime/Views/otiz",
     "app/YiiRuntime/Assets/OtizAssetBundle.php",
     "config/yii/web.php",
     "rapid-pilot/router.php",
     "public/runtime.php",
+    "deploy/runtime/compose.yaml",
+    "deploy/runtime/README.md",
+    "docs/operations/production-runtime-runbook.md",
     ".quality-graph/verification-policy.json",
     "rapid-pilot/Otiz.php",
     "app/PilotHttp/PilotRouteCsp.php",
@@ -24,7 +32,11 @@
     "tests/Otiz/snapshot_publication_001_test.php",
     "tests/Otiz/snapshot_publication_http_001_test.php",
     "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
-    "tests/Yii2/yii2_otiz_settlement_001_test.php"
+    "tests/Yii2/otiz_settlement_browser.mjs",
+    "tests/Yii2/yii2_otiz_settlement_001_test.php",
+    "tests/Runtime/runtime_settlement_compatibility_001_test.php",
+    "tests/Runtime/production_runtime_browser_001_test.php",
+    "tests/Runtime/runtime_storage_001_test.php"
   ],
   "acceptances": [
     {
@@ -42,6 +54,9 @@
         "tests/Yii2/yii2_otiz_publication_browser_001_test.php",
         "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php",
         "tests/Runtime/rapid_router_otiz_dependency_001_test.php",
+        "tests/Runtime/runtime_settlement_compatibility_001_test.php",
+        "tests/Runtime/production_runtime_browser_001_test.php",
+        "tests/Runtime/runtime_storage_001_test.php",
         "tests/Otiz/snapshot_publication_001_test.php",
         "tests/Otiz/snapshot_publication_http_001_test.php",
         "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
@@ -49,18 +64,21 @@
       ],
       "gate3_expected": {
         "tests/Yii2/yii2_otiz_workflow_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_commands_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_concurrency_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_commands_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_concurrency_001_test.php": "GREEN",
         "tests/Yii2/yii2_otiz_guest_return_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_evidence_reads_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_decisions_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_evidence_reads_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_decisions_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "GREEN",
         "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php": "GREEN",
-        "tests/Runtime/rapid_router_otiz_dependency_001_test.php": "INTENDED_RED",
+        "tests/Runtime/rapid_router_otiz_dependency_001_test.php": "GREEN",
+        "tests/Runtime/runtime_settlement_compatibility_001_test.php": "INTENDED_RED",
+        "tests/Runtime/production_runtime_browser_001_test.php": "INTENDED_RED",
+        "tests/Runtime/runtime_storage_001_test.php": "INTENDED_RED",
         "tests/Otiz/snapshot_publication_001_test.php": "GREEN",
         "tests/Otiz/snapshot_publication_http_001_test.php": "GREEN",
-        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "GREEN",
-        "tests/Yii2/yii2_otiz_settlement_001_test.php": "GREEN"
+        "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php": "INTENDED_RED"
       }
     }
   ]

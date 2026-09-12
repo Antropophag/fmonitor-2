@@ -65,6 +65,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'health/ready' => 'health/ready',
                 'GET pilot/login' => 'auth/login',
                 'POST pilot/login' => 'auth/login',
+                'GET pilot/otiz/login' => 'auth/login',
+                'POST pilot/otiz/login' => 'auth/login',
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
                 'GET,HEAD pilot/objects' => 'object-queue/index',

@@ -18,7 +18,8 @@ final class AuthController extends PilotController
         if($request->isPost&&$this->validEmail($email)){
             try{$store=$this->store();if($store->rateLimited($email)){$store->fail($email);$error=$this->neutral();}else{$found=$store->findForLogin($email);if($found===null){$store->fail($email);$error=$this->neutral();}else{$stage='password';$name=$found['identity']->displayName;if(is_string($password)){if(strlen($password)>200||$password===''||!password_verify($password,$found['passwordHash'])){$store->fail($email);$error=$this->neutral();}else{Yii::$app->user->login($found['identity'],0);$return=Yii::$app->user->getReturnUrl('/pilot/objects');Yii::$app->user->setReturnUrl('/pilot/objects');Yii::$app->session->close();$store->succeed($email);return$this->localRedirect($this->safeReturn((string)$return));}}}}}catch(\Throwable$e){throw new \RuntimeException('Authentication unavailable.',0,$e);}
         }elseif($request->isPost)$error='Введите рабочий email в домене @shlz.ru.';
-        return $this->render('@app/app/YiiRuntime/Views/login',['stage'=>$stage,'email'=>$email,'error'=>$error,'name'=>$name]);
+        $loginPath=Yii::$app->request->pathInfo==='pilot/otiz/login'?'/pilot/otiz/login':'/pilot/login';
+        return $this->render('@app/app/YiiRuntime/Views/login',['stage'=>$stage,'email'=>$email,'error'=>$error,'name'=>$name,'loginPath'=>$loginPath]);
     }
     public function actionLogout():Response{Yii::$app->user->logout();return$this->localRedirect('/pilot/login');}
     private function store():MariaDbYiiLocalIdentityStore{return Yii::$app->localIdentity;}

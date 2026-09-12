@@ -22,10 +22,16 @@ try {
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(/\/pilot\/objects/);
   await page.goto(`http://127.0.0.1:${port}/pilot/otiz/payments`);
+  if(new URL(page.url()).pathname==='/pilot/otiz/login'){
+    await page.locator('input[name="email"]').fill(email);await page.locator('button[type="submit"]').click();
+    await page.locator('input[name="password"]').fill(password);await page.locator('button[type="submit"]').click();
+    await page.waitForURL(/\/pilot\/otiz\/payments/);
+  }
   page.on('console',message=>{if(message.type()==='error')result.consoleErrors.push(message.text());});
   page.on('pageerror',error=>result.pageErrors.push(error.message));
   page.on('requestfailed',request=>result.failedRequests.push({url:new URL(request.url()).pathname,error:request.failure()?.errorText||''}));
   page.on('response',response=>{if(response.status()>=400)result.responses.push({url:new URL(response.url()).pathname,status:response.status()});});
+  result.paymentUrl=page.url();result.paymentText=(await page.locator('body').innerText()).slice(0,500);
   const operation=await page.locator('input[name="operationId"]').inputValue();
   result.operationIdPresent=/^[a-f0-9-]{36}$/.test(operation);
   await page.locator('input[name="reportDate"]').fill(reportDate);

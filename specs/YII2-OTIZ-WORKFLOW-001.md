@@ -6,7 +6,7 @@
 
 ## Scope, actor and public seam
 
-Actor — активный пользователь FMonitor с exact permission `otiz.manage`. Guest SHALL получить Yii2 login redirect с сохранённым return URL; authenticated actor без exact permission SHALL получить denial до предметной операции. Near-match permission не допускает действие.
+Actor — активный пользователь FMonitor с exact permission `otiz.manage`. Guest SHALL получить redirect на явный Yii2 OTIZ login `/pilot/otiz/login` с сохранённым return URL; authenticated actor без exact permission SHALL получить denial до предметной операции. Near-match permission не допускает действие. Rapid session от `/pilot/login` не является Yii2 authentication и не SHALL неявно переноситься либо дублироваться.
 
 Public seam — реальные HTTP method/path из `openspec/changes/yii2-otiz-workflow/inventory.md`, обслуживаемые `public/yii.php` и production Yii2 configuration. State-changing adapters MUST вызывать существующие seams:
 
@@ -50,6 +50,8 @@ Invalid, stale, conflicting, replayed or forbidden decision SHALL сохрани
 ## Framework and runtime boundary
 
 Yii2 MUST владеть Request/Response, routing, authentication/session, CSRF, error mapping, views and assets для всех inventory routes. Реальный production request к любому `/pilot/otiz...` MUST NOT require, instantiate, dispatch or call `RapidPilotOtiz`; production router MUST NOT использовать его для navigation permission probing.
+
+Production preparation MUST создать закрытый durable Yii2 session directory в общем state volume до первого OTIZ request; обязательные cookie validation/identity keys MUST поступать через runtime environment. Известный Yii HTTP rejection SHALL сохранить свой HTTP status, а неожиданный infrastructure failure SHALL остаться безопасным `503 SERVICE_UNAVAILABLE` без раскрытия деталей.
 
 `rapid-pilot/Otiz.php`, `verify-otiz-*` и pilot characterization MAY оставаться как non-production behavioral evidence. Их существование не считается runtime dependency. Нельзя ослаблять route admission/CSP/architecture checks ради GREEN.
 

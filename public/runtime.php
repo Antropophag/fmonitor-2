@@ -37,17 +37,19 @@ try {
     }
     unset($_SERVER['REMOTE_USER'], $_SERVER['FMONITOR_AUTH_USER_ID'], $_SERVER['FMONITOR_AUTH_CSRF']);
     $_SERVER['FMONITOR_TRUSTED_REQUEST_HOST'] = $configuration->value('FMONITOR_TRUSTED_REQUEST_HOST');
-    if (preg_match('#^/pilot/otiz(?:/|$)#D', (string)$path) === 1 || $path === '/pilot/assets/otiz.js') {
+    $otizRoute= preg_match('#^/pilot/otiz(?:/|$)#D', (string)$path) === 1 || $path === '/pilot/assets/otiz.js';
+    if ($otizRoute) {
         require __DIR__.'/yii.php';
         exit;
     }
     require dirname(__DIR__) . '/rapid-pilot/router.php';
-} catch (Throwable) {
+} catch (Throwable $error) {
     while (ob_get_level() > $level) ob_end_clean();
     header_remove('Location');
     header_remove('Content-Length');
-    http_response_code(503);
+    $status=$error instanceof \yii\web\HttpException?$error->statusCode:503;
+    http_response_code($status);
     header('Content-Type: application/json');
     header('Cache-Control: no-store');
-    echo "{\"ok\":false,\"reason\":\"SERVICE_UNAVAILABLE\"}\n";
+    echo $status===503?"{\"ok\":false,\"reason\":\"SERVICE_UNAVAILABLE\"}\n":"{\"ok\":false,\"reason\":\"REQUEST_REJECTED\"}\n";
 }
