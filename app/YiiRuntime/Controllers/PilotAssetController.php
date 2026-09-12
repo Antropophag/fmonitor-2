@@ -14,7 +14,7 @@ final class PilotAssetController extends PilotController
     {
         $root = dirname(__DIR__) . '/Assets';
         $map = [];
-        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js','checklist.js','control-queue.js'] as $file) {
+        foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js','checklist.js','control-queue.js','otiz.js'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/javascript; charset=UTF-8',3600];
         }$map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];

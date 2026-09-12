@@ -1,12 +1,13 @@
 <?php
 
 declare(strict_types=1);
+require_once dirname(__DIR__).'/app/PilotHttp/OtizNavigation.php';
 
 final class RapidPilotShell
 {
     public static function decorate(string $html, string $csrf, bool $calendarActive, bool $otizAllowed, bool $otizActive): string
     {
-        if ($otizAllowed) $html = RapidPilotOtiz::decorateNavigation($html, $otizActive);
+        if ($otizAllowed) $html = \FMonitor2\PilotHttp\OtizNavigation::decorate($html, $otizActive);
         $html = RapidPilotCalendar::decorateNavigation($html, $calendarActive);
         $html = self::distillNavigation($html);
         $html = str_replace(

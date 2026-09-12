@@ -8,7 +8,8 @@ services `php`, `web`, deployment CLI и опциональными jobs service
 Обязательные значения задаются оператором вне repository: `FMONITOR_DB_NAME`,
 `FMONITOR_DB_USER`, `FMONITOR_DB_PASSWORD`, `FMONITOR_MIGRATION_DB_USER`,
 `FMONITOR_MIGRATION_DB_PASSWORD`, равные process/legacy prefixes, session instance,
-trusted host и scheme. Для reviewed exact image задайте `FMONITOR_RUNTIME_IMAGE`
+отдельные случайные `FMONITOR_YII_COOKIE_VALIDATION_KEY` и
+`FMONITOR_YII_IDENTITY_KEY` длиной не менее 32 байт, trusted host и scheme. Для reviewed exact image задайте `FMONITOR_RUNTIME_IMAGE`
 digest reference; без него Compose использует локальный `fmonitor2-runtime`.
 
 Порядок и rollback описаны в

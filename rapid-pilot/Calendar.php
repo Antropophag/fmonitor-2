@@ -49,7 +49,7 @@ final class RapidPilotCalendar
             $user = $this->user();
             $events = $this->read($first, $last);
             $html = $this->render($user, $first, $last, $selected, $events);
-            $html = RapidPilotShell::decorate($html, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), true, RapidPilotOtiz::currentUserCanAccess(), false);
+            $html = RapidPilotShell::decorate($html, (string) ($_SERVER['FMONITOR_AUTH_CSRF'] ?? ''), true, \FMonitor2\PilotHttp\OtizNavigation::currentUserCanAccess(), false);
             $html = str_replace('</body>', '<script type="module" src="/pilot/assets/calendar.js"></script></body>', $html);
             header('Content-Type: text/html; charset=UTF-8');
             header('Content-Security-Policy: default-src \'self\'; style-src \'self\'; script-src \'self\'; img-src \'self\'; font-src \'self\'; base-uri \'none\'; frame-ancestors \'none\'');

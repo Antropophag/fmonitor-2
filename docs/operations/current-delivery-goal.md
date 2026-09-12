@@ -1,4 +1,15 @@
-# Текущая цель — №76, workforce sync через Yii2 console
+# Текущая цель — PR #103 до merge
+
+Владелец 2026-09-12 поручил исправить PR #103 и довести его до merge.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`;
+change `yii2-otiz-workflow`, spec `YII2-OTIZ-WORKFLOW-001`.
+Пять CI regression failures исправлены в fixtures/runtime delivery sequence;
+история и evidence — [delivery record](yii2-otiz-workflow-delivery-2026-09-12.md).
+Фактические source/PR/CI получать через `python3 tools/delivery/harness.py state`.
+Следующий шаг: независимые correction Gates 3/5, один full exact-source CI,
+merge при GREEN. Deployment остаётся `UNKNOWN` и не входит в поручение.
+
+# Предыдущий указатель — №76, workforce sync через Yii2 console
 
 Владелец 2026-09-12 поручил автономно довести следующий не-OTIZ срез №76 до PR merge-ready. Рабочий checkout: `/Users/antropophag/code/fmonitor-2-yii2-workforce-sync-76`, branch `codex/yii2-workforce-sync-76-20260912`.
 
@@ -16,6 +27,22 @@ checks; полный matrix выполняется один раз паралл�
 Прерванный локальный запуск 2026-09-11 подтвердил чрезмерную последовательную
 стоимость и отдельно встретил недоступную PDF renderer dependency; повторный
 локальный full run не является способом исправления этой среды.
+
+# Текущая цель — №76, полный HTTP workflow ОТиЗ через Yii2
+
+Рабочий checkout: `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`, branch
+`codex/yii2-otiz-http-76-20260912`. PR100 поставил case import в Yii2 console;
+этот независимый срез переносит calculate/accept/export, settlement adjacency,
+reconciliation/quarantine и historical reads в Yii2 web. Контракт и evidence:
+[`YII2-OTIZ-WORKFLOW-001`](../../specs/YII2-OTIZ-WORKFLOW-001.md),
+[`OpenSpec`](../../openspec/changes/yii2-otiz-workflow/),
+[`delivery record`](yii2-otiz-workflow-delivery-2026-09-12.md).
+
+Gate 3 APPROVED. Gate 4 focused/architecture checks GREEN. Следующий шаг —
+exact-source Gate 5, PR и один полный Quality Graph CI. Deployment остаётся
+UNKNOWN и не выполняется без отдельной авторизации.
+
+## Предыдущий указатель — история
 
 # Текущая цель — №76, фоновые процессы через Yii2 console
 

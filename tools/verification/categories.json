@@ -380,5 +380,14 @@
   "tests/Yii2/yii2_workforce_sync_console_001_test.php": "integration",
   "tests/Yii2/yii2_workforce_sync_db_001_test.php": "integration",
   "tests/Yii2/yii2_workforce_sync_ownership_001_test.php": "unit",
-  "tests/Deployment/yii2_workforce_sync_package_001_test.py": "unit"
+  "tests/Deployment/yii2_workforce_sync_package_001_test.py": "unit",
+  "tests/Runtime/rapid_router_otiz_dependency_001_test.php": "integration",
+  "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_workflow_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_commands_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_concurrency_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_decisions_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_evidence_reads_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_guest_return_001_test.php": "integration",
+  "tests/Yii2/yii2_otiz_publication_browser_001_test.php": "e2e"
 }
