@@ -61,6 +61,8 @@ Production preparation MUST создать закрытый durable Yii2 session
 
 Изолированные Compose fixtures MUST явно задавать тестовые cookie-validation и identity keys, не наследуя секреты локального стенда. DDL inventory MUST проверять реальные перенесённые `app/Otiz` implementations вместе с compatibility wrappers.
 
+Смежные governance regressions SHALL проверять положительный preflight на собственном git fixture/base, независимо от diff текущего PR. Fixture MUST наследовать repository `.gitignore`, чтобы Python bytecode не подменял executable source между сохранением evidence и review. Проверки отказа при реальной смене исходников, несовместимой acceptance или отсутствии зависимости MUST сохраняться.
+
 Recovery rehearsal SHALL сохранять прежний протокол: historical bundle восстанавливается exact historical image; после additive database migrations явный текущий `bin/fmonitor2-runtime-prepare.php` добавляет закрытый `yii-sessions` до текущих readiness/backup. Подготовка MUST сохранять все существующие файлы, права и исторические DB/AUTO_INCREMENT facts; повтор MUST быть no-op. Текущий backup/restore SHALL сохранять содержимое и права Yii2 session files наряду с остальным private state. Backup/readiness MUST NOT неявно готовить отсутствующие каталоги или ослаблять проверки безопасности.
 
 Complete intended RED/GREEN SHALL проверять через настоящий Yii2 HTTP/browser: guest return, exact permission, CSRF, calculate success/replay/conflict/concurrency/rollback, snapshot content, accept blocker/incomplete/immutable/concurrency, XLSX, reconciliation/quarantine decisions, historical reads, adjacent settlement and runtime dependency absence. DB fingerprints служат дополнительным доказательством facts/no-facts.

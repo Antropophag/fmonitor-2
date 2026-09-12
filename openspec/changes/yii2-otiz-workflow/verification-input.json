@@ -45,6 +45,7 @@
       "spec_path": "specs/YII2-OTIZ-WORKFLOW-001.md",
       "seam": "isolated Compose config, OTIZ runtime DDL inventory, public current-image prepare and historical/current backup/restore CLI",
       "tests": [
+        "tests/Verification/delivery_harness_ci_completeness_001_test.py",
         "tests/Jobs/jobs_runtime_contract_001_test.php",
         "tests/Otiz/runtime_schema_001_test.php",
         "tests/Runtime/production_runtime_compose_001_test.php",
@@ -52,6 +53,7 @@
         "tests/Runtime/runtime_recovery_forward_update_001_test.php"
       ],
       "gate3_expected": {
+        "tests/Verification/delivery_harness_ci_completeness_001_test.py": "GREEN",
         "tests/Jobs/jobs_runtime_contract_001_test.php": "GREEN",
         "tests/Otiz/runtime_schema_001_test.php": "GREEN",
         "tests/Runtime/production_runtime_compose_001_test.php": "GREEN",

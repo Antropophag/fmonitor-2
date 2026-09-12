@@ -28,7 +28,7 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         for name in ['tools/delivery', 'tools/verification', '.quality-graph', '.codex',
                      'specs', 'tests/Verification', 'deploy/runtime', 'openspec/changes']:
             shutil.copytree(ROOT / name, repo / name)
-        for name in ['AGENTS.md', 'quality-graph.yml']:
+        for name in ['AGENTS.md', 'quality-graph.yml', '.gitignore']:
             shutil.copy2(ROOT / name, repo / name)
         (repo / 'docs/operations').mkdir(parents=True)
         shutil.copy2(ROOT / 'docs/development-process.md', repo / 'docs/development-process.md')
@@ -138,24 +138,27 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
             self.assertIn(option, harness_help.stdout, f'INTENDED_RED {option} package contract is absent')
 
     def test_preflight_is_fail_closed_and_records_environment(self):
-        planner = load('ci_complete_preflight_planner', 'tools/delivery/change-verification.py')
-        plan = planner.build('origin/main', 'openspec/changes/delivery-harness-first-pass-ci-completeness/verification-input.json')
-        with tempfile.TemporaryDirectory(prefix='fmonitor-ci-completeness-') as directory:
-            home = Path(directory)
-            package = home / 'packages' / 'contract'
-            package.mkdir(parents=True)
-            plan_path = package / 'verification-plan.json'
-            plan_path.write_text(planner.canonical(plan))
-            environment = dict(os.environ, FMONITOR_HARNESS_HOME=str(home))
-            result = subprocess.run([
-                sys.executable, 'tools/delivery/change-verification.py', 'preflight', '--plan',
-                str(plan_path)], cwd=ROOT, env=environment, text=True,
-                capture_output=True, timeout=90)
-            self.assertNotEqual('', result.stdout.strip() or result.stderr.strip())
-            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-            payload = json.loads(result.stdout)
-            self.assertEqual('GREEN', payload['outcome'])
-            self.assertEqual(payload['executable_source'], payload['evidence_executable_source'])
+        repo, base, home, environment = self.fixture_repo()
+        test = 'tests/Verification/synthetic_preflight_001_test.py'
+        input_name = self.write_input(repo, test=test)
+        categories = json.loads((repo / 'tools/verification/categories.json').read_text())
+        categories[test] = 'unit'
+        (repo / 'tools/verification/categories.json').write_text(json.dumps(categories) + '\n')
+        with (repo / 'tools/verification/suites.tsv').open('a') as stream:
+            stream.write(f'unit\tpython3\t{test}\n')
+        planned, _, plan_name = self.plan(repo, environment, base, input_name)
+        self.assertEqual(0, planned.returncode, planned.stdout + planned.stderr)
+        result = self.command(repo, environment, sys.executable,
+                              'tools/delivery/change-verification.py', 'preflight',
+                              '--plan', plan_name)
+        self.assertNotEqual('', result.stdout.strip() or result.stderr.strip())
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual('GREEN', payload['outcome'])
+        self.assertEqual(payload['executable_source'], payload['evidence_executable_source'])
+        record = Path(payload['record_path'])
+        self.assertTrue(record.resolve().is_relative_to(home.resolve()))
+        self.assertEqual(payload['evidence'], json.loads(record.read_text())['evidence'])
 
     def test_pr98_inventory_is_complete_before_publication(self):
         repo, base, _, environment = self.fixture_repo()
@@ -489,6 +492,9 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
                                 '--evidence', current_record, '--historical-red', historical_record,
                                 '--test-delta', test)
         self.assertEqual(0, accepted.returncode, 'INTENDED_RED valid test-delta lineage rejected: ' + accepted.stderr)
+        untracked = self.command(repo, environment, 'git', 'ls-files', '--others', '--exclude-standard')
+        self.assertEqual(0, untracked.returncode)
+        self.assertNotIn('__pycache__', untracked.stdout, 'interpreter caches are not candidate source')
         lineage = json.loads(accepted.stdout)['test_delta_lineage']
         self.assertEqual('fixture', lineage['acceptance_id'])
         self.assertEqual(64, len(lineage['base_blob']))

@@ -86,3 +86,11 @@ Fresh evidence/package and the second independent verdict supersede the first ve
 - The reviewed tests retain exact outcomes and strengthen coverage of real `app/Otiz` owners, required Yii keys, nonempty Yii session bytes/modes, historical rows/AUTO_INCREMENT, explicit current-image prepare and replay no-op. The bounded restart poll still requires HTTP 200 and does not prepare or mutate state.
 - Evidence: all five mapped records in the reviewer package are `GREEN` with no source drift; preflight `1789233570809498000-c56c3427931a400aa27b493ce4caa03a` is `GREEN`.
 - Verdict: `APPROVED`; no findings.
+
+## PR #103 governance fixture delta Gate 3 — 2026-09-12
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T173451Z-9d696bb067/package.json`; snapshot base `a5eb2db877503ee5dc713c5e0796b1212142e7a7`, patch SHA-256 `d7f9785354de45888c57bcce03e40f935b0e775ca68dd9dd862345ab55beb117`, source `5e7cd8f62f970bd45f6e71c8b61fb3ef72c5575a0761138b8c383e9851f9289d`, executable source `abf09fbb77affff2a5c04f38c5223e5213e72541d4ef7f5b88da3a3eb981d847`.
+- CI `34708129873` retained one governance suite regression containing two fixture failures; plan, fast, unit, e2e and both integration shards succeeded. Aggregate verify failure remains historical RED evidence. Full governance log: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/stdout/1789234614010953000-2518fdb9d6794cc287fb3bebc2d00691.log`; its retrieval runner succeeded, not the failed test.
+- The delta makes source identity deterministic under Python 3.12 by copying repository `.gitignore`, tests positive preflight against its own registered synthetic unit/base, and verifies canonical retained-record containment and payload. Existing mutation, mismatch, missing-dependency and unrelated-evidence rejections remain unchanged. Two intermediate correction failures remain retained and are not approvals.
+- Exact Python `3.12.11` evidence `1789234429494845000-e1e4ab3148764258a7e0ffc2fc20661e` is `GREEN`: 15/15 methods, no source drift.
+- Verdict: `APPROVED`; no findings.
