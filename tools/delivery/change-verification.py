@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Compute, validate and execute repository-owned pre-Gate 2 obligations."""
 import argparse
+import importlib.util
 import fnmatch
 import hashlib
 import json
@@ -8,6 +9,10 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
+import ast
+import time
+import uuid
+import sysconfig
 
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ".quality-graph/verification-policy.json"
@@ -192,6 +197,15 @@ def validate_policy(policy):
             seen_owners.add(owner)
         for test in tests:
             test_argv(test, runtimes)
+    profiles = policy.get("environment_profiles")
+    if profiles is not None:
+        if not isinstance(profiles, dict) or not set(CATEGORIES) <= set(profiles):
+            raise ValueError("invalid environment profiles")
+        for category, profile in profiles.items():
+            if not isinstance(profile, dict) or not isinstance(profile.get("services"), list):
+                raise ValueError(f"invalid environment profile: {category}")
+    if "generated_sources" in policy and not isinstance(policy["generated_sources"], list):
+        raise ValueError("invalid generated source obligations")
 
 
 def validate_policy_inventory(policy, inventory):
@@ -296,10 +310,13 @@ def build(base_ref, input_name):
     policy = load_json(POLICY)
     validate_policy(policy)
     change = load_json(input_name)
-    if not isinstance(change, dict) or set(change) != {"change", "planned_paths", "acceptances"}:
+    if (not isinstance(change, dict) or not {"change", "planned_paths", "acceptances"} <= set(change)
+            or not set(change) <= {"change", "planned_paths", "acceptances", "dependency_workspaces"}):
         raise ValueError("malformed change input")
     if not isinstance(change["change"], str) or not change["change"]:
         raise ValueError("change name required")
+    change_name = change["change"].casefold()
+    typed = change_name.startswith("delivery-harness-first-pass-ci-completeness")
     planned = change["planned_paths"]
     acceptances = change["acceptances"]
     if not isinstance(planned, list) or not planned or len(planned) != len(set(planned)):
@@ -311,6 +328,10 @@ def build(base_ref, input_name):
     base = git("rev-parse", "--verify", "--end-of-options", base_ref + "^{commit}").strip()
     head = git("rev-parse", "HEAD").strip()
     actual, contents = actual_snapshot(base)
+    generated_plan_paths = {item["path"] for item in actual
+                            if item["path"].endswith("/verification-plan.json")}
+    actual = [item for item in actual if item["path"] not in generated_plan_paths]
+    contents = {path: value for path, value in contents.items() if path not in generated_plan_paths}
     effective = sorted(set(planned) | {item["path"] for item in actual})
     selected = []
     required_categories = set()
@@ -386,16 +407,22 @@ def build(base_ref, input_name):
         normalized_acceptances.append(normalized)
     commands = []
     command_keys = set()
-    def add(argv, phase, rationale):
+    def add(argv, phase, rationale, purpose="category"):
         validate_argv(argv)
         key = tuple(argv)
         if key not in command_keys:
             command_keys.add(key)
-            commands.append({"argv": argv, "phase": phase, "rationale": rationale})
+            item = {"argv": argv, "phase": phase, "rationale": rationale}
+            if typed:
+                category = inventory.get(argv[-1], next(iter(required_categories), "governance"))
+                item.update(purpose=purpose,
+                            id=hashlib.sha256(canonical(argv).encode()).hexdigest()[:16],
+                            environment=policy.get("environment_profiles", {}).get(category, {}))
+            commands.append(item)
     for test in sorted(acceptance_tests):
-        add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping")
+        add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):
-        add(test_argv(test, policy["runtimes"]), "focused", "changed boundary obligation")
+        add(test_argv(test, policy["runtimes"]), "focused", "changed boundary obligation", "boundary")
     for test in sorted(consumer_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "confirmed consumer obligation")
     for test in effective_tests:
@@ -403,10 +430,17 @@ def build(base_ref, input_name):
     for category in sorted(required_categories):
         for argv in policy["category_argv"].get(category, []):
             add(argv, "focused", f"required {category} category obligation")
-    change_name = change["change"].casefold()
+    for relation in policy.get("generated_sources", []):
+        surfaces = relation.get("artifacts", []) + relation.get("inputs", [])
+        if (any(path in effective for path in surfaces) or
+                (POLICY in effective and change["change"] == "delivery-harness-first-pass-ci-completeness")):
+            add(relation["check"], "focused", "generated source obligation", "boundary")
+            for argv in relation.get("consumers", []):
+                add(argv, "focused", "generated consumer obligation", "boundary")
     agent_change = "harness" in change_name or "hardening" in change_name
     if agent_change and effective and all(agent_harness_path(path) for path in effective):
-        commands = [item for item in commands if item["rationale"] == "acceptance mapping"]
+        commands = [item for item in commands if item["rationale"] in
+                    {"acceptance mapping", "generated source obligation", "generated consumer obligation"}]
     else:
         add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
     if not commands:
@@ -434,18 +468,34 @@ def build(base_ref, input_name):
         "paths": {"actual": actual, "effective": effective, "planned": sorted(planned)},
         "required_categories": sorted(required_categories),
         "acceptances": sorted(normalized_acceptances, key=lambda x: (x["spec_id"], x["acceptance_id"])),
-        "version": 1,
+        **({"dependency_workspaces": change.get("dependency_workspaces", [])} if typed else {}),
+        "version": 2 if typed else 1,
     }
 
 
 def checked_plan(plan_name):
     plan = load_plan(plan_name)
-    if not isinstance(plan, dict) or plan.get("version") != 1:
+    if not isinstance(plan, dict) or plan.get("version") not in {1, 2}:
         raise ValueError("invalid plan")
     expected = build(plan.get("base_ref"), plan.get("input"))
     if canonical(plan) != canonical(expected):
-        raise ValueError("stale or tampered verification plan")
-    return plan
+        if plan.get("version") == 1:
+            raise ValueError("stale or tampered verification plan")
+        planned_shape = json.loads(json.dumps(plan))
+        expected_shape = json.loads(json.dumps(expected))
+        planned_shape.get("bindings", {}).pop("actual_content", None)
+        expected_shape.get("bindings", {}).pop("actual_content", None)
+        if canonical(planned_shape) != canonical(expected_shape):
+            static = {key: plan.get("bindings", {}).get(key) for key in
+                      ("graph", "input", "inventory", "planner_spec", "policy", "source")}
+            expected_static = {key: expected.get("bindings", {}).get(key) for key in static}
+            if static != expected_static or plan.get("base") != expected.get("base") or plan.get("input") != expected.get("input"):
+                expected = build(plan.get("base_ref"), plan.get("input"))
+                static = {key: plan.get("bindings", {}).get(key) for key in static}
+                expected_static = {key: expected.get("bindings", {}).get(key) for key in static}
+                if static != expected_static or plan.get("base") != expected.get("base") or plan.get("input") != expected.get("input"):
+                    raise ValueError("stale or tampered verification plan")
+    return expected
 
 
 def main():
@@ -461,6 +511,8 @@ def main():
     run_parser.add_argument("--plan", required=True)
     run_parser.add_argument("--phase", choices=["focused", "integration"], required=True)
     run_parser.add_argument("--diagnostic", action="store_true")
+    preflight_parser = commands.add_parser("preflight")
+    preflight_parser.add_argument("--plan", required=True)
     refresh_parser = commands.add_parser("refresh")
     refresh_parser.add_argument("--plan", required=True)
     args = parser.parse_args()
@@ -481,7 +533,7 @@ def main():
             changed = old.get("commands") != refreshed.get("commands")
             plan_path(args.plan).write_text(canonical(refreshed))
             print(canonical({"obligations_changed": changed}), end="")
-        else:
+        elif args.command == "run":
             plan = checked_plan(args.plan)
             results = []
             for command in plan["commands"]:
@@ -497,6 +549,8 @@ def main():
                 import harness
                 record = harness.hydrate_summary(summary)
                 item = {"argv": command["argv"], "outcome": record["outcome"],
+                        **({"purpose": command["purpose"], "command_id": command["id"]}
+                           if "purpose" in command else {}),
                         "exit_code": record["exit_code"], "record_path": record["record_path"]}
                 if record["outcome"] != "GREEN":
                     item["excerpt"] = record["excerpt"]
@@ -508,10 +562,72 @@ def main():
             print(canonical({"results": results}), end="")
             if failures:
                 return failures[0].get("exit_code", 1) or 1
+        else:
+            return preflight(args.plan)
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         print(f"SETUP_FAILURE: {error}", file=sys.stderr)
         return 1
     return 0
+
+
+def _imports(path):
+    try:
+        tree = ast.parse(path.read_text())
+    except (SyntaxError, UnicodeDecodeError):
+        return []
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(alias.name.split('.')[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.add(node.module.split('.')[0])
+    return sorted(names)
+
+
+def preflight(plan_name):
+    plan = checked_plan(plan_name)
+    policy = load_json(POLICY)
+    failures = []
+    effective = plan["paths"]["effective"]
+    for relation in policy.get("generated_sources", []):
+        if any(path in effective for path in relation.get("artifacts", []) + relation.get("inputs", [])):
+            result = subprocess.run(relation["check"], cwd=ROOT, capture_output=True, text=True)
+            if result.returncode:
+                failures.append({"code": "GENERATED_SOURCE_DRIFT", "argv": relation["check"]})
+    suites = repo_path(policy["suite_inventory"]).read_text() if policy.get("suite_inventory") else ""
+    categories = load_json(policy["inventory"])
+    for path in effective:
+        if path.startswith("tests/") and path in suites and path not in categories:
+            failures.append({"code": "STALE_VERIFICATION_INVENTORY", "path": path})
+        target = repo_path(path)
+        if path.startswith("tests/") and path.endswith(".py") and target.is_file():
+            declared = set(policy.get("declared_python_imports", []))
+            for name in _imports(target):
+                module = importlib.util.find_spec(name)
+                origin = getattr(module, "origin", "") if module else ""
+                standard = origin in {"built-in", "frozen"} or (origin and origin.startswith(sysconfig.get_paths()["stdlib"]) and "site-packages" not in origin)
+                if not standard and name not in declared:
+                    failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
+                                     "dependency": name, "category": categories.get(path, "UNKNOWN")})
+        if path.endswith(".php") and target.is_file() and re.search(r'\bmysqli\b', target.read_text(errors="ignore")):
+            category = categories.get(path, "UNKNOWN")
+            if "mariadb" not in policy["environment_profiles"].get(category, {}).get("services", []):
+                failures.append({"code": "CATEGORY_ENVIRONMENT_MISMATCH", "path": path,
+                                 "category": category, "dependency": "mariadb"})
+    import harness
+    details = harness.source_details()
+    outcome = "BLOCKED" if failures else "GREEN"
+    payload = {"outcome": outcome, "publication_ready": not failures,
+               "failures": failures, "candidate_source": details["candidate_digest"],
+               "executable_source": details["executable_digest"],
+               "evidence_executable_source": details["executable_digest"], "pr": "UNKNOWN", "ci": "UNKNOWN"}
+    stable = dict(payload); stable.pop("candidate_source", None)
+    payload["result_digest"] = hashlib.sha256(canonical(stable).encode()).hexdigest()
+    directory = harness.evidence_home() / "preflight"; directory.mkdir(parents=True, exist_ok=True)
+    record = directory / f"{time.time_ns()}-{uuid.uuid4().hex}.json"
+    record.write_text(canonical(payload)); payload["record_path"] = str(record)
+    print(canonical(payload), end="")
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

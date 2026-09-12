@@ -59,13 +59,22 @@ def source_details():
     names = set()
     for args in (("ls-files", "-z"), ("ls-files", "--others", "--exclude-standard", "-z")):
         names.update(x for x in _git(*args, binary=True).split(b"\0") if x)
-    digest = hashlib.sha256()
+    candidate = hashlib.sha256()
+    executable = hashlib.sha256()
+    lifecycle_paths = []
     for raw in sorted(names):
         relative = raw.decode("utf-8", errors="surrogateescape")
         path = ROOT / relative
-        digest.update(len(raw).to_bytes(8, "big")); digest.update(raw)
+        is_lifecycle = (relative.startswith("reviews/") or
+                        (relative.startswith("openspec/changes/") and relative.endswith("/tasks.md")))
+        if is_lifecycle:
+            lifecycle_paths.append(relative)
+        targets = [candidate] if is_lifecycle else [candidate, executable]
+        for selected in targets:
+            selected.update(len(raw).to_bytes(8, "big")); selected.update(raw)
         if not os.path.lexists(path):
-            digest.update(b"missing")
+            for selected in targets:
+                selected.update(b"missing")
             continue
         info = path.lstat()
         if stat.S_ISLNK(info.st_mode):
@@ -75,9 +84,12 @@ def source_details():
             content = path.read_bytes()
         else:
             continue
-        digest.update(mode); digest.update(len(content).to_bytes(8, "big")); digest.update(content)
+        for selected in targets:
+            selected.update(mode); selected.update(len(content).to_bytes(8, "big")); selected.update(content)
     status = _git("status", "--porcelain=v1", "-z", binary=True)
-    return {"digest": digest.hexdigest(), "head": _git("rev-parse", "HEAD").strip(),
+    return {"digest": candidate.hexdigest(), "candidate_digest": candidate.hexdigest(),
+            "executable_digest": executable.hexdigest(), "lifecycle_paths": lifecycle_paths,
+            "head": _git("rev-parse", "HEAD").strip(),
             "dirty": bool(status), "status_digest": hashlib.sha256(status).hexdigest()}
 
 
@@ -293,6 +305,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None):
     selected_reason = reason or _auto_reason(argv, str(ROOT), source, fixture_digest, environment)
     excerpt = _excerpt(stdout, stderr, outcome, intended_red)
     record = {"id": identifier, "argv": argv, "cwd": str(ROOT), "source": source,
+              "candidate_source": source, "executable_source": source_state["executable_digest"],
               "source_state": source_state, "environment": environment,
               "end_source": end_source_state["digest"], "end_source_state": end_source_state,
               "environment_coverage": environment_coverage, "fixture": fixture_digest,

@@ -95,7 +95,9 @@ def _compute_state(helpers):
             cache_path.write_text(json.dumps({"last_success_at": checked_at}) + "\n", encoding="utf-8")
         except (OSError, TypeError, json.JSONDecodeError):
             pass
-    state = {"source": source, "head": head, "dirty": dirty, "github": github,
+    details = helpers.source_details()
+    state = {"source": source, "executable_source": details.get("executable_digest", source),
+             "head": head, "dirty": dirty, "github": github,
              "ci": ci, "deployment": "UNKNOWN", "active_binding": _active_binding(helpers)}
     state["next_action"] = ("merged; await the next owner task" if github.get("state") == "MERGED"
                             else "prepare/review exact source before publication")
@@ -460,12 +462,12 @@ def _normalized_argv(argv):
     return (first, *argv[1:])
 
 
-def _validate_evidence(path, source, expectations):
+def _validate_evidence(path, source, expectations, plan_commands=None, executable_source=None):
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"evidence is unreadable: {error}") from error
-    if record.get("source") != source:
+    if record.get("source") != source and record.get("executable_source") != executable_source:
         raise ValueError("evidence source does not match current source")
     try:
         current_environment = _helpers().environment_identity()["digest"]
@@ -475,11 +477,50 @@ def _validate_evidence(path, source, expectations):
         raise ValueError("evidence environment does not match current environment")
     argv = _normalized_argv(record.get("argv", []))
     expected = expectations.get(argv)
+    plan_command = (plan_commands or {}).get(argv)
+    if expected is None and plan_command is not None:
+        expected = "GREEN"
     if expected is None:
-        raise ValueError("evidence does not cover a mapped acceptance")
+        raise ValueError("evidence does not cover a plan-owned command")
     if record.get("outcome") != expected:
         raise ValueError(f"evidence outcome must be {expected} for this mapped acceptance")
-    return {"record": str(path), "argv": record["argv"], "outcome": record["outcome"], "source": source}
+    return {"record": str(path), "argv": record["argv"], "outcome": record["outcome"],
+            "source": record.get("source"), "executable_source": record.get("executable_source"),
+            "purpose": (plan_command or {}).get("purpose", "acceptance")}
+
+
+def _dependency_workspaces(args, helpers, plan):
+    requested = list(getattr(args, "dependency_workspace", None) or [])
+    if sorted(requested) != sorted(plan.get("dependency_workspaces", [])):
+        raise ValueError("dependency workspace arguments do not match verification input")
+    result = []
+    for value in requested:
+        lexical = Path(value).expanduser()
+        if lexical.is_symlink():
+            raise ValueError("dependency workspace manifest cannot be a symlink")
+        path = lexical.resolve()
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        identity = manifest.get("identity")
+        if not isinstance(identity, str) or not identity:
+            raise ValueError("dependency workspace identity is required")
+        root = Path(manifest.get("root", ""))
+        consumers = manifest.get("consumers")
+        if not root.is_absolute() or not root.is_dir() or root.is_symlink():
+            raise ValueError("dependency workspace root is unavailable or unsafe")
+        if not isinstance(consumers, list) or not consumers or any(not (helpers.ROOT / item).is_file() for item in consumers):
+            raise ValueError("dependency workspace consumers are unavailable")
+        content = helpers.fixture_identity(str(root))
+        state = helpers.evidence_home() / "state" / ("workspace-" + hashlib.sha256(str(path).encode()).hexdigest() + ".json")
+        if state.exists():
+            previous = json.loads(state.read_text())
+            if previous != {"identity": identity, "content": content}:
+                raise ValueError("dependency workspace immutable identity changed")
+        else:
+            state.parent.mkdir(parents=True, exist_ok=True)
+            state.write_text(json.dumps({"identity": identity, "content": content}) + "\n")
+        result.append({"manifest": str(path), "root": str(root.resolve()), "identity": identity,
+                       "content": content, "consumers": sorted(consumers)})
+    return result
 
 
 def _snapshot(root, output):
@@ -534,25 +575,45 @@ def command_prepare(args, helpers):
     _check_all_whitespace(root)
     module = _load_change_verification(root)
     plan_value = module.build(args.base, args.input)
-    package_dir = helpers.evidence_home() / "packages" / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + uuid.uuid4().hex[:10])
+    configured_home = os.environ.get("FMONITOR_HARNESS_HOME")
+    package_home = (Path(configured_home).expanduser().absolute() if configured_home
+                    else helpers.evidence_home())
+    package_dir = package_home / "packages" / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + uuid.uuid4().hex[:10])
     package_dir.mkdir(parents=True, exist_ok=False)
     plan_path = package_dir / "verification-plan.json"
     plan_path.write_text(module.canonical(plan_value), encoding="utf-8")
     source = _source(helpers, root)
+    executable_source = helpers.source_details().get("executable_digest", source)
     missing = sorted({test for item in plan_value["acceptances"] for test in item["tests"]
                       if not (root / test).is_file()})
     evidence = []
     expectations = _gate_expectations(plan_value, args.gate)
     mapped = set(expectations)
+    plan_commands = {_normalized_argv(item["argv"]): item for item in plan_value["commands"]}
     for value in getattr(args, "evidence", None) or []:
-        evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, expectations))
+        evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, expectations,
+                                           plan_commands, executable_source))
     covered = {_normalized_argv(item["argv"]) for item in evidence}
     if args.role == "reviewer" and mapped - covered:
         raise ValueError("reviewer evidence does not cover every mapped acceptance test")
     if args.role == "reviewer" and (missing or not evidence):
         raise ValueError("reviewer package requires existing mapped tests and current Gate evidence")
-    if args.role == "reviewer" and args.gate == "3" and "INTENDED_RED" not in expectations.values():
+    historical_red = getattr(args, "historical_red", None)
+    test_delta = getattr(args, "test_delta", None)
+    if (args.role == "reviewer" and args.gate == "3" and plan_value.get("version") == 1
+            and "INTENDED_RED" not in expectations.values()):
         raise ValueError("Gate 3 requires at least one intended RED acceptance")
+    if bool(historical_red) != bool(test_delta):
+        raise ValueError("historical RED and test delta must be supplied together")
+    lineage = None
+    if historical_red:
+        mapped_delta = next((key for key in expectations if key[-1] == test_delta), None)
+        old = json.loads(Path(historical_red).read_text())
+        if mapped_delta is None or old.get("outcome") != "INTENDED_RED" or _normalized_argv(old.get("argv", [])) != mapped_delta:
+            raise ValueError("historical RED does not match test delta acceptance")
+        lineage = {"test": test_delta, "historical_red": str(Path(historical_red).resolve()),
+                   "historical_source": old.get("source"), "current_executable_source": executable_source}
+    workspaces = _dependency_workspaces(args, helpers, plan_value)
     if getattr(args, "previous", None) and not getattr(args, "findings", None):
         raise ValueError("previous snapshot requires findings")
     snapshot_path = package_dir / "snapshot"
@@ -566,7 +627,9 @@ def command_prepare(args, helpers):
               "plan": str(plan_path), "plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
               "role": args.role, "approval": "NOT_REVIEWED", "missing_tests": missing,
               "contracts": contracts, "rules": rules, "sources": sources, "evidence": evidence,
-              "previous": getattr(args, "previous", None), "findings": getattr(args, "findings", None)}
+              "previous": getattr(args, "previous", None), "findings": getattr(args, "findings", None),
+              "candidate_source": source, "executable_source": executable_source,
+              "dependency_workspaces": workspaces, "test_delta_lineage": lineage}
     if result["previous"]:
         previous = Path(result["previous"]).expanduser().resolve()
         findings = Path(result["findings"]).expanduser().resolve()
@@ -607,6 +670,9 @@ def _parse(argv):
     prepare.add_argument("--previous")
     prepare.add_argument("--findings")
     prepare.add_argument("--evidence", action="append")
+    prepare.add_argument("--historical-red")
+    prepare.add_argument("--test-delta")
+    prepare.add_argument("--dependency-workspace", action="append")
     return parser.parse_args(argv)
 
 
