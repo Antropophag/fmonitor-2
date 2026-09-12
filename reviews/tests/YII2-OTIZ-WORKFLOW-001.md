@@ -70,3 +70,10 @@ Fresh evidence/package and the second independent verdict supersede the first ve
 - Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T145237Z-94265b4777/package.json`.
 - Evidence: 12/12 expected outcomes, including direct fallback dependency RED, public runtime GREEN, HTTP concurrency/rollback, safe guest return, rendered decision UI and generated-snapshot settlement/reversal.
 - Verdict: `APPROVED`; no blocking findings. Standalone `otiz-oracle-router.php` requires no production hooks.
+
+## Final populated-read and fallback regression Gate 3
+
+- Test-only source: `c1e6e2e26e246fb02c9fb60a38ad37ab10a6a3f8dcd78e75d01048671d0b7c31` on main `a8ba73a926d1031c8b039555d0b6c3f142abd991`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T152311Z-7ad7e6490a/package.json`.
+- Evidence: 13/13 expected outcomes, including populated page-two active/historical reads, authenticated object/calendar fallback and the test-owned location-independent oracle.
+- Verdict: `APPROVED`; no blocking findings. Production implementation explicitly excluded.

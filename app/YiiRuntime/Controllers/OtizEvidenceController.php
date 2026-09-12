@@ -67,11 +67,8 @@ final class OtizEvidenceController extends PilotController
     public function actionActiveBaselines(): string
     {
         $this->loadEvidenceOwners();
-        $model=(new \LegacyActiveBaselineReadModel($this->db(),$this->prefix()))->read(['state'=>$this->oneOf('state',['ready','blocked']),'coverage'=>$this->oneOf('coverage',['both','partial','none'])], $this->page());
-        $body='<h1>Active baselines</h1>'.$this->nav();
-        foreach($model['rows'] as$row)$body.='<article>'.$this->e((string)($row['regnumber']??'')).'</article>';
-        if($model['rows']===[])$body.='<p>Нет active baselines</p>';
-        return $this->pageHtml('Active baselines',$body);
+        $filters=['state'=>$this->oneOf('state',['ready','blocked']),'coverage'=>$this->oneOf('coverage',['both','partial','none'])];$model=(new \LegacyActiveBaselineReadModel($this->db(),$this->prefix()))->read($filters,$this->page());
+        return OtizEvidenceHtml::activeBaselines($model,$filters);
     }
 
     public function actionHistoricalReplay(): string
@@ -79,10 +76,7 @@ final class OtizEvidenceController extends PilotController
         $this->loadEvidenceOwners();
         try{$model=\HistoricalPremiumReplayReadModel::page($this->db(),$this->prefix(),$this->page(),50);}
         catch(\Throwable$e){throw new ServiceUnavailableHttpException('Historical replay temporarily unavailable',0,$e);}
-        $body='<h1>Historical replay</h1>'.$this->nav();
-        foreach($model['rows'] as$row)$body.='<article>'.$this->e((string)($row['regnumber']??'')).'</article>';
-        $body.='<p>'.($model['rows']===[]?'Нет historical replay':'Нет подтверждённого пересчёта без полного evidence').'</p>';
-        return $this->pageHtml('Historical replay',$body);
+        $model['page']=$this->page();$model['pages']=max(1,(int)ceil($model['total']/50));return OtizEvidenceHtml::historicalReplay($model);
     }
 
     public function actionReconciliationDecision(): Response

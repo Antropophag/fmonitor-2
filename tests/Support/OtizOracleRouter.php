@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/ObjectDetails.php';
-require_once __DIR__ . '/LocalAuth.php';
-require_once __DIR__ . '/Otiz.php';
-require_once __DIR__ . '/Calendar.php';
-require_once __DIR__ . '/Shell.php';
-require_once __DIR__ . '/ObjectQueue.php';
-require_once __DIR__ . '/CompletionFlow.php';
-require_once __DIR__ . '/InspectionSchedule.php';
-require_once __DIR__ . '/UserAccessView.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname(__DIR__) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
-require_once __DIR__ . '/FileTypeAsset.php';
+$rapidRoot=dirname(__DIR__,2).'/rapid-pilot';
+
+require_once $rapidRoot . '/ObjectDetails.php';
+require_once $rapidRoot . '/LocalAuth.php';
+require_once $rapidRoot . '/Otiz.php';
+require_once $rapidRoot . '/Calendar.php';
+require_once $rapidRoot . '/Shell.php';
+require_once $rapidRoot . '/ObjectQueue.php';
+require_once $rapidRoot . '/CompletionFlow.php';
+require_once $rapidRoot . '/InspectionSchedule.php';
+require_once $rapidRoot . '/UserAccessView.php';require_once dirname($rapidRoot) . '/app/PilotHttp/PilotRouteCsp.php';require_once dirname($rapidRoot) . '/app/PilotHttp/PilotRouteAdmission.php';\FMonitor2\PilotHttp\PilotRouteCsp::installDirectHeaderPolicy();
+require_once $rapidRoot . '/FileTypeAsset.php';
 if(getenv('FMONITOR_LIVE_CLOCK')==='1')putenv('FMONITOR_NOW='.(new DateTimeImmutable('now',new DateTimeZone('Europe/Moscow')))->format(DATE_ATOM));$path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
 if ($path === false || !is_string($path) || preg_match('/[\x00-\x1f\x7f]/', rawurldecode($path)) === 1 || preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D', $host) !== 1) {
@@ -28,7 +30,7 @@ if ($path === '/') {
     exit;
 }
 if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
-    $bytes = file_get_contents(__DIR__ . '/favicon.svg');
+    $bytes = file_get_contents($rapidRoot . '/favicon.svg');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -38,10 +40,10 @@ if ($path === '/favicon.ico' || $path === '/pilot/assets/favicon.svg') {
     exit;
 }
 if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' || $path === '/pilot/assets/pilot-20260829-22.css' || $path === '/pilot/assets/pilot-20260829-23.css') {
-    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname($rapidRoot, 2) . '/shlz-ui';
     $file = $path === '/pilot/assets/shlz.css'
         ? $shlzRoot . '/packages/styles/dist/shlz.css'
-        : __DIR__ . '/pilot.css';
+        : $rapidRoot . '/pilot.css';
     $bytes = file_get_contents($file);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/css; charset=UTF-8');
@@ -52,14 +54,14 @@ if ($path === '/pilot/assets/shlz.css' || $path === '/pilot/assets/pilot.css' ||
     exit;
 }
 if ($path === '/pilot/assets/shlz-calendar-grid.js') {
-    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname($rapidRoot, 2) . '/shlz-ui';
     $file = $shlzRoot . '/packages/behaviors/dist/calendar-grid.js';
     $bytes = file_get_contents($file);
     if (!is_string($bytes)) { http_response_code(503); header('Content-Type: text/plain; charset=UTF-8'); echo "Configured shlz-ui does not export Calendar Grid behavior. Set FMONITOR_SHLZ_UI_ROOT to a compatible public shlz-ui checkout.\n"; exit; }
     header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
 if ($path === '/pilot/assets/shlz-icons.svg') {
-    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname(__DIR__, 2) . '/shlz-ui';
+    $shlzRoot = getenv('FMONITOR_SHLZ_UI_ROOT') ?: dirname($rapidRoot, 2) . '/shlz-ui';
     $bytes = file_get_contents($shlzRoot . '/packages/icons/dist/sprite.svg');
     if (!is_string($bytes)) { http_response_code(503); header('Content-Type: text/plain; charset=UTF-8'); echo "Configured shlz-ui does not export its icon sprite. Set FMONITOR_SHLZ_UI_ROOT to a compatible public shlz-ui checkout.\n"; exit; }
     header('Content-Type: image/svg+xml; charset=UTF-8');
@@ -72,7 +74,7 @@ if ($path === '/pilot/assets/shlz-icons.svg') {
 if (is_string($path) && RapidPilotFileTypeAsset::matches($path)) RapidPilotFileTypeAsset::handle($path);
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'file-types/file-pdf-default.svg' : 'icons/download.svg';
-    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/icons/dist/' . $icon);
+    $bytes = file_get_contents(dirname($rapidRoot, 2) . '/shlz-ui/packages/icons/dist/' . $icon);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: image/svg+xml; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -82,7 +84,7 @@ if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/as
     exit;
 }
 if ($path === '/pilot/assets/shlz-tabs.js') {
-    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/behaviors/dist/tabs.js');
+    $bytes = file_get_contents(dirname($rapidRoot, 2) . '/shlz-ui/packages/behaviors/dist/tabs.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -92,7 +94,7 @@ if ($path === '/pilot/assets/shlz-tabs.js') {
     exit;
 }
 if ($path === '/pilot/assets/shlz-behaviors.js') {
-    $bytes = file_get_contents(dirname(__DIR__, 2) . '/shlz-ui/packages/behaviors/dist/browser.js');
+    $bytes = file_get_contents(dirname($rapidRoot, 2) . '/shlz-ui/packages/behaviors/dist/browser.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -103,7 +105,7 @@ if ($path === '/pilot/assets/shlz-behaviors.js') {
 }
 if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|selection-picker|users|control-queue|navigation|original-upload)\.js$#D', $path, $script) === 1) {
     $filename = $script[1] . '.js';
-    $bytes = file_get_contents(dirname(__DIR__) . '/app/PilotHttp/' . $filename);
+    $bytes = file_get_contents(dirname($rapidRoot) . '/app/PilotHttp/' . $filename);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     if ($filename === 'users.js') $bytes = str_replace("(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))", "(filter==='uf-blocked'&&row.classList.contains('fm2-user-row--blocked'))||(filter==='uf-invited'&&row.classList.contains('fm2-user-row--invited'))", $bytes);
     header('Content-Type: text/javascript; charset=UTF-8');
@@ -118,7 +120,7 @@ if (is_string($path) && preg_match('#^/pilot/assets/(checklist(?:-sw)?|picker|se
     exit;
 }
 if ($path === '/pilot/assets/object-details.js') {
-    $bytes = file_get_contents(__DIR__ . '/object-details.js');
+    $bytes = file_get_contents($rapidRoot . '/object-details.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -128,7 +130,7 @@ if ($path === '/pilot/assets/object-details.js') {
     exit;
 }
 if ($path === '/pilot/assets/object-queue.js') {
-    $bytes = file_get_contents(__DIR__ . '/object-queue.js');
+    $bytes = file_get_contents($rapidRoot . '/object-queue.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -138,7 +140,7 @@ if ($path === '/pilot/assets/object-queue.js') {
     exit;
 }
 if ($path === '/pilot/assets/installer-directory.js') {
-    $bytes = file_get_contents(__DIR__ . '/installer-directory.js');
+    $bytes = file_get_contents($rapidRoot . '/installer-directory.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -148,7 +150,7 @@ if ($path === '/pilot/assets/installer-directory.js') {
     exit;
 }
 if ($path === '/pilot/assets/otiz.js') {
-    $bytes = file_get_contents(__DIR__ . '/otiz.js');
+    $bytes = file_get_contents($rapidRoot . '/otiz.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -158,17 +160,17 @@ if ($path === '/pilot/assets/otiz.js') {
     exit;
 }
 if ($path === '/pilot/assets/calendar.js') {
-    $bytes = file_get_contents(__DIR__ . '/calendar.js');
+    $bytes = file_get_contents($rapidRoot . '/calendar.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
 if ($path === '/pilot/assets/inspection-schedule.js') {
-    $bytes = file_get_contents(__DIR__ . '/inspection-schedule.js');
+    $bytes = file_get_contents($rapidRoot . '/inspection-schedule.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8'); header('Content-Length: '.strlen($bytes)); header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff'); echo $bytes; exit;
 }
 if ($path === '/pilot/assets/preloader.js') {
-    $bytes = file_get_contents(__DIR__ . '/preloader.js');
+    $bytes = file_get_contents($rapidRoot . '/preloader.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -178,7 +180,7 @@ if ($path === '/pilot/assets/preloader.js') {
     exit;
 }
 if ($path === '/pilot/assets/invite.js') {
-    $bytes = file_get_contents(__DIR__ . '/invite.js');
+    $bytes = file_get_contents($rapidRoot . '/invite.js');
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: text/javascript; charset=UTF-8');
     header('Content-Length: ' . strlen($bytes));
@@ -188,7 +190,7 @@ if ($path === '/pilot/assets/invite.js') {
     exit;
 }
 if (is_string($path) && preg_match('#^/pilot/assets/fonts/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$#D', $path, $font) === 1) {
-    $bytes = file_get_contents(__DIR__ . '/fonts/' . $font[1]);
+    $bytes = file_get_contents($rapidRoot . '/fonts/' . $font[1]);
     if (!is_string($bytes)) { http_response_code(404); exit; }
     header('Content-Type: font/woff2');
     header('Content-Length: ' . strlen($bytes));
@@ -236,13 +238,13 @@ if (is_string($path) && RapidPilotCompletionFlow::matches($path)) RapidPilotComp
 if (is_string($path) && RapidPilotCompletionFlow::blocksLegacyCompletion($path)) exit;
 if (is_string($path) && RapidPilotObjectQueue::matches($path)) RapidPilotObjectQueue::handle();
 if (is_string($path) && RapidPilotCalendar::matches($path)) {
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
+    require_once dirname($rapidRoot) . '/app/PilotHttp/PilotHttp.php';
+    require_once dirname($rapidRoot) . '/app/PilotHttp/PilotView.php';
     (new RapidPilotCalendar())->handle();
 }
 if (is_string($path) && RapidPilotOtiz::matches($path)) {
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotHttp.php';
-    require_once dirname(__DIR__) . '/app/PilotHttp/PilotView.php';
+    require_once dirname($rapidRoot) . '/app/PilotHttp/PilotHttp.php';
+    require_once dirname($rapidRoot) . '/app/PilotHttp/PilotView.php';
     (new RapidPilotOtiz())->handle($path);
 }
 $localServerAddress = $_SERVER['SERVER_ADDR'] ?? $_SERVER['SERVER_NAME'] ?? null;
@@ -257,7 +259,7 @@ if (PHP_SAPI === 'cli-server' && $localServerAddress === '127.0.0.1') {
         $_SERVER['FMONITOR_DEMO_TRUSTED_REQUEST_HOST'] = $demoHost;
     }
 }
-$entrypoint = require dirname(__DIR__) . '/app/PilotHttp/production-entrypoint.php';
+$entrypoint = require dirname($rapidRoot) . '/app/PilotHttp/production-entrypoint.php';
 
 $originalFormHead = ($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD' && is_string($path) && preg_match('#^/pilot/objects/[1-9][0-9]*/assignment-orders/[1-9][0-9]*/originals/submit$#D', $path) === 1; $response = $entrypoint->handle($originalFormHead ? array_replace($_SERVER, ['REQUEST_METHOD'=>'GET']) : $_SERVER);
 if ($path === '/pilot/admin/users/invite') $response = RapidPilotUserAccessView::invitationResponse($response);

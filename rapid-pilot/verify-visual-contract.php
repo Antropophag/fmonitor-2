@@ -16,7 +16,7 @@ function verifyRapidPilotVisualContract(string $root):array
     $calendar=(string)file_get_contents($root.'/rapid-pilot/Calendar.php');
     $objectDetails=(string)file_get_contents($root.'/rapid-pilot/ObjectDetails.php');
     $rapidRouter=(string)file_get_contents($root.'/rapid-pilot/router.php');
-    $otizOracleRouter=(string)file_get_contents($root.'/rapid-pilot/otiz-oracle-router.php');
+    $otizOracleRouter=(string)file_get_contents($root.'/tests/Support/OtizOracleRouter.php');
     $router=(string)file_get_contents($root.'/public/router.php');
     $failures=[];
 

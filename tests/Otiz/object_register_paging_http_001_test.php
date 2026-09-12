@@ -10,7 +10,7 @@ $p='orh_'.bin2hex(random_bytes(5)).'_';
 $f=new SelectionHttpFixture(true,static function(SelectedOriginalFixture$original)use($p):array{
     ObjectRegisterPagingFixture::seed($original,$p,3);
     return['FMONITOR_NOW'=>'2026-09-09T12:00:00+03:00'];
-},$p,dirname(__DIR__,2).'/rapid-pilot/otiz-oracle-router.php');
+},$p,dirname(__DIR__,2).'/tests/Support/OtizOracleRouter.php');
 $rows=static function(string$html):array{$dom=new DOMDocument();@$dom->loadHTML($html,LIBXML_NONET);$xpath=new DOMXPath($dom);$ids=[];foreach($xpath->query('//*[@data-otiz-row]//a[starts-with(@href,"/pilot/objects/")]')as$link)$ids[]=(int)basename((string)$link->getAttribute('href'));return$ids;};
 $control=static function(string$html,string$name):?string{$dom=new DOMDocument();@$dom->loadHTML($html,LIBXML_NONET);$xpath=new DOMXPath($dom);$nodes=$xpath->query('//*[@name="'.$name.'"]');return$nodes->length?(string)$nodes->item(0)->getAttribute('value'):null;};
 try{
