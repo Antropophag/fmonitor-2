@@ -29,3 +29,31 @@ RED determinism and setup isolation are adequate for the five currently asserted
 2. Exercise plan generation, evidence recording, reviewer-package preparation and publication admission through the documented CLI/public serialized seam; keep direct pure-function tests only as supplementary checks.
 3. Add mutation fixtures for lifecycle/executable/unknown paths and isolated dependency workspaces, plus two-worktree and repeated-run assertions for source effects, idempotence and state isolation.
 4. Capture a new exact-source intended RED after correcting the tests and regenerate the Gate 3 package/verification plan before rereview.
+
+## Rereview 2026-09-12 — corrected Gate 3 candidate
+
+- Reviewed source: base `63135104cbeb2f1554f905287343b3fa881e79a7` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260912T133112Z-9937a40279/snapshot/source.patch`, SHA-256 `c3daabfb85ca7edec061d46a38e69f8e0e677d0773a092ecf5d2266bfbdb5fa3`
+- Candidate source: `bc953d6cc24774282d621b49730593e09e50c41b5eb1822bf33c5dcc75b4985d`
+- Evidence: external record `1789219837346283000-c044dff1e37746b09e099b036b716bf5`, `INTENDED_RED`, exit 1
+- Prior findings disposition: findings 2, 4 and 5 are materially addressed by new CLI fixtures, source mutations and synthetic PR #98/#100 inventories. Findings 1 and 3 are only partially addressed; the corrections add important fail-closed paths but omit required R4 and isolation/idempotence behavior, and part of the captured RED is caused by fixture/setup defects rather than missing behavior.
+- Verdict: `CHANGES_REQUESTED`
+
+### Rereview findings
+
+1. **Blocking — the captured RED includes unrelated setup/regression failures.** Both `test_pr98_inventory_is_complete_before_publication` and `test_pr100_db_in_unit_is_rejected_in_unit_environment` stop before their new acceptance assertions because `plan()` writes `--output` beneath the external evidence directory and the current planner reports `SETUP_FAILURE: unsafe repository path`. The specification does not require arbitrary planner output paths outside the checkout, so this is not demonstrated as the intended missing behavior. Separately, `test_reviewer_package_accepts_plan_owned_category_evidence_only` runs the copied existing `change_verification_001_test.py`, which fails because `fixture_repo()` copied an incomplete repository and omitted an owner file required by `test_harness_refresh_and_confirmed_consumers`. This is a fixture regression, not the intended plan-owned-category-evidence RED. Gate 2 requires deterministic failure for missing behavior rather than broken setup.
+
+2. **Blocking — R4 remains untested.** The corrected file checks that help mentions `--historical-red` and `--test-delta`, but never prepares a package containing current GREEN, an exact base/current test delta and a linked historical `INTENDED_RED`; it also never tests rejection of a mismatched acceptance, missing historical RED or changed mapping. Option-name presence cannot catch a non-functional or fail-open test-delta implementation.
+
+3. **Blocking — declared idempotence and worktree concurrency isolation remain untested.** `test_source_identity_mutations_and_repeat_preflight_are_observable` does not run preflight at all despite its name, and no test repeats an identical source/environment admission or creates two worktrees/evidence pointers. Thus the verification input's `idempotence` and `worktree_concurrency_isolation` dimensions remain unsupported. The corrected tests also do not verify candidate/dependency bytes are unchanged by rejection.
+
+4. **Blocking — R6 negative matrix is incomplete.** The dependency-workspace test covers one declared manifest and a symlinked manifest path, but does not assert fail-closed behavior for missing/mutable identity, root realpath escape, missing workspace, changed lock/source digest, or a command/consumer outside the manifest. An implementation validating only `Path.is_symlink()` could pass while violating the manifest identity and consumer contract.
+
+5. **Blocking — R7 has no corrected/publication-ready fixture.** The bad PR #98/#100 candidates are now modeled, but the normative requirement also says the corrected fixture becomes publication-ready without local full suites or product DB/PDF/runtime/E2E services. No test corrects the fixture, reruns bounded admission on one executable digest, verifies `publication_ready`, and preserves actual PR/CI as `UNKNOWN`.
+
+### Required changes after rereview
+
+1. Repair the disposable repository fixture/output placement so every intended RED reaches the new acceptance seam; copy all owners needed by any existing command selected in the fixture, or use a narrower deterministic command that is independently GREEN before testing package evidence behavior.
+2. Add a full public R4 lineage test with the valid current-GREEN + historical-RED + exact-delta case and the specified mismatch/missing rejection cases.
+3. Add repeated same-source admission and two-worktree external-state isolation tests, including no source/dependency mutation on rejection.
+4. Complete the dependency workspace negative matrix and add a corrected PR fixture that becomes publication-ready while PR/CI remain `UNKNOWN`.
+5. Capture a clean intended RED for the corrected exact source and regenerate the reviewer package before the next rereview.
