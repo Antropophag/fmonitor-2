@@ -1,5 +1,7 @@
 # Test review: DELIVERY-PROFILE-110-A
 
+- Current Gate 3 verdict: `APPROVED` (final bounded rereview below)
+
 - Reviewer: Codex independent Gate 3 reviewer (`/root/gate3_profile_a`)
 - Test author: root Codex
 - Reviewed source: commit `0947256ed45eafb372562c0c31c5bfc38b6debb6`; candidate source `f9cced03730012025b052e18960cccbb1e226a0d84a26d2aae7e67143f656b6c`; executable source `f6b5aeb2f909e92c3d039772dfd7c5c4426b6fd08635bca69bd32ca96b6345a7`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T140001Z-18e36c687f/snapshot` (base commit `0947256ed45eafb372562c0c31c5bfc38b6debb6`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
@@ -36,3 +38,18 @@ The intended RED itself is valid and isolated: the captured first failure is the
 3. **Resolved.** Exact argv, numeric non-negative duration, and failed-command argv/exit evidence are now asserted.
 
 The fresh RED remains valid and isolated. No new scope or implementation issue was reviewed. After the remaining DP110A-03 assertions and fresh RED are captured, submit the corrected exact source for another bounded rereview.
+
+## Final bounded rereview — 2026-09-13
+
+- Reviewed correction source: commit `e1f4eff37c179690139764b4845b52ffb8e56757`; candidate source `a9f8be5f47374ac77e44f526dd0b5cef3c73d89a9dae2bc5df3084103bb320ed`; executable source `1b628dfafa057139835ee8f35aba0b4c954ce4a02595a4a990d21d970dfc7c46`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T140611Z-91aac4c031/snapshot` (base commit `e1f4eff37c179690139764b4845b52ffb8e56757`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
+- Correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T140611Z-91aac4c031/package.json`
+- Fresh RED: `php tests/Verification/quality_graph_ci_setup_001_test.php`; harness record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789308359284296000-538a36f2bc6a4299a9dc1ffd2fab8b11.json`; exit `255`, intended first failure `INTENDED_RED DELIVERY-PROFILE-110-A launcher is missing`
+- Verdict: `APPROVED`
+
+### Findings disposition
+
+1. **Resolved.** The public-seam probe now checks container execution, actual existence of the reported image, exact PHP/Python/Node pins, exact Composer/uv/npm pins, Composer platform requirements, and browser Playwright version against the lockfile from the pinned `shlz-ui` dependency workspace.
+2. **Resolved.** The isolated marker proves an unknown profile is rejected before its command executes.
+3. **Resolved.** Successful and failed evidence checks cover exact argv, numeric non-negative duration and exit code propagation.
+
+The corrected test is traceable to DP110A-01 through DP110A-05, exercises the declared launcher seam, is sensitive to host execution and version drift, derives expected versions from canonical pins/lockfiles rather than duplicating them, and remains deterministic and isolated from production systems. The fresh RED fails for the absent launcher before Docker or dependency setup. No blocking findings remain; Gate 4 implementation may proceed against this approved test source without changing its expectations.

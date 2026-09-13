@@ -3,7 +3,7 @@
 - [x] 1.1 Подтвердить этот scope владельцем и проверить `openspec validate pinned-focused-check-profiles --strict`; это единственная binding-точка issue #110 перед implementation.
 - [x] 1.2 Создать минимальный `verification-input.json` только с issue/spec/base и focused commands, сгенерировать обязательный plan существующим `change-verification.py`; если guard требует запрещённые поля или расширение scope, STOP и вынести владельцу минимальное изменение guard.
 - [x] 1.3 Добавить Gate 2 tests для трёх profiles, argv/exit propagation, pinned digest и local/CI parity; сохранить целевой RED.
-- [ ] 1.4 Передать spec, tests и RED независимому Gate 3 reviewer; implementation разрешена только при `APPROVED`.
+- [x] 1.4 Передать spec, tests и RED независимому Gate 3 reviewer; implementation разрешена только при `APPROVED`.
 
 ## 2. PR A — Container execution
 
