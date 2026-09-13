@@ -11,6 +11,21 @@ final class MariaDbRuntimeReadiness
 {
     public static function assertReady(RuntimeConfiguration $config): void
     {
+        $connection = self::connect($config);
+        try {
+            self::assertSchema($connection, $config);
+        } finally {
+            $connection->close();
+        }
+    }
+
+    public static function assertAvailable(RuntimeConfiguration $config): void
+    {
+        self::connect($config)->close();
+    }
+
+    private static function connect(RuntimeConfiguration $config): \mysqli
+    {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $connection = mysqli_init();
         try {
@@ -25,6 +40,11 @@ final class MariaDbRuntimeReadiness
         } catch (\Throwable) {
             throw new \RuntimeException('DATABASE_UNAVAILABLE');
         }
+        return $connection;
+    }
+
+    private static function assertSchema(\mysqli $connection, RuntimeConfiguration $config): void
+    {
         try {
             $prefix = $config->value('FMONITOR_PROCESS_TABLE_PREFIX');
             Schema\MariaDbPilotLegacyObjectSchemaReadiness::assertReady($connection, $prefix);
@@ -56,8 +76,6 @@ final class MariaDbRuntimeReadiness
             }
         } catch (\Throwable) {
             throw new \RuntimeException('SCHEMA_NOT_READY');
-        } finally {
-            $connection->close();
         }
     }
 }

@@ -20,18 +20,27 @@ final class HealthController extends Controller
 
     public function actionLive(): Response
     {
-        return $this->asJson(['ok' => true]);
+        return $this->json("{\"ok\":true}\n");
     }
 
     public function actionReady(): Response
     {
         try {
             RuntimeReadiness::assertReady(RuntimeConfiguration::fromEnvironment(getenv()));
-            return $this->asJson(['ok' => true]);
+            return $this->json("{\"ok\":true}\n");
         } catch (\Throwable) {
-            $response = $this->asJson(['ok' => false, 'reason' => 'SERVICE_UNAVAILABLE']);
+            $response = $this->json("{\"ok\":false,\"reason\":\"SERVICE_UNAVAILABLE\"}\n");
             $response->statusCode = 503;
             return $response;
         }
+    }
+
+    private function json(string $content): Response
+    {
+        $response = $this->response;
+        $response->format = Response::FORMAT_RAW;
+        $response->headers->set('Content-Type', 'application/json; charset=UTF-8');
+        $response->content = $content;
+        return $response;
     }
 }

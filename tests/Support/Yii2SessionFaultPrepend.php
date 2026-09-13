@@ -30,5 +30,8 @@ final class Yii2SessionFaultHandler extends SessionHandler
     }
 }
 
-session_set_save_handler(new Yii2SessionFaultHandler(), true);
-
+// Yii's ReliableSession closes explicitly before sending the response. Registering
+// PHP's second shutdown close would recreate an empty native session file after
+// the injected write failure and make the fixture observe engine cleanup as an
+// application commit.
+session_set_save_handler(new Yii2SessionFaultHandler(), false);

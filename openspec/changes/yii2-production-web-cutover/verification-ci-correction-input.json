@@ -1,0 +1,59 @@
+{
+  "change": "yii2-production-web-cutover-ci-correction",
+  "planned_paths": [
+    "app/demo/router.php",
+    "app/demo/native-router.php",
+    "config/yii/web.php",
+    "tests/Runtime/production_runtime_contract_001_test.php",
+    "tests/Runtime/production_runtime_compose_001_test.php",
+    "tests/Runtime/rapid_router_otiz_dependency_001_test.php",
+    "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php",
+    "tests/Support/shlz_manifest_capture_witness.php",
+    "tests/Support/production_http_router_probe.php",
+    "tests/InstallationProcess/local_rbac_objects_route_admission_001_test.php",
+    "tests/InstallationProcess/pilot_object_card_001_test.php",
+    "tests/InstallationProcess/pilot_object_list_001_test.php",
+    "tests/InstallationProcess/pilot_shlz_assets_001_test.php",
+    "tests/InstallationProcess/pilot_ui_shell_001_test.php",
+    "tests/InstallationProcess/pilot_http_auth_001_test.php",
+    "tests/InstallationProcess/pilot_demo_bootstrap_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "CI34726338495-complete-failure-inventory",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "retired native HTTP oracle isolated under app/demo plus current Yii production runtime and full CI regressions",
+      "tests": [
+        "tests/Runtime/production_runtime_contract_001_test.php",
+        "tests/Runtime/production_runtime_compose_001_test.php",
+        "tests/Runtime/rapid_router_otiz_dependency_001_test.php",
+        "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php",
+        "tests/InstallationProcess/local_rbac_objects_route_admission_001_test.php",
+        "tests/InstallationProcess/pilot_object_card_001_test.php",
+        "tests/InstallationProcess/pilot_object_list_001_test.php",
+        "tests/InstallationProcess/pilot_ui_shell_001_test.php",
+        "tests/InstallationProcess/pilot_http_auth_001_test.php",
+        "tests/InstallationProcess/pilot_demo_bootstrap_001_test.php",
+        "tests/InstallationProcess/pilot_e2e_flow_001_test.php",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php",
+        "tests/Runtime/production_runtime_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Runtime/production_runtime_contract_001_test.php": "GREEN",
+        "tests/Runtime/production_runtime_compose_001_test.php": "GREEN",
+        "tests/Runtime/rapid_router_otiz_dependency_001_test.php": "GREEN",
+        "tests/Runtime/yii2_otiz_runtime_boundary_001_test.php": "GREEN",
+        "tests/InstallationProcess/local_rbac_objects_route_admission_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_object_card_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_object_list_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_ui_shell_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_http_auth_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_demo_bootstrap_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_e2e_flow_001_test.php": "GREEN",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php": "GREEN",
+        "tests/Runtime/production_runtime_browser_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

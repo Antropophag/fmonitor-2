@@ -10,9 +10,13 @@ final class RuntimeStoragePaths
     public static function directories(RuntimeConfiguration $config): array
     {
         $state = $config->value('FMONITOR_SESSION_STATE_ROOT');
+        try { $yiiSession = $config->value('FMONITOR_YII_SESSION_PATH'); }
+        catch (\LogicException) { $yiiSession = $state . '/yii-sessions'; }
+        $yiiParent = realpath(dirname($yiiSession));
+        if (is_string($yiiParent)) $yiiSession = $yiiParent . '/' . basename($yiiSession);
         return array_values(array_unique([
             $state, $state . '/sessions', $state . '/sessions/' . $config->value('FMONITOR_SESSION_INSTANCE'),
-            $state . '/yii-sessions',
+            $yiiSession,
             $config->value('FMONITOR_ARTIFACT_STORAGE_ROOT'),
             dirname($config->value('FMONITOR_ORIGINAL_DB_PASSWORD_FILE')),
             dirname($config->value('FMONITOR_ORIGINAL_SAFE_LOG_FILE')),

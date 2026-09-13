@@ -71,3 +71,23 @@ conflict/staleness rules, checklist/photo/offline, ОТиЗ и общий cutove
 Кандидат поставки — PR #96; exact-source Quality Graph `34593480014` GREEN и
 `VERIFY_OK`. После merge этот документ становится checkpoint; следующий срез
 №76 начинать от актуального main, сохраняя историю failures/reviews этого среза.
+# Текущая цель — №76 production web runtime cutover
+
+Владелец 2026-09-12 разрешил автономный рефакторинг №76 отдельными PR и merge.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-runtime-76`, branch
+`codex/yii2-runtime-operations-76-20260912`. Срез `yii2-production-web-cutover`
+переводит production `public/runtime.php` на единый Yii2 runtime и удаляет
+production legacy router/auth/session reachability без deployment стенда.
+
+Gate 3 и correction Gate 5 `APPROVED`; sequential generated focused plan 12/12
+GREEN на executable source
+`a3701968eca6b1f161a2d1f991cf4ad9daba2691aaa5c496e2de58a81951ea6b`.
+Следующий шаг: commit/PR, один full exact-source Quality Graph, merge только при
+GREEN. Фактические source/PR/CI получать через harness. Общий №76, restore
+rehearsal и deployment остаются незавершёнными.
+
+[Контракт](../../specs/YII2-PRODUCTION-WEB-CUTOVER-001.md),
+[OpenSpec](../../openspec/changes/yii2-production-web-cutover/),
+[delivery record](yii2-production-web-cutover-delivery-2026-09-13.md).
+
+# Предыдущий указатель — история

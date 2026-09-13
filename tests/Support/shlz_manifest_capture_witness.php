@@ -50,7 +50,7 @@ function witnessAttempt(string $repository, string $directory, int $attempt): ?a
     $port = (int) substr($address, strrpos($address, ':') + 1);
     $process = null; $pipes = []; $socket = null; $stopped = false; $pid = 0;
     try {
-        $command = ['/usr/bin/nice', '-n', '10', PHP_BINARY, '-d', 'expose_php=0', '-S', "127.0.0.1:$port", "$repository/public/router.php"];
+        $command = ['/usr/bin/nice', '-n', '10', PHP_BINARY, '-d', 'expose_php=0', '-S', "127.0.0.1:$port", "$repository/app/demo/native-router.php"];
         $process = proc_open($command, [0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, $repository, ['FMONITOR_SHLZ_CSS_PATH'=>$entry]);
         if (!is_resource($process)) witnessFail('start owned PHP server');
         $pid = (int) proc_get_status($process)['pid'];
@@ -124,7 +124,7 @@ $repository = realpath($argv[1] ?? '');
 $base = sys_get_temp_dir().'/fm2-css-capture-'.bin2hex(random_bytes(12));
 $exitCode = 0;
 try {
-    if (PHP_OS_FAMILY !== 'Linux' || !is_dir('/proc/self/fd') || !function_exists('posix_kill') || !is_executable('/usr/bin/nice') || $repository === false || !is_file("$repository/public/router.php")) witnessFail('Linux/PHP/source preconditions');
+    if (PHP_OS_FAMILY !== 'Linux' || !is_dir('/proc/self/fd') || !function_exists('posix_kill') || !is_executable('/usr/bin/nice') || $repository === false || !is_file("$repository/app/demo/native-router.php")) witnessFail('Linux/PHP/source preconditions');
     if (!mkdir($base, 0700)) witnessFail('create owned root');
     $result = null;
     for ($attempt = 1; $attempt <= 12; $attempt++) {

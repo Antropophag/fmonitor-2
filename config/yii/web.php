@@ -1,24 +1,23 @@
 <?php
 declare(strict_types=1);
 
-use FMonitor2\YiiRuntime\SafeErrorHandler;
-use FMonitor2\YiiRuntime\WebResponse;
-use FMonitor2\YiiRuntime\ReliableSession;
-use FMonitor2\IdentityAccess\YiiCanonicalAccessChecker;
-use FMonitor2\IdentityAccess\YiiLocalIdentity;
-use FMonitor2\IdentityAccess\MariaDbYiiLocalIdentityStore;
-use FMonitor2\IdentityAccess\YiiUserAccess;
+use FMonitor2\YiiRuntime\{ReliableSession, SafeErrorHandler, WebResponse};
+use FMonitor2\IdentityAccess\{MariaDbYiiLocalIdentityStore, YiiCanonicalAccessChecker, YiiLocalIdentity, YiiUserAccess};
 use yii\helpers\ArrayHelper;
 
 return ArrayHelper::merge(require __DIR__ . '/common.php', [
     'controllerNamespace' => 'FMonitor2\\YiiRuntime\\Controllers',
+    'on beforeRequest' => static function (): void {
+        $request = Yii::$app->request;
+        if (defined('FMONITOR_PRODUCTION_WEB_CUTOVER')
+            && !$request->getIsGet() && !$request->getIsHead()
+            && Yii::$app->user->isGuest && !$request->validateCsrfToken()) {
+            throw new yii\web\BadRequestHttpException();
+        }
+    },
     'components' => [
-        'request' => [
-            'cookieValidationKey' => getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY') ?: '',
-            'scriptUrl' => '/yii.php',
-            'baseUrl' => '',
-            'enableCsrfCookie' => false,
-        ],
+        'request' => ['cookieValidationKey' => getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY') ?: '',
+            'scriptUrl' => '/runtime.php', 'baseUrl' => '', 'enableCsrfCookie' => false],
         'localIdentity' => [
             'class' => MariaDbYiiLocalIdentityStore::class,
             'tablePrefix' => getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: '',
@@ -29,7 +28,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
         'session' => [
             'class' => ReliableSession::class,
             'name' => (static function(): string {$name=getenv('FMONITOR_YII_SESSION_COOKIE');return is_string($name)&&preg_match('/^[A-Za-z][A-Za-z0-9_]{1,63}$/D',$name)===1?$name:'fm2yii';})(),
-            'savePath' => getenv('FMONITOR_YII_SESSION_PATH') ?: '/home/fmonitor/.local/state/fmonitor2/yii-sessions',
+            'savePath' => getenv('FMONITOR_YII_SESSION_PATH') ?: (getenv('FMONITOR_SESSION_STATE_ROOT') ?: '/home/fmonitor/.local/state/fmonitor2') . '/yii-sessions',
             'timeout' => 604800,
             'useStrictMode' => true,
             'cookieParams' => [
@@ -61,11 +60,12 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
             'showScriptName' => false,
             'enableStrictParsing' => true,
             'rules' => [
+                '' => 'site/index',
                 'health/live' => 'health/live',
                 'health/ready' => 'health/ready',
-                'GET pilot/login' => 'auth/login',
+                'GET,HEAD pilot/login' => 'auth/login',
                 'POST pilot/login' => 'auth/login',
-                'GET pilot/otiz/login' => 'auth/login',
+                'GET,HEAD pilot/otiz/login' => 'auth/login',
                 'POST pilot/otiz/login' => 'auth/login',
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',

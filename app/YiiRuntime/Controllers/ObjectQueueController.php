@@ -20,10 +20,6 @@ final class ObjectQueueController extends PilotController
     public function behaviors(): array
     {
         return [
-            'verbs' => ['class' => VerbFilter::class, 'actions' => [
-                'index' => ['GET', 'HEAD'],
-                'schedule' => ['POST'],
-            ]],
             'access' => [
                 'class' => AccessControl::class,
                 'rules' => [['allow' => true, 'roles' => ['@']]],
@@ -33,6 +29,10 @@ final class ObjectQueueController extends PilotController
                     Yii::$app->response->headers->set('Location', '/pilot/login');
                 },
             ],
+            'verbs' => ['class' => VerbFilter::class, 'actions' => [
+                'index' => ['GET', 'HEAD'],
+                'schedule' => ['POST'],
+            ]],
         ];
     }
 

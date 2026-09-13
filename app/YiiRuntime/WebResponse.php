@@ -39,10 +39,10 @@ final class WebResponse
 
     public static function head(Event $event): void
     {
-        if (!Yii::$app->request->getIsHead()) return;
         /** @var Response $response */
         $response = $event->sender;
         $response->headers->set('Content-Length', (string) strlen($response->content ?? ''));
+        if (!Yii::$app->request->getIsHead()) return;
         $response->content = '';
         $response->stream = null;
     }

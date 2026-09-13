@@ -1,0 +1,58 @@
+{
+  "change": "yii2-production-web-cutover",
+  "planned_paths": [
+    "public/runtime.php",
+    "config/yii/web.php",
+    "app/YiiRuntime/Controllers/SiteController.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "tests/Support/included_files_probe.php",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Runtime/yii2_production_web_cutover_001_test.php",
+    "tests/Runtime/yii2_production_web_cutover_architecture_001_test.php",
+    "tools/architecture/check",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "A1-exact-public-cutover-matrix",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "explicit method/path/status/location/Allow and attributable include table; independent asset SHA-256/media/cache/CORP manifest; exact dynamic/error/HEAD security; whole isolated DB and every configured private-path snapshot for public/rejected/failure groups; missing/malformed/mismatched Host; exact config/DB/session/artifact and durable session-close failures with no redirect, live cookie, disclosure or mutation. Sources: YII2-AUTH-001 (late session write/destroy safe failure), YII2-USER-ACCESS-001, YII2-PREOPENING-JOURNEY-001, YII2-INSPECTION-JOURNEY-001, YII2-DOCUMENTARY-CLOSURE-001, YII2-OTIZ-WORKFLOW-001, PILOT-SHLZ-ASSETS-001, PILOT-ROUTE-CSP-001, YII2-RUNTIME-001",
+      "tests": ["tests/Runtime/yii2_production_web_cutover_001_test.php"],
+      "gate3_expected": {"tests/Runtime/yii2_production_web_cutover_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "A2-production-dependency-frontier",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "all production public/config/YiiRuntime/Runtime sources reject legacy path, auth owner and session namespace symbols; complete guest inventory plus authenticated roles/users/objects/OTIZ requests preserve exact case/method/path identities and prove the transitive loaded-file frontier after same-port process restart and cookie reuse",
+      "tests": ["tests/Runtime/yii2_production_web_cutover_architecture_001_test.php", "tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php"],
+      "gate3_expected": {"tests/Runtime/yii2_production_web_cutover_architecture_001_test.php": "INTENDED_RED", "tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "A3-storage-readiness-failures",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "PRODUCTION-RUNTIME-STORAGE-001 and PRODUCTION-PROCESS-READINESS-001 prove private storage/artifact readiness faults; the exact public matrix proves Host-before-dependency and session/config/DB/artifact safe failure",
+      "tests": ["tests/Runtime/runtime_storage_001_test.php", "tests/Runtime/production_process_readiness_001_test.php"],
+      "gate3_expected": {"tests/Runtime/runtime_storage_001_test.php": "GREEN", "tests/Runtime/production_process_readiness_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "A5-production-golden-flows",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "authenticated production front-controller journey, durable authenticated state/process restart and settlement adjacency",
+      "tests": ["tests/Runtime/production_runtime_browser_001_test.php", "tests/Runtime/runtime_settlement_compatibility_001_test.php"],
+      "gate3_expected": {"tests/Runtime/production_runtime_browser_001_test.php": "GREEN", "tests/Runtime/runtime_settlement_compatibility_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-PRODUCTION-WEB-CUTOVER-001",
+      "acceptance_id": "A6-verification-inventory",
+      "spec_path": "specs/YII2-PRODUCTION-WEB-CUTOVER-001.md",
+      "seam": "mandatory focused tests and production dependency frontier remain in verification inventory",
+      "tests": ["tests/Verification/architecture_guard_001_test.py", "tests/Verification/verification_ci_001_test.py"],
+      "gate3_expected": {"tests/Verification/architecture_guard_001_test.py": "GREEN", "tests/Verification/verification_ci_001_test.py": "GREEN"}
+    }
+  ]
+}

@@ -16,4 +16,4 @@ if (is_string($handlerSentinel) && $handlerSentinel !== '') {
     ], JSON_UNESCAPED_SLASHES) . "\n", LOCK_EX);
 }
 
-require dirname(__DIR__, 2) . '/public/router.php';
+require dirname(__DIR__, 2) . '/app/demo/native-router.php';

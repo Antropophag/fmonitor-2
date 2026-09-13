@@ -5,7 +5,7 @@ const [port,moduleRoot,cookieValue,resultPath]=process.argv.slice(2);
 const {chromium}=createRequire(import.meta.url)(moduleRoot);const base=`http://127.0.0.1:${port}`;let browser;const result={errors:[]};
 try{
   browser=await chromium.launch({headless:true,channel:'chromium'});const context=await browser.newContext({acceptDownloads:true});
-  await context.addCookies([{name:`fm2auth_${port}`,value:cookieValue,url:base,httpOnly:true,sameSite:'Strict'}]);const page=await context.newPage();
+  await context.addCookies([{name:'fm2yii',value:cookieValue,domain:'127.0.0.1',path:'/pilot',httpOnly:true,sameSite:'Strict'}]);const page=await context.newPage();
   page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});page.on('pageerror',e=>result.errors.push(e.message));
   const response=await page.goto(`${base}/pilot/objects/4512`);if(response?.status()!==200||page.url().includes('/pilot/login'))throw new Error('persisted authenticated cookie rejected after restart');
   const progress=await page.getByRole('progressbar',{name:'Готовность работ'}).getAttribute('aria-valuenow');if(progress!=='100')throw new Error(`persisted completion projection ${progress}`);

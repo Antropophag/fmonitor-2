@@ -130,14 +130,14 @@ try {
     assertSameValue(200, runtimeHttp($port, '/health/live')['status'], 'nginx reaches PHP-FPM liveness endpoint');
     assertSameValue(200, runtimeHttp($port, '/health/ready')['status'], 'readiness confirms DB, schema and writable storage');
     $login = runtimeHttp($port, '/pilot/login');
-    assertSameValue(200, $login['status'], 'composite rapid router serves the login page through nginx and FPM');
+    assertSameValue(200, $login['status'], 'Yii runtime serves the login page through nginx and FPM');
     assertSameValue(true, str_contains($login['body'], 'csrf'), 'login HTML contains the real CSRF field');
     $setCookie = implode("\n", array_values(array_filter($login['headers'], static fn (string $header): bool => str_starts_with(strtolower($header), 'set-cookie:'))));
     assertSameValue(1, preg_match('/Set-Cookie:\s*([^;]+)/i', $setCookie, $cookieMatch), 'login publishes an opaque session cookie');
     $cookie = $cookieMatch[1];
     $continued = runtimeHttp($port, '/pilot/login', null, 'GET', null, $cookie);
     assertSameValue(200, $continued['status'], 'login session cookie remains readable on the next request');
-    assertSameValue(403, runtimeHttp($port, '/pilot/login', null, 'POST', http_build_query(['email' => 'nobody@shlz.ru', 'csrfToken' => str_repeat('0', 64)]), $cookie)['status'], 'login rejects a wrong CSRF token inside a valid session');
+    assertSameValue(400, runtimeHttp($port, '/pilot/login', null, 'POST', http_build_query(['email' => 'nobody@shlz.ru', '_csrf' => str_repeat('0', 64)]), $cookie)['status'], 'Yii login rejects a wrong CSRF token inside a valid session');
     $asset = runtimeHttp($port, '/pilot/assets/pilot.css');
     assertSameValue(200, $asset['status'], 'composite router/static server preserves pilot assets');
     assertSameValue(true, strlen($asset['body']) > 100, 'pilot stylesheet is nonempty');

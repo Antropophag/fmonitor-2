@@ -18,7 +18,7 @@ function verifyRapidPilotVisualContract(string $root):array
     $rapidRouter=(string)file_get_contents($root.'/rapid-pilot/router.php');
     $otizOraclePath=$root.'/tests/Support/OtizOracleRouter.php';
     $otizOracleRouter=is_file($otizOraclePath)?(string)file_get_contents($otizOraclePath):'';
-    $router=(string)file_get_contents($root.'/public/router.php');
+    $router=(string)file_get_contents($root.'/app/YiiRuntime/Controllers/PilotAssetController.php');
     $failures=[];
 
     $require=static function(bool $condition,string $message)use(&$failures):void{if(!$condition)$failures[]=$message;};
