@@ -11,7 +11,7 @@
 - [x] 2.2 Сохранить минимальный launcher без registry publishing, layer normalization, command registry или provenance framework.
 - [x] 2.3 Выполнить parity contract test через уже выбранный corpus, не меняя Quality Graph/workflow/category semantics.
 - [x] 2.4 Выполнить полный focused plan, `git diff --check`, strict OpenSpec и LOC guard; при >500 infrastructure LOC STOP.
-- [ ] 2.5 Передать exact source, spec, approved tests и evidence независимому Gate 5 reviewer; PR A создавать только после `APPROVED` и подтверждения владельца.
+- [x] 2.5 Передать exact source, spec, approved tests и evidence независимому Gate 5 reviewer; PR A создавать только после `APPROVED` и подтверждения владельца.
 
 ## 3. Merge checkpoint
 

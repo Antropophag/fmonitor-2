@@ -28,3 +28,31 @@ No forbidden scope growth, command registry, selection/aggregation change, persi
 - Make image construction reproducible without adding a framework: remove mutable package resolution from per-machine builds, or pin the complete OS/build input to an immutable artifact/snapshot so clean local and CI builds of a profile resolve the same environment. Add a bounded test/evidence comparison sensitive to two independent clean builds; do not introduce forbidden identity/provenance machinery.
 - Re-run and retain the complete focused verification plan against the corrected exact source, then prepare a fresh Gate 5 package. Full Quality Graph remains the later exact-source CI step and must not be represented as GREEN until it actually runs.
 
+## Revised-contract rereview — 2026-09-13
+
+- Reviewed commit: `0f7f3a3e5ce9f50c29d4caf1acc5b9c3bd4da47a`
+- Reviewed candidate source: `e1ce1dc069a3f619dc6ff869a76186ab0a09529b00a90cce92aa9ad8cbf2e2cc`
+- Reviewed executable source: `acea153fd731da3ec66ce62a94d7b65e53e168cbbe483d441f88d944dac0a2e4`
+- Review package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T160709Z-5159e903b9/package.json`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T160709Z-5159e903b9/snapshot` (base commit `0f7f3a3e5ce9f50c29d4caf1acc5b9c3bd4da47a`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
+- Revised specification/test approval: `reviews/tests/DELIVERY-PROFILE-110-A.md`, revised reproducibility-contract Gate 3 verdict `APPROVED`
+- Exact-source GREEN evidence:
+  - `php tests/Verification/quality_graph_ci_setup_001_test.php`: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789315422407176000-37fac7fa38914e6c95bd1985888d61ae.json`, exit `0`, duration `79.36998662500001`
+  - `python3 tests/Verification/change_verification_001_test.py`: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789315510338641000-a72698de453a4e4ba8b0f7bfe63df21e.json`, exit `0`, duration `32.955278375`
+  - `php tests/Runtime/runtime_storage_001_test.php`: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789315540541305000-4a80c6171a8241f18518db22abe5c2d7.json`, exit `0`, duration `4.359219792`
+  - `python3 tools/delivery/render-dependencies.py --check`: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789315547534534000-9d2ef5241baf42ddbda9592e0155014b.json`, exit `0`, duration `1.064805125`
+  - `python3 tests/Verification/verification_ci_001_test.py`: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789315551289150000-f7e012d93d244b9a9ada8638136078fe.json`, exit `0`, duration `56.001391915999996`
+- All five records identify candidate source `e1ce1dc069a3f619dc6ff869a76186ab0a09529b00a90cce92aa9ad8cbf2e2cc` and executable source `acea153fd731da3ec66ce62a94d7b65e53e168cbbe483d441f88d944dac0a2e4`.
+- Scope/LOC check: forbidden Quality Graph workflow/manifests, `harness.py`, planner, selection, aggregation, inventories, `tools/verification/ci.py`, category semantics and `setup-runtime` are unchanged. Production LOC is zero; implementation/infrastructure is 135 changed lines (64 Dockerfile, 5 additions to the existing canonical pin file, 66 launcher), below the 500 LOC STOP threshold.
+- Revised verdict: `APPROVED`
+
+### Findings disposition
+
+1. **Resolved by explicit owner criterion and strengthened observed contract.** The owner explicitly permits independent builds to have different Docker image IDs/config/layer digests and excludes registry publishing/normalization. Under that normative boundary, mutable layer bytes are not a rejection. Every base image is consumed with a canonical registry `sha256` digest. The focused public-seam test observes all three profile names, PHP plus the canonical required-extension set, Python, Node/npm, Composer and uv versions, Composer packages against `composer.lock`, an offline/frozen Python environment against `uv.lock`, and browser-profile Playwright plus its installed locked Chromium revision/executable. No parallel dependency manifest was introduced.
+2. **Resolved.** The fresh package contains all five focused commands from the prepared plan, GREEN against one exact candidate/executable source. Full CI remains honestly `UNKNOWN` and is a post-review publication check, not evidence used for this approval.
+
+The launcher remains a 66-line transparent adapter: it validates exactly three profile names, passes the submitted argv directly to `docker run`, propagates the child exit code, and emits only git SHA, argv, profile/local executing image digest, exit code and duration. Invalid profile/empty command handling, executing-container identity, successful/failing evidence and exit `23` are sensitively tested. No command registry, service orchestration, selection/aggregation ownership, persistent provenance/evidence subsystem or forbidden scope growth was found. No blocking security or maintainability findings remain for PR A.
+
+## Required changes after rereview
+
+None.
