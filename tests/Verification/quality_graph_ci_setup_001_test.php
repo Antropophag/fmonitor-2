@@ -91,11 +91,19 @@ $tag='fmonitor2-php-test:qcs-'.bin2hex(random_bytes(8));$absent=qcsRun(['docker'
 test -f /.dockerenv
 test "$FMONITOR_PROFILE" = "$1"
 test "$FMONITOR_IMAGE_DIGEST" != ""
+set -a
+. tools/delivery/dependencies.env
+set +a
 php -r '$v=[];foreach(file("tools/delivery/dependencies.env", FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES) as $l){if($l[0]!=="#"){$p=explode("=",$l,2);$v[$p[0]]=$p[1];}} exit(PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION===$v["PHP_VERSION"]?0:1);'
 python3 -c 'import pathlib,platform; p=dict(x.split("=",1) for x in pathlib.Path("tools/delivery/dependencies.env").read_text().splitlines() if x and not x.startswith("#")); assert platform.python_version()==p["PYTHON_VERSION"]'
 node -e 'const fs=require("fs"),p=Object.fromEntries(fs.readFileSync("tools/delivery/dependencies.env","utf8").split("\n").filter(x=>x&&!x.startsWith("#")).map(x=>x.split(/=(.*)/s).slice(0,2))); if(process.versions.node!==p.NODE_VERSION)process.exit(1)'
+test "$(composer --version --no-ansi | awk '{print $3}')" = "$COMPOSER_VERSION"
+test "$(uv --version | awk '{print $2}')" = "$UV_VERSION"
+test "$(npm --version)" = "$NPM_VERSION"
 composer check-platform-reqs --no-dev --no-interaction >/dev/null
-if test "$1" = browser; then node -e 'require("playwright")'; fi
+if test "$1" = browser; then
+  node -e 'const fs=require("fs"),path=require("path"),root=process.env.FMONITOR_SHLZ_UI_ROOT,lock=JSON.parse(fs.readFileSync(path.join(root,"package-lock.json"))),expected=lock.packages["node_modules/playwright"].version,actual=require("playwright/package.json").version;if(actual!==expected)process.exit(1)'
+fi
 printf 'argv=%s image=%s\n' "$2" "$FMONITOR_IMAGE_DIGEST"
 SH, 'profile-probe', $profile, 'value with spaces'];
         $probe = qcsRun([$launcher, $profile, ...$command], $root);

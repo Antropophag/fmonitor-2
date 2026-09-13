@@ -21,3 +21,18 @@ The intended RED itself is valid and isolated: the captured first failure is the
 
 - Strengthen the existing focused test to cover the three blocking sensitivity gaps above, without adding a framework or expanding PR A scope.
 - Capture a fresh intended RED for the corrected test and submit the corrected exact source for independent Gate 3 rereview before implementation.
+
+## Rereview — 2026-09-13
+
+- Reviewed correction source: commit `1ea9dbce45006ce716f4124b3c2dd36763d91223`; candidate source `905456241aa5a3291e09adbb350867d3e511d36347c435bc511025ef8067476b`; executable source `86ff9d87d293b73aa63a1f401e4a2127f58d1021e6353b9e3a70d856311d292a`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T140333Z-563ddc54de/snapshot` (base commit `1ea9dbce45006ce716f4124b3c2dd36763d91223`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
+- Correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T140333Z-563ddc54de/package.json`
+- Fresh RED: `php tests/Verification/quality_graph_ci_setup_001_test.php`; harness record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789308191869502000-5f4259879bd04a02be7f627006ee6745.json`; exit `255`, intended first failure remains the missing launcher
+- Final verdict: `CHANGES_REQUESTED`
+
+### Findings disposition
+
+1. **Partially resolved; still blocking.** The correction now proves container execution (`/.dockerenv`), checks that the reported image exists, and compares PHP, Python and Node runtime versions with `tools/delivery/dependencies.env`. It does not check the canonical `COMPOSER_VERSION`, `UV_VERSION`, or `NPM_VERSION` pins, and the browser assertion checks only that Playwright is importable rather than that its installed version agrees with the applicable npm lockfile. Consequently a profile with drifting tool/package versions still passes DP110A-03. Add direct bounded version comparisons for Composer, uv and npm, plus a Playwright installed-versus-lockfile version comparison. This is a small extension of the existing probe, not a new manifest or framework.
+2. **Resolved.** The isolated marker proves an unknown profile is rejected before its command executes.
+3. **Resolved.** Exact argv, numeric non-negative duration, and failed-command argv/exit evidence are now asserted.
+
+The fresh RED remains valid and isolated. No new scope or implementation issue was reviewed. After the remaining DP110A-03 assertions and fresh RED are captured, submit the corrected exact source for another bounded rereview.
