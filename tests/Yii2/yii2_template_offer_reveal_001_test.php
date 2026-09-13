@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/PreopeningFixture.php';
+$f=null;
+try{
+ $f=new PreopeningFixture(dirname(__DIR__,2));$f->start();$cookies=[];assertSameValue(303,$f->login($cookies,18)['status'],'FKR login');
+ $before=$f->facts();$fresh=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue(200,$fresh['status'],'real Yii selection GET');assertSameValue($before,$f->facts(),'fresh GET no facts');$f->noLegacy();
+ $dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$fresh['body']);$x=new DOMXPath($dom);$helper=$x->query('//*[@data-template-offer]')->item(0);assertSameValue(true,$helper instanceof DOMElement,'INTENDED_RED semantic offer');assertSameValue([true,true,''],[$helper->hasAttribute('hidden'),$helper->hasAttribute('inert'),$helper->getAttribute('data-saved-order-id')],'fresh fail-closed identity');assertSameValue(0,$x->query('//*[@data-template-offer]//form[contains(@action,"/template")]')->length,'fresh no template POST');
+ assertSameValue(303,$f->selection($cookies,'11111111-1111-4111-8111-000000000001',[7001,7002])['status'],'save exact composition');$savedFacts=$f->facts();$saved=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue($savedFacts,$f->facts(),'saved GET no facts');$dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$saved['body']);$x=new DOMXPath($dom);$helper=$x->query('//*[@data-template-offer]')->item(0);assertSameValue(true,$helper instanceof DOMElement,'saved semantic offer');assertSameValue(['81','7001,7002','73'],[$helper->getAttribute('data-saved-order-id'),$helper->getAttribute('data-saved-installer-ids'),$helper->getAttribute('data-saved-engineer-id')],'exact normalized snapshot');assertSameValue(1,$x->query('//*[@data-template-offer]//form[@action="/pilot/objects/4512/assignment-orders/81/template"]')->length,'exact template action nested in offer');
+ $beforeReject=$f->facts();$stale=$f->form('/pilot/objects/4512/assignment-orders/82/template',['_csrf'=>$f->token($cookies)],$cookies);assertSameValue(404,$stale['status'],'forged absent template target rejected');assertSameValue($beforeReject,$f->facts(),'forged target no facts');
+ echo"PASS: TEMPLATE-OFFER-REVEAL-001 real Yii HTML, identity and no-side-effect denial\n";
+}finally{if($f instanceof PreopeningFixture)$f->close();}
