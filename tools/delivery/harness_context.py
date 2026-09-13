@@ -594,12 +594,6 @@ def _validate_evidence(path, source, expectations, plan_commands=None, executabl
         raise ValueError(f"evidence is unreadable: {error}") from error
     if record.get("source") != source and record.get("executable_source") != executable_source:
         raise ValueError("evidence source does not match current source")
-    try:
-        current_environment = _helpers().environment_identity()["digest"]
-    except (AttributeError, TypeError):
-        current_environment = None
-    if current_environment is not None and record.get("environment") != current_environment:
-        raise ValueError("evidence environment does not match current environment")
     argv = _normalized_argv(record.get("argv", []))
     expected = expectations.get(argv)
     plan_command = (plan_commands or {}).get(argv)
@@ -607,6 +601,43 @@ def _validate_evidence(path, source, expectations, plan_commands=None, executabl
         expected = "GREEN"
     if expected is None:
         raise ValueError("evidence does not cover a plan-owned command")
+    execution = record.get("execution")
+    if execution is None:
+        try:
+            current_environment = _helpers().environment_identity()["digest"]
+        except (AttributeError, TypeError):
+            current_environment = None
+        if current_environment is not None and record.get("environment") != current_environment:
+            raise ValueError("evidence environment does not match current environment")
+    else:
+        if not isinstance(execution, dict):
+            raise ValueError("container evidence execution envelope is invalid")
+        required = {"image_id", "platform", "profile", "lockfiles", "runtimes"}
+        if not required <= set(execution):
+            raise ValueError("container evidence execution envelope is incomplete")
+        if record.get("applicability") != "APPLICABLE":
+            raise ValueError("container evidence applicability is not current")
+        import execution_environment
+        profile = execution.get("profile")
+        if profile not in execution_environment.PROFILES:
+            raise ValueError("container evidence profile is unsupported")
+        try:
+            expected_profile = execution_environment._profile_for(record.get("argv", []))
+        except ValueError:
+            planned_environment = (plan_command or {}).get("environment", {})
+            services = planned_environment.get("services", [])
+            languages = planned_environment.get("languages", [])
+            if (set(services) - {"mariadb", "browser", "container"}
+                    or set(languages) - {"python3", "php", "node"}):
+                raise ValueError("plan command environment is unsupported")
+            expected_profile = ("browser" if "browser" in services or "container" in services
+                                else "integration" if "mariadb" in services else "governance")
+        if profile != expected_profile:
+            raise ValueError("container evidence profile does not match plan command")
+        observed = execution_environment.prepare(profile)
+        for field in ("image_id", "platform", "lockfiles", "runtimes"):
+            if execution.get(field) != observed.get(field):
+                raise ValueError("container evidence observed envelope does not match current target")
     if plan_command is not None:
         if record.get("command_id") != plan_command.get("id"):
             raise ValueError("evidence command identity does not match plan")

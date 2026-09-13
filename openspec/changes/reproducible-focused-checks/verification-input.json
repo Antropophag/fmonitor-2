@@ -1,0 +1,105 @@
+{
+  "change": "reliable-delivery-execution-i2",
+  "planned_paths": [
+    "tools/delivery/harness.py",
+    "tools/delivery/harness_context.py",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/render-dependencies.py",
+    "tools/delivery/dependencies.env",
+    "tools/delivery/Dockerfile.runtime.in",
+    "tools/delivery/Dockerfile.test.in",
+    "tools/delivery/compose.test.yaml.in",
+    "tools/delivery/probe-environment.py",
+    "tools/delivery/verify.py",
+    "tools/verification/ci.py",
+    "tools/verification/run.sh",
+    ".quality-graph/verification-policy.json",
+    "quality-graph.yml",
+    ".github/workflows/quality-graph.yml",
+    ".github/actions/setup-runtime/action.yml",
+    "Makefile",
+    "compose.test.yaml",
+    "tests/Verification/delivery_execution_107_i2_test.py",
+    "tests/Verification/delivery_execution_107_i2_routes_test.py",
+    "tests/Verification/delivery_execution_107_i2_boundaries_test.py",
+    "tests/Verification/harness_canonical_migration_stage_001_test.php",
+    "tests/Verification/verification_ci_001_test.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-EXECUTION-107-I2",
+      "acceptance_id": "AC02-03-07-08-09",
+      "spec_path": "specs/DELIVERY-EXECUTION-107-I2.md",
+      "seam": "harness environment/run container profile and actual registered launchers",
+      "seam_kind": "infrastructure",
+      "tests": [
+        "tests/Verification/verification_ci_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/verification_ci_001_test.py": "INTENDED_RED"
+      },
+      "observable_dimensions": {
+        "stdout": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "stderr": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "exit_status": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "retained_evidence": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "filesystem_effects": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "idempotence": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "failure_semantics": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "caller_interoperability": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "worktree_concurrency_isolation": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        },
+        "verification_registry_synchronization": {
+          "status": "covered",
+          "tests": [
+            "tests/Verification/verification_ci_001_test.py"
+          ]
+        }
+      }
+    }
+  ]
+}

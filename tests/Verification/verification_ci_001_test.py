@@ -342,9 +342,11 @@ class VerificationCI(unittest.TestCase):
         self.assertIn('fail-fast: false', integration)
         self.assertIn('shard: [1, 2]', integration)
         self.assertIn('runs-on: ubuntu-latest', integration)
-        self.assertIn('run: make test-db-reset migrate', integration)
+        self.assertIn('harness.py run --profile integration', integration,
+                      'INTENDED_RED AC02 CI integration still uses a separate host environment')
         self.assertIn('make test CATEGORY=integration SHARD=${{ matrix.shard }}/2', integration)
-        self.assertIn('if: always()\n      run: make test-env-down', integration)
+        self.assertNotIn('run: make test-env-down', integration,
+                         'AC03 runner owns exact-run cleanup, not a shared Compose project')
         self.assertIn('"integration":"${{ needs.integration.result }}"', workflow)
 
     def test_aggregate_requires_exact_expected_evidence(self):
@@ -418,7 +420,106 @@ class VerificationCI(unittest.TestCase):
             'php\ttests/Yii2/yii2_installer_directory_browser_001_test.php',
             'python3\ttests/Deployment/yii2_canonical_migrations_package_001_test.py',
             'python3\ttests/Deployment/yii2_production_image_cleanup_001_test.py',
-        ], e2e.stdout.splitlines())
+        ], e2e.stdout.splitlines(),
+            'INTENDED_RED ordinary product inventory still includes heavy I2 selftests')
+
+    def test_i2_selftests_follow_actual_changed_path_selection(self):
+        corpora = [
+            'tests/Verification/delivery_execution_107_i2_test.py',
+            'tests/Verification/delivery_execution_107_i2_routes_test.py',
+            'tests/Verification/delivery_execution_107_i2_boundaries_test.py',
+        ]
+        for path in corpora:
+            (self.root / path).write_text('fixture\n')
+            with (self.root / 'tools/verification/suites.tsv').open('a') as out:
+                out.write('e2e\tpython3\t' + path + '\n')
+            self.mapping[path] = 'e2e'
+            self.runtimes[path] = 'python3'
+        self.write_mapping()
+        self.git('add', '.')
+        self.git('commit', '-qm', 'register I2 selftests')
+
+        cases = [('app/product.php', False)] + [(path, True) for path in [
+            'tools/delivery/harness.py',
+            'tools/delivery/dependencies.env',
+            'tools/delivery/Dockerfile.execution.in',
+            'tools/delivery/Dockerfile.runtime.in',
+            'tools/delivery/Dockerfile.test.in',
+            'tools/delivery/execution_environment.py',
+            'tools/delivery/compose.test.yaml.in',
+            'tools/delivery/render-dependencies.py',
+            'composer.json', 'composer.lock', 'uv.lock', 'Makefile',
+            'compose.test.yaml', '.github/actions/setup-runtime/action.yml',
+            '.github/workflows/quality-graph.yml',
+            '.quality-graph/verification-policy.json', 'quality-graph.yml',
+            'tools/verification/ci.py', 'tools/verification/suites.tsv',
+            'tests/Verification/delivery_execution_107_i2_test.py',
+            'specs/DELIVERY-EXECUTION-107-I2.md',
+            'openspec/changes/reproducible-focused-checks/design.md',
+        ]]
+        for changed_path, expected in cases:
+            base = self.git('rev-parse', 'HEAD')
+            changed = self.root / changed_path
+            changed.parent.mkdir(parents=True, exist_ok=True)
+            original = changed.read_text() if changed.is_file() else ''
+            changed.write_text(original + '\n# changed\n')
+            self.git('add', '.')
+            self.git('commit', '-qm', 'candidate')
+            selected = self.cli('plan', '--base', base, '--event', 'pull_request')
+            self.assertEqual(0, selected.returncode, selected.stderr)
+            plan = json.loads(selected.stdout)
+            self.assertIn('i2_selftests', plan,
+                          'INTENDED_RED changed-path selftest selection is absent')
+            self.assertEqual(expected, plan['i2_selftests'], changed_path)
+            self.assertEqual('i2' if expected else 'full', plan['mode'], changed_path)
+            self.assertEqual([] if expected else CATEGORIES, plan['categories'], changed_path)
+            environment = dict(self.env, FMONITOR_I2_SELFTESTS=str(expected).lower())
+            listed = self.cli('list', 'e2e', env=environment)
+            self.assertEqual(0, listed.returncode, listed.stderr)
+            paths = [line.split('\t')[1] for line in listed.stdout.splitlines()]
+            for corpus in corpora:
+                self.assertEqual(expected, corpus in paths, (changed_path, corpus))
+
+    def test_i2_selftests_use_dedicated_parallel_ci_not_product_e2e(self):
+        workflow = (ROOT / '.github/workflows/quality-graph.yml').read_text()
+        match = __import__('re').search(r'^  i2-selftests:\n(.*?)(?=^  [a-zA-Z][\w-]*:\n|\Z)',
+                                        workflow, __import__('re').M | __import__('re').S)
+        self.assertIsNotNone(match, 'INTENDED_RED heavy I2 corpora lack a dedicated CI job')
+        block = match.group(1)
+        self.assertIn('needs.plan.outputs.i2_selftests', block)
+        self.assertIn('fail-fast: false', block)
+        self.assertIn('matrix:', block)
+        for corpus in ('delivery_execution_107_i2_test.py',
+                       'delivery_execution_107_i2_routes_test.py',
+                       'delivery_execution_107_i2_boundaries_test.py'):
+            self.assertEqual(1, block.count(corpus), corpus)
+        self.assertRegex(block, r'timeout-minutes: (?:[6-9]\d|\d{3,})')
+        self.assertRegex(block, r'harness\.py run --profile browser.*matrix\.')
+        self.assertRegex(workflow, r'needs: \[plan, fast, harness, unit, integration, e2e, governance, i2-selftests\]')
+
+    def test_i2_selftest_aggregate_requires_exact_conditional_result(self):
+        product_results = {'plan':'success', 'fast':'success', 'harness':'skipped',
+                           'unit':'success', 'integration':'success', 'e2e':'success',
+                           'governance':'success'}
+        i2_results = {'plan':'success', 'fast':'success', 'harness':'skipped',
+                      'unit':'skipped', 'integration':'skipped', 'e2e':'skipped',
+                      'governance':'skipped'}
+        cases = [
+            ('true', 'success', True), ('true', 'failure', False),
+            ('true', 'skipped', False), ('true', 'missing', False),
+            ('false', 'skipped', True), ('false', 'success', False),
+            ('false', 'failure', False), ('false', 'missing', False),
+        ]
+        for selected, outcome, accepted in cases:
+            mode = 'i2' if selected == 'true' else 'full'
+            result = self.cli('aggregate', '--full', 'false' if mode == 'i2' else 'true',
+                              '--mode', mode,
+                              '--results', json.dumps(i2_results if mode == 'i2' else product_results),
+                              '--i2-selftests', selected,
+                              '--i2-selftest-result', outcome)
+            self.assertEqual(accepted, result.returncode == 0,
+                             ('INTENDED_RED conditional I2 aggregation is absent', selected, outcome,
+                              result.stdout, result.stderr))
 
 
 if __name__ == '__main__':

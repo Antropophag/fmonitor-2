@@ -15,6 +15,9 @@ import uuid
 import sysconfig
 
 ROOT = Path(__file__).resolve().parents[2]
+DELIVERY_TOOLS = str(ROOT / "tools/delivery")
+if DELIVERY_TOOLS not in sys.path:
+    sys.path.insert(0, DELIVERY_TOOLS)
 POLICY = ".quality-graph/verification-policy.json"
 CATEGORIES = {"unit", "integration", "e2e", "governance"}
 OBSERVABLE_DIMENSIONS = {
@@ -212,7 +215,8 @@ def validate_policy(policy):
     for service, argv in probes.items():
         if not isinstance(service, str) or not service:
             raise ValueError("invalid service probe name")
-        validate_argv(argv)
+        if not isinstance(argv, list) or not argv or any(not isinstance(x, str) or not x for x in argv):
+            raise ValueError("invalid service probe")
 
 
 def validate_policy_inventory(policy, inventory):
@@ -424,15 +428,15 @@ def build(base_ref, input_name):
         if key not in command_keys:
             command_keys.add(key)
             item = {"argv": argv, "phase": phase, "rationale": rationale}
+            category = inventory.get(argv[-1], "governance")
             if typed:
-                category = inventory.get(argv[-1], "governance")
+                item["environment"] = policy.get("environment_profiles", {}).get(category, {})
                 command_id = hashlib.sha256(canonical(argv).encode()).hexdigest()[:16]
                 if purpose == "acceptance":
                     stem = Path(argv[-1]).stem
                     command_id = "acceptance:" + stem.removeprefix("ci_complete_")
                 item.update(purpose=purpose,
-                            id=command_id,
-                            environment=policy.get("environment_profiles", {}).get(category, {}))
+                            id=command_id)
             commands.append(item)
         elif typed and rationale.startswith("generated"):
             item = next(value for value in commands if tuple(value["argv"]) == key)
@@ -578,8 +582,9 @@ def main():
                 item = {"argv": command["argv"], "outcome": record["outcome"],
                         **({"purpose": command["purpose"], "command_id": command["id"]}
                            if "purpose" in command else {}),
-                        "environment": command.get("environment"),
                         "exit_code": record["exit_code"], "record_path": record["record_path"]}
+                if "environment" in command:
+                    item["environment"] = command["environment"]
                 if record["outcome"] != "GREEN":
                     item["excerpt"] = record["excerpt"]
                 results.append(item)
@@ -612,17 +617,31 @@ def _imports(path):
     return sorted(names)
 
 
-def _declared_dependencies(path):
+def _declared_dependencies(path, seen=None):
+    seen = seen or set()
+    resolved = path.resolve()
+    if resolved in seen or not path.is_file():
+        return {"python": [], "php": [], "node": []}
+    seen.add(resolved)
     text = path.read_text(errors="ignore")
     if path.suffix == ".py":
         return {"python": _imports(path), "php": [], "node": []}
     if path.suffix == ".php":
-        values = re.findall(r"(?:require|include)(?:_once)?\s*\(?\s*['\"]([^'\"]+)", text)
+        values = re.findall(r"(?:require|include)(?:_once)?\s*\(?\s*(?:__DIR__\s*\.\s*)?['\"]([^'\"]+)", text)
         extensions = (["mysqli"] if re.search(r"\bmysqli\b", text) else [])
-        return {"python": [], "php": sorted(set(values + extensions)), "node": []}
+        dependencies = set(values + extensions)
+        for value in values:
+            candidate = path.parent / value.lstrip("/")
+            try:
+                candidate.resolve().relative_to(ROOT.resolve())
+            except ValueError:
+                continue
+            child = _declared_dependencies(candidate, seen)
+            dependencies.update(child["php"])
+        return {"python": [], "php": sorted(dependencies), "node": []}
     if path.suffix in {".js", ".mjs", ".cjs"}:
         values = re.findall(r"(?:from\s+|require\s*\(\s*)['\"]([^'\"./][^'\"]*)", text)
-        return {"python": [], "php": [], "node": sorted(set(v.split('/')[0] for v in values))}
+        return {"python": [], "php": [], "node": sorted(set(values))}
     return {"python": [], "php": [], "node": []}
 
 
@@ -649,8 +668,17 @@ def preflight(plan_name):
     categories = load_json(policy["inventory"])
     observed_services = {}
     for service, argv in policy.get("service_probes", {}).items():
-        probe = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)
-        observed_services[service] = probe.returncode == 0
+        trusted = ["python3", "tools/delivery/probe-environment.py", "service", service]
+        if argv != trusted:
+            probe = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)
+            if probe.returncode == 0 and plan.get("version") == 1:
+                failures.append({"code": "UNTRUSTED_SERVICE_PROBE", "service": service})
+                observed_services[service] = False
+            else:
+                observed_services[service] = probe.returncode == 0
+        else:
+            probe = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)
+            observed_services[service] = probe.returncode == 0
     for path in effective:
         if path.startswith("tests/") and path in suites and path not in categories:
             failures.append({"code": "STALE_VERIFICATION_INVENTORY", "path": path})
@@ -669,28 +697,45 @@ def preflight(plan_name):
                 elif name in declared and module is None and not local_sibling and not (ROOT / (name + ".py")).is_file():
                     failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
                                      "dependency": name, "category": categories.get(path, "UNKNOWN")})
-        if path.endswith(".php") and target.is_file() and re.search(r'\bmysqli\b', target.read_text(errors="ignore")):
+        if path.endswith(".php") and target.is_file() and "mysqli" in discovered["php"]:
             category = categories.get(path, "UNKNOWN")
-            if "mariadb" not in policy["environment_profiles"].get(category, {}).get("services", []):
+            if (category != "UNKNOWN"
+                    and "mariadb" not in policy["environment_profiles"].get(category, {}).get("services", [])):
                 failures.append({"code": "CATEGORY_ENVIRONMENT_MISMATCH", "path": path,
                                  "category": category, "dependency": "mariadb"})
         if path.startswith("tests/") and target.is_file():
             found = _declared_dependencies(target)
+            builtins = set(json.loads(subprocess.check_output(
+                ["node", "-e", "console.log(JSON.stringify(require('node:module').builtinModules))"], text=True)))
             for dependency in found["node"]:
-                if (not dependency.startswith("node:")
+                normalized = dependency[5:] if dependency.startswith("node:") else dependency
+                if (normalized not in builtins
                         and dependency not in policy.get("declared_node_dependencies", [])):
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
                                      "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
+                elif dependency in policy.get("declared_node_dependencies", []):
+                    probe = subprocess.run(["node", "--input-type=module", "-e",
+                        "import.meta.resolve(process.argv[1])", dependency], capture_output=True, text=True)
+                    if probe.returncode:
+                        failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
+                                         "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
             for dependency in found["php"]:
                 if (dependency != "mysqli" and not dependency.startswith((".", "/", "__DIR__"))
                         and dependency not in policy.get("declared_php_dependencies", [])):
                     failures.append({"code": "UNDECLARED_TEST_DEPENDENCY", "path": path,
                                      "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
+                elif dependency in policy.get("declared_php_dependencies", []):
+                    probe = subprocess.run(["php", "-r", "exit(is_file($argv[1]) ? 0 : 1);", dependency],
+                                           cwd=ROOT, capture_output=True, text=True)
+                    if probe.returncode:
+                        failures.append({"code": "DEPENDENCY_UNAVAILABLE", "path": path,
+                                         "dependency": dependency, "category": categories.get(path, "UNKNOWN")})
     import harness
     details = harness.source_details()
     evidence = []
     for command in plan["commands"]:
-        profile = command.get("environment", {})
+        category = categories.get(command["argv"][-1], "governance")
+        profile = command.get("environment") or policy.get("environment_profiles", {}).get(category, {})
         target = repo_path(command["argv"][-1]) if command["argv"][-1].startswith(("tests/", "tools/")) else None
         discovered = _declared_dependencies(target) if target and target.is_file() else {"python": [], "php": [], "node": []}
         available_dependencies = {"python": [], "php": [], "node": []}
@@ -701,6 +746,19 @@ def preflight(plan_name):
                     module = importlib.util.find_spec(name)
                     available = (module is not None or _repository_local_sibling(target, name)
                                  or (ROOT / (name + ".py")).is_file())
+                elif language == "node":
+                    probe = subprocess.run(["node", "--input-type=module", "-e",
+                        "import.meta.resolve(process.argv[1])", name], capture_output=True, text=True)
+                    available = probe.returncode == 0
+                elif language == "php":
+                    if name == "mysqli":
+                        probe = subprocess.run(["php", "-r", "exit(extension_loaded('mysqli') ? 0 : 1);"],
+                                               capture_output=True, text=True)
+                    else:
+                        candidate = target.parent / name.lstrip("/") if name.startswith("/") else ROOT / name
+                        probe = subprocess.run(["php", "-r", "exit(is_file($argv[1]) ? 0 : 1);", str(candidate)],
+                                               capture_output=True, text=True)
+                    available = probe.returncode == 0
                 if available:
                     available_dependencies[language].append(name)
         available_services = sorted(service for service in profile.get("services", [])

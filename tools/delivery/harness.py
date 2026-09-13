@@ -50,7 +50,12 @@ def evidence_home():
 
 
 def _git(*args, binary=False):
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+    environment = dict(os.environ)
+    # A user's global excludes file is not part of a candidate contract and must
+    # never make relevant repository files disappear from its identity.
+    environment["GIT_CONFIG_GLOBAL"] = os.devnull
+    environment["GIT_CONFIG_SYSTEM"] = os.devnull
+    return subprocess.run(["git", *args], cwd=ROOT, env=environment, capture_output=True,
                           text=not binary, check=True).stdout
 
 
@@ -404,6 +409,20 @@ def report(task=None, run_id=None, candidate=None):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["environment"] or argv[:1] == ["run"]:
+        try:
+            import execution_environment
+            separator = argv.index("--") if "--" in argv else len(argv)
+            command = argv[separator + 1:]
+            if (argv[:1] == ["environment"] or "--profile" in argv[:separator]
+                    or (execution_environment.project_execution_available()
+                        and not (Path("/.dockerenv").is_file()
+                                 and os.environ.get("FMONITOR_EXECUTION_ACTIVE") == str(ROOT.resolve()))
+                        and execution_environment.registered_command(command))):
+                return execution_environment.main(argv)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            print(canonical({"outcome": "SETUP_FAILURE", "reason": str(error)}))
+            return 1
     if argv and argv[0] == "run":
         parser = argparse.ArgumentParser()
         parser.add_argument("--reason"); parser.add_argument("--fixture")

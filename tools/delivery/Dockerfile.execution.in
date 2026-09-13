@@ -1,0 +1,54 @@
+ARG PHP_IMAGE=php:8.5-cli-bookworm
+ARG NODE_EXECUTION_IMAGE=node:22.22.0-bookworm
+ARG NODE_IMAGE=node:22.22.0-alpine3.23
+ARG PYTHON_IMAGE=python:3.12.11-bookworm
+ARG GIT_IMAGE=alpine/git:2.49.1
+ARG DOCKER_CLI_IMAGE=docker:29.0.0-cli
+ARG COMPOSER_VERSION=2.10.3
+ARG UV_VERSION=0.8.15
+FROM ${NODE_EXECUTION_IMAGE} AS node
+FROM ${DOCKER_CLI_IMAGE} AS docker-cli
+FROM ${PYTHON_IMAGE} AS python
+ARG UV_VERSION=0.8.15
+WORKDIR /opt/fmonitor-dependencies
+RUN pip install --no-cache-dir "uv==${UV_VERSION}"
+COPY pyproject.toml uv.lock ./
+ENV UV_PROJECT_ENVIRONMENT=/opt/fmonitor-dependencies/python
+RUN uv sync --frozen --no-install-project
+FROM composer:${COMPOSER_VERSION} AS composer
+FROM ${GIT_IMAGE} AS shlz-source
+ARG SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
+RUN git clone https://github.com/Antropophag/shlz-ui.git /shlz-ui \
+ && git -C /shlz-ui checkout --detach "$SHLZ_UI_REVISION"
+FROM ${NODE_IMAGE} AS shlz-build
+WORKDIR /shlz-ui
+COPY --from=shlz-source /shlz-ui ./
+RUN npm ci --no-audit --no-fund && npm run generate && npm run build:packages && rm -rf .git node_modules
+FROM ${PHP_IMAGE}
+ARG SHLZ_UI_REVISION=9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b
+ARG PLAYWRIGHT_VERSION=1.55.0
+RUN apt-get update && apt-get install -y --no-install-recommends git curl unzip default-mysql-client libcurl4-openssl-dev libonig-dev \
+ && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pcntl curl mbstring && rm -rf /var/lib/apt/lists/*
+COPY --from=python /usr/local /usr/local
+COPY --from=python /opt/fmonitor-dependencies/python /opt/fmonitor-dependencies/python
+RUN ldconfig
+RUN ln -s /usr/local/bin/python3 /usr/bin/python3
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=docker-cli /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
+WORKDIR /opt/fmonitor-dependencies
+COPY composer.json composer.lock ./
+RUN mkdir app && COMPOSER_VENDOR_DIR=/opt/fmonitor-dependencies/vendor composer install --no-interaction --prefer-dist --no-progress \
+ && rm -rf app \
+ && sed -i "s#\\\$baseDir \. '/app/autoload.php'#'/workspace/source/app/autoload.php'#g" vendor/composer/autoload_files.php \
+ && sed -i "s#__DIR__ \. '/../..' \. '/app/autoload.php'#'/workspace/source/app/autoload.php'#g" vendor/composer/autoload_static.php
+ARG PROFILE=governance
+RUN if [ "$PROFILE" = browser ]; then npm install --no-audit --no-fund "playwright@${PLAYWRIGHT_VERSION}" && npx playwright install --with-deps chromium; fi
+COPY --from=shlz-build /shlz-ui /workspace/shlz-ui
+WORKDIR /workspace/source
+ENV UV_PROJECT_ENVIRONMENT=/opt/fmonitor-dependencies/python
+ENV PATH=/opt/fmonitor-dependencies/python/bin:/opt/fmonitor-dependencies/vendor/bin:/usr/local/bin:/usr/bin:/bin
+ENTRYPOINT []

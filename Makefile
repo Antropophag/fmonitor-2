@@ -68,11 +68,20 @@ test-env-up:
 test-env-down:
 	docker compose -f compose.test.yaml down --volumes --remove-orphans
 
-test-db-reset: test-env-up
-	@FMONITOR_TEST_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" php tools/verification/reset-test-db.php
+test-db-reset:
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then \
+		FMONITOR_TEST_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" php tools/verification/reset-test-db.php; \
+	else \
+		python3 tools/delivery/harness.py run --profile integration -- make test-db-reset; \
+	fi
 
 migrate:
-	@FMONITOR_DB_HOST="$${FMONITOR_TEST_DB_HOST:-127.0.0.1}" \
+	@if ! { [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; }; then \
+		for field in HOST PORT NAME USER PASSWORD; do eval "value=\$${FMONITOR_TEST_DB_$$field:-}"; \
+			test -n "$$value" || { echo "SETUP_FAILURE: make migrate requires explicit existing FMONITOR_TEST_DB_*" >&2; exit 2; }; done; \
+		python3 tools/delivery/harness.py run --profile integration -- make migrate; exit $$?; \
+	fi; \
+	FMONITOR_DB_HOST="$${FMONITOR_TEST_DB_HOST:-127.0.0.1}" \
 	FMONITOR_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" \
 	FMONITOR_DB_NAME="$${FMONITOR_TEST_DB_NAME:-fmonitor2_test}" \
 	FMONITOR_DB_USER="$${FMONITOR_TEST_DB_USER:-fmonitor2_test}" \
@@ -80,29 +89,40 @@ migrate:
 	FMONITOR_PROCESS_TABLE_PREFIX= php bin/yii schema-migrate/run --interactive=0
 
 unit-test:
-	@bash tools/verification/run.sh unit
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then bash tools/verification/run.sh unit; else python3 tools/delivery/harness.py run --profile governance -- make unit-test; fi
 
-db-test: test-env-up
-	@bash tools/verification/run.sh db
+db-test:
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then bash tools/verification/run.sh db; else python3 tools/delivery/harness.py run --profile integration -- make db-test; fi
 
 characterization-test:
-	@bash tools/verification/run.sh characterization
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then bash tools/verification/run.sh characterization; else python3 tools/delivery/harness.py run --profile governance -- make characterization-test; fi
 
-e2e-test: test-env-up
-	@bash tools/verification/run.sh e2e
+e2e-test:
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then bash tools/verification/run.sh e2e; else python3 tools/delivery/harness.py run --profile browser -- make e2e-test; fi
 
 architecture-check:
-	@php tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php
-	@tools/architecture/check
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then php tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php && tools/architecture/check; else python3 tools/delivery/harness.py run --profile governance -- make architecture-check; fi
 
 lint:
-	@bash tools/verification/run.sh lint
+	@if [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; then bash tools/verification/run.sh lint; else python3 tools/delivery/harness.py run --profile governance -- make lint; fi
 
 verify: test
 
 ifneq ($(strip $(CATEGORY)),)
+EXECUTION_PROFILE := governance
+ifeq ($(CATEGORY),integration)
+EXECUTION_PROFILE := integration
+endif
+ifeq ($(CATEGORY),e2e)
+EXECUTION_PROFILE := browser
+endif
 test:
-	@bash tools/verification/run.sh category "$(CATEGORY)" $(if $(strip $(SHARD)),--shard "$(SHARD)")
+	@if { [ -f /.dockerenv ] && [ "$${FMONITOR_EXECUTION_ACTIVE:-}" = "$$(pwd -P)" ]; } || [ ! -f composer.lock ]; then \
+		bash tools/verification/run.sh category "$(CATEGORY)" $(if $(strip $(SHARD)),--shard "$(SHARD)"); \
+	else \
+		python3 tools/delivery/harness.py run --profile $(EXECUTION_PROFILE) -- \
+			make test CATEGORY="$(CATEGORY)" $(if $(strip $(SHARD)),SHARD="$(SHARD)"); \
+	fi
 else
 test:
 	@set +e; failures=""; failed_count=0; setup_failed=0; setup_cause=""; \

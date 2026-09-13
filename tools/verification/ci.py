@@ -24,11 +24,30 @@ HARNESS_METADATA = HARNESS_CORE + [
     'tools/verification/categories.json', 'reviews/tests/*HARNESS*.md',
     'reviews/code/*HARNESS*.md', 'AGENTS.md', 'docs/operations/current-delivery-goal.md',
 ]
+I2_SELFTESTS = {
+    'tests/Verification/delivery_execution_107_i2_test.py',
+    'tests/Verification/delivery_execution_107_i2_routes_test.py',
+    'tests/Verification/delivery_execution_107_i2_boundaries_test.py',
+}
+I2_INFRASTRUCTURE = [
+    'tools/delivery/harness.py', 'tools/delivery/harness_context.py',
+    'tools/delivery/execution_environment.py', 'tools/delivery/probe-environment.py',
+    'tools/delivery/render-dependencies.py', 'tools/delivery/dependencies.env',
+    'tools/delivery/Dockerfile.*.in', 'tools/delivery/compose*.in',
+    'compose.test.yaml', 'composer.json', 'composer.lock', 'uv.lock', 'Makefile',
+    '.github/actions/setup-runtime/**', '.github/workflows/quality-graph.yml',
+    '.quality-graph/verification-policy.json', 'quality-graph.yml',
+    'tools/verification/ci.py', 'tools/verification/run.sh',
+    'tools/verification/suites.tsv', 'tools/verification/categories.json',
+    'tests/Verification/delivery_execution_107_i2*_test.py',
+    'specs/DELIVERY-EXECUTION-107-I2.md',
+    'openspec/changes/reproducible-focused-checks/**',
+]
 
 
 def expected_job_conclusions(mode):
     """Canonical Quality Graph job obligations for an admitted CI mode."""
-    if mode not in {'full', 'harness', 'docs'}:
+    if mode not in {'full', 'harness', 'docs', 'i2'}:
         raise ValueError('unsupported admission mode')
     expected = {'plan': 'SUCCESS', 'fast': 'SKIPPED' if mode == 'harness' else 'SUCCESS',
                 'harness': 'SUCCESS' if mode == 'harness' else 'SKIPPED'}
@@ -39,6 +58,9 @@ def expected_job_conclusions(mode):
         expected['Integration (2/2)'] = 'SUCCESS'
     else:
         expected['Integration (${{ matrix.shard }}/2)'] = 'SKIPPED'
+    if mode == 'i2':
+        for corpus in sorted(I2_SELFTESTS):
+            expected[f'i2-selftests ({corpus})'] = 'SUCCESS'
     expected['verify'] = 'SUCCESS'
     return expected
 
@@ -115,7 +137,10 @@ def matches_any(path, patterns):
 
 
 def harness_only(paths):
-    return (bool(paths) and any(matches_any(path, HARNESS_CORE) for path in paths)
+    shared_execution = {'tools/delivery/dependencies.env', 'tools/delivery/Dockerfile.execution.in',
+                        '.github/workflows/quality-graph.yml', 'Makefile'}
+    return (not any(path in shared_execution for path in paths)
+            and bool(paths) and any(matches_any(path, HARNESS_CORE) for path in paths)
             and all(matches_any(path, HARNESS_METADATA) for path in paths))
 
 
@@ -134,12 +159,16 @@ def plan(base, event):
                     files = [p.decode('utf-8', errors='surrogateescape') for p in diff.stdout.split(b'\0') if p]
                     if files and all(docs_only(p) for p in files):
                         reason = 'docs-only'; mode = 'docs'
+                    elif any(matches_any(path, I2_INFRASTRUCTURE) for path in files):
+                        reason = 'i2-infrastructure'; mode = 'i2'
                     elif harness_only(files):
                         reason = 'agent-harness-only'; mode = 'harness'
                     else:
                         reason = 'code-or-unknown-impact'; mode = 'full'
     full = mode == 'full'
-    print(json.dumps({'full': full, 'reason': reason, 'files': files,
+    i2_selftests = event != 'pull_request' or any(
+        matches_any(path, I2_INFRASTRUCTURE) for path in files)
+    print(json.dumps({'full': full, 'reason': reason, 'files': files, 'i2_selftests': i2_selftests,
                       'categories': CATEGORIES if full else [], 'mode': mode}, ensure_ascii=True))
 
 
@@ -147,6 +176,8 @@ def category_items(category, shard=None):
     if shard is not None and (category != 'integration' or shard not in ['1/2', '2/2']):
         raise ValueError('shard must be 1/2 or 2/2 and is only supported for integration')
     items = [(runtime, path) for group, runtime, path in inventory() if group == category]
+    if category == 'e2e' and os.environ.get('FMONITOR_I2_SELFTESTS', '').lower() != 'true':
+        items = [item for item in items if item[1] not in I2_SELFTESTS]
     if shard is not None:
         offset = 0 if shard == '1/2' else 1
         items = sorted(items, key=lambda item: item[1])[offset::2]
@@ -204,7 +235,7 @@ def run_category(category, shard=None):
     return 1 if failures else 0
 
 
-def aggregate(full, raw, mode=None):
+def aggregate(full, raw, mode=None, i2_selftests='false', i2_selftest_result='skipped'):
     results = json.loads(raw, object_pairs_hook=strict_object)
     if mode is None:
         expected = dict.fromkeys(['plan', 'fast'], 'success')
@@ -213,14 +244,21 @@ def aggregate(full, raw, mode=None):
             raise ValueError(f'incomplete or failed CI evidence: expected={expected}, actual={results}')
         print('VERIFY_OK' if full == 'true' else 'DOCS_VERIFY_OK')
         return
-    if mode not in {'full', 'docs', 'harness'}:
+    if mode not in {'full', 'docs', 'harness', 'i2'}:
         raise ValueError('invalid verification mode')
+    if i2_selftests not in {'true', 'false'}:
+        raise ValueError('invalid I2 selftest selection')
+    expected_i2_result = 'success' if i2_selftests == 'true' else 'skipped'
+    if i2_selftest_result != expected_i2_result:
+        raise ValueError('incomplete or failed I2 selftest evidence: '
+                         f'expected={expected_i2_result}, actual={i2_selftest_result}')
     expected = {'plan': 'success', 'fast': 'skipped' if mode == 'harness' else 'success',
                 'harness': 'success' if mode == 'harness' else 'skipped'}
     expected.update(dict.fromkeys(CATEGORIES, 'success' if mode == 'full' else 'skipped'))
     if results != expected:
         raise ValueError(f'incomplete or failed CI evidence: expected={expected}, actual={results}')
-    print({'full': 'VERIFY_OK', 'docs': 'DOCS_VERIFY_OK', 'harness': 'HARNESS_VERIFY_OK'}[mode])
+    print({'full': 'VERIFY_OK', 'docs': 'DOCS_VERIFY_OK', 'harness': 'HARNESS_VERIFY_OK',
+           'i2': 'I2_VERIFY_OK'}[mode])
 
 
 def main():
@@ -235,8 +273,10 @@ def main():
         category.add_argument('--shard', choices=['1/2', '2/2'])
     aggregation = commands.add_parser('aggregate')
     aggregation.add_argument('--full', choices=['true', 'false'], required=True)
-    aggregation.add_argument('--mode', choices=['full', 'docs', 'harness'])
+    aggregation.add_argument('--mode', choices=['full', 'docs', 'harness', 'i2'])
     aggregation.add_argument('--results', required=True)
+    aggregation.add_argument('--i2-selftests', choices=['true', 'false'], default='false')
+    aggregation.add_argument('--i2-selftest-result', default='skipped')
     commands.add_parser('verify-roster')
     args = parser.parse_args()
     try:
@@ -248,7 +288,8 @@ def main():
         elif args.command == 'run':
             return run_category(args.category, args.shard)
         elif args.command == 'aggregate':
-            aggregate(args.full, args.results, args.mode)
+            aggregate(args.full, args.results, args.mode, args.i2_selftests,
+                      args.i2_selftest_result)
         else:
             verify_roster()
     except (OSError, ValueError, TypeError) as error:

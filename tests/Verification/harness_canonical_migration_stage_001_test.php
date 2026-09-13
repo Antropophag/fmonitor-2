@@ -20,14 +20,23 @@ function hcmRun(string $root, string $overlay, string $bin, string $log, string 
     }
     $environment['PATH'] = $bin . PATH_SEPARATOR . ($environment['PATH'] ?? '');
     $environment['HCM_STAGE_LOG'] = $log;
+    $environment['FMONITOR_TEST_DB_HOST'] = '127.0.0.1';
+    $environment['FMONITOR_TEST_DB_PORT'] = '23306';
+    $environment['FMONITOR_TEST_DB_NAME'] = 'fmonitor2_test';
+    $environment['FMONITOR_TEST_DB_USER'] = 'fmonitor2_test';
+    $environment['FMONITOR_TEST_DB_PASSWORD'] = 'fmonitor2_test_local';
     $command = array_merge(
         ['make', '--no-print-directory', '-f', 'Makefile', '-f', $overlay],
         array_map(static fn (string $name, string $value): string => "$name=$value", array_keys($variables), $variables),
         [$target],
     );
+    $stderrPath = tempnam(sys_get_temp_dir(), 'fmonitor-hcm-stderr-');
+    if ($stderrPath === false) {
+        throw new TestFailure("SETUP_FAILURE: cannot allocate stderr fixture for make $target");
+    }
     $process = proc_open(
         $command,
-        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['file', $stderrPath, 'w']],
         $pipes,
         $root,
         $environment,
@@ -37,11 +46,12 @@ function hcmRun(string $root, string $overlay, string $bin, string $log, string 
     }
     fclose($pipes[0]);
     $stdout = stream_get_contents($pipes[1]);
-    $stderr = stream_get_contents($pipes[2]);
     fclose($pipes[1]);
-    fclose($pipes[2]);
+    $status = proc_close($process);
+    $stderr = file_get_contents($stderrPath);
+    unlink($stderrPath);
 
-    return ['status' => proc_close($process), 'stdout' => $stdout, 'stderr' => $stderr];
+    return ['status' => $status, 'stdout' => $stdout, 'stderr' => $stderr === false ? '' : $stderr];
 }
 
 function hcmLines(string $path): array

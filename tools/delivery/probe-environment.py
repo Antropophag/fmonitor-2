@@ -2,12 +2,17 @@
 """Observe bounded CI service prerequisites without mutating the environment."""
 
 import argparse
+import os
 import subprocess
 import sys
 
 
 PROBES = {
-    "mariadb": ["mysqladmin", "ping"],
+    "mariadb": lambda: ["mysqladmin", "--host", os.environ.get("FMONITOR_TEST_DB_HOST", "127.0.0.1"),
+                         "--port", os.environ.get("FMONITOR_TEST_DB_PORT", "3306"),
+                         "--user", os.environ.get("FMONITOR_TEST_DB_ADMIN_USER", "root"),
+                         "--password=" + os.environ.get("FMONITOR_TEST_DB_ADMIN_PASSWORD", "fmonitor2_test_root_local"),
+                         "ping", "--silent"],
     "container": ["docker", "info"],
     "browser": ["node", "-e", "require.resolve('playwright')"],
 }
@@ -19,7 +24,8 @@ def main(argv=None):
     parser.add_argument("name", choices=tuple(PROBES))
     args = parser.parse_args(argv)
     try:
-        result = subprocess.run(PROBES[args.name], stdout=subprocess.DEVNULL,
+        argv = PROBES[args.name]() if callable(PROBES[args.name]) else PROBES[args.name]
+        result = subprocess.run(argv, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL, timeout=5)
     except (OSError, subprocess.TimeoutExpired):
         result = None

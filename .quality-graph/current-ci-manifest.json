@@ -7,7 +7,7 @@
       ]
     },
     "defaultBranch": "main",
-    "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
+    "graphDigest": "15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e",
     "graphVersion": 0,
     "labels": {
       "enabled": true,
@@ -66,7 +66,7 @@
           "path": ".quality-graph/reports/fast.json"
         },
         "step": {
-          "run": "make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check"
+          "run": "python3 tools/delivery/harness.py run --profile governance -- bash -e -c 'make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check'"
         },
         "title": "fast"
       },
@@ -231,12 +231,12 @@
   },
   "fileSha256": {
     ".github/workflows/quality-graph-publish.yml": "b97ec4c135f3a62184eba237507d00bab2a3a7b59c21cbce28000ea048ace263",
-    ".github/workflows/quality-graph.yml": "afa221a797bc5490d3baf4c5179f9967b75b034fb70e34d0e4051abecfc53b0a",
-    "quality-graph.yml": "f8b54f7a22f4ea297a9e0d7d0170d0a842917d7120f1a4723f32ad3d59ae2dc8",
+    ".github/workflows/quality-graph.yml": "e78c456bd6c339b01d2ba59d199146af38e022d322d8b3e526a4f71ffd5a305c",
+    "quality-graph.yml": "b50588a5a982ea486c5120f056d94bef4388b35b853453ca75eedd05f5f7c1d0",
     "tools/delivery/quality-graph-preflight.py": "a33b227522d91db9a0f5f6a6bea0744df688f3e11ba614a45a7b7ee1b87ab23a",
     "tools/delivery/quality-graph-report.py": "8cee33501b7a3a82c205c07afce5c818630e2002d0fe4c9797ff3af0c281754b"
   },
-  "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
+  "graphDigest": "15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e",
   "schemaVersion": 1,
-  "selfDigest": "56b2ae4d67042f91fdb2db0437134f332d81f945cd873d6a3150ef43f503189c"
+  "selfDigest": "427bffab0b390459db248b1ef86745cc528d155c3d77261fc3e2f98b06d975f4"
 }

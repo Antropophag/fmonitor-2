@@ -20,6 +20,7 @@ jobs:
     outputs:
       full: ${{ steps.policy.outputs.full }}
       mode: ${{ steps.policy.outputs.mode }}
+      i2_selftests: ${{ steps.policy.outputs.i2_selftests }}
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
@@ -36,6 +37,7 @@ jobs:
         cat /tmp/test-plan.json
         python3 -c 'import json; p=json.load(open("/tmp/test-plan.json")); print("full="+str(p["full"]).lower())' >> "$GITHUB_OUTPUT"
         python3 -c 'import json; p=json.load(open("/tmp/test-plan.json")); print("mode="+p["mode"])' >> "$GITHUB_OUTPUT"
+        python3 -c 'import json; p=json.load(open("/tmp/test-plan.json")); print("i2_selftests="+str(p["i2_selftests"]).lower())' >> "$GITHUB_OUTPUT"
         printf '\n### Selected checks\n\n```json\n' >> "$GITHUB_STEP_SUMMARY"
         cat /tmp/test-plan.json >> "$GITHUB_STEP_SUMMARY"
         printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
@@ -50,17 +52,8 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
-    - uses: ./.github/actions/setup-runtime
     - name: Syntax, architecture and verification policy
-      run: |
-        make lint architecture-check
-        python3 tools/delivery/render-dependencies.py --check
-        python3 tests/Verification/development_setup_001_test.py
-        python3 tests/Verification/verification_ci_001_test.py
-        uv sync --frozen
-        uv run --frozen python tools/delivery/render-current-quality-graph.py --check
-        python3 tools/delivery/check-current-quality-graph.py --root .
-        git diff --check
+      run: python3 tools/delivery/harness.py run --profile governance -- bash -e -c 'make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check'
   harness:
     needs: plan
     if: needs.plan.outputs.mode == 'harness'
@@ -85,9 +78,8 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
-    - uses: ./.github/actions/setup-runtime
     - name: Run unit category once
-      run: make test CATEGORY=unit
+      run: python3 tools/delivery/harness.py run --profile governance -- make test CATEGORY=unit
   integration:
     name: Integration (${{ matrix.shard }}/2)
     strategy:
@@ -104,37 +96,41 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
-    - uses: ./.github/actions/setup-runtime
-    - name: Prepare pinned integration dependencies
-      run: make ci-setup
-    - name: Prepare isolated test database
-      run: make test-db-reset migrate
     - name: Run integration category once
-      run: make test CATEGORY=integration SHARD=${{ matrix.shard }}/2
-    - name: Tear down isolated test database
-      if: always()
-      run: make test-env-down
+      run: python3 tools/delivery/harness.py run --profile integration -- make test CATEGORY=integration SHARD=${{ matrix.shard }}/2
   e2e:
     needs: plan
     if: needs.plan.outputs.full == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
     - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       with:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
-    - uses: ./.github/actions/setup-runtime
-    - name: Prepare pinned integration dependencies
-      run: make ci-setup
-    - name: Prepare isolated test database
-      run: make test-db-reset migrate
     - name: Run e2e category once
-      run: make test CATEGORY=e2e
-    - name: Tear down isolated test database
-      if: always()
-      run: make test-env-down
+      run: python3 tools/delivery/harness.py run --profile browser -- make test CATEGORY=e2e
+  i2-selftests:
+    needs: plan
+    if: needs.plan.outputs.i2_selftests == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus:
+        - tests/Verification/delivery_execution_107_i2_test.py
+        - tests/Verification/delivery_execution_107_i2_routes_test.py
+        - tests/Verification/delivery_execution_107_i2_boundaries_test.py
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+    - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        persist-credentials: 'false'
+        fetch-depth: '0'
+    - name: Run selected I2 selftest corpus
+      run: python3 tools/delivery/harness.py run --profile browser -- python3 ${{ matrix.corpus }}
   governance:
     needs: plan
     if: needs.plan.outputs.full == 'true'
@@ -146,12 +142,11 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
         persist-credentials: 'false'
         fetch-depth: '0'
-    - uses: ./.github/actions/setup-runtime
     - name: Run governance category once
-      run: make test CATEGORY=governance
+      run: python3 tools/delivery/harness.py run --profile governance -- make test CATEGORY=governance
   verify:
     if: always()
-    needs: [plan, fast, harness, unit, integration, e2e, governance]
+    needs: [plan, fast, harness, unit, integration, e2e, governance, i2-selftests]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -164,8 +159,10 @@ jobs:
       env:
         FULL: ${{ needs.plan.outputs.full }}
         MODE: ${{ needs.plan.outputs.mode }}
+        I2_SELFTESTS: ${{ needs.plan.outputs.i2_selftests }}
+        I2_SELFTEST_RESULT: ${{ needs.i2-selftests.result }}
         RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","harness":"${{ needs.harness.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}"}'
-      run: python3 tools/verification/ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS"
+      run: python3 tools/verification/ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS" --i2-selftests "$I2_SELFTESTS" --i2-selftest-result "$I2_SELFTEST_RESULT"
   quality-results:
     if: always() && github.event_name == 'pull_request' && needs.plan.outputs.mode != 'harness'
     needs: [plan, fast, harness, unit, integration, e2e, governance, verify]
@@ -184,7 +181,7 @@ jobs:
       env:
         FULL: ${{ needs.plan.outputs.full || 'unknown' }}
         RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}","verify":"${{ needs.verify.result }}"}'
-      run: python3 tools/delivery/quality-graph-report.py --full "$FULL" --results-json "$RESULTS" --graph-digest 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a --output-dir .quality-graph/reports
+      run: python3 tools/delivery/quality-graph-report.py --full "$FULL" --results-json "$RESULTS" --graph-digest 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e --output-dir .quality-graph/reports
     - name: Collect plan
       id: collect-plan
       if: always()
@@ -196,7 +193,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/plan.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -219,7 +216,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/fast.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -242,7 +239,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/unit.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -265,7 +262,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/integration.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -288,7 +285,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/e2e.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -311,7 +308,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/governance.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -334,7 +331,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/verify.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 15c9f1f89174f43475045911735a970955d54e4864597b2c1f14efbf782b1c4e
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
