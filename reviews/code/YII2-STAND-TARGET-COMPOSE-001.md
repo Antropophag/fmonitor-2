@@ -50,3 +50,29 @@ Fix both validator defects and corresponding tests; complete correction Gate 3; 
 All prior Gate 5 findings are resolved: wrong-type images fail with the exact safe response; symlinked parent components fail canonical-path comparison; the package is clean and bounded; all generated focused obligations are present and GREEN; deterministic serialization/environment behavior is covered; Compose has an explicit required shared image and no mutable default; isolated builds may use only an explicit temporary tag under the clarified contract; `render-dependencies.py` owns template regeneration/check; and the test remains readable and diagnosable. Standards and spec axes are both approved. No new scope creep, security, history, authorization, integration-boundary or maintainability finding was found.
 
 CI, PR, merge and deployment remain `UNKNOWN` and are not approved by this Gate 5 verdict.
+
+---
+
+## CI correction Gate 5 review — 2026-09-13
+
+- Reviewer: independent agent `/root/gate5_target_compose` (gpt-5.6-sol / low); authored neither tests, correction nor production implementation
+- Reviewed commit: `d9938aed0633c2b2d5ef730e43771931502fba32`; candidate source `d3503af58c85a9846b25a63bb0b99c6ec3c28dd2ff45e52278175e037b18333d`; executable source `80ad0d34865eb1d59d86d0a94434c3eb8d2578ec9aadee1d5745c42eec9cb6ec`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T093910Z-c410d836c7/package.json`; plan SHA-256 `d57368d66fc71c7c76688cccce30849d17b6c07e18508e2853a2a236a7eaf3cb`; clean committed snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verdict: `APPROVED`
+
+### Failure inventory and disposition
+
+CI `34749515238` was inspected as failed/cancelled evidence: governance and fast contained only the three development-setup fixture failures caused by the omitted generated runtime Compose target; verify failed their aggregation; unit was GREEN; integration/e2e cancellation was owner-requested. The correction adds that target to the established isolated fixture, binds the existing setup test under A3, and removes an accidental duplicate verification-input entry. It neither changes production behavior nor weakens/skips the renderer check.
+
+### Exact-source evidence — 8/8 GREEN
+
+1. Target contract: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292020824000000-e1eb57791bc24a78bc304082ec3d167d.json`
+2. Runtime Compose: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292025887178000-1958c0221a1647e2a4c9a92f0daa4db0.json`
+3. Development setup: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292115936169000-46265f5f8b214e83ad87513f8ce07177.json`
+4. Verification inventory: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292129323374000-a332aa33a952418eaabe21c7425c05f3.json`
+5. Pilot jobs Compose: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292183459456000-e5b7544d98cd413fa63dbb425fab1630.json`
+6. Change verification: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292233187160000-855c36259d4a47c7b048626392601299.json`
+7. Architecture guard: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292264470083000-9e15b7adc9544b45be42025ae369188a.json`
+8. Dependency render check: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292293665798000-eb5f5038b823427ca44ef2f102528129.json`
+
+Standards and spec axes are approved. No new scope, behavior, security, architecture or maintainability finding was found. A new full exact-commit CI must complete successfully before merge-ready; focused GREEN does not convert CI `34749515238` into GREEN, and deployment remains `UNKNOWN`.

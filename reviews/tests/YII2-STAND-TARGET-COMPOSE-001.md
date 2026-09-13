@@ -135,3 +135,23 @@ Correct the complete bounded matrix above, regenerate the exact-source package/e
 All prior test findings are resolved. Image fields are type-checked before regex use. Canonical path acceptance requires the resolved path to equal the supplied normalized absolute path, and the regression uses a symlink to an otherwise permitted external parent. Canonical output is exercised across serialization, cwd, locale and ambient variants. The readable helper structure remains intact. On the supported review host, sandbox write/network denial is combined with byte snapshots and guarded external executables; the small validator is independently auditable and contains no write/process/network seam. Compose requires an explicit shared image with no mutable default, while the clarified contract permits an explicit temporary tag only for isolated build tests. The renderer seam and its check are executable.
 
 No findings. This approval advances the corrected tests only; it does not approve CI, PR, merge, deployment, backup, reset or rollback.
+
+---
+
+## CI correction Gate 3 review — 2026-09-13
+
+- Reviewer: independent Gate 3/5 agent `/root/gate5_target_compose` (gpt-5.6-sol / low); authored neither the correction nor the implementation
+- Reviewed commit: `d9938aed0633c2b2d5ef730e43771931502fba32`; candidate source `d3503af58c85a9846b25a63bb0b99c6ec3c28dd2ff45e52278175e037b18333d`; executable source `80ad0d34865eb1d59d86d0a94434c3eb8d2578ec9aadee1d5745c42eec9cb6ec`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T093910Z-c410d836c7/package.json`; plan SHA-256 `d57368d66fc71c7c76688cccce30849d17b6c07e18508e2853a2a236a7eaf3cb`; clean committed snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Prior CI `34749515238`: governance/fast failed only three `development_setup_001_test.py` cases because the isolated fixture omitted the newly generated `deploy/runtime/compose.yaml`; verify failed aggregation; unit was GREEN; integration/e2e were cancelled by owner request. That run remains failed/cancelled evidence, not GREEN.
+- Verdict: `APPROVED`
+
+### Correction and sensitivity
+
+The correction is narrowly causal: `tests/Verification/development_setup_001_test.py` copies `deploy/runtime/compose.yaml` into the isolated checkout so every `render-dependencies.py --check` target is represented. The verification input adds the setup consumer to planned paths and A3 exactly once; the follow-up commit removes the accidental duplicate mapping. This preserves the renderer drift check rather than bypassing it, changes no production behavior, and directly catches removal of the fixture target.
+
+### Exact-source evidence — 8/8 GREEN
+
+`1789292020824000000-e1eb57791bc24a78bc304082ec3d167d`, `1789292025887178000-1958c0221a1647e2a4c9a92f0daa4db0`, `1789292115936169000-46265f5f8b214e83ad87513f8ce07177`, `1789292129323374000-a332aa33a952418eaabe21c7425c05f3`, `1789292183459456000-e5b7544d98cd413fa63dbb425fab1630`, `1789292233187160000-855c36259d4a47c7b048626392601299`, `1789292264470083000-9e15b7adc9544b45be42025ae369188a`, and `1789292293665798000-eb5f5038b823427ca44ef2f102528129` under `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/`.
+
+No findings. A new complete exact-commit CI is still required; the prior failed/cancelled run is not superseded by focused evidence alone.
