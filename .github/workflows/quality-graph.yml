@@ -52,15 +52,10 @@ jobs:
         fetch-depth: '0'
     - uses: ./.github/actions/setup-runtime
     - name: Syntax, architecture and verification policy
-      run: |
-        make lint architecture-check
-        python3 tools/delivery/render-dependencies.py --check
-        python3 tests/Verification/development_setup_001_test.py
-        python3 tests/Verification/verification_ci_001_test.py
-        uv sync --frozen
-        uv run --frozen python tools/delivery/render-current-quality-graph.py --check
-        python3 tools/delivery/check-current-quality-graph.py --root .
-        git diff --check
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.sha }}
+        EVENT: ${{ github.event_name }}
+      run: python3 tools/verification/ci.py run-fast-node --base "$BASE_REF" --event "$EVENT"
   harness:
     needs: plan
     if: needs.plan.outputs.mode == 'harness'
@@ -162,10 +157,11 @@ jobs:
         fetch-depth: '0'
     - name: Require every expected result
       env:
+        BASE_REF: ${{ github.event.pull_request.base.sha }}
         FULL: ${{ needs.plan.outputs.full }}
         MODE: ${{ needs.plan.outputs.mode }}
         RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","harness":"${{ needs.harness.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}"}'
-      run: python3 tools/verification/ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS"
+      run: python3 tools/verification/ci.py aggregate --full "$FULL" --mode "$MODE" --base "$BASE_REF" --results "$RESULTS"
   quality-results:
     if: always() && github.event_name == 'pull_request' && needs.plan.outputs.mode != 'harness'
     needs: [plan, fast, harness, unit, integration, e2e, governance, verify]
@@ -184,7 +180,7 @@ jobs:
       env:
         FULL: ${{ needs.plan.outputs.full || 'unknown' }}
         RESULTS: '{"plan":"${{ needs.plan.result }}","fast":"${{ needs.fast.result }}","unit":"${{ needs.unit.result }}","integration":"${{ needs.integration.result }}","e2e":"${{ needs.e2e.result }}","governance":"${{ needs.governance.result }}","verify":"${{ needs.verify.result }}"}'
-      run: python3 tools/delivery/quality-graph-report.py --full "$FULL" --results-json "$RESULTS" --graph-digest 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a --output-dir .quality-graph/reports
+      run: python3 tools/delivery/quality-graph-report.py --full "$FULL" --results-json "$RESULTS" --graph-digest 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b --output-dir .quality-graph/reports
     - name: Collect plan
       id: collect-plan
       if: always()
@@ -196,7 +192,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/plan.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -219,7 +215,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/fast.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -242,7 +238,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/unit.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -265,7 +261,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/integration.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -288,7 +284,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/e2e.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -311,7 +307,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/governance.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'
@@ -334,7 +330,7 @@ jobs:
         adapter: native
         report-path: .quality-graph/reports/verify.json
         command-outcome: ${{ steps.reports.outcome }}
-        graph-digest: 4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a
+        graph-digest: 7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b
         approval-findings: 'false'
         approval-files: 'false'
         approval-node: 'false'

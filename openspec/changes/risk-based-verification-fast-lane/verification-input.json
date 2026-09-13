@@ -1,0 +1,70 @@
+{
+  "change": "risk-based-verification-fast-lane-issue-118",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "quality-graph.yml",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness_context.py",
+    "tools/verification/ci.py",
+    "tests/Verification/change_verification_001_test.py",
+    "tests/Verification/delivery_harness_001_test.py",
+    "tests/Verification/fast_lane_118_admission_test.py",
+    "tests/Verification/fast_lane_118_classification_test.py",
+    "tests/Verification/verification_ci_001_test.py",
+    "specs/DELIVERY-FAST-LANE-118-V1.md",
+    "openspec/changes/risk-based-verification-fast-lane/proposal.md",
+    "openspec/changes/risk-based-verification-fast-lane/design.md",
+    "openspec/changes/risk-based-verification-fast-lane/tasks.md",
+    "openspec/changes/risk-based-verification-fast-lane/specs/delivery/risk-based-verification-lanes/spec.md",
+    "openspec/changes/risk-based-verification-fast-lane/specs/delivery/current-ci-quality-graph/spec.md",
+    "openspec/changes/risk-based-verification-fast-lane/verification-input.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-FAST-LANE-118-V1",
+      "acceptance_id": "F01-F03-F04-F06-F07-F10-MIN-F12",
+      "spec_path": "specs/DELIVERY-FAST-LANE-118-V1.md",
+      "seam": "change-verification plan/check/refresh, harness prepared review package, and Quality Graph exact-source admission",
+      "seam_kind": "infrastructure",
+      "tests": [
+        "tests/Verification/fast_lane_118_classification_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/fast_lane_118_classification_test.py": "INTENDED_RED"
+      },
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "retained_evidence": {"status": "not_applicable", "reason": "classification RED records are retained by the delivery harness"},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "planner fixture owns one isolated repository"},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_classification_test.py"]}
+      }
+    },
+    {
+      "spec_id": "DELIVERY-FAST-LANE-118-V1",
+      "acceptance_id": "MIN-F12",
+      "spec_path": "specs/DELIVERY-FAST-LANE-118-V1.md",
+      "seam": "tools/verification/ci.py aggregate --mode fast",
+      "seam_kind": "infrastructure",
+      "tests": ["tests/Verification/fast_lane_118_admission_test.py"],
+      "gate3_expected": {"tests/Verification/fast_lane_118_admission_test.py": "GREEN"},
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "retained_evidence": {"status": "not_applicable", "reason": "harness retains the CI admission RED record"},
+        "filesystem_effects": {"status": "not_applicable", "reason": "admission reads plan and results without repository writes"},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "aggregate is read-only over one exact-source plan"},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/fast_lane_118_admission_test.py"]}
+      }
+    }
+  ]
+}

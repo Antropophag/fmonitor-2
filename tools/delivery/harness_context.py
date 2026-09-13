@@ -315,7 +315,10 @@ def _refresh_active_binding(helpers):
     refreshed.write_text(module.canonical(plan), encoding="utf-8")
     active.update(source=_source(helpers, helpers.ROOT), plan=str(refreshed),
                   contracts=sorted({item["spec_path"] for item in plan["acceptances"]}),
-                  obligation_count=len(plan["commands"]), refreshed_at=_now())
+                  obligation_count=len(plan["commands"]),
+                  verification_lane=plan.get("verification_lane", "STANDARD"),
+                  required_reviews=plan.get("required_reviews", ["gate3", "final"]),
+                  selected_checks=plan.get("selected_checks", []), refreshed_at=_now())
     binding_path = _binding_path(helpers)
     temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
     temporary.write_text(json.dumps(active, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
@@ -338,7 +341,10 @@ def _context(helpers, role="root"):
         prefix += f" ACTIVE_PLAN_REFRESH_FAILED={type(error).__name__}."
     if not active:
         return prefix + " ROOT_SCOPE_REQUIRED: bind the owner's issue to an OpenSpec/verification input once before implementation."
-    role_route = {"reviewer": "Reviewer independently checks the supplied gate/source/evidence and returns a verdict; preparation is not approval.",
+    fast_review = (active.get("verification_lane") == "FAST" and role == "reviewer")
+    role_route = {"reviewer": ("Reviewer performs the single FAST final review of test sensitivity, diff, classification, critical-boundary absence, RED-to-GREEN evidence and selected checks; preparation is not approval."
+                                if fast_review else
+                                "Reviewer independently checks the supplied gate/source/evidence and returns a verdict; preparation is not approval."),
                   "executor": "Executor changes only the bound scope and records focused verification through harness run.",
                   "root": "Root resolves scope/spec/tests and dispatches separate executor and independent reviews."}.get(role, "Use only this role's bounded package.")
     return (prefix + " " + role_route + f" Active binding: input={active['input']}; base={active['base']}; "
