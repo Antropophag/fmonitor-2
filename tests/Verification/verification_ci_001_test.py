@@ -419,6 +419,13 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Deployment/yii2_canonical_migrations_package_001_test.py',
             'python3\ttests/Deployment/yii2_production_image_cleanup_001_test.py',
             'python3\ttests/Deployment/yii2_stand_target_compose_001_test.py',
+            'php\ttests/Yii2/yii2_stand_backup_console_001_test.php',
+            'php\ttests/Yii2/yii2_stand_backup_ownership_001_test.php',
+            'python3\ttests/Architecture/yii2_stand_backup_boundary_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_backup_target_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_backup_bundle_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_backup_preservation_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_backup_replay_001_test.py',
         ], e2e.stdout.splitlines())
 
 
