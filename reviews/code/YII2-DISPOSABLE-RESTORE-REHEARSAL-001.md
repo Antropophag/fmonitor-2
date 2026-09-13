@@ -131,3 +131,63 @@ All eleven focused-plan records are freshly GREEN and source-bound to candidate 
 `APPROVED`
 
 Gate 5 passes for exact candidate source `1e2fd475d5be43dd26eb4cbbbbc7bb26d33530122d3afa5eea0dce164ab014ce`. Root must preserve these reviewed bytes for commit/publication. Exact-source CI, authorized disposable roundtrip/rollback, PR/merge, deployment and production cutover remain distinct deferred actions; this documentation review authorizes none of them.
+
+---
+
+## Runtime-configuration blocker correction Gate 5 review — 2026-09-13
+
+- Reviewer: independent `gate5_runtime_mismatch`; authored none of the reviewed production code, tests, or evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T205524Z-860375cbdd/package.json`.
+- Reviewed reconstructible source over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`: candidate source `db0b6c09ab43f6faddec218de2af49a28ba4c43fd09c982eae4874621f4eaa29`, executable source `8400429fbafcd9eebd434b2a223ec381a3a7eaf3ce6bd91b4d7251cc240485ca`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T205524Z-860375cbdd/snapshot/source.patch`, SHA-256 `0785621bcbd931730f0d826c09055803df4cea723c4d4a8c212c23c6857bf288`.
+- Controlling test review: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, sections “Runtime-configuration correction v2” and “Runtime-configuration post-implementation test-delta review,” both `APPROVED`.
+
+### Assessment
+
+No findings remain in the blocker-only correction delta.
+
+`StandRuntimeConfiguration` is the single validated owner of the canonical process-table prefix and the artifact/Yii-session children relative to `FMONITOR_SESSION_STATE_ROOT`. Both production drivers receive that configuration and the shared `StandProcess` port; their native default preserves the production subprocess behavior. Backup archive, restore materialization, and post-restore evidence consistently use the configured state-relative paths. Restore evidence constructs the jobs, job-event, outbox-intent, outbox-attempt, worker-heartbeat, and rehearsal-probe identifiers through the shared prefix owner. The drivers contain no second list of those table names and no legacy `/state/fmonitor2/...` path.
+
+The approved process-boundary test invokes both real production drivers with prefix `fm2_`, records emitted argv/stdin length/environment names, requires exact `fm2_fm2_*` identifiers and `/state/artifacts` plus `/state/yii-sessions`, and rejects unprefixed/legacy names and the doubled `/state/fmonitor2/...` layout. It is therefore sensitive to missing, doubled, or wrongly placed prefixes and paths rather than merely checking source tokens. The configuration test separately rejects invalid prefixes and paths outside or below the direct managed-state children.
+
+Secret handling is unchanged in substance: the database secret is read only after admission/preflight, is supplied through the subprocess environment, and is not placed in argv, returned evidence, or the recording test's captured values. The correction introduces no new state owner, destructive operation, scope expansion, or duplicated hard-coded runtime identity.
+
+### Evidence and deferred state
+
+The exact package contains all 13 planned focused records, each GREEN and source-bound to candidate `db0b6c09ab43f6faddec218de2af49a28ba4c43fd09c982eae4874621f4eaa29` / executable source `8400429fbafcd9eebd434b2a223ec381a3a7eaf3ce6bd91b4d7251cc240485ca`. During this review the two new PHP boundary tests were rerun and GREEN, all four changed production PHP files passed `php -l`, and `git diff --check` was clean.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. No destructive action or authorization package was executed during this review. Authorized disposable roundtrip/rollback, exact-source full CI, publication/merge, deployment, and production cutover remain separate deferred actions and are not inferred GREEN.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for the runtime-configuration blocker correction at exact candidate source `db0b6c09ab43f6faddec218de2af49a28ba4c43fd09c982eae4874621f4eaa29`. Root must preserve the reviewed implementation and test bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
+
+---
+
+## Jobs-readiness blocker correction Gate 5 review — 2026-09-14
+
+- Reviewer: independent `gate5_jobs_readiness`; authored none of the reviewed contract, test, implementation, or evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T211129Z-5a2762fe34/package.json`.
+- Reviewed reconstructible source over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`: candidate source `b46bf3fa09a25f57a5132c62252bee65c27e3a28bb79b1d8735d8e82ee04e930`, executable source `79e1b2b94d6773e3be58c55fa86e8851777e5d5a1653993a33baba98c79ff501`.
+- Snapshot patch SHA-256: `c2ffbd632628fd4030454353720e4911d34fa55f390a488cce33faf3cbfcdef1`; verification plan SHA-256: `7cc685011446dbf28d0c562b14a05c95e3f5a4ec61d2d7626c8a536ba5196574`.
+- Controlling test review: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, sections “Jobs-readiness correction v2” and “Jobs-readiness post-implementation observation correction,” both `APPROVED`.
+
+### Assessment
+
+No findings remain in the jobs-readiness blocker correction.
+
+Normative A6 requires the disposable jobs worker alone to receive the fixed `FMONITOR_BITRIX_CONFIG=/run/fmonitor-secrets/bitrix-config.json` reference from the existing exact private `secrets` volume, excludes caller-provided path/value and rendered contents, excludes the scheduler, and preserves the fail-closed `php bin/yii jobs/health --interactive=0` healthcheck. The stable specification and bound OpenSpec delta state the same requirement, and the independently approved test delta exercises the rendered Compose model at that boundary.
+
+Both `deploy/runtime/compose.yaml` and the synchronized `tools/delivery/compose.runtime.yaml.in` add only the fixed worker environment value; the files are byte-identical. The worker continues to inherit the existing named `secrets:/run/fmonitor-secrets` volume. No host path, config contents, credential value, new mount, or scheduler configuration is introduced. The hostile caller value is ignored rather than interpolated, and the worker/scheduler commands, dependency ordering, stop policy, restart policy, and exact healthcheck definitions are unchanged.
+
+The focused jobs-readiness test was rerun during review and is GREEN. It proves the fixed worker reference, scheduler exclusion, hostile-value non-disclosure, logical named-volume source `secrets`, and exact health command for both jobs services. `git diff --check` is clean. The exact package contains all 14 planned focused records, each GREEN and source-bound to candidate `b46bf3fa09a25f57a5132c62252bee65c27e3a28bb79b1d8735d8e82ee04e930` / executable source `79e1b2b94d6773e3be58c55fa86e8851777e5d5a1653993a33baba98c79ff501`.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. No destructive action or authorization package was executed during this review. Authorized disposable roundtrip/rollback, exact-source CI, publication/merge, deployment, and production cutover remain separate deferred actions and are not inferred GREEN.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for the jobs-readiness blocker correction at exact candidate source `b46bf3fa09a25f57a5132c62252bee65c27e3a28bb79b1d8735d8e82ee04e930`. Root must preserve the reviewed compose, contract, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.

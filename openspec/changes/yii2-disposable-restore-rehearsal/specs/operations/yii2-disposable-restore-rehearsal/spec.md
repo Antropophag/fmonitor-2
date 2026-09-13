@@ -66,3 +66,15 @@ Repository SHALL содержать воспроизводимый spec/test/run
 #### Scenario: Legacy responsibility ещё существует
 - **WHEN** executable inventory находит хотя бы одну production responsibility `RuntimeRecovery`, не покрытую новым contour
 - **THEN** legacy implementation сохраняется, responsibility записывается явно и retirement не объявляется готовым
+
+### Requirement: Jobs readiness использует private canonical config reference
+Disposable jobs worker SHALL получать `FMONITOR_BITRIX_CONFIG` только как fixed
+`/run/fmonitor-secrets/bitrix-config.json` из exact attest-нутого private secrets
+volume. File SHALL быть regular non-symlink mode 0600 и подготовлен без вывода
+contents. Caller-provided path/value MUST NOT попадать в rendered service.
+Scheduler SHALL не получать Bitrix config, а существующий fail-closed
+`jobs/health --interactive=0` healthcheck MUST сохраняться.
+
+#### Scenario: Worker получает private config без ослабления health
+- **WHEN** canonical jobs profile rendered для disposable stand
+- **THEN** worker ссылается на fixed private-volume file, scheduler не получает config, secret/config contents отсутствуют в render, а оба jobs healthcheck сохраняют exact Yii command

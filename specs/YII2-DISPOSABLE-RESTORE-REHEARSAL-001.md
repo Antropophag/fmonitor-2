@@ -104,6 +104,15 @@ artifact/mode, session/job и golden subset assertions. Запуск rollback co
 
 ## 6. Audit, evidence, rejected cases и Done
 
+Jobs worker на disposable runtime MUST получать `FMONITOR_BITRIX_CONFIG` только
+как фиксированную ссылку `/run/fmonitor-secrets/bitrix-config.json` внутри уже
+смонтированного private secrets volume. Caller environment или compose variable
+MUST NOT подменять этот path либо раскрывать token/config bytes в rendered
+configuration. До запуска operator MUST положить canonical config как regular
+non-symlink mode 0600 file в exact attest-нутый secrets volume. Scheduler не
+получает Bitrix config. Существующий `jobs/health --interactive=0` healthcheck и
+fail-closed startup/readiness MUST сохраняться без ослабления.
+
 Ledger и safe summary содержат digests, operation/authorization ids, observed target
 ids, phases/timestamps и assertion outcomes, но не secrets, payloads или private
 paths. Полные логи/dumps/artifacts/cookies остаются во внешнем evidence root.

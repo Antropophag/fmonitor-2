@@ -3,6 +3,8 @@
   "planned_paths": [
     "app/RuntimeRestore/StandRestoreApplication.php",
     "app/RuntimeRestore/StandRestoreDriver.php",
+    "app/RuntimeRestore/StandRuntimeConfiguration.php",
+    "app/RuntimeRestore/StandProcess.php",
     "app/RuntimeRestore/ProductionStandRestoreDriver.php",
     "app/RuntimeRestore/RecordingStandRestoreDriver.php",
     "app/RuntimeRestore/StandRestoreAuthorization.php",
@@ -14,6 +16,10 @@
     "specs/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md",
     "tests/Deployment/yii2_disposable_restore_admission_001_test.py",
     "tests/Deployment/yii2_disposable_restore_driver_001_test.py",
+    "tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php",
+    "tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php",
+    "tests/Deployment/yii2_disposable_jobs_readiness_001_test.py",
+    "deploy/runtime/compose.yaml",
     "tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py",
     "tests/Deployment/yii2_disposable_restore_rollback_001_test.py",
     "tests/Support/stand_restore_authorization_probe.php",
@@ -34,15 +40,15 @@
       "spec_path": "openspec/changes/yii2-disposable-restore-rehearsal/specs/operations/yii2-disposable-restore-rehearsal/spec.md",
       "seam": "php bin/yii stand-restore/run with exact disposable authorization and observed target identities; name-only discovery is rejected before effects and credentials remain private",
       "tests": ["tests/Deployment/yii2_disposable_restore_admission_001_test.py"],
-      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_admission_001_test.py": "INTENDED_RED"}
+      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_admission_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-DISPOSABLE-RESTORE-REHEARSAL-001",
       "acceptance_id": "A2-existing-owner-production-driver",
       "spec_path": "openspec/changes/yii2-disposable-restore-rehearsal/specs/operations/yii2-disposable-restore-rehearsal/spec.md",
       "seam": "existing StandRestoreApplication orchestrates the injected real-effect driver after immutable bundle preflight while retaining PR #124 ledger lease replay and UNKNOWN semantics",
-      "tests": ["tests/Architecture/yii2_disposable_restore_boundary_001_test.py", "tests/Deployment/yii2_disposable_restore_driver_001_test.py", "tests/Deployment/yii2_stand_restore_failure_001_test.py", "tests/Deployment/yii2_stand_restore_roundtrip_001_test.py"],
-      "gate3_expected": {"tests/Architecture/yii2_disposable_restore_boundary_001_test.py": "INTENDED_RED", "tests/Deployment/yii2_disposable_restore_driver_001_test.py": "INTENDED_RED", "tests/Deployment/yii2_stand_restore_failure_001_test.py": "GREEN", "tests/Deployment/yii2_stand_restore_roundtrip_001_test.py": "GREEN"}
+      "tests": ["tests/Architecture/yii2_disposable_restore_boundary_001_test.py", "tests/Deployment/yii2_disposable_restore_driver_001_test.py", "tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php", "tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php", "tests/Deployment/yii2_stand_restore_failure_001_test.py", "tests/Deployment/yii2_stand_restore_roundtrip_001_test.py"],
+      "gate3_expected": {"tests/Architecture/yii2_disposable_restore_boundary_001_test.py": "GREEN", "tests/Deployment/yii2_disposable_restore_driver_001_test.py": "GREEN", "tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php": "GREEN", "tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php": "GREEN", "tests/Deployment/yii2_stand_restore_failure_001_test.py": "GREEN", "tests/Deployment/yii2_stand_restore_roundtrip_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-DISPOSABLE-RESTORE-REHEARSAL-001",
@@ -50,7 +56,7 @@
       "spec_path": "openspec/changes/yii2-disposable-restore-rehearsal/specs/operations/yii2-disposable-restore-rehearsal/spec.md",
       "seam": "known state through stand-backup/create and verify, exact disposable target destruction, stand-restore/run, runtime restart/readiness and independent DB artifact session job and golden assertions",
       "tests": ["tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py"],
-      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py": "INTENDED_RED"}
+      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-DISPOSABLE-RESTORE-REHEARSAL-001",
@@ -58,7 +64,7 @@
       "spec_path": "openspec/changes/yii2-disposable-restore-rehearsal/specs/operations/yii2-disposable-restore-rehearsal/spec.md",
       "seam": "failed candidate predicate followed by a separate authorized known-good restore operation and second restart readiness integrity proof",
       "tests": ["tests/Deployment/yii2_disposable_restore_rollback_001_test.py"],
-      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_rollback_001_test.py": "INTENDED_RED"}
+      "gate3_expected": {"tests/Deployment/yii2_disposable_restore_rollback_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-DISPOSABLE-RESTORE-REHEARSAL-001",
@@ -67,6 +73,14 @@
       "seam": "executable RuntimeRecovery responsibility inventory and exact disposable evidence keep production deployment unauthorized and identify later retirement prerequisites",
       "tests": ["tests/Architecture/yii2_disposable_restore_inventory_001_test.py"],
       "gate3_expected": {"tests/Architecture/yii2_disposable_restore_inventory_001_test.py": "GREEN"}
+    }
+    ,{
+      "spec_id": "YII2-DISPOSABLE-RESTORE-REHEARSAL-001",
+      "acceptance_id": "A6-jobs-runtime-readiness-configuration",
+      "spec_path": "openspec/changes/yii2-disposable-restore-rehearsal/specs/operations/yii2-disposable-restore-rehearsal/spec.md",
+      "seam": "docker compose jobs profile supplies the canonical private Bitrix config file reference required by YiiJobsRuntimeEnvironment without weakening readiness",
+      "tests": ["tests/Deployment/yii2_disposable_jobs_readiness_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_disposable_jobs_readiness_001_test.py": "INTENDED_RED"}
     }
   ]
 }

@@ -281,3 +281,171 @@ No destructive branch was executed, and no implementation review is implied.
 `APPROVED`
 
 The exact-integrity test delta may proceed to implementation correction and a new exact-source Gate 5 review. This approval does not establish safe volume staging, approve production code, or authorize rehearsal, CI, publication, deployment, or cutover. `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Runtime-configuration correction — narrow Gate 3 review — 2026-09-13
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the reviewed test or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T203309Z-74fcac891b/package.json`.
+- Exact reviewed source: candidate source `7067589053c02f94716fe6e3cd52f9f97c52687a035d0a1842e15b9a929350f2`, executable source `71f22bdf156918215740355b9fd3b10b9f61fde32a49f803f7e3520b1430deae`, over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T203309Z-74fcac891b/snapshot/source.patch`, SHA-256 `ecd83ca27c07d20af921ae765e91fb9b9bad00d0ff6f669918167c7415e897cd`.
+- Scope: new `tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php` only; production implementation is outside this review.
+
+### Assessment
+
+The canonical table-name assertions are traceable to the existing runtime convention: `FMONITOR_PROCESS_TABLE_PREFIX` is applied to logical names that already include their `fm2_` namespace. With prefix `fm2_`, the exact expected values such as `fm2_fm2_jobs` therefore detect a missing prefix, an incorrect single-prefix interpretation, and an extra second application. The invalid-prefix case is deterministic and the retained run fails before implementation because `StandRuntimeConfiguration` is absent, rather than because setup is broken.
+
+The path expectations also correctly identify the compose ownership model: `deploy/runtime/compose.yaml` mounts the persistent state volume at `/home/fmonitor/.local/state/fmonitor2`; artifacts and Yii sessions are children `artifacts` and `yii-sessions`. A driver mounting that volume at `/state` must consume those relative children and must not insert another `fmonitor2` component.
+
+### Blocking finding
+
+1. **HIGH — driver use of the canonical paths and table names is asserted only through source substrings, so the test does not behaviorally detect the reported runtime mismatch.** Locations: `tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php:12-15`; normative spec sections 3–4. The test proves the proposed value object's outputs, but the production drivers can still query or restore the wrong paths/tables while passing: they may retain the bad behavior through concatenated strings or another helper, and merely mention or instantiate `StandRuntimeConfiguration`. Conversely, line 14's broad `FROM fm2_outbox` substring also matches a literal correct `FROM fm2_outbox_intents`, making the lexical constraint implementation-shaped. This repeats the sensitivity defect already rejected for the earlier volume-publication source-token assertion. Add a deterministic recording/process-boundary case that invokes each driver with a non-default valid prefix and compose-owned mount layout, captures its generated DB/filesystem operations, and proves the exact configured table identifiers and relative artifact/session paths are used. The case should fail on the current hard-coded `fm2_jobs`/`fm2_outbox`/`fm2_job_recovery` and `/state/fmonitor2/...` behavior, without depending on source spelling. Retain fresh exact-source intended RED.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789331545134617000-654e6c12dfce40e5bc34017d4f670bd2.json` is start/end source-stable and `INTENDED_RED` at the reviewed candidate/executable sources. Its failure is valid for the missing canonical configuration owner, but it cannot establish behavioral sensitivity of driver consumption because execution stops at `class_exists`.
+
+`CHANGES_REQUESTED`
+
+Gate 4 is blocked for this correction until driver consumption is tested at a behavioral boundary with retained intended RED. The table-prefix and relative-path value expectations themselves need no change. This verdict does not review production code or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Runtime-configuration correction v2 — narrow Gate 3 rereview — 2026-09-13
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the reviewed tests or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T203723Z-284d038832/package.json`.
+- Exact reviewed source: candidate source `fca37c8446be5d146828a7d94bd57283cdeb65c05e35e1a7c850218e27809b7a`, executable source `6553794765fa329667eb26e94c16b5755d23c618a5df1e1bd547f89ef56a53be`, over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+- Snapshot patch SHA-256: `9fd3c013c5f6164047707649bb6b512e3c9b855e188c0e744e21af5479d37183`; correction delta SHA-256: `c181581b8291fa4c4f1f042673a887aa085d9123dac500b415c55c6a472c6137`.
+- Scope: removal of the rejected source-string assertions from `tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php` and addition of `tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php`.
+
+### Assessment
+
+The prior blocking finding is resolved. The value-object test retains the independently derived canonical mappings and invalid configurations but no longer inspects production source text. The new test constructs a valid authorization and canonical runtime configuration, invokes the real `ProductionStandRestoreDriver` through preflight and restore and the real `ProductionStandBackupDriver` through capture, and injects only the external-process port. It records the argv, stdin size, and environment names actually emitted by those drivers.
+
+The resulting assertions distinguish the reported regressions at the executable boundary: required commands contain the exact prefixed jobs, outbox, job-event, and heartbeat identifiers and use `/state/artifacts` plus `/state/yii-sessions`; the old unprefixed names and duplicated `/state/fmonitor2/...` roots are rejected. This is sensitive to both no-prefix/wrong-prefix behavior and compose-volume path ownership without constraining shell spelling or implementation structure. Credential values are not captured, only environment names.
+
+The fixture responses are deterministic and sufficient to carry the driver through identity observation, database evidence, filesystem materialization/observation, health, and backup capture. Expected identifiers and paths come from the established runtime prefix convention and `deploy/runtime/compose.yaml`, not from implementation output.
+
+### Evidence and controlling verdict
+
+- Runtime mapping record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789331786994175000-a01c8484a00d49dd8e6d5520eb3d5fb6.json`: source-stable `INTENDED_RED` for the missing `StandRuntimeConfiguration`.
+- Process-boundary record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789331788468254000-147ca63a18b54b1ba3784ff87487a0f1.json`: source-stable `INTENDED_RED` for the missing injectable `StandProcess`/configuration seam.
+- The eight prior package checks are source-stable GREEN; destructive roundtrip/rollback branches remain action-gated and are not claimed as executed evidence.
+
+No findings remain in this correction scope.
+
+`APPROVED`
+
+Gate 4 may proceed for this runtime-configuration correction against exact candidate source `fca37c8446be5d146828a7d94bd57283cdeb65c05e35e1a7c850218e27809b7a`. Any change to these expectations or executable tests requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not review production implementation or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Runtime-configuration post-implementation test-delta review — 2026-09-13
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the reviewed test delta, production implementation, or GREEN evidence.
+- Approved RED baseline: package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T203723Z-284d038832/package.json`, candidate `fca37c8446be5d146828a7d94bd57283cdeb65c05e35e1a7c850218e27809b7a`, executable `6553794765fa329667eb26e94c16b5755d23c618a5df1e1bd547f89ef56a53be`.
+- Implementation package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T203854Z-23e1ae9553/package.json`, snapshot patch SHA-256 `17156df012e7cc06907aaaeff09d75339b70bd61a9432820cbcce65564ffebd9`.
+- Exact GREEN test source: candidate `7635890b3e7c5703553fa77436875f4659843093cb4bc43b77fc9022c3bdc5fc`, executable `8400429fbafcd9eebd434b2a223ec381a3a7eaf3ce6bd91b4d7251cc240485ca`, over head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+
+### Assessment
+
+The post-implementation test delta changes fixture mechanics only. `realpath(sys_get_temp_dir())` makes the authorization's absolute evidence and credential paths agree with macOS's canonical `/private/var/...` identity. `StandBackupFilesystem::canonical()` produces the same canonical JSON format consumed by production authorization validation instead of maintaining a test-local approximation. Replacing nonexistent `assertTrue` calls with exact `assertSameValue(true|false, ...)` uses the repository test API while preserving each predicate.
+
+No expected table identifier, forbidden legacy identifier, volume-relative path, driver invocation, recorded process field, authorization binding, or fake process response was removed or relaxed. The test still executes both real production drivers through the injected process boundary and still fails if emitted commands use an unprefixed/wrong table or the duplicated `/state/fmonitor2/...` layout. Using the production canonical serializer affects only valid fixture admission; the expected runtime names and paths remain independently literal.
+
+### GREEN evidence and controlling verdict
+
+- Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789332287991560000-37f594b282e346e28b60d936df592839.json`: runtime configuration GREEN, start/end stable at candidate `7635890b3e7c5703553fa77436875f4659843093cb4bc43b77fc9022c3bdc5fc` and executable `8400429fbafcd9eebd434b2a223ec381a3a7eaf3ce6bd91b4d7251cc240485ca`.
+- Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789332289896227000-3b84564eacca48ddaf00f9df45f23738.json`: process boundary GREEN at the same stable source.
+
+No findings remain in the test delta.
+
+`APPROVED`
+
+The corrected tests retain the prior Gate 3 approval and may be used for exact-source Gate 5 review. This approval does not approve the production implementation itself or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Jobs-readiness correction — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_jobs_readiness`; authored none of the reviewed test, specification inputs, or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T205951Z-ecd0d5e561/package.json`.
+- Exact reviewed source: candidate source `254ef99af7944e00b8072198f633f8dfbc25ce7e837c2b145bffcc79898eeece`, executable source `3b4d87ed30b084a71eb398c857b00b2eb7d63755ab733f11468e4b129bbbaac2`, over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+- Snapshot patch SHA-256: `1d25babda0e1d2ac8000b4cc2441e65e1feba4cec449f55a77e8541b025c7c60`.
+- Scope: new `tests/Deployment/yii2_disposable_jobs_readiness_001_test.py` and its A6 verification mapping only; production implementation is outside this review.
+
+### Assessment
+
+The retained run is a valid, deterministic intended RED for the currently absent worker configuration reference. Docker Compose renders successfully; the test then fails only because `jobs-worker` has no `FMONITOR_BITRIX_CONFIG`, while the current scheduler omission and generic named secrets-volume mount are observed. Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789333153610797000-a5443a07c1b047cc9e00ae5ceaef5590.json` is start/end source-stable, exits `1`, and retains the precise `None` versus `/run/fmonitor-secrets/bitrix-config.json` assertion failure. The verification input and generated plan both map this test to A6 with `INTENDED_RED`.
+
+### Blocking findings
+
+1. **HIGH — the new acceptance has no normative contract traceability.** `openspec/changes/yii2-disposable-restore-rehearsal/verification-input.json:78-83` introduces A6 and its exact worker-only path, but neither the bound OpenSpec delta nor `specs/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md` states that requirement. The existing contract requires fresh readiness and secret privacy generally; it does not specify `FMONITOR_BITRIX_CONFIG=/run/fmonitor-secrets/bitrix-config.json`, worker-only delivery, or preservation of the jobs healthcheck. Gate 1 requires normative behavior before Gate 2, and a verification-input seam cannot create that behavior. Add the exact requirement/scenario to the bound contract and make the test cite the spec ID.
+
+2. **HIGH — the test does not prove that readiness is not weakened or that Bitrix secret values remain undisclosed.** `tests/Deployment/yii2_disposable_jobs_readiness_001_test.py:9-13` inspects only the environment key and one generic volume target/type. It never asserts either service's existing `php bin/yii jobs/health --interactive=0` healthcheck or its timing/retry policy, and it supplies no sentinel Bitrix secret whose absence from rendered configuration/output can be checked. A correction could remove/weaken healthchecks or interpolate a secret value and this test would still pass. Extend A6 with exact healthcheck-preservation assertions and a sentinel non-disclosure assertion, or map an existing executable contract that proves them into this exact package.
+
+3. **MEDIUM — the claimed existing private secrets-volume source is under-specified.** Line 13 accepts any Compose volume mounted at `/run/fmonitor-secrets`; it does not assert that the mount uses the existing `secrets` volume source, is read-only where required by the accepted contract, or that the referenced config file is actually supplied by a private file mount/source. A nonexistent path inside an unrelated generic volume passes. Assert the exact rendered source/config-specific delivery and applicable read-only property without exposing its contents.
+
+The compressed one-line test body and absence of a subprocess timeout are non-blocking maintainability/determinism concerns: failures are harder to localize, and a stalled Compose invocation would not remain bounded.
+
+### Controlling verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 is blocked for this jobs-readiness correction until the normative contract and executable coverage prove the full worker-reference, scheduler-exclusion, private-source/non-disclosure, and unchanged-readiness claim with fresh exact-source intended RED evidence. This verdict does not review production code or authorize destructive rehearsal, CI, publication, deployment, or cutover; harness state remains `action_authorized: false`, and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Jobs-readiness correction v2 — narrow Gate 3 rereview — 2026-09-14
+
+- Reviewer: independent `gate3_jobs_readiness`; authored none of the corrected contracts, executable test, or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T210348Z-59e3d428ae/package.json`.
+- Exact reviewed source: candidate source `6b05c08c29090df56fb28c0f92b6b91c594f691e3be67ff39abc5cea05db7df1`, executable source `fa70b140882d90b0905c784ec7ad0510dc953df9c4c1efe0e977a074daeaeca9`, over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+- Snapshot patch SHA-256: `7467d70e3667ba49d45cd336de6e334090904539a700848cb73bad1bce9cdcd1`.
+- Scope: corrected A6 requirements in the stable and delta specifications, its verification mapping, and `tests/Deployment/yii2_disposable_jobs_readiness_001_test.py`; production implementation remains outside this review.
+
+### Assessment
+
+The previous traceability finding is resolved. The stable specification and bound OpenSpec delta now normatively require the worker-only fixed `/run/fmonitor-secrets/bitrix-config.json` reference from the exact private secrets volume, forbid caller path/value and rendered secret contents, exclude the scheduler, define the regular non-symlink mode-0600 operator precondition, and preserve the fail-closed `jobs/health --interactive=0` healthcheck. A6 maps the executable Compose seam directly to that requirement.
+
+The corrected test is sensitive to the material regressions. It supplies a hostile caller value and proves that value is absent from the rendered worker service; requires the fixed canonical worker reference; requires scheduler exclusion; resolves a fixed Compose project name and proves `/run/fmonitor-secrets` is the existing named `fm2-disposable-jobs_secrets` volume; and asserts the exact `CMD php bin/yii jobs/health --interactive=0` healthcheck for both worker and scheduler. Expected path, volume identity, service separation, and command are literal contract values rather than values copied from production output. Docker Compose rendering is isolated from production systems and does not read or print real credentials.
+
+The mode-0600 regular non-symlink file rule is correctly expressed as an operator precondition rather than fabricated by the declarative Compose-render test; this Gate 3 approval does not claim that a live disposable volume has been prepared or inspected.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789333378254168000-9c512d4c25b244d5a7a261a6ed382fa7.json` is source-stable at candidate `6b05c08c29090df56fb28c0f92b6b91c594f691e3be67ff39abc5cea05db7df1` and executable source `fa70b140882d90b0905c784ec7ad0510dc953df9c4c1efe0e977a074daeaeca9`. It exits `1` after successful Compose rendering solely because the current worker value is `None` rather than the required fixed reference. This is the intended missing behavior, not setup failure. The remaining ten mapped checks in the exact package are GREEN.
+
+No findings remain in the corrected A6 Gate 3 scope. The earlier `CHANGES_REQUESTED` verdict is superseded for this correction by:
+
+`APPROVED`
+
+Gate 4 may proceed for the jobs-readiness correction against this exact reviewed source. Any change to the normative expectation or executable test requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not review production implementation or authorize destructive rehearsal, CI, publication, deployment, or cutover; harness state remains `action_authorized: false`, and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Jobs-readiness post-implementation test-delta review — 2026-09-14
+
+- Reviewer: independent `gate3_jobs_readiness`; authored neither the test delta nor production implementation.
+- Approved RED baseline: package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T210348Z-59e3d428ae/package.json`, candidate `6b05c08c29090df56fb28c0f92b6b91c594f691e3be67ff39abc5cea05db7df1`, executable `fa70b140882d90b0905c784ec7ad0510dc953df9c4c1efe0e977a074daeaeca9`.
+- Exact GREEN source: candidate `1070a44b57e9c213bf2e1ebb5c08c6cf19ceaf54be621498a1c9565b06040860`, executable `79e1b2b94d6773e3be58c55fa86e8851777e5d5a1653993a33baba98c79ff501`, over base/head `56a65b5d0e166721e3c6aa62f7a96378fe45dbee`.
+- Scope: the single expected worker volume-source value in `tests/Deployment/yii2_disposable_jobs_readiness_001_test.py`, changed from engine-resolved `fm2-disposable-jobs_secrets` to Compose configuration's logical named-volume source `secrets`.
+
+### Assessment
+
+The adjustment corrects the observation layer without weakening the approved expectation. `docker compose config --format json` describes the canonical Compose model and reports the top-level logical volume key `secrets`; project-name prefixing is an engine resource-name concern and is not the rendered service's `source` value. The test continues to require volume type `volume`, target `/run/fmonitor-secrets`, worker value `/run/fmonitor-secrets/bitrix-config.json`, absence of the hostile caller value, scheduler exclusion, and the exact `CMD php bin/yii jobs/health --interactive=0` healthcheck for both services.
+
+Consequently, the test still catches substitution of an unrelated volume, bind mount, wrong target/path, caller-controlled or exposed value, scheduler leakage, and health-command regression. No accepted security, service-separation, or readiness predicate was removed or broadened.
+
+### GREEN evidence and controlling verdict
+
+- Jobs record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789333623063785000-dc272a8e24744990a923948b3b39ae6c.json`: source-stable GREEN, exit `0`, one test passed at the exact GREEN candidate/executable source.
+- Adjacent stand-target Compose record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789333624166644000-cd0650d1b3c24f76b70a0386e6bf68a8.json`: source-stable GREEN, exit `0`, three topology/configuration tests passed at the same source.
+
+No findings remain in the test delta.
+
+`APPROVED`
+
+The corrected test retains the A6 Gate 3 approval and may be used for exact-source Gate 5 review. This approval does not approve the production implementation itself or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
