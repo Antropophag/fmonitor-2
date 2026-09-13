@@ -19,7 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && git clone https://github.com/Antropophag/shlz-ui.git /shlz-ui \
     && git -C /shlz-ui checkout --detach "$SHLZ_UI_REVISION" \
     && rm -rf /shlz-ui/.git \
-    && npm --prefix /shlz-ui ci
+    && npm --prefix /shlz-ui ci \
+    && node -e 'const fs=require("fs"),p="/shlz-ui/node_modules/playwright-core/package.json",v=require(p);v.exports["./browsers.json"]="./browsers.json";fs.writeFileSync(p,JSON.stringify(v))' \
+    && PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+        node /shlz-ui/node_modules/playwright/cli.js install chromium
 
 FROM python:${PYTHON_VERSION}-bookworm@${PYTHON_IMAGE_DIGEST} AS python
 FROM composer:${COMPOSER_VERSION}@${COMPOSER_IMAGE_DIGEST} AS composer
@@ -37,9 +40,15 @@ COPY --from=node /usr/local/ /usr/local/
 COPY --from=python /usr/local/ /usr/local/
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 COPY --from=uv /uv /uvx /usr/local/bin/
+COPY composer.json composer.lock pyproject.toml uv.lock /opt/fmonitor/
+RUN composer install --working-dir=/opt/fmonitor --no-interaction --no-scripts \
+    && UV_PROJECT_ENVIRONMENT=/opt/fmonitor/.venv \
+        uv sync --directory=/opt/fmonitor --frozen --no-install-project
 
 ENV NODE_PATH=/shlz-ui/node_modules \
-    FMONITOR_SHLZ_UI_ROOT=/shlz-ui
+    FMONITOR_SHLZ_UI_ROOT=/shlz-ui \
+    FMONITOR_COMPOSER_VENDOR=/opt/fmonitor/vendor \
+    FMONITOR_PYTHON_ENV=/opt/fmonitor/.venv
 WORKDIR /workspace
 
 FROM common AS governance
@@ -50,4 +59,6 @@ ENV FMONITOR_PROFILE=integration
 
 FROM common AS browser
 COPY --from=shlz-ui /shlz-ui /shlz-ui
-ENV FMONITOR_PROFILE=browser
+COPY --from=shlz-ui /ms-playwright /ms-playwright
+ENV FMONITOR_PROFILE=browser \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
