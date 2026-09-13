@@ -1,0 +1,20 @@
+{
+  "change": "connect-focused-profiles-to-test-services",
+  "planned_paths": [
+    "openspec/changes/connect-focused-profiles-to-test-services/owner-authorization.md",
+    "specs/DELIVERY-PROFILE-NETWORK-110.md",
+    "tools/delivery/run-in-profile",
+    "tests/Verification/quality_graph_ci_setup_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-PROFILE-NETWORK-110",
+      "acceptance_id": "DPN110-01-04",
+      "spec_path": "specs/DELIVERY-PROFILE-NETWORK-110.md",
+      "seam": "tools/delivery/run-in-profile <profile> <command> [args...]",
+      "tests": [
+        "tests/Verification/quality_graph_ci_setup_001_test.php"
+      ]
+    }
+  ]
+}
