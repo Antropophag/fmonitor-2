@@ -192,9 +192,17 @@ try {
     $activeExit = proc_close($active);
     preg_match('/DRAIN_COMPLETE ([0-9]+)ms/', $activeOut, $drainMatch);
     assertSameValue([0, true, ''], [$activeExit, isset($drainMatch[1]) && (int) $drainMatch[1] >= 1300, $activeErr], 'SIGQUIT drains and returns the complete active FPM response after sustained work');
-    $stopped = runtimeComposeCommand([...$base, 'ps', '--status', 'running', '--services'], $environment, $root);
-    assertRuntimeCompose($stopped, 'post-drain process inventory');
-    assertSameValue(false, in_array('php', preg_split('/\s+/', trim($stopped['stdout'])) ?: [], true), 'gracefully stopped FPM has no running container child');
+    $stoppedDeadline = microtime(true) + 5;
+    do {
+        $stopped = runtimeComposeCommand([...$base, 'ps', '--status', 'running', '--services'], $environment, $root);
+        assertRuntimeCompose($stopped, 'post-drain process inventory');
+        $phpStillRunning = in_array('php', preg_split('/\s+/', trim($stopped['stdout'])) ?: [], true);
+        if (!$phpStillRunning) {
+            break;
+        }
+        usleep(100000);
+    } while (microtime(true) < $stoppedDeadline);
+    assertSameValue(false, $phpStillRunning, 'gracefully stopped FPM has no running container child');
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'up', '--detach', '--wait', 'php', 'web'], $environment, $root), 'FPM restart after graceful drain');
 
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'stop', 'db'], $environment, $root), 'database outage fixture');
