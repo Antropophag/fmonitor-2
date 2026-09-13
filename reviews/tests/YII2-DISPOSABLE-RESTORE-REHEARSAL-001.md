@@ -559,6 +559,60 @@ Gate 4 may proceed for this correction against exact candidate source `20f1166c5
 
 ---
 
+## Native process environment inheritance — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta or retained evidence.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T225544Z-956c211747/package.json`.
+- Exact reviewed RED source: candidate `99488785111a9039ba9ec0e9e05b8843796e3d9117598ab3c9cfaca3d5060616`, executable `595c4802f539c6bbb86bcc321048e300f9d8c1bbf2f6630ef5b19e99b74a37f0`, over head `82be2fba2c0232675afde16fd86c659ea1f21215`.
+- Scope: inherited native-process environment and per-call override behavior; no destructive action or production implementation is reviewed.
+
+### Assessment
+
+The `putenv` canary is directly sensitive to the observed defect. PHP's complete process environment is available through `getenv()`, while `$_ENV` may omit variables introduced at runtime. The test invokes the real `NativeStandProcess`, requires a child shell to observe the canary, and removes it in `finally`. The retained failure occurs at the child exit because the current adapter supplies `array_merge($_ENV, $env)`, so it is valid intended RED rather than a test-local assertion error.
+
+### Blocking findings
+
+1. **MEDIUM — the PATH check unnecessarily depends on a live Docker daemon.** Location: `tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php:7`. `docker version --format '{{.Server.Version}}'` requires both the executable and a reachable server. A machine with correct inherited PATH but no running Docker daemon fails before the intended runtime-canary assertion, making RED/environment failures ambiguous and the otherwise bounded unit check nondeterministic. Exercise inherited PATH with a local command that requires PATH resolution but no external service, such as `sh -c 'command -v php >/dev/null'` or an equivalent repository-available executable.
+
+2. **HIGH — the required per-call secret override precedence is not tested.** Location: `tests/Deployment/yii2_disposable_restore_runtime_configuration_001_test.php:8`; `StandProcess::run(..., array $env)`. The requested correction must merge the complete inherited `getenv()` environment with per-call credential variables taking precedence. The current canary case passes an empty `$env`, so an implementation that merges in the wrong order (`array_merge($env, getenv())`) passes yet silently replaces a fresh per-call `MYSQL_PWD` or equivalent with an inherited stale value. Set an inherited canary value, invoke `run` with a different value for the same name, require the child to observe only the per-call value, and retain empty stdout so the secret/canary value is not disclosed. Keep the existing inherited-only case and `finally` cleanup.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789340557102163000-6d00867c313f4c6190e9bbe06992befc.json` is start/end stable at the exact reviewed candidate/executable sources. The Docker observer happened to pass and the test then fails with the explicit inherited-runtime-environment marker, proving the current `$_ENV` defect. It does not prove deterministic PATH behavior across environments or override precedence.
+
+`CHANGES_REQUESTED`
+
+Gate 4 for this narrow environment correction remains blocked until the external Docker dependency is removed and per-call override precedence is executable. No output/secret weakening is approved, and no destructive rehearsal, CI, publication, deployment, or cutover is authorized; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Native process environment inheritance v2 — narrow Gate 3 rereview — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta or retained evidence.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T225544Z-956c211747/package.json`.
+- Exact reviewed RED source: candidate `7cf24a5fc4a818cb2c2549333148f35c2b948aa5f4d490bfb0555a7095749d28`, executable `49e549b0bcadf126d540d31a24e5f9dceec399a90fc5156502b0b8b263257f1e`, over head `82be2fba2c0232675afde16fd86c659ea1f21215`.
+- Scope: inherited environment completeness, local PATH resolution, same-key per-call override precedence, cleanup, and output privacy; production implementation remains outside review.
+
+### Assessment
+
+Both prior findings are resolved. The PATH observer invokes `php` by name and checks a literal local result, relying only on the executable already required to run the test rather than a Docker daemon or external service. The inherited-only canary remains a direct check that `putenv` values from the complete `getenv()` environment reach the child.
+
+The new same-key case sets an inherited stale value, supplies a different fresh value through `StandProcess::run(..., $env)`, and requires the child to accept the fresh value. This fails if merge precedence is reversed. The shell emits no bytes and the test asserts exact empty stdout, so neither inherited nor per-call canary is disclosed. Both environment mutations are removed in `finally`, including failure paths.
+
+Together these cases are sensitive to the intended minimal implementation: complete inherited environment first, then per-call environment overrides. They do not relax subprocess failure handling, output handling, or credential privacy.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789340673749957000-0a5cd7327f0641748e0aa528ea0fe8c9.json` is start/end stable at the exact reviewed candidate/executable sources. The local PATH observer passes; execution then fails with the explicit inherited-runtime-environment marker because current `$_ENV` construction drops the `putenv` canary. This is valid intended RED. The override case is correctly staged to run after that missing behavior is supplied.
+
+No findings remain in the v2 environment correction scope.
+
+`APPROVED`
+
+Gate 4 may proceed for this environment correction against exact candidate source `7cf24a5fc4a818cb2c2549333148f35c2b948aa5f4d490bfb0555a7095749d28`. Any change to environment precedence, output expectations, or executable tests requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
 ## Native process PSR-4 autoload correction — narrow Gate 3 review — 2026-09-14
 
 - Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta or retained evidence.

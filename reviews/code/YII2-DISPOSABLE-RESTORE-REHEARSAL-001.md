@@ -247,3 +247,31 @@ Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN
 `APPROVED`
 
 Gate 5 passes for the narrow PSR-4 autoload correction at exact candidate source `65fd2e3c98255982cbc5a5a225a527093fa80d1b2214b9b5e86dcfa282aa6843`. Root must preserve the reviewed class, interface, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
+
+---
+
+## Native process environment correction Gate 5 review — 2026-09-14
+
+- Reviewer: independent `gate5_runtime_binding`; authored none of the reviewed test, implementation, or retained evidence.
+- Exact root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T230745Z-bfef947430/package.json`.
+- Reviewed reconstructible source over base/head `82be2fba2c0232675afde16fd86c659ea1f21215`: candidate source `8847006d19910cd9b3cdc2e120e49cff9f9f4d58e57740876260c874c82fa107`, executable source `2be8770c4a1e2e13d74b0d69e3bcf18baa3172ed21cc4ef36c2887226ff6c2a0`.
+- Snapshot patch SHA-256: `733211a3be5bd1ec905df63254572c51ce07da8c4873ba6dc1bc45ab5412cf39`; verification plan SHA-256: `33860ae7cd103978165f582426393a123a7d7c0e5c115541e7808cf431d1361b`.
+- Controlling test review: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, section “Native process environment inheritance v2 — narrow Gate 3 rereview,” verdict `APPROVED`.
+
+### Assessment
+
+No findings.
+
+The one-file production correction replaces the potentially incomplete `$_ENV` source with PHP's complete `getenv()` array and uses `array_replace($environment, $env)`. Thus inherited executable/runtime variables reach the child while same-key per-call values—most importantly the driver-supplied credential environment—take precedence over stale inherited values. The false/non-array guard fails closed before process construction.
+
+The process interface, argv form, working directory, stdin/stdout/stderr plumbing, nonzero-exit rejection, and returned output are unchanged. No environment value is added to argv, stdout, error text, evidence, or persisted state. The approved test uses a harmless local PATH command, an inherited-only canary, and a same-key stale/fresh override with exact empty stdout and `finally` cleanup.
+
+Three fresh records are GREEN and start/end bound to candidate `8847006d19910cd9b3cdc2e120e49cff9f9f4d58e57740876260c874c82fa107` / executable source `2be8770c4a1e2e13d74b0d69e3bcf18baa3172ed21cc4ef36c2887226ff6c2a0`: runtime/environment `178934086118...`, production process boundary `178934086233...`, and authorization admission `178934086310...`. `git diff --check` is clean.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. No destructive action was authorized or run. This narrow approval does not infer operational rehearsal, CI, publication, merge, deployment, or cutover readiness.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for the narrow native-process environment correction at exact candidate source `8847006d19910cd9b3cdc2e120e49cff9f9f4d58e57740876260c874c82fa107`. Root must preserve the reviewed process, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
