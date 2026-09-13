@@ -10,6 +10,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMANDS = [
+    ("python3", "tests/Verification/delivery_execution_107_i1_test.py"),
     ("python3", "tests/Verification/delivery_harness_001_test.py"),
     ("python3", "tests/Verification/change_verification_001_test.py"),
     ("python3", "tests/Verification/verification_ci_001_test.py"),

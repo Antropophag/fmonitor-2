@@ -275,8 +275,8 @@ class Harness(unittest.TestCase):
         result = self.cli('state',env=env)
         self.assertEqual(0,result.returncode,'INTENDED_RED state missing: '+result.stderr)
         clean=json.loads(result.stdout)
-        self.assertEqual('SUCCESS',clean['ci']['status'])
-        self.assertEqual(self.base,clean['ci']['source'])
+        self.assertEqual('UNKNOWN',clean['ci']['status'],
+                         'INTENDED_RED AC01 verify-only CI has no bound expected matrix')
         self.assertFalse(clean['dirty'])
         (self.repo/self.test).write_text('print("dirty")\n')
         dirty=json.loads(self.cli('state',env=env).stdout)

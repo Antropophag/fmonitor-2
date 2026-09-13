@@ -239,7 +239,8 @@ def explicit_outcome_markers(content):
 
 
 def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
-            command_id=None, purpose=None, command_environment=None, acceptance_id=None):
+            command_id=None, purpose=None, command_environment=None, acceptance_id=None,
+            task=None, run_id=None):
     home = evidence_home()
     for name in ("records", "stdout", "stderr"):
         (home / name).mkdir(parents=True, exist_ok=True)
@@ -318,8 +319,18 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
     end_source_state = source_details()
     end_fixture_digest = fixture_identity(fixture)
     source_drift = end_source_state["digest"] != source or end_fixture_digest != fixture_digest
+    explicit_unknown = outcome == UNKNOWN and not source_drift
+    command_verdict = ("DIAGNOSTIC" if purpose == "diagnostic" else
+                       "UNKNOWN" if explicit_unknown else
+                       "GREEN" if child_exit == 0 else "REGRESSION_FAILURE")
+    applicability = "STALE" if source_drift else ("UNKNOWN" if explicit_unknown else "APPLICABLE")
+    applicability_reason = ("source_or_fixture_drift" if source_drift else
+                            "explicit_unknown_identity" if explicit_unknown else
+                            "exact_source_and_fixture")
     if source_drift and outcome not in {"SETUP_FAILURE", "INTERRUPTED"}:
         outcome = UNKNOWN
+    elif purpose == "diagnostic" and outcome == "GREEN":
+        outcome = "DIAGNOSTIC"
     cli_exit = 0 if outcome == "GREEN" else (child_exit or 1)
     stdout_path.write_bytes(stdout); stderr_path.write_bytes(stderr)
     os.chmod(stdout_path, 0o600); os.chmod(stderr_path, 0o600)
@@ -332,12 +343,14 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
               "environment_coverage": environment_coverage, "fixture": fixture_digest,
               "end_fixture": end_fixture_digest, "source_drift": source_drift,
               "reason": selected_reason, "started_at": started_wall,
+              "task": task, "run_id": run_id,
               "command_id": command_id, "purpose": purpose,
               "command_environment": command_environment,
               "acceptance_id": acceptance_id, "command_blob": command_blob,
               "finished_at": time.time(), "duration_seconds": duration,
               "exit_code": child_exit, "cli_exit_code": cli_exit,
-              "raw_child_returncode": raw_exit,
+              "raw_child_returncode": raw_exit, "command_verdict": command_verdict,
+              "applicability": applicability, "applicability_reason": applicability_reason,
               "outcome": outcome, "stdout_path": str(stdout_path),
               "stderr_path": str(stderr_path), "output_bytes": len(stdout) + len(stderr)}
     if outcome == "GREEN":
@@ -351,13 +364,25 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
     return cli_exit, summary
 
 
-def report():
+def report(task=None, run_id=None, candidate=None):
     records = _records(); events = load_events()
-    tools = [e for e in events if e.get("kind") == "tool_call"]
-    agents = [e for e in events if e.get("kind") == "agent_task"]
-    reviews = [e for e in events if e.get("kind") == "review_return"]
+    if task is not None:
+        records = [item for item in records if item.get("task") == task]
+    if run_id is not None:
+        records = [item for item in records if item.get("run_id") == run_id]
+    if candidate is not None:
+        records = [item for item in records if item.get("source") == candidate]
+    def event_in_scope(event):
+        return ((task is None or event.get("task") == task)
+                and (run_id is None or event.get("run_id") == run_id)
+                and (candidate is None or event.get("candidate") == candidate))
+    tools = [e for e in events if e.get("kind") == "tool_call" and event_in_scope(e)]
+    agents = [e for e in events if e.get("kind") == "agent_task" and event_in_scope(e)]
+    reviews = [e for e in events if e.get("kind") == "review_return" and event_in_scope(e)]
     result = {
-        "checks": len(records), "tool_calls": len(tools), "agent_tasks": len(agents),
+        "checks": sum(item.get("command_verdict") not in {"DIAGNOSTIC"} for item in records),
+        "diagnostics": sum(item.get("command_verdict") == "DIAGNOSTIC" for item in records),
+        "tool_calls": len(tools), "agent_tasks": len(agents),
         "review_returns": len(reviews),
         "observed_tool_output_bytes": sum(int(e.get("output_bytes", 0)) for e in tools),
         "token_telemetry": {"status": UNKNOWN, "total_tokens": UNKNOWN,
@@ -383,7 +408,8 @@ def main(argv=None):
         parser = argparse.ArgumentParser()
         parser.add_argument("--reason"); parser.add_argument("--fixture")
         parser.add_argument("--intended-red"); parser.add_argument("--timeout", type=float)
-        parser.add_argument("--command-id"); parser.add_argument("--purpose", choices=("acceptance", "boundary", "category"))
+        parser.add_argument("--command-id"); parser.add_argument("--purpose", choices=("acceptance", "boundary", "category", "diagnostic"))
+        parser.add_argument("--task"); parser.add_argument("--run-id")
         parser.add_argument("--command-environment"); parser.add_argument("--acceptance-id")
         parser.add_argument("argv", nargs=argparse.REMAINDER)
         args = parser.parse_args(argv[1:])
@@ -395,9 +421,13 @@ def main(argv=None):
         if bool(args.command_id) != bool(args.purpose):
             parser.error("--command-id and --purpose must be supplied together")
         return execute(command, args.reason, args.fixture, args.intended_red, args.timeout,
-                       args.command_id, args.purpose, command_environment, args.acceptance_id)[0]
-    if argv == ["report"]:
-        return report()
+                       args.command_id, args.purpose, command_environment, args.acceptance_id,
+                       args.task, args.run_id)[0]
+    if argv[:1] == ["report"]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--task"); parser.add_argument("--run-id"); parser.add_argument("--candidate")
+        args = parser.parse_args(argv[1:])
+        return report(args.task, args.run_id, args.candidate)
     try:
         import harness_context
         return harness_context.main(argv)

@@ -1,0 +1,176 @@
+{
+  "full": {
+    "source": "https://github.com/Antropophag/fmonitor-2/actions/runs/34708819232",
+    "observed_at": "2026-09-12",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "plan",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "Integration (2/2)",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "fast",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "governance",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "Integration (1/2)",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "e2e",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "unit",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "harness",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "verify",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "quality-results",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "e2b66b51d51e1cde407cefcb0cff76be2c68cf89",
+        "name": "Quality Graph",
+        "run_attempt": 1,
+        "run_id": 34708819232,
+        "status": "completed"
+      }
+    ],
+    "total_count": 11
+  },
+  "harness": {
+    "source": "https://github.com/Antropophag/fmonitor-2/actions/runs/34708256525",
+    "observed_at": "2026-09-12",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "plan",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "harness",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "unit",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "governance",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "fast",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "e2e",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "Integration (${{ matrix.shard }}/2)",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "verify",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "head_sha": "a9acfcf9e6e8fb2f320dba1cba4a23d37ff69264",
+        "name": "quality-results",
+        "run_attempt": 1,
+        "run_id": 34708256525,
+        "status": "completed"
+      }
+    ],
+    "total_count": 9
+  }
+}

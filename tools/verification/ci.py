@@ -26,6 +26,23 @@ HARNESS_METADATA = HARNESS_CORE + [
 ]
 
 
+def expected_job_conclusions(mode):
+    """Canonical Quality Graph job obligations for an admitted CI mode."""
+    if mode not in {'full', 'harness', 'docs'}:
+        raise ValueError('unsupported admission mode')
+    expected = {'plan': 'SUCCESS', 'fast': 'SKIPPED' if mode == 'harness' else 'SUCCESS',
+                'harness': 'SUCCESS' if mode == 'harness' else 'SKIPPED'}
+    expected.update(dict.fromkeys(('unit', 'e2e', 'governance'),
+                                  'SUCCESS' if mode == 'full' else 'SKIPPED'))
+    if mode == 'full':
+        expected['Integration (1/2)'] = 'SUCCESS'
+        expected['Integration (2/2)'] = 'SUCCESS'
+    else:
+        expected['Integration (${{ matrix.shard }}/2)'] = 'SKIPPED'
+    expected['verify'] = 'SUCCESS'
+    return expected
+
+
 def harness_run(argv, environment):
     harness = ROOT / 'tools/delivery/harness.py'
     python = os.environ.get('FMONITOR_HARNESS_PYTHON', sys.executable)
