@@ -87,3 +87,26 @@ Harness reports PR/CI and deployment `UNKNOWN`. They are not treated as GREEN, m
 `APPROVED`
 
 Gate 5 passes for exact source `59c95d2bc7935c038ca27d5cecdda3e2490c6b5b8f8c29bb53754304788f9b4a`. Root must preserve the reviewed bytes when committing/publishing and obtain the required exact-source CI before merge-ready status. Deployment remains separately unauthorized.
+
+---
+
+## Post-CI correction Gate 5 review — 2026-09-13
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/package.json`.
+- Exact reviewed source: reconstructible snapshot over commit `fbec3d5257c270f57c72f11b7b2d1fc40a1416a5`, candidate source `1012b628df2abf94bdaeccfd93d19c18bf9fd4a25bb4bb807aa72570db757428`, executable source `c2b87416c0fca8851ff621be75c515b22fc5fa589bdfe617fc6a1a4c268ceb27`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/snapshot/source.patch`, SHA-256 `f13fce534eb1b24fe8f9d1726877d70c8d76e5027b6c40dbc483550777e9546e`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/verification-plan.json`, SHA-256 `585f9783d32aaf67b68c4e423664bf50f662ebfdf1b102fac2b23e1d4b00c433`.
+- Gate 3 correction approval: `reviews/tests/YII2-STAND-BACKUP-CONSOLE-001.md`, “Post-CI unreadable-observer correction review.”
+- Reviewer independence is unchanged.
+
+No findings. The post-CI executable delta is confined to the external Python test observer and delivery/review records. The three production PHP owners are byte-identical to the terminal-approved package: `StandBackupApplication.php` SHA-256 `c462e416512443a64d0e1cebfbf8d527815f3420ee85bc6c1f76cd607f5e5dcd`, `StandBackupFilesystem.php` `275d4d5f8ccd7e5016a584a20c4f34fe42c735664855d0fa41e5a5ad6f1b3253`, and `StandBackupController.php` `8f9c4ac07c9400e111e402888fa8dfe2478951a9b060be184842d8a0b9d4ae6e`. Therefore the approved Yii/PHP ownership, UNKNOWN lease preservation, descriptor identity/no-follow checks, hostile-temp protection, bounded exclusive creation, canonical bundle/history/pointer semantics, and absence of a Python production seam remain unchanged.
+
+All eight mapped checks are GREEN and exact-source bound: Yii transport, target admission, complete bundle/verify including unreadable/hostile/bounded atomic cases, preservation, replay/concurrency, architecture, PHP ownership, and verification inventory. `git diff --check` is clean.
+
+Quality Graph `34762933379` remains a failed run with the complete known inventory recorded in the associated test review: e2e failed on the observer `PermissionError`; integration, unit, fast, and governance succeeded; aggregate verify failed. This Gate 5 approval covers the correction source but does not convert that prior CI to GREEN. Harness currently reports the new correction's CI/deployment as `UNKNOWN`.
+
+### Post-CI correction verdict
+
+`APPROVED`
+
+Gate 5 passes for exact source `1012b628df2abf94bdaeccfd93d19c18bf9fd4a25bb4bb807aa72570db757428`. Root must publish exactly these bytes and obtain a terminal GREEN/`VERIFY_OK` Quality Graph for the corrected exact commit before merge-ready status. Deployment/live backup remains unauthorized and `UNKNOWN`.

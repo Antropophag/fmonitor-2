@@ -38,7 +38,11 @@ def tree(root: Path) -> dict[str, tuple[str, bytes | str]]:
         if path.is_symlink():
             result[rel] = ("symlink", os.readlink(path))
         elif path.is_file():
-            result[rel] = ("file", path.read_bytes())
+            info = path.stat()
+            if info.st_mode & 0o444 == 0:
+                result[rel] = ("unreadable", str(info.st_size))
+            else:
+                result[rel] = ("file", path.read_bytes())
         elif path.is_dir():
             result[rel] = ("dir", "")
     return result

@@ -9,3 +9,8 @@
 - Focused evidence: eight mapped commands GREEN; complete adjacent plan GREEN as recorded by executor. Full local suite was not run per owner policy.
 - Python is used only by external black-box tests/harness; no Python production seam exists.
 - PR/CI/deployment: UNKNOWN until publication checks below are appended. Live backup and deployment were not performed.
+
+## CI history
+
+- Commit `fbec3d5257c270f57c72f11b7b2d1fc40a1416a5`, workflow_dispatch `34762933379`: FAILED. Direct failure only in e2e because the Python observer attempted `read_bytes()` on a chmod(0) fixture under Linux; both integration shards, unit, fast and governance succeeded, verify failed aggregately, quality-results was skipped.
+- Root corrected the observer to compare unreadable regular files by lstat metadata without reading bytes. Independent correction Gate 3 and Gate 5: APPROVED. A new exact-source CI is required; the failed run remains history.

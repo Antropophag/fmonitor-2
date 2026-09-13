@@ -158,3 +158,26 @@ CI and deployment remain `UNKNOWN`; they are not treated as GREEN or authorizati
 `APPROVED`
 
 The bounded exclusive-temp correction may proceed against this exact reviewed test. The changed bundle suite and complete focused plan must be GREEN on the corrected exact source before final Gate 5 rereview.
+
+---
+
+## Post-CI unreadable-observer correction review — 2026-09-13
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/package.json`.
+- Exact reviewed source: reconstructible snapshot over commit `fbec3d5257c270f57c72f11b7b2d1fc40a1416a5`, candidate source `1012b628df2abf94bdaeccfd93d19c18bf9fd4a25bb4bb807aa72570db757428`, executable source `c2b87416c0fca8851ff621be75c515b22fc5fa589bdfe617fc6a1a4c268ceb27`.
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/snapshot/source.patch`, SHA-256 `f13fce534eb1b24fe8f9d1726877d70c8d76e5027b6c40dbc483550777e9546e`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/verification-plan.json`, SHA-256 `585f9783d32aaf67b68c4e423664bf50f662ebfdf1b102fac2b23e1d4b00c433`.
+- Reviewed delta: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T144658Z-5651625987/delta.patch`.
+- Review scope is the test observer in `tests/Support/stand_backup_contract.py`; reviewer independence is unchanged.
+
+No findings. For an ordinary readable file `tree()` still records exact bytes. For a symlink it still records the link target without following it. For a mode-`000` regular file it now records the unreadable classification and exact size from metadata instead of calling `read_bytes()`. Thus the test continues to distinguish missing, changed type, changed permissions, and changed size while remaining portable when CI runs as an unprivileged user. The change does not weaken the production verifier expectation: the public command must still reject the unreadable member and preserve the complete evidence tree; it only prevents the external observer itself from raising `PermissionError` before making that assertion.
+
+Quality Graph run `34762933379` is retained as FAILED: its full inventory had only the e2e unreadable-member `PermissionError`; integration, unit, fast, and governance jobs succeeded, while the aggregate verify job failed because e2e failed. This is coherent evidence for an observer portability defect, not a production acceptance failure, but the failed run is not reclassified as GREEN.
+
+All eight current mapped records are GREEN at exact source `1012b628df2abf94bdaeccfd93d19c18bf9fd4a25bb4bb807aa72570db757428`, including the complete bundle suite with the unreadable case. `git diff --check` is clean.
+
+### Observer correction verdict
+
+`APPROVED`
+
+The corrected observer remains a valid Gate 2 artifact. A new full exact-source Quality Graph run is still required; run `34762933379` is historical failed evidence, not approval.
