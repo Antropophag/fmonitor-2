@@ -88,3 +88,29 @@ Every record reports `end_fixture: UNKNOWN`; this is not treated as fixture appr
 ### Gate decision
 
 `APPROVED` for the exact corrected Gate 5 candidate. No blocking finding remains: exact object authorization, guest/authenticated schedule routing, production-only CSRF behavior, Yii-only runtime ownership, session failure/restart behavior, and visual parity conform to the accepted contracts and exact GREEN evidence. Publication still requires final committed-byte equivalence and the repository's authoritative full CI.
+
+## Gate 5 review of CI34726338495 correction package — 2026-09-13
+
+Status: `APPROVED` for the exact correction package. This verdict supplements the preceding implementation approval by reviewing the later CI-driven demo/config correction; it does not rewrite the failed CI run or approve publication.
+
+- Independent correction reviewer: `/root/ci_correction_review`; author of none of the reviewed artifacts.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T003417Z-25b294fd53/package.json`.
+- Reconstructible snapshot: base `982ba2ab1524215a529244ae3e0b0513f397389d`, patch SHA-256 `5c562cb4d044f713398765380d1ce29144ae43f0885649b99fe2ff83c2f0498c`.
+- Candidate source: `47342af6508c31aa057a513b8417c719db990e01067e8e4fedae5821414705e7`; executable source: `578620ecbf9f5916c9fad54a2a8098848a7ceea2c4fd95fd96336e8636705645`.
+- Gate 3 correction approval: append-only section in `reviews/tests/YII2-PRODUCTION-WEB-CUTOVER-001.md` for this same package and source.
+
+### Complete CI failure disposition
+
+The failed run `34726338495` at commit `982ba2ab1524215a529244ae3e0b0513f397389d` was inspected from the complete failed-job logs. Its direct failures were: production runtime contract; demo bootstrap; object card; rapid-router OTIZ dependency; local RBAC admission; HTTP auth; object list; SHLZ assets; UI shell; Yii OTIZ boundary; the retained-flow aggregate; production Compose; and the architecture hotspot for `config/yii/web.php`. The correction redirects the historical native tests to the demo-only handler, fixes the two structured include-log consumers, restores demo launcher identity propagation, updates the production contract/Compose expectations to Yii and safe `400` CSRF behavior, and reduces the config file from the reported 156 lines to 147. The derived `verify` and Quality Graph failures require no separate behavior correction.
+
+### Production boundary and implementation assessment
+
+`public/router.php` is deleted. `public/runtime.php` remains the sole production web front controller selected by nginx and directly constructs one Yii application. Neither that front controller nor production config references or dispatches `app/demo/native-router.php`, `app/demo/router.php`, `rapid-pilot/router.php`, or legacy local-auth composition. The separate native handler lives under `app/demo`, and its only repository consumers are the explicit demo wrapper and historical test probes. Direct execution does not acquire an identity from request headers: the demo wrapper requires launcher-owned actor, CSRF, nonce, principal, and trusted Host; the native handler propagates the launcher principal only for loopback CLI-server execution and retains Host/method rejection before domain work.
+
+The `config/yii/web.php` compaction changes representation only. The production-only guest CSRF guard, Yii session/auth components, and route/controller mapping remain byte-equivalent in behavior under the focused Yii production checks. The correction introduces no production legacy reachability and no new state owner.
+
+### Exact evidence and decision
+
+The package contains thirteen acceptance-mapped `GREEN` records at the exact candidate and executable sources. Additional exact-source `GREEN` records cover the changed visual contract, Linux-only SHLZ descriptor/inode witness, settlement compatibility, architecture and authenticated frontiers, jobs Compose adjacency, governance, runtime storage, and architecture guard. In particular, `1789259419860370000-ecb07ea61d2f4f129bb0db8802667c67` is the Linux-only SHLZ correction evidence and `1789259505565957000-85e4048b62104f5d86c54984cf832e46` confirms the hotspot correction through the architecture guard.
+
+`APPROVED` for correction Gate 5 at source `47342af6508c31aa057a513b8417c719db990e01067e8e4fedae5821414705e7`. No blocking finding remains and no expectation weakening or production legacy reachability was found. Publication still requires committed-byte equivalence and a fresh authoritative full CI; run `34726338495`, current PR, CI, and deployment states are not treated as GREEN where they remain failed or `UNKNOWN`.

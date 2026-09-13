@@ -46,7 +46,7 @@ function polStart(array $environment): array
     for ($attempt = 0; $attempt < 10; $attempt++) {
         $port = polPort(); $command = ['/usr/bin/env', '-i'];
         foreach ($environment as $name => $value) $command[] = $name . '=' . $value;
-        $command = [...$command, PHP_BINARY, '-d', 'expose_php=0', '-S', '127.0.0.1:' . $port, dirname(__DIR__, 2) . '/public/router.php'];
+        $command = [...$command, PHP_BINARY, '-d', 'expose_php=0', '-S', '127.0.0.1:' . $port, dirname(__DIR__, 2) . '/app/demo/native-router.php'];
         $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes, dirname(__DIR__, 2));
         if (!is_resource($process)) throw new TestFailure('start real PHP server');
         fclose($pipes[0]); stream_set_blocking($pipes[1], false); stream_set_blocking($pipes[2], false);

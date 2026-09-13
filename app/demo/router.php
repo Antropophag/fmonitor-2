@@ -24,4 +24,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 $_SERVER['FMONITOR_AUTH_USER_ID'] = $actor;
 $_SERVER['FMONITOR_AUTH_CSRF'] = $csrf;
-require dirname(__DIR__, 2) . '/public/router.php';
+$principal = getenv('REMOTE_USER');
+$trustedHost = getenv('FMONITOR_TRUSTED_REQUEST_HOST');
+if (!is_string($principal) || $principal === '' || !is_string($trustedHost) || $trustedHost === '') {
+    http_response_code(503); exit("Service unavailable.\n");
+}
+$_SERVER['REMOTE_USER'] = $principal;
+$_SERVER['FMONITOR_DEMO_LOOPBACK_NONCE'] = $nonce;
+$_SERVER['FMONITOR_DEMO_TRUSTED_REQUEST_HOST'] = $trustedHost;
+require __DIR__ . '/native-router.php';

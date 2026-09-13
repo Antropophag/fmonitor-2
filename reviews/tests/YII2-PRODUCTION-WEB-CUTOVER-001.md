@@ -322,3 +322,26 @@ Permission coverage is not weakened. This frontier is responsible for reaching r
 ### Gate decision
 
 `APPROVED` for the authenticated-object frontier fixture correction. It supplies the exact permission required by the already expected `200`, preserves the admin and object permission separation, and retains the independent OTIZ denial.
+
+## Gate 3 approval of CI34726338495 oracle corrections — 2026-09-13
+
+- Independent correction reviewer: `/root/ci_correction_review`; author of none of the reviewed specification, tests, correction implementation, or prior review findings.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T003417Z-25b294fd53/package.json`.
+- Reconstructible snapshot: base `982ba2ab1524215a529244ae3e0b0513f397389d`, patch SHA-256 `5c562cb4d044f713398765380d1ce29144ae43f0885649b99fe2ff83c2f0498c`.
+- Candidate source: `47342af6508c31aa057a513b8417c719db990e01067e8e4fedae5821414705e7`; executable source: `578620ecbf9f5916c9fad54a2a8098848a7ceea2c4fd95fd96336e8636705645`.
+- Verification plan SHA-256: `837386d40a49cccd3bd515c239e009f97027b39b16efcc59def63fd5eeef995e`.
+- Verdict: `APPROVED` for the changed test oracles in this correction package.
+
+### Correction assessment
+
+The corrections preserve the assertions and move only the retired native HTTP fixture boundary from deleted `public/router.php` to `app/demo/native-router.php`. The native handler still exercises the same real `PilotHttp` production entrypoint and database-backed applications for the historical contracts; it is no longer represented as the production web front controller. The production runtime assertions are strengthened to require direct `yii\\web\\Application` composition, exclude `rapid-pilot/router.php`, and expect Yii's `_csrf` field and safe `400` rejection. No accepted status, authorization, state/history assertion, exact asset byte, Host/error ordering, or filesystem/database invariance was relaxed.
+
+The include-probe corrections consume the structured shutdown record's `files` member while retaining the case/method/path attribution and the forbidden dependency predicates. The demo bootstrap correction requires the wrapper and native handler to agree on a launcher-owned loopback principal, nonce, and trusted Host; request headers cannot select that identity.
+
+CI run `34726338495` contained one unit failure, nine direct integration failures across both shards, two direct e2e failures, and the `config/yii/web.php` hotspot failure. `pilot_e2e_flow_001_test.php` was a derived failure of the retained local-RBAC contract; `verify` and Quality Graph were derived aggregate failures. Every direct test failure is represented in the correction input or its planned changed-test inventory. The Linux-only SHLZ race test is a changed registered test rather than an acceptance-mapped test; exact-source harness record `1789259419860370000-ecb07ea61d2f4f129bb0db8802667c67` is `GREEN` and preserves its descriptor/inode race assertions.
+
+### Exact GREEN evidence and decision
+
+All thirteen acceptance-mapped checks in the package are `GREEN` at the exact candidate and executable sources above. The same sources also have `GREEN` records for the changed visual contract, Linux-only SHLZ test, settlement compatibility, both cutover architecture/frontier tests, jobs Compose adjacency, change-verification governance, runtime storage, and architecture guard (`1789259418976312000-be4beb919f2a48628c63ce92037fe10f` through `1789259505565957000-85e4048b62104f5d86c54984cf832e46`).
+
+`APPROVED`. The changed oracles distinguish the retired demo/native fixture from the normative Yii production seam and remain sensitive to the behavior and security failures they previously covered. Historical failed CI, final PR state, and final CI remain separate from this Gate 3 decision and are not converted to GREEN.

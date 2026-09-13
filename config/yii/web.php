@@ -1,13 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use FMonitor2\YiiRuntime\SafeErrorHandler;
-use FMonitor2\YiiRuntime\WebResponse;
-use FMonitor2\YiiRuntime\ReliableSession;
-use FMonitor2\IdentityAccess\YiiCanonicalAccessChecker;
-use FMonitor2\IdentityAccess\YiiLocalIdentity;
-use FMonitor2\IdentityAccess\MariaDbYiiLocalIdentityStore;
-use FMonitor2\IdentityAccess\YiiUserAccess;
+use FMonitor2\YiiRuntime\{ReliableSession, SafeErrorHandler, WebResponse};
+use FMonitor2\IdentityAccess\{MariaDbYiiLocalIdentityStore, YiiCanonicalAccessChecker, YiiLocalIdentity, YiiUserAccess};
 use yii\helpers\ArrayHelper;
 
 return ArrayHelper::merge(require __DIR__ . '/common.php', [
@@ -21,12 +16,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
         }
     },
     'components' => [
-        'request' => [
-            'cookieValidationKey' => getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY') ?: '',
-            'scriptUrl' => '/runtime.php',
-            'baseUrl' => '',
-            'enableCsrfCookie' => false,
-        ],
+        'request' => ['cookieValidationKey' => getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY') ?: '',
+            'scriptUrl' => '/runtime.php', 'baseUrl' => '', 'enableCsrfCookie' => false],
         'localIdentity' => [
             'class' => MariaDbYiiLocalIdentityStore::class,
             'tablePrefix' => getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: '',

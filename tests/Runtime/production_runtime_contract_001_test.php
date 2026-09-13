@@ -39,7 +39,8 @@ assertSameValue(true, (bool) preg_match('/php-fpm[^\n]*(?:-F|--nodaemonize)/i', 
 assertSameValue(true, str_contains($nginx, 'fastcgi_pass'), 'nginx delegates PHP requests to PHP-FPM');
 assertSameValue(true, str_contains($nginx, 'public/runtime.php'), 'nginx uses the production front controller');
 assertSameValue(true, (bool) preg_match('/daemonize\s*=\s*no/i', $fpm), 'PHP-FPM remains attached to the container lifecycle');
-assertSameValue(true, str_contains($frontController, "rapid-pilot/router.php"), 'production front controller preserves the composite rapid router');
+assertSameValue(false, str_contains($frontController, "rapid-pilot/router.php"), 'production front controller excludes the retired rapid router');
+assertSameValue(true, str_contains($frontController, 'new yii\\web\\Application'), 'production front controller runs the Yii application directly');
 assertSameValue(false, (bool) preg_match('/(?:fmonitor2-migrate|SchemaMigration|CREATE\s+TABLE|ALTER\s+TABLE)/i', $frontController), 'ordinary HTTP front controller performs no migration or DDL');
 
 foreach (['FMONITOR_DB_HOST', 'FMONITOR_DB_PORT', 'FMONITOR_DB_NAME', 'FMONITOR_DB_USER', 'FMONITOR_DB_PASSWORD', 'FMONITOR_PROCESS_TABLE_PREFIX'] as $name) {
