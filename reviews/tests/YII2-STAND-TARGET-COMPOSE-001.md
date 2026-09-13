@@ -155,3 +155,19 @@ The correction is narrowly causal: `tests/Verification/development_setup_001_tes
 `1789292020824000000-e1eb57791bc24a78bc304082ec3d167d`, `1789292025887178000-1958c0221a1647e2a4c9a92f0daa4db0`, `1789292115936169000-46265f5f8b214e83ad87513f8ce07177`, `1789292129323374000-a332aa33a952418eaabe21c7425c05f3`, `1789292183459456000-e5b7544d98cd413fa63dbb425fab1630`, `1789292233187160000-855c36259d4a47c7b048626392601299`, `1789292264470083000-9e15b7adc9544b45be42025ae369188a`, and `1789292293665798000-eb5f5038b823427ca44ef2f102528129` under `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/`.
 
 No findings. A new complete exact-commit CI is still required; the prior failed/cancelled run is not superseded by focused evidence alone.
+
+---
+
+## Second CI correction Gate 3 review — 2026-09-13
+
+- Reviewer: independent Gate 3/5 agent `/root/gate5_target_compose` (gpt-5.6-sol / low); authored neither the corrected test nor production implementation
+- Reviewed commit: `db65ab5f886ddcb6878f19c60927d8d48a35b159`; candidate source `226ab5949a0de69aee21b3ddf9a4100c879a8e5a948b7630d6506ca8e0e0178e`; executable source `a7d01e62bcb98614a563cc78466e86d40e0e65c3e10a033ebb1427858a291e38`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T100400Z-34f7f445a4/package.json`; plan SHA-256 `6d27fab0c36fac1a3e1a707d3fd7b82be18f08c966a39cd69ae40ef8070174f2`; clean committed snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Prior CI `34750011236`: governance, fast, unit, e2e and integration1 were GREEN; integration2 failed only the stale jobs-runtime topology expectation; verify failed aggregation. That run remains failed evidence.
+- Verdict: `APPROVED`
+
+The correction is sensitive and narrowly causal. The established jobs root contract now requires default `db,migrate,php,web`, exact `php bin/yii jobs/{worker|scheduler} --interactive=0` argv and `service_completed_successfully` migration dependencies. Existing profile, no-port, shared-image, graceful-stop, secret isolation and no-bootstrap assertions remain. Reverting any CI-observed stale expectation fails an exact assertion. The test is bound once under A2 and added to planned paths without widening production scope.
+
+Exact-source evidence is 10/10 GREEN: records `1789293483932025000-bb8666898c53472fbdbbc8f431d62f5c`, `1789293489374983000-ced7724c5851442d9306c4ecdbab1115`, `1789293491728067000-b6175e16e77c4ed384c33e7848bd9b16`, `1789293596698012000-dd89c98af86b4832bc47dda7db635242`, `1789293612200440000-9a657044611544c4af5bb3060ea7dd61`, `1789293671421762000-ee12dd744c714f8f9f32c590af99f84a`, `1789293733624654000-7cf6465f6159465a8121b0fa0d4bd5c7`, `1789293757553901000-fb60201b4bb246458f74d7543b7a0dc1`, `1789293760239118000-ba74943a3fc04e71b719d2922d66da56`, and `1789293783905538000-61b0154014084976971f4af8f54cca01` under `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/`.
+
+No findings. A new full exact-commit CI is required before merge-ready.

@@ -76,3 +76,29 @@ CI `34749515238` was inspected as failed/cancelled evidence: governance and fast
 8. Dependency render check: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789292293665798000-eb5f5038b823427ca44ef2f102528129.json`
 
 Standards and spec axes are approved. No new scope, behavior, security, architecture or maintainability finding was found. A new full exact-commit CI must complete successfully before merge-ready; focused GREEN does not convert CI `34749515238` into GREEN, and deployment remains `UNKNOWN`.
+
+---
+
+## Second CI correction Gate 5 review — 2026-09-13
+
+- Reviewer: independent agent `/root/gate5_target_compose` (gpt-5.6-sol / low); authored neither tests, correction nor production implementation
+- Reviewed commit: `db65ab5f886ddcb6878f19c60927d8d48a35b159`; candidate source `226ab5949a0de69aee21b3ddf9a4100c879a8e5a948b7630d6506ca8e0e0178e`; executable source `a7d01e62bcb98614a563cc78466e86d40e0e65c3e10a033ebb1427858a291e38`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T100400Z-34f7f445a4/package.json`; plan SHA-256 `6d27fab0c36fac1a3e1a707d3fd7b82be18f08c966a39cd69ae40ef8070174f2`; clean committed snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verdict: `APPROVED`
+
+CI `34750011236` is retained as failed evidence: all named axes except integration2 and verify were GREEN; integration2 contained only the stale jobs-runtime topology expectation and verify aggregated that failure. The correction aligns that adjacent root test with the already approved canonical Compose: required default migration, exact Yii2 worker/scheduler commands and successful-migration dependencies. It preserves all existing security, profile, shared-image and lifecycle assertions and binds the touched test once under A2. Production behavior is unchanged.
+
+Exact-source evidence is 10/10 GREEN, in package order:
+
+1. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293483932025000-bb8666898c53472fbdbbc8f431d62f5c.json`
+2. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293489374983000-ced7724c5851442d9306c4ecdbab1115.json`
+3. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293491728067000-b6175e16e77c4ed384c33e7848bd9b16.json`
+4. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293596698012000-dd89c98af86b4832bc47dda7db635242.json`
+5. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293612200440000-9a657044611544c4af5bb3060ea7dd61.json`
+6. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293671421762000-ee12dd744c714f8f9f32c590af99f84a.json`
+7. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293733624654000-7cf6465f6159465a8121b0fa0d4bd5c7.json`
+8. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293757553901000-fb60201b4bb246458f74d7543b7a0dc1.json`
+9. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293760239118000-ba74943a3fc04e71b719d2922d66da56.json`
+10. `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789293783905538000-61b0154014084976971f4af8f54cca01.json`
+
+Standards and spec axes are approved. No finding remains. A new complete exact-commit CI GREEN is still required before merge-ready; the prior failed run and current deployment `UNKNOWN` are not approvals.
