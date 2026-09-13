@@ -17,16 +17,24 @@ function monitor(page, pageName) {
   page.on('console', message => { if (message.type() === 'error') output.errors.push(message.text()); });
   page.on('pageerror', error => output.errors.push(error.message));
   page.on('requestfailed', request => {
-    output.errors.push(request.failure()?.errorText);
+    const errorText = request.failure()?.errorText || '';
+    const action = pageActions.get(page) || null;
+    const expectedInlinePdfAbort = errorText === 'net::ERR_ABORTED'
+      && request.method() === 'GET'
+      && request.resourceType() === 'other'
+      && pageName === 'template-popup'
+      && action === 'template-popup-load';
+    if (expectedInlinePdfAbort) return;
+    output.errors.push(errorText);
     try {
       if (output.requestFailures.length >= 20) return;
       output.requestFailures.push({
-        errorText: (request.failure()?.errorText || '').slice(0, 120),
+        errorText: errorText.slice(0, 120),
         method: request.method(),
         pathname: new URL(request.url()).pathname.slice(0, 240),
         resourceType: request.resourceType(),
         pageName,
-        action: pageActions.get(page) || null,
+        action,
         pageClosed: page.isClosed(),
       });
     } catch {}

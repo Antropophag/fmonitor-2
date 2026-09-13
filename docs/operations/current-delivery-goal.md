@@ -1,4 +1,18 @@
-# Текущая цель — №76 production image cleanup
+# Текущая цель — №76 PHP/Yii2 stand backup console
+
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-backup-console-76`,
+branch `codex/yii2-stand-backup-console-76`, change
+`yii2-stand-backup-console`, base PR #113 head
+`404aa6858b8fdd61ac0e8151f09a67000a387ead`. Production seam — только
+`php bin/yii stand-backup/create|verify`, owner — `app/RuntimeRestore`.
+Gate 3 и Gate 5 APPROVED; 8/8 exact-source focused checks GREEN на reviewed
+candidate `59c95d2bc7935c038ca27d5cecdda3e2490c6b5b8f8c29bb53754304788f9b4a`.
+Следующий шаг — commit, stacked PR и один exact-source Quality Graph CI.
+Deployment/live backup не разрешены и остаются UNKNOWN. Связано #76/#115.
+
+## Предыдущий указатель — история
+
+# №76 production image cleanup
 
 Владелец 2026-09-13 поручил продолжить рефакторинг №76 после поставки PR108.
 Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-console-retirement-76`,
@@ -111,3 +125,15 @@ rehearsal и deployment остаются незавершёнными.
 [delivery record](yii2-production-web-cutover-delivery-2026-09-13.md).
 
 # Предыдущий указатель — история
+# Текущая цель — №76 PHP/Yii2 stand backup console
+
+Owner поручил исправить ошибочно выбранный Python production seam. Рабочий
+checkout `/Users/antropophag/code/fmonitor-2-yii2-backup-console-76`, branch
+`codex/yii2-stand-backup-console-76`, change `yii2-stand-backup-console`, base PR
+#113 head `404aa6858b8fdd61ac0e8151f09a67000a387ead`.
+Production seam только `php bin/yii stand-backup/create|verify`; PHP owner —
+`app/RuntimeRestore`. Python разрешён лишь внешним tests/harness. Связано #76/#115.
+Root пишет spec/tests, отдельный sol/low executor реализует, независимые reviewers
+решают Gates 3/5. Live backup/deployment не разрешены; PR/CI/deployment UNKNOWN.
+
+## Предыдущий указатель — история
