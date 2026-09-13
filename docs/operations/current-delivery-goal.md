@@ -1,4 +1,24 @@
-# Текущая цель — PR #103 до merge
+# Текущая цель — №76 production image cleanup
+
+Владелец 2026-09-13 поручил продолжить рефакторинг №76 после поставки PR108.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-console-retirement-76`,
+branch `codex/yii2-console-retirement-76-20260913`. Bounded slice
+`yii2-production-image-cleanup` удаляет каталог `rapid-pilot` и его build-time
+verifier только из production runtime image, сохраняя Yii2 HTTP/console contracts.
+
+[Контракт](../../specs/YII2-PRODUCTION-IMAGE-001.md),
+[OpenSpec](../../openspec/changes/yii2-production-image-cleanup/). Root пишет
+spec/tests; отдельный sol/low executor реализует; независимые sol/low reviewers
+решают Gates 3/5. Фактический source/PR/CI получать через harness. Demo oracle,
+pilot image, stand deployment и общий upgrade/rollback rehearsal не входят в срез.
+
+Gates 3/5 `APPROVED`; focused plan 6/6 GREEN на reviewed executable source
+`154c3fc09ac4a9462ec63f7287ca7a11ecd84fa5024f12c0926ae28c027ad922`.
+[Delivery record](yii2-production-image-cleanup-delivery-2026-09-13.md).
+Следующий шаг: отдельный commit/PR и один full exact-source Quality Graph CI;
+merge только при подтверждённом `VERIFY_OK`.
+
+# Предыдущий указатель — PR #103 до merge
 
 Владелец 2026-09-12 поручил исправить PR #103 и довести его до merge.
 Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`;

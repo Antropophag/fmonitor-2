@@ -1,0 +1,23 @@
+{
+  "change": "yii2-production-image-cleanup",
+  "planned_paths": [
+    "tools/delivery/Dockerfile.runtime.in",
+    "deploy/runtime/Dockerfile",
+    "tests/Deployment/yii2_production_image_cleanup_001_test.py",
+    "tests/Verification/verification_ci_001_test.py",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/yii2-production-image-cleanup-delivery-2026-09-13.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-PRODUCTION-IMAGE-001",
+      "acceptance_id": "A1-A3",
+      "spec_path": "specs/YII2-PRODUCTION-IMAGE-001.md",
+      "seam": "canonical production Dockerfile template/render, fresh-built image filesystem, packaged Yii console closed failure and packaged Yii live HTTP endpoint",
+      "tests": ["tests/Deployment/yii2_production_image_cleanup_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_production_image_cleanup_001_test.py": "GREEN"}
+    }
+  ]
+}

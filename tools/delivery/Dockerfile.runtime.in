@@ -36,10 +36,7 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
 COPY bin ./bin
 COPY config ./config
 COPY public ./public
-COPY rapid-pilot ./rapid-pilot
 COPY deploy/runtime ./deploy/runtime
-
-RUN php rapid-pilot/verify-visual-contract.php
 
 USER 10001:10001
 EXPOSE 8080 9000
