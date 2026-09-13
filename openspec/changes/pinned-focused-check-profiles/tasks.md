@@ -7,10 +7,10 @@
 
 ## 2. PR A — Container execution
 
-- [ ] 2.1 Executor добавляет один container recipe с profiles `governance`, `integration`, `browser` и immutable image pins; проверить сборку каждого target и runtime/dependency probes.
-- [ ] 2.2 Executor добавляет минимальный `run-in-profile <profile> <command>` без command registry/selection/provenance policy; проверить точную передачу argv и exit code.
-- [ ] 2.3 Расширить уже выбранный Quality Graph container setup contract test для parity smoke, не меняя workflow, graph manifests, category commands, planner или aggregation; проверить одинаковые profile/image digest/runtime versions локально и в CI.
-- [ ] 2.4 Выполнить focused regression, `git diff --check`, OpenSpec strict validation и LOC guard; при >500 production/infrastructure LOC STOP.
+- [x] 2.1 Executor добавляет один container recipe с profiles `governance`, `integration`, `browser` и immutable image pins; проверить сборку каждого target и runtime/dependency probes.
+- [x] 2.2 Executor добавляет минимальный `run-in-profile <profile> <command>` без command registry/selection/provenance policy; проверить точную передачу argv и exit code.
+- [x] 2.3 Расширить уже выбранный Quality Graph container setup contract test для parity smoke, не меняя workflow, graph manifests, category commands, planner или aggregation; проверить одинаковые profile/image digest/runtime versions локально и в CI.
+- [x] 2.4 Выполнить focused regression, `git diff --check`, OpenSpec strict validation и LOC guard; при >500 production/infrastructure LOC STOP.
 - [ ] 2.5 Передать exact source, spec, approved tests и evidence независимому Gate 5 reviewer; PR A создавать только после `APPROVED` и подтверждения владельца.
 
 ## 3. Merge checkpoint

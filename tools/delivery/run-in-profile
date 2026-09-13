@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -u
+
+usage() {
+    echo 'usage: run-in-profile <governance|integration|browser> <command> [args...]' >&2
+    exit 2
+}
+
+[[ $# -ge 2 ]] || usage
+profile=$1
+shift
+case "$profile" in
+    governance|integration|browser) ;;
+    *) usage ;;
+esac
+
+root=$(git -C "$(dirname "$0")/../.." rev-parse --show-toplevel) || exit 2
+set -a
+# shellcheck source=dependencies.env
+. "$root/tools/delivery/dependencies.env"
+set +a
+
+recipe=$root/tools/delivery/Dockerfile.focused-checks
+recipe_hash=$(sha256sum "$recipe" "$root/tools/delivery/dependencies.env" \
+    | sha256sum | cut -c1-16)
+image="fmonitor2-focused-${profile}:${recipe_hash}"
+git_sha=$(git -C "$root" rev-parse HEAD) || exit 2
+
+docker build --quiet --target "$profile" --tag "$image" \
+    --label "org.opencontainers.image.revision=$git_sha" \
+    --build-arg "PHP_IMAGE=$PHP_IMAGE" \
+    --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
+    --build-arg "NODE_VERSION=$NODE_VERSION" \
+    --build-arg "NODE_BOOKWORM_IMAGE_DIGEST=$NODE_BOOKWORM_IMAGE_DIGEST" \
+    --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
+    --build-arg "PYTHON_IMAGE_DIGEST=$PYTHON_IMAGE_DIGEST" \
+    --build-arg "COMPOSER_VERSION=$COMPOSER_VERSION" \
+    --build-arg "COMPOSER_IMAGE_DIGEST=$COMPOSER_IMAGE_DIGEST" \
+    --build-arg "UV_VERSION=$UV_VERSION" \
+    --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
+    --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
+    --file "$recipe" "$root" >/dev/null || exit $?
+image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
+
+started=$(python3 -c 'import time; print(time.time_ns())')
+docker run --rm --init \
+    --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
+    --mount "type=bind,src=$root,dst=/workspace" \
+    --workdir /workspace \
+    "$image_digest" "$@"
+status=$?
+finished=$(python3 -c 'import time; print(time.time_ns())')
+
+python3 - "$git_sha" "$profile" "$image_digest" "$status" "$started" "$finished" "$@" <<'PY' >&2
+import json, sys
+git_sha, profile, image, status, started, finished, *argv = sys.argv[1:]
+print("RUN_IN_PROFILE_RESULT " + json.dumps({
+    "argv": argv,
+    "duration_seconds": (int(finished) - int(started)) / 1_000_000_000,
+    "exit_code": int(status),
+    "git_sha": git_sha,
+    "image_digest": image,
+    "profile": profile,
+}, separators=(",", ":"), sort_keys=True))
+PY
+exit "$status"
