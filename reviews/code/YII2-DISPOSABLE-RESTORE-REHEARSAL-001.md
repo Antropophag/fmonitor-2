@@ -221,3 +221,29 @@ Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN
 `APPROVED`
 
 Gate 5 passes for exact candidate source `618380433c45e19d0ff754b502f4826ba50876d6ec8deb7d8c994afd96fcfcd7`. Root must preserve the reviewed bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
+
+---
+
+## Native process PSR-4 autoload correction Gate 5 review — 2026-09-14
+
+- Reviewer: independent `gate5_runtime_binding`; authored none of the reviewed test, implementation, or retained evidence.
+- Exact root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T225544Z-956c211747/package.json`.
+- Reviewed reconstructible source over base/head `33a6a998219a84d06a1c6b1bcfb57ef9fab48a2e`: candidate source `65fd2e3c98255982cbc5a5a225a527093fa80d1b2214b9b5e86dcfa282aa6843`, executable source `a012c8a63fa61ac53413f73f301f78f1006e2c088f31aa340c6070c9819bb967`.
+- Snapshot patch SHA-256: `ca6aeae3022c30686085c87646f6f35f9b49d9946cd71a47c42edeb9acbbb588`; verification plan SHA-256: `41399bb437ed2328f84681d4fe6cd07e0c1940a6a7cb7a0757583cfa4851dae5`.
+- Controlling test review: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, section “Native process PSR-4 autoload correction — narrow Gate 3 review,” verdict `APPROVED`.
+
+### Assessment
+
+No findings.
+
+The correction only relocates the unchanged `NativeStandProcess` declaration from `StandProcess.php` into the PSR-4-matching `NativeStandProcess.php`. `StandProcess.php` retains the same interface and method signature. The relocated class retains the identical `proc_open` argv execution, stdin/stdout/stderr handling, environment merge, exit-status rejection, and return behavior. Driver construction and process protocol are unchanged; the correction merely makes clean direct autoload resolve the production implementation without depending on prior interface-file loading.
+
+Three fresh records are GREEN and start/end bound to candidate `65fd2e3c98255982cbc5a5a225a527093fa80d1b2214b9b5e86dcfa282aa6843` / executable source `a012c8a63fa61ac53413f73f301f78f1006e2c088f31aa340c6070c9819bb967`: runtime configuration/direct autoload `178934014054...`, production process boundary `178934014155...`, and authorization admission `178934014264...`. `git diff --check` is clean.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. No destructive action was authorized or run. This narrow approval does not alter the preceding exact-source runtime-binding approval or infer operational rehearsal, CI, publication, merge, deployment, or cutover readiness.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for the narrow PSR-4 autoload correction at exact candidate source `65fd2e3c98255982cbc5a5a225a527093fa80d1b2214b9b5e86dcfa282aa6843`. Root must preserve the reviewed class, interface, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.

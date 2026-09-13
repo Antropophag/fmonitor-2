@@ -556,3 +556,29 @@ No findings remain in the v4 correction scope.
 `APPROVED`
 
 Gate 4 may proceed for this correction against exact candidate source `20f1166c52b8654fa5d4d0492c35c96441f2a4f4d7318c1bf2bc5de5f68febd0`. Any change to the normative tuple, outbox identity, or executable expectations requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not review production implementation or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Native process PSR-4 autoload correction — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T224213Z-ccb05c098f/package.json`.
+- Exact reviewed RED source: candidate `5504b1324320876d35d5342218900b76f19a7a383ae8b98842c89bb5f91272bc`, executable `63108b0a10793f23b8c8fa858508f351c15613fb41e689f3281bc14b5bbc6c54`, over head `33a6a998219a84d06a1c6b1bcfb57ef9fab48a2e`.
+- Package snapshot patch SHA-256: `5b0584c88b7541f0d028d0ebebb83682e74f1e9b3b3b79f15b490772d91d61ac`.
+- Scope: direct autoload assertion for `NativeStandProcess`; no protocol, production behavior, or destructive action is reviewed.
+
+### Assessment
+
+The test is sensitive to the production construction failure that the injected process-boundary test masked. `app/autoload.php` maps each `FMonitor2\\...` class name to the same relative `.php` path. Requesting `FMonitor2\\RuntimeRestore\\NativeStandProcess` therefore resolves only `app/RuntimeRestore/NativeStandProcess.php`; its current declaration inside `StandProcess.php` is not discovered unless the interface happened to be loaded first. Both production driver constructors instantiate `NativeStandProcess` directly, so ordinary production construction can fail with class-not-found.
+
+Calling `class_exists(NativeStandProcess::class)` before loading `StandRuntimeConfiguration` and without first referencing `StandProcess` exercises that exact clean-autoload condition. The literal expected outcome is simply successful class availability; it does not inspect source text or prescribe implementation beyond the repository's existing autoload convention. A separate `NativeStandProcess.php` declaration, with `StandProcess.php` retaining only the interface, is the minimal correction and changes no process protocol.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789339993220419000-da0071844bbb47ba9e6f9e04391b3738.json` is start/end stable at the exact reviewed candidate/executable sources. It exits `255` with `INTENDED_RED: production process implementation is not PSR-4 autoloadable` because the class-mapped file is absent. This is the intended production preflight failure, not broken fixture setup.
+
+No findings remain in this narrow test delta.
+
+`APPROVED`
+
+Gate 4 may proceed with the minimal autoload correction. Any change to the process interface or behavior requires broader review. This approval does not approve production implementation or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
