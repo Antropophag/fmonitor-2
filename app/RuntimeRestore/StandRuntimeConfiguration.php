@@ -22,6 +22,17 @@ final readonly class StandRuntimeConfiguration
     public function artifactVolumePath(): string{return $this->artifactPath;}
     public function sessionVolumePath(): string{return $this->sessionPath;}
     public function restoreProbeTable(): string{return $this->prefix.'fm2_restore_rehearsal_probe';}
+    public function matchesAuthorization(StandRestoreAuthorization $authorization): bool
+    {
+        return $authorization->value('runtime')===['artifact_volume_path'=>$this->artifactPath,'process_table_prefix'=>$this->prefix,'session_volume_path'=>$this->sessionPath];
+    }
+    public static function validAuthorizationValue(mixed $runtime): bool
+    {
+        if(!is_array($runtime)||array_is_list($runtime)||array_keys($runtime)!==['artifact_volume_path','process_table_prefix','session_volume_path'])return false;
+        if(!is_string($runtime['process_table_prefix'])||preg_match('/^[A-Za-z0-9_]{0,25}$/D',$runtime['process_table_prefix'])!==1)return false;
+        foreach(['artifact_volume_path','session_volume_path']as$name)if(!is_string($runtime[$name])||preg_match('/^[A-Za-z0-9._-]+$/D',$runtime[$name])!==1)return false;
+        return $runtime['artifact_volume_path']!==$runtime['session_volume_path'];
+    }
     private static function path(mixed $path): string
     {
         if(!is_string($path)||$path===''||$path[0]!=='/'||str_contains($path,"\0")||preg_match('#(?:^|/)(?:\.|\.\.)(?:/|$)#D',$path)===1||str_contains($path,'//')||($path!=='/'&&str_ends_with($path,'/')))throw new \InvalidArgumentException();

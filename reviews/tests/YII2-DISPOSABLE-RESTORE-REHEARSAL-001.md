@@ -449,3 +449,110 @@ No findings remain in the test delta.
 `APPROVED`
 
 The corrected test retains the A6 Gate 3 approval and may be used for exact-source Gate 5 review. This approval does not approve the production implementation itself or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Outbox ownership SQL correction — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the reviewed test delta or retained evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T211129Z-5a2762fe34/package.json`.
+- Exact reviewed RED source: candidate `29247df774a5bd79593c3088c7d2e1422dc4e93b91efe9b40a38364a96c8fbfc`, executable `7a3561caeebf8c45a5a93be056d6bb33444803cfacd6d4f79a222966ab226075`, over head `0997a37a9ef9921c7960358e13ac804685ebf1d8`.
+- Package snapshot patch SHA-256: `c2ffbd632628fd4030454353720e4911d34fa55f390a488cce33faf3cbfcdef1`.
+- Scope: lines 17–19 added to `tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php`; no production implementation or destructive action is reviewed.
+
+### Assessment
+
+The negative expectation is correct and materially sensitive: `fm2_outbox_intents` has no `idempotency_key`, so the emitted restore-validation SQL must not reuse the jobs-table predicate. The positive `domain_event_id='restore-rehearsal-outbox'` assertion is also traceable to `app/Jobs/MariaDbOutbox.php` and `app/InstallationProcess/JobsDeliveryDefinitionSchemaMigration.php`.
+
+### Blocking finding
+
+1. **HIGH — the positive predicate omits the other half of the canonical outbox identity.** Locations: `tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php:17-19`; `app/Jobs/MariaDbOutbox.php:16-23`; `app/InstallationProcess/JobsDeliveryDefinitionSchemaMigration.php:14-15,27`. `MariaDbOutbox` defines an intent's lookup identity as `(domain_event_id, channel)`, and the schema enforces the unique index on that pair. The test currently approves `WHERE domain_event_id='restore-rehearsal-outbox'` alone. Two valid intents may share that event id across channels, making the restore observation ambiguous or causing a multi-row mismatch unrelated to the intended known fact. Bind the known-state fixture to a literal channel and require the actual emitted SQL to include both the exact domain event id and exact channel while continuing to forbid the nonexistent `idempotency_key`. The expected channel must come from independently specified setup/action-package data, not production output. Retain fresh exact-source intended RED for the incomplete current predicate.
+
+The guarded real roundtrip/rollback observers still contain legacy `fm2_outbox`/`idempotency_key` queries; they are outside this narrow delta, but they must be corrected and independently reviewed before authorized live evidence can be accepted.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789334198001374000-5c5881f196d54719b6c59e2929678def.json` is start/end stable at the reviewed candidate/executable sources. It fails after exercising the real driver process boundary because current generated SQL uses `idempotency_key`; this is valid intended RED, not setup failure. It does not expose the missing-channel weakness because the proposed positive expectation itself omits channel.
+
+`CHANGES_REQUESTED`
+
+Gate 4 for this additional DB-ownership correction remains blocked until the test requires the full canonical `(domain_event_id, channel)` identity and retains fresh intended RED. This verdict authorizes no destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Outbox ownership SQL correction v2 — narrow Gate 3 rereview — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the reviewed test delta or retained evidence.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T211129Z-5a2762fe34/package.json`.
+- Exact reviewed RED source: candidate `eeaa99dfe5502ab2dcc7ba9c3dd70d2eeada413bbd3b21cad390789951ed960a`, executable `cf97a39249ac243f5047ae3a87dd3dd223bde9b330f9541d42f96bd76f9e12a5`, over head `0997a37a9ef9921c7960358e13ac804685ebf1d8`.
+- Scope: complete outbox identity assertions in the process-boundary test and corresponding guarded live roundtrip/rollback observer corrections; production implementation remains outside review.
+
+### Assessment
+
+The process-boundary portion resolves the prior canonical-identity finding. It now requires emitted SQL to use both literal `domain_event_id='restore-rehearsal-outbox'` and `channel='rehearsal'`, matching `MariaDbOutbox` lookup ownership and the schema's unique `(domain_event_id, channel)` index, while continuing to reject the nonexistent outbox `idempotency_key`. The retained failure occurs after the real production driver reaches its injected process boundary and therefore is valid intended RED for the incomplete current SQL.
+
+The guarded observers correctly replace the obsolete table/column facts with `status,idempotency_key` on the canonical prefixed jobs table and `status` on the canonical prefixed outbox-intents table using the complete outbox identity. Their expected `ready`/`pending` values match the schema/runtime vocabulary.
+
+### Remaining blocking finding
+
+1. **HIGH — the guarded authorized branches obtain the table prefix from a key their authorization document cannot contain.** Locations: `tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py:20`; `tests/Deployment/yii2_disposable_restore_rollback_001_test.py:15`; `app/RuntimeRestore/StandRestoreAuthorization.php:19-20`. Both tests load the nested restore authorization and access `auth["process_table_prefix"]`. `StandRestoreAuthorization` requires its production authorization keys to match an exact allowlist, and `process_table_prefix` is absent from that allowlist. Consequently no valid authorization consumed by the public restore seam can supply the key: an authorized guarded test reaches a Python `KeyError` before the MariaDB observation. Put the independently specified expected prefix in an appropriate canonical action-package field and bind/validate it, or derive it from another already authorized immutable configuration source; then make the observers consume that reachable value. Do not silently accept an extra unbound authorization key. Retain non-destructive fixture validation demonstrating the authorized branch can resolve the prefix before live action.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789334341675625000-d9151b9c62204868af98ce3a7c05a2a1.json` is start/end stable at the exact reviewed candidate/executable sources. It is valid intended RED for the production driver's old outbox predicate. Because destructive authorization is absent, it cannot exercise or expose the unreachable live-observer prefix lookup.
+
+`CHANGES_REQUESTED`
+
+The process-boundary expectation is approved, but the combined v2 test delta is blocked until the guarded observers obtain the canonical prefix from a valid bound source. No destructive rehearsal, CI, publication, deployment, or cutover is authorized; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Outbox/runtime authorization correction v3 — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the corrected contract, tests, or retained evidence.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T211129Z-5a2762fe34/package.json`.
+- Exact reviewed RED source: candidate `40344ac7a09d3497bfa88c49b7b446dc6474924e56cd285f0db9b50e7cee2849`, executable `e2997a4296f378645df71f659a954ebb715ac0c5500ed39d75bfe67ccfa58a09`, over head `0997a37a9ef9921c7960358e13ac804685ebf1d8`.
+- Scope: normative authorization binding for the runtime tuple, process-boundary mismatch behavior, full canonical outbox identity, and guarded live observers; production implementation remains outside review.
+
+### Assessment
+
+The v2 reachability blocker is resolved in contract shape: the stable specification and OpenSpec delta now require the production authorization to bind `runtime.process_table_prefix`, `runtime.artifact_volume_path`, and `runtime.session_volume_path`, with mismatch rejected before process calls. The process test supplies that nested tuple. The guarded DB observers now read the prefix from the same canonical nested authorization and query the canonical prefixed jobs and outbox-intents tables using the complete `(domain_event_id, channel)` identity. The current strict authorization parser rejects the newly required tuple, so the retained failure is a valid missing-contract RED rather than environment failure.
+
+### Remaining blocking finding
+
+1. **HIGH — only one of the three bound runtime tuple members is mismatch-tested, and the guarded filesystem observers still bypass the tuple.** Locations: `tests/Deployment/yii2_disposable_restore_process_boundary_001_test.php:15`; `tests/Deployment/yii2_disposable_restore_rehearsal_001_test.py:18-19`; `tests/Deployment/yii2_disposable_restore_rollback_001_test.py:16`. The normative correction requires exact comparison of all three tuple fields before process calls. The process test changes only `process_table_prefix`; an implementation that validates the prefix but ignores either volume path passes. Add separate artifact-path and session-path mismatches and require `TARGET_INVALID` with unchanged process-call count for each. In addition, the guarded observers continue to inspect `/state/fmonitor2/artifacts/...` and `/state/fmonitor2/sessions/...`, the same duplicated-root layout this correction exists to eliminate. Build their read-only paths from `auth["runtime"]["artifact_volume_path"]` and `auth["runtime"]["session_volume_path"]`, while retaining literal checks that the authorized tuple contains the independently expected `artifacts` and `yii-sessions` values. This makes the new binding operationally observable rather than prefix-only.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789334840303015000-009c1a7b0c9a40bf9042e81ea29cec2a.json` is start/end stable at the exact reviewed candidate/executable sources and fails because current strict authorization rejects the required `runtime` tuple. It is valid intended RED, but cannot demonstrate the untested path-mismatch branches because authorization admission fails first.
+
+`CHANGES_REQUESTED`
+
+The runtime tuple contract and full outbox identity expectations are approved, but Gate 4 remains blocked until all tuple members are mismatch-sensitive and guarded filesystem observers consume the bound paths. No destructive rehearsal, CI, publication, deployment, or cutover is authorized; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
+## Outbox/runtime authorization correction v4 — narrow Gate 3 rereview — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the corrected contract, tests, or retained evidence.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T211129Z-5a2762fe34/package.json`.
+- Exact reviewed RED source: candidate `20f1166c52b8654fa5d4d0492c35c96441f2a4f4d7318c1bf2bc5de5f68febd0`, executable `e17fd4bf3f4fbceb77364c36615a635838e1deb2267e753c6ceb4f1040d7c508`, over head `0997a37a9ef9921c7960358e13ac804685ebf1d8`.
+- Scope: independent mismatch sensitivity for every authorized runtime tuple member, bound path use in guarded roundtrip/rollback observers, and the previously accepted complete outbox identity expectations; production implementation remains outside review.
+
+### Assessment
+
+The v3 finding is resolved. The process-boundary test constructs three otherwise valid runtime configurations that independently differ in process-table prefix, artifact volume child, or Yii session volume child. For each, it requires exact `TARGET_INVALID` and proves the injected process call count is unchanged, so an implementation cannot validate only a subset of the authorization tuple or begin identity/effect work before rejecting drift.
+
+The guarded roundtrip and rollback branches now read both filesystem children from `auth.runtime`, first assert the independently specified literal tuple values `artifacts` and `yii-sessions`, and then use those values in their read-only volume observations. The old duplicated `/state/fmonitor2/...` roots are absent. Their DB observers likewise consume the bound prefix and require canonical jobs status plus the unique outbox `(domain_event_id='restore-rehearsal-outbox', channel='rehearsal')` fact while forbidding reliance on the nonexistent outbox idempotency column through the process test.
+
+These additions preserve the public restore authorization boundary, deterministic injected process seam, independently literal expectations, and no-effect rejection. They do not execute the guarded destructive branches.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789338639007962000-73c7fef00236447ba3d6e0cbc3943dec.json` is start/end stable at the exact reviewed candidate/executable sources. It exits `255` with the explicit intended-RED marker because the current strict authorization parser rejects the newly required `runtime` tuple. This is the missing production contract, not test setup failure. Later tuple mismatch and generated-SQL assertions are correctly staged for the implementation correction.
+
+No findings remain in the v4 correction scope.
+
+`APPROVED`
+
+Gate 4 may proceed for this correction against exact candidate source `20f1166c52b8654fa5d4d0492c35c96441f2a4f4d7318c1bf2bc5de5f68febd0`. Any change to the normative tuple, outbox identity, or executable expectations requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not review production implementation or authorize destructive rehearsal, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.

@@ -28,6 +28,10 @@ reference. Manifest MUST canonical-bound связывать authorization id/sco
 absolute compose file, exact services, database identity, database/state/secrets
 volume names и observed engine IDs, disposable marker, credential-file references,
 health URLs и evidence root. Secret values в manifest запрещены.
+Production authorization MUST также exact bind-ить canonical runtime tuple:
+`process_table_prefix`, `artifact_volume_path`, `session_volume_path`. Driver
+MUST сравнить tuple со своим runtime configuration до process calls; mismatch
+даёт `TARGET_INVALID` без credential read или effect.
 
 ## 2. Authorization и target attestation до effects
 

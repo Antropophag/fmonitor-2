@@ -191,3 +191,33 @@ Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN
 `APPROVED`
 
 Gate 5 passes for the jobs-readiness blocker correction at exact candidate source `b46bf3fa09a25f57a5132c62252bee65c27e3a28bb79b1d8735d8e82ee04e930`. Root must preserve the reviewed compose, contract, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
+
+---
+
+## Runtime authorization binding and outbox SQL correction Gate 5 review — 2026-09-14
+
+- Reviewer: independent `gate5_runtime_binding`; authored none of the reviewed contract, test, implementation, or retained verification evidence.
+- Exact package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T224213Z-ccb05c098f/package.json`.
+- Reviewed reconstructible source over base/head `0997a37a9ef9921c7960358e13ac804685ebf1d8`: candidate source `618380433c45e19d0ff754b502f4826ba50876d6ec8deb7d8c994afd96fcfcd7`, executable source `127eb8360c10a272e6f07e96cd5f79020620f6ad1464d0b3ff2e7b2693d569ec`.
+- Snapshot patch SHA-256: `5b0584c88b7541f0d028d0ebebb83682e74f1e9b3b3b79f15b490772d91d61ac`; verification plan SHA-256: `43b7e962ff4ac156ec2bd3600787046927aa04ce0ad65c4235d20e970e323d2d`.
+- Controlling narrow test reviews: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, runtime-tuple and outbox-identity correction sections, verdicts `APPROVED`.
+
+### Assessment
+
+No findings remain in this correction scope.
+
+The production authorization exact schema now includes the canonical `runtime` tuple and validates its exact key set and values. `StandRuntimeConfiguration` compares that tuple byte-for-byte with its validated process-table prefix, artifact-volume child and Yii-session-volume child. `ProductionStandRestoreDriver::preflight()` performs this comparison before `observe()` and therefore before any `StandProcess` call. The approved process-boundary test independently varies each of the three tuple members, requires `TARGET_INVALID`, and proves the process call count remains unchanged for every mismatch.
+
+After successful binding, guarded restore observers and effects consume the same bound configuration owner: rehearsal and jobs tables are derived from its prefix, while artifact and session restore/verification paths are derived from its two managed volume children. The outbox recovery assertion now queries the canonical unique identity `(domain_event_id, channel)` and no longer refers to the nonexistent jobs `idempotency_key` column on `fm2_outbox_intents`.
+
+The candidate preserves the previously approved table/path correction, jobs-readiness Compose correction, application-owned authorization/attestation boundary, immutable target observations, operation-specific staged volume replacement, exact expected-state comparison, retained lease/no pointer on ambiguous outcome, private credential handling, and durable replay/conflict history. This delta introduces no new destructive seam or alternate state owner.
+
+All 14 focused-plan records in the exact package are GREEN and source-bound to candidate `618380433c45e19d0ff754b502f4826ba50876d6ec8deb7d8c994afd96fcfcd7` / executable source `127eb8360c10a272e6f07e96cd5f79020620f6ad1464d0b3ff2e7b2693d569ec`. During review, both changed PHP boundary checks were rerun and GREEN, and `git diff --check` was clean.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. No destructive action or authorization package was executed. Authorized disposable roundtrip/rollback, exact-source full CI, publication/merge, deployment, and production cutover remain separate deferred actions and are not inferred GREEN.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for exact candidate source `618380433c45e19d0ff754b502f4826ba50876d6ec8deb7d8c994afd96fcfcd7`. Root must preserve the reviewed bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
