@@ -61,6 +61,97 @@ def _ci_status(checks):
     return "SUCCESS" if conclusions == {"SUCCESS"} else "FAILURE"
 
 
+def _load_observation(path):
+    value = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("observation must be a JSON object")
+    value["replay"] = True
+    return value
+
+
+def _admit(helpers, observation):
+    import admission
+    return admission.evaluate(observation, helpers.ROOT)
+
+
+def _native_github_observation(helpers):
+    """Collect exact native PR/run/attempt jobs; no rollup is trusted as CI proof."""
+    root = helpers.ROOT
+    details = helpers.source_details()
+    dirty = details.get("dirty", True)
+    head = details["head"]
+    repository = json.loads(_run(root, ["gh", "repo", "view", "--json", "nameWithOwner"], check=True).stdout)["nameWithOwner"]
+    pr = json.loads(_run(root, ["gh", "pr", "view", "--json",
+                          "number,state,headRefOid,baseRefOid,url,statusCheckRollup"], check=True).stdout)
+    runs = json.loads(_run(root, ["gh", "run", "list", "--workflow", "quality-graph.yml",
+                           "--commit", pr.get("headRefOid"),
+                           "--json", "databaseId,headSha,status,conclusion,attempt,workflowName,event"], check=True).stdout)
+    matching = [item for item in runs if item.get("headSha") == pr.get("headRefOid")]
+    if not matching:
+        raise ValueError("no workflow run bound to PR head")
+    selected = max(matching, key=lambda item: (int(item.get("databaseId", 0)), int(item.get("attempt", 0))))
+    run_id = selected["databaseId"]
+    run = json.loads(_run(root, ["gh", "api", f"repos/{repository}/actions/runs/{run_id}"], check=True).stdout)
+    attempt = int(selected.get("attempt", 0))
+    jobs = json.loads(_run(root, ["gh", "api", f"repos/{repository}/actions/runs/{run_id}/attempts/{attempt}/jobs"], check=True).stdout)
+    base = pr.get("baseRefOid")
+    if not base:
+        pulls = run.get("pull_requests") or []
+        base = pulls[0].get("base", {}).get("sha") if pulls else None
+    plan = _run(root, [sys.executable, "tools/verification/ci.py", "plan", "--base", str(base or ""),
+                       "--event", "pull_request"], check=True)
+    mode = json.loads(plan.stdout).get("mode")
+    import admission
+    binding = {"repository": repository, "pr": pr.get("number"), "head": pr.get("headRefOid"),
+               "base": base, "candidate": details["digest"], "mode": mode,
+               "policy_digest": admission.policy_digest(root), "workflow": admission.WORKFLOW,
+               "run_id": run_id, "attempt": attempt}
+    ci_binding = dict(binding)
+    if run.get("id") != binding["run_id"]:
+        ci_binding["run_id"] = run.get("id")
+    if run.get("run_attempt") != binding["attempt"]:
+        ci_binding["attempt"] = run.get("run_attempt")
+    if run.get("head_sha") != binding["head"]:
+        ci_binding["head"] = run.get("head_sha")
+    if run.get("path") != binding["workflow"]:
+        ci_binding["workflow"] = run.get("path")
+    if selected.get("event") != "pull_request" or run.get("event") != "pull_request":
+        ci_binding["workflow"] = "INVALID_EVENT"
+    run_pulls = run.get("pull_requests") or []
+    if len(run_pulls) == 1:
+        pull = run_pulls[0]
+        if pull.get("number") != binding["pr"]:
+            ci_binding["pr"] = pull.get("number")
+        run_head = pull.get("head", {}).get("sha")
+        run_base = pull.get("base", {}).get("sha")
+        if run_head != binding["head"]:
+            ci_binding["head"] = run_head
+        if run_base != binding["base"]:
+            ci_binding["base"] = run_base
+    else:
+        ci_binding["pr"] = None
+    job_values = []
+    for item in jobs.get("jobs", []):
+        job_binding = dict(binding)
+        if item.get("head_sha") != binding["head"]:
+            job_binding["head"] = item.get("head_sha")
+        if item.get("run_id") != binding["run_id"]:
+            job_binding["run_id"] = item.get("run_id")
+        if item.get("run_attempt") != binding["attempt"]:
+            job_binding["attempt"] = item.get("run_attempt")
+        job_values.append({"name": item.get("name"), "status": str(item.get("status", "")).upper(),
+                           "conclusion": str(item.get("conclusion", "")).upper() or None,
+                           "binding": job_binding})
+    # I1 has no persisted preflight/review adapter yet: absence must remain blocking.
+    observation = {"binding": binding, "current": {"head": head, "base": base},
+                   "ci": {"binding": ci_binding, "jobs": job_values},
+                   "preflight": {}, "reviews": [], "authorization": None,
+                   "enforcement": "ENFORCEMENT_NOT_CONFIGURED", "replay": False}
+    if dirty:
+        observation["current"]["head"] = "DIRTY:" + head
+    return observation, pr
+
+
 def _compute_state(helpers):
     root = helpers.ROOT
     checked_at = _now()
@@ -106,9 +197,32 @@ def _compute_state(helpers):
     return state
 
 
+def command_admission(args, helpers):
+    result = _admit(helpers, _load_observation(args.observation))
+    _json(result)
+    return 0 if result["merge_ready"] else 1
+
+
+def command_live_admission(args, helpers):
+    try:
+        observation, pr = _native_github_observation(helpers)
+        result = _admit(helpers, observation)
+        result["github"] = {key: pr.get(key) for key in ("number", "state", "headRefOid", "url")}
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError,
+            subprocess.SubprocessError) as error:
+        legacy = _compute_state(helpers) if args.command == "state" else {}
+        result = {**legacy, "ci": {"status": "UNKNOWN", "source": "UNKNOWN"}, "publication_ready": False,
+                  "merge_ready": False, "action_authorized": False,
+                  "enforcement": "ENFORCEMENT_NOT_CONFIGURED",
+                  "reasons": ["live_github_unavailable:" + type(error).__name__]}
+    _json(result)
+    return 0 if args.command == "state" else (0 if result["merge_ready"] else 1)
+
+
 def command_state(args, helpers):
-    _json(_compute_state(helpers))
-    return 0
+    if getattr(args, "observation", None):
+        return command_admission(args, helpers)
+    return command_live_admission(args, helpers)
 
 
 def _event_identity(event):
@@ -139,6 +253,9 @@ def _append_hook_event(helpers, event):
     payload = {"event": name, "session_id": event.get("session_id"), "observed_at": _now(),
                "repository": repository, "cwd": event.get("cwd"),
                "integration_fingerprint": fingerprint}
+    for field in ("task", "run_id", "candidate"):
+        if event.get(field) is not None:
+            payload[field] = event[field]
     if name == "PostToolUse":
         response = event.get("tool_response", "")
         if not isinstance(response, str):
@@ -248,8 +365,16 @@ def command_hook(args, helpers):
     name = event["hook_event_name"]
     if name == "SessionStart":
         state = _compute_state(helpers)
+        try:
+            observation, pr = _native_github_observation(helpers)
+            ci_status = _admit(helpers, observation)["ci"]["status"]
+            pr_state = pr.get("state", "UNKNOWN")
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError,
+                subprocess.SubprocessError):
+            ci_status = "UNKNOWN"
+            pr_state = state["github"]["state"]
         summary = (f" Exact state: head={state['head']}; source={state['source']}; dirty={state['dirty']}; "
-                   f"PR={state['github']['state']}; CI={state['ci']['status']}; next={state['next_action']}.")
+                   f"PR={pr_state}; CI={ci_status}; next={state['next_action']}.")
         output = {"hookSpecificOutput": {"hookEventName": name,
                   "additionalContext": _context(helpers) + summary}}
         _json(output)
@@ -698,7 +823,12 @@ def command_prepare(args, helpers):
 def _parse(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("state")
+    for name in ("admission", "state", "prepare-merge"):
+        command = commands.add_parser(name)
+        command.add_argument("--observation")
+    wait = commands.add_parser("wait")
+    wait.add_argument("--observation")
+    wait.add_argument("--once", action="store_true")
     commands.add_parser("doctor")
     commands.add_parser("hook")
     install = commands.add_parser("install")
@@ -722,7 +852,11 @@ def main(args, helpers=None):
     if isinstance(args, (list, tuple)):
         args = _parse(args)
     try:
-        if args.command == "state":
+        if args.command in {"admission", "state", "wait", "prepare-merge"}:
+            if args.command == "admission" and not args.observation:
+                raise ValueError("admission requires --observation")
+            if args.observation:
+                return command_admission(args, helpers)
             return command_state(args, helpers)
         if args.command == "hook":
             return command_hook(args, helpers)
