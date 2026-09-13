@@ -56,7 +56,12 @@ def harness_run(argv, environment):
         raise ValueError(f'delivery harness returned invalid JSON: {error}') from error
     module_spec = importlib.util.spec_from_file_location('fmonitor_delivery_harness', harness)
     module = importlib.util.module_from_spec(module_spec)
-    module_spec.loader.exec_module(module)
+    previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        module_spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode
     record = module.hydrate_summary(summary)
     if environment.get('GITHUB_ACTIONS') == 'true':
         for name in ['stdout_path', 'stderr_path']:
@@ -132,7 +137,12 @@ def reconstructed_plan(base):
     planner_path = ROOT / 'tools/delivery/change-verification.py'
     module_spec = importlib.util.spec_from_file_location('change_verification', planner_path)
     module = importlib.util.module_from_spec(module_spec)
-    module_spec.loader.exec_module(module)
+    previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        module_spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode
     first = module.build(base, inputs[0])
     second = module.build(base, inputs[0])
     if module.canonical(first) != module.canonical(second):
@@ -262,7 +272,9 @@ def run_fast(base):
         identifier, argv = check.get('id'), check.get('argv')
         if not isinstance(identifier, str) or not isinstance(argv, list):
             raise ValueError('invalid selected check')
-        record = harness_run(argv, dict(os.environ))
+        environment = dict(os.environ)
+        environment['PYTHONDONTWRITEBYTECODE'] = '1'
+        record = harness_run(argv, environment)
         if record.get('outcome') != 'GREEN':
             failures.append(identifier)
     if failures:
