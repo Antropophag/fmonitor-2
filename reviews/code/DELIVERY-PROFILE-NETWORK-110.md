@@ -192,3 +192,61 @@ No blocker was introduced by the rebase. The prior technical and authorization
 approvals remain valid. Live PR/CI/publication/deployment state remains
 `UNKNOWN`; this exact-source Gate 5 approval neither declares authoritative
 Quality Graph GREEN nor authorizes merge.
+
+## Post-PR125 fixture correction review — package `20260913T191146Z-e9f056010d`
+
+- Reviewer: independent Gate 5 agent `/root/gate5_profile_network`; authored none
+  of the reviewed implementation, test correction, Gate 3 decision, or evidence.
+- Reviewed source: committed PR #125 head
+  `885d30dea885658d0256feb2b35d0a8828ab4392` plus retained correction snapshot
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T191146Z-e9f056010d/snapshot/source.patch`,
+  verified SHA-256
+  `9dc05a3591f5d3c72dd36189e177daea8949062e3588801c4b8add6872e17db9`;
+  package candidate source
+  `8f7837e027e7fb54fa9ea8b7ad01d494f7f6c1b0b2f0d071d4159d256952d5b8`
+  and executable source
+  `a729a5d3c30e45beb42f52e446dba4d5ef003dd698d3f84fbab422fb72073170`.
+- Verdict: `APPROVED`.
+
+### Correction review
+
+The executable delta is test-only: 11 additions and one deletion in
+`tests/Verification/quality_graph_ci_setup_001_test.php`. The fixture now asks
+the OS for an ephemeral loopback port, validates the returned numeric endpoint,
+closes the reservation, and passes that host port as `FMONITOR_TEST_DB_PORT` in
+the same environment already used consistently by Compose config/create/up/
+inspect/down. Container-side acceptance remains exactly `test-db:3306`.
+
+This correction prevents the randomized nested Compose project from predictably
+colliding with the outer canonical DB on host port `23306`, without changing the
+launcher, normative specification, Compose/Make topology, lifecycle ownership,
+profile route, or forbidden-scope boundaries. The small close-before-Compose-bind
+race can cause a visible setup failure but cannot produce a false GREEN; the
+previously approved `finally` cleanup remains in force.
+
+The independent Gate 3 correction review appended after package preparation is
+`APPROVED` and names the same package, snapshot digest, candidate/executable
+sources, and behavioral record. Its later documentary bytes are expected review
+history rather than an unreviewed executable change. No test expectation was
+weakened.
+
+The Quality Graph run `34775953385` on exact prior head
+`885d30dea885658d0256feb2b35d0a8828ab4392` remains `FAILURE`: its Integration
+(1/2) failure was the nested fixture's occupied host port, not a networking
+contract failure. It is retained as historical failure and is not acceptance
+GREEN.
+
+All required focused checks are GREEN on exact executable source
+`a729a5d3c30e45beb42f52e446dba4d5ef003dd698d3f84fbab422fb72073170`:
+
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — record
+  `1789326462814596000-edc3ae02abba4b8ab7b6a42a2016f4cf`;
+- `python3 tests/Verification/change_verification_001_test.py` — record
+  `1789326659293133000-aa26b094f21f4b4ba876290808aad4a9`;
+- `php tests/Runtime/runtime_storage_001_test.php` — record
+  `1789326691256565000-d817f387e9084a37954e1cead3281e73`.
+
+No blocking findings remain in the correction. PR #125 still requires a new
+authoritative exact-source Quality Graph run. Current CI is `FAILURE`,
+`merge_ready` is false, and no historical run is promoted to GREEN; this review
+does not authorize merge or deployment.

@@ -154,7 +154,17 @@ SH, 'profile-probe', $profile, 'value with spaces'];
         assertSameValue(0, $evidence['exit_code'], "DP110A-04 {$profile} recorded exit");
     }
 
-    $composeEnv = ['COMPOSE_PROJECT_NAME' => 'qcsnet'.bin2hex(random_bytes(6))];
+    $portProbe = stream_socket_server('tcp://127.0.0.1:0', $socketError, $socketMessage);
+    assertSameValue(true, is_resource($portProbe),
+        "SETUP_FAILURE: reserve isolated test DB port: {$socketError} {$socketMessage}");
+    $probeAddress = stream_socket_get_name($portProbe, false);
+    fclose($portProbe);
+    assertSameValue(1, preg_match('/:(\d+)$/D', (string) $probeAddress, $portMatch),
+        'DPN110-03 isolated external lifecycle port');
+    $composeEnv = [
+        'COMPOSE_PROJECT_NAME' => 'qcsnet'.bin2hex(random_bytes(6)),
+        'FMONITOR_TEST_DB_PORT' => $portMatch[1],
+    ];
     $probePath = $root.'/.local/qcs-db-probe-'.bin2hex(random_bytes(6)).'.php';
     if (!is_dir(dirname($probePath))) {
         mkdir(dirname($probePath), 0700, true);

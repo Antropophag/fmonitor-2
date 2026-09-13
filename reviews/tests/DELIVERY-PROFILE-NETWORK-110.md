@@ -135,3 +135,24 @@ Gate 3 approval permits progression under the delivery process but does not itse
 No blocking findings remain in this correction scope. The test retains real `git ls-files` behavior, uses the public launcher, preserves argv/exit semantics, and neither copies Git metadata into the image nor changes the existing harness/category runner. Read-only mounting only the Git common/worktree metadata is the authorized narrow security boundary; broader host exposure remains forbidden by the normative path mapping and is reviewable at Gate 5. Total current launcher implementation delta remains 23 added lines, below the 100-LOC guard, with no forbidden harness/Compose/Quality Graph/product change.
 
 Package hashes match the reviewed bytes, strict OpenSpec validation and `git diff --check` pass, and all earlier Gate 3 findings remain resolved. This Gate 3 approval covers the corrected Git metadata acceptance matrix. Harness still reports `action_authorized: false`; approval is not implementation authorization.
+
+## Post-PR125 CI fixture correction review — package `20260913T191146Z-e9f056010d`
+
+- Reviewer: independent Gate 3 agent `/root/gate3_profile_network`; authored neither the original test nor this fixture correction.
+- Reviewed source: committed PR #125 head/base `885d30dea885658d0256feb2b35d0a8828ab4392` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T191146Z-e9f056010d/snapshot/source.patch`, verified SHA-256 `9dc05a3591f5d3c72dd36189e177daea8949062e3588801c4b8add6872e17db9`; candidate source `8f7837e027e7fb54fa9ea8b7ad01d494f7f6c1b0b2f0d071d4159d256952d5b8`, executable source `a729a5d3c30e45beb42f52e446dba4d5ef003dd698d3f84fbab422fb72073170`.
+- Review boundary: the 11-addition/1-deletion test-fixture delta in `tests/Verification/quality_graph_ci_setup_001_test.php` after Quality Graph run `34775953385`; no production, normative expectation, OpenSpec, harness, Compose, Make, inventory, planner, or selection change.
+- Failure disposition: exact head `885d30dea885658d0256feb2b35d0a8828ab4392` had one integration failure because the randomized nested Compose project inherited host port `127.0.0.1:23306`, already bound by the outer canonical test DB. This is a fixture collision, not a product/networking acceptance failure.
+- Corrected evidence: `php tests/Verification/quality_graph_ci_setup_001_test.php` is GREEN in retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789326462814596000-edc3ae02abba4b8ab7b6a42a2016f4cf.json` (174.546 s). The evidence source/executable hashes match the package. The run was performed while the outer canonical DB was live; its identity was preserved, the randomized nested project cleaned successfully, and the retained fixture digest remained present rather than being consumed by nested teardown.
+- Verdict: `APPROVED`
+
+### Findings
+
+None blocking.
+
+The correction reserves an ephemeral loopback port with `stream_socket_server('tcp://127.0.0.1:0')`, validates extraction of its numeric port, closes the reservation, and places that value in `FMONITOR_TEST_DB_PORT` alongside the already randomized `COMPOSE_PROJECT_NAME`. PHP passes the same `composeEnv` to config, create, stopped-service inspection, `make test-env-up`, running-service inspection, and `make test-env-down`; therefore the nested lifecycle consistently owns one project/port pair and cannot address or tear down the outer canonical project.
+
+The small close-before-bind interval is the standard unavoidable ephemeral-port allocation race, not a deterministic conflict or acceptance change. A collision would remain a visible setup failure and cleanup still runs through the previously approved `finally`; it cannot produce a false GREEN. The corrected run under the formerly conflicting outer-DB condition provides direct sensitivity to the reported regression.
+
+All behavioral expectations remain identical: randomized/atypical Compose-network discovery, missing-network and stopped-service non-ownership, governance independence, real integration/browser DB probes, Git metadata read-only/portability, argv/exit semantics, and cleanup assertions are unchanged. Production `tools/delivery/run-in-profile` is byte-identical to PR #125 head. The package's additional review history is documentary and does not expand the correction scope.
+
+This approval covers only the Gate 2 fixture correction. The prior failed CI remains historical failure; PR #125 needs new exact-source authoritative CI and applicable Gate 5 correction review before merge readiness. Current harness state remains CI `FAILURE`, `merge_ready: false`, and `action_authorized: false`; none is promoted by this test approval.
