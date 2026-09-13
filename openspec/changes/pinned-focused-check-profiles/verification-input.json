@@ -1,0 +1,18 @@
+{
+  "change": "pinned-focused-check-profiles",
+  "planned_paths": [
+    "specs/DELIVERY-PROFILE-110-A.md",
+    "tools/delivery/run-in-profile",
+    "tools/delivery/Dockerfile.focused-checks",
+    "tests/Verification/quality_graph_ci_setup_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "DELIVERY-PROFILE-110-A",
+      "acceptance_id": "DP110A-01-05",
+      "spec_path": "specs/DELIVERY-PROFILE-110-A.md",
+      "seam": "tools/delivery/run-in-profile <profile> <command> [args...]",
+      "tests": ["tests/Verification/quality_graph_ci_setup_001_test.php"]
+    }
+  ]
+}
