@@ -143,3 +143,52 @@ No blocking findings remain. The rejected full-category regression records remai
 negative scope evidence only. PR state, authoritative exact-source Quality Graph
 CI, merge readiness, publication, and deployment remain `UNKNOWN`; this approval
 does not promote any of them to GREEN and does not authorize merge.
+
+## Post-rebase exact-source rereview — package `20260913T185024Z-d0985778d9`
+
+- Reviewer: independent Gate 5 agent `/root/gate5_profile_network`; authored none
+  of the reviewed artifacts, implementation, rebase, or evidence.
+- Reviewed committed source: base
+  `e5a420e0b52162bde19c7d527c3fb1c57eb9f40a` (merged PR #124) and candidate
+  `c57bfaf15f382dafae3e59c8747ad961229a4759`; package candidate source
+  `7c7f8c520b68964da3b8743024457d518849b50e75d4c370298d81e8ce5373b8`
+  and executable source
+  `542916bad74fcbf2842e9af49aa0e019b5b49b6c6ede8bb0368577c3feb13d13`.
+  The retained snapshot patch is correctly empty for the clean committed
+  candidate (SHA-256
+  `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`).
+- Verdict: `APPROVED`.
+
+### Rebase interaction review
+
+The candidate remains one commit ahead of new `origin/main` and its production
+delta is still exactly 23 added lines in `tools/delivery/run-in-profile`; the
+behavioral test remains exactly 127 added lines. Their content hashes are
+unchanged from the prior approved technical candidate. The only expected
+repository-owned post-approval artifact changes are the completed Gate 5 task
+checkbox and the appended review history.
+
+Upstream PR #124 adds the Yii2 stand-restore control and registers its checks in
+`tests/Verification/verification_ci_001_test.py`,
+`tools/verification/categories.json`, and `tools/verification/suites.tsv`. It
+does not change `compose.test.yaml`, `tools/delivery/run-in-profile`, or
+`tests/Verification/quality_graph_ci_setup_001_test.php`. The regenerated plan
+continues to require the applicable `governance` and `integration` categories,
+and the change-verification check is GREEN against the expanded upstream
+inventory. No semantic, lifecycle, network, profile, selection, or aggregation
+interaction was found.
+
+All three required focused checks were rerun GREEN on exact executable source
+`542916bad74fcbf2842e9af49aa0e019b5b49b6c6ede8bb0368577c3feb13d13`:
+
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — record
+  `1789325301764498000-287dd861f30043a1ba23dffcd57ac584`;
+- `python3 tests/Verification/change_verification_001_test.py` — record
+  `1789325389687265000-16e286cc27a6466399541ad894b162ca`;
+- `php tests/Runtime/runtime_storage_001_test.php` — record
+  `1789325412452200000-d8ecc05874dc4c2090458b22cc911f16`.
+
+No blocker was introduced by the rebase. The prior technical and authorization
+approvals remain valid. Live PR/CI/publication/deployment state remains
+`UNKNOWN`; this exact-source Gate 5 approval neither declares authoritative
+Quality Graph GREEN nor authorizes merge.
