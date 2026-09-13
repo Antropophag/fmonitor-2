@@ -1,0 +1,54 @@
+{
+  "change": "yii2-stand-restore-control",
+  "planned_paths": [
+    "app/RuntimeRestore/StandBackupApplication.php",
+    "app/RuntimeRestore/StandBackupFilesystem.php",
+    "app/RuntimeRestore/StandBackupBundle.php",
+    "app/RuntimeRestore/StandRestoreApplication.php",
+    "app/YiiRuntime/Commands/StandRestoreController.php",
+    "config/yii/console.php",
+    "specs/YII2-STAND-RESTORE-CONTROL-001.md",
+    "tests/Deployment/yii2_stand_restore_roundtrip_001_test.py",
+    "tests/Deployment/yii2_stand_restore_failure_001_test.py",
+    "tests/Architecture/yii2_stand_restore_boundary_001_test.py",
+    "tests/Yii2/yii2_stand_restore_console_001_test.php",
+    "tests/Support/stand_restore_contract.py",
+    "docs/operations/yii2-stand-restore-control-delivery-2026-09-13.md",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-STAND-RESTORE-CONTROL-001",
+      "acceptance_id": "A1-yii2-application-seam",
+      "spec_path": "specs/YII2-STAND-RESTORE-CONTROL-001.md",
+      "seam": "php bin/yii stand-restore/run safe argv and application ownership",
+      "tests": ["tests/Yii2/yii2_stand_restore_console_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_stand_restore_console_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-CONTROL-001",
+      "acceptance_id": "A2-roundtrip-integrity-readiness",
+      "spec_path": "specs/YII2-STAND-RESTORE-CONTROL-001.md",
+      "seam": "stand-backup/create then stand-restore/run over materialized disposable DB/artifact/session state",
+      "tests": ["tests/Deployment/yii2_stand_restore_roundtrip_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_stand_restore_roundtrip_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-CONTROL-001",
+      "acceptance_id": "A3-fail-closed-and-ambiguous-outcome",
+      "spec_path": "specs/YII2-STAND-RESTORE-CONTROL-001.md",
+      "seam": "invalid/corrupt/incompatible/unsafe/replayed/interrupted restore has zero unconfirmed success",
+      "tests": ["tests/Deployment/yii2_stand_restore_failure_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_stand_restore_failure_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-CONTROL-001",
+      "acceptance_id": "A4-backup-regression-and-legacy-inventory",
+      "spec_path": "specs/YII2-STAND-RESTORE-CONTROL-001.md",
+      "seam": "PR #119 backup contracts remain green and RuntimeRecovery production responsibilities are executable inventory",
+      "tests": ["tests/Architecture/yii2_stand_restore_boundary_001_test.py", "tests/Yii2/yii2_stand_backup_console_001_test.php", "tests/Yii2/yii2_stand_backup_ownership_001_test.php", "tests/Architecture/yii2_stand_backup_boundary_001_test.py", "tests/Deployment/yii2_stand_backup_target_001_test.py", "tests/Deployment/yii2_stand_backup_bundle_001_test.py", "tests/Deployment/yii2_stand_backup_preservation_001_test.py", "tests/Deployment/yii2_stand_backup_replay_001_test.py"],
+      "gate3_expected": {"tests/Architecture/yii2_stand_restore_boundary_001_test.py": "GREEN", "tests/Yii2/yii2_stand_backup_console_001_test.php": "GREEN", "tests/Yii2/yii2_stand_backup_ownership_001_test.php": "GREEN", "tests/Architecture/yii2_stand_backup_boundary_001_test.py": "GREEN", "tests/Deployment/yii2_stand_backup_target_001_test.py": "GREEN", "tests/Deployment/yii2_stand_backup_bundle_001_test.py": "GREEN", "tests/Deployment/yii2_stand_backup_preservation_001_test.py": "GREEN", "tests/Deployment/yii2_stand_backup_replay_001_test.py": "GREEN"}
+    }
+  ]
+}
