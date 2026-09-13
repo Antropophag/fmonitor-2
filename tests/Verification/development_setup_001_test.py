@@ -25,7 +25,8 @@ class DevelopmentSetup(unittest.TestCase):
         self.root.mkdir()
         for relative in ["composer.json", "composer.lock", "app/autoload.php", "Makefile",
                          "Dockerfile", "compose.yaml", "compose.test.yaml",
-                         "tools/verification/Dockerfile.test", "deploy/runtime/Dockerfile"]:
+                         "tools/verification/Dockerfile.test", "deploy/runtime/Dockerfile",
+                         "deploy/runtime/compose.yaml"]:
             source = ROOT / relative
             if source.is_file():
                 target = self.root / relative
