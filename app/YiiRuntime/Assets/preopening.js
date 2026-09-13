@@ -2,7 +2,7 @@
   'use strict';
   const form = document.querySelector('[data-selection-picker]');
   if (!form) return;
-  const dialog = form.querySelector('[data-installer-dialog]');
+  const dialog = document.querySelector('[data-installer-dialog]');
   const search = dialog?.querySelector('[data-installer-search]');
   const results = dialog?.querySelector('[data-installer-results]');
   const status = dialog?.querySelector('[data-installer-status]');

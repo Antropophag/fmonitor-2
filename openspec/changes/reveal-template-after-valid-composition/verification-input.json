@@ -1,0 +1,56 @@
+{
+  "change": "reveal-template-after-valid-composition",
+  "planned_paths": [
+    "app/YiiRuntime/Views/selection.php",
+    "app/YiiRuntime/Assets/preopening.js",
+    "app/YiiRuntime/Assets/template-offer.js",
+    "app/YiiRuntime/Assets/PreopeningAssetBundle.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "config/yii/assets.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "tests/Support/pilot_current_flow_browser.cjs",
+    "tests/Runtime/production_runtime_browser_001_test.php",
+    "tests/Otiz/snapshot_publication_browser_001_test.mjs",
+    "tests/Runtime/yii2_production_web_cutover_001_test.php",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Verification/architecture_guard_001_test.py",
+    "tests/Verification/template_offer_architecture_001_test.py",
+    "tests/Yii2/yii2_template_offer_reveal_001_test.php",
+    "tests/Yii2/yii2_template_offer_asset_001_test.php",
+    "tests/Yii2/template_offer_reveal_browser.mjs",
+    "tests/Yii2/yii2_template_offer_reveal_browser_001_test.php",
+    "tests/Yii2/yii2_preopening_browser_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "TEMPLATE-OFFER-REVEAL-001",
+      "acceptance_id": "A1-A6",
+      "spec_path": "specs/TEMPLATE-OFFER-REVEAL-001.md",
+      "seam": "Yii2 selection HTML/DOM and form events with exact persisted composition snapshot",
+      "tests": [
+        "tests/Yii2/yii2_template_offer_reveal_001_test.php",
+        "tests/Yii2/yii2_template_offer_asset_001_test.php",
+        "tests/Yii2/yii2_template_offer_reveal_browser_001_test.php"
+        ,"tests/Yii2/yii2_preopening_failures_001_test.php"
+        ,"tests/AssignmentOrderComposition/selection_http_failures_001_test.php",
+        "tests/Runtime/production_runtime_browser_001_test.php",
+        "tests/Yii2/yii2_preopening_browser_001_test.php",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php",
+        "tests/Verification/architecture_guard_001_test.py",
+        "tests/Verification/template_offer_architecture_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_template_offer_reveal_001_test.php": "GREEN",
+        "tests/Yii2/yii2_template_offer_asset_001_test.php": "GREEN",
+        "tests/Yii2/yii2_template_offer_reveal_browser_001_test.php": "GREEN"
+        ,"tests/Yii2/yii2_preopening_failures_001_test.php": "GREEN"
+        ,"tests/AssignmentOrderComposition/selection_http_failures_001_test.php": "GREEN",
+        "tests/Runtime/production_runtime_browser_001_test.php": "GREEN",
+        "tests/Yii2/yii2_preopening_browser_001_test.php": "GREEN",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php": "GREEN",
+        "tests/Verification/architecture_guard_001_test.py": "GREEN",
+        "tests/Verification/template_offer_architecture_001_test.py": "GREEN"
+      }
+    }
+  ]
+}
