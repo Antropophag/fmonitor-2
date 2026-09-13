@@ -5,7 +5,7 @@
 ## What Changes
 
 - Добавить read-only exact target manifest validator с deterministic digest и safe failures.
-- Добавить canonical template/render production Compose для одного immutable Yii2 image у migration, web, worker и scheduler.
+- Добавить canonical template/render production Compose с обязательным explicit shared image reference; immutable digest обязателен для deployment manifest, а isolated build может использовать explicit temporary tag.
 - Отложить backup, journal, reset, rollback и live deployment в отдельные changes.
 
 ## Capabilities

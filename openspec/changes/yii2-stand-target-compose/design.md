@@ -12,7 +12,7 @@
 
 1. Validator — отдельный Python CLI без Docker/DB calls; canonical JSON digest является входом будущего control plane.
 2. Compose template — source owner, rendered file генерируется существующим dependency renderer и проверяется byte-for-byte.
-3. Parsed-config test проверяет exact services, immutable shared image, entrypoints, successful-migration dependencies, principals, secret files, volumes и отсутствие rapid-pilot; existing runtime Compose test остаётся executable adjacency.
+3. Parsed-config test проверяет exact services, explicit shared image без mutable default, entrypoints и successful-migration dependencies; deployment manifest отдельно требует immutable digest. Existing runtime Compose test сохраняет principals, secret files, volumes и executable adjacency.
 4. Persistence owner отсутствует: срез read-only и не выполняет DDL/DML.
 
 ## Risks / Trade-offs

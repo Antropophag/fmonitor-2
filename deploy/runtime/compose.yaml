@@ -18,7 +18,7 @@ x-runtime-environment: &runtime-environment
   FMONITOR_TRUSTED_REQUEST_SCHEME: "${FMONITOR_TRUSTED_REQUEST_SCHEME:?Set FMONITOR_TRUSTED_REQUEST_SCHEME}"
 
 x-image: &image
-  image: "${FMONITOR_RUNTIME_IMAGE:-fmonitor2-runtime}"
+  image: "${FMONITOR_RUNTIME_IMAGE:?Set explicit runtime image reference}"
   build:
     context: ../..
     dockerfile: deploy/runtime/Dockerfile

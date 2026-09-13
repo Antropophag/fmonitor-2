@@ -87,7 +87,7 @@ def canonical_absolute_path(value: Any) -> Path | None:
         resolved = path.resolve(strict=False)
     except (OSError, RuntimeError):
         return None
-    return resolved
+    return resolved if resolved == path else None
 
 
 def is_within(path: Path, root: Path) -> bool:

@@ -17,6 +17,8 @@ Missing/extra keys, wrong types/version/auth, non-canonical compose path, relati
 
 ## 3. Canonical Compose
 
+Compose MUST require an explicit shared image reference and MUST NOT provide a mutable default. The target validator requires an immutable digest for deployment; isolated exact-source build tests MAY supply an explicit temporary tag.
+
 `tools/delivery/compose.runtime.yaml.in` is canonical and generated `deploy/runtime/compose.yaml` MUST be byte-identical. Parsed services preserve accepted `PRODUCTION-HTTP-RUNTIME-001` topology: `db`, `prepare`, `migrate`, `php`, `web`, `jobs-worker`, `jobs-scheduler`. All application services use one image. `migrate` runs exact `php bin/yii schema-migrate/run --interactive=0`; jobs run exact `php bin/yii jobs/worker|scheduler --interactive=0`. `php` and jobs depend on successful migration; web depends on healthy php.
 
 DML/migration principals, protected storage/secrets and volume wiring remain governed by and executable-tested in `tests/Runtime/production_runtime_compose_001_test.php`; this slice does not redefine them. No production command or entrypoint references `rapid-pilot`.

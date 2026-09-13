@@ -93,8 +93,10 @@ class StandTargetComposeContract(unittest.TestCase):
         for changes, remove in cases:
             with self.subTest(changes=changes, remove=remove):
                 self.assert_invalid(changes, remove)
+        real_parent = self.root / "real-parent"
+        real_parent.mkdir()
         linked_parent = self.root / "linked-parent"
-        linked_parent.symlink_to(ROOT)
+        linked_parent.symlink_to(real_parent)
         self.assert_invalid({"evidence_root": str(linked_parent / "child")})
 
     def test_valid_digest_is_canonical_and_environment_independent(self):
@@ -109,6 +111,8 @@ class StandTargetComposeContract(unittest.TestCase):
 
     def test_compose_is_exact_parsed_yii2_topology(self):
         self.assertEqual(TEMPLATE.read_bytes(), COMPOSE.read_bytes())
+        self.assertIn("${FMONITOR_RUNTIME_IMAGE:?", TEMPLATE.read_text())
+        self.assertNotIn("${FMONITOR_RUNTIME_IMAGE:-", TEMPLATE.read_text())
         environment = {key: "x" for key in ("FMONITOR_DB_PASSWORD", "FMONITOR_MIGRATION_DB_PASSWORD", "FMONITOR_YII_COOKIE_VALIDATION_KEY", "FMONITOR_YII_IDENTITY_KEY")}
         environment.update({"PATH": os.environ["PATH"], "FMONITOR_RUNTIME_IMAGE": "runtime@sha256:" + "a" * 64, "FMONITOR_DB_NAME": "fmonitor2", "FMONITOR_DB_USER": "runtime", "FMONITOR_MIGRATION_DB_USER": "migration", "FMONITOR_HTTP_PORT": "18092", "FMONITOR_PROCESS_TABLE_PREFIX": "fm2_", "FMONITOR_LEGACY_TABLE_PREFIX": "fm2_", "FMONITOR_SESSION_INSTANCE": "stand", "FMONITOR_TRUSTED_REQUEST_HOST": "127.0.0.1:18092", "FMONITOR_TRUSTED_REQUEST_SCHEME": "http", "FMONITOR_BITRIX_ORIGIN": "https://example.invalid", "FMONITOR_BITRIX_WEBHOOK_USER_ID": "1", "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON": "[]", "FMONITOR_BITRIX_TOKEN_HOST_FILE": "/run/secrets/token", "FMONITOR_BITRIX_CA_HOST_FILE": "/run/secrets/ca"})
         result = subprocess.run(["docker", "compose", "-f", str(COMPOSE), "--profile", "jobs", "--profile", "deployment", "config", "--format", "json"], env=environment, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
