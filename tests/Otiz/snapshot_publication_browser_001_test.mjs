@@ -14,7 +14,7 @@ try {
   browser=await chromium.launch({headless:true});
   const context=await browser.newContext({acceptDownloads:true});
   const page=await context.newPage();
-  page.setDefaultTimeout(5000);
+  page.setDefaultTimeout(15000);
   await page.goto(`http://127.0.0.1:${port}/pilot/login`);
   await page.locator('input[name="email"]').fill(email);
   await page.locator('button[type="submit"]').click();

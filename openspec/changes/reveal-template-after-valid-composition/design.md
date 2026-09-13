@@ -19,7 +19,7 @@
 
 ## Decisions
 
-1. **Владельцем поведения остаётся `app/YiiRuntime`.** View выдаёт семантические data-атрибуты и безопасное начальное скрытое состояние; существующий `preopening.js` вычисляет готовность по текущим form controls. Альтернатива с новым модулем отклонена как лишний seam для одного экрана.
+1. **Владельцем поведения остаётся `app/YiiRuntime`.** View выдаёт семантические data-атрибуты и безопасное начальное скрытое состояние; отдельный bounded asset `template-offer.js` вычисляет готовность по текущим form controls, а `preopening.js` сохраняет выбор монтажников и upload workflow. Разделение предотвращает hotspot и не создаёт нового domain/application seam.
 2. **Готовность формы и применимость POST разделены.** Helper появляется при валидных installer/engineer/confirmation controls. Кнопка шаблона доступна только если нормализованные текущие installer IDs и engineer ID совпадают с server-rendered snapshot актуального распоряжения. Новая форма показывает следующий шаг сохранения, но не фабрикует order identity.
 3. **Скрытие задаётся HTML до выполнения JS.** Это исключает мерцание и убирает элементы из accessibility tree; script атомарно снимает/возвращает `hidden` и `inert`. Без JS предложение остаётся скрытым, тогда как основной submit и отдельный template route после сохранения остаются серверно работоспособными.
 4. **Движение принадлежит CSS.** Короткий opacity/translate transition применяется только к видимому helper; media query `prefers-reduced-motion` убирает transition/transform. JS не использует таймеры и не перемещает фокус.

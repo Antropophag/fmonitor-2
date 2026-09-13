@@ -293,3 +293,219 @@ After that exact pending state is proven, the same DOM node must become hidden a
 No expected result, fixture, production file, public seam, acceptance mapping or adjacent control changed beyond the corrected boolean assertion. The retained HTML and adjacent commands are GREEN on the exact package source. Independent reproduction of the browser command reached the corrected precondition and then exited `255` at the 30-second `waitForFunction` for post-switch hidden state, matching the intended missing cancellation behavior rather than setup failure.
 
 No blocking traceability, seam, independence, determinism, isolation or sensitivity finding remains for this delta. Gate 3 is approved for minimal correction implementation against exact source `317a9e1b...`; browser expectation changes require a new independent Gate 5 after GREEN.
+
+## Post-CI complete-correction Gate 3 — latest controlling verdict
+
+- Reviewer: separately tasked Codex agent `/root/issue53_gate3` (independent; authored no test, fixture, production change, or CI correction)
+- Reviewed source: `9113e3856e65ce444deebd5ca74834ace8ae54c3603bd39bc7894c92371808a9`; base `1aba76a11ac917df98d2873407c2144ee5b3004b`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T125055Z-828fd34b70/snapshot/source.patch`, SHA-256 `379e38cc24712e0e1372fb77a8303e58a68fbee10a0345c70779da619f810ca4`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T125055Z-828fd34b70/package.json`
+- Verification plan: SHA-256 `2a1685caaf20eb04a8a269cd7c8067eb39f3867d8b8d64fc8329ee3fa466d4c8`
+- Scope: complete CI-attempt-2 failure inventory and correction expectations for existing browser consumers, production asset digest consumer, and the public architecture-check seam
+- Verdict: `APPROVED`
+
+### Findings
+
+None blocking for this exact correction input.
+
+The two existing browser-oracle changes are legitimate compatibility corrections, not weakened expectations. `tests/Support/pilot_current_flow_browser.cjs` and `tests/Yii2/preopening_browser.mjs` now explicitly check `controlEngineerConfirmed` after the saved selection GET before invoking the template action. This follows A1's confirmed-engineer readiness requirement and preserves the original real POST/PDF/audit/navigation assertions. They do not bypass the helper or force-enable the action. Both corrected end-to-end consumers are GREEN on the exact source.
+
+The production cutover RED is sensitive and narrowly classified. `tests/Runtime/yii2_production_web_cutover_001_test.php` still serves the real public assets and compares status, exact SHA-256, cache policy, MIME type, `nosniff`, and same-origin policy. Independent reproduction reports exactly two failures: old `pilot.css` digest versus current `e18b92a...`, and old `preopening.js` digest versus current `1e868902...`; all transport/security fields match. Thus the RED is the expected immutable-asset consumer update, not runtime setup or a broad cutover regression. Because the architecture correction can still change final JS bytes, the digest expectation must be updated only to the final reviewed asset hashes; that resulting test delta must be included in the next exact-source Gate 3/5 package rather than silently treated as GREEN.
+
+The new architecture wrapper is a valid public verification-seam test. `tests/Verification/template_offer_architecture_001_test.py` contains no duplicate line-count oracle or alternate threshold: it literally runs `make architecture-check`, forwards complete captured output on failure, and preserves the real exit code. Independent reproduction returns exit `2` with the exact sole architecture finding `hotspot_ratchet: new hotspot app/YiiRuntime/Assets/preopening.js (186 lines)` after the existing HTTP global-call qualification passes. A fake local pass, lower-level-only invocation, suppressed finding, or wrong make target cannot satisfy this wrapper. The separately run lower-level `architecture_guard_001_test.py` completes all 59 tests GREEN, proving the intended RED is the higher public make seam and not broken Python/setup.
+
+The regenerated verification input honestly maps the full known CI inventory: original HTML/browser and selection failure controls; both corrected existing browser journeys; production runtime browser; cutover digest consumer; lower architecture unit; and public architecture wrapper. It retains E2E, governance, integration and eventual full exact-source CI obligations. No UNKNOWN is treated as approval.
+
+Expected values remain independent where behavioral: confirmation readiness comes from A1, browser actions retain their prior outcomes, and the hotspot is selected by repository architecture policy rather than a test-local invented limit. The asset hashes are explicit immutable delivery-contract values; their pending final-byte update is mechanical but still must be reviewed on the exact final source.
+
+### Independent verification and retained inventory
+
+```text
+python3 tests/Verification/template_offer_architecture_001_test.py
+INTENDED_RED; exit 2; hotspot_ratchet: new hotspot app/YiiRuntime/Assets/preopening.js (186 lines)
+
+python3 tests/Verification/architecture_guard_001_test.py
+Ran 59 tests ... OK
+
+php tests/Runtime/yii2_production_web_cutover_001_test.php
+INTENDED_RED; only pilot.css and preopening.js SHA-256 differ; headers/status match
+```
+
+The exact-source package additionally retains GREEN evidence for:
+
+- `yii2_template_offer_reveal_001_test.php`
+- `yii2_template_offer_reveal_browser_001_test.php`
+- `yii2_preopening_failures_001_test.php`
+- `selection_http_failures_001_test.php`
+- `production_runtime_browser_001_test.php`
+- corrected `yii2_preopening_browser_001_test.php`
+
+`git diff --check` is clean. The two reproduced RED causes and all retained outcomes match the package mapping.
+
+### Required changes
+
+None before minimal correction implementation for the 186-line architecture hotspot and final asset-contract synchronization. Any final digest edit or other test expectation delta must be included in a fresh exact-source review package; after all mapped checks are GREEN, a new independent Gate 5 is required before CI rerun.
+
+## Final exact-source test-delta review — controlling verdict
+
+- Reviewer: separately tasked Codex agent `/root/issue53_gate3` (independent; authored no production, test, fixture, digest or compaction change)
+- Reviewed source: `527136227346e80a8e82d853e3cc2ccc9e096e06ad711bfbfdd433d7bf252659`; executable source `dd46bc763b16132580811f21d5becec5a396b70ae97ec2804b6492cf70d05988`; base `1aba76a11ac917df98d2873407c2144ee5b3004b`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T131349Z-fc552ab46a/snapshot/source.patch`, SHA-256 `754528668b46e875deedbeac9f80494d430c49021ac18a5696ae9bac2bec26fb`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T131349Z-fc552ab46a/package.json`
+- Verification plan: SHA-256 `d1e1955d3359df3563b82b85dbce5dee10782471e75632c86405c467f253dfd7`
+- Verdict: `APPROVED`
+
+### Delta and findings
+
+No blocking finding remains.
+
+The delta from the prior reviewed snapshot preserves the already approved browser-consumer confirmation changes and behavioral oracles. Production `preopening.js` is mechanically compacted from the 186-line hotspot to 149 lines while retaining the reviewed public behavior; the full real browser contract is GREEN. The architecture wrapper itself is unchanged and still literally delegates to `make architecture-check`; it now returns `TEMPLATE_OFFER_ARCHITECTURE_OK`, so the former exact hotspot RED is closed through the public policy seam rather than by weakening or bypassing the guard.
+
+The only final expected-value update is the immutable production asset digest consumer in `tests/Support/yii2_production_web_cutover_contract.php`. I independently computed the candidate bytes:
+
+```text
+e18b92a5426d36f791773010f3e3dffc65fd50f35d19ce9b0e8f5216fe08607a  app/YiiRuntime/Assets/pilot.css
+4175ae4a39c8657866f6077b2e24e72b5976705cd03e4981be75094df8c6b72b  app/YiiRuntime/Assets/preopening.js
+```
+
+Those values exactly equal the two updated contract literals. All other asset digests, status, cache, MIME and security-header expectations are unchanged. Independent execution of `yii2_production_web_cutover_001_test.php` is GREEN, proving the public runtime serves those exact final bytes. The values were not copied from a production test response during this review; they were calculated directly from the exact candidate files and cross-checked against the retained contract.
+
+The regenerated input honestly changes the cutover and architecture expectations from their reviewed correction REDs to GREEN and adds the digest contract file to the planned/effective boundary inventory. It does not reclassify any unresolved UNKNOWN. The package contains 12 focused GREEN records; every record names the same candidate source `527136...` and executable source `dd46bc...`, and together they cover the nine acceptance-mapped commands plus E2E, governance and integration obligations. `git diff --check` is clean.
+
+### Independent verification
+
+```text
+sha256sum app/YiiRuntime/Assets/pilot.css app/YiiRuntime/Assets/preopening.js
+# exact matches shown above
+
+wc -l app/YiiRuntime/Assets/preopening.js
+149
+
+php tests/Runtime/yii2_production_web_cutover_001_test.php
+PASS: YII2-PRODUCTION-WEB-CUTOVER-001 single runtime
+
+python3 tests/Verification/template_offer_architecture_001_test.py
+TEMPLATE_OFFER_ARCHITECTURE_OK
+
+git diff --check
+PASS (no output)
+```
+
+The retained 12/12 GREEN evidence additionally confirms both original/new browser flows, HTML/no-side-effect behavior, adjacent Yii/native failures, runtime browser, lower architecture unit, compose, verification governance and runtime storage on the exact executable source.
+
+### Harness limitation
+
+The harness package remains `approval: NOT_REVIEWED` because its v1 plan cannot encode typed lineage from the older manually captured RED records once the current exact plan is all GREEN. This is a tooling/metadata limitation, not inferred approval and not a fabricated historical RED. This explicit independent review supplies the final Gate 3 test-delta decision for the exact source; the harness label itself remains truthfully unchanged.
+
+### Required changes
+
+None. Gate 3 is `APPROVED` for the exact test delta and final asset-digest expectations above. This does not replace the required independent Gate 5 decision or exact-source full CI result.
+
+## Architecture-decomposition Gate 3 — latest controlling verdict
+
+- Reviewer: separately tasked Codex agent `/root/issue53_gate3` (independent; authored no design, test, asset, runtime registration, controller or production implementation)
+- Reviewed source: `148d3a3218f21db8db0de53313f76f41f1fece9b7c45c6d095bd4b02b7b1b58e`; executable source `ed07d98bdacc1ccae7870dac6502cae21c973b743adf5f23072b2950d620f667`; base `1aba76a11ac917df98d2873407c2144ee5b3004b`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T132518Z-ef1c9afd5f/snapshot/source.patch`, SHA-256 `b2c7a9d08965565574a258c19f1d55c5a9e8b38807b05b3e11772ab52f762262`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T132518Z-ef1c9afd5f/package.json`
+- Verification plan: SHA-256 `87bf9dd47261bdb9436acd0e4f4618589c48f5b9e6dd3a0e184cbf964ea8cfc8`
+- Verdict: `CHANGES_REQUESTED`
+
+### Finding
+
+1. **Blocking — the new oracle proves presence of a second asset, but not transfer of ownership out of the hotspot.** The design now explicitly says that bounded `template-offer.js` computes readiness while `preopening.js` retains installer selection and upload behavior. `tests/Yii2/yii2_template_offer_asset_001_test.php:8-10` requires the selection script tag, exact public transport, and three tokens in the new asset. It never observes that `preopening.js` no longer contains or executes the template-offer owner. An implementation can copy the existing offer state machine into `template-offer.js`, keep the old implementation in `preopening.js`, and satisfy the new test; the existing browser behavior can continue to be supplied by the old asset. If physical lines remain below the ratchet, the architecture wrapper also passes despite two owners and no actual responsibility decomposition. This is precisely the Gate-5 architectural defect the new slice is intended to correct.
+
+Add a sensitive ownership assertion at the public asset boundary: fetch `/pilot/assets/preopening.js` and require absence of the semantic template-offer owner markers/state machine (at minimum `data-template-offer`, reduced-motion/transition-cancellation ownership and saved-composition reconciliation identifiers), while requiring them in `template-offer.js`. Prefer also a browser case that blocks the new asset and proves offer behavior is absent while installer selection/upload ownership remains functional, or an equivalent deterministic single-owner sensor. The expectation must reject both duplicated ownership and a dummy token-only new asset.
+
+### Conforming areas
+
+The proposed module seam is otherwise coherent and remains within `app/YiiRuntime`; it creates no new domain/application owner and does not alter persistence. The real Yii HTTP test authenticates through the existing fixture, loads the actual selection page, requires an exact `/pilot/assets/template-offer.js` declaration, then requests the real asset route and checks `200`, exact JavaScript MIME, exact cache policy, and semantic motion/offer tokens. It calls no private production methods, uses fictional isolated MariaDB state, confirms no legacy layer, and cleans its fixture.
+
+The RED is intended and independently reproduced: the authenticated selection GET succeeds, then the test exits `255` because the page lacks the new asset declaration. This is missing behavior, not setup. The core HTML acceptance independently remains GREEN. Package evidence records all preceding full-plan commands GREEN on exact candidate/executable source, including public architecture-check, cutover/runtime assets, existing browser consumers, and negative seams; the two core template tests are separately GREEN.
+
+The generated boundaries are complete for the proposed implementation: `template-offer.js`, `preopening.js`, `PreopeningAssetBundle.php`, `PilotAssetController.php`, `config/yii/assets.php`, selection view, immutable asset contract, browser consumers and architecture checks are all effective/planned. No `rapid-pilot`, production-image, Compose, deployment or other #76-owned path is changed. Shared Yii asset infrastructure is touched only to register and serve the bounded issue-53 asset, so no behavioral #76 scope conflict is apparent from this exact package.
+
+Expected transport values are independently derived from existing Yii asset contracts, and the semantic tokens follow the approved A1–A5 state machine. The remaining flaw is sensitivity to exclusivity/real ownership, not expected-value provenance or determinism.
+
+### Independent verification
+
+```text
+php tests/Yii2/yii2_template_offer_asset_001_test.php
+INTENDED_RED selection declares bounded template offer asset; exit 255 after successful authenticated Yii GET
+
+php tests/Yii2/yii2_template_offer_reveal_001_test.php
+PASS: TEMPLATE-OFFER-REVEAL-001 real Yii HTML, identity and no-side-effect denial
+
+git diff --check
+PASS (no output)
+```
+
+### Required changes
+
+1. Make the asset test reject retained/duplicated template-offer ownership in `preopening.js` and reject a token-only inert `template-offer.js`.
+2. Capture new exact-source intended RED, regenerate the package if bound inputs change, and request independent Gate 3 rereview.
+
+Architecture-decomposition implementation is not authorized against this test source.
+
+## Ownership-correction Gate 3 — latest controlling verdict
+
+- Reviewer: separately tasked Codex agent `/root/issue53_gate3` (independent; test-delta review only)
+- Reviewed source: `f7187e0255fb454ebc3be24c31c603860845a15e0ac463dde7aa068323d6e945`; executable source `48ab199d1360f928873625694777b592b4a07289fb0628b2f8603c28c8b0dd1b`; base `1aba76a11ac917df98d2873407c2144ee5b3004b`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T133427Z-ec56ceb13b/snapshot/source.patch`, SHA-256 `843446f0e6e62a48c5d88f8e85dd73713374ff8c3238c85c5778b600f744a45f`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T133427Z-ec56ceb13b/package.json`
+- Verification plan: SHA-256 `43e5f5f5087b3eace5a8f5ebac392f94df46c274687c26e27e57a7c7e2820c7e`
+- Verdict: `APPROVED`
+
+### Prior finding disposition
+
+Resolved. The real Yii asset test now fetches both public production assets. It requires `template-offer.js` to contain the semantic owner markers `data-template-offer`, `prefers-reduced-motion`, and `transitioncancel`, while `preopening.js` must contain none of those and must additionally release `savedInstallerIds`. A copied second implementation that leaves the old owner intact therefore fails.
+
+The ownership oracle is not relied upon alone. The unchanged full browser acceptance remains mapped and GREEN on the exact source; after extraction it must still pass every readiness, exact-composition, motion/cancellation, focus, accessibility, layout, idempotence and no-side-effect behavior. Consequently a token-only inert new asset plus removal from the old asset cannot complete Gate 4: it may satisfy marker placement, but it fails the real browser behavior. Together, the public asset exclusivity check and behavioral browser test are sensitive to both duplicated ownership and dummy extraction.
+
+The test retains the real authenticated Yii selection GET, exact script declaration, real asset routes, `200`, exact JavaScript MIME/cache policy, and no-legacy include trace. Expected markers are independently taken from the approved state-machine/design responsibilities rather than production implementation output. Inputs and runtime remain isolated and deterministic.
+
+### Exact evidence
+
+Independent reproduction:
+
+```text
+php tests/Yii2/yii2_template_offer_asset_001_test.php
+INTENDED_RED selection declares bounded template offer asset; exit 255 after successful authenticated Yii GET
+
+php tests/Yii2/yii2_template_offer_reveal_browser_001_test.php
+PASS: TEMPLATE-OFFER-REVEAL-001 browser
+
+git diff --check
+PASS (no output)
+```
+
+The package records the seven earlier full-plan commands GREEN on exact candidate `f7187e02...` / executable `48ab199d...`, followed by this intended asset RED; separately captured core HTML and browser controls are GREEN on the same candidate source. The RED cause is the missing new selection asset declaration, not setup or an existing behavior failure.
+
+Planned/effective boundaries remain complete for the extraction: new/old assets, asset bundle, asset controller, Yii asset config, selection view, immutable asset contract, browser consumers and architecture checks. No #76 production-image, `rapid-pilot`, Compose or deployment path is added.
+
+### Required changes
+
+None. Gate 3 is approved for the bounded ownership extraction against exact source `f7187e0255fb454ebc3be24c31c603860845a15e0ac463dde7aa068323d6e945`. Any expectation or fixture change restarts Gate 2/3; the implemented extraction requires fresh exact-source GREEN and independent Gate 5.
+
+## OTIZ browser timeout test-delta review — latest controlling verdict
+
+- Reviewer: separately tasked Codex agent `/root/issue53_gate3` (independent; narrow test-delta review only)
+- Reviewed source: `0363a243c2c38569887cb3e0b0dc1778b2289a3534d97aa8301afba599e8fc85`; executable source `b09e8149152a644751338353fcbbe6bba07bb4dea02112c8b2808dc4cab2d430`; base `1aba76a11ac917df98d2873407c2144ee5b3004b`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T141127Z-7d7da51f8e/snapshot/source.patch`, SHA-256 `0fac81c62fa10eb887db58cf3cf8b943ce21b3c8f00236caff6e5178a206e208`
+- Prepared root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T141127Z-7d7da51f8e/package.json`
+- Verification plan: SHA-256 `2ff0f21ab88fde02ed1c3d0b0b1a4c7162bb722c882fc03409de11143489c567`
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The executable test delta in `tests/Otiz/snapshot_publication_browser_001_test.mjs` changes only Playwright's bounded default action/navigation timeout from 5,000ms to 15,000ms. It adds no retry, sleep before assertion, catch-and-ignore path, conditional skip, relaxed locator, alternate URL, reduced result predicate, or suppressed request/page/console failure. Every original OTIZ assertion remains byte-for-byte present: two-stage login and exact navigation, preserved operation UUID/date after the intentionally lost response, created snapshot URL, non-empty object rows, acceptance, XLSX download metadata/bytes, closure/payment/reversal completion, and empty unexpected console/page/request/HTTP-failure inventories.
+
+The 15-second bound is proportionate to the observed local Compose server latency of 9–14 seconds and still fails a hang deterministically. It addresses setup scheduling/response variance rather than changing business behavior or expected results. The two repeat failures at the old fixed 5-second navigation budget are therefore legitimately classified as environment timing, unrelated to issue #53's template-offer behavior.
+
+The helper is now explicitly listed in `verification-input.json` planned paths, so the regenerated plan/source digest cannot omit this cross-flow test change. This binding is conservative: the OTIZ helper is not added as an A1–A6 behavioral oracle and does not broaden production scope; it is included because `production_runtime_browser_001_test.php` consumes it in the full verification path.
+
+The package is a root role package and contains no new evidence records, so this review does not invent a GREEN result or infer approval from absent evidence. It approves only the expectation-preserving timeout delta. Exact-source execution of the consuming runtime browser/full plan remains required, and any failure beyond the bounded timeout must be diagnosed normally.
+
+### Required changes
+
+None. The 5s→15s bounded timeout correction is approved without weakening OTIZ assertions. This test delta still requires inclusion in the next exact-source Gate 5 and verification package.

@@ -10,8 +10,7 @@
   const main = form.querySelector('[data-main-selection]');
   const modal = dialog?.querySelector('[data-modal-selection]');
   const count = dialog?.querySelector('[data-picker-count]');
-  const offer = form.querySelector('[data-template-offer]');
-  if (!dialog || !search || !results || !status || !more || !main || !offer) return;
+  if (!dialog || !search || !results || !status || !more || !main) return;
 
   const selected = new Map();
   let query = '', page = 1, generation = 0, timer = null, request = null, opener = null, retryAppend = false;
@@ -19,60 +18,6 @@
     tabId: String(node.dataset.tabId), fullName: node.dataset.fullName || '', position: node.dataset.position || '',
     source: node.dataset.source || '', updatedAt: node.dataset.updatedAt || '',
   }));
-
-  const positiveId = value => /^\d+$/.test(String(value)) && Number(value) > 0 ? Number(value) : null;
-  const normalizedIds = values => [...new Set(values.map(positiveId).filter(value => value !== null))].sort((a, b) => a - b);
-  const savedInstallerIds = normalizedIds((offer.dataset.savedInstallerIds || '').split(','));
-  const savedOrderId = positiveId(offer.dataset.savedOrderId);
-  const savedEngineerId = positiveId(offer.dataset.savedEngineerId);
-  const templateButton = offer.querySelector('form[action$="/template"] button');
-  const exactCopy = offer.querySelector('[data-template-offer-exact]');
-  const saveFirstCopy = offer.querySelector('[data-template-offer-save-first]');
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let hidePending = false;
-  const finalizeHide = () => {
-    if (!hidePending) return;
-    hidePending = false;
-    offer.hidden = true;
-    offer.classList.remove('fm2-order-helper--entering', 'fm2-order-helper--motion-start', 'fm2-order-helper--exiting');
-  };
-  const finalizeOpacityExit = event => {
-    if (event.target === offer && event.propertyName === 'opacity') finalizeHide();
-  };
-  offer.addEventListener('transitionend', finalizeOpacityExit);
-  offer.addEventListener('transitioncancel', finalizeOpacityExit);
-  reducedMotion.addEventListener('change', event => { if (event.matches) finalizeHide(); });
-  offer.addEventListener('animationend', event => {
-    if (event.target === offer && event.animationName === 'fm2-template-offer-in') offer.classList.remove('fm2-order-helper--entering');
-  });
-  const reconcileOffer = () => {
-    const installerIds = normalizedIds([...form.querySelectorAll('input[name="installerTabIds[]"]')].map(input => input.value));
-    const engineerId = positiveId(form.querySelector('input[name="controlEngineerUserId"]:checked')?.value);
-    const confirmed = form.querySelector('input[name="controlEngineerConfirmed"]')?.checked === true;
-    const ready = installerIds.length > 0 && engineerId !== null && confirmed;
-    const exact = ready && savedOrderId !== null && engineerId === savedEngineerId
-      && installerIds.length === savedInstallerIds.length && installerIds.every((id, index) => id === savedInstallerIds[index]);
-    if (templateButton) templateButton.disabled = !exact;
-    if (exactCopy) exactCopy.hidden = !exact;
-    if (saveFirstCopy) saveFirstCopy.hidden = exact;
-    if ((ready && !offer.hidden && !offer.hasAttribute('inert')) || (!ready && (offer.hidden || hidePending))) return;
-    if (ready) {
-      hidePending = false;
-      offer.classList.remove('fm2-order-helper--exiting');
-      offer.hidden = false; offer.removeAttribute('inert');
-      offer.classList.add('fm2-order-helper--entering');
-    }
-    else {
-      offer.setAttribute('inert', '');
-      offer.classList.remove('fm2-order-helper--entering');
-      if (reducedMotion.matches) { hidePending = true; finalizeHide(); return; }
-      offer.classList.add('fm2-order-helper--motion-start');
-      void offer.offsetWidth;
-      offer.classList.remove('fm2-order-helper--motion-start');
-      hidePending = true;
-      offer.classList.add('fm2-order-helper--exiting');
-    }
-  };
 
   const chip = (item, withInput) => {
     const node = document.createElement('span');
@@ -83,7 +28,7 @@
     const tab = document.createElement('small'); tab.textContent = `№ ${String(item.tabId).padStart(6, '0')}`;
     const remove = document.createElement('button'); remove.type = 'button'; remove.dataset.removeInstaller = '';
     remove.setAttribute('aria-label', `Убрать ${item.fullName}`); remove.textContent = '×';
-    remove.addEventListener('click', () => { selected.delete(String(item.tabId)); renderSelections(); renderChecks(); reconcileOffer(); });
+    remove.addEventListener('click', () => { selected.delete(String(item.tabId)); renderSelections(); renderChecks(); });
     node.append(name, tab, remove);
     if (withInput) { const input = document.createElement('input'); input.type = 'hidden'; input.name = 'installerTabIds[]'; input.value = item.tabId; node.append(input); }
     return node;
@@ -105,7 +50,7 @@
     name.textContent = item.fullName; detail.textContent = `${item.position} · № ${id.padStart(6, '0')}`;
     provenance.textContent = `Источник: ${item.source} · Актуально на: ${item.updatedAt}`;
     copy.append(name, detail, provenance); label.append(input, copy);
-    input.addEventListener('change', () => { if (input.checked) selected.set(id, {...item, tabId: id}); else selected.delete(id); renderSelections(); renderChecks(); reconcileOffer(); });
+    input.addEventListener('change', () => { if (input.checked) selected.set(id, {...item, tabId: id}); else selected.delete(id); renderSelections(); renderChecks(); });
     return label;
   };
   const load = async append => {
@@ -134,12 +79,10 @@
   });
   form.querySelector('[data-dialog-open]')?.addEventListener('click', event => { opener = event.currentTarget; dialog.showModal(); renderSelections(); search.focus(); });
   dialog.querySelector('[data-dialog-close]')?.addEventListener('click', () => dialog.close());
-  dialog.querySelector('[data-dialog-apply]')?.addEventListener('click', () => { dialog.close(); reconcileOffer(); });
+  dialog.querySelector('[data-dialog-apply]')?.addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => opener?.focus());
   more.addEventListener('click', () => { if (more.textContent === 'Повторить') load(retryAppend); else { page += 1; load(true); } });
-  form.addEventListener('change', reconcileOffer);
   renderSelections();
-  reconcileOffer();
 })();
 
 (() => {

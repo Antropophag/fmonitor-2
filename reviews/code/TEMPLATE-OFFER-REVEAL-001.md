@@ -97,6 +97,90 @@ GREEN is not approval because the cancellation path is outside the corrected bro
 
 ---
 
+## Extracted-architecture Gate 5 — latest controlling verdict
+
+- Independent reviewer: Codex `/root/issue53_gate5`; author of none of the specification, tests, fixtures, production implementation, asset registration, or browser-consumer corrections
+- Reviewed source: candidate source `e31a4a9386febe6bfc91c134bf01035853d898e6f8597c6f0b92bc0e0516acbb`; executable source `034232360206b4c80ebd0a2e22aeb459813facb79f99b23db2526c51f8195da2`; base `1aba76a11ac917df98d2873407c2144ee5b3004b` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T135507Z-0242fa5401/snapshot/source.patch` (SHA-256 `0969e82bd60679b159d9f5c0d43e5913a16b7f65b3ef42ebadb760059c3d9084`)
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T135507Z-0242fa5401/package.json`; delta SHA-256 `b720aca2ebc09aa82fa0bbfb75d4637499336501130e4bc01911dc48b997d385`; plan SHA-256 `986508e6fcf06b3ffe3478ed398619c5a8fb394343efdd3ad007e39d1c5fac2e`
+- Controlling Gate 3 ownership approval: `Ownership-correction Gate 3 — latest controlling verdict` in `reviews/tests/TEMPLATE-OFFER-REVEAL-001.md`, verdict `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+The architectural ownership defect is resolved. `app/YiiRuntime/Assets/template-offer.js` is a readable 73-line single owner of readiness, normalized exact identity, copy/action state, inert-first motion, transition cancellation, runtime reduced-motion changes, and reversal. `preopening.js` retains picker/search and original-upload responsibilities and contains none of the reviewed offer-owner markers. The public ownership test rejects duplicated/dummy extraction, while the full browser contract proves the new asset actually owns the behavior.
+
+`template-offer.js` is declared after `preopening.js` by `PreopeningAssetBundle`, admitted by the exact Yii route, served by `PilotAssetController` with the established JavaScript MIME/cache policy, and inventoried by the runtime asset contract. Its event delegation observes picker-created controls without coupling back into the picker owner. No controller/application/domain command or persistence ownership changes.
+
+The exact candidate asset hashes independently reproduce the contract literals:
+
+- `pilot.css`: `e18b92a5426d36f791773010f3e3dffc65fd50f35d19ce9b0e8f5216fe08607a`
+- `preopening.js`: `f9db00abfb7cb6a7f27ebf322945de35573dd29c68574f7b4201735863880964`
+- `template-offer.js`: `774faee3c0ca2700d63b22343733da61a671dc5ae73a0f1d894ba1eca61ba706`
+
+The adjacent browser corrections remain necessary and preserve their original assertions. No duplicate offer marker/state owner remains. All earlier behavior, accessibility, security, DOM/form, layout, motion/cancellation, no-side-effect, exact-composition, and test-sensitivity findings remain resolved.
+
+### Remaining finding
+
+#### Low / blocking prior-disposition completeness — unrelated picker/upload compaction was not restored after extraction
+
+The actual extraction makes `preopening.js` 108 lines, safely below the 150-line hotspot boundary, but the candidate retains formatting damage introduced by the rejected 186→149 compaction attempt. Against base `1aba76a…`, lines 5-7 still combine unrelated DOM bindings; line 36 compresses the full `renderChecks` callback; lines 38-40 combine element construction and mutations; line 53 combines `fetch` with its error branch; and line 71 joins two independent dialog listeners. The original-upload half similarly retains newly joined statements at lines 77-81, 86, 90-91, and elsewhere.
+
+This no longer games the architecture threshold because responsibility was genuinely extracted, but it leaves the previous Gate 5 requirement to keep ordinary readable statement structure only partially satisfied. None of these compactions is needed to preserve the new seam or remain below the ratchet; they are unrelated formatting churn that makes picker/upload review and future diffs harder. Restore the retained picker/upload code to its pre-compaction readable formatting while preserving only the semantic removal of offer ownership. No specification or test-expectation change should be necessary.
+
+### Verification evidence
+
+The package records 13/13 focused commands GREEN, each on exact candidate `e31a4a93…` and executable `03423236…`. Coverage includes native selection failures, production runtime browser, Yii cutover/assets, lower and public architecture checks, existing preopening browser/failure flows, the new real asset ownership/transport check, core HTML and complete offer browser flows, Compose, verification governance, and runtime storage. `git diff --check` is clean.
+
+These results establish behavior and integration correctness but do not erase the narrow maintainability disposition above. Full post-correction exact-source CI, merge state, and deployment remain outside this Gate 5 approval.
+
+### Required changes
+
+1. Restore readable pre-compaction formatting in the retained picker and original-upload code, keeping `template-offer.js` as the sole extracted offer owner.
+2. Refresh exact asset hashes/package and rerun the affected asset, browser, architecture, and mapped focused checks.
+3. Return the formatting-only exact source for final Gate 5 equivalence review; a Gate 3 restart is needed only if expectations or behavior change.
+
+---
+
+## Readable extracted architecture Gate 5 — latest controlling verdict
+
+- Independent reviewer: Codex `/root/issue53_gate5`; author of none of the specification, tests, fixtures, production implementation, asset registration, timeout correction, or browser-consumer corrections
+- Reviewed source: candidate source `bf83ecaf2e897f2e1aceb1bc125cfcdc509c1cf2772ffcc7c62310df3ec94603`; executable source `b09e8149152a644751338353fcbbe6bba07bb4dea02112c8b2808dc4cab2d430`; base `1aba76a11ac917df98d2873407c2144ee5b3004b` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T143003Z-d18687e27c/snapshot/source.patch` (SHA-256 `61c0368d84fda763f75178a38834bcefc0efce1f128fd2d06bed0c585127bbd6`)
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T143003Z-d18687e27c/package.json`; delta SHA-256 `932a64b40455ad63c20091e172880dd8e8dbbbfbd064325efbfef757776e8357`; plan SHA-256 `c1ddad25d5e29cf0c51800078ce512ceaf677b3bfca8201883f2adfecf43d4c3`
+- Controlling Gate 3 approvals: `Ownership-correction Gate 3 — latest controlling verdict` and `OTIZ browser timeout test-delta review — latest controlling verdict` in `reviews/tests/TEMPLATE-OFFER-REVEAL-001.md`, both `APPROVED`
+- Verdict: `APPROVED`
+
+### Findings and complete prior disposition
+
+None remain.
+
+The final maintainability finding is resolved. `app/YiiRuntime/Assets/preopening.js` is restored to the base-readable picker/upload formatting and is 129 lines. Its diff against base consists of removal of the template-offer owner and calls plus the already necessary document-level dialog lookup; it contains no offer marker, saved-identity reconciliation, motion preference, or cancellation ownership. The prior unrelated statement-joining/minification churn is gone.
+
+`app/YiiRuntime/Assets/template-offer.js` is the sole, readable 73-line owner of A1-A6 client behavior. It retains normalized sorted/unique identity comparison; exact action/copy state; inert-first bounded enter/exit motion; idempotent `transitionend`/`transitioncancel` finalization; runtime reduced-motion completion; and stale-event-safe reversal. Document-level change/click delegation correctly observes controls and picker-rendered installer inputs without importing picker implementation state.
+
+The asset seam is complete and single-owned: `PreopeningAssetBundle` loads `template-offer.js` after the picker/upload asset; the Yii route and controller serve it with the established JavaScript MIME/cache policy; the immutable runtime contract inventories its exact bytes; and the public ownership test rejects both missing/dummy behavior and retained duplicate owner markers in `preopening.js`. The corrected existing browser consumers explicitly reconfirm the engineer after the saved GET and otherwise retain their prior template/original/OTIZ assertions.
+
+The OTIZ helper delta changes only Playwright's bounded default timeout from 5 to 15 seconds. It adds no retry, skip, catch-and-ignore behavior, relaxed locator, alternate result, or removed assertion. Its independent Gate 3 approval records why the bound matches observed local Compose latency, and the exact-source production runtime browser command is GREEN.
+
+All earlier findings remain resolved: initial fail-closed HTML, valid sibling forms, exact saved composition, stale-action disablement, forged POST failure atomicity, absence of automatic domain facts, focus/tab behavior, same-value determinism, 1440px adjacent and 360px overflow-safe layout, actual bidirectional motion, reduced-motion behavior, cancellation/media-switch recovery, single reduced-motion CSS owner, and readable architecture decomposition. No security, authorization, persistence, audit/history, application-command, upload/original/opening, or `rapid-pilot` ownership regression was found.
+
+### Exact assets and verification
+
+Independent SHA-256 calculation matches the final asset-contract literals:
+
+- `pilot.css`: `e18b92a5426d36f791773010f3e3dffc65fd50f35d19ce9b0e8f5216fe08607a`
+- `preopening.js`: `d0746e990b2b3a1756ab4122b955a859097319397c937ce98a68d2733e630fd6`
+- `template-offer.js`: `774faee3c0ca2700d63b22343733da61a671dc5ae73a0f1d894ba1eca61ba706`
+
+The package records 13/13 focused commands GREEN. Every record names candidate source `bf83ecaf2e897f2e1aceb1bc125cfcdc509c1cf2772ffcc7c62310df3ec94603` and executable source `b09e8149152a644751338353fcbbe6bba07bb4dea02112c8b2808dc4cab2d430`. The plan covers native selection failures, production runtime browser, Yii cutover and exact assets, lower/public architecture checks, prior preopening browser/failures, public offer-asset ownership/transport, core HTML and full offer browser behavior, Compose adjacency, verification governance, and runtime storage. `git diff --check` is clean.
+
+The live harness still reports PR #114 at head `1aba76a…` with CI `FAILURE`, head/base mismatch, and `merge_ready: false`. This Gate 5 approval covers only the retained exact working-tree source above; it does not reclassify the old CI, approve publication, or imply merge/deployment readiness. A new exact committed candidate and authoritative full CI remain required.
+
+### Required changes
+
+None. Gate 5 is approved for exact candidate source `bf83ecaf2e897f2e1aceb1bc125cfcdc509c1cf2772ffcc7c62310df3ec94603` and executable source `b09e8149152a644751338353fcbbe6bba07bb4dea02112c8b2808dc4cab2d430`.
+
+---
+
 ## Final cancellation correction rereview — latest controlling verdict
 
 - Independent reviewer: Codex `/root/issue53_gate5`; author of none of the specification, tests, fixtures, or implementation
@@ -133,3 +217,44 @@ This approval covers the retained exact working-tree source only. Full exact-sou
 ### Required changes
 
 None. Gate 5 is approved for exact candidate source `62751c6b6d20e72a5f63102271227c06edc620121ae83dbee000a91549a84beb` and executable source `e2742abada1759d5fe26ceb5f9a3cbe46cee6a1d37752601f0f35a8915be738e`.
+
+---
+
+## Post-CI compaction Gate 5 — latest controlling verdict
+
+- Independent reviewer: Codex `/root/issue53_gate5`; author of none of the specification, tests, fixtures, production code, browser-consumer corrections, or asset-digest updates
+- Reviewed source: candidate source `527136227346e80a8e82d853e3cc2ccc9e096e06ad711bfbfdd433d7bf252659`; executable source `dd46bc763b16132580811f21d5becec5a396b70ae97ec2804b6492cf70d05988`; base `1aba76a11ac917df98d2873407c2144ee5b3004b` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T131349Z-fc552ab46a/snapshot/source.patch` (SHA-256 `754528668b46e875deedbeac9f80494d430c49021ac18a5696ae9bac2bec26fb`)
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T131349Z-fc552ab46a/package.json`; delta SHA-256 `a8ddea38895e722814e6210a4214091b4dd2f3fffb9eed5eb1409e653656e007`; plan SHA-256 `d1e1955d3359df3563b82b85dbce5dee10782471e75632c86405c467f253dfd7`
+- Final test-delta approval: `Final exact-source test-delta review — controlling verdict` in `reviews/tests/TEMPLATE-OFFER-REVEAL-001.md`, verdict `APPROVED`
+- Verdict: `CHANGES_REQUESTED`
+
+### Finding
+
+#### Medium / blocking — the hotspot ratchet is satisfied by source minification rather than a maintainable boundary
+
+The production change in `app/YiiRuntime/Assets/preopening.js` is behaviorally equivalent under the reviewed browser contracts, but its reduction from 186 to exactly 149 physical lines is achieved almost entirely by joining independent declarations and statements onto single lines. It does not reduce responsibilities, control-flow complexity, state, or coupling. It also mechanically compacts the unrelated original-upload workflow at lines 117-149 even though issue #53 changes the selection/template offer.
+
+This is not a maintainable resolution of the architecture finding. The documented hotspot policy in `docs/architecture/guardrails.md:23-25` says that moving behavior behind a seam may require more changed files and is preferred to adding behavior to a hotspot. The candidate instead encodes the same large module just below the scanner's physical-line threshold. The clearest symptom is line 123, which is 1,211 characters and contains the entire error-message map; multiple control-flow lines now combine assignments, conditionals, DOM updates, and returns. This materially impairs reviewability, debugging, future diffs, and ownership discovery while making `architecture-check` GREEN only through formatting.
+
+Treat this as a possible **Divergent Change** smell and a hard maintainability failure for Gate 5: one asset still owns installer search/picker state, template-offer motion/exact identity, and original-PDF upload, while the correction hides that fact from the hotspot inventory. Extract a coherent behavior behind a named asset/module seam (the template offer or original upload are natural candidates), keep ordinary readable statement structure, and register/load/hash/test the resulting production assets through the existing Yii runtime boundary. Do not satisfy the threshold by minification or unrelated whitespace compaction.
+
+### Conforming areas and prior findings
+
+No behavioral, security, accessibility, DOM/form, persistence, or test-sensitivity regression was found in the compaction bytes. The template-offer state machine retains idempotent end/cancel/media-query finalization, stale-event-safe reversal, normal/reduced motion, exact normalized identity, fail-closed initial state, valid sibling forms, responsive two-column/one-column layout, focus preservation, and no automatic domain effects. All prior Gate 5 findings remain behaviorally resolved.
+
+The two browser-consumer corrections are necessary compatibility updates rather than weakened tests: after the post-save GET they explicitly re-confirm the engineer before attempting the now-conditionally available template action. The template POST, upload, and continuing current-flow assertions remain intact.
+
+The production asset contract is exact. Independently calculated SHA-256 values are `e18b92a5426d36f791773010f3e3dffc65fd50f35d19ce9b0e8f5216fe08607a` for `pilot.css` and `4175ae4a39c8657866f6077b2e24e72b5976705cd03e4981be75094df8c6b72b` for `preopening.js`; they equal the updated literals in `tests/Support/yii2_production_web_cutover_contract.php`. Other runtime asset expectations are unchanged. The architecture wrapper remains a transparent invocation of public `make architecture-check`; it does not bypass the canonical checker, although the production formatting described above defeats the intent of its physical-line heuristic.
+
+### Verification evidence
+
+All 12 package records are GREEN and source-stable: each records candidate source `527136227346e80a8e82d853e3cc2ccc9e096e06ad711bfbfdd433d7bf252659` and executable source `dd46bc763b16132580811f21d5becec5a396b70ae97ec2804b6492cf70d05988`. They cover the native selection failure boundary, production runtime browser, Yii production cutover, lower architecture guard, public architecture wrapper, both preopening browser/failure flows, template-offer HTML/browser acceptance, Compose adjacency, verification governance, and runtime storage. `git diff --check` is clean.
+
+These GREEN records establish behavior equivalence but cannot make source readability or a genuine module boundary observable. Harness state also reports the current PR CI as `FAILURE` and `merge_ready: false`; this review does not reinterpret that state.
+
+### Required changes
+
+1. Replace the physical-line compaction with a coherent extraction that leaves both resulting production modules readable and below the hotspot frontier by responsibility, not formatting.
+2. Update the Yii runtime asset registration/serving and immutable hash contract for the extracted asset without weakening existing asset, CSP/cache/MIME, browser, or architecture expectations.
+3. Restore conventional one-statement/readable formatting in the untouched selection and original-upload behavior.
+4. Obtain independent Gate 3 approval for any resulting test/asset-contract delta, rebuild the exact package, rerun the mapped checks, and return the full candidate to Gate 5.

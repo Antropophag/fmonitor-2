@@ -74,6 +74,8 @@ async function selectComposition(page) {
 }
 
 async function verifyInlineTemplate(page, context) {
+  const confirmation = page.locator('[name="controlEngineerConfirmed"]');
+  if (await confirmation.count()) await confirmation.check();
   let captured = null;
   const templatePattern = /\/assignment-orders\/\d+\/template$/;
   await context.route('**/assignment-orders/*/template', async route => {
