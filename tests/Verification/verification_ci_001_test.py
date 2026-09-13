@@ -426,6 +426,10 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Deployment/yii2_stand_backup_bundle_001_test.py',
             'python3\ttests/Deployment/yii2_stand_backup_preservation_001_test.py',
             'python3\ttests/Deployment/yii2_stand_backup_replay_001_test.py',
+            'php\ttests/Yii2/yii2_stand_restore_console_001_test.php',
+            'python3\ttests/Architecture/yii2_stand_restore_boundary_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_restore_roundtrip_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_restore_failure_001_test.py',
         ], e2e.stdout.splitlines())
 
 
