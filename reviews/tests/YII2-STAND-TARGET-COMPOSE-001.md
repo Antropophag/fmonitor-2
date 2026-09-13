@@ -110,3 +110,28 @@ None. Gate 3 is approved for source `81d01197b54b1239ca48ae62f93934d35193d96f4b3
 ### Required changes
 
 Correct the complete bounded matrix above, regenerate the exact-source package/evidence, and obtain correction Gate 3 approval before relying on the updated tests for Gate 5.
+
+---
+
+## Final correction Gate 3 review — 2026-09-13
+
+- Reviewer: independent Gate 3/5 agent `/root/gate5_target_compose` (gpt-5.6-sol / low); authored neither specification, tests nor implementation
+- Reviewed commit: `8f0a5eb3d4c5adf879f4af6dbc4e8c5ef9803e49`; candidate source `2c70ada9e94683a76fe70bf36ccf8f4fa419f8d64c6718261f92cab152503f04`; executable source `a5d8fbb8e5885e09df1f76d1808988808f5b0f3f5b355d7fc78a0f190c7f3400`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T092154Z-079d8e6f31/package.json`; plan SHA-256 `030928a766fba1aacf58ef61621f3d334c0def8e38617f80e7a28666ca2194b3`; clean committed snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verdict: `APPROVED`
+
+### Exact-source evidence — 7/7 GREEN
+
+1. Target contract — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789290967438859000-5fbe634b26744d24acfcd48f5643213a.json`
+2. Runtime Compose — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789290974011421000-11dbc499ea0547d5afbf6fb8c4004e5b.json`
+3. Verification inventory — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789291078146063000-7f2730f6114b42db99c77aa5e58f7b32.json`
+4. Pilot jobs Compose — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789291135279022000-a687c3fe783a4fa49c6858a91c89cdff.json`
+5. Change verification — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789291189926954000-1b06622358804951b2c078a7c5b44080.json`
+6. Architecture guard — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789291222714149000-c84873d67b9b40a0aa0eeb32097dee05.json`
+7. Dependency render check — `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789291253109296000-735f86304e904e5dac140ea46006a025.json`
+
+### Disposition
+
+All prior test findings are resolved. Image fields are type-checked before regex use. Canonical path acceptance requires the resolved path to equal the supplied normalized absolute path, and the regression uses a symlink to an otherwise permitted external parent. Canonical output is exercised across serialization, cwd, locale and ambient variants. The readable helper structure remains intact. On the supported review host, sandbox write/network denial is combined with byte snapshots and guarded external executables; the small validator is independently auditable and contains no write/process/network seam. Compose requires an explicit shared image with no mutable default, while the clarified contract permits an explicit temporary tag only for isolated build tests. The renderer seam and its check are executable.
+
+No findings. This approval advances the corrected tests only; it does not approve CI, PR, merge, deployment, backup, reset or rollback.

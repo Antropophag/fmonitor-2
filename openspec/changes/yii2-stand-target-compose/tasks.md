@@ -11,8 +11,8 @@
 
 ## 3. Gate 5 и поставка
 
-- [ ] 3.1 Выполнить generated focused/fast plan и сохранить evidence вне checkout.
-- [ ] 3.2 Независимый sol/low reviewer дать Gate 5 verdict exact source.
+- [x] 3.1 Выполнить generated focused/fast plan и сохранить evidence вне checkout.
+- [x] 3.2 Независимый sol/low reviewer дать Gate 5 verdict exact source.
 - [ ] 3.3 После APPROVED создать PR и получить exact-source Quality Graph `VERIFY_OK`; deployment остаётся `UNKNOWN`.
 
 ## 4. Handoff
