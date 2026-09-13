@@ -12,6 +12,8 @@ snapshot/provenance/fixture policy.
 
 - один прозрачный launcher поверх обычного container runtime;
 - один recipe с тремя явными targets/profiles и pinned image references;
+- сравнение immutable inputs и runtime/dependency observations вместо попытки
+  сделать независимо собранные Docker layers byte-identical;
 - существующая test command остаётся владельцем selection semantics;
 - implementation + infrastructure LOC удерживаются существенно ниже 500.
 
@@ -20,6 +22,7 @@ snapshot/provenance/fixture policy.
 - изменение `harness.py`, test inventory, planner или aggregation;
 - snapshot/candidate identity, lifecycle/provenance/fixture models;
 - orchestration resources шире минимально нужных DB/browser dependencies;
+- registry publishing и filesystem/layer normalization;
 - удаление `setup-runtime` в PR A или до GREEN PR B.
 
 ## Decisions
@@ -30,7 +33,8 @@ snapshot/provenance/fixture policy.
    дублирует Quality Graph и меняет ответственность selection.
 2. Три profiles собираются из одного container recipe с общим базовым слоем и
    явными profile targets. Все внешние base/service images закрепляются digest;
-   lockfiles остаются источником версий package dependencies.
+   lockfiles остаются источником версий package dependencies. Docker image ID
+   конкретного build не является нормативным сравнением между машинами.
 3. Integration/browser service setup переиспользует существующий
    `compose.test.yaml`/Make targets либо минимальный profile-specific compose
    overlay. Launcher не становится владельцем БД lifecycle, если существующая
@@ -45,8 +49,8 @@ snapshot/provenance/fixture policy.
 
 ## Risks / Trade-offs
 
-- [Multi-architecture image digests различаются] → закрепить manifest-list digest
-  и проверять фактически разрешённый digest на поддерживаемой CI/local platform.
+- [Image IDs/layers различаются между cold builds] → сравнивать закреплённые
+  registry digests и наблюдаемые contracts; не добавлять normalization machinery.
 - [DB/browser profiles могут потребовать service networking] → сначала доказать
   существующие команды без новой orchestration abstraction; при конфликте
   остановиться и предложить минимальный compose adjustment.

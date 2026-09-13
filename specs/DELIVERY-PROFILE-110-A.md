@@ -33,17 +33,30 @@ code этой команды. Пустая command MUST быть отклоне�
 
 ### DP110A-03 — pinned reproducible environment
 
-Каждый profile MUST разрешаться в immutable image digest. Runtime и package
-versions MUST происходить из существующих canonical sources
+При одинаковом Git source и одинаковых immutable build inputs каждый profile
+MUST иметь одинаковые наблюдаемые runtime/dependency contracts. Все base
+container images MUST быть закреплены registry digest, не только tag. Runtime и
+package versions MUST происходить из существующих canonical sources
 `tools/delivery/dependencies.env`, `composer.lock`, `uv.lock` и применимых npm
-lockfiles; новый параллельный manifest запрещён. Локальный и CI вызовы одного
-profile на одной платформе MUST наблюдать один image digest и версии.
+lockfiles; новый параллельный manifest запрещён, а `latest`/`current` не могут
+определять нормативную версию.
+
+Наблюдения MUST включать profile name, immutable base-image inputs, PHP version
+и required extensions, Python version, Node/npm versions, Composer version,
+installed application dependencies относительно lockfiles, а для `browser` —
+Playwright version и установленную browser asset revision.
+
+Два независимых local cold build MAY иметь разные Docker image IDs, config или
+layer digests, если immutable inputs и все перечисленные наблюдения совпадают.
+Registry publishing и normalization machinery не входят в контракт.
 
 ### DP110A-04 — минимальное evidence
 
-Каждый запуск MUST выдать компактный результат с git SHA, argv, profile/image
-digest, exit code и duration. Persistent evidence store, lifecycle identity,
-fixture identity и дополнительные digest-модели запрещены.
+Каждый запуск MUST выдать компактный результат с git SHA, argv, profile/local
+image digest, exit code и duration. Этот local image digest идентифицирует
+фактически выполненный container, но не обязан совпадать у независимых builds.
+Persistent evidence store, lifecycle identity, fixture identity и дополнительные
+digest-модели запрещены.
 
 ### DP110A-05 — неизменность владельцев тестов
 

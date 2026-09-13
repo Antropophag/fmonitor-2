@@ -1,16 +1,16 @@
 ## 1. Gate 1–3: contract и RED
 
 - [x] 1.1 Подтвердить этот scope владельцем и проверить `openspec validate pinned-focused-check-profiles --strict`; это единственная binding-точка issue #110 перед implementation.
-- [x] 1.2 Создать минимальный `verification-input.json` только с issue/spec/base и focused commands, сгенерировать обязательный plan существующим `change-verification.py`; если guard требует запрещённые поля или расширение scope, STOP и вынести владельцу минимальное изменение guard.
-- [x] 1.3 Добавить Gate 2 tests для трёх profiles, argv/exit propagation, pinned digest и local/CI parity; сохранить целевой RED.
-- [x] 1.4 Передать spec, tests и RED независимому Gate 3 reviewer; implementation разрешена только при `APPROVED`.
+- [x] 1.2 Пересчитать минимальный verification plan после пересмотра owner contract; если guard требует запрещённые поля или расширение scope, STOP.
+- [x] 1.3 Обновить Gate 2 test: immutable base inputs и runtime/dependency observations без равенства independent image IDs; сохранить RED пересмотренного контракта.
+- [ ] 1.4 Передать revised spec, test delta и RED независимому Gate 3 reviewer; correction разрешена только при `APPROVED`.
 
 ## 2. PR A — Container execution
 
-- [x] 2.1 Executor добавляет один container recipe с profiles `governance`, `integration`, `browser` и immutable image pins; проверить сборку каждого target и runtime/dependency probes.
-- [x] 2.2 Executor добавляет минимальный `run-in-profile <profile> <command>` без command registry/selection/provenance policy; проверить точную передачу argv и exit code.
-- [x] 2.3 Расширить уже выбранный Quality Graph container setup contract test для parity smoke, не меняя workflow, graph manifests, category commands, planner или aggregation; проверить одинаковые profile/image digest/runtime versions локально и в CI.
-- [x] 2.4 Выполнить focused regression, `git diff --check`, OpenSpec strict validation и LOC guard; при >500 production/infrastructure LOC STOP.
+- [ ] 2.1 Executor корректирует один container recipe для полного revised runtime/dependency contract, сохраняя immutable base-image digests.
+- [ ] 2.2 Сохранить минимальный launcher без registry publishing, layer normalization, command registry или provenance framework.
+- [ ] 2.3 Выполнить parity contract test через уже выбранный corpus, не меняя Quality Graph/workflow/category semantics.
+- [ ] 2.4 Выполнить полный focused plan, `git diff --check`, strict OpenSpec и LOC guard; при >500 infrastructure LOC STOP.
 - [ ] 2.5 Передать exact source, spec, approved tests и evidence независимому Gate 5 reviewer; PR A создавать только после `APPROVED` и подтверждения владельца.
 
 ## 3. Merge checkpoint

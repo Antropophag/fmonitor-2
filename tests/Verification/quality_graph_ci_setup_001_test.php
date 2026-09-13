@@ -75,6 +75,22 @@ try {
     assertSameValue(false, file_exists($rejectedMarker),
         'DP110A-01 unknown profile must not launch its command');
 
+    $pinValues = [];
+    foreach (file($root.'/tools/delivery/dependencies.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if ($line[0] !== '#') {
+            [$name, $value] = explode('=', $line, 2);
+            $pinValues[$name] = $value;
+        }
+    }
+    $recipe = file_get_contents($root.'/tools/delivery/Dockerfile.focused-checks');
+    foreach (['PHP_IMAGE_DIGEST', 'NODE_BOOKWORM_IMAGE_DIGEST', 'PYTHON_IMAGE_DIGEST',
+              'COMPOSER_IMAGE_DIGEST', 'UV_IMAGE_DIGEST'] as $digestPin) {
+        assertSameValue(1, preg_match('/^sha256:[0-9a-f]{64}$/D', $pinValues[$digestPin] ?? ''),
+            "DP110A-03 {$digestPin} is an immutable registry digest");
+        assertSameValue(true, str_contains($recipe, '@${'.$digestPin.'}'),
+            "DP110A-03 {$digestPin} is consumed by a FROM input");
+    }
+
     foreach (['unit', 'db'] as $suite) {
         $r=qcsRun(['bash','tools/verification/run.sh','list',$suite],$tmp,['PATH'=>$bin]);
         assertSameValue([0,"php\ttests/InstallationProcess/{$suite}_sample_test.php\n",''],
@@ -88,6 +104,7 @@ $tag='fmonitor2-php-test:qcs-'.bin2hex(random_bytes(8));$absent=qcsRun(['docker'
 
     foreach (['governance', 'integration', 'browser'] as $profile) {
         $command = ['sh', '-c', <<<'SH'
+set -eu
 test -f /.dockerenv
 test "$FMONITOR_PROFILE" = "$1"
 test "$FMONITOR_IMAGE_DIGEST" != ""
@@ -95,19 +112,25 @@ set -a
 . tools/delivery/dependencies.env
 set +a
 php -r '$v=[];foreach(file("tools/delivery/dependencies.env", FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES) as $l){if($l[0]!=="#"){$p=explode("=",$l,2);$v[$p[0]]=$p[1];}} exit(PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION===$v["PHP_VERSION"]?0:1);'
+php -r 'foreach(explode(",",getenv("PHP_EXTENSIONS")) as $e) if(!extension_loaded($e)) exit(1);'
 python3 -c 'import pathlib,platform; p=dict(x.split("=",1) for x in pathlib.Path("tools/delivery/dependencies.env").read_text().splitlines() if x and not x.startswith("#")); assert platform.python_version()==p["PYTHON_VERSION"]'
 node -e 'const fs=require("fs"),p=Object.fromEntries(fs.readFileSync("tools/delivery/dependencies.env","utf8").split("\n").filter(x=>x&&!x.startsWith("#")).map(x=>x.split(/=(.*)/s).slice(0,2))); if(process.versions.node!==p.NODE_VERSION)process.exit(1)'
 test "$(composer --version --no-ansi | awk '{print $3}')" = "$COMPOSER_VERSION"
 test "$(uv --version | awk '{print $2}')" = "$UV_VERSION"
 test "$(npm --version)" = "$NPM_VERSION"
 composer check-platform-reqs --no-dev --no-interaction >/dev/null
+test -f "$FMONITOR_COMPOSER_VENDOR/composer/installed.json"
+php -r '$lock=json_decode(file_get_contents("composer.lock"),true);$installed=json_decode(file_get_contents(getenv("FMONITOR_COMPOSER_VENDOR")."/composer/installed.json"),true);$installed=$installed["packages"]??$installed;$actual=[];foreach($installed as $p)$actual[$p["name"]]=$p["version"];$expected=[];foreach(array_merge($lock["packages"],$lock["packages-dev"]??[]) as $p)$expected[$p["name"]]=$p["version"];ksort($actual);ksort($expected);exit($actual===$expected?0:1);'
+test -x "$FMONITOR_PYTHON_ENV/bin/python"
+UV_PROJECT_ENVIRONMENT="$FMONITOR_PYTHON_ENV" uv sync --frozen --offline --no-install-project --check >/dev/null
 if test "$1" = browser; then
-  node -e 'const fs=require("fs"),path=require("path"),root=process.env.FMONITOR_SHLZ_UI_ROOT,lock=JSON.parse(fs.readFileSync(path.join(root,"package-lock.json"))),expected=lock.packages["node_modules/playwright"].version,actual=require("playwright/package.json").version;if(actual!==expected)process.exit(1)'
+  node -e 'const fs=require("fs"),path=require("path"),root=process.env.FMONITOR_SHLZ_UI_ROOT,lock=JSON.parse(fs.readFileSync(path.join(root,"package-lock.json"))),expected=lock.packages["node_modules/playwright"].version,actual=require("playwright/package.json").version,browsers=require("playwright-core/browsers.json").browsers,chromium=browsers.find(x=>x.name==="chromium"),executable=require("playwright").chromium.executablePath();if(actual!==expected||!chromium||!chromium.revision||!fs.existsSync(executable))process.exit(1)'
 fi
 printf 'argv=%s image=%s\n' "$2" "$FMONITOR_IMAGE_DIGEST"
 SH, 'profile-probe', $profile, 'value with spaces'];
         $probe = qcsRun([$launcher, $profile, ...$command], $root);
-        assertSameValue(0, $probe['exit'], "DP110A-02 {$profile} exit propagation");
+        assertSameValue(0, $probe['exit'],
+            "INTENDED_RED DP110A-03 {$profile} locked runtime/dependency contract");
         assertSameValue(1, preg_match('/RUN_IN_PROFILE_RESULT (\{[^\n]+\})\n/D', $probe['err'], $record),
             "DP110A-04 {$profile} compact result");
         $evidence = json_decode($record[1], true, flags: JSON_THROW_ON_ERROR);

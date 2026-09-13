@@ -7,13 +7,18 @@
 
 ### Requirement: Три pinned execution profile
 Система SHALL предоставлять ровно профили `governance`, `integration` и
-`browser`; каждый профиль SHALL разрешаться в container image, закреплённый
-неизменяемым digest, и SHALL иметь одинаковые runtime/dependency versions при
-локальном запуске и в CI.
+`browser`; base images каждого профиля SHALL быть закреплены registry digest.
+При одинаковом Git source и immutable build inputs профиль SHALL иметь
+одинаковые наблюдаемые runtime/dependency contracts локально и в CI.
 
 #### Scenario: Совпадение окружения локально и в CI
 - **WHEN** одна команда запускается локально и в CI через один и тот же profile
-- **THEN** наблюдаемые profile, image digest и runtime/dependency versions совпадают
+- **THEN** наблюдаемые profile, base-image digests, PHP/extensions, Python,
+  Node/npm, Composer и locked dependency versions совпадают
+
+#### Scenario: Разные локальные image IDs допустимы
+- **WHEN** два cold build используют одинаковые Git source и immutable inputs
+- **THEN** их Docker image IDs MAY различаться, если нормативные наблюдения совпадают
 
 #### Scenario: Неизвестный profile
 - **WHEN** launcher получает имя вне `governance`, `integration`, `browser`

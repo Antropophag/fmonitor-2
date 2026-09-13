@@ -10,8 +10,9 @@ environments.
 
 - PR A добавляет ровно три execution profile: `governance`, `integration`,
   `browser`, и launcher с семантикой `run-in-profile <profile> <command>`.
-- PR A доказывает совпадение runtime/dependency versions локально и в CI, не
-  меняя selection или aggregation существующих тестов.
+- PR A доказывает совпадение immutable build inputs и наблюдаемых
+  runtime/dependency contracts локально и в CI, не требуя одинаковых Docker
+  image IDs и не меняя selection или aggregation существующих тестов.
 - После merge PR A отдельный PR B переводит текущие Quality Graph jobs `unit`,
   `integration`, `e2e`, `governance` на launcher, сохраняя planner, selection и
   aggregation. `setup-runtime` остаётся до подтверждённого GREEN.
@@ -19,7 +20,8 @@ environments.
   exit code и duration.
 - Из scope исключены архитектура PR #117, lifecycle hashing, event/provenance
   stores, fixture/environment identity, I2 self-test matrix и новый CI/runtime
-  framework в `harness.py`.
+  framework в `harness.py`, а также registry publishing и normalization Docker
+  layers ради byte-identical builds.
 
 ## Capabilities
 
