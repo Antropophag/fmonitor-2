@@ -1,0 +1,145 @@
+# Code review: DELIVERY-PROFILE-NETWORK-110
+
+- Reviewer: independent Gate 5 agent `/root/gate5_profile_network`; authored none
+  of the reviewed specification, OpenSpec, tests, implementation, or evidence.
+- Review package:
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T183935Z-7df6386a92/package.json`.
+- Reviewed source: base `11b8587372040ab045d1a69faeeb1432ff85e400`
+  plus retained snapshot `snapshot/source.patch`, verified SHA-256
+  `e5e7262460453836ecab21fa403b83a209fbc56b67f4db8a5f708d973c5febde`;
+  package candidate source
+  `be6e3f1a92fba088c9fa459bc5b9b362e0e2faf7f194b4dcaf051c003c012a46`
+  and executable source
+  `2f796724f9c8c3d654551bdcfcd15e7e266fca1f171352e6606b6acd9a9a0b1f`.
+- Normative contract: `specs/DELIVERY-PROFILE-NETWORK-110.md`; OpenSpec
+  `connect-focused-profiles-to-test-services`; public seam
+  `tools/delivery/run-in-profile <profile> <command> [args...]`.
+- Verdict: `CHANGES_REQUESTED`.
+
+## Blocking finding
+
+1. **BLOCKER — Gate 4 has no recorded owner action authorization.** The exact
+   package/harness state reports `action_authorized: false`. The final Gate 3
+   history explicitly states that its approval does not authorize implementation
+   and that root must record current owner authorization before dispatching Gate
+   4. Nevertheless, the package contains the implemented launcher delta and Gate
+   4 GREEN records. Repository policy requires preserving authorization, and an
+   absent authorization record cannot be inferred from successful execution or
+   from this review. Root must bind/record the owner's authorization for this
+   narrowed prerequisite in the delivery harness, then prepare an exact-source
+   Gate 5 package. No implementation correction is requested by this finding.
+
+## Spec axis
+
+No implementation-conformance finding was found. The 23-line launcher delta is
+below the 100 infrastructure LOC guard and is limited to the declared public
+seam. For `integration` and `browser` it reads `networks.default.name` from
+canonical `docker compose -f compose.test.yaml config --format json`, checks that
+the network already exists, and conditionally adds only that network plus
+`FMONITOR_TEST_DB_HOST=test-db` and `FMONITOR_TEST_DB_PORT=3306`. It does not
+construct the Compose network name, create/start/reset/migrate/tear down any
+resource, or change `governance` behavior. Existing argv and child exit-code
+handling remain unchanged.
+
+No Git metadata mount, Docker socket, Docker CLI/tooling inside a profile,
+Compose/Make topology change, harness change, planner/selection/aggregation/
+inventory/Quality Graph change, PR B, or blanket category adoption is present.
+The current behavioral test hash
+`5fc44dc9d9db75055acf7f0f9f5bb012fa9e255d03b8296112637f0e378cf0bc`
+matches the previously approved networking Gate 3 package
+`20260913T172616Z-36d9f44ce5`. Later Git-metadata review entries are preserved
+history of a superseded excursion; the final owner-narrowed contract and current
+candidate explicitly exclude that scope.
+
+## Standards axis
+
+No documented-standard violation was found. `git diff --check` and
+`bash -n tools/delivery/run-in-profile` pass. The launcher addition is cohesive and does
+not exhibit a material Fowler smell. A non-blocking **Divergent Change / fixture
+complexity** observation applies to
+`tests/Verification/quality_graph_ci_setup_001_test.php:157`: the registered
+contract test now owns several Docker scenarios and cleanup paths. They are all
+required by this acceptance slice, so extraction is not requested here; further
+profile-network behavior should use a named helper or dedicated registered test
+rather than grow this procedural block.
+
+## Verification evidence
+
+All three required focused checks are GREEN on the same executable source
+`2f796724f9c8c3d654551bdcfcd15e7e266fca1f171352e6606b6acd9a9a0b1f`:
+
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — record
+  `1789324594583345000-c728f67e1adb424e8f90b1ea80b30a30`;
+- `python3 tests/Verification/change_verification_001_test.py` — record
+  `1789324706036178000-d7210be4821a443ba142b1d4bdc43654`;
+- `php tests/Runtime/runtime_storage_001_test.php` — record
+  `1789324731421147000-97d08c04d765416b88d3f272531b865a`.
+
+The behavioral check covers an atypical Compose-declared network name, absent
+network, stopped service, governance non-injection, real `mysqli SELECT 1`
+through both profiles, retained argv/exit semantics, and verified cleanup.
+
+Records `1789322336496696000-37f17af0baa340c588333734d6462101`
+and `1789323956397204000-32bb360992584c5fb87b658eb425dd24`
+are `REGRESSION_FAILURE` results from rejected full-category consumers. They are
+explicit negative evidence supporting rejection of blanket category adoption;
+they are not acceptance GREEN and are not counted as such.
+
+Authoritative exact-source full Quality Graph CI, PR, publication, and deployment
+remain `UNKNOWN`. This review does not authorize any of them.
+
+## Authorization correction rereview — package `20260913T184620Z-7516567b90`
+
+- Reviewer: independent Gate 5 agent `/root/gate5_profile_network`; authored none
+  of the reviewed artifacts or evidence.
+- Reviewed correction: retained snapshot
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T184620Z-7516567b90/snapshot/source.patch`,
+  verified SHA-256
+  `a43a82fc51e0e9f3eb9cb2b5befa52cb33d53173c3de3b665068e4a574f82865`;
+  candidate source
+  `cb375935ce1e26d02a4aa2d94e7b2fea790037a840d9e8ca65a3566b2afbf12a`
+  and executable source
+  `fbbf4625d2cd9defb161caf5935d73ae25d2dbd011bd0e1e37c8cdcb2b66168a`.
+- Verdict: `APPROVED`.
+
+### Prior finding disposition
+
+1. **RESOLVED — owner action authorization is now retained and bound.**
+   `openspec/changes/connect-focused-profiles-to-test-services/owner-authorization.md`
+   records the owner's pre-implementation authorization for the Gate 4 executor,
+   subsequent autonomous delivery through a separate prerequisite PR, and the
+   final narrowed networking scope after consumer verification. The authorization
+   artifact is now an explicit planned path in `verification-input.json` and is
+   hashed by the correction package. It permits only the reviewed launcher seam,
+   caps infrastructure code at 100 LOC, excludes Git metadata, Docker socket/CLI
+   expansion, lifecycle ownership, PR B, Quality Graph/planner/selection/
+   aggregation/inventory/harness changes, and forbids autonomous merge.
+
+   Harness still reports live `action_authorized: false` together with
+   `live_github_unavailable`; the retained authorization explicitly distinguishes
+   that unavailable live publication-admission field from owner authorization.
+   It does not claim the field as GREEN or use it to authorize merge. This closes
+   the sole process blocker without weakening fail-closed publication state.
+
+### Correction boundary and evidence
+
+The package delta from the previous review contains only the new authorization
+artifact, its verification-input binding, and the preserved initial Gate 5 review
+record. The launcher and behavioral test are byte-for-byte unchanged; therefore
+the prior Spec and Standards axes remain approved, including the non-blocking
+fixture-complexity observation.
+
+All required focused checks were rerun GREEN on exact executable source
+`fbbf4625d2cd9defb161caf5935d73ae25d2dbd011bd0e1e37c8cdcb2b66168a`:
+
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — record
+  `1789325035981464000-f2d9a02014fd47b9b6713a974c130671`;
+- `python3 tests/Verification/change_verification_001_test.py` — record
+  `1789325144284857000-2a3819d8d9704f3790388204a394c66c`;
+- `php tests/Runtime/runtime_storage_001_test.php` — record
+  `1789325168691817000-003c242cf92948a291a57ec32d8d1380`.
+
+No blocking findings remain. The rejected full-category regression records remain
+negative scope evidence only. PR state, authoritative exact-source Quality Graph
+CI, merge readiness, publication, and deployment remain `UNKNOWN`; this approval
+does not promote any of them to GREEN and does not authorize merge.

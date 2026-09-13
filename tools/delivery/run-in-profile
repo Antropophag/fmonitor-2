@@ -42,8 +42,31 @@ docker build --quiet --target "$profile" --tag "$image" \
     --file "$recipe" "$root" >/dev/null || exit $?
 image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
 
+profile_run_args=()
+if [[ "$profile" == integration || "$profile" == browser ]]; then
+    network_name=$(
+        cd "$root" || exit 2
+        docker compose -f compose.test.yaml config --format json |
+            python3 -c 'import json, sys
+try:
+    value = json.load(sys.stdin).get("networks", {}).get("default", {}).get("name")
+    if isinstance(value, str) and value:
+        print(value)
+except (AttributeError, json.JSONDecodeError):
+    pass'
+    )
+    if [[ -n "$network_name" ]] && docker network inspect "$network_name" >/dev/null 2>&1; then
+        profile_run_args+=(
+            --network "$network_name"
+            --env FMONITOR_TEST_DB_HOST=test-db
+            --env FMONITOR_TEST_DB_PORT=3306
+        )
+    fi
+fi
+
 started=$(python3 -c 'import time; print(time.time_ns())')
 docker run --rm --init \
+    ${profile_run_args[@]+"${profile_run_args[@]}"} \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --mount "type=bind,src=$root,dst=/workspace" \
     --workdir /workspace \
