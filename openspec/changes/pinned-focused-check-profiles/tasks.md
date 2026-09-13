@@ -3,7 +3,7 @@
 - [x] 1.1 Подтвердить этот scope владельцем и проверить `openspec validate pinned-focused-check-profiles --strict`; это единственная binding-точка issue #110 перед implementation.
 - [x] 1.2 Пересчитать минимальный verification plan после пересмотра owner contract; если guard требует запрещённые поля или расширение scope, STOP.
 - [x] 1.3 Обновить Gate 2 test: immutable base inputs и runtime/dependency observations без равенства independent image IDs; сохранить RED пересмотренного контракта.
-- [ ] 1.4 Передать revised spec, test delta и RED независимому Gate 3 reviewer; correction разрешена только при `APPROVED`.
+- [x] 1.4 Передать revised spec, test delta и RED независимому Gate 3 reviewer; correction разрешена только при `APPROVED`.
 
 ## 2. PR A — Container execution
 
