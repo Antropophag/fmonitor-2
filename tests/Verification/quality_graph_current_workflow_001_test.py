@@ -54,7 +54,7 @@ class CurrentGraphWorkflow(unittest.TestCase):
         self.assertIn("shard: [1, 2]", workflow)
         self.assertIn("fail-fast: false", workflow)
         self.assertIn('"integration":"${{ needs.integration.result }}"', workflow)
-        self.assertIn('ci.py aggregate --full "$FULL" --mode "$MODE" --results "$RESULTS"', workflow)
+        self.assertIn('ci.py aggregate --full "$FULL" --mode "$MODE" --base "$BASE_REF" --results "$RESULTS"', workflow)
         self.assertEqual(4, workflow.count("if: needs.plan.outputs.full == 'true'"))
         self.assertNotIn("checks: write", workflow)
         self.assertNotIn("issues: write", workflow)
