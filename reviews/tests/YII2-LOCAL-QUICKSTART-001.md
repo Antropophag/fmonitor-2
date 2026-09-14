@@ -232,3 +232,35 @@ None.
 `APPROVED`
 
 Gate 4 may resume against clean baseline `230c7ff2a50bfb665022665c36eb7ecb7a9e8596`. This approval is limited to the assertion-helper correction and does not review implementation WIP or authorize Docker, reset, CI, PR, or deployment actions.
+
+---
+
+## Post-approval verification-inventory correction — 2026-09-14
+
+- Reviewer independence unchanged; production WIP is excluded.
+- Clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T131725Z-5997873b41/package.json`
+- Reviewed commit: `a4036253ef3e9a48c7dae29a48b2e7a9dfa615a0`
+- Candidate source: `4b793e76af4dbc5371a50c49c7b15a83763caabbce1c54fe75abb0c84e0fec83`
+- Executable source: `665a8c8e9a8e5e777fc42a4d151bde035f0d9422cbff1e7f37d805132e6e25d5`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `893fcf12491ce125e144ec96d9a5c2020161b8b7ca947af82eae1bb76c08b493`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The delta adds exactly the two newly registered quickstart e2e commands to the hard-coded expected e2e composition in `tests/Verification/verification_ci_001_test.py`:
+
+- `python3 tests/Deployment/yii2_local_quickstart_001_test.py`
+- `python3 tests/Deployment/yii2_local_quickstart_real_001_test.py`
+
+No existing expected entry, partition rule, execution behavior, acceptance assertion or product test changed. The correction restores inventory sensitivity: removing either registration or introducing a duplicate/order drift will disagree with the exact expected list. Package bindings and regenerated mapped RED/GREEN evidence are coherent with the clean baseline.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may resume against clean baseline `a4036253ef3e9a48c7dae29a48b2e7a9dfa615a0`. This approval covers only verification inventory alignment; it does not review production WIP or authorize Docker, reset, CI, PR, or deployment actions.
