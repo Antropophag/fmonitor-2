@@ -1,5 +1,7 @@
 ## Why
 
+> **Owner decision / supersession — 2026-09-14.** Этот change superseded как acceptance gate для закрытия issue #76 решением выполнять clean Yii2 stand cutover без сохранения legacy/disposable rehearsal state. Исторические code, evidence, исходный `OUTCOME_UNKNOWN` и retained lease сохраняются неизменными. Reconciliation и rollback не выполнять; offline backup/restore capability этим решением не удаляется. Ниже сохранён исторический план change.
+
 Exact disposable restore operation `e82320ce-a1de-4728-971a-f472167717b8` durable-завершилась `OUTCOME_UNKNOWN`, сохранила matching lease и не опубликовала `restored.json`. Исправленный driver готов для будущего rollback, но никакая новая restore operation не может законно начаться до explicit append-only reconciliation прежнего UNKNOWN; ручное удаление lease разрушило бы fail-closed protocol и audit.
 
 ## What Changes

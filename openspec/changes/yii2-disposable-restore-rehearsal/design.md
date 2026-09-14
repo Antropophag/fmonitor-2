@@ -1,5 +1,7 @@
 ## Context
 
+> **Owner decision / supersession — 2026-09-14.** Этот restore-based design больше не определяет closure issue #76. Его fail-closed semantics и historical evidence сохраняются; никакие reconciliation/rollback effects не разрешены. Replacement planning change — `yii2-clean-stand-cutover`.
+
 См. `proposal.md`. На main `e5a420e0` PR #124 поставил `StandRestoreApplication`: bundle admission общий с backup, ledger/lease/replay и fail-closed outcomes уже принадлежат application owner. Единственный effect path, однако, включается `FMONITOR_STAND_RESTORE_TEST_MODE=1`, читает соседний JSON fixture и создаёт модельные `database.json`, `artifacts/`, `sessions.json`, `readiness.json`; он не соединяется с MariaDB, Docker volumes, runtime stop/restart или HTTP readiness. Existing `RuntimeRecovery` остаётся production-capable legacy contour с собственным bundle/schema/runbook и не должен удаляться этим срезом.
 
 ## Goals / Non-Goals

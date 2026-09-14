@@ -1,5 +1,7 @@
 ## Context
 
+> **Owner decision / supersession — 2026-09-14.** Design остаётся историческим описанием implemented recovery protocol, но больше не является маршрутом closure issue #76. UNKNOWN ledger/lease/evidence не изменять, reconciliation/rollback не выполнять, offline recovery code не удалять. Новый delivery route — отдельный `yii2-clean-stand-cutover`.
+
 См. `proposal.md`. Operation `e82320ce-a1de-4728-971a-f472167717b8` имеет durable canonical `OUTCOME_UNKNOWN`, matching retained lease, no confirmed pointer и partially restored target. Existing `StandRestoreApplication` replay правильно возвращает UNKNOWN, а любой новый restore/rollback UUID получает `LEASE_HELD`. Root cause volume stdin исправлен commit `9d0ca509a99a39cc765c8fad5afd0ef1b2087721`, но это не разрешает обход retained ambiguity.
 
 ## Goals / Non-Goals

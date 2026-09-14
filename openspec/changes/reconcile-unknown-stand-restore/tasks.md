@@ -1,3 +1,5 @@
+> **Owner decision / supersession — 2026-09-14.** Незавершённые execution/reconciliation/rollback tasks ниже отменены как acceptance gates issue #76 и не должны исполняться. Исторические completed tasks, code/evidence, `OUTCOME_UNKNOWN` и retained lease сохраняются; offline backup/restore capability не удаляется. Replacement: `yii2-clean-stand-cutover`.
+
 ## 1. Root contract и intended RED
 
 - [x] 1.1 Root создать `YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001` normative spec и exact verification input, связанные с issue #76, failed operation `e82320ce-a1de-4728-971a-f472167717b8`, bundle `ed8d7613…` и base `9d0ca509a99a39cc765c8fad5afd0ef1b2087721`; validate strict GREEN.

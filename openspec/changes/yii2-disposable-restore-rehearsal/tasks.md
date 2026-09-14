@@ -1,3 +1,5 @@
+> **Owner decision / supersession — 2026-09-14.** Remaining real restore/rollback/reconciliation tasks не выполнять и не считать gates closure issue #76. Completed implementation/evidence, UNKNOWN record и retained lease остаются историческими; offline backup/restore capability сохраняется. Replacement: `yii2-clean-stand-cutover`.
+
 ## 1. Root scope, executable specification и Gate 2
 
 - [x] 1.1 Root создать `YII2-DISPOSABLE-RESTORE-REHEARSAL-001` с plain-language summary и нормативными authorization/attestation, driver, roundtrip, rollback и evidence acceptance; проверить traceability к issue #76, PR #124 и `verification-input.json`.

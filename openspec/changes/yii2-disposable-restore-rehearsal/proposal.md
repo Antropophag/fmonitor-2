@@ -1,5 +1,7 @@
 ## Why
 
+> **Owner decision / supersession — 2026-09-14.** Restore/rollback rehearsal superseded как acceptance gate для closure issue #76 решением о clean Yii2 stand cutover. Исторические implementation, evidence, failed `OUTCOME_UNKNOWN` и retained lease сохраняются; reconciliation и rollback не выполнять. Production-shaped offline backup/restore capability этим действием не удаляется. Ниже сохранён исходный исторический scope.
+
 После merge PR #124 новый Yii2 `StandRestoreApplication` сохраняет fail-closed protocol, bundle validation, lease/ledger/replay и подтверждённый outcome, но выполняет эффекты только через test fixture и не может восстановить настоящий disposable runtime. Issue #76 требует до production cutover доказать реальный backup/restore и rollback на одноразовом stand с MariaDB, persistent artifacts/sessions, restart/readiness и golden smoke flows.
 
 ## What Changes
