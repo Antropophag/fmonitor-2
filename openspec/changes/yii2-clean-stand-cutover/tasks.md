@@ -17,7 +17,7 @@
 
 - [x] 3.1 После Gate 3 отдельный executor выполнить generated focused plan на current production code; verification: если contract уже GREEN, зафиксировать zero production delta и не создавать искусственную implementation.
 - [x] 3.2 Только если honest RED выявил gap, executor добавить минимальный operational/production delta через существующих owners без новых domain semantics, второй provisioning owner или ослабления readiness; verification: production delta не потребовался, добавлены только approved acceptance-only support/override/adapters, focused tests GREEN.
-- [ ] 3.3 Root подтвердить complete candidate и exact reconstructible source; independent Gate 5 reviewer проверить authorization, real boundaries, evidence integrity, no legacy dependency и отсутствие scope growth.
+- [x] 3.3 Root подтвердить complete candidate и exact reconstructible source; independent Gate 5 `APPROVED` under explicit owner evidence waiver, code findings отсутствуют.
 - [ ] 3.4 Выполнить обязательную verification из generated plan и один exact-source full GitHub CI; verification: focused commands и Quality Graph `VERIFY_OK`, UNKNOWN/partial outcomes явно не считаются успехом.
 
 ## 4. Disposable acceptance handoff
