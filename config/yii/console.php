@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/SchemaMigrateController.php';
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/LocalRuntimeController.php';
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/CaseImportController.php';
+require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/LegacyImportController.php';
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/WorkforceSyncController.php';
 require_once dirname(__DIR__, 2) . '/app/RuntimeRestore/StandBackupFilesystem.php';
 require_once dirname(__DIR__, 2) . '/app/RuntimeRestore/StandBackupBundle.php';
@@ -19,6 +20,7 @@ return yii\helpers\ArrayHelper::merge(require __DIR__ . '/common.php', [
         'schema-migrate' => FMonitor2\YiiRuntime\Commands\SchemaMigrationCommand::class,
         'local-runtime' => FMonitor2\YiiRuntime\Commands\LocalRuntimeController::class,
         'case-import' => FMonitor2\YiiRuntime\Commands\CaseImportCommand::class,
+        'legacy-import' => FMonitor2\YiiRuntime\Commands\LegacyImportController::class,
         'workforce-sync' => FMonitor2\YiiRuntime\Commands\WorkforceSyncController::class,
         'stand-backup' => FMonitor2\YiiRuntime\Commands\StandBackupController::class,
         'stand-restore' => FMonitor2\YiiRuntime\Commands\StandRestoreController::class,

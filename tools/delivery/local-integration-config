@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Validate private local integration configuration before running a command."""
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+
+
+def reject() -> "None":
+    print("LOCAL_INTEGRATION_CONFIG_INVALID", file=sys.stderr)
+    raise SystemExit(64)
+
+
+def private_file(path: str) -> None:
+    try:
+        info = os.lstat(path)
+    except OSError:
+        reject()
+    if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o600:
+        reject()
+
+
+def legacy(path: str) -> None:
+    expected = [
+        "FMONITOR_SOURCE_HOST", "FMONITOR_SOURCE_PORT", "FMONITOR_SOURCE_NAME",
+        "FMONITOR_SOURCE_USER", "FMONITOR_SOURCE_PASSWORD", "FMONITOR_MIGRATION_CUTOFF",
+    ]
+    values = {}
+    try:
+        for line in open(path, encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line or "=" not in line:
+                reject()
+            name, value = line.split("=", 1)
+            if name not in expected or name in values:
+                reject()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                value = value[1:-1]
+            values[name] = value
+    except (OSError, UnicodeError):
+        reject()
+    if list(values) != expected:
+        reject()
+    if any(not values[name] for name in expected[:1] + expected[2:5]):
+        reject()
+    port = values["FMONITOR_SOURCE_PORT"]
+    if not re.fullmatch(r"[1-9][0-9]{0,4}", port) or int(port) > 65535:
+        reject()
+    cutoff = values["FMONITOR_MIGRATION_CUTOFF"]
+    if cutoff and not re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", cutoff):
+        reject()
+
+
+def bitrix(path: str) -> None:
+    try:
+        value = json.load(open(path, encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        reject()
+    if not isinstance(value, dict) or set(value) != {"baseUrl", "departments"}:
+        reject()
+    if not isinstance(value["baseUrl"], str) or not re.fullmatch(r"https://[^/]+/rest/[1-9][0-9]*/[^/]+", value["baseUrl"]):
+        reject()
+    departments = value["departments"]
+    if not isinstance(departments, list) or not departments or any(type(item) is not int or item <= 0 for item in departments) or len(set(departments)) != len(departments):
+        reject()
+
+
+if len(sys.argv) < 3 or sys.argv[1] not in ("legacy", "bitrix"):
+    reject()
+kind, path = sys.argv[1:3]
+private_file(path)
+(legacy if kind == "legacy" else bitrix)(path)
+if len(sys.argv) == 3:
+    raise SystemExit(0)
+if sys.argv[3] != "--" or len(sys.argv) == 4:
+    reject()
+environment = {key: value for key, value in os.environ.items() if not key.startswith("FMONITOR_SOURCE_") and not key.startswith("FMONITOR_BITRIX_")}
+environment["FMONITOR_LEGACY_SOURCE_CONFIG" if kind == "legacy" else "FMONITOR_BITRIX_CONFIG"] = os.path.abspath(path)
+raise SystemExit(subprocess.run(sys.argv[4:], env=environment).returncode)

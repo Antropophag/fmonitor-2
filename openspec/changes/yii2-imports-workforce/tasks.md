@@ -12,5 +12,6 @@
 
 ## 3. Gate 5 и merge-ready
 
+- [x] 3.0 Реализовать `import-legacy`, `sync-workforce`, `up-with-data` через native Yii2 seams без production-загрузки `rapid-pilot`.
 - [x] 3.1 Независимый sol/low reviewer проверяет exact production diff и evidence; verification: code review содержит полный findings list и `APPROVED` либо correction scope.
-- [ ] 3.2 Root подтверждает reviewed bytes, strict OpenSpec и completeness, фиксирует merge-ready commit и PR; verification: harness связывает exact source/PR, CI остаётся UNKNOWN до фактического запуска.
+- [x] 3.2 Root подтверждает reviewed bytes, strict OpenSpec и completeness, фиксирует merge-ready commit и PR; verification: harness связывает exact source/PR, CI остаётся UNKNOWN до фактического запуска.

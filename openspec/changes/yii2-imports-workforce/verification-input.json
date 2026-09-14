@@ -1,6 +1,19 @@
 {
   "change": "yii2-imports-workforce",
   "planned_paths": [
+    "Makefile",
+    "app/YiiRuntime/Commands/LegacyImportController.php",
+    "app/YiiRuntime/LegacyImportConsole.php",
+    "app/InstallationProcess/MariaDbLegacyImportApplication.php",
+    "app/InstallationProcess/LegacyImportRouting.php",
+    "app/InstallationProcess/MariaDbLegacySourceSnapshot.php",
+    "specs/YII2-LOCAL-DATA-BOOTSTRAP-001.md",
+    "tests/Deployment/yii2_local_data_bootstrap_001_test.py",
+    "tests/Deployment/yii2_local_data_bootstrap_make_001_test.py",
+    "tests/Deployment/yii2_local_integration_config_001_test.py",
+    "tests/Yii2/yii2_legacy_import_db_001_test.php",
+    "tests/Support/yii_legacy_import_test_entrypoint.php",
+    "tools/delivery/local-integration-config",
     "app/YiiRuntime/Commands/CaseImportController.php",
     "app/YiiRuntime/CaseImportConsole.php",
     "bin/fmonitor2-import-cases.php",
@@ -17,6 +30,10 @@
     "tools/verification/categories.json"
   ],
   "acceptances": [
+    {"spec_id":"YII2-LOCAL-DATA-BOOTSTRAP-001","acceptance_id":"A1-Make-orchestration","spec_path":"specs/YII2-LOCAL-DATA-BOOTSTRAP-001.md","seam":"separate Make integration commands and ordered fail-fast up-with-data","tests":["tests/Deployment/yii2_local_data_bootstrap_001_test.py","tests/Deployment/yii2_local_data_bootstrap_make_001_test.py"],"gate3_expected":{"tests/Deployment/yii2_local_data_bootstrap_001_test.py":"INTENDED_RED","tests/Deployment/yii2_local_data_bootstrap_make_001_test.py":"INTENDED_RED"}},
+    {"spec_id":"YII2-LOCAL-DATA-BOOTSTRAP-001","acceptance_id":"A2-private-config","spec_path":"specs/YII2-LOCAL-DATA-BOOTSTRAP-001.md","seam":"private integration config validation precedes effects and redacts secrets","tests":["tests/Deployment/yii2_local_integration_config_001_test.py"],"gate3_expected":{"tests/Deployment/yii2_local_integration_config_001_test.py":"INTENDED_RED"}},
+    {"spec_id":"YII2-LOCAL-DATA-BOOTSTRAP-001","acceptance_id":"A3-native-legacy-facts","spec_path":"specs/YII2-LOCAL-DATA-BOOTSTRAP-001.md","seam":"native Yii legacy-import preserving established eligibility/provenance/template/detail facts","tests":["tests/Yii2/yii2_legacy_import_db_001_test.php","tests/InstallationProcess/classification_provenance_schema_001_test.php","tests/InstallationProcess/checklist_template_schema_001_test.php","tests/InstallationProcess/object_detail_snapshot_schema_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_legacy_import_db_001_test.php":"INTENDED_RED","tests/InstallationProcess/classification_provenance_schema_001_test.php":"GREEN","tests/InstallationProcess/checklist_template_schema_001_test.php":"GREEN","tests/InstallationProcess/object_detail_snapshot_schema_001_test.php":"GREEN"}},
+    {"spec_id":"YII2-LOCAL-DATA-BOOTSTRAP-001","acceptance_id":"A4-workforce-and-package","spec_path":"specs/YII2-LOCAL-DATA-BOOTSTRAP-001.md","seam":"Make workforce sync reuses native Yii owner and production image excludes rapid-pilot","tests":["tests/Yii2/yii2_workforce_sync_console_001_test.php","tests/Yii2/yii2_workforce_sync_db_001_test.php","tests/Yii2/yii2_workforce_sync_ownership_001_test.php","tests/Deployment/yii2_workforce_sync_package_001_test.py","tests/Deployment/yii2_production_image_cleanup_001_test.py"],"gate3_expected":{"tests/Yii2/yii2_workforce_sync_console_001_test.php":"GREEN","tests/Yii2/yii2_workforce_sync_db_001_test.php":"GREEN","tests/Yii2/yii2_workforce_sync_ownership_001_test.php":"GREEN","tests/Deployment/yii2_workforce_sync_package_001_test.py":"GREEN","tests/Deployment/yii2_production_image_cleanup_001_test.py":"GREEN"}},
     {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A1","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"closed php bin/yii case-import/run transport","tests":["tests/Yii2/yii2_imports_workforce_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_imports_workforce_001_test.php":"INTENDED_RED"}},
     {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A2","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"full PILOT-CASE-IMPORT-001 oracle redirected through Yii","tests":["tests/Yii2/yii2_case_import_db_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_case_import_db_001_test.php":"INTENDED_RED"}},
     {"spec_id":"YII2-IMPORTS-WORKFORCE-001","acceptance_id":"A3","spec_path":"specs/YII2-IMPORTS-WORKFORCE-001.md","seam":"single owner connection and compatibility alias","tests":["tests/Yii2/yii2_imports_workforce_ownership_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_imports_workforce_ownership_001_test.php":"INTENDED_RED"}},
