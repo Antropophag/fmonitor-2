@@ -57,7 +57,7 @@ final class ExecutionController extends PreopeningController
             $fields['actualStartDate'] ?? '', $this->actor(),
         );
         $result = C\ProductionConfirmedOriginalOpeningFactory::create($resources->db, $resources->prefix)->openConfirmedOriginal($command);
-        if ($result['accepted']) return $this->redirect303('/pilot/objects/'.$id);
+        if ($result['accepted']) return $this->redirect303(Yii::$app->request->get('return') === 'construction-control' ? '/pilot/construction-control/objects/'.$id.'/checklist' : '/pilot/objects/'.$id);
         $unavailable = in_array($result['reasonCode'] ?? '', ['dependency_unavailable', 'persistence_outcome_unknown'], true);
         return $this->pageError(
             $unavailable ? 503 : 422,

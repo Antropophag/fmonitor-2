@@ -60,6 +60,6 @@ final readonly class MariaDbOriginalOpening
     }
     private function authorized(MariaDbSelectionSql $s,int $actor,bool $lock): bool
     {
-        return $s->rows('SELECT u.user_id FROM '.$s->table('fm2_pilot_users').' u JOIN '.$s->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$s->table('fm2_pilot_roles').' r ON r.role_id=ur.role_id JOIN '.$s->table('fm2_pilot_role_permissions')." p ON p.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND r.status=1 AND r.code IN ('fkr_operator','manager') AND p.permission='installation.open'".($lock?' FOR UPDATE':''),[$actor])!==[];
+        return $s->rows('SELECT u.user_id FROM '.$s->table('fm2_pilot_users').' u JOIN '.$s->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$s->table('fm2_pilot_roles').' r ON r.role_id=ur.role_id JOIN '.$s->table('fm2_pilot_role_permissions')." p ON p.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND r.status=1 AND r.code IN ('fkr_operator','manager','construction_control_engineer') AND p.permission='installation.open'".($lock?' FOR UPDATE':''),[$actor])!==[];
     }
 }
