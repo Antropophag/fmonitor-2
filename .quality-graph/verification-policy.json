@@ -2,6 +2,49 @@
   "boundaries": [
     {
       "categories": [
+        "unit"
+      ],
+      "name": "bounded-ui",
+      "patterns": [
+        "app/YiiRuntime/Assets/checklist-sw.js",
+        "app/YiiRuntime/Assets/checklist.js",
+        "app/YiiRuntime/Assets/control-queue.js",
+        "app/YiiRuntime/Assets/inspection-schedule.js",
+        "app/YiiRuntime/Assets/navigation.js",
+        "app/YiiRuntime/Assets/object-queue.js",
+        "app/YiiRuntime/Assets/otiz.js",
+        "app/YiiRuntime/Assets/pilot.css",
+        "app/YiiRuntime/Assets/preloader.js",
+        "app/YiiRuntime/Assets/preopening.css",
+        "app/YiiRuntime/Assets/preopening.js",
+        "app/YiiRuntime/Assets/shlz.css",
+        "app/YiiRuntime/Assets/template-offer.js",
+        "app/YiiRuntime/Assets/users.js",
+        "rapid-pilot/calendar.js",
+        "rapid-pilot/inspection-schedule.js",
+        "rapid-pilot/installer-directory.js",
+        "rapid-pilot/invite.js",
+        "rapid-pilot/object-details.js",
+        "rapid-pilot/object-queue.js",
+        "rapid-pilot/otiz.js",
+        "rapid-pilot/pilot.css",
+        "rapid-pilot/preloader.js"
+      ],
+      "tests": []
+    },
+    {
+      "categories": [
+        "unit",
+        "governance"
+      ],
+      "name": "auth",
+      "patterns": [
+        "app/IdentityAccess/**"
+      ],
+      "tests": []
+    },
+    {
+      "categories": [
         "governance"
       ],
       "name": "pilot-http",
@@ -46,7 +89,6 @@
       "patterns": [
         "app/AssignmentOrderComposition/**",
         "app/AssignmentOrderOriginal/**",
-        "app/IdentityAccess/**",
         "app/InspectionEvidence/**",
         "app/InstallationProcess/**",
         "app/Jobs/**",
@@ -54,11 +96,25 @@
         "app/Runtime/**",
         "app/RuntimeRestore/**",
         "app/Workforce/**",
-        "app/YiiRuntime/**",
+        "app/YiiRuntime/*.php",
+        "app/YiiRuntime/Assets/*.php",
+        "app/YiiRuntime/Assets/*.svg",
+        "app/YiiRuntime/Assets/fonts/**",
+        "app/YiiRuntime/Commands/**",
+        "app/YiiRuntime/Controllers/**",
+        "app/YiiRuntime/Models/**",
+        "app/YiiRuntime/Views/**",
         "app/demo/**",
         "config/**",
         "commands/**",
-      "rapid-pilot/**",
+      "rapid-pilot/*.php",
+      "rapid-pilot/*.sh",
+      "rapid-pilot/*.mjs",
+      "rapid-pilot/*.md",
+      "rapid-pilot/*.svg",
+      "rapid-pilot/assets/**",
+      "rapid-pilot/fonts/**",
+      "rapid-pilot/legacy-migration/**",
       "public/**",
       "web/**"
       ],
@@ -200,6 +256,15 @@
     "mariadb": ["python3", "tools/delivery/probe-environment.py", "service", "mariadb"],
     "browser": ["python3", "tools/delivery/probe-environment.py", "service", "browser"],
     "container": ["python3", "tools/delivery/probe-environment.py", "service", "container"]
+  },
+  "verification_lanes": {
+    "FAST": [
+      "bounded-ui"
+    ],
+    "CRITICAL": [
+      "auth",
+      "delivery-policy"
+    ]
   },
   "runtimes": {
     ".mjs": "node",

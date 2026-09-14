@@ -7,7 +7,7 @@
       ]
     },
     "defaultBranch": "main",
-    "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
+    "graphDigest": "7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b",
     "graphVersion": 0,
     "labels": {
       "enabled": true,
@@ -66,7 +66,7 @@
           "path": ".quality-graph/reports/fast.json"
         },
         "step": {
-          "run": "make lint architecture-check && python3 tools/delivery/render-dependencies.py --check && python3 tests/Verification/development_setup_001_test.py && python3 tests/Verification/verification_ci_001_test.py && uv sync --frozen && uv run --frozen python tools/delivery/render-current-quality-graph.py --check && python3 tools/delivery/check-current-quality-graph.py --root . && git diff --check"
+          "run": "python3 tools/verification/ci.py run-fast-node --base \"$BASE_REF\" --event \"$EVENT\""
         },
         "title": "fast"
       },
@@ -206,7 +206,7 @@
           "path": ".quality-graph/reports/verify.json"
         },
         "step": {
-          "run": "python3 tools/verification/ci.py aggregate --full \"$FULL\" --mode \"$MODE\" --results \"$RESULTS\""
+          "run": "python3 tools/verification/ci.py aggregate --full \"$FULL\" --mode \"$MODE\" --base \"$BASE_REF\" --results \"$RESULTS\""
         },
         "title": "verify"
       }
@@ -231,12 +231,12 @@
   },
   "fileSha256": {
     ".github/workflows/quality-graph-publish.yml": "b97ec4c135f3a62184eba237507d00bab2a3a7b59c21cbce28000ea048ace263",
-    ".github/workflows/quality-graph.yml": "afa221a797bc5490d3baf4c5179f9967b75b034fb70e34d0e4051abecfc53b0a",
-    "quality-graph.yml": "f8b54f7a22f4ea297a9e0d7d0170d0a842917d7120f1a4723f32ad3d59ae2dc8",
+    ".github/workflows/quality-graph.yml": "a127136dfe0a316e1bc58572f2c549162575a57243346bdbea86ab7a1f5a53dc",
+    "quality-graph.yml": "cfd9eaa38878f0446c7261d47ac686026a65ee77bd54610af1d310c7a42ac2f2",
     "tools/delivery/quality-graph-preflight.py": "a33b227522d91db9a0f5f6a6bea0744df688f3e11ba614a45a7b7ee1b87ab23a",
     "tools/delivery/quality-graph-report.py": "8cee33501b7a3a82c205c07afce5c818630e2002d0fe4c9797ff3af0c281754b"
   },
-  "graphDigest": "4b66408b274f47b533a3a95f8a7515503767bed21018177525406d973c860c6a",
+  "graphDigest": "7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b",
   "schemaVersion": 1,
-  "selfDigest": "56b2ae4d67042f91fdb2db0437134f332d81f945cd873d6a3150ef43f503189c"
+  "selfDigest": "77e6db3b24760b2ba5fa12023cdaa51d01a144d025cca36cd408da37c70ff78c"
 }
