@@ -1,0 +1,53 @@
+{
+  "change": "reconcile-unknown-stand-restore-issue-76-operation-e82320ce",
+  "planned_paths": [
+    "app/RuntimeRestore/StandRestoreApplication.php",
+    "app/RuntimeRestore/StandRestoreReconciliationAuthorization.php",
+    "app/RuntimeRestore/StandRestoreReconciliation.php",
+    "app/YiiRuntime/Commands/StandRestoreController.php",
+    "specs/YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001.md",
+    "tests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py",
+    "tests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py",
+    "tests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py",
+    "tests/Yii2/yii2_stand_restore_reconcile_console_001_test.php",
+    "tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py",
+    "docs/operations/yii2-stand-restore-unknown-reconcile-runbook.md",
+    "docs/operations/yii2-stand-restore-unknown-reconcile-evidence-2026-09-14.md",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001",
+      "acceptance_id": "A1-exact-public-recovery-intent",
+      "spec_path": "openspec/changes/reconcile-unknown-stand-restore/specs/operations/reconcile-unknown-stand-restore/spec.md",
+      "seam": "php bin/yii stand-restore/reconcile-unknown exact argv delegates to existing RuntimeRestore owner without generic unlock",
+      "tests": ["tests/Yii2/yii2_stand_restore_reconcile_console_001_test.php", "tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py"],
+      "gate3_expected": {"tests/Yii2/yii2_stand_restore_reconcile_console_001_test.php":"INTENDED_RED", "tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py":"GREEN"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001",
+      "acceptance_id": "A2-valid-unknown-reconciliation",
+      "spec_path": "openspec/changes/reconcile-unknown-stand-restore/specs/operations/reconcile-unknown-stand-restore/spec.md",
+      "seam": "existing application owner reconciles exact UNKNOWN into append-only ROLLBACK_ONLY fact while preserving original ledger and no restored pointer",
+      "tests": ["tests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py":"INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001",
+      "acceptance_id": "A3-admission-and-conflict-matrix",
+      "spec_path": "openspec/changes/reconcile-unknown-stand-restore/specs/operations/reconcile-unknown-stand-restore/spec.md",
+      "seam": "non-UNKNOWN, missing or mismatched lease, pointer, target, bundle, authorization and identity cases reject with byte-identical evidence",
+      "tests": ["tests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py":"INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-STAND-RESTORE-UNKNOWN-RECONCILE-001",
+      "acceptance_id": "A4-replay-interruption-durable-order",
+      "spec_path": "openspec/changes/reconcile-unknown-stand-restore/specs/operations/reconcile-unknown-stand-restore/spec.md",
+      "seam": "record fsync precedes exact rollback-only lease transition; crash replay repairs only matching state and conflicts fail closed",
+      "tests": ["tests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py":"INTENDED_RED"}
+    }
+  ]
+}

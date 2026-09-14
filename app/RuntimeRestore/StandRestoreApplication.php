@@ -6,6 +6,9 @@ final class StandRestoreApplication
 {
     private array $fixtureState=[];
     public function __construct(private ?StandRestoreDriver $driver=null){}
+
+    public function reconcileUnknown(string$manifest,string$priorOperation,string$reconciliationId,string$authorization,?string$fixtureDriver=null):array
+    {return(new StandRestoreReconciliation())->run($manifest,$priorOperation,$reconciliationId,$authorization,$fixtureDriver);}
     public function run(string $manifestPath, string $bundleDigest, string $operationId, ?string $fixturePath, ?string $authorizationPath=null): array
     {
         if (!StandBackupBundle::uuid($operationId) || !StandBackupBundle::hex($bundleDigest)) return $this->result('TARGET_INVALID');

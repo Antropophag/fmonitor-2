@@ -399,6 +399,11 @@ e2e	php	tests/Yii2/yii2_stand_restore_console_001_test.php
 e2e	python3	tests/Architecture/yii2_stand_restore_boundary_001_test.py
 e2e	python3	tests/Deployment/yii2_stand_restore_roundtrip_001_test.py
 e2e	python3	tests/Deployment/yii2_stand_restore_failure_001_test.py
+e2e	python3	tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py
+e2e	python3	tests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py
+e2e	python3	tests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py
+e2e	python3	tests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py
+e2e	php	tests/Yii2/yii2_stand_restore_reconcile_console_001_test.php
 characterization	python3	tests/Verification/delivery_harness_ci_completeness_001_test.py
 db	php	tests/Yii2/yii2_workforce_sync_console_001_test.php
 db	php	tests/Yii2/yii2_workforce_sync_db_001_test.php
