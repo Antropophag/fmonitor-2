@@ -6,7 +6,7 @@ LOCAL_ENV_VALIDATE := bash tools/delivery/local-runtime-env --validate
 RUNTIME_COMPOSE := $(LOCAL_ENV_RUN) docker compose --env-file '@env-file' -f deploy/runtime/compose.yaml
 TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
-.PHONY: help up down logs ps reset import-production \
+.PHONY: help up up-with-data down logs ps reset import-production import-legacy sync-workforce \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
 	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools setup doctor
 
@@ -14,7 +14,7 @@ help:
 	@echo "make setup  Подготовить закреплённые зависимости (без изменения существующих)"
 	@echo "make doctor Проверить инструменты и существующие зависимости"
 	@echo "make up     Собрать и поднять локальный Yii2 runtime (настройки в .env)"
-	@echo "make import-production  Загрузить не начатые объекты, пользователей и роли production"
+	@echo "make import-production  Совместимый alias для make import-legacy"
 	@echo "make down   Остановить Yii2 runtime, сохранив данные"
 	@echo "make logs   Показать логи"
 	@echo "make ps     Показать состояние контейнеров"
@@ -44,16 +44,21 @@ up:
 	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/ready' >/dev/null
 	@$(LOCAL_ENV_RUN) printf 'FMonitor Yii2: %s/\n' '@local-url'
 
-import-production:
-	@test -f .env || { echo ".env не найден. Выполните: cp .env.example .env" >&2; exit 2; }
-	$(COMPOSE) run --rm --no-deps --env-from-file .env --entrypoint sh \
-		-e FMONITOR_DB_HOST=mariadb \
-		-e FMONITOR_DB_PORT=3306 \
-		-e FMONITOR_DB_NAME=fmonitor2_demo \
-		-e FMONITOR_DB_USER=fmonitor2_demo \
-		-e FMONITOR_DB_PASSWORD=fmonitor2_demo_local \
-		-e FMONITOR_PILOT_OWNER_EMAIL="$${FMONITOR_PILOT_OWNER_EMAIL:-ts.grishin@shlz.ru}" \
-		pilot -c 'socat TCP4-LISTEN:23306,bind=127.0.0.1,fork,reuseaddr TCP4:mariadb:3306 & FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
+import-legacy:
+	@tools/delivery/local-integration-config legacy .local/legacy-source.env
+	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/legacy-source.env:/run/fmonitor-secrets/legacy-source.env:ro" -e FMONITOR_LEGACY_SOURCE_CONFIG=/run/fmonitor-secrets/legacy-source.env --entrypoint php prepare bin/yii legacy-import/run --interactive=0
+
+sync-workforce:
+	@tools/delivery/local-integration-config bitrix .local/bitrix-workforce.json
+	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/bitrix-workforce.json:/run/fmonitor-secrets/bitrix-workforce.json:ro" -e FMONITOR_BITRIX_CONFIG=/run/fmonitor-secrets/bitrix-workforce.json --entrypoint php prepare bin/yii workforce-sync/run --interactive=0
+
+up-with-data:
+	@$(MAKE) --no-print-directory up
+	@$(MAKE) --no-print-directory import-legacy
+	@$(MAKE) --no-print-directory sync-workforce
+	@echo "FMonitor Yii2 with production data: ready"
+
+import-production: import-legacy
 
 down:
 	$(RUNTIME_COMPOSE) down
