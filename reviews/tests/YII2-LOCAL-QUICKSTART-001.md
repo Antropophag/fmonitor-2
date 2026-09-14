@@ -172,3 +172,33 @@ None.
 `APPROVED`
 
 Gate 4 may resume only against commit `989336e42e620b99a917da5068f45b1cac384411` plus the already reviewed contract. The preserved production WIP requires its own eventual Gate 5 review; this correction approves no implementation, Docker action, reset, CI, PR, or deployment.
+
+---
+
+## Post-approval assertion-helper correction — 2026-09-14
+
+- Reviewer independence unchanged; preserved production WIP is excluded.
+- Clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T130952Z-5557758481/package.json`
+- Reviewed commit: `f9de3a5cb6140f4cd54423c4522899c88df6cae0`
+- Candidate source: `c9eff95cea54c0c64da38b85f5b16b19f0d418d14efcf4987b722177a838b6bd`
+- Executable source: `09d41c8db6df188b3e156418844d673916d163db880c11c469a041176a7babb3`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `36d14e90065a0efdfec8773d22262f07984f3c6ff798f24d1d5e5ac75194e0f1`
+- Corrected test SHA-256: `b9e82fa17c73310e054b47dcb0969ee9043c95a964a7b34adf75b6c3656417d7`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The delta replaces exactly three calls to the undefined `assertContainsText` helper with the repository's existing `assertTrueValue(str_contains(...))`. The same expected strings remain at the same create, exact-replay and mismatch observations: `RUNTIME_DB_ACCOUNT_READY`, `RUNTIME_DB_ACCOUNT_READY`, and `LOCAL_DB_ACCOUNT_MISMATCH`. Exit-code, exact privilege inventory, full grant snapshots, no-mutation and secret-redaction assertions are unchanged. Test sensitivity and the reviewed public contract are therefore preserved.
+
+Regenerated evidence is consistently bound to the corrected clean source. The MariaDB test now reaches the intended missing-command assertion (`LOCAL_RUNTIME_COMMAND_ABSENT`, actual exit 255), rather than failing because an assertion helper is undefined. Other mapped RED/GREEN outcomes remain as previously approved.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may resume against clean baseline `f9de3a5cb6140f4cd54423c4522899c88df6cae0`. This narrow approval covers only the test-helper correction and does not approve the preserved implementation WIP, Docker actions, reset, CI, PR, or deployment.
