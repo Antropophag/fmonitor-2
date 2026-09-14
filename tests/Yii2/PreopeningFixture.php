@@ -17,6 +17,7 @@ final class PreopeningFixture
     public string $password='Correct preopening fixture 2026';
     public array $emails=[18=>'fkr.preopening@shlz.ru',73=>'engineer.preopening@shlz.ru',94=>'admin.preopening@shlz.ru',95=>'reader.preopening@shlz.ru',96=>'otiz.preopening@shlz.ru',97=>'manager.preopening@shlz.ru'];
     public ?array $server=null;
+    public bool $countDirectoryQueries=false;
     private bool $ownsDmlUser=false;
     private string $traceNonce;
 
@@ -82,7 +83,10 @@ final class PreopeningFixture
         $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with($key,'FMONITOR_'))unset($env[$key]);
         $env=array_replace($env,$this->environment(),$overrides,['FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:'.$port]);
         $router=$this->artifacts.'/router.php';$trace=$this->artifacts.'/includes.jsonl';
-        file_put_contents($router,'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(["nonce"=>'.var_export($this->traceNonce,true).',"method"=>$_SERVER["REQUEST_METHOD"],"uri"=>$_SERVER["REQUEST_URI"],"files"=>get_included_files()])."\n",FILE_APPEND|LOCK_EX);}); require '.var_export($this->root.'/public/yii.php',true).';');
+        if($this->countDirectoryQueries){
+            $code='<?php require '.var_export($this->root.'/vendor/autoload.php',true).';require '.var_export($this->root.'/vendor/yiisoft/yii2/Yii.php',true).';class NativeDirectoryCountingCommand extends yii\\db\\Command{public static int $queries=0;protected function queryInternal($method,$fetchMode=null){$sql=$this->getRawSql();if(str_contains($sql,"fm2_workforce_catalog")||str_contains($sql,"fm2_order_installers")||str_contains($sql,"fm2_assignment_order_applications"))self::$queries++;return parent::queryInternal($method,$fetchMode);}} register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(["nonce"=>'.var_export($this->traceNonce,true).',"method"=>$_SERVER["REQUEST_METHOD"],"uri"=>$_SERVER["REQUEST_URI"],"status"=>http_response_code(),"queries"=>NativeDirectoryCountingCommand::$queries,"files"=>get_included_files()])."\\n",FILE_APPEND|LOCK_EX);});$config=require '.var_export($this->root.'/config/yii/web.php',true).';$factory=$config["components"]["db"];$config["components"]["db"]=static function()use($factory){$db=$factory();$db->commandClass=NativeDirectoryCountingCommand::class;return $db;};(new yii\\web\\Application($config))->run();';
+            file_put_contents($router,$code);
+        }else file_put_contents($router,'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(["nonce"=>'.var_export($this->traceNonce,true).',"method"=>$_SERVER["REQUEST_METHOD"],"uri"=>$_SERVER["REQUEST_URI"],"files"=>get_included_files()])."\n",FILE_APPEND|LOCK_EX);}); require '.var_export($this->root.'/public/yii.php',true).';');
         $process=proc_open([PHP_BINARY,'-d','display_errors=0','-d','post_max_size=24M','-S','127.0.0.1:'.$port,$router],[0=>['file','/dev/null','r'],1=>['file',$this->artifacts.'/server.log','a'],2=>['file',$this->artifacts.'/server.log','a']],$pipes,$this->root,$env);
         if(!is_resource($process))throw new TestFailure('SETUP_FAILURE server');$this->server=['process'=>$process,'port'=>$port];
         $deadline=microtime(true)+5;do{$s=@fsockopen('127.0.0.1',$port,$e,$m,.1);if(is_resource($s)){fclose($s);return;}usleep(20000);}while(microtime(true)<$deadline);
@@ -169,7 +173,7 @@ final class PreopeningFixture
     public function noLegacy(): void
     {
         $lines=file($this->artifacts.'/includes.jsonl',FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES);assertSameValue(true,is_array($lines)&&$lines!==[],'observed real requests');
-        foreach($lines as$line){$record=json_decode($line,true,flags:JSON_THROW_ON_ERROR);assertSameValue($this->traceNonce,$record['nonce'],'request trace belongs to fixture');foreach($record['files']as$path)assertSameValue(false,str_contains($path,'/rapid-pilot/')||str_contains($path,'/app/PilotHttp/'),'every Yii request loads no old layer: '.$record['method'].' '.$record['uri']);}
+        $counts=[];foreach($lines as$line){$record=json_decode($line,true,flags:JSON_THROW_ON_ERROR);assertSameValue($this->traceNonce,$record['nonce'],'request trace belongs to fixture');if($this->countDirectoryQueries&&$record['uri']==='/pilot/installers'&&$record['method']==='GET'&&($record['status']??0)===200&&($record['queries']??0)>0){$counts[]=(int)$record['queries'];assertSameValue(true,$record['queries']<=6,'bounded native directory queries '.$record['queries']);}foreach($record['files']as$path)assertSameValue(false,str_contains($path,'/rapid-pilot/')||str_contains($path,'/app/PilotHttp/'),'every Yii request loads no old layer: '.$record['method'].' '.$record['uri']);}if($this->countDirectoryQueries){assertSameValue(true,count($counts)>=3,'native application query budget observed across changing case count');assertSameValue(1,count(array_unique($counts)),'directory query count independent of application/case rows');}
     }
     public function close(): void
     {
