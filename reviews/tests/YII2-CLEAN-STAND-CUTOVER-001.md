@@ -223,3 +223,30 @@ The structural oracle still requires exact environment and volume equality for `
 `APPROVED`
 
 Gate 4 may implement this exact acceptance-only ini activation mechanism together with the previously approved isolated adapters. This verdict authorizes no live container, database, deployment, or stand action.
+
+---
+
+## Production jobs canonical-configuration gap review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T092839Z-ee452c2436/package.json`.
+- Exact reviewed source: candidate `80ede0e91599b378414beef148e679d85150fa33e89a8492db6dd955e793b886`, executable source `0c6f98be1b0e1212f93e9979193046817e99b1deb33fcdcba15e1a1c05e23bd9`, head `77161fb5b297274291e59e9a2b2007e9f84e2c7e`.
+- Snapshot patch SHA-256: `56c1928500da6fe77ee0411ea0a1226d21ccb0347e42836ec158ec90e62f2738`.
+- Correction delta SHA-256: `8f445dece5f1ee3f13f0ce268e0ab3dee0cd6cc5f53401533252fc223dd82489`.
+- Verification plan SHA-256: `274fb1d10c08c6d0534a04786c0474a5715824b4e111b6ea4fd506af49f200fd`.
+- Reviewer independence is unchanged. No implementation or stand action was performed.
+
+### Assessment
+
+No findings. Source inspection confirms a real production gap: `YiiJobsRuntimeEnvironment` currently discovers exactly one `pilot-demo/*/active.json`, reads its `processPrefix`, and overwrites `FMONITOR_PROCESS_TABLE_PREFIX` before invoking the Jobs owner. A clean stand without a legacy demo manifest therefore rejects worker, scheduler, and health before the configured database boundary, while a hostile legacy manifest can redirect the canonical table identity.
+
+The new stable requirement and A10 verification mapping are narrow and consistent with clean-stand closure. `yii2_jobs_clean_runtime_configuration_001_test.php` executes all three public Yii routes, requires the explicit canonical prefix, independently rejects missing and malformed prefixes, proves missing/hostile legacy manifests are irrelevant, distinguishes worker-only Bitrix secret requirements from scheduler/health, and retains redacted closed outcomes. Both console tests are honest `INTENDED_RED` against the observed manifest dependency, not environment failures.
+
+The updated DB-backed regression supplies a canonical prefix whose migrated tables exist while an incompatible legacy manifest supplies another prefix. Real worker and scheduler processes must publish their distinct heartbeats into the canonical tables, and health must query the same tables. Removing or replacing the legacy manifest with an unreadable directory must not change that behavior. Rejection snapshot and graceful shutdown/secret cleanup checks remain present. The DB test is appropriately deferred to its configured database/CI profile rather than being misreported as local GREEN.
+
+The intended implementation surface is limited to the existing `YiiJobsRuntimeEnvironment` adapter: validate and preserve the canonical environment prefix, stop reading active manifests, and retain worker-only secret staging/cleanup. It creates no new public interface and does not weaken jobs health/readiness.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may correct the existing jobs environment adapter against this exact contract and tests. Focused GREEN, the DB-profile regression, Gate 5, and exact-source CI remain required. This verdict authorizes no disposable deployment or stand mutation.
