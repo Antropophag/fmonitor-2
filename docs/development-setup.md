@@ -86,8 +86,9 @@ Playwright использует `--with-deps` и может запросить `
 
 ## Запуск актуального локального Yii2 runtime
 
-Создайте локальный конфиг, замените все placeholders и задайте уникальные
-project name, credentials и Yii keys:
+Создайте локальный конфиг, замените все placeholders, укажите реальный
+корпоративный `@shlz.ru` email первого owner и задайте уникальные project name,
+credentials и Yii keys:
 
 ```bash
 cp .env.example .env

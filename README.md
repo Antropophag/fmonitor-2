@@ -13,7 +13,8 @@ Docker и Compose v2:
 git clone https://github.com/Antropophag/fmonitor-2.git
 cd fmonitor-2
 cp .env.example .env
-# Замените все replace_me; project должен иметь уникальное имя fm2-local-*.
+# Замените все replace_me; owner email должен оканчиваться на @shlz.ru,
+# а project должен иметь уникальное имя fm2-local-*.
 make up
 ```
 
