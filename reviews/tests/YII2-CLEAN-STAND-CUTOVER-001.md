@@ -250,3 +250,82 @@ The intended implementation surface is limited to the existing `YiiJobsRuntimeEn
 `APPROVED`
 
 Gate 4 may correct the existing jobs environment adapter against this exact contract and tests. Focused GREEN, the DB-profile regression, Gate 5, and exact-source CI remain required. This verdict authorizes no disposable deployment or stand mutation.
+
+---
+
+## Acceptance HTTP raw-body DSL review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T093801Z-3218431082/package.json`.
+- Exact reviewed source: candidate `49081ca74b57d5d06fdfd5e6d4fe6eeb38682862abb35d0d6bb1f5d42d486ff5`, executable source `bde4d99337220a0ce56c211e0fe681b635a0586b0cde5c8dacce1f952eb5929b`, head `647f4b74042ef8d2f384c1c9452deb0577108697`.
+- Snapshot patch SHA-256: `cf9ae85ad22eaea54141159e3401e79ee64990272245e183e1ec5a4a105af610`.
+- Correction delta SHA-256: `9bc1fb65a9d667f8aa7d56e6f3e41f867811ab2d61b706e0eb19df021be29d9e`.
+- Verification plan SHA-256: `c61564f4fab12d98927250cf0494f5ed757b19d4aeed76829bc490b3ad76e3a0`.
+- Reviewer independence is unchanged. No production interface or stand action was performed.
+
+### Assessment
+
+The support-only scope is appropriate: raw JSON is needed for existing production HTTP actions, and extending the private acceptance DSL does not add a production route or domain owner. The existing mapped tests are GREEN on the exact source, and the new test is honest `INTENDED_RED` because `validate-http-context` does not yet exist.
+
+### Finding
+
+1. **HIGH — the proposed valid fixture uses an undefined forward capture, so its expected success contradicts executable capture ordering.** Location: `tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py:19-23`; contract: `specs/YII2-CLEAN-STAND-CUTOVER-001.md:63`. Its only request references `@capture:csrf` in both header and `rawBody`, but no preceding request defines a `captures` mapping. The real acceptance executor resolves `@capture:*` before sending a request and records response captures only afterward. A fail-closed implementation must therefore reject this fixture, while the test requires `HTTP_CONTEXT_VALID`. An implementation could pass the test only by accepting an unresolved token or treating a reference as its own definition, either of which breaks bounded response-derived substitution.
+
+   Use at least two requests: a first safe request with an explicit response `captures` regex for `csrf`, followed by the raw-JSON POST that references the already-defined value in its header/body. Require the validator result to distinguish defined captures from references. Add independent rejection of missing/forward capture and malformed/non-string raw JSON, alongside the existing form/raw mutual-exclusion case. The test should also prove substitution produces valid JSON/string escaping without exposing the captured value in argv, stdout, or persisted evidence. These are direct sensitivities of the newly added requirement, not additional product scope.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 for the raw-body DSL is blocked on the corrected capture-order fixture and negative matrix. Previously approved clean-stand and jobs work remains unaffected. Retain fresh exact-source RED and resubmit this narrow support-only test delta.
+
+---
+
+## Corrected HTTP raw-body DSL rereview — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T094118Z-0c0009e0e2/package.json`.
+- Exact reviewed source: candidate `f83444d356e690121e9fbabda36061b228ef527be0f143bd27211e1f3ac9d1e4`, executable source `da6aff3dcd1c726f9f3abe96b049afd11b9f107166c086333b72a5aeb2ff41f2`.
+- Snapshot patch SHA-256: `edea5e141c0de110e9d904f3dce0b8b515876225a4aa77c1b878b53eb74177a7`.
+- Correction delta SHA-256: `c6dec66d5c5ac4134f0c555b7f518f011aeaeb4e14df0501cb37889756c3d92e`.
+- Verification plan SHA-256: `dd57c054e7b8ed89edc3d8e95a09e749c6eae8d74721005f5c5ae51596b22569`.
+- Reviewer independence is unchanged; no production interface or stand operation was performed.
+
+### Resolution assessment
+
+The capture-order fixture is corrected: a GET response explicitly defines `csrf`, and only the following POST references it. Validator output distinguishes definitions and references. Separate cases now reject forward/missing capture, simultaneous form/raw bodies, malformed JSON, and a non-string raw body. The retained run is honest `INTENDED_RED` on the absent `validate-http-context` seam; all other mapped tests remain GREEN on the exact source.
+
+### Remaining finding
+
+1. **HIGH — raw-body capture substitution itself is still untested and can be ignored or implemented unsafely while the test passes.** Location: `tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py:19-30`; contract: `specs/YII2-CLEAN-STAND-CUTOVER-001.md:63`. The POST references `csrf` in both a header and `rawBody`. The expected `references:["csrf"]` can therefore be produced by scanning only the header; an implementation may completely ignore raw-body references and pass. The test validates only that the static template is JSON before substitution. It never substitutes a captured value containing JSON-significant characters, never verifies the actual transmitted bytes remain valid JSON with the exact value, and never inspects an effect/argv/evidence representation for redaction. The assertion excluding `11111111` and `_csrf` from validator stdout demonstrates summary omission, but not execution-time token/body confidentiality.
+
+   Make the raw-body reference independently observable: use one capture name only in `rawBody` (a different already-defined capture may cover the header) and require both references in the summary. Exercise the bounded renderer/executor with a synthetic captured value containing quotes, backslashes, and Unicode; independently JSON-decode the emitted body and require exact value equality. Assert that neither the captured value nor raw body appears in command argv, stdout/stderr, operation records, or persisted evidence—the body may travel only through a private mode-0600 input file/stdin that is removed. This is the remaining sensitivity explicitly requested by the preceding review.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 for the raw JSON execution path remains blocked on this narrow substitution/redaction test. Capture ordering and validation are approved, and prior clean-stand/jobs approvals remain unaffected.
+
+---
+
+## Final HTTP raw-body execution review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T094451Z-3bc4b17dc6/package.json`.
+- Exact reviewed source: candidate `58f1dc5e58eda881f728588c41d1884d1c5b977ae49594c52a979d7470b6aef7`, executable source `ff0d483d49cf1739d1420d08345d9f48d5f6aa376d07f6b665e515b9d4285b37`.
+- Snapshot patch SHA-256: `d27aceba28ac440ee1b6f04880fa74adcaf3b4960df36f577451e1fd2da7aca1`.
+- Correction delta SHA-256: `10d4c20f729f19e7d75a2a66e5c775d8927b00bc5dd7e41409cef7a00f059f71`.
+- Verification plan SHA-256: `c4a8dc78093a3a6df88e2e76dcdf53d2cd709148b5b44549e6b367eb9eb5216f`.
+- Reviewer independence is unchanged; no production or stand operation was performed.
+
+### Finding disposition
+
+The remaining raw-body sensitivity finding is resolved. The valid context now defines two prior response captures: `csrf` is referenced only by the header, while distinct `json_value` is referenced only by `rawBody`. Validator output must therefore discover both reference locations independently and preserve definition-before-use ordering.
+
+The execution probe supplies `json_value` containing a quote, backslash, whitespace, and Unicode. A fake bounded curl boundary reads only the private `--data-binary @file` transport; the test independently decodes its bytes as JSON and requires exact captured-value equality. It also requires mode `0600`, removal of the body file after execution, absence of secret/csrf values from argv and process stdout/stderr, absence of unresolved `@capture:` markers, and a redacted result containing only status and transport class. The form/raw, forward/missing capture, malformed JSON, and non-string JSON matrix remains intact.
+
+The fresh mapped run is honest `INTENDED_RED` on the absent validation/execution seam, while all ten adjacent mapped checks remain GREEN on the same exact source. No findings remain for this support-only correction.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may implement the bounded private-file raw JSON renderer/executor against this exact test. This creates no production HTTP interface and authorizes no live stand activity.

@@ -202,6 +202,38 @@ function privateFile(array $files,string $key): string
     $path=$files[$key]??null;if(!is_string($path)||!str_starts_with($path,'/')||!is_file($path)||is_link($path)||(fileperms($path)&0777)!==0600)emit('CREDENTIAL_REFERENCE_INVALID');
     $mode=fileperms($path)&0777;if(!in_array($mode,[0400,0600],true))emit('CREDENTIAL_REFERENCE_INVALID');$value=trim((string)file_get_contents($path));if($value==='')emit('CREDENTIAL_REFERENCE_INVALID');return $value;
 }
+function captureReferences(string $value): array
+{
+    preg_match_all('/@capture:([A-Za-z][A-Za-z0-9_.-]{0,63})/D',$value,$matches);
+    return array_values(array_unique($matches[1]??[]));
+}
+function validateHttpContext(array $context): array
+{
+    $defined=[];$summary=[];$requests=$context['httpRequests']??null;if(!is_array($requests))emit('HTTP_CONTEXT_INVALID');
+    foreach($requests as $request){
+        if(!is_array($request)||!in_array($request['method']??null,['GET','POST'],true)||!is_string($request['path']??null)||!str_starts_with($request['path'],'/')||!is_int($request['expectedStatus']??null))emit('HTTP_CONTEXT_INVALID');
+        $hasForm=array_key_exists('form',$request);$hasRaw=array_key_exists('rawBody',$request);if($hasForm&&$hasRaw)emit('HTTP_CONTEXT_INVALID');
+        if($hasForm&&!is_array($request['form']))emit('HTTP_CONTEXT_INVALID');if($hasRaw&&(!is_string($request['rawBody'])||json_decode($request['rawBody'],true)===null))emit('HTTP_CONTEXT_INVALID');
+        $references=[];foreach(($request['headers']??[])as$header){if(!is_string($header))emit('HTTP_CONTEXT_INVALID');$references=array_merge($references,captureReferences($header));}
+        foreach(($request['form']??[])as$value)if(is_string($value))$references=array_merge($references,captureReferences($value));
+        if($hasRaw)$references=array_merge($references,captureReferences($request['rawBody']));$references=array_values(array_unique($references));sort($references);
+        foreach($references as $name)if(!isset($defined[$name]))emit('HTTP_CONTEXT_INVALID');
+        $defines=array_keys($request['captures']??[]);foreach(($request['captures']??[])as$name=>$pattern)if(!is_string($name)||!is_string($pattern)||@preg_match($pattern,'')===false)emit('HTTP_CONTEXT_INVALID');sort($defines);foreach($defines as$name)$defined[$name]=true;
+        $summary[]=['method'=>$request['method'],'path'=>$request['path'],'body'=>$hasRaw?'raw-json':($hasForm?'form':'none'),'defines'=>$defines,'references'=>$references];
+    }return $summary;
+}
+function substituteCapture(string $template,array $captures,bool $json): string
+{
+    foreach(captureReferences($template)as$name){if(!array_key_exists($name,$captures)||!is_string($captures[$name]))emit('HTTP_CONTEXT_INVALID');$token='@capture:'.$name;$template=$json?str_replace(json_encode($token,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),json_encode($captures[$name],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$template):str_replace($token,$captures[$name],$template);}return $template;
+}
+function executeHttpRequest(array $request,array $captures,string $curl): never
+{
+    validateHttpContext(['httpRequests'=>[['method'=>'GET','path'=>'/capture-source','headers'=>[],'expectedStatus'=>200,'captures'=>array_fill_keys(array_keys($captures),'~(.)~')],$request]]);
+    $sensitive=[];register_shutdown_function(static function()use(&$sensitive):void{foreach($sensitive as$p)if(is_file($p))@unlink($p);});$args=str_ends_with($curl,'.php')?[PHP_BINARY,$curl]:[$curl];array_push($args,'--silent','--show-error','--output','/dev/null','--write-out','%{http_code}','--request',$request['method']);
+    $config=tempnam(sys_get_temp_dir(),'fm2-clean-curl-');if(!is_string($config))emit('HTTP_CONTEXT_INVALID');chmod($config,0600);$sensitive[]=$config;$configLines=[];foreach(($request['headers']??[])as$header){$header=substituteCapture($header,$captures,false);$configLines[]='header = '.json_encode($header,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);}$configLines[]='url = '.json_encode('http://127.0.0.1'.$request['path']);file_put_contents($config,implode("\n",$configLines)."\n");$args[]='--config';$args[]=$config;
+    $transport='none';if(isset($request['rawBody'])){$body=substituteCapture($request['rawBody'],$captures,true);if(json_decode($body,true)===null)emit('HTTP_CONTEXT_INVALID');$bodyFile=tempnam(sys_get_temp_dir(),'fm2-clean-body-');if(!is_string($bodyFile))emit('HTTP_CONTEXT_INVALID');chmod($bodyFile,0600);file_put_contents($bodyFile,$body);$sensitive[]=$bodyFile;$args[]='--data-binary';$args[]='@'.$bodyFile;$transport='private-file';}
+    [$exit,$status]=execute($args,getenv(),true);if($exit!==0)emit('HTTP_CONTEXT_INVALID');emit('HTTP_REQUEST_EXECUTED',['status'=>(int)$status,'bodyTransport'=>$transport],0);
+}
 function realRun(string $packagePath,string $evidence,array $opts): never
 {
     $package=readDocument($packagePath,'AUTHORIZATION_PACKAGE_MALFORMED');
@@ -236,7 +268,14 @@ function realRun(string $packagePath,string $evidence,array $opts): never
     execute([...$compose,'--profile','acceptance','run','--rm','acceptance-setup'],$env);execute([...$compose,'--profile','jobs','up','--detach','--wait','php','web','jobs-worker','jobs-scheduler'],$env);
     foreach(['live','ready'] as $health){[$exit,$body]=execute(['curl','--fail','--silent','--show-error','--header','Host: '.$package['runtime']['trustedHost'],'http://127.0.0.1:'.$package['runtime']['httpPort'].'/health/'.$health],$env,true);$json=json_decode($body,true);if($exit!==0||($json['ok']??null)!==true)emit('RUNTIME_NOT_READY',[],70);}
     execute([...$compose,'exec','-T','jobs-worker','php','bin/yii','jobs/health','--interactive=0'],$env);execute([...$compose,'--profile','acceptance','run','--rm','acceptance-enqueue'],$env);
-    $context=$boundContext;$cookieJar=tempnam(sys_get_temp_dir(),'fm2-clean-cookie-');if(!is_string($cookieJar))emit('STEP_FAILED',[],70);chmod($cookieJar,0600);$sensitive=[$cookieJar];register_shutdown_function(static function()use(&$sensitive):void{foreach($sensitive as $path)if(is_string($path)&&is_file($path))@unlink($path);});$captures=[];foreach(($context['httpRequests']??[]) as $request){$bodyFile=tempnam(sys_get_temp_dir(),'fm2-clean-http-');if(!is_string($bodyFile))emit('STEP_FAILED',[],70);chmod($bodyFile,0600);$sensitive[]=$bodyFile;$args=['curl','--silent','--show-error','--output',$bodyFile,'--write-out','%{http_code}','--cookie',$cookieJar,'--cookie-jar',$cookieJar,'--request',$request['method'],'--header','Host: '.$package['runtime']['trustedHost']];foreach(($request['headers']??[])as$header){$args[]='--header';$args[]=$header;}foreach(($request['form']??[])as$key=>$value){$encoded=$key.'='.$value;if(is_string($value)&&str_starts_with($value,'@credential:')){$credentialKey=substr($value,12);privateFile($files,$credentialKey);$encoded=$key.'@'.$files[$credentialKey];}elseif(is_string($value)&&str_starts_with($value,'@capture:')){$capture=substr($value,9);if(!array_key_exists($capture,$captures))emit('GOLDEN_FLOW_INVALID',[],70);$encoded=$key.'='.$captures[$capture];}$args[]='--data-urlencode';$args[]=$encoded;}$args[]='http://127.0.0.1:'.$package['runtime']['httpPort'].$request['path'];[, $status]=execute($args,$env);$body=(string)file_get_contents($bodyFile);@unlink($bodyFile);if((int)$status!==(int)$request['expectedStatus'])emit('GOLDEN_FLOW_INVALID',[],70);foreach(($request['captures']??[])as$name=>$pattern){if(!is_string($name)||!is_string($pattern)||@preg_match($pattern,$body,$match)!==1||!isset($match[1]))emit('GOLDEN_FLOW_INVALID',[],70);$captures[$name]=(string)$match[1];}}
+    $context=$boundContext;validateHttpContext($context);$cookieJar=tempnam(sys_get_temp_dir(),'fm2-clean-cookie-');if(!is_string($cookieJar))emit('STEP_FAILED',[],70);chmod($cookieJar,0600);$sensitive=[$cookieJar];register_shutdown_function(static function()use(&$sensitive):void{foreach($sensitive as $path)if(is_string($path)&&is_file($path))@unlink($path);});$captures=[];
+    foreach(($context['httpRequests']??[]) as $request){
+        $responseFile=tempnam(sys_get_temp_dir(),'fm2-clean-http-');$configFile=tempnam(sys_get_temp_dir(),'fm2-clean-curl-');if(!is_string($responseFile)||!is_string($configFile))emit('STEP_FAILED',[],70);chmod($responseFile,0600);chmod($configFile,0600);$sensitive[]=$responseFile;$sensitive[]=$configFile;
+        $args=['curl','--silent','--show-error','--output',$responseFile,'--write-out','%{http_code}','--cookie',$cookieJar,'--cookie-jar',$cookieJar,'--request',$request['method']];$configuration=['header = '.json_encode('Host: '.$package['runtime']['trustedHost'])];foreach(($request['headers']??[])as$header)$configuration[]='header = '.json_encode(substituteCapture($header,$captures,false),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);$configuration[]='url = '.json_encode('http://127.0.0.1:'.$package['runtime']['httpPort'].$request['path']);file_put_contents($configFile,implode("\n",$configuration)."\n");$args[]='--config';$args[]=$configFile;
+        foreach(($request['form']??[])as$key=>$value){$encoded=$key.'='.$value;if(is_string($value)&&str_starts_with($value,'@credential:')){$credentialKey=substr($value,12);privateFile($files,$credentialKey);$encoded=$key.'@'.$files[$credentialKey];}elseif(is_string($value)&&str_starts_with($value,'@capture:')){$captured=substituteCapture($value,$captures,false);$captureFile=tempnam(sys_get_temp_dir(),'fm2-clean-form-');if(!is_string($captureFile))emit('STEP_FAILED',[],70);chmod($captureFile,0600);file_put_contents($captureFile,$captured);$sensitive[]=$captureFile;$encoded=$key.'@'.$captureFile;}$args[]='--data-urlencode';$args[]=$encoded;}
+        if(isset($request['rawBody'])){$raw=substituteCapture($request['rawBody'],$captures,true);if(str_contains($raw,'@capture:')||json_decode($raw,true)===null)emit('GOLDEN_FLOW_INVALID',[],70);$requestFile=tempnam(sys_get_temp_dir(),'fm2-clean-body-');if(!is_string($requestFile))emit('STEP_FAILED',[],70);chmod($requestFile,0600);file_put_contents($requestFile,$raw);$sensitive[]=$requestFile;$args[]='--data-binary';$args[]='@'.$requestFile;}
+        [, $status]=execute($args,$env);$body=(string)file_get_contents($responseFile);@unlink($responseFile);@unlink($configFile);if((int)$status!==(int)$request['expectedStatus'])emit('GOLDEN_FLOW_INVALID',[],70);foreach(($request['captures']??[])as$name=>$pattern){if(@preg_match($pattern,$body,$match)!==1||!isset($match[1]))emit('GOLDEN_FLOW_INVALID',[],70);$captures[$name]=(string)$match[1];}
+    }
     foreach(($context['validationQueries']??[]) as $query){[, $rows]=execute([...$compose,'exec','-T','-e','MYSQL_PWD','db','mariadb','-N','-B','-u',$package['runtime']['acceptanceDatabaseUser'],$package['names']['database'],'-e',$query['sql']],array_merge($env,['MYSQL_PWD'=>$acceptancePassword]));if(!hash_equals((string)($query['expectedSha256']??''),hash('sha256',$rows)))emit('ACCEPTANCE_FACT_INVALID',[],70);}
     [, $inventory]=execute([...$compose,'exec','-T','php','find','/workspace/fmonitor-2','-path','*/rapid-pilot/*','-print'],$env);if(trim($inventory)!=='')emit('LEGACY_RUNTIME_REACHABLE',[],70);
     // Long-running PHP processes publish their complete include set at graceful
@@ -249,6 +288,12 @@ function realRun(string $packagePath,string $evidence,array $opts): never
 }
 
 $action=$argv[1]??''; $opts=options($argv);
+if($action==='validate-http-context'){
+    if(!isset($opts['context'],$opts['context-digest'])||!is_file($opts['context'])||!hash_equals($opts['context-digest'],digest($opts['context'])))emit('HTTP_CONTEXT_INVALID');$context=readDocument($opts['context'],'HTTP_CONTEXT_INVALID');emit('HTTP_CONTEXT_VALID',['requests'=>validateHttpContext($context)],0);
+}
+if($action==='execute-http-context'){
+    if(getenv('FMONITOR_CLEAN_STAND_TEST_MODE')!=='1'||!isset($opts['context'],$opts['context-digest'],$opts['captures'],$opts['request-index'])||!is_file($opts['context'])||!hash_equals($opts['context-digest'],digest($opts['context'])))emit('HTTP_CONTEXT_INVALID');$context=readDocument($opts['context'],'HTTP_CONTEXT_INVALID');validateHttpContext($context);$capturesPath=$opts['captures'];if(!is_file($capturesPath)||is_link($capturesPath)||(fileperms($capturesPath)&0777)!==0600)emit('HTTP_CONTEXT_INVALID');$captures=readDocument($capturesPath,'HTTP_CONTEXT_INVALID');$index=filter_var($opts['request-index'],FILTER_VALIDATE_INT);if($index===false||!isset($context['httpRequests'][$index]))emit('HTTP_CONTEXT_INVALID');$curl=getenv('FMONITOR_CLEAN_STAND_CURL_BIN');if(!is_string($curl)||$curl==='')$curl='curl';executeHttpRequest($context['httpRequests'][$index],$captures,$curl);
+}
 if (isset($opts['authorization-package'])) {
     if (getenv('FMONITOR_CLEAN_STAND_TEST_MODE')==='1' || getenv('FMONITOR_CLEAN_STAND_RECORDING_DRIVER')!==false) emit('RECORDING_DRIVER_FORBIDDEN');
     if(!isset($opts['evidence-root']))emit('AUTHORIZATION_REQUIRED');realRun($opts['authorization-package'],$opts['evidence-root'],$opts);

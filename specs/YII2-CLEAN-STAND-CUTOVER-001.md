@@ -60,6 +60,8 @@ Synthetic JSON/readiness fixtures, ручная вставка heartbeat либ�
 
 Для каждого family MUST наблюдаться expected HTTP outcome и связанный canonical append-only fact. Отдельный user без permission MUST получить действующий отказ, а whole relevant fact projection MUST остаться неизменной.
 
+Acceptance-only HTTP driver MUST поддерживать mutually exclusive form fields либо digest-bound raw JSON body, response-derived cookie/CSRF capture и bounded substitution в headers/body без записи captured credentials/tokens в argv, stdout, logs или persisted evidence.
+
 ### A5. Jobs/outbox normal operation
 
 Harness MUST инициировать bounded synthetic workload через acceptance-only enqueue/workload adapter, доступный только внутри isolated disposable topology, и доказать настоящими production worker/outbox owners на canonical configured tables одну связанную цепочку:
