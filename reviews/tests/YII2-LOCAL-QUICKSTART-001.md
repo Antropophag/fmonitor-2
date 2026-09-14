@@ -390,3 +390,34 @@ Fresh evidence remains honest `INTENDED_RED` at `DOTENV_EXECUTED_AS_MAKE`, befor
 `APPROVED`
 
 The non-evaluating env-helper correction may proceed against this exact test package. This review does not approve its implementation, Docker/reset actions, CI, PR, or deployment.
+
+---
+
+## Post-approval env-helper fixture correction — 2026-09-14
+
+- Reviewer independence unchanged; no env-helper implementation was present in the reviewed clean checkout.
+- Prior approved security package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T135003Z-2cfded5086/package.json`
+- Corrected root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T135445Z-ec31f41495/package.json`
+- Reviewed commit: `e4368464898b8ff52bee935f062dd03560c195b6`
+- Candidate source: `9e00c7412772aa54bb593ea261e5f01aa39e0957266a0eb7c4c24a570a377d75`
+- Executable source: `e7d2eddfdc7be43ec9866fd1baef05e3a039f5755dffbe66da131a68ed4bb498`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `c301042149b640468bb5d3124780837aa48b12e6dfced23c9663553a8da5fd94`
+- Corrected test SHA-256: `02dee9487e0a06047640dc82e321e6046fd2fe18b90d8b739be1ba2c8772c350`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The delta makes no expectation or security-semantic change. The fixture conditionally copies `tools/delivery/local-runtime-env` into the isolated checkout if the production dependency exists; when it is absent on the reviewed RED baseline, behavior is unchanged. This prevents a future conforming implementation from failing only because the isolated fixture omitted the helper invoked by the copied Makefile. The verification input is corrected from the nonexistent `.php` filename to the same actual extensionless path.
+
+The corrected root package contains no retained command records, so it is not independently represented as fresh packaged evidence. For this mechanical delta, the prior approved security package remains the normative evidence and a direct bounded rerun on clean commit `e4368464` confirms the target still fails at the intended `DOTENV_EXECUTED_AS_MAKE`, not at fixture setup or a missing helper. The test hash matches the corrected verification-plan binding.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+The env-helper implementation may proceed against corrected fixture baseline `e4368464898b8ff52bee935f062dd03560c195b6`. Fresh exact-source evidence is required after implementation; this approval authorizes no Docker/reset, CI, PR, or deployment action.
