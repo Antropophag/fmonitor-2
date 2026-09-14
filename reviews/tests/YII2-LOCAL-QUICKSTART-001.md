@@ -202,3 +202,33 @@ None.
 `APPROVED`
 
 Gate 4 may resume against clean baseline `f9de3a5cb6140f4cd54423c4522899c88df6cae0`. This narrow approval covers only the test-helper correction and does not approve the preserved implementation WIP, Docker actions, reset, CI, PR, or deployment.
+
+---
+
+## Post-approval canonical assertion-helper correction — 2026-09-14
+
+- Reviewer independence unchanged; production WIP is excluded.
+- Clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T131311Z-ebae498495/package.json`
+- Reviewed commit: `230c7ff2a50bfb665022665c36eb7ecb7a9e8596`
+- Candidate source: `03782ff582ebc4d487f03365fa889640ca7011a8e8fd3e1b064e29875d75f5dd`
+- Executable source: `21132e6a1a81b3d700302f9fac8637cad041b523963fd81d9e745c78f35eeea3`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `c68024c3ae1670d8585b508972b6d4fbabe4919c7e20a9a69d50f4f658e7ba59`
+- Corrected test SHA-256: `c800197f3071bd5fe44f8b3cb25563a6d3d84c69b240416b18c0b87011d9a482`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The delta is exactly five mechanical replacements in the new MariaDB provisioning test: nonexistent `assertTrueValue(predicate, message)` calls became the repository's defined `assertSameValue(true, predicate, message)` helper. Every predicate and diagnostic string is byte-for-byte unchanged. Create/replay result markers, secret non-disclosure, exact privilege inventory, complete grant snapshots and mismatch no-mutation semantics are unaffected.
+
+The corrected test hash matches the verification-plan binding. Fresh evidence reaches the intended missing production seam (`LOCAL_RUNTIME_COMMAND_ABSENT`, exit 255), rather than either missing assertion helper. All other mapped outcomes remain consistent with the approved matrix.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may resume against clean baseline `230c7ff2a50bfb665022665c36eb7ecb7a9e8596`. This approval is limited to the assertion-helper correction and does not review implementation WIP or authorize Docker, reset, CI, PR, or deployment actions.
