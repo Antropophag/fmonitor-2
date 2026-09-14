@@ -294,3 +294,33 @@ None.
 `APPROVED`
 
 The real disposable acceptance may be retried only with its existing explicit authorization package and the corrected exact source. This review does not approve production WIP, any existing stand, CI, PR, or deployment.
+
+---
+
+## Post-approval SQL-sentinel transport correction — 2026-09-14
+
+- Reviewer independence unchanged; production WIP is excluded.
+- Clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T133450Z-1bc036c806/package.json`
+- Reviewed commit: `31d0b773cf02a91f489239e029989bad4a4338dd` over `dae3ab1b2ac1ca4e1344f05af98e9682ab4bacf8`
+- Candidate source: `b509c0274f44ce4c1bb177df7efa485d58ec095c70fa68da83f97b25d73ddfbe`
+- Executable source: `84a68194ce3cba19fe40a96e85bccb080535d1c7ca9d1de4e8fe5762b4b916dd`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `6d0f6e90d85cbc940f4156d739a7a700035b8c6ea3075637c18339fa32427733`
+- Corrected test SHA-256: `5f1fe150db2b3a31850e30a7f81c794c890beb9e0f400dc2768ba4a43649ae4b`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The one-line delta preserves the fixed sentinel DDL/DML and value but transports it through `subprocess.run(..., input=..., text=True)` to the MariaDB process stdin. It removes only the nested `sh -c`/`mariadb -e` quoting layer that stripped the SQL string literal during the authorized disposable attempt. Database target, root credential source, Compose project, sentinel table/value, subsequent observation query and cleanup behavior are unchanged. No dynamic or user-controlled value was introduced into the SQL.
+
+The reported attempt reached ready before this probe failure and its bounded cleanup completed. The correction is isolated to the probe transport; package bindings and regenerated mapped evidence are coherent with the clean source.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+The authorization-gated disposable acceptance may be retried on this exact corrected source. This review does not approve production WIP, an existing stand, CI, PR, or deployment.
