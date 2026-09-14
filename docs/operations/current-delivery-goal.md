@@ -1,4 +1,24 @@
-# Текущая цель — №76 PHP/Yii2 stand backup console
+# Текущая цель — №76 clean Yii2 stand cutover planning
+
+Owner decision 2026-09-14 заменяет restore-based closure на fresh provisioning и
+acceptance чистого Yii2 stand. Planning change:
+[`yii2-clean-stand-cutover`](../../openspec/changes/yii2-clean-stand-cutover/),
+рабочий checkout
+`/Users/antropophag/code/fmonitor-2-yii2-disposable-restore-76`, branch
+`codex/issue-76-disposable-restore-rehearsal`. Проверенный planning baseline —
+`origin/main` `f4dab7d6b576edc3bb6e9578a939e90b9a1f36ae`; production cutover и любые
+state-changing stand actions не разрешены. Restore rehearsal, UNKNOWN
+reconciliation и rollback больше не являются acceptance gates #76; их code,
+evidence и retained state сохраняются как история/offline compatibility.
+
+Следующий шаг после planning review — отдельный apply workflow: root-owned
+executable spec/RED, independent Gate 3, minimal delta только при честном gap,
+Gate 5 и verification. До отдельной authorization disposable deployment не
+выполняется.
+
+## Предыдущий указатель — история
+
+# №76 PHP/Yii2 stand backup console
 
 Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-backup-console-76`,
 branch `codex/yii2-stand-backup-console-76`, change

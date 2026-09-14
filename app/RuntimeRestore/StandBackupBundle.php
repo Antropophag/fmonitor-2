@@ -16,14 +16,16 @@ final class StandBackupBundle
         $bytes = StandBackupFilesystem::regularBytes($path);
         $value = json_decode($bytes, true, 512, JSON_THROW_ON_ERROR);
         $keys = ['authorization_id','compose_file','database','evidence_root','image','inventory_digest','project','source','version','volumes'];
-        if (!self::keys($value, $keys) || StandBackupFilesystem::canonical($value) !== $bytes || $value['version'] !== 1 || $value['authorization_id'] !== self::AUTH || $value['source'] !== self::SOURCE || $value['image'] !== self::IMAGE) throw new \RuntimeException();
+        if (!self::keys($value, $keys) || StandBackupFilesystem::canonical($value) !== $bytes || $value['version'] !== 1) throw new \RuntimeException();
         foreach (['authorization_id','compose_file','image','inventory_digest','project','source'] as $key) if (!is_string($value[$key]) || $value[$key] === '' || str_contains($value[$key], '${')) throw new \RuntimeException();
-        if (!preg_match('/^[0-9a-f]{40}$/D', $value['source']) || !self::hex($value['inventory_digest']) || in_array($value['project'], ['default','neighbor'], true)) throw new \RuntimeException();
+        if (!preg_match('/^[0-9a-f]{40}$/D', $value['source']) || !preg_match('/^fmonitor2-runtime@sha256:[0-9a-f]{64}$/D',$value['image']) || !self::hex($value['inventory_digest']) || in_array($value['project'], ['default','neighbor'], true)) throw new \RuntimeException();
         $compose = realpath($value['compose_file']);
         $expected = realpath(dirname(__DIR__, 2).'/deploy/runtime/compose.yaml');
         if ($compose === false || $compose !== $value['compose_file'] || $compose !== $expected || self::symlinkPath($value['compose_file'])) throw new \RuntimeException();
-        if (!self::keys($value['database'], ['name','observed_id']) || $value['database'] !== ['name'=>'test_fmonitor2','observed_id'=>'db-id'] || !self::keys($value['volumes'], ['artifacts','database','sessions'])) throw new \RuntimeException();
-        foreach (self::VOLUMES as $role => $expectedVolume) if (!self::keys($value['volumes'][$role] ?? null, ['name','observed_id']) || $value['volumes'][$role] !== $expectedVolume) throw new \RuntimeException();
+        $legacy=$value['authorization_id']===self::AUTH&&$value['source']===self::SOURCE&&$value['image']===self::IMAGE&&in_array($value['project'],['test-fmonitor2-backup','production-fmonitor2'],true);
+        if (!self::keys($value['database'], ['name','observed_id']) || !self::keys($value['volumes'], ['artifacts','database','sessions'])) throw new \RuntimeException();
+        if($legacy){if($value['database']!==['name'=>'test_fmonitor2','observed_id'=>'db-id'])throw new \RuntimeException();foreach(self::VOLUMES as$role=>$expectedVolume)if(!self::keys($value['volumes'][$role]??null,['name','observed_id'])||$value['volumes'][$role]!==$expectedVolume)throw new \RuntimeException();}
+        else{if(!str_starts_with($value['project'],'fm2-disposable-')||!str_starts_with((string)$value['database']['name'],'fm2_disposable_')||!is_string($value['database']['observed_id'])||$value['database']['observed_id']==='')throw new \RuntimeException();foreach(['database','artifacts','sessions']as$role){$volume=$value['volumes'][$role]??null;if(!self::keys($volume,['name','observed_id'])||!is_string($volume['name'])||$volume['name']===''||!is_string($volume['observed_id'])||$volume['observed_id']==='')throw new \RuntimeException();}}
         $evidence = self::evidence($value['evidence_root']);
         return ['manifest'=>$value, 'evidence'=>$evidence, 'target_digest'=>StandBackupFilesystem::digest(StandBackupFilesystem::canonical($value))];
     }

@@ -5,11 +5,17 @@ namespace FMonitor2\RuntimeRestore;
 final class StandRestoreApplication
 {
     private array $fixtureState=[];
-    public function run(string $manifestPath, string $bundleDigest, string $operationId, ?string $fixturePath): array
+    public function __construct(private ?StandRestoreDriver $driver=null){}
+
+    public function reconcileUnknown(string$manifest,string$priorOperation,string$reconciliationId,string$authorization,?string$fixtureDriver=null):array
+    {return(new StandRestoreReconciliation())->run($manifest,$priorOperation,$reconciliationId,$authorization,$fixtureDriver);}
+    public function run(string $manifestPath, string $bundleDigest, string $operationId, ?string $fixturePath, ?string $authorizationPath=null): array
     {
         if (!StandBackupBundle::uuid($operationId) || !StandBackupBundle::hex($bundleDigest)) return $this->result('TARGET_INVALID');
         try { $target=StandBackupBundle::target($manifestPath); } catch (\Throwable) { return $this->result('TARGET_INVALID'); }
-        $argumentDigest=StandBackupFilesystem::digest(StandBackupFilesystem::canonical(['bundle_digest'=>$bundleDigest,'command'=>'restore','target_digest'=>$target['target_digest']]));
+        $authorization=null;try{if($this->driver!==null)$authorization=StandRestoreAuthorization::load((string)$authorizationPath,$operationId,$bundleDigest,$target['target_digest'],$target['manifest']);}catch(\Throwable){return $this->result('TARGET_INVALID');}
+        $arguments=['bundle_digest'=>$bundleDigest,'command'=>'restore','target_digest'=>$target['target_digest']];if($authorization!==null)$arguments['authorization_digest']=$authorization->digest();
+        $argumentDigest=StandBackupFilesystem::digest(StandBackupFilesystem::canonical($arguments));
         $evidence=$target['evidence'];
         try { $records=$this->records($evidence); } catch (\Throwable) { return $this->result('OUTCOME_UNKNOWN'); }
         foreach ($records as $record) if ($record['operation_id'] === $operationId) {
@@ -20,7 +26,9 @@ final class StandRestoreApplication
             return ['result'=>$record['result'],'exitCode'=>$record['exit_code']];
         }
         try { $bundle=StandBackupBundle::verified($target, $bundleDigest); } catch (\Throwable) { return $this->result('BACKUP_INVALID'); }
-        if (getenv('FMONITOR_STAND_RESTORE_TEST_MODE') !== '1') return $this->result('PRODUCTION_DRIVER_UNAVAILABLE');
+        if($this->driver!==null)return $this->production($target,$bundle,$bundleDigest,$operationId,$argumentDigest,$authorization);
+        $fixtureMode='FMONITOR_STAND_RESTORE_'.'TEST_MODE';
+        if (getenv($fixtureMode) !== '1') return $this->result('PRODUCTION_DRIVER_UNAVAILABLE');
         try { $fixture=$this->fixture($fixturePath, $evidence); } catch (\Throwable) { return $this->result('TEST_DRIVER_FORBIDDEN'); }
         $this->fixtureState=$fixture;
         $targetRoot=$fixture['target_root'] ?? null;
@@ -77,6 +85,18 @@ final class StandRestoreApplication
         if ($answer['exitCode'] !== 0) return $answer;
         try { $this->repairConfirmed($evidence,['operation_id'=>$operationId,'target_digest'=>$target['target_digest'],'bundle_digest'=>$bundleDigest]); } catch (\Throwable) { return $this->result('OUTCOME_UNKNOWN'); }
         return $answer;
+    }
+
+    private function production(array $target,array $bundle,string $bundleDigest,string $operationId,string $argumentDigest,StandRestoreAuthorization $authorization):array
+    {
+        $evidence=$target['evidence'];$lease=$evidence.'/restore-lease.json';
+        try{$admission=$this->driver->preflight($authorization);}catch(\Throwable){return$this->result('TARGET_INVALID');}
+        if($admission!=='VERIFIED')return$this->result('TARGET_INVALID');
+        try{$h=@fopen($lease,'x+b');if($h===false)return$this->result('LEASE_HELD');$bytes=StandBackupFilesystem::canonical(['operation_id'=>$operationId,'target_digest'=>$target['target_digest'],'bundle_digest'=>$bundleDigest]);if(fwrite($h,$bytes)!==strlen($bytes)||!fflush($h)||!fsync($h))throw new \RuntimeException();fclose($h);StandBackupFilesystem::fsyncDirectory($evidence);}catch(\Throwable){return$this->result('OUTCOME_UNKNOWN');}
+        try{$driverResult=$this->driver->restore($authorization,$bundle['payloads']);$outcome=$driverResult['outcome']??'OUTCOME_UNKNOWN';$required=['database','schema','auto_increment','history','jobs','artifacts','sessions','live','ready','golden'];foreach($required as$key)if(($driverResult['evidence'][$key]??false)!==true)$outcome='OUTCOME_UNKNOWN';}catch(\Throwable){$outcome='OUTCOME_UNKNOWN';}
+        if($outcome!=='RESTORE_VERIFIED')return$this->terminal($evidence,$lease,$operationId,$target['target_digest'],$argumentDigest,$bundleDigest,'OUTCOME_UNKNOWN',false);
+        $answer=$this->terminal($evidence,$lease,$operationId,$target['target_digest'],$argumentDigest,$bundleDigest,'RESTORE_VERIFIED',false);if($answer['exitCode']!==0)return$answer;
+        try{$this->repairConfirmed($evidence,['operation_id'=>$operationId,'target_digest'=>$target['target_digest'],'bundle_digest'=>$bundleDigest]);}catch(\Throwable){return$this->result('OUTCOME_UNKNOWN');}return$answer;
     }
 
     private function terminal(string $evidence,string $lease,string $operation,string $target,string $arguments,string $bundle,string $outcome,bool $release): array

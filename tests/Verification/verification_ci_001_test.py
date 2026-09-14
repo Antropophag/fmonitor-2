@@ -430,6 +430,18 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Architecture/yii2_stand_restore_boundary_001_test.py',
             'python3\ttests/Deployment/yii2_stand_restore_roundtrip_001_test.py',
             'python3\ttests/Deployment/yii2_stand_restore_failure_001_test.py',
+            'python3\ttests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py',
+            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py',
+            'php\ttests/Yii2/yii2_stand_restore_reconcile_console_001_test.php',
+            'python3\ttests/Deployment/yii2_clean_stand_acceptance_result_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_admission_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_golden_flows_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_jobs_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_provisioning_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_real_acceptance_001_test.py',
+            'python3\ttests/Deployment/yii2_clean_stand_runtime_001_test.py',
         ], e2e.stdout.splitlines())
 
 

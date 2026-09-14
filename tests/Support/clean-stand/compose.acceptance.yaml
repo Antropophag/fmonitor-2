@@ -1,0 +1,121 @@
+services:
+  php:
+    environment:
+      FMONITOR_ACCEPTANCE_CONTEXT_FILE: /run/fmonitor-acceptance/context.json
+      FMONITOR_ACCEPTANCE_TRACE_ROOT: /home/fmonitor/.local/state/fmonitor2/acceptance-traces
+      PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d:/run/fmonitor-acceptance-ini
+    volumes:
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_HOST_FILE:?Set acceptance probe}
+        target: /run/fmonitor-acceptance/include-probe.php
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?Set acceptance context}
+        target: /run/fmonitor-acceptance/context.json
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_INI_HOST_FILE:?Set acceptance probe ini}
+        target: /run/fmonitor-acceptance-ini/99-acceptance-probe.ini
+        read_only: true
+  jobs-worker:
+    environment:
+      FMONITOR_ACCEPTANCE_CONTEXT_FILE: /run/fmonitor-acceptance/context.json
+      FMONITOR_ACCEPTANCE_TRACE_ROOT: /home/fmonitor/.local/state/fmonitor2/acceptance-traces
+      PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d:/run/fmonitor-acceptance-ini
+    volumes:
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_HOST_FILE:?Set acceptance probe}
+        target: /run/fmonitor-acceptance/include-probe.php
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?Set acceptance context}
+        target: /run/fmonitor-acceptance/context.json
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_INI_HOST_FILE:?Set acceptance probe ini}
+        target: /run/fmonitor-acceptance-ini/99-acceptance-probe.ini
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_SUPPORT_ROOT:?Set acceptance support root}/JobHandlerRuntime.php
+        target: /workspace/fmonitor-2/app/Jobs/JobHandlerRuntime.php
+        read_only: true
+  jobs-scheduler:
+    environment:
+      FMONITOR_ACCEPTANCE_CONTEXT_FILE: /run/fmonitor-acceptance/context.json
+      FMONITOR_ACCEPTANCE_TRACE_ROOT: /home/fmonitor/.local/state/fmonitor2/acceptance-traces
+      PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d:/run/fmonitor-acceptance-ini
+    volumes:
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_HOST_FILE:?Set acceptance probe}
+        target: /run/fmonitor-acceptance/include-probe.php
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?Set acceptance context}
+        target: /run/fmonitor-acceptance/context.json
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_PROBE_INI_HOST_FILE:?Set acceptance probe ini}
+        target: /run/fmonitor-acceptance-ini/99-acceptance-probe.ini
+        read_only: true
+  acceptance-setup:
+    image: ${FMONITOR_RUNTIME_IMAGE:?Set explicit runtime image reference}
+    command: [php, /run/fmonitor-acceptance/setup.php]
+    profiles: [acceptance]
+    environment: &acceptance-environment
+      FMONITOR_ACCEPTANCE_CONTEXT_FILE: /run/fmonitor-acceptance/context.json
+      FMONITOR_ACCEPTANCE_CONTEXT_DIGEST: ${FMONITOR_ACCEPTANCE_CONTEXT_DIGEST:?Set context digest}
+      FMONITOR_ACCEPTANCE_OPERATION_ID: ${FMONITOR_ACCEPTANCE_OPERATION_ID:?Set operation UUID}
+      FMONITOR_ACCEPTANCE_TARGET_DIGEST: ${FMONITOR_ACCEPTANCE_TARGET_DIGEST:?Set target digest}
+      FMONITOR_DB_HOST: 127.0.0.1
+      FMONITOR_DB_PORT: "3306"
+      FMONITOR_DB_NAME: ${FMONITOR_DB_NAME:?Set database name}
+      FMONITOR_DB_USER: ${FMONITOR_ACCEPTANCE_DB_USER:?Set private setup principal}
+      FMONITOR_DB_PASSWORD_FILE: /run/fmonitor-acceptance/database-password
+      FMONITOR_PROCESS_TABLE_PREFIX: ${FMONITOR_PROCESS_TABLE_PREFIX:?Set process prefix}
+    volumes: &setup-volumes
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_SUPPORT_ROOT:?Set acceptance support root}/setup.php
+        target: /run/fmonitor-acceptance/setup.php
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?Set acceptance context}
+        target: /run/fmonitor-acceptance/context.json
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_DB_PASSWORD_HOST_FILE:?Set private credential file}
+        target: /run/fmonitor-acceptance/database-password
+        read_only: true
+    depends_on:
+      db: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    network_mode: service:db
+    restart: "no"
+    read_only: true
+    security_opt: [no-new-privileges:true]
+  acceptance-enqueue:
+    image: ${FMONITOR_RUNTIME_IMAGE:?Set explicit runtime image reference}
+    command: [php, /run/fmonitor-acceptance/enqueue.php]
+    profiles: [acceptance]
+    environment: *acceptance-environment
+    volumes:
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_SUPPORT_ROOT:?Set acceptance support root}/enqueue.php
+        target: /run/fmonitor-acceptance/enqueue.php
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?Set acceptance context}
+        target: /run/fmonitor-acceptance/context.json
+        read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_DB_PASSWORD_HOST_FILE:?Set private credential file}
+        target: /run/fmonitor-acceptance/database-password
+        read_only: true
+    depends_on:
+      db: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      jobs-worker: {condition: service_healthy}
+      jobs-scheduler: {condition: service_healthy}
+    network_mode: service:db
+    restart: "no"
+    read_only: true
+    security_opt: [no-new-privileges:true]

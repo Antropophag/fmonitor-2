@@ -97,8 +97,13 @@ final class MariaDbOutbox
     {
         return ['intentId'=>(int)$row['intent_id'],'eventId'=>$row['domain_event_id'],'channel'=>$row['channel'],
             'template'=>$row['template_reference'],'version'=>(int)$row['payload_version'],
-            'data'=>json_decode($row['data_json'],true,512,JSON_THROW_ON_ERROR),'createdAtUtc'=>$row['created_at_utc'],
+            'data'=>json_decode($row['data_json'],true,512,JSON_THROW_ON_ERROR),'createdAtUtc'=>$this->instant($row['created_at_utc']),
             'status'=>$row['status'],'providerReference'=>$row['provider_reference'],
             'idempotencyReference'=>hash('sha256',"fmonitor2-outbox-v1\0".$row['domain_event_id']."\0".$row['channel'])];
+    }
+    private function instant(mixed $value): string
+    {
+        if(is_string($value)&&preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}$/D',$value)===1)$value=substr($value,0,10).'T'.substr($value,11).'Z';
+        return JobValues::date($value);
     }
 }

@@ -1,0 +1,112 @@
+{
+  "change": "yii2-clean-stand-cutover-issue-76-owner-decision-2026-09-14",
+  "planned_paths": [
+    "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+    "tests/Deployment/yii2_clean_stand_admission_001_test.py",
+    "tests/Deployment/yii2_clean_stand_provisioning_001_test.py",
+    "tests/Deployment/yii2_clean_stand_runtime_001_test.py",
+    "tests/Deployment/yii2_clean_stand_jobs_001_test.py",
+    "tests/Deployment/yii2_clean_stand_golden_flows_001_test.py",
+    "tests/Deployment/yii2_clean_stand_acceptance_result_001_test.py",
+    "tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py",
+    "tests/Architecture/yii2_clean_stand_runtime_closure_001_test.py",
+    "tests/Support/yii2_clean_stand_acceptance.php",
+    "app/Jobs/YiiJobsRuntimeEnvironment.php",
+    "tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php",
+    "tests/Yii2/yii2_jobs_console_001_test.php",
+    "tests/Yii2/yii2_jobs_console_db_001_test.php",
+    "tests/Support/clean-stand/compose.acceptance.yaml",
+    "tests/Support/clean-stand/setup.php",
+    "tests/Support/clean-stand/enqueue.php",
+    "tests/Support/clean-stand/include-probe.php",
+    "tests/Support/clean-stand/99-acceptance-probe.ini",
+    "tests/Support/clean-stand/JobHandlerRuntime.php",
+    "tests/Jobs/acceptance_outbox_worker_handler_001_test.php",
+    "tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py",
+    "docs/operations/yii2-clean-stand-cutover-runbook.md",
+    "docs/operations/yii2-clean-stand-cutover-evidence.md",
+    "docs/operations/yii2-clean-stand-cutover-capability-inventory-2026-09-14.md",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A10-jobs-canonical-runtime-configuration",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "jobs/worker, jobs/scheduler and jobs/health take the canonical configured table prefix directly from production environment and do not discover pilot-demo active manifests",
+      "tests": ["tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php", "tests/Yii2/yii2_jobs_console_001_test.php"],
+      "gate3_expected": {
+        "tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php": "GREEN",
+        "tests/Yii2/yii2_jobs_console_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A9-acceptance-only-topology-isolation",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "separate acceptance Compose override/setup/enqueue/include-probe are inaccessible outside exact disposable topology; production Compose/image/config/public routes and commands contain no acceptance-only dependency",
+      "tests": ["tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py"],
+      "gate3_expected": {"tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A7-authorization-gated-real-disposable-slot",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "the non-default real-disposable acceptance command refuses execution without an external exact owner authorization package; after authorization the same command must produce real-boundary evidence and cannot be satisfied by recording-driver mode",
+      "tests": ["tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A1-exact-candidate-target-admission",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "read-only preflight binds exact source, immutable image digest, canonical Compose, authorization, exact future resource names and expected absence/non-overlap; after authorized create a second exact-ID/label/image/network/mount attestation gates database/bootstrap effects",
+      "tests": ["tests/Deployment/yii2_clean_stand_admission_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_admission_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A2-fresh-idempotent-provisioning",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "authorized real disposable MariaDB creation followed by existing runtime prepare, Yii schema-migrate/run and initial-owner/user provisioning; repeat is idempotent and partial outcome cannot publish acceptance",
+      "tests": ["tests/Deployment/yii2_clean_stand_provisioning_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_provisioning_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A3-real-runtime-readiness",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "canonical production Compose starts php/web/jobs-worker/jobs-scheduler from one exact image and proves container health, /health/live, /health/ready, jobs health and distinct fresh heartbeats",
+      "tests": ["tests/Deployment/yii2_clean_stand_runtime_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_runtime_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A4-representative-golden-flows",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "production Yii2 HTTP login/access and representative FKR, construction-control, checklist and OTIZ actions over synthetic fresh facts with authorized results and unauthorized zero-fact rejection",
+      "tests": ["tests/Deployment/yii2_clean_stand_golden_flows_001_test.py"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_golden_flows_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A5-jobs-outbox-normal-operation",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "real scheduler/application enqueue through worker claim and terminal job/outbox attempt/history with recovery counters, stable reads and healthy worker/scheduler heartbeats using canonical configured table identities",
+      "tests": ["tests/Deployment/yii2_clean_stand_jobs_001_test.py", "tests/Jobs/acceptance_outbox_worker_handler_001_test.php"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_jobs_001_test.py": "GREEN", "tests/Jobs/acceptance_outbox_worker_handler_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A6-runtime-closure-and-non-cutover-result",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "exact image inventory, process commands and attributable web/console/jobs include traces contain no rapid-pilot or RuntimeRecovery; CLEAN_STAND_ACCEPTED requires every step and never performs production cutover, old-stand deletion, restore, rollback or reconciliation",
+      "tests": ["tests/Architecture/yii2_clean_stand_runtime_closure_001_test.py", "tests/Deployment/yii2_clean_stand_acceptance_result_001_test.py"],
+      "gate3_expected": {
+        "tests/Architecture/yii2_clean_stand_runtime_closure_001_test.py": "GREEN",
+        "tests/Deployment/yii2_clean_stand_acceptance_result_001_test.py": "GREEN"
+      }
+    }
+  ]
+}

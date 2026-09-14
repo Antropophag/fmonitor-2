@@ -22,7 +22,7 @@ if (in_array(($argv[1] ?? null), ['stand-backup/create', 'stand-backup/verify'],
 try {
     return (new yii\console\Application(require dirname(__DIR__) . '/config/yii/console.php'))->run();
 } catch (\Throwable) {
-    $field = count($argv) === 1 || in_array('schema-migrate/run', $argv, true) || in_array('case-import/run', $argv, true) || in_array('workforce-sync/run', $argv, true) || in_array('stand-backup/create', $argv, true) || in_array('stand-backup/verify', $argv, true) ? 'reason' : 'error';
+    $field = count($argv) === 1 || in_array('schema-migrate/run', $argv, true) || in_array('case-import/run', $argv, true) || in_array('workforce-sync/run', $argv, true) || in_array('stand-backup/create', $argv, true) || in_array('stand-backup/verify', $argv, true) || in_array('stand-restore/reconcile-unknown', $argv, true) ? 'reason' : 'error';
     echo json_encode(['ok' => false, $field => 'CONFIGURATION_INVALID'], JSON_THROW_ON_ERROR), "\n";
     return 64;
 }

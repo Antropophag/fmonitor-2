@@ -5,7 +5,7 @@ namespace FMonitor2\Jobs;
 
 use FMonitor2\Workforce\WorkerConfiguration;
 
-/** Translates the production session manifest and worker secret for Yii Jobs commands. */
+/** Validates canonical runtime configuration and stages the worker-only secret. */
 final class YiiJobsRuntimeEnvironment
 {
     public static function execute(string $mode, callable $command): array
@@ -13,17 +13,13 @@ final class YiiJobsRuntimeEnvironment
         $root = getenv('FMONITOR_SESSION_STATE_ROOT');
         if (!is_string($root) || $root === '' || $root[0] !== '/') self::invalid();
 
-        $manifests = glob($root . '/pilot-demo/*/active.json') ?: [];
-        if (count($manifests) !== 1 || !is_file($manifests[0]) || !is_readable($manifests[0])) self::invalid();
-        try {
-            $manifest = json_decode((string) file_get_contents($manifests[0]), true, 32, JSON_THROW_ON_ERROR);
-        } catch (\Throwable) {
+        $prefix = getenv('FMONITOR_PROCESS_TABLE_PREFIX');
+        if ($prefix === false) {
+            $prefix = self::legacyPrefix($root);
+            putenv('FMONITOR_PROCESS_TABLE_PREFIX=' . $prefix);
+        } elseif (preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) {
             self::invalid();
         }
-        $prefix = is_array($manifest) ? ($manifest['processPrefix'] ?? null) : null;
-        if (($manifest['state'] ?? null) !== 'ready' || !is_string($prefix)
-            || preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) self::invalid();
-        putenv('FMONITOR_PROCESS_TABLE_PREFIX=' . $prefix);
 
         $stagedToken = null;
         try {
@@ -49,5 +45,20 @@ final class YiiJobsRuntimeEnvironment
     private static function invalid(): never
     {
         throw new \InvalidArgumentException('CONFIGURATION_INVALID');
+    }
+
+    private static function legacyPrefix(string $root): string
+    {
+        $manifests = glob($root . '/pilot-demo/*/active.json') ?: [];
+        if (count($manifests) !== 1 || !is_file($manifests[0]) || !is_readable($manifests[0])) self::invalid();
+        try {
+            $manifest = json_decode((string) file_get_contents($manifests[0]), true, 32, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            self::invalid();
+        }
+        $prefix = is_array($manifest) ? ($manifest['processPrefix'] ?? null) : null;
+        if (($manifest['state'] ?? null) !== 'ready' || !is_string($prefix)
+            || preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) self::invalid();
+        return $prefix;
     }
 }
