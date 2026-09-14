@@ -35,3 +35,5 @@ Only issue66 in the existing native Yii2 flow. No rapid-pilot compatibility, new
 - [x] Focused changed-boundary checks and architecture check.
 - [ ] One full exact-source GitHub CI, complete failure inventory and honest scope report.
 - [ ] Commit and concrete reviewable PR; no stand mutation.
+
+- [ ] Owner-authorized active-application CI inventory, preserved shared/history coverage, independent review and exact-source full CI.

@@ -75,9 +75,9 @@ final class PreopeningFixture
         ];
     }
 
-    public function start(array $overrides=[], ?string $routerBootstrap=null): void
+    public function start(array $overrides=[], ?string $routerBootstrap=null, bool $replaceExisting=false): void
     {
-        if($this->server!==null){proc_terminate($this->server['process']);proc_close($this->server['process']);$this->server=null;}
+        if($replaceExisting&&$this->server!==null){proc_terminate($this->server['process']);proc_close($this->server['process']);$this->server=null;}
         $socket=stream_socket_server('tcp://127.0.0.1:0',$error,$message);if(!is_resource($socket))throw new TestFailure('SETUP_FAILURE listener');
         $address=stream_socket_get_name($socket,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($socket);
         $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with($key,'FMONITOR_'))unset($env[$key]);

@@ -313,7 +313,7 @@ try {
                 'fm2_checklist_revisions',
                 'fm2_checklist_template_associations',
                 'fm2_checklist_template_snapshots',
-                'fm2_deadline_certificate_roots','fm2_deadline_certificate_revisions','fm2_deadline_certificate_operations','fm2_deadline_certificate_pdf_chunks',
+                'fm2_deadline_certificate_operations','fm2_deadline_certificate_pdf_chunks','fm2_deadline_certificate_revisions','fm2_deadline_certificate_roots',
                 'fm2_feedback',
                 'fm2_feedback_results',
                 'fm2_installation_cases',
@@ -368,7 +368,7 @@ try {
             ]),
         ],
         ['result' => $cleanResult, 'tables' => $cleanTables],
-        'A clean exact 26-byte composed prefix must reach ordered canonical v26 and create the full literal catalogue.',
+        'A clean exact 25-byte composed prefix must reach ordered canonical v26 and create the full literal catalogue.',
     );
     wcrAssertExactV5($connection, $prefix25);
     wcrAssertFreshV5Rows($connection, $prefix25);

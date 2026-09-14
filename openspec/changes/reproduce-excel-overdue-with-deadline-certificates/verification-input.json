@@ -21,7 +21,9 @@
     "app/YiiRuntime/Controllers/OtizPublicationController.php",
     "app/YiiRuntime/Controllers/OtizSettlementController.php",
     "app/YiiRuntime/Views/deadline-certificates.php",
-    "tools/architecture/check.py"
+    "tools/architecture/check.py",
+    "tools/verification/suites.tsv",
+    "tools/verification/categories.json"
   ],
   "acceptances": [
     {
@@ -78,6 +80,16 @@
       "tests": [
         "tests/Otiz/excel_publication_001_test.php",
         "tests/Yii2/excel_publication_browser_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "VERIFICATION-ACTIVE-APPLICATION-001",
+      "acceptance_id": "active-ci-and-historical-oracle",
+      "spec_path": "specs/VERIFICATION-ACTIVE-APPLICATION-001.md",
+      "seam": "public CI roster and native historical calculator",
+      "tests": [
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Otiz/legacy_premium_calculation_001_test.php"
       ]
     }
   ]

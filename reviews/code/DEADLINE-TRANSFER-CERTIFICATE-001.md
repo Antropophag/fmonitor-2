@@ -122,3 +122,28 @@ All eight newly registered focused tests are GREEN at the exact candidate/execut
 `APPROVED`
 
 Gate 5 passes for the bounded certificate schema-v26 integration on exact source `76539fec0ff2f9314a33e437cc5827abcefaa8fc65ea331665524daad8e24ecd`.
+
+---
+
+## Gate 5 maximal-prefix correction — 2026-09-14
+
+- Final package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T205757Z-420e6f2965/package.json`
+- Package source: candidate `236ac45d7cb769f8946796b85e244198e0397170af41525df61a7c6fa3b22a80`, executable `8d1d8443b7305efc965307d86e138cceb0f5e20f71a218c9f0b9f3a85172fca8`, base `b1d6b5178126090e6e2ee3d6eb090100547d3c47`
+- Snapshot patch SHA-256: `3c923ce76030e806e0f94ec826474752fcb609cd3c5cf37ee731344517c02b91`; plan SHA-256: `7be08ba6169790e90f5829929bb840ccb3a02d403fd8d1223d553b9b4e77ed44`
+- Scope: only the certificate migration's maximal-prefix foreign-key identifier correction and its approved physical-inventory/dual-prefix witness.
+
+### Assessment
+
+No findings. The migration replaces MariaDB-generated foreign-key names with four explicit identifiers formed from the validated 0..25-byte prefix plus short fixed suffixes. The longest is 40 bytes, below MariaDB's 64-byte identifier limit. Names remain distinct across the four certificate constraints and across distinct prefixes in the same schema. Referenced tables, columns, keys, DDL order, compatibility fingerprint and all previously approved certificate behavior are unchanged.
+
+The corrected schema test constructs the physical v25 baseline through the public catalogue, adds the literal four-table v26 expectation, validates a 25-byte prefix, installs a second distinct 25-byte prefix in the same database, and proves replay of both preserves the complete combined DDL and rows.
+
+Record `1789419389095745000-7eb5f0eaf40a41d8bc8a3753a3b2c2b6` is GREEN with exit 0, empty stderr, and `PASS DEADLINE-TRANSFER-CERTIFICATE-001 schema`. It starts and ends at candidate `24bb928a97b2691dd2a0d8fa7951dd06bfc937721de51bc2763ad65612f53f03` and executable `8d1d8443...`; the package retains the identical executable digest after append-only review lifecycle changes changed the candidate digest to `236ac45d...`. Thus the reviewed specification, test and production bytes match the GREEN execution. The seven other runtime checks were retained GREEN at the same production executable before the root test-lifecycle append; no broader certificate logic changed.
+
+Current-Yii2 CI policy is a separate root-owned correction. This review does not waive mandatory CI and authorizes no old-pilot or rapid compatibility work.
+
+### Verdict
+
+`APPROVED`
+
+Gate 5 passes for the bounded maximal-prefix correction at executable source `8d1d8443b7305efc965307d86e138cceb0f5e20f71a218c9f0b9f3a85172fca8`.

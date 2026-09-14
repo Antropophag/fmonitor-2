@@ -46,8 +46,8 @@ try{
  assertSameValue(2,(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_deadline_certificate_revisions")->fetch_column(),'HTTP storage failure left no partial revision');
  // Start a fresh fixture server with a complete DI bootstrap before the first request.
  $bootstrap='<?php define("YII_DEBUG",false);define("YII_ENV","prod"); require '.var_export($fixture->root.'/vendor/autoload.php',true).'; require '.var_export($fixture->root.'/vendor/yiisoft/yii2/Yii.php',true).'; $app=new yii\\web\\Application(require '.var_export($fixture->root.'/config/yii/web.php',true).'); Yii::$container->set(FMonitor2\\DeadlineTransferCertificate\\DeadlineTransferCertificates::class, static function($container,$params,$config){return new FMonitor2\\DeadlineTransferCertificate\\DeadlineTransferCertificates($params[0],$params[1],$params[2],static function(string $phase):void{if($phase==="afterCommit")throw new RuntimeException("injected lost response");});}); $app->run();';
- $fixture->start([],$bootstrap);
- try{$unknown=$send($next,$a);assertSameValue(503,$unknown['status'],'unknown committed outcome maps503');}finally{$fixture->start();}
+ $fixture->start([],$bootstrap,true);
+ try{$unknown=$send($next,$a);assertSameValue(503,$unknown['status'],'unknown committed outcome maps503');}finally{$fixture->start([],null,true);}
  assertSameValue(3,(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_deadline_certificate_revisions")->fetch_column(),'unknown response retained committed fact');
  assertSameValue(303,$send($next,$a)['status'],'same HTTP identity resolves unknown');assertSameValue(3,(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_deadline_certificate_revisions")->fetch_column(),'unknown retry does not duplicate');assertSameValue(0,(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_deadline_certificate_revisions WHERE installation_case_id=6102 OR actor_id<>18")->fetch_column(),'hostile client cannot write another case or forge author');
  $json=$fixture->request('GET',$path,[],$cookies,['Accept: application/json']);

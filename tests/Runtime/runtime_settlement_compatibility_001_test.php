@@ -79,8 +79,8 @@ $private=sys_get_temp_dir().'/runtime-otiz-'.bin2hex(random_bytes(5));
 $account='runtime_otiz_'.bin2hex(random_bytes(5));$password=bin2hex(random_bytes(20));
 try {
     $fixture=new Yii2AuthFixture($root);$fixture->setPermission('otiz.manage');$db=$fixture->db;$p=$fixture->prefix;
-    foreach([[301,100000],[302,150000]] as [$snapshot,$amount]) {
-        $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(id,report_date,status,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES({$snapshot},'2026-09-08','accepted','premium-calculation-v1','2026-09-09T09:00:00Z',9101,'2026-09-09T09:30:00Z',9101,{$amount},0,{$amount},REPEAT('d',64))");
+    foreach([[301,100000,'premium-calculation-v1'],[302,150000,'premium-calculation-v2-excel']] as [$snapshot,$amount,$version]) {
+        $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(id,report_date,status,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES({$snapshot},'2026-09-08','accepted','{$version}','2026-09-09T09:00:00Z',9101,'2026-09-09T09:30:00Z',9101,{$amount},0,{$amount},REPEAT('d',64))");
         $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshot_objects(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES({$snapshot},7301,'COMPAT-1','Synthetic compatibility object',0,10000,'2026-09-08',150000,10000,10000,{$amount},150000,0,{$amount},{$amount},{$amount},0,'ready','{}')");
     }
     $db->query("INSERT INTO {$p}fm2_pilot_otiz_payment_closures(id,snapshot_id,object_id,closed_on,paid_cents,discipline_cents,deadline_cents,basis,artifact,created_by_user_id,created_at) VALUES(401,301,7301,'2026-09-09',100000,0,0,'Earlier accepted payout','',9101,'2026-09-09T10:00:00Z')");

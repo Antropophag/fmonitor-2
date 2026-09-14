@@ -61,3 +61,27 @@ None for the owner-bounded publication scope. The complete matrix now sensitivel
 ### Required changes
 
 None.
+
+## CI fixture correction review — 2026-09-14
+
+- Reviewer: Codex independent reviewer `/root/review_calc` (gpt-5.6-sol / low)
+- Test author: root agent
+- Reviewed source: base `b1d6b5178126090e6e2ee3d6eb090100547d3c47` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T204829Z-31a636cb46/snapshot`, restored outside the working checkout at `/private/tmp/fmonitor-issue66-ci-review.sPkmNU/checkout`
+- Candidate source: `bb4306f2748aac3f8c5fe88898a5a07713717503bea26174d158abf9576cee35`; executable source: `514b31eccae83b2157b16059e5538c7b19b0a6afcc3df07a57f96dc8ef3e1446`
+- Evidence reviewed: the complete 18-test first-CI failure inventory and retained full failing segments/logs under `/Users/antropophag/.local/share/fmonitor-2/issue66-ci-*`; exact current native Yii browser GREEN records `1789418762067842000-1c52d70579b54137b709536db845ff33` and `1789418763208114000-ea2030db9afa46229cf023a088172a0d`.
+- Excluded ownership: the prefix-25 certificate schema witness is reviewed with the certificate slice.
+- Gate 3 verdict for the bounded test corrections: `APPROVED`
+
+### Findings
+
+None.
+
+The publication browser now uses the public native `InspectionFixture` opening and item-28 completion for object 4512, retains public Yii calculate/accept/settle/reverse/XLSX behavior, and replaces the obsolete synthetic 4520 eligibility oracle with the independently stated `65000000 × 2% = 1300000` pool. Existing receipt, event, replay, XLSX signature/content and three-closure assertions remain. The production runtime browser likewise consumes the native 4512 journey and keeps its restart, private-original and OTIZ export assertions; it does not introduce rapid/demo compatibility.
+
+Settlement fixtures preserve their original money oracle. Snapshot 302 is current V2 and remains payable for 150000; snapshot 301 remains historical V1 for read/replay/stale behavior. The browser fixture obtains its full trace from the already approved pure V2 calculator using independently literal operands and source evidence, while retaining the 100000 settlement and export assertions.
+
+The removed duplicate harness start in the core publication test fixes the observed bind conflict without removing a behavior assertion. `PreopeningFixture::start()` now keeps the first explicitly captured server alive for the established two-server concurrency test; replacement is opt-in and used by the certificate fault-injection test. The latter restores the ordinary server explicitly. The recovery fixture changes only traversal of the extracted historical public-code directory to 0755; private controls remain 0700. The frozen role-catalog hash update is consistent with the retained old catalog plus the five specified certificate permissions and keeps exact catalog sensitivity. The CI composition golden adds the newly registered browser test and retains exact list equality.
+
+### Required changes
+
+None.

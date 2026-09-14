@@ -13,6 +13,46 @@
 
 None.
 
+## CI fixture correction final-review supplement — 2026-09-14
+
+- Reviewer: Codex independent reviewer `/root/review_calc` (gpt-5.6-sol / low)
+- Reviewed source: base `b1d6b5178126090e6e2ee3d6eb090100547d3c47` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T204829Z-31a636cb46/snapshot`, restored at `/private/tmp/fmonitor-issue66-ci-review.sPkmNU/checkout`
+- Candidate source: `bb4306f2748aac3f8c5fe88898a5a07713717503bea26174d158abf9576cee35`; executable source: `514b31eccae83b2157b16059e5538c7b19b0a6afcc3df07a57f96dc8ef3e1446`
+- Source findings: none.
+- Final Gate 5 status: `PENDING_EVIDENCE`
+
+The bounded corrections faithfully repair setup drift exposed by the complete first-CI failure inventory. They do not change production code, relax product outcomes, erase historical V1 coverage, or add rapid/demo compatibility. The current native Yii publication and settlement browser corrections have exact GREEN records `1789418762067842000-1c52d70579b54137b709536db845ff33` and `1789418763208114000-ea2030db9afa46229cf023a088172a0d`. Final approval is reserved until the requested runtime-focused records arrive for this frozen source lineage.
+
+### Required changes
+
+None at source review. Supply the pending bounded runtime evidence for final disposition.
+
+## CI fixture correction final evidence disposition — 2026-09-14
+
+- Final candidate source: `da76d7ab12d50961828b1766d1ad27d892b59a64abb4c6226de655b1acc330ec`; executable source: `c2722b8f263ea92689370f6432408980f2f1ba1ddc53cc5e31f1f152d9941b4c`.
+- Prior `PENDING_EVIDENCE` disposition: resolved by fresh exact-source bounded records after the production FK-name correction.
+- Final Gate 5 verdict for the bounded publication/fixture correction scope: `APPROVED`.
+
+### Findings
+
+None.
+
+Exact-source GREEN evidence:
+
+- Production native browser: `1789419051785523000-8b377658a87d42c2ae349c15ce5ee992`.
+- Historical certificate recovery: `1789419052946746000-0eb8b5af72a542338de1d5e8a08b8196`.
+- Runtime settlement compatibility: `1789419054129608000-07aae90269734864af3e8f3b196ceabf`.
+- Publication core: `1789419066465774000-725f4ec192674ca89fe3a24a4de023b3`.
+- Certificate HTTP fixture replacement: `1789419066470843000-b36fd3c2c41d49c893ca1c3953aafee5`.
+- Full prefix-25 workforce fixture: `1789419066480706000-28c8d3529bf94386aec44a7e5cc2913b`.
+- Architecture check: `1789419066480727000-a008e99083644249befa070f70cb35dd`.
+
+All records report exit 0 and `GREEN` with matching candidate and executable digests. This approval covers only the reviewed publication and CI-fixture corrections. The separately owned added prefix-25 schema-test expectation remains outside this review, as do the three known legacy CI failures and overall merge admission.
+
+### Required changes
+
+None.
+
 The implementation preserves the existing transaction and replay seams while changing newly built snapshots to `premium-calculation-v2-excel`. Publication reads signed paid closures through the report date, retains their ordered source envelope in the content identity, keeps discipline/deadline closure amounts outside `paidBefore`, and persists the complete calculator operands, seven-step trace, exclusions, allocation version and deterministic allocations. Blocked inputs remain nonpayable and snapshots with blockers remain unacceptably draft. The acceptance and payment seams reject V1 snapshots with `STALE_CALCULATION`; operation receipts are checked before settlement work, so an already recorded operation still replays unchanged.
 
 The Yii integration derives certificate provenance from the accepted request and uploaded bytes, maps stale acceptance and payment to HTTP 409 with the new-calculation instruction, renders the V2 trace and certificate evidence with escaped values, links the selected PDF revision, and exports the corresponding money, deadline, PTO and provenance rows. The native browser journey verifies the mobile return flow and persisted label, locator and PDF hash. The inherited OTIZ layout remains outside this bounded behavioral change.

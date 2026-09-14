@@ -242,3 +242,66 @@ All eight new focused tests are exact-source GREEN. Certificate records are appl
 `APPROVED`
 
 The schema-v26 root test/frontier correction is accepted on the final exact source.
+
+---
+
+## Gate 3 maximal-prefix correction review — 2026-09-14
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T204448Z-57bcf94480/package.json`
+- Exact source: candidate `5996c5dc8328f76ff23aa20ef30fec2e70cd437d7691256b5c0489471f791f66`, executable `e43217ffa9ee4cfc45e6d38c152f96026c155d875a343f5630603fd0739eed82`, base `b1d6b5178126090e6e2ee3d6eb090100547d3c47`
+- Snapshot patch SHA-256: `2f333038358990783ee9de775c1756f1c9b8e2d4f132ac7d5a2a52b27aa4cb6c`; plan SHA-256: `326f3ad77eef13282f765e09b07be8ebc54bf21c3a9d974f56746b71c220fd0d`
+- Scope: only the root-authored canonical 0..25-byte prefix contract and certificate schema witness. Concurrent CI/native fixture corrections and legacy compatibility are excluded.
+
+### Finding
+
+1. **MEDIUM — coexistence replay is not exercised after both maximal prefixes exist.** The new contract requires distinct prefixes in one schema to coexist and replay without DDL changes. The test installs the 25-byte `p...` prefix, captures its rows, replays it, and only then installs the 25-byte `q...` prefix. It checks the second installation's exit code but never captures the combined two-prefix schema, replays both prefixes in that state, or asserts that tables/DDL/rows remain unchanged. An implementation that succeeds on the second initial install but fails or mutates schema on a subsequent coexistence replay would pass the proposed witness. After creating both prefixes, capture the complete database state, replay each prefix, and require the complete state to remain byte-for-byte unchanged.
+
+### RED evidence
+
+Record `1789418436682159000-ec7ab6b16a0a477aa08881b6377d3c14` is applicable to the exact fixture/source, starts and ends at candidate `5996c5dc...`, executable `e43217ff...`, and fails at the intended maximum-prefix assertion after the preceding certificate schema matrix. The observed result is `[70,null]` rather than `[0,26]`, exposing the current overlong generated foreign-key identifier. Although the harness labels the stopped command `REGRESSION_FAILURE`, its failure is the intended missing behavior for this bounded Gate 3 review.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Complete the coexistence/replay/no-DDL witness and capture fresh intended RED. The maximum-prefix requirement and first-prefix failure are otherwise well formed. Gate 4 authorization for the short foreign-key identifier correction is withheld until the bounded test gap is resolved.
+
+---
+
+## Gate 3 maximal-prefix follow-up — 2026-09-14
+
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T204741Z-a80943b8c1/package.json`
+- Exact source: candidate `b5f912c642adcbb3be6fbc8dafa16ca1f61db56ee233253c3f7b075510b58095`, executable `514b31eccae83b2157b16059e5538c7b19b0a6afcc3df07a57f96dc8ef3e1446`, base `b1d6b5178126090e6e2ee3d6eb090100547d3c47`
+- Snapshot patch SHA-256: `31c28ab3f023fa27780adf05a253012e07e4997097ff4c62718d6ed207382b03`; plan SHA-256: `f444916e794a0842f2b6d1f4a443d9b00ac0c94ec75bb4b46e5a2b35d9720568`
+
+### Assessment
+
+No findings. After both distinct 25-byte prefixes are installed in the same database, the corrected test captures every table's `SHOW CREATE TABLE` output and every row across both namespaces. It then replays each prefix independently and requires the complete combined DDL/row state to remain exactly unchanged after each replay. This closes the coexistence/replay/no-DDL sensitivity gap without weakening the initial maximum-prefix, inventory, or first-prefix replay witnesses.
+
+Record `1789418798198900000-04907ec539ba4b36b5ba5d8e386abe61` is applicable, starts and ends at candidate `b5f912c6...`, executable `514b31ec...`, and stops at the intended first maximum-prefix assertion with observed `[70,null]` rather than `[0,26]`. The later dual-prefix assertions are structurally sensitive to the authorized short-identifier correction once the first RED is resolved.
+
+### Follow-up verdict
+
+`APPROVED`
+
+Gate 3 passes for the bounded maximal-prefix correction. An executor may implement only the certificate migration's short, collision-safe foreign-key identifier fix; no legacy/rapid compatibility work is authorized by this review.
+
+---
+
+## Gate 3 physical-inventory correction — 2026-09-14
+
+- Corrected RED package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T205605Z-37f096cd0e/package.json`
+- Exact source: candidate `e74109f202693f4ba910f77328f8b6caa8cf94cd546742e2394ad1fac0124798`, executable `4ccdd99906b33e2872420e4c518e21c3ee47e0f3832ce00b539264c1af65fd27`, base `b1d6b5178126090e6e2ee3d6eb090100547d3c47`
+- Snapshot patch SHA-256: `601cff4411d33e40eea8c7e4e10bbf76a9bc36599331b9c4fe91282cfc66bd5b`; plan SHA-256: `4d6eac8b7518e8c2285c3f5ee49adbf15b0f4143c3dbf0677e95335664e89130`
+
+### Assessment
+
+No findings. The test now applies the public catalogue through v25 at the maximal prefix and captures the actual physical table baseline. It derives the v26 expectation by adding exactly the four literal certificate table names and sorting, avoiding any dependence on recovery-only logical alias mapping. It then runs public migration 26, checks the complete physical inventory, installs a distinct maximal prefix in the same database, captures all combined `SHOW CREATE TABLE` output and rows, and proves replay of both prefixes causes no DDL or row change. Historical recovery profiles and production alias mapping remain untouched.
+
+Record `1789419294421049000-f3e71b2fd41647028f312cc13bc87755` is applicable and exact to candidate `e74109f2...` / executable `4ccdd999...`. It reaches the intended maximum-prefix assertion after successfully constructing the public v25 physical baseline and observes `[70,null]` rather than `[0,26]`, correctly isolating the missing short foreign-key identifier behavior.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 passes for the physical-inventory correction. The authorized production scope remains only collision-safe short certificate foreign-key identifiers. Current-Yii2 CI policy is handled separately and this review neither waives nor expands it.

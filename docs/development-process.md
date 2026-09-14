@@ -215,3 +215,7 @@ Live preflight/review adapters and server-side enforcement remain incomplete
 under #107. Their absence is `UNKNOWN`, not approval or GREEN, and does not
 justify repeating an already GREEN exact-source run without new failure or risk.
 A manual owner merge does not establish autonomous agent admission.
+
+## Owner decision — 2026-09-14: active application CI
+
+The owner explicitly selected mandatory CI for the current Yii2 application only. Retired rapid-pilot launch/UI verifiers are no longer delivery gates. Preserve shared application, migration, security and historical replay checks; a retired adapter used only as a test fixture is not itself a reason to remove a shared contract. The exact retirement inventory and native replacement witness are in `specs/VERIFICATION-ACTIVE-APPLICATION-001.md`. No allow-failure, aggregate bypass, or legacy production compatibility is implied. This decision supersedes earlier requirements to run retired launch/UI entrypoints.

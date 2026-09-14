@@ -41,3 +41,5 @@ GET /pilot/objects/<object>/deadline-certificates displays form/history; POST th
 ## Boundaries
 
 Application owns facts; HTTP calls it. PDF parser mechanics may be adapted from the mature passive inspector; AssignmentOrderOriginal service/state is not the certificate owner. Schema/readiness/default capabilities/backup and focused authorization/CSRF/history flows are required before completion. No production deployment/import/backfill. Calculator/publication/payment integration remains in the parent №66 contract.
+
+The schema inherits the canonical0..25-byte table-prefix contract. All table/index/foreign-key identifiers must fit MariaDB limits at prefix25; distinct prefixes in one schema must coexist and replay without DDL changes.

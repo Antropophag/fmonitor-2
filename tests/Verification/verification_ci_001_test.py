@@ -1,5 +1,6 @@
 """VERIFICATION-PR-CYCLE-001: real Git, public CLI, isolated traced runtimes."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -384,6 +385,30 @@ class VerificationCI(unittest.TestCase):
         result = self.cli('aggregate', '--full', 'invalid', '--results', json.dumps(good))
         self.assertNotEqual(0, result.returncode)
 
+    def test_repository_targets_current_application(self):
+        # VERIFICATION-ACTIVE-APPLICATION-001: owner's supported runtime, not failing-test suppression.
+        paths = []
+        roster = []
+        for category in CATEGORIES:
+            result = self.cli('list', category, root=ROOT)
+            self.assertEqual(0, result.returncode, result.stderr)
+            for line in result.stdout.splitlines():
+                runtime, path = line.split('\t')
+                paths.append(path)
+                roster.append([category, runtime, path])
+        self.assertEqual([], [p for p in paths if p.startswith('rapid-pilot/')],
+                         'INTENDED_RED retired rapid runtime must not be mandatory')
+        retired = ['tests/Verification/harness_otiz_canonical_compat_001_test.php', 'tests/InstallationProcess/pilot_demo_bootstrap_001_test.php', 'tests/InstallationProcess/docker_bootstrap_manual_pilot_test.php', 'tests/InstallationProcess/pilot_e2e_flow_001_test.php', 'tests/InstallationProcess/checklist_asset_current_source_manual_test.php', 'tests/InstallationProcess/local_rbac_objects_route_admission_001_test.php', 'tests/InstallationProcess/pilot_http_auth_001_test.php', 'tests/InstallationProcess/pilot_object_card_001_test.php', 'tests/InstallationProcess/pilot_object_list_001_test.php', 'tests/InstallationProcess/pilot_route_csp_login_001_test.php', 'tests/InstallationProcess/pilot_session_storage_local_auth_canonical_001_test.php', 'tests/InstallationProcess/pilot_session_storage_local_auth_lifecycle_001_test.php', 'tests/InstallationProcess/pilot_session_storage_protocol_001_test.php', 'tests/InstallationProcess/pilot_shlz_assets_001_test.php', 'tests/InstallationProcess/pilot_ui_shell_001_test.php', 'tests/Runtime/rapid_router_otiz_dependency_001_test.php']
+        self.assertEqual([], sorted(set(paths).intersection(retired)), 'retired launcher and UI tests')
+        required = ['tests/Otiz/legacy_premium_calculation_001_test.php', 'tests/Otiz/excel_calculation_001_test.php', 'tests/Otiz/excel_inputs_001_test.php', 'tests/Otiz/excel_publication_001_test.php', 'tests/Otiz/settlement_concurrency_001_test.php', 'tests/Runtime/production_runtime_browser_001_test.php', 'tests/Runtime/runtime_settlement_compatibility_001_test.php', 'tests/Yii2/yii2_otiz_publication_browser_001_test.php', 'tests/Yii2/yii2_otiz_settlement_browser_001_test.php', 'tests/InstallationProcess/production_migration_runner_001_test.php', 'tests/Yii2/yii2_user_access_001_test.php']
+        for path in required:
+            self.assertEqual(1, paths.count(path), 'current/shared contract retained once: ' + path)
+
+        # Independently frozen b1d6b517 roster minus all 25 specified retirements, plus native V1 oracle.
+        encoded = json.dumps(sorted(roster), ensure_ascii=True, separators=(',', ':')).encode()
+        self.assertEqual('7e325890f8e337a4db1c4801c627b5e58bf1aa22454cb1a7a81d0c74efdf6772', hashlib.sha256(encoded).hexdigest(),
+                         'exact complete roster: preserve every non-retired contract and category')
+
     def test_real_composition_keeps_contracts_once(self):
         paths = []
         for group in CATEGORIES:
@@ -391,17 +416,12 @@ class VerificationCI(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
             paths.extend(line.split('\t')[1] for line in result.stdout.splitlines())
         self.assertEqual(len(paths), len(set(paths)))
-        children = ['production_migration_runner', 'pilot_case_import', 'artifact_store',
-                    'pilot_shlz_assets', 'pilot_e2e_flow', 'pilot_demo_bootstrap']
+        children = ['production_migration_runner', 'pilot_case_import', 'artifact_store']
         for name in children:
             self.assertEqual(1, paths.count(f'tests/InstallationProcess/{name}_001_test.php'))
-        bootstrap = (ROOT / 'tests/InstallationProcess/pilot_demo_bootstrap_001_test.php').read_text()
-        for name in children[:-1]:
-            self.assertNotIn(name + '_001_test.php', bootstrap, 'independent children must not rerun')
         e2e = self.cli('list', 'e2e', root=ROOT)
         self.assertEqual([
             'python3\ttests/Deployment/pilot_jobs_compose_001_test.py',
-            'php\ttests/InstallationProcess/pilot_e2e_flow_001_test.php',
             'php\ttests/Runtime/production_runtime_compose_001_test.php',
             'php\ttests/Runtime/production_runtime_browser_001_test.php',
             'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
@@ -446,6 +466,7 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Deployment/yii2_local_quickstart_real_001_test.py',
             'python3\ttests/Deployment/yii2_local_data_bootstrap_make_001_test.py',
             'php\ttests/Yii2/yii2_feedback_browser_001_test.php',
+            'php\ttests/Yii2/excel_publication_browser_001_test.php',
         ], e2e.stdout.splitlines())
 
 

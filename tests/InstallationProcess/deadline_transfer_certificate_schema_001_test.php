@@ -52,5 +52,21 @@ try{
  assertSameValue('60fa1fd41837e5df38936b55416f6ed511c0db86b53d5783a7fc9116e878d90b',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV23.php'),'historical recovery profile unchanged');
  assertSameValue('5c61012c6b976a982bb55504c3e9f22d593e7647aa7a49e0492e6007a8b5080e',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV24.php'),'historical recovery profile unchanged');
  assertSameValue('29a475f2d94b300a689d7c2e611280db49bcfa74224a3768d85c195b7cddb821',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV25.php'),'upstream feedback recovery profile unchanged');
+ $prefixDb=$f->database();$longPrefix=str_repeat('p',25);
+ // Physical canonical tables precede the logical aliases used by recovery profiles.
+ $priorCatalogue=Catalogue::migrations();unset($priorCatalogue[26]);
+ assertSameValue(0,Migration::run($prefixDb,$longPrefix,$priorCatalogue)['exitCode'],'public v25 maximal-prefix baseline');
+ $expectedPrefixTables=Fixture::tables($prefixDb);foreach(['roots','revisions','operations','pdf_chunks']as$suffix)$expectedPrefixTables[]=$longPrefix.'fm2_deadline_certificate_'.$suffix;sort($expectedPrefixTables,SORT_STRING);
+ $prefixed=Migration::run($prefixDb,$longPrefix,Catalogue::migrations());
+ assertSameValue([0,26],[$prefixed['exitCode'],$prefixed['result']['schemaVersion']??null],'RED_ASSERTION certificate supports canonical 25-byte prefix');
+ assertSameValue($expectedPrefixTables,Fixture::tables($prefixDb),'complete physical prefixed current inventory');
+ $prefixedRows=Fixture::rows($prefixDb,Fixture::tables($prefixDb));
+ assertSameValue(0,Migration::run($prefixDb,$longPrefix,Catalogue::migrations())['exitCode'],'prefixed replay');
+ assertSameValue($prefixedRows,Fixture::rows($prefixDb,Fixture::tables($prefixDb)),'prefixed replay preserves rows');
+ $otherPrefix=str_repeat('q',25);assertSameValue(0,Migration::run($prefixDb,$otherPrefix,Catalogue::migrations())['exitCode'],'distinct maximal prefix in same schema');
+ $combinedState=static function()use($prefixDb):array{$tables=Fixture::tables($prefixDb);$ddl=[];foreach($tables as$table)$ddl[$table]=$prefixDb->query("SHOW CREATE TABLE `$table`")->fetch_row()[1];return['ddl'=>$ddl,'rows'=>Fixture::rows($prefixDb,$tables)];};
+ $combinedBefore=$combinedState();
+ foreach([$longPrefix,$otherPrefix]as$replayPrefix){assertSameValue(0,Migration::run($prefixDb,$replayPrefix,Catalogue::migrations())['exitCode'],'coexisting maximal-prefix replay');assertSameValue($combinedBefore,$combinedState(),'both namespaces preserve DDL and rows after replay');}
+ $prefixDb->close();
  $fresh->close();$db->close();echo "PASS DEADLINE-TRANSFER-CERTIFICATE-001 schema\n";
 }finally{$f->close();}
