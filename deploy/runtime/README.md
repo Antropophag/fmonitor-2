@@ -12,7 +12,8 @@ services `php`, `web`, deployment CLI и опциональными jobs service
 `FMONITOR_YII_IDENTITY_KEY` длиной не менее 32 байт, trusted host и scheme. Для reviewed exact image задайте `FMONITOR_RUNTIME_IMAGE`
 digest reference; без него Compose использует локальный `fmonitor2-runtime`.
 
-Порядок и rollback описаны в
+Для обычного локального запуска используйте `cp .env.example .env`, заполните
+значения и выполните `make up`. Низкоуровневый production порядок и rollback описаны в
 [`docs/operations/production-runtime-runbook.md`](../../docs/operations/production-runtime-runbook.md).
 Короткая локальная проверка конфигурации:
 

@@ -1,7 +1,48 @@
 .DEFAULT_GOAL := help
 
 COMPOSE := docker compose
+RUNTIME_COMPOSE := docker compose -f deploy/runtime/compose.yaml
 TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
+
+# Local lifecycle configuration is accepted only from the checkout's .env.
+COMPOSE_PROJECT_NAME :=
+FMONITOR_RUNTIME_IMAGE :=
+FMONITOR_HTTP_PORT :=
+FMONITOR_DB_NAME :=
+FMONITOR_DB_USER :=
+FMONITOR_DB_PASSWORD :=
+FMONITOR_MIGRATION_DB_USER :=
+FMONITOR_MIGRATION_DB_PASSWORD :=
+FMONITOR_PROCESS_TABLE_PREFIX :=
+FMONITOR_LEGACY_TABLE_PREFIX :=
+FMONITOR_SESSION_INSTANCE :=
+FMONITOR_YII_COOKIE_VALIDATION_KEY :=
+FMONITOR_YII_IDENTITY_KEY :=
+FMONITOR_TRUSTED_REQUEST_HOST :=
+FMONITOR_TRUSTED_REQUEST_SCHEME :=
+FMONITOR_INITIAL_OWNER_EMAIL :=
+FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD :=
+-include .env
+export COMPOSE_PROJECT_NAME FMONITOR_RUNTIME_IMAGE FMONITOR_HTTP_PORT FMONITOR_DB_NAME FMONITOR_DB_USER FMONITOR_DB_PASSWORD
+export FMONITOR_MIGRATION_DB_USER FMONITOR_MIGRATION_DB_PASSWORD FMONITOR_PROCESS_TABLE_PREFIX FMONITOR_LEGACY_TABLE_PREFIX
+export FMONITOR_SESSION_INSTANCE FMONITOR_YII_COOKIE_VALIDATION_KEY FMONITOR_YII_IDENTITY_KEY FMONITOR_TRUSTED_REQUEST_HOST
+export FMONITOR_TRUSTED_REQUEST_SCHEME FMONITOR_INITIAL_OWNER_EMAIL FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD
+
+define validate_local_environment
+	@test -f .env || { echo "LOCAL_CONFIG_INVALID: создайте .env из .env.example" >&2; exit 64; }; \
+	set -eu; \
+	for value in "$(COMPOSE_PROJECT_NAME)" "$(FMONITOR_RUNTIME_IMAGE)" "$(FMONITOR_HTTP_PORT)" "$(FMONITOR_DB_NAME)" "$(FMONITOR_DB_USER)" "$(FMONITOR_DB_PASSWORD)" "$(FMONITOR_MIGRATION_DB_USER)" "$(FMONITOR_MIGRATION_DB_PASSWORD)" "$(FMONITOR_PROCESS_TABLE_PREFIX)" "$(FMONITOR_LEGACY_TABLE_PREFIX)" "$(FMONITOR_SESSION_INSTANCE)" "$(FMONITOR_YII_COOKIE_VALIDATION_KEY)" "$(FMONITOR_YII_IDENTITY_KEY)" "$(FMONITOR_TRUSTED_REQUEST_HOST)" "$(FMONITOR_TRUSTED_REQUEST_SCHEME)" "$(FMONITOR_INITIAL_OWNER_EMAIL)" "$(FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD)"; do \
+		case "$$value" in ''|*replace_me*|replace_with_*) echo "LOCAL_CONFIG_INVALID: заполните все обязательные значения .env" >&2; exit 64;; esac; \
+	done; \
+	case "$(COMPOSE_PROJECT_NAME)" in fm2-local-?*) ;; *) echo "LOCAL_CONFIG_INVALID: COMPOSE_PROJECT_NAME должен иметь вид fm2-local-<name>" >&2; exit 64;; esac; \
+	case "$(COMPOSE_PROJECT_NAME)" in *[!A-Za-z0-9_-]*) echo "LOCAL_CONFIG_INVALID: недопустимый COMPOSE_PROJECT_NAME" >&2; exit 64;; esac; \
+	case "$(FMONITOR_HTTP_PORT)" in ''|*[!0-9]*) echo "LOCAL_CONFIG_INVALID: недопустимый FMONITOR_HTTP_PORT" >&2; exit 64;; esac; \
+	[ "$(FMONITOR_HTTP_PORT)" -ge 1 ] 2>/dev/null && [ "$(FMONITOR_HTTP_PORT)" -le 65535 ] 2>/dev/null || { echo "LOCAL_CONFIG_INVALID: недопустимый FMONITOR_HTTP_PORT" >&2; exit 64; }; \
+	[ "$$(printf %s "$(FMONITOR_YII_COOKIE_VALIDATION_KEY)" | wc -c | tr -d ' ')" -ge 32 ] && [ "$$(printf %s "$(FMONITOR_YII_IDENTITY_KEY)" | wc -c | tr -d ' ')" -ge 32 ] || { echo "LOCAL_CONFIG_INVALID: Yii keys должны быть не короче 32 байт" >&2; exit 64; }; \
+	case "$(FMONITOR_TRUSTED_REQUEST_SCHEME)" in http|https) ;; *) echo "LOCAL_CONFIG_INVALID: trusted scheme должен быть http или https" >&2; exit 64;; esac; \
+	case "$(FMONITOR_TRUSTED_REQUEST_HOST)" in *:*) ;; *) echo "LOCAL_CONFIG_INVALID: trusted host должен включать порт" >&2; exit 64;; esac; \
+	case "$(FMONITOR_INITIAL_OWNER_EMAIL)" in *@*.*) ;; *) echo "LOCAL_CONFIG_INVALID: недопустимый initial owner email" >&2; exit 64;; esac
+endef
 
 .PHONY: help up down logs ps reset import-production \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
@@ -10,12 +51,12 @@ TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 help:
 	@echo "make setup  Подготовить закреплённые зависимости (без изменения существующих)"
 	@echo "make doctor Проверить инструменты и существующие зависимости"
-	@echo "make up     Поднять пилот с Bitrix на http://127.0.0.1:8092/ (настройки в .env)"
+	@echo "make up     Собрать и поднять локальный Yii2 runtime (настройки в .env)"
 	@echo "make import-production  Загрузить не начатые объекты, пользователей и роли production"
-	@echo "make down   Остановить пилот, сохранив данные"
+	@echo "make down   Остановить Yii2 runtime, сохранив данные"
 	@echo "make logs   Показать логи"
 	@echo "make ps     Показать состояние контейнеров"
-	@echo "make reset  Удалить локальные данные пилота"
+	@echo "make reset  Явно удалить данные выбранного local Yii2 project"
 	@echo "make test-env-up/down  Поднять/остановить disposable test MariaDB"
 	@echo "make test-db-reset    Пересоздать чистую test DB"
 	@echo "make migrate          Применить canonical production migrations к test DB"
@@ -26,18 +67,20 @@ help:
 	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
 
 up:
-	@docker info >/dev/null 2>&1 || { echo "Docker daemon недоступен. Запустите Docker внутри WSL или включите WSL integration в Docker Desktop." >&2; exit 1; }
-	@test -f .env || { echo "Bitrix: .env не найден. Скопируйте .env.example в .env и заполните настройки." >&2; exit 1; }
-	@mkdir -p .local && chmod 700 .local
-	docker build --tag fmonitor2-pilot .
-	@docker run --rm --network none --user "$$(id -u):$$(id -g)" --entrypoint php \
-		--mount "type=bind,src=$$(pwd)/.env,dst=/run/fmonitor/input.env,readonly" \
-		--mount "type=bind,src=$$(pwd)/.local,dst=/run/fmonitor/output" \
-		fmonitor2-pilot bin/fmonitor2-prepare-bitrix-config.php /run/fmonitor/input.env /run/fmonitor/output/bitrix-workforce.json
-	@$(COMPOSE) config --quiet 2>/dev/null || { echo "Проверьте синтаксис .env и обязательные настройки стенда по .env.example." >&2; exit 1; }
-	$(COMPOSE) up --detach --wait pilot mariadb
-	$(COMPOSE) up --detach --wait --no-deps --force-recreate workforce-sync workforce-scheduler
-	@echo "FMonitor 2.0 с Bitrix sync: http://127.0.0.1:8092/"
+	$(validate_local_environment); \
+	docker info >/dev/null 2>&1 || { echo "LOCAL_DOCKER_UNAVAILABLE" >&2; exit 69; }; \
+	docker build --file deploy/runtime/Dockerfile --tag "$(FMONITOR_RUNTIME_IMAGE)" .; \
+	$(RUNTIME_COMPOSE) config --quiet; \
+	$(RUNTIME_COMPOSE) up --detach --wait db; \
+	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_MIGRATION_DB_USER -e FMONITOR_MIGRATION_DB_PASSWORD --entrypoint php prepare bin/yii local-runtime/provision-database --interactive=0; \
+	$(RUNTIME_COMPOSE) --profile deployment run --rm prepare; \
+	$(RUNTIME_COMPOSE) --profile deployment run --rm migrate; \
+	$(RUNTIME_COMPOSE) --profile deployment run --rm --entrypoint php prepare bin/fmonitor2-runtime-check.php; \
+	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --email "$(FMONITOR_INITIAL_OWNER_EMAIL)"; \
+	$(RUNTIME_COMPOSE) up --detach --wait php web; \
+	curl --fail --silent --show-error --header "Host: $(FMONITOR_TRUSTED_REQUEST_HOST)" "http://127.0.0.1:$(FMONITOR_HTTP_PORT)/health/live" >/dev/null; \
+	curl --fail --silent --show-error --header "Host: $(FMONITOR_TRUSTED_REQUEST_HOST)" "http://127.0.0.1:$(FMONITOR_HTTP_PORT)/health/ready" >/dev/null; \
+	echo "FMonitor Yii2: http://127.0.0.1:$(FMONITOR_HTTP_PORT)/"
 
 import-production:
 	@test -f .env || { echo ".env не найден. Выполните: cp .env.example .env" >&2; exit 2; }
@@ -51,16 +94,16 @@ import-production:
 		pilot -c 'socat TCP4-LISTEN:23306,bind=127.0.0.1,fork,reuseaddr TCP4:mariadb:3306 & FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
 
 down:
-	$(COMPOSE) down
+	$(validate_local_environment); $(RUNTIME_COMPOSE) down
 
 logs:
-	$(COMPOSE) logs --follow
+	$(validate_local_environment); $(RUNTIME_COMPOSE) logs --follow
 
 ps:
-	$(COMPOSE) ps
+	$(validate_local_environment); $(RUNTIME_COMPOSE) ps
 
 reset:
-	$(COMPOSE) down --volumes
+	$(validate_local_environment); $(RUNTIME_COMPOSE) down --volumes --remove-orphans
 
 test-env-up:
 	docker compose -f compose.test.yaml up --detach --wait test-db
