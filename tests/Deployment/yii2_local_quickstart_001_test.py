@@ -20,7 +20,11 @@ open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project}
 stages={'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}
 if fail in stages and stages[fail] in joined:sys.exit(42)
 if '--volumes' in argv and not ('compose' in argv and '-f' in argv and 'deploy/runtime/compose.yaml' in argv and project.startswith('fm2-local-') and 'down' in argv and '--remove-orphans' in argv):sys.exit(43)
-data=json.load(open(state_path));resources=data.setdefault(project,{'database':'seed-001','owner':'owner-001','session':'session-001','artifact':'artifact-001','volumes':True,'running':False})
+allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web',' down',' logs',' ps')
+if not any(token in ' '+joined for token in allowed):sys.exit(44)
+data=json.load(open(state_path));resources=data.get(project)
+if 'up --detach --wait db' in joined and resources is None:resources={'database':'domain-sentinel-001','owner':'owner-001','session':'session-sentinel-001','artifact':'artifact-sentinel-001','volumes':True,'running':False};data[project]=resources
+if resources is None and not ('info'==joined or joined.startswith('build ') or 'config --quiet' in joined):sys.exit(45)
 if 'up --detach --wait php web' in joined:resources['running']=True
 if ' down' in ' '+joined:
  resources['running']=False
@@ -39,9 +43,10 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
 
     first=make('up');assert first.returncode==0,(first.stdout,first.stderr,'LEGACY_MAKE_UP_TRACE')
     observed=events();joined=[' '.join(e['argv']) for e in observed];assert all(e['project']=='fm2-local-contract' for e in observed),('ENV_PROJECT_NOT_BOUND',observed)
-    required=['build ','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web','/health/live','/health/ready'];positions=[]
+    required=['build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web','/health/live','/health/ready'];positions=[]
     for needle in required:positions.append(next(i for i,value in enumerate(joined) if needle in value))
     assert positions==sorted(positions),('LIFECYCLE_ORDER_WRONG',joined)
+    assert len(joined)==len(required)+1 and joined[0]=='info',('UNEXPECTED_OR_MISSING_OPERATION',joined)
     combined=first.stdout+first.stderr+trace.read_text()
     for secret in ('db-secret-contract','migration-secret-contract','owner-secret-contract','hostile-secret'):assert secret not in combined,('SECRET_EXPOSED',secret)
     assert 'http://127.0.0.1:18093' in first.stdout;before=json.loads(state.read_text())['fm2-local-contract'].copy()

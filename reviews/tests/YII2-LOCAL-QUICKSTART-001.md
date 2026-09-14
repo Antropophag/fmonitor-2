@@ -78,3 +78,35 @@ Retained results match the package expectations: architecture, Make lifecycle, D
 `CHANGES_REQUESTED`
 
 Gate 4 remains blocked. Correct only the remaining root-owned test/verification-input gaps, retain fresh exact-source RED, rebuild the package, and resubmit for bounded correction review.
+
+---
+
+## Third correction review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed only the four remaining correction findings.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T125514Z-cd8c40c33b/package.json`
+- Reviewed source: candidate `9f3a07138a09bf833dc4a33a6362fbbf65f46eb4471d39687a2ebe642e9d88b9`, executable source `3cb73c8518d7ca9f1960d27dce331b74714976592e2a91d2f88268c43b3d117b`, commit `de548c15f664b6970142030ad3b4dd15e02fa75d`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `b393650c169fe502c532e906f3c7b2f1b6a79d34e72ea50029421db4ba621c42`
+- Verdict: `CHANGES_REQUESTED`
+
+### Correction disposition
+
+- **Stage-stop and configuration/reset matrix: mostly resolved.** Every named failure must now be the final trace event. Missing `.env`, every mandatory key, placeholders, invalid keys/scheme/project, and invalid reset identities reject before an external trace.
+- **MariaDB grants: resolved.** The test uses privilege inventories for exact DML-only cardinality, snapshots complete `SHOW GRANTS` across replay and mismatch, and checks secret-free output.
+- **Authorization binding: resolved.** Authorization/env files require mode `0600`; source, project and port are bound before Docker; live/ready and authorized cleanup are explicit.
+- **Repeat-state sensitivity: not fully resolved.** The recording and real tests still permit loss/recreation of database/domain state while reporting preservation.
+
+### Remaining finding
+
+1. **HIGH — repeated `make up` can destructively rebuild database/domain history and still pass both corrected tests.** Locations: `tests/Deployment/yii2_local_quickstart_001_test.py:17-31,43-44`; `tests/Deployment/yii2_local_quickstart_real_001_test.py:25-39`; A2 in `specs/YII2-LOCAL-QUICKSTART-001.md`. The fake rejects only an unsafe command containing `--volumes`; it does not reject unknown destructive commands as claimed. For example, an added `docker compose exec db ... DROP DATABASE ...` or custom reinitialization command is recorded, accepted, and does not mutate the fake's hard-coded `database/owner/session/artifact` values. The first/repeat test requires only the presence and order of ten substrings, not the complete allowed trace, so that extra command passes. The real slot compares only owner count/min ID and total table count, all of which can return to the same values after a destructive rebuild, plus one sentinel on the `state` volume. It does not create/verify a database domain-history sentinel, session fact, or artifact-volume sentinel required by A2. Make the fake fail on every unrecognised operation and compare an exact allowed first/replay trace. In the authorized real slot, create independently identifiable DB/domain and relevant persistent-volume sentinels after first startup, then prove their identifiers/bytes survive repeated `up` and `down`/`up`; table cardinality alone is insufficient.
+
+### Evidence
+
+Fresh package evidence is correctly bound: architecture, lifecycle, DB provisioning and docs are honest `INTENDED_RED`; initial-owner is GREEN. The no-authorization real-Docker check is GREEN without Docker effects and remains only admission evidence, not real-stand acceptance. No Docker/reset/deployment action was run during this review.
+
+### Third correction verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 remains blocked solely on the repeat-state sensitivity finding above. Correct that bounded test gap, retain fresh exact-source evidence, and return for final correction review.
