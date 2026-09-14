@@ -4,6 +4,29 @@
 остаётся в `../fmonitor`, публичные UI-экспорты поставляет закреплённый checkout
 `../shlz-ui`.
 
+## Локальный Yii2 quickstart
+
+Для запуска актуального локального стенда нужны Git, Make, `curl`, запущенный
+Docker и Compose v2:
+
+```bash
+git clone https://github.com/Antropophag/fmonitor-2.git
+cd fmonitor-2
+cp .env.example .env
+# Замените все replace_me; owner email должен оканчиваться на @shlz.ru,
+# а project должен иметь уникальное имя fm2-local-*.
+make up
+```
+
+После успешных live/ready проверок стенд доступен на
+<http://127.0.0.1:8093/>. Повторный `make up` сохраняет данные. `make down`
+сохраняет volumes; `make ps` и `make logs` наблюдают тот же project. Только
+явный `make reset` удаляет его локальные volumes.
+
+Quickstart не запускает Bitrix/jobs, import или production deployment.
+Исторический `rapid-pilot` остаётся oracle/adapter, но обычные Make-команды от
+него больше не зависят.
+
 ## Production запуск
 
 Для запуска стенда на Linux или macOS нужны Git, Make и запущенный Docker
@@ -16,9 +39,9 @@
 выполняет migrations, выдаёт DML-only account, явно создаёт первого owner-admin и
 только затем запускает nginx/PHP-FPM.
 
-Прежние `make up`, порт `8092`, demo bootstrap и Bitrix worker относятся к
-историческому rapid-pilot contour. Они сохраняются для совместимости и расследования,
-но не являются production quickstart. [Инструкция Bitrix](docs/bitrix-startup.md)
+Порт `8092`, demo bootstrap и Bitrix worker относятся к историческому
+rapid-pilot contour. Они сохраняются для совместимости и расследования, но не
+являются canonical local quickstart. [Инструкция Bitrix](docs/bitrix-startup.md)
 описывает этот исторический opt-in adapter; реальная синхронизация не включается
 production setup автоматически.
 

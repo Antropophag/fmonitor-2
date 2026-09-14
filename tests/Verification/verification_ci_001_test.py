@@ -442,6 +442,8 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Deployment/yii2_clean_stand_provisioning_001_test.py',
             'python3\ttests/Deployment/yii2_clean_stand_real_acceptance_001_test.py',
             'python3\ttests/Deployment/yii2_clean_stand_runtime_001_test.py',
+            'python3\ttests/Deployment/yii2_local_quickstart_001_test.py',
+            'python3\ttests/Deployment/yii2_local_quickstart_real_001_test.py',
         ], e2e.stdout.splitlines())
 
 

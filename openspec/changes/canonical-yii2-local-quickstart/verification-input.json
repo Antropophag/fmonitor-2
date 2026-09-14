@@ -1,0 +1,48 @@
+{
+  "change": "canonical-yii2-local-quickstart-issue-128",
+  "planned_paths": [
+    "Makefile",
+    ".env.example",
+    "README.md",
+    "docs/development-setup.md",
+    "deploy/runtime/README.md",
+    "app/YiiRuntime/Commands/LocalRuntimeController.php",
+    "tools/delivery/local-runtime-env",
+    "config/yii/console.php",
+    "specs/YII2-LOCAL-QUICKSTART-001.md",
+    "tests/Deployment/yii2_local_quickstart_001_test.py",
+    "tests/Deployment/yii2_local_quickstart_real_001_test.py",
+    "tests/Yii2/yii2_local_runtime_provisioning_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tests/Architecture/yii2_local_quickstart_boundary_001_test.py",
+    "tests/Verification/yii2_local_quickstart_docs_001_test.py",
+    "tests/Verification/development_setup_001_test.py",
+    "tests/Verification/verification_ci_001_test.py",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-LOCAL-QUICKSTART-001",
+      "acceptance_id": "A1-A4-clean-repeat-lifecycle-and-bounded-reset",
+      "spec_path": "specs/YII2-LOCAL-QUICKSTART-001.md",
+      "seam": "make up/down/logs/ps/reset with .env converge the canonical Yii2 project, preserve state on repeat/down, reject unsafe input and bound explicit reset without rapid-pilot",
+      "tests": ["tests/Deployment/yii2_local_quickstart_001_test.py", "tests/Deployment/yii2_local_quickstart_real_001_test.py", "tests/Architecture/yii2_local_quickstart_boundary_001_test.py", "tests/Yii2/yii2_local_runtime_provisioning_001_test.php", "tests/Runtime/initial_owner_provisioning_001_test.php"],
+      "gate3_expected": {
+        "tests/Deployment/yii2_local_quickstart_001_test.py": "INTENDED_RED",
+        "tests/Deployment/yii2_local_quickstart_real_001_test.py": "GREEN",
+        "tests/Architecture/yii2_local_quickstart_boundary_001_test.py": "GREEN",
+        "tests/Yii2/yii2_local_runtime_provisioning_001_test.php": "GREEN",
+        "tests/Runtime/initial_owner_provisioning_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-LOCAL-QUICKSTART-001",
+      "acceptance_id": "A5-operational-separation",
+      "spec_path": "specs/YII2-LOCAL-QUICKSTART-001.md",
+      "seam": "canonical local documentation points to make quickstart while production runbook and low-level commands remain intact",
+      "tests": ["tests/Verification/yii2_local_quickstart_docs_001_test.py"],
+      "gate3_expected": {"tests/Verification/yii2_local_quickstart_docs_001_test.py": "GREEN"}
+    }
+  ]
+}

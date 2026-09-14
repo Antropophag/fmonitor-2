@@ -1,6 +1,9 @@
 .DEFAULT_GOAL := help
 
 COMPOSE := docker compose
+LOCAL_ENV_RUN := bash tools/delivery/local-runtime-env --
+LOCAL_ENV_VALIDATE := bash tools/delivery/local-runtime-env --validate
+RUNTIME_COMPOSE := $(LOCAL_ENV_RUN) docker compose --env-file '@env-file' -f deploy/runtime/compose.yaml
 TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
 .PHONY: help up down logs ps reset import-production \
@@ -10,12 +13,12 @@ TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 help:
 	@echo "make setup  Подготовить закреплённые зависимости (без изменения существующих)"
 	@echo "make doctor Проверить инструменты и существующие зависимости"
-	@echo "make up     Поднять пилот с Bitrix на http://127.0.0.1:8092/ (настройки в .env)"
+	@echo "make up     Собрать и поднять локальный Yii2 runtime (настройки в .env)"
 	@echo "make import-production  Загрузить не начатые объекты, пользователей и роли production"
-	@echo "make down   Остановить пилот, сохранив данные"
+	@echo "make down   Остановить Yii2 runtime, сохранив данные"
 	@echo "make logs   Показать логи"
 	@echo "make ps     Показать состояние контейнеров"
-	@echo "make reset  Удалить локальные данные пилота"
+	@echo "make reset  Явно удалить данные выбранного local Yii2 project"
 	@echo "make test-env-up/down  Поднять/остановить disposable test MariaDB"
 	@echo "make test-db-reset    Пересоздать чистую test DB"
 	@echo "make migrate          Применить canonical production migrations к test DB"
@@ -26,18 +29,20 @@ help:
 	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
 
 up:
-	@docker info >/dev/null 2>&1 || { echo "Docker daemon недоступен. Запустите Docker внутри WSL или включите WSL integration в Docker Desktop." >&2; exit 1; }
-	@test -f .env || { echo "Bitrix: .env не найден. Скопируйте .env.example в .env и заполните настройки." >&2; exit 1; }
-	@mkdir -p .local && chmod 700 .local
-	docker build --tag fmonitor2-pilot .
-	@docker run --rm --network none --user "$$(id -u):$$(id -g)" --entrypoint php \
-		--mount "type=bind,src=$$(pwd)/.env,dst=/run/fmonitor/input.env,readonly" \
-		--mount "type=bind,src=$$(pwd)/.local,dst=/run/fmonitor/output" \
-		fmonitor2-pilot bin/fmonitor2-prepare-bitrix-config.php /run/fmonitor/input.env /run/fmonitor/output/bitrix-workforce.json
-	@$(COMPOSE) config --quiet 2>/dev/null || { echo "Проверьте синтаксис .env и обязательные настройки стенда по .env.example." >&2; exit 1; }
-	$(COMPOSE) up --detach --wait pilot mariadb
-	$(COMPOSE) up --detach --wait --no-deps --force-recreate workforce-sync workforce-scheduler
-	@echo "FMonitor 2.0 с Bitrix sync: http://127.0.0.1:8092/"
+	@$(LOCAL_ENV_VALIDATE)
+	@$(LOCAL_ENV_RUN) docker info >/dev/null 2>&1 || { echo "LOCAL_DOCKER_UNAVAILABLE" >&2; exit 69; }
+	$(LOCAL_ENV_RUN) docker build --file deploy/runtime/Dockerfile --tag '@env:FMONITOR_RUNTIME_IMAGE' .
+	$(RUNTIME_COMPOSE) config --quiet
+	$(RUNTIME_COMPOSE) up --detach --wait db
+	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_MIGRATION_DB_USER -e FMONITOR_MIGRATION_DB_PASSWORD --entrypoint php prepare bin/yii local-runtime/provision-database --interactive=0
+	$(RUNTIME_COMPOSE) --profile deployment run --rm prepare
+	$(RUNTIME_COMPOSE) --profile deployment run --rm migrate
+	$(RUNTIME_COMPOSE) --profile deployment run --rm --entrypoint php prepare bin/fmonitor2-runtime-check.php
+	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --email '@env:FMONITOR_INITIAL_OWNER_EMAIL'
+	$(RUNTIME_COMPOSE) up --detach --wait php web
+	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/live' >/dev/null
+	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/ready' >/dev/null
+	@$(LOCAL_ENV_RUN) printf 'FMonitor Yii2: %s/\n' '@local-url'
 
 import-production:
 	@test -f .env || { echo ".env не найден. Выполните: cp .env.example .env" >&2; exit 2; }
@@ -51,16 +56,16 @@ import-production:
 		pilot -c 'socat TCP4-LISTEN:23306,bind=127.0.0.1,fork,reuseaddr TCP4:mariadb:3306 & FMONITOR_PILOT_ACTIVE_MANIFEST="$$(find /home/fmonitor/.local/state/fmonitor2/pilot-demo -name active.json -print -quit)" php rapid-pilot/initialize-native-only.php --cutoff="$${FMONITOR_MIGRATION_CUTOFF:-$$(date +%F\ 23:59:59)}"'
 
 down:
-	$(COMPOSE) down
+	$(RUNTIME_COMPOSE) down
 
 logs:
-	$(COMPOSE) logs --follow
+	$(RUNTIME_COMPOSE) logs --follow
 
 ps:
-	$(COMPOSE) ps
+	$(RUNTIME_COMPOSE) ps
 
 reset:
-	$(COMPOSE) down --volumes
+	$(RUNTIME_COMPOSE) down --volumes --remove-orphans
 
 test-env-up:
 	docker compose -f compose.test.yaml up --detach --wait test-db
