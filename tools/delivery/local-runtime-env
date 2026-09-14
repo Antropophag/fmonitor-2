@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf '%s\n' 'LOCAL_CONFIG_INVALID' >&2
+  exit 64
+}
+
+[[ $# -ge 1 ]] || fail
+environment_file=${FMONITOR_LOCAL_ENV_FILE:-.env}
+[[ -f "$environment_file" && ! -L "$environment_file" ]] || fail
+
+required=(
+  COMPOSE_PROJECT_NAME FMONITOR_RUNTIME_IMAGE FMONITOR_HTTP_PORT
+  FMONITOR_DB_NAME FMONITOR_DB_USER FMONITOR_DB_PASSWORD
+  FMONITOR_MIGRATION_DB_USER FMONITOR_MIGRATION_DB_PASSWORD
+  FMONITOR_PROCESS_TABLE_PREFIX FMONITOR_LEGACY_TABLE_PREFIX
+  FMONITOR_SESSION_INSTANCE FMONITOR_YII_COOKIE_VALIDATION_KEY
+  FMONITOR_YII_IDENTITY_KEY FMONITOR_TRUSTED_REQUEST_HOST
+  FMONITOR_TRUSTED_REQUEST_SCHEME FMONITOR_INITIAL_OWNER_EMAIL
+  FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD
+)
+for name in "${required[@]}"; do unset "$name"; done
+seen='|'
+while IFS= read -r line || [[ -n "$line" ]]; do
+  [[ -z "$line" || "$line" == \#* ]] && continue
+  [[ "$line" == *=* ]] || fail
+  name=${line%%=*}
+  value=${line#*=}
+  [[ "$name" =~ ^[A-Z][A-Z0-9_]*$ ]] || fail
+  case " ${required[*]} " in *" $name "*) ;; *) fail ;; esac
+  [[ "$seen" != *"|$name|"* ]] || fail
+  seen+="$name|"
+  export "$name=$value"
+done < "$environment_file"
+
+for name in "${required[@]}"; do
+  [[ "$seen" == *"|$name|"* ]] || fail
+  value=${!name}
+  [[ -n "$value" && "$value" != *replace_me* && "$value" != replace_with_* ]] || fail
+done
+
+project=$COMPOSE_PROJECT_NAME
+[[ "$project" =~ ^fm2-local-[A-Za-z0-9_-]+$ ]] || fail
+project_words="-${project#fm2-local-}-"
+case "$project_words" in
+  *-prod-*|*-production-*|*-stage-*|*-staging-*|*-live-*) fail ;;
+esac
+port=$FMONITOR_HTTP_PORT
+[[ "$port" =~ ^[0-9]+$ ]] && (( port >= 1 && port <= 65535 )) || fail
+(( ${#FMONITOR_YII_COOKIE_VALIDATION_KEY} >= 32 )) || fail
+(( ${#FMONITOR_YII_IDENTITY_KEY} >= 32 )) || fail
+[[ "$FMONITOR_TRUSTED_REQUEST_SCHEME" == http || "$FMONITOR_TRUSTED_REQUEST_SCHEME" == https ]] || fail
+[[ "$FMONITOR_TRUSTED_REQUEST_HOST" == *:* ]] || fail
+[[ "$FMONITOR_INITIAL_OWNER_EMAIL" == *@*.* ]] || fail
+
+[[ $1 == -- ]] || fail
+shift
+[[ $# -gt 0 ]] || fail
+
+arguments=()
+for argument in "$@"; do
+  case "$argument" in
+    @env:*)
+      name=${argument#@env:}
+      [[ "$seen" == *"|$name|"* ]] || fail
+      arguments+=("${!name}")
+      ;;
+    @local-url*)
+      arguments+=("http://127.0.0.1:${FMONITOR_HTTP_PORT}${argument#@local-url}")
+      ;;
+    @trusted-host-header)
+      arguments+=("Host: ${FMONITOR_TRUSTED_REQUEST_HOST}")
+      ;;
+    @env-file)
+      arguments+=("$environment_file")
+      ;;
+    *) arguments+=("$argument") ;;
+  esac
+done
+exec "${arguments[@]}"
