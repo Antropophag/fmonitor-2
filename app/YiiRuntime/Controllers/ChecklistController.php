@@ -36,7 +36,8 @@ $a=$owner->access($this->actor(),$id);
 if(!($a['exists']??false))return$this->plain(404);
 if(!($a['read']??false))return$this->plain(403);
 $completion=$owner->completion($id);
-return$this->render('@app/app/YiiRuntime/Views/checklist',['identity'=>Yii::$app->user->identity,'id'=>$id,'access'=>$a,'projection'=>$owner->projection($id),'csrf'=>Yii::$app->request->csrfToken,'fromControl'=>$source==='control','progressCap'=>$completion['cap']]);
+$opening=($a['ready']??false)&&(($a['roleAccess']??false)||($a['itemComplete']??false))&&Yii::$app->canonicalAccess->checkAccess($this->actor(),'installation.open')?($a['openingIntent']??null):null;
+return$this->render('@app/app/YiiRuntime/Views/checklist',['identity'=>Yii::$app->user->identity,'id'=>$id,'access'=>$a,'projection'=>$owner->projection($id),'csrf'=>Yii::$app->request->csrfToken,'fromControl'=>$source==='control','progressCap'=>$completion['cap'],'opening'=>$opening]);
 } catch(\Throwable)
     {return$this->plain(503,true);
 }

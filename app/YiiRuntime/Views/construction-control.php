@@ -26,6 +26,7 @@
 <a href="/pilot/construction-control/objects/<?=$o['id']?>/checklist">
 <?=Html::encode($o['address'])?> · <?=Html::encode($o['registrationNumber'])?>
 </a>
+<?php if($o['ready']??false):?><strong>Готов к открытию</strong><?php endif?>
 </td>
 <td>
 <span data-local-sync>
