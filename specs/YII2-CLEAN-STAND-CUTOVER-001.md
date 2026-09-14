@@ -76,6 +76,8 @@ Adapter MAY создать только initial ready workload; terminal job/out
 2. Compose/container process commands являются canonical Yii2/nginx/PHP-FPM/jobs commands и не запускают `RuntimeRecovery`;
 3. attributable loaded-file traces реальных health, login, golden HTTP, migration и jobs invocations не содержат `/rapid-pilot/` или `RuntimeRecovery`.
 
+Jobs worker/scheduler/health MUST использовать canonical `FMONITOR_PROCESS_TABLE_PREFIX` из production configuration и MUST NOT обнаруживать либо требовать `pilot-demo/*/active.json`; missing/hostile/ambiguous legacy manifest не может менять normal jobs composition.
+
 Attributable include traces MAY собираться acceptance-only mounted probe/Compose override, если probe отсутствует в production image/topology и не меняет production routes/commands. Lexical source checks MAY быть дополнительным guard, но не заменяют runtime observations. Historical/offline `bin/fmonitor2-runtime-recovery.php`, schema compatibility и backup/restore code MAY оставаться в repository и MUST NOT запускаться этим acceptance.
 
 ### A7. Result и evidence

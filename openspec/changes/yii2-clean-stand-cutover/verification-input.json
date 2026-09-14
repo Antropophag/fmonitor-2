@@ -11,6 +11,10 @@
     "tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py",
     "tests/Architecture/yii2_clean_stand_runtime_closure_001_test.py",
     "tests/Support/yii2_clean_stand_acceptance.php",
+    "app/Jobs/YiiJobsRuntimeEnvironment.php",
+    "tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php",
+    "tests/Yii2/yii2_jobs_console_001_test.php",
+    "tests/Yii2/yii2_jobs_console_db_001_test.php",
     "tests/Support/clean-stand/compose.acceptance.yaml",
     "tests/Support/clean-stand/setup.php",
     "tests/Support/clean-stand/enqueue.php",
@@ -26,11 +30,22 @@
   "acceptances": [
     {
       "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
+      "acceptance_id": "A10-jobs-canonical-runtime-configuration",
+      "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
+      "seam": "jobs/worker, jobs/scheduler and jobs/health take the canonical configured table prefix directly from production environment and do not discover pilot-demo active manifests",
+      "tests": ["tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php", "tests/Yii2/yii2_jobs_console_001_test.php"],
+      "gate3_expected": {
+        "tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_jobs_console_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
       "acceptance_id": "A9-acceptance-only-topology-isolation",
       "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
       "seam": "separate acceptance Compose override/setup/enqueue/include-probe are inaccessible outside exact disposable topology; production Compose/image/config/public routes and commands contain no acceptance-only dependency",
       "tests": ["tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py"],
-      "gate3_expected": {"tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py": "INTENDED_RED"}
+      "gate3_expected": {"tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
