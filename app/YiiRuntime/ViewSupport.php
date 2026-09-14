@@ -21,6 +21,7 @@ final class ViewSupport
         }
         $canAdmin = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'access.administer');
         $canControl = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'construction_control.read');
+        $feedbackUrl = '/pilot/feedback?from=' . rawurlencode('/' . ltrim(\Yii::$app->request->pathInfo, '/'));
         $view->beginPage();
         ?><!doctype html>
 <html lang="ru">
@@ -48,6 +49,7 @@ final class ViewSupport
                     <span class="fm2-nav-text">Объекты монтажа</span>
                 </a>
                 <?php if ($canControl): ?><a class="fm2-nav-item" href="/pilot/construction-control" aria-label="Стройконтроль"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M6 16V8h12v8M9 8V5h6v3"/></svg><span class="fm2-nav-text">Стройконтроль</span></a><?php endif ?>
+                <a class="fm2-nav-item" href="<?= Html::encode($feedbackUrl) ?>"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 3V5Zm4 4h8M8 13h5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span class="fm2-nav-text">Обратная связь</span></a>
                 <?php if ($canAdmin): ?>
                     <span class="fm2-nav-group">Администрирование</span>
                     <a class="fm2-nav-item" href="/pilot/admin/users" aria-label="Пользователи"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 2h2.8l.6 2.5 2 .8 2.2-1.3 2 2-1.3 2.2.8 2 2.3.6v2.8l-2.3.6-.8 2 1.3 2.2-2 2-2.2-1.3-2 .8-.6 2.5h-2.8l-.6-2.5-2-.8-2.2 1.3-2-2 1.3-2.2-.8-2-2.3-.6v-2.8l2.3-.6.8-2L3.8 6l2-2L8 5.3l2-.8.6-2.5Z"/></svg><span class="fm2-nav-text">Пользователи</span></a>

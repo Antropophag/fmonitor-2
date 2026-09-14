@@ -34,7 +34,7 @@ final class PilotDemoDatabase
         'fm2_pilot_users', 'fm2_pilot_user_roles', 'fm2_pilot_user_role_events', 'fm2_pilot_user_status_events',
         'fm2_process_events', 'fm2_process_tasks', 'fm2_process_user_capabilities', 'fm2_workforce_catalog',
         'fm2_workforce_observations', 'fm2_workforce_sync_metadata', 'fm2_workforce_sync_runs',
-        'fm2_jobs', 'fm2_job_events', 'fm2_outbox_intents', 'fm2_outbox_attempt_events',
+        'fm2_jobs', 'fm2_job_events', 'fm2_outbox_intents', 'fm2_outbox_attempt_events', 'fm2_feedback', 'fm2_feedback_results',
         'fm2_scheduler_slots', 'fm2_worker_heartbeats', 'fm_maintable',
     ];
 
@@ -55,7 +55,7 @@ final class PilotDemoDatabase
         $db->query("INSERT INTO `{$legacy}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
         $db->query("INSERT INTO `{$legacy}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
         $migration=CanonicalMigrationApplication::run($db,$process,ProductionPilotMigrationCatalogue::migrations());
-        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>24,'appliedVersions'=>range(1,24)]])throw new RuntimeException();
+        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>25,'appliedVersions'=>range(1,25)]])throw new RuntimeException();
         $marker=$db->real_escape_string("fmonitor2-demo:{$fingerprint}:{$generation}:{$nonce}");
         $db->query("ALTER TABLE `{$process}fm2_installation_cases` COMMENT='{$marker}'");
         $db->query("ALTER TABLE `{$legacy}fm_maintable` COMMENT='{$marker}'");

@@ -14,6 +14,12 @@ return [
             if(!is_string($host)||$host===''||!is_string($port)||filter_var($port,FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>65535]])===false||!is_string($name)||$name===''||!is_string($user)||$user===''||!is_string($password)||$password==='')throw new RuntimeException('Database configuration unavailable.');
             return new yii\db\Connection(['dsn'=>'mysql:host='.$host.';port='.$port.';dbname='.$name,'username'=>$user,'password'=>$password,'charset'=>'utf8mb4']);
         },
+        'feedback' => [
+            'class' => FMonitor2\YiiRuntime\FeedbackApplication::class,
+            'db' => 'db',
+            'tablePrefix' => getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: '',
+            'appVersion' => '2.0',
+        ],
         'log' => [
             'traceLevel' => 0,
             'targets' => [[

@@ -445,6 +445,7 @@ class VerificationCI(unittest.TestCase):
             'python3\ttests/Deployment/yii2_local_quickstart_001_test.py',
             'python3\ttests/Deployment/yii2_local_quickstart_real_001_test.py',
             'python3\ttests/Deployment/yii2_local_data_bootstrap_make_001_test.py',
+            'php\ttests/Yii2/yii2_feedback_browser_001_test.php',
         ], e2e.stdout.splitlines())
 
 

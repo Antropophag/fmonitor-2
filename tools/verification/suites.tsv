@@ -432,3 +432,5 @@ unit	python3	tests/Deployment/yii2_local_data_bootstrap_001_test.py
 e2e	python3	tests/Deployment/yii2_local_data_bootstrap_make_001_test.py
 unit	python3	tests/Deployment/yii2_local_integration_config_001_test.py
 db	php	tests/Yii2/yii2_legacy_import_db_001_test.php
+db	php	tests/Yii2/yii2_feedback_001_test.php
+e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php
