@@ -613,6 +613,31 @@ Gate 4 may proceed for this environment correction against exact candidate sourc
 
 ---
 
+## Streamed volume input attachment — narrow Gate 3 review — 2026-09-14
+
+- Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta, diagnosis evidence, or retained RED.
+- Active package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260913T230745Z-bfef947430/package.json`.
+- Exact reviewed RED source: candidate `c75fb9076be2af59471b31f5ad3484ec66d95acc34f1e47759038f7ce8728507`, executable `77401ce5dc49fa09abf855b43a287f6faac6944144dfd4b52cc2713dca2c2089`, over head `4f4f7edb2835fe938cd8344dbc57c1b4a6669966`.
+- Scope: stdin attachment for artifact/session archive materialization commands; no destructive action or production implementation is reviewed.
+
+### Assessment
+
+The test is directly traceable to the retained operational failure: the verified artifact archive contained 10,240 bytes, while the restore staging `archive.tar` contained zero bytes and failed before publication/restart. `ProductionStandRestoreDriver::volume()` passes each archive through `StandProcess::run(..., $stdin)`, but its `docker run` command lacks Docker's stdin-attachment flag, so the container-side `cat` receives EOF.
+
+The injected process boundary records actual argv and stdin byte counts from the real restore driver. The new filter selects only `docker run` calls carrying non-empty stdin, excluding identity checks, read-only filesystem evidence, health checks, database import, and backup capture. Requiring exactly two such calls independently proves one artifact and one session payload path, and requiring `-i` on each is sensitive to either stream being detached. The test does not inspect production source or require destructive infrastructure.
+
+### Evidence and controlling verdict
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789366873434787000-9890dfc26acd41bbbc1404f424e8e599.json` is start/end stable at the exact reviewed candidate/executable sources. It reaches the emitted production volume command, prints the explicit intended-RED marker, and fails because the first payload-bearing `docker run` argv lacks `-i`. This is the diagnosed missing behavior, not fixture failure.
+
+No findings remain in this narrow test delta.
+
+`APPROVED`
+
+Gate 4 may add stdin attachment to both volume-materialization commands. Any change to payload count, materialization protocol, or test expectations requires fresh Gate 2 evidence and independent Gate 3 review. This approval does not authorize a destructive rerun, CI, publication, deployment, or cutover; `action_authorized` remains false and PR/CI/deployment remain `UNKNOWN`.
+
+---
+
 ## Native process PSR-4 autoload correction — narrow Gate 3 review — 2026-09-14
 
 - Reviewer: independent `gate3_runtime_mismatch`; authored none of the test delta or retained evidence.

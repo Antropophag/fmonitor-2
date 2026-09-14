@@ -275,3 +275,31 @@ Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN
 `APPROVED`
 
 Gate 5 passes for the narrow native-process environment correction at exact candidate source `8847006d19910cd9b3cdc2e120e49cff9f9f4d58e57740876260c874c82fa107`. Root must preserve the reviewed process, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rehearsal, CI, publication, merge, deployment, or cutover.
+
+---
+
+## Streamed volume stdin attachment correction Gate 5 review — 2026-09-14
+
+- Reviewer: independent `gate5_runtime_binding`; authored none of the reviewed test, implementation, diagnosis, or retained evidence.
+- Exact root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T062426Z-06802406ea/package.json`.
+- Reviewed reconstructible source over base/head `4f4f7edb2835fe938cd8344dbc57c1b4a6669966`: candidate source `3b96306d98083346299e66d92d862cdbb1a6e4a3bfc94a476d84a95d67381835`, executable source `80c23047b763aa413e71ac19b90c979f24b17c995a3f035c79b1b6e868fd0b34`.
+- Snapshot patch SHA-256: `af57280294d7655023f6770d5836e77473257e5b1fd3e2586be5d3eb4637ad2d`; verification plan SHA-256: `137d1a6f244417a959ea4056c4fe6ee02b5fc8b733304fb85e0e02a598091a5b`.
+- Controlling test review: `reviews/tests/YII2-DISPOSABLE-RESTORE-REHEARSAL-001.md`, section “Streamed volume input attachment — narrow Gate 3 review,” verdict `APPROVED`.
+
+### Assessment
+
+No findings.
+
+The retained operational failure precisely diagnoses detached container stdin: a valid 10,240-byte bundle archive reached `StandProcess`, but the container-side staging archive was zero bytes and validation stopped before restart/publication. The one-line production delta adds Docker's `-i` flag to the sole payload-bearing `docker run` command in `ProductionStandRestoreDriver::volume()`. Because that method is used for both artifact and session materialization, both archive streams now remain attached through the already established `StandProcess::run(..., $bytes)` boundary.
+
+No payload count, authorization, target attestation, process adapter, staging path, archive validation, symlink/path rejection, hash/mode verification, fsync/rename sequence, restart order, evidence check, ambiguity handling, or publication protocol changes. The only argv semantic change is the required stdin attachment; image, mounts, environment, shell script, and payload bytes remain unchanged. The injected test proves exactly two nonempty-stdin volume commands and requires `-i` on each.
+
+Four fresh records are GREEN and start/end bound to candidate `3b96306d98083346299e66d92d862cdbb1a6e4a3bfc94a476d84a95d67381835` / executable source `80c23047b763aa413e71ac19b90c979f24b17c995a3f035c79b1b6e868fd0b34`: process boundary `178936705305...`, driver `178936705462...`, failure behavior `178936705625...`, and roundtrip observer `178936706498...`. `git diff --check` is clean.
+
+Harness reports `action_authorized: false`, PR/CI `UNKNOWN`, deployment `UNKNOWN`, and `merge_ready: false`. The destructive roundtrip was not rerun during this review. The earlier partial authorized attempt remains retained evidence, not GREEN proof; a future destructive rerun requires separate explicit authorization.
+
+### Controlling verdict
+
+`APPROVED`
+
+Gate 5 passes for the narrow streamed-volume stdin correction at exact candidate source `3b96306d98083346299e66d92d862cdbb1a6e4a3bfc94a476d84a95d67381835`. Root must preserve the reviewed driver, test, and review bytes when recording or publishing the next candidate. This review authorizes no destructive rerun, CI, publication, merge, deployment, or cutover.
