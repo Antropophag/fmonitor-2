@@ -313,6 +313,8 @@ try {
                 'fm2_checklist_revisions',
                 'fm2_checklist_template_associations',
                 'fm2_checklist_template_snapshots',
+                'fm2_feedback',
+                'fm2_feedback_results',
                 'fm2_installation_cases',
                 'fm2_job_events',
                 'fm2_jobs',

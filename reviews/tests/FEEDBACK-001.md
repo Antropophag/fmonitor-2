@@ -72,3 +72,19 @@ The test delta is approved for the executor's bounded UI correction. Any further
 None. The earlier test measured the textarea's own box and could pass while an ancestor with clipped overflow exposed only a one-line strip. The correction intersects the textarea rectangle with every scrolling or clipping ancestor and requires at least 96px of visible vertical content. It applies through the existing ordinary and admin journeys at both 360px and 1280px, so it covers every description/result textarea already exercised. The expected visible height is unchanged; the delta closes a false GREEN in the oracle and reproduces the observed defect for the intended reason without prescribing a CSS fix.
 
 This test delta is approved. The executor may correct the feedback-local wrapper geometry; any further test or expectation change requires another independent Gate 3 delta review.
+
+## Post-CI test-delta review — 2026-09-14
+
+- Reviewed source: checkpoint/reconstruction base `cf0ba05b9f70251ef87bbd6da7ba733643942802` plus retained package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T192108Z-0a387d2c17/package.json`; candidate source `a71000454186c028fcadc4527d4119fb2ef9b34cf9d048605f709187d9af99e0`; snapshot patch SHA-256 `061e9a6ff6b782818ab2879e3bd240e0e1967f9aa7320c7c1b8bd0f6d614b648`; delta patch SHA-256 `450e9316f36e45c920ae122f7988aab8b4aba4d9318f43407b222e22c2f9884e`
+- Scope: six test-only corrections after exact-source CI run `34884408428`; no production, normative specification, CI workflow, planner, or harness change is included in this verdict.
+- Failed-run evidence: complete failed-job and `REGRESSION_FAILURE` inventory `/Users/antropophag/.local/share/fmonitor-2/issue-31/ci-34884408428-failure-inventory.json` was inspected. The test changes correspond to the five stale direct-consumer expectations and the activation-proxy ordering failure; `verify` and Quality Graph were aggregate failures.
+- Focused evidence: process readiness `1789413508559339000-57d9a1d1c5fd47b7b9a761c919b00579`; schema readiness `1789413508569686000-95215f46685a48eabd982b4f33b1b2e2`; workforce catalogue `1789413508563225000-d083521c4cec4d32ba5ad1afcee3f3ae`; public web asset contract `1789413508586065000-4e4018caffc54c49ab38fa088562cff9`; verification composition `1789413508585658000-ff7178db67164bb3957e06ae7cf9aa1d`; activation proxy `1789413634604893000-ce2e5593f3b946b7b13ff5daf95c1ef5`. All six are GREEN for the corrected source. The package also retains current owner/browser GREEN.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The workforce inventory adds exactly the two canonical v25 feedback tables; both readiness fixtures advance only their current terminal schema literal from 24 to 25; the asset contract updates the exact hash for the already independently reviewed CSS bytes; and the verification composition adds the already registered feedback browser test to the literal e2e command list. These changes reconcile direct consumers with delivered behavior and preserve their exact-list/hash sensitivity.
+
+The activation-proxy change also preserves its privacy and operational contract. Baseline and current reproductions show that concurrent nginx workers can emit the same three completed access records in different orders. Comparing the exact sorted `(method, uri)` multiset removes only the unsupported ordering assumption; the test still requires exactly three records, the precise route multiplicities, status and upstream status, valid timing fields, three distinct request IDs, and absence of every prohibited request field. No behavior expectation is weakened.
+
+The six-file post-CI test delta is approved. The failed CI run remains historical failure evidence; a new exact-source CI result is still required before publication readiness can be claimed.
