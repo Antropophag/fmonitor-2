@@ -76,3 +76,55 @@ of the production runbook otherwise align with the spec and mapped evidence.
 case to the appropriate correction gates, regenerate exact-source RED/GREEN
 evidence and package, then request a new independent Gate 5 review. Do not publish,
 merge or deploy this candidate.
+
+---
+
+## Correction review — 2026-09-14
+
+- Reviewer independence unchanged; no reviewed code, test or specification was authored by this reviewer.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T140633Z-4f872ebc73/package.json`
+- Reviewed commit: `b9f2dd9b1fe43a7496a887977cbcb46452d3ca1f`
+- Candidate source: `243646a634b313bcc886164651ea6c633106f25441ddeb82383032e71d73208d`
+- Executable source: `8c3264348f7449f4bb42632f7206b62391d013737fe022596c335f7c94a87e92`
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T140633Z-4f872ebc73/verification-plan.json`
+- Verification plan SHA-256: `df361005f179cced4e000bbdfb352acc8e9d9b2cfc73b3176e4a27408552d592`
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Resolved.** `tools/delivery/local-runtime-env` reads the file line-by-line
+   without evaluating Make or shell syntax, centralizes the required schema, and
+   substitutes selected argv values as array elements. Make no longer includes the
+   dotenv file or embeds its secret values. The adversarial test proves a literal
+   Make function is neither executed nor disclosed and arrives unchanged.
+2. **Resolved.** The helper rejects tokenized `prod`, `production`, `stage`,
+   `staging`, and `live` identities before command execution; focused tests cover
+   `fm2-local-prod` and `fm2-local-production` with an empty effect trace.
+
+The exact-source package is coherent and all six mapped records are GREEN.
+
+### Remaining finding
+
+1. **MEDIUM — invalid or missing `.env` is misreported as Docker unavailable by
+   `make up`.** The rejected-case contract at
+   `specs/YII2-LOCAL-QUICKSTART-001.md:45` requires `LOCAL_CONFIG_INVALID` for a
+   missing/invalid input and separately reserves `LOCAL_DOCKER_UNAVAILABLE` for an
+   unavailable Docker/Compose boundary. At `Makefile:31`, the helper and
+   `docker info` are one command whose complete output is redirected; the `||`
+   handler maps *any* helper failure to `LOCAL_DOCKER_UNAVAILABLE` and exit 69.
+   A bounded invocation with no `.env` produced only
+   `LOCAL_DOCKER_UNAVAILABLE` (Make exit 2), suppressing the helper's intended
+   `LOCAL_CONFIG_INVALID`/64. Validate independently before the Docker probe, or
+   preserve and classify the helper exit, and assert the exact diagnostic for
+   missing/invalid configuration versus actual Docker failure.
+
+No other correction finding was observed. The helper is Bash-3-compatible in the
+reviewed constructs, preserves literal metacharacters through argv/environment,
+and bounds reset before executing Compose. PR, CI and deployment remain `UNKNOWN`.
+No Docker/reset/publication/merge/deployment action was performed.
+
+### Correction decision
+
+`CHANGES_REQUESTED`. Correct the error-classification ordering in `make up`, add
+the focused negative assertion, regenerate exact-source evidence/package, and
+return for a final bounded Gate 5 correction review.
