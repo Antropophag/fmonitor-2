@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,10 +21,23 @@ def load(name, path):
 
 
 class DeliveryHarnessCiCompleteness(unittest.TestCase):
+    @staticmethod
+    def cleanup_fixture(path):
+        for attempt in range(10):
+            try:
+                shutil.rmtree(path)
+                return
+            except FileNotFoundError:
+                return
+            except OSError:
+                if attempt == 9:
+                    raise
+                time.sleep(0.05)
+
     def fixture_repo(self):
-        temporary = tempfile.TemporaryDirectory(prefix='fmonitor-ci-complete-repo-')
-        self.addCleanup(temporary.cleanup)
-        repo = Path(temporary.name) / 'repo'
+        temporary = Path(tempfile.mkdtemp(prefix='fmonitor-ci-complete-repo-'))
+        self.addCleanup(self.cleanup_fixture, temporary)
+        repo = temporary / 'repo'
         repo.mkdir()
         for name in ['tools/delivery', 'tools/verification', '.quality-graph', '.codex',
                      'specs', 'tests/Verification', 'deploy/runtime', 'openspec/changes']:
@@ -41,7 +55,7 @@ class DeliveryHarnessCiCompleteness(unittest.TestCase):
         subprocess.run(['git', 'commit', '-qm', 'fixture base'], cwd=repo, check=True)
         base = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=repo, check=True,
                               text=True, capture_output=True).stdout.strip()
-        evidence = Path(temporary.name) / 'evidence'
+        evidence = temporary / 'evidence'
         environment = dict(os.environ, FMONITOR_HARNESS_HOME=str(evidence))
         return repo, base, evidence, environment
 
