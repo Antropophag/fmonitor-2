@@ -425,4 +425,6 @@ unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php
 db	php	tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php
 unit	python3	tests/Architecture/yii2_local_quickstart_boundary_001_test.py
 e2e	python3	tests/Deployment/yii2_local_quickstart_001_test.py
+e2e	python3	tests/Deployment/yii2_local_quickstart_real_001_test.py
 unit	python3	tests/Verification/yii2_local_quickstart_docs_001_test.py
+db	php	tests/Yii2/yii2_local_runtime_provisioning_001_test.php
