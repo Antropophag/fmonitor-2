@@ -167,3 +167,36 @@ Architecture record `1789415237904493000-1e662c6c620249e3879b6e441f25cc2a.json` 
 **APPROVED**
 
 Gate 5 approves the owner-corrected narrow local Yii2 implementation at exact candidate source `a752f9012851a882e681fa6c533ffc2e5fc94261aca278379258fe7f98d7cbc8`. Publication still requires the separately mandated exact-source Quality Graph CI GREEN; deployment remains outside this change.
+
+---
+
+## Post-rebase exact-source Gate 5 confirmation — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T195549Z-000139c27f/package.json`
+- Rebased HEAD: `c448fe43af239e6c09b9b12812ca8d7591234f93`
+- Exact candidate source: `354d6d2a818db72fe0f0d2b621d527198543758e6e1faf929ad16c3fb93ec1c7`
+- Exact executable source: `5f724b14b23ab955a4c7aea5a963ce9f62f4a98c0d80f17c9be0c316652e7fc6`
+- Snapshot patch: empty committed-source patch, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `7987a16fd434ee13a87be13b1152a7cb49e57f4ca4c555bfe0ed14b6c09a5348`
+- Verdict: **APPROVED**
+
+### Delta confirmation
+
+No issue #40 production, normative specification, OpenSpec behavior, verification input, or executable test byte changed from the owner-corrected narrow snapshot approved immediately above. Comparing the two plans' `bindings.actual_content` maps yields identical hashes for every shared issue #40 source; the only changed shared paths are append-only delivery metadata (`openspec/.../tasks.md` and this review). `MariaDbConfirmedOriginalOpening.php` is absent from the new actual-delta map because the rebase incorporated it into the new upstream base, but its current SHA-256 `f149e6e3e31ba5b194e6d9978ba4e3b4c93c095a0715ed1dd9472e011a7c2486` exactly matches the prior approved snapshot. The rebase therefore introduces no behavioral delta requiring reranking or a new finding.
+
+The worktree/package is clean and reconstructible at `c448fe43`; `git diff --check` is clean. Six focused commands were rerun and are GREEN with `source_drift=false`, all bound to candidate source `354d6d2a818db72fe0f0d2b621d527198543758e6e1faf929ad16c3fb93ec1c7` and executable source `5f724b14b23ab955a4c7aea5a963ce9f62f4a98c0d80f17c9be0c316652e7fc6`:
+
+- `1789415609625170000-09264ea96bc84f77a13e9ae9f69f3694.json`
+- `1789415619035365000-5fe937723cc543239bdbb1905602042f.json`
+- `1789415632763358000-241e3960c8014ac7b3a9ea52d51f5566.json`
+- `1789415641564288000-68b95addfb73461eb97cf8f930953672.json`
+- `1789415650511328000-7a36ff4357c84abc8bac2be9dd63c0bc.json`
+- `1789415667021681000-17b33d27d62e4c60915758d2a80c6058.json`
+
+Architecture record `1789415679928020000-24909247f5bc4123992d75494c3a7898.json` is GREEN at the same exact source and reports the PilotHttp global-call qualification plus all seven architecture rules passing.
+
+### Exact-source verdict
+
+**APPROVED**
+
+The prior narrow Gate 5 approval carries forward to exact post-rebase source `354d6d2a818db72fe0f0d2b621d527198543758e6e1faf929ad16c3fb93ec1c7`. Exact-source GitHub CI and deployment remain separate; neither is implied by this confirmation.
