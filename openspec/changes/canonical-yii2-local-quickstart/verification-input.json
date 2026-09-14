@@ -11,6 +11,7 @@
     "specs/YII2-LOCAL-QUICKSTART-001.md",
     "tests/Deployment/yii2_local_quickstart_001_test.py",
     "tests/Architecture/yii2_local_quickstart_boundary_001_test.py",
+    "tests/Verification/yii2_local_quickstart_docs_001_test.py",
     "tests/Verification/development_setup_001_test.py",
     "tests/Verification/verification_ci_001_test.py",
     "tools/verification/categories.json",
@@ -29,7 +30,7 @@
       "acceptance_id": "A5-operational-separation",
       "spec_path": "specs/YII2-LOCAL-QUICKSTART-001.md",
       "seam": "canonical local documentation points to make quickstart while production runbook and low-level commands remain intact",
-      "tests": ["tests/Verification/development_setup_001_test.py", "tests/Verification/verification_ci_001_test.py"]
+      "tests": ["tests/Verification/yii2_local_quickstart_docs_001_test.py"]
     }
   ]
 }

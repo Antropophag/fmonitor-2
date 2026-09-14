@@ -424,5 +424,6 @@
   "tests/Runtime/yii2_production_web_cutover_architecture_001_test.php": "unit",
   "tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php": "integration",
   "tests/Architecture/yii2_local_quickstart_boundary_001_test.py": "unit",
-  "tests/Deployment/yii2_local_quickstart_001_test.py": "e2e"
+  "tests/Deployment/yii2_local_quickstart_001_test.py": "e2e",
+  "tests/Verification/yii2_local_quickstart_docs_001_test.py": "unit"
 }
