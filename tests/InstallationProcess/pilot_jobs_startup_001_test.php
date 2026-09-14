@@ -33,7 +33,7 @@ try{
         assertSameValue(false,str_contains(json_encode($service,JSON_THROW_ON_ERROR),'/tmp/workforce-ready'),$serviceName.' has no stale file readiness');
         $commands[$mode]=$service['entrypoint'];
     }
-    $make=file_get_contents($root.'/Makefile')?:'';assertSameValue(true,(bool)preg_match('/\$\(COMPOSE\) up --detach --wait --no-deps --force-recreate workforce-sync workforce-scheduler/',$make),'make up waits for worker and scheduler together');
+    $make=file_get_contents($root.'/Makefile')?:'';assertSameValue(false,str_contains($make,'up --detach --wait --no-deps --force-recreate workforce-sync workforce-scheduler'),'canonical make up does not start legacy pilot jobs');
 
     $config=$tmp.'/config.json';file_put_contents($config,json_encode(['baseUrl'=>'https://example.invalid/rest/7/FIXTURE_TOKEN_123/','departments'=>[72,71]],JSON_THROW_ON_ERROR));
     file_put_contents($tmp.'/state/pilot-demo/one/active.json',json_encode(['state'=>'ready','processPrefix'=>'pilot_'],JSON_THROW_ON_ERROR));

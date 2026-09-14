@@ -17,15 +17,15 @@ $check = static function (bool $condition, string $message): void {
 
 preg_match('/^up:\s*\n(?<recipe>(?:\t.*\n)+)/m', $makefile, $up);
 $check(isset($up['recipe']), 'make up target is missing');
-$check(str_contains($up['recipe'], 'fmonitor2-prepare-bitrix-config.php'), 'make up does not prepare explicit Bitrix configuration');
-$check(str_contains($up['recipe'], '$(COMPOSE) up --detach --wait'), 'make up does not start the complete stack after preparation');
+$check(str_contains($up['recipe'], 'deploy/runtime/compose.yaml') || str_contains($up['recipe'], 'RUNTIME_COMPOSE'), 'make up does not own canonical Yii2 runtime');
+$check(!str_contains($up['recipe'], 'fmonitor2-prepare-bitrix-config.php'), 'canonical make up still prepares legacy Bitrix configuration');
 $check(!str_contains($makefile, '../fmonitor'), 'deployment still depends on sibling legacy checkout');
 $check(!str_contains($makefile, 'export-legacy-bitrix-secret.php'), 'deployment still invokes the legacy Bitrix exporter');
 $check(str_contains($makefile, 'import-production:'), 'production import command is missing');
 $check(str_contains($makefile, '--env-from-file .env'), 'production import does not pass .env without Make interpolation');
 $check(!str_contains($makefile, '-include .env'), 'production secrets must not be parsed as Make syntax');
 $check(str_contains($makefile, 'TCP4-LISTEN:23306,bind=127.0.0.1'), 'one-off production importer cannot reach scripts using the local pilot DB endpoint');
-$check(str_contains($envExample, 'FMONITOR_SOURCE_USER=replace_with_read_only_user'), 'production env template is missing safe credential placeholders');
+$check(!str_contains($envExample, 'FMONITOR_BITRIX_WEBHOOK_URL'), 'canonical local env still requires legacy Bitrix credentials');
 $check(!str_contains($envExample, 'FMONITOR_SOURCE_PASSWORD=<'), 'production env template must not contain a real password');
 $check(str_contains($makefile, 'initialize-native-only.php'), 'production import does not use the guarded initializer');
 $check(!str_contains($compose, 'profiles: ["bitrix"]'), 'Bitrix sync remains opt-in instead of part of standard startup');
