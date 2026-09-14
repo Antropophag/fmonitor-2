@@ -142,3 +142,33 @@ All retained records match source `bea089f37c659431e6034a195b9fae0fd9cdf275abc00
 `APPROVED`
 
 Gate 4 may proceed against this exact reviewed specification/test package. Refresh the executor package so implementation is bound to this source. This approval authorizes neither a real disposable run nor reset/deployment of any existing stand.
+
+---
+
+## Post-approval lazy fault-marker correction — 2026-09-14
+
+- Reviewer independence unchanged; the executor was interrupted and its production WIP is excluded from this review.
+- Corrected clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T130552Z-8bfe56c0dc/package.json`
+- Reviewed commit: `989336e42e620b99a917da5068f45b1cac384411`
+- Candidate source: `be0874e9f53747acc0bb6a8ef12c7e9da20ba3e2bfe63631f42e3c240eb4987b`
+- Executable source: `cac999f06f0b918b701c6ddca150fd236449b730328e299a943a6dff97c822ca`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `bc8c0739e8945629074294fb690805798ec23bfc9121713e5d7fd6c549ee72ee`
+- Corrected test SHA-256: `25ada153f82aeb4175c8f51fce63414aa1aa0dd4b737cfa7314f97d330a87d99`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The delta from the approved package is exactly one semantic correction in `tests/Deployment/yii2_local_quickstart_001_test.py`: fault-marker selection now uses a lazy conditional for `live`/`ready` instead of `dict.get`, whose fallback expression was eagerly indexed for every stage. The selected marker strings and the previously approved failure-order assertion are unchanged. This removes the latent `KeyError` after implementation without weakening or broadening the acceptance matrix.
+
+Regenerated evidence is coherent and bound to the corrected clean source. Architecture, Make lifecycle, DB provisioning and docs remain honest `INTENDED_RED` for missing production behavior; initial-owner remains GREEN; the real-Docker no-authorization path remains GREEN without Docker effects. The lifecycle RED now stops on legacy `make up` routing (`fmonitor2-pilot` rejected by the corrected fake), not on the repaired fault-marker expression or test setup.
+
+### Findings
+
+None.
+
+### Correction verdict
+
+`APPROVED`
+
+Gate 4 may resume only against commit `989336e42e620b99a917da5068f45b1cac384411` plus the already reviewed contract. The preserved production WIP requires its own eventual Gate 5 review; this correction approves no implementation, Docker action, reset, CI, PR, or deployment.
