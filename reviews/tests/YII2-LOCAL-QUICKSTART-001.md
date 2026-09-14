@@ -264,3 +264,33 @@ None.
 `APPROVED`
 
 Gate 4 may resume against clean baseline `a4036253ef3e9a48c7dae29a48b2e7a9dfa615a0`. This approval covers only verification inventory alignment; it does not review production WIP or authorize Docker, reset, CI, PR, or deployment actions.
+
+---
+
+## Post-approval disposable-prefix correction — 2026-09-14
+
+- Reviewer independence unchanged; production WIP is excluded.
+- Clean baseline package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T132651Z-4f218b9c6a/package.json`
+- Reviewed commit: `dae3ab1b2ac1ca4e1344f05af98e9682ab4bacf8` over `a4036253ef3e9a48c7dae29a48b2e7a9dfa615a0`
+- Candidate source: `39981160a011335242ce0778b3e7532d827514e536d10c91838e76d0f0064688`
+- Executable source: `0bde65d693e4cfc4deb91530a5461ef08b092d97242ad9d1a09d27d52fc62f08`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `708ace2f7b332b0e8b38f8d974b46795784f793063013829de3e64e7bc12bad6`
+- Corrected test SHA-256: `aef4d99de47b26b7bc4f21bdab4f2118a5242b343c7b3af11d0b69f91bff51ce`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The isolated delta changes exactly one admission prefix in the authorization-gated real acceptance test, from `fm2-quickstart-test-` to `fm2-local-quickstart-test-`. The corrected prefix is a strict subset of the normative `fm2-local-<name>` identity accepted by the Make validation and is consistent with the specification's `fm2-local-*` examples. It does not broaden the destructive target boundary to production-like or ambiguous names; all existing source, project, port, mode-`0600`, expected-absence and explicit-reset authorization checks remain intact.
+
+The reported prior attempt stopped at the contradictory pre-effect validation mismatch. This correction changes only that admission inconsistency; no Docker lifecycle assertion or acceptance semantic changed. Package hashes and regenerated mapped evidence are coherent with the isolated clean source.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+The real disposable acceptance may be retried only with its existing explicit authorization package and the corrected exact source. This review does not approve production WIP, any existing stand, CI, PR, or deployment.
