@@ -82,17 +82,25 @@ $operation=json_decode(is_string($decoded)?$decoded:'',true,16,JSON_THROW_ON_ERR
 } else{if(preg_match('#^application/json(?:;\s*charset=UTF-8)?$#iD',(string)$request->contentType)!==1)return$this->json(400,['status'=>'rejected']);
 $operation=json_decode($body,true,16,JSON_THROW_ON_ERROR);
 }if(!is_array($operation))return$this->json(400,['status'=>'rejected']);
+$actor=$this->actor();
+$owner=$this->owner();
+$access=$owner->access($actor,$id);
+if(!($access['exists']??false))return$this->json(404,['status'=>'rejected']);
+if(!($access['read']??false))return$this->json(403,['status'=>'rejected']);
+if(($operation['itemId']??null)===42&&!($access['itemComplete']??false))return$this->json(403,['status'=>'rejected']);
 if(($operation['itemId']??null)===42)return$this->json(409,['status'=>'rejected','message'=>'Последние 15% закрываются актом ПТО и декларацией в карточке объекта.']);
 $recording=null;
 if(($operation['type']??null)==='item_completed'){
     $resources=new PreopeningResources(Yii::$app->db);
     $composition=AssignmentOrderApplicationReaderFactory::create($resources->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'))->readCurrent($id);
     $recording=ProductionInspectionEvidenceFactory::create($resources->db,new ProductionInspectionEvidenceConfig((string)getenv('FMONITOR_PROCESS_TABLE_PREFIX')),null,$composition->status==='found'?$composition->value:null);
+    $owner=$this->owner($recording);
 }
-$owner=$this->owner($recording);
-$result=$owner->accept($id,$this->actor(),$operation,$photo?$body:null);
+$result=$owner->accept($id,$actor,$operation,$photo?$body:null);
 if($result['status']==='not_found')return$this->json(404,['status'=>'rejected']);
 if($result['status']==='forbidden')return$this->json(403,['status'=>'rejected']);
+$access=$owner->access($actor,$id);
+if(!($access['read']??false))return$this->json(403,['status'=>'rejected']);
 $result['projection']=$owner->projection($id);
 $status=in_array($result['status'],['accepted','duplicate'],true)?200:($result['status']==='conflict'?409:422);
 return$this->json($status,$result);

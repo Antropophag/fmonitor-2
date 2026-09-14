@@ -1,0 +1,14 @@
+{
+  "change": "checklist-http-authorization-130",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/InspectionEvidence/MariaDbYiiChecklistMutation.php"
+  ],
+  "acceptances": [{
+    "spec_id": "CHECKLIST-HTTP-AUTHORIZATION-001",
+    "acceptance_id": "A1-A6",
+    "spec_path": "specs/CHECKLIST-HTTP-AUTHORIZATION-001.md",
+    "seam": "real Yii HTTP checklist operations and photos",
+    "tests": ["tests/Yii2/yii2_inspection_journey_001_test.php"]
+  }]
+}
