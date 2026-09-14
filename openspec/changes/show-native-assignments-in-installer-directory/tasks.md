@@ -13,5 +13,5 @@
 ## 3. Review and delivery
 
 - [x] 3.1 Obtain independent Gate 5 review of exact source and corrections.
-- [ ] 3.2 Run one exact-source GitHub CI matrix and inspect the complete failure inventory.
-- [ ] 3.3 Record PR-ready source, authorship, review and CI evidence.
+- [x] 3.2 Run one exact-source GitHub CI matrix and inspect the complete failure inventory.
+- [x] 3.3 Record PR-ready source, authorship, review and CI evidence.

@@ -19,4 +19,11 @@
 - Focused GREEN: native end-to-end regression, existing directory HTTP, 16 change
   verification tests, 59 architecture guard tests, runtime storage, strict OpenSpec
   validation and diff check. Exact final source evidence is refreshed after records.
-- Final source snapshot, PR and CI: pending; `UNKNOWN` is not approval/GREEN.
+- Production/test checkpoint: commit `3f74db2d2ddaca3916b2ce0e205461994bbf3cf3`.
+- PR: [#144](https://github.com/Antropophag/fmonitor-2/pull/144).
+- Exact-source CI run `34898211621`: GREEN (`plan`, `governance`, `fast`, `unit`,
+  `e2e`, Integration 1/2, Integration 2/2, `verify`, `quality-results`); failed-job
+  and `REGRESSION_FAILURE` inventory empty. `harness` job is intentionally skipped
+  by workflow selection, not treated as a failed check.
+- Delivery state: PR-ready; merge/deployment remain outside this assignment and
+  therefore `UNKNOWN` until separately performed.
