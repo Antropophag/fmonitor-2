@@ -109,3 +109,26 @@ Record `1789370497634458000-8493001ace4f42f7aa8b8ba049c7c59b` is clean `INTENDED
 `APPROVED`
 
 The implementation correction may proceed against this exact regression. The corrected durability suite and complete focused plan must be GREEN on the new exact source before independent Gate 5 rereview. CI and deployment remain `UNKNOWN`; this approval does not authorize reconciliation, rollback, or live stand mutation.
+
+---
+
+## Post-Gate 5 canonical compose-service regression review — 2026-09-14
+
+- Scope: only `test_production_attestation_uses_canonical_compose_database_service` in `tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py:9-12`.
+- Exact test source: candidate `614910d0a0593d3ac726e957bbae91683f98528393513bf8062849ddf54df58c`, executable source `c969901589c83b4d7c8baa12f4100180332e0fa7033ebdbcf6ab35ccdc247d90`.
+- Retained record: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789371132656377000-919df5539f6441b2903adf1077ee6404.json`.
+- Reviewer independence is unchanged. No live command or stand mutation was performed.
+
+### Assessment
+
+No findings. `deploy/runtime/compose.yaml` canonically declares the MariaDB service as `db`; `database` is the named volume, not a service. Production reconciliation attestation currently executes `docker compose ... ps -q database`, so a correct disposable target can never yield the required database container identity and the read-only preflight necessarily fails closed. The regression directly distinguishes the faulty and corrected argv by requiring `ps -q db` and forbidding `ps -q database` in the reconciliation owner.
+
+For this narrow literal topology defect, the architecture assertion is proportionate: it neither invokes Docker nor touches a stand, and it fixes no domain behavior beyond using the repository-owned canonical service name for identity observation. Existing behavioral tests continue to own target/authorization equality, production-overlap rejection, zero effects, and replay semantics; this guard prevents the production adapter from drifting from the checked-in compose topology.
+
+Record `1789371132656377000-919df5539f6441b2903adf1077ee6404` is clean `INTENDED_RED`, with matching start/end candidate source `614910d0a0593d3ac726e957bbae91683f98528393513bf8062849ddf54df58c` and executable source `c969901589c83b4d7c8baa12f4100180332e0fa7033ebdbcf6ab35ccdc247d90`. It fails on the exact stale `database` service literal present in `StandRestoreReconciliation`, not on environment or live Docker availability.
+
+### Test-delta verdict
+
+`APPROVED`
+
+The one-token production-attestation correction may proceed against this regression. The architecture suite and complete focused plan must be GREEN on the corrected exact source before independent Gate 5 rereview. CI and deployment remain `UNKNOWN`; this verdict authorizes no reconciliation, rollback, or live stand operation.

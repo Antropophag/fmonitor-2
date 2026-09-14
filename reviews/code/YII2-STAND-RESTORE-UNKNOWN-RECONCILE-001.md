@@ -54,3 +54,25 @@ Harness state still reports `action_authorized: false`, PR/CI/deployment `UNKNOW
 `APPROVED`
 
 Gate 5 passes for exact corrected source `7764bd5efbfcd2a09609a17db5829ed26b7248130bd5a17abf2fca292228653c`. This approval covers the repository implementation and focused evidence only. It grants no authority to reconcile the real UNKNOWN operation, prepare or execute rollback, deploy, publish, or perform any generic unlock; those remain separately gated and currently UNKNOWN/not authorized.
+
+---
+
+## Canonical compose-service correction rereview — 2026-09-14
+
+- Scope: only the production attestation correction from `docker compose ... ps -q database` to the canonical service `docker compose ... ps -q db` in `app/RuntimeRestore/StandRestoreReconciliation.php`.
+- Exact corrected source: candidate `fc0a9d745f1eacf60c04d40b322ed13c872c1ee62403d32cfba89bf96e9efc59`, executable source `979a5cf639982737fb6e00fe174672080504384d602da6067c05a9563f2002be`.
+- Independence is unchanged; this reviewer authored neither the production correction, defect-specific RED, Gate 3 approval, nor retained GREEN evidence.
+
+### Assessment
+
+No findings. `deploy/runtime/compose.yaml` declares the MariaDB service as `db`; `database` names its volume. The production attestor now queries the actual service while leaving the existing project/file pinning, observed container/project/network/volume comparison, fail-closed behavior, replay admission, and application ownership unchanged. The correction performs no state-changing Docker action.
+
+The independently approved regression requires the canonical `ps -q db` argv and rejects the stale `ps -q database` literal. It is GREEN at the reviewed bytes. The executor-supplied focused records for architecture (`1789371251295574000-00c303ee93e54c88863876f0d369dd79`), console (`1789371254172483000-96a6716fc2184d06a80f6728c1e783a0`), valid reconciliation (`1789371256114280000-94e6e5868323400cacfc83f903518bcc`), durability (`1789371259139125000-2997a69f740f4ad9a417f50f7ec52062`), rejection (`1789371264317910000-19ff629b1f624f8bbf02a312852f7a4b`), change verification (`1789371272278823000-2bc619c3ce614f078a910372d8408eb6`), and architecture guard (`1789371294463450000-d261bac2838b4ceeb53524bb33cec054`) are all `GREEN` and bind candidate `fc0a9d745f1eacf60c04d40b322ed13c872c1ee62403d32cfba89bf96e9efc59` plus executable source `979a5cf639982737fb6e00fe174672080504384d602da6067c05a9563f2002be`.
+
+Harness state continues to report `action_authorized: false`, CI/deployment `UNKNOWN`, and no publication readiness. This rereview inspected repository and retained evidence only; it did not query or mutate the real stand, UNKNOWN ledger, retained lease, rollback state, deployment, or neighbors.
+
+### Controlling narrow verdict
+
+`APPROVED`
+
+Gate 5 passes for the canonical service correction at exact source `fc0a9d745f1eacf60c04d40b322ed13c872c1ee62403d32cfba89bf96e9efc59`. The preceding complete Gate 5 approval remains controlling for the rest of the slice. This verdict grants no reconciliation, rollback, deployment, publication, or generic-unlock authority.
