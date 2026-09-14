@@ -324,3 +324,37 @@ None.
 `APPROVED`
 
 The authorization-gated disposable acceptance may be retried on this exact corrected source. This review does not approve production WIP, an existing stand, CI, PR, or deployment.
+
+---
+
+## Gate 3 security-correction review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed the new Gate 2 delta after Gate 5 return.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T134739Z-197e9d0097/package.json`
+- Reviewed commit: `68338f688564fe3b6ebdd788cc2ccb220c24e242`
+- Candidate source: `f2be80fbf4c3b11b325e75fa932d884b72d32b94c2ff5418916d9405763a1d21`
+- Executable source: `903959fcb55bf87e963dac4a52c47c67f0c827776d1018e77178a502471373f2`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `14a9d1bf6163e48bc47d98b04c3d04ea07883ab79ca3321e53b7f304c6f9fc31`
+- Security test SHA-256: `32c9880e7cd3e15cf6e4e184e706cbcca2b5c60fc1fb018b62c20ce96c1f7252`
+- Verdict: `CHANGES_REQUESTED`
+
+### Assessment
+
+The new RED is correctly traceable to the existing A1/A4 security contract. The literal `$(shell touch ...)` is valid adversarial evidence for the current unsafe Make inclusion boundary; retained execution fails as intended with `DOTENV_EXECUTED_AS_MAKE`. Its digest assertion is independently derived and would detect value evaluation/mutation before the Docker observation. The added `fm2-local-production` and `fm2-local-prod` cases exercise the previously missed syntactically valid production-like namespace for both `up` and destructive `reset`, with an empty external trace on rejection. Planning a non-evaluating `tools/delivery/local-runtime-env.php` boundary is consistent with the returned finding and does not itself approve an implementation.
+
+One sensitivity gap remains in the new security assertion.
+
+### Finding
+
+1. **HIGH — the adversarial secret may be disclosed verbatim and the test still passes.** Location: `tests/Deployment/yii2_local_quickstart_001_test.py:59`; contract `specs/YII2-LOCAL-QUICKSTART-001.md:45,54`. The new case checks non-execution and the SHA-256 delivered to the fake Docker, but never checks `literal_run.stdout`, `literal_run.stderr`, or the trace for the literal value. The earlier secret loop covers only `db-secret-contract`, `migration-secret-contract`, `owner-secret-contract`, and `hostile-secret`; it runs before this distinct payload. An implementation can parse the value literally, print `$(shell touch …)` during validation/debug output, pass the exact digest, and satisfy the test despite the explicit no-secret-output requirement and the Gate 5 correction request. Assert that the complete adversarial literal (and preferably its unique marker/path component) is absent from stdout, stderr and retained trace while the digest remains exact.
+
+### Evidence
+
+The mapped package outcomes are coherent: the security lifecycle command is `INTENDED_RED` solely at `DOTENV_EXECUTED_AS_MAKE`; architecture, real-Docker admission, DB provisioning, initial-owner and docs are GREEN. No Docker, reset, PR, CI or deployment action was performed by this review.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Return only this secret-disclosure assertion gap to Gate 2, regenerate exact-source evidence/package, and resubmit for bounded Gate 3 correction review. The non-evaluating env-helper implementation must not begin against this package.
