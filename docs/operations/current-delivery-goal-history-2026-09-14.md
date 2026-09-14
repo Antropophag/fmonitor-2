@@ -1,0 +1,159 @@
+# Текущая цель — №76 clean Yii2 stand cutover planning
+
+Owner decision 2026-09-14 заменяет restore-based closure на fresh provisioning и
+acceptance чистого Yii2 stand. Planning change:
+[`yii2-clean-stand-cutover`](../../openspec/changes/yii2-clean-stand-cutover/),
+рабочий checkout
+`/Users/antropophag/code/fmonitor-2-yii2-disposable-restore-76`, branch
+`codex/issue-76-disposable-restore-rehearsal`. Проверенный planning baseline —
+`origin/main` `f4dab7d6b576edc3bb6e9578a939e90b9a1f36ae`; production cutover и любые
+state-changing stand actions не разрешены. Restore rehearsal, UNKNOWN
+reconciliation и rollback больше не являются acceptance gates #76; их code,
+evidence и retained state сохраняются как история/offline compatibility.
+
+Следующий шаг после planning review — отдельный apply workflow: root-owned
+executable spec/RED, independent Gate 3, minimal delta только при честном gap,
+Gate 5 и verification. До отдельной authorization disposable deployment не
+выполняется.
+
+## Предыдущий указатель — история
+
+# №76 PHP/Yii2 stand backup console
+
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-backup-console-76`,
+branch `codex/yii2-stand-backup-console-76`, change
+`yii2-stand-backup-console`, base PR #113 head
+`404aa6858b8fdd61ac0e8151f09a67000a387ead`. Production seam — только
+`php bin/yii stand-backup/create|verify`, owner — `app/RuntimeRestore`.
+Gate 3 и Gate 5 APPROVED; 8/8 exact-source focused checks GREEN на reviewed
+candidate `59c95d2bc7935c038ca27d5cecdda3e2490c6b5b8f8c29bb53754304788f9b4a`.
+Следующий шаг — commit, stacked PR и один exact-source Quality Graph CI.
+Deployment/live backup не разрешены и остаются UNKNOWN. Связано #76/#115.
+
+## Предыдущий указатель — история
+
+# №76 production image cleanup
+
+Владелец 2026-09-13 поручил продолжить рефакторинг №76 после поставки PR108.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-console-retirement-76`,
+branch `codex/yii2-console-retirement-76-20260913`. Bounded slice
+`yii2-production-image-cleanup` удаляет каталог `rapid-pilot` и его build-time
+verifier только из production runtime image, сохраняя Yii2 HTTP/console contracts.
+
+[Контракт](../../specs/YII2-PRODUCTION-IMAGE-001.md),
+[OpenSpec](../../openspec/changes/yii2-production-image-cleanup/). Root пишет
+spec/tests; отдельный sol/low executor реализует; независимые sol/low reviewers
+решают Gates 3/5. Фактический source/PR/CI получать через harness. Demo oracle,
+pilot image, stand deployment и общий upgrade/rollback rehearsal не входят в срез.
+
+Gates 3/5 `APPROVED`; focused plan 6/6 GREEN на reviewed executable source
+`154c3fc09ac4a9462ec63f7287ca7a11ecd84fa5024f12c0926ae28c027ad922`.
+[Delivery record](yii2-production-image-cleanup-delivery-2026-09-13.md).
+Следующий шаг: отдельный commit/PR и один full exact-source Quality Graph CI;
+merge только при подтверждённом `VERIFY_OK`.
+
+# Предыдущий указатель — PR #103 до merge
+
+Владелец 2026-09-12 поручил исправить PR #103 и довести его до merge.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`;
+change `yii2-otiz-workflow`, spec `YII2-OTIZ-WORKFLOW-001`.
+Пять CI regression failures исправлены в fixtures/runtime delivery sequence;
+история и evidence — [delivery record](yii2-otiz-workflow-delivery-2026-09-12.md).
+Фактические source/PR/CI получать через `python3 tools/delivery/harness.py state`.
+Следующий шаг: независимые correction Gates 3/5, один full exact-source CI,
+merge при GREEN. Deployment остаётся `UNKNOWN` и не входит в поручение.
+
+# Предыдущий указатель — №76, workforce sync через Yii2 console
+
+Владелец 2026-09-12 поручил автономно довести следующий не-OTIZ срез №76 до PR merge-ready. Рабочий checkout: `/Users/antropophag/code/fmonitor-2-yii2-workforce-sync-76`, branch `codex/yii2-workforce-sync-76-20260912`.
+
+Срез переносит ручной workforce sync на `php bin/yii workforce-sync/run --interactive=0`, оставляет прежний entrypoint тонким alias и объединяет manual/jobs composition без изменения Bitrix/workforce domain owners. [Контракт](../../specs/YII2-WORKFORCE-SYNC-CONSOLE-001.md), [OpenSpec](../../openspec/changes/yii2-workforce-sync-console/), [delivery record](yii2-workforce-sync-console-delivery-2026-09-12.md).
+
+Gate 3 и Gate 5 APPROVED; focused checks GREEN. Кандидат — PR #101. Первый CI `34698699427` выявил четыре исправленные regression groups и один отдельно перепроверенный browser timeout; correction Gate 3/5 APPROVED. Фактические commit/PR/CI проверять через `python3 tools/delivery/harness.py state`. Новый exact-source CI требуется до merge-ready; stand/deployment и общий #76 этим срезом не закрываются. Параллельный OTIZ checkout и его WIP не затрагиваются.
+
+# Предыдущий указатель — история
+
+# Owner verification decision — 2026-09-11
+
+Локальные `make test` и `make verify` больше не запускать в delivery-задачах без
+нового прямого поручения владельца. Локально выполнять только bounded focused/fast
+checks; полный matrix выполняется один раз параллельным exact-source GitHub CI.
+Прерванный локальный запуск 2026-09-11 подтвердил чрезмерную последовательную
+стоимость и отдельно встретил недоступную PDF renderer dependency; повторный
+локальный full run не является способом исправления этой среды.
+
+# Текущая цель — №76, полный HTTP workflow ОТиЗ через Yii2
+
+Рабочий checkout: `/Users/antropophag/code/fmonitor-2-yii2-otiz-http-76`, branch
+`codex/yii2-otiz-http-76-20260912`. PR100 поставил case import в Yii2 console;
+этот независимый срез переносит calculate/accept/export, settlement adjacency,
+reconciliation/quarantine и historical reads в Yii2 web. Контракт и evidence:
+[`YII2-OTIZ-WORKFLOW-001`](../../specs/YII2-OTIZ-WORKFLOW-001.md),
+[`OpenSpec`](../../openspec/changes/yii2-otiz-workflow/),
+[`delivery record`](yii2-otiz-workflow-delivery-2026-09-12.md).
+
+Gate 3 APPROVED. Gate 4 focused/architecture checks GREEN. Следующий шаг —
+exact-source Gate 5, PR и один полный Quality Graph CI. Deployment остаётся
+UNKNOWN и не выполняется без отдельной авторизации.
+
+## Предыдущий указатель — история
+
+# Текущая цель — №76, фоновые процессы через Yii2 console
+
+Владелец поручил продолжить рефакторинг №76. Предыдущий документарный срез
+поставлен PR #91: exact commit `47bb6b438d667ef807ff273b9efa4577e8780bd6`,
+Quality Graph CI 34522776165 SUCCESS, merge
+`aa4d20f30edb4b5e9c7de7abad8ac2d016ec4952`.
+
+Справочник монтажников поставлен PR #92, harness hardening — PR #93. Следующий
+bounded slice — production `worker`, `scheduler` и jobs `health`: сохранить
+durable queue/lease/retry/deduplication, heartbeat, безопасную Bitrix-конфигурацию
+и restart behavior, переведя entrypoints на общий Yii2 console runtime без
+production-загрузки `rapid-pilot/jobs-entrypoint.php`.
+
+[OpenSpec](../../openspec/changes/yii2-jobs-console/) создаёт planning
+input. До реализации root обязан подготовить verification input/harness package,
+написать нормативный spec и intended RED; отдельный sol/low reviewer решает
+Gate 3, отдельный sol/low executor реализует, независимый sol/low reviewer решает
+Gate 5. Фактические source/PR/CI всегда получать через harness state.
+
+Imports/migrations, web runtime retirement, карточка монтажника, новые
+conflict/staleness rules, checklist/photo/offline, ОТиЗ и общий cutover остаются
+в следующих срезах №76. Рабочий rapid-pilot stand не переключается. Deployment
+требует отдельной авторизации после общего upgrade/rollback evidence.
+
+Кандидат поставки — PR #96; exact-source Quality Graph `34593480014` GREEN и
+`VERIFY_OK`. После merge этот документ становится checkpoint; следующий срез
+№76 начинать от актуального main, сохраняя историю failures/reviews этого среза.
+# Текущая цель — №76 production web runtime cutover
+
+Владелец 2026-09-12 разрешил автономный рефакторинг №76 отдельными PR и merge.
+Рабочий checkout `/Users/antropophag/code/fmonitor-2-yii2-runtime-76`, branch
+`codex/yii2-runtime-operations-76-20260912`. Срез `yii2-production-web-cutover`
+переводит production `public/runtime.php` на единый Yii2 runtime и удаляет
+production legacy router/auth/session reachability без deployment стенда.
+
+Gate 3 и correction Gate 5 `APPROVED`; sequential generated focused plan 12/12
+GREEN на executable source
+`a3701968eca6b1f161a2d1f991cf4ad9daba2691aaa5c496e2de58a81951ea6b`.
+Следующий шаг: commit/PR, один full exact-source Quality Graph, merge только при
+GREEN. Фактические source/PR/CI получать через harness. Общий №76, restore
+rehearsal и deployment остаются незавершёнными.
+
+[Контракт](../../specs/YII2-PRODUCTION-WEB-CUTOVER-001.md),
+[OpenSpec](../../openspec/changes/yii2-production-web-cutover/),
+[delivery record](yii2-production-web-cutover-delivery-2026-09-13.md).
+
+# Предыдущий указатель — история
+# Текущая цель — №76 PHP/Yii2 stand backup console
+
+Owner поручил исправить ошибочно выбранный Python production seam. Рабочий
+checkout `/Users/antropophag/code/fmonitor-2-yii2-backup-console-76`, branch
+`codex/yii2-stand-backup-console-76`, change `yii2-stand-backup-console`, base PR
+#113 head `404aa6858b8fdd61ac0e8151f09a67000a387ead`.
+Production seam только `php bin/yii stand-backup/create|verify`; PHP owner —
+`app/RuntimeRestore`. Python разрешён лишь внешним tests/harness. Связано #76/#115.
+Root пишет spec/tests, отдельный sol/low executor реализует, независимые reviewers
+решают Gates 3/5. Live backup/deployment не разрешены; PR/CI/deployment UNKNOWN.
+
+## Предыдущий указатель — история

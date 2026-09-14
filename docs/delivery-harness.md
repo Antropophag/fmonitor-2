@@ -22,6 +22,13 @@ telemetry остаётся `UNKNOWN`: установленные Codex hooks v1 
 поддерживаемые token fields. Размер сохранённого или показанного вывода не
 выдаётся за расход токенов.
 
+Planner — единственный источник `verification_lane` и `required_reviews`.
+Поддержанный `FAST` требует один независимый final review; `STANDARD` и
+`CRITICAL` требуют Gate 3 и final review. Агент не выбирает FAST по размеру
+diff: v1 ограничен поддержанным bounded UI scope, а tests/spec могут повысить
+lane. CI восстанавливает выбранные FAST-команды из exact-source plan; text-only
+docs allowlist остаётся отдельным CI mode, а не решением о delivery lane.
+
 ## План и диагностика
 
 ```sh
@@ -39,3 +46,12 @@ InspectionEvidence/ChecklistSync живут в существующей verifica
 готовят role-specific review package и обслуживают repository Codex hooks.
 Локальная настройка ограничена доверием к repository hook definitions через
 нативный `/hooks`; глобальные настройки harness не перезаписывает.
+
+Во время delivery локально выполняются только bounded focused/fast checks;
+существующий exact-source CI consumer выполняет проверки, выбранные
+planner/policy. Полный `make test`/`make verify` выполняется только когда
+consumer выбирает полный matrix; его локальный запуск требует отдельного owner
+override. Отсутствующие live preflight/review adapters и server-side enforcement
+из #107 остаются `UNKNOWN`, а не approval или GREEN. Они не требуют повторять
+уже GREEN same-source CI и не превращают ручной owner merge в autonomous
+admission.

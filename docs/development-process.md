@@ -41,8 +41,16 @@ Review corrections against that source; broaden only for changed scope or new
 risk. After a second return for foreseeable incompleteness, root rebuilds the
 entire matrix and candidate before another dispatch. Assertions, form fields and
 editorial corrections belong to their vertical slice, not separate microreviews.
-Keep Gates 3/5 independent; one reviewer may serve both if it authored neither.
+Keep planner-required Gate 3/final reviews independent; one reviewer may serve
+both if it authored neither.
 Batch independent read-only calls and inspect every result.
+
+The verification planner alone selects `verification_lane` and
+`required_reviews`. Planner-selected `FAST` requires the independent final
+review listed by the plan without a separate Gate 3. `STANDARD` and `CRITICAL`
+retain Gate 3 and final review. Agents do not infer FAST from diff size or prose.
+The v1 classifier covers only its supported bounded UI scope; tests/spec changes
+can escalate a small change. Classifier expansion is a separate policy change.
 
 Commits mark meaningful stages, with related fixes and review records grouped at
 an appropriate checkpoint. There is no per-assertion or per-verdict commit rule
@@ -68,12 +76,16 @@ verification plan](../tools/delivery/change-verification.md). The test author
 reads its required obligations and executable commands before writing RED tests.
 Unresolved coverage blocks Gate 2. A generated plan is not acceptance approval,
 RED evidence or a replacement for independent review. Regenerate and review when
-scope or bound inputs change. Existing full-CI selection remains authoritative;
-focused local checks do not waive integration, E2E or governance categories.
+scope or bound inputs change. Existing CI selection remains authoritative. CI
+reconstructs a FAST plan's selected commands from exact source. The separate
+text-only docs allowlist is a CI mode, not a delivery-lane decision. Focused local
+checks do not waive selected CI obligations.
 
 Run meaningful focused checks locally; repeat only after relevant changes,
-failures or new risk. One full exact-source CI validates the candidate; avoid a
-second local-full run without cause. Collect the complete failed-job and REGRESSION_FAILURE inventory and inspect
+failures or new risk. Do not run full `make test` or `make verify` locally in
+delivery without a new explicit owner override. One exact-source CI run through
+the selected existing consumer validates the candidate. Collect the complete
+failed-job and REGRESSION_FAILURE inventory and inspect
 every failure before corrections. A same-source retry needs a recorded reason;
 retain previous failures rather than treating reruns as diagnosis.
 Report elapsed time, review/return counts and reasons, repeated checks, delivered
@@ -129,7 +141,9 @@ Approved cross-cutting invariants are inherited by every slice and are not resub
 ## Gate 2: red test
 
 Use small deterministic tests to cover the complete agreed slice matrix.
-Incremental RED runs are allowed; submit the complete candidate to Gate 3. Run it before implementation and retain the command and relevant failure output in the test-review record.
+Incremental RED runs are allowed; when Gate 3 is required, submit the complete
+candidate there before implementation and retain the command and relevant
+failure output in the test-review record.
 
 The test must:
 
@@ -143,22 +157,37 @@ The gate passes only when the test is demonstrably red for the intended reason.
 
 ## Gate 3: independent test review
 
-A reviewer other than the test author reviews the specification and test without relying on planned implementation details. Record the review in `reviews/tests/<spec-id>.md` using the template in that directory.
+Gate 3 applies when the planner includes `gate3` in `required_reviews`;
+`STANDARD` and `CRITICAL` include it. Planner-selected `FAST` proceeds to
+its required independent final review without adding Gate 3.
+
+A reviewer other than the test author reviews the specification and test without
+relying on planned implementation details. Record the review in
+`reviews/tests/<spec-id>.md` using the template in that directory.
 
 The reviewer checks traceability, seam choice, sensitivity, expected-value independence, rejected cases, determinism, and the captured red result. `APPROVED` advances the slice. `CHANGES_REQUESTED` returns it to Gate 1 or 2.
 
 ## Gate 4: minimal implementation
 
-Write only enough production code to make the independently reviewed test pass. Run focused tests after a coherent correction affecting behavior or test risk,
+Write only enough production code to make the tests required by the selected
+plan pass. Run focused tests after a coherent correction affecting behavior or test risk,
 then the relevant suite. Record the commands and results for code review. Refactoring beyond the slice waits for review or a separately specified slice.
 
-The gate passes when the reviewed test and relevant regression suite are green with no changes to the approved expectation.
+The gate passes when tests required by the selected plan and the relevant
+regression suite are green with no changes to an approved expectation. When
+`required_reviews` includes Gate 3, implementation uses that independently
+reviewed test.
 
 ## Gate 5: independent code review
 
-A reviewer other than the implementation author reviews the specification, approved tests, production diff, and verification output. Record the review in `reviews/code/<spec-id>.md`.
+The planner-selected final review is the Gate 5 decision for the prepared exact
+source and is required for every lane, including `FAST`.
 
-The reviewer checks specification conformance, invariant enforcement at every entry point, audit/history behavior, security, integration boundaries, maintainability, and whether the test would catch a plausible regression. Test changes discovered here restart at Gate 2 and require a new independent test approval.
+A reviewer other than the implementation author reviews the specification,
+tests and earlier reviews required by the selected plan, production diff, and
+verification output. Record the review in `reviews/code/<spec-id>.md`.
+
+The reviewer checks specification conformance, invariant enforcement at every entry point, audit/history behavior, security, integration boundaries, maintainability, and whether the test would catch a plausible regression. Test changes discovered here require plan recomputation and restart at Gate 2; a new independent test approval is required when the recomputed `required_reviews` includes Gate 3.
 
 The slice is complete only with an `APPROVED` code review and green relevant tests. A review record names the reviewer, reviewed commit or reconstructible source snapshot, verdict, findings, and verification evidence; approval cannot be inferred from silence.
 
@@ -172,9 +201,17 @@ The owner approved the [PR matrix](operations/verification-ci-matrix-2026-09-08.
 and selected `make test` as the canonical full command. `make verify` remains a
 compatibility alias. Local focused evidence and independent review precede one
 authoritative CI run; local-full followed by CI-full is not a mandatory sequence.
-Code, tests, CI, policy/spec and unknown changes require all categories. A narrow
-text-only documentation allowlist requires the fast checks and explicitly reports
+Except for planner-supported FAST, code, tests, CI, policy/spec and unknown
+changes use the full CI-category fallback. FAST runs the commands selected in its
+planner plan, which CI reconstructs from the exact source. Separately, a narrow
+text-only documentation allowlist selects docs CI checks and explicitly reports
 DOCS_VERIFY_OK, never full VERIFY_OK. Schedule, release and manual CI run full.
 This supersedes earlier assumptions requiring duplicate full execution, preserving
-Gates 1–5, exact source, authorization, append-only history and fail-closed results.
+planner-required reviews, exact source, authorization, append-only history and
+fail-closed results.
 No branch protection or publisher permission changes are implied.
+
+Live preflight/review adapters and server-side enforcement remain incomplete
+under #107. Their absence is `UNKNOWN`, not approval or GREEN, and does not
+justify repeating an already GREEN exact-source run without new failure or risk.
+A manual owner merge does not establish autonomous agent admission.
