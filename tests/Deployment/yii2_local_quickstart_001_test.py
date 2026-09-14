@@ -66,7 +66,7 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
         clear();failed=make('up',{'FMONITOR_TEST_FAIL_STAGE':stage});assert failed.returncode!=0,('STAGE_ACCEPTED',stage);stage_events=events();text=failed.stdout+failed.stderr+trace.read_text();assert 'FMonitor Yii2:' not in text
         for secret in ('db-secret-contract','migration-secret-contract','owner-secret-contract'):assert secret not in text
         assert all(e['project']=='fm2-local-contract' for e in stage_events)
-        failed_needle={'live':'/health/live','ready':'/health/ready'}.get(stage,{'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}[stage])
+        failed_needle=({'live':'/health/live','ready':'/health/ready'}[stage] if stage in ('live','ready') else {'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}[stage])
         failed_index=next(i for i,e in enumerate(stage_events) if failed_needle in ' '.join(e['argv']))
         assert failed_index==len(stage_events)-1,('EFFECT_AFTER_FAILURE',stage,stage_events)
 print('PASS: YII2-LOCAL-QUICKSTART-001 stateful Make lifecycle')
