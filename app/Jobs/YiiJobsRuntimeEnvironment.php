@@ -14,7 +14,12 @@ final class YiiJobsRuntimeEnvironment
         if (!is_string($root) || $root === '' || $root[0] !== '/') self::invalid();
 
         $prefix = getenv('FMONITOR_PROCESS_TABLE_PREFIX');
-        if (!is_string($prefix) || preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) self::invalid();
+        if ($prefix === false) {
+            $prefix = self::legacyPrefix($root);
+            putenv('FMONITOR_PROCESS_TABLE_PREFIX=' . $prefix);
+        } elseif (preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) {
+            self::invalid();
+        }
 
         $stagedToken = null;
         try {
@@ -40,5 +45,20 @@ final class YiiJobsRuntimeEnvironment
     private static function invalid(): never
     {
         throw new \InvalidArgumentException('CONFIGURATION_INVALID');
+    }
+
+    private static function legacyPrefix(string $root): string
+    {
+        $manifests = glob($root . '/pilot-demo/*/active.json') ?: [];
+        if (count($manifests) !== 1 || !is_file($manifests[0]) || !is_readable($manifests[0])) self::invalid();
+        try {
+            $manifest = json_decode((string) file_get_contents($manifests[0]), true, 32, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            self::invalid();
+        }
+        $prefix = is_array($manifest) ? ($manifest['processPrefix'] ?? null) : null;
+        if (($manifest['state'] ?? null) !== 'ready' || !is_string($prefix)
+            || preg_match('/^[A-Za-z0-9_]{1,25}$/D', $prefix) !== 1) self::invalid();
+        return $prefix;
     }
 }

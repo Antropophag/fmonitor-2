@@ -68,7 +68,7 @@ Acceptance MUST инициировать безопасную synthetic workload
 ### Requirement: Normal production closure не зависит от legacy runtime
 Acceptance MUST инспектировать реально запущенные production web, console, worker и scheduler paths. Runtime image MUST не содержать `rapid-pilot`; loaded-file/process/command evidence MUST доказывать отсутствие `rapid-pilot` и `RuntimeRecovery` в normal paths. Historical/offline recovery CLI и compatibility code MAY оставаться в repository, но MUST NOT быть запущены acceptance operation.
 
-Jobs worker/scheduler/health MUST получать canonical table prefix непосредственно из production runtime configuration и MUST NOT зависеть от `pilot-demo/*/active.json` discovery.
+Jobs worker/scheduler/health MUST получать canonical table prefix непосредственно из normal production runtime configuration и при explicit value MUST NOT зависеть от `pilot-demo/*/active.json` discovery. Historical fallback MAY сохраняться только когда переменная отсутствует; invalid explicit value MUST fail closed.
 
 #### Scenario: Production closure чистая
 - **WHEN** acceptance выполняет health, login, golden HTTP, migrations и jobs operations в exact image
