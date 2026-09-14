@@ -22,12 +22,12 @@ $check(!str_contains($up['recipe'], 'fmonitor2-prepare-bitrix-config.php'), 'can
 $check(!str_contains($makefile, '../fmonitor'), 'deployment still depends on sibling legacy checkout');
 $check(!str_contains($makefile, 'export-legacy-bitrix-secret.php'), 'deployment still invokes the legacy Bitrix exporter');
 $check(str_contains($makefile, 'import-production:'), 'production import command is missing');
-$check(str_contains($makefile, '--env-from-file .env'), 'production import does not pass .env without Make interpolation');
+$check(preg_match('/^import-production:\s+import-legacy$/m', $makefile) === 1, 'production import compatibility alias is not native');
 $check(!str_contains($makefile, '-include .env'), 'production secrets must not be parsed as Make syntax');
-$check(str_contains($makefile, 'TCP4-LISTEN:23306,bind=127.0.0.1'), 'one-off production importer cannot reach scripts using the local pilot DB endpoint');
+$check(str_contains($makefile, 'legacy-import/run'), 'production import does not use native Yii command');
 $check(!str_contains($envExample, 'FMONITOR_BITRIX_WEBHOOK_URL'), 'canonical local env still requires legacy Bitrix credentials');
 $check(!str_contains($envExample, 'FMONITOR_SOURCE_PASSWORD=<'), 'production env template must not contain a real password');
-$check(str_contains($makefile, 'initialize-native-only.php'), 'production import does not use the guarded initializer');
+$check(!str_contains($makefile, 'initialize-native-only.php'), 'production import still invokes rapid initializer');
 $check(!str_contains($compose, 'profiles: ["bitrix"]'), 'Bitrix sync remains opt-in instead of part of standard startup');
 $check(str_contains($compose, 'host.docker.internal:host-gateway'), 'container cannot address a host production tunnel');
 $check(!preg_match('/LIMIT\s+(?:100|250)\b/i', $importer), 'production object selection is still truncated');

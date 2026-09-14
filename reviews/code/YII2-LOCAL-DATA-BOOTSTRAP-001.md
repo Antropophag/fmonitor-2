@@ -103,3 +103,27 @@ I independently ran `python3 tests/Verification/verification_inventory_001_test.
 `APPROVED`
 
 The inventory-only publication delta is approved. The prior Gate 5 approval remains valid for production/test behavior; no findings remain.
+
+---
+
+## CI architecture-name correction Gate 5 — APPROVED, 2026-09-14
+
+- Baseline commit: `9028a36d0fd1d358e058378c178cf128eb561b16` (`Record local data bootstrap PR readiness`).
+- Reviewed reconstructible correction: baseline plus complete binary diff SHA-256 `a25471a4307b220422f1ab3147709ce43f49ed4023514cd49a116704cbd55746`.
+- Scope: production class/file rename, its console/package/verification-input references, and the retained deployment-contract verifier update.
+
+### Complete findings
+
+None.
+
+`LegacyImportApplication` and `LegacySourceSnapshot` are renamed consistently to `MariaDbLegacyImportApplication` and `MariaDbLegacySourceSnapshot`. After substituting only each class name in the approved baseline files, their bytes hash identically to the replacement files (`a4ecbc05...` for the application and `29ce61bb...` for the snapshot), establishing that transaction, reconciliation, classification, eligibility, and source-read behavior did not drift. `LegacyImportConsole`, the verification input, and the built-package assertions reference only the new PSR-4-compatible names; repository search finds no stale runtime reference to either old class.
+
+The retained rapid deployment verifier now requires `import-production` to be the native `import-legacy` alias, requires the Yii `legacy-import/run` route, and forbids the retired `initialize-native-only.php` Make invocation. This updates the oracle to the already approved production boundary and does not load rapid code into production. The package test likewise changes only the expected renamed files in source and built-image inventories.
+
+The reported focused correction evidence is GREEN for `make architecture-check`, the deployment verifier, native legacy DB oracle, production package/load closure, and PHP lints. I additionally confirmed `git diff --check` and PHP syntax for both renamed classes, `LegacyImportConsole`, and the deployment verifier. The current harness reports PR #138 CI `FAILURE`; that external CI state is not converted to GREEN by this scoped approval and still requires the delivery workflow's complete failure inventory/reconciliation.
+
+### Verdict
+
+`APPROVED`
+
+The exact rename/verifier correction introduces no behavior drift and preserves the prior Gate 5 approval. No findings remain within this correction delta; overall merge readiness remains subject to exact-source CI resolution.

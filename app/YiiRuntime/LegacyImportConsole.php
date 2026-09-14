@@ -2,8 +2,8 @@
 declare(strict_types=1);
 namespace FMonitor2\YiiRuntime;
 
-use FMonitor2\InstallationProcess\LegacySourceSnapshot;
-use FMonitor2\InstallationProcess\LegacyImportApplication;
+use FMonitor2\InstallationProcess\MariaDbLegacySourceSnapshot;
+use FMonitor2\InstallationProcess\MariaDbLegacyImportApplication;
 
 final class LegacyImportConsole
 {
@@ -19,8 +19,8 @@ final class LegacyImportConsole
             $target = self::connect(self::required('FMONITOR_DB_HOST'), self::required('FMONITOR_DB_USER'), self::explicit('FMONITOR_DB_PASSWORD'), self::required('FMONITOR_DB_NAME'), self::port(self::required('FMONITOR_DB_PORT')));
             $processPrefix = self::prefix(self::required('FMONITOR_PROCESS_TABLE_PREFIX'));
             $legacyPrefix = self::prefix(self::required('FMONITOR_LEGACY_TABLE_PREFIX'));
-            $snapshot = (new LegacySourceSnapshot($source))->read($cutoff);
-            $result = (new LegacyImportApplication($target, $processPrefix, $legacyPrefix))->import($snapshot, $cutoff);
+            $snapshot = (new MariaDbLegacySourceSnapshot($source))->read($cutoff);
+            $result = (new MariaDbLegacyImportApplication($target, $processPrefix, $legacyPrefix))->import($snapshot, $cutoff);
             return ['exitCode' => 0, 'result' => ['result' => 'LEGACY_IMPORT_COMPLETED', 'cutoff' => $cutoff] + $result];
         } catch (\InvalidArgumentException | \JsonException) {
             return ['exitCode' => 64, 'result' => ['ok' => false, 'reason' => 'CONFIGURATION_INVALID']];

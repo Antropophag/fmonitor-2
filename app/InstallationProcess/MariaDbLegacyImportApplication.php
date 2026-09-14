@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace FMonitor2\InstallationProcess;
 
-final class LegacyImportApplication
+final class MariaDbLegacyImportApplication
 {
     public function __construct(private readonly \mysqli $db, private readonly string $processPrefix, private readonly string $legacyPrefix)
     {

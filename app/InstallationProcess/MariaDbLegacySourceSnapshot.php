@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace FMonitor2\InstallationProcess;
 
-final class LegacySourceSnapshot
+final class MariaDbLegacySourceSnapshot
 {
     public function __construct(private readonly \mysqli $source) {}
 

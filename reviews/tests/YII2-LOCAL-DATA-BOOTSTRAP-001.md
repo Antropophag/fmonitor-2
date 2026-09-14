@@ -170,6 +170,30 @@ Correction Gate 3 passes for exact test source `601a94e49e76b0cf01f601398f087171
 
 ---
 
+## CI correction Gate 3 — APPROVED, 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T163417Z-c125edcfe3/package.json`.
+- Exact source: base `44880bbe4df579789a094fda526e6a4415598b29`, snapshot patch SHA-256 `f0bfee561ffa767f3a8649d1d396daf9368d9ef496a72736bcd2baa3f59f4fa3`, harness source `6dd160937440aefa29b113d9d7f901acb364f38b879b3393fe06be28e0fface4`.
+- Review scope: root-authored expectation changes in `tests/Deployment/yii2_imports_workforce_package_001_test.py` and `rapid-pilot/verify-deployment-contract.php` only. Production renames were not authored or approved by this Gate 3 review.
+
+### Complete findings
+
+None.
+
+The package expectation now names `MariaDbLegacyImportApplication` and `MariaDbLegacySourceSnapshot` in both the repository inventory and built-image inventory. This accurately identifies their SQL-specific ownership, remains sensitive to missing/incorrectly packaged owners, and preserves all existing native route, command execution, autoload/load-closure, and `rapid-pilot` exclusion assertions.
+
+The deployment oracle now requires `import-production` to be an exact compatibility dependency on `import-legacy`, requires `legacy-import/run` in the Make interface, and explicitly forbids `initialize-native-only.php`. These checks directly encode the accepted native cutover and would fail for the old rapid-pilot importer while retaining the surrounding deployment invariants.
+
+The reported CI REDs are appropriate: governance exposed the stale deployment oracle and fast exposed stale SQL-owner naming. On the corrected exact source I independently ran `python3 tests/Deployment/yii2_imports_workforce_package_001_test.py` and `php rapid-pilot/verify-deployment-contract.php`; both are GREEN. The prepared package also retains the package check and the wider focused matrix as source-bound GREEN. Overall CI remains `FAILURE` until a new exact-source run; deployment remains `UNKNOWN`.
+
+### Verdict
+
+`APPROVED`
+
+Correction Gate 3 passes for the two expectation files at exact source `6dd160937440aefa29b113d9d7f901acb364f38b879b3393fe06be28e0fface4`. Gate 5 must review the production rename and final exact-source evidence independently.
+
+---
+
 ## Final three-gap correction rereview — APPROVED, 2026-09-14
 
 - Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T155537Z-1f5e7ac1ee/package.json`.
