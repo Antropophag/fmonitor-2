@@ -22,8 +22,8 @@
 
 ## 4. Disposable acceptance handoff
 
-- [ ] 4.1 После Gate 5 non-destructively сформировать exact clean disposable target/source/image authorization package и остановиться; verification: package перечисляет все allowed create/provision effects и исключает production/neighbor resources.
-- [ ] 4.2 После отдельной owner authorization развернуть только exact disposable clean target и выполнить полный executable acceptance; verification: внешний canonical report содержит `CLEAN_STAND_ACCEPTED` только при GREEN всех обязательных steps.
+- [x] 4.1 Сформирован exact clean disposable target/source/image authorization package; package ограничил effects project `fm2-clean-76-a9fd0c33-325e1f46` без production/neighbor overlap.
+- [x] 4.2 По owner authorization exact disposable target развёрнут и substantive acceptance завершён `CLEAN_STAND_ACCEPTED`; внешний evidence SHA-256 `ce8df9cdbba9eeed458f6c96521834858db0213a8f3583cee569c87210b148a6`.
 - [ ] 4.3 Сформировать отдельный production cutover authorization handoff; verification: этот change не переключает traffic, не удаляет old stand и не выполняет restore/reconciliation/rollback.
 
 ## 5. Done definition

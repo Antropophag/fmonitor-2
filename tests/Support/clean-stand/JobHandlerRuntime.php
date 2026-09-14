@@ -21,7 +21,10 @@ final class JobHandlerRuntime
                 'status'=>'delivered',
                 'providerReference'=>'acceptance-'.hash('sha256',(string)$message['eventId']),
             ];
-            return (new OutboxDeliveryHandler($outbox,$transport,static fn():string=>(new MariaDbJobsSession($db,$config->prefix()))->now()))->handle($job);
+            $outcome=(new OutboxDeliveryHandler($outbox,$transport,static fn():string=>(new MariaDbJobsSession($db,$config->prefix()))->now()))->handle($job);
+            if($outcome['status']==='delivered')return ['status'=>'completed','result'=>['outcome'=>'delivered','providerReference'=>$outcome['providerReference']??null]];
+            if($outcome['status']==='ambiguous_retryable')return ['status'=>'retryable','failureCode'=>$outcome['failureCode']??'TRANSPORT_UNAVAILABLE'];
+            return ['status'=>'permanent','failureCode'=>$outcome['failureCode']??'OUTBOX_DELIVERY_FAILED'];
         } finally {
             $db->close();
         }
