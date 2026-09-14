@@ -421,3 +421,33 @@ None.
 `APPROVED`
 
 The env-helper implementation may proceed against corrected fixture baseline `e4368464898b8ff52bee935f062dd03560c195b6`. Fresh exact-source evidence is required after implementation; this approval authorizes no Docker/reset, CI, PR, or deployment action.
+
+---
+
+## Post-approval adversarial-fixture order correction — 2026-09-14
+
+- Reviewer independence unchanged; executor security implementation is explicitly excluded.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T135748Z-ed328151b1/package.json`
+- Reviewed test commit: `01310754362128284f6f004ee4b8aa069475d3a5`
+- Package candidate source: `3c939ead86fa43a20b230781f81c395f6d884ab5293760887f14fa085e9f7dba`
+- Package executable source: `fa82b2ab451ab09ee1c5f4f9ecb1ddac69c6a1766712218ea31a4a2bb9407e12`
+- Snapshot patch SHA-256: `593cc91a12b070a97feda3c4b2d487caaa56c3c240862d57b7ddae98edf2dea2`
+- Verification plan SHA-256: `ed7034020cc7ef1fa11a502e271c57639c4476d7233258cf1ba194708edf6f32`
+- Corrected test SHA-256: `13e33f19ef92e7a7f3776c18624ab6612be3ff01db2c76cf93a9b1a7448450be`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The exact committed test delta changes only the adversarial invocation from `make ps` to `make up`. The immediately preceding accepted `make reset` intentionally removes the modeled project, so `up` is the correct lifecycle action to recreate it before observing the child environment. The same `$(shell touch …)` literal, marker non-creation, stdout/stderr/trace redaction and exact digest assertions remain unchanged. Exercising the full startup path strengthens rather than weakens the security boundary.
+
+The supplied package has no retained evidence and its snapshot patch contains the executor's uncommitted `Makefile` and `tools/delivery/local-runtime-env` implementation. Those WIP bytes are not part of this Gate 3 verdict and are not approved here. Approval is limited to the one-line committed test delta relative to the already approved security/fixture baseline; fresh exact-source GREEN and Gate 5 review remain required for the implementation candidate.
+
+### Findings
+
+None for the bounded test delta.
+
+### Verdict
+
+`APPROVED`
+
+The executor may use test baseline `01310754362128284f6f004ee4b8aa069475d3a5`. This verdict does not approve the snapshot's implementation WIP or authorize Docker/reset, CI, PR, or deployment.
