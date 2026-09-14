@@ -46,7 +46,7 @@ $validText='Сохраните это описание';$r=$reject('POST','/pilo
 assertSameValue(true,str_contains($r['body'],$validText),'422 retains valid description');assertSameValue('/pilot/objects/1450',feedbackInput($r['body'],'pagePath'),'422 retains safe context');
 $reject('GET','/pilot/admin/feedback',[],$ordinary,403);
 $reject('POST',"/pilot/admin/feedback/$httpId/result",['_csrf'=>$fields['_csrf'],'requestId'=>feedbackUuid(821),'result'=>'Denied'],$ordinary,403);
-foreach([['result'=>[]],['requestId'=>[]]]as$bad)$reject('POST',"/pilot/admin/feedback/$httpId/result",array_replace($resultFields,$bad),$admin,400);
+foreach([['result'=>['bad']],['requestId'=>['bad']]]as$bad)$reject('POST',"/pilot/admin/feedback/$httpId/result",array_replace($resultFields,$bad),$admin,400);
 $reject('POST',"/pilot/admin/feedback/$httpId/result",['requestId'=>feedbackUuid(821),'result'=>'No csrf'],$admin,400);
 $r=$reject('POST',"/pilot/admin/feedback/$httpId/result",array_replace($resultFields,['requestId'=>'bad','result'=>'Сохраните результат']),$admin,422);assertSameValue(true,str_contains($r['body'],'Сохраните результат'),'result422 retains text');
 $reject('POST','/pilot/admin/feedback/999999/result',array_replace($resultFields,['requestId'=>feedbackUuid(822)]),$admin,404);

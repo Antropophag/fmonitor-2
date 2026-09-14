@@ -5,7 +5,8 @@ require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/InspectionFixture.ph
 $inspection=null;$process=null;
 try {
  $inspection=new InspectionFixture(dirname(__DIR__,2));$f=$inspection->http;$f->start();$ordinary=[];$f->login($ordinary,97);
- $form=$f->request('GET','/pilot/feedback',[],$ordinary);assertSameValue(200,$form['status'],'INTENDED_RED FEEDBACK-001 browser route absent');$f->stop();
+ $form=$f->request('GET','/pilot/feedback',[],$ordinary);assertSameValue(200,$form['status'],'INTENDED_RED FEEDBACK-001 browser route absent');
+ proc_terminate($f->server['process']);proc_close($f->server['process']);$f->server=null;
  $f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>7,'permission'=>'installers.read']);
  $inspection->open();$ordinary=[];$admin=[];$f->login($ordinary,97);$f->login($admin,94);
  foreach(['/pilot/objects','/pilot/objects/4512','/pilot/objects/4512/assignment-order/selection','/pilot/objects/4512/execution','/pilot/objects/4512/assignment-orders/81/originals/submit','/pilot/objects/4512/assignment-orders/81/originals/history','/pilot/construction-control','/pilot/objects/4512/checklist','/pilot/installers']as$path){

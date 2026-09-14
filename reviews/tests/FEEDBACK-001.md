@@ -46,3 +46,29 @@ Resolve findings 1-6, regenerate the prepared exact-source package because tests
 6. **Resolved.** The schema matrix now has literal column/type/nullability, primary/unique-key, result-root FK, table-membership and AUTO_INCREMENT expectations. Distinct hostile HTTP fields and headers demonstrate that disallowed identity, contact, network, document and client-version metadata is neither stored nor returned.
 
 No new findings. The corrected tests remain deterministic and isolated, derive expectations independently from FEEDBACK-001/design, exercise the agreed public seams, and are sensitive to plausible privacy, replay, concurrency, migration, recovery, authorization and UI regressions. Gate 3 may advance to implementation against this exact candidate.
+
+## Gate 3 test-delta review — 2026-09-14
+
+- Reviewed source: retained package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T184435Z-50547ada31/package.json`; candidate source `262d0104e05c14096db25773e43567e32d339438d6531969333c67e4632cf777`; snapshot patch SHA-256 `0487dd1c5360a1d47cb9c083d89eedd9aa293c0a1eff8bd60ce5094320b4a988`; delta patch SHA-256 `c1d4e2ddec485a64383aebce88fe83e5e270af1dc42ddb96c44b8e0c6ad898ce`
+- Scope: test/spec delta after the preceding approval; production implementation in the package was not reviewed for this Gate 3 decision.
+- Evidence: owner suite GREEN record `1789411426800362000-368a25a1e496479e9e55963b6e0dcd1c`; browser suite intended RED record `1789411450753249000-b668049e28c347babdd811ca0fd53818`, failing specifically because the implemented description textarea is shorter than the independently asserted 96px multiline minimum. Historical preimplementation RED remains retained above.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The four fixture corrections repair test execution without weakening an acceptance expectation: non-empty nested arrays survive `http_build_query` and still exercise nonscalar rejection; explicit process termination replaces a nonexistent fixture helper; binary table ordering matches the public immutable recovery inventory; and substring matching observes the saved result inside its rendered audit context. The added browser assertions give A6's usable, unobtrusive feedback entry a bounded oracle: the navigation target must expose visible text or an icon and measure at least 24px in both dimensions, and the sole description field must provide at least 96px for multiline input. These checks operate at 360px and 1280px through the real Yii/browser seam and are sensitive to the observed blank-mobile-navigation and compressed-textarea regressions without prescribing production markup or CSS.
+
+The test delta is approved for the executor's bounded UI correction. Any further expectation or test-mechanic change requires another independent delta review before Gate 5.
+
+## Gate 3 clipping-oracle restart — 2026-09-14
+
+- Reviewed source: retained package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T185301Z-80c0e40d37/package.json`; candidate source `7bea0cf7e2e4b417f6c101db186836aadbeb6433515c3f964c448add2a210c26`; snapshot patch SHA-256 `52c4697b9722e547e5bd0e5f45edf779052c3288bf1572e9f733ae2528f74e49`; delta patch SHA-256 `6950de783f39c9e662efb4c2072021a8628998aeb8eb77b9c85bc50254cea1e7`
+- Scope: only the `tests/Yii2/feedback_browser.mjs` geometry-oracle delta prompted by the independent Gate 5 visual finding; production changes present in the package are outside this decision.
+- Evidence: browser intended RED record `1789411951862951000-dbf008098dde492982c143d36776c91e` fails at `multiline text must remain visible through field wrappers`; owner GREEN record `1789411953027931000-202a4e4e3c4a486b8b362597ae9f55b3` confirms the nonvisual acceptance suite remains green. The visual defect and screenshots are recorded in `reviews/code/FEEDBACK-001.md`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The earlier test measured the textarea's own box and could pass while an ancestor with clipped overflow exposed only a one-line strip. The correction intersects the textarea rectangle with every scrolling or clipping ancestor and requires at least 96px of visible vertical content. It applies through the existing ordinary and admin journeys at both 360px and 1280px, so it covers every description/result textarea already exercised. The expected visible height is unchanged; the delta closes a false GREEN in the oracle and reproduces the observed defect for the intended reason without prescribing a CSS fix.
+
+This test delta is approved. The executor may correct the feedback-local wrapper geometry; any further test or expectation change requires another independent Gate 3 delta review.

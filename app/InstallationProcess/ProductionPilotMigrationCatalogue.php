@@ -32,6 +32,7 @@ final class ProductionPilotMigrationCatalogue
             22=>PilotLegacyObjectSchemaMigration::class,
             23=>JobsSchemaMigration::class,
             24=>OtizSettlementSchemaMigration::class,
+            25=>FeedbackSchemaMigration::class,
         ];
     }
 }

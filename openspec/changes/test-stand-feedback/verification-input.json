@@ -9,7 +9,6 @@
     "app/RuntimeRestore/RuntimeRecovery.php",
     "app/YiiRuntime/Controllers/FeedbackController.php",
     "app/YiiRuntime/Views/feedback.php",
-    "app/YiiRuntime/Views/feedback-list.php",
     "app/YiiRuntime/ViewSupport.php",
     "app/YiiRuntime/Views/objects.php",
     "app/YiiRuntime/Views/installers.php",
@@ -17,7 +16,10 @@
     "app/YiiRuntime/Views/roles.php",
     "config/yii/common.php",
     "config/yii/web.php",
-    "app/demo/PilotDemoDatabase.php"
+    "app/demo/PilotDemoDatabase.php",
+    "app/YiiRuntime/Views/feedback-admin.php",
+    "app/YiiRuntime/Views/feedback-confirmation.php",
+    "config/yii/feedback-routes.php"
   ],
   "acceptances": [
     {
@@ -27,7 +29,10 @@
       "seam": "FeedbackApplication submit/listing/recordResult; Yii2 /pilot/feedback",
       "tests": [
         "tests/Yii2/yii2_feedback_001_test.php"
-      ]
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_feedback_001_test.php": "GREEN"
+      }
     },
     {
       "spec_id": "FEEDBACK-001",
