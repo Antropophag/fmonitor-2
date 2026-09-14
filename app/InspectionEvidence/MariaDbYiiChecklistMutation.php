@@ -13,6 +13,8 @@ trait MariaDbYiiChecklistMutation
     $role=(bool)($access['roleAccess']??false);
     if($type==='photo_uploaded'&&(!$opened||!$role))return['status'=>'forbidden'];
     if(!$role&&!($opened&&in_array($type,['completion_retracted','photo_revoked'],true)))return['status'=>'forbidden'];
+    if($type==='completion_retracted'&&!($access['assigned']??false))return['status'=>'forbidden'];
+    if($type==='photo_revoked'&&(!($access['assigned']??false)||!($access['photoRevoke']??false)))return['status'=>'forbidden'];
             $id=(string)($o['clientOperationId']??'');
     $device=(string)($o['deviceInstallationId']??'');
     $time=(string)($o['deviceTime']??'');
@@ -64,7 +66,7 @@ trait MariaDbYiiChecklistMutation
     } elseif($type==='photo_revoked')
         {$photo=$o['photoId']??null;
     $reason=$o['reason']??null;
-    if(!($access['assigned']??false)||!($access['photoRevoke']??false)||!is_int($photo)||!is_string($reason)||trim($reason)===''||mb_strlen(trim($reason))>500||$this->lastPhoto($caseId,$section)||!$this->revoke($caseId,$section,$photo))
+    if(!is_int($photo)||!is_string($reason)||trim($reason)===''||mb_strlen(trim($reason))>500||$this->lastPhoto($caseId,$section)||!$this->revoke($caseId,$section,$photo))
         {$this->rollback();
     return['status'=>'rejected'];
     }$payload=['photoId'=>$photo,'reason'=>trim($reason)];
@@ -106,7 +108,7 @@ trait MariaDbYiiChecklistMutation
             $r=$owner->completeItem(new CompleteInspectionItem($actor,$caseId,(string)($o['clientOperationId']??''),(string)($o['deviceInstallationId']??''),(string)($o['deviceTime']??''),(int)($o['baseRevision']??-1),(int)($o['sectionId']??0),(int)($o['itemId']??0),array_map('intval',(array)($o['installerTabIds']??[]))));
             if($r->status==='INSPECTION_SCHEMA_UNAVAILABLE')throw new \RuntimeException();
     return['status'=>match($r->status)
-        {'ACCEPTED'=>'accepted','DUPLICATE'=>'duplicate','STALE_REVISION','OPERATION_PAYLOAD_CONFLICT'=>'conflict',default=>'rejected'},'revision'=>$r->revision];
+        {'ACCEPTED'=>'accepted','DUPLICATE'=>'duplicate','STALE_REVISION','OPERATION_PAYLOAD_CONFLICT'=>'conflict','ACTOR_NOT_AUTHORIZED'=>'forbidden',default=>'rejected'},'revision'=>$r->revision];
         }
         private function template(int$case,string$time):?array{$r=$this->one("SELECT a.template_snapshot_id snapshot_id,a.template_snapshot_version snapshot_version,a.template_content_sha256 content_sha256,t.valid_from,a.effective_at,t.snapshot_version current_version,t.content_sha256 current_hash FROM {$this->t('fm2_checklist_template_associations')} a JOIN {$this->t('fm2_checklist_template_snapshots')} t ON t.id=a.template_snapshot_id WHERE a.subject_kind='operational_case' AND a.subject_id=?",[(string)$case]);
     if(!$r||$r['snapshot_version']!==$r['current_version']||!hash_equals($r['content_sha256'],$r['current_hash']))return null;
