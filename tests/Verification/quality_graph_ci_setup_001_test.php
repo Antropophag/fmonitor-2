@@ -154,6 +154,143 @@ SH, 'profile-probe', $profile, 'value with spaces'];
         assertSameValue(0, $evidence['exit_code'], "DP110A-04 {$profile} recorded exit");
     }
 
+    $portProbe = stream_socket_server('tcp://127.0.0.1:0', $socketError, $socketMessage);
+    assertSameValue(true, is_resource($portProbe),
+        "SETUP_FAILURE: reserve isolated test DB port: {$socketError} {$socketMessage}");
+    $probeAddress = stream_socket_get_name($portProbe, false);
+    fclose($portProbe);
+    assertSameValue(1, preg_match('/:(\d+)$/D', (string) $probeAddress, $portMatch),
+        'DPN110-03 isolated external lifecycle port');
+    $composeEnv = [
+        'COMPOSE_PROJECT_NAME' => 'qcsnet'.bin2hex(random_bytes(6)),
+        'FMONITOR_TEST_DB_PORT' => $portMatch[1],
+    ];
+    $probePath = $root.'/.local/qcs-db-probe-'.bin2hex(random_bytes(6)).'.php';
+    if (!is_dir(dirname($probePath))) {
+        mkdir(dirname($probePath), 0700, true);
+    }
+    file_put_contents($probePath, <<<'PHP'
+<?php
+$host=getenv('FMONITOR_TEST_DB_HOST');$port=getenv('FMONITOR_TEST_DB_PORT');
+if($host!=='test-db'||$port!=='3306'||gethostbyname('test-db')==='test-db')exit(20);
+$db=@new mysqli($host,'fmonitor2_test','fmonitor2_test_local','fmonitor2_test',(int)$port);
+if($db->connect_errno!==0||$db->query('SELECT 1')->fetch_row()!==['1'])exit(21);
+PHP);
+    $composeOwned = false;
+    $declaredNetwork = null;
+    $serviceContainer = null;
+    try {
+        $network = qcsRun(['docker', 'compose', '-f', 'compose.test.yaml', 'config', '--format', 'json'], $root, $composeEnv);
+        assertSameValue(0, $network['exit'], 'DPN110-01 canonical Compose config is readable');
+        $config = json_decode($network['out'], true, flags: JSON_THROW_ON_ERROR);
+        $networkName = $config['networks']['default']['name'] ?? null;
+        assertSameValue(true, is_string($networkName) && $networkName !== '',
+            'DPN110-01 canonical Compose declares the actual default network name');
+        assertSameValue(false, str_contains($networkName, 'fmonitor2-test'),
+            'DPN110-01 randomized canonical name rejects hard-coded fmonitor2-test_default');
+        $governanceNoNetwork = qcsRun([$launcher, 'governance', 'sh', '-c',
+            'test -z "${FMONITOR_TEST_DB_HOST:-}${FMONITOR_TEST_DB_PORT:-}"'], $root, $composeEnv);
+        assertSameValue(0, $governanceNoNetwork['exit'],
+            'DPN110-03 governance has no test-network or DB-route dependency');
+        $integrationNoNetwork = qcsRun([$launcher, 'integration', 'sh', '-c',
+            'test -z "${FMONITOR_TEST_DB_HOST:-}${FMONITOR_TEST_DB_PORT:-}"'], $root, $composeEnv);
+        assertSameValue(0, $integrationNoNetwork['exit'],
+            'DPN110-03 missing network is not repaired and command still owns its availability result');
+        $missingNetwork = qcsRun(['docker', 'network', 'inspect', $networkName], $root);
+        assertSameValue(true, $missingNetwork['exit'] !== 0,
+            'DPN110-03 launcher does not create a missing canonical network');
+
+        $create = qcsRun(['docker', 'compose', '-f', 'compose.test.yaml', 'create', 'test-db'], $root, $composeEnv);
+        assertSameValue(0, $create['exit'], 'DPN110-03 external lifecycle creates stopped test service: '.$create['err']);
+        $composeOwned = true;
+        $networkId = qcsRun(['docker', 'network', 'inspect', $networkName, '--format', '{{.Id}}'], $root);
+        $serviceId = qcsRun(['docker', 'compose', '-f', 'compose.test.yaml', 'ps', '-aq', 'test-db'], $root, $composeEnv);
+        assertSameValue(true, $networkId['exit'] === 0 && trim($networkId['out']) !== '',
+            'DPN110-03 external lifecycle owns an existing network');
+        assertSameValue(true, $serviceId['exit'] === 0 && trim($serviceId['out']) !== '',
+            'DPN110-03 external lifecycle owns a stopped test-db');
+        $stoppedProbe = qcsRun([$launcher, 'integration', 'php', substr($probePath, strlen($root) + 1)], $root, $composeEnv);
+        $stoppedAfter = qcsRun(['docker', 'inspect', trim($serviceId['out']), '--format', '{{.State.Running}}'], $root);
+        assertSameValue(true, $stoppedProbe['exit'] !== 0,
+            'DPN110-03 launcher does not hide unavailable stopped test-db');
+        assertSameValue([0, "false\n", ''], array_values($stoppedAfter),
+            'DPN110-03 launcher does not start an externally created stopped service');
+
+        $up = qcsRun(['make', 'test-env-up'], $root, $composeEnv);
+        assertSameValue(0, $up['exit'], 'DPN110-03 existing Make/Compose lifecycle starts test-db: '.$up['err']);
+        $relativeProbe = substr($probePath, strlen($root) + 1);
+
+        $realDocker = trim((string) shell_exec('command -v docker'));
+        $declaredNetwork = 'qcs-declared-'.bin2hex(random_bytes(6));
+        $createdNetwork = qcsRun([$realDocker, 'network', 'create', $declaredNetwork], $root);
+        assertSameValue(0, $createdNetwork['exit'], 'DPN110-01 sensitivity network exists');
+        $serviceContainer = trim($serviceId['out']);
+        $connectedAlias = qcsRun([$realDocker, 'network', 'connect', '--alias', 'test-db',
+            $declaredNetwork, $serviceContainer], $root);
+        assertSameValue(0, $connectedAlias['exit'], 'DPN110-01 test-db joins declared sensitivity network');
+        $disconnectedDefault = qcsRun([$realDocker, 'network', 'disconnect', $networkName, $serviceContainer], $root);
+        assertSameValue(0, $disconnectedDefault['exit'], 'DPN110-01 derived default route is unavailable during sensitivity probe');
+        $dockerSpy = $bin.'/docker';
+        file_put_contents($dockerSpy, <<<'SH'
+#!/bin/sh
+is_config=0
+for arg in "$@"; do test "$arg" = config && is_config=1; done
+if test "$1" = compose && test "$is_config" = 1; then
+  "$REAL_DOCKER" "$@" | python3 -c 'import json,os,sys;p=json.load(sys.stdin);p["networks"]["default"]["name"]=os.environ["QCS_DECLARED_NETWORK"];json.dump(p,sys.stdout)'
+else
+  exec "$REAL_DOCKER" "$@"
+fi
+SH);
+        chmod($dockerSpy, 0700);
+        $spyEnv = array_merge($composeEnv, [
+            'PATH' => $bin.':'.getenv('PATH'),
+            'REAL_DOCKER' => $realDocker,
+            'QCS_DECLARED_NETWORK' => $declaredNetwork,
+        ]);
+        $declaredProbe = qcsRun([$launcher, 'integration', 'php', $relativeProbe], $root, $spyEnv);
+        assertSameValue(0, $declaredProbe['exit'],
+            'INTENDED_RED DPN110-01 launcher consumes declared Compose JSON network instead of deriving project_default: '.$declaredProbe['err']);
+        $restoredDefault = qcsRun([$realDocker, 'network', 'connect', '--alias', 'test-db',
+            $networkName, $serviceContainer], $root);
+        assertSameValue(0, $restoredDefault['exit'], 'DPN110-01 fixture restores canonical default network');
+
+        $integrationDb = qcsRun([$launcher, 'integration', 'php', $relativeProbe], $root, $composeEnv);
+        $browserDb = qcsRun([$launcher, 'browser', 'php', $relativeProbe], $root, $composeEnv);
+        $networkAfter = qcsRun(['docker', 'network', 'inspect', $networkName, '--format', '{{.Id}}'], $root);
+        $serviceAfter = qcsRun(['docker', 'compose', '-f', 'compose.test.yaml', 'ps', '-q', 'test-db'], $root, $composeEnv);
+        assertSameValue(0, $integrationDb['exit'],
+            'INTENDED_RED DPN110-01/02 integration resolves test-db and executes mysqli SELECT 1: '.$integrationDb['err']);
+        assertSameValue(0, $browserDb['exit'],
+            'INTENDED_RED DPN110-01/02 browser resolves test-db and executes mysqli SELECT 1: '.$browserDb['err']);
+        assertSameValue(trim($networkId['out']), trim($networkAfter['out']),
+            'DPN110-03 launcher does not replace or create the Compose network');
+        assertSameValue(trim($serviceId['out']), trim($serviceAfter['out']),
+            'DPN110-03 launcher does not replace or start test-db');
+    } finally {
+        $cleanupFailures = [];
+        if (is_string($declaredNetwork)) {
+            if (is_string($serviceContainer) && $serviceContainer !== '') {
+                $disconnect = qcsRun(['docker', 'network', 'disconnect', '--force', $declaredNetwork, $serviceContainer], $root);
+                if ($disconnect['exit'] !== 0) {
+                    $cleanupFailures[] = 'declared-network-disconnect';
+                }
+            }
+            $removeNetwork = qcsRun(['docker', 'network', 'rm', $declaredNetwork], $root);
+            if ($removeNetwork['exit'] !== 0) {
+                $cleanupFailures[] = 'declared-network-remove';
+            }
+        }
+        if ($composeOwned) {
+            $down = qcsRun(['make', 'test-env-down'], $root, $composeEnv);
+            if ($down['exit'] !== 0) {
+                $cleanupFailures[] = 'make-test-env-down';
+            }
+        }
+        @unlink($probePath);
+        assertSameValue([], $cleanupFailures,
+            'DPN110-03 finally cleans every test-owned Docker resource after success or failure');
+    }
+
     $childFailure = qcsRun([$launcher, 'governance', 'sh', '-c', 'exit 23'], $root);
     assertSameValue(23, $childFailure['exit'], 'DP110A-02 child exit code is returned');
     assertSameValue(1, preg_match('/RUN_IN_PROFILE_RESULT (\{[^\n]+\})\n/D',

@@ -213,6 +213,13 @@ def validate_policy(policy):
         if not isinstance(service, str) or not service:
             raise ValueError("invalid service probe name")
         validate_argv(argv)
+    lanes = policy.get("verification_lanes", {})
+    if not isinstance(lanes, dict) or any(name not in {"FAST", "CRITICAL"} for name in lanes):
+        raise ValueError("invalid verification lanes")
+    for lane, boundaries in lanes.items():
+        if (not isinstance(boundaries, list) or len(boundaries) != len(set(boundaries))
+                or any(name not in names for name in boundaries)):
+            raise ValueError(f"invalid {lane} boundaries")
 
 
 def validate_policy_inventory(policy, inventory):
@@ -336,10 +343,11 @@ def build(base_ref, input_name):
     head = git("rev-parse", "HEAD").strip()
     actual, contents = actual_snapshot(base)
     generated_plan_paths = {item["path"] for item in actual
-                            if item["path"].endswith("/verification-plan.json")}
+                            if (item["path"].endswith("/verification-plan.json")
+                                or item["path"] == input_name)}
     actual = [item for item in actual if item["path"] not in generated_plan_paths]
     contents = {path: value for path, value in contents.items() if path not in generated_plan_paths}
-    effective = sorted(set(planned) | {item["path"] for item in actual})
+    effective = sorted((set(planned) - {input_name}) | {item["path"] for item in actual})
     selected = []
     required_categories = set()
     boundary_tests = set()
@@ -352,6 +360,21 @@ def build(base_ref, input_name):
         selected.append({"name": boundary["name"], "path": path})
         required_categories.update(boundary["categories"])
         boundary_tests.update(boundary["tests"])
+    lane_policy = policy.get("verification_lanes", {})
+    boundary_names = {item["name"] for item in selected}
+    critical = sorted(boundary_names & set(lane_policy.get("CRITICAL", [])))
+    fast_boundaries = set(lane_policy.get("FAST", []))
+    if critical:
+        verification_lane = "CRITICAL"
+        reasons = critical
+    elif boundary_names and boundary_names <= fast_boundaries:
+        verification_lane = "FAST"
+        reasons = sorted(boundary_names)
+    else:
+        verification_lane = "STANDARD"
+        reasons = sorted(boundary_names - fast_boundaries)
+    escalations = ([] if verification_lane == "FAST" else
+                   [{"lane": verification_lane, "reason": reason} for reason in reasons])
     inventory = load_json(policy["inventory"])
     if not isinstance(inventory, dict) or any(v not in CATEGORIES for v in inventory.values()):
         raise ValueError("invalid category inventory")
@@ -416,6 +439,10 @@ def build(base_ref, input_name):
         if expected is not None:
             normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
         normalized_acceptances.append(normalized)
+    if verification_lane == "FAST":
+        missing = sorted(set(acceptance_tests) - set(inventory))
+        if missing:
+            raise ValueError(f"FAST acceptance oracle is not registered: {missing[0]}")
     commands = []
     command_keys = set()
     def add(argv, phase, rationale, purpose="category"):
@@ -446,8 +473,9 @@ def build(base_ref, input_name):
     for test in effective_tests:
         add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
     for category in sorted(required_categories):
-        for argv in policy["category_argv"].get(category, []):
-            add(argv, "focused", f"required {category} category obligation")
+        if verification_lane != "FAST":
+            for argv in policy["category_argv"].get(category, []):
+                add(argv, "focused", f"required {category} category obligation")
     for relation in policy.get("generated_sources", []):
         surfaces = relation.get("artifacts", []) + relation.get("inputs", [])
         if (any(path in effective for path in surfaces) or
@@ -456,7 +484,9 @@ def build(base_ref, input_name):
             for argv in relation.get("consumers", []):
                 add(argv, "focused", "generated consumer obligation", "boundary")
     agent_change = "harness" in change_name or "hardening" in change_name
-    if agent_change and effective and (typed or all(agent_harness_path(path) for path in effective)):
+    if verification_lane == "FAST":
+        pass
+    elif agent_change and effective and (typed or all(agent_harness_path(path) for path in effective)):
         commands = [item for item in commands if item["rationale"] in
                     {"acceptance mapping", "generated source obligation", "generated consumer obligation"}
                     or (item.get("purpose") == "category" and not item.get("environment", {}).get("services"))]
@@ -479,6 +509,14 @@ def build(base_ref, input_name):
         "policy": digest(repo_path(POLICY)),
         "source": digest(Path(__file__).resolve()),
     }
+    selected_checks = []
+    if verification_lane == "FAST":
+        for item in commands:
+            if item["phase"] == "focused":
+                selected_checks.append({
+                    "id": hashlib.sha256(canonical(item["argv"]).encode()).hexdigest()[:16],
+                    "argv": item["argv"],
+                })
     return {
         "base": base, "base_ref": base_ref, "bindings": bindings,
         "boundaries": sorted(selected, key=lambda x: (x["path"], x["name"])),
@@ -486,6 +524,11 @@ def build(base_ref, input_name):
         "input": input_name,
         "paths": {"actual": actual, "effective": effective, "planned": sorted(planned)},
         "required_categories": sorted(required_categories),
+        "verification_lane": verification_lane,
+        "reasons": reasons,
+        "escalations": escalations,
+        "required_reviews": ["final"] if verification_lane == "FAST" else ["gate3", "final"],
+        "selected_checks": selected_checks,
         "acceptances": sorted(normalized_acceptances, key=lambda x: (x["spec_id"], x["acceptance_id"])),
         **({"dependency_workspaces": change.get("dependency_workspaces", [])} if typed else {}),
         "version": 2 if typed else 1,
