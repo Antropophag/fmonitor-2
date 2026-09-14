@@ -54,6 +54,9 @@ port=$FMONITOR_HTTP_PORT
 [[ "$FMONITOR_TRUSTED_REQUEST_HOST" == *:* ]] || fail
 [[ "$FMONITOR_INITIAL_OWNER_EMAIL" == *@*.* ]] || fail
 
+if [[ $# -eq 1 && $1 == --validate ]]; then
+  exit 0
+fi
 [[ $1 == -- ]] || fail
 shift
 [[ $# -gt 0 ]] || fail

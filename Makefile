@@ -2,6 +2,7 @@
 
 COMPOSE := docker compose
 LOCAL_ENV_RUN := bash tools/delivery/local-runtime-env --
+LOCAL_ENV_VALIDATE := bash tools/delivery/local-runtime-env --validate
 RUNTIME_COMPOSE := $(LOCAL_ENV_RUN) docker compose --env-file '@env-file' -f deploy/runtime/compose.yaml
 TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
@@ -28,6 +29,7 @@ help:
 	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
 
 up:
+	@$(LOCAL_ENV_VALIDATE)
 	@$(LOCAL_ENV_RUN) docker info >/dev/null 2>&1 || { echo "LOCAL_DOCKER_UNAVAILABLE" >&2; exit 69; }
 	$(LOCAL_ENV_RUN) docker build --file deploy/runtime/Dockerfile --tag '@env:FMONITOR_RUNTIME_IMAGE' .
 	$(RUNTIME_COMPOSE) config --quiet
