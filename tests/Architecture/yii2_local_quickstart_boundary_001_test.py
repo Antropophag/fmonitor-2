@@ -20,7 +20,7 @@ for line in makefile.splitlines():
 
 for name in ("up", "down", "logs", "ps", "reset"):
     body = "\n".join(targets[name])
-    assert "deploy/runtime/compose.yaml" in body or "RUNTIME_COMPOSE" in body, name
+    assert "deploy/runtime/compose.yaml" in body or "RUNTIME_COMPOSE" in body, "LEGACY_MAKE_ROUTING"
     assert "rapid-pilot" not in body and "pilot" not in body.lower(), name
 
 assert "--volumes" not in "\n".join(targets["down"])

@@ -57,7 +57,7 @@ with tempfile.TemporaryDirectory() as raw:
     first = make("up")
     assert first.returncode == 0, first.stderr
     first_trace = trace.read_text()
-    assert "deploy/runtime/compose.yaml" in first_trace
+    assert "deploy/runtime/compose.yaml" in first_trace, "LEGACY_MAKE_UP_TRACE"
     assert "fmonitor2-pilot" not in first_trace and " rapid-pilot/" not in first_trace
     for expected in ("up --detach --wait db", "run --rm prepare", "run --rm migrate", "provision-initial-admin", "up --detach --wait php web"):
         assert expected in first_trace, (expected, first_trace)
