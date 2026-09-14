@@ -226,3 +226,196 @@ Record `1789409793078800000-be08dd4893414cb3bc396ac8687af84c` is source-bound in
 `APPROVED`
 
 Gate 3 is approved for exact source `c03b53a96ba3e415b111614a21f2ff24fdd4d2e7ee93a61aa5f044ed3e872138`, including the corrected assigned-versus-foreign fixture. Gate 4 may proceed from this clean-baseline package. Later behavioral spec/test changes require independent delta review.
+
+---
+
+## Post-Gate 5 correction-test Gate 3 review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T184156Z-cb403ccc7e/package.json`
+- Production baseline: reviewed commit `d5e9b26ffcddac4ce3858126e62d14af5da962ff`; correction WIP excluded from the package
+- Candidate source: `91ef5c1e94e9de59543fc5ecb75c3d37ccf9fffd55584d94a37a90f4b0cb9af1`, executable source `62749dfd9e0aa8ef5510a2af4ca43a62324cd31ea70af60928a76aa2b10bbf96`
+- Snapshot patch SHA-256: `6c96c49d9622415705c26d11a0f8aae1522f8f77a855d230c3552c6bbc46e1f8`
+- Verification plan SHA-256: `3fbd77049023de93468ed698326d822a3d7397bdae92621adb63bfd4dbc2aceb`
+
+### Complete findings
+
+None.
+
+The active-queue delta exercises the real Yii HTTP seam with exactly 51 working rows assigned to actor 73 and two explicit foreign working rows, while retaining PTO/completed/non-working exclusions. It requires a 50/1 page split, exact tail identity 5050, filtered total 51 on both pages, repeat determinism, and after PTO transition of assigned object 5000 requires total 50 and rejection of the stale second page. The current reviewed implementation returns 53 rows, so record `1789411246389794000-93db0084a020468ca45ecc61ede2f2a6` fails at the independently determined assigned-row count. This is sensitive to both cross-engineer leakage and COUNT/page predicate drift, not setup.
+
+The confirmed-original delta exercises the public application factory in the supported non-local/legacy storage branch. Actors 73 and 95 have equivalent active legacy roles plus both `construction_control_engineer` and `installation.open` capabilities; only actor 73 matches the original's selected engineer. Foreign actor 95 must return exact `authorization_denied` with the full business snapshot unchanged, while a fresh fixture requires actor 73 to reach `working` and persist itself as opener. On the reviewed implementation, the foreign request passes the missing assignment admission and reaches a later owner failure reported as `dependency_unavailable`; record `1789411242549693000-8970b72f7427424babbc69dc6c37b6b4` therefore fails at the intended early-assignment outcome. The paired assigned case prevents a correction that merely rejects all non-local engineers and will validate the remaining setup when Gate 4 reruns the complete file.
+
+The primary ready-to-open HTTP flow is GREEN and the four unchanged neighboring Yii tests are GREEN at the same candidate source. The verification input accurately changes the primary expectation to GREEN, maps the new owner control as intended RED, and marks the changed active-queue control intended RED. The Gate 5 N+1/unbounded-scan finding remains a production design/code-review correction; the expanded test owns deterministic observable filtering, total and page-boundary behavior without introducing a timing-based nondeterministic oracle.
+
+Package hashes match, `git diff --check` is clean, and no local full suite was run. Gate 5 remains `CHANGES_REQUESTED`; CI and deployment remain `UNKNOWN`.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 approves the post-Gate 5 test delta at exact source `91ef5c1e94e9de59543fc5ecb75c3d37ccf9fffd55584d94a37a90f4b0cb9af1`. The executor may apply the stashed corrections without changing these expectations, then must produce complete GREEN evidence and a fresh independent Gate 5 review. Any further test/spec change requires Gate 3 delta review.
+
+---
+
+## Authoritative-fixture Gate 3 correction rereview — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T184816Z-ea7838fd17/package.json`
+- Production baseline: reviewed commit `d5e9b26ffcddac4ce3858126e62d14af5da962ff`; all Gate 5 correction production WIP excluded
+- Candidate source: `bdab313ad1fb7cdb28fe97527730f73702e16e8ee2fa349cbc51252c65ce42b6`, executable source `5da5eb7a97010c37b311b336955528bd8ef570f21453293dfb24b30dc3a786b5`
+- Snapshot patch SHA-256: `e9e870ad9cb6e2c8084fbf24575ca055f525fd9a57093b3f67d19b6910a00809`
+- Verification plan SHA-256: `a391fac51e8610bc8d19c780e7807e74e3ad96efa64ef8b32b5899c8d2de3c91`
+
+### Complete findings
+
+None.
+
+The corrected active-queue fixture now establishes ownership through the same authoritative source order production must use. Object 4512 has a current application whose `control_engineer_user_id` is explicitly changed to 94, so it is foreign even if its legacy row says otherwise. Object 4513 remains a foreign legacy-fallback row. The 51 copied working rows have no current application and explicitly carry legacy engineer 73, so they are assigned to the authenticated actor. Exact expected membership (5000–5050 only), 50/1 pagination, filtered totals and transition are therefore independent of accidental inherited fixture values and sensitive to both application-first and fallback ownership.
+
+The neighboring inspection journey now explicitly assigns its copied pagination objects to engineer 73 before cloning. Its retained second-page identity and ordering assertions no longer rely on an implicit legacy value, and the source-bound GREEN record confirms that the fixture correction preserves the adjacent flow.
+
+The active queue still produces exact intended RED 53 versus 51 at record `1789411625264117000-70ccf4e924b7440884564d71c19d61cf`, demonstrating that the reviewed implementation leaks precisely the two authoritative foreign rows. The non-local owner test remains intended RED at its assignment-denial expectation. The primary preopening flow and four neighboring controls are GREEN at the same source, all with no reported drift. Package hashes match and `git diff --check` is clean. No local full suite was run; Gate 5, CI and deployment are not approved by this test review.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 approves the authoritative fixture corrections at exact source `bdab313ad1fb7cdb28fe97527730f73702e16e8ee2fa349cbc51252c65ce42b6`. The executor may restore and implement the Gate 5 corrections without changing these expectations, then must provide complete GREEN evidence and fresh independent Gate 5 review.
+
+---
+
+## Authoritative-readiness parity Gate 3 delta review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T190057Z-14f2923b91/package.json`
+- Production baseline: original committed implementation `d5e9b26ffcddac4ce3858126e62d14af5da962ff`; all correction production WIP excluded
+- Candidate source: `f09e5cbdfaf5a297c5d36555da0dee8c5446338821def659173dd9a6bcc7a4a2`, executable source `f1c8d27ddedb70cc8bf6e7748eed32606316ffebac3d6a1072157b1f8bb92bec`
+- Snapshot patch SHA-256: `5c90efa32de1701e3549d6537dabe422dface5e9ad840fcaef1e35dbf6a7d395`
+- Verification plan SHA-256: `d707acab1cac54748ef072cbab928757ca6c28400e1e6b153a0b71927fd1c716`
+
+### Complete findings
+
+None.
+
+The new parity case is sensitive to the exact Gate 5 finding. After a valid selection and accepted original have made object 4512 ready, it removes the current selection's only member while retaining the selection/order/original rows that a simplified SQL `EXISTS` predicate can still mistake for readiness. The real queue and authoritative construction-control checklist must both fail closed with HTTP 503, and the complete fixture inventory must remain byte-equivalent throughout those reads. The original per-row authoritative implementation is GREEN on this case, establishing that the fixture reaches the intended integrity boundary rather than a broken setup.
+
+An optimized queue that merely joins latest selection, original root and current revision but omits the authoritative projection's selection-member/integrity validation will return a normal queue response or ready row and fail this assertion. Conversely, blindly excluding the malformed row with HTTP 200 also fails; the queue must preserve the authoritative owner's integrity outcome. Re-inserting the exact captured member restores the fixture for the subsequent PTO, checklist, authorization and opening flow, which remains GREEN.
+
+The two previously approved Gate 5 correction tests remain source-bound intended RED for cross-engineer working-row leakage and non-local assigned-engineer admission. The primary parity-expanded flow and four unchanged neighbors are GREEN at the same source, all with no reported drift. The verification plan retains their correct classifications. Package hashes match and `git diff --check` is clean. No local full suite was run; Gate 5, CI and deployment remain unapproved/`UNKNOWN`.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 approves the authoritative-readiness parity delta at exact source `f09e5cbdfaf5a297c5d36555da0dee8c5446338821def659173dd9a6bcc7a4a2`. The executor may implement a bounded authoritative readiness seam without weakening this 503 parity expectation, then must provide complete GREEN evidence and fresh independent Gate 5 review.
+
+---
+
+## Authoritative-readiness helper scope Gate 3 delta review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T190434Z-27ac47ac99/package.json`
+- Production baseline: committed implementation `d5e9b26ffcddac4ce3858126e62d14af5da962ff`; correction WIP excluded
+- Candidate source: `abb2bf07ec129e6388cd74f11ccb1c17bdc36d7a6198f2a14f8b8e6b4a3ca91b`, executable source `604577c471ff8406248a923362643c673aa4f58d11cbfe99b4d951776d52cc26`
+- Snapshot patch SHA-256: `31ce7e01ac47656396e2289b8b3c28a8f2b92e87447dca464c806d1d62447e4f`
+- Verification plan SHA-256: `09a942c4c6b78a523232a730d94bb78a248c06f3f7571ce0f4ca3d5d3ec07e8e`
+
+### Findings
+
+None.
+
+Adding existing `app/InstallationProcess/MariaDbYiiObjectCardProjection.php` and planned `app/InstallationProcess/MariaDbYiiObjectReadiness.php` is necessary for the selected correction design. The card projection is the current authoritative readiness/integrity consumer; the new helper is the shared batch-capable relation/validator; and the already planned `app/InspectionEvidence/MariaDbYiiChecklistRead.php` is the bounded queue consumer. Together these paths make both consumers and the single authority visible to implementation and independent Gate 5 review, preventing the optimized queue from silently owning a second weaker predicate.
+
+The scope remains complete without another composition file: the planned helper is an application class under the existing autoloaded namespace, and no public route or writer seam changes. Acceptance mappings, CRITICAL lane, required categories, test classifications and Gate 3/final reviews are unchanged. The authoritative parity test remains GREEN on the original per-row authority, both correction tests remain intended RED, and four neighbors remain GREEN at the same source with no reported drift.
+
+Package hashes match and `git diff --check` is clean. No local full suite was run; Gate 5, CI and deployment remain unapproved/`UNKNOWN`.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 approves the authoritative-helper planned-path delta at exact source `abb2bf07ec129e6388cd74f11ccb1c17bdc36d7a6198f2a14f8b8e6b4a3ca91b`. The executor may implement the shared bounded authority within these paths without changing approved expectations, followed by complete GREEN evidence and fresh Gate 5 review.
+
+---
+
+## Application-integrity parity Gate 3 delta review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T192258Z-3573e7710b/package.json`
+- Production baseline: original committed per-row authority `d5e9b26ffcddac4ce3858126e62d14af5da962ff`; all helper/correction WIP excluded
+- Candidate source: `0b344a340efe856c718469605aca97db5a5388d076af4a4b8e6af6b4c514e6bf`, executable source `c5110fb46519c93fe5d8dcf816ba1380c9068789988485cb5faef08d6ed835c4`
+- Snapshot patch SHA-256: `f71f5f434578c893cfeba8849ad83b9f3db534df0ddd94719136dc99eae9c1c0`
+- Verification plan SHA-256: `0a7b655ed5957ff3c28d0e3c27637f106ffeb4f1249bd072b79f8251b176754d`
+
+### Complete findings
+
+1. **HIGH — the malformed-application parity test omits the required foreign-actor no-signaling half.** Locations: `reviews/code/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md`, final authoritative-helper rereview finding; `tests/Yii2/yii2_construction_control_preopening_001_test.php:45-54,89-103`. The new case correctly creates a real application through the public compatibility seam, corrupts its persisted `selected_snapshot_json`, and requires assigned actor 73's queue and checklist to return 503 without repair. However actor 95 is not logged in or exercised until after the application bytes have been restored. A batch validator that detects the malformed row globally and returns 503 to every ordinary engineer—including actors for whom object 4512 is foreign—passes all current assertions while leaking the existence/state of another engineer's object through an error side channel. Configure/login the equivalently read-authorized foreign actor before restoring the corrupt application, require its queue to return the ordinary non-signaling response (HTTP 200 with object 4512 absent and no fact changes), then retain assigned actor 73's 503 parity assertions. If the checklist contract intentionally allows a foreign direct read shell, assert its established isolated outcome separately; the queue case is mandatory.
+
+### Assessment and verdict
+
+The owned half is otherwise sound. The real apply produces application sequence 1; exact original `selected_snapshot_json` bytes are captured, corrupted to a structurally valid but semantically invalid object, compared through both real HTTP seams, restored with a prepared statement, and the full rendered-sequence-1 opening flow continues GREEN on the original authority. That establishes setup validity and sensitivity to the weaker application-integrity relation for the assigned actor. It does not establish actor-scoped invalidity admission.
+
+The primary test is source-bound GREEN on the original per-row implementation, two correction tests remain intended RED, and four neighbors are GREEN at the same source with no reported drift. Package hashes match and `git diff --check` is clean. No local full suite was run; Gate 5/CI/deployment remain unapproved or `UNKNOWN`.
+
+`CHANGES_REQUESTED`
+
+Add the foreign malformed-application no-signaling assertion on the clean production baseline, retain the owned 503/checklist parity and continuation checks, capture fresh evidence, and request a bounded Gate 3 rereview.
+
+---
+
+## Owner-corrected substitution Gate 3 review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T193748Z-3a9882129a/package.json`
+- Baseline: committed implementation `d5e9b26ffcddac4ce3858126e62d14af5da962ff` with the confirmed-owner assigned-only reversal retained solely to expose RED; other production correction WIP excluded
+- Candidate source: `936b9cf9a6e8964de1bc3144ceb0c9353d2a12a7bae7ccd17c8ab8909d802172`, executable source `1c50132e3e207a682cef7d1b7ba6f7a220a9e0e8902be34a73d348df99712882`
+- Snapshot patch SHA-256: `bf1b21557e9539eb2be3704ccd6e272b64d1a8ed42151a9e5dc6acce2ce7048e`
+- Verification plan SHA-256: `0113ea3efa8eb76981e4edd9a4e55a6551919404eac9b74cc21def2bc93694f0`
+
+### Complete findings
+
+1. **HIGH — the rebuilt test no longer behaviorally enforces the still-normative preopening mutation lock.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md:26`; delta spec `spec.md:18-27`; `tests/Yii2/yii2_construction_control_preopening_001_test.php:30-44`. The checklist is checked only for a `data-enabled="false"` marker. The previously approved candidate actually submitted a checklist operation and requested sync-context before opening, required both to be denied, and compared the complete fact inventory. The owner's substitution decision changes who may open; it does not authorize checklist mutation before `working`. An implementation that renders the disabled marker but accepts operation/photo/offline writes will pass. Restore real preopening operation and sync-context attempts through the construction-control seams with exact denial and no-fact/file assertions.
+
+2. **HIGH — ready-state PTO exclusion remains normative but has been dropped from the candidate.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md:18-20`; delta spec ready requirement; `tests/Yii2/yii2_construction_control_preopening_001_test.php:18-29`. The rebuilt test covers selection-without-original and one eligible ready row, but no longer adds `pto_act` to that ready case and proves it disappears. The retained active-queue test covers PTO on `working` cases, not the new ready branch. A queue that excludes documentary closure only for working rows can pass. Restore the ready-plus-PTO real queue case and complete no-write inventory check.
+
+3. **MEDIUM — explicit ready HEAD/read-only coverage was removed although both ready public seams still include HEAD.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md:11,38`; `tests/Yii2/yii2_construction_control_preopening_001_test.php:24-32`. The rebuilt test compares facts after ready queue GET but never sends ready queue HEAD or ready checklist HEAD and never compares facts immediately after substitute checklist GET. Retained neighbors exercise working-resource HEAD, so a distinct ready branch that rejects HEAD, emits a body or writes can pass. Restore exact 200/empty-body HEAD checks for ready queue and checklist and unchanged facts around ready checklist GET/HEAD.
+
+4. **MEDIUM — the rendered form is no longer required to target the specified public execution seam.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md:11,32-34`; `tests/Yii2/yii2_construction_control_preopening_001_test.php:33-45`. The test extracts whatever action appears on the `open_confirmed` form and posts to it, but does not assert `/pilot/objects/4512/execution?return=construction-control`; the exact-action assertion from the approved candidate was removed. A new/alternate writer route can satisfy the test despite the one-writer/public-seam contract. Require the exact action before using it. Retain extraction of hidden values and success return assertion.
+
+### Scope and RED assessment
+
+The owner correction itself is coherent across normative spec, OpenSpec proposal/delta/design and verification input: the server response remains the existing shared queue, assignment drives client-side Mine only, a same-role substitute may open, and legacy/non-local plus helper/performance work are out of scope. Actor 95 shares role 2 and exact local checklist/open grants with actor 73; the real substitute checklist request reaches HTTP 200 but lacks the opening form under the assigned-only implementation. Record `1789414584427255000-4662ff2f02814ca6a36b0340b36dda46` therefore fails for the precise missing substitution behavior, not setup. Revoking the shared exact permission before POST and restoring it before success is sensitive to current authority, and the final expected opener 95 correctly captures substitution authorship.
+
+The five mapped neighbors are source-bound GREEN. Package hashes match and `git diff --check` is clean. These facts do not replace the removed novel-branch assertions above. No local full suite was run; Gate 5, CI and deployment remain unapproved/`UNKNOWN`.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+The prior assigned-only approvals are superseded by the owner's product correction, but this rebuilt substitute-flow candidate is incomplete. Restore the four bounded still-normative checks without reintroducing assigned-only, legacy or helper/performance scope, capture fresh intended RED, and request rereview.
+
+---
+
+## Owner-corrected substitution Gate 3 correction rereview — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T194152Z-6b44348a68/package.json`
+- Baseline: committed implementation `d5e9b26ffcddac4ce3858126e62d14af5da962ff` with only the confirmed-owner assigned-only reversal exposed for RED; unrelated correction scope excluded
+- Candidate source: `84948394cd2885ff1d822492a00c8ce850b9d5c3ce25ba3485fad6955723a19b`, executable source `1de55a13d822a52f57da60bf7559cf689e8eb36567ebe241b952c725474dd511`
+- Snapshot patch SHA-256: `210a4d9ae92dc0e790e73d5ae675d07ef86ea1b91577a78bb72c9e09cd77aa62`
+- Verification plan SHA-256: `8891db6f5208db0041bf3c6f028cf0d2c5be2d9ec561a3c1103b34937755fe7a`
+
+### Prior findings disposition
+
+1. Resolved. The substitute submits a real construction-control checklist operation and requests sync-context before opening; both must return 403 and the complete fact inventory must remain unchanged.
+2. Resolved. The ready case receives `pto_act`, must disappear from the real queue without read-side mutation, then the fixture fact is removed before checklist continuation.
+3. Resolved. Ready queue and substitute checklist HEAD both require HTTP 200 with empty bodies, and fact inventories cover queue GET/HEAD plus checklist GET/HEAD and denied mutation reads.
+4. Resolved. The isolated `open_confirmed` form action must equal `/pilot/objects/4512/execution?return=construction-control` before the test uses it for revoked and accepted submissions.
+
+### Complete findings
+
+None.
+
+The restored assertions remain bounded to the owner-corrected local Yii2 slice. They do not require server-side assignment isolation, legacy/non-local behavior, a shared readiness helper or a performance redesign. Actor 95 has the same local construction-control/checklist/open role as actor 73, receives the ready checklist and must be offered the opening form despite not being assigned; assignment remains only the `data-engineer-id="73"` input to client-side Mine presentation.
+
+Record `1789414818023841000-de225d7cad554745b8dc4b47b7478c1a` remains an exact intended RED at the missing substitute opening form after selection, original acceptance, ready queue and role setup succeed. The five mapped neighboring tests are GREEN at the same source with no reported drift. Package hashes match and `git diff --check` is clean. No local full suite was run; Gate 5, CI and deployment remain unapproved/`UNKNOWN`.
+
+### Verdict
+
+`APPROVED`
+
+Gate 3 approves the complete owner-corrected substitution candidate at exact source `84948394cd2885ff1d822492a00c8ce850b9d5c3ce25ba3485fad6955723a19b`. The executor may implement the narrow local admission correction without changing these expectations, followed by complete GREEN evidence and fresh independent Gate 5 review.

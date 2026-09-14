@@ -2,7 +2,7 @@
 
 ## Простыми словами
 
-После выбора состава и принятия подписанного оригинала назначенный инженер видит объект в своей очереди, открывает работы над ещё заблокированным чек-листом и продолжает работу там же. Просмотр ничего не открывает, а чужой инженер не получает объект или действие.
+После выбора состава и принятия подписанного оригинала объект появляется у назначенного инженера в «Мои». Открыть его над заблокированным чек-листом может также другой уполномоченный инженер, если назначенный недоступен.
 
 ## Authority и public seams
 
@@ -19,13 +19,13 @@
 
 Готовая строка имеет status `Готов к открытию`, `completed=false` и ведёт на construction-control checklist. Она не считается открытой. Selection без accepted current original и case с `pto_act` не входят как ready. Этот slice MUST потреблять authoritative readiness существующего preopening projection, а не реализовывать второй упрощённый lineage predicate; stale-lineage contract и его regression остаются у `YII2-PREOPENING-JOURNEY-001`.
 
-Представление «Мои» MUST быть защищено сервером: обычный инженер получает только строки, где current engineer user ID равен actor ID. Manager-wide поведение может сохранять действующий доступ, но JS-фильтр не является authorization boundary. Действующие pagination rules не меняются.
+Очередь сохраняет действующий общий server response и client-side «Мои/Все»: current engineer ID управляет персональным отображением, но не является authorization boundary. Действующие pagination rules не меняются.
 
 ## A2. Предоткрывающий checklist
 
-Назначенный инженер с exact `installation.open` получает HTTP 200 и видит над чек-листом status `Готов к открытию`, поле обязательной фактической даты и кнопку `Открыть работы`. Форма содержит native CSRF и exact current `orderId`, `revisionId`, `sequence`, новый UUIDv4 request ID; её action использует существующий execution seam. Checklist sections, photos, completion, sync-context и offline mutation остаются disabled/inert до `working`.
+Любой активный `construction_control_engineer`, которому действующие правила разрешают checklist и exact `installation.open`, получает HTTP 200 и видит форму открытия. Совпадение с назначенным инженером не требуется: это штатное замещение. Checklist mutations остаются disabled/inert до `working`.
 
-Неназначенный actor не получает готовую строку в своей server-side очереди и не получает форму открытия. Назначенный actor без `installation.open` может видеть правдиво заблокированный экран, но не форму. Отзыв exact capability между GET и POST даёт отказ owning command без фактов.
+Actor без checklist role access или exact `installation.open` не получает форму. Отзыв exact capability между GET и POST даёт отказ owning command без фактов. Legacy/non-local authorization этим slice не меняется и не проверяется.
 
 ## A3. Успешное открытие и return path
 
@@ -41,7 +41,7 @@ GET/HEAD queue/checklist не изменяют case, application, original, even
 
 Case 6101/object 4512: selection order 81 revision 1, installer 7001, engineer 73, accepted original revision R1 от 2026-09-01, case ещё не открыт, PTO отсутствует. Actor 73 имеет `construction_control.read`, `checklist.read`, `installation.open`.
 
-До POST очередь содержит 4512 один раз как `Готов к открытию`; checklist inert и содержит opening form. GET/HEAD сохраняют все facts. POST с actualStartDate `2026-09-02` возвращает к construction-control checklist; case становится `working`, `opened_by_user_id=73`, одна application и один `installation_opened_from_original` event. После refresh 4512 остаётся один раз, opening form отсутствует и checklist enabled. Actor 95 и actor 73 после отзыва `installation.open` не создают ни одного нового факта.
+До POST очередь содержит 4512 один раз как `Готов к открытию` и помечает engineer 73 для фильтра «Мои». Замещающий engineer 95 с теми же checklist/open rights видит inert checklist и opening form. POST с датой `2026-09-02` сохраняет `opened_by_user_id=95`, возвращает в checklist и разблокирует его. После отзыва `installation.open` тот же POST даёт 403 без фактов.
 
 ## Done
 

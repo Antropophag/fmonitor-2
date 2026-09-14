@@ -15,10 +15,10 @@ final readonly class MariaDbConfirmedOriginalOpening
             if(!$s->idle())return$failure('dependency_unavailable');
             $originals=O\AssignmentOrderOriginalApplicationReferenceFactory::create($s->db,$s->prefix);
             $applicationOperation=new MariaDbAssignmentOrderApplicationOperation($s,$originals);
+            if(!$applicationOperation->authorized($c->actorId,false,'installation.open'))return$failure('authorization_denied');
             $lookup=$originals->readCurrent($c->objectId,$c->orderId);
             if($lookup->status!==O\AssignmentOrderOriginalApplicationReferenceStatus::FOUND||$lookup->reference===null)return$failure('original_unavailable');
             $reference=$lookup->reference;$metadata=$reference->metadata();
-            if(!$applicationOperation->authorizedForOpening($c->actorId,(int)$metadata['composition']['engineer']['userId'],false))return$failure('authorization_denied');
             if($metadata['revisionId']!==$c->originalRevisionId)return$failure('original_changed');
             $instant=$this->clock->now();if($instant->status!==SelectionLookupStatus::FOUND||$instant->payload===null)return$failure('dependency_unavailable');$at=$instant->payload;
             $today=SelectionScalar::selectionDate($at);if($c->actualStartDate>$today||$c->actualStartDate<$metadata['documentDate'])return$failure('actual_start_before_order_or_future');
@@ -26,7 +26,7 @@ final readonly class MariaDbConfirmedOriginalOpening
             if(!$s->db->query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED')||!$s->db->begin_transaction())throw new \RuntimeException('dependency_unavailable');$owned=true;
             $cases=$s->rows('SELECT * FROM '.$s->table('fm2_installation_cases').' WHERE legacy_installation_object_id=? FOR UPDATE',[$c->objectId]);
             if(count($cases)!==1||(int)$cases[0]['id']!==$metadata['caseId'])throw new \RuntimeException('object_not_found');$case=$cases[0];$caseId=(int)$case['id'];
-            if(!$applicationOperation->authorizedForOpening($c->actorId,(int)$metadata['composition']['engineer']['userId'],true))throw new \RuntimeException('authorization_denied');
+            if(!$applicationOperation->authorized($c->actorId,true,'installation.open'))throw new \RuntimeException('authorization_denied');
             if($case['actual_start_date']!==null||$case['opened_at']!==null){
                 $events=$s->rows('SELECT payload_json FROM '.$s->table('fm2_process_events')." WHERE installation_case_id=? AND event_type='installation_opened_from_original' ORDER BY id DESC LIMIT 1",[$caseId]);
                 $event=$events===[]?[]:json_decode($events[0]['payload_json'],true,512,JSON_THROW_ON_ERROR);

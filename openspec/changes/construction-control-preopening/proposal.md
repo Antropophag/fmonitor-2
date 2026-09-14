@@ -6,7 +6,7 @@
 
 - Включить в `GET /pilot/construction-control` неоткрытые дела с актуальным применимым оригиналом и назначенным инженером, сохраняя открытые рабочие дела и исключение документального закрытия.
 - Показывать назначенному инженеру состояние «Готов к открытию» и ссылку на экран чек-листа до открытия.
-- Над чек-листом показывать существующее действие `open_confirmed` с фактической датой начала только назначенному активному инженеру с exact `installation.open`.
+- Над чек-листом показывать существующее действие `open_confirmed` с фактической датой начала любому активному инженеру с действующими правами на чек-лист и exact `installation.open`; это сохраняет штатное замещение назначенного инженера.
 - После успешной команды оставить объект в очереди как открытый и разблокировать действующие checklist actions; повторное открытие не предлагать.
 - Проверить полный Yii2 путь и отсутствие новых фактов у GET/HEAD и отказов.
 
@@ -22,6 +22,6 @@
 
 ## Impact
 
-Actor — назначенный активный инженер стройконтроля. Source oracle — issue #40 и существующие контракты `YII2-PREOPENING-JOURNEY-001`, `YII2-INSPECTION-JOURNEY-001`, `YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001`. Public seams — Yii2 `GET /pilot/construction-control`, `GET /pilot/construction-control/objects/{id}/checklist` и существующий `POST /pilot/objects/{id}/execution`/application owner открытия.
+Actors — назначенный инженер для представления «Мои» и любой уполномоченный инженер для штатного замещения. Source oracle — issue #40, уточнение владельца 2026-09-14 и существующие контракты `YII2-PREOPENING-JOURNEY-001`, `YII2-INSPECTION-JOURNEY-001`, `YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001`. Public seams — текущие Yii2 routes очереди, checklist и execution.
 
-Затрагиваются read model очереди, checklist controller/view и focused Yii2 tests. Новых таблиц, writer'ов, прав, предметных правил открытия или записей из read paths нет. Не меняются очередь ФКР, выбор состава/загрузка оригинала, checklist mutation rules после открытия, ОТиЗ, `rapid-pilot`, deployment и текущий stand.
+Затрагиваются только local Yii2 read model очереди, checklist controller/view, local opening admission и focused Yii2 test. Legacy/non-local compatibility, новые таблицы, writer'ы и checklist mutation rules после открытия не меняются.

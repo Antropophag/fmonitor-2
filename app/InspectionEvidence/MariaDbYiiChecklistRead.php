@@ -59,8 +59,8 @@ trait MariaDbYiiChecklistRead
             if(!in_array('construction_control.read',$this->permissions($actorId),true))throw new \DomainException();
     $active="c.process_state IN('working','needs_assignment_order','assignment_order_prepared') AND NOT EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
     $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE $active ORDER BY last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
-    $eligible=[];$manager=$this->managerAccess($actorId);
-    foreach($this->all($sql)as$r){$engineer=$r['process_state']==='working'?$this->engineer((int)$r['case_id']):$this->selectedEngineer((int)$r['case_id']);$ready=false;if($r['process_state']!=='working'){$card=$this->authoritativeCard($actorId,(int)$r['object_id']);$ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);if(!$ready||!$manager&&(int)($engineer['userId']??0)!==$actorId)continue;}$r['ready']=$ready;$r['controlEngineer']=$engineer;$eligible[]=$r;}
+    $eligible=[];
+    foreach($this->all($sql)as$r){$engineer=$r['process_state']==='working'?$this->engineer((int)$r['case_id']):$this->selectedEngineer((int)$r['case_id']);$ready=false;if($r['process_state']!=='working'){$card=$this->authoritativeCard($actorId,(int)$r['object_id']);$ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);if(!$ready)continue;}$r['ready']=$ready;$r['controlEngineer']=$engineer;$eligible[]=$r;}
     $total=count($eligible);$offset=($page-1)*$size;
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
@@ -107,8 +107,6 @@ trait MariaDbYiiChecklistRead
     }
 
         private function selectedEngineer(int$case):?array{$r=$this->one("SELECT control_engineer_user_id id,control_engineer_fio_snapshot name FROM {$this->t('fm2_assignment_order_selections')} WHERE installation_case_id=? ORDER BY selection_revision DESC LIMIT 1",[$case]);if(!$r||!(int)$r['id'])return$this->engineer($case);return['userId'=>(int)$r['id'],'fullName'=>(string)$r['name']];}
-
-        private function managerAccess(int$id):bool{return$this->one("SELECT 1 FROM {$this->t('fm2_pilot_users')} u JOIN {$this->t('fm2_pilot_user_roles')} ur ON ur.user_id=u.user_id JOIN {$this->t('fm2_pilot_roles')} r ON r.role_id=ur.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state='active' AND r.status=1 AND r.code='manager' LIMIT 1",[$id])!==null;}
 
         private function authoritativeCard(int$actorId,int$objectId):?array{if(!$this->yii instanceof \yii\db\Connection)return null;return \FMonitor2\YiiRuntime\InstallationProcessFactory::card($this->yii,$this->prefix,$this->legacyPrefix)->read($actorId,$objectId);}
 

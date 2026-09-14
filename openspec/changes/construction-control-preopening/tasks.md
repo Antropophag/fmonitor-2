@@ -13,6 +13,6 @@
 
 ## 3. Gate 5 и поставка
 
-- [ ] 3.1 Root фиксирует reconstructible exact-source package; независимый sol/low reviewer проверяет spec, approved tests, production diff и evidence и записывает Gate 5 verdict
-- [ ] 3.2 После `APPROVED` выполнить все команды свежего focused plan; локальный `make test`/`make verify` не запускать
+- [x] 3.1 Root фиксирует reconstructible exact-source package; независимый sol/low reviewer проверяет spec, approved tests, production diff и evidence и записывает Gate 5 verdict
+- [x] 3.2 После `APPROVED` выполнить все команды свежего focused plan; локальный `make test`/`make verify` не запускать
 - [ ] 3.3 Создать commit/PR и выполнить один exact-source Quality Graph CI; merge/закрытие #40 допустимы только при подтверждённом GREEN, deployment остаётся UNKNOWN
