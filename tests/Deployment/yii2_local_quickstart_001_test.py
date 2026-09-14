@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """YII2-LOCAL-QUICKSTART-001: stateful public Make lifecycle contract."""
-import json, os, shutil, subprocess, tempfile
+import hashlib, json, os, shutil, subprocess, tempfile
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[2]
@@ -14,9 +14,9 @@ with tempfile.TemporaryDirectory() as raw:
         current={**values,**(changes or {})};(checkout/'.env').write_text(''.join(f'{k}={v}\n' for k,v in current.items()))
     write_env();fake_bin=sandbox/'bin';fake_bin.mkdir();trace=sandbox/'trace.jsonl';state=sandbox/'state.json';state.write_text('{}')
     driver=fake_bin/'docker';driver.write_text('''#!/usr/bin/env python3
-import json,os,sys
+import hashlib,json,os,sys
 trace=os.environ['FMONITOR_TEST_TRACE'];state_path=os.environ['FMONITOR_TEST_STATE'];argv=sys.argv[1:];project=os.environ.get('COMPOSE_PROJECT_NAME','')
-open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project})+'\\n');joined=' '.join(argv);fail=os.environ.get('FMONITOR_TEST_FAIL_STAGE','')
+open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project,'dbPasswordDigest':hashlib.sha256(os.environ.get('FMONITOR_DB_PASSWORD','').encode()).hexdigest()})+'\\n');joined=' '.join(argv);fail=os.environ.get('FMONITOR_TEST_FAIL_STAGE','')
 stages={'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}
 if fail in stages and stages[fail] in joined:sys.exit(42)
 if '--volumes' in argv and not ('compose' in argv and '-f' in argv and 'deploy/runtime/compose.yaml' in argv and project.startswith('fm2-local-') and 'down' in argv and '--remove-orphans' in argv):sys.exit(43)
@@ -56,10 +56,11 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
     clear();assert make('down').returncode==0;down_state=json.loads(state.read_text())['fm2-local-contract'];assert down_state['volumes'] and not down_state['running']
     all_state=json.loads(state.read_text());all_state['fm2-local-neighbor']={'database':'neighbor','volumes':True,'running':True};state.write_text(json.dumps(all_state))
     clear();assert make('reset').returncode==0;remaining=json.loads(state.read_text());assert 'fm2-local-contract' not in remaining and remaining['fm2-local-neighbor']['running'];assert any('down --volumes --remove-orphans' in ' '.join(e['argv']) for e in events())
-    mandatory=tuple(values);invalid_cases=[{key:None} for key in mandatory]+[{key:'replace_me'} for key in mandatory]+[{'FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD':'replace_with_a_strong_unique_password'},{'FMONITOR_YII_COOKIE_VALIDATION_KEY':'short'},{'FMONITOR_YII_IDENTITY_KEY':'short'},{'FMONITOR_TRUSTED_REQUEST_SCHEME':'ftp'},{'COMPOSE_PROJECT_NAME':''},{'COMPOSE_PROJECT_NAME':'bad project'},{'COMPOSE_PROJECT_NAME':'fmonitor2-production'},{'FMONITOR_INITIAL_OWNER_EMAIL':''}]
+    marker=sandbox/'ENV_MUST_NOT_EXECUTE';literal=f'$(shell touch {marker})';write_env({'FMONITOR_DB_PASSWORD':literal});clear();literal_run=make('ps');assert literal_run.returncode==0 and not marker.exists(),'DOTENV_EXECUTED_AS_MAKE';assert events()[0]['dbPasswordDigest']==hashlib.sha256(literal.encode()).hexdigest(),'DOTENV_VALUE_CHANGED';write_env()
+    mandatory=tuple(values);invalid_cases=[{key:None} for key in mandatory]+[{key:'replace_me'} for key in mandatory]+[{'FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD':'replace_with_a_strong_unique_password'},{'FMONITOR_YII_COOKIE_VALIDATION_KEY':'short'},{'FMONITOR_YII_IDENTITY_KEY':'short'},{'FMONITOR_TRUSTED_REQUEST_SCHEME':'ftp'},{'COMPOSE_PROJECT_NAME':''},{'COMPOSE_PROJECT_NAME':'bad project'},{'COMPOSE_PROJECT_NAME':'fmonitor2-production'},{'COMPOSE_PROJECT_NAME':'fm2-local-production'},{'COMPOSE_PROJECT_NAME':'fm2-local-prod'},{'FMONITOR_INITIAL_OWNER_EMAIL':''}]
     for changes in invalid_cases:
         current={k:v for k,v in {**values,**changes}.items() if v is not None};(checkout/'.env').write_text(''.join(f'{k}={v}\n' for k,v in current.items()));clear();rejected=make('up');assert rejected.returncode!=0,('INVALID_ACCEPTED',changes);assert events()==[],('INVALID_EFFECT',changes);assert 'replace_with_a_strong_unique_password' not in rejected.stdout+rejected.stderr
-    for project in ('','replace_me','bad project','fmonitor2-production','fm2-local'):
+    for project in ('','replace_me','bad project','fmonitor2-production','fm2-local-production','fm2-local-prod','fm2-local'):
         write_env({'COMPOSE_PROJECT_NAME':project});clear();rejected=make('reset');assert rejected.returncode!=0 and events()==[],('UNBOUNDED_RESET',project)
     (checkout/'.env').unlink();clear();assert make('up').returncode!=0 and events()==[],'MISSING_ENV_EFFECT';assert make('reset').returncode!=0 and events()==[],'MISSING_ENV_RESET';write_env()
     for stage in ('build','db','provision-db','prepare','migrate','runtime-check','owner','services','live','ready'):
