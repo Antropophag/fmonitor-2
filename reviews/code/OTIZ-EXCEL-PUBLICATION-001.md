@@ -13,6 +13,25 @@
 
 None.
 
+## Moscow-midnight browser fixture Gate 5 — 2026-09-15
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T213231Z-5cb47b19b0/package.json`, prepared against base `408bada41f2d25049e946f0801cd5da7f5c5a60f`
+- Candidate source: `65f70187104700c090f90a8f9e87dc4f46277e393bd1bc84dbebe80a86e49d2c`; executable source: `f606bc3c0a07919d66aae560aa0220357cc2f980a798ae3783b2f2656163c7f7`
+- Scope: root-authored changes only to `tests/Yii2/excel_publication_browser_001_test.php` and `tests/Yii2/excel_publication_browser.mjs`; no production change
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The test now derives a Moscow-relative report cutoff that includes the real payment date and remains valid if execution crosses midnight. It preserves the exact two-day Kss 9800 calculation, 1274000 first pool, confirmed-payment recurrence to 25480, certificate source/PDF assertions, trace values, PTO absence, XLSX evidence and public browser lifecycle. It removes only the artificial checklist server-time rewrite and adds a direct audit that the payment date is within the cutoff.
+
+`php tests/Yii2/excel_publication_browser_001_test.php` is exact-source `GREEN` in record `1789421431877653000-eaee1fb80eac420ca37e3a7597df923e`. The second CI inventory reports both integration shards, fast/unit and governance green; its e2e failure is this pre-correction fixed-date fixture, with verify consequentially failing and Quality Graph log retrieval returning API 404. Those CI observations establish the correction's trigger but are not relabeled as final-source GREEN.
+
+### Required changes
+
+None.
+
 ## CI fixture correction final-review supplement — 2026-09-14
 
 - Reviewer: Codex independent reviewer `/root/review_calc` (gpt-5.6-sol / low)

@@ -33,7 +33,7 @@ Only issue66 in the existing native Yii2 flow. No rapid-pilot compatibility, new
 
 - [x] Review only necessary current schema frontier expectations; no old pilot-flow compatibility work.
 - [x] Focused changed-boundary checks and architecture check.
-- [ ] One full exact-source GitHub CI, complete failure inventory and honest scope report.
-- [ ] Commit and concrete reviewable PR; no stand mutation.
+- [x] Full exact-source GitHub CI and complete failure inventory recorded; corrections independently reviewed. Final corrected-commit CI status is tracked in PR143 (pending at this checkpoint).
+- [x] Commit and concrete reviewable PR143; no stand mutation.
 
-- [ ] Owner-authorized active-application CI inventory, preserved shared/history coverage, independent review and exact-source full CI.
+- [x] Owner-authorized active-application CI inventory, preserved shared/history coverage, independent review and exact-source full CI34897403000; remaining browser-date fixture failure reproduced and corrected, final corrected-commit CI pending.

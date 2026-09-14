@@ -62,6 +62,26 @@ None for the owner-bounded publication scope. The complete matrix now sensitivel
 
 None.
 
+## Moscow-midnight browser fixture correction — 2026-09-15
+
+- Test author: root agent
+- Baseline source: retained package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T212513Z-86072483a7/snapshot`, candidate/executable `6f989b4e339c12dd5350b3589b1944d161e69f04657f938919deb5dd06c648ef` / `a940d020f664d50ca341fe9dd45081c8623bc73b6bd2e9ee6b0c101ba636fea6`
+- Corrected source: retained package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T212622Z-d719d9e988/snapshot`, candidate/executable `398b8a67d055a3021c042f0ed335fa5f911b35b42624a3d730fff9a5caf2b209` / `f606bc3c0a07919d66aae560aa0220357cc2f980a798ae3783b2f2656163c7f7`
+- Baseline evidence: exact-source intended RED record `1789421047653001000-4e05aafd9fc046b9a868239b2070b9c7` demonstrates that the fixed 2026-09-14 report cutoff excludes a real payment recorded after Moscow midnight, producing the unreduced second pool.
+- Gate 3 verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The correction derives a Moscow `today`, uses tomorrow as the report cutoff, today as certificate date, and yesterday as the new deadline. Those relationships remain valid if the journey crosses midnight: the real payment date is still within the report cutoff and the deadline remains exactly two days before that cutoff. The checklist completion uses its actual current device/server time and the test no longer rewrites `server_received_at` into a historical date.
+
+The browser receives the three dates explicitly and uses the same report date for both publications. The independent amounts remain 1274000 for the first pool and 25480 after the confirmed 1274000 payment, with Kss 9800. The correction retains exact source/PDF provenance, trace labels and money, certificate link, PTO absence, XLSX evidence, public acceptance/payment flow and the no-ledger-rewrite recurrence assertion; it adds an explicit check that the actual payment date falls inside the cutoff.
+
+### Required changes
+
+None.
+
 ## CI fixture correction review — 2026-09-14
 
 - Reviewer: Codex independent reviewer `/root/review_calc` (gpt-5.6-sol / low)
