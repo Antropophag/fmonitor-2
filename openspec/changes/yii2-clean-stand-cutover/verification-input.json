@@ -20,6 +20,8 @@
     "tests/Support/clean-stand/enqueue.php",
     "tests/Support/clean-stand/include-probe.php",
     "tests/Support/clean-stand/99-acceptance-probe.ini",
+    "tests/Support/clean-stand/JobHandlerRuntime.php",
+    "tests/Jobs/acceptance_outbox_worker_handler_001_test.php",
     "tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py",
     "docs/operations/yii2-clean-stand-cutover-runbook.md",
     "docs/operations/yii2-clean-stand-cutover-evidence.md",
@@ -45,7 +47,7 @@
       "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
       "seam": "separate acceptance Compose override/setup/enqueue/include-probe are inaccessible outside exact disposable topology; production Compose/image/config/public routes and commands contain no acceptance-only dependency",
       "tests": ["tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py"],
-      "gate3_expected": {"tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py": "GREEN"}
+      "gate3_expected": {"tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py": "INTENDED_RED"}
     },
     {
       "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
@@ -53,7 +55,7 @@
       "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
       "seam": "the non-default real-disposable acceptance command refuses execution without an external exact owner authorization package; after authorization the same command must produce real-boundary evidence and cannot be satisfied by recording-driver mode",
       "tests": ["tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py"],
-      "gate3_expected": {"tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py": "INTENDED_RED"}
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_real_acceptance_001_test.py": "GREEN"}
     },
     {
       "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",
@@ -92,8 +94,8 @@
       "acceptance_id": "A5-jobs-outbox-normal-operation",
       "spec_path": "specs/YII2-CLEAN-STAND-CUTOVER-001.md",
       "seam": "real scheduler/application enqueue through worker claim and terminal job/outbox attempt/history with recovery counters, stable reads and healthy worker/scheduler heartbeats using canonical configured table identities",
-      "tests": ["tests/Deployment/yii2_clean_stand_jobs_001_test.py"],
-      "gate3_expected": {"tests/Deployment/yii2_clean_stand_jobs_001_test.py": "GREEN"}
+      "tests": ["tests/Deployment/yii2_clean_stand_jobs_001_test.py", "tests/Jobs/acceptance_outbox_worker_handler_001_test.php"],
+      "gate3_expected": {"tests/Deployment/yii2_clean_stand_jobs_001_test.py": "GREEN", "tests/Jobs/acceptance_outbox_worker_handler_001_test.php": "INTENDED_RED"}
     },
     {
       "spec_id": "YII2-CLEAN-STAND-CUTOVER-001",

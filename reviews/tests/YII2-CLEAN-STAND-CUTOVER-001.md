@@ -329,3 +329,55 @@ The fresh mapped run is honest `INTENDED_RED` on the absent validation/execution
 `APPROVED`
 
 Gate 4 may implement the bounded private-file raw JSON renderer/executor against this exact test. This creates no production HTTP interface and authorizes no live stand activity.
+
+---
+
+## Acceptance-only deterministic outbox handler review — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T095451Z-9a6e0e43c1/package.json`.
+- Exact reviewed source: candidate `37f3145e79a83260aeafc25daa52fb5e0b3b9f37c659c05a03e498202a4dcbf7`, executable source `a646f0b0a8f45e3885be8a7bde8276bdda7eaaec77b80cb5d2e7ff85ed25fdd0`, head `db34c6c818d65bb23dec68f7c0b874cfdf9c1f2b`.
+- Snapshot patch SHA-256: `dac4cc9c3c4151510751323019ccf4c8b4a4e2f2d17e0f040c75a891c19181c2`.
+- Correction delta SHA-256: `2289ed838b43b75237883207aab3588094a41ded3c6f17c2db4ed31dc4943e0e`.
+- Verification plan SHA-256: `d5fb3fa91860712bf4484a9dad2b8c45e81af6343e7304c89844b4d8d9cfd943`.
+- Reviewer independence is unchanged. No implementation or stand action was performed.
+
+### Assessment
+
+The contract correction is appropriately limited to the disposable acceptance worker. The exact Compose oracle permits one additional read-only bind only on `jobs-worker`, replacing the existing `app/Jobs/JobHandlerRuntime.php`; production Compose/image and the PHP/other services remain unchanged. The stable and delta specs correctly require real `MariaDbOutbox` plus `OutboxDeliveryHandler`, a deterministic delivered transport, preservation of `WorkforceSyncConsole`, and production-owned claim/history/outbox facts. The isolation RED is honest because the support handler file is absent.
+
+### Finding
+
+1. **HIGH — handler ownership and outbox behavior are asserted only lexically, so a fake handler can pass without invoking either existing owner.** Location: `tests/Architecture/yii2_clean_stand_acceptance_isolation_001_test.py:46-47`; contract: `specs/YII2-CLEAN-STAND-CUTOVER-001.md:65-71`. A file containing the strings `new OutboxDeliveryHandler`, `new MariaDbOutbox`, `providerReference`, and `WorkforceSyncConsole::runJob` in comments or unreachable code passes. Its actual `handle()` may return `['status'=>'completed']` directly, insert terminal facts itself, use a random provider reference, or break all non-outbox jobs. The current intended RED therefore does not prove the correction's central invariant.
+
+   Add executable behavior coverage for the mounted class. For an `outbox.dispatch` job backed by the migrated test database, require the existing `MariaDbOutbox`/`OutboxDeliveryHandler` path to append the canonical attempt/history and delivered intent with one exact deterministic provider reference, and prove replay does not duplicate effects. Snapshot unrelated tables so the handler cannot synthesize terminal/heartbeat facts. Invoke at least one non-outbox workforce-sync case through both production and acceptance handler compositions and require equivalent delegation/result, preserving `WorkforceSyncConsole`. Keep the lexical checks only as supplemental isolation guards. Register the DB-backed check in its database/CI profile if it cannot run locally.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 for the deterministic handler is blocked until its behavior—not merely source vocabulary—is executable. Previously approved acceptance support, jobs-prefix correction, and production isolation remain unaffected. No production or live target mutation is authorized.
+
+---
+
+## Behavioral deterministic outbox handler rereview — 2026-09-14
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T095932Z-59597b5270/package.json`.
+- Exact reviewed source: candidate `ed9734a1a17e4699db1dd6d9739a280b42bfac03f38cb08be8417dc01cc12ee3`, executable source `03cf8d81fb75206745de6d836273b0c05b7335bbf1175b676d5d55321d337998`.
+- Snapshot patch SHA-256: `9111c40fe3f2b2885bb5180ca3f25653cbaa5f411181391bf50abdb2d6db7b9a`.
+- Correction delta SHA-256: `fac846c2e9d5eafae64d1b16a9b83dcc6a147f233841732b7e6ea7ba8d76acf7`.
+- Verification plan SHA-256: `488aa652b59619d9f5e5fb8107c57873af1c3b37f24e035acca2a32477cf7f8e`.
+- Reviewer independence is unchanged. No implementation or stand action was performed.
+
+### Finding disposition
+
+The behavioral gap is resolved. The new DB-profile test loads the acceptance-mounted handler class, migrates a fresh Jobs schema under an explicit prefix, appends a real outbox intent through `MariaDbOutbox`, enqueues it with `OutboxDispatchScheduler`, and claims it through `MariaDbJobQueue`. The handler must return the exact deterministic delivered provider reference. Independently queried canonical attempt history must bind the intent, claimed job, attempt number, delivered outcome, and same provider reference; the intent must become delivered through the existing owner.
+
+Calling the handler again with the same lease must return the same result without a second attempt. The test snapshots job-event count around handling, so the acceptance handler cannot forge queue terminal/history facts. Non-outbox behavior is executed in isolated subprocesses against the production and acceptance class compositions and must be byte-for-byte equivalent, preserving `WorkforceSyncConsole` delegation. The earlier lexical checks now serve only as supplemental isolation guards.
+
+The test is correctly registered in the DB suite/integration category and mapped to A5. Its retained run is honest `INTENDED_RED`: it stops on the absent acceptance handler before opening the DB, so local lack of a DB profile is not disguised as feature evidence. The isolation mount test independently remains `INTENDED_RED`; all adjacent mapped tests are GREEN on the same exact source. No findings remain.
+
+### Verdict
+
+`APPROVED`
+
+Gate 4 may implement the acceptance-only deterministic handler and mount against this exact behavioral contract. DB-profile GREEN, complete focused verification, Gate 5, and owner authorization for any disposable execution remain mandatory.

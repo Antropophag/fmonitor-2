@@ -68,7 +68,7 @@ Harness MUST инициировать bounded synthetic workload через acce
 
 `enqueue → worker claim/lease → terminal job history → outbox attempt/history`.
 
-Adapter MAY создать только initial ready workload; terminal job/outbox/heartbeat facts MUST создавать реальные production worker/scheduler processes. После bounded stabilization jobs health MUST оставаться успешным, worker/scheduler heartbeat — свежими, recovery projection — без blocking backlog. Повторные read-only validations MUST не менять jobs/outbox facts. Direct insertion terminal/heartbeat facts вместо запуска процессов запрещена.
+Adapter MAY создать только initial ready workload. Acceptance override MAY bind-mount deterministic `JobHandlerRuntime` только в disposable worker; он MUST передать claimed `outbox.dispatch` существующим `MariaDbOutbox` и `OutboxDeliveryHandler`, а transport MAY вернуть только deterministic delivered outcome. Terminal job/outbox/heartbeat facts MUST создавать реальные worker/scheduler/application owners, не setup/enqueue adapter. После bounded stabilization jobs health MUST оставаться успешным, worker/scheduler heartbeat — свежими, recovery projection — без blocking backlog. Повторные read-only validations MUST не менять jobs/outbox facts. Direct insertion terminal/heartbeat facts вместо запуска процессов запрещена.
 
 ### A6. Normal production runtime closure
 

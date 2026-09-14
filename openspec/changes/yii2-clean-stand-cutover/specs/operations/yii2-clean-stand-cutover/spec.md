@@ -55,6 +55,8 @@ Acceptance MUST через production Yii2 HTTP entrypoint создать тол
 ### Requirement: Jobs и outbox выполняют normal цикл
 Acceptance MUST инициировать безопасную synthetic workload через canonical application/job seam и доказать enqueue, worker claim, terminal job history, outbox attempt/history, recovery counters и worker/scheduler health. Проверка MUST использовать canonical configured table identities и не подменять процессы fixture JSON.
 
+В disposable topology acceptance override MAY заменить только worker handler composition: claimed outbox job MUST пройти существующие `MariaDbOutbox` и `OutboxDeliveryHandler` с deterministic delivered transport. Production image/topology и setup/enqueue adapters MUST не создавать terminal facts напрямую.
+
 #### Scenario: Job и outbox обработаны
 - **WHEN** scheduler/application публикует разрешённую synthetic workload и worker её обрабатывает
 - **THEN** наблюдаются связанные enqueue, lease/claim, completion, outbox attempt/history facts, отсутствуют unexpected dead/expired jobs и jobs health остаётся успешным

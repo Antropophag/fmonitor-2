@@ -35,6 +35,10 @@ services:
         source: ${FMONITOR_ACCEPTANCE_PROBE_INI_HOST_FILE:?Set acceptance probe ini}
         target: /run/fmonitor-acceptance-ini/99-acceptance-probe.ini
         read_only: true
+      - type: bind
+        source: ${FMONITOR_ACCEPTANCE_SUPPORT_ROOT:?Set acceptance support root}/JobHandlerRuntime.php
+        target: /workspace/fmonitor-2/app/Jobs/JobHandlerRuntime.php
+        read_only: true
   jobs-scheduler:
     environment:
       FMONITOR_ACCEPTANCE_CONTEXT_FILE: /run/fmonitor-acceptance/context.json

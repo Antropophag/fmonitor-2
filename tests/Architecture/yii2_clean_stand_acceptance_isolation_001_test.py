@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import copy,hashlib,json,os,pathlib,subprocess,tempfile,yaml
 ROOT=pathlib.Path(__file__).resolve().parents[2]; support=ROOT/"tests/Support/clean-stand"; override=support/"compose.acceptance.yaml"
-adapters=[support/"setup.php",support/"enqueue.php",support/"include-probe.php"]
+adapters=[support/"setup.php",support/"enqueue.php",support/"include-probe.php",support/"JobHandlerRuntime.php"]
 ini=support/"99-acceptance-probe.ini"
-assert override.is_file() and ini.is_file() and all(p.is_file() for p in adapters),"INTENDED_RED: isolated acceptance ini topology is missing"
+assert override.is_file() and ini.is_file() and all(p.is_file() for p in adapters),"INTENDED_RED: deterministic outbox worker override is missing"
 
 base=yaml.safe_load((ROOT/"deploy/runtime/compose.yaml").read_text()); extra=yaml.safe_load(override.read_text())
 assert set(extra)=={"services"} and set(extra["services"])=={"php","jobs-worker","jobs-scheduler","acceptance-setup","acceptance-enqueue"}
@@ -12,7 +12,9 @@ context_mount={"type":"bind","source":"${FMONITOR_ACCEPTANCE_CONTEXT_HOST_FILE:?
 ini_mount={"type":"bind","source":"${FMONITOR_ACCEPTANCE_PROBE_INI_HOST_FILE:?Set acceptance probe ini}","target":"/run/fmonitor-acceptance-ini/99-acceptance-probe.ini","read_only":True}
 for name in ("php","jobs-worker","jobs-scheduler"):
     delta=extra["services"][name]
-    assert set(delta)=={"environment","volumes"} and delta["volumes"]==[probe_mount,context_mount,ini_mount]
+    expected_mounts=[probe_mount,context_mount,ini_mount]
+    if name=="jobs-worker": expected_mounts.append({"type":"bind","source":"${FMONITOR_ACCEPTANCE_SUPPORT_ROOT:?Set acceptance support root}/JobHandlerRuntime.php","target":"/workspace/fmonitor-2/app/Jobs/JobHandlerRuntime.php","read_only":True})
+    assert set(delta)=={"environment","volumes"} and delta["volumes"]==expected_mounts
     assert delta["environment"]=={"FMONITOR_ACCEPTANCE_CONTEXT_FILE":"/run/fmonitor-acceptance/context.json","FMONITOR_ACCEPTANCE_TRACE_ROOT":"/home/fmonitor/.local/state/fmonitor2/acceptance-traces","PHP_INI_SCAN_DIR":"/usr/local/etc/php/conf.d:/run/fmonitor-acceptance-ini"}
     # Every non-instrumentation property remains owned solely by production Compose.
     for forbidden in ("image","build","command","entrypoint","ports","depends_on","healthcheck","security_opt","read_only","networks","secrets","user"):
@@ -37,8 +39,10 @@ with tempfile.TemporaryDirectory(prefix="fm2-acceptance-isolation-") as tmp:
     context.write_text(json.dumps({"operationId":operation,"targetDigest":target},sort_keys=True,separators=(",",":"))+"\n")
     digest=hashlib.sha256(context.read_bytes()).hexdigest(); clean={k:v for k,v in os.environ.items() if not k.startswith("FMONITOR_ACCEPTANCE_")}
     cases=[({},"ACCEPTANCE_CONTEXT_REQUIRED"),({"FMONITOR_ACCEPTANCE_CONTEXT_FILE":str(context),"FMONITOR_ACCEPTANCE_CONTEXT_DIGEST":digest,"FMONITOR_ACCEPTANCE_OPERATION_ID":"22222222-2222-4222-8222-222222222222","FMONITOR_ACCEPTANCE_TARGET_DIGEST":target},"ACCEPTANCE_CONTEXT_INVALID"),({"FMONITOR_ACCEPTANCE_CONTEXT_FILE":str(context),"FMONITOR_ACCEPTANCE_CONTEXT_DIGEST":digest,"FMONITOR_ACCEPTANCE_OPERATION_ID":operation,"FMONITOR_ACCEPTANCE_TARGET_DIGEST":"b"*64},"ACCEPTANCE_CONTEXT_INVALID"),({"FMONITOR_ACCEPTANCE_CONTEXT_FILE":str(context),"FMONITOR_ACCEPTANCE_CONTEXT_DIGEST":"c"*64,"FMONITOR_ACCEPTANCE_OPERATION_ID":operation,"FMONITOR_ACCEPTANCE_TARGET_DIGEST":target},"ACCEPTANCE_CONTEXT_INVALID")]
-    for adapter in adapters:
+    for adapter in adapters[:3]:
         for additions,reason in cases:
             env=clean|additions; p=subprocess.run(["php",str(adapter)],cwd=ROOT,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             assert p.returncode!=0 and json.loads(p.stdout)["reason"]==reason and p.stderr=="",(adapter,reason,p.stdout,p.stderr)
+handler=adapters[3].read_text(); assert "new OutboxDeliveryHandler" in handler and "new MariaDbOutbox" in handler and "providerReference" in handler
+assert "OUTBOX_TRANSPORT_UNCONFIGURED" not in handler and "WorkforceSyncConsole::runJob" in handler
 print("PASS: YII2-CLEAN-STAND-CUTOVER-001 acceptance topology isolation")

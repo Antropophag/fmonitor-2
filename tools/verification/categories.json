@@ -253,6 +253,7 @@
   "tests/Jobs/durable_queue_001_test.php": "integration",
   "tests/Jobs/durable_queue_concurrency_001_test.php": "integration",
   "tests/Jobs/durable_queue_connection_loss_001_test.php": "integration",
+  "tests/Jobs/acceptance_outbox_worker_handler_001_test.php": "integration",
   "tests/Jobs/jobs_extensions_schema_001_test.php": "integration",
   "tests/Jobs/jobs_runtime_cli_001_test.php": "integration",
   "tests/Jobs/jobs_runtime_contract_001_test.php": "integration",

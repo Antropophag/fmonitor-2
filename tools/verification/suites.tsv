@@ -307,6 +307,7 @@ unit	python3	tests/Verification/architecture_guard_001_test.py
 db	php	tests/Jobs/durable_queue_001_test.php
 db	php	tests/Jobs/durable_queue_concurrency_001_test.php
 db	php	tests/Jobs/jobs_extensions_schema_001_test.php
+db	php	tests/Jobs/acceptance_outbox_worker_handler_001_test.php
 db	php	tests/Jobs/jobs_runtime_cli_001_test.php
 db	php	tests/Jobs/jobs_runtime_contract_001_test.php
 db	php	tests/Jobs/jobs_runtime_handler_validation_001_test.php
