@@ -2,7 +2,7 @@
 
 - [x] 1.1 Зафиксировать `YII2-LOCAL-QUICKSTART-001`, owner issue #128 и полный verification input; проверить `openspec validate --strict` и сгенерировать Quality Graph plan без незакрытых obligations
 - [x] 1.2 Написать минимальные public-seam tests для routing Make-команд, config rejection, clean/repeated `make up`, сохранения volumes при `down` и ограничения `reset`; сохранить intended RED, вызванный legacy routing, а не setup failure
-- [ ] 1.3 Получить независимое Gate 3 `APPROVED` на spec, tests, mapping и RED evidence до production edits
+- [x] 1.3 Получить независимое Gate 3 `APPROVED` на spec, tests, mapping и RED evidence до production edits
 
 ## 2. Gate 4: минимальная реализация
 

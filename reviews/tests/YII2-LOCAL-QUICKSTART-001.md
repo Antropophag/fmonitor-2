@@ -110,3 +110,35 @@ Fresh package evidence is correctly bound: architecture, lifecycle, DB provision
 `CHANGES_REQUESTED`
 
 Gate 4 remains blocked solely on the repeat-state sensitivity finding above. Correct that bounded test gap, retain fresh exact-source evidence, and return for final correction review.
+
+---
+
+## Final correction review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed only the remaining repeat-state sensitivity finding.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T125811Z-53b1c2121b/package.json`
+- Reviewed source: candidate `bea089f37c659431e6034a195b9fae0fd9cdf275abc00da59fc7fbe4f7e3baa7`, executable source `fc153e4c884bc3fc99f92adb2783b1b538c3a525dfd0b42cd221409f4bbd49b7`, commit `5e10cad7e11c03f09d7b8d976dee05e96596b13a`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `e98639625dcfa1fa69851d6d0297764cd94e125fef9ce5c4b9ce9337b374020a`
+- Verdict: `APPROVED`
+
+### Final finding disposition
+
+The sole remaining finding is resolved by complementary deterministic and real-boundary coverage.
+
+- The recording driver no longer creates persistent facts on arbitrary pre-DB calls, rejects operations outside the bounded lifecycle vocabulary, rejects unsafe volume deletion, and requires the first `up` trace to contain exactly the expected operations in order. Each injected failure remains the final observed event.
+- Repeated orchestration must preserve the modeled database/domain, owner, session and artifact identities. Valid `down` preserves them; reset removes only the selected project while the neighbor stays running.
+- The authorization-gated real slot binds source/project/port and private mode-`0600` env before effects. After first startup it writes an independently identifiable database domain sentinel plus separate session and artifact sentinels, then verifies the complete DB observation and sentinel bytes after repeated `up` and again after `down`/`up`. A destructive DB or persistent-volume rebuild can no longer pass merely by recreating owner/table counts.
+- Cleanup remains confined to the explicitly authorized disposable project and executes in `finally`; the project must be absent before and after the run.
+
+Together with the previously resolved exact DB-grant/replay/mismatch test, full initial-owner test, config/reset matrix, stage-stop matrix, documentation and architecture tests, the package now covers A1–A5 at the appropriate safe recording, real MariaDB, existing application, and authorization-gated disposable seams. No Gate 3 findings remain.
+
+### Final evidence assessment
+
+All retained records match source `bea089f37c659431e6034a195b9fae0fd9cdf275abc00da59fc7fbe4f7e3baa7` and executable source `fc153e4c884bc3fc99f92adb2783b1b538c3a525dfd0b42cd221409f4bbd49b7`. Architecture, lifecycle, DB provisioning and docs are honest missing-behavior `INTENDED_RED`; the existing initial-owner regression is GREEN. The real-Docker record is GREEN only for the no-authorization admission path and performed no Docker effects; actual disposable acceptance remains required later under an explicit authorization package and must not be inferred from this Gate 3 result. PR, CI, deployment and real stand acceptance remain `UNKNOWN`.
+
+### Final verdict
+
+`APPROVED`
+
+Gate 4 may proceed against this exact reviewed specification/test package. Refresh the executor package so implementation is bound to this source. This approval authorizes neither a real disposable run nor reset/deployment of any existing stand.
