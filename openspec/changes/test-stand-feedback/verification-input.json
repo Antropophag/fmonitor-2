@@ -1,0 +1,47 @@
+{
+  "change": "test-stand-feedback",
+  "planned_paths": [
+    "app/YiiRuntime/FeedbackApplication.php",
+    "app/InstallationProcess/MariaDbFeedback.php",
+    "app/InstallationProcess/FeedbackSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV25.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/YiiRuntime/Controllers/FeedbackController.php",
+    "app/YiiRuntime/Views/feedback.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Views/users.php",
+    "app/YiiRuntime/Views/roles.php",
+    "config/yii/common.php",
+    "config/yii/web.php",
+    "app/demo/PilotDemoDatabase.php",
+    "app/YiiRuntime/Views/feedback-admin.php",
+    "app/YiiRuntime/Views/feedback-confirmation.php",
+    "config/yii/feedback-routes.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "FEEDBACK-001",
+      "acceptance_id": "A1-A5-A7-owner-http-schema",
+      "spec_path": "specs/FEEDBACK-001.md",
+      "seam": "FeedbackApplication submit/listing/recordResult; Yii2 /pilot/feedback",
+      "tests": [
+        "tests/Yii2/yii2_feedback_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_feedback_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "FEEDBACK-001",
+      "acceptance_id": "A6-browser",
+      "spec_path": "specs/FEEDBACK-001.md",
+      "seam": "GET /pilot/feedback desktop/mobile",
+      "tests": [
+        "tests/Yii2/yii2_feedback_browser_001_test.php"
+      ]
+    }
+  ]
+}

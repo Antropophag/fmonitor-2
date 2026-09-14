@@ -70,6 +70,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'POST pilot/logout' => 'auth/logout',
                 'GET pilot/logout' => 'auth/logout',
                 'GET,HEAD pilot/objects' => 'object-queue/index',
+                ...(require __DIR__ . '/feedback-routes.php'),
                 'GET,HEAD pilot/installers' => 'installer-directory/index',
                 'pilot/installers' => 'installer-directory/index',
                 'GET,HEAD pilot/construction-control' => 'checklist/queue',

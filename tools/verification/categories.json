@@ -431,5 +431,7 @@
   "tests/Deployment/yii2_local_quickstart_001_test.py": "e2e",
   "tests/Deployment/yii2_local_quickstart_real_001_test.py": "e2e",
   "tests/Verification/yii2_local_quickstart_docs_001_test.py": "unit",
-  "tests/Yii2/yii2_local_runtime_provisioning_001_test.php": "integration"
+  "tests/Yii2/yii2_local_runtime_provisioning_001_test.php": "integration",
+  "tests/Yii2/yii2_feedback_001_test.php": "integration",
+  "tests/Yii2/yii2_feedback_browser_001_test.php": "e2e"
 }

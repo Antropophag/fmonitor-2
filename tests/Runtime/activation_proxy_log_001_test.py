@@ -190,8 +190,11 @@ def inspect_family(image_id, family, evidence):
         check(len(records) == 3, family + ': one structured access record per request')
         expected_records = [('GET', '/pilot/activate'), ('POST', '/pilot/activate'), ('GET', '/health/live')]
         ids = []
-        for record, expected_route in zip(records, expected_records):
-            check((record.get('method'), record.get('uri')) == expected_route, family + ': exact method/path without args')
+        # nginx workers may flush completed requests in a different order.
+        actual_records = [(record.get('method'), record.get('uri')) for record in records]
+        check(sorted(actual_records, key=repr) == sorted(expected_records, key=repr),
+              family + ': exact method/path multiset without args')
+        for record in records:
             check(record.get('status') == 502, family + ': diagnostic status')
             request_id = record.get('request_id', '')
             check(isinstance(request_id, str) and re.fullmatch('[0-9a-f]{32}', request_id) is not None, family + ': generated request ID')

@@ -23,6 +23,10 @@
   For implementation or continuation, use `python3 tools/delivery/harness.py state`
   and the active role package prepared by `harness.py prepare`; repository Codex
   hooks supply this route automatically on task start and resume.
+- The verification planner alone selects the lane and `required_reviews`.
+  Planner-selected `FAST` requires one independent final review; `STANDARD`
+  and `CRITICAL` retain Gate 3 plus final review. The v1 FAST classifier is
+  limited to its supported bounded UI scope; tests/spec changes can escalate.
 
 ## Continuing rules
 
@@ -32,7 +36,12 @@
 - Preserve append-only history. State changes belong to one explicit public application seam; screens, HTTP, imports, and cron do not own domain facts.
 - `rapid-pilot/` is a behavioral oracle and temporary adapter, not a destination for new domain logic. Follow its local boundary instructions.
 - `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.
-- Check changed boundaries and focused user flows while delivering the manual pilot. Run `make verify` before declaring final production integration complete; an intermediate manual-test stand follows the current delivery goal.
+- Check changed boundaries and focused user flows. During delivery run bounded
+  local checks and use the selected existing CI consumer for exact-source
+  verification. The owner ban above applies to full `make test`/`make verify`.
+- Missing live adapters or server-side enforcement remain `UNKNOWN`, never
+  approval or GREEN. Do not repeat same-source GREEN solely for that gap; manual
+  owner merge does not authorize autonomous admission.
 
 ## Focused verification and CI failure triage
 
