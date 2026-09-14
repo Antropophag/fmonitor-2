@@ -358,3 +358,35 @@ The mapped package outcomes are coherent: the security lifecycle command is `INT
 `CHANGES_REQUESTED`
 
 Return only this secret-disclosure assertion gap to Gate 2, regenerate exact-source evidence/package, and resubmit for bounded Gate 3 correction review. The non-evaluating env-helper implementation must not begin against this package.
+
+---
+
+## Final Gate 3 security-correction review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed only the remaining adversarial-secret disclosure gap.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T135003Z-2cfded5086/package.json`
+- Reviewed commit: `1080a4d208fa85604ec794ffedfecf22f82080a0`
+- Candidate source: `439317f3accd917e453c0ddad4022250223b1407f969865a11b1de127e4dba10`
+- Executable source: `864279847257cda0b9aa414bcc5022f6df798d0f66285820be0ea678ee1ea01d`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `ea03958e2e51b7f513b41fbb01c397f4629743267c0d8736ff238af03895c650`
+- Security test SHA-256: `a6e9fec49e0ab6e3e940e0776e4eba17f350f2e18967fa2578ba54c186034a45`
+- Verdict: `APPROVED`
+
+### Finding disposition
+
+Resolved. The adversarial dotenv case now combines all required independent observations:
+
+- the `$(shell touch …)` payload does not create the marker;
+- the exact literal and its unique marker path are absent from captured stdout, stderr and the retained trace;
+- the fake child receives a SHA-256 matching the original literal bytes.
+
+Thus execution, disclosure and semantic mutation are independently detectable. The production-like `up`/`reset` rejection matrix and all previously approved lifecycle assertions remain unchanged.
+
+Fresh evidence remains honest `INTENDED_RED` at `DOTENV_EXECUTED_AS_MAKE`, before the later redaction/digest assertions, while every other mapped check is GREEN on the same exact source. No findings remain for the returned security scope.
+
+### Verdict
+
+`APPROVED`
+
+The non-evaluating env-helper correction may proceed against this exact test package. This review does not approve its implementation, Docker/reset actions, CI, PR, or deployment.
