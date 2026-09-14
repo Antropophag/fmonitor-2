@@ -8,7 +8,7 @@ if not authorization:
 package=pathlib.Path(authorization);assert package.is_absolute() and package.is_file() and not package.is_symlink() and package.stat().st_mode&0o777==0o600,'AUTHORIZATION_REQUIRED'
 value=json.loads(package.read_text());required={'source','project','port','env','expectedAbsent','allowReset'}
 assert set(value)==required and value['source']==subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'AUTHORIZATION_SOURCE_MISMATCH'
-project=value['project'];assert isinstance(project,str) and project.startswith('fm2-quickstart-test-'),'TARGET_NOT_DISPOSABLE'
+project=value['project'];assert isinstance(project,str) and project.startswith('fm2-local-quickstart-test-'),'TARGET_NOT_DISPOSABLE'
 assert value['expectedAbsent'] is True and value['allowReset'] is True,'DESTRUCTIVE_AUTHORIZATION_REQUIRED'
 env_path=pathlib.Path(value['env']);assert env_path.is_absolute() and env_path.is_file() and not env_path.is_symlink() and env_path.stat().st_mode&0o777==0o600,'PRIVATE_ENV_REQUIRED'
 env_values={}
