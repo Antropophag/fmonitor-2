@@ -75,14 +75,15 @@ final class PreopeningFixture
         ];
     }
 
-    public function start(array $overrides=[]): void
+    public function start(array $overrides=[], ?string $routerBootstrap=null): void
     {
+        if($this->server!==null){proc_terminate($this->server['process']);proc_close($this->server['process']);$this->server=null;}
         $socket=stream_socket_server('tcp://127.0.0.1:0',$error,$message);if(!is_resource($socket))throw new TestFailure('SETUP_FAILURE listener');
         $address=stream_socket_get_name($socket,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($socket);
         $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with($key,'FMONITOR_'))unset($env[$key]);
         $env=array_replace($env,$this->environment(),$overrides,['FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:'.$port]);
-        $router=$this->artifacts.'/router.php';$trace=$this->artifacts.'/includes.jsonl';
-        file_put_contents($router,'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(["nonce"=>'.var_export($this->traceNonce,true).',"method"=>$_SERVER["REQUEST_METHOD"],"uri"=>$_SERVER["REQUEST_URI"],"files"=>get_included_files()])."\n",FILE_APPEND|LOCK_EX);}); require '.var_export($this->root.'/public/yii.php',true).';');
+        $router=$this->artifacts.'/router-'.bin2hex(random_bytes(6)).'.php';$trace=$this->artifacts.'/includes.jsonl';
+        file_put_contents($router,$routerBootstrap??'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(["nonce"=>'.var_export($this->traceNonce,true).',"method"=>$_SERVER["REQUEST_METHOD"],"uri"=>$_SERVER["REQUEST_URI"],"files"=>get_included_files()])."\n",FILE_APPEND|LOCK_EX);}); require '.var_export($this->root.'/public/yii.php',true).';');
         $process=proc_open([PHP_BINARY,'-d','display_errors=0','-d','post_max_size=24M','-S','127.0.0.1:'.$port,$router],[0=>['file','/dev/null','r'],1=>['file',$this->artifacts.'/server.log','a'],2=>['file',$this->artifacts.'/server.log','a']],$pipes,$this->root,$env);
         if(!is_resource($process))throw new TestFailure('SETUP_FAILURE server');$this->server=['process'=>$process,'port'=>$port];
         $deadline=microtime(true)+5;do{$s=@fsockopen('127.0.0.1',$port,$e,$m,.1);if(is_resource($s)){fclose($s);return;}usleep(20000);}while(microtime(true)<$deadline);

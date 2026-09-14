@@ -21,3 +21,25 @@ The use of `mb_strlen` is consistent with the contract's UTF-8 character limit a
 ## Required changes
 
 None.
+
+## Validation extraction delta review — 2026-09-14
+
+- Reviewer: Codex independent reviewer `/root/review_calc` (gpt-5.6-sol / low)
+- Implementation author: executor assigned by root; reviewer authored neither production file
+- Reviewed source: base commit `79b3a4cecae558d74d781f353e967f03c036b921` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T193035Z-53029fe020/snapshot`, patch SHA-256 `572b06d32e81c69d9e16aa36c4b934aa67b2b30d7b402526510e87b0f83d1d38`; restored and checked at `/private/tmp/fmonitor-issue66-calc-refactor.0LuU3V/checkout`
+- Agreed review scope: only the refactor delta in `app/Otiz/PremiumCalculationV2.php` and new internal collaborator `app/Otiz/PremiumCalculationV2Evidence.php`. Unrelated certificate/publication candidate files present in the frozen snapshot are excluded from this verdict.
+- Unchanged approved inputs: `specs/OTIZ-EXCEL-CALCULATION-001.md` SHA-256 `58b21ab2feb9dcf6ff26f26057f0c1833497d920fbaf4b2a5231d48aab7d106a`; `tests/Otiz/excel_calculation_001_test.php` SHA-256 `fef9233fdccbc853cfa688e1a9055457f1d69f0a911a10786ad9bb2ec67910f1`
+- Reviewed implementation hashes: calculator `66c699deae54d0103dd687a885000f78c47882238db9ae329b4b5ae030c12fcd`; evidence collaborator `fd37b29dd67135a4189174e53bdee8e99e08fbe50dab234c2eace1053d0efcd7`
+- Exact-source evidence: retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789414228414116000-8b585c04991c4dfcbb41533c9ecce74c.json` reports `php tests/Otiz/excel_calculation_001_test.php` GREEN at candidate source `93765de116823fec7cb3bf203304acb8e958d4b06e23a5df063c31144ee4d4f2` / executable source `3b2ddd1ce9a9cafdd3ee2d8a234c2e03b68fc2f2005f3fe42cbc53f295a496f9`.
+- Reviewer verification: `php tests/Otiz/excel_calculation_001_test.php` GREEN, all seven groups plus terminal marker; `php -l app/Otiz/PremiumCalculationV2.php` GREEN; `php -l app/Otiz/PremiumCalculationV2Evidence.php` GREEN; `python3 tools/architecture/check.py` GREEN, 7 rules.
+- Verdict: `APPROVED`
+
+### Findings
+
+None for the agreed refactor delta.
+
+The calculator retains its documented public methods, constants, argument types, result grammar and arithmetic/allocation implementation. The extracted collaborator contains the prior operand, payment, exclusion, provenance and date validation with the same call order, bounds, accepted values and `InvalidArgumentException` behavior. It has no state or external dependency and is referenced only by `PremiumCalculationV2`. The extraction removes the calculator file-size hotspot while keeping evidence validation cohesive and leaves the approved specification and tests byte-identical.
+
+### Required changes
+
+None.

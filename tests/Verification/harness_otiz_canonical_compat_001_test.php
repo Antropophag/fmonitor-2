@@ -194,9 +194,9 @@ $db->close();
 $migration = hoccRun(['make', '--no-print-directory', 'migrate'], $root, $environment);
 $migrationEvidence = json_encode($migration, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 assertSameValue(
-    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":25,\"appliedVersions\":[]}\n", 'stderr'=>''],
+    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":26,\"appliedVersions\":[]}\n", 'stderr'=>''],
     $migration,
-    "SETUP_FAILURE: prepared canonical v25 must return the exact no-op process result; evidence=$migrationEvidence",
+    "SETUP_FAILURE: prepared canonical v26 must return the exact no-op process result; evidence=$migrationEvidence",
 );
 
 $canonicalTables = [
@@ -204,6 +204,10 @@ $canonicalTables = [
     'fm2_assignment_orders',
     'fm2_checklist_template_associations',
     'fm2_checklist_template_snapshots',
+    'fm2_deadline_certificate_operations',
+    'fm2_deadline_certificate_pdf_chunks',
+    'fm2_deadline_certificate_revisions',
+    'fm2_deadline_certificate_roots',
     'fm2_checklist_revisions',
     'fm2_checklist_operations',
     'fm2_checklist_operation_installers',

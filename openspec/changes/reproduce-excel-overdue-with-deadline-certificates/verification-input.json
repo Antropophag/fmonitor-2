@@ -1,0 +1,84 @@
+{
+  "change": "reproduce-excel-overdue-with-deadline-certificates",
+  "planned_paths": [
+    "app/DeadlineTransferCertificate/DeadlineTransferCertificates.php",
+    "app/IdentityAccess/LocalRoleCatalog.php",
+    "app/InstallationProcess/DeadlineTransferCertificateSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/Otiz/MariaDbNativePremiumInputs.php",
+    "app/Otiz/MariaDbOtizSettlement.php",
+    "app/Otiz/MariaDbOtizSettlementView.php",
+    "app/Otiz/MariaDbSnapshotBuilder.php",
+    "app/Otiz/MariaDbSnapshotPublicationRecords.php",
+    "app/Otiz/MariaDbSnapshotStore.php",
+    "app/Otiz/OtizSettlement.php",
+    "app/Otiz/PremiumCalculationV2.php",
+    "app/Otiz/SnapshotPublication.php",
+    "app/Runtime/MariaDbRuntimeReadiness.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV26.php",
+    "app/YiiRuntime/Controllers/DeadlineCertificateController.php",
+    "app/YiiRuntime/Controllers/OtizPublicationController.php",
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Views/deadline-certificates.php",
+    "tools/architecture/check.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-EXCEL-CALCULATION-001",
+      "acceptance_id": "dates-money-recurrence-validation-evidence-allocation",
+      "spec_path": "specs/OTIZ-EXCEL-CALCULATION-001.md",
+      "seam": "PremiumCalculationV2::calculate / allocate",
+      "tests": [
+        "tests/Otiz/excel_calculation_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "DEADLINE-TRANSFER-CERTIFICATE-001",
+      "acceptance_id": "certificate-application",
+      "spec_path": "specs/DEADLINE-TRANSFER-CERTIFICATE-001.md",
+      "seam": "DeadlineTransferCertificates::submit/read/download/currentEvidence",
+      "tests": [
+        "tests/InstallationProcess/deadline_transfer_certificate_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "DEADLINE-TRANSFER-CERTIFICATE-001",
+      "acceptance_id": "certificate-http",
+      "spec_path": "specs/DEADLINE-TRANSFER-CERTIFICATE-001.md",
+      "seam": "Yii certificate HTTP routes",
+      "tests": [
+        "tests/Yii2/deadline_transfer_certificate_http_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "DEADLINE-TRANSFER-CERTIFICATE-001",
+      "acceptance_id": "certificate-schema-recovery",
+      "spec_path": "specs/DEADLINE-TRANSFER-CERTIFICATE-001.md",
+      "seam": "canonical migration and runtime backup/restore",
+      "tests": [
+        "tests/InstallationProcess/deadline_transfer_certificate_schema_001_test.php",
+        "tests/Runtime/deadline_transfer_certificate_recovery_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-EXCEL-INPUTS-001",
+      "acceptance_id": "native-inputs",
+      "spec_path": "specs/OTIZ-EXCEL-INPUTS-001.md",
+      "seam": "MariaDbNativePremiumInputs::forDate",
+      "tests": [
+        "tests/Otiz/excel_inputs_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "OTIZ-EXCEL-PUBLICATION-001",
+      "acceptance_id": "publication-payment",
+      "spec_path": "specs/OTIZ-EXCEL-PUBLICATION-001.md",
+      "seam": "SnapshotPublication and OtizSettlement through native Yii",
+      "tests": [
+        "tests/Otiz/excel_publication_001_test.php",
+        "tests/Yii2/excel_publication_browser_001_test.php"
+      ]
+    }
+  ]
+}

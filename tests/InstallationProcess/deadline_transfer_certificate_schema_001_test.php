@@ -1,0 +1,56 @@
+<?php
+// DEADLINE-TRANSFER-CERTIFICATE-001 — root-authored exact schema and additive deployment.
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require dirname(__DIR__,2).'/app/autoload.php';
+use FMonitor2\Tests\Support\DeadlineSchemaFixture as Fixture;
+use FMonitor2\InstallationProcess\{CanonicalMigrationApplication as Migration,ProductionPilotMigrationCatalogue as Catalogue,DeadlineTransferCertificateSchemaMigration as CertificateMigration};
+use FMonitor2\RuntimeRestore\{RuntimeRecoverySchemaV25 as V25,RuntimeRecoverySchemaV26 as V26};
+$f=new Fixture();$p='c25_';
+try{
+ $db=$f->database();$old=array_slice(Catalogue::migrations(),0,25,true);assertSameValue(0,Migration::run($db,$p,$old)['exitCode'],'real canonical v25 setup');
+ $now='2026-09-14T12:00:00Z';foreach([101=>'fkr_operator',102=>'manager',103=>'otiz_specialist'] as $id=>$code){$db->prepare("INSERT INTO {$p}fm2_pilot_roles(role_id,code,name,description,status,source_updated_at) VALUES(?,?,?,'fixture',1,?)")->execute([$id,$code,$code,$now]);$db->prepare("INSERT INTO {$p}fm2_pilot_role_permissions(role_id,permission) VALUES(?,'fixture.preserved')")->execute([$id]);}
+ $db->query("INSERT INTO {$p}fm2_otiz_settlement_locks(object_id)VALUES(4512)");$db->query("ALTER TABLE {$p}fm2_process_events AUTO_INCREMENT=90001");
+ $before=Fixture::rows($db,V25::tables($p));$auto=Fixture::counters($db);
+ assertSameValue(true,class_exists(CertificateMigration::class),'RED_ASSERTION certificate v26 migration absent');
+ $upgrade=Migration::run($db,$p,Catalogue::migrations());assertSameValue([0,26],[$upgrade['exitCode'],$upgrade['result']['schemaVersion']??null],'v25 forward to26');
+ foreach([101=>['deadline_certificate.read','deadline_certificate.write'],102=>['deadline_certificate.read','deadline_certificate.write'],103=>['deadline_certificate.read']] as $id=>$permissions)foreach($permissions as $permission)$before[$p.'fm2_pilot_role_permissions'][]=['role_id'=>(string)$id,'permission'=>$permission];
+ usort($before[$p.'fm2_pilot_role_permissions'],static fn($a,$b)=>strcmp(serialize($a),serialize($b)));
+ assertSameValue($before,Fixture::rows($db,V25::tables($p)),'all v25 rows preserved except specified additive capabilities');
+ assertSameValue($auto,array_values(array_filter(Fixture::counters($db),static fn($r)=>$r['TABLE_NAME']!==$p.'fm2_deadline_certificate_revisions')),'every old counter preserved');
+ $all=Fixture::rows($db,Fixture::tables($db));$allAuto=Fixture::counters($db);assertSameValue(0,Migration::run($db,$p,Catalogue::migrations())['exitCode'],'migration replay');assertSameValue([$all,$allAuto],[Fixture::rows($db,Fixture::tables($db)),Fixture::counters($db)],'migration replay no mutation');
+ assertSameValue([77,42],[count(V26::tables($p)),count(V26::autoIncrement($p))],'exact current recovery inventory');assertSameValue(V26::tables($p),Fixture::tables($db),'database exact current table set');
+ $definitions=[
+ 'roots'=>[['installation_case_id','bigint(20) unsigned','NO',''],['current_revision_id','bigint(20) unsigned','YES',''],['current_version','int(10) unsigned','NO','']],
+ 'revisions'=>[['id','bigint(20) unsigned','NO','auto_increment'],['installation_case_id','bigint(20) unsigned','NO',''],['revision_number','int(10) unsigned','NO',''],['previous_revision_id','bigint(20) unsigned','YES',''],['certificate_date','date','NO',''],['new_deadline','date','NO',''],['correction_reason','varchar(1000)','YES',''],['actor_id','bigint(20) unsigned','NO',''],['recorded_at','varchar(40)','NO',''],['source_label','varchar(500)','NO',''],['source_locator','varchar(500)','NO',''],['pdf_sha256','char(64)','NO',''],['byte_size','int(10) unsigned','NO','']],
+ 'operations'=>[['actor_id','bigint(20) unsigned','NO',''],['request_id','char(36)','NO',''],['request_sha256','char(64)','NO',''],['revision_id','bigint(20) unsigned','NO','']],
+ 'pdf_chunks'=>[['revision_id','bigint(20) unsigned','NO',''],['chunk_no','smallint(5) unsigned','NO',''],['bytes','mediumblob','NO','']]];
+ $unique=['roots'=>[['installation_case_id']],'revisions'=>[['id'],['installation_case_id','revision_number']],'operations'=>[['actor_id','request_id']],'pdf_chunks'=>[['revision_id','chunk_no']]];
+ $foreign=['roots'=>[],'revisions'=>[['installation_case_id',$p.'fm2_installation_cases','id'],['previous_revision_id',$p.'fm2_deadline_certificate_revisions','id']],'operations'=>[['revision_id',$p.'fm2_deadline_certificate_revisions','id']],'pdf_chunks'=>[['revision_id',$p.'fm2_deadline_certificate_revisions','id']]];
+ foreach($definitions as $suffix=>$wanted){$table=$p.'fm2_deadline_certificate_'.$suffix;$rows=$db->query("SHOW FULL COLUMNS FROM `$table`")->fetch_all(MYSQLI_ASSOC);$actual=array_map(static fn($r)=>[$r['Field'],$r['Type'],$r['Null'],$r['Extra']],$rows);assertSameValue($wanted,$actual,'exact type/nullability/auto '.$suffix);foreach($rows as$row){assertSameValue(null,$row['Default'],'no implicit column default');if(str_contains($row['Type'],'char'))assertSameValue('utf8mb4_unicode_ci',$row['Collation'],'canonical string collation');}
+  $indexes=[];foreach($db->query("SHOW INDEX FROM `$table`")->fetch_all(MYSQLI_ASSOC)as$row)if((int)$row['Non_unique']===0)$indexes[$row['Key_name']][]=$row['Column_name'];$observed=array_values($indexes);sort($observed);$expected=$unique[$suffix];sort($expected);assertSameValue($expected,$observed,'exact primary/unique keys '.$suffix);assertSameValue($unique[$suffix][0],$indexes['PRIMARY'],'primary key '.$suffix);
+  $fks=$db->query("SELECT COLUMN_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='$table' AND REFERENCED_TABLE_NAME IS NOT NULL ORDER BY COLUMN_NAME")->fetch_all(MYSQLI_NUM);assertSameValue($foreign[$suffix],$fks,'exact foreign keys '.$suffix);
+  assertSameValue('InnoDB',$db->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='$table'")->fetch_column(),'transactional engine');
+ }
+ // An incompatible existing table must be detected before creating any missing table.
+ foreach(['roots','revisions','operations','pdf_chunks'] as $suffix){$bad=$f->database();$bad->query("CREATE TABLE {$p}fm2_deadline_certificate_{$suffix}(wrong_column INT)");$names=Fixture::tables($bad);$ddl=$bad->query("SHOW CREATE TABLE {$names[0]}")->fetch_row()[1];$refused=CertificateMigration::apply($bad,$p);assertSameValue('SCHEMA_MIGRATION_CONFLICT',$refused['reason']??null,'incompatible preexisting '.$suffix);assertSameValue([$names,$ddl],[Fixture::tables($bad),$bad->query("SHOW CREATE TABLE {$names[0]}")->fetch_row()[1]],'refusal before any DDL');$bad->close();}
+ // Same-column defects must not pass the migration/readiness fingerprint.
+ foreach(['primary','unique','foreign','engine','collation','default']as$defect){$bad=$f->database();$bad->query("CREATE TABLE {$p}fm2_installation_cases(id BIGINT UNSIGNED PRIMARY KEY) ENGINE=InnoDB");foreach(['roots','revisions','operations','pdf_chunks']as$suffix)$bad->query($db->query("SHOW CREATE TABLE {$p}fm2_deadline_certificate_$suffix")->fetch_row()[1]);
+  $root=$p.'fm2_deadline_certificate_roots';$revisions=$p.'fm2_deadline_certificate_revisions';$operations=$p.'fm2_deadline_certificate_operations';
+  if($defect==='primary')$bad->query("ALTER TABLE $operations DROP PRIMARY KEY, ADD PRIMARY KEY(actor_id,request_id,revision_id)");
+  if($defect==='unique'){$bad->query("ALTER TABLE $revisions ADD KEY case_lookup(installation_case_id)");$bad->query("ALTER TABLE $revisions DROP INDEX installation_revision");}
+  if($defect==='foreign'){$fk=$bad->query("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='$operations' AND REFERENCED_TABLE_NAME IS NOT NULL")->fetch_column();$bad->query("ALTER TABLE $operations DROP FOREIGN KEY `$fk`");}
+  if($defect==='engine')$bad->query("ALTER TABLE $root ENGINE=MyISAM");
+  if($defect==='collation')$bad->query("ALTER TABLE $operations MODIFY request_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL");
+  if($defect==='default')$bad->query("ALTER TABLE $root ALTER current_version SET DEFAULT 0");
+  assertSameValue(false,CertificateMigration::isCompleteCompatible($bad,$p),'readiness rejects same-column '.$defect);
+  $bad->query("DROP TABLE {$p}fm2_deadline_certificate_pdf_chunks");$names=Fixture::tables($bad);$ddls=[];foreach($names as$name)$ddls[$name]=$bad->query("SHOW CREATE TABLE `$name`")->fetch_row()[1];$result=CertificateMigration::apply($bad,$p);assertSameValue('SCHEMA_MIGRATION_CONFLICT',$result['reason']??null,'fingerprint rejects '.$defect);$after=[];foreach(Fixture::tables($bad)as$name)$after[$name]=$bad->query("SHOW CREATE TABLE `$name`")->fetch_row()[1];assertSameValue($ddls,$after,'no DDL before refusal '.$defect);$bad->close();}
+ $fresh=$f->database();assertSameValue([0,26],(static function($r){return[$r['exitCode'],$r['result']['schemaVersion']??null];})(Migration::run($fresh,$p,Catalogue::migrations())),'clean canonical26');
+ $provision=FMonitor2\IdentityAccess\MariaDbInitialOwnerProvisioning::provision($fresh,$p,'certificate.owner@shlz.ru','Certificate bootstrap fixture 2026');assertSameValue('created',$provision->status,'real public role provisioning');
+ $grants=$fresh->query("SELECT r.code,p.permission FROM {$p}fm2_pilot_roles r JOIN {$p}fm2_pilot_role_permissions p ON p.role_id=r.role_id WHERE p.permission LIKE 'deadline_certificate.%' ORDER BY BINARY r.code,BINARY p.permission")->fetch_all(MYSQLI_NUM);
+ assertSameValue([['fkr_operator','deadline_certificate.read'],['fkr_operator','deadline_certificate.write'],['manager','deadline_certificate.read'],['manager','deadline_certificate.write'],['otiz_specialist','deadline_certificate.read']],$grants,'fresh public provisioning exact certificate defaults');
+ assertSameValue('07d78c9341380923b350dd29c2c74077d98619bdb404967d23547d231f8e19d8',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV22.php'),'historical recovery profile unchanged');
+ assertSameValue('60fa1fd41837e5df38936b55416f6ed511c0db86b53d5783a7fc9116e878d90b',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV23.php'),'historical recovery profile unchanged');
+ assertSameValue('5c61012c6b976a982bb55504c3e9f22d593e7647aa7a49e0492e6007a8b5080e',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV24.php'),'historical recovery profile unchanged');
+ assertSameValue('29a475f2d94b300a689d7c2e611280db49bcfa74224a3768d85c195b7cddb821',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV25.php'),'upstream feedback recovery profile unchanged');
+ $fresh->close();$db->close();echo "PASS DEADLINE-TRANSFER-CERTIFICATE-001 schema\n";
+}finally{$f->close();}

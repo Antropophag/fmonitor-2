@@ -1,3 +1,11 @@
+# Current assignment — №66, 2026-09-14
+
+Owner requested implementation of №66 in `/Users/antropophag/code/fmonitor-2-issue66`, branch `codex/issue-66-overdue`. Raw planned deadline at calculation time; preserve Excel recurrence using confirmed signed payouts. No product questions remain. Owner narrowed scope: no rapid-pilot compatibility or new draft/payment lifecycle.
+
+Calculator, certificate application and native inputs have independent focused approvals. Complete V2 publication and native Yii2/XLSX presentation. Upstream feedback owns migration25; certificate moves to26 without changing historical profiles. Root authors specs/tests; separate sol/low executor implements and independent reviewers decide Gates3/5. Bounded local checks and one exact-source full CI; no local full suite, deployment/import/backfill. [Delivery history](issue-66-resume-2026-09-14.md). Use harness state for exact source/PR/CI.
+
+## Previous delivery pointer — retained upstream history
+
 # Текущая цель — №31, обратная связь тестового стенда
 
 Поручение владельца 2026-09-14: реализовать [№31](https://github.com/Antropophag/fmonitor-2/issues/31) от актуального main до PR-ready, строго минимальный механизм обратной связи через существующие Yii2/application/persistence и shlz-ui seams. Без notification/telemetry framework. Checklist/process owners №40, OTIZ №66 и общие verification/CI files не менять без доказанной необходимости.

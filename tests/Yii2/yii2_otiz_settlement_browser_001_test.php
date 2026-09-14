@@ -15,7 +15,7 @@ try {
     $fixture=new Yii2AuthFixture($root);
     $fixture->setPermission('otiz.manage');
     $db=$fixture->db;$p=$fixture->prefix;$hash=str_repeat('d',64);
-    $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(id,report_date,status,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(301,'2026-09-30','accepted','premium-calculation-v1','2026-10-01T09:00:00+03:00',9101,'2026-10-01T10:00:00+03:00',9101,100000,0,100000,'{$hash}')");
+    $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(id,report_date,status,rules_version,calculated_at,calculated_by_user_id,accepted_at,accepted_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(301,'2026-09-30','accepted','premium-calculation-v2-excel','2026-10-01T09:00:00+03:00',9101,'2026-10-01T10:00:00+03:00',9101,100000,0,100000,'{$hash}')");
     $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshot_objects(snapshot_id,object_id,regnumber,address,previous_progress_bp,current_progress_bp,progress_fact_date,premium_cents,shaft_bp,kss_bp,accrued_cents,fund_cents,closed_before_cents,remaining_cents,pool_cents,distributed_cents,undistributed_cents,calculation_state,inputs_json) VALUES(301,7301,'BROWSER-1','Synthetic browser object',0,10000,'2026-09-30',100000,10000,10000,100000,100000,0,100000,100000,100000,0,'ready','{}')");
     $trace=json_encode(['premiumCalculation'=>['formulaTrace'=>[['step'=>'fund','resultCents'=>100000],['step'=>'progress','resultCents'=>100000],['step'=>'pool','resultCents'=>100000]],'exclusions'=>[]]],JSON_THROW_ON_ERROR);
     $statement=$db->prepare("UPDATE {$p}fm2_pilot_otiz_snapshot_objects SET inputs_json=? WHERE snapshot_id=301 AND object_id=7301");
@@ -67,7 +67,7 @@ try {
     $archive=new PharData($artifacts.'/snapshot.xlsx');
     $xml='';
     foreach(new RecursiveIteratorIterator($archive) as $entry)if($entry->isFile()&&str_ends_with($entry->getFilename(),'.xml'))$xml.=$entry->getContent();
-    foreach (['Объекты','Работники','Метаданные','BROWSER-1','Browser Installer','2026-09-30','premium-calculation-v1'] as $text) assertSameValue(true,str_contains($xml,$text),'retained workbook contains '.$text);
+    foreach (['Объекты','Работники','Метаданные','BROWSER-1','Browser Installer','2026-09-30','premium-calculation-v2-excel'] as $text) assertSameValue(true,str_contains($xml,$text),'retained workbook contains '.$text);
     $rows=$db->query("SELECT id,paid_cents,discipline_cents,deadline_cents,basis,artifact,reverses_payment_closure_id,created_by_user_id FROM {$p}fm2_pilot_otiz_payment_closures ORDER BY id")->fetch_all(MYSQLI_ASSOC);
     assertSameValue(3,count($rows),'one closure per rendered command');
     assertSameValue([[0,10000,0],[90000,0,0],[0,-10000,0]],array_map(static fn(array $r):array=>[(int)$r['paid_cents'],(int)$r['discipline_cents'],(int)$r['deadline_cents']],$rows),'literal accrued100000 discipline10000 paid90000 reversal-10000 oracle');

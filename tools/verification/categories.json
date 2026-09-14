@@ -433,5 +433,13 @@
   "tests/Verification/yii2_local_quickstart_docs_001_test.py": "unit",
   "tests/Yii2/yii2_local_runtime_provisioning_001_test.php": "integration",
   "tests/Yii2/yii2_feedback_001_test.php": "integration",
-  "tests/Yii2/yii2_feedback_browser_001_test.php": "e2e"
+  "tests/Yii2/yii2_feedback_browser_001_test.php": "e2e",
+  "tests/Otiz/excel_calculation_001_test.php": "unit",
+  "tests/Otiz/excel_inputs_001_test.php": "integration",
+  "tests/Otiz/excel_publication_001_test.php": "integration",
+  "tests/InstallationProcess/deadline_transfer_certificate_001_test.php": "integration",
+  "tests/InstallationProcess/deadline_transfer_certificate_schema_001_test.php": "integration",
+  "tests/Runtime/deadline_transfer_certificate_recovery_001_test.php": "integration",
+  "tests/Yii2/deadline_transfer_certificate_http_001_test.php": "integration",
+  "tests/Yii2/excel_publication_browser_001_test.php": "e2e"
 }

@@ -32,6 +32,7 @@ $inputs=static function(string $date):array{
     $rows=[];
     foreach([[101,10000],[202,20000]]as[$id,$premium]){
         $rows[]=['id'=>$id,'caseId'=>$id,'reg'=>'TEST-'.$id,'address'=>'Synthetic '.$id,
+            'sourceEvidence'=>['fixture'=>$source],
             'progress'=>8500,'deadline'=>'2026-09-30','pto'=>null,'premium'=>$premium,'shaft'=>10000,
             'issues'=>[],'team'=>[
                 ['tab'=>'1','name'=>'One','position'=>'Installer','weight'=>1],
@@ -57,7 +58,8 @@ try{
     $reader=new SnapshotPublication(new MariaDbSnapshotStore($other,$p),$inputs,$clock);
     $empty=(new SnapshotPublication(new MariaDbSnapshotStore($db,$p),static fn(string$date):array=>[],$clock))->buildAndPublish(1,'2026-09-08',$operation());
     $emptyResult=$reader->read(1,$empty);$receipt=$emptyResult['publication'];
-    assertSameValue(['otiz-publication-v1',0,0,0,'afe8736fcf02174a47e94fdb7676699ef0b9af006c04484b1a7560ea57a4742a'],[$receipt['manifest_version'],(int)$receipt['object_count'],(int)$receipt['allocation_count'],(int)$receipt['issue_count'],$receipt['manifest_sha256']],'independent empty snapshot canonical golden');
+    // V2 empty golden independently derived from literal header/date/version and empty object identity.
+    assertSameValue(['otiz-publication-v1',0,0,0,'cf1788d327c6d4437700041499f2b5cb8a6ae2f9017ac9e7699aff7ed45a9970'],[$receipt['manifest_version'],(int)$receipt['object_count'],(int)$receipt['allocation_count'],(int)$receipt['issue_count'],$receipt['manifest_sha256']],'independent empty snapshot canonical golden');
     $op=$operation();$id=$service->buildAndPublish(1,'2026-09-08',$op);
     $result=$reader->read(1,$id);
     assertSameValue('draft',$result['snapshot']['status'],'published draft needs explicit acceptance');
