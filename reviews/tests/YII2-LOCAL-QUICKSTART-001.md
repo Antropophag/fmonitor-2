@@ -481,3 +481,33 @@ The returned Gate 5 requirement, however, explicitly distinguishes invalid confi
 `CHANGES_REQUESTED`
 
 Return only the missing Docker-unavailable side of the reason matrix to Gate 2, retain fresh exact-source RED, and resubmit. The implementation correction remains blocked against this package.
+
+---
+
+## Final Gate 3 failure-classification review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed only the missing Docker-unavailable side of the matrix.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T141309Z-7ca458d2f3/package.json`
+- Reviewed commit: `0edc7e0a997c1e83ae78c2e297cf80cce00222ae`
+- Candidate source: `0a469ecd04e1edc459afb3b017a0a9612370930bfbd1e43cb76267c79f6ae6b0`
+- Executable source: `760285c7fe24469aaa5bbd1cf741b152e1492d7be7a864407aea2238f66376c0`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `7b2721a81216803c8386898efda41ba106f77304a4fe5fc4824db63b298ea8b3`
+- Corrected lifecycle test SHA-256: `356dd6924c27ae8010a88330fb6c081b9418b9b3b8d944f80ac989a601011455`
+- Verdict: `APPROVED`
+
+### Finding disposition
+
+Resolved. With a valid `.env`, the fake Docker can now fail exactly at `docker info`. The test requires a nonzero result, exact `LOCAL_DOCKER_UNAVAILABLE` classification, no ready banner, no configured secret in stdout/stderr/trace, and makes the failed probe the final observed event. Missing and invalid `.env` cases independently continue to require `LOCAL_CONFIG_INVALID` with zero Docker events. The two failure classes can no longer mask one another.
+
+Fresh package evidence remains honest `INTENDED_RED` at the earlier current defect, `INVALID_REASON_MASKED`, while all other mapped checks are GREEN. This ordering is expected: after the invalid-config classification is corrected, the approved Docker-probe branch becomes reachable and sensitive.
+
+### Findings
+
+None.
+
+### Verdict
+
+`APPROVED`
+
+The failure-classification implementation correction may proceed against this exact test package. This review approves no implementation, Docker/reset action, CI, PR, or deployment.
