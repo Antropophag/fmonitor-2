@@ -39,3 +39,42 @@ The package reports PR/CI/deployment as `UNKNOWN` and action authorization as fa
 ## Required changes
 
 Return to Gate 2 and complete the root-owned executable matrix for findings 1–5. Retain fresh exact-source intended RED, regenerate the verification plan/package, and resubmit for independent Gate 3. Gate 4 implementation is blocked against this package.
+
+---
+
+## Correction review — 2026-09-14
+
+- Reviewer independence unchanged; this reviewer authored none of the correction artifacts or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T125024Z-9e5603a5d3/package.json`
+- Reviewed source: candidate `e5805d729c53665478113a112de15ed7e25f36b677b8e1f738281cb4cf11b8a8`, executable source `52b1f83b4f6f7c36788d97ace6080c34bf9004f60ab4c544e6ab4934c75b80fb`, commit `933998d71de53b7a7ce013c2881cdcb7dd09ac6d`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `de9a22c7bdebeddb043fda1552f3150d3f8c09c58e486a788c399f838b9939fe`
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Partially resolved.** Build, DB, provisioning, prepare, migration, runtime-check, owner, services, live and ready calls are now ordered through a stateful fake; an authorization-gated real slot was added. The recording model still accepts arbitrary extra destructive calls and the real slot does not observe the required preserved facts.
+2. **Partially resolved.** Existing initial-owner coverage is strong, and a real-MariaDB DB-account test was added. Its grant and no-mutation assertions are incomplete.
+3. **Partially resolved.** Neighbor preservation, valid reset, non-destructive down and one production-like rejection are covered. Missing/ambiguous reset configuration is not covered, and the real authorization is not bound to the env target it later resets.
+4. **Partially resolved.** Representative configuration and all named stage failures were added, with secret-output checks. The failure test does not prove execution stops at the failed stage; mandatory-value coverage remains incomplete.
+5. **Resolved.** `ps`, `logs`, `down`, `reset` and hostile ambient project selection are exercised through the public Make seam.
+
+### Remaining findings
+
+1. **HIGH — stage-failure and replay tests permit later or extra destructive effects.** Location: `tests/Deployment/yii2_local_quickstart_001_test.py:38-61`. For every injected failure, the test asserts only a nonzero final status, no printed ready banner, and project equality. It never asserts that the trace ends at the failing operation. A recipe may continue through migrations, owner provisioning, service startup and health after a failed build/DB/migration, then deliberately exit nonzero, and pass. Likewise the fake silently accepts any unrecognised command, so a second `make up` can execute a custom database reinitialisation or volume removal that does not contain the literal `--volumes`; the synthetic facts remain unchanged and the replay assertion passes. Define the complete allowed trace for first/repeated `up`, require each fault trace to be the exact prefix ending at the failed stage, reject unknown fake operations, and assert state/effect snapshots for every failure.
+
+2. **HIGH — the real-disposable slot is not bound to, and does not verify, its authorized target.** Location: `tests/Deployment/yii2_local_quickstart_real_001_test.py:8-25`. The authorization names `project` and `port`, but the test never parses the private env or proves its `COMPOSE_PROJECT_NAME`/port equal those values. Absence is checked for the authorized name while `make up/reset` may operate on a different project from the env; the `finally` block would then destructively reset an unauthorised target. It also compares only nonempty `compose ps` strings before/after: no independent live/ready request, owner identity/count/identifier, domain sentinel, session/artifact volume, or post-`down` persistence is observed. Bind and validate the env's exact project/port before any Docker effect, attest all resources selected for cleanup, and collect the A1/A2/A4 facts required for a real acceptance rather than treating two nonempty `ps` outputs as clean/repeat preservation. The no-authorization path may verify admission, but its current `PASS`/GREEN must remain explicitly classified as “not executed”, never real-stand acceptance.
+
+3. **HIGH — DB “exact DML-only” and mismatch no-mutation assertions are not exact.** Location: `tests/Yii2/yii2_local_runtime_provisioning_001_test.php:24-32`. Creation passes when one grant row contains the four DML privileges even if other global/database privileges were also granted. After adding `CREATE`, rejection checks only that some `CREATE` remains; it does not compare the complete grants before and after, so the command may mutate other privileges while passing. Exact replay also does not snapshot grants around the call, and stdout is not checked for either generated password. Canonicalize and compare the complete expected `SHOW GRANTS` set, snapshot it across replay and mismatch, and assert credentials are absent from stdout/stderr.
+
+4. **MEDIUM — pre-effect config/reset rejection still misses explicit contract cases.** Location: `tests/Deployment/yii2_local_quickstart_001_test.py:53-56`. There is no absent `.env` case, and most mandatory values can be omitted/placeholders without test sensitivity (including DB/migration credentials, identity key, trusted host, runtime image and port). `reset` is tested only with one production-like project, not missing, placeholder, malformed or ambiguous identity. Add a table covering every mandatory field at least for absence/empty and representative placeholders/types, plus the reset identity families, all with zero external trace and secret-safe diagnostics.
+
+### Correction evidence
+
+Retained results match the package expectations: architecture, Make lifecycle, DB provisioning and docs are `INTENDED_RED`; the existing initial-owner test is GREEN. The real-Docker command is GREEN only because it detects absent authorization and performs no Docker action. Source/executable bindings match across the records. No real Docker/reset/deployment action was run by this review.
+
+### Correction verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 remains blocked. Correct only the remaining root-owned test/verification-input gaps, retain fresh exact-source RED, rebuild the package, and resubmit for bounded correction review.

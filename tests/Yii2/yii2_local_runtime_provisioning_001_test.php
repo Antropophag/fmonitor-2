@@ -22,13 +22,17 @@ $run=static function()use($root,$host,$port,$database,$runtimeUser,$runtimePassw
 try{
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     [$code,$out,$err]=$run();assertSameValue(0,$code,'LOCAL_RUNTIME_COMMAND_ABSENT');assertContainsText('RUNTIME_DB_ACCOUNT_READY',$out,'safe create result');assertSameValue('',$err,'create stderr');
-    $grants=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$grants[]=$row[0];
-    assertTrueValue(count(array_filter($grants,static fn(string $v):bool=>str_contains($v,'SELECT, INSERT, UPDATE, DELETE')&&str_contains($v,"`{$database}`.*")))===1,'exact DML grant');
-    [$code,$out]=$run();assertSameValue(0,$code,'exact replay');assertContainsText('RUNTIME_DB_ACCOUNT_READY',$out,'safe replay result');
-    $before=$grants;$admin->query("GRANT CREATE ON `{$database}`.* TO `{$runtimeUser}`@'%'");
+    assertTrueValue(!str_contains($out.$err,$runtimePassword),'create output is secret-free');
+    $grants=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$grants[]=$row[0];sort($grants,SORT_STRING);
+    $escapedUser=$admin->real_escape_string($runtimeUser);$grantee="'{$escapedUser}'@'%'";
+    $probe="SELECT (SELECT COUNT(*)<>1 OR COALESCE(SUM(PRIVILEGE_TYPE='USAGE'),0)<>1 FROM information_schema.USER_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>4 OR COALESCE(SUM(TABLE_SCHEMA='{$database}' AND PRIVILEGE_TYPE IN ('SELECT','INSERT','UPDATE','DELETE')),0)<>4 OR COUNT(DISTINCT PRIVILEGE_TYPE)<>4 FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>0 FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>0 FROM information_schema.COLUMN_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")";
+    assertSameValue(0,(int)$admin->query($probe)->fetch_column(),'exact DML-only account');
+    $before=$grants;[$code,$out,$err]=$run();assertSameValue(0,$code,'exact replay');assertContainsText('RUNTIME_DB_ACCOUNT_READY',$out,'safe replay result');assertTrueValue(!str_contains($out.$err,$runtimePassword),'replay output is secret-free');
+    $replayed=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$replayed[]=$row[0];sort($replayed,SORT_STRING);assertSameValue($before,$replayed,'replay preserves exact account grants');
+    $admin->query("GRANT CREATE ON `{$database}`.* TO `{$runtimeUser}`@'%'");$mismatchBefore=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$mismatchBefore[]=$row[0];sort($mismatchBefore,SORT_STRING);
     [$code,$out,$err]=$run();assertSameValue(65,$code,'mismatch rejected');assertContainsText('LOCAL_DB_ACCOUNT_MISMATCH',$out.$err,'stable mismatch');
-    $after=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$after[]=$row[0];
-    assertTrueValue(count(array_filter($after,static fn(string $v):bool=>str_contains($v,'CREATE')))===1,'mismatch unchanged');
+    assertTrueValue(!str_contains($out.$err,$runtimePassword),'mismatch output is secret-free');$after=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$after[]=$row[0];sort($after,SORT_STRING);
+    assertSameValue($mismatchBefore,$after,'mismatch leaves full account snapshot unchanged');
 }finally{
     try{$admin->query("DROP USER IF EXISTS `{$runtimeUser}`@'%'");}catch(Throwable){}
     try{$admin->query("DROP DATABASE IF EXISTS `{$database}`");}catch(Throwable){}
