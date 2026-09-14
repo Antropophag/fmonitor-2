@@ -128,3 +128,40 @@ No Docker/reset/publication/merge/deployment action was performed.
 `CHANGES_REQUESTED`. Correct the error-classification ordering in `make up`, add
 the focused negative assertion, regenerate exact-source evidence/package, and
 return for a final bounded Gate 5 correction review.
+
+---
+
+## Final correction review — 2026-09-14
+
+- Reviewer independence unchanged.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T142044Z-b444cbe914/package.json`
+- Reviewed commit: `c2721204d34b43390d92ef707e70cf67b4de4c2e`
+- Candidate source: `7134b92c17a51e4396b3ff97cd912efcea2e4a300ca90dc0578ad616d1d74c95`
+- Executable source: `15a970c8a334ec75f675829cc083f8698b8be611976348cd65f25931e641c6e0`
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T142044Z-b444cbe914/verification-plan.json`
+- Verification plan SHA-256: `3bc1a8ed9ea49544e3e1972c9cc3ab439ed2f2ff2bb433b8e3d44fa27e7491d6`
+- Verdict: `APPROVED`
+
+### Finding disposition
+
+Resolved. `make up` now invokes the helper's validation-only mode before the
+Docker probe. Missing or invalid configuration exits through the helper with
+`LOCAL_CONFIG_INVALID`, before any Docker event. Only a subsequent failed
+`docker info` is mapped to `LOCAL_DOCKER_UNAVAILABLE`. The focused lifecycle test
+independently exercises both branches, requires no later effects or readiness
+claim, and retains secret-redaction assertions.
+
+The correction is minimal and does not weaken the previously accepted literal
+dotenv parsing, argv substitution, project-name deny policy, lifecycle routing,
+idempotency, exact DB grants, bounded reset, or documentation separation. The
+full candidate diff against `origin/main` has no remaining Standards or Spec
+finding. `git diff --check` is clean.
+
+All six exact-source mapped records in the immutable package are GREEN. This
+review also reran the bounded lifecycle and architecture checks on the reviewed
+worktree; both passed. PR, CI and deployment remain `UNKNOWN` and are not part of
+this approval. No Docker/reset/publication/merge/deployment action was performed.
+
+### Final Gate 5 decision
+
+`APPROVED`

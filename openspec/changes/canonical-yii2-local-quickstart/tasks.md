@@ -15,5 +15,5 @@
 ## 3. Gate 5 и Done
 
 - [x] 3.1 Пересчитать exact-source verification plan и выполнить focused/adjacent commands; сохранить компактное evidence вне checkout и не объявлять UNKNOWN как GREEN
-- [ ] 3.2 Получить независимое Gate 5 `APPROVED` на полный candidate diff, Gate 3 tests и verification evidence; corrections вернуть в соответствующий gate
+- [x] 3.2 Получить независимое Gate 5 `APPROVED` на полный candidate diff, Gate 3 tests и verification evidence; corrections вернуть в соответствующий gate
 - [ ] 3.3 Подготовить PR-ready exact source и один authoritative full Quality Graph CI run; Done означает APPROVED Gates 3/5, GREEN mapped checks/CI и отсутствие deployment/reset существующих стендов
