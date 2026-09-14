@@ -21,17 +21,17 @@ $run=static function()use($root,$host,$port,$database,$runtimeUser,$runtimePassw
 };
 try{
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    [$code,$out,$err]=$run();assertSameValue(0,$code,'LOCAL_RUNTIME_COMMAND_ABSENT');assertTrueValue(str_contains($out,'RUNTIME_DB_ACCOUNT_READY'),'safe create result');assertSameValue('',$err,'create stderr');
-    assertTrueValue(!str_contains($out.$err,$runtimePassword),'create output is secret-free');
+    [$code,$out,$err]=$run();assertSameValue(0,$code,'LOCAL_RUNTIME_COMMAND_ABSENT');assertSameValue(true,str_contains($out,'RUNTIME_DB_ACCOUNT_READY'),'safe create result');assertSameValue('',$err,'create stderr');
+    assertSameValue(true,!str_contains($out.$err,$runtimePassword),'create output is secret-free');
     $grants=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$grants[]=$row[0];sort($grants,SORT_STRING);
     $escapedUser=$admin->real_escape_string($runtimeUser);$grantee="'{$escapedUser}'@'%'";
     $probe="SELECT (SELECT COUNT(*)<>1 OR COALESCE(SUM(PRIVILEGE_TYPE='USAGE'),0)<>1 FROM information_schema.USER_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>4 OR COALESCE(SUM(TABLE_SCHEMA='{$database}' AND PRIVILEGE_TYPE IN ('SELECT','INSERT','UPDATE','DELETE')),0)<>4 OR COUNT(DISTINCT PRIVILEGE_TYPE)<>4 FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>0 FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")+(SELECT COUNT(*)<>0 FROM information_schema.COLUMN_PRIVILEGES WHERE GRANTEE=\"{$grantee}\")";
     assertSameValue(0,(int)$admin->query($probe)->fetch_column(),'exact DML-only account');
-    $before=$grants;[$code,$out,$err]=$run();assertSameValue(0,$code,'exact replay');assertTrueValue(str_contains($out,'RUNTIME_DB_ACCOUNT_READY'),'safe replay result');assertTrueValue(!str_contains($out.$err,$runtimePassword),'replay output is secret-free');
+    $before=$grants;[$code,$out,$err]=$run();assertSameValue(0,$code,'exact replay');assertSameValue(true,str_contains($out,'RUNTIME_DB_ACCOUNT_READY'),'safe replay result');assertSameValue(true,!str_contains($out.$err,$runtimePassword),'replay output is secret-free');
     $replayed=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$replayed[]=$row[0];sort($replayed,SORT_STRING);assertSameValue($before,$replayed,'replay preserves exact account grants');
     $admin->query("GRANT CREATE ON `{$database}`.* TO `{$runtimeUser}`@'%'");$mismatchBefore=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$mismatchBefore[]=$row[0];sort($mismatchBefore,SORT_STRING);
-    [$code,$out,$err]=$run();assertSameValue(65,$code,'mismatch rejected');assertTrueValue(str_contains($out.$err,'LOCAL_DB_ACCOUNT_MISMATCH'),'stable mismatch');
-    assertTrueValue(!str_contains($out.$err,$runtimePassword),'mismatch output is secret-free');$after=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$after[]=$row[0];sort($after,SORT_STRING);
+    [$code,$out,$err]=$run();assertSameValue(65,$code,'mismatch rejected');assertSameValue(true,str_contains($out.$err,'LOCAL_DB_ACCOUNT_MISMATCH'),'stable mismatch');
+    assertSameValue(true,!str_contains($out.$err,$runtimePassword),'mismatch output is secret-free');$after=[];$result=$admin->query("SHOW GRANTS FOR `{$runtimeUser}`@'%'");while($row=$result->fetch_row())$after[]=$row[0];sort($after,SORT_STRING);
     assertSameValue($mismatchBefore,$after,'mismatch leaves full account snapshot unchanged');
 }finally{
     try{$admin->query("DROP USER IF EXISTS `{$runtimeUser}`@'%'");}catch(Throwable){}
