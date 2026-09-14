@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory() as raw:
 import hashlib,json,os,sys
 trace=os.environ['FMONITOR_TEST_TRACE'];state_path=os.environ['FMONITOR_TEST_STATE'];argv=sys.argv[1:];project=os.environ.get('COMPOSE_PROJECT_NAME','')
 open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project,'dbPasswordDigest':hashlib.sha256(os.environ.get('FMONITOR_DB_PASSWORD','').encode()).hexdigest()})+'\\n');joined=' '.join(argv);fail=os.environ.get('FMONITOR_TEST_FAIL_STAGE','')
-stages={'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}
+stages={'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}
 if fail in stages and stages[fail] in joined:sys.exit(42)
 if '--volumes' in argv and not ('compose' in argv and '-f' in argv and 'deploy/runtime/compose.yaml' in argv and project.startswith('fm2-local-') and 'down' in argv and '--remove-orphans' in argv):sys.exit(43)
 allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web',' down',' logs',' ps')
@@ -66,11 +66,12 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
     for project in ('','replace_me','bad project','fmonitor2-production','fm2-local-production','fm2-local-prod','fm2-local'):
         write_env({'COMPOSE_PROJECT_NAME':project});clear();rejected=make('reset');assert rejected.returncode!=0 and events()==[],('UNBOUNDED_RESET',project)
     (checkout/'.env').unlink();clear();missing_up=make('up');assert missing_up.returncode!=0 and events()==[],'MISSING_ENV_EFFECT';assert 'LOCAL_CONFIG_INVALID' in missing_up.stdout+missing_up.stderr,'MISSING_ENV_REASON_MASKED';missing_reset=make('reset');assert missing_reset.returncode!=0 and events()==[],'MISSING_ENV_RESET';assert 'LOCAL_CONFIG_INVALID' in missing_reset.stdout+missing_reset.stderr,'MISSING_RESET_REASON_MASKED';write_env()
-    for stage in ('build','db','provision-db','prepare','migrate','runtime-check','owner','services','live','ready'):
+    for stage in ('docker-info','build','db','provision-db','prepare','migrate','runtime-check','owner','services','live','ready'):
         clear();failed=make('up',{'FMONITOR_TEST_FAIL_STAGE':stage});assert failed.returncode!=0,('STAGE_ACCEPTED',stage);stage_events=events();text=failed.stdout+failed.stderr+trace.read_text();assert 'FMonitor Yii2:' not in text
         for secret in ('db-secret-contract','migration-secret-contract','owner-secret-contract'):assert secret not in text
         assert all(e['project']=='fm2-local-contract' for e in stage_events)
-        failed_needle=({'live':'/health/live','ready':'/health/ready'}[stage] if stage in ('live','ready') else {'build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}[stage])
+        if stage=='docker-info':assert 'LOCAL_DOCKER_UNAVAILABLE' in failed.stdout+failed.stderr,'DOCKER_REASON_MASKED'
+        failed_needle=({'live':'/health/live','ready':'/health/ready'}[stage] if stage in ('live','ready') else {'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}[stage])
         failed_index=next(i for i,e in enumerate(stage_events) if failed_needle in ' '.join(e['argv']))
         assert failed_index==len(stage_events)-1,('EFFECT_AFTER_FAILURE',stage,stage_events)
 print('PASS: YII2-LOCAL-QUICKSTART-001 stateful Make lifecycle')

@@ -451,3 +451,33 @@ None for the bounded test delta.
 `APPROVED`
 
 The executor may use test baseline `01310754362128284f6f004ee4b8aa069475d3a5`. This verdict does not approve the snapshot's implementation WIP or authorize Docker/reset, CI, PR, or deployment.
+
+---
+
+## Gate 3 exact failure-reason review — 2026-09-14
+
+- Reviewer independence unchanged; reviewed the root-owned RED returned from Gate 5.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260914T140954Z-ba562cf8da/package.json`
+- Reviewed commit: `a71bd6d196b62323f08f19cf1462557dac29473c`
+- Candidate source: `3b31e88507718db7f67c2fe32d6fce1a8849917c8558bb404a4fd5c63091767f`
+- Executable source: `04b736e88df19528cf52716e2afb0e7a5d5b62e3dfbefc853333d352ea5d021a`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Verification plan SHA-256: `d105b286879e60dddd5df3a25f0a1b5d85676790f588172714b948ed038b72d2`
+- Corrected lifecycle test SHA-256: `edcea6856a7369a6d6d904a0cdcfe0774e5db57b83427c98160321c0c8a4b34b`
+- Verdict: `CHANGES_REQUESTED`
+
+### Assessment
+
+The new assertions correctly require every missing/invalid `.env` case to report `LOCAL_CONFIG_INVALID` while retaining zero Docker trace and placeholder redaction. The fresh result is honest `INTENDED_RED` at `INVALID_REASON_MASKED` for a missing `COMPOSE_PROJECT_NAME`; other mapped checks are GREEN. This is sensitive to the current implementation's masking of helper validation as Docker unavailability.
+
+The returned Gate 5 requirement, however, explicitly distinguishes invalid configuration from an actual Docker probe failure. Only the first half is tested.
+
+### Finding
+
+1. **HIGH — actual Docker unavailability has no distinct expected-reason test.** Location: `tests/Deployment/yii2_local_quickstart_001_test.py:19-30,64-72`; rejected cases in `specs/YII2-LOCAL-QUICKSTART-001.md`. The fake Docker cannot currently fail `docker info`: `FMONITOR_TEST_FAIL_STAGE` has no Docker-probe marker, and all invalid-env cases require an empty trace before that probe. Therefore an implementation can fix the RED by preserving `LOCAL_CONFIG_INVALID` for helper failures but emit the same reason, an arbitrary error, or a readiness message when a valid configuration reaches a failing `docker info`; the suite still passes. Add a valid-env `docker info` failure case that expects `LOCAL_DOCKER_UNAVAILABLE`, nonzero exit, no later lifecycle events/readiness claim and no secret disclosure. This is necessary to prove the helper-validation and Docker-check failure classes are actually separated, as Gate 5 requested.
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+Return only the missing Docker-unavailable side of the reason matrix to Gate 2, retain fresh exact-source RED, and resubmit. The implementation correction remains blocked against this package.
