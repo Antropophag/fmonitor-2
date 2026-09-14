@@ -7,7 +7,7 @@
     "docs/development-setup.md",
     "deploy/runtime/README.md",
     "app/YiiRuntime/Commands/LocalRuntimeController.php",
-    "tools/delivery/local-runtime-env.php",
+    "tools/delivery/local-runtime-env",
     "config/yii/console.php",
     "specs/YII2-LOCAL-QUICKSTART-001.md",
     "tests/Deployment/yii2_local_quickstart_001_test.py",

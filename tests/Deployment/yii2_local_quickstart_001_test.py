@@ -9,6 +9,9 @@ with tempfile.TemporaryDirectory() as raw:
     for relative in ('Makefile','.env.example'): shutil.copy2(root/relative,checkout/relative)
     for relative in ('deploy/runtime/compose.yaml','deploy/runtime/Dockerfile'):
         target=checkout/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/relative,target)
+    helper=root/'tools/delivery/local-runtime-env'
+    if helper.is_file():
+        target=checkout/'tools/delivery/local-runtime-env';target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(helper,target)
     values={'COMPOSE_PROJECT_NAME':'fm2-local-contract','FMONITOR_RUNTIME_IMAGE':'fmonitor2-runtime:contract','FMONITOR_HTTP_PORT':'18093','FMONITOR_DB_NAME':'fmonitor2','FMONITOR_DB_USER':'fmonitor_runtime','FMONITOR_DB_PASSWORD':'db-secret-contract','FMONITOR_MIGRATION_DB_USER':'root','FMONITOR_MIGRATION_DB_PASSWORD':'migration-secret-contract','FMONITOR_PROCESS_TABLE_PREFIX':'fm2_','FMONITOR_LEGACY_TABLE_PREFIX':'fm2_','FMONITOR_SESSION_INSTANCE':'local-contract','FMONITOR_YII_COOKIE_VALIDATION_KEY':'c'*32,'FMONITOR_YII_IDENTITY_KEY':'i'*32,'FMONITOR_TRUSTED_REQUEST_HOST':'127.0.0.1:18093','FMONITOR_TRUSTED_REQUEST_SCHEME':'http','FMONITOR_INITIAL_OWNER_EMAIL':'owner@example.test','FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD':'owner-secret-contract'}
     def write_env(changes=None):
         current={**values,**(changes or {})};(checkout/'.env').write_text(''.join(f'{k}={v}\n' for k,v in current.items()))
