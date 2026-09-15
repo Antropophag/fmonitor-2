@@ -194,7 +194,7 @@ $db->close();
 $migration = hoccRun(['make', '--no-print-directory', 'migrate'], $root, $environment);
 $migrationEvidence = json_encode($migration, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 assertSameValue(
-    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":25,\"appliedVersions\":[]}\n", 'stderr'=>''],
+    ['status'=>0, 'stdout'=>"{\"ok\":true,\"schemaVersion\":26,\"appliedVersions\":[]}\n", 'stderr'=>''],
     $migration,
     "SETUP_FAILURE: prepared canonical v25 must return the exact no-op process result; evidence=$migrationEvidence",
 );

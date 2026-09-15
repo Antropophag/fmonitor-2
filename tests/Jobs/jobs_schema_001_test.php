@@ -38,7 +38,7 @@ try {
     assertSameValue(false, JobsSchemaMigration::isReady($db, $prefix), 'absent schema is not ready');
     assertSameValue([], $tables($db), 'readiness does not create tables');
     $result = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0, true, 25, range(1, 25)], [
+    assertSameValue([0, true, 26, range(1, 26)], [
         $result['exitCode'], $result['result']['ok'] ?? null,
         $result['result']['schemaVersion'] ?? null, $result['result']['appliedVersions'] ?? null,
     ], 'canonical runner installs the new Jobs frontier');
