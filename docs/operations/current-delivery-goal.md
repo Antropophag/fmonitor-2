@@ -24,3 +24,7 @@ gpt-5.6-sol/low reviewers решают planner-selected gates. Full local suite 
 Фактические source/PR/CI/lane получать через harness state и активный package.
 
 Delivery record: [issue-38-installer-assignments-delivery.md](issue-38-installer-assignments-delivery.md).
+
+Incoming main history for completed delivery №66 remains preserved in
+[issue-66-resume-2026-09-14.md](issue-66-resume-2026-09-14.md); it does not replace
+this branch's active №38 pointer before PR №144 merges.
