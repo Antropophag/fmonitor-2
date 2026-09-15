@@ -1,0 +1,29 @@
+{
+  "change": "checklist-operation-replay-equivalence",
+  "planned_paths": [
+    "app/InspectionEvidence/MariaDbYiiChecklistMutation.php",
+    "specs/CHECKLIST-OPERATION-REPLAY-001.md",
+    "tests/Yii2/yii2_checklist_operation_replay_001_test.php",
+    "tests/Yii2/support/checklist_operation_replay_race_worker.php",
+    "openspec/changes/checklist-operation-replay-equivalence/proposal.md",
+    "openspec/changes/checklist-operation-replay-equivalence/design.md",
+    "openspec/changes/checklist-operation-replay-equivalence/tasks.md",
+    "openspec/changes/checklist-operation-replay-equivalence/specs/inspection/checklist-operation-replay-equivalence/spec.md",
+    "openspec/changes/checklist-operation-replay-equivalence/verification-input.json",
+    "reviews/tests/CHECKLIST-OPERATION-REPLAY-001.md",
+    "reviews/code/CHECKLIST-OPERATION-REPLAY-001.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/current-delivery-goal-history-issue-38-2026-09-15.md",
+    "docs/operations/issue-131-checklist-operation-replay-delivery.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CHECKLIST-OPERATION-REPLAY-001",
+      "acceptance_id": "A-I-typed-replay-race-and-regressions",
+      "spec_path": "specs/CHECKLIST-OPERATION-REPLAY-001.md",
+      "seam": "real Yii2 checklist operation/photo HTTP endpoints backed by disposable MariaDB and private file storage",
+      "tests": ["tests/Yii2/yii2_checklist_operation_replay_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_checklist_operation_replay_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}
