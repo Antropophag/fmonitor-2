@@ -1,11 +1,11 @@
 # Architecture guardrails
 
 `tools/architecture/check` is the canonical, deterministic architecture check.
-It is a current-state ratchet: existing debt is recorded in
+Meaningful architecture rules are a current-state ratchet: existing debt is recorded in
 `tools/architecture/baseline.json`; removal is always allowed, addition is not.
 The baseline is not an allow-list and must only be regenerated after an explicit
 architecture review. CI and local verification must run the checker without
-`--write-baseline`.
+baseline-update options.
 
 ## Enforced policy
 
@@ -20,10 +20,12 @@ architecture review. CI and local verification must run the checker without
    module. It must not acquire dependencies on PilotHttp, rapid-pilot, or direct
    construction of concrete MariaDB adapters. Existing composition debt is
    ratcheted.
-4. **Hotspot ratchet.** Every production source file at or above 150 lines is
-   baselined with its exact line ceiling. It may shrink, but may not grow; a new
-   150-line hotspot also fails. Moving a behavior behind a seam may require more
-   changed files and is preferred to adding it to a hotspot.
+4. **File-size advisory.** Every production source file at or above 150 physical
+   lines is tracked as review metadata. A new hotspot or growth above its recorded
+   size produces a non-blocking advisory, including after a move/rename or a
+   threshold crossing caused only by comments or blank lines. Review should assess
+   cohesion and responsibilities; decomposition is not required merely to meet a
+   line ceiling.
 5. **Public seam ownership.** Public application methods with state-changing
    command verbs are the detectable capability seams. Current seams are
    registered in the baseline; a new one requires architecture review and a
@@ -45,6 +47,7 @@ oracle remains defined once in its existing test; no second implementation is ad
 ```sh
 tools/architecture/check
 tools/architecture/check --json
+tools/architecture/check --write-size-baseline
 ```
 
 Exit `0` means the architecture did not regress. Exit `1` identifies a policy
@@ -55,6 +58,16 @@ the general legacy SQL ratchet. The three decision-ledger/projection adapters
 called by OTIZ are explicitly scanned for runtime DDL despite that directory
 exclusion (ADR0002); this named inventory is not a general PHP call-graph proof.
 
-When a deliberate new public seam or exceptional hotspot growth is approved,
-record the reason in an ADR, then run `tools/architecture/check --write-baseline`
-in the reviewed change. Never rebaseline merely to make a failure green.
+Human output shows file-size advisories for both passing and failing checks. JSON
+consumers receive separate `errors` and `advisories` arrays; only `errors` control
+`ok` and the process exit status. To refresh size metadata, run
+`tools/architecture/check --write-size-baseline`; it preserves every non-size
+baseline section even if the current scan contains an unrelated violation. The
+legacy `--write-baseline` spelling remains a deprecated size-only alias and no
+longer rewrites meaningful exceptions.
+
+Deliberate new meaningful exceptions, including a public seam, require an ADR and
+an explicit reviewed edit to the applicable baseline section. Never rebaseline
+merely to make a failure green. SQL, DDL/runtime migration, dependency direction,
+public-seam, session/workforce ownership, and rapid-pilot boundary violations
+remain blocking independently of file size.

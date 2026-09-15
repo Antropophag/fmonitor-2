@@ -1,0 +1,41 @@
+{
+  "change": "advisory-architecture-file-size",
+  "planned_paths": [
+    "docs/architecture/guardrails.md",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/advisory-architecture-file-size/design.md",
+    "openspec/changes/advisory-architecture-file-size/proposal.md",
+    "openspec/changes/advisory-architecture-file-size/specs/architecture-file-size-advisory/spec.md",
+    "openspec/changes/advisory-architecture-file-size/tasks.md",
+    "openspec/changes/advisory-architecture-file-size/verification-input.json",
+    "reviews/code/ARCHITECTURE-FILE-SIZE-ADVISORY-001.md",
+    "reviews/tests/ARCHITECTURE-FILE-SIZE-ADVISORY-001.md",
+    "specs/ARCHITECTURE-FILE-SIZE-ADVISORY-001.md",
+    "tools/architecture/check.py",
+    "tests/Verification/architecture_file_size_advisory_001_test.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ARCHITECTURE-FILE-SIZE-ADVISORY-001",
+      "acceptance_id": "R1-R8",
+      "spec_path": "specs/ARCHITECTURE-FILE-SIZE-ADVISORY-001.md",
+      "seam": "tools/architecture/check human and JSON CLI, exit status, and size-only baseline update",
+      "seam_kind": "infrastructure",
+      "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"],
+      "gate3_expected": {"tests/Verification/architecture_file_size_advisory_001_test.py": "INTENDED_RED"},
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "retained_evidence": {"status": "not_applicable", "reason": "Harness retains command evidence outside the checkout."},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "idempotence": {"status": "not_applicable", "reason": "Read-only scan is deterministic; size update atomically replaces one deterministic metadata key."},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Baseline writes are reviewed developer operations and not concurrent runtime state."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/architecture_file_size_advisory_001_test.py"]}
+      }
+    }
+  ]
+}
