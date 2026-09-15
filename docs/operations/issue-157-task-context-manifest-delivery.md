@@ -6,9 +6,11 @@ Implemented boundary: the existing `tools/delivery/harness.py prepare` route now
 
 The deterministic replay command is `python3 tools/delivery/measure-task-context.py --baseline docs/operations/issue-157-task-context-manifest-baseline.json`. On the implementation source it reported:
 
-- bounded presentation/UI: 78,637 -> 13,764 mandatory bytes; 56,113 -> 12,825 characters; 11 -> 2 whole documents; 1,207 historical/load-on-demand references;
-- persistence/current-state: 138,336 -> 103,577 mandatory bytes; 98,763 -> 67,869 characters; 13 -> 6 whole documents; all ten reviewed sensitive/general rule identifiers retained; 1,207 load-on-demand references;
-- harness/verification: 54,275 -> 14,579 mandatory bytes; 46,275 -> 14,134 characters; 9 -> 2 whole documents; all four reviewed governance/general rule identifiers retained; 1,207 load-on-demand references.
+- bounded presentation/UI: 78,637 -> 13,764 mandatory content bytes and 19,291 total serialized delivered bytes; 56,113 -> 12,825 characters; 11 -> 2 whole documents;
+- persistence/current-state: 138,336 -> 103,577 mandatory content bytes and 118,469 total serialized delivered bytes; 98,763 -> 67,869 characters; 13 -> 6 whole documents; all ten reviewed sensitive/general rule identifiers retained;
+- harness/verification: 54,275 -> 14,579 mandatory content bytes and 20,974 total serialized delivered bytes; 46,275 -> 14,134 characters; 9 -> 2 whole documents; all four reviewed governance/general rule identifiers retained.
+
+The replay also reports serialized manifest bytes, required-context artifact bytes and their combined `total_delivered_bytes`. Large historical trees are represented by three compact reconstructible collection references rather than a 1,207-file inline roster; current-task review references are limited to the matching contract identifier. These package-overhead fields, rather than mandatory content alone, are the honest delivered-byte comparison.
 
 These are exact UTF-8 byte/Unicode-character context proxies. Token usage is `UNKNOWN`; the result supports only reduced mandatory context bytes and expected token-pressure reduction.
 

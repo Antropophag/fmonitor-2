@@ -32,6 +32,10 @@ def main():
             evidence=[], snapshot="replay")
         mandatory_bytes = sum(len(item["content"].encode("utf-8")) for item in delivered["items"])
         mandatory_characters = sum(len(item["content"]) for item in delivered["items"])
+        manifest_bytes = len((json.dumps(manifest, ensure_ascii=False, sort_keys=True,
+            indent=2) + "\n").encode("utf-8"))
+        artifact_bytes = len((json.dumps(delivered, ensure_ascii=False, sort_keys=True,
+            indent=2) + "\n").encode("utf-8"))
         whole_documents = sum(item["content_reference"]["start_byte"] == 0
             and item["content_reference"]["end_byte"] == (ROOT / item["source"]).stat().st_size
             for item in manifest["required_context"])
@@ -44,6 +48,9 @@ def main():
                 "mandatory_characters": mandatory_characters,
                 "whole_documents": whole_documents,
                 "load_on_demand_references": len(manifest["load_on_demand"]),
+                "manifest_bytes": manifest_bytes,
+                "required_context_artifact_bytes": artifact_bytes,
+                "total_delivered_bytes": manifest_bytes + artifact_bytes,
                 "required_rule_ids": sorted(item["rule_id"] for item in manifest["required_context"])}})
     print(json.dumps({"schema": "fmonitor-task-context-measurement-v1",
         "token_usage": "UNKNOWN", "cases": cases}, ensure_ascii=False, sort_keys=True))

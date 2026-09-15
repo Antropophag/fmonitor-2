@@ -802,21 +802,41 @@ def build_task_context(root, plan_value, *, role, source, base, contracts, evide
     required.sort(key=lambda item: (item["source"], item["rule_id"]))
     materialized.sort(key=lambda item: (item["source"], item["rule_id"]))
     historical = []
+    history_groups = []
     for pattern in ("docs/operations/current-delivery-goal-history*", "docs/operations/*evidence*", "reviews/**/*.md"):
+        group = []
         for path in sorted(root.glob(pattern)):
             relative = path.relative_to(root).as_posix()
             if not path.is_file() or relative in contracts:
                 continue
             content = path.read_bytes()
-            historical.append({"source": relative, "reason": "historical context; open on demand",
-                "digest": _sha256_bytes(content), "content_reference": {"path": relative}})
-    history_by_source = {item["source"]: item for item in historical}
+            group.append({"source": relative, "digest": _sha256_bytes(content)})
+        history_groups.append((pattern, group))
+        historical.extend(group)
+    if len(historical) <= 20:
+        load_on_demand = [{"source": item["source"],
+            "reason": "historical context; open on demand", "digest": item["digest"],
+            "content_reference": {"path": item["source"]}} for item in historical]
+    else:
+        load_on_demand = []
+        for pattern, group in history_groups:
+            if not group:
+                continue
+            index_bytes = json.dumps(group, ensure_ascii=False, sort_keys=True,
+                                     separators=(",", ":")).encode("utf-8")
+            load_on_demand.append({"source": pattern,
+                "reason": "historical collection; reconstruct index from current canonical tree on demand",
+                "digest": _sha256_bytes(index_bytes),
+                "content_reference": {"path": pattern.split("*")[0].rstrip("/"),
+                                      "pattern": pattern, "entries": len(group)}})
     references = []
     for relative in contracts:
         path = root / relative
         if path.is_file():
             references.append({"source": relative, "digest": _sha256_bytes(path.read_bytes())})
-    reviews = sorted(path.relative_to(root).as_posix() for path in root.glob("reviews/**/*.md") if path.is_file())
+    contract_stems = {Path(relative).stem for relative in contracts}
+    reviews = sorted(path.relative_to(root).as_posix() for path in root.glob("reviews/**/*.md")
+        if path.is_file() and (path.stem == "CURRENT" or path.stem in contract_stems))
     manifest = {
         "schema": "fmonitor-task-context-v1",
         "task": {"change": plan_value.get("change"), "base": base, "source": source, "role": role,
@@ -825,7 +845,7 @@ def build_task_context(root, plan_value, *, role, source, base, contracts, evide
         "section_index": {"version": index["version"], "digest": _sha256_bytes(index_bytes),
                           "source": "tools/delivery/context-sections.json"},
         "required_context": required,
-        "load_on_demand": [history_by_source[key] for key in sorted(history_by_source)],
+        "load_on_demand": sorted(load_on_demand, key=lambda item: item["source"]),
         "product_spec": {"contracts": contracts, "references": references},
         "verification": {"candidate_source": source,
                          "snapshot": snapshot if role == "reviewer" else "candidate-source:" + source,
