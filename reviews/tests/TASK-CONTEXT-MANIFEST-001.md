@@ -137,3 +137,26 @@ Replacing the legacy `assertTrue(data['rules'])` expectation with `assertFalse(d
 The surrounding test still verifies reviewer role, `NOT_REVIEWED`, exact plan digest, contracts, sources, current evidence, package existence, stale-source rejection and executor/root behavior. The stronger manifest-specific suite separately binds `context_delivery.path` to `required_context_path` and verifies artifact/excerpt digests, so this compatibility assertion does not weaken reconstruction coverage.
 
 No contradiction with the approved specification or case L remains. Gate 3 stays `APPROVED`.
+
+---
+
+## Gate 3 test-delta review v6 — compact-history digest integrity
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test delta author: root
+- Reviewed exact delta: commit `ca4322a2` only; parent includes the prior final-review record and executor correction
+- Isolated worktree: `/tmp/fmonitor-2-issue157-final`
+- Focused RED: `python3 tests/Verification/delivery_harness_context_manifest_001_test.py` — 4 tests, 3 pass, 1 intended failure
+- Verdict: `APPROVED` — Gate 3 remains approved for this correction test
+
+### Findings and disposition
+
+None.
+
+The `large_history=True` fixture adds 25 deterministic historical goal files, commits them inside the isolated fixture repository, and therefore forces the compact load-on-demand collection route that the ordinary small-history cases did not exercise. The retained `len(load_on_demand) == 1` expectation discriminates that compact route without weakening the existing reconstructible-history cases.
+
+The two new digest assertions independently derive SHA-256 from the exact fixture copy of canonical `tools/delivery/context-sections.json`, require it to equal `manifest.section_index.digest`, and require `task.policy_digests.instruction_index` to carry the same binding. They directly enforce R1/R3 and case K's no-silent-staleness property; they do not encode an implementation detail beyond the already normative canonical index digest.
+
+The exact focused run reproduced the Gate 5 finding: actual canonical digest `bd5cfc0a9232ca01a13b317a563c0e40d44f8405ff531b909904d55e5674a7d7` differs from advertised `bf94a727dc711364710e42cc7541f75e438400774d8a5cd3024ebfc04e85b64b` only on the compact large-history path. The other three test groups pass, establishing valid setup and a sensitive, narrowly targeted RED rather than an unrelated regression.
+
+Gate 3 is `APPROVED` for the digest-integrity correction. This does not approve the implementation correction; Gate 5 must review the corrected exact source and GREEN evidence.
