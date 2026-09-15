@@ -38,6 +38,7 @@
     "tests/Yii2/PreopeningConcurrentRequests.php",
     "tests/Support/SelectionNativeFixture.php",
     "tests/AssignmentOrderComposition/selection_native_authority_001_test.php",
+    "tools/verification/suites.tsv",
     "config/yii/web.php"
   ],
   "acceptances": [
