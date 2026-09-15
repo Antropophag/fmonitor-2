@@ -244,7 +244,6 @@
   ],
   "graph": "quality-graph.yml",
   "suite_inventory": "tools/verification/suites.tsv",
-  "inventory": "tools/verification/categories.json",
   "generated_sources": [
     {
       "inputs": ["tools/delivery/Dockerfile.runtime.in", "tools/delivery/dependencies.env", "tools/delivery/render-dependencies.py"],

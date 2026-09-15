@@ -15,7 +15,7 @@ class ChangeVerification(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="change-verification-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        for relative in ["tools/delivery", "tools/verification", ".quality-graph", "specs", "app/PilotHttp", "app/Infrastructure/Persistence", "app/Otiz", "tests/InstallationProcess", "tests/Runtime", "tests/Otiz"]:
+        for relative in ["tools/delivery", "tools/verification", ".quality-graph", "specs", "app/PilotHttp", "app/Infrastructure/Persistence", "app/Otiz", "tests/InstallationProcess", "tests/AssignmentOrderComposition", "tests/Verification", "tests/Runtime", "tests/Otiz", "tests/Jobs"]:
             (self.root / relative).mkdir(parents=True, exist_ok=True)
         source = ROOT / "tools/delivery/change-verification.py"
         if source.exists():
@@ -23,17 +23,20 @@ class ChangeVerification(unittest.TestCase):
         (self.root / "specs/CHANGE-VERIFICATION-001.md").write_text("contract\n")
         (self.root / "specs/EXAMPLE-001.md").write_text("acceptance contract\n")
         (self.root / "quality-graph.yml").write_text("version: 1\n")
-        (self.root / "tools/verification/categories.json").write_text(json.dumps({
-            "tests/InstallationProcess/action_001_test.php": "integration",
-            "tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php": "integration",
-            "tests/Runtime/runtime_storage_001_test.php": "integration",
-            "tests/Otiz/snapshot_publication_001_test.php": "integration",
-        }))
+        inventory_source = ROOT / "tools/verification/inventory.py"
+        if inventory_source.exists():
+            shutil.copy2(inventory_source, self.root / "tools/verification/inventory.py")
+        (self.root / "tools/verification/suites.tsv").write_text(
+            "db\tphp\ttests/InstallationProcess/action_001_test.php\tintegration\n"
+            "db\tphp\ttests/InstallationProcess/pilot_http_auth_001_global_calls_test.php\tintegration\n"
+            "db\tphp\ttests/Otiz/snapshot_publication_001_test.php\tintegration\n"
+            "db\tphp\ttests/Runtime/runtime_storage_001_test.php\tintegration\n"
+        )
         self.policy = {
             "version": 1,
             "graph": "quality-graph.yml",
             "spec": "specs/CHANGE-VERIFICATION-001.md",
-            "inventory": "tools/verification/categories.json",
+            "suite_inventory": "tools/verification/suites.tsv",
             "runtimes": {".py": "python3", ".php": "php", ".mjs": "node"},
             "category_argv": {
                 "integration": [["php", "tests/Runtime/runtime_storage_001_test.php"]],
@@ -55,6 +58,7 @@ class ChangeVerification(unittest.TestCase):
         }
         self.write_json(".quality-graph/verification-policy.json", self.policy)
         (self.root / "app/PilotHttp/Action.php").write_text("before\n")
+        (self.root / "app/Otiz/Delete.php").write_text("before\n")
         (self.root / "tests/InstallationProcess/action_001_test.php").write_text("<?php\n")
         (self.root / "tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php").write_text("<?php\n")
         (self.root / "tests/Runtime/runtime_storage_001_test.php").write_text("<?php\n")
@@ -75,6 +79,47 @@ class ChangeVerification(unittest.TestCase):
 
     def write_json(self, path, value):
         (self.root / path).write_text(json.dumps(value, sort_keys=True) + "\n")
+
+    def add_inventory(self, path, category, runtime="php", suite="db"):
+        catalog = self.root / "tools/verification/suites.tsv"
+        rows = catalog.read_text().splitlines()
+        rows.append("\t".join((suite, runtime, path, category)))
+        catalog.write_text("\n".join(sorted(rows, key=self.inventory_sort_key)) + "\n")
+
+    @staticmethod
+    def inventory_sort_key(row):
+        suite, runtime, path, category = row.split("\t")
+        return suite, path, runtime, category
+
+    def set_inventory_category(self, path, category):
+        catalog = self.root / "tools/verification/suites.tsv"
+        rows = []
+        for row in catalog.read_text().splitlines():
+            fields = row.split("\t")
+            if fields[2] == path:
+                fields[3] = category
+            rows.append("\t".join(fields))
+        catalog.write_text("\n".join(sorted(rows, key=self.inventory_sort_key)) + "\n")
+
+    def copy_real_inventory(self):
+        catalog = self.root / "tools/verification/suites.tsv"
+        shutil.copy2(ROOT / "tools/verification/suites.tsv", catalog)
+        inventory_paths = []
+        for row in catalog.read_text().splitlines():
+            if not row or row.startswith("#"):
+                continue
+            _suite, _runtime, path, _category = row.split("\t")
+            target = self.root / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text("fixture\n")
+            inventory_paths.append(path)
+        action = "tests/InstallationProcess/action_001_test.php"
+        if (self.root / action).is_file() and action not in catalog.read_text():
+            self.add_inventory(action, "integration")
+        self.git("add", "tools/verification/suites.tsv", *inventory_paths)
+        self.git("commit", "-qm", "inventory fixture baseline")
+        self.base = self.git("rev-parse", "HEAD").stdout.strip()
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, text=True, capture_output=True, check=True)
@@ -108,8 +153,6 @@ class ChangeVerification(unittest.TestCase):
     def test_repository_policy_maps_deployment_sources(self):
         """Use the real policy through the public CLI, in a disposable repository."""
         policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
-        inventory = json.loads((ROOT / "tools/verification/categories.json").read_text())
-        inventory["tests/InstallationProcess/action_001_test.php"] = "integration"
         commands = [command for values in policy["category_argv"].values() for command in values]
         paths = [command[1] for command in commands]
         paths += [test for boundary in policy["boundaries"] for test in boundary["tests"]]
@@ -119,7 +162,9 @@ class ChangeVerification(unittest.TestCase):
             if not target.exists():
                 target.write_text("fixture\n")
         self.write_json(".quality-graph/verification-policy.json", policy)
-        self.write_json("tools/verification/categories.json", inventory)
+        self.copy_real_inventory()
+        if "tests/InstallationProcess/action_001_test.php" not in (self.root / "tools/verification/suites.tsv").read_text():
+            self.add_inventory("tests/InstallationProcess/action_001_test.php", "integration")
         self.input["planned_paths"] = ["deploy/runtime/Dockerfile", "deploy/runtime/compose.yaml", "deploy/yii2/Dockerfile"]
         self.write_json("change.json", self.input)
         result = self.plan()
@@ -137,13 +182,13 @@ class ChangeVerification(unittest.TestCase):
         (self.root / "app/PilotHttp/Staged.php").write_text("x")
         self.git("add", "app/PilotHttp/Staged.php")
         (self.root / "app/PilotHttp/Untracked.php").write_text("x")
-        (self.root / "tests/InstallationProcess/action_001_test.php").unlink()
+        (self.root / "app/Otiz/Delete.php").unlink()
         self.assertEqual(0, self.plan().returncode)
         actual = {(x["path"], x["status"]) for x in json.loads((self.root / "plan.json").read_text())["paths"]["actual"]}
         self.assertIn(("app/PilotHttp/Action.php", "committed"), actual)
         self.assertIn(("app/PilotHttp/Staged.php", "staged"), actual)
         self.assertIn(("app/PilotHttp/Untracked.php", "untracked"), actual)
-        self.assertIn(("tests/InstallationProcess/action_001_test.php", "deleted"), actual)
+        self.assertIn(("app/Otiz/Delete.php", "deleted"), actual)
 
     def test_registered_legacy_verifier_is_required_but_arbitrary_script_is_rejected(self):
         legacy = "rapid-pilot/verify-calendar-projections.php"
@@ -151,9 +196,7 @@ class ChangeVerification(unittest.TestCase):
         (self.root / legacy).write_text("<?php // registered verifier\n")
         self.policy["boundaries"].append({"name": "legacy", "patterns": ["rapid-pilot/**"], "categories": ["integration"], "tests": []})
         self.write_json(".quality-graph/verification-policy.json", self.policy)
-        inventory = json.loads((self.root / "tools/verification/categories.json").read_text())
-        inventory[legacy] = "integration"
-        self.write_json("tools/verification/categories.json", inventory)
+        self.add_inventory(legacy, "integration")
         result = self.plan()
         self.assertEqual(0, result.returncode, "INTENDED_RED: registered legacy verifier must remain in the plan: " + result.stderr)
         commands = json.loads((self.root / "plan.json").read_text())["commands"]
@@ -190,7 +233,7 @@ class ChangeVerification(unittest.TestCase):
         mutations = [
             lambda: (self.root / "change.json").write_text(json.dumps(dict(self.input, change="changed"))),
             lambda: (self.root / "quality-graph.yml").write_text("changed\n"),
-            lambda: (self.root / "tools/verification/categories.json").write_text("{}\n"),
+            lambda: (self.root / "tools/verification/suites.tsv").write_text("\n"),
             lambda: (self.root / ".quality-graph/verification-policy.json").write_text(json.dumps(dict(self.policy, version=2))),
             lambda: (self.root / "specs/CHANGE-VERIFICATION-001.md").write_text("changed\n"),
             lambda: (self.root / "tools/delivery/change-verification.py").write_text((self.root / "tools/delivery/change-verification.py").read_text() + "\n# harmless source drift\n"),
@@ -223,6 +266,7 @@ class ChangeVerification(unittest.TestCase):
         env = dict(os.environ, PATH=str(bindir) + os.pathsep + os.environ["PATH"], TRACE=str(trace))
         result = self.cli("run", "--plan", "plan.json", "--phase", "focused", env=env)
         self.assertNotEqual(0, result.returncode); self.assertFalse(trace.exists())
+        self.add_inventory(future, "integration")
         self.assertEqual(0, self.plan().returncode)
         result = self.cli("run", "--plan", "plan.json", "--phase", "focused", env=env)
         self.assertEqual(7, result.returncode, "child RED is preserved")
@@ -241,9 +285,7 @@ class ChangeVerification(unittest.TestCase):
             self.assertIn(required, argvs)
 
     def test_exact_category_binding_cannot_be_masked_by_another_boundary(self):
-        inventory = json.loads((self.root / "tools/verification/categories.json").read_text())
-        inventory["tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php"] = "governance"
-        self.write_json("tools/verification/categories.json", inventory)
+        self.set_inventory_category("tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php", "governance")
         self.input["planned_paths"].append(".quality-graph/other-policy.json")
         self.write_json("change.json", self.input)
         result = self.plan()
@@ -261,7 +303,7 @@ class ChangeVerification(unittest.TestCase):
             with self.subTest(planned=planned):
                 self.setUp()
                 shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
-                shutil.copy2(ROOT / "tools/verification/categories.json", self.root / "tools/verification/categories.json")
+                self.copy_real_inventory()
                 (self.root / "app/PilotHttp/Action.php").write_text("before\n")
                 self.input["planned_paths"] = [planned]
                 self.write_json("change.json", self.input)
@@ -270,7 +312,7 @@ class ChangeVerification(unittest.TestCase):
                 self.assertIn(required, argvs)
         self.setUp()
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
-        shutil.copy2(ROOT / "tools/verification/categories.json", self.root / "tools/verification/categories.json")
+        self.copy_real_inventory()
         (self.root / "app/PilotHttp/Action.php").write_text("before\n")
         planned = "tests/Verification/change_verification_001_test.py"
         self.input["planned_paths"] = [planned]
@@ -283,7 +325,7 @@ class ChangeVerification(unittest.TestCase):
 
     def test_registered_acceptance_adds_its_inventory_category(self):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
-        shutil.copy2(ROOT / "tools/verification/categories.json", self.root / "tools/verification/categories.json")
+        self.copy_real_inventory()
         (self.root / "app/PilotHttp/Action.php").write_text("before\n")
         self.input["planned_paths"] = ["app/IdentityAccess/Command.php"]
         self.input["acceptances"][0]["tests"] = ["tests/Runtime/runtime_storage_001_test.php"]
@@ -314,7 +356,9 @@ class ChangeVerification(unittest.TestCase):
         (self.root/'app/PilotHttp/Action.php').write_text('before\n')
         files=['tests/InstallationProcess/log_'+str(i)+'_test.py' for i in range(6)]
         log=''.join('case %02d checked ... ok\n'%i for i in range(50))+'Ran 50 checks\nOK\n'
-        for path in files:(self.root/path).write_text('print('+repr(log)+',end="")\n')
+        for path in files:
+            (self.root/path).write_text('print('+repr(log)+',end="")\n')
+            self.add_inventory(path, 'governance', runtime='python3', suite='characterization')
         self.input['planned_paths']=files
         self.input['acceptances'][0]['tests']=files
         self.write_json('change.json',self.input)
@@ -366,7 +410,7 @@ class ChangeVerification(unittest.TestCase):
             'tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php',
         }
         shutil.copy2(ROOT / '.quality-graph/verification-policy.json', self.root / '.quality-graph/verification-policy.json')
-        shutil.copy2(ROOT / 'tools/verification/categories.json', self.root / 'tools/verification/categories.json')
+        self.copy_real_inventory()
         (self.root / 'app/PilotHttp/Action.php').write_text('before\n')
         for owner in ['app/InspectionEvidence/MariaDbYiiChecklist.php', 'app/InspectionEvidence/MariaDbYiiChecklistAdmission.php', 'app/PilotHttp/ChecklistSync.php']:
             self.assertTrue((ROOT / owner).is_file(), 'consumer evidence must name a real owner')
@@ -386,7 +430,7 @@ class ChangeVerification(unittest.TestCase):
 
     def test_changed_registered_test_schedules_itself(self):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
-        shutil.copy2(ROOT / "tools/verification/categories.json", self.root / "tools/verification/categories.json")
+        self.copy_real_inventory()
         (self.root / "app/PilotHttp/Action.php").write_text("before\n")
         changed = "tests/Verification/verification_inventory_001_test.py"
         target = self.root / changed
@@ -403,6 +447,28 @@ class ChangeVerification(unittest.TestCase):
         self.assertIn(argv, [x["argv"] for x in plan["commands"]],
                       "INTENDED_RED changed registered verifier omitted")
         self.assertEqual(1, [x["argv"] for x in plan["commands"]].count(argv))
+
+    def test_new_canonical_test_must_be_registered_before_plan(self):
+        added = "tests/Verification/new_inventory_contract_001_test.py"
+        target = self.root / added
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("# executable contract\n")
+        self.input["planned_paths"] = [added]
+        self.write_json("change.json", self.input)
+        result = self.plan()
+        self.assertNotEqual(0, result.returncode, "INTENDED_RED unregistered test reached Gate 3 planning")
+        self.assertIn("UNREGISTERED_TEST: " + added, result.stderr)
+        self.assertFalse((self.root / "plan.json").exists())
+
+    def test_new_support_helper_is_not_a_canonical_test(self):
+        helper = "tests/Support/inventory_fixture.py"
+        target = self.root / helper
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("# non executable helper\n")
+        self.input["planned_paths"] = [helper]
+        self.write_json("change.json", self.input)
+        result = self.plan()
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 if __name__ == "__main__":

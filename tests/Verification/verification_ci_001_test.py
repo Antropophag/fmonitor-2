@@ -1,6 +1,7 @@
 """VERIFICATION-PR-CYCLE-001: real Git, public CLI, isolated traced runtimes."""
 import json
 import hashlib
+import importlib.util
 import os
 from pathlib import Path
 import shutil
@@ -8,6 +9,7 @@ import subprocess
 import tempfile
 import sys
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 CATEGORIES = ['unit', 'integration', 'e2e', 'governance']
@@ -28,6 +30,8 @@ class VerificationCI(unittest.TestCase):
         shutil.copy(ROOT / 'tools/verification/run.sh', tool)
         if (ROOT / 'tools/verification/ci.py').exists():
             shutil.copy(ROOT / 'tools/verification/ci.py', tool)
+        if (ROOT / 'tools/verification/inventory.py').exists():
+            shutil.copy(ROOT / 'tools/verification/inventory.py', tool)
         for directory in ['InstallationProcess', 'AssignmentOrderComposition', 'Verification', 'Otiz', 'Runtime', 'Jobs']:
             (self.root / 'tests' / directory).mkdir(parents=True)
         self.paths = [f'tests/InstallationProcess/{name}_test.php' for name in ['a', 'b', 'c', 'd', 'e']]
@@ -37,9 +41,11 @@ class VerificationCI(unittest.TestCase):
                 ('e2e', self.paths[3]), ('characterization', self.paths[4])]
         self.runtimes = dict.fromkeys(self.paths, 'php')
         self.runtimes[self.paths[1]] = 'node'
-        (tool / 'suites.tsv').write_text(''.join(f'{g}\t{self.runtimes[p]}\t{p}\n' for g, p in rows))
         self.mapping = dict(zip(self.paths, ['unit', 'unit', 'integration', 'e2e', 'governance']))
-        self.write_mapping()
+        rows = [(group, self.runtimes[path], path, self.mapping[path]) for group, path in rows]
+        (tool / 'suites.tsv').write_text(
+            ''.join('\t'.join(row) + '\n'
+                    for row in sorted(rows, key=lambda row: (row[0], row[2], row[1], row[3]))))
         self.bin = self.root / 'trace-bin'
         self.bin.mkdir()
         self.trace = self.root / 'trace.log'
@@ -63,9 +69,6 @@ class VerificationCI(unittest.TestCase):
             subprocess.run(['git',*args],cwd=self.root,check=True,capture_output=True)
 
 
-    def write_mapping(self):
-        (self.root / 'tools/verification/categories.json').write_text(json.dumps(self.mapping))
-
     def add_integration_inventory(self):
         paths = [
             'tests/AssignmentOrderComposition/zeta_test.php',
@@ -77,12 +80,13 @@ class VerificationCI(unittest.TestCase):
         runtimes = ['php', 'node', 'node', 'php', 'php']
         for path in paths:
             (self.root / path).write_text('fixture')
-        with (self.root / 'tools/verification/suites.tsv').open('a') as out:
-            for runtime, path in zip(runtimes, paths):
-                out.write(f'db\t{runtime}\t{path}\n')
+        catalog = self.root / 'tools/verification/suites.tsv'
+        rows = [line.split('\t') for line in catalog.read_text().splitlines()]
+        rows += [('db', runtime, path, 'integration') for runtime, path in zip(runtimes, paths)]
+        catalog.write_text(''.join('\t'.join(row) + '\n'
+                                   for row in sorted(rows, key=lambda row: (row[0], row[2], row[1], row[3]))))
         self.mapping.update(dict.fromkeys(paths, 'integration'))
         self.runtimes.update(zip(paths, runtimes))
-        self.write_mapping()
         return paths
 
     def cli(self, *args, root=None, env=None):
@@ -176,13 +180,14 @@ class VerificationCI(unittest.TestCase):
         self.add_integration_inventory()
         unsharded = self.cli('list', 'integration')
         self.assertEqual(0, unsharded.returncode, unsharded.stderr)
-        # The established unsharded category preserves catalogue order.
-        self.assertEqual([f'{self.runtimes[p]}\t{p}' for p in [self.paths[2],
-                         'tests/AssignmentOrderComposition/zeta_test.php',
-                         'tests/InstallationProcess/alpha_test.php',
-                         'tests/Verification/middle_test.mjs',
-                         'tests/InstallationProcess/gamma_test.php',
-                         'tests/AssignmentOrderComposition/beta_test.php']],
+        # The unsharded category preserves canonical catalogue order.
+        expected_paths = sorted([self.paths[2],
+                                 'tests/AssignmentOrderComposition/zeta_test.php',
+                                 'tests/InstallationProcess/alpha_test.php',
+                                 'tests/Verification/middle_test.mjs',
+                                 'tests/InstallationProcess/gamma_test.php',
+                                 'tests/AssignmentOrderComposition/beta_test.php'])
+        self.assertEqual([f'{self.runtimes[p]}\t{p}' for p in expected_paths],
                          unsharded.stdout.splitlines())
 
         full = sorted(unsharded.stdout.splitlines(), key=lambda row: row.split('\t')[1])
@@ -199,8 +204,10 @@ class VerificationCI(unittest.TestCase):
 
         catalog = self.root / 'tools/verification/suites.tsv'
         catalog.write_text(''.join(reversed(catalog.read_text().splitlines(keepends=True))))
-        self.assertEqual(first.stdout, self.cli('list', 'integration', '--shard', '1/2').stdout)
-        self.assertEqual(second.stdout, self.cli('list', 'integration', '--shard', '2/2').stdout)
+        for shard in ['1/2', '2/2']:
+            rejected = self.cli('list', 'integration', '--shard', shard)
+            self.assertNotEqual(0, rejected.returncode)
+            self.assertIn('not in canonical order', rejected.stderr)
 
     def test_real_integration_shards_partition_current_inventory_once(self):
         full = self.cli('list', 'integration', root=ROOT)
@@ -243,25 +250,19 @@ class VerificationCI(unittest.TestCase):
             self.assertFalse(self.trace.exists(), args)
             self.assertFalse(self.db_trace.exists(), args)
 
-    def test_invalid_mapping_or_catalog_fails_before_execution(self):
-        valid = dict(self.mapping)
-        cases = [dict(list(valid.items())[1:]), dict(valid, **{'unknown.php': 'unit'}),
-                 dict(valid, **{self.paths[0]: 'invalid'})]
-        for mapping in cases:
-            self.mapping = mapping
-            self.write_mapping()
+    def test_invalid_catalog_fails_before_execution(self):
+        catalog = self.root / 'tools/verification/suites.tsv'
+        valid = catalog.read_text()
+        cases = [valid.replace('\tunit\n', '\tinvalid\n', 1),
+                 valid + f'unit\tphp\t{self.paths[0]}\tunit\n',
+                 valid + 'unit\tphp\ttests/InstallationProcess/missing_test.php\tunit\n']
+        for content in cases:
+            catalog.write_text(content)
             result = self.cli('run', 'unit')
             self.assertNotEqual(0, result.returncode)
             self.assertIn('SETUP_FAILURE', result.stderr)
             self.assertFalse(self.trace.exists())
-        self.mapping = valid
-        self.write_mapping()
-        with (self.root / 'tools/verification/suites.tsv').open('a') as out:
-            out.write(f'e2e\tphp\t{self.paths[0]}\n')
-        result = self.cli('run', 'unit')
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn('SETUP_FAILURE', result.stderr)
-        self.assertFalse(self.trace.exists())
+        catalog.write_text(valid)
 
     def test_category_run_continues_and_reports_real_exit(self):
         py = 'tests/Verification/python_dispatch_test.py'
@@ -269,10 +270,12 @@ class VerificationCI(unittest.TestCase):
             'import os\nfrom pathlib import Path\n'
             f'with Path(os.environ["TRACE"]).open("a") as out: out.write("python3\\t{py}\\n")\n'
             f'print("child-output:{py}")\n')
-        with (self.root / 'tools/verification/suites.tsv').open('a') as out:
-            out.write(f'unit\tpython3\t{py}\n')
+        catalog = self.root / 'tools/verification/suites.tsv'
+        rows = [line.split('\t') for line in catalog.read_text().splitlines()]
+        rows.append(('unit', 'python3', py, 'unit'))
+        catalog.write_text(''.join('\t'.join(row) + '\n'
+                                   for row in sorted(rows, key=lambda row: (row[0], row[2], row[1], row[3]))))
         self.mapping[py] = 'unit'
-        self.write_mapping()
         env = dict(self.env, FAIL_FILE=self.paths[0], GITHUB_ACTIONS='false')
         result = subprocess.run(['/bin/bash', str(self.root / 'tools/verification/run.sh'), 'category', 'unit'],
                                 cwd=self.root, env=env, capture_output=True, text=True, timeout=30)
@@ -348,6 +351,37 @@ class VerificationCI(unittest.TestCase):
         self.assertIn('if: always()\n      run: make test-env-down', integration)
         self.assertIn('"integration":"${{ needs.integration.result }}"', workflow)
 
+    def test_fast_validates_inventory_without_running_governance_contract(self):
+        spec = importlib.util.spec_from_file_location('verification_ci_contract', ROOT / 'tools/verification/ci.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        observed = []
+        def successful(argv, **kwargs):
+            observed.append(list(argv))
+            return subprocess.CompletedProcess(argv, 0, '', '')
+        with mock.patch.object(module, 'reconstructed_plan', return_value=(None, None)), \
+             mock.patch.object(module.subprocess, 'run', side_effect=successful):
+            module.run_fast_node('HEAD', 'workflow_dispatch')
+        self.assertTrue(observed, 'INTENDED_RED fast command list empty')
+        self.assertEqual(['python3', 'tools/verification/inventory.py', 'validate'], observed[0],
+                         'INTENDED_RED inventory validation must run before other fast checks')
+        self.assertNotIn(['python3', 'tests/Verification/verification_ci_001_test.py'], observed,
+                         'governance contract must not execute directly in fast')
+        failed = []
+        def fail_inventory(argv, **kwargs):
+            failed.append(list(argv))
+            raise subprocess.CalledProcessError(1, argv)
+        with mock.patch.object(module, 'reconstructed_plan', return_value=(None, None)), \
+             mock.patch.object(module.subprocess, 'run', side_effect=fail_inventory):
+            with self.assertRaises(subprocess.CalledProcessError):
+                module.run_fast_node('HEAD', 'workflow_dispatch')
+        self.assertEqual([['python3', 'tools/verification/inventory.py', 'validate']], failed,
+                         'inventory failure must stop fast before later checks')
+        governance = self.cli('list', 'governance', root=ROOT)
+        self.assertEqual(0, governance.returncode, governance.stderr)
+        self.assertEqual(1, [line.split('\t')[1] for line in governance.stdout.splitlines()].count(
+            'tests/Verification/verification_ci_001_test.py'))
+
     def test_aggregate_requires_exact_expected_evidence(self):
         good = dict.fromkeys(['plan', 'fast'] + CATEGORIES, 'success')
         result = self.cli('aggregate', '--full', 'true', '--results', json.dumps(good))
@@ -420,54 +454,15 @@ class VerificationCI(unittest.TestCase):
         for name in children:
             self.assertEqual(1, paths.count(f'tests/InstallationProcess/{name}_001_test.php'))
         e2e = self.cli('list', 'e2e', root=ROOT)
-        self.assertEqual([
-            'python3\ttests/Deployment/pilot_jobs_compose_001_test.py',
-            'php\ttests/Runtime/production_runtime_compose_001_test.php',
-            'php\ttests/Runtime/production_runtime_browser_001_test.php',
-            'php\ttests/Support/ObjectRegisterPagingBrowserFixture.php',
-            'php\ttests/Yii2/yii2_otiz_settlement_browser_001_test.php',
-            'php\ttests/Yii2/yii2_otiz_publication_browser_001_test.php',
-            'php\ttests/Runtime/runtime_settlement_compatibility_001_test.php',
-            'php\ttests/Yii2/yii2_user_access_browser_001_test.php',
-            'python3\ttests/Runtime/activation_proxy_log_001_test.py',
-            'php\ttests/Yii2/yii2_object_queue_browser_001_test.php',
-            'php\ttests/Yii2/yii2_preopening_browser_001_test.php',
-            'python3\ttests/Yii2/yii2_preopening_package_001_test.py',
-            'php\ttests/Yii2/yii2_inspection_browser_001_test.php',
-            'php\ttests/Yii2/yii2_documentary_browser_001_test.php',
-            'php\ttests/Yii2/yii2_installer_directory_browser_001_test.php',
-            'python3\ttests/Deployment/yii2_canonical_migrations_package_001_test.py',
-            'python3\ttests/Deployment/yii2_production_image_cleanup_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_target_compose_001_test.py',
-            'php\ttests/Yii2/yii2_stand_backup_console_001_test.php',
-            'php\ttests/Yii2/yii2_stand_backup_ownership_001_test.php',
-            'python3\ttests/Architecture/yii2_stand_backup_boundary_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_backup_target_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_backup_bundle_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_backup_preservation_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_backup_replay_001_test.py',
-            'php\ttests/Yii2/yii2_stand_restore_console_001_test.php',
-            'python3\ttests/Architecture/yii2_stand_restore_boundary_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_restore_roundtrip_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_restore_failure_001_test.py',
-            'python3\ttests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_durability_001_test.py',
-            'python3\ttests/Deployment/yii2_stand_restore_unknown_reconcile_failure_001_test.py',
-            'php\ttests/Yii2/yii2_stand_restore_reconcile_console_001_test.php',
-            'python3\ttests/Deployment/yii2_clean_stand_acceptance_result_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_admission_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_golden_flows_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_jobs_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_provisioning_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_real_acceptance_001_test.py',
-            'python3\ttests/Deployment/yii2_clean_stand_runtime_001_test.py',
-            'python3\ttests/Deployment/yii2_local_quickstart_001_test.py',
-            'python3\ttests/Deployment/yii2_local_quickstart_real_001_test.py',
-            'python3\ttests/Deployment/yii2_local_data_bootstrap_make_001_test.py',
-            'php\ttests/Yii2/yii2_feedback_browser_001_test.php',
-            'php\ttests/Yii2/excel_publication_browser_001_test.php',
-        ], e2e.stdout.splitlines())
+        expected = []
+        for line in (ROOT / 'tools/verification/suites.tsv').read_text().splitlines():
+            if not line or line.startswith('#'):
+                continue
+            _suite, runtime, path, category = line.split('\t')
+            if category == 'e2e':
+                expected.append(f'{runtime}\t{path}')
+        self.assertEqual(expected, e2e.stdout.splitlines(),
+                         'category composition must be reproduced only from canonical manifest')
 
 
 if __name__ == '__main__':

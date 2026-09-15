@@ -1,0 +1,59 @@
+{
+  "change": "canonical-verification-inventory",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    ".github/workflows/quality-graph.yml",
+    "Makefile",
+    "docs/operations/issue-135-canonical-verification-inventory-delivery.md",
+    "openspec/changes/canonical-verification-inventory/design.md",
+    "openspec/changes/canonical-verification-inventory/proposal.md",
+    "openspec/changes/canonical-verification-inventory/specs/verification/canonical-inventory/spec.md",
+    "openspec/changes/canonical-verification-inventory/tasks.md",
+    "openspec/changes/canonical-verification-inventory/verification-input.json",
+    "reviews/code/VERIFICATION-CANONICAL-INVENTORY-001.md",
+    "reviews/tests/VERIFICATION-CANONICAL-INVENTORY-001.md",
+    "specs/VERIFICATION-CANONICAL-INVENTORY-001.md",
+    "tests/Verification/change_verification_001_test.py",
+    "tests/Verification/verification_ci_001_test.py",
+    "tests/Verification/verification_inventory_001_test.py",
+    "tests/Verification/verification_native_suites_001_test.py",
+    "tools/delivery/change-verification.py",
+    "tools/verification/README.md",
+    "tools/verification/categories.json",
+    "tools/verification/ci.py",
+    "tools/verification/inventory.py",
+    "tools/verification/run.sh",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "VERIFICATION-CANONICAL-INVENTORY-001",
+      "acceptance_id": "R1-R5",
+      "spec_path": "specs/VERIFICATION-CANONICAL-INVENTORY-001.md",
+      "seam": "canonical inventory CLI, Make registration, change-verification prepare, CI composition and Quality Graph execution",
+      "seam_kind": "infrastructure",
+      "tests": [
+        "tests/Verification/change_verification_001_test.py",
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Verification/verification_inventory_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/change_verification_001_test.py": "GREEN",
+        "tests/Verification/verification_ci_001_test.py": "GREEN",
+        "tests/Verification/verification_inventory_001_test.py": "GREEN"
+      },
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/verification_inventory_001_test.py", "tests/Verification/verification_ci_001_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/change_verification_001_test.py", "tests/Verification/verification_inventory_001_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/change_verification_001_test.py", "tests/Verification/verification_inventory_001_test.py", "tests/Verification/verification_ci_001_test.py"]},
+        "retained_evidence": {"status": "not_applicable", "reason": "Inventory and planner contracts produce no separate retained evidence artifact; delivery harness records command evidence externally."},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/verification_inventory_001_test.py"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/verification_inventory_001_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/change_verification_001_test.py", "tests/Verification/verification_inventory_001_test.py", "tests/Verification/verification_ci_001_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/change_verification_001_test.py", "tests/Verification/verification_ci_001_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "The repository-local inventory command has no worktree-global state; multi-writer locking is outside bounded issue #135 and parallel additions are reconciled from main before final candidate."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/change_verification_001_test.py", "tests/Verification/verification_inventory_001_test.py", "tests/Verification/verification_ci_001_test.py"]}
+      }
+    }
+  ]
+}

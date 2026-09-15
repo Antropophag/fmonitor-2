@@ -6,7 +6,7 @@ LOCAL_ENV_VALIDATE := bash tools/delivery/local-runtime-env --validate
 RUNTIME_COMPOSE := $(LOCAL_ENV_RUN) docker compose --env-file '@env-file' -f deploy/runtime/compose.yaml
 TEST_TOOL_IMAGE ?= fmonitor2-php-test:latest
 
-.PHONY: help up up-with-data down logs ps reset import-production import-legacy sync-workforce \
+.PHONY: help up up-with-data down logs ps reset import-production import-legacy sync-workforce register-test \
 	test-env-up test-env-down test-db-reset migrate unit-test db-test \
 	characterization-test e2e-test architecture-check lint test verify fresh-test fresh-test-verify ci-setup test-tools setup doctor
 
@@ -27,6 +27,10 @@ help:
 	@echo "make test CATEGORY=unit|integration|e2e|governance  Выбранная категория"
 	@echo "make test             Полная clean-checkout проверка"
 	@echo "make fresh-test         Полная проверка с обязательным test-env teardown"
+	@echo "make register-test FILE=... CATEGORY=... RUNTIME=... SUITE=..."
+
+register-test:
+	@python3 tools/verification/inventory.py register --file "$(FILE)" --category "$(CATEGORY)" --runtime "$(RUNTIME)" --suite "$(SUITE)"
 
 up:
 	@$(LOCAL_ENV_VALIDATE)
