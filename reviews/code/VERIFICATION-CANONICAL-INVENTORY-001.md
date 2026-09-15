@@ -38,6 +38,51 @@ The constitutionally prohibited local full suite was not run. The planner-select
 
 None.
 
+## Rebased final review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate5_final`; not author of the specification, tests, implementation, rebase, or corrections.
+- Reviewed base: `origin/main@2ec819e83b1fd769fb5ec9d916ffa239da83b56b`.
+- Reviewed commit: `62df5131` with a clean worktree before this review record was appended.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T135103Z-461b6d771e/package.json`.
+- Reconstructible snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T135103Z-461b6d771e/snapshot`.
+- Candidate source: `bfce3ff61417abc94229cb5046c5313e929b8cff3263bb40dfd7560a8f5d3a8f`.
+- Executable source: `9b2860e1ec907495662e57f10044c265f379ba76f4aa57558079c5b56f549eba`.
+- Verification plan SHA-256: `03128c000cbff18648a4472fe9d43a7c3a2c2d1564374d7fd74a84b2983d1ab0` (`CRITICAL`; required reviews `gate3`, `final`).
+- Authorship: root authored the specification, tests, bounded fixture corrections, and rebase characterization; `/root/executor` authored implementation and production-tool corrections; `/root/gate3_review` independently approved Gate 3 and all test deltas.
+- Verdict: `APPROVED`.
+
+### Findings
+
+None.
+
+The rebased manifest contains 431 unique canonical entries and exactly preserves every suite, runtime, path, and category mapping from `origin/main@2ec819e8`. Consequently the four entries added to main after the original 427-row migration baseline were mechanically retained rather than overwritten or reclassified. The independently reconstructed historical oracle still requires all 427 tuples from `25aee552` as an unchanged subset; current validation and projection tests cover the complete 431-row roster.
+
+The post-CI bytecode correction is minimal and correctly scoped. Both dynamic imports save `sys.dont_write_bytecode`, set it only while executing the shared parser module, and restore it in `finally`. With bytecode writing otherwise enabled, category listing creates no `tools/verification/__pycache__`; repeated planning/listing therefore remains read-only and does not perturb candidate-source reconstruction.
+
+The canonical roster is a complete disjoint category partition: unit 101, integration 272, e2e 46, governance 12. Fast performs cheap inventory validation and does not directly invoke `verification_ci_001_test.py`; that substantive test occurs exactly once in governance. Existing Quality Graph result aggregation and missing/failed/skipped-result rejection remain unchanged and fail closed. The rebase and corrections add no product behavior, allow-failure path, category bypass, FAST-classifier change, publisher/admission implementation, or #107 enforcement behavior.
+
+### Verification evidence
+
+All package evidence below is GREEN and bound to candidate source `bfce3ff61417abc94229cb5046c5313e929b8cff3263bb40dfd7560a8f5d3a8f` and executable source `9b2860e1ec907495662e57f10044c265f379ba76f4aa57558079c5b56f549eba`:
+
+- change-verification acceptance: `1789480010724218000-2c7cabcb35c3470cbddb9c8dfcb55299`;
+- CI/category contract: `1789480035773154000-1e6c284120cb46dfb0758315f1a0d49d`;
+- canonical inventory acceptance: `1789480052937144000-3cac7bc0d7f347dfb0c6ed83fbc5d697`;
+- delivery harness: `1789480075083729000-6d711535e2034dd1b4f496115c354440`;
+- delivery-harness CI completeness: `1789480118076900000-5864d4d7859d488196fc6bae3025ce6c`;
+- FAST classification: `1789480168996976000-84f3e4f11ef34e14a506296758eb87f4`;
+- Quality Graph isolated setup: `1789480183421621000-f31dd41f906644f9ac82837d88f6763e`;
+- runtime storage regression: `1789480215864702000-7f7352109b704d4588ce66ba3b7c483b`;
+- architecture guard: `1789480221072394000-6334ff8b8b064447b7933da3ec5ccf73`.
+
+Direct reviewer checks additionally confirmed: exact equality with all 431 mappings on rebased main; unchanged inclusion of all 427 historical mappings; canonical validation GREEN; roster GREEN at 431; exactly one governance registration for `verification_ci_001_test.py`; no bytecode side effect under an explicitly bytecode-enabled caller; and `git diff --check` GREEN.
+
+Earlier failed CI runs remain retained failure evidence and are not reclassified. The exact-source GitHub CI run for commit `62df5131` remains required before publication readiness; this review does not claim CI, merge, deployment, or enforcement as GREEN.
+
+### Required changes
+
+None.
+
 ## Post-CI correction review — 2026-09-15
 
 - Reviewer: Codex independent reviewer `/root/gate5_final`; not author of the specification, tests, implementation, or post-CI corrections.
