@@ -31,6 +31,19 @@
     },
     {
       "categories": [
+        "integration"
+      ],
+      "fast_class": "bounded-server-rendered-presentation",
+      "name": "server-rendered-presentation",
+      "patterns": [
+        "app/YiiRuntime/Views/feedback-confirmation.php"
+      ],
+      "tests": [
+        "tests/Yii2/yii2_feedback_001_test.php"
+      ]
+    },
+    {
+      "categories": [
         "e2e"
       ],
       "name": "sensitive-offline-ui",
@@ -107,14 +120,44 @@
         "app/Runtime/**",
         "app/RuntimeRestore/**",
         "app/Workforce/**",
-        "app/YiiRuntime/*.php",
+        "app/YiiRuntime/CanonicalMigrationConsole.php",
+        "app/YiiRuntime/CaseImportConsole.php",
+        "app/YiiRuntime/FeedbackApplication.php",
+        "app/YiiRuntime/InstallationProcessFactory.php",
+        "app/YiiRuntime/LegacyImportConsole.php",
+        "app/YiiRuntime/MainNavigation.php",
+        "app/YiiRuntime/OtizEvidenceHtml.php",
+        "app/YiiRuntime/PreopeningResources.php",
+        "app/YiiRuntime/ReliableSession.php",
+        "app/YiiRuntime/SafeErrorHandler.php",
+        "app/YiiRuntime/ViewSupport.php",
+        "app/YiiRuntime/WebResponse.php",
+        "app/YiiRuntime/WorkforceSyncConsole.php",
         "app/YiiRuntime/Assets/*.php",
         "app/YiiRuntime/Assets/*.svg",
         "app/YiiRuntime/Assets/fonts/**",
         "app/YiiRuntime/Commands/**",
         "app/YiiRuntime/Controllers/**",
         "app/YiiRuntime/Models/**",
-        "app/YiiRuntime/Views/**",
+        "app/YiiRuntime/Views/activate.php",
+        "app/YiiRuntime/Views/checklist.php",
+        "app/YiiRuntime/Views/completion.php",
+        "app/YiiRuntime/Views/construction-control.php",
+        "app/YiiRuntime/Views/deadline-certificates.php",
+        "app/YiiRuntime/Views/execution.php",
+        "app/YiiRuntime/Views/feedback-admin.php",
+        "app/YiiRuntime/Views/feedback.php",
+        "app/YiiRuntime/Views/installers.php",
+        "app/YiiRuntime/Views/login.php",
+        "app/YiiRuntime/Views/object-card.php",
+        "app/YiiRuntime/Views/objects.php",
+        "app/YiiRuntime/Views/original-history.php",
+        "app/YiiRuntime/Views/original.php",
+        "app/YiiRuntime/Views/preopening-error.php",
+        "app/YiiRuntime/Views/roles.php",
+        "app/YiiRuntime/Views/selection.php",
+        "app/YiiRuntime/Views/users.php",
+        "app/YiiRuntime/Views/*/**",
         "app/demo/**",
         "config/**",
         "commands/**",
@@ -320,13 +363,35 @@
   },
   "verification_lanes": {
     "FAST": [
-      "bounded-ui"
+      "bounded-ui",
+      "server-rendered-presentation"
     ],
     "CRITICAL": [
       "auth",
       "delivery-policy",
       "sensitive-offline-ui"
     ]
+  },
+  "fast_classes": {
+    "bounded-server-rendered-presentation": {
+      "companion_boundaries": [
+        "bounded-ui"
+      ],
+      "negative_boundaries_checked": [
+        "schema-migration",
+        "persistence-write",
+        "authoritative-current-state",
+        "domain-application-mutation",
+        "authorization-rbac-session-admission",
+        "csrf-security",
+        "offline-cache-service-worker-synchronization",
+        "external-integration",
+        "jobs-outbox-scheduler",
+        "verification-admission-policy",
+        "runtime-deployment-configuration",
+        "product-spec-semantics"
+      ]
+    }
   },
   "runtimes": {
     ".mjs": "node",
