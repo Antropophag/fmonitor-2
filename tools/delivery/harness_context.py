@@ -686,6 +686,156 @@ def _snapshot(root, output):
     return json.loads(result.stdout)
 
 
+_CONTEXT_COMMON = ("instruction.constitution", "delivery.workflow", "current.actionable-goal")
+_CONTEXT_PROFILES = {
+    "ui": _CONTEXT_COMMON + ("ui.presentation",),
+    "persistence": _CONTEXT_COMMON + ("product.core", "product.context", "pilot.behavior",
+        "pilot.data-model", "persistence.current-state", "domain.state-history", "security.authorization"),
+    "auth": _CONTEXT_COMMON + ("product.core", "product.context", "pilot.behavior",
+        "security.authorization", "security.session-csrf-secrets"),
+    "harness": _CONTEXT_COMMON + ("delivery.verification-governance",),
+}
+_CONTEXT_CONSERVATIVE = ("AGENTS.md", "docs/development-process.md",
+    "docs/operations/current-delivery-goal.md", "PRODUCT.md", "CONTEXT.md",
+    "docs/fmonitor-2-pilot-spec.md", "docs/fmonitor-2-pilot-data-model.md")
+
+
+def _sha256_bytes(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+def _context_profile(paths):
+    meaningful = []
+    for path in paths:
+        if (path.startswith(("openspec/", "specs/", "reviews/", "docs/operations/"))
+                or path == "tools/verification/suites.tsv" or path.startswith("tests/")):
+            continue
+        meaningful.append(path)
+    if not meaningful:
+        return "conservative"
+    if any(path.startswith(("app/InstallationProcess/", "app/AssignmentOrderComposition/",
+                            "app/InspectionEvidence/")) for path in meaningful):
+        return "persistence"
+    harness_files = {"Makefile", ".quality-graph/verification-policy.json", ".github/workflows/quality-graph.yml"}
+    if all(path in harness_files or path.startswith(("tools/delivery/", "tools/verification/"))
+           for path in meaningful):
+        return "harness"
+    if all(path.startswith("app/YiiRuntime/") for path in meaningful):
+        return "ui"
+    if all(path.startswith(("app/IdentityAccess/", "app/PilotHttp/", "config/yii/"))
+           for path in meaningful):
+        return "auth"
+    return "conservative"
+
+
+def _section_bounds(source_bytes, heading, end_heading=None):
+    marker = heading.encode("utf-8") + b"\n"
+    if source_bytes.count(marker) != 1:
+        raise ValueError("section heading is absent or ambiguous")
+    start = source_bytes.index(marker)
+    if end_heading is None:
+        return start, len(source_bytes)
+    end_marker = end_heading.encode("utf-8") + b"\n"
+    if source_bytes.count(end_marker) != 1:
+        raise ValueError("section end heading is absent or ambiguous")
+    end = source_bytes.index(end_marker)
+    if end <= start:
+        raise ValueError("section end precedes section start")
+    return start, end
+
+
+def build_task_context(root, plan_value, *, role, source, base, contracts, evidence, snapshot):
+    """Build a deterministic index and exact materialization from canonical bytes."""
+    index_path = root / "tools/delivery/context-sections.json"
+    index_bytes = index_path.read_bytes()
+    index = json.loads(index_bytes)
+    sections = {item["rule_id"]: item for item in index["sections"]}
+    paths = plan_value.get("paths", {}).get("planned", [])
+    profile = _context_profile(paths)
+    required = []
+    materialized = []
+
+    def add_full(relative, reason):
+        path = root / relative
+        if not path.is_file():
+            return
+        content = path.read_bytes()
+        digest = _sha256_bytes(content)
+        required.append({"rule_id": "FULL_DOCUMENT", "source": relative,
+            "reason": reason, "load_mode": "required_reference", "digest": digest,
+            "source_digest": digest,
+            "content_reference": {"start_byte": 0, "end_byte": len(content)}})
+        materialized.append({"rule_id": "FULL_DOCUMENT", "source": relative,
+                             "content": content.decode("utf-8")})
+
+    if profile == "conservative":
+        for relative in _CONTEXT_CONSERVATIVE:
+            add_full(relative, "unknown boundary: conservative full canonical source")
+    else:
+        fallback_sources = set()
+        extracted = []
+        for rule_id in _CONTEXT_PROFILES[profile]:
+            locator = sections[rule_id]
+            relative = locator["source"]
+            content = (root / relative).read_bytes()
+            try:
+                if locator.get("whole_source") is True:
+                    start, end = 0, len(content)
+                else:
+                    start, end = _section_bounds(content, locator["heading"], locator.get("end_heading"))
+            except ValueError:
+                fallback_sources.add(relative)
+                continue
+            extracted.append((rule_id, relative, content, start, end, content[start:end]))
+        for rule_id, relative, content, start, end, excerpt in extracted:
+            if relative in fallback_sources:
+                continue
+            required.append({"rule_id": rule_id, "source": relative,
+                "reason": f"{profile} boundary profile", "load_mode": "inline",
+                "digest": _sha256_bytes(excerpt), "source_digest": _sha256_bytes(content),
+                "content_reference": {"start_byte": start, "end_byte": end}})
+            materialized.append({"rule_id": rule_id, "source": relative,
+                                 "content": excerpt.decode("utf-8")})
+        for relative in sorted(fallback_sources):
+            add_full(relative, "invalid section locator: full canonical source fallback")
+
+    required.sort(key=lambda item: (item["source"], item["rule_id"]))
+    materialized.sort(key=lambda item: (item["source"], item["rule_id"]))
+    historical = []
+    for pattern in ("docs/operations/current-delivery-goal-history*", "docs/operations/*evidence*", "reviews/**/*.md"):
+        for path in sorted(root.glob(pattern)):
+            relative = path.relative_to(root).as_posix()
+            if not path.is_file() or relative in contracts:
+                continue
+            content = path.read_bytes()
+            historical.append({"source": relative, "reason": "historical context; open on demand",
+                "digest": _sha256_bytes(content), "content_reference": {"path": relative}})
+    history_by_source = {item["source"]: item for item in historical}
+    references = []
+    for relative in contracts:
+        path = root / relative
+        if path.is_file():
+            references.append({"source": relative, "digest": _sha256_bytes(path.read_bytes())})
+    reviews = sorted(path.relative_to(root).as_posix() for path in root.glob("reviews/**/*.md") if path.is_file())
+    manifest = {
+        "schema": "fmonitor-task-context-v1",
+        "task": {"change": plan_value.get("change"), "base": base, "source": source, "role": role,
+                 "policy_digests": {"instruction_index": _sha256_bytes(index_bytes)}},
+        "applicability": {"mode": profile, "boundaries": sorted(paths)},
+        "section_index": {"version": index["version"], "digest": _sha256_bytes(index_bytes),
+                          "source": "tools/delivery/context-sections.json"},
+        "required_context": required,
+        "load_on_demand": [history_by_source[key] for key in sorted(history_by_source)],
+        "product_spec": {"contracts": contracts, "references": references},
+        "verification": {"candidate_source": source,
+                         "snapshot": snapshot if role == "reviewer" else "candidate-source:" + source,
+                         "evidence": evidence,
+                         "plan_digest": _sha256_bytes(json.dumps(plan_value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()),
+                         "reviews": reviews},
+    }
+    return manifest, {"schema": "fmonitor-required-context-v1", "items": materialized}
+
+
 def _delta(root, previous, current, output):
     with tempfile.TemporaryDirectory(prefix="harness-delta-") as directory:
         old = Path(directory) / "old"
@@ -793,15 +943,31 @@ def command_prepare(args, helpers):
     if _source(helpers, root) != source:
         raise ValueError("source changed while preparing review package")
     contracts = sorted({item["spec_path"] for item in plan_value["acceptances"]})
-    rules = [value for value in ("AGENTS.md", "docs/development-process.md") if (root / value).is_file()]
     sources = sorted({path for path in plan_value["paths"]["effective"] if (root / path).exists()})
     result = {"package_path": str(package_dir / "package.json"), "snapshot": str(snapshot_path),
               "plan": str(plan_path), "plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
               "role": args.role, "approval": "NOT_REVIEWED", "missing_tests": missing,
-              "contracts": contracts, "rules": rules, "sources": sources, "evidence": evidence,
+              "contracts": contracts, "rules": [], "sources": sources, "evidence": evidence,
               "previous": getattr(args, "previous", None), "findings": getattr(args, "findings", None),
               "candidate_source": source, "executable_source": executable_source,
               "dependency_workspaces": workspaces, "test_delta_lineage": lineage}
+    manifest, delivered = build_task_context(root, plan_value, role=args.role, source=source,
+        base=args.base, contracts=contracts, evidence=evidence, snapshot=str(snapshot_path))
+    manifest_path = package_dir / "task-context-manifest.json"
+    required_path = package_dir / "required-context.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    required_path.write_text(json.dumps(delivered, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    result.update(context_manifest=str(manifest_path),
+        context_manifest_sha256=_sha256_bytes(manifest_path.read_bytes()),
+        required_context_path=str(required_path), required_context_sha256=_sha256_bytes(required_path.read_bytes()),
+        context_delivery={"mode": "task_context_manifest", "path": str(required_path)},
+        context_metrics={"mandatory_bytes": sum(len(item["content"].encode("utf-8")) for item in delivered["items"]),
+                         "mandatory_characters": sum(len(item["content"]) for item in delivered["items"]),
+                         "whole_documents": sum(item["content_reference"]["start_byte"] == 0
+                             and item["content_reference"]["end_byte"] == (root / item["source"]).stat().st_size
+                             for item in manifest["required_context"]),
+                         "load_on_demand_references": len(manifest["load_on_demand"]),
+                         "token_usage": "UNKNOWN"})
     if result["previous"]:
         previous = Path(result["previous"]).expanduser().resolve()
         findings = Path(result["findings"]).expanduser().resolve()
@@ -818,7 +984,11 @@ def command_prepare(args, helpers):
     binding = {"repository": str(root), "worktree": _worktree_realpath(helpers),
                "input": args.input, "base": args.base,
                "source": source, "plan": str(plan_path), "package_path": result["package_path"],
-               "contracts": contracts, "prepared_at": _now()}
+               "contracts": contracts, "prepared_at": _now(),
+               "context_manifest": str(manifest_path),
+               "context_manifest_sha256": result["context_manifest_sha256"],
+               "required_context_path": str(required_path),
+               "required_context_sha256": result["required_context_sha256"]}
     temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
     temporary.write_text(json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     os.replace(temporary, binding_path)

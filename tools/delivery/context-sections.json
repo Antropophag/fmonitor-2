@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "sections": [
+    {"rule_id": "instruction.constitution", "source": "AGENTS.md", "heading": "# FMonitor 2.0 constitution"},
+    {"rule_id": "delivery.workflow", "source": "docs/development-process.md", "heading": "## Compact execution protocol — #82, 2026-09-10", "end_heading": "## Historical owner-authorized delivery mode —2026-09-07"},
+    {"rule_id": "current.actionable-goal", "source": "docs/operations/current-delivery-goal.md", "whole_source": true},
+    {"rule_id": "ui.presentation", "source": "PRODUCT.md", "heading": "## Product Principles"},
+    {"rule_id": "product.core", "source": "PRODUCT.md", "heading": "# Product"},
+    {"rule_id": "product.context", "source": "CONTEXT.md", "heading": "# FMonitor"},
+    {"rule_id": "pilot.behavior", "source": "docs/fmonitor-2-pilot-spec.md", "heading": "# FMonitor 2.0 — спецификация пилота"},
+    {"rule_id": "pilot.data-model", "source": "docs/fmonitor-2-pilot-data-model.md", "heading": "# FMonitor 2.0 — модель данных и процессный интерфейс пилота"},
+    {"rule_id": "persistence.current-state", "source": "docs/fmonitor-2-pilot-data-model.md", "heading": "## 3. Таблицы первого инкремента", "end_heading": "## 4. Читаемые проекции"},
+    {"rule_id": "domain.state-history", "source": "docs/fmonitor-2-pilot-data-model.md", "heading": "## 6. Транзакционные инварианты", "end_heading": "## 7. Минимальный набор миграций"},
+    {"rule_id": "security.authorization", "source": "docs/fmonitor-2-pilot-spec.md", "heading": "## 3. Роли пилота", "end_heading": "## 4. Источники данных"},
+    {"rule_id": "security.session-csrf-secrets", "source": "AGENTS.md", "heading": "## Continuing rules", "end_heading": "## Focused verification and CI failure triage"},
+    {"rule_id": "delivery.verification-governance", "source": "docs/development-process.md", "heading": "## Owner-approved verification matrix — 2026-09-08"}
+  ]
+}

@@ -6,10 +6,10 @@
 
 ## 2. Minimal implementation
 
-- [ ] 2.1 Executor реализует deterministic boundary profiles и safe canonical section index с full-document fallback; verification: UI, persistence, auth, harness и unknown fixtures проходят без изменения planner/FAST/coverage.
-- [ ] 2.2 Executor materializes digest-bound manifest и exact required content в existing package directory, связывает их с `package.json` и active binding/state; verification: fresh/repeat/stale/index-invalid/reconstruction tests проходят.
-- [ ] 2.3 Executor добавляет deterministic three-replay measurement и delivery record; verification: before/after bytes/chars/full-doc/load-on-demand output воспроизводим, bounded case меньше, sensitive context сохранён, tokens `UNKNOWN`.
-- [ ] 2.4 Запустить planner-selected focused checks, OpenSpec strict validation, architecture check и `git diff --check`; canonical full `make test`/`make verify` локально не запускать.
+- [x] 2.1 Executor реализует deterministic boundary profiles и safe canonical section index с full-document fallback; verification: UI, persistence, auth, harness и unknown fixtures проходят без изменения planner/FAST/coverage.
+- [x] 2.2 Executor materializes digest-bound manifest и exact required content в existing package directory, связывает их с `package.json` и active binding/state; verification: fresh/repeat/stale/index-invalid/reconstruction tests проходят.
+- [x] 2.3 Executor добавляет deterministic three-replay measurement и delivery record; verification: before/after bytes/chars/full-doc/load-on-demand output воспроизводим, bounded case меньше, sensitive context сохранён, tokens `UNKNOWN`.
+- [x] 2.4 Запустить planner-selected focused checks, OpenSpec strict validation, architecture check и `git diff --check`; canonical full `make test`/`make verify` локально не запускать.
 
 ## 3. Independent review и publication
 
