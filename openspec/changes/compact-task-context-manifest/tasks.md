@@ -13,5 +13,5 @@
 
 ## 3. Independent review и publication
 
-- [ ] 3.1 Независимый sol/low final reviewer проверяет exact candidate, cases A–L, context completeness, no second policy/planner и measurement honesty; все findings разрешены до APPROVED.
+- [x] 3.1 Независимый sol/low final reviewer проверяет exact candidate, cases A–L, context completeness, no second policy/planner и measurement honesty; все findings разрешены до APPROVED.
 - [ ] 3.2 Подготовить PR с exact source, запустить один exact-source GitHub CI consumer и собрать полный failed-job/REGRESSION_FAILURE inventory при failure; merge/deploy/settings не выполнять.
