@@ -118,3 +118,50 @@ The failed first CI run remains failure evidence and is not reclassified. A new 
 ### Required changes
 
 None.
+
+## Final integration review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate5_final`; not author of the specification, tests, implementation, integration rebase, or corrections.
+- Reviewed base: `origin/main@7c31ffb89d62d00fd88b4d4c8e454b9a7d4cdb9f` after PRs #148 and #151 merged.
+- Reviewed commit: `0f71c590` with a clean worktree before this review record was appended.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T142221Z-db44d05c04/package.json`.
+- Reconstructible snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T142221Z-db44d05c04/snapshot`.
+- Candidate source: `fea6ce30bc5dc006ca89316bfbac413494718a311c9a2f50916b6d4c56257c68`.
+- Executable source: `5ff9dfd70de6005ad6420cd442091a55334f8a741d9e189611e8fcbc224ed05c`.
+- Verification plan SHA-256: `657338084dd210885f4c9ea9abd3e4030bcfdf3903a3b2c9cdb663cffec6315e` (`CRITICAL`; required reviews `gate3`, `final`).
+- Authorship: root authored the specification, tests, bounded fixture corrections, and integration characterization; `/root/executor` authored implementation and production-tool corrections; `/root/gate3_review` independently approved Gate 3 and all test deltas.
+- Verdict: `APPROVED`.
+
+### Findings
+
+None.
+
+The current four-field manifest exactly preserves all 432 suite/runtime/path/category mappings from `origin/main@7c31ffb8`; there are zero missing, extra, duplicate, or reclassified inherited registrations. The five registrations accumulated since the historical `25aee552` baseline each occur exactly once with their inherited `db` / `php` / `integration` semantics, including `yii2_main_navigation_001_test.php`. The independently reconstructed historical oracle continues to preserve every original 427 tuple unchanged.
+
+`categories.json` is deleted and bounded active policy, workflow, Make, runner, CI, planner, and documentation consumers contain no reference to it. Normal inventory validation remains canonical and fail closed. Dynamic parser imports remain bytecode-side-effect free, and registration remains explicit, validated, and atomic within the specified single-writer boundary.
+
+The invariant-based `verification_ci_001_test.py` compares the complete public category composition with an independent projection of the canonical manifest and asserts global path uniqueness. That invariant is complemented by independent fixed-provenance assertions for the historical 427 and all five accumulated main additions, so consumer self-consistency cannot hide an inherited-row deletion or reclassification.
+
+Fast runs cheap inventory validation first and does not directly execute the substantive CI governance contract. `verification_ci_001_test.py` is registered exactly once in governance. Full category composition remains a complete disjoint partition of 432 tests: unit 101, integration 273, e2e 46, governance 12. Quality Graph aggregation continues to reject missing, failed, cancelled, or unexpectedly skipped required results and emits success only for the exact expected result set. No allow-failure route, FAST bypass, product behavior, or #107 enforcement implementation was introduced.
+
+### Verification evidence
+
+All nine package records are GREEN and bound to candidate source `fea6ce30bc5dc006ca89316bfbac413494718a311c9a2f50916b6d4c56257c68` and executable source `5ff9dfd70de6005ad6420cd442091a55334f8a741d9e189611e8fcbc224ed05c`:
+
+- change-verification acceptance: `1789481901684864000-ce6930eaed424437962dce1df256b553`;
+- CI/category contract: `1789481925560449000-8836652b7a354b41abf5984c4276690b`;
+- canonical inventory acceptance: `1789481943023538000-80794e011d494df09546151f15548bac`;
+- delivery harness: `1789481964015063000-0f6f150551114b18b964cd1831c20b31`;
+- delivery-harness CI completeness: `1789482003757859000-726f211784204168a69358dbf4aff114`;
+- FAST classification: `1789482054152834000-0ca3453b83ed497c97820a8594961c3d`;
+- Quality Graph isolated setup: `1789482068092914000-1a8f1c1a545f4a50abd2fe8792a6dc97`;
+- runtime storage regression: `1789482101497946000-4581c6c3a632411ca64584024c3a29a2`;
+- architecture guard: `1789482107111362000-91419a9a24b347faa00af84650245f5e`.
+
+Direct reviewer checks confirmed exact 432/432 equality with integrated main, exact-once membership for all five additions, the unchanged 427 historical subset, canonical validation GREEN, the 101/273/46/12 roster, deletion and zero bounded active references for `categories.json`, one governance registration and no fast invocation of the substantive governance test, fail-closed aggregation assertions, and `git diff --check` GREEN.
+
+The harness reports an earlier exact-source CI status of SUCCESS for the prior published head, but its current publication binding does not match `0f71c590`. Exact-source CI for this reviewed integration commit therefore remains required; this review does not claim publication, merge, deployment, or enforcement readiness.
+
+### Required changes
+
+None.
