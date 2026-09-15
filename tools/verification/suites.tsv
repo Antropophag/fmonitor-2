@@ -411,6 +411,7 @@ unit	php	tests/Otiz/legacy_premium_calculation_001_test.php	unit
 unit	php	tests/Runtime/production_runtime_contract_001_test.php	unit
 unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php	unit
 unit	python3	tests/Usage/usage_aggregation_001_test.py	governance
+unit	python3	tests/Verification/architecture_file_size_advisory_001_test.py	governance
 unit	python3	tests/Verification/architecture_guard_001_test.py	unit
 unit	python3	tests/Verification/change_verification_001_test.py	governance
 unit	python3	tests/Verification/change_verification_semantic_closure_153_test.py	governance

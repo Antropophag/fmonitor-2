@@ -2,7 +2,8 @@
 """Deterministic architecture ratchet for FMonitor 2.0.
 
 The baseline records existing debt, never permissions for new debt. Run from any
-working directory. Use --write-baseline only after an architectural review.
+working directory. Size metadata can be refreshed with --write-size-baseline;
+meaningful architecture exceptions require an explicit reviewed edit.
 """
 
 from __future__ import annotations
@@ -333,8 +334,9 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
     }
 
 
-def compare(current: dict, baseline: dict) -> list[str]:
+def classify(current: dict, baseline: dict) -> tuple[list[str], list[str]]:
     errors: list[str] = []
+    advisories: list[str] = []
     for item in current.get("workforce_migration_ownership", []):
         errors.append(f"workforce_migration_ownership: forbidden production owner: {item}")
     for item in current.get("session_storage_ownership", []):
@@ -347,39 +349,63 @@ def compare(current: dict, baseline: dict) -> list[str]:
     old_hotspots = baseline.get("hotspots", {})
     for path, lines in current.get("hotspots", {}).items():
         if path not in old_hotspots:
-            errors.append(f"hotspot_ratchet: new hotspot {path} ({lines} lines)")
+            advisories.append(f"file_size: new hotspot {path} ({lines} lines)")
         elif lines > old_hotspots[path]:
-            errors.append(f"hotspot_ratchet: {path} grew {old_hotspots[path]} -> {lines} lines")
+            advisories.append(f"file_size: {path} grew {old_hotspots[path]} -> {lines} lines")
     old_seams = set(baseline.get("public_seams", []))
     for seam in sorted(set(current.get("public_seams", [])) - old_seams):
         errors.append(f"public_seam_ownership: unregistered state-changing seam {seam}")
+    return errors, advisories
+
+
+def compare(current: dict, baseline: dict) -> list[str]:
+    """Return blocking regressions for compatibility with existing callers."""
+    errors, _ = classify(current, baseline)
     return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--write-baseline", action="store_true", help="replace the reviewed current-state baseline")
+    baseline_update = parser.add_mutually_exclusive_group()
+    baseline_update.add_argument(
+        "--write-size-baseline",
+        action="store_true",
+        help="update file-size metadata while preserving architecture exceptions",
+    )
+    baseline_update.add_argument(
+        "--write-baseline",
+        action="store_true",
+        help="deprecated alias for --write-size-baseline",
+    )
     parser.add_argument("--json", action="store_true", help="emit machine-readable result")
     args = parser.parse_args()
     current = collect()
-    if args.write_baseline:
-        BASELINE.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"WROTE {BASELINE.relative_to(ROOT)}")
-        return 0
     if not BASELINE.exists():
         print("ERROR architecture baseline missing", file=sys.stderr)
         return 2
     baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
-    errors = compare(current, baseline)
-    result = {"ok": not errors, "errors": errors, "rules": 7}
+    if args.write_size_baseline or args.write_baseline:
+        baseline["hotspots"] = current.get("hotspots", {})
+        BASELINE.write_text(json.dumps(baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if args.write_baseline:
+            print("WARNING --write-baseline is deprecated; only file-size metadata was updated")
+        print("WROTE tools/architecture/baseline.json")
+        return 0
+    errors, advisories = classify(current, baseline)
+    result = {"ok": not errors, "errors": errors, "advisories": advisories, "rules": 7}
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    elif errors:
-        print("ARCHITECTURE CHECK FAILED")
-        for error in errors:
-            print(f"- {error}")
     else:
-        print("ARCHITECTURE CHECK PASSED (7 rules)")
+        if errors:
+            print("ARCHITECTURE CHECK FAILED")
+            for error in errors:
+                print(f"- {error}")
+        else:
+            print("ARCHITECTURE CHECK PASSED (7 rules)")
+        if advisories:
+            print("ARCHITECTURE ADVISORIES")
+            for advisory in advisories:
+                print(f"- {advisory}")
     return 1 if errors else 0
 
 

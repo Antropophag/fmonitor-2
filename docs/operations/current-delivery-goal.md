@@ -1,6 +1,6 @@
 # Текущая цель — №153 Slice A, semantic integration closure guard
 
-Поручение владельца 2026-09-15: реализовать только Slice A [№153](https://github.com/Antropophag/fmonitor-2/issues/153) от актуального `main` `3c4dd015` и довести candidate до PR-ready. Scope: существующий change-verification planner консервативно распознаёт repository-owned high-risk semantic surfaces и до публикации требует category-level integration closure из canonical `tools/verification/suites.tsv`.
+Поручение владельца 2026-09-15: реализовать только Slice A [№153](https://github.com/Antropophag/fmonitor-2/issues/153), обновить PR после merge №116 до актуального `main` `b2b4df1a` и довести candidate до PR-ready. Scope: существующий change-verification planner консервативно распознаёт repository-owned high-risk semantic surfaces и до публикации требует category-level integration closure из canonical `tools/verification/suites.tsv`.
 
 Не входят Slice B capability→consumer graph, Slice C Gate 3 completeness audit, Slice D CI feedback expansion, новый planner/registry/Gate, FAST changes, blanket integration для STANDARD/CRITICAL, product code, CI performance №136, №107 и rapid-pilot cleanup №141. Merge/deploy/settings не выполнять.
 
