@@ -82,6 +82,27 @@ The three focused records remain intended RED for the missing implementation rat
 
 None.
 
+## Post-main-sync historical-roster test-delta review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the test or implementation.
+- Main synchronization: `origin/main` advanced to `2ec819e83b1fd769fb5ec9d916ffa239da83b56b`, adding four canonical inventory entries beyond the contract's historical base `25aee5524f790292d350175ba278bc47e282ed4c`.
+- Delta: one assertion in `tests/Verification/verification_inventory_001_test.py`; current SHA-256 `f79936e65957d6e6f11147279ecc7b15ad212a54e1f4c11ebd158d43f669acf2`. Stable specification SHA-256 remains `e87770d45b17bf8fca22c476bda4dcd309a3cf79c7fd259fa80d3afbacd3fe15`.
+- Verdict: `APPROVED`.
+
+### Complete delta findings
+
+None.
+
+The normative migration oracle explicitly protects the 427 mappings from `main@25aee552`. The corrected assertion still reconstructs every historical `(legacy suite, runtime, path, CI category)` tuple independently from that commit's two manifests, still requires exactly 427 historical entries, and now requires that complete set to be a subset of the synchronized canonical manifest. Any removal or change of suite, runtime, path or category for an original row remains RED.
+
+Changing equality to subset membership is necessary for authorized parallel additions from newer `main`; equality would incorrectly turn every later registered test into a regression. It does not make the four new entries unchecked: the public validator and repository-baseline tests still require all current rows to have valid enums, existing/discovered paths, unique membership and exact canonical ordering, and category/suite projections must cover the entire current manifest. At review time the synchronized manifest contains 431 rows, 431 unique paths, and is in normative tuple order.
+
+No production behavior, parser rule, historical expected tuple or specification changed. The delta neither permits mutation of the protected 427 mappings nor expands issue #135; it only distinguishes immutable historical migration evidence from legitimate append-only main evolution.
+
+### Required changes
+
+None.
+
 ## CI pycache filesystem-effect test-delta review — 2026-09-15
 
 - Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.
