@@ -16,10 +16,12 @@ class FastLaneClassification(unittest.TestCase):
         self.root = Path(self.temp.name)
         for path in ["tools/delivery", "tools/verification", ".quality-graph", "specs",
                      "web/views", "app/Infrastructure/Persistence", "app/IdentityAccess",
-                     "tests/UI", "tests/Verification"]:
+                     "tests/UI", "tests/Verification", "tests/InstallationProcess",
+                     "tests/AssignmentOrderComposition", "tests/Otiz", "tests/Runtime", "tests/Jobs"]:
             (self.root / path).mkdir(parents=True, exist_ok=True)
         shutil.copytree(ROOT / "tools/delivery", self.root / "tools/delivery", dirs_exist_ok=True)
         shutil.copy(ROOT / "tools/verification/ci.py", self.root / "tools/verification/ci.py")
+        shutil.copy(ROOT / "tools/verification/inventory.py", self.root / "tools/verification/inventory.py")
         (self.root / "specs/CHANGE-VERIFICATION-001.md").write_text("planner\n")
         (self.root / "specs/DELIVERY-FAST-LANE-118-V1.md").write_text("acceptance\n")
         (self.root / "quality-graph.yml").write_text("version: 1\n")
@@ -32,7 +34,7 @@ class FastLaneClassification(unittest.TestCase):
         self.inventory = {self.oracle: "unit", "tests/Verification/policy_test.py": "governance"}
         self.policy = {
             "version": 1, "graph": "quality-graph.yml", "spec": "specs/CHANGE-VERIFICATION-001.md",
-            "inventory": "tools/verification/categories.json",
+            "suite_inventory": "tools/verification/suites.tsv",
             "runtimes": {".py": "python3", ".php": "php", ".mjs": "node"},
             "category_argv": {"unit": [["python3", self.oracle]],
                               "governance": [["python3", "tests/Verification/policy_test.py"]]},
@@ -47,7 +49,7 @@ class FastLaneClassification(unittest.TestCase):
             "verification_lanes": {"FAST": ["bounded-ui"], "CRITICAL": ["auth", "delivery-policy"]},
             "full_categories": ["unit", "integration", "e2e", "governance"],
             "full_argv": ["make", "test"]}
-        self.write("tools/verification/categories.json", self.inventory)
+        self.write_inventory(self.inventory)
         self.write(".quality-graph/verification-policy.json", self.policy)
         (self.root / "web/views/card.js").write_text("const action='reveal-template';\n")
         self.input = {"change": "bounded-ui", "planned_paths": ["web/views/card.js"], "acceptances": [{
@@ -67,6 +69,14 @@ class FastLaneClassification(unittest.TestCase):
         target = self.root / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(value, sort_keys=True) + "\n")
+
+    def write_inventory(self, mapping, suites=None):
+        suites = suites or {}
+        rows = [(suites.get(path, 'unit'), 'php' if path.endswith('.php') else 'python3', path, category)
+                for path, category in mapping.items()]
+        rows.sort(key=lambda row: (row[0], row[2], row[1], row[3]))
+        (self.root / 'tools/verification/suites.tsv').write_text(
+            ''.join('\t'.join(row) + '\n' for row in rows))
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, text=True, capture_output=True, check=True)
@@ -137,7 +147,8 @@ class FastLaneClassification(unittest.TestCase):
 
     def test_shipped_policy_selects_real_ui_oracle_and_rejects_nested_wildcard(self):
         policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
-        inventory = json.loads((ROOT / "tools/verification/categories.json").read_text())
+        inventory = {line.split('\t')[2]: line.split('\t')[3]
+                     for line in (ROOT / 'tools/verification/suites.tsv').read_text().splitlines() if line}
         referenced = {test for boundary in policy["boundaries"] for test in boundary["tests"]}
         referenced.update(test for consumer in policy.get("consumers", []) for test in consumer["tests"])
         referenced.update(command[-1] for values in policy["category_argv"].values() for command in values
@@ -150,7 +161,15 @@ class FastLaneClassification(unittest.TestCase):
         inventory[oracle] = "e2e"
         (self.root / oracle).parent.mkdir(parents=True, exist_ok=True)
         (self.root / oracle).write_text("<?php exit(0);\n")
-        self.write("tools/verification/categories.json", inventory)
+        for line in (ROOT / 'tools/verification/suites.tsv').read_text().splitlines():
+            if not line:
+                continue
+            _suite, _runtime, relative, _category = line.split('\t')
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text('fixture\n')
+        shutil.copy2(ROOT / 'tools/verification/suites.tsv', self.root / 'tools/verification/suites.tsv')
         self.write(".quality-graph/verification-policy.json", policy)
         asset = self.root / "app/YiiRuntime/Assets/preopening.js"
         asset.parent.mkdir(parents=True, exist_ok=True)

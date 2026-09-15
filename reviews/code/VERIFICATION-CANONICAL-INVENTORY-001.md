@@ -37,3 +37,39 @@ The constitutionally prohibited local full suite was not run. The planner-select
 ### Required changes
 
 None.
+
+## Post-CI correction review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate5_final`; not author of the specification, tests, implementation, or post-CI corrections.
+- Specification and original test author: root agent. Original implementation and runner correction author: `/root/executor` (gpt-5.6-sol/low). Root authored the bounded direct-consumer fixture migrations. `/root/gate3_review` independently approved the post-CI test delta.
+- Reviewed base: `25aee5524f790292d350175ba278bc47e282ed4c`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T131353Z-2d980d72d4/package.json`.
+- Reconstructible snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T131353Z-2d980d72d4/snapshot`.
+- Candidate source: `080e1fff89a72ae1d0bbc9ad99b0e2decf31c136218fb6fb526e5f36cf838b6e`.
+- Executable source: `85fea4c10acb6ea1cf9c64acd93efd153054fd5ceea36d9b2685b7c69cd4e70d`.
+- Verification plan SHA-256: `6aeabc352dcf47ef0c18c6dedfcde24b17c86fad53f5c5431e693a16e57af005` (`CRITICAL`; required reviews `gate3`, `final`).
+- Verdict: `APPROVED`.
+
+### Findings
+
+None.
+
+The first exact-source Quality Graph run `34969985820` on commit `0fba8224` was correctly retained as failed evidence. The complete job inventory identified primary failures in fast, governance, unit, and Integration 2/2, with downstream verify failure; E2E and Integration 1/2 were GREEN. The corrections match the three diagnosed migration gaps: the shell runner now validates rather than trying to list the pseudo-suites `lint` and `red`; the isolated Quality Graph fixture copies the shared parser; and the active delivery-harness and FAST fixtures use canonical four-column `suites.tsv` data instead of the deleted JSON registry or three-column rows.
+
+The runner correction preserves fail-closed behavior and returns the shared validator's diagnostic and exit status before executing lint or RED behavior. Valid legacy suites still use the same canonical list seam. The fixture migrations retain their prior behavioral assertions, create required inventory members and files explicitly, and keep canonical ordering. The updated early failure scenario now proves `UNREGISTERED_TEST` before registration, then continues to verify generated-source drift, undeclared dependency rejection, retained evidence, and non-publication after the inventory is corrected.
+
+No product source, server-side admission implementation, publisher behavior, allow-failure path, FAST classifier rule, category assignment, shard behavior, or #107 enforcement behavior changed. Adding `delivery_execution_107_i1_test.py` to the bounded expected verifier list only reflects the entry already present on the reviewed base and does not implement or approve #107.
+
+### Verification evidence
+
+- `python3 tests/Verification/verification_inventory_001_test.py`: GREEN, record `1789477934165951000-5bc7b0d30a174463aef1e7420b10a8e4`, bound to the candidate/executable source above.
+- `python3 tests/Verification/change_verification_001_test.py`: GREEN, record `1789477963778452000-f6cd4347665e4f7d8fc49ee7a9861cdb`, bound to the candidate/executable source above.
+- `python3 tests/Verification/verification_ci_001_test.py`: GREEN, record `1789477993840876000-bc6531f8bbaf407c8ac423aec4e4cfab`, bound to the candidate/executable source above.
+- Independent bounded reviewer checks: `bash tools/verification/run.sh lint` GREEN; `quality_graph_ci_setup_001_test.php` GREEN; `fast_lane_118_classification_test.py` 7/7 GREEN; `delivery_harness_hardening_001_test.py` 9/9 GREEN; `git diff --check` GREEN.
+- The post-CI direct-consumer test delta and its preserved assertions are independently approved in `reviews/tests/VERIFICATION-CANONICAL-INVENTORY-001.md`.
+
+The failed first CI run remains failure evidence and is not reclassified. A new exact-source GitHub CI run for this reviewed candidate is still required before publication readiness; this verdict does not claim that run, merge, deployment, or #107 enforcement as GREEN.
+
+### Required changes
+
+None.

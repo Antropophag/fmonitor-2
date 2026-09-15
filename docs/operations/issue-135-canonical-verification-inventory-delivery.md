@@ -18,4 +18,6 @@ Focused GREEN evidence was rerun after the correction; final exact-source record
 - canonical roster: 427 tests, category counts unit 101 / integration 268 / e2e 46 / governance 12;
 - strict OpenSpec validation, Python compile, shell syntax, active `categories.json` reference scan, and `git diff --check`: GREEN.
 
-The constitutionally prohibited local full `make test` / `make verify` was not run. Gate 5 and one exact-source GitHub CI run must complete before PR-ready status; merge, deployment, and repository settings remain out of scope.
+The constitutionally prohibited local full `make test` / `make verify` was not run. A post-correction Gate 5 re-review and GREEN exact-source GitHub CI run must complete before PR-ready status; merge, deployment, and repository settings remain out of scope.
+
+First exact-source CI triage: Quality Graph run `34969985820` on commit `0fba8224` completed with primary failures in fast, governance, unit, and Integration 2/2; verify then failed downstream. The complete regression inventory identified three migration gaps: `run.sh` attempted to list the pseudo-suite `lint`, isolated `quality_graph_ci_setup_001_test.php` did not copy the new shared parser, and active delivery-harness/FAST fixtures still read `categories.json` or wrote three-column manifests. Root migrated only those direct consumer fixtures; executor finalized the runner dispatch correction. E2E and Integration 1/2 were GREEN. A corrected exact-source CI run remains required; the failed run is not evidence of admission.

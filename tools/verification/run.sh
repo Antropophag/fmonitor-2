@@ -45,8 +45,20 @@ load_inventory() {
   for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification tests/Otiz tests/Runtime tests/Jobs; do
     test -d "$directory" || fail SETUP_FAILURE "missing verification directory: $directory"
   done
-  inventory_output="$(/usr/bin/python3 tools/verification/inventory.py list --suite "$suite")" \
-    || fail SETUP_FAILURE "invalid verification inventory"
+  case "$suite" in
+    unit|db|characterization|e2e)
+      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py list --suite "$suite" 2>&1)"
+      ;;
+    *)
+      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py validate 2>&1)"
+      ;;
+  esac
+  status=$?
+  if ((status != 0)); then
+    printf '%s\n' "$inventory_output" >&2
+    exit "$status"
+  fi
+  [[ "$suite" == unit || "$suite" == db || "$suite" == characterization || "$suite" == e2e ]] || return 0
   while IFS=$'\t' read -r runtime file; do
     [[ -n "$runtime" ]] || continue
     selected_runtimes+=("$runtime")

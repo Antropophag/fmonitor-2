@@ -23,12 +23,29 @@ class Harness(unittest.TestCase):
             shutil.copytree(ROOT / '.codex', self.repo / '.codex')
         for name in ['.quality-graph', 'tools/verification', 'specs', 'docs/operations', 'tests/Verification']:
             (self.repo / name).mkdir(parents=True, exist_ok=True)
-        for name in ['.quality-graph/verification-policy.json', 'tools/verification/categories.json', 'quality-graph.yml', 'specs/CHANGE-VERIFICATION-001.md', 'AGENTS.md', 'docs/development-process.md']:
+        for name in ['.quality-graph/verification-policy.json', 'tools/verification/suites.tsv',
+                     'tools/verification/inventory.py', 'quality-graph.yml',
+                     'specs/CHANGE-VERIFICATION-001.md', 'AGENTS.md', 'docs/development-process.md']:
             shutil.copy2(ROOT / name, self.repo / name)
         (self.repo / 'docs/operations/current-delivery-goal.md').write_text('Owner intent: implement issue 99; no deployment.\n')
         (self.repo / 'specs/EXAMPLE.md').write_text('EXAMPLE: print expected values.\n')
         self.test = 'tests/Verification/example_test.py'
         (self.repo / self.test).write_text('print("EXAMPLE_OK")\n')
+        for line in (self.repo / 'tools/verification/suites.tsv').read_text().splitlines():
+            if not line:
+                continue
+            _suite, _runtime, path, _category = line.split('\t')
+            target = self.repo / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text('print("fixture")\n' if path.endswith('.py') else
+                                  ('console.log("fixture");\n' if path.endswith('.mjs') else '<?php\n'))
+        rows = [tuple(line.split('\t')) for line in
+                (self.repo / 'tools/verification/suites.tsv').read_text().splitlines() if line]
+        rows.append(('unit', 'python3', self.test, 'unit'))
+        rows.sort(key=lambda row: (row[0], row[2], row[1], row[3]))
+        (self.repo / 'tools/verification/suites.tsv').write_text(
+            ''.join('\t'.join(row) + '\n' for row in rows))
         (self.repo / '.gitignore').write_text('.local/\n__pycache__/\n')
         self.git('init', '-q'); self.git('config', 'user.email', 'contract@example.invalid'); self.git('config', 'user.name', 'Contract')
         self.input = 'specs/input.json'
@@ -43,6 +60,14 @@ class Harness(unittest.TestCase):
 
     def write(self, name, data):
         (self.repo / name).write_text(json.dumps(data) + '\n')
+
+    def register_test(self, path, category='unit', suite='unit', runtime='python3'):
+        catalog = self.repo / 'tools/verification/suites.tsv'
+        rows = [tuple(line.split('\t')) for line in catalog.read_text().splitlines() if line]
+        if not any(row[2] == path for row in rows):
+            rows.append((suite, runtime, path, category))
+        rows.sort(key=lambda row: (row[0], row[2], row[1], row[3]))
+        catalog.write_text(''.join('\t'.join(row) + '\n' for row in rows))
 
     def cli(self, *args, env=None, stdin=None):
         return subprocess.run([sys.executable, 'tools/delivery/harness.py', *args], cwd=self.repo,
@@ -417,8 +442,8 @@ class Harness(unittest.TestCase):
         new=json.loads(root.stdout)
         self.assertNotEqual(previous_plan['bindings'],json.loads(Path(new['plan']).read_text())['bindings'])
         (self.repo/self.test).unlink()
-        future=self.prepare();self.assertEqual(0,future.returncode,future.stderr)
-        self.assertIn(self.test,json.loads(future.stdout)['missing_tests'])
+        future=self.prepare();self.assertNotEqual(0,future.returncode)
+        self.assertIn('missing catalog file: ' + self.test, future.stderr)
 
     def test_gate3_red_evidence_and_complete_current_obligations(self):
         (self.repo/self.test).write_text('print("EXPECTED_ASSERT"); raise SystemExit(7)\n')
@@ -433,6 +458,7 @@ class Harness(unittest.TestCase):
         self.assertIn('evidence',(gate5.stdout+gate5.stderr).lower())
         (self.repo/self.test).write_text('print("GREEN")\n')
         second='tests/Verification/second_test.py';(self.repo/second).write_text('print("SECOND")\n')
+        self.register_test(second)
         value=json.loads((self.repo/self.input).read_text());value['acceptances'][0]['tests'].append(second);self.write(self.input,value)
         run=self.cli('run','--','python3',self.test);record=json.loads(run.stdout)['record_path']
         incomplete=self.cli('prepare','--input',self.input,'--base',self.base,'--role','reviewer','--evidence',record)
@@ -471,6 +497,7 @@ class Harness(unittest.TestCase):
     def test_mixed_gate3_new_red_and_existing_green_regression(self):
         new='tests/Verification/new_behavior_test.py'
         (self.repo/new).write_text('print("NEW_BEHAVIOR_RED"); raise SystemExit(7)\n')
+        self.register_test(new)
         self.mixed_mapping([new])
         records=[self.mapped_run(new,red=True),self.mapped_run(self.test)]
         prepared=self.reviewer_with(records)
@@ -485,6 +512,8 @@ class Harness(unittest.TestCase):
         new='tests/Verification/new_behavior_test.py';other='tests/Verification/other_behavior_test.py'
         (self.repo/new).write_text('print("unexpected green")\n')
         (self.repo/other).write_text('print("NEW_BEHAVIOR_RED"); raise SystemExit(7)\n')
+        self.register_test(new)
+        self.register_test(other)
         self.mixed_mapping([new,other])
         records=[self.mapped_run(self.test),self.mapped_run(new),self.mapped_run(other,red=True)]
         rejected=self.reviewer_with(records)

@@ -82,6 +82,34 @@ The three focused records remain intended RED for the missing implementation rat
 
 None.
 
+## Post-CI direct-consumer test-delta review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.
+- Reviewed delta: `tests/Verification/delivery_harness_001_test.py`, `delivery_harness_hardening_001_test.py`, `delivery_harness_ci_completeness_001_test.py`, `fast_lane_118_classification_test.py`, and `quality_graph_ci_setup_001_test.php`; no `fast_lane_118_admission_test.py` byte change is present.
+- Current SHA-256 values: `96878c17f5fc5e926edc93b527d9e7555d574b3b3f190da20c8c8a8fa01ef08c`, `2838af779d45c007b0092ccbdbdc099ff63f536d1588514c9c1cfad92e75f46a`, `99e89fab65ec99f7bf827b4441a4858e6d456e633f361fe8aef1e219cdd999e3`, `6fc67d402923279efb63010c07667b48aa187c9b124dbe84103c232915e6492b`, and `d818dc8c1e0ca275bcf92049f403484938a36134a70d7c238cdf1b765e1ec0f2` in the file order above.
+- Focused evidence reported with the review request: `delivery_harness_001_test.py` 25/25 GREEN; `delivery_harness_hardening_001_test.py` 9/9 GREEN; `fast_lane_118_classification_test.py` 7/7 GREEN; `delivery_harness_ci_completeness_001_test.py` 16/17 in the aggregate run followed by the remaining lineage case GREEN with its planner-derived typed environment; lint GREEN. No exact record identifiers were supplied for these runs, so this review does not claim independent record/source binding for them. The earlier complete CI failure inventory remains the reason for this bounded compatibility delta.
+- Verdict: `APPROVED`.
+
+### Complete delta findings
+
+None.
+
+The five changed direct-consumer tests are migrated mechanically from deleted `categories.json` plus three-column rows to sorted four-column `suites.tsv`. Isolated repositories now receive `inventory.py`, materialize every registered path, and register synthetic canonical tests before planner/package operations. These are required runtime and discovery preconditions for the already approved one-parser contract; they do not bypass inventory validation.
+
+The PR98 stale scenario is stronger and correctly sequenced. Its new canonical test first fails planning with exact `UNREGISTERED_TEST`, then is explicitly registered. The later preflight still rejects the candidate, preserves `publication_ready == false`, retains evidence, and requires the two remaining independent failures `GENERATED_SOURCE_DRIFT` and `UNDECLARED_TEST_DEPENDENCY`. Removing `STALE_VERIFICATION_INVENTORY` from that later set does not weaken admission because stale dual-registry state no longer exists and early canonical validation has already tested the replacement failure.
+
+Other semantic protections remain intact: missing catalog members fail rather than becoming `missing_tests`; Gate 3 evidence completeness, mixed RED/GREEN mapping, planner bindings, undeclared PHP/Python/Node dependencies, local-source precedence, source drift, and CI lineage remain asserted. The lineage case now passes the exact planner-selected command environment into both historical RED and current GREEN records, strengthening source/environment identity rather than altering the expected decision.
+
+The hardening test continues to prove an unregistered discovered E2E test fails and that explicit registration restores one exact E2E member. Its fixture changes from Python to Node only to use an actually discovered canonical naming/runtime pair. Adding `delivery_execution_107_i1_test.py` to the bounded verify-list expectation reflects the entry already present on current `main`; it changes no #107 product behavior or admission rule.
+
+The PHP Quality Graph setup test merely copies the shared parser required by `run.sh` and supplies canonical sorted rows with unchanged unit/db intent. Fast-lane fixtures likewise use the canonical registry and materialize its paths; lane classification and real-oracle expectations are unchanged.
+
+No assertions were deleted to obtain GREEN, no allow-failure path was added, and no production/specification behavior or issue scope changed. These corrections preserve the original consumer semantics under the new canonical inventory boundary.
+
+### Required changes
+
+None.
+
 ## Planner and CI canonical-fixture test-delta review — 2026-09-15
 
 - Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.
