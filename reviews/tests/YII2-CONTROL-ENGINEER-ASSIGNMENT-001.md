@@ -347,3 +347,30 @@ Successful corrected exact-source CI remains pending and is not inferred from fo
 `APPROVED`
 
 The bounded CI inventory correction is approved for exact candidate source `653c291031836be6b8b22da261dc75835b10c78214a15eab2a4efd3829d9ba19`. It preserves all approved test semantics and does not expand verification policy.
+
+---
+
+## Post-rebase v28 compatibility Gate 3 rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T104435Z-54cfbde61d/package.json`.
+- Exact source: base/current main `25aee5524f790292d350175ba278bc47e282ed4c`, head `e85271142189950bd7da93d09f64c5ff34aaee9f`, candidate `179efef513f48afe88ba67c85b6b2b22b37bff7d4d97aa991836a68434b22748`, executable `5870ec6a8dbc7689c45edd0e6027e3f822c08f44c95bdd87b9e12a055783c1e4`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T104435Z-54cfbde61d/verification-plan.json`, SHA-256 `b8837532c941b759357eb246ec239b2defd431cb677940dee5a03b781fc82de7`; lane `CRITICAL`, reviews `gate3` and `final`.
+- Scope: test/spec compatibility of the rebase and the narrow migration/recovery frontier move from #52 v27 to v28 after main acquired its own v27. No implementation was authored or changed by this reviewer.
+
+### Assessment
+
+No blocking findings.
+
+Main's v27 remains `BitrixOrderDocumentLinksSchemaMigration`; #52 is appended as v28 and its migration result/fixture literals are changed from 27 to 28. The owner, Yii, direct-native replay, schema-drift, authorization, history, bootstrap, concurrency and adjacent #40/#38 assertions otherwise retain their approved semantics. The identity and inspection schema consumers now require the exact ordered `1..28` catalogue and repeat at terminal 28; they do not skip, renumber or relabel main's v27.
+
+Recovery compatibility is additive and exact: the landed `RuntimeRecoverySchemaV27` owns 78 tables and 42 AUTO_INCREMENT tables, while `RuntimeRecoverySchemaV28` derives from that inventory, adds only `fm2_control_engineer_assignments`, re-sorts deterministically, and therefore owns 79 tables and 43 AUTO_INCREMENT tables. Independent evaluation of those profiles produced exact counts `78/42` and `79/43`. Recovery tests assert those literal counts, exact table sets, row/counter preservation, current v28 backup/restore, and rejection of a v28 bundle by historical images without target mutation. `RuntimeRecovery` consistently validates backup, restore and counters against the v28 profile.
+
+The refreshed CRITICAL plan expands focused coverage to every schema/recovery consumer changed by the frontier update: 44 focused commands plus the CI-only full-suite command. The supplied root package contains no retained execution records, so this Gate 3 verdict approves the test/spec compatibility and sensitivity only; it does not report those commands or CI as GREEN. Exact-source execution evidence remains a later verification/admission obligation. `git diff --check 25aee552..e8527114` is clean.
+
+Non-blocking editorial note: several legacy assertion messages still say "terminal v27" or refer to earlier successor ranges while their literal expected values correctly require v28. This does not alter execution or mask a migration defect, but may be cleaned up later without changing expectations.
+
+### Compatibility verdict
+
+`APPROVED`
+
+The v27-to-v28 compatibility test/spec delta is approved for exact candidate source `179efef513f48afe88ba67c85b6b2b22b37bff7d4d97aa991836a68434b22748`. Execution, final review, CI and deployment are not inferred by this Gate 3 verdict.

@@ -239,3 +239,29 @@ The only accompanying changes bind `tools/verification/suites.tsv` into the Open
 **APPROVED**
 
 Gate 5 approves the bounded verifier-registration correction. This approval does not infer CI GREEN: the corrected exact source must complete the required GitHub matrix successfully. Merge/deployment remain outside this review.
+
+---
+
+## New-main v28 compatibility rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T104435Z-54cfbde61d/package.json`
+- Base: `25aee5524f790292d350175ba278bc47e282ed4c`
+- Exact reviewed commit: `e85271142189950bd7da93d09f64c5ff34aaee9f`
+- Candidate source: `179efef513f48afe88ba67c85b6b2b22b37bff7d4d97aa991836a68434b22748`
+- Executable source: `5870ec6a8dbc7689c45edd0e6027e3f822c08f44c95bdd87b9e12a055783c1e4`
+- Verification plan SHA-256: `b8837532c941b759357eb246ec239b2defd431cb677940dee5a03b781fc82de7`
+- Verdict: **CHANGES_REQUESTED**
+
+### Finding
+
+1. **The exact v28 runtime-recovery witness has the assignment table twice and cannot match the production inventory.** `tests/Runtime/runtime_jobs_recovery_001_test.php:10` adds `fm2_control_engineer_assignments` both immediately after `fm2_assignment_application_attempts` and again after `fm2_bitrix_order_document_links`. Sorting preserves both copies, while `RuntimeRecoverySchemaV28::tables()` produces one assignment table from the v27 inventory plus one new entry (`app/RuntimeRestore/RuntimeRecoverySchemaV28.php:10-13`). The test later compares this duplicated literal array exactly with the manifest table inventory. This planned focused check therefore fails even though the production v28 inventory is unique. Remove the earlier duplicate and retain the single v28 addition adjacent to the inherited v27 Bitrix frontier (or otherwise make the literal exact and unique).
+
+### Compatibility assessment
+
+No production/spec compatibility finding was found. `ProductionPilotMigrationCatalogue` retains merged-main `BitrixOrderDocumentLinksSchemaMigration` at v27 and adds the standalone assignment migration at v28 (`app/InstallationProcess/ProductionPilotMigrationCatalogue.php:37-38`). `RuntimeRecoverySchemaV28` derives from the exact v27 table and deferred inventories, adds exactly the assignment history table to both table and auto-increment inventories, and `RuntimeRecovery` consistently validates/backs up/restores against v28. The object-card delta is additive around the merged-main controller and routes; no existing object-card owner or Bitrix behavior was removed. Prior substantive #52 Gate 5 findings remain resolved.
+
+### Verdict
+
+**CHANGES_REQUESTED**
+
+Correct the single duplicated literal recovery-table witness and refresh exact-source evidence/review binding. No production redesign is requested.
