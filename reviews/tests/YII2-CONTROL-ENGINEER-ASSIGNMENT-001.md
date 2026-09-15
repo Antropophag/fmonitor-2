@@ -399,3 +399,32 @@ The supplied root package contains no retained execution records, so this verdic
 `APPROVED`
 
 The narrow CI category-registration delta is approved for exact candidate source `cfbc3750a07c24f27e5eff020f1b5ea0fae0649564f0419e9b0edf536fb1c9b4`.
+
+---
+
+## CI regression-closure fixture/test rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T112956Z-78ebd20e01/package.json`.
+- Exact source: base `25aee5524f790292d350175ba278bc47e282ed4c`, head `e3a525bbc2e16d2b9b6ef3bc06a1edc5a0f143bc`, candidate `ddf63e9d2defc6a0e4e82a3fe44c89cdf88cc3ce341051e93f69ccfad8ff0a9c`, executable `b0badd81270ee3d696943148d259d17bdcbc26dcdd9cd8ab2f0dfd733ebfd918`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T112956Z-78ebd20e01/verification-plan.json`, SHA-256 `a1d47cb2871d993b33d054d27217ed1906d5f444b6a53e5426305b674bec8320`; lane `CRITICAL`, reviews `gate3` and `final`.
+- Scope: changed test/fixture compatibility only. Production corrections and other review artifacts are outside this verdict.
+
+### Assessment
+
+No findings.
+
+Every changed executable test remains present exactly once in `suites.tsv` and has an explicit inventory category (`unit`, `integration`, or `e2e` as appropriate); changed support fixtures are consumed rather than independently executable. The refreshed plan binds all changed consumers and contains 53 focused commands plus the CI-only full-suite command. Nothing is removed from the CI inventory or shifted into a non-executing/manual category.
+
+The Yii fixtures now submit the authoritative assignment revision and omit manual engineer/confirmation fields. The public form test positively requires `expectedControlEngineerAssignmentRevision` and negatively requires both legacy controls to be absent. Concurrent and failure requests likewise use assignment revision, while `SelectionForm` may still accept obsolete scalar fields solely as inert transport compatibility and `SelectionController` always constructs the command with a null client engineer. The previously approved direct-native forged-engineer replay test remains the sensitivity witness that obsolete non-null engineer input cannot affect authority or request identity.
+
+The command fixture adds the current-assignment seam with an authoritative engineer-73 snapshot and exact missing/unavailable/malformed variants. Updated outcome tests replace obsolete directory/manual-engineer scenarios with current-assignment missing and corruption cases, preserving exact status/reason, allocation ordering, retryability, and no-write footprints. The missing-current-assignment rollback intentionally has no terminal fact, matching the real case-locked public seam; other business rejections retain their terminal/audit expectations. Native outcome coverage still requires missing assignment to reject with `control_engineer_required`, and the broader approved #52 suites retain inactive/wrong-role assignment authorization coverage.
+
+Removing manual-engineer-specific HTTP expectations is therefore a contract correction, not weaker coverage. Required-installer behavior remains covered by command/Yii A–H tests; indexed installer keys are now accepted because real PHP form encoding uses them, while duplicate scalars, malformed escapes, unknown keys, numeric bounds, list bounds, CSRF, media and byte caps remain closed. Clean-stand and preopening fixture changes only advance the already approved exact migration frontier to v28 and align the authoritative FIO snapshot.
+
+The supplied root package contains no retained execution records, so this verdict approves test semantics and CI reachability only and does not infer GREEN. `git diff --check` is clean. Exact-source execution, final review, CI and deployment remain separate obligations.
+
+### Regression-closure verdict
+
+`APPROVED`
+
+The bounded fixture/test correction is approved for exact candidate source `ddf63e9d2defc6a0e4e82a3fe44c89cdf88cc3ce341051e93f69ccfad8ff0a9c`; it does not restore manual engineer authority or weaken accepted expectations.

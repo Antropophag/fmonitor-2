@@ -314,3 +314,31 @@ Local bounded checks confirm both JSON inventories parse, the PilotHttp qualific
 **APPROVED**
 
 Gate 5 approves this narrow CI inventory/architecture registration correction. A fresh exact-source CI run remains required; this review does not infer it GREEN and does not authorize merge/deployment.
+
+---
+
+## CI regression-closure rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T112956Z-78ebd20e01/package.json`
+- Exact reviewed commit: `e3a525bbc2e16d2b9b6ef3bc06a1edc5a0f143bc`
+- Candidate source: `ddf63e9d2defc6a0e4e82a3fe44c89cdf88cc3ce341051e93f69ccfad8ff0a9c`
+- Executable source: `b0badd81270ee3d696943148d259d17bdcbc26dcdd9cd8ab2f0dfd733ebfd918`
+- Verification plan SHA-256: `a1d47cb2871d993b33d054d27217ed1906d5f444b6a53e5426305b674bec8320`
+- CI inventory source: GitHub run `34960640462`
+- Verdict: **CHANGES_REQUESTED**
+
+### Findings
+
+1. **The submitted delta does not close the complete recorded CI regression inventory.** Run `34960640462` explicitly reports `tests/InstallationProcess/inspection_planning_schema_001_test.php` and `tests/InstallationProcess/workforce_canonical_runner_001_test.php` as regressions, but neither file is corrected in this package. Focused execution on exact head reproduces both failures. At `tests/InstallationProcess/inspection_planning_schema_001_test.php:102`, the expected v28 result still uses `range(1,27)`, while the actual canonical runner correctly returns applied versions 1 through 28. At `tests/InstallationProcess/workforce_canonical_runner_001_test.php:291`, the exact prefixed v28 catalogue assertion also still fails. These are deterministic migration-frontier witness failures, not consequences of `SelectionStatePolicy` or assignment fixtures. Correct the exact literals and rerun the applicable focused checks before claiming complete CI closure.
+
+2. **Two unrelated negative assertions were removed instead of adapted.** `tests/AssignmentOrderComposition/selection_http_failures_001_test.php:17-22` deletes the still-valid `installer_required` case even though #52 removes manual engineer selection, not the requirement for an installer. `tests/Yii2/yii2_selection_input_001_test.php:11-13` removes the indexed `installerTabIds[0]` malformed-transport rejection, although the #52 engineer-revision field does not change the existing closed array-shape contract. Run `34960640462` did not identify either assertion as the cause of its corresponding failure (the reported failures were obsolete engineer eligibility and pending replacement respectively). Restore these assertions unless a normative contract change is identified; do not reduce unrelated regression sensitivity as fixture cleanup.
+
+### Production assessment
+
+The production correction itself is sound and bounded. `SelectionStatePolicy::refusal()` now computes pending-replacement equality with the transaction-reread current engineer rather than obsolete client intent, and `SelectionWork` supplies that authoritative ID only after validating the reader payload. This resolves the pending replacement/no-changes error without reintroducing manual engineer authority. The added fail-closed payload validation is appropriate. No new architecture framework or adjacent product behavior is introduced.
+
+### Verdict
+
+**CHANGES_REQUESTED**
+
+Retain the production correction, complete the two outstanding exact migration witnesses from the recorded CI inventory, and restore the two unrelated negative assertions. Refresh exact-source evidence and review binding afterward.

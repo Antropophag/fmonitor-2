@@ -8,6 +8,7 @@ $f=null;
 try {
     $f=new F();$native=$f->original->selection;$base=A::input($f,100);$counter=100;
     foreach([
+        'installer_required'=>['installerTabIds'=>[]],
         'installer_not_in_catalog'=>['installerTabIds'=>['9999']],
         'invalid_command'=>['installerTabIds'=>['7001','7001']],
     ] as $reason=>$override){
