@@ -1,11 +1,11 @@
-# Текущая цель — №15, ссылки на техническую документацию Битрикс
+# Текущая цель — №52, самостоятельное закрепление инженера стройконтроля
 
-Поручение владельца 2026-09-14: реализовать [№15](https://github.com/Antropophag/fmonitor-2/issues/15) от актуального `main` `b2907355` до PR-ready. Scope: read-only исследование legacy-контракта, native application/integration owner, exact-сопоставление только по номеру заказа `fm_maintable.zavnumber`, безопасная актуализация и отображение ссылок в карточке объекта.
+Поручение владельца 2026-09-15: реализовать [№52](https://github.com/Antropophag/fmonitor-2/issues/52) от актуального `main` `3d213666` до PR-ready. Текущее закрепление инженера — самостоятельный native append-only fact; распоряжение хранит immutable historical snapshot. До первого standalone fact разрешён только read-only bootstrap из последнего подтверждённого native application.
 
-Не входят №12/№30, общий redesign интеграций, object identity refactor, rapid-pilot cleanup, construction-control/checklist owner №40 и OTIZ/calculation №66. Общие verification/harness files не менять без доказанной необходимости. Копирование файлов и merge/deploy не входят.
+Контракт: [YII2-CONTROL-ENGINEER-ASSIGNMENT-001](../../specs/YII2-CONTROL-ENGINEER-ASSIGNMENT-001.md). Lifecycle: [standalone-control-engineer-assignment](../../openspec/changes/standalone-control-engineer-assignment/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-selected gates. Full local suite запрещён; используются bounded focused checks и один exact-source CI run.
 
-Контракт: [BITRIX-ORDER-DOCUMENT-LINKS-001](../../specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md). Lifecycle: [bitrix-order-document-links](../../openspec/changes/bitrix-order-document-links/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают требуемые planner-ом gates. Full `make test`/`make verify` локально запрещён; bounded checks и один exact-source CI run.
+Не входят rapid-pilot, legacy assignment migration, district rules, #20/#45/#14/#131/#141, checklist/offline, generic assignment/event framework, redesign order/application и unrelated refactor. №40 переключается только в current-engineer reads; №38 сохраняет application ownership installer composition.
 
-Предыдущий указатель №31 сохранён в [истории](current-delivery-goal-history-issue-31-2026-09-14.md). Фактические source/PR/CI/lane получать через harness state и активный package. Live Bitrix access/auth остаётся `UNKNOWN`, пока не проверен отдельно.
+Предыдущий pointer №131 сохранён в [истории](current-delivery-goal-history-issue-131-2026-09-15-issue52-transition.md).
 
-Delivery record: [issue-15-bitrix-order-document-links-delivery.md](issue-15-bitrix-order-document-links-delivery.md).
+Delivery record: [issue-52-control-engineer-assignment-delivery.md](issue-52-control-engineer-assignment-delivery.md). Live source/PR/CI/lane получать через harness state и активный package.

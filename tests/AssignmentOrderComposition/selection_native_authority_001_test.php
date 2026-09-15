@@ -7,6 +7,12 @@ use FMonitor2\AssignmentOrderComposition as C;
 
 // ASSIGNMENT-ORDER-SELECTION-NATIVE-001: Gate5 tracer-v1 authority findings.
 $tests=[
+    'obsolete engineer input is inert for native replay'=>static function(F $f):void {
+        $app=$f->app();$first=F::command();assertSameValue('selected',$app->selectAssignmentOrderComposition($first)->status()->value,'native selection accepted');
+        $forged=new C\SelectAssignmentOrderCompositionCommand($first->requestId,$first->mode,$first->installationObjectId,$first->actorUserId,$first->installerTabIds,new C\UserId(999),$first->expectedSelectionRevision,$first->expectedControlEngineerAssignmentRevision);
+        $before=$f->rows();$replay=$app->selectAssignmentOrderComposition($forged);assertSameValue('replayed',$replay->status()->value,'native replay ignores changed obsolete engineer input');assertSameValue($before,$f->rows(),'native replay writes no second selection');
+        $selections=$before['fm2_assignment_order_selections'];assertSameValue([1,'73'],[count($selections),(string)$selections[0]['control_engineer_user_id']],'persisted native snapshot remains authoritative engineer');
+    },
     'partial local schema never replays through legacy'=>static function(F $f):void {
         $app=$f->app();$command=F::command();assertSameValue('selected',$app->selectAssignmentOrderComposition($command)->status()->value,'accepted native replay target');
         // Fictional alternative authority: no legacy data import or legacy writer migration.

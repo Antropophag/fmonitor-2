@@ -1,0 +1,12 @@
+# Delivery №52 — самостоятельное закрепление инженера
+
+- Owner assignment: 2026-09-15, PR-ready from exact main `0a286f3e`.
+- Owner clarification: standalone append-only current assignment explicitly authorized; bounded native-application bootstrap only.
+- Root author: scope, PRODUCT/normative/OpenSpec contracts and executable RED tests.
+- Executor: `/root/issue52_executor`, gpt-5.6-sol/low; authored production implementation only. Root authored contracts and tests, including bounded fixture/schema-registration corrections found during Gate 4.
+- Gate 3: APPROVED after four exact-source review rounds; final approved test candidate `46ee9fa70ed9b5c49b5481319b2b83e79643b0adb4db0d125b4bad5fe9f236f8`, executable `658f3f41d5aa6014562038fd5791e17fbc7d1fc2b333ccbbeb15ba3aa5a9cfba`; see `reviews/tests/YII2-CONTROL-ENGINEER-ASSIGNMENT-001.md`.
+- Gate 5: APPROVED on final package `20260915T092035Z-13cd9bbe70`, candidate `1f6c73b835a7b9b89179a6c939fada6834a14cf96e671bc6ced37fbed6640180`, executable `b47b6bc7b861b79cab71ed237ea411bee13097f4735ce234bbfa24c6326abcd2`; all prior findings resolved. CI/PR pending; UNKNOWN is not approval or GREEN.
+- Scope exclusion: no rapid-pilot read/change, legacy backfill, adjacent issues or generic framework.
+- Verification planner: CRITICAL; required reviews `gate3`, `final`; local full suite forbidden.
+- Intended RED: owner test stops on missing `ControlEngineerAssignmentClock`/owner contract; Yii2 test reaches real preparation GET and fails because the required explicit missing-current-assignment state is absent. The earlier missing-vendor result was setup-only and is not RED evidence.
+- Focused verification: final plan selects 15 bounded commands; all GREEN on executable source `b47b6bc7b861b79cab71ed237ea411bee13097f4735ce234bbfa24c6326abcd2`. Full local suite was not run. Two initial `inspection_evidence_schema_001_test.php` failures were completely inventoried as stale terminal-v26 registration expectations and corrected to additive v27; the final exact-source run is GREEN.
