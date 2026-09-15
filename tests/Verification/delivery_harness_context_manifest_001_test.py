@@ -149,7 +149,10 @@ class ContextManifest(unittest.TestCase):
         self.assertNotEqual(old_agents["source_digest"], new_agents["source_digest"])
         self.assertEqual(hashlib.sha256((value.repo / "AGENTS.md").read_bytes()).hexdigest(), new_agents["source_digest"])
 
-        _v, _u, unknown = self.prepared(["unknown-boundary/example.xyz"])
+        # The verification planner already rejects truly unknown repository paths.
+        # A test-only change is planner-known but has no product context profile,
+        # so the context layer must conservatively deliver the full safe set.
+        _v, _u, unknown = self.prepared([])
         self.assertEqual("conservative", unknown["applicability"]["mode"])
         full_sources = {item["source"] for item in unknown["required_context"] if item["rule_id"] == "FULL_DOCUMENT"}
         self.assertEqual(self.CONSERVATIVE_FULL, full_sources)
