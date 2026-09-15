@@ -141,6 +141,21 @@ class Inventory(native.NativeSuites):
         self.assertTrue(set(expected).issubset(current),
                         'INTENDED_RED migration changed base suite/runtime/path/category membership')
 
+    def test_accumulated_main_product_registrations_are_preserved_once(self):
+        rows = [tuple(line.split('\t')) for line in
+                (native.ROOT / 'tools/verification/suites.tsv').read_text().splitlines()
+                if line and not line.startswith('#')]
+        additions = [
+            ('db', 'php', 'tests/InstallationProcess/control_engineer_assignment_001_test.php', 'integration'),
+            ('db', 'php', 'tests/Yii2/yii2_construction_control_preopening_001_test.php', 'integration'),
+            ('db', 'php', 'tests/Yii2/yii2_control_engineer_assignment_001_test.php', 'integration'),
+            ('db', 'php', 'tests/Yii2/yii2_installer_directory_native_assignments_001_test.php', 'integration'),
+            ('db', 'php', 'tests/Yii2/yii2_main_navigation_001_test.php', 'integration'),
+        ]
+        for registration in additions:
+            self.assertEqual(1, rows.count(registration),
+                             'accumulated main registration must retain exact semantics once: ' + registration[2])
+
     def test_categories_json_and_active_consumer_references_are_removed(self):
         self.assertFalse((native.ROOT / 'tools/verification/categories.json').exists(),
                          'INTENDED_RED duplicate category registry remains')

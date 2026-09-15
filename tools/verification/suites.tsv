@@ -208,6 +208,7 @@ db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integ
 db	php	tests/Yii2/yii2_jobs_console_db_001_test.php	integration
 db	php	tests/Yii2/yii2_legacy_import_db_001_test.php	integration
 db	php	tests/Yii2/yii2_local_runtime_provisioning_001_test.php	integration
+db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration

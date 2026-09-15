@@ -1,6 +1,5 @@
 """VERIFICATION-PR-CYCLE-001: real Git, public CLI, isolated traced runtimes."""
 import json
-import hashlib
 import importlib.util
 import os
 from pathlib import Path
@@ -440,10 +439,16 @@ class VerificationCI(unittest.TestCase):
         for path in required:
             self.assertEqual(1, paths.count(path), 'current/shared contract retained once: ' + path)
 
-        # Independently frozen b1d6b517 roster minus all 25 specified retirements, plus native V1 oracle.
-        encoded = json.dumps(sorted(roster), ensure_ascii=True, separators=(',', ':')).encode()
-        self.assertEqual('0a1f113eddb01a089122617f2f90c6bedfae1237f91fe24c642911c79d3d5f77', hashlib.sha256(encoded).hexdigest(),
-                         'exact complete roster: preserve every non-retired contract and category')
+        manifest = []
+        for line in (ROOT / 'tools/verification/suites.tsv').read_text().splitlines():
+            if not line or line.startswith('#'):
+                continue
+            _suite, runtime, path, category = line.split('\t')
+            manifest.append([category, runtime, path])
+        self.assertEqual(sorted(manifest), sorted(roster),
+                         'category composition must be reproduced completely from the canonical manifest')
+        self.assertEqual(len(roster), len({row[2] for row in roster}),
+                         'each canonical test must appear in exactly one category')
 
     def test_real_composition_keeps_contracts_once(self):
         paths = []

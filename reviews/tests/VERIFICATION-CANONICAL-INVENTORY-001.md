@@ -82,6 +82,48 @@ The three focused records remain intended RED for the missing implementation rat
 
 None.
 
+## Final main-integration roster test-delta review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.
+- Main synchronization: `origin/main@7c31ffb89d62d00fd88b4d4c8e454b9a7d4cdb9f` adds `tests/Yii2/yii2_main_navigation_001_test.php`; current branch registers it as `db/php/integration`.
+- Delta: `tests/Verification/verification_ci_001_test.py` SHA-256 `535c83f4d083bcc0f66d5030ea2f71868b28eb3347b17b81e295c641993d92f5`; the hard-coded complete-roster SHA assertion was replaced by equality between `ci.py` output and a projection of the current candidate manifest plus a unique-path assertion.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Complete delta findings
+
+1. **HIGH — the replacement removes the independent oracle for post-base main additions** (`tests/Verification/verification_ci_001_test.py:423-451`; `tests/Verification/verification_inventory_001_test.py:128-142`; `tools/verification/suites.tsv:211`). Both sides of the new equality are derived from the same candidate `suites.tsv`: `ci.py list` reads it, and the test's `manifest` list reads it directly. If an implementation or later reconciliation deletes the synchronized `yii2_main_navigation_001_test.php` row (and its test file), both projections shrink together, uniqueness remains true, the explicit required list does not mention this path, and the historical-427 subset test remains GREEN because this row was added after `25aee552`. Thus the delta checks consumer self-consistency but no longer proves preservation of the exact new `main@7c31ffb8` registration. This repeats the oracle weakness found in the initial Gate 3 review, now specifically for post-base additions.
+
+The manifest/projection equality and unique-path invariant are useful R2/R5 assertions and should remain. They are not substitutes for an independently derived preservation expectation. Preserve legitimate future additions without a perpetually stale whole-roster literal by reconstructing the required synchronized-main tuples from fixed `main@7c31ffb8`'s `suites.tsv` plus `categories.json` and asserting that set is a subset of the current four-field manifest, analogous to the approved historical-427 test. A narrower explicit assertion that `yii2_main_navigation_001_test.php` occurs exactly once as `db/php/integration` would close this immediate delta, but a fixed-main subset oracle better covers all parallel additions incorporated by this synchronization.
+
+The public-route registration itself is correctly shaped and canonically placed. The retired-path bans and existing required semantic assertions are unchanged. No production-code finding is made in this test-only review.
+
+### Required changes
+
+1. Retain the new complete projection equality and uniqueness checks, but add an independent executable oracle that preserves every registration incorporated from `main@7c31ffb8`, including exact `db/php/integration` membership for `tests/Yii2/yii2_main_navigation_001_test.php`.
+2. Capture focused evidence for the corrected test delta and return it for independent rereview before relying on this post-sync candidate.
+
+## Final main-integration roster correction rereview — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the test or implementation.
+- Corrected test: `tests/Verification/verification_inventory_001_test.py` SHA-256 `e5152aff0f991af8187cc241a5497e12f4610ae56c75e7852355a31a01c63535`. The projection test remains `535c83f4d083bcc0f66d5030ea2f71868b28eb3347b17b81e295c641993d92f5`; stable specification remains `e87770d45b17bf8fca22c476bda4dcd309a3cf79c7fd259fa80d3afbacd3fe15`.
+- Focused verification independently run by this reviewer: `python3 tests/Verification/verification_inventory_001_test.py` — 22/22 GREEN in 17.208 seconds.
+- Prior finding disposition: resolved.
+- Verdict: `APPROVED`.
+
+### Complete correction findings
+
+None.
+
+The new test independently enumerates all five registrations accumulated from the post-`25aee552` main synchronizations and requires each exact tuple once: `db/php/<path>/integration`, including `tests/Yii2/yii2_main_navigation_001_test.php`. Removing a row, duplicating it, or changing its suite, runtime or category now fails independently of `ci.py` and its projection of the current manifest.
+
+The previously added complete manifest-versus-category projection equality and global unique-path invariant remain unchanged, so consumer completeness and single-category composition stay covered. Together with the historical 427-row subset oracle, the tests now protect the full synchronized provenance without using a whole-roster hash that becomes stale on every legitimate later addition.
+
+The correction is bounded to preservation assertions for already integrated main registrations. It changes no parser behavior, product test semantics, retired/required lists or issue scope. No weakening or additional finding was identified.
+
+### Required changes
+
+None.
+
 ## Post-main-sync historical-roster test-delta review — 2026-09-15
 
 - Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the test or implementation.
