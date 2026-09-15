@@ -7,7 +7,8 @@ foreach([18,97] as $actorId) {
 try {
  $f=new PreopeningFixture(dirname(__DIR__,2));$f->start();$cookies=[];assertSameValue(303,$f->login($cookies,$actorId)['status'],'native FKR login');
  $page=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue(200,$page['status'],'INTENDED_RED Yii selection portal');$f->noLegacy();
- foreach(['data-main-selection','controlEngineerUserId','controlEngineerConfirmed','requestId','expectedSelectionRevision','_csrf']as$name)assertSameValue(true,str_contains($page['body'],$name),'complete selection form '.$name);
+ foreach(['data-main-selection','requestId','expectedSelectionRevision','expectedControlEngineerAssignmentRevision','_csrf']as$name)assertSameValue(true,str_contains($page['body'],$name),'complete selection form '.$name);
+ foreach(['controlEngineerUserId','controlEngineerConfirmed']as$name)assertSameValue(false,str_contains($page['body'],$name),'removed manual engineer input '.$name);
  $before=$f->facts();$pdfBefore=$f->base->privateFiles();$saved=$f->selection($cookies);assertSameValue([303,'/pilot/objects/4512/assignment-order/selection'],[$saved['status'],$saved['headers']['location'][0]??null],'selection return');$f->noLegacy();
  $selectedFacts=$f->facts();$selectedPage=$f->request('GET','/pilot/objects/4512/assignment-order/selection',[],$cookies);assertSameValue(200,$selectedPage['status'],'persisted selection form');
  assertSameValue(1,preg_match('/<input\b(?=[^>]*\bname="installerTabIds\[\]")(?=[^>]*\bvalue="7001")[^>]*>/',$selectedPage['body']),'persisted installer has real submitted field');assertSameValue($selectedFacts,$f->facts(),'selection form read adds no facts');

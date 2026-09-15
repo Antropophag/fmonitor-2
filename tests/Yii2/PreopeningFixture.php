@@ -35,7 +35,7 @@ final class PreopeningFixture
         $this->db->query("UPDATE {$p}fm2_installation_cases SET id=6101 WHERE legacy_installation_object_id=4512");
         if($assignmentTable)$this->insert($p.'fm2_control_engineer_assignments',[
             'installation_case_id'=>6101,'object_id'=>4512,'assignment_sequence'=>1,
-            'engineer_user_id'=>73,'engineer_fio_snapshot'=>'Инженер 73','engineer_position_snapshot'=>'Инженер строительного контроля',
+            'engineer_user_id'=>73,'engineer_fio_snapshot'=>'Инженер теста','engineer_position_snapshot'=>'Инженер строительного контроля',
             'previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,
             'assigned_by_user_id'=>18,'assigned_at_utc'=>'2026-09-01 06:00:00',
             'request_id'=>'52525252-0000-4525-8525-000000000001','request_fingerprint'=>str_repeat('5',64),
@@ -155,7 +155,7 @@ final class PreopeningFixture
     }
     public function selection(array &$cookies,string $request='11111111-1111-4111-8111-000000000001',array $ids=[7001],string $mode='new_order',int $revision=0,int $assignmentRevision=1): array
     {
-        return $this->form('/pilot/objects/4512/assignment-order/selection',['_csrf'=>$this->token($cookies),'requestId'=>$request,'mode'=>$mode,'expectedSelectionRevision'=>(string)$revision,'expectedControlEngineerAssignmentRevision'=>(string)$assignmentRevision,'controlEngineerUserId'=>'73','controlEngineerConfirmed'=>'yes','installerTabIds'=>$ids],$cookies);
+        return $this->form('/pilot/objects/4512/assignment-order/selection',['_csrf'=>$this->token($cookies),'requestId'=>$request,'mode'=>$mode,'expectedSelectionRevision'=>(string)$revision,'expectedControlEngineerAssignmentRevision'=>(string)$assignmentRevision,'installerTabIds'=>$ids],$cookies);
     }
     public function metadata(array &$cookies,string $request='22222222-2222-4222-8222-000000000001'): array
     {

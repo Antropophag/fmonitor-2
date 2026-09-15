@@ -20,13 +20,17 @@ final readonly class SelectionWork implements SelectionTransactionalWork
             $current=$transaction->currentControlEngineer();
             if(($current['status']??null)!=='found')return ($current['status']??null)==='missing'
                 ?SelectionTransactionDecision::rollbackResult($a->rejected(AssignmentOrderCompositionReason::CONTROL_ENGINEER_REQUIRED)):self::dependency();
+            if(!is_int($current['revision']??null)||$current['revision']<0||!is_array($current['engineer']??null)
+                ||!is_int($current['engineer']['userId']??null)||$current['engineer']['userId']<1
+                ||!is_string($current['engineer']['fullName']??null)||!SelectionScalar::text($current['engineer']['fullName'],300)
+                ||!is_string($current['engineer']['position']??null)||!SelectionScalar::text($current['engineer']['position'],300))return self::dependency();
             $shown=$a->command->expectedControlEngineerAssignmentRevision;
             if($shown!==null&&$shown!==(int)$current['revision'])return SelectionTransactionDecision::rollbackResult($a->conflict(AssignmentOrderCompositionReason::ASSIGNMENT_CHANGED));
             $snapshot=$current['engineer'];$engineer=new EngineerSnapshot((int)$snapshot['userId'],(string)$snapshot['fullName'],(string)$snapshot['position']);
             $intent=SelectionIntent::build($a->intent->actorUserId,$engineer->userId,$a->intent->expectedRevision,$a->intent->objectId,$a->intent->installers,$a->intent->mode);
             $lookup=$transaction->selectionState();
             if($lookup->status!==SelectionLookupStatus::FOUND || $lookup->payload===null || !SelectionStatePolicy::valid($lookup->payload))return self::dependency();
-            $state=$lookup->payload;$refusal=SelectionStatePolicy::refusal($a,$state,$this->caseId);
+            $state=$lookup->payload;$refusal=SelectionStatePolicy::refusal($a,$state,$this->caseId,$engineer->userId);
             if($refusal!==null)return $this->terminal($transaction,$refusal);
             $latest=$state->latestSelection;$revision=$latest?->selectionRevision??0;$version=$latest?->orderVersion??0;
             if($revision>=4294967295 || $version>=65535)return SelectionTransactionDecision::rollback(SelectionRollbackCause::ALLOCATION_CAPACITY_EXHAUSTED);
