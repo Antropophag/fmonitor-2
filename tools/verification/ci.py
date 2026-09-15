@@ -138,6 +138,9 @@ def integration_weights(paths):
             print(f'INTEGRATION_TIMING_FALLBACK: invalid weight for {path}', file=sys.stderr)
             continue
         weights[path] = weight
+    for path in sorted(paths):
+        if path not in weights and path not in invalid:
+            print(f'INTEGRATION_TIMING_FALLBACK: missing weight for {path}', file=sys.stderr)
     return {path: weights.get(path, INTEGRATION_FALLBACK_WEIGHT) for path in paths}
 
 
