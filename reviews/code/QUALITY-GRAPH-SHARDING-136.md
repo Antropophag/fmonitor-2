@@ -66,3 +66,42 @@ No local full suite was run. After findings 1-4 are corrected, prepare a new exa
 - `python3 tests/Verification/change_verification_semantic_closure_153_test.py` — GREEN, record `1789508530979416000-8fbe36ff25fa4f3882b254c1c04ca9b3.json`
 
 All records bind candidate source `20e825db975123753fceb16551b7ad9428381c9436bdffa1ef95d2ede02bf85f` and executable source `7571352ae470cd18a796f43758c6643f546dd54e9777c6ebfff53c2b3103b77e`. Recomputed allocation remains 273 canonical tests exactly once across two shards, with estimated loads `619.005s / 618.992s`. No local full suite was run. Gate 5 is approved for the corrected exact source; proceed to the single exact-source FULL Quality Graph run, then record actual timings and runner variance before declaring PR-ready.
+
+---
+
+## Current-main rebase review — APPROVED
+
+- Reviewer: independent Codex reviewer `/root/issue136_final_review`; authored neither the contract, tests nor implementation
+- Current main/base: `82b8b2cc6ee1b3eace47e96556a65252f2cbf3cb`
+- Reviewed source: commit `0a1ccee103ce88dd8cffc8506a253f691c94c77a`; candidate source `de43c96aec38d07c8cbbed29b1d6ba95127e6ea9b43611d85f0ee2fb2a6d883a`; executable source `6c9305f6235ff3bb6364a361eb2b812d0f84eabc96ccd6e56b23e7d938e692d4`
+- Reconstructible snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T223352Z-642cec2060/snapshot`; empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` over the reviewed commit
+- Prepared reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T223352Z-642cec2060/package.json`; plan SHA-256 `c2b26b57a211979e57d10b197d20ce87e3203c9bb228628f4f3ff559f51f3d15`
+- Gate 3 continuity review: `APPROVED` at the end of `reviews/tests/QUALITY-GRAPH-SHARDING-136.md`; specification and acceptance-test bytes remain unchanged
+- Verdict: `APPROVED`
+
+### Whole-diff decision
+
+The complete `82b8b2cc...0a1ccee1` diff stays within issue #136: OpenSpec/spec/report/review artifacts, the existing verification CLI and its executable test, plus one historical timing-hints artifact. It changes no product code, workflow, canonical `suites.tsv`, FAST policy/planner, #153 contract, runtime acceptance, rapid-pilot path, setup subsystem, shard count or timeout. The rebased specification, tests, implementation and weights retain their previously approved hashes (`09ddd232…`, `40644bfd…`, `424dca81…`, `6a08145f…`).
+
+The refreshed report correctly limits the fresh current-architecture baseline to one successful FULL run (`35028248716` / `59cbb6b9`) and does not invent a median. It separates that measurement from the older planning-weight medians, the reproducible `696.077s / 541.920s` round-robin and `619.005s / 618.992s` LPT estimates, and the still-pending rebased exact-source after run. The single setup investigation still ends honestly in `NO_SAFE_SETUP_OPTIMIZATION_FOUND`; no setup code or second candidate was introduced. Token/cost remains `UNKNOWN`.
+
+Canonical membership remains 273 unique integration tests. The two shards contain 136 and 137 tests, their union is all 273 and their intersection is empty. LPT ordering/ties, missing/invalid/stale fallback behavior and diagnostics, cases A-H, two existing job names, and fail-closed aggregation remain covered. The new-main Gate 3 continuity decision is sound because the executable specification/test bytes did not change and exact-source focused witnesses remain GREEN.
+
+### Prior same-SHA CI failure triage and scope decision
+
+I independently inspected the complete failed-job and `REGRESSION_FAILURE` inventory for pre-rebase run `35028861332` at SHA `5285f34d`:
+
+- direct failed job: `e2e`; its sole direct regression was `tests/Deployment/pilot_jobs_compose_001_test.py` (`VERIFY_TIMING ... exit=1`, assertion `native HTTPS delivery must fetch both pages`);
+- derived failed job: `verify`, which correctly rejected the failed e2e result;
+- `plan`, `fast`, `unit`, `governance`, `Integration (1/2)` and `Integration (2/2)` were GREEN; `harness` was expectedly skipped; no other `REGRESSION_FAILURE` appeared.
+
+That e2e test, workflow and inventory are absent from the #136 diff, and the test is byte-identical to current main (`885f86e6…`). Both integration shards were GREEN on the failed run. Therefore the evidence is a real non-GREEN run and must remain recorded, but it does not identify a #136 defect. Changing the e2e/runtime path here would violate the owner's explicit no-scope-expansion boundaries. It is not a reason to add another setup optimization, change test semantics, or alter CI policy. A recurrence on the new exact source must again be recorded and triaged, not silently treated as GREEN.
+
+### Exact-source evidence and publication readiness
+
+- semantic closure #153A — GREEN, record `1789511527803520000-83a0aa8c24c94dff968b529294b2a9a5.json`
+- verification CI contract — GREEN, record `1789511536837662000-4fa0e64f54f44b1db64cacede7170c9b.json`
+- canonical inventory #135 — GREEN, record `1789511556464262000-01d77fe4f8e746a18dfaacba8f44177f.json`
+- verification governance — GREEN, record `1789511578038778000-3d35f563efb74d3bb9248466d55a6f42.json`
+
+All four records bind candidate source `de43c96a…` and executable source `6c9305f6…`. No local full suite was run. The rebased candidate is approved and ready to publish for one new exact-source FULL Quality Graph run. Publication for CI does not itself establish CI GREEN or PR-ready completion: after that run, record the complete result and actual before/after timings with runner-variance caveat; any failure remains non-GREEN and requires the repository's complete-inventory triage without automatically broadening #136.
