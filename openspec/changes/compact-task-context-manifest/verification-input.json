@@ -1,0 +1,44 @@
+{
+  "change": "compact-task-context-manifest-issue-157",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-157-task-context-manifest-baseline.json",
+    "docs/operations/issue-157-task-context-manifest-delivery.md",
+    "openspec/changes/compact-task-context-manifest/design.md",
+    "openspec/changes/compact-task-context-manifest/proposal.md",
+    "openspec/changes/compact-task-context-manifest/specs/delivery/task-context-manifest/spec.md",
+    "openspec/changes/compact-task-context-manifest/tasks.md",
+    "openspec/changes/compact-task-context-manifest/verification-input.json",
+    "reviews/code/TASK-CONTEXT-MANIFEST-001.md",
+    "reviews/tests/TASK-CONTEXT-MANIFEST-001.md",
+    "specs/TASK-CONTEXT-MANIFEST-001.md",
+    "tests/Verification/delivery_harness_context_manifest_001_test.py",
+    "tools/delivery/context-sections.json",
+    "tools/delivery/harness_context.py",
+    "tools/delivery/measure-task-context.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "TASK-CONTEXT-MANIFEST-001",
+      "acceptance_id": "R1-R6-cases-A-L",
+      "spec_path": "specs/TASK-CONTEXT-MANIFEST-001.md",
+      "seam": "existing harness prepare/state/package route emits digest-bound applicable canonical context and deterministic three-replay measurement",
+      "seam_kind": "infrastructure",
+      "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"],
+      "gate3_expected": {"tests/Verification/delivery_harness_context_manifest_001_test.py": "INTENDED_RED"},
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "retained_evidence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Each immutable package owns its manifest artifact; shared binding isolation remains covered by DELIVERY-HARNESS-001."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/delivery_harness_context_manifest_001_test.py"]}
+      }
+    }
+  ]
+}
