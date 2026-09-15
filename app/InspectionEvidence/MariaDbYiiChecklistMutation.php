@@ -21,7 +21,8 @@ trait MariaDbYiiChecklistMutation
     $base=$o['baseRevision']??null;
     $section=$o['sectionId']??null;
     if(!$this->uuid($id)||!$this->uuid($device)||!$this->instant($time)||!is_int($base)||$base<0||!is_int($section)||!isset(self::ITEMS[$section]))return['status'=>'rejected'];
-            if($duplicate=$this->duplicate($id))return['status'=>'duplicate','revision'=>(int)$duplicate['accepted_revision']];
+            if($replay=$this->replay($id,$objectId,$actorId,$device,$type,$section,$o,$bytes))return$replay;
+            $createdPhoto=null;
             $this->begin();
     try{$case=$this->case($objectId,true);
     if($case===null)
@@ -58,11 +59,14 @@ trait MariaDbYiiChecklistMutation
     return['status'=>'rejected'];
     }$payload=['originalClientOperationId'=>$original,'reason'=>trim($reason)];
     } elseif($type==='photo_uploaded')
-        {$failure=$this->storePhoto($caseId,$section,$id,$actorId,$time,$o,$bytes);
+        {$photoPath=is_string($o['sha256']??null)?$this->storageRoot.'/checklist/'.strtolower($o['sha256']).'.bin':null;
+    $photoExisted=$photoPath!==null&&is_file($photoPath);
+    $failure=$this->storePhoto($caseId,$section,$id,$actorId,$time,$o,$bytes);
     if($failure)
         {$this->rollback();
     return$failure;
-    }$payload=['sha256'=>$o['sha256'],'mime'=>$o['mime'],'size'=>$o['size'],'originalName'=>$o['originalName']];
+    }if(!$photoExisted&&$photoPath!==null&&is_file($photoPath))$createdPhoto=['path'=>$photoPath,'sha256'=>(string)$o['sha256']];
+    $payload=['sha256'=>$o['sha256'],'mime'=>$o['mime'],'size'=>$o['size'],'originalName'=>$o['originalName']];
     } elseif($type==='photo_revoked')
         {$photo=$o['photoId']??null;
     $reason=$o['reason']??null;
@@ -90,7 +94,8 @@ trait MariaDbYiiChecklistMutation
             } catch(\Throwable$e)
         {$this->rollback();
     if($this->yii instanceof \yii\db\Connection&&!$e instanceof \yii\db\IntegrityException)throw$e;
-    if($d=$this->duplicate($id))return['status'=>'duplicate','revision'=>(int)$d['accepted_revision']];
+    if($createdPhoto!==null&&!$this->one("SELECT 1 FROM {$this->t('fm2_checklist_photos')} WHERE sha256=? LIMIT 1",[$createdPhoto['sha256']]))@unlink($createdPhoto['path']);
+    if($replay=$this->replay($id,$objectId,$actorId,$device,$type,$section,$o,$bytes))return$replay;
     throw$e;
     }
         }
@@ -114,7 +119,63 @@ trait MariaDbYiiChecklistMutation
     if(!$r||$r['snapshot_version']!==$r['current_version']||!hash_equals($r['content_sha256'],$r['current_hash']))return null;
     return$r;
     }
-        private function duplicate(string$id):?array{return$this->one("SELECT accepted_revision FROM {$this->t('fm2_checklist_operations')} WHERE client_operation_id=?",[$id]);
+        private function replay(string$id,int$objectId,int$actorId,string$device,string$type,int$section,array$o,?string$bytes):?array
+        {
+    $stored=$this->one("SELECT installation_case_id,device_installation_id,operation_type,section_id,item_id,actor_user_id,accepted_revision,payload_json FROM {$this->t('fm2_checklist_operations')} WHERE client_operation_id=?",[$id]);
+    if($stored===null)return null;
+    $case=$this->case($objectId,false);
+    $matches=$case!==null
+        &&(int)$stored['installation_case_id']===(int)$case['id']
+        &&(string)$stored['operation_type']===$type
+        &&(int)$stored['actor_user_id']===$actorId
+        &&(string)$stored['device_installation_id']===$device
+        &&(int)$stored['section_id']===$section;
+    $expected=$this->replayPayload($type,$o);
+    try{$payload=json_decode((string)$stored['payload_json'],true,32,JSON_THROW_ON_ERROR);}
+    catch(\JsonException){$payload=null;}
+    if(!$matches||$expected===null||!is_array($payload))return['status'=>'conflict'];
+    $item=$o['itemId']??null;
+    $expectedItem=in_array($type,['item_installers_changed','completion_retracted'],true)&&is_int($item)?$item:null;
+    if(($stored['item_id']===null?null:(int)$stored['item_id'])!==$expectedItem||$this->replayPayload($type,$payload,true)!==$expected)return['status'=>'conflict'];
+    if(!$this->replayValid($type,$o,$bytes))return['status'=>'rejected'];
+    return['status'=>'duplicate','revision'=>(int)$stored['accepted_revision']];
+        }
+        private function replayValid(string$type,array$o,?string$bytes):bool
+        {
+            if($type==='item_installers_changed')
+            {$ids=$o['installerTabIds']??null;
+    return is_array($ids)&&$ids!==[]&&count($ids)===count(array_unique(array_map('strval',$ids)));
+            }
+    if($type!=='photo_uploaded')return true;
+    $mime=$o['mime']??null;$size=$o['size']??null;$sha=$o['sha256']??null;$name=$o['originalName']??null;
+    $image=is_string($bytes)?@getimagesizefromstring($bytes):false;
+    return is_string($bytes)&&in_array($mime,['image/jpeg','image/png','image/webp'],true)&&is_array($image)&&($image['mime']??null)===$mime&&is_int($size)&&$size>=1&&$size<=5242880&&strlen($bytes)===$size&&is_string($sha)&&preg_match('/^[a-f0-9]{64}$/D',$sha)===1&&hash_equals($sha,hash('sha256',$bytes))&&is_string($name)&&$name!==''&&mb_strlen($name)<=255&&preg_match('/[\x00-\x1f\x7f]/u',$name)!==1;
+        }
+        private function replayPayload(string$type,array$payload,bool$stored=false):?array
+        {
+            $keys=match($type){'item_installers_changed'=>['installerTabIds'],'completion_retracted'=>['originalClientOperationId','reason'],'photo_uploaded'=>['sha256','mime','size','originalName'],'photo_revoked'=>['photoId','reason'],'section_completed'=>[],default=>null};
+    if($keys===null)return null;
+    if($stored){$actualKeys=array_keys($payload);sort($actualKeys);$expectedKeys=$keys;sort($expectedKeys);if($actualKeys!==$expectedKeys)return null;}
+            if($type==='item_installers_changed')
+            {$ids=$payload['installerTabIds']??null;
+    if(!is_array($ids)||$ids===[]||array_filter($ids,static fn($id)=>!is_int($id)&&!is_string($id)))return null;
+    $ids=array_values(array_unique(array_map('strval',$ids)));
+    sort($ids,SORT_STRING);
+    return['installerTabIds'=>$ids];
+            }
+    if($type==='completion_retracted')
+            {$original=$payload['originalClientOperationId']??null;$reason=$payload['reason']??null;
+    return is_string($original)&&is_string($reason)?['originalClientOperationId'=>$original,'reason'=>trim($reason)]:null;
+            }
+    if($type==='photo_uploaded')
+            {$sha=$payload['sha256']??null;$mime=$payload['mime']??null;$size=$payload['size']??null;$name=$payload['originalName']??null;
+    return is_string($sha)&&is_string($mime)&&is_int($size)&&is_string($name)?['sha256'=>strtolower($sha),'mime'=>$mime,'size'=>$size,'originalName'=>$name]:null;
+            }
+    if($type==='photo_revoked')
+            {$photo=$payload['photoId']??null;$reason=$payload['reason']??null;
+    return is_int($photo)&&is_string($reason)?['photoId'=>$photo,'reason'=>trim($reason)]:null;
+            }
+    return$type==='section_completed'?[]:null;
     }
         private function revision(int$id,bool$lock):int{$r=$this->one("SELECT revision_no FROM {$this->t('fm2_checklist_revisions')} WHERE installation_case_id=?".($lock?' FOR UPDATE':''),[$id]);
     return(int)($r['revision_no']??0);
