@@ -176,6 +176,19 @@
         "deploy/**"
       ],
       "tests": []
+    },
+    {
+      "name": "deadline-certificate",
+      "patterns": [
+        "app/DeadlineTransferCertificate/**"
+      ],
+      "categories": [
+        "integration",
+        "governance"
+      ],
+      "tests": [
+        "tests/InstallationProcess/deadline_transfer_certificate_001_test.php"
+      ]
     }
   ],
   "category_argv": {

@@ -16,6 +16,8 @@ final readonly class AuthorizeLocalActor
         'assignment_order.original.read',
         'assignment_order.original.upload',
         'assignment_order.original.correct',
+        'deadline_certificate.read',
+        'deadline_certificate.write',
         'assignment_order.confirm_registration',
         'installation.open',
         'construction_control.read',
