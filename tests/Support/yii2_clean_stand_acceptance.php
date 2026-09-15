@@ -155,7 +155,7 @@ function validatePostcreate(array $driver, array $manifest): void
 function deriveFacts(array $driver, array $manifest, array $auth): array
 {
     $o=$driver['observations']??[]; $db=$o['database']??[];
-    if (($db['schemaBefore']??null)!==[] || ($db['schemaVersion']??null)!==27 || count($db['migrationLedger']??[])!==26) emit('PROVISIONING_INVALID');
+    if (($db['schemaBefore']??null)!==[] || ($db['schemaVersion']??null)!==27 || count($db['migrationLedger']??[])!==27) emit('PROVISIONING_INVALID');
     $provision=$o['provision']??[];
     if (($provision['replay']['createdIds']??null)!==[] || ($provision['firstFactDigest']??null)!==($provision['replay']['userFactDigest']??null)) emit('PROVISIONING_INVALID');
     $containers=$o['containers']??[];
