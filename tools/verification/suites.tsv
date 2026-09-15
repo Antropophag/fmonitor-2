@@ -413,6 +413,7 @@ unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php	uni
 unit	python3	tests/Usage/usage_aggregation_001_test.py	governance
 unit	python3	tests/Verification/architecture_guard_001_test.py	unit
 unit	python3	tests/Verification/change_verification_001_test.py	governance
+unit	python3	tests/Verification/change_verification_semantic_closure_153_test.py	governance
 unit	python3	tests/Verification/delivery_execution_107_i1_test.py	unit
 unit	python3	tests/Verification/delivery_harness_001_test.py	unit
 unit	python3	tests/Verification/development_setup_001_test.py	governance

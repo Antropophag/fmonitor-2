@@ -1,0 +1,29 @@
+{
+  "change": "require-semantic-integration-closure",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/current-delivery-goal-history-issue-150-2026-09-15-issue153-transition.md",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/require-semantic-integration-closure/design.md",
+    "openspec/changes/require-semantic-integration-closure/proposal.md",
+    "openspec/changes/require-semantic-integration-closure/specs/verification/semantic-integration-closure/spec.md",
+    "openspec/changes/require-semantic-integration-closure/tasks.md",
+    "openspec/changes/require-semantic-integration-closure/verification-input.json",
+    "reviews/code/CHANGE-VERIFICATION-SEMANTIC-CLOSURE-001.md",
+    "reviews/tests/CHANGE-VERIFICATION-SEMANTIC-CLOSURE-001.md",
+    "specs/CHANGE-VERIFICATION-SEMANTIC-CLOSURE-001.md",
+    "tests/Verification/change_verification_semantic_closure_153_test.py",
+    "tools/delivery/change-verification.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CHANGE-VERIFICATION-SEMANTIC-CLOSURE-001",
+      "acceptance_id": "matrix-a-l-semantic-integration-closure",
+      "spec_path": "specs/CHANGE-VERIFICATION-SEMANTIC-CLOSURE-001.md",
+      "seam": "public change-verification build/check via disposable planner repository",
+      "tests": ["tests/Verification/change_verification_semantic_closure_153_test.py"],
+      "gate3_expected": {"tests/Verification/change_verification_semantic_closure_153_test.py": "INTENDED_RED"}
+    }
+  ]
+}
