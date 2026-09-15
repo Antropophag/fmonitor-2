@@ -231,6 +231,20 @@ class VerificationCI(unittest.TestCase):
         self.assertFalse(self.trace.exists(), 'listing must not probe the DB or invoke runtimes')
         self.assertFalse(self.db_trace.exists(), 'listing must not probe the DB')
 
+    def test_lpt_allocation_is_independent_of_input_order(self):
+        module_path = self.root / 'tools/verification/ci.py'
+        spec = importlib.util.spec_from_file_location('verification_ci_shuffled_fixture', module_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        items = [('php', 'tests/z.php'), ('node', 'tests/a.mjs'),
+                 ('php', 'tests/m.php'), ('php', 'tests/b.php')]
+        weights = {'tests/z.php': 8.0, 'tests/a.mjs': 8.0,
+                   'tests/m.php': 3.0, 'tests/b.php': 1.0}
+        with mock.patch.object(module, 'integration_weights',
+                               side_effect=lambda paths: {path: weights[path] for path in paths}):
+            expected = module.integration_shards(items)
+            self.assertEqual(expected, module.integration_shards(list(reversed(items))))
+
     def test_new_test_without_weight_and_stale_weight_preserve_exact_membership(self):
         self.add_integration_inventory()
         full = self.cli('list', 'integration').stdout.splitlines()

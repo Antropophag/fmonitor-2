@@ -32,6 +32,7 @@
   ],
   "change": "balance-integration-shards",
   "planned_paths": [
+    "docs/operations/issue-136-quality-graph-performance.md",
     "docs/operations/current-delivery-goal.md",
     "openspec/changes/balance-integration-shards/design.md",
     "openspec/changes/balance-integration-shards/proposal.md",
