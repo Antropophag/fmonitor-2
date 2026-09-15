@@ -2,6 +2,7 @@
 """Explicit CI selection, category execution and evidence aggregation (stdlib only)."""
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -11,6 +12,9 @@ import importlib.util
 
 ROOT = Path(__file__).resolve().parents[2]
 CATEGORIES = ['unit', 'integration', 'e2e', 'governance']
+INTEGRATION_TIMINGS = ROOT / 'tools/verification/integration-timings.tsv'
+# Missing or unusable historical data must remain schedulable with positive weight.
+INTEGRATION_FALLBACK_WEIGHT = 1.0
 HARNESS_CORE = [
     'tools/delivery/*', 'tests/Verification/delivery_harness*_test.py',
     'tests/Verification/change_verification_001_test.py',
@@ -99,6 +103,55 @@ def inventory_module():
 def inventory():
     return [(entry.category, entry.runtime, entry.path)
             for entry in inventory_module().load(ROOT)]
+
+
+def integration_weights(paths):
+    """Return advisory weights for canonical paths; timing rows never add membership."""
+    weights = {}
+    invalid = set()
+    try:
+        lines = INTEGRATION_TIMINGS.read_text().splitlines()
+    except OSError as error:
+        print(f'INTEGRATION_TIMING_FALLBACK: {error}', file=sys.stderr)
+        return dict.fromkeys(paths, INTEGRATION_FALLBACK_WEIGHT)
+    for number, line in enumerate(lines, 1):
+        if not line or line.startswith('#'):
+            continue
+        fields = line.split('\t')
+        if len(fields) != 2 or not fields[0]:
+            print(f'INTEGRATION_TIMING_FALLBACK: invalid row {number}', file=sys.stderr)
+            continue
+        path, raw_weight = fields
+        if path in weights or path in invalid:
+            weights.pop(path, None)
+            invalid.add(path)
+            print(f'INTEGRATION_TIMING_FALLBACK: duplicate path {path}', file=sys.stderr)
+            continue
+        try:
+            weight = float(raw_weight)
+        except ValueError:
+            invalid.add(path)
+            print(f'INTEGRATION_TIMING_FALLBACK: invalid weight for {path}', file=sys.stderr)
+            continue
+        if not math.isfinite(weight) or weight <= 0:
+            invalid.add(path)
+            print(f'INTEGRATION_TIMING_FALLBACK: invalid weight for {path}', file=sys.stderr)
+            continue
+        weights[path] = weight
+    return {path: weights.get(path, INTEGRATION_FALLBACK_WEIGHT) for path in paths}
+
+
+def integration_shards(items):
+    """Allocate canonical integration items to exactly two deterministic LPT bins."""
+    item_by_path = {path: (runtime, path) for runtime, path in items}
+    weights = integration_weights(item_by_path)
+    shards = [[], []]
+    loads = [0.0, 0.0]
+    for path in sorted(item_by_path, key=lambda value: (-weights[value], value)):
+        index = 0 if loads[0] <= loads[1] else 1
+        shards[index].append(item_by_path[path])
+        loads[index] += weights[path]
+    return [sorted(shard, key=lambda item: item[1]) for shard in shards]
 
 
 def docs_only(path):
@@ -203,7 +256,7 @@ def category_items(category, shard=None):
     items = [(runtime, path) for group, runtime, path in inventory() if group == category]
     if shard is not None:
         offset = 0 if shard == '1/2' else 1
-        items = sorted(items, key=lambda item: item[1])[offset::2]
+        items = integration_shards(items)[offset]
     return items
 
 
