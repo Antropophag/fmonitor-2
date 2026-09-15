@@ -24,6 +24,7 @@ final class PilotDemoDatabase
         'fm2_assignment_order_original_events', 'fm2_assignment_order_original_requests', 'fm2_assignment_order_original_revisions',
         'fm2_assignment_order_original_roots', 'fm2_assignment_order_selections', 'fm2_assignment_order_selection_audits',
         'fm2_assignment_order_selection_events', 'fm2_assignment_order_selection_members', 'fm2_assignment_order_selection_requests',
+        'fm2_bitrix_order_document_links',
         'fm2_checklist_operations', 'fm2_checklist_operation_installers', 'fm2_checklist_photos', 'fm2_checklist_revisions',
         'fm2_checklist_template_associations', 'fm2_checklist_template_snapshots', 'fm2_installation_cases',
         'fm2_migration_classification_provenance', 'fm2_order_artifacts', 'fm2_order_installers',
