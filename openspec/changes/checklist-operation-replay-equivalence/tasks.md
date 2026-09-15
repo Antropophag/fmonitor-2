@@ -19,5 +19,5 @@
 ## 4. Gate 5 и PR-ready
 
 - [x] 4.1 Подготовить reconstructible exact-source snapshot/package и получить независимый final review от неавтора implementation; verification: verdict `APPROVED`, findings resolved against exact bytes, никакой UNKNOWN не назван GREEN.
-- [ ] 4.2 Зафиксировать coherent commits, обновить delivery record/OpenSpec task state и запустить один exact-source GitHub CI через выбранного consumer; verification: complete failure inventory собран при любом failure, final source имеет GREEN required CI.
+- [x] 4.2 Зафиксировать coherent commits, обновить delivery record/OpenSpec task state и запустить один exact-source GitHub CI через выбранного consumer; verification: complete failure inventory собран при любом failure, final source имеет GREEN required CI.
 - [ ] 4.3 Открыть PR в `main` со scope, contract, test/review/CI evidence и остановиться; verification: harness показывает exact PR/source publication-ready, merge/deployment не выполнены.
