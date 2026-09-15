@@ -200,34 +200,32 @@ class DeliveryHarnessHardening(unittest.TestCase):
 
     def test_roster_consistency_fails_before_ci_and_recovers(self):
         product_catalog = (self.repo / 'tools/verification/suites.tsv').read_text()
-        product_categories = json.loads((self.repo / 'tools/verification/categories.json').read_text())
         for agent_test in ['tests/Verification/delivery_harness_hardening_001_test.py',
                            'tests/Verification/delivery_harness_mutation_001_test.py']:
             self.assertNotIn(agent_test, product_catalog,
                              'INTENDED_RED agent harness leaked into product suites')
-            self.assertNotIn(agent_test, product_categories,
-                             'INTENDED_RED agent harness leaked into product categories')
         baseline = self.command(sys.executable, 'tools/verification/ci.py', 'verify-roster')
         self.assertEqual(0, baseline.returncode, 'INTENDED_RED public roster check absent: ' + baseline.stderr)
-        suite = 'tests/Verification/synthetic_new_e2e_test.py'
-        (self.repo / suite).write_text('print("SYNTHETIC_E2E_OK")\n')
-        with (self.repo / 'tools/verification/suites.tsv').open('a') as stream:
-            stream.write(f'e2e\tpython3\t{suite}\n')
+        suite = 'tests/Verification/synthetic_new_e2e_test.mjs'
+        (self.repo / suite).write_text('console.log("SYNTHETIC_E2E_OK");\n')
         stale = self.command(sys.executable, 'tools/verification/ci.py', 'verify-roster')
         self.assertNotEqual(0, stale.returncode)
-        mapping = json.loads((self.repo / 'tools/verification/categories.json').read_text())
-        mapping[suite] = 'e2e'
-        (self.repo / 'tools/verification/categories.json').write_text(json.dumps(mapping, sort_keys=True) + '\n')
+        catalog = self.repo / 'tools/verification/suites.tsv'
+        rows = [tuple(line.split('\t')) for line in catalog.read_text().splitlines() if line]
+        rows.append(('e2e', 'node', suite, 'e2e'))
+        rows.sort(key=lambda row: (row[0], row[2], row[1], row[3]))
+        catalog.write_text(''.join('\t'.join(row) + '\n' for row in rows))
         fixed = self.command(sys.executable, 'tools/verification/ci.py', 'verify-roster')
         self.assertEqual(0, fixed.returncode, fixed.stderr)
         listed = self.command(sys.executable, 'tools/verification/ci.py', 'list', 'e2e')
-        self.assertEqual(1, listed.stdout.splitlines().count(f'python3\t{suite}'))
+        self.assertEqual(1, listed.stdout.splitlines().count(f'node\t{suite}'))
 
     def test_bounded_agent_entry_point_excludes_product_execution(self):
         result = self.command(sys.executable, 'tools/delivery/verify.py', 'list')
         self.assertEqual(0, result.returncode, 'INTENDED_RED bounded harness entry point absent: ' + result.stderr)
         commands = result.stdout.splitlines()
         self.assertEqual([
+            'python3 tests/Verification/delivery_execution_107_i1_test.py',
             'python3 tests/Verification/delivery_harness_001_test.py',
             'python3 tests/Verification/change_verification_001_test.py',
             'python3 tests/Verification/verification_ci_001_test.py',

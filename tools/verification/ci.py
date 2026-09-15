@@ -20,8 +20,8 @@ HARNESS_CORE = [
 ]
 HARNESS_METADATA = HARNESS_CORE + [
     '.github/workflows/quality-graph.yml', '.quality-graph/verification-policy.json',
-    'tools/verification/ci.py', 'tools/verification/suites.tsv',
-    'tools/verification/categories.json', 'reviews/tests/*HARNESS*.md',
+    'tools/verification/ci.py', 'tools/verification/inventory.py',
+    'tools/verification/suites.tsv', 'reviews/tests/*HARNESS*.md',
     'reviews/code/*HARNESS*.md', 'AGENTS.md', 'docs/operations/current-delivery-goal.md',
 ]
 
@@ -83,27 +83,22 @@ def strict_object(pairs):
     return result
 
 
+def inventory_module():
+    path = ROOT / 'tools/verification/inventory.py'
+    spec = importlib.util.spec_from_file_location('fmonitor_verification_inventory', path)
+    module = importlib.util.module_from_spec(spec)
+    previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode
+    return module
+
+
 def inventory():
-    mapping = json.loads((ROOT / 'tools/verification/categories.json').read_text(),
-                         object_pairs_hook=strict_object)
-    if not isinstance(mapping, dict) or any(v not in CATEGORIES for v in mapping.values()):
-        raise ValueError('invalid category mapping')
-    items = []
-    seen = set()
-    for suite in ['unit', 'db', 'characterization', 'e2e']:
-        result = subprocess.run(['bash', 'tools/verification/run.sh', 'list', suite],
-                                cwd=ROOT, capture_output=True, text=True)
-        if result.returncode:
-            raise ValueError(result.stderr.strip())
-        for line in result.stdout.splitlines():
-            runtime, path = line.split('\t')
-            if path in seen:
-                raise ValueError(f'duplicate full-suite path: {path}')
-            seen.add(path)
-            items.append((runtime, path))
-    if seen != set(mapping):
-        raise ValueError(f'category inventory mismatch: missing={sorted(seen - set(mapping))} extra={sorted(set(mapping) - seen)}')
-    return [(mapping[path], runtime, path) for runtime, path in items]
+    return [(entry.category, entry.runtime, entry.path)
+            for entry in inventory_module().load(ROOT)]
 
 
 def docs_only(path):
@@ -287,10 +282,10 @@ def run_fast_node(base, event):
     if event == 'pull_request' and selected and selected.get('verification_lane') == 'FAST':
         return run_fast(base)
     commands = [
+        ['python3', 'tools/verification/inventory.py', 'validate'],
         ['make', 'lint', 'architecture-check'],
         ['python3', 'tools/delivery/render-dependencies.py', '--check'],
         ['python3', 'tests/Verification/development_setup_001_test.py'],
-        ['python3', 'tests/Verification/verification_ci_001_test.py'],
         ['uv', 'sync', '--frozen'],
         ['uv', 'run', '--frozen', 'python', 'tools/delivery/render-current-quality-graph.py', '--check'],
         ['python3', 'tools/delivery/check-current-quality-graph.py', '--root', '.'],

@@ -37,6 +37,25 @@ def load_json(relative):
     return json.loads(repo_path(relative).read_text(), object_pairs_hook=strict_object)
 
 
+def inventory_module():
+    path = ROOT / "tools/verification/inventory.py"
+    spec = importlib.util.spec_from_file_location("fmonitor_verification_inventory", path)
+    module = importlib.util.module_from_spec(spec)
+    previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode
+    return module
+
+
+def load_inventory(policy):
+    module = inventory_module()
+    entries = module.load(ROOT, Path(policy["suite_inventory"]))
+    return module, entries, {entry.path: entry.category for entry in entries}
+
+
 def plan_path(value):
     """Resolve only generated plan artifacts outside the repository."""
     if not isinstance(value, str) or not value or "\x00" in value:
@@ -140,7 +159,7 @@ def actual_snapshot(base):
 def validate_policy(policy):
     if not isinstance(policy, dict) or policy.get("version") != 1:
         raise ValueError("invalid verification policy")
-    for key in ["graph", "spec", "inventory"]:
+    for key in ["graph", "spec", "suite_inventory"]:
         repo_path(policy.get(key))
     runtimes = policy.get("runtimes")
     if not isinstance(runtimes, dict) or not runtimes or any(v not in {"python3", "php", "node"} for v in runtimes.values()):
@@ -273,7 +292,7 @@ def canonical(value):
 def agent_harness_path(path):
     patterns = (
         "tools/delivery/*", "tools/verification/ci.py", "tools/verification/suites.tsv",
-        "tools/verification/categories.json", ".github/workflows/quality-graph.yml",
+        "tools/verification/inventory.py", ".github/workflows/quality-graph.yml",
         ".quality-graph/verification-policy.json", "tests/Verification/delivery_harness*_test.py",
         "tests/Verification/*hardening*_test.py",
         "tests/Verification/change_verification_001_test.py",
@@ -375,9 +394,11 @@ def build(base_ref, input_name):
         reasons = sorted(boundary_names - fast_boundaries)
     escalations = ([] if verification_lane == "FAST" else
                    [{"lane": verification_lane, "reason": reason} for reason in reasons])
-    inventory = load_json(policy["inventory"])
-    if not isinstance(inventory, dict) or any(v not in CATEGORIES for v in inventory.values()):
-        raise ValueError("invalid category inventory")
+    inventory_api, inventory_entries, inventory = load_inventory(policy)
+    inventory_api.validate_added_paths(
+        [item["path"] for item in actual if item["status"] in {"added", "untracked"}],
+        inventory_entries,
+    )
     validate_policy_inventory(policy, inventory)
     consumer_tests = set()
     for path in effective:
@@ -504,7 +525,7 @@ def build(base_ref, input_name):
         "actual_content": contents,
         "graph": digest(repo_path(policy["graph"])),
         "input": digest(repo_path(input_name)),
-        "inventory": digest(repo_path(policy["inventory"])),
+        "inventory": digest(repo_path(policy["suite_inventory"])),
         "planner_spec": digest(repo_path(policy["spec"])),
         "policy": digest(repo_path(POLICY)),
         "source": digest(Path(__file__).resolve()),
@@ -688,14 +709,14 @@ def preflight(plan_name):
             result = subprocess.run(relation["check"], cwd=ROOT, capture_output=True, text=True)
             if result.returncode:
                 failures.append({"code": "GENERATED_SOURCE_DRIFT", "argv": relation["check"]})
-    suites = repo_path(policy["suite_inventory"]).read_text() if policy.get("suite_inventory") else ""
-    categories = load_json(policy["inventory"])
+    _inventory_api, inventory_entries, categories = load_inventory(policy)
+    registered = {entry.path for entry in inventory_entries}
     observed_services = {}
     for service, argv in policy.get("service_probes", {}).items():
         probe = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True)
         observed_services[service] = probe.returncode == 0
     for path in effective:
-        if path.startswith("tests/") and path in suites and path not in categories:
+        if path.startswith("tests/") and path in registered and path not in categories:
             failures.append({"code": "STALE_VERIFICATION_INVENTORY", "path": path})
         target = repo_path(path)
         discovered = _declared_dependencies(target) if target.is_file() else {"python": [], "php": [], "node": []}

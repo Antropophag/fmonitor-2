@@ -59,11 +59,12 @@ class NativeSuites(unittest.TestCase):
 
 
     def write_catalog(self, unit=UNIT, db=DB, clients=(CLIENT,)):
-        rows = [('unit', 'php', p) for p in unit]
-        rows += [('unit', 'node', p) for p in clients]
-        rows += [('db', 'php', p) for p in db]
+        rows = [('unit', 'php', p, 'unit') for p in unit]
+        rows += [('unit', 'node', p, 'unit') for p in clients]
+        rows += [('db', 'php', p, 'integration') for p in db]
         (self.root / 'tools/verification/suites.tsv').write_text(
-            ''.join('\t'.join(row) + '\n' for row in rows))
+            ''.join('\t'.join(row) + '\n'
+                    for row in sorted(rows, key=lambda row: (row[0], row[2], row[1], row[3]))))
 
     def run_cli(self, *arguments, failures=()):
         env = dict(self.env, FAIL_PATHS=''.join(f'|{p}|' for p in failures))

@@ -51,16 +51,19 @@ make test-env-down
 
 ## Явный состав
 
-`suites.tsv` задаёт группу, интерпретатор (`php`, `node`, `python3`) и путь через TAB.
+`suites.tsv` — единственный canonical inventory. Он задаёт legacy-группу,
+интерпретатор (`php`, `node`, `python3`), путь и CI-категорию через TAB.
 Старые группы unit/db/characterization/e2e сохранены для совместимости полного
 harness; историческая unit-группа включает инфраструктурные проверки.
-`categories.json` задаёт новое непересекающееся распределение каждого файла по
+Последнее поле задаёт непересекающееся распределение каждого файла по
 unit/integration/e2e/governance. Категория unit — проверенный быстрый набор без БД.
 
 ```sh
 bash tools/verification/run.sh list db
 python3 tools/verification/ci.py list unit
 python3 tools/verification/ci.py plan --base origin/main --event pull_request
+python3 tools/verification/inventory.py validate
+make register-test FILE=tests/Verification/example_test.py CATEGORY=governance RUNTIME=python3 SUITE=characterization
 ```
 
 Новый тест регистрируется явно. Незарегистрированный `*test.php` в двух основных

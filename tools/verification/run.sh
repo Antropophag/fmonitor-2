@@ -41,37 +41,29 @@ require_db() {
 
 # Explicit inventory: validate everything before printing a list or executing tests.
 load_inventory() {
-  local directory line group runtime file extra key
-  local seen=$'\n' registered=$'\n'
-  local catalog=tools/verification/suites.tsv
+  local directory runtime file inventory_output status
   for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification tests/Otiz tests/Runtime tests/Jobs; do
     test -d "$directory" || fail SETUP_FAILURE "missing verification directory: $directory"
   done
-  test -f "$catalog" || fail SETUP_FAILURE "missing verification catalog: $catalog"
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ -z "$line" || "$line" == \#* ]] && continue
-    IFS=$'\t' read -r group runtime file extra <<< "$line"
-    [[ "$line" == "$group"$'\t'"$runtime"$'\t'"$file" ]] \
-      || fail SETUP_FAILURE "invalid catalog row: $line"
-    case "$group" in unit|db|characterization|e2e) ;; *) fail SETUP_FAILURE "unknown catalog suite: $group" ;; esac
-    case "$runtime" in php|node|python3) ;; *) fail SETUP_FAILURE "unknown catalog runtime: $runtime" ;; esac
-    [[ "$file" =~ ^(tests|rapid-pilot)/[a-zA-Z0-9_./-]+$ && "$file" != *..* ]] \
-      || fail SETUP_FAILURE "invalid catalog path: $file"
-    test -f "$file" || fail SETUP_FAILURE "missing catalog file: $file"
-    key="$group"$'\t'"$file"
-    [[ "$seen" != *$'\n'"$key"$'\n'* ]] || fail SETUP_FAILURE "duplicate catalog member: $key"
-    seen+="$key"$'\n'
-    registered+="$file"$'\n'
-    if [[ "$group" == "$suite" ]]; then
-      selected_runtimes+=("$runtime")
-      selected_files+=("$file")
-    fi
-  done < "$catalog"
-  for file in tests/InstallationProcess/*test.php tests/AssignmentOrderComposition/*test.php tests/Verification/*_test.mjs tests/Otiz/*test.php tests/Runtime/*test.php tests/Jobs/*test.php; do
-    test -f "$file" || continue
-    [[ "$registered" == *$'\n'"$file"$'\n'* ]] \
-      || fail SETUP_FAILURE "unregistered verifier: $file; add it to $catalog"
-  done
+  case "$suite" in
+    unit|db|characterization|e2e)
+      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py list --suite "$suite" 2>&1)"
+      ;;
+    *)
+      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py validate 2>&1)"
+      ;;
+  esac
+  status=$?
+  if ((status != 0)); then
+    printf '%s\n' "$inventory_output" >&2
+    exit "$status"
+  fi
+  [[ "$suite" == unit || "$suite" == db || "$suite" == characterization || "$suite" == e2e ]] || return 0
+  while IFS=$'\t' read -r runtime file; do
+    [[ -n "$runtime" ]] || continue
+    selected_runtimes+=("$runtime")
+    selected_files+=("$file")
+  done <<< "$inventory_output"
 }
 
 run_selected() {
