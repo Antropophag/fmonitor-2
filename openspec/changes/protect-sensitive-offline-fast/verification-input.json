@@ -1,0 +1,29 @@
+{
+  "acceptances": [
+    {
+      "acceptance_id": "sensitive-offline-public-planner-matrix",
+      "gate3_expected": {
+        "tests/Verification/change_verification_sensitive_offline_132_test.py": "INTENDED_RED"
+      },
+      "seam": "python3 tools/delivery/change-verification.py plan JSON output",
+      "spec_id": "SENSITIVE-OFFLINE-VERIFICATION-001",
+      "spec_path": "specs/SENSITIVE-OFFLINE-VERIFICATION-001.md",
+      "tests": [
+        "tests/Verification/change_verification_sensitive_offline_132_test.py"
+      ]
+    }
+  ],
+  "change": "protect-sensitive-offline-fast",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/protect-sensitive-offline-fast/design.md",
+    "openspec/changes/protect-sensitive-offline-fast/proposal.md",
+    "openspec/changes/protect-sensitive-offline-fast/specs/sensitive-offline-verification/spec.md",
+    "openspec/changes/protect-sensitive-offline-fast/tasks.md",
+    "openspec/changes/protect-sensitive-offline-fast/verification-input.json",
+    "specs/SENSITIVE-OFFLINE-VERIFICATION-001.md",
+    "tests/Verification/change_verification_sensitive_offline_132_test.py",
+    "tools/verification/suites.tsv"
+  ]
+}
