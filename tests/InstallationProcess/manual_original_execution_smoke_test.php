@@ -10,9 +10,10 @@ $f=new F('ma_');
 try {
     $f->selection->db->query('UPDATE ma_fm_maintable SET id=94512 WHERE id=4512');
     $f->selection->db->query('UPDATE ma_fm2_installation_cases SET legacy_installation_object_id=94512 WHERE id=4512');
+    $f->selection->db->query('UPDATE ma_fm2_control_engineer_assignments SET object_id=94512 WHERE installation_case_id=4512');
     $selected=$f->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command(1,0,7001,94512));
     assertSameValue('selected',$selected->status()->value,'selected');
-    assertSameValue(['applied'=>true],I\AssignmentOrderApplicationSchemaMigration::apply($f->selection->db,'ma_'),'application schema');
+    assertSameValue(true,I\AssignmentOrderApplicationSchemaMigration::isReady($f->selection->db,'ma_'),'application schema');
     $f->selection->schema->insert('ma_fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'assignment_order.composition.apply']);
     $original=$f->app()->submitAssignmentOrderOriginal(F::command(new O\AssignmentOrderOriginalMemoryStream(F::pdf())));
     assertSameValue(O\AssignmentOrderOriginalStatus::ACCEPTED,$original->status(),'original accepted');

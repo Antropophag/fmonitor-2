@@ -49,7 +49,7 @@ final readonly class SelectionForm
             if (preg_match('/%(?![0-9A-Fa-f]{2})/', implode('', $pair))) throw new \InvalidArgumentException();
             $key = rawurldecode(str_replace('+', ' ', $pair[0]));
             $value = rawurldecode(str_replace('+', ' ', $pair[1] ?? ''));
-            if(preg_match('/^installerTabIds\[[0-9]+\]$/D',$key)===1)$key='installerTabIds[]';
+            if(preg_match('/^installerTabIds\[[0-9]+\]$/D',$key)===1)throw new \InvalidArgumentException();
             if (!in_array($key, self::ALLOWED, true) || str_contains($key, "\0") || str_contains($value, "\0")) throw new \InvalidArgumentException();
             if ($key === 'installerTabIds[]') {
                 $fields[$key][] = $value;
