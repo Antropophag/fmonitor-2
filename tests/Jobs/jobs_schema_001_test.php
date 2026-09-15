@@ -77,7 +77,7 @@ try {
     assertSameValue($before, [$tables($db), $rows($db)], 'other prefix repeat preserves populated first family');
     assertSameValue(false, JobsSchemaMigration::apply($db, $prefix)['applied'], 'populated migration repeat is no-op');
     $repeat = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0, 25, []], [$repeat['exitCode'], $repeat['result']['schemaVersion'] ?? null,
+    assertSameValue([0, 26, []], [$repeat['exitCode'], $repeat['result']['schemaVersion'] ?? null,
         $repeat['result']['appliedVersions'] ?? null], 'canonical repeat applies no version');
     assertSameValue($before, [$tables($db), $rows($db)], 'repeat preserves exact rows, history and table inventory');
 

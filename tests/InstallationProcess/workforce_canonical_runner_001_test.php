@@ -307,6 +307,7 @@ try {
                 'fm2_assignment_order_selection_requests',
                 'fm2_assignment_order_selections',
                 'fm2_assignment_orders',
+                'fm2_bitrix_order_document_links',
                 'fm2_checklist_operation_installers',
                 'fm2_checklist_operations',
                 'fm2_checklist_photos',
