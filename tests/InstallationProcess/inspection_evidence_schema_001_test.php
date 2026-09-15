@@ -309,8 +309,8 @@ try {
     assertSameValue('', $runner['stderr'], 'Canonical runner setup keeps stderr empty.');
     $runnerResult = json_decode($runner['stdout'], true, flags: JSON_THROW_ON_ERROR);
     assertSameValue([1,2,3,4,5,6,7], array_slice($runnerResult['appliedVersions'], 0, 7), 'Landed prerequisites v1-v7 must apply before inspection evidence.');
-    assertSameValue(27, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v27 after proven v1-v7.');
-    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
+    assertSameValue(28, $runnerResult['schemaVersion'], 'G2-01 canonical runner must own literal terminal v28 after proven v1-v7.');
+    assertSameValue([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28], $runnerResult['appliedVersions'], 'G2-01 runner ordering is exact.');
     iesAssertRuntimeDoesNotOwnDdl();
 
     $db = new mysqli($host, $user, $password, $database, $port); $db->set_charset('utf8mb4');
