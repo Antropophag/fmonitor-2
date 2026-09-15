@@ -25,4 +25,7 @@
 
 ## Publication
 
-Exact commit, PR и GitHub CI заполняются после публикации candidate. Merge/deployment не выполняются.
+- Implementation commit: `481970dc`.
+- PR: [#151](https://github.com/Antropophag/fmonitor-2/pull/151).
+- Exact-source GitHub CI: ожидается для последнего PR commit; результат фиксируется после завершения.
+- Merge/deployment не выполняются.

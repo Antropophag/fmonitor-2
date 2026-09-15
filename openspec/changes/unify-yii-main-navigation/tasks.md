@@ -15,6 +15,6 @@
 ## 3. Gate 5 и PR-ready
 
 - [x] 3.1 Подготовить точный reconstructible source package и получить независимый planner-required final review без findings; при коррекциях повторно проверить изменённый delta
-- [ ] 3.2 Создать meaningful commits, push branch и открыть PR для #150 без merge/deploy; проверить exact source binding
+- [x] 3.2 Создать meaningful commits, push branch и открыть PR для #150 без merge/deploy; проверить exact source binding
 - [ ] 3.3 Запустить один existing exact-source GitHub CI consumer, собрать полный failed-job/`REGRESSION_FAILURE` inventory при сбое и довести CI до GREEN без локального full suite
 - [ ] 3.4 Обновить delivery record и handoff фактическими авторами, review/return counts, focused evidence, exact commit/PR/CI и подтвердить состояние PR-ready
