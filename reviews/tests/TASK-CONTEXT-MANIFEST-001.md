@@ -81,3 +81,25 @@ B. **BLOCKING — the executable measurement can omit required acceptance fields
 1. Complete reviewer-package and load-on-demand reconstruction assertions described in finding A.
 2. Complete the deterministic measurement assertions described in finding B.
 3. Retain a refreshed exact-source RED and request independent rereview before executor dispatch.
+
+---
+
+## Gate 3 rereview v3 — final test approval
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test author / correction author: root
+- Reviewed correction: commit `0f4ed6980c4253f8c008c7d6d7ab8fe5b0f6a868`; candidate source `d60dea9657bf590fd0ffb87663c4fd912cb45f8841614da441124653d64cd088`; package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T212214Z-57c39472cc/package.json`; snapshot manifest SHA-256 `5adb2edaf3f38b521673dc9999f1d38e9a8bf17716efc24268246829379a7669` (empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
+- Refreshed RED: `python3 tests/Verification/delivery_harness_context_manifest_001_test.py`; retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789507319313431000-44219df7ed094b419f2639f2842e1f17.json`; exit 1 with the same four intended missing-behavior failures
+- Verdict: `APPROVED`
+
+### Remaining findings disposition
+
+A. **Resolved.** Reviewer tests now bind exact candidate source and snapshot, verify current review presence, retain exact evidence and contract bindings, and recompute every product/spec digest from canonical bytes. Historical goal/review/evidence load-on-demand items now require exact source paths and SHA-256 values recomputed from their canonical bytes.
+
+B. **Resolved.** Each replay now propagates the baseline `whole_sources` and `obviously_historical_or_unrelated` inventories, binds `input_digest` to the named input's exact bytes, checks every required numeric metric, remains deterministic across two runs, and requires the complete reviewed persistence and harness rule inventories.
+
+### Final assessment
+
+The normative spec and OpenSpec artifacts remain within issue #157/T02 and preserve canonical documents as the only source of truth. The corrected executable matrix is independently expected, deterministic and sensitive across cases A-L: bounded UI reduction, sensitive applicability, conservative unknown fallback, source/index freshness, all three roles, exact reconstruction, historical on-demand references, admission fail-closed behavior and reproducible measurement with token usage `UNKNOWN`. The retained RED fails because the manifest and measurement implementation do not yet exist, not because of broken setup.
+
+Gate 3 is approved for executor dispatch. This approval covers specification/tests/RED only and is not Gate 5 approval of any implementation.

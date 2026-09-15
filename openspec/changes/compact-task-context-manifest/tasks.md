@@ -2,7 +2,7 @@
 
 - [x] 1.1 Root фиксирует canonical spec, verification input и before-measurement для трёх representative completed changes; verification: deterministic report перечисляет mandatory sources, bytes/chars, full-doc count, unrelated/history notes и `token_usage: UNKNOWN`.
 - [x] 1.2 Root добавляет executable RED cases A–L через public `harness.py prepare/package` route; verification: focused test падает только из-за отсутствующего task-context manifest behavior.
-- [ ] 1.3 Независимый sol/low reviewer проверяет scope/spec/tests/RED и записывает Gate 3 findings/APPROVED; unresolved finding блокирует executor.
+- [x] 1.3 Независимый sol/low reviewer проверяет scope/spec/tests/RED и записывает Gate 3 findings/APPROVED; unresolved finding блокирует executor.
 
 ## 2. Minimal implementation
 
