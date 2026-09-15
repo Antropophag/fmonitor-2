@@ -53,3 +53,25 @@ None. Cases A-H are executable and traceable: skew improvement and exact LPT all
 ### Required changes
 
 None. Gate 3 may advance to minimal implementation against corrected test SHA-256 `a563197f822cb47df833a42a9c1b3068f4e1ee934a4555dbcf878a77e94ac0b2`.
+
+---
+
+## Gate 3 restart — missing per-test fallback diagnostic
+
+- Reviewer: independent Codex reviewer `/root/issue136_gate3`; authored neither the contract nor the revised test
+- Restart reason: final review found that a canonical test missing its individual historical weight could use fallback without emitting the required diagnostic; root added the acceptance assertion and reconstructed a no-implementation RED source
+- Reviewed source: commit `f8f20fe7a3d47dab7fa13c621d0d1018f22eeee7`; candidate source `69f68c19da603e5ac575b9d0cd15b90c44bb2b43e35febea02617469791c2363`; executable source `14990ce9f1bd3f3adbe6787143b4bc76f05357cc83d0dd9dc1c64f93797c1edf`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T214016Z-fb6d4c0b1e/snapshot/source.patch`, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (empty patch over the reviewed commit)
+- Prepared reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T214016Z-fb6d4c0b1e/package.json`; plan SHA-256 `f497c2aa411562626aecda21ee396177e2da0adc4b4e1883e88cd1daeb036886`
+- Revised test: `tests/Verification/verification_ci_001_test.py`, SHA-256 `40644bfdd8d8ecc7e5123f864e87a6ae40ebb98c035ae370395d81440d68f4c2`
+- Specification: `specs/QUALITY-GRAPH-SHARDING-136.md`, SHA-256 `09ddd232630ba6bc7629c8a1b82d6593f34302021111440722942202195c41ca`; normative contract unchanged, with the required plain-language preface added
+- Revised RED evidence: `python3 tests/Verification/verification_ci_001_test.py`; retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789508360217332000-8897a985060041e7afc07fb4ea909895.json`; exit `1`, `INTENDED_RED`. Seventeen unaffected methods remain GREEN. The four non-green methods are attributable to absent pre-implementation behavior: old round-robin cannot improve the skew (`24.0 == 24.0`), the no-implementation module lacks the LPT seams, invalid/missing artifacts emit no fallback marker, and the newly covered per-test missing weight emits neither `INTEGRATION_TIMING_FALLBACK` nor `missing weight`. No runtime, fixture or environment setup failed.
+- Preservation evidence: canonical inventory record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789508378729615000-d5eb729fa60a47d697aa0bc78960beac.json` is GREEN (22 tests); #153A semantic-closure record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789508400787784000-e6cec02de44a456b8e81d18ef8b2fea0.json` is GREEN (11 tests)
+- Verdict: `APPROVED`
+
+### Findings and disposition
+
+None. The added assertions at `tests/Verification/verification_ci_001_test.py:261-265` close the exact gap: a hints file may be readable and syntactically valid yet omit every new canonical path, and each shard invocation must now expose both the stable fallback marker and the specific `missing weight` reason while still returning success. The same fixture continues to prove the new tests are scheduled exactly once, stale history does not restore a removed path, and union/intersection invariants hold. All previously approved A-H algorithm, order-independence, invalid-input, workflow-topology and fail-closed aggregate coverage remains unchanged.
+
+### Required changes
+
+None. Gate 3 is re-approved for the minimal implementation correction against revised test SHA-256 `40644bfdd8d8ecc7e5123f864e87a6ae40ebb98c035ae370395d81440d68f4c2`.
