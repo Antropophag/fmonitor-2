@@ -64,3 +64,25 @@ None.
 `app/YiiRuntime/MainNavigation.php:29-35` now emits the optional administration group and links before the feedback link, preserving feedback as the final MAIN anchor. The independently approved assertion at `tests/Yii2/yii2_main_navigation_001_test.php:81` applies that invariant across every available target route and permission phase and was demonstrably RED against the previous exact renderer before turning GREEN on this package.
 
 The complete candidate preserves the established sidebar group/icon structure, limits the new MAIN navigation to the exact five contract surfaces, filters all section links through `canonicalAccess`, keeps both admin links under `access.administer`, supplies the correct feedback return path and exactly one route-correct `aria-current="page"`, preserves distinct OTIZ internal navigation, and leaves routes, RBAC, login/deny and server-side authorization logic unchanged. The read-only/no-facts and focused governance/architecture evidence is exact-source GREEN. Full GitHub CI remains a subsequent PR-ready gate and is not claimed by this approval.
+
+## Post-approval CI-setup delta review
+
+- Reviewer: Codex independent final reviewer `/root/final_review`; authored none of the reviewed delta
+- Reviewed exact source: commit `56c7d9aea667b1c6aa5dbeae3cacd770c6a683fe` in clean review checkout `/private/tmp/fmonitor-issue150-ci-review`; retained package snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T122518Z-65a4a06ded/snapshot/source.patch` is empty, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, candidate source `ec47d24433dc1f5a4ac166315eea3149ee1cb0e032bb7bd7f260bc72053b8bc7`, executable source `73915772edaeec338e7fa0bc275f729b98492334141660a0d4ca70c0b6b74ac5`
+- Previous approved source: snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T120938Z-cf803fee97/snapshot`, candidate `6ed71c0df5779afecd9087317890f64e7fac1f2835f144391f3aef67dbb1582e`
+- Supplied cross-snapshot delta: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T122518Z-65a4a06ded/delta.patch`, SHA-256 `2eca83b9bde8a30ab36fb487d499302b475d2554ecff1813038f155e48328807`
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T122518Z-65a4a06ded/verification-plan.json`, SHA-256 `ace9405db448adb5e4e23f6c227e5b673987a3da624f29011fed4126b4798f55`, lane `CRITICAL`, required reviews `gate3`, `final`, required categories `governance`, `integration`, `unit`, no missing tests
+- Exact focused evidence: `php tests/Yii2/yii2_main_navigation_001_test.php` GREEN, exit 0, 21.122231875s, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789474999964452000-318edc0cecf94ab1a7e4b5adc050d791.json`; `python3 tests/Verification/change_verification_001_test.py` GREEN, exit 0, 22.239703333s, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789475024785523000-f8b50cbef91041f9ba28a4b29004eac2.json`; planner-added `php tests/Runtime/runtime_storage_001_test.php` GREEN, exit 0, 2.345123667s, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789475051131017000-1a729d5f998f44f2bda0338813074929.json`; `python3 tests/Verification/architecture_guard_001_test.py` GREEN, exit 0, 19.767841125s, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789475057078442000-b27d9e4eeb5b46328ac04d302888d8c8.json`. Every record binds exact candidate source `ec47d244...` and executable source `73915772...`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### Disposition
+
+The authoritative commit delta `7876b00375ea9c2435852a238792b69855c14045..56c7d9aea667b1c6aa5dbeae3cacd770c6a683fe` changes exactly `tools/verification/categories.json` and `docs/operations/issue-150-main-navigation-delivery.md`. The category change registers `tests/Yii2/yii2_main_navigation_001_test.php` as `integration`, consistent with its real Yii HTTP/disposable-database seam and with its existing `db` suite registration. The delivery-record addition transparently records the complete first-CI setup-failure inventory, common missing-category cause, absence of `REGRESSION_FAILURE`, and the bounded correction without claiming CI GREEN.
+
+The supplied cross-snapshot delta also displays removal of unrelated untracked `openspec/changes/sync-erp-equipment-facts/` WIP and incorporation of previously uncommitted issue #150 workflow records. Those are artifacts of comparing the earlier dirty shared-worktree snapshot with the clean commit checkout, not changes made by commit `56c7d9ae`: the commit contains no such deletions, and the unrelated WIP remains present in the shared worktree. They therefore do not expand this commit's spec or delivery scope and are not approved as deletions.
+
+No production, normative-spec, behavioral-test, route, RBAC, authorization, navigation, OTIZ, or domain-fact behavior changed. The prior Gate 5 approval remains valid for this exact source. CI is still pending/UNKNOWN in harness state and is not treated as GREEN or publication-ready by this review.
