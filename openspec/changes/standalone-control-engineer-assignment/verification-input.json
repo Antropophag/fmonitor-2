@@ -71,6 +71,8 @@
     "tests/Yii2/feedback_schema_matrix.php",
     "tests/AssignmentOrderComposition/selection_native_authority_001_test.php",
     "tools/verification/suites.tsv",
+    "tools/verification/categories.json",
+    "tools/architecture/baseline.json",
     "config/yii/web.php"
   ],
   "acceptances": [
