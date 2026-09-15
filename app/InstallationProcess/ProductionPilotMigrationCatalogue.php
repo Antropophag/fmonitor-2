@@ -34,6 +34,7 @@ final class ProductionPilotMigrationCatalogue
             24=>OtizSettlementSchemaMigration::class,
             25=>FeedbackSchemaMigration::class,
             26=>DeadlineTransferCertificateSchemaMigration::class,
+            27=>BitrixOrderDocumentLinksSchemaMigration::class,
         ];
     }
 }

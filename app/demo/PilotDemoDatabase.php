@@ -24,6 +24,7 @@ final class PilotDemoDatabase
         'fm2_assignment_order_original_events', 'fm2_assignment_order_original_requests', 'fm2_assignment_order_original_revisions',
         'fm2_assignment_order_original_roots', 'fm2_assignment_order_selections', 'fm2_assignment_order_selection_audits',
         'fm2_assignment_order_selection_events', 'fm2_assignment_order_selection_members', 'fm2_assignment_order_selection_requests',
+        'fm2_bitrix_order_document_links',
         'fm2_checklist_operations', 'fm2_checklist_operation_installers', 'fm2_checklist_photos', 'fm2_checklist_revisions',
         'fm2_checklist_template_associations', 'fm2_checklist_template_snapshots', 'fm2_installation_cases',
         'fm2_migration_classification_provenance', 'fm2_order_artifacts', 'fm2_order_installers',
@@ -53,9 +54,9 @@ final class PilotDemoDatabase
         $db->query("CREATE TABLE `{$legacy}users` (id BIGINT UNSIGNED NOT NULL PRIMARY KEY,name VARCHAR(300) NOT NULL,email VARCHAR(300) NOT NULL,role_id BIGINT UNSIGNED NOT NULL,status INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $db->query("INSERT INTO `{$legacy}users_roles` VALUES(5,'ФКР',1),(8,'Строительный контроль',1)");
         $db->query("INSERT INTO `{$legacy}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
-        $db->query("INSERT INTO `{$legacy}fm_maintable` VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
+        $db->query("INSERT INTO `{$legacy}fm_maintable`(id,ordadr_address,entrance,regnumber,workdatestart,workdateendadjusted,plan_finish_date,workdatefinish,ptoactdate,responsstroicontrol) VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
         $migration=CanonicalMigrationApplication::run($db,$process,ProductionPilotMigrationCatalogue::migrations());
-        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>25,'appliedVersions'=>range(1,25)]])throw new RuntimeException();
+        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>27,'appliedVersions'=>range(1,27)]])throw new RuntimeException();
         $marker=$db->real_escape_string("fmonitor2-demo:{$fingerprint}:{$generation}:{$nonce}");
         $db->query("ALTER TABLE `{$process}fm2_installation_cases` COMMENT='{$marker}'");
         $db->query("ALTER TABLE `{$legacy}fm_maintable` COMMENT='{$marker}'");

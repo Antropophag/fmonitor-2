@@ -12,7 +12,7 @@ final class MariaDbLegacySourceSnapshot
         $this->source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
         $this->source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
         try {
-            $statement = $this->source->prepare("SELECT id,ordadr_address,entrance,regnumber,workdatestart,workdatestartadjusted,workdateendadjusted,plan_finish_date,workdatefinish,CASE WHEN ptoactdate<=? THEN ptoactdate ELSE NULL END ptoactdate,responsstroicontrol,CASE WHEN factworkstartdate<=? THEN factworkstartdate ELSE NULL END factworkstartdate,object_status,fact_percent,workstarted,floors,weight,speed,pittype,pitmaterial,paired FROM fm_maintable ORDER BY id");
+            $statement = $this->source->prepare("SELECT id,ordadr_address,entrance,regnumber,zavnumber,workdatestart,workdatestartadjusted,workdateendadjusted,plan_finish_date,workdatefinish,CASE WHEN ptoactdate<=? THEN ptoactdate ELSE NULL END ptoactdate,responsstroicontrol,CASE WHEN factworkstartdate<=? THEN factworkstartdate ELSE NULL END factworkstartdate,object_status,fact_percent,workstarted,floors,weight,speed,pittype,pitmaterial,paired FROM fm_maintable ORDER BY id");
             $statement->bind_param('ss', $cutoff, $cutoff);
             $statement->execute();
             $objects = [];

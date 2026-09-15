@@ -33,7 +33,7 @@ final readonly class MariaDbYiiObjectCard
         try {
             $p = $this->prefix;
             $l = $this->legacyPrefix;
-            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
+            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
             $rows = $this->db->createCommand($sql, [':object' => $objectId])->queryAll();
             if ($rows === []) {
                 return null;
@@ -88,6 +88,7 @@ final readonly class MariaDbYiiObjectCard
                 'objectDetailsStatus' => $row['detail_payload'] === null ? 'unavailable' : ($detailValid ? 'available' : 'corrupt'),
                 'events' => [],
                 'hasPtoAct' => (bool) $row['has_pto'] || $this->optionalLegacyDate($row['ptoactdate']) !== null,
+                'technicalDocuments' => $this->documentLinks($row['zavnumber']),
             ];
             return $this->projection->decorate($card, $actorId, (int) $row['case_id'], (string) $row['process_state']);
         } catch (\DomainException | \RuntimeException $error) {
@@ -96,7 +97,12 @@ final readonly class MariaDbYiiObjectCard
             throw new \RuntimeException('Object card unavailable.', 0, $error);
         }
     }
-
+    private function documentLinks(mixed $orderNumber): array {
+        if ($orderNumber === null || $orderNumber === '') return ['status'=>'order_number_missing','links'=>[]];
+        try {$rows=$this->db->createCommand("SELECT DISTINCT source_folder_name,url FROM `{$this->prefix}fm2_bitrix_order_document_links` WHERE BINARY order_number=BINARY :order ORDER BY source_folder_name,url",[':order'=>(string)$orderNumber])->queryAll();}
+        catch (\Throwable) { return ['status'=>'unavailable','links'=>[]]; }
+        return ['status'=>$rows===[]?'empty':'available','links'=>array_map(static fn(array$row):array=>['name'=>$row['source_folder_name'],'url'=>$row['url']],$rows)];
+    }
     private function hasActiveCutoverProvenance(int $caseId): bool
     {
         $table = $this->prefix . 'fm2_active_case_provenance';
