@@ -196,6 +196,31 @@ def validate_policy(policy):
             raise ValueError("invalid boundary tests")
         for test in boundary["tests"]:
             test_argv(test, runtimes)
+    semantic_surfaces = policy.get("semantic_surfaces", [])
+    if not isinstance(semantic_surfaces, list):
+        raise ValueError("malformed semantic surface")
+    semantic_names = set()
+    for surface in semantic_surfaces:
+        if (not isinstance(surface, dict)
+                or set(surface) != {"name", "patterns", "category", "reason"}):
+            raise ValueError("malformed semantic surface")
+        name = surface["name"]
+        if not isinstance(name, str) or not name:
+            raise ValueError("invalid semantic surface name")
+        if name in semantic_names:
+            raise ValueError("duplicate semantic surface")
+        semantic_names.add(name)
+        patterns = surface["patterns"]
+        if (not isinstance(patterns, list) or not patterns
+                or len(patterns) != len(set(patterns))
+                or any(not isinstance(pattern, str) or not pattern for pattern in patterns)):
+            raise ValueError("semantic surface requires patterns")
+        for pattern in patterns:
+            repo_path(pattern)
+        if not isinstance(surface["reason"], str) or not surface["reason"].strip():
+            raise ValueError("semantic surface requires reason")
+        if surface["category"] != "integration":
+            raise ValueError("semantic surface requires integration category")
     consumers = policy.get("consumers", [])
     if not isinstance(consumers, list):
         raise ValueError("invalid consumer obligations")
@@ -400,6 +425,31 @@ def build(base_ref, input_name):
         inventory_entries,
     )
     validate_policy_inventory(policy, inventory)
+    integration_checks = sorted(
+        ([entry.runtime, entry.path] for entry in inventory_entries
+         if entry.category == "integration"),
+        key=lambda argv: tuple(argv),
+    )
+    semantic_escalations = []
+    for surface in sorted(policy.get("semantic_surfaces", []), key=lambda item: item["name"]):
+        matched_paths = sorted(
+            path for path in effective
+            if any(fnmatch.fnmatchcase(path, pattern) for pattern in surface["patterns"])
+        )
+        if not matched_paths:
+            continue
+        if not integration_checks:
+            raise ValueError(
+                f"SEMANTIC_INTEGRATION_CLOSURE_UNAVAILABLE: {surface['name']}: integration"
+            )
+        required_categories.add("integration")
+        semantic_escalations.append({
+            "surface": surface["name"],
+            "paths": matched_paths,
+            "reason": surface["reason"],
+            "required_category": "integration",
+            "added_checks": integration_checks,
+        })
     consumer_tests = set()
     for path in effective:
         matches = [consumer for consumer in policy.get("consumers", [])
@@ -493,6 +543,8 @@ def build(base_ref, input_name):
         add(test_argv(test, policy["runtimes"]), "focused", "confirmed consumer obligation")
     for test in effective_tests:
         add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
+    for argv in integration_checks if semantic_escalations else []:
+        add(argv, "focused", "semantic integration closure")
     for category in sorted(required_categories):
         if verification_lane != "FAST":
             for argv in policy["category_argv"].get(category, []):
@@ -550,6 +602,7 @@ def build(base_ref, input_name):
         "escalations": escalations,
         "required_reviews": ["final"] if verification_lane == "FAST" else ["gate3", "final"],
         "selected_checks": selected_checks,
+        "semantic_escalations": semantic_escalations,
         "acceptances": sorted(normalized_acceptances, key=lambda x: (x["spec_id"], x["acceptance_id"])),
         **({"dependency_workspaces": change.get("dependency_workspaces", [])} if typed else {}),
         "version": 2 if typed else 1,

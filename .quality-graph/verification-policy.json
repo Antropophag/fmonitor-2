@@ -258,6 +258,44 @@
     "e2e": {"services": ["mariadb", "browser", "container"], "languages": ["python3", "php", "node"]},
     "governance": {"services": [], "languages": ["python3", "php", "node"]}
   },
+  "semantic_surfaces": [
+    {
+      "name": "current-state-authority",
+      "patterns": ["app/**/*Current*.php", "app/**/*Projection*.php", "app/**/*State*.php"],
+      "category": "integration",
+      "reason": "authoritative current-state changes affect downstream consumers"
+    },
+    {
+      "name": "persistence-semantics",
+      "patterns": ["app/**/MariaDb*.php", "app/Infrastructure/Persistence/**"],
+      "category": "integration",
+      "reason": "persisted state semantics require integration closure"
+    },
+    {
+      "name": "schema-migration-frontier",
+      "patterns": ["app/**/*Migration*.php", "app/**/*Schema*.php", "migrations/**"],
+      "category": "integration",
+      "reason": "schema and migration frontier require integration closure"
+    },
+    {
+      "name": "domain-application-contract",
+      "patterns": [
+        "app/AssignmentOrderComposition/**", "app/AssignmentOrderOriginal/**",
+        "app/DeadlineTransferCertificate/**", "app/IdentityAccess/**",
+        "app/InspectionEvidence/**", "app/InstallationProcess/**", "app/Jobs/**",
+        "app/Otiz/**", "app/RapidPilot/**", "app/Runtime/**", "app/Workforce/**",
+        "app/YiiRuntime/*Application.php"
+      ],
+      "category": "integration",
+      "reason": "domain application contracts affect downstream consumers"
+    },
+    {
+      "name": "recovery-representation",
+      "patterns": ["app/**/*Recovery*.php", "app/**/*Restore*.php", "app/RuntimeRestore/**"],
+      "category": "integration",
+      "reason": "persisted recovery representation requires integration closure"
+    }
+  ],
   "test_prerequisites": {
     "tests/Yii2/yii2_imports_workforce_001_test.php": {"services": ["mariadb"]}
   },
