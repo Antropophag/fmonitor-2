@@ -41,8 +41,14 @@ class ContextManifest(unittest.TestCase):
         value.git("commit", "-qm", "context fixture")
         return value
 
-    def prepared(self, paths, role="root"):
+    def prepared(self, paths, role="root", large_history=False):
         value = self.fixture()
+        if large_history:
+            for number in range(25):
+                target = value.repo / f"docs/operations/current-delivery-goal-history-extra-{number:02d}.md"
+                target.write_text(f"historical {number}\n")
+            value.git("add", ".")
+            value.git("commit", "-qm", "large history fixture")
         for relative in paths:
             target = value.repo / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -79,6 +85,8 @@ class ContextManifest(unittest.TestCase):
         self.assertEqual("UNKNOWN", package["context_metrics"]["token_usage"])
         self.assertRegex(manifest["section_index"]["digest"], r"^[0-9a-f]{64}$")
         self.assertEqual(1, manifest["section_index"]["version"])
+        self.assertEqual(hashlib.sha256((value.repo / "tools/delivery/context-sections.json").read_bytes()).hexdigest(), manifest["section_index"]["digest"])
+        self.assertEqual(manifest["section_index"]["digest"], manifest["task"]["policy_digests"]["instruction_index"])
         materialized = json.loads(Path(package["required_context_path"]).read_text())
         self.assertEqual(package["required_context_sha256"], hashlib.sha256(Path(package["required_context_path"]).read_bytes()).hexdigest())
         self.assertEqual(len(manifest["required_context"]), len(materialized["items"]))
@@ -156,6 +164,9 @@ class ContextManifest(unittest.TestCase):
         self.assertEqual("conservative", unknown["applicability"]["mode"])
         full_sources = {item["source"] for item in unknown["required_context"] if item["rule_id"] == "FULL_DOCUMENT"}
         self.assertEqual(self.CONSERVATIVE_FULL, full_sources)
+
+        _v, _large, large_history = self.prepared(["tools/delivery/example.py"], large_history=True)
+        self.assertEqual(1, len(large_history["load_on_demand"]))
 
     def test_I_K_L_reviewer_reconstruction_index_safety_and_no_false_green(self):
         value, package, manifest = self.prepared(["tools/delivery/example.py"])
