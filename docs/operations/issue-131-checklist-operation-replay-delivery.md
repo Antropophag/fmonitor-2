@@ -18,7 +18,7 @@
 - Gate 4 executor: separate gpt-5.6-sol/low agent changed only `app/InspectionEvidence/MariaDbYiiChecklistMutation.php`. Root repeated GREEN: new A–I verifier including malformed replay admission, inspection journey/#130, inspection schema, runtime storage, architecture guard, change-verification governance, PHP lint and `git diff --check`.
 - Planner-listed local photo characterization commands are not used because they execute `rapid-pilot` as an oracle, explicitly forbidden by the owner scope. Existing exact-source CI remains required; no inventory/policy change was made.
 - Gate 5: initial `CHANGES_REQUESTED` found early replay bypassing installer/photo admission. Root added public-seam RED coverage, Gate 3 re-approved it, executor added side-effect-free validation, and corrected package `20260915T074633Z-ee08431491` received `APPROVED`; full history is in `reviews/code/CHECKLIST-OPERATION-REPLAY-001.md`.
-- CI and PR: pending.
+- PR #147 opened at commit `2f7b21c3`. Exact-source CI run `34943619524` completed with `plan`, `unit`, `e2e`, both integration shards and `governance` GREEN. The sole primary failure was `fast`: hotspot ratchet rejected the changed owner at exactly 200 lines; aggregate `verify` failed only because `fast` failed, and the complete run contained no `REGRESSION_FAILURE`. Executor mechanically joined adjacent new assignments to reduce the file to 199 lines without semantic change; corrected CI is pending.
 
 ## Scope controls
 

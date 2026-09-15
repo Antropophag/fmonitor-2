@@ -118,3 +118,44 @@ The package records exact-source GREEN for
 `php tests/Yii2/yii2_checklist_operation_replay_001_test.php`, with no missing
 acceptance tests. Exact-source GitHub CI and PR publication remain later delivery
 steps and are not represented by this approval as already GREEN or complete.
+
+## CI-hotspot correction review — package 20260915T081211Z-907db9dac4
+
+### Fresh verdict
+
+**APPROVED**
+
+Reviewed independently using only immutable package
+`20260915T081211Z-907db9dac4` and its reconstructed snapshot: base commit
+`2f7b21c3f82a2ae7dd00f9f0fe5d005a93c1ea06`, patch SHA-256
+`10fe1bf30151938635f6558d0704c48d34f4df8863dce7a8a57287bb98e230dd`,
+candidate source
+`519bcc6b59c5334a1bac26d47cd9b2ed5831f82a56d8e3ddc203d71c9bfdf6c1`,
+and executable source
+`71d27424456a23d564ca765737b453059238644149936e07c0426aee2a372f36`.
+No `rapid-pilot` content was inspected.
+
+The production delta from the previously approved base is mechanical statement
+joining only. It preserves evaluation and control-flow order for early replay,
+photo storage/failure handling, rollback and orphan-file cleanup, exception-path
+replay, fail-closed typed comparison, validation-before-duplicate, and the
+returned conflict/rejected/duplicate envelopes. Both the ordinary and recovery
+paths still call the same `replay(..., $bytes)` policy. The compacted file is 149
+lines and parses successfully; no semantic, authorization, persistence, race,
+or disclosure regression was found.
+
+The full #131 A–I contract remains satisfied: all five scoped operation types
+retain typed equivalence and zero-write collisions; installer normalization and
+duplicate-identity rejection remain distinct; valid photo replay and mismatched
+photo-body rejection remain distinct; equivalent/conflicting races preserve one
+winner and the correct loser outcome; and `item_completed` plus #130 stay
+regression-only. The only changed production boundary remains
+`app/InspectionEvidence/MariaDbYiiChecklistMutation.php`; the accompanying
+delivery-history update introduces no product scope.
+
+The package records exact-source GREEN for
+`php tests/Yii2/yii2_checklist_operation_replay_001_test.php` with no missing
+acceptance tests. The reported `make architecture-check` PASS is consistent with
+the 149-line candidate and the stated hotspot correction, but no separate
+architecture-check record is embedded in this package, so this review does not
+misrepresent that report as package-recorded evidence.
