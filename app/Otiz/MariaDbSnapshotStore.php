@@ -39,7 +39,7 @@ final class MariaDbSnapshotStore
         $p=$this->prefix;
         $s=$this->db->prepare("SELECT id FROM `{$p}fm2_pilot_otiz_snapshots` WHERE status='accepted' AND report_date<? ORDER BY report_date DESC,id DESC LIMIT 1");
         $s->bind_param('s',$date);$s->execute();$row=$s->get_result()->fetch_assoc();$previous=$row===null?null:(int)$row['id'];
-        $rules=PremiumCalculation::VERSION;
+        $rules=PremiumCalculationV2::VERSION;
         $s=$this->db->prepare("INSERT INTO `{$p}fm2_pilot_otiz_snapshots`(report_date,status,previous_snapshot_id,rules_version,calculated_at,calculated_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES(?,'draft',?,?,?,?,0,0,0,'pending')");
         $s->bind_param('sissi',$date,$previous,$rules,$now,$actor);$s->execute();return (int)$s->insert_id;
     }
@@ -65,6 +65,8 @@ final class MariaDbSnapshotStore
     public function acceptPublished(int $id,int $actor,string $now): void
     {
         $p=$this->prefix;
+        $rules=$this->db->query("SELECT rules_version FROM `{$p}fm2_pilot_otiz_snapshots` WHERE id={$id}")->fetch_column();
+        if($rules!==PremiumCalculationV2::VERSION) throw new \DomainException('STALE_CALCULATION');
         $count=(int)$this->db->query("SELECT COUNT(*) n FROM `{$p}fm2_pilot_otiz_snapshot_issues` WHERE snapshot_id={$id} AND severity='blocker' AND state='open'")->fetch_assoc()['n'];
         if($count>0) throw new \DomainException('BLOCKERS');
         $s=$this->db->prepare("UPDATE `{$p}fm2_pilot_otiz_snapshots` SET status='accepted',accepted_at=?,accepted_by_user_id=? WHERE id=?");

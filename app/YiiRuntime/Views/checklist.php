@@ -28,6 +28,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span data-total-items>0</span> из 41 монтажной работы</span>
 </div>
 </header>
+<?php if($access['ready']??false):?><section class="fm2-check-gate" role="status"><strong>Готов к открытию</strong><?php if(is_array($opening)):?><form class="fm2-opening-form" method="post" action="/pilot/objects/<?=$id?>/execution?return=construction-control"><?=Html::hiddenInput('_csrf',$csrf)?><?=Html::hiddenInput('action','open_confirmed')?><?=Html::hiddenInput('requestId',ViewSupport::uuid())?><?=Html::hiddenInput('orderId',(string)$opening['orderId'])?><?=Html::hiddenInput('revisionId',(string)$opening['revisionId'])?><?=Html::hiddenInput('sequence',(string)$opening['sequence'])?><label>Фактическая дата начала<input type="date" name="actualStartDate" required></label><button type="submit">Открыть работы</button></form><?php else:?><span>Открыть работы может назначенный инженер с необходимыми полномочиями.</span><?php endif?></section><?php endif?>
 <?php if(!$enabled):?>
 <div class="fm2-check-gate" role="status">
 <strong>Чек-лист недоступен</strong>

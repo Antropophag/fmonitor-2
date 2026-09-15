@@ -14,7 +14,7 @@ final class BitrixOrderDocumentLinksSchemaMigration
         if (!MariaDbSchemaInspector::tableExists($db,$links)) {
             $db->query("CREATE TABLE `{$links}`(source_folder_id BIGINT UNSIGNED NOT NULL,source_folder_name VARCHAR(255) NOT NULL,order_number VARCHAR(120) COLLATE utf8mb4_bin NOT NULL,url VARCHAR(2048) NOT NULL,UNIQUE KEY uq_folder_order(source_folder_id,order_number),KEY ix_order(order_number)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin");$changed[]=$links;
         } elseif (!self::linksReady($db,$links)) throw new \RuntimeException('SCHEMA_MIGRATION_CONFLICT');
-        return ['applied'=>$changed!==[],'schemaVersion'=>26,'changed'=>$changed];
+        return ['applied'=>$changed!==[],'schemaVersion'=>27,'changed'=>$changed];
     }
     private static function linksReady(\mysqli$db,string$table):bool
     {

@@ -54,6 +54,7 @@ ViewSupport::begin($this, 'Объект ' . $registrationNumber, $identity);
     <span class="shlz-status <?= $statusClasses[$status] ?? 'shlz-status--neutral' ?>"><?= Html::encode($status) ?></span>
 </header>
 <div class="fm2-object-dashboard">
+    <?php if (Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'deadline_certificate.read')): ?><p><a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></p><?php endif ?>
     <main>
         <section class="fm2-panel fm2-object-data">
             <header><div><h2>Распоряжение и состав</h2><p>Актуальное документное основание монтажного дела</p></div></header>

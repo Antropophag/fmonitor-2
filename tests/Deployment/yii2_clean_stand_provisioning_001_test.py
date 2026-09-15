@@ -9,7 +9,7 @@ try:
     payload = result(run)
     assert run.returncode == 0 and payload["reason"] == "CLEAN_STAND_CONTRACT_VERIFIED"
     facts = payload["facts"]; trace=f.trace()
-    assert facts["database"] == {"fresh": True, "schemaVersion": 25, "migrationCount": 25}
+    assert facts["database"] == {"fresh": True, "schemaVersion": 27, "migrationCount": 27}
     assert facts["provisioning"]["replayCreated"] == [] and facts["provisioning"]["sameFacts"] is True
     assert facts["legacyInputs"] == []
     assert [row["call"] for row in trace]==CALLS

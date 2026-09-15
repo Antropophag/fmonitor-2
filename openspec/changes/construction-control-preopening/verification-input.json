@@ -1,0 +1,48 @@
+{
+  "change": "construction-control-preopening",
+  "planned_paths": [
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "app/AssignmentOrderComposition/MariaDbOriginalOpening.php",
+    "app/AssignmentOrderComposition/MariaDbAssignmentOrderApplicationOperation.php",
+    "app/AssignmentOrderComposition/MariaDbConfirmedOriginalOpening.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/YiiRuntime/Controllers/ExecutionController.php",
+    "app/YiiRuntime/Views/checklist.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "tests/Yii2/yii2_construction_control_preopening_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CONSTRUCTION-CONTROL-PREOPENING-001",
+      "acceptance_id": "ready-queue-opening-and-continuation",
+      "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md",
+      "seam": "real Yii2 ready queue to checklist to existing open_confirmed seam and opened checklist",
+      "tests": [
+        "tests/Yii2/yii2_construction_control_preopening_001_test.php",
+        "tests/Yii2/yii2_preopening_authorization_001_test.php",
+        "tests/Yii2/yii2_preopening_concurrency_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_construction_control_preopening_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_preopening_authorization_001_test.php": "GREEN",
+        "tests/Yii2/yii2_preopening_concurrency_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-CONSTRUCTION-CONTROL-PREOPENING-001",
+      "acceptance_id": "adjacent-active-queue-and-inspection",
+      "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md",
+      "seam": "existing construction-control and checklist HTTP contracts",
+      "tests": [
+        "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+        "tests/Yii2/yii2_inspection_journey_001_test.php",
+        "tests/Yii2/yii2_inspection_boundaries_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_construction_control_active_queue_001_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_journey_001_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_boundaries_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

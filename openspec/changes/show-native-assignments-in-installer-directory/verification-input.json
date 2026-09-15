@@ -1,0 +1,17 @@
+{
+  "change": "show-native-assignments-in-installer-directory",
+  "planned_paths": [
+    "app/Workforce/MariaDbYiiInstallerDirectory.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-INSTALLER-DIRECTORY-ASSIGNMENTS-001",
+      "acceptance_id": "A1-A5",
+      "spec_path": "specs/YII2-INSTALLER-DIRECTORY-ASSIGNMENTS-001.md",
+      "seam": "native selection/original application followed by GET|HEAD /pilot/installers",
+      "tests": [
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php"
+      ]
+    }
+  ]
+}

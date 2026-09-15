@@ -56,7 +56,7 @@ final class PilotDemoDatabase
         $db->query("INSERT INTO `{$legacy}users` VALUES(18,'Сидоров Сергей Сергеевич','sidorov@shlz.ru',5,1),(73,'Анна Волкова','volkova@shlz.ru',8,1)");
         $db->query("INSERT INTO `{$legacy}fm_maintable`(id,ordadr_address,entrance,regnumber,workdatestart,workdateendadjusted,plan_finish_date,workdatefinish,ptoactdate,responsstroicontrol) VALUES(4512,'Москва, ул. Примерная, д. 10','2','77-000123','2026-10-05','2026-12-20',NULL,NULL,NULL,'73'),(4999,'Москва, ул. Непилотная, д. 1','1','77-000999','2026-09-30','2026-12-01',NULL,NULL,NULL,'73')");
         $migration=CanonicalMigrationApplication::run($db,$process,ProductionPilotMigrationCatalogue::migrations());
-        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>26,'appliedVersions'=>range(1,26)]])throw new RuntimeException();
+        if($migration!==['exitCode'=>0,'result'=>['ok'=>true,'schemaVersion'=>27,'appliedVersions'=>range(1,27)]])throw new RuntimeException();
         $marker=$db->real_escape_string("fmonitor2-demo:{$fingerprint}:{$generation}:{$nonce}");
         $db->query("ALTER TABLE `{$process}fm2_installation_cases` COMMENT='{$marker}'");
         $db->query("ALTER TABLE `{$legacy}fm_maintable` COMMENT='{$marker}'");

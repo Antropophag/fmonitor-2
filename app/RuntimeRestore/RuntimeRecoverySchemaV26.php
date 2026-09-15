@@ -1,22 +1,3 @@
 <?php
-declare(strict_types=1);
-namespace FMonitor2\RuntimeRestore;
-
-/** Exact current-image recovery inventory for migration frontier v26. */
-final class RuntimeRecoverySchemaV26
-{
-    public const VERSION = 26;
-    public const DEFERRED = RuntimeRecoverySchemaV25::DEFERRED;
-
-    public static function tables(string $prefix): array
-    {
-        $tables = [...RuntimeRecoverySchemaV25::tables(''), 'fm2_bitrix_order_document_links'];
-        sort($tables, SORT_STRING);
-        return array_map(static fn(string $table): string => $prefix.$table, $tables);
-    }
-
-    public static function autoIncrement(string $prefix): array
-    {
-        return RuntimeRecoverySchemaV25::autoIncrement($prefix);
-    }
-}
+declare(strict_types=1);namespace FMonitor2\RuntimeRestore;
+final class RuntimeRecoverySchemaV26{public const VERSION=26;public const DEFERRED=RuntimeRecoverySchemaV25::DEFERRED;public static function tables(string$p):array{$x=[...RuntimeRecoverySchemaV25::tables($p),$p.'fm2_deadline_certificate_roots',$p.'fm2_deadline_certificate_revisions',$p.'fm2_deadline_certificate_operations',$p.'fm2_deadline_certificate_pdf_chunks'];sort($x,SORT_STRING);return$x;}public static function autoIncrement(string$p):array{$x=[...RuntimeRecoverySchemaV25::autoIncrement($p),$p.'fm2_deadline_certificate_revisions'];sort($x,SORT_STRING);return$x;}}
