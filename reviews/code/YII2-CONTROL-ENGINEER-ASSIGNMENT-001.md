@@ -342,3 +342,20 @@ The production correction itself is sound and bounded. `SelectionStatePolicy::re
 **CHANGES_REQUESTED**
 
 Retain the production correction, complete the two outstanding exact migration witnesses from the recorded CI inventory, and restore the two unrelated negative assertions. Refresh exact-source evidence and review binding afterward.
+
+---
+
+## CI regression findings closure — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T113952Z-a948af2e10/package.json`
+- Exact reviewed commit: `54a6710ab91428674655414d0af129865ec6c656`
+- Candidate source: `67a753a07f36a2262cddcf8e0ab17c00214520f1de78590bee67eeb673819fb8`
+- Executable source: `76cdce62db45ca2b5de2250143f6dbfac6b2d99e0a5244f02d7841b902210103`
+- Verification plan SHA-256: `de4718a3b5bd39cea6eff3303387befe1d0a1f36d41ecb23ecb6fa373be7499e`
+- Verdict: **APPROVED**
+
+Both findings are closed exactly. `inspection_planning_schema_001_test.php` now expects applied versions 1–28 for clean and partial canonical migrations; `workforce_canonical_runner_001_test.php` places the one assignment table at its correct binary-sorted location. The reported focused executions of both schema witnesses are GREEN. The `installer_required` HTTP case and indexed `installerTabIds[0]` rejection are restored unchanged in meaning. No production source or additional scope changed, and `git diff --check` is clean.
+
+**APPROVED**
+
+The prior `SelectionStatePolicy`/`SelectionWork` production approval and all earlier Gate 5 conclusions remain valid. Fresh exact-source CI is still required; merge/deployment are not authorized.

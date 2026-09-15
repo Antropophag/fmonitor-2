@@ -428,3 +428,22 @@ The supplied root package contains no retained execution records, so this verdic
 `APPROVED`
 
 The bounded fixture/test correction is approved for exact candidate source `ddf63e9d2defc6a0e4e82a3fe44c89cdf88cc3ce341051e93f69ccfad8ff0a9c`; it does not restore manual engineer authority or weaken accepted expectations.
+
+---
+
+## Exact Gate 5 finding-closure test rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T113952Z-a948af2e10/package.json`.
+- Exact source: head `54a6710ab91428674655414d0af129865ec6c656`, candidate `67a753a07f36a2262cddcf8e0ab17c00214520f1de78590bee67eeb673819fb8`, executable `76cdce62db45ca2b5de2250143f6dbfac6b2d99e0a5244f02d7841b902210103`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T113952Z-a948af2e10/verification-plan.json`, SHA-256 `de4718a3b5bd39cea6eff3303387befe1d0a1f36d41ecb23ecb6fa373be7499e`; lane remains `CRITICAL`.
+- Scope: the two restored negative cases and two corrected v28 literals only.
+
+No findings. `selection_http_failures` again requires empty installers to yield exact `installer_required`; `yii2_selection_input` again proves an additional indexed installer encoding cannot bypass duplicate-list rejection and writes no facts. Neither case reintroduces manual engineer authority. The inspection-planning runner now requires exact ordered migrations `1..28` for clean and both partial recoveries, and the workforce expected table inventory restores binary ordering by placing `fm2_control_engineer_assignments` after checklist tables. These strengthen exactness and do not alter any previously approved expectation.
+
+All four changed executable tests remain registered exactly once as `integration` checks. The package itself retains no execution records, so reported focused GREEN is not promoted to package-bound evidence by this review; exact-source CI/final admission remain separate. `git diff --check` is clean.
+
+### Finding-closure verdict
+
+`APPROVED`
+
+The prior Gate 3 approval remains valid for exact candidate source `67a753a07f36a2262cddcf8e0ab17c00214520f1de78590bee67eeb673819fb8`.
