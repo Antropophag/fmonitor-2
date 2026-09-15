@@ -291,3 +291,31 @@ CI/deployment remain outside this bounded test review and are not inferred GREEN
 `APPROVED`
 
 The direct native replay and minimal fixture delta is approved for exact candidate source `1f6c73b835a7b9b89179a6c939fada6834a14cf96e671bc6ced37fbed6640180`. Later expectation changes require renewed independent test review.
+
+---
+
+## Post-rebase Gate 3 test review — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T093627Z-e2ded6e033/package.json`.
+- Rebase base: current main `3d213666886e53756781d9ea71943cfe47eee8fb`; exact committed head `3ac5902b3db227447fad0b7867ccfa8623e84c78`.
+- Exact candidate source: `6576470637dd17a0f88510cd9641e7802792232a2062aebd1e2187d0ec43b0cc`; executable source: `382eeb99f5b602e87600d1b54f2a319a28067c01a2ebe2894e75df0164abee6c`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T093627Z-e2ded6e033/verification-plan.json`, SHA-256 `7fdecd6bc7f1272748f4cce1825115f3f0151d5ee2a7decb95c6c99089ff2b63`; lane `CRITICAL`, reviews `gate3` and `final`.
+- Scope: preservation of all previously approved test semantics across the rebase and fixture merge. Reviewer independence is unchanged.
+
+### Assessment
+
+No findings.
+
+The post-rebase verification plan binds every issue test and helper to the same content hashes approved in the immediately preceding exact package. This includes the direct native replay witness and `SelectionNativeFixture`, the complete assignment A–H suites, schema consumers, `PreopeningFixture`, concurrency helper, #40 and #38 regressions, and Yii public-seam tests. The fixture merge therefore changes no accepted assertion, setup fact, expected value, isolation behavior, or negative-path sensitivity.
+
+In particular, the native replay remains `selected` then `replayed` for identical normalized intent with a forged non-null engineer change, retains a complete no-write comparison, and requires exactly one authoritative engineer-73 selection. The current-assignment fixture continues to provide only the application/v27 schemas and one explicit immutable engineer-73 assignment. The case-FK, bootstrap lineage, mandatory revision, mixed concurrency, authorization, history, fail-closed and no-fallback witnesses remain byte-identical to their approved versions.
+
+The snapshot patch is empty because the candidate is the exact committed head rather than a dirty reconstruction; its SHA-256 is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`. Fifteen focused records at this candidate/executable source are all `GREEN`, exit 0, and `source_drift=false`. The plan still contains the forbidden-local/full-CI integration command separately; this review does not claim it ran locally. `git diff --check` is clean.
+
+CI/deployment remain outside this Gate 3 test verdict and are not inferred GREEN.
+
+### Post-rebase verdict
+
+`APPROVED`
+
+The rebase and fixture merge preserve the approved test semantics for exact candidate source `6576470637dd17a0f88510cd9641e7802792232a2062aebd1e2187d0ec43b0cc`. Later test or normative-expectation changes require renewed independent review.

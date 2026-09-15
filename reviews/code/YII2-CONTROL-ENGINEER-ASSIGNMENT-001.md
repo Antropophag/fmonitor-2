@@ -171,3 +171,44 @@ All are GREEN, exit 0, source-bound, with no missing acceptance test. The Gate 3
 **APPROVED**
 
 Gate 5 approves the reviewed executable candidate for publication to exact-source CI. No unresolved specification, security, history, concurrency, bootstrap, schema, Yii transport/UI, #40/#38 or scope finding remains. Merge/deployment are not authorized by this review.
+
+---
+
+## Post-rebase exact-source rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T093627Z-e2ded6e033/package.json`
+- Current main/merge-base: `3d213666886e53756781d9ea71943cfe47eee8fb` (merged #131)
+- Exact reviewed commit: `3ac5902b3db227447fad0b7867ccfa8623e84c78`
+- Candidate source: `6576470637dd17a0f88510cd9641e7802792232a2062aebd1e2187d0ec43b0cc`
+- Executable source: `382eeb99f5b602e87600d1b54f2a319a28067c01a2ebe2894e75df0164abee6c`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (clean committed source)
+- Verification plan SHA-256: `7fdecd6bc7f1272748f4cce1825115f3f0151d5ee2a7decb95c6c99089ff2b63`
+- Verdict: **APPROVED**
+
+### Rebase assessment
+
+No findings.
+
+The rebase preserves both owners without conflict. Merged #131 changes `MariaDbYiiChecklistMutation` replay equivalence, while #52 adds only `currentEngineerAssignment()` to sibling trait `MariaDbYiiChecklistPersistence` and consumes it from `MariaDbYiiChecklistRead`. `MariaDbYiiChecklist` composes all three traits once; there is no duplicate method, property, transaction, replay or persistence ownership. The #52 helper reuses the existing mysqli connection when present and opens/closes a bounded reader connection for the Yii-backed instance; it neither participates in nor changes #131 checklist mutation transactions. Conversely, #131's replay comparator and photo cleanup do not read or mutate control-engineer assignment facts.
+
+The post-rebase diff retains the previously approved #52 behavior unchanged: selection current assignment is reread after the existing case lock, HTTP requires the shown assignment revision, obsolete engineer input is normalized out of request identity, bootstrap and standalone lineage fail closed, exact schema constraints are validated, #40 uses only the authoritative reader, historical application/order snapshots stay immutable, and #38 installer authority remains application-owned.
+
+The current goal/history pointer correctly records merged #131 and rebases #52 on `3d213666`; no #131 product behavior is reimplemented inside #52. `git diff --check 3d213666...3ac5902b` is clean.
+
+### Evidence
+
+The package binds five acceptance GREEN records to candidate `6576470637dd17a0f88510cd9641e7802792232a2062aebd1e2187d0ec43b0cc` and executable `382eeb99f5b602e87600d1b54f2a319a28067c01a2ebe2894e75df0164abee6c`:
+
+- native composition authority/replay: `1789464437297119000-82f09a8d44484954add3feea8a7a8beb.json`
+- assignment owner/history/schema: `1789464507870531000-906bfb494a0346519560ce7d5a6da3b6.json`
+- #40 preopening/opening: `1789464540921374000-0eee562897534eb99e7ca9f51fb1477e.json`
+- Yii A–H/concurrency: `1789464574536446000-bad5b5b6ef4a487c93b06ab7e2a93676.json`
+- #38 installer directory: `1789464623097050000-bd80f97c3a0640efb761c529f2dc36fc.json`
+
+The refreshed CRITICAL plan retains 15 focused commands, including #131-affected inspection consumers, and the delivery evidence reports all 15 GREEN at the same executable source. No prohibited local full suite was run. CI/deployment remain pending/`UNKNOWN` and are not inferred GREEN.
+
+### Post-rebase verdict
+
+**APPROVED**
+
+Gate 5 approves exact commit `3ac5902b3db227447fad0b7867ccfa8623e84c78` after rebase on current main. All previous #52 findings remain resolved, and coexistence with merged #131 introduces no new finding. Publication still requires exact-source CI; merge/deployment are outside this approval.
