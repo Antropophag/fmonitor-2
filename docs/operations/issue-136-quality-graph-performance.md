@@ -1,5 +1,9 @@
 # Issue №136 — Quality Graph performance evidence
 
+## Авторизация и авторство
+
+Прямое поручение владельца в текущей сессии авторизовало bounded issue №136 и немедленный переход OpenSpec propose → apply после strict validation; autonomous authorship не разрешалось. Root/Codex authored scope, executable spec, tests и delivery report. Отдельный `gpt-5.6-sol / low` executor `/root/issue136_executor` authored только `tools/verification/ci.py` и `tools/verification/integration-timings.tsv`. Независимые `gpt-5.6-sol / low` reviewers: `/root/issue136_gate3` (Gate 3) и `/root/issue136_final_review` (Gate 5).
+
 ## Fresh comparable baseline
 
 Выборка: три последних successful FULL Quality Graph runs после merge №135 с обеими integration jobs и итоговым fail-closed `verify`. Cancelled, partial, FAST и harness-only runs не использованы. Wall — от `created_at` workflow до завершения check `Quality Graph`; execution/setup — timestamps соответствующих GitHub steps.

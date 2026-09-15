@@ -261,6 +261,8 @@ class VerificationCI(unittest.TestCase):
                   for shard in ['1/2', '2/2']]
         for result in shards:
             self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('INTEGRATION_TIMING_FALLBACK', result.stderr)
+            self.assertIn('missing weight', result.stderr)
         combined = [row for result in shards for row in result.stdout.splitlines()]
         self.assertEqual(set(full), set(combined))
         self.assertEqual(len(full), len(combined))

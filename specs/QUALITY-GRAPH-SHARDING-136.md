@@ -1,5 +1,9 @@
 # QUALITY-GRAPH-SHARDING-136
 
+## Простыми словами
+
+Два существующих integration shards получают тот же обязательный набор tests, но распределяют его по исторической стоимости, чтобы уменьшить ожидаемое время ожидания полного Quality Graph. Срез не меняет product code, test semantics, FAST, category membership, число runners или №153 closure; setup остаётся без изменения, потому что безопасная оптимизация не подтверждена.
+
 ## Scope
 
 Actor — CI/developer. Oracle — owner issue №136, свежие successful FULL Quality Graph runs после №135 и canonical `tools/verification/suites.tsv`. Public seam — `python3 tools/verification/ci.py list integration --shard 1/2|2/2`; workflow seam сохраняет две jobs `Integration (1/2)` и `Integration (2/2)` и fail-closed aggregate.
@@ -23,4 +27,3 @@ Actor — CI/developer. Oracle — owner issue №136, свежие successful F
 - New-without-history, stale-history и invalid/missing-history fixtures доказывают полноту и отсутствие дублей.
 - Static workflow и aggregate tests доказывают две job names и failure propagation.
 - Existing №135 inventory и №153A closure tests остаются GREEN.
-
