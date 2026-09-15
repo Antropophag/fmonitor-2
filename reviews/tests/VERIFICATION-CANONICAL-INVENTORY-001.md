@@ -82,6 +82,28 @@ The three focused records remain intended RED for the missing implementation rat
 
 None.
 
+## CI pycache filesystem-effect test-delta review — 2026-09-15
+
+- Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.
+- Delta: one filesystem-effect assertion in `tests/Verification/change_verification_001_test.py` and one in `tests/Verification/verification_ci_001_test.py`.
+- Current test SHA-256 values: `66c42a1d7427e17c86ae452c522bfb891af060e0a5d0ff85fa4aa4fb1dfed5e3` and `900197b568998a2e38f2a3d48966ff3150c93c618284df843a84912c94c22d14` respectively. The stable specification and inventory/native tests remain unchanged at the hashes recorded in the preceding reviews.
+- RED evidence: exact GitHub CI run `34974282041` reported plan, fast, E2E and both integration shards GREEN; unit and governance failed, with downstream verify blocked. The shared complete failure inventory identifies `tools/verification/__pycache__/inventory*.pyc` appearing between planner snapshots: `fast_lane_118` fails in unit and `change_verification_001_test.py` fails in governance from nondeterministic source reconstruction/stale-plan detection. Local focused executions remain GREEN because that environment does not reproduce bytecode emission.
+- Verdict: `APPROVED`.
+
+### Complete delta findings
+
+None.
+
+The new assertions exercise observable filesystem effects at public consumer seams. The planner test invokes planning twice, already requires byte-identical plans, then requires that importing the shared inventory parser created no `tools/verification/__pycache__`. The CI composition test lists all four categories through the public CLI, already checks exact partitioning and absence of runtime/DB execution, then applies the same no-cache assertion. Neither assertion mocks the parser or depends on a private function.
+
+This directly strengthens the accepted idempotence and filesystem-effect contract. A generated `.pyc` under a tracked source boundary changes candidate/source snapshots and can make the same logical input reconstruct differently; therefore its absence is required for deterministic planning and read-only listing even though local Python settings may suppress its creation. The environment-specific CI failure is valid RED characterization of that observable behavior, not an excuse to weaken or skip the check.
+
+No previous expected value, command, fixture, category member or failure condition changed. No production/specification scope was added: the assertions constrain side effects of the already required shared parser at the already reviewed planner and CI seams. Exact-source GREEN after correction and final independent Gate 5 review remain required.
+
+### Required changes
+
+None.
+
 ## Post-CI direct-consumer test-delta review — 2026-09-15
 
 - Reviewer: Codex independent reviewer `/root/gate3_review`; not author of the tests or implementation.

@@ -175,6 +175,8 @@ class VerificationCI(unittest.TestCase):
         self.assertEqual(5, len(set(observed)))
         self.assertFalse(self.trace.exists())
         self.assertFalse(self.db_trace.exists())
+        self.assertFalse((self.root / 'tools/verification/__pycache__').exists(),
+                         'INTENDED_RED inventory import mutated candidate source')
 
     def test_integration_shards_are_stable_disjoint_complete_sorted_partitions(self):
         self.add_integration_inventory()

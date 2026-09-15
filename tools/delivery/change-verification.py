@@ -41,7 +41,12 @@ def inventory_module():
     path = ROOT / "tools/verification/inventory.py"
     spec = importlib.util.spec_from_file_location("fmonitor_verification_inventory", path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    previous_bytecode = sys.dont_write_bytecode
+    try:
+        sys.dont_write_bytecode = True
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode
     return module
 
 

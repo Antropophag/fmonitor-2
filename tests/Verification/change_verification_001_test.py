@@ -149,6 +149,8 @@ class ChangeVerification(unittest.TestCase):
         first = (self.root / "plan.json").read_bytes()
         self.assertEqual(0, self.plan().returncode)
         self.assertEqual(first, (self.root / "plan.json").read_bytes(), "canonical plan is deterministic")
+        self.assertFalse((self.root / 'tools/verification/__pycache__').exists(),
+                         'INTENDED_RED inventory import mutated candidate source')
 
     def test_repository_policy_maps_deployment_sources(self):
         """Use the real policy through the public CLI, in a disposable repository."""
