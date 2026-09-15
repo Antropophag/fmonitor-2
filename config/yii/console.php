@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/LocalRuntimeControl
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/CaseImportController.php';
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/LegacyImportController.php';
 require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/WorkforceSyncController.php';
+require_once dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/BitrixOrderDocumentLinksSyncController.php';
 require_once dirname(__DIR__, 2) . '/app/RuntimeRestore/StandBackupFilesystem.php';
 require_once dirname(__DIR__, 2) . '/app/RuntimeRestore/StandBackupBundle.php';
 require_once dirname(__DIR__, 2) . '/app/RuntimeRestore/StandBackupApplication.php';
@@ -22,6 +23,7 @@ return yii\helpers\ArrayHelper::merge(require __DIR__ . '/common.php', [
         'case-import' => FMonitor2\YiiRuntime\Commands\CaseImportCommand::class,
         'legacy-import' => FMonitor2\YiiRuntime\Commands\LegacyImportController::class,
         'workforce-sync' => FMonitor2\YiiRuntime\Commands\WorkforceSyncController::class,
+        'bitrix-order-document-links-sync' => FMonitor2\YiiRuntime\Commands\BitrixOrderDocumentLinksSyncController::class,
         'stand-backup' => FMonitor2\YiiRuntime\Commands\StandBackupController::class,
         'stand-restore' => FMonitor2\YiiRuntime\Commands\StandRestoreController::class,
     ],

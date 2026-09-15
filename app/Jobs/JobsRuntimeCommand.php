@@ -15,7 +15,7 @@ final class JobsRuntimeCommand
         try{
             $prefix=$config->prefix();if(!JobsSchemaMigration::isReady($db,$prefix))throw new \RuntimeException('JOBS_UNAVAILABLE');
             $session=new MariaDbJobsSession($db,$prefix);$clock=$session->now(...);
-            $queue=new MariaDbJobQueue($db,$prefix,null,null,['workforce.sync'=>[1],'outbox.dispatch'=>[1]]);
+            $queue=new MariaDbJobQueue($db,$prefix,null,null,['workforce.sync'=>[1],'outbox.dispatch'=>[1],'bitrix.order-document-links.sync'=>[1]]);
             $operator=new MariaDbOperatorJobs($db,$prefix,static fn(string $authority): bool=>$authority==='deployment-operator');
             $options=$request->options;
             switch($request->mode){
@@ -32,11 +32,12 @@ final class JobsRuntimeCommand
                 case 'scheduler':
                     $result=(new JobsSchedulerProcess(new MariaDbWorkforceScheduler($db,$prefix),
                         new OutboxDispatchScheduler(new MariaDbOutbox($db,$prefix),$queue),
+                        new MariaDbOrderDocumentLinksScheduler($db,$prefix),
                         new MariaDbWorkerHeartbeat($db,$prefix),$clock,'scheduler:'.$instance))->run();
                     return [$result['exitCode'],$result];
                 case 'worker':
                     $command=static fn(array $job): array=>[PHP_BINARY,dirname(__DIR__,2).'/bin/fmonitor2-job-handler.php'];
-                    $registry=['workforce.sync'=>[1=>$command],'outbox.dispatch'=>[1=>$command]];
+                    $registry=['workforce.sync'=>[1=>$command],'outbox.dispatch'=>[1=>$command],'bitrix.order-document-links.sync'=>[1=>$command]];
                     $result=(new JobWorkerProcess($queue,new MariaDbWorkerHeartbeat($db,$prefix),$registry,$clock,
                         'worker:'.$instance,1,1_000_000,55))->run();return [$result['exitCode'],$result];
             }

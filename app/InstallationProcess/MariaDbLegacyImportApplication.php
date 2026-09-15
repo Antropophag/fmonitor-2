@@ -36,7 +36,7 @@ final class MariaDbLegacyImportApplication
 
     private function object(array $row,string $cutoff,int $templateId,array $template,array &$counts): void
     {
-        $id=(int)$row['id'];$mirrorFields=['ordadr_address','entrance','regnumber','workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate','responsstroicontrol','floors','weight','speed','pittype','pitmaterial','paired'];
+        $id=(int)$row['id'];$mirrorFields=['ordadr_address','entrance','regnumber','zavnumber','workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate','responsstroicontrol','floors','weight','speed','pittype','pitmaterial','paired'];
         $mirror=$this->db->query("SELECT ".implode(',',$mirrorFields)." FROM `{$this->legacyPrefix}fm_maintable` WHERE id={$id} FOR UPDATE")->fetch_assoc();
         $expected=array_combine($mirrorFields,array_map(static fn($field)=>$row[$field]===null?null:(string)$row[$field],$mirrorFields));
         if ($mirror !== null) foreach (['workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate'] as $field) {

@@ -18,7 +18,8 @@ final class MariaDbPilotLegacyObjectSchemaReadiness
         )->fetch_all(MYSQLI_ASSOC);
         $actual = array_map(static fn(array $row): string => implode('|', $row), $rows);
         $expected = self::expectedColumns();
-        if ($actual !== $expected) throw new DatabaseUnavailable('Pilot legacy object schema is unavailable.');
+        $withOrder=$expected;array_splice($withOrder,3,0,['zavnumber|varchar(120)|YES']);
+        if ($actual !== $expected && $actual !== $withOrder) throw new DatabaseUnavailable('Pilot legacy object schema is unavailable.');
     }
 
     /** Exact supported predecessor, validated before any additive ALTER. */

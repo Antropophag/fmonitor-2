@@ -1,0 +1,93 @@
+{
+  "change": "bitrix-order-document-links",
+  "planned_paths": [
+    "app/InstallationProcess/BitrixOrderDocumentDelivery.php",
+    "app/InstallationProcess/BitrixOrderDocumentDeliveryConfig.php",
+    "app/InstallationProcess/BitrixOrderDocumentDeliveryResult.php",
+    "app/InstallationProcess/BitrixOrderDocumentFolderMapper.php",
+    "app/InstallationProcess/BitrixOrderDocumentFailureReason.php",
+    "app/InstallationProcess/NativeBitrixOrderDocumentDelivery.php",
+    "app/InstallationProcess/BitrixOrderDocumentLinksSchemaMigration.php",
+    "app/InstallationProcess/MariaDbBitrixOrderDocumentLinks.php",
+    "app/InstallationProcess/MariaDbBitrixOrderDocumentLinksRead.php",
+    "app/InstallationProcess/OrderDocumentLinksApplication.php",
+    "app/InstallationProcess/PilotLegacyObjectSchemaMigration.php",
+    "app/InstallationProcess/MariaDbPilotLegacyObjectSchemaReadiness.php",
+    "app/InstallationProcess/MariaDbLegacySourceSnapshot.php",
+    "app/InstallationProcess/MariaDbLegacyImportApplication.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/Jobs/MariaDbOrderDocumentLinksScheduler.php",
+    "app/Jobs/JobHandlerClaim.php",
+    "app/Jobs/JobHandlerRuntime.php",
+    "app/Jobs/JobsRuntimeCommand.php",
+    "app/Jobs/JobsSchedulerProcess.php",
+    "app/YiiRuntime/Commands/BitrixOrderDocumentLinksSyncController.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "config/yii/console.php",
+    "deploy/runtime/compose.yaml"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A1-bounded-delivery",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "BitrixOrderDocumentDelivery fetch complete/failed",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A2-exact-order-range-no-regnumber-fallback",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "Bitrix folder delivery normalization and OrderDocumentLinksApplication",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_mapping_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A3-transactional-current-replacement",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "OrderDocumentLinksApplication replace",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_application_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A4-schema-import",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "canonical migration v26 and legacy import",
+      "tests": [
+        "tests/InstallationProcess/bitrix_order_document_links_schema_001_test.php",
+        "tests/Yii2/yii2_legacy_import_db_001_test.php"
+      ]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A4-exact-read",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "MariaDbBitrixOrderDocumentLinksRead and Yii object-card read projection",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_read_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A4-card-http-access-and-states",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "GET/HEAD /pilot/objects/<id>",
+      "tests": ["tests/Yii2/yii2_bitrix_order_document_links_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A5-console-sync-public-owner",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "bitrix-order-document-links-sync console delegates to application owner",
+      "tests": ["tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A6-hourly-native-schedule",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "MariaDbOrderDocumentLinksScheduler tick and Jobs runtime dispatch",
+      "tests": ["tests/Jobs/bitrix_order_document_links_scheduler_001_test.php"]
+    }
+  ]
+}
