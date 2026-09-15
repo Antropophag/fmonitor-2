@@ -27,7 +27,10 @@
     "app/YiiRuntime/InstallationProcessFactory.php",
     "app/YiiRuntime/Views/object-card.php",
     "config/yii/console.php",
-    "deploy/runtime/compose.yaml"
+    "deploy/runtime/compose.yaml",
+    "tools/delivery/compose.runtime.yaml.in",
+    "tools/verification/categories.json",
+    "tools/verification/suites.tsv"
   ],
   "acceptances": [
     {

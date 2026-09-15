@@ -434,3 +434,11 @@ unit	python3	tests/Deployment/yii2_local_integration_config_001_test.py
 db	php	tests/Yii2/yii2_legacy_import_db_001_test.php
 db	php	tests/Yii2/yii2_feedback_001_test.php
 e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php
+db	php	tests/InstallationProcess/bitrix_order_document_links_application_001_test.php
+unit	php	tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php
+unit	php	tests/InstallationProcess/bitrix_order_document_links_mapping_001_test.php
+db	php	tests/InstallationProcess/bitrix_order_document_links_read_001_test.php
+db	php	tests/InstallationProcess/bitrix_order_document_links_schema_001_test.php
+db	php	tests/Jobs/bitrix_order_document_links_scheduler_001_test.php
+db	php	tests/Yii2/yii2_bitrix_order_document_links_001_test.php
+unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php
