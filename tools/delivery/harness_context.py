@@ -822,11 +822,11 @@ def build_task_context(root, plan_value, *, role, source, base, contracts, evide
         for pattern, group in history_groups:
             if not group:
                 continue
-            index_bytes = json.dumps(group, ensure_ascii=False, sort_keys=True,
-                                     separators=(",", ":")).encode("utf-8")
+            collection_index_bytes = json.dumps(group, ensure_ascii=False, sort_keys=True,
+                                                separators=(",", ":")).encode("utf-8")
             load_on_demand.append({"source": pattern,
                 "reason": "historical collection; reconstruct index from current canonical tree on demand",
-                "digest": _sha256_bytes(index_bytes),
+                "digest": _sha256_bytes(collection_index_bytes),
                 "content_reference": {"path": pattern.split("*")[0].rstrip("/"),
                                       "pattern": pattern, "entries": len(group)}})
     references = []
