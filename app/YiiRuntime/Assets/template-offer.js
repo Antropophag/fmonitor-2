@@ -9,6 +9,7 @@
   const savedInstallerIds = normalizedIds((offer.dataset.savedInstallerIds || '').split(','));
   const savedOrderId = positiveId(offer.dataset.savedOrderId);
   const savedEngineerId = positiveId(offer.dataset.savedEngineerId);
+  const currentEngineerId = positiveId(offer.dataset.currentEngineerId);
   const templateButton = offer.querySelector('form[action$="/template"] button');
   const exactCopy = offer.querySelector('[data-template-offer-exact]');
   const saveFirstCopy = offer.querySelector('[data-template-offer-save-first]');
@@ -36,10 +37,8 @@
   const reconcile = () => {
     const currentIds = [...selection.querySelectorAll('input[name="installerTabIds[]"]')].map(input => input.value);
     const installerIds = normalizedIds(currentIds);
-    const engineerId = positiveId(selection.querySelector('input[name="controlEngineerUserId"]:checked')?.value);
-    const confirmed = selection.querySelector('input[name="controlEngineerConfirmed"]')?.checked === true;
-    const ready = installerIds.length > 0 && engineerId !== null && confirmed;
-    const exact = ready && savedOrderId !== null && engineerId === savedEngineerId
+    const ready = installerIds.length > 0 && currentEngineerId !== null;
+    const exact = ready && savedOrderId !== null && currentEngineerId === savedEngineerId
       && installerIds.length === savedInstallerIds.length
       && installerIds.every((id, index) => id === savedInstallerIds[index]);
 

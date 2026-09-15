@@ -11,6 +11,7 @@ final readonly class SelectionTransactionDecision
         return new self('commit',$result,null,null);
     }
     public static function rollback(SelectionRollbackCause $cause): self { return new self('rollback',null,$cause,null); }
+    public static function rollbackResult(SelectionResult$result):self{return new self('rollbackResult',$result,null,null);}
     public static function requestRace(): self { return new self('requestRace',null,null,null); }
     public static function observedTerminal(SelectionTerminalRequestRecord $record): self { return new self('observedTerminal',null,null,$record); }
     public function kind(): string { return $this->k; }

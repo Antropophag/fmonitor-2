@@ -96,8 +96,9 @@ final class SelectionController extends PreopeningController
                 new C\InstallationObjectId($id),
                 new C\UserId($this->actor()),
                 new C\InstallerTabIdList($installers),
-                new C\UserId((int) $fields['controlEngineerUserId']),
+                null,
                 new C\SelectionRevision((int) $fields['expectedSelectionRevision']),
+                (int)$fields['expectedControlEngineerAssignmentRevision'],
             );
         } catch (\Throwable) { return null; }
     }

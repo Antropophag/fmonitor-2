@@ -11,7 +11,7 @@ try {
     $batch=static function(string$path,callable$body,callable$headers)use($servers,$cookies):array{
         $requests=[];foreach([0,1]as$i)$requests[]=['port'=>$servers[$i]['port'],'path'=>$path,'cookies'=>$cookies[$i],'body'=>$body($i),'headers'=>$headers($i)];return preopeningConcurrent($requests);
     };
-    $selection=['requestId'=>'11111111-1111-4111-8111-000000000066','mode'=>'new_order','expectedSelectionRevision'=>'0','controlEngineerUserId'=>'73','controlEngineerConfirmed'=>'yes'];
+    $selection=['requestId'=>'11111111-1111-4111-8111-000000000066','mode'=>'new_order','expectedSelectionRevision'=>'0','expectedControlEngineerAssignmentRevision'=>'1'];
     $results=$batch('/pilot/objects/4512/assignment-order/selection',static fn($i)=>http_build_query(['_csrf'=>$csrf[$i]]+$selection).'&installerTabIds%5B%5D=7001',static fn($i)=>['Content-Type: application/x-www-form-urlencoded']);
     foreach($results as$r)assertSameValue(303,$r['status'],'concurrent same selection succeeds/replays');assertSameValue(1,count($f->rows('fm2_assignment_order_selections')),'one immutable selection');
     $path='/pilot/objects/4512/assignment-orders/81/originals';$metadata=$f->metadata($b,'22222222-2222-4222-8222-000000000066');$pdf=FMonitor2\Tests\Support\SelectedOriginalFixture::pdf();

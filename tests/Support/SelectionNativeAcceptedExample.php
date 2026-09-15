@@ -16,6 +16,7 @@ final class SelectionNativeAcceptedExample
         $member=new C\InstallerSnapshot(7001,'Монтажник теста','Монтажник',$axis==='dismissed'?'dismissed':'employed',$axis==='future_employment'?'2026-09-06':'2020-01-01',null,'synthetic-hr',$axis==='bad_source_time'?'not-an-instant':'2026-09-01T06:00:00Z');
         $event=new C\SelectionSelectedEvent($c->requestId,4512,81,1,1,null,null,$hash,$at,$c->actorUserId);
         $audit=new C\SelectionSafeAttemptAudit($c->requestId,$c->actorUserId,$c->installationObjectId,$c->mode,$r->status(),null,$at);
-        return new C\SelectionAcceptedPersistence($allocation,1,$c->mode,null,null,$engineer,[$member],$date,$at,$c->actorUserId,C\SelectionIntent::fromCommand($c),$r,$event,$audit);
+        $intent=C\SelectionIntent::build($c->actorUserId->value,$engineer->userId,$c->expectedSelectionRevision->value,$c->installationObjectId->value,new C\InstallerTabIdSet([new C\InstallerTabId(7001)]),$c->mode);
+        return new C\SelectionAcceptedPersistence($allocation,1,$c->mode,null,null,$engineer,[$member],$date,$at,$c->actorUserId,$intent,$r,$event,$audit);
     }
 }

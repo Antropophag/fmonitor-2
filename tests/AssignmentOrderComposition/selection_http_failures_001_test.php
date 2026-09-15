@@ -10,7 +10,6 @@ try {
     foreach([
         'installer_required'=>['installerTabIds'=>[]],
         'installer_not_in_catalog'=>['installerTabIds'=>['9999']],
-        'control_engineer_not_eligible'=>['controlEngineerUserId'=>'99'],
         'invalid_command'=>['installerTabIds'=>['7001','7001']],
     ] as $reason=>$override){
         $input=array_replace($base,$override,['requestId'=>sprintf('11111111-1111-4111-8111-%012d',++$counter)]);$before=$native->rows();
@@ -29,7 +28,7 @@ try {
         assertSameValue('1',A::field($r['body'],'expectedSelectionRevision'),'retry same revision');
         assertSameValue('replace_pending',A::field($r['body'],'mode'),'retry same mode');
         $retryBody=A::submission($r['body']);parse_str($retryBody,$actualIntent);$expectedIntent=$retry;ksort($actualIntent);ksort($expectedIntent);
-        assertSameValue($expectedIntent,$actualIntent,'rendered retry preserves entire intent including crew/engineer/confirmation/CSRF');
+        assertSameValue($expectedIntent,$actualIntent,'rendered retry preserves crew, revisions and CSRF');
         $portal=$f->request('GET',A::PATH);assertSameValue(200,$portal['status'],'selection portal does not eagerly read the installer catalogue');
         assertSameValue(false,str_contains($portal['body'],'Монтажник 7002'),'unavailable catalogue is not embedded beyond the saved current selection');
         assertSameValue(true,str_contains($portal['body'],'data-installer-search'),'portal retains the bounded lazy-search control');

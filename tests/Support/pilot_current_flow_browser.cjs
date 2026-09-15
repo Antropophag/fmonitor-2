@@ -75,15 +75,11 @@ async function selectComposition(page) {
   await dialog.locator('.fm2-picker-result').first().waitFor();
   await dialog.locator('.fm2-picker-result').first().click();
   await dialog.getByRole('button', { name: 'Готово', exact: true }).click();
-  await page.locator('input[name="controlEngineerUserId"]').first().check();
-  await page.locator('input[name="controlEngineerConfirmed"]').check();
   await page.getByRole('button', { name: 'Сохранить состав', exact: true }).click();
   await page.waitForLoadState('domcontentloaded');
 }
 
 async function verifyInlineTemplate(page, context) {
-  const confirmation = page.locator('[name="controlEngineerConfirmed"]');
-  if (await confirmation.count()) await confirmation.check();
   let captured = null;
   const templatePattern = /\/assignment-orders\/\d+\/template$/;
   await context.route('**/assignment-orders/*/template', async route => {

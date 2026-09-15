@@ -11,6 +11,7 @@ final readonly class SelectionUnitOfWorkResult
         return new self('committed',$result,null,null);
     }
     public static function rolledBack(SelectionRollbackCause $cause): self { return new self('rolledBack',null,$cause,null); }
+    public static function rolledBackResult(SelectionResult$result):self{return new self('rolledBackResult',$result,null,null);}
     public static function requestRace(): self { return new self('requestRace',null,null,null); }
     public static function observedTerminal(SelectionTerminalRequestRecord $record): self { return new self('observedTerminal',null,null,$record); }
     public static function outcomeUnknown(): self { return new self('outcomeUnknown',null,null,null); }

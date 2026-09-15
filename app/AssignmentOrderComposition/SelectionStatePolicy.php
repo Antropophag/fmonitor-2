@@ -21,14 +21,14 @@ final class SelectionStatePolicy
     { return $s->assignmentOrderId>0 && $s->orderVersion>0 && $s->orderVersion<=65535 && $s->selectionRevision>0 && $s->selectionRevision<=4294967295
         && $s->compositionIdentity==='composition-'.$s->assignmentOrderId.'-v'.$s->orderVersion && SelectionScalar::hash($s->compositionSha256); }
     private static function same(SelectionIdentitySummary $a,SelectionIdentitySummary $b): bool { return get_object_vars($a)===get_object_vars($b); }
-    public static function refusal(SelectionAttempt $attempt,SelectionStateSnapshot $state,int $caseId): ?SelectionResult
+    public static function refusal(SelectionAttempt $attempt,SelectionStateSnapshot $state,int $caseId,int $currentEngineerUserId): ?SelectionResult
     {
         $latest=$state->latestSelection;$revision=$latest?->selectionRevision??0;
         if($attempt->intent->expectedRevision!==$revision)return $attempt->conflict(AssignmentOrderCompositionReason::STALE_SELECTION);
         if($attempt->command->mode===AssignmentOrderCompositionMode::NEW_ORDER)return $state->latestPendingSelection!==null?$attempt->conflict(AssignmentOrderCompositionReason::PENDING_SELECTION_EXISTS):null;
         if($latest===null)return $attempt->conflict(AssignmentOrderCompositionReason::SELECTION_NOT_FOUND);
         if($latest->hasAcceptedOriginal)return $attempt->conflict(AssignmentOrderCompositionReason::ORIGINAL_ALREADY_ACCEPTED);
-        [, $hash]=SelectionIntent::composition($caseId,$latest->assignmentOrderId,$latest->orderVersion,$attempt->intent->engineerUserId,$attempt->intent->installers);
+        [, $hash]=SelectionIntent::composition($caseId,$latest->assignmentOrderId,$latest->orderVersion,$currentEngineerUserId,$attempt->intent->installers);
         return $hash===$latest->compositionSha256?$attempt->rejected(AssignmentOrderCompositionReason::NO_CHANGES):null;
     }
 }

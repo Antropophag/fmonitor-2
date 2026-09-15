@@ -21,6 +21,9 @@ final class SelectionNativeFixture
                 \assertSameValue(true, $migration::apply($this->db,$prefix)['applied'], 'approved native dependency schema');
             }
             \assertSameValue(O\AssignmentOrderOriginalSchemaMigrationStatus::APPLIED, O\AssignmentOrderOriginalSchemaMigration::apply($this->db,$prefix)->status(), 'approved original schema');
+            \assertSameValue(['applied'=>true],I\AssignmentOrderApplicationSchemaMigration::apply($this->db,$prefix),'approved application schema for current engineer authority');
+            \assertSameValue(['applied'=>true,'schemaVersion'=>28,'tablesCreated'=>[$prefix.'fm2_control_engineer_assignments']],I\ControlEngineerAssignmentDefinitionSchemaMigration::apply($this->db,$prefix),'approved current engineer schema');
+            $this->schema->insert($prefix.'fm2_control_engineer_assignments',['installation_case_id'=>4512,'object_id'=>4512,'assignment_sequence'=>1,'engineer_user_id'=>73,'engineer_fio_snapshot'=>'Инженер теста','engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>18,'assigned_at_utc'=>'2026-09-01 06:00:00','request_id'=>'52525252-0052-4525-8525-000000000001','request_fingerprint'=>str_repeat('a',64)]);
             $this->db->query("CREATE TABLE `{$prefix}fm_maintable` (id BIGINT UNSIGNED PRIMARY KEY, ordadr_address VARCHAR(500), entrance VARCHAR(80), regnumber VARCHAR(120), workdatestart VARCHAR(40), workdateendadjusted VARCHAR(40), plan_finish_date VARCHAR(40), workdatefinish VARCHAR(40), ptoactdate VARCHAR(40), responsstroicontrol VARCHAR(80)) ENGINE=InnoDB");
             $this->db->query("INSERT INTO `{$prefix}fm_maintable`(id,ordadr_address,regnumber) VALUES(4512,'Вымышленный объект','TEST-4512')");
             foreach ([[18,'Сотрудник теста'],[73,'Инженер теста']] as [$id,$name]) {

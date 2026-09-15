@@ -13,6 +13,7 @@ final readonly class AuthorizeLocalActor
         'assignment_order.prepare',
         'assignment_order.composition.select',
         'assignment_order.composition.apply',
+        'control_engineer.assign',
         'assignment_order.original.read',
         'assignment_order.original.upload',
         'assignment_order.original.correct',

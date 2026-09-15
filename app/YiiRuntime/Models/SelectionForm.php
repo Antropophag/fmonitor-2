@@ -6,7 +6,7 @@ final readonly class SelectionForm
 {
     private const ALLOWED = [
         '_csrf', 'requestId', 'mode', 'expectedSelectionRevision',
-        'controlEngineerUserId', 'controlEngineerConfirmed', 'installerTabIds[]',
+        'controlEngineerUserId', 'controlEngineerConfirmed', 'expectedControlEngineerAssignmentRevision', 'installerTabIds[]',
     ];
 
     private function __construct(public array $fields) {}
@@ -17,7 +17,7 @@ final readonly class SelectionForm
             throw new \LengthException();
         }
         $fields = self::decode($body);
-        foreach (['_csrf', 'requestId', 'mode', 'expectedSelectionRevision', 'controlEngineerUserId', 'controlEngineerConfirmed'] as $key) {
+        foreach (['_csrf', 'requestId', 'mode', 'expectedSelectionRevision', 'expectedControlEngineerAssignmentRevision'] as $key) {
             if (!isset($fields[$key]) || !is_string($fields[$key])) {
                 throw new \InvalidArgumentException();
             }
@@ -30,11 +30,7 @@ final readonly class SelectionForm
             || (int) $fields['expectedSelectionRevision'] > 4294967295) {
             throw new \InvalidArgumentException();
         }
-        if (!preg_match('/^[1-9][0-9]*$/D', $fields['controlEngineerUserId'])
-            || filter_var($fields['controlEngineerUserId'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false
-            || $fields['controlEngineerConfirmed'] !== 'yes') {
-            throw new \InvalidArgumentException();
-        }
+        if(isset($fields['expectedControlEngineerAssignmentRevision'])&&(!is_string($fields['expectedControlEngineerAssignmentRevision'])||!preg_match('/^(0|[1-9][0-9]{0,9})$/D',$fields['expectedControlEngineerAssignmentRevision'])||(int)$fields['expectedControlEngineerAssignmentRevision']>2147483647))throw new \InvalidArgumentException();
         foreach ($fields['installerTabIds[]'] ?? [] as $id) {
             if (!preg_match('/^[1-9][0-9]*$/D', $id)
                 || filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
@@ -53,6 +49,7 @@ final readonly class SelectionForm
             if (preg_match('/%(?![0-9A-Fa-f]{2})/', implode('', $pair))) throw new \InvalidArgumentException();
             $key = rawurldecode(str_replace('+', ' ', $pair[0]));
             $value = rawurldecode(str_replace('+', ' ', $pair[1] ?? ''));
+            if(preg_match('/^installerTabIds\[[0-9]+\]$/D',$key)===1)throw new \InvalidArgumentException();
             if (!in_array($key, self::ALLOWED, true) || str_contains($key, "\0") || str_contains($value, "\0")) throw new \InvalidArgumentException();
             if ($key === 'installerTabIds[]') {
                 $fields[$key][] = $value;

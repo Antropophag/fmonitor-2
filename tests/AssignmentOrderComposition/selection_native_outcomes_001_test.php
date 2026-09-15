@@ -10,7 +10,7 @@ $cases=[
     'missing_worker'=>["DELETE FROM fm2_workforce_catalog WHERE installer_tab_id=7001",'rejected','installer_not_in_catalog'],
     'dismissed_worker'=>["UPDATE fm2_workforce_catalog SET employment_status='dismissed' WHERE installer_tab_id=7001",'rejected','installer_not_employed'],
     'future_worker'=>["UPDATE fm2_workforce_catalog SET employed_from='2026-09-06' WHERE installer_tab_id=7001",'rejected','installer_not_employed'],
-    'inactive_engineer'=>["UPDATE fm2_pilot_users SET status=0 WHERE user_id=73",'rejected','control_engineer_not_eligible'],
+    'missing_assignment'=>["DELETE FROM fm2_control_engineer_assignments",'rejected','control_engineer_required'],
     'completed_precedes_pto'=>["UPDATE fm_maintable SET workdatefinish='2026-09-04',ptoactdate='2026-09-03'",'rejected','object_completed'],
     'pto'=>["UPDATE fm_maintable SET ptoactdate='2026-09-03'",'rejected','object_has_pto_act'],
     'malformed_object_date'=>["UPDATE fm_maintable SET ptoactdate='not-a-date'",'failed','dependency_unavailable'],
@@ -27,7 +27,7 @@ function outcomeUnchanged(array $before,array $after,bool $terminal):void {
 foreach($cases as $name=>[$setup,$status,$reason]) {
     $f=null;$errors=[];
     try{$f=new F();$f->db->query($setup);$before=$f->rows();echo "SETUP_OK $name\n";$r=$f->app()->selectAssignmentOrderComposition(F::command());
-        assertSameValue([$status,$reason,$status==='failed'&&$reason!=='allocation_capacity_exhausted',null],[$r->status()->value,$r->reasonCode()?->value,$r->retryable(),$r->success()],'exact native outcome');outcomeUnchanged($before,$f->rows(),$status==='rejected');
+        assertSameValue([$status,$reason,$status==='failed'&&$reason!=='allocation_capacity_exhausted',null],[$r->status()->value,$r->reasonCode()?->value,$r->retryable(),$r->success()],'exact native outcome');outcomeUnchanged($before,$f->rows(),$status==='rejected'&&$reason!=='control_engineer_required');
     }catch(Throwable $e){$errors[]=$e->getMessage();}
     if($f!==null)try{$f->close();echo "CLEANUP_OK $name\n";}catch(Throwable $e){$errors[]='cleanup: '.$e->getMessage();}
     if($errors!==[]){$failed++;echo "FAIL $name: ".implode(' | ',$errors)."\n";}else echo "PASS $name\n";

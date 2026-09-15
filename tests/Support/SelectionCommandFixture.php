@@ -19,6 +19,7 @@ final class SelectionCommandFixture implements C\SelectionAuthorizer, C\Selectio
     public ?C\SelectionInstantLookup $clockResponse=null; public ?C\SelectionStateLookup $stateResponse=null;
     public ?C\SelectionTerminalRequestLookup $requestResponse=null; public ?C\SelectionTerminalRequestLookup $freshResponse=null;
     public ?C\SelectionIdentityAllocationResult $allocationResponse=null; public ?C\SelectionStageResult $stageResponse=null;
+    public ?array $currentEngineerResponse=null;
     public ?C\SelectionAuditWriteResult $auditResponse=null; public string $outcome='normal';
     public ?C\SelectionUnitOfWorkResult $terminalOutcome=null;
     private bool $inside = false; private bool $fresh=false; private mixed $staged = null;
@@ -68,6 +69,15 @@ final class SelectionCommandFixture implements C\SelectionAuthorizer, C\Selectio
     }
     public function selectionState(): C\SelectionStateLookup
     { $this->trace[]='state';return $this->stateResponse??C\SelectionStateLookup::found($this->state); }
+    public function currentControlEngineer(): array
+    {
+        $this->trace[]='current-engineer';
+        return $this->currentEngineerResponse??[
+            'status'=>'found','caseId'=>4512,'objectId'=>4512,'revision'=>1,
+            'engineer'=>['userId'=>73,'fullName'=>'Инженер теста','position'=>'Инженер'],
+            'provenance'=>'standalone','bootstrapApplicationId'=>null,'assignmentId'=>1,
+        ];
+    }
     public function allocateIdentity(C\SelectionSourceKind $kind,C\SelectionInstant $at): C\SelectionIdentityAllocationResult
     {
         $this->trace[]='allocate';$this->allocations++;\assertSameValue(C\SelectionSourceKind::SELECTION,$kind,'selection owns allocated source kind');
@@ -104,6 +114,7 @@ final class SelectionCommandFixture implements C\SelectionAuthorizer, C\Selectio
                 $this->trace[]='commit';return $this->outcome==='unknown-committed'?C\SelectionUnitOfWorkResult::outcomeUnknown():C\SelectionUnitOfWorkResult::committed($decision->result());
             }
             if($decision->kind()==='observedTerminal'){\assertSameValue(null,$this->staged,'observed terminal is read-only');return C\SelectionUnitOfWorkResult::observedTerminal($decision->terminalRecord());}
+            if($decision->kind()==='rollbackResult'){\assertSameValue(null,$this->staged,'rollback result is read-only');return C\SelectionUnitOfWorkResult::rolledBackResult($decision->result());}
             $this->trace[]='rollback';return $decision->kind()==='requestRace'?C\SelectionUnitOfWorkResult::requestRace():C\SelectionUnitOfWorkResult::rolledBack($decision->rollbackCause());
         }finally{$this->inside=false;$this->staged=null;}
     }

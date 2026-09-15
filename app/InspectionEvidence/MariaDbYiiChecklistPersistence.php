@@ -23,6 +23,11 @@ trait MariaDbYiiChecklistPersistence
         private function commit():void{if($this->transaction!==null){$this->transaction->commit();$this->transaction=null;return;}$this->db->commit();}
         private function rollback():void{if($this->transaction!==null){$this->transaction->rollBack();$this->transaction=null;return;}if($this->db!==null)$this->db->rollback();}
         private function yiiParams(array$p):array{return$p===[]?[]:array_combine(range(1,count($p)),array_values($p));}
+        private function currentEngineerAssignment(int$objectId):array
+        {
+            if($this->db!==null)return(new \FMonitor2\InstallationProcess\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix))->read($objectId);
+            $port=filter_var(getenv('FMONITOR_DB_PORT'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'max_range'=>65535]]);if($port===false)throw new \RuntimeException();$db=new \mysqli((string)getenv('FMONITOR_DB_HOST'),(string)getenv('FMONITOR_DB_USER'),(string)getenv('FMONITOR_DB_PASSWORD'),(string)getenv('FMONITOR_DB_NAME'),$port);try{if(!$db->set_charset('utf8mb4'))throw new \RuntimeException();return(new \FMonitor2\InstallationProcess\MariaDbControlEngineerAssignmentReader($db,$this->prefix))->read($objectId);}finally{$db->close();}
+        }
 
         private function t(string$n):string{return'`'.$this->prefix.$n.'`';
     }

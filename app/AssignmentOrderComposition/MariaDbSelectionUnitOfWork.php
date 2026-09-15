@@ -24,7 +24,7 @@ final readonly class MariaDbSelectionUnitOfWork implements SelectionUnitOfWork
             if($kind==='observedTerminal'&&($session===null||!$session->canObserve()))throw new \RuntimeException();
             if($kind==='requestRace'&&($session===null||$session->stageStatus!==SelectionStageStatus::REQUEST_RACE))throw new \RuntimeException();
             if(!$this->sql->db->rollback())return SelectionUnitOfWorkResult::outcomeUnknown();$owned=false;
-            return match($kind){'observedTerminal'=>SelectionUnitOfWorkResult::observedTerminal($decision->terminalRecord()),'requestRace'=>SelectionUnitOfWorkResult::requestRace(),default=>SelectionUnitOfWorkResult::rolledBack($decision->rollbackCause())};
+            return match($kind){'observedTerminal'=>SelectionUnitOfWorkResult::observedTerminal($decision->terminalRecord()),'requestRace'=>SelectionUnitOfWorkResult::requestRace(),'rollbackResult'=>SelectionUnitOfWorkResult::rolledBackResult($decision->result()),default=>SelectionUnitOfWorkResult::rolledBack($decision->rollbackCause())};
         }catch(\Throwable){
             if(!$owned)return SelectionUnitOfWorkResult::rolledBack(SelectionRollbackCause::PERSISTENCE_FAILURE);
             try{if($this->sql->db->rollback())return SelectionUnitOfWorkResult::rolledBack(SelectionRollbackCause::PERSISTENCE_FAILURE);}catch(\Throwable){}
