@@ -429,5 +429,6 @@
   "tests/InstallationProcess/deadline_transfer_certificate_schema_001_test.php": "integration",
   "tests/Runtime/deadline_transfer_certificate_recovery_001_test.php": "integration",
   "tests/Yii2/deadline_transfer_certificate_http_001_test.php": "integration",
-  "tests/Yii2/excel_publication_browser_001_test.php": "e2e"
+  "tests/Yii2/excel_publication_browser_001_test.php": "e2e",
+  "tests/Yii2/yii2_main_navigation_001_test.php": "integration"
 }

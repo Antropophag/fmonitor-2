@@ -430,3 +430,4 @@ db	php	tests/InstallationProcess/bitrix_order_document_links_schema_001_test.php
 db	php	tests/Jobs/bitrix_order_document_links_scheduler_001_test.php
 db	php	tests/Yii2/yii2_bitrix_order_document_links_001_test.php
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php
+db	php	tests/Yii2/yii2_main_navigation_001_test.php

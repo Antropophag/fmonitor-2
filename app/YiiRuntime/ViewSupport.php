@@ -10,7 +10,7 @@ use yii\web\View;
 
 final class ViewSupport
 {
-    public static function begin(View $view, string $title, object $identity): void
+    public static function begin(View $view, string $title, object $identity, ?string $currentSection = null): void
     {
         PreopeningAssetBundle::register($view);
         $csrf = Html::hiddenInput(\Yii::$app->request->csrfParam, \Yii::$app->request->csrfToken);
@@ -42,6 +42,9 @@ final class ViewSupport
                 <svg class="fm2-logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="fm2-logo-rail" x="5" y="4" width="4" height="24"/><rect class="fm2-logo-rail" x="23" y="4" width="4" height="24"/><rect class="fm2-logo-progress" x="11" y="10" width="10" height="12"/></svg>
                 <span class="fm2-logo-name">FMonitor 2.0</span>
             </a>
+            <?php if ($currentSection !== null): ?>
+                <?= MainNavigation::render($identity, $currentSection) ?>
+            <?php else: ?>
             <nav class="fm2-primary-nav" aria-label="Основная навигация">
                 <span class="fm2-nav-group">Монтаж</span>
                 <a class="fm2-nav-item" href="/pilot/objects" aria-current="page" aria-label="Объекты монтажа">
@@ -56,6 +59,7 @@ final class ViewSupport
                     <a class="fm2-nav-item" href="/pilot/admin/roles" aria-label="Роли"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm12 0a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM2 19.5c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5H2Zm12 0c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5h-8Z"/></svg><span class="fm2-nav-text">Роли</span></a>
                 <?php endif ?>
             </nav>
+            <?php endif ?>
         </div>
         <div class="fm2-sidebar-user">
             <span class="shlz-avatar shlz-avatar--32 fm2-sidebar-avatar"><?= Html::encode($initials) ?></span>
