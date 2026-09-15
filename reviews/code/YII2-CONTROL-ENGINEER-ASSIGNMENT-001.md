@@ -212,3 +212,30 @@ The refreshed CRITICAL plan retains 15 focused commands, including #131-affected
 **APPROVED**
 
 Gate 5 approves exact commit `3ac5902b3db227447fad0b7867ccfa8623e84c78` after rebase on current main. All previous #52 findings remain resolved, and coexistence with merged #131 introduces no new finding. Publication still requires exact-source CI; merge/deployment are outside this approval.
+
+---
+
+## CI inventory correction rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T095617Z-7b330f3b03/package.json`
+- Exact reviewed commit: `c87736c9d65d598c02bc6d771f687ea14cd54a29`
+- Candidate source: `653c291031836be6b8b22da261dc75835b10c78214a15eab2a4efd3829d9ba19`
+- Executable source: `4da89d4159eccb3e44e46584325b693568f0d73a6d6c0465718f7ace2b02f6ae`
+- Verification plan SHA-256: `e9bfef98e2c436891a70b5cb1fcf76fb65607ba6f6af48e7b80dd8013bccc85a`
+- Verdict: **APPROVED**
+
+### Findings
+
+No findings.
+
+The complete failed-job inventory for GitHub run `34953677750` agrees with the delivery record: `fast`, `unit`, `governance`, both integration shards and `e2e` each stopped at the inventory guard with the identical first setup error, `unregistered verifier: tests/InstallationProcess/control_engineer_assignment_001_test.php`; no product regression ran. Aggregate `verify` then failed from the missing category results. `plan` and `quality-results` passed, and `harness` was skipped. No distinct regression failure is present in any failed job.
+
+The correction is the existing policy mechanism and no broader CI change: `tools/verification/suites.tsv:171-174` adds exactly the four #52 owner/Yii verifier paths as `db/php` entries. All four are legitimate #52 acceptance witnesses; registering the remaining paths at the same time avoids merely exposing the next sequential inventory error after the first missing path. The existing native composition verifier was already registered at `tools/verification/suites.tsv:143`. No workflow, harness implementation, category policy or production source changed.
+
+The only accompanying changes bind `tools/verification/suites.tsv` into the OpenSpec verification inventory/plan and record the complete CI failure inventory at `docs/operations/issue-52-control-engineer-assignment-delivery.md:14`. Production file hashes checked against the previously approved CI head remain identical, including `MariaDbControlEngineerAssignment.php` (`bb6dde459a087c2221abda3da34faeddf83df65b3cc0dcda10beb66d287779a4`) and `MariaDbYiiChecklistPersistence.php` (`4de62e1ed0b4cf237f180e6d6cd0e1802ff0dd74ac605fdace8e20ca94520c10`). Therefore every substantive conclusion of the post-rebase Gate 5 approval remains valid.
+
+### CI-correction verdict
+
+**APPROVED**
+
+Gate 5 approves the bounded verifier-registration correction. This approval does not infer CI GREEN: the corrected exact source must complete the required GitHub matrix successfully. Merge/deployment remain outside this review.

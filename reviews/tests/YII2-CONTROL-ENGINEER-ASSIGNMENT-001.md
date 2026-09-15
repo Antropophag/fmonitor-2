@@ -319,3 +319,31 @@ CI/deployment remain outside this Gate 3 test verdict and are not inferred GREEN
 `APPROVED`
 
 The rebase and fixture merge preserve the approved test semantics for exact candidate source `6576470637dd17a0f88510cd9641e7802792232a2062aebd1e2187d0ec43b0cc`. Later test or normative-expectation changes require renewed independent review.
+
+---
+
+## CI inventory-registration correction review — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T095617Z-7b330f3b03/package.json`.
+- Exact committed head: `c87736c9d65d598c02bc6d771f687ea14cd54a29` over base `3d213666886e53756781d9ea71943cfe47eee8fb`.
+- Exact candidate source: `653c291031836be6b8b22da261dc75835b10c78214a15eab2a4efd3829d9ba19`; executable source: `4da89d4159eccb3e44e46584325b693568f0d73a6d6c0465718f7ace2b02f6ae`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T095617Z-7b330f3b03/verification-plan.json`, SHA-256 `e9bfef98e2c436891a70b5cb1fcf76fb65607ba6f6af48e7b80dd8013bccc85a`; lane remains `CRITICAL`, reviews `gate3` and `final`.
+- Scope: CI verifier inventory registration, corresponding verification input/plan refresh, and first-run setup-failure inventory only. Reviewer authored none of the correction.
+
+### Assessment
+
+No findings.
+
+The correction adds exactly four already approved executable verifiers to the existing `db / php` suite inventory: the assignment owner, Yii A–H, #40 construction-control, and #38 installer-directory suites. Each path exists, appears exactly once in `suites.tsv`, and retains its prior file content hash. No test body, fixture, production file, runner, category definition, workflow, CI policy, or admission rule is changed. Registration makes the inventory guard aware of the tests; it neither suppresses them nor broadens policy.
+
+The refreshed input explicitly plans `tools/verification/suites.tsv`, and the regenerated CRITICAL plan binds its exact hash while retaining the same fifteen focused commands plus the CI-only full integration command. All fifteen focused records at this exact candidate/executable source report `GREEN`, exit 0, and `source_drift=false`. A bounded `make lint` also exits 0, and `git diff --check` is clean.
+
+The delivery record inventories every first CI job outcome: `fast`, `unit`, `governance`, both integration shards, and `e2e` stopped at the same unregistered-verifier setup guard; aggregate `verify` consequently failed; `plan` and `quality-results` passed; `harness` was intentionally skipped. It explicitly states that no product regression ran before the guard. This is a complete setup-failure inventory and does not relabel that failed CI run as product RED or GREEN.
+
+Successful corrected exact-source CI remains pending and is not inferred from focused checks. Deployment remains outside this review.
+
+### CI correction verdict
+
+`APPROVED`
+
+The bounded CI inventory correction is approved for exact candidate source `653c291031836be6b8b22da261dc75835b10c78214a15eab2a4efd3829d9ba19`. It preserves all approved test semantics and does not expand verification policy.
