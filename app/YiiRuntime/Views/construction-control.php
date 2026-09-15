@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);use FMonitor2\YiiRuntime\ViewSupport;use yii\helpers\Html;$pagination=$objects[0]['_pagination']??['page'=>1,'pages'=>1,'total'=>0];ViewSupport::begin($this,'Стройконтроль',$identity);?>
+<?php declare(strict_types=1);use FMonitor2\YiiRuntime\ViewSupport;use yii\helpers\Html;$pagination=$objects[0]['_pagination']??['page'=>1,'pages'=>1,'total'=>0];ViewSupport::begin($this,'Стройконтроль',$identity,'construction-control');?>
 <section class="fm2-control-queue" data-control-queue data-user-id="<?=(int)$identity->getId()?>">
 <header class="fm2-control-header">
 <h1>Стройконтроль</h1>
