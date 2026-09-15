@@ -103,3 +103,37 @@ B. **Resolved.** Each replay now propagates the baseline `whole_sources` and `ob
 The normative spec and OpenSpec artifacts remain within issue #157/T02 and preserve canonical documents as the only source of truth. The corrected executable matrix is independently expected, deterministic and sensitive across cases A-L: bounded UI reduction, sensitive applicability, conservative unknown fallback, source/index freshness, all three roles, exact reconstruction, historical on-demand references, admission fail-closed behavior and reproducible measurement with token usage `UNKNOWN`. The retained RED fails because the manifest and measurement implementation do not yet exist, not because of broken setup.
 
 Gate 3 is approved for executor dispatch. This approval covers specification/tests/RED only and is not Gate 5 approval of any implementation.
+
+---
+
+## Gate 3 test-delta review v4 — planner-compatible case F
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test delta author: root
+- Reviewed exact delta: commit `b0ccb85c` only (`tests/Verification/delivery_harness_context_manifest_001_test.py`); uncommitted executor implementation explicitly excluded
+- Verdict: `APPROVED` — prior Gate 3 approval remains valid
+
+### Disposition
+
+The one-line fixture change from `prepared(["unknown-boundary/example.xyz"])` to `prepared([])` is correct and preserves case F at the context-selection seam. `prepared()` still appends the known verification test path to `planned_paths`; therefore the existing verification planner accepts and classifies the task, while the context layer has no supported product/profile applicability and must select `conservative` with the exact full safe source set.
+
+This is a stronger boundary test than requiring the manifest layer to receive a repository path that the authoritative planner already rejects. It does not add a second planner, relax planner validation, alter verification coverage, or change the approved expected conservative inventory. The explanatory comment accurately records that separation of responsibilities.
+
+No new test/spec finding is introduced. Gate 3 remains `APPROVED`; implementation remains subject to independent Gate 5 review.
+
+---
+
+## Gate 3 test-delta review v5 — legacy package-contract alignment
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test delta author: root
+- Reviewed scope: narrow uncommitted delta in `tests/Verification/delivery_harness_001_test.py` only; executor WIP excluded
+- Verdict: `APPROVED` — prior Gate 3 approval remains valid
+
+### Disposition
+
+Replacing the legacy `assertTrue(data['rules'])` expectation with `assertFalse(data['rules'])` is required by the approved case L/public-route contract: whole-document `rules` must not remain a second mandatory delivery path after `context_delivery` becomes authoritative. The added assertions require the existing reviewer `prepare` route to declare `task_context_manifest` mode and point to an actually materialized context artifact.
+
+The surrounding test still verifies reviewer role, `NOT_REVIEWED`, exact plan digest, contracts, sources, current evidence, package existence, stale-source rejection and executor/root behavior. The stronger manifest-specific suite separately binds `context_delivery.path` to `required_context_path` and verifies artifact/excerpt digests, so this compatibility assertion does not weaken reconstruction coverage.
+
+No contradiction with the approved specification or case L remains. Gate 3 stays `APPROVED`.
