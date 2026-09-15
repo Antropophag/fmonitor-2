@@ -58,3 +58,30 @@ None.
 ### Required changes
 
 None. Gate 5 is approved for candidate source `c55b3ba20396343fd07c5dd6edbbfc0509b5c7def7e2a9e1b9864c400ca0b463`; the appended review record is the only post-snapshot documentation change.
+
+---
+
+## Post-main-update Gate 5 rereview — PR #155
+
+- Reviewer: independent Codex reviewer `/root/gate5_review`; authored neither Slice A nor upstream PR #154/#116
+- New base: `b2b4df1a`; reviewed merge commit: `916b71b7bee759bdad6348df93bbeb2eec58f42e`; candidate source `26f52d42da2185ce12f9aaf53909e551ee192811703a0c02ead49d4b2846616a`
+- Reconstructible source: clean commit `916b71b7`; retained empty patch `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T200627Z-4114caebe1/snapshot/source.patch`, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Prepared reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T200627Z-4114caebe1/package.json`; plan SHA-256 `cfa69d2247da7d8bb6c911fe47ce2ec8fb3607e655ba6441f0936701eb60511f`
+- Verdict: `APPROVED`
+
+### Merge-resolution and compatibility review
+
+- The only recorded merge conflict was `docs/operations/current-delivery-goal.md`. Its resolution correctly retains #153 Slice A as the active goal, records merged #116 and updates the base to `b2b4df1a`; it does not restore #116 as the current queue.
+- Canonical `tools/verification/suites.tsv` retains both independently sorted governance registrations exactly once: `tests/Verification/architecture_file_size_advisory_001_test.py` from #116 and `tests/Verification/change_verification_semantic_closure_153_test.py` from #153.
+- Upstream #116 changes only the architecture file-size signal and its documentation/tests. They do not modify the change-verification planner or policy, the protected semantic classification, integration inventory API, plan tamper reconstruction, FAST lane selection, or Slice A specification. The merge introduces no Slice B/C/D or product behavior.
+- Prepared GREEN evidence: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789502737475984000-e8e9bf676a644ea6944594652787f2ed.json`; semantic closure suite GREEN on exact source `26f52d42da2185ce12f9aaf53909e551ee192811703a0c02ead49d4b2846616a`.
+- Reviewer reruns: semantic closure suite — 11 tests `OK`; existing change-verification suite — 18 tests `OK`; upstream architecture file-size advisory suite — 10 tests `OK`; exact prepared-plan check — `CHANGE_VERIFICATION_OK`.
+- No local full `make test` / `make verify` was run. The harness reports the previously published PR head rather than merge commit `916b71b7` and therefore correctly leaves publication readiness false until the updated exact source is published and verified by CI.
+
+### Findings
+
+None.
+
+### Required changes
+
+None. Post-main-update Gate 5 is approved for merge commit `916b71b7bee759bdad6348df93bbeb2eec58f42e`; this appended review section is the only post-package documentation change.
