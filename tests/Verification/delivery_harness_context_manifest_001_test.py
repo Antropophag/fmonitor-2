@@ -15,6 +15,15 @@ SPEC.loader.exec_module(BASE)
 
 
 class ContextManifest(unittest.TestCase):
+    COMMON = {"instruction.constitution", "delivery.workflow", "current.actionable-goal"}
+    EXPECTED = {
+        "ui": COMMON | {"ui.presentation"},
+        "persistence": COMMON | {"product.core", "product.context", "pilot.behavior", "pilot.data-model", "persistence.current-state", "domain.state-history", "security.authorization"},
+        "auth": COMMON | {"product.core", "product.context", "pilot.behavior", "security.authorization", "security.session-csrf-secrets"},
+        "harness": COMMON | {"delivery.verification-governance"},
+    }
+    CONSERVATIVE_FULL = {"AGENTS.md", "docs/development-process.md", "docs/operations/current-delivery-goal.md", "PRODUCT.md", "CONTEXT.md", "docs/fmonitor-2-pilot-spec.md", "docs/fmonitor-2-pilot-data-model.md"}
+
     def fixture(self):
         value = BASE.Harness(methodName="runTest")
         value.setUp()
@@ -43,7 +52,12 @@ class ContextManifest(unittest.TestCase):
         spec["change"] = "context-case"
         spec["planned_paths"] = paths + [value.test]
         value.write(value.input, spec)
-        result = value.cli("prepare", "--input", value.input, "--base", value.base, "--role", role)
+        extra = []
+        if role == "reviewer":
+            run = value.cli("run", "--", sys.executable, value.test)
+            self.assertEqual(0, run.returncode, run.stderr)
+            extra = ["--evidence", json.loads(run.stdout)["record_path"]]
+        result = value.cli("prepare", "--input", value.input, "--base", value.base, "--role", role, *extra)
         self.assertEqual(0, result.returncode, "INTENDED_RED task-context prepare absent: " + result.stderr)
         package = json.loads(result.stdout)
         self.assertIn("context_manifest", package, "INTENDED_RED package does not expose manifest")
@@ -57,13 +71,26 @@ class ContextManifest(unittest.TestCase):
         self.assertEqual("context-case", manifest["task"]["change"])
         self.assertEqual(role, manifest["task"]["role"])
         self.assertTrue(Path(package["required_context_path"]).is_file())
+        self.assertEqual({"mode": "task_context_manifest", "path": package["required_context_path"]}, package["context_delivery"])
+        self.assertFalse(package.get("rules"), "legacy whole-document rules must not remain a second mandatory route")
         self.assertEqual("UNKNOWN", package["context_metrics"]["token_usage"])
+        self.assertRegex(manifest["section_index"]["digest"], r"^[0-9a-f]{64}$")
+        self.assertEqual(1, manifest["section_index"]["version"])
+        materialized = json.loads(Path(package["required_context_path"]).read_text())
+        self.assertEqual(package["required_context_sha256"], hashlib.sha256(Path(package["required_context_path"]).read_bytes()).hexdigest())
+        self.assertEqual(len(manifest["required_context"]), len(materialized["items"]))
         for item in manifest["required_context"]:
-            self.assertEqual("required_reference", item["load_mode"])
+            self.assertIn(item["load_mode"], {"inline", "required_reference"})
             self.assertRegex(item["digest"], r"^[0-9a-f]{64}$")
             self.assertTrue(item["source"])
             self.assertTrue(item["reason"])
             self.assertIn("content_reference", item)
+            source_bytes = (value.repo / item["source"]).read_bytes()
+            ref = item["content_reference"]
+            excerpt = source_bytes[ref["start_byte"]:ref["end_byte"]]
+            self.assertEqual(item["digest"], hashlib.sha256(excerpt).hexdigest())
+            delivered = next(entry for entry in materialized["items"] if entry["rule_id"] == item["rule_id"] and entry["source"] == item["source"])
+            self.assertEqual(excerpt.decode(), delivered["content"])
         return value, package, manifest
 
     def rule_ids(self, manifest):
@@ -71,21 +98,29 @@ class ContextManifest(unittest.TestCase):
 
     def test_A_to_D_profiles_and_J_history(self):
         _v, ui, ui_manifest = self.prepared(["app/YiiRuntime/Views/example.php"])
-        self.assertIn("ui.presentation", self.rule_ids(ui_manifest))
+        self.assertEqual(self.EXPECTED["ui"], self.rule_ids(ui_manifest))
         self.assertNotIn("persistence.current-state", self.rule_ids(ui_manifest))
         self.assertNotIn("security.authorization", self.rule_ids(ui_manifest))
         self.assertTrue(any(item["source"].startswith("docs/operations/current-delivery-goal-history") for item in ui_manifest["load_on_demand"]))
 
         _v, _p, persistence = self.prepared(["app/InstallationProcess/MariaDbExample.php"])
-        self.assertTrue({"persistence.current-state", "domain.state-history", "security.authorization"} <= self.rule_ids(persistence))
+        self.assertEqual(self.EXPECTED["persistence"], self.rule_ids(persistence))
 
         _v, _a, auth = self.prepared(["app/IdentityAccess/AuthorizeExample.php"])
-        self.assertIn("security.authorization", self.rule_ids(auth))
+        self.assertEqual(self.EXPECTED["auth"], self.rule_ids(auth))
 
         _v, _h, harness = self.prepared(["tools/delivery/example.py"])
-        self.assertIn("delivery.verification-governance", self.rule_ids(harness))
+        self.assertEqual(self.EXPECTED["harness"], self.rule_ids(harness))
         self.assertFalse(any(item["source"] in {"PRODUCT.md", "CONTEXT.md", "docs/fmonitor-2-pilot-spec.md"} for item in harness["required_context"]))
         self.assertLess(ui["context_metrics"]["mandatory_bytes"], 78637)
+
+        _v, executor, executor_manifest = self.prepared(["tools/delivery/example.py"], role="executor")
+        self.assertEqual("executor", executor_manifest["task"]["role"])
+        _v, reviewer, reviewer_manifest = self.prepared(["tools/delivery/example.py"], role="reviewer")
+        self.assertEqual("reviewer", reviewer_manifest["task"]["role"])
+        self.assertTrue(reviewer["evidence"])
+        self.assertEqual(reviewer["contracts"], reviewer_manifest["product_spec"]["contracts"])
+        self.assertEqual(reviewer["evidence"], reviewer_manifest["verification"]["evidence"])
 
     def test_E_to_H_digest_freshness_unknown_fallback_and_repeat(self):
         value, first, manifest = self.prepared(["app/YiiRuntime/Views/example.php"])
@@ -93,15 +128,23 @@ class ContextManifest(unittest.TestCase):
         self.assertEqual(0, second.returncode, second.stderr)
         second_package = json.loads(second.stdout)
         self.assertEqual(first["context_manifest_sha256"], second_package["context_manifest_sha256"])
+        self.assertEqual(first["required_context_sha256"], second_package["required_context_sha256"])
 
         (value.repo / "AGENTS.md").write_text((value.repo / "AGENTS.md").read_text() + "\nNew canonical instruction.\n")
         fresh = value.cli("prepare", "--input", value.input, "--base", value.base, "--role", "root")
         self.assertEqual(0, fresh.returncode, fresh.stderr)
-        self.assertNotEqual(first["context_manifest_sha256"], json.loads(fresh.stdout)["context_manifest_sha256"])
+        fresh_package = json.loads(fresh.stdout)
+        self.assertNotEqual(first["context_manifest_sha256"], fresh_package["context_manifest_sha256"])
+        fresh_manifest = json.loads(Path(fresh_package["context_manifest"]).read_text())
+        old_agents = next(item for item in manifest["required_context"] if item["source"] == "AGENTS.md")
+        new_agents = next(item for item in fresh_manifest["required_context"] if item["source"] == "AGENTS.md")
+        self.assertNotEqual(old_agents["source_digest"], new_agents["source_digest"])
+        self.assertEqual(hashlib.sha256((value.repo / "AGENTS.md").read_bytes()).hexdigest(), new_agents["source_digest"])
 
         _v, _u, unknown = self.prepared(["unknown-boundary/example.xyz"])
         self.assertEqual("conservative", unknown["applicability"]["mode"])
-        self.assertTrue(any(item["rule_id"] == "FULL_DOCUMENT" for item in unknown["required_context"]))
+        full_sources = {item["source"] for item in unknown["required_context"] if item["rule_id"] == "FULL_DOCUMENT"}
+        self.assertEqual(self.CONSERVATIVE_FULL, full_sources)
 
     def test_I_K_L_reviewer_reconstruction_index_safety_and_no_false_green(self):
         value, package, manifest = self.prepared(["tools/delivery/example.py"])
@@ -114,23 +157,57 @@ class ContextManifest(unittest.TestCase):
         index = value.repo / "tools/delivery/context-sections.json"
         if index.exists():
             broken = json.loads(index.read_text())
+            corrupted_source = broken["sections"][0]["source"]
             broken["sections"][0]["heading"] = "## definitely absent heading"
             index.write_text(json.dumps(broken) + "\n")
             rebuilt = value.cli("prepare", "--input", value.input, "--base", value.base, "--role", "root")
             self.assertEqual(0, rebuilt.returncode, rebuilt.stderr)
             rebuilt_manifest = json.loads(Path(json.loads(rebuilt.stdout)["context_manifest"]).read_text())
-            self.assertTrue(any(item["rule_id"] == "FULL_DOCUMENT" for item in rebuilt_manifest["required_context"]))
+            self.assertTrue(any(item["rule_id"] == "FULL_DOCUMENT" and item["source"] == corrupted_source for item in rebuilt_manifest["required_context"]))
+
+        state = value.cli("state")
+        self.assertEqual(0, state.returncode, state.stderr)
+        state_value = json.loads(state.stdout)
+        self.assertFalse(state_value["merge_ready"])
+        self.assertFalse(state_value["publication_ready"])
+
+        for relative in ("reviews/tests/OLD.md", "docs/operations/old-evidence.md"):
+            target = value.repo / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("historical\n")
+        historical = value.cli("prepare", "--input", value.input, "--base", value.base, "--role", "root")
+        self.assertEqual(0, historical.returncode, historical.stderr)
+        historical_manifest = json.loads(Path(json.loads(historical.stdout)["context_manifest"]).read_text())
+        lod = {item["source"]: item for item in historical_manifest["load_on_demand"]}
+        for relative in ("docs/operations/current-delivery-goal-history-old.md", "reviews/tests/OLD.md", "docs/operations/old-evidence.md"):
+            self.assertIn(relative, lod)
+            self.assertRegex(lod[relative]["digest"], r"^[0-9a-f]{64}$")
 
     def test_measurement_replays_three_completed_changes(self):
         result = subprocess.run([sys.executable, "tools/delivery/measure-task-context.py", "--baseline", "docs/operations/issue-157-task-context-manifest-baseline.json"], cwd=ROOT, text=True, capture_output=True)
         self.assertEqual(0, result.returncode, "INTENDED_RED deterministic measurement absent: " + result.stderr)
         report = json.loads(result.stdout)
+        repeat = subprocess.run([sys.executable, "tools/delivery/measure-task-context.py", "--baseline", "docs/operations/issue-157-task-context-manifest-baseline.json"], cwd=ROOT, text=True, capture_output=True, check=True)
+        self.assertEqual(report, json.loads(repeat.stdout))
         self.assertEqual("UNKNOWN", report["token_usage"])
         self.assertEqual({"bounded_presentation_ui", "persistence_current_state", "harness_verification"}, {item["id"] for item in report["cases"]})
+        baseline = json.loads((ROOT / "docs/operations/issue-157-task-context-manifest-baseline.json").read_text())
+        baseline_cases = {item["id"]: item for item in baseline["cases"]}
+        for item in report["cases"]:
+            expected = baseline_cases[item["id"]]
+            self.assertEqual(expected["mandatory_bytes"], item["before"]["mandatory_bytes"])
+            self.assertEqual(expected["mandatory_characters"], item["before"]["mandatory_characters"])
+            self.assertEqual(expected["whole_documents"], item["before"]["whole_documents"])
+            self.assertEqual(expected["load_on_demand_references"], item["before"]["load_on_demand_references"])
+            self.assertRegex(item["input_digest"], r"^[0-9a-f]{64}$")
+            for key in ("mandatory_bytes", "mandatory_characters", "whole_documents", "load_on_demand_references"):
+                self.assertIsInstance(item["after"][key], int)
         bounded = next(item for item in report["cases"] if item["id"] == "bounded_presentation_ui")
         self.assertLess(bounded["after"]["mandatory_bytes"], bounded["before"]["mandatory_bytes"])
         sensitive = next(item for item in report["cases"] if item["id"] == "persistence_current_state")
         self.assertTrue({"persistence.current-state", "domain.state-history", "security.authorization"} <= set(sensitive["after"]["required_rule_ids"]))
+        harness = next(item for item in report["cases"] if item["id"] == "harness_verification")
+        self.assertEqual(self.EXPECTED["harness"], set(harness["after"]["required_rule_ids"]))
 
 
 if __name__ == "__main__":
