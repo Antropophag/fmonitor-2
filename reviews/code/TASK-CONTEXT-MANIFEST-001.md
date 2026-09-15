@@ -32,3 +32,39 @@ No other blocking or major finding was found in the reviewed delta. In particula
 - Live GitHub/CI state in the exact package was `UNKNOWN`; it was not treated as GREEN or approval.
 
 Gate 5 does not approve this candidate. Correct both findings, refresh exact-source evidence/package, obtain the required independent test-delta decision, and return the corrected complete candidate for independent final review.
+
+---
+
+## Gate 5 rereview v2 — section-index freshness correction
+
+- Reviewer: independent agent `/root/final_review` (gpt-5.6-sol/low)
+- Corrected candidate commit: `7ee72d2e950a4c885629273e0b564828849d63bf`
+- Candidate source: `8999fa7f31e5ce1c7f3e035a1acd21a3f69fcbbe19593b28772a7c043e9c1ba7`
+- Executable source: `4685c073c909539da5b2f1e93cff946bb9cbb1211120c3cfad199468a75e68e3`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T215255Z-1f79c3387f/package.json`
+- Package manifest SHA-256: `6870d8527b992985d033554e3964456eba2a6bb019f1eff1c18c0ddf7e33945e`
+- Required-context SHA-256: `33fc47c376535cf1ab34a2863b28a1dc7e89b53317d39fa2dd5b8dde75e65434`
+- Gate 3 correction-test approval: commit `fb278712` for exact test delta `ca4322a2`
+- Verdict: `APPROVED`
+
+### Prior findings disposition
+
+1. **Resolved.** `build_task_context` now keeps canonical section-index bytes in `index_bytes` and serializes historical groups through a separate `collection_index_bytes` variable. Direct reconstruction against the fresh real package proves that `section_index.digest`, `task.policy_digests.instruction_index`, and SHA-256 of the declared `tools/delivery/context-sections.json` source all equal `bd5cfc0a9232ca01a13b317a563c0e40d44f8405ff531b909904d55e5674a7d7`. Compact historical collection digests remain independently bound to their collection indexes.
+
+2. **Resolved.** The corrected executable test derives the expected digest from exact canonical index bytes, checks both manifest bindings, and forces the previously missed compact branch with 25 committed deterministic historical files. Gate 3 v6 independently approved that exact RED test delta before the three-line implementation correction.
+
+### Complete rereview findings inventory
+
+No new blocking, major, or minor findings.
+
+The correction is limited to the faulty local variable and its directly sensitive regression fixture. The original full-candidate assessment remains valid: A–L applicability and fail-safe behavior are preserved; compact historical collections stay reconstructible and on demand; package/state integration remains real and admission remains `NOT_REVIEWED`; measurement continues to report content and delivered artifact overhead honestly with token usage `UNKNOWN`; and there is no product, planner, FAST, verification-coverage, Gate, CI-performance, or other #145 scope expansion.
+
+### Rereview evidence
+
+- `python3 tests/Verification/delivery_harness_context_manifest_001_test.py`: 4 tests GREEN on exact candidate source, including the >20-history regression; retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789509154101252000-399e25b2e528452b9ffbf91e5c3093b0.json` reports exit 0 and matching start/end source.
+- Direct SHA-256 reconstruction of the fresh package's declared section-index source: all three canonical/manifest/policy values match as recorded above.
+- `openspec validate compact-task-context-manifest --strict`: valid.
+- `git diff --check 82e479aae21a95e30b3e1462cba6b4ef04729f50..7ee72d2e950a4c885629273e0b564828849d63bf`: GREEN.
+- Exact package state still reports GitHub/CI as `UNKNOWN`; this review does not claim CI GREEN, publication readiness, merge, or deployment.
+
+Gate 5 approves candidate `7ee72d2e950a4c885629273e0b564828849d63bf` for TASK-CONTEXT-MANIFEST-001. Exact-source CI and PR preparation remain separate required delivery steps.
