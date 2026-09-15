@@ -278,7 +278,9 @@ def validate_policy_inventory(policy, inventory):
     for boundary in policy["boundaries"]:
         for test in boundary["tests"]:
             registered = inventory.get(test)
-            if registered is not None and registered not in boundary["categories"]:
+            if registered is None:
+                raise ValueError(f"boundary test is not registered: {test}")
+            if registered not in boundary["categories"]:
                 raise ValueError(f"boundary test category mismatch: {test} is {registered}")
     for consumer in policy.get("consumers", []):
         for test in consumer["tests"]:
