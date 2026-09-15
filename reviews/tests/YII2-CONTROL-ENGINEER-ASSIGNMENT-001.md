@@ -374,3 +374,28 @@ Non-blocking editorial note: several legacy assertion messages still say "termin
 `APPROVED`
 
 The v27-to-v28 compatibility test/spec delta is approved for exact candidate source `179efef513f48afe88ba67c85b6b2b22b37bff7d4d97aa991836a68434b22748`. Execution, final review, CI and deployment are not inferred by this Gate 3 verdict.
+
+---
+
+## CI category-registration Gate 3 review — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T105449Z-eab60687ce/package.json`.
+- Exact source: base `25aee5524f790292d350175ba278bc47e282ed4c`, head `98c3c6a8c5d61c11ad84049b84e952fd7f160219`, candidate `cfbc3750a07c24f27e5eff020f1b5ea0fae0649564f0419e9b0edf536fb1c9b4`, executable `7ece1994ee17b5aeb295b6f980f271290b641a576d64ede9b2410f2824eaa5f2`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T105449Z-eab60687ce/verification-plan.json`, SHA-256 `2e72dd1af8a90da34f126db73e783bee4d89ad8e63806ebaefa7463345e66627`; lane `CRITICAL`, reviews `gate3` and `final`.
+- Scope: only the four #52 entries added to `tools/verification/categories.json`. The architecture baseline delta is explicitly excluded for separate Gate 5 review.
+
+### Assessment
+
+No findings.
+
+The assignment owner, Yii A–H, #40 construction-control, and #38 installer-directory verifiers were already approved and each remains registered exactly once in `suites.tsv` as `db / php`. The category delta maps those same exact paths once to `integration`; it changes no test, fixture, expected value, runtime, suite command, exclusion, shard algorithm, or failure interpretation. Integration is appropriate because every verifier exercises MariaDB and the Yii tests additionally exercise native HTTP seams.
+
+Direct evaluation of `tools/verification/ci.py::inventory()` succeeds with an exact 431-entry partition and returns each of the four paths as `('integration', 'php', path)`. Thus the prior category-inventory setup failure is closed by inclusion: none of the tests is suppressed, moved out of execution, or weakened. The refreshed verification input plans `categories.json`, and the CRITICAL plan retains 44 focused commands plus the CI-only full-suite command.
+
+The supplied root package contains no retained execution records, so this verdict approves the category mapping and execution reachability only; it does not infer focused GREEN or CI GREEN. `git diff --check` is clean. Architecture baseline correctness, final review, CI and deployment remain separate obligations.
+
+### Category-registration verdict
+
+`APPROVED`
+
+The narrow CI category-registration delta is approved for exact candidate source `cfbc3750a07c24f27e5eff020f1b5ea0fae0649564f0419e9b0edf536fb1c9b4`.

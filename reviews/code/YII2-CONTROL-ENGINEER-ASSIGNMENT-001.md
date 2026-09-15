@@ -286,3 +286,31 @@ Resolved. `tests/Runtime/runtime_jobs_recovery_001_test.php:10` now contains exa
 **APPROVED**
 
 The only finding from the new-main v28 compatibility rereview is closed. The preceding production/spec compatibility assessment and all earlier substantive #52 Gate 5 approvals remain valid. Exact-source CI is still required; merge/deployment are outside this review.
+
+---
+
+## CI category and architecture-inventory correction rereview — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T105449Z-eab60687ce/package.json`
+- Exact reviewed commit: `98c3c6a8c5d61c11ad84049b84e952fd7f160219`
+- Candidate source: `cfbc3750a07c24f27e5eff020f1b5ea0fae0649564f0419e9b0edf536fb1c9b4`
+- Executable source: `7ece1994ee17b5aeb295b6f980f271290b641a576d64ede9b2410f2824eaa5f2`
+- Verification plan SHA-256: `2e72dd1af8a90da34f126db73e783bee4d89ad8e63806ebaefa7463345e66627`
+- CI inventory source: GitHub run `34959856845`
+- Verdict: **APPROVED**
+
+### Findings
+
+No findings.
+
+The failed-job logs agree with the correction exactly. `governance`, both integration shards, `e2e` and `unit` report the same category inventory mismatch containing precisely the four #52 tests now mapped to `integration` in `tools/verification/categories.json`. All four are mysqli/Yii integration witnesses already registered in `suites.tsv`; the correction neither remaps existing tests nor changes category policy.
+
+The `fast` job reports precisely the six architecture findings now registered by exact fingerprint/value in `tools/architecture/baseline.json`: two SQL-owner fingerprints, two dependency-direction fingerprints, the exact `config/yii/web.php` 151-line hotspot, and `MariaDbControlEngineerAssignment::assign` as the public mutation seam. Each entry corresponds to a fact introduced by #52. No wildcard, directory, threshold increase, alternate fingerprint, existing-finding mutation or rule disablement was added. The public seam entry correctly identifies the standalone assignment application owner rather than the controller; the hotspot value is exact rather than an open-ended allowance.
+
+Local bounded checks confirm both JSON inventories parse, the PilotHttp qualification remains GREEN, and the 59-case architecture guard is GREEN. The correction changes no production, product contract, migration, UI or executable test body. Prior #52 Gate 5 conclusions therefore remain valid.
+
+### Verdict
+
+**APPROVED**
+
+Gate 5 approves this narrow CI inventory/architecture registration correction. A fresh exact-source CI run remains required; this review does not infer it GREEN and does not authorize merge/deployment.
