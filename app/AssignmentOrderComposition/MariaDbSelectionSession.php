@@ -12,6 +12,7 @@ final class MariaDbSelectionSession implements SelectionTransactionSession
     public function findTerminalRequest(SelectionRequestId $id): SelectionTerminalRequestLookup
     { try{return (new MariaDbSelectionRequests($this->sql))->lockedFind($id);}catch(\Throwable){return SelectionTerminalRequestLookup::unavailable();} }
     public function selectionState(): SelectionStateLookup { return (new MariaDbSelectionState($this->sql))->read($this->caseId); }
+    public function currentControlEngineer():array { return (new \FMonitor2\InstallationProcess\MariaDbControlEngineerAssignmentReader($this->sql->db,$this->sql->prefix))->read($this->objectId); }
     public function allocateIdentity(SelectionSourceKind $kind,SelectionInstant $at): SelectionIdentityAllocationResult
     {
         try {

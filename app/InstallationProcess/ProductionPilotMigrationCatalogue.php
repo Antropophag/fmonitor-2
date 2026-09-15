@@ -35,6 +35,7 @@ final class ProductionPilotMigrationCatalogue
             25=>FeedbackSchemaMigration::class,
             26=>DeadlineTransferCertificateSchemaMigration::class,
             27=>BitrixOrderDocumentLinksSchemaMigration::class,
+            28=>ControlEngineerAssignmentDefinitionSchemaMigration::class,
         ];
     }
 }

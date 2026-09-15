@@ -12,5 +12,6 @@ final readonly class SelectAssignmentOrderCompositionCommand
         public InstallerTabIdList $installerTabIds,
         public ?UserId $controlEngineerUserId,
         public SelectionRevision $expectedSelectionRevision,
+        public ?int $expectedControlEngineerAssignmentRevision = null,
     ) {}
 }

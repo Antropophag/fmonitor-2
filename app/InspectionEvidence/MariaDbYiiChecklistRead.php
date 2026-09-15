@@ -13,7 +13,7 @@ trait MariaDbYiiChecklistRead
     $permissions=$this->permissions($actorId);
     $role=$this->roleAccess($actorId);
     $read=$role||in_array('checklist.read',$permissions,true)||in_array('inspection.item.complete',$permissions,true);
-    $engineer=$case['process_state']==='working'?$this->engineer((int)$case['id']):$this->selectedEngineer((int)$case['id']);
+    $assignment=$this->currentEngineerAssignment($objectId);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;
     $card=$case['process_state']==='working'?null:$this->authoritativeCard($actorId,$objectId);
     $ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);
             return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'engineer'=>$engineer];
@@ -60,7 +60,7 @@ trait MariaDbYiiChecklistRead
     $active="c.process_state IN('working','needs_assignment_order','assignment_order_prepared') AND NOT EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
     $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE $active ORDER BY last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
     $eligible=[];
-    foreach($this->all($sql)as$r){$engineer=$r['process_state']==='working'?$this->engineer((int)$r['case_id']):$this->selectedEngineer((int)$r['case_id']);$ready=false;if($r['process_state']!=='working'){$card=$this->authoritativeCard($actorId,(int)$r['object_id']);$ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);if(!$ready)continue;}$r['ready']=$ready;$r['controlEngineer']=$engineer;$eligible[]=$r;}
+    foreach($this->all($sql)as$r){$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;$ready=false;if($r['process_state']!=='working'){$card=$this->authoritativeCard($actorId,(int)$r['object_id']);$ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);if(!$ready)continue;}$r['ready']=$ready;$r['controlEngineer']=$engineer;$eligible[]=$r;}
     $total=count($eligible);$offset=($page-1)*$size;
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();

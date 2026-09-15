@@ -54,6 +54,7 @@ ViewSupport::begin($this, 'Объект ' . $registrationNumber, $identity);
     <span class="shlz-status <?= $statusClasses[$status] ?? 'shlz-status--neutral' ?>"><?= Html::encode($status) ?></span>
 </header>
 <div class="fm2-object-dashboard">
+    <section class="fm2-panel fm2-detail-group"><h2>Инженер строительного контроля</h2><?php if(($currentEngineerAssignment['status']??'missing')==='found'): ?><p><strong><?= Html::encode($currentEngineerAssignment['engineer']['fullName']) ?></strong> · <?= Html::encode($currentEngineerAssignment['provenance']) ?></p><?php else: ?><p>Не назначен</p><?php endif ?><?php if($canAssignEngineer): ?><form method="post" action="/pilot/objects/<?= (int)$id ?>/control-engineer-assignment"><?= Html::hiddenInput('_csrf',$csrf) ?><?= Html::hiddenInput('requestId',ViewSupport::uuid()) ?><?= Html::hiddenInput('expectedRevision',(int)($currentEngineerAssignment['revision']??0)) ?><select name="engineerUserId" required><?php foreach($eligibleEngineers as$engineer): ?><option value="<?= (int)$engineer['user_id'] ?>"><?= Html::encode($engineer['full_name']) ?></option><?php endforeach ?></select><button type="submit">Закрепить инженера</button></form><?php endif ?></section>
     <?php if (Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'deadline_certificate.read')): ?><p><a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/deadline-certificates">Справки о переносе срока</a></p><?php endif ?>
     <main>
         <section class="fm2-panel fm2-object-data">

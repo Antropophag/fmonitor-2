@@ -20,12 +20,12 @@ final class SelectionResolution
         if(in_array($result->reasonCode(),[AssignmentOrderCompositionReason::INVALID_COMMAND,AssignmentOrderCompositionReason::AUTHORIZATION_DENIED,AssignmentOrderCompositionReason::REQUEST_ID_CONFLICT],true))return $attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE);
         $p=$result->success();
         if($result->status()===AssignmentOrderCompositionStatus::SELECTED){
-            if($p===null || $record->intent->engineerUserId===null || $p->selectionRevision!==$record->intent->expectedRevision+1
+            if($p===null || $p->selectionRevision!==$record->intent->expectedRevision+1
                 || $p->selectionDate!==SelectionScalar::selectionDate(new SelectionInstant($p->selectedAt)))return $attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE);
-            [$identity,$hash]=SelectionIntent::composition($p->caseId,$p->assignmentOrderId,$p->assignmentOrderVersion,$record->intent->engineerUserId,$record->intent->installers);
-            if($identity!==$p->compositionIdentity || $hash!==$p->compositionSha256)return $attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE);
+            if($record->intent->engineerUserId!==null){[$identity,$hash]=SelectionIntent::composition($p->caseId,$p->assignmentOrderId,$p->assignmentOrderVersion,$record->intent->engineerUserId,$record->intent->installers);if($identity!==$p->compositionIdentity||$hash!==$p->compositionSha256)return $attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE);}
         }
-        if($record->intent->canonicalJson!==$attempt->intent->canonicalJson || $record->intent->fingerprint!==$attempt->intent->fingerprint)return $attempt->independentAudit($attempt->conflict(AssignmentOrderCompositionReason::REQUEST_ID_CONFLICT));
+        $requested=$attempt->intent;if($requested->engineerUserId===null&&$record->intent->engineerUserId!==null)$requested=SelectionIntent::build($requested->actorUserId,$record->intent->engineerUserId,$requested->expectedRevision,$requested->objectId,$requested->installers,$requested->mode);
+        if($record->intent->canonicalJson!==$requested->canonicalJson || $record->intent->fingerprint!==$requested->fingerprint)return $attempt->independentAudit($attempt->conflict(AssignmentOrderCompositionReason::REQUEST_ID_CONFLICT));
         if($result->status()!==AssignmentOrderCompositionStatus::SELECTED)return $result;
         return SelectionResult::replayed($attempt->command->requestId,$p);
     }
@@ -46,6 +46,7 @@ final class SelectionResolution
         return match($unit->kind()){'committed'=>$unit->result(),'observedTerminal'=>self::terminal($attempt,$unit->terminalRecord()),
             'requestRace','outcomeUnknown'=>self::recover($attempt),
             'rolledBack'=>$attempt->failed(AssignmentOrderCompositionReason::from($unit->rollbackCause()->value)),
+            'rolledBackResult'=>$unit->result(),
             default=>$attempt->failed(AssignmentOrderCompositionReason::PERSISTENCE_FAILURE)};
     }
 }

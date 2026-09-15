@@ -28,6 +28,12 @@ final class SelectionEligibility
             return [null,$batch->snapshots,$engineer->payload];
         }catch(\Throwable){return $bad();}
     }
+    /** @return array{?SelectionResult,list<InstallerSnapshot>} */
+    public static function installers(SelectionAttempt $attempt):array
+    {
+        if($attempt->intent->installers->ascendingUniqueIds===[])return[$attempt->rejected(AssignmentOrderCompositionReason::INSTALLER_REQUIRED),[]];
+        try{$lookup=$attempt->ports->facts->findInstallers($attempt->intent->installers,$attempt->at());if($lookup->status!==SelectionLookupStatus::FOUND||!self::batchValid($lookup->payload,$attempt->intent->installers))return[$attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE),[]];$batch=$lookup->payload;if($batch->missingIds!==[])return[$attempt->rejected(AssignmentOrderCompositionReason::INSTALLER_NOT_IN_CATALOG),[]];$date=SelectionScalar::selectionDate($attempt->at());foreach($batch->snapshots as$worker){if($worker->employmentStatus!=='employed'||($worker->employedFrom!==null&&$worker->employedFrom>$date)||($worker->employedTo!==null&&$worker->employedTo<$date))return[$attempt->rejected(AssignmentOrderCompositionReason::INSTALLER_NOT_EMPLOYED),[]];if($worker->employedFrom===null&&!SelectionEmploymentProof::full($worker))return[$attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE),[]];}return[null,$batch->snapshots];}catch(\Throwable){return[$attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE),[]];}
+    }
     private static function batchValid(?InstallerBatchPayload $batch,InstallerTabIdSet $requested): bool
     {
         if($batch===null || !array_is_list($batch->snapshots) || !array_is_list($batch->missingIds))return false;$ids=[];$previous=0;

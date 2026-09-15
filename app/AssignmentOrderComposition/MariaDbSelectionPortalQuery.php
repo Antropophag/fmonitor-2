@@ -42,6 +42,7 @@ final readonly class MariaDbSelectionPortalQuery implements AssignmentOrderSelec
                 return ['status'=>'found','reasonCode'=>null,'caseId'=>$id,'objectId'=>$objectId,'object'=>$object,
                     'selectionRevision'=>$latest?->selectionRevision??0,'latest'=>$summary,'installers'=>$installers,'engineers'=>$engineers,'lastTemplateDate'=>null];
             });
+            if($result['status']==='found'){$assignment=(new I\MariaDbControlEngineerAssignmentReader($this->sql->db,$this->sql->prefix))->read($objectId);if($assignment['status']==='unavailable')throw new \RuntimeException();$result['currentAssignment']=$assignment;}
             if($result['status']==='found'&&$result['latest']!==null){
                 $date=ProductionAssignmentOrderTemplateFactory::dateReader($this->sql->db,$this->sql->prefix)->find($result['caseId'],$result['latest']['orderId']);
                 if($date['status']==='unavailable')throw new \RuntimeException();$result['lastTemplateDate']=$date['date'];

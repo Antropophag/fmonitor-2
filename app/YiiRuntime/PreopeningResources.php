@@ -4,6 +4,7 @@ namespace FMonitor2\YiiRuntime;
 
 use FMonitor2\AssignmentOrderComposition as C;
 use FMonitor2\AssignmentOrderOriginal as O;
+use FMonitor2\InstallationProcess as I;
 
 require_once dirname(__DIR__).'/AssignmentOrderOriginal/AssignmentOrderOriginalRuntime.php';
 
@@ -27,6 +28,8 @@ final class PreopeningResources
         if(!$db->set_charset('utf8mb4')){$db->close();throw new \RuntimeException();}return$db;
     }
     public function portal():C\AssignmentOrderSelectionPortalQuery{return C\ProductionAssignmentOrderSelectionPortalFactory::create($this->db,$this->prefix);}
+    public function assignmentReader():I\MariaDbControlEngineerAssignmentReader{return new I\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix);}
+    public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
     public function selectAssignmentOrderComposition(C\SelectAssignmentOrderCompositionCommand $command): array
     {
         $application = C\ProductionAssignmentOrderCompositionFactory::create($this->db, $this->connect(...), $this->prefix);
