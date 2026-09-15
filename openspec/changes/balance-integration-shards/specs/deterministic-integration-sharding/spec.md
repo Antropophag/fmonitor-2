@@ -50,4 +50,3 @@ Delivery evidence MUST показывать fresh comparable FULL baseline, old/
 #### Scenario: Безопасный setup candidate не подтверждён
 - **WHEN** профиль не доказывает повтор, заметную стоимость и сохранение contract простым изменением
 - **THEN** setup code не оптимизируется и результат явно фиксируется как `NO_SAFE_SETUP_OPTIMIZATION_FOUND`
-

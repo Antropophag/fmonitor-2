@@ -6,15 +6,13 @@
 
 ## Fresh comparable baseline
 
-Выборка: три последних successful FULL Quality Graph runs после merge №135 с обеими integration jobs и итоговым fail-closed `verify`. Cancelled, partial, FAST и harness-only runs не использованы. Wall — от `created_at` workflow до завершения check `Quality Graph`; execution/setup — timestamps соответствующих GitHub steps.
+После перебазирования на `main` `82b8b2cc` доступен один comparable successful FULL Quality Graph run актуальной inventory architecture: exact source №157 `59cbb6b9`, уже включённый в текущий `main`. Cancelled, partial, FAST, harness-only и runs до этой architecture не включены в fresh baseline. Ограничение честное: это один run, поэтому median не вычисляется. Wall — от `createdAt` workflow до check `Quality Graph`; execution/setup — timestamps GitHub steps.
 
 | Run / source | Full wall | Shard 1 execution | Shard 2 execution | Runtime setup 1/2 | Dependency setup 1/2 | DB setup 1/2 |
 |---|---:|---:|---:|---:|---:|---:|
-| [35022305566](https://github.com/Antropophag/fmonitor-2/actions/runs/35022305566) / `f4933a64` | 13:19 | 9:33 | 9:10 | 0:27 / 0:37 | 1:52 / 2:10 | 0:13 / 0:11 |
-| [35017913916](https://github.com/Antropophag/fmonitor-2/actions/runs/35017913916) / `d65a82eb` | 15:44 | 11:33 | 7:26 | 0:23 / 0:34 | 1:38 / 1:44 | 0:10 / 0:14 |
-| [34981392888](https://github.com/Antropophag/fmonitor-2/actions/runs/34981392888) / `854a8dc5` | 16:05 | 11:44 | 9:23 | 0:26 / 0:25 | 1:44 / 1:43 | 0:14 / 0:13 |
+| [35028248716](https://github.com/Antropophag/fmonitor-2/actions/runs/35028248716) / `59cbb6b9` | 13:39 | 9:34 (573.589s category) | 9:23 (562.373s category) | 0:40 / 0:29 | 1:53 / 2:09 | 0:15 / 0:12 |
 
-Медианные `VERIFY_TIMING` по этим runs сохранены только как planning weights. Top expensive integration tests: `quality_graph_ci_setup_001_test.php` 82.308s; `bitrix_workforce_delivery_001_test.php` 37.491s; `runtime_recovery_forward_update_001_test.php` 36.117s; `yii2_case_import_db_001_test.php` 35.836s; `deadline_transfer_certificate_recovery_001_test.php` 35.278s; `runtime_jobs_recovery_001_test.php` 34.197s.
+Planning weights остаются historical medians трёх сопоставимых runs предыдущего snapshot; они не являются fresh-baseline median или verdict evidence. Top expensive integration tests в fresh run: `quality_graph_ci_setup_001_test.php` 95.277s; `deadline_transfer_certificate_recovery_001_test.php` 37.300s; `runtime_recovery_forward_update_001_test.php` 35.930s; `runtime_jobs_recovery_001_test.php` 35.716s; `bitrix_workforce_delivery_001_test.php` 35.682s; `yii2_case_import_db_001_test.php` 26.460s.
 
 ## Shard estimate
 
@@ -35,6 +33,6 @@ Declared profile: direct bounded `php tests/Verification/quality_graph_ci_setup_
 
 ## Exact-source after CI
 
-Будет заполнено после единственного FULL run candidate source. Runner variance учитывается; historical и after runs не трактуются как контролируемый benchmark.
+Будет заполнено после FULL run перебазированного candidate source. Предыдущий pre-rebase source `5285f34d` имел один GREEN FULL run `35027307483`, но повторный run того же SHA `35028861332` упал в e2e `pilot_jobs_compose_001_test.py`, тогда как оба integration shards остались GREEN. Это не final exact-source evidence после rebase и не используется для заявления measured improvement. Runner variance учитывается; historical и after runs не трактуются как контролируемый benchmark.
 
 Token/cost: `UNKNOWN` — supported telemetry отсутствует.
