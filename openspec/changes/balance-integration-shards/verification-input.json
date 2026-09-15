@@ -39,6 +39,8 @@
     "openspec/changes/balance-integration-shards/specs/deterministic-integration-sharding/spec.md",
     "openspec/changes/balance-integration-shards/tasks.md",
     "openspec/changes/balance-integration-shards/verification-input.json",
+    "reviews/code/QUALITY-GRAPH-SHARDING-136.md",
+    "reviews/tests/QUALITY-GRAPH-SHARDING-136.md",
     "specs/QUALITY-GRAPH-SHARDING-136.md",
     "tests/Verification/verification_ci_001_test.py",
     "tools/verification/ci.py",

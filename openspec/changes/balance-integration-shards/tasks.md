@@ -16,7 +16,7 @@
 
 ## 4. Gates и PR-ready
 
-- [ ] 4.1 Выполнить planner-selected focused checks, включая invariants №135 и closure №153A, без локального full suite; сохранить evidence.
+- [x] 4.1 Выполнить planner-selected focused checks, включая invariants №135 и closure №153A, без локального full suite; сохранить evidence.
 - [ ] 4.2 Получить независимые planner-required Gate 3 и final reviews на exact source, исправить подтверждённые замечания и повторить затронутые focused checks.
 - [ ] 4.3 Опубликовать bounded PR, запустить один exact-source FULL Quality Graph, собрать полный failure inventory при ошибке и зафиксировать before/after job timings с runner-variance caveat.
 - [ ] 4.4 Подготовить финальный report с base/head SHA, coverage invariants, единственным setup outcome и `token/cost UNKNOWN`; merge/deploy/settings не выполнять.
