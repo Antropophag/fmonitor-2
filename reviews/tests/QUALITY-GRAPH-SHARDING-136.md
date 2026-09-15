@@ -75,3 +75,30 @@ None. The added assertions at `tests/Verification/verification_ci_001_test.py:26
 ### Required changes
 
 None. Gate 3 is re-approved for the minimal implementation correction against revised test SHA-256 `40644bfdd8d8ecc7e5123f864e87a6ae40ebb98c035ae370395d81440d68f4c2`.
+
+---
+
+## Gate 3 continuity after rebase onto current main — APPROVED
+
+- Reviewer: independent Codex reviewer `/root/issue136_gate3`; authored neither the contract, tests nor implementation
+- Rebase under review: current main `82b8b2cc6ee1b3eace47e96556a65252f2cbf3cb` to candidate `06bcb7b462c3fc2673cc3533ce4001a5b428f488`
+- Reconstructible exact-source package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T222442Z-23a884d124/package.json`; candidate source `dc6df8f8aeba7a18c049e06f3556d35096d4736de9cb2f2667e7fa69dc08c22a`; executable source `6c9305f6235ff3bb6364a361eb2b812d0f84eabc96ccd6e56b23e7d938e692d4`; plan SHA-256 `2d8f89bbf6b7ed6e3f32928a248019ecc07d533b17ec423861bda794447e08d7`; snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (empty patch over commit `06bcb7b4`)
+- Test continuity: `tests/Verification/verification_ci_001_test.py` SHA-256 `40644bfdd8d8ecc7e5123f864e87a6ae40ebb98c035ae370395d81440d68f4c2`, byte-identical to the test approved in the preceding Gate 3 restart
+- Specification continuity: `specs/QUALITY-GRAPH-SHARDING-136.md` SHA-256 `09ddd232630ba6bc7629c8a1b82d6593f34302021111440722942202195c41ca`, byte-identical to the specification approved in the preceding Gate 3 restart
+- Exact-source focused evidence: semantic closure `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789511338459527000-0c59b901664b40aeb1a646a1171f6f3b.json` GREEN (11 tests); verification CI `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789511348223388000-fddb2ccd26d041948bebe7a66dbae5a7.json` GREEN (21 tests); canonical inventory `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789511367789267000-60bd8c3c8e2a4378b648c8e06a6ca673.json` GREEN (22 tests). All records bind candidate source `dc6df8f8…` and executable source `6c9305f6…`.
+- Canonical integration inventory: 273 members after rebase
+- Verdict: `APPROVED`
+
+### Continuity decision
+
+The prior Gate 3 approval remains applicable. Rebase changed commit identities and incorporated the newer main history, but it did not change one byte of the approved executable acceptance test or normative specification. Therefore the retained no-implementation RED evidence and its attribution remain the same reviewed contract lineage; rerunning an artificial post-implementation RED is neither necessary nor compatible with the v1 plan's correct `INTENDED_RED` expectation.
+
+The exact rebased candidate passes all three focused witnesses. The 21-method verification contract still exercises A-H, including exact deterministic LPT allocation, reversed input, new/missing/stale/invalid hints, diagnostics, union/intersection, two workflow jobs and fail-closed aggregation. Canonical inventory and #153A closure remain GREEN, and the integration category remains 273 members. The stated current-main FULL run `35028248716` is contextual baseline evidence, not a substitute for this Gate 3 lineage decision.
+
+### Findings
+
+None.
+
+### Required changes
+
+None. Gate 3 continuity is approved for the rebased source; a new Gate 3 cycle is required only if the specification or acceptance-test bytes change.
