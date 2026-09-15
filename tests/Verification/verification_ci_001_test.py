@@ -213,6 +213,10 @@ class VerificationCI(unittest.TestCase):
         old_max = max(load(full[::2]), load(full[1::2]))
         new_max = max(load(first.stdout.splitlines()), load(second.stdout.splitlines()))
         self.assertLess(new_max, old_max)
+        first_paths = {row.split('\t')[1] for row in first.stdout.splitlines()}
+        second_paths = {row.split('\t')[1] for row in second.stdout.splitlines()}
+        self.assertEqual({paths[0], paths[1], paths[3], paths[5]}, first_paths)
+        self.assertEqual({paths[2], paths[4]}, second_paths)
 
         original = (self.root / 'tools/verification/suites.tsv').read_text()
         (self.root / 'tools/verification/suites.tsv').write_text(
@@ -244,6 +248,9 @@ class VerificationCI(unittest.TestCase):
                                side_effect=lambda paths: {path: weights[path] for path in paths}):
             expected = module.integration_shards(items)
             self.assertEqual(expected, module.integration_shards(list(reversed(items))))
+            self.assertEqual(('node', 'tests/a.mjs'), expected[0][0],
+                             'path tie is assigned first to lower shard index')
+            self.assertEqual(('php', 'tests/z.php'), expected[1][-1])
 
     def test_new_test_without_weight_and_stale_weight_preserve_exact_membership(self):
         self.add_integration_inventory()
@@ -263,6 +270,7 @@ class VerificationCI(unittest.TestCase):
         self.add_integration_inventory()
         full = set(self.cli('list', 'integration').stdout.splitlines())
         cases = [None, 'broken\n', f'{self.paths[2]}\t0\n',
+                 f'{self.paths[2]}\t-1\n', f'{self.paths[2]}\tinf\n',
                  f'{self.paths[2]}\tnan\n',
                  f'{self.paths[2]}\t2\n{self.paths[2]}\t3\n']
         for raw in cases:
@@ -277,11 +285,24 @@ class VerificationCI(unittest.TestCase):
                       for shard in ['1/2', '2/2']]
             for result in first + second:
                 self.assertEqual(0, result.returncode, result.stderr)
+                self.assertIn('INTEGRATION_TIMING_FALLBACK', result.stderr)
             self.assertEqual([result.stdout for result in first],
                              [result.stdout for result in second])
             combined = [row for result in first for row in result.stdout.splitlines()]
             self.assertEqual(full, set(combined))
             self.assertEqual(len(full), len(combined))
+
+        target = self.root / 'tools/verification/integration-timings.tsv'
+        target.unlink()
+        target.mkdir()
+        unreadable = [self.cli('list', 'integration', '--shard', shard)
+                      for shard in ['1/2', '2/2']]
+        for result in unreadable:
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('INTEGRATION_TIMING_FALLBACK', result.stderr)
+        combined = [row for result in unreadable for row in result.stdout.splitlines()]
+        self.assertEqual(full, set(combined))
+        self.assertEqual(len(full), len(combined))
 
     def test_real_integration_shards_partition_current_inventory_once(self):
         full = self.cli('list', 'integration', root=ROOT)
