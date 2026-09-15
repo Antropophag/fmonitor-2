@@ -88,6 +88,14 @@ class VerificationCI(unittest.TestCase):
         self.runtimes.update(zip(paths, runtimes))
         return paths
 
+    def write_integration_weights(self, weights, raw=None):
+        target = self.root / 'tools/verification/integration-timings.tsv'
+        if raw is not None:
+            target.write_text(raw)
+        else:
+            target.write_text(''.join(f'{path}\t{weight}\n'
+                                      for path, weight in sorted(weights.items())))
+
     def cli(self, *args, root=None, env=None):
         target = root or self.root
         return subprocess.run(['python3', str(target / 'tools/verification/ci.py'), *args],
@@ -177,8 +185,8 @@ class VerificationCI(unittest.TestCase):
         self.assertFalse((self.root / 'tools/verification/__pycache__').exists(),
                          'INTENDED_RED inventory import mutated candidate source')
 
-    def test_integration_shards_are_stable_disjoint_complete_sorted_partitions(self):
-        self.add_integration_inventory()
+    def test_integration_shards_use_deterministic_lpt_and_beat_round_robin_skew(self):
+        added = self.add_integration_inventory()
         unsharded = self.cli('list', 'integration')
         self.assertEqual(0, unsharded.returncode, unsharded.stderr)
         # The unsharded category preserves canonical catalogue order.
@@ -192,23 +200,74 @@ class VerificationCI(unittest.TestCase):
                          unsharded.stdout.splitlines())
 
         full = sorted(unsharded.stdout.splitlines(), key=lambda row: row.split('\t')[1])
+        paths = [row.split('\t')[1] for row in full]
+        weights = {path: weight for path, weight in zip(paths, [9.0, 1.0, 8.0, 1.0, 7.0, 1.0])}
+        self.write_integration_weights(weights)
         first = self.cli('list', 'integration', '--shard', '1/2')
         second = self.cli('list', 'integration', '--shard', '2/2')
         self.assertEqual(0, first.returncode, first.stderr)
         self.assertEqual(0, second.returncode, second.stderr)
-        self.assertEqual(full[::2], first.stdout.splitlines())
-        self.assertEqual(full[1::2], second.stdout.splitlines())
         self.assertEqual(set(full), set(first.stdout.splitlines()) | set(second.stdout.splitlines()))
         self.assertFalse(set(first.stdout.splitlines()) & set(second.stdout.splitlines()))
+        load = lambda rows: sum(weights[row.split('\t')[1]] for row in rows)
+        old_max = max(load(full[::2]), load(full[1::2]))
+        new_max = max(load(first.stdout.splitlines()), load(second.stdout.splitlines()))
+        self.assertLess(new_max, old_max)
+
+        original = (self.root / 'tools/verification/suites.tsv').read_text()
+        (self.root / 'tools/verification/suites.tsv').write_text(
+            ''.join(reversed(original.splitlines(keepends=True))))
+        shuffled = [self.cli('list', 'integration', '--shard', shard)
+                    for shard in ['1/2', '2/2']]
+        # Canonical inventory validation rejects order drift rather than allowing
+        # input order to influence allocation.
+        for result in shuffled:
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn('not in canonical order', result.stderr)
+        (self.root / 'tools/verification/suites.tsv').write_text(original)
+        repeated = [self.cli('list', 'integration', '--shard', shard).stdout
+                    for shard in ['1/2', '2/2']]
+        self.assertEqual([first.stdout, second.stdout], repeated)
         self.assertFalse(self.trace.exists(), 'listing must not probe the DB or invoke runtimes')
         self.assertFalse(self.db_trace.exists(), 'listing must not probe the DB')
 
-        catalog = self.root / 'tools/verification/suites.tsv'
-        catalog.write_text(''.join(reversed(catalog.read_text().splitlines(keepends=True))))
-        for shard in ['1/2', '2/2']:
-            rejected = self.cli('list', 'integration', '--shard', shard)
-            self.assertNotEqual(0, rejected.returncode)
-            self.assertIn('not in canonical order', rejected.stderr)
+    def test_new_test_without_weight_and_stale_weight_preserve_exact_membership(self):
+        self.add_integration_inventory()
+        full = self.cli('list', 'integration').stdout.splitlines()
+        stale = 'tests/InstallationProcess/removed_test.php'
+        self.write_integration_weights({stale: 9999.0})
+        shards = [self.cli('list', 'integration', '--shard', shard)
+                  for shard in ['1/2', '2/2']]
+        for result in shards:
+            self.assertEqual(0, result.returncode, result.stderr)
+        combined = [row for result in shards for row in result.stdout.splitlines()]
+        self.assertEqual(set(full), set(combined))
+        self.assertEqual(len(full), len(combined))
+        self.assertNotIn(stale, '\n'.join(combined))
+
+    def test_missing_and_invalid_weights_schedule_every_test_deterministically(self):
+        self.add_integration_inventory()
+        full = set(self.cli('list', 'integration').stdout.splitlines())
+        cases = [None, 'broken\n', f'{self.paths[2]}\t0\n',
+                 f'{self.paths[2]}\tnan\n',
+                 f'{self.paths[2]}\t2\n{self.paths[2]}\t3\n']
+        for raw in cases:
+            target = self.root / 'tools/verification/integration-timings.tsv'
+            if raw is None:
+                target.unlink(missing_ok=True)
+            else:
+                self.write_integration_weights({}, raw=raw)
+            first = [self.cli('list', 'integration', '--shard', shard)
+                     for shard in ['1/2', '2/2']]
+            second = [self.cli('list', 'integration', '--shard', shard)
+                      for shard in ['1/2', '2/2']]
+            for result in first + second:
+                self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual([result.stdout for result in first],
+                             [result.stdout for result in second])
+            combined = [row for result in first for row in result.stdout.splitlines()]
+            self.assertEqual(full, set(combined))
+            self.assertEqual(len(full), len(combined))
 
     def test_real_integration_shards_partition_current_inventory_once(self):
         full = self.cli('list', 'integration', root=ROOT)
@@ -219,8 +278,6 @@ class VerificationCI(unittest.TestCase):
         expected = sorted(full.stdout.splitlines(), key=lambda row: row.split('\t')[1])
         self.assertTrue(first.stdout.splitlines())
         self.assertTrue(second.stdout.splitlines())
-        self.assertEqual(expected[::2], first.stdout.splitlines())
-        self.assertEqual(expected[1::2], second.stdout.splitlines())
         combined = first.stdout.splitlines() + second.stdout.splitlines()
         self.assertEqual(len(expected), len(combined))
         self.assertEqual(len(combined), len(set(combined)))

@@ -1,0 +1,46 @@
+{
+  "acceptances": [
+    {
+      "acceptance_id": "deterministic-complete-two-shard-lpt",
+      "gate3_expected": {
+        "tests/Verification/change_verification_semantic_closure_153_test.py": "GREEN",
+        "tests/Verification/verification_ci_001_test.py": "INTENDED_RED",
+        "tests/Verification/verification_inventory_001_test.py": "GREEN"
+      },
+      "seam_kind": "infrastructure",
+      "observable_dimensions": {
+        "stdout": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py"]},
+        "stderr": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py"]},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py"]},
+        "retained_evidence": {"status": "not_applicable", "reason": "The public list seam emits allocation; delivery evidence is retained by the external harness and report."},
+        "filesystem_effects": {"status": "not_applicable", "reason": "Listing shards is read-only and the test asserts runtimes and database probes are not invoked."},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/verification_ci_001_test.py", "tests/Verification/change_verification_semantic_closure_153_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "The repository-owned hints are immutable during a run and allocation has no shared mutable state."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/verification_inventory_001_test.py", "tests/Verification/change_verification_semantic_closure_153_test.py"]}
+      },
+      "seam": "python3 tools/verification/ci.py list integration --shard 1/2|2/2",
+      "spec_id": "QUALITY-GRAPH-SHARDING-136",
+      "spec_path": "specs/QUALITY-GRAPH-SHARDING-136.md",
+      "tests": [
+        "tests/Verification/verification_ci_001_test.py",
+        "tests/Verification/verification_inventory_001_test.py",
+        "tests/Verification/change_verification_semantic_closure_153_test.py"
+      ]
+    }
+  ],
+  "change": "balance-integration-shards",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/balance-integration-shards/design.md",
+    "openspec/changes/balance-integration-shards/proposal.md",
+    "openspec/changes/balance-integration-shards/specs/deterministic-integration-sharding/spec.md",
+    "openspec/changes/balance-integration-shards/tasks.md",
+    "openspec/changes/balance-integration-shards/verification-input.json",
+    "specs/QUALITY-GRAPH-SHARDING-136.md",
+    "tests/Verification/verification_ci_001_test.py",
+    "tools/verification/ci.py",
+    "tools/verification/integration-timings.tsv"
+  ]
+}
