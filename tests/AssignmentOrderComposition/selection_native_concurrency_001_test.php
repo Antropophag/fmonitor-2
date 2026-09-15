@@ -39,6 +39,7 @@ foreach(['same_case','same_request_different_cases','different_cases','lost_resp
         $f=new F();
         if(in_array($axis,['same_request_different_cases','different_cases'],true)){
             $f->db->query("INSERT INTO fm2_installation_cases(id,legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES(4513,4513,'needs_assignment_order','2026-08-20T09:00:00Z','2026-08-20T09:00:00Z',1)");$f->db->query("INSERT INTO fm_maintable(id,ordadr_address,regnumber) VALUES(4513,'Вымышленный объект 2','TEST-4513')");
+            $f->schema->insert('fm2_control_engineer_assignments',['installation_case_id'=>4513,'object_id'=>4513,'assignment_sequence'=>1,'engineer_user_id'=>73,'engineer_fio_snapshot'=>'Инженер теста','engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>18,'assigned_at_utc'=>'2026-09-01 06:00:00','request_id'=>'52525252-0052-4525-8525-000000004513','request_fingerprint'=>str_repeat('b',64)]);
         }
         $before=$f->rows();echo "SETUP_OK $axis\n";
         if($axis==='lost_response'){

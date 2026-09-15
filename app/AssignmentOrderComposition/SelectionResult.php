@@ -20,7 +20,7 @@ final readonly class SelectionResult implements AssignmentOrderCompositionResult
     {
         $allowed=match($status){
             AssignmentOrderCompositionStatus::REJECTED=>['invalid_command','authorization_denied','object_not_found','installer_required','control_engineer_required','installer_not_in_catalog','installer_not_employed','control_engineer_not_eligible','object_has_pto_act','object_completed','no_changes'],
-            AssignmentOrderCompositionStatus::CONFLICT=>['request_id_conflict','stale_selection','pending_selection_exists','selection_not_found','original_already_accepted'],
+            AssignmentOrderCompositionStatus::CONFLICT=>['request_id_conflict','stale_selection','assignment_changed','pending_selection_exists','selection_not_found','original_already_accepted'],
             AssignmentOrderCompositionStatus::FAILED=>['dependency_unavailable','persistence_failure','persistence_outcome_unknown','allocation_capacity_exhausted'],default=>[]};
         if(!in_array($reason->value,$allowed,true))throw new \InvalidArgumentException('Invalid selection result.');return new self($status,$id,$reason,null);
     }

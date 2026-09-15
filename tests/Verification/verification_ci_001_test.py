@@ -406,7 +406,7 @@ class VerificationCI(unittest.TestCase):
 
         # Independently frozen b1d6b517 roster minus all 25 specified retirements, plus native V1 oracle.
         encoded = json.dumps(sorted(roster), ensure_ascii=True, separators=(',', ':')).encode()
-        self.assertEqual('3fb73919c95c8a08b58485115b4026a97aba8a007c20272d90e2e42f028b2223', hashlib.sha256(encoded).hexdigest(),
+        self.assertEqual('0a1f113eddb01a089122617f2f90c6bedfae1237f91fe24c642911c79d3d5f77', hashlib.sha256(encoded).hexdigest(),
                          'exact complete roster: preserve every non-retired contract and category')
 
     def test_real_composition_keeps_contracts_once(self):

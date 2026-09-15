@@ -27,7 +27,7 @@ final readonly class SelectionApplication implements AssignmentOrderCompositionA
         if($case->status!==SelectionLookupStatus::FOUND || $case->payload===null || !SelectionEligibility::caseValid($case->payload,$intent->objectId))return $attempt->failed(AssignmentOrderCompositionReason::DEPENDENCY_UNAVAILABLE);
         $reason=SelectionEligibility::caseReason($case->payload);
         if($reason!==null){$refusal=$attempt->rejected($reason);$installers=[];$engineer=null;}
-        else{[$refusal,$installers,$engineer]=SelectionEligibility::crew($attempt);}
+        else{[$refusal,$installers]=SelectionEligibility::installers($attempt);$engineer=null;}
         if($refusal?->status()===AssignmentOrderCompositionStatus::FAILED)return $refusal;
         try{
             $work=new SelectionWork($attempt,$case->payload->caseId,$refusal,$installers,$engineer);

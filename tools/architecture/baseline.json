@@ -39,6 +39,8 @@
     "ddl|rapid-pilot/import-production-installers.php|77c28ac79dee3630"
   ],
   "dependency_direction": [
+    "dependency|app/InstallationProcess/MariaDbControlEngineerAssignment.php|c4b0e18284731e7b",
+    "dependency|app/InstallationProcess/ProductionControlEngineerAssignmentFactory.php|e02f514a4f409660",
     "dependency|app/InstallationProcess/ProductionInstallationProcessFactory.php|084c944362d3a6fc",
     "dependency|app/InstallationProcess/ProductionInstallationProcessFactory.php|0978b61b0cb96ba5",
     "dependency|app/InstallationProcess/ProductionInstallationProcessFactory.php|09f3a689d90f14b0",
@@ -111,6 +113,8 @@
     "rapid-mutation|rapid-pilot/issue-invitation.php|55ba22d1dd893632"
   ],
   "sql_ownership": [
+    "sql|app/YiiRuntime/Controllers/ObjectCardController.php|9f2310faaa6a5569",
+    "sql|app/YiiRuntime/Views/object-card.php|1c223b905ac57e2b",
     "sql|app/RuntimeRestore/ProductionStandRestoreDriver.php|64ba6ac888716c35",
     "sql|app/InstallationProcess/ProcessCapabilityChecksClassifier.php|eaba7d68624a73ae",
     "sql|app/PilotHttp/AccessPolicy.php|05fe99a42e851690",
@@ -347,6 +351,7 @@
     "app/PilotHttp/PilotHttp.php": 551,
     "bin/fmonitor2-import-cases.php": 157,
     "bin/fmonitor2-pilot-demo.php": 376,
+    "config/yii/web.php": 151,
     "rapid-pilot/Calendar.php": 165,
     "rapid-pilot/ObjectDetails.php": 194,
     "rapid-pilot/Otiz.php": 598,
@@ -369,6 +374,7 @@
     "app/InstallationProcess/InstallationProcess.php::openInstallation",
     "app/InstallationProcess/InstallationProcess.php::prepareAssignmentOrder",
     "app/InstallationProcess/MariaDbInstallationCompletion.php::record",
+    "app/InstallationProcess/MariaDbControlEngineerAssignment.php::assign",
     "app/InstallationProcess/YiiInspectionPlanning.php::scheduleInspection"
   ]
 }

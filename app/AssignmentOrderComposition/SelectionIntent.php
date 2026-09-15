@@ -12,7 +12,8 @@ final class SelectionIntent
             || !array_is_list($ids) || count($ids)>500)return null;
         $values=[];foreach($ids as $id){if(!$id instanceof InstallerTabId || $id->value<1 || isset($values[$id->value]))return null;$values[$id->value]=$id;}
         ksort($values,SORT_NUMERIC);$set=new InstallerTabIdSet(array_values($values));
-        return self::build($command->actorUserId->value,$command->controlEngineerUserId?->value,$command->expectedSelectionRevision->value,$command->installationObjectId->value,$set,$command->mode);
+        // The historical engineer field is transport compatibility only; current assignment is resolved by the owner under lock.
+        return self::build($command->actorUserId->value,null,$command->expectedSelectionRevision->value,$command->installationObjectId->value,$set,$command->mode);
     }
     public static function build(int $actor,?int $engineer,int $revision,int $object,InstallerTabIdSet $ids,AssignmentOrderCompositionMode $mode): SelectionNormalizedIntent
     {

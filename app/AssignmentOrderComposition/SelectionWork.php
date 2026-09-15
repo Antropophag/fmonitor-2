@@ -17,9 +17,20 @@ final readonly class SelectionWork implements SelectionTransactionalWork
             if($case->status!==SelectionLookupStatus::FOUND || $case->payload===null || !SelectionEligibility::caseValid($case->payload,$a->intent->objectId) || $case->payload->caseId!==$this->caseId)return self::dependency();
             $blocked=SelectionEligibility::caseReason($case->payload);$refusal=$blocked!==null?$a->rejected($blocked):$this->refusal;
             if($refusal!==null)return $this->terminal($transaction,$refusal);
+            $current=$transaction->currentControlEngineer();
+            if(($current['status']??null)!=='found')return ($current['status']??null)==='missing'
+                ?SelectionTransactionDecision::rollbackResult($a->rejected(AssignmentOrderCompositionReason::CONTROL_ENGINEER_REQUIRED)):self::dependency();
+            if(!is_int($current['revision']??null)||$current['revision']<0||!is_array($current['engineer']??null)
+                ||!is_int($current['engineer']['userId']??null)||$current['engineer']['userId']<1
+                ||!is_string($current['engineer']['fullName']??null)||!SelectionScalar::text($current['engineer']['fullName'],300)
+                ||!is_string($current['engineer']['position']??null)||!SelectionScalar::text($current['engineer']['position'],300))return self::dependency();
+            $shown=$a->command->expectedControlEngineerAssignmentRevision;
+            if($shown!==null&&$shown!==(int)$current['revision'])return SelectionTransactionDecision::rollbackResult($a->conflict(AssignmentOrderCompositionReason::ASSIGNMENT_CHANGED));
+            $snapshot=$current['engineer'];$engineer=new EngineerSnapshot((int)$snapshot['userId'],(string)$snapshot['fullName'],(string)$snapshot['position']);
+            $intent=SelectionIntent::build($a->intent->actorUserId,$engineer->userId,$a->intent->expectedRevision,$a->intent->objectId,$a->intent->installers,$a->intent->mode);
             $lookup=$transaction->selectionState();
             if($lookup->status!==SelectionLookupStatus::FOUND || $lookup->payload===null || !SelectionStatePolicy::valid($lookup->payload))return self::dependency();
-            $state=$lookup->payload;$refusal=SelectionStatePolicy::refusal($a,$state,$this->caseId);
+            $state=$lookup->payload;$refusal=SelectionStatePolicy::refusal($a,$state,$this->caseId,$engineer->userId);
             if($refusal!==null)return $this->terminal($transaction,$refusal);
             $latest=$state->latestSelection;$revision=$latest?->selectionRevision??0;$version=$latest?->orderVersion??0;
             if($revision>=4294967295 || $version>=65535)return SelectionTransactionDecision::rollback(SelectionRollbackCause::ALLOCATION_CAPACITY_EXHAUSTED);
@@ -28,12 +39,12 @@ final readonly class SelectionWork implements SelectionTransactionalWork
             $identity=$allocation->allocation;
             if($allocation->status!==SelectionIdentityAllocationStatus::ALLOCATED || $identity===null || $identity->caseId!==$this->caseId || $identity->orderVersion!==$version+1
                 || $identity->sourceKind!==SelectionSourceKind::SELECTION || $identity->allocatedAt->utcRfc3339Seconds!==$a->at()->utcRfc3339Seconds)return self::persistence();
-            [$composition,$hash]=SelectionIntent::composition($this->caseId,$identity->assignmentOrderId,$identity->orderVersion,$this->engineer->userId,$a->intent->installers);
+            [$composition,$hash]=SelectionIntent::composition($this->caseId,$identity->assignmentOrderId,$identity->orderVersion,$engineer->userId,$a->intent->installers);
             $date=SelectionScalar::selectionDate($a->at());$revision++;
             $result=SelectionResult::selected($a->command->requestId,new SelectionSuccessPayload($this->caseId,$identity->assignmentOrderId,$identity->orderVersion,$revision,$composition,$hash,$date,$a->at()->utcRfc3339Seconds));
             $previous=$latest?->assignmentOrderId;$replaces=$a->command->mode===AssignmentOrderCompositionMode::REPLACE_PENDING?$previous:null;
             $event=new SelectionSelectedEvent($a->command->requestId,$this->caseId,$identity->assignmentOrderId,$identity->orderVersion,$revision,$previous,$replaces,$hash,$a->at(),$a->command->actorUserId);
-            $payload=new SelectionAcceptedPersistence($identity,$revision,$a->command->mode,$previous,$replaces,$this->engineer,$this->installers,$date,$a->at(),$a->command->actorUserId,$a->intent,$result,$event,$a->audit($result));
+            $payload=new SelectionAcceptedPersistence($identity,$revision,$a->command->mode,$previous,$replaces,$engineer,$this->installers,$date,$a->at(),$a->command->actorUserId,$intent,$result,$event,$a->audit($result));
             return self::stage($transaction->stageAccepted($payload),$result,true);
         }catch(\Throwable){return self::persistence();}
     }

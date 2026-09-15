@@ -17,6 +17,7 @@ enum AssignmentOrderCompositionReason: string
     case NO_CHANGES='no_changes';
     case REQUEST_ID_CONFLICT='request_id_conflict';
     case STALE_SELECTION='stale_selection';
+    case ASSIGNMENT_CHANGED='assignment_changed';
     case PENDING_SELECTION_EXISTS='pending_selection_exists';
     case SELECTION_NOT_FOUND='selection_not_found';
     case ORIGINAL_ALREADY_ACCEPTED='original_already_accepted';

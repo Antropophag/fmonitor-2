@@ -7,6 +7,7 @@ interface SelectionTransactionSession
  public function lockedCase():SelectionCaseLookup;
  public function findTerminalRequest(SelectionRequestId $id):SelectionTerminalRequestLookup;
  public function selectionState():SelectionStateLookup;
+ public function currentControlEngineer():array;
  public function allocateIdentity(SelectionSourceKind $kind,SelectionInstant $at):SelectionIdentityAllocationResult;
  public function stageAccepted(SelectionAcceptedPersistence $payload):SelectionStageResult;
  public function stageTerminalAttempt(SelectionTerminalAttemptPersistence $payload):SelectionStageResult;
