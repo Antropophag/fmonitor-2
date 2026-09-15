@@ -265,3 +265,24 @@ No production/spec compatibility finding was found. `ProductionPilotMigrationCat
 **CHANGES_REQUESTED**
 
 Correct the single duplicated literal recovery-table witness and refresh exact-source evidence/review binding. No production redesign is requested.
+
+---
+
+## v28 recovery-inventory finding closure — 2026-09-15
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T104649Z-c35728aa1d/package.json`
+- Exact reviewed commit: `2e9efa908e337fdd1c52112858f79dd2aad58099`
+- Candidate source: `3c20ba9b4fada7beaea54ee0f5a1837b6c89051d59968e44b3de3122a2f5c3a4`
+- Executable source: `864ca8ecd3c3eb4211f6db56fcd30122291ad426f63608bf3706e0ff402d40d2`
+- Verification plan SHA-256: `ccde47b44eaad66ef487b3de2b4f03c7ea059343a03198d25e963a859e6ce3a8`
+- Verdict: **APPROVED**
+
+### Finding closure
+
+Resolved. `tests/Runtime/runtime_jobs_recovery_001_test.php:10` now contains exactly one `fm2_control_engineer_assignments` table entry, matching the single table added by `RuntimeRecoverySchemaV28`. `tests/Runtime/runtime_jobs_recovery_001_test.php:11` retains exactly one corresponding AUTO_INCREMENT entry. The correction commit changes no production source, and `git diff --check` is clean.
+
+### Verdict
+
+**APPROVED**
+
+The only finding from the new-main v28 compatibility rereview is closed. The preceding production/spec compatibility assessment and all earlier substantive #52 Gate 5 approvals remain valid. Exact-source CI is still required; merge/deployment are outside this review.
