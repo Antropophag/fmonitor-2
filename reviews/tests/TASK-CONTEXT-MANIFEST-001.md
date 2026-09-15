@@ -45,3 +45,39 @@
 8. Resolve and test the supported load-mode/materialization schema without weakening exact canonical content delivery.
 
 No executor implementation should begin until these Gate 3 findings are corrected and independently rereviewed.
+
+---
+
+## Gate 3 rereview v2 — corrected test source
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test author / correction author: root
+- Reviewed correction: commit `e2c4b79ca4b2fe462d12bd59bb8ac036c66f4271`; candidate source `d33586e038446d500a1f6d853b2a622e1f4a7d0e24d6805d9d6da537f1c79f8d`; package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260915T212007Z-2e6071b3f7/package.json`; snapshot manifest SHA-256 `af98e01126b72fff71715075120fcb190edefd167e5876bcc6d17d68f97a451d` (empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`)
+- Corrected RED: `python3 tests/Verification/delivery_harness_context_manifest_001_test.py`; retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789507194553557000-ab6246d1ce3a4b558d75884a7ae1f856.json`; exit 1, four intended failures at absent manifest/measurement behavior
+- Verdict: `CHANGES_REQUIRED`
+
+### Prior findings disposition
+
+1. **Partially resolved.** Root, executor and reviewer roles are prepared; reviewer evidence and contracts are asserted. Exact candidate/spec/evidence/**review** references and reconstructible reviewer load-on-demand links are not completely asserted; see new finding A.
+2. **Resolved.** `context_delivery` identifies the manifest artifact and legacy `rules` are required absent, making the public route observable.
+3. **Resolved.** Required artifact digest, exact byte ranges/excerpt digests, section-index version/digest and source-specific invalid-heading fallback are asserted.
+4. **Resolved.** The existing `state` consumer remains not merge/publication ready after manifest preparation.
+5. **Resolved.** Independently declared exact rule inventories cover UI, persistence, auth, harness and the exact conservative full-source fallback.
+6. **Resolved for the stated freshness risk.** Repeat manifest/artifact identity is asserted, and the updated canonical source digest must match current bytes, preventing reuse of the old binding.
+7. **Partially resolved.** Goal/review/evidence history classes and digests are exercised, while explicit evidence stays in reviewer verification bindings. Reconstructible historical links are not validated beyond digest shape; see finding A.
+8. **Partially resolved.** Deterministic repeat, baseline aggregate correspondence, all four numeric metrics and harness profile are asserted. Required document/unrelated inventories and full sensitive measurement completeness remain untested; see finding B.
+9. **Resolved.** Both contract load modes are admitted and exact materialized content is checked independently of mode.
+10. **Resolved.** Expected profile and conservative source inventories now live in the test as the reviewed independent oracle rather than being imported from the implementation table.
+11. **Resolved.** Corrected exact-source RED remains isolated to absent T02 behavior and is retained.
+
+### Remaining findings
+
+A. **BLOCKING — reviewer and historical references are still not proven reconstructible as required by R4/R5 and case I/J.** The reviewer assertions check `contracts` and `evidence` equality only (`tests/Verification/delivery_harness_context_manifest_001_test.py:119-123`); they do not assert candidate/snapshot, spec digests, review references, or the reviewer manifest's load-on-demand links. Historical items are checked only for presence plus a 64-character digest (`:174-184`), without comparing that digest to canonical bytes or validating a content/path reference. An implementation may emit random digests or omit review/candidate reconstruction while passing. Assert the exact required reviewer reference classes and verify every load-on-demand reference against its canonical source bytes/path (including the historical goal, review and evidence fixtures).
+
+B. **BLOCKING — the executable measurement can omit required acceptance fields and under-report sensitive completeness.** R6 requires, for each replay, documents previously passed/read whole and obvious historical/unrelated material in addition to bytes/chars/full-doc/load-on-demand counts. The corrected test compares only the four aggregate `before` values and four numeric `after` values (`:194-205`); it never requires `whole_sources` or `obviously_historical_or_unrelated` in the report. Its `input_digest` check accepts any 64 hex characters without tying it to the actual input. The persistence measurement checks only three sensitive IDs (`:208-209`), not the complete reviewed persistence inventory already declared in `EXPECTED`. A fabricated/minimal report can therefore pass. Assert exact baseline `whole_sources` and unrelated/history inventory propagation, recompute each input digest from its named input, and require the full persistence rule inventory (as already done for harness).
+
+### Required changes for v3
+
+1. Complete reviewer-package and load-on-demand reconstruction assertions described in finding A.
+2. Complete the deterministic measurement assertions described in finding B.
+3. Retain a refreshed exact-source RED and request independent rereview before executor dispatch.

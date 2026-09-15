@@ -54,6 +54,9 @@ class ContextManifest(unittest.TestCase):
         value.write(value.input, spec)
         extra = []
         if role == "reviewer":
+            current_review = value.repo / "reviews/tests/CURRENT.md"
+            current_review.parent.mkdir(parents=True, exist_ok=True)
+            current_review.write_text("current review input\n")
             run = value.cli("run", "--", sys.executable, value.test)
             self.assertEqual(0, run.returncode, run.stderr)
             extra = ["--evidence", json.loads(run.stdout)["record_path"]]
@@ -121,6 +124,11 @@ class ContextManifest(unittest.TestCase):
         self.assertTrue(reviewer["evidence"])
         self.assertEqual(reviewer["contracts"], reviewer_manifest["product_spec"]["contracts"])
         self.assertEqual(reviewer["evidence"], reviewer_manifest["verification"]["evidence"])
+        self.assertEqual(reviewer["candidate_source"], reviewer_manifest["verification"]["candidate_source"])
+        self.assertEqual(reviewer["snapshot"], reviewer_manifest["verification"]["snapshot"])
+        self.assertIn("reviews/tests/CURRENT.md", reviewer_manifest["verification"]["reviews"])
+        for contract in reviewer_manifest["product_spec"]["references"]:
+            self.assertEqual(hashlib.sha256((_v.repo / contract["source"]).read_bytes()).hexdigest(), contract["digest"])
 
     def test_E_to_H_digest_freshness_unknown_fallback_and_repeat(self):
         value, first, manifest = self.prepared(["app/YiiRuntime/Views/example.php"])
@@ -181,7 +189,8 @@ class ContextManifest(unittest.TestCase):
         lod = {item["source"]: item for item in historical_manifest["load_on_demand"]}
         for relative in ("docs/operations/current-delivery-goal-history-old.md", "reviews/tests/OLD.md", "docs/operations/old-evidence.md"):
             self.assertIn(relative, lod)
-            self.assertRegex(lod[relative]["digest"], r"^[0-9a-f]{64}$")
+            self.assertEqual(hashlib.sha256((value.repo / relative).read_bytes()).hexdigest(), lod[relative]["digest"])
+            self.assertEqual({"path": relative}, lod[relative]["content_reference"])
 
     def test_measurement_replays_three_completed_changes(self):
         result = subprocess.run([sys.executable, "tools/delivery/measure-task-context.py", "--baseline", "docs/operations/issue-157-task-context-manifest-baseline.json"], cwd=ROOT, text=True, capture_output=True)
@@ -199,13 +208,15 @@ class ContextManifest(unittest.TestCase):
             self.assertEqual(expected["mandatory_characters"], item["before"]["mandatory_characters"])
             self.assertEqual(expected["whole_documents"], item["before"]["whole_documents"])
             self.assertEqual(expected["load_on_demand_references"], item["before"]["load_on_demand_references"])
-            self.assertRegex(item["input_digest"], r"^[0-9a-f]{64}$")
+            self.assertEqual(expected["whole_sources"], item["before"]["whole_sources"])
+            self.assertEqual(expected["obviously_historical_or_unrelated"], item["before"]["obviously_historical_or_unrelated"])
+            self.assertEqual(hashlib.sha256((ROOT / expected["input"]).read_bytes()).hexdigest(), item["input_digest"])
             for key in ("mandatory_bytes", "mandatory_characters", "whole_documents", "load_on_demand_references"):
                 self.assertIsInstance(item["after"][key], int)
         bounded = next(item for item in report["cases"] if item["id"] == "bounded_presentation_ui")
         self.assertLess(bounded["after"]["mandatory_bytes"], bounded["before"]["mandatory_bytes"])
         sensitive = next(item for item in report["cases"] if item["id"] == "persistence_current_state")
-        self.assertTrue({"persistence.current-state", "domain.state-history", "security.authorization"} <= set(sensitive["after"]["required_rule_ids"]))
+        self.assertEqual(self.EXPECTED["persistence"], set(sensitive["after"]["required_rule_ids"]))
         harness = next(item for item in report["cases"] if item["id"] == "harness_verification")
         self.assertEqual(self.EXPECTED["harness"], set(harness["after"]["required_rule_ids"]))
 
