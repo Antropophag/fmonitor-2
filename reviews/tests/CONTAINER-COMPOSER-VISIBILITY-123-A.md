@@ -81,3 +81,56 @@ Gate 3 does not advance to implementation on this source.
 ### Required changes
 
 None.
+
+---
+
+## Gate 3 delta review — owner-authorized frozen source layout
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent (`/root/issue123_gate3`); authored neither the A–O specification nor rewritten tests.
+- Review type: fresh delta review; no reliance on the earlier A–J approval.
+- Reviewed source: `2b4a493608f0f946272e997771ee0e17e72faa0e`; exact candidate source `86e0af5929022bf72f9d10222d5c964929b7656b8b30d6d1be6f22debc26593b`.
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T070817Z-dcca2e0244/package.json`; plan SHA-256 `a7d076ab1ce652b5c8439c68c08d097b86ae42e4101a92422650698c4b680106`; context manifest SHA-256 `d22a803e4d3431bd03938e265c4f3bf4ba3a74981a22d9d4fd27d31933d03202`.
+- Reconstructible source: package snapshot base `2b4a493608f0f946272e997771ee0e17e72faa0e`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Normative contract: `specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md`, package-bound SHA-256 `70c7228d4e2cfb992c7c1611526e8cafdc7ed0be2c8952ad3b85a07968fa563c`.
+- Public seam: `tools/delivery/run-in-profile <profile> <command> [args...]`, with the existing frozen snapshot as optional explicit source input.
+- Planner: `CRITICAL`; required reviews `gate3`, `final`; required categories `governance`, `integration`.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Evidence reviewed
+
+- `python3 tests/Verification/container_composer_visibility_123_a_test.py` — exit `1`, `INTENDED_RED`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789542428533512000-5330887dae9b4b379a70d5553f0234a1.json`. The five failures are behavioral: absent exact-source evidence, post-freeze host mutation leaking into execution, host source remaining writable, and profile identity gaps. E/G/H already pass through their intended public routes. There is no setup failure.
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — exit `255`, `INTENDED_RED`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789542479298946000-e4c277395d8542baa661354a2831a8bb.json`. It reaches the governance profile and fails specifically because compact evidence lacks the newly required `source_digest` field.
+- Both records bind exact source `86e0af5929022bf72f9d10222d5c964929b7656b8b30d6d1be6f22debc26593b` and executable source `7a26c83b20ab417dc5d4772881ee288d63d61c158aeff4eb60acc71c49fe4ec6`.
+- No full local `make test` or `make verify` was run.
+
+### Complete A–O assessment
+
+- A–C/I/O: two disposable worktrees, distinct untracked candidate markers, cold/warm launches, origins, source immutability and before/after dependency inventories make source contamination and empty host dependency mountpoints observable.
+- D: an explicit existing snapshot is frozen before a later host marker mutation; the expected frozen marker and independently captured executable digest are asserted against payload, evidence and image label.
+- E: a tracked deletion plus an untracked executable-mode addition are exercised through the public route. Together with D, this is sensitive to additions, deletions, modes and post-freeze mutation.
+- F/G/H: hostile stale host vendor preservation, deliberately corrupt container dependencies and changed lock identity cover host fallback, fail-closed behavior and lock invalidation. Execution-time network fallback is excluded by the intended immutable/read-only runtime design and public-route failure behavior.
+- J: source writing must fail while `/tmp` and the explicit `.local` artifact area remain writable; the host tracked digest and absent host vendor are checked afterward.
+- K–M: governance, integration and browser all use the common Yii bootstrap assertion. The PHP exact-source adaptation is minimal and limited to explicit executed Git identity plus the additional compact evidence field.
+- N: explicit-snapshot identity is independently checked in D, but automatic/default snapshot identity is only self-consistency checked; see blocking finding D1.
+- The PHP bootstrap output now uses real newline characters (`"\nYII_BOOTSTRAP_OK\n"`), so the earlier literal-backslash newline defect is fixed.
+- The OpenSpec proposal/design/delta and normative contract coherently bound the owner-authorized change to verification source layout, existing capture/restore identity, read-only source, separate locked dependencies and unchanged production/CI topology.
+
+### Findings
+
+#### D1 — Blocking — automatic frozen-source identity has a circular oracle
+
+- Location: `tests/Verification/container_composer_visibility_123_a_test.py:201-203`.
+- When `snapshot is None`—the ordinary automatic-freeze path used by A–C/F/K–M—the test sets `expected_source = payload["source_digest"]`, then only checks that payload, compact evidence and image label repeat that same value. A plausible regression that labels and reports an arbitrary or stale 64-hex digest while executing current bytes would pass these identity assertions. Marker checks establish some source bytes, but do not prove the complete executable digest required by CCV123A-01 and matrix N.
+- The explicit-snapshot D case is independently anchored to `snapshot.executable_digest`, but it cannot establish that the default launcher captured the current candidate identity in every automatic invocation.
+- Correction: independently compute the expected executable digest from the candidate before invoking the ordinary public route (using the already selected `source_details()` seam), then compare payload, compact evidence and image label to that value. Preserve the explicit snapshot oracle for post-freeze mutation. Capture fresh exact-source RED evidence and resubmit the corrected delta.
+
+### Complete findings list
+
+- D1 only. No additional traceability, seam, expected-value, determinism, setup-isolation, OpenSpec coherence, newline, A–M or O findings.
+
+### Required changes
+
+1. Correct D1 so matrix N independently proves automatic/default frozen executable identity rather than internal digest agreement.
+2. Refresh exact-source RED evidence/package after the test delta and request independent Gate 3 rereview.
+
+This delta does not advance to implementation on the reviewed source.
