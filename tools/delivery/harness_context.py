@@ -3,6 +3,7 @@
 
 import hashlib
 import argparse
+import fcntl
 import importlib.util
 import json
 import os
@@ -425,15 +426,21 @@ def _compute_state(helpers):
     if active and active.get("lifecycle"):
         refreshed_lifecycle = _requirement_freshness(root, active["lifecycle"])
         if refreshed_lifecycle != active["lifecycle"]:
-            active["lifecycle"] = refreshed_lifecycle
             binding_path = _binding_path(helpers)
-            temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
-            temporary.write_text(json.dumps(active, ensure_ascii=False, sort_keys=True) + "\n",
-                                 encoding="utf-8")
-            os.replace(temporary, binding_path)
+            lock_path = binding_path.with_suffix(binding_path.suffix + ".lock")
+            with lock_path.open("a+", encoding="utf-8") as lock:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+                active = _active_binding(helpers)
+                if active and active.get("lifecycle"):
+                    refreshed_lifecycle = _requirement_freshness(root, active["lifecycle"])
+                    if refreshed_lifecycle != active["lifecycle"]:
+                        active["lifecycle"] = refreshed_lifecycle
+                        _atomic_json(binding_path, active)
     state = {"source": source, "executable_source": details.get("executable_digest", source),
              "head": head, "dirty": dirty, "github": github,
-             "ci": ci, "deployment": "UNKNOWN", "active_binding": active}
+             "ci": ci, "deployment": "UNKNOWN", "active_binding": active,
+             "active_binding_path": str(_binding_path(helpers)),
+             "admission_context": _admission_context(helpers, active) if active else None}
     state["next_action"] = ("merged; await the next owner task" if github.get("state") == "MERGED"
                             else "prepare/review exact source before publication")
     live_path = helpers.evidence_home() / "state" / ("live-" + _worktree_key(helpers) + ".json")
@@ -448,14 +455,21 @@ def command_admission(args, helpers):
 
 
 def command_live_admission(args, helpers):
+    state = _compute_state(helpers)
     try:
         observation, pr = _native_github_observation(helpers)
+        observation["admission_context"] = state.get("admission_context")
+        observation["reviews"] = _admission_reviews(
+            state.get("admission_context"), observation.get("binding", {}))
         result = _admit(helpers, observation)
+        result.update(admission_context=state.get("admission_context"),
+                      active_binding=state.get("active_binding"),
+                      active_binding_path=state.get("active_binding_path"),
+                      source=state.get("source"))
         result["github"] = {key: pr.get(key) for key in ("number", "state", "headRefOid", "url")}
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError,
             subprocess.SubprocessError) as error:
-        legacy = _compute_state(helpers) if args.command == "state" else {}
-        result = {**legacy, "ci": {"status": "UNKNOWN", "source": "UNKNOWN",
+        result = {**state, "ci": {"status": "UNKNOWN", "source": "UNKNOWN",
                   "triage": _ci_triage({})}, "publication_ready": False,
                   "merge_ready": False, "action_authorized": False,
                   "enforcement": "ENFORCEMENT_NOT_CONFIGURED",
@@ -549,6 +563,124 @@ def _active_binding(helpers):
     return None
 
 
+def _atomic_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp-" + uuid.uuid4().hex)
+    temporary.write_text(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n",
+                         encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def _plan_for_binding(active):
+    data = Path(active["plan"]).read_bytes()
+    value = json.loads(data)
+    if not isinstance(value, dict):
+        raise ValueError("verification plan must be a JSON object")
+    return value, hashlib.sha256(data).hexdigest()
+
+
+def _change_for_binding(root, active):
+    value = json.loads(_safe_repo_path(root, active["input"]).read_text(encoding="utf-8"))
+    change = value.get("change") if isinstance(value, dict) else None
+    if not isinstance(change, str) or not change:
+        raise ValueError("verification input change is unavailable")
+    return change
+
+
+def _admission_context(helpers, active=None):
+    active = active or _active_binding(helpers)
+    if not active:
+        return None
+    plan, plan_sha256 = _plan_for_binding(active)
+    source = _source(helpers, helpers.ROOT)
+    import admission
+    binding = {"change": _change_for_binding(helpers.ROOT, active),
+               "input": active["input"], "base": active["base"],
+               "source": source, "candidate": source}
+    expected = {**binding, "plan_sha256": plan_sha256,
+                "policy_digest": admission.policy_digest(helpers.ROOT)}
+    results = active.get("review_results")
+    results = results if isinstance(results, list) else []
+    reviews = []
+    for gate in plan.get("required_reviews", []):
+        gate_results = [item for item in results if isinstance(item, dict)
+                        and item.get("gate") == gate]
+        exact = [item for item in gate_results
+                 if item.get("binding") == {**expected, "gate": gate,
+                                             "reviewer_role": "reviewer"}]
+        unique = {json.dumps(item, ensure_ascii=True, sort_keys=True,
+                             separators=(",", ":")): item for item in exact}
+        if len(unique) == 1:
+            item = next(iter(unique.values()))
+            reviews.append({**item, "status": "CURRENT",
+                            "current_verdict": item.get("verdict")})
+        elif gate_results:
+            reviews.append({"gate": gate, "status": "STALE", "verdict": None,
+                            "current_verdict": None})
+        else:
+            reviews.append({"gate": gate, "status": "MISSING", "verdict": None,
+                            "current_verdict": None})
+    return {"verification_plan": {"sha256": plan_sha256, "value": plan},
+            "selected_obligations": plan.get("commands", []), "binding": binding,
+            "policy": {"sha256": expected["policy_digest"]}, "reviews": reviews}
+
+
+def _admission_reviews(context, native_binding):
+    """Adapt current canonical results to the evaluator's existing Gate schema."""
+    gate_numbers = {"gate3": 3, "final": 5}
+    if not isinstance(context, dict):
+        return []
+    return [{"gate": gate_numbers[item["gate"]], "verdict": item.get("verdict"),
+             "reviewer": item.get("reviewer"), "author": item.get("author"),
+             "binding": dict(native_binding)}
+            for item in context.get("reviews", [])
+            if (isinstance(item, dict) and item.get("status") == "CURRENT"
+                and item.get("gate") in gate_numbers)]
+
+
+def command_record_review(args, helpers):
+    if not args.reviewer:
+        raise ValueError("reviewer identity is required")
+    if not args.author:
+        raise ValueError("author identity is required")
+    if args.reviewer == args.author:
+        raise ValueError("independent reviewer must differ from author")
+    binding_path = _binding_path(helpers)
+    lock_path = binding_path.with_suffix(binding_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        active = _active_binding(helpers)
+        if not active:
+            raise ValueError("active binding is unavailable")
+        context = _admission_context(helpers, active)
+        if context["binding"]["source"] != active.get("source"):
+            raise ValueError("source changed since prepare")
+        if args.gate not in context["verification_plan"]["value"].get("required_reviews", []):
+            raise ValueError("gate is not required by the verification plan")
+        record_binding = {**context["binding"],
+                          "plan_sha256": context["verification_plan"]["sha256"],
+                          "policy_digest": context["policy"]["sha256"],
+                          "gate": args.gate, "reviewer_role": "reviewer"}
+        record = {"gate": args.gate, "verdict": args.verdict,
+                  "reviewer": args.reviewer, "author": args.author,
+                  "reviewer_role": "reviewer", "recorded_at": _now(),
+                  "binding": record_binding}
+        results = active.get("review_results")
+        results = results if isinstance(results, list) else []
+        identity = {key: value for key, value in record.items() if key != "recorded_at"}
+        existing = next((item for item in results if isinstance(item, dict)
+                         and {key: value for key, value in item.items()
+                              if key != "recorded_at"} == identity), None)
+        if existing is None:
+            active["review_results"] = [*results, record]
+            _atomic_json(binding_path, active)
+        else:
+            record = existing
+    _json(record)
+    return 0
+
+
 def _requirement_freshness(root, lifecycle):
     if not isinstance(lifecycle, dict) or lifecycle.get("route") != "FAST_MAINTENANCE":
         return lifecycle
@@ -571,27 +703,29 @@ def _requirement_freshness(root, lifecycle):
 
 
 def _refresh_active_binding(helpers):
-    active = _active_binding(helpers)
-    if not active:
-        return None
-    module = _load_change_verification(helpers.ROOT)
-    plan = module.build(active["base"], active["input"])
-    state_dir = helpers.evidence_home() / "state"
-    refreshed = state_dir / ("active-verification-plan-" + _worktree_key(helpers) + ".json")
-    refreshed.write_text(module.canonical(plan), encoding="utf-8")
-    if active.get("lifecycle"):
-        active["lifecycle"] = _requirement_freshness(helpers.ROOT, active["lifecycle"])
-    active.update(source=_source(helpers, helpers.ROOT), plan=str(refreshed),
-                  contracts=sorted({item["spec_path"] for item in plan["acceptances"]}),
-                  obligation_count=len(plan["commands"]),
-                  verification_lane=plan.get("verification_lane", "STANDARD"),
-                  required_reviews=plan.get("required_reviews", ["gate3", "final"]),
-                  selected_checks=plan.get("selected_checks", []), refreshed_at=_now())
     binding_path = _binding_path(helpers)
-    temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
-    temporary.write_text(json.dumps(active, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    os.replace(temporary, binding_path)
-    return active
+    lock_path = binding_path.with_suffix(binding_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        active = _active_binding(helpers)
+        if not active:
+            return None
+        module = _load_change_verification(helpers.ROOT)
+        plan = module.build(active["base"], active["input"])
+        state_dir = helpers.evidence_home() / "state"
+        refreshed = state_dir / ("active-verification-plan-" + _worktree_key(helpers) + ".json")
+        refreshed.write_text(module.canonical(plan), encoding="utf-8")
+        if active.get("lifecycle"):
+            active["lifecycle"] = _requirement_freshness(helpers.ROOT, active["lifecycle"])
+        active.update(source=_source(helpers, helpers.ROOT), plan=str(refreshed),
+                      contracts=sorted({item["spec_path"] for item in plan["acceptances"]}),
+                      obligation_count=len(plan["commands"]),
+                      verification_lane=plan.get("verification_lane", "STANDARD"),
+                      required_reviews=plan.get("required_reviews", ["gate3", "final"]),
+                      selected_checks=plan.get("selected_checks", []), refreshed_at=_now())
+        _atomic_json(binding_path, active)
+        return active
 
 
 def _context(helpers, role="root"):
@@ -1257,8 +1391,9 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
 def command_prepare(args, helpers):
     root = helpers.ROOT
     _check_all_whitespace(root)
+    previous_binding = _active_binding(helpers)
     if args.role == "executor":
-        active = _active_binding(helpers)
+        active = previous_binding
         if active and active.get("lifecycle", {}).get("route") == "FAST_MAINTENANCE":
             refreshed = _requirement_freshness(root, active["lifecycle"])
             if refreshed.get("freshness") == "STALE":
@@ -1376,21 +1511,30 @@ def command_prepare(args, helpers):
         delta = package_dir / "delta.patch"
         _delta(root, previous, snapshot_path, delta)
         result["delta"] = str(delta)
-    Path(result["package_path"]).write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     binding_path = _binding_path(helpers)
+    result["review_results_location"] = str(binding_path)
     binding_path.parent.mkdir(parents=True, exist_ok=True)
-    binding = {"repository": str(root), "worktree": _worktree_realpath(helpers),
-               "input": args.input, "base": args.base,
-               "source": source, "plan": str(plan_path), "package_path": result["package_path"],
-               "contracts": contracts, "prepared_at": _now(),
-               "context_manifest": str(manifest_path),
-               "context_manifest_sha256": result["context_manifest_sha256"],
-               "required_context_path": str(required_path),
-               "required_context_sha256": result["required_context_sha256"],
-               "lifecycle": lifecycle}
-    temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
-    temporary.write_text(json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    os.replace(temporary, binding_path)
+    lock_path = binding_path.with_suffix(binding_path.suffix + ".lock")
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        latest_binding = _active_binding(helpers)
+        review_results = (latest_binding or {}).get("review_results", [])
+        result["review_results"] = review_results
+        Path(result["package_path"]).write_text(
+            json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8")
+        binding = {"repository": str(root), "worktree": _worktree_realpath(helpers),
+                   "input": args.input, "base": args.base,
+                   "source": source, "plan": str(plan_path), "package_path": result["package_path"],
+                   "contracts": contracts, "prepared_at": _now(),
+                   "context_manifest": str(manifest_path),
+                   "context_manifest_sha256": result["context_manifest_sha256"],
+                   "required_context_path": str(required_path),
+                   "required_context_sha256": result["required_context_sha256"],
+                   "review_results": review_results,
+                   "review_results_location": str(binding_path),
+                   "lifecycle": lifecycle}
+        _atomic_json(binding_path, binding)
     _json(result)
     return 0
 
@@ -1419,6 +1563,12 @@ def _parse(argv):
     prepare.add_argument("--historical-red")
     prepare.add_argument("--test-delta")
     prepare.add_argument("--dependency-workspace", action="append")
+    review = commands.add_parser("record-review")
+    review.add_argument("--gate", required=True, choices=("gate3", "final"))
+    review.add_argument("--verdict", required=True,
+                        choices=("APPROVED", "CHANGES_REQUESTED"))
+    review.add_argument("--reviewer")
+    review.add_argument("--author")
     return parser.parse_args(argv)
 
 
@@ -1439,6 +1589,8 @@ def main(args, helpers=None):
             return command_doctor(args, helpers)
         if args.command == "prepare":
             return command_prepare(args, helpers)
+        if args.command == "record-review":
+            return command_record_review(args, helpers)
         if args.command == "install":
             return command_install(args, helpers)
         raise ValueError(f"unsupported context command: {args.command}")
