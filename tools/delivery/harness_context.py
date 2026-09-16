@@ -998,12 +998,15 @@ def _normalized_argv(argv):
     return (first, *argv[1:])
 
 
-def _validate_evidence(path, source, expectations, plan_commands=None, executable_source=None):
+def _validate_evidence(path, source, expectations, plan_commands=None, executable_source=None,
+                       reachability=None, acceptance_by_command=None):
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"evidence is unreadable: {error}") from error
-    if record.get("source") != source and record.get("executable_source") != executable_source:
+    if (record.get("source") != source
+            or (executable_source is not None
+                and record.get("executable_source") != executable_source)):
         raise ValueError("evidence source does not match current source")
     try:
         current_environment = _helpers().environment_identity()["digest"]
@@ -1014,6 +1017,12 @@ def _validate_evidence(path, source, expectations, plan_commands=None, executabl
     argv = _normalized_argv(record.get("argv", []))
     expected = expectations.get(argv)
     plan_command = (plan_commands or {}).get(argv)
+    reachability_declaration = (reachability or {}).get(argv)
+    is_reachability = record.get("outcome") == "FIXTURE_REACHABLE"
+    if is_reachability:
+        if reachability_declaration is None:
+            raise ValueError("fixture reachability evidence is not declared for this command")
+        expected = "FIXTURE_REACHABLE"
     if expected is None and plan_command is not None:
         expected = "GREEN"
     if expected is None:
@@ -1025,12 +1034,25 @@ def _validate_evidence(path, source, expectations, plan_commands=None, executabl
             raise ValueError("evidence purpose does not match plan")
         if record.get("command_environment") != plan_command.get("environment"):
             raise ValueError("evidence command environment does not match plan")
+    acceptance_id = (acceptance_by_command or {}).get(argv)
+    if (acceptance_id is not None and plan_command is not None and plan_command.get("id") is not None
+            and record.get("acceptance_id") != acceptance_id):
+        raise ValueError("evidence acceptance identity does not match plan")
+    if is_reachability:
+        if (record.get("fixture_reachability_boundary") != reachability_declaration["boundary"]
+                or record.get("fixture_reachability_probe_kind") != "fixture_read_only"):
+            raise ValueError("fixture reachability boundary does not match plan")
     if record.get("outcome") != expected:
         raise ValueError(f"evidence outcome must be {expected} for this mapped acceptance")
     return {"record": str(path), "argv": record["argv"], "outcome": record["outcome"],
             "source": record.get("source"), "executable_source": record.get("executable_source"),
             "purpose": record.get("purpose"), "command_id": record.get("command_id"),
-            "command_environment": record.get("command_environment")}
+            "command_environment": record.get("command_environment"),
+            "acceptance_id": record.get("acceptance_id"),
+            "command_blob": record.get("command_blob"),
+            "environment": record.get("environment"),
+            "fixture_reachability_boundary": record.get("fixture_reachability_boundary"),
+            "fixture_reachability_probe_kind": record.get("fixture_reachability_probe_kind")}
 
 
 def _dependency_workspaces(args, helpers, plan):
@@ -1423,9 +1445,22 @@ def command_prepare(args, helpers):
     expectations = _gate_expectations(plan_value, evidence_gate)
     mapped = set(expectations)
     plan_commands = {_normalized_argv(item["argv"]): item for item in plan_value["commands"]}
+    acceptance_by_command = {}
+    reachability = {}
+    for acceptance in plan_value["acceptances"]:
+        for test in acceptance.get("tests", []):
+            command = next((_normalized_argv(item["argv"]) for item in plan_value["commands"]
+                            if item.get("rationale") == "acceptance mapping"
+                            and item["argv"][-1] == test), None)
+            if command is not None:
+                acceptance_by_command[command] = acceptance["acceptance_id"]
+                declaration = acceptance.get("fixture_reachability", {}).get(test)
+                if declaration is not None:
+                    reachability[command] = declaration
     for value in getattr(args, "evidence", None) or []:
         evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, expectations,
-                                           plan_commands, executable_source))
+                                           plan_commands, executable_source, reachability,
+                                           acceptance_by_command))
     lifecycle = _fast_maintenance_lifecycle(root, plan_value, args.input, source, args.base,
                                             plan_path, evidence)
     if (args.role == "executor" and lifecycle["route"] == "FAST_MAINTENANCE"
@@ -1433,9 +1468,26 @@ def command_prepare(args, helpers):
         if any(item.get("outcome") == "INTENDED_RED" for item in evidence):
             raise ValueError("FAST maintenance intended RED evidence must cover declared executable regression")
         raise ValueError("FAST maintenance executor requires intended RED evidence")
-    covered = {_normalized_argv(item["argv"]) for item in evidence}
+    covered = {_normalized_argv(item["argv"]) for item in evidence
+               if item["outcome"] != "FIXTURE_REACHABLE"}
     if args.role == "reviewer" and mapped - covered:
         raise ValueError("reviewer evidence does not cover every mapped acceptance test")
+    if args.role == "reviewer" and evidence_gate == "3":
+        reached = {_normalized_argv(item["argv"]): item for item in evidence
+                   if item["outcome"] == "FIXTURE_REACHABLE"}
+        if set(reachability) - set(reached):
+            raise ValueError("reviewer evidence lacks declared fixture reachability")
+        ordinary = {_normalized_argv(item["argv"]): item for item in evidence
+                    if item["outcome"] != "FIXTURE_REACHABLE"}
+        for command, reached_item in reached.items():
+            red_item = ordinary.get(command)
+            if (red_item is None or red_item.get("outcome") != "INTENDED_RED"
+                    or red_item.get("acceptance_id") != reached_item.get("acceptance_id")
+                    or red_item.get("command_id") != reached_item.get("command_id")
+                    or red_item.get("command_environment") != reached_item.get("command_environment")
+                    or red_item.get("environment") != reached_item.get("environment")
+                    or red_item.get("command_blob") != reached_item.get("command_blob")):
+                raise ValueError("fixture reachability evidence does not match separate intended RED")
     if args.role == "reviewer" and (missing or not evidence):
         raise ValueError("reviewer package requires existing mapped tests and current Gate evidence")
     historical_red = getattr(args, "historical_red", None)

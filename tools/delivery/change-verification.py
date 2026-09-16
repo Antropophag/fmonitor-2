@@ -612,7 +612,8 @@ def build(base_ref, input_name):
     normalized_acceptances = []
     required = {"spec_id", "acceptance_id", "spec_path", "seam", "tests"}
     for acceptance in acceptances:
-        optional = {"gate3_expected", "seam_kind", "observable_dimensions"}
+        optional = {"gate3_expected", "seam_kind", "observable_dimensions",
+                    "fixture_reachability"}
         if (not isinstance(acceptance, dict) or not required <= set(acceptance)
                 or not set(acceptance) <= required | optional):
             raise ValueError("malformed acceptance mapping")
@@ -641,6 +642,24 @@ def build(base_ref, input_name):
             if (not isinstance(expected, dict) or set(expected) != set(tests)
                     or any(value not in {"INTENDED_RED", "GREEN"} for value in expected.values())):
                 raise ValueError("invalid Gate 3 expected outcomes")
+        reachability = acceptance.get("fixture_reachability")
+        if reachability is not None:
+            if not isinstance(reachability, dict) or not reachability:
+                raise ValueError("invalid fixture reachability declaration")
+            if not set(reachability) <= set(tests):
+                raise ValueError("fixture reachability test must be mapped by its acceptance")
+            normalized_reachability = {}
+            for test, declaration in reachability.items():
+                if (not isinstance(declaration, dict)
+                        or set(declaration) != {"boundary", "probe_kind"}
+                        or declaration.get("probe_kind") != "fixture_read_only"
+                        or not isinstance(declaration.get("boundary"), str)
+                        or not declaration["boundary"].strip()):
+                    raise ValueError("invalid fixture reachability declaration")
+                normalized_reachability[test] = {
+                    "boundary": declaration["boundary"],
+                    "probe_kind": "fixture_read_only",
+                }
         normalized = {key: acceptance[key] for key in required}
         normalized["tests"] = sorted(tests)
         dimension_contract = validate_observable_dimensions(acceptance, tests)
@@ -648,6 +667,9 @@ def build(base_ref, input_name):
             normalized.update(dimension_contract)
         if expected is not None:
             normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
+        if reachability is not None:
+            normalized["fixture_reachability"] = {
+                test: normalized_reachability[test] for test in sorted(normalized_reachability)}
         normalized_acceptances.append(normalized)
     if verification_lane == "FAST":
         missing = sorted(set(acceptance_tests) - set(inventory))

@@ -8,13 +8,13 @@
 ## 2. Independent Gate 3 and minimal safeguard
 
 - [x] 2.1 Obtain an independent Gate-3 review from a non-author gpt-5.6-sol/low reviewer against the prepared package; verify the review record has an explicit verdict and resolve all findings before implementation.
-- [ ] 2.2 Have a separate gpt-5.6-sol/low executor add the minimal opt-in reachability declaration and planner propagation; verify malformed/unknown declarations fail closed and undeclared non-applicable tests preserve compatibility.
-- [ ] 2.3 Extend the existing runner record with a bounded reachability mode/outcome bound to command, acceptance, source, environment, test blob and boundary; verify marker-only, nonzero, timeout, signal and control-marker executions never produce healthy reachability.
-- [ ] 2.4 Extend Gate-3 `prepare` admission to require both `INTENDED_RED` and matching healthy reachability evidence for applicable acceptances; verify package approval remains `NOT_REVIEWED` and missing/stale/foreign evidence is rejected.
+- [x] 2.2 Have a separate gpt-5.6-sol/low executor add the minimal opt-in reachability declaration and planner propagation; verify malformed/unknown declarations fail closed and undeclared non-applicable tests preserve compatibility.
+- [x] 2.3 Extend the existing runner record with a bounded reachability mode/outcome bound to command, acceptance, source, environment, test blob and boundary; verify marker-only, nonzero, timeout, signal and control-marker executions never produce healthy reachability.
+- [x] 2.4 Extend Gate-3 `prepare` admission to require both `INTENDED_RED` and matching healthy reachability evidence for applicable acceptances; verify package approval remains `NOT_REVIEWED` and missing/stale/foreign evidence is rejected.
 
 ## 3. Focused verification and review
 
-- [ ] 3.1 Run only the planner-selected focused tooling checks plus OpenSpec strict validation and relevant architecture check; verify the five defect classes block, healthy intended RED advances, existing intended-RED provenance tests stay green, and no full local `make test`/`make verify` is run.
+- [x] 3.1 Run only the planner-selected focused tooling checks plus OpenSpec strict validation and relevant architecture check; verify the five defect classes block, healthy intended RED advances, existing intended-RED provenance tests stay green, and no full local `make test`/`make verify` is run.
 - [ ] 3.2 Capture the complete exact-source candidate/package and obtain the planner-required independent final review from a non-author gpt-5.6-sol/low reviewer; verify all findings are resolved and the final verdict is explicit `APPROVED`.
 - [ ] 3.3 Push the separate branch and run the selected existing GitHub CI consumer once on the exact reviewed source; inventory every failed job and `REGRESSION_FAILURE` before any correction, and verify final CI is GREEN for that exact source.
 - [ ] 3.4 Prepare a separate PR-ready handoff recording base/source, actual authors, RED/GREEN evidence, review counts, focused commands, CI URL/status and exclusions; verify PR remains unmerged and then STOP.
