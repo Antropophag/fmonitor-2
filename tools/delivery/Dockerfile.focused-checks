@@ -43,6 +43,7 @@ COPY --from=python /usr/local/ /usr/local/
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 COPY --from=uv /uv /uvx /usr/local/bin/
 COPY composer.json composer.lock /workspace/
+RUN composer validate --working-dir=/workspace --strict --no-check-publish
 RUN composer install --working-dir=/workspace --no-interaction --no-scripts
 COPY pyproject.toml uv.lock /opt/fmonitor/
 RUN UV_PROJECT_ENVIRONMENT=/opt/fmonitor/.venv \
