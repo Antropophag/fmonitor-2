@@ -37,7 +37,7 @@ ARG EXECUTABLE_SOURCE
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         bash git make unzip \
-    && docker-php-ext-install -j"$(nproc)" mysqli pcntl \
+    && docker-php-ext-install -j"$(nproc)" mysqli pcntl pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=node /usr/local/ /usr/local/

@@ -1,0 +1,35 @@
+{
+  "change": "canonical-integration-pdo-mysql",
+  "planned_paths": [
+    "openspec/changes/canonical-integration-pdo-mysql/proposal.md",
+    "openspec/changes/canonical-integration-pdo-mysql/design.md",
+    "openspec/changes/canonical-integration-pdo-mysql/tasks.md",
+    "openspec/changes/canonical-integration-pdo-mysql/specs/delivery/canonical-integration-runtime/spec.md",
+    "openspec/changes/canonical-integration-pdo-mysql/verification-input.json",
+    "specs/CANONICAL-INTEGRATION-RUNTIME-001.md",
+    "tools/delivery/Dockerfile.focused-checks",
+    "tests/Verification/canonical_integration_runtime_001_test.py",
+    "tools/verification/suites.tsv",
+    "reviews/tests/CANONICAL-INTEGRATION-RUNTIME-001.md",
+    "reviews/code/CANONICAL-INTEGRATION-RUNTIME-001.md",
+    "docs/operations/canonical-integration-runtime-001-delivery.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CANONICAL-INTEGRATION-RUNTIME-001",
+      "acceptance_id": "CIR001-01-05",
+      "spec_path": "specs/CANONICAL-INTEGRATION-RUNTIME-001.md",
+      "seam": "tools/delivery/run-in-profile integration <command> [args...]",
+      "tests": [
+        "tests/Verification/canonical_integration_runtime_001_test.py",
+        "tests/Verification/container_composer_visibility_123_a_test.py",
+        "tests/Verification/quality_graph_ci_setup_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Verification/canonical_integration_runtime_001_test.py": "INTENDED_RED",
+        "tests/Verification/container_composer_visibility_123_a_test.py": "GREEN",
+        "tests/Verification/quality_graph_ci_setup_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
