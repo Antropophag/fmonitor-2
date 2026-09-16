@@ -30,6 +30,12 @@ class SensitiveOfflineClassification(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / source, target)
         policy = json.loads((self.root / ".quality-graph/verification-policy.json").read_text())
+        policy["capability_ownership"].append({
+            "name": "sensitive-offline-persistence-fixture-owner",
+            "patterns": ["app/Infrastructure/Persistence/Store.php"],
+            "verifiers": [], "consumers": []})
+        (self.root / ".quality-graph/verification-policy.json").write_text(
+            json.dumps(policy, ensure_ascii=False, indent=2) + "\n")
         required = {self.ORACLE, "tests/Verification/architecture_guard_001_test.py"}
         for row in (self.root / "tools/verification/suites.tsv").read_text().splitlines():
             if row and not row.startswith("#"):

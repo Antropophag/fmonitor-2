@@ -13,6 +13,10 @@
     "reviews/tests/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
     "specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
     "tests/Verification/change_verification_consumer_frontier_153_test.py",
+    "tests/Verification/change_verification_semantic_closure_153_test.py",
+    "tests/Verification/change_verification_sensitive_offline_132_test.py",
+    "tests/Verification/change_verification_server_rendered_fast_160_test.py",
+    "tests/Verification/delivery_harness_context_manifest_001_test.py",
     "tools/delivery/change-verification.py",
     "tools/verification/suites.tsv"
   ],

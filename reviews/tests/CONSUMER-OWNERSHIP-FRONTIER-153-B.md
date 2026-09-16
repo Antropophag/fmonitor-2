@@ -189,3 +189,32 @@ None.
 `APPROVED`
 
 The root-owned legacy regression corrections preserve their original test purposes while reconciling them with the approved fail-closed ownership contract. Gate 3 remains valid for exact source `52a8d5a23b039aaebf45ee152dae388bcf68b2aec755bb7e263d3b328af6ae27`.
+
+### CI-driven additional Gate 3 audit 2026-09-16 — four fixture ownership corrections
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of the root-owned fixture corrections and executor production implementation.
+- Exact reviewed source: `fe5b2a3231471217a4d92d83e74ab15af3fa42a661a1ad2d31fdde13845d1fdd`; executable source recorded by the package: `c467a2bc645d02d595d110ef9f8059e5de32a9b232135c290fecddeb6fec4d22`.
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T204953Z-a02f88e6c9/package.json`; SHA-256 `cb98db90280bb7b793333fdbcf999769f171a9714f7285907ce78e1d818aa514`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T204953Z-a02f88e6c9/verification-plan.json`; SHA-256 `6324173fbb26b40ef3153bfc21c6ccf4081dba622120c054211b5da103c61687`; lane `CRITICAL`; required reviews `gate3`, `final`; all four corrected regression files are included in the planned/effective boundary.
+- Retained snapshot: base `691156e37cf6d6b1fcf864a1c29c6685ad68a006`; patch SHA-256 `f3e609fa562bcd143a20d015fe748651a89ea83edc5bfc9ba39d18fec14e59fa`.
+- CI trigger evidence reviewed from run `35147065878`: the complete failed-job inventory contained only governance primary plus the expected verify/top Quality Graph aggregate; every other job was GREEN. The complete `REGRESSION_FAILURE` inventory was `change_verification_semantic_closure_153_test.py` (10), `change_verification_sensitive_offline_132_test.py` (1), `change_verification_server_rendered_fast_160_test.py` (7), and `delivery_harness_context_manifest_001_test.py` (1). No other failure was omitted from correction triage.
+- Focused evidence: the bounded six-test local contour was reported GREEN after the corrections. No local full suite was run, preserving the owner prohibition; authoritative exact-source CI remains a later delivery gate.
+
+#### Fixture-purpose and sensitivity audit
+
+1. **Semantic closure (`change_verification_semantic_closure_153_test.py`).** The synthetic policy gains one `semantic-closure-fixture-owner` limited exactly to its protected CurrentState, Domain Application, Persistence, migration, and RuntimeRestore fixture paths, with empty verifier/consumer lists. This permits the existing tests to continue observing Slice A integration-category closure, complete inventory closure, structured escalation reasons, mixed-change behavior, ordering, tamper rejection, and FAST/presentation negatives; it neither supplies nor fakes the assertions under test. The shipped `FeedbackApplication.php` case adds a separate exact one-path test-only owner after copying shipped policy, solely so its existing shipped semantic-surface escalation assertion reaches the original oracle. It does not add that owner to production policy.
+2. **Sensitive offline (`change_verification_sensitive_offline_132_test.py`).** The copied-policy fixture gains one exact owner for `app/Infrastructure/Persistence/Store.php`, with no frontier witnesses. This removes only the new owner-missing precondition from the persistence neighbor used to prove non-FAST classification. Sensitive asset/oracle selection, negative-boundary classification, missing/multiple oracle rejection, unknown-path rejection, and defective-variant execution remain unchanged.
+3. **Server-rendered FAST (`change_verification_server_rendered_fast_160_test.py`).** Its wholly synthetic policy gains one owner for the already-declared `app/CurrentState/**` semantic surface, again with no frontier witnesses. The seven former failures can therefore reach their original assertions that semantic/current-state neighbors are not FAST, while the positive FAST oracle, exact negative boundaries, conservative fallback, and failure cases are untouched.
+4. **Context manifest (`delivery_harness_context_manifest_001_test.py`).** The disposable harness repository gains one fixture owner limited to its two synthetic protected examples, `MariaDbExample.php` and `AuthorizeExample.php`. This restores the original context-routing observations for persistence and authorization without adding context rules, changing expected rule sets, or bypassing unknown/conservative behavior. The capability exists only in the fixture policy and has no executable or transitive claims.
+
+Across all four files, the additions are bounded fixture-local metadata with unique names/patterns and empty verifier/consumer edges. They satisfy Slice B's prerequisite that a changed protected path has one current owner but cannot create a command, causal chain, GREEN result, or production authorization by themselves. There is no production `.quality-graph/verification-policy.json` or planner change in this correction delta.
+
+#### Findings
+
+None.
+
+#### Audit verdict
+
+`APPROVED`
+
+The four root-owned corrections preserve the original regression purposes and sensitivity while making their disposable repositories valid under the approved fail-closed ownership contract. Gate 3 is valid for exact reviewed source `fe5b2a3231471217a4d92d83e74ab15af3fa42a661a1ad2d31fdde13845d1fdd`; exact-source CI status is not inferred from the bounded local GREEN contour.

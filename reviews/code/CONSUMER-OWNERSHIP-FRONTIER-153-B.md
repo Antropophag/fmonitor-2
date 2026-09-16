@@ -80,3 +80,31 @@ None. Full-candidate inspection also reconfirmed deterministic unique-chain evid
 `APPROVED`
 
 Gate 5 passes for exact source `85933cb375a4c538f1a1c752252a9cc4945556863d5c5dac6dd28a1190a17952`. This verdict covers the reviewed committed candidate and focused evidence only; exact-source GitHub CI remains required before PR-ready delivery can be claimed.
+
+### CI-driven correction rereview 2026-09-16
+
+- Reviewer: `/root/gate5_consumer_frontier` (`gpt-5.6-sol`, low), independent of the root-owned fixture corrections and production implementation.
+- Corrected exact source: `bedae6fb54ebb3fe53e5305088f02a74c1b0e640f1f2dab2efdaf5d219657190`; reconstructible snapshot base `691156e37cf6d6b1fcf864a1c29c6685ad68a006`, patch SHA-256 `92fb6c7fae12db8ebbff133a58c203bd36b37f1f5964970a18a6b96dc93612c7`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T205249Z-fec8549f7b/package.json`; SHA-256 `507eae0cfd7338b0cff2be00beb36e8d5c58f64de43721548fe58d82ee71d1ce`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T205249Z-fec8549f7b/verification-plan.json`; SHA-256 `c03bafd0e03471342366d54d9e6c9314f1307ae5218f898b1ae9521681d73fcc`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Required context SHA-256: `bf7d086bd0ac499fa9a51f8062cf34c0c5cfadba0d5cd90405019a981df60473`; task-context manifest SHA-256: `a57a3cc69d4ddcf209cee043fe40e290de587397425fbc7337607128b4354fc0`.
+- CI trigger reviewed: run `35147065878` on committed head `691156e37cf6d6b1fcf864a1c29c6685ad68a006`. Complete failed-job inventory was governance primary plus the expected `verify` and top-level Quality Graph aggregates; every other category was GREEN. Complete primary `REGRESSION_FAILURE` inventory contained exactly four files: `change_verification_semantic_closure_153_test.py` (10), `change_verification_sensitive_offline_132_test.py` (1), `change_verification_server_rendered_fast_160_test.py` (7), and `delivery_harness_context_manifest_001_test.py` (1).
+- Renewed independent Gate 3 audit: `APPROVED` for all four fixture corrections (`reviews/tests/CONSUMER-OWNERSHIP-FRONTIER-153-B.md`, “CI-driven additional Gate 3 audit”).
+- Exact-source bounded evidence: all six selected commands are GREEN and bind source `bedae6fb54ebb3fe53e5305088f02a74c1b0e640f1f2dab2efdaf5d219657190` / executable source `c467a2bc645d02d595d110ef9f8059e5de32a9b232135c290fecddeb6fec4d22`: semantic closure record `1789591891187614000-0cb3671d12334d47abc8a6609c92d073.json`; sensitive offline record `1789591897686427000-ac51473ebdaf4a2eaaa917daf570e013.json`; server-rendered FAST record `1789591902002054000-004cbf680cfb48efb27d93b1889a0f4d.json`; context manifest record `1789591907635986000-fc1f3670e60f4ff4a7093a2265b6b8f9.json`; consumer frontier A–N record `1789591921968142000-1db021e8ae8b42ee916e0ad1b84ea69e.json`; canonical planner record `1789591930129624000-2c28f2d239a44fc2abff4a56a5d91f89.json` (all under `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/`).
+- Local full suite was not run, preserving the owner prohibition.
+
+#### Delta and sensitivity review
+
+The production `.quality-graph/verification-policy.json` and `tools/delivery/change-verification.py` are byte-unchanged from the previously approved head. Each correction is confined to a disposable test repository and adds exactly one bounded owner with empty `verifiers` and `consumers`: the semantic-closure fixture paths plus its one shipped FeedbackApplication subject; one Persistence path in sensitive-offline; the existing CurrentState semantic surface in server-rendered FAST; and the two synthetic protected context-manifest examples. These declarations satisfy the new owner prerequisite but cannot select a command, emit consumer causal evidence, or authorize a production path.
+
+The original observables remain intact: semantic closure still proves integration selection, structured escalation, ordering/tamper behavior and presentation negatives; sensitive-offline still proves conservative non-FAST classification and oracle failure modes; server-rendered FAST still tests positive presentation admission and semantic-neighbor exclusion; context manifest still checks rule routing and conservative behavior. The corrections do not weaken expected outputs or transplant a production catch-all into fixtures. `verification-input.json` now includes all four corrected regression files, so planning and future exact-source verification cannot omit them.
+
+#### Findings
+
+None.
+
+#### Rereview verdict
+
+`APPROVED`
+
+Gate 5 passes for corrected exact source `bedae6fb54ebb3fe53e5305088f02a74c1b0e640f1f2dab2efdaf5d219657190`. Run `35147065878` remains failed evidence for the prior committed head; this approval does not turn it GREEN. The corrected snapshot must be committed byte-for-byte and exact-source GitHub CI must pass before PR-ready delivery is claimed.
