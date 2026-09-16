@@ -4,11 +4,12 @@
 - [x] 1.2 Создать `verification-input.json`, подготовить root package, прочитать planner lane/obligations/commands и устранить UNKNOWN coverage до Gate 2.
 - [x] 1.3 Root написать executable public-route regression и сохранить RED на dependency visibility с T08 measurement (3/3 setup failures до behavior), не выполняя local full suite.
 - [x] 1.4 Получить planner-required independent Gate 3 approval exact spec/test/RED, если план требует Gate 3.
+- [ ] 1.5 Включить owner decision о frozen container source, исправить newline oracle, расширить matrix A–O и получить Gate 3 delta approval плюс intended RED source-layout gap.
 
 ## 2. Minimal implementation
 
-- [ ] 2.1 Отдельный executor реализует container-only read-only dependency visibility в existing profile seam и lock-bound image identity без host vendor или нового manager; A–F становятся GREEN.
-- [ ] 2.2 Executor сохраняет existing governance/integration/browser behavior и tracked inputs; G–J и focused planner commands GREEN с cold-ish/warm timing/origin evidence.
+- [ ] 2.1 Отдельный executor переиспользует existing review-source snapshot, materialize'ит exact candidate в container-owned read-only source и связывает image с executable/lock identity без host dependency paths; A–J GREEN.
+- [ ] 2.2 Executor сохраняет governance/integration/browser/Yii semantics и allowed writable artifacts; K–O и focused planner commands GREEN с cold-ish/warm timing/origin evidence.
 
 ## 3. Review и публикация
 

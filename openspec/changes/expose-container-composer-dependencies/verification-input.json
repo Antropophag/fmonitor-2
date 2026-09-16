@@ -8,6 +8,7 @@
     "reviews/code/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
     "specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
     "tools/delivery/Dockerfile.focused-checks",
+    "tools/delivery/Dockerfile.focused-checks.dockerignore",
     "tools/delivery/run-in-profile",
     "tools/verification/suites.tsv",
     "tests/Verification/container_composer_visibility_123_a_test.py"

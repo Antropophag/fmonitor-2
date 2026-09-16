@@ -41,3 +41,9 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T023249Z-4cf39ef9e8/package.json`; exact source `615aeb9ad2b77b52cda63c1daef22a09375935130558fbda1f23e327b8001d61`.
 - Evidence: new public-route test `INTENDED_RED` record `1789525887291964000-03bbfc36e3dc47e98eb96caa2532e7c4`; existing profile test `GREEN` record `1789525914660850000-4f5e1bf083ae422da978317104d528a3`.
 - Independent reviewer append-only record commit `c056c1cb5563be29db94603b82b13772b3bed890`: `APPROVED`; case F reaches `run-in-profile` and detects hostile host fallback.
+
+### Owner-authorized source-layout delta
+
+- First executor commits retained: `029673a2`, `03d81c98`, `503e12a0`. They proved Yii/dependency visibility and lock/corruption behavior, but nested volume created an empty host `vendor/`; no completion was claimed and the mountpoint was removed.
+- Owner decision 2026-09-16 explicitly authorizes bounded verification source-layout change only: reuse existing harness frozen snapshot, materialize exact candidate inside container-owned read-only source, retain separate locked dependency layer and no host application bind/dependency path.
+- Root delta authorship: updated OpenSpec/design, executable spec A–O, newline oracle and directly related exact-source test adaptation. Previous Gate 3 approval does not approve this delta; a new delta review is required before implementation resumes.

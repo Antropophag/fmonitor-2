@@ -5,7 +5,7 @@
 ## ADDED Requirements
 
 ### Requirement: Candidate source и locked dependencies компонуются в canonical profile
-`tools/delivery/run-in-profile <profile> <command> [args...]` SHALL выполнять project code из переданного candidate checkout и SHALL предоставлять его repository-relative Composer paths из container-managed dependencies, построенных по `composer.lock` этого checkout. Bootstrap MUST NOT требовать host `vendor/`, копировать или связывать dependencies между worktrees либо использовать shared writable dependency tree.
+`tools/delivery/run-in-profile <profile> <command> [args...]` SHALL выполнять project code из materialized existing harness frozen candidate snapshot и SHALL предоставлять его repository-relative Composer paths из отдельного container-managed dependency layer, построенного по `composer.lock` этого candidate. Snapshot SHALL сохранять применимые additions, deletions и executable modes; его existing executable identity MUST совпадать с image label и compact execution evidence. Bootstrap MUST NOT требовать host `vendor/`, `node_modules`, `.venv`, dependency mountpoints, копировать или связывать dependencies между worktrees либо использовать shared writable dependency tree.
 
 #### Scenario: Fresh clean worktree достигает Yii bootstrap
 - **WHEN** checkout не содержит host `vendor/` и actor запускает representative Yii bootstrap через canonical profile
@@ -19,8 +19,20 @@
 - **WHEN** project class в candidate checkout отличается от image build context или соседнего checkout
 - **THEN** canonical profile загружает project class из текущего candidate checkout, сохраняя third-party dependency origin в container layer
 
+#### Scenario: Host изменён после freeze
+- **WHEN** existing harness snapshot frozen, а исходный host checkout затем изменён
+- **THEN** canonical profile исполняет frozen bytes и identity, не более позднее host состояние
+
+#### Scenario: Candidate deletion и mode
+- **WHEN** frozen candidate удаляет tracked project file или меняет применимый executable mode
+- **THEN** materialized execution source сохраняет отсутствие файла и mode candidate
+
+#### Scenario: Candidate source read-only
+- **WHEN** command пытается изменить project source внутри execution container
+- **THEN** изменение отклоняется, а явно разрешённый temp/artifact/runtime location остаётся writable
+
 ### Requirement: Host dependency state не является входом canonical profile
-Canonical profile MUST игнорировать отсутствующий, stale или чужой host `vendor/` и MUST NOT создавать repository-local host `vendor/` при cold или warm запуске.
+Canonical profile MUST игнорировать отсутствующие, stale или чужие host dependency trees и MUST NOT создавать repository-local `vendor/`, `node_modules`, `.venv` или dependency mountpoints при cold или warm запуске.
 
 #### Scenario: На host присутствует stale vendor
 - **WHEN** checkout содержит чужой или stale `vendor/`, а actor запускает Yii bootstrap через canonical profile
@@ -28,7 +40,7 @@ Canonical profile MUST игнорировать отсутствующий, stal
 
 #### Scenario: Warm repeat не материализует host dependencies
 - **WHEN** actor повторяет успешный canonical запуск с уже построенным соответствующим image
-- **THEN** Yii bootstrap снова успешен и repository-local host `vendor/` не появляется
+- **THEN** Yii bootstrap снова успешен, свежий frozen candidate identity соблюдён и host dependency directories не появляются
 
 ### Requirement: Dependency identity соответствует текущему locked input
 Dependency layer SHALL однозначно соответствовать canonical dependency recipe, immutable image inputs и текущему `composer.lock`. Изменение locked input MUST штатно инвалидировать прежнюю identity; профиль MUST NOT молча выполнить candidate с dependencies от другого lock input.
@@ -40,6 +52,10 @@ Dependency layer SHALL однозначно соответствовать canon
 #### Scenario: Неизменный lock допускает immutable layer reuse
 - **WHEN** два worktrees имеют одинаковые canonical dependency inputs
 - **THEN** они MAY использовать одинаковые immutable image layers, оставаясь изолированными по mutable runtime state
+
+#### Scenario: Missing или corrupt dependency не вызывает network install при execution
+- **WHEN** executing image не имеет валидного locked dependency layer
+- **THEN** command fail closed до behavior без host/network fallback; dependency resolution выполняется только image preparation stage
 
 ### Requirement: Missing или corrupt dependency layer завершается fail closed
 Если container-managed Composer dependency location отсутствует, повреждена или не соответствует lock input, canonical route MUST завершиться ненулевым setup/command failure до Yii behavior и MUST NOT fallback на host `vendor/`.
@@ -62,6 +78,10 @@ Dependency layer SHALL однозначно соответствовать canon
 #### Scenario: Preparation сохраняет tracked inputs
 - **WHEN** image preparation и representative cold/warm runs завершаются
 - **THEN** `composer.lock` и tracked candidate source byte-for-byte неизменны
+
+#### Scenario: Два разных candidate изолированы
+- **WHEN** два worktrees с разными project markers исполняются последовательно или параллельно
+- **THEN** каждый container видит только свой frozen source и matching dependency identity
 
 ### Requirement: Slice A не меняет classification или domain semantics
 Этот slice MUST NOT классифицировать setup failure как `INTENDED_RED`, добавлять worktree identity guard, создавать новый environment manager/profile или менять product/domain behavior, authorization, audit/history либо concurrency semantics.

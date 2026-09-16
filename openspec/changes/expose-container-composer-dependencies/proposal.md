@@ -4,10 +4,10 @@ Slice A задачи #123 устраняет доказанный T08 setup gap:
 
 ## What Changes
 
-- Canonical profile предоставляет repository-relative Composer bootstrap внутри container из immutable locked dependency layer, не создавая host `vendor/`.
-- Candidate source продолжает загружаться из exact bind-mounted checkout, а third-party classes — из container-managed dependency location.
+- Canonical profile materialize'ит существующий harness frozen candidate snapshot в container-owned read-only application source и предоставляет repository-relative Composer bootstrap из отдельного immutable locked dependency layer, не создавая host dependency paths.
+- Project files происходят из exact executed candidate identity, включая additions, deletions и modes; host application root больше не является обязательной runtime composition.
 - Запуск fail closed отклоняет несовпадающий lock input и отсутствующий либо повреждённый dependency layer без fallback на host dependencies.
-- Добавляется public-route regression для двух clean worktrees, stale host vendor, изменённого candidate source, изменённого lock fixture, missing/corrupt layer, существующих profiles и warm repeat.
+- Добавляется public-route regression A–O для frozen source, post-freeze host mutation, candidate deletion, двух worktrees, allowed writable artifacts, stale host dependencies, lock/corruption failures, существующих profiles и cold/warm repeat.
 - Не меняются classification `INTENDED_RED`, worktree identity guard, harness lifecycle, Composer/PHP/Yii versions, product/domain behavior, Docker performance или caching.
 
 ## Capabilities

@@ -1,49 +1,51 @@
 ## Context
 
-См. `proposal.md`. Existing image build копирует `composer.json` и `composer.lock` в `/opt/fmonitor` и выполняет locked `composer install`, создавая `/opt/fmonitor/vendor`. Existing `run-in-profile` bind-mount'ит exact checkout в `/workspace`; `bin/fmonitor2-yii.php`, `public/yii.php` и Yii tests читают `/workspace/vendor/autoload.php`, поэтому image dependencies остаются невидимыми. Candidate mount не скрывает `/opt/fmonitor`, но repository-relative path не связан с ним.
+См. `proposal.md`. Existing image устанавливает locked Composer dependencies, но existing `run-in-profile` bind-mount'ит checkout в `/workspace`, где Yii entrypoints ожидают `/workspace/vendor/autoload.php`. Попытка вложенного read-only volume доказала противоречие: writable parent bind заставляет Docker создать host mountpoint, а read-only parent не позволяет OCI создать child mount. Owner decision 2026-09-16 разрешает bounded изменение verification source layout.
 
-Owning module — `tools/delivery/run-in-profile` и его существующий focused-check image recipe. Разрешённые dependencies — Docker CLI/daemon, immutable pins из `tools/delivery/dependencies.env`, `composer.json` и `composer.lock`. Persistence owner отсутствует: immutable image layers принадлежат Docker image store, mutable command/runtime state остаётся disposable container state или явно существующему внешнему test-service lifecycle. `rapid-pilot` adapter отсутствует и не читается. Architecture-check impact ограничен shell/container execution contract; domain/persistence ceremony неприменима.
+Harness уже владеет frozen-candidate seam: `review-source.py capture/restore` сохраняет tracked/untracked additions, deletions и modes, а `harness.py source_details().executable_digest` определяет executed source identity. Этот seam переиспользуется без нового snapshot format или identity system.
+
+Owning module — `tools/delivery/run-in-profile`, existing focused-check image recipe и непосредственно связанный execution helper/ignore policy. Разрешённые dependencies — Docker CLI/daemon, existing snapshot tool, immutable pins, manifests и lockfiles. Persistence owner отсутствует: image layers immutable; writable temp/artifact/runtime state disposable или принадлежит existing external service lifecycle. `rapid-pilot` adapter отсутствует и не читается. Production runtime/Compose не меняются.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- сохранить `/workspace` exact candidate source и дать repository-relative Yii bootstrap container-only view на matching `/opt/fmonitor/vendor`;
-- проверять lock identity до выполнения candidate command;
-- исключить host vendor как источник и результат canonical execution;
-- сохранить существующие profiles, network ownership, argv, exit code и evidence.
+- materialize existing frozen candidate snapshot как read-only `/workspace` внутри verification image;
+- предоставить repository-relative Yii bootstrap из matching immutable dependency layer;
+- связать image/evidence с existing executable source и lock identities;
+- исключить host dependency directories/mountpoints и сохранить profiles/argv/exit/evidence.
 
 **Non-Goals:**
 
-- classification slice B, identity guard slice C, новый bootstrap manager/profile;
-- host Composer install, host mount/copy/symlink, shared writable vendor;
-- dependency/version updates, performance/caching redesign, product behavior.
+- classification slice B, worktree guard slice C, новый snapshot/environment manager/runner;
+- production Docker/Compose, CI topology, deployment или application semantics;
+- host dependency setup, dependency/version updates, performance/caching optimization.
 
 ## Decisions
 
-1. **Container-only mount composition в public launcher.** Перед command launcher предоставляет `/workspace/vendor` отдельным read-only container mount из `/opt/fmonitor/vendor`; bind-mounted candidate source остаётся `/workspace`. Docker mount ordering позволяет более специфичному child mount быть видимым поверх parent source mount, не создавая host path. Альтернатива — менять каждый Yii entrypoint на env resolver — размножает seam и переписывает application/test bootstrap. Альтернатива — symlink/copy на host — нарушает isolation.
+1. **Existing frozen snapshot становится Docker build context.** Launcher использует `review-source.py capture/restore`; optional explicit existing snapshot позволяет исполнить ранее frozen candidate после host mutation. Перед build он сравнивает materialized `executable_digest` с frozen identity. `git archive HEAD` отклонён, потому что теряет relevant uncommitted/untracked bytes; direct host application bind отклонён из-за доказанного mountpoint conflict.
 
-2. **Dependency tree переносится в именованный immutable image location, пригодный как mount source.** Runtime container получает dependency contents только из built image. Mount read-only; command не может превратить reuse в shared writable state. Реализация MUST учитывать Docker semantics для bind/volume и не использовать anonymous volume с lifecycle, переживающим task.
+2. **Multi-layer image composition без host application mount.** Dependency layer устанавливает lock-bound Composer tree по repository-relative final path; следующий layer копирует materialized candidate source, исключая host dependency trees/secrets/Git metadata. Final container запускается `--read-only`; writable `/tmp` и минимальная existing-check artifact area предоставляются отдельным disposable tmpfs. Project source не является mutable test workspace.
 
-3. **Image identity включает lock-bearing recipe inputs.** Existing tag hash только recipe и pins недостаточен при изменении `composer.lock`; hash/tag SHALL включать `composer.json` и `composer.lock`, а build label/check SHALL связывать executing layer с candidate lock digest. Старый image не может быть принят молча. Полный worktree identity guard не добавляется.
+3. **Image identity включает frozen executable source и lock-bearing inputs.** Tag/labels связывают recipe, pins, `composer.json`, `composer.lock` и existing harness `executable_digest`. Launcher inspect/check сверяет labels до command. Это execution identity в разрешённом seam, не общий worktree identity guard slice C.
 
-4. **Fail closed probe до command.** Container startup проверяет наличие readable autoload, Yii file и lock correspondence из Composer installed metadata до запуска user argv. Проверка не читает host `vendor`. Failure остаётся raw nonzero setup/command result; harness classification не меняется.
+4. **Fail closed до command.** Startup проверяет readable Composer/Yii bootstrap и identity labels. Dependency resolution/network доступны только image preparation stage; execution не имеет fallback на host Composer/vendor, соседний checkout или network install.
 
-5. **Executable regression идёт через настоящий launcher.** Test создаёт disposable Git worktrees/fixtures и вызывает `run-in-profile`; отдельный unit path resolver не считается доказательством. Source origin доказывается candidate-only marker class, dependency origin — included/autoloader path и read-only `/opt/fmonitor/vendor`; tracked/lock state сравнивается до/после.
+5. **Public-route proof A–O.** Test создаёт disposable worktrees и existing snapshots, затем вызывает launcher. Markers, post-freeze mutation, deletion и mode доказывают source semantics; included paths/read-only state доказывают dependency origin; before/after inventory доказывает host cleanliness; distinct candidates доказывают isolation. Existing tests, которые выводили source через checkout-local Git metadata, MAY минимально использовать explicit execution identity env/evidence, поскольку `.git` не является application source.
 
 ## Risks / Trade-offs
 
-- [Docker child mount source нельзя напрямую адресовать как image path стандартным bind mount] → выбрать минимальный container-internal startup layout, например запуск через existing image с read-only bind semantics, проверенный executable RED/GREEN; если потребуется новый manager/profile, остановиться `NEEDS_OWNER`.
-- [Composer generated autoload maps project PSR-4 paths относительно `/opt/fmonitor/vendor`] → Composer vendor autoload already maps `FMonitor2\\` к path derived from vendor location (`/opt/fmonitor/app` may not exist). Bootstrap SHALL load project classes from candidate `app/autoload.php`; test D обязателен, а Composer project mapping MUST be assessed before implementation.
-- [Stale host vendor виден parent bind mount до child composition] → child container-only mount MUST mask it and origin assertion MUST fail if any host path is loaded.
-- [Corruption fixture может потребовать test-only image manipulation] → fixture остаётся disposable и проверяет raw failure без production fallback.
+- [Snapshot capture и host mutation race] → build только restored frozen directory; сравнивать existing executable digest при materialization и image inspect. Harness source-drift evidence остаётся дополнительным контролем.
+- [Docker context исторически исключает tests/tools] → Dockerfile-specific ignore policy исключает `.git`, secrets и dependency trees, но включает exact executable candidate files profiles.
+- [Read-only root ломает checks с локальными artifacts] → предоставить только documented disposable tmpfs/artifact paths; unexpected source writes должны fail.
+- [Composer generated paths зависят от install location] → install генерируется для final `/workspace`, затем candidate source копируется без host vendor; candidate `app/autoload.php` остаётся project owner.
+- [Image/source labels могут устареть при cache reuse] → source digest входит в tag/build args и проверяется перед execution.
 
 ## Migration Plan
 
-1. Зафиксировать executable RED A–J на `11f0fcb…` и сохранить timing/origin evidence вне checkout.
-2. Независимый Gate 3 рассматривает spec/test согласно planner-selected lane.
-3. Executor вносит минимальное изменение existing profile seam.
-4. Выполнить focused public-route regression, architecture/governance checks и independent Gate 5.
-5. Один exact-source CI run через выбранный existing consumer; merge/deploy/settings не выполнять.
+1. Обновить executable contract A–O и newline oracle; получить Gate 3 delta approval и intended RED source-layout gap.
+2. Executor заменяет host bind composition на existing snapshot → restored build context → read-only final image.
+3. Выполнить focused public-route/profile/source-identity regressions и independent Gate 5.
+4. Выполнить один exact-source CI run через existing consumer; merge/deploy/settings не выполнять.
 
-Rollback — удалить launcher/image-layout delta; lockfiles и host filesystem migration отсутствуют.
+Rollback — удалить bounded source-layout delta и вернуться к предыдущему verification launcher; host/product data migrations отсутствуют.
