@@ -134,3 +134,39 @@ None.
 2. Refresh exact-source RED evidence/package after the test delta and request independent Gate 3 rereview.
 
 This delta does not advance to implementation on the reviewed source.
+
+---
+
+## Gate 3 delta rereview — independent automatic-source identity
+
+- Rereviewer: independent `gpt-5.6-sol / low` Gate 3 agent (`/root/issue123_gate3`); authored neither the correction nor reviewed artifacts.
+- Corrected source: commit `1d423bf924c7ecd49b6b171ac4b644c72ea707d1`; exact candidate source `81865c8282cc706fb61207e46a3a212b7acdc4d18ded57859d39dd1629ed41f6`.
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T071235Z-d9c6a065e5/package.json`; plan SHA-256 `ed1bde79cd85d2bc45114b4b26b6ecb1bf0e72e17cebf658686c98dbe7ee722a`; context manifest SHA-256 `f88d7a739af90dfa75b18454975bac43bd43c9482157a025bb465a6f9edc725b`.
+- Reconstructible source: package snapshot base `1d423bf924c7ecd49b6b171ac4b644c72ea707d1`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Scope: D1 correction plus full rewritten-test coherence against the unchanged A–O contract.
+- Verdict: `APPROVED`. This verdict supersedes the preceding `CHANGES_REQUESTED` verdict for this corrected exact source only.
+
+### Evidence
+
+- `python3 tests/Verification/container_composer_visibility_123_a_test.py` — exit `1`, `INTENDED_RED`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789542636575608000-98d1f019756c4f38a0c00cdad9895b3d.json`.
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` — exit `255`, `INTENDED_RED`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789542722353392000-301d097fe2dd48e5a17c278e09a995d9.json`.
+- Both records bind exact source `81865c8282cc706fb61207e46a3a212b7acdc4d18ded57859d39dd1629ed41f6` and executable source `189a4092467a9a44a4033d53c1b8acbdb8e64587272c33ac3a261e5278c8a7bd`. Failures remain behavioral—missing source evidence/layout, post-freeze isolation and read-only source—not setup failures.
+- No full local `make test` or `make verify` was run.
+
+### Prior finding disposition
+
+- D1 — `RESOLVED`. Before every ordinary launcher call, `assert_bootstrap` now independently obtains the candidate `source_details()["executable_digest"]` from the existing host-side harness seam. It then compares that fixed expectation with the container environment payload, compact result and image label. An arbitrary or stale internally self-consistent digest can no longer pass. Explicit-snapshot D continues to use the digest captured before the later host mutation, preserving the distinct freeze oracle.
+
+### Complete rereview findings
+
+- None.
+
+### Coherence conclusion
+
+- The one-line correction strengthens matrix N without changing the public route or expected implementation. It composes correctly with A–C/F/K–M automatic capture and D explicit post-freeze mutation.
+- The remaining A–O assertions retain the previously reviewed sensitivity for additions/deletions/modes, host dependency cleanliness, candidate isolation, read-only source and writable artifacts, corruption/lock rejection, profiles, newline output and exact frozen identity.
+- The fresh complete RED is valid for the owner-authorized source-layout gap. Gate 3 advances this exact corrected source to implementation; later spec/test changes require renewed review under the recomputed plan.
+
+### Required changes
+
+None.
