@@ -14,6 +14,7 @@ import sys
 import tempfile
 import time
 import uuid
+from pathlib import PurePosixPath
 
 
 def _helpers(value=None):
@@ -36,6 +37,30 @@ def _run(root, argv, *, check=False, timeout=30):
 
 def _now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _safe_repo_path(root, value):
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise ValueError("invalid repository path")
+    relative = PurePosixPath(value)
+    if relative.is_absolute() or ".." in relative.parts or value != relative.as_posix():
+        raise ValueError("unsafe repository path")
+    return root / value
+
+
+def _safe_canonical_path(root, value):
+    path = _safe_repo_path(root, value)
+    root = root.resolve()
+    current = root
+    for part in PurePosixPath(value).parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("canonical requirement cannot contain symlinks")
+    try:
+        path.resolve(strict=False).relative_to(root)
+    except ValueError as error:
+        raise ValueError("canonical requirement escapes repository") from error
+    return path
 
 
 def _source(helpers, root):
@@ -187,9 +212,19 @@ def _compute_state(helpers):
         except (OSError, TypeError, json.JSONDecodeError):
             pass
     details = helpers.source_details()
+    active = _active_binding(helpers)
+    if active and active.get("lifecycle"):
+        refreshed_lifecycle = _requirement_freshness(root, active["lifecycle"])
+        if refreshed_lifecycle != active["lifecycle"]:
+            active["lifecycle"] = refreshed_lifecycle
+            binding_path = _binding_path(helpers)
+            temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
+            temporary.write_text(json.dumps(active, ensure_ascii=False, sort_keys=True) + "\n",
+                                 encoding="utf-8")
+            os.replace(temporary, binding_path)
     state = {"source": source, "executable_source": details.get("executable_digest", source),
              "head": head, "dirty": dirty, "github": github,
-             "ci": ci, "deployment": "UNKNOWN", "active_binding": _active_binding(helpers)}
+             "ci": ci, "deployment": "UNKNOWN", "active_binding": active}
     state["next_action"] = ("merged; await the next owner task" if github.get("state") == "MERGED"
                             else "prepare/review exact source before publication")
     live_path = helpers.evidence_home() / "state" / ("live-" + _worktree_key(helpers) + ".json")
@@ -304,6 +339,27 @@ def _active_binding(helpers):
     return None
 
 
+def _requirement_freshness(root, lifecycle):
+    if not isinstance(lifecycle, dict) or lifecycle.get("route") != "FAST_MAINTENANCE":
+        return lifecycle
+    result = json.loads(json.dumps(lifecycle))
+    result["freshness"] = "CURRENT"
+    result["freshness_reason"] = "requirement_digests_match"
+    for reference in result.get("canonical_requirements", []):
+        try:
+            path = _safe_canonical_path(root, reference.get("path"))
+            current = _sha256_bytes(path.read_bytes()) if path.is_file() else None
+        except (OSError, TypeError, ValueError):
+            current = None
+        if current != reference.get("sha256"):
+            result["freshness"] = "STALE"
+            result["freshness_reason"] = ("requirement_digest_changed" if current is not None
+                                          else "canonical_requirement_missing")
+            result["disposition"] = "IN_PROGRESS"
+            break
+    return result
+
+
 def _refresh_active_binding(helpers):
     active = _active_binding(helpers)
     if not active:
@@ -313,6 +369,8 @@ def _refresh_active_binding(helpers):
     state_dir = helpers.evidence_home() / "state"
     refreshed = state_dir / ("active-verification-plan-" + _worktree_key(helpers) + ".json")
     refreshed.write_text(module.canonical(plan), encoding="utf-8")
+    if active.get("lifecycle"):
+        active["lifecycle"] = _requirement_freshness(helpers.ROOT, active["lifecycle"])
     active.update(source=_source(helpers, helpers.ROOT), plan=str(refreshed),
                   contracts=sorted({item["spec_path"] for item in plan["acceptances"]}),
                   obligation_count=len(plan["commands"]),
@@ -895,9 +953,106 @@ def _check_all_whitespace(root):
         Path(index_name).unlink(missing_ok=True)
 
 
+def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path, evidence):
+    """Project a fail-closed lifecycle decision after the authoritative planner result."""
+    try:
+        change = json.loads(_safe_repo_path(root, input_name).read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        change = {}
+    declaration = change.get("lifecycle")
+    if not isinstance(declaration, dict):
+        declaration = {}
+
+    route = "OPENSPEC_REQUIRED"
+    reason = "lifecycle_intent_not_fast_maintenance"
+    references = []
+    regression = declaration.get("executable_regression")
+    requirement_status = declaration.get("requirement_status")
+    mapped_tests = {test for acceptance in plan.get("acceptances", [])
+                    for test in acceptance.get("tests", [])}
+
+    if plan.get("verification_lane") != "FAST":
+        reason = "planner_not_fast"
+    elif declaration.get("intent") != "FAST_MAINTENANCE":
+        reason = "lifecycle_intent_not_fast_maintenance"
+    elif declaration.get("semantic_change") is not False:
+        reason = "semantic_change_not_false"
+    elif requirement_status == "OWNER_DECISION_REQUIRED":
+        reason = "NEEDS_OWNER:owner_decision_required"
+    elif requirement_status == "CONFLICTING":
+        reason = "NEEDS_OWNER:conflicting_requirements"
+    elif requirement_status != "CURRENT":
+        reason = "canonical_requirement_status_unknown"
+    elif not isinstance(declaration.get("issue"), str) or not declaration["issue"].strip():
+        reason = "maintenance_issue_missing"
+    elif regression not in mapped_tests:
+        reason = "executable_regression_not_mapped"
+    else:
+        raw_references = declaration.get("canonical_requirements")
+        if not isinstance(raw_references, list) or not raw_references:
+            reason = "canonical_requirement_missing"
+        else:
+            reason = None
+            seen = set()
+            for item in raw_references:
+                path_value = item.get("path") if isinstance(item, dict) else None
+                try:
+                    path = _safe_canonical_path(root, path_value)
+                except (TypeError, ValueError):
+                    reason = "canonical_requirement_invalid"
+                    break
+                if (path_value in seen or not path.is_file()
+                        or not (path_value in {"PRODUCT.md", "CONTEXT.md"}
+                                or path_value.startswith(("specs/", "openspec/specs/", "openspec/changes/")))):
+                    reason = ("canonical_requirement_missing" if not path.is_file()
+                              else "canonical_requirement_invalid")
+                    break
+                sha256 = _sha256_bytes(path.read_bytes())
+                if item.get("sha256") not in (None, sha256):
+                    reason = "canonical_requirement_digest_mismatch"
+                    break
+                seen.add(path_value)
+                references.append({"path": path_value, "sha256": sha256})
+            if reason is None:
+                route = "FAST_MAINTENANCE"
+                reason = "eligible_planner_fast_existing_requirement"
+
+    intended_red = any(item.get("outcome") == "INTENDED_RED"
+                       and _normalized_argv(item.get("argv", []))[-1:] == (regression,)
+                       for item in evidence)
+    lifecycle = {
+        "route": route,
+        "reason": reason,
+        "issue": declaration.get("issue", "UNKNOWN"),
+        "base": plan.get("base", base),
+        "exact_source": source,
+        "fast_class": plan.get("fast_class", "UNKNOWN"),
+        "fast_reason": plan.get("fast_reason", "UNKNOWN"),
+        "semantic_change": declaration.get("semantic_change", "UNKNOWN"),
+        "canonical_requirements": references,
+        "executable_regression": regression or "UNKNOWN",
+        "executable_red": {"required": route == "FAST_MAINTENANCE",
+                           "status": "INTENDED_RED" if intended_red else "PENDING"},
+        "verification_plan": {"path": str(plan_path),
+                              "sha256": _sha256_bytes(plan_path.read_bytes())},
+        "final_review": {"required": route == "FAST_MAINTENANCE", "status": "PENDING"},
+        "ci": {"required": route == "FAST_MAINTENANCE", "status": "UNKNOWN"},
+        "disposition": "IN_PROGRESS" if route == "FAST_MAINTENANCE" else reason,
+        "freshness": "CURRENT",
+        "freshness_reason": "requirement_digests_match" if route == "FAST_MAINTENANCE" else "not_applicable",
+    }
+    return lifecycle
+
+
 def command_prepare(args, helpers):
     root = helpers.ROOT
     _check_all_whitespace(root)
+    if args.role == "executor":
+        active = _active_binding(helpers)
+        if active and active.get("lifecycle", {}).get("route") == "FAST_MAINTENANCE":
+            refreshed = _requirement_freshness(root, active["lifecycle"])
+            if refreshed.get("freshness") == "STALE":
+                raise ValueError("stale FAST maintenance binding requires root rebuild")
     module = _load_change_verification(root)
     plan_value = module.build(args.base, args.input)
     configured_home = os.environ.get("FMONITOR_HARNESS_HOME")
@@ -912,12 +1067,24 @@ def command_prepare(args, helpers):
     missing = sorted({test for item in plan_value["acceptances"] for test in item["tests"]
                       if not (root / test).is_file()})
     evidence = []
-    expectations = _gate_expectations(plan_value, args.gate)
+    preliminary_lifecycle = _fast_maintenance_lifecycle(
+        root, plan_value, args.input, source, args.base, plan_path, evidence)
+    evidence_gate = ("3" if args.role == "executor"
+                     and preliminary_lifecycle["route"] == "FAST_MAINTENANCE"
+                     else args.gate)
+    expectations = _gate_expectations(plan_value, evidence_gate)
     mapped = set(expectations)
     plan_commands = {_normalized_argv(item["argv"]): item for item in plan_value["commands"]}
     for value in getattr(args, "evidence", None) or []:
         evidence.append(_validate_evidence(Path(value).expanduser().resolve(), source, expectations,
                                            plan_commands, executable_source))
+    lifecycle = _fast_maintenance_lifecycle(root, plan_value, args.input, source, args.base,
+                                            plan_path, evidence)
+    if (args.role == "executor" and lifecycle["route"] == "FAST_MAINTENANCE"
+            and lifecycle["executable_red"]["status"] != "INTENDED_RED"):
+        if any(item.get("outcome") == "INTENDED_RED" for item in evidence):
+            raise ValueError("FAST maintenance intended RED evidence must cover declared executable regression")
+        raise ValueError("FAST maintenance executor requires intended RED evidence")
     covered = {_normalized_argv(item["argv"]) for item in evidence}
     if args.role == "reviewer" and mapped - covered:
         raise ValueError("reviewer evidence does not cover every mapped acceptance test")
@@ -970,7 +1137,8 @@ def command_prepare(args, helpers):
               "contracts": contracts, "rules": [], "sources": sources, "evidence": evidence,
               "previous": getattr(args, "previous", None), "findings": getattr(args, "findings", None),
               "candidate_source": source, "executable_source": executable_source,
-              "dependency_workspaces": workspaces, "test_delta_lineage": lineage}
+              "dependency_workspaces": workspaces, "test_delta_lineage": lineage,
+              "lifecycle": lifecycle}
     manifest, delivered = build_task_context(root, plan_value, role=args.role, source=source,
         base=args.base, contracts=contracts, evidence=evidence, snapshot=str(snapshot_path))
     manifest_path = package_dir / "task-context-manifest.json"
@@ -1008,7 +1176,8 @@ def command_prepare(args, helpers):
                "context_manifest": str(manifest_path),
                "context_manifest_sha256": result["context_manifest_sha256"],
                "required_context_path": str(required_path),
-               "required_context_sha256": result["required_context_sha256"]}
+               "required_context_sha256": result["required_context_sha256"],
+               "lifecycle": lifecycle}
     temporary = binding_path.with_suffix(".tmp-" + uuid.uuid4().hex)
     temporary.write_text(json.dumps(binding, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     os.replace(temporary, binding_path)

@@ -405,7 +405,7 @@ def build(base_ref, input_name):
     validate_policy(policy)
     change = load_json(input_name)
     if (not isinstance(change, dict) or not {"change", "planned_paths", "acceptances"} <= set(change)
-            or not set(change) <= {"change", "planned_paths", "acceptances", "dependency_workspaces"}):
+            or not set(change) <= {"change", "planned_paths", "acceptances", "dependency_workspaces", "lifecycle"}):
         raise ValueError("malformed change input")
     if not isinstance(change["change"], str) or not change["change"]:
         raise ValueError("change name required")
