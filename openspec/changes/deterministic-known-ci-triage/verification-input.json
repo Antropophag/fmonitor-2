@@ -1,0 +1,39 @@
+{
+  "change": "deterministic-known-ci-triage-issue-164",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-164-deterministic-ci-triage-delivery.md",
+    "openspec/changes/deterministic-known-ci-triage/design.md",
+    "openspec/changes/deterministic-known-ci-triage/proposal.md",
+    "openspec/changes/deterministic-known-ci-triage/specs/deterministic-known-ci-triage/spec.md",
+    "openspec/changes/deterministic-known-ci-triage/tasks.md",
+    "openspec/changes/deterministic-known-ci-triage/verification-input.json",
+    "reviews/code/DETERMINISTIC-KNOWN-CI-TRIAGE-001.md",
+    "reviews/tests/DETERMINISTIC-KNOWN-CI-TRIAGE-001.md",
+    "specs/DETERMINISTIC-KNOWN-CI-TRIAGE-001.md",
+    "tests/Verification/delivery_harness_ci_triage_001_test.py",
+    "tools/delivery/harness_context.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "DETERMINISTIC-KNOWN-CI-TRIAGE-001",
+    "acceptance_id": "R1-R9-cases-A-N",
+    "spec_path": "specs/DETERMINISTIC-KNOWN-CI-TRIAGE-001.md",
+    "seam": "existing harness state/wait public CLI returns exact-source closed deterministic CI triage and bounded retry decision",
+    "seam_kind": "infrastructure",
+    "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"],
+    "gate3_expected": {"tests/Verification/delivery_harness_ci_triage_001_test.py": "INTENDED_RED"},
+    "observable_dimensions": {
+      "stdout": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "stderr": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "exit_status": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "retained_evidence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "idempotence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "failure_semantics": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]},
+      "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Triage is a read-only pure projection of one supplied exact-bound observation; existing delivery harness tests own worktree binding isolation."},
+      "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/delivery_harness_ci_triage_001_test.py"]}
+    }
+  }]
+}
