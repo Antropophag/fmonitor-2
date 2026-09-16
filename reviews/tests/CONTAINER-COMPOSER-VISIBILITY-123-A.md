@@ -82,8 +82,6 @@ Gate 3 does not advance to implementation on this source.
 
 None.
 
----
-
 ## Gate 3 delta review — owner-authorized frozen source layout
 
 - Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent (`/root/issue123_gate3`); authored neither the A–O specification nor rewritten tests.
@@ -170,3 +168,39 @@ This delta does not advance to implementation on the reviewed source.
 ### Required changes
 
 None.
+
+---
+
+## Gate 3 narrow delta rereview — frozen profile Compose source
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent (`/root/issue123_gate3`); authored neither the test delta nor implementation.
+- Prior approved test source: review commit `8871ebb43874eeb4095caea641990076001ff027`.
+- Gate 5 originating finding: F1 in review commit `41a731da`, requiring integration/browser Compose configuration to come from the frozen candidate rather than later host state.
+- Test delta: commit `32c05957eff0bb7efe09440445b455d70e6fc5ef`.
+- Exact candidate source: `100ef5891714e6e58a1ff5715a925deb625a2d90b73ebb37410419ad20807f43`; executable source `6597161536102e519e2502baeadb5cac95408cc4605e0753025cc6f77651e588`.
+- Prepared root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T075900Z-641957d8c7/package.json`; plan SHA-256 `b2faf8b2fb8405f39c544ffea842d9d1528aeabc1c367ae2a23429463dd430ba`; context manifest SHA-256 `6e520033630df7d3316449326698fa3b678617234ef8b98d49faa40f833d1c3f`.
+- Reconstructible source: snapshot base `32c05957eff0bb7efe09440445b455d70e6fc5ef`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Scope: only the added integration/browser post-freeze Compose-source assertion and its interaction with the previously approved matrix D.
+- Verdict: `APPROVED`.
+
+### RED evidence
+
+- Focused command: `python3 tests/Verification/container_composer_visibility_123_a_test.py ContainerComposerVisibilityTest.test_d_frozen_candidate_ignores_later_host_mutation`.
+- Record: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789545399360630000-c5d196244f944f11963f7b43a4529e96.json`; exit `1`; harness outcome `REGRESSION_FAILURE` because this is a post-implementation correction cycle. For Gate 3 sensitivity it is the required intended RED: both integration and browser report `x-fm123-source: later-host-compose` where the independently frozen expectation is `x-fm123-source: frozen-compose`.
+- Runtime: 78.742s. No setup failure, no full local suite, and no `rapid-pilot` access.
+
+### Review assessment
+
+- Public seam: both probes call the real `tools/delivery/run-in-profile <profile> true` route with the explicit existing `FMONITOR_EXECUTION_SNAPSHOT`; the test does not invoke a private implementation helper.
+- Independent oracle: the fixture adds `frozen-compose` before capture, mutates only the live host checkout to `later-host-compose` after capture, and expects the immutable pre-mutation value. The expected value is not derived from launcher output or planned correction.
+- Sensitivity: a temporary `docker` shim records the concrete `-f` Compose file consumed by the launcher, then delegates unchanged argv to the real Docker CLI. The retained RED proves the current implementation reads live host Compose input for both affected profiles; changing those entry points to the restored frozen candidate is necessary for GREEN.
+- Determinism and isolation: the worktree, snapshot, shim directory and log are disposable; the real Docker executable is resolved explicitly; the shim preserves all non-observation behavior; integration and browser are asserted separately and in a fixed order. Existing marker/source-digest assertions still prove the container application bytes use the same frozen snapshot.
+- Coherence: the 42-line addition is confined to matrix D and directly closes Gate 5 F1. It does not weaken or change prior A–O expectations, the exact-source oracle, dependency/lock assertions, profile command semantics or production scope.
+
+### Findings
+
+- None.
+
+### Required changes
+
+None. This test delta is approved for the exact source above; implementation correction and renewed Gate 5 review remain required.
