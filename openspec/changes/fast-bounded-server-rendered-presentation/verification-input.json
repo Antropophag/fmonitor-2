@@ -1,0 +1,26 @@
+{
+  "change": "fast-bounded-server-rendered-presentation",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "tools/delivery/change-verification.py",
+    "tests/Verification/change_verification_server_rendered_fast_160_test.py",
+    "specs/FAST-SERVER-RENDERED-PRESENTATION-001.md",
+    "openspec/changes/fast-bounded-server-rendered-presentation/.openspec.yaml",
+    "openspec/changes/fast-bounded-server-rendered-presentation/proposal.md",
+    "openspec/changes/fast-bounded-server-rendered-presentation/design.md",
+    "openspec/changes/fast-bounded-server-rendered-presentation/specs/verification/fast-server-rendered-presentation/spec.md",
+    "openspec/changes/fast-bounded-server-rendered-presentation/tasks.md",
+    "openspec/changes/fast-bounded-server-rendered-presentation/verification-input.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-160-fast-server-rendered-presentation-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "FAST-SERVER-RENDERED-PRESENTATION-001",
+    "acceptance_id": "A-O-bounded-presentation-and-sensitive-neighbors",
+    "spec_path": "specs/FAST-SERVER-RENDERED-PRESENTATION-001.md",
+    "seam": "actual change-verification planner and public harness prepare select one repository-owned presentation oracle while sensitive/mixed neighbors fail closed",
+    "tests": ["tests/Verification/change_verification_server_rendered_fast_160_test.py"],
+    "gate3_expected": {"tests/Verification/change_verification_server_rendered_fast_160_test.py": "INTENDED_RED"}
+  }]
+}
