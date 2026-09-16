@@ -66,3 +66,47 @@ None. The full corrected candidate is traceable to matrix A–M, exercises the p
 `APPROVED`
 
 Gate 3 passes for exact corrected source `124d0dc092819047d234a66a8537b4fac60fce43c4902ee9b790c2e85f0a873c`. Gate 4 may proceed using this independently reviewed specification/test snapshot. Any subsequent specification or test change requires recomputed planning and renewed Gate 3 review when required by that plan.
+
+### Gate 3 restart 2026-09-16 — BEFORE harness correction
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of the root-authored correction and production implementation.
+- Reviewed detached pre-implementation source: `0a3bf1bb1b410a10850747e6805c705830995489bb72e8edb1e2f02edeaa1d77` in `/private/tmp/fmonitor-153b-g3-correction`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T200914Z-ca017bc6fa/package.json`; SHA-256 `509632a387a6f6c34b96d002b6c88b183b1afd1437da2b1d25e7e1d31c593f11`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T200914Z-ca017bc6fa/verification-plan.json`; SHA-256 `370030cba5d1ba3bbf2c5ccf19e14cac240256c3ff933f3607e909baecd0f118`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Retained snapshot: base `e83e6f749363a3b019923eb1a40ddee30e863bbf`; patch SHA-256 `31cd21ba2570dce9f62fa0950af0f3931c43eede3affea9d8d6ff9402dde3584`.
+- Corrected RED evidence: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789589342823823000-71bbefb1654b483bb8b243f214a3f9a1.json`; command `python3 tests/Verification/change_verification_consumer_frontier_153_test.py`; exit `1`; `INTENDED_RED`; source `0a3bf1bb1b410a10850747e6805c705830995489bb72e8edb1e2f02edeaa1d77`; executable source `eb2c899185490ac9573e7a7e3198ead4c3d22fee616b17c54dc889ac15c064f7`. The main candidate test is byte-identical to this reviewed test. Output remains 12 tests / 17 intended behavior failures with BEFORE and both preservation controls green.
+
+#### Restart finding
+
+1. **HIGH — The BEFORE oracle is mutable and depends on an outer-worktree remote-tracking ref.** `use_slice_a_planner()` shells out in `ROOT` to `git show origin/main:tools/delivery/change-verification.py` (`tests/Verification/change_verification_consumer_frontier_153_test.py:120-128`). This fixes the immediate contradiction while `origin/main` happens to be Slice A, and the conditional commit correctly avoids a no-op failure. It does not provide a stable test oracle: `origin/main` may be absent in an exported/shallow test environment, may differ according to fetch state, and after Slice B merges it can resolve to the Slice B planner itself. In that last ordinary lifecycle state, BEFORE would no longer exercise unmodified Slice A and could fail because it emits the very expansions the test requires to be absent. **Required correction:** materialize the frozen Slice A planner without a mutable remote ref—prefer a candidate-contained fixture or other repository-owned stable oracle; if project policy deliberately accepts historical Git-object coupling, use and validate the exact Slice A base identity rather than `origin/main`. Preserve the conditional no-op commit, verify the test remains byte-identical on the implementation candidate, and capture fresh exact-source RED.
+
+#### Sensitivity assessment
+
+Apart from that environment/lifecycle dependency, the delta does not weaken the approved assertions. Only the BEFORE case swaps the planner executable; all A–M behavior tests still exercise the candidate planner, and the retained output demonstrates the same missing-feature failures and green preservation controls. The no-op commit guard is safe: it updates the fixture base only when materialization changes the staged planner.
+
+#### Restart verdict
+
+`CHANGES_REQUESTED`
+
+Gate 3 restart does not approve a long-lived regression test whose BEFORE oracle changes with local fetch state and eventually with the feature under test. Correct the oracle source, recapture intended RED, and request another independent restart review before continuing implementation evidence.
+
+### Gate 3 restart rereview 2026-09-16 — immutable BEFORE oracle
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of test/specification and production authorship.
+- Reviewed detached source: `344ed17e78ce72dac20895d377518c0cfdd398af139222446359832c15417c33` in `/private/tmp/fmonitor-153b-g3-correction`; the main candidate contains a byte-identical test.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T201109Z-433a64f703/package.json`; SHA-256 `7ce7806f481b70bc1fc85828089f5efc433e17514f13b1b85b8bf9d8c181f66d`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T201109Z-433a64f703/verification-plan.json`; SHA-256 `e3980c945dbf2aa6588210cd1bf0777580e8182ce7aea991316f1ef0bdeeff75`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Retained snapshot: base `e83e6f749363a3b019923eb1a40ddee30e863bbf`; patch SHA-256 `8acb1639f8b8485ddfb5202bd6d57787062c095be6e22782e02f25e872aa9ef1`.
+- Fresh RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789589458957136000-681d72bf153a4ac18c216999b6b4d57e.json`; command `python3 tests/Verification/change_verification_consumer_frontier_153_test.py`; exit `1`; `INTENDED_RED`; source `344ed17e78ce72dac20895d377518c0cfdd398af139222446359832c15417c33`; executable source `784ba581a8ddc43c216b477040dfe590966413a24e7a02026565a33bf4216cf7`.
+
+#### Prior-finding disposition and sensitivity
+
+**Resolved.** `use_slice_a_planner()` now reads `tools/delivery/change-verification.py` from immutable Slice A commit `b9dfcb4d9d1cdd934f16fa4a9f4910464f1ddfc6` and verifies the materialized bytes against SHA-256 `788eb80bf11afbd79ed38129555227deaacda7aa1b160cb539c29324bce1395c` before using them (`tests/Verification/change_verification_consumer_frontier_153_test.py:12-13,123-133`). Direct inspection confirmed that exact Git object exists and hashes to the asserted value. Unlike `origin/main`, neither identity can move after merge. The Quality Graph workflow checks out full history with `fetch-depth: '0'` in its jobs (`.github/workflows/quality-graph.yml`), so the selected CI consumer retains the pinned ancestor. Absence or corruption fails explicitly during setup rather than silently substituting another planner.
+
+The conditional commit remains correct and avoids a no-op commit while updating the disposable fixture base whenever the pinned planner changes its tracked bytes. Only BEFORE uses the pinned Slice A planner; all affirmative/rejection A–M cases continue to exercise the candidate planner. Fresh output preserves the complete sensitivity profile: 12 tests, 17 failures for missing Slice B behavior, with BEFORE, presentation FAST, and Slice A closure/plan-check controls green. No assertion or rejection case was weakened, and no network or mutable remote-tracking ref is consulted.
+
+#### Restart rereview verdict
+
+`APPROVED`
+
+Gate 3 is restored for the byte-identical corrected test on the main implementation candidate. The immutable historical object is an intentional test fixture dependency supported by the selected full-history CI checkout; any later change to the pinned identity/digest or test bytes requires renewed review.

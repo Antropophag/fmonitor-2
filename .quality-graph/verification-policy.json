@@ -268,6 +268,62 @@
       ]
     }
   ],
+  "capability_ownership": [
+    {
+      "name": "protected-semantic-contract",
+      "patterns": [
+        "app/**/*Current*.php",
+        "app/**/*Projection*.php",
+        "app/**/*State*.php",
+        "app/**/MariaDb*.php",
+        "app/Infrastructure/Persistence/**",
+        "app/**/*Migration*.php",
+        "app/**/*Schema*.php",
+        "migrations/**",
+        "app/AssignmentOrderComposition/**",
+        "app/AssignmentOrderOriginal/**",
+        "app/DeadlineTransferCertificate/**",
+        "app/IdentityAccess/**",
+        "app/InspectionEvidence/**",
+        "app/InstallationProcess/**",
+        "app/Jobs/**",
+        "app/Otiz/**",
+        "app/RapidPilot/**",
+        "app/Runtime/**",
+        "app/Workforce/**",
+        "app/YiiRuntime/*Application.php",
+        "app/**/*Recovery*.php",
+        "app/**/*Restore*.php",
+        "app/RuntimeRestore/**"
+      ],
+      "verifiers": [
+        "tests/Runtime/production_schema_frontier_001_test.php",
+        "tests/AssignmentOrderComposition/selection_native_authority_001_test.php"
+      ],
+      "consumers": [
+        "current-schema-recovery"
+      ]
+    },
+    {
+      "name": "current-schema-recovery",
+      "patterns": [],
+      "verifiers": [
+        "tests/Runtime/runtime_recovery_001_test.php",
+        "tests/InstallationProcess/assignment_order_identity_registry_recovery_001_test.php"
+      ],
+      "consumers": [
+        "runtime-inventory"
+      ]
+    },
+    {
+      "name": "runtime-inventory",
+      "patterns": [],
+      "verifiers": [
+        "tests/Verification/canonical_integration_runtime_001_test.py"
+      ],
+      "consumers": []
+    }
+  ],
   "full_argv": [
     "make",
     "test"

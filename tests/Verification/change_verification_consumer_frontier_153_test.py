@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CONSUMER-OWNERSHIP-FRONTIER-153-B public planner regression."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -9,6 +10,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+SLICE_A_COMMIT = "b9dfcb4d9d1cdd934f16fa4a9f4910464f1ddfc6"
+SLICE_A_PLANNER_SHA256 = "788eb80bf11afbd79ed38129555227deaacda7aa1b160cb539c29324bce1395c"
 
 
 class ConsumerFrontier(unittest.TestCase):
@@ -117,6 +120,18 @@ class ConsumerFrontier(unittest.TestCase):
         key = lambda row: (lambda fields: (fields[0], fields[2], fields[1], fields[3]))(row.split("\t"))
         (self.root / "tools/verification/suites.tsv").write_text("\n".join(sorted(rows, key=key)) + "\n")
 
+    def use_slice_a_planner(self):
+        source = subprocess.run(
+            ["git", "show", f"{SLICE_A_COMMIT}:tools/delivery/change-verification.py"],
+            cwd=ROOT, text=True, capture_output=True, check=True).stdout
+        self.assertEqual(SLICE_A_PLANNER_SHA256, hashlib.sha256(source.encode()).hexdigest(),
+                         "pinned Slice A planner object is unavailable or changed")
+        (self.root / "tools/delivery/change-verification.py").write_text(source)
+        self.command("git", "add", "tools/delivery/change-verification.py", check=True)
+        if self.command("git", "diff", "--cached", "--quiet").returncode != 0:
+            self.command("git", "commit", "-qm", "materialize Slice A planner", check=True)
+            self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
+
     def commit_policy_baseline(self):
         self.write_json(".quality-graph/verification-policy.json", self.policy)
         self.command("git", "add", ".", check=True)
@@ -149,6 +164,7 @@ class ConsumerFrontier(unittest.TestCase):
                 "verifier": verifier, "argv": ["python3", verifier]}
 
     def test_before_measurement_exposes_slice_a_gap(self):
+        self.use_slice_a_planner()
         result = self.build(["app/Schema/CanonicalMigration.php"])
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual([], self.expansions(), "BEFORE must have no ownership evidence")

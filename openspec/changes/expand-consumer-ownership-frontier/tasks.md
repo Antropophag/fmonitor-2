@@ -7,10 +7,10 @@
 
 ## 2. Minimal consumer frontier implementation
 
-- [ ] 2.1 Отдельному executor добавить минимальную capability ownership metadata в существующую verification policy и доказать schema validation для unique owners, declared targets и canonical registered verifier identities
-- [ ] 2.2 В существующем planner реализовать deterministic transitive traversal и `consumer_expansions` causal evidence, дедуплицируя execution без потери indirect selection
-- [ ] 2.3 Сохранить Slice A `semantic_escalations`/integration closure и прежний local presentation-only plan; выполнить только planner-selected focused checks и canonical regression, не запуская local full suite
-- [ ] 2.4 Зафиксировать AFTER для тех же synthetic #20/#148 inputs с точным списком механически добавленных direct/transitive consumers и сравнением с BEFORE
+- [x] 2.1 Отдельному executor добавить минимальную capability ownership metadata в существующую verification policy и доказать schema validation для unique owners, declared targets и canonical registered verifier identities
+- [x] 2.2 В существующем planner реализовать deterministic transitive traversal и `consumer_expansions` causal evidence, дедуплицируя execution без потери indirect selection
+- [x] 2.3 Сохранить Slice A `semantic_escalations`/integration closure и прежний local presentation-only plan; выполнить только planner-selected focused checks и canonical regression, не запуская local full suite
+- [x] 2.4 Зафиксировать AFTER для тех же synthetic #20/#148 inputs с точным списком механически добавленных direct/transitive consumers и сравнением с BEFORE
 
 ## 3. Independent review and PR-ready delivery
 
