@@ -418,6 +418,7 @@ unit	python3	tests/Verification/change_verification_001_test.py	governance
 unit	python3	tests/Verification/change_verification_semantic_closure_153_test.py	governance
 unit	python3	tests/Verification/change_verification_sensitive_offline_132_test.py	governance
 unit	python3	tests/Verification/change_verification_server_rendered_fast_160_test.py	governance
+unit	python3	tests/Verification/container_composer_visibility_123_a_test.py	governance
 unit	python3	tests/Verification/delivery_execution_107_i1_test.py	unit
 unit	python3	tests/Verification/delivery_harness_001_test.py	unit
 unit	python3	tests/Verification/delivery_harness_context_manifest_001_test.py	governance

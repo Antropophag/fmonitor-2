@@ -1,0 +1,27 @@
+{
+  "change": "expose-container-composer-dependencies",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-123-slice-a-delivery.md",
+    "openspec/changes/expose-container-composer-dependencies",
+    "reviews/tests/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
+    "reviews/code/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
+    "specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
+    "tools/delivery/Dockerfile.focused-checks",
+    "tools/delivery/run-in-profile",
+    "tools/verification/suites.tsv",
+    "tests/Verification/container_composer_visibility_123_a_test.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CONTAINER-COMPOSER-VISIBILITY-123-A",
+      "acceptance_id": "CCV123A-01-06/A-J",
+      "spec_path": "specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
+      "seam": "tools/delivery/run-in-profile <profile> <command> [args...]",
+      "tests": [
+        "tests/Verification/container_composer_visibility_123_a_test.py",
+        "tests/Verification/quality_graph_ci_setup_001_test.php"
+      ]
+    }
+  ]
+}
