@@ -87,6 +87,7 @@ class ServerRenderedFast(unittest.TestCase):
             boundary("jobs", ["app/Jobs/**"]),
             boundary("domain-mutation", ["app/DomainMutation/**"]),
             boundary("runtime-config", ["config/**", "routes/**"]),
+            boundary("application-code", ["app/YiiRuntime/Views/**"]),
             {"name":"delivery-policy","patterns":["tools/**","tests/**","specs/**","openspec/**",".quality-graph/**"],"categories":["governance"],"tests":[]},
         ]
         return {"version":1,"graph":"quality-graph.yml","spec":"specs/CHANGE-VERIFICATION-001.md",
@@ -142,6 +143,13 @@ class ServerRenderedFast(unittest.TestCase):
             matches=[pattern for pattern in application["patterns"] if __import__("fnmatch").fnmatchcase(mixed,pattern)]
             self.assertTrue(matches,"mixed semantic owner must remain application-code: "+mixed)
         self.assertEqual(self.NEGATIVE,policy["fast_classes"]["bounded-server-rendered-presentation"]["negative_boundaries_checked"])
+
+    def test_unregistered_server_rendered_view_uses_conservative_application_fallback(self):
+        self.touch("app/YiiRuntime/Views/example.php")
+        result,plan=self.plan(["app/YiiRuntime/Views/example.php"])
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual("STANDARD",plan["verification_lane"])
+        self.assertNotIn("fast_class",plan)
 
     def test_d_to_l_sensitive_and_semantic_neighbors_are_not_fast(self):
         cases=[("app/IdentityAccess/Permission.php","CRITICAL"),("app/Security/Csrf.php","CRITICAL"),

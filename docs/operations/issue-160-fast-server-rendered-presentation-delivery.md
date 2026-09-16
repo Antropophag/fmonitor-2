@@ -49,8 +49,19 @@ diagnostics. A later executor-discovered inventory setup defect caused one more
 root test correction and independent delta review. The final Gate 3 verdict is
 APPROVED. `/root/executor` implemented only the policy and classifier.
 
-Focused GREEN: A–O 6/6; FAST v1 classification 7/7 and admission 4/4; #132 7/7;
+Focused GREEN: A–O 7/7; FAST v1 classification 7/7 and admission 4/4; #132 7/7;
 #153A 11/11; base classifier 18/18; Python compile, JSON validation and diff check.
 The deliberately defective presentation replay fails through the exact plan
 emitted by public `harness.py prepare`. Full local `make test`/`make verify` was
-not run. Independent Gate 5 and exact-source CI remain pending.
+not run. Independent Gate 5 is APPROVED.
+
+The first exact-source CI run (`35037029378`) completed with one primary
+regression: `delivery_harness_context_manifest_001_test.py` could no longer map
+an unregistered server-rendered view to the conservative `application-code`
+fallback. `fast`, `unit`, both integration shards and `e2e` were GREEN;
+`governance` failed, and `verify`/`Quality Graph` failed only as aggregators.
+There were no other `REGRESSION_FAILURE` entries. Root added the regression
+fixture; the executor restored `Views/**` as the STANDARD fallback and allowed
+only the exact pair of one registered presentation owner plus that fallback to
+select FAST. Every other overlap remains fail-closed. Independent Gate 3 and
+FINAL correction reviews are APPROVED. Corrected exact-source CI is pending.

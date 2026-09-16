@@ -127,3 +127,38 @@ CI and deployment remain `UNKNOWN`, and enforcement remains unconfigured. This t
 `APPROVED`
 
 Gate 3 is approved for exact candidate source `11c2b3a9fc51892441fae964f115dfd187f55865330e372fb60204880656941a`. Implementation may correct the shipped policy against this exact expectation. Any later normative expectation or executable-test change requires renewed independent Gate 2/3 review.
+
+---
+
+## Conservative view-fallback correction review — 2026-09-16
+
+- Correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T000419Z-f169a824e4/package.json`.
+- Exact dirty candidate: reconstructible snapshot over base `498c71b072eb0c90e1c8e418e3b78dc91b6c1f03`; candidate source `0353d3fdcd9f3f7060f842e15c688bd4f47a7197aa3dc449ff6964d8c2a2e950`, executable source `7eb6ccec9c8fbf18c0f51ac22a420a82f1a964c81fc22e4f7045e992517c8f34`.
+- Snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T000419Z-f169a824e4/snapshot/source.patch`, SHA-256 `bd0d76aca775666d4fd5b7de6531db0bc6b0cc3f776fc48aa851e83c00bbe5af`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T000419Z-f169a824e4/verification-plan.json`, SHA-256 `acd09c42ef67ad30ddb1da9f604625ffc1794165e4957da38c73399c9f67beaa`; lane `CRITICAL`, required reviews `gate3` and `final`.
+- Corrected test SHA-256: `7a7be0178768b09e186aaf8f40325895d6b1209da9627eb573e9d4a48dfb43ab`.
+- Scope: test adequacy and safety for the generic `Views/**` conservative fallback, the sole exact FAST-plus-fallback overlap, and preservation of all other ambiguous-boundary failures. No implementation was authored or modified by this reviewer.
+
+### Correction assessment
+
+No findings.
+
+The fixture now reproduces the shipped ownership shape: an exact `server-rendered-presentation` owner overlaps a broad `application-code` fallback for the registered view, while unrelated views match only the fallback. Cases A–C therefore prove that the exact pair can still select FAST with its sole registered oracle. The new `Views/example.php` case independently requires successful planning as `STANDARD` and absence of `fast_class`, directly preventing the CI regression where an ordinary server-rendered view became unknown.
+
+The exception remains mechanically closed. It is available only when the complete match set has exactly two entries: one boundary declaring `fast_class="bounded-server-rendered-presentation"` and one boundary named `application-code`. A third match cannot satisfy the two-entry condition; two conservative matches cannot satisfy the presentation condition; and a presentation overlap with any differently named fallback cannot satisfy the application condition. The existing `test_unknown_ambiguous_empty_and_bad_mappings_fail_closed` regression supplies the complementary non-approved overlap witness and continues to require `SETUP_FAILURE` with no plan.
+
+The shipped-policy witness still constrains FAST to the exact singleton `feedback-confirmation.php` owner and its real feedback HTTP oracle, while generic `Views/**` ownership remains conservative. The correction changes neither the normative product contract nor product behavior, and introduces no AST/LLM classifier, semantic inference, new registry/planner/Gate, dependency graph, or later FAST class.
+
+The prepared package contains no retained command records, so this review does not infer GREEN from package silence. The reviewer ran the bounded checks directly against the packaged dirty source before adding this review record:
+
+- `python3 tests/Verification/change_verification_server_rendered_fast_160_test.py` — `7/7`, GREEN.
+- `python3 tests/Verification/delivery_harness_context_manifest_001_test.py` — `4/4`, GREEN.
+- `python3 -m unittest tests.Verification.change_verification_001_test.ChangeVerification.test_unknown_ambiguous_empty_and_bad_mappings_fail_closed` — `1/1`, GREEN.
+
+These checks cover the exact FAST/fallback pair, generic-view fallback, the formerly failing context-manifest consumer, and preservation of fail-closed ambiguity. They are focused local evidence, not exact-source CI. CI and deployment remain `UNKNOWN`, and enforcement remains unconfigured; none is treated as GREEN or authorization.
+
+### Correction verdict
+
+`APPROVED`
+
+Gate 3 approves the correction for exact candidate source `0353d3fdcd9f3f7060f842e15c688bd4f47a7197aa3dc449ff6964d8c2a2e950`. The corrected implementation still requires independent final review and exact-source CI. Any later normative expectation or executable-test change requires renewed independent Gate 2/3 review.

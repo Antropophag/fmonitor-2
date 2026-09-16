@@ -336,6 +336,11 @@ def test_argv(path, runtimes, trusted_registered=False):
 
 def boundary_for(path, policy):
     matches = [b for b in policy["boundaries"] if any(fnmatch.fnmatchcase(path, pattern) for pattern in b["patterns"])]
+    presentation = [boundary for boundary in matches
+                    if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION]
+    conservative = [boundary for boundary in matches if boundary["name"] == "application-code"]
+    if len(matches) == 2 and len(presentation) == 1 and len(conservative) == 1:
+        return presentation[0]
     if len(matches) != 1:
         raise ValueError(f"unknown or ambiguous boundary: {path}")
     return matches[0]
