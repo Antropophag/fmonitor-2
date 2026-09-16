@@ -608,23 +608,37 @@ class Harness(unittest.TestCase):
         binary = self.outer / 'bin'; binary.mkdir(exist_ok=True)
         docker = binary / 'docker'
         docker.write_text('''#!/usr/bin/env python3
-import os, subprocess, sys
+import json, os, subprocess, sys
 args=sys.argv[1:]
 if args[:1] == ['build']:
+    values={}
+    for i,value in enumerate(args[:-1]):
+        if value == '--build-arg' and '=' in args[i+1]:
+            key,item=args[i+1].split('=',1); values[key]=item
+    open(os.environ['FAKE_DOCKER_STATE'],'w').write(json.dumps(values))
     raise SystemExit(71 if os.environ.get('FAKE_DOCKER_BUILD_FAIL') else 0)
 if args[:2] == ['image','inspect']:
+    template=args[args.index('--format')+1] if '--format' in args else ''
+    values=json.load(open(os.environ['FAKE_DOCKER_STATE']))
+    if 'composer-lock-sha256' in template:
+        print(values['COMPOSER_LOCK_SHA256']); raise SystemExit(0)
+    if 'executable-source' in template:
+        print(values['EXECUTABLE_SOURCE']); raise SystemExit(0)
     print('sha256:bounded-profile-image'); raise SystemExit(0)
 if args[:1] == ['run']:
     i=1
     while i < len(args):
-        if args[i] in ('--rm','--init'): i+=1; continue
-        if args[i] in ('--env','--mount','--workdir'): i+=2; continue
+        if args[i] in ('--rm','--init','--read-only'): i+=1; continue
+        if args[i] in ('--env','--mount','--workdir','--tmpfs'): i+=2; continue
         i+=1; break
+    if 'run-in-profile' in args[i:]:
+        i=args.index('run-in-profile',i)+1
     raise SystemExit(subprocess.run(args[i:]).returncode)
 raise SystemExit(2)
 ''')
         docker.chmod(0o755)
-        env = dict(self.env, PATH=str(binary) + os.pathsep + os.environ['PATH'])
+        env = dict(self.env, PATH=str(binary) + os.pathsep + os.environ['PATH'],
+                   FAKE_DOCKER_STATE=str(self.outer/'fake-docker-state.json'))
         if mode == 'setup-failure': env['FAKE_DOCKER_BUILD_FAIL'] = '1'
         return env
 
@@ -660,6 +674,8 @@ raise SystemExit(2)
         self.assertEqual(255, result.returncode)
         diagnostic = Path(record['stderr_path']).read_text()
         self.assertIn('RUN_IN_PROFILE_RESULT', diagnostic); self.assertIn(marker, diagnostic)
+        structured = json.loads(diagnostic.split('RUN_IN_PROFILE_RESULT ', 1)[1].splitlines()[0])
+        self.assertRegex(structured['source_digest'], r'^[0-9a-f]{64}$')
         metadata_result, metadata_summary, metadata_record = result, summary, record
 
         # C: command echo alone is wrapper diagnostic, not behavior observation.
