@@ -117,12 +117,17 @@ except (AttributeError, json.JSONDecodeError):
     fi
 fi
 
+artifact_run_args=(--tmpfs /workspace/.local:rw,nosuid,nodev)
+if [[ -d "$root/.local" ]]; then
+    artifact_run_args=(--mount "type=bind,src=$root/.local,dst=/workspace/.local")
+fi
+
 started=$(python3 -c 'import time; print(time.time_ns())')
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
+    ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
     --read-only \
     --tmpfs /tmp:rw,nosuid,nodev \
-    --tmpfs /workspace/.local:rw,nosuid,nodev \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
     --env "FMONITOR_EXECUTED_GIT_SHA=$git_sha" \
