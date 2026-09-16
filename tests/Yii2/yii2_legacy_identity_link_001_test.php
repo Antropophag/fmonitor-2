@@ -4,7 +4,7 @@ require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/UserAccessFixture.ph
 $f=null;
 try {
     $f=new UserAccessFixture(dirname(__DIR__,2));$p=$f->p;
-    $f->start();$admin=[];assertSameValue(303,$f->login($admin)['status'],'admin login');
+    $f->start();$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='construction_control_engineer' WHERE role_id=9212");$admin=[];assertSameValue(303,$f->login($admin)['status'],'admin login');
     $f->db->query("CREATE TABLE {$p}users_roles(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(100),status TINYINT NOT NULL)");
     $f->db->query("CREATE TABLE {$p}legacy_users_source(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),email VARCHAR(300),role_id BIGINT UNSIGNED,status TINYINT NOT NULL,password VARCHAR(300) NULL)");
     $f->db->query("CREATE FUNCTION {$p}deny_http_legacy_password_read() RETURNS VARCHAR(300) DETERMINISTIC BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='HTTP_LEGACY_PASSWORD_WAS_READ'; RETURN ''; END");
@@ -14,6 +14,11 @@ try {
     $facts=static fn()=>array_merge($f->facts(),['legacyLinks'=>$f->rows('fm2_legacy_identity_links'),'legacyLinkEvents'=>$f->rows('fm2_legacy_identity_link_events')]);
     $page=$f->page($admin);
     assertSameValue(true,str_contains($page['body'],'legacyUserId'),'INTENDED_RED link control rendered');
+    if(getenv('FMONITOR_FIXTURE_REACHABILITY')==='yii-legacy-link-post-red-fixture'){
+        assertSameValue(true,str_contains($page['body'],'_csrf'),'post-red Yii page fixture readable');
+        assertSameValue('Legacy <Engineer>',(string)$f->db->query("SELECT name FROM {$p}legacy_users_source WHERE id=8001")->fetch_column(),'post-red legacy hint fixture readable');
+        $f->close();$f=null;echo "FIXTURE_REACHABLE: yii-legacy-link-post-red-fixture\n";exit(0);
+    }
     foreach(['GET','HEAD'] as $method)assertSameValue(405,$f->request($method,'/pilot/admin/users/9403/legacy-link',[],$admin)['status'],'mutation method '.$method);
     $before=$facts();$denied=[];$deniedLoginForm=$f->request('GET','/pilot/login',[],$denied);$deniedCsrf=$f->csrf($deniedLoginForm['body']);assertSameValue(303,$f->login($denied,'ordinary.person@shlz.ru')['status'],'regular login');
     $r=$f->request('POST','/pilot/admin/users/9403/legacy-link',['_csrf'=>$deniedCsrf,'requestId'=>'20202020-0002-4020-8020-000000000001','legacyUserId'=>'8001'],$denied);

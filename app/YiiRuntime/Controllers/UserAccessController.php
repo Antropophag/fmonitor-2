@@ -21,7 +21,7 @@ Yii::$app->response->headers->set('Location','/pilot/login');
 }else throw new ForbiddenHttpException();
 }]];
 }
- public function actionIndex():string{try{$d=$this->owner()->directory((int)Yii::$app->user->id);$db=$this->legacyDb();$p=(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX');$links=[];foreach($db->query("SELECT local_user_id,legacy_user_id,legacy_name_snapshot FROM `{$p}fm2_legacy_identity_links` WHERE superseded_by_link_id IS NULL ORDER BY link_id")->fetch_all(MYSQLI_ASSOC)as$r)$links[(int)$r['local_user_id']]=$r;$db->close();
+ public function actionIndex():string{try{$actor=(int)Yii::$app->user->id;$d=$this->owner()->directory($actor);$db=$this->legacyDb();$process=(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX');$legacy=(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX');if($legacy==='')$legacy=$process;try{$links=ProductionLegacyIdentityLinkFactory::create($db,$process,$legacy)->directory($actor);}finally{$db->close();}
 }catch(DomainException){throw new ForbiddenHttpException();
 }catch(\Throwable$e){throw new \RuntimeException('User directory unavailable.',0,$e);
 }return$this->render('@app/app/YiiRuntime/Views/users',['identity'=>Yii::$app->user->identity,'directory'=>$d,'legacyLinks'=>$links,'notice'=>Yii::$app->session->getFlash('notice'),'error'=>Yii::$app->session->getFlash('error'),'invitation'=>Yii::$app->session->getFlash('invitation')]);

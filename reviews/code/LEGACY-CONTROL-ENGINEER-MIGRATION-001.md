@@ -35,3 +35,12 @@
 The package’s three focused exact-source records are GREEN, and the prior Gate 3/test-delta approvals establish strong fixture sensitivity, including real Yii activation/first-login and credential-read guards. Those records do not override the executable discrepancies above: the migration fixture deliberately uses one shared prefix and asserts the hard-coded actor/time, while no exact-byte rejection, non-exact operation replay, concurrent first-link, multi-role engineer, or confirmed-post-marker rollback case closes these findings. CI and PR remain `UNKNOWN`, which is acceptable before publication but cannot be treated as Gate 5 GREEN.
 
 `CHANGES_REQUESTED`
+
+## Consolidated post-main Gate 5 — 2026-09-17
+
+- Reviewer: `issue20-gate5-final`
+- Candidate source: `c3c659595b4a9b4d1eb823cc8f96dc5760c7de647de2eba48ed5bb8c5765b5b3`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T225311Z-d544c2db2d/package.json`
+- Verdict: `CHANGES_REQUESTED`; `STOP NEEDS_OWNER` не требуется.
+
+Полный bounded findings list: correction обновляла предыдущий identity-link fact вместо append-only successor currentness; exact construction-control role и его fingerprint не были единым authority при нескольких ролях; canonical preview validation не проверяла status/reason/ID/count semantics; v29 schema migration не классифицировала exact compatible/predecessor и malformed partial states fail-closed; Yii controller владел SQL current-link projection. Reviewer также потребовал exact-source `FIXTURE_REACHABLE` evidence для трёх объявленных probes. Все findings признаны sibling cases уже известного forensic frontier.
