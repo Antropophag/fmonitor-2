@@ -15,6 +15,6 @@
 ## 3. Independent review and PR-ready delivery
 
 - [x] 3.1 Root проверить полноту candidate и подготовить exact source/reviewer package с actual authorship, focused GREEN и BEFORE/AFTER evidence
-- [ ] 3.2 Получить независимый Gate 5 review полного exact source; все findings исправлять через separate executor и повторно review changed delta до `APPROVED`
+- [x] 3.2 Получить независимый Gate 5 review полного exact source; все findings исправлять через separate executor и повторно review changed delta до `APPROVED`
 - [ ] 3.3 Создать отдельный PR-ready commit/branch, запустить ровно один existing exact-source GitHub CI consumer, а при failure сначала собрать полный failed-job и `REGRESSION_FAILURE` inventory и затем довести тот же bounded Slice B до GREEN
 - [ ] 3.4 Записать delivery result: exact source, reviews, CI, elapsed/rework, `#153 Slice B delivered`, `#153 remains open`, C/D untouched; merge не выполнять и после Slice B остановиться

@@ -50,3 +50,33 @@ The graph traversal implementation otherwise preserves one evidence item per uni
 `CHANGES_REQUESTED`
 
 Gate 5 does not approve exact source `ede84cdefa29acecece262e0fb2936f4986056fb921766f766eafa7a95508a0a`. Correct the production ownership model and add the missing production-policy sensitivity before requesting a new final review. Because the correction necessarily changes policy/tests, recompute the verification plan and obtain renewed Gate 3 approval as required by the resulting plan.
+
+### Rereview 2026-09-16 — bounded shipped ownership correction
+
+- Reviewer: `/root/gate5_consumer_frontier` (`gpt-5.6-sol`, low), still independent of scope/spec/test and production authorship.
+- Full corrected exact source: `85933cb375a4c538f1a1c752252a9cc4945556863d5c5dac6dd28a1190a17952`; committed head `795884dfca75eb99742870940efbc9fe146ab9a8` on base `b9dfcb4d9d1cdd934f16fa4a9f4910464f1ddfc6`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202925Z-83b11f769f/package.json`; SHA-256 `3e6d8e01b117338e46ca80059d8af40a62e8168ed2cd69b3b633de38afb042bb`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202925Z-83b11f769f/verification-plan.json`; SHA-256 `a03504f8be79a262ee628c4db39d78a53352d7e4711e2a905569d7efc6601835`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Required context SHA-256: `bf7d086bd0ac499fa9a51f8062cf34c0c5cfadba0d5cd90405019a981df60473`; task-context manifest SHA-256: `98501eab0471ee59cabf4f400fb728fe220b571e72188b3e94bfd9377cd3e6bd`.
+- Retained exact-source snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202925Z-83b11f769f/snapshot`; base `795884dfca75eb99742870940efbc9fe146ab9a8`; empty committed-source patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Renewed Gate 3 evidence reviewed: Case N exact shipped-chain rereview `APPROVED` (`reviews/tests/CONSUMER-OWNERSHIP-FRONTIER-153-B.md:139-164`) and additional legacy-regression audit `APPROVED` (`:166-191`).
+- Exact-source focused evidence reviewed: `python3 tests/Verification/change_verification_consumer_frontier_153_test.py` — 13/13 GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789590518124624000-8b6d5d91fd244f4097bb51d0cd9723ac.json`; `python3 tests/Verification/change_verification_001_test.py` — 18/18 GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789590525853593000-4a135fc1816347828d22b157fc58b8a0.json`. Both bind source `85933cb375a4c538f1a1c752252a9cc4945556863d5c5dac6dd28a1190a17952` and executable source `2cdbd0f3e0f3dc340ed9d2d7e8a91fdb011fb2b98fcf11665207baa23cc301e3`.
+- Local full suite was not run, preserving the owner prohibition. Exact-source GitHub CI remains required after review and is not claimed here.
+
+#### Prior-finding disposition
+
+**Resolved.** `.quality-graph/verification-policy.json:271-343` no longer copies every Slice A semantic pattern into a universal root. It declares two bounded production roots: `canonical-migration-frontier` owns only the three canonical migration entrypoints and reaches the independently specified migration runner/schema, recovery/forward-update and runtime-inventory witnesses; `standalone-current-assignment` owns only the six current-assignment command/read/schema files and reaches native assignment, selection-authority and Yii runtime witnesses. All terminal files exist and resolve through canonical `tools/verification/suites.tsv`. The roots do not share terminals or inherit one another's chain.
+
+Case N loads the shipped policy and canonical inventory through the public planner seam and compares the complete ordered `consumer_expansions` for representative migration and assignment paths, including changed path, root, every capability-chain segment, terminal identity and canonical argv (`tests/Verification/change_verification_consumer_frontier_153_test.py:352-421`). Whole-list equality catches missing, extra, reordered, cross-owned or fabricated verifier evidence. Its unrelated protected Otiz path must fail with `PROTECTED_CAPABILITY_OWNER_MISSING`, proving that policy does not regain a catch-all merely to admit other Slice A surfaces. The normative bounded witnesses are recorded in `specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md:43-48`.
+
+The accompanying legacy planner-test corrections preserve their prior purposes under the new fail-closed precondition: generic protected Persistence/Otiz cases now assert owner-missing, acceptance-category mapping uses an unprotected subject, and the InspectionEvidence consumer test adds only a fixture-local exact owner with no verifier/consumer claims (`tests/Verification/change_verification_001_test.py:298-346,413-443`). No production catch-all or fail-open bypass was introduced.
+
+#### Remaining findings
+
+None. Full-candidate inspection also reconfirmed deterministic unique-chain evidence, cycle termination, diamond preservation, execution deduplication, missing/stale target and verifier rejection, Slice A integration closure, and unchanged presentation-only behavior.
+
+#### Rereview verdict
+
+`APPROVED`
+
+Gate 5 passes for exact source `85933cb375a4c538f1a1c752252a9cc4945556863d5c5dac6dd28a1190a17952`. This verdict covers the reviewed committed candidate and focused evidence only; exact-source GitHub CI remains required before PR-ready delivery can be claimed.
