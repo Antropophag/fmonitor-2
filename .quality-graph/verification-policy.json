@@ -270,35 +270,15 @@
   ],
   "capability_ownership": [
     {
-      "name": "protected-semantic-contract",
+      "name": "canonical-migration-frontier",
       "patterns": [
-        "app/**/*Current*.php",
-        "app/**/*Projection*.php",
-        "app/**/*State*.php",
-        "app/**/MariaDb*.php",
-        "app/Infrastructure/Persistence/**",
-        "app/**/*Migration*.php",
-        "app/**/*Schema*.php",
-        "migrations/**",
-        "app/AssignmentOrderComposition/**",
-        "app/AssignmentOrderOriginal/**",
-        "app/DeadlineTransferCertificate/**",
-        "app/IdentityAccess/**",
-        "app/InspectionEvidence/**",
-        "app/InstallationProcess/**",
-        "app/Jobs/**",
-        "app/Otiz/**",
-        "app/RapidPilot/**",
-        "app/Runtime/**",
-        "app/Workforce/**",
-        "app/YiiRuntime/*Application.php",
-        "app/**/*Recovery*.php",
-        "app/**/*Restore*.php",
-        "app/RuntimeRestore/**"
+        "app/InstallationProcess/CanonicalMigrationApplication.php",
+        "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+        "app/YiiRuntime/CanonicalMigrationConsole.php"
       ],
       "verifiers": [
-        "tests/Runtime/production_schema_frontier_001_test.php",
-        "tests/AssignmentOrderComposition/selection_native_authority_001_test.php"
+        "tests/InstallationProcess/production_migration_runner_001_test.php",
+        "tests/Runtime/production_schema_frontier_001_test.php"
       ],
       "consumers": [
         "current-schema-recovery"
@@ -309,17 +289,53 @@
       "patterns": [],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
-        "tests/InstallationProcess/assignment_order_identity_registry_recovery_001_test.php"
+        "tests/Runtime/runtime_recovery_forward_update_001_test.php"
       ],
       "consumers": [
-        "runtime-inventory"
+        "runtime-schema-inventory"
       ]
     },
     {
-      "name": "runtime-inventory",
+      "name": "runtime-schema-inventory",
       "patterns": [],
       "verifiers": [
         "tests/Verification/canonical_integration_runtime_001_test.py"
+      ],
+      "consumers": []
+    },
+    {
+      "name": "standalone-current-assignment",
+      "patterns": [
+        "app/InstallationProcess/ControlEngineerAssignmentClock.php",
+        "app/InstallationProcess/ControlEngineerAssignmentCommand.php",
+        "app/InstallationProcess/ControlEngineerAssignmentDefinitionSchemaMigration.php",
+        "app/InstallationProcess/MariaDbControlEngineerAssignment.php",
+        "app/InstallationProcess/MariaDbControlEngineerAssignmentReader.php",
+        "app/InstallationProcess/ProductionControlEngineerAssignmentFactory.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/control_engineer_assignment_001_test.php"
+      ],
+      "consumers": [
+        "current-assignment-selection"
+      ]
+    },
+    {
+      "name": "current-assignment-selection",
+      "patterns": [],
+      "verifiers": [
+        "tests/AssignmentOrderComposition/selection_native_authority_001_test.php"
+      ],
+      "consumers": [
+        "current-assignment-runtime"
+      ]
+    },
+    {
+      "name": "current-assignment-runtime",
+      "patterns": [],
+      "verifiers": [
+        "tests/Yii2/yii2_construction_control_preopening_001_test.php",
+        "tests/Yii2/yii2_control_engineer_assignment_001_test.php"
       ],
       "consumers": []
     }

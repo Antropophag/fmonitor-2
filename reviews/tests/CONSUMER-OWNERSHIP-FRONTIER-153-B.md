@@ -110,3 +110,82 @@ The conditional commit remains correct and avoids a no-op commit while updating 
 `APPROVED`
 
 Gate 3 is restored for the byte-identical corrected test on the main implementation candidate. The immutable historical object is an intentional test fixture dependency supported by the selected full-history CI checkout; any later change to the pinned identity/digest or test bytes requires renewed review.
+
+### Gate 3 restart 2026-09-16 — shipped production-policy Case N
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of root-authored contract/test changes and production implementation.
+- Exact reviewed source: `2031d6ab1f5eac8edca03bf1847dbadfb7191fc14b67c5a31d697fd71e952e65`; committed base/head before this uncommitted Gate 1/2 delta: `c06ba96f73ae7a543703b8d47f2b29dee683e66f`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T201838Z-f8c173b8e3/package.json`; SHA-256 `8d342cf281713e686841722c81610f9a973b209758bb2ee9576cf9a9047eb7e8`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T201838Z-f8c173b8e3/verification-plan.json`; SHA-256 `e06cf52988ee2fa190b9101ef3d7e4a695dd99d7439b1f556acf1b643b9c0df5`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Retained snapshot: base `c06ba96f73ae7a543703b8d47f2b29dee683e66f`; patch SHA-256 `80126fea6652cd1089499e961071a9526be573c5263151bc89d8e873b4a29c64`.
+- Exact RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789589906970829000-49b65f89547b428e8d3d97911623ad4a.json`; command `python3 tests/Verification/change_verification_consumer_frontier_153_test.py`; exit `1`; `INTENDED_RED`; source `2031d6ab1f5eac8edca03bf1847dbadfb7191fc14b67c5a31d697fd71e952e65`; executable source `d4453e64778e2587cb71584de95ed9b3808c5c251a516eb08696f2ae12a261eb`. Twelve prior tests are green and only new Case N is red, at the shipped migration root assertion (`protected-semantic-contract` instead of `canonical-migration-frontier`).
+
+#### Finding
+
+1. **HIGH — Case N constrains root labels but not the distinct production causal chains required to close Gate 5.** The new scenario says the shipped canonical migration/catalogue and standalone current-assignment owners each receive their own causal chain (`specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md:38`; OpenSpec scenario at `openspec/changes/expand-consumer-ownership-frontier/specs/verification/consumer-ownership-frontier/spec.md:18-20`). The test proves exact root names, proves only that *some* catalogue chain contains `current-schema-recovery`, and proves only that no assignment chain contains that name (`tests/Verification/change_verification_consumer_frontier_153_test.py:362-384`). It never asserts the terminal verifier identities/argv or the complete ordered chains for either shipped capability. A policy could therefore rename the catch-all roots as requested while attaching arbitrary, incomplete, or unrelated registered verifiers; it would pass Case N without establishing the capability-specific ownership relationships demanded by the Gate 5 finding and normative items 1, 4, and 5. **Required correction:** Gate 1 must state the independently justified exact shipped causal chains (ordered capability names plus terminal verifier identities) for the representative catalogue and assignment paths. Gate 2 must compare the complete `consumer_expansions` for each positive path to those exact expectations, including absence of cross-capability verifiers, rather than using `any(...)`/negative recovery-name checks. Retain the existing unrelated protected Otiz fail-closed assertion and recapture exact-source RED.
+
+#### Other review results
+
+- Loading the shipped policy and canonical inventory into a disposable repository and invoking the public planner is the correct seam; synthetic policy replacement no longer hides production-policy structure.
+- The Otiz representative is a general protected surface and the expected missing-owner diagnostic enforces fail-closed behavior without putting issue numbers or historical incident names into policy.
+- The exact RED is sensitive to the current universal production root and does not reflect setup failure. Prior A–M coverage remains green. These strengths do not close the missing positive-chain oracle.
+
+#### Restart verdict
+
+`CHANGES_REQUESTED`
+
+The new test catches the specific universal-root implementation but is not yet sensitive to a renamed or otherwise fabricated ownership graph. Complete the production-chain oracle and request another independent Gate 3 review before correcting production policy.
+
+### Gate 3 Case N rereview 2026-09-16 — exact shipped ownership witnesses
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of specification/test and production authorship.
+- Exact reviewed source: `7a276fe93a22e26b46ed107b8f43ea45d0a82bc9ccb1eff7f44423e394973ca7`; committed base/head before the corrected Gate 1/2 delta: `c06ba96f73ae7a543703b8d47f2b29dee683e66f`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202059Z-128e0f09b4/package.json`; SHA-256 `368e3dbe675aff9bdf112cd9fa11d439b047604c669c5534cef46ed2ce29c50a`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202059Z-128e0f09b4/verification-plan.json`; SHA-256 `595e1eada24b922b5ebad2f198a7a2f0520bb54dc4ec3dbc423a5d0ab32ef264`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Retained snapshot: base `c06ba96f73ae7a543703b8d47f2b29dee683e66f`; patch SHA-256 `4cbf8eccb598a773399a1902c8578665bc0fa9e1d63052fd314f2d8e03816b72`.
+- Fresh exact RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789590047822132000-dd3d5f23420a41bcbac7e9531b68168c.json`; command `python3 tests/Verification/change_verification_consumer_frontier_153_test.py`; exit `1`; `INTENDED_RED`; source `7a276fe93a22e26b46ed107b8f43ea45d0a82bc9ccb1eff7f44423e394973ca7`; executable source `56cbe1202a5cc9ed751cec638c9f6885beea845266a231bc6494cb168ded962a`. All twelve prior tests pass; only Case N fails because the shipped catch-all emits a different complete migration expansion.
+
+#### Prior-finding disposition
+
+**Resolved.** The normative contract now independently names the bounded shipped ownership witnesses (`specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md:44-48`): migration runner/schema frontier, recovery/forward-update, and runtime inventory for canonical migration; native assignment, selection authority, and the Yii consumers for standalone assignment. Every named terminal is present in canonical `tools/verification/suites.tsv`.
+
+Case N compares the entire ordered `consumer_expansions` list for the migration catalogue to five exact entries, including root, full capability chain, terminal identity, and canonical runtime argv (`tests/Verification/change_verification_consumer_frontier_153_test.py:368-387`). It likewise compares the entire assignment expansion to four exact entries through selection and Yii runtime consumers (`:394-412`). Whole-list equality rejects missing, extra, reordered, cross-capability, or fabricated registered verifiers; it is materially stronger than the prior root-name and `any(...)` checks. The unrelated protected Otiz path still requires the exact missing-owner failure (`:414-421`), preserving the fail-closed frontier beyond the two demonstrated capabilities.
+
+The shipped-policy fixture continues to use the public planner with repository policy and canonical inventory. Capability names and ownership paths describe durable repository concepts rather than issue numbers or historical incidents, so the correction constrains the Gate 5 finding without issue-specific policy.
+
+#### Remaining findings
+
+None.
+
+#### Case N rereview verdict
+
+`APPROVED`
+
+Gate 3 is restored for exact source `7a276fe93a22e26b46ed107b8f43ea45d0a82bc9ccb1eff7f44423e394973ca7`. Production policy may now be corrected against this complete shipped ownership oracle; any subsequent contract/test change requires renewed planning and Gate 3 review when selected.
+
+### Additional Gate 3 audit 2026-09-16 — legacy planner regressions
+
+- Reviewer: `/root/gate3_consumer_frontier` (`gpt-5.6-sol`, low), independent of the root-authored legacy regression corrections and executor implementation.
+- Exact reviewed source: `52a8d5a23b039aaebf45ee152dae388bcf68b2aec755bb7e263d3b328af6ae27`; executable source `2cdbd0f3e0f3dc340ed9d2d7e8a91fdb011fb2b98fcf11665207baa23cc301e3`.
+- Root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202608Z-65a29ef73d/package.json`; SHA-256 `3a1ffeabaedaa5892cf6db666b5e29ea8ef3ceb7eea5e4095a4894b7099d14ed`.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T202608Z-65a29ef73d/verification-plan.json`; SHA-256 `24b9333149087b9368708bb124e609beaedf734eece30f6c78db8abad5d92d2d`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Retained snapshot: base `c06ba96f73ae7a543703b8d47f2b29dee683e66f`; patch SHA-256 `cc6cc0a6dba0874c34fa61ae382720f104dff8cea672aafda79f3d4273a879ac`.
+- Exact-source GREEN evidence: consumer A–N `python3 tests/Verification/change_verification_consumer_frontier_153_test.py` — 13/13, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789590370314481000-2b9a39024831407091268fc405b05459.json`; canonical planner `python3 tests/Verification/change_verification_001_test.py` — 18/18, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789590378281998000-ee6507284da04fff8b8354242c0a9476.json`. Both records bind the exact source and executable source above.
+- Pre-correction evidence considered: executor and root independently reproduced exactly four `PROTECTED_CAPABILITY_OWNER_MISSING` failures for the shipped InspectionEvidence consumer fixture, protected IdentityAccess acceptance-mapping fixture, generic Persistence path, and generic Otiz path. Those failures are the expected consequence of the newly approved bounded shipped policy, not evidence that the planner mechanism regressed.
+
+#### Correction audit
+
+1. **Generic shipped Persistence/Otiz — purpose preserved and contract aligned.** `test_shipped_policy_has_concrete_boundaries_and_bounded_governance_focus` now expects exact owner-missing diagnostics for `app/Infrastructure/Persistence/Store.php` and `app/Otiz/Money.php` (`tests/Verification/change_verification_001_test.py:298-333`). This directly preserves the test's shipped-policy focus while enforcing the approved Case N rule that protected paths outside demonstrated bounded ownership fail closed. The older positive boundary-command behavior remains independently covered by `test_http_persistence_and_money_boundaries_add_concrete_commands` using the test's synthetic policy (`:277-287`), so command mapping coverage was not silently deleted.
+2. **Mapped acceptance category — purpose preserved without protected-ownership interference.** `test_registered_acceptance_adds_its_inventory_category` now uses existing unprotected `app/PilotHttp/Action.php` instead of protected-but-unowned `app/IdentityAccess/Command.php` (`:335-346`). Its observable remains unchanged: a registered integration acceptance adds the `integration` category and exact `runtime_storage_001_test.php` command. The fixture no longer mixes that mapping assertion with an unrelated ownership rejection.
+3. **Confirmed InspectionEvidence consumers — minimal test-local precondition.** `test_harness_refresh_and_confirmed_consumers` adds one fixture-only capability owner limited to the two real protected InspectionEvidence owner paths, with no verifiers or downstream capability edges (`:413-443`). This satisfies the public planner's new ownership precondition without manufacturing consumer-frontier evidence. The original assertions remain intact: each real owner still selects the five existing path-based consumers, local presentation refresh removes them, obligations change is reported, and refreshed plan check succeeds. `app/PilotHttp/ChecklistSync.php` continues through its existing non-conflicting path mapping.
+4. **No fail-open weakening.** Production policy remains bounded to the independently approved migration and standalone-assignment capabilities; the fixture-only InspectionEvidence declaration is created solely inside the disposable test repository. Case N is green with exact complete chains and Otiz owner-missing. The legacy changes neither add production catch-all patterns nor bypass planner validation.
+
+#### Findings
+
+None.
+
+#### Audit verdict
+
+`APPROVED`
+
+The root-owned legacy regression corrections preserve their original test purposes while reconciling them with the approved fail-closed ownership contract. Gate 3 remains valid for exact source `52a8d5a23b039aaebf45ee152dae388bcf68b2aec755bb7e263d3b328af6ae27`.

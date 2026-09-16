@@ -35,10 +35,17 @@ Actor — автор change, запускающий существующий `ha
 | K | Direct verifier already selected by another reason | One execution, preserved consumer causal evidence, indirect still selected |
 | L | Local presentation-only change | No consumer expansion; existing FAST/presentation behavior preserved |
 | M | Complete protected ownership | Existing Slice A semantic escalation and full integration closure unchanged |
+| N | Shipped repository policy | Canonical migration/catalogue and standalone current-assignment owners emit distinct causal chains; unrelated protected surface without demonstrated ownership fails closed |
 
 ## BEFORE / AFTER measurement
 
 The same disposable synthetic inputs MUST be executed against unmodified Slice A and Slice B candidate. BEFORE records exact consumer-specific selections absent from the plan (even if Slice A broadly executes the same check); AFTER records exact mechanically reachable direct/recovery/indirect identities and causal chains for #20 and #148. Broad category selection MUST NOT be misreported as ownership proof.
+
+## Bounded shipped ownership
+
+Canonical migration ownership is limited to production migration catalogue / repository migration entrypoints. Its direct witnesses are the existing production migration runner and production schema frontier verifiers; its downstream `current-schema-recovery` witnesses are ordinary and forward-update runtime recovery verifiers; its indirect `runtime-schema-inventory` witness is the canonical integration runtime verifier.
+
+Standalone current-assignment ownership is limited to the existing control-engineer assignment command/read/schema owner files. Its direct witness is the native control-engineer assignment verifier; downstream `current-assignment-selection` is witnessed by selection native authority; indirect `current-assignment-runtime` is witnessed by the existing Yii control-engineer and construction-control current-assignment consumers. These two roots MUST NOT inherit one another's terminal verifiers. Other Slice A protected paths remain protected but MUST fail closed until their own bounded ownership is registered.
 
 ## Done and stop
 

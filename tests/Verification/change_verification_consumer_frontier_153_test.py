@@ -138,6 +138,23 @@ class ConsumerFrontier(unittest.TestCase):
         self.command("git", "commit", "-qm", "policy fixture", check=True)
         self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
 
+    def use_repository_policy(self):
+        shutil.copy2(ROOT / ".quality-graph/verification-policy.json",
+                     self.root / ".quality-graph/verification-policy.json")
+        shutil.copy2(ROOT / "tools/verification/suites.tsv",
+                     self.root / "tools/verification/suites.tsv")
+        for row in (self.root / "tools/verification/suites.tsv").read_text().splitlines():
+            if not row or row.startswith("#"):
+                continue
+            _suite, _runtime, verifier, _category = row.split("\t")
+            target = self.root / verifier
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text("fixture\n")
+        self.command("git", "add", ".", check=True)
+        self.command("git", "commit", "-qm", "shipped repository policy", check=True)
+        self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
+
     def build(self, paths):
         for path in paths:
             (self.root / path).write_text("after\n")
@@ -162,6 +179,12 @@ class ConsumerFrontier(unittest.TestCase):
     def expected(path, root, chain, verifier):
         return {"changed_path": path, "root_capability": root, "consumer_chain": chain,
                 "verifier": verifier, "argv": ["python3", verifier]}
+
+    @staticmethod
+    def production_expected(path, root, chain, verifier):
+        runtime = "php" if verifier.endswith(".php") else "python3"
+        return {"changed_path": path, "root_capability": root, "consumer_chain": chain,
+                "verifier": verifier, "argv": [runtime, verifier]}
 
     def test_before_measurement_exposes_slice_a_gap(self):
         self.use_slice_a_planner()
@@ -328,6 +351,74 @@ class ConsumerFrontier(unittest.TestCase):
         checked = self.command("python3", "tools/delivery/change-verification.py", "check",
                                "--plan", "plan.json")
         self.assertEqual(0, checked.returncode, checked.stderr)
+
+    def test_n_repository_policy_has_distinct_bounded_capabilities(self):
+        self.use_repository_policy()
+        catalogue = "app/InstallationProcess/ProductionPilotMigrationCatalogue.php"
+        assignment = "app/InstallationProcess/MariaDbControlEngineerAssignment.php"
+        unrelated = "app/Otiz/MariaDbMigratedEvidenceProjectionStore.php"
+        for path in [catalogue, assignment, unrelated]:
+            target = self.root / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("before\n")
+        self.command("git", "add", ".", check=True)
+        self.command("git", "commit", "-qm", "bounded capability subjects", check=True)
+        self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
+
+        result = self.build([catalogue]); self.assertEqual(0, result.returncode, result.stderr)
+        catalogue_expansions = self.expansions()
+        self.assertEqual([
+            self.production_expected(catalogue, "canonical-migration-frontier",
+                                     ["canonical-migration-frontier"],
+                                     "tests/InstallationProcess/production_migration_runner_001_test.php"),
+            self.production_expected(catalogue, "canonical-migration-frontier",
+                                     ["canonical-migration-frontier"],
+                                     "tests/Runtime/production_schema_frontier_001_test.php"),
+            self.production_expected(catalogue, "canonical-migration-frontier",
+                                     ["canonical-migration-frontier", "current-schema-recovery"],
+                                     "tests/Runtime/runtime_recovery_001_test.php"),
+            self.production_expected(catalogue, "canonical-migration-frontier",
+                                     ["canonical-migration-frontier", "current-schema-recovery"],
+                                     "tests/Runtime/runtime_recovery_forward_update_001_test.php"),
+            self.production_expected(catalogue, "canonical-migration-frontier",
+                                     ["canonical-migration-frontier", "current-schema-recovery",
+                                      "runtime-schema-inventory"],
+                                     "tests/Verification/canonical_integration_runtime_001_test.py"),
+        ], catalogue_expansions, "INTENDED_RED shipped migration chain is catch-all or incomplete")
+
+        self.setUp(); self.use_repository_policy()
+        for path in [catalogue, assignment, unrelated]:
+            target = self.root / path; target.parent.mkdir(parents=True, exist_ok=True); target.write_text("before\n")
+        self.command("git", "add", ".", check=True); self.command("git", "commit", "-qm", "subjects", check=True)
+        self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
+        result = self.build([assignment]); self.assertEqual(0, result.returncode, result.stderr)
+        assignment_expansions = self.expansions()
+        self.assertEqual([
+            self.production_expected(assignment, "standalone-current-assignment",
+                                     ["standalone-current-assignment"],
+                                     "tests/InstallationProcess/control_engineer_assignment_001_test.php"),
+            self.production_expected(assignment, "standalone-current-assignment",
+                                     ["standalone-current-assignment", "current-assignment-selection"],
+                                     "tests/AssignmentOrderComposition/selection_native_authority_001_test.php"),
+            self.production_expected(assignment, "standalone-current-assignment",
+                                     ["standalone-current-assignment", "current-assignment-selection",
+                                      "current-assignment-runtime"],
+                                     "tests/Yii2/yii2_construction_control_preopening_001_test.php"),
+            self.production_expected(assignment, "standalone-current-assignment",
+                                     ["standalone-current-assignment", "current-assignment-selection",
+                                      "current-assignment-runtime"],
+                                     "tests/Yii2/yii2_control_engineer_assignment_001_test.php"),
+        ], assignment_expansions,
+           "INTENDED_RED shipped current-assignment chain is catch-all, incomplete, or cross-owned")
+
+        self.setUp(); self.use_repository_policy()
+        for path in [catalogue, assignment, unrelated]:
+            target = self.root / path; target.parent.mkdir(parents=True, exist_ok=True); target.write_text("before\n")
+        self.command("git", "add", ".", check=True); self.command("git", "commit", "-qm", "subjects", check=True)
+        self.base = self.command("git", "rev-parse", "HEAD", check=True).stdout.strip()
+        rejected = self.build([unrelated])
+        self.assertNotEqual(0, rejected.returncode, "INTENDED_RED unrelated protected surface inherited chain")
+        self.assertIn(f"PROTECTED_CAPABILITY_OWNER_MISSING: {unrelated}", rejected.stderr)
 
 
 if __name__ == "__main__":

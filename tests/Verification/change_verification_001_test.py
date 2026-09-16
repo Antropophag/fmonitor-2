@@ -298,8 +298,6 @@ class ChangeVerification(unittest.TestCase):
     def test_shipped_policy_has_concrete_boundaries_and_bounded_governance_focus(self):
         expected = {
             "app/PilotHttp/Action.php": ["php", "tests/InstallationProcess/pilot_http_auth_001_global_calls_test.php"],
-            "app/Infrastructure/Persistence/Store.php": ["php", "tests/Runtime/runtime_storage_001_test.php"],
-            "app/Otiz/Money.php": ["php", "tests/Otiz/snapshot_publication_001_test.php"],
         }
         for planned, required in expected.items():
             with self.subTest(planned=planned):
@@ -312,6 +310,15 @@ class ChangeVerification(unittest.TestCase):
                 result = self.plan(); self.assertEqual(0, result.returncode, result.stderr)
                 argvs = [x["argv"] for x in json.loads((self.root / "plan.json").read_text())["commands"]]
                 self.assertIn(required, argvs)
+        for planned in ["app/Infrastructure/Persistence/Store.php", "app/Otiz/Money.php"]:
+            with self.subTest(planned=planned):
+                self.setUp()
+                shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
+                self.copy_real_inventory()
+                self.input["planned_paths"] = [planned]
+                self.write_json("change.json", self.input)
+                result = self.plan(); self.assertNotEqual(0, result.returncode)
+                self.assertIn(f"PROTECTED_CAPABILITY_OWNER_MISSING: {planned}", result.stderr)
         self.setUp()
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
         self.copy_real_inventory()
@@ -329,7 +336,7 @@ class ChangeVerification(unittest.TestCase):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json", self.root / ".quality-graph/verification-policy.json")
         self.copy_real_inventory()
         (self.root / "app/PilotHttp/Action.php").write_text("before\n")
-        self.input["planned_paths"] = ["app/IdentityAccess/Command.php"]
+        self.input["planned_paths"] = ["app/PilotHttp/Action.php"]
         self.input["acceptances"][0]["tests"] = ["tests/Runtime/runtime_storage_001_test.php"]
         self.write_json("change.json", self.input)
         result = self.plan()
@@ -413,6 +420,13 @@ class ChangeVerification(unittest.TestCase):
         }
         shutil.copy2(ROOT / '.quality-graph/verification-policy.json', self.root / '.quality-graph/verification-policy.json')
         self.copy_real_inventory()
+        policy = json.loads((self.root / '.quality-graph/verification-policy.json').read_text())
+        policy['capability_ownership'].append({
+            'name': 'inspection-evidence-fixture-owner',
+            'patterns': ['app/InspectionEvidence/MariaDbYiiChecklist.php',
+                         'app/InspectionEvidence/MariaDbYiiChecklistAdmission.php'],
+            'verifiers': [], 'consumers': []})
+        self.write_json('.quality-graph/verification-policy.json', policy)
         (self.root / 'app/PilotHttp/Action.php').write_text('before\n')
         for owner in ['app/InspectionEvidence/MariaDbYiiChecklist.php', 'app/InspectionEvidence/MariaDbYiiChecklistAdmission.php', 'app/PilotHttp/ChecklistSync.php']:
             self.assertTrue((ROOT / owner).is_file(), 'consumer evidence must name a real owner')

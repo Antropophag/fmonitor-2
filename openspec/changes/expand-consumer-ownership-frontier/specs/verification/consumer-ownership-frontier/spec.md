@@ -15,6 +15,10 @@ Planner SHALL использовать минимальную repository-owned o
 - **WHEN** protected authoritative current-assignment capability изменён
 - **THEN** planner выбирает все его зарегистрированные direct и transitive consumers без full-suite selection
 
+#### Scenario: Shipped capabilities remain bounded
+- **WHEN** repository policy классифицирует canonical migration/catalogue и standalone current-assignment owners
+- **THEN** migration owner получает exact migration/frontier → recovery/current-schema → runtime-inventory witnesses, current-assignment owner получает exact native assignment → selection authority → Yii current-assignment witnesses, cross-capability verifiers отсутствуют, а unrelated protected surface без доказанного ownership fail closed
+
 #### Scenario: Local presentation-only change
 - **WHEN** изменение принадлежит только bounded presentation surface и не меняет protected semantic capability
 - **THEN** planner не добавляет consumer ownership frontier
