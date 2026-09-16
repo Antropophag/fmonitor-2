@@ -98,7 +98,7 @@ fi
 profile_run_args=()
 if [[ "$profile" == integration || "$profile" == browser ]]; then
     network_name=$(
-        cd "$root" || exit 2
+        cd "$materialized" || exit 2
         docker compose -f compose.test.yaml config --format json |
             python3 -c 'import json, sys
 try:
