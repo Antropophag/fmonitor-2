@@ -238,6 +238,33 @@ def explicit_outcome_markers(content):
     return [(match.group(1).decode("ascii"), match.start(1)) for match in pattern.finditer(content)]
 
 
+def intended_red_observation(stdout, stderr):
+    """Return the permitted marker channel, failing closed for wrapper metadata."""
+    command_prefix = b"RUN_IN_PROFILE_COMMAND "
+    result_prefix = b"RUN_IN_PROFILE_RESULT "
+    structured = command_prefix in stderr or result_prefix in stderr
+    if not structured:
+        return stdout + (b"\n" if stdout and stderr else b"") + stderr
+
+    position = stderr.rfind(result_prefix)
+    if position < 0:
+        return None
+    try:
+        encoded = stderr[position + len(result_prefix):].splitlines()[0]
+        result = json.loads(encoded)
+        observation = result["observation"]
+        stdout_bytes = observation["stdout_bytes"]
+        stderr_bytes = observation["stderr_bytes"]
+        if (not isinstance(stdout_bytes, int) or isinstance(stdout_bytes, bool) or
+                not isinstance(stderr_bytes, int) or isinstance(stderr_bytes, bool) or
+                stdout_bytes != len(stdout) or stderr_bytes != position):
+            return None
+    except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    child_stderr = stderr[:stderr_bytes]
+    return stdout + (b"\n" if stdout and child_stderr else b"") + child_stderr
+
+
 def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
             command_id=None, purpose=None, command_environment=None, acceptance_id=None,
             task=None, run_id=None):
@@ -277,6 +304,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
             raw_exit = process.returncode
             child_exit = 128 + (-raw_exit) if raw_exit < 0 else raw_exit
             text = stdout + b"\n" + stderr
+            observation = intended_red_observation(stdout, stderr)
             explicit = {name for name, _ in explicit_outcome_markers(text)}
             if "SETUP_FAILURE" in explicit:
                 outcome = "SETUP_FAILURE"
@@ -286,7 +314,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
                 outcome = "INTERRUPTED"
             elif child_exit == 0:
                 outcome = "GREEN"
-            elif intended_red and intended_red.encode() in text:
+            elif intended_red and observation is not None and intended_red.encode() in observation:
                 outcome = "INTENDED_RED"
             else:
                 outcome = "REGRESSION_FAILURE"

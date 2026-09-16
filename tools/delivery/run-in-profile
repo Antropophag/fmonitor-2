@@ -65,24 +65,37 @@ except (AttributeError, json.JSONDecodeError):
 fi
 
 started=$(python3 -c 'import time; print(time.time_ns())')
+observation_dir=$(mktemp -d "${TMPDIR:-/tmp}/fmonitor-profile-observation.XXXXXX") || exit 2
+observation_stdout=$observation_dir/stdout
+observation_stderr=$observation_dir/stderr
+trap 'rm -rf "$observation_dir"' EXIT
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --mount "type=bind,src=$root,dst=/workspace" \
     --workdir /workspace \
-    "$image_digest" "$@"
+    "$image_digest" "$@" >"$observation_stdout" 2>"$observation_stderr"
 status=$?
 finished=$(python3 -c 'import time; print(time.time_ns())')
+cat "$observation_stdout"
+cat "$observation_stderr" >&2
 
-python3 - "$git_sha" "$profile" "$image_digest" "$status" "$started" "$finished" "$@" <<'PY' >&2
-import json, sys
-git_sha, profile, image, status, started, finished, *argv = sys.argv[1:]
+python3 - "$git_sha" "$profile" "$image_digest" "$status" "$started" "$finished" \
+    "$observation_stdout" "$observation_stderr" "$@" <<'PY' >&2
+import json, pathlib, sys
+git_sha, profile, image, status, started, finished, stdout_path, stderr_path, *argv = sys.argv[1:]
+stdout = pathlib.Path(stdout_path).read_bytes()
+stderr = pathlib.Path(stderr_path).read_bytes()
 print("RUN_IN_PROFILE_RESULT " + json.dumps({
     "argv": argv,
     "duration_seconds": (int(finished) - int(started)) / 1_000_000_000,
     "exit_code": int(status),
     "git_sha": git_sha,
     "image_digest": image,
+    "observation": {
+        "stderr_bytes": len(stderr),
+        "stdout_bytes": len(stdout),
+    },
     "profile": profile,
 }, separators=(",", ":"), sort_keys=True))
 PY
