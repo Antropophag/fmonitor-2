@@ -79,3 +79,33 @@ The delta contains only the append-only prior Gate 5 correction review, correcte
 `APPROVED`
 
 Gate 5 approves the metadata-only delta and exact candidate source `e7fba36f9539e84bcb59bd2be67d9179c607fb2bcc93e94e60a04fca4d64b8da`. Exact-source GitHub CI and PR preparation remain subsequent steps; this verdict does not authorize merge, deployment, or settings changes.
+
+---
+
+## Exact-source CI portability correction — final delta review
+
+- Fixed point: commit `69b9e55d4a27d9816dd320ef9d565bb96785df64`.
+- Reviewed delta before this append: `tests/Delivery/fast_maintenance_lifecycle_162_test.py` plus the independent Gate 3 append in `reviews/tests/FAST-MAINTENANCE-LIFECYCLE-001.md`; binary diff SHA-256 `53083d4ff7a3c8a44f53943bfb4e554820a1ba9cb654c8d04117c67b6074fed5`.
+- Corrected test SHA-256: `0d429aec4f0ab797449b1661a9df19edf82a3454c1cce0feea3b25c2c6c82e62`.
+- CI evidence reviewed: Quality Graph run `35043123501`, exact head `69b9e55d4a27d9816dd320ef9d565bb96785df64`.
+- Focused reviewer rerun: `python3 tests/Delivery/fast_maintenance_lifecycle_162_test.py` — 11/11 GREEN; historical measurement unchanged.
+
+### CI inventory and root cause
+
+The complete run inventory shows `plan`, `fast`, `unit`, both integration shards, `e2e`, and `quality-results` GREEN. `governance` failed, `verify` then failed as the expected aggregate consequence, and the terminal Quality Graph check reflected that failure. The sole primary `REGRESSION_FAILURE` line is `tests/Delivery/fast_maintenance_lifecycle_162_test.py`.
+
+The failing test's 14 assertions consistently observed a CRITICAL/`planner_not_fast` disposable plan instead of its intended FAST plan. The isolated fixture copied and imported Python delivery modules before asking Git/planner for authoritative changed paths; on the runner those imports created unignored `tools/delivery/__pycache__` bytecode paths, which correctly matched the delivery-policy boundary and escalated the fixture. This is environment-dependent fixture contamination, not a product, planner, classifier, or lifecycle implementation failure.
+
+### Assessment
+
+No findings.
+
+The correction adds only conventional `__pycache__/` and `*.py[cod]` ignores to the disposable repository's committed `.gitignore`, alongside its existing fixture-only `/change.json` ignore. It cannot hide Python source changes or other delivery-policy files, and it mirrors the root repository and existing verification fixtures. The ignore file is committed before the fixture base, so it does not itself alter the candidate changed-path set. The Gate 3 append accurately records the bounded correction and keeps failed CI distinct from approval.
+
+There is no normative spec, harness implementation, planner/classifier, STANDARD/CRITICAL lifecycle, #107 admission, product-code, or historical-measurement change. The focused 11/11 result confirms the intended A–N behavior under explicit repository-local ignore semantics; it does not replace corrected exact-source CI.
+
+### Verdict
+
+`APPROVED`
+
+Gate 5 approves this test-fixture portability delta. Corrected exact-source CI remains required, and the failed run `35043123501` remains historical failure evidence. This verdict authorizes neither commit/push by the reviewer, merge, deployment, settings changes, nor publication before matching GREEN CI.

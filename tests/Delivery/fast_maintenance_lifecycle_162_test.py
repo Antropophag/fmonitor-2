@@ -95,7 +95,10 @@ class FastMaintenanceLifecycle(unittest.TestCase):
                 ("e2e", "python3", "tests/Verification/e2e_test.py", "e2e")]
         rows.sort(key=lambda row: (row[0], row[2], row[1], row[3]))
         (self.root / "tools/verification/suites.tsv").write_text("".join("\t".join(row) + "\n" for row in rows))
-        (self.root / ".gitignore").write_text("/change.json\n")
+        # Imports performed by the public harness create bytecode beside the
+        # copied modules on runners that do not have a global Python ignore.
+        # Keep that runtime byproduct out of the fixture's authoritative diff.
+        (self.root / ".gitignore").write_text("/change.json\n__pycache__/\n*.py[cod]\n")
         self.git("init", "-q")
         self.git("config", "user.email", "x@example.invalid")
         self.git("config", "user.name", "x")
