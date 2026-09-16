@@ -104,3 +104,20 @@ The sole textual conflict in `docs/operations/current-delivery-goal.md` was reso
 - Correction: compose the two already-approved contracts without broadening classification. Teach the structured parser the canonical seven-field result and validate `source_digest` as a non-empty/exact digest field; update only the real-wrapper fake Docker fixture so it supports the #123-A build/label/read-only invocation and still exercises the same #123-B behavioral assertions. Add or retain a direct assertion that a child marker in the real seven-field wrapper is admitted while argv/metadata-only markers remain rejected. Obtain the applicable independent test-delta review, then rerun this focused test plus the four #123-A package commands on one fresh exact source.
 
 No second post-merge finding was found. The current `CHANGES_REQUESTED` verdict is limited to P1 merge compatibility; it does not reopen the previously approved #123-A source/dependency composition or F1 correction. Exact-source CI must remain pending until the focused shared-harness regression is GREEN.
+
+---
+
+## P1 correction rereview
+
+- Test delta: `00c83c4d1dfd334ba86377751ac31daf85d2824c`, independently approved at Gate 3 by commit `c85c5338`.
+- Implementation correction: `60ebf58e75699944f5f1d9aa2f88eedf9ed31e69`.
+- Scope: P1 only; no classification precedence, product behavior, profile composition, or broader harness policy change.
+- Verdict: `APPROVED`.
+
+P1 is `RESOLVED`. `intended_red_observation()` now requires the exact canonical seven-field `RUN_IN_PROFILE_RESULT` schema and validates `source_digest` with the same 64-lowercase-hex shape emitted by #123-A. The parser still rejects missing, malformed, extra-field, exit-mismatched, and metadata-only provenance; it strips wrapper metadata and admits only the independent child stdout/stderr observation. A direct bounded probe confirmed a valid seven-field result returns the child observation, while an invalid digest or an extra field returns `None`.
+
+The renewed fixture models only the launcher mechanics introduced by #123-A: build args are retained for exact label responses, Composer-lock/source label inspections are answered from those actual args, read-only/tmpfs options are consumed, and the wrapper entrypoint is skipped before forwarding the unchanged child command. It neither injects an intended marker nor decides classification. The test also parses the real launcher result and independently requires its `source_digest` to be 64-hex.
+
+Focused verification `python3 tests/Verification/delivery_harness_001_test.py Harness.test_intended_red_provenance_cases_a_to_m` is GREEN, 1/1, in 6.475s on reviewer reproduction (root evidence reported 6.331s). The formerly failing real-wrapper child-marker case now reaches `INTENDED_RED`; argv/metadata-only, setup-failure, unrelated-failure, missing/malformed provenance, direct RED, and GREEN cases retain their prior outcomes.
+
+No new finding exists in the P1 delta. The post-main-merge Gate 5 delta is `APPROVED` at implementation commit `60ebf58e75699944f5f1d9aa2f88eedf9ed31e69`. This narrow approval restores compatibility between the already-approved #123-A result schema and merged #123-B provenance parser; publication still requires final exact-source CI under the repository workflow.
