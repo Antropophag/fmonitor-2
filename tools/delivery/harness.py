@@ -238,7 +238,7 @@ def explicit_outcome_markers(content):
     return [(match.group(1).decode("ascii"), match.start(1)) for match in pattern.finditer(content)]
 
 
-def intended_red_observation(stdout, stderr):
+def intended_red_observation(stdout, stderr, child_exit):
     """Return the permitted marker channel, failing closed for wrapper metadata."""
     command_prefix = b"RUN_IN_PROFILE_COMMAND "
     result_prefix = b"RUN_IN_PROFILE_RESULT "
@@ -246,22 +246,41 @@ def intended_red_observation(stdout, stderr):
     if not structured:
         return stdout + (b"\n" if stdout and stderr else b"") + stderr
 
-    position = stderr.rfind(result_prefix)
-    if position < 0:
+    positions = [match.start() for match in re.finditer(re.escape(result_prefix), stderr)]
+    result_position = None
+    expected_keys = {"argv", "duration_seconds", "exit_code", "git_sha",
+                     "image_digest", "profile"}
+    decoder = json.JSONDecoder()
+    for position in reversed(positions):
+        try:
+            encoded = stderr[position + len(result_prefix):].decode("utf-8")
+            result, consumed = decoder.raw_decode(encoded)
+            duration = result.get("duration_seconds") if isinstance(result, dict) else None
+            if (encoded[consumed:].strip() or not isinstance(result, dict) or
+                    set(result) != expected_keys or
+                    not isinstance(result["argv"], list) or
+                    not all(isinstance(value, str) for value in result["argv"]) or
+                    not isinstance(duration, (int, float)) or isinstance(duration, bool) or
+                    duration < 0 or
+                    not isinstance(result["exit_code"], int) or
+                    isinstance(result["exit_code"], bool) or
+                    result["exit_code"] != child_exit or
+                    not all(isinstance(result[key], str) and result[key]
+                            for key in ("git_sha", "image_digest", "profile"))):
+                continue
+        except (TypeError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+            continue
+        result_position = position
+        break
+    if result_position is None:
         return None
-    try:
-        encoded = stderr[position + len(result_prefix):].splitlines()[0]
-        result = json.loads(encoded)
-        observation = result["observation"]
-        stdout_bytes = observation["stdout_bytes"]
-        stderr_bytes = observation["stderr_bytes"]
-        if (not isinstance(stdout_bytes, int) or isinstance(stdout_bytes, bool) or
-                not isinstance(stderr_bytes, int) or isinstance(stderr_bytes, bool) or
-                stdout_bytes != len(stdout) or stderr_bytes != position):
-            return None
-    except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
-        return None
-    child_stderr = stderr[:stderr_bytes]
+
+    child_lines = []
+    for line in stderr[:result_position].splitlines(keepends=True):
+        if line.lstrip().startswith((command_prefix, result_prefix)):
+            continue
+        child_lines.append(line)
+    child_stderr = b"".join(child_lines)
     return stdout + (b"\n" if stdout and child_stderr else b"") + child_stderr
 
 
@@ -304,7 +323,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
             raw_exit = process.returncode
             child_exit = 128 + (-raw_exit) if raw_exit < 0 else raw_exit
             text = stdout + b"\n" + stderr
-            observation = intended_red_observation(stdout, stderr)
+            observation = intended_red_observation(stdout, stderr, child_exit)
             explicit = {name for name, _ in explicit_outcome_markers(text)}
             if "SETUP_FAILURE" in explicit:
                 outcome = "SETUP_FAILURE"
