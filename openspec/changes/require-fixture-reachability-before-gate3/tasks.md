@@ -15,6 +15,6 @@
 ## 3. Focused verification and review
 
 - [x] 3.1 Run only the planner-selected focused tooling checks plus OpenSpec strict validation and relevant architecture check; verify the five defect classes block, healthy intended RED advances, existing intended-RED provenance tests stay green, and no full local `make test`/`make verify` is run.
-- [ ] 3.2 Capture the complete exact-source candidate/package and obtain the planner-required independent final review from a non-author gpt-5.6-sol/low reviewer; verify all findings are resolved and the final verdict is explicit `APPROVED`.
+- [x] 3.2 Capture the complete exact-source candidate/package and obtain the planner-required independent final review from a non-author gpt-5.6-sol/low reviewer; verify all findings are resolved and the final verdict is explicit `APPROVED`.
 - [ ] 3.3 Push the separate branch and run the selected existing GitHub CI consumer once on the exact reviewed source; inventory every failed job and `REGRESSION_FAILURE` before any correction, and verify final CI is GREEN for that exact source.
 - [ ] 3.4 Prepare a separate PR-ready handoff recording base/source, actual authors, RED/GREEN evidence, review counts, focused commands, CI URL/status and exclusions; verify PR remains unmerged and then STOP.
