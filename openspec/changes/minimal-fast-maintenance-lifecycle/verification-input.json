@@ -1,0 +1,28 @@
+{
+  "change": "minimal-fast-maintenance-lifecycle",
+  "planned_paths": [
+    "tools/delivery/harness_context.py",
+    "tools/delivery/change-verification.py",
+    "tests/Delivery/fast_maintenance_lifecycle_162_test.py",
+    "specs/FAST-MAINTENANCE-LIFECYCLE-001.md",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/.openspec.yaml",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/proposal.md",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/design.md",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/specs/delivery/fast-maintenance-lifecycle/spec.md",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/tasks.md",
+    "openspec/changes/minimal-fast-maintenance-lifecycle/verification-input.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-162-fast-maintenance-delivery.md",
+    "docs/development-process.md",
+    "AGENTS.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "FAST-MAINTENANCE-LIFECYCLE-001",
+    "acceptance_id": "A-N-fast-maintenance-routing",
+    "spec_path": "specs/FAST-MAINTENANCE-LIFECYCLE-001.md",
+    "seam": "public harness prepare/state package routing and requirement freshness",
+    "tests": ["tests/Delivery/fast_maintenance_lifecycle_162_test.py"],
+    "gate3_expected": {"tests/Delivery/fast_maintenance_lifecycle_162_test.py": "INTENDED_RED"}
+  }]
+}
