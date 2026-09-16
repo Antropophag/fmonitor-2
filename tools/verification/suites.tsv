@@ -286,6 +286,7 @@ unit	python3	tests/Architecture/yii2_local_quickstart_boundary_001_test.py	unit
 unit	php	tests/AssignmentOrderComposition/selection_command_outcomes_001_test.php	unit
 unit	php	tests/AssignmentOrderComposition/selection_command_recovery_001_test.php	unit
 unit	php	tests/AssignmentOrderComposition/selection_command_tracer_001_test.php	unit
+unit	python3	tests/Delivery/canonical_live_admission_context_001_test.py	governance
 unit	python3	tests/Delivery/fast_maintenance_lifecycle_162_test.py	governance
 unit	php	tests/Deployment/bitrix_startup_config_001_test.php	governance
 unit	python3	tests/Deployment/yii2_imports_workforce_package_001_test.py	unit
