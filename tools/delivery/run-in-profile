@@ -22,12 +22,15 @@ set +a
 
 recipe=$root/tools/delivery/Dockerfile.focused-checks
 recipe_hash=$(sha256sum "$recipe" "$root/tools/delivery/dependencies.env" \
+    "$root/composer.json" "$root/composer.lock" \
     | sha256sum | cut -c1-16)
 image="fmonitor2-focused-${profile}:${recipe_hash}"
 git_sha=$(git -C "$root" rev-parse HEAD) || exit 2
+composer_lock_sha=$(sha256sum "$root/composer.lock" | cut -d' ' -f1) || exit 2
 
 docker build --quiet --target "$profile" --tag "$image" \
     --label "org.opencontainers.image.revision=$git_sha" \
+    --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
     --build-arg "PHP_IMAGE=$PHP_IMAGE" \
     --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
     --build-arg "NODE_VERSION=$NODE_VERSION" \
@@ -41,6 +44,12 @@ docker build --quiet --target "$profile" --tag "$image" \
     --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
     --file "$recipe" "$root" >/dev/null || exit $?
 image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
+image_lock_sha=$(docker image inspect "$image_digest" \
+    --format '{{index .Config.Labels "org.fmonitor.composer-lock-sha256"}}') || exit 2
+if [[ "$image_lock_sha" != "$composer_lock_sha" ]]; then
+    echo 'container Composer dependency identity does not match candidate lock' >&2
+    exit 2
+fi
 
 profile_run_args=()
 if [[ "$profile" == integration || "$profile" == browser ]]; then
@@ -69,8 +78,13 @@ docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --mount "type=bind,src=$root,dst=/workspace" \
+    --mount "type=volume,dst=/workspace/vendor,readonly" \
     --workdir /workspace \
-    "$image_digest" "$@"
+    "$image_digest" sh -c \
+        'test -r /workspace/vendor/autoload.php \
+            && test -r /workspace/vendor/yiisoft/yii2/Yii.php \
+            && exec "$@"' \
+        run-in-profile "$@"
 status=$?
 finished=$(python3 -c 'import time; print(time.time_ns())')
 
