@@ -155,7 +155,7 @@ function validatePostcreate(array $driver, array $manifest): void
 function deriveFacts(array $driver, array $manifest, array $auth): array
 {
     $o=$driver['observations']??[]; $db=$o['database']??[];
-    if (($db['schemaBefore']??null)!==[] || ($db['schemaVersion']??null)!==28 || count($db['migrationLedger']??[])!==28) emit('PROVISIONING_INVALID');
+    if (($db['schemaBefore']??null)!==[] || ($db['schemaVersion']??null)!==29 || count($db['migrationLedger']??[])!==29) emit('PROVISIONING_INVALID');
     $provision=$o['provision']??[];
     if (($provision['replay']['createdIds']??null)!==[] || ($provision['firstFactDigest']??null)!==($provision['replay']['userFactDigest']??null)) emit('PROVISIONING_INVALID');
     $containers=$o['containers']??[];
@@ -185,7 +185,7 @@ function deriveFacts(array $driver, array $manifest, array $auth): array
     sort($seen); sort($wanted); if ($seen!==$wanted || ($inventory['image']??null)!==$manifest['image']) emit('LEGACY_RUNTIME_REACHABLE');
     $commands=[]; foreach ($processes as $p) { $id=$p['containerId']??''; foreach (($driver['postcreate']['ids']['containers']??[]) as $name=>$cid) if ($id===$cid && in_array($name,['php','web','jobs-worker','jobs-scheduler'],true)) $commands[$name]=match($name){'php'=>'php-fpm','web'=>'nginx','jobs-worker'=>'php bin/yii jobs/worker','jobs-scheduler'=>'php bin/yii jobs/scheduler'}; }
     if (count($commands)!==4) emit('LEGACY_RUNTIME_REACHABLE');
-    return ['database'=>['fresh'=>true,'schemaVersion'=>28,'migrationCount'=>28], 'provisioning'=>['replayCreated'=>[],'sameFacts'=>true], 'legacyInputs'=>[], 'runtime'=>['healthy'=>array_keys($containers),'live'=>200,'ready'=>200,'jobsHealth'=>['ok'=>true,'counters'=>$o['jobsHealth']['body']['counters']??[]],'heartbeats'=>$heartbeats], 'golden'=>$golden, 'jobs'=>['chain'=>['enqueue','claim','complete','outbox-attempt','outbox-history'],'stableRead'=>true,'blockingRecovery'=>[]], 'closure'=>['imageHasRapidPilot'=>false,'loadedLegacy'=>[],'commands'=>$commands]];
+    return ['database'=>['fresh'=>true,'schemaVersion'=>29,'migrationCount'=>29], 'provisioning'=>['replayCreated'=>[],'sameFacts'=>true], 'legacyInputs'=>[], 'runtime'=>['healthy'=>array_keys($containers),'live'=>200,'ready'=>200,'jobsHealth'=>['ok'=>true,'counters'=>$o['jobsHealth']['body']['counters']??[]],'heartbeats'=>$heartbeats], 'golden'=>$golden, 'jobs'=>['chain'=>['enqueue','claim','complete','outbox-attempt','outbox-history'],'stableRead'=>true,'blockingRecovery'=>[]], 'closure'=>['imageHasRapidPilot'=>false,'loadedLegacy'=>[],'commands'=>$commands]];
 }
 
 function execute(array $argv, array $environment, bool $allowFailure=false, ?string $input=null): array

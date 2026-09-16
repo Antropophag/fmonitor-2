@@ -36,6 +36,7 @@ final class ProductionPilotMigrationCatalogue
             26=>DeadlineTransferCertificateSchemaMigration::class,
             27=>BitrixOrderDocumentLinksSchemaMigration::class,
             28=>ControlEngineerAssignmentDefinitionSchemaMigration::class,
+            29=>LegacyControlEngineerMigrationSchema::class,
         ];
     }
 }

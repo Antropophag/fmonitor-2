@@ -15,9 +15,13 @@ Yii2 `/pilot/admin/users` показывает безопасный legacy ID/st
 
 ## 2. Preview
 
-CLI принимает `preview --all-imported` либо 1..100 distinct canonical `--object-id=N`, обязательный `--operation-id=<lowercase UUIDv4>` и output path вне checkout. DB env/prefix contract наследует `PILOT-CASE-IMPORT-001`; web principal не имеет execute/write grants.
+CLI принимает `preview --all-imported` либо 1..100 distinct canonical `--object-id=N`, обязательный `--operation-id=<lowercase UUIDv4>` и output path вне checkout. DB env/prefix contract наследует `PILOT-CASE-IMPORT-001`: `FMONITOR_PROCESS_TABLE_PREFIX` и `FMONITOR_LEGACY_TABLE_PREFIX` читаются и валидируются независимо. Web principal не имеет execute/write grants.
 
 Preview одним snapshot читает target `fm2_installation_cases`, legacy `fm_maintable(id,responsstroicontrol)`, legacy users/roles, current identity links и standalone assignments. Он сортирует по object ID и выдаёт canonical UTF-8 JSON version/operation/sourceFingerprint/counts/rows и SHA-256 digest. Legacy и process fingerprints до/после совпадают.
+
+Canonical document использует integer `version: 1`; до добавления `digest` имеет exact key order `version,operationId,sourceFingerprint,counts,rows`; counts — `selected,ready,alreadyApplied,skipped,conflict`; row — `objectId,status,reasonCode,legacyUserId,localUserId`. Nullable значения сериализуются JSON `null`. `sourceFingerprint` равен SHA-256 canonical JSON массива отсортированных authority tuples `[objectId,caseId,responsstroicontrol,legacyUserStatus,legacyRoleStatus,linkId,localUserId,localUserStatus,localRoleStatus,currentAssignmentId,currentEngineerId,currentAssignmentSource]`. `digest` равен SHA-256 exact UTF-8 bytes canonical document без trailing newline; output-файл содержит document с добавленным последним key `digest` и одним trailing newline.
+
+Apply принимает только exact bytes этого output: полный key/type schema, порядок keys, отсутствие duplicate/additional keys и ровно один trailing newline проверяются до DB access. Pretty/reordered/non-newline representation отклоняется даже при digest от его re-encoding.
 
 Каждая строка имеет ровно один status/reason: `ready`; `already_applied`; `skipped` с `OBJECT_NOT_IMPORTED`, `LEGACY_ENGINEER_MISSING`, `LEGACY_USER_NOT_FOUND`, `LEGACY_USER_INACTIVE`, `IDENTITY_LINK_MISSING`, `LOCAL_ENGINEER_INELIGIBLE`; либо `conflict` с `IDENTITY_LINK_AMBIGUOUS`, `CURRENT_ASSIGNMENT_DIFFERS`, `SOURCE_CORRUPT`.
 
@@ -25,13 +29,14 @@ Preview одним snapshot читает target `fm2_installation_cases`, legacy
 
 ## 3. Apply и reconcile
 
-`apply` принимает exact preview path, operation ID и expected digest. Он проверяет canonical bytes/digest, повторно читает и блокирует все authority facts в deterministic order. Любой drift/stale/conflict отклоняет весь batch без assignment facts.
+`apply` принимает exact preview path, operation ID и expected digest, а также требует validated positive `FMONITOR_MIGRATION_ACTOR_USER_ID`. Actor/time не имеют fixture/default значений; UTC time поступает через application clock (`FMONITOR_MIGRATION_NOW_UTC` является explicit offline-operator clock input). Он проверяет canonical bytes/digest, повторно читает и блокирует все authority facts в deterministic order. Любой drift/stale/conflict отклоняет весь batch без assignment facts.
 
 Ready rows атомарно передаются batch method существующего ControlEngineerAssignment application owner. Immutable row сохраняет source `legacy_fmonitor`, operation ID, legacy object/user IDs, local engineer ID, actor identity, UTC time и request fingerprint. Ни CLI, ни controller не делают direct assignment INSERT. Signed orders/applications/originals/opening/checklist и legacy rows остаются byte-identical.
 
 Exact successful replay создаёт ноль rows. Отличающееся current native assignment всегда conflict и не заменяется. Confirmed rollback возвращает safe failure; unknown commit outcome возвращает `IMPORT_OUTCOME_UNKNOWN` и проверяется только `reconcile`. UNKNOWN не является GREEN/success и не запускает mutation retry.
 
-`reconcile` читает operation facts и возвращает deterministic terminal report для каждого selected object: applied/already_applied/skipped/conflict/unknown. Он не изменяет данные.
+`reconcile` читает operation facts и возвращает canonical JSON с key order `version,operationId,counts,rows`; integer `version: 1`; counts — `selected,applied,alreadyApplied,skipped,conflict,unknown`; row — `objectId,status,reasonCode` в порядке object ID. Status каждого selected object: applied/already_applied/skipped/conflict/unknown; `reasonCode` сохраняет preview reason для skipped/conflict и равен JSON `null` для applied/already_applied/unknown. Он не изменяет данные.
+Если operation ещё не зафиксирована, concurrent `reconcile` fail closed с exit `2` и exact reason `OPERATION_NOT_FOUND`; он не возвращает ложный terminal report.
 
 ## 4. Acceptance A–L
 

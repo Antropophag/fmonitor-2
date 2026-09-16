@@ -18,7 +18,7 @@ try {
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $db=new mysqli($host,$user,$password,$database,$port);$prefix='settle_';
     $migration=CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations());
-    assertSameValue([0,true,28],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null],'SETUP_FAILURE: isolated canonical DB reaches v24');
+    assertSameValue([0,true,29],[$migration['exitCode'],$migration['result']['ok']??null,$migration['result']['schemaVersion']??null],'SETUP_FAILURE: isolated canonical DB reaches v24');
     $db->query('CREATE TABLE settlement_ambient(id INT NOT NULL PRIMARY KEY,marker VARCHAR(30) NOT NULL) ENGINE=InnoDB');
     $db->query("INSERT INTO settlement_ambient VALUES(1,'preserve')");
     assertSameValue(true,class_exists(OtizSettlement::class),'INTENTIONAL_RED: OTIZ-SETTLEMENT-001 public application owner is absent after valid isolated DB setup');

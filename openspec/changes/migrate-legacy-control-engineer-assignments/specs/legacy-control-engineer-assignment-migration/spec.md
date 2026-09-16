@@ -7,6 +7,8 @@
 ### Requirement: Детерминированный read-only preview
 Offline migration seam SHALL принимать явный набор canonical legacy object IDs либо режим `all-imported`, читать только соответствующие `fm2_installation_cases`, legacy `fm_maintable.responsstroicontrol`, legacy users и подтверждённые local identity links и выдавать отсортированный deterministic preview. Preview SHALL включать counts и для каждого объекта один статус `ready`, `already_applied`, `skipped` или `conflict` со стабильными reason codes.
 
+Canonical JSON SHALL использовать key order и digest/source fingerprint algorithm из `LEGACY-CONTROL-ENGINEER-MIGRATION-001`, чтобы независимый consumer мог пересчитать оба SHA-256 без production code.
+
 #### Scenario: Готовое закрепление
 - **WHEN** объект уже импортирован, `responsstroicontrol` содержит существующий legacy user ID, этот ID однозначно связан с active local engineer и native assignment отсутствует
 - **THEN** preview содержит `ready` с object ID, legacy user ID, local user ID и fingerprint входных фактов без изменения process или legacy rows
@@ -43,4 +45,3 @@ Preview/apply SHALL быть offline operator seam с least-privilege DB princip
 #### Scenario: Неверная конфигурация или schema
 - **WHEN** отсутствует required schema/column, prefix/config malformed либо source недоступен
 - **THEN** команда завершает работу до mutation со стабильным technical outcome и без раскрытия секретов
-
