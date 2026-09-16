@@ -181,8 +181,8 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
             recipe = root / "tools/delivery/Dockerfile.focused-checks"
             text = recipe.read_text()
             changed = re.sub(
-                r"RUN composer install --working-dir=/workspace --no-interaction --no-scripts",
-                "RUN mkdir -p /workspace/vendor",
+                r"RUN composer install --working-dir=(/opt/fmonitor|/workspace) --no-interaction --no-scripts",
+                lambda match: f"RUN mkdir -p {match.group(1)}/vendor",
                 text,
                 count=1,
             )

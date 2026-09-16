@@ -29,3 +29,9 @@
 - Full RED log retained outside checkout in the active session evidence; no local full suite executed.
 
 Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
+
+### Gate 3 return 1
+
+- Review `reviews/tests/CONTAINER-COMPOSER-VISIBILITY-123-A.md`, reviewer commit `aa9a401b9689c0b0e099b885574175f926182bdc`: `CHANGES_REQUESTED`.
+- Blocking finding: case F fixture searched only the proposed `/workspace` install path, while RED source still installed at `/opt/fmonitor`; fixture failed before invoking public seam.
+- Root correction: fixture now recognizes either bounded install location and corrupts the dependency layer at the actual current location, so both pre-implementation RED and post-implementation regression traverse `run-in-profile`.
