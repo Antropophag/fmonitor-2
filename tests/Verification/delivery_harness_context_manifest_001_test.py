@@ -35,6 +35,14 @@ class ContextManifest(unittest.TestCase):
         index = ROOT / "tools/delivery/context-sections.json"
         if index.exists():
             (value.repo / "tools/delivery/context-sections.json").write_bytes(index.read_bytes())
+        policy_path = value.repo / ".quality-graph/verification-policy.json"
+        policy = json.loads(policy_path.read_text())
+        policy["capability_ownership"].append({
+            "name": "context-manifest-persistence-fixture-owner",
+            "patterns": ["app/InstallationProcess/MariaDbExample.php",
+                         "app/IdentityAccess/AuthorizeExample.php"],
+            "verifiers": [], "consumers": []})
+        policy_path.write_text(json.dumps(policy, ensure_ascii=False, sort_keys=True) + "\n")
         history = value.repo / "docs/operations/current-delivery-goal-history-old.md"
         history.write_text("historical goal that must not be mandatory inline\n")
         value.git("add", ".")

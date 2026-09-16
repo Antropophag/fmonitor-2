@@ -246,6 +246,37 @@ def validate_policy(policy):
             raise ValueError("semantic surface requires reason")
         if surface["category"] != "integration":
             raise ValueError("semantic surface requires integration category")
+    capabilities = policy.get("capability_ownership", [])
+    if not isinstance(capabilities, list):
+        raise ValueError("CAPABILITY_OWNERSHIP_MALFORMED")
+    capability_names = set()
+    for capability in capabilities:
+        if (not isinstance(capability, dict)
+                or set(capability) != {"name", "patterns", "verifiers", "consumers"}):
+            raise ValueError("CAPABILITY_OWNERSHIP_MALFORMED")
+        name = capability["name"]
+        if not isinstance(name, str) or not name:
+            raise ValueError("CAPABILITY_NAME_INVALID")
+        if name in capability_names:
+            raise ValueError("CAPABILITY_NAME_DUPLICATE")
+        capability_names.add(name)
+        for key, diagnostic in (
+                ("patterns", "CAPABILITY_PATTERNS_INVALID"),
+                ("verifiers", "CAPABILITY_VERIFIERS_INVALID"),
+                ("consumers", "CAPABILITY_CONSUMERS_INVALID")):
+            values = capability[key]
+            if (not isinstance(values, list) or len(values) != len(set(values))
+                    or any(not isinstance(value, str) or not value for value in values)):
+                raise ValueError(diagnostic)
+        for pattern in capability["patterns"]:
+            repo_path(pattern)
+        for verifier in capability["verifiers"]:
+            if not repo_path(verifier).is_file():
+                raise ValueError(f"CAPABILITY_VERIFIER_MISSING: {name}: {verifier}")
+    for capability in capabilities:
+        for consumer in capability["consumers"]:
+            if consumer not in capability_names:
+                raise ValueError(f"CAPABILITY_CONSUMER_UNKNOWN: {capability['name']}: {consumer}")
     consumers = policy.get("consumers", [])
     if not isinstance(consumers, list):
         raise ValueError("invalid consumer obligations")
@@ -315,6 +346,50 @@ def validate_policy_inventory(policy, inventory):
         for test in consumer["tests"]:
             if test not in inventory:
                 raise ValueError(f"consumer test is not registered: {test}")
+    for capability in policy.get("capability_ownership", []):
+        for verifier in capability["verifiers"]:
+            if verifier not in inventory:
+                raise ValueError(
+                    f"CAPABILITY_VERIFIER_UNREGISTERED: {capability['name']}: {verifier}"
+                )
+
+
+def consumer_frontier(effective, policy, inventory_entries, protected_paths):
+    capabilities = {item["name"]: item for item in policy.get("capability_ownership", [])}
+    inventory = {entry.path: entry for entry in inventory_entries}
+    expansions = []
+
+    def visit(changed_path, root_name, current_name, chain, visited):
+        capability = capabilities[current_name]
+        for verifier in sorted(capability["verifiers"]):
+            entry = inventory[verifier]
+            expansions.append({
+                "changed_path": changed_path,
+                "root_capability": root_name,
+                "consumer_chain": chain,
+                "verifier": verifier,
+                "argv": [entry.runtime, verifier],
+            })
+        for consumer in sorted(capability["consumers"]):
+            if consumer in visited:
+                continue
+            visit(changed_path, root_name, consumer, chain + [consumer], visited | {consumer})
+
+    for path in sorted(set(effective) & set(protected_paths)):
+        owners = sorted(
+            item["name"] for item in capabilities.values()
+            if any(fnmatch.fnmatchcase(path, pattern) for pattern in item["patterns"])
+        )
+        if not owners:
+            raise ValueError(f"PROTECTED_CAPABILITY_OWNER_MISSING: {path}")
+        if len(owners) != 1:
+            raise ValueError(f"PROTECTED_CAPABILITY_OWNER_AMBIGUOUS: {path}")
+        root_name = owners[0]
+        visit(path, root_name, root_name, [root_name], {root_name})
+    return sorted(expansions, key=lambda item: (
+        item["changed_path"], item["root_capability"], item["consumer_chain"],
+        item["verifier"], item["argv"],
+    ))
 
 
 def validate_argv(argv):
@@ -488,6 +563,7 @@ def build(base_ref, input_name):
         key=lambda argv: tuple(argv),
     )
     semantic_escalations = []
+    protected_paths = set()
     for surface in sorted(policy.get("semantic_surfaces", []), key=lambda item: item["name"]):
         matched_paths = sorted(
             path for path in effective
@@ -495,6 +571,7 @@ def build(base_ref, input_name):
         )
         if not matched_paths:
             continue
+        protected_paths.update(matched_paths)
         if not integration_checks:
             raise ValueError(
                 f"SEMANTIC_INTEGRATION_CLOSURE_UNAVAILABLE: {surface['name']}: integration"
@@ -507,6 +584,11 @@ def build(base_ref, input_name):
             "required_category": "integration",
             "added_checks": integration_checks,
         })
+    consumer_expansions = consumer_frontier(
+        effective, policy, inventory_entries, protected_paths
+    )
+    for expansion in consumer_expansions:
+        required_categories.add(inventory[expansion["verifier"]])
     consumer_tests = set()
     for path in effective:
         matches = [consumer for consumer in policy.get("consumers", [])
@@ -530,7 +612,8 @@ def build(base_ref, input_name):
     normalized_acceptances = []
     required = {"spec_id", "acceptance_id", "spec_path", "seam", "tests"}
     for acceptance in acceptances:
-        optional = {"gate3_expected", "seam_kind", "observable_dimensions"}
+        optional = {"gate3_expected", "seam_kind", "observable_dimensions",
+                    "fixture_reachability"}
         if (not isinstance(acceptance, dict) or not required <= set(acceptance)
                 or not set(acceptance) <= required | optional):
             raise ValueError("malformed acceptance mapping")
@@ -559,6 +642,24 @@ def build(base_ref, input_name):
             if (not isinstance(expected, dict) or set(expected) != set(tests)
                     or any(value not in {"INTENDED_RED", "GREEN"} for value in expected.values())):
                 raise ValueError("invalid Gate 3 expected outcomes")
+        reachability = acceptance.get("fixture_reachability")
+        if reachability is not None:
+            if not isinstance(reachability, dict) or not reachability:
+                raise ValueError("invalid fixture reachability declaration")
+            if not set(reachability) <= set(tests):
+                raise ValueError("fixture reachability test must be mapped by its acceptance")
+            normalized_reachability = {}
+            for test, declaration in reachability.items():
+                if (not isinstance(declaration, dict)
+                        or set(declaration) != {"boundary", "probe_kind"}
+                        or declaration.get("probe_kind") != "fixture_read_only"
+                        or not isinstance(declaration.get("boundary"), str)
+                        or not declaration["boundary"].strip()):
+                    raise ValueError("invalid fixture reachability declaration")
+                normalized_reachability[test] = {
+                    "boundary": declaration["boundary"],
+                    "probe_kind": "fixture_read_only",
+                }
         normalized = {key: acceptance[key] for key in required}
         normalized["tests"] = sorted(tests)
         dimension_contract = validate_observable_dimensions(acceptance, tests)
@@ -566,6 +667,9 @@ def build(base_ref, input_name):
             normalized.update(dimension_contract)
         if expected is not None:
             normalized["gate3_expected"] = {test: expected[test] for test in sorted(expected)}
+        if reachability is not None:
+            normalized["fixture_reachability"] = {
+                test: normalized_reachability[test] for test in sorted(normalized_reachability)}
         normalized_acceptances.append(normalized)
     if verification_lane == "FAST":
         missing = sorted(set(acceptance_tests) - set(inventory))
@@ -600,6 +704,8 @@ def build(base_ref, input_name):
         add(test_argv(test, policy["runtimes"]), "focused", "confirmed consumer obligation")
     for test in effective_tests:
         add(test_argv(test, policy["runtimes"], trusted_registered=True), "focused", "changed registered test")
+    for expansion in consumer_expansions:
+        add(expansion["argv"], "focused", "consumer ownership frontier")
     for argv in integration_checks if semantic_escalations else []:
         add(argv, "focused", "semantic integration closure")
     for category in sorted(required_categories):
@@ -660,6 +766,7 @@ def build(base_ref, input_name):
         "required_reviews": ["final"] if verification_lane == "FAST" else ["gate3", "final"],
         "selected_checks": selected_checks,
         "semantic_escalations": semantic_escalations,
+        "consumer_expansions": consumer_expansions,
         "acceptances": sorted(normalized_acceptances, key=lambda x: (x["spec_id"], x["acceptance_id"])),
         **({"dependency_workspaces": change.get("dependency_workspaces", [])} if typed else {}),
         "version": 2 if typed else 1,

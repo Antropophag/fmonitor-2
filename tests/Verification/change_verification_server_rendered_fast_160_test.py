@@ -99,6 +99,7 @@ class ServerRenderedFast(unittest.TestCase):
                 "fast_classes":{"bounded-server-rendered-presentation":{"companion_boundaries":["bounded-ui"],
                 "negative_boundaries_checked":self.NEGATIVE}},
                 "semantic_surfaces":[{"name":"current-state-authority","patterns":["app/CurrentState/**"],"category":"integration","reason":"#153A"}],
+                "capability_ownership":[{"name":"current-state-fixture-owner","patterns":["app/CurrentState/**"],"verifiers":[],"consumers":[]}],
                 "full_categories":["unit","integration","e2e","governance"],"full_argv":["make","test"]}
 
     def git(self, *args):

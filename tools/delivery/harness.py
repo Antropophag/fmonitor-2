@@ -288,7 +288,7 @@ def intended_red_observation(stdout, stderr, child_exit):
 
 def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
             command_id=None, purpose=None, command_environment=None, acceptance_id=None,
-            task=None, run_id=None):
+            task=None, run_id=None, fixture_reachability=None):
     home = evidence_home()
     for name in ("records", "stdout", "stderr"):
         (home / name).mkdir(parents=True, exist_ok=True)
@@ -318,8 +318,11 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
     try:
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous_handlers[signum] = signal.signal(signum, interrupted)
+        child_environment = os.environ.copy()
+        if fixture_reachability is not None:
+            child_environment["FMONITOR_FIXTURE_REACHABILITY"] = fixture_reachability
         process = subprocess.Popen(argv, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   start_new_session=True)
+                                   start_new_session=True, env=child_environment)
         try:
             stdout, stderr = process.communicate(timeout=timeout)
             raw_exit = process.returncode
@@ -327,12 +330,21 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
             text = stdout + b"\n" + stderr
             observation = intended_red_observation(stdout, stderr, child_exit)
             explicit = {name for name, _ in explicit_outcome_markers(text)}
+            reachability_markers = [line.decode(errors="replace")
+                                    for line in text.splitlines()
+                                    if line.decode(errors="replace").startswith("FIXTURE_REACHABLE:")]
+            expected_reachability = ("FIXTURE_REACHABLE: " + fixture_reachability
+                                     if fixture_reachability is not None else None)
             if "SETUP_FAILURE" in explicit:
                 outcome = "SETUP_FAILURE"
             elif "UNKNOWN" in explicit:
                 outcome = UNKNOWN
             elif raw_exit < 0:
                 outcome = "INTERRUPTED"
+            elif fixture_reachability is not None:
+                outcome = ("FIXTURE_REACHABLE" if child_exit == 0
+                           and reachability_markers == [expected_reachability]
+                           else "REGRESSION_FAILURE")
             elif child_exit == 0:
                 outcome = "GREEN"
             elif intended_red and observation is not None and intended_red.encode() in observation:
@@ -380,7 +392,7 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
         outcome = UNKNOWN
     elif purpose == "diagnostic" and outcome == "GREEN":
         outcome = "DIAGNOSTIC"
-    cli_exit = 0 if outcome == "GREEN" else (child_exit or 1)
+    cli_exit = 0 if outcome in {"GREEN", "FIXTURE_REACHABLE"} else (child_exit or 1)
     stdout_path.write_bytes(stdout); stderr_path.write_bytes(stderr)
     os.chmod(stdout_path, 0o600); os.chmod(stderr_path, 0o600)
     selected_reason = reason or _auto_reason(argv, str(ROOT), source, fixture_digest, environment)
@@ -396,13 +408,16 @@ def execute(argv, reason=None, fixture=None, intended_red=None, timeout=None,
               "command_id": command_id, "purpose": purpose,
               "command_environment": command_environment,
               "acceptance_id": acceptance_id, "command_blob": command_blob,
+              "fixture_reachability_boundary": fixture_reachability,
+              "fixture_reachability_probe_kind": ("fixture_read_only"
+                                                    if fixture_reachability is not None else None),
               "finished_at": time.time(), "duration_seconds": duration,
               "exit_code": child_exit, "cli_exit_code": cli_exit,
               "raw_child_returncode": raw_exit, "command_verdict": command_verdict,
               "applicability": applicability, "applicability_reason": applicability_reason,
               "outcome": outcome, "stdout_path": str(stdout_path),
               "stderr_path": str(stderr_path), "output_bytes": len(stdout) + len(stderr)}
-    if outcome == "GREEN":
+    if outcome in {"GREEN", "FIXTURE_REACHABLE"}:
         summary = {"id": identifier, "outcome": outcome, "record_path": str(record_path)}
     else:
         summary = {key: record[key] for key in ("id", "outcome", "exit_code", "cli_exit_code", "stdout_path", "stderr_path", "output_bytes")}
@@ -457,6 +472,7 @@ def main(argv=None):
         parser = argparse.ArgumentParser()
         parser.add_argument("--reason"); parser.add_argument("--fixture")
         parser.add_argument("--intended-red"); parser.add_argument("--timeout", type=float)
+        parser.add_argument("--fixture-reachability")
         parser.add_argument("--command-id"); parser.add_argument("--purpose", choices=("acceptance", "boundary", "category", "diagnostic"))
         parser.add_argument("--task"); parser.add_argument("--run-id")
         parser.add_argument("--command-environment"); parser.add_argument("--acceptance-id")
@@ -469,9 +485,11 @@ def main(argv=None):
                                else (command_profile(command) if args.command_id else None))
         if bool(args.command_id) != bool(args.purpose):
             parser.error("--command-id and --purpose must be supplied together")
+        if args.intended_red and args.fixture_reachability:
+            parser.error("--intended-red and --fixture-reachability are separate evidence modes")
         return execute(command, args.reason, args.fixture, args.intended_red, args.timeout,
                        args.command_id, args.purpose, command_environment, args.acceptance_id,
-                       args.task, args.run_id)[0]
+                       args.task, args.run_id, args.fixture_reachability)[0]
     if argv[:1] == ["report"]:
         parser = argparse.ArgumentParser()
         parser.add_argument("--task"); parser.add_argument("--run-id"); parser.add_argument("--candidate")
