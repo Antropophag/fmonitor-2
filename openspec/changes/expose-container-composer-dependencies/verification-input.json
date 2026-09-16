@@ -25,7 +25,7 @@
       ],
       "gate3_expected": {
         "tests/Verification/container_composer_visibility_123_a_test.py": "INTENDED_RED",
-        "tests/Verification/quality_graph_ci_setup_001_test.php": "GREEN"
+        "tests/Verification/quality_graph_ci_setup_001_test.php": "INTENDED_RED"
       }
     }
   ]
