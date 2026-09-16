@@ -226,9 +226,51 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
     def test_d_frozen_candidate_ignores_later_host_mutation(self) -> None:
         with Worktree("frozen") as root:
             write_marker(root, "frozen-value")
+            compose = root / "compose.test.yaml"
+            compose.write_text(compose.read_text() + "\nx-fm123-source: frozen-compose\n")
             with FrozenSnapshot(root, "frozen") as snapshot:
                 write_marker(root, "later-host-value")
                 self.assert_bootstrap(root, "frozen-value", snapshot=snapshot)
+                compose.write_text(compose.read_text().replace("frozen-compose", "later-host-compose"))
+                with tempfile.TemporaryDirectory(prefix="fm123-docker-probe-") as probe_dir:
+                    probe = Path(probe_dir)
+                    docker_log = probe / "compose-source.log"
+                    real_docker = shutil.which("docker")
+                    self.assertIsNotNone(real_docker, "SETUP_FAILURE: docker CLI unavailable")
+                    (probe / "docker").write_text(
+                        "#!/bin/sh\n"
+                        "set -eu\n"
+                        "if [ \"${1:-}\" = compose ]; then\n"
+                        "  compose_file=\n"
+                        "  previous=\n"
+                        "  for argument in \"$@\"; do\n"
+                        "    if [ \"$previous\" = -f ]; then compose_file=$argument; break; fi\n"
+                        "    previous=$argument\n"
+                        "  done\n"
+                        "  case $compose_file in /*) ;; *) compose_file=$PWD/$compose_file ;; esac\n"
+                        "  grep '^x-fm123-source:' \"$compose_file\" >> \"$FMONITOR_COMPOSE_SOURCE_LOG\"\n"
+                        "fi\n"
+                        "exec \"$FMONITOR_REAL_DOCKER\" \"$@\"\n"
+                    )
+                    (probe / "docker").chmod(0o755)
+                    env = {
+                        "FMONITOR_EXECUTION_SNAPSHOT": str(snapshot.path),
+                        "FMONITOR_REAL_DOCKER": str(real_docker),
+                        "FMONITOR_COMPOSE_SOURCE_LOG": str(docker_log),
+                        "PATH": str(probe) + os.pathsep + os.environ["PATH"],
+                    }
+                    for profile in ("integration", "browser"):
+                        result = run(
+                            [str(root / "tools/delivery/run-in-profile"), profile, "true"],
+                            root,
+                            env=env,
+                        )
+                        self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual(
+                        ["x-fm123-source: frozen-compose"] * 2,
+                        docker_log.read_text().splitlines(),
+                        "integration/browser compose config escaped the frozen candidate",
+                    )
 
     def test_e_candidate_deletion_and_mode_are_materialized(self) -> None:
         with Worktree("deletion-mode") as root:
