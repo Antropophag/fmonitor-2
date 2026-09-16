@@ -109,3 +109,37 @@ There is no normative spec, harness implementation, planner/classifier, STANDARD
 `APPROVED`
 
 Gate 5 approves this test-fixture portability delta. Corrected exact-source CI remains required, and the failed run `35043123501` remains historical failure evidence. This verdict authorizes neither commit/push by the reviewer, merge, deployment, settings changes, nor publication before matching GREEN CI.
+
+---
+
+## Second exact-source CI portability correction — final delta review
+
+- Fixed point: commit `d590e9c8c8485cf94ee0a50fcc488b2351e54e1d`.
+- Reviewed delta before this append: `tests/Delivery/fast_maintenance_lifecycle_162_test.py` and the append-only Gate 3 review; binary diff SHA-256 `0725ca9704e2152a2c5d45be95d37d4e882889f033ed3b0f9e32504e3dc61ec3`.
+- Corrected test SHA-256: `ec33210189d506dda5dbfd794412bce5c4bcf33d5530be83d55f761272aadd81`.
+- CI evidence reviewed: Quality Graph run `35044404987`, exact head `d590e9c8c8485cf94ee0a50fcc488b2351e54e1d`.
+- Controlling Gate 3 verdict: `APPROVED`; its intermediate incorrect-path finding is explicitly resolved and superseded in the same append.
+
+### CI inventory and root cause
+
+The complete run inventory shows `plan`, `fast`, `unit`, `e2e`, both integration shards, and `quality-results` GREEN. `governance` had the sole primary `REGRESSION_FAILURE`, `tests/Delivery/fast_maintenance_lifecycle_162_test.py`; `verify` and the terminal Quality Graph failure were aggregate consequences. Its only failing case was N, which raised `FileNotFoundError` while launching the external `openspec` executable absent from the runner.
+
+### Assessment
+
+No findings.
+
+Case N still unconditionally proves the public legacy input routes `OPENSPEC_REQUIRED` with the exact normal-route reason and that the complete five-artifact OpenSpec change set exists: proposal, design, tasks, verification input, and the correctly located delta spec. Only invocation of an unavailable external CLI is skipped. When `openspec` is present, the test still requires real `status --json`, schema `spec-driven`, and strict validation success.
+
+Reviewer verification is GREEN in both environments:
+
+- ordinary `PATH`: focused suite 11/11, including real OpenSpec status/strict validation;
+- `PATH=/usr/bin:/bin`: focused suite 11/11, exercising the absent-CLI branch after all routing/artifact assertions;
+- standalone `openspec validate minimal-fast-maintenance-lifecycle --strict`: GREEN.
+
+The historical measurement is unchanged. The correction neither weakens `OPENSPEC_REQUIRED`, removes lifecycle artifacts, nor changes a normative spec, harness implementation, planner/classifier, STANDARD/CRITICAL behavior, #107 admission, or product code.
+
+### Verdict
+
+`APPROVED`
+
+Gate 5 approves this bounded test-portability correction. Corrected exact-source CI remains required, and run `35044404987` remains retained failure evidence. This verdict authorizes neither implementation beyond the reviewed delta, commit/push by the reviewer, merge, deployment, settings changes, nor publication before matching GREEN CI.

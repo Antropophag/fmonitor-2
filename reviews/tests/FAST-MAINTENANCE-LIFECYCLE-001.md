@@ -198,3 +198,44 @@ The local rerun exercises all A–N groups, including exact declared-RED identit
 `APPROVED`
 
 Gate 3 approves this exact test-only portability delta. Any further normative or executable-test change requires renewed independent review. This verdict authorizes neither merge, deployment, settings change, nor publication before corrected exact-source CI.
+
+---
+
+## Second exact-source CI portability correction — Gate 3 review
+
+- Trigger: exact-source run `35044404987`; plan, fast, unit, e2e, both integration shards, and quality-results GREEN; governance's sole primary `REGRESSION_FAILURE` was case N raising `FileNotFoundError` because the runner lacks the external `openspec` executable; verify failed only as aggregate consequence.
+- Reviewed delta: conditional external CLI execution plus an unconditional artifact-set assertion in `tests/Delivery/fast_maintenance_lifecycle_162_test.py:394-412`.
+- Local evidence: `openspec validate minimal-fast-maintenance-lifecycle --strict` GREEN; focused suite rerun reaches 10 passing groups and fails case N on its new artifact assertion.
+- Verdict: `CHANGES_REQUIRED`.
+
+### Finding
+
+1. **HIGH — the unconditional delta asserts the wrong delta-spec path and fails in every environment.** Location: `tests/Delivery/fast_maintenance_lifecycle_162_test.py:402`. The test expects `openspec/changes/minimal-fast-maintenance-lifecycle/specs/fast-maintenance-lifecycle/spec.md`, but the actual complete artifact is `openspec/changes/minimal-fast-maintenance-lifecycle/specs/delivery/fast-maintenance-lifecycle/spec.md`. The reviewer reran the suite with `openspec` available; case N fails before the availability branch with that exact false assertion. Correct the repository-relative path and rerun the complete focused suite before preparing the CI correction.
+
+### Remaining assessment
+
+The portability strategy itself is sound. Case N continues to require the public legacy input to route `OPENSPEC_REQUIRED` with its exact reason. Unconditional checks for proposal, design, tasks, verification input, and the correct delta spec preserve the presence of the existing OpenSpec workflow on runners without the optional CLI. When the executable is available, real status/schema and strict validation remain mandatory. Returning only after the complete artifact set is established does not weaken STANDARD/CRITICAL routing, generate OpenSpec automatically, or claim strict-validation evidence where the dependency is absent.
+
+No other finding was identified in this bounded delta. CI and publication remain non-GREEN; no merge, deployment, or settings action is authorized.
+
+### Delta verdict
+
+`CHANGES_REQUIRED`
+
+Fix only the incorrect delta-spec path, capture a GREEN focused rerun, and return the test-only correction for independent rereview.
+
+### Immediate corrected-path rereview — controlling verdict
+
+The draft finding is resolved before completion of this review. The current diff asserts the actual delta-spec path `openspec/changes/minimal-fast-maintenance-lifecycle/specs/delivery/fast-maintenance-lifecycle/spec.md`.
+
+Reviewer evidence against the corrected test SHA-256 `ec33210189d506dda5dbfd794412bce5c4bcf33d5530be83d55f761272aadd81`:
+
+- `python3 tests/Delivery/fast_maintenance_lifecycle_162_test.py` — 11/11 GREEN;
+- `openspec validate minimal-fast-maintenance-lifecycle --strict` — GREEN;
+- historical measurement unchanged and complete.
+
+No findings remain. The availability branch skips only invocation of an absent external executable after public normal routing and all five required OpenSpec artifacts are proven present. Environments with the CLI continue to require real `status` schema and strict validation.
+
+`APPROVED`
+
+This is the controlling verdict for the second CI portability correction. Corrected exact-source CI remains required; merge, deployment, settings changes, and publication are not authorized by this review.

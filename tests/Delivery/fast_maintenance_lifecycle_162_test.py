@@ -396,11 +396,18 @@ class FastMaintenanceLifecycle(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("OPENSPEC_REQUIRED", package["lifecycle"]["route"])
         self.assertEqual("lifecycle_intent_not_fast_maintenance", package["lifecycle"]["reason"])
-        status = subprocess.run(["openspec", "status", "--change", "minimal-fast-maintenance-lifecycle", "--json"],
+        change = ROOT / "openspec/changes/minimal-fast-maintenance-lifecycle"
+        self.assertTrue(all((change / name).is_file() for name in
+                            ("proposal.md", "design.md", "tasks.md", "verification-input.json")))
+        self.assertTrue((change / "specs/delivery/fast-maintenance-lifecycle/spec.md").is_file())
+        openspec = shutil.which("openspec")
+        if openspec is None:
+            return
+        status = subprocess.run([openspec, "status", "--change", "minimal-fast-maintenance-lifecycle", "--json"],
                                 cwd=ROOT, text=True, capture_output=True)
         self.assertEqual(0, status.returncode, status.stderr)
         self.assertEqual("spec-driven", json.loads(status.stdout)["schemaName"])
-        validation = subprocess.run(["openspec", "validate", "minimal-fast-maintenance-lifecycle", "--strict"],
+        validation = subprocess.run([openspec, "validate", "minimal-fast-maintenance-lifecycle", "--strict"],
                                     cwd=ROOT, text=True, capture_output=True)
         self.assertEqual(0, validation.returncode, validation.stderr)
 
