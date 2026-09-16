@@ -47,3 +47,9 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - First executor commits retained: `029673a2`, `03d81c98`, `503e12a0`. They proved Yii/dependency visibility and lock/corruption behavior, but nested volume created an empty host `vendor/`; no completion was claimed and the mountpoint was removed.
 - Owner decision 2026-09-16 explicitly authorizes bounded verification source-layout change only: reuse existing harness frozen snapshot, materialize exact candidate inside container-owned read-only source, retain separate locked dependency layer and no host application bind/dependency path.
 - Root delta authorship: updated OpenSpec/design, executable spec A–O, newline oracle and directly related exact-source test adaptation. Previous Gate 3 approval does not approve this delta; a new delta review is required before implementation resumes.
+
+### Gate 3 source-layout delta return 1
+
+- Review commit `5c3e2671b313fbbb9ef397048d50eca64a9faa1c`: `CHANGES_REQUESTED` D1.
+- Finding: default automatic-snapshot N compared container-reported digests only with one another, creating a circular oracle.
+- Root correction: compute expected executable digest independently with existing host-side `harness.py source_details()` before launcher invocation, then compare container env, compact evidence and image label to that frozen expectation.

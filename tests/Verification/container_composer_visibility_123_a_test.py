@@ -174,6 +174,7 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
     def assert_bootstrap(
         self, root: Path, expected_marker: str, profile: str = "governance", snapshot: FrozenSnapshot | None = None
     ) -> dict[str, object]:
+        expected_source = snapshot.executable_digest if snapshot else str(source_details(root)["executable_digest"])
         result = bootstrap(root, profile, snapshot.path if snapshot else None)
         self.assertEqual(
             0,
@@ -198,7 +199,6 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
             r"^[0-9a-f]{64}$",
             "INTENDED_RED CCV123A-01 frozen executable source identity is unavailable",
         )
-        expected_source = snapshot.executable_digest if snapshot else payload["source_digest"]
         self.assertEqual(expected_source, payload["source_digest"])
         self.assertEqual(expected_source, record.get("source_digest"), "executed source evidence")
         label = run(
