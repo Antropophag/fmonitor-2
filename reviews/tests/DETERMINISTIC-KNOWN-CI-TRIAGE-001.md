@@ -179,3 +179,22 @@ The native fixture now uses the independently reproduced `gh run view --log` lin
 The fresh run is deterministic and setup-independent. Eight tests pass, including the previously RED e2e setup case. The sole failure is the native collector assertion: classification already fails closed, failed-job inventory is present, but `regression_failure_inventory` is empty instead of the two exact expected objects. There is no fixture, network, import, timeout or environmental failure. This precisely reproduces the Gate 5 real-seam parsing defect.
 
 No new finding is introduced. Gate 3 remains `APPROVED` for the narrow parser implementation correction and subsequent Gate 5 rereview. This verdict covers the root-owned test delta only, not production code.
+
+---
+
+## Gate 3 test-delta rereview v8 — admission-alias exit semantics
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review` (gpt-5.6-sol/low)
+- Test delta author: root
+- Reviewed source: base commit `11f0fcb446d8fbd0cbfa2c88caf2e0888b9819cf`; candidate source `ec28ad4a2d14fee1a7891d6e4062b27aa730c63af794b49ee58406f617fbcd4f`; package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T031440Z-50e7bf3f74/package.json`; package SHA-256 `2b1ab275cff1232d6e1d6e92f5d3776466549743cd9c35f63008bcca24e9a6ea`; snapshot manifest SHA-256 `fdf41f7638ec2fcfed3ce62aadfb61797a8818c37a5326b48dc3ee02eaa97403` (patch SHA-256 `5d654f4e488a4138b87a22fbdeda80f59eca00cb1936f2f5a51581169c085d01`)
+- Verification plan: CRITICAL; required reviews `gate3`, `final`; plan SHA-256 `1c9deb25e0a48fc92250473e18a76693ba744f985b392aa72875afb10504f188`
+- Retained RED: `python3 tests/Verification/delivery_harness_ci_triage_001_test.py`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789528468859455000-abe64048a0ff4da5b384d9c060fe949f.json`; exit 1 with exactly one intended failure
+- Verdict for test delta: `APPROVED`
+
+### Assessment
+
+The changed assertion restores the established public alias contract rather than changing T03 classification semantics. For an explicit observation, `admission`, `state`, `wait` and `prepare-merge` expose the same admission result and exit success only when `merge_ready` is true; `tests/Verification/delivery_execution_107_i1_test.py:57-74` independently requires equal alias return codes and nonzero when merge is not ready. Binding T03's public helper to `value['merge_ready']` (`tests/Verification/delivery_harness_ci_triage_001_test.py:107-108`) therefore prevents triage from weakening existing admission/review/preflight gates merely because CI itself is successful.
+
+The fresh RED is deterministic and setup-independent. Eight T03 tests pass. The sole failure is the successful same-source retry/history case: CI status is success, but reviews/admission remain insufficient and `merge_ready=false`; current code incorrectly exits 0 instead of the required 1. There is no fixture, import, network, timeout or environmental failure. This precisely catches the exact-source CI regression also exposed by the existing delivery-execution alias suite.
+
+No finding remains in this test delta. Gate 3 is `APPROVED` for the narrow implementation correction and subsequent independent Gate 5/CI verification. This approval does not approve production code or reinterpret a CI diagnostic as admission.

@@ -23,6 +23,7 @@
 - Corrective focused GREEN: triage `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789526994377301000-f901258f5b404fc98d27c2f97afe4dda.json`; change verification `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789527007704855000-36cbd151feb14394bb80bd0c51616c55.json`.
 - Second Gate 5 return proved that real `gh run view --log` prefixes machine messages with job/step/timestamp columns. Gate 3 approved the realistic fixture; the executor added an exact three-column parser, and Gate 5 v3 independently reproduced it against live PR #144 evidence.
 - Final pre-publication focused GREEN: triage `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789527377495643000-bbdaf482cb4b470dae9bb7a9d09d2447.json`; change verification `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789527382609415000-1193a09609f94e4e90d63bc6392db125.json`.
+- First exact-source CI run `35050060163` on commit `3137b47f8efe477ddb3a5b8dac2d313c203a7a1c` failed in `unit`, with downstream `verify`. Public triage returned `UNKNOWN`, retry denied, complete failed-job inventory retained, and zero diagnostic log payloads were materialized before that decision. Normal bounded triage then found `delivery_execution_107_i1_test.py` proving that the new explicit-observation `state`/`wait` exit override had broken the pre-existing admission-alias contract. Gate 3 approved the corrective RED and the executor removed only that override; no same-source retry was attempted.
 
 ## Verification policy
 

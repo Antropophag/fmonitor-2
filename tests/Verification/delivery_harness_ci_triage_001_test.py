@@ -104,8 +104,8 @@ class PublicCiTriage(unittest.TestCase):
         self.assertEqual(EXACT_KEYS, set(value['ci']['triage']['exact']))
         self.assertEqual(MEASUREMENT_KEYS, set(value['ci']['triage']['measurement']))
         self.assertEqual(SIGNATURE_IDS, value['ci']['triage']['known_signature_ids'])
-        self.assertEqual(0 if value['ci']['status'] == 'SUCCESS' else 1,
-                         result.returncode)
+        self.assertEqual(0 if value['merge_ready'] else 1, result.returncode,
+                         'triage must preserve existing admission alias exit semantics')
         return result, value, value['ci']['triage']
 
     def assert_unknown(self, observation):

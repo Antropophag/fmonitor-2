@@ -85,3 +85,36 @@ No local canonical full suite was run. The planner-selected full integration com
 No findings remain. The candidate implements one closed two-signature classifier through the existing `state`/`wait` seam; binds exact repository/PR/run/attempt/job/check/head/candidate facts; distinguishes integration/e2e preflight setup from product failures; fails closed for malformed, stale, generic and ambiguous neighbors; permits at most one attempt-1 same-source retry; retains prior-attempt history and complete diagnostic inventories; and keeps diagnostics separate from admission. It adds no broad semantic regex/LLM classifier, store, waiter, publisher/workflow permission, dispatch, product behavior, FAST classifier, merge or deployment action. Measurement remains limited to materialized diagnostic payloads, model triage steps and automatic retry count, with token usage honestly `UNKNOWN`.
 
 Gate 5 is `APPROVED` for the exact candidate above. This approval does not substitute for the required exact committed-source GitHub CI result and authorizes no merge, deployment or settings change.
+
+---
+
+## Gate 5 rereview v4 — exact-source CI correction
+
+- Reviewer: independent Gate 5 agent `/root/gate5_review` (authored no reviewed artifact)
+- Reviewed base commit: `3137b47f8efe477ddb3a5b8dac2d313c203a7a1c`
+- Reviewed candidate source: `ac18c11d2d009d2da23b36e653709876858edf0bbafb8c006d5d872d88847ec6`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T032030Z-e7b4d6bc45/package.json`
+- Snapshot patch SHA-256: `343211a75b1a9a30b1b0cc9fc9d9706bb20a278646b55596248b5994c2b791e0`
+- Verification plan SHA-256: `2c00af0fafeb4f98a659c0a9e92454628e1d95134f6ae275b352c19fd49465ac`; CRITICAL with required reviews `gate3`, `final`
+- Gate 3 test-delta rereview v8: `APPROVED`
+- Superseding verdict: `APPROVED`
+
+### Failed-CI disposition
+
+The first exact-source CI run `35050060163` on commit `3137b47f8efe477ddb3a5b8dac2d313c203a7a1c` had one primary failed job, `unit` (`104648309184`), plus downstream aggregate `verify` (`104650909742`) and graph result `Quality Graph` (`104651097052`). The complete unit log identifies only `tests/Verification/delivery_execution_107_i1_test.py`: 23 assertions received exit 1 from the `state` alias where the established admission alias contract expected parity with `admission` and exit 0 for those merge-ready observations. `verify` then reported only the expected aggregate consequence of unit failure. No product, integration, e2e, governance, setup or known-signature failure was present.
+
+The T03 classifier disposition was correct: the failed job was outside both closed known signatures, so classification remained `UNKNOWN`, retry was denied, complete failed-job references were retained, and no diagnostic job-log payload was materialized before that decision. No same-source retry was attempted. Normal bounded triage, rather than signature inference, identified the deterministic compatibility regression.
+
+### Correction and verification
+
+The implementation delta removes only the two-line `state`/`wait` CI-status exit override from `command_admission`; all explicit-observation aliases again return success exactly when the existing admission result is `merge_ready`. This preserves diagnostic/admission separation: a successful retry may make CI status successful, but cannot make an unreviewed or otherwise inadmissible candidate exit successfully. The T03 test now asserts that inherited alias contract rather than the incompatible CI-status override. No classifier, signature, collection, history, retry, publisher, workflow or authorization behavior changed.
+
+All correction evidence binds start/end candidate source `ac18c11d2d009d2da23b36e653709876858edf0bbafb8c006d5d872d88847ec6` and executable source `ef59ecf74935b760b9b86aaf6f457262a0e5912616eacd300265eeb0fa3fe820`:
+
+- `python3 tests/Verification/delivery_harness_ci_triage_001_test.py`: GREEN, `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789528711790317000-6e1619557b3d48c490cecf7555b5d508.json`
+- `python3 tests/Verification/change_verification_001_test.py`: GREEN, `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789528787936580000-dd4238eac0b8424182516ff7a3b2fae3.json`
+- `python3 tests/Verification/delivery_execution_107_i1_test.py`: GREEN, 18/18 tests, `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789528719613804000-b5ba31340796469b8f5c8a25aeb9975c.json`
+
+### Final assessment
+
+No findings remain. The correction is the minimum compatible change, preserves the full approved T03 contract and resolves the complete observed CI regression without misclassifying it or spending the one-retry permission. Gate 5 is `APPROVED` for candidate `ac18c11d2d009d2da23b36e653709876858edf0bbafb8c006d5d872d88847ec6`. A fresh exact committed-source GitHub CI result is still required; this review authorizes no merge, deployment or settings change.

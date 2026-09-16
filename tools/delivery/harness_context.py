@@ -444,8 +444,6 @@ def _compute_state(helpers):
 def command_admission(args, helpers):
     result = _admit(helpers, _load_observation(args.observation))
     _json(result)
-    if args.command in {"state", "wait"}:
-        return 0 if result["ci"]["status"] == "SUCCESS" else 1
     return 0 if result["merge_ready"] else 1
 
 
