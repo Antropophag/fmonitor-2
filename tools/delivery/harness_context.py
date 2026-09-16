@@ -605,7 +605,10 @@ def _admission_context(helpers, active=None):
     for gate in plan.get("required_reviews", []):
         gate_results = [item for item in results if isinstance(item, dict)
                         and item.get("gate") == gate]
-        exact = [item for item in gate_results
+        subject_results = [item for item in gate_results
+                           if isinstance(item.get("binding"), dict)
+                           and item["binding"].get("change") == binding["change"]]
+        exact = [item for item in subject_results
                  if item.get("binding") == {**expected, "gate": gate,
                                              "reviewer_role": "reviewer"}]
         unique = {json.dumps(item, ensure_ascii=True, sort_keys=True,
@@ -614,7 +617,7 @@ def _admission_context(helpers, active=None):
             item = next(iter(unique.values()))
             reviews.append({**item, "status": "CURRENT",
                             "current_verdict": item.get("verdict")})
-        elif gate_results:
+        elif subject_results:
             reviews.append({"gate": gate, "status": "STALE", "verdict": None,
                             "current_verdict": None})
         else:

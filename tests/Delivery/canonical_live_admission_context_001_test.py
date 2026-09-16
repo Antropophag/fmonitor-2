@@ -225,6 +225,18 @@ class CanonicalLiveAdmissionContext(unittest.TestCase):
                 gate3 = next(item for item in foreign["admission_context"]["reviews"] if item["gate"] == "gate3")
                 self.assertNotEqual("CURRENT", gate3["status"])
 
+    def test_i_foreign_task_review_is_missing_for_new_subject(self):
+        self.prepare(change="task-a")
+        self.assertEqual(0, self.record().returncode)
+
+        self.prepare(change="task-b")
+        _, task_b = self.state()
+        gate3 = next(item for item in task_b["admission_context"]["reviews"]
+                     if item["gate"] == "gate3")
+        self.assertEqual("task-b", task_b["admission_context"]["binding"]["change"])
+        self.assertEqual("MISSING", gate3["status"])
+        self.assertNotIn("APPROVED", json.dumps(gate3))
+
     def test_rejected_review_inputs_fail_closed_and_duplicate_is_idempotent(self):
         self.prepare()
         cases = [
