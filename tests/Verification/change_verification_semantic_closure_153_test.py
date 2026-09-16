@@ -62,6 +62,11 @@ class SemanticClosure(unittest.TestCase):
                 self.surface("domain-application-contract", ["app/Domain/Application.php"], "domain application contracts affect downstream consumers"),
                 self.surface("recovery-representation", ["app/RuntimeRestore/**"], "persisted recovery representation requires integration closure"),
             ],
+            "capability_ownership": [{
+                "name": "semantic-closure-fixture-owner",
+                "patterns": ["app/Domain/CurrentState.php", "app/Domain/Application.php",
+                             "app/Infrastructure/Persistence/**", "migrations/**", "app/RuntimeRestore/**"],
+                "verifiers": [], "consumers": []}],
             "verification_lanes": {"FAST": ["bounded-ui"], "CRITICAL": []},
             "full_categories": ["unit", "integration", "e2e", "governance"],
             "full_argv": ["make", "test"],
@@ -176,6 +181,12 @@ class SemanticClosure(unittest.TestCase):
     def test_repository_evidenced_yii_application_contract_is_protected(self):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json",
                      self.root / ".quality-graph/verification-policy.json")
+        policy = json.loads((self.root / ".quality-graph/verification-policy.json").read_text())
+        policy["capability_ownership"].append({
+            "name": "feedback-application-fixture-owner",
+            "patterns": ["app/YiiRuntime/FeedbackApplication.php"],
+            "verifiers": [], "consumers": []})
+        self.write_json(".quality-graph/verification-policy.json", policy)
         shutil.copy2(ROOT / "tools/verification/suites.tsv",
                      self.root / "tools/verification/suites.tsv")
         for row in (self.root / "tools/verification/suites.tsv").read_text().splitlines():

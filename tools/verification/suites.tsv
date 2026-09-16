@@ -417,6 +417,7 @@ unit	python3	tests/Usage/usage_aggregation_001_test.py	governance
 unit	python3	tests/Verification/architecture_file_size_advisory_001_test.py	governance
 unit	python3	tests/Verification/architecture_guard_001_test.py	unit
 unit	python3	tests/Verification/change_verification_001_test.py	governance
+unit	python3	tests/Verification/change_verification_consumer_frontier_153_test.py	governance
 unit	python3	tests/Verification/change_verification_semantic_closure_153_test.py	governance
 unit	python3	tests/Verification/change_verification_sensitive_offline_132_test.py	governance
 unit	python3	tests/Verification/change_verification_server_rendered_fast_160_test.py	governance

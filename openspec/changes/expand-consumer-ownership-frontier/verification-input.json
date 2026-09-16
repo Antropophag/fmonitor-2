@@ -1,0 +1,33 @@
+{
+  "change": "expand-consumer-ownership-frontier",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/current-delivery-goal-history-issue-123-2026-09-16-issue153b-transition.md",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/expand-consumer-ownership-frontier/design.md",
+    "openspec/changes/expand-consumer-ownership-frontier/proposal.md",
+    "openspec/changes/expand-consumer-ownership-frontier/specs/verification/consumer-ownership-frontier/spec.md",
+    "openspec/changes/expand-consumer-ownership-frontier/tasks.md",
+    "openspec/changes/expand-consumer-ownership-frontier/verification-input.json",
+    "reviews/code/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
+    "reviews/tests/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
+    "specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
+    "tests/Verification/change_verification_consumer_frontier_153_test.py",
+    "tests/Verification/change_verification_semantic_closure_153_test.py",
+    "tests/Verification/change_verification_sensitive_offline_132_test.py",
+    "tests/Verification/change_verification_server_rendered_fast_160_test.py",
+    "tests/Verification/delivery_harness_context_manifest_001_test.py",
+    "tools/delivery/change-verification.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CONSUMER-OWNERSHIP-FRONTIER-153-B",
+      "acceptance_id": "matrix-a-m-transitive-consumer-frontier",
+      "spec_path": "specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md",
+      "seam": "public change-verification plan/check via disposable planner repository",
+      "tests": ["tests/Verification/change_verification_consumer_frontier_153_test.py"],
+      "gate3_expected": {"tests/Verification/change_verification_consumer_frontier_153_test.py": "INTENDED_RED"}
+    }
+  ]
+}
