@@ -1,9 +1,9 @@
-# Текущая цель — №153 Slice B, consumer/ownership frontier
+# Текущая цель — pre-Gate-3 fixture reachability safeguard
 
-Поручение владельца 2026-09-16: реализовать только bounded Slice B [№153](https://github.com/Antropophag/fmonitor-2/issues/153) от актуального `origin/main` `b9dfcb4d9d1cdd934f16fa4a9f4910464f1ddfc6` и довести отдельный candidate до PR-ready без merge.
+Поручение владельца 2026-09-17: реализовать утверждённый OpenSpec change `require-fixture-reachability-before-gate3` от актуального `origin/main` `764f2c0f2118a8c8f8cdb7b8235fb360e982bb13` и довести отдельный candidate до PR-ready без merge.
 
-Scope: существующий change-verification planner детерминированно расширяет frontier от изменённого protected capability/invariant до всех зарегистрированных direct/transitive consumers, выдаёт machine-readable causal chains и fail closed для missing/stale ownership или unregistered verifier. Slice A conservative integration closure сохраняется; local presentation-only change не расширяется.
+Scope: только явно applicable intended-RED tests получают bounded read-only fixture reachability control. Gate-3 preparation требует отдельные exact-source `INTENDED_RED` и `FIXTURE_REACHABLE` evidence; setup/crash/fixture defects блокируются до Gate 3 без product GREEN prerequisite.
 
-Контракт: [CONSUMER-OWNERSHIP-FRONTIER-153-B](../../specs/CONSUMER-OWNERSHIP-FRONTIER-153-B.md). Lifecycle: [expand-consumer-ownership-frontier](../../openspec/changes/expand-consumer-ownership-frontier/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
+Контракт: [INTENDED-RED-FIXTURE-REACHABILITY-001](../../specs/INTENDED-RED-FIXTURE-REACHABILITY-001.md). Lifecycle: [require-fixture-reachability-before-gate3](../../openspec/changes/require-fixture-reachability-before-gate3/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
 
-Не входят #153C/D, T07a+/#107, fixture-reachability safeguard, product changes, новый evidence store, новый planner/global dependency framework и issue-specific policy. Frozen #20 branch `codex/issue-20-control-engineer-import` at `0e34bb7e2f72e7ac766fc8d364abf6e420d84768` не изменяется. После Slice B остановиться; merge/deploy/settings не выполнять.
+Не входят frozen #20, #153C/D, T07/#107, product changes, generic instrumentation/rewrite test architecture, новый Gate/framework/evidence store, LLM analysis. После отдельного PR-ready остановиться; merge/deploy/settings не выполнять.

@@ -467,6 +467,222 @@ class Harness(unittest.TestCase):
         self.assertNotEqual(0,incomplete.returncode)
         self.assertIn('evidence',(incomplete.stdout+incomplete.stderr).lower())
 
+    def declare_fixture_reachability(self, boundary='post-red-fixture'):
+        value=json.loads((self.repo/self.input).read_text())
+        value['acceptances'][0]['fixture_reachability']={self.test:{
+            'boundary':boundary,'probe_kind':'fixture_read_only'}}
+        self.write(self.input,value)
+
+    def fixture_reachability_run(self, test, boundary):
+        return self.cli('run','--fixture-reachability',boundary,'--','python3',test)
+
+    def test_fixture_reachability_declaration_is_opt_in_and_fail_closed(self):
+        self.declare_fixture_reachability()
+        valid=self.prepare()
+        self.assertEqual(0,valid.returncode,'INTENDED_RED valid reachability declaration rejected: '+valid.stderr)
+        malformed=[
+            [],
+            {self.test:{'boundary':'','probe_kind':'fixture_read_only'}},
+            {self.test:{'boundary':'post-red-fixture','probe_kind':'product_mutation'}},
+            {self.test:{'boundary':'post-red-fixture','probe_kind':'fixture_read_only','extra':True}},
+            {'tests/Verification/unmapped.py':{'boundary':'post-red-fixture','probe_kind':'fixture_read_only'}},
+        ]
+        for declaration in malformed:
+            with self.subTest(declaration=declaration):
+                value=json.loads((self.repo/self.input).read_text())
+                value['acceptances'][0]['fixture_reachability']=declaration
+                self.write(self.input,value)
+                rejected=self.prepare()
+                self.assertNotEqual(0,rejected.returncode,'malformed reachability declaration admitted')
+
+    def test_fixture_reachability_runner_requires_exact_successful_boundary(self):
+        boundary='after-red-fixtures'
+        cases=[
+            ('import os; print("FIXTURE_REACHABLE: "+os.environ["FMONITOR_FIXTURE_REACHABILITY"])',
+             'FIXTURE_REACHABLE',0),
+            ('print("FIXTURE_REACHABLE: after-red-fixtures"); raise SystemExit(7)',
+             'REGRESSION_FAILURE',7),
+            ('print("SETUP_FAILURE: fixture unavailable"); print("FIXTURE_REACHABLE: after-red-fixtures")',
+             'SETUP_FAILURE',1),
+            ('print("FIXTURE_REACHABLE: wrong-boundary")','REGRESSION_FAILURE',1),
+            ('print("ordinary zero without boundary")','REGRESSION_FAILURE',1),
+            ('print("FIXTURE_REACHABLE: after-red-fixtures"); print("FIXTURE_REACHABLE: after-red-fixtures")',
+             'REGRESSION_FAILURE',1),
+            ('import os,signal; print("FIXTURE_REACHABLE: after-red-fixtures",flush=True); os.kill(os.getpid(),signal.SIGTERM)',
+             'INTERRUPTED',143),
+        ]
+        for code,outcome,exit_code in cases:
+            with self.subTest(outcome=outcome,code=code):
+                result=self.cli('run','--fixture-reachability',boundary,'--',sys.executable,'-c',code)
+                self.assertTrue(result.stdout.strip().startswith('{'),result.stderr)
+                summary=json.loads(result.stdout);record=json.loads(Path(summary['record_path']).read_text())
+                self.assertEqual(outcome,summary['outcome'])
+                self.assertEqual(exit_code,result.returncode)
+                self.assertEqual(boundary,record['fixture_reachability_boundary'])
+                self.assertEqual('fixture_read_only',record['fixture_reachability_probe_kind'])
+
+    def test_gate3_requires_separate_red_and_fixture_reachability_evidence(self):
+        boundary='post-red-fixture'
+        value=json.loads((self.repo/self.input).read_text())
+        value['change']='delivery-harness-first-pass-ci-completeness-fixture-reachability'
+        self.write(self.input,value)
+        self.declare_fixture_reachability(boundary)
+        (self.repo/self.test).write_text(
+            'import os\n'
+            'boundary=os.environ.get("FMONITOR_FIXTURE_REACHABILITY")\n'
+            'if boundary is None:\n print("PRODUCT_BEHAVIOR_MISSING"); raise SystemExit(7)\n'
+            'assert boundary=="post-red-fixture"\n'
+            'fixture={"column":"healthy"}\n'
+            'assert fixture["column"]=="healthy"\n'
+            'print("FIXTURE_REACHABLE: "+boundary)\n')
+        prepared=self.prepare();self.assertEqual(0,prepared.returncode,prepared.stderr)
+        plan=json.loads(Path(json.loads(prepared.stdout)['plan']).read_text())
+        command=next(item for item in plan['commands'] if item['argv'][-1]==self.test)
+        identity=['--command-id',command['id'],'--purpose','acceptance',
+                  '--command-environment',json.dumps(command['environment'],separators=(',',':')),
+                  '--acceptance-id','example']
+        red=self.cli('run','--intended-red','PRODUCT_BEHAVIOR_MISSING',*identity,'--','python3',self.test)
+        self.assertEqual(7,red.returncode);red_record=json.loads(red.stdout)['record_path']
+        missing=self.reviewer_with([red_record])
+        self.assertNotEqual(0,missing.returncode,'INTENDED_RED alone admitted applicable test')
+        reached=self.cli('run','--fixture-reachability',boundary,*identity,'--','python3',self.test)
+        self.assertEqual(0,reached.returncode,reached.stderr)
+        reached_record=json.loads(reached.stdout)['record_path']
+        package=self.reviewer_with([red_record,reached_record])
+        self.assertEqual(0,package.returncode,'separate healthy evidence rejected: '+package.stderr)
+        value=json.loads(package.stdout)
+        self.assertEqual('NOT_REVIEWED',value['approval'])
+        self.assertEqual({'INTENDED_RED','FIXTURE_REACHABLE'},{item['outcome'] for item in value['evidence']})
+        duplicated=self.reviewer_with([red_record,red_record])
+        self.assertNotEqual(0,duplicated.returncode,'one RED record substituted for both evidence obligations')
+        wrong=self.cli('run','--fixture-reachability','other-boundary','--','python3',self.test)
+        self.assertNotEqual(0,wrong.returncode)
+        self.assertNotEqual(0,self.reviewer_with([red_record,json.loads(wrong.stdout)['record_path']]).returncode)
+        reached_value=json.loads(Path(reached_record).read_text())
+        mutations={
+            'acceptance_id':'other-acceptance',
+            'command_id':'acceptance:other_test',
+            'command_environment':{'services':['foreign']},
+            'command_blob':'0'*64,
+            'source':'0'*64,
+            'environment':'0'*64,
+            'argv':['python3','tests/Verification/other_mapped_test.py'],
+            'fixture_reachability_boundary':'other-boundary',
+        }
+        for field,replacement in mutations.items():
+            with self.subTest(identity_field=field):
+                altered=dict(reached_value);altered[field]=replacement
+                path=self.outer/('altered-'+field+'.json');path.write_text(json.dumps(altered))
+                rejected=self.reviewer_with([red_record,str(path)])
+                self.assertNotEqual(0,rejected.returncode,'foreign '+field+' evidence admitted')
+
+    def test_undeclared_intended_red_compatibility_remains_gate3_admissible(self):
+        (self.repo/self.test).write_text('print("UNCHANGED_PRODUCT_RED"); raise SystemExit(7)\n')
+        run=self.cli('run','--intended-red','UNCHANGED_PRODUCT_RED','--','python3',self.test)
+        self.assertEqual('INTENDED_RED',json.loads(run.stdout)['outcome'])
+        prepared=self.reviewer_with([json.loads(run.stdout)['record_path']])
+        self.assertEqual(0,prepared.returncode,'undeclared test was forced into reachability contract: '+prepared.stderr)
+        self.assertEqual('NOT_REVIEWED',json.loads(prepared.stdout)['approval'])
+
+    def test_repeated_and_concurrent_controls_keep_independent_records(self):
+        import concurrent.futures
+        value=json.loads((self.repo/self.input).read_text())
+        paths=['tests/Verification/concurrent_fixture_a.py','tests/Verification/concurrent_fixture_b.py']
+        boundaries=['concurrent-boundary-a','concurrent-boundary-b']
+        value['acceptances'][0]['tests']=paths
+        value['acceptances'][0]['gate3_expected']={path:'INTENDED_RED' for path in paths}
+        value['acceptances'][0]['fixture_reachability']={path:{'boundary':boundary,'probe_kind':'fixture_read_only'} for path,boundary in zip(paths,boundaries)}
+        self.write(self.input,value)
+        for path,boundary in zip(paths,boundaries):
+            (self.repo/path).write_text(
+                'import os,time\n'
+                'boundary=os.environ.get("FMONITOR_FIXTURE_REACHABILITY")\n'
+                'if boundary is None:\n print("CONCURRENT_PRODUCT_RED"); raise SystemExit(7)\n'
+                'time.sleep(.05)\n'
+                'print("FIXTURE_REACHABLE: "+boundary)\n')
+            self.register_test(path)
+        reds=[]
+        for path in paths:
+            run=self.cli('run','--intended-red','CONCURRENT_PRODUCT_RED','--','python3',path)
+            self.assertEqual('INTENDED_RED',json.loads(run.stdout)['outcome'])
+            reds.append(json.loads(run.stdout)['record_path'])
+        def execute(pair):
+            return self.fixture_reachability_run(*pair)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            results=list(pool.map(execute,zip(paths,boundaries)))
+        records=[]
+        for result in results:
+            self.assertEqual(0,result.returncode,result.stderr)
+            summary=json.loads(result.stdout);self.assertEqual('FIXTURE_REACHABLE',summary['outcome'])
+            records.append(json.loads(Path(summary['record_path']).read_text()))
+        self.assertEqual(2,len({record['id'] for record in records}))
+        self.assertEqual(set(boundaries),{record['fixture_reachability_boundary'] for record in records})
+        self.assertEqual(set(paths),{record['argv'][-1] for record in records})
+        reach_paths=[str(Path(record['stdout_path']).parent.parent/'records'/(record['id']+'.json')) for record in records]
+        valid=self.reviewer_with([*reds,*reach_paths])
+        self.assertEqual(0,valid.returncode,'independent concurrent records rejected: '+valid.stderr)
+        crossed=self.reviewer_with([*reds,reach_paths[0],reach_paths[0]])
+        self.assertNotEqual(0,crossed.returncode,'one concurrent command borrowed the other command reachability outcome')
+
+    def test_fixture_reachability_blocks_forensic_defect_classes_after_real_red(self):
+        boundary='remainder-complete'
+        defects={
+            'missing_table_column': 'import sqlite3; db=sqlite3.connect(":memory:"); db.execute("select missing from absent")',
+            'wrong_helper_argument': 'def helper(required): return required\nhelper()',
+            'malformed_provider_index': 'provider={"actual":1}\nprovider["expected"]',
+            'invalid_csrf_setup_source': 'csrf=None\nassert csrf and csrf.startswith("server:")',
+        }
+        for name,remainder in defects.items():
+            with self.subTest(name=name):
+                path='tests/Verification/'+name+'_fixture.py'
+                (self.repo/path).write_text(
+                    'import os\n'
+                    'boundary=os.environ.get("FMONITOR_FIXTURE_REACHABILITY")\n'
+                    'if boundary is None:\n print("PRODUCT_BEHAVIOR_MISSING"); raise SystemExit(7)\n'+
+                    remainder+'\nprint("FIXTURE_REACHABLE: "+boundary)\n')
+                ordinary=self.cli('run','--intended-red','PRODUCT_BEHAVIOR_MISSING','--','python3',path)
+                self.assertEqual('INTENDED_RED',json.loads(ordinary.stdout)['outcome'])
+                probe=self.fixture_reachability_run(path,boundary)
+                self.assertNotEqual(0,probe.returncode)
+                self.assertEqual('REGRESSION_FAILURE',json.loads(probe.stdout)['outcome'])
+
+    def test_realistic_post_fork_db_fixture_has_defective_and_healthy_sensitivity(self):
+        boundary='post-fork-db-readable'
+        path='tests/Verification/post_fork_db_fixture.py'
+        template='''import os,sqlite3,subprocess,sys,tempfile
+boundary=os.environ.get("FMONITOR_FIXTURE_REACHABILITY")
+if boundary is None:
+ print("PRODUCT_BEHAVIOR_MISSING"); raise SystemExit(7)
+with tempfile.TemporaryDirectory(prefix="post-fork-fixture-",dir=os.environ["FIXTURE_PARENT"]) as root:
+ db=os.path.join(root,"fixture.sqlite")
+ connection=sqlite3.connect(db)
+ connection.execute("create table fixture(id integer primary key, expected text)")
+ connection.execute("insert into fixture(expected) values ('healthy')")
+ connection.commit(); connection.close()
+ column=os.environ.get("POST_FORK_COLUMN","expected")
+ child=subprocess.run([sys.executable,"-c","import sqlite3,sys; print(sqlite3.connect(sys.argv[1]).execute('select "+column+" from fixture').fetchone()[0])",db],capture_output=True,text=True)
+ if child.returncode != 0:
+  print(child.stderr,file=sys.stderr); raise SystemExit(child.returncode)
+ assert child.stdout.strip()=="healthy"
+assert not os.path.exists(root)
+print("FIXTURE_REACHABLE: "+boundary)
+'''
+        (self.repo/path).write_text(template)
+        ordinary=self.cli('run','--intended-red','PRODUCT_BEHAVIOR_MISSING','--','python3',path)
+        self.assertEqual('INTENDED_RED',json.loads(ordinary.stdout)['outcome'])
+        healthy_parent=self.outer/'healthy-post-fork';healthy_parent.mkdir()
+        healthy_env=dict(self.env,FIXTURE_PARENT=str(healthy_parent))
+        healthy=self.cli('run','--fixture-reachability',boundary,'--','python3',path,env=healthy_env)
+        self.assertEqual(0,healthy.returncode,healthy.stderr)
+        self.assertEqual('FIXTURE_REACHABLE',json.loads(healthy.stdout)['outcome'])
+        self.assertEqual([],list(healthy_parent.iterdir()),'healthy post-fork fixture leaked')
+        broken_parent=self.outer/'broken-post-fork';broken_parent.mkdir()
+        broken_env=dict(self.env,POST_FORK_COLUMN='missing_column',FIXTURE_PARENT=str(broken_parent))
+        broken=self.cli('run','--fixture-reachability',boundary,'--','python3',path,env=broken_env)
+        self.assertNotEqual(0,broken.returncode)
+        self.assertEqual('REGRESSION_FAILURE',json.loads(broken.stdout)['outcome'])
+        self.assertEqual([],list(broken_parent.iterdir()),'defective post-fork fixture leaked')
+
     def test_review_evidence_environment_and_untracked_whitespace(self):
         run=self.cli('run','--','python3',self.test)
         self.assertEqual(0,run.returncode,'INTENDED_RED mapped run absent: '+run.stderr)

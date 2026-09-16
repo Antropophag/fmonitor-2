@@ -1,0 +1,31 @@
+{
+  "change": "require-fixture-reachability-before-gate3",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/pre-gate3-fixture-reachability-delivery.md",
+    "openspec/changes/require-fixture-reachability-before-gate3/design.md",
+    "openspec/changes/require-fixture-reachability-before-gate3/proposal.md",
+    "openspec/changes/require-fixture-reachability-before-gate3/specs/delivery/intended-red-fixture-reachability/spec.md",
+    "openspec/changes/require-fixture-reachability-before-gate3/tasks.md",
+    "openspec/changes/require-fixture-reachability-before-gate3/verification-input.json",
+    "reviews/code/INTENDED-RED-FIXTURE-REACHABILITY-001.md",
+    "reviews/tests/INTENDED-RED-FIXTURE-REACHABILITY-001.md",
+    "specs/INTENDED-RED-FIXTURE-REACHABILITY-001.md",
+    "tests/Verification/delivery_harness_001_test.py",
+    "tests/Verification/fixture_reachability_001_test.py",
+    "tools/verification/suites.tsv",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness.py",
+    "tools/delivery/harness_context.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "INTENDED-RED-FIXTURE-REACHABILITY-001",
+      "acceptance_id": "pre-gate3-fixture-reachability",
+      "spec_path": "specs/INTENDED-RED-FIXTURE-REACHABILITY-001.md",
+      "seam": "python3 tools/delivery/harness.py run/prepare",
+      "tests": ["tests/Verification/fixture_reachability_001_test.py"],
+      "gate3_expected": {"tests/Verification/fixture_reachability_001_test.py": "INTENDED_RED"}
+    }
+  ]
+}
