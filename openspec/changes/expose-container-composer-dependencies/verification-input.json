@@ -16,7 +16,7 @@
   "acceptances": [
     {
       "spec_id": "CONTAINER-COMPOSER-VISIBILITY-123-A",
-      "acceptance_id": "CCV123A-01-06/A-J",
+      "acceptance_id": "CCV123A-01-06/A-O",
       "spec_path": "specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md",
       "seam": "tools/delivery/run-in-profile <profile> <command> [args...]",
       "tests": [
