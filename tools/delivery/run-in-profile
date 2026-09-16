@@ -15,22 +15,64 @@ case "$profile" in
 esac
 
 root=$(git -C "$(dirname "$0")/../.." rev-parse --show-toplevel) || exit 2
+execution_tmp=$(mktemp -d "${TMPDIR:-/tmp}/fmonitor-profile.XXXXXXXX") || exit 2
+materialized=$execution_tmp/source
+cleanup() {
+    if [[ -d "$materialized" ]]; then
+        git -C "$root" worktree remove --force "$materialized" >/dev/null 2>&1 || true
+    fi
+    rm -rf -- "$execution_tmp"
+}
+trap cleanup EXIT HUP INT TERM
+
+source_digest() {
+    local source_root=$1
+    (
+        cd "$source_root" || exit 2
+        python3 -c 'import importlib.util, pathlib
+p = pathlib.Path("tools/delivery/harness.py").resolve()
+s = importlib.util.spec_from_file_location("candidate_harness", p)
+m = importlib.util.module_from_spec(s)
+s.loader.exec_module(m)
+print(m.source_details()["executable_digest"])'
+    )
+}
+
+expected_source=
+snapshot=${FMONITOR_EXECUTION_SNAPSHOT:-}
+if [[ -z "$snapshot" ]]; then
+    snapshot=$execution_tmp/snapshot
+    expected_source=$(source_digest "$root") || exit 2
+    python3 "$root/tools/delivery/review-source.py" capture \
+        --repo "$root" --output "$snapshot" >/dev/null || exit 2
+fi
+python3 "$root/tools/delivery/review-source.py" restore \
+    --snapshot "$snapshot" --output "$materialized" >/dev/null || exit 2
+executable_source=$(source_digest "$materialized") || exit 2
+if [[ -n "$expected_source" && "$executable_source" != "$expected_source" ]]; then
+    echo 'materialized executable source does not match frozen candidate' >&2
+    exit 2
+fi
+
 set -a
 # shellcheck source=dependencies.env
-. "$root/tools/delivery/dependencies.env"
+. "$materialized/tools/delivery/dependencies.env"
 set +a
 
-recipe=$root/tools/delivery/Dockerfile.focused-checks
-recipe_hash=$(sha256sum "$recipe" "$root/tools/delivery/dependencies.env" \
-    "$root/composer.json" "$root/composer.lock" \
+recipe=$materialized/tools/delivery/Dockerfile.focused-checks
+recipe_hash=$(sha256sum "$recipe" "$materialized/tools/delivery/dependencies.env" \
+    "$materialized/composer.json" "$materialized/composer.lock" \
+    "$materialized/tools/delivery/Dockerfile.focused-checks.dockerignore" \
+    <(printf '%s' "$executable_source") \
     | sha256sum | cut -c1-16)
 image="fmonitor2-focused-${profile}:${recipe_hash}"
-git_sha=$(git -C "$root" rev-parse HEAD) || exit 2
-composer_lock_sha=$(sha256sum "$root/composer.lock" | cut -d' ' -f1) || exit 2
+git_sha=$(git -C "$materialized" rev-parse HEAD) || exit 2
+composer_lock_sha=$(sha256sum "$materialized/composer.lock" | cut -d' ' -f1) || exit 2
 
 docker build --quiet --target "$profile" --tag "$image" \
     --label "org.opencontainers.image.revision=$git_sha" \
     --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
+    --build-arg "EXECUTABLE_SOURCE=$executable_source" \
     --build-arg "PHP_IMAGE=$PHP_IMAGE" \
     --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
     --build-arg "NODE_VERSION=$NODE_VERSION" \
@@ -42,12 +84,14 @@ docker build --quiet --target "$profile" --tag "$image" \
     --build-arg "UV_VERSION=$UV_VERSION" \
     --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
     --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
-    --file "$recipe" "$root" >/dev/null || exit $?
+    --file "$recipe" "$materialized" >/dev/null || exit $?
 image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
 image_lock_sha=$(docker image inspect "$image_digest" \
     --format '{{index .Config.Labels "org.fmonitor.composer-lock-sha256"}}') || exit 2
-if [[ "$image_lock_sha" != "$composer_lock_sha" ]]; then
-    echo 'container Composer dependency identity does not match candidate lock' >&2
+image_source=$(docker image inspect "$image_digest" \
+    --format '{{index .Config.Labels "org.fmonitor.executable-source"}}') || exit 2
+if [[ "$image_lock_sha" != "$composer_lock_sha" || "$image_source" != "$executable_source" ]]; then
+    echo 'container dependency/source identity does not match frozen candidate' >&2
     exit 2
 fi
 
@@ -76,9 +120,12 @@ fi
 started=$(python3 -c 'import time; print(time.time_ns())')
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
+    --read-only \
+    --tmpfs /tmp:rw,nosuid,nodev \
+    --tmpfs /workspace/.local:rw,nosuid,nodev \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
-    --mount "type=bind,src=$root,dst=/workspace" \
-    --mount "type=volume,dst=/workspace/vendor,readonly" \
+    --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
+    --env "FMONITOR_EXECUTED_GIT_SHA=$git_sha" \
     --workdir /workspace \
     "$image_digest" sh -c \
         'test -r /workspace/vendor/autoload.php \
@@ -88,9 +135,9 @@ docker run --rm --init \
 status=$?
 finished=$(python3 -c 'import time; print(time.time_ns())')
 
-python3 - "$git_sha" "$profile" "$image_digest" "$status" "$started" "$finished" "$@" <<'PY' >&2
+python3 - "$git_sha" "$profile" "$image_digest" "$executable_source" "$status" "$started" "$finished" "$@" <<'PY' >&2
 import json, sys
-git_sha, profile, image, status, started, finished, *argv = sys.argv[1:]
+git_sha, profile, image, source, status, started, finished, *argv = sys.argv[1:]
 print("RUN_IN_PROFILE_RESULT " + json.dumps({
     "argv": argv,
     "duration_seconds": (int(finished) - int(started)) / 1_000_000_000,
@@ -98,6 +145,7 @@ print("RUN_IN_PROFILE_RESULT " + json.dumps({
     "git_sha": git_sha,
     "image_digest": image,
     "profile": profile,
+    "source_digest": source,
 }, separators=(",", ":"), sort_keys=True))
 PY
 exit "$status"
