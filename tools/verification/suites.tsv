@@ -44,6 +44,7 @@ db	php	tests/AssignmentOrderComposition/selection_picker_view_manual_test.php	in
 db	php	tests/AssignmentOrderComposition/selection_unknown_employment_manual_pilot_test.php	integration
 db	php	tests/AssignmentOrderComposition/template_generation_001_test.php	integration
 db	php	tests/AssignmentOrderComposition/template_generation_boundaries_001_test.php	integration
+db	php	tests/IdentityAccess/legacy_identity_link_001_test.php	integration
 db	php	tests/InstallationProcess/artifact_store_001_test.php	integration
 db	php	tests/InstallationProcess/assignment_order_identity_registry_001_test.php	integration
 db	php	tests/InstallationProcess/assignment_order_identity_registry_concurrency_001_test.php	integration
@@ -98,6 +99,7 @@ db	php	tests/InstallationProcess/installation_completion_multi_prefix_001_test.p
 db	php	tests/InstallationProcess/installation_completion_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/installation_completion_schema_001_test.php	integration
 db	php	tests/InstallationProcess/invitation_reissue_http_001_test.php	integration
+db	php	tests/InstallationProcess/legacy_control_engineer_migration_001_test.php	integration
 db	php	tests/InstallationProcess/legacy_object_snapshot_001_test.php	integration
 db	php	tests/InstallationProcess/migration_process_001_test.php	integration
 db	php	tests/InstallationProcess/object_card_actor_name_001_test.php	integration
@@ -206,6 +208,7 @@ db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_http_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integration
 db	php	tests/Yii2/yii2_jobs_console_db_001_test.php	integration
+db	php	tests/Yii2/yii2_legacy_identity_link_001_test.php	integration
 db	php	tests/Yii2/yii2_legacy_import_db_001_test.php	integration
 db	php	tests/Yii2/yii2_local_runtime_provisioning_001_test.php	integration
 db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration

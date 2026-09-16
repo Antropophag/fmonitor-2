@@ -1,13 +1,13 @@
 ## 1. Gate 1 и verification plan
 
-- [ ] 1.1 Root обновляет current delivery goal, product/data-model contract и создаёт normative executable specs для identity link и migration CLI; проверить трассировку всех OpenSpec scenarios и explicit non-goals #20
-- [ ] 1.2 Root создаёт `verification-input.json`, вычисляет planner-selected plan через delivery harness и закрывает все Quality Graph obligations до Gate 2
+- [x] 1.1 Root обновляет current delivery goal, product/data-model contract и создаёт normative executable specs для identity link и migration CLI; проверить трассировку всех OpenSpec scenarios и explicit non-goals #20
+- [x] 1.2 Root создаёт `verification-input.json`, вычисляет planner-selected plan через delivery harness и закрывает все Quality Graph obligations до Gate 2
 
 ## 2. Gate 2 — executable RED
 
-- [ ] 2.1 Root пишет focused IdentityAccess tests для exact-ID link, duplicate/ambiguous/missing/inactive cases, authorization, replay, correction history и отсутствия legacy credential inheritance; подтвердить intended RED на отсутствующей capability
+- [x] 2.1 Root пишет focused IdentityAccess tests для exact-ID link, duplicate/ambiguous/missing/inactive cases, authorization, replay, correction history и отсутствия legacy credential inheritance; подтвердить intended RED на отсутствующей capability
 - [ ] 2.2 Root пишет public Yii2 admin tests для invite → local role/permission → legacy link → activation/first login, CSRF/admission/escaping и отсутствия token/password disclosure; подтвердить intended RED только на link UI/seam
-- [ ] 2.3 Root пишет isolated MariaDB CLI tests preview/apply/reconcile для ready/skipped/conflict, explicit allowlist/all-imported, drift, all-or-nothing, repeat, commit-unknown и read-only legacy fingerprint; подтвердить intended RED без production importer
+- [x] 2.3 Root пишет isolated MariaDB CLI tests preview/apply/reconcile для ready/skipped/conflict, explicit allowlist/all-imported, drift, all-or-nothing, repeat, commit-unknown и read-only legacy fingerprint; подтвердить intended RED без production importer
 - [ ] 2.4 Подготовить exact Gate 3 package и получить независимый `gpt-5.6-sol/low` review полноты и чувствительности executable RED, если planner требует Gate 3
 
 ## 3. Gate 4 — минимальная реализация
