@@ -17,6 +17,7 @@ import sysconfig
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ".quality-graph/verification-policy.json"
 CATEGORIES = {"unit", "integration", "e2e", "governance"}
+SERVER_RENDERED_PRESENTATION = "bounded-server-rendered-presentation"
 OBSERVABLE_DIMENSIONS = {
     "stdout", "stderr", "exit_status", "retained_evidence", "filesystem_effects",
     "idempotence", "failure_semantics", "caller_interoperability",
@@ -177,7 +178,9 @@ def validate_policy(policy):
         raise ValueError("empty boundaries policy")
     names = set()
     for boundary in boundaries:
-        if not isinstance(boundary, dict) or set(boundary) != {"name", "patterns", "categories", "tests"}:
+        if (not isinstance(boundary, dict)
+                or not {"name", "patterns", "categories", "tests"} <= set(boundary)
+                or not set(boundary) <= {"name", "patterns", "categories", "tests", "fast_class"}):
             raise ValueError("malformed boundary")
         if not isinstance(boundary["name"], str) or not boundary["name"] or boundary["name"] in names:
             raise ValueError("duplicate or invalid boundary name")
@@ -196,6 +199,28 @@ def validate_policy(policy):
             raise ValueError("invalid boundary tests")
         for test in boundary["tests"]:
             test_argv(test, runtimes)
+        fast_class = boundary.get("fast_class")
+        if fast_class is not None and fast_class != SERVER_RENDERED_PRESENTATION:
+            raise ValueError("invalid boundary fast class")
+    fast_classes = policy.get("fast_classes", {})
+    if not isinstance(fast_classes, dict) or set(fast_classes) - {SERVER_RENDERED_PRESENTATION}:
+        raise ValueError("invalid fast classes policy")
+    declared_fast_classes = {boundary.get("fast_class") for boundary in boundaries
+                             if boundary.get("fast_class") is not None}
+    if declared_fast_classes != set(fast_classes):
+        raise ValueError("fast class boundary and policy definition must match")
+    for name, definition in fast_classes.items():
+        if (not isinstance(definition, dict)
+                or set(definition) != {"companion_boundaries", "negative_boundaries_checked"}):
+            raise ValueError(f"malformed fast class: {name}")
+        companions = definition["companion_boundaries"]
+        negatives = definition["negative_boundaries_checked"]
+        if (not isinstance(companions, list) or len(companions) != len(set(companions))
+                or any(value not in names for value in companions)):
+            raise ValueError(f"invalid fast class companions: {name}")
+        if (not isinstance(negatives, list) or not negatives or len(negatives) != len(set(negatives))
+                or any(not isinstance(value, str) or not value for value in negatives)):
+            raise ValueError(f"invalid fast class negative boundaries: {name}")
     semantic_surfaces = policy.get("semantic_surfaces", [])
     if not isinstance(semantic_surfaces, list):
         raise ValueError("malformed semantic surface")
@@ -282,6 +307,10 @@ def validate_policy_inventory(policy, inventory):
                 raise ValueError(f"boundary test is not registered: {test}")
             if registered not in boundary["categories"]:
                 raise ValueError(f"boundary test category mismatch: {test} is {registered}")
+        if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION:
+            registered_oracles = [test for test in boundary["tests"] if test in inventory]
+            if len(registered_oracles) != 1:
+                raise ValueError("FAST presentation boundary requires exactly one registered public oracle")
     for consumer in policy.get("consumers", []):
         for test in consumer["tests"]:
             if test not in inventory:
@@ -307,6 +336,11 @@ def test_argv(path, runtimes, trusted_registered=False):
 
 def boundary_for(path, policy):
     matches = [b for b in policy["boundaries"] if any(fnmatch.fnmatchcase(path, pattern) for pattern in b["patterns"])]
+    presentation = [boundary for boundary in matches
+                    if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION]
+    conservative = [boundary for boundary in matches if boundary["name"] == "application-code"]
+    if len(matches) == 2 and len(presentation) == 1 and len(conservative) == 1:
+        return presentation[0]
     if len(matches) != 1:
         raise ValueError(f"unknown or ambiguous boundary: {path}")
     return matches[0]
@@ -408,11 +442,32 @@ def build(base_ref, input_name):
         boundary_tests.update(boundary["tests"])
     lane_policy = policy.get("verification_lanes", {})
     boundary_names = {item["name"] for item in selected}
+    selected_boundaries = [boundary_for(item["path"], policy) for item in selected]
+    presentation_boundaries = [boundary for boundary in selected_boundaries
+                               if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION]
+    fast_class = None
+    selected_public_oracle = None
+    fast_definition = policy.get("fast_classes", {}).get(SERVER_RENDERED_PRESENTATION)
     critical = sorted(boundary_names & set(lane_policy.get("CRITICAL", [])))
     fast_boundaries = set(lane_policy.get("FAST", []))
     if critical:
         verification_lane = "CRITICAL"
         reasons = critical
+    elif presentation_boundaries and fast_definition is not None:
+        allowed = ({boundary["name"] for boundary in policy["boundaries"]
+                    if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION}
+                   | set(fast_definition["companion_boundaries"]))
+        if boundary_names <= allowed:
+            oracles = sorted({test for boundary in presentation_boundaries for test in boundary["tests"]})
+            if len(oracles) != 1:
+                raise ValueError("FAST presentation boundary requires exactly one registered public oracle")
+            verification_lane = "FAST"
+            reasons = sorted(boundary_names)
+            fast_class = SERVER_RENDERED_PRESENTATION
+            selected_public_oracle = oracles[0]
+        else:
+            verification_lane = "STANDARD"
+            reasons = sorted(boundary_names - set(fast_definition["companion_boundaries"]))
     elif boundary_names and boundary_names <= fast_boundaries:
         verification_lane = "FAST"
         reasons = sorted(boundary_names)
@@ -592,7 +647,7 @@ def build(base_ref, input_name):
                     "id": hashlib.sha256(canonical(item["argv"]).encode()).hexdigest()[:16],
                     "argv": item["argv"],
                 })
-    return {
+    result = {
         "base": base, "base_ref": base_ref, "bindings": bindings,
         "boundaries": sorted(selected, key=lambda x: (x["path"], x["name"])),
         "change": change["change"], "commands": commands, "head": head,
@@ -609,6 +664,14 @@ def build(base_ref, input_name):
         **({"dependency_workspaces": change.get("dependency_workspaces", [])} if typed else {}),
         "version": 2 if typed else 1,
     }
+    if fast_class is not None:
+        result.update({
+            "fast_class": fast_class,
+            "fast_reason": "closed server-rendered presentation boundary with exactly one registered public oracle",
+            "selected_public_oracle": selected_public_oracle,
+            "negative_boundaries_checked": fast_definition["negative_boundaries_checked"],
+        })
+    return result
 
 
 def checked_plan(plan_name):

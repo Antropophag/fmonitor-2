@@ -31,6 +31,19 @@
     },
     {
       "categories": [
+        "integration"
+      ],
+      "fast_class": "bounded-server-rendered-presentation",
+      "name": "server-rendered-presentation",
+      "patterns": [
+        "app/YiiRuntime/Views/feedback-confirmation.php"
+      ],
+      "tests": [
+        "tests/Yii2/yii2_feedback_001_test.php"
+      ]
+    },
+    {
+      "categories": [
         "e2e"
       ],
       "name": "sensitive-offline-ui",
@@ -107,7 +120,19 @@
         "app/Runtime/**",
         "app/RuntimeRestore/**",
         "app/Workforce/**",
-        "app/YiiRuntime/*.php",
+        "app/YiiRuntime/CanonicalMigrationConsole.php",
+        "app/YiiRuntime/CaseImportConsole.php",
+        "app/YiiRuntime/FeedbackApplication.php",
+        "app/YiiRuntime/InstallationProcessFactory.php",
+        "app/YiiRuntime/LegacyImportConsole.php",
+        "app/YiiRuntime/MainNavigation.php",
+        "app/YiiRuntime/OtizEvidenceHtml.php",
+        "app/YiiRuntime/PreopeningResources.php",
+        "app/YiiRuntime/ReliableSession.php",
+        "app/YiiRuntime/SafeErrorHandler.php",
+        "app/YiiRuntime/ViewSupport.php",
+        "app/YiiRuntime/WebResponse.php",
+        "app/YiiRuntime/WorkforceSyncConsole.php",
         "app/YiiRuntime/Assets/*.php",
         "app/YiiRuntime/Assets/*.svg",
         "app/YiiRuntime/Assets/fonts/**",
@@ -320,13 +345,35 @@
   },
   "verification_lanes": {
     "FAST": [
-      "bounded-ui"
+      "bounded-ui",
+      "server-rendered-presentation"
     ],
     "CRITICAL": [
       "auth",
       "delivery-policy",
       "sensitive-offline-ui"
     ]
+  },
+  "fast_classes": {
+    "bounded-server-rendered-presentation": {
+      "companion_boundaries": [
+        "bounded-ui"
+      ],
+      "negative_boundaries_checked": [
+        "schema-migration",
+        "persistence-write",
+        "authoritative-current-state",
+        "domain-application-mutation",
+        "authorization-rbac-session-admission",
+        "csrf-security",
+        "offline-cache-service-worker-synchronization",
+        "external-integration",
+        "jobs-outbox-scheduler",
+        "verification-admission-policy",
+        "runtime-deployment-configuration",
+        "product-spec-semantics"
+      ]
+    }
   },
   "runtimes": {
     ".mjs": "node",
