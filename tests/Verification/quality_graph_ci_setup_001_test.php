@@ -135,7 +135,7 @@ SH, 'profile-probe', $profile, 'value with spaces'];
             "DP110A-04 {$profile} compact result");
         $evidence = json_decode($record[1], true, flags: JSON_THROW_ON_ERROR);
         assertSameValue(['argv', 'duration_seconds', 'exit_code', 'git_sha', 'image_digest', 'profile', 'source_digest'],
-            array_keys($evidence), "DP110A-04 {$profile} evidence fields");
+            array_keys($evidence), "INTENDED_RED CCV123A-05/DP110A-04 {$profile} exact-source evidence fields");
         assertSameValue($profile, $evidence['profile'], "DP110A-01 {$profile} identity");
         assertSameValue($head, $evidence['git_sha'], "DP110A-04 {$profile} git SHA");
         assertSameValue($command, $evidence['argv'], "DP110A-04 {$profile} exact argv");
