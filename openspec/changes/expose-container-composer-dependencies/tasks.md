@@ -3,7 +3,7 @@
 - [x] 1.1 Зафиксировать bounded ownership check, normative spec `CONTAINER-COMPOSER-VISIBILITY-123-A` и A–J mapping; проверить `openspec validate --strict`.
 - [x] 1.2 Создать `verification-input.json`, подготовить root package, прочитать planner lane/obligations/commands и устранить UNKNOWN coverage до Gate 2.
 - [x] 1.3 Root написать executable public-route regression и сохранить RED на dependency visibility с T08 measurement (3/3 setup failures до behavior), не выполняя local full suite.
-- [ ] 1.4 Получить planner-required independent Gate 3 approval exact spec/test/RED, если план требует Gate 3.
+- [x] 1.4 Получить planner-required independent Gate 3 approval exact spec/test/RED, если план требует Gate 3.
 
 ## 2. Minimal implementation
 

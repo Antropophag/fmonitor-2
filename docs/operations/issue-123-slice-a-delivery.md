@@ -35,3 +35,9 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - Review `reviews/tests/CONTAINER-COMPOSER-VISIBILITY-123-A.md`, reviewer commit `aa9a401b9689c0b0e099b885574175f926182bdc`: `CHANGES_REQUESTED`.
 - Blocking finding: case F fixture searched only the proposed `/workspace` install path, while RED source still installed at `/opt/fmonitor`; fixture failed before invoking public seam.
 - Root correction: fixture now recognizes either bounded install location and corrupts the dependency layer at the actual current location, so both pre-implementation RED and post-implementation regression traverse `run-in-profile`.
+
+### Gate 3 rereview
+
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T023249Z-4cf39ef9e8/package.json`; exact source `615aeb9ad2b77b52cda63c1daef22a09375935130558fbda1f23e327b8001d61`.
+- Evidence: new public-route test `INTENDED_RED` record `1789525887291964000-03bbfc36e3dc47e98eb96caa2532e7c4`; existing profile test `GREEN` record `1789525914660850000-4f5e1bf083ae422da978317104d528a3`.
+- Independent reviewer append-only record commit `c056c1cb5563be29db94603b82b13772b3bed890`: `APPROVED`; case F reaches `run-in-profile` and detects hostile host fallback.
