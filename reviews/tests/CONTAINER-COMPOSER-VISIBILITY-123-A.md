@@ -204,3 +204,37 @@ None.
 ### Required changes
 
 None. This test delta is approved for the exact source above; implementation correction and renewed Gate 5 review remain required.
+
+---
+
+## Gate 3 merge-integration delta review — #123-A/#123-B wrapper compatibility
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent (`/root/issue123_gate3`); authored neither the merged fixture delta nor classification implementation.
+- Originating Gate 5 finding: P1 in commit `c994eee5`, limited to post-main-merge compatibility between the #123-A seven-field launcher result and #123-B structured provenance parser.
+- Test delta: `00c83c4d1dfd334ba86377751ac31daf85d2824c`.
+- Exact candidate source: `59e869e2fe70be6e89dc899895926c88fca3a6d2e01ae29caf12886778f888e7`; executable source `6f67356c5ee62d788179c74325d081168618a9d768a69668d3b89c790f40bc82`.
+- Prepared root package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T083129Z-48c6b3a48d/package.json`; plan SHA-256 `737fe97f4b2cdb6fea2e9473dd54fd4ecab4bd3ba2e69993b2f1f0c2b0d627a6`; context manifest SHA-256 `959c8f5f9aaebf8d86eb58932394648337d51e0e9c7256a78a1092f29aa18626`.
+- Scope: the 24-line merged real-wrapper fake-Docker adaptation and the added `source_digest` schema assertion only.
+- Verdict: `APPROVED`.
+
+### RED evidence
+
+- Command: `python3 tests/Verification/delivery_harness_001_test.py Harness.test_intended_red_provenance_cases_a_to_m`.
+- Retained evidence supplied with the review: the fixture reaches case H and fails at line 714 because the independent child oracle is observed through the real seven-field wrapper but the merged parser returns `REGRESSION_FAILURE` instead of expected `INTENDED_RED`.
+- Reviewer focused reproduction: same command, exit `1`, one failure at line 714 for the same expected/actual outcome; 5.280s. No full suite and no `rapid-pilot` access.
+
+### Review assessment
+
+- Fidelity: fake Docker now records actual build arguments, returns the #123-A Composer-lock and executable-source labels on the corresponding inspect templates, accepts `--read-only` and paired `--tmpfs` arguments, and skips the image entrypoint before running the child. This models only canonical launcher mechanics needed to reach the child; it does not fabricate child output or classifier decisions.
+- Schema sensitivity: the test parses the actual `RUN_IN_PROFILE_RESULT` emitted by the real launcher and requires `source_digest` to be a 64-hex value. A stale six-field wrapper or missing/invalid source identity cannot satisfy the fixture.
+- Classification independence: case H’s marker originates in the independent oracle file, while expected `INTENDED_RED` is fixed by the previously approved #123-B contract. The fake Docker neither injects the marker nor assigns outcomes.
+- No semantics change: argv/metadata-only marker cases remain explicitly `REGRESSION_FAILURE`; missing/malformed structured provenance remains fail-closed; setup failure cannot become intended RED; unrelated failure remains regression; direct independent RED and GREEN retain their established outcomes. The delta changes fixture reachability and asserts canonical provenance shape, not classification rules.
+- Determinism/isolation: build state is a per-test temporary JSON file under `self.outer`; the fake executable is isolated through the test PATH; fixed build args drive label responses; subprocess argv is forwarded deterministically after canonical wrapper options are consumed.
+
+### Findings
+
+- None.
+
+### Required changes
+
+None. The test delta is approved for the exact source above. The parser correction, fresh focused GREEN evidence and renewed Gate 5 decision remain separate requirements.
