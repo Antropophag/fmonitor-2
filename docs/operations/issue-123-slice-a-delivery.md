@@ -53,3 +53,9 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - Review commit `5c3e2671b313fbbb9ef397048d50eca64a9faa1c`: `CHANGES_REQUESTED` D1.
 - Finding: default automatic-snapshot N compared container-reported digests only with one another, creating a circular oracle.
 - Root correction: compute expected executable digest independently with existing host-side `harness.py source_details()` before launcher invocation, then compare container env, compact evidence and image label to that frozen expectation.
+
+### Gate 3 source-layout delta approval
+
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T071235Z-d9c6a065e5/package.json`; exact source `81865c8282cc706fb61207e46a3a212b7acdc4d18ded57859d39dd1629ed41f6`.
+- Evidence: A–O test `INTENDED_RED` record `1789542636575608000-98d1f019756c4f38a0c00cdad9895b3d`; profile evidence test `INTENDED_RED` record `1789542722353392000-301d097fe2dd48e5a17c278e09a995d9`.
+- Independent rereview commit `8871ebb43874eeb4095caea641990076001ff027`: `APPROVED`, D1 resolved, no new findings.

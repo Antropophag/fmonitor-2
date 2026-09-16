@@ -4,7 +4,7 @@
 - [x] 1.2 Создать `verification-input.json`, подготовить root package, прочитать planner lane/obligations/commands и устранить UNKNOWN coverage до Gate 2.
 - [x] 1.3 Root написать executable public-route regression и сохранить RED на dependency visibility с T08 measurement (3/3 setup failures до behavior), не выполняя local full suite.
 - [x] 1.4 Получить planner-required independent Gate 3 approval exact spec/test/RED, если план требует Gate 3.
-- [ ] 1.5 Включить owner decision о frozen container source, исправить newline oracle, расширить matrix A–O и получить Gate 3 delta approval плюс intended RED source-layout gap.
+- [x] 1.5 Включить owner decision о frozen container source, исправить newline oracle, расширить matrix A–O и получить Gate 3 delta approval плюс intended RED source-layout gap.
 
 ## 2. Minimal implementation
 
