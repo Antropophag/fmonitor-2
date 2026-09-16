@@ -84,3 +84,23 @@ No local full suite or `rapid-pilot` access occurred. Exact-source CI remains pe
 No new standards, specification, security, isolation, fail-closed, lock/source identity, artifact-boundary, or maintainability finding was introduced by the one-line implementation correction and bounded test delta. The complete candidate retains read-only exact source, container-managed locked Composer dependencies, stale-host dependency exclusion, missing/corrupt dependency failure, host dependency cleanliness, per-worktree artifact ownership, candidate isolation, profile compatibility, and source/lock invalidation.
 
 Gate 5 is `APPROVED` for exact candidate source `1daed97dd8dce0a37abcc058258b723c88e8b33deaac5fc31afc5856e36e2699`. Publication remains contingent on the repository workflow and one authoritative exact-source CI run; merge, deployment, and settings are not approved by this review.
+
+---
+
+## Post-main-merge Gate 5 delta review
+
+- Review scope: merge commit `b5d871cd9ab05f46301717d296fc6a26dfc753c6` against updated main `5e746a50b018bb6a353bd27d774684d7ab97d784`.
+- Exact candidate source: `58a50f569c654104f54c9cb4876144fd897ee376b5e15ae80934af8fc12b75a4`; executable source: `fb644ad8c20313c1aef46a4f504ab1ba1ffc958045e5abf5dddfd94fa377c0d6`.
+- Delta package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T082802Z-068b937009/package.json`.
+- Verdict: `CHANGES_REQUESTED`.
+
+The sole textual conflict in `docs/operations/current-delivery-goal.md` was resolved by retaining the active #123-A pointer, and `tools/verification/suites.tsv` correctly retains both additive suite entries. The #123-A source/dependency implementation itself did not conflict. The package contains source-matched GREEN records for A–O, governance compatibility, change verification, and runtime storage. Those four checks do not exercise the newly merged #123-B structured-wrapper parser against the #123-A launcher.
+
+### P1 — Blocking — merged #123-B wrapper contract rejects the #123-A result schema
+
+- Locations: `tools/delivery/harness.py:241-278`, `tools/delivery/run-in-profile:146-154`, and `tests/Verification/delivery_harness_001_test.py:599-699`.
+- Main's new `intended_red_observation()` accepts a `RUN_IN_PROFILE_RESULT` only when its keys are exactly `{argv,duration_seconds,exit_code,git_sha,image_digest,profile}`. The #123-A canonical launcher now correctly and necessarily adds `source_digest`. Consequently the merged parser returns `None` for a valid real #123-A result, discarding child observation and preventing a genuinely reached child marker from being classified through the #123-B contract. A direct read-only probe of `intended_red_observation()` with the seven-field canonical result returns `None`.
+- The merged #123-B real-wrapper fixture is also stale relative to the #123-A launcher: its fake Docker CLI does not model the added source/lock label inspections and read-only/tmpfs run arguments. Bounded reproduction `python3 tests/Verification/delivery_harness_001_test.py Harness.test_intended_red_provenance_cases_a_to_m` fails in 2.101s at line 660 because the public launcher exits `2` instead of the expected pre-behavior `255`. Thus exact-source CI would encounter an already reproducible focused regression if publication proceeded.
+- Correction: compose the two already-approved contracts without broadening classification. Teach the structured parser the canonical seven-field result and validate `source_digest` as a non-empty/exact digest field; update only the real-wrapper fake Docker fixture so it supports the #123-A build/label/read-only invocation and still exercises the same #123-B behavioral assertions. Add or retain a direct assertion that a child marker in the real seven-field wrapper is admitted while argv/metadata-only markers remain rejected. Obtain the applicable independent test-delta review, then rerun this focused test plus the four #123-A package commands on one fresh exact source.
+
+No second post-merge finding was found. The current `CHANGES_REQUESTED` verdict is limited to P1 merge compatibility; it does not reopen the previously approved #123-A source/dependency composition or F1 correction. Exact-source CI must remain pending until the focused shared-harness regression is GREEN.
