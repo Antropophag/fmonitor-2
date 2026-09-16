@@ -96,7 +96,144 @@ def _load_observation(path):
 
 def _admit(helpers, observation):
     import admission
-    return admission.evaluate(observation, helpers.ROOT)
+    result = admission.evaluate(observation, helpers.ROOT)
+    result["ci"]["triage"] = _ci_triage(observation)
+    return result
+
+
+_KNOWN_CI_SIGNATURES = (
+    "pr144-inspection-partial-result-json-v1",
+    "verification-mariadb-precondition-v1",
+)
+_PR144_TEST = "tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php"
+_DB_PREFLIGHT = "test MariaDB unavailable; run make test-db-reset migrate"
+
+
+def _triage_unknown(exact, history=None, failed_jobs=None, regressions=None):
+    return {
+        "classification": "UNKNOWN", "known_signature_ids": list(_KNOWN_CI_SIGNATURES),
+        "exact": exact, "signature_id": None, "matched_evidence": [],
+        "confidence_basis": "insufficient_evidence", "recommended_action": "NORMAL_TRIAGE",
+        "retry_allowed": False, "retry_budget": 1, "retry_remaining": 0,
+        "diagnostic_references": {"failed_job_inventory": failed_jobs or [],
+                                  "regression_failure_inventory": regressions or [],
+                                  "history": history or []},
+        "measurement": {"mandatory_log_payloads_materialized": 0, "model_triage_steps": 0,
+                        "automatic_retry_count": 0, "token_usage": "UNKNOWN"},
+    }
+
+
+def _ci_triage(observation):
+    """Pure, closed classification of the two repository-owned CI signatures."""
+    binding = observation.get("binding") if isinstance(observation, dict) else None
+    binding = binding if isinstance(binding, dict) else {}
+    ci = observation.get("ci") if isinstance(observation, dict) else None
+    ci = ci if isinstance(ci, dict) else {}
+    jobs = ci.get("jobs") if isinstance(ci.get("jobs"), list) else []
+    failed = [job for job in jobs if isinstance(job, dict)
+              and str(job.get("conclusion", "")).upper() == "FAILURE"]
+    failed_inventory = [{"job_id": job.get("id"), "job": job.get("name"),
+                         "check": job.get("check", job.get("name")),
+                         "conclusion": "FAILURE"} for job in failed]
+    diagnostics = ci.get("diagnostics") if isinstance(ci.get("diagnostics"), list) else []
+    diagnostic = diagnostics[0] if len(diagnostics) == 1 and isinstance(diagnostics[0], dict) else None
+    setup_jobs = {"Integration (1/2)", "Integration (2/2)", "e2e"}
+    applicable = [job for job in failed if job.get("name") in setup_jobs
+                  and job.get("check", job.get("name")) == job.get("name")]
+    matching = [job for job in applicable if diagnostic is not None
+                and diagnostic.get("job_id") == job.get("id")
+                and diagnostic.get("job") == job.get("name")
+                and diagnostic.get("check") == job.get("check", job.get("name"))]
+    target = matching[0] if len(matching) == 1 else {}
+    exact = {
+        "repository": binding.get("repository", "UNKNOWN"), "pr": binding.get("pr", "UNKNOWN"),
+        "run_id": binding.get("run_id", "UNKNOWN"), "attempt": binding.get("attempt", "UNKNOWN"),
+        "job_id": target.get("id", "UNKNOWN"), "job": target.get("name", "UNKNOWN"),
+        "check": target.get("check", target.get("name", "UNKNOWN")),
+        "candidate_source": binding.get("candidate", "UNKNOWN"),
+        "head": binding.get("head", "UNKNOWN"),
+    }
+    history = ci.get("history") if isinstance(ci.get("history"), list) else []
+    retained_history = [item for item in history if isinstance(item, dict)
+                        and item.get("run_id") == binding.get("run_id")
+                        and item.get("head") == binding.get("head")]
+    inventory = ci.get("failure_inventory") if isinstance(ci.get("failure_inventory"), list) else []
+    regressions = [item for item in inventory if isinstance(item, dict)
+                   and item.get("kind") == "REGRESSION_FAILURE"]
+    unknown = _triage_unknown(exact, retained_history, failed_inventory, regressions)
+    required = ("repository", "pr", "head", "candidate", "run_id", "attempt")
+    current = observation.get("current") if isinstance(observation.get("current"), dict) else {}
+    if (any(binding.get(key) in (None, "", "UNKNOWN") for key in required)
+            or current.get("head") != binding.get("head")
+            or ci.get("binding") != binding
+            or not isinstance(ci.get("failure_inventory"), list)
+            or not isinstance(ci.get("diagnostics"), list)
+            or any(not isinstance(job, dict) or job.get("binding") != binding for job in jobs)):
+        return unknown
+    if ci.get("diagnostics_unavailable") or len(diagnostics) > 1:
+        return unknown
+    if not target or not isinstance(target.get("id"), int) or target["id"] <= 0:
+        return unknown
+    if diagnostic is None:
+        return unknown
+    if "signature_id" in diagnostic:
+        return unknown
+    common = (diagnostic.get("source") == "bounded_job_diagnostic"
+              and diagnostic.get("job_id") == target["id"]
+              and diagnostic.get("job") == target["name"]
+              and diagnostic.get("check") == exact["check"]
+              and diagnostic.get("run_id") == binding["run_id"]
+              and diagnostic.get("attempt") == binding["attempt"]
+              and diagnostic.get("head") == binding["head"]
+              and diagnostic.get("candidate_source") == binding["candidate"])
+    if not common:
+        return unknown
+    payloads = diagnostic.get("materialized_log_payloads")
+    if not isinstance(payloads, int) or isinstance(payloads, bool) or payloads < 0 or payloads > 1:
+        return unknown
+    references = {"run_id": binding["run_id"], "attempt": binding["attempt"],
+                  "job_id": target["id"], "failed_job_inventory": failed_inventory,
+                  "regression_failure_inventory": regressions,
+                  "history": retained_history}
+    measurement = {"mandatory_log_payloads_materialized": payloads,
+                   "model_triage_steps": 0, "automatic_retry_count": 0,
+                   "token_usage": "UNKNOWN"}
+    setup = (diagnostic.get("phase") == "category_preflight"
+             and diagnostic.get("before_first_test") is True
+             and diagnostic.get("message") == _DB_PREFLIGHT and inventory == [])
+    if setup:
+        return {**unknown, "classification": "SETUP_FAILURE",
+                "signature_id": _KNOWN_CI_SIGNATURES[1],
+                "matched_evidence": {"evidence_role": "DIAGNOSTIC", "signal": _DB_PREFLIGHT},
+                "confidence_basis": "deterministic_signature",
+                "recommended_action": "RUN_EXISTING_DB_PREFLIGHT",
+                "diagnostic_references": references, "measurement": measurement}
+    primary = [item for item in inventory if isinstance(item, dict)
+               and item.get("kind") == "REGRESSION_FAILURE" and item.get("primary") is True]
+    transient = (target.get("name") == "Integration (2/2)"
+                 and binding.get("attempt") == 1 and len(primary) == 1
+                 and primary[0].get("job_id") == target["id"]
+                 and primary[0].get("job") == target["name"]
+                 and primary[0].get("check") == exact["check"]
+                 and primary[0].get("path") == _PR144_TEST
+                 and primary[0].get("mode") == "--missing-revision"
+                 and diagnostic.get("test") == _PR144_TEST
+                 and diagnostic.get("mode") == "--missing-revision"
+                 and diagnostic.get("phase") == "product_verifier"
+                 and diagnostic.get("exception") == "JsonException"
+                 and diagnostic.get("message") == "Syntax error"
+                 and diagnostic.get("site") == "worker_result_json_decode"
+                 and diagnostic.get("parent_failure") == "Mode --missing-revision exit")
+    if transient:
+        return {**unknown, "classification": "INFRA_TRANSIENT",
+                "signature_id": _KNOWN_CI_SIGNATURES[0],
+                "matched_evidence": {"evidence_role": "DIAGNOSTIC", "test": _PR144_TEST,
+                                     "mode": "--missing-revision", "site": "worker_result_json_decode"},
+                "confidence_basis": "deterministic_signature",
+                "recommended_action": "SAME_SOURCE_RETRY", "retry_allowed": True,
+                "retry_remaining": 1, "diagnostic_references": references,
+                "measurement": measurement}
+    return unknown
 
 
 def _native_github_observation(helpers):
@@ -164,12 +301,84 @@ def _native_github_observation(helpers):
             job_binding["run_id"] = item.get("run_id")
         if item.get("run_attempt") != binding["attempt"]:
             job_binding["attempt"] = item.get("run_attempt")
-        job_values.append({"name": item.get("name"), "status": str(item.get("status", "")).upper(),
+        job_values.append({"id": item.get("id"), "name": item.get("name"),
+                           "check": item.get("name"), "status": str(item.get("status", "")).upper(),
                            "conclusion": str(item.get("conclusion", "")).upper() or None,
                            "binding": job_binding})
+    # Materialize the complete machine failed-job inventory before selecting one
+    # applicable diagnostic payload. Logs from unrelated failed jobs are never fetched.
+    failed_jobs = [{"job_id": item.get("id"), "job": item.get("name"),
+                    "check": item.get("name"), "conclusion": item.get("conclusion")}
+                   for item in job_values if item.get("conclusion") == "FAILURE"]
+    history = []
+    if attempt > 1:
+        for prior_attempt in range(1, attempt):
+            prior = json.loads(_run(root, ["gh", "api",
+                f"repos/{repository}/actions/runs/{run_id}/attempts/{prior_attempt}/jobs"],
+                check=True).stdout)
+            for item in prior.get("jobs", []):
+                if str(item.get("conclusion", "")).upper() == "FAILURE":
+                    history.append({"run_id": run_id, "attempt": prior_attempt,
+                        "job_id": item.get("id"), "job": item.get("name"),
+                        "check": item.get("name"),
+                        "head": item.get("head_sha") or binding["head"]})
+    failure_inventory = []
+    diagnostics = []
+    diagnostic_categories = {"Integration (1/2)", "Integration (2/2)", "e2e"}
+    candidates = [item for item in failed_jobs if item.get("job") in diagnostic_categories
+                  and isinstance(item.get("job_id"), int) and item["job_id"] > 0]
+    if len(candidates) == 1:
+        candidate = candidates[0]
+        log = _run(root, ["gh", "run", "view", str(run_id), "--job",
+                          str(candidate["job_id"]), "--attempt", str(attempt), "--log"],
+                   check=True).stdout
+        regression_paths = []
+        for line in log.splitlines():
+            columns = line.split("\t")
+            if len(columns) == 1:
+                message = columns[0]
+            elif (len(columns) == 3 and columns[0] and columns[1]
+                  and re.fullmatch(
+                      r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z .+",
+                      columns[2])):
+                message = columns[2].split(" ", 1)[1]
+            else:
+                continue
+            match = re.fullmatch(r"REGRESSION_FAILURE: ([^\s]+)", message)
+            if match:
+                regression_paths.append(match.group(1))
+        regression = (_PR144_TEST in regression_paths and "--missing-revision" in log)
+        setup = _DB_PREFLIGHT in log and "VERIFY " not in log[:log.index(_DB_PREFLIGHT)]
+        for path in regression_paths:
+            failure_inventory.append({"kind": "REGRESSION_FAILURE", "primary": True,
+                "job_id": candidate["job_id"], "job": candidate["job"], "check": candidate["check"],
+                "path": path,
+                "mode": "--missing-revision" if path == _PR144_TEST and regression else None})
+        diagnostic = {"source": "bounded_job_diagnostic", "job_id": candidate["job_id"],
+            "job": candidate["job"], "check": candidate["check"], "run_id": run_id,
+            "attempt": attempt, "head": binding["head"], "candidate_source": binding["candidate"],
+            "materialized_log_payloads": 1}
+        decode_stack = "inspection_item_complete_001_mariadb_test.php(21): json_decode()"
+        thrown_site = re.search(
+            r"thrown in [^\n]*inspection_item_complete_001_mariadb_test\.php on line 21(?:\s|$)",
+            log) is not None
+        if (regression and "JsonException: Syntax error" in log
+                and decode_stack in log and thrown_site
+                and "Mode --missing-revision exit" in log):
+            diagnostic.update(test=_PR144_TEST, mode="--missing-revision", phase="product_verifier",
+                              exception="JsonException", message="Syntax error",
+                              site="worker_result_json_decode",
+                              parent_failure="Mode --missing-revision exit")
+        elif setup:
+            diagnostic.update(phase="category_preflight", before_first_test=True,
+                              message=_DB_PREFLIGHT)
+        diagnostics.append(diagnostic)
     # I1 has no persisted preflight/review adapter yet: absence must remain blocking.
     observation = {"binding": binding, "current": {"head": head, "base": base},
-                   "ci": {"binding": ci_binding, "jobs": job_values},
+                   "ci": {"binding": ci_binding, "jobs": job_values,
+                          "failed_job_inventory": failed_jobs,
+                          "failure_inventory": failure_inventory,
+                          "diagnostics": diagnostics, "history": history},
                    "preflight": {}, "reviews": [], "authorization": None,
                    "enforcement": "ENFORCEMENT_NOT_CONFIGURED", "replay": False}
     if dirty:
@@ -246,7 +455,8 @@ def command_live_admission(args, helpers):
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError,
             subprocess.SubprocessError) as error:
         legacy = _compute_state(helpers) if args.command == "state" else {}
-        result = {**legacy, "ci": {"status": "UNKNOWN", "source": "UNKNOWN"}, "publication_ready": False,
+        result = {**legacy, "ci": {"status": "UNKNOWN", "source": "UNKNOWN",
+                  "triage": _ci_triage({})}, "publication_ready": False,
                   "merge_ready": False, "action_authorized": False,
                   "enforcement": "ENFORCEMENT_NOT_CONFIGURED",
                   "reasons": ["live_github_unavailable:" + type(error).__name__]}
