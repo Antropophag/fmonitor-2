@@ -49,3 +49,38 @@ One exact-candidate entry-point leak remains.
 `CHANGES_REQUESTED`
 
 Gate 5 does not pass for exact candidate source `dd04b8d312433412c5a9f4dfca167a954de9836510ae0c74f48b52f5d82bcb23`. Correct F1, renew the changed-test review, run the affected focused evidence on a fresh exact-source package, and request independent Gate 5 rereview. Standards: one hard exact-source boundary finding; Spec: one blocking missing invariant at integration/browser entry points.
+
+---
+
+## Gate 5 correction rereview — frozen profile Compose source
+
+- Reviewer independence is unchanged; this reviewer authored neither the test correction, Gate 3 delta review, implementation correction, nor verification evidence.
+- Corrected commit: `a88a0f43d1b03002f094983a7d0a6270dfad30de`.
+- Exact candidate source: `1daed97dd8dce0a37abcc058258b723c88e8b33deaac5fc31afc5856e36e2699`; executable source: `68cbbb96e22d1d17e33d2e8501b638febc5855bef83780981a7e06fb2e0235ae`.
+- Delta package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T081411Z-403c362167/package.json`; previous snapshot is retained; correction delta SHA-256 `dd229e827fe9d22a394120a03d814ff84638c72e191d208094b42468d04326ca`; corrected snapshot patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Renewed Gate 3: test commit `32c05957eff0bb7efe09440445b455d70e6fc5ef`, independent approval commit `36314513`, final verdict `APPROVED`.
+- Correction implementation: commit `a88a0f43d1b03002f094983a7d0a6270dfad30de`.
+- Correction verdict: `APPROVED`.
+
+### F1 disposition
+
+F1 is `RESOLVED`. `tools/delivery/run-in-profile` now changes directory to the restored `$materialized` candidate before evaluating `compose.test.yaml` for both integration and browser. The network name and resulting DB environment therefore derive from the same frozen source used to build and execute `/workspace`, not from later live-host bytes. The fixed Compose project name still resolves the established `fmonitor2-test_default` network, so existing service ownership is preserved.
+
+The renewed test freezes a candidate containing an independent `frozen-compose` marker, mutates the live checkout to `later-host-compose`, and invokes both affected public profiles through an explicit existing snapshot. A bounded Docker shim observes the actual `-f` input before delegating unchanged argv to the real CLI. Its pre-implementation RED recorded both profiles consuming the later host marker; the corrected exact-source GREEN records both consuming only the frozen marker. This catches the original plausible regression without changing profile behavior or introducing a private test seam.
+
+### Corrected evidence
+
+All records bind candidate `1daed97dd8dce0a37abcc058258b723c88e8b33deaac5fc31afc5856e36e2699` and executable source `68cbbb96e22d1d17e33d2e8501b638febc5855bef83780981a7e06fb2e0235ae`:
+
+- A–O public-route regression: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789546180836569000-0eef30e87e134e41bdccb3449a5a5ad2.json`, 8/8 GREEN in 87.882s; setup failures before Yii behavior `0/N`; measured command durations 0.416–0.574s for the reported clean-worktree cold-ish/warm runs.
+- Governance/profile compatibility: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789546278873739000-c561bd2fbba54a9e800bae8416bdf04e.json`, GREEN in 100.668s.
+- Exact-source/change-verification regression: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789546389098807000-5ebbb335409b4ca3b2a7c135e504ea93.json`, GREEN in 21.190s.
+- Runtime-storage boundary: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789546415603776000-eb5ba0dd3d654b659ee3861bcd5f62b2.json`, GREEN in 2.050s.
+
+No local full suite or `rapid-pilot` access occurred. Exact-source CI remains pending and is not implied by this approval.
+
+### Complete rereview conclusion
+
+No new standards, specification, security, isolation, fail-closed, lock/source identity, artifact-boundary, or maintainability finding was introduced by the one-line implementation correction and bounded test delta. The complete candidate retains read-only exact source, container-managed locked Composer dependencies, stale-host dependency exclusion, missing/corrupt dependency failure, host dependency cleanliness, per-worktree artifact ownership, candidate isolation, profile compatibility, and source/lock invalidation.
+
+Gate 5 is `APPROVED` for exact candidate source `1daed97dd8dce0a37abcc058258b723c88e8b33deaac5fc31afc5856e36e2699`. Publication remains contingent on the repository workflow and one authoritative exact-source CI run; merge, deployment, and settings are not approved by this review.
