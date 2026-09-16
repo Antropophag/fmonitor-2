@@ -1,0 +1,12 @@
+{
+  "change": "reject-wrapper-only-intended-red",
+  "planned_paths": ["docs/operations/current-delivery-goal.md", "openspec/changes/reject-wrapper-only-intended-red/design.md", "openspec/changes/reject-wrapper-only-intended-red/proposal.md", "openspec/changes/reject-wrapper-only-intended-red/specs/delivery/intended-red-observation-provenance/spec.md", "openspec/changes/reject-wrapper-only-intended-red/tasks.md", "openspec/changes/reject-wrapper-only-intended-red/verification-input.json", "reviews/code/INTENDED-RED-OBSERVATION-PROVENANCE-001.md", "reviews/tests/INTENDED-RED-OBSERVATION-PROVENANCE-001.md", "specs/INTENDED-RED-OBSERVATION-PROVENANCE-001.md", "tests/Verification/delivery_harness_001_test.py", "tools/delivery/harness.py", "tools/delivery/run-in-profile"],
+  "acceptances": [{
+    "spec_id": "INTENDED-RED-OBSERVATION-PROVENANCE-001", "acceptance_id": "A-M", "spec_path": "specs/INTENDED-RED-OBSERVATION-PROVENANCE-001.md", "seam": "python3 tools/delivery/harness.py run with direct and structured wrapper commands", "seam_kind": "infrastructure", "tests": ["tests/Verification/delivery_harness_001_test.py"],
+    "gate3_expected": {"tests/Verification/delivery_harness_001_test.py": "INTENDED_RED"},
+    "observable_dimensions": {
+      "stdout": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "stderr": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "exit_status": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "retained_evidence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "idempotence": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "failure_semantics": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]}, "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/delivery_harness_001_test.py"]},
+      "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "Slice B excludes the worktree identity guard and does not share retained records across worktrees."}, "verification_registry_synchronization": {"status": "not_applicable", "reason": "The bounded harness test is not added to product verification registries."}
+    }
+  }]
+}

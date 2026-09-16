@@ -596,6 +596,131 @@ class Harness(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn('evidence', (result.stdout+result.stderr).lower())
 
+    def intended_red_result(self, command, env=None):
+        marker = 'INTENDED_RED canonical acceptance behavior is absent'
+        result = self.cli('run', '--intended-red', marker, '--', *command, env=env)
+        self.assertTrue(result.stdout.startswith('{'), result.stderr)
+        summary = json.loads(result.stdout)
+        record = json.loads(Path(summary['record_path']).read_text())
+        return marker, result, summary, record
+
+    def profile_environment(self, mode='run'):
+        binary = self.outer / 'bin'; binary.mkdir(exist_ok=True)
+        docker = binary / 'docker'
+        docker.write_text('''#!/usr/bin/env python3
+import os, subprocess, sys
+args=sys.argv[1:]
+if args[:1] == ['build']:
+    raise SystemExit(71 if os.environ.get('FAKE_DOCKER_BUILD_FAIL') else 0)
+if args[:2] == ['image','inspect']:
+    print('sha256:bounded-profile-image'); raise SystemExit(0)
+if args[:1] == ['run']:
+    i=1
+    while i < len(args):
+        if args[i] in ('--rm','--init'): i+=1; continue
+        if args[i] in ('--env','--mount','--workdir'): i+=2; continue
+        i+=1; break
+    raise SystemExit(subprocess.run(args[i:]).returncode)
+raise SystemExit(2)
+''')
+        docker.chmod(0o755)
+        env = dict(self.env, PATH=str(binary) + os.pathsep + os.environ['PATH'])
+        if mode == 'setup-failure': env['FAKE_DOCKER_BUILD_FAIL'] = '1'
+        return env
+
+    def profile_result(self, command, mode='run'):
+        return self.intended_red_result(
+            ['tools/delivery/run-in-profile', 'governance', *command],
+            self.profile_environment(mode))
+
+    def diagnostic_wrapper_result(self, command_line, result_line=None):
+        wrapper = self.outer / 'bounded-structured-wrapper'
+        lines = ['#!/usr/bin/env python3', 'import sys',
+                 'print(' + repr(command_line) + ', file=sys.stderr)']
+        if result_line is not None:
+            lines.append('print(' + repr(result_line) + ', file=sys.stderr)')
+        lines.append('raise SystemExit(8)')
+        wrapper.write_text('\n'.join(lines) + '\n'); wrapper.chmod(0o755)
+        return self.intended_red_result([str(wrapper)])
+
+    def test_intended_red_provenance_cases_a_to_m(self):
+        marker = 'INTENDED_RED canonical acceptance behavior is absent'
+        oracle = self.outer / 'oracle-red.py'
+        oracle.write_text("raise AssertionError('INTENDED_RED canonical acceptance behavior is absent')\n")
+        unrelated = self.outer / 'unrelated-red.py'
+        unrelated.write_text("raise AssertionError('unrelated assertion')\n")
+        green = self.outer / 'green.py'; green.write_text("print('GREEN oracle reached')\n")
+
+        # A: marker exists only in argv. B/C/M: the real wrapper serializes that argv
+        # as RUN_IN_PROFILE_RESULT command metadata after a T08-shaped pre-behavior failure.
+        command = [sys.executable, '-c', "import sys; print('dependency unavailable',file=sys.stderr); sys.exit(255)", marker]
+        _, result, summary, record = self.profile_result(command)
+        self.assertEqual('REGRESSION_FAILURE', summary['outcome'],
+                         'INTENDED_RED: real wrapper argv/diagnostic admitted as behavior')
+        self.assertEqual(255, result.returncode)
+        diagnostic = Path(record['stderr_path']).read_text()
+        self.assertIn('RUN_IN_PROFILE_RESULT', diagnostic); self.assertIn(marker, diagnostic)
+        metadata_result, metadata_summary, metadata_record = result, summary, record
+
+        # C: command echo alone is wrapper diagnostic, not behavior observation.
+        command_echo = 'RUN_IN_PROFILE_COMMAND '+json.dumps({'argv':['test',marker]}, separators=(',',':'))
+        result_metadata = 'RUN_IN_PROFILE_RESULT '+json.dumps(
+            {'argv':['test'],'exit_code':8,'observation':{'stdout_bytes':0,'stderr_bytes':0}},
+            separators=(',',':'))
+        _, _, command_summary, _ = self.diagnostic_wrapper_result(command_echo, result_metadata)
+        self.assertEqual('REGRESSION_FAILURE', command_summary['outcome'],
+                         'INTENDED_RED: command echo admitted as behavior')
+
+        # D/K: launcher setup fails before docker/test execution and cannot be intended RED.
+        sentinel = self.outer / 'child-reached'
+        setup_command = [sys.executable, '-c',
+                         "from pathlib import Path; Path(sys.argv[1]).write_text('reached')",
+                         str(sentinel), marker]
+        _, result, summary, record = self.profile_result(setup_command, 'setup-failure')
+        self.assertNotEqual(0, result.returncode); self.assertNotEqual('INTENDED_RED', summary['outcome'])
+        self.assertEqual('REGRESSION_FAILURE', summary['outcome'])
+        self.assertEqual('REGRESSION_FAILURE', record['command_verdict']); self.assertFalse(sentinel.exists())
+
+        # E/J: existing direct healthy intended RED remains admitted from an independent oracle file.
+        _, _, summary, record = self.intended_red_result([sys.executable, str(oracle)])
+        self.assertEqual('INTENDED_RED', summary['outcome']); self.assertEqual('REGRESSION_FAILURE', record['command_verdict'])
+        # J is also guarded by the pre-existing sibling fixture
+        # Harness.test_outcome_precedence_and_actual_exit in this same focused run.
+
+        # F: reached unrelated assertion is regression. G: reached green oracle is GREEN.
+        _, _, summary, _ = self.intended_red_result([sys.executable, str(unrelated)])
+        self.assertEqual('REGRESSION_FAILURE', summary['outcome'])
+        _, result, summary, record = self.intended_red_result([sys.executable, str(green)])
+        self.assertEqual(0, result.returncode); self.assertEqual('GREEN', summary['outcome']); self.assertEqual('GREEN', record['command_verdict'])
+
+        # H: marker appears in real wrapper metadata and in the independent child oracle.
+        _, _, summary, record = self.profile_result([sys.executable, str(oracle), marker])
+        self.assertEqual('INTENDED_RED', summary['outcome'])
+        self.assertIn(marker, Path(record['stderr_path']).read_text())
+
+        # I/L: public harness machine result and retained raw wrapper diagnostics survive classification.
+        self.assertEqual(255, metadata_result.returncode)
+        self.assertEqual(255, metadata_record['raw_child_returncode'])
+        self.assertEqual('REGRESSION_FAILURE', metadata_record['command_verdict'])
+        self.assertTrue(Path(metadata_record['stdout_path']).is_file()); self.assertTrue(Path(metadata_record['stderr_path']).is_file())
+
+        prepared = self.cli('prepare', '--input', self.input, '--base', self.base, '--role', 'root')
+        self.assertEqual(0, prepared.returncode, prepared.stderr)
+        package = json.loads(prepared.stdout)
+        self.assertEqual('root', package['role']); self.assertTrue(Path(package['package_path']).is_file())
+        self.assertEqual('REGRESSION_FAILURE', metadata_summary['outcome'])
+
+        # Missing/malformed structured wrapper provenance fails closed even when
+        # its command diagnostic contains the expected marker.
+        for label, result_line in (('missing', None),
+                                   ('malformed', 'RUN_IN_PROFILE_RESULT {bad-json')):
+            with self.subTest(provenance=label):
+                _, bad_result, bad_summary, bad_record = self.diagnostic_wrapper_result(command_echo, result_line)
+                self.assertEqual(8, bad_result.returncode)
+                self.assertEqual('REGRESSION_FAILURE', bad_summary['outcome'])
+                self.assertEqual(8, bad_record['raw_child_returncode'])
+                self.assertEqual('REGRESSION_FAILURE', bad_record['command_verdict'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
