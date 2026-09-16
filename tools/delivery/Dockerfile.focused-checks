@@ -59,7 +59,8 @@ LABEL org.fmonitor.composer-lock-sha256="$COMPOSER_LOCK_SHA256" \
 ENV NODE_PATH=/shlz-ui/node_modules \
     FMONITOR_SHLZ_UI_ROOT=/shlz-ui \
     FMONITOR_COMPOSER_VENDOR=/workspace/vendor \
-    FMONITOR_PYTHON_ENV=/opt/fmonitor/.venv
+    FMONITOR_PYTHON_ENV=/opt/fmonitor/.venv \
+    UV_CACHE_DIR=/tmp/uv-cache
 WORKDIR /workspace
 
 FROM common AS governance
