@@ -6,7 +6,7 @@
 - Lifecycle: `openspec/changes/expose-container-composer-dependencies/`.
 - Root author: scope, executable specification, verification input и tests — primary Codex session.
 - Executor author: separate `gpt-5.6-sol / low` agent `/root/issue123_executor`; production commits `029673a2`, `03d81c98`, `503e12a0`, `f344b397`, `0ef231d8`, `47579912`.
-- Independent reviewers: pending separate `gpt-5.6-sol / low` agents according to planner-required Gates 3/5.
+- Independent reviewers: Gate 3 — `/root/issue123_gate3`; Gate 5 — `/root/issue123_gate5`, оба `gpt-5.6-sol / low` и не авторы проверяемых artifacts.
 - Exact-source CI/PR: pending.
 
 ## Bounded ownership check
@@ -68,3 +68,14 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - `php tests/Verification/quality_graph_ci_setup_001_test.php` → `QUALITY-GRAPH-CI-SETUP-001 PASSED` in approximately `109s`. It was repeated after two relevant corrections: route uv cache to disposable `/tmp`, then expose the existing `.local` artifact seam required by the profile DB probe.
 - `python3 tests/Verification/change_verification_001_test.py` → 18/18 GREEN in `22.900s`; `php tests/Runtime/runtime_storage_001_test.php` → GREEN.
 - No local full `make test`/`make verify` ran. Gate 5 and exact-source CI remain pending root/reviewer work.
+
+### Gate 5 return и correction
+
+- Первый exact-source review commit `41a731dac5dc18f9b635d6bba61ce6d325a783af`: `CHANGES_REQUESTED`. F1: integration/browser Compose config читался из live host root после freeze.
+- Root test delta commit `32c05957` добавил public-route oracle post-freeze Compose mutation. RED record `1789545399360630000-c5d196244f944f11963f7b43a4529e96` наблюдал `later-host-compose` в обоих profiles.
+- Gate 3 delta rereview commit `363145139f8fe35c27274d934c4e2cee3ff9dee5`: `APPROVED`.
+- Executor correction commit `a88a0f43d1b03002f094983a7d0a6270dfad30de` разрешает Compose config из restored `$materialized` candidate. Narrow D GREEN; полный A–O GREEN, setup failures до behavior `0`.
+- Corrected exact source `1daed97dd8dce0a37abcc058258b723c88e8b33deaac5fc31afc5856e36e2699`, executable source `68cbbb96e22d1d17e33d2e8501b638febc5855bef83780981a7e06fb2e0235ae`; package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T081411Z-403c362167/package.json`.
+- Source-matched GREEN records: A–O `1789546180836569000-0eef30e87e134e41bdccb3449a5a5ad2`; governance `1789546278873739000-c561bd2fbba54a9e800bae8416bdf04e`; exact-source identity `1789546389098807000-5ebbb335409b4ca3b2a7c135e504ea93`; runtime storage `1789546415603776000-eb5ba0dd3d654b659ee3861bcd5f62b2`.
+- Independent Gate 5 rereview commit `79ef839b77df417d4ebe524ed81d689af17bb48f`: `APPROVED`, F1 resolved, no new findings. Review/docs bookkeeping after the approved artifact is enumerated here; executable code/tests are unchanged.
+- Exact-source CI remains pending; it is not represented as GREEN before the existing consumer completes.

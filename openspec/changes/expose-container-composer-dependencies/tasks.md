@@ -13,6 +13,6 @@
 
 ## 3. Review и публикация
 
-- [ ] 3.1 Root проверяет complete candidate, source snapshot/freshness и готовит reviewer package с полным focused evidence.
-- [ ] 3.2 Independent Gate 5 reviewer выдаёт APPROVED для exact source; все findings исправлены и применимые delta повторно reviewed.
+- [x] 3.1 Root проверяет complete candidate, source snapshot/freshness и готовит reviewer package с полным focused evidence.
+- [x] 3.2 Independent Gate 5 reviewer выдаёт APPROVED для exact source; все findings исправлены и применимые delta повторно reviewed.
 - [ ] 3.3 Выполнить один exact-source CI run через planner-selected existing consumer, собрать полный failure inventory при сбое и довести branch/PR до PR-ready без merge/deploy/settings.
