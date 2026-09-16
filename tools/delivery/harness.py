@@ -249,7 +249,7 @@ def intended_red_observation(stdout, stderr, child_exit):
     positions = [match.start() for match in re.finditer(re.escape(result_prefix), stderr)]
     result_position = None
     expected_keys = {"argv", "duration_seconds", "exit_code", "git_sha",
-                     "image_digest", "profile"}
+                     "image_digest", "profile", "source_digest"}
     decoder = json.JSONDecoder()
     for position in reversed(positions):
         try:
@@ -266,7 +266,9 @@ def intended_red_observation(stdout, stderr, child_exit):
                     isinstance(result["exit_code"], bool) or
                     result["exit_code"] != child_exit or
                     not all(isinstance(result[key], str) and result[key]
-                            for key in ("git_sha", "image_digest", "profile"))):
+                            for key in ("git_sha", "image_digest", "profile")) or
+                    not isinstance(result["source_digest"], str) or
+                    re.fullmatch(r"[0-9a-f]{64}", result["source_digest"]) is None):
                 continue
         except (TypeError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
             continue
