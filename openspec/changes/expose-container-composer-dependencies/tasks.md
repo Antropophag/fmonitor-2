@@ -8,8 +8,8 @@
 
 ## 2. Minimal implementation
 
-- [ ] 2.1 Отдельный executor переиспользует existing review-source snapshot, materialize'ит exact candidate в container-owned read-only source и связывает image с executable/lock identity без host dependency paths; A–J GREEN.
-- [ ] 2.2 Executor сохраняет governance/integration/browser/Yii semantics и allowed writable artifacts; K–O и focused planner commands GREEN с cold-ish/warm timing/origin evidence.
+- [x] 2.1 Отдельный executor переиспользует existing review-source snapshot, materialize'ит exact candidate в container-owned read-only source и связывает image с executable/lock identity без host dependency paths; A–J GREEN.
+- [x] 2.2 Executor сохраняет governance/integration/browser/Yii semantics и allowed writable artifacts; K–O и focused planner commands GREEN с cold-ish/warm timing/origin evidence.
 
 ## 3. Review и публикация
 

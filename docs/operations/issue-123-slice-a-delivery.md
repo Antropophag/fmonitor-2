@@ -5,7 +5,7 @@
 - Contract: `specs/CONTAINER-COMPOSER-VISIBILITY-123-A.md`.
 - Lifecycle: `openspec/changes/expose-container-composer-dependencies/`.
 - Root author: scope, executable specification, verification input и tests — primary Codex session.
-- Executor author: pending separate `gpt-5.6-sol / low` agent.
+- Executor author: separate `gpt-5.6-sol / low` agent `/root/issue123_executor`; production commits `029673a2`, `03d81c98`, `503e12a0`, `f344b397`, `0ef231d8`, `47579912`.
 - Independent reviewers: pending separate `gpt-5.6-sol / low` agents according to planner-required Gates 3/5.
 - Exact-source CI/PR: pending.
 
@@ -59,3 +59,12 @@ Gate 3 / implementation / Gate 5 / CI evidence follows append-only.
 - Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260916T071235Z-d9c6a065e5/package.json`; exact source `81865c8282cc706fb61207e46a3a212b7acdc4d18ded57859d39dd1629ed41f6`.
 - Evidence: A–O test `INTENDED_RED` record `1789542636575608000-98d1f019756c4f38a0c00cdad9895b3d`; profile evidence test `INTENDED_RED` record `1789542722353392000-301d097fe2dd48e5a17c278e09a995d9`.
 - Independent rereview commit `8871ebb43874eeb4095caea641990076001ff027`: `APPROVED`, D1 resolved, no new findings.
+
+### Gate 4 implementation
+
+- Executor reused `tools/delivery/review-source.py capture/restore`, built only from the restored frozen source, bound the image/tag/labels to `source_details().executable_digest` and Composer lock identity, and removed the host application/dependency mounts. Execution uses a read-only root with disposable `/tmp`; `.local` is the existing explicit artifact seam (host bind only when already present, otherwise tmpfs).
+- Final production commits through `47579912592fbe17f059433c296679b757e4be34`; changed production files: `tools/delivery/Dockerfile.focused-checks`, `tools/delivery/Dockerfile.focused-checks.dockerignore`, `tools/delivery/run-in-profile`.
+- `python3 tests/Verification/container_composer_visibility_123_a_test.py` → 8/8 GREEN in `321.216s` after the final corrections. A–O reported `setup_failures_before_behavior: 0`; representative command durations were `0.505075–0.550048s`; source/dependency origins, frozen mutation/deletion/mode, lock/corruption failure, read-only source and unchanged host dependency inventories passed.
+- `php tests/Verification/quality_graph_ci_setup_001_test.php` → `QUALITY-GRAPH-CI-SETUP-001 PASSED` in approximately `109s`. It was repeated after two relevant corrections: route uv cache to disposable `/tmp`, then expose the existing `.local` artifact seam required by the profile DB probe.
+- `python3 tests/Verification/change_verification_001_test.py` → 18/18 GREEN in `22.900s`; `php tests/Runtime/runtime_storage_001_test.php` → GREEN.
+- No local full `make test`/`make verify` ran. Gate 5 and exact-source CI remain pending root/reviewer work.
