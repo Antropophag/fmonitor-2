@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-"""Validate private local integration configuration before running a command."""
+"""Stage and validate private local integration configuration."""
 import json
 import os
 import re
 import stat
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
+from urllib.parse import urlsplit
 
 
 def reject() -> "None":
     print("LOCAL_INTEGRATION_CONFIG_INVALID", file=sys.stderr)
     raise SystemExit(64)
+
+
+def publication_failure() -> "None":
+    print("LOCAL_INTEGRATION_CONFIG_PUBLICATION_FAILED", file=sys.stderr)
+    raise SystemExit(74)
 
 
 def private_file(path: str) -> None:
@@ -67,6 +75,159 @@ def bitrix(path: str) -> None:
         reject()
 
 
+LEGACY_NAMES = [
+    "FMONITOR_SOURCE_HOST", "FMONITOR_SOURCE_PORT", "FMONITOR_SOURCE_NAME",
+    "FMONITOR_SOURCE_USER", "FMONITOR_SOURCE_PASSWORD", "FMONITOR_MIGRATION_CUTOFF",
+]
+BITRIX_NAMES = ["FMONITOR_BITRIX_WEBHOOK_URL", "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON"]
+
+
+def parse_environment(path: str, expected: list[str]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    try:
+        source = os.lstat(path)
+        if not stat.S_ISREG(source.st_mode):
+            reject()
+        with open(path, encoding="utf-8") as stream:
+            for raw_line in stream:
+                line = raw_line.rstrip("\n")
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    reject()
+                name, raw_value = line.split("=", 1)
+                if not re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
+                    reject()
+                if name not in expected:
+                    continue
+                if name in values:
+                    reject()
+                if raw_value.startswith(("'", '"')):
+                    quote = raw_value[0]
+                    if len(raw_value) < 2 or raw_value[-1] != quote:
+                        reject()
+                    value = raw_value[1:-1]
+                else:
+                    if "'" in raw_value or '"' in raw_value:
+                        reject()
+                    value = raw_value
+                if "$" in value or "`" in value:
+                    reject()
+                values[name] = value
+    except (OSError, UnicodeError):
+        reject()
+    if set(values) != set(expected):
+        reject()
+    return values
+
+
+def legacy_document(values: dict[str, str]) -> bytes:
+    if any(not values[name] for name in (
+        "FMONITOR_SOURCE_HOST", "FMONITOR_SOURCE_NAME", "FMONITOR_SOURCE_USER",
+        "FMONITOR_SOURCE_PASSWORD",
+    )):
+        reject()
+    port = values["FMONITOR_SOURCE_PORT"]
+    if not re.fullmatch(r"[1-9][0-9]{0,4}", port) or int(port) > 65535:
+        reject()
+    cutoff = values["FMONITOR_MIGRATION_CUTOFF"]
+    if cutoff and not re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", cutoff):
+        reject()
+    password = values["FMONITOR_SOURCE_PASSWORD"]
+    if "'" in password and '"' in password:
+        reject()
+    if "'" not in password:
+        password = "'" + password + "'"
+    else:
+        password = '"' + password + '"'
+    lines = [f"{name}={values[name]}" for name in LEGACY_NAMES]
+    lines[4] = "FMONITOR_SOURCE_PASSWORD=" + password
+    return ("\n".join(lines) + "\n").encode()
+
+
+def bitrix_document(values: dict[str, str]) -> bytes:
+    url = values["FMONITOR_BITRIX_WEBHOOK_URL"]
+    try:
+        parts = urlsplit(url)
+        parts.port
+    except ValueError:
+        reject()
+    if (not url.startswith("https://") or parts.scheme != "https" or not parts.hostname
+            or any(character.isspace() for character in parts.hostname)
+            or parts.username is not None or parts.password is not None
+            or parts.query or parts.fragment
+            or re.fullmatch(r"/rest/[1-9][0-9]*/[A-Za-z0-9_-]{1,256}/?", parts.path) is None):
+        reject()
+    try:
+        departments = json.loads(values["FMONITOR_BITRIX_DEPARTMENT_IDS_JSON"])
+    except json.JSONDecodeError:
+        reject()
+    if (not isinstance(departments, list) or not departments
+            or any(type(item) is not int or item <= 0 for item in departments)
+            or len(set(departments)) != len(departments)):
+        reject()
+    document = {"baseUrl": url.rstrip("/"), "departments": departments}
+    return (json.dumps(document, separators=(",", ":")) + "\n").encode()
+
+
+def stage(kind: str, input_path: str, destination_path: str) -> None:
+    expected = LEGACY_NAMES if kind == "legacy" else BITRIX_NAMES
+    values = parse_environment(input_path, expected)
+    document = legacy_document(values) if kind == "legacy" else bitrix_document(values)
+    destination = Path(destination_path)
+    directory = destination.parent
+    temporary: str | None = None
+    try:
+        try:
+            directory_info = os.lstat(directory)
+        except FileNotFoundError:
+            directory.mkdir(mode=0o700, parents=True)
+            directory_info = os.lstat(directory)
+        if (not stat.S_ISDIR(directory_info.st_mode)
+                or stat.S_IMODE(directory_info.st_mode) != 0o700):
+            publication_failure()
+        try:
+            destination_info = os.lstat(destination)
+        except FileNotFoundError:
+            destination_info = None
+        if destination_info is not None and (
+                not stat.S_ISREG(destination_info.st_mode)
+                or stat.S_IMODE(destination_info.st_mode) != 0o600):
+            publication_failure()
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{destination.name}.tmp-", dir=directory)
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(document)
+                stream.flush()
+                os.fsync(stream.fileno())
+            temp_info = os.lstat(temporary)
+            if not stat.S_ISREG(temp_info.st_mode) or stat.S_IMODE(temp_info.st_mode) != 0o600:
+                publication_failure()
+            os.replace(temporary, destination)
+            temporary = None
+            private_file(str(destination))
+        except BaseException:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+            raise
+    except SystemExit:
+        raise
+    except (OSError, UnicodeError):
+        publication_failure()
+    finally:
+        if temporary is not None:
+            try:
+                os.unlink(temporary)
+            except (FileNotFoundError, OSError):
+                pass
+
+
+if len(sys.argv) == 5 and sys.argv[1] == "stage" and sys.argv[2] in ("legacy", "bitrix"):
+    stage(sys.argv[2], sys.argv[3], sys.argv[4])
+    raise SystemExit(0)
 if len(sys.argv) < 3 or sys.argv[1] not in ("legacy", "bitrix"):
     reject()
 kind, path = sys.argv[1:3]

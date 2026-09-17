@@ -49,14 +49,18 @@ up:
 	@$(LOCAL_ENV_RUN) printf 'FMonitor Yii2: %s/\n' '@local-url'
 
 import-legacy:
+	@tools/delivery/local-integration-config stage legacy .env .local/legacy-source.env
 	@tools/delivery/local-integration-config legacy .local/legacy-source.env
 	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/legacy-source.env:/run/fmonitor-secrets/legacy-source.env:ro" -e FMONITOR_LEGACY_SOURCE_CONFIG=/run/fmonitor-secrets/legacy-source.env --entrypoint php prepare bin/yii legacy-import/run --interactive=0
 
 sync-workforce:
+	@tools/delivery/local-integration-config stage bitrix .env .local/bitrix-workforce.json
 	@tools/delivery/local-integration-config bitrix .local/bitrix-workforce.json
 	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/bitrix-workforce.json:/run/fmonitor-secrets/bitrix-workforce.json:ro" -e FMONITOR_BITRIX_CONFIG=/run/fmonitor-secrets/bitrix-workforce.json --entrypoint php prepare bin/yii workforce-sync/run --interactive=0
 
 up-with-data:
+	@tools/delivery/local-integration-config stage legacy .env .local/legacy-source.env
+	@tools/delivery/local-integration-config stage bitrix .env .local/bitrix-workforce.json
 	@$(MAKE) --no-print-directory up
 	@$(MAKE) --no-print-directory import-legacy
 	@$(MAKE) --no-print-directory sync-workforce
