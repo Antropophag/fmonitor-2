@@ -1,0 +1,36 @@
+{
+  "change": "issue-49-object-identifiers",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "tests/Yii2/ObjectQueueFixture.php",
+    "tests/Yii2/yii2_object_queue_001_test.php",
+    "tests/Yii2/yii2_object_card_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-IDENTITY-PRESENTATION-049",
+      "acceptance_id": "bounded-list-and-card-header-identifiers",
+      "spec_path": "docs/fmonitor-2-object-card-spec.md",
+      "seam": "GET /pilot/objects and GET /pilot/objects/{id} through native Yii controllers and database readers",
+      "tests": ["tests/Yii2/yii2_object_queue_001_test.php", "tests/Yii2/yii2_object_card_001_test.php"]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "#49",
+    "change_kind": "BOUNDED_FIX",
+    "requirement_status": "CURRENT",
+    "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+    "sensitivity": {
+      "classification": "SENSITIVE",
+      "boundaries": ["verification-admission-policy", "authoritative-current-state"],
+      "rationale": "The correction changes native Yii database read projections and adds only their exact capability ownership registration; classifier algorithms and check-skipping rules remain unchanged."
+    },
+    "canonical_requirements": [{"path": "docs/fmonitor-2-object-card-spec.md"}],
+    "executable_regression": "tests/Yii2/yii2_object_queue_001_test.php"
+  }
+}

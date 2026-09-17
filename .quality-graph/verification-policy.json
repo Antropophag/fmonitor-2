@@ -334,6 +334,18 @@
       "consumers": []
     },
     {
+      "name": "yii-object-read-presentation",
+      "patterns": [
+        "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+        "app/InstallationProcess/MariaDbYiiObjectCard.php"
+      ],
+      "verifiers": [
+        "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/Yii2/yii2_object_card_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "standalone-current-assignment",
       "patterns": [
         "app/InstallationProcess/ControlEngineerAssignmentClock.php",

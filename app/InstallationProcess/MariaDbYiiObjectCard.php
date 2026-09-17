@@ -42,7 +42,7 @@ final readonly class MariaDbYiiObjectCard
                 throw new \RuntimeException('Malformed object card identity.');
             }
             $row = $rows[0];
-            if ((int) $row['legacy_id'] !== $objectId || trim((string) $row['ordadr_address']) === '' || trim((string) $row['entrance']) === '' || trim((string) $row['regnumber']) === '') {
+            if ((int) $row['legacy_id'] !== $objectId || trim((string) $row['ordadr_address']) === '' || trim((string) $row['entrance']) === '') {
                 return null;
             }
             $opening = [$row['actual_start_date'], $row['opened_at'], $row['opened_by_user_id']];
@@ -75,6 +75,7 @@ final readonly class MariaDbYiiObjectCard
                 'address' => trim((string) $row['ordadr_address']),
                 'entrance' => trim((string) $row['entrance']),
                 'registrationNumber' => trim((string) $row['regnumber']),
+                'factoryNumber' => trim((string) ($row['zavnumber'] ?? '')),
                 'plannedStartDate' => YiiObjectCardValues::date($row['workdatestart']),
                 'plannedFinishDate' => YiiObjectCardValues::date($row['workdateendadjusted']) ?? YiiObjectCardValues::date($row['plan_finish_date']),
                 'opened' => $present === 3,

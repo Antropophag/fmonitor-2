@@ -38,7 +38,7 @@ final readonly class MariaDbYiiObjectQueue
             throw new \RuntimeException('Page unavailable.');
         }
         $offset = ($page - 1) * $size;
-        $columns = 'c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.ordadr_address,l.entrance,l.regnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id';
+        $columns = 'c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id';
         $rows = $this->db->createCommand("SELECT {$columns}{$from} ORDER BY l.workdatestart IS NULL,LEFT(l.workdatestart,10),c.legacy_installation_object_id LIMIT {$size} OFFSET {$offset}", $params)->queryAll();
         $objects = [];
         foreach ($rows as $row) {
@@ -121,14 +121,14 @@ final readonly class MariaDbYiiObjectQueue
         $id = (int)$r['legacy_installation_object_id'];
         if (!in_array($present, [0,3], true) || $id < 1 || $label === null
             || trim((string)$r['ordadr_address']) === ''
-            || trim((string)$r['entrance']) === ''
-            || trim((string)$r['regnumber']) === '') {
+            || trim((string)$r['entrance']) === '') {
             throw new \RuntimeException('Malformed queue row.');
         }
         $start = self::date($r['workdatestart']);
         $finish = self::date($r['workdateendadjusted']) ?? self::date($r['plan_finish_date']);
         return [
-            'id'=>$id, 'caseId'=>(int)$r['case_id'], 'registrationNumber'=>$r['regnumber'],
+            'id'=>$id, 'caseId'=>(int)$r['case_id'], 'registrationNumber'=>trim((string)($r['regnumber']??'')),
+            'factoryNumber'=>trim((string)($r['zavnumber']??'')),
             'address'=>$r['ordadr_address'], 'entrance'=>$r['entrance'],
             'plannedStartDate'=>$start ?? 'Не указано', 'plannedFinishDate'=>$finish ?? 'Не указано',
             'planningDatesUnknownAtCutover'=>$start === null || $finish === null,
