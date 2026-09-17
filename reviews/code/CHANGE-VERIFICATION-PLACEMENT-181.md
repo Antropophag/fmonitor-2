@@ -95,3 +95,39 @@ The pinned shipped-#187 comparison remains 279 focused commands before versus 4 
 - `git diff --check b8e070f3f8b39aaf1cd94dbf9ba1bb55b009b50a` and Python compilation of the changed planner/test — passed.
 
 This verdict supersedes the prior correction source identity. The currently recorded successful CI run is associated with Git head `b8e070f3f8b39aaf1cd94dbf9ba1bb55b009b50a`; it does not by itself validate the uncommitted candidate snapshot `d65f1d8d...`. Exact-source CI for the final committed candidate remains required before PR readiness.
+
+---
+
+## Gate 5 delta review — production runtime Compose port collision
+
+- Reviewer: independent Gate 5 agent `/root/issue181_gate5`
+- Correction author: root/executor delivery session; changed artifact is test infrastructure only
+- Reviewed source: base `e245ba1c173cc09f9183380228a7532c8dc942d2` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T215751Z-525a5ee0dd/snapshot`; snapshot manifest SHA-256 `76c89ba9906e784d44f61deeaecce8b1e4ff510e7fcc01e0ee8db305d83b63f5`; patch SHA-256 `505c70a0f5f37de5d7adad5c9b5287043a64649195ee370b64ebdb7683b53409`; candidate source `6ed644d69eab649e9c4e7b32a7c3aedb5a5489c39febebd741a7c0ddc866816a`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T215751Z-525a5ee0dd/package.json`; plan SHA-256 `df35a3d6f8f0b994f263015c74ae68510f1e7abf04fb293e5464d605e51fcdad`
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### CI failure inventory and delta assessment
+
+Exact-source run `35277418237` had one primary failure: the e2e `production_runtime_compose_001_test.php` selected random host port `23306`, which was already occupied when Docker attempted to publish the web service. `verify` only aggregated that mandatory e2e failure; the supplied complete inventory reports every other job GREEN. The failure is isolated to test host-port allocation, not product/runtime behavior.
+
+The delta changes only `tests/Runtime/production_runtime_compose_001_test.php`. It replaces blind `random_int(20000, 40000)` selection with an OS-assigned loopback ephemeral port obtained by binding `127.0.0.1:0`. One allocation supplies valid initial Compose configuration; a fresh allocation immediately before `web` publication narrows the release-to-Docker-bind interval after the long image/database/migration setup.
+
+Closing the probe socket before Docker binds necessarily leaves a small time-of-check/time-of-use race, but the correction materially removes the observed deterministic collision class and minimizes the remaining window without changing production Compose configuration. Parallel test isolation remains provided by the cryptographically unique Compose project, image and credentials. If publication still loses the residual race, the existing `finally` path runs project-scoped `down --volumes --remove-orphans`, removes the uniquely named image and deletes the temporary nginx fixture; the probe socket itself is closed on both successful allocations and the helper fails explicitly if allocation or address parsing fails.
+
+The refreshed port and trusted-host value are updated together before startup, so subsequent health, Host-header, restart and outage assertions target the actually published port. No product code, runtime manifest, planner behavior, #181 placement semantics or acceptance expectation changed.
+
+### Verification evidence
+
+The prepared exact-source reviewer package contains all four planner-selected focused obligations as GREEN for source `6ed644d69eab...`:
+
+- `python3 tests/Verification/change_verification_placement_181_test.py` — record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789682090137956000-82d97fceed8c4712ae8bad9dfede694f.json`.
+- `php tests/Runtime/production_runtime_compose_001_test.php` — full real Compose lifecycle GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789682124578466000-bfbdaf0e6ade4aa0a5e6f6b799f30757.json`.
+- `python3 tests/Deployment/pilot_jobs_compose_001_test.py` — e2e boundary GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789682183561045000-c22c5146aba44395a6c7caff4f28322e.json`.
+- `python3 tests/Verification/change_verification_001_test.py` — record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789682234974243000-3f5b81331e924333ad837e0bef8e74a0.json`.
+- Independent reviewer checks: PHP syntax and `git diff --check HEAD` passed.
+
+This approval supersedes the preceding Gate 5 source identity. Run one new exact-source full CI on the final committed candidate; the failed run remains failure evidence and is not converted to GREEN by this focused result.
