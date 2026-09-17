@@ -667,12 +667,25 @@ def build(base_ref, input_name):
         reasons = sorted(boundary_names - fast_boundaries)
     escalations = ([] if verification_lane == "FAST" else
                    [{"lane": verification_lane, "reason": reason} for reason in reasons])
-    inventory_api, inventory_entries, inventory = load_inventory(policy)
-    inventory_api.validate_added_paths(
-        [item["path"] for item in actual if item["status"] in {"added", "untracked"}],
-        inventory_entries,
-    )
-    validate_policy_inventory(policy, inventory)
+    try:
+        inventory_api, inventory_entries, inventory = load_inventory(policy)
+    except ValueError as error:
+        # Semantic closure has a more specific fail-closed diagnostic than the
+        # inventory's general unregistered-test error when the category has
+        # been removed wholesale.
+        surfaces = sorted(policy.get("semantic_surfaces", []), key=lambda item: item["name"])
+        matched = next((surface for surface in surfaces
+                        if any(any(fnmatch.fnmatchcase(path, pattern)
+                                   for pattern in surface["patterns"])
+                               for path in effective)), None)
+        rows = repo_path(policy["suite_inventory"]).read_text().splitlines()
+        has_integration = any(len(row.split("\t")) == 4 and row.split("\t")[3] == "integration"
+                              for row in rows if row.strip())
+        if matched is not None and not has_integration:
+            raise ValueError(
+                f"SEMANTIC_INTEGRATION_CLOSURE_UNAVAILABLE: {matched['name']}: integration"
+            ) from error
+        raise
     integration_checks = sorted(
         ([entry.runtime, entry.path] for entry in inventory_entries
          if entry.category == "integration"),
@@ -700,6 +713,11 @@ def build(base_ref, input_name):
             "required_category": "integration",
             "added_checks": integration_checks,
         })
+    inventory_api.validate_added_paths(
+        [item["path"] for item in actual if item["status"] in {"added", "untracked"}],
+        inventory_entries,
+    )
+    validate_policy_inventory(policy, inventory)
     consumer_expansions = consumer_frontier(
         effective, policy, inventory_entries, protected_paths
     )
@@ -792,13 +810,16 @@ def build(base_ref, input_name):
         if missing:
             raise ValueError(f"FAST acceptance oracle is not registered: {missing[0]}")
     commands = []
-    command_keys = set()
-    def add(argv, phase, rationale, purpose="category"):
+    command_by_key = {}
+    def add(argv, phase, rationale, purpose="category", execution="local"):
         validate_argv(argv)
         key = tuple(argv)
-        if key not in command_keys:
-            command_keys.add(key)
-            item = {"argv": argv, "phase": phase, "rationale": rationale}
+        if key not in command_by_key:
+            item = {"argv": argv, "phase": phase}
+            if semantic_escalations:
+                item.update(execution=execution, rationales=[rationale])
+            else:
+                item["rationale"] = rationale
             if typed:
                 category = inventory.get(argv[-1], "governance")
                 command_id = hashlib.sha256(canonical(argv).encode()).hexdigest()[:16]
@@ -809,9 +830,15 @@ def build(base_ref, input_name):
                             id=command_id,
                             environment=policy.get("environment_profiles", {}).get(category, {}))
             commands.append(item)
-        elif typed and rationale.startswith("generated"):
-            item = next(value for value in commands if tuple(value["argv"]) == key)
-            item.update(rationale=rationale, purpose=purpose)
+            command_by_key[key] = item
+        else:
+            item = command_by_key[key]
+            if semantic_escalations:
+                item["rationales"] = sorted(set(item["rationales"] + [rationale]))
+            if semantic_escalations and execution == "local":
+                item["execution"] = "local"
+            if typed and rationale.startswith("generated"):
+                item.update(purpose=purpose)
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):
@@ -823,11 +850,12 @@ def build(base_ref, input_name):
     for expansion in consumer_expansions:
         add(expansion["argv"], "focused", "consumer ownership frontier")
     for argv in integration_checks if semantic_escalations else []:
-        add(argv, "focused", "semantic integration closure")
+        add(argv, "focused", "semantic integration closure", execution="ci")
     for category in sorted(required_categories):
         if verification_lane != "FAST":
             for argv in policy["category_argv"].get(category, []):
-                add(argv, "focused", f"required {category} category obligation")
+                add(argv, "focused", f"required {category} category obligation",
+                    execution=("ci" if category == "integration" and semantic_escalations else "local"))
     for relation in policy.get("generated_sources", []):
         surfaces = relation.get("artifacts", []) + relation.get("inputs", [])
         if (any(path in effective for path in surfaces) or
@@ -839,11 +867,13 @@ def build(base_ref, input_name):
     if verification_lane == "FAST":
         pass
     elif agent_change and effective and (typed or all(agent_harness_path(path) for path in effective)):
-        commands = [item for item in commands if item["rationale"] in
+        commands = [item for item in commands if any(reason in
                     {"acceptance mapping", "generated source obligation", "generated consumer obligation"}
+                    for reason in item.get("rationales", [item.get("rationale")]))
                     or (item.get("purpose") == "category" and not item.get("environment", {}).get("services"))]
     else:
-        add(policy["full_argv"], "integration", "mandatory full CI for code, test, policy or unknown impact")
+        add(policy["full_argv"], "integration",
+            "mandatory full CI for code, test, policy or unknown impact", execution="ci")
     if not commands:
         raise ValueError("empty verification plan")
     for item in commands:
@@ -875,6 +905,8 @@ def build(base_ref, input_name):
         "base": base, "base_ref": base_ref, "bindings": bindings,
         "boundaries": sorted(selected, key=lambda x: (x["path"], x["name"])),
         "change": change["change"], "commands": commands, "head": head,
+        "ci_obligations": [item for item in commands
+                           if item.get("execution") == "ci" or item["phase"] == "integration"],
         "input": input_name,
         "paths": {"actual": actual, "effective": effective, "planned": sorted(planned)},
         "required_categories": sorted(required_categories),
@@ -965,6 +997,8 @@ def main():
             results = []
             for command in plan["commands"]:
                 if command["phase"] != args.phase:
+                    continue
+                if args.phase == "focused" and command.get("execution", "local") != "local":
                     continue
                 harness = ROOT / "tools/delivery/harness.py"
                 harness_argv = [sys.executable, str(harness), "run"]

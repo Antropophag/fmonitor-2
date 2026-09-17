@@ -1,0 +1,26 @@
+{
+  "change": "separate-local-focused-from-ci-integration",
+  "planned_paths": [
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/separate-local-focused-from-ci-integration/design.md",
+    "openspec/changes/separate-local-focused-from-ci-integration/proposal.md",
+    "openspec/changes/separate-local-focused-from-ci-integration/specs/verification/local-ci-check-placement/spec.md",
+    "openspec/changes/separate-local-focused-from-ci-integration/tasks.md",
+    "openspec/changes/separate-local-focused-from-ci-integration/verification-input.json",
+    "reviews/code/CHANGE-VERIFICATION-PLACEMENT-181.md",
+    "reviews/tests/CHANGE-VERIFICATION-PLACEMENT-181.md",
+    "specs/CHANGE-VERIFICATION-PLACEMENT-181.md",
+    "tests/Verification/change_verification_placement_181_test.py",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness_context.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "CHANGE-VERIFICATION-PLACEMENT-181",
+    "acceptance_id": "local-ci-placement-route",
+    "spec_path": "specs/CHANGE-VERIFICATION-PLACEMENT-181.md",
+    "seam": "public planner, focused runner, reviewer package and existing CI selection",
+    "tests": ["tests/Verification/change_verification_placement_181_test.py"],
+    "gate3_expected": {"tests/Verification/change_verification_placement_181_test.py": "INTENDED_RED"}
+  }]
+}

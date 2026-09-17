@@ -978,7 +978,7 @@ def _load_change_verification(root):
 
 def _mapped_commands(plan):
     return {tuple(item["argv"]) for item in plan.get("commands", [])
-            if item.get("rationale") == "acceptance mapping"}
+            if "acceptance mapping" in item.get("rationales", [item.get("rationale")])}
 
 
 def _gate_expectations(plan, gate):
@@ -990,7 +990,8 @@ def _gate_expectations(plan, gate):
         for test in acceptance.get("tests", []):
             by_test[test] = declared[test] if declared is not None else "INTENDED_RED"
     return {tuple(item["argv"]): by_test[item["argv"][-1]]
-            for item in plan.get("commands", []) if item.get("rationale") == "acceptance mapping"}
+            for item in plan.get("commands", [])
+            if "acceptance mapping" in item.get("rationales", [item.get("rationale")])}
 
 
 def _normalized_argv(argv):
@@ -1542,7 +1543,7 @@ def command_prepare(args, helpers):
     for acceptance in plan_value["acceptances"]:
         for test in acceptance.get("tests", []):
             command = next((_normalized_argv(item["argv"]) for item in plan_value["commands"]
-                            if item.get("rationale") == "acceptance mapping"
+                            if "acceptance mapping" in item.get("rationales", [item.get("rationale")])
                             and item["argv"][-1] == test), None)
             if command is not None:
                 acceptance_by_command[command] = acceptance["acceptance_id"]
@@ -1632,6 +1633,10 @@ def command_prepare(args, helpers):
               "candidate_source": source, "executable_source": executable_source,
               "dependency_workspaces": workspaces, "test_delta_lineage": lineage,
               "lifecycle": lifecycle}
+    result["local_obligations"] = [item for item in plan_value["commands"]
+                                   if item.get("execution", "local") == "local"
+                                   and item.get("phase") != "integration"]
+    result["ci_obligations"] = plan_value.get("ci_obligations", [])
     manifest, delivered = build_task_context(root, plan_value, role=args.role, source=source,
         base=args.base, contracts=contracts, evidence=evidence, snapshot=str(snapshot_path))
     manifest_path = package_dir / "task-context-manifest.json"

@@ -1,22 +1,9 @@
-# Текущая цель — №183, компактная поставка обычных исправлений
+# Текущая цель — №181, local focused / exact-source CI placement
 
-Поручение владельца 2026-09-17: реализовать
-[№183](https://github.com/Antropophag/fmonitor-2/issues/183) от актуального
-`main` до PR-ready. Обычное ограниченное исправление проходит через одного
-автора теста и реализации, focused checks, один независимый final review и
-planner-selected exact-source CI. Полнота CI сама по себе не добавляет Gate 3
-или дублирующий lifecycle.
+Поручение владельца 2026-09-17 заменяет прежнюю текущую цель №183: реализовать [№181](https://github.com/Antropophag/fmonitor-2/issues/181) одним отдельным PR от актуального `main` после merge №187 и довести до PR-ready. Исключение №181 из объёма завершённой №183 не запрещает это поручение; разовые разрешения №183 не наследуются.
 
-Для самой №183 владелец разрешил одному агенту писать тесты и реализацию, не
-проводить отдельный Gate 3 и не создавать новый OpenSpec change или дублирующую
-спецификацию. Требуются один независимый final review полного policy change и
-полный выбранный CI. Автор: `/root/issue183_author`; reviewer назначается
-отдельно с **gpt-5.6-sol / low**.
+Локальный focused сохраняет acceptance/regression, изменённые зарегистрированные tests, непосредственные boundary checks и известные transitive consumer verifiers. Только общая integration closure, выбранная одним консервативным semantic fallback, переносится в обязательный exact-source CI. При нескольких основаниях local побеждает. Reviewer видит local evidence и CI-pending obligations без фиктивного evidence.
 
-Не входят №181/№182, №107/T07a, изменение состава CI, новый harness или система
-исключений и повтор Docker-бенчмарков №180. Merge/deploy/settings не выполнять.
-Локально только bounded focused checks; full `make test`/`make verify` запрещён.
-Exact-source GitHub CI выполняется один раз через существующего consumer.
+Не входят product code и повтор #49, расширение FAST, новые planner/registry/admission, изменение ролей/review rules, №182, №141, №107/T07a и остальные части №153. Полный старый local benchmark и локальные `make test`/`make verify` запрещены. Merge/deploy/settings не выполнять.
 
-Критерии принадлежат issue №183. Предыдущий указатель №180 сохранён в Git
-history; его merged реализация служит только примером типа изменения.
+Контракт: [CHANGE-VERIFICATION-PLACEMENT-181](../../specs/CHANGE-VERIFICATION-PLACEMENT-181.md). Lifecycle: [separate-local-focused-from-ci-integration](../../openspec/changes/separate-local-focused-from-ci-integration/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Сравнение использует поставленный состав №187 и `tests/fixtures/delivery/issue-49-delivery.json`; итог фиксирует before/after local команды, неизменные CI obligations и реальный bounded run.
