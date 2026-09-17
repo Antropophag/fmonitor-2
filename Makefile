@@ -42,7 +42,7 @@ up:
 	$(RUNTIME_COMPOSE) --profile deployment run --rm prepare
 	$(RUNTIME_COMPOSE) --profile deployment run --rm migrate
 	$(RUNTIME_COMPOSE) --profile deployment run --rm --entrypoint php prepare bin/fmonitor2-runtime-check.php
-	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --email '@env:FMONITOR_INITIAL_OWNER_EMAIL'
+	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --resume-existing-local --email '@env:FMONITOR_INITIAL_OWNER_EMAIL'
 	$(RUNTIME_COMPOSE) up --detach --wait php web
 	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/live' >/dev/null
 	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/ready' >/dev/null

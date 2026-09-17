@@ -142,3 +142,69 @@ The independent focused test is GREEN. Production source is unchanged.
 
 **Verdict: APPROVED.** This is a test-isolation correction for the integrated CI
 environment and does not alter the previously reviewed provisioning behavior.
+
+---
+
+## Independent Gate 5 review — explicit local continuation (#185) — 2026-09-18
+
+- Reviewer: independently tasked agent `/root/issue185_gate5`; author of none of
+  the reviewed specification, tests, production implementation, or Gate 3 review.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T232001Z-428549e1e4/package.json`.
+- Base: `e419c2b5d1e4d6c9e46edda1adf7abac6883447a`.
+- Candidate source: `24e498a1d99cce3fb4b05453a1405041025e02b59523ef20a6d2f618c20e106b`;
+  executable source: `5a157b1487fe093ac10fbb232f84284343c794d0d5ddb01818a90da04e7b0815`.
+- Contract: `specs/INITIAL-OWNER-PROVISIONING-001.md`
+  (`6f59acf9dadd30d2ddac31fb38aaa21917fb0a1af0db915ea9f667463c20876d`).
+- Snapshot patch: `b712e3c70e1b55fdd619a1ad08f2f15e94b4a17a86393dd737ecdd9003b914e8`.
+- Planner lane: `CRITICAL`; Gate 3 and final review required.
+- Verdict: **APPROVED**.
+
+### Findings
+
+No blocking or non-blocking code findings.
+
+### Assessment
+
+The implementation conforms to A1–A5. `make up` alone opts into the explicit
+local-resume CLI after prepare/migrate, while the unflagged direct CLI and checked
+production/web/migration entry points retain strict clean-create/exact-replay
+semantics. The application operation remains in IdentityAccess and introduces no
+second persistence owner, migration, import, external send, or excluded #185
+scope.
+
+Local continuation validates normalized expected identity, global uniqueness of
+the bootstrap owner candidate, active user and mandatory role definitions, exact
+bootstrap/null-actor provenance for both required grants, exactly one credential,
+and the four required permissions. Foreign, absent, ambiguous, blocked,
+credential-less, provenance-corrupt, inactive-role, missing-grant, and
+insufficient-permission states fail closed. It neither compares the supplied
+password nor seeds, repairs, promotes, restores, or otherwise changes identity
+facts.
+
+The operation uses the existing database/prefix advisory-lock key and a MariaDB
+`READ ONLY` transaction. All success and rejection paths commit or roll back and
+the outer `finally` releases the lock. The focused runtime verifier exercises a
+DML-only principal, held-lock behavior, complete concurrent process triples,
+strict production isolation, all complementary provenance predicates, developed
+owner tolerance, and full pre/post equality across the nine identity tables. The
+Make verifier is execution-sensitive through `make --dry-run up`, checks ordering
+and exact opt-in, and checks the named production routes negatively. The small
+owner methods and shared required-permission constant are maintainable and do not
+duplicate policy outside the owning module.
+
+All four supplied GREEN records are bound to the candidate and executable source
+above with exit 0 and retained transcripts: route ownership
+`1789686919867737000-7308c4821da14394bd96e0b81426450f`, runtime lifecycle
+`1789686924237194000-e26c07101f884ca6ae1d2dc87ea7b210`, governance
+`1789687144215276000-148afc90565e421e8e0ea2bd64f8a5c6`, and architecture
+`1789687170722786000-d27708d9a1c544b3aea2de15c9bb538c`. Their command blobs
+match the reviewed test files where applicable. The complete Gate 3 history was
+reviewed: two requested-correction rounds were closed by the approved narrow
+rereview, and the later two-line root fixture/oracle correction received an
+independent supplemental approval. Authorship separation and scope exclusions are
+recorded consistently.
+
+Exact-source CI, PR/head, deployment, and enforcement remain `UNKNOWN`/pending and
+are not represented as GREEN. This approval authorizes continuation to the
+required exact-source CI and PR-ready work only; it does not authorize merge or
+deploy.

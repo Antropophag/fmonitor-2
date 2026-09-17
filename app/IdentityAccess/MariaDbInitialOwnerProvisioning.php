@@ -7,6 +7,13 @@ use FMonitor2\InstallationProcess\IdentityAccessSchemaMigration;
 
 final class MariaDbInitialOwnerProvisioning
 {
+    private const REQUIRED_OWNER_PERMISSIONS = [
+        'objects.read',
+        'access.administer',
+        'access.superadminister',
+        'access.audit.read',
+    ];
+
     public static function provision(\mysqli $db, string $prefix, string $rawEmail, string $password): InitialOwnerProvisioningResult
     {
         IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);
@@ -18,6 +25,78 @@ final class MariaDbInitialOwnerProvisioning
         if ($lock === null) throw new \RuntimeException('PROVISIONING_BUSY');
         try { return self::provisionLocked($db, $prefix, $email, $password); }
         finally { self::release($db, $lock); }
+    }
+
+    public static function resumeExistingLocal(\mysqli $db, string $prefix, string $rawEmail): InitialOwnerProvisioningResult
+    {
+        IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);
+        $email = mb_strtolower(trim($rawEmail));
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false
+            || preg_match('/^[^@]+@shlz\.ru$/D', $email) !== 1) throw new \InvalidArgumentException();
+        if (!IdentityAccessSchemaMigration::isCompleteCompatible($db, $prefix)) throw new \RuntimeException('SCHEMA_NOT_READY');
+        $lock = self::acquire($db, $prefix);
+        if ($lock === null) throw new \RuntimeException('PROVISIONING_BUSY');
+        try { return self::resumeExistingLocalLocked($db, $prefix, $email); }
+        finally { self::release($db, $lock); }
+    }
+
+    private static function resumeExistingLocalLocked(\mysqli $db, string $prefix, string $email): InitialOwnerProvisioningResult
+    {
+        $db->query('START TRANSACTION READ ONLY');
+        try {
+            $ownerCandidates = $db->query("SELECT ur.user_id
+                FROM `{$prefix}fm2_pilot_user_roles` ur
+                JOIN `{$prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id
+                WHERE r.code IN ('user','superadministrator')
+                  AND ur.origin='bootstrap' AND ur.assigned_by_user_id IS NULL
+                GROUP BY ur.user_id
+                HAVING COUNT(DISTINCT r.code)=2")->fetch_all(MYSQLI_ASSOC);
+            $userStatement = $db->prepare("SELECT user_id,status,activation_state FROM `{$prefix}fm2_pilot_users` WHERE email=?");
+            $userStatement->bind_param('s', $email);
+            $userStatement->execute();
+            $users = $userStatement->get_result()->fetch_all(MYSQLI_ASSOC);
+            if (count($ownerCandidates) !== 1 || count($users) !== 1
+                || (int) $ownerCandidates[0]['user_id'] !== (int) $users[0]['user_id']
+                || (int) $users[0]['status'] !== 1 || $users[0]['activation_state'] !== 'active') {
+                $db->commit();
+                return InitialOwnerProvisioningResult::identityNotEmpty();
+            }
+            $userId = (int) $users[0]['user_id'];
+            $credential = $db->prepare("SELECT COUNT(*) FROM `{$prefix}fm2_pilot_auth_credentials` WHERE user_id=?");
+            $credential->bind_param('i', $userId);
+            $credential->execute();
+            if ((int) $credential->get_result()->fetch_column() !== 1
+                || !self::hasResumableOwnerAuthority($db, $prefix, $userId)) {
+                $db->commit();
+                return InitialOwnerProvisioningResult::identityNotEmpty();
+            }
+            $db->commit();
+            return InitialOwnerProvisioningResult::alreadyProvisioned();
+        } catch (\Throwable $error) { $db->rollback(); throw $error; }
+    }
+
+    private static function hasResumableOwnerAuthority(\mysqli $db, string $prefix, int $userId): bool
+    {
+        $statement = $db->prepare("SELECT r.code,ur.origin,ur.assigned_by_user_id,r.status
+            FROM `{$prefix}fm2_pilot_user_roles` ur
+            JOIN `{$prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id
+            WHERE ur.user_id=? AND r.code IN ('user','superadministrator')
+            ORDER BY r.code");
+        $statement->bind_param('i', $userId);
+        $statement->execute();
+        if ($statement->get_result()->fetch_all(MYSQLI_ASSOC) !== [
+            ['code'=>'superadministrator','origin'=>'bootstrap','assigned_by_user_id'=>null,'status'=>1],
+            ['code'=>'user','origin'=>'bootstrap','assigned_by_user_id'=>null,'status'=>1],
+        ]) return false;
+        $permissions = $db->prepare("SELECT DISTINCT rp.permission
+            FROM `{$prefix}fm2_pilot_user_roles` ur
+            JOIN `{$prefix}fm2_pilot_roles` r ON r.role_id=ur.role_id AND r.status=1
+            JOIN `{$prefix}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id
+            WHERE ur.user_id=? AND r.code IN ('user','superadministrator')");
+        $permissions->bind_param('i', $userId);
+        $permissions->execute();
+        $actual = array_column($permissions->get_result()->fetch_all(MYSQLI_ASSOC), 'permission');
+        return array_diff(self::REQUIRED_OWNER_PERMISSIONS, $actual) === [];
     }
 
     private static function provisionLocked(\mysqli $db, string $prefix, string $email, string $password): InitialOwnerProvisioningResult
