@@ -1,0 +1,44 @@
+{
+  "change": "unify-local-integration-env-issue-149",
+  "planned_paths": [
+    ".env.example",
+    "Makefile",
+    "docs/bitrix-startup.md",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/unify-local-integration-env/proposal.md",
+    "openspec/changes/unify-local-integration-env/specs/local-integration-env/spec.md",
+    "openspec/changes/unify-local-integration-env/design.md",
+    "openspec/changes/unify-local-integration-env/tasks.md",
+    "openspec/changes/unify-local-integration-env/verification-input.json",
+    "specs/LOCAL-INTEGRATION-ENV-001.md",
+    "tests/Architecture/yii2_local_quickstart_boundary_001_test.py",
+    "tests/Deployment/local_integration_env_001_test.py",
+    "tests/Deployment/local_integration_env_security_001_test.py",
+    "tools/delivery/local-integration-config",
+    "tools/delivery/local-runtime-env"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "A1-A3-A6-single-env-preflight-owners-and-docs",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": ".env.example plus Make/bootstrap validate complete applicable legacy or Bitrix input before downstream effects, retain existing Yii2 owners, and document one path without manual private files or reset",
+      "tests": ["tests/Architecture/yii2_local_quickstart_boundary_001_test.py", "tests/Deployment/local_integration_env_001_test.py", "tests/Deployment/yii2_local_integration_config_001_test.py", "tests/Yii2/yii2_legacy_import_db_001_test.php", "tests/Yii2/yii2_workforce_sync_db_001_test.php"],
+      "gate3_expected": {
+        "tests/Architecture/yii2_local_quickstart_boundary_001_test.py": "GREEN",
+        "tests/Deployment/local_integration_env_001_test.py": "GREEN",
+        "tests/Deployment/yii2_local_integration_config_001_test.py": "GREEN",
+        "tests/Yii2/yii2_legacy_import_db_001_test.php": "GREEN",
+        "tests/Yii2/yii2_workforce_sync_db_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "A4-A5-atomic-private-staging-replay-and-secret-boundary",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "local integration bootstrap atomically publishes complete private files for first, changed, failed and concurrent runs while Make/packaging keep canary secrets out of argv, output, compose config, tracked/build-context inputs and reset paths",
+      "tests": ["tests/Deployment/local_integration_env_security_001_test.py"],
+      "gate3_expected": {"tests/Deployment/local_integration_env_security_001_test.py": "GREEN"}
+    }
+  ]
+}

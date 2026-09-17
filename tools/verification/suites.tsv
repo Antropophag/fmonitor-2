@@ -293,6 +293,8 @@ unit	php	tests/AssignmentOrderComposition/selection_command_tracer_001_test.php	
 unit	python3	tests/Delivery/canonical_live_admission_context_001_test.py	governance
 unit	python3	tests/Delivery/fast_maintenance_lifecycle_162_test.py	governance
 unit	php	tests/Deployment/bitrix_startup_config_001_test.php	governance
+unit	python3	tests/Deployment/local_integration_env_001_test.py	unit
+unit	python3	tests/Deployment/local_integration_env_security_001_test.py	unit
 unit	python3	tests/Deployment/yii2_imports_workforce_package_001_test.py	unit
 unit	python3	tests/Deployment/yii2_local_data_bootstrap_001_test.py	unit
 unit	python3	tests/Deployment/yii2_local_integration_config_001_test.py	unit
