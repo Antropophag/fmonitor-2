@@ -46,11 +46,13 @@ $size = static function (int $bytes): string {
     if ($bytes < 1024) return $bytes . ' Б';
     return number_format($bytes / 1024, $bytes < 10240 ? 1 : 0, ',', ' ') . ' КиБ';
 };
-ViewSupport::begin($this, 'Объект ' . $registrationNumber, $identity);
+$registrationIdentity=trim((string)$registrationNumber)!==''?'Регистрационный номер '.$registrationNumber:'Регистрационный номер не указан';
+$factoryIdentity=trim((string)($factoryNumber??''))!==''?'Заводской номер лифта '.$factoryNumber:'Заводской номер лифта не указан';
+ViewSupport::begin($this, $registrationIdentity, $identity);
 ?>
-<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><span aria-current="page"><?= Html::encode($registrationNumber) ?></span></nav>
+<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><span aria-current="page"><?= Html::encode($registrationIdentity) ?></span></nav>
 <header class="fm2-object-identity">
-    <div><h1><?= Html::encode($address) ?></h1><p>Подъезд <?= Html::encode($entrance) ?></p><span><?= Html::encode($registrationNumber) ?> · ID <?= (int) $id ?></span></div>
+    <div><h1><?= Html::encode($registrationIdentity) ?></h1><p><?= Html::encode($address) ?> · подъезд <?= Html::encode($entrance) ?></p><span><?= Html::encode($factoryIdentity) ?></span></div>
     <span class="shlz-status <?= $statusClasses[$status] ?? 'shlz-status--neutral' ?>"><?= Html::encode($status) ?></span>
 </header>
 <div class="fm2-object-dashboard">

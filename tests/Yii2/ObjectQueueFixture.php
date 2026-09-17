@@ -11,7 +11,7 @@ final class ObjectQueueFixture
     public function __construct(public string $root)
     {
         $this->http=new UserAccessFixture($root);$this->db=$this->http->db;$this->p=$this->http->p;
-        $this->db->query("CREATE TABLE fm_maintable(id BIGINT UNSIGNED PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120),workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40)) ENGINE=InnoDB");
+        $this->db->query("CREATE TABLE fm_maintable(id BIGINT UNSIGNED PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(120) NULL,zavnumber VARCHAR(120) NULL,workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40)) ENGINE=InnoDB");
         foreach(['objects.read','inspection.schedule'] as $permission)$this->insert($this->p.'fm2_pilot_role_permissions',['role_id'=>9201,'permission'=>$permission]);
         $this->object(451201,6101,'working');$this->order(6111,6101,1,7299);$this->order(6112,6101,2,7301);
     }
@@ -23,7 +23,7 @@ final class ObjectQueueFixture
     }
     public function object(int $object,int $case,string $state='needs_assignment_order',?string $start='2026-09-12',string $address='Синтетический адрес'):void
     {
-        $this->insert('fm_maintable',['id'=>$object,'ordadr_address'=>$address,'entrance'=>'1','regnumber'=>'REG-'.$object,'workdatestart'=>$start,'plan_finish_date'=>'2026-12-01']);
+        $this->insert('fm_maintable',['id'=>$object,'ordadr_address'=>$address,'entrance'=>'1','regnumber'=>'REG-'.$object,'zavnumber'=>'ZAV-'.$object,'workdatestart'=>$start,'plan_finish_date'=>'2026-12-01']);
         $opened=in_array($state,['working','needs_assignment_change'],true);
         $this->insert($this->p.'fm2_installation_cases',['id'=>$case,'legacy_installation_object_id'=>$object,'process_state'=>$state,'actual_start_date'=>$opened?'2026-09-01':null,'opened_at'=>$opened?'2026-09-01T09:00:00+03:00':null,'opened_by_user_id'=>$opened?9101:null,'created_at'=>'2026-09-01T09:00:00+03:00','updated_at'=>'2026-09-01T09:00:00+03:00','lock_version'=>0]);
         $payload=json_encode(['schemaVersion'=>'technical-object-detail-v1','objectId'=>$object,'fields'=>[]],JSON_THROW_ON_ERROR);

@@ -1,18 +1,22 @@
 {
   "change": "issue-49-object-identifiers",
   "planned_paths": [
-    "app/PilotHttp/ObjectListView.php",
-    "app/PilotHttp/ObjectCardView.php",
-    "app/PilotHttp/PilotHttp.php",
-    "tests/InstallationProcess/object_card_registration_identity_test.php"
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "tests/Yii2/ObjectQueueFixture.php",
+    "tests/Yii2/yii2_object_queue_001_test.php",
+    "tests/Yii2/yii2_object_card_001_test.php"
   ],
   "acceptances": [
     {
       "spec_id": "OBJECT-IDENTITY-PRESENTATION-049",
       "acceptance_id": "bounded-list-and-card-header-identifiers",
       "spec_path": "docs/fmonitor-2-object-card-spec.md",
-      "seam": "server-rendered common object list and object-card identity header",
-      "tests": ["tests/InstallationProcess/object_card_registration_identity_test.php"]
+      "seam": "GET /pilot/objects and GET /pilot/objects/{id} through native Yii controllers and database readers",
+      "tests": ["tests/Yii2/yii2_object_queue_001_test.php", "tests/Yii2/yii2_object_card_001_test.php"]
     }
   ],
   "lifecycle": {
@@ -22,11 +26,11 @@
     "requirement_status": "CURRENT",
     "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
     "sensitivity": {
-      "classification": "ORDINARY",
-      "boundaries": ["server-rendered-presentation"],
-      "rationale": "The slice changes only object identity presentation; it preserves routes, actions, authorization, persistence, domain rules, filters and pagination."
+      "classification": "SENSITIVE",
+      "boundaries": ["verification-admission-policy", "authoritative-current-state"],
+      "rationale": "The correction changes native Yii database read projections and adds only their exact capability ownership registration; classifier algorithms and check-skipping rules remain unchanged."
     },
     "canonical_requirements": [{"path": "docs/fmonitor-2-object-card-spec.md"}],
-    "executable_regression": "tests/InstallationProcess/object_card_registration_identity_test.php"
+    "executable_regression": "tests/Yii2/yii2_object_queue_001_test.php"
   }
 }
