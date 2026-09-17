@@ -14,7 +14,7 @@ if ($dockerStatus !== 0) {
 
 $token = substr(bin2hex(random_bytes(6)), 0, 12);
 $project = 'fm2rt' . $token;
-$port = random_int(20000, 40000);
+$port = runtimeAvailablePort();
 $runtimePassword = 'runtime_' . $token;
 $migrationPassword = 'migration_' . $token;
 $runtimeImage = 'fmonitor2-runtime:' . $project;
@@ -82,6 +82,20 @@ function assertRuntimeCompose(array $result, string $operation): void
     assertSameValue(0, $result['exit'], "{$operation} stderr=" . trim($result['stderr']) . ' stdout=' . trim($result['stdout']));
 }
 
+function runtimeAvailablePort(): int
+{
+    $socket = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
+    if (!is_resource($socket)) {
+        throw new TestFailure("SETUP_FAILURE: cannot allocate runtime HTTP port: {$errorCode} {$errorMessage}");
+    }
+    $name = stream_socket_get_name($socket, false);
+    fclose($socket);
+    if (!is_string($name) || !preg_match('/:(\d+)$/', $name, $match)) {
+        throw new TestFailure('SETUP_FAILURE: allocated runtime HTTP port is unavailable');
+    }
+    return (int) $match[1];
+}
+
 /** @return array{status:int,body:string,headers:list<string>} */
 function runtimeHttp(int $port, string $path, ?string $host = null, string $method = 'GET', ?string $body = null, ?string $cookie = null): array
 {
@@ -125,6 +139,9 @@ try {
     $ddlDenied = runtimeComposeCommand([...$base, '--profile', 'deployment', 'run', '--rm', '--entrypoint', 'php', 'prepare', '-r', '$db=new mysqli(getenv("FMONITOR_DB_HOST"),getenv("FMONITOR_DB_USER"),getenv("FMONITOR_DB_PASSWORD"),getenv("FMONITOR_DB_NAME"),(int)getenv("FMONITOR_DB_PORT"));try{$db->query("CREATE TABLE forbidden_runtime_ddl(id INT)");exit(1);}catch(mysqli_sql_exception){echo "DDL_DENIED\n";}'], $environment, $root);
     assertSameValue([0, "DDL_DENIED\n", ''], [$ddlDenied['exit'], $ddlDenied['stdout'], $ddlDenied['stderr']], 'runtime principal cannot execute DDL');
     assertRuntimeCompose(runtimeComposeCommand([...$base, '--profile', 'deployment', 'run', '--rm', 'migrate'], $environment, $root), 'separate canonical migration');
+    $port = runtimeAvailablePort();
+    $environment['FMONITOR_HTTP_PORT'] = (string) $port;
+    $environment['FMONITOR_TRUSTED_REQUEST_HOST'] = '127.0.0.1:' . $port;
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'up', '--detach', '--wait', 'php', 'web'], $environment, $root), 'nginx and PHP-FPM startup');
 
     assertSameValue(200, runtimeHttp($port, '/health/live')['status'], 'nginx reaches PHP-FPM liveness endpoint');
