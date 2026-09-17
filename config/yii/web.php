@@ -126,6 +126,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/roles' => 'user-access/role',
                 'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/roles/<roleId:[1-9]\\d*>' => 'user-access/role',
                 'GET,HEAD,POST pilot/admin/users/<id:[1-9]\\d*>/status' => 'user-access/status',
+                'pilot/admin/users/<id:[1-9]\\d*>/legacy-link' => 'user-access/legacy-link',
                 'GET,POST pilot/activate' => 'user-access/activate',
                 'GET pilot/otiz' => 'otiz-settlement/index',
                 'GET pilot/otiz/objects' => 'otiz-settlement/objects',

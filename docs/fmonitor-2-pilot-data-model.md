@@ -218,6 +218,8 @@ Production-owned явное соответствие пользователя pr
 
 Composite ProcessUserDirectory читает активность и ФИО из legacy `users`/`users_roles`, а явные полномочия и настроенную должность — из `fm2_process_user_capabilities`. Один adapter обслуживает authorization подготовки и поиск инженера, не связываясь с `users_rights2roles`.
 
+Для миграции №20 local Yii2 identity связывается с legacy `users.id` отдельным append-only identity fact. Числовое совпадение local/legacy ID, ФИО, email, роль или должность не являются связью. Preview читает `responsstroicontrol` только у объектов, уже представленных в `fm2_installation_cases`; apply создаёт canonical standalone assignment через его application owner и не переносит legacy credentials/roles/rights.
+
 ### DocumentRenderer adapter
 
 Формирует документ и приложение по шаблону. Отдельный адаптер оправдан двумя реализациями: реальный renderer и детерминированный тестовый renderer.

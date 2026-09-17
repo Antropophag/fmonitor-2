@@ -285,8 +285,38 @@
       ]
     },
     {
+      "name": "legacy-control-engineer-migration",
+      "patterns": [
+        "app/InstallationProcess/LegacyControlEngineerMigration.php",
+        "app/InstallationProcess/LegacyControlEngineerMigrationSchema.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/legacy_control_engineer_migration_001_test.php"
+      ],
+      "consumers": [
+        "canonical-migration-frontier"
+      ]
+    },
+    {
+      "name": "legacy-identity-link",
+      "patterns": [
+        "app/IdentityAccess/LegacyIdentityLinkClock.php",
+        "app/IdentityAccess/LegacyIdentityLinkCommand.php",
+        "app/IdentityAccess/MariaDbLegacyIdentityLink.php",
+        "app/IdentityAccess/ProductionLegacyIdentityLinkFactory.php"
+      ],
+      "verifiers": [
+        "tests/IdentityAccess/legacy_identity_link_001_test.php",
+        "tests/Yii2/yii2_legacy_identity_link_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "current-schema-recovery",
-      "patterns": [],
+      "patterns": [
+        "app/RuntimeRestore/RuntimeRecovery.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV29.php"
+      ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
         "tests/Runtime/runtime_recovery_forward_update_001_test.php"

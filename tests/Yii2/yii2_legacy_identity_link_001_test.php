@@ -1,0 +1,40 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/UserAccessFixture.php';
+$f=null;
+try {
+    $f=new UserAccessFixture(dirname(__DIR__,2));$p=$f->p;
+    $f->start();$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='construction_control_engineer' WHERE role_id=9212");$admin=[];assertSameValue(303,$f->login($admin)['status'],'admin login');
+    $f->db->query("CREATE TABLE {$p}users_roles(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(100),status TINYINT NOT NULL)");
+    $f->db->query("CREATE TABLE {$p}legacy_users_source(id BIGINT UNSIGNED PRIMARY KEY,name VARCHAR(300),email VARCHAR(300),role_id BIGINT UNSIGNED,status TINYINT NOT NULL,password VARCHAR(300) NULL)");
+    $f->db->query("CREATE FUNCTION {$p}deny_http_legacy_password_read() RETURNS VARCHAR(300) DETERMINISTIC BEGIN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='HTTP_LEGACY_PASSWORD_WAS_READ'; RETURN ''; END");
+    $f->db->query("CREATE VIEW {$p}users AS SELECT id,name,email,role_id,status,{$p}deny_http_legacy_password_read() AS password FROM {$p}legacy_users_source");
+    $f->db->query("INSERT INTO {$p}users_roles VALUES(42,'Строительный контроль',1)");
+    $f->db->query("INSERT INTO {$p}legacy_users_source VALUES(8001,'Legacy <Engineer>','old@example.test',42,1,'legacy-secret-hash')");
+    $facts=static fn()=>array_merge($f->facts(),['legacyLinks'=>$f->rows('fm2_legacy_identity_links'),'legacyLinkEvents'=>$f->rows('fm2_legacy_identity_link_events')]);
+    $page=$f->page($admin);
+    assertSameValue(true,str_contains($page['body'],'legacyUserId'),'INTENDED_RED link control rendered');
+    if(getenv('FMONITOR_FIXTURE_REACHABILITY')==='yii-legacy-link-post-red-fixture'){
+        assertSameValue(true,str_contains($page['body'],'_csrf'),'post-red Yii page fixture readable');
+        assertSameValue('Legacy <Engineer>',(string)$f->db->query("SELECT name FROM {$p}legacy_users_source WHERE id=8001")->fetch_column(),'post-red legacy hint fixture readable');
+        $f->close();$f=null;echo "FIXTURE_REACHABLE: yii-legacy-link-post-red-fixture\n";exit(0);
+    }
+    foreach(['GET','HEAD'] as $method)assertSameValue(405,$f->request($method,'/pilot/admin/users/9403/legacy-link',[],$admin)['status'],'mutation method '.$method);
+    $before=$facts();$denied=[];$deniedLoginForm=$f->request('GET','/pilot/login',[],$denied);$deniedCsrf=$f->csrf($deniedLoginForm['body']);assertSameValue(303,$f->login($denied,'ordinary.person@shlz.ru')['status'],'regular login');
+    $r=$f->request('POST','/pilot/admin/users/9403/legacy-link',['_csrf'=>$deniedCsrf,'requestId'=>'20202020-0002-4020-8020-000000000001','legacyUserId'=>'8001'],$denied);
+    assertSameValue(403,$r['status'],'unprivileged link denied');assertSameValue($before,$facts(),'denied no identity facts');
+    $r=$f->post('/pilot/admin/users/9403/legacy-link',['requestId'=>'20202020-0002-4020-8020-000000000001','legacyUserId'=>'8001'],$admin);
+    assertSameValue([303,'/pilot/admin/users'],[$r['status'],$r['headers']['location'][0]??null],'link redirect');
+    $linkedFacts=$facts();assertSameValue(303,$f->post('/pilot/admin/users/9403/legacy-link',['requestId'=>'20202020-0002-4020-8020-000000000001','legacyUserId'=>'8001'],$admin)['status'],'HTTP replay');assertSameValue($linkedFacts,$facts(),'HTTP replay no facts');
+    assertSameValue(409,$f->post('/pilot/admin/users/9403/legacy-link',['requestId'=>'20202020-0002-4020-8020-000000000001','legacyUserId'=>'8002'],$admin)['status'],'request conflict 409');assertSameValue($linkedFacts,$facts(),'HTTP conflict no facts');
+    $linked=$f->page($admin);assertSameValue(true,str_contains($linked['body'],'8001'),'linked ID visible');assertSameValue(true,str_contains($linked['body'],'Legacy &lt;Engineer&gt;'),'snapshot escaped');assertSameValue(false,str_contains($linked['body'],'legacy-secret-hash'),'legacy credential hidden');
+    assertSameValue(400,$f->request('POST','/pilot/admin/users/9403/legacy-link',['_csrf'=>'bad','requestId'=>'20202020-0002-4020-8020-000000000002','legacyUserId'=>'8001'],$admin)['status'],'CSRF required');
+    $csrf=$f->csrf($f->page($admin)['body']);assertSameValue(415,$f->request('POST','/pilot/admin/users/9403/legacy-link',[],$admin,['Content-Type: application/json'])['status'],'content type bound');assertSameValue(413,$f->request('POST','/pilot/admin/users/9403/legacy-link',['_csrf'=>$csrf,'requestId'=>'20202020-0002-4020-8020-000000000099','legacyUserId'=>'8001','padding'=>str_repeat('x',9000)],$admin)['status'],'body size bound');
+    foreach([[['requestId'=>'bad','legacyUserId'=>'8001'],400],[['requestId'=>'20202020-0002-4020-8020-000000000003','legacyUserId'=>'0'],422],[['requestId'=>'20202020-0002-4020-8020-000000000004','legacyUserId'=>'9999'],422]] as[$fields,$expected]){$before=$facts();assertSameValue($expected,$f->post('/pilot/admin/users/9403/legacy-link',$fields,$admin)['status'],'HTTP rejection mapping');assertSameValue($before,$facts(),'HTTP rejection atomic');}
+    assertSameValue(303,$f->post('/pilot/admin/users/invite',['email'=>'new.engineer@shlz.ru','fullName'=>'Новый инженер'],$admin)['status'],'real HTTP invite');$invitedPage=$f->page($admin);assertSameValue(1,preg_match('#/pilot/activate\?token=([A-Za-z0-9_-]{43})#',$invitedPage['body'],$tokenMatch),'real invitation token');$token=$tokenMatch[1];$newId=(int)$f->db->query("SELECT user_id FROM {$p}fm2_pilot_users WHERE email='new.engineer@shlz.ru'")->fetch_column();assertSameValue(303,$f->post("/pilot/admin/users/$newId/roles",['roleId'=>'9212','action'=>'attach'],$admin)['status'],'real HTTP construction-control role');
+    $f->db->query("INSERT INTO {$p}legacy_users_source VALUES(8002,'Новый инженер','legacy.new@example.test',42,1,'NEVER-READ-LEGACY-CREDENTIAL'),(8003,'Fault Engineer','fault@example.test',42,1,'PRIVATE-LEGACY-FAULT-CREDENTIAL')");
+    assertSameValue(303,$f->post("/pilot/admin/users/$newId/legacy-link",['requestId'=>'20202020-0002-4020-8020-000000000005','legacyUserId'=>'8002'],$admin)['status'],'invited user linked before activation');
+    assertSameValue(null,$f->db->query("SELECT password_hash FROM {$p}fm2_pilot_auth_credentials WHERE user_id=$newId")->fetch_column(),'local credential still unset');$recipient=[];$activation=$f->request('GET','/pilot/activate?token='.$token,[],$recipient);assertSameValue(200,$activation['status'],'real activation form');$password='Independent local activation secret 2026';$activated=$f->request('POST','/pilot/activate',['_csrf'=>$f->csrf($activation['body']),'token'=>$token,'password'=>$password,'passwordConfirmation'=>$password],$recipient);assertSameValue(200,$activated['status'],'real HTTP activation');$localHash=(string)$f->db->query("SELECT password_hash FROM {$p}fm2_pilot_auth_credentials WHERE user_id=$newId")->fetch_column();assertSameValue(true,password_verify($password,$localHash),'new local credential');assertSameValue(false,str_contains($localHash,'NEVER-READ'),'legacy credential not copied');assertSameValue(303,$f->login($recipient,'new.engineer@shlz.ru',$password)['status'],'real first login');
+    assertSameValue(303,$f->post('/pilot/admin/users/9401/roles',['roleId'=>'9212','action'=>'attach'],$admin)['status'],'fault target made eligible through public role seam');$f->db->query("CREATE TRIGGER {$p}legacy_link_fault BEFORE INSERT ON {$p}fm2_legacy_identity_links FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='PRIVATE-LEGACY-LINK-FAULT'");try{$before=$facts();$fault=$f->post('/pilot/admin/users/9401/legacy-link',['requestId'=>'20202020-0002-4020-8020-000000000006','legacyUserId'=>'8003'],$admin);assertSameValue(503,$fault['status'],'persistence 503');assertSameValue($before,$facts(),'503 atomic');assertSameValue(false,str_contains(json_encode($fault,JSON_THROW_ON_ERROR),'PRIVATE-LEGACY-LINK-FAULT'),'503 sanitized');}finally{$f->db->query("DROP TRIGGER {$p}legacy_link_fault");}
+    echo "PASS: LEGACY-CONTROL-ENGINEER-MIGRATION-001 real Yii link route\n";
+} finally {if($f instanceof UserAccessFixture)$f->close();}
