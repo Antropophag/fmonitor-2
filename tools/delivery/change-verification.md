@@ -16,9 +16,11 @@ from prose. The accepted specification and reviewed policy own the obligations.
    intended failure in the Gate 3 review record. Setup failure is not valid RED.
 4. Recompute after bound source/input/spec/policy changes. Review any obligation
    changes. Use `check` before consuming a saved plan; `run` checks automatically.
-   The planner alone selects lane and `required_reviews`: supported `FAST`
-   requires independent final review; `STANDARD` and `CRITICAL` require Gate 3
-   and final review. Do not classify FAST by hand. The v1 classifier is limited
+   The planner alone selects lane and `required_reviews`, while CI breadth and
+   lifecycle ceremony remain separate. Supported `FAST` and declared ordinary
+   bounded fixes require independent final review; sensitive semantics and
+   admission/check policy require Gate 3 and final review. Do not classify FAST
+   by hand. The v1 classifier is limited
    to supported bounded UI scope; tests/spec changes can escalate it.
 5. Run exact-source CI once through the existing consumer selected by policy.
    CI reconstructs supported FAST selected commands from the exact-source plan;

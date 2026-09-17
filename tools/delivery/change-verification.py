@@ -18,6 +18,14 @@ ROOT = Path(__file__).resolve().parents[2]
 POLICY = ".quality-graph/verification-policy.json"
 CATEGORIES = {"unit", "integration", "e2e", "governance"}
 SERVER_RENDERED_PRESENTATION = "bounded-server-rendered-presentation"
+ISSUE183_TRANSITION = {
+    "base": "1245b44523f258294de4ac949e139dc2af26e07e",
+    "input": "docs/operations/issue-183-delivery.json",
+    "change": "issue-183-compact-maintenance",
+    "requirement": "tests/fixtures/delivery/issue-183-transition-authorization.txt",
+    "requirement_sha256": "c185c529f8ff98d189bad041a7c6846ce4a7c1d1b042a059b6ccd9182d1699bd",
+    "token": "OWNER_2026-09-17_ISSUE_183_NO_GATE3",
+}
 OBSERVABLE_DIMENSIONS = {
     "stdout", "stderr", "exit_status", "retained_evidence", "filesystem_effects",
     "idempotence", "failure_semantics", "caller_interoperability",
@@ -392,6 +400,114 @@ def consumer_frontier(effective, policy, inventory_entries, protected_paths):
     ))
 
 
+def issue183_transition_authorized(change, base, input_name):
+    lifecycle = change.get("lifecycle", {})
+    references = lifecycle.get("canonical_requirements")
+    expected = ISSUE183_TRANSITION
+    if not (lifecycle.get("issue") == "#183"
+            and lifecycle.get("transition_authorization") == expected["token"]
+            and change.get("change") == expected["change"]
+            and base == expected["base"]
+            and input_name == expected["input"]
+            and references == [{"path": expected["requirement"],
+                                 "sha256": expected["requirement_sha256"]}]):
+        return False
+    requirement = repo_path(expected["requirement"])
+    return requirement.is_file() and digest(requirement) == expected["requirement_sha256"]
+
+
+def focused_checks_arg_metadata_move(base, effective):
+    """Recognize only the #180 relocation of two unchanged metadata ARG lines."""
+    path = "tools/delivery/Dockerfile.focused-checks"
+    if path not in effective:
+        return False
+    try:
+        before = subprocess.run(["git", "show", f"{base}:{path}"], cwd=ROOT, text=True,
+                                capture_output=True, check=True).stdout.splitlines()
+        after = repo_path(path).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError, subprocess.SubprocessError):
+        return False
+    def stage(lines, name):
+        starts = [index for index, line in enumerate(lines)
+                  if re.match(r"^FROM\s+.+\s+AS\s+" + re.escape(name) + r"\s*$", line,
+                              flags=re.IGNORECASE)]
+        if len(starts) != 1:
+            return None
+        start = starts[0]
+        end = next((index for index in range(start + 1, len(lines))
+                    if re.match(r"^FROM\s+", lines[index], flags=re.IGNORECASE)), len(lines))
+        return start, end
+
+    before_common, after_common = stage(before, "common"), stage(after, "common")
+    if before_common is None or after_common is None:
+        return False
+    args = ["ARG COMPOSER_LOCK_SHA256", "ARG EXECUTABLE_SOURCE"]
+    before_indexes = [index for index in range(*before_common) if before[index] in args]
+    after_indexes = [index for index in range(*after_common) if after[index] in args]
+    if ([before[index] for index in before_indexes] != args
+            or [after[index] for index in after_indexes] != args):
+        return False
+    stripped_before = [line for index, line in enumerate(before) if index not in before_indexes]
+    stripped_after = [line for index, line in enumerate(after) if index not in after_indexes]
+    if stripped_before != stripped_after:
+        return False
+    label = 'LABEL org.fmonitor.composer-lock-sha256="$COMPOSER_LOCK_SHA256" \\'
+    try:
+        label_index = after.index(label, *after_common)
+        return (after_indexes[1] + 1 == label_index
+                and after_indexes[0] + 1 == after_indexes[1]
+                and before_indexes[1] + 1 < before.index(label, *before_common))
+    except ValueError:
+        return False
+
+
+def compact_maintenance_reviews(change, effective, acceptance_tests, base, input_name, policy):
+    """Separate review ceremony from CI breadth for declared bounded fixes."""
+    lifecycle = change.get("lifecycle")
+    if not isinstance(lifecycle, dict) or lifecycle.get("intent") != "COMPACT_MAINTENANCE":
+        return None
+    sensitivity = lifecycle.get("sensitivity")
+    required = {"issue", "change_kind", "requirement_status", "semantic_change",
+                "canonical_requirements", "executable_regression"}
+    references = lifecycle.get("canonical_requirements")
+    if (not required <= set(lifecycle)
+            or lifecycle.get("change_kind") != "BOUNDED_FIX"
+            or lifecycle.get("requirement_status") != "CURRENT"
+            or lifecycle.get("semantic_change") != "ESTABLISHED_BEHAVIOR_FIX"
+            or not isinstance(lifecycle.get("issue"), str) or not lifecycle["issue"].strip()
+            or not isinstance(sensitivity, dict)
+            or set(sensitivity) != {"classification", "boundaries", "rationale"}
+            or sensitivity.get("classification") not in {"ORDINARY", "SENSITIVE"}
+            or not isinstance(sensitivity.get("boundaries"), list)
+            or not isinstance(sensitivity.get("rationale"), str)
+            or not sensitivity["rationale"].strip()
+            or lifecycle.get("executable_regression") not in acceptance_tests
+            or not isinstance(references, list) or not references
+            or any(not isinstance(item, dict) or set(item) - {"path", "sha256"}
+                   or not isinstance(item.get("path"), str) or not item["path"].strip()
+                   for item in references)):
+        return ["gate3", "final"]
+    sensitive_boundaries = (set(policy.get("verification_lanes", {}).get("CRITICAL", []))
+                            | {"dependency-or-runtime", "persistence", "otiz-money"})
+    sensitive_paths = {path for path in effective
+                       if boundary_for(path, policy)["name"] in sensitive_boundaries}
+    semantic_sensitive_paths = {
+        path for path in effective
+        if any(surface.get("name") != "domain-application-contract"
+               and any(fnmatch.fnmatchcase(path, pattern) for pattern in surface.get("patterns", []))
+               for surface in policy.get("semantic_surfaces", []))
+    }
+    sensitive_paths.update(semantic_sensitive_paths)
+    metadata_only = (sensitive_paths == {"tools/delivery/Dockerfile.focused-checks"}
+                     and focused_checks_arg_metadata_move(base, effective))
+    known_sensitive = bool(sensitive_paths) and not metadata_only
+    if issue183_transition_authorized(change, base, input_name):
+        return ["final"]
+    if sensitivity["classification"] == "SENSITIVE" or known_sensitive:
+        return ["gate3", "final"]
+    return ["final"]
+
+
 def validate_argv(argv):
     if not isinstance(argv, list) or not argv or any(not isinstance(x, str) or not x or "\x00" in x for x in argv):
         raise ValueError("invalid argv")
@@ -753,6 +869,8 @@ def build(base_ref, input_name):
                     "id": hashlib.sha256(canonical(item["argv"]).encode()).hexdigest()[:16],
                     "argv": item["argv"],
                 })
+    compact_reviews = compact_maintenance_reviews(change, effective, acceptance_tests,
+                                                  base, input_name, policy)
     result = {
         "base": base, "base_ref": base_ref, "bindings": bindings,
         "boundaries": sorted(selected, key=lambda x: (x["path"], x["name"])),
@@ -763,7 +881,8 @@ def build(base_ref, input_name):
         "verification_lane": verification_lane,
         "reasons": reasons,
         "escalations": escalations,
-        "required_reviews": ["final"] if verification_lane == "FAST" else ["gate3", "final"],
+        "required_reviews": (compact_reviews if compact_reviews is not None else
+                             (["final"] if verification_lane == "FAST" else ["gate3", "final"])),
         "selected_checks": selected_checks,
         "semantic_escalations": semantic_escalations,
         "consumer_expansions": consumer_expansions,

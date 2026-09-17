@@ -1,0 +1,5 @@
+Issue #183 owner transition authorization, 2026-09-17.
+Base: 1245b44523f258294de4ac949e139dc2af26e07e
+Input: docs/operations/issue-183-delivery.json
+Change: issue-183-compact-maintenance
+Permission: one author for tests and implementation; no separate Gate 3 or new OpenSpec; retain independent final review and exact-source full CI.

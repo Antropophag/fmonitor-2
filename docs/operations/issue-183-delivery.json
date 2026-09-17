@@ -1,0 +1,49 @@
+{
+  "change": "issue-183-compact-maintenance",
+  "planned_paths": [
+    "AGENTS.md",
+    "docs/development-process.md",
+    "docs/delivery-harness.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-183-delivery.json",
+    "tests/Delivery/fast_maintenance_lifecycle_162_test.py",
+    "tests/fixtures/delivery/issue-183-transition-authorization.txt",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/change-verification.md",
+    "tools/delivery/harness_context.py"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ISSUE-183",
+      "acceptance_id": "compact-maintenance-real-route",
+      "spec_path": "docs/operations/current-delivery-goal.md",
+      "seam": "tools/delivery/harness.py prepare, state, and repository hooks",
+      "tests": [
+        "tests/Delivery/fast_maintenance_lifecycle_162_test.py"
+      ]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "#183",
+    "change_kind": "BOUNDED_FIX",
+    "requirement_status": "CURRENT",
+    "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+    "sensitivity": {
+      "classification": "SENSITIVE",
+      "boundaries": [
+        "delivery-policy",
+        "admission-check-policy"
+      ],
+      "rationale": "This changes delivery policy and therefore normally retains preliminary review; the owner explicitly waived Gate 3 only for the issue #183 transition while retaining an independent final review and exact-source full CI."
+    },
+    "transition_authorization": "OWNER_2026-09-17_ISSUE_183_NO_GATE3",
+    "canonical_requirements": [
+      {
+        "path": "tests/fixtures/delivery/issue-183-transition-authorization.txt",
+        "sha256": "c185c529f8ff98d189bad041a7c6846ce4a7c1d1b042a059b6ccd9182d1699bd"
+      }
+    ],
+    "executable_regression": "tests/Delivery/fast_maintenance_lifecycle_162_test.py"
+  }
+}

@@ -1,24 +1,22 @@
-# Текущая цель — №180, Docker dependency cache focused checks
+# Текущая цель — №183, компактная поставка обычных исправлений
 
-Поручение владельца 2026-09-17: реализовать только первую задачу
-[№180](https://github.com/Antropophag/fmonitor-2/issues/180) из навигационной
-сводки №179 от актуального `main` и довести candidate до PR-ready. Scope:
-сохранить Docker cache dependency layers focused checks при source-only
-изменении, не ослабляя exact source/lock identity; показать реальный bounded
-A→B before/after и внешний wall time.
+Поручение владельца 2026-09-17: реализовать
+[№183](https://github.com/Antropophag/fmonitor-2/issues/183) от актуального
+`main` до PR-ready. Обычное ограниченное исправление проходит через одного
+автора теста и реализации, focused checks, один независимый final review и
+planner-selected exact-source CI. Полнота CI сама по себе не добавляет Gate 3
+или дублирующий lifecycle.
 
-Не входят №181–№183, application code, CI composition, FAST/Gates, dependency
-upgrades, новый image/runner/telemetry framework, `RUN_IN_PROFILE_RESULT` schema
-и общий рефакторинг harness. Merge/deploy/settings не выполнять.
+Для самой №183 владелец разрешил одному агенту писать тесты и реализацию, не
+проводить отдельный Gate 3 и не создавать новый OpenSpec change или дублирующую
+спецификацию. Требуются один независимый final review полного policy change и
+полный выбранный CI. Автор: `/root/issue183_author`; reviewer назначается
+отдельно с **gpt-5.6-sol / low**.
 
-Контракт: [FOCUSED-CHECK-CACHE-180](../../specs/FOCUSED-CHECK-CACHE-180.md).
-Lifecycle:
-[focused-checks-dependency-cache](../../openspec/changes/focused-checks-dependency-cache/).
-Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует;
-независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5.
+Не входят №181/№182, №107/T07a, изменение состава CI, новый harness или система
+исключений и повтор Docker-бенчмарков №180. Merge/deploy/settings не выполнять.
 Локально только bounded focused checks; full `make test`/`make verify` запрещён.
-Exact-source GitHub CI выполняется один раз.
+Exact-source GitHub CI выполняется один раз через существующего consumer.
 
-Предыдущий указатель №157 сохранён в Git history и его WIP остаётся в отдельном
-worktree. Нельзя очищать shared Docker caches или удалять чужие
-worktrees/volumes. Устойчивый процент экономии по одной машине не заявляется.
+Критерии принадлежат issue №183. Предыдущий указатель №180 сохранён в Git
+history; его merged реализация служит только примером типа изменения.
