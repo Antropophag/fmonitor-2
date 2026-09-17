@@ -1,0 +1,19 @@
+{
+  "change": "focused-checks-dependency-cache",
+  "planned_paths": [
+    "specs/FOCUSED-CHECK-CACHE-180.md",
+    "tools/delivery/Dockerfile.focused-checks",
+    "tests/Verification/focused_check_cache_180_test.py",
+    "tools/verification/suites.tsv",
+    "docs/operations/issue-180-focused-check-cache-delivery.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "FOCUSED-CHECK-CACHE-180",
+      "acceptance_id": "FCC180-01-05",
+      "spec_path": "specs/FOCUSED-CHECK-CACHE-180.md",
+      "seam": "tools/delivery/run-in-profile <profile> <command> [args...]",
+      "tests": ["tests/Verification/focused_check_cache_180_test.py"]
+    }
+  ]
+}
