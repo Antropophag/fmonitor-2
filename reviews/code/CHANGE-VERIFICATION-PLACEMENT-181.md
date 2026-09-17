@@ -30,3 +30,33 @@ The diff does not alter FAST classification, review selection, registries, admis
 - Python compilation of the changed planner, package consumer and acceptance test — passed.
 
 The required full exact-source CI obligation is `make test`. It is intentionally pending and has no fabricated local result. This Gate 5 approval covers the reviewed candidate source; publication readiness still requires the planned exact-source GitHub CI to finish GREEN.
+
+---
+
+## Gate 5 correction review — CI run 35270615451
+
+- Reviewer: independent Gate 5 agent `/root/issue181_gate5`
+- Correction author: separate executor
+- Corrected source: base `e245ba1c173cc09f9183380228a7532c8dc942d2` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T204611Z-c8f4a079ab/snapshot`; snapshot manifest SHA-256 `4bfbfb85f4dc4b15d51f13633772272edcd3d3ae16ec52609d88ed514565bcf2`; patch SHA-256 `9451ab6c45363d2cdc698c42057f90fa8ac34bfd143ecb5caffbc5fe2c4052a9`; candidate source `b335a56b650909ed18ae8849cae663388b87ac3058719b4def9df808dcad64c4`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T204611Z-c8f4a079ab/package.json`; plan SHA-256 `64f24bd62d4767f7aae13192aba355d2e92a50c9877bc91a067a57190719e441`
+- Verdict: `APPROVED`
+
+### CI failure inventory and diagnosis
+
+Exact-source run `35270615451` failed in the primary `governance` job because `delivery_harness_ci_completeness_001_test.py` observed that deduplication retained an earlier rationale for `verification_ci_001_test.py` instead of upgrading it to `generated consumer obligation`. The harness-specific command filter consequently dropped that required generated consumer. The `verify` and `Quality Graph` failures correctly aggregated the primary governance failure; the supplied complete inventory reports every other job passed. This is a planner deduplication regression, not a failure in CI selection or aggregation.
+
+### Correction assessment
+
+The correction changes only `add()`'s duplicate-command handling. A generated source/consumer rationale now upgrades the legacy single `rationale` field even when the plan is untyped, which restores the existing harness consumer filter. Typed plans still update `purpose`, and semantic-placement plans retain their complete sorted `rationales` list rather than replacing it. Local precedence, once-only argv deduplication, CI placement, #187 command composition, package visibility and the full-CI aggregate remain unchanged.
+
+No additional finding was introduced by the correction. The delta is limited to the diagnosed failure and remains within the approved #181 scope.
+
+### Correction verification
+
+- Prepared exact-source focused evidence: `python3 tests/Verification/change_verification_placement_181_test.py` — `GREEN`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789677912528475000-577344cb0c2f4bf4ae64efab59454f1c.json`.
+- Prepared exact-source focused evidence: `python3 tests/Verification/change_verification_001_test.py` — `GREEN`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789677940171130000-c4fd04953b574ba3befc05e4941d778c.json`.
+- Independent reviewer rerun: `python3 tests/Verification/delivery_harness_ci_completeness_001_test.py` — 17 tests, all passed.
+- Independent reviewer rerun: `python3 tests/Verification/change_verification_placement_181_test.py` — 21 tests, all passed.
+- `git diff --check HEAD` and Python compilation of the corrected planner — passed.
+
+This correction approval supersedes the earlier Gate 5 source identity while preserving its findings disposition. A new exact-source CI run is still required; the failed run is retained as failure evidence and is not GREEN by implication.

@@ -837,8 +837,11 @@ def build(base_ref, input_name):
                 item["rationales"] = sorted(set(item["rationales"] + [rationale]))
             if semantic_escalations and execution == "local":
                 item["execution"] = "local"
-            if typed and rationale.startswith("generated"):
-                item.update(purpose=purpose)
+            if rationale.startswith("generated"):
+                if not semantic_escalations:
+                    item["rationale"] = rationale
+                if typed:
+                    item["purpose"] = purpose
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):
