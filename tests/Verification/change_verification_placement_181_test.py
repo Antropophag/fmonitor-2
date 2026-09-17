@@ -212,6 +212,65 @@ class Placement(MODULE.SemanticClosure):
         finally:
             fixture.doCleanups()
 
+    def test_acceptance_generated_consumer_keeps_evidence_mapping_with_and_without_semantic(self):
+        harness_spec = importlib.util.spec_from_file_location(
+            "harness_acceptance_generated", ROOT / "tests/Verification/delivery_harness_001_test.py")
+        harness_module = importlib.util.module_from_spec(harness_spec); harness_spec.loader.exec_module(harness_module)
+        for semantic in (False, True):
+            fixture = harness_module.Harness("runTest"); fixture.setUp()
+            try:
+                artifact = "tools/generated-acceptance-input.txt"
+                (fixture.repo / artifact).write_text("generated input\n")
+                fixture.git("add", "."); fixture.git("commit", "-qm", "generated acceptance fixture")
+                fixture.base = fixture.git("rev-parse", "HEAD").stdout.strip()
+                change_input = json.loads((fixture.repo / fixture.input).read_text())
+                change_input["planned_paths"] = [artifact]
+                fixture.write(fixture.input, change_input)
+                policy_path = fixture.repo / ".quality-graph/verification-policy.json"
+                policy = json.loads(policy_path.read_text())
+                policy["generated_sources"] = [{
+                    "inputs": [], "artifacts": [artifact],
+                    "check": ["python3", "tools/delivery/render-dependencies.py", "--check"],
+                    "consumers": [["python3", fixture.test]],
+                }]
+                if semantic:
+                    policy.setdefault("semantic_surfaces", []).append({
+                        "name": "acceptance-generated-semantic", "patterns": [artifact],
+                        "category": "integration", "reason": "semantic overlap fixture"})
+                    policy.setdefault("capability_ownership", []).append({
+                        "name": "acceptance-generated-owner", "patterns": [artifact],
+                        "verifiers": [], "consumers": []})
+                policy_path.write_text(json.dumps(policy, sort_keys=True) + "\n")
+                prepared = fixture.cli("prepare", "--input", fixture.input, "--base", fixture.base,
+                                       "--role", "root")
+                self.assertEqual(0, prepared.returncode, prepared.stderr)
+                package = json.loads(prepared.stdout)
+                plan = json.loads(Path(package["plan"]).read_text())
+                matches = [item for item in plan["commands"]
+                           if item["argv"] == ["python3", fixture.test]]
+                self.assertEqual(1, len(matches), "acceptance/generated command must execute once")
+                expected = ["acceptance mapping", "generated consumer obligation"]
+                self.assertEqual(sorted(expected), matches[0].get("rationales"),
+                                 "INTENDED_RED acceptance/generated reasons were not preserved")
+                self.assertEqual(semantic, bool(plan.get("semantic_escalations")))
+                run = fixture.cli("run", "--", "python3", fixture.test)
+                self.assertEqual(0, run.returncode, run.stderr)
+                record = json.loads(run.stdout)["record_path"]
+                reviewer = fixture.cli("prepare", "--input", fixture.input, "--base", fixture.base,
+                                       "--role", "reviewer", "--gate", "5", "--evidence", record)
+                self.assertEqual(0, reviewer.returncode,
+                                 "INTENDED_RED acceptance evidence mapping was lost: " + reviewer.stderr)
+                reviewed = json.loads(reviewer.stdout)
+                self.assertEqual(["python3", fixture.test], reviewed["evidence"][0]["argv"])
+                self.assertIn(["python3", fixture.test],
+                              [item["argv"] for item in reviewed["local_obligations"]])
+                missing = fixture.cli("prepare", "--input", fixture.input, "--base", fixture.base,
+                                      "--role", "reviewer", "--gate", "5")
+                self.assertNotEqual(0, missing.returncode,
+                                    "acceptance/generated command no longer requires evidence")
+            finally:
+                fixture.doCleanups()
+
     def test_existing_full_ci_aggregate_rejects_missing_skip_failure_and_cancel(self):
         spec = importlib.util.spec_from_file_location("ci", ROOT / "tools/verification/ci.py")
         ci = importlib.util.module_from_spec(spec); spec.loader.exec_module(ci)

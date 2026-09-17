@@ -152,3 +152,46 @@ Gate 3 is approved for separate executor implementation. This approval covers th
 ### Required changes
 
 None.
+
+## Gate 3 delta review v5 — PR188 acceptance/generated-consumer overlap
+
+- Reviewer: independent Gate 3 agent `/root/issue181_gate3`
+- Delta author: root
+- Reviewed delta: `tests/Verification/change_verification_placement_181_test.py` only; base commit `b8e070f3f8b39aaf1cd94dbf9ba1bb55b009b50a`; retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T211933Z-982c7c722c/snapshot`; manifest SHA-256 `ff7f4d45e8908fd21b4b5653b16bbc82353ffe43d9ebb410918f5bac4048124d`; patch SHA-256 `1bb2f8a6bd165fe171f827c46831da4cc07ebeca8b46d97631b04f55857af894`; candidate source `788f2d080eedda3b51ed4c0bbab9dfed9fd3acddf7edc13d04d93697d0cc9bb8`
+- Retained RED: `python3 tests/Verification/change_verification_placement_181_test.py`; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789679937519677000-0889102853884804b43195b3d18cc2ee.json`; exit 1; prior 21 tests pass and the new case fails at absent preserved rationales
+- Verdict: `APPROVED` — prior Gate 3 approval remains valid for this correction test
+
+### Findings and disposition
+
+None.
+
+The regression exercises the public planner and reviewer-package seams through the established disposable harness fixture. In both the ordinary non-semantic plan and the same contract under semantic escalation, one registered test is independently selected as both the acceptance mapping and a generated consumer. The expected result is stated independently and exactly: one command, local placement through its acceptance obligation, and the sorted rationales `acceptance mapping` plus `generated consumer obligation` (`tests/Verification/change_verification_placement_181_test.py:215-248`). The semantic variant additionally requires a real semantic escalation rather than merely relabeling the ordinary plan.
+
+The reviewer half runs the selected command through the harness, submits its exact record, requires the reviewer package to retain that argv in evidence and local obligations, and proves omission of the evidence remains rejected (`:249-263`). This catches the reported admission regression: deduplication may merge selection reasons, but it may not erase the acceptance identity used to bind evidence. The fixture is isolated, deterministic, and does not depend on implementation-private helpers or external systems.
+
+The retained RED is clean and narrow. All 21 previously approved tests pass; the new test reaches plan construction and fails because the one deduplicated command has no `rationales`, not because of setup, package preparation, or environment failure. The delta changes no prior expectation and introduces no broader planner, registry, FAST, CI, or product scope.
+
+Gate 3 is approved for the separate executor correction. This is approval of the root-authored regression and retained RED only, not Gate 5 approval of implementation, existing CI success, or PR admission.
+
+### Required changes
+
+None.
+
+---
+
+## Gate 3 test-fixture delta review v6 — independent generated artifact
+
+- Reviewer: independent Gate 3 agent `/root/issue181_gate3`
+- Fixture correction author: root
+- Reviewed scope: correction to `test_acceptance_generated_consumer_keeps_evidence_mapping_with_and_without_semantic` only; implementation changes excluded
+- Reviewed source package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T212054Z-5d1ef5c454/package.json`; candidate source `bd5c42216d8876a7f9fd2019bd67e0916c66132ccc3b7cc4bd1a66ea1da3b6f0`; snapshot manifest SHA-256 `42ffaefcf94e460e01974539938b93b7df985046618a9465559f63cf27723a0d`; patch SHA-256 `2c6c5b1c805232807a935a6e18a8b8df438d331090c070685a453c343d56c94c`
+- Focused confirmation: `python3 -m unittest -v tests.Verification.change_verification_placement_181_test.Placement.test_acceptance_generated_consumer_keeps_evidence_mapping_with_and_without_semantic` — PASS, both variants, 4.385 seconds
+- Verdict: `APPROVED` — v5 Gate 3 approval remains valid
+
+### Disposition
+
+The correction removes the changed-test overlap without weakening the v5 expectation. A distinct committed generated artifact is now the only planned path, generated artifact and optional semantic trigger; the registered test remains independently selected by the unchanged acceptance mapping and by the generated source's consumer declaration. The asserted single command and exact `acceptance mapping` plus `generated consumer obligation` rationales therefore cannot be satisfied through changed-registered-test placement or by making the acceptance test itself the trigger.
+
+The non-semantic variant proves the untyped ordinary plan, while the semantic variant applies escalation to the separate artifact and retains the same acceptance/generated-consumer command contract. Reviewer evidence binding and missing-evidence rejection remain unchanged. The focused method passes against the corrected implementation in both variants, confirming that the revised fixture is reachable and deterministic.
+
+No finding is introduced. This delta approval covers the root-authored fixture correction only and does not review or approve the implementation delta.

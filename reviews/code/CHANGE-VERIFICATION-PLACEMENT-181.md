@@ -60,3 +60,38 @@ No additional finding was introduced by the correction. The delta is limited to 
 - `git diff --check HEAD` and Python compilation of the corrected planner — passed.
 
 This correction approval supersedes the earlier Gate 5 source identity while preserving its findings disposition. A new exact-source CI run is still required; the failed run is retained as failure evidence and is not GREEN by implication.
+
+---
+
+## Gate 5 delta review — acceptance/generated-consumer preservation
+
+- Reviewer: independent Gate 5 agent `/root/issue181_gate5`
+- Test author: root; implementation correction author: separate executor
+- Reviewed source: base `e245ba1c173cc09f9183380228a7532c8dc942d2` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T213247Z-b7f6351e6f/snapshot`; snapshot manifest SHA-256 `f8f090f10191093165f5eeb350d050bed2c14929f73f48d1e8e89cec9c7fba65`; patch SHA-256 `f06628ae567590ea6abc007b76a3364f6622481ae281dfbb13f913a6ca26a4b5`; candidate source `d65f1d8d0a8b9f4468fe432c02b62cabd4a5436f3e7ea6960e670143bee09925`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T213247Z-b7f6351e6f/package.json`; plan SHA-256 `4ce267f39e18c49a69607fcdb3359b43986a388f4403c9ba49a13828caa4a241`
+- Gate 3 delta reviews: v5 and fixture correction v6 in `reviews/tests/CHANGE-VERIFICATION-PLACEMENT-181.md`, both `APPROVED`
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### Delta assessment
+
+The root-authored regression isolates a registered acceptance test selected independently as a generated consumer by using a separate committed generated artifact. It covers both the ordinary non-semantic/untyped plan and a real semantic-escalation variant, then exercises the reviewer package with current evidence and proves that omission of that evidence remains rejected. Gate 3 v5/v6 correctly identify the earlier changed-test overlap and approve the corrected independent fixture.
+
+The planner correction accumulates selection reasons for every duplicate argv without replacing the primary legacy `rationale`. In the non-semantic untyped case the one command therefore preserves `rationale: acceptance mapping` and adds sorted `rationales: [acceptance mapping, generated consumer obligation]`. `_mapped_commands`, `_gate_expectations` and acceptance lookup continue to recognize the mapping, so reviewer evidence remains mandatory. In typed plans a later generated reason cannot replace `purpose: acceptance`; in semantic plans local execution still wins and both reasons remain visible.
+
+This also restores the generated-consumer reason used by harness completeness filtering without dropping acceptance identity. Changed-registered-test selection is not suppressed: the existing changed-test/consumer regression passes, and the current package itself shows the acceptance command retaining both acceptance and changed-test reasons. No FAST, registry, CI aggregate, product or admission scope changed.
+
+The pinned shipped-#187 comparison remains 279 focused commands before versus 4 local commands after, with the exact ordered prior CI argv equal to the new `ci_obligations` inventory.
+
+### Verification evidence
+
+- Prepared exact-source placement evidence — `GREEN`: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789680645844591000-94161d48442a401699b35a44e99eccca.json`.
+- Prepared generated-completeness suite — 17/17 `GREEN`: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789680677378431000-bb4183f02d594a8390a1bcb33c31ba83.json`.
+- Prepared exact-source planner evidence — `GREEN`: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789680734192034000-82ef938d76c946629419bbe8f10823ef.json`.
+- Independent reviewer run of the new ordinary/semantic case, changed-test preservation case and #187 comparison — 3/3 passed.
+- `git diff --check b8e070f3f8b39aaf1cd94dbf9ba1bb55b009b50a` and Python compilation of the changed planner/test — passed.
+
+This verdict supersedes the prior correction source identity. The currently recorded successful CI run is associated with Git head `b8e070f3f8b39aaf1cd94dbf9ba1bb55b009b50a`; it does not by itself validate the uncommitted candidate snapshot `d65f1d8d...`. Exact-source CI for the final committed candidate remains required before PR readiness.

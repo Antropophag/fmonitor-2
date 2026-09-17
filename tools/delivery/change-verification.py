@@ -833,14 +833,14 @@ def build(base_ref, input_name):
             command_by_key[key] = item
         else:
             item = command_by_key[key]
-            if semantic_escalations:
-                item["rationales"] = sorted(set(item["rationales"] + [rationale]))
-            if semantic_escalations and execution == "local":
+            existing_rationales = item.get("rationales")
+            if existing_rationales is None:
+                existing_rationales = [item["rationale"]]
+            item["rationales"] = sorted(set(existing_rationales + [rationale]))
+            if "execution" in item and execution == "local":
                 item["execution"] = "local"
-            if rationale.startswith("generated"):
-                if not semantic_escalations:
-                    item["rationale"] = rationale
-                if typed:
+            if rationale.startswith("generated") and typed:
+                if item.get("purpose") != "acceptance":
                     item["purpose"] = purpose
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
