@@ -85,3 +85,27 @@ No other new regression was found. A1, A2, A4-A6 and remaining A3 cases conform.
 ### Final verdict
 
 `APPROVED` for exact source `c110e59ed801fce673b55c8188181ff79e1f962025c970249e9fcedf176ffb72`. This Gate 5 approval does not claim CI, publication, merge, deployment, or settings; exact-source CI remains `UNKNOWN` and must follow the owner-selected workflow.
+
+## CI oracle correction final rereview — 2026-09-17
+
+- Reviewer: `/root/issue149_gate5`; independence is unchanged.
+- Verdict: `APPROVED`.
+- Exact candidate: `af58ae69e9659b1d698829c5bd469480232cad6a3b17492dbca990cb9a4fa791`; executable source `52871ab219063a3c81ca316d5280e96e107e839910bce254f34891610ca003ad`; base `19ae9d3ec02a801075add5e6db3f504585271e26`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T131707Z-8691313613/package.json`, SHA-256 `563d900bf05c73f69ebdaae9c76487c7b10f189dd9742a3440e28ae30d56220f`.
+- Previous Gate 3 snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T131501Z-1bd6946a74/snapshot`.
+- Final snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T131707Z-8691313613/snapshot`; patch SHA-256 `3bb02411bed5f70f6ee62b4affc5bde4c3176386c34eb97687139796b013ac47`; manifest SHA-256 `98016cc7e6c867e1681da9e85f3d0e9474ff4cca197ac182c6bc6a2417f85e75`; final delta SHA-256 `cc0f846afc1313754b35e9329a8991b6d25ccdebc92c116f0774aa84b12c7653`.
+- Required context SHA-256 `344fd732ae062c572af68a77a020f96d99b87f550330b2acc001311b060c4109`; context manifest SHA-256 `c8b1059998e76bd42ea93406a198f964931432cc0ca103063576cf31b2f46a70`; plan SHA-256 `5c2dfbe286a5f8663c7fd7a6c5ceb32c5e6b3485b1308d5122aeaa61109f89a9` (`CRITICAL`).
+- Fresh Gate 3: `APPROVED` at source `f28b84654b3e49995b3cd9a9f45162a3271479bb2a605da0cc60f41edbaea463` for the corrected quickstart oracle and mapping.
+- All six package commands are source-matched `GREEN`. Independent bounded reruns of `yii2_local_quickstart_boundary_001_test.py` and `local_integration_env_001_test.py` passed. Full local suite was not run.
+
+### Delta review and findings
+
+- The stale pre-#149 assertion that `.env.example` must omit Bitrix configuration is correctly replaced by positive witnesses for the Bitrix and legacy groups required by the accepted single-`.env` contract.
+- The quickstart invariant is not weakened: the oracle now explicitly rejects `local-integration-config` in the plain `up` recipe. The mapped executed `up-with-data` contract complements this direct check by requiring exactly one `up`, then exactly one legacy owner and one workforce owner in order, so indirect integration execution from `up` would also fail.
+- The corrected architecture test is explicitly planned and mapped to A1-A3-A6. The complete eight-key template, independent seams, A4-A5 security behavior, and retained owners remain covered by the other five source-matched GREEN checks.
+- The final package delta after the Gate 3 snapshot contains only the append-only Gate 3 record. No production or normative specification behavior changed, no expectation was weakened, and no unrelated impact was introduced.
+- Complete findings: none.
+
+### Final correction verdict
+
+`APPROVED` for exact source `af58ae69e9659b1d698829c5bd469480232cad6a3b17492dbca990cb9a4fa791`. The historical exact-source CI failure identified the obsolete oracle; this approval verifies its correction but does not represent the broader CI state as GREEN. CI triage/publication, merge, deployment, and settings remain separate workflow steps.

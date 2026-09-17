@@ -152,6 +152,25 @@ The first Gate 3 review of the Gate 5 return requested two sensitivity additions
 
 Correction final review reproduced one remaining owner-parity gap: uppercase `HTTPS://portal.example/rest/7/token/` passed staging but the unchanged `WorkerConfiguration` rejected it after the Docker boundary. Root added this exact rejection to the public preflight matrix and clarified the owner-compatible lowercase scheme. Fresh Gate 3 approval is required before the production correction.
 
+### CI oracle correction
+
+Exact-source CI run `35224850825` exposed one complete unit inventory failure: `tests/Architecture/yii2_local_quickstart_boundary_001_test.py` retained the pre-#149 assertion that `.env.example` must not contain `FMONITOR_BITRIX_WEBHOOK_URL`. The new contract intentionally adds Bitrix and legacy placeholders while preserving plain `make up` as runtime-only. Root changes the stale oracle to require both integration groups in the template and to prove the `up` recipe itself does not invoke `local-integration-config`. The failed unit record is the historical RED; current corrected oracle must be GREEN and is explicitly mapped before correction review.
+
+## CI oracle correction Gate 3 — 2026-09-17
+
+- Reviewer: `/root/issue149_gate3`; independent of specification, test and implementation authorship.
+- Verdict: `APPROVED`.
+- Review mode: green correction; harness v1 cannot prepare a Gate 3 package without remaining intended RED. Historical RED is exact-source CI run `35224850825`, unit `REGRESSION_FAILURE`, recorded above; the corrected oracle and all mapped current checks are GREEN.
+- Reviewed exact source: harness digest `f28b84654b3e49995b3cd9a9f45162a3271479bb2a605da0cc60f41edbaea463`; executable-source digest `52871ab219063a3c81ca316d5280e96e107e839910bce254f34891610ca003ad`; base `19ae9d3ec02a801075add5e6db3f504585271e26`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260917T131501Z-1bd6946a74/package.json`; required-context SHA-256 `344fd732ae062c572af68a77a020f96d99b87f550330b2acc001311b060c4109`; verification-plan SHA-256 `d1b7c9aeedd92fe75a051910d3d0d562d04b0278d25821277811b5d09dcde85d`.
+- Source-matched GREEN evidence: architecture oracle `1789650810600314000-321fdd2183424123a96ede7a45a42e95.json`; deployment contracts `1789650811710933000-7554c42078e64127971b893de2d3e7e6.json`, `1789650818157355000-366de9d4dcee41579a1316a45a6b6102.json`, `1789650820990391000-c39ba54bdf6d418b918df9a00840c4bc.json`; retained owners `1789650823217397000-5ae86a41fd754c5bbaa5d1c767099c9d.json`, `1789650834874619000-c0d09be4498a48ccb8295265aa4a3c3d.json`.
+
+### Complete findings
+
+- None. `tests/Architecture/yii2_local_quickstart_boundary_001_test.py` replaces only the stale negative Bitrix-template assertion with positive witnesses for both Bitrix and legacy placeholder groups and a negative witness that the plain `up` recipe does not call `local-integration-config`.
+- Traceability is explicit through the A1-A3-A6 mapping. Sensitivity is complementary: the architecture oracle fails if either integration group disappears or staging is inserted directly into `up`; the mapped executed `up-with-data` test requires exactly one `up`, then exactly one legacy and workforce owner, so an indirect integration invocation from plain `up` also breaks the observable order/count. The complete template and independent integration seams remain covered by the existing deployment contract.
+- The historical failure is an obsolete pre-#149 expectation rather than a product regression; the replacement preserves the old quickstart invariant that plain `make up` is integration-free while aligning the template oracle with the accepted single-`.env` behavior. No production/spec expectation is weakened.
+
 ## Gate 3 fourth correction rereview — 2026-09-17
 
 - Reviewer: `/root/issue149_gate3`; independent of specification and test authorship.
