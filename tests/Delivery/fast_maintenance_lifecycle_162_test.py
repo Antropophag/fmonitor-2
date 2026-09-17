@@ -34,6 +34,7 @@ class FastMaintenanceLifecycle(unittest.TestCase):
             '{"change", "planned_paths", "acceptances", "dependency_workspaces"}',
             '{"change", "planned_paths", "acceptances", "dependency_workspaces", "lifecycle"}'))
         for relative in ["AGENTS.md", "PRODUCT.md", "CONTEXT.md", "docs/development-process.md",
+                         "docs/fmonitor-2-pilot-spec.md", "docs/fmonitor-2-pilot-data-model.md",
                          "docs/operations/current-delivery-goal.md"]:
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -73,18 +74,30 @@ class FastMaintenanceLifecycle(unittest.TestCase):
                 {"name": "server-rendered-presentation", "patterns": ["app/YiiRuntime/Views/card.php"],
                  "categories": ["unit"], "tests": [self.oracle],
                  "fast_class": "bounded-server-rendered-presentation"},
-                {"name": "application-code", "patterns": ["app/YiiRuntime/Views/**"], "categories": ["unit"], "tests": []},
+                {"name": "application-code", "patterns": ["app/YiiRuntime/Views/**", "app/InstallationProcess/**"], "categories": ["unit"], "tests": []},
                 {"name": "auth", "patterns": ["app/IdentityAccess/**"], "categories": ["unit"], "tests": []},
                 {"name": "sensitive-offline-ui", "patterns": ["app/YiiRuntime/Assets/checklist-sw.js"], "categories": ["unit"], "tests": []},
                 {"name": "persistence", "patterns": ["migrations/**"], "categories": ["integration"], "tests": []},
-                {"name": "delivery-policy", "patterns": ["tools/**", "tests/**", "specs/**", "openspec/**"],
+                {"name": "tests", "patterns": ["tests/**"], "categories": ["governance"], "tests": []},
+                {"name": "delivery-policy", "patterns": [".github/**", "tools/**", "specs/**", "openspec/**"],
+                 "categories": ["governance"], "tests": []},
+                {"name": "dependency-or-runtime", "patterns": ["Dockerfile"],
                  "categories": ["governance"], "tests": []},
             ],
             "verification_lanes": {"FAST": ["server-rendered-presentation"],
                                    "CRITICAL": ["auth", "sensitive-offline-ui", "delivery-policy"]},
             "fast_classes": {"bounded-server-rendered-presentation": {
                 "companion_boundaries": [], "negative_boundaries_checked": ["product-spec-semantics", "verification-admission-policy"]}},
-            "semantic_surfaces": [], "full_categories": ["unit", "integration", "e2e", "governance"],
+            "semantic_surfaces": [
+                {"name": "schema-migration-frontier", "patterns": ["app/**/*Migration*.php", "app/**/*Schema*.php"],
+                 "category": "integration", "reason": "schema and migration frontier require integration closure"},
+                {"name": "domain-application-contract", "patterns": ["app/InstallationProcess/**"],
+                 "category": "integration", "reason": "domain application contracts affect downstream consumers"},
+            ],
+            "capability_ownership": [{
+                "name": "installation-schema-owner", "patterns": ["app/InstallationProcess/**"],
+                "verifiers": ["tests/Verification/integration_test.py"], "consumers": []}],
+            "full_categories": ["unit", "integration", "e2e", "governance"],
             "full_argv": ["make", "test"],
         }
         self.write_json(".quality-graph/verification-policy.json", policy)
@@ -119,6 +132,18 @@ class FastMaintenanceLifecycle(unittest.TestCase):
     def declaration(self, **overrides):
         value = {"intent": "FAST_MAINTENANCE", "issue": "#historical-presentation",
                  "semantic_change": False, "requirement_status": "CURRENT",
+                 "canonical_requirements": [{"path": self.requirement}],
+                 "executable_regression": self.oracle}
+        value.update(overrides)
+        return value
+
+    def compact_declaration(self, **overrides):
+        value = {"intent": "COMPACT_MAINTENANCE", "issue": "#183-fixture",
+                 "change_kind": "BOUNDED_FIX", "requirement_status": "CURRENT",
+                 "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+                 "sensitivity": {"classification": "ORDINARY", "boundaries": [],
+                                 "rationale": "No rights, secrets, money, persistence, replay, "
+                                              "irreversible operation, or admission policy changes."},
                  "canonical_requirements": [{"path": self.requirement}],
                  "executable_regression": self.oracle}
         value.update(overrides)
@@ -227,6 +252,195 @@ class FastMaintenanceLifecycle(unittest.TestCase):
                 for relative in paths[1:]:
                     if relative != "app/YiiRuntime/Views/card.php":
                         (self.root / relative).unlink(missing_ok=True)
+
+    def test_o_full_ci_bounded_fix_uses_one_author_and_final_review(self):
+        result, package = self.prepare(
+            paths=["app/YiiRuntime/Views/card.php", self.oracle],
+            lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual("STANDARD", plan["verification_lane"])
+        self.assertIn(["make", "test"], [item["argv"] for item in plan["commands"]])
+        self.assertEqual(["final"], plan["required_reviews"])
+        self.assertEqual("COMPACT_MAINTENANCE", package["lifecycle"]["route"])
+        self.assertEqual("single_author", package["lifecycle"]["authorship"])
+        self.assertEqual("ORDINARY", package["lifecycle"]["sensitivity"]["classification"])
+
+        blocked, _ = self.prepare(paths=["app/YiiRuntime/Views/card.php", self.oracle],
+                                  lifecycle=self.compact_declaration(), role="executor")
+        self.assertNotEqual(0, blocked.returncode)
+        self.assertIn("compact maintenance executor requires intended RED evidence", blocked.stderr)
+        admitted, executor = self.prepare(
+            paths=["app/YiiRuntime/Views/card.php", self.oracle],
+            lifecycle=self.compact_declaration(), role="executor", evidence=self.red_evidence())
+        self.assertEqual(0, admitted.returncode, admitted.stderr)
+        self.assertEqual("INTENDED_RED", executor["lifecycle"]["executable_red"]["status"])
+
+    def test_p_metadata_fix_keeps_full_ci_but_drops_duplicate_lifecycle(self):
+        recipe = self.root / "tools/delivery/Dockerfile.focused-checks"
+        before = subprocess.run(
+            ["git", "show", "c94c54247e85ebaf4e3bfd3b8b63d4b661ef27d4^:tools/delivery/Dockerfile.focused-checks"],
+            cwd=ROOT, text=True, capture_output=True, check=True).stdout
+        after = subprocess.run(
+            ["git", "show", "c94c54247e85ebaf4e3bfd3b8b63d4b661ef27d4:tools/delivery/Dockerfile.focused-checks"],
+            cwd=ROOT, text=True, capture_output=True, check=True).stdout
+        self.assertGreaterEqual(before.count("ARG COMPOSER_LOCK_SHA256"), 2)
+        self.assertIn("FROM common AS governance", before)
+        self.assertIn("FROM common AS integration", before)
+        self.assertIn("FROM common AS browser", before)
+        recipe.write_text(before)
+        self.git("add", "tools/delivery/Dockerfile.focused-checks")
+        self.git("commit", "-qm", "fixture pre-180 recipe")
+        self.base = self.git("rev-parse", "HEAD").stdout.strip()
+        recipe.write_text(after)
+        result, package = self.prepare(paths=["tools/delivery/Dockerfile.focused-checks", self.oracle],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertNotEqual("FAST", plan["verification_lane"])
+        self.assertEqual(["final"], plan["required_reviews"])
+        self.assertIn(["make", "test"], [item["argv"] for item in plan["commands"]])
+        self.assertEqual("COMPACT_MAINTENANCE", package["lifecycle"]["route"])
+
+        recipe.write_text(recipe.read_text().replace("RUN apt-get update", "RUN echo arbitrary-change && apt-get update", 1))
+        result, package = self.prepare(paths=["tools/delivery/Dockerfile.focused-checks", self.oracle],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["gate3", "final"], json.loads(Path(package["plan"]).read_text())["required_reviews"])
+
+    def test_p2_workflow_change_is_sensitive_even_when_declared_ordinary(self):
+        workflow = self.root / ".github/workflows/changed.yml"
+        workflow.parent.mkdir(parents=True, exist_ok=True)
+        workflow.write_text("name: changed\n")
+        result, package = self.prepare(paths=[".github/workflows/changed.yml"],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+
+    def test_p4_schema_semantic_surface_is_sensitive_without_escalating_all_app_code(self):
+        schema = self.root / "app/InstallationProcess/ControlEngineerAssignmentDefinitionSchemaMigration.php"
+        schema.parent.mkdir(parents=True, exist_ok=True)
+        schema.write_text("<?php // schema migration\n")
+        result, package = self.prepare(paths=[str(schema.relative_to(self.root))],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+
+    def test_p3_arbitrary_root_dockerfile_change_is_sensitive(self):
+        (self.root / "Dockerfile").write_text("FROM scratch\nRUN echo arbitrary\n")
+        result, package = self.prepare(paths=["Dockerfile"],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+
+    def test_q_sensitive_semantics_and_admission_policy_keep_preliminary_review(self):
+        sensitive = self.compact_declaration(sensitivity={
+            "classification": "SENSITIVE", "boundaries": ["rights"],
+            "rationale": "Authorization semantics change."})
+        result, package = self.prepare(paths=["app/YiiRuntime/Views/card.php"],
+                                       lifecycle=sensitive)
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+
+        ordinary_lie = self.compact_declaration()
+        (self.root / "tools/delivery/policy.py").write_text("changed\n")
+        result, package = self.prepare(paths=["tools/delivery/policy.py"], lifecycle=ordinary_lie)
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+        self.assertEqual("known_sensitive_boundary", package["lifecycle"]["reason"])
+
+        transition = self.compact_declaration(
+            issue="#183", sensitivity={"classification": "SENSITIVE",
+                "boundaries": ["admission-policy"], "rationale": "Policy transition."},
+            transition_authorization="OWNER_2026-09-17_ISSUE_183_NO_GATE3")
+        result, package = self.prepare(paths=["tools/delivery/policy.py"], lifecycle=transition)
+        self.assertEqual(0, result.returncode, result.stderr)
+        plan = json.loads(Path(package["plan"]).read_text())
+        self.assertEqual(["gate3", "final"], plan["required_reviews"])
+        self.assertEqual("PRELIMINARY_REVIEW_REQUIRED", package["lifecycle"]["route"])
+
+    def test_r_compact_record_is_resumable_and_requirement_drift_is_stale(self):
+        result, package = self.prepare(paths=["app/YiiRuntime/Views/card.php", self.oracle],
+                                       lifecycle=self.compact_declaration())
+        self.assertEqual(0, result.returncode, result.stderr)
+        state = subprocess.run(["python3", "tools/delivery/harness.py", "state"], cwd=self.root,
+                               env=self.environment, text=True, capture_output=True, check=True)
+        active = json.loads(state.stdout)["active_binding"]
+        self.assertEqual("COMPACT_MAINTENANCE", active["lifecycle"]["route"])
+        self.assertEqual("CURRENT", active["lifecycle"]["freshness"])
+        findings = Path(self.temp.name) / "findings.json"
+        findings.write_text(json.dumps({"open": ["bounded correction"]}))
+        correction = subprocess.run([
+            "python3", "tools/delivery/harness.py", "prepare", "--input", "change.json",
+            "--base", self.base, "--role", "root", "--previous", package["snapshot"],
+            "--findings", str(findings)], cwd=self.root, env=self.environment,
+            text=True, capture_output=True)
+        self.assertEqual(0, correction.returncode, correction.stderr)
+        correction_package = json.loads(correction.stdout)
+        self.assertEqual("COMPACT_MAINTENANCE", correction_package["lifecycle"]["route"])
+        self.assertTrue(Path(correction_package["delta"]).is_file())
+        self.assertEqual(["final"], json.loads(Path(correction_package["plan"]).read_text())["required_reviews"])
+        (self.root / self.requirement).write_text("# drift\n")
+        state = subprocess.run(["python3", "tools/delivery/harness.py", "state"], cwd=self.root,
+                               env=self.environment, text=True, capture_output=True, check=True)
+        active = json.loads(state.stdout)["active_binding"]
+        self.assertEqual("STALE", active["lifecycle"]["freshness"])
+        self.assertNotEqual("PR_READY", active["lifecycle"]["disposition"])
+
+    def test_s_invalid_or_foreign_transition_declarations_fail_closed(self):
+        cases = [
+            self.compact_declaration(sensitivity={"classification": "ORDINARY",
+                                                  "boundaries": [], "rationale": ""}),
+            self.compact_declaration(
+                issue="#not-183", transition_authorization="OWNER_2026-09-17_ISSUE_183_NO_GATE3",
+                sensitivity={"classification": "SENSITIVE", "boundaries": ["admission-policy"],
+                             "rationale": "Sensitive policy."}),
+        ]
+        for declaration in cases:
+            with self.subTest(issue=declaration["issue"]):
+                result, package = self.prepare(paths=["tools/delivery/policy.py"],
+                                               lifecycle=declaration)
+                self.assertEqual(0, result.returncode, result.stderr)
+                plan = json.loads(Path(package["plan"]).read_text())
+                self.assertEqual(["gate3", "final"], plan["required_reviews"])
+                self.assertNotEqual("COMPACT_MAINTENANCE", package["lifecycle"]["route"])
+
+    def test_t_issue183_transition_is_bound_to_exact_delivery_identity(self):
+        spec = importlib.util.spec_from_file_location(
+            "change_verification_183", ROOT / "tools/delivery/change-verification.py")
+        planner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(planner)
+        input_name = "docs/operations/issue-183-delivery.json"
+        change = json.loads((ROOT / input_name).read_text())
+        base = "1245b44523f258294de4ac949e139dc2af26e07e"
+        self.assertTrue(planner.issue183_transition_authorized(change, base, input_name))
+        self.assertEqual("tests/fixtures/delivery/issue-183-transition-authorization.txt",
+                         planner.ISSUE183_TRANSITION["requirement"])
+        advanced_goal = {**change, "current_goal": "next-task"}
+        self.assertTrue(planner.issue183_transition_authorized(advanced_goal, base, input_name))
+        changed_basis = json.loads(json.dumps(change))
+        changed_basis["lifecycle"]["canonical_requirements"][0]["sha256"] = "0" * 64
+        variants = [
+            (change, "0" * 40, input_name),
+            (change, base, "docs/operations/copied-issue-183.json"),
+            ({**change, "change": "later-maintenance-task"}, base, input_name),
+            (changed_basis, base, input_name),
+        ]
+        for candidate, candidate_base, candidate_input in variants:
+            with self.subTest(base=candidate_base, input=candidate_input,
+                              change=candidate["change"]):
+                self.assertFalse(planner.issue183_transition_authorized(
+                    candidate, candidate_base, candidate_input))
 
     def test_fast_planner_declaration_failures_have_distinct_fail_closed_reasons(self):
         cases = [

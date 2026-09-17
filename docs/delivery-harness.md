@@ -22,9 +22,10 @@ telemetry остаётся `UNKNOWN`: установленные Codex hooks v1 
 поддерживаемые token fields. Размер сохранённого или показанного вывода не
 выдаётся за расход токенов.
 
-Planner — единственный источник `verification_lane` и `required_reviews`.
-Поддержанный `FAST` требует один независимый final review; `STANDARD` и
-`CRITICAL` требуют Gate 3 и final review. Агент не выбирает FAST по размеру
+Planner — единственный источник `verification_lane` и `required_reviews`, но
+ширина CI не определяет ceremony. Обычный bounded fix и поддержанный `FAST`
+требуют один независимый final review; чувствительные изменения требуют Gate 3
+и final review. Агент не выбирает FAST по размеру
 diff: v1 ограничен поддержанным bounded UI scope, а tests/spec могут повысить
 lane. CI восстанавливает выбранные FAST-команды из exact-source plan; text-only
 docs allowlist остаётся отдельным CI mode, а не решением о delivery lane.

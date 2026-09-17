@@ -685,7 +685,8 @@ def command_record_review(args, helpers):
 
 
 def _requirement_freshness(root, lifecycle):
-    if not isinstance(lifecycle, dict) or lifecycle.get("route") != "FAST_MAINTENANCE":
+    if (not isinstance(lifecycle, dict)
+            or lifecycle.get("route") not in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}):
         return lifecycle
     result = json.loads(json.dumps(lifecycle))
     result["freshness"] = "CURRENT"
@@ -736,8 +737,8 @@ def _context(helpers, role="root"):
     goal = root / "docs/operations/current-delivery-goal.md"
     prefix = (f"FMonitor delivery context ({role}). Read {goal.relative_to(root)} and AGENTS.md. "
             "Use tools/delivery/harness.py state for exact source/PR/CI and prepare role packages. "
-            "Follow existing Gates 1–5; root owns scope/spec/tests, executor implements, independent "
-            "reviewers decide Gates 3/5. Preserve WIP, authorization and history. Full logs/evidence "
+            "Follow planner-required reviews; preserve independent final review, WIP, authorization "
+            "and history. Full logs/evidence "
             "remain outside the checkout; UNKNOWN is not approval or GREEN.")
     try:
         active = _refresh_active_binding(helpers)
@@ -745,13 +746,16 @@ def _context(helpers, role="root"):
         active = _active_binding(helpers)
         prefix += f" ACTIVE_PLAN_REFRESH_FAILED={type(error).__name__}."
     if not active:
-        return prefix + " ROOT_SCOPE_REQUIRED: bind the owner's issue to an OpenSpec/verification input once before implementation."
-    fast_review = (active.get("verification_lane") == "FAST" and role == "reviewer")
-    role_route = {"reviewer": ("Reviewer performs the single FAST final review of test sensitivity, diff, classification, critical-boundary absence, RED-to-GREEN evidence and selected checks; preparation is not approval."
-                                if fast_review else
+        return prefix + " ROOT_SCOPE_REQUIRED: bind the owner's issue to the applicable compact task or OpenSpec verification input before implementation."
+    compact = active.get("lifecycle", {}).get("route") == "COMPACT_MAINTENANCE"
+    single_review = (active.get("required_reviews") == ["final"] and role == "reviewer")
+    role_route = {"reviewer": ("Reviewer performs the single independent final review of test sensitivity, diff, lifecycle classification, RED-to-GREEN evidence and selected checks; preparation is not approval."
+                                if single_review else
                                 "Reviewer independently checks the supplied gate/source/evidence and returns a verdict; preparation is not approval."),
-                  "executor": "Executor changes only the bound scope and records focused verification through harness run.",
-                  "root": "Root resolves scope/spec/tests and dispatches separate executor and independent reviews."}.get(role, "Use only this role's bounded package.")
+                  "executor": ("The single compact-maintenance author writes the regression and implementation inside the bound scope and records focused verification through harness run."
+                               if compact else "Executor changes only the bound scope and records focused verification through harness run."),
+                  "root": ("Root binds the compact task record, confirms sensitivity and dispatches its independent final review."
+                           if compact else "Root resolves scope/spec/tests and dispatches the planner-required author/reviews.")}.get(role, "Use only this role's bounded package.")
     return (prefix + " " + role_route + f" Active binding: input={active['input']}; base={active['base']}; "
             f"contracts={','.join(active.get('contracts', []))}; source_at_prepare={active['source']}; "
             f"obligations={active.get('obligation_count', 'UNKNOWN')}; plan={active['plan']}; package={active['package_path']}.")
@@ -1322,6 +1326,32 @@ def _check_all_whitespace(root):
         Path(index_name).unlink(missing_ok=True)
 
 
+def _issue183_transition_authorized(root, change, plan, input_name):
+    expected = {
+        "base": "1245b44523f258294de4ac949e139dc2af26e07e",
+        "input": "docs/operations/issue-183-delivery.json",
+        "change": "issue-183-compact-maintenance",
+        "requirement": "tests/fixtures/delivery/issue-183-transition-authorization.txt",
+        "requirement_sha256": "c185c529f8ff98d189bad041a7c6846ce4a7c1d1b042a059b6ccd9182d1699bd",
+        "token": "OWNER_2026-09-17_ISSUE_183_NO_GATE3",
+    }
+    lifecycle = change.get("lifecycle", {})
+    references = lifecycle.get("canonical_requirements")
+    if not (lifecycle.get("issue") == "#183"
+            and lifecycle.get("transition_authorization") == expected["token"]
+            and change.get("change") == expected["change"]
+            and plan.get("base") == expected["base"]
+            and input_name == expected["input"]
+            and references == [{"path": expected["requirement"],
+                                 "sha256": expected["requirement_sha256"]}]):
+        return False
+    try:
+        requirement = _safe_canonical_path(root, expected["requirement"])
+        return (_sha256_bytes(requirement.read_bytes()) == expected["requirement_sha256"])
+    except (OSError, TypeError, ValueError):
+        return False
+
+
 def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path, evidence):
     """Project a fail-closed lifecycle decision after the authoritative planner result."""
     try:
@@ -1340,7 +1370,41 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
     mapped_tests = {test for acceptance in plan.get("acceptances", [])
                     for test in acceptance.get("tests", [])}
 
-    if plan.get("verification_lane") != "FAST":
+    compact = declaration.get("intent") == "COMPACT_MAINTENANCE"
+    sensitivity = declaration.get("sensitivity") if compact else None
+    if compact:
+        required = {"issue", "change_kind", "requirement_status", "semantic_change",
+                    "canonical_requirements", "executable_regression"}
+        valid = (required <= set(declaration)
+                 and declaration.get("change_kind") == "BOUNDED_FIX"
+                 and declaration.get("semantic_change") == "ESTABLISHED_BEHAVIOR_FIX"
+                 and declaration.get("requirement_status") == "CURRENT"
+                 and isinstance(declaration.get("issue"), str) and declaration["issue"].strip()
+                 and isinstance(sensitivity, dict)
+                 and set(sensitivity) == {"classification", "boundaries", "rationale"}
+                 and sensitivity.get("classification") in {"ORDINARY", "SENSITIVE"}
+                 and isinstance(sensitivity.get("boundaries"), list)
+                 and isinstance(sensitivity.get("rationale"), str)
+                 and sensitivity["rationale"].strip()
+                 and regression in mapped_tests)
+        if not valid:
+            reason = "compact_declaration_invalid"
+        elif "gate3" in plan.get("required_reviews", []):
+            route = "PRELIMINARY_REVIEW_REQUIRED"
+            reason = ("declared_sensitive_semantics"
+                      if sensitivity["classification"] == "SENSITIVE"
+                      else "known_sensitive_boundary")
+        elif ((sensitivity["classification"] == "SENSITIVE"
+               or declaration.get("transition_authorization") is not None)
+              and not _issue183_transition_authorized(root, change, plan, input_name)):
+            route = "PRELIMINARY_REVIEW_REQUIRED"
+            reason = "transition_authorization_not_exact"
+        else:
+            route = "COMPACT_MAINTENANCE"
+            reason = ("owner_authorized_issue_183_transition"
+                      if _issue183_transition_authorized(root, change, plan, input_name)
+                      else "eligible_bounded_fix")
+    elif plan.get("verification_lane") != "FAST":
         reason = "planner_not_fast"
     elif declaration.get("intent") != "FAST_MAINTENANCE":
         reason = "lifecycle_intent_not_fast_maintenance"
@@ -1356,7 +1420,7 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
         reason = "maintenance_issue_missing"
     elif regression not in mapped_tests:
         reason = "executable_regression_not_mapped"
-    else:
+    elif not compact:
         raw_references = declaration.get("canonical_requirements")
         if not isinstance(raw_references, list) or not raw_references:
             reason = "canonical_requirement_missing"
@@ -1386,6 +1450,29 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
                 route = "FAST_MAINTENANCE"
                 reason = "eligible_planner_fast_existing_requirement"
 
+    if route in {"COMPACT_MAINTENANCE", "PRELIMINARY_REVIEW_REQUIRED"}:
+        raw_references = declaration.get("canonical_requirements")
+        if not isinstance(raw_references, list) or not raw_references:
+            route, reason = "OPENSPEC_REQUIRED", "canonical_requirement_missing"
+        else:
+            seen = set()
+            for item in raw_references:
+                path_value = item.get("path") if isinstance(item, dict) else None
+                try:
+                    path = _safe_canonical_path(root, path_value)
+                except (TypeError, ValueError):
+                    route, reason = "OPENSPEC_REQUIRED", "canonical_requirement_invalid"
+                    break
+                if path_value in seen or not path.is_file():
+                    route, reason = "OPENSPEC_REQUIRED", "canonical_requirement_missing"
+                    break
+                sha256 = _sha256_bytes(path.read_bytes())
+                if item.get("sha256") not in (None, sha256):
+                    route, reason = "OPENSPEC_REQUIRED", "canonical_requirement_digest_mismatch"
+                    break
+                seen.add(path_value)
+                references.append({"path": path_value, "sha256": sha256})
+
     intended_red = any(item.get("outcome") == "INTENDED_RED"
                        and _normalized_argv(item.get("argv", []))[-1:] == (regression,)
                        for item in evidence)
@@ -1400,15 +1487,18 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
         "semantic_change": declaration.get("semantic_change", "UNKNOWN"),
         "canonical_requirements": references,
         "executable_regression": regression or "UNKNOWN",
-        "executable_red": {"required": route == "FAST_MAINTENANCE",
+        "authorship": "single_author" if route == "COMPACT_MAINTENANCE" else "separate_executor",
+        "sensitivity": sensitivity or {"classification": "UNKNOWN", "boundaries": [], "rationale": "UNKNOWN"},
+        "executable_red": {"required": route in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"},
                            "status": "INTENDED_RED" if intended_red else "PENDING"},
         "verification_plan": {"path": str(plan_path),
                               "sha256": _sha256_bytes(plan_path.read_bytes())},
-        "final_review": {"required": route == "FAST_MAINTENANCE", "status": "PENDING"},
-        "ci": {"required": route == "FAST_MAINTENANCE", "status": "UNKNOWN"},
-        "disposition": "IN_PROGRESS" if route == "FAST_MAINTENANCE" else reason,
+        "final_review": {"required": route in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}, "status": "PENDING"},
+        "ci": {"required": route in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}, "status": "UNKNOWN"},
+        "disposition": "IN_PROGRESS" if route in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"} else reason,
         "freshness": "CURRENT",
-        "freshness_reason": "requirement_digests_match" if route == "FAST_MAINTENANCE" else "not_applicable",
+        "freshness_reason": ("requirement_digests_match"
+                             if route in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"} else "not_applicable"),
     }
     return lifecycle
 
@@ -1419,10 +1509,12 @@ def command_prepare(args, helpers):
     previous_binding = _active_binding(helpers)
     if args.role == "executor":
         active = previous_binding
-        if active and active.get("lifecycle", {}).get("route") == "FAST_MAINTENANCE":
+        if active and active.get("lifecycle", {}).get("route") in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}:
             refreshed = _requirement_freshness(root, active["lifecycle"])
             if refreshed.get("freshness") == "STALE":
-                raise ValueError("stale FAST maintenance binding requires root rebuild")
+                label = ("FAST maintenance" if active["lifecycle"].get("route") == "FAST_MAINTENANCE"
+                         else "compact maintenance")
+                raise ValueError("stale " + label + " binding requires root rebuild")
     module = _load_change_verification(root)
     plan_value = module.build(args.base, args.input)
     configured_home = os.environ.get("FMONITOR_HARNESS_HOME")
@@ -1440,7 +1532,7 @@ def command_prepare(args, helpers):
     preliminary_lifecycle = _fast_maintenance_lifecycle(
         root, plan_value, args.input, source, args.base, plan_path, evidence)
     evidence_gate = ("3" if args.role == "executor"
-                     and preliminary_lifecycle["route"] == "FAST_MAINTENANCE"
+                     and preliminary_lifecycle["route"] in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}
                      else args.gate)
     expectations = _gate_expectations(plan_value, evidence_gate)
     mapped = set(expectations)
@@ -1463,11 +1555,12 @@ def command_prepare(args, helpers):
                                            acceptance_by_command))
     lifecycle = _fast_maintenance_lifecycle(root, plan_value, args.input, source, args.base,
                                             plan_path, evidence)
-    if (args.role == "executor" and lifecycle["route"] == "FAST_MAINTENANCE"
+    if (args.role == "executor" and lifecycle["route"] in {"FAST_MAINTENANCE", "COMPACT_MAINTENANCE"}
             and lifecycle["executable_red"]["status"] != "INTENDED_RED"):
         if any(item.get("outcome") == "INTENDED_RED" for item in evidence):
-            raise ValueError("FAST maintenance intended RED evidence must cover declared executable regression")
-        raise ValueError("FAST maintenance executor requires intended RED evidence")
+            raise ValueError("maintenance intended RED evidence must cover declared executable regression")
+        prefix = "compact maintenance" if lifecycle["route"] == "COMPACT_MAINTENANCE" else "FAST maintenance"
+        raise ValueError(prefix + " executor requires intended RED evidence")
     covered = {_normalized_argv(item["argv"]) for item in evidence
                if item["outcome"] != "FIXTURE_REACHABLE"}
     if args.role == "reviewer" and mapped - covered:

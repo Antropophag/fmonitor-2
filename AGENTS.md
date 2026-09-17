@@ -16,23 +16,26 @@
   `docs/operations/current-delivery-goal.md`; it owns the current queue and pause state.
 - Preserve history, authorization, the working stand and independent review.
   Parallel agents use **gpt-5.6-sol / low**.
-- Authorship: root writes specifications and tests unless the owner explicitly
-  enables autonomous mode for the current assignment; separate sol/low agents
-  implement and independently review. Record that authorization and actual authors.
+- Authorship: a declared bounded fix of established behavior may use one author
+  for its regression test and implementation. Other work keeps root-authored
+  specifications/tests and a separate sol/low executor unless the owner explicitly
+  authorizes an exception. Record that authorization and actual authors.
 - Use the compact execution/review workflow in `docs/development-process.md`.
   For implementation or continuation, use `python3 tools/delivery/harness.py state`
   and the active role package prepared by `harness.py prepare`; repository Codex
   hooks supply this route automatically on task start and resume.
-- The verification planner alone selects the lane and `required_reviews`.
-  Planner-selected `FAST` requires one independent final review; `STANDARD`
-  and `CRITICAL` retain Gate 3 plus final review. The v1 FAST classifier is
-  limited to its supported bounded UI scope; tests/spec changes can escalate.
+- The planner alone selects the CI lane and `required_reviews`; CI breadth does
+  not select lifecycle ceremony. Declared ordinary bounded fixes require one
+  independent final review even with full CI. Sensitive semantics and admission/
+  check policy retain Gate 3 plus final review. Existing `FAST` remains supported.
 
 ## Continuing rules
 
 - Read `PRODUCT.md` and `CONTEXT.md` before product work. For pilot behavior also read `docs/fmonitor-2-pilot-spec.md` and `docs/fmonitor-2-pilot-data-model.md`.
 - `docs/development-process.md` defines the normal full-gate process and the current owner-authorized manual-pilot exception. Preserve review independence and report deferred gates honestly.
-- New migration slices use the lifecycle under `openspec/`; OpenSpec does not replace executable specs, RED evidence, or review records.
+- New migration slices use the lifecycle under `openspec/`. A bounded correction
+  of established behavior may instead use the existing compact delivery record.
+  OpenSpec does not replace executable specs, RED evidence, or review records.
 - Preserve append-only history. State changes belong to one explicit public application seam; screens, HTTP, imports, and cron do not own domain facts.
 - `rapid-pilot/` is a behavioral oracle and temporary adapter, not a destination for new domain logic. Follow its local boundary instructions.
 - `../fmonitor` is read-only evidence. Consume only public exports from `../shlz-ui`. Keep primary evidence and secrets outside this repository.

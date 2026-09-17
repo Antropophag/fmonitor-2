@@ -16,11 +16,12 @@ resume prompts to this process. They do not run checks, approve reviews, or star
 delivery work for an ordinary read-only question.
 
 Quality takes precedence over token efficiency, which takes precedence over time.
-Keep the most capable model in the primary session. Root owns analysis, scope, the complete acceptance matrix and key decisions. In
-normal mode root authors specifications and tests; a separate executor implements
-and independent agents review. Only explicit owner authorization for the current
-assignment enables autonomous delegation of spec/tests. Record its scope and
-actual authors in the delivery record; historical permission is not inherited.
+Keep the most capable model in the primary session. Root owns analysis, scope, the complete acceptance matrix and key decisions.
+A declared bounded correction of established behavior may use one author for its
+regression test and implementation. New behavior and sensitive work keep root-
+authored specifications/tests and a separate executor unless the owner gives a
+task-specific exception. Record the route and actual authors in the delivery
+record; historical permission is not inherited.
 Executors and reviewers use **gpt-5.6-sol / low**, with fresh, bounded contexts.
 Root checks candidate completeness before dispatch; reviewers validate prepared
 requirements rather than discover missing parts of the assignment.
@@ -46,8 +47,12 @@ both if it authored neither.
 Batch independent read-only calls and inspect every result.
 
 The verification planner alone selects `verification_lane` and
-`required_reviews`. Planner-selected `FAST` requires the independent final
-review listed by the plan without a separate Gate 3. `STANDARD` and `CRITICAL`
+`required_reviews`, but CI breadth and lifecycle ceremony are separate decisions.
+A declared ordinary bounded fix of established behavior requires one independent
+final review without Gate 3 even when its lane selects full CI. `FAST` continues
+to require that final review. Changes to rights/secrets, money, schema or data
+durability, lossy/duplicating replay or concurrency, irreversible operations,
+admission/check policy, or materially uncertain sensitive product semantics
 retain Gate 3 and final review. Agents do not infer FAST from diff size or prose.
 The v1 classifier covers only its supported bounded UI scope; tests/spec changes
 can escalate a small change. Classifier expansion is a separate policy change.
@@ -63,8 +68,11 @@ review; use [review-source capture/restore](../tools/delivery/review-source.md).
 any additional review/documentation files. Changed code or tests require review
 of the delta. CI still runs on the final exact committed candidate.
 
-The normative spec owns behavior. OpenSpec owns lifecycle, scope and task state;
-link to the spec instead of copying acceptance matrices. Review records own RED,
+The normative spec owns behavior. OpenSpec owns lifecycle, scope and task state
+for new slices. An ordinary bounded correction may use the existing compact task/
+delivery record to link its issue and criteria (or current contract), exact source,
+risk rationale, checks and final review without a new OpenSpec or duplicate spec.
+Full logs remain outside Git. Review records own RED,
 GREEN and findings evidence. One delivery record links exact source, reviews and
 CI; a handoff contains only current state, next action and these links. Historical
 records remain available; supersede them with a pointer instead of loading them
@@ -157,9 +165,10 @@ The gate passes only when the test is demonstrably red for the intended reason.
 
 ## Gate 3: independent test review
 
-Gate 3 applies when the planner includes `gate3` in `required_reviews`;
-`STANDARD` and `CRITICAL` include it. Planner-selected `FAST` proceeds to
-its required independent final review without adding Gate 3.
+Gate 3 applies when the planner includes `gate3` in `required_reviews`.
+Sensitive routes include it; ordinary compact maintenance and `FAST` proceed to
+their required independent final review without adding Gate 3. Full CI alone
+does not add Gate 3.
 
 A reviewer other than the test author reviews the specification and test without
 relying on planned implementation details. Record the review in
