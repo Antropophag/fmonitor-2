@@ -1,0 +1,32 @@
+{
+  "change": "issue-49-object-identifiers",
+  "planned_paths": [
+    "app/PilotHttp/ObjectListView.php",
+    "app/PilotHttp/ObjectCardView.php",
+    "app/PilotHttp/PilotHttp.php",
+    "tests/InstallationProcess/object_card_registration_identity_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-IDENTITY-PRESENTATION-049",
+      "acceptance_id": "bounded-list-and-card-header-identifiers",
+      "spec_path": "docs/fmonitor-2-object-card-spec.md",
+      "seam": "server-rendered common object list and object-card identity header",
+      "tests": ["tests/InstallationProcess/object_card_registration_identity_test.php"]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "#49",
+    "change_kind": "BOUNDED_FIX",
+    "requirement_status": "CURRENT",
+    "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+    "sensitivity": {
+      "classification": "ORDINARY",
+      "boundaries": ["server-rendered-presentation"],
+      "rationale": "The slice changes only object identity presentation; it preserves routes, actions, authorization, persistence, domain rules, filters and pagination."
+    },
+    "canonical_requirements": [{"path": "docs/fmonitor-2-object-card-spec.md"}],
+    "executable_regression": "tests/InstallationProcess/object_card_registration_identity_test.php"
+  }
+}
