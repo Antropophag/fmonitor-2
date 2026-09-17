@@ -1,9 +1,24 @@
-# Текущая цель — №149, единая настройка интеграций через `.env`
+# Текущая цель — №180, Docker dependency cache focused checks
 
-Поручение владельца 2026-09-17: переключить активную очередь на [№149](https://github.com/Antropophag/fmonitor-2/issues/149), изолировать незавершённый worktree №157 и реализовать candidate от актуального `origin/main`. Scope: один операторский `.env` для legacy import и Bitrix workforce sync, полный безопасный шаблон, fail-closed preflight до внешних эффектов, атомарная подготовка приватных runtime-файлов и повторное применение изменённых настроек без reset данных.
+Поручение владельца 2026-09-17: реализовать только первую задачу
+[№180](https://github.com/Antropophag/fmonitor-2/issues/180) из навигационной
+сводки №179 от актуального `main` и довести candidate до PR-ready. Scope:
+сохранить Docker cache dependency layers focused checks при source-only
+изменении, не ослабляя exact source/lock identity; показать реальный bounded
+A→B before/after и внешний wall time.
 
-Существующие Yii2 import/sync owners, read-only доступ к legacy DB, идемпотентность и append-only история сохраняются. Секреты не попадают в argv, вывод, Compose config, image layers или Git. Не входят изменения бизнес-правил интеграций, redesign их владельцев, автоматический reset базы/volumes, merge, deploy и settings.
+Не входят №181–№183, application code, CI composition, FAST/Gates, dependency
+upgrades, новый image/runner/telemetry framework, `RUN_IN_PROFILE_RESULT` schema
+и общий рефакторинг harness. Merge/deploy/settings не выполнять.
 
-Lifecycle: [unify-local-integration-env](../../openspec/changes/unify-local-integration-env/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Авторизация автономного implementation не дана: каждый role действует только по prepared package.
+Контракт: [FOCUSED-CHECK-CACHE-180](../../specs/FOCUSED-CHECK-CACHE-180.md).
+Lifecycle:
+[focused-checks-dependency-cache](../../openspec/changes/focused-checks-dependency-cache/).
+Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует;
+независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5.
+Локально только bounded focused checks; full `make test`/`make verify` запрещён.
+Exact-source GitHub CI выполняется один раз.
 
-Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз. Предыдущие цели и dirty/conflicted worktree №157 сохранены в Git history/отдельных worktrees и не изменяются.
+Предыдущий указатель №157 сохранён в Git history и его WIP остаётся в отдельном
+worktree. Нельзя очищать shared Docker caches или удалять чужие
+worktrees/volumes. Устойчивый процент экономии по одной машине не заявляется.

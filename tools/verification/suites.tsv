@@ -435,6 +435,7 @@ unit	python3	tests/Verification/development_setup_001_test.py	governance
 unit	python3	tests/Verification/fast_lane_118_admission_test.py	unit
 unit	python3	tests/Verification/fast_lane_118_classification_test.py	unit
 unit	python3	tests/Verification/fixture_reachability_001_test.py	unit
+unit	python3	tests/Verification/focused_check_cache_180_test.py	governance
 unit	node	tests/Verification/original_upload_client_001_test.mjs	unit
 unit	python3	tests/Verification/quality_graph_current_report_001_test.py	unit
 unit	python3	tests/Verification/quality_graph_current_workflow_001_test.py	unit
