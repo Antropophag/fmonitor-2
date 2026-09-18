@@ -128,7 +128,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     assertSameValue(
         $expectedTables,
         array_column($tables, 'TABLE_NAME'),
-        'The catalog contains exactly the v1-v29 tables, including migration, identity-link, registry, selection, application and production object tables.',
+        'The catalog contains exactly the v1-v30 tables, including migration, identity-link, registry, selection, application and production object tables.',
     );
     foreach ($tables as $table) {
         assertSameValue('InnoDB', $table['ENGINE'], 'Every approved table must use InnoDB.');

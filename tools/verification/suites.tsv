@@ -100,6 +100,8 @@ db	php	tests/InstallationProcess/installation_completion_multi_prefix_001_test.p
 db	php	tests/InstallationProcess/installation_completion_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/installation_completion_schema_001_test.php	integration
 db	php	tests/InstallationProcess/invitation_reissue_http_001_test.php	integration
+db	php	tests/InstallationProcess/legacy_control_engineer_http_001_test.php	integration
+db	php	tests/InstallationProcess/legacy_control_engineer_import_001_test.php	integration
 db	php	tests/InstallationProcess/legacy_control_engineer_migration_001_test.php	integration
 db	php	tests/InstallationProcess/legacy_object_snapshot_001_test.php	integration
 db	php	tests/InstallationProcess/migration_process_001_test.php	integration
@@ -187,6 +189,7 @@ db	php	tests/Runtime/yii2_readiness_001_test.php	integration
 db	python3	tests/Runtime/yii2_runtime_001_test.py	integration
 db	php	tests/Verification/batched_schema_snapshot_001_test.php	integration
 db	php	tests/Yii2/deadline_transfer_certificate_http_001_test.php	integration
+db	php	tests/Yii2/legacy_control_engineer_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_authentication_001_test.php	integration
 db	php	tests/Yii2/yii2_bitrix_order_document_links_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_001_test.php	integration

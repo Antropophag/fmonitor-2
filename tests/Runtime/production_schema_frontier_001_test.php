@@ -25,7 +25,7 @@ try {
     $prefix = 'runtime_';
     $catalogue = ProductionPilotMigrationCatalogue::migrations();
 
-    assertSameValue(range(1, 29), array_keys($catalogue), 'canonical production catalogue has a contiguous v29 frontier');
+    assertSameValue(range(1, 30), array_keys($catalogue), 'canonical production catalogue has a contiguous v30 frontier');
     $v22 = $catalogue[22];
     $applyV22 = static fn (mysqli $connection, string $tablePrefix): array => is_string($v22)
         ? $v22::apply($connection, $tablePrefix)
@@ -50,14 +50,14 @@ try {
     assertSameValue([$conflictBefore, $conflictRows], [$db->query("SHOW CREATE TABLE `{$conflictTable}`")->fetch_row()[1], $db->query("SELECT * FROM `{$conflictTable}`")->fetch_all(MYSQLI_ASSOC)], 'v22 conflict performs no schema or row mutation');
 
     $first = CanonicalMigrationApplication::run($db, $prefix, $catalogue);
-    assertSameValue([0, true, 29, range(1, 29)], [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema');
+    assertSameValue([0, true, 30, range(1, 29)], [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema and records v30 no-op readiness');
     MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db, $prefix);
 
     $table = $prefix . 'fm_maintable';
     $db->query("INSERT INTO `{$table}`(id,ordadr_address,entrance,regnumber,workdatestart) VALUES(1450,'Москва, тестовый адрес','1','77-TEST','2026-09-09')");
     $before = $db->query("SELECT * FROM `{$table}` WHERE id=1450")->fetch_assoc();
     $repeat = CanonicalMigrationApplication::run($db, $prefix, $catalogue);
-    assertSameValue([0, true, 29, []], [$repeat['exitCode'], $repeat['result']['ok'] ?? null, $repeat['result']['schemaVersion'] ?? null, $repeat['result']['appliedVersions'] ?? null], 'production migration replay is a no-op at v29');
+    assertSameValue([0, true, 30, []], [$repeat['exitCode'], $repeat['result']['ok'] ?? null, $repeat['result']['schemaVersion'] ?? null, $repeat['result']['appliedVersions'] ?? null], 'production migration replay is a no-op at v30');
     assertSameValue($before, $db->query("SELECT * FROM `{$table}` WHERE id=1450")->fetch_assoc(), 'migration replay preserves populated object facts exactly');
 
     echo "PASS: PRODUCTION-HTTP-RUNTIME-001 canonical v22 object schema frontier\n";

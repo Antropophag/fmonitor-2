@@ -10,14 +10,21 @@ final class MariaDbLegacyImportApplication
         MariaDbSchemaInspector::validateTablePrefix($legacyPrefix);
     }
 
-    /** @param array{objects:list<array<string,mixed>>,template:array<string,mixed>} $snapshot */
+    /** @param array{objects:list<array<string,mixed>>,engineers:list<array<string,mixed>>,template:array<string,mixed>} $snapshot */
     public function import(array $snapshot, string $cutoff): array
     {
         $this->db->begin_transaction();
         try {
+            [$engineers, $engineerCounts] = $this->engineers($snapshot['engineers'], $cutoff);
             [$templateId, $templateCreated] = $this->template($snapshot['template'], $cutoff);
-            $counts = ['eligible'=>count($snapshot['objects']),'imported'=>0,'alreadyPresent'=>0,'details'=>0,'templateAssociations'=>0];
-            foreach ($snapshot['objects'] as $row) $this->object($row, $cutoff, $templateId, $snapshot['template'], $counts);
+            $counts = ['eligible'=>count($snapshot['objects']),'imported'=>0,'alreadyPresent'=>0,'details'=>0,'templateAssociations'=>0] + $engineerCounts + ['objectsLinked'=>0,'objectsUnassigned'=>0];
+            foreach ($snapshot['objects'] as $row) {
+                $caseId = $this->object($row, $cutoff, $templateId, $snapshot['template'], $counts);
+                $legacyId = (int)($row['responsstroicontrol'] ?? 0);
+                if ($legacyId === 0) { $counts['objectsUnassigned']++; continue; }
+                $this->assignment($caseId, (int)$row['id'], $legacyId, $engineers[$legacyId], $cutoff);
+                $counts['objectsLinked']++;
+            }
             $this->db->commit();
             return $counts;
         } catch (\Throwable $error) {
@@ -34,7 +41,7 @@ final class MariaDbLegacyImportApplication
         $version='legacy-checklist-template-cutover-v1';$scope='active_baseline_and_future_native_only';$label='legacy_fmonitor_current_at_cutover';$now=gmdate('Y-m-d H:i:s');$insert=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_checklist_template_snapshots`(snapshot_version,captured_at,valid_from,validity_scope,source_label,content_sha256,payload_json,created_at) VALUES(?,?,?,?,?,?,?,?)");$insert->bind_param('ssssssss',$version,$cutoff,$cutoff,$scope,$label,$hash,$payload,$now);$insert->execute();return[(int)$insert->insert_id,true];
     }
 
-    private function object(array $row,string $cutoff,int $templateId,array $template,array &$counts): void
+    private function object(array $row,string $cutoff,int $templateId,array $template,array &$counts): int
     {
         $id=(int)$row['id'];$mirrorFields=['ordadr_address','entrance','regnumber','zavnumber','workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate','responsstroicontrol','floors','weight','speed','pittype','pitmaterial','paired'];
         $mirror=$this->db->query("SELECT ".implode(',',$mirrorFields)." FROM `{$this->legacyPrefix}fm_maintable` WHERE id={$id} FOR UPDATE")->fetch_assoc();
@@ -60,7 +67,49 @@ final class MariaDbLegacyImportApplication
         $subject='operational_case';$subjectId=(string)$caseId;$association=$this->db->prepare("SELECT effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256 FROM `{$this->processPrefix}fm2_checklist_template_associations` WHERE subject_kind=? AND subject_id=? FOR UPDATE");$association->bind_param('ss',$subject,$subjectId);$association->execute();$storedAssociation=$association->get_result()->fetch_assoc();$snapshotVersion='legacy-checklist-template-cutover-v1';$templateHash=(string)$template['contentSha256'];
         if($storedAssociation===null){$associationVersion='checklist-template-association-v1';$now=gmdate('Y-m-d H:i:s');$insert=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_checklist_template_associations`(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES(?,?,?,?,?,?,?,?)");$insert->bind_param('ssssisss',$associationVersion,$subject,$subjectId,$cutoff,$templateId,$snapshotVersion,$templateHash,$now);$insert->execute();$counts['templateAssociations']++;}
         elseif((string)$storedAssociation['effective_at']!==$cutoff||(int)$storedAssociation['template_snapshot_id']!==$templateId||(string)$storedAssociation['template_snapshot_version']!==$snapshotVersion||!hash_equals($templateHash,(string)$storedAssociation['template_content_sha256']))throw new \DomainException('ASSOCIATION_CONFLICT');
+        return $caseId;
     }
+
+    private function engineers(array $rows, string $cutoff): array
+    {
+        $role = $this->db->query("SELECT role_id FROM `{$this->processPrefix}fm2_pilot_roles` WHERE BINARY code='construction_control_engineer' AND status=1 FOR UPDATE")->fetch_all(MYSQLI_ASSOC);
+        if ($role === []) {
+            $q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_pilot_roles`(code,name,description,status,source_updated_at)VALUES('construction_control_engineer','Инженер строительного контроля','Импортированная роль строительного контроля',1,?)");$q->execute([$cutoff]);
+            $role=[['role_id'=>$this->db->insert_id]];
+        }
+        if (count($role) !== 1) throw new \DomainException('ENGINEER_ROLE_INVALID');
+        $roleId = (int)$role[0]['role_id']; $mapped=[]; $created=0; $present=0;
+        foreach ($rows as $row) {
+            $legacy=(int)$row['id']; $name=trim((string)$row['name']); $email=mb_strtolower(trim((string)$row['email']));
+            $q=$this->db->prepare("SELECT * FROM `{$this->processPrefix}fm2_legacy_identity_links` WHERE legacy_user_id=? AND superseded_by_link_id IS NULL FOR UPDATE");$q->execute([$legacy]);$links=$q->get_result()->fetch_all(MYSQLI_ASSOC);
+            if(count($links)>1)throw new \DomainException('IDENTITY_LINK_AMBIGUOUS');
+            if($links===[]){
+                $q=$this->db->prepare("SELECT user_id FROM `{$this->processPrefix}fm2_pilot_users` WHERE email=? FOR UPDATE");$q->execute([$email]);if($q->get_result()->fetch_assoc()!==null)throw new \DomainException('IDENTITY_EMAIL_CONFLICT');
+                $q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_pilot_users`(full_name,email,phone,status,activation_state,session_version,source_updated_at)VALUES(?,?,'',1,'pending_invitation',1,?)");$q->execute([$name,$email,$cutoff]);$local=(int)$this->db->insert_id;
+                $q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_pilot_user_roles`(user_id,role_id,origin,assigned_at,assigned_by_user_id)VALUES(?,?,'legacy_import',?,NULL)");$q->execute([$local,$roleId,$cutoff]);
+                $q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_process_user_capabilities`(user_id,capability,position_snapshot)VALUES(?,'construction_control_engineer','Инженер строительного контроля')");$q->execute([$local]);
+                $request=self::uuid("identity:{$legacy}");$fingerprint=hash('sha256',json_encode([$legacy,$name,$email,(int)$row['status'],(int)$row['role_id'],(int)$row['role_status']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
+                $stamp=self::mysqlTime($cutoff);$q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_legacy_identity_links`(local_user_id,legacy_user_id,legacy_name_snapshot,legacy_email_snapshot,legacy_status_snapshot,legacy_role_id_snapshot,legacy_role_status_snapshot,linked_by_user_id,linked_at_utc,request_id,request_fingerprint)VALUES(?,?,?,?,?,?,?,?,?,?,?)");$q->execute([$local,$legacy,$name,$email,(int)$row['status'],(int)$row['role_id'],(int)$row['role_status'],$local,$stamp,$request,$fingerprint]);$created++;
+            } else {
+                $link=$links[0];$local=(int)$link['local_user_id'];
+                if((int)$link['legacy_status_snapshot']!==(int)$row['status']||(int)$link['legacy_role_id_snapshot']!==(int)$row['role_id']||(int)$link['legacy_role_status_snapshot']!==(int)$row['role_status']||(string)$link['legacy_name_snapshot']!==$name||mb_strtolower((string)$link['legacy_email_snapshot'])!==$email)throw new \DomainException('IDENTITY_LINK_CONFLICT');
+                $q=$this->db->prepare("SELECT user_id FROM `{$this->processPrefix}fm2_pilot_users` WHERE user_id=? AND BINARY email=BINARY ? AND full_name=? AND status=1 FOR UPDATE");$q->execute([$local,$email,$name]);if(count($q->get_result()->fetch_all())!==1)throw new \DomainException('IDENTITY_LOCAL_CONFLICT');$present++;
+            }
+            $mapped[$legacy]=$local;
+        }
+        return [$mapped,['engineersReferenced'=>count($rows),'engineersCreated'=>$created,'engineersAlreadyPresent'=>$present]];
+    }
+
+    private function assignment(int $caseId,int $objectId,int $legacyId,int $localId,string $cutoff):void
+    {
+        $q=$this->db->prepare("SELECT * FROM `{$this->processPrefix}fm2_control_engineer_assignments` WHERE installation_case_id=? FOR UPDATE");$q->execute([$caseId]);$rows=$q->get_result()->fetch_all(MYSQLI_ASSOC);
+        if($rows!==[]){if(count($rows)!==1||(int)$rows[0]['engineer_user_id']!==$localId||(string)$rows[0]['assignment_source']!=='legacy_fmonitor'||(int)$rows[0]['source_legacy_object_id']!==$objectId||(int)$rows[0]['source_legacy_user_id']!==$legacyId)throw new \DomainException('ASSIGNMENT_CONFLICT');return;}
+        $name=$this->db->query("SELECT full_name FROM `{$this->processPrefix}fm2_pilot_users` WHERE user_id={$localId}")->fetch_column();$operation=self::uuid('legacy-import:'.$cutoff);$request=self::uuid("assignment:{$objectId}:{$legacyId}");$fingerprint=hash('sha256',json_encode([$operation,$objectId,$legacyId,$localId,$localId],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));$stamp=self::mysqlTime($cutoff);
+        $q=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_control_engineer_assignments`(installation_case_id,object_id,assignment_sequence,engineer_user_id,engineer_fio_snapshot,engineer_position_snapshot,assigned_by_user_id,assigned_at_utc,request_id,request_fingerprint,assignment_source,source_operation_id,source_legacy_object_id,source_legacy_user_id)VALUES(?,?,?,?,?,'Инженер строительного контроля',?,?,?,?, 'legacy_fmonitor',?,?,?)");$q->execute([$caseId,$objectId,1,$localId,$name,$localId,$stamp,$request,$fingerprint,$operation,$objectId,$legacyId]);
+    }
+
+    private static function uuid(string $material):string{$h=hash('sha256',$material);return substr($h,0,8).'-'.substr($h,8,4).'-4'.substr($h,13,3).'-8'.substr($h,17,3).'-'.substr($h,20,12);}
+    private static function mysqlTime(string $value):string{return str_replace('T',' ',substr($value,0,19));}
 
     private static function canonicalDate(mixed $raw): ?string
     {
