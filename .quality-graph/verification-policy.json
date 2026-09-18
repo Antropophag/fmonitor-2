@@ -306,6 +306,21 @@
       "consumers": []
     },
     {
+      "name": "user-invitation-lifecycle",
+      "patterns": [
+        "app/IdentityAccess/MariaDbReissueUserInvitation.php",
+        "app/InstallationProcess/IdentityAccessDefinitionSchemaMigration.php",
+        "app/InstallationProcess/LegacyControlEngineerImportSchemaMigration.php",
+        "app/PilotHttp/MariaDbPilotUserDirectory.php",
+        "app/PilotHttp/UserDirectoryView.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/invitation_reissue_http_001_test.php",
+        "tests/InstallationProcess/legacy_control_engineer_http_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "canonical-migration-frontier",
       "patterns": [
         "app/InstallationProcess/CanonicalMigrationApplication.php",

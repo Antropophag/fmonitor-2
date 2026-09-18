@@ -50,7 +50,7 @@ try {
     assertSameValue([$conflictBefore, $conflictRows], [$db->query("SHOW CREATE TABLE `{$conflictTable}`")->fetch_row()[1], $db->query("SELECT * FROM `{$conflictTable}`")->fetch_all(MYSQLI_ASSOC)], 'v22 conflict performs no schema or row mutation');
 
     $first = CanonicalMigrationApplication::run($db, $prefix, $catalogue);
-    assertSameValue([0, true, 30, range(1, 29)], [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema and records v30 no-op readiness');
+    assertSameValue([0, true, 30, range(1, 30)], [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema');
     MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db, $prefix);
 
     $table = $prefix . 'fm_maintable';

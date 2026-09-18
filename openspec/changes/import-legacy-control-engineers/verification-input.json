@@ -1,6 +1,7 @@
 {
   "change": "import-legacy-control-engineers",
   "planned_paths": [
+    ".quality-graph/verification-policy.json",
     "app/InstallationProcess/MariaDbLegacySourceSnapshot.php",
     "app/InstallationProcess/MariaDbLegacyImportApplication.php",
     "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
