@@ -18,6 +18,7 @@ final class MainNavigation
         $html .= '<span class="fm2-nav-group">Монтаж</span>';
         foreach ([
             ['objects.read', 'objects', '/pilot/objects', 'Объекты монтажа', 'M4 20V8l8-5 8 5v12H4Zm5 0v-6h6v6'],
+            ['installers.read', 'installers', '/pilot/installers', 'Монтажники', 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c.2-4 1.8-6 5-6s4.8 2 5 6H3Zm10 0c-.1-2.4-.8-4.2-2-5.2.9-.5 2-.8 3-.8 3.2 0 4.8 2 5 6h-6Z'],
             ['construction_control.read', 'construction-control', '/pilot/construction-control', 'Стройконтроль', 'M4 19h16M6 16V8h12v8M9 8V5h6v3'],
             ['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'M5 4h14v16H5V4Zm3 4h8M8 12h3m2 0h3M8 16h3m2 0h3'],
         ] as $link) {

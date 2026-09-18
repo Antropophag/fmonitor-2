@@ -56,11 +56,23 @@ eligible/imported/alreadyPresent/details/templateAssociations и завершё�
 Configuration invalid SHALL вернуть exit `64`; любой недоказанный terminal result
 SHALL быть non-zero и не содержать success. После сбоя повтор SHALL безопасно
 сверить уже записанные immutable facts и продолжить, не переписывая историю.
+Replay comparison SHALL одинаково canonicalize source expectation и сохранённое
+mirror-представление дат: необязательный time suffix и legacy zero-date variants
+не создают `MIRROR_CONFLICT`, когда обозначают тот же импортированный факт.
+
+Legacy `workdatefinish` SHALL считаться фактом завершения только когда значение
+не позднее зафиксированного cutoff. Будущая относительно cutoff дата SHALL
+нормализоваться в `null` до classification/eligibility и не должна сама по себе
+исключать ещё не открытый объект. Это тот же cutoff contract, который действует
+для остальных фактов, недоступных на момент снимка.
 
 Eligibility, all-or-nothing case facts и replay наследуются из
 `PILOT-CASE-IMPORT-001`; classification/provenance — из действующего
 classification contract; template/details — из checklist/object-detail snapshot
 contracts. Новый seam меняет transport/composition, а не ожидаемые факты.
+В частности, bootstrap SHALL импортировать native candidate независимо от
+плановой даты начала; прежняя техническая граница `2026-10-01` не является
+eligibility-критерием.
 
 Production command, image и runtime loaded-file closure MUST NOT содержать или
 загружать `rapid-pilot`. Существующие rapid scripts остаются только oracle.

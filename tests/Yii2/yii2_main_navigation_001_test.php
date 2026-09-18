@@ -12,7 +12,7 @@ try {
     $db = $fixture->db;
     $prefix = $fixture->p;
     $db->query("ALTER TABLE fm_maintable ADD responsstroicontrol VARCHAR(80) NULL");
-    foreach (['construction_control.read', 'otiz.manage'] as $permission) {
+    foreach (['construction_control.read', 'otiz.manage', 'installers.read'] as $permission) {
         $fixture->insert($prefix . 'fm2_pilot_role_permissions', ['role_id' => 9201, 'permission' => $permission]);
     }
     $http->start();
@@ -28,6 +28,7 @@ try {
     ];
     $labels = [
         '/pilot/objects' => 'Объекты монтажа',
+        '/pilot/installers' => 'Монтажники',
         '/pilot/construction-control' => 'Стройконтроль',
         '/pilot/otiz' => 'ОТиЗ',
         '/pilot/feedback' => 'Обратная связь',
@@ -92,11 +93,19 @@ try {
         }
     };
 
-    $canonical = array_values($routes);
+    $canonical = ['/pilot/objects', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
     $before = $fixture->facts();
     $assertMatrix($canonical, $routes);
     $assertMatrix($canonical, $routes); // repeated reads independently render and remain read-only
     assertSameValue($before, $fixture->facts(), 'five-route repeated reads create no database facts');
+
+    $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='installers.read'");
+    $phaseBefore = $fixture->facts();
+    $withoutInstallers = array_values(array_diff($canonical, ['/pilot/installers']));
+    $assertMatrix($withoutInstallers, $routes);
+    assertSameValue(403, $http->request('GET', '/pilot/installers', [], $cookies)['status'], 'direct installer directory authorization unchanged');
+    assertSameValue($phaseBefore, $fixture->facts(), 'no-installers reads and denial create no facts');
+    $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'installers.read')");
 
     $otiz = $http->request('GET', '/pilot/otiz', [], $cookies);
     [, $otizDocument, $otizXpath, $mainNode] = $navigation($otiz['body']);
@@ -144,7 +153,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'construction_control.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='objects.read'");
     $phaseBefore = $fixture->facts();
-    $withoutObjects = ['/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
+    $withoutObjects = ['/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
     $assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys($withoutObjects, true)));
     assertSameValue(403, $http->request('GET', '/pilot/objects', [], $cookies)['status'], 'direct objects authorization unchanged');
     assertSameValue($phaseBefore, $fixture->facts(), 'no-objects reads and denial create no facts');
@@ -152,7 +161,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'objects.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('access.administer','inspection.schedule')");
     $phaseBefore = $fixture->facts();
-    $withoutAdmin = ['/pilot/objects', '/pilot/construction-control', '/pilot/otiz'];
+    $withoutAdmin = ['/pilot/objects', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz'];
     $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys($withoutAdmin, true)));
     foreach (['/pilot/admin/users', '/pilot/admin/roles'] as $adminRoute) {
         assertSameValue(403, $http->request('GET', $adminRoute, [], $cookies)['status'], 'both direct admin routes retain access.administer guard ' . $adminRoute);
@@ -162,7 +171,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'access.administer')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('otiz.manage','construction_control.read')");
     $phaseBefore = $fixture->facts();
-    $restricted = ['/pilot/objects', '/pilot/admin/users', '/pilot/admin/roles'];
+    $restricted = ['/pilot/objects', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles'];
     $assertMatrix($restricted, array_intersect_key($routes, array_fill_keys($restricted, true)));
     assertSameValue($phaseBefore, $fixture->facts(), 'restricted admin combination reads create no facts');
 

@@ -79,22 +79,25 @@ workdateendadjusted, plan_finish_date, workdatefinish, ptoactdate
 
 1. exact legacy row существует;
 2. `address`, `entrance`, `objectRegistrationNumber`, `plannedStartDate`, `plannedFinishDate` непусты;
-3. `plannedStartDate >= 2026-10-01` как календарная дата;
-4. `ptoActDate = null`;
-5. `workdatefinish = null`;
-6. process case с этим `legacy_installation_object_id` ещё не существует.
+3. `ptoActDate = null`;
+4. `workdatefinish = null`;
+5. process case с этим `legacy_installation_object_id` ещё не существует.
 
-Условие 6 отличает новый import от идемпотентного повторения: уже существующее дело не перечитывает legacy eligibility и классифицируется `alreadyPresent`, независимо от его последующего process state. Bootstrap никогда не исправляет и не возвращает дело к `needs_assignment_order`.
+Условие 5 отличает новый import от идемпотентного повторения: уже существующее дело не перечитывает legacy eligibility и классифицируется `alreadyPresent`, независимо от его последующего process state. Bootstrap никогда не исправляет и не возвращает дело к `needs_assignment_order`. Плановая дата начала не ограничивает eligibility: ещё не открытое дело без истории допустимо независимо от того, находится плановая дата до или после `2026-10-01`.
 
 Rejected reason codes имеют стабильный приоритет и порядок:
 
 ```text
 LEGACY_OBJECT_NOT_FOUND
 LEGACY_OBJECT_REQUIRED_DATA_MISSING
-PILOT_PLANNED_START_BEFORE_CUTOFF
 ORDER_HAS_PTO_ACT
 LEGACY_INSTALLATION_ALREADY_COMPLETED
 ```
+
+`LEGACY_OBJECT_REQUIRED_DATA_MISSING` охватывает как пустые address/entrance/
+objectRegistrationNumber, так и отсутствующие после approved normalization
+`plannedStartDate` или `plannedFinishDate`. Удаление календарной границы не
+разрешает импорт объекта без обязательных плановых дат.
 
 Для существующего legacy row собираются все применимые причины в этом порядке. Missing required fields не печатаются: детальная коррекция данных остаётся в legacy source; process command позднее использует утверждённый предметный field-level отказ.
 
@@ -140,10 +143,10 @@ exit: 0
 
 ## 8. Rejection all-or-nothing
 
-Независимый запуск выбирает `[4512, 4600, 4601]`: `4512` допустим; `4600` отсутствует; `4601` имеет planned start `2026-09-30`, blank entrance, nonzero PTO и nonzero completion. Результат:
+Независимый запуск выбирает `[4512, 4600, 4601]`: `4512` допустим; `4600` отсутствует; `4601` имеет blank entrance, nonzero PTO и nonzero completion. Его planned start `2026-09-30` сам по себе допустим и не является причиной rejection. Результат:
 
 ```json
-{"ok":false,"reason":"PILOT_CASES_NOT_ELIGIBLE","rejected":[{"installationObjectId":4600,"reasonCodes":["LEGACY_OBJECT_NOT_FOUND"]},{"installationObjectId":4601,"reasonCodes":["LEGACY_OBJECT_REQUIRED_DATA_MISSING","PILOT_PLANNED_START_BEFORE_CUTOFF","ORDER_HAS_PTO_ACT","LEGACY_INSTALLATION_ALREADY_COMPLETED"]}]}
+{"ok":false,"reason":"PILOT_CASES_NOT_ELIGIBLE","rejected":[{"installationObjectId":4600,"reasonCodes":["LEGACY_OBJECT_NOT_FOUND"]},{"installationObjectId":4601,"reasonCodes":["LEGACY_OBJECT_REQUIRED_DATA_MISSING","ORDER_HAS_PTO_ACT","LEGACY_INSTALLATION_ALREADY_COMPLETED"]}]}
 ```
 
 Exit `2`, empty stderr. `4512` не создаётся: eligibility всего batch проверяется до первого INSERT, transaction откатывает весь batch при любом rejected ID. Existing `alreadyPresent` IDs не являются rejection и могут соседствовать с новыми valid IDs.
@@ -200,7 +203,7 @@ Gate 2 запускает отдельные PHP CLI processes против real
 - argv grammar: no IDs, zero/negative/leading-zero/overflow/duplicate/101 IDs/unknown arg;
 - stdin boundary: непустые немедленные и delayed bytes игнорируются; процесс не ждёт EOF открытого stdin и даёт тот же exact result, что без этих bytes;
 - все env absence/empty/port/prefix cases, включая одновременно отсутствующие password и оба prefixes;
-- required fields, exact cutoff boundary `2026-10-01`, day-before, PTO/completion zero variants;
+- required fields, otherwise-valid planned dates before/on/after `2026-10-01`, PTO/completion zero variants;
 - mixed batch all-or-nothing, repeat after progress, two-process race;
 - least-privilege success, schema missing/incompatible, confirmed rollback and commit-unknown reconciliation;
 - exact stdout/stderr/exit/newline/key order and absence of distinct secret/raw-value literals.
@@ -218,7 +221,7 @@ Gate 2 запускает отдельные PHP CLI processes против real
 
 ## 14. Решения и доказательства
 
-- `PRODUCT.md`, `docs/fmonitor-2-pilot-spec.md`: explicit pilot boundary — ещё не открытые объекты с плановым началом с `2026-10-01`.
+- `PRODUCT.md`, `docs/fmonitor-2-pilot-spec.md`: explicit pilot boundary — ещё не открытые объекты без истории движения checklist независимо от плановой даты.
 - `docs/fmonitor-2-pilot-data-model.md`, раздел 7: создать case rows без переноса четырёх legacy slots как доказанных назначений.
 - `LEGACY-OBJECT-SNAPSHOT-001`: утверждённый read-only mapping required object facts, fallback и zero-date semantics.
 - `MIGRATION-PROCESS-001`: exact target case schema и unique identity.
