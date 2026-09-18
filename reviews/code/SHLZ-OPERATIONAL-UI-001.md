@@ -2,10 +2,10 @@
 
 - Reviewer: separately tasked agent `/root/ui_object_card_final_review`; authored none of the reviewed specification, tests, or implementation.
 - Review date: 2026-09-18.
-- Current reviewed source: reconstructible dirty snapshot over base `5bc6a2254bfaa4f5abef283795189d83f98348e3`; exact candidate `f5fde2ea7255eb4134436f566ec16654d3abbe8cc73b48431f7d301200ef033a` from reviewer package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T194518Z-fb651446e2/package.json`. Earlier candidates and returns are retained below.
+- Current reviewed source: reconstructible dirty snapshot over base `5bc6a2254bfaa4f5abef283795189d83f98348e3`; exact candidate `288fae19e2ac4e1e647c66ebe4db33d0bb10fc1e78fdc532c8be134e2d36be7a` from reviewer package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T200853Z-5343453cc9/package.json`. Earlier candidates and returns are retained below.
 - Contract: `specs/SHLZ-OPERATIONAL-UI-001.md`, A1–A5.
 - Gate 3 status: `DEFERRED_BY_OWNER` under the recorded 2026-09-18 exception. It is not `APPROVED`; its historical findings and subsequent resolutions are retained below.
-- Current verdict: `APPROVED` (see final permission-correction rereview below).
+- Current verdict: `APPROVED` (see latest asset-contract correction rereview below).
 
 ## Findings
 
@@ -87,3 +87,17 @@ No other regression or scope issue was found. Exact-source CI remains `UNKNOWN`;
 - All eight planner-selected local obligations have GREEN records bound to exact source `f5fde2ea7255eb4134436f566ec16654d3abbe8cc73b48431f7d301200ef033a`; `git diff --check` is clean. No routes, methods, CSRF fields, command payloads, persisted facts, replay/concurrency behavior, or append-only history ownership changed.
 
 No findings remain for the bounded object-card slice. This approval is the Gate 5 code-review decision only: exact-source GitHub CI is still `UNKNOWN` and remains required before publication/completion.
+
+---
+
+## Asset-contract correction rereview — 2026-09-18
+
+- Reviewed source: exact candidate `288fae19e2ac4e1e647c66ebe4db33d0bb10fc1e78fdc532c8be134e2d36be7a` from package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T200853Z-5343453cc9/package.json`.
+- Gate 3 remains `DEFERRED_BY_OWNER`, not `APPROVED`.
+- Verdict: `APPROVED`.
+
+The approved object-card implementation, exact checklist access seam, dual-link gating, admitted engineer JavaScript-disabled navigation, denied-reader witness, and A1–A4 rendered assertions are unchanged from the preceding approved candidate. The correction updates `tests/Support/yii2_production_web_cutover_contract.php` so the expected `pilot.css` SHA-256 is `b5fcd68e8af456609c456fd0bc96e52ef8978a11095a8452ef517ed7a3705eb1`, which exactly matches the candidate asset, and binds that contract in the verification input.
+
+The package retains nine exact-source GREEN records, including `php tests/Runtime/yii2_production_web_cutover_001_test.php`, the previously failing inventory consumer, plus the eight earlier planner obligations. `git diff --check` is clean. No new finding or behavioral drift was found.
+
+This remains a Gate 5 approval only. The package reports exact-source GitHub CI as `UNKNOWN`; publication/completion still requires the repository-prescribed CI result.
