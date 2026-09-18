@@ -187,3 +187,38 @@ Canonicalization does not alter source classification or cutoff semantics: it oc
 - `git diff --check` — PASS.
 
 No full local suite was run. Gate 5 is `APPROVED` for the complete corrected candidate at the exact artifact bytes above. Exact-source CI and deployment remain separate required gates and are not claimed GREEN.
+
+---
+
+## Publication audit — clean rebased exact commit
+
+- Reviewer: independent `/root/prod_data_fix_gate5`; authored none of the reviewed production, specifications, tests, or rebase.
+- Exact reviewed commit: `3d343961230c5963bc849309ef58894f7cd284e1`.
+- Exact base and merge-base: `origin/main` at `4d6315b09ad4d3eef510d94bdfebf812be38b361`.
+- Exact reviewed tree: `026e7dfe2ac7772bc065e5835cc3f046f811cfbc`.
+- Exact commit binary-show SHA-256: `117cd02414ec6a2d05139f30caaaf05af9ec27ac787ef2f55b078af301329248`.
+- Pre-rebase candidate commit used for byte comparison: `1f7c7e69`.
+- Harness state before this docs-only audit addendum: clean worktree, HEAD `3d343961230c5963bc849309ef58894f7cd284e1`, source `b2b76f081dc19a7dd4d0292f7995b68f1679740010e4678fbccb3c3a2555cfcc`, executable source `7de1f324f61f02caa14628ab4c35933414dae58d9a124f766a565a7915345eb7`; CI and deployment `UNKNOWN`.
+- Publication-audit verdict: `APPROVED`.
+
+### Complete findings
+
+None.
+
+### Rebase comparison
+
+The exact commit is a direct child of the stated `origin/main`; `git merge-base origin/main HEAD` returned the same base. `origin/main...HEAD` contains exactly the ten previously approved production/spec/test artifacts plus the independent Gate 3 and Gate 5 records. No unrelated candidate file was added by the rebased commit.
+
+All four production files, all three specifications, the Yii legacy-import test, and the navigation test match their previously approved SHA-256 values byte-for-byte. Comparing the original candidate commit `1f7c7e69` with rebased commit `3d343961` across the ten behavioral artifacts found exactly one changed line in `tests/InstallationProcess/pilot_case_import_001_test.php`: its setup expectation advances the canonical migration from schema version 28 / applied versions 1–28 to the current base's schema version 29 / applied versions 1–29. Feature fixtures, assertions, rejection outcomes, replay snapshots, and production behavior are unchanged. The post-rebase focused PASS confirms the test still reaches its public behavioral seam on the new base.
+
+The rebase therefore introduces no unreviewed behavior or expectation drift. The previously approved cutoff projection, aggregate source reads, planned-date eligibility and required presence, canonical first mirror insert, immutable equivalent replay, genuine conflict rejection, navigation permissions, negative authorization, history preservation, and secret redaction remain intact on the current base.
+
+### Verification evidence supplied and audited
+
+- `FMONITOR_TEST_DB_ADMIN_PASSWORD=fmonitor2_test_root_local php tests/InstallationProcess/pilot_case_import_001_test.php` — PASS after rebase.
+- `php tests/Yii2/yii2_legacy_import_db_001_test.php` — PASS after rebase.
+- `php tests/Yii2/yii2_main_navigation_001_test.php` — PASS after rebase.
+- `git diff --check origin/main...HEAD` — PASS.
+- Worktree was clean before this audit record was appended.
+
+No full local suite was run. Exact commit `3d343961230c5963bc849309ef58894f7cd284e1` is Gate 5 `APPROVED`. CI and deployment remain separate required gates and are not claimed GREEN. This publication-audit text is the only post-commit change and requires a docs-only follow-up commit; it does not alter the reviewed commit's production, specification, or test bytes.
