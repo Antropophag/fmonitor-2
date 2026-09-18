@@ -165,3 +165,29 @@ None. The interruption/tmpfs correction conforms to the amended A4-A5 contract a
 ### Verdict
 
 `APPROVED` for exact source `22df10142169dc32ba6a6ac7b3d68a7786546dcbf81f1536656de37ce19347a2`. This is the independent delta Gate 5 decision only. Exact-source CI for the corrected committed candidate remains required; the earlier failed run and its unrelated e2e regression remain historical unresolved evidence until the delivery workflow records their disposition. Publication, merge, deploy, production imports and external sends are not approved by this review.
+
+## PR #190 final CI-topology oracle Gate 5 rereview — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independence unchanged; authored none of the correction.
+- Verdict: `APPROVED`.
+- Reviewed base: `41cd3014573c4a9fda5e756439164e1baa6b99be` plus the prepared topology-oracle snapshot.
+- Exact candidate source: `31bbba2ca5d37c8a86dd54148799600ebcdb75feff60810d15ee08098bcf6e40`; executable-source digest `cb45f71180c0981c19a348e786688e1bf8a77f50f37aa3eb7feb2299a9fce423`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T025502Z-3787fa21d5/package.json`; verification-plan SHA-256 `48ae7ca7ce4ed1eb1038dfc2dcb17e2e5ccf172cb61bd1f84c0f72f583a7b9e6`.
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T025502Z-3787fa21d5/snapshot`; patch SHA-256 `6d7df353b6eee2784ab6bb61adedd32a8e13137a8c30366d0b898eb4e328ec77`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `cb075929ee9a7bf880a576cf5f2d999f174167f6be308a2239d595e8d9bf1f4b`.
+
+### CI inventory and delta review
+
+Corrected-head CI run `35299888379` for `41cd3014573c4a9fda5e756439164e1baa6b99be` had exactly one `REGRESSION_FAILURE`: the existing exact parsed-Compose topology test retained the pre-change service set and omitted the approved bounded `local-integration` service. Aggregate `verify` failed only because the e2e category contained that stale expectation. The previously observed runtime reconnect failure was GREEN in this run; unit, both integration shards, fast and governance were also GREEN. This review does not reinterpret that failed run as GREEN.
+
+The correction is necessary because the repository's topology contract intentionally enumerates the complete generated Compose service set; accepting the new service without updating that oracle would leave CI deterministically red. It is also behaviorally sensitive rather than a permissive allowlist edit: in addition to adding exactly `local-integration` to the expected set, the test requires its fixed wrapper entrypoint, dedicated `SIGTERM`, `/run/fmonitor-local-integration` tmpfs and absence of any `/run/fmonitor-secrets` volume target. It continues to require byte parity between the generated Compose file and its template and retains all prior topology, dependency and rapid-pilot exclusions.
+
+No production code, Compose topology, runtime behavior, normative specification, harness algorithm, classifier, skip rule or architecture baseline changes in this delta. The verification input merely registers the already-existing topology test in the bounded change paths. The delivery record appends the complete corrected-head failure disposition. All eight package evidence records are source-matched GREEN, including the corrected topology oracle, interruption supervision/tmpfs, cross-UID delivery, staging/security, public Make E2E and both canonical DB owners.
+
+### Complete findings
+
+None. The correction closes the sole current-head CI failure without weakening the topology boundary or expanding #185 scope.
+
+### Verdict
+
+`APPROVED` for exact source `31bbba2ca5d37c8a86dd54148799600ebcdb75feff60810d15ee08098bcf6e40`. This decision approves only the final topology-oracle delta. A new exact-source CI result for the committed correction is still required before PR-ready admission; publication, merge, deploy, production imports and external sends remain outside this review.

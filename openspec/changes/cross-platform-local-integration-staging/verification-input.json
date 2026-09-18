@@ -23,6 +23,7 @@
     "tests/Deployment/local_integration_interruption_185_test.py",
     "tests/Deployment/local_integration_make_e2e_185_test.py",
     "tests/Deployment/yii2_local_integration_config_001_test.py",
+    "tests/Deployment/yii2_stand_target_compose_001_test.py",
     "tests/Yii2/yii2_legacy_import_db_001_test.php",
     "tests/Yii2/yii2_workforce_sync_db_001_test.php",
     "tools/delivery/Dockerfile.runtime.in",
