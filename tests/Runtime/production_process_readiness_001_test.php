@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
+require dirname(__DIR__) . '/Support/CurrentProductionSchemaContract.php';
 require dirname(__DIR__, 2) . '/app/autoload.php';
 
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
@@ -73,7 +74,7 @@ try {
         $db = new mysqli($host, $user, $password, $database, $port);
         $prefix = 'process_';
         $migrated = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-        assertSameValue([0, true, 30], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches current v30");
+        assertSameValue(array_slice(CurrentProductionSchemaContract::cleanApplicationResult(), 0, 3), [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches current schema");
         $db->query('CREATE TABLE readiness_ambient(id INT NOT NULL PRIMARY KEY, marker VARCHAR(40) NOT NULL) ENGINE=InnoDB');
         $db->query("INSERT INTO readiness_ambient VALUES(1,'preserve process readiness')");
         $storage = $temporaryRoot . '/fmonitor-process-readiness-' . $token;

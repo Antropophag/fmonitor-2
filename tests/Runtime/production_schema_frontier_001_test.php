@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
+require dirname(__DIR__) . '/Support/CurrentProductionSchemaContract.php';
 require dirname(__DIR__, 2) . '/app/autoload.php';
 
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
@@ -15,17 +16,68 @@ $port = (int) (getenv('FMONITOR_TEST_DB_PORT') ?: 23306);
 $user = getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root';
 $password = getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local';
 $database = 't_runtime_schema_' . bin2hex(random_bytes(5));
-$admin = new mysqli($host, $user, $password, '', $port);
+$admin = null;
 $db = null;
 
+/** @param array<int, callable|string> $catalogue */
+function assertCurrentProductionSchemaFrontier(array $catalogue, string $label): void
+{
+    assertSameValue(
+        CurrentProductionSchemaContract::versions(),
+        array_keys($catalogue),
+        "{$label}: canonical production catalogue does not match the independent current frontier"
+    );
+}
+
+/** @param array<int, callable|string> $catalogue */
+function assertFrontierVariantRejected(array $catalogue, string $label): void
+{
+    try {
+        assertCurrentProductionSchemaFrontier($catalogue, $label);
+    } catch (TestFailure $failure) {
+        assertSameValue(
+            true,
+            str_contains($failure->getMessage(), $label)
+                && str_contains($failure->getMessage(), 'independent current frontier'),
+            "{$label}: bounded variant reports an addressable frontier mismatch"
+        );
+        return;
+    }
+
+    throw new TestFailure("{$label}: bounded variant unexpectedly passed the current frontier assertion");
+}
+
+$catalogue = ProductionPilotMigrationCatalogue::migrations();
+CurrentProductionSchemaContract::assertInternallyConsistent();
+$intendedRed = getenv('FMONITOR_TEST_SCHEMA_FRONTIER_VARIANT') ?: '';
+if (!in_array($intendedRed, ['', 'missing-last', 'missing-intermediate'], true)) {
+    throw new TestFailure('SETUP_FAILURE: unsupported schema frontier variant');
+}
+if ($intendedRed !== '') {
+    $defectiveCatalogue = $catalogue;
+    unset($defectiveCatalogue[
+        $intendedRed === 'missing-last'
+            ? CurrentProductionSchemaContract::CURRENT_VERSION
+            : 15
+    ]);
+    assertCurrentProductionSchemaFrontier($defectiveCatalogue, $intendedRed);
+    throw new TestFailure("{$intendedRed}: intended RED variant unexpectedly passed before database mutation");
+}
+
+assertCurrentProductionSchemaFrontier($catalogue, 'production catalogue');
+$missingLast = $catalogue;
+unset($missingLast[CurrentProductionSchemaContract::CURRENT_VERSION]);
+assertFrontierVariantRejected($missingLast, 'missing-last');
+$missingIntermediate = $catalogue;
+unset($missingIntermediate[15]);
+assertFrontierVariantRejected($missingIntermediate, 'missing-intermediate');
+
+$admin = new mysqli($host, $user, $password, '', $port);
 try {
     $admin->query("CREATE DATABASE `{$database}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $db = new mysqli($host, $user, $password, $database, $port);
     $db->set_charset('utf8mb4');
     $prefix = 'runtime_';
-    $catalogue = ProductionPilotMigrationCatalogue::migrations();
-
-    assertSameValue(range(1, 30), array_keys($catalogue), 'canonical production catalogue has a contiguous v30 frontier');
     $v22 = $catalogue[22];
     $applyV22 = static fn (mysqli $connection, string $tablePrefix): array => is_string($v22)
         ? $v22::apply($connection, $tablePrefix)
@@ -50,14 +102,14 @@ try {
     assertSameValue([$conflictBefore, $conflictRows], [$db->query("SHOW CREATE TABLE `{$conflictTable}`")->fetch_row()[1], $db->query("SELECT * FROM `{$conflictTable}`")->fetch_all(MYSQLI_ASSOC)], 'v22 conflict performs no schema or row mutation');
 
     $first = CanonicalMigrationApplication::run($db, $prefix, $catalogue);
-    assertSameValue([0, true, 30, range(1, 30)], [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema');
+    assertSameValue(CurrentProductionSchemaContract::cleanApplicationResult(), [$first['exitCode'], $first['result']['ok'] ?? null, $first['result']['schemaVersion'] ?? null, $first['result']['appliedVersions'] ?? null], 'clean production migration creates the full runtime schema');
     MariaDbPilotLegacyObjectSchemaReadiness::assertReady($db, $prefix);
 
     $table = $prefix . 'fm_maintable';
     $db->query("INSERT INTO `{$table}`(id,ordadr_address,entrance,regnumber,workdatestart) VALUES(1450,'Москва, тестовый адрес','1','77-TEST','2026-09-09')");
     $before = $db->query("SELECT * FROM `{$table}` WHERE id=1450")->fetch_assoc();
     $repeat = CanonicalMigrationApplication::run($db, $prefix, $catalogue);
-    assertSameValue([0, true, 30, []], [$repeat['exitCode'], $repeat['result']['ok'] ?? null, $repeat['result']['schemaVersion'] ?? null, $repeat['result']['appliedVersions'] ?? null], 'production migration replay is a no-op at v30');
+    assertSameValue(CurrentProductionSchemaContract::replayApplicationResult(), [$repeat['exitCode'], $repeat['result']['ok'] ?? null, $repeat['result']['schemaVersion'] ?? null, $repeat['result']['appliedVersions'] ?? null], 'production migration replay is a no-op at the current frontier');
     assertSameValue($before, $db->query("SELECT * FROM `{$table}` WHERE id=1450")->fetch_assoc(), 'migration replay preserves populated object facts exactly');
 
     echo "PASS: PRODUCTION-HTTP-RUNTIME-001 canonical v22 object schema frontier\n";

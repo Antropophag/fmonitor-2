@@ -1,0 +1,74 @@
+{
+  "change": "deduplicate-current-schema-test-setup-issue-193",
+  "planned_paths": [
+    "specs/CURRENT-SCHEMA-TEST-CONTRACT-001.md",
+    "tests/Support/CurrentProductionSchemaContract.php",
+    "tests/Runtime/production_schema_frontier_001_test.php",
+    "tests/InstallationProcess/*.php",
+    "tests/Jobs/*.php",
+    "tests/Otiz/*.php",
+    "tests/Runtime/*.php",
+    "tests/Yii2/*.php",
+    "openspec/changes/deduplicate-current-schema-test-setup/**"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "CURRENT-SCHEMA-TEST-CONTRACT-001",
+      "acceptance_id": "A1-independent-frontier-and-mutations",
+      "spec_path": "specs/CURRENT-SCHEMA-TEST-CONTRACT-001.md",
+      "seam": "PHP current-schema contract compared with the supplied production catalogue; bounded missing-last and missing-intermediate variants fail at the frontier assertion",
+      "tests": ["tests/Runtime/production_schema_frontier_001_test.php"],
+      "gate3_expected": {"tests/Runtime/production_schema_frontier_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "CURRENT-SCHEMA-TEST-CONTRACT-001",
+      "acceptance_id": "A2-current-setup-replay-consumers",
+      "spec_path": "specs/CURRENT-SCHEMA-TEST-CONTRACT-001.md",
+      "seam": "selected PHP consumers prepare isolated current databases and retain subject assertions plus empty appliedVersions on replay",
+      "tests": [
+        "tests/InstallationProcess/assignment_order_original_attempt_audit_schema_001_test.php",
+        "tests/InstallationProcess/checklist_template_schema_001_test.php",
+        "tests/InstallationProcess/classification_provenance_schema_001_test.php",
+        "tests/InstallationProcess/construction_control_completed_filter_001_test.php",
+        "tests/InstallationProcess/identity_access_schema_001_test.php",
+        "tests/InstallationProcess/otiz_settlement_schema_001_test.php",
+        "tests/InstallationProcess/pilot_case_import_001_test.php",
+        "tests/InstallationProcess/production_migration_runner_001_test.php",
+        "tests/Jobs/jobs_schema_001_test.php",
+        "tests/Otiz/runtime_schema_001_test.php",
+        "tests/Otiz/settlement_concurrency_001_test.php",
+        "tests/Runtime/initial_owner_provisioning_001_test.php",
+        "tests/Runtime/production_process_readiness_001_test.php",
+        "tests/Runtime/production_readiness_schema_001_test.php",
+        "tests/Runtime/production_runtime_browser_001_test.php",
+        "tests/Yii2/yii2_feedback_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/InstallationProcess/assignment_order_original_attempt_audit_schema_001_test.php": "GREEN",
+        "tests/InstallationProcess/checklist_template_schema_001_test.php": "GREEN",
+        "tests/InstallationProcess/classification_provenance_schema_001_test.php": "GREEN",
+        "tests/InstallationProcess/construction_control_completed_filter_001_test.php": "GREEN",
+        "tests/InstallationProcess/identity_access_schema_001_test.php": "GREEN",
+        "tests/InstallationProcess/otiz_settlement_schema_001_test.php": "GREEN",
+        "tests/InstallationProcess/pilot_case_import_001_test.php": "GREEN",
+        "tests/InstallationProcess/production_migration_runner_001_test.php": "GREEN",
+        "tests/Jobs/jobs_schema_001_test.php": "GREEN",
+        "tests/Otiz/runtime_schema_001_test.php": "GREEN",
+        "tests/Otiz/settlement_concurrency_001_test.php": "GREEN",
+        "tests/Runtime/initial_owner_provisioning_001_test.php": "GREEN",
+        "tests/Runtime/production_process_readiness_001_test.php": "GREEN",
+        "tests/Runtime/production_readiness_schema_001_test.php": "GREEN",
+        "tests/Runtime/production_runtime_browser_001_test.php": "GREEN",
+        "tests/Yii2/yii2_feedback_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "CURRENT-SCHEMA-TEST-CONTRACT-001",
+      "acceptance_id": "A3-historical-contract-preservation",
+      "spec_path": "specs/CURRENT-SCHEMA-TEST-CONTRACT-001.md",
+      "seam": "diff retains literal historical upgrade/recovery/catalog expectations and changes no production implementation",
+      "tests": ["tests/Runtime/runtime_recovery_forward_update_001_test.php"],
+      "gate3_expected": {"tests/Runtime/runtime_recovery_forward_update_001_test.php": "GREEN"}
+    }
+  ]
+}
