@@ -27,7 +27,7 @@ $renderHistory = static function (string $type, array $fact): void {
     <header><div><h2>Документарное закрытие</h2><p>Последние 15% закрываются актом ПТО и декларацией.</p></div><strong><?= $progress ?>%</strong></header>
     <div class="fm2-completion-track" role="progressbar" aria-label="Готовность работ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $progress ?>"><progress class="fm2-completion-track__segment" max="85" value="<?= min(85, $progress) ?>" aria-hidden="true"></progress><progress class="fm2-completion-track__segment fm2-completion-track__segment--documents" max="15" value="<?= max(0, $progress - 85) ?>" aria-hidden="true"></progress></div>
     <?php if (!$at85): ?>
-        <p>Сначала завершите монтажные работы до 85% в чек-листе.</p><a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/checklist">Перейти к чек-листу</a>
+        <p>Сначала завершите монтажные работы до 85% в чек-листе.</p><?php if ($canReadChecklist): ?><a class="shlz-link" href="/pilot/objects/<?= (int) $id ?>/checklist">Перейти к чек-листу</a><?php endif ?>
     <?php elseif ($pto === null && $canRecordPto): ?>
         <form class="fm2-completion-form" method="post" action="/pilot/objects/<?= (int) $id ?>/completion"><?= Html::hiddenInput('_csrf', $csrf) ?><?= Html::hiddenInput('action', 'record_pto') ?><label class="shlz-field"><span class="shlz-field__label">Дата акта ПТО</span><input class="shlz-input" type="date" name="ptoActDate" value="<?= $today ?>" required max="<?= $today ?>"></label><button class="shlz-button shlz-button--primary" type="submit">Зафиксировать акт ПТО</button></form>
     <?php elseif ($pto !== null && $declaration === null && $canRecordDeclaration): ?>

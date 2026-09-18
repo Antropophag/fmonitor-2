@@ -1,0 +1,8 @@
+{
+  "change":"refresh-yii2-shlz-ui",
+  "planned_paths":["app/YiiRuntime/Assets/pilot.css","app/YiiRuntime/Controllers/ObjectCardController.php","app/YiiRuntime/Views/completion.php","app/YiiRuntime/Views/object-card.php","docs/operations/current-delivery-goal.md","openspec/changes/refresh-yii2-shlz-ui/design.md","openspec/changes/refresh-yii2-shlz-ui/proposal.md","openspec/changes/refresh-yii2-shlz-ui/specs/ui/shlz-operational-surfaces/spec.md","openspec/changes/refresh-yii2-shlz-ui/tasks.md","specs/SHLZ-OPERATIONAL-UI-001.md","tests/Yii2/preopening_browser.mjs","tests/Yii2/yii2_object_card_001_test.php","tests/Yii2/yii2_preopening_browser_001_test.php","tests/Yii2/yii2_preopening_concurrency_001_test.php","tests/Yii2/yii2_shlz_operational_ui_001_test.php","tools/verification/suites.tsv"],
+  "acceptances":[
+    {"spec_id":"SHLZ-OPERATIONAL-UI-001","acceptance_id":"A1-A4-object-card-ui","spec_path":"specs/SHLZ-OPERATIONAL-UI-001.md","seam":"authenticated Yii2 object-card HTTP and rendered browser DOM","tests":["tests/Yii2/yii2_shlz_operational_ui_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_shlz_operational_ui_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"SHLZ-OPERATIONAL-UI-001","acceptance_id":"A5-domain-preservation","spec_path":"specs/SHLZ-OPERATIONAL-UI-001.md","seam":"object-card GET/HEAD and preopening command replay/concurrency with before/after facts","tests":["tests/Yii2/yii2_object_card_001_test.php","tests/Yii2/yii2_preopening_concurrency_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_object_card_001_test.php":"GREEN","tests/Yii2/yii2_preopening_concurrency_001_test.php":"GREEN"}}
+  ]
+}
