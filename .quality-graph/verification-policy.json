@@ -270,6 +270,16 @@
   ],
   "capability_ownership": [
     {
+      "name": "initial-owner-provisioning",
+      "patterns": [
+        "app/IdentityAccess/MariaDbInitialOwnerProvisioning.php"
+      ],
+      "verifiers": [
+        "tests/Runtime/initial_owner_provisioning_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "canonical-migration-frontier",
       "patterns": [
         "app/InstallationProcess/CanonicalMigrationApplication.php",

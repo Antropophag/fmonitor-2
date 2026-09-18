@@ -1,0 +1,26 @@
+{
+  "change": "resume-provisioned-local-stand-issue-185",
+  "planned_paths": [
+    "Makefile",
+    "app/IdentityAccess/MariaDbInitialOwnerProvisioning.php",
+    "bin/fmonitor2-provision-initial-admin.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-185-resume-local-up-delivery.md",
+    "openspec/changes/resume-provisioned-local-stand/design.md",
+    "openspec/changes/resume-provisioned-local-stand/proposal.md",
+    "openspec/changes/resume-provisioned-local-stand/specs/operations/initial-owner-provisioning/spec.md",
+    "openspec/changes/resume-provisioned-local-stand/tasks.md",
+    "openspec/changes/resume-provisioned-local-stand/verification-input.json",
+    "reviews/code/INITIAL-OWNER-PROVISIONING-001.md",
+    "reviews/tests/INITIAL-OWNER-PROVISIONING-001.md",
+    "specs/INITIAL-OWNER-PROVISIONING-001.md",
+    "tests/Architecture/initial_owner_local_resume_route_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tools/verification/suites.tsv",
+    ".quality-graph/verification-policy.json"
+  ],
+  "acceptances": [
+    {"spec_id":"INITIAL-OWNER-PROVISIONING-001","acceptance_id":"A1-A3-A5-owner-lifecycle","spec_path":"specs/INITIAL-OWNER-PROVISIONING-001.md","seam":"direct CLI retains clean strict replay while explicit local-resume confirms developed bootstrap owner or rejects conflicts read-only under existing schema lock and concurrency guarantees","tests":["tests/Runtime/initial_owner_provisioning_001_test.php"],"gate3_expected":{"tests/Runtime/initial_owner_provisioning_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"INITIAL-OWNER-PROVISIONING-001","acceptance_id":"A4-real-make-up-route-production-isolation","spec_path":"specs/INITIAL-OWNER-PROVISIONING-001.md","seam":"Makefile up explicitly selects local mode through canonical CLI and IdentityAccess while direct production CLI remains strict","tests":["tests/Architecture/initial_owner_local_resume_route_001_test.php"],"gate3_expected":{"tests/Architecture/initial_owner_local_resume_route_001_test.php":"GREEN"}}
+  ]
+}
