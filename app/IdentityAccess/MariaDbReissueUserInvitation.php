@@ -34,14 +34,28 @@ final class MariaDbReissueUserInvitation implements ReissueUserInvitation
             }
 
             $target = $this->db->prepare(
-                "SELECT status,activation_state FROM `{$this->prefix}fm2_pilot_users` WHERE user_id=? FOR UPDATE"
+                "SELECT email,status,activation_state FROM `{$this->prefix}fm2_pilot_users` WHERE user_id=? FOR UPDATE"
             );
             $target->bind_param('i', $userId);
             $target->execute();
             $user = $target->get_result()->fetch_assoc();
-            if ($user === null || (int) $user['status'] !== 1 || $user['activation_state'] !== 'invited') {
+            if ($user === null || (int) $user['status'] !== 1 || !in_array($user['activation_state'], ['pending_invitation','invited'], true)) {
                 $this->db->rollback();
                 return ['status' => 'not_invited'];
+            }
+
+            if ($user['activation_state'] === 'pending_invitation') {
+                $email = mb_strtolower(trim((string) $user['email']));
+                if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                    throw new \RuntimeException('Pending invitation email is invalid.');
+                }
+                $credential = $this->db->prepare(
+                    "INSERT INTO `{$this->prefix}fm2_pilot_auth_credentials`"
+                    . '(user_id,email_normalized,password_hash,password_set_at,updated_at)'
+                    . " VALUES(?,?,NULL,NULL,DATE_FORMAT(UTC_TIMESTAMP(),'%Y-%m-%dT%H:%i:%sZ'))"
+                );
+                $credential->bind_param('is', $userId, $email);
+                $credential->execute();
             }
 
             $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
@@ -59,6 +73,11 @@ final class MariaDbReissueUserInvitation implements ReissueUserInvitation
             );
             $issue->bind_param('isi', $userId, $hash, $actorId);
             $issue->execute();
+            if ($user['activation_state'] === 'pending_invitation') {
+                $state = $this->db->prepare("UPDATE `{$this->prefix}fm2_pilot_users` SET activation_state='invited',source_updated_at=DATE_FORMAT(UTC_TIMESTAMP(),'%Y-%m-%dT%H:%i:%sZ') WHERE user_id=?");
+                $state->bind_param('i', $userId);
+                $state->execute();
+            }
             $this->db->commit();
             return ['status' => 'issued', 'token' => $token];
         } catch (\Throwable $error) {

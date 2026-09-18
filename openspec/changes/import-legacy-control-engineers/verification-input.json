@@ -1,0 +1,78 @@
+{
+  "change": "import-legacy-control-engineers",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/MariaDbLegacySourceSnapshot.php",
+    "app/InstallationProcess/MariaDbLegacyImportApplication.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/IdentityAccess/MariaDbReissueUserInvitation.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
+    "app/YiiRuntime/Views/users.php",
+    "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
+    "tests/Yii2/yii2_legacy_import_db_001_test.php",
+    "tests/InstallationProcess/legacy_control_engineer_import_001_test.php",
+    "tests/InstallationProcess/legacy_control_engineer_http_001_test.php",
+    "tests/InstallationProcess/production_migration_runner_001_test.php",
+    "tests/Deployment/yii2_imports_workforce_package_001_test.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "LEGACY-CONTROL-ENGINEER-IMPORT-001",
+      "acceptance_id": "A1",
+      "spec_path": "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
+      "seam": "exact referenced source identities",
+      "tests": [
+        "tests/Yii2/yii2_legacy_import_db_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_legacy_import_db_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "LEGACY-CONTROL-ENGINEER-IMPORT-001",
+      "acceptance_id": "A1-A3-A5",
+      "spec_path": "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
+      "seam": "referenced snapshot, pending identity, atomic assignment, aggregate result, replay and changed-source conflict",
+      "tests": [
+        "tests/InstallationProcess/legacy_control_engineer_import_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/InstallationProcess/legacy_control_engineer_import_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "LEGACY-CONTROL-ENGINEER-IMPORT-001",
+      "acceptance_id": "A4",
+      "spec_path": "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
+      "seam": "authenticated canonical reads and invitation",
+      "tests": [
+        "tests/InstallationProcess/legacy_control_engineer_http_001_test.php",
+        "tests/InstallationProcess/invitation_reissue_http_001_test.php",
+        "tests/Yii2/legacy_control_engineer_reads_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/InstallationProcess/legacy_control_engineer_http_001_test.php": "INTENDED_RED",
+        "tests/InstallationProcess/invitation_reissue_http_001_test.php": "GREEN",
+        "tests/Yii2/legacy_control_engineer_reads_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "LEGACY-CONTROL-ENGINEER-IMPORT-001",
+      "acceptance_id": "A6",
+      "spec_path": "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
+      "seam": "schema and package boundaries",
+      "tests": [
+        "tests/InstallationProcess/production_migration_runner_001_test.php",
+        "tests/Deployment/yii2_imports_workforce_package_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/InstallationProcess/production_migration_runner_001_test.php": "GREEN",
+        "tests/Deployment/yii2_imports_workforce_package_001_test.py": "GREEN"
+      }
+    }
+  ]
+}

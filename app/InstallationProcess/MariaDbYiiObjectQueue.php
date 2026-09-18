@@ -45,6 +45,7 @@ final readonly class MariaDbYiiObjectQueue
             $objects[] = $this->map($row, $page, $pages, $total);
         }
         $objects = $this->projection->decorate($objects, $actor);
+        $objects = $this->engineers($objects);
         return['objects' => $objects,'filters' => ['q' => $q,'status' => $status,'page' => $page,'pages' => $pages,'total' => $total]];
     }
     private function query(string$q, string$status): array
@@ -134,9 +135,20 @@ final readonly class MariaDbYiiObjectQueue
             'planningDatesUnknownAtCutover'=>$start === null || $finish === null,
             'dataOrigin'=>'migration_native', 'status'=>$label,
             'nextStep'=>'Откройте карточку объекта монтажа',
+            'controlEngineer'=>null,
             '_pagination'=>compact('page', 'pages', 'total'),
         ];
     }
+    private function engineers(array $objects):array
+    {
+        if($objects===[])return$objects;
+        $cases=array_values(array_unique(array_map(static fn(array$o):int=>(int)$o['caseId'],$objects)));$params=[];$marks=[];foreach($cases as$index=>$case){$name=':case'.$index;$marks[]=$name;$params[$name]=$case;}$in=implode(',',$marks);
+        try{$rows=$this->db->createCommand("SELECT a.installation_case_id,a.engineer_user_id,u.full_name,u.activation_state FROM `{$this->prefix}fm2_control_engineer_assignments` a JOIN `{$this->prefix}fm2_pilot_users` u ON u.user_id=a.engineer_user_id WHERE a.installation_case_id IN ({$in}) AND a.assignment_sequence=(SELECT MAX(x.assignment_sequence) FROM `{$this->prefix}fm2_control_engineer_assignments` x WHERE x.installation_case_id=a.installation_case_id)",$params)->queryAll();}
+        catch(\Throwable){return$objects;}
+        $byCase=[];foreach($rows as$row){$case=(int)$row['installation_case_id'];if(isset($byCase[$case])||(int)$row['engineer_user_id']<1||trim((string)$row['full_name'])==='')return$objects;$byCase[$case]=['userId'=>(int)$row['engineer_user_id'],'fullName'=>(string)$row['full_name'],'status'=>self::engineerStatus((string)$row['activation_state'])];}
+        foreach($objects as&$object)$object['controlEngineer']=$byCase[(int)$object['caseId']]??null;unset($object);return$objects;
+    }
+    private static function engineerStatus(string $state):string{return match($state){'pending_invitation'=>'Ожидает приглашения','invited'=>'Приглашён','active'=>'Активен',default=>'Недоступен'};}
     private static function date(mixed$v): ?string
     {
         $v = trim((string)$v);

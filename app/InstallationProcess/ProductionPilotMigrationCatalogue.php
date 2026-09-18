@@ -37,6 +37,7 @@ final class ProductionPilotMigrationCatalogue
             27=>BitrixOrderDocumentLinksSchemaMigration::class,
             28=>ControlEngineerAssignmentDefinitionSchemaMigration::class,
             29=>LegacyControlEngineerMigrationSchema::class,
+            30=>LegacyControlEngineerImportSchemaMigration::class,
         ];
     }
 }

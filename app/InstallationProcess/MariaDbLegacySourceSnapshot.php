@@ -6,7 +6,7 @@ final class MariaDbLegacySourceSnapshot
 {
     public function __construct(private readonly \mysqli $source) {}
 
-    /** @return array{objects:list<array<string,mixed>>,template:array<string,mixed>} */
+    /** @return array{objects:list<array<string,mixed>>,engineers:list<array<string,mixed>>,template:array<string,mixed>} */
     public function read(string $cutoff): array
     {
         $this->source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
@@ -45,10 +45,33 @@ final class MariaDbLegacySourceSnapshot
                 $row['classification'] = $classification;
                 $objects[] = $row;
             }
+            $referenced = [];
+            foreach ($objects as $object) {
+                $raw = $object['responsstroicontrol'];
+                if ($raw === null || (string)$raw === '' || (string)$raw === '0') continue;
+                if (filter_var($raw, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]) === false) throw new \DomainException('ENGINEER_REFERENCE_INVALID');
+                $referenced[(int)$raw] = true;
+            }
+            $engineers = [];
+            if ($referenced !== []) {
+                $ids = array_keys($referenced);
+                $marks = implode(',', array_fill(0, count($ids), '?'));
+                $query = $this->source->prepare("SELECT u.id,u.name,u.email,u.status,u.role_id,r.status role_status FROM users u JOIN users_roles r ON r.id=u.role_id WHERE u.id IN ({$marks}) ORDER BY u.id");
+                $query->execute($ids);
+                foreach ($query->get_result()->fetch_all(MYSQLI_ASSOC) as $engineer) $engineers[(int)$engineer['id']] = $engineer;
+                foreach ($ids as $id) {
+                    $engineer = $engineers[$id] ?? null;
+                    if ($engineer === null || (int)$engineer['status'] !== 1 || (int)$engineer['role_status'] !== 1 || !in_array((int)$engineer['role_id'], [16,18], true)
+                        || trim((string)$engineer['name']) === '' || filter_var(trim((string)$engineer['email']), FILTER_VALIDATE_EMAIL) === false) {
+                        throw new \DomainException('ENGINEER_IDENTITY_INVALID');
+                    }
+                }
+                $engineers = array_values($engineers);
+            }
             $parts = $this->source->query('SELECT id,name,rang FROM fm_install_checklist_parts ORDER BY rang,id')->fetch_all(MYSQLI_ASSOC);
             $definitions = $this->source->query('SELECT id,part_id,name,share,rang,needphoto FROM fm_install_checklist ORDER BY part_id,rang,id')->fetch_all(MYSQLI_ASSOC);
             $this->source->commit();
-            return ['objects' => $objects, 'template' => self::template($parts, $definitions, $cutoff)];
+            return ['objects' => $objects, 'engineers' => $engineers, 'template' => self::template($parts, $definitions, $cutoff)];
         } catch (\Throwable $error) {
             try { $this->source->rollback(); } catch (\Throwable) {}
             throw $error;
