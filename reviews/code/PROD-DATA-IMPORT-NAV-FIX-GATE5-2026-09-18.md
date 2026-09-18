@@ -222,3 +222,44 @@ The rebase therefore introduces no unreviewed behavior or expectation drift. The
 - Worktree was clean before this audit record was appended.
 
 No full local suite was run. Exact commit `3d343961230c5963bc849309ef58894f7cd284e1` is Gate 5 `APPROVED`. CI and deployment remain separate required gates and are not claimed GREEN. This publication-audit text is the only post-commit change and requires a docs-only follow-up commit; it does not alter the reviewed commit's production, specification, or test bytes.
+
+---
+
+## CI correction Gate 5 review
+
+- Reviewer: independent `/root/prod_data_fix_gate5`; authored none of the CI correction policy, fixture, or Gate 3 record.
+- Base/pushed HEAD: `4ce561a508d2452e0ed2ae17a87f0f27848f950f`.
+- Reviewed behavioral/policy delta: `.quality-graph/verification-policy.json` plus `tests/InstallationProcess/pilot_snapshot_import_manual_test.php`; binary diff SHA-256 `648f04f05ea63eb572af2fab2d0a87fe52f07e952da2d4143cb46e3d11e77991`.
+- Complete supplied delta including the Gate 3 record: binary diff SHA-256 `03c33a313d35eaae864fc498ec5d14d9dce0fb618b47f573a02579e007496bec`.
+- Artifact hashes: policy `1bb5f48e05628cdf57ff32996f83f420a08e5cb2b4bfc057953abdf9077c1422`; snapshot test `92c3c34e5367bb052f584f4affc5bc8de36fb0a4211090f5ff6fbbd3c33b69f7`; Gate 3 record `cc588065a05d63c00203a67e08306a63125bd493c574045d88cb4b42b0bf132a`.
+- Gate 3 CI-correction verdict: `APPROVED`.
+- Gate 5 CI-correction verdict: `APPROVED`.
+
+### Complete findings
+
+None.
+
+### Failure inventory and correction scope
+
+The supplied exact CI failure inventory contains two failures and no additional `REGRESSION_FAILURE`: governance could not resolve a capability owner for the three changed legacy-import production files, and the manual snapshot integration fixture was rejected because it omitted now-required planned dates. The correction addresses exactly those causes. It does not change production code, normative specifications, runtime configuration, database schema, or public behavior.
+
+### Assessment
+
+The new `legacy-object-import` capability owner is bounded to exact paths for `MariaDbLegacyImportApplication.php`, `MariaDbLegacySourceSnapshot.php`, and `PilotCaseImporter.php`. Independent matching against the complete shipped ownership list resolved each path to exactly this one capability, with no zero-owner or multiple-owner ambiguity. The three verifier paths exist and cover distinct material boundaries: explicit-ID case import, manual snapshot import, and native Yii legacy database import. Empty consumers are appropriate because the correction registers direct owner tests rather than claiming a downstream capability dependency.
+
+The policy addition is narrow: it does not use a broad directory glob, absorb unrelated installation-process owners, alter lanes/categories, waive checks, add allow-failure behavior, or weaken fail-closed planning. The complete 18-test change-verification suite remains GREEN, including shipped-policy concreteness, ambiguity rejection, registered-verifier enforcement, and bounded governance focus.
+
+The snapshot fixture now supplies `plannedDates.start = 2026-09-01` and fallback `plannedFinish = 2026-12-01`, with adjusted values still null and `eligibility.plannedDateFilter` still null. It therefore satisfies the required-date contract while retaining a start before the former threshold, so an accidental restoration of `2026-10-01` filtering would still break the success expectation. Its first import, replay/no-op, object detail, checklist template, and no-template-association behavior is otherwise unchanged. No production code or approved feature expectation changed.
+
+Adjacent impacts are bounded and beneficial: future changes to any of the three legacy import owners now schedule the three relevant verifiers, while the snapshot test remains a canonical integration witness for the alternative snapshot importer. No unrelated capability is made a consumer, and no competing owner mapping was introduced.
+
+### Verification
+
+- `php tests/InstallationProcess/pilot_snapshot_import_manual_test.php` — PASS.
+- `python3 tests/Verification/change_verification_001_test.py` — PASS, 18 tests.
+- JSON parse of `.quality-graph/verification-policy.json` — PASS.
+- Exact owner-match inspection for all three paths — one match each: `legacy-object-import`.
+- All three declared verifier files exist.
+- `git diff --check` — PASS.
+
+No full local suite was run. The CI correction is Gate 5 `APPROVED`; the candidate still requires a new exact-source CI result after this correction, and no deployment state is claimed.

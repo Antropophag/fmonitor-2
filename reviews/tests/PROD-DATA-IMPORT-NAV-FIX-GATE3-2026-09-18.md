@@ -176,3 +176,27 @@ I independently ran `php tests/Yii2/yii2_legacy_import_db_001_test.php`. It fail
 #### Complete findings
 
 None for the corrected replay-canonicalization spec/test delta. Gate 3 is `APPROVED`; production implementation remains subject to Gate 5 review.
+
+---
+
+## CI correction Gate 3 review — 2026-09-18
+
+- Scope: correct the manual snapshot fixture for required planned dates and register the legacy import capability owner/verifier set.
+- Reviewed source: dirty delta over `4ce561a508d2452e0ed2ae17a87f0f27848f950f`; two-artifact binary diff SHA-256 `648f04f05ea63eb572af2fab2d0a87fe52f07e952da2d4143cb46e3d11e77991`.
+- Reviewer independence is unchanged; no production implementation was reviewed.
+- Verdict: `APPROVED`.
+
+### Assessment
+
+1. The snapshot fixture now supplies the required normalized planned start and finish without weakening its purpose. Start `2026-09-01` is before the former threshold, finish `2026-12-01` is present, and `eligibility.plannedDateFilter` remains `null`; successful import therefore still detects an accidental reintroduction of date filtering while satisfying the required-data contract. Existing first-import, replay, detail/template, and no-association assertions remain intact.
+2. `legacy-object-import` is a unique capability owner for exactly the three changed import-owner files: `MariaDbLegacyImportApplication.php`, `MariaDbLegacySourceSnapshot.php`, and `PilotCaseImporter.php`. Its verifier set exists and covers the three material seams: explicit-ID case import, manual snapshot import, and Yii legacy database import. No competing exact owner entry was found for any of those files, and the policy JSON remains valid.
+
+### Verification
+
+- `php tests/InstallationProcess/pilot_snapshot_import_manual_test.php` — PASS.
+- Independent policy inspection found exactly `legacy-object-import` for each of the three owner paths and confirmed all three verifier files exist.
+- `git diff --check -- tests/InstallationProcess/pilot_snapshot_import_manual_test.php .quality-graph/verification-policy.json` — PASS.
+
+### Complete findings
+
+None for this CI correction delta. The fixture remains behaviorally sensitive, capability ownership is uniquely scoped, and verifier coverage matches the protected import boundary. Gate 3 verdict is `APPROVED`; exact-source CI and final production review remain separate requirements.
