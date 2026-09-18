@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__).'/bootstrap.php';
+require dirname(__DIR__).'/Support/CurrentProductionSchemaContract.php';
 require dirname(__DIR__,2).'/app/autoload.php';
 require_once dirname(__DIR__,2).'/rapid-pilot/legacy-migration/MigratedEvidenceDecisionLedger.php';
 require_once dirname(__DIR__,2).'/rapid-pilot/legacy-migration/MigrationQuarantineDecisionLedger.php';
@@ -111,8 +112,8 @@ try{
     assertSameValue(['applied'=>false,'schemaVersion'=>21,'reason'=>'SCHEMA_MIGRATION_CONFLICT','conflictingTables'=>[$driftTable]],OtizEvidenceSchemaMigration::apply($db,$evidenceDrift),'v21 refuses index drift without repair');assertSameValue($driftBefore,orsColumns($db,$driftTable),'v21 index conflict preserves existing rows and columns');
 
     $catalogue=ProductionPilotMigrationCatalogue::migrations();assertSameValue(OtizPublicationSchemaMigration::class,$catalogue[20]??null,'canonical catalogue owns publication schema at v20');assertSameValue(OtizEvidenceSchemaMigration::class,$catalogue[21]??null,'canonical catalogue owns evidence schema at v21');
-    $canonical=CanonicalMigrationApplication::run($db,$clean,$catalogue);assertSameValue([0,true,30,range(1,30)],[$canonical['exitCode'],$canonical['result']['ok']??null,$canonical['result']['schemaVersion']??null,$canonical['result']['appliedVersions']??null],'clean canonical migration reaches the complete v24 frontier');
-    $repeat=CanonicalMigrationApplication::run($db,$clean,$catalogue);assertSameValue([0,true,30,[]],[$repeat['exitCode'],$repeat['result']['ok']??null,$repeat['result']['schemaVersion']??null,$repeat['result']['appliedVersions']??null],'complete canonical v29 repeat is a no-op');
+    $canonical=CanonicalMigrationApplication::run($db,$clean,$catalogue);assertSameValue(CurrentProductionSchemaContract::cleanApplicationResult(),[$canonical['exitCode'],$canonical['result']['ok']??null,$canonical['result']['schemaVersion']??null,$canonical['result']['appliedVersions']??null],'clean canonical migration reaches the current frontier');
+    $repeat=CanonicalMigrationApplication::run($db,$clean,$catalogue);assertSameValue(CurrentProductionSchemaContract::replayApplicationResult(),[$repeat['exitCode'],$repeat['result']['ok']??null,$repeat['result']['schemaVersion']??null,$repeat['result']['appliedVersions']??null],'complete canonical current-frontier repeat is a no-op');
     assertSameValue(true,OtizPublicationSchemaMigration::isCompleteCompatible($db,$clean),'publication readiness recognizes canonical schema');assertSameValue(true,OtizEvidenceSchemaMigration::isCompleteCompatible($db,$clean),'evidence readiness recognizes canonical schema');
 
     foreach(['rapid-pilot/Otiz.php','rapid-pilot/legacy-migration/MigratedEvidenceDecisionLedger.php','rapid-pilot/legacy-migration/MigratedEvidenceProjectionStore.php','rapid-pilot/legacy-migration/MigrationQuarantineDecisionLedger.php']as$file){$source=orsRuntimeSource($file);assertSameValue(0,preg_match('/\b(?:CREATE|ALTER|DROP|TRUNCATE)\s+(?:TABLE|INDEX)\b/i',$source),'retained OTIZ GET/POST reachable runtime has no DDL: '.$file);}

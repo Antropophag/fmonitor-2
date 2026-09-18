@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
+require dirname(__DIR__).'/Support/CurrentProductionSchemaContract.php';
 require dirname(__DIR__,2).'/app/autoload.php';
 use FMonitor2\InstallationProcess\CanonicalMigrationApplication;
 use FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue;
@@ -31,7 +32,7 @@ function iopSnapshot(mysqli$db,string$p):array{$out=[];foreach(['fm2_pilot_users
 function iopCatalogHash(mysqli$db,string$p):string{$roles=[];foreach($db->query("SELECT role_id,code,name,description FROM `{$p}fm2_pilot_roles`")->fetch_all(MYSQLI_ASSOC)as$r){$permissions=array_column($db->query("SELECT permission FROM `{$p}fm2_pilot_role_permissions` WHERE role_id=".(int)$r['role_id'])->fetch_all(MYSQLI_ASSOC),'permission');sort($permissions,SORT_STRING);$roles[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'permissions'=>$permissions];}usort($roles,static fn(array$a,array$b):int=>$a['code']<=>$b['code']);return hash('sha256',json_encode($roles,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));}
 function iopFixture(mysqli$admin,string$host,int$port,string$adminUser,string$adminPassword,array&$databases,array&$dbUsers):array{
     $token=bin2hex(random_bytes(5));$name='t_initial_owner_'.$token;$user='iop_'.$token;$runtimePassword='Dml-'.$token.'-Secret!';$prefix='owner_';$databases[]=$name;$dbUsers[]=$user;
-    $admin->query("CREATE DATABASE `{$name}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");$db=new mysqli($host,$adminUser,$adminPassword,$name,$port);$m=CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations());assertSameValue([0,true,30],[$m['exitCode'],$m['result']['ok']??null,$m['result']['schemaVersion']??null],'canonical v30 prerequisite');
+    $admin->query("CREATE DATABASE `{$name}` DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");$db=new mysqli($host,$adminUser,$adminPassword,$name,$port);$m=CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations());assertSameValue(array_slice(CurrentProductionSchemaContract::cleanApplicationResult(),0,3),[$m['exitCode'],$m['result']['ok']??null,$m['result']['schemaVersion']??null],'canonical current-schema prerequisite');
     $escaped=$admin->real_escape_string($runtimePassword);$admin->query("CREATE USER `{$user}`@'%' IDENTIFIED BY '{$escaped}'");$admin->query("GRANT SELECT,INSERT,UPDATE,DELETE ON `{$name}`.* TO `{$user}`@'%'");
     $env=['FMONITOR_DB_HOST'=>$host,'FMONITOR_DB_PORT'=>(string)$port,'FMONITOR_DB_NAME'=>$name,'FMONITOR_DB_USER'=>$user,'FMONITOR_DB_PASSWORD'=>$runtimePassword,'FMONITOR_PROCESS_TABLE_PREFIX'=>$prefix,'FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'Synthetic Owner Password 2026!'];return[$db,$env,$prefix];
 }

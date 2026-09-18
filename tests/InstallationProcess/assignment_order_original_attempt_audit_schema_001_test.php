@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require dirname(__DIR__).'/Support/CurrentProductionSchemaContract.php';
 // FMONITOR_TEST_DB: ATTEMPT-AUDIT-001 v0.4 sections6/8-11. Synthetic databases only.
 require dirname(__DIR__).'/Support/AssignmentOrderOriginalIntegrityTestBootstrap.php';
 require dirname(__DIR__).'/Support/AssignmentOrderOriginalIntegrityCommits.php';
@@ -90,13 +91,13 @@ foreach(['name','literal'] as $drift)A::case('capability-v5-'.$drift.'-drift',fu
  $before=$f->facts();assertSameValue('SCHEMA_MIGRATION_CONFLICT',I\ProcessCommandCapabilitiesSchemaMigration::apply($f->db,$f->prefix)['reason']??null,'only exact v5 successor allowed');assertSameValue($before,$f->facts(),'drift fail closed');
 });
 A::case('canonical-original-family13-repeat',function($f){
- [$exit,$result]=A::runCanonical($f);assertSameValue(0,$exit,'canonical applies original family');assertSameValue([true,30],[$result['ok']??null,$result['schemaVersion']??null],'canonical final version27, original remains step13');assertSameValue(true,in_array(13,$result['appliedVersions']??[],true),'original v3 actually applied');
- $facts=$f->facts();assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>[]]],A::runCanonical($f),'entire canonical runner repeats through current successors');assertSameValue($facts,$f->facts(),'repeat preserves original facts');
+ [$exit,$result]=A::runCanonical($f);assertSameValue(0,$exit,'canonical applies original family');assertSameValue([true,CurrentProductionSchemaContract::CURRENT_VERSION],[$result['ok']??null,$result['schemaVersion']??null],'canonical current version, original remains step13');assertSameValue(true,in_array(13,$result['appliedVersions']??[],true),'original v3 actually applied');
+ $facts=$f->facts();assertSameValue(CurrentProductionSchemaContract::replayNestedResult(),A::runCanonical($f),'entire canonical runner repeats through current successors');assertSameValue($facts,$f->facts(),'repeat preserves original facts');
 });
 A::case('canonical-clean-prefix-isolation',function($f){
  $old=$f->prefix;$before=$f->facts();$f->prefix='fresh_';
- assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>range(1,30)]],A::runCanonical($f),'canonical clean installs every version including original');
- assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>[]]],A::runCanonical($f),'canonical clean repeat');
+ assertSameValue(CurrentProductionSchemaContract::cleanNestedResult(),A::runCanonical($f),'canonical clean installs every version including original');
+ assertSameValue(CurrentProductionSchemaContract::replayNestedResult(),A::runCanonical($f),'canonical clean repeat');
  $f->prefix=$old;assertSameValue($before,$f->facts(),'other prefix unchanged');
 });
 A::case('prefix25-maintenance-evidence-consumer',function($f){

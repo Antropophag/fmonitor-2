@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/bootstrap.php';
+require dirname(__DIR__) . '/Support/CurrentProductionSchemaContract.php';
 require __DIR__ . '/identity_access_schema_001_green_application_contract.php';
 
 // Specification: IDENTITY-ACCESS-SCHEMA-001 v0.1.
@@ -281,7 +282,7 @@ try {
     // Clean: literal v1..v6 result and exactly nine empty identity/access tables.
     $clean = iaRun($database, 'clean_');
     assertSameValue(0, $clean['exitCode'], 'Clean canonical runner exit.');
-    assertSameValue(['ok' => true, 'schemaVersion' => 30, 'appliedVersions' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,20,21,22,23,24,25,26,27,28,29,30]], iaJson($clean), 'Clean composed canonical result through terminal v27.');
+    assertSameValue(CurrentProductionSchemaContract::cleanResult(), iaJson($clean), 'Clean composed canonical result through the current frontier.');
     foreach (iaNames('clean_') as $table) {
         assertSameValue(1, (int) $db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}'")->fetch_assoc()['n'], "{$table} must exist.");
         assertSameValue(0, (int) $db->query("SELECT COUNT(*) n FROM `{$table}`")->fetch_assoc()['n'], "{$table} must not be seeded.");
@@ -290,7 +291,7 @@ try {
     assertSameValue(iaExpectedManifest('clean_', iaDatabaseCollation($db)), iaComparableManifest($cleanManifest), 'All nine clean semantic manifests and deterministic symbols are test-owned literals.');
     $repeatBefore = iaState($db, 'clean_');
     $repeat = iaRun($database, 'clean_');
-    assertSameValue(['ok' => true, 'schemaVersion' => 30, 'appliedVersions' => []], iaJson($repeat), 'Complete composed repeat result.');
+    assertSameValue(CurrentProductionSchemaContract::replayResult(), iaJson($repeat), 'Complete composed repeat result.');
     assertSameValue($repeatBefore, iaState($db, 'clean_'), 'Complete repeat preserves schema, rows and counters byte-observably.');
     iaReleaseTerminalV10($db,'clean_');
 
@@ -349,7 +350,7 @@ try {
     $partialBefore = iaAfterV30(iaState($db, 'partial_'),'partial_');
     assertSameValue(['ok' => true, 'schemaVersion' => 30, 'appliedVersions' => [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]], iaJson(iaRun($database, 'partial_')), 'Identity partial recovery composes with v7-v27 successors.');
     assertSameValue($partialBefore, array_intersect_key(iaState($db, 'partial_'), $partialBefore), 'Existing partial members are unchanged.');
-    assertSameValue(['ok' => true, 'schemaVersion' => 30, 'appliedVersions' => []], iaJson(iaRun($database, 'partial_')), 'Interrupted recovery repeat is a no-op.');
+    assertSameValue(CurrentProductionSchemaContract::replayResult(), iaJson(iaRun($database, 'partial_')), 'Interrupted recovery repeat is a no-op.');
     iaReleaseTerminalV10($db,'partial_');
 
     // Dependency-safe recovery: roles and every dependent member are absent.
@@ -359,7 +360,7 @@ try {
     assertSameValue(['ok'=>true,'schemaVersion' => 30,'appliedVersions'=>[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]], iaJson(iaRun($database, 'deps_')), 'Identity dependency recovery within composed v27 catalogue.');
     assertSameValue($depsBefore, array_intersect_key(iaState($db, 'deps_'), $depsBefore), 'Dependency recovery preserves existing members.');
     foreach (iaNames('deps_') as $table) assertSameValue(1, (int)$db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}'")->fetch_assoc()['n'], 'Dependency recovery creates every missing member in FK-safe order.');
-    assertSameValue(['ok'=>true,'schemaVersion' => 30,'appliedVersions'=>[]], iaJson(iaRun($database, 'deps_')), 'Dependency recovery is restartable within composed v27 catalogue.');
+    assertSameValue(CurrentProductionSchemaContract::replayResult(), iaJson(iaRun($database, 'deps_')), 'Dependency recovery is restartable within composed v27 catalogue.');
     iaReleaseTerminalV10($db,'deps_');
 
     // Representative significant fingerprint defects: extra column and relationship rule.
