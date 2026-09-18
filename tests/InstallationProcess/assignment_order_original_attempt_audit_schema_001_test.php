@@ -91,12 +91,12 @@ foreach(['name','literal'] as $drift)A::case('capability-v5-'.$drift.'-drift',fu
 });
 A::case('canonical-original-family13-repeat',function($f){
  [$exit,$result]=A::runCanonical($f);assertSameValue(0,$exit,'canonical applies original family');assertSameValue([true,29],[$result['ok']??null,$result['schemaVersion']??null],'canonical final version27, original remains step13');assertSameValue(true,in_array(13,$result['appliedVersions']??[],true),'original v3 actually applied');
- $facts=$f->facts();assertSameValue([0,['ok'=>true,'schemaVersion'=>29,'appliedVersions'=>[]]],A::runCanonical($f),'entire canonical runner repeats through current successors');assertSameValue($facts,$f->facts(),'repeat preserves original facts');
+ $facts=$f->facts();assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>[]]],A::runCanonical($f),'entire canonical runner repeats through current successors');assertSameValue($facts,$f->facts(),'repeat preserves original facts');
 });
 A::case('canonical-clean-prefix-isolation',function($f){
  $old=$f->prefix;$before=$f->facts();$f->prefix='fresh_';
- assertSameValue([0,['ok'=>true,'schemaVersion'=>29,'appliedVersions'=>range(1,29)]],A::runCanonical($f),'canonical clean installs every version including original');
- assertSameValue([0,['ok'=>true,'schemaVersion'=>29,'appliedVersions'=>[]]],A::runCanonical($f),'canonical clean repeat');
+ assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>range(1,30)]],A::runCanonical($f),'canonical clean installs every version including original');
+ assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>[]]],A::runCanonical($f),'canonical clean repeat');
  $f->prefix=$old;assertSameValue($before,$f->facts(),'other prefix unchanged');
 });
 A::case('prefix25-maintenance-evidence-consumer',function($f){

@@ -366,7 +366,8 @@
       "name": "current-schema-recovery",
       "patterns": [
         "app/RuntimeRestore/RuntimeRecovery.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV29.php"
+        "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV30.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",

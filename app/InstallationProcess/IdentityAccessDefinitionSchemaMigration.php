@@ -72,7 +72,13 @@ final class IdentityAccessDefinitionSchemaMigration
             $row['EXTRA'], $row['CHARACTER_SET_NAME'] ?? 'NULL', $row['COLLATION_NAME'] ?? 'NULL',
         ]), $columns);
         if ($columnSignatures !== $expected['columns']) {
-            return false;
+            $pendingColumns = $expected['columns'];
+            if (!str_ends_with($table, 'fm2_pilot_users') || !isset($pendingColumns[5])) return false;
+            $legacy = "activation_state|enum('invited','active','blocked')|NO|NULL||utf8mb4|{$collation}";
+            $pending = "activation_state|enum('pending_invitation','invited','active','blocked')|NO|NULL||utf8mb4|{$collation}";
+            if ($pendingColumns[5] !== $legacy) return false;
+            $pendingColumns[5] = $pending;
+            if ($columnSignatures !== $pendingColumns) return false;
         }
         $indexes = $connection->query("SELECT NON_UNIQUE,INDEX_NAME,SEQ_IN_INDEX,COLUMN_NAME,INDEX_TYPE FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$escaped}' ORDER BY INDEX_NAME,SEQ_IN_INDEX")->fetch_all(MYSQLI_ASSOC);
         if (IdentityAccessSemanticFingerprintSchemaMigration::indexes($indexes) !== IdentityAccessSemanticFingerprintSchemaMigration::indexSignatures($expected['indexes'])) {
@@ -113,7 +119,7 @@ final class IdentityAccessDefinitionSchemaMigration
         $f = static fn (string $name, string $column, string $target, string $targetColumn, string $delete): string => "{$name}|{$column}|{$target}|{$targetColumn}|{$delete}|RESTRICT";
         $m = static fn (array $columns, array $indexes, array $foreignKeys = []): array => ['columns'=>$columns,'indexes'=>$indexes,'foreignKeys'=>$foreignKeys];
         return [
-            'fm2_pilot_users'=>$m([$c('user_id','bigint(20) unsigned','NO',null,'auto_increment'),$c('full_name','varchar(300)','NO',null,'',true),$c('email','varchar(254)','NO',null,'',true),$c('phone','varchar(100)','NO',"''",'',true),$c('status','tinyint(1)','NO','1'),$c('activation_state',"enum('pending_invitation','invited','active','blocked')",'NO',null,'',true),$c('session_version','int(10) unsigned','NO','1'),$c('source_updated_at','varchar(40)','NO',null,'',true)],[$i(1,'ix_ia_users_status_name',1,'status'),$i(1,'ix_ia_users_status_name',2,'full_name'),$i(0,'PRIMARY',1,'user_id'),$i(0,'uq_ia_users_email',1,'email')]),
+            'fm2_pilot_users'=>$m([$c('user_id','bigint(20) unsigned','NO',null,'auto_increment'),$c('full_name','varchar(300)','NO',null,'',true),$c('email','varchar(254)','NO',null,'',true),$c('phone','varchar(100)','NO',"''",'',true),$c('status','tinyint(1)','NO','1'),$c('activation_state',"enum('invited','active','blocked')",'NO',null,'',true),$c('session_version','int(10) unsigned','NO','1'),$c('source_updated_at','varchar(40)','NO',null,'',true)],[$i(1,'ix_ia_users_status_name',1,'status'),$i(1,'ix_ia_users_status_name',2,'full_name'),$i(0,'PRIMARY',1,'user_id'),$i(0,'uq_ia_users_email',1,'email')]),
             'fm2_pilot_roles'=>$m([$c('role_id','bigint(20) unsigned','NO',null,'auto_increment'),$c('code','varchar(64)','NO',null,'',true),$c('name','varchar(300)','NO',null,'',true),$c('description','varchar(500)','NO',null,'',true),$c('status','tinyint(1)','NO'),$c('source_updated_at','varchar(40)','NO',null,'',true)],[$i(0,'PRIMARY',1,'role_id'),$i(0,'uq_ia_roles_code',1,'code')]),
             'fm2_pilot_role_permissions'=>$m([$c('role_id','bigint(20) unsigned','NO'),$c('permission','varchar(100)','NO',null,'',true)],[$i(0,'PRIMARY',1,'role_id'),$i(0,'PRIMARY',2,'permission')],[$f($fk('fk_ia_role_permissions_role','ia_rp_role'),'role_id',$prefix.'fm2_pilot_roles','role_id','CASCADE')]),
             'fm2_pilot_user_roles'=>$m([$c('user_id','bigint(20) unsigned','NO'),$c('role_id','bigint(20) unsigned','NO'),$c('origin','varchar(40)','NO',null,'',true),$c('assigned_at','varchar(40)','NO',null,'',true),$c('assigned_by_user_id','bigint(20) unsigned','YES')],[$i(1,'ix_ia_user_roles_role',1,'role_id'),$i(0,'PRIMARY',1,'user_id'),$i(0,'PRIMARY',2,'role_id')],[$f($fk('fk_ia_user_roles_role','ia_ur_role'),'role_id',$prefix.'fm2_pilot_roles','role_id','RESTRICT'),$f($fk('fk_ia_user_roles_user','ia_ur_user'),'user_id',$prefix.'fm2_pilot_users','user_id','CASCADE')]),

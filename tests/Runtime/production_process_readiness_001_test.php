@@ -73,7 +73,7 @@ try {
         $db = new mysqli($host, $user, $password, $database, $port);
         $prefix = 'process_';
         $migrated = CanonicalMigrationApplication::run($db, $prefix, ProductionPilotMigrationCatalogue::migrations());
-        assertSameValue([0, true, 29], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches current v29");
+        assertSameValue([0, true, 30], [$migrated['exitCode'], $migrated['result']['ok'] ?? null, $migrated['result']['schemaVersion'] ?? null], "{$label} fixture reaches current v30");
         $db->query('CREATE TABLE readiness_ambient(id INT NOT NULL PRIMARY KEY, marker VARCHAR(40) NOT NULL) ENGINE=InnoDB');
         $db->query("INSERT INTO readiness_ambient VALUES(1,'preserve process readiness')");
         $storage = $temporaryRoot . '/fmonitor-process-readiness-' . $token;

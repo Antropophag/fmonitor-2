@@ -8,6 +8,8 @@
     "app/InstallationProcess/MariaDbYiiObjectQueue.php",
     "app/InstallationProcess/MariaDbYiiObjectCard.php",
     "app/IdentityAccess/MariaDbReissueUserInvitation.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
     "app/YiiRuntime/Views/users.php",
     "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
     "tests/Yii2/yii2_legacy_import_db_001_test.php",

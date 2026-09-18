@@ -15,7 +15,7 @@ function cccfQ(string $name):string{return'`'.str_replace('`','``',$name).'`';}
 $token=substr(hash('sha256',__FILE__.getmypid().hrtime(true)),0,10);$database='t_cccf_'.$token;$prefix='cc'.substr($token,0,6).'_';$admin=cccfDb();$db=null;$htmlFile=dirname(__DIR__,2).'/.test-artifacts/cccf-'.$token.'.html';$failure=null;
 try{
     $admin->query('CREATE DATABASE '.cccfQ($database).' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');$db=cccfDb($database);$q=fn(string$name):string=>cccfQ($prefix.$name);
-    assertSameValue([0,29],[CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations())['exitCode'],max(array_keys(ProductionPilotMigrationCatalogue::migrations()))],'fixture installs canonical v29');
+    assertSameValue([0,30],[CanonicalMigrationApplication::run($db,$prefix,ProductionPilotMigrationCatalogue::migrations())['exitCode'],max(array_keys(ProductionPilotMigrationCatalogue::migrations()))],'fixture installs canonical v30');
     $db->query('INSERT INTO '.$q('fm2_installation_cases')."(id,legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES(71,966,'working','2026-09-01T00:00:00Z','2026-09-01T00:00:00Z',1),(72,967,'working','2026-09-01T00:00:00Z','2026-09-01T00:00:00Z',1)");
     $db->query('INSERT INTO '.$q('fm_maintable')."(id,ordadr_address,entrance,regnumber,ptoactdate,responsstroicontrol) VALUES(966,'Завершённый объект','1','77-966',NULL,73),(967,'Монтаж выполнен на 85%','2','77-967',NULL,73)");
     $db->query('INSERT INTO '.$q('fm2_pilot_users')."(user_id,full_name,email,status,activation_state,source_updated_at) VALUES(73,'Инженер стройконтроля','engineer@example.invalid',1,'active','2026-09-01T00:00:00Z')");
