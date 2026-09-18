@@ -38,13 +38,14 @@ final readonly class MariaDbYiiObjectQueue
             throw new \RuntimeException('Page unavailable.');
         }
         $offset = ($page - 1) * $size;
-        $columns = 'c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id,ce.engineer_user_id canonical_engineer_id,ceu.full_name canonical_engineer_name,ceu.activation_state canonical_engineer_state';
+        $columns = 'c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id';
         $rows = $this->db->createCommand("SELECT {$columns}{$from} ORDER BY l.workdatestart IS NULL,LEFT(l.workdatestart,10),c.legacy_installation_object_id LIMIT {$size} OFFSET {$offset}", $params)->queryAll();
         $objects = [];
         foreach ($rows as $row) {
             $objects[] = $this->map($row, $page, $pages, $total);
         }
         $objects = $this->projection->decorate($objects, $actor);
+        $objects = $this->engineers($objects);
         return['objects' => $objects,'filters' => ['q' => $q,'status' => $status,'page' => $page,'pages' => $pages,'total' => $total]];
     }
     private function query(string$q, string$status): array
@@ -95,9 +96,7 @@ final readonly class MariaDbYiiObjectQueue
             . ' AND r.assignment_order_id=s.assignment_order_id AND r.composition_identity=s.composition_identity'
             . ' AND r.composition_sha256=s.composition_sha256'
             . " LEFT JOIN `{$p}fm2_assignment_order_original_revisions` v ON v.root_original_id=r.root_original_id"
-            . " AND v.revision_id=r.current_revision_id"
-            . " LEFT JOIN `{$p}fm2_control_engineer_assignments` ce ON ce.installation_case_id=c.id AND ce.assignment_sequence=(SELECT MAX(cx.assignment_sequence) FROM `{$p}fm2_control_engineer_assignments` cx WHERE cx.installation_case_id=c.id)"
-            . " LEFT JOIN `{$p}fm2_pilot_users` ceu ON ceu.user_id=ce.engineer_user_id WHERE {$where}";
+            . " AND v.revision_id=r.current_revision_id WHERE {$where}";
         return[$from,$params];
     }
     private function map(array$r, int$page, int$pages, int$total): array
@@ -136,9 +135,18 @@ final readonly class MariaDbYiiObjectQueue
             'planningDatesUnknownAtCutover'=>$start === null || $finish === null,
             'dataOrigin'=>'migration_native', 'status'=>$label,
             'nextStep'=>'Откройте карточку объекта монтажа',
-            'controlEngineer'=>$r['canonical_engineer_id']===null?null:['userId'=>(int)$r['canonical_engineer_id'],'fullName'=>(string)$r['canonical_engineer_name'],'status'=>self::engineerStatus((string)$r['canonical_engineer_state'])],
+            'controlEngineer'=>null,
             '_pagination'=>compact('page', 'pages', 'total'),
         ];
+    }
+    private function engineers(array $objects):array
+    {
+        if($objects===[])return$objects;
+        $cases=array_values(array_unique(array_map(static fn(array$o):int=>(int)$o['caseId'],$objects)));$params=[];$marks=[];foreach($cases as$index=>$case){$name=':case'.$index;$marks[]=$name;$params[$name]=$case;}$in=implode(',',$marks);
+        try{$rows=$this->db->createCommand("SELECT a.installation_case_id,a.engineer_user_id,u.full_name,u.activation_state FROM `{$this->prefix}fm2_control_engineer_assignments` a JOIN `{$this->prefix}fm2_pilot_users` u ON u.user_id=a.engineer_user_id WHERE a.installation_case_id IN ({$in}) AND a.assignment_sequence=(SELECT MAX(x.assignment_sequence) FROM `{$this->prefix}fm2_control_engineer_assignments` x WHERE x.installation_case_id=a.installation_case_id)",$params)->queryAll();}
+        catch(\Throwable){return$objects;}
+        $byCase=[];foreach($rows as$row){$case=(int)$row['installation_case_id'];if(isset($byCase[$case])||(int)$row['engineer_user_id']<1||trim((string)$row['full_name'])==='')return$objects;$byCase[$case]=['userId'=>(int)$row['engineer_user_id'],'fullName'=>(string)$row['full_name'],'status'=>self::engineerStatus((string)$row['activation_state'])];}
+        foreach($objects as&$object)$object['controlEngineer']=$byCase[(int)$object['caseId']]??null;unset($object);return$objects;
     }
     private static function engineerStatus(string $state):string{return match($state){'pending_invitation'=>'Ожидает приглашения','invited'=>'Приглашён','active'=>'Активен',default=>'Недоступен'};}
     private static function date(mixed$v): ?string

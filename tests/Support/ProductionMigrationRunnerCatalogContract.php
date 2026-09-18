@@ -97,7 +97,7 @@ final class ProductionMigrationRunnerCatalogContract
                 'id:bigint unsigned:NO:auto_increment;user_id:bigint unsigned:NO:;action:varchar(40):NO:;occurred_at:varchar(40):NO:;actor_user_id:bigint unsigned:NO:'
             ),
             'fm2_pilot_users' => self::parseColumns(
-                'user_id:bigint unsigned:NO:auto_increment;full_name:varchar(300):NO:;email:varchar(254):NO:;phone:varchar(100):NO:;status:tinyint:NO:;activation_state:enum(\'invited\',\'active\',\'blocked\'):NO:;session_version:int unsigned:NO:;source_updated_at:varchar(40):NO:'
+                'user_id:bigint unsigned:NO:auto_increment;full_name:varchar(300):NO:;email:varchar(254):NO:;phone:varchar(100):NO:;status:tinyint:NO:;activation_state:enum(\'pending_invitation\',\'invited\',\'active\',\'blocked\'):NO:;session_version:int unsigned:NO:;source_updated_at:varchar(40):NO:'
             ),
             'fm2_order_artifacts' => self::parseColumns(
                 'assignment_order_id:bigint unsigned:NO:;artifact_type:varchar(40):NO:;filename:varchar(500):NO:;media_type:varchar(120):NO:;byte_size:bigint unsigned:NO:;sha256:char(64):NO:'

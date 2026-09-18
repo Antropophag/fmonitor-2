@@ -90,7 +90,7 @@ foreach(['name','literal'] as $drift)A::case('capability-v5-'.$drift.'-drift',fu
  $before=$f->facts();assertSameValue('SCHEMA_MIGRATION_CONFLICT',I\ProcessCommandCapabilitiesSchemaMigration::apply($f->db,$f->prefix)['reason']??null,'only exact v5 successor allowed');assertSameValue($before,$f->facts(),'drift fail closed');
 });
 A::case('canonical-original-family13-repeat',function($f){
- [$exit,$result]=A::runCanonical($f);assertSameValue(0,$exit,'canonical applies original family');assertSameValue([true,29],[$result['ok']??null,$result['schemaVersion']??null],'canonical final version27, original remains step13');assertSameValue(true,in_array(13,$result['appliedVersions']??[],true),'original v3 actually applied');
+ [$exit,$result]=A::runCanonical($f);assertSameValue(0,$exit,'canonical applies original family');assertSameValue([true,30],[$result['ok']??null,$result['schemaVersion']??null],'canonical final version27, original remains step13');assertSameValue(true,in_array(13,$result['appliedVersions']??[],true),'original v3 actually applied');
  $facts=$f->facts();assertSameValue([0,['ok'=>true,'schemaVersion'=>30,'appliedVersions'=>[]]],A::runCanonical($f),'entire canonical runner repeats through current successors');assertSameValue($facts,$f->facts(),'repeat preserves original facts');
 });
 A::case('canonical-clean-prefix-isolation',function($f){
