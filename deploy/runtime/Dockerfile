@@ -18,7 +18,7 @@ RUN npm ci --no-audit --no-fund \
 
 FROM php:8.5-fpm-bookworm
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip \
+    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip util-linux \
     && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pcntl \
     && groupadd --gid 10001 fmonitor \
     && useradd --uid 10001 --gid 10001 --home-dir /home/fmonitor --create-home --shell /usr/sbin/nologin fmonitor \
@@ -35,6 +35,7 @@ COPY app ./app
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress \
     && composer check-platform-reqs --no-dev
 COPY bin ./bin
+RUN test -x bin/fmonitor2-run-with-local-integration-config
 COPY config ./config
 COPY public ./public
 COPY deploy/runtime ./deploy/runtime

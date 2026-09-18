@@ -8,7 +8,7 @@ final class WorkerConfiguration
 {
     public static function fromFile(string $path): array
     {
-        if ($path === '' || $path[0] !== '/' || !is_file($path) || !is_readable($path)) self::fail();
+        if ($path === '' || $path[0] !== '/' || !is_file($path) || is_link($path) || !is_readable($path)) self::fail();
         try { $document = json_decode((string) file_get_contents($path), true, 8, JSON_THROW_ON_ERROR); }
         catch (\Throwable) { self::fail(); }
         if (!is_array($document) || array_diff(array_keys($document), ['baseUrl', 'departments']) !== []) self::fail();

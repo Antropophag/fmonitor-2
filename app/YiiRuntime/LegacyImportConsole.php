@@ -36,7 +36,7 @@ final class LegacyImportConsole
     private static function configuration(): array
     {
         $path = self::required('FMONITOR_LEGACY_SOURCE_CONFIG');
-        if (!is_file($path) || is_link($path) || (fileperms($path) & 0777) !== 0600) throw new \InvalidArgumentException();
+        if ($path === '' || $path[0] !== '/' || !is_file($path) || is_link($path) || !is_readable($path)) throw new \InvalidArgumentException();
         $names = ['FMONITOR_SOURCE_HOST','FMONITOR_SOURCE_PORT','FMONITOR_SOURCE_NAME','FMONITOR_SOURCE_USER','FMONITOR_SOURCE_PASSWORD','FMONITOR_MIGRATION_CUTOFF'];
         $values = [];
         foreach (file($path, FILE_IGNORE_NEW_LINES) ?: [] as $line) {

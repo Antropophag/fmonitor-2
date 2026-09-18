@@ -242,6 +242,9 @@ db	php	tests/Yii2/yii2_workforce_sync_db_001_test.php	integration
 e2e	python3	tests/Architecture/yii2_stand_backup_boundary_001_test.py	e2e
 e2e	python3	tests/Architecture/yii2_stand_restore_boundary_001_test.py	e2e
 e2e	python3	tests/Architecture/yii2_stand_restore_reconcile_boundary_001_test.py	e2e
+e2e	python3	tests/Deployment/local_integration_cross_platform_185_test.py	integration
+e2e	python3	tests/Deployment/local_integration_interruption_185_test.py	integration
+e2e	python3	tests/Deployment/local_integration_make_e2e_185_test.py	integration
 e2e	python3	tests/Deployment/pilot_jobs_compose_001_test.py	e2e
 e2e	python3	tests/Deployment/yii2_canonical_migrations_package_001_test.py	e2e
 e2e	python3	tests/Deployment/yii2_clean_stand_acceptance_result_001_test.py	e2e

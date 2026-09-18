@@ -109,3 +109,102 @@ No other new regression was found. A1, A2, A4-A6 and remaining A3 cases conform.
 ### Final correction verdict
 
 `APPROVED` for exact source `af58ae69e9659b1d698829c5bd469480232cad6a3b17492dbca990cb9a4fa791`. The historical exact-source CI failure identified the obsolete oracle; this approval verifies its correction but does not represent the broader CI state as GREEN. CI triage/publication, merge, deployment, and settings remain separate workflow steps.
+
+## Issue #185 slice 2 independent final Gate 5 review — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independent reviewer, authored none of the specification, tests, implementation, or Gate 3 decisions.
+- Verdict: `APPROVED`.
+- Base: `95e070893082422b067786abe6b6e5ff4ea3aa65` (`main` after merge #189).
+- Exact candidate source: `d3661ac140c8514a125a471b8a6c962a343568489e36b8eb0b628d6c98644c9b`; executable-source digest `e846c5d7ac64907ba43374c998c895c5e2d2036ffc7e951d698b1a3beda3ca60`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T013530Z-4106ad0fa3/package.json`; verification-plan SHA-256 `3bb9ed8e7dd9840ec7e46f356cd475ced925e2ec77c948859fb3c39d1cd1c376` (`CRITICAL`; reviews `gate3`, `final`).
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T013530Z-4106ad0fa3/snapshot`; patch SHA-256 `b4c81c0a8053235eeefc38ef2609b031e0c8c355b26a3fe50015b26bc147ef2b`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `a4208f4215c68ec13957430d521fd0bd4e40273f2d8b6b51a671ef1f0f2b8a16`.
+
+### Evidence and complete review
+
+All eleven package records are source-matched GREEN. They cover portable `0644` input and `0755` staging, unsafe input/destination rejection, atomic publication and replay, a host-owned `0600` file read by effective UID/GID 10001, preserved importer exit `23`, empty container secret storage after success/failure, both real Make/Compose targets against isolated MariaDB and a task-owned verified-TLS Bitrix endpoint, both retained importer DB contracts, loader compatibility, generated Dockerfile parity, architecture/governance checks, and the CI-consumer oracle. Full local `make test`/`make verify` was not run, in accordance with the owner prohibition. WSL was unavailable and remains `UNKNOWN`; the recorded Docker Desktop/Linux-container exercise does not claim a full OS matrix. Exact-source GitHub CI remains `UNKNOWN` and is not represented as GREEN by this review.
+
+I reviewed the complete candidate against the owner scope, normative A4-A6 contract, OpenSpec delta, approved Gate 3 history, implementation and test sensitivity. Host staging no longer gates valid accessible regular files or directories on exact POSIX mode bits, while retaining format validation, non-regular/symlink rejection, same-directory temporary publication and atomic replacement. Neither the source `.env` ownership nor its mode is changed. Both Make targets mount only the staged host snapshot into a root-only delivery step; the wrapper copies to a unique private file in container-owned storage, assigns `10001:10001` and `0600`, then invokes the unchanged canonical importer as UID/GID 10001. The legacy and workforce loaders accept absolute readable regular non-symlink files without repeating the removed exact-mode predicate.
+
+Cleanup uses unique names for concurrent invocations, removes both temporary and published container files, reports cleanup failure when the importer succeeded, and preserves a nonzero importer status when cleanup also fails. Secret material is file-delivered rather than placed in argv or Compose environment values; the acceptance checks cover stdout/stderr, resolved Compose output, image history, application logs and final volume contents. The optional local Bitrix CA follows the same copy/drop/cleanup boundary and does not alter production secret/session policy. The change does not modify import filtering, domain owners, harness/classifier/skip rules, architecture baselines, provisioning, schema, or other excluded #185 slices.
+
+### Complete findings
+
+None. The tests would fail for plausible regressions in exact-mode removal, Make wiring, direct host-file delivery, privilege drop, loader readability, stale replay, cleanup, exit-status masking, importer ownership, persisted synthetic facts, or secret disclosure. The implementation is bounded and maintainable for the stated local integration seam.
+
+### Verdict
+
+`APPROVED` for exact source `d3661ac140c8514a125a471b8a6c962a343568489e36b8eb0b628d6c98644c9b`. This approval covers Gate 5 only. It does not claim exact-source CI, publication, merge, deployment, production imports, external sends, or completion of the remaining parent #185 scope.
+
+## PR #190 interruption/tmpfs delta Gate 5 rereview — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independence unchanged; authored none of the delta specification, tests, implementation, or Gate 3 decisions.
+- Verdict: `APPROVED`.
+- Reviewed base: committed candidate `07cfbc4bae79f5fb8d774f4c25c4b38c83be6629` plus the prepared correction snapshot.
+- Exact candidate source: `22df10142169dc32ba6a6ac7b3d68a7786546dcbf81f1536656de37ce19347a2`; executable-source digest `508a0224c4db58a14e78e1a2a04d22635f34fad58355a54d2f717ce9ca4b4417`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T023230Z-83f168e520/package.json`; verification-plan SHA-256 `3ae6b3a8d5b860793aab21e71d71c46e97c7634d90e3acf99fded42ab43230fb`.
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T023230Z-83f168e520/snapshot`; patch SHA-256 `f1b9850a5ffe65061fedc068572251211f4d09798dfda3118d70233e35a19dee`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `2504a4c681e32b8cc447a4e3133b172fe7a39ec0256b91566cb7f964ddb67653`.
+
+### CI failure inventory reviewed
+
+Exact-head CI run `35296146049` for `07cfbc4bae79f5fb8d774f4c25c4b38c83be6629` is retained as failed, not GREEN. The complete recorded inventory is: one `unit` `REGRESSION_FAILURE` from the stale exact-mode assertion in `tests/Deployment/yii2_local_data_bootstrap_001_test.py`; one unrelated `e2e` `REGRESSION_FAILURE` in `tests/Runtime/production_runtime_compose_001_test.php` where DB-restart readiness expected 200 and observed 503; aggregate `verify` failed because those categories failed. Plan, fast, both integration shards and governance were GREEN. The first failure is corrected in this candidate; the unrelated runtime failure remains unresolved evidence and is not silently converted into approval. No CI retry or broader CI GREEN is claimed here.
+
+### Delta and retained-invariant review
+
+The dedicated `local-integration` Compose service is correctly separated from `x-app`: it uses the runtime image and environment needed by the importers, runs only its fixed wrapper as root, stores delivered configuration in `/run/fmonitor-local-integration` tmpfs with `noexec,nosuid,nodev`, and does not mount the persistent `secrets` volume. Both Make targets select that service through the real Compose seam. `stop_signal: SIGTERM` is scoped to the one-shot service; the long-running `php` service remains unchanged on `SIGQUIT`.
+
+The wrapper starts the UID/GID 10001 importer as a child, records its PID, forwards TERM, INT and QUIT, and loops around an interrupted `wait` until the child is no longer alive. It therefore collects the child's actual nonzero signal-handler result instead of reporting success or exiting before the delayed child completion. Normal success and exact importer failure `23` retain their statuses; cleanup failure can replace only a successful importer result. EXIT cleanup remains active for ordinary and graceful-signal exits. SIGKILL cannot execute cleanup, but the delivered config and optional CA exist only in the container tmpfs, so container teardown removes them without leaving a named-volume or bind-backed private copy.
+
+All thirteen package records are source-matched GREEN. The new real-container interruption test covers TERM/INT/QUIT acknowledgement while the delivered `.ready` file exists, delayed `CHILD_REAPABLE` completion before wrapper exit, nonzero container status, actual SIGKILL, tmpfs topology, container removal, Make/service selection and absence of a persistent secrets mount. Retained exact-source evidence covers host-UID-mismatched `0600` delivery and UID 10001 reads, both canonical loaders, replay freshness, success and exact exit `23`, atomic host staging, real Make/MariaDB/local-Bitrix E2E, both DB owners, generated Compose parity, architecture/governance checks and CI-consumer registration. The tests remain sensitive to a wrapper that exits without forwarding, forwards the wrong signal, does not wait/reap, masks interruption, reuses persistent secret storage, changes the PHP service stop policy, or bypasses the dedicated service.
+
+### Complete findings
+
+None. The interruption/tmpfs correction conforms to the amended A4-A5 contract and does not weaken the previously approved mode portability, cross-UID delivery, cleanup/status, replay, loader, Make E2E, secret-redaction or scope boundaries.
+
+### Verdict
+
+`APPROVED` for exact source `22df10142169dc32ba6a6ac7b3d68a7786546dcbf81f1536656de37ce19347a2`. This is the independent delta Gate 5 decision only. Exact-source CI for the corrected committed candidate remains required; the earlier failed run and its unrelated e2e regression remain historical unresolved evidence until the delivery workflow records their disposition. Publication, merge, deploy, production imports and external sends are not approved by this review.
+
+## PR #190 final CI-topology oracle Gate 5 rereview — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independence unchanged; authored none of the correction.
+- Verdict: `APPROVED`.
+- Reviewed base: `41cd3014573c4a9fda5e756439164e1baa6b99be` plus the prepared topology-oracle snapshot.
+- Exact candidate source: `31bbba2ca5d37c8a86dd54148799600ebcdb75feff60810d15ee08098bcf6e40`; executable-source digest `cb45f71180c0981c19a348e786688e1bf8a77f50f37aa3eb7feb2299a9fce423`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T025502Z-3787fa21d5/package.json`; verification-plan SHA-256 `48ae7ca7ce4ed1eb1038dfc2dcb17e2e5ccf172cb61bd1f84c0f72f583a7b9e6`.
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T025502Z-3787fa21d5/snapshot`; patch SHA-256 `6d7df353b6eee2784ab6bb61adedd32a8e13137a8c30366d0b898eb4e328ec77`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `cb075929ee9a7bf880a576cf5f2d999f174167f6be308a2239d595e8d9bf1f4b`.
+
+### CI inventory and delta review
+
+Corrected-head CI run `35299888379` for `41cd3014573c4a9fda5e756439164e1baa6b99be` had exactly one `REGRESSION_FAILURE`: the existing exact parsed-Compose topology test retained the pre-change service set and omitted the approved bounded `local-integration` service. Aggregate `verify` failed only because the e2e category contained that stale expectation. The previously observed runtime reconnect failure was GREEN in this run; unit, both integration shards, fast and governance were also GREEN. This review does not reinterpret that failed run as GREEN.
+
+The correction is necessary because the repository's topology contract intentionally enumerates the complete generated Compose service set; accepting the new service without updating that oracle would leave CI deterministically red. It is also behaviorally sensitive rather than a permissive allowlist edit: in addition to adding exactly `local-integration` to the expected set, the test requires its fixed wrapper entrypoint, dedicated `SIGTERM`, `/run/fmonitor-local-integration` tmpfs and absence of any `/run/fmonitor-secrets` volume target. It continues to require byte parity between the generated Compose file and its template and retains all prior topology, dependency and rapid-pilot exclusions.
+
+No production code, Compose topology, runtime behavior, normative specification, harness algorithm, classifier, skip rule or architecture baseline changes in this delta. The verification input merely registers the already-existing topology test in the bounded change paths. The delivery record appends the complete corrected-head failure disposition. All eight package evidence records are source-matched GREEN, including the corrected topology oracle, interruption supervision/tmpfs, cross-UID delivery, staging/security, public Make E2E and both canonical DB owners.
+
+### Complete findings
+
+None. The correction closes the sole current-head CI failure without weakening the topology boundary or expanding #185 scope.
+
+### Verdict
+
+`APPROVED` for exact source `31bbba2ca5d37c8a86dd54148799600ebcdb75feff60810d15ee08098bcf6e40`. This decision approves only the final topology-oracle delta. A new exact-source CI result for the committed correction is still required before PR-ready admission; publication, merge, deploy, production imports and external sends remain outside this review.
+
+## PR #190 inherited-signal delta Gate 5 — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independent of specification, tests and implementation.
+- Verdict: `APPROVED`.
+- Reviewed base: `c1d99be631ad0b7d4302902bd22864381fba7be3` plus the prepared inherited-signal snapshot.
+- Exact candidate source: `b7c747dfbc87ab8212908edd5a8bebb8221b88cfd402cec4ce869fa64510b0d1`; executable-source digest `904625f0dc0d1408c2258cac5035bcced5e2662be2d0050a8057b38b283cc5bc`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T072550Z-bdc6df9d58/package.json`; verification-plan SHA-256 `63fbe650e040415018bffc64551ea0807ff556a2849a2a68106c72eb892dfffa`.
+- Immutable snapshot patch SHA-256 `b4a4da9d8800981d32021dfe911a2e21d9cacfcfd9c5a44adfd77191bb9350dd`; required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `9ec90e44a6a20ed9a8e6b16ab792be75b48a8e960251db0b99e1d6cebbab180b`.
+
+The wrapper uses GNU `env --default-signal=INT,QUIT` immediately before `setpriv`; the real production image test reaches handler-free PHP readiness and proves both INT and QUIT terminate it without `PLAIN_NORMAL_COMPLETION`, which also establishes option availability in that image rather than only host-side syntax. Wrapper traps record only the first accepted interruption as `143`, `130`, or `131`, continue forwarding later signals without overwriting it, wait until the child is no longer alive, and apply that recorded nonzero result after reap so signal-aware child cleanup `exit(0)` cannot become success. In executions with no accepted wrapper signal, the child status remains exact; retained real-image evidence covers ordinary success and exact exit `23`. Existing cleanup precedence still preserves a nonzero importer/interruption status, and wait/reap plus tmpfs cleanup behavior remains intact.
+
+All nine package records are source-matched GREEN. The interruption record covers default INT/QUIT behavior, handled TERM cleanup-to-zero, prior TERM/INT/QUIT forwarding and delayed reap, SIGKILL/tmpfs confinement and Compose-service invariants. Cross-UID delivery, replay, exact ordinary failure, staging/security, generated-runtime parity, public Make E2E and both canonical DB owners remain GREEN. The delta changes no importer, Make/Compose topology, tmpfs policy, loader, domain behavior, harness/classifier or architecture baseline.
+
+Complete findings: none.
+
+`APPROVED` for exact source `b7c747dfbc87ab8212908edd5a8bebb8221b88cfd402cec4ce869fa64510b0d1`. Exact-source CI, publication, merge and deployment remain separate workflow decisions.

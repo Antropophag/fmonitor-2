@@ -56,7 +56,9 @@ Legacy-набор SHALL принимать непустые host, database, user
 
 ### A4 — Атомарный приватный staging и replay
 
-Bootstrap SHALL автоматически создать `.local` с mode `0700`. Каждый destination SHALL публиковаться через уникальный temporary regular file в том же каталоге, иметь mode `0600` до публикации и заменяться атомарным rename. После публикации bootstrap MUST проверить тип и exact permissions; symlink и unsafe existing path отклоняются fail closed.
+Bootstrap SHALL автоматически создать `.local`, если каталога нет. Корректный доступный regular input/destination и directory MUST приниматься независимо от exact POSIX mode bits, включая `.env` `0644` и каталог `0755`. Каждый destination SHALL публиковаться через уникальный temporary regular file в том же каталоге и заменяться атомарным rename. После публикации bootstrap MUST проверить regular type и доступность; symlink, non-regular и фактически недоступный path отклоняются fail closed. Owner и mode исходного `.env` MUST NOT изменяться.
+
+Перед запуском importer host snapshot SHALL копироваться через Compose в private regular container file, принадлежащий и доступный штатному UID 10001. Одноразовая копия MUST находиться в отдельном tmpfs конкретного one-shot container и MUST NOT использовать постоянный runtime secrets volume. Прямой bind-mounted host-файл с несовпадающим owner не считается доставленным. Сам importer MUST исполняться как UID 10001. Wrapper MUST пересылать TERM, INT и QUIT дочернему importer, ждать его завершения, очищать файлы и возвращать ненулевой interruption status; штатный stop signal one-shot container MUST совпадать с этим контрактом без изменения production PHP-FPM stop policy.
 
 Invalid input или write failure MUST не запускать consumer и MUST не выдавать partial file за актуальный. Параллельные подготовки MAY завершаться last-writer-wins, но каждый наблюдаемый destination MUST быть одним полным валидным документом. Temporary files SHALL очищаться после успеха и ожидаемой ошибки.
 
@@ -88,12 +90,14 @@ Bootstrap MUST не создавать альтернативный owner дом
 
 ## Independently determined examples
 
-1. Legacy input `host=legacy-db.internal`, port `3306`, database `fmonitor`, user `reader`, непустой password и cutoff `2026-09-17 00:00:00` создаёт private env file `0600`; downstream witness видит только его path, не password в argv/output.
+1. Legacy input `host=legacy-db.internal`, port `3306`, database `fmonitor`, user `reader`, непустой password и cutoff `2026-09-17 00:00:00` создаёт полный env snapshot; downstream witness видит только его path, не password в argv/output. Валидный `.env` `0644` и staging directory `0755` принимаются.
 2. Port `03306`, `0`, `65536` или `abc` отклоняется до downstream witness; прежний destination не используется.
 3. Webhook `https://portal.example/rest/7/SECRET_TOKEN/` и departments `[72,71]` создают private JSON с теми же IDs; ни `SECRET_TOKEN`, ни полный URL не появляются в process/output/Compose witness.
 4. Departments `[]`, `[71,71]`, `[0]`, `[true]`, `["71"]` и объект `{}` отклоняются до downstream witness.
-5. Два concurrent valid writers с различными canary snapshots оставляют destination, равный целиком одному из snapshots; JSON/env document остаётся parseable, mode `0600`, temporary files отсутствуют.
+5. Два concurrent valid writers с различными canary snapshots оставляют destination, равный целиком одному из snapshots; JSON/env document остаётся parseable, partial и temporary files отсутствуют.
 6. После успешного запуска оператор меняет webhook и повторяет `make sync-workforce`: новый snapshot передаётся existing owner, volumes и прежняя workforce history не удаляются.
+7. Host snapshot `0600`, принадлежащий UID, отличному от runtime UID, доставляется в container-owned private file; importer как UID 10001 реально читает его. После успеха и importer failure container-side snapshot отсутствует, а failure остаётся failure.
+8. После подтверждённого старта длительного synthetic importer сигналы TERM, INT и QUIT к wrapper прекращают child, не возвращают success и не оставляют `.ready`; штатная остановка one-shot container использует поддерживаемый wrapper signal. Launcher MUST восстановить default disposition INT/QUIT перед exec, чтобы обычный importer без собственных handlers не наследовал игнорирование background shell. Факт принятого wrapper signal MUST давать ненулевой результат даже при child cleanup с `exit(0)`. SIGKILL также не оставляет persistent copy, поскольку config находится только в container tmpfs.
 
 ## Explicit non-goals
 

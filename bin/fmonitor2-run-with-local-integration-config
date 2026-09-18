@@ -1,0 +1,84 @@
+#!/bin/sh
+set -eu
+
+fail() {
+    printf '%s\n' 'LOCAL_INTEGRATION_CONFIG_DELIVERY_FAILED' >&2
+    exit 74
+}
+
+[ "$#" -ge 4 ] || fail
+kind=$1
+source_path=$2
+shift 2
+[ "$1" = "--" ] || fail
+shift
+[ "$#" -gt 0 ] || fail
+case "$kind" in
+    legacy) environment_name=FMONITOR_LEGACY_SOURCE_CONFIG ;;
+    bitrix) environment_name=FMONITOR_BITRIX_CONFIG ;;
+    *) fail ;;
+esac
+[ -f "$source_path" ] && [ ! -L "$source_path" ] || fail
+
+umask 077
+temporary=$(mktemp /run/fmonitor-local-integration/.local-integration.XXXXXX) || fail
+delivered=${temporary}.ready
+ca_temporary=
+ca_delivered=
+cleanup() {
+    cleanup_status=0
+    if [ -n "$temporary" ]; then rm -f -- "$temporary" || cleanup_status=$?; fi
+    if [ -n "$delivered" ]; then rm -f -- "$delivered" || cleanup_status=$?; fi
+    if [ -n "$ca_temporary" ]; then rm -f -- "$ca_temporary" || cleanup_status=$?; fi
+    if [ -n "$ca_delivered" ]; then rm -f -- "$ca_delivered" || cleanup_status=$?; fi
+    return "$cleanup_status"
+}
+trap cleanup EXIT
+
+cp -- "$source_path" "$temporary" || fail
+sync -f "$temporary" || fail
+chown 10001:10001 "$temporary" || fail
+chmod 0600 "$temporary" || fail
+mv -- "$temporary" "$delivered" || fail
+temporary=
+export "$environment_name=$delivered"
+
+if [ "$kind" = bitrix ] && [ -n "${FMONITOR_BITRIX_CA_INPUT:-}" ]; then
+    [ -f "$FMONITOR_BITRIX_CA_INPUT" ] && [ ! -L "$FMONITOR_BITRIX_CA_INPUT" ] || fail
+    ca_temporary=$(mktemp /run/fmonitor-local-integration/.local-integration-ca.XXXXXX) || fail
+    ca_delivered=${ca_temporary}.ready
+    cp -- "$FMONITOR_BITRIX_CA_INPUT" "$ca_temporary" || fail
+    sync -f "$ca_temporary" || fail
+    chown 10001:10001 "$ca_temporary" || fail
+    chmod 0600 "$ca_temporary" || fail
+    mv -- "$ca_temporary" "$ca_delivered" || fail
+    ca_temporary=
+    export FMONITOR_BITRIX_CA_FILE="$ca_delivered"
+fi
+
+child=
+interrupted_status=0
+forward() {
+    signal=$1
+    signal_status=$2
+    if [ "$interrupted_status" -eq 0 ]; then interrupted_status=$signal_status; fi
+    if [ -n "$child" ]; then kill -"$signal" "$child" 2>/dev/null || :; fi
+}
+trap 'forward TERM 143' TERM
+trap 'forward INT 130' INT
+trap 'forward QUIT 131' QUIT
+
+env --default-signal=INT,QUIT setpriv --reuid=10001 --regid=10001 --clear-groups -- "$@" &
+child=$!
+status=0
+while :; do
+    if wait "$child"; then status=0; else status=$?; fi
+    kill -0 "$child" 2>/dev/null || break
+done
+if [ "$interrupted_status" -ne 0 ]; then status=$interrupted_status; fi
+if ! cleanup; then
+    [ "$status" -ne 0 ] && exit "$status"
+    exit 74
+fi
+trap - EXIT TERM INT QUIT
+exit "$status"
