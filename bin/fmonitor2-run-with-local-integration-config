@@ -57,21 +57,25 @@ if [ "$kind" = bitrix ] && [ -n "${FMONITOR_BITRIX_CA_INPUT:-}" ]; then
 fi
 
 child=
+interrupted_status=0
 forward() {
     signal=$1
+    signal_status=$2
+    if [ "$interrupted_status" -eq 0 ]; then interrupted_status=$signal_status; fi
     if [ -n "$child" ]; then kill -"$signal" "$child" 2>/dev/null || :; fi
 }
-trap 'forward TERM' TERM
-trap 'forward INT' INT
-trap 'forward QUIT' QUIT
+trap 'forward TERM 143' TERM
+trap 'forward INT 130' INT
+trap 'forward QUIT 131' QUIT
 
-setpriv --reuid=10001 --regid=10001 --clear-groups -- "$@" &
+env --default-signal=INT,QUIT setpriv --reuid=10001 --regid=10001 --clear-groups -- "$@" &
 child=$!
 status=0
 while :; do
     if wait "$child"; then status=0; else status=$?; fi
     kill -0 "$child" 2>/dev/null || break
 done
+if [ "$interrupted_status" -ne 0 ]; then status=$interrupted_status; fi
 if ! cleanup; then
     [ "$status" -ne 0 ] && exit "$status"
     exit 74

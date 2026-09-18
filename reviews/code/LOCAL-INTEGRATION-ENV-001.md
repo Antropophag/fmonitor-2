@@ -191,3 +191,20 @@ None. The correction closes the sole current-head CI failure without weakening t
 ### Verdict
 
 `APPROVED` for exact source `31bbba2ca5d37c8a86dd54148799600ebcdb75feff60810d15ee08098bcf6e40`. This decision approves only the final topology-oracle delta. A new exact-source CI result for the committed correction is still required before PR-ready admission; publication, merge, deploy, production imports and external sends remain outside this review.
+
+## PR #190 inherited-signal delta Gate 5 — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independent of specification, tests and implementation.
+- Verdict: `APPROVED`.
+- Reviewed base: `c1d99be631ad0b7d4302902bd22864381fba7be3` plus the prepared inherited-signal snapshot.
+- Exact candidate source: `b7c747dfbc87ab8212908edd5a8bebb8221b88cfd402cec4ce869fa64510b0d1`; executable-source digest `904625f0dc0d1408c2258cac5035bcced5e2662be2d0050a8057b38b283cc5bc`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T072550Z-bdc6df9d58/package.json`; verification-plan SHA-256 `63fbe650e040415018bffc64551ea0807ff556a2849a2a68106c72eb892dfffa`.
+- Immutable snapshot patch SHA-256 `b4a4da9d8800981d32021dfe911a2e21d9cacfcfd9c5a44adfd77191bb9350dd`; required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `9ec90e44a6a20ed9a8e6b16ab792be75b48a8e960251db0b99e1d6cebbab180b`.
+
+The wrapper uses GNU `env --default-signal=INT,QUIT` immediately before `setpriv`; the real production image test reaches handler-free PHP readiness and proves both INT and QUIT terminate it without `PLAIN_NORMAL_COMPLETION`, which also establishes option availability in that image rather than only host-side syntax. Wrapper traps record only the first accepted interruption as `143`, `130`, or `131`, continue forwarding later signals without overwriting it, wait until the child is no longer alive, and apply that recorded nonzero result after reap so signal-aware child cleanup `exit(0)` cannot become success. In executions with no accepted wrapper signal, the child status remains exact; retained real-image evidence covers ordinary success and exact exit `23`. Existing cleanup precedence still preserves a nonzero importer/interruption status, and wait/reap plus tmpfs cleanup behavior remains intact.
+
+All nine package records are source-matched GREEN. The interruption record covers default INT/QUIT behavior, handled TERM cleanup-to-zero, prior TERM/INT/QUIT forwarding and delayed reap, SIGKILL/tmpfs confinement and Compose-service invariants. Cross-UID delivery, replay, exact ordinary failure, staging/security, generated-runtime parity, public Make E2E and both canonical DB owners remain GREEN. The delta changes no importer, Make/Compose topology, tmpfs policy, loader, domain behavior, harness/classifier or architecture baseline.
+
+Complete findings: none.
+
+`APPROVED` for exact source `b7c747dfbc87ab8212908edd5a8bebb8221b88cfd402cec4ce869fa64510b0d1`. Exact-source CI, publication, merge and deployment remain separate workflow decisions.

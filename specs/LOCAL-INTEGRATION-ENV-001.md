@@ -97,7 +97,7 @@ Bootstrap MUST не создавать альтернативный owner дом
 5. Два concurrent valid writers с различными canary snapshots оставляют destination, равный целиком одному из snapshots; JSON/env document остаётся parseable, partial и temporary files отсутствуют.
 6. После успешного запуска оператор меняет webhook и повторяет `make sync-workforce`: новый snapshot передаётся existing owner, volumes и прежняя workforce history не удаляются.
 7. Host snapshot `0600`, принадлежащий UID, отличному от runtime UID, доставляется в container-owned private file; importer как UID 10001 реально читает его. После успеха и importer failure container-side snapshot отсутствует, а failure остаётся failure.
-8. После подтверждённого старта длительного synthetic importer сигналы TERM, INT и QUIT к wrapper прекращают child, не возвращают success и не оставляют `.ready`; штатная остановка one-shot container использует поддерживаемый wrapper signal. SIGKILL также не оставляет persistent copy, поскольку config находится только в container tmpfs.
+8. После подтверждённого старта длительного synthetic importer сигналы TERM, INT и QUIT к wrapper прекращают child, не возвращают success и не оставляют `.ready`; штатная остановка one-shot container использует поддерживаемый wrapper signal. Launcher MUST восстановить default disposition INT/QUIT перед exec, чтобы обычный importer без собственных handlers не наследовал игнорирование background shell. Факт принятого wrapper signal MUST давать ненулевой результат даже при child cleanup с `exit(0)`. SIGKILL также не оставляет persistent copy, поскольку config находится только в container tmpfs.
 
 ## Explicit non-goals
 

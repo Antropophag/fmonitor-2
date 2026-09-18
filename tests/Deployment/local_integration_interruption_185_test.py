@@ -27,6 +27,7 @@ with tempfile.TemporaryDirectory() as raw:
     tmpfs = "/run/fmonitor-local-integration:rw,noexec,nosuid,nodev,mode=0700,uid=10001,gid=10001"
     compatibility_tmpfs = "/run/fmonitor-secrets:rw,noexec,nosuid,nodev,mode=0700,uid=10001,gid=10001"
     base = ["docker", "run", "--detach", "--user", "0:0", "--volume", f"{source}:/run/fmonitor-input/config:ro", "--tmpfs", tmpfs, "--tmpfs", compatibility_tmpfs, "--stop-signal", "SIGTERM", "--entrypoint", "bin/fmonitor2-run-with-local-integration-config", tag, "legacy", "/run/fmonitor-input/config", "--", "php", "-r", php]
+    correction_failures = []
     try:
         for signal, number in (("TERM", 15), ("INT", 2), ("QUIT", 3)):
             name = "fm2-i185-interrupt-" + signal.lower() + "-" + os.urandom(4).hex()
@@ -54,6 +55,56 @@ with tempfile.TemporaryDirectory() as raw:
                 assert all(not (item["Type"] in ("volume", "bind") and item["Destination"] == "/run/fmonitor-secrets") for item in mounts)
             finally:
                 subprocess.run(["docker", "rm", "-f", name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # A background child inherits ignored INT/QUIT from a non-interactive shell
+        # unless the launcher explicitly restores their default disposition before exec.
+        plain = r'''$p=getenv("FMONITOR_LEGACY_SOURCE_CONFIG");if(posix_geteuid()!==10001||!is_readable($p))exit(92);echo "PLAIN_READY\n";flush();sleep(20);echo "PLAIN_NORMAL_COMPLETION\n";flush();'''
+        for signal in ("INT", "QUIT"):
+            name = "fm2-i185-default-" + signal.lower() + "-" + os.urandom(4).hex()
+            created = subprocess.run((base[:-1] + [plain])[:3] + ["--name", name] + (base[:-1] + [plain])[3:], cwd=ROOT, text=True, capture_output=True)
+            assert created.returncode == 0, created.stderr
+            try:
+                deadline = time.time() + 10
+                while time.time() < deadline:
+                    logs = subprocess.run(["docker", "logs", name], text=True, capture_output=True)
+                    if "PLAIN_READY" in logs.stdout: break
+                    time.sleep(0.05)
+                assert "PLAIN_READY" in logs.stdout
+                subprocess.run(["docker", "kill", "--signal", signal, name], check=True, text=True, capture_output=True)
+                try:
+                    waited = subprocess.run(["docker", "wait", name], text=True, capture_output=True, timeout=8)
+                except subprocess.TimeoutExpired as error:
+                    correction_failures.append(f"ordinary PHP inherited ignored {signal}")
+                    waited = None
+                logs = subprocess.run(["docker", "logs", name], text=True, capture_output=True)
+                if waited is not None and (waited.returncode != 0 or int(waited.stdout.strip()) == 0):
+                    correction_failures.append(f"ordinary PHP {signal} became success")
+                if "PLAIN_NORMAL_COMPLETION" in logs.stdout:
+                    correction_failures.append(f"ordinary PHP ignored {signal}")
+            finally:
+                subprocess.run(["docker", "rm", "-f", name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Interruption is a wrapper fact: child cleanup may intentionally return 0,
+        # but PID 1 must still report a nonzero interrupted outcome.
+        zero = r'''$p=getenv("FMONITOR_LEGACY_SOURCE_CONFIG");if(posix_geteuid()!==10001||!is_readable($p))exit(92);pcntl_async_signals(true);pcntl_signal(SIGTERM,function(){echo "ZERO_SIGNAL_RECEIVED\n";flush();usleep(250000);echo "ZERO_CHILD_CLEANUP\n";flush();exit(0);});echo "ZERO_READY\n";flush();while(true)sleep(1);'''
+        name = "fm2-i185-zero-" + os.urandom(4).hex()
+        created = subprocess.run((base[:-1] + [zero])[:3] + ["--name", name] + (base[:-1] + [zero])[3:], cwd=ROOT, text=True, capture_output=True)
+        assert created.returncode == 0, created.stderr
+        try:
+            deadline = time.time() + 10
+            while time.time() < deadline:
+                logs = subprocess.run(["docker", "logs", name], text=True, capture_output=True)
+                if "ZERO_READY" in logs.stdout: break
+                time.sleep(0.05)
+            assert "ZERO_READY" in logs.stdout
+            subprocess.run(["docker", "stop", "--time", "5", name], check=True, text=True, capture_output=True)
+            waited = subprocess.run(["docker", "wait", name], text=True, capture_output=True, timeout=8)
+            logs = subprocess.run(["docker", "logs", name], text=True, capture_output=True)
+            assert "ZERO_SIGNAL_RECEIVED" in logs.stdout and "ZERO_CHILD_CLEANUP" in logs.stdout
+            if waited.returncode != 0 or int(waited.stdout.strip()) == 0:
+                correction_failures.append("child exit(0) erased wrapper interruption")
+        finally:
+            subprocess.run(["docker", "rm", "-f", name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # SIGKILL cannot run cleanup; tmpfs confinement, not a trap, prevents persistence.
         name = "fm2-i185-interrupt-kill-" + os.urandom(4).hex()
@@ -88,6 +139,7 @@ with tempfile.TemporaryDirectory() as raw:
         assert "stop_signal: SIGTERM" in service, "INTENDED_RED: one-shot stop signal does not match wrapper"
         assert "/run/fmonitor-local-integration" in service and "tmpfs:" in service, "INTENDED_RED: one-shot config is not tmpfs"
         assert "secrets:/run/fmonitor-secrets" not in service, "INTENDED_RED: one-shot service mounts persistent runtime secrets"
+        assert correction_failures == [], "INTENDED_RED: " + "; ".join(correction_failures)
     finally:
         subprocess.run(["docker", "image", "rm", "-f", tag], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 

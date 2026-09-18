@@ -417,6 +417,48 @@ Gate 3 is approved for the interruption/tmpfs delta against this exact snapshot.
 
 This manual review closes only the Compose-service/HostConfig oracle correction. It does not replace the required independent final code review or exact-source CI.
 
+## PR #190 inherited-signal delta Gate 3 — 2026-09-18
+
+- Reviewer: `/root/gate3_review`; independent `gpt-5.6-sol/low` agent; authored none of the reviewed delta specification or tests.
+- Reviewed source: base `c1d99be631ad0b7d4302902bd22864381fba7be3` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T071421Z-91b6a4d2f2/snapshot/source.patch`, SHA-256 `021da6e2b702eaa0e09fef6c74d63543cdff65ebe6470f58b19ff2697f2ac814`; candidate-source digest `f2dbb9c548494eba6c635d19fbc90eb776549088da28e79329d12488f156cc98`, executable-source digest `219020aca23b22f430be33515d3213b245246d104f8f3b7fb82b2230c2920c2b`.
+- Scope: two added semantics only—handler-free PHP must not inherit ignored INT/QUIT, and a signal-aware child cleanup `exit(0)` must not erase wrapper interruption. Previously approved signal forwarding/wait/tmpfs and ordinary success/exit-23 behavior are retained scope.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T071421Z-91b6a4d2f2/package.json`; verification-plan SHA-256 `f25cfd92f68fb59160f2fc4796404125c329daab01e94891c940a895d41db870`.
+- Evidence reviewed: intended RED `1789715524828456000-cdd90fb7a2104fedb6d79c516a1659e8.json`; retained GREEN `1789715542298365000-05d175469dbf48b58f42e62bc1ac68e3.json`, `1789715557833440000-ff929c4e0cbf40808d11627284ddfb16.json`, `1789715568161302000-dd1d8e08437f4bc8a890698ea95d4584.json`, `1789715579426308000-ed272f500f12414f81d34c4be9e758ac.json`, `1789715632083073000-535ac8f584e54224b0942f4996ea81ff.json`, and `1789715646441709000-787a52280a6c40c68a2ccb615d1eadf6.json`. All records match candidate/executable source.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Findings
+
+1. **HIGH — the child-`exit(0)` interruption rule has no executable RED evidence.** The captured interruption run stops at `local_integration_interruption_185_test.py:78` on the first handler-free INT case (`ordinary PHP INT became success`). Consequently the signal-aware zero-cleanup fixture at lines 83-102 is never started. That second behavior is independent: an implementation can restore default INT/QUIT dispositions yet still return child status `0` after a handled TERM, violating the new contract while satisfying the demonstrated RED. **Correction:** split default-disposition and zero-cleanup probes into independently runnable tests/subcommands, or aggregate independent subtest results, and capture a source-matched RED that reaches `ZERO_SIGNAL_RECEIVED` and `ZERO_CHILD_CLEANUP` then fails specifically because the wrapper reports success.
+
+2. **MEDIUM — QUIT remains unexecuted in the submitted RED, though its oracle is otherwise adequate.** The serial loop fails on INT before starting QUIT. INT proves the inherited-background-disposition class exists, but does not demonstrate the exact QUIT branch required by the contract. **Correction:** make INT and QUIT independently execute and report, retaining `PLAIN_READY`, bounded wait, nonzero exit and absence of `PLAIN_NORMAL_COMPLETION`. One combined record is acceptable if it collects both outcomes before failing.
+
+### Checked and adequate
+
+- The normative delta correctly distinguishes ordinary child status from wrapper interruption state and requires explicit default INT/QUIT dispositions before exec.
+- The handler-free fixture does not install signal handlers and independently observes readiness, termination, nonzero status and absence of normal completion. Its captured INT failure is missing behavior, not setup failure.
+- Prior TERM/INT/QUIT forwarding and delayed wait, tmpfs/SIGKILL topology, cross-UID success, replay, exact exit `23`, cleanup, public Make E2E and both DB owners remain source-matched GREEN or retained in the reviewed test matrix.
+
+### Required changes
+
+- Capture independently attributable RED for both default INT/QUIT behavior and child-cleanup `exit(0)`, then request a narrow rereview. Do not change the approved expectations.
+
+## PR #190 inherited-signal delta Gate 3 correction rereview — 2026-09-18
+
+- Reviewer: `/root/gate3_review`; independent `gpt-5.6-sol/low` agent; authored none of the reviewed delta specification or tests.
+- Reviewed source: base `c1d99be631ad0b7d4302902bd22864381fba7be3` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T071845Z-e9bf72643a/snapshot/source.patch`, SHA-256 `80d853c0a51615c4f61911b7d1a854e02d06c67aba4db401e09d022e26f536b2`; candidate-source digest `da1c940f9e2c0f766bc6f64fbf1146a1bb90d7da479bff55b831b84fe70f298f`, executable-source digest `8497edf70d6f7a06a3d013502e8b4b8ecbbbbbca45fa97653436dc354c216ee0`.
+- Rereview scope: only the two findings from the immediately preceding inherited-signal Gate 3 review.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T071845Z-e9bf72643a/package.json`; verification-plan SHA-256 `6842d03d3c6ac39ab321b70277b411ce369cd5080c36c202039fc087e19c25d7`.
+- Evidence reviewed: intended RED `1789715789767981000-5918355878804817990aa186fba498a3.json`; retained GREEN `1789715807309019000-7eb752ac93304d25b06ac9eca1047afa.json`, `1789715822750692000-f8af12d550184d1faafa4405efcfca51.json`, `1789715832773119000-6ae4705a1f1945d8a501f25ea5916547.json`, `1789715844422087000-8e05f613d4a2451a8b7f1c4dc6c641e2.json`, `1789715892653089000-94768697a0aa41ee8b8a60c3d3e68bb2.json`, and `1789715906717004000-2999729c469d4b8192edcf0d4fda5937.json`. All records match candidate/executable source.
+- Verdict: `APPROVED`.
+
+### Closure and complete findings
+
+- **CLOSED — independent default INT and QUIT sensitivity.** The corrected test accumulates outcomes instead of failing inside the first loop iteration. The captured RED confirms both handler-free children reached `PLAIN_READY`; INT and QUIT each became success and each reached `PLAIN_NORMAL_COMPLETION`. Thus both exact default-disposition branches execute and independently expose the missing behavior.
+- **CLOSED — child cleanup `exit(0)` sensitivity.** The same run continues into the signal-aware TERM fixture, observes both `ZERO_SIGNAL_RECEIVED` and delayed `ZERO_CHILD_CLEANUP`, then records `child exit(0) erased wrapper interruption`. This is directly sensitive to wrapper interruption state independently of child status.
+- Complete findings: none. Aggregation preserves deterministic cleanup and reports all missing behaviors only after the retained forwarding/tmpfs/SIGKILL and Compose-service assertions execute. Cross-UID success, replay, exact exit `23`, host staging, public Make E2E and both DB owners remain source-matched GREEN.
+
+Gate 3 is approved for the inherited-signal delta against this exact snapshot. Implementation must make the aggregated test GREEN without weakening expectations; independent final review and exact-source CI remain required.
+
 ## Root interruption test correction — 2026-09-18
 
 - Retained UID 10001 read, replay, canonical loaders, exact exit 23 and cleanup remain in the independently runnable cross-UID test and are expected GREEN at correction Gate 3.

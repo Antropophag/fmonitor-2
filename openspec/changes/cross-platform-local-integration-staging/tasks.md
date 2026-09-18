@@ -21,3 +21,9 @@
 - [x] 4.1 Add RED coverage for TERM/INT/QUIT forwarding, real-container stop, child reaping, nonzero interruption and tmpfs-only one-shot config; obtain independent delta Gate 3 review
 - [x] 4.2 Implement signal supervision and one-shot tmpfs wiring without changing production PHP-FPM stop policy; keep success, exit 23, replay and Make E2E GREEN
 - [ ] 4.3 Obtain independent delta Gate 5 review, push corrected head and complete required CI for the new exact source
+
+## 5. PR #190 inherited-signal correction
+
+- [x] 5.1 Add RED for ordinary PHP INT/QUIT default termination and child `exit(0)` preserving wrapper interruption; obtain independent delta Gate 3 review
+- [x] 5.2 Restore child INT/QUIT defaults and retain wrapper interruption status without changing importers or Compose/tmpfs; keep focused regressions GREEN
+- [ ] 5.3 Obtain independent delta Gate 5 review, push corrected head and complete exact-source CI without merge/deploy

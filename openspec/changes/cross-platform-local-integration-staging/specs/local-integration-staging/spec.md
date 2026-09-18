@@ -49,6 +49,12 @@ Local integration staging SHALL принимать доступные обычн
 - **THEN** результат ненулевой, importer не продолжает работу и `.ready` отсутствует
 - **THEN** одноразовая копия существует только в tmpfs этого container, поэтому SIGKILL не сохраняет её в persistent secrets volume
 
+#### Scenario: Default child signals and zero cleanup remain interrupted
+- **WHEN** обычный PHP child без signal handlers получает пересланный INT или QUIT
+- **THEN** восстановленный launcher default signal прекращает child до normal-completion marker
+- **WHEN** signal-aware child завершает cleanup через `exit(0)`
+- **THEN** wrapper всё равно возвращает ненулевой interruption result после ожидания child
+
 ### Requirement: Synthetic end-to-end acceptance
 Проверка SHALL использовать изолированную MariaDB и локальный synthetic Bitrix endpoint, MUST подтверждать наблюдаемые legacy/workforce facts через действующие public Make seams и MUST NOT обращаться к production systems.
 
