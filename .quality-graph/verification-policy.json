@@ -270,6 +270,18 @@
   ],
   "capability_ownership": [
     {
+      "name": "local-integration-configuration",
+      "patterns": [
+        "app/Workforce/WorkerConfiguration.php",
+        "app/YiiRuntime/LegacyImportConsole.php"
+      ],
+      "verifiers": [
+        "tests/Deployment/local_integration_cross_platform_185_test.py",
+        "tests/Deployment/yii2_local_integration_config_001_test.py"
+      ],
+      "consumers": []
+    },
+    {
       "name": "initial-owner-provisioning",
       "patterns": [
         "app/IdentityAccess/MariaDbInitialOwnerProvisioning.php"

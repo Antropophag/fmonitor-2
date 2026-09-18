@@ -46,6 +46,19 @@ with tempfile.TemporaryDirectory() as raw:
     before = destination.read_bytes()
     assert legacy_a.encode() in before
 
+    # Accessible non-exact POSIX modes are portable inputs, not a rejection reason.
+    source_0644 = box / "portable.env"
+    source_0644.write_text(content(legacy_a)); source_0644.chmod(0o644)
+    private.chmod(0o755); source_before = source_0644.stat()
+    portable = subprocess.run([str(tool), "stage", "legacy", str(source_0644), str(destination)], text=True, capture_output=True)
+    assert portable.returncode == 0, "INTENDED_RED: valid 0644 input / 0755 staging directory rejected"
+    source_after = source_0644.stat()
+    assert (source_before.st_uid, stat.S_IMODE(source_before.st_mode)) == (source_after.st_uid, stat.S_IMODE(source_after.st_mode))
+    destination.chmod(0o644)
+    accepted = subprocess.run([str(tool), "legacy", str(destination)], text=True, capture_output=True)
+    assert accepted.returncode == 0, "INTENDED_RED: valid readable destination rejected only for mode bits"
+    private.chmod(0o700); destination.chmod(0o600)
+
     # Invalid replacement leaves the old complete snapshot but cannot invoke a consumer.
     bad = box / "bad.env"
     bad.write_text(content(legacy_b).replace("FMONITOR_SOURCE_PORT=3306", "FMONITOR_SOURCE_PORT=bad"))
@@ -98,6 +111,15 @@ with tempfile.TemporaryDirectory() as raw:
     target = box / "outside"
     target.write_text("outside")
     destination.unlink()
+
+    # Input paths are never followed or treated as streams/devices.
+    input_target = box / "input-target.env"; input_target.write_text(content(legacy_a))
+    input_link = box / "input-link.env"; input_link.symlink_to(input_target)
+    linked = subprocess.run([str(tool), "stage", "legacy", str(input_link), str(destination)], text=True, capture_output=True)
+    assert linked.returncode != 0 and not destination.exists()
+    fifo = box / "input.fifo"; os.mkfifo(fifo)
+    nonregular = subprocess.run([str(tool), "stage", "legacy", str(fifo), str(destination)], text=True, capture_output=True, timeout=2)
+    assert nonregular.returncode != 0 and not destination.exists()
     destination.symlink_to(target)
     unsafe = stage(legacy_a)
     assert unsafe.returncode != 0 and target.read_text() == "outside"

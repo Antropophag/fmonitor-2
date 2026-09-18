@@ -1,0 +1,82 @@
+{
+  "change": "cross-platform-local-integration-staging-issue-185-slice-2",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "Makefile",
+    "app/Workforce/WorkerConfiguration.php",
+    "app/YiiRuntime/LegacyImportConsole.php",
+    "bin/fmonitor2-run-with-local-integration-config",
+    "deploy/runtime/Dockerfile",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-185-cross-platform-staging-delivery.md",
+    "openspec/changes/cross-platform-local-integration-staging/design.md",
+    "openspec/changes/cross-platform-local-integration-staging/proposal.md",
+    "openspec/changes/cross-platform-local-integration-staging/specs/local-integration-staging/spec.md",
+    "openspec/changes/cross-platform-local-integration-staging/tasks.md",
+    "openspec/changes/cross-platform-local-integration-staging/verification-input.json",
+    "reviews/code/LOCAL-INTEGRATION-ENV-001.md",
+    "reviews/tests/LOCAL-INTEGRATION-ENV-001.md",
+    "specs/LOCAL-INTEGRATION-ENV-001.md",
+    "tests/Deployment/local_integration_cross_platform_185_test.py",
+    "tests/Deployment/local_integration_env_001_test.py",
+    "tests/Deployment/local_integration_env_security_001_test.py",
+    "tests/Deployment/local_integration_make_e2e_185_test.py",
+    "tests/Deployment/yii2_local_integration_config_001_test.py",
+    "tests/Yii2/yii2_legacy_import_db_001_test.php",
+    "tests/Yii2/yii2_workforce_sync_db_001_test.php",
+    "tools/delivery/Dockerfile.runtime.in",
+    "tools/delivery/local-integration-config",
+    "tools/delivery/local-runtime-env",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "accessible-host-staging-and-safe-rejection",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "tools/delivery/local-integration-config stage accepts accessible 0644 input and 0755 directory while preserving atomic fail-closed path handling",
+      "tests": ["tests/Deployment/local_integration_env_security_001_test.py"],
+      "gate3_expected": {"tests/Deployment/local_integration_env_security_001_test.py": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "cross-uid-private-container-delivery",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "container delivery carries host-owned 0600 snapshots to private files read by real runtime UID 10001 through canonical PHP loaders",
+      "tests": ["tests/Deployment/local_integration_cross_platform_185_test.py"],
+      "gate3_expected": {"tests/Deployment/local_integration_cross_platform_185_test.py": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "public-make-compose-synthetic-e2e",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "actual make import-legacy and make sync-workforce traverse real Compose delivery and canonical loaders/importers to isolated MariaDB and local verified-TLS Bitrix facts, including replay and log redaction",
+      "tests": ["tests/Deployment/local_integration_make_e2e_185_test.py"],
+      "gate3_expected": {"tests/Deployment/local_integration_make_e2e_185_test.py": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "replay-cleanup-exit-and-secret-confinement",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "public Make targets replace snapshots, remove temporary/container secrets on success and failure, preserve importer failure, and expose no secret in process or Compose surfaces",
+      "tests": ["tests/Deployment/local_integration_env_001_test.py"],
+      "gate3_expected": {"tests/Deployment/local_integration_env_001_test.py": "GREEN"}
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "canonical-legacy-loader-importer-isolated-mariadb",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "canonical Yii legacy loader and importer consume a private config against isolated MariaDB and persist independently expected synthetic facts",
+      "tests": ["tests/Yii2/yii2_legacy_import_db_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_legacy_import_db_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "LOCAL-INTEGRATION-ENV-001",
+      "acceptance_id": "canonical-workforce-loader-importer-local-bitrix",
+      "spec_path": "specs/LOCAL-INTEGRATION-ENV-001.md",
+      "seam": "canonical Yii workforce loader and importer consume a private config against isolated MariaDB and the local verified TLS Bitrix fixture",
+      "tests": ["tests/Yii2/yii2_workforce_sync_db_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_workforce_sync_db_001_test.php": "GREEN"}
+    }
+  ]
+}

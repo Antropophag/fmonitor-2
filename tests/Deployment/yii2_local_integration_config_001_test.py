@@ -22,6 +22,6 @@ with tempfile.TemporaryDirectory() as raw:
         path.write_text(valid);path.chmod(0o600);effect.unlink(missing_ok=True);ok=call(kind,path);assert ok.returncode==0 and effect.exists();assert secret not in ok.stdout+ok.stderr
         captured=record.read_text();assert secret not in captured and 'AMBIENT_CANARY' not in captured and 'AMBIENT_BITRIX_CANARY' not in captured;assert 'compose-config-redacted' in ok.stdout
         if kind=='legacy':path.write_text(valid.replace('2026-09-14 23:59:59',''));effect.unlink(missing_ok=True);assert call(kind,path).returncode==0 and effect.exists()
-        link=d/(kind+'.link');link.symlink_to(path);rejected(kind,link);link.unlink();path.chmod(0o644);rejected(kind,path);path.chmod(0o600)
+        link=d/(kind+'.link');link.symlink_to(path);rejected(kind,link);link.unlink();path.chmod(0o644);effect.unlink(missing_ok=True);portable=call(kind,path);assert portable.returncode==0 and effect.exists(),'INTENDED_RED: readable regular config rejected only for mode bits';path.chmod(0o600)
         for value in bad:path.write_text(value);rejected(kind,path)
 print('PASS: YII2-LOCAL-DATA-BOOTSTRAP-001 private config')

@@ -109,3 +109,29 @@ No other new regression was found. A1, A2, A4-A6 and remaining A3 cases conform.
 ### Final correction verdict
 
 `APPROVED` for exact source `af58ae69e9659b1d698829c5bd469480232cad6a3b17492dbca990cb9a4fa791`. The historical exact-source CI failure identified the obsolete oracle; this approval verifies its correction but does not represent the broader CI state as GREEN. CI triage/publication, merge, deployment, and settings remain separate workflow steps.
+
+## Issue #185 slice 2 independent final Gate 5 review — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independent reviewer, authored none of the specification, tests, implementation, or Gate 3 decisions.
+- Verdict: `APPROVED`.
+- Base: `95e070893082422b067786abe6b6e5ff4ea3aa65` (`main` after merge #189).
+- Exact candidate source: `d3661ac140c8514a125a471b8a6c962a343568489e36b8eb0b628d6c98644c9b`; executable-source digest `e846c5d7ac64907ba43374c998c895c5e2d2036ffc7e951d698b1a3beda3ca60`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T013530Z-4106ad0fa3/package.json`; verification-plan SHA-256 `3bb9ed8e7dd9840ec7e46f356cd475ced925e2ec77c948859fb3c39d1cd1c376` (`CRITICAL`; reviews `gate3`, `final`).
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T013530Z-4106ad0fa3/snapshot`; patch SHA-256 `b4c81c0a8053235eeefc38ef2609b031e0c8c355b26a3fe50015b26bc147ef2b`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `a4208f4215c68ec13957430d521fd0bd4e40273f2d8b6b51a671ef1f0f2b8a16`.
+
+### Evidence and complete review
+
+All eleven package records are source-matched GREEN. They cover portable `0644` input and `0755` staging, unsafe input/destination rejection, atomic publication and replay, a host-owned `0600` file read by effective UID/GID 10001, preserved importer exit `23`, empty container secret storage after success/failure, both real Make/Compose targets against isolated MariaDB and a task-owned verified-TLS Bitrix endpoint, both retained importer DB contracts, loader compatibility, generated Dockerfile parity, architecture/governance checks, and the CI-consumer oracle. Full local `make test`/`make verify` was not run, in accordance with the owner prohibition. WSL was unavailable and remains `UNKNOWN`; the recorded Docker Desktop/Linux-container exercise does not claim a full OS matrix. Exact-source GitHub CI remains `UNKNOWN` and is not represented as GREEN by this review.
+
+I reviewed the complete candidate against the owner scope, normative A4-A6 contract, OpenSpec delta, approved Gate 3 history, implementation and test sensitivity. Host staging no longer gates valid accessible regular files or directories on exact POSIX mode bits, while retaining format validation, non-regular/symlink rejection, same-directory temporary publication and atomic replacement. Neither the source `.env` ownership nor its mode is changed. Both Make targets mount only the staged host snapshot into a root-only delivery step; the wrapper copies to a unique private file in container-owned storage, assigns `10001:10001` and `0600`, then invokes the unchanged canonical importer as UID/GID 10001. The legacy and workforce loaders accept absolute readable regular non-symlink files without repeating the removed exact-mode predicate.
+
+Cleanup uses unique names for concurrent invocations, removes both temporary and published container files, reports cleanup failure when the importer succeeded, and preserves a nonzero importer status when cleanup also fails. Secret material is file-delivered rather than placed in argv or Compose environment values; the acceptance checks cover stdout/stderr, resolved Compose output, image history, application logs and final volume contents. The optional local Bitrix CA follows the same copy/drop/cleanup boundary and does not alter production secret/session policy. The change does not modify import filtering, domain owners, harness/classifier/skip rules, architecture baselines, provisioning, schema, or other excluded #185 slices.
+
+### Complete findings
+
+None. The tests would fail for plausible regressions in exact-mode removal, Make wiring, direct host-file delivery, privilege drop, loader readability, stale replay, cleanup, exit-status masking, importer ownership, persisted synthetic facts, or secret disclosure. The implementation is bounded and maintainable for the stated local integration seam.
+
+### Verdict
+
+`APPROVED` for exact source `d3661ac140c8514a125a471b8a6c962a343568489e36b8eb0b628d6c98644c9b`. This approval covers Gate 5 only. It does not claim exact-source CI, publication, merge, deployment, production imports, external sends, or completion of the remaining parent #185 scope.

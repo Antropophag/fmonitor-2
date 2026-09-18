@@ -25,7 +25,8 @@ integration=(
   FMONITOR_SOURCE_USER FMONITOR_SOURCE_PASSWORD FMONITOR_MIGRATION_CUTOFF
   FMONITOR_BITRIX_WEBHOOK_URL FMONITOR_BITRIX_DEPARTMENT_IDS_JSON
 )
-for name in "${required[@]}" "${integration[@]}"; do unset "$name"; done
+optional=(FMONITOR_BITRIX_CA_FILE_HOST)
+for name in "${required[@]}" "${integration[@]}" "${optional[@]}"; do unset "$name"; done
 seen='|'
 while IFS= read -r line || [[ -n "$line" ]]; do
   [[ -z "$line" || "$line" == \#* ]] && continue
@@ -38,7 +39,12 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     *)
       case " ${integration[*]} " in
         *" $name "*) continue ;;
-        *) fail ;;
+        *)
+          case " ${optional[*]} " in
+            *" $name "*) ;;
+            *) fail ;;
+          esac
+          ;;
       esac
       ;;
   esac
@@ -81,6 +87,22 @@ for argument in "$@"; do
       name=${argument#@env:}
       [[ "$seen" == *"|$name|"* ]] || fail
       arguments+=("${!name}")
+      ;;
+    @optional-volume:*)
+      value=${argument#@optional-volume:}
+      name=${value%%:*}
+      target=${value#*:}
+      if [[ "$seen" == *"|$name|"* && -n "${!name}" ]]; then
+        arguments+=(--volume "${!name}:$target")
+      fi
+      ;;
+    @optional-environment:*)
+      value=${argument#@optional-environment:}
+      name=${value%%:*}
+      assignment=${value#*:}
+      if [[ "$seen" == *"|$name|"* && -n "${!name}" ]]; then
+        arguments+=(--env "$assignment")
+      fi
       ;;
     @local-url*)
       arguments+=("http://127.0.0.1:${FMONITOR_HTTP_PORT}${argument#@local-url}")

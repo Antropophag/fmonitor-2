@@ -226,3 +226,93 @@ The full `$`/backtick rejection forms and template-derived documentation port as
 
 - None. The normative contract now requires exact lowercase `https`, matching unchanged `WorkerConfiguration`; the focused test independently changes only the scheme spelling and places uppercase `HTTPS` in the existing Bitrix rejection matrix while retaining valid lowercase, user-info, path, empty/dotted/256/257 token and departments cases.
 - The captured RED reaches zero-based Bitrix invalid case 2 because the current stage accepts uppercase `HTTPS`; this is the intended owner-parity gap rather than setup failure, returns no secret output, and is positioned before any Docker/owner effect. Security staging and all three retained mapped checks remain source-matched GREEN.
+
+## Issue #185 slice 2 Gate 3 review — 2026-09-18
+
+- Reviewer: `/root/gate3_review`; independent `gpt-5.6-sol/low` agent; authored none of the reviewed specification or tests.
+- Test author: root agent `/root`.
+- Reviewed source: base `95e070893082422b067786abe6b6e5ff4ea3aa65` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T005657Z-345e354a22/snapshot/source.patch`, SHA-256 `fc30fe891472f65cfa356db442e514287e5584eff81240f63330defe501a6c83`; candidate-source digest `e0811552f127652a0d977b5ccde71234cd0645539c0d326e15925cbbabc95f34`.
+- Agreed review scope: complete second bounded slice of #185; cross-platform mode tolerance, private cross-UID container delivery, both public Make seams and real loaders/importers, replay/cleanup, and synthetic MariaDB/Bitrix acceptance. Prior #149 findings are historical and are not reopened except where this slice changes the boundary.
+- Specification: `specs/LOCAL-INTEGRATION-ENV-001.md` A4-A6 and `openspec/changes/cross-platform-local-integration-staging/specs/local-integration-staging/spec.md`.
+- Public seam: `make import-legacy` and `make sync-workforce`, following `.env` → host staging → Make/Compose delivery → штатный PHP loader → importer.
+- Red command and intended failure: records `1789692993735980000-c820360c5e244101acbd7d2516e712dc.json` and `1789692997713924000-0f5f148bba5e48569e52dbb3e8513071.json`; both exit `1` at rejection of accessible `0644` input / `0755` staging directory. Regression record `1789693001568052000-e17af744dada4379b5ce8dbd02739c20.json` is GREEN.
+- Verification plan: SHA-256 `33485340949f012bf6648495ece7e76a843e06cb74280d44eb52fa90f2f77b63`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Findings
+
+1. **HIGH — The required synthetic end-to-end acceptance is not an executable test.** The delta contract requires isolated MariaDB and a local Bitrix endpoint through both public Make seams (`openspec/.../spec.md:46-52`), but the only new runtime test invokes the proposed wrapper directly with `php -r` (`local_integration_cross_platform_185_test.py:75-89`). The existing Make test uses a fake `docker` witness and neither runs the importers nor observes persisted legacy/workforce facts. Task 3.1 is correspondingly still unchecked (`tasks.md:13-16`). A broken Make/Compose/PHP-loader/importer chain can pass the submitted suite. **Correction:** add deterministic isolated acceptance that runs both actual Make targets, supplies synthetic legacy MariaDB data and a local Bitrix endpoint, and independently asserts the expected imported/synchronized facts, updated endpoint values on replay, and absence of production connections.
+
+2. **HIGH — Cross-UID and loader coverage bypasses the public seams and both штатные PHP loaders.** Lines 43-49 only inspect Makefile/Dockerfile strings, while lines 70-84 execute a generic inline PHP reader through the wrapper. This cannot catch a target that supplies the wrong path/environment, a remaining exact-mode rejection in `LegacyImportConsole` or `WorkerConfiguration`, or an importer that is not actually UID 10001. **Correction:** exercise `make import-legacy` and `make sync-workforce` with the real Compose construction and real loaders/importers; assert the `0600` host-owner mismatch, effective UID 10001 at importer execution, and successful reading/consumption for both configuration types. Retain a narrow wrapper test only as supplementary coverage.
+
+3. **HIGH — The captured RED does not demonstrate the principal cross-UID missing behavior.** Both intended-RED records stop at the first mode-tolerance assertion (`local_integration_cross_platform_185_test.py:35-36`; `local_integration_env_security_001_test.py:53-54`). The wrapper-existence, different-UID read, failure-status, and cleanup assertions are never reached, so the supplied evidence proves only one sub-behavior and cannot distinguish cross-UID implementation defects from unexecuted assertions. **Correction:** split independently runnable mode, delivery/UID, loader, replay and cleanup tests (or otherwise arrange independent probes) and capture source-matched intended RED for each missing behavior without converting unavailable Docker into product RED.
+
+4. **MEDIUM — The new acceptance matrix omits input-path rejection and container replay freshness.** The security test covers a destination symlink, symlinked staging directory and non-regular destination (`local_integration_env_security_001_test.py:110-126`), but not a symlink or non-regular `.env` input required by the delta spec (`spec.md:15-18`). The container test runs each kind once and checks only final volume emptiness; it never repeats one target/config kind with changed values and proves the second importer saw no stale container snapshot (`spec.md:33-39`). **Correction:** add public-seam zero-effect cases for symlink and non-regular input with preserved destination/no temps, and repeat each applicable delivery with distinct old/new canaries while asserting only the new value is consumed and no secret remains after success or importer failure.
+
+5. **MEDIUM — Secret-boundary coverage does not observe image layers or application logs.** The new test asserts only process stdout/stderr (`local_integration_cross_platform_185_test.py:82-89`); building the image before creating the host canary makes the canary trivially absent from layers, and the inline reader produces no application log. The contract explicitly includes image layers and application logs. **Correction:** add deterministic inspection appropriate to the real public-seam fixture (image history/export or an equivalent layer-content oracle, plus captured application logs from actual importer runs) and reject all synthetic secret/private-document canaries there as well as in argv, Compose output and stdout/stderr.
+
+Traceability and fixed expected values for mode acceptance, host owner/mode preservation, UID 10001 readability, exit-status preservation and final cleanup are otherwise clear. The tests use temporary/randomized names and avoid production endpoints, but the five findings prevent complete Gate 2 coverage and Gate 3 approval.
+
+### Required changes
+
+- Close findings 1-5, capture independent source-matched RED evidence for the newly covered missing behaviors, refresh the harness package/plan, and request a narrow independent Gate 3 rereview before production implementation.
+
+## Root correction — issue #185 slice 2, 2026-09-18
+
+- Разделены независимые RED: mode portability остаётся в staging/security test, cross-UID test теперь начинает с отсутствующей container-delivery seam и не блокируется прежним mode assertion.
+- Cross-UID test строит production runtime image, монтирует host-owned `0600`, требует фактическое чтение UID 10001, вызывает оба canonical Yii loaders, проверяет updated replay, importer exit `23`, cleanup named volume, container removal и отсутствие canary в stdout/stderr/image history.
+- Security test добавил symlink и FIFO input rejection; существующие проверки сохраняют symlink directory/non-regular destination, concurrent observation, atomic preservation и temp cleanup.
+- Acceptance mapping теперь включает существующие реальные isolated MariaDB legacy importer и workforce importer с локальным verified-TLS Bitrix fixture. Public Make tests отдельно исполняют оба target через наблюдаемый Compose boundary; cross-UID test проверяет тот же production wrapper/image и canonical PHP loaders.
+- Полностью совместный live Make/MariaDB/Bitrix прогон остаётся обязательной задачей 3.1 до Gate 5, но Gate 2 теперь содержит executable fixtures для каждой части реальной цепочки, а не lexical/dry-run замену.
+
+Нужны fresh plan/evidence и независимое повторное Gate 3 review; прежний verdict остаётся историческим.
+
+## Issue #185 slice 2 Gate 3 correction rereview — 2026-09-18
+
+- Reviewer: `/root/gate3_review`; independent `gpt-5.6-sol/low` agent; authored none of the reviewed specification or tests.
+- Reviewed source: base `95e070893082422b067786abe6b6e5ff4ea3aa65` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T010426Z-2f553c3d0e/snapshot/source.patch`, SHA-256 `19bc15fde6326268ef742fc02386d6ddd0404b5242595f5ccd2f54256bed2ceb`; candidate-source digest `7612c678d8b27ec1e3fe571766e0413df47c00662c22af05dfd574ebdd29ffa6`.
+- Rereview scope: disposition of all five findings in the immediately preceding Gate 3 review; no broader reopening.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T010426Z-2f553c3d0e/package.json`; verification-plan SHA-256 `50ef55dad1f8e706137a3917c1750115cc841dfacd41d90a2b2f8a65678cad54`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Evidence reviewed: intended RED records `1789693360441159000-43573babbcbc4615880fc14490464f30.json` and `1789693365272947000-427ecb029fa442ad8209814bb3231233.json`; GREEN records `1789693369131124000-3a678ed57c1f48bf9dffb4b1060b6c03.json`, `1789693430695401000-0682d94b91c244709bb82e148b2412ab.json`, and `1789693445529361000-91fcf83bbc0a4553943cd9f262e4cb3b.json`. All five records match candidate and executable-source digests.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Previous findings disposition
+
+1. **NOT CLOSED — synthetic end-to-end public-seam acceptance.** The correction adds the existing direct MariaDB legacy test and direct local-TLS Bitrix/workforce test as GREEN evidence, but neither invokes a Make target. `local_integration_env_001_test.py` still executes both targets only through a fake `docker` witness, while `local_integration_cross_platform_185_test.py` invokes the proposed wrapper directly. Therefore no executable test follows the normative `.env` → staging → Make/Compose → PHP loader → importer chain and then observes the MariaDB/workforce facts required by the delta spec at lines 46-52. The correction note itself defers the joint live Make/MariaDB/Bitrix run to task 3.1; Gate 2 cannot claim the complete agreed slice while that normative scenario has no executable public-seam test. **Required correction:** add the isolated test through both actual Make targets and assert the independently expected persisted facts/local endpoint behavior and no production connection.
+
+2. **NOT CLOSED — actual Make/Compose delivery to canonical loaders/importers.** The new container test improves loader coverage, but still calls `docker run ... bin/fmonitor2-run-with-local-integration-config` directly (`local_integration_cross_platform_185_test.py:56-74`). Its Make coverage remains lexical (`:25-30`). Combining that test with a separate fake-Docker Make test does not catch disagreement in real Make/Compose flags, user selection, mounts, paths or cleanup wiring. **Required correction:** drive the runtime image/wrapper and both canonical Yii routes from `make import-legacy` and `make sync-workforce`, preserving the host-UID mismatch and UID 10001 assertions at the importer boundary.
+
+3. **CLOSED — independent RED attribution.** The cross-UID record now fails first and specifically because the wrapper/delivery seam is absent, independently of the mode-portability RED. This establishes two distinct missing behaviors without treating unavailable Docker as RED.
+
+4. **CLOSED — unsafe input and replay.** The security test adds symlink and FIFO inputs before destination publication; the container test repeats both kinds after replacing the host canary, requires only the updated value, preserves importer exit `23`, and verifies empty container storage after all runs.
+
+5. **CLOSED — layer/log secret witnesses, within the submitted fixture.** Image history is inspected and actual canonical loader stdout/stderr is captured and checked for the canary. The test also checks removal of temporary containers. Final public-seam acceptance must retain these assertions, but no separate residual finding is raised here.
+
+The fresh REDs are deterministic missing-behavior failures, the three GREEN fixtures are source-matched and isolated, and no evidence contains a synthetic secret. Findings 1 and 2 remain blocking because the contract explicitly makes the two Make targets—not the wrapper or direct Yii commands—the observable seam.
+
+### Required changes
+
+- Add one executable isolated acceptance path that starts at each actual Make target, traverses real Compose/container delivery and the canonical loader/importer as UID 10001, and observes the expected MariaDB/local-Bitrix facts. Capture fresh source-matched RED and request a narrow rereview; do not defer this Gate 2 contract coverage to Gate 5.
+
+## Root second correction — issue #185 slice 2, 2026-09-18
+
+Добавлен `tests/Deployment/local_integration_make_e2e_185_test.py`: он запускает реальный `make up`, создаёт legacy fixture schema в изолированной runtime MariaDB, выполняет фактические `make import-legacy` и `make sync-workforce`, поднимает task-owned verified-TLS Bitrix container в Compose network, проверяет сохранённые legacy/workforce facts и повторный sync с новым token. Тот же test проверяет Compose/application logs, temp cleanup и отсутствие production endpoints. Текущий independent RED — отсутствующая production delivery seam до создания каких-либо контейнеров.
+
+## Issue #185 slice 2 Gate 3 second correction rereview — 2026-09-18
+
+- Reviewer: `/root/gate3_review`; independent `gpt-5.6-sol/low` agent; authored none of the reviewed specification or tests.
+- Reviewed source: base `95e070893082422b067786abe6b6e5ff4ea3aa65` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T010956Z-e4b982924f/snapshot/source.patch`, SHA-256 `99666a29d6aabc0e18b39273979a7f3ae933f757ae33ce2a090b5cf4a57325e1`; candidate-source digest `1922b2fd8b36adb9a96e1a21895e2f71fdbaac427220a341c0c0c5cfd89775d7`.
+- Rereview scope: only the two residual HIGH findings from the preceding correction rereview.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T010956Z-e4b982924f/package.json`; verification-plan SHA-256 `94d29dedba48da78d5cc14b1dc7f00b3d95b60c994876b9b45f63c1b0d8c2eb0`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Evidence reviewed: intended RED records `1789693746852310000-90cc8b1ba1834a6e995edff8ccd69f18.json`, `1789693751351945000-0c5d559577854ff89614a5f84528f7f8.json`, and `1789693755168584000-f32bd2c5c993432793f3326bb2655a34.json`; GREEN records `1789693758620867000-2a20b00852bd4c19a65207b191600fdf.json`, `1789693767605025000-32279c93038c4347b1468ce6a6b1c3cc.json`, and `1789693781150253000-422b628eb7454696a2cf3492d6ad60fc.json`. Every record matches candidate `1922b2fd...` and executable source `75152767...`.
+- Verdict: `APPROVED`.
+
+### Residual closure and complete findings
+
+1. **CLOSED — synthetic end-to-end public-seam acceptance.** `local_integration_make_e2e_185_test.py:59-67` runs real `make up` and `make import-legacy`, seeds only the isolated Compose MariaDB, and independently observes the expected legacy case. Lines 69-90 start a task-owned verified-TLS Bitrix endpoint inside the same isolated Compose network, run real `make sync-workforce`, observe 51 workforce rows, update `.env`, rerun the same public target and prove both old and new endpoint-token paths were received. All addresses, credentials, project/image/container names and persisted facts are synthetic and isolated.
+
+2. **CLOSED — actual Make/Compose delivery to canonical loaders/importers.** The new E2E executes the repository Make recipes and real Compose commands rather than a fake Docker witness, so wrong mounts, paths, entrypoints, environment, loader selection or importer wiring fail at the public seam. Its success criteria are persisted importer facts, not command text. In combination with `local_integration_cross_platform_185_test.py`, which independently requires the same production wrapper/image to make a host-owned `0600` file readable at effective UID 10001 for both config kinds and invokes both canonical Yii routes, the matrix is sensitive to both wiring and privilege-drop behavior.
+
+- Complete findings: none. The public seam, independently fixed legacy/workforce results, replay freshness, local-only endpoint, secret redaction, Compose/application-log boundary and cleanup are directly observable. The E2E RED fails before external effects because the required delivery wrapper is absent, which is the intended missing behavior rather than fixture failure. The retained direct importer GREEN records confirm the MariaDB and local Bitrix fixtures themselves are viable.
+
+Gate 3 is approved for implementation against this exact reviewed test/spec snapshot. Gate 4 must make these tests GREEN without weakening expectations; exact-source final review and CI remain separate requirements.
