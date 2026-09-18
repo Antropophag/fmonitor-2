@@ -21,6 +21,6 @@
   ],
   "acceptances": [
     {"spec_id":"INITIAL-OWNER-PROVISIONING-001","acceptance_id":"A1-A3-A5-owner-lifecycle","spec_path":"specs/INITIAL-OWNER-PROVISIONING-001.md","seam":"direct CLI retains clean strict replay while explicit local-resume confirms developed bootstrap owner or rejects conflicts read-only under existing schema lock and concurrency guarantees","tests":["tests/Runtime/initial_owner_provisioning_001_test.php"],"gate3_expected":{"tests/Runtime/initial_owner_provisioning_001_test.php":"INTENDED_RED"}},
-    {"spec_id":"INITIAL-OWNER-PROVISIONING-001","acceptance_id":"A4-real-make-up-route-production-isolation","spec_path":"specs/INITIAL-OWNER-PROVISIONING-001.md","seam":"Makefile up explicitly selects local resume through canonical CLI and IdentityAccess while direct production CLI remains strict","tests":["tests/Architecture/initial_owner_local_resume_route_001_test.php"],"gate3_expected":{"tests/Architecture/initial_owner_local_resume_route_001_test.php":"INTENDED_RED"}}
+    {"spec_id":"INITIAL-OWNER-PROVISIONING-001","acceptance_id":"A4-real-make-up-route-production-isolation","spec_path":"specs/INITIAL-OWNER-PROVISIONING-001.md","seam":"Makefile up explicitly selects local mode through canonical CLI and IdentityAccess while direct production CLI remains strict","tests":["tests/Architecture/initial_owner_local_resume_route_001_test.php"],"gate3_expected":{"tests/Architecture/initial_owner_local_resume_route_001_test.php":"GREEN"}}
   ]
 }

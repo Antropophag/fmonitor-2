@@ -13,7 +13,7 @@ try{
     if(preg_match('/^[1-9][0-9]{0,4}$/D',$port)!==1||(int)$port>65535||preg_match('/^[A-Za-z0-9_]{0,25}$/D',$prefix)!==1)throw new InvalidArgumentException();
     mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$db=mysqli_init();$db->options(MYSQLI_OPT_CONNECT_TIMEOUT,3);@$db->real_connect($host,$user,$dbPassword,$name,(int)$port);$db->set_charset('utf8mb4');
     $result=$resumeExistingLocal
-        ?MariaDbInitialOwnerProvisioning::resumeExistingLocal($db,$prefix,$email)
+        ?MariaDbInitialOwnerProvisioning::resumeExistingLocal($db,$prefix,$email,$ownerPassword)
         :MariaDbInitialOwnerProvisioning::provision($db,$prefix,$email,$ownerPassword);
     if($result->status==='identity_not_empty'){$exit=65;$out=['ok'=>false,'reason'=>$resumeExistingLocal?'LOCAL_OWNER_NOT_RESUMABLE':'IDENTITY_NOT_EMPTY'];}else$out=['ok'=>true,'status'=>$result->status];
 }catch(InvalidArgumentException){$exit=64;$out=['ok'=>false,'reason'=>'CONFIGURATION_INVALID'];}

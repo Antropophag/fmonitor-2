@@ -27,16 +27,20 @@ final class MariaDbInitialOwnerProvisioning
         finally { self::release($db, $lock); }
     }
 
-    public static function resumeExistingLocal(\mysqli $db, string $prefix, string $rawEmail): InitialOwnerProvisioningResult
+    public static function resumeExistingLocal(\mysqli $db, string $prefix, string $rawEmail, string $password): InitialOwnerProvisioningResult
     {
         IdentityAccessDefinitionSchemaMigration::assertPrefix($prefix);
         $email = mb_strtolower(trim($rawEmail));
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false
-            || preg_match('/^[^@]+@shlz\.ru$/D', $email) !== 1) throw new \InvalidArgumentException();
+            || preg_match('/^[^@]+@shlz\.ru$/D', $email) !== 1 || $password === '') throw new \InvalidArgumentException();
         if (!IdentityAccessSchemaMigration::isCompleteCompatible($db, $prefix)) throw new \RuntimeException('SCHEMA_NOT_READY');
         $lock = self::acquire($db, $prefix);
         if ($lock === null) throw new \RuntimeException('PROVISIONING_BUSY');
-        try { return self::resumeExistingLocalLocked($db, $prefix, $email); }
+        try {
+            return self::identityIsEmpty($db, $prefix)
+                ? self::provisionLocked($db, $prefix, $email, $password)
+                : self::resumeExistingLocalLocked($db, $prefix, $email);
+        }
         finally { self::release($db, $lock); }
     }
 

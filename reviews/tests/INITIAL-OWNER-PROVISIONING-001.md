@@ -366,3 +366,75 @@ which equals the corrected runtime test SHA-256. It records command
 fixture/oracle repairs and preserve the previously approved acceptance matrix.
 This verdict does not review or approve production implementation; independent
 Gate 5 and the remaining planner-selected verification/CI obligations still apply.
+
+---
+
+## Gate 3 correction review — first local startup in PR #189 — 2026-09-18
+
+- Reviewer: `/root/issue185_blocker_gate3`, independent of the corrected
+  specification, OpenSpec artifacts, test, existing implementation, and prior
+  reviews.
+- Package:
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T000139Z-9220f42799/package.json`
+  (`d304acf08fd5b499404b68cd91981646779ee67e1b429144a99e406b8e1a3d6c`).
+- Base: `e419c2b5d1e4d6c9e46edda1adf7abac6883447a`.
+- Candidate source:
+  `dee9bf11b4a6e00d5760e64c4eba5b00f723abbb703ec54ca7af127b6fb52179`;
+  executable source:
+  `4ce48cb6563e8144286c03cfafe88a9153e1fc54123d4f7fb98f54602e4be207`.
+- Corrected contract SHA-256:
+  `cb28aa540e8452d5b3c2edff192915676fc45626624f5aed7a997a626355e9f3`.
+- Corrected runtime test SHA-256:
+  `4eb4016e1f173a50655c981c991a0ae3c79da005128b621dbb5768b9c0db35b6`.
+- Verdict: **APPROVED**.
+
+### Findings
+
+No blocking or non-blocking findings in the bounded A4 correction.
+
+### Correction assessment
+
+The corrected contract now gives the explicit local flag one IdentityAccess-owned
+startup meaning under the existing database/prefix advisory lock: strict creation
+on completely empty canonical identity, read-only continuation for one eligible
+bootstrap owner, and fail-closed `LOCAL_OWNER_NOT_RESUMABLE` for every nonempty
+partial, conflicting, or ineligible state. The unflagged CLI remains the strict
+production default. Make and CLI are explicitly excluded from classifying identity
+state or suppressing failure.
+
+The RED is execution-sensitive to the real CLI, not the Make dry-run. The runtime
+test invokes `php bin/fmonitor2-provision-initial-admin.php
+--resume-existing-local --email ...` against a freshly migrated disposable
+MariaDB through a DML-only principal. Exact-source record
+`1789689676400373000-ca9de5f6a18c429db1812b6e941b96cf` exits `255` at the
+first corrected assertion because the real local-mode CLI returns exact exit `65`
+and `LOCAL_OWNER_NOT_RESUMABLE` on empty identity instead of exit `0`/`created`.
+This is the intended missing behavior. The separate architecture record
+`1789689672599561000-37cd2a3771624d7a9d799be2560a1d39` is GREEN and remains
+only a wiring/order/isolation check through `make --dry-run up`; it is not used as
+evidence that startup mutations execute.
+
+The corrected runtime oracle then requires an immediate local-mode read-only
+replay, retains direct production exact replay and developed-state rejection, and
+adds local-mode rejection with complete unchanged snapshots for both an invited
+foreign user and partial role-only identity. The previously approved sensitivity
+matrix remains present: both mandatory grants, both role statuses, both `origin`
+fields, both `assigned_by_user_id` fields, credential, blocked state, required
+permission, foreign/absent email, and a second bootstrap owner. Developed identity
+still includes changed password/profile/session, another user and credential,
+manual owner role, invitation, and auth/role/status history, with full nine-table
+pre/post equality.
+
+Concurrency coverage is preserved. Held-lock local resume still requires exact
+exit `75`/`PROVISIONING_BUSY` and unchanged developed identity; concurrent
+developed resumes retain complete exit/stdout/stderr triples and unchanged state;
+concurrent clean local-mode calls require exactly one created owner and only the
+previously accepted busy-or-replay companion outcome. Strict rollback, lock
+release, schema-not-ready, invalid configuration, redaction, and DML-only checks
+also remain intact.
+
+**Gate 3 correction is APPROVED.** Gate 4 may correct only the atomic clean-create
+versus read-only-resume selection inside IdentityAccess under the existing lock.
+Independent final review and a new exact-source CI remain required; current
+implementation, CI admission, merge, deployment, and enforcement are not approved
+by this Gate 3 verdict.

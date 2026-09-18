@@ -17,5 +17,12 @@
 ## 4. Gate 5 и PR-ready
 
 - [x] 4.1 Root фиксирует reconstructible exact-source snapshot/commit и передаёт отдельному независимому `gpt-5.6-sol/low` reviewer complete candidate; reviewer записывает Gate 5 verdict в `reviews/code/INITIAL-OWNER-PROVISIONING-001.md`.
-- [ ] 4.2 После `APPROVED` root создаёт отдельный PR с `Refs #185`, запускает один требуемый exact-source CI, собирает полную failure inventory при любом failure и доводит тот же bounded slice до GREEN/PR-ready без merge/deploy.
-- [ ] 4.3 Финальная delivery запись указывает PR/head, доказанные first/repeat/preservation/rejection сценарии, authorship/reviews/CI и оставшийся объём #185: POSIX modes, file UID, VPN route, import filters, engineers и chunking.
+- [x] 4.2 После `APPROVED` root создаёт отдельный PR с `Refs #185`, запускает один требуемый exact-source CI, собирает полную failure inventory при любом failure и доводит тот же bounded slice до GREEN/PR-ready без merge/deploy.
+- [x] 4.3 Финальная delivery запись указывает PR/head, доказанные first/repeat/preservation/rejection сценарии, authorship/reviews/CI и оставшийся объём #185: POSIX modes, file UID, VPN route, import filters, engineers и chunking.
+
+## 5. Коррекция первого local up в PR #189
+
+- [x] 5.1 Root исправляет A4/delta без нового change и добавляет RED на real local-mode CLI: clean created, immediate replay, developed replay и partial/conflict rejection; сохранить provenance/permissions/preservation/concurrency matrix.
+- [x] 5.2 Независимый reviewer одобряет corrected spec/test/RED до production correction.
+- [x] 5.3 Отдельный executor переносит атомарный выбор create/resume внутрь IdentityAccess под существующий lock, сохраняя read-only resume и strict production default.
+- [ ] 5.4 Независимый final reviewer одобряет correction candidate; новый HEAD PR #189 проходит адресные local checks и один новый exact-source CI без merge/deploy.

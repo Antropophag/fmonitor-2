@@ -2,17 +2,17 @@
 
 ## Простыми словами
 
-Первый запуск на чистой migrated database создаёт первоначального владельца. Обычная production-команда остаётся строгой и безопасно повторяется только для первозданного exact state. Локальный `make up` явно выбирает отдельную read-only проверку ранее созданного bootstrap-владельца, поэтому входы, дополнительные пользователи и история не ломают запуск и ничего не сбрасывают.
+Первый запуск на чистой migrated database создаёт первоначального владельца. Обычная production-команда остаётся строгой. Локальный `make up` явно выбирает один IdentityAccess-owned режим: он создаёт владельца только на полностью пустой identity либо read-only подтверждает ранее созданного bootstrap-владельца. Входы, дополнительные пользователи и история не ломают повторный запуск и ничего не сбрасывают.
 
 ## Actor и public seams
 
 Actor — оператор FMonitor, авторизующий bootstrap только выбранной database/prefix.
 
 - Strict production seam: `php bin/fmonitor2-provision-initial-admin.php --email <owner@shlz.ru>`.
-- Explicit local continuation: `php bin/fmonitor2-provision-initial-admin.php --resume-existing-local --email <owner@shlz.ru>`, вызываемый repository-owned `make up` после migrations.
+- Explicit local startup: `php bin/fmonitor2-provision-initial-admin.php --resume-existing-local --email <owner@shlz.ru>`, вызываемый repository-owned `make up` после migrations. Название flag сохраняется для совместимости; режим атомарно выбирает clean create либо existing-owner resume внутри IdentityAccess.
 - Application owner: `FMonitor2\IdentityAccess\MariaDbInitialOwnerProvisioning`; CLI и Make не владеют identity facts.
 
-Оба seam принимают exact direct DB/prefix config, normalized `@shlz.ru` email и внешний `FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD`. Secrets, email и DB details не выводятся. Local continuation не сравнивает и не изменяет текущий password hash.
+Оба seam принимают exact direct DB/prefix config, normalized `@shlz.ru` email и внешний `FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD`. Secrets, email и DB details не выводятся. Local startup использует secret только при clean create; при existing-owner resume не сравнивает и не изменяет текущий password hash.
 
 ## A1 — clean create и strict production replay
 
@@ -48,7 +48,13 @@ Local continuation возвращает exit 65/reason `LOCAL_OWNER_NOT_RESUMABL
 
 ## A4 — real local-up route и production isolation
 
-`Makefile up` после canonical migrations вызывает CLI только с explicit `--resume-existing-local`. Direct CLI без этого flag сохраняет strict production semantics A1. Web/FPM, migration runner и production deployment startup local continuation не выбирают. Второго bootstrap owner или отдельного persistence owner нет.
+`Makefile up` после canonical migrations вызывает CLI только с explicit `--resume-existing-local`. Под существующим advisory lock IdentityAccess SHALL выбрать ровно одно поведение по coherent identity state:
+
+- полностью пустая canonical identity → выполнить существующее строгое создание A1 и вернуть `created`;
+- однозначный пригодный bootstrap-owner → выполнить read-only continuation A2 и вернуть `already_provisioned`;
+- любое непустое partial/conflicting/ineligible состояние → вернуть `LOCAL_OWNER_NOT_RESUMABLE` по A3 без попытки создать замену.
+
+Direct CLI без этого flag сохраняет strict production semantics A1. Web/FPM, migration runner и production deployment startup local mode не выбирают. Make/CLI не выполняют SQL-классификацию, не подавляют отказ и не создают второго bootstrap/persistence owner.
 
 ## A5 — atomicity, concurrency и ошибки
 
@@ -61,10 +67,11 @@ Local continuation возвращает exit 65/reason `LOCAL_OWNER_NOT_RESUMABL
 
 ## Acceptance examples
 
-1. Clean DB + `owner@shlz.ru` → `created`, один owner и две bootstrap grants.
-2. Strict immediate repeat with same password → `already_provisioned`, snapshot unchanged.
+1. Clean DB + explicit local-mode `owner@shlz.ru` → `created`, один owner и две bootstrap grants.
+2. Immediate local-mode repeat → `already_provisioned`, snapshot unchanged.
 3. После login, смены password/profile/session, invitation и появления дополнительного user explicit local repeat → `already_provisioned`, весь snapshot unchanged.
 4. После удаления `superadministrator` grant, блокировки owner, подмены provenance, второго bootstrap-owner либо вызова с чужим email explicit local repeat → `LOCAL_OWNER_NOT_RESUMABLE`, snapshot unchanged.
-5. Тот же developed state через direct production CLI без flag → `IDENTITY_NOT_EMPTY`, snapshot unchanged.
+5. Partial nonempty identity без пригодного bootstrap-owner через local mode → `LOCAL_OWNER_NOT_RESUMABLE`, snapshot unchanged и replacement owner не создаётся.
+6. Тот же developed state через direct production CLI без flag → `IDENTITY_NOT_EMPTY`, snapshot unchanged.
 
 Не входят schema migration, demo/rebuild bootstrap, обычные invitation/role/status operations, POSIX modes, file UID, VPN route, import filters, engineers, chunking и #182.

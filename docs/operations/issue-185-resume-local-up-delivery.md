@@ -32,3 +32,11 @@ Gate 3 returned twice: first for incomplete sensitive branches, local lock/concu
 ## Remaining #185 scope
 
 This PR intentionally leaves POSIX modes, file UID ownership, VPN route, import filters, engineers and chunking for later slices. It does not take #182 or alter planner/harness algorithms, skip rules or architecture exceptions.
+
+## Correction — first local up blocker
+
+Owner feedback found that head `b2563a7a` wired `make up` directly to the read-only resume path, so a completely empty canonical identity returned `LOCAL_OWNER_NOT_RESUMABLE` instead of creating the first owner. Root corrected A4/delta and the real local-mode MariaDB oracle; correction RED record `1789689676400373000-ca9de5f6a18c429db1812b6e941b96cf` proves exit 65 on the affected CLI.
+
+Independent correction Gate 3 `/root/issue185_blocker_gate3` approved the spec/test delta. Separate executor `/root/issue185_blocker_executor` moved the empty/create versus nonempty/resume choice into `MariaDbInitialOwnerProvisioning` under the existing advisory lock while preserving the read-only resume method and strict unflagged production call. Independent correction Gate 5 `/root/issue185_blocker_gate5` approved with no findings.
+
+Correction focused GREEN records: route `1789690214558582000-b9a383d20865412882861e608ac1b66b`, full MariaDB matrix `1789690218493979000-f70726b588b94599a7e4db3672ba3d5d`, governance `1789690417639579000-317157a052f64ea9863e2e89fd63b7c5`, architecture `1789690441799056000-dbd5d425e6f4466981c5b6f07cce895e`. New correction HEAD/CI remain live external facts and are not predeclared GREEN here.
