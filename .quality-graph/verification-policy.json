@@ -282,6 +282,20 @@
       "consumers": []
     },
     {
+      "name": "legacy-object-import",
+      "patterns": [
+        "app/InstallationProcess/MariaDbLegacyImportApplication.php",
+        "app/InstallationProcess/MariaDbLegacySourceSnapshot.php",
+        "app/InstallationProcess/PilotCaseImporter.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/pilot_case_import_001_test.php",
+        "tests/InstallationProcess/pilot_snapshot_import_manual_test.php",
+        "tests/Yii2/yii2_legacy_import_db_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "initial-owner-provisioning",
       "patterns": [
         "app/IdentityAccess/MariaDbInitialOwnerProvisioning.php"

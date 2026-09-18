@@ -39,8 +39,9 @@ final class MariaDbLegacyImportApplication
         $id=(int)$row['id'];$mirrorFields=['ordadr_address','entrance','regnumber','zavnumber','workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate','responsstroicontrol','floors','weight','speed','pittype','pitmaterial','paired'];
         $mirror=$this->db->query("SELECT ".implode(',',$mirrorFields)." FROM `{$this->legacyPrefix}fm_maintable` WHERE id={$id} FOR UPDATE")->fetch_assoc();
         $expected=array_combine($mirrorFields,array_map(static fn($field)=>$row[$field]===null?null:(string)$row[$field],$mirrorFields));
-        if ($mirror !== null) foreach (['workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate'] as $field) {
-            if ($mirror[$field] !== null) $mirror[$field] = substr((string) $mirror[$field], 0, 10);
+        foreach (['workdatestart','workdatestartadjusted','workdateendadjusted','plan_finish_date','workdatefinish','ptoactdate'] as $field) {
+            $expected[$field] = self::canonicalDate($expected[$field]);
+            if ($mirror !== null) $mirror[$field] = self::canonicalDate($mirror[$field]);
         }
         if($mirror===null){$columns=implode(',',$mirrorFields);$marks=implode(',',array_fill(0,count($mirrorFields)+1,'?'));$insert=$this->db->prepare("INSERT INTO `{$this->legacyPrefix}fm_maintable`(id,{$columns}) VALUES({$marks})");$values=array_values($expected);$insert->bind_param('i'.str_repeat('s',count($values)),$id,...$values);$insert->execute();}
         elseif($mirror!==$expected)throw new \DomainException('MIRROR_CONFLICT');
@@ -59,5 +60,18 @@ final class MariaDbLegacyImportApplication
         $subject='operational_case';$subjectId=(string)$caseId;$association=$this->db->prepare("SELECT effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256 FROM `{$this->processPrefix}fm2_checklist_template_associations` WHERE subject_kind=? AND subject_id=? FOR UPDATE");$association->bind_param('ss',$subject,$subjectId);$association->execute();$storedAssociation=$association->get_result()->fetch_assoc();$snapshotVersion='legacy-checklist-template-cutover-v1';$templateHash=(string)$template['contentSha256'];
         if($storedAssociation===null){$associationVersion='checklist-template-association-v1';$now=gmdate('Y-m-d H:i:s');$insert=$this->db->prepare("INSERT INTO `{$this->processPrefix}fm2_checklist_template_associations`(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES(?,?,?,?,?,?,?,?)");$insert->bind_param('ssssisss',$associationVersion,$subject,$subjectId,$cutoff,$templateId,$snapshotVersion,$templateHash,$now);$insert->execute();$counts['templateAssociations']++;}
         elseif((string)$storedAssociation['effective_at']!==$cutoff||(int)$storedAssociation['template_snapshot_id']!==$templateId||(string)$storedAssociation['template_snapshot_version']!==$snapshotVersion||!hash_equals($templateHash,(string)$storedAssociation['template_content_sha256']))throw new \DomainException('ASSOCIATION_CONFLICT');
+    }
+
+    private static function canonicalDate(mixed $raw): ?string
+    {
+        if ($raw === null) return null;
+        $value = trim((string) $raw);
+        if ($value === '' || preg_match('/^0+$/D', $value) === 1 || str_starts_with($value, '0000-00-00')) return null;
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):(\d{2}))?$/D', $value, $parts) !== 1
+            || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+            || (isset($parts[4]) && ((int) $parts[4] > 23 || (int) $parts[5] > 59 || (int) $parts[6] > 59))) {
+            throw new \DomainException('MIRROR_DATE_INVALID');
+        }
+        return $parts[1] . '-' . $parts[2] . '-' . $parts[3];
     }
 }

@@ -146,12 +146,21 @@ final class PilotCaseImporter
             if (trim((string) $row['ordadr_address']) === ''
                 || trim((string) $row['entrance']) === ''
                 || trim((string) $row['regnumber']) === ''
+                || self::missingLegacyDate($row['workdatestart'])
+                || (self::missingLegacyDate($row['workdateendadjusted']) && self::missingLegacyDate($row['plan_finish_date']))
             ) $reasons[] = 'LEGACY_OBJECT_REQUIRED_DATA_MISSING';
             if ($pto !== null) $reasons[] = 'ORDER_HAS_PTO_ACT';
             if ($completed !== null) $reasons[] = 'LEGACY_INSTALLATION_ALREADY_COMPLETED';
             if ($reasons !== []) $rejected[] = ['installationObjectId' => $id, 'reasonCodes' => $reasons];
         }
         return $rejected;
+    }
+
+    private static function missingLegacyDate(mixed $value): bool
+    {
+        if ($value === null) return true;
+        $value = trim((string) $value);
+        return $value === '' || preg_match('/^0+$/D', $value) === 1 || str_starts_with($value, '0000-00-00');
     }
 
     private static function date(mixed $value): ?string

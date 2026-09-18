@@ -12,16 +12,17 @@ final class MariaDbLegacySourceSnapshot
         $this->source->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
         $this->source->query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
         try {
-            $statement = $this->source->prepare("SELECT id,ordadr_address,entrance,regnumber,zavnumber,workdatestart,workdatestartadjusted,workdateendadjusted,plan_finish_date,workdatefinish,CASE WHEN ptoactdate<=? THEN ptoactdate ELSE NULL END ptoactdate,responsstroicontrol,CASE WHEN factworkstartdate<=? THEN factworkstartdate ELSE NULL END factworkstartdate,object_status,fact_percent,workstarted,floors,weight,speed,pittype,pitmaterial,paired FROM fm_maintable ORDER BY id");
-            $statement->bind_param('ss', $cutoff, $cutoff);
+            $statement = $this->source->prepare("SELECT id,ordadr_address,entrance,regnumber,zavnumber,workdatestart,workdatestartadjusted,workdateendadjusted,plan_finish_date,CASE WHEN workdatefinish<=? THEN workdatefinish ELSE NULL END workdatefinish,CASE WHEN ptoactdate<=? THEN ptoactdate ELSE NULL END ptoactdate,responsstroicontrol,CASE WHEN factworkstartdate<=? THEN factworkstartdate ELSE NULL END factworkstartdate,object_status,fact_percent,workstarted,floors,weight,speed,pittype,pitmaterial,paired FROM fm_maintable ORDER BY id");
+            $statement->bind_param('sss', $cutoff, $cutoff, $cutoff);
             $statement->execute();
+            $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+            $eventCounts = $this->countsByObject('SELECT value_id object_id,COUNT(*) fact_count FROM fm_install_checklists_values_log WHERE ctime<=? GROUP BY value_id', $cutoff);
+            $attributionCounts = $this->countsByObject('SELECT v.value_id object_id,COUNT(*) fact_count FROM fm_install_checklists_values_installators_log a JOIN fm_install_checklists_values v ON v.id=a.checklist_value_id WHERE a.ctime<=? GROUP BY v.value_id', $cutoff);
             $objects = [];
-            foreach ($statement->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
+            foreach ($rows as $row) {
                 $id = (int) $row['id'];
-                $events = $this->count('SELECT COUNT(*) FROM fm_install_checklists_values_log WHERE value_id=? AND ctime<=?', $id, $cutoff);
-                $attributions = $this->count('SELECT COUNT(*) FROM fm_install_checklists_values_installators_log a JOIN fm_install_checklists_values v ON v.id=a.checklist_value_id WHERE v.value_id=? AND a.ctime<=?', $id, $cutoff);
-                $row['checklist_event_count'] = $events;
-                $row['attribution_count'] = $attributions;
+                $row['checklist_event_count'] = $eventCounts[$id] ?? 0;
+                $row['attribution_count'] = $attributionCounts[$id] ?? 0;
                 $classification = LegacyImportRouting::classify($row);
                 if (!LegacyImportRouting::importsOperationalCase($classification)) continue;
                 try {
@@ -36,7 +37,7 @@ final class MariaDbLegacySourceSnapshot
                 $row['entrance'] = trim((string) $row['entrance']);
                 $row['regnumber'] = trim((string) $row['regnumber']);
                 if ($row['ordadr_address'] === '' || $row['entrance'] === '' || $row['regnumber'] === ''
-                    || $start === null || $plannedFinish === null || $start < '2026-10-01' || $completed !== null) continue;
+                    || $start === null || $plannedFinish === null || $completed !== null) continue;
                 $row['workdatestart'] = $start;
                 $row['workdateendadjusted'] = $adjustedFinish;
                 $row['plan_finish_date'] = $plannedFinish;
@@ -54,12 +55,17 @@ final class MariaDbLegacySourceSnapshot
         }
     }
 
-    private function count(string $sql, int $id, string $cutoff): int
+    /** @return array<int,int> */
+    private function countsByObject(string $sql, string $cutoff): array
     {
         $statement = $this->source->prepare($sql);
-        $statement->bind_param('is', $id, $cutoff);
+        $statement->bind_param('s', $cutoff);
         $statement->execute();
-        return (int) $statement->get_result()->fetch_column();
+        $counts = [];
+        foreach ($statement->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
+            $counts[(int) $row['object_id']] = (int) $row['fact_count'];
+        }
+        return $counts;
     }
 
     private static function date(mixed $raw): ?string

@@ -15,12 +15,13 @@
 
 1. На каждом из пяти routes состав section links основной навигации определяется одинаково:
    - `objects.read` → «Объекты монтажа», `/pilot/objects`;
+   - `installers.read` → «Монтажники», `/pilot/installers`;
    - `construction_control.read` → «Стройконтроль», `/pilot/construction-control`;
    - `otiz.manage` → «ОТиЗ», `/pilot/otiz`;
    - `access.administer` → «Пользователи», `/pilot/admin/users`, и «Роли», `/pilot/admin/roles`.
 2. Если соответствующего effective permission нет, section link отсутствует на каждой доступной странице из матрицы.
 3. Существующая ссылка «Обратная связь», доступная аутентифицированному пользователю, сохраняется одинаково на этих surfaces и продолжает передавать текущий return path.
-4. При всех четырёх permissions упорядоченный набор canonical main links одинаков на пяти routes.
+4. При всех перечисленных permissions упорядоченный набор canonical main links одинаков на пяти routes.
 5. Ровно canonical link текущего раздела имеет `aria-current="page"`; смена текущего route не меняет остальные links.
 6. Admin menu зависит от `access.administer`, а не от конкретного admin view или названия роли.
 7. Прямой route access, login/deny outcome и server-side authorization остаются прежними. Сокрытие пункта не является enforcement.
@@ -28,7 +29,8 @@
 
 ## Acceptance examples
 
-- Пользователь с четырьмя permissions получает `200` на пяти routes, одинаковый набор main links и ровно один правильный `aria-current` на каждом.
+- Пользователь со всеми перечисленными permissions получает `200` на пяти routes, одинаковый набор main links и ровно один правильный `aria-current` на каждом.
+- Без `installers.read` `/pilot/installers` отсутствует в MAIN navigation на всех доступных routes; наличие ссылки не заменяет server-side authorization страницы.
 - Без `otiz.manage` `/pilot/otiz` отсутствует в MAIN navigation на всех доступных routes.
 - Без `construction_control.read` `/pilot/construction-control` отсутствует в MAIN navigation на всех доступных routes.
 - С `access.administer` обе admin links присутствуют вместе с любыми другими links, разрешёнными effective permissions.
