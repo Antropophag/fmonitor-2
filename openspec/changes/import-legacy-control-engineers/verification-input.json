@@ -6,6 +6,7 @@
     "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
     "app/InstallationProcess/MariaDbYiiObjectQueue.php",
     "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/IdentityAccess/MariaDbReissueUserInvitation.php",
     "app/YiiRuntime/Views/users.php",
     "specs/LEGACY-CONTROL-ENGINEER-IMPORT-001.md",
     "tests/Yii2/yii2_legacy_import_db_001_test.php",
@@ -47,10 +48,12 @@
       "seam": "authenticated canonical reads and invitation",
       "tests": [
         "tests/InstallationProcess/legacy_control_engineer_http_001_test.php",
+        "tests/InstallationProcess/invitation_reissue_http_001_test.php",
         "tests/Yii2/legacy_control_engineer_reads_001_test.php"
       ],
       "gate3_expected": {
         "tests/InstallationProcess/legacy_control_engineer_http_001_test.php": "INTENDED_RED",
+        "tests/InstallationProcess/invitation_reissue_http_001_test.php": "GREEN",
         "tests/Yii2/legacy_control_engineer_reads_001_test.php": "INTENDED_RED"
       }
     },
