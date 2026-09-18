@@ -135,3 +135,33 @@ None. The tests would fail for plausible regressions in exact-mode removal, Make
 ### Verdict
 
 `APPROVED` for exact source `d3661ac140c8514a125a471b8a6c962a343568489e36b8eb0b628d6c98644c9b`. This approval covers Gate 5 only. It does not claim exact-source CI, publication, merge, deployment, production imports, external sends, or completion of the remaining parent #185 scope.
+
+## PR #190 interruption/tmpfs delta Gate 5 rereview — 2026-09-18
+
+- Reviewer: `/root/gate5_review`; independence unchanged; authored none of the delta specification, tests, implementation, or Gate 3 decisions.
+- Verdict: `APPROVED`.
+- Reviewed base: committed candidate `07cfbc4bae79f5fb8d774f4c25c4b38c83be6629` plus the prepared correction snapshot.
+- Exact candidate source: `22df10142169dc32ba6a6ac7b3d68a7786546dcbf81f1536656de37ce19347a2`; executable-source digest `508a0224c4db58a14e78e1a2a04d22635f34fad58355a54d2f717ce9ca4b4417`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T023230Z-83f168e520/package.json`; verification-plan SHA-256 `3ae6b3a8d5b860793aab21e71d71c46e97c7634d90e3acf99fded42ab43230fb`.
+- Immutable snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260918T023230Z-83f168e520/snapshot`; patch SHA-256 `f1b9850a5ffe65061fedc068572251211f4d09798dfda3118d70233e35a19dee`.
+- Required-context SHA-256 `64066bf33612e5e676ef972040f01e268236f2368af9d57e0aa667bf25781e5d`; task-context-manifest SHA-256 `2504a4c681e32b8cc447a4e3133b172fe7a39ec0256b91566cb7f964ddb67653`.
+
+### CI failure inventory reviewed
+
+Exact-head CI run `35296146049` for `07cfbc4bae79f5fb8d774f4c25c4b38c83be6629` is retained as failed, not GREEN. The complete recorded inventory is: one `unit` `REGRESSION_FAILURE` from the stale exact-mode assertion in `tests/Deployment/yii2_local_data_bootstrap_001_test.py`; one unrelated `e2e` `REGRESSION_FAILURE` in `tests/Runtime/production_runtime_compose_001_test.php` where DB-restart readiness expected 200 and observed 503; aggregate `verify` failed because those categories failed. Plan, fast, both integration shards and governance were GREEN. The first failure is corrected in this candidate; the unrelated runtime failure remains unresolved evidence and is not silently converted into approval. No CI retry or broader CI GREEN is claimed here.
+
+### Delta and retained-invariant review
+
+The dedicated `local-integration` Compose service is correctly separated from `x-app`: it uses the runtime image and environment needed by the importers, runs only its fixed wrapper as root, stores delivered configuration in `/run/fmonitor-local-integration` tmpfs with `noexec,nosuid,nodev`, and does not mount the persistent `secrets` volume. Both Make targets select that service through the real Compose seam. `stop_signal: SIGTERM` is scoped to the one-shot service; the long-running `php` service remains unchanged on `SIGQUIT`.
+
+The wrapper starts the UID/GID 10001 importer as a child, records its PID, forwards TERM, INT and QUIT, and loops around an interrupted `wait` until the child is no longer alive. It therefore collects the child's actual nonzero signal-handler result instead of reporting success or exiting before the delayed child completion. Normal success and exact importer failure `23` retain their statuses; cleanup failure can replace only a successful importer result. EXIT cleanup remains active for ordinary and graceful-signal exits. SIGKILL cannot execute cleanup, but the delivered config and optional CA exist only in the container tmpfs, so container teardown removes them without leaving a named-volume or bind-backed private copy.
+
+All thirteen package records are source-matched GREEN. The new real-container interruption test covers TERM/INT/QUIT acknowledgement while the delivered `.ready` file exists, delayed `CHILD_REAPABLE` completion before wrapper exit, nonzero container status, actual SIGKILL, tmpfs topology, container removal, Make/service selection and absence of a persistent secrets mount. Retained exact-source evidence covers host-UID-mismatched `0600` delivery and UID 10001 reads, both canonical loaders, replay freshness, success and exact exit `23`, atomic host staging, real Make/MariaDB/local-Bitrix E2E, both DB owners, generated Compose parity, architecture/governance checks and CI-consumer registration. The tests remain sensitive to a wrapper that exits without forwarding, forwards the wrong signal, does not wait/reap, masks interruption, reuses persistent secret storage, changes the PHP service stop policy, or bypasses the dedicated service.
+
+### Complete findings
+
+None. The interruption/tmpfs correction conforms to the amended A4-A5 contract and does not weaken the previously approved mode portability, cross-UID delivery, cleanup/status, replay, loader, Make E2E, secret-redaction or scope boundaries.
+
+### Verdict
+
+`APPROVED` for exact source `22df10142169dc32ba6a6ac7b3d68a7786546dcbf81f1536656de37ce19347a2`. This is the independent delta Gate 5 decision only. Exact-source CI for the corrected committed candidate remains required; the earlier failed run and its unrelated e2e regression remain historical unresolved evidence until the delivery workflow records their disposition. Publication, merge, deploy, production imports and external sends are not approved by this review.

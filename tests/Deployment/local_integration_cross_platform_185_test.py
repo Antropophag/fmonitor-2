@@ -25,9 +25,11 @@ assert WRAPPER.is_file(), "INTENDED_RED: cross-UID container delivery wrapper mi
 makefile = (ROOT / "Makefile").read_text()
 for target in ("import-legacy", "sync-workforce"):
     block = makefile.split(target + ":", 1)[1].split("\n\n", 1)[0]
-    assert "fmonitor2-run-with-local-integration-config" in block, f"INTENDED_RED: {target} bypasses container delivery"
+    assert " local-integration " in block, f"INTENDED_RED: {target} bypasses container delivery service"
 assert "USER 10001:10001" in (ROOT / "deploy/runtime/Dockerfile").read_text()
 assert "COPY bin ./bin" in (ROOT / "deploy/runtime/Dockerfile").read_text()
+compose = (ROOT / "deploy/runtime/compose.yaml").read_text()
+assert 'entrypoint: ["bin/fmonitor2-run-with-local-integration-config"]' in compose
 
 if shutil.which("docker") is None:
     raise AssertionError("SETUP_FAILURE: Docker is required for real runtime-UID evidence")
@@ -38,7 +40,6 @@ with tempfile.TemporaryDirectory() as raw:
         raise AssertionError("SETUP_FAILURE: host UID must differ from runtime UID 10001")
     configs = {"legacy": legacy, "bitrix": bitrix}
     tag = "fmonitor2-issue185-cross-uid:" + os.urandom(5).hex()
-    volume = "fmonitor2_issue185_" + os.urandom(5).hex()
     build = subprocess.run(["docker", "build", "--quiet", "--file", "deploy/runtime/Dockerfile", "--tag", tag, "."], cwd=ROOT, text=True, capture_output=True, timeout=300)
     assert build.returncode == 0, "SETUP_FAILURE: runtime image build failed\n" + build.stderr[-2000:]
     try:
@@ -56,7 +57,7 @@ with tempfile.TemporaryDirectory() as raw:
             command = [
                 "docker", "run", "--rm", "--user", "0:0",
                 "--volume", f"{host}:/run/fmonitor-input/config:ro",
-                "--volume", f"{volume}:/run/fmonitor-secrets",
+                "--tmpfs", "/run/fmonitor-local-integration:rw,noexec,nosuid,nodev,mode=0700,uid=10001,gid=10001",
                 "--env", "FMONITOR_DB_HOST=127.0.0.1", "--env", "FMONITOR_DB_PORT=9",
                 "--env", "FMONITOR_DB_NAME=synthetic", "--env", "FMONITOR_DB_USER=synthetic",
                 "--env", "FMONITOR_DB_PASSWORD=synthetic", "--env", "FMONITOR_PROCESS_TABLE_PREFIX=fm2_",
@@ -85,17 +86,11 @@ with tempfile.TemporaryDirectory() as raw:
             assert failed.returncode == 23, "INTENDED_RED: cleanup masked importer failure"
             assert SECRET not in failed.stdout + failed.stderr
 
-        leftovers = subprocess.run(
-            ["docker", "run", "--rm", "--user", "0:0", "--volume", f"{volume}:/run/fmonitor-secrets", "--entrypoint", "sh", tag, "-c", "find /run/fmonitor-secrets -mindepth 1 -print -quit"],
-            cwd=ROOT, text=True, capture_output=True,
-        )
-        assert leftovers.returncode == 0 and leftovers.stdout == "", "INTENDED_RED: container secret survived cleanup"
         history = subprocess.run(["docker", "history", "--no-trunc", tag], cwd=ROOT, text=True, capture_output=True)
         assert history.returncode == 0 and SECRET not in history.stdout + history.stderr
         logs = subprocess.run(["docker", "ps", "-aq", "--filter", f"ancestor={tag}"], cwd=ROOT, text=True, capture_output=True)
         assert logs.returncode == 0 and logs.stdout == "", "temporary config container was not removed"
     finally:
-        subprocess.run(["docker", "volume", "rm", "-f", volume], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["docker", "image", "rm", "-f", tag], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 print("PASS: LOCAL-INTEGRATION-ENV-001 cross-platform cross-UID delivery")

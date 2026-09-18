@@ -43,6 +43,12 @@ Local integration staging SHALL принимать доступные обычн
 - **THEN** Make-target возвращает ненулевой status
 - **THEN** cleanup не заменяет его success и container-side temporary secret удаляется
 
+#### Scenario: Interrupted importer is terminated and ephemeral
+- **WHEN** после подтверждённого чтения config wrapper получает TERM, INT или QUIT либо one-shot container штатно останавливается
+- **THEN** wrapper пересылает signal дочернему importer и ждёт его завершения
+- **THEN** результат ненулевой, importer не продолжает работу и `.ready` отсутствует
+- **THEN** одноразовая копия существует только в tmpfs этого container, поэтому SIGKILL не сохраняет её в persistent secrets volume
+
 ### Requirement: Synthetic end-to-end acceptance
 Проверка SHALL использовать изолированную MariaDB и локальный synthetic Bitrix endpoint, MUST подтверждать наблюдаемые legacy/workforce facts через действующие public Make seams и MUST NOT обращаться к production systems.
 

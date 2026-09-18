@@ -48,7 +48,8 @@ with tempfile.TemporaryDirectory() as raw:
         link = tmp / (kind + ".link"); link.symlink_to(good)
         symlink = validate(kind, link)
         good.chmod(0o644); permissive = validate(kind, good); good.chmod(0o600)
-        for result in (missing, directory, symlink, permissive):
+        assert permissive.returncode == 0
+        for result in (missing, directory, symlink):
             assert result.returncode == 64
             text = result.stdout + result.stderr
             assert "LOCAL_INTEGRATION_CONFIG_INVALID" in text

@@ -53,6 +53,17 @@ services:
     profiles: ["deployment"]
     restart: "no"
 
+  local-integration:
+    <<: *image
+    environment: *runtime-environment
+    user: "0:0"
+    entrypoint: ["bin/fmonitor2-run-with-local-integration-config"]
+    tmpfs:
+      - /run/fmonitor-local-integration:rw,noexec,nosuid,nodev,mode=0700,uid=10001,gid=10001
+    stop_signal: SIGTERM
+    profiles: ["deployment"]
+    restart: "no"
+
   migrate:
     <<: *app
     environment:

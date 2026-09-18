@@ -21,7 +21,7 @@ esac
 [ -f "$source_path" ] && [ ! -L "$source_path" ] || fail
 
 umask 077
-temporary=$(mktemp /run/fmonitor-secrets/.local-integration.XXXXXX) || fail
+temporary=$(mktemp /run/fmonitor-local-integration/.local-integration.XXXXXX) || fail
 delivered=${temporary}.ready
 ca_temporary=
 ca_delivered=
@@ -33,7 +33,7 @@ cleanup() {
     if [ -n "$ca_delivered" ]; then rm -f -- "$ca_delivered" || cleanup_status=$?; fi
     return "$cleanup_status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
 
 cp -- "$source_path" "$temporary" || fail
 sync -f "$temporary" || fail
@@ -45,7 +45,7 @@ export "$environment_name=$delivered"
 
 if [ "$kind" = bitrix ] && [ -n "${FMONITOR_BITRIX_CA_INPUT:-}" ]; then
     [ -f "$FMONITOR_BITRIX_CA_INPUT" ] && [ ! -L "$FMONITOR_BITRIX_CA_INPUT" ] || fail
-    ca_temporary=$(mktemp /run/fmonitor-secrets/.local-integration-ca.XXXXXX) || fail
+    ca_temporary=$(mktemp /run/fmonitor-local-integration/.local-integration-ca.XXXXXX) || fail
     ca_delivered=${ca_temporary}.ready
     cp -- "$FMONITOR_BITRIX_CA_INPUT" "$ca_temporary" || fail
     sync -f "$ca_temporary" || fail
@@ -56,11 +56,25 @@ if [ "$kind" = bitrix ] && [ -n "${FMONITOR_BITRIX_CA_INPUT:-}" ]; then
     export FMONITOR_BITRIX_CA_FILE="$ca_delivered"
 fi
 
+child=
+forward() {
+    signal=$1
+    if [ -n "$child" ]; then kill -"$signal" "$child" 2>/dev/null || :; fi
+}
+trap 'forward TERM' TERM
+trap 'forward INT' INT
+trap 'forward QUIT' QUIT
+
+setpriv --reuid=10001 --regid=10001 --clear-groups -- "$@" &
+child=$!
 status=0
-setpriv --reuid=10001 --regid=10001 --clear-groups -- "$@" || status=$?
+while :; do
+    if wait "$child"; then status=0; else status=$?; fi
+    kill -0 "$child" 2>/dev/null || break
+done
 if ! cleanup; then
     [ "$status" -ne 0 ] && exit "$status"
     exit 74
 fi
-trap - EXIT HUP INT TERM
+trap - EXIT TERM INT QUIT
 exit "$status"

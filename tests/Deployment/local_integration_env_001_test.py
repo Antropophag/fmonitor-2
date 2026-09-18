@@ -237,7 +237,7 @@ sys.exit(0)
     assert all(event["integration_env"] == {} for event in all_events)
     assert any(".local/legacy-source.env:/run/fmonitor-input/config:ro" in " ".join(event["argv"]) for event in legacy_events)
     assert any(".local/bitrix-workforce.json:/run/fmonitor-input/config:ro" in " ".join(event["argv"]) for event in workforce_events)
-    assert all("--user 0:0" in " ".join(event["argv"]) and "fmonitor2-run-with-local-integration-config" in " ".join(event["argv"]) for event in all_events)
+    assert all(" local-integration " in " " + " ".join(event["argv"]) + " " for event in all_events)
 
     # Inspect real Compose rendering, not the fake downstream witness.
     rendered = subprocess.run(

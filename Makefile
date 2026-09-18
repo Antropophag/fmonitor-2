@@ -51,12 +51,12 @@ up:
 import-legacy:
 	@tools/delivery/local-integration-config stage legacy .env .local/legacy-source.env
 	@tools/delivery/local-integration-config legacy .local/legacy-source.env
-	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --user 0:0 --volume "$$(pwd)/.local/legacy-source.env:/run/fmonitor-input/config:ro" --entrypoint bin/fmonitor2-run-with-local-integration-config prepare legacy /run/fmonitor-input/config -- php bin/yii legacy-import/run --interactive=0
+	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/legacy-source.env:/run/fmonitor-input/config:ro" local-integration legacy /run/fmonitor-input/config -- php bin/yii legacy-import/run --interactive=0
 
 sync-workforce:
 	@tools/delivery/local-integration-config stage bitrix .env .local/bitrix-workforce.json
 	@tools/delivery/local-integration-config bitrix .local/bitrix-workforce.json
-	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --user 0:0 --volume "$$(pwd)/.local/bitrix-workforce.json:/run/fmonitor-input/config:ro" '@optional-volume:FMONITOR_BITRIX_CA_FILE_HOST:/run/fmonitor-input/bitrix-ca.pem:ro' '@optional-environment:FMONITOR_BITRIX_CA_FILE_HOST:FMONITOR_BITRIX_CA_INPUT=/run/fmonitor-input/bitrix-ca.pem' --entrypoint bin/fmonitor2-run-with-local-integration-config prepare bitrix /run/fmonitor-input/config -- php bin/yii workforce-sync/run --interactive=0
+	@$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps --volume "$$(pwd)/.local/bitrix-workforce.json:/run/fmonitor-input/config:ro" '@optional-volume:FMONITOR_BITRIX_CA_FILE_HOST:/run/fmonitor-input/bitrix-ca.pem:ro' '@optional-environment:FMONITOR_BITRIX_CA_FILE_HOST:FMONITOR_BITRIX_CA_INPUT=/run/fmonitor-input/bitrix-ca.pem' local-integration bitrix /run/fmonitor-input/config -- php bin/yii workforce-sync/run --interactive=0
 
 up-with-data:
 	@tools/delivery/local-integration-config stage legacy .env .local/legacy-source.env

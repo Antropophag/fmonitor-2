@@ -27,3 +27,9 @@ Legacy and workforce PHP loaders require an absolute readable regular non-symlin
 ## Remaining parent scope
 
 This PR does not close #185. VPN routing, import filters, engineers, chunking, #182, further owner provisioning, universal secret management, production runtime/session policy and any other parent slices remain outside this delivery.
+
+## PR #190 interruption correction
+
+Owner correction on 2026-09-18 requires wrapper signal supervision and moves one-shot copies from the persistent secrets volume to container tmpfs. Current-head CI run `35296146049` for `07cfbc4bae79f5fb8d774f4c25c4b38c83be6629` completed failure: `unit` had one `REGRESSION_FAILURE` in the stale exact-mode expectation `tests/Deployment/yii2_local_data_bootstrap_001_test.py`; `e2e` had one `REGRESSION_FAILURE` in unrelated `tests/Runtime/production_runtime_compose_001_test.php` (DB restart readiness expected 200, observed 503); `verify` failed only because those categories failed. Plan, fast, both integration shards and governance were GREEN. Both failures were inspected before correction; the unrelated e2e failure remains recorded and is not treated as GREEN.
+
+Correction implementation uses a dedicated `local-integration` Compose service with container-only tmpfs and `SIGTERM`, leaving the production `php` service on `SIGQUIT`. Wrapper PID 1 launches the UID 10001 importer as a child, forwards TERM/INT/QUIT, waits for the child, cleans the delivered files and preserves a nonzero interruption result. Focused Docker evidence covers all three graceful signals plus SIGKILL confinement and retains success, exit 23 and replay.
