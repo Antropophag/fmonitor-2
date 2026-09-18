@@ -7,6 +7,7 @@ use FMonitor2\YiiRuntime\PreopeningResources;
 use FMonitor2\InstallationProcess\MariaDbYiiCompletionQuery;
 use FMonitor2\InstallationProcess\ControlEngineerAssignmentCommand;
 use FMonitor2\IdentityAccess\MariaDbYiiLocalIdentityStore;
+use FMonitor2\InspectionEvidence\MariaDbYiiChecklist;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Response;
@@ -38,6 +39,7 @@ final class ObjectCardController extends PreopeningController
             if ($documentAccess['status'] === 'unavailable') return $this->status(503, true);
             $completionQuery = new MariaDbYiiCompletionQuery(Yii::$app->db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'));
             $completion = $completionQuery->read($id);
+            $checklistAccess = $this->checklistOwner()->access($this->actor(), $id);
             $identityStore = Yii::$app->localIdentity;
             if (!$identityStore instanceof MariaDbYiiLocalIdentityStore) throw new \RuntimeException('Identity store unavailable.');
             $resources=new PreopeningResources(Yii::$app->db);try{$assignment=$resources->assignmentReader()->read($id);}finally{$resources->close();}
@@ -50,6 +52,7 @@ final class ObjectCardController extends PreopeningController
                 'canOpen' => $this->cap('installation.open'),
                 'canCorrect' => $documentAccess['canCorrect'],
                 'canReadOriginal' => $documentAccess['canRead'],
+                'canReadChecklist' => (bool) ($checklistAccess['read'] ?? false),
                 'completion' => $completion,
                 // Completion capabilities are not yet in the canonical RBAC registry; grants() is the existing exact active-grant read seam.
                 'canRecordPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.record'),
@@ -91,6 +94,16 @@ final class ObjectCardController extends PreopeningController
         $resources = new PreopeningResources(Yii::$app->db);
         try { return $resources->originalAccess()->readAccess($this->actor(), $id); }
         finally { $resources->close(); }
+    }
+    private function checklistOwner(): MariaDbYiiChecklist
+    {
+        return new MariaDbYiiChecklist(
+            Yii::$app->db,
+            (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'),
+            (string) getenv('FMONITOR_LEGACY_TABLE_PREFIX'),
+            (string) (getenv('FMONITOR_ARTIFACT_STORAGE_ROOT') ?: getenv('FMONITOR_DEMO_PRIVATE_ROOT')),
+            (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),
+        );
     }
     public function actionMethod(string $id): Response
     {
