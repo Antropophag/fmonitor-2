@@ -9,8 +9,22 @@ try {
  for(const [name,width]of[['desktop',1280],['mobile',360]]){
   const c=await context(input.cookies,width);const page=await c.newPage();
   await page.goto(input.url+'/pilot/objects/4512');
-  const link=page.locator('a[href^="/pilot/feedback"]').first();assert(await link.count()===1,'incumbent navigation trigger');
-  assert(await link.evaluate(e=>{const r=e.getBoundingClientRect();const visual=[...e.querySelectorAll('svg, .fm2-nav-text')].some(v=>{const b=v.getBoundingClientRect();return b.width>0&&b.height>0;});return r.width>=24&&r.height>=24&&visual;}),'INTENDED_RED FEEDBACK-001 discoverable mobile navigation');
+  const navToggle=page.locator('.fm2-nav-trigger');
+  if(name==='desktop'){
+   assert(await navToggle.count()===1,'INTENDED_RED one desktop collapse control');
+   assert(await navToggle.getAttribute('aria-label')==='Свернуть меню','expanded control label');
+   assert(await navToggle.getAttribute('data-shlz-icon')==='chevron-left-duo','expanded shlz chevron');
+   assert(await navToggle.evaluate(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;}),'collapse target 44px');
+   await navToggle.focus();await page.keyboard.press('Enter');
+   await page.waitForFunction(()=>document.querySelector('.fm2-nav-trigger')?.getAttribute('aria-label')==='Развернуть меню');
+   assert(await navToggle.getAttribute('aria-label')==='Развернуть меню','collapsed control label');
+   assert(await navToggle.getAttribute('data-shlz-icon')==='chevron-right-duo','collapsed shlz chevron');
+   await page.reload();assert(await navToggle.getAttribute('aria-label')==='Развернуть меню','collapsed state persists reload');
+  }else assert(await navToggle.isVisible()===false,'mobile has no visible collapse control');
+  const link=page.locator('a.fm2-feedback-fab[href^="/pilot/feedback"]');assert(await link.count()===1,'INTENDED_RED one floating feedback action');
+  assert(await link.evaluate(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);const nav=e.closest('nav[aria-label="Основная навигация"]');const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !nav&&s.position==='fixed'&&r.width>=44&&r.height>=44&&(hit===e||e.contains(hit));}),'INTENDED_RED floating feedback is outside nav, fixed, visible and usable');
+  assert(await link.getAttribute('data-shlz-icon')==='chat','floating feedback uses shlz chat icon');
+  assert(await link.evaluate(e=>{const a=e.getBoundingClientRect(),s=getComputedStyle(e);const overlaps=b=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;const bottom=document.querySelector('.fm2-sidebar')?.getBoundingClientRect();const action=document.querySelector('main button, [role=main] button, main .shlz-button')?.getBoundingClientRect();return (!bottom||!overlaps(bottom))&&(!action||!overlaps(action))&&a.right<=innerWidth&&a.bottom<=innerHeight&&parseFloat(s.right)>=8&&parseFloat(s.bottom)>=8;}),'INTENDED_RED feedback avoids mobile nav, primary action and preserves safe edge clearance');
   await link.focus();await page.keyboard.press('Enter');await page.waitForURL('**/pilot/feedback**');
   assert(await page.locator('a[href="/pilot/admin/feedback"]').count()===0,'ordinary user has no review affordance');
   const textarea=page.locator('textarea[name="description"]');await textarea.waitFor();const id=await textarea.getAttribute('id');assert(id&&await page.locator(`label[for="${id}"]`).count()===1,'accessible label');

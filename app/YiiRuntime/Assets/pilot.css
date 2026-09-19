@@ -264,8 +264,11 @@
 .fm2-nav-trigger::-webkit-details-marker { display: none; }
 .fm2-nav-trigger:hover { color: #fff; background: rgb(255 255 255 / 7%); }
 .fm2-nav-trigger:focus-visible { outline: 2px solid var(--fm2-focus-ring-inverse); outline-offset: -2px; }
-.fm2-nav-trigger svg { flex: 0 0 24px; inline-size: 24px; block-size: 24px; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; transition: transform 220ms cubic-bezier(.2, 0, 0, 1); }
-.fm2-nav-state[open] .fm2-nav-trigger svg { transform: rotate(180deg); }
+.fm2-nav-trigger-icon { flex: 0 0 24px; inline-size: 24px; block-size: 24px; }
+.fm2-nav-trigger-icon--expand { display: block; }
+.fm2-nav-trigger-icon--collapse { display: none; }
+.fm2-nav-state[open] .fm2-nav-trigger-icon--expand { display: none; }
+.fm2-nav-state[open] .fm2-nav-trigger-icon--collapse { display: block; }
 .fm2-nav-trigger-text { display: none; white-space: nowrap; }
 
 .fm2-primary-nav {
@@ -305,6 +308,10 @@
 .fm2-nav-group { margin: 14px 13px 3px; color: rgb(255 255 255 / 38%); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .fm2-shell:has(.fm2-nav-state[open]) :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name, .fm2-nav-trigger-text) { display: block; }
 .fm2-shell:has(.fm2-nav-state[open]) .fm2-logo { inline-size: 100%; }
+.fm2-feedback-fab { position: fixed; z-index: 60; inset-inline-end: max(20px, env(safe-area-inset-right)); inset-block-end: max(20px, env(safe-area-inset-bottom)); display: grid; inline-size: 48px; block-size: 48px; place-items: center; color: #fff; background: var(--fm2-primary); border-radius: 50%; box-shadow: 0 10px 28px rgb(11 22 35 / 24%); text-decoration: none; }
+.fm2-feedback-fab:hover { background: var(--fm2-ink); }
+.fm2-feedback-fab:focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: 3px; }
+.fm2-feedback-fab-icon { inline-size: 24px; block-size: 24px; }
 .fm2-sidebar-user { display: flex; inline-size: 100%; min-block-size: 56px; padding: 10px 8px; align-items: center; gap: 10px; border-block-start: 1px solid rgb(255 255 255 / 10%); }
 .fm2-sidebar-avatar { flex: 0 0 32px; color: var(--fm2-ink); background: #fff; font-size: 10px; }
 .fm2-sidebar:not(:has(.fm2-nav-state[open])) .fm2-sidebar-user { justify-content: center; gap: 0; }
@@ -1132,6 +1139,7 @@
   .fm2-nav-trigger, .fm2-nav-group, .fm2-nav-text, .fm2-logo-name { display: none !important; }
   .fm2-sidebar-user { flex: 0 0 auto; inline-size: auto; min-block-size: 48px; padding: 4px; border: 0; }
   .fm2-sidebar-user-copy, .fm2-sidebar-avatar { display: none !important; }
+  .fm2-feedback-fab { inset-inline-end: max(12px, env(safe-area-inset-right)); inset-block-end: calc(76px + env(safe-area-inset-bottom)); }
   .fm2-logout { inline-size: 40px; block-size: 40px; }
   .fm2-main { padding: 18px 12px 32px; }
   .fm2-page-header, .fm2-object-head, .fm2-command { display: grid; }

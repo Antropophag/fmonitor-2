@@ -1,0 +1,33 @@
+{
+  "change": "refine-sidebar-navigation",
+  "planned_paths": [
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Assets/navigation.js",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Views/installers.php",
+    "config/yii/web.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "tests/Yii2/yii2_feedback_browser_001_test.php",
+    "tests/Yii2/feedback_browser.mjs",
+    "tools/verification/suites.tsv",
+    "specs/YII2-SIDEBAR-NAVIGATION-002.md",
+    "openspec/changes/refine-sidebar-navigation/proposal.md",
+    "openspec/changes/refine-sidebar-navigation/design.md",
+    "openspec/changes/refine-sidebar-navigation/tasks.md",
+    "openspec/changes/refine-sidebar-navigation/specs/runtime/sidebar-navigation/spec.md",
+    "openspec/changes/refine-sidebar-navigation/verification-input.json",
+    "docs/operations/refine-sidebar-navigation-delivery.md",
+    "reviews/code/YII2-SIDEBAR-NAVIGATION-002.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-SIDEBAR-NAVIGATION-002",
+      "acceptance_id": "A1-A5-sidebar-feedback",
+      "spec_path": "specs/YII2-SIDEBAR-NAVIGATION-002.md",
+      "seam": "real repeated authenticated Yii HTTP semantic DOM plus Chromium desktop/mobile rendering covers ordered permission-derived groups, shlz-ui icon markers, persistent collapsed/expanded affordance, and one non-navigation floating feedback action",
+      "tests": ["tests/Yii2/yii2_main_navigation_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_main_navigation_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}
