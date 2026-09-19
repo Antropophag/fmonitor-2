@@ -12,6 +12,6 @@
 
 ## 3. Gate 5 и publication
 
-- [ ] 3.1 Выполнить planner-selected focused checks без local full suite и получить независимый final review exact source с APPROVED.
+- [x] 3.1 Выполнить planner-selected focused checks без local full suite и получить независимый final review exact source с APPROVED.
 - [ ] 3.2 Зафиксировать candidate, выполнить один exact-source CI через selected existing consumer, собрать полный failure inventory при сбое и не дублировать full run локально.
 - [ ] 3.3 Push отдельной ветки и открыть один PR от актуального `origin/main`; delivery record содержит PR/head, одну clean-worktree command, first/repeat results, isolation proof и remaining limitations.
