@@ -1,8 +1,8 @@
-# Текущая цель — `refresh-yii2-shlz-ui`
+# Текущая цель — №196, `refresh-otiz-shlz-ui`
 
-Поручение владельца 2026-09-18: приостановить №157 и привести активный Yii2 UI FMonitor к цельному `shlz-ui`. Первые критичные поверхности — карточка объекта и ОТиЗ; затем тот же action/state vocabulary распространяется на остальные активные экраны.
+Поручение владельца 2026-09-18: реализовать №196 — привести активный Yii2-раздел ОТиЗ к цельному `shlz-ui`. Карточка объекта доставлена predecessor PR #195; этот bounded child охватывает только `/pilot/otiz/**`.
 
-Source: `origin/main@5bc6a2254bfaa4f5abef283795189d83f98348e3`, branch `codex/ui-shlz-refresh`, worktree `/Users/antropophag/code/fmonitor-2-main-stand`. Жизненный цикл: [refresh-yii2-shlz-ui](../../openspec/changes/refresh-yii2-shlz-ui/). Stable contract: [SHLZ-OPERATIONAL-UI-001](../../specs/SHLZ-OPERATIONAL-UI-001.md). История паузы №157: [transition record](current-delivery-goal-history-issue-157-2026-09-18-ui-transition.md).
+Base: `origin/main@af4e2ddb72a194ecfb114820f4134a34b20fdb39`; branch `codex/issue-196-shlz-ui`; worktree `/Users/antropophag/code/fmonitor-2-issue196`. Жизненный цикл: [refresh-otiz-shlz-ui](../../openspec/changes/refresh-otiz-shlz-ui/). Stable contract: [OTIZ-SHLZ-UI-001](../../specs/OTIZ-SHLZ-UI-001.md). Mutable source/PR/CI state принадлежит delivery harness.
 
 Root пишет scope/spec/tests. Отдельный gpt-5.6-sol/low executor реализует. Независимые gpt-5.6-sol/low reviewers решают planner-required Gate 3 и Gate 5. Автономное авторство spec/tests другим агентом не разрешено. Все actual authors и source checkpoints фиксируются в delivery record.
 
@@ -10,4 +10,4 @@ Root пишет scope/spec/tests. Отдельный gpt-5.6-sol/low executor р
 
 Локально только bounded focused checks и `make architecture-check`; full `make test`/`make verify` запрещён. Один exact-source GitHub CI выполняется после focused GREEN и required reviews. UNKNOWN не является GREEN или approval.
 
-Owner exception 2026-09-18: после многократных Gate 3 returns владелец явно поручил начать implementation object-card slice без ещё одного Gate 3 cycle. Gate 3 остаётся `DEFERRED_BY_OWNER`, а не APPROVED; separate executor, focused checks, independent final review и exact-source CI сохраняются.
+Scope: workflow header; register/snapshot/history; object/evidence/violation/settlement regions; action hierarchy; labelled-row/contained-scroll strategies; 320/768/1024/1440, keyboard, coarse pointer, reduced motion и JS-off. Формулы, permissions, routes, payloads, idempotency/concurrency и append-only facts неизменны. Merge/deploy/settings не выполнять.

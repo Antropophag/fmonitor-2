@@ -127,12 +127,9 @@ try {
     foreach (['/pilot/otiz/objects', '/pilot/otiz/payments', '/pilot/otiz/history'] as $internalRoute) {
         $internalPage = $http->request('GET', $internalRoute, [], $cookies);
         assertSameValue(200, $internalPage['status'], 'existing OTIZ internal route remains available ' . $internalRoute);
-        $document = new DOMDocument();
-        $previous = libxml_use_internal_errors(true);
-        try { $document->loadHTML('<?xml encoding="UTF-8">' . $internalPage['body']); }
-        finally { libxml_clear_errors(); libxml_use_internal_errors($previous); }
-        $xpath = new DOMXPath($document);
-        assertSameValue(0, $xpath->query('//nav[@aria-label="Основная навигация"]')->length, 'shared MAIN stays off out-of-scope OTIZ route ' . $internalRoute);
+        [$internalLinks] = $navigation($internalPage['body']);
+        $active = array_values(array_column(array_filter($internalLinks, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
+        assertSameValue(['/pilot/otiz'], $active, 'shared MAIN keeps OTIZ current on internal route ' . $internalRoute);
     }
 
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='otiz.manage'");

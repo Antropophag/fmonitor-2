@@ -1242,7 +1242,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: var(--fm2-motion-duration, .01ms) !important; }
   .fm2-order-helper { animation: none !important; transform: none !important; transition: none !important; }
   @starting-style { .fm2-order-helper:not([hidden]) { opacity: 1; transform: none; } }
 }
@@ -1790,3 +1790,59 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 /* Register controls wrap as a group while preserving the shared field geometry. */
 .fm2-otiz-register-toolbar { flex-wrap: wrap; }
 .fm2-otiz-register-toolbar .shlz-field { min-inline-size: 160px; }
+
+/* OTIZ settlement workspace: scoped compositions over public shlz-ui exports. */
+.fm2-otiz { --fm2-motion-duration: 160ms; display: grid; gap: 28px; min-inline-size: 0; color: var(--shlz-semantic-color-text-primary); font-variant-numeric: tabular-nums; }
+.fm2-shell:has(.fm2-otiz) { grid-template-columns: 72px minmax(0,1fr); }
+.fm2-shell:has(.fm2-otiz) :is(.fm2-nav-text,.fm2-nav-group,.fm2-logo-name,.fm2-nav-trigger-text,.fm2-sidebar-user-copy) { display: none; }
+.fm2-shell:has(.fm2-otiz) .fm2-logo { inline-size: 48px; }
+.fm2-otiz ::selection { background: var(--shlz-source-color-blue-blue-200-15); color: var(--shlz-semantic-color-text-primary); }
+.fm2-otiz :focus-visible { outline: 3px solid var(--shlz-semantic-color-action-primary); outline-offset: 3px; }
+.fm2-otiz-tabs { display: flex; gap: 4px; max-inline-size: 100%; overflow-x: auto; border-block-end: 1px solid var(--shlz-semantic-color-border-default); }
+.fm2-otiz-tabs a { min-block-size: 44px; display: inline-flex; flex: 0 0 auto; align-items: center; padding: 0 14px; color: var(--shlz-semantic-color-text-secondary); font-weight: 500; text-decoration: none; }
+.fm2-otiz-tabs a[aria-current="page"] { box-shadow: inset 0 -2px var(--shlz-semantic-color-action-primary); color: var(--shlz-semantic-color-text-primary); }
+.fm2-otiz-workflow { display: flex; align-items: end; justify-content: space-between; gap: 32px; padding: 28px 30px; border-radius: 14px; background: var(--shlz-semantic-color-surface-muted); }
+.fm2-otiz-workflow h1 { max-inline-size: 22ch; margin: 0 0 12px; font-size: clamp(25px, 3vw, 38px); letter-spacing: -.025em; }
+.fm2-otiz-workflow p { margin: 10px 0 0; color: var(--shlz-semantic-color-text-secondary); }
+.fm2-otiz-workflow-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.fm2-otiz-workflow-actions form { margin: 0; }
+.fm2-otiz-period-form { display: flex; align-items: end; gap: 12px; }
+.fm2-otiz-register-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1px; overflow: hidden; border-radius: 14px; background: var(--shlz-semantic-color-border-default); }
+.fm2-otiz-register-summary > div { display: grid; gap: 6px; padding: 18px; background: var(--shlz-semantic-color-surface-subtle); }
+.fm2-otiz-register-summary span { color: var(--shlz-semantic-color-text-muted); font-size: 12px; }
+.fm2-otiz-register-summary strong { font-size: 18px; }
+.fm2-otiz-register-toolbar { display: flex; align-items: end; gap: 12px; }
+.fm2-otiz-register-wrap { min-inline-size: 0; overflow-x: auto; }
+.fm2-otiz-register-table { inline-size: 100%; }
+.fm2-otiz-register-table a { display: grid; gap: 4px; color: var(--shlz-semantic-color-action-primary); }
+.fm2-otiz-register-table small { color: var(--shlz-semantic-color-text-muted); overflow-wrap: anywhere; }
+.fm2-otiz-object-row { min-inline-size: 0; padding-block: 28px; border-block-start: 1px solid var(--shlz-semantic-color-border-default); }
+.fm2-otiz-object-row > header { display: flex; align-items: start; justify-content: space-between; gap: 28px; margin-block-end: 20px; }
+.fm2-otiz-object-row h2,.fm2-otiz-object-row h3 { margin-block-start: 0; }
+.fm2-otiz-object-row > header h2 { margin-block-end: 5px; overflow-wrap: anywhere; font-size: 22px; }
+.fm2-otiz-object-row > header p { max-inline-size: 70ch; margin: 0; color: var(--shlz-semantic-color-text-secondary); overflow-wrap: anywhere; }
+.fm2-otiz-object-row dl { display: flex; gap: 28px; margin: 0; }
+.fm2-otiz-object-row dl div { display: grid; gap: 4px; }
+.fm2-otiz-object-row dt { color: var(--shlz-semantic-color-text-muted); font-size: 12px; }
+.fm2-otiz-object-row dd { margin: 0; font-weight: 600; white-space: nowrap; }
+.fm2-otiz-trace,.fm2-otiz-allocation,.fm2-otiz-issues,.fm2-otiz-discipline { margin-block-start: 18px; }
+.fm2-otiz-issues p { max-inline-size: 75ch; padding: 12px 14px; border-radius: 12px; background: var(--shlz-source-color-aditional-orange-15); color: var(--shlz-source-color-aditional-orange); overflow-wrap: anywhere; }
+.fm2-otiz-issues [data-severity="blocker"] { background: var(--shlz-source-color-aditional-red-100-15); color: var(--shlz-semantic-color-status-danger); }
+.fm2-otiz-discipline form,.fm2-otiz-ledger form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.fm2-otiz-discipline label { display: grid; gap: 5px; color: var(--shlz-semantic-color-text-secondary); font-size: 12px; }
+.fm2-otiz-ledger { min-inline-size: 0; max-inline-size: 100%; overflow: hidden; }
+.fm2-otiz-ledger .shlz-table-wrap { inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; }
+.fm2-otiz-ledger table { min-inline-size: 920px; }
+.fm2-otiz-ledger form { min-inline-size: 250px; }
+.fm2-otiz-feedback,.fm2-otiz-state { max-inline-size: 75ch; padding: 14px 16px; border-radius: 12px; background: var(--shlz-semantic-color-surface-muted); }
+.fm2-otiz-empty { padding: 32px; border: 1px dashed var(--shlz-semantic-color-border-default); border-radius: 14px; }
+.fm2-otiz-empty h2 { margin-block-start: 0; }
+.fm2-otiz-snapshots ul { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; background: var(--shlz-semantic-color-border-default); }
+.fm2-otiz-snapshots li a { display: flex; justify-content: space-between; gap: 18px; padding: 14px 16px; background: var(--shlz-semantic-color-surface-base); color: var(--shlz-semantic-color-action-primary); text-decoration: none; }
+@media (max-width: 760px) { .fm2-otiz-workflow,.fm2-otiz-object-row > header { align-items: stretch; flex-direction: column; } .fm2-otiz-workflow-actions,.fm2-otiz-workflow-actions > *,.fm2-otiz-workflow-actions .shlz-button { inline-size: 100%; } .fm2-otiz-period-form,.fm2-otiz-register-toolbar { align-items: stretch; flex-direction: column; } .fm2-otiz-register-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } .fm2-otiz-register-table thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); } .fm2-otiz-register-table tr,.fm2-otiz-register-table td { display: block; } .fm2-otiz-register-table tr { padding-block: 10px; border-block-end: 1px solid var(--shlz-semantic-color-border-default); } .fm2-otiz-register-table td { display: grid; grid-template-columns: minmax(90px,35%) minmax(0,1fr); gap: 12px; border: 0; } .fm2-otiz-register-table td::before { content: attr(data-label); color: var(--shlz-semantic-color-text-muted); font-size: 12px; } }
+@media (max-width: 900px) and (min-width: 681px) { .fm2-shell:has(.fm2-otiz) { grid-template-columns: 64px minmax(0,1fr); } }
+@media (max-width: 900px) { .fm2-otiz-tabs { flex-wrap: wrap; overflow: visible; } .fm2-otiz-tabs a { flex: 1 1 130px; justify-content: center; text-align: center; } }
+@media (max-width: 420px) { .fm2-otiz { gap: 20px; } .fm2-otiz-workflow { padding: 20px 16px; } .fm2-otiz-register-summary { grid-template-columns: 1fr; } .fm2-otiz-object-row dl { flex-direction: column; gap: 12px; } }
+@media (pointer: coarse) { body:has(.fm2-otiz) :is(a,button,input,select,summary) { min-inline-size: 44px; min-block-size: 44px; } body:has(.fm2-otiz) a { display: inline-flex; align-items: center; } }
+@media (max-width: 760px) { body.shlz-scope .fm2-shell .fm2-otiz-page :is(a,button,input,select,summary) { min-inline-size: 48px; min-block-size: 48px; } .fm2-otiz-page a { display: inline-flex; align-items: center; } }
+@media (prefers-reduced-motion: reduce) { .fm2-otiz { --fm2-motion-duration: 0s; } body.shlz-scope .fm2-shell .fm2-workspace .fm2-main .fm2-otiz * { animation: none; transition: none; } }
