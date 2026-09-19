@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -23,6 +24,21 @@ class RegisteredYii2FocusedBootstrapTest(unittest.TestCase):
         module = importlib.util.module_from_spec(specification)
         specification.loader.exec_module(module)
         return module.build("origin/main", CHANGE)
+
+    def current_plan(self):
+        path = ROOT / "tools/delivery/change-verification.py"
+        specification = importlib.util.spec_from_file_location("rfb_current_verification", path)
+        module = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(module)
+        return module.build("origin/main", "openspec/changes/bootstrap-registered-yii2-focused-check/verification-input.json")
+
+    @staticmethod
+    def profile_result(record):
+        stderr = Path(record["stderr_path"]).read_text()
+        matches = re.findall(r"^RUN_IN_PROFILE_RESULT (\{[^\n]+\})$", stderr, re.MULTILINE)
+        if len(matches) != 1:
+            raise AssertionError("exactly one structured profile result required")
+        return json.loads(matches[0])
 
     def fake_environment(self, mode="ok"):
         temporary = tempfile.TemporaryDirectory(prefix="rfb-fake-")
@@ -81,6 +97,8 @@ if args[:1] == ["run"]:
         print("missing pinned css path",file=sys.stderr);raise SystemExit(74)
     marker=os.environ["RFB_CHILD_MARKER"]
     open(marker,"w").write(json.dumps(args))
+    if mode == "slow-child":
+        import time;time.sleep(10)
     if mode == "test-503":
         print("HTTP 503 from tested application",file=sys.stderr);raise SystemExit(8)
     raise SystemExit(0)
@@ -119,14 +137,27 @@ raise SystemExit(75)
         self.assertEqual("acceptance", command["purpose"])
         self.assertEqual(["mariadb"], command["environment"]["services"])
 
+        own = self.current_plan()
+        own_commands = [item for item in own["commands"]
+                        if item["argv"][-1] == "tests/Verification/registered_yii2_focused_bootstrap_001_test.py"]
+        self.assertEqual(1, len(own_commands), "current package acceptance command missing")
+        self.assertEqual("acceptance:registered_yii2_focused_bootstrap_001_test", own_commands[0]["id"])
+        self.assertEqual("acceptance", own_commands[0]["purpose"])
+        self.assertNotEqual("tools/delivery/run-in-profile", own_commands[0]["argv"][0],
+                            "generic bootstrap diagnostic recursively wrapped")
+
         current_input = json.loads((ROOT / "openspec/changes/bootstrap-registered-yii2-focused-check/verification-input.json").read_text())
         self.assertEqual(["tests/Verification/registered_yii2_focused_bootstrap_001_test.py"],
                          current_input["acceptances"][0]["tests"])
         ordinary = [item for item in plan["commands"]
                     if item["argv"][-1] == "tests/Runtime/runtime_storage_001_test.php"]
+        self.assertTrue(ordinary, "ordinary integration control command absent")
         for item in ordinary:
             self.assertNotEqual("tools/delivery/run-in-profile", item["argv"][0],
                                 "generic integration command was promoted to heavy profile")
+        policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
+        self.assertEqual({TARGET: "browser"}, policy.get("focused_command_profiles"),
+                         "unregistered commands can enter heavy focused profile")
 
     def test_launcher_rejects_invalid_entry_without_child_execution(self):
         launcher = ROOT / "tools/delivery/run-in-profile"
@@ -204,8 +235,22 @@ raise SystemExit(75)
                     self.assertIn("stage=", Path(record["stderr_path"]).read_text())
                     self.assertFalse(marker.exists())
                 else:
+                    self.assertEqual(8, record["exit_code"], "child assertion exit was not preserved")
                     self.assertTrue("HTTP 503" in Path(record["stderr_path"]).read_text(),
                                     "ordinary HTTP 503 was lost or reclassified")
+
+        temporary, environment, state, _ = self.fake_environment("slow-child")
+        self.addCleanup(temporary.cleanup)
+        interrupted = subprocess.run(
+            ["python3", "tools/delivery/harness.py", "run", "--timeout", "5", "--",
+             "tools/delivery/run-in-profile", "browser", "php", TARGET],
+            cwd=ROOT, env=environment, text=True, capture_output=True,
+        )
+        interrupted_record = json.loads(Path(json.loads(interrupted.stdout)["record_path"]).read_text())
+        self.assertEqual("INTERRUPTED", interrupted_record["outcome"])
+        calls = [json.loads(line) for line in state.read_text().splitlines()]
+        self.assertTrue(any(call[:1] == ["compose"] and "down" in call for call in calls),
+                        "INTENDED_RED RFB001-D interruption skipped owned cleanup")
 
     def test_real_clean_worktree_first_repeat_and_uncommitted_candidate(self):
         plan = self.plan()
@@ -221,6 +266,11 @@ raise SystemExit(75)
             self.assertFalse((checkout / "vendor").exists())
             self.assertFalse((checkout / "node_modules").exists())
             self.assertFalse((Path(parent) / "shlz-ui").exists())
+            foreign = "rfb-foreign-" + os.urandom(5).hex()
+            subprocess.run(["docker", "network", "create", foreign], check=True,
+                           capture_output=True, text=True)
+            self.addCleanup(lambda: subprocess.run(["docker", "network", "rm", foreign],
+                                                    capture_output=True, text=True))
 
             def execute():
                 return subprocess.run(
@@ -239,6 +289,14 @@ raise SystemExit(75)
             second_record = json.loads(Path(json.loads(second.stdout)["record_path"]).read_text())
             self.assertEqual(first_record["command_id"], second_record["command_id"])
             self.assertEqual(first_record["acceptance_id"], second_record["acceptance_id"])
+            first_profile = self.profile_result(first_record)
+            second_profile = self.profile_result(second_record)
+            self.assertEqual(first_profile["image_digest"], second_profile["image_digest"],
+                             "RFB001-B unchanged dependency image/layers were not reused")
+            self.assertEqual(first_profile["source_digest"], second_profile["source_digest"])
+            self.assertEqual(0, subprocess.run(["docker", "network", "inspect", foreign],
+                                               capture_output=True).returncode,
+                             "foreign resource was removed by owned cleanup")
 
             source = checkout / "app/YiiRuntime/MainNavigation.php"
             original = source.read_text()
