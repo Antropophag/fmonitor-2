@@ -155,3 +155,12 @@ No findings. The corrections are independently justified by the stable specifica
 ### Required changes
 
 None.
+
+## CI regression test delta — 2026-09-19
+
+- Reviewer: independent `/root/issue196_ci_test_delta` (gpt-5.6-sol / low); authored neither production nor tests.
+- Source: commit `42cbee4d` plus the bounded delta in `tests/Yii2/yii2_main_navigation_001_test.php` and `tests/Support/yii2_production_web_cutover_contract.php`; source digest `c2bf36dc…`.
+- Evidence: focused records `1789812455029602000-a419d1bedbf241ad8da9f52b8055e75e` and `1789812461907868000-2b132bd2199646d9bee678ada6375784` are GREEN.
+- Verdict: `APPROVED`; findings: none.
+
+The navigation correction preserves the exact single shared MAIN requirement and now asserts `/pilot/otiz` as the sole current item on all internal OTIZ routes. The asset correction pins the exact SHA-256 of the intentionally changed served `pilot.css`. No expectation was removed without an equivalent accepted contract.
