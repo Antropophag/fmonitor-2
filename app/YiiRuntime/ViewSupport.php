@@ -46,7 +46,7 @@ final class ViewSupport
             <span class="fm2-sidebar-user-copy"><strong><?= Html::encode($identity->displayName) ?></strong><small><?= Html::encode($identity->email) ?></small></span>
             <form method="post" action="/pilot/logout" class="fm2-logout-form"><?= $csrf ?><button class="fm2-logout" type="submit" aria-label="Выйти"><svg class="fm2-user-logout-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4m4-4H9" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span class="fm2-logout-text">Выйти</span></button></form>
         </div>
-        <details class="fm2-nav-state" open><summary class="fm2-nav-trigger"><span class="fm2-nav-trigger-text">Свернуть меню</span></summary></details>
+        <?= MainNavigation::collapseControl() ?>
     </aside>
     <div class="fm2-workspace"><div class="fm2-main" id="main-content" tabindex="-1" role="main">
 <?php
