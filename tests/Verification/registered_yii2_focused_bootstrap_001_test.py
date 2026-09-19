@@ -9,6 +9,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = "tests/Yii2/yii2_main_navigation_001_test.php"
@@ -210,11 +211,22 @@ raise SystemExit(75)
 
         substituted = red.with_name("substituted-" + red.name)
         altered = json.loads(red.read_text())
-        altered["argv"][0] = "tools/other/run-in-profile"
+        altered["argv"][0] = "/attacker/tools/delivery/run-in-profile"
         substituted.write_text(json.dumps(altered))
         replacement = self.reviewer_prepare(3, red_environment, substituted)
         self.assertNotEqual(0, replacement.returncode,
-                            "Gate 3 equated a different command by basename")
+                            "Gate 3 equated a different command by canonical suffix")
+
+        sys.path.insert(0, str(ROOT / "tools/delivery"))
+        try:
+            import harness_context
+            self.assertNotEqual(
+                harness_context._normalized_argv(["/attacker/python3", TARGET]),
+                harness_context._normalized_argv(["python3", TARGET]),
+                "arbitrary interpreter path was canonicalized by basename",
+            )
+        finally:
+            sys.path.pop(0)
 
         green_environment, green = self.reviewer_evidence("ok")
         gate5 = self.reviewer_prepare(5, green_environment, green)

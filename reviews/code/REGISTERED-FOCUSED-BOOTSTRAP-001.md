@@ -116,3 +116,32 @@ No blocking or non-blocking findings in the reviewed delta.
 **APPROVED** for the post-CI Gate 5 delta at candidate source `ceb6b5162638f7c7fb8b00c04199872424fec22cd5dd182791065b9c1e78a0b3` / head `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`.
 
 The historical failed CI run is closed diagnostically but remains failed. A single authorized new-source exact CI run is still required before CI GREEN or PR-ready publication may be claimed. Any subsequent executable, specification, test, registration, or source-binding change requires applicable fresh evidence and delta review.
+
+---
+
+## PR #202 connection-defect Gate 5 delta review
+
+### Binding and evidence
+
+- Review date: 2026-09-19.
+- Verdict: **CHANGES_REQUESTED**.
+- Reviewer: independent Gate 5 delta reviewer `/root/pr202_gate5_delta`; authored neither the approved test delta nor executor commit `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`.
+- Reviewed head: `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`; candidate source `b6d169a9062dd135975e152572352faba13c203df4715ee2268c07771b36e0c5`; executable source `2ce152faae7dd6e27d5cb01c9fafb78beacabcf6f8baa6ec515fae721ed3153d`; base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T174803Z-f2c31536d5/package.json`, SHA-256 `8967f7a38e3f851c6b4aba798f7bbde9458de415ff17b456b4c02bff876c337d`; verification-plan SHA-256 `579757c79ac1ac79cd2bc71b79b19c1273eb1ec079397dcf43b36708f1904bf5`; snapshot manifest SHA-256 `4eaeedd333d1aab8c9d8de1337c3eaf5fc66c76719af4b1a1a9fbcea552cc56c`; package delta SHA-256 `277c274731b41554e0b89fdfe9ac8af0f28558ba19a1b335c8cdcf29f88ebd50`.
+- Approved Gate 3 delta: head `6fb4684f41fddd5943042409dbf15944ed1d52fc`, candidate source `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326`, recorded above in `reviews/tests/REGISTERED-FOCUSED-BOOTSTRAP-001.md`.
+- Exact-source focused GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789839828927062000-40037bb63b754a1fa804307f0eb37831.json`, exit `0`, all eight methods in 212.297 seconds. Exact-source governance GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789840049756672000-b26dd7797a394c40a99ec04fa5718d05.json`, exit `0` in 21.448 seconds.
+- Reviewer bounded checks passed: `bash -n tools/delivery/run-in-profile`; Python compilation of `tools/delivery/change-verification.py`, `tools/delivery/harness_context.py`, and the focused acceptance; `git diff --check e1ca83a2..2bdba9ec`. The canonical full local suite was not run.
+
+### Delta assessment
+
+The planner half of the correction is coherent. Profile wrapping now precedes command-key selection for every selection reason, so acceptance and changed-registered-test discovery converge on one exact wrapped command. The retained focused run proves the command keeps acceptance id/purpose, MariaDB environment, both rationales and local priority. The merge path promotes a pre-existing non-acceptance item to the acceptance identity if discovery order changes. The bootstrap diagnostic and ordinary integration controls remain unwrapped, and neither `run-in-profile` nor the Docker/DB bootstrap implementation changed in this delta.
+
+Expectation, plan-command, acceptance, evidence and coverage maps now all call the same `_normalized_argv`, and source, executable-source, environment, command id, purpose, command environment, acceptance id and outcome checks remain present. Missing evidence and wrong Gate 5 outcome are rejected. However, the exact-command rejection required by the approved delta is still incomplete.
+
+### Blocking finding
+
+1. **BLOCKING — suffix normalization still accepts arbitrary substituted executable paths as the exact wrapped command.** `_normalized_argv` canonicalizes any first argument whose final three path components are `tools/delivery/run-in-profile` to the repository command (`tools/delivery/harness_context.py:1053-1059`). Consequently `/attacker/tools/delivery/run-in-profile` collides with the plan-owned wrapper just as an absolute path to the real repository wrapper does. It also canonicalizes any path whose basename is `python` or `python3`, so `/attacker/python3` collides with the supported interpreter. The approved negative test changes only the middle directory to `tools/other/run-in-profile` (`tests/Verification/registered_yii2_focused_bootstrap_001_test.py:211-217`) and therefore misses both collisions. A substituted evidence record can retain the expected source, executable-source, environment, command id, purpose, command environment, acceptance id and outcome while naming an arbitrary executable path; normalization then selects the genuine `plan_command` and every downstream check passes. Restrict aliases to the explicitly supported spellings and the actual resolved repository wrapper path (or otherwise prove path identity), and extend the public reviewer-prepare regression with hostile same-suffix wrapper and interpreter paths. Retain acceptance of the intended relative wrapper and the real absolute repository wrapper if that absolute form is part of the contract.
+
+### Decision
+
+Gate 5 is **not approved** for candidate source `b6d169a9062dd135975e152572352faba13c203df4715ee2268c07771b36e0c5` / head `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`. Planner convergence and all previously reviewed bootstrap/lifecycle behavior are GREEN and unchanged; the only blocking issue is exact executable-path identity in reviewer normalization. Root-owned test correction, fresh Gate 3 delta approval, separate executor correction, exact-source focused/governance GREEN, and a fresh independent Gate 5 rereview are required before this connection delta can be approved. The package's recorded CI success does not cure this review finding or authorize publication/merge.
