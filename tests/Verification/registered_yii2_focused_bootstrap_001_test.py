@@ -172,9 +172,11 @@ raise SystemExit(75)
         self.assertEqual("acceptance:yii2_main_navigation_001_test", command["id"])
         self.assertEqual("acceptance", command["purpose"])
         self.assertEqual(["mariadb"], command["environment"]["services"])
-        self.assertEqual({"acceptance mapping", "changed registered test"},
-                         set(command.get("rationales", [command.get("rationale")])),
-                         "all selection reasons must merge onto the one route")
+        rationales = set(command.get("rationales", [command.get("rationale")]))
+        self.assertTrue({"acceptance mapping", "changed registered test"}.issubset(rationales),
+                        "all direct selection reasons must merge onto the one route")
+        self.assertEqual(set(), rationales - {"acceptance mapping", "changed registered test", "semantic integration closure"},
+                         "only the protected-capability closure may augment the focused route")
         self.assertEqual("local", command.get("execution", "local"),
                          "local execution priority must survive deduplication")
 

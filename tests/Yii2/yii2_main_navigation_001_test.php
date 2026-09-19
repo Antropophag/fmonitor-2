@@ -21,6 +21,7 @@ try {
 
     $routes = [
         '/pilot/objects' => '/pilot/objects',
+        '/pilot/calendar' => '/pilot/calendar',
         '/pilot/installers' => '/pilot/installers',
         '/pilot/construction-control' => '/pilot/construction-control',
         '/pilot/otiz' => '/pilot/otiz',
@@ -30,6 +31,7 @@ try {
     ];
     $labels = [
         '/pilot/objects' => 'Объекты монтажа',
+        '/pilot/calendar' => 'Календарь',
         '/pilot/installers' => 'Монтажники',
         '/pilot/construction-control' => 'Стройконтроль',
         '/pilot/otiz' => 'ОТиЗ',
@@ -96,7 +98,7 @@ try {
             usort($membership, static fn(array $a, array $b): int => strcmp($a['href'], $b['href']));
             assertSameValue($expected, $membership, 'INTENDED_RED exact permitted MAIN membership and labels on ' . $route);
             $order = array_map(static fn(array $link): string => str_starts_with($link['href'], '/pilot/feedback?') ? '/pilot/feedback' : $link['href'], $links);
-            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/construction-control','/pilot/installers','/pilot/otiz','/pilot/admin/users','/pilot/admin/roles'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
+            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/calendar','/pilot/construction-control','/pilot/installers','/pilot/otiz','/pilot/admin/users','/pilot/admin/roles'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
             assertSameValue($expectedOrder, $order, 'INTENDED_RED exact MAIN order on ' . $route);
             assertSameValue(0, $xpath->query('.//a[starts-with(@href,"/pilot/feedback")]', $main)->length, 'INTENDED_RED feedback is not a MAIN navigation item on ' . $route);
             $floatingFeedback = $xpath->query('//a[contains(concat(" ",normalize-space(@class)," ")," fm2-feedback-fab ") and starts-with(@href,"/pilot/feedback")]');
@@ -127,7 +129,7 @@ try {
             }
             $expectedTokens=[];
             foreach ([
-                'Монтаж'=>['/pilot/objects','/pilot/construction-control'],
+                'Монтаж'=>['/pilot/objects','/pilot/calendar','/pilot/construction-control'],
                 'Справочники'=>['/pilot/installers'],
                 'ОТиЗ'=>['/pilot/otiz'],
                 'Администрирование'=>['/pilot/admin/users','/pilot/admin/roles'],
@@ -138,7 +140,7 @@ try {
             }
             assertSameValue($expectedTokens,$tokens,'INTENDED_RED exact group-to-child hierarchy on '.$route);
             assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon--shlz ") and @aria-hidden="true"]', $main)->length, 'INTENDED_RED every MAIN link uses one shlz icon on ' . $route);
-            $iconByHref=['/pilot/objects'=>'circle-grid-interface-sidebar','/pilot/construction-control'=>'setting-tool-circle','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'pie-chart','/pilot/admin/users'=>'user-1','/pilot/admin/roles'=>'book'];
+            $iconByHref=['/pilot/objects'=>'circle-grid-interface-sidebar','/pilot/calendar'=>'circle-grid-interface-sidebar','/pilot/construction-control'=>'setting-tool-circle','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'pie-chart','/pilot/admin/users'=>'user-1','/pilot/admin/roles'=>'book'];
             foreach($links as$link){$name=$iconByHref[$link['href']]??null;assertSameValue(true,is_string($name),'known nav icon '.$link['href']);$svg=$xpath->query('./*[name()="svg" and @data-shlz-icon="'.$name.'"]',$main->getElementsByTagName('a')->item(array_search($link,$links,true)))->item(0);assertSameValue(true,$svg instanceof DOMElement,'exact nav icon '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'nav geometry equals pinned shlz '.$name);}
             foreach(['chevron-left-duo','chevron-right-duo']as$name){$svg=$xpath->query('//summary[contains(concat(" ",normalize-space(@class)," ")," fm2-nav-trigger ")]/*[name()="svg" and @data-shlz-icon="'.$name.'"]')->item(0);assertSameValue(true,$svg instanceof DOMElement,'collapse contains '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'collapse geometry equals pinned shlz '.$name);}
             $active = array_values(array_column(array_filter($links, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
@@ -146,7 +148,7 @@ try {
         }
     };
 
-    $canonical = ['/pilot/objects', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
+    $canonical = ['/pilot/objects', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
     $before = $fixture->facts();
     $assertMatrix($canonical, $routes);
     $assertMatrix($canonical, $routes); // repeated reads independently render and remain read-only
@@ -211,7 +213,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'objects.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('access.administer','inspection.schedule')");
     $phaseBefore = $fixture->facts();
-    $withoutAdmin = ['/pilot/objects', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz'];
+    $withoutAdmin = ['/pilot/objects', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz'];
     $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys([...$withoutAdmin, '/pilot/feedback'], true)));
     foreach (['/pilot/admin/users', '/pilot/admin/roles'] as $adminRoute) {
         assertSameValue(403, $http->request('GET', $adminRoute, [], $cookies)['status'], 'both direct admin routes retain access.administer guard ' . $adminRoute);
@@ -221,7 +223,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'access.administer')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('otiz.manage','construction_control.read')");
     $phaseBefore = $fixture->facts();
-    $restricted = ['/pilot/objects', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles'];
+    $restricted = ['/pilot/objects', '/pilot/calendar', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles'];
     $assertMatrix($restricted, array_intersect_key($routes, array_fill_keys([...$restricted, '/pilot/feedback'], true)));
     assertSameValue($phaseBefore, $fixture->facts(), 'restricted admin combination reads create no facts');
 
