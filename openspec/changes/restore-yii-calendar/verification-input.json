@@ -1,10 +1,11 @@
 {
   "change": "restore-yii-calendar",
   "planned_paths": [
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
     "app/YiiRuntime/Controllers/CalendarController.php",
     "app/YiiRuntime/Views/calendar.php",
     "app/YiiRuntime/MainNavigation.php",
-    "app/YiiRuntime/Assets/ShellAssetBundle.php",
     "config/yii/web.php",
     "tests/Yii2/yii2_calendar_003_test.php",
     "tests/Yii2/yii2_calendar_003_browser_test.php",

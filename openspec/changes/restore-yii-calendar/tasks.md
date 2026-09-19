@@ -11,13 +11,13 @@
 
 ## 3. Gate 4 — Yii implementation
 
-- [ ] 3.1 Реализовать bounded read-only Yii calendar projection с explicit date/object/schedule ordering, readiness guard и safe `400`/`503`; focused HTTP test должен стать GREEN без DDL/DML.
-- [ ] 3.2 Добавить Yii route/controller/view с существующими calendar/shlz assets и общим authentication/RBAC flow; HTTP и browser tests должны стать GREEN.
-- [ ] 3.3 Добавить permission-aware пункт `Календарь` после `Объекты` в группе `Монтаж` и exact current state; focused navigation regression должен стать GREEN.
+- [x] 3.1 Реализовать bounded read-only Yii calendar projection с explicit date/object/schedule ordering, readiness guard и safe `400`/`503`; focused HTTP test должен стать GREEN без DDL/DML.
+- [x] 3.2 Добавить Yii route/controller/view с существующими calendar/shlz assets и общим authentication/RBAC flow; HTTP и browser tests должны стать GREEN.
+- [x] 3.3 Добавить permission-aware пункт `Календарь` после `Объекты` в группе `Монтаж` и exact current state; focused navigation regression должен стать GREEN.
 
 ## 4. Focused verification и Gate 5
 
-- [ ] 4.1 Выполнить только выбранные planner commands, применимые Yii/navigation/planning regressions и `make architecture-check` (плюс mandatory PilotHttp auth check при изменении `app/PilotHttp/*.php`); сохранить bounded evidence, не запуская локально полный `make test`/`make verify`.
+- [x] 4.1 Выполнить только выбранные planner commands, применимые Yii/navigation/planning regressions и `make architecture-check` (плюс mandatory PilotHttp auth check при изменении `app/PilotHttp/*.php`); сохранить bounded evidence, не запуская локально полный `make test`/`make verify`.
 - [ ] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`, исправляя findings с delta review по изменённому source.
 - [ ] 4.3 Выполнить один exact-source GitHub CI run выбранным existing consumer, собрать полный failure inventory при сбое и записать PR/CI/UNKNOWN state без merge/deploy/settings.
 

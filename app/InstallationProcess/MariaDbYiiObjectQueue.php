@@ -8,6 +8,8 @@ use yii\db\Connection;
 
 final readonly class MariaDbYiiObjectQueue
 {
+    private const CALENDAR_ROW_LIMIT = 5000;
+
     public function __construct(private Connection$db, private string$prefix, private string$legacyPrefix, private MariaDbYiiObjectQueueProjection $projection)
     {
         foreach ([$prefix,$legacyPrefix] as $p) {
@@ -21,6 +23,19 @@ final readonly class MariaDbYiiObjectQueue
         $p = $this->prefix;
         $sql = "SELECT 1 FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='objects.read' LIMIT 1";
         return(bool)$this->db->createCommand($sql, [':id' => $actor])->queryScalar();
+    }
+    /** @return list<array{scheduleId:int,objectId:int,date:string,registration:string,address:string,entrance:string}> */
+    public function readCalendar(string $first, string $last): array
+    {
+        $table = $this->prefix . InspectionPlanningDefinitionSchemaMigration::SCHEDULES;
+        $columns = $this->db->createCommand('SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=:table ORDER BY ORDINAL_POSITION', [':table'=>$table])->queryColumn();
+        if ($columns !== ['id','installation_case_id','legacy_object_id','control_engineer_user_id','inspection_date','scheduled_by_user_id','scheduled_at']) {
+            throw new \RuntimeException('Inspection planning schema is not ready.');
+        }
+        $p=$this->prefix;$l=$this->legacyPrefix;
+        $rows=$this->db->createCommand("SELECT s.id schedule_id,s.legacy_object_id object_id,s.inspection_date event_date,m.regnumber,m.ordadr_address,m.entrance FROM `{$p}fm2_pilot_inspection_schedules` s LEFT JOIN `{$l}fm_maintable` m ON m.id=s.legacy_object_id WHERE s.inspection_date BETWEEN :first AND :last ORDER BY s.inspection_date,s.legacy_object_id,s.id LIMIT ".(self::CALENDAR_ROW_LIMIT+1),[':first'=>$first,':last'=>$last])->queryAll();
+        if(count($rows)>self::CALENDAR_ROW_LIMIT)throw new \RuntimeException('Calendar source projection overflow.');
+        return array_map(static fn(array$row):array=>['scheduleId'=>(int)$row['schedule_id'],'objectId'=>(int)$row['object_id'],'date'=>(string)$row['event_date'],'registration'=>trim((string)$row['regnumber']),'address'=>trim((string)$row['ordadr_address']),'entrance'=>trim((string)$row['entrance'])],$rows);
     }
     public function read(int$actor, string$q, string$status, int$page, int$size = 50): array
     {

@@ -34,7 +34,7 @@ try {
         assertSameValue(true, str_contains($page['body'], $needle), 'calendar markup ' . $needle);
     }
     assertSameValue(1, substr_count($page['body'], 'href="/pilot/calendar" aria-current="page"'), 'one current calendar link');
-    assertSameValue(true, strpos($page['body'], 'Объекты монтажа') < strpos($page['body'], 'Календарь'), 'calendar follows objects');
+    assertSameValue(true, strpos($page['body'], 'href="/pilot/objects" aria-label="Объекты монтажа"') < strpos($page['body'], 'href="/pilot/calendar" aria-current="page"'), 'calendar follows objects');
     assertSameValue(true, strpos($page['body'], 'data-object-id="7"') < strpos($page['body'], 'data-object-id="19"'), 'same-day numeric object order independent of insertion');
     assertSameValue(true, strpos($page['body'], '2026-10-15') < strpos($page['body'], '2026-11-03'), 'date/month chronology');
     assertSameValue(false, str_contains($page['body'], '2027-05-01'), 'out-of-range schedule hidden');

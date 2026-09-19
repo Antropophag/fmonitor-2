@@ -16,6 +16,11 @@ use yii\db\Connection;
 
 final class InstallationProcessFactory
 {
+    public static function calendar(Connection $db, string $prefix, string $legacyPrefix): MariaDbYiiObjectQueue
+    {
+        return new MariaDbYiiObjectQueue($db, $prefix, $legacyPrefix, new MariaDbYiiObjectQueueProjection($db, $prefix));
+    }
+
     public static function card(Connection $db, string $prefix, string $legacyPrefix): YiiObjectCard
     {
         $projection = new MariaDbYiiObjectCardProjection($db, $prefix, new MariaDbYiiObjectQueueProjection($db, $prefix));
