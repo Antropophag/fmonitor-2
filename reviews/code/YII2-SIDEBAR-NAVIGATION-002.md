@@ -52,3 +52,25 @@ Preserve the pinned icon root geometry and test it, consolidate the duplicated c
 The corrected source implements A1–A5 without changing permissions, routes, domain facts, session/logout behavior, or OTIZ internal navigation. Calendar remains explicitly excluded to #203. The implementation uses exact pinned shlz-ui icon assets, exposes a discoverable accessible desktop collapse/expand affordance, keeps mobile navigation free of that control, places Монтажники and ОТиЗ in their required groups, and renders feedback as a single accessible floating action outside MAIN. The focused tests would catch the plausible regressions identified in the initial review.
 
 PHP/Node syntax and `git diff --check` are clean; the prior Impeccable detector result is `[]`. No full local suite was run, in accordance with the owner prohibition. Exact-source CI/publication/deployment remain separate later delivery states and are not implied by this Gate 5 approval.
+
+---
+
+## Post-CI test-fixture delta review — 2026-09-19
+
+- **Reviewed commits:** previously approved production candidate `9dce3424`; fixture correction `b6dd075a`.
+- **Delta:** `tests/Support/yii2_production_web_cutover_contract.php`, `tests/Yii2/installer_directory_browser.mjs`, and the independent Gate 3 delta-review append only.
+- **Delta verdict:** `APPROVED`.
+
+### Findings
+
+None.
+
+### Assessment
+
+The two updated cutover hashes exactly match the committed `pilot.css` and `navigation.js` bytes. The contract still checks immutable SHA-256 values together with MIME and cache policy, so the correction restores sensitivity to the intentionally changed assets rather than weakening the runtime boundary.
+
+The installer browser locator changes from an ambiguous global submit-button selector to the accessible button named `Показать`. This selects the intended filter action after the shared shell legitimately added the separate `Выйти` form. The surrounding oracle remains sensitive: it selects exact status and availability values, awaits navigation, requires the independently expected `40 сотрудников`, reloads, and requires the filtered result to persist. A wrong form, no-op, logout, lost query, or wrong result still fails.
+
+The independent Gate 3 delta review is `APPROVED`. Focused cutover verification is GREEN; PHP and Node syntax, exact asset hashes, and `git diff --check 9dce3424..b6dd075a` are clean. The local browser environment remains unavailable and is not represented as GREEN, but the recorded GitHub runner failure reached the exact strict-mode selector and the correction narrowly resolves that diagnosed ambiguity without altering production behavior or expected user outcomes.
+
+This delta introduces no production, authorization, history, permission, navigation, security, or Calendar behavior change. The prior Gate 5 approval therefore remains valid for commit `b6dd075a`.
