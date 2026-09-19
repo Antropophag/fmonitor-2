@@ -63,3 +63,56 @@ No blocking or non-blocking findings within the agreed scope.
 **APPROVED** for Gate 5 at candidate source `021940c42f69a33f8f674a62470ff9c229e078ffd74da353e8e2c0b9d87a72c5` / head `9e46aca311e971ec3a0b2ce24b27156b3fce71a0`.
 
 Remaining delivery condition: the planner-selected full CI obligation is still `UNKNOWN` and must be satisfied by the authorized exact-source CI route before any claim of CI GREEN or publication readiness. Any code, test, specification, verification-input, registration, or source-binding change after this review requires applicable delta review and fresh evidence.
+
+---
+
+## Post-CI Gate 5 delta review — explicit service ownership
+
+### Delta binding
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer independence: unchanged; the reviewer authored neither the post-CI specification/test delta nor executor correction commit `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`.
+- Previous approved implementation: head `9e46aca311e971ec3a0b2ce24b27156b3fce71a0`, candidate source `021940c42f69a33f8f674a62470ff9c229e078ffd74da353e8e2c0b9d87a72c5`.
+- Approved post-CI Gate 3 delta: head `7fe7ce345034f846ca35f01a7e50147d40b535a9`, candidate source `cd8a0613f9cfafa8b123392e71818f373882ec5960721bf4a162d88cbf317c7a`, recorded in `reviews/tests/REGISTERED-FOCUSED-BOOTSTRAP-001.md`.
+- Reviewed correction head: `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`.
+- Candidate source: `ceb6b5162638f7c7fb8b00c04199872424fec22cd5dd182791065b9c1e78a0b3`.
+- Executable source: `5ec4346cf73aea10ba36f78fd7a654a7b4be63649c00ba013bd899686ab6ac54`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T165955Z-905b51025c/package.json`.
+- Required-context SHA-256: `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Verification-plan SHA-256: `d352bb8f621797770a68459cb54b8d5466a20ed3ae5facbf905c8a77dc17a48f`.
+- Package previous snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T160420Z-3b54c4f684/snapshot`.
+
+### CI failure inventory and correction closure
+
+Historical CI run `35453961230` at head `80e6f785f9016882595b1c3884dce04a80de5e5b` remains failed evidence. Its complete recorded inventory is coherent: plan, fast, e2e, Integration 2 and quality-results were GREEN; unit, governance and Integration 1 failed; verify reflected those failures. The actionable failures were fully grouped into (1) seven planner/harness/package regressions from assigning identity to every acceptance command and (2) generic profile lifecycle regressions in `container_composer_visibility_123_a_test.py` and `quality_graph_ci_setup_001_test.php` from unconditional MariaDB ownership. No failed job or `REGRESSION_FAILURE` class is silently relabelled or omitted.
+
+The correction closes exactly those two causes. Planner identity is now added only when `focused_command_profiles` resolves the exact registered target. The registered navigation command receives `browser --with-services`, its stable acceptance id/purpose and environment; the unrouted bootstrap acceptance and ordinary category commands retain their historical identity shape. Plain integration/browser launchers return to external-network discovery and do not set Compose ownership, start MariaDB, or invoke owned cleanup.
+
+### Alias parsing, child identity, and ownership
+
+The launcher parses `--with-services` only in the single documented position immediately after the validated profile and shifts it before snapshot/image/child processing. The exact registered prepared argv is therefore deterministic, while the child continues to receive only `php tests/Yii2/yii2_main_navigation_001_test.php`. Missing commands after profile or alias still take the pre-child usage rejection. Unknown profiles remain rejected before alias handling.
+
+Owned state is initialized false and becomes true only on the explicit service route. Only that branch creates a high-entropy project, starts and checks MariaDB, injects its network/database coordinates, and enables exact-project cleanup. Generic integration/browser calls preserve the pre-change optional connection to an already available declared network; missing/stopped external service resources are neither created nor destroyed. Governance remains service-neutral unless explicitly invoked through the alias, and the planner emits that alias only for the singleton registered browser acceptance.
+
+### Evidence and regression sensitivity
+
+- Exact-source focused matrix GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789837065434452000-b1d87e32ed3b4e5a8c9ed299daaefbe0.json`, exit `0`, all seven methods, 119.741 seconds. It covers exact planner argv/identity, alias stripping, exact child argv, first/repeat cache identity, clean-worktree/source isolation, controlled mutation RED/restored GREEN, setup stages, ordinary 503, interruption, unique owned cleanup, foreign-resource survival, generic non-promotion and legacy unrouted identity.
+- Exact-source governance GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789837025069302000-7ff267b5f9aa41fc926006765ed78ec1.json`, exit `0`.
+- Independent bounded historical regression: `python3 tests/Verification/container_composer_visibility_123_a_test.py` GREEN, eight tests in 64.048 seconds. This covers clean materialization, frozen-source isolation, deletion/mode handling, host-vendor isolation, corrupt/stale dependency rejection, read-only source/artifact writes, and shared governance/integration/browser dependency semantics.
+- Independent bounded historical regression: `php tests/Verification/quality_graph_ci_setup_001_test.php` GREEN with `QUALITY-GRAPH-CI-SETUP-001 PASSED`, including generic profile external-network and no-owned-service compatibility.
+- Reviewer static checks: shell syntax, Python compilation and correction-delta whitespace validation passed.
+
+The new assertions are sensitive to both original CI regressions: global acceptance identity assignment fails the unrouted-command checks, and leaking or omitting the alias fails exact planner/child argv checks; unconditional lifecycle ownership fails both historical consumers. The five unaffected focused methods remaining GREEN in the approved Gate 3 RED and all seven becoming GREEN after the executor correction provide appropriate delta discrimination.
+
+### Security, maintainability, and scope
+
+The alias adds no secret handling, host dependency fallback, shared-cache deletion, broad Compose discovery, evidence-schema change, CI/admission change, or product behavior. It makes ownership opt-in at a small explicit seam and retains exact-project cleanup. The planner registration remains a validated singleton and generic commands remain unpromoted. The implementation is confined to the approved planner and launcher correction; no unrelated production or workflow changes are present.
+
+### Findings and decision
+
+No blocking or non-blocking findings in the reviewed delta.
+
+**APPROVED** for the post-CI Gate 5 delta at candidate source `ceb6b5162638f7c7fb8b00c04199872424fec22cd5dd182791065b9c1e78a0b3` / head `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`.
+
+The historical failed CI run is closed diagnostically but remains failed. A single authorized new-source exact CI run is still required before CI GREEN or PR-ready publication may be claimed. Any subsequent executable, specification, test, registration, or source-binding change requires applicable fresh evidence and delta review.
