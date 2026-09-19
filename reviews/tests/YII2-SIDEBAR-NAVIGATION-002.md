@@ -81,3 +81,25 @@ The owner split is coherent, the current package no longer carries Calendar prod
 No Gate 3 findings remain for the owner-split A1-A5 scope. The corrected suite is traceable to the normative contract, exercises the real authenticated HTTP and rendered browser seams, derives exact hierarchy/icon expectations independently, preserves permission and no-facts checks, and is deterministic across repeated/role-restricted phases. Calendar is consistently excluded and remains tracked by GitHub issue #203.
 
 Gate 4 may proceed from the exact reviewed test bytes represented by source digest `9534cd00ab831b453d33f50333fecf6383fc22b3aade94dee6eb7dfeb88f5cb7`. Any later specification, test, verification-input or evidence-binding change requires applicable independent delta review.
+
+---
+
+## Post-CI fixture delta review — 2026-09-19
+
+- Reviewer independence: unchanged; the reviewer authored neither production changes nor these two fixture corrections.
+- Reviewed delta: only `tests/Support/yii2_production_web_cutover_contract.php` asset hashes and the submit locator in `tests/Yii2/installer_directory_browser.mjs`.
+- CI failure inventory supplied for review: Integration 1 failed only the two changed asset hashes; e2e failed only Playwright strict-mode ambiguity after the shared shell added the logout form; the aggregate verify job reflected those failures; all other job outcomes were known.
+- Focused evidence: `php tests/Runtime/yii2_production_web_cutover_001_test.php` exits `0` with `PASS: YII2-PRODUCTION-WEB-CUTOVER-001 single runtime`. `node --check tests/Yii2/installer_directory_browser.mjs` succeeds. The local browser profile still stops before script execution on missing Linux browser libraries and is not counted as behavioral GREEN.
+- Delta verdict: `APPROVED`.
+
+### Delta findings
+
+None.
+
+### Sensitivity assessment
+
+1. The new `pilot.css` and `navigation.js` SHA-256 values exactly equal the current production asset bytes (`fc8cc00971efc3fb3dc6a1588a1ba66879345b0e12fcc3aa2cfc093969c46d8c` and `da1bc22a4f9c28991580457a0a0e04ec498d0b9321ba5686d1eb368bb4ae8572`). The contract continues to compare immutable expected digests, MIME type and cache policy; updating the two expected values does not relax or bypass the cutover oracle and the focused test reaches GREEN.
+
+2. Replacing global `form button[type=submit]` with `getByRole('button', {name: 'Показать'})` narrows the action to the filter form's accessible submit button. It removes only the ambiguity introduced by the legitimate shared-shell `Выйти` form. Sensitivity is preserved by the preceding exact status/availability selections, awaited navigation, the independently expected `40 сотрудников` result, and reload-persistence assertion. A no-op, logout click, wrong form submission or lost filters still fails.
+
+The earlier Gate 3 approval remains valid. These fixture-only corrections may proceed to exact-source CI and final review; the local browser setup failure is neither approval nor GREEN.
