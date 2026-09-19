@@ -824,7 +824,7 @@ def build(base_ref, input_name):
         validate_argv(argv)
         focused_profile = policy.get("focused_command_profiles", {}).get(argv[-1])
         if purpose == "acceptance" and focused_profile:
-            argv = ["tools/delivery/run-in-profile", focused_profile, *argv]
+            argv = ["tools/delivery/run-in-profile", focused_profile, "--with-services", *argv]
         key = tuple(argv)
         if key not in command_by_key:
             item = {"argv": argv, "phase": phase}
@@ -832,7 +832,7 @@ def build(base_ref, input_name):
                 item.update(execution=execution, rationales=[rationale])
             else:
                 item["rationale"] = rationale
-            if typed or purpose == "acceptance":
+            if typed or focused_profile:
                 category = inventory.get(argv[-1], "governance")
                 command_id = hashlib.sha256(canonical(argv).encode()).hexdigest()[:16]
                 if purpose == "acceptance":
