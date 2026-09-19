@@ -114,3 +114,28 @@ Code conformance approval does not establish PR readiness:
 - no GREEN evidence for any other still-applicable planner obligation may be inferred from the two focused GREEN records.
 
 The candidate may proceed only to resolving/characterizing the browser result as required and running the single exact-source CI through the reviewed launcher. Until browser and CI evidence satisfy the delivery contract, do not report PR-ready, GREEN delivery, merge readiness or approval beyond this code verdict.
+
+---
+
+## Exact committed candidate rereview — 2026-09-19
+
+- Commit: `a84890fb1c51a8ac88d2907a64c34b8842051b08` (`Deduplicate verification delivery for issue 198`).
+- Exact candidate source: `8663ac889491a1fea894e4e981ab2e2db49f3aa009803d082b2871d4efc1aacc`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T125400Z-8d009fdcc7/package.json`, SHA-256 `42cbcd876f3dde06a3e91f8b32cac2c360a76a0232474478d80eb4227a1b9849`.
+- Snapshot manifest: base commit `a84890fb1c51a8ac88d2907a64c34b8842051b08`; empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`; committed bytes are the reviewed bytes and the worktree was clean at review.
+- Verification plan: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T125400Z-8d009fdcc7/verification-plan.json`, SHA-256 `2e2a2711bdf26861aa598c7858806d6fd7d5359bc1f1dcd7e12262586c8676b9`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- Root contract GREEN: record `1789822336452620000-1e3e2e0dd625457aad9dcf4705a474ff`.
+- Registered transport GREEN: record `1789822337649415000-cc12eedeb4dc4f8b9bfda1e5b2399c8f`.
+- Planner governance GREEN: record `1789822368777866000-ee27e516201741ae8dbc5d873f7d4cc6`, command `python3 tests/Verification/change_verification_001_test.py`.
+- Canonical direct browser GREEN: record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789822402853176000-fe357efaf7c746218a38860eccf28d13.json`; command `php tests/Yii2/yii2_preopening_browser_001_test.php`; exit `0`; `PASS: YII2-PREOPENING-JOURNEY-001 browser`; source drift false.
+- Findings: none.
+- Exact-source code verdict: `APPROVED`.
+- Delivery readiness: exact-source GitHub CI remains `UNKNOWN`; this review alone is not PR-ready or merge-ready approval.
+
+### Final assessment
+
+The committed implementation, stable specification, root acceptance contract, registered real-transport regression, supplemental Gate 3 approval and prior Gate 5 dispositions are coherent with issue #198. The canonical browser bytes remain unchanged from base while the redundant executable wrapper and every active direct mapping are removed. The launcher reuses only an exact applicable PR run, hydrates completed runs before authoritative required-job admission, performs at most one fallback dispatch, correlates the new run by pre/post identities, preserves one-run job ownership, and fails closed for mode, binding, incomplete response, non-success terminal conclusion and transport uncertainty. Correction-package and cosmetic-delta behavior remain bounded to A4/A5.
+
+All planner-selected local obligations and the canonical browser flow are GREEN on the exact committed candidate. No implementation, test, specification, review-history or issue-acceptance defect remains in the reviewed bytes.
+
+The remaining step is external verification: run or reuse one exact-source Quality Graph through the reviewed launcher and record its admitted result. Until that CI is confirmed GREEN, report the state as code-review approved with local verification GREEN and CI `UNKNOWN`, not PR-ready, merge-ready or fully delivered.
