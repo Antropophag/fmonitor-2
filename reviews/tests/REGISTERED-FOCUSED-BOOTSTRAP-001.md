@@ -114,3 +114,40 @@ Gate 4 may proceed against candidate source `6c4e125cb6c93188ac3c0faab16efd9d1e5
 ### Final decision
 
 No findings remain in the submitted Gate 3 delta. The correction may proceed to a separate executor. Gate 5 delta review and a new-source exact CI run remain required; the failed CI run is historical evidence, not approval or GREEN. Any change to the alias position, registration cardinality, generic lifecycle semantics, identity shape, specification or tests requires applicable independent rereview.
+
+---
+
+## PR #202 connection-defect Gate 3 delta review
+
+### Binding and independence
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer: independent Gate 3 delta reviewer `/root/pr202_gate3_delta`; authored neither the specification/test correction nor the implementation under review.
+- Reviewed head: `6fb4684f41fddd5943042409dbf15944ed1d52fc`.
+- Candidate source: `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326`; executable source: `bf31c5a8b3e695a61bce9a4c7cf7d0ab6cadb72750b4decf2854fc8fb548dc88`; base: `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T173138Z-87f8116981/package.json`; verification-plan SHA-256 `a41970b1755452bfd50ab105d353ee7249ddf68e925178eb97d0d32a289f7048`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Delta from the previously approved post-CI correction at `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`: bounded specification/design/task/delivery-record clarification plus two regression methods in the existing focused bootstrap acceptance. No implementation change is included in this Gate 3 source.
+
+### Delta assessment
+
+The route regression is sensitive to the first PR connection defect. It selects every command whose final argument is the exact navigation test, requires one command rather than merely one matching identity, fixes the complete wrapped argv, and retains the acceptance id/purpose, MariaDB environment, both `acceptance mapping` and `changed registered test` rationales, and local execution priority. A raw PHP duplicate, lost selection reason, identity/environment drift or priority weakening therefore fails the same bounded method. Existing assertions continue to keep the bootstrap diagnostic and ordinary integration controls outside recursive/heavy promotion.
+
+The reviewer-prepare regression exercises the real harness `run` and `prepare` seams with generated records. It requires wrapped `INTENDED_RED` evidence to pass Gate 3 and wrapped `GREEN` evidence to pass Gate 5; missing evidence, a different path sharing the `run-in-profile` basename, and RED supplied to Gate 5 are rejected. Inspection of the exercised `_validate_evidence` path confirms that source plus executable-source, host environment digest, command id, purpose, command environment, acceptance id and outcome remain exact checks. The authorized implementation seam is correspondingly narrow: use the same exact wrapped key for expectations, plan ownership and coverage, while canonicalizing only supported interpreter spelling and the known wrapper path rather than arbitrary basenames.
+
+The OpenSpec scenario and design match those executable expectations and do not broaden product, Docker lifecycle, evidence schema, CI/admission or generic-profile behavior. The prior disposable clean-worktree, first/repeat cache identity, candidate mutation, setup-stage, HTTP 503, interruption cleanup, foreign-resource survival and container-asset checks remain present and unchanged.
+
+### Fresh RED
+
+`python3 tests/Verification/registered_yii2_focused_bootstrap_001_test.py` completed fresh in `127.347s` with eight methods and exactly two failures:
+
+1. `test_prepared_plan_uses_exact_focused_route_and_stable_identity`: two commands selected the exact navigation test instead of one converged wrapped route.
+2. `test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly`: exact wrapped Gate 3 RED was rejected because the disconnected expectation key required GREEN.
+
+The other six methods were GREEN, including the real clean-worktree/lifecycle test. The failures are exactly the two reported connection defects, not fixture, Docker, dependency, database, cleanup or unrelated assertion failures. The canonical full local suite was not run, per owner policy.
+
+### Findings and decision
+
+No blocking or non-blocking findings remain in this bounded Gate 3 delta.
+
+Gate 3 is **APPROVED** for candidate source `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326` / head `6fb4684f41fddd5943042409dbf15944ed1d52fc`. Gate 4 may correct only focused-command deduplication and exact reviewer-key normalization against these expectations. All eight focused methods must become GREEN without weakening source, executable-source, identity, acceptance, environment, outcome, clean-worktree or lifecycle guarantees before Gate 5. CI, publication, merge and deployment remain `UNKNOWN` and are not approved by this review.
