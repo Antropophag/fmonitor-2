@@ -8,6 +8,8 @@
     "app/YiiRuntime/MainNavigation.php",
     "config/yii/web.php",
     "tests/Yii2/yii2_calendar_003_test.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "tests/Verification/registered_yii2_focused_bootstrap_001_test.py",
     "tests/Yii2/yii2_calendar_003_browser_test.php",
     "tests/Yii2/calendar_003_browser.mjs",
     "tools/verification/suites.tsv",

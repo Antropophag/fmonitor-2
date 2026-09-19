@@ -32,3 +32,10 @@
 - Seven source-bound focused records GREEN, including corrected HTTP acceptance and browser rendering.
 - Independent reviewer `/root/calendar_gate5`: `APPROVED`; both prior P1 findings resolved, no correction-delta regression.
 - Exact-source CI remains pending/UNKNOWN until the PR-triggered run completes.
+
+## Exact-source CI attempt 1 — failed and triaged
+
+- Run `35468465778`, SHA `b60db0948f437395314f51b7058c8c79e7c6af4a`; complete failed-job inventory: `governance`, `Integration (2/2)`, aggregate `verify` and `Quality Graph` only. Plan, fast, unit, e2e and Integration (1/2) passed; harness skipped as designed.
+- Complete `REGRESSION_FAILURE` inventory: `tests/Verification/registered_yii2_focused_bootstrap_001_test.py` (two assertions) and `tests/Yii2/yii2_main_navigation_001_test.php` (one assertion). No other regression failure was recorded.
+- Root cause: the newly visible Calendar link was absent from the existing shared-navigation permission matrix; the focused-bootstrap governance oracle also rejected the valid `semantic integration closure` rationale introduced by the protected navigation owner.
+- Correction: add Calendar to every applicable navigation phase/order/group/icon/current-route matrix and allow only the known closure rationale in addition to the two mandatory direct reasons. Focused navigation profile passes. A fresh exact-source run is required because source changed; this is not a same-source retry.
