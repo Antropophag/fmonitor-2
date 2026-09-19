@@ -30,6 +30,10 @@
 
 Category остаётся `integration`. Existing policy получает narrow command override/registration для exact test, направляющую его в existing browser image target, потому что этот target уже владеет pinned `shlz-ui` build/assets. MariaDB lifecycle остаётся service obligation integration. Все прочие integration commands продолжают использовать integration target.
 
+Override применяется до command-key/deduplication независимо от selection purpose. Поэтому acceptance mapping и changed-test obligation сходятся на одном wrapped argv; merge сохраняет acceptance metadata, все rationales и более строгий local execution priority.
+
+Reviewer expectations нормализуются тем же exact helper, что plan/evidence/coverage maps. Helper канонизирует только известный `tools/delivery/run-in-profile` seam и interpreter spelling; произвольный иной путь с тем же basename не становится эквивалентным.
+
 ### 4. Container-only assets and dependencies
 
 Focused image строит Composer dependencies из `composer.lock`; browser stage строит `shlz-ui` по `SHLZ_UI_REVISION` и его lockfile. Fixture получает `FMONITOR_SHLZ_CSS_PATH`/root из container environment. Snapshot source копируется в `/workspace`; host dependencies не bind-mountятся. Existing image identity labels продолжают связывать source digest и Composer lock.

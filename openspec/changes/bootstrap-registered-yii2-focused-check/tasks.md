@@ -21,3 +21,10 @@
 - [x] 4.1 Получить Gate 3 delta approval для explicit `--with-services` alias и compatibility expectations после полного CI failure inventory.
 - [x] 4.2 Отдельному executor сузить stable identity и owned lifecycle до exact registered navigation command; focused matrix и затронутые historical regressions GREEN.
 - [ ] 4.3 Получить независимый Gate 5 delta approval и один new-source PR-triggered CI; same-source rerun не выполнять.
+
+## 5. PR #202 connection correction
+
+- [x] 5.1 Root дополнить существующий bootstrap-test RED-регрессиями единого exact-test route и настоящего Gate 3/Gate 5 reviewer prepare с negative evidence cases.
+- [ ] 5.2 Получить независимый Gate 3 delta review test/spec correction.
+- [ ] 5.3 Отдельному executor исправить focused deduplication и exact reviewer-key normalization; сохранить все существующие bootstrap/lifecycle проверки GREEN.
+- [ ] 5.4 Получить независимый Gate 5 delta review и exact-source CI нового HEAD без local full suite.

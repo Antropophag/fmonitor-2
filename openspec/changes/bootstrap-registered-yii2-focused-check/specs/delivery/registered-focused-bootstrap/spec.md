@@ -50,6 +50,14 @@ Application source SHALL загружаться из materialized snapshot те�
 - **WHEN** planner включает зарегистрированный Yii2 test в prepared package
 - **THEN** package command использует focused container route с прежними command-id/acceptance-id и оператор указывает test/command-id вместо ручной dependency/DB последовательности
 
+#### Scenario: Один тест выбран по нескольким основаниям
+- **WHEN** exact зарегистрированный Yii2 test одновременно выбран acceptance mapping, changed registered test или другим planner obligation
+- **THEN** plan SHALL содержать ровно один focused container command, сохранить все selection rationales, acceptance identity и local execution priority и MUST NOT содержать прямой host PHP duplicate
+
+#### Scenario: Reviewer prepare сопоставляет wrapped command точно
+- **WHEN** Gate 3 или Gate 5 получает evidence для planner-owned wrapped navigation command
+- **THEN** expectation, plan command, coverage и evidence SHALL использовать один exact normalized key; правильный RED принимается только Gate 3, правильный GREEN — Gate 5, а missing либо подменённый command evidence MUST быть отклонён без ослабления source, identity, acceptance и environment checks
+
 #### Scenario: Interruption and test failure
 - **WHEN** child прерывается либо acceptance assertion действительно падает после успешного setup
 - **THEN** existing interruption/test-failure outcomes сохраняются и не заменяются `SETUP_FAILURE`

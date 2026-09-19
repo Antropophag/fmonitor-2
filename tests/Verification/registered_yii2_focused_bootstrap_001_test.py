@@ -101,6 +101,8 @@ if args[:1] == ["run"]:
         import time;time.sleep(10)
     if mode == "test-503":
         print("HTTP 503 from tested application",file=sys.stderr);raise SystemExit(8)
+    if mode == "intended-red":
+        print("INTENDED_RED reviewer wrapped navigation",file=sys.stderr);raise SystemExit(8)
     raise SystemExit(0)
 raise SystemExit(75)
 ''')
@@ -113,6 +115,37 @@ raise SystemExit(75)
             "RFB_CHILD_MARKER": str(marker),
         })
         return temporary, environment, state, marker
+
+    def reviewer_evidence(self, mode):
+        plan = self.plan()
+        command = next(item for item in plan["commands"]
+                       if item.get("id") == "acceptance:yii2_main_navigation_001_test")
+        temporary, environment, _, _ = self.fake_environment(mode)
+        self.addCleanup(temporary.cleanup)
+        evidence_home = Path(temporary.name) / "evidence"
+        environment["FMONITOR_HARNESS_HOME"] = str(evidence_home)
+        argv = ["python3", "tools/delivery/harness.py", "run",
+                "--command-id", command["id"], "--purpose", command["purpose"],
+                "--acceptance-id", "A1-A5-complete-main-navigation-matrix",
+                "--command-environment", json.dumps(command["environment"], separators=(",", ":"))]
+        if mode == "intended-red":
+            argv += ["--intended-red", "INTENDED_RED reviewer wrapped navigation"]
+        result = subprocess.run([*argv, "--", *command["argv"]], cwd=ROOT,
+                                env=environment, text=True, capture_output=True)
+        summary = json.loads(result.stdout)
+        record = Path(summary["record_path"])
+        self.assertEqual("INTENDED_RED" if mode == "intended-red" else "GREEN",
+                         json.loads(record.read_text())["outcome"])
+        return environment, record
+
+    def reviewer_prepare(self, gate, environment, *evidence):
+        command = ["python3", "tools/delivery/harness.py", "prepare",
+                   "--input", CHANGE, "--base", "origin/main",
+                   "--role", "reviewer", "--gate", str(gate)]
+        for path in evidence:
+            command += ["--evidence", str(path)]
+        return subprocess.run(command, cwd=ROOT, env=environment,
+                              text=True, capture_output=True)
 
     def run_launcher(self, mode="ok"):
         temporary, environment, state, marker = self.fake_environment(mode)
@@ -127,15 +160,22 @@ raise SystemExit(75)
 
     def test_prepared_plan_uses_exact_focused_route_and_stable_identity(self):
         plan = self.plan()
-        commands = [item for item in plan["commands"] if item.get("id") == "acceptance:yii2_main_navigation_001_test"]
-        self.assertEqual(1, len(commands), "INTENDED_RED RFB001-E registered command identity missing")
+        commands = [item for item in plan["commands"] if item["argv"][-1] == TARGET]
+        self.assertEqual(1, len(commands),
+                         "INTENDED_RED RFB001-E exact test has duplicate host/container routes")
         command = commands[0]
         self.assertEqual(
             ["tools/delivery/run-in-profile", "browser", "--with-services", "php", TARGET], command["argv"],
             "INTENDED_RED RFB001-E prepared command bypasses focused bootstrap",
         )
+        self.assertEqual("acceptance:yii2_main_navigation_001_test", command["id"])
         self.assertEqual("acceptance", command["purpose"])
         self.assertEqual(["mariadb"], command["environment"]["services"])
+        self.assertEqual({"acceptance mapping", "changed registered test"},
+                         set(command.get("rationales", [command.get("rationale")])),
+                         "all selection reasons must merge onto the one route")
+        self.assertEqual("local", command.get("execution", "local"),
+                         "local execution priority must survive deduplication")
 
         own = self.current_plan()
         own_commands = [item for item in own["commands"]
@@ -158,6 +198,32 @@ raise SystemExit(75)
         policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
         self.assertEqual({TARGET: "browser"}, policy.get("focused_command_profiles"),
                          "unregistered commands can enter heavy focused profile")
+
+    def test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly(self):
+        red_environment, red = self.reviewer_evidence("intended-red")
+        gate3 = self.reviewer_prepare(3, red_environment, red)
+        self.assertEqual(0, gate3.returncode,
+                         "INTENDED_RED Gate 3 rejected exact wrapped RED: " + gate3.stderr)
+
+        missing = self.reviewer_prepare(3, red_environment)
+        self.assertNotEqual(0, missing.returncode, "Gate 3 accepted missing evidence")
+
+        substituted = red.with_name("substituted-" + red.name)
+        altered = json.loads(red.read_text())
+        altered["argv"][0] = "tools/other/run-in-profile"
+        substituted.write_text(json.dumps(altered))
+        replacement = self.reviewer_prepare(3, red_environment, substituted)
+        self.assertNotEqual(0, replacement.returncode,
+                            "Gate 3 equated a different command by basename")
+
+        green_environment, green = self.reviewer_evidence("ok")
+        gate5 = self.reviewer_prepare(5, green_environment, green)
+        self.assertEqual(0, gate5.returncode,
+                         "INTENDED_RED Gate 5 rejected exact wrapped GREEN: " + gate5.stderr)
+
+        wrong_gate5 = self.reviewer_prepare(5, red_environment, red)
+        self.assertNotEqual(0, wrong_gate5.returncode,
+                            "Gate 5 accepted RED instead of required GREEN")
 
     def test_launcher_rejects_invalid_entry_without_child_execution(self):
         launcher = ROOT / "tools/delivery/run-in-profile"
