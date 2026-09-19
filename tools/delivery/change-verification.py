@@ -823,7 +823,7 @@ def build(base_ref, input_name):
     def add(argv, phase, rationale, purpose="category", execution="local"):
         validate_argv(argv)
         focused_profile = policy.get("focused_command_profiles", {}).get(argv[-1])
-        if purpose == "acceptance" and focused_profile:
+        if focused_profile:
             argv = ["tools/delivery/run-in-profile", focused_profile, "--with-services", *argv]
         key = tuple(argv)
         if key not in command_by_key:
@@ -851,9 +851,16 @@ def build(base_ref, input_name):
             item["rationales"] = sorted(set(existing_rationales + [rationale]))
             if "execution" in item and execution == "local":
                 item["execution"] = "local"
-            if rationale.startswith("generated") and typed:
-                if item.get("purpose") != "acceptance":
-                    item["purpose"] = purpose
+            if purpose == "acceptance" and item.get("purpose") != "acceptance":
+                category = inventory.get(argv[-1], "governance")
+                stem = Path(argv[-1]).stem
+                item.update(
+                    purpose="acceptance",
+                    id="acceptance:" + stem.removeprefix("ci_complete_"),
+                    environment=policy.get("environment_profiles", {}).get(category, {}),
+                )
+            elif rationale.startswith("generated") and typed and item.get("purpose") != "acceptance":
+                item["purpose"] = purpose
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):

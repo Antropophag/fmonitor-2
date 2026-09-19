@@ -1047,8 +1047,20 @@ def _load_change_verification(root):
     return module
 
 
+def _normalized_argv(argv):
+    if not argv:
+        return tuple()
+    first = argv[0]
+    path = PurePosixPath(first)
+    if path.name in {"python", "python3"}:
+        first = "python3"
+    elif tuple(path.parts[-3:]) == ("tools", "delivery", "run-in-profile"):
+        first = "tools/delivery/run-in-profile"
+    return (first, *argv[1:])
+
+
 def _mapped_commands(plan):
-    return {tuple(item["argv"]) for item in plan.get("commands", [])
+    return {_normalized_argv(item["argv"]) for item in plan.get("commands", [])
             if "acceptance mapping" in item.get("rationales", [item.get("rationale")])}
 
 
@@ -1060,18 +1072,9 @@ def _gate_expectations(plan, gate):
         declared = acceptance.get("gate3_expected")
         for test in acceptance.get("tests", []):
             by_test[test] = declared[test] if declared is not None else "INTENDED_RED"
-    return {tuple(item["argv"]): by_test[item["argv"][-1]]
+    return {_normalized_argv(item["argv"]): by_test[item["argv"][-1]]
             for item in plan.get("commands", [])
             if "acceptance mapping" in item.get("rationales", [item.get("rationale")])}
-
-
-def _normalized_argv(argv):
-    if not argv:
-        return tuple()
-    first = Path(argv[0]).name
-    if first.startswith("python"):
-        first = "python3"
-    return (first, *argv[1:])
 
 
 def _validate_evidence(path, source, expectations, plan_commands=None, executable_source=None,
