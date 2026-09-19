@@ -55,7 +55,7 @@ final class Yii2AuthFixture
             'FMONITOR_YII_RUNTIME_PATH' => $this->temporaryRoot . '/runtime',
             'FMONITOR_TRUSTED_REQUEST_HOST' => 'fmonitor.example.test',
             'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'http',
-            'FMONITOR_SHLZ_CSS_PATH' => dirname($this->repositoryRoot) . '/shlz-ui/packages/styles/dist/shlz.css',
+            'FMONITOR_SHLZ_CSS_PATH' => (string) getenv('FMONITOR_SHLZ_CSS_PATH'),
         ];
     }
 

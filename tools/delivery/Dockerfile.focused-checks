@@ -22,6 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && git -C /shlz-ui checkout --detach "$SHLZ_UI_REVISION" \
     && rm -rf /shlz-ui/.git \
     && npm --prefix /shlz-ui ci \
+    && sed '/await generateSourceReferences(root);/d' /shlz-ui/tools/generate.mjs > /shlz-ui/tools/generate-focused.mjs \
+    && cd /shlz-ui \
+    && node /shlz-ui/tools/generate-focused.mjs \
+    && rm /shlz-ui/tools/generate-focused.mjs \
     && node -e 'const fs=require("fs"),p="/shlz-ui/node_modules/playwright-core/package.json",v=require(p);v.exports["./browsers.json"]="./browsers.json";fs.writeFileSync(p,JSON.stringify(v))' \
     && PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
         node /shlz-ui/node_modules/playwright/cli.js install chromium
@@ -71,6 +75,7 @@ ENV FMONITOR_PROFILE=integration
 
 FROM common AS browser
 COPY --from=shlz-ui /shlz-ui /shlz-ui
+COPY --from=shlz-ui /shlz-ui/packages/styles/dist/shlz.css /shlz-ui/packages/styles/dist/shlz.css
 COPY --from=shlz-ui /ms-playwright /ms-playwright
 ENV FMONITOR_PROFILE=browser \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright

@@ -2,7 +2,7 @@
 set -u
 
 usage() {
-    echo 'usage: run-in-profile <governance|integration|browser> <command> [args...]' >&2
+    echo 'usage: run-in-profile <governance|integration|browser> [--with-services] <command> [args...]' >&2
     exit 2
 }
 
@@ -13,17 +13,38 @@ case "$profile" in
     governance|integration|browser) ;;
     *) usage ;;
 esac
+with_services=false
+if [[ "${1:-}" == "--with-services" ]]; then
+    with_services=true
+    shift
+fi
+[[ $# -ge 1 ]] || usage
 
 root=$(git -C "$(dirname "$0")/../.." rev-parse --show-toplevel) || exit 2
 execution_tmp=$(mktemp -d "${TMPDIR:-/tmp}/fmonitor-profile.XXXXXXXX") || exit 2
 materialized=$execution_tmp/source
+compose_project=
+compose_owned=false
 cleanup() {
+    if [[ "$compose_owned" == true && -n "$compose_project" && -d "$materialized" ]]; then
+        docker compose --project-name "$compose_project" -f "$materialized/compose.test.yaml" \
+            down --volumes >/dev/null 2>&1 || true
+    fi
     if [[ -d "$materialized" ]]; then
         git -C "$root" worktree remove --force "$materialized" >/dev/null 2>&1 || true
     fi
     rm -rf -- "$execution_tmp"
 }
 trap cleanup EXIT HUP INT TERM
+
+setup_failure() {
+    echo "SETUP_FAILURE: stage=$1" >&2
+    exit "${2:-2}"
+}
+
+if [[ "$with_services" == true ]]; then
+    docker version >/dev/null 2>&1 || setup_failure docker
+fi
 
 source_digest() {
     local source_root=$1
@@ -60,31 +81,35 @@ set -a
 set +a
 
 recipe=$materialized/tools/delivery/Dockerfile.focused-checks
-recipe_hash=$(sha256sum "$recipe" "$materialized/tools/delivery/dependencies.env" \
-    "$materialized/composer.json" "$materialized/composer.lock" \
-    "$materialized/tools/delivery/Dockerfile.focused-checks.dockerignore" \
-    <(printf '%s' "$executable_source") \
-    | sha256sum | cut -c1-16)
+recipe_hash=$({
+    sha256sum "$recipe" "$materialized/tools/delivery/dependencies.env" \
+        "$materialized/composer.json" "$materialized/composer.lock" \
+        "$materialized/tools/delivery/Dockerfile.focused-checks.dockerignore" \
+        | cut -d' ' -f1
+    printf '%s\n' "$executable_source"
+} | sha256sum | cut -c1-16)
 image="fmonitor2-focused-${profile}:${recipe_hash}"
 git_sha=$(git -C "$materialized" rev-parse HEAD) || exit 2
 composer_lock_sha=$(sha256sum "$materialized/composer.lock" | cut -d' ' -f1) || exit 2
 
-docker build --quiet --target "$profile" --tag "$image" \
-    --label "org.opencontainers.image.revision=$git_sha" \
-    --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
-    --build-arg "EXECUTABLE_SOURCE=$executable_source" \
-    --build-arg "PHP_IMAGE=$PHP_IMAGE" \
-    --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
-    --build-arg "NODE_VERSION=$NODE_VERSION" \
-    --build-arg "NODE_BOOKWORM_IMAGE_DIGEST=$NODE_BOOKWORM_IMAGE_DIGEST" \
-    --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
-    --build-arg "PYTHON_IMAGE_DIGEST=$PYTHON_IMAGE_DIGEST" \
-    --build-arg "COMPOSER_VERSION=$COMPOSER_VERSION" \
-    --build-arg "COMPOSER_IMAGE_DIGEST=$COMPOSER_IMAGE_DIGEST" \
-    --build-arg "UV_VERSION=$UV_VERSION" \
-    --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
-    --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
-    --file "$recipe" "$materialized" >/dev/null || exit $?
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+    docker build --quiet --target "$profile" --tag "$image" \
+        --label "org.opencontainers.image.revision=$git_sha" \
+        --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
+        --build-arg "EXECUTABLE_SOURCE=$executable_source" \
+        --build-arg "PHP_IMAGE=$PHP_IMAGE" \
+        --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
+        --build-arg "NODE_VERSION=$NODE_VERSION" \
+        --build-arg "NODE_BOOKWORM_IMAGE_DIGEST=$NODE_BOOKWORM_IMAGE_DIGEST" \
+        --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
+        --build-arg "PYTHON_IMAGE_DIGEST=$PYTHON_IMAGE_DIGEST" \
+        --build-arg "COMPOSER_VERSION=$COMPOSER_VERSION" \
+        --build-arg "COMPOSER_IMAGE_DIGEST=$COMPOSER_IMAGE_DIGEST" \
+        --build-arg "UV_VERSION=$UV_VERSION" \
+        --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
+        --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
+        --file "$recipe" "$materialized" >/dev/null || setup_failure dependencies "$?"
+fi
 image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
 image_lock_sha=$(docker image inspect "$image_digest" \
     --format '{{index .Config.Labels "org.fmonitor.composer-lock-sha256"}}') || exit 2
@@ -96,7 +121,34 @@ if [[ "$image_lock_sha" != "$composer_lock_sha" || "$image_source" != "$executab
 fi
 
 profile_run_args=()
-if [[ "$profile" == integration || "$profile" == browser ]]; then
+if [[ "$with_services" == true ]]; then
+    compose_project="fmonitor2-focused-$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
+    compose_owned=true
+    export FMONITOR_TEST_DB_PORT=0
+    docker compose --project-name "$compose_project" -f "$materialized/compose.test.yaml" \
+        up --detach --wait test-db || setup_failure db_start "$?"
+    docker compose --project-name "$compose_project" -f "$materialized/compose.test.yaml" \
+        exec -T test-db mariadb-admin ping --silent -h 127.0.0.1 \
+        || setup_failure db_readiness "$?"
+    network_name=$(
+        cd "$materialized" || exit 2
+        docker compose --project-name "$compose_project" -f compose.test.yaml config --format json |
+            python3 -c 'import json, sys
+try:
+    value = json.load(sys.stdin).get("networks", {}).get("default", {}).get("name")
+    if isinstance(value, str) and value:
+        print(value)
+except (AttributeError, json.JSONDecodeError):
+    pass'
+    )
+    [[ -n "$network_name" ]] || setup_failure db_readiness
+    docker network inspect "$network_name" >/dev/null 2>&1 || setup_failure db_readiness
+    profile_run_args+=(
+        --network "$network_name"
+        --env FMONITOR_TEST_DB_HOST=test-db
+        --env FMONITOR_TEST_DB_PORT=3306
+    )
+elif [[ "$profile" == integration || "$profile" == browser ]]; then
     network_name=$(
         cd "$materialized" || exit 2
         docker compose -f compose.test.yaml config --format json |
@@ -123,6 +175,7 @@ if [[ -d "$root/.local" ]]; then
 fi
 
 started=$(python3 -c 'import time; print(time.time_ns())')
+child_stdout=$execution_tmp/child.stdout
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
     ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
@@ -131,13 +184,18 @@ docker run --rm --init \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
     --env "FMONITOR_EXECUTED_GIT_SHA=$git_sha" \
+    --env "FMONITOR_SHLZ_CSS_PATH=/shlz-ui/packages/styles/dist/shlz.css" \
     --workdir /workspace \
     "$image_digest" sh -c \
         'test -r /workspace/vendor/autoload.php \
             && test -r /workspace/vendor/yiisoft/yii2/Yii.php \
             && exec "$@"' \
-        run-in-profile "$@"
+        run-in-profile "$@" >"$child_stdout"
 status=$?
+cat "$child_stdout"
+if [[ "$status" -ne 0 ]]; then
+    cat "$child_stdout" >&2
+fi
 finished=$(python3 -c 'import time; print(time.time_ns())')
 
 python3 - "$git_sha" "$profile" "$image_digest" "$executable_source" "$status" "$started" "$finished" "$@" <<'PY' >&2

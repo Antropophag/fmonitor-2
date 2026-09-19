@@ -312,6 +312,15 @@ def validate_policy(policy):
         for category, profile in profiles.items():
             if not isinstance(profile, dict) or not isinstance(profile.get("services"), list):
                 raise ValueError(f"invalid environment profile: {category}")
+    focused_profiles = policy.get("focused_command_profiles", {})
+    if (not isinstance(focused_profiles, dict)
+            or any(not isinstance(test, str) or not isinstance(profile, str)
+                   for test, profile in focused_profiles.items())
+            or any(profile not in {"governance", "integration", "browser"}
+                   for profile in focused_profiles.values())):
+        raise ValueError("invalid focused command profiles")
+    for test in focused_profiles:
+        test_argv(test, runtimes, trusted_registered=True)
     if "generated_sources" in policy and not isinstance(policy["generated_sources"], list):
         raise ValueError("invalid generated source obligations")
     probes = policy.get("service_probes", {})
@@ -813,6 +822,9 @@ def build(base_ref, input_name):
     command_by_key = {}
     def add(argv, phase, rationale, purpose="category", execution="local"):
         validate_argv(argv)
+        focused_profile = policy.get("focused_command_profiles", {}).get(argv[-1])
+        if focused_profile:
+            argv = ["tools/delivery/run-in-profile", focused_profile, "--with-services", *argv]
         key = tuple(argv)
         if key not in command_by_key:
             item = {"argv": argv, "phase": phase}
@@ -820,7 +832,7 @@ def build(base_ref, input_name):
                 item.update(execution=execution, rationales=[rationale])
             else:
                 item["rationale"] = rationale
-            if typed:
+            if typed or focused_profile:
                 category = inventory.get(argv[-1], "governance")
                 command_id = hashlib.sha256(canonical(argv).encode()).hexdigest()[:16]
                 if purpose == "acceptance":
@@ -839,9 +851,16 @@ def build(base_ref, input_name):
             item["rationales"] = sorted(set(existing_rationales + [rationale]))
             if "execution" in item and execution == "local":
                 item["execution"] = "local"
-            if rationale.startswith("generated") and typed:
-                if item.get("purpose") != "acceptance":
-                    item["purpose"] = purpose
+            if purpose == "acceptance" and item.get("purpose") != "acceptance":
+                category = inventory.get(argv[-1], "governance")
+                stem = Path(argv[-1]).stem
+                item.update(
+                    purpose="acceptance",
+                    id="acceptance:" + stem.removeprefix("ci_complete_"),
+                    environment=policy.get("environment_profiles", {}).get(category, {}),
+                )
+            elif rationale.startswith("generated") and typed and item.get("purpose") != "acceptance":
+                item["purpose"] = purpose
     for test in sorted(acceptance_tests):
         add(test_argv(test, policy["runtimes"]), "focused", "acceptance mapping", "acceptance")
     for test in sorted(boundary_tests):

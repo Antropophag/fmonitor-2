@@ -1,0 +1,188 @@
+# Gate 3 test review: REGISTERED-FOCUSED-BOOTSTRAP-001
+
+- Reviewer: independent Gate 3 agent `/root/gate3_review`; authored none of the reviewed specification, lifecycle artifacts, or tests.
+- Review date: 2026-09-19.
+- Test author: root agent.
+- Reviewed source: commit `4aeb9b4d0b305a6946a52f1ab1a3ae79f3b0c192`; candidate source `8ec952550bbe6b2d86c843c91e4235d9f2b2b57d9c4b294c3cf53a2f7924b69d` over base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T144226Z-2054a723ac/package.json`; verification-plan SHA-256 `b38b55b74b1a34343f58dcb28b039dff491aafb2dee9597572e0a04d666f57d6`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Specification: `specs/REGISTERED-FOCUSED-BOOTSTRAP-001.md`; OpenSpec change `bootstrap-registered-yii2-focused-check`.
+- Public seam: prepared plan/package command -> `tools/delivery/harness.py run` -> `tools/delivery/run-in-profile` -> selected real Yii2 HTTP test.
+- Retained RED: `python3 tests/Verification/registered_yii2_focused_bootstrap_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789828937188717000-26363f5f3e1d4b4a883489cd41246fab.json`; exit `1`, outcome `INTENDED_RED`. With `RFB_GATE3_RED=1`, three of four tests were skipped and the only executed failure was the fixture's sibling-asset lookup.
+- Additional bounded diagnostic: the same test without the RED skip exited `1` with six failures across route, launcher, three setup subcases, and fixture assertions. This confirms those present assertions are reachable but is not retained public-seam evidence.
+- Verdict: `CHANGES_REQUESTED`.
+
+## Findings
+
+1. **BLOCKING — RFB001-A/B are not tested at the promised public seam, and repeat/cache behavior is absent.** `tests/Verification/registered_yii2_focused_bootstrap_001_test.py:27-102` replaces Docker with a fake and invokes `run-in-profile` directly from the existing checkout. The fake records argv and creates a marker; it never executes PHP, serves Yii HTTP, builds real pinned dependencies, starts MariaDB, or uses a disposable worktree without `vendor`, `node_modules`, and sibling `shlz-ui`. No test performs a second unchanged invocation or proves Docker layer/image reuse. An implementation that merely emits the expected Docker command shape, while the prepared harness command cannot bootstrap or execute the real navigation assertions, can pass. Add a bounded Docker-backed public-route test from a disposable dependency-free worktree, including first GREEN and second unchanged run with independently observable cache reuse and exact selected-test execution.
+
+2. **BLOCKING — RFB001-C exact-source isolation and the controlled mutation witness are uncovered.** The only isolation assertion reads source text and searches for an environment variable plus a Dockerfile `COPY` (`:153-159`). It does not execute a materialized tracked/uncommitted snapshot, bind the application/image bytes to candidate identity, exclude host `vendor`/`node_modules`/sibling checkout fallbacks, or introduce an uncommitted navigation defect and observe assertion RED followed by restored GREEN. Static strings can pass while runtime uses the host checkout or stale application bytes. Exercise the prepared snapshot route with independently created uncommitted behavior mutation and verify RED/restore-GREEN against the real HTTP assertion and source/image identities.
+
+3. **BLOCKING — failure classification/evidence and lifecycle coverage stop below the harness contract.** `test_setup_failures_name_stage_and_never_execute_assertions` checks only launcher stderr and a child marker (`:135-151`). It never invokes `harness.py run` or verifies the retained-log path/evidence record and `SETUP_FAILURE` classification required by RFB001-D. It omits `db_start`, arbitrary HTTP 503 remaining a normal test failure, child assertion failure, interruption, and preservation of their existing outcomes. Cleanup is asserted only for readiness failure; success checks only that some `down --volumes` call exists, while dependency/build failure, child failure, and interruption cleanup and preservation of the primary exit are not covered. Add harness-level cases for every normative classification and cleanup path, with exact retained record/log assertions.
+
+4. **BLOCKING — prepared identity and rejection coverage is incomplete.** The plan test uses a different change input, `openspec/changes/unify-yii-main-navigation/verification-input.json` (`:14, 20-25`), then asserts only command id, argv, purpose, and MariaDB service (`:104-115`). It does not prepare this change's package, assert acceptance-id/mapping and intended-RED interpretation, execute the emitted command, or prove evidence schema/store identity is preserved. It also does not cover the specified pre-child rejections for unknown profile, missing command, and unregistered heavy promotion, nor prove generic diagnostic commands remain unwrapped. Bind the test to the current verification input/package and assert the complete emitted identity plus all rejection/non-promotion cases.
+
+5. **BLOCKING — owned Compose isolation is asserted for only one invocation and cannot detect cross-run collisions or over-broad cleanup.** The test requires a non-default project and internally consistent project name (`:118-133`), but never runs concurrent or sequential launchers and never establishes that identities differ. It also does not assert the exact resources selected by `down`, absence of `--remove-orphans`/shared project cleanup, or that foreign containers/networks/volumes survive. A constant non-default project such as `fmonitor2-focused` would pass and violate the unique-per-run contract. Add at least two runs (preferably overlapping), require distinct cryptographically safe project identities, and seed/assert untouched foreign resources while owned resources are removed.
+
+6. **BLOCKING — the retained intended-RED evidence demonstrates only one static implementation detail, not the acceptance matrix submitted for Gate 3.** `RFB_GATE3_RED=1` skips the route, lifecycle, and setup tests (`:104, 117, 135`); the retained output is one failure at `:155`. Although an unskipped diagnostic reaches six failures, the reviewed retained record does not show the prepared route or launcher branches failing for their intended missing behavior, and neither run reaches the real public seam required by A/C/E. After correcting findings 1–5, retain fresh exact-source RED evidence that independently reaches the expanded cases without allowing one early/static failure to stand in for the whole matrix.
+
+## Assessment
+
+The normative specification and OpenSpec artifacts coherently bound a tooling-only slice, preserve the existing runner/evidence ownership, exclude product/schema/admission changes, and describe setup versus behavior failures clearly. The fake-Docker tests are useful fast protocol checks and their expectations are deterministic. They are not sufficient for the central claim of this slice: one prepared command autonomously executing the real registered Yii2 HTTP test from an isolated exact-source snapshot, twice, with lifecycle/evidence semantics intact.
+
+## Required changes
+
+Correct all six findings, regenerate the verification plan and reviewer package because test/source bindings will change, retain fresh exact-source intended-RED evidence for the complete corrected matrix, and request independent Gate 3 rereview before executor implementation begins.
+
+---
+
+## Gate 3 correction rereview — 2026-09-19
+
+- Reviewer independence: unchanged; the reviewer authored none of the corrected specification or test source.
+- Corrected source: commit `cbaabf27ff9bd780357be692d8ebe6fa518fca35`; candidate source `049a7b0ecaf13cccddc42ed51239ba315e4fe5e492173d8578f82d801e898423` over base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T145208Z-87da1e1c9f/package.json`; delta SHA-256 `97ddacf4ba4e322cba7e273704b11b149cf98e4b5acb51b665e6c7167b8c879f`; verification-plan SHA-256 `a81438e515edc97a3e98ed53a27a95aa81a5c24ea1cb3b28e1681469fe865451`; test SHA-256 `f38943b7d90a67c5e78c40b3a057a0e55d50eba566e84cabb3c67ea358657e02`.
+- Fresh full-matrix RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789829412971144000-8356adc6bcc349eea8bb29fcc7a3f4cb.json`; exit `1`, `INTENDED_RED`, executable source `5a80883a5443f319cfb7b35e610a80adf4789c1613c511947ef90a160d7c4cca`. All seven test methods ran; retained output contains eleven failures and one error across route, launcher, all four setup stages, harness classification, fixture isolation, and the clean-worktree scenario's missing registered command.
+- Verdict: `CHANGES_REQUESTED`.
+
+### Prior findings disposition
+
+1. **Partially resolved; cache-reuse blocker remains.** The corrected test now defines a real disposable worktree without host dependency directories or sibling `shlz-ui` and invokes the selected command through `harness.py run` for first and repeated executions (`tests/Verification/registered_yii2_focused_bootstrap_001_test.py:210-255`). It still does not observe Docker dependency-layer/image reuse. The only repeat assertions compare `command_id` and `acceptance_id` (`:237-241`), which remain equal even if every dependency is rebuilt from scratch. RFB001-B specifically requires unchanged layers/image to be reused; assert a stable image identity plus independently observable no-rebuild/cache-hit evidence (and separate setup/build versus test timing only if timing is used).
+
+2. **Resolved.** The clean-worktree test removes host dependency/sibling preconditions, mutates an uncommitted navigation label, requires the real command to become `REGRESSION_FAILURE` at the corresponding HTTP membership assertion, requires candidate source identity to change, restores the bytes, and requires GREEN (`:210-255`). Together with the fixture/image assertions, this is sensitive to the promised candidate snapshot and container asset boundary.
+
+3. **Partially resolved; interruption and cleanup preservation remain open.** Harness-level records now distinguish dependency/DB setup failures from an ordinary HTTP 503, require retained stdout/stderr, and cover `docker`, `dependencies`, `db_start`, and `db_readiness` launcher stages (`:165-208`). However, no test interrupts a running child, asserts the existing interruption outcome, or proves cleanup while preserving the primary interrupted exit. The 503 branch checks classification/log text but not that owned Compose resources are cleaned after child failure; the fake lifecycle test likewise checks cleanup only for DB start/readiness failures (`:179-182`). RFB001-D explicitly requires cleanup on success, failure, and interruption and preservation of interruption/test-failure semantics. Add child-failure and bounded interruption cases that assert the outcome/primary exit and owned `down --volumes` execution.
+
+4. **Open — the prepared identity test still uses the unrelated change plan and incomplete/vacuous assertions.** `CHANGE` remains `openspec/changes/unify-yii-main-navigation/verification-input.json` (`:14`), and `self.plan()` still builds that input (`:20-25`). Reading the current bootstrap input only to assert its test path (`:122-124`) does not prove this prepared package emits or preserves the selected command identity, purpose, acceptance mapping, intended-RED interpretation, environment, or evidence schema/store. The clean-worktree helper also takes the command from the unrelated plan and hard-codes acceptance `Y2MN001-A-H` (`:210-231`). The generic non-promotion loop does not assert that `ordinary` is nonempty (`:125-129`), so it can pass vacuously. Unknown/missing launcher rejection is now covered, but unregistered heavy-promotion rejection is not. Exercise this change's actual prepared plan/package (or independently prove the deliberate inherited command binding), assert the complete command/evidence identity, require a concrete ordinary diagnostic fixture, and test an attempted unregistered heavy promotion is rejected before child execution.
+
+5. **Partially resolved; foreign-resource and interruption isolation remain open.** Two sequential launcher runs must now use different project names, and calls reject the default name and `--remove-orphans` (`:138-163`). That closes the constant-project weakness. The correction still does not seed/observe any foreign container, network, or volume, run overlapping projects, or assert cleanup after child failure/interruption. Consequently an implementation could issue another broad cleanup command outside the inspected Compose argv or collide only under overlap while passing. Add an overlapping or explicitly isolated foreign-resource fixture and require those resources survive success, child failure, and interruption.
+
+6. **Resolved for RED reachability.** The skip decorators are gone. The fresh retained run executes all seven methods and exposes missing behavior in route, lifecycle, setup classification, fixture, and public clean-worktree scenarios. The clean-worktree case currently stops at the intentionally absent registered command, which is the earliest missing production behavior; its deeper post-registration expectations are reviewable and will become reachable during implementation.
+
+### Remaining complete findings
+
+1. **BLOCKING — RFB001-B can be false while the suite is GREEN.** Repeat identity is not cache reuse; add an independent image/layer reuse assertion.
+2. **BLOCKING — RFB001-D lifecycle closure is incomplete.** Add bounded child-failure and interruption outcome/primary-exit/cleanup coverage, including foreign-resource survival.
+3. **BLOCKING — RFB001-E is still not bound to this prepared package and heavy-promotion rejection can pass vacuously.** Replace the unrelated-plan/vacuous checks with exact current-package command, mapping, evidence, concrete ordinary-command, and rejection assertions.
+
+Because cache reuse and current-package identity were explicit parts of the first return, this is a second return for foreseeable incompleteness. Rebuild the remaining matrix as one correction rather than another narrow assertion handoff, regenerate source-bound RED/package evidence, and request rereview before Gate 4.
+
+---
+
+## Gate 3 full-matrix rereview — 2026-09-19
+
+- Reviewer independence: unchanged; the reviewer authored none of the specification or corrected test matrix.
+- Corrected source: commit `6a68b49649e4ad032402f2f034fc5a8254373843`; candidate source `6c4e125cb6c93188ac3c0faab16efd9d1e5b9210ad31295f0d12e35b7eb42c63` over base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T150728Z-82eda018e0/package.json`; delta SHA-256 `284e6bc649797e464d6401ee69ebb5c75d9e7c9dbd7370f8ddc8c135f6791d7c`; verification-plan SHA-256 `226940778d920645898bc2ec33d6734865d07536c25aa95fb21091a504c36ea8`; test SHA-256 `2a5dbedd4dea886201b62e1b7e3bedd51fb54d8ec67c3627f612ee4c7cf14719`.
+- Fresh RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789830383766800000-a8d4b3033de24c8e86e686c42d33cc48.json`; exit `1`, `INTENDED_RED`, executable source `664d4228da1248cc7095826d2f41813527489e140a69d7dbdb97f9047795b79e`. All seven methods ran; retained output exposes the missing route, lifecycle, classification, interruption, fixture, and clean-worktree behavior rather than a setup-only failure.
+- Final verdict: `APPROVED`.
+
+### Remaining findings disposition
+
+1. **Resolved — repeat/cache identity.** The real clean-worktree path extracts exactly one structured `RUN_IN_PROFILE_RESULT` from each retained record and requires unchanged repeat runs to have identical immutable `image_digest` and `source_digest` (`tests/Verification/registered_yii2_focused_bootstrap_001_test.py:35-41, 284-299`). This couples the repeat assertion to the actual selected image rather than merely stable command metadata while continuing to require two real successful executions.
+
+2. **Resolved — failure/interruption cleanup and foreign-resource isolation.** The HTTP 503 child case now requires preserved exit `8` and ordinary `REGRESSION_FAILURE`; the bounded slow-child case requires harness `INTERRUPTED` plus owned Compose `down` (`:215-253`). The real Docker-backed scenario creates a uniquely named foreign network before first/repeat execution and proves it still exists after owned cleanup (`:255-299`). Together with distinct per-run project names, exact-project lifecycle calls, no default project, no `--remove-orphans`, and setup-stage cleanup, the matrix is sensitive across success, setup failure, child failure, and interruption without granting shared-resource cleanup.
+
+3. **Resolved — current package identity and singleton promotion.** The test now builds the current bootstrap verification input and requires its one acceptance command, stable id/purpose, and absence of recursive heavy wrapping (`:28-33, 140-147`). The inherited navigation command remains independently bound to its exact id, purpose, environment and browser argv (`:128-138`). The ordinary integration control is required nonempty and unwrapped, while policy must contain exactly one focused command profile, `{tests/Yii2/yii2_main_navigation_001_test.php: browser}` (`:149-160`). Missing/unknown launcher entrypoints remain pre-child rejections. This prevents both a vacuous non-promotion pass and unregistered heavy promotion.
+
+### Final assessment
+
+No Gate 3 findings remain. The stable contract, OpenSpec artifacts, verification input, executable matrix and retained RED are coherent and deterministic. The tests now cover the real prepared/harness route from a dependency-free disposable worktree, exact selected argv, pinned container assets, first/repeat immutable image identity, uncommitted candidate mutation RED/restored GREEN, all setup stages, retained outcome/log semantics, ordinary HTTP failure, interruption, unique owned Compose cleanup, real foreign-resource survival, exact singleton promotion, and current-package identity.
+
+Gate 4 may proceed against candidate source `6c4e125cb6c93188ac3c0faab16efd9d1e5b9210ad31295f0d12e35b7eb42c63`. Any later specification, test, verification-input, registration, or source-binding change requires applicable independent delta review.
+
+---
+
+## Post-CI Gate 3 delta review — explicit service ownership
+
+- Review date: 2026-09-19.
+- Reviewer independence: unchanged; the reviewer authored none of this spec/test/design delta or the prior executor implementation.
+- Reviewed head: `7fe7ce345034f846ca35f01a7e50147d40b535a9`; candidate source `cd8a0613f9cfafa8b123392e71818f373882ec5960721bf4a162d88cbf317c7a` over base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T163206Z-b538b499bb/package.json`; delta SHA-256 `7a648017c4c93c6bcddec70edfe63236f473d59402e8096ab1b8683b5b701223`; verification-plan SHA-256 `034568eedb152d6dbb5689003dd6f2f09d17ec2bd4a44bcfed305e3f2331f820`; test SHA-256 `bb10b0d76f52638fec2b9e27f293aef12e7374d14020e1cbf8a50e0d4b423083`.
+- Test-delta lineage: historical blob `94f356b3093d1e00cc4c791b26ddf50f44ade04ae0a56f7c7de2983454017da0`; current blob above; delta SHA-256 `f0df29d1bba03e9d0a4fcae4e245322e868cffc0214a787ba321c1ace1f84076`; historical intended RED `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789828706027478000-f5d1982f611d4921b7e1c2d4a232e55c.json` at source `4ae663fedb8c089eefb424a2733e2d0928e798db8f31acb4b1a0886ff5b12d6d`.
+- Fresh delta RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789835369182752000-54981e34a1d7428ca614b86e73369e4d.json`; `INTENDED_RED`, exit `1`, executable source `264d9d0b0001df53164dc055dca4ac788dc9d817baaa34d12ffb32a30043da96`, acceptance `RFB001-A-E`, command id `acceptance:registered_yii2_focused_bootstrap_001_test`, purpose `acceptance`.
+- Verdict: `APPROVED`.
+
+### Delta assessment
+
+1. **Explicit owned-service route is complete and narrow.** The canonical spec, OpenSpec delta and design consistently define `run-in-profile browser --with-services` as the only route that owns MariaDB for the exact registered `tests/Yii2/yii2_main_navigation_001_test.php` acceptance. The executable test requires that exact planner argv and uses the same alias for success, all setup stages, assertion failure and interruption (`tests/Verification/registered_yii2_focused_bootstrap_001_test.py:117-138, 215-253`). The expected child assertion at `:184` requires the launcher to consume the alias rather than leak it into selected PHP argv.
+
+2. **Generic profile compatibility is independently protected.** The stable contract now explicitly requires plain `run-in-profile integration|browser` to retain external service ownership and never start/stop MariaDB. The focused test continues to require a concrete ordinary integration command, no wrapping, and an exact singleton focused registration (`:149-160`). Existing executable regression coverage in `tests/Verification/quality_graph_ci_setup_001_test.php` exercises plain integration/browser with a missing network, a stopped externally owned DB, a declared non-default network, a running external DB, and unchanged network/service identities; it therefore fails if the correction leaves unconditional service ownership in either generic profile. The CI failure inventory identifies the same boundary in `container_composer_visibility_123_a_test.py`, providing a second unchanged historical consumer for the selected full-CI obligation.
+
+3. **Legacy identity shape is protected without weakening registered identity.** The current bootstrap plan's unrouted Python acceptance command must contain neither `id` nor `purpose` and must remain outside `run-in-profile` (`registered_yii2_focused_bootstrap_001_test.py:140-147`). In contrast, the registered navigation command still requires its exact existing id, purpose, MariaDB environment and new focused argv (`:128-138`), while the retained harness evidence for this test delta remains explicitly bound to its own acceptance id/command id/purpose. This distinguishes package evidence identity from the raw unrouted planner-command shape and prevents the prior global identity assignment regression.
+
+4. **RED sensitivity and lineage are valid.** The fresh retained run executes all seven methods: five remain GREEN against the prior implementation and exactly two fail at the newly required behavior. One proves the planner has not yet emitted `--with-services`; the other proves the launcher has not yet consumed it and instead leaks it into child argv. These are deterministic behavior failures, not Docker/setup failures. The package binds the current test delta to the original historical intended RED, preserving evidence that the broader A-E behavior was missing before implementation while accurately demonstrating the new correction delta now.
+
+### Final decision
+
+No findings remain in the submitted Gate 3 delta. The correction may proceed to a separate executor. Gate 5 delta review and a new-source exact CI run remain required; the failed CI run is historical evidence, not approval or GREEN. Any change to the alias position, registration cardinality, generic lifecycle semantics, identity shape, specification or tests requires applicable independent rereview.
+
+---
+
+## PR #202 connection-defect Gate 3 delta review
+
+### Binding and independence
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer: independent Gate 3 delta reviewer `/root/pr202_gate3_delta`; authored neither the specification/test correction nor the implementation under review.
+- Reviewed head: `6fb4684f41fddd5943042409dbf15944ed1d52fc`.
+- Candidate source: `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326`; executable source: `bf31c5a8b3e695a61bce9a4c7cf7d0ab6cadb72750b4decf2854fc8fb548dc88`; base: `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T173138Z-87f8116981/package.json`; verification-plan SHA-256 `a41970b1755452bfd50ab105d353ee7249ddf68e925178eb97d0d32a289f7048`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Delta from the previously approved post-CI correction at `e1ca83a2cf1375ec1bf36b3d6acea1c01352eeac`: bounded specification/design/task/delivery-record clarification plus two regression methods in the existing focused bootstrap acceptance. No implementation change is included in this Gate 3 source.
+
+### Delta assessment
+
+The route regression is sensitive to the first PR connection defect. It selects every command whose final argument is the exact navigation test, requires one command rather than merely one matching identity, fixes the complete wrapped argv, and retains the acceptance id/purpose, MariaDB environment, both `acceptance mapping` and `changed registered test` rationales, and local execution priority. A raw PHP duplicate, lost selection reason, identity/environment drift or priority weakening therefore fails the same bounded method. Existing assertions continue to keep the bootstrap diagnostic and ordinary integration controls outside recursive/heavy promotion.
+
+The reviewer-prepare regression exercises the real harness `run` and `prepare` seams with generated records. It requires wrapped `INTENDED_RED` evidence to pass Gate 3 and wrapped `GREEN` evidence to pass Gate 5; missing evidence, a different path sharing the `run-in-profile` basename, and RED supplied to Gate 5 are rejected. Inspection of the exercised `_validate_evidence` path confirms that source plus executable-source, host environment digest, command id, purpose, command environment, acceptance id and outcome remain exact checks. The authorized implementation seam is correspondingly narrow: use the same exact wrapped key for expectations, plan ownership and coverage, while canonicalizing only supported interpreter spelling and the known wrapper path rather than arbitrary basenames.
+
+The OpenSpec scenario and design match those executable expectations and do not broaden product, Docker lifecycle, evidence schema, CI/admission or generic-profile behavior. The prior disposable clean-worktree, first/repeat cache identity, candidate mutation, setup-stage, HTTP 503, interruption cleanup, foreign-resource survival and container-asset checks remain present and unchanged.
+
+### Fresh RED
+
+`python3 tests/Verification/registered_yii2_focused_bootstrap_001_test.py` completed fresh in `127.347s` with eight methods and exactly two failures:
+
+1. `test_prepared_plan_uses_exact_focused_route_and_stable_identity`: two commands selected the exact navigation test instead of one converged wrapped route.
+2. `test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly`: exact wrapped Gate 3 RED was rejected because the disconnected expectation key required GREEN.
+
+The other six methods were GREEN, including the real clean-worktree/lifecycle test. The failures are exactly the two reported connection defects, not fixture, Docker, dependency, database, cleanup or unrelated assertion failures. The canonical full local suite was not run, per owner policy.
+
+### Findings and decision
+
+No blocking or non-blocking findings remain in this bounded Gate 3 delta.
+
+Gate 3 is **APPROVED** for candidate source `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326` / head `6fb4684f41fddd5943042409dbf15944ed1d52fc`. Gate 4 may correct only focused-command deduplication and exact reviewer-key normalization against these expectations. All eight focused methods must become GREEN without weakening source, executable-source, identity, acceptance, environment, outcome, clean-worktree or lifecycle guarantees before Gate 5. CI, publication, merge and deployment remain `UNKNOWN` and are not approved by this review.
+
+---
+
+## PR #202 executable-identity Gate 3 delta rereview
+
+### Binding and independence
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer: independent Gate 3 delta reviewer `/root/pr202_gate3_delta`; authored neither the Gate 5 finding, root-owned regression correction nor forthcoming implementation.
+- Reviewed head: `cc3d0e5f4a541708dc6757f98bd508353e6a3005`.
+- Candidate source: `3c5cdda82611fb7e0d063bac6f53cfbc72330d8ae49095740a0a045458fbece2`; executable source: `b8621eb3c78b80fb7b15af004f353f12c71297d7d499b0901f55c716300c67f6`; base: `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T175503Z-2bbaf9eb1c/package.json`; verification-plan SHA-256 `d2c024f4cb69022f18dd265ee2f9fd24d374c5210e0552ba1a84df5b30263c93`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Originating Gate 5 finding: `reviews/code/REGISTERED-FOCUSED-BOOTSTRAP-001.md`, candidate `b6d169a9062dd135975e152572352faba13c203df4715ee2268c07771b36e0c5` / head `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`.
+- Retained package RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789840283446556000-8bad30c575c448ca84226d31afd113bf.json`, outcome `INTENDED_RED`, command blob `67e01656537c6145f93559360111380200be43fe3bac2b354596a533ea88a84e`.
+
+### Finding closure and sensitivity
+
+The correction directly closes the single Gate 5 test gap without changing the approved contract or implementation. The actual reviewer-prepare path now receives an evidence record whose executable is `/attacker/tools/delivery/run-in-profile`. This retains the canonical three-component suffix that the defective helper currently trusts, so a suffix-based fix cannot satisfy the test; Gate 3 must reject the record even when its source, executable-source, environment, command id, purpose, command environment, acceptance id and intended outcome otherwise match.
+
+The same method now compares normalized keys for `/attacker/python3` and the explicitly supported `python3` spelling and requires them to remain distinct. This is appropriately narrower than accepting arbitrary interpreter basenames and is independently sensitive to the second collision named by the Gate 5 finding. The first reviewer-prepare assertion stops the current full run before this later assertion; a separate bounded probe confirmed the current helper maps both interpreter paths to the identical tuple `('python3', 'tests/Yii2/yii2_main_navigation_001_test.php')`. Thus both requested hostile paths are executable RED expectations, while one full-test failure accurately represents the shared method's first failing barrier.
+
+The prior positive Gate 3/Gate 5 reviewer preparation, missing evidence, wrong Gate 5 outcome, route convergence, rationale/priority/identity preservation, and all clean-worktree, source-isolation, Docker/DB lifecycle and setup-classification assertions remain unchanged. The implementation boundary remains exact normalization only: accept explicitly supported spellings and, if required by the existing contract, the actual repository wrapper path; never infer executable identity from an arbitrary suffix or basename.
+
+### Fresh RED and checks
+
+`python3 tests/Verification/registered_yii2_focused_bootstrap_001_test.py` completed fresh in `128.812s`: eight methods, exactly one failure in `test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly`, where Gate 3 incorrectly accepted `/attacker/tools/delivery/run-in-profile`. The other seven methods were GREEN, including the previously corrected planner convergence and real clean-worktree/lifecycle path.
+
+The direct helper probe separately confirmed the still-live `/attacker/python3` collision. Python compilation of the corrected focused test and `git diff --check 2bdba9ec..cc3d0e5f` passed. The canonical full local suite was not run, per owner policy.
+
+### Findings and decision
+
+No blocking or non-blocking findings remain in this bounded regression delta.
+
+Gate 3 is **APPROVED** for candidate source `3c5cdda82611fb7e0d063bac6f53cfbc72330d8ae49095740a0a045458fbece2` / head `cc3d0e5f4a541708dc6757f98bd508353e6a3005`. A separate executor may correct only executable-key normalization for the hostile suffix/interpreter collisions. The full eight-method focused acceptance and applicable governance check must be GREEN on the corrected exact source before independent Gate 5 rereview. This approval does not make the prior CI source current and does not authorize publication, merge or deployment.

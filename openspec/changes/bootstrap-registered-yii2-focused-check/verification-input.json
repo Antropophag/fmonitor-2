@@ -1,0 +1,30 @@
+{
+  "change": "bootstrap-registered-yii2-focused-check",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/registered-focused-bootstrap-001-delivery.md",
+    "openspec/changes/bootstrap-registered-yii2-focused-check",
+    "reviews/code/REGISTERED-FOCUSED-BOOTSTRAP-001.md",
+    "reviews/tests/REGISTERED-FOCUSED-BOOTSTRAP-001.md",
+    "specs/REGISTERED-FOCUSED-BOOTSTRAP-001.md",
+    "tests/Verification/registered_yii2_focused_bootstrap_001_test.py",
+    "tests/Yii2/UserAccessFixture.php",
+    "tools/delivery/Dockerfile.focused-checks",
+    "tools/delivery/run-in-profile",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "REGISTERED-FOCUSED-BOOTSTRAP-001",
+      "acceptance_id": "RFB001-A-E",
+      "spec_path": "specs/REGISTERED-FOCUSED-BOOTSTRAP-001.md",
+      "seam": "prepared plan/package command -> tools/delivery/harness.py run -> tools/delivery/run-in-profile -> selected Yii2 test",
+      "tests": [
+        "tests/Verification/registered_yii2_focused_bootstrap_001_test.py"
+      ],
+      "gate3_expected": {
+        "tests/Verification/registered_yii2_focused_bootstrap_001_test.py": "INTENDED_RED"
+      }
+    }
+  ]
+}
