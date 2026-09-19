@@ -18,6 +18,6 @@
 
 ## 4. CI correction
 
-- [ ] 4.1 Получить Gate 3 delta approval для explicit `--with-services` alias и compatibility expectations после полного CI failure inventory.
+- [x] 4.1 Получить Gate 3 delta approval для explicit `--with-services` alias и compatibility expectations после полного CI failure inventory.
 - [ ] 4.2 Отдельному executor сузить stable identity и owned lifecycle до exact registered navigation command; focused matrix и затронутые historical regressions GREEN.
 - [ ] 4.3 Получить независимый Gate 5 delta approval и один new-source PR-triggered CI; same-source rerun не выполнять.
