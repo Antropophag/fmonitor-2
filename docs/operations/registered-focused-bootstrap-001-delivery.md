@@ -7,4 +7,5 @@
 - Full local `make test` / `make verify` is prohibited; use bounded checks and one exact-source CI.
 - Gate 1: OpenSpec strict validation GREEN; planner selected `CRITICAL`, required reviews `gate3` and `final`, local obligations are the focused bootstrap test, real Yii navigation test, governance category and runtime-storage category; full local suite remains prohibited.
 - Gate 2 RED: `INTENDED_RED` at fixture sibling-asset assertion, retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789828706027478000-f5d1982f611d4921b7e1c2d4a232e55c.json`.
-- Current state: complete Gate 1/2 candidate awaiting independent Gate 3; PR/CI `UNKNOWN` until live evidence exists.
+- Gate 3 return 1: independent reviewer `CHANGES_REQUESTED` six blocking gaps in public-seam, source-isolation, setup/evidence, identity/rejection and lifecycle coverage. Root expanded the executable test with real disposable-worktree first/repeat/mutation commands, harness-level retained outcomes, four setup stages, 503 distinction, stable identity and multi-run ownership/rejection assertions; rereview pending.
+- Current state: corrected Gate 1/2 candidate awaiting independent Gate 3 rereview; PR/CI `UNKNOWN` until live evidence exists.
