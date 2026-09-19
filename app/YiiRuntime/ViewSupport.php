@@ -19,9 +19,6 @@ final class ViewSupport
         foreach (array_slice($parts, 0, 2) as $part) {
             $initials .= mb_strtoupper(mb_substr($part, 0, 1));
         }
-        $canAdmin = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'access.administer');
-        $canControl = \Yii::$app->canonicalAccess->checkAccess((int) $identity->id, 'construction_control.read');
-        $feedbackUrl = '/pilot/feedback?from=' . rawurlencode('/' . ltrim(\Yii::$app->request->pathInfo, '/'));
         $view->beginPage();
         ?><!doctype html>
 <html lang="ru">
@@ -42,24 +39,7 @@ final class ViewSupport
                 <svg class="fm2-logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="fm2-logo-rail" x="5" y="4" width="4" height="24"/><rect class="fm2-logo-rail" x="23" y="4" width="4" height="24"/><rect class="fm2-logo-progress" x="11" y="10" width="10" height="12"/></svg>
                 <span class="fm2-logo-name">FMonitor 2.0</span>
             </a>
-            <?php if ($currentSection !== null): ?>
-                <?= MainNavigation::render($identity, $currentSection) ?>
-            <?php else: ?>
-            <nav class="fm2-primary-nav" aria-label="Основная навигация">
-                <span class="fm2-nav-group">Монтаж</span>
-                <a class="fm2-nav-item" href="/pilot/objects" aria-current="page" aria-label="Объекты монтажа">
-                    <svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-5 8 5v12H4Zm5 0v-6h6v6"/></svg>
-                    <span class="fm2-nav-text">Объекты монтажа</span>
-                </a>
-                <?php if ($canControl): ?><a class="fm2-nav-item" href="/pilot/construction-control" aria-label="Стройконтроль"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M6 16V8h12v8M9 8V5h6v3"/></svg><span class="fm2-nav-text">Стройконтроль</span></a><?php endif ?>
-                <a class="fm2-nav-item" href="<?= Html::encode($feedbackUrl) ?>"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 3V5Zm4 4h8M8 13h5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span class="fm2-nav-text">Обратная связь</span></a>
-                <?php if ($canAdmin): ?>
-                    <span class="fm2-nav-group">Администрирование</span>
-                    <a class="fm2-nav-item" href="/pilot/admin/users" aria-label="Пользователи"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 2h2.8l.6 2.5 2 .8 2.2-1.3 2 2-1.3 2.2.8 2 2.3.6v2.8l-2.3.6-.8 2 1.3 2.2-2 2-2.2-1.3-2 .8-.6 2.5h-2.8l-.6-2.5-2-.8-2.2 1.3-2-2 1.3-2.2-.8-2-2.3-.6v-2.8l2.3-.6.8-2L3.8 6l2-2L8 5.3l2-.8.6-2.5Z"/></svg><span class="fm2-nav-text">Пользователи</span></a>
-                    <a class="fm2-nav-item" href="/pilot/admin/roles" aria-label="Роли"><svg class="fm2-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm12 0a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM2 19.5c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5H2Zm12 0c.3-4.2 1.7-6.5 4-6.5s3.7 2.3 4 6.5h-8Z"/></svg><span class="fm2-nav-text">Роли</span></a>
-                <?php endif ?>
-            </nav>
-            <?php endif ?>
+            <?= MainNavigation::render($identity, $currentSection) ?>
         </div>
         <div class="fm2-sidebar-user">
             <span class="shlz-avatar shlz-avatar--32 fm2-sidebar-avatar"><?= Html::encode($initials) ?></span>
