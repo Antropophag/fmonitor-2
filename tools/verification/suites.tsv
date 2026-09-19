@@ -287,7 +287,6 @@ e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_shlz_ui_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_preopening_browser_001_test.php	e2e
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py	e2e
-e2e	php	tests/Yii2/yii2_shlz_operational_ui_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_console_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_ownership_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_restore_console_001_test.php	e2e
@@ -451,6 +450,7 @@ unit	python3	tests/Verification/quality_graph_current_report_001_test.py	unit
 unit	python3	tests/Verification/quality_graph_current_workflow_001_test.py	unit
 unit	python3	tests/Verification/quality_graph_preflight_001_test.py	unit
 unit	python3	tests/Verification/review_source_001_test.py	unit
+unit	python3	tests/Verification/verification_delivery_deduplication_001_test.py	governance
 unit	python3	tests/Verification/yii2_dependency_setup_001_test.py	governance
 unit	python3	tests/Verification/yii2_local_quickstart_docs_001_test.py	unit
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
@@ -458,3 +458,4 @@ unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php	unit
+unit	python3	tools/delivery/ci_launch_transport_198_test.py	governance

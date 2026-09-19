@@ -1,13 +1,11 @@
-# Текущая цель — №196, `refresh-otiz-shlz-ui`
+# Текущая цель — №198, убрать дубли CI/E2E и лишние циклы review
 
-Поручение владельца 2026-09-18: реализовать №196 — привести активный Yii2-раздел ОТиЗ к цельному `shlz-ui`. Карточка объекта доставлена predecessor PR #195; этот bounded child охватывает только `/pilot/otiz/**`.
+Поручение владельца 2026-09-19: реализовать bounded issue №198 от актуального `origin/main`, довести до PR-ready без merge/deploy/settings. Base: `62d027d54af7a01a1da300eda2901ba68b2bab20`; branch `codex/issue-198-deduplicate-verification`; worktree `/Users/antropophag/code/fmonitor-2-issue198`.
 
-Base: `origin/main@af4e2ddb72a194ecfb114820f4134a34b20fdb39`; branch `codex/issue-196-shlz-ui`; worktree `/Users/antropophag/code/fmonitor-2-issue196`. Жизненный цикл: [refresh-otiz-shlz-ui](../../openspec/changes/refresh-otiz-shlz-ui/). Stable contract: [OTIZ-SHLZ-UI-001](../../specs/OTIZ-SHLZ-UI-001.md). Mutable source/PR/CI state принадлежит delivery harness.
+Scope: удалить конкретный повторный запуск `yii2_preopening_browser_001_test.php` через SHLZ wrapper; добавить fail-closed reuse штатного PR-triggered Quality Graph run перед одним fallback dispatch; адресно сократить correction/review handoff. Не начинать аудит/переписывание harness, общий граф dedup, глобальную exactly-once семантику, telemetry или изменение workflow/branch settings/FAST/admission schemas.
 
-Root пишет scope/spec/tests. Отдельный gpt-5.6-sol/low executor реализует. Независимые gpt-5.6-sol/low reviewers решают planner-required Gate 3 и Gate 5. Автономное авторство spec/tests другим агентом не разрешено. Все actual authors и source checkpoints фиксируются в delivery record.
+Lifecycle: [deduplicate-verification-delivery](../../openspec/changes/deduplicate-verification-delivery/). Stable contract: [VERIFICATION-DELIVERY-DEDUPLICATION-001](../../specs/VERIFICATION-DELIVERY-DEDUPLICATION-001.md). Mutable source/PR/CI state принадлежит delivery harness.
 
-Сохраняются routes, HTTP methods, CSRF, form fields, permissions, domain decisions, append-only facts, idempotency/concurrency и user return paths. Меняются presentation, information hierarchy, responsive behavior, accessibility states и bounded progressive motion. `../shlz-ui` — read-only public component oracle; rapid-pilot не получает новой логики.
+Root авторит scope/spec/tests. Отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают Gate 3 и Gate 5. Фактических авторов и source checkpoints фиксировать в delivery record.
 
-Локально только bounded focused checks и `make architecture-check`; full `make test`/`make verify` запрещён. Один exact-source GitHub CI выполняется после focused GREEN и required reviews. UNKNOWN не является GREEN или approval.
-
-Scope: workflow header; register/snapshot/history; object/evidence/violation/settlement regions; action hierarchy; labelled-row/contained-scroll strategies; 320/768/1024/1440, keyboard, coarse pointer, reduced motion и JS-off. Формулы, permissions, routes, payloads, idempotency/concurrency и append-only facts неизменны. Merge/deploy/settings не выполнять.
+Локально только bounded focused checks и применимый architecture check; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI выполняется штатным PR-trigger либо единственным fallback dispatch через новый guard. UNKNOWN не является GREEN/approval. Чужой WIP №157 и параллельные UI changes не менять.
