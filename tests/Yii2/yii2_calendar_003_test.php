@@ -46,7 +46,7 @@ try {
     assertSameValue(403, $f->request('GET', '/pilot/calendar', [], $denied)['status'], 'objects.read required');
     $login = $f->request('GET', '/pilot/calendar', [], $guest);
     assertSameValue([303, '/pilot/login'], [$login['status'], $login['headers']['location'][0] ?? null], 'guest login flow');
-    foreach (['date=bad', 'date=2026-01-01', 'date%5B%5D=2026-10-15', 'date=2026-10-15&extra=1'] as $query) {
+    foreach (['date=bad', 'date=2026-01-01', 'date%5B%5D=2026-10-15', 'date=2026-10-15&date=2026-11-03', 'date=2026-10-15&extra=1'] as $query) {
         $bad = $f->request('GET', '/pilot/calendar?' . $query, [], $allowed);
         assertSameValue(400, $bad['status'], 'invalid query ' . $query);
         assertSameValue(false, str_contains($bad['body'], 'data-calendar-page'), 'no partial HTML');
@@ -54,6 +54,40 @@ try {
     assertSameValue($before, $f->facts(), 'all reads and rejections preserve facts/schema');
     $head = $f->request('HEAD', '/pilot/calendar', [], $allowed);
     assertSameValue([200, ''], [$head['status'], $head['body']], 'HEAD route and empty body');
+
+    $planningState = static function () use ($f, $p): array {
+        $tables = [];
+        foreach (['fm2_pilot_inspection_schedules', 'fm2_pilot_inspection_schedule_events'] as $suffix) {
+            $table = $p . $suffix;
+            $ddl = $f->db->query("SHOW CREATE TABLE `$table`")->fetch_row()[1];
+            $rows = $f->db->query("SELECT * FROM `$table` ORDER BY 1")->fetch_all(MYSQLI_ASSOC);
+            $tables[$suffix] = [$ddl, $rows];
+        }
+        return $tables;
+    };
+    for ($offset = 0; $offset < 4998; $offset += 400) {
+        $values = [];
+        for ($i = $offset; $i < min(4998, $offset + 400); $i++) {
+            $id = 8000 + $i; $date = (new DateTimeImmutable('2026-09-20'))->modify('+' . ($i % 170) . ' days')->format('Y-m-d');
+            $values[] = "($id,$id," . (100000 + $i) . ",73,'$date',18,'2026-09-19T12:00:00+03:00')";
+        }
+        $f->db->query("INSERT INTO {$p}fm2_pilot_inspection_schedules(id,installation_case_id,legacy_object_id,control_engineer_user_id,inspection_date,scheduled_by_user_id,scheduled_at) VALUES" . implode(',', $values));
+    }
+    $overflowBefore = $planningState();
+    $overflow = $f->request('GET', '/pilot/calendar', [], $allowed);
+    assertSameValue(503, $overflow['status'], 'bounded source overflow fails closed');
+    assertSameValue(false, str_contains($overflow['body'], 'data-calendar-page'), 'overflow has no partial calendar HTML');
+    assertSameValue(false, str_contains($overflow['body'], 'SQLSTATE') || str_contains($overflow['body'], $p), 'overflow response is safe');
+    assertSameValue($overflowBefore, $planningState(), 'overflow preserves planning facts and schema byte-for-byte');
+
+    $f->db->query("DELETE FROM {$p}fm2_pilot_inspection_schedules WHERE id>=8000");
+    $f->db->query("ALTER TABLE {$p}fm2_pilot_inspection_schedules DROP COLUMN scheduled_at");
+    $schemaBefore = $planningState();
+    $unavailable = $f->request('GET', '/pilot/calendar', [], $allowed);
+    assertSameValue(503, $unavailable['status'], 'incompatible planning schema fails closed');
+    assertSameValue(false, str_contains($unavailable['body'], 'data-calendar-page'), 'schema failure has no partial calendar HTML');
+    assertSameValue(false, str_contains($unavailable['body'], 'SQLSTATE') || str_contains($unavailable['body'], $p), 'schema response is safe');
+    assertSameValue($schemaBefore, $planningState(), 'schema failure performs no repair or fact write');
     $f->noLegacy();
     echo "PASS YII2-CALENDAR-003 HTTP deterministic read-only calendar\n";
 } finally {

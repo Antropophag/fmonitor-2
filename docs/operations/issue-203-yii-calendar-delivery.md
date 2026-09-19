@@ -18,3 +18,10 @@
 - `make architecture-check`: PASS, 7 rules; only file-size advisories, including the existing queue owner growing to 172 lines.
 - PHP syntax, `git diff --check`, and Impeccable detector: PASS / no findings.
 - Full local `make test`/`make verify`: not run by owner policy. Exact-source CI remains pending.
+
+## Gate 5 return 1 — 2026-09-19
+
+- Independent reviewer `/root/calendar_gate5`, package `20260919T203931Z-99b7f7b325`, verdict `CHANGES_REQUESTED`.
+- P1: repeated scalar `date` was collapsed by PHP/Yii before validation. Correction validates multiplicity from raw `QUERY_STRING`; root added the exact repeated-scalar regression.
+- P1: missing acceptance evidence for schema failure and bounded overflow. Root added real HTTP cases for 5,001 in-range rows and an incompatible schedule schema, including `503`, safe/no-partial response and byte-equivalent facts/schema.
+- Visual finish: approved; shlz-ui fidelity, hierarchy, selected/today states, mobile containment and agenda usability had no blocking findings.

@@ -46,6 +46,16 @@ final class CalendarController extends PilotController
 
         $query = Yii::$app->request->queryParams;
         unset($query['slash']);
+        $rawQuery = (string) ($_SERVER['QUERY_STRING'] ?? '');
+        $dateParameters = 0;
+        foreach ($rawQuery === '' ? [] : explode('&', $rawQuery) as $pair) {
+            $separator = strpos($pair, '=');
+            $key = rawurldecode($separator === false ? $pair : substr($pair, 0, $separator));
+            if ($key === 'date') $dateParameters++;
+        }
+        if ($dateParameters > 1) {
+            throw new BadRequestHttpException('Укажите одну дату в формате ГГГГ-ММ-ДД.');
+        }
         if (array_diff(array_keys($query), ['date']) !== []) {
             throw new BadRequestHttpException('Некорректные параметры календаря.');
         }
