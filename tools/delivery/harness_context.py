@@ -1051,10 +1051,14 @@ def _normalized_argv(argv):
     if not argv:
         return tuple()
     first = argv[0]
-    path = PurePosixPath(first)
-    if path.name in {"python", "python3"}:
+    trusted_interpreters = {"python", "python3", sys.executable,
+                            str(Path(sys.executable).resolve())}
+    repository_wrapper = Path(__file__).resolve().parents[2] / "tools/delivery/run-in-profile"
+    trusted_wrappers = {"tools/delivery/run-in-profile", "./tools/delivery/run-in-profile",
+                        str(repository_wrapper)}
+    if first in trusted_interpreters:
         first = "python3"
-    elif tuple(path.parts[-3:]) == ("tools", "delivery", "run-in-profile"):
+    elif first in trusted_wrappers:
         first = "tools/delivery/run-in-profile"
     return (first, *argv[1:])
 
