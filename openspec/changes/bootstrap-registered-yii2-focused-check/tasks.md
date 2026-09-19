@@ -6,9 +6,9 @@
 
 ## 2. Gate 4
 
-- [ ] 2.1 Отдельному executor углубить existing `run-in-profile` для unique Compose lifecycle, bounded readiness и stage-specific SETUP_FAILURE; focused tests должны пройти.
-- [ ] 2.2 Адресно подключить pinned `shlz-ui` assets и подходящий existing profile только для navigation test; planner/package test подтверждает route и сохранённые identities.
-- [ ] 2.3 В disposable worktree без host dependencies и sibling `shlz-ui` выполнить первую и повторную prepared command, controlled uncommitted mutation RED и restored GREEN, а также bounded negative setup cases; сохранить external evidence и отдельно measured setup/test durations, если доступны.
+- [x] 2.1 Отдельному executor углубить existing `run-in-profile` для unique Compose lifecycle, bounded readiness и stage-specific SETUP_FAILURE; focused tests должны пройти.
+- [x] 2.2 Адресно подключить pinned `shlz-ui` assets и подходящий existing profile только для navigation test; planner/package test подтверждает route и сохранённые identities.
+- [x] 2.3 В disposable worktree без host dependencies и sibling `shlz-ui` выполнить первую и повторную prepared command, controlled uncommitted mutation RED и restored GREEN, а также bounded negative setup cases; сохранить external evidence и отдельно measured setup/test durations, если доступны.
 
 ## 3. Gate 5 и publication
 

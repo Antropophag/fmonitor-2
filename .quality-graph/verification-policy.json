@@ -460,6 +460,9 @@
     "e2e": {"services": ["mariadb", "browser", "container"], "languages": ["python3", "php", "node"]},
     "governance": {"services": [], "languages": ["python3", "php", "node"]}
   },
+  "focused_command_profiles": {
+    "tests/Yii2/yii2_main_navigation_001_test.php": "browser"
+  },
   "semantic_surfaces": [
     {
       "name": "current-state-authority",
