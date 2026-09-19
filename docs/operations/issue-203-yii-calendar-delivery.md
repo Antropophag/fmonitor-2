@@ -25,3 +25,10 @@
 - P1: repeated scalar `date` was collapsed by PHP/Yii before validation. Correction validates multiplicity from raw `QUERY_STRING`; root added the exact repeated-scalar regression.
 - P1: missing acceptance evidence for schema failure and bounded overflow. Root added real HTTP cases for 5,001 in-range rows and an incompatible schedule schema, including `503`, safe/no-partial response and byte-equivalent facts/schema.
 - Visual finish: approved; shlz-ui fidelity, hierarchy, selected/today states, mobile containment and agenda usability had no blocking findings.
+
+## Gate 5 rereview — 2026-09-19
+
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T204600Z-5391b117aa/package.json`; exact source `0b023d324dc72919cf697eeef85c6f212faaf5580991d68afcfdc8bb00b509bf`.
+- Seven source-bound focused records GREEN, including corrected HTTP acceptance and browser rendering.
+- Independent reviewer `/root/calendar_gate5`: `APPROVED`; both prior P1 findings resolved, no correction-delta regression.
+- Exact-source CI remains pending/UNKNOWN until the PR-triggered run completes.

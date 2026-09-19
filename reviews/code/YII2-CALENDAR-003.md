@@ -38,3 +38,19 @@ Correction: extend the focused HTTP test with (1) an incompatible or absent sche
 The package binds all recorded local GREEN results to the reviewed exact source. The browser test checks desktop/mobile rendering, contained overflow, selected state, today-state presence, agenda ordering, and a visible object link. It does not actually follow the object link despite the design record saying it verifies a return to object detail; this is non-blocking for production correctness because the href uses the established route, but the evidence wording should not overclaim navigation coverage.
 
 Gate 5 cannot approve while a normative request-boundary case is known to violate A3 and mandatory safe-failure branches remain untested.
+
+## Rereview — 2026-09-19
+
+- Reviewer: the same independent reviewer; no production, test, or specification authorship.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T204600Z-5391b117aa/package.json`.
+- Corrected exact source: `0b023d324dc72919cf697eeef85c6f212faaf5580991d68afcfdc8bb00b509bf`.
+- Verdict: **APPROVED**.
+
+Both P1 findings are resolved:
+
+1. `CalendarController` now counts raw, URL-decoded query keys before reading Yii's normalized parameters and rejects more than one scalar `date`. The focused HTTP test includes `date=2026-10-15&date=2026-11-03` and verifies `400` plus absence of partial calendar HTML. Existing malformed, array, out-of-range, and unknown-key checks remain intact.
+2. The focused HTTP test now drives both fail-closed branches: 5,001 in-range rows prove bounded overflow returns safe `503`, and a deliberately incompatible schedule schema proves readiness failure returns safe `503`. Both cases assert no partial calendar markup, no leaked SQL/table details, and unchanged planning facts/schema across the request.
+
+The correction delta is confined to request multiplicity validation, focused failure coverage, delivery evidence, and this review record. The raw-query check does not broaden accepted keys or bypass the existing normalized type/range validation. The overflow fixture reaches the sentinel deterministically (three original in-range rows plus 4,998 inserted rows), and the schema fixture records its intentionally incompatible baseline before the request, so its no-repair comparison is meaningful.
+
+The corrected package records GREEN exact-source results for the calendar HTTP/browser checks, object-card/object-queue consumer frontier, jobs composition, change verification, and architecture guard. No correction-delta regression or remaining Gate 5 finding was identified. Exact-source CI remains a separate pending/UNKNOWN publication gate and is not represented as GREEN by this approval.

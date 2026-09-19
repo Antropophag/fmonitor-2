@@ -18,7 +18,7 @@
 ## 4. Focused verification и Gate 5
 
 - [x] 4.1 Выполнить только выбранные planner commands, применимые Yii/navigation/planning regressions и `make architecture-check` (плюс mandatory PilotHttp auth check при изменении `app/PilotHttp/*.php`); сохранить bounded evidence, не запуская локально полный `make test`/`make verify`.
-- [ ] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`, исправляя findings с delta review по изменённому source.
+- [x] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`, исправляя findings с delta review по изменённому source.
 - [ ] 4.3 Выполнить один exact-source GitHub CI run выбранным existing consumer, собрать полный failure inventory при сбое и записать PR/CI/UNKNOWN state без merge/deploy/settings.
 
 ## 5. Done definition
