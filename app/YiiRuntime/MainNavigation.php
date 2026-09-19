@@ -8,7 +8,7 @@ use yii\helpers\Html;
 
 final class MainNavigation
 {
-    public static function render(object $identity, string $currentSection): string
+    public static function render(object $identity, ?string $currentSection = null): string
     {
         $actorId = (int) $identity->id;
         $access = \Yii::$app->canonicalAccess;
@@ -38,7 +38,7 @@ final class MainNavigation
         return $html . '</nav>';
     }
 
-    private static function link(string $section, string $href, string $label, string $icon, string $currentSection, bool $outline = false): string
+    private static function link(string $section, string $href, string $label, string $icon, ?string $currentSection, bool $outline = false): string
     {
         $current = $section === $currentSection ? ' aria-current="page"' : '';
         $stroke = $outline ? ' fill="none" stroke="currentColor" stroke-width="1.7"' : '';

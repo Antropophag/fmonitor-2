@@ -1,0 +1,22 @@
+{
+  "change": "fix-role-stable-sidebar",
+  "planned_paths": [
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Views/installers.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "openspec/changes/fix-role-stable-sidebar/specs/runtime/role-stable-sidebar/spec.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/fix-role-stable-sidebar-delivery.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ROLE-STABLE-SIDEBAR-001",
+      "acceptance_id": "role-stable-read-only-navigation-matrix",
+      "spec_path": "openspec/changes/fix-role-stable-sidebar/specs/runtime/role-stable-sidebar/spec.md",
+      "seam": "real repeated Yii HTTP GET semantic DOM on root /pilot/objects plus standalone /pilot/installers and nested /pilot/feedback screens compares ordered permission-derived MAIN navigation for one identity, exercises removed permissions and unchanged direct-route denial, and compares before/after persisted fixture facts",
+      "tests": ["tests/Yii2/yii2_main_navigation_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_main_navigation_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}

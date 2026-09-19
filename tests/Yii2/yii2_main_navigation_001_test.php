@@ -21,10 +21,12 @@ try {
 
     $routes = [
         '/pilot/objects' => '/pilot/objects',
+        '/pilot/installers' => '/pilot/installers',
         '/pilot/construction-control' => '/pilot/construction-control',
         '/pilot/otiz' => '/pilot/otiz',
         '/pilot/admin/users' => '/pilot/admin/users',
         '/pilot/admin/roles' => '/pilot/admin/roles',
+        '/pilot/feedback' => null,
     ];
     $labels = [
         '/pilot/objects' => 'Объекты монтажа',
@@ -89,7 +91,7 @@ try {
             assertSameValue($expectedGroups, $groups, 'preserved sidebar groups on ' . $route);
             assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and @aria-hidden="true"]', $main)->length, 'every MAIN link preserves one presentation icon on ' . $route);
             $active = array_values(array_column(array_filter($links, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
-            assertSameValue([$current], $active, 'INTENDED_RED one correct aria-current on ' . $route);
+            assertSameValue($current === null ? [] : [$current], $active, 'INTENDED_RED only the canonical current section is marked on ' . $route);
         }
     };
 
@@ -97,12 +99,12 @@ try {
     $before = $fixture->facts();
     $assertMatrix($canonical, $routes);
     $assertMatrix($canonical, $routes); // repeated reads independently render and remain read-only
-    assertSameValue($before, $fixture->facts(), 'five-route repeated reads create no database facts');
+    assertSameValue($before, $fixture->facts(), 'root and nested repeated reads create no database facts');
 
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='installers.read'");
     $phaseBefore = $fixture->facts();
     $withoutInstallers = array_values(array_diff($canonical, ['/pilot/installers']));
-    $assertMatrix($withoutInstallers, $routes);
+    $assertMatrix($withoutInstallers, array_diff_key($routes, ['/pilot/installers' => true]));
     assertSameValue(403, $http->request('GET', '/pilot/installers', [], $cookies)['status'], 'direct installer directory authorization unchanged');
     assertSameValue($phaseBefore, $fixture->facts(), 'no-installers reads and denial create no facts');
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'installers.read')");
@@ -151,7 +153,7 @@ try {
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='objects.read'");
     $phaseBefore = $fixture->facts();
     $withoutObjects = ['/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
-    $assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys($withoutObjects, true)));
+    $assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys([...$withoutObjects, '/pilot/feedback'], true)));
     assertSameValue(403, $http->request('GET', '/pilot/objects', [], $cookies)['status'], 'direct objects authorization unchanged');
     assertSameValue($phaseBefore, $fixture->facts(), 'no-objects reads and denial create no facts');
 
@@ -159,7 +161,7 @@ try {
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('access.administer','inspection.schedule')");
     $phaseBefore = $fixture->facts();
     $withoutAdmin = ['/pilot/objects', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz'];
-    $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys($withoutAdmin, true)));
+    $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys([...$withoutAdmin, '/pilot/feedback'], true)));
     foreach (['/pilot/admin/users', '/pilot/admin/roles'] as $adminRoute) {
         assertSameValue(403, $http->request('GET', $adminRoute, [], $cookies)['status'], 'both direct admin routes retain access.administer guard ' . $adminRoute);
     }
@@ -169,7 +171,7 @@ try {
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('otiz.manage','construction_control.read')");
     $phaseBefore = $fixture->facts();
     $restricted = ['/pilot/objects', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles'];
-    $assertMatrix($restricted, array_intersect_key($routes, array_fill_keys($restricted, true)));
+    $assertMatrix($restricted, array_intersect_key($routes, array_fill_keys([...$restricted, '/pilot/feedback'], true)));
     assertSameValue($phaseBefore, $fixture->facts(), 'restricted admin combination reads create no facts');
 
     $guest = [];
