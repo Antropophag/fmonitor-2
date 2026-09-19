@@ -54,3 +54,17 @@ Both P1 findings are resolved:
 The correction delta is confined to request multiplicity validation, focused failure coverage, delivery evidence, and this review record. The raw-query check does not broaden accepted keys or bypass the existing normalized type/range validation. The overflow fixture reaches the sentinel deterministically (three original in-range rows plus 4,998 inserted rows), and the schema fixture records its intentionally incompatible baseline before the request, so its no-repair comparison is meaningful.
 
 The corrected package records GREEN exact-source results for the calendar HTTP/browser checks, object-card/object-queue consumer frontier, jobs composition, change verification, and architecture guard. No correction-delta regression or remaining Gate 5 finding was identified. Exact-source CI remains a separate pending/UNKNOWN publication gate and is not represented as GREEN by this approval.
+
+## Post-CI delta review — 2026-09-20
+
+- Reviewed commit: `c45a95e872a2c5070f7981d0af8b10897e4638c2` (`Align calendar navigation verification`).
+- CI failure inventory reviewed: run `35468465778`; `governance` failed on two `registered_yii2_focused_bootstrap` assertions, `Integration (2/2)` failed on one `yii2_main_navigation` assertion, and only their aggregate jobs failed. All other jobs passed.
+- Verdict: **APPROVED**.
+
+No findings remain in the post-CI delta.
+
+The shared-navigation test correction adds `/pilot/calendar` consistently to the route/label matrix, canonical order, `Монтаж` child hierarchy, pinned icon expectations, and both permission phases that retain `objects.read`. It does not relax exact membership, exact order, current-route uniqueness, group structure, icon geometry, permission-negative behavior, or repeated-read no-write assertions. This directly repairs the single Integration failure while increasing coverage of the newly shipped navigation item.
+
+The governance-oracle correction preserves the two mandatory direct rationales as a required subset and permits exactly one additional rationale, `semantic integration closure`; any other augmentation still fails. This matches the planner's protected-capability closure for the registered shared-navigation consumer and does not turn the assertion into an unconstrained containment check. Adding both corrected tests to `verification-input.json` also keeps their selection and future changes within the declared change boundary.
+
+The delivery record accurately preserves the complete failed-job and `REGRESSION_FAILURE` inventories, identifies aggregate failures as downstream, records the two root causes, and requires a fresh exact-source CI run because the source changed. Reported bounded reruns are GREEN: the focused main-navigation profile and all eight governance-oracle tests. No production behavior, stable contract, or acceptance expectation changed, and no test weakening or unrelated scope expansion was found.
