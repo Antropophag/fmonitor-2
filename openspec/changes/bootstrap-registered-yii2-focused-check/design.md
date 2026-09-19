@@ -20,7 +20,7 @@
 
 ### 1. Existing runner remains the owner
 
-`run-in-profile` остаётся единственным execution seam. Planner формирует wrapper argv только для зарегистрированной addressable command; harness сам не заворачивает generic diagnostics. Альтернатива — новый Yii launcher — отклонена как второй runner.
+`run-in-profile` остаётся единственным execution seam. Planner формирует wrapper argv с малым `browser --with-services` alias только для зарегистрированной addressable command; harness сам не заворачивает generic diagnostics. Без alias существующие `integration`/`browser` profiles сохраняют non-owning service contract. Альтернатива — новый Yii launcher — отклонена как второй runner.
 
 ### 2. Per-run Compose lifecycle
 

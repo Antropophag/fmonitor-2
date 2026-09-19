@@ -7,6 +7,8 @@
 ### Requirement: Registered command owns focused environment bootstrap
 Prepared command для `tests/Yii2/yii2_main_navigation_001_test.php` SHALL получать профиль и зависимости из существующих verification registrations, подготовить pinned container dependencies и test MariaDB и SHALL исполнить только выбранный тест.
 
+Owned lifecycle SHALL включаться явным addressable `--with-services` alias только у этой registered command; generic `integration`/`browser` invocations без alias SHALL сохранять внешний service lifecycle и MUST NOT автоматически поднимать либо останавливать MariaDB.
+
 #### Scenario: Первый запуск в чистом worktree
 - **WHEN** оператор из worktree без `vendor`, `node_modules` и соседнего `shlz-ui` запускает prepared command выбранного зарегистрированного теста
 - **THEN** команда сама строит container environment по repository lockfiles/pins, поднимает owned MariaDB, дожидается readiness и тест проходит реальные HTTP assertions

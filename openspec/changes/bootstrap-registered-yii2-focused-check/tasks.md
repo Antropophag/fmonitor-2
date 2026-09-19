@@ -15,3 +15,9 @@
 - [x] 3.1 Выполнить planner-selected focused checks без local full suite и получить независимый final review exact source с APPROVED.
 - [ ] 3.2 Зафиксировать candidate, выполнить один exact-source CI через selected existing consumer, собрать полный failure inventory при сбое и не дублировать full run локально.
 - [ ] 3.3 Push отдельной ветки и открыть один PR от актуального `origin/main`; delivery record содержит PR/head, одну clean-worktree command, first/repeat results, isolation proof и remaining limitations.
+
+## 4. CI correction
+
+- [ ] 4.1 Получить Gate 3 delta approval для explicit `--with-services` alias и compatibility expectations после полного CI failure inventory.
+- [ ] 4.2 Отдельному executor сузить stable identity и owned lifecycle до exact registered navigation command; focused matrix и затронутые historical regressions GREEN.
+- [ ] 4.3 Получить независимый Gate 5 delta approval и один new-source PR-triggered CI; same-source rerun не выполнять.

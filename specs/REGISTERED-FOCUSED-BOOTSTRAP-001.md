@@ -6,7 +6,7 @@
 
 ## 1. Actor и public seam
 
-Actor: delivery operator или агент. Public seam: prepared plan/package command, переданная в existing `tools/delivery/harness.py run`, которая для зарегистрированного `tests/Yii2/yii2_main_navigation_001_test.php` исполняется existing `tools/delivery/run-in-profile` route.
+Actor: delivery operator или агент. Public seam: prepared plan/package command, переданная в existing `tools/delivery/harness.py run`, которая для зарегистрированного `tests/Yii2/yii2_main_navigation_001_test.php` исполняется existing `tools/delivery/run-in-profile browser --with-services` route. Малый `--with-services` alias включает owned service lifecycle только для planner-зарегистрированной команды; обычные `integration`/`browser` вызовы сохраняют прежний внешний lifecycle.
 
 Preconditions: Git candidate доступен snapshot-механизму; на host доступны Git, Docker/Compose и launcher prerequisites. Host PHP/Composer/Node, `vendor`, `node_modules`, соседний `shlz-ui` и заранее поднятая MariaDB не являются preconditions.
 
@@ -50,5 +50,6 @@ Planner/package MUST реально выдавать новый route для з�
 
 - Unknown profile, missing command и незарегистрированная попытка heavy promotion MUST быть отклонены до child execution.
 - Все integration tests автоматически в browser profile не переводятся; адресная registration выбранного Yii-теста может использовать подходящий existing profile с нужными assets.
+- Generic `run-in-profile integration|browser` без `--with-services` MUST NOT поднимать или останавливать service resources и сохраняет существующий contract подключения к уже доступной declared network.
 - Не меняются product navigation, production error handler, database schema, FAST classifier, review/CI admission и evidence schema.
 - State-changing domain facts отсутствуют; authorization, audit/history, replay и concurrency product semantics неприменимы. Infrastructure ownership/isolation проверяются unique project identity и cleanup.

@@ -119,7 +119,7 @@ raise SystemExit(75)
         self.addCleanup(temporary.cleanup)
         launcher = ROOT / "tools/delivery/run-in-profile"
         result = subprocess.run(
-            [str(launcher), "browser", "php", TARGET], cwd=ROOT,
+            [str(launcher), "browser", "--with-services", "php", TARGET], cwd=ROOT,
             env=environment, text=True, capture_output=True,
         )
         calls = [json.loads(line) for line in state.read_text().splitlines()] if state.exists() else []
@@ -131,7 +131,7 @@ raise SystemExit(75)
         self.assertEqual(1, len(commands), "INTENDED_RED RFB001-E registered command identity missing")
         command = commands[0]
         self.assertEqual(
-            ["tools/delivery/run-in-profile", "browser", "php", TARGET], command["argv"],
+            ["tools/delivery/run-in-profile", "browser", "--with-services", "php", TARGET], command["argv"],
             "INTENDED_RED RFB001-E prepared command bypasses focused bootstrap",
         )
         self.assertEqual("acceptance", command["purpose"])
@@ -141,8 +141,8 @@ raise SystemExit(75)
         own_commands = [item for item in own["commands"]
                         if item["argv"][-1] == "tests/Verification/registered_yii2_focused_bootstrap_001_test.py"]
         self.assertEqual(1, len(own_commands), "current package acceptance command missing")
-        self.assertEqual("acceptance:registered_yii2_focused_bootstrap_001_test", own_commands[0]["id"])
-        self.assertEqual("acceptance", own_commands[0]["purpose"])
+        self.assertNotIn("id", own_commands[0], "unrouted acceptance identity changed")
+        self.assertNotIn("purpose", own_commands[0], "unrouted acceptance purpose changed")
         self.assertNotEqual("tools/delivery/run-in-profile", own_commands[0]["argv"][0],
                             "generic bootstrap diagnostic recursively wrapped")
 
@@ -222,7 +222,7 @@ raise SystemExit(75)
                 self.addCleanup(temporary.cleanup)
                 result = subprocess.run(
                     ["python3", "tools/delivery/harness.py", "run", "--",
-                     "tools/delivery/run-in-profile", "browser", "php", TARGET],
+                     "tools/delivery/run-in-profile", "browser", "--with-services", "php", TARGET],
                     cwd=ROOT, env=environment, text=True, capture_output=True,
                 )
                 summary = json.loads(result.stdout)
@@ -243,7 +243,7 @@ raise SystemExit(75)
         self.addCleanup(temporary.cleanup)
         interrupted = subprocess.run(
             ["python3", "tools/delivery/harness.py", "run", "--timeout", "5", "--",
-             "tools/delivery/run-in-profile", "browser", "php", TARGET],
+             "tools/delivery/run-in-profile", "browser", "--with-services", "php", TARGET],
             cwd=ROOT, env=environment, text=True, capture_output=True,
         )
         interrupted_record = json.loads(Path(json.loads(interrupted.stdout)["record_path"]).read_text())
