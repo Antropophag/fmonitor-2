@@ -151,3 +151,38 @@ The other six methods were GREEN, including the real clean-worktree/lifecycle te
 No blocking or non-blocking findings remain in this bounded Gate 3 delta.
 
 Gate 3 is **APPROVED** for candidate source `89fe39b3b6fac38bbd0468132ebba5d6996bcdbba72692bc836d0e404d41d326` / head `6fb4684f41fddd5943042409dbf15944ed1d52fc`. Gate 4 may correct only focused-command deduplication and exact reviewer-key normalization against these expectations. All eight focused methods must become GREEN without weakening source, executable-source, identity, acceptance, environment, outcome, clean-worktree or lifecycle guarantees before Gate 5. CI, publication, merge and deployment remain `UNKNOWN` and are not approved by this review.
+
+---
+
+## PR #202 executable-identity Gate 3 delta rereview
+
+### Binding and independence
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer: independent Gate 3 delta reviewer `/root/pr202_gate3_delta`; authored neither the Gate 5 finding, root-owned regression correction nor forthcoming implementation.
+- Reviewed head: `cc3d0e5f4a541708dc6757f98bd508353e6a3005`.
+- Candidate source: `3c5cdda82611fb7e0d063bac6f53cfbc72330d8ae49095740a0a045458fbece2`; executable source: `b8621eb3c78b80fb7b15af004f353f12c71297d7d499b0901f55c716300c67f6`; base: `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T175503Z-2bbaf9eb1c/package.json`; verification-plan SHA-256 `d2c024f4cb69022f18dd265ee2f9fd24d374c5210e0552ba1a84df5b30263c93`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`.
+- Originating Gate 5 finding: `reviews/code/REGISTERED-FOCUSED-BOOTSTRAP-001.md`, candidate `b6d169a9062dd135975e152572352faba13c203df4715ee2268c07771b36e0c5` / head `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`.
+- Retained package RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789840283446556000-8bad30c575c448ca84226d31afd113bf.json`, outcome `INTENDED_RED`, command blob `67e01656537c6145f93559360111380200be43fe3bac2b354596a533ea88a84e`.
+
+### Finding closure and sensitivity
+
+The correction directly closes the single Gate 5 test gap without changing the approved contract or implementation. The actual reviewer-prepare path now receives an evidence record whose executable is `/attacker/tools/delivery/run-in-profile`. This retains the canonical three-component suffix that the defective helper currently trusts, so a suffix-based fix cannot satisfy the test; Gate 3 must reject the record even when its source, executable-source, environment, command id, purpose, command environment, acceptance id and intended outcome otherwise match.
+
+The same method now compares normalized keys for `/attacker/python3` and the explicitly supported `python3` spelling and requires them to remain distinct. This is appropriately narrower than accepting arbitrary interpreter basenames and is independently sensitive to the second collision named by the Gate 5 finding. The first reviewer-prepare assertion stops the current full run before this later assertion; a separate bounded probe confirmed the current helper maps both interpreter paths to the identical tuple `('python3', 'tests/Yii2/yii2_main_navigation_001_test.php')`. Thus both requested hostile paths are executable RED expectations, while one full-test failure accurately represents the shared method's first failing barrier.
+
+The prior positive Gate 3/Gate 5 reviewer preparation, missing evidence, wrong Gate 5 outcome, route convergence, rationale/priority/identity preservation, and all clean-worktree, source-isolation, Docker/DB lifecycle and setup-classification assertions remain unchanged. The implementation boundary remains exact normalization only: accept explicitly supported spellings and, if required by the existing contract, the actual repository wrapper path; never infer executable identity from an arbitrary suffix or basename.
+
+### Fresh RED and checks
+
+`python3 tests/Verification/registered_yii2_focused_bootstrap_001_test.py` completed fresh in `128.812s`: eight methods, exactly one failure in `test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly`, where Gate 3 incorrectly accepted `/attacker/tools/delivery/run-in-profile`. The other seven methods were GREEN, including the previously corrected planner convergence and real clean-worktree/lifecycle path.
+
+The direct helper probe separately confirmed the still-live `/attacker/python3` collision. Python compilation of the corrected focused test and `git diff --check 2bdba9ec..cc3d0e5f` passed. The canonical full local suite was not run, per owner policy.
+
+### Findings and decision
+
+No blocking or non-blocking findings remain in this bounded regression delta.
+
+Gate 3 is **APPROVED** for candidate source `3c5cdda82611fb7e0d063bac6f53cfbc72330d8ae49095740a0a045458fbece2` / head `cc3d0e5f4a541708dc6757f98bd508353e6a3005`. A separate executor may correct only executable-key normalization for the hostile suffix/interpreter collisions. The full eight-method focused acceptance and applicable governance check must be GREEN on the corrected exact source before independent Gate 5 rereview. This approval does not make the prior CI source current and does not authorize publication, merge or deployment.
