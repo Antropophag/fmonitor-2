@@ -10,6 +10,7 @@ from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = Path("tools/verification/suites.tsv")
+DELIVERY_TESTS = ("tools/delivery/ci_launch_transport_198_test.py",)
 SUITES = ("unit", "db", "characterization", "e2e")
 RUNTIMES = ("php", "node", "python3")
 CATEGORIES = ("unit", "integration", "e2e", "governance")
@@ -37,7 +38,8 @@ def repository_path(root, value):
     lexical = PurePosixPath(value)
     if lexical.is_absolute() or ".." in lexical.parts or value != lexical.as_posix():
         raise ValueError(f"invalid catalog path: {value}")
-    if not (value.startswith("tests/") or value.startswith("rapid-pilot/")):
+    if not (value.startswith("tests/") or value.startswith("rapid-pilot/")
+            or value in DELIVERY_TESTS):
         raise ValueError(f"invalid catalog path: {value}")
     return root / value
 

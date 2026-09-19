@@ -18,6 +18,77 @@ import uuid
 from pathlib import PurePosixPath
 
 
+def correction_review_context(*, full_candidate, last_reviewed_source, delta,
+                              findings, suggestions=None, new_risks=None,
+                              return_count=0):
+    """Build the bounded context for a corrected candidate's repeat review."""
+    if not all(isinstance(value, str) and value for value in
+               (full_candidate, last_reviewed_source, delta)):
+        raise ValueError("candidate identities and delta are required")
+    if not isinstance(findings, list):
+        raise ValueError("findings must be a list")
+    open_findings = []
+    for finding in findings:
+        if not isinstance(finding, dict) or not finding.get("id"):
+            raise ValueError("each finding requires an id")
+        status = finding.get("status")
+        if status not in {"fixed", "open", "not-applicable"}:
+            raise ValueError("each finding requires a supported disposition")
+        required = {"fixed": "evidence", "open": "blocker",
+                    "not-applicable": "reason"}[status]
+        if not finding.get(required):
+            raise ValueError(f"{status} finding requires {required}")
+        if status == "open":
+            open_findings.append(finding)
+    status = "READY"
+    if open_findings:
+        status = "RECONSIDER_OR_BLOCK" if return_count >= 2 else "BLOCKED"
+    return {
+        "full_candidate": full_candidate,
+        "last_reviewed_source": last_reviewed_source,
+        "candidate_delta": delta,
+        "finding_dispositions": findings,
+        "suggestions": list(suggestions or []),
+        "new_risks": list(new_risks or []),
+        "status": status,
+    }
+
+
+def requires_repeat_code_review(before, after):
+    """Return False only for completion checkboxes and PR-number typo fixes."""
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        raise ValueError("review snapshots must be mappings")
+    paths = set(before) | set(after)
+    for path in paths:
+        old = before.get(path)
+        new = after.get(path)
+        if old == new:
+            continue
+        if not isinstance(old, (str, bytes)) or not isinstance(new, (str, bytes)):
+            return True
+        if isinstance(old, bytes):
+            try:
+                old = old.decode("utf-8")
+                new = new.decode("utf-8") if isinstance(new, bytes) else new
+            except UnicodeDecodeError:
+                return True
+        elif isinstance(new, bytes):
+            try:
+                new = new.decode("utf-8")
+            except UnicodeDecodeError:
+                return True
+        if path.startswith("openspec/") and path.endswith("/tasks.md"):
+            normalize = lambda value: re.sub(r"(?m)^([ \t]*- \[)[ xX](\])", r"\1?\2", value)
+            if normalize(old) == normalize(new):
+                continue
+        if path == "external-pr-record":
+            normalize = lambda value: re.sub(r"(?i)\bPR\s*#\d+\b", "PR #?", value)
+            if normalize(old) == normalize(new):
+                continue
+        return True
+    return False
+
+
 def _helpers(value=None):
     if value is not None:
         return value

@@ -42,6 +42,11 @@ Review corrections against that source; broaden only for changed scope or new
 risk. After a second return for foreseeable incompleteness, root rebuilds the
 entire matrix and candidate before another dispatch. Assertions, form fields and
 editorial corrections belong to their vertical slice, not separate microreviews.
+Each correction handoff identifies the full candidate and last reviewed source,
+their delta, every prior finding with an explicit `fixed`, `open`, or justified
+`not-applicable` disposition, and any new delta risk. An open finding remains a
+blocker; a second return for the same unresolved cause requires reconsidering the
+approach or reporting the blocker.
 Keep planner-required Gate 3/final reviews independent; one reviewer may serve
 both if it authored neither.
 Batch independent read-only calls and inspect every result.
@@ -96,6 +101,11 @@ the selected existing consumer validates the candidate. Collect the complete
 failed-job and REGRESSION_FAILURE inventory and inspect
 every failure before corrections. A same-source retry needs a recorded reason;
 retain previous failures rather than treating reruns as diagnosis.
+Before a manual Quality Graph dispatch, use `tools/delivery/ci-launch.py` to
+boundedly discover an applicable PR-triggered run for the exact repository,
+workflow, head, base and mode. Reuse that run when present; dispatch once only
+after confirmed absence. Mismatch, failure, cancelled, incomplete or unknown
+observations fail closed and do not authorize another dispatch.
 Report elapsed time, review/return counts and reasons, repeated checks, delivered
 result and remaining blockers. Distinguish implemented code, open PR, green CI
 and merge; report material scope growth promptly. Measure tokens and money only
