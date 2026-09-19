@@ -1,0 +1,41 @@
+{
+  "change": "refresh-otiz-shlz-ui",
+  "planned_paths": [
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Views/otiz.php",
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/refresh-otiz-shlz-ui/design.md",
+    "openspec/changes/refresh-otiz-shlz-ui/proposal.md",
+    "openspec/changes/refresh-otiz-shlz-ui/specs/ui/otiz-operational-workflow/spec.md",
+    "openspec/changes/refresh-otiz-shlz-ui/tasks.md",
+    "openspec/changes/refresh-otiz-shlz-ui/verification-input.json",
+    "reviews/code/OTIZ-SHLZ-UI-001.md",
+    "reviews/tests/OTIZ-SHLZ-UI-001.md",
+    "specs/OTIZ-SHLZ-UI-001.md",
+    "tests/Yii2/otiz_shlz_ui_browser.mjs",
+    "tests/Yii2/yii2_otiz_shlz_ui_001_test.php",
+    "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
+    "tests/Yii2/otiz_settlement_browser.mjs",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A1-A7-complete-presentation",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "authenticated Yii2 /pilot/otiz/** HTTP DOM and Chromium rendering at required viewport/input/motion/script contexts",
+      "tests": ["tests/Yii2/yii2_otiz_shlz_ui_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_shlz_ui_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A3-A8-existing-financial-contracts",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "existing Yii2 OTIZ publication and settlement HTTP/browser/domain commands with before/after facts",
+      "tests": ["tests/Yii2/yii2_otiz_workflow_001_test.php", "tests/Yii2/yii2_otiz_commands_001_test.php", "tests/Yii2/yii2_otiz_settlement_browser_001_test.php", "tests/Otiz/snapshot_publication_001_test.php", "tests/Otiz/settlement_owner_001_test.php", "tests/Otiz/settlement_concurrency_001_test.php", "tests/Otiz/object_register_paging_http_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_workflow_001_test.php": "GREEN", "tests/Yii2/yii2_otiz_commands_001_test.php": "GREEN", "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "GREEN", "tests/Otiz/snapshot_publication_001_test.php": "GREEN", "tests/Otiz/settlement_owner_001_test.php": "GREEN", "tests/Otiz/settlement_concurrency_001_test.php": "GREEN", "tests/Otiz/object_register_paging_http_001_test.php": "GREEN"}
+    }
+  ]
+}
