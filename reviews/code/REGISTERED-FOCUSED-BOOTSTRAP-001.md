@@ -145,3 +145,35 @@ Expectation, plan-command, acceptance, evidence and coverage maps now all call t
 ### Decision
 
 Gate 5 is **not approved** for candidate source `b6d169a9062dd135975e152572352faba13c203df4715ee2268c07771b36e0c5` / head `2bdba9ecf9d8c7c64a1e143363c0d10979123fa3`. Planner convergence and all previously reviewed bootstrap/lifecycle behavior are GREEN and unchanged; the only blocking issue is exact executable-path identity in reviewer normalization. Root-owned test correction, fresh Gate 3 delta approval, separate executor correction, exact-source focused/governance GREEN, and a fresh independent Gate 5 rereview are required before this connection delta can be approved. The package's recorded CI success does not cure this review finding or authorize publication/merge.
+
+---
+
+## PR #202 executable-identity Gate 5 delta rereview
+
+### Binding and evidence
+
+- Review date: 2026-09-19.
+- Verdict: **APPROVED**.
+- Reviewer independence: unchanged; the reviewer authored neither root-owned regression commit `cc3d0e5f4a541708dc6757f98bd508353e6a3005` nor executor commit `95942cb9d832dce1792941440665ca39435b8278`.
+- Reviewed head: `95942cb9d832dce1792941440665ca39435b8278`; candidate source `592f5695ebd409f9a9041dd735e5a0cdb62d3688de886fd6de8dabe26a9f0085`; executable source `ebe0ceb7f7d8c5cb2d07876cf312713d2256e7fc87c47a6aa618e3345384142b`; base `7c85fdbca24f087e235c27039d3e3f0da320341b`.
+- Exact reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260919T180949Z-2dd1308d9e/package.json`, SHA-256 `5221c2e08aeb306f43c6dea06539247157e8d118d5cd827de447384780d15504`; verification-plan SHA-256 `1a3aa22e229e93777bc8af746c666618c5399360c12e7622075c33ea662398ac`; required-context SHA-256 `cc27073ad5a348b935a49617c0075b4218fbc58f37a0a0975b7bd1a80ed7167e`; snapshot manifest SHA-256 `7455c93d1e174bbba83cddaedbe68fb3f6ccca626b5a5f0c9341c14d702c46dd`; delta SHA-256 `c58d1488e36b1c0622bc10b849dcb46a9e2db3a425feb01cd0af04f52393a5f9`.
+- Approved executable-identity Gate 3 delta: head `cc3d0e5f4a541708dc6757f98bd508353e6a3005`, candidate source `3c5cdda82611fb7e0d063bac6f53cfbc72330d8ae49095740a0a045458fbece2`, recorded in `reviews/tests/REGISTERED-FOCUSED-BOOTSTRAP-001.md`.
+- Exact-source focused GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789841134539866000-bbe46b8749fd40a8970f3cae47bb134b.json`, exit `0`, all eight methods in 208.526 seconds. Exact-source governance/planner GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789841351680234000-6f78e1ea8ab7472e8c437a74888131db.json`, exit `0` in 21.448 seconds.
+
+### Finding closure
+
+The single prior Gate 5 finding is resolved. `_normalized_argv` now uses closed trusted sets rather than basename or path-suffix inference. It accepts the supported `python` and `python3` spellings, the running interpreter identity and its resolved path; it accepts `tools/delivery/run-in-profile`, its explicit `./` form and only the wrapper resolved from this repository's `harness_context.py`. These trusted forms converge to the existing canonical plan keys.
+
+Direct reviewer probes confirmed `/attacker/tools/delivery/run-in-profile` and `/attacker/python3` remain unchanged and distinct from their plan-owned counterparts. The corrected public regression passes an otherwise identity/source/environment/outcome-correct record carrying the hostile canonical-suffix wrapper through actual reviewer `prepare` and requires rejection. A fresh bounded rerun of `test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly` passed in 15.160 seconds, covering exact Gate 3 RED acceptance, missing evidence rejection, hostile wrapper rejection, hostile interpreter distinction, exact Gate 5 GREEN acceptance and wrong-outcome rejection.
+
+The executor commit changes only `tools/delivery/harness_context.py`. The shared normalization continues to feed expectations, mapped plan commands, acceptance identity, evidence validation and coverage. Source, executable-source, host environment, command id, purpose, command environment, acceptance id and outcome checks are unchanged. The prior planner convergence implementation is unchanged, so the registered navigation target still has one wrapped route with both selection reasons, acceptance identity/environment and local priority; generic diagnostic and integration commands remain unpromoted.
+
+Neither `tools/delivery/run-in-profile`, its Dockerfile nor planner construction changed in this correction. The exact-source eight-method GREEN therefore retains the previously approved dependency-free disposable bootstrap, first/repeat identity, controlled candidate mutation, setup classifications, ordinary HTTP 503, interruption cleanup, unique Compose ownership, foreign-resource survival and container asset/source isolation checks.
+
+Reviewer static checks passed: Python compilation of the helper and focused acceptance, shell syntax for `run-in-profile`, and `git diff --check cc3d0e5f..95942cb9`. The canonical full local suite was not run, per owner policy.
+
+### Findings and decision
+
+No blocking or non-blocking findings remain in this bounded correction.
+
+Gate 5 is **APPROVED** for candidate source `592f5695ebd409f9a9041dd735e5a0cdb62d3688de886fd6de8dabe26a9f0085` / head `95942cb9d832dce1792941440665ca39435b8278`. This verdict closes only the executable-identity correction and preserves the earlier connection/bootstrap approvals. The package still reports the live PR head as `54928606b35a8dbeba0c52c9775b595463d92145` and publication readiness false; this code-review approval does not make hosted CI current, authorize push/merge/deployment, or convert mismatched admission state to GREEN. Any further executable, test, specification, registration or source-binding change requires applicable fresh review and evidence.
