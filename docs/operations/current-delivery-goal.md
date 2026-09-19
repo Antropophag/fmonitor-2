@@ -1,11 +1,11 @@
-# Текущая цель — №198, убрать дубли CI/E2E и лишние циклы review
+# Текущая цель — №203, восстановить Yii Calendar
 
-Поручение владельца 2026-09-19: реализовать bounded issue №198 от актуального `origin/main`, довести до PR-ready без merge/deploy/settings. Base: `62d027d54af7a01a1da300eda2901ba68b2bab20`; branch `codex/issue-198-deduplicate-verification`; worktree `/Users/antropophag/code/fmonitor-2-issue198`.
+Поручение владельца 2026-09-19: реализовать bounded issue №203 от актуального `origin/main` и довести до PR-ready без merge/deploy/settings. Base: `fa930ed7bd308ede3ab1b083f7e366ba451ecb98`; branch `codex/issue-203-yii-calendar`; worktree `/Users/antropophag/code/fmonitor-2-issue203`.
 
-Scope: удалить конкретный повторный запуск `yii2_preopening_browser_001_test.php` через SHLZ wrapper; добавить fail-closed reuse штатного PR-triggered Quality Graph run перед одним fallback dispatch; адресно сократить correction/review handoff. Не начинать аудит/переписывание harness, общий граф dedup, глобальную exactly-once семантику, telemetry или изменение workflow/branch settings/FAST/admission schemas.
+Scope: восстановить authenticated read-only `GET /pilot/calendar[/]` в Yii; проецировать существующие inspection schedule facts детерминированно; требовать `objects.read`; вернуть `Календарь` в группу `Монтаж` и current state; сохранить no-write GET и scheduling commands; добавить focused HTTP/browser coverage.
 
-Lifecycle: [deduplicate-verification-delivery](../../openspec/changes/deduplicate-verification-delivery/). Stable contract: [VERIFICATION-DELIVERY-DEDUPLICATION-001](../../specs/VERIFICATION-DELIVERY-DEDUPLICATION-001.md). Mutable source/PR/CI state принадлежит delivery harness.
+Не входят schema/migrations, mutation redesign, новая rapid-pilot domain logic, дополнительный calendar event catalogue и несвязанная полировка sidebar. Запрошенный владельцем FAST передаётся verification planner; authoritative lane и reviews выбирает только planner.
 
-Root авторит scope/spec/tests. Отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают Gate 3 и Gate 5. Фактических авторов и source checkpoints фиксировать в delivery record.
+Lifecycle: [restore-yii-calendar](../../openspec/changes/restore-yii-calendar/). Stable contract: [YII2-CALENDAR-003](../../specs/YII2-CALENDAR-003.md). Root авторит scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимый gpt-5.6-sol/low reviewer принимает planner-required review. Чужой WIP №157 и №198 не менять.
 
-Локально только bounded focused checks и применимый architecture check; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI выполняется штатным PR-trigger либо единственным fallback dispatch через новый guard. UNKNOWN не является GREEN/approval. Чужой WIP №157 и параллельные UI changes не менять.
+Локально только bounded focused checks и применимый architecture check; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI через выбранный existing consumer. UNKNOWN не является GREEN/approval.

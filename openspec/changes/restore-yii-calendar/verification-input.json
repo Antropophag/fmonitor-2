@@ -1,0 +1,31 @@
+{
+  "change": "restore-yii-calendar",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/CalendarController.php",
+    "app/YiiRuntime/Views/calendar.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Assets/ShellAssetBundle.php",
+    "config/yii/web.php",
+    "tests/Yii2/yii2_calendar_003_test.php",
+    "tests/Yii2/yii2_calendar_003_browser_test.php",
+    "tests/Yii2/calendar_003_browser.mjs",
+    "tools/verification/suites.tsv",
+    "specs/YII2-CALENDAR-003.md",
+    "openspec/changes/restore-yii-calendar/proposal.md",
+    "openspec/changes/restore-yii-calendar/design.md",
+    "openspec/changes/restore-yii-calendar/tasks.md",
+    "openspec/changes/restore-yii-calendar/specs/runtime/yii-calendar/spec.md",
+    "openspec/changes/restore-yii-calendar/verification-input.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-203-yii-calendar-delivery.md",
+    "reviews/code/YII2-CALENDAR-003.md"
+  ],
+  "acceptances": [{
+    "spec_id": "YII2-CALENDAR-003",
+    "acceptance_id": "A1-A5-yii-calendar",
+    "spec_path": "specs/YII2-CALENDAR-003.md",
+    "seam": "real authenticated Yii HTTP and Chromium cover read-only deterministic inspection schedule projection, RBAC, date failures, shared navigation and object return path",
+    "tests": ["tests/Yii2/yii2_calendar_003_test.php", "tests/Yii2/yii2_calendar_003_browser_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_calendar_003_test.php": "INTENDED_RED", "tests/Yii2/yii2_calendar_003_browser_test.php": "INTENDED_RED"}
+  }]
+}
