@@ -61,17 +61,34 @@ try {
         }
         return [$links, $document, $xpath, $nodes->item(0)];
     };
-    $assertMatrix = static function (array $expectedSections, array $availableRoutes) use ($http, &$cookies, $navigation, $labels): void {
+    $svgSignature = static function (DOMElement $svg): array {
+        $signature=['root'=>[
+            'width'=>$svg->getAttribute('width'),
+            'height'=>$svg->getAttribute('height'),
+            'viewBox'=>$svg->hasAttribute('viewBox')?$svg->getAttribute('viewBox'):$svg->getAttribute('viewbox'),
+        ],'paths'=>[]];
+        foreach ($svg->getElementsByTagName('path') as $path) {
+            $attributes=[];
+            foreach ($path->attributes as $attribute) if ($attribute->name !== 'id') $attributes[$attribute->name]=$attribute->value;
+            ksort($attributes);$signature['paths'][]=$attributes;
+        }
+        return $signature;
+    };
+    $sourceSignature = static function (string $name) use ($svgSignature): array {
+        $root=getenv('FMONITOR_SHLZ_UI_ROOT')?:dirname(__DIR__,3).'/shlz-ui';
+        $bytes=file_get_contents($root.'/packages/icons/dist/icons/'.$name.'.svg');
+        assertSameValue(true,is_string($bytes),'pinned shlz icon exists '.$name);
+        $document=new DOMDocument();assertSameValue(true,$document->loadXML($bytes),'pinned shlz icon parses '.$name);
+        return $svgSignature($document->documentElement);
+    };
+    $assertMatrix = static function (array $expectedSections, array $availableRoutes) use ($http, &$cookies, $navigation, $labels, $svgSignature, $sourceSignature): void {
         $observedOrder = null;
         foreach ($availableRoutes as $route => $current) {
             $response = $http->request('GET', $route, [], $cookies);
             assertSameValue(200, $response['status'], 'available route ' . $route);
             [$links, , $xpath, $main] = $navigation($response['body']);
             $feedback = '/pilot/feedback?from=' . rawurlencode($route);
-            $expected = [[
-                'href' => $feedback,
-                'label' => $labels['/pilot/feedback'],
-            ]];
+            $expected = [];
             foreach ($expectedSections as $href) $expected[] = ['href' => $href, 'label' => $labels[$href]];
             $actual = array_map(static fn(array $link): array => array_intersect_key($link, ['href' => true, 'label' => true]), $links);
             usort($expected, static fn(array $a, array $b): int => strcmp($a['href'], $b['href']));
@@ -79,23 +96,57 @@ try {
             usort($membership, static fn(array $a, array $b): int => strcmp($a['href'], $b['href']));
             assertSameValue($expected, $membership, 'INTENDED_RED exact permitted MAIN membership and labels on ' . $route);
             $order = array_map(static fn(array $link): string => str_starts_with($link['href'], '/pilot/feedback?') ? '/pilot/feedback' : $link['href'], $links);
-            if ($observedOrder === null) $observedOrder = $order;
-            assertSameValue($observedOrder, $order, 'INTENDED_RED identical MAIN order across permission-equivalent routes on ' . $route);
-            assertSameValue('/pilot/feedback', $order[array_key_last($order)] ?? null, 'INTENDED_RED preserve feedback as final MAIN link on ' . $route);
+            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/construction-control','/pilot/installers','/pilot/otiz','/pilot/admin/users','/pilot/admin/roles'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
+            assertSameValue($expectedOrder, $order, 'INTENDED_RED exact MAIN order on ' . $route);
+            assertSameValue(0, $xpath->query('.//a[starts-with(@href,"/pilot/feedback")]', $main)->length, 'INTENDED_RED feedback is not a MAIN navigation item on ' . $route);
+            $floatingFeedback = $xpath->query('//a[contains(concat(" ",normalize-space(@class)," ")," fm2-feedback-fab ") and starts-with(@href,"/pilot/feedback")]');
+            $feedbackExpected=$route==='/pilot/feedback'?0:1;
+            assertSameValue($feedbackExpected, $floatingFeedback->length, 'INTENDED_RED floating feedback presence on ' . $route);
+            if($feedbackExpected===1){
+                assertSameValue($feedback, html_entity_decode($floatingFeedback->item(0)->getAttribute('href'), ENT_QUOTES | ENT_HTML5, 'UTF-8'), 'floating feedback preserves source route');
+                assertSameValue('Обратная связь', $floatingFeedback->item(0)->getAttribute('aria-label'), 'floating feedback has accessible name');
+                $fabSvg=$xpath->query('.//*[name()="svg" and @data-shlz-icon="chat"]',$floatingFeedback->item(0))->item(0);
+                assertSameValue(true,$fabSvg instanceof DOMElement,'feedback shlz chat icon');
+                assertSameValue($sourceSignature('chat'),$svgSignature($fabSvg),'feedback geometry equals pinned shlz chat');
+            }
             $groups = [];
             foreach ($xpath->query('./span[contains(concat(" ",normalize-space(@class)," ")," fm2-nav-group ")]', $main) as $group) {
                 $groups[] = trim($group->textContent);
             }
             $expectedGroups = ['Монтаж'];
+            if (in_array('/pilot/installers', $expectedSections, true)) $expectedGroups[] = 'Справочники';
+            if (in_array('/pilot/otiz', $expectedSections, true)) $expectedGroups[] = 'ОТиЗ';
             if (in_array('/pilot/admin/users', $expectedSections, true)) $expectedGroups[] = 'Администрирование';
             assertSameValue($expectedGroups, $groups, 'preserved sidebar groups on ' . $route);
-            assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and @aria-hidden="true"]', $main)->length, 'every MAIN link preserves one presentation icon on ' . $route);
+            $tokens=[];
+            foreach ($main->childNodes as $child) {
+                if (!$child instanceof DOMElement) continue;
+                $classes=' '.$child->getAttribute('class').' ';
+                if (str_contains($classes,' fm2-nav-group ')) $tokens[]=['group',trim($child->textContent)];
+                elseif ($child->tagName==='a') $tokens[]=['link',html_entity_decode($child->getAttribute('href'),ENT_QUOTES|ENT_HTML5,'UTF-8')];
+            }
+            $expectedTokens=[];
+            foreach ([
+                'Монтаж'=>['/pilot/objects','/pilot/construction-control'],
+                'Справочники'=>['/pilot/installers'],
+                'ОТиЗ'=>['/pilot/otiz'],
+                'Администрирование'=>['/pilot/admin/users','/pilot/admin/roles'],
+            ] as $group=>$children) {
+                $present=array_values(array_filter($children,static fn(string $href):bool=>in_array($href,$expectedSections,true)));
+                if ($present===[]) continue;
+                $expectedTokens[]=['group',$group];foreach($present as $href)$expectedTokens[]=['link',$href];
+            }
+            assertSameValue($expectedTokens,$tokens,'INTENDED_RED exact group-to-child hierarchy on '.$route);
+            assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon--shlz ") and @aria-hidden="true"]', $main)->length, 'INTENDED_RED every MAIN link uses one shlz icon on ' . $route);
+            $iconByHref=['/pilot/objects'=>'circle-grid-interface-sidebar','/pilot/construction-control'=>'setting-tool-circle','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'pie-chart','/pilot/admin/users'=>'user-1','/pilot/admin/roles'=>'book'];
+            foreach($links as$link){$name=$iconByHref[$link['href']]??null;assertSameValue(true,is_string($name),'known nav icon '.$link['href']);$svg=$xpath->query('./*[name()="svg" and @data-shlz-icon="'.$name.'"]',$main->getElementsByTagName('a')->item(array_search($link,$links,true)))->item(0);assertSameValue(true,$svg instanceof DOMElement,'exact nav icon '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'nav geometry equals pinned shlz '.$name);}
+            foreach(['chevron-left-duo','chevron-right-duo']as$name){$svg=$xpath->query('//summary[contains(concat(" ",normalize-space(@class)," ")," fm2-nav-trigger ")]/*[name()="svg" and @data-shlz-icon="'.$name.'"]')->item(0);assertSameValue(true,$svg instanceof DOMElement,'collapse contains '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'collapse geometry equals pinned shlz '.$name);}
             $active = array_values(array_column(array_filter($links, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
             assertSameValue($current === null ? [] : [$current], $active, 'INTENDED_RED only the canonical current section is marked on ' . $route);
         }
     };
 
-    $canonical = ['/pilot/objects', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
+    $canonical = ['/pilot/objects', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles'];
     $before = $fixture->facts();
     $assertMatrix($canonical, $routes);
     $assertMatrix($canonical, $routes); // repeated reads independently render and remain read-only
@@ -160,7 +211,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'objects.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('access.administer','inspection.schedule')");
     $phaseBefore = $fixture->facts();
-    $withoutAdmin = ['/pilot/objects', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz'];
+    $withoutAdmin = ['/pilot/objects', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz'];
     $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys([...$withoutAdmin, '/pilot/feedback'], true)));
     foreach (['/pilot/admin/users', '/pilot/admin/roles'] as $adminRoute) {
         assertSameValue(403, $http->request('GET', $adminRoute, [], $cookies)['status'], 'both direct admin routes retain access.administer guard ' . $adminRoute);
