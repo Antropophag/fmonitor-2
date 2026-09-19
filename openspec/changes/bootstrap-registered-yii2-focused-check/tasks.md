@@ -2,7 +2,7 @@
 
 - [x] 1.1 Зафиксировать `REGISTERED-FOCUSED-BOOTSTRAP-001`, OpenSpec delta и verification input; проверить `openspec validate --strict` и planner obligations.
 - [x] 1.2 Root написать executable tests для exact planner route, owned DB lifecycle, setup-failure stages, source isolation и exact selected argv; получить intended RED через prepared harness command.
-- [ ] 1.3 Получить обязательный независимый Gate 3 review полного spec/test/RED candidate и устранить все findings до APPROVED.
+- [x] 1.3 Получить обязательный независимый Gate 3 review полного spec/test/RED candidate и устранить все findings до APPROVED.
 
 ## 2. Gate 4
 
