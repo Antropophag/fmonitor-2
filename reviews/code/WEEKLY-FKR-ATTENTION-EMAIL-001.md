@@ -383,3 +383,96 @@ bounded syntax/focused checks affected by that mechanical delta, and prepare a
 new exact-source package for one final review. The two environment-only checks
 remain honestly `UNKNOWN`; they are not a reason to rerun the prohibited local
 full suite.
+
+---
+
+# Final verdict after readability correction and rebase — exact source `40f15990`
+
+- Date: `2026-09-21`
+- Reviewer: separately tasked agent `/root/issue11_final_review`
+- Independence: unchanged; the reviewer authored none of the implementation,
+  specification, tests, rebase, or evidence
+- Rebased main: `8ce66adb26b73a81931cb3a0dc2697bd96c58729`
+- Candidate commit: `736f70c70ca2934189c3d0ad5d51c48f139ebfbf`
+- Exact candidate source:
+  `40f15990c2f59af996116ce4703f8ae68b5b714ea5689c540200a8ca5fa10060`
+- Prepared package:
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T232953Z-d4994e09d5/package.json`
+- Verdict: **APPROVED**
+
+The prepared package, committed diff, latest test approvals, seven exact-source
+records and the post-rebase repository state were inspected. The worktree was
+clean before this append-only review update. `HEAD` is one issue #11 feature
+commit above the requested latest-main merge base. No conflict markers or
+candidate-path omissions were found.
+
+## Rebase and current-goal preservation
+
+The feature is based on `8ce66adb...`; `git merge-base HEAD 8ce66adb...` returns
+that exact commit. The rebased branch preserves main's current operational goal
+for issue #21 in `docs/operations/current-delivery-goal.md` rather than
+reintroducing the stale issue #11 queue marker. Issue #11's specification,
+OpenSpec lifecycle, implementation, tests, operations documentation and review
+history remain present in the feature commit.
+
+## Prior finding closure
+
+- **G5-1 fixed:** the persisted Moscow scheduler, job admission/worker registry,
+  transactional outbox, active-manager/global-`objects.read` directory and
+  native report adapters remain wired. Opening attention delegates to the
+  canonical current application/original/workforce/control-engineer/completion/
+  PTO eligibility owner.
+- **G5-2 fixed:** exact subject/period presentation, 85/15/UNKNOWN closing
+  readiness, stable universal sorting, inclusive attention boundaries and dual
+  overdue actions remain intact after rebase.
+- **G5-3 fixed:** TLS-only STARTTLS/AUTH handling, peer verification,
+  dot-stuffing and safe outcome classification remain intact. Production uses
+  `mapEmailTransportOutcome()`; unknown ACK persists one terminal
+  `UNKNOWN_DELIVERY` attempt, leaves the intent/job dead and produces no
+  automatic resweep or second network call.
+- **G5-4 fixed:** environment/compose readiness, explicit manual `--send`, safe
+  SMTP operations documentation and rollback guidance remain present without a
+  committed `k2` secret.
+- **G5-5 fixed:** builder and transport retain the shared recipient-eligibility
+  rule; test-only fingerprints remain absent from production ports. Every
+  production file cited in the prior readability finding now has zero physical
+  lines longer than 180 characters. SQL, projection, HTML rendering, SMTP
+  protocol and outcome mapping are structured into readable multiline blocks
+  and cohesive helpers without changing their reviewed behavior.
+
+Historical progress still consumes the shared checklist-progress owner and
+uses exact `Europe/Moscow` prior-day/period-end instants converted to UTC. The
+approved unknown-delivery persistence regression is included in the current
+package.
+
+## Evidence and honest unknowns
+
+All seven mapped records are exact-source GREEN for `40f15990...`:
+
+```text
+php tests/Jobs/durable_queue_concurrency_001_test.php
+php tests/Jobs/outbox_delivery_lifecycle_001_test.php
+php tests/Jobs/weekly_fkr_report_delivery_001_test.php
+php tests/Jobs/weekly_fkr_unknown_delivery_001_test.php
+php tests/Runtime/weekly_fkr_smtp_configuration_001_test.php
+php tests/WeeklyFkrReport/weekly_report_001_test.php
+php tests/WeeklyFkrReport/weekly_schedule_001_test.php
+```
+
+The reported post-rebase weekly, core opening, Jobs and architecture checks are
+GREEN. The inspection-schema consumer remains `UNKNOWN`: bare checkout lacked
+`vendor`, and the integration profile later reached a read-only runtime-storage
+fixture failure. Those diagnosed environment conditions are neither product
+regressions nor GREEN and do not weaken this code-review verdict. The prohibited
+local full suite was not run.
+
+## Final Gate 5 verdict
+
+**APPROVED**
+
+Gate 5 is approved for exact source
+`40f15990c2f59af996116ce4703f8ae68b5b714ea5689c540200a8ca5fa10060`
+on base `8ce66adb26b73a81931cb3a0dc2697bd96c58729`. This approval covers the reviewed
+code/spec/test/configuration completeness and does not convert the inspection
+consumer environment gap or required exact-source GitHub CI into GREEN. CI and
+publication readiness remain separate subsequent gates.

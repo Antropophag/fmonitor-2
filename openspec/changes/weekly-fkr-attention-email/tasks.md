@@ -31,7 +31,7 @@
 
 ## 5. Gate 5 и delivery
 
-- [ ] 5.1 Root проверяет candidate completeness, захватывает reconstructible exact-source snapshot и готовит final reviewer package
-- [ ] 5.2 Независимый reviewer проверяет spec/tests/Gate 3/code/config/security/evidence и записывает verdict в `reviews/code/WEEKLY-FKR-ATTENTION-EMAIL-001.md`; findings исправляются с повторной проверкой нужного delta
+- [x] 5.1 Root проверяет candidate completeness, захватывает reconstructible exact-source snapshot и готовит final reviewer package
+- [x] 5.2 Независимый reviewer проверяет spec/tests/Gate 3/code/config/security/evidence и записывает verdict в `reviews/code/WEEKLY-FKR-ATTENTION-EMAIL-001.md`; findings исправляются с повторной проверкой нужного delta
 - [ ] 5.3 Выполнить одну exact-source GitHub CI проверку выбранным существующим consumer, собрать полный failure inventory при ошибке и не считать UNKNOWN зелёным
 - [ ] 5.4 После APPROVED и GREEN подготовить PR-ready handoff с authorship, elapsed/rework, source/review/CI links и явным статусом live SMTP/test-send; архивирование выполняется отдельно после Done
