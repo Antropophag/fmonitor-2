@@ -24,7 +24,7 @@ final readonly class MariaDbYiiObjectQueue
         $sql = "SELECT 1 FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='objects.read' LIMIT 1";
         return(bool)$this->db->createCommand($sql, [':id' => $actor])->queryScalar();
     }
-    /** @return list<array{scheduleId:int,objectId:int,date:string,registration:string,address:string,entrance:string}> */
+    /** @return list<array{scheduleId:?int,objectId:int,date:string,type:string,registration:string,address:string,entrance:string}> */
     public function readCalendar(string $first, string $last): array
     {
         $table = $this->prefix . InspectionPlanningDefinitionSchemaMigration::SCHEDULES;
@@ -33,9 +33,18 @@ final readonly class MariaDbYiiObjectQueue
             throw new \RuntimeException('Inspection planning schema is not ready.');
         }
         $p=$this->prefix;$l=$this->legacyPrefix;
-        $rows=$this->db->createCommand("SELECT s.id schedule_id,s.legacy_object_id object_id,s.inspection_date event_date,m.regnumber,m.ordadr_address,m.entrance FROM `{$p}fm2_pilot_inspection_schedules` s LEFT JOIN `{$l}fm_maintable` m ON m.id=s.legacy_object_id WHERE s.inspection_date BETWEEN :first AND :last ORDER BY s.inspection_date,s.legacy_object_id,s.id LIMIT ".(self::CALENDAR_ROW_LIMIT+1),[':first'=>$first,':last'=>$last])->queryAll();
+        $rows=$this->db->createCommand("SELECT s.id schedule_id,s.legacy_object_id object_id,s.inspection_date event_date,'inspection' event_type,m.regnumber,m.ordadr_address,m.entrance FROM `{$p}fm2_pilot_inspection_schedules` s LEFT JOIN `{$l}fm_maintable` m ON m.id=s.legacy_object_id WHERE s.inspection_date BETWEEN :first AND :last ORDER BY s.inspection_date,s.legacy_object_id,s.id LIMIT ".(self::CALENDAR_ROW_LIMIT+1),[':first'=>$first,':last'=>$last])->queryAll();
         if(count($rows)>self::CALENDAR_ROW_LIMIT)throw new \RuntimeException('Calendar source projection overflow.');
-        return array_map(static fn(array$row):array=>['scheduleId'=>(int)$row['schedule_id'],'objectId'=>(int)$row['object_id'],'date'=>(string)$row['event_date'],'registration'=>trim((string)$row['regnumber']),'address'=>trim((string)$row['ordadr_address']),'entrance'=>trim((string)$row['entrance'])],$rows);
+        $legacyTable=$l.'fm_maintable';
+        $legacyColumns=$this->db->createCommand('SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=:table',[':table'=>$legacyTable])->queryColumn();
+        $finishColumn=in_array('workdatefinish',$legacyColumns,true)?'m.workdatefinish':'NULL';
+        $finishExpression="COALESCE(NULLIF({$finishColumn},''),m.plan_finish_date)";
+        $planned=$this->db->createCommand("SELECT m.id object_id,m.workdatestart,{$finishColumn} workdatefinish,m.plan_finish_date,m.regnumber,m.ordadr_address,m.entrance FROM `{$legacyTable}` m WHERE (LEFT(m.workdatestart,10) BETWEEN :first AND :last) OR (LEFT({$finishExpression},10) BETWEEN :first AND :last) LIMIT ".(self::CALENDAR_ROW_LIMIT+1),[':first'=>$first,':last'=>$last])->queryAll();
+        if(count($planned)>self::CALENDAR_ROW_LIMIT)throw new \RuntimeException('Calendar source projection overflow.');
+        foreach($planned as$row){$start=self::date($row['workdatestart']);$finish=self::date($row['workdatefinish'])??self::date($row['plan_finish_date']);foreach([['planned_start',$start],['planned_end',$finish]]as[$type,$date])if($date!==null&&$date>=$first&&$date<=$last)$rows[]=['schedule_id'=>null,'object_id'=>$row['object_id'],'event_date'=>$date,'event_type'=>$type,'regnumber'=>$row['regnumber'],'ordadr_address'=>$row['ordadr_address'],'entrance'=>$row['entrance']];}
+        if(count($rows)>self::CALENDAR_ROW_LIMIT)throw new \RuntimeException('Calendar source projection overflow.');
+        usort($rows,static fn(array$a,array$b):int=>[$a['event_date'],(int)$a['object_id'],(int)($a['schedule_id']??0)]<=>[$b['event_date'],(int)$b['object_id'],(int)($b['schedule_id']??0)]);
+        return array_map(static fn(array$row):array=>['scheduleId'=>$row['schedule_id']===null?null:(int)$row['schedule_id'],'objectId'=>(int)$row['object_id'],'date'=>(string)$row['event_date'],'type'=>(string)$row['event_type'],'registration'=>trim((string)$row['regnumber']),'address'=>trim((string)$row['ordadr_address']),'entrance'=>trim((string)$row['entrance'])],$rows);
     }
     public function read(int$actor, string$q, string$status, int$page, int$size = 50): array
     {

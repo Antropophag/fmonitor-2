@@ -1,3 +1,32 @@
+import { enhanceCalendarGrids } from '/pilot/assets/shlz-behaviors.js';
+import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
+
+enhanceSelects(document);
+enhanceCalendarGrids(document);
+for (const root of document.querySelectorAll('[data-shlz-select]')) {
+  root.classList.add('is-enhanced');
+  const submittedValue = root.querySelector('input[type="hidden"]');
+  const fallback = root.querySelector('.shlz-select-fallback select');
+  if (submittedValue) submittedValue.disabled = false;
+  if (fallback) fallback.disabled = true;
+  if (root.hasAttribute('data-shlz-select-required') && submittedValue) {
+    const trigger = root.querySelector('[role="combobox"]');
+    const clearInvalid = () => {
+      if (!submittedValue.value) return;
+      trigger?.removeAttribute('aria-invalid');
+      root.classList.remove('shlz-field--error');
+    };
+    submittedValue.addEventListener('change', clearInvalid);
+    root.closest('form')?.addEventListener('submit', event => {
+      if (submittedValue.value) return;
+      event.preventDefault();
+      trigger?.setAttribute('aria-invalid', 'true');
+      root.classList.add('shlz-field--error');
+      trigger?.focus();
+    });
+  }
+}
+
 (() => {
   const state = document.getElementsByClassName('fm2-nav-state')[0];
   const label = state?.getElementsByClassName('fm2-nav-trigger-text')[0];

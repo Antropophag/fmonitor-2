@@ -452,6 +452,12 @@
 .fm2-queue-table tbody tr:hover { background: var(--fm2-filter); }
 
 .fm2-object-link { display: grid; gap: 1px; color: var(--fm2-ink); text-decoration: none; }
+.fm2-object-identity { min-inline-size: 0; overflow-wrap: anywhere; }
+.fm2-queue-table .fm2-object-identity { display: grid; grid-template-columns: minmax(0, 1fr); min-inline-size: 0; align-items: start; gap: 1px; }
+.fm2-queue-table .fm2-object-identity > :is(strong, small) { display: block; min-inline-size: 0; overflow-wrap: anywhere; }
+.shlz-select-root.is-enhanced > .shlz-select-fallback { display: none; }
+.shlz-field.shlz-select-root.is-enhanced:has(.shlz-select-fallback select:disabled) { cursor: auto; }
+.shlz-field.shlz-select-root.is-enhanced:has(.shlz-select-fallback select:disabled) :is(.shlz-field__label, .shlz-select__trigger) { opacity: 1; }
 .fm2-object-link strong { color: var(--fm2-primary); font-size: 13px; font-weight: 500; }
 .fm2-cell-main { display: block; font-weight: 400; }
 .fm2-queue-table small { display: block; margin-block-start: 1px; color: var(--fm2-muted); font-size: 11px; }
@@ -1517,6 +1523,8 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-calendar-grid thead [scope="colgroup"]:is([data-shlz-calendar-grid-state="past"],[data-shlz-calendar-grid-state="future"]) > .shlz-calendar-grid__group-label { position: sticky; inset-inline-start: calc(var(--shlz-calendar-grid-row-header-width) + 12px); display: inline-block; min-inline-size: max-content; }
 .fm2-calendar-grid .fm2-calendar-day { inline-size: 100%; padding: 3px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; text-align: start; cursor: pointer; }
 .fm2-calendar-grid .fm2-calendar-day:hover, .fm2-calendar-grid .fm2-calendar-day.is-selected { color: var(--fm2-primary); background: var(--fm2-primary-soft); }
+.fm2-calendar-grid .shlz-calendar-grid__disclosure { margin-block-start: var(--shlz-source-spacing-8, 8px); }
+.fm2-calendar-grid .shlz-calendar-grid__disclosure + .shlz-calendar-grid__items:not([hidden]) { margin-block-start: var(--shlz-source-spacing-8, 8px); }
 .fm2-calendar-event-link { display: grid; gap: 2px; color: inherit; font-size: 11px; line-height: 1.3; text-decoration: none; }
 .fm2-calendar-event-link strong { font-size: 12px; font-weight: 600; }
 .fm2-calendar-event-link:hover strong { text-decoration: underline; text-underline-offset: 2px; }

@@ -11,5 +11,5 @@ final class InstallerDirectoryAssetBundle extends \yii\web\AssetBundle
     public $baseUrl = '/pilot/assets';
     public $css = ['shlz.css', 'pilot.css'];
     public $js = ['preloader.js', 'navigation.js'];
-    public $jsOptions = ['position' => \yii\web\View::POS_END];
+    public $jsOptions = ['position' => \yii\web\View::POS_END, 'type' => 'module'];
 }

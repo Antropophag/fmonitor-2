@@ -16,11 +16,11 @@ final class MainNavigation
         $groups = [
             'Монтаж' => [
                 ['objects.read', 'objects', '/pilot/objects', 'Объекты монтажа', 'circle-grid-interface-sidebar'],
-                ['objects.read', 'calendar', '/pilot/calendar', 'Календарь', 'circle-grid-interface-sidebar'],
                 ['construction_control.read', 'construction-control', '/pilot/construction-control', 'Стройконтроль', 'setting-tool-circle'],
+                ['objects.read', 'calendar', '/pilot/calendar', 'Календарь', 'circle-grid-interface-sidebar'],
+                ['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'pie-chart'],
+                ['installers.read', 'installers', '/pilot/installers', 'Монтажники', 'user-sidebar'],
             ],
-            'Справочники' => [['installers.read', 'installers', '/pilot/installers', 'Монтажники', 'user-sidebar']],
-            'ОТиЗ' => [['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'pie-chart']],
             'Администрирование' => [
                 ['access.administer', 'admin-users', '/pilot/admin/users', 'Пользователи', 'user-1'],
                 ['access.administer', 'admin-roles', '/pilot/admin/roles', 'Роли', 'book'],

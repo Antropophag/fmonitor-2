@@ -4,6 +4,8 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap.php';
 require __DIR__ . '/ObjectQueueFixture.php';
 
+$root=dirname(__DIR__,2);foreach(glob($root.'/app/YiiRuntime/Views/*.php')as$view)assertSameValue(false,str_contains((string)file_get_contents($view),'fm2-primary-nav'),'shared MainNavigation is sole primary-nav owner '.basename($view));$navigationJs=(string)file_get_contents($root.'/app/YiiRuntime/Assets/navigation.js');foreach(['insertAdjacentHTML','appendChild','before(','after(','replaceWith']as$mutation)assertSameValue(false,str_contains($navigationJs,$mutation),'navigation client does not insert/reorder links '.$mutation);
+
 // YII2-MAIN-NAVIGATION-001: real Yii HTTP and semantic navigation DOM.
 $fixture = null;
 try {
@@ -98,7 +100,7 @@ try {
             usort($membership, static fn(array $a, array $b): int => strcmp($a['href'], $b['href']));
             assertSameValue($expected, $membership, 'INTENDED_RED exact permitted MAIN membership and labels on ' . $route);
             $order = array_map(static fn(array $link): string => str_starts_with($link['href'], '/pilot/feedback?') ? '/pilot/feedback' : $link['href'], $links);
-            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/calendar','/pilot/construction-control','/pilot/installers','/pilot/otiz','/pilot/admin/users','/pilot/admin/roles'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
+            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers','/pilot/admin/users','/pilot/admin/roles'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
             assertSameValue($expectedOrder, $order, 'INTENDED_RED exact MAIN order on ' . $route);
             assertSameValue(0, $xpath->query('.//a[starts-with(@href,"/pilot/feedback")]', $main)->length, 'INTENDED_RED feedback is not a MAIN navigation item on ' . $route);
             $floatingFeedback = $xpath->query('//a[contains(concat(" ",normalize-space(@class)," ")," fm2-feedback-fab ") and starts-with(@href,"/pilot/feedback")]');
@@ -116,8 +118,6 @@ try {
                 $groups[] = trim($group->textContent);
             }
             $expectedGroups = ['Монтаж'];
-            if (in_array('/pilot/installers', $expectedSections, true)) $expectedGroups[] = 'Справочники';
-            if (in_array('/pilot/otiz', $expectedSections, true)) $expectedGroups[] = 'ОТиЗ';
             if (in_array('/pilot/admin/users', $expectedSections, true)) $expectedGroups[] = 'Администрирование';
             assertSameValue($expectedGroups, $groups, 'preserved sidebar groups on ' . $route);
             $tokens=[];
@@ -129,9 +129,7 @@ try {
             }
             $expectedTokens=[];
             foreach ([
-                'Монтаж'=>['/pilot/objects','/pilot/calendar','/pilot/construction-control'],
-                'Справочники'=>['/pilot/installers'],
-                'ОТиЗ'=>['/pilot/otiz'],
+                'Монтаж'=>['/pilot/objects','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers'],
                 'Администрирование'=>['/pilot/admin/users','/pilot/admin/roles'],
             ] as $group=>$children) {
                 $present=array_values(array_filter($children,static fn(string $href):bool=>in_array($href,$expectedSections,true)));
