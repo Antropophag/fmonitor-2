@@ -1,0 +1,14 @@
+{
+  "change": "fix-yii-construction-control-completed-filter",
+  "planned_paths": ["app/InspectionEvidence/MariaDbYiiChecklistRead.php"],
+  "acceptances": [{
+    "spec_id": "YII2-CONSTRUCTION-CONTROL-PREOPENING-001",
+    "acceptance_id": "completed-filter-full-slice",
+    "spec_path": "specs/YII2-CONSTRUCTION-CONTROL-PREOPENING-001.md",
+    "seam": "authorized, unauthorized and guest GET|HEAD /pilot/construction-control followed by completed toggle",
+    "tests": [
+      "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+      "tests/Yii2/yii2_inspection_browser_001_test.php"
+    ]
+  }]
+}
