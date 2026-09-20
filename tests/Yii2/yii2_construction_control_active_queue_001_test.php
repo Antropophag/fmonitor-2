@@ -5,6 +5,7 @@ require __DIR__.'/InspectionFixture.php';
 
 // YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001: real Yii HTTP is the public seam.
 $fixture=null;
+$htmlFile=null;
 try {
     $fixture=new InspectionFixture(dirname(__DIR__,2));
     $fixture->open();
@@ -43,18 +44,32 @@ try {
     preg_match_all('/data-object-id="(\d+)"/',$second['body'],$secondMatches);
     $ids=array_map('intval',array_merge($firstMatches[1],$secondMatches[1]));sort($ids);
     assertSameValue(false,in_array(4516,$ids,true),'INTENDED_RED PTO-only documentary case is absent');
-    assertSameValue(51,count($ids),'50 plus 1 eligible rows');
+    assertSameValue(52,count($ids),'50 plus 2 eligible rows including completed case');
     assertSameValue(true,in_array(4512,$ids,true),'working case with activity remains');
     assertSameValue(true,in_array(4513,$ids,true),'working case without activity remains');
-    assertSameValue(false,in_array(4514,$ids,true),'completed documentary case is absent');
+    assertSameValue(true,in_array(4514,$ids,true),'completed documentary case remains available to client filter');
     assertSameValue(false,in_array(4515,$ids,true),'non-working case is absent');
-    assertSameValue([4512],array_map('intval',$secondMatches[1]),'activity ordering leaves exact tail row');
-    foreach([$first,$second]as$page)assertSameValue(true,str_contains($page['body'],PHP_EOL.'51 объектов</span>'),'filtered total is rendered');
+    assertSameValue([4512,4514],array_map('intval',$secondMatches[1]),'activity ordering leaves exact tail rows including completed case');
+    assertSameValue(true,str_contains($second['body'],'data-object-id="4514" data-engineer-id="73" data-completed="true"'),'completed row carries native filter marker');
+    foreach([$first,$second]as$page)assertSameValue(true,str_contains($page['body'],PHP_EOL.'52 объектов</span>'),'queue total includes completed rows');
+    $htmlFile=sys_get_temp_dir().'/fm2-yii-control-filter-'.bin2hex(random_bytes(6)).'.html';
+    file_put_contents($htmlFile,$second['body'],LOCK_EX);$pipes=[];
+    $process=proc_open(['node',dirname(__DIR__).'/Support/construction_control_completed_filter_browser.cjs',$htmlFile,dirname(__DIR__,2).'/app/YiiRuntime/Assets/control-queue.js'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));
+    if(!is_resource($process))throw new RuntimeException('browser start');
+    $out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);
+    assertSameValue([0,''],[proc_close($process),$err],'Yii queue client filter execution');
+    $filter=json_decode($out,true,16,JSON_THROW_ON_ERROR);
+    assertSameValue(['completed'=>'true','hidden'=>true],$filter['before']['4514']??null,'completed Yii row hidden by default');
+    assertSameValue(['completed'=>'false','hidden'=>false],$filter['before']['4512']??null,'active Yii row visible by default');
+    assertSameValue(false,$filter['after']['4514']['hidden']??true,'completed Yii row shown after enabling toggle');
+    assertSameValue(false,$filter['after']['4512']['hidden']??true,'active Yii row remains visible with completed toggle');
+    assertSameValue(true,$filter['restored']['4514']['hidden']??false,'completed Yii row hidden after disabling toggle');
+    assertSameValue(false,$filter['restored']['4512']['hidden']??true,'active Yii row remains visible after disabling toggle');
     assertSameValue(true,str_contains($first['body'],'class="shlz-pagination"')&&str_contains($first['body'],'aria-label="Страницы стройконтроля"')&&str_contains($first['body'],'<ul class="shlz-pagination__list">'),'INTENDED_RED shared construction-control pagination');
     $repeat=$fixture->page('/pilot/construction-control');
     preg_match_all('/data-object-id="(\d+)"/',$repeat['body'],$repeatMatches);
     assertSameValue($firstMatches[1],$repeatMatches[1],'identical GET repeats row composition');
-    assertSameValue(true,str_contains($repeat['body'],PHP_EOL.'51 объектов</span>'),'identical GET repeats total');
+    assertSameValue(true,str_contains($repeat['body'],PHP_EOL.'52 объектов</span>'),'identical GET repeats total');
     assertSameValue(true,str_contains($repeat['body'],'href="/pilot/construction-control?page=2"'),'identical GET repeats page boundary');
     assertSameValue($before,$http->facts(),'repeated queue GET preserves all facts');
     $head=$http->request('HEAD','/pilot/construction-control?page=2',[],$fixture->cookies);
@@ -76,8 +91,8 @@ try {
     assertSameValue(200,$afterTransition['status'],'active queue after transition');
     assertSameValue(false,str_contains($afterTransition['body'],'data-object-id="4512"'),'transitioned case disappears after refresh');
     assertSameValue(50,preg_match_all('/data-control-row\b/',$afterTransition['body']),'filtered first page remains full');
-    assertSameValue(true,str_contains($afterTransition['body'],PHP_EOL.'50 объектов</span>'),'transition updates filtered total');
-    assertSameValue(503,$fixture->page('/pilot/construction-control?page=2')['status'],'no stale empty tail page after transition');
+    assertSameValue(true,str_contains($afterTransition['body'],PHP_EOL.'51 объектов</span>'),'PTO-only transition updates completed-inclusive total');
+    assertSameValue(200,$fixture->page('/pilot/construction-control?page=2')['status'],'completed-inclusive tail page remains');
     assertSameValue($transitioned,$http->facts(),'refresh preserves cases and append-only history');
 
     $reader=[];
@@ -88,5 +103,6 @@ try {
     $fixture->http->noLegacy();
     echo "PASS: YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001 Yii HTTP\n";
 } finally {
+    if(is_string($htmlFile)&&is_file($htmlFile))unlink($htmlFile);
     if($fixture instanceof InspectionFixture)$fixture->close();
 }

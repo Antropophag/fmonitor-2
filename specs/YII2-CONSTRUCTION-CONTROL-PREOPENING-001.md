@@ -14,12 +14,14 @@
 
 Для активного actor с exact `construction_control.read` очередь MUST включать:
 
-- `working` cases без `pto_act` по действующему #39 contract;
+- `working` cases без полного документального завершения;
+- завершённые `working` cases, у которых одновременно существуют append-only
+  факты `pto_act` и `declaration`, с `completed=true` для клиентского фильтра;
 - неоткрытый case, который существующий authoritative preopening projection уже классифицирует как `Готов к открытию`, с назначенным инженером.
 
-Готовая строка имеет status `Готов к открытию`, `completed=false` и ведёт на construction-control checklist. Она не считается открытой. Selection без accepted current original и case с `pto_act` не входят как ready. Этот slice MUST потреблять authoritative readiness существующего preopening projection, а не реализовывать второй упрощённый lineage predicate; stale-lineage contract и его regression остаются у `YII2-PREOPENING-JOURNEY-001`.
+Готовая строка имеет status `Готов к открытию`, `completed=false` и ведёт на construction-control checklist. Она не считается открытой. Selection без accepted current original не входит как ready. `working` case только с `pto_act`, но без `declaration`, находится в документальном закрытии и в очередь стройконтроля не входит. Этот slice MUST потреблять authoritative readiness существующего preopening projection, а не реализовывать второй упрощённый lineage predicate; stale-lineage contract и его regression остаются у `YII2-PREOPENING-JOURNEY-001`.
 
-Очередь сохраняет действующий общий server response и client-side «Мои/Все»: current engineer ID управляет персональным отображением, но не является authorization boundary. Действующие pagination rules не меняются.
+Очередь сохраняет действующий общий server response и client-side «Мои/Все»: current engineer ID управляет персональным отображением, но не является authorization boundary. Завершённые строки входят в server-side pagination и total, скрыты клиентом по умолчанию и появляются после включения «Показывать завершённые». GET, фильтрация и повторное переключение не меняют completion facts. Действующие pagination rules не меняются.
 
 ## A2. Предоткрывающий checklist
 
