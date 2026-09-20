@@ -187,6 +187,7 @@ db	php	tests/Runtime/yii2_production_web_cutover_001_test.php	integration
 db	php	tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php	integration
 db	php	tests/Runtime/yii2_readiness_001_test.php	integration
 db	python3	tests/Runtime/yii2_runtime_001_test.py	integration
+db	php	tests/Runtime/yii2_safe_error_correlation_001_test.php	integration
 db	php	tests/Verification/batched_schema_snapshot_001_test.php	integration
 db	php	tests/Yii2/deadline_transfer_certificate_http_001_test.php	integration
 db	php	tests/Yii2/legacy_control_engineer_reads_001_test.php	integration

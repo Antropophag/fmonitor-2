@@ -1,0 +1,32 @@
+{
+  "change": "safe-runtime-error-correlation",
+  "planned_paths": [
+    "app/Runtime/SafeRuntimeFailure.php",
+    "app/YiiRuntime/SafeErrorHandler.php",
+    "app/YiiRuntime/Controllers/ExecutionController.php",
+    "app/YiiRuntime/Controllers/OriginalController.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "public/runtime.php",
+    "tests/Runtime/yii2_safe_error_correlation_001_test.php",
+    ".quality-graph/verification-policy.json",
+    "tools/verification/suites.tsv",
+    "tools/verification/integration-timings.tsv",
+    "specs/SAFE-RUNTIME-ERROR-CORRELATION-001.md",
+    "openspec/changes/safe-runtime-error-correlation/proposal.md",
+    "openspec/changes/safe-runtime-error-correlation/design.md",
+    "openspec/changes/safe-runtime-error-correlation/tasks.md",
+    "openspec/changes/safe-runtime-error-correlation/specs/runtime/safe-error-correlation/spec.md",
+    "openspec/changes/safe-runtime-error-correlation/verification-input.json",
+    "docs/operations/issue-173-safe-runtime-error-correlation-delivery.md",
+    "reviews/tests/SAFE-RUNTIME-ERROR-CORRELATION-001.md",
+    "reviews/code/SAFE-RUNTIME-ERROR-CORRELATION-001.md"
+  ],
+  "acceptances": [{
+    "spec_id": "SAFE-RUNTIME-ERROR-CORRELATION-001",
+    "acceptance_id": "A1-A8-safe-runtime-error-correlation",
+    "spec_path": "specs/SAFE-RUNTIME-ERROR-CORRELATION-001.md",
+    "seam": "real canonical HTTP responses and actually written runtime log lines cover bootstrap and selected Yii/controller 5xx, server-owned ID, category evidence, privacy, single emission, logger failure and unchanged adjacent behavior",
+    "tests": ["tests/Runtime/yii2_safe_error_correlation_001_test.php"],
+    "gate3_expected": {"tests/Runtime/yii2_safe_error_correlation_001_test.php": "INTENDED_RED"}
+  }]
+}

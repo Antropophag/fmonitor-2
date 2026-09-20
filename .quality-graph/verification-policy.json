@@ -270,6 +270,16 @@
   ],
   "capability_ownership": [
     {
+      "name": "safe-runtime-error-correlation",
+      "patterns": [
+        "app/Runtime/SafeRuntimeFailure.php"
+      ],
+      "verifiers": [
+        "tests/Runtime/yii2_safe_error_correlation_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "local-integration-configuration",
       "patterns": [
         "app/Workforce/WorkerConfiguration.php",

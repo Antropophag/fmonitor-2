@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Controllers;
 
 use FMonitor2\AssignmentOrderComposition as C;
+use FMonitor2\Runtime\SafeRuntimeFailure;
 use FMonitor2\YiiRuntime\Models\ExecutionForm;
 use FMonitor2\YiiRuntime\PreopeningResources;
 use Yii;
@@ -34,7 +35,8 @@ final class ExecutionController extends PreopeningController
             return $model['status'] === 'found'
                 ? $this->render('@app/app/YiiRuntime/Views/execution', ['identity' => Yii::$app->user->identity, 'objectId' => $id, 'model' => $model, 'csrf' => Yii::$app->request->csrfToken])
                 : $this->domain($model);
-        } catch (\Throwable) {
+        } catch (\Throwable $error) {
+            Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'execution_controller'));
             return $this->pageError(503, 'Результат операции неизвестен. Проверьте карточку объекта перед повтором.', '/pilot/objects/'.$id, 'Вернуться к карточке');
         } finally {
             $resources?->close();

@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Controllers;
 
 use FMonitor2\InspectionEvidence\MariaDbYiiChecklist;
+use FMonitor2\Runtime\SafeRuntimeFailure;
 use FMonitor2\InspectionEvidence\InspectionRecording;
 use FMonitor2\InspectionEvidence\ProductionInspectionEvidenceConfig;
 use FMonitor2\InspectionEvidence\ProductionInspectionEvidenceFactory;
@@ -38,8 +39,8 @@ if(!($a['read']??false))return$this->plain(403);
 $completion=$owner->completion($id);
 $opening=($a['ready']??false)&&(($a['roleAccess']??false)||($a['itemComplete']??false))&&Yii::$app->canonicalAccess->checkAccess($this->actor(),'installation.open')?($a['openingIntent']??null):null;
 return$this->render('@app/app/YiiRuntime/Views/checklist',['identity'=>Yii::$app->user->identity,'id'=>$id,'access'=>$a,'projection'=>$owner->projection($id),'csrf'=>Yii::$app->request->csrfToken,'fromControl'=>$source==='control','progressCap'=>$completion['cap'],'opening'=>$opening]);
-} catch(\Throwable)
-    {return$this->plain(503,true);
+} catch(\Throwable$error)
+    {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->plain(503,true);
 }
     }
 
@@ -53,8 +54,8 @@ $a=$o->access($this->actor(),$id);
 if(!($a['exists']??false))return$this->json(404,['status'=>'rejected']);
 if(!($a['opened']??false)||!($a['roleAccess']??false)&&!($a['assigned']??false)&&!($a['itemComplete']??false))return$this->json(403,['status'=>'rejected']);
 return$this->json(200,['csrf'=>Yii::$app->request->csrfToken,'revision'=>$o->projection($id)['revision']]);
-} catch(\Throwable)
-    {return$this->json(503,['status'=>'retryable']);
+} catch(\Throwable$error)
+    {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->json(503,['status'=>'retryable']);
 }}
 
     public function actionOperation(string$id):Response{return$this->mutate($id,false);
@@ -107,8 +108,8 @@ $status=in_array($result['status'],['accepted','duplicate'],true)?200:($result['
 return$this->json($status,$result);
 } catch(\JsonException)
     {return$this->json(400,['status'=>'rejected']);
-} catch(\Throwable)
-    {return$this->json(503,['status'=>'retryable','message'=>'Сервис временно недоступен.']);
+} catch(\Throwable$error)
+    {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->json(503,['status'=>'retryable','message'=>'Сервис временно недоступен.']);
 } finally {if($resources instanceof PreopeningResources)$resources->close();
 }
     }
@@ -119,8 +120,8 @@ $objects=$this->owner()->queue($this->actor(),(int)$page);
 return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects]);
 } catch(\DomainException)
     {return$this->plain(403);
-} catch(\Throwable)
-    {return$this->plain(503,true);
+} catch(\Throwable$error)
+    {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->plain(503,true);
 }}
 
     private function owner(?InspectionRecording$recording=null):MariaDbYiiChecklist{return new MariaDbYiiChecklist(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'),(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX'),(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT')),(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),$recording);
