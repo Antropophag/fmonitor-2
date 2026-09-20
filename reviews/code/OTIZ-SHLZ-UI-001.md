@@ -222,3 +222,18 @@ The nine-column register retains the exact public table composition: `thead.shlz
 Standards axis: `APPROVED`. Spec and invariant axis: `APPROVED`. Gate 5: `APPROVED` for exact candidate `ee783ae41a5b0cd64fea4f490fa1680fe55487cfae8a8dafb4407bbc610b17ce`.
 
 Exact-source GitHub CI, deployment, publication and merge readiness are outside this package and remain `UNKNOWN`; this approval does not promote them to GREEN.
+
+## PR #208 CI-correction final re-review — candidate `e9e94715…`
+
+- Reviewer: Codex independent Gate 5 reviewer `/root/otiz_final_review`; authored neither production nor tests.
+- Reviewed source: prepared package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T132227Z-9e2478e9fd/package.json`; candidate source `e9e94715e8272698473469a81314d22d0486fe40cff639a1b645071bb90b5d07`; executable source `cf503419babd9743717b957e649e14c635825cf69e0197923fc57870bc749997`.
+- Verification plan: SHA-256 `c5b53755f7c54cf94546577c1bec4c766f7fc44588bde315495c4bf7189c20b8`; lane `CRITICAL`; required reviews `gate3`, `final`.
+- CI failure inventory for run `35512305480`: `e2e` failed on the stale installer pager selector; `Integration (1/2)` failed on the stale `pilot.css` digest; `Integration (2/2)` failed on a transient truncated/empty worker arrival JSON. Governance, fast and unit were GREEN. The complete inventory contained exactly those three `REGRESSION_FAILURE` entries.
+- Evidence: all 14 mapped focused records are exact-source `GREEN`; the installer browser, production web cutover and worker signal tests are separately GREEN after diagnosis. `change_verification_001_test.py` is 18/18 GREEN, `architecture_guard_001_test.py` is 59/59 GREEN, PHP/Node syntax and `git diff --check` are clean.
+- Verdict: `APPROVED`; findings absent.
+
+### Delta assessment
+
+The installer browser assertion now targets the public `nav.shlz-pagination` composition and selects the exact page-number link, retaining keyboard navigation and `aria-current="page"` sensitivity without matching the next-arrow destination. The production cutover contract pins the actual reviewed `pilot.css` SHA-256 `0945a22751dabac986252c37ba6985449430b696aaf868b1e6b0c58e82a69bd7`. Both changes update stale expectations; neither weakens the checks or changes production behavior.
+
+The worker-signal failure is unrelated to this delta and reproduced GREEN locally without a source change. A new qualifying exact-source GitHub CI run is still required; publication and merge readiness remain `UNKNOWN` until it succeeds.

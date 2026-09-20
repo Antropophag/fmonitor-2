@@ -30,12 +30,12 @@
 - [x] 4.4 Отдельный gpt-5.6-sol/low executor исправляет material adapter,
   восстанавливает полный OTIZ register и reusable pagination composition, не
   меняя финансовые owners, formulas, permissions и persistence.
-- [ ] 4.5 Выполнить один batched desktop/mobile screenshot pass, одну correction
+- [x] 4.5 Выполнить один batched desktop/mobile screenshot pass, одну correction
   batch, не более одного confirmation pass и один Impeccable detector run.
-- [ ] 4.6 Выполнить planner-selected focused checks, OTIZ/import/financial и
+- [x] 4.6 Выполнить planner-selected focused checks, OTIZ/import/financial и
   затронутые directory regressions, `make architecture-check`; локальный full
   suite не запускать.
-- [ ] 4.7 Получить независимый final Gate 5 по exact reconstructible correction
+- [x] 4.7 Получить независимый final Gate 5 по exact reconstructible correction
   source и исправить полный findings list.
 - [ ] 4.8 Создать PR и выполнить один exact-source GitHub CI run; при сбое сначала
   собрать полный failed-job/`REGRESSION_FAILURE` inventory. Merge/deploy оставить
