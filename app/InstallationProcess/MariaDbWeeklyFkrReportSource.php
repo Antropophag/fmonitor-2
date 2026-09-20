@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
-namespace FMonitor2\Jobs;
+namespace FMonitor2\InstallationProcess;
 
 use FMonitor2\InspectionEvidence\ProductionChecklistProgressFactory;
+use FMonitor2\Jobs\WeeklyFkrReportSource;
 
 /** Global read-only report projection using canonical checklist progress weights. */
 final readonly class MariaDbWeeklyFkrReportSource implements WeeklyFkrReportSource

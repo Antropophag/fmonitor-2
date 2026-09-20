@@ -2,7 +2,9 @@
 declare(strict_types=1);
 require dirname(__DIR__).'/app/autoload.php';
 
-use FMonitor2\Jobs\{JobsRuntimeConfiguration,MariaDbJobsConnection,MariaDbWeeklyFkrOpeningEligibility,MariaDbWeeklyFkrRecipientDirectory,MariaDbWeeklyFkrReportSource,SmtpConfiguration,SmtpTransport,WeeklyFkrReportBuilder,WeeklyFkrReportRenderer};
+use FMonitor2\IdentityAccess\MariaDbWeeklyFkrRecipientDirectory;
+use FMonitor2\InstallationProcess\MariaDbWeeklyFkrReportSource;
+use FMonitor2\Jobs\{JobsRuntimeConfiguration,MariaDbJobsConnection,MariaDbWeeklyFkrOpeningEligibility,SmtpConfiguration,SmtpTransport,WeeklyFkrReportBuilder,WeeklyFkrReportRenderer};
 
 if(PHP_SAPI!=='cli'||$argc!==2||$argv[1]!=='--send'){
     fwrite(STDERR,"Explicit --send is required.\n");exit(64);

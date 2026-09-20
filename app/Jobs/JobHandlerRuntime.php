@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 namespace FMonitor2\Jobs;
+use FMonitor2\IdentityAccess\MariaDbWeeklyFkrRecipientDirectory;
+use FMonitor2\InstallationProcess\MariaDbWeeklyFkrReportSource;
 use FMonitor2\YiiRuntime\WorkforceSyncConsole;
 use FMonitor2\YiiRuntime\Commands\BitrixOrderDocumentLinksSyncController;
 

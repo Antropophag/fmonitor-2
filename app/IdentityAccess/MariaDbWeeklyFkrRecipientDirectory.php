@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-namespace FMonitor2\Jobs;
+namespace FMonitor2\IdentityAccess;
+
+use FMonitor2\Jobs\JobValues;
+use FMonitor2\Jobs\WeeklyFkrRecipientDirectory;
 
 final class MariaDbWeeklyFkrRecipientDirectory implements WeeklyFkrRecipientDirectory
 {
