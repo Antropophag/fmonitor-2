@@ -11,7 +11,7 @@ try {
  const response=await page.goto(c.origin+'/pilot/objects/4512/checklist');check(response.status()===200,'INTENDED_RED Yii browser checklist');
  check(!response.headers()['content-security-policy'].includes('unsafe-inline'),'CSP no unsafe-inline');
  await page.waitForFunction(()=>document.querySelector('[data-checklist]')?.dataset.userId==='73');
- await page.locator('[data-check-section="1"] .fm2-section-toggle').click();
+ if(await page.locator('[data-check-section="1"] .fm2-section-toggle').getAttribute('aria-expanded')==='false')await page.locator('[data-check-section="1"] .fm2-section-toggle').click();
  let lost=false,acceptedId=null;
  await page.route('**/pilot/objects/4512/checklist/operations',async route=>{const data=route.request().postDataJSON();if(!lost&&data.type==='item_completed'){const answer=await route.fetch();const body=await answer.json();check(body.status==='accepted','first click accepted before response loss');lost=true;acceptedId=data.clientOperationId;await route.abort('connectionreset');}else await route.continue();});
  await page.locator('[data-check-item="28"] .fm2-check-toggle').click();
@@ -26,7 +26,7 @@ try {
  const localRows=()=>page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('fmonitor2-fast-pilot',2);r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,t=db.transaction(['operations','meta','photoBlobs']),q=t.objectStore('operations').getAll(),d=t.objectStore('meta').get('deviceInstallationId'),p=t.objectStore('photoBlobs').getAll();t.oncomplete=()=>{resolve({stores:[...db.objectStoreNames],rows:q.result,device:d.result,photos:p.result});db.close();};};}));
  const pollLocal=async(predicate,message,timeout=30000)=>{const deadline=Date.now()+timeout;let current;do{current=await localRows();if(predicate(current))return current;await new Promise(resolve=>setTimeout(resolve,50));}while(Date.now()<deadline);throw new Error(message+'; observed '+JSON.stringify(current.rows.map(r=>({id:r.clientOperationId,type:r.type,status:r.status}))));};
  let local=await localRows();check(JSON.stringify(local.stores.sort())===JSON.stringify(['meta','operations','photoBlobs']),'exact IDB v2 stores');check(local.rows.every(r=>r.scope===`73:${r.deviceInstallationId}:4512`),'user device object scope');
- await page.locator('[data-check-section="1"] .fm2-section-toggle').click();
+ if(await page.locator('[data-check-section="1"] .fm2-section-toggle').getAttribute('aria-expanded')==='false')await page.locator('[data-check-section="1"] .fm2-section-toggle').click();
  await context.setOffline(true);await page.locator('[data-check-item="29"] .fm2-check-toggle').click();
  await pollLocal(s=>s.rows.some(r=>r.itemId===29),'offline item durably queued');
  const offlineId=(await localRows()).rows.find(r=>r.itemId===29).clientOperationId;

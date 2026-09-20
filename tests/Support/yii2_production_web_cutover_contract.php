@@ -74,7 +74,7 @@ return [
     ],
     'assets' => [
         'shlz.css'=>['bb5e00fba0a3b6804571fdc0a90caaa5ae62a03000d01501a63cd77d234fe99e','text/css; charset=UTF-8','public, max-age=3600'],
-        'pilot.css'=>['fc8cc00971efc3fb3dc6a1588a1ba66879345b0e12fcc3aa2cfc093969c46d8c','text/css; charset=UTF-8','public, max-age=3600'],
+        'pilot.css'=>['26cb63a1d0d362ed902022aa843018ca5004e82f889f74ff854d54720ea79687','text/css; charset=UTF-8','public, max-age=3600'],
         'preopening.css'=>['7c69ca7f249c12ee9c4f8526a4ddf9f3de35dd0ca8a81e781b82dc2b6c5197aa','text/css; charset=UTF-8','public, max-age=3600'],
         'favicon.svg'=>['24b621ad3437c7ebec28fa5f2fe11c345b182a7ceb61e60acd99de163a3ea5b2','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'navigation.js'=>['da1bc22a4f9c28991580457a0a0e04ec498d0b9321ba5686d1eb368bb4ae8572','text/javascript; charset=UTF-8','public, max-age=3600'],
@@ -84,7 +84,7 @@ return [
         'inspection-schedule.js'=>['7fc67ff2732b01147ec0b6260dd210459e3ada2f06d6b77e89a39b269c8a6327','text/javascript; charset=UTF-8','public, max-age=3600'],
         'preopening.js'=>['d0746e990b2b3a1756ab4122b955a859097319397c937ce98a68d2733e630fd6','text/javascript; charset=UTF-8','public, max-age=3600'],
         'template-offer.js'=>['cd6e13f6b5c23ba0e341d899a8876dae45ebeb2ad7f4475eb8c532511aa049e3','text/javascript; charset=UTF-8','public, max-age=3600'],
-        'checklist.js'=>['5a6ba8e109c684ca5b047ed2b2cc2f02234068b61f447b27c63af4141b1777ea','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'checklist.js'=>['4b2e234cf1a7c82ba6b23a31d38806eeb73c785668b55345a8922626a8e21fa8','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist-sw.js'=>['e0555252c5194438254f6b8b4f4b766a09efd942dfa8573cb9fb179e8bd6a622','text/javascript; charset=UTF-8','public, max-age=0'],
         'control-queue.js'=>['80f9137b1ef9993fd3f1f36b14687b31e512141c5f0cc987b9271f458e72f44c','text/javascript; charset=UTF-8','public, max-age=3600'],
         'otiz.js'=>['3a6895e62cf0630b39f6d0ddaf9eee7822ad45fcd869e12f389659890dfcdaff','text/javascript; charset=UTF-8','public, max-age=3600'],

@@ -33,7 +33,8 @@ final class MariaDbUserInvitations
         return $this->context->run(function () use ($actorId, $userId): array {
             if (!$this->context->authorized($actorId, 'access.administer')) return ['status'=>'access_denied'];
             $user = $this->context->db->createCommand('SELECT status,activation_state FROM '.$this->context->table('fm2_pilot_users').' WHERE user_id=:user FOR UPDATE', [':user'=>$userId])->queryOne();
-            if ($user === false || (int)$user['status'] !== 1 || $user['activation_state'] !== 'invited') return ['status'=>'invalid'];
+            if ($user === false || (int)$user['status'] !== 1 || !in_array($user['activation_state'], ['invited','pending_invitation'], true)) return ['status'=>'invalid'];
+            if ($user['activation_state'] === 'pending_invitation') $this->context->db->createCommand()->update($this->context->raw('fm2_pilot_users'), ['activation_state'=>'invited'], ['user_id'=>$userId])->execute();
             $this->context->db->createCommand()->update($this->context->raw('fm2_pilot_invitations'), ['revoked_at'=>new Expression('NOW(6)')], 'user_id=:user AND used_at IS NULL AND revoked_at IS NULL', [':user'=>$userId])->execute();
             return $this->issue($userId, $actorId);
         });

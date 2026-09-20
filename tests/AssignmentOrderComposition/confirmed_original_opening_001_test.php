@@ -25,11 +25,46 @@ if(!class_exists(C\ProductionConfirmedOriginalOpeningFactory::class)||!class_exi
 
 [$f,$original,$clock]=cooSetup();try{$db=$f->selection->db;$standalone=C\ProductionAssignmentOrderApplicationFactory::create($db,'co_',$clock)->applyAssignmentOrderOriginal(new C\ApplyAssignmentOrderOriginalCommand('44444444-4444-4444-8444-000000000001',4512,81,(string)$original->currentRevisionId(),0,19));assertSameValue(['rejected','authorization_denied'],[$standalone->status,$standalone->reason],'opener cannot use standalone composition apply');$owner=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock);$command=cooCommand('55555555-5555-4555-8555-000000000001',$original);$result=$owner->openConfirmedOriginal($command);assertSameValue([true,'working','2026-09-04'],[$result['accepted'],$result['processState'],$result['actualStartDate']],'compound command applies confirmed original and opens');assertSameValue(true,(int)$result['applicationId']>0,'success returns application identity');assertSameValue([1,1,1],[count($db->query('SELECT * FROM co_fm2_assignment_order_applications')->fetch_all()),(int)$db->query("SELECT COUNT(*) n FROM co_fm2_process_events WHERE event_type='installation_opened_from_original'")->fetch_assoc()['n'],(int)$db->query('SELECT COUNT(*) n FROM co_fm2_checklist_template_associations')->fetch_assoc()['n']],'one application, opening and template association');assertSameValue([18,19,19],[(int)$db->query('SELECT actor_user_id FROM co_fm2_assignment_order_original_revisions LIMIT 1')->fetch_assoc()['actor_user_id'],(int)$db->query('SELECT applied_by_user_id FROM co_fm2_assignment_order_applications LIMIT 1')->fetch_assoc()['applied_by_user_id'],(int)$db->query('SELECT opened_by_user_id FROM co_fm2_installation_cases WHERE id=4512')->fetch_assoc()['opened_by_user_id']],'uploader remains distinct from authorized opener and application actor');$before=cooSnapshot($db);$replay=$owner->openConfirmedOriginal($command);assertSameValue($result,$replay,'exact retry returns durable result');assertSameValue($before,cooSnapshot($db),'exact retry duplicates no facts');echo"PASS confirmed original compound opening and replay\n";}finally{$f->close();}
 
+foreach(['pending_invitation','invited'] as $activationState){
+    [$f,$original,$clock]=cooSetup();try{
+        $db=$f->selection->db;
+        if($activationState==='pending_invitation')$db->query("ALTER TABLE co_fm2_pilot_users MODIFY activation_state VARCHAR(32) NOT NULL");
+        $db->query("UPDATE co_fm2_pilot_users SET activation_state='".$db->real_escape_string($activationState)."' WHERE user_id=31");
+        $result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('56565656-5656-4656-8656-'.($activationState==='invited'?'000000000001':'000000000002'),$original));
+        assertSameValue(true,$result['accepted'],"$activationState control engineer remains eligible for opening");
+        echo "PASS confirmed original $activationState control engineer opening\n";
+    }finally{$f->close();}
+}
+
 [$f,$original,$clock]=cooSetup();try{$db=$f->selection->db;$before=cooSnapshot($db);$result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('55555555-5555-4555-8555-000000000002',$original,'2026-09-03'));assertSameValue(false,$result['accepted'],'date before original rejected');assertSameValue($before,cooSnapshot($db),'invalid date changes no business snapshot');echo"PASS confirmed original invalid date refusal\n";}finally{$f->close();}
 
 [$f,$original,$clock]=cooSetup();try{$db=$f->selection->db;$before=cooSnapshot($db);$result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('55555555-5555-4555-8555-000000000003',$original,revision:'revision-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'));assertSameValue(false,$result['accepted'],'stale original revision rejected');assertSameValue($before,cooSnapshot($db),'stale revision changes no business snapshot');echo"PASS confirmed original stale revision refusal\n";}finally{$f->close();}
 
 [$f,$original,$clock]=cooSetup();try{$db=$f->selection->db;$f->selection->schema->insert('co_fm2_pilot_users',['user_id'=>20,'full_name'=>'Наблюдатель','email'=>'viewer20@example.invalid','status'=>1,'activation_state'=>'active','source_updated_at'=>'2026-09-01T06:00:00Z']);$before=cooSnapshot($db);$result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('55555555-5555-4555-8555-000000000004',$original,actor:20));assertSameValue(false,$result['accepted'],'actor without installation.open rejected');assertSameValue($before,cooSnapshot($db),'denied actor changes no business snapshot');echo"PASS confirmed original authorization refusal\n";}finally{$f->close();}
+
+// Imported native candidates may already be bound to the immutable cutover template.
+[$f,$original,$clock]=cooSetup();try{
+    $db=$f->selection->db;$template=$db->query('SELECT * FROM co_fm2_checklist_template_snapshots LIMIT 1')->fetch_assoc();
+    $s=$db->prepare("INSERT INTO co_fm2_checklist_template_associations(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES('checklist-template-association-v1','operational_case','4512','2026-09-01 00:00:00',?,?,?,'2026-09-01 00:00:00')");
+    $s->bind_param('iss',$template['id'],$template['snapshot_version'],$template['content_sha256']);$s->execute();
+    $result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('57575757-5757-4757-8757-000000000001',$original));
+    assertSameValue(true,$result['accepted'],'opening reuses valid imported checklist association');
+    assertSameValue(1,(int)$db->query('SELECT COUNT(*) n FROM co_fm2_checklist_template_associations')->fetch_assoc()['n'],'opening duplicates no imported association');
+    echo"PASS confirmed original reuses imported checklist association\n";
+}finally{$f->close();}
+
+[$f,$original,$clock]=cooSetup();try{
+    $db=$f->selection->db;$template=$db->query('SELECT * FROM co_fm2_checklist_template_snapshots LIMIT 1')->fetch_assoc();$invalid='true';$hash=hash('sha256',$invalid);
+    $db->query("UPDATE co_fm2_checklist_template_snapshots SET payload_json='true',content_sha256='$hash'");
+    $s=$db->prepare("INSERT INTO co_fm2_checklist_template_associations(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES('checklist-template-association-v1','operational_case','4512','2026-09-01 00:00:00',?,?,?,'2026-09-01 00:00:00')");$s->bind_param('iss',$template['id'],$template['snapshot_version'],$hash);$s->execute();$before=cooSnapshot($db);
+    $result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('58585858-5858-4858-8858-000000000001',$original));
+    assertSameValue(false,$result['accepted'],'non-array imported checklist association fails closed');assertSameValue($before,cooSnapshot($db),'invalid imported association changes no opening facts');
+    echo"PASS confirmed original rejects invalid imported checklist association\n";
+}finally{$f->close();}
+
+[$f,$original,$clock]=cooSetup();try{
+    $db=$f->selection->db;$template=$db->query('SELECT * FROM co_fm2_checklist_template_snapshots LIMIT 1')->fetch_assoc();$s=$db->prepare("INSERT INTO co_fm2_checklist_template_associations(association_version,subject_kind,subject_id,effective_at,template_snapshot_id,template_snapshot_version,template_content_sha256,created_at) VALUES('checklist-template-association-v1','operational_case','4512','2099-01-01 00:00:00',?,?,?,'2026-09-01 00:00:00')");$s->bind_param('iss',$template['id'],$template['snapshot_version'],$template['content_sha256']);$s->execute();$before=cooSnapshot($db);$result=C\ProductionConfirmedOriginalOpeningFactory::create($db,'co_',$clock)->openConfirmedOriginal(cooCommand('59595959-5959-4959-8959-000000000001',$original));assertSameValue(false,$result['accepted'],'future imported association fails closed');assertSameValue($before,cooSnapshot($db),'future association changes no opening facts');echo"PASS confirmed original rejects future imported checklist association\n";
+}finally{$f->close();}
 
 // A rejection after the internal application writes must roll back that application too.
 [$f,$original,$clock]=cooSetup();try{
