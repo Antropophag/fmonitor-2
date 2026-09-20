@@ -443,7 +443,10 @@
       "name": "yii-object-read-presentation",
       "patterns": [
         "app/InstallationProcess/MariaDbYiiObjectQueue.php",
-        "app/InstallationProcess/MariaDbYiiObjectCard.php"
+        "app/InstallationProcess/MariaDbYiiObjectCard.php",
+        "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
+        "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+        "app/InstallationProcess/YiiOperationalDashboard.php"
       ],
       "verifiers": [
         "tests/Yii2/yii2_object_queue_001_test.php",

@@ -13,10 +13,12 @@ final class UserAccessFixture
     public string $artifacts;
     public string $dmlUser;
     public string $dmlPassword;
+    public array $emails;
+    public string $password;
     public ?array $server=null;
     public function __construct(public string $root)
     {
-        $this->auth=new FMonitor2\Tests\Yii2\Yii2AuthFixture($root);
+        $this->auth=new FMonitor2\Tests\Yii2\Yii2AuthFixture($root);$this->emails=[18=>$this->auth->email];$this->password=$this->auth->password;
         $this->db=$this->auth->db;$this->p=$this->auth->prefix;
         $this->artifacts=sys_get_temp_dir().'/yii-user-access-'.bin2hex(random_bytes(6));mkdir($this->artifacts,0700);
         $p=$this->p;
@@ -43,10 +45,10 @@ final class UserAccessFixture
     public function rows(string $name):array{return $this->db->query("SELECT * FROM {$this->p}{$name} ORDER BY 1,2")->fetch_all(MYSQLI_ASSOC);}
     public function facts():array{$result=[];foreach(['users','auth_credentials','roles','user_roles','role_permissions','invitations','user_role_events','user_status_events']as$n)$result[$n]=$this->rows('fm2_pilot_'.$n);return$result;}
     public function user(int $id):array{$s=$this->db->prepare("SELECT * FROM {$this->p}fm2_pilot_users WHERE user_id=?");$s->bind_param('i',$id);$s->execute();return$s->get_result()->fetch_assoc()??[];}
-    public function start(?string $fault=null,?int $port=null):void
+    public function start(?string $fault=null,?int $port=null,array $extraEnvironment=[]):void
     {
         if($port===null){$listener=stream_socket_server('tcp://127.0.0.1:0',$error,$message);if(!is_resource($listener))throw new TestFailure('SETUP_FAILURE: listener');$address=(string)stream_socket_get_name($listener,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($listener);}
-        $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with((string)$key,'FMONITOR_'))unset($env[$key]);$env=array_replace($env,$this->environment(),['FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:'.$port]);
+        $env=getenv();foreach(array_keys($env)as$key)if(str_starts_with((string)$key,'FMONITOR_'))unset($env[$key]);$env=array_replace($env,$this->environment(),['FMONITOR_TRUSTED_REQUEST_HOST'=>'127.0.0.1:'.$port],$extraEnvironment);
         $trace=$this->artifacts.'/includes.json';$entry=$this->root.'/public/yii.php';$router=$this->artifacts.'/router.php';
         file_put_contents($router,'<?php register_shutdown_function(static function(){file_put_contents('.var_export($trace,true).',json_encode(get_included_files()));}); require '.var_export($entry,true).';');
         $command=[PHP_BINARY,'-d','display_errors=0'];if($fault!==null){$env['FMONITOR_TEST_SESSION_FAULT']=$fault;$env['FMONITOR_TEST_SESSION_FAULT_MARKER']=$this->artifacts.'/session-fault.log';$command[]='-d';$command[]='auto_prepend_file='.$this->root.'/tests/Support/Yii2SessionFaultPrepend.php';}array_push($command,'-S','127.0.0.1:'.$port,$router);

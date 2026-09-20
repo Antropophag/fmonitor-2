@@ -20,9 +20,6 @@ final readonly class MariaDbYiiObjectCardProjection
         $application = $this->one("SELECT * FROM `{$this->prefix}fm2_assignment_order_applications` WHERE installation_case_id=:case ORDER BY application_sequence DESC LIMIT 1", [':case' => $caseId]);
         $selection = $this->one("SELECT s.*,r.current_revision_id,v.revision_number,v.document_date,v.uploaded_at_utc,v.actor_user_id,v.byte_size FROM `{$this->prefix}fm2_assignment_order_selections` s LEFT JOIN `{$this->prefix}fm2_assignment_order_original_roots` r ON r.installation_case_id=s.installation_case_id AND r.assignment_order_id=s.assignment_order_id AND r.composition_identity=s.composition_identity AND r.composition_sha256=s.composition_sha256 LEFT JOIN `{$this->prefix}fm2_assignment_order_original_revisions` v ON v.root_original_id=r.root_original_id AND v.revision_id=r.current_revision_id WHERE s.installation_case_id=:case AND s.selection_revision=(SELECT MAX(x.selection_revision) FROM `{$this->prefix}fm2_assignment_order_selections` x WHERE x.installation_case_id=:case2) LIMIT 2", [':case' => $caseId, ':case2' => $caseId]);
         $card['events'] = $this->events($caseId);
-        if ($card['opened'] && $application === null) {
-            throw new \RuntimeException('Opened native card has no applied composition.');
-        }
         if ($application !== null) {
             $card = $this->applied($card, $application);
             if (!$card['opened'] && $selection !== null && $selection['current_revision_id'] !== null) {

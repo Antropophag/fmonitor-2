@@ -1,0 +1,40 @@
+{
+  "change": "add-minimal-operational-dashboard",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/YiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiObjectCard.php",
+    "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
+    "app/YiiRuntime/Controllers/DashboardController.php",
+    "app/YiiRuntime/Controllers/AuthController.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/PreopeningResources.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Assets/shlz.css",
+    "app/YiiRuntime/Assets/pilot.css",
+    "config/yii/web.php",
+    "docs/operations/issue-21-dashboard-demo.md",
+    "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php",
+    "tests/Yii2/UserAccessFixture.php",
+    "tests/Support/minimal_operational_dashboard_browser.cjs"
+    ,"tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "MINIMAL-OPERATIONAL-DASHBOARD-001",
+      "acceptance_id": "A-N-complete-dashboard-slice",
+      "spec_path": "specs/MINIMAL-OPERATIONAL-DASHBOARD-001.md",
+      "seam": "YiiOperationalDashboard read and real Yii GET/HEAD /pilot/dashboard, MainNavigation, object links, 1440/390 rendered UI and demo contract cover acceptance A-N",
+      "tests": [
+        "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}
