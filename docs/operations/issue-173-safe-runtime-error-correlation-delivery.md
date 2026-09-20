@@ -43,3 +43,16 @@ Current focused verification:
 - change-verification governance: GREEN, record `1789891966666880000-fd480891d83c4c8cbddcf2a062f71a77.json`;
 - architecture guard: GREEN, record `1789891993865002000-9372c5b2d0f0413ca32280493bd2fae5.json`;
 - `make architecture-check`: PASS (7 rules; existing/advisory file-size notices only).
+
+## Owner override after Gate 5 — 2026-09-20
+
+For issue #173 only, the owner replaced the aggregate Gate 3 limit and the consumed fixture-only exception. Production and public HTTP/log regression corrections for findings inside the original #173 contract may proceed autonomously with required Gate 3 delta reviews. Two unsuccessful corrections of the same blocker remain the stop limit; contract, authorization, or scope expansion still requires an owner decision.
+
+Gate 5 found two handled-result omissions in `ExecutionController`: portal `dependency_unavailable` lacked correlation and stable `persistence_failure` fell through to `unexpected`. Root added public HTTP/factual-log regressions; retained RED `1789892548321767000-eeeea7d05911435f935417a4963114ae` fails on the missing portal ID. Independent Gate 3 delta review approved both cases with no findings. Executor corrected both branches and audited the remaining handled 503 returns inside the agreed files without finding another omission.
+
+Post-correction focused evidence:
+
+- container HTTP/log acceptance: GREEN, record `1789892745007367000-6ea283a053464942868c4a411f05dc4c.json`;
+- change-verification governance: GREEN, record `1789892766029712000-ba5c1b0ff36143bea19506b69c67fb2f.json`;
+- architecture guard: GREEN, record `1789892793020803000-350e6523246643f2aeee4d56040ba4ca.json`;
+- `make architecture-check`: PASS (7 rules; advisories only).

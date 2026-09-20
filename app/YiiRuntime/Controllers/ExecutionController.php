@@ -32,9 +32,13 @@ final class ExecutionController extends PreopeningController
                 return $this->execute($resources, $id);
             }
             $model = $resources->portal()->readSelectionPortal($id, $this->actor());
-            return $model['status'] === 'found'
-                ? $this->render('@app/app/YiiRuntime/Views/execution', ['identity' => Yii::$app->user->identity, 'objectId' => $id, 'model' => $model, 'csrf' => Yii::$app->request->csrfToken])
-                : $this->domain($model);
+            if ($model['status'] === 'found') {
+                return $this->render('@app/app/YiiRuntime/Views/execution', ['identity' => Yii::$app->user->identity, 'objectId' => $id, 'model' => $model, 'csrf' => Yii::$app->request->csrfToken]);
+            }
+            if (($model['status'] ?? '') === 'failed' || ($model['reasonCode'] ?? '') === 'SERVICE_UNAVAILABLE') {
+                $this->reportResult((string) ($model['reasonCode'] ?? ''));
+            }
+            return $this->domain($model);
         } catch (\Throwable $error) {
             Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'execution_controller'));
             return $this->pageError(503, 'Результат операции неизвестен. Проверьте карточку объекта перед повтором.', '/pilot/objects/'.$id, 'Вернуться к карточке');
@@ -107,7 +111,7 @@ final class ExecutionController extends PreopeningController
 
     private function reportResult(string $reason): void
     {
-        $category = $reason === 'persistence_outcome_unknown' ? 'database'
+        $category = in_array($reason, ['persistence_failure', 'persistence_outcome_unknown'], true) ? 'database'
             : ($reason === 'dependency_unavailable' ? 'dependency' : 'unexpected');
         Yii::$app->response->headers->set(
             'X-FMonitor-Error-ID',

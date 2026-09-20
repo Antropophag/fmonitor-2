@@ -98,3 +98,24 @@ The minimal production changes inspected solely for downstream-test consistency 
 ### Required changes
 
 None.
+
+## Owner-authorized Gate 3 regression delta for Gate 5 findings — 2026-09-20
+
+- Authorization/scope: review only the regression-test delta for the two findings in `reviews/code/SAFE-RUNTIME-ERROR-CORRELATION-001.md`: an ordinary selection-portal `dependency_unavailable` result and assignment-order application `persistence_failure`. This is not a Gate 5 rereview and does not approve production code.
+- Reviewed source: commit/base `48ce61755791eb4e598b4484d0161a8f8754c10e` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T082251Z-c2edd9783f/snapshot/source.patch`, SHA-256 `cfd05e54747203fc538b8a8ed14ecad4c03aa2d342a219700af72da4bb3bd83f`; candidate source `93d0ce5f59f5ab93cb5a5f23b7b90f7d1a1e5620c618edd14bf275b64ecba95a`.
+- RED evidence: container record `1789892548321767000-eeeea7d05911435f935417a4963114ae`, exact candidate/end source match, exit 255 at `execution portal handled result one error ID header` (expected 1, actual 0).
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The portal regression reaches the ordinary public `GET /pilot/objects/4512/execution` path with the real selection table temporarily unavailable. `MariaDbSelectionPortalQuery` converts that database fault to its stable `['status' => 'failed', 'reasonCode' => 'dependency_unavailable']` result, and `PreopeningController::domain()` preserves the established plain 503. The assertion requires the unchanged 503 body/security/`Retry-After`, one server-owned ID, exactly one factual record, `component=execution_controller`, and `category=dependency`. The retained RED fails specifically because that handled result lacks the ID; authentication, fixture setup, result conversion, and response rendering have already succeeded.
+
+The application regression submits a valid public `action=apply` request with an accepted original and exact identifiers. A transaction trigger fails the real application insert, causing `MariaDbAssignmentOrderApplication` to return its stable `persistence_failure` result. The test requires the existing plain 503 contract, one correlated record with `category=database`, and a complete before/after fact/history equality check after trigger cleanup. `srcRecord()` also enforces one physical record by returned ID, so a correction that double-reports or merely changes the category cannot pass.
+
+Together with the already approved thrown-exception, explicit opening-result, original-result/context, and checklist-result cases, this batch covers the known handled-503 class inside the agreed components: read projection dependency failure and mutation persistence failure are no longer represented only by thrown faults. Expectations remain specification-derived and do not prescribe implementation structure beyond the public HTTP/log seam and closed factual category mapping.
+
+### Required changes
+
+None.

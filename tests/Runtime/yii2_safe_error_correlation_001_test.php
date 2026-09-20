@@ -120,6 +120,15 @@ try{
     $originalCsrf=$fixture->token($cookies);$unsupported=$fixture->request('POST','/pilot/objects/4512/assignment-orders/81/originals',[],$cookies,['Content-Type: text/plain','X-CSRF-Token: '.$originalCsrf],SRC_CANARY);srcNoFailureRecord($before,$yiiLog,$unsupported,415,"{\"error\":\"UNSUPPORTED_MEDIA_TYPE\"}\n",'415 media');
     $tooLarge=$fixture->request('POST','/pilot/objects/4512/assignment-orders/81/originals',[],$cookies,['Content-Type: application/pdf','X-CSRF-Token: '.$originalCsrf],str_repeat('A',20971521));srcNoFailureRecord($before,$yiiLog,$tooLarge,413,"{\"error\":\"REQUEST_TOO_LARGE\"}\n",'413 admission',['content-type'=>'application/json; charset=UTF-8']);
 
+    // Ordinary handled-result 503s must not bypass the correlation boundary.
+    $fixture->db->query("RENAME TABLE {$fixture->p}fm2_assignment_order_selections TO {$fixture->p}fm2_assignment_order_selections_src173");
+    try{$portalFailure=$fixture->request('GET','/pilot/objects/4512/execution',[],$cookies);srcControllerExpectation($portalFailure,$yiiLog,'execution_controller','dependency','execution portal handled result','plain');}
+    finally{$fixture->db->query("RENAME TABLE {$fixture->p}fm2_assignment_order_selections_src173 TO {$fixture->p}fm2_assignment_order_selections");}
+    $apply=['_csrf'=>$originalCsrf,'action'=>'apply','requestId'=>'66666666-6666-4666-8666-000000000173','orderId'=>'81','revisionId'=>$accepted->currentRevisionId(),'sequence'=>'0'];$applyFacts=$fixture->facts();$fixture->db->query("CREATE TRIGGER src173_apply_persistence BEFORE INSERT ON {$fixture->p}fm2_assignment_order_applications FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='".SRC_CANARY."'");
+    try{$applyFailure=$fixture->form('/pilot/objects/4512/execution',$apply,$cookies);srcControllerExpectation($applyFailure,$yiiLog,'execution_controller','database','apply persistence_failure handled result','plain');}
+    finally{$fixture->db->query('DROP TRIGGER IF EXISTS src173_apply_persistence');}
+    assertSameValue($applyFacts,$fixture->facts(),'apply persistence failure preserves facts and history');
+
     // Controller boundaries are exercised through actual Yii routes. A test router throws closed known/generic types after authentication.
     $fixture->start(['FMONITOR_LEGACY_TABLE_PREFIX'=>'wrong_'],null,true);$execution=$fixture->request('GET','/pilot/objects/4512/execution?query='.SRC_CANARY,[],$cookies);srcControllerExpectation($execution,$fixture->artifacts.'/server.log','execution_controller','unexpected','execution','html');
     $fixture->start([],null,true);$metadata=$fixture->metadata($cookies);$metadata['originalFilename']='secret-'.SRC_CANARY.'.pdf';$missingStorage=$fixture->artifacts.'/missing-storage';$fixture->start(['FMONITOR_ARTIFACT_STORAGE_ROOT'=>$missingStorage],null,true);$privateUpload=$fixture->upload($cookies,$metadata,"%PDF-1.4\n".SRC_CANARY);srcControllerExpectation($privateUpload,$fixture->artifacts.'/server.log','original_controller','unexpected','original privacy','json');
