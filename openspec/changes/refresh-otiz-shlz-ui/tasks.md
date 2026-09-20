@@ -37,13 +37,13 @@
   suite не запускать.
 - [x] 4.7 Получить независимый final Gate 5 по exact reconstructible correction
   source и исправить полный findings list.
-- [ ] 4.8 Создать PR и выполнить один exact-source GitHub CI run; при сбое сначала
+- [x] 4.8 Создать PR и выполнить один exact-source GitHub CI run; при сбое сначала
   собрать полный failed-job/`REGRESSION_FAILURE` inventory. Merge/deploy оставить
   не выполненными без отдельной авторизации.
 
 ## 5. Done definition
 
-- [ ] 5.1 Подтвердить, что `/pilot/otiz/**` и все pageable Yii surfaces
+- [x] 5.1 Подтвердить, что `/pilot/otiz/**` и все pageable Yii surfaces
   соответствуют обновлённому контракту, material mapping доказан, все
   существующие финансовые HTTP/browser/domain contracts остаются GREEN,
   required reviews APPROVED и exact-source CI GREEN; обновить delivery record и

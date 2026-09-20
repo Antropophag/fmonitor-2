@@ -237,3 +237,7 @@ Exact-source GitHub CI, deployment, publication and merge readiness are outside 
 The installer browser assertion now targets the public `nav.shlz-pagination` composition and selects the exact page-number link, retaining keyboard navigation and `aria-current="page"` sensitivity without matching the next-arrow destination. The production cutover contract pins the actual reviewed `pilot.css` SHA-256 `0945a22751dabac986252c37ba6985449430b696aaf868b1e6b0c58e82a69bd7`. Both changes update stale expectations; neither weakens the checks or changes production behavior.
 
 The worker-signal failure is unrelated to this delta and reproduced GREEN locally without a source change. A new qualifying exact-source GitHub CI run is still required; publication and merge readiness remain `UNKNOWN` until it succeeds.
+
+### Exact-source CI qualification
+
+Quality Graph run `35513395173` on commit `f2654f080fb6da5e646e97b5c1b52d9f1748c64c` completed `SUCCESS`: plan, governance, unit, e2e, Integration (1/2), fast, Integration (2/2), verify and quality-results are GREEN; harness is intentionally skipped by the selected graph. This supersedes failed run `35512305480` and establishes the reviewed implementation/test candidate as CI GREEN. The remaining task-state and evidence-record edits below are documentation-only and require the repository's exact final-head check before merge readiness is claimed.
