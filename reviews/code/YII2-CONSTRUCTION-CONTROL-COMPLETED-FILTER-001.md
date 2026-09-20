@@ -40,3 +40,30 @@ The one exact-source CI consumer remains pending and deployment status is not es
 ### Required changes
 
 None.
+
+---
+
+## CI-return correction Gate 5 review — 2026-09-20
+
+- Reviewer: `/root/gate3_completed_filter`
+- Base: `c4098c554159754ddd5ebe614406dd80f00222e9`
+- Candidate source: `3f0ffbf847651e04dcfca67a7a244cceda635be4d0edc337648037f49f629bf2`
+- Executable source: `d67c4da1dc3be8062ff6a737463e6bef8205a5045301823bcacafee280bb82d7`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T155707Z-a285fa3a90/package.json`
+- Verdict: `APPROVED`
+
+### Complete findings
+
+None.
+
+The correction changes only the stale end-to-end expectations and acceptance mapping. Production code, canonical spec, completed/PTO-only predicates, server-side count and pagination, completed-last ordering, selection/original binary identity gate, historical engineer fallback, authorization, and append-only owners are unchanged from the approved latest-stand candidate.
+
+The full failed-job inventory is coherent with the delta: the former e2e expectation rejected the now-required completed row, and verify failed only because e2e failed; governance, fast, unit, and integration were GREEN. The corrected e2e remains strict on exact queue composition/order, completion marker, default active-only counts, completed reveal, completed search, current and missing assignment behavior, persisted checklist history, account isolation, offline cache isolation, browser errors, asset loading, and legacy-runtime exclusion. Adding it to `verification-input.json` closes the mapping gap without changing execution semantics.
+
+Both mapped tests are fresh GREEN at the exact candidate and executable source: queue record `1789919788567528000-71c513a23efe44bf9c19f42e928965e0` and browser record `1789919788567533000-18f8e0eec26e464cb479bb581818faf2`. The package reports no missing tests and `git diff --check` is clean.
+
+The failed exact-source CI run is not retroactively GREEN. A corrected exact-source CI consumer remains required; deployment status also remains `UNKNOWN` unless separately evidenced.
+
+### Required changes
+
+None.
