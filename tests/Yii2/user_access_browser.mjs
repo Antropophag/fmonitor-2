@@ -30,7 +30,7 @@ try{
  await recipient.getByText('Учётная запись активирована',{exact:true}).waitFor();
  await recipient.locator('a[href="/pilot/login"]').click();await recipient.locator('[name=email]').fill('browser.person@shlz.ru');await recipient.locator('[name=email]').locator('xpath=ancestor::form').locator('button[type=submit]').click();await recipient.locator('[name=password]').fill('Browser activation secret 2026');
  await Promise.all([recipient.waitForResponse(r=>r.url().endsWith('/pilot/login')&&r.request().method()==='POST'&&r.status()===303),recipient.locator('[name=password]').locator('xpath=ancestor::form').locator('button[type=submit]').click()]);
- await page.goto(c.origin+'/pilot/admin/users');row=page.locator(`tr[data-user-id="${userId}"]`);const roleForm=row.locator('form[action$="/roles"]');await roleForm.locator('[name=roleId]').selectOption('9212');
+ await page.goto(c.origin+'/pilot/admin/users');row=page.locator(`tr[data-user-id="${userId}"]`);const roleForm=row.locator('form[action$="/roles"]'),roleSelect=roleForm.locator('[data-shlz-select]'),roleTrigger=roleSelect.getByRole('combobox');await roleForm.getByRole('button',{name:'Назначить',exact:true}).click();assert(new URL(page.url()).pathname==='/pilot/admin/users'&&await roleTrigger.getAttribute('aria-invalid')==='true'&&await roleTrigger.evaluate(element=>element===document.activeElement),'empty role assignment blocked, marked invalid and focused');await roleTrigger.click();await roleSelect.locator('[role="option"][data-value="9212"]').click();assert(await roleTrigger.getAttribute('aria-invalid')===null&&await roleSelect.locator('input[type="hidden"][name="roleId"]').inputValue()==='9212','role assignment official select clears invalid and updates value');
  await Promise.all([page.waitForResponse(r=>r.url().endsWith('/roles')&&r.request().method()==='POST'&&r.status()===303),roleForm.locator('button[type=submit]').click()]);await page.waitForURL(c.origin+'/pilot/admin/users');
  row=page.locator(`tr[data-user-id="${userId}"]`);assert(await row.textContent().then(t=>t.includes('Инженер')),'assigned role visible');
  const block=row.locator('form[action$="/status"]');await Promise.all([page.waitForResponse(r=>r.url().endsWith('/status')&&r.status()===303),block.getByRole('button',{name:'Заблокировать',exact:true}).click()]);await page.waitForURL(c.origin+'/pilot/admin/users');
@@ -39,8 +39,10 @@ try{
  const search=page.locator('[data-user-search]');await search.fill('Browser Recipient');assert(await page.locator('tr[data-user-id]:visible').count()===1,'search filters rows');await search.fill('');
  await page.locator('label[for=uf-active]').click();assert(await page.locator(`tr[data-user-id="${userId}"]:visible`).count()===1,'active filter includes restored user');await page.locator('label[for=uf-all]').click();
  const filter=page.locator('[data-role-filter]').getByRole('combobox');
+ const roleValue=page.locator('[data-role-filter] input[type="hidden"][data-role-choice]');assert(await roleValue.count()===1,'role filter binds one hidden official value');
  if(await filter.evaluate(el=>el.tagName)==='SELECT')await filter.selectOption('9212');
  else {await filter.click();await page.locator('[data-role-filter]').getByRole('option',{name:/Инженер/}).click();}
+ assert(await roleValue.inputValue()==='9212','official select change updates role filter hidden value');
  assert(await page.locator(`tr[data-user-id="${userId}"]:visible`).count()===1,'role filter includes assigned role');
  assert(await page.locator('tr[data-user-id="9401"]:visible').count()===0,'role filter hides unassigned row');
  assert(await page.locator('body.shlz-scope').count()===1,'corporate shlz scope retained');assert(assetFailures.length===0,'assets unavailable: '+assetFailures.join(', '));

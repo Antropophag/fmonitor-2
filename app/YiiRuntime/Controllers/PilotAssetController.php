@@ -16,7 +16,9 @@ final class PilotAssetController extends PilotController
         $map = [];
         foreach (['navigation.js','preloader.js','users.js','object-queue.js','inspection-schedule.js','preopening.js','template-offer.js','checklist.js','control-queue.js','otiz.js'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/javascript; charset=UTF-8',3600];
-        }$map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
+        }$shlzRoot=(string)(getenv('FMONITOR_SHLZ_UI_ROOT')?:dirname(__DIR__,4).'/shlz-ui');
+        $map['shlz-behaviors.js']=[$shlzRoot.'/packages/behaviors/dist/browser.js','text/javascript; charset=UTF-8',3600];
+        $map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
         }foreach (['chevron-left-duo.svg','chevron-right-duo.svg'] as $file) {
             $map['shlz-icons/'.$file]=[$root.'/shlz-icons/'.$file,'image/svg+xml; charset=UTF-8',31536000];

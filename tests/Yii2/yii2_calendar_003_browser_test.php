@@ -6,7 +6,7 @@ require __DIR__ . '/PreopeningFixture.php';
 $f = null; $process = null;
 try {
     $f = new PreopeningFixture(dirname(__DIR__, 2));
-    foreach ([[7202,6101,19,'2026-10-15'],[7201,6102,7,'2026-10-15'],[7203,6103,42,'2026-11-03']] as [$id,$case,$object,$date]) {
+    foreach ([[7202,6101,19,'2026-10-15'],[7201,6102,7,'2026-10-15'],[7204,6104,20,'2026-10-15'],[7203,6103,42,'2026-11-03']] as [$id,$case,$object,$date]) {
         $f->insert($f->p.'fm2_pilot_inspection_schedules',['id'=>$id,'installation_case_id'=>$case,'legacy_object_id'=>$object,'control_engineer_user_id'=>73,'inspection_date'=>$date,'scheduled_by_user_id'=>18,'scheduled_at'=>'2026-09-19T12:00:00+03:00']);
     }
     $f->start(['FMONITOR_NOW'=>'2026-09-19T12:00:00+03:00']); $cookies=[]; $f->login($cookies,18);
