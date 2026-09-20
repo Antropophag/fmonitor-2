@@ -27,3 +27,31 @@ The remaining inspected behavior is consistent with the bounded contract: bootst
 ## Decision
 
 `CHANGES_REQUESTED`
+
+## Correction round 1 — final Gate 5 decision — 2026-09-20
+
+- Reviewed candidate: commit `629ec6571d5ae860fcc9327409c21cc69b8e773f`
+- Reviewed exact source: `87d2a637847e75220b8a84864b061309f475efb93324e2023cb119764bc93677`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T082850Z-9e20604d3a/package.json`
+- Approved Gate 3 regression delta: `reviews/tests/SAFE-RUNTIME-ERROR-CORRELATION-001.md`, owner-authorized Gate 3 regression delta for Gate 5 findings
+- Focused GREEN evidence: record `1789892899664701000-4ca01f19a53a4eacb403c89b3a76dcc8`, exact candidate/end source `87d2a637847e75220b8a84864b061309f475efb93324e2023cb119764bc93677`
+- Correction delta: `app/YiiRuntime/Controllers/ExecutionController.php`, the two public regressions, and lifecycle/review evidence only
+- Verdict: `APPROVED`
+
+### Prior findings disposition
+
+1. **Fixed.** `ExecutionController::actionIndex()` now distinguishes the successful portal projection, reports an ordinary `failed` or `SERVICE_UNAVAILABLE` result before returning the existing `domain()` response, and leaves all other domain outcomes unchanged. The real HTTP regression removes the selection table so `MariaDbSelectionPortalQuery` returns its stable `dependency_unavailable` result; it proves the unchanged plain 503, security headers and `Retry-After`, one server-owned ID, and exactly one physical `execution_controller` record categorized as `dependency`. The branch returns immediately after `domain()` and cannot also reach the catch/global handler, so the correction does not double-report.
+
+2. **Fixed.** `ExecutionController::reportResult()` now maps both stable persistence owner codes, `persistence_failure` and `persistence_outcome_unknown`, to `database`; `dependency_unavailable` remains `dependency` and unknown codes remain `unexpected`. The real apply regression triggers the application insert failure, observes the stable `persistence_failure` result through public HTTP, requires exactly one correlated database record, and proves all domain facts/history unchanged.
+
+### Final findings
+
+None. The correction is limited to the two returned-result gaps and does not broaden selected components or turn success, expected 4xx, or non-503 domain outcomes into diagnostic events. Re-auditing the agreed handled 503 paths confirms that bootstrap and the global handler retain single ownership; all checklist 503s are caught and reported; original form, upload, worker-result, and context 503s report once; and execution thrown, confirmed-opening, apply, legacy-opening, and portal-result 503s now report once with closed categories. The approved regressions and exact-source GREEN evidence are sensitive to response compatibility, category, correlation, duplicate records, and domain-fact changes.
+
+### Required changes
+
+None.
+
+### Final decision
+
+`APPROVED`

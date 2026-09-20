@@ -17,7 +17,7 @@
 ## 4. Verification, reviews и PR
 
 - [x] 4.1 Выполнить planner-selected focused commands, применимые runtime/Yii regressions и `make architecture-check`; полный локальный `make test`/`make verify` не запускать.
-- [ ] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`; весь список findings исправлять одним пакетом, delta review — не более двух correction rounds.
+- [x] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`; весь список findings исправлять одним пакетом, delta review — не более двух correction rounds.
 - [ ] 4.3 Создать отдельный PR, запустить только штатный PR-triggered exact-source CI через `ci-launch`, при сбое собрать полный failed-job/`REGRESSION_FAILURE` inventory и использовать не более двух correction candidates после первого.
 
 ## 5. Done definition
