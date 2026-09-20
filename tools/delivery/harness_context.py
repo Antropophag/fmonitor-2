@@ -1454,9 +1454,14 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
     if compact:
         required = {"issue", "change_kind", "requirement_status", "semantic_change",
                     "canonical_requirements", "executable_regression"}
+        change_kind = declaration.get("change_kind")
+        semantic_change = declaration.get("semantic_change")
+        valid_change = ((change_kind == "BOUNDED_FIX"
+                         and semantic_change == "ESTABLISHED_BEHAVIOR_FIX")
+                        or (change_kind in {"PRESENTATION", "READ", "APPLICATION_TEST_OR_REFACTOR"}
+                            and semantic_change == "AGREED_ORDINARY_CHANGE"))
         valid = (required <= set(declaration)
-                 and declaration.get("change_kind") == "BOUNDED_FIX"
-                 and declaration.get("semantic_change") == "ESTABLISHED_BEHAVIOR_FIX"
+                 and valid_change
                  and declaration.get("requirement_status") == "CURRENT"
                  and isinstance(declaration.get("issue"), str) and declaration["issue"].strip()
                  and isinstance(sensitivity, dict)
@@ -1482,6 +1487,8 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
             route = "COMPACT_MAINTENANCE"
             reason = ("owner_authorized_issue_183_transition"
                       if _issue183_transition_authorized(root, change, plan, input_name)
+                      else "eligible_ordinary_change"
+                      if change_kind in {"PRESENTATION", "READ", "APPLICATION_TEST_OR_REFACTOR"}
                       else "eligible_bounded_fix")
     elif plan.get("verification_lane") != "FAST":
         reason = "planner_not_fast"
@@ -1564,6 +1571,7 @@ def _fast_maintenance_lifecycle(root, plan, input_name, source, base, plan_path,
         "fast_class": plan.get("fast_class", "UNKNOWN"),
         "fast_reason": plan.get("fast_reason", "UNKNOWN"),
         "semantic_change": declaration.get("semantic_change", "UNKNOWN"),
+        "change_kind": declaration.get("change_kind", "UNKNOWN"),
         "canonical_requirements": references,
         "executable_regression": regression or "UNKNOWN",
         "authorship": "single_author" if route == "COMPACT_MAINTENANCE" else "separate_executor",

@@ -1,0 +1,8 @@
+{
+  "historical": [
+    {"issue": "187", "commit": "e245ba1c", "class": "PRESENTATION", "applicable": false, "rationale": "Фактический merge сочетает read projections, Yii views/regressions и изменение verification policy; product-часть соответствует ordinary presentation/read, но весь historical diff является admission-policy change.", "required_checks": "Gate 3 + final для полного historical diff; object card/list regressions; FULL CI"},
+    {"issue": "194", "commit": "5bc6a225", "class": "APPLICATION_TEST_OR_REFACTOR", "applicable": true, "rationale": "Фактический diff дедуплицирует test setup при сохранении schema expectations; delivery policy artifacts требуют собственного sensitive process, но аналогичная application-test delta является ordinary.", "required_checks": "all changed schema tests; helper consumers; FULL CI"},
+    {"issue": "209", "commit": "ae0a9596", "class": "READ", "applicable": true, "rationale": "Фактическая product delta меняет completed filter read projection и связанные Yii/browser regressions без write/schema/access change.", "required_checks": "read regression; Yii active queue; browser consumer; environment checks; CI breadth by complete mapping"}
+  ],
+  "unseen": {"class": "PRESENTATION", "fixture_path": "app/YiiRuntime/Views/not-used-to-author-rule.php", "regression": "tests/Yii2/card_presentation_test.py"}
+}

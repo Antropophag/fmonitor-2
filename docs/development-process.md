@@ -53,14 +53,20 @@ Batch independent read-only calls and inspect every result.
 
 The verification planner alone selects `verification_lane` and
 `required_reviews`, but CI breadth and lifecycle ceremony are separate decisions.
-A declared ordinary bounded fix of established behavior requires one independent
-final review without Gate 3 even when its lane selects full CI. `FAST` continues
-to require that final review. Changes to rights/secrets, money, schema or data
+A declared ordinary `PRESENTATION`, `READ`, or
+`APPLICATION_TEST_OR_REFACTOR` change (including an established bounded fix)
+requires one independent final review without Gate 3 even when incomplete FAST
+mapping selects full CI. A presentation change selects `FAST` only when its
+public oracle, every changed regression, mapped consumers, and environment
+checks form a closed ownership mapping; otherwise CI is full without changing
+the ceremony. Changes to rights/secrets, money, schema or data
 durability, lossy/duplicating replay or concurrency, irreversible operations,
 admission/check policy, or materially uncertain sensitive product semantics
 retain Gate 3 and final review. Agents do not infer FAST from diff size or prose.
-The v1 classifier covers only its supported bounded UI scope; tests/spec changes
-can escalate a small change. Classifier expansion is a separate policy change.
+Sensitive methods added inside a mixed ordinary file and sensitive changes made
+after prepare are also fail-closed and require recomputation. Missing, failed,
+cancelled, incomplete, or unknown mandatory exact-source checks never produce an
+overall GREEN or PR-ready result.
 
 Commits mark meaningful stages, with related fixes and review records grouped at
 an appropriate checkpoint. There is no per-assertion or per-verdict commit rule

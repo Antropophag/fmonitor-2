@@ -23,11 +23,15 @@ telemetry остаётся `UNKNOWN`: установленные Codex hooks v1 
 выдаётся за расход токенов.
 
 Planner — единственный источник `verification_lane` и `required_reviews`, но
-ширина CI не определяет ceremony. Обычный bounded fix и поддержанный `FAST`
-требуют один независимый final review; чувствительные изменения требуют Gate 3
-и final review. Агент не выбирает FAST по размеру
-diff: v1 ограничен поддержанным bounded UI scope, а tests/spec могут повысить
-lane. CI восстанавливает выбранные FAST-команды из exact-source plan; text-only
+ширина CI не определяет ceremony. Обычные классы `PRESENTATION`, `READ` и
+`APPLICATION_TEST_OR_REFACTOR` требуют один независимый final review даже при
+полном CI; чувствительные и неизвестные изменения требуют Gate 3 и final review.
+`FAST` presentation требует замкнутой ownership/oracle связи со всеми
+изменёнными tests, consumers и environment checks. Неполная связь выбирает
+полный CI, но сама по себе не добавляет Gate 3. Sensitive boundary или
+добавленный sensitive method в смешанном файле имеют приоритет, а изменение
+exact source после prepare делает plan/package stale. CI восстанавливает
+выбранные FAST-команды из exact-source plan; text-only
 docs allowlist остаётся отдельным CI mode, а не решением о delivery lane.
 
 ## План и диагностика

@@ -1,0 +1,31 @@
+{
+  "change": "extend-ordinary-change-process",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "tools/delivery/change-verification.py",
+    "tools/delivery/harness_context.py",
+    "tools/verification/ci.py",
+    "tests/Delivery/ordinary_change_process_001_test.py",
+    "tests/fixtures/delivery/ordinary-change-process/**",
+    "specs/ORDINARY-CHANGE-PROCESS-001.md",
+    "openspec/changes/extend-ordinary-change-process/.openspec.yaml",
+    "openspec/changes/extend-ordinary-change-process/proposal.md",
+    "openspec/changes/extend-ordinary-change-process/design.md",
+    "openspec/changes/extend-ordinary-change-process/specs/ordinary-change-process/spec.md",
+    "openspec/changes/extend-ordinary-change-process/tasks.md",
+    "openspec/changes/extend-ordinary-change-process/verification-input.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/ordinary-change-process-delivery.md",
+    "docs/development-process.md",
+    "docs/delivery-harness.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "ORDINARY-CHANGE-PROCESS-001",
+    "acceptance_id": "A-L-ordinary-lifecycle-ci-and-sensitive-exclusions",
+    "spec_path": "specs/ORDINARY-CHANGE-PROCESS-001.md",
+    "seam": "public harness prepare through focused evidence and reviewer package to exact-source CI selection",
+    "tests": ["tests/Delivery/ordinary_change_process_001_test.py"],
+    "gate3_expected": {"tests/Delivery/ordinary_change_process_001_test.py": "INTENDED_RED"}
+  }]
+}
