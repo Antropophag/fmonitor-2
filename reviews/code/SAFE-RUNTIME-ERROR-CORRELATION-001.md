@@ -55,3 +55,26 @@ None.
 ### Final decision
 
 `APPROVED`
+
+## CI correction candidate 1 review — 2026-09-20
+
+- Reviewed candidate: commit `6848581efc3f30be5f796649118dc0c723b9d816`
+- Reviewed exact source: `7d0a1dec1d17eb20b89d11871d8281f6c1fdc431fa6fb1fb1f738b5ae51ac52b`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T085628Z-308a4d91b8/package.json`
+- Triggering CI: run `35499759133`, primary failure `governance`; sole reported `REGRESSION_FAILURE` in `tests/Verification/registered_yii2_focused_bootstrap_001_test.py`; `verify` and Quality Graph were aggregate failures, while all other jobs were GREEN
+- Exact acceptance GREEN: record `1789894559861068000-1a284a012afd44d7a251131597d02756`, exact candidate/end source `7d0a1dec1d17eb20b89d11871d8281f6c1fdc431fa6fb1fb1f738b5ae51ac52b`
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The correction changes only the governance fixture's deliberate exact `focused_command_profiles` allowlist so it recognizes both previously registered routes: the #202 browser navigation profile and the #173 integration runtime profile. It does not relax the assertion to accept arbitrary entries, alter profile selection, change harness algorithms, or touch product code. Adding the changed governance test to `planned_paths` correctly makes the recomputed plan select that obligation.
+
+The correction matches the complete reported CI inventory: it addresses the one primary governance regression rather than treating the aggregate `verify`/Quality Graph failures as independent causes. The targeted failed method, change-verification check, architecture guard, and exact acceptance are reported GREEN. The unrelated full-local governance-file observation (`dependency-failure` producing `UNKNOWN` instead of `SETUP_FAILURE`) is recorded as an environment discrepancy, was GREEN in the exact CI run, and is correctly excluded from correction evidence rather than being claimed as resolved.
+
+### Required changes
+
+None.
+
+### Decision
+
+`APPROVED`
