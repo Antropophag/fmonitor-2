@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 POLICY = ".quality-graph/verification-policy.json"
 CATEGORIES = {"unit", "integration", "e2e", "governance"}
 SERVER_RENDERED_PRESENTATION = "bounded-server-rendered-presentation"
+ORDINARY_CHANGE_KINDS = {"PRESENTATION", "READ", "APPLICATION_TEST_OR_REFACTOR"}
 ISSUE183_TRANSITION = {
     "base": "1245b44523f258294de4ac949e139dc2af26e07e",
     "input": "docs/operations/issue-183-delivery.json",
@@ -479,10 +480,14 @@ def compact_maintenance_reviews(change, effective, acceptance_tests, base, input
     required = {"issue", "change_kind", "requirement_status", "semantic_change",
                 "canonical_requirements", "executable_regression"}
     references = lifecycle.get("canonical_requirements")
+    change_kind = lifecycle.get("change_kind")
+    established_fix = (change_kind == "BOUNDED_FIX"
+                       and lifecycle.get("semantic_change") == "ESTABLISHED_BEHAVIOR_FIX")
+    ordinary_change = (change_kind in ORDINARY_CHANGE_KINDS
+                       and lifecycle.get("semantic_change") == "AGREED_ORDINARY_CHANGE")
     if (not required <= set(lifecycle)
-            or lifecycle.get("change_kind") != "BOUNDED_FIX"
+            or not (established_fix or ordinary_change)
             or lifecycle.get("requirement_status") != "CURRENT"
-            or lifecycle.get("semantic_change") != "ESTABLISHED_BEHAVIOR_FIX"
             or not isinstance(lifecycle.get("issue"), str) or not lifecycle["issue"].strip()
             or not isinstance(sensitivity, dict)
             or set(sensitivity) != {"classification", "boundaries", "rationale"}
@@ -510,9 +515,29 @@ def compact_maintenance_reviews(change, effective, acceptance_tests, base, input
     metadata_only = (sensitive_paths == {"tools/delivery/Dockerfile.focused-checks"}
                      and focused_checks_arg_metadata_move(base, effective))
     known_sensitive = bool(sensitive_paths) and not metadata_only
+    sensitive_method = re.compile(
+        r"(?i)\b(grant|permission|authori[sz]|persist|save|write|delete|schema|migrat|"
+        r"secret|token|payment|money|replay|concurr|sync|external)\w*\s*\("
+    )
+    for path in effective:
+        if path.startswith("tests/") or not repo_path(path).is_file():
+            continue
+        try:
+            changed = git("diff", "--unified=0", base, "--", path)
+        except subprocess.SubprocessError:
+            known_sensitive = True
+            break
+        added = "\n".join(line[1:] for line in changed.splitlines()
+                          if line.startswith("+") and not line.startswith("+++"))
+        if sensitive_method.search(added):
+            known_sensitive = True
+            break
     if issue183_transition_authorized(change, base, input_name):
         return ["final"]
     if sensitivity["classification"] == "SENSITIVE" or known_sensitive:
+        return ["gate3", "final"]
+    correction = lifecycle.get("correction")
+    if correction is not None and correction != {"contract": "UNCHANGED", "risk": "UNCHANGED"}:
         return ["gate3", "final"]
     return ["final"]
 
@@ -645,6 +670,10 @@ def build(base_ref, input_name):
     selected_boundaries = [boundary_for(item["path"], policy) for item in selected]
     presentation_boundaries = [boundary for boundary in selected_boundaries
                                if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION]
+    lifecycle_declaration = change.get("lifecycle")
+    ordinary_presentation = (isinstance(lifecycle_declaration, dict)
+                             and lifecycle_declaration.get("intent") == "COMPACT_MAINTENANCE"
+                             and lifecycle_declaration.get("change_kind") == "PRESENTATION")
     fast_class = None
     selected_public_oracle = None
     fast_definition = policy.get("fast_classes", {}).get(SERVER_RENDERED_PRESENTATION)
@@ -657,7 +686,31 @@ def build(base_ref, input_name):
         allowed = ({boundary["name"] for boundary in policy["boundaries"]
                     if boundary.get("fast_class") == SERVER_RENDERED_PRESENTATION}
                    | set(fast_definition["companion_boundaries"]))
-        if boundary_names <= allowed:
+        presentation_paths = [item["path"] for item in selected
+                              if item["name"] in allowed]
+        owned_oracles = set()
+        ownership_complete = True
+        for path in presentation_paths:
+            owners = [capability for capability in policy.get("capability_ownership", [])
+                      if any(fnmatch.fnmatchcase(path, pattern)
+                             for pattern in capability["patterns"])]
+            if len(owners) != 1:
+                ownership_complete = False
+                continue
+            owned_oracles.update(owners[0]["verifiers"])
+        related_tests = set(owned_oracles)
+        for path in presentation_paths:
+            for consumer in policy.get("consumers", []):
+                if any(fnmatch.fnmatchcase(path, owner) for owner in consumer["owners"]):
+                    related_tests.update(consumer["tests"])
+        changed_tests = {item["path"] for item in selected if item["path"].startswith("tests/")}
+        non_test_boundaries = {item["name"] for item in selected
+                               if not item["path"].startswith("tests/")}
+        legacy_fast_closed = boundary_names <= allowed
+        ordinary_fast_closed = (non_test_boundaries <= allowed and ownership_complete
+                                and changed_tests <= related_tests)
+        if ((not ordinary_presentation and legacy_fast_closed)
+                or (ordinary_presentation and ordinary_fast_closed)):
             oracles = sorted({test for boundary in presentation_boundaries for test in boundary["tests"]})
             if len(oracles) != 1:
                 raise ValueError("FAST presentation boundary requires exactly one registered public oracle")
@@ -667,7 +720,8 @@ def build(base_ref, input_name):
             selected_public_oracle = oracles[0]
         else:
             verification_lane = "STANDARD"
-            reasons = sorted(boundary_names - set(fast_definition["companion_boundaries"]))
+            reasons = sorted(boundary_names - set(fast_definition["companion_boundaries"])) or [
+                "incomplete-presentation-ownership"]
     elif boundary_names and boundary_names <= fast_boundaries:
         verification_lane = "FAST"
         reasons = sorted(boundary_names)

@@ -1,24 +1,22 @@
-# Текущая цель — stand-feedback correction Yii ОТиЗ и пагинации
+# Текущая цель — общий короткий процесс обычных изменений
 
-Поручение владельца 2026-09-20: исправить выявленное на локальном стенде
-неполное соответствие `refresh-otiz-shlz-ui` от актуального `origin/main` и
-довести correction candidate до PR-ready. Base `7784d3f800dfe53fecf9fb3ee8a8bce7daa31192`,
-branch `codex/fix-otiz-register-pagination`, worktree
-`/Users/antropophag/code/fmonitor-2-otiz-correction`.
+Поручение владельца 2026-09-20 заменяет узкое исключение для одного SQL
+read-model: расширить существующие compact lifecycle и FAST selection на
+повторяющиеся ordinary presentation, read и application-test/refactor changes и
+довести один отдельный candidate от `origin/main` до PR-ready.
 
-Scope: полный девятиколоночный Yii object register ОТиЗ; доказанные legacy-коды
-Кшах без переписывания snapshot; корректные суммы/unknown presentation;
-filters/sort/pageSize/server pagination; единая public `shlz-pagination`
-composition для pageable Yii surfaces объектов, монтажников, стройконтроля и ОТиЗ.
+Base: `ae0a9596ee3b18952832949015d3d345459dfc05`. Branch:
+`codex/ordinary-change-process`. Lifecycle:
+[extend-ordinary-change-process](../../openspec/changes/extend-ordinary-change-process/).
+Contract: [ORDINARY-CHANGE-PROCESS-001](../../specs/ORDINARY-CHANGE-PROCESS-001.md).
 
-Не входят новые финансовые формулы, schema/DDL, изменение RBAC и state-changing
-owners, переписывание истории и redesign содержимого соседних экранов. FAST
-выбирает только verification planner.
+Переиспользовать existing planner, lifecycle, ownership, inventory и CI consumer.
+Не создавать PR/path whitelist, второй registry, LLM classifier или общий AST
+analyzer. #187/#194/#209 — только replay evidence. Не менять product runtime,
+stand, merge authority, settings, deploy, #107/#153, supervisor, общий cache или
+metrics platform.
 
-Lifecycle: [refresh-otiz-shlz-ui](../../openspec/changes/refresh-otiz-shlz-ui/).
-Contracts: [OTIZ-SHLZ-UI-001](../../specs/OTIZ-SHLZ-UI-001.md),
-[OTIZ-OBJECT-REGISTER-PAGING-001](../../specs/OTIZ-OBJECT-REGISTER-PAGING-001.md).
-Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует;
-независимые reviewers выполняют planner-required reviews.
-
-Локально только bounded focused checks и применимый architecture check; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI через выбранный existing consumer. UNKNOWN не является GREEN/approval.
+Это изменение admission policy чувствительно и не применяет будущий shortcut к
+себе: root владеет scope/spec/tests, отдельный executor реализует, независимые
+reviewers решают Gate 3 и final. Локально только bounded checks; полный
+`make test`/`make verify` запрещён. Ровно один выбранный exact-source CI.
