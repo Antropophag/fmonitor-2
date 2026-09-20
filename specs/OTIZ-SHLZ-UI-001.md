@@ -42,6 +42,45 @@ Object register использует labelled-row mobile presentation с дос�
 
 GET/HEAD остаются read-only. Authorization выполняется до обработки невалидного query/payload. Формулы, суммы, permissions, routes, redirect/return paths, accepted snapshot/object/allocation/issue facts, replay/idempotency/concurrency outcomes и append-only audit/history остаются неизменными. Rejected/forbidden/invalid команды не добавляют snapshot, closure, operation или event facts; exact replay не дублирует денежные/audit facts.
 
+### A9 — полный Yii object register
+
+`/pilot/otiz[/objects]` показывает девять колонок существующей проекции:
+«Объект», «Прогресс», «Фонд премии», «Кшах», «Заработано», «Выплачено»,
+«Удержано», «Остаток фонда», «Состояние». View не вычисляет суммы и не заменяет
+отсутствующий норматив на `0,00 ₽`. Summary относится ко всему реестру независимо
+от страницы и фильтров.
+
+### A10 — legacy-коды Кшах
+
+Существующий legacy oracle `Integration.php:1612–1622` и read-only справочник
+`fm_fields_values(field_id=13)` доказывают: `41` — «железобетон» и `72` —
+«Железобетон и металл» дают `10000bp`; `86` — «кирпич» и `112` — «кирпич и
+металл» дают `11500bp`; `123` — «Металлокаркас и сетка» даёт `12500bp`.
+Другие numeric-коды не угадываются. Разрешение одинаково применяется в register
+и premium inputs и не переписывает detail snapshot.
+
+### A10a — визуальный контракт таблицы
+
+Основная поверхность register белая. Таблица использует полный public markup:
+`thead.shlz-table__head`, `tr.shlz-table__row`, `th/td.shlz-table__cell`, а
+числовые заголовки и значения — `shlz-table__cell--numeric`. Заголовки имеют
+`scope="col"`; прозрачная таблица не наследует серую secondary surface.
+
+### A11 — server-side pagination
+
+GET controls сохраняют `q`, `state`, `sort`, `pageSize`; смена отбора начинает
+страницу 1. При 51 строке и `pageSize=50` страницы содержат 50 и одну строку.
+Pager сообщает диапазон и total, сохраняет query context, обозначает текущую
+страницу и работает ссылками с клавиатуры.
+
+### A12 — единая `shlz-pagination`
+
+Очередь объектов, монтажники, стройконтроль и ОТиЗ используют один renderer:
+purpose-specific `nav.shlz-pagination`, `ul.shlz-pagination__list`, один `li` на
+item, ссылки `.shlz-pagination__item`, `aria-current="page"`, non-link disabled
+directions и ellipsis. Локальные `.fm2-pagination` и button-like substitutes
+запрещены; query filters каждой surface сохраняются.
+
 ## Worked examples
 
 ### E1 — accepted object
@@ -59,6 +98,8 @@ Ledger row с исходным удержанием `100,00 ₽` предлаг�
 | A1–A4, A7 | Authenticated Yii2 HTTP DOM structure test и browser roles |
 | A5–A6 | Playwright matrix 320/768/1024/1440, zoom, keyboard, coarse pointer, reduced motion, JS-off |
 | A3, A8 | Existing publication/settlement browser + HTTP/domain regressions with before/after facts |
+| A9–A11 | Authenticated Yii2 register browser и public ObjectRegister assertions |
+| A12 | Shared renderer contract плюс Yii HTTP/browser consumers |
 
 ## Non-goals
 

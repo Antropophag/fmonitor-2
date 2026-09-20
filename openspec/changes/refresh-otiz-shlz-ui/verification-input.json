@@ -1,10 +1,20 @@
 {
   "change": "refresh-otiz-shlz-ui",
   "planned_paths": [
+    ".quality-graph/verification-policy.json",
     "app/YiiRuntime/Assets/pilot.css",
     "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
     "app/YiiRuntime/Views/otiz.php",
     "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "app/Otiz/NativePremiumNorms.php",
+    "app/Otiz/MariaDbObjectRegisterQuery.php",
+    "app/Otiz/ObjectEconomy.php",
+    "config/yii/assets.php",
     "docs/operations/current-delivery-goal.md",
     "openspec/changes/refresh-otiz-shlz-ui/design.md",
     "openspec/changes/refresh-otiz-shlz-ui/proposal.md",
@@ -18,6 +28,12 @@
     "tests/Yii2/yii2_otiz_shlz_ui_001_test.php",
     "tests/Yii2/yii2_otiz_settlement_browser_001_test.php",
     "tests/Yii2/otiz_settlement_browser.mjs",
+    "tests/Yii2/yii2_shared_pagination_001_test.php",
+    "tests/Yii2/yii2_object_queue_001_test.php",
+    "tests/Yii2/yii2_installer_directory_http_001_test.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "tests/Otiz/object_register_paging_001_test.php",
+    "tests/Otiz/excel_inputs_001_test.php",
     "tools/verification/suites.tsv"
   ],
   "acceptances": [
@@ -36,6 +52,46 @@
       "seam": "existing Yii2 OTIZ publication and settlement HTTP/browser/domain commands with before/after facts",
       "tests": ["tests/Yii2/yii2_otiz_workflow_001_test.php", "tests/Yii2/yii2_otiz_commands_001_test.php", "tests/Yii2/yii2_otiz_settlement_browser_001_test.php", "tests/Otiz/snapshot_publication_001_test.php", "tests/Otiz/settlement_owner_001_test.php", "tests/Otiz/settlement_concurrency_001_test.php", "tests/Otiz/object_register_paging_http_001_test.php"],
       "gate3_expected": {"tests/Yii2/yii2_otiz_workflow_001_test.php": "GREEN", "tests/Yii2/yii2_otiz_commands_001_test.php": "GREEN", "tests/Yii2/yii2_otiz_settlement_browser_001_test.php": "GREEN", "tests/Otiz/snapshot_publication_001_test.php": "GREEN", "tests/Otiz/settlement_owner_001_test.php": "GREEN", "tests/Otiz/settlement_concurrency_001_test.php": "GREEN", "tests/Otiz/object_register_paging_http_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A9-A12-register-and-shared-pagination-correction",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "authenticated Yii2 OTIZ register and shared server-rendered pagination composition",
+      "tests": ["tests/Yii2/yii2_shared_pagination_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_shared_pagination_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-OBJECT-REGISTER-PAGING-001",
+      "acceptance_id": "legacy-material-code-compatibility",
+      "spec_path": "specs/OTIZ-OBJECT-REGISTER-PAGING-001.md",
+      "seam": "public ObjectRegister read projection using established legacy shaft coefficient evidence",
+      "tests": ["tests/Otiz/object_register_paging_001_test.php", "tests/Otiz/excel_inputs_001_test.php"],
+      "gate3_expected": {"tests/Otiz/object_register_paging_001_test.php": "INTENDED_RED", "tests/Otiz/excel_inputs_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A12-object-queue-consumer",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "authenticated Yii object queue HTTP pagination",
+      "tests": ["tests/Yii2/yii2_object_queue_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_object_queue_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A12-installer-consumer",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "authenticated Yii installer directory HTTP pagination",
+      "tests": ["tests/Yii2/yii2_installer_directory_http_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_installer_directory_http_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-SHLZ-UI-001",
+      "acceptance_id": "A12-construction-control-consumer",
+      "spec_path": "specs/OTIZ-SHLZ-UI-001.md",
+      "seam": "authenticated Yii construction-control HTTP pagination",
+      "tests": ["tests/Yii2/yii2_construction_control_active_queue_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_construction_control_active_queue_001_test.php": "GREEN"}
     }
   ]
 }

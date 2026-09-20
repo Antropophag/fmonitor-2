@@ -53,3 +53,51 @@ Presentation change MUST сохранять текущие permissions, authoriz
 #### Scenario: Запрет и невалидный ввод
 - **WHEN** неуполномоченный актор либо невалидный payload достигает публичного HTTP seam
 - **THEN** текущий denial/error outcome MUST сохраниться и новые snapshot, closure, operation или event facts MUST NOT появиться
+
+### Requirement: Полный реестр экономики объектов
+Yii object register SHALL показывать объект, прогресс, фонд премии, Кшах,
+заработано, выплачено, удержано, остаток фонда и состояние. Значения и глобальная
+сводка MUST поступать из существующего `ObjectRegister`; view MUST NOT заменять
+неизвестные значения нулями или вычислять финансовые формулы самостоятельно.
+
+#### Scenario: Заполненная экономическая строка
+- **WHEN** объект имеет доказанные входы нормы и рассчитанные суммы
+- **THEN** все девять колонок MUST содержать соответствующие значения, а summary MUST учитывать весь реестр независимо от текущей страницы
+
+#### Scenario: Неполный норматив
+- **WHEN** материал либо другой обязательный вход нормы неизвестен
+- **THEN** денежное значение MUST отображаться как неизвестное, состояние MUST быть понятным пользователю `missing_norm`, и система MUST NOT показывать вымышленный `0,00 ₽`
+
+### Requirement: Доказанное разрешение материала шахты
+Импортированный legacy identifier материала SHALL разрешаться через существующий
+публичный legacy reference source до применения `NativePremiumNorms`. Known
+mapping MUST давать канонический display-value и provenance; unknown mapping MUST
+оставаться неизвестным и MUST NOT подбираться эвристически.
+
+#### Scenario: Known legacy material identifier
+- **WHEN** карточка содержит identifier с доказанным справочным соответствием
+- **THEN** register MUST использовать канонический материал и вычислить фонд по действующей норме
+
+#### Scenario: Unknown legacy material identifier
+- **WHEN** справочник не доказывает соответствие identifier
+- **THEN** объект MUST остаться `missing_norm` без записи или изменения бизнес-фактов
+
+### Requirement: Серверная пагинация реестра
+OTIZ register SHALL выводить текущий диапазон, page size и доступные страницы из
+существующего server-side page result. Search, state, sort и pageSize MUST
+сохраняться в GET controls/links; смена отбора MUST начинать page 1.
+
+#### Scenario: Реестр из 334 объектов
+- **WHEN** пользователь открывает первую страницу размера 50
+- **THEN** DOM MUST содержать не более 50 object rows, summary MUST сообщать полный count, а keyboard-accessible pager MUST вести на страницу 2 с сохранённым query context
+
+### Requirement: Единая пагинация справочников и реестров
+Все существующие pageable Yii списки — объекты монтажа, монтажники,
+стройконтроль и ОТиЗ — SHALL использовать reusable public `shlz-pagination`
+composition. Markup MUST содержать purpose-specific accessible name, list/item
+structure, current page, disabled directions и ellipsis согласно public export;
+локальные button-like pagination substitutes MUST NOT использоваться.
+
+#### Scenario: Первая, средняя и последняя страницы
+- **WHEN** пользователь открывает любую pageable Yii surface на первой, средней или последней странице
+- **THEN** pager MUST иметь согласованную shlz-ui геометрию и состояния, сохранять surface filters и работать клавиатурой без page-level overflow

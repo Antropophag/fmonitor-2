@@ -44,15 +44,54 @@ Root-authored executable spec/HTTP/browser tests фиксируют DOM semantic
 
 Schema frontier, backup/restore и migration inventory неприменимы: schema и persistence не меняются. Runtime dependency остаётся текущей цепочкой Yii2 asset bundle → public `shlz.css`/`pilot.css`; отсутствие live adapter evidence остаётся `UNKNOWN`, а не GREEN.
 
+### 7. Полный object register остаётся проекцией существующего owner
+
+Yii view отображает все принятые поля `ObjectRegister`: объект, прогресс, фонд,
+Кшах, заработано, выплачено, удержано, остаток фонда и состояние. Summary и row
+values не пересчитываются в view. Фильтры, сортировка, `pageSize` и pager
+сохраняют query context; смена фильтра начинает страницу 1. Rapid-pilot служит
+behavioral oracle для состава и подписей, но новая логика туда не добавляется.
+
+### 8. Legacy material identifier разрешается на import/read boundary
+
+Стенд содержит `fields.pitmaterial.display` со значениями `41`, `86`, `112`,
+`72`, `123`, то есть identifier, а не display-name, ожидаемый
+`NativePremiumNorms`. Adapter получает display-value из существующего публичного
+legacy справочника и сохраняет provenance. Известный identifier отображается и
+участвует в норме детерминированно; отсутствующее или неизвестное соответствие
+остаётся `missing_norm`. View и `NativePremiumNorms` не получают fallback map и
+не угадывают материал.
+
+### 9. Одна reusable pagination composition
+
+Pageable Yii surfaces используют общий renderer/partial с точной структурой
+`nav.shlz-pagination > ul.shlz-pagination__list > li`: destination links имеют
+`shlz-pagination__item`, текущая страница — `aria-current="page"`, недоступные
+направления — non-link disabled item, разрывы — non-interactive ellipsis, стрелки
+берутся из публичного icon export. Renderer принимает path, текущую/последнюю
+страницу, query context, summary и доступные page sizes; он не владеет выборкой.
+Локальные `.fm2-pagination` и pager-кнопки удаляются после перевода всех текущих
+consumers.
+
 ## Risks / Trade-offs
 
 - [Крупный controller одновременно содержит HTTP и HTML] → вынести presentation в views без изменения command orchestration и сравнить exact form contracts тестами.
 - [Responsive CSS может затронуть другие surfaces] → ограничить selectors корнем `.fm2-otiz` и выполнить shared 320/768/1024/1440 scan.
+- [Общий pager затрагивает несколько списков] → renderer остаётся чистой
+  presentation composition; каждый существующий read owner и query contract
+  проверяется своим HTTP/browser regression.
+- [Legacy id может не иметь доказанного display mapping] → unknown остаётся
+  `missing_norm`; тесты запрещают numeric label и неподтверждённый fallback.
 - [Contained ledger scroll может быть неочевиден keyboard user] → focusable labelled container, видимый focus и сохранённые table headers.
 - [Тесты presentation могут стать хрупкими] → проверять semantic roles/classes/relationships и geometry invariants, не пиксельные координаты каждого элемента.
 
 ## Migration Plan
 
-1. Ввести views и scoped composition styles без DDL/data migration.
-2. Прогнать focused HTTP/browser/architecture checks и независимые Gates 3/5 по exact source.
-3. Выполнить один exact-source CI run. Rollback — откат presentation commit; persisted facts и schema не меняются.
+1. Исправить material adapter и доказать known/unknown mapping без DDL или
+   переписывания исторических фактов.
+2. Восстановить полный OTIZ register и общий `shlz-pagination` renderer, затем
+   перевести существующие pageable Yii consumers.
+3. Прогнать focused HTTP/browser/import/financial/architecture checks и
+   planner-required независимые reviews по exact source.
+4. Выполнить один exact-source CI run. Rollback — откат correction commits;
+   persisted facts и schema не меняются.

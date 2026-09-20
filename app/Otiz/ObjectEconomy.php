@@ -25,6 +25,9 @@ final class ObjectEconomy
             ?intdiv($row['premium_cents']*$row['shaft_bp'],10000):null;
         $row['deadline_penalty_cents']=(int)$row['has_calculation']===1
             ?max(0,(int)$row['trace_progress_cents']-(int)$row['accrued_cents']):0;
+        $row['penalties_cents']=(int)$row['discipline_cents']+$row['deadline_penalty_cents'];
+        $row['remaining_fund_cents']=$row['fund_cents']===null?null
+            :max(0,$row['fund_cents']-(int)$row['paid_cents']-(int)$row['discipline_cents']-$row['deadline_penalty_cents']);
         $row['state']=$row['fund_cents']===null?'missing_norm':($row['snapshot_id']===null?'planned':(string)$row['calculation_state']);
         if($row['state']==='ready'&&(int)$row['pool_cents']>0&&(int)$row['snapshot_closed_cents']>=(int)$row['pool_cents'])$row['state']='completed';
         return $row;

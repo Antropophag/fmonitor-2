@@ -73,9 +73,23 @@ try{
 
   result.stage='register labelled rows';
   await page.setViewportSize({width:320,height:900});
-  await page.goto(`${config.origin}/pilot/otiz/objects`);
+  await page.goto(`${config.origin}/pilot/otiz/objects?sort=regnumber_asc&pageSize=50`);
   assert.equal(await page.locator('.fm2-otiz-register-table[data-mobile-strategy="labelled-rows"]').count(),1);
-  assert.equal(await page.locator('.fm2-otiz-register-table td[data-label]').count()>=4,true);
+  assert.deepEqual(await page.locator('.fm2-otiz-register-table thead th').allTextContents(),['Объект','Прогресс','Фонд премии','Кшах','Заработано','Выплачено','Удержано','Остаток фонда','Состояние'],'INTENDED_RED: full register columns match accepted oracle');
+  assert.equal(await page.locator('.fm2-otiz-register-table thead.shlz-table__head').count(),1,'INTENDED_RED: public shlz table head');assert.equal(await page.locator('.fm2-otiz-register-table thead .shlz-table__cell[scope="col"]').count(),9,'all headers use public cell contract');assert.equal(await page.locator('.fm2-otiz-register-table thead .shlz-table__cell--numeric').count(),7,'numeric headers use shlz alignment');assert.equal(await page.locator('.fm2-otiz-register-table tbody tr.shlz-table__row').count(),50,'body rows use public shlz contract');assert.equal(await page.locator('.fm2-otiz-register-table tbody td.shlz-table__cell').count(),450,'body cells use public shlz contract');assert.equal(await page.locator('.fm2-otiz-register-table tbody td.shlz-table__cell--numeric').count(),350,'all seven numeric body columns use shlz alignment');assert.equal(await page.locator('.fm2-otiz-register-table tbody td[data-label="Объект"].shlz-table__cell--numeric,.fm2-otiz-register-table tbody td[data-label="Состояние"].shlz-table__cell--numeric').count(),0,'identity and state remain nonnumeric');const colors=await page.evaluate(()=>({page:getComputedStyle(document.querySelector('.fm2-otiz-page')).backgroundColor,wrap:getComputedStyle(document.querySelector('.fm2-otiz-register-wrap')).backgroundColor}));assert.deepEqual(colors,{page:'rgb(255, 255, 255)',wrap:'rgb(255, 255, 255)'},'OTIZ register surfaces are white');
+  assert.equal(await page.locator('[data-otiz-row]').count(),50,'first server page is bounded');
+  assert.match(await page.locator('.fm2-otiz-register-summary').innerText(),/30\s?420\s?000,00 ₽/,'all proven legacy material codes produce the global fund');
+  const knownRow=page.locator('[data-otiz-row]').first();const cell=async label=>(await knownRow.locator(`td[data-label="${label}"]`).innerText()).replace(/\s+/g,' ').trim();assert.match(await cell('Объект'),/^OTIZ-001 Адрес реестра 01/);assert.equal(await cell('Прогресс'),'0,00 %');assert.equal(await cell('Фонд премии'),'598 000,00 ₽ База 520 000,00 ₽');assert.equal(await cell('Кшах'),'1,15');assert.equal(await cell('Заработано'),'1,00 ₽');assert.equal(await cell('Выплачено'),'0,00 ₽');assert.equal(await cell('Удержано'),'0,60 ₽');assert.equal(await cell('Остаток фонда'),'597 999,40 ₽');assert.equal(await cell('Состояние'),'Готов к расчёту');
+  const pager=page.locator('nav.shlz-pagination[aria-label="Страницы объектов ОТиЗ"]');
+  assert.equal(await pager.count(),1,'INTENDED_RED: register exposes shlz pagination');
+  assert.equal(await pager.locator('ul.shlz-pagination__list > li').count()>0,true,'pagination uses public list composition');
+  assert.equal(await pager.locator('a[aria-current="page"]').innerText(),'1');
+  await pager.getByRole('link',{name:'2',exact:true}).focus();await page.keyboard.press('Enter');await page.waitForURL(/page=2/);
+  assert.equal(await page.locator('[data-otiz-row]').count(),2,'second page contains remaining rows');
+  const code41Row=page.locator('[data-otiz-row]').filter({hasText:'OTIZ-051'});assert.equal(await code41Row.locator('td[data-label="Кшах"]').innerText(),'1,00');assert.match(await code41Row.locator('td[data-label="Фонд премии"]').innerText(),/520 000,00 ₽/);
+  const unknownRow=page.locator('[data-otiz-row]').filter({hasText:'OTIZ-052'});assert.match(await unknownRow.innerText(),/Норма не определена/);const unknownFund=unknownRow.locator('td[data-label="Фонд премии"]');assert.match(await unknownFund.innerText(),/—/);assert.doesNotMatch(await unknownFund.innerText(),/0,00 ₽/,'unknown fund is never invented zero');
+  assert.equal(new URL(page.url()).searchParams.get('pageSize'),'50','pager preserves page size');
+  await page.goto(`${config.origin}/pilot/otiz/objects?state=missing_norm&pageSize=50`);assert.match(await page.locator('.fm2-otiz-register-summary').innerText(),/30\s?420\s?000,00 ₽/,'summary remains global under filtering');
 
   result.stage='ledger contained scroll and keyboard';
   await page.goto(`${config.origin}/pilot/otiz/snapshots/501`);

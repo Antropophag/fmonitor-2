@@ -50,6 +50,7 @@ try {
     assertSameValue(false,in_array(4515,$ids,true),'non-working case is absent');
     assertSameValue([4512],array_map('intval',$secondMatches[1]),'activity ordering leaves exact tail row');
     foreach([$first,$second]as$page)assertSameValue(true,str_contains($page['body'],PHP_EOL.'51 объектов</span>'),'filtered total is rendered');
+    assertSameValue(true,str_contains($first['body'],'class="shlz-pagination"')&&str_contains($first['body'],'aria-label="Страницы стройконтроля"')&&str_contains($first['body'],'<ul class="shlz-pagination__list">'),'INTENDED_RED shared construction-control pagination');
     $repeat=$fixture->page('/pilot/construction-control');
     preg_match_all('/data-object-id="(\d+)"/',$repeat['body'],$repeatMatches);
     assertSameValue($firstMatches[1],$repeatMatches[1],'identical GET repeats row composition');
