@@ -40,14 +40,7 @@
 <strong>Объекты не найдены</strong>
 <button class="shlz-button shlz-button--secondary" type="button" data-clear-filters>Сбросить фильтры</button>
 </div>
-<footer class="fm2-control-footer"><span data-list-summary>Показано <?=count($objects)?> из <?=$pagination['total']?></span><nav class="shlz-pagination" aria-label="Страницы"><div class="shlz-pagination__list">
-<?php if($pagination["page"]>1):?>
-<a class="shlz-pagination__item" href="/pilot/construction-control?page=<?=$pagination["page"]-1?>">Предыдущая</a>
-<?php endif?>
-<?php if($pagination["page"]<$pagination["pages"]):?>
-<a class="shlz-pagination__item" href="/pilot/construction-control?page=<?=$pagination["page"]+1?>">Следующая</a>
-<?php endif?>
-</div></nav></footer></div></section>
+<footer class="fm2-control-footer"><span data-list-summary>Показано <?=count($objects)?> из <?=$pagination['total']?></span><?=ViewSupport::pagination('/pilot/construction-control',(int)$pagination['page'],(int)$pagination['pages'],(int)$pagination['total'],50,[],'Страницы стройконтроля')?></footer></div></section>
 <script src="/pilot/assets/control-queue.js" defer>
 </script>
 <?php ViewSupport::end($this);

@@ -270,6 +270,19 @@
   ],
   "capability_ownership": [
     {
+      "name": "otiz-premium-norms",
+      "patterns": [
+        "app/Otiz/MariaDbObjectRegisterQuery.php",
+        "app/Otiz/NativePremiumNorms.php"
+        ,"app/Otiz/ObjectEconomy.php"
+      ],
+      "verifiers": [
+        "tests/Otiz/excel_inputs_001_test.php",
+        "tests/Otiz/object_register_paging_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "assignment-order-current-eligibility",
       "patterns": [
         "app/AssignmentOrderComposition/MariaDbAssignmentOrderCurrentEligibility.php",

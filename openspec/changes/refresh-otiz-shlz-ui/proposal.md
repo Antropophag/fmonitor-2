@@ -2,6 +2,14 @@
 
 Активный Yii2-раздел ОТиЗ после runtime-переноса сохраняет правильные финансовые owners, но его server-rendered представление разрывает период, готовность, объекты, доказательства, нарушения и действия между несогласованными HTML-регионами. Из-за этого сотруднику ОТиЗ трудно увидеть следующий шаг, а таблицы и формы нестабильны на промежуточных и мобильных ширинах; №196 завершает этот bounded UI slice сейчас, пока финансовое поведение остаётся неизменным.
 
+Ручная проверка локального стенда после первоначального merge выявила неполное
+соответствие change: Yii object register показывает только четыре из девяти
+принятых экономических колонок, не выводит серверную пагинацию и пропускает
+публичную composition `shlz-pagination`. Кроме того, импортированные значения
+материала шахты представлены legacy identifier вместо нормализованного
+display-value, поэтому все 334 объекта получают `missing_norm` и финансовая
+сводка остаётся нулевой при наличии остальных входов.
+
 ## What Changes
 
 - Собрать период расчёта, readiness и одно основное разрешённое действие в единый workflow header на Yii2 HTTP/browser seam.
@@ -9,6 +17,15 @@
 - Заменить command-like текстовые ссылки на корректные primary/secondary/danger button compositions и явно связать каждое нарушение и доказательство с его объектом.
 - Для каждой таблицы закрепить labelled-row либо contained-scroll mobile strategy; обеспечить 320/768/1024/1440 px, keyboard, coarse pointer, reduced motion и JS-off.
 - Добавить root-authored HTTP/browser acceptance tests и провести planner-selected Gates 1–5 отдельными executor/reviewer agents.
+- Восстановить на Yii register полный принятый набор из девяти экономических
+  колонок, глобальную сводку, состояния, filters/sort/pageSize и серверную
+  пагинацию из существующих `ObjectRegister`/rapid-pilot contracts.
+- Разрешать импортированный legacy identifier материала через существующий
+  публичный справочный источник до применения `NativePremiumNorms`, не добавляя
+  новую финансовую формулу и не угадывая неизвестные значения.
+- Использовать одну reusable Yii composition точного публичного контракта
+  `shlz-pagination` во всех pageable справочниках и реестрах: объекты монтажа,
+  монтажники, стройконтроль и ОТиЗ.
 - Не менять формулы, permissions, routes, methods, CSRF, form payloads, idempotency/concurrency, append-only facts, схему БД или state-changing owners.
 
 ## Capabilities
@@ -25,8 +42,16 @@
 
 Актор — сотрудник ОТиЗ с `otiz.manage`. Source oracle — текущие Yii2 routes, `app/Otiz` application owners, `specs/YII2-OTIZ-WORKFLOW-001.md`, settlement/publication contracts и существующие focused browser/HTTP tests. Target public seam — authenticated Yii2 HTTP/browser flow `/pilot/otiz/**`.
 
-Затрагиваются только Yii2 OTIZ controller/view composition, shared pilot CSS/JS при необходимости, bounded tests, stable executable spec и delivery records. `../shlz-ui` используется только через публичные exports. `rapid-pilot/` не получает новой логики.
+Затрагиваются Yii2 OTIZ read/presentation composition, существующий import/read
+adapter материала шахты, reusable pagination view/helper, pageable Yii views,
+shared pilot CSS/JS при необходимости, bounded tests, stable executable spec и
+delivery records. `../shlz-ui` используется только через публичные exports.
+`rapid-pilot/` не получает новой логики.
 
 Release value: сотрудник ОТиЗ видит целостный период расчёта, состояние готовности, связанные с объектом основания и одно очевидное следующее действие на desktop и mobile.
 
-Non-goals: новые финансовые правила или формулы, изменение принятой истории, новая схема/writer, изменение RBAC, redesign других экранов, общий runtime cutover, merge/deploy/settings. Неопределённые acceptance semantics из characterization changes остаются `NEEDS_GRILL` и не блокируют presentation-only slice.
+Non-goals: новые финансовые правила или формулы, ручная подстановка суммы,
+угадывание неизвестного legacy identifier, изменение принятой истории, новая
+схема/writer, изменение RBAC, redesign содержимого других экранов, общий runtime
+cutover, merge/deploy/settings. Неопределённые acceptance semantics из
+characterization changes остаются `NEEDS_GRILL` и не блокируют correction slice.

@@ -239,6 +239,7 @@ db	php	tests/Yii2/yii2_preopening_uncertain_commit_001_test.php	integration
 db	php	tests/Yii2/yii2_queue_readiness_001_test.php	integration
 db	php	tests/Yii2/yii2_selection_input_001_test.php	integration
 db	php	tests/Yii2/yii2_session_failure_001_test.php	integration
+db	php	tests/Yii2/yii2_shared_pagination_001_test.php	integration
 db	php	tests/Yii2/yii2_user_access_001_test.php	integration
 db	php	tests/Yii2/yii2_user_access_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_user_access_edges_001_test.php	integration

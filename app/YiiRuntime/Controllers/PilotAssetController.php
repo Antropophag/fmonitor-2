@@ -18,6 +18,8 @@ final class PilotAssetController extends PilotController
             $map[$file] = [$root . '/' . $file,'text/javascript; charset=UTF-8',3600];
         }$map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
+        }foreach (['chevron-left-duo.svg','chevron-right-duo.svg'] as $file) {
+            $map['shlz-icons/'.$file]=[$root.'/shlz-icons/'.$file,'image/svg+xml; charset=UTF-8',31536000];
         }$map['favicon.svg'] = [$root . '/favicon.svg','image/svg+xml; charset=UTF-8',31536000];
         if (preg_match('/^fonts\/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$/D', $path, $m) === 1) {
             $entry = [$root . '/fonts/' . $m[1],'font/woff2',31536000];

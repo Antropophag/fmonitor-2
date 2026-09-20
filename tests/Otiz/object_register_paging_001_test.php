@@ -16,6 +16,12 @@ try{
     $register=new ObjectRegister($f->db,$p,$p);$before=$facts($f->db,$p);
     $first=$register->read(18,['sort'=>'regnumber_asc']);
     assertSameValue(['q'=>'','state'=>'','sort'=>'regnumber_asc','page'=>1,'pageSize'=>50],$first['query'],'normalized query is public');
+    foreach([['41',10000,52000000],['72',10000,52000000],['86',11500,59800000],['112',11500,59800000],['123',12500,65000000]]as[$code,$shaft,$fund]){$f->card(1,'5','320',$code,'');$codeBefore=$facts($f->db,$p);$legacyMaterial=$register->read(18,['q'=>'Вымышленный адрес 001']);assertSameValue([$shaft,$fund],[$legacyMaterial['rows'][0]['shaft_bp'],$legacyMaterial['rows'][0]['fund_cents']],'INTENDED_RED: proven legacy material code '.$code.' keeps established coefficient');assertSameValue($codeBefore,$facts($f->db,$p),'legacy material read '.$code.' preserves immutable source facts');}
+    $f->card(1,'5','320','999','');
+    $unknownBefore=$facts($f->db,$p);$unknownMaterial=$register->read(18,['q'=>'Вымышленный адрес 001']);
+    assertSameValue([null,null,'missing_norm'],[$unknownMaterial['rows'][0]['shaft_bp'],$unknownMaterial['rows'][0]['fund_cents'],$unknownMaterial['rows'][0]['state']],'unknown legacy material remains unproven');
+    assertSameValue($unknownBefore,$facts($f->db,$p),'unknown material read preserves immutable source facts');
+    $f->card(1,'5','320','Железобетон','Пассажирский');
     assertSameValue([1,50,3,125,50],[$first['page'],$first['pageSize'],$first['pages'],$first['total'],count($first['rows'])],'first bounded page');
     assertSameValue([3,1,2,5,6,4],array_slice($ids($register->read(18,[])),0,6),'default order preserves snapshot/state rank before registration and id keys');
     $second=$register->read(18,['sort'=>'regnumber_asc','page'=>'2']);$third=$register->read(18,['sort'=>'regnumber_asc','page'=>3]);
@@ -53,6 +59,7 @@ try{
     assertSameValue(6395999771,$clamped['summary']['balance'],'global balance clamps each object before summing');
     $blockedRow=$register->read(18,['state'=>'blocked'])['rows'][0];
     assertSameValue(50,(int)$blockedRow['deadline_penalty_cents'],'row deadline penalty comes from saved formula trace');
+    assertSameValue(51999940,(int)$blockedRow['remaining_fund_cents'],'INTENDED_RED: row remaining fund subtracts discipline10 plus trace deadline50, not stored deadline20');
     assertSameValue(60,$clamped['summary']['penalties'],'global penalties use discipline plus trace deadline');
 
     $f->card(115,5,320," \tЖЕЛЕЗОБЕТОН\n",'ПАССАЖИРСКИЙ');

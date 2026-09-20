@@ -15,8 +15,36 @@
 - [x] 3.1 Выполнить один batched desktop/mobile screenshot pass, одну correction batch, не более одного confirmation pass и один Impeccable detector run; зафиксировать артефакты и результат.
 - [x] 3.2 Выполнить planner-selected focused checks, relevant OTIZ regression и `make architecture-check`, не запуская локально full `make test`/`make verify`; записать source digest и полные результаты.
 - [x] 3.3 Получить независимый gpt-5.6-sol/low final Gate 5 `APPROVED` по exact reconstructible source; исправить полный findings list и повторно проверить затронутые boundaries.
-- [ ] 3.4 Создать PR и выполнить один exact-source GitHub CI run; проверить полный failed-job/`REGRESSION_FAILURE` inventory при сбое и получить GREEN для reviewed matching source. Merge/deploy оставить не выполненными без отдельной авторизации.
+- [x] 3.4 Прежнее Gate 5 approval считать superseded для correction delta; обновить `verification-input.json`, выполнить `harness.py prepare` и принять planner-selected lane/required reviews без ручного назначения FAST.
 
-## 4. Done definition
+## 4. Stand-feedback correction
 
-- [ ] 4.1 Подтвердить, что `/pilot/otiz/**` соответствует `OTIZ-SHLZ-UI-001`, все существующие финансовые HTTP/browser/domain contracts остаются GREEN, required reviews APPROVED и exact-source CI GREEN; обновить delivery record и OpenSpec task state.
+- [x] 4.1 Root дополняет executable spec и пишет RED HTTP/browser tests: полный
+  девятиколоночный Yii register, unknown money без ложного нуля, summary,
+  filters/sort/pageSize, страницы 50/50/…, keyboard/mobile и exact
+  `shlz-pagination` contract на всех pageable Yii surfaces.
+- [x] 4.2 Root пишет RED integration coverage для known/unknown legacy material
+  identifier и доказанного reference mapping без schema/history mutation.
+- [x] 4.3 Если planner требует Gate 3, независимый gpt-5.6-sol/low reviewer
+  проверяет полный correction spec/tests/RED и выдаёт явный verdict.
+- [x] 4.4 Отдельный gpt-5.6-sol/low executor исправляет material adapter,
+  восстанавливает полный OTIZ register и reusable pagination composition, не
+  меняя финансовые owners, formulas, permissions и persistence.
+- [ ] 4.5 Выполнить один batched desktop/mobile screenshot pass, одну correction
+  batch, не более одного confirmation pass и один Impeccable detector run.
+- [ ] 4.6 Выполнить planner-selected focused checks, OTIZ/import/financial и
+  затронутые directory regressions, `make architecture-check`; локальный full
+  suite не запускать.
+- [ ] 4.7 Получить независимый final Gate 5 по exact reconstructible correction
+  source и исправить полный findings list.
+- [ ] 4.8 Создать PR и выполнить один exact-source GitHub CI run; при сбое сначала
+  собрать полный failed-job/`REGRESSION_FAILURE` inventory. Merge/deploy оставить
+  не выполненными без отдельной авторизации.
+
+## 5. Done definition
+
+- [ ] 5.1 Подтвердить, что `/pilot/otiz/**` и все pageable Yii surfaces
+  соответствуют обновлённому контракту, material mapping доказан, все
+  существующие финансовые HTTP/browser/domain contracts остаются GREEN,
+  required reviews APPROVED и exact-source CI GREEN; обновить delivery record и
+  OpenSpec task state.

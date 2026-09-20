@@ -43,7 +43,7 @@ final readonly class MariaDbObjectRegisterQuery
         $bands=[];foreach($norms->premiumBands() as $r){
             $bands[]='SELECT '.$this->literal($r['type'])." lift_type,{$r['floors']} floors,{$r['from']} capacity_from,{$r['to']} capacity_to,{$r['premiumCents']} premium_cents";
         }
-        $shafts=[];foreach($norms->shaftRules() as $name=>$amount)$shafts[]='SELECT '.$this->literal($name)." material,{$amount} shaft_bp";
+        $shafts=[];foreach($norms->shaftRules() as $name=>$amount)$shafts[]='SELECT '.$this->literal((string)$name)." material,{$amount} shaft_bp";
         $bandSql=implode(' UNION ALL ',$bands);$shaftSql=implode(' UNION ALL ',$shafts);
         $floors=$this->integer('floor_json');$capacity=$this->integer('capacity_json');
         $trimPattern=$this->literal('^[\\x00\\x09\\x0a\\x0b\\x0d\\x20]+|[\\x00\\x09\\x0a\\x0b\\x0d\\x20]+$');
