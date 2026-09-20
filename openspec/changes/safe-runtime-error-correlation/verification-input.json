@@ -8,6 +8,7 @@
     "app/YiiRuntime/Controllers/ChecklistController.php",
     "public/runtime.php",
     "tests/Runtime/yii2_safe_error_correlation_001_test.php",
+    "tests/Verification/registered_yii2_focused_bootstrap_001_test.py",
     ".quality-graph/verification-policy.json",
     "tools/verification/suites.tsv",
     "tools/verification/integration-timings.tsv",

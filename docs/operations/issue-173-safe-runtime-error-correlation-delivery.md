@@ -58,3 +58,7 @@ Post-correction focused evidence:
 - `make architecture-check`: PASS (7 rules; advisories only).
 
 Final Gate 5 correction review approved exact committed head `629ec657` / source `87d2a637847e75220b8a84864b061309f475efb93324e2023cb119764bc93677` with GREEN record `1789892899664701000-4ca01f19a53a4eacb403c89b3a76dcc8`. Both prior findings are fixed and no findings remain.
+
+First exact-source CI run `35499759133` on PR #206/head `1ad1b4a7` completed with one primary failure: governance `tests/Verification/registered_yii2_focused_bootstrap_001_test.py`; verify failed only as aggregator. Fast, unit, both integration shards, e2e and quality-results passed. The governance fixture still expected only the #202 navigation profile and did not include the address-specific #173 runtime profile. No other `REGRESSION_FAILURE` was present.
+
+Correction candidate 1 updates only that exact policy expectation and declares the governance test in the change input. The targeted failed method `test_prepared_plan_uses_exact_focused_route_and_stable_identity` is GREEN; `change_verification_001_test.py` and `architecture_guard_001_test.py` are GREEN. A full local invocation of the governance file additionally observed an unrelated local `dependency-failure` fixture outcome `UNKNOWN` instead of `SETUP_FAILURE`; that case was GREEN in exact-source CI and is not represented as correction evidence.
