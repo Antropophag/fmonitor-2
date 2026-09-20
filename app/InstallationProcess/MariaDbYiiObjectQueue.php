@@ -87,7 +87,7 @@ final readonly class MariaDbYiiObjectQueue
                 . " OR (c.process_state='needs_assignment_order' AND o.id IS NULL AND a.application_id IS NULL)"
                 . " OR (c.process_state='assignment_order_prepared' AND o.status='prepared' AND a.application_id IS NULL))",
             'ready_to_open' => "c.process_state IN('needs_assignment_order','assignment_order_prepared') AND {$ready}",
-            'installation' => "{$active} AND {$count}<41",
+            'installation' => "{$active} AND {$count}<41 AND NOT({$pto} AND {$dec})",
             'document_closeout' => "{$active} AND {$count}=41 AND NOT({$pto} AND {$dec})",
             'completed' => "{$active} AND {$pto} AND {$dec}",
             'needs_assignment_change' => "c.process_state='needs_assignment_change'"

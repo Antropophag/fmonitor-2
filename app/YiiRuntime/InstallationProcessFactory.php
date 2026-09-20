@@ -9,13 +9,19 @@ use FMonitor2\InstallationProcess\MariaDbYiiObjectCard;
 use FMonitor2\InstallationProcess\MariaDbYiiObjectCardProjection;
 use FMonitor2\InstallationProcess\MariaDbYiiObjectQueue;
 use FMonitor2\InstallationProcess\MariaDbYiiObjectQueueProjection;
+use FMonitor2\InstallationProcess\MariaDbYiiOperationalDashboard;
 use FMonitor2\InstallationProcess\YiiInspectionPlanning;
 use FMonitor2\InstallationProcess\YiiObjectCard;
 use FMonitor2\InstallationProcess\YiiObjectQueue;
+use FMonitor2\InstallationProcess\YiiOperationalDashboard;
 use yii\db\Connection;
 
 final class InstallationProcessFactory
 {
+    public static function dashboard(Connection $db, string $prefix, string $legacyPrefix): YiiOperationalDashboard
+    {
+        return new YiiOperationalDashboard(new MariaDbYiiOperationalDashboard($db, $prefix, $legacyPrefix));
+    }
     public static function calendar(Connection $db, string $prefix, string $legacyPrefix): MariaDbYiiObjectQueue
     {
         return new MariaDbYiiObjectQueue($db, $prefix, $legacyPrefix, new MariaDbYiiObjectQueueProjection($db, $prefix));
