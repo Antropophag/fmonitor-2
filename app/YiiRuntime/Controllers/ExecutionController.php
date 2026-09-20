@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Controllers;
 
 use FMonitor2\AssignmentOrderComposition as C;
+use FMonitor2\Runtime\SafeRuntimeFailure;
 use FMonitor2\YiiRuntime\Models\ExecutionForm;
 use FMonitor2\YiiRuntime\PreopeningResources;
 use Yii;
@@ -31,10 +32,15 @@ final class ExecutionController extends PreopeningController
                 return $this->execute($resources, $id);
             }
             $model = $resources->portal()->readSelectionPortal($id, $this->actor());
-            return $model['status'] === 'found'
-                ? $this->render('@app/app/YiiRuntime/Views/execution', ['identity' => Yii::$app->user->identity, 'objectId' => $id, 'model' => $model, 'csrf' => Yii::$app->request->csrfToken])
-                : $this->domain($model);
-        } catch (\Throwable) {
+            if ($model['status'] === 'found') {
+                return $this->render('@app/app/YiiRuntime/Views/execution', ['identity' => Yii::$app->user->identity, 'objectId' => $id, 'model' => $model, 'csrf' => Yii::$app->request->csrfToken]);
+            }
+            if (($model['status'] ?? '') === 'failed' || ($model['reasonCode'] ?? '') === 'SERVICE_UNAVAILABLE') {
+                $this->reportResult((string) ($model['reasonCode'] ?? ''));
+            }
+            return $this->domain($model);
+        } catch (\Throwable $error) {
+            Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'execution_controller'));
             return $this->pageError(503, 'Результат операции неизвестен. Проверьте карточку объекта перед повтором.', '/pilot/objects/'.$id, 'Вернуться к карточке');
         } finally {
             $resources?->close();
@@ -58,7 +64,9 @@ final class ExecutionController extends PreopeningController
         );
         $result = C\ProductionConfirmedOriginalOpeningFactory::create($resources->db, $resources->prefix)->openConfirmedOriginal($command);
         if ($result['accepted']) return $this->redirect303(Yii::$app->request->get('return') === 'construction-control' ? '/pilot/construction-control/objects/'.$id.'/checklist' : '/pilot/objects/'.$id);
-        $unavailable = in_array($result['reasonCode'] ?? '', ['dependency_unavailable', 'persistence_outcome_unknown'], true);
+        $reason = $result['reasonCode'] ?? '';
+        $unavailable = in_array($reason, ['dependency_unavailable', 'persistence_outcome_unknown'], true);
+        if ($unavailable) $this->reportResult($reason);
         return $this->pageError(
             $unavailable ? 503 : 422,
             $unavailable ? 'Результат открытия неизвестен. Проверьте карточку перед повтором.' : 'Работы не открыты. Проверьте дату и актуальность распоряжения.',
@@ -84,6 +92,7 @@ final class ExecutionController extends PreopeningController
         $command = new C\ApplyAssignmentOrderOriginalCommand($fields['requestId'] ?? '', $id, $orderId, $fields['revisionId'], $sequence, $this->actor());
         $result = C\ProductionAssignmentOrderApplicationFactory::create($resources->db, $resources->prefix)->applyAssignmentOrderOriginal($command);
         if (in_array($result->status, ['applied', 'replayed'], true)) return $this->redirect303('/pilot/objects/'.$id.'/execution');
+        if ($result->status === 'failed') $this->reportResult((string) $result->reason);
         return $this->status($result->status === 'failed' ? 503 : 422, $result->status === 'failed');
     }
 
@@ -94,8 +103,20 @@ final class ExecutionController extends PreopeningController
         if ($applicationId === null) return $this->status(400);
         $result = C\ProductionOriginalOpeningFactory::create($resources->db, $resources->prefix)->openInstallation($id, $fields['actualStartDate'] ?? '', $applicationId, $this->actor());
         if ($result['accepted']) return $this->redirect303('/pilot/objects/'.$id.'/execution');
-        $unavailable = in_array($result['reasonCode'] ?? '', ['dependency_unavailable', 'persistence_outcome_unknown'], true);
+        $reason = $result['reasonCode'] ?? '';
+        $unavailable = in_array($reason, ['dependency_unavailable', 'persistence_outcome_unknown'], true);
+        if ($unavailable) $this->reportResult($reason);
         return $this->status($unavailable ? 503 : 422, $unavailable);
+    }
+
+    private function reportResult(string $reason): void
+    {
+        $category = in_array($reason, ['persistence_failure', 'persistence_outcome_unknown'], true) ? 'database'
+            : ($reason === 'dependency_unavailable' ? 'dependency' : 'unexpected');
+        Yii::$app->response->headers->set(
+            'X-FMonitor-Error-ID',
+            SafeRuntimeFailure::report(null, 'execution_controller', $category),
+        );
     }
 
     private function positive(mixed $value): ?int

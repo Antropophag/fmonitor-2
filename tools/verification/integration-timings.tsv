@@ -211,6 +211,7 @@ tests/Runtime/yii2_production_web_cutover_001_test.php	4.098
 tests/Runtime/yii2_production_web_cutover_authenticated_frontier_001_test.php	2.027
 tests/Runtime/yii2_readiness_001_test.php	3.975
 tests/Runtime/yii2_runtime_001_test.py	1.108
+tests/Runtime/yii2_safe_error_correlation_001_test.php	8.000
 tests/Verification/batched_schema_snapshot_001_test.php	0.643
 tests/Verification/characterize_inspection_photo_limit_concurrency_001_test.php	1.767
 tests/Verification/characterize_inspection_photo_rejections_001_test.php	1.214

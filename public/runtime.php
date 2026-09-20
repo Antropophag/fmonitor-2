@@ -16,6 +16,7 @@ if ($path === '/health/live') {
 
 $level = ob_get_level();
 ob_start();
+$failureCategory = 'configuration';
 try {
     $trustedHost = getenv('FMONITOR_TRUSTED_REQUEST_HOST');
     $receivedHost = $_SERVER['HTTP_HOST'] ?? null;
@@ -43,6 +44,7 @@ try {
     $configuration->apply();
     $cookieKey = getenv('FMONITOR_YII_COOKIE_VALIDATION_KEY');
     if (!is_string($cookieKey) || $cookieKey === '') throw new RuntimeException('CONFIGURATION_INVALID');
+    $failureCategory = 'database';
     FMonitor2\Runtime\RuntimeStorage::assertReady($configuration);
     FMonitor2\Runtime\MariaDbRuntimeReadiness::assertAvailable($configuration);
     unset($_SERVER['REMOTE_USER'], $_SERVER['FMONITOR_AUTH_USER_ID'], $_SERVER['FMONITOR_AUTH_CSRF']);
@@ -54,6 +56,10 @@ try {
     header_remove('Content-Length');
     header_remove('Set-Cookie');
     $status=$error instanceof \yii\web\HttpException?$error->statusCode:503;
+    if ($status >= 500) {
+        $errorId = FMonitor2\Runtime\SafeRuntimeFailure::report($error, 'bootstrap', $failureCategory);
+        header('X-FMonitor-Error-ID: '.$errorId);
+    }
     http_response_code($status);
     header('Content-Type: application/json; charset=UTF-8');
     header('Cache-Control: no-store');

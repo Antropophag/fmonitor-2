@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Controllers;
 
 use FMonitor2\AssignmentOrderOriginal as O;
+use FMonitor2\Runtime\SafeRuntimeFailure;
 use FMonitor2\YiiRuntime\Models\OriginalMetadata;
 use FMonitor2\YiiRuntime\PreopeningResources;
 use Yii;
@@ -34,10 +35,12 @@ final class OriginalController extends PreopeningController
         try {
             $resources = new PreopeningResources(Yii::$app->db);
             $result = $resources->originalAccess()->readSubmissionForm($this->actor(), $id, $orderId);
+            if (($result['reasonCode'] ?? null) === 'SERVICE_UNAVAILABLE') $this->reportResult('dependency');
             return $result['status'] === 'found'
                 ? $this->render('@app/app/YiiRuntime/Views/original', $result + ['identity' => Yii::$app->user->identity, 'csrf' => Yii::$app->request->csrfToken])
                 : $this->domain($result);
-        } catch (\Throwable) {
+        } catch (\Throwable $error) {
+            Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'original_controller'));
             return $this->status(503, true);
         } finally {
             $resources?->close();
@@ -63,7 +66,8 @@ final class OriginalController extends PreopeningController
             $stream = new O\AssignmentOrderOriginalMemoryStream($bytes);
             $command = $this->command($fields, $context, $stream);
             return $this->result($resources->original()->submitAssignmentOrderOriginal($command));
-        } catch (\Throwable) {
+        } catch (\Throwable $error) {
+            Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'original_controller'));
             return $this->json(503, ['error' => 'SERVICE_UNAVAILABLE'], true);
         } finally {
             $stream?->close(); $resources?->close();
@@ -115,7 +119,18 @@ final class OriginalController extends PreopeningController
         $response = Yii::$app->response;
         $response->format = Response::FORMAT_RAW; $response->statusCode = $status;
         $response->headers->set('Content-Type', 'application/json; charset=UTF-8');
-        if ($status === 503) $response->headers->set('Retry-After', '60');
+        if ($status === 503) {
+            $response->headers->set('Retry-After', '60');
+            $reason = $result->reasonCode();
+            $category = match ($reason) {
+                O\AssignmentOrderOriginalReason::STORAGE_FAILURE => 'storage',
+                O\AssignmentOrderOriginalReason::PERSISTENCE_FAILURE,
+                O\AssignmentOrderOriginalReason::PERSISTENCE_OUTCOME_UNKNOWN => 'database',
+                O\AssignmentOrderOriginalReason::STREAM_FAILURE => 'dependency',
+                default => 'unexpected',
+            };
+            $this->reportResult($category);
+        }
         $response->content = O\AssignmentOrderOriginalWorkerResultEncoder::encode($result);
         return $response;
     }
@@ -130,7 +145,16 @@ final class OriginalController extends PreopeningController
     {
         $reason = $result['reasonCode'] ?? 'SERVICE_UNAVAILABLE';
         $status = match ($reason) { 'ACCESS_DENIED' => 403, 'NOT_FOUND' => 404, default => 503 };
+        if ($status === 503) $this->reportResult($reason === 'SERVICE_UNAVAILABLE' ? 'dependency' : 'unexpected');
         return $this->json($status, ['error' => $reason], $status === 503);
+    }
+
+    private function reportResult(string $category): void
+    {
+        Yii::$app->response->headers->set(
+            'X-FMonitor-Error-ID',
+            SafeRuntimeFailure::report(null, 'original_controller', $category),
+        );
     }
 
     public function actionFormMethod(string $id, string $orderId): Response { return $this->invalidIds($id, $orderId) ? $this->status(404) : $this->methodNotAllowed('GET, HEAD'); }

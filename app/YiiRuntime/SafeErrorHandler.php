@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\YiiRuntime;
 
+use FMonitor2\Runtime\SafeRuntimeFailure;
 use Yii;
 use yii\web\ErrorHandler;
 use yii\web\HttpException;
@@ -11,9 +12,11 @@ use yii\web\Response;
 /** Do not serialize native exception messages, configuration or request secrets. */
 final class SafeErrorHandler extends ErrorHandler
 {
+    private ?string $errorId = null;
+
     public function logException($exception): void
     {
-        Yii::error(['event' => 'http_failure', 'status' => $this->status($exception)], 'fmonitor.http');
+        if ($this->status($exception) >= 500) $this->errorId = SafeRuntimeFailure::report($exception, 'yii_error_handler');
     }
 
     protected function renderException($exception): void
@@ -25,6 +28,8 @@ final class SafeErrorHandler extends ErrorHandler
             $response->cookies->removeAll();
             header_remove('Location');
             header_remove('Set-Cookie');
+            $this->errorId ??= SafeRuntimeFailure::report($exception, 'yii_error_handler');
+            $response->headers->set('X-FMonitor-Error-ID', $this->errorId);
         }
         $response->isSent = false;
         $response->stream = null;

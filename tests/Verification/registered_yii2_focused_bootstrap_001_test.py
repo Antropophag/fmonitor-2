@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = "tests/Yii2/yii2_main_navigation_001_test.php"
+RUNTIME_TARGET = "tests/Runtime/yii2_safe_error_correlation_001_test.php"
 CHANGE = "openspec/changes/unify-yii-main-navigation/verification-input.json"
 
 
@@ -199,7 +200,8 @@ raise SystemExit(75)
             self.assertNotEqual("tools/delivery/run-in-profile", item["argv"][0],
                                 "generic integration command was promoted to heavy profile")
         policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
-        self.assertEqual({TARGET: "browser"}, policy.get("focused_command_profiles"),
+        self.assertEqual({RUNTIME_TARGET: "integration", TARGET: "browser"},
+                         policy.get("focused_command_profiles"),
                          "unregistered commands can enter heavy focused profile")
 
     def test_reviewer_prepare_normalizes_wrapped_navigation_evidence_exactly(self):
