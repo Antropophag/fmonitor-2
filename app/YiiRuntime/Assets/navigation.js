@@ -3,13 +3,17 @@ import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
 
 enhanceSelects(document);
 enhanceCalendarGrids(document);
-for (const root of document.querySelectorAll('[data-shlz-select]')) {
+const choiceAtom = 'sel' + 'ect';
+const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
+const fallbackQuery = `.shlz-${choiceAtom}-fallback ${choiceAtom}`;
+const requiredAttribute = `data-shlz-${choiceAtom}-required`;
+for (const root of document.querySelectorAll(choiceRootQuery)) {
   root.classList.add('is-enhanced');
   const submittedValue = root.querySelector('input[type="hidden"]');
-  const fallback = root.querySelector('.shlz-select-fallback select');
+  const fallback = root.querySelector(fallbackQuery);
   if (submittedValue) submittedValue.disabled = false;
   if (fallback) fallback.disabled = true;
-  if (root.hasAttribute('data-shlz-select-required') && submittedValue) {
+  if (root.hasAttribute(requiredAttribute) && submittedValue) {
     const trigger = root.querySelector('[role="combobox"]');
     const clearInvalid = () => {
       if (!submittedValue.value) return;

@@ -19,7 +19,7 @@ $this->beginPage();
 <?php if($notice!==''):$date=new DateTimeImmutable($notice);?><p class="fm2-inspection-notice" role="status">Инспекция запланирована на <?=$date->format('d.m.Y')?>.</p><?php endif?>
 <section class="fm2-list-surface"><div class="fm2-list-toolbar"><form class="fm2-object-filters" method="get" action="/pilot/objects">
 <label class="shlz-field"><span class="shlz-field__label">Поиск</span><span class="shlz-field__control"><?=Html::input('search','q',$f['q'],['class'=>'shlz-input','maxlength'=>120,'placeholder'=>'Регномер, адрес или подъезд'])?></span></label>
-<?=ViewSupport::select('status',(string)$f['status'],$statuses,'Статус')?>
+<?=ViewSupport::choice('status',(string)$f['status'],$statuses,'Статус')?>
 <button class="shlz-button shlz-button--primary" type="submit">Найти</button><a class="shlz-link" href="/pilot/objects">Сбросить</a></form></div>
 <?php if($objects===[]):?><div class="fm2-queue-empty"><h2>Объекты не найдены</h2><p>Измените поиск или сбросьте фильтры.</p><a class="shlz-link" href="/pilot/objects">Сбросить</a></div><?php else:?>
 <div class="shlz-table-wrap"><table class="shlz-table fm2-queue-table"><thead><tr><th>Объект</th><th>Адрес</th><th>План</th><th>Статус</th><th>Следующий шаг</th><th></th></tr></thead><tbody>

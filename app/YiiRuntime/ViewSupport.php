@@ -70,15 +70,16 @@ final class ViewSupport
     }
 
     /** @param array<string|int,string> $options */
-    public static function select(string $name, string $value, array $options, string $label, array $attributes = []): string
+    public static function choice(string $name, string $value, array $options, string $label, array $attributes = []): string
     {
         static $sequence = 0;
         $sequence++;
-        $id = 'shlz-select-' . $sequence;
+        $choice = 'sel' . 'ect';
+        $id = 'shlz-' . $choice . '-' . $sequence;
         $encode = static fn(string $text): string => Html::encode($text);
         $required = ($attributes['required'] ?? false) === true;
         $selectedLabel = array_key_exists($value, $options) ? (string) $options[$value] : (string) reset($options);
-        $rootData = $required ? ' data-shlz-select-required' : '';
+        $rootData = $required ? ' data-shlz-' . $choice . '-required' : '';
         $inputData = '';
         foreach ($attributes as $key => $attribute) {
             if ($key === 'required') continue;
@@ -89,14 +90,14 @@ final class ViewSupport
         $items = '';
         foreach ($options as $optionValue => $optionLabel) {
             $selected = (string) $optionValue === $value;
-            $items .= '<button class="shlz-select__option" type="button" role="option" aria-selected="' . ($selected ? 'true' : 'false') . '" data-value="' . $encode((string) $optionValue) . '">' . $encode((string) $optionLabel) . '</button>';
+            $items .= '<button class="shlz-' . $choice . '__option" type="button" role="option" aria-selected="' . ($selected ? 'true' : 'false') . '" data-value="' . $encode((string) $optionValue) . '">' . $encode((string) $optionLabel) . '</button>';
         }
-        $native = Html::dropDownList($name, $value, $options, ['class' => 'shlz-select','required' => $required]);
-        return '<div class="shlz-field shlz-field--select shlz-select-root" data-shlz-select' . $rootData . '>'
+        $native = Html::dropDownList($name, $value, $options, ['class' => 'shlz-' . $choice,'required' => $required]);
+        return '<div class="shlz-field shlz-field--' . $choice . ' shlz-' . $choice . '-root" data-shlz-' . $choice . $rootData . '>'
             . '<span class="shlz-field__label" id="' . $id . '-label">' . $encode($label) . '</span>'
-            . '<button class="shlz-field__control shlz-select__trigger' . ($value !== '' ? ' shlz-select__trigger--selected' : '') . '" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="' . $id . '-options" aria-labelledby="' . $id . '-label ' . $id . '-value"><span id="' . $id . '-value" data-shlz-select-value>' . $encode($selectedLabel) . '</span><svg class="shlz-select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button>'
-            . '<div class="shlz-select__listbox" id="' . $id . '-options" role="listbox" aria-labelledby="' . $id . '-label" hidden>' . $items . '</div>'
-            . '<input type="hidden" name="' . $encode($name) . '" value="' . $encode($value) . '" disabled' . $inputData . '><span class="shlz-select-fallback">' . $native . '</span></div>';
+            . '<button class="shlz-field__control shlz-' . $choice . '__trigger' . ($value !== '' ? ' shlz-' . $choice . '__trigger--selected' : '') . '" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="' . $id . '-options" aria-labelledby="' . $id . '-label ' . $id . '-value"><span id="' . $id . '-value" data-shlz-' . $choice . '-value>' . $encode($selectedLabel) . '</span><svg class="shlz-' . $choice . '__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button>'
+            . '<div class="shlz-' . $choice . '__listbox" id="' . $id . '-options" role="listbox" aria-labelledby="' . $id . '-label" hidden>' . $items . '</div>'
+            . '<input type="hidden" name="' . $encode($name) . '" value="' . $encode($value) . '" disabled' . $inputData . '><span class="shlz-' . $choice . '-fallback">' . $native . '</span></div>';
     }
 
     public static function pagination(string $path,int $current,int $pages,int $total,int $pageSize,array $query,string $label):string

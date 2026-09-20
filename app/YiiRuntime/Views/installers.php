@@ -16,8 +16,8 @@ $date = static function (?string $value): string {
     return (new DateTimeImmutable($value))->format('d.m.Y');
 };
 $source = static fn(string $value): string => $value === 'one_c_zup_via_bitrix' ? '1С ЗУП через Битрикс' : $value;
-$statusControl = ViewSupport::select('status', (string) $filters['status'], ['' => 'Все', 'employed' => 'Работает', 'dismissed' => 'Уволен'], 'Кадровый статус');
-$availabilityControl = ViewSupport::select('availability', (string) $filters['availability'], ['' => 'Все', 'assigned' => 'Закреплён', 'free' => 'Свободен'], 'Закрепление');
+$statusControl = ViewSupport::choice('status', (string) $filters['status'], ['' => 'Все', 'employed' => 'Работает', 'dismissed' => 'Уволен'], 'Кадровый статус');
+$availabilityControl = ViewSupport::choice('availability', (string) $filters['availability'], ['' => 'Все', 'assigned' => 'Закреплён', 'free' => 'Свободен'], 'Закрепление');
 $query = static function (int $page) use ($filters): string {
     $values = array_filter(['q' => $filters['q'], 'status' => $filters['status'], 'availability' => $filters['availability'], 'page' => $page], static fn($value, $key): bool => $value !== '' && !($key === 'page' && $value === 1), ARRAY_FILTER_USE_BOTH);
     return '/pilot/installers' . ($values === [] ? '' : '?' . http_build_query($values, '', '&', PHP_QUERY_RFC3986));

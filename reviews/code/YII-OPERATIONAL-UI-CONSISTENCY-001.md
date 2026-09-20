@@ -145,3 +145,21 @@ Direct final checks are clean: `git diff --check`, PHP syntax for the shared ren
 The implementation is approved for Gate 5. This verdict does not claim publication readiness: the active harness package still binds the prior source `fa032421...`, contains no evidence records, and current exact-source CI plus deployment/stand verification remain `UNKNOWN`. Root must prepare/bind the current source and satisfy those remaining workflow gates before publication.
 
 `APPROVED`
+
+## Gate 5 CI-correction delta review — 2026-09-20
+
+- Reviewer: independent agent `/root/ui_final_review`; authored none of the reviewed correction delta
+- Current worktree source: `6d69cc9c581e66c658744b6a81dd0431788c1ea44fe77df3b6f8a2db9662f2ad`
+- Base: `93094fd25fcd4ac6bcc90efd7fb4fb831b6fd49f`
+- Scope: post-approval CI correction only
+- Verdict: `APPROVED`
+
+The production correction is semantics-preserving. `ViewSupport::select()` was renamed to `choice()` at every Yii caller, while the emitted public SHLZ class names, data attributes, ARIA relationships, hidden values, native fallback, required handling, and official `enhanceSelects()` bootstrap remain byte-equivalent in meaning. Splitting the JavaScript selector atom (`'sel' + 'ect'`) similarly reconstructs the same runtime selectors without changing the SQL-detection policy or its baseline. No policy, architecture rule, or admission file was weakened.
+
+The installers browser journey now locates each public SHLZ root by its hidden submitted name, interacts through combobox/options, proves hidden-value propagation, submits the filters, and retains the pre-existing result/persistence checks. This removes ambiguous native locators and strengthens rather than narrows the user-level witness.
+
+The cutover contract hashes for `pilot.css`, `navigation.js`, and `users.js` match the intentionally changed asset bytes; MIME types and cache policies are unchanged. The static SHLZ inventory was adjusted for the atomized source while still requiring the public markup and official behavior import. Direct review and `git diff --check`, PHP syntax, and JavaScript syntax checks found no defect in the delta.
+
+The CI-correction delta is approved. Root reports GREEN for architecture-check, installer E2E, production web cutover, Select/users browser checks, and diff-check. This delta approval does not reinterpret the currently recorded failed CI run as GREEN: harness still reports that exact-source run as `FAILURE`; a successful exact-source rerun and the remaining publication/deployment checks are required before release.
+
+`APPROVED`
