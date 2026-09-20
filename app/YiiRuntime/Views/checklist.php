@@ -28,8 +28,8 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span data-total-items>0</span> из 41 монтажной работы</span>
 </div>
 </header>
-<?php if($access['ready']??false):?><section class="fm2-check-gate" role="status"><strong>Готов к открытию</strong><?php if(is_array($opening)):?><form class="fm2-opening-form" method="post" action="/pilot/objects/<?=$id?>/execution?return=construction-control"><?=Html::hiddenInput('_csrf',$csrf)?><?=Html::hiddenInput('action','open_confirmed')?><?=Html::hiddenInput('requestId',ViewSupport::uuid())?><?=Html::hiddenInput('orderId',(string)$opening['orderId'])?><?=Html::hiddenInput('revisionId',(string)$opening['revisionId'])?><?=Html::hiddenInput('sequence',(string)$opening['sequence'])?><label>Фактическая дата начала<input type="date" name="actualStartDate" required></label><button type="submit">Открыть работы</button></form><?php else:?><span>Открыть работы может назначенный инженер с необходимыми полномочиями.</span><?php endif?></section><?php endif?>
-<?php if(!$enabled):?>
+<?php if($access['ready']??false):?><section class="fm2-check-gate fm2-check-opening" role="status"><div><strong>Готов к открытию</strong><span>После открытия пункты чек-листа станут доступны для отметки.</span></div><?php if(is_array($opening)):?><form class="fm2-opening-form" method="post" action="/pilot/objects/<?=$id?>/execution?return=construction-control"><?=Html::hiddenInput('_csrf',$csrf)?><?=Html::hiddenInput('action','open_confirmed')?><?=Html::hiddenInput('requestId',ViewSupport::uuid())?><?=Html::hiddenInput('orderId',(string)$opening['orderId'])?><?=Html::hiddenInput('revisionId',(string)$opening['revisionId'])?><?=Html::hiddenInput('sequence',(string)$opening['sequence'])?><label class="shlz-field"><span class="shlz-field__label">Фактическая дата начала</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="actualStartDate" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button></form><?php else:?><span>Открыть работы может назначенный инженер с необходимыми полномочиями.</span><?php endif?></section>
+<?php elseif(!$enabled):?>
 <div class="fm2-check-gate" role="status">
 <strong>Чек-лист недоступен</strong>
 <span>Для действий требуются открытые работы и полномочия.</span>
@@ -38,7 +38,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <main class="fm2-check-layout">
 <div class="fm2-check-content">
 <?php foreach($sections as$sectionId=>[$title,$items]):$weight=array_sum(array_column($items,2));?>
-<section class="fm2-check-section<?=$sectionId===1?' is-open':''?>" data-check-section="<?=$sectionId?>" data-section-weight="<?=$weight?>"<?=$enabled?'':' inert'?>>
+<section class="fm2-check-section<?=$sectionId===1?' is-open':''?>" data-check-section="<?=$sectionId?>" data-section-weight="<?=$weight?>">
 <button class="fm2-check-section-head fm2-section-toggle" type="button" aria-expanded="false">
 <span class="fm2-section-title">
 <strong>
@@ -113,13 +113,22 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 </div>
 </section>
 <dialog class="fm2-confirm-dialog" data-bulk-dialog>
-<div>
+<div class="fm2-confirm-dialog__content">
 <h2>Отметить весь раздел?</h2>
 <p>Все работы в разделе <strong data-bulk-section-name>
 </strong> будут отмечены.</p>
-<button type="button" data-bulk-cancel>Отмена</button>
-<button type="button" data-bulk-confirm>Отметить все</button>
+<div class="fm2-confirm-dialog__actions"><button class="shlz-button shlz-button--secondary" type="button" data-bulk-cancel>Отмена</button>
+<button class="shlz-button shlz-button--primary" type="button" data-bulk-confirm>Отметить все</button></div>
 </div>
+</dialog>
+<dialog class="fm2-confirm-dialog" data-reason-dialog>
+<form class="fm2-confirm-dialog__content" method="dialog">
+<h2 data-reason-title>Подтвердите действие</h2>
+<p data-reason-copy></p>
+<label class="shlz-field"><span class="shlz-field__label">Причина</span><span class="shlz-field__control"><textarea class="shlz-input" data-reason-input required maxlength="1000"></textarea></span></label>
+<p class="fm2-installer-error" data-reason-error hidden>Укажите причину.</p>
+<div class="fm2-confirm-dialog__actions"><button class="shlz-button shlz-button--secondary" type="button" data-reason-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-reason-confirm>Подтвердить</button></div>
+</form>
 </dialog>
 <dialog class="fm2-installer-dialog" data-installer-dialog>
 <div>
@@ -139,6 +148,6 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <div class="fm2-toast" data-toast hidden>
 </div>
 </div>
-<script src="/pilot/assets/checklist.js?v=20260910-1" defer>
+<script src="/pilot/assets/checklist.js?v=20260920-2" defer>
 </script>
 <?php ViewSupport::end($this);

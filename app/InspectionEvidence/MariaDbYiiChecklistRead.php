@@ -57,16 +57,14 @@ trait MariaDbYiiChecklistRead
         public function queue(int $actorId,int $page=1,int $size=50):array
         {
             if(!in_array('construction_control.read',$this->permissions($actorId),true))throw new \DomainException();
-    $active="c.process_state IN('working','needs_assignment_order','assignment_order_prepared') AND NOT EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
+    $active="c.process_state IN('working','needs_assignment_order','assignment_order_prepared') AND NOT EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') AND (c.process_state='working' OR EXISTS(SELECT 1 FROM {$this->t('fm2_assignment_order_original_roots')} original_root JOIN {$this->t('fm2_assignment_order_selections')} selected ON selected.installation_case_id=c.id AND selected.assignment_order_id=original_root.assignment_order_id WHERE original_root.installation_case_id=c.id AND selected.selection_revision=(SELECT MAX(latest.selection_revision) FROM {$this->t('fm2_assignment_order_selections')} latest WHERE latest.installation_case_id=c.id) AND BINARY selected.composition_identity=BINARY original_root.composition_identity AND BINARY selected.composition_sha256=BINARY original_root.composition_sha256))";
     $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE $active ORDER BY last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
-    $eligible=[];
-    foreach($this->all($sql)as$r){$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;$ready=false;if($r['process_state']!=='working'){$card=$this->authoritativeCard($actorId,(int)$r['object_id']);$ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);if(!$ready)continue;}$r['ready']=$ready;$r['controlEngineer']=$engineer;$eligible[]=$r;}
-    $total=count($eligible);$offset=($page-1)*$size;
+    $total=(int)($this->one("SELECT COUNT(*) n FROM {$this->t('fm2_installation_cases')} c WHERE $active")['n']??0);$offset=($page-1)*$size;
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
-    $rows=array_slice($eligible,$offset,$size);
+    $rows=$this->all($sql.' LIMIT '.(int)$size.' OFFSET '.(int)$offset);
     foreach($rows as&$r)
-        {$r['id']=(int)$r['object_id'];
+        {$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$r['ready']=$r['process_state']!=='working';$r['controlEngineer']=$assignment['status']==='found'?$assignment['engineer']:null;$r['id']=(int)$r['object_id'];
     $r['registrationNumber']=$r['registration_number'];
     $r['completed']=false;
     $r['lastChecklistActivityAt']=$r['last_activity_at'];

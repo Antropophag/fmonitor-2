@@ -35,6 +35,7 @@ try {
     $queueHead=$f->request('HEAD','/pilot/construction-control',[],$assigned);
     assertSameValue([200,''],[$queueHead['status'],$queueHead['body']],'ready queue HEAD');
     assertSameValue($before,$f->facts(),'ready queue HEAD read-only');
+    $selected=$f->rows('fm2_assignment_order_selections')[0];$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".str_repeat('0',64)."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);$stale=$f->request('GET','/pilot/construction-control',[],$assigned);assertSameValue(false,str_contains($stale['body'],'data-object-id="4512"'),'stale original root does not satisfy current selection');$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".$f->db->real_escape_string($selected['composition_sha256'])."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);
     $f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=95 WHERE assignment_sequence=2");$corruptQueue=$f->request('GET','/pilot/construction-control',[],$assigned);assertSameValue(503,$corruptQueue['status'],'#40 corrupt standalone fails closed without selection or legacy fallback');$f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=73 WHERE assignment_sequence=2");
     $f->insert($f->p.'fm2_pilot_completion_facts',['installation_case_id'=>6101,'fact_type'=>'pto_act','fact_date'=>'2026-09-01','details'=>'','recorded_at'=>'2026-09-01T12:00:00+03:00','recorded_by_user_id'=>18]);
     $pto=$f->facts();$ptoQueue=$f->request('GET','/pilot/construction-control',[],$assigned);
@@ -44,6 +45,10 @@ try {
     $checklist=$f->request('GET','/pilot/construction-control/objects/4512/checklist',[],$substitute);
     assertSameValue(200,$checklist['status'],'authorized substitute reads ready checklist');
     foreach(['Готов к открытию','name="action" value="open_confirmed"','name="actualStartDate"','>Открыть работы</button>','data-enabled="false"']as$marker)assertSameValue(true,str_contains($checklist['body'],$marker),'ready checklist '.$marker);
+    assertSameValue(false,str_contains($checklist['body'],'Чек-лист недоступен'),'ready opening uses one truthful information panel');
+    assertSameValue(0,preg_match('/data-check-section="1"[^>]*\binert\b/',$checklist['body']),'preopening section heading remains collapsible');
+    foreach(['shlz-button shlz-button--primary','data-reason-dialog','data-reason-input','data-reason-confirm','data-reason-cancel']as$marker)assertSameValue(true,str_contains($checklist['body'],$marker),'styled checklist interaction '.$marker);
+    $checklistJs=(string)file_get_contents(dirname(__DIR__,2).'/app/YiiRuntime/Assets/checklist.js');assertSameValue(0,preg_match('/globalThis\.(?:prompt|confirm)\s*\(/',$checklistJs),'checklist uses no native prompt or confirm');
     $checkHead=$f->request('HEAD','/pilot/construction-control/objects/4512/checklist',[],$substitute);assertSameValue([200,''],[$checkHead['status'],$checkHead['body']],'ready checklist HEAD');
     $operation=json_encode(['clientOperationId'=>'aaaaaaaa-aaaa-4aaa-8aaa-000000000040','deviceInstallationId'=>'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','type'=>'item_completed','deviceTime'=>'2026-09-02T10:00:00+03:00','baseRevision'=>0,'sectionId'=>1,'itemId'=>28,'installerTabIds'=>[7001]],JSON_THROW_ON_ERROR);
     $locked=$f->request('POST','/pilot/construction-control/objects/4512/checklist/operations',[],$substitute,['Content-Type: application/json; charset=UTF-8','X-FM2-CSRF: '.$f->csrf($checklist['body']),'Content-Length: '.strlen($operation)],$operation);

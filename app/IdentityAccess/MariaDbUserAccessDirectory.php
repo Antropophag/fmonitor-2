@@ -26,7 +26,7 @@ final class MariaDbUserAccessDirectory
             $id = (int) $row['user_id'];
             $effective = [];
             foreach ($byUser[$id] ?? [] as $membership) if ($membership['active']) foreach ($byRole[$membership['id']] ?? [] as $permission) $effective[$permission] = true;
-            $normalized[] = ['id'=>$id, 'name'=>(string)$row['full_name'], 'email'=>(string)$row['email'], 'phone'=>(string)$row['phone'], 'active'=>(int)$row['status'] === 1 && $row['activation_state'] === 'active', 'invited'=>(int)$row['status'] === 1 && $row['activation_state'] === 'invited', 'invitationValid'=>$validByUser[$id] ?? false, 'updatedAt'=>(string)$row['source_updated_at'], 'roles'=>$byUser[$id] ?? [], 'permissions'=>array_keys($effective)];
+            $normalized[] = ['id'=>$id, 'name'=>(string)$row['full_name'], 'email'=>(string)$row['email'], 'phone'=>(string)$row['phone'], 'active'=>(int)$row['status'] === 1 && $row['activation_state'] === 'active', 'invited'=>(int)$row['status'] === 1 && in_array($row['activation_state'], ['invited','pending_invitation'], true), 'invitationValid'=>$validByUser[$id] ?? false, 'updatedAt'=>(string)$row['source_updated_at'], 'roles'=>$byUser[$id] ?? [], 'permissions'=>array_keys($effective)];
         }
         return ['users'=>$normalized, 'roles'=>array_map(static fn(array $row):array => ['id'=>(int)$row['role_id'], 'code'=>(string)$row['code'], 'name'=>(string)$row['name'], 'active'=>(int)$row['status'] === 1, 'userCount'=>(int)$row['user_count'], 'updatedAt'=>(string)$row['source_updated_at'], 'permissions'=>$byRole[(int)$row['role_id']] ?? []], $roles)];
     }
