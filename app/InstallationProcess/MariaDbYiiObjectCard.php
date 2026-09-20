@@ -33,13 +33,7 @@ final readonly class MariaDbYiiObjectCard
         try {
             $p = $this->prefix;
             $l = $this->legacyPrefix;
-            $legacyTable = $l . 'fm_maintable';
-            $hasLegacyPto = (bool) $this->db->createCommand(
-                'SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=:table AND COLUMN_NAME=\'ptoactdate\' LIMIT 1',
-                [':table' => $legacyTable],
-            )->queryScalar();
-            $legacyPto = $hasLegacyPto ? 'l.ptoactdate' : 'NULL';
-            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,{$legacyPto} ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$legacyTable}` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
+            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
             $rows = $this->db->createCommand($sql, [':object' => $objectId])->queryAll();
             if ($rows === []) {
                 return null;

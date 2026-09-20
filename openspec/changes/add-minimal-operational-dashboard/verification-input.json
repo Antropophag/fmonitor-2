@@ -19,7 +19,10 @@
     "config/yii/web.php",
     "docs/operations/issue-21-dashboard-demo.md",
     "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
     "tests/Yii2/UserAccessFixture.php",
+    "tests/Yii2/ObjectQueueFixture.php",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "tests/Support/minimal_operational_dashboard_browser.cjs"
     ,"tools/verification/suites.tsv"
   ],

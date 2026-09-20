@@ -214,3 +214,77 @@ The verification-input and ownership scope delta is also **APPROVED**:
 The current controlling Gate 3 executable contract and verification/ownership plan are **APPROVED**. These approvals supersede the earlier per-delta message decisions for recording purposes and preserve the original A–N expectations without weakening the public seams. The historical RED record is provenance for the pre-implementation missing-owner boundary; current post-implementation evidence must be bound separately by the harness.
 
 This decision does **not** approve production correctness, Gate 5, exact-source CI, PR readiness, merge, deployment, or settings changes.
+
+---
+
+# CI-failure Gate 3 test-delta review — main navigation — 2026-09-21
+
+- Verdict: **TEST-DELTA APPROVED**
+- Reviewer: Codex, `gpt-5.6-sol`, reasoning `low`
+- CI run: `35542435174`, PR `212`, attempt `1`
+- Failed job: `governance`, job ID `106162428399`
+- Exact CI candidate reported by triage: `f810d8983f332960697490d5481ba5eae7c5827bd3f8c6ea878c41337381c1a9`, Git head `07cbf5a4bb569778d90e318e25ea7ebce4da3b5c`
+- Complete reported regression inventory: only `REGRESSION_FAILURE tests/Verification/registered_yii2_focused_bootstrap_001_test.py`
+- Changed executable test: `tests/Yii2/yii2_main_navigation_001_test.php`
+- Planning delta: that test path was added to `openspec/changes/add-minimal-operational-dashboard/verification-input.json`
+
+## Complete findings list
+
+No unresolved findings.
+
+1. **[RESOLVED] Canonical navigation membership now includes the newly specified dashboard seam.** `/pilot/dashboard` and label `Дашборд` are added to the exact route/label matrix, so every tested available Yii page must render the same canonical shared navigation membership.
+
+2. **[RESOLVED] Ordering and hierarchy remain exact rather than permissive.** Dashboard is required first in the exact MAIN order and first inside the existing `Монтаж` group. Existing link order remains explicitly asserted after it; no set-only assertion can mask reordering.
+
+3. **[RESOLVED] Public icon provenance remains enforced.** Dashboard is bound to the existing public `circle-grid-interface-sidebar` icon. The test still requires exactly one shlz icon for every MAIN link and compares its geometry with the pinned public source asset.
+
+4. **[RESOLVED] RBAC sensitivity is complete.** Dashboard participates in the canonical, no-admin, and restricted sets while `objects.read` is present. The existing `withoutObjects` set deliberately omits both dashboard and objects, proving the dashboard item is hidden when `objects.read` is removed. Direct dashboard authorization remains covered by the dedicated dashboard acceptance test; the navigation test preserves exact membership on every remaining reachable route.
+
+5. **[RESOLVED] Existing navigation assertions are not weakened.** Exact labels, membership, order, group-to-child token hierarchy, current-page semantics, icon geometry, feedback separation, repeated read-only rendering, other permission removals, and guest authorization checks remain in place. The delta only adds the required dashboard member to existing exact expectations.
+
+6. **[RESOLVED] Traceability is explicit.** The changed registered navigation test is included in the change verification input, matching the sole governance regression that exposed the stale bootstrap expectation.
+
+## Decision
+
+The test delta is **APPROVED**. It corrects the registered navigation oracle for the already specified RBAC dashboard link, increases sensitivity to its order/group/icon/permission behavior, and does not weaken existing expectations. This review does not approve production Gate 5 or claim the failed CI run GREEN; a fresh exact-source verification/CI result is still required.
+
+**Append-only correction approval:** the dashboard icon expectation is corrected from `circle-grid-interface-sidebar` to the actual existing public `pie-chart` selected by `MainNavigation`; the exact `data-shlz-icon` and pinned public SVG geometry comparison remain unchanged and fully sensitive. **APPROVED.**
+
+---
+
+# CI correction Gate 3 test-delta review — fixture/card/asset — 2026-09-21
+
+- Verdict: **TEST-DELTA APPROVED**
+- Reviewer: Codex, `gpt-5.6-sol`, reasoning `low`
+- CI run: `35542435174`, PR `212`, attempt `1`, head `07cbf5a4bb569778d90e318e25ea7ebce4da3b5c`
+
+## Complete failed-job and regression inventory inspected
+
+- `governance`, job `106162428399`: `REGRESSION_FAILURE tests/Verification/registered_yii2_focused_bootstrap_001_test.py`.
+- `Integration (2/2)`, job `106162428275`: `yii2_main_navigation_001_test.php`.
+- `Integration (1/2)`, job `106162428324`: production web cutover and safe-error-correlation regressions.
+- `verify`, job `106164126867`: aggregate failure caused by the failed required category jobs; no independent executable regression.
+- Aggregate check `Quality Graph`, check/run `106164225969`: failed because required results were not all GREEN; no independent executable regression.
+- Successful jobs were `plan`, `fast`, `unit`, `e2e`, and `quality-results`; `harness` was skipped by the workflow.
+
+## Complete findings list
+
+No unresolved findings in the reviewed test deltas.
+
+1. **[RESOLVED] `ObjectQueueFixture` now represents the real nullable legacy PTO fact column.** Adding nullable `fm_maintable.ptoactdate` restores the production schema seam needed by queue/card compatibility without inventing a fact: existing fixture rows remain `NULL` unless a test explicitly supplies one. It increases schema fidelity and does not weaken status, completion, or dashboard assertions.
+
+2. **[RESOLVED] Exact card navigation now uses a valid rendered object.** Object `451204` is independently asserted as the first upcoming rendered row and has an exact `/pilot/objects/451204` href. Requiring 200 for the authorized actor and 403 for the actor without `objects.read` therefore still proves row-to-exact-card navigation plus independent card authorization, while avoiding the invalid opened-without-application fixture `451201`. The full overdue identity assertion for `451201` remains separate and unchanged.
+
+3. **[RESOLVED] The production web cutover asset contract remains exact.** The pinned `pilot.css` SHA-256 is updated to the exact current bytes `dd78c311c75dcc7ca1015161f2aabebc4815186f80b9fe900855ba22b00d291d`. Media type and cache policy assertions are unchanged; this is an exact-byte oracle update for the intentionally changed dashboard CSS, not a relaxation to existence or pattern matching.
+
+4. **[RESOLVED] Main navigation correction remains approved.** Dashboard membership, exact first position/group, actual public `pie-chart` icon and pinned SVG geometry, positive `objects.read` combinations, and negative `withoutObjects` behavior remain covered as recorded above.
+
+5. **[RESOLVED] Traceability is complete.** `tests/Yii2/ObjectQueueFixture.php`, `tests/Yii2/yii2_main_navigation_001_test.php`, and `tests/Support/yii2_production_web_cutover_contract.php` are now explicit planned paths in the verification input alongside the dashboard test. The safe-error-correlation failure is addressed by the separately executor-owned production invariant reversion and is not disguised as a test-oracle change.
+
+## Decision
+
+The reviewed fixture, exact-card, navigation, and pinned-asset test deltas are **APPROVED**. They correct stale or invalid test setup/oracles exposed by the complete CI failure inventory while preserving or increasing sensitivity. No production change is approved by this Gate 3 decision, and run `35542435174` remains failed; fresh exact-source focused evidence and CI are required after the separately owned production invariant reversion.
+
+**Append-only fixture isolation correction approval:** `ObjectQueueFixture` now keeps the canonical process-prefixed `fm_maintable` BASE TABLE and exposes an unprefixed, updatable VIEW over the exact legacy columns for direct queue tests; dashboard HTTP explicitly uses the process prefix as its legacy prefix, so both seams observe the same rows without duplicating facts. The concurrent digest uses `SHOW FULL TABLES`: BASE TABLE entries retain count plus required non-null `CHECKSUM TABLE EXTENDED`, while VIEW entries retain count plus SHA-256 of the exact non-empty `SHOW CREATE VIEW` definition. This remains bounded, detects base-row and view-definition changes, and preserves read-only sensitivity. **APPROVED.**
+
+**Append-only superseding fixture/seam approval:** the immediately preceding prefixed-table/unprefixed-view arrangement is superseded. `ObjectQueueFixture` is restored to its independent unprefixed `fm_maintable` BASE TABLE, with only the real nullable `ptoactdate` column added, and dashboard HTTP no longer forces process/legacy prefix equality. The invalid authorized-card 200 assertion is removed because restored `PreopeningResources` correctly rejects that split-prefix card composition. Dashboard sensitivity remains sufficient in combination: every rendered row retains an exact `/pilot/objects/{id}` href assertion; the same rendered object `451204` retains a 403 authorization witness; and planner-mandatory independent `yii2_object_card_001_test.php` supplies the authorized 200/full-card public journey and remains required/GREEN. The type-aware bounded digest remains valid for the current base-table fixture and future views. **APPROVED.**

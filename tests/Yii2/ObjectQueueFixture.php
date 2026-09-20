@@ -11,7 +11,7 @@ final class ObjectQueueFixture
     public function __construct(public string $root)
     {
         $this->http=new UserAccessFixture($root);$this->db=$this->http->db;$this->p=$this->http->p;
-        $this->db->query("CREATE TABLE fm_maintable(id BIGINT UNSIGNED PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(200) NULL,zavnumber VARCHAR(200) NULL,workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40)) ENGINE=InnoDB");
+        $this->db->query("CREATE TABLE fm_maintable(id BIGINT UNSIGNED PRIMARY KEY,ordadr_address VARCHAR(500),entrance VARCHAR(80),regnumber VARCHAR(200) NULL,zavnumber VARCHAR(200) NULL,workdatestart VARCHAR(40),workdateendadjusted VARCHAR(40),plan_finish_date VARCHAR(40),ptoactdate VARCHAR(40) NULL) ENGINE=InnoDB");
         foreach(['objects.read','inspection.schedule'] as $permission)$this->insert($this->p.'fm2_pilot_role_permissions',['role_id'=>9201,'permission'=>$permission]);
         $this->object(451201,6101,'working');$this->order(6111,6101,1,7299);$this->order(6112,6101,2,7301);
     }

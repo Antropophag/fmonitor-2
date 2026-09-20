@@ -16,7 +16,7 @@ final class PreopeningResources
     public function __construct(private readonly ?\yii\db\Connection $yiiDb = null)
     {
         $this->prefix=(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:'');
-        if(strlen($this->prefix)>28||preg_match('/^[A-Za-z0-9_]*$/D',$this->prefix)!==1)throw new \RuntimeException();
+        if((string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:'')!==$this->prefix)throw new \RuntimeException();
         $this->db=$this->connect();
     }
     public function connect():\mysqli

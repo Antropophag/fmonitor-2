@@ -92,3 +92,38 @@ No unresolved findings.
 ## Final Gate 5 decision
 
 **APPROVED.** The corrected exact candidate satisfies MINIMAL-OPERATIONAL-DASHBOARD-001 A–N, resolves every prior Gate 5 finding, preserves security and compatibility boundaries, and has current independently approved executable lineage plus five exact-source focused GREEN records. Exact-source GitHub CI is still the required post-review delivery step and remains `UNKNOWN`; this approval does not claim CI GREEN, PR readiness, merge, deployment, or settings changes.
+
+---
+
+# Gate 5 CI-correction delta review — 2026-09-21
+
+- Verdict: **APPROVED**
+- Reviewer: Codex, `gpt-5.6-sol`, reasoning `low`, task `/root/issue21_gate5`
+- Review point: pre-commit working candidate reported by the delivery harness as `d6b6d8c9276c2a4e2fc66d7a8bda9183fed2527d0f437fd849a3a51377f12a9d`.
+- Prior approved checkpoint: candidate `7b79b8b7abf160a51a627334668fcb1ce20177ba1ab493f7c74e6439d4966f55`, executable `200535dcf0d805ab97fb2e697b07ce2e581859c7451b7fa2f443d9b0e4f8a39e`.
+- CI evidence reviewed: run `35542435174`, PR `212`, attempt `1`, and the complete failed-job/`REGRESSION_FAILURE` inventory persisted in `reviews/tests/MINIMAL-OPERATIONAL-DASHBOARD-001.md`.
+- Controlling test authority: the two append-only `TEST-DELTA APPROVED` sections and their superseding fixture/seam approval in `reviews/tests/MINIMAL-OPERATIONAL-DASHBOARD-001.md`.
+
+## Complete findings list
+
+No unresolved finding in the dashboard branch-caused CI correction delta.
+
+1. **[RESOLVED][production scope] Three unnecessary compatibility changes are fully reverted to `origin/main`.** `PreopeningResources` again enforces the established process/legacy prefix equality; `MariaDbYiiObjectCardProjection` again rejects an opened native card without an applied composition; and `MariaDbYiiObjectCard` again reads the required legacy `ptoactdate` column directly. These files have no remaining diff against base. The correction removes branch-created weakening/compatibility behavior rather than adding a new runtime path.
+
+2. **[RESOLVED][navigation regression] The canonical navigation oracle now includes the specified dashboard seam exactly.** `/pilot/dashboard` is required first in the `Монтаж` group when `objects.read` is present, retains the existing `pie-chart` public icon and exact SVG geometry check, participates in the positive permission matrices, and remains absent from the existing `withoutObjects` matrix. Existing link order, grouping, current-page, feedback, read-only and guest assertions remain exact.
+
+3. **[RESOLVED][asset regression] The production web cutover contract pins the exact intentional dashboard-era `pilot.css` bytes.** Only the expected SHA-256 changes; MIME/cache and asset-delivery assertions remain unchanged. This corrects an exact-byte oracle rather than weakening it.
+
+4. **[RESOLVED][fixture/schema fidelity] `ObjectQueueFixture` adds only the real nullable `ptoactdate` column to its independent unprefixed legacy `fm_maintable` base table.** Existing rows default to `NULL`; no fact or production schema is invented. The abandoned prefixed-table/view composition is superseded and absent. The type-aware fact digest remains bounded and supports both base tables and any future views without materializing rows.
+
+5. **[RESOLVED][card seam coverage] The dashboard test no longer claims an authorized 200 for invalid split-prefix card fixture composition.** Every rendered dashboard row still has an exact `/pilot/objects/{id}` href; rendered object `451204` retains the independent 403 witness for an actor without `objects.read`; and the planner-mandatory focused `yii2_object_card_001_test.php` supplies the valid authorized 200/full-card public journey. This combination preserves the specification's exact link and server-side authorization requirements without changing production safety.
+
+6. **[CONFORMING][verification evidence]** Focused dashboard, queue, main-navigation, object-card, and production-cutover checks are reported GREEN after the final correction. The verification input explicitly includes the changed fixture/navigation/cutover paths, and the independent Gate 3 record approves the complete current test delta. `git diff --check` is clean.
+
+7. **[BASELINE][not branch-caused] The remaining safe-error broken-sink final assertion is not resolved or relabelled GREEN.** The identical failure was reproduced in disposable clean `origin/main` at `/tmp/fm21-main-baseline.jQ44kD`. The earlier branch-caused execution-200 failure disappeared after restoring `PreopeningResources`; the remaining assertion is therefore recorded as inherited baseline evidence, not approval of that separate contract and not a dashboard regression. Run `35542435174` remains failed and cannot be called GREEN.
+
+8. **[CONFORMING][scope/history]** The correction changes only approved test/fixture/provenance expectations and removes the three unnecessary production deviations. It adds no dashboard formula, permission, state/history mutation, DDL/cache, dependency, `rapid-pilot`, landing, UI, or demo scope. The previously approved MINIMAL-OPERATIONAL-DASHBOARD-001 A–N production implementation is otherwise unchanged.
+
+## CI-correction Gate 5 decision
+
+**APPROVED.** The complete branch-caused correction is minimal, independently test-approved, restores mainline production invariants, and preserves dashboard acceptance sensitivity. This is approval of the correction delta only. CI run `35542435174` is still failed because the remaining broken-sink assertion is an independently reproduced `origin/main` baseline failure; a fresh exact-source CI/admission decision and honest handling of that baseline remain required before PR-ready/Done. Merge, deployment, and settings are not approved.
