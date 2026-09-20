@@ -10,13 +10,13 @@
 
 ## 3. Gate 4 — минимальная реализация
 
-- [ ] 3.1 Реализовать runtime-owned generator/classifier/allowlisted record writer с fail-safe sink и trusted build-version fallback; focused test должен подтвердить closed fields и отсутствие message inspection.
-- [ ] 3.2 Подключить bootstrap и `SafeErrorHandler`, сохранив sanitize/security/Retry-After и error-ID header после очистки; focused wire/log cases должны стать GREEN без Yii/DB bootstrap dependency.
-- [ ] 3.3 Подключить только `ExecutionController`, `OriginalController`, `ChecklistController`, сохранив существующие envelopes и unknown-result semantics; focused tests должны доказать одну запись, отсутствие повторов и unchanged facts.
+- [x] 3.1 Реализовать runtime-owned generator/classifier/allowlisted record writer с fail-safe sink и trusted build-version fallback; focused test должен подтвердить closed fields и отсутствие message inspection.
+- [x] 3.2 Подключить bootstrap и `SafeErrorHandler`, сохранив sanitize/security/Retry-After и error-ID header после очистки; focused wire/log cases должны стать GREEN без Yii/DB bootstrap dependency.
+- [x] 3.3 Подключить только `ExecutionController`, `OriginalController`, `ChecklistController`, сохранив существующие envelopes и unknown-result semantics; focused tests должны доказать одну запись, отсутствие повторов и unchanged facts.
 
 ## 4. Verification, reviews и PR
 
-- [ ] 4.1 Выполнить planner-selected focused commands, применимые runtime/Yii regressions и `make architecture-check`; полный локальный `make test`/`make verify` не запускать.
+- [x] 4.1 Выполнить planner-selected focused commands, применимые runtime/Yii regressions и `make architecture-check`; полный локальный `make test`/`make verify` не запускать.
 - [ ] 4.2 Подготовить exact-source Gate 5 package и получить независимый final review `APPROVED`; весь список findings исправлять одним пакетом, delta review — не более двух correction rounds.
 - [ ] 4.3 Создать отдельный PR, запустить только штатный PR-triggered exact-source CI через `ci-launch`, при сбое собрать полный failed-job/`REGRESSION_FAILURE` inventory и использовать не более двух correction candidates после первого.
 

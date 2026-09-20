@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime;
 
 use FMonitor2\Runtime\SafeRuntimeFailure;
+use Yii;
 use yii\web\ErrorHandler;
 use yii\web\HttpException;
 use yii\web\Response;

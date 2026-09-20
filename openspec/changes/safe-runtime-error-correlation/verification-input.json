@@ -27,6 +27,6 @@
     "spec_path": "specs/SAFE-RUNTIME-ERROR-CORRELATION-001.md",
     "seam": "real canonical HTTP responses and actually written runtime log lines cover bootstrap and selected Yii/controller 5xx, server-owned ID, category evidence, privacy, single emission, logger failure and unchanged adjacent behavior",
     "tests": ["tests/Runtime/yii2_safe_error_correlation_001_test.php"],
-    "gate3_expected": {"tests/Runtime/yii2_safe_error_correlation_001_test.php": "INTENDED_RED"}
+    "gate3_expected": {"tests/Runtime/yii2_safe_error_correlation_001_test.php": "GREEN"}
   }]
 }

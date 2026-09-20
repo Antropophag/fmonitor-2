@@ -471,6 +471,7 @@
     "governance": {"services": [], "languages": ["python3", "php", "node"]}
   },
   "focused_command_profiles": {
+    "tests/Runtime/yii2_safe_error_correlation_001_test.php": "integration",
     "tests/Yii2/yii2_main_navigation_001_test.php": "browser"
   },
   "semantic_surfaces": [

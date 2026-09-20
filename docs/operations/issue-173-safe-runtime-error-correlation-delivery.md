@@ -30,3 +30,16 @@ Correcting the fixture changes an approved test. CRITICAL policy requires recomp
 ## Remaining authorized action
 
 Owner direction is required to allow one additional Gate 3 round for the fixture-only correction. Without that override, PR-ready delivery cannot proceed without either falsifying failure classification or bypassing the required review.
+
+## Owner override — 2026-09-20
+
+The owner authorized exactly one additional Gate 3 delta-review for a fixture-only correction. The correction must prepare the complete production runtime contract in isolated test directories, prove a healthy `public/runtime.php` baseline first, and keep each fault isolated to its intended branch. Historical RED and prior review history remain authoritative and are not reset.
+
+The corrected test prepares the full runtime storage contract with `RuntimeStorage::prepare`, proves the healthy canonical bootstrap first, and then runs each isolated fault. Official lineage links historical RED `1789891766777353000-c9162e1d1e55449facca42334ae2455a` to GREEN `1789891790114348000-bad606477b8d4a9180f641b9bacf9d38` with delta SHA-256 `fb95f4f0730cbcade05cf0b9d2d6c42c4b86c17a7e94576391e6c68f4dc96248`. The independent authorized delta review is `APPROVED` with no findings.
+
+Current focused verification:
+
+- container HTTP/log acceptance: GREEN, record `1789891945082992000-364bc58b63404d07bea7fc2120955fdf.json`;
+- change-verification governance: GREEN, record `1789891966666880000-fd480891d83c4c8cbddcf2a062f71a77.json`;
+- architecture guard: GREEN, record `1789891993865002000-9372c5b2d0f0413ca32280493bd2fae5.json`;
+- `make architecture-check`: PASS (7 rules; existing/advisory file-size notices only).

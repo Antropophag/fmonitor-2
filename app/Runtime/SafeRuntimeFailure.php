@@ -22,7 +22,7 @@ final class SafeRuntimeFailure
         'unexpected',
     ];
 
-    public static function report(\Throwable $error, string $component, ?string $categoryHint = null): string
+    public static function report(?\Throwable $error, string $component, ?string $categoryHint = null): string
     {
         $errorId = bin2hex(random_bytes(16));
         $record = [
@@ -44,10 +44,11 @@ final class SafeRuntimeFailure
         return $errorId;
     }
 
-    private static function category(\Throwable $error, ?string $hint): string
+    private static function category(?\Throwable $error, ?string $hint): string
     {
         if (is_string($hint) && in_array($hint, self::CATEGORIES, true)) return $hint;
-        if ($error instanceof \FMonitor2\InstallationProcess\ArtifactStorageException) return 'storage';
+        if ($error instanceof \FMonitor2\InstallationProcess\ArtifactStorageException
+            || $error instanceof \FMonitor2\InspectionEvidence\ChecklistInfrastructureUnavailable) return 'storage';
         if ($error instanceof \yii\db\Exception || $error instanceof \mysqli_sql_exception) return 'database';
         return 'unexpected';
     }

@@ -77,3 +77,24 @@ None. The candidate maps the full bounded acceptance contract through canonical 
 ### Required changes
 
 None.
+
+## Authorized additional Gate 3 delta review — 2026-09-20
+
+- Authorization/scope: owner-authorized one-time Gate 3 delta review required by the v1 harness GREEN-package gate. This is limited to corrected test-environment preparation, baseline/fault reachability, complete scenario viability, and preservation of approved expectations; it is not Gate 5 or a final production-code review.
+- Reviewed source: base `2d6afb4c9bf050a054994536360e10d05d1b75df` plus retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260920T081054Z-73fdc0a5c8/snapshot/source.patch`, SHA-256 `fc0a1530cab986f295d0fdd2dc24951904e1c7fa8194801e5f58e7dbf701ee79`; candidate source `e737d3ff9ef19b62b6f395cb1a3c8d64d79d26cee32f68a8773330dd68280df1`.
+- Test delta lineage: approved historical source `b0554783cbb8013b9a185c49aedce1ec54266a5d3d4505d11dc4b829074cc61c`; historical container RED record `1789891766777353000-c9162e1d1e55449facca42334ae2455a`; current container GREEN record `1789891790114348000-bad606477b8d4a9180f641b9bacf9d38`; delta SHA-256 `fb95f4f0730cbcade05cf0b9d2d6c42c4b86c17a7e94576391e6c68f4dc96248`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+The correction prepares an isolated production-runtime storage tree before bootstrap testing and first proves that the prepared baseline reaches Yii without an error ID or diagnostic record. Configuration and database bootstrap faults therefore remain distinguishable from setup failure. The downstream cases now use reachable behavior rather than test-router substitutes: wrong-prefix execution failure, real original-upload metadata/body with unavailable storage, an authorized/opened checklist photo with a real storage obstruction, a valid `open_confirmed` attempt interrupted by a database trigger while the declared process sink is unavailable, and a visible SQL-trigger failure with privacy canary. The MyISAM attempt counter plus full fact snapshot establishes one command attempt and no retained domain mutation; trigger/table cleanup restores the fixture before comparison.
+
+Expectation adjustments preserve or strengthen the approved contract. The 409 case now installs the exact capability needed to reach the existing domain rejection. Original 415 and 413 cases include valid CSRF and use ordinary HTTP, so they prove admission behavior rather than transport/setup behavior. Controller envelopes remain boundary-specific and pin status, material security headers, `Retry-After`, error ID, body semantics, category, exact correlated record, and canary exclusion. Replacing the synthetic checklist `unexpected` failure with a real `storage` failure improves factual classification coverage without removing unknown-exception coverage from execution/global paths.
+
+The minimal production changes inspected solely for downstream-test consistency expose the expected public effects used by these tests: result-based 503 paths report once through the declared shared process sink, preserve existing envelopes, and use closed component/category values. No expectation was relaxed to mirror an implementation accident.
+
+### Required changes
+
+None.
