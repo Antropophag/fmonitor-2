@@ -430,9 +430,12 @@ unit	php	tests/InstallationProcess/selected_original_binding_001_test.php	integr
 unit	php	tests/InstallationProcess/selected_original_lifecycle_001_test.php	integration
 unit	php	tests/InstallationProcess/terminology_object_001_test.php	unit
 unit	php	tests/InstallationProcess/workforce_worker_cli_manual_pilot_test.php	integration
+unit	php	tests/Jobs/weekly_fkr_report_delivery_001_test.php	integration
+unit	php	tests/Jobs/weekly_fkr_unknown_delivery_001_test.php	integration
 unit	php	tests/Otiz/excel_calculation_001_test.php	unit
 unit	php	tests/Otiz/legacy_premium_calculation_001_test.php	unit
 unit	php	tests/Runtime/production_runtime_contract_001_test.php	unit
+unit	php	tests/Runtime/weekly_fkr_smtp_configuration_001_test.php	unit
 unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php	unit
 unit	python3	tests/Usage/usage_aggregation_001_test.py	governance
 unit	python3	tests/Verification/architecture_file_size_advisory_001_test.py	governance
@@ -462,6 +465,8 @@ unit	python3	tests/Verification/review_source_001_test.py	unit
 unit	python3	tests/Verification/verification_delivery_deduplication_001_test.py	governance
 unit	python3	tests/Verification/yii2_dependency_setup_001_test.py	governance
 unit	python3	tests/Verification/yii2_local_quickstart_docs_001_test.py	unit
+unit	php	tests/WeeklyFkrReport/weekly_report_001_test.php	integration
+unit	php	tests/WeeklyFkrReport/weekly_schedule_001_test.php	integration
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit

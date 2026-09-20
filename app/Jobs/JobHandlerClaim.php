@@ -14,6 +14,7 @@ final class JobHandlerClaim
         if($job['jobType']==='workforce.sync'&&$job['payloadVersion']===1){$payload=$job['payload'];if(!is_array($payload))throw new \InvalidArgumentException();JobValues::keys($payload,['scheduleSlot','dueAtUtc','runIdentity']);JobValues::text($payload['scheduleSlot'],'/^\d{4}-\d{2}-\d{2}T\d{2}$/D');JobValues::date($payload['dueAtUtc']);JobValues::text($payload['runIdentity'],'/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D');return$job;}
         if($job['jobType']==='bitrix.order-document-links.sync'&&$job['payloadVersion']===1){$payload=$job['payload'];if(!is_array($payload))throw new \InvalidArgumentException();JobValues::keys($payload,['scheduleSlot']);JobValues::text($payload['scheduleSlot'],'/^\d{4}-\d{2}-\d{2}T\d{2}$/D');return$job;}
         if($job['jobType']==='outbox.dispatch'&&$job['payloadVersion']===1&&is_array($job['payload'])){JobValues::keys($job['payload'],['intentId']);JobValues::number($job['payload']['intentId']);return$job;}
+        if($job['jobType']==='weekly-fkr-report.generate'&&$job['payloadVersion']===1&&is_array($job['payload'])){JobValues::keys($job['payload'],['reportWeek','generatedAtUtc']);JobValues::text($job['payload']['reportWeek'],'/^\d{4}-\d{2}-\d{2}$/D');JobValues::date($job['payload']['generatedAtUtc']);return$job;}
         throw new \InvalidArgumentException();
     }
 }

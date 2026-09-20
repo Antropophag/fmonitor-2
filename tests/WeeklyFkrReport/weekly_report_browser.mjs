@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+
+const [htmlPath, textPath, parityPath, outputDirectory] = process.argv.slice(2);
+if (!htmlPath || !textPath || !parityPath || !outputDirectory) throw new Error('usage: weekly_report_browser.mjs <html> <text> <parity-json> <output-dir>');
+const html = fs.readFileSync(htmlPath, 'utf8');
+const text = fs.readFileSync(textPath, 'utf8');
+const parity = JSON.parse(fs.readFileSync(parityPath, 'utf8'));
+const { chromium } = createRequire(import.meta.url)(parity.playwright);
+if (!/^<!doctype html>/i.test(html.trim()) || !/<html\b[\s\S]*<head\b[\s\S]*<body\b/i.test(html)) throw new Error('message is not a standalone HTML document');
+if (/<(img|picture|svg|script|link)\b|background-image|data:|@font-face|url\s*\(/i.test(html)) throw new Error('forbidden image or external resource markup');
+if (/\shidden(?:\s|>|=)|display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$)|font-size\s*:\s*0(?:\D|$)|(?:max-)?(?:height|width)\s*:\s*0(?:\D|$)|clip(?:-path)?\s*:|transform\s*:|text-indent\s*:\s*-|(?:left|top|right|bottom)\s*:\s*[+-]?\d{3,}|color\s*:\s*transparent/i.test(html)) throw new Error('content-hiding CSS is forbidden');
+const browser = await chromium.launch({headless:true});
+try {
+  for (const [name,width] of [['desktop',680],['narrow',320]]) {
+    const page = await browser.newPage({viewport:{width,height:900}});
+    await page.setContent(html,{waitUntil:'domcontentloaded'});
+    const result = await page.evaluate(() => { const body=getComputedStyle(document.body); const links=[...document.querySelectorAll('a')]; const cells=[...document.querySelectorAll('td')]; return {scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth,headings:[...document.querySelectorAll('h1,h2,h3')].map(node=>node.textContent.trim()),links:links.map(node=>({href:node.href,text:node.textContent.trim()})),minLinkHeight:Math.min(...links.map(node=>node.getBoundingClientRect().height)),images:document.querySelectorAll('img,picture,svg').length,fontSize:parseFloat(body.fontSize),lineHeight:parseFloat(body.lineHeight)/parseFloat(body.fontSize),paddedCells:cells.filter(node=>parseFloat(getComputedStyle(node).paddingLeft)>0).length,explicitCells:cells.filter(node=>node.hasAttribute('align')&&node.hasAttribute('valign')&&node.hasAttribute('width')).length,inlineCritical:cells.filter(node=>node.hasAttribute('style')).length,contrastedCells:cells.filter(node=>{const s=getComputedStyle(node);return s.color!=='rgba(0, 0, 0, 0)'&&s.backgroundColor!=='rgba(0, 0, 0, 0)'}).length,text:document.body.innerText}; });
+    if (result.scrollWidth>result.clientWidth) throw new Error(`${name}: horizontal overflow ${result.scrollWidth}>${result.clientWidth}`);
+    if (result.images!==0) throw new Error(`${name}: image markup present`);
+    if (result.fontSize<14 || result.lineHeight<1.4) throw new Error(`${name}: typography below contract`);
+    const cellCount=await page.locator('td').count(); if (result.paddedCells!==cellCount || result.explicitCells!==cellCount || result.inlineCritical!==cellCount) throw new Error(`${name}: every Outlook cell must carry padding, width/align/valign and inline style`);
+    if (name==='narrow' && result.minLinkHeight<44) throw new Error(`${name}: touch link below 44px`);
+    const expectedHeadings=['Плановые открытия','Плановые закрытия','Прогресс за прошедшую неделю','Просрочка','Обратить внимание']; if (JSON.stringify(result.headings.filter(value=>expectedHeadings.includes(value)))!==JSON.stringify(expectedHeadings)) throw new Error(`${name}: section order mismatch`);
+    if (result.links.some(link=>!link.href.startsWith('https://')||link.text==='')) throw new Error(`${name}: invalid HTTPS link`);
+    if (result.inlineCritical===0 || result.contrastedCells===0) throw new Error(`${name}: inline/contrast contract absent`);
+    for (const value of parity.values) { const count=(body,value)=>body.split(value).length-1; if (count(result.text,value)!==count(text,value)||count(text,value)===0) throw new Error(`${name}: exhaustive HTML/text parity failed for ${value}`); }
+    for (const [section,ids] of Object.entries(parity.sections)) { const actual=await page.locator(`[data-report-section="${section}"] [data-object-id]`).evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-object-id'))); if(JSON.stringify(actual)!==JSON.stringify(ids)) throw new Error(`${name}: ${section} exact object order mismatch`); }
+    const material=await page.locator('[data-report-section], [data-object-id], h1, h2, h3, a').evaluateAll(nodes=>nodes.map(node=>{const s=getComputedStyle(node),b=node.getBoundingClientRect();return{width:b.width,height:b.height,left:b.left,right:b.right,top:b.top,bottom:b.bottom,display:s.display,visibility:s.visibility,opacity:Number(s.opacity)}})); if(material.some(item=>item.width<=0||item.height<=0||item.right<=0||item.left>=result.clientWidth||item.bottom<=0||item.display==='none'||item.visibility==='hidden'||item.opacity===0)) throw new Error(`${name}: material report content hidden, zero-area or off-canvas`);
+    for (const [label,target] of Object.entries(parity.links)) { const link=result.links.find(item=>item.text.includes(label)); if(!link||link.href!==target) throw new Error(`${name}: canonical target mismatch for ${label}`); if(!text.includes(`${label}`)||!text.includes(target)) throw new Error(`${name}: text link parity missing for ${label}`); }
+    const statuses=await page.locator('[data-status-label]').evaluateAll(nodes=>{const rgb=value=>(value.match(/[\d.]+/g)||[]).slice(0,3).map(Number);const lum=value=>{const [r,g,b]=rgb(value).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};return nodes.map(node=>{const s=getComputedStyle(node),box=node.getBoundingClientRect(),a=lum(s.color),b=lum(s.backgroundColor);return{label:node.getAttribute('data-status-label'),text:node.textContent.trim(),ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),width:box.width,height:box.height,left:box.left,right:box.right,visibility:s.visibility,display:s.display,opacity:Number(s.opacity)}})}); if(statuses.length===0||statuses.some(item=>!item.label||!item.text.includes(item.label)||item.ratio<4.5||item.width<=0||item.height<=0||item.right<=0||item.left>=result.clientWidth||item.visibility==='hidden'||item.display==='none'||item.opacity===0)) throw new Error(`${name}: every status needs visible text, viewport presence and WCAG contrast`);
+    await page.screenshot({path:`${outputDirectory}/${name}.png`,fullPage:true});
+    await page.close();
+  }
+} finally { await browser.close(); }

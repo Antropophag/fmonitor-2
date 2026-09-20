@@ -15,7 +15,7 @@ final class JobsRuntimeCommand
         try{
             $prefix=$config->prefix();if(!JobsSchemaMigration::isReady($db,$prefix))throw new \RuntimeException('JOBS_UNAVAILABLE');
             $session=new MariaDbJobsSession($db,$prefix);$clock=$session->now(...);
-            $queue=new MariaDbJobQueue($db,$prefix,null,null,['workforce.sync'=>[1],'outbox.dispatch'=>[1],'bitrix.order-document-links.sync'=>[1]]);
+            $queue=new MariaDbJobQueue($db,$prefix,null,null,['workforce.sync'=>[1],'outbox.dispatch'=>[1],'bitrix.order-document-links.sync'=>[1],'weekly-fkr-report.generate'=>[1]]);
             $operator=new MariaDbOperatorJobs($db,$prefix,static fn(string $authority): bool=>$authority==='deployment-operator');
             $options=$request->options;
             switch($request->mode){
@@ -25,6 +25,7 @@ final class JobsRuntimeCommand
                     $result=$operator->retry(['authority'=>'deployment-operator','jobId'=>$options['job-id'],'operationId'=>$options['operation-id'],'nowUtc'=>$options['now-utc']]);
                     return [match($result['status']){'created'=>0,'busy'=>75,'forbidden'=>77,default=>65},$result];
                 case 'health':
+                    if($config->optionalValue('FMONITOR_RUNTIME_ENV')==='production')SmtpConfiguration::fromEnvironment(getenv());
                     $result=(new MariaDbJobsHealth($db,$prefix,$clock,[
                         'workerHeartbeatId'=>'worker:'.$instance,'schedulerHeartbeatId'=>'scheduler:'.$instance,
                         'workerFreshSeconds'=>120,'schedulerFreshSeconds'=>120,'readyMaxAgeSeconds'=>300,
@@ -33,11 +34,12 @@ final class JobsRuntimeCommand
                     $result=(new JobsSchedulerProcess(new MariaDbWorkforceScheduler($db,$prefix),
                         new OutboxDispatchScheduler(new MariaDbOutbox($db,$prefix),$queue),
                         new MariaDbOrderDocumentLinksScheduler($db,$prefix),
-                        new MariaDbWorkerHeartbeat($db,$prefix),$clock,'scheduler:'.$instance))->run();
+                        new MariaDbWorkerHeartbeat($db,$prefix),$clock,'scheduler:'.$instance,
+                        new MariaDbWeeklyFkrScheduler($db,$prefix)))->run();
                     return [$result['exitCode'],$result];
                 case 'worker':
                     $command=static fn(array $job): array=>[PHP_BINARY,dirname(__DIR__,2).'/bin/fmonitor2-job-handler.php'];
-                    $registry=['workforce.sync'=>[1=>$command],'outbox.dispatch'=>[1=>$command],'bitrix.order-document-links.sync'=>[1=>$command]];
+                    $registry=['workforce.sync'=>[1=>$command],'outbox.dispatch'=>[1=>$command],'bitrix.order-document-links.sync'=>[1=>$command],'weekly-fkr-report.generate'=>[1=>$command]];
                     $result=(new JobWorkerProcess($queue,new MariaDbWorkerHeartbeat($db,$prefix),$registry,$clock,
                         'worker:'.$instance,1,1_000_000,55))->run();return [$result['exitCode'],$result];
             }

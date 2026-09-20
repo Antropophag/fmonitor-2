@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';require dirname(__DIR__,2).'/app/autoload.php';
+use FMonitor2\Jobs\SmtpConfiguration;
+if(getenv('FMONITOR_FIXTURE_REACHABILITY')==='weekly-smtp-config-fixture'){assertSameValue(true,filter_var('mailbox@example.test',FILTER_VALIDATE_EMAIL)!==false,'test recipient fixture valid');echo "FIXTURE_REACHABLE: weekly-smtp-config-fixture\n";exit(0);}
+assertSameValue(true,class_exists(SmtpConfiguration::class),'INTENTIONAL_RED: WEEKLY-FKR-ATTENTION-EMAIL-001 SMTP configuration seam exists');
+$valid=['FMONITOR_RUNTIME_ENV'=>'test','FMONITOR_SMTP_HOST'=>'smtp.internal.test','FMONITOR_SMTP_PORT'=>'587','FMONITOR_SMTP_ENCRYPTION'=>'tls','FMONITOR_SMTP_USERNAME'=>'mailer@example.test','FMONITOR_SMTP_PASSWORD'=>'smtp-secret-never-log','FMONITOR_SMTP_FROM_ADDRESS'=>'mailer@example.test','FMONITOR_SMTP_FROM_NAME'=>'Автоматическая почта FMonitor','FMONITOR_SMTP_TIMEOUT_SECONDS'=>'10','FMONITOR_SMTP_VERIFY_PEER'=>'true','FMONITOR_PUBLIC_BASE_URL'=>'https://fmonitor.example.test','FMONITOR_SMTP_TEST_RECIPIENT'=>'mailbox@example.test'];
+$config=SmtpConfiguration::fromEnvironment($valid);$safe=$config->safeValues();
+assertSameValue(['smtp.internal.test',587,'tls','mailer@example.test','Автоматическая почта FMonitor',10,true,'https://fmonitor.example.test','mailbox@example.test'],[$safe['host'],$safe['port'],$safe['encryption'],$safe['username'],$safe['fromName'],$safe['timeoutSeconds'],$safe['verifyPeer'],$safe['publicBaseUrl'],$safe['testRecipient']],'A10 exact safe configuration');
+assertSameValue(false,str_contains(json_encode($safe,JSON_THROW_ON_ERROR),'smtp-secret-never-log'),'A10 password absent from safe values');
+foreach([['FMONITOR_SMTP_PASSWORD',null],['FMONITOR_SMTP_VERIFY_PEER','false'],['FMONITOR_SMTP_FROM_ADDRESS','other@example.test'],['FMONITOR_PUBLIC_BASE_URL','http://fmonitor.example.test'],['FMONITOR_SMTP_PORT','0']]as[$key,$value]){$bad=$valid;if($value===null)unset($bad[$key]);else$bad[$key]=$value;try{SmtpConfiguration::fromEnvironment($bad);throw new TestFailure("{$key} must fail closed");}catch(RuntimeException$e){assertSameValue('SMTP_CONFIGURATION_INVALID',$e->getMessage(),"A10 {$key} stable secret-free error");assertSameValue(false,str_contains($e->getMessage(),'smtp-secret-never-log'),"A10 {$key} no secret leak");}}
+$production=array_replace($valid,['FMONITOR_RUNTIME_ENV'=>'production']);try{SmtpConfiguration::fromEnvironment($production);throw new TestFailure('production test override must fail');}catch(RuntimeException$e){assertSameValue('SMTP_CONFIGURATION_INVALID',$e->getMessage(),'A10 production recipient override rejected');}
+assertSameValue(5242880,SmtpConfiguration::MAX_MESSAGE_BYTES,'A11 exact 5 MiB pre-encoding bound');
+echo "PASS: WEEKLY-FKR-ATTENTION-EMAIL-001 SMTP configuration and redaction\n";
