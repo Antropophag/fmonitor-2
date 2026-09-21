@@ -72,3 +72,32 @@ CI and deployment remain `UNKNOWN`; this review does not treat either as GREEN a
 `APPROVED`
 
 Gate 5 passes for exact source `893e23227b98416417862483a866a9bd0b19d2581f564416244ad41ed96aaf3f` / executable source `715fcce0023a5d36e513bdc325643dcc909c7de72ba6eeeb95269929a0d8d861`. No code, test, tooling, or evidence finding remains in the reviewed scope. Any later source or expectation change requires fresh bound verification and independent review.
+
+---
+
+## Bounded focused-tooling delta review — 2026-09-21
+
+- Reviewed commit: `001db2578fe5a4a536f46b1a83fb0f086561610a` (`feat: show shipment status in control queue`)
+- Requested scope: `tools/delivery/Dockerfile.focused-checks` and `tools/delivery/run-in-profile`
+- Repository state at review: clean; `HEAD` equals `001db257`, so there is no uncommitted or post-commit source delta beyond the tooling already contained in that exact commit
+
+### Assessment
+
+No finding.
+
+The two focused-test changes are bounded responses to observed setup failures:
+
+- `npm --prefix /shlz-ui/packages/behaviors run build` materializes the pinned public browser behavior bundle required by existing Playwright consumers and closes the observed asset 404. It executes in the dependency stage at the pinned `SHLZ_UI_REVISION`; it does not alter application or production assets.
+- `--tmpfs /workspace/.test-artifacts:rw,nosuid,nodev` supplies the test-owned write target required by schema/browser evidence while preserving the read-only candidate workspace. It is ephemeral, non-executable by mount policy, and removed with the focused container.
+
+The already-reviewed browser target retains pinned Chromium bytes and browser-only system dependencies. The runner retains frozen-source restoration plus executable-source/image-label checks before execution. Neither change expands production images, runtime permissions, deployment behavior, secrets, or live stand authority.
+
+The bounded exact-source results are GREEN across the Playwright module probe, Yii inspection browser, inspection schema and four photo characterizations, active queue, preopening, inspection journey, and the selected Python governance checks. No full local suite was run.
+
+The first exact-commit CI attempt failed before tests on an external HTTP 504 while downloading a pinned Python artifact. That run is not GREEN, but the failure is upstream dependency transport rather than a product/tooling assertion and does not contradict the bounded local qualification. CI remains unresolved until a complete exact-source run succeeds; this review neither retries CI nor treats the failed run as approval.
+
+### Delta verdict
+
+`APPROVED`
+
+The focused tooling delta is approved as committed in `001db257`. No correction is required. This approval does not alter the existing rule that publication/merge admission still requires its independently tracked exact-source CI disposition.
