@@ -29,6 +29,15 @@ final readonly class JobsRuntimeConfiguration
         if(!is_string($value)||str_contains($value,"\0")||preg_match('/[\x00-\x1f\x7f]/',$value)===1)throw new \InvalidArgumentException('Invalid Jobs configuration.');
         return $value;
     }
+    public function secretFileValue(string $name): string
+    {
+        $path=$this->value($name);$before=@lstat($path);
+        if($path[0]!=='/'||$before===false||(($before['mode']&0170000)!==0100000)||is_link($path)||$before['size']<1||$before['size']>4096)throw new \InvalidArgumentException('Invalid Jobs configuration.');
+        $handle=@fopen($path,'rb');if($handle===false)throw new \InvalidArgumentException('Invalid Jobs configuration.');
+        try{$opened=fstat($handle);$bytes=stream_get_contents($handle,4097);$after=@lstat($path);}finally{fclose($handle);}
+        if($opened===false||$after===false||!is_string($bytes)||strlen($bytes)>4096||$before['dev']!==$opened['dev']||$before['ino']!==$opened['ino']||$after['dev']!==$opened['dev']||$after['ino']!==$opened['ino'])throw new \InvalidArgumentException('Invalid Jobs configuration.');
+        $value=trim($bytes);if($value===''||str_contains($value,"\0")||preg_match('/[\x00-\x1f\x7f]/',$value)===1)throw new \InvalidArgumentException('Invalid Jobs configuration.');return$value;
+    }
     public function port(): int
     {
         $value=$this->value('FMONITOR_DB_PORT');

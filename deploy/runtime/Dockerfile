@@ -18,8 +18,14 @@ RUN npm ci --no-audit --no-fund \
 
 FROM php:8.5-fpm-bookworm
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip util-linux \
+    && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip util-linux ca-certificates gnupg unixodbc-dev \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft-prod.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
     && docker-php-ext-install -j"$(nproc)" mysqli pdo_mysql pcntl \
+    && pecl install sqlsrv-5.13.0 pdo_sqlsrv-5.13.0 \
+    && docker-php-ext-enable sqlsrv pdo_sqlsrv \
     && groupadd --gid 10001 fmonitor \
     && useradd --uid 10001 --gid 10001 --home-dir /home/fmonitor --create-home --shell /usr/sbin/nologin fmonitor \
     && mkdir -p /home/fmonitor/.local/state/fmonitor2/artifacts /run/fmonitor-secrets /var/log/fmonitor /tmp/nginx-client-body /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi \

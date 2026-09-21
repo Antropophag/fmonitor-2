@@ -127,6 +127,11 @@ services:
       FMONITOR_BITRIX_CONFIG: /run/fmonitor-secrets/bitrix-config.json
       FMONITOR_BITRIX_TOKEN_FILE: /run/fmonitor-secrets/bitrix-token
       FMONITOR_BITRIX_CA_FILE: "${FMONITOR_BITRIX_CA_HOST_FILE:+/run/fmonitor-secrets/bitrix-ca.pem}"
+      FMONITOR_ERP_HOST: "${FMONITOR_ERP_HOST:-}"
+      FMONITOR_ERP_DATABASE: "${FMONITOR_ERP_DATABASE:-}"
+      FMONITOR_ERP_USER: "${FMONITOR_ERP_USER:-}"
+      FMONITOR_ERP_PASSWORD_FILE: /run/fmonitor-secrets/erp-password
+      FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_FILE: /run/fmonitor-secrets/erp-equipment-facts-hmac-key
       FMONITOR_RUNTIME_ENV: production
       FMONITOR_PUBLIC_BASE_URL: "${FMONITOR_PUBLIC_BASE_URL:-}"
       FMONITOR_SMTP_HOST: "${FMONITOR_SMTP_HOST:-}"
@@ -148,6 +153,14 @@ services:
       - type: bind
         source: "${FMONITOR_BITRIX_CA_HOST_FILE:-/dev/null}"
         target: /run/fmonitor-secrets/bitrix-ca.pem
+        read_only: true
+      - type: bind
+        source: "${FMONITOR_ERP_PASSWORD_HOST_FILE:-/dev/null}"
+        target: /run/fmonitor-secrets/erp-password
+        read_only: true
+      - type: bind
+        source: "${FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_HOST_FILE:-/dev/null}"
+        target: /run/fmonitor-secrets/erp-equipment-facts-hmac-key
         read_only: true
     depends_on:
       db:
