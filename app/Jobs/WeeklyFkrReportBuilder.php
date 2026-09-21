@@ -23,7 +23,7 @@ final readonly class WeeklyFkrReportBuilder
             'progressEnd'=>$local->modify('sunday last week')->format('Y-m-d'),
         ];
         $objects=$this->source->allObjectsAsOf($periods['progressStart'],$periods['progressEnd'],$generatedAtUtc);
-        $sections=['plannedOpenings'=>[],'plannedClosings'=>[],'progress'=>[],'overdue'=>[],'attention'=>[]];
+        $sections=['plannedOpenings'=>[],'plannedClosings'=>[],'progress'=>[],'overdue'=>[]];
         foreach($objects as$row)$this->classify($sections,$row,$periods,$generatedAtUtc,$baseUrl);
         foreach(array_keys($sections)as$name)usort($sections[$name],self::byDate(...));
         return['recipientIdentity'=>$recipientId,'recipientEmail'=>$recipient['email'],'generatedAtUtc'=>$generatedAtUtc,'periods'=>$periods,'sections'=>$sections];
@@ -46,7 +46,6 @@ final readonly class WeeklyFkrReportBuilder
         if(!$row['closingCompleted']&&$this->within($closing,$periods['planStart'],$periods['planEnd']))$sections['plannedClosings'][]=$common+$this->closingRow($row,$closing);
         $this->appendProgress($sections,$common,$row,$periods['progressEnd']);
         $this->appendOverdue($sections,$common,$row,$opening,$closing,$periods['planStart']);
-        $this->appendAttention($sections,$common,$row,$opening,$closing,$periods,$generatedAtUtc);
     }
 
     private function closingRow(array$row,string$date):array
@@ -84,31 +83,6 @@ final readonly class WeeklyFkrReportBuilder
     private function overdueRow(string$date,string$label,string$today):array
     {
         return['date'=>$date,'label'=>$label,'daysLate'=>(new \DateTimeImmutable($date))->diff(new \DateTimeImmutable($today))->days];
-    }
-
-    private function appendAttention(array&$sections,array$common,array$row,mixed$opening,mixed$closing,array$periods,string$generatedAtUtc):void
-    {
-        if(!$row['openingCompleted']&&$this->within($opening,$periods['planStart'],$periods['planEnd'])){
-            $reasons=$this->eligibility->reasons((string)$row['id'],$generatedAtUtc);
-            if($reasons!==[])$sections['attention'][]=$common+[
-                'date'=>$opening,'label'=>'Не готовы основания для открытия',
-                'reasons'=>array_values($reasons),
-            ];
-        }
-        if($row['closingCompleted']||!$this->within($closing,$periods['planStart'],$periods['planEnd']))return;
-        $reasons=$this->closingReasons($row);
-        if($reasons!==[])$sections['attention'][]=$common+['date'=>$closing,'label'=>'Недостаточная готовность к закрытию','reasons'=>$reasons];
-    }
-
-    private function closingReasons(array$row):array
-    {
-        $work=$row['work'];$documents=$row['documents'];
-        if($work===null||$documents===null)return['Недостаточно данных для оценки'];
-        $reasons=[];
-        if($work<85)$reasons[]='Работы: '.$work.' из 85';
-        if($documents<15)$reasons[]='Документы: '.$documents.' из 15';
-        foreach($row['violations']as$violation)$reasons[]=(string)$violation;
-        return$reasons;
     }
 
     private function progressValues(array$row,string$suffix):array

@@ -9,14 +9,12 @@ final class WeeklyFkrReportRenderer
         'plannedClosings'=>'Плановые закрытия',
         'progress'=>'Прогресс за прошедшую неделю',
         'overdue'=>'Просрочка',
-        'attention'=>'Обратить внимание',
     ];
     private const SUMMARY_LABELS = [
         'plannedOpenings'=>'Открытия',
         'plannedClosings'=>'Закрытия',
         'progress'=>'Прогресс',
         'overdue'=>'Просрочка',
-        'attention'=>'Внимание',
     ];
 
     public function render(array $report): array
@@ -38,20 +36,22 @@ final class WeeklyFkrReportRenderer
                 $empty='<span data-status-label="Данных за период нет" '
                     .'style="display:inline-block;color:#46515e;background-color:#eef0f4;padding:2px 5px;font-weight:600;">'
                     .'Данных за период нет</span>';
-                $body=$this->cell($empty);
+                $body='<tr data-object-empty="true"><td colspan="4" width="100%" align="left" valign="top" '
+                    .'style="width:100%;padding:3px;background-color:#ffffff;color:#46515e;">'.$empty.'</td></tr>';
             }
             foreach($rows as$row){
                 $line=$this->line($key,$row);
                 $text[]=$line.' — '.$row['url'];
-                $body.=$this->cell($this->rowHtml($key,$row));
+                $body.=$this->rowHtml($key,$row);
             }
             $text[]='';
-            $heading='<h2 data-status-label="'.$title.'" '
+            $heading='<tr><td colspan="4" width="100%" align="left" valign="top" style="width:100%;padding:3px 5px;background-color:#0b1623;color:#fff;">'
+                .'<h2 data-status-label="'.$title.'" '
                 .'style="margin:0;color:#ffffff;background-color:#0b1623;font-size:14px;line-height:1.3;">'
-                .$title.'</h2>';
+                .$title.'</h2></td></tr>';
             $sections.='<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
-                .'data-report-section="'.$key.'" style="width:100%;border-collapse:collapse;margin:0 0 6px;">'
-                .$this->cell($heading,'#0b1623').$body.'</table>';
+                .'data-report-section="'.$key.'" style="width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 6px;">'
+                .$heading.$this->columnHeader($key).$body.'</table>';
         }
         $html=$this->document($subject,$period,$generated,$this->summary($summaryCounts),$sections);
         $text[]='Письмо сформировано автоматически. Отвечать на него не нужно.';
@@ -100,7 +100,6 @@ final class WeeklyFkrReportRenderer
             return$base.' · '.$detail;
         }
         if($key==='overdue')return$base.' · '.$r['label'].' · '.$r['daysLate'].' дн.';
-        if($key==='attention')return$base.' · '.$r['label'].' · '.implode(' · ',array_map($this->compactReason(...),$r['reasons']));
         if($key==='plannedClosings'){
             $readiness=$r['total']===null
                 ? 'Недостаточно данных для оценки'
@@ -111,21 +110,37 @@ final class WeeklyFkrReportRenderer
     }
     private function rowHtml(string$key,array$r):string
     {
-        $detail=$this->line($key,$r);
-        $suffix=substr($detail,strlen($r['registrationNumber'])+strlen(' · '));
-        return '<div data-object-id="'.$this->esc($r['objectId']).'">'
-            .'<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'
-            .$this->esc($r['registrationNumber']).'</a> · '.$this->esc($suffix).'</div>';
+        if($key==='progress'){
+            $date=$r['delta']===null?'—':sprintf('%+d',$r['delta']).' п.п.';
+            $detail=$r['delta']===null?'Недостаточно данных':$r['workStart'].'→'.$r['workEnd'].'/85 · '.$r['documentsStart'].'→'.$r['documentsEnd'].'/15';
+        }elseif($key==='plannedClosings'){
+            $date=$r['date'];$detail=$r['total']===null?'Недостаточно данных':$r['work'].'/85 · '.$r['documents'].'/15 · '.$r['total'].'%';
+        }elseif($key==='overdue'){
+            $date=$r['date'];$detail=str_replace(' просрочено','',$r['label']).' · '.$r['daysLate'].' дн.';
+        }else{
+            $date=$r['date'];$detail=$r['label'];
+        }
+        return '<tr data-object-id="'.$this->esc($r['objectId']).'">'
+            .$this->dataCell('<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'.$this->esc($r['registrationNumber']).'</a>','18%')
+            .$this->dataCell($this->esc($r['address']),'32%')
+            .$this->dataCell($this->esc((string)$date),'16%')
+            .$this->dataCell($this->esc((string)$detail),'34%').'</tr>';
     }
-    private function compactReason(string$reason):string
+    private function columnHeader(string$key):string
     {
-        return preg_replace('/^(Работы|Документы): (\d+) из (\d+)$/u','$1 $2/$3',$reason)??$reason;
+        $third=$key==='progress'?'Изменение':'Срок';
+        $fourth=match($key){'plannedOpenings'=>'Статус','plannedClosings'=>'Раб. / док. / итого','progress'=>'Работы / документы',default=>'Тип'};
+        return '<tr data-column-header="'.$key.'">'
+            .$this->headerCell('Объект','18%').$this->headerCell('Адрес','32%')
+            .$this->headerCell($third,'16%').$this->headerCell($fourth,'34%').'</tr>';
     }
-    private function cell(string$content,string$background='#ffffff'):string
+    private function headerCell(string$content,string$width):string
     {
-        $style=$background==='#ffffff'?'padding:1px 3px;font-size:13px;line-height:1.25':'padding:3px 5px;background-color:#0b1623;color:#fff';
-        return '<tr><td width="100%" align="left" valign="top" style="'.$style.'">'
-            .$content.'</td></tr>';
+        return '<td width="'.$width.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;background-color:#eef0f4;color:#46515e;font-size:11px;line-height:1.2;font-weight:700;">'.$content.'</td>';
+    }
+    private function dataCell(string$content,string$width):string
+    {
+        return '<td width="'.$width.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;font-size:12px;line-height:1.25;border-bottom:1px solid #e5e7eb;">'.$content.'</td>';
     }
     private function esc(string$value):string{return htmlspecialchars($value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 }

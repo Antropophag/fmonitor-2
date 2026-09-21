@@ -35,3 +35,9 @@
 - [x] 5.2 Независимый reviewer проверяет spec/tests/Gate 3/code/config/security/evidence и записывает verdict в `reviews/code/WEEKLY-FKR-ATTENTION-EMAIL-001.md`; findings исправляются с повторной проверкой нужного delta
 - [ ] 5.3 Выполнить одну exact-source GitHub CI проверку выбранным существующим consumer, собрать полный failure inventory при ошибке и не считать UNKNOWN зелёным
 - [ ] 5.4 После APPROVED и GREEN подготовить PR-ready handoff с authorship, elapsed/rework, source/review/CI links и явным статусом live SMTP/test-send; архивирование выполняется отдельно после Done
+
+## 6. Owner-requested compact table revision
+
+- [x] 6.1 Root обновляет spec/tests: четыре раздела, табличные колонки, current native opening status и явная проверка overdue closing
+- [x] 6.2 Implementer убирает `attention`, подключает current native opening status и рендерит четыре Outlook-safe таблицы
+- [x] 6.3 Выполнить bounded render/source tests, Impeccable detector и independent final review; full local suite не запускать

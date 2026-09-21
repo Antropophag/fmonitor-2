@@ -9,7 +9,7 @@
 - Один application seam строит персональную read-only проекцию по заданным `recipient identity`, московской отчётной неделе и `generated-at`.
 - Существующий Jobs/Outbox владеет планированием, дедупликацией, retry и историей доставки.
 - SMTP transport является узким адаптером с typed outcome и полной внешней конфигурацией.
-- Focused tests доказывают календарь, scope, историю, пять разделов, внимание, idempotency/concurrency, redaction и отсутствие предметных мутаций.
+- Focused tests доказывают календарь, scope, историю, четыре табличных раздела, current native opening status, просроченные открытия и закрытия, idempotency/concurrency, redaction и отсутствие предметных мутаций.
 
 **Non-Goals:**
 
