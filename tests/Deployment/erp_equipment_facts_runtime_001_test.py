@@ -88,6 +88,17 @@ base_values = {
     "FMONITOR_TRUSTED_REQUEST_SCHEME": "http",
     "FMONITOR_INITIAL_OWNER_EMAIL": "owner@example.invalid",
     "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD": "synthetic-admin-password",
+    "FMONITOR_RUNTIME_ENV": "development",
+    "FMONITOR_PUBLIC_BASE_URL": "https://fmonitor.example.invalid",
+    "FMONITOR_SMTP_HOST": "smtp.example.invalid",
+    "FMONITOR_SMTP_PORT": "587",
+    "FMONITOR_SMTP_ENCRYPTION": "tls",
+    "FMONITOR_SMTP_USERNAME": "fmonitor@example.invalid",
+    "FMONITOR_SMTP_PASSWORD": "synthetic-smtp-password",
+    "FMONITOR_SMTP_FROM_ADDRESS": "fmonitor@example.invalid",
+    "FMONITOR_SMTP_FROM_NAME": "FMonitor",
+    "FMONITOR_SMTP_TIMEOUT_SECONDS": "10",
+    "FMONITOR_SMTP_VERIFY_PEER": "true",
     "FMONITOR_ERP_HOST": "erp.example.invalid",
     "FMONITOR_ERP_DATABASE": "1c-erp",
     "FMONITOR_ERP_USER": "reader",
@@ -117,6 +128,21 @@ def validate(values: dict[str, str]) -> subprocess.CompletedProcess[str]:
 valid = validate(base_values)
 assert valid.returncode == 0 and valid.stdout == "" and valid.stderr == "", \
     "INTENDED_RED: complete direct ERP environment validates without disclosure"
+example_values = {}
+for line in example.splitlines():
+    if not line or line.startswith("#"):
+        continue
+    key, value = line.split("=", 1)
+    example_values[key] = value.strip("'")
+example_values.update(base_values)
+example_values.update({
+    "FMONITOR_SOURCE_PASSWORD": "synthetic-source-password",
+    "FMONITOR_BITRIX_WEBHOOK_URL": "https://example.invalid/rest/1/synthetic-token/",
+    "FMONITOR_INITIAL_OWNER_EMAIL": "owner@example.invalid",
+})
+example_result = validate(example_values)
+assert example_result.returncode == 0 and example_result.stdout == "" and example_result.stderr == "", \
+    "canonical .env.example passes after replacing placeholders"
 for name in ["FMONITOR_ERP_PASSWORD", "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY"]:
     case = dict(base_values)
     case.pop(name)
@@ -135,6 +161,27 @@ for name, value in [("FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS", "0"),
     result = validate(case)
     assert (result.returncode, result.stdout, result.stderr) == (64, "", "LOCAL_CONFIG_INVALID\n"), \
         f"invalid bound {name} fails closed"
+for changes in [
+    {"FMONITOR_RUNTIME_ENV": ""},
+    {"FMONITOR_PUBLIC_BASE_URL": "http://fmonitor.example.invalid"},
+    {"FMONITOR_SMTP_PORT": "0"},
+    {"FMONITOR_SMTP_PORT": "65536"},
+    {"FMONITOR_SMTP_ENCRYPTION": "none"},
+    {"FMONITOR_SMTP_FROM_ADDRESS": "other@example.invalid"},
+    {"FMONITOR_SMTP_TIMEOUT_SECONDS": "0"},
+    {"FMONITOR_SMTP_TIMEOUT_SECONDS": "121"},
+    {"FMONITOR_SMTP_VERIFY_PEER": "false"},
+]:
+    case = dict(base_values)
+    case.update(changes)
+    result = validate(case)
+    assert (result.returncode, result.stdout, result.stderr) == (64, "", "LOCAL_CONFIG_INVALID\n"), \
+        f"invalid SMTP/runtime configuration fails closed: {tuple(changes)}"
+production_test_recipient = dict(base_values)
+production_test_recipient.update({"FMONITOR_RUNTIME_ENV": "production", "FMONITOR_SMTP_TEST_RECIPIENT": "test@example.invalid"})
+result = validate(production_test_recipient)
+assert (result.returncode, result.stdout, result.stderr) == (64, "", "LOCAL_CONFIG_INVALID\n"), \
+    "production rejects SMTP test recipient"
 
 parity = subprocess.run(["python3", "tools/delivery/render-dependencies.py", "--check"], cwd=ROOT,
                         text=True, capture_output=True, timeout=30)

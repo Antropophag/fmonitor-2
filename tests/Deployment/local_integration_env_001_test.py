@@ -139,7 +139,7 @@ with tempfile.TemporaryDirectory() as raw:
     # Execute the public Make seams in an isolated checkout with downstream witnesses.
     checkout = box / "checkout"
     checkout.mkdir()
-    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env", "tools/delivery/local-integration-config"):
+    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env", "tools/delivery/local-integration-config", "app/autoload.php", "app/Jobs/SmtpConfiguration.php"):
         destination = checkout / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / rel, destination)
@@ -164,6 +164,17 @@ FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:18093
 FMONITOR_TRUSTED_REQUEST_SCHEME=http
 FMONITOR_INITIAL_OWNER_EMAIL=owner@example.test
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=OWNER_CANARY_149
+FMONITOR_RUNTIME_ENV=development
+FMONITOR_PUBLIC_BASE_URL=https://fmonitor.example.invalid
+FMONITOR_SMTP_HOST=smtp.example.invalid
+FMONITOR_SMTP_PORT=587
+FMONITOR_SMTP_ENCRYPTION=tls
+FMONITOR_SMTP_USERNAME=fmonitor@example.invalid
+FMONITOR_SMTP_PASSWORD=SMTP_CANARY_149
+FMONITOR_SMTP_FROM_ADDRESS=fmonitor@example.invalid
+FMONITOR_SMTP_FROM_NAME=FMonitor
+FMONITOR_SMTP_TIMEOUT_SECONDS=10
+FMONITOR_SMTP_VERIFY_PEER=true
 FMONITOR_ERP_HOST=erp.example.invalid
 FMONITOR_ERP_DATABASE=legacy-stage
 FMONITOR_ERP_USER=reader

@@ -37,6 +37,17 @@ FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:{http_port}
 FMONITOR_TRUSTED_REQUEST_SCHEME=http
 FMONITOR_INITIAL_OWNER_EMAIL=issue185@shlz.ru
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=Owner-Issue-185-Synthetic!
+FMONITOR_RUNTIME_ENV=development
+FMONITOR_PUBLIC_BASE_URL=https://fmonitor.example.invalid
+FMONITOR_SMTP_HOST=smtp.example.invalid
+FMONITOR_SMTP_PORT=587
+FMONITOR_SMTP_ENCRYPTION=tls
+FMONITOR_SMTP_USERNAME=fmonitor@example.invalid
+FMONITOR_SMTP_PASSWORD=SMTP_E2E_SECRET
+FMONITOR_SMTP_FROM_ADDRESS=fmonitor@example.invalid
+FMONITOR_SMTP_FROM_NAME=FMonitor
+FMONITOR_SMTP_TIMEOUT_SECONDS=10
+FMONITOR_SMTP_VERIFY_PEER=true
 FMONITOR_ERP_HOST=erp.example.invalid
 FMONITOR_ERP_DATABASE=legacy-stage
 FMONITOR_ERP_USER=reader
@@ -124,7 +135,7 @@ CREATE TABLE fm_install_checklists_values_log(value_id BIGINT,ctime DATETIME);\n
     rendered=run(['bash','tools/delivery/local-runtime-env','--','docker','compose','--env-file','@env-file','-f','deploy/runtime/compose.yaml','config'])
     for secret in (legacy_secret,bitrix_old,bitrix_new):assert secret not in rendered.stdout+rendered.stderr
     app_logs=run(['bash','tools/delivery/local-runtime-env','--','docker','compose','--env-file','@env-file','-f','deploy/runtime/compose.yaml','logs','--no-color'])
-    for secret in (legacy_secret,bitrix_old,bitrix_new):assert secret not in app_logs.stdout+app_logs.stderr
+    for secret in (legacy_secret,bitrix_old,bitrix_new,'SMTP_E2E_SECRET'):assert secret not in app_logs.stdout+app_logs.stderr
 finally:
     subprocess.run(['docker','rm','-f',endpoint],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     if env_path.exists():

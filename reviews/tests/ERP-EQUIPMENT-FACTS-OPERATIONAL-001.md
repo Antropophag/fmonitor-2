@@ -261,3 +261,30 @@ Current Gate 3 security/test-delta findings: None. The correction resolves the o
 Current terminal consumer-delta findings: None. Both corrections register the already reviewed one-shot secret-staging boundary in stale consumers and increase sensitivity to its presence and ordering; neither accepts a missing/unhealthy jobs contour nor relaxes security or state-preservation behavior.
 
 `APPROVED` for the terminal test-consumer delta at exact commit `684a57dac62e8e8984a1846d257a87a49d6f2986`. This is not Gate 5 and does not itself declare run `35596058141` fully GREEN or authorize implementation acceptance, publication, deployment or merge.
+
+---
+
+## Owner-comment canonical SMTP environment review — commit `68a1a692d9ae901f289b84b67a5a484bccb2f821`
+
+- Reviewer: `/root/erp_gate3` (`gpt-5.6-sol/low`), independent of correction authorship and production implementation
+- Scope: local runtime environment allowlist/validation and affected isolated test fixtures; production implementation review remains Gate 5
+- Focused evidence supplied: ERP runtime, local-integration env/security, local-data bootstrap, quickstart, weekly SMTP and real Make E2E are GREEN
+- Verdict: `APPROVED`
+
+### Security and no-weakening assessment
+
+1. **Canonical allowlist completeness — approved.** `tools/delivery/local-runtime-env` now requires the runtime mode, public base URL and canonical SMTP host/port/encryption/identity/password/from/name/timeout/peer-verification keys, while retaining `FMONITOR_SMTP_TEST_RECIPIENT` as optional. Existing duplicate/unknown-key, permissions and non-empty required-value checks continue to apply; ERP and integration requirements are unchanged.
+
+2. **Single validation owner — approved.** The shell boundary delegates semantic SMTP/runtime validation to `FMonitor2\Jobs\SmtpConfiguration::fromEnvironment(getenv())` rather than cloning rules. Parser output is redirected on both stdout and stderr; every rejection remains the exact public `LOCAL_CONFIG_INVALID` result from the shell's existing fail seam. Exception details and values cannot cross the validator boundary.
+
+3. **Independent invalid matrix — approved.** `tests/Deployment/erp_equipment_facts_runtime_001_test.py` verifies a populated canonical `.env.example`, then rejects empty runtime mode, non-HTTPS public URL, ports outside `1..65535`, unsupported encryption, username/from mismatch, timeouts outside the accepted range, disabled peer verification and a production test recipient. Existing missing/empty ERP secrets and bounded ERP controls remain covered.
+
+4. **Optional test-recipient semantics — approved.** Absence remains valid because the key is optional, while presence in production is rejected by the canonical validator. This preserves the existing controlled test-delivery behavior without requiring a recipient for ordinary runtime or permitting test rerouting in production.
+
+5. **Fixture fidelity and leakage — approved.** Isolated Make fixtures copy the real autoloader and `SmtpConfiguration`, then provide synthetic SMTP values instead of bypassing validation. SMTP password canaries are added to bootstrap/quickstart output and real application-log non-disclosure assertions. No test emits `.env`, validator diagnostics or passwords, and the real Make E2E retains the existing ERP/Bitrix/legacy leakage checks.
+
+### Findings and conclusion
+
+Current owner-comment Gate 3 correction findings: None. The delta closes a canonical configuration gap, centralizes validation, expands rejected cases and secret-canary coverage, and does not relax ERP/jobs/startup/readiness behavior.
+
+`APPROVED` for the SMTP/runtime test and configuration-contract delta at exact commit `68a1a692d9ae901f289b84b67a5a484bccb2f821`. This is not Gate 5 and does not approve overall implementation, CI state, live qualification, publication, deployment or merge.
