@@ -9,11 +9,11 @@ final readonly class YiiObjectQueue
     public function __construct(private MariaDbYiiObjectQueue $store)
     {
     }
-    public function read(int $actorId, string $query, string $status, int $page): array
+    public function read(int $actorId, string $query, string $status, int $page, int $size = 50, string $chart = '', string $bucket = '', ?string $cutoff = null): array
     {
         if (!$this->store->authorized($actorId)) {
             throw new \DomainException('ACCESS_DENIED');
         }
-        return $this->store->read($actorId, trim($query), $status, $page);
+        return $this->store->read($actorId, trim($query), $status, $page, $size, $chart, $bucket, $cutoff);
     }
 }

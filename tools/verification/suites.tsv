@@ -234,6 +234,7 @@ db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
+db	php	tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_commands_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_concurrency_001_test.php	integration

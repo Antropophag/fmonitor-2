@@ -472,6 +472,8 @@
         "app/InstallationProcess/MariaDbYiiObjectCard.php",
         "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
         "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+        "app/InstallationProcess/YiiObjectQueue.php",
+        "app/InstallationProcess/YiiOperationalDashboardStore.php",
         "app/InstallationProcess/YiiOperationalDashboard.php"
       ],
       "verifiers": [

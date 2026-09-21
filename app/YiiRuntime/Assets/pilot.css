@@ -1928,5 +1928,28 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-dashboard-list li span { color: var(--shlz-semantic-color-text-secondary); font-size: 13px; }
 .fm2-dashboard-state { max-inline-size: 760px; }
 .fm2-dashboard-register { justify-self: start; }
+.fm2-dashboard-charts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; min-inline-size: 0; }
+.fm2-dashboard-chart { grid-template-rows: auto minmax(0,auto); gap: 18px; min-inline-size: 0; min-block-size: 0; padding: 24px; }
+.fm2-dashboard-chart > .shlz-chart-widget__plot { min-block-size: 0; overflow: visible; }
+.fm2-dashboard-chart--stages { grid-column: 1/-1; }
+.fm2-dashboard-chart h2 { margin: 0; font-size: 20px; }
+.fm2-dashboard-chart .shlz-chart-widget__header p { margin: 6px 0 0; color: var(--shlz-semantic-color-text-secondary); font-size: 12px; }
+.fm2-chart-bars { display: grid; align-items: end; gap: 10px; min-block-size: 190px; margin-block-start: 18px; }
+.fm2-chart-bars--six { grid-template-columns: repeat(6,minmax(0,1fr)); }
+.fm2-chart-bars--five { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.fm2-chart-weeks { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; min-inline-size: 0; }
+.fm2-chart-week { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-inline-size: 0; }
+.fm2-chart-week__label { color: var(--shlz-semantic-color-text-secondary); font-size: 11px; text-align: center; white-space: nowrap; }
+.fm2-chart-week__bars { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: end; gap: 4px; min-inline-size: 0; }
+.fm2-chart-week__bars .fm2-chart-bar { grid-template-rows: 120px auto auto; }
+.fm2-chart-week__bars .fm2-chart-bar__label { font-size: 10px; }
+.fm2-chart-bar { display: grid; grid-template-rows: 120px auto auto; align-items: end; gap: 6px; min-inline-size: 0; color: inherit; text-align: center; text-decoration: none; }
+.fm2-chart-bar:focus-visible { outline: 3px solid var(--shlz-semantic-color-action-primary); outline-offset: 4px; border-radius: 6px; }
+.fm2-chart-bar__mark { align-self: end; inline-size: min(100%,56px); min-block-size: 4px; block-size: calc(4px + var(--fm2-bar-size)); margin-inline: auto; border-radius: 6px 6px 2px 2px; background: var(--shlz-source-color-blue-blue-200,#253d98); }
+.fm2-chart-week__bars .fm2-chart-bar:nth-child(even) .fm2-chart-bar__mark { background: var(--shlz-source-color-aditional-purple,#7652a8); }
+.fm2-chart-bar__value { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.fm2-chart-bar__label { color: var(--shlz-semantic-color-text-secondary); font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
+.fm2-chart-key { display: inline-block; inline-size: 10px; block-size: 10px; margin-inline-end: 4px; border-radius: 2px; background: var(--shlz-source-color-blue-blue-200,#253d98); }
+.fm2-chart-key--finish { background: var(--shlz-source-color-aditional-purple,#7652a8); }
 @media (max-width: 1050px) { .fm2-dashboard-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 680px) { .fm2-dashboard-page { gap: 20px; padding: 20px 14px; } .fm2-dashboard-header { align-items: flex-start; flex-direction: column; } .fm2-dashboard-metrics,.fm2-dashboard-lists { grid-template-columns: minmax(0,1fr); } .fm2-dashboard-metric { min-block-size: 0; } .fm2-dashboard-register { inline-size: 100%; } }
+@media (max-width: 680px) { .fm2-dashboard-page { gap: 20px; padding: 20px 14px; } .fm2-dashboard-header { align-items: flex-start; flex-direction: column; } .fm2-dashboard-metrics,.fm2-dashboard-lists,.fm2-dashboard-charts { grid-template-columns: minmax(0,1fr); } .fm2-dashboard-chart--stages { grid-column: auto; } .fm2-dashboard-chart { padding: 18px 12px; } .fm2-chart-bars { min-block-size: 190px; gap: 6px; } .fm2-chart-weeks { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 12px; } .fm2-chart-week__bars .fm2-chart-bar { grid-template-rows: 88px auto auto; } .fm2-chart-bar__label { font-size: 11px; } .fm2-dashboard-metric { min-block-size: 0; } .fm2-dashboard-register { inline-size: 100%; } }
