@@ -2,11 +2,11 @@
 declare(strict_types=1);
 require dirname(__DIR__).'/Support/CurrentProductionSchemaContract.php';
 // A7 public canonical deployment and current backup inventory, no runtime DDL.
-$catalogue=FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();assertSameValue(range(1,30),array_keys($catalogue),'v29 canonical frontier');
+$catalogue=FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();assertSameValue(range(1,31),array_keys($catalogue),'v29 canonical frontier');
 $before=feedbackFacts($f);$repeat=FMonitor2\InstallationProcess\CanonicalMigrationApplication::run($f->db,$f->p,$catalogue);$expected=CurrentProductionSchemaContract::replayApplicationResult();assertSameValue([$expected[0],$expected[2],$expected[3]],[$repeat['exitCode'],$repeat['result']['schemaVersion'],$repeat['result']['appliedVersions']],'populated schema replay');assertSameValue($before,feedbackFacts($f),'schema replay preserves feedback');
 $actual=array_column($f->db->query('SHOW TABLES')->fetch_all(MYSQLI_NUM),0);sort($actual);
-assertSameValue($actual,FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV29::tables($f->p),'backup includes exact new inventory');
-$auto=array_column($f->db->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND AUTO_INCREMENT IS NOT NULL ORDER BY BINARY TABLE_NAME')->fetch_all(MYSQLI_ASSOC),'TABLE_NAME');assertSameValue($auto,FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV29::autoIncrement($f->p),'backup AI inventory');
+assertSameValue($actual,FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV31::tables($f->p),'backup includes exact new inventory');
+$auto=array_column($f->db->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND AUTO_INCREMENT IS NOT NULL ORDER BY BINARY TABLE_NAME')->fetch_all(MYSQLI_ASSOC),'TABLE_NAME');assertSameValue($auto,FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV31::autoIncrement($f->p),'backup AI inventory');
 $oldProfile=FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV24::tables($f->p);assertSameValue(false,in_array($f->p.'fm2_feedback',$oldProfile,true),'historical v24 unchanged');
 // Public v25 migration on partial/incompatible schema must preflight before any CREATE.
 $migration=$catalogue[25];$prefix='badfeedback_';

@@ -86,6 +86,15 @@ db	php	tests/InstallationProcess/construction_control_completed_filter_001_test.
 db	php	tests/InstallationProcess/control_engineer_assignment_001_test.php	integration
 db	php	tests/InstallationProcess/deadline_transfer_certificate_001_test.php	integration
 db	php	tests/InstallationProcess/deadline_transfer_certificate_schema_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_changes_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_contract_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_diagnostics_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_initial_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_isolation_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_read_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_schema_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_schema_compatibility_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_schema_001_test.php	integration
 db	php	tests/InstallationProcess/inspection_evidence_schema_001_test.php	integration
@@ -138,6 +147,7 @@ db	php	tests/Jobs/bitrix_order_document_links_scheduler_001_test.php	integration
 db	php	tests/Jobs/durable_queue_001_test.php	integration
 db	php	tests/Jobs/durable_queue_concurrency_001_test.php	integration
 db	php	tests/Jobs/durable_queue_connection_loss_001_test.php	integration
+db	php	tests/Jobs/erp_equipment_facts_scheduler_001_test.php	integration
 db	php	tests/Jobs/jobs_extensions_schema_001_test.php	integration
 db	php	tests/Jobs/jobs_runtime_cli_001_test.php	integration
 db	php	tests/Jobs/jobs_runtime_contract_001_test.php	integration
@@ -204,6 +214,7 @@ db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
 db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_http_001_test.php	integration
+db	php	tests/Yii2/yii2_erp_equipment_facts_001_test.php	integration
 db	php	tests/Yii2/yii2_feedback_001_test.php	integration
 db	php	tests/Yii2/yii2_imports_workforce_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_boundaries_001_test.php	integration
@@ -354,6 +365,8 @@ unit	php	tests/InstallationProcess/bitrix_workforce_delivery_001_test.php	integr
 unit	php	tests/InstallationProcess/checklist_bulk_online_sequence_manual_test.php	integration
 unit	php	tests/InstallationProcess/control_queue_bulk_protocol_manual_test.php	integration
 unit	php	tests/InstallationProcess/document_render_html_001_test.php	unit
+unit	php	tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php	unit
+unit	php	tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php	unit
 unit	php	tests/InstallationProcess/harness_artifact_isolation_001_test.php	integration
 unit	php	tests/InstallationProcess/inspection_evidence_sql_owner_policy_test.php	governance
 unit	php	tests/InstallationProcess/inspection_item_complete_001_authorization_test.php	unit
@@ -471,6 +484,7 @@ unit	php	tests/WeeklyFkrReport/weekly_report_001_test.php	integration
 unit	php	tests/WeeklyFkrReport/weekly_schedule_001_test.php	integration
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
+unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit

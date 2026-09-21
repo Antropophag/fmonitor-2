@@ -50,6 +50,7 @@ final readonly class MariaDbYiiObjectCardProjection
             if ($state === 'needs_assignment_change') { $card['status'] = 'Требуется изменение'; }
         }
         $card['completionWritable'] = $state === 'working';
+        $card['equipmentFacts'] = $this->equipmentFacts((int) $card['id']);
         unset($card['caseId'], $card['nextStep']);
         return $this->actorNames($card);
     }
@@ -141,6 +142,31 @@ final readonly class MariaDbYiiObjectCardProjection
         $rows = $this->db->createCommand($sql, $params)->queryAll();
         if (count($rows) > 1) { throw new \RuntimeException('Ambiguous object card projection.'); }
         return $rows[0] ?? null;
+    }
+
+    private function equipmentFacts(int $objectId): array
+    {
+        $unavailable = ['readinessDate' => null, 'firstShipmentDate' => null, 'fullShipmentDate' => null, 'source' => '1c_erp', 'status' => 'unavailable', 'lastSuccessfulSyncAt' => null];
+        try {
+            $meta = $this->one("SELECT last_successful_observed_at,latest_failure_observed_at FROM `{$this->prefix}fm2_equipment_fact_sync_metadata` WHERE singleton_id=1", []);
+            $row = $this->one("SELECT readiness_date,first_shipment_date,full_shipment_date,last_successful_observed_at FROM `{$this->prefix}fm2_equipment_fact_current` WHERE object_id=:object", [':object' => $objectId]);
+            if ($meta === null) { throw new \RuntimeException('Equipment facts metadata unavailable.'); }
+            $success = $meta['last_successful_observed_at'] ?? null;
+            $failure = $meta['latest_failure_observed_at'] ?? null;
+            $status = $row === null
+                ? ($success === null && $failure !== null ? 'failed_before_success' : 'never_synced')
+                : ($failure !== null && $failure > $success ? 'failed_after_success' : 'fresh');
+            return [
+                'readinessDate' => $row['readiness_date'] ?? null,
+                'firstShipmentDate' => $row['first_shipment_date'] ?? null,
+                'fullShipmentDate' => $row['full_shipment_date'] ?? null,
+                'source' => '1c_erp',
+                'status' => $status,
+                'lastSuccessfulSyncAt' => $row === null ? null : $this->utc($row['last_successful_observed_at']),
+            ];
+        } catch (\Throwable) {
+            return $unavailable;
+        }
     }
 
     private function utc(mixed $value): string { return str_replace(' ', 'T', (string) $value) . 'Z'; }

@@ -42,10 +42,10 @@ try {
     $card = $fixture->request('GET', '/pilot/objects/4512', [], $cookies);
     $check($card['status'] === 200, 'card GET');
     $body = $card['body'];
-    foreach (['Сроки и готовность','Команда','Документы','История','role="tablist"','role="tab"','role="tabpanel"','data-shlz-tabs','shlz-document-row','shlz-document-row__visual','shlz-document-row__title','shlz-document-row__meta','shlz-document-row__actions','/pilot/assets/shlz-file-types/file-pdf-default.svg','/pilot/assets/shlz-icons/download.svg','Регистрационный номер','Табельный','Уволен','Сведения о поставке не переданы'] as $text) {
+    foreach (['Сроки и готовность','Команда','Документы','История','role="tablist"','role="tab"','role="tabpanel"','data-shlz-tabs','shlz-document-row','shlz-document-row__visual','shlz-document-row__title','shlz-document-row__meta','shlz-document-row__actions','/pilot/assets/shlz-file-types/file-pdf-default.svg','/pilot/assets/shlz-icons/download.svg','Регистрационный номер','Табельный','Уволен','Готовность оборудования','Первое грузоместо','Полная отгрузка','Источник','1С ERP','Последнее успешное обновление','Синхронизация ещё не выполнялась'] as $text) {
         $check(str_contains($body, $text), 'rendered ' . $text);
     }
-    foreach (['Источник','legacy_fmonitor','position_snapshot','workforce_source','Статус не указан'] as $text) {
+    foreach (['legacy_fmonitor','position_snapshot','workforce_source','Статус не указан'] as $text) {
         $check(!str_contains($body, $text), 'card hides ' . $text);
     }
     $assetCookies = [];
@@ -93,7 +93,7 @@ try {
         $check($fact($label, $value), 'readiness pair ' . $label . '=' . $value);
     }
     $panelText = $panel ? trim($panel->textContent) : '';
-    $check(str_contains($panelText, 'Сведения о поставке не переданы'), 'readiness missing delivery');
+    $check(str_contains($panelText, 'Готовность оборудования') && substr_count($panelText, 'неизвестно') >= 4, 'readiness exposes three unknown equipment dates and unknown successful sync');
     $check(!str_contains($panelText, 'Фактическое начало'), 'absent factual start is not invented');
     foreach (['Этажность','Грузоподъёмность, кг','Скорость, м/с'] as $label) {
         $check(!str_contains($panelText, $label), 'readiness excludes passport fact ' . $label);

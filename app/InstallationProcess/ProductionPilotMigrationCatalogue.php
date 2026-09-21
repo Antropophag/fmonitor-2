@@ -38,6 +38,7 @@ final class ProductionPilotMigrationCatalogue
             28=>ControlEngineerAssignmentDefinitionSchemaMigration::class,
             29=>LegacyControlEngineerMigrationSchema::class,
             30=>LegacyControlEngineerImportSchemaMigration::class,
+            31=>EquipmentFactsSchemaMigration::class,
         ];
     }
 }

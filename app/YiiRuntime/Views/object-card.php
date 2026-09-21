@@ -192,12 +192,20 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                     <dl class="fm2-fact-grid">
                         <div class="fm2-fact"><dt>Монтажное дело</dt><dd><?= Html::encode($status) ?></dd></div>
                         <div class="fm2-fact"><dt>Оригинал распоряжения</dt><dd><?= !empty($confirmedOriginal) ? 'Принят' : 'Не принят' ?></dd></div>
-                        <div class="fm2-fact"><dt>Поставка оборудования</dt><dd>Сведения о поставке не переданы</dd></div>
+                        <div class="fm2-fact"><dt>Готовность оборудования</dt><dd><?= $equipmentFacts['readinessDate'] ? $date($equipmentFacts['readinessDate']) : 'неизвестно' ?></dd></div>
+                        <div class="fm2-fact"><dt>Первое грузоместо</dt><dd><?= $equipmentFacts['firstShipmentDate'] ? $date($equipmentFacts['firstShipmentDate']) : 'неизвестно' ?></dd></div>
+                        <div class="fm2-fact"><dt>Полная отгрузка</dt><dd><?= $equipmentFacts['fullShipmentDate'] ? $date($equipmentFacts['fullShipmentDate']) : 'неизвестно' ?></dd></div>
+                        <div class="fm2-fact"><dt>Источник</dt><dd>1С ERP</dd></div>
+                        <div class="fm2-fact"><dt>Последнее успешное обновление</dt><dd><?= $equipmentFacts['lastSuccessfulSyncAt'] ? $date($equipmentFacts['lastSuccessfulSyncAt'], true) : 'неизвестно' ?></dd></div>
                         <?php if ($opened): ?>
                             <div class="fm2-fact"><dt>Работы открыл</dt><dd data-opening-actor><?= Html::encode($openedByName ?? ('Пользователь недоступен · ID ' . $openedByUserId)) ?></dd></div>
                             <div class="fm2-fact"><dt>Время открытия</dt><dd><time data-opening-time datetime="<?= Html::encode($openedAt) ?>"><?= $date($openedAt, true) ?> МСК</time></dd></div>
                         <?php endif ?>
                     </dl>
+                    <?php if ($equipmentFacts['status'] === 'never_synced'): ?><p role="status">Синхронизация ещё не выполнялась</p>
+                    <?php elseif ($equipmentFacts['status'] === 'failed_before_success'): ?><p role="status">Синхронизация завершилась ошибкой до первого успешного обновления</p>
+                    <?php elseif ($equipmentFacts['status'] === 'failed_after_success'): ?><p role="status">Последняя попытка завершилась ошибкой</p>
+                    <?php elseif ($equipmentFacts['status'] === 'unavailable'): ?><p role="status">Данные оборудования временно недоступны</p><?php endif ?>
                 </div>
                 <?php if ($opened) require __DIR__ . '/completion.php'; ?>
             </section>
