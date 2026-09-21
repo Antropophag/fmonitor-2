@@ -13,24 +13,24 @@
 </fieldset>
 <label class="shlz-choice fm2-completed-switch"><input class="shlz-checkbox" type="checkbox" data-show-completed><span>Показывать завершённые</span></label></div>
 </div>
-<div class="fm2-control-surface"><table class="fm2-control-table"><thead><tr><th>Объект</th><th>Последняя активность</th><th>Инженер</th><th><span class="fm2-visually-hidden">Открыть</span></th></tr></thead>
+<div class="fm2-control-surface"><table class="fm2-control-table"><thead><tr><th>Объект</th><th>Последняя активность</th><th><span class="fm2-visually-hidden">Отгрузка</span></th><th>Инженер</th><th><span class="fm2-visually-hidden">Открыть</span></th></tr></thead>
 <tbody>
-<?php foreach($objects as$o):$engineer=$o['controlEngineer'];$shipmentDate=$o['fullShipmentDate']??$o['firstShipmentDate']??null;$shipmentState=($o['fullShipmentDate']??null)!==null?'full':(($o['firstShipmentDate']??null)!==null?'first':null);$shipmentTitle=$shipmentState==='full'?'Заказ отгружен полностью':'Первое грузоместо отгружено';$shipmentIcon=$shipmentState==='full'?'delivery-4.svg':'delivery-box.svg';?>
+<?php foreach($objects as$o):$engineer=$o['controlEngineer'];$shipmentDate=$o['fullShipmentDate']??$o['firstShipmentDate']??null;$shipmentState=($o['fullShipmentDate']??null)!==null?'full':(($o['firstShipmentDate']??null)!==null?'partial':'unknown');$shipmentTitle=$shipmentState==='full'?'Полностью отгружен':($shipmentState==='partial'?'Частично отгружен':'Не известно');$shipmentLabel=$shipmentDate===null?$shipmentTitle:$shipmentTitle.', '.(new DateTimeImmutable((string)$shipmentDate))->format('d.m.Y');?>
 <tr class="fm2-control-row" data-control-row data-object-id="<?=$o['id']?>" data-engineer-id="<?=(int)($engineer['userId']??0)?>" data-completed="<?=$o['completed']?'true':'false'?>" data-search="<?=Html::encode(mb_strtolower($o['address'].' '.$o['registrationNumber']))?>">
-<td>
+<td class="fm2-object-cell">
 <a class="fm2-control-link" href="/pilot/construction-control/objects/<?=$o['id']?>/checklist">
 <span class="fm2-control-address"><?=Html::encode($o['address'])?></span><span class="fm2-control-reg">Рег. № <?=Html::encode($o['registrationNumber'])?><?php if(trim((string)$o['entrance'])!==''):?><span class="fm2-control-entrance">Подъезд <?=Html::encode((string)$o['entrance'])?></span><?php endif?></span>
 </a>
-<?php if($shipmentState!==null):?><details class="fm2-shipment-indicator fm2-shipment-indicator--<?=$shipmentState?>" data-shipment-disclosure data-shipment-state="<?=$shipmentState?>">
-<summary aria-label="<?=Html::encode($shipmentTitle)?>"><img src="/pilot/assets/shlz-icons/<?=$shipmentIcon?>" alt=""><span class="fm2-visually-hidden"><?=Html::encode($shipmentTitle)?></span></summary>
-<span class="fm2-shipment-detail"><strong><?=Html::encode($shipmentTitle)?></strong><time datetime="<?=Html::encode((string)$shipmentDate)?>"><?=(new DateTimeImmutable((string)$shipmentDate))->format('d.m.Y')?></time></span>
-</details><?php endif?>
-<?php if($o['ready']??false):?><strong>Готов к открытию</strong><?php endif?>
 </td>
-<td>
-<?php $lastActivity=$activity($o['lastChecklistActivityAt']);?><span class="fm2-activity-line"><span class="fm2-local-sync" data-local-sync>
+<?php $lastActivity=$activity($o['lastChecklistActivityAt']);$activityState=$lastActivity!==null?'recorded':(($o['ready']??false)?'ready':'empty');?><td data-activity-state="<?=$activityState?>">
+<?php if($activityState==='ready'):?><span class="fm2-activity fm2-activity--ready">Готов к открытию</span><?php else:?><span class="fm2-activity-line"><span class="fm2-local-sync" data-local-sync>
 <span class="fm2-visually-hidden">Синхронизировано</span>
-</span><?php if($lastActivity!==null):?><time class="fm2-activity" datetime="<?=Html::encode($lastActivity['source'])?>"><span class="fm2-activity-date"><?=Html::encode($lastActivity['date'])?></span><small class="fm2-activity-time"><?=Html::encode($lastActivity['time'])?></small></time><?php else:?><span class="fm2-activity fm2-activity--never">Инспекций ещё не было</span><?php endif?></span>
+</span><?php if($lastActivity!==null):?><time class="fm2-activity" datetime="<?=Html::encode($lastActivity['source'])?>"><span class="fm2-activity-date"><?=Html::encode($lastActivity['date'])?></span><small class="fm2-activity-time"><?=Html::encode($lastActivity['time'])?></small></time><?php else:?><span class="fm2-activity fm2-activity--never">Инспекций ещё не было</span><?php endif?></span><?php endif?>
+</td>
+<td class="fm2-shipment-cell" data-shipment-state="<?=$shipmentState?>" aria-label="<?=Html::encode($shipmentLabel)?>" title="<?=Html::encode($shipmentLabel)?>"><span class="fm2-shipment-status">
+<?php if($shipmentState!=='unknown'):?><span class="fm2-shipment-icon-stack" aria-hidden="true">
+<img class="fm2-shipment-icon" src="/pilot/assets/shlz-icons/delivery-box.svg" alt="">
+</span><?php endif?></span>
 </td>
 <td>
 <?=Html::encode((string)($engineer['fullName']??'Инженер не назначен'))?>

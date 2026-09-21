@@ -142,3 +142,89 @@ No specification, test-sensitivity, or intended-RED finding remains. CI and depl
 `APPROVED`
 
 Gate 4 may proceed against exact source `c1d5ca682c910e39c48c7d1184871f8906ea5ab2aac2bb572f68678c757280e5`. Implementation must make the complete focused acceptance GREEN without changing expectations; any normative or executable-test change requires fresh Gate 2 evidence and independent Gate 3 review.
+
+---
+
+## Owner-directed UI replacement Gate 3 review — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T164138Z-d351faf8e9/package.json`
+- Exact source: base `557166d918b16933538510c489ce5c99c2abaee0` plus reconstructible snapshot, harness source `d13779437be406f08a353866a8974ced5094a8ba10738d760fd302a3a9c951a8`, executable source `57ec4fa8ea11197fd273e0c891e37927f2c6c44f8f18ce74bebc97ef9a075661`
+- Snapshot patch SHA-256: `d8ee555e2d87a035eaadff0c02e0e8012d35ddb966cbadd3e8b9d57c38ba984d`
+- Verification plan SHA-256: `b97a888b4f5f6453013a3902ee1164d0787e88f47d7841a099c56065fb81ccce`
+- Scope: specification/tests/INTENDED_RED only; production implementation not reviewed
+
+### Complete findings
+
+1. **HIGH — the executable contract and OpenSpec delta prescribe mutually incompatible UIs.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:15-22`; `openspec/changes/show-equipment-shipment-in-control-queue/specs/shipment-indicator/spec.md:5-26`. The owner-directed contract requires an always-visible three-state «Отгрузка» column, visible «Не известно», no disclosure, and the ready-to-open activity replacement. The still-bound delta instead requires no positive indicator for readiness and normatively requires a keyboard/touch disclosure that opens to reveal title/date. An implementation cannot both remove disclosure and satisfy the delta's disclosure scenario, and the delta contains none of the separate-column, visible-unknown, composed full icon, no-row-height, mobile-label, or ready-activity requirements. Replace the obsolete delta requirements/scenarios with the new owner decision before Gate 4; OpenSpec cannot remain normative for the rejected design.
+
+2. **HIGH — the full composed icon and decorative-icon accessibility contract are not structurally sensitive.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:19-20`; `tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php:38-49`; `tests/Support/construction_control_shipment_indicator_browser.cjs:3-5`. The test only searches the full row for `delivery-box.svg` and `checkmark.svg`; it does not bind the checkmark as a separate corner overlay on the box, so two unrelated sequential icons or a checkmark elsewhere pass. It also never requires empty `alt`/`aria-hidden` treatment for all three decorative icon forms or binds accessible status text to the shipment cell. Add a structural source/DOM assertion for one icon stack containing the box plus separately positioned corner checkmark, exact unknown/partial icon structure, decorative semantics, and visible status text as the accessible name. Bind the corner positioning/no-colored-container CSS rather than only checking for filenames and the absence of one `background` declaration on two selectors.
+
+3. **MEDIUM — the ready-to-open relocation is asserted globally rather than on the qualifying row.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:22`; `tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php:74-75`. The positive assertion accepts `data-activity-state="ready"` anywhere on the page, while the negative regular expression starts at the first `fm2-control-link` and scans an arbitrary 500 characters. It does not prove that the same fixture object is ready, has no inspection activity, shows «Готов к открытию» in its activity cell, omits «Инспекций ещё не было», and lacks a duplicate label in its identity cell. Extract the known qualifying row and its object/activity cells separately, then assert the complete replacement and absence rules within that row; retain a non-ready/no-inspection row proving the ordinary empty-activity copy remains unchanged.
+
+### RED evidence assessment
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790008858977164000-274d3829a31e4facb5e253e8d8540f31.json` is exact-source and drift-free. It completes MariaDB/bootstrap and the real authenticated Yii queue, then aggregates 21 expected missing-product gaps across the separate column, new labels, public assets, source-layout contract, removal of `delivery-4`, all unknown states, and ready activity. There is no setup or environment failure. This is valid intended RED for the assertions that exist, but it cannot compensate for the normative conflict and structural sensitivity gaps above.
+
+CI and deployment retain their existing external dispositions and are not treated as Gate 3 evidence or authorization.
+
+### Replacement-design verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 is blocked. Reconcile the OpenSpec delta with the owner-directed replacement, add bounded structural icon/accessibility and row-local ready-activity assertions, retain fresh aggregate exact-source RED, and resubmit for independent Gate 3 review.
+
+---
+
+## Replacement-design correction rereview — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T164713Z-eaf19c73ce/package.json`
+- Exact source: base `557166d918b16933538510c489ce5c99c2abaee0` plus reconstructible snapshot, harness source `bcef6256c959ee2635f56f2fc101f9ec06b0d42c0efc7ddebd1cc1294c5fade7`, executable source `152a0a60b86effdadee76a30dadb37ac324e064f735a61b7429577fac9270753`
+- Snapshot patch SHA-256: `673cac8b04f092a23963c79171586ac0ffe91a7c3978a0d84e186ba60add15fc`
+- Verification plan SHA-256: `e4746735a246edb547fe7a81bbef4cefd33e85ecd73c3d735b78481310f54f43`
+
+### Prior findings disposition
+
+1. **Normative coherence — resolved.** The OpenSpec delta now requires the separate three-state column, full-over-partial priority, visible neutral unknown, no disclosure, box-plus-corner-checkmark composition, decorative icons, neutral compact layout, and the ready activity replacement. Its readiness scenario's “positive indicator absent” is compatible with rendering the explicitly required neutral unknown state.
+2. **Icon/accessibility structure — partially resolved.** The test adds the intended icon-stack/icon/marker class names and `alt=""`, but the remaining binding defect is described below.
+3. **Ready activity — resolved.** Object 4512 is explicitly moved to the ready process state; assertions extract its row and bind the ready copy to a `data-activity-state="ready"` cell while excluding it from that row's identity cell. Object 4513 independently proves the ordinary no-inspection copy remains.
+
+### Remaining finding
+
+1. **HIGH — the purported exact full-icon markup assertion remains an unordered row-wide substring check.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:19-20`; `tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php:38-50`; `tests/Support/construction_control_shipment_indicator_browser.cjs:3-5`. The loop only proves that the full row contains the strings `fm2-shipment-icon-stack`, `fm2-shipment-icon`, `delivery-box.svg`, `fm2-shipment-marker`, `checkmark.svg`, and one occurrence of `alt=""`. It does not prove that the box and marker are nested in the same stack, that both images are decorative, or that the marker is positioned in the corner. The helper still has no icon-structure observation and its CSS check only covers fixed height/inline display/no direct background. An implementation with the checkmark elsewhere in the cell, two sequential uncomposed icons, non-empty alt on one image, and an unpositioned marker passes. Parse or structurally match the shipment cell so the full state requires one stack containing exactly the decorative box image and decorative marker image; require unknown/partial images to be decorative too; and assert the marker selector has corner positioning relative to the stack. Retain the visible text labels as the accessible content.
+
+### Corrected RED evidence
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790009190501607000-9e9b9bf68ce04c20a33853ed6fe79bf4.json` is exact-source, drift-free, and aggregates 26 expected missing-product findings. It reaches the corrected row-local ready and ordinary controls and all three-state/layout groups without setup failure. Fresh RED remains required after the final structural icon assertions are added.
+
+### Correction verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4 remains blocked only on the bounded composed-icon/decorative-semantics structural assertion. The normative artifacts and ready-activity coverage need no further correction at this time.
+
+---
+
+## Final replacement-design Gate 3 rereview — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T165048Z-a2a2abd8ed/package.json`
+- Exact source: base `557166d918b16933538510c489ce5c99c2abaee0` plus reconstructible snapshot, harness source `3a4fae1757711f895f7c35df87bffdc91edc9011837b3de5179a7a6ef1350c99`, executable source `df60c88cc939745226218eb951acbc98e53f2e4174cc1960e0b49e3210f9360c`
+- Snapshot patch SHA-256: `c0ca3e73f40b6f0588b152680d53c14d7149d04f58736077467820ea90b60151`
+- Verification plan SHA-256: `4e662c023e7db491e9c790fcf70441c02a92495eb111ecd48c57e3b7308ca57f`
+
+### Final finding disposition
+
+The sole remaining finding is resolved.
+
+- Full state is now bound by one exact structural expression to a single `fm2-shipment-icon-stack` with `aria-hidden="true"`, containing the decorative `delivery-box.svg` base immediately followed by the decorative `checkmark.svg` marker. Partial is independently bound to an exact decorative box-only stack, and unknown to an exact decorative `info-circle.svg` image.
+- The source-layout helper requires the icon stack to be `position: relative` and the marker to be `position: absolute` with an inset rule, making the separately nested marker a corner overlay rather than an unrelated sequential icon.
+- Visible cell text remains the accessible status content. The exact public hashes, three-state labels, separate fixed-height column, neutral styling, mobile label, no `delivery-4`, full priority, unknown matrix, row-local ready activity replacement, ordinary no-inspection control, read-only envelope, and unavailable-projection behavior remain covered.
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790009409744760000-8e6fdf457d0449628a97a4bf7fafa533.json` is exact-source and drift-free. It aggregates 23 expected missing-product findings, including the three exact icon structures and relative/absolute corner positioning, without setup or environment failure.
+
+No specification, test-sensitivity, or intended-RED finding remains for the owner-directed replacement design.
+
+### Final replacement verdict
+
+`APPROVED`
+
+Gate 4 may proceed against exact source `3a4fae1757711f895f7c35df87bffdc91edc9011837b3de5179a7a6ef1350c99`. Implementation must make the complete replacement acceptance GREEN without changing expectations; any normative or executable-test change requires fresh Gate 2 evidence and independent Gate 3 review.
