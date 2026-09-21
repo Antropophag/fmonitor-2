@@ -51,3 +51,19 @@ No open findings.
 ### CI status boundary
 
 GitHub run `35611168525` is retained as failed evidence for pre-correction PR head `0211c8190d9874ccb3192cf672d84bbf2b9bd647`, not as GREEN evidence for final commit `2a43b137`. Its complete failed inventory includes `e2e`, `Integration (1/2)`, aggregate `verify`, and `Quality Graph`; the correction addresses the identified dashboard census and stale-consumer failures. A new exact-source CI run for `2a43b137` remains required before merge readiness. This Gate 5 approval covers the bounded correction delta and does not relabel the failed earlier run or infer final CI GREEN.
+
+## CI-setup correction rereview
+
+- Reviewed uncommitted delta: `.github/actions/setup-runtime/action.yml`, its explicit verification-input registration, and the delivery-record evidence note.
+- Correction verdict: **APPROVED**. No product, dashboard-contract, test-oracle, permission, persistence, or ERP finding is introduced; all earlier Gate 3/Gate 5 findings remain resolved.
+
+### Safety and scope disposition
+
+1. **Exact pin remains fail-closed.** The fast path is selected only when `platform.python_version()` exactly equals repository-provided `PYTHON_VERSION` (`3.12.11`). The following `Verify pinned Python` step independently asserts the same exact equality before any test category runs.
+2. **Fallback is preserved.** A missing `python3`, a version mismatch, or a probe failure enters the existing `uv python install "$PYTHON_VERSION"` and `uv python find --no-project "$PYTHON_VERSION"` path. The change therefore avoids a redundant external download only when the runner already supplies the exact pinned interpreter; it does not weaken the pin or silently accept a nearby major/minor/patch version.
+3. **PATH handling is bounded.** The fast path appends only the directory containing the already resolved `python3` executable to `GITHUB_PATH`. It does not mutate the runner interpreter, dependency pins, caches, credentials, or application runtime.
+4. **Failure evidence is attributable.** Quality Graph run `35614232072`, attempt 1, and its one same-source retry (attempt 2) target head `cc85a0ce3e1192179a0ff77b6414c60cb2c1cce1`. Both failing `Integration (1/2)` setup steps report the same external download URL and `504 Gateway Timeout` after three retries, before integration tests began. Other attempt-2 categories that completed setup (`fast`, `unit`, `governance`, `e2e`, and `Integration (2/2)`) were GREEN; aggregate `verify`/`Quality Graph` failed because the required integration result was absent. The correction is therefore proportionate to the observed setup-only failure and is not a test bypass.
+5. **Verification coverage is explicit.** `.github/actions/setup-runtime/action.yml` is added to this change's `planned_paths`. Reported focused checks `tests/Verification/yii2_dependency_setup_001_test.py`, `tests/Verification/architecture_guard_001_test.py`, and `tests/Verification/change_verification_001_test.py` are GREEN, covering the shared dependency bootstrap contract, architecture policy, and verification-plan registration.
+6. **Prior scope remains intact.** The delta contains no code/test/spec change outside the shared CI setup registration and evidence record. The dashboard correction approval, PR #218 ERP preservation, and R1–R8 evidence remain valid.
+
+This approval covers the bounded setup correction. Because the correction itself changes the exact PR source, a successful exact-source GitHub CI run after commit remains required for merge readiness; neither failed attempt is relabeled GREEN.

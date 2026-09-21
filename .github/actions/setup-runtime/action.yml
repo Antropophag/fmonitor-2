@@ -24,8 +24,12 @@ runs:
     - name: Select pinned Python
       shell: bash
       run: |
-        uv python install "$PYTHON_VERSION"
-        dirname "$(uv python find --no-project "$PYTHON_VERSION")" >> "$GITHUB_PATH"
+        if python3 -c 'import os,platform,sys; sys.exit(platform.python_version() != os.environ["PYTHON_VERSION"])'; then
+          dirname "$(command -v python3)" >> "$GITHUB_PATH"
+        else
+          uv python install "$PYTHON_VERSION"
+          dirname "$(uv python find --no-project "$PYTHON_VERSION")" >> "$GITHUB_PATH"
+        fi
     - name: Verify pinned Python
       shell: bash
       run: python3 -c 'import os, platform; assert platform.python_version() == os.environ["PYTHON_VERSION"]'

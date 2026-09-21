@@ -1,6 +1,7 @@
 {
   "change": "refine-operational-dashboard-visuals",
   "planned_paths": [
+    ".github/actions/setup-runtime/action.yml",
     "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
     "app/InstallationProcess/MariaDbYiiObjectQueue.php",
     "app/InstallationProcess/YiiOperationalDashboard.php",
