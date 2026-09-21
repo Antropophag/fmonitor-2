@@ -50,3 +50,65 @@ The normative specification is coherent, bounded, read-only, explicit about auth
 ## Required changes
 
 Correct the contradictory stage/drill-down expectation and revise the RED candidate to close every blocking and major gap above. Re-run the focused command to retain a fresh intended-RED record, regenerate the prepared reviewer package for the new exact source, and obtain a new independent Gate 3 review before executor handoff.
+
+---
+
+# Gate 3 re-review — 2026-09-21
+
+- Reviewer: Codex, independent `gpt-5.6-sol`, reasoning `low`
+- Reviewed exact source: `48cfed52384158524b4070bed302c9d25da4a64087eba0222a5ee53200b3aaa7`
+- Reconstructible source: base commit `120fd2749f241c2e3dd14e42e1594ab14e199848` plus empty retained patch `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T082505Z-7cf1e91140/snapshot/source.patch`, patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Role package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T082505Z-7cf1e91140/package.json`
+- RED record: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789979090704971000-630f3c2b47794b098d863e3f73690fe0.json`
+- RED test blob: `44bac639491b3f9ad49276a6e4b6a37216d4e5e56132a7028caf0f7eb1fb948b`
+- RED evidence: `INTENDED_RED`, exit `255`; first failure is now line 27, `INTENDED_RED fixed chart DTO`, because the predecessor owner does not return the chart DTO. The correction did not introduce a setup/environment failure before the missing behavior.
+- Prior review disposition: all 14 findings were rechecked against the complete corrected candidate; dispositions are recorded below.
+- Verdict: **CHANGES_REQUESTED**
+
+## Current findings
+
+1. **[BLOCKING] Concurrent determinism can still false-GREEN.** `tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php:45` starts concurrent GET and HEAD requests and asserts only `curl` exit `0` plus an unchanged fact fingerprint. It never reads the retained GET/HEAD output files, never proves the concurrent GET body equals the already asserted deterministic dashboard response, and never proves HEAD has the expected headers with an empty body. A race that returns a different but successful dashboard, a partial chart body, or a shifted cutoff will pass. Read the two outputs and assert the same stable GET semantics/body and exact HEAD semantics required by Acceptance A; retain the existing no-write fingerprint.
+
+2. **[MAJOR] The all-bar accessible-name oracle remains too weak for Acceptance G.** At PHP line 36 every name is accepted if it matches only `/\:\s*\d+$/`; the browser helper checks only the first bar with similarly generic conditions. Therefore all 23 links could expose names such as `Столбец: 1`, omitting chart, series, or category, and the test would pass even though the contract requires chart/series/category/value. The exact href matrix and visible-text check do not prove the accessible name contains those semantic fields. Build independently expected accessible names (or independently expected required tokens) for all six stage, twelve weekly-series, and five activity bars, assert all 23 in PHP, and have the browser witness validate the rendered names rather than only recording 22 of them.
+
+3. **[MAJOR] Atomic DTO shape/sum failure remains untested.** The correction materially improves Acceptance F/I with a missing mandatory activity table, but line 50 is still the only atomic failure injection. The normative contract separately requires a unified `503` when the owner/controller receives an invalid fixed shape or violated stage/activity sum invariant. An implementation that safely handles SQL failure but renders a malformed/partial DTO can pass. Add a public HTTP-seam fixture/factory injection or other repository-supported public oracle that supplies malformed shape and sum mismatch and proves the same atomic safe response with no chart/object disclosure or writes.
+
+4. **[MINOR] Verification-input traceability still hides the browser executable dependency.** `openspec/changes/add-operational-dashboard-bar-charts/verification-input.json` continues to map all A–L to one acceptance and lists only the PHP wrapper in `tests`, although populated/empty/error 1440/390 evidence materially depends on `tests/Support/operational_dashboard_bar_charts_browser.cjs`. The package does include the helper as a source, so this is not independently blocking, but listing it in the acceptance mapping would make planner/reviewer traceability honest.
+
+## Prior finding dispositions
+
+1. **Resolved — contradictory stage count.** Lines 28, 32, 35–36 use one `stageExpected` for DTO, displayed-row projection, all six chart drill-downs, and total. The specification now correctly clarifies that chart stages are mutually exclusive displayed-status buckets, while ordinary `status=installation` retains the predecessor active-queue meaning. Line 37 checks that ordinary filter remains accepted without treating it as stage parity.
+
+2. **Resolved — 30k boundedness.** Line 47 creates 30,000 additional objects and checks exact aggregate, fixed `6/6/5` DTO shape, bounded query count, bounded memory delta, 23 DOM marks, and absence of a scale-row sentinel from HTML.
+
+3. **Partially resolved, still blocking — repeat/concurrent determinism.** Lines 38 and 45 now prove sequential owner equality, GET/HEAD no-write behavior, and concurrent process completion/no writes. Finding 1 above records the remaining missing concurrent-result comparison.
+
+4. **Resolved — complete drill-down allowlist.** Lines 35–37 derive and exercise all 23 exact hrefs/totals, require unique rendered links, verify registry cutoff disclosure, and cover search/page composition.
+
+5. **Resolved — rejection and authorization/read-only.** Lines 39–41 cover missing, unknown, conflicting, duplicate, and extra dimensions; guest safe return; forbidden dashboard and chart-filter requests; no disclosure; and fact fingerprints.
+
+6. **Resolved — activity boundaries and evidence selection.** Lines 13–21 and 31 independently cover ages `7/8/14/15/30/31`, future accepted evidence exclusion, untrusted device time, revoked photo exclusion, correction/root maximum behavior, `never`, and completed exclusion through the expected totals.
+
+7. **Resolved — browser states and activation.** Lines 43, 49–50 and the browser helper cover populated/empty/error at 1440/390, Enter activation, exact resulting href, focus visibility, clipping/overflow, state semantics, and retained screenshots.
+
+8. **Partially resolved, still major — presentation/accessibility.** Desktop full-width/paired geometry, mobile flow, visible values, exact unique links, empty zeros, focus, and text/state semantics are now covered. Finding 2 above records the remaining all-bar accessible-name false-GREEN.
+
+9. **Partially resolved, still major — atomic error/empty behavior.** Empty HTTP/browser behavior, all 23 zeros, safe SQL-source failure, no partial data, and read-only fingerprints are covered. Finding 3 above records the remaining explicit invalid-shape/sum path.
+
+10. **Resolved — canonical stage ownership/parity.** Line 32 counts the canonical displayed labels across the full ordinary registry fixture and compares all six to the DTO. Lines 35–36 compare all six mutually exclusive chart drill-downs. This is the correct normative seam and does not redefine historical `status=installation`.
+
+11. **Resolved — weekly characterization.** The fixture covers Monday/Sunday/Monday edges (`09-21`, `09-27`, `09-28`), an unknown date, out-of-window data, original-finish replacement by a confirmed transfer, six fixed week records, and every start/finish drill-down.
+
+12. **Resolved — adjacent flows.** The focused test preserves ordinary `status=installation`, and the prepared plan explicitly selects the existing object-card and object-queue focused consumers plus the predecessor minimal-dashboard regression in CI. The current candidate does not replace those established oracles.
+
+13. **Resolved — public `shlz-ui` provenance.** Line 52 pins hashes and exact public bytes for dashboard/chart widget, status, link, button, and empty-state styles, while rejecting private/dependency markers and alternate chart runtimes.
+
+14. **Resolved — self-validating browser evidence.** Line 43 requires path, digest, byte size, viewport data and an existing non-empty file, then recomputes each screenshot SHA-256 for every mode and viewport.
+
+## Re-review decision
+
+The correction is substantial and closes the stage semantic inconsistency, boundedness, complete 23-bucket parity, rejection/RBAC/read-only coverage, activity boundaries, responsive state matrix, adjacent-flow mapping, public-export provenance, and evidence integrity. The fresh RED remains an intended missing-behavior failure. Gate 3 cannot advance while concurrent determinism and the mandated all-bar accessible-name semantics can false-GREEN, and malformed DTO/sum atomicity remains without an executable witness.
+
+## Required changes after re-review
+
+Assert the actual concurrent GET/HEAD results against the stable expected response, independently verify chart/series/category/value semantics in every rendered accessible name, and add a public-seam malformed DTO/sum-invariant atomic-error witness. Update the acceptance mapping to name the browser helper. Then retain a fresh intended-RED record and request another independent rereview of the corrected exact source.
