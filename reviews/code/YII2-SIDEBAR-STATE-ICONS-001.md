@@ -53,3 +53,49 @@ The repository-wide `make test` obligation remains for the single exact-source G
 ## Decision
 
 `APPROVED`. The candidate conforms to the normative contract, closes all earlier Gate 3 findings, preserves security/accessibility/no-write invariants, and is maintainable at the declared boundary. No code or test correction is requested. Proceed to the exact-source CI/publication steps without changing reviewed production or test bytes; any such delta requires renewed review.
+
+---
+
+## Integrated-source rereview after latest `origin/main`
+
+- Reviewer: same independent Gate 5 reviewer; authored neither the implementation nor the conflict resolutions
+- Latest-main comparison base: `c0814f5de3a080f0ea82c77099d5dd593c4ff05c`
+- Integrated commit: `0949beb145082755268e6217c887d90ea466165b`
+- Reviewed exact source SHA-256: `feb5748c906ff4e20f807cf0e54f74d39e00ea4afc0aa371fd9101733f17f1f9`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T012425Z-50ca619a95/package.json`
+- Verification plan SHA-256: `6abbd9a2bb7dcf0621ea2788221976db17d972007f2e92da60f4300fcd3f45dc`
+- Snapshot: committed tree at `0949beb145082755268e6217c887d90ea466165b`; package patch is empty with SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Integrated-source verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### Branch-unique and conflict-resolution review
+
+The review compared only the branch-unique delta against latest main and then inspected the integration seams affected by conflict resolution.
+
+- `app/YiiRuntime/Assets/navigation.js` preserves latest-main `enhanceTabs()` alongside `enhanceSelects()` and `enhanceCalendarGrids()`. Moving all three existing enhancements into the same guarded dynamic import lets sidebar hydration execute independently while retaining every upstream behavior; the sidebar's synchronous accessibility/persistence logic remains unchanged.
+- `app/YiiRuntime/Views/original.php` preserves latest-main installer tab-number presentation and applies only the reviewed `cloud-upload` and `plus-alt-2` icon substitutions. No upload, composition, correction or history semantics were lost.
+- `config/yii/assets.php` now exposes `sidebar-bootstrap.js` and all six new pinned icon files while preserving latest-main `download` and `shlz-file-types` routes. This closes the previously missing real HTTP integration seam; `PilotAssetController` independently retains its explicit file allowlist, content types, `nosniff`, same-origin resource policy and immutable caching.
+- The remaining branch-unique source is materially the previously approved sidebar/icon slice. Route order and permissions, first-paint/CSP behavior, no-JS fallback, icon provenance/cardinality, accessibility and read-only GET invariants remain intact.
+
+No conflict marker, unintended upstream reversion, scope expansion or new standards/specification finding was found. `git diff --check` passes for the complete latest-main delta.
+
+### Integrated exact-source evidence
+
+All five fresh mandatory records are `GREEN`, exit `0`, end on source `feb5748c…f1f9`, and report `source_drift=false`:
+
+- `php tests/Yii2/yii2_sidebar_state_icons_001_test.php` — record `1789953592926048000-fdc88f8a348e4e93a147498cbce72ca5.json`; PASS first-frame/state/toggle/no-JS matrix and audit.
+- `tools/delivery/run-in-profile browser --with-services php tests/Yii2/yii2_main_navigation_001_test.php` — record `1789953623672236000-3ca6d48287ba4af78215ef29f0577073.json`; PASS permission-aware navigation through the integrated HTTP/assets seam.
+- `python3 tests/Verification/change_verification_001_test.py` — record `1789953719054006000-3140dcff77164dc7bc9e4d567740ce2e.json`; 18 tests PASS.
+- `php tests/Runtime/runtime_storage_001_test.php` — sequential record `1789953836566829000-48ddfa720af14ea7a3a5a09d501030d1.json`; PASS runtime storage contract.
+- `python3 tests/Verification/architecture_guard_001_test.py` — record `1789953719054045000-71e2298737c84c86a5e6b32317520321.json`; 59 tests PASS.
+
+One earlier parallel runtime record remains `UNKNOWN` and is not counted; the sequential exact-source runtime record above is the relied-upon GREEN evidence. The three tests seen failing during pre-commit inventory fail identically in a clean latest-main comparison, are not branch-unique regressions, and are correctly absent from the refreshed planner-selected local obligations. Those baseline failures are not reclassified as GREEN and do not contribute to this approval.
+
+The mandatory repository-wide `make test` GitHub CI obligation remains pending and fail-closed. This integrated-source approval authorizes publication/CI of the exact reviewed bytes; it does not by itself claim CI GREEN or merge readiness.
+
+### Integrated decision
+
+`APPROVED`. The latest-main integration retains both upstream behavior and the complete `YII2-SIDEBAR-STATE-ICONS-001` contract. No production, test or integration correction is requested. Any subsequent code/test/config delta requires renewed review.
