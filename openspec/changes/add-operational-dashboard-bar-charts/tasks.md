@@ -13,17 +13,17 @@
 
 ## 3. Executor — data и drill-down
 
-- [ ] 3.1 Отдельный `gpt-5.6-sol / low` executor из prepared role package выделяет общий canonical status classification owner и подключает его к queue/dashboard; проверить parity fixture для всех шести статусов и сумму stage total
-- [ ] 3.2 Executor добавляет bounded aggregates для шести календарных недель с актуальным подтверждённым переносом срока; проверить worked examples, query-count envelope и measured 30k fixture/`EXPLAIN`
-- [ ] 3.3 Executor добавляет bounded activity aggregation по server-accepted checklist/photo/completion evidence и пяти buckets; проверить границы 7/8/14/15/30/31, no-activity и исключение неподтверждённого device state
-- [ ] 3.4 Executor добавляет allowlisted stage/week/activity filters в существующий object-register seam с fail-closed `400`, обычным `objects.read`, search/page composition и server-derived cutoff; проверить HTTP RED из 2.2 становится GREEN
+- [x] 3.1 Отдельный `gpt-5.6-sol / low` executor из prepared role package выделяет общий canonical status classification owner и подключает его к queue/dashboard; проверить parity fixture для всех шести статусов и сумму stage total
+- [x] 3.2 Executor добавляет bounded aggregates для шести календарных недель с актуальным подтверждённым переносом срока; проверить worked examples, query-count envelope и measured 30k fixture/`EXPLAIN`
+- [x] 3.3 Executor добавляет bounded activity aggregation по server-accepted checklist/photo/completion evidence и пяти buckets; проверить границы 7/8/14/15/30/31, no-activity и исключение неподтверждённого device state
+- [x] 3.4 Executor добавляет allowlisted stage/week/activity filters в существующий object-register seam с fail-closed `400`, обычным `objects.read`, search/page composition и server-derived cutoff; проверить HTTP RED из 2.2 становится GREEN
 
 ## 4. Executor — presentation
 
-- [ ] 4.1 Executor расширяет dashboard DTO/controller/view тремя атомарными charts и безопасными empty/error states; проверить data/HTTP tests и отсутствие production writes
-- [ ] 4.2 Executor переносит только нужные публичные `shlz-ui` Dashboard/Chart Widget contracts с provenance, добавляет application-owned semantic bar/list composition без chart dependency; проверить public-export/architecture guards
-- [ ] 4.3 Executor реализует full-width stage widget и responsive paired widgets с visible values, text legend/summary, native links и focus-visible; проверить browser tests на 1440/390 и отсутствие horizontal page overflow
-- [ ] 4.4 Выполнить одну batched desktop/mobile visual inspection, исправить найденные материальные дефекты одним пакетом, подтвердить не более чем одним дополнительным capture round и один раз запустить `impeccable detect --json` по изменённым UI targets
+- [x] 4.1 Executor расширяет dashboard DTO/controller/view тремя атомарными charts и безопасными empty/error states; проверить data/HTTP tests и отсутствие production writes
+- [x] 4.2 Executor переносит только нужные публичные `shlz-ui` Dashboard/Chart Widget contracts с provenance, добавляет application-owned semantic bar/list composition без chart dependency; проверить public-export/architecture guards
+- [x] 4.3 Executor реализует full-width stage widget и responsive paired widgets с visible values, text legend/summary, native links и focus-visible; проверить browser tests на 1440/390 и отсутствие horizontal page overflow
+- [x] 4.4 Выполнить одну batched desktop/mobile visual inspection, исправить найденные материальные дефекты одним пакетом, подтвердить не более чем одним дополнительным capture round и один раз запустить `impeccable detect --json` по изменённым UI targets
 
 ## 5. Gate 4–5 и публикация
 

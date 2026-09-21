@@ -42,14 +42,26 @@ final class ObjectQueueController extends PilotController
         $query = $request->get('q', '');
         $status = $request->get('status', '');
         $page = $request->get('page', '1');
+        $chart = $request->get('chart', '');
+        $bucket = $request->get('bucket', '');
+        $raw = $request->queryString;
         if (!is_string($query) || !is_string($status) || !is_string($page)
+            || !is_string($chart) || !is_string($bucket)
             || filter_var($page, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
             throw new \RuntimeException('Queue unavailable.');
         }
+        preg_match_all('/(?:^|&)([^=&]+)/', $raw, $matches);
+        $keys=array_map('rawurldecode',$matches[1]);$allowed=['q','status','page','chart','bucket','inspectionScheduled'];
+        if (array_diff($keys,$allowed)!==[] || count($keys)!==count(array_unique($keys))
+            || (($chart==='') !== ($bucket==='')) || ($chart!=='' && $status!=='')) throw new BadRequestHttpException();
+        $cutoff = (new \DateTimeImmutable((string)(getenv('FMONITOR_NOW') ?: 'now')))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');
         try {
-            $result = $this->queue()->read((int) Yii::$app->user->id, $query, $status, (int) $page);
+            $result = $this->queue()->read((int) Yii::$app->user->id, $query, $status, (int) $page, 50, $chart, $bucket, $cutoff);
         } catch (\DomainException) {
             throw new ForbiddenHttpException();
+        } catch (\RuntimeException $error) {
+            if ($chart !== '') throw new BadRequestHttpException();
+            throw $error;
         }
         $candidate = $request->get('inspectionScheduled', '');
         $notice = is_string($candidate) && self::validDate($candidate) ? $candidate : '';
