@@ -15,16 +15,16 @@ final class MainNavigation
         $access = \Yii::$app->canonicalAccess;
         $groups = [
             'Монтаж' => [
-                ['objects.read', 'dashboard', '/pilot/dashboard', 'Дашборд', 'pie-chart'],
-                ['objects.read', 'objects', '/pilot/objects', 'Объекты монтажа', 'circle-grid-interface-sidebar'],
-                ['construction_control.read', 'construction-control', '/pilot/construction-control', 'Стройконтроль', 'setting-tool-circle'],
-                ['objects.read', 'calendar', '/pilot/calendar', 'Календарь', 'calendar-sidebar'],
-                ['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'pie-chart'],
+                ['objects.read', 'objects', '/pilot/objects', 'Объекты монтажа', 'docs'],
+                ['construction_control.read', 'construction-control', '/pilot/construction-control', 'Стройконтроль', 'eye'],
+                ['objects.read', 'calendar', '/pilot/calendar', 'Календарь', 'calendar-interface'],
+                ['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'graph'],
                 ['installers.read', 'installers', '/pilot/installers', 'Монтажники', 'user-sidebar'],
+                ['objects.read', 'dashboard', '/pilot/dashboard', 'Дашборд', 'bar-chart-square-plus'],
             ],
             'Администрирование' => [
-                ['access.administer', 'admin-users', '/pilot/admin/users', 'Пользователи', 'user-1'],
-                ['access.administer', 'admin-roles', '/pilot/admin/roles', 'Роли', 'book'],
+                ['access.administer', 'admin-users', '/pilot/admin/users', 'Пользователи', 'user'],
+                ['access.administer', 'admin-roles', '/pilot/admin/roles', 'Роли', 'settings'],
             ],
         ];
 

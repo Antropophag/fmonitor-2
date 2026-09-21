@@ -12,4 +12,9 @@ final class InstallerDirectoryAssetBundle extends \yii\web\AssetBundle
     public $css = ['shlz.css', 'pilot.css'];
     public $js = ['preloader.js', 'navigation.js'];
     public $jsOptions = ['position' => \yii\web\View::POS_END, 'type' => 'module'];
+    public function init(): void
+    {
+        parent::init();
+        $this->css = ['shlz.css', AssetVersion::file('pilot.css')];
+    }
 }
