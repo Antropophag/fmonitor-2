@@ -32,3 +32,22 @@ No open findings.
 - Normative contract R1–R8, OpenSpec proposal/design/delta/tasks, final APPROVED Gate 3 review, prior Gate 5 rejection, complete production/test diff from rebased main, and all six final package evidence records.
 - GREEN records: `1789999964692552000-126e89eaeab6413293cb5972a0a31e9c`, `1789999964686627000-9739cc82ca71418eb90f96e552c1292f`, `1789999964689056000-dc577a5e3b804dca9c68cac10e54ae8c`, `1789999964696367000-8d6e7bf5e1ce461990892e22cef18304`, `1789999964705606000-e88ebf0759684a1898131dafe81121b2`, and `1790000077950662000-b27e4e129b73415fb3625806f683b264`.
 - The prohibited local full suite was not run. Exact-source GitHub CI, PR publication, merge, deployment, and enforcement remain `UNKNOWN`/pending and are not inferred GREEN.
+
+## Correction-delta rereview after CI run 35611168525
+
+- Rereviewed final commit: `2a43b13791638c0169cbf03f7c0df185951c605f`, still a direct child of merged PR #218 base `80130fbb3bb7998a1a0fc6e88429699244715540`.
+- Delta reviewed against the previously approved implementation commit `3407b64b7f9153658d59b5ba9d790966d107e76d`: `app/YiiRuntime/Views/dashboard.php`, two predecessor consumer expectations, verification input, and delivery/review records only.
+- Final correction verdict: **APPROVED**. No open findings; all prior findings remain resolved.
+
+### Correction disposition
+
+1. **SVG census compatibility — resolved without semantic change.** The bar mark now emits the same `svg > rect` structure through Yii `Html::tag()`. The same calculated `x`, `y`, `width`, `height`, `rx`, class, view box, preserve-aspect-ratio, and hidden accessibility attribute are retained. The approved dashboard acceptance/browser test is byte-for-byte unchanged across the correction and remains GREEN.
+2. **Immutable asset consumer — resolved.** The production-web-cutover fixture changes only the expected `pilot.css` SHA-256 to the final reviewed asset bytes; transport, MIME, cache, CSP, and every other asset expectation remain unchanged.
+3. **Predecessor navigation consumer — resolved.** The minimal-dashboard assertion now expects the already approved operational-section ordering (`objects`, `calendar`, then `dashboard`) without weakening membership, current-page, permission, deterministic HTTP, or browser assertions.
+4. **Verification inventory — resolved.** Both correction consumers are explicitly registered in `verification-input.json`, so the delta is not hidden from planning.
+5. **Focused correction evidence — GREEN.** The reported final-source checks are `yii2_sidebar_state_icons_001_test.php`, `yii2_operational_dashboard_bar_charts_001_test.php`, `yii2_production_web_cutover_001_test.php`, `yii2_minimal_operational_dashboard_001_test.php`, and `git diff --check`. These checks directly cover the census, unchanged R1–R8 behavior, exact CSS asset bytes, predecessor navigation, and patch hygiene.
+6. **ERP preservation — confirmed.** `2a43b137` remains based directly on `80130fbb`; the correction delta changes no ERP/Bitrix/SMTP operational implementation or test path. PR #218 remains intact.
+
+### CI status boundary
+
+GitHub run `35611168525` is retained as failed evidence for pre-correction PR head `0211c8190d9874ccb3192cf672d84bbf2b9bd647`, not as GREEN evidence for final commit `2a43b137`. Its complete failed inventory includes `e2e`, `Integration (1/2)`, aggregate `verify`, and `Quality Graph`; the correction addresses the identified dashboard census and stale-consumer failures. A new exact-source CI run for `2a43b137` remains required before merge readiness. This Gate 5 approval covers the bounded correction delta and does not relabel the failed earlier run or infer final CI GREEN.
