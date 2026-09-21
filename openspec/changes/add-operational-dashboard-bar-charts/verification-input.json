@@ -1,0 +1,43 @@
+{
+  "change": "add-operational-dashboard-bar-charts",
+  "planned_paths": [
+    "app/InstallationProcess/YiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/YiiRuntime/Controllers/DashboardController.php",
+    "app/YiiRuntime/Controllers/ObjectQueueController.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Assets/shlz.css",
+    "app/YiiRuntime/Assets/pilot.css",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/current-delivery-goal-history-issue-21-2026-09-21-dashboard-charts-transition.md",
+    "docs/operations/operational-dashboard-bar-charts-delivery.md",
+    "openspec/changes/add-operational-dashboard-bar-charts/.openspec.yaml",
+    "openspec/changes/add-operational-dashboard-bar-charts/proposal.md",
+    "openspec/changes/add-operational-dashboard-bar-charts/design.md",
+    "openspec/changes/add-operational-dashboard-bar-charts/tasks.md",
+    "openspec/changes/add-operational-dashboard-bar-charts/verification-input.json",
+    "openspec/changes/add-operational-dashboard-bar-charts/specs/ui/operational-dashboard-bar-charts/spec.md",
+    "reviews/tests/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md",
+    "reviews/code/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md",
+    "specs/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md",
+    "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php",
+    "tests/Support/operational_dashboard_bar_charts_browser.cjs",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001",
+      "acceptance_id": "A-L-complete-bar-chart-slice",
+      "spec_path": "specs/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md",
+      "seam": "YiiOperationalDashboard read, real Yii GET|HEAD /pilot/dashboard, GET /pilot/objects chart bucket filters and rendered 1440/390 browser behavior cover A-L",
+      "tests": [
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}
