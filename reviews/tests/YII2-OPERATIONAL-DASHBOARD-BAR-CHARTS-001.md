@@ -112,3 +112,31 @@ The correction is substantial and closes the stage semantic inconsistency, bound
 ## Required changes after re-review
 
 Assert the actual concurrent GET/HEAD results against the stable expected response, independently verify chart/series/category/value semantics in every rendered accessible name, and add a public-seam malformed DTO/sum-invariant atomic-error witness. Update the acceptance mapping to name the browser helper. Then retain a fresh intended-RED record and request another independent rereview of the corrected exact source.
+
+---
+
+# Gate 3 third review — 2026-09-21
+
+- Reviewer: Codex, independent `gpt-5.6-sol`, reasoning `low`
+- Reviewed exact source: `a11fd63ba38f7f9343ed035813cb21739af66e210ce52b6937a099586431a064`
+- Reconstructible source: base commit `44328db53da1ff44debfa41c7bb99476ccc76900` plus empty retained patch `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T082825Z-fe437f1d8e/snapshot/source.patch`, patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Role package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T082825Z-fe437f1d8e/package.json`
+- RED record: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789979292274988000-d217817eaabe4e48a2a0d441c8edfa29.json`
+- RED test blob: `d31e98a2bdb93e75edf2cff38f3405b457a9b42725b6d166e9af225507af8ea4`
+- RED evidence: `INTENDED_RED`, exit `255`; the first failure remains line 27, `INTENDED_RED fixed chart DTO`, because the predecessor public owner has no chart DTO. No correction executes before or changes the intended missing-behavior failure.
+- Review scope: the three open findings from exact source `48cfed52384158524b4070bed302c9d25da4a64087eba0222a5ee53200b3aaa7`; no previously closed finding was reopened by the bounded delta.
+- Verdict: **APPROVED**
+
+## Findings and dispositions
+
+1. **Resolved — exact accessible names for all 23 bars.** `tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php:36–37` independently builds the complete href-to-name map: chart/category/value for six stage bars, chart/series/category/value for twelve weekly bars, and chart/category/value for five activity bars. It compares the entire ordered 23-entry map with the rendered HTTP DOM, while retaining visible-label/value assertions and browser focus/activation evidence. Generic names such as `Столбец: 1` can no longer pass.
+
+2. **Resolved — concurrent response determinism.** Line 46 retains concurrent GET/HEAD processes, reads their output, canonicalizes only the per-request CSRF token, compares the concurrent GET body exactly with the previously asserted stable dashboard body, requires HEAD status `200`, rejects dashboard body markers from HEAD, and preserves the before/after fact fingerprint. A successful but partial, shifted-cutoff, or otherwise divergent concurrent GET now fails.
+
+3. **Resolved — public atomic failure on malformed stage sum.** Line 48 creates one unsupported installation state through fixture setup, causing the stage buckets to no longer sum to the public total. The real authenticated dashboard request must return `503`; the response must expose neither charts, bars, object identities nor the invalid state, and the request must preserve the post-setup fact fingerprint. This exercises the classification/shape/sum fail-closed path independently from the missing-table infrastructure failure at line 53.
+
+4. **Non-blocking observation — browser helper traceability.** The acceptance remains registered through its PHP public-seam wrapper rather than listing the spawned `.cjs` helper separately. The prepared package nevertheless includes the helper as a changed source, and the PHP test directly executes it, validates its exit, parses its evidence, checks files/bytes, and recomputes every screenshot digest. This does not leave an executable coverage gap for Gate 3.
+
+## Final Gate 3 decision
+
+The corrected root-authored test now provides a deterministic intended RED and a complete, sensitive A–L matrix across the agreed data, real HTTP, and rendered browser seams. It covers all-six displayed-stage parity without changing predecessor `status=installation` semantics; all 23 server-derived drill-downs and exact accessible names; authorization, rejection and read-only behavior; independently derived week/activity boundaries; bounded 30k behavior; repeat and concurrent results; populated/empty/error responsive evidence; public `shlz-ui` provenance; and both infrastructure and stage-sum atomic failures. No blocking or major finding remains. Gate 3 is approved for executor handoff on the reviewed exact source.

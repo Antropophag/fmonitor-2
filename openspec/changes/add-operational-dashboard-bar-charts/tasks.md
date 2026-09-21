@@ -9,7 +9,7 @@
 - [x] 2.1 Root добавляет data-seam RED fixture для шести взаимоисключающих стадий, шести недель с переносом срока, пяти activity buckets, unknown dates и independently expected totals; проверить, что focused команда падает именно из-за отсутствующих диаграмм
 - [x] 2.2 Root добавляет HTTP RED coverage для RBAC, `GET|HEAD`, stage/week/activity drill-down, invalid/conflicting filters, pagination total, atomic error/empty states и DB fingerprint read-only; проверить intended RED без setup failure
 - [x] 2.3 Root добавляет browser RED coverage для visible values/labels, keyboard links/focus, accessible names, 1440/390 layout и отсутствия page overflow; проверить intended RED на predecessor UI
-- [ ] 2.4 Если planner требует Gate 3, подготовить reconstructible source snapshot и получить независимый `gpt-5.6-sol / low` APPROVED test review в `reviews/tests/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md`; при замечаниях вернуть весь кандидат к соответствующему Gate 1/2 пункту
+- [x] 2.4 Если planner требует Gate 3, подготовить reconstructible source snapshot и получить независимый `gpt-5.6-sol / low` APPROVED test review в `reviews/tests/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md`; при замечаниях вернуть весь кандидат к соответствующему Gate 1/2 пункту
 
 ## 3. Executor — data и drill-down
 
