@@ -63,3 +63,33 @@ None.
 `APPROVED`
 
 The bounded CI correction is suitable for commit and exact-source CI. Approval is limited to the correction snapshot above and does not assert PR readiness, merge, or deployment.
+
+---
+
+# Independent rereview: route-handler synchronization correction
+
+- Reviewer: independent Codex reviewer `/root/photo_ci_review`; authored none of the reviewed correction
+- Correction base: `b89ea42827d92cb887490de4c386208d97a60264`
+- Reported corrected source: `49829cc25ce774a15630e1e4692b000455fc67206f1071eb919a6a8867b6eb94`
+- Reviewed delta: `git diff --binary b89ea428 -- tests/Support/checklist_photo_viewing_browser.cjs`, SHA-256 `4e5b8e86082e293eb0bc838a57b97b1ddf409ed86bf1d2c0fd4ba16f634ca462`
+- Scope: test-only correction in `tests/Support/checklist_photo_viewing_browser.cjs`
+- Reported focused evidence: three consecutive isolated browser runs GREEN on the corrected source
+- Verdict: `APPROVED`
+
+## Findings
+
+None.
+
+## Review
+
+1. The CI race is credible: application code persists `sending` before calling `fetch`, while Playwright assigns `releaseUpload` only after its route handler observes that request. Therefore IndexedDB can expose `sending` before the Node-side release callback exists.
+2. The correction waits at most one second, in 10 ms bounded increments, only for that callback assignment. It retains the immediate explicit `typeof releaseUpload === 'function'` failure after the bound, so a request that never reaches the handler remains a hard failure rather than a timeout-based pass.
+3. The behavioral oracle remains strict and ordered: the test first observes the exact operation id as persisted `sending`, then proves the request is held, releases it, waits for that same operation id to be persisted as `accepted`, and finally requires exactly one upload request, unchanged operation count, cleared local blob preview after reload, and the durable server URL. No assertion was removed or broadened.
+4. The delta against `b89ea428` contains only the one-line test-helper synchronization change. No production, specification, fixture contract, persistence, authorization, or OpenSpec file changed.
+5. Independent bounded checks `node --check tests/Support/checklist_photo_viewing_browser.cjs` and `git diff --check b89ea428 --` are GREEN. The reported three consecutive isolated browser GREEN runs provide repeat evidence for the previously flaky seam; exact-source CI is still required for overall delivery status.
+
+## Verdict
+
+`APPROVED`
+
+The test-only synchronization correction preserves the approved acceptance coverage and is suitable for commit and exact-source CI. This verdict is limited to the delta identified above and does not assert CI GREEN, PR readiness, merge, or deployment.
