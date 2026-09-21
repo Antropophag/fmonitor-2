@@ -42,9 +42,16 @@ makefile = read("Makefile")
 assert "up --detach --wait php web jobs-worker jobs-scheduler" in makefile, \
     "INTENDED_RED: make up starts the complete pilot operational contour"
 assert "jobs/process-health" in makefile, "make up qualifies worker/scheduler process health before success"
-assert "down --volumes" not in "\n".join(
-    line for line in makefile.splitlines() if line.startswith("down:") or line.startswith("\t")
-), "ordinary down path must preserve volumes"
+targets = {}
+current = None
+for line in makefile.splitlines():
+    if line and not line.startswith((" ", "\t")) and line.endswith(":"):
+        current = line[:-1]
+        targets[current] = []
+    elif current is not None:
+        targets[current].append(line)
+assert "--volumes" not in "\n".join(targets["down"]), "ordinary down path must preserve volumes"
+assert "--volumes" in "\n".join(targets["reset"]), "explicit reset remains the only volume-deleting target"
 
 example = read(".env.example")
 for forbidden in ["1c-erp-password", "real-password", "production-secret"]:

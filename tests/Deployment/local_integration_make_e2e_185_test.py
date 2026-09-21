@@ -70,6 +70,16 @@ def run(argv, *, input_text=None, ok=True):
             verify=subprocess.run(['openssl','verify','-CAfile',str(fixture/'ca.crt'),str(fixture/'server.crt')],text=True,capture_output=True)
             curl_probe=subprocess.run(['docker','run','--rm','--network',project+'_default','-v',str(fixture)+':/fixture:ro','--entrypoint','curl',image,'--silent','--show-error','--cacert','/fixture/ca.crt','https://bitrix-fixture:8443/fixture-health'],text=True,capture_output=True)
             diagnostic=f' endpoint_logs={endpoint_logs.stdout+endpoint_logs.stderr!r} connections={connections} requests={requests} cert_verify={verify.returncode} curl_probe={curl_probe.returncode}:{curl_probe.stderr!r}'
+        elif argv[-1:] == ['up']:
+            compose=['docker','compose','--env-file','.env','-f','deploy/runtime/compose.yaml']
+            status=subprocess.run([*compose,'ps','--format','json'],cwd=ROOT,text=True,capture_output=True)
+            health=[]
+            for service in ('jobs-worker','jobs-scheduler'):
+                container=subprocess.run([*compose,'ps','-q',service],cwd=ROOT,text=True,capture_output=True).stdout.strip()
+                if container:
+                    observed=subprocess.run(['docker','inspect',container,'--format','{{json .State.Health}}'],cwd=ROOT,text=True,capture_output=True)
+                    health.append(service+'='+observed.stdout.strip())
+            diagnostic=' process_status='+status.stdout[-2000:]+' health='+' '.join(health)
         raise AssertionError((argv,r.returncode,combined[-4000:]+diagnostic))
     return r
 
