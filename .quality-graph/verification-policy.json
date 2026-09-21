@@ -286,6 +286,7 @@
       "name": "assignment-order-current-eligibility",
       "patterns": [
         "app/AssignmentOrderComposition/MariaDbAssignmentOrderCurrentEligibility.php",
+        "app/AssignmentOrderComposition/MariaDbCurrentOpeningEligibility.php",
         "app/AssignmentOrderComposition/MariaDbOpeningTemplate.php"
       ],
       "verifiers": [
@@ -487,6 +488,39 @@
       "verifiers": [
         "tests/Yii2/yii2_construction_control_preopening_001_test.php",
         "tests/Yii2/yii2_control_engineer_assignment_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
+      "name": "weekly-fkr-attention-email",
+      "patterns": [
+        "app/Jobs/WeeklyFkrRecipientDirectory.php",
+        "app/Jobs/WeeklyFkrRecipientEligibility.php",
+        "app/Jobs/WeeklyFkrReportSource.php",
+        "app/Jobs/WeeklyFkrOpeningEligibility.php",
+        "app/Jobs/WeeklyFkrReportBuilder.php",
+        "app/Jobs/WeeklyFkrReportRenderer.php",
+        "app/Jobs/SmtpConfiguration.php",
+        "app/Jobs/SmtpTransport.php",
+        "app/Jobs/MariaDbWeeklyFkrScheduler.php",
+        "app/Jobs/WeeklyFkrReportJobHandler.php",
+        "app/IdentityAccess/MariaDbWeeklyFkrRecipientDirectory.php",
+        "app/InstallationProcess/MariaDbWeeklyFkrReportSource.php",
+        "app/Jobs/MariaDbWeeklyFkrOpeningEligibility.php",
+        "app/Jobs/JobHandlerClaim.php",
+        "app/Jobs/JobHandlerRuntime.php",
+        "app/Jobs/JobsRuntimeCommand.php",
+        "app/Jobs/JobsSchedulerProcess.php",
+        "app/Jobs/MariaDbOutbox.php"
+        ,"app/Jobs/OutboxDeliveryOutcome.php"
+        ,"app/InspectionEvidence/MariaDbChecklistProgress.php"
+      ],
+      "verifiers": [
+        "tests/Jobs/weekly_fkr_report_delivery_001_test.php",
+        "tests/Jobs/weekly_fkr_unknown_delivery_001_test.php",
+        "tests/Runtime/weekly_fkr_smtp_configuration_001_test.php",
+        "tests/WeeklyFkrReport/weekly_report_001_test.php",
+        "tests/WeeklyFkrReport/weekly_schedule_001_test.php"
       ],
       "consumers": []
     }

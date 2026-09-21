@@ -222,9 +222,19 @@ FMONITOR_BITRIX_WEBHOOK_USER_ID='7'
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[71]'
 FMONITOR_BITRIX_TOKEN_HOST_FILE="${FMONITOR_PRIVATE_ROOT}/bitrix-token"
 FMONITOR_BITRIX_CA_HOST_FILE=''
+FMONITOR_PUBLIC_BASE_URL='https://fmonitor.example.invalid'
+FMONITOR_SMTP_HOST='smtp.example.invalid'
+FMONITOR_SMTP_PORT='587'
+FMONITOR_SMTP_ENCRYPTION='tls'
+FMONITOR_SMTP_USERNAME='fmonitor@example.invalid'
+FMONITOR_SMTP_PASSWORD='replace-from-approved-secret-store'
+FMONITOR_SMTP_FROM_ADDRESS='fmonitor@example.invalid'
+FMONITOR_SMTP_FROM_NAME='FMonitor'
+FMONITOR_SMTP_TIMEOUT_SECONDS='10'
 ENV
 chmod 600 "$FMONITOR_JOBS_ENV"
-# Отредактировать private jobs.env: origin, webhook user и departments выше фиктивные.
+# Отредактировать private jobs.env: все origin/SMTP значения выше фиктивные. SMTP
+# password берётся только из утверждённого secret store и не копируется из checkout.
 set -a; . "$FMONITOR_PRIVATE_ENV"; . "$FMONITOR_JOBS_ENV"; set +a
 ```
 
@@ -287,9 +297,14 @@ docker compose --file deploy/runtime/compose.yaml --profile jobs exec -T jobs-wo
 
 Scheduler ставит кадровое задание на последний наступивший московский слот HH:07;
 повтор не создаёт второе задание, после простоя нет массового hourly backfill.
-Outbox sweep ставит отдельные delivery jobs только для committed intents. Production
-email transport не установлен: он возвращает `OUTBOX_TRANSPORT_UNCONFIGURED` без
-отправки; продуктовые триггеры/шаблоны и подключение sender остаются в #11/#13.
+Outbox sweep ставит отдельные delivery jobs только для committed intents. Еженедельный
+отчёт использует внешний SMTP secret, обязательный HTTPS public base URL и всегда
+проверяет TLS peer/name; отключение проверки не поддерживается. `FMONITOR_SMTP_TEST_RECIPIENT`
+разрешён только в test runtime и запрещён в production. Live-send выполняется лишь
+отдельной явно согласованной операторской операцией; штатный запуск jobs сам по себе
+не является разрешением на пробную отправку.
+Полный порядок проверки, явной test-send операции, трактовки неизвестного ACK и
+rollback описан в [`weekly-fkr-email.md`](weekly-fkr-email.md).
 Ночной smoke использует только локальный HTTPS fixture, а не реальный портал.
 
 Worker и scheduler записывают `worker:<instance>` и `scheduler:<instance>` heartbeat

@@ -127,6 +127,17 @@ services:
       FMONITOR_BITRIX_CONFIG: /run/fmonitor-secrets/bitrix-config.json
       FMONITOR_BITRIX_TOKEN_FILE: /run/fmonitor-secrets/bitrix-token
       FMONITOR_BITRIX_CA_FILE: "${FMONITOR_BITRIX_CA_HOST_FILE:+/run/fmonitor-secrets/bitrix-ca.pem}"
+      FMONITOR_RUNTIME_ENV: production
+      FMONITOR_PUBLIC_BASE_URL: "${FMONITOR_PUBLIC_BASE_URL:-}"
+      FMONITOR_SMTP_HOST: "${FMONITOR_SMTP_HOST:-}"
+      FMONITOR_SMTP_PORT: "${FMONITOR_SMTP_PORT:-587}"
+      FMONITOR_SMTP_ENCRYPTION: "${FMONITOR_SMTP_ENCRYPTION:-tls}"
+      FMONITOR_SMTP_USERNAME: "${FMONITOR_SMTP_USERNAME:-}"
+      FMONITOR_SMTP_PASSWORD: "${FMONITOR_SMTP_PASSWORD:-}"
+      FMONITOR_SMTP_FROM_ADDRESS: "${FMONITOR_SMTP_FROM_ADDRESS:-}"
+      FMONITOR_SMTP_FROM_NAME: "${FMONITOR_SMTP_FROM_NAME:-FMonitor}"
+      FMONITOR_SMTP_TIMEOUT_SECONDS: "${FMONITOR_SMTP_TIMEOUT_SECONDS:-10}"
+      FMONITOR_SMTP_VERIFY_PEER: "true"
     volumes:
       - state:/home/fmonitor/.local/state/fmonitor2
       - secrets:/run/fmonitor-secrets

@@ -16,7 +16,9 @@ final class MariaDbOutbox
         $event=JobValues::text($intent['eventId'],'/^[A-Za-z0-9][A-Za-z0-9_.:\/-]{0,119}$/D');
         $channel=JobValues::text($intent['channel'],'/^[a-z][a-z0-9_.-]{0,39}$/D');
         $template=JobValues::text($intent['template'],'/^[A-Za-z0-9][A-Za-z0-9_.:\/-]{0,119}$/D');
-        $version=JobValues::number($intent['version'],1,65535);$data=JobValues::json($intent['data']);
+        $version=JobValues::number($intent['version'],1,65535);
+        $dataLimit=$channel==='email'?SmtpConfiguration::MAX_MESSAGE_BYTES:65535;
+        $data=JobValues::json($intent['data'],$dataLimit);
         $s=$this->sql;
         if((int)$s->db->query('SELECT @@in_transaction')->fetch_column()!==1)throw new \LogicException('OUTBOX_TRANSACTION_REQUIRED');
         $fingerprint=hash('sha256',json_encode([$event,$channel,$template,$version,$data],JSON_THROW_ON_ERROR));

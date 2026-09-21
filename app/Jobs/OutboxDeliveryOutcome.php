@@ -11,7 +11,7 @@ final class OutboxDeliveryOutcome
             return ['status'=>'ambiguous_retryable','failureCode'=>'TRANSPORT_RESULT_INVALID'];
         $result=['status'=>$value['status']];
         if($value['status']!=='delivered'){
-            $codes=['TRANSPORT_TIMEOUT','TRANSPORT_UNAVAILABLE','TRANSPORT_REJECTED','TRANSPORT_RESULT_INVALID','RECIPIENT_INVALID'];
+            $codes=['TRANSPORT_TIMEOUT','TRANSPORT_UNAVAILABLE','TRANSPORT_REJECTED','TRANSPORT_RESULT_INVALID','RECIPIENT_INVALID','UNKNOWN_DELIVERY'];
             $result['failureCode']=in_array($value['failureCode']??null,$codes,true)?$value['failureCode']:'TRANSPORT_UNAVAILABLE';
         }
         $provider=$value['providerReference']??null;

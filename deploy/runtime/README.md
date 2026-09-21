@@ -35,5 +35,6 @@ email/password безопасен; существующих пользовате
 
 Профиль `jobs` включает `jobs-worker` и `jobs-scheduler` из того же image. Без
 явного профиля они не стартуют и портов не публикуют. Worker получает read-only
-Bitrix token/optional CA, scheduler этих credentials не получает. Настройка,
+Bitrix token/optional CA и внешний SMTP secret; TLS peer verification обязательна,
+а test-recipient override в production запрещён. Scheduler этих credentials не получает. Настройка,
 health, ручной retry и остановка перед backup — в разделе7 единого runbook.
