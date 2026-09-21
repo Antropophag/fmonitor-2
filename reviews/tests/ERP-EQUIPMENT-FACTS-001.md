@@ -53,3 +53,11 @@
 - Planner-selected changed-schema/recovery checks are GREEN: inspection completion, production migration runner, workforce canonical runner, deadline-certificate recovery and jobs recovery.
 - Planner-selected category witnesses are GREEN: `change_verification_001_test.py` (16 tests), `runtime_storage_001_test.php` and `architecture_guard_001_test.py` (59 tests).
 - `openspec validate sync-erp-equipment-facts --strict` and `git diff --check` are GREEN. The local full suite was not run; `make test` remains reserved for the one exact-source GitHub CI run.
+
+## Current-main Gate 3 delta review — 2026-09-21
+
+- Owner authorization: resume issue #12 delivery from current `origin/main`; root retained scope/spec/test authorship, `/root/issue12_executor` (`gpt-5.6-sol/low`) authored the port and corrections, `/root/issue12_gate3` (`gpt-5.6-sol/low`) independently reviewed them.
+- Reviewed exact commit: `d9ca447cd1f738a00f6eccbf23ff60fafc7472f9` on base `c0814f5de3a080f0ea82c77099d5dd593c4ff05c`.
+- First verdict: `CHANGES_REQUESTED` for missing production SQL Server driver/config handoff, an unbounded production transport, and incomplete same-name schema compatibility checks.
+- Corrections add generated runtime `pdo_sqlsrv`, file-backed ERP secrets, read-only bounded/timeout SQL Server transport, exact v31 schema/FK/trigger validation, recovery v31 coverage and current scheduler lifecycle expectations.
+- Final verdict: `APPROVED`; complete residual findings list: none. Local full `make test` / `make verify` was not run.
