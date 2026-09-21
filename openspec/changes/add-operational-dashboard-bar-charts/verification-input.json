@@ -3,6 +3,7 @@
   "planned_paths": [
     ".quality-graph/verification-policy.json",
     "app/InstallationProcess/YiiOperationalDashboard.php",
+    "app/InstallationProcess/YiiOperationalDashboardStore.php",
     "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
     "app/InstallationProcess/MariaDbYiiObjectQueue.php",
     "app/InstallationProcess/YiiObjectQueue.php",

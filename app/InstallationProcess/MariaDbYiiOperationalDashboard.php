@@ -6,7 +6,7 @@ namespace FMonitor2\InstallationProcess;
 
 use yii\db\Connection;
 
-final readonly class MariaDbYiiOperationalDashboard
+final readonly class MariaDbYiiOperationalDashboard implements YiiOperationalDashboardStore
 {
     public function __construct(private Connection $db, private string $prefix, private string $legacyPrefix)
     {

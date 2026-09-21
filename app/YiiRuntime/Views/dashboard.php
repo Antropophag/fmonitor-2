@@ -38,15 +38,15 @@ $bar=static function(string $href,string $name,string $label,int $value,int $max
 <a class="fm2-chart-bar" data-dashboard-bar href="<?=Html::encode($href)?>" aria-label="<?=Html::encode($name)?>"><span class="fm2-chart-bar__mark" style="--fm2-bar-size:<?=$size?>px"></span><span class="fm2-chart-bar__value" data-dashboard-value="<?=$value?>"><?=$value?></span> <span class="fm2-chart-bar__label"><?=Html::encode($label)?></span></a><?php };
 ?>
     <div class="fm2-dashboard-charts">
-        <section class="shlz-chart-widget fm2-dashboard-chart fm2-dashboard-chart--stages" data-dashboard-chart="stages"><header class="shlz-chart-widget__header"><div><h2><?=$stageTitle?></h2><p>Текущий этап каждого объекта</p></div></header><div class="fm2-chart-bars fm2-chart-bars--six">
+        <section class="shlz-chart-widget fm2-dashboard-chart fm2-dashboard-chart--stages" data-dashboard-chart="stages"><header class="shlz-chart-widget__header"><div><h2><?=$stageTitle?></h2><p>Текущий этап каждого объекта</p></div></header><div class="shlz-chart-widget__plot"><div class="fm2-chart-bars fm2-chart-bars--six">
 <?php foreach($charts['stages'] as$item)$bar('/pilot/objects?chart=stage&bucket='.$item['key'],$stageTitle.' — '.$item['label'].': '.$item['value'],$item['label'],$item['value'],$stageMax); ?>
-        </div></section>
-        <section class="shlz-chart-widget fm2-dashboard-chart" data-dashboard-chart="weeks"><header class="shlz-chart-widget__header"><div><h2><?=$weekTitle?></h2><p><span class="fm2-chart-key fm2-chart-key--start"></span>Плановые начала · <span class="fm2-chart-key fm2-chart-key--finish"></span>Плановые окончания</p></div></header><div class="fm2-chart-bars fm2-chart-bars--weeks">
-<?php foreach($charts['weeks'] as$i=>$week){$label=$weekLabel($week);$bar('/pilot/objects?chart=planned-start&bucket='.$i,$weekTitle.' — Плановые начала — '.$label.': '.$week['starts'],$label.' · начала',$week['starts'],$weekMax);$bar('/pilot/objects?chart=planned-finish&bucket='.$i,$weekTitle.' — Плановые окончания — '.$label.': '.$week['finishes'],$label.' · окончания',$week['finishes'],$weekMax);} ?>
-        </div></section>
-        <section class="shlz-chart-widget fm2-dashboard-chart" data-dashboard-chart="activity-age"><header class="shlz-chart-widget__header"><div><h2><?=$activityTitle?></h2><p>Только активные объекты, по серверному времени</p></div></header><div class="fm2-chart-bars fm2-chart-bars--five">
+        </div></div></section>
+        <section class="shlz-chart-widget fm2-dashboard-chart" data-dashboard-chart="weeks"><header class="shlz-chart-widget__header"><div><h2><?=$weekTitle?></h2><p><span class="fm2-chart-key fm2-chart-key--start"></span>Плановые начала · <span class="fm2-chart-key fm2-chart-key--finish"></span>Плановые окончания</p></div></header><div class="shlz-chart-widget__plot"><div class="fm2-chart-weeks">
+<?php foreach($charts['weeks'] as$i=>$week):$label=$weekLabel($week);?><div class="fm2-chart-week"><span class="fm2-chart-week__label"><?=$label?></span><div class="fm2-chart-week__bars"><?php $bar('/pilot/objects?chart=planned-start&bucket='.$i,$weekTitle.' — Плановые начала — '.$label.': '.$week['starts'],'Начало',$week['starts'],$weekMax);$bar('/pilot/objects?chart=planned-finish&bucket='.$i,$weekTitle.' — Плановые окончания — '.$label.': '.$week['finishes'],'Окончание',$week['finishes'],$weekMax);?></div></div><?php endforeach ?>
+        </div></div></section>
+        <section class="shlz-chart-widget fm2-dashboard-chart" data-dashboard-chart="activity-age"><header class="shlz-chart-widget__header"><div><h2><?=$activityTitle?></h2><p>Только активные объекты, по серверному времени</p></div></header><div class="shlz-chart-widget__plot"><div class="fm2-chart-bars fm2-chart-bars--five">
 <?php foreach($charts['activityAge'] as$item)$bar('/pilot/objects?chart=activity-age&bucket='.$item['key'],$activityTitle.' — '.$item['label'].': '.$item['value'],$item['label'],$item['value'],$activityMax); ?>
-        </div></section>
+        </div></div></section>
     </div>
 <?php if ($total === 0): ?>
     <section class="shlz-empty-state shlz-empty-state--basic fm2-dashboard-state"><div class="shlz-empty-state__content"><h2>Объектов пока нет</h2><p>Когда объекты станут доступны, здесь появится операционная сводка.</p></div><a class="shlz-link" href="/pilot/objects">Открыть реестр</a></section>
