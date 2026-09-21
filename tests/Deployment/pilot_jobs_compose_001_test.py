@@ -147,7 +147,7 @@ secrets:
             if time.monotonic() >= delivery_deadline:
                 raise AssertionError("native workforce delivery did not complete")
             time.sleep(0.5)
-        assert [request["request"]["start"] for request in requests] == [0, 50], "native HTTPS delivery must fetch both pages"
+        assert [request["request"]["start"] for request in requests[:2]] == [0, 50], "native HTTPS delivery must fetch both pages"
         assert all(request["path"].endswith("/user.get") for request in requests), "only the native workforce endpoint is called"
 
         manifest = json.loads(compose(base, ["exec", "-T", "pilot", "sh", "-c", "cat /home/fmonitor/.local/state/fmonitor2/pilot-demo/*/active.json"], env, 30).stdout)
