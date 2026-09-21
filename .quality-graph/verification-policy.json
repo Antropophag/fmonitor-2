@@ -281,6 +281,7 @@
         "app/InstallationProcess/MariaDbEquipmentFacts.php",
         "app/InstallationProcess/MariaDbEquipmentFactsRead.php",
         "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
+        "app/InstallationProcess/MariaDbSqlServerEquipmentFactsTransport.php",
         "app/InstallationProcess/NativeErpEquipmentFactsDelivery.php",
         "app/Jobs/MariaDbEquipmentFactsScheduler.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV31.php",
@@ -534,6 +535,7 @@
         "app/Jobs/JobHandlerClaim.php",
         "app/Jobs/JobHandlerRuntime.php",
         "app/Jobs/JobsRuntimeCommand.php",
+        "app/Jobs/JobsRuntimeConfiguration.php",
         "app/Jobs/JobsSchedulerProcess.php",
         "app/Jobs/MariaDbOutbox.php"
         ,"app/Jobs/OutboxDeliveryOutcome.php"
