@@ -228,3 +228,60 @@ No specification, test-sensitivity, or intended-RED finding remains for the owne
 `APPROVED`
 
 Gate 4 may proceed against exact source `3a4fae1757711f895f7c35df87bffdc91edc9011837b3de5179a7a6ef1350c99`. Implementation must make the complete replacement acceptance GREEN without changing expectations; any normative or executable-test change requires fresh Gate 2 evidence and independent Gate 3 review.
+
+---
+
+## Reconstructed icon-only Gate 3 review — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T174406Z-7b4decd441/package.json`
+- Reconstructed worktree: detached pre-icon implementation `52f152a132812ee411ad357146f75952b0297396` with only final icon-only contract/tests applied
+- Harness source: `fe4fe906dd0c4e1e4d6be05dd9e0f6fc916344f5c10522002016a7807da5cc8e`
+- Executable source: `720b055f043a16bf5d3244504ef4c1691567fb7b683d00818196c2c1de28e9a9`
+- Snapshot patch SHA-256: `81e9a821494da13b1060af071ff708537306d667392a4c87a4fbfac1581b6bfe`
+- Verification plan SHA-256: `a7906cb1932daa8165c250cc982331ebdf29a2afcf853f218c9c02cd614915bd`
+
+### Complete findings
+
+1. **HIGH — “no visible status/date” is inferred from an implementation-specific class name, not observed.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:18-21`; `tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php:39-51,66-80`; `tests/Support/construction_control_shipment_indicator_browser.cjs:3-5`. The acceptance only rejects the literal class `fm2-shipment-copy`. It still passes if partial/full/unknown cells render plain text in another element or as a direct text node, because the same status/date strings are required somewhere in row HTML for `aria-label`/`title` and the helper never inspects visible/text-node content. This is particularly material for unknown, whose cell must be visually empty but whose test positively searches the row for «Не известно». Parse the shipment cell and assert it contains no non-whitespace text nodes or non-hidden status/date element, while independently checking the cell's `aria-label` and `title`. Apply this to unknown, partial, full, and full-without-first.
+
+2. **MEDIUM — the mobile contract does not prove placement beside the chevron or reserved same-row geometry.** Locations: `specs/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md:20-21`; `tests/Support/construction_control_shipment_indicator_browser.cjs:5`. `mobileInlineIcon` requires only an absolute `.fm2-shipment-cell` somewhere in the mobile CSS and absence of the prior `::before` label. It does not bind the shipment inset relative to `.fm2-row-action`, require row padding that reserves both targets, or prove the 24px icon stays within the card without overlap or extra height. An icon absolutely positioned at the left/top or on top of the chevron passes. Add a bounded source-geometry assertion for the shipment and chevron right insets plus row inline-end padding (or a real layout observation) that establishes adjacent, non-overlapping targets in the same row while preserving the fixed row/card height.
+
+### RED evidence assessment
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790012605956159000-199ba2cb6efc44368b83102f23555eed.json` is exact-source and drift-free. It runs in the detached pre-icon worktree, completes MariaDB/bootstrap and the authenticated Yii queue, and aggregates 23 expected product gaps across the hidden header, icon-only labels/tooltips, common box/no marker, unknown-empty state, source layout, unknown matrix, and activity relocation. There is no setup failure. It is valid RED for the asserted behaviors, but the two sensitivity omissions above are not represented in its failure inventory.
+
+### Icon-only Gate 3 verdict
+
+`CHANGES_REQUESTED`
+
+Gate 4/Gate 5 remains blocked on two bounded test corrections: actual absence of visible cell copy and non-overlapping mobile placement beside the chevron. Retain the reconstructed pre-icon contour, capture fresh aggregate RED after adding these assertions, and request independent rereview.
+
+---
+
+## Final reconstructed icon-only Gate 3 rereview — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T174947Z-e0cbd30f0e/package.json`
+- Reconstructed worktree: detached pre-icon implementation `52f152a132812ee411ad357146f75952b0297396`
+- Harness source: `f78c95c6f0eaa501b139921cda4998c61196f8ec2a6f2f4dfaeb8fd7e89fb950`
+- Executable source: `3b123a7d5b5e720f1a0ce6a2aae58a532255ce807e22f1e506ecb8a3eff6cccb`
+- Snapshot patch SHA-256: `6cefc62139353248180553febcf090f499aa7de0699f70f92af975d61a681ca5`
+- Verification plan SHA-256: `59e0a4fb526dfbfe861eaaf247f760812a6e3eab8b7be1f59c3e08c233b15523`
+
+### Prior findings disposition
+
+Both remaining findings are resolved.
+
+- The PHP acceptance now isolates each shipment cell body, strips markup, trims it, and requires an empty text result for partial, full, and unknown states. The helper independently enumerates every shipment cell and requires all stripped text values to be empty. `aria-label`/`title` values are read from opening-tag attributes separately, so accessible/tool-tip strings cannot satisfy the no-visible-copy observation. Full-without-first shares the same full-state cell contract.
+- The mobile source contract now jointly requires card padding `14px 76px 13px 14px`, a 24px absolute shipment cell at right inset 44px, and the 36px chevron target at right inset 8px. Those dimensions reserve two adjacent non-overlapping regions (`44..68` and `8..44`) inside the same row, while the shipment cell remains outside document flow and the fixed desktop row rule remains asserted. The obsolete mobile label pseudo-element remains forbidden.
+
+### RED evidence
+
+Record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790012907477864000-8ff064c2e8f04dfabf09c4aabe12d9ee.json` is exact-source and drift-free. It executes in the reconstructed pre-icon worktree, completes MariaDB/bootstrap and the authenticated Yii queue, and aggregates 26 expected product failures. The new visible-text checks fail on the old row content and the combined mobile geometry check fails on the old layout; no setup/environment failure is present.
+
+No specification, test-sensitivity, or intended-RED finding remains for the owner-approved icon-only design.
+
+### Final icon-only Gate 3 verdict
+
+`APPROVED`
+
+Gate 4/Gate 5 may proceed against the icon-only contract and tests at exact source `f78c95c6f0eaa501b139921cda4998c61196f8ec2a6f2f4dfaeb8fd7e89fb950`. The already implemented candidate must make this unchanged acceptance GREEN; any later expectation change requires fresh reconstructed RED and independent review.

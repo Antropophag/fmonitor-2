@@ -39,10 +39,12 @@ try {
     $first=$row($page['body'],4512);
     foreach(['class="fm2-shipment-cell"','data-shipment-state="partial"','aria-label="Частично отгружен, 10.09.2026"','title="Частично отгружен, 10.09.2026"','delivery-box.svg']as$needle)$check(true,str_contains($first,$needle),'partial shipment '.$needle);
     $check(false,str_contains($first,'fm2-shipment-copy'),'partial has no visible shipment copy');
+    $check('',trim(strip_tags((string)preg_replace('#^.*?<td[^>]*class="fm2-shipment-cell"[^>]*>|</td>.*$#s','',$first))),'partial cell has no visible text');
     $check(false,str_contains($first,'Полностью отгружен'),'partial does not claim full');
     $full=$row($page['body'],4513);
     foreach(['class="fm2-shipment-cell"','data-shipment-state="full"','aria-label="Полностью отгружен, 12.09.2026"','title="Полностью отгружен, 12.09.2026"']as$needle)$check(true,str_contains($full,$needle),'full shipment '.$needle);
     $check(false,str_contains($full,'fm2-shipment-copy'),'full has no visible shipment copy');
+    $check('',trim(strip_tags((string)preg_replace('#^.*?<td[^>]*class="fm2-shipment-cell"[^>]*>|</td>.*$#s','',$full))),'full cell has no visible text');
     $check(1,preg_match('#<span class="fm2-shipment-icon-stack" aria-hidden="true">\s*<img class="fm2-shipment-icon" src="/pilot/assets/shlz-icons/delivery-box\.svg" alt="">\s*</span>#',$full),'full icon is exact decorative box without marker');
     $check(false,str_contains($full,'checkmark.svg')||str_contains($full,'fm2-shipment-marker'),'full icon has no marker');
     $check(1,preg_match('#<span class="fm2-shipment-icon-stack" aria-hidden="true">\s*<img class="fm2-shipment-icon" src="/pilot/assets/shlz-icons/delivery-box\.svg" alt="">\s*</span>#',$first),'partial icon is exact decorative box without marker');
@@ -60,13 +62,14 @@ try {
     $browserExit=proc_close($process);$check([0,''],[$browserExit,$browserErr],'shipment indicator browser acceptance');
     $browser=$browserExit===0?json_decode($browserOut,true,16,JSON_THROW_ON_ERROR):[];
     $check(['unknown'=>'Не известно','partial'=>'Частично отгружен, 10.09.2026','full'=>'Полностью отгружен, 12.09.2026'],$browser['labels']??null,'three accessible shipment labels');
-    $check([true,true,true],[$browser['separateColumn']??null,$browser['fixedRowHeight']??null,$browser['mobileInlineIcon']??null],'icon-only column fixed row height and mobile inline icon');
+    $check([true,true,true,true],[$browser['separateColumn']??null,$browser['noVisibleText']??null,$browser['fixedRowHeight']??null,$browser['mobileInlineIcon']??null],'icon-only column no visible text fixed row height and mobile inline icon');
     $check(false,$browser['usesDelivery4']??true,'ambiguous delivery-4 icon is absent');
 
     $http->db->query("UPDATE {$p}fm2_equipment_fact_current SET first_shipment_date=NULL,full_shipment_date=NULL WHERE object_id=4512");
     $readinessOnly=$row($fixture->page('/pilot/construction-control')['body'],4512);
     foreach(['data-shipment-state="unknown"','aria-label="Не известно"','title="Не известно"']as$needle)$check(true,str_contains($readinessOnly,$needle),'readiness unknown '.$needle);
     $check(false,str_contains($readinessOnly,'fm2-shipment-copy'),'unknown has no visible shipment copy');
+    $check('',trim(strip_tags((string)preg_replace('#^.*?<td[^>]*class="fm2-shipment-cell"[^>]*>|</td>.*$#s','',$readinessOnly))),'unknown cell has no visible text');
     $check(false,str_contains($readinessOnly,'fm2-shipment-icon')||str_contains($readinessOnly,'info-circle.svg'),'unknown cell has no icon');
     $check(false,str_contains($readinessOnly,'не отгружено'),'unknown is not a negative fact');
     $http->db->query("UPDATE {$p}fm2_equipment_fact_current SET readiness_date=NULL WHERE object_id=4512");
