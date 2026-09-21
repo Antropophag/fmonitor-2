@@ -11,6 +11,13 @@ final class WeeklyFkrReportRenderer
         'overdue'=>'Просрочка',
         'attention'=>'Обратить внимание',
     ];
+    private const SUMMARY_LABELS = [
+        'plannedOpenings'=>'Открытия',
+        'plannedClosings'=>'Закрытия',
+        'progress'=>'Прогресс',
+        'overdue'=>'Просрочка',
+        'attention'=>'Внимание',
+    ];
 
     public function render(array $report): array
     {
@@ -18,7 +25,11 @@ final class WeeklyFkrReportRenderer
         $start=(new \DateTimeImmutable($report['periods']['planStart']))->format('d.m.Y');$end=(new \DateTimeImmutable($report['periods']['planEnd']))->format('d.m.Y');
         $subject='FMonitor — недельный отчёт ФКР, '.$start.'–'.$end;
         $period='Период планов: '.$start.'–'.$end;
-        $text=['Еженедельный отчёт ФКР',$period,'Сформировано: '.$generated,''];$sections='';
+        $summaryCounts=[];
+        foreach(self::SUMMARY_LABELS as$key=>$label)$summaryCounts[$key]=count($report['sections'][$key]??[]);
+        $summaryText=[];
+        foreach(self::SUMMARY_LABELS as$key=>$label)$summaryText[]=$label.' — '.$summaryCounts[$key];
+        $text=['Еженедельный отчёт ФКР',$period,'Сформировано: '.$generated,'','Сводка: '.implode(' · ',$summaryText),''];$sections='';
         foreach(self::TITLES as$key=>$title){
             $text[]=$title;$rows=$report['sections'][$key]??[];
             $body='';
@@ -36,35 +47,48 @@ final class WeeklyFkrReportRenderer
             }
             $text[]='';
             $heading='<h2 data-status-label="'.$title.'" '
-                .'style="margin:0;color:#ffffff;background-color:#0b1623;font-size:18px;line-height:1.4;">'
+                .'style="margin:0;color:#ffffff;background-color:#0b1623;font-size:16px;line-height:1.4;">'
                 .$title.'</h2>';
             $sections.='<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
-                .'data-report-section="'.$key.'" style="width:100%;border-collapse:collapse;margin:0 0 24px;">'
+                .'data-report-section="'.$key.'" style="width:100%;border-collapse:collapse;margin:0 0 12px;">'
                 .$this->cell($heading,'#0b1623').$body.'</table>';
         }
-        $html=$this->document($subject,$period,$generated,$sections);
+        $html=$this->document($subject,$period,$generated,$this->summary($summaryCounts),$sections);
         $text[]='Данных за период нет — раздел остаётся в письме, '
             .'чтобы структура отчёта была стабильной.';
         return compact('subject','html')+['text'=>implode("\n",$text)];
     }
-    private function document(string$subject,string$period,string$generated,string$sections):string
+    private function document(string$subject,string$period,string$generated,string$summary,string$sections):string
     {
         return '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
             .'<meta name="viewport" content="width=device-width,initial-scale=1"><title>'.$this->esc($subject).'</title></head>'
             .'<body style="margin:0;padding:0;background-color:#f4f6f9;color:#0b1623;font-family:Arial, Helvetica, sans-serif;font-size:15px;line-height:1.5;">'
             .'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#f4f6f9;"><tr>'
-            .'<td width="100%" align="center" valign="top" style="width:100%;padding:20px 1px;background-color:#f4f6f9;color:#0b1623;">'
+            .'<td width="100%" align="center" valign="top" style="width:100%;padding:12px 1px;background-color:#f4f6f9;color:#0b1623;">'
             .'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
             .'style="width:100%;max-width:680px;border-collapse:collapse;background-color:#ffffff;"><tr>'
-            .'<td width="100%" align="left" valign="top" style="width:100%;padding:28px 24px;background-color:#253d98;color:#ffffff;">'
-            .'<h1 style="margin:0 0 8px;font-size:26px;line-height:1.3;font-weight:600;">'
+            .'<td width="100%" align="left" valign="top" style="width:100%;padding:18px 16px;background-color:#253d98;color:#ffffff;">'
+            .'<h1 style="margin:0 0 4px;font-size:22px;line-height:1.3;font-weight:600;">'
             .'Еженедельный отчёт ФКР</h1>'
             .'<p style="margin:0;color:#ffffff;">'.$period.'<br>Сформировано: '.$generated.'</p></td></tr><tr>'
-            .'<td width="100%" align="left" valign="top" style="width:100%;padding:24px;background-color:#ffffff;color:#0b1623;">'
-            .$sections.'<p style="margin:0;color:#697586;font-size:13px;line-height:1.5;">'
+            .'<td width="100%" align="left" valign="top" style="width:100%;padding:12px 16px;background-color:#ffffff;color:#0b1623;">'
+            .$summary.$sections.'<p style="margin:0;color:#697586;font-size:13px;line-height:1.5;">'
             .'Данных за период нет — раздел остаётся в письме, '
             .'чтобы структура отчёта была стабильной.</p>'
             .'</td></tr></table></td></tr></table></body></html>';
+    }
+    private function summary(array$counts):string
+    {
+        $cells='';
+        foreach(self::SUMMARY_LABELS as$key=>$label){
+            $count=$counts[$key];
+            $cells.='<td width="20%" align="center" valign="top" data-summary-key="'.$key.'" data-summary-count="'.$count.'" '
+                .'style="width:20%;padding:8px 2px;background-color:#eef0f4;color:#0b1623;">'
+                .'<strong style="display:block;font-size:20px;line-height:1.2;">'.$count.'</strong>'
+                .'<span style="font-size:12px;line-height:1.25;">'.$label.'</span></td>';
+        }
+        return '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" data-report-summary="counts" '
+            .'style="width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 12px;"><tr>'.$cells.'</tr></table>';
     }
     private function line(string$key,array$r):string
     {
@@ -98,7 +122,7 @@ final class WeeklyFkrReportRenderer
     }
     private function cell(string$content,string$background='#ffffff'):string
     {
-        $style=$background==='#ffffff'?'padding:8px':'padding:8px;background-color:#0b1623;color:#fff';
+        $style=$background==='#ffffff'?'padding:2px 4px':'padding:5px 6px;background-color:#0b1623;color:#fff';
         return '<tr><td width="100%" align="left" valign="top" style="'.$style.'">'
             .$content.'</td></tr>';
     }

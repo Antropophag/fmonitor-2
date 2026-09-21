@@ -41,6 +41,9 @@ assertSameValue(['Недостаточно данных для оценки'],$r
 assertSameValue(null,$report['sections']['progress'][1]['delta'],'A5 UNKNOWN boundary never produces numeric delta');
 $renderer=new WeeklyFkrReportRenderer();$message=$renderer->render($report);
 foreach(['Плановые открытия','Плановые закрытия','Прогресс за прошедшую неделю','Просрочка','Обратить внимание','Данных за период нет']as$label)assertSameValue(true,str_contains($message['html'],$label)&&str_contains($message['text'],$label),"A3 both bodies contain {$label}");
+assertSameValue(true,str_contains($message['html'],'data-report-summary="counts"'),'A3 compact summary is the first report block');
+foreach(['plannedOpenings'=>2,'plannedClosings'=>5,'progress'=>3,'overdue'=>2,'attention'=>5]as$key=>$count)assertSameValue(true,str_contains($message['html'],'data-summary-key="'.$key.'" data-summary-count="'.$count.'"'),"A3 summary exposes exact {$key} count");
+assertSameValue(true,str_contains($message['text'],"Сводка: Открытия — 2 · Закрытия — 5 · Прогресс — 3 · Просрочка — 2 · Внимание — 5"),'A3 text fallback starts with the same compact summary');
 assertSameValue([['2026-09-14','2026-09-20','2026-09-21T06:00:00.000000Z']],$source->calls,'A2/A5 one typed native-source call receives exact as-of boundaries');
 $leaderB=$builder->build('leader-b','2026-09-21T06:00:00.000000Z','https://fmonitor.example.test');foreach(array_keys($report['sections'])as$section)assertSameValue(array_column($report['sections'][$section],'objectId'),array_column($leaderB['sections'][$section],'objectId'),"A2 both leaders receive identical {$section} object identities");
 assertSameValue(true,str_contains($message['html'],'Ленина, 2 &lt;секция&gt;')&&str_contains($message['html'],'https://fmonitor.example.test/pilot/object/A-1'),'A3 escaped value and trusted absolute link');
