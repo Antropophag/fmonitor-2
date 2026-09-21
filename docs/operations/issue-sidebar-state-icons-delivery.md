@@ -39,3 +39,9 @@
 ## Current state
 
 Gate 4 behavior, bounded desktop/mobile observation, detector, and five planner-focused checks are GREEN. Two earlier parallel UI runs remain `UNKNOWN` fixture-temp collisions and were not counted; sequential exact-source reruns passed. Gate 5 approved source `8e96df27b34a32928b0b6d379c85185a3098bc7fdd82296e7591901eb52a4382` with no findings. Next: commit/push, PR and the single required exact-source CI consumer.
+
+## CI correction
+
+- First exact-source run `35550883926` on `42ccefd65c7f559544101d450c64552db5c82cb4` failed. Complete primary inventory: unit `yii2_shlz_select_001_test.php` and `yii2_sidebar_state_icons_001_test.php`; integration 1/2 `yii2_production_web_cutover_001_test.php`; e2e `ObjectRegisterPagingBrowserFixture.php`. `verify` was derivative. Integration 2/2, fast, governance and plan passed.
+- Corrections: restored official static SHLZ behavior imports; moved the Playwright regression from unit to e2e; updated exact asset hashes; added safe allowlisted pinned-icon routes to production rapid-pilot and its OTIZ oracle. The browser harness uses a deterministic no-op behavior module only inside its isolated synthetic server.
+- Six planner-focused obligations are GREEN on corrected exact source `e9ff837281490aacc9540ed0b4b14b1dcfac0971fb8331f273062c94bfdbd2ff`. Independent Gate 3 and Gate 5 correction reviews are `APPROVED` with no findings. A replacement CI run is required because the first run failed; it is not a same-source retry.

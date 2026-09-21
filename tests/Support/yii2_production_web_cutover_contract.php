@@ -74,10 +74,10 @@ return [
     ],
     'assets' => [
         'shlz.css'=>['bb5e00fba0a3b6804571fdc0a90caaa5ae62a03000d01501a63cd77d234fe99e','text/css; charset=UTF-8','public, max-age=3600'],
-        'pilot.css'=>['b51464ede718381f967511d01aac7f69fbbb921699474786ca496d2434ea4ce1','text/css; charset=UTF-8','public, max-age=3600'],
+        'pilot.css'=>['36a82167d00f55db0722fdbe075192c304f7d9d5d7914183286561e0cf5c3559','text/css; charset=UTF-8','public, max-age=3600'],
         'preopening.css'=>['7c69ca7f249c12ee9c4f8526a4ddf9f3de35dd0ca8a81e781b82dc2b6c5197aa','text/css; charset=UTF-8','public, max-age=3600'],
         'favicon.svg'=>['24b621ad3437c7ebec28fa5f2fe11c345b182a7ceb61e60acd99de163a3ea5b2','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
-        'navigation.js'=>['e6325fc6e0262ee98fff2e3c848b89e6c5691d60a2b3b59c9c3be7cce6c32cc3','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'navigation.js'=>['94e0f756c7309f61a678dd4bed2d23c1c316b8524e03ec3c9141fc72006b6475','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-file-types/file-pdf-default.svg'=>['97e564168a005b67340870d42bdb828c8469fdb547bd6a22b9d8a97b18352a87','image/svg+xml; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/download.svg'=>['0b290278a6a0cdfb4986cc98125833f1020cb3cfc0c511e878868d106622bfd5','image/svg+xml; charset=UTF-8','public, max-age=3600'],
         'preloader.js'=>['0dd6e0d3c833218d4aa08538f94e905b5b7dc0f5265f6aebb3fa3602c88bc047','text/javascript; charset=UTF-8','public, max-age=3600'],

@@ -191,3 +191,27 @@ The tests are traceable to `YII2-SIDEBAR-STATE-ICONS-001`, use the agreed public
 None. Immediately after each summary activation, before any geometry wait, the test still requires the contractually synchronous visible text, `aria-label`, directed-icon marker, and persisted `localStorage` value. It then waits on the observable terminal width before asserting completion of the existing interactive CSS transition. This distinguishes synchronous accessible/control state from intentionally animated geometry and does not weaken the no-flash requirement: the pre-module first-frame width assertion remains immediate and unchanged.
 
 The correction removes a false expectation of zero-duration manual-toggle geometry, matches the OpenSpec decision to preserve ordinary interactive animation after hydration, retains the independently reviewed expected values, and remains deterministic without a hard-coded sleep. The historical exact-source RED continues to demonstrate sensitivity to the original first-frame defect, while both affected focused commands are GREEN on the corrected exact source.
+
+---
+
+## CI-correction test/support review — source `88385528152f13346a681f34000a53dd409cb323444a7afb40ced5a7ce784483`
+
+- Reviewed scope: test/support and verification-inventory corrections only; no production-code verdict in this section
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T015005Z-9b81a5ac53/package.json`; candidate source SHA-256 `88385528152f13346a681f34000a53dd409cb323444a7afb40ced5a7ce784483`; plan SHA-256 `a70aa7f74a484da559b9a4366d99dd36bd6c067b016b41aaba97897d17255508`
+- First-run failed-job and regression inventory reviewed from `/private/tmp/fmonitor-pr215-ci-failed.log`: unit failures `yii2_shlz_select_001_test.php` and Playwright-unavailable `yii2_sidebar_state_icons_001_test.php`; integration failure `yii2_production_web_cutover_001_test.php`; e2e failure `ObjectRegisterPagingBrowserFixture.php` from six 404 calendar-icon requests; aggregate verify failed because those mandatory categories failed
+- Reported focused correction evidence: `yii2_shlz_select`, sidebar-state browser, `yii2_production_web_cutover`, and `ObjectRegisterPagingBrowserFixture` all PASS; browser fixture reports zero console errors, page errors, failed requests and error responses
+- Verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### Review rationale
+
+- Moving `yii2_sidebar_state_icons_001_test.php` from `unit` to `e2e` is a truthful dependency classification: the test explicitly requires host Playwright/Chromium. Its behavioral assertions and historical RED sensitivity are unchanged; the move does not waive or weaken the oracle.
+- The sidebar synthetic server now supplies a deterministic ES module exporting no-op `enhanceCalendarGrids`, `enhanceSelects`, and `enhanceTabs`. This is appropriately narrow: the sidebar regression is not an SHLZ behavior test, while production `navigation.js` retains official static imports independently checked by `yii2_shlz_select_001_test.php`. The stub permits module evaluation without substituting sidebar behavior.
+- Updated cutover hashes exactly match the reviewed bytes: `pilot.css` is `36a82167…c3559` and `navigation.js` is `94e0f756…6475`. MIME and cache contracts remain unchanged, so the correction refreshes immutable cutover evidence rather than relaxing it.
+- `OtizOracleRouter.php` serves only the seven explicit pinned icon names from repository-owned `app/YiiRuntime/Assets/shlz-icons`, with SVG MIME, immutable cache policy and 404 on missing bytes. It does not add a broad filesystem route or mask arbitrary failed requests. The consuming browser oracle continues to fail on console errors, failed requests and non-success responses, so the former calendar-icon 404 is fixed without suppressing diagnostics.
+- The production restoration of official static imports is outside this narrow test/support authorship review; the focused SHLZ select check provides the relevant test evidence for it.
+
+The corrections map one-to-one to the complete first-run failure inventory, preserve fail-closed behavior, and introduce no test-only approximation that could make the specified sidebar or icon behavior pass incorrectly.

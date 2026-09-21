@@ -99,3 +99,50 @@ The mandatory repository-wide `make test` GitHub CI obligation remains pending a
 ### Integrated decision
 
 `APPROVED`. The latest-main integration retains both upstream behavior and the complete `YII2-SIDEBAR-STATE-ICONS-001` contract. No production, test or integration correction is requested. Any subsequent code/test/config delta requires renewed review.
+
+---
+
+## CI-correction code rereview
+
+- Reviewer: same independent Gate 5 reviewer; authored neither the correction nor the Gate 3 test/support delta
+- Previous integrated checkpoint: commit `42ccefd65c7f559544101d450c64552db5c82cb4`
+- Reviewed exact source SHA-256: `e9ff837281490aacc9540ed0b4b14b1dcfac0971fb8331f273062c94bfdbd2ff`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T015539Z-04a4292208/package.json`
+- Verification plan SHA-256: `8ed6102c0214a1bc469359d86811abaaafa34455299e8cf50571ad9a1a5f4c95`
+- Snapshot: base commit `42ccefd65c7f559544101d450c64552db5c82cb4` plus `snapshot/source.patch`, patch SHA-256 `193cdfefda5e573f928ad5e734545f3577bb889a271032e5c57c0cb29dcccbd5`
+- Gate 3 delta review: `reviews/tests/YII2-SIDEBAR-STATE-ICONS-001.md`, section “CI-correction test/support review”, `APPROVED`
+- CI-correction verdict: `APPROVED`
+
+### Findings
+
+None.
+
+### Failure inventory and correction review
+
+The complete first-run inventory was reviewed: unit failed in `yii2_shlz_select_001_test.php` and the Playwright-dependent sidebar test; integration failed in `yii2_production_web_cutover_001_test.php`; e2e failed in `ObjectRegisterPagingBrowserFixture.php` on six calendar/icon 404 responses; aggregate verify and Quality Graph failed because mandatory jobs were not green. No `REGRESSION_FAILURE` entries were reported. The corrections map to that inventory without suppressing failed requests, broadening filesystem access or weakening behavioral assertions.
+
+- `app/YiiRuntime/Assets/navigation.js` restores the official static imports for `enhanceCalendarGrids`, `enhanceSelects` and `enhanceTabs`, preserving the public SHLZ module contract checked by the existing select test. The pre-head `sidebar-bootstrap.js` remains independent and still owns saved compact state before paint; the restored imports do not move or delay that responsibility.
+- `rapid-pilot/router.php` exposes only seven explicitly named, repository-pinned SVG assets through an anchored regex. The requested name is reduced to the captured allowlisted basename before path construction, missing bytes return 404, and responses set exact SVG MIME, length, `public, max-age=31536000, immutable`, and `X-Content-Type-Options: nosniff`. There is no traversal, arbitrary-extension or sibling-workspace read path.
+- `tests/Support/OtizOracleRouter.php` mirrors the production allowlist and headers so the active browser oracle exercises real icon requests. Its consumer continues to reject console errors, page errors, failed requests and non-success responses; the former 404 is corrected, not ignored.
+- The sidebar synthetic server supplies no-op exports only for the unrelated SHLZ behavior dependency so the focused first-paint oracle can evaluate the production navigation module. The sidebar state, CSP, storage, accessibility and geometry code is not stubbed. Gate 3 independently approved this support delta.
+- Moving `yii2_sidebar_state_icons_001_test.php` from `unit` to `e2e` accurately declares its existing Playwright/Chromium dependency. It remains mandatory and its test body and historical sensitivity are unchanged.
+- Production cutover hashes were updated to the exact reviewed `pilot.css` and restored-static-import `navigation.js` bytes. MIME/cache expectations remain strict. Verification input now includes every correction boundary, and the refreshed planner adds the applicable deployment/e2e obligation.
+
+The rapid adapter remains a bounded oracle/temporary adapter and does not receive new domain logic. Routes, rights, facts, database/history semantics, CSP and the approved icon provenance/cardinality contract are unchanged. `git diff --check` passes.
+
+### Exact-source focused evidence
+
+All six package records are `GREEN`, exit `0`, end on exact source `e9ff8372…d2ff`, and report `source_drift=false`:
+
+- `php tests/Yii2/yii2_sidebar_state_icons_001_test.php` — record `1789955502401510000-163a6bf15c6140a392c67d223968499b.json`; PASS first-frame/state/toggle/no-JS matrix.
+- `tools/delivery/run-in-profile browser --with-services php tests/Yii2/yii2_main_navigation_001_test.php` — record `1789955566146256000-fb4a22f6c3ac4789a668f35276ca22db.json`; PASS shared permission-aware Yii navigation.
+- `python3 tests/Deployment/pilot_jobs_compose_001_test.py` — record `1789955588756612000-c973b8c84d3641218222da1dfb42f69c.json`; PASS isolated root Compose delivery/restart.
+- `python3 tests/Verification/change_verification_001_test.py` — record `1789955642722394000-739a81f7595d437d9e15cf1e47ccff5d.json`; 18 tests PASS.
+- `php tests/Runtime/runtime_storage_001_test.php` — record `1789955673283313000-5ca78fd39cd24132bd492d57394f4574.json`; PASS runtime storage contract.
+- `python3 tests/Verification/architecture_guard_001_test.py` — record `1789955695446311000-3804ed50573b428887514690b740752f.json`; 59 tests PASS.
+
+The prior GitHub run remains `FAILURE`; its failed-job inventory is historical diagnostic evidence, not GREEN evidence. This review approves the correction source for a new exact-source CI run and does not claim that mandatory full CI has passed. Publication and merge readiness remain fail-closed until that run is GREEN.
+
+### CI-correction decision
+
+`APPROVED`. The production correction is narrow, secure and consistent with the previously approved specification. The independently approved test/support changes remain sensitive and mandatory, and the six refreshed focused obligations are green on the exact reviewed source. No further code or test correction is requested before exact-source CI.

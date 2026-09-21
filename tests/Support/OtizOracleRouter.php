@@ -71,6 +71,16 @@ if ($path === '/pilot/assets/shlz-icons.svg') {
     echo $bytes;
     exit;
 }
+if (is_string($path) && preg_match('#^/pilot/assets/shlz-icons/(calendar-sidebar|calendar-interface|logout|search|chevron-right-duo|cloud-upload|plus-alt-2)\.svg$#D', $path, $icon) === 1) {
+    $bytes = file_get_contents(dirname($rapidRoot) . '/app/YiiRuntime/Assets/shlz-icons/' . $icon[1] . '.svg');
+    if (!is_string($bytes)) { http_response_code(404); exit; }
+    header('Content-Type: image/svg+xml; charset=UTF-8');
+    header('Content-Length: ' . strlen($bytes));
+    header('Cache-Control: public, max-age=31536000, immutable');
+    header('X-Content-Type-Options: nosniff');
+    echo $bytes;
+    exit;
+}
 if (is_string($path) && RapidPilotFileTypeAsset::matches($path)) RapidPilotFileTypeAsset::handle($path);
 if ($path === '/pilot/assets/icons/file-pdf-default.svg' || $path === '/pilot/assets/icons/download.svg') {
     $icon = $path === '/pilot/assets/icons/file-pdf-default.svg' ? 'file-types/file-pdf-default.svg' : 'icons/download.svg';
