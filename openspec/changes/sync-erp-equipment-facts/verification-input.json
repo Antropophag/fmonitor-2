@@ -1,0 +1,120 @@
+{
+  "change": "sync-erp-equipment-facts",
+  "planned_paths": [
+    "app/InstallationProcess/EquipmentFactsSchemaMigration.php",
+    "app/InstallationProcess/EquipmentFactsApplication.php",
+    "app/InstallationProcess/EquipmentFactsPersistenceFailure.php",
+    "app/InstallationProcess/MariaDbEquipmentFacts.php",
+    "app/InstallationProcess/MariaDbEquipmentFactsRead.php",
+    "app/InstallationProcess/ErpEquipmentFactsDelivery.php",
+    "app/InstallationProcess/ErpEquipmentFactsDeliveryConfig.php",
+    "app/InstallationProcess/NativeErpEquipmentFactsDelivery.php",
+    "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
+    "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
+    "app/Jobs/MariaDbEquipmentFactsScheduler.php",
+    "app/Jobs/JobHandlerRuntime.php",
+    "app/Jobs/JobsRuntimeCommand.php",
+    "app/Jobs/JobsSchedulerProcess.php",
+    "app/YiiRuntime/Commands/ErpEquipmentFactsSyncController.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "config/yii/console.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "public-command-authorization-validation-receipts",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication execute complete|failed public command and receipt",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_contract_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "single-writer-architecture-boundary",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "architecture policy over adapter, CLI, scheduler, worker, HTTP and screen writers",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "A-D-independent-initial-states",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication execute complete initial authoritative states on disposable DB",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_initial_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "E-F-I-correction-idempotency-clear",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication execute correction, replay, concurrency, clear and absent-order behavior",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_changes_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "G-source-failure-preserves-success",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "ErpEquipmentFactsDelivery two-query normalization, invalid/incomplete failure, and owner failed command",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "H-exact-missing-ambiguous-mapping",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication execute exact zavnumber mapping and safe diagnostics",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "J-process-isolation",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication execute with adjacent persisted process snapshot",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_isolation_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "K-provenance-history-freshness-read",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "MariaDbEquipmentFactsRead current/history/global status projection",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_read_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "card-authorization-and-degradation",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "authorized GET/HEAD Yii object card equipmentFacts block",
+      "tests": ["tests/Yii2/yii2_erp_equipment_facts_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "schema-migration-recovery-catalogue-backup",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "forward migration, compatible recovery and production catalogue/backup inventory",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_schema_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "hourly-scheduler-worker-runtime",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "existing scheduler tick and JobHandlerRuntime equipment sync dispatch",
+      "tests": ["tests/Jobs/erp_equipment_facts_scheduler_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "canonical-console-composition-safe-output",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "Yii erp-equipment-facts-sync console registration and canonical composition",
+      "tests": ["tests/Yii2/yii2_erp_equipment_facts_console_001_test.php"]
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "L-safe-diagnostics",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication diagnostics receipt and persistence readback",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_diagnostics_001_test.php"]
+    }
+  ]
+}

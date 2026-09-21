@@ -476,3 +476,16 @@ unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php	unit
 unit	python3	tools/delivery/ci_launch_transport_198_test.py	governance
+db	php	tests/InstallationProcess/erp_equipment_facts_changes_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_contract_001_test.php	integration
+unit	php	tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php	unit
+db	php	tests/InstallationProcess/erp_equipment_facts_diagnostics_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_initial_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_isolation_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php	integration
+unit	php	tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php	unit
+db	php	tests/InstallationProcess/erp_equipment_facts_read_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_schema_001_test.php	integration
+db	php	tests/Jobs/erp_equipment_facts_scheduler_001_test.php	integration
+db	php	tests/Yii2/yii2_erp_equipment_facts_001_test.php	integration
+unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit

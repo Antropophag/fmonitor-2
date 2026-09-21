@@ -10,6 +10,13 @@ final class JobHandlerRuntime
 {
     public static function handle(array $job, JobsRuntimeConfiguration $config, ?callable $documentSync=null): array
     {
+        if ($job['jobType'] === 'erp.equipment-facts.sync') {
+            try { $result=$documentSync===null?\FMonitor2\YiiRuntime\Commands\ErpEquipmentFactsSyncController::runJob($config):$documentSync(); }
+            catch (\Throwable) { return ['status'=>'retryable','failureCode'=>'ERP_EQUIPMENT_FACTS_SYNC_FAILED']; }
+            if (($result['status']??null)==='completed' && is_string($result['runId']??null) && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$result['runId'])===1 && is_int($result['matched']??null) && $result['matched']>=0) return ['status'=>'completed','result'=>['runId'=>$result['runId'],'matched'=>$result['matched']]];
+            if (($result['status']??null)==='failed' && is_string($result['runId']??null) && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$result['runId'])===1 && ($result['reason']??null)==='SOURCE_UNAVAILABLE') return ['status'=>'retryable','failureCode'=>'ERP_EQUIPMENT_FACTS_SYNC_FAILED','result'=>['runId'=>$result['runId'],'reason'=>'SOURCE_UNAVAILABLE']];
+            return ['status'=>'retryable','failureCode'=>'ERP_EQUIPMENT_FACTS_SYNC_FAILED'];
+        }
         if ($job['jobType'] === 'outbox.dispatch') return self::deliverOutbox($job, $config);
         if ($job['jobType'] === 'weekly-fkr-report.generate') return self::generateWeekly($job, $config);
         if ($job['jobType'] === 'bitrix.order-document-links.sync') {

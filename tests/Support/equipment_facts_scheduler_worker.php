@@ -1,0 +1,3 @@
+<?php
+declare(strict_types=1);require dirname(__DIR__,2).'/app/autoload.php';
+use FMonitor2\Jobs\MariaDbEquipmentFactsScheduler;[$script,$name,$release]=$argv;$host=getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1';$port=(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306);$user=getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root';$pass=getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local';while(!is_file($release))usleep(1000);$db=new mysqli($host,$user,$pass,$name,$port);echo json_encode((new MariaDbEquipmentFactsScheduler($db,'es_'))->tick('2026-09-15T15:22:00.000000Z'),JSON_THROW_ON_ERROR);$db->close();
