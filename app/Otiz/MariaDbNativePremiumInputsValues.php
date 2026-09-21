@@ -48,6 +48,8 @@ trait MariaDbNativePremiumInputsValues
             return null;
         }
         $f = $x["fields"] ?? [];
+        $edit=$this->db->prepare("SELECT revision,values_json,updated_at_utc FROM `{$p}fm2_object_detail_edits` WHERE object_id=? LIMIT 1");$edit->execute([$id]);$override=$edit->get_result()->fetch_assoc();$manual=[];
+        if($override){$manual=json_decode((string)$override['values_json'],true,512,JSON_THROW_ON_ERROR);foreach(['floors','weight','lift_type','pitmaterial']as$key)if(array_key_exists($key,$manual)){$value=$manual[$key];$display=in_array($key,['lift_type','pitmaterial'],true)&&$value!==null?\FMonitor2\InstallationProcess\ObjectDetailsReferenceCatalogue::display($key,(string)$value):(is_bool($value)?($value?'Да':'Нет'):$value);$f[$key]=['raw'=>$value,'display'=>$display];}}
         $floor = filter_var($f["floors"]["raw"] ?? null, FILTER_VALIDATE_INT, [
             "options" => ["min_range" => 1],
         ]);
@@ -65,13 +67,14 @@ trait MariaDbNativePremiumInputsValues
         if ($shaft === null) {
             $this->issue($issues, "SHAFT_COEFFICIENT_UNRESOLVED");
         }
+        $manualEvidence=$override&&array_intersect_key($manual,array_flip(['floors','weight','lift_type','pitmaterial']))!==[];
         return [
             "premium" => $premium,
             "shaft" => $shaft,
-            "date" => substr($r["captured_at"], 0, 10),
+            "date" => substr((string)($manualEvidence?$override["updated_at_utc"]:$r["captured_at"]), 0, 10),
             "label" => "Характеристики карточки объекта + приложение 4 к приказу №178",
-            "locator" => "fm2_pilot_object_details/" . $id,
-            "sha" => $r["content_sha256"],
+            "locator" => $manualEvidence?"fm2_object_detail_edits/".$id."/".$override['revision']:"fm2_pilot_object_details/" . $id,
+            "sha" => $manualEvidence?hash('sha256',json_encode(['objectId'=>$id,'revision'=>(int)$override['revision'],'technical'=>array_intersect_key($manual,array_flip(['floors','weight','lift_type','pitmaterial']))],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)):$r["content_sha256"],
         ];
     }
     private function issue(array &$a, string $c): void

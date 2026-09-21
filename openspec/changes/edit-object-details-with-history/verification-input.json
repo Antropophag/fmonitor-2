@@ -58,9 +58,14 @@
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
       "seam": "import and current public readers",
       "tests": [
-        "tests/InstallationProcess/object_details_effective_consumers_001_test.php"
+        "tests/InstallationProcess/object_details_effective_consumers_001_test.php",
+        "tests/InstallationProcess/pilot_case_import_001_test.php",
+        "tests/Yii2/yii2_object_card_001_test.php",
+        "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/InstallationProcess/erp_equipment_facts_read_001_test.php",
+        "tests/Otiz/excel_inputs_001_test.php"
       ],
-      "gate3_expected":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":"INTENDED_RED"},
+      "gate3_expected":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":"INTENDED_RED","tests/InstallationProcess/pilot_case_import_001_test.php":"GREEN","tests/Yii2/yii2_object_card_001_test.php":"GREEN","tests/Yii2/yii2_object_queue_001_test.php":"GREEN","tests/InstallationProcess/erp_equipment_facts_read_001_test.php":"GREEN","tests/Otiz/excel_inputs_001_test.php":"GREEN"},
       "fixture_reachability":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":{"boundary":"object-details-consumer-fixture","probe_kind":"fixture_read_only"}}
     },
     {
@@ -91,9 +96,11 @@
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
       "seam": "canonical migration and backup restore",
       "tests": [
-        "tests/Runtime/object_details_editing_recovery_001_test.php"
+    "tests/Runtime/object_details_editing_recovery_001_test.php",
+    "tests/Runtime/object_details_editing_restore_roundtrip_001_test.php",
+        "tests/Runtime/production_schema_frontier_001_test.php"
       ],
-      "gate3_expected":{"tests/Runtime/object_details_editing_recovery_001_test.php":"INTENDED_RED"},
+      "gate3_expected":{"tests/Runtime/object_details_editing_recovery_001_test.php":"INTENDED_RED","tests/Runtime/production_schema_frontier_001_test.php":"GREEN","tests/Runtime/object_details_editing_restore_roundtrip_001_test.php":"GREEN"},
       "fixture_reachability":{"tests/Runtime/object_details_editing_recovery_001_test.php":{"boundary":"object-details-recovery-fixture","probe_kind":"fixture_read_only"}}
     }
   ]

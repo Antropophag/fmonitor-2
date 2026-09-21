@@ -15,11 +15,11 @@ final readonly class MariaDbYiiObjectCardProjection
         }
     }
 
-    public function decorate(array $card, int $actorId, int $caseId, string $state): array
+    public function decorate(array $card, int $actorId, int $caseId, string $state,?string$historyCursor=null): array
     {
         $application = $this->one("SELECT * FROM `{$this->prefix}fm2_assignment_order_applications` WHERE installation_case_id=:case ORDER BY application_sequence DESC LIMIT 1", [':case' => $caseId]);
         $selection = $this->one("SELECT s.*,r.current_revision_id,v.revision_number,v.document_date,v.uploaded_at_utc,v.actor_user_id,v.byte_size FROM `{$this->prefix}fm2_assignment_order_selections` s LEFT JOIN `{$this->prefix}fm2_assignment_order_original_roots` r ON r.installation_case_id=s.installation_case_id AND r.assignment_order_id=s.assignment_order_id AND r.composition_identity=s.composition_identity AND r.composition_sha256=s.composition_sha256 LEFT JOIN `{$this->prefix}fm2_assignment_order_original_revisions` v ON v.root_original_id=r.root_original_id AND v.revision_id=r.current_revision_id WHERE s.installation_case_id=:case AND s.selection_revision=(SELECT MAX(x.selection_revision) FROM `{$this->prefix}fm2_assignment_order_selections` x WHERE x.installation_case_id=:case2) LIMIT 2", [':case' => $caseId, ':case2' => $caseId]);
-        $card['events'] = $this->events($caseId);
+        [$card['events'],$card['historyNext']] = $this->events($caseId,(int)$card['id'],$historyCursor);
         if ($card['opened'] && $application === null) {
             throw new \RuntimeException('Opened native card has no applied composition.');
         }
@@ -109,10 +109,10 @@ final readonly class MariaDbYiiObjectCardProjection
         return ['version' => (int) ($row['order_version'] ?? 0), 'status' => $status, 'orderDate' => (string) $row['document_date'], 'preparedAt' => $prepared, 'registrationNumber' => null, 'artifacts' => [$artifact], 'organizationType' => count($installers) === 1 ? 'individual' : 'brigade', 'engineer' => $engineer, 'installers' => $installers];
     }
 
-    private function events(int $caseId): array
+    private function events(int $caseId,int$objectId,?string$cursor): array
     {
-        $rows = $this->db->createCommand("SELECT event_type,occurred_at,actor_user_id FROM `{$this->prefix}fm2_process_events` WHERE installation_case_id=:case ORDER BY id DESC LIMIT 8", [':case' => $caseId])->queryAll();
-        return array_map(static fn (array $row): array => ['type' => (string) $row['event_type'], 'occurredAt' => (string) $row['occurred_at'], 'actorId' => (int) $row['actor_user_id']], $rows);
+        $params=[':case'=>$caseId,':object'=>$objectId];$where='';if($cursor!==null){$decoded=base64_decode(strtr($cursor,'-_','+/'),true);$tuple=is_string($decoded)?json_decode($decoded,true):null;if(!is_array($tuple)||count($tuple)!==3||!is_int($tuple[0])||!is_int($tuple[1])||!is_int($tuple[2]))throw new \DomainException('Invalid history cursor.');[$time,$rank,$id]=$tuple;$where=' WHERE occurred_sort<:time OR (occurred_sort=:time2 AND (source_rank<:rank OR (source_rank=:rank2 AND source_id<:source)))';$params+=[':time'=>$time,':time2'=>$time,':rank'=>$rank,':rank2'=>$rank,':source'=>$id];}
+        $p=$this->prefix;$sql="SELECT * FROM (SELECT id source_id,1 source_rank,UNIX_TIMESTAMP(REPLACE(SUBSTRING(occurred_at,1,19),'T',' ')) occurred_sort,event_type,occurred_at,actor_user_id,NULL actor_display_snapshot,NULL changes_json FROM `{$p}fm2_process_events` WHERE installation_case_id=:case UNION ALL SELECT event_id source_id,2 source_rank,UNIX_TIMESTAMP(occurred_at_utc) occurred_sort,event_type,DATE_FORMAT(occurred_at_utc,'%Y-%m-%dT%H:%i:%sZ') occurred_at,actor_user_id,actor_display_snapshot,changes_json FROM `{$p}fm2_object_detail_edit_events` WHERE installation_case_id=:case AND object_id=:object) chronology{$where} ORDER BY occurred_sort DESC,source_rank DESC,source_id DESC LIMIT 9";$rows=$this->db->createCommand($sql,$params)->queryAll();$more=count($rows)>8;if($more)array_pop($rows);$events=array_map(static fn(array$row):array=>['type'=>(string)$row['event_type'],'occurredAt'=>(string)$row['occurred_at'],'actorId'=>(int)$row['actor_user_id']]+($row['actor_display_snapshot']!==null?['actorName'=>(string)$row['actor_display_snapshot'],'changes'=>json_decode((string)$row['changes_json'],true,flags:JSON_THROW_ON_ERROR)]:[]),$rows);$last=end($rows);$next=$more&&is_array($last)?rtrim(strtr(base64_encode(json_encode([(int)$last['occurred_sort'],(int)$last['source_rank'],(int)$last['source_id']],JSON_THROW_ON_ERROR)),'+/','-_'),'='):null;return[$events,$next];
     }
 
     private function actorNames(array $card): array
@@ -128,7 +128,7 @@ final readonly class MariaDbYiiObjectCardProjection
             $rows = $this->db->createCommand("SELECT user_id,full_name,email FROM `{$this->prefix}fm2_pilot_users` WHERE user_id IN(" . implode(',', $marks) . ')', $params)->queryAll();
             foreach ($rows as $row) { $name = trim((string) $row['full_name']); $name = $name === '' ? trim((string) $row['email']) : $name; $names[(int) $row['user_id']] = $name === '' ? null : $name; }
         }
-        foreach ($card['events'] as &$event) { $event['actorName'] = $names[$event['actorId']] ?? null; }
+        foreach ($card['events'] as &$event) { if(!array_key_exists('actorName',$event))$event['actorName'] = $names[$event['actorId']] ?? null; }
         unset($event);
         if (($card['openedByUserId'] ?? null) !== null) {
             $id = (int) $card['openedByUserId'];

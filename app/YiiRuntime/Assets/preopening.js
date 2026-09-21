@@ -127,3 +127,13 @@
     finally { busy = false; disable(false); if (changedIntent) renew(); }
   });
 })();
+const detailsDialog=document.querySelector('[data-object-details-dialog]');
+const detailsTrigger=document.querySelector('[data-object-details-edit]');
+if(detailsDialog&&detailsTrigger){
+  const close=()=>detailsDialog.close();
+  detailsTrigger.addEventListener('click',()=>detailsDialog.showModal());
+  detailsDialog.querySelector('[data-object-details-close]')?.addEventListener('click',close);
+  detailsDialog.querySelector('[data-object-details-cancel]')?.addEventListener('click',close);
+  detailsDialog.addEventListener('click',event=>{if(event.target===detailsDialog)close();});
+  if(detailsDialog.hasAttribute('data-object-details-invalid')){detailsDialog.showModal();detailsDialog.querySelector('[aria-invalid="true"]')?.focus();}
+}

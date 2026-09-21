@@ -8,6 +8,7 @@ final readonly class AuthorizeLocalActor
 {
     private const PERMISSIONS = [
         'objects.read',
+        'objects.details.edit',
         'installers.read',
         'assignment_order_artifact.read',
         'assignment_order.prepare',

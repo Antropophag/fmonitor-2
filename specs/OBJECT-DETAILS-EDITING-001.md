@@ -8,7 +8,7 @@
 
 ## 1. Actor, public seam и результат
 
-Actor: активный local user с capability `objects.details.edit` и доступом к объекту. Нормативное назначение capability: бизнес-роли `fkr_operator` и `manager`; access administrator/superadministrator без бизнес-роли права автоматически не получает.
+Actor: активный local user с capability `objects.details.edit` и `objects.read`. Нормативное назначение capability: бизнес-роли `fkr_operator` и `manager`; access administrator/superadministrator без бизнес-роли права автоматически не получает. Решение владельца 2026-09-21: для этих двух бизнес-ролей scope глобален по всем пилотным объектам, доступным через `objects.read`; отдельной actor↔object привязки нет и #222 её не создаёт.
 
 Единственный state-changing public application seam принимает:
 
@@ -47,30 +47,25 @@ Canonical HTTP seam: `POST /pilot/objects/<positive-id>/details` через Yii 
 
 `shaftBp`/Кшах отсутствует в allowlist и форме. Для нового расчёта он выводится действующей `NativePremiumNorms`-нормой из effective `pitmaterial`; изменение таблицы норм не входит в срез.
 
-### 2.3 Conditionally editable — исходный план
-
-`workdatestart` и `plan_finish_date` допустимы только до фиксации соответствующего исходного срока реальным immutable документным/процессным фактом. Непустой текст даты сам по себе не является фиксацией. После распоряжения/opening/другого утверждённого snapshot обычная правка запрещена. `workdatestartadjusted`, `workdateendadjusted` и срок действующей справки о переносе не являются отдельными свободными полями; certificate deadline сохраняет приоритет и меняется только существующей командой справки.
-
-В первой UI модалке условные даты показываются только когда owner/projection подтверждает editable state; сервер проверяет условие независимо от UI.
-
-### 2.4 Integration-owned — только владельцы интеграции
+### 2.3 Integration-owned — только владельцы интеграции
 
 - ERP equipment readiness/first/full shipment, source, run/status/timestamps — `EquipmentFacts`/hourly ERP sync.
 - Bitrix technical-document links — Bitrix document-link integration.
 - workforce identity/status/dates/positions — hourly workforce catalog.
 - пустое значение, source outage или выключенный worker не передаёт ownership ручному editor.
 
-### 2.5 Process-owned — только существующие commands
+### 2.4 Process-owned — только существующие commands
 
 - ПТО и declaration date/details/file/corrections;
 - actual opening/completion, actor/time;
 - assignment orders/originals, composition/assignments/control engineer;
 - inspections, checklist, photos, progress;
 - transfer certificates и effective transferred deadlines.
+- исходные и скорректированные плановые даты.
 
 Эти поля запрещены даже если пусты и actor имеет `objects.details.edit`.
 
-### 2.6 Derived/system — не поля editor
+### 2.5 Derived/system — не поля editor
 
 Case state/readiness, computed progress, organization form, Кшах, premiums и другие calculations; local/legacy IDs, revisions, hashes/provenance, published snapshots, payments и technical audit identities.
 
@@ -133,7 +128,7 @@ Rollback web image скрывает editor, но не удаляет additive sc
 | ID | Observable acceptance |
 |---|---|
 | A1 | Каждое безусловно editable поле заполняется из missing и исправляется независимо; provenance соседей не меняется. |
-| A2 | Conditional plan разрешён до real fixing fact и запрещён после snapshot/opening/certificate priority. |
+| A2 | Плановые и скорректированные даты отсутствуют в allowlist и mixed payload с ними отклоняется целиком. |
 | A3 | Unknown/forbidden/`shaftBp`/mixed payload и invalid typed/reference values дают zero writes. |
 | A4 | Leading zeros, 120-byte boundary, decimal normalization и null semantics сохраняют точный смысл. |
 | A5 | Active+capability+scope required; missing capability/inactive/out-of-scope rejected. |

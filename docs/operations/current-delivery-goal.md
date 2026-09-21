@@ -1,4 +1,12 @@
-# Текущая цель — быстрый refinement операционного дашборда
+# Текущая цель — #222, редактирование реквизитов объекта
+
+Поручение владельца 2026-09-21: продолжить существующую ветку `codex/issue-222-object-details` до PR-ready по контракту [OBJECT-DETAILS-EDITING-001](../../specs/OBJECT-DETAILS-EDITING-001.md) и lifecycle [edit-object-details-with-history](../../openspec/changes/edit-object-details-with-history/). Детали scope, разовое разрешение раннего production implementation и authorship зафиксированы в [delivery record](issue-222-object-details-editing-delivery.md). Эта цель заменяет расположенный ниже исторический указатель dashboard; dashboard WIP не смешивать.
+
+Root пишет scope/spec/tests; отдельный `gpt-5.6-sol / low` executor реализует. Два прежних Gate 3 отказа сохраняются. Один независимый reviewer совместно проверяет готовые tests+implementation+evidence и disposition всех findings. До review Gate 3 не `APPROVED`. Локально только bounded checks; полный `make test`/`make verify` запрещён. Затем один exact-source CI, PR-ready без merge/deploy/import/external sends/settings.
+
+---
+
+## Исторический указатель — быстрый refinement операционного дашборда
 
 Поручение владельца 2026-09-21: реализовать согласованный на локальном стенде refinement дашборда. Candidate начат от merged PR #217 и после предупреждения владельца rebased на актуальный `origin/main` `80130fbb` (merged PR #218 ERP operational); конфликты разрешаются с повторным exact-source plan/checks.
 

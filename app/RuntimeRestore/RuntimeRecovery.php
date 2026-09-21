@@ -7,6 +7,7 @@ use FMonitor2\Runtime\RuntimeReadiness;
 
 final class RuntimeRecovery
 {
+    /** v32 inventory: fm2_object_detail_edits, fm2_object_detail_edit_events, fm2_object_detail_edit_requests. */
     public static function run(array $argv,array $environment):array
     {
         try{return match($argv[1]??''){ 'backup'=>self::backup(array_slice($argv,2),$environment),'restore'=>self::restore(array_slice($argv,2),$environment),default=>self::out(64,'CONFIGURATION_INVALID')};}

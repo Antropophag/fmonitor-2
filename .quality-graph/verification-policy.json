@@ -325,6 +325,7 @@
       "name": "otiz-premium-norms",
       "patterns": [
         "app/Otiz/MariaDbNativePremiumInputs.php",
+        "app/Otiz/MariaDbNativePremiumInputsValues.php",
         "app/Otiz/MariaDbObjectRegisterQuery.php",
         "app/Otiz/NativePremiumNorms.php"
         ,"app/Otiz/ObjectEconomy.php"
@@ -500,6 +501,7 @@
         "app/InstallationProcess/MariaDbYiiObjectCard.php",
         "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
         "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+        "app/InstallationProcess/YiiObjectCard.php",
         "app/InstallationProcess/YiiObjectQueue.php",
         "app/InstallationProcess/YiiOperationalDashboardStore.php",
         "app/InstallationProcess/YiiOperationalDashboard.php"
@@ -549,10 +551,16 @@
     {
       "name": "object-details-editing",
       "patterns": [
+        "app/IdentityAccess/AuthorizeLocalActor.php",
+        "app/IdentityAccess/LocalRoleCatalog.php",
+        "app/InstallationProcess/MariaDbBitrixOrderDocumentLinksRead.php",
         "app/InstallationProcess/ObjectDetailsEditApplication.php",
         "app/InstallationProcess/ObjectDetailsEditCommand.php",
+        "app/InstallationProcess/ObjectDetailsEditPermissionProvisioning.php",
+        "app/InstallationProcess/ObjectDetailsEditingMigration.php",
         "app/InstallationProcess/ObjectDetailsEditingSchemaMigration.php",
         "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
+        "app/InstallationProcess/ObjectDetailsReferenceCatalogue.php",
         "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
         "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
         "app/InstallationProcess/ProductionObjectDetailsEditFactory.php"

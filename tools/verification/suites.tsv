@@ -188,6 +188,7 @@ db	php	tests/Runtime/initial_owner_provisioning_001_test.php	integration
 db	php	tests/Runtime/migration_concurrency_lock_001_test.php	integration
 db	php	tests/Runtime/migration_parallel_runners_001_test.php	integration
 db	php	tests/Runtime/object_details_editing_recovery_001_test.php	integration
+db	php	tests/Runtime/object_details_editing_restore_roundtrip_001_test.php	integration
 db	php	tests/Runtime/production_process_readiness_001_test.php	integration
 db	php	tests/Runtime/production_readiness_schema_001_test.php	integration
 db	php	tests/Runtime/production_schema_frontier_001_test.php	integration

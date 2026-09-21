@@ -27,9 +27,9 @@
 
 ### 2. Fixed typed field registry
 
-Registry перечисляет 11 безусловных полей и два условных поля исходного плана, их wire names, scalar/reference types, normalization, validation, display label/unit и consumer semantics. `shaftBp` отсутствует: OTIZ вычисляет Кшах из effective `pitmaterial`. Registry не принимает ambient columns и не становится runtime-конструктором.
+Registry перечисляет 11 разрешённых полей, их wire names, scalar/reference types, normalization, validation, display label/unit и consumer semantics. `shaftBp` отсутствует: OTIZ вычисляет Кшах из effective `pitmaterial`. Registry не принимает ambient columns и не становится runtime-конструктором.
 
-Справочные поля хранят подтверждённое canonical значение/code и display snapshot события. Числа преобразуются decimal/integer logic без binary float. Номера остаются strings. Условие редактирования исходного плана читает реальные immutable document/process facts и transfer-certificate priority, а не непустой текст даты.
+Справочные поля хранят подтверждённое canonical значение/code и display snapshot события. Числа преобразуются decimal/integer logic без binary float. Номера остаются strings. Плановые и скорректированные даты принадлежат существующим process/document seams и не входят в registry.
 
 Альтернатива — loose JSON/EAV без registry — отвергнута из-за mass-assignment, type drift и невозможности доказать consumer coverage.
 

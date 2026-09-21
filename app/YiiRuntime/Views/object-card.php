@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use FMonitor2\YiiRuntime\ViewSupport;
+use FMonitor2\InstallationProcess\ObjectDetailsReferenceCatalogue;
 use yii\helpers\Html;
 
 $date = static function (?string $value, bool $withTime = false): string {
@@ -53,6 +54,7 @@ $eventLabels = [
     'installation_opened_from_original' => 'Монтажные работы открыты',
     'inspection_scheduled' => 'Инспекция запланирована',
     'control_engineer_changed' => 'Инженер строительного контроля изменён',
+    'object_details_changed' => 'Данные объекта изменены',
 ];
 $canCorrect = $canCorrect ?? false;
 $canReadOriginal = $canReadOriginal ?? false;
@@ -127,7 +129,20 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             <span>Регистрационный номер</span>
             <strong><?= trim((string) $registrationNumber) !== '' ? Html::encode($registrationNumber) : 'Не указан' ?></strong>
         </div>
+        <?php if (($detailEditor['allowed'] ?? false) === true): ?><button class="shlz-button shlz-button--icon fm2-object-edit" type="button" data-object-details-edit aria-label="Редактировать данные объекта" title="Редактировать данные объекта"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><?php endif ?>
     </header>
+    <?php if (($detailEditor['allowed'] ?? false) === true): $editorValues=array_replace([
+        'address'=>$address,'entrance'=>$entrance,'regnumber'=>$registrationNumber,'zavnumber'=>$factoryNumber,
+        'floors'=>$objectDetails['fields']['floors']['raw']??'','weight'=>$objectDetails['fields']['weight']['raw']??'','speed'=>$objectDetails['fields']['speed']['raw']??'',
+        'pittype'=>$objectDetails['fields']['pittype']['raw']??'','pitmaterial'=>$objectDetails['fields']['pitmaterial']['raw']??'','lift_type'=>$objectDetails['fields']['lift_type']['raw']??'','paired'=>$objectDetails['fields']['paired']['raw']??'',
+    ],$detailEditor['values']??[]);$editorErrors=$detailEditor['errors']??[]; ?>
+    <dialog class="shlz-modal fm2-object-details-modal" data-object-details-dialog <?= ($detailEditor['open']??false)?'data-object-details-invalid':'' ?> aria-labelledby="object-details-title"><form class="shlz-modal__surface" method="post" action="/pilot/objects/<?= (int)$id ?>/details"><header class="shlz-modal__header"><div><h2 class="shlz-modal__title" id="object-details-title">Редактировать данные объекта</h2></div><button class="shlz-modal__close" type="button" data-object-details-close aria-label="Закрыть"><span aria-hidden="true">×</span></button></header><div class="shlz-modal__body">
+        <?= Html::hiddenInput('_csrf',$csrf) ?><?= Html::hiddenInput('requestId',ViewSupport::uuid()) ?><?= Html::hiddenInput('expectedRevision',(int)$detailEditor['revision']) ?>
+        <?php if(isset($editorErrors['_form'])): ?><p class="fm2-problem" role="alert"><?= Html::encode($editorErrors['_form']) ?></p><?php endif ?>
+        <fieldset><legend>Идентификация и размещение</legend><?php foreach(['address'=>'Адрес','entrance'=>'Подъезд','regnumber'=>'Регистрационный номер','zavnumber'=>'Заводской номер']as$name=>$label): $error=$editorErrors[$name]??null; ?><label class="fm2-details-field"><span><?= $label ?></span><input class="shlz-input" name="<?= $name ?>" value="<?= Html::encode((string)($editorValues[$name]??'')) ?>" <?= in_array($name,['address','entrance'],true)?'required':'' ?> <?= $name==='zavnumber'?'maxlength="120"':'' ?> <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?></fieldset>
+        <fieldset><legend>Классификация оборудования</legend><?php foreach(['floors'=>'Этажность','weight'=>'Грузоподъёмность','speed'=>'Скорость']as$name=>$label): $error=$editorErrors[$name]??null; ?><label class="fm2-details-field"><span><?= $label ?></span><input class="shlz-input" inputmode="decimal" name="<?= $name ?>" value="<?= Html::encode((string)($editorValues[$name]??'')) ?>" <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?><?php foreach(['pittype'=>'Тип шахты','pitmaterial'=>'Материал шахты','lift_type'=>'Тип лифта']as$name=>$label): $error=$editorErrors[$name]??null;$selected=(string)($editorValues[$name]??''); ?><label class="fm2-details-field"><span><?= $label ?></span><select class="shlz-select" name="<?= $name ?>" <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><option value="">Не изменять</option><?php if($selected!==''&&!array_key_exists($selected,ObjectDetailsReferenceCatalogue::options($name))): ?><option value="<?= Html::encode($selected) ?>" selected>Недопустимое значение: <?= Html::encode($selected) ?></option><?php endif ?><?php foreach(ObjectDetailsReferenceCatalogue::options($name)as$code=>$display): ?><option value="<?= Html::encode($code) ?>" <?= $selected===(string)$code?'selected':'' ?>><?= Html::encode($display) ?></option><?php endforeach ?></select><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?><label class="fm2-details-field"><span>Спаренность лифта</span><select class="shlz-select" name="paired"><option value="">Не изменять</option><option value="1" <?= ($editorValues['paired']??null)===true?'selected':'' ?>>Да</option><option value="0" <?= ($editorValues['paired']??null)===false?'selected':'' ?>>Нет</option></select></label></fieldset>
+    </div><footer class="shlz-modal__footer"><button class="shlz-button" type="button" data-object-details-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="submit">Сохранить</button></footer></form></dialog>
+    <?php endif ?>
     <div class="fm2-object-layout">
     <aside class="fm2-static-passport" aria-labelledby="object-context-heading">
         <div class="fm2-passport-heading"><h2 id="object-context-heading">Паспорт объекта</h2><span>Технические характеристики</span></div>
@@ -251,8 +266,9 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-history" role="tabpanel" aria-labelledby="object-tab-history" hidden>
                 <div class="fm2-tab-section">
                     <h2>История монтажного дела</h2>
-                    <?php if ($events): ?><ol class="fm2-event-list"><?php foreach ($events as $event): ?><li class="fm2-event"><div><strong><?= Html::encode($eventLabels[$event['type']] ?? ($event['type'] === 'Состав применён' ? 'Состав распоряжения применён' : 'Событие монтажного дела')) ?></strong><small><time datetime="<?= Html::encode($event['occurredAt']) ?>"><?= $date($event['occurredAt'], true) ?></time> МСК · <?= Html::encode($event['actorName'] ?? ('Пользователь недоступен · ID ' . $event['actorId'])) ?></small></div></li><?php endforeach ?></ol>
+                    <?php if ($events): ?><ol class="fm2-event-list"><?php foreach ($events as $event): ?><li class="fm2-event"><div><strong><?= Html::encode($eventLabels[$event['type']] ?? ($event['type'] === 'Состав применён' ? 'Состав распоряжения применён' : 'Событие монтажного дела')) ?></strong><small><time datetime="<?= Html::encode($event['occurredAt']) ?>"><?= $date($event['occurredAt'], true) ?></time> МСК · <?= Html::encode($event['actorName'] ?? ('Пользователь недоступен · ID ' . $event['actorId'])) ?></small><?php foreach($event['changes']??[]as$change): ?><span class="fm2-event-change"><?= Html::encode((string)$change['label']) ?>: <?= Html::encode((string)($change['old']['display']??'Не указано')) ?> → <?= Html::encode((string)($change['new']['display']??'Не указано')) ?></span><?php endforeach ?></div></li><?php endforeach ?></ol>
                     <?php else: ?><div class="fm2-quiet-empty"><strong>История пока пуста</strong><span>События монтажного дела появятся после первого действия.</span></div><?php endif ?>
+                    <?php if(($historyNext??null)!==null): ?><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int)$id ?>?history=<?= Html::encode($historyNext) ?>#history">Показать ещё</a><?php endif ?>
                 </div>
             </section>
         </div>

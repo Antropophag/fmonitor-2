@@ -5,7 +5,7 @@
 ## ADDED Requirements
 
 ### Requirement: Fixed editable field map
-Система SHALL принимать обычную правку только для фиксированного серверного allowlist: `address`, `entrance`, `regnumber`, `zavnumber`, `floors`, `weight`, `speed`, `pittype`, `pitmaterial`, `lift_type`, `paired`, а также исходных `workdatestart` и `plan_finish_date` только пока соответствующий исходный план не зафиксирован документным или процессным фактом. Кшах MUST NOT приниматься как ввод: он SHALL вычисляться из effective `pitmaterial` по действующей нормативной таблице. Внутренние IDs, legacy identity, ERP facts, Bitrix links, workforce, документы/основания, открытие/завершение, распоряжения, состав/закрепления, inspections/checklist/photos/progress, сроки справок, status/readiness, расчёты, revisions/hashes/provenance/snapshots/payments MUST NOT быть свободно редактируемыми.
+Система SHALL принимать обычную правку только для фиксированного серверного allowlist: `address`, `entrance`, `regnumber`, `zavnumber`, `floors`, `weight`, `speed`, `pittype`, `pitmaterial`, `lift_type`, `paired`. Плановые и скорректированные даты MUST NOT входить в этот редактор. Кшах MUST NOT приниматься как ввод: он SHALL вычисляться из effective `pitmaterial` по действующей нормативной таблице. Внутренние IDs, legacy identity, ERP facts, Bitrix links, workforce, документы/основания, открытие/завершение, распоряжения, состав/закрепления, inspections/checklist/photos/progress, сроки справок, status/readiness, расчёты, revisions/hashes/provenance/snapshots/payments MUST NOT быть свободно редактируемыми.
 
 #### Scenario: Allowed field is filled or corrected independently
 - **WHEN** уполномоченный actor отправляет одно допустимое поле с валидным новым значением, не заполняя остальные разрешённые поля
@@ -31,7 +31,7 @@
 - **THEN** вся команда получает стабильный validation rejection, пользовательский ввод может быть повторно показан формой, а overrides/history не меняются
 
 ### Requirement: Single authorized atomic command
-Ровно один public application seam SHALL владеть изменением реквизитов и append-only историей. Команда SHALL принимать object identity, actor, `requestId`, `expectedRevision` и ограниченный field patch; author и server time MUST поступать из доверенного runtime. Capability `objects.details.edit` SHALL выдаваться только `fkr_operator` и `manager` в пределах их доступа к объекту; access administrator/superadministrator без бизнес-роли MUST NOT получать её автоматически. Canonical Yii POST SHALL применять обычные auth, CSRF и method rules и SHALL вызывать owner, а не владеть domain mutation.
+Ровно один public application seam SHALL владеть изменением реквизитов и append-only историей. Команда SHALL принимать object identity, actor, `requestId`, `expectedRevision` и ограниченный field patch; author и server time MUST поступать из доверенного runtime. Capability `objects.details.edit` SHALL выдаваться только `fkr_operator` и `manager`; вместе с exact `objects.read` она даёт глобальный scope всех пилотных объектов. Отдельная actor↔object assignment model не создаётся. Access administrator/superadministrator без бизнес-роли MUST NOT получать capability автоматически. Canonical Yii POST SHALL применять обычные auth, CSRF и method rules и SHALL вызывать owner, а не владеть domain mutation.
 
 #### Scenario: Authorized atomic multi-field save
 - **WHEN** `fkr_operator` с доступом меняет заводской номер, этажность и материал стен шахты одним валидным request

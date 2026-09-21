@@ -12,4 +12,8 @@ final readonly class MariaDbBitrixOrderDocumentLinksRead
         $links=array_map(static fn(array$row):array=>['name'=>$row['source_folder_name'],'url'=>$row['url']],$q->get_result()->fetch_all(MYSQLI_ASSOC));
         return['status'=>$links===[]?'empty':'available','links'=>$links];
     }
+    public function forObject(int$objectId):array
+    {
+        if($objectId<1)throw new \InvalidArgumentException();$effective=(new MariaDbEffectiveObjectDetails($this->db,$this->prefix,$this->prefix))->read($objectId);$number=$effective['zavnumber']['value']??null;return$this->forOrder(is_string($number)?$number:null);
+    }
 }

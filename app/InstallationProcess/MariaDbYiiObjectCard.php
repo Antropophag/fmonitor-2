@@ -28,12 +28,12 @@ final readonly class MariaDbYiiObjectCard
         return (bool) $this->db->createCommand($sql, [':actor' => $actorId])->queryScalar();
     }
 
-    public function read(int $actorId, int $objectId): ?array
+    public function read(int $actorId, int $objectId,?string $historyCursor=null): ?array
     {
         try {
             $p = $this->prefix;
             $l = $this->legacyPrefix;
-            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
+            $sql = "SELECT c.id case_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,l.id legacy_id,l.ordadr_address,l.entrance,l.regnumber,l.zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,l.ptoactdate,d.schema_version detail_schema,d.payload_json detail_payload,d.content_sha256 detail_hash,e.revision edit_revision,e.values_json edit_values,m.category migration_category,EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act') has_pto FROM `{$p}fm2_installation_cases` c LEFT JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_object_details` d ON d.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_object_detail_edits` e ON e.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_migration_classification_provenance` m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id WHERE c.legacy_installation_object_id=:object LIMIT 2";
             $rows = $this->db->createCommand($sql, [':object' => $objectId])->queryAll();
             if ($rows === []) {
                 return null;
@@ -69,6 +69,9 @@ final readonly class MariaDbYiiObjectCard
                     $detailValid = false;
                 }
             }
+            $edits=$row['edit_values']===null?[]:json_decode((string)$row['edit_values'],true,512,JSON_THROW_ON_ERROR);if($edits!==[]&&!is_array($detail)){$detail=['schemaVersion'=>'technical-object-detail-v1','objectId'=>$objectId,'fields'=>[]];$detailValid=true;}
+            foreach(['floors','weight','speed','pittype','pitmaterial','lift_type','paired']as$field)if(array_key_exists($field,$edits)){$value=$edits[$field];$display=in_array($field,['pittype','pitmaterial','lift_type'],true)&&$value!==null?ObjectDetailsReferenceCatalogue::display($field,(string)$value):(is_bool($value)?($value?'Да':'Нет'):$value);$detail['fields'][$field]=['raw'=>$value,'display'=>$display,'source'=>'manual'];}
+            foreach(['address'=>'ordadr_address','entrance'=>'entrance','regnumber'=>'regnumber','zavnumber'=>'zavnumber']as$field=>$column)if(array_key_exists($field,$edits))$row[$column]=$edits[$field];
             $card = [
                 'id' => $objectId,
                 'caseId' => (int) $row['case_id'],
@@ -90,8 +93,9 @@ final readonly class MariaDbYiiObjectCard
                 'events' => [],
                 'hasPtoAct' => (bool) $row['has_pto'] || $this->optionalLegacyDate($row['ptoactdate']) !== null,
                 'technicalDocuments' => $this->documentLinks($row['zavnumber']),
+                'detailEditor'=>['revision'=>(int)($row['edit_revision']??0),'values'=>$edits],
             ];
-            return $this->projection->decorate($card, $actorId, (int) $row['case_id'], (string) $row['process_state']);
+            return $this->projection->decorate($card, $actorId, (int) $row['case_id'], (string) $row['process_state'],$historyCursor);
         } catch (\DomainException | \RuntimeException $error) {
             throw $error;
         } catch (\Throwable $error) {

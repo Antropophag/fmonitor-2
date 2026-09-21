@@ -30,6 +30,7 @@ final class PreopeningResources
     public function portal():C\AssignmentOrderSelectionPortalQuery{return C\ProductionAssignmentOrderSelectionPortalFactory::create($this->db,$this->prefix);}
     public function assignmentReader():I\MariaDbControlEngineerAssignmentReader{return new I\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix);}
     public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
+    public function editObjectDetails(I\ObjectDetailsEditCommand$command):array{return I\ProductionObjectDetailsEditFactory::create($this->db,$this->prefix,static fn():string=>(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'))->edit($command);}
     public function selectAssignmentOrderComposition(C\SelectAssignmentOrderCompositionCommand $command): array
     {
         $application = C\ProductionAssignmentOrderCompositionFactory::create($this->db, $this->connect(...), $this->prefix);
