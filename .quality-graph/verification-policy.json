@@ -271,6 +271,29 @@
   ],
   "capability_ownership": [
     {
+      "name": "erp-equipment-facts",
+      "patterns": [
+        "app/InstallationProcess/EquipmentFactsApplication.php",
+        "app/InstallationProcess/EquipmentFactsPersistenceFailure.php",
+        "app/InstallationProcess/EquipmentFactsSchemaMigration.php",
+        "app/InstallationProcess/ErpEquipmentFactsDelivery.php",
+        "app/InstallationProcess/ErpEquipmentFactsDeliveryConfig.php",
+        "app/InstallationProcess/MariaDbEquipmentFacts.php",
+        "app/InstallationProcess/MariaDbEquipmentFactsRead.php",
+        "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
+        "app/InstallationProcess/NativeErpEquipmentFactsDelivery.php",
+        "app/Jobs/MariaDbEquipmentFactsScheduler.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV31.php",
+        "app/YiiRuntime/Commands/ErpEquipmentFactsSyncController.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/erp_equipment_facts_contract_001_test.php",
+        "tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php",
+        "tests/InstallationProcess/erp_equipment_facts_read_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "otiz-premium-norms",
       "patterns": [
         "app/Otiz/MariaDbObjectRegisterQuery.php",

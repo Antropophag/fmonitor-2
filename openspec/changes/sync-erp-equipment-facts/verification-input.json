@@ -1,6 +1,7 @@
 {
   "change": "sync-erp-equipment-facts",
   "planned_paths": [
+    ".quality-graph/verification-policy.json",
     "app/InstallationProcess/EquipmentFactsSchemaMigration.php",
     "app/InstallationProcess/EquipmentFactsApplication.php",
     "app/InstallationProcess/EquipmentFactsPersistenceFailure.php",
