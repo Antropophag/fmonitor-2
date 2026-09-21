@@ -54,6 +54,15 @@ trait MariaDbYiiChecklistRead
             return['revision'=>$revision,'crew'=>$crew,'items'=>$items,'photos'=>$photos,'completedSections'=>$sections];
         }
 
+        public function photo(int $objectId,int $photoId):?array
+        {
+            $case=$this->case($objectId,false);
+            if($case===null)return null;
+            $row=$this->one("SELECT storage_name,mime_type,byte_size FROM {$this->t('fm2_checklist_photos')} WHERE id=? AND installation_case_id=? AND revoked_at IS NULL",[$photoId,(int)$case['id']]);
+            if($row===null)return null;
+            return['storageName'=>(string)$row['storage_name'],'mime'=>(string)$row['mime_type'],'size'=>(int)$row['byte_size']];
+        }
+
         public function queue(int $actorId,int $page=1,int $size=50):array
         {
             if(!in_array('construction_control.read',$this->permissions($actorId),true))throw new \DomainException();

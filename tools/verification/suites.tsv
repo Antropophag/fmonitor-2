@@ -212,6 +212,7 @@ db	php	tests/Yii2/yii2_canonical_migrations_alias_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_db_001_test.php	integration
 db	php	tests/Yii2/yii2_case_import_db_001_test.php	integration
+db	php	tests/Yii2/yii2_checklist_photo_viewing_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_active_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	integration
@@ -300,6 +301,7 @@ e2e	php	tests/Runtime/runtime_settlement_compatibility_001_test.php	e2e
 e2e	php	tests/Support/ObjectRegisterPagingBrowserFixture.php	e2e
 e2e	php	tests/Yii2/excel_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_calendar_003_browser_test.php	e2e
+e2e	php	tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_documentary_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php	e2e

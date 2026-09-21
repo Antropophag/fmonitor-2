@@ -21,7 +21,7 @@ final class ChecklistController extends PilotController
     public function behaviors():array{return['access'=>['class'=>AccessControl::class,'rules'=>[['allow'=>true,'roles'=>['@']]],'denyCallback'=>function():void{Yii::$app->user->setReturnUrl(Yii::$app->request->url);
 Yii::$app->response->statusCode=303;
 Yii::$app->response->headers->set('Location','/pilot/login');
-}],'verbs'=>['class'=>VerbFilter::class,'actions'=>['view'=>['GET','HEAD'],'control'=>['GET','HEAD'],'operation'=>['POST'],'photo'=>['POST'],'context'=>['GET','HEAD'],'queue'=>['GET','HEAD']]]];
+}],'verbs'=>['class'=>VerbFilter::class,'actions'=>['view'=>['GET','HEAD'],'control'=>['GET','HEAD'],'operation'=>['POST'],'photo'=>['POST'],'photo-read'=>['GET','HEAD'],'context'=>['GET','HEAD'],'queue'=>['GET','HEAD']]]];
 }
 
     public function beforeAction($action):bool{if(in_array($action->id,['operation','photo'],true))$this->enableCsrfValidation=false;
@@ -38,7 +38,7 @@ if(!($a['exists']??false))return$this->plain(404);
 if(!($a['read']??false))return$this->plain(403);
 $completion=$owner->completion($id);
 $opening=($a['ready']??false)&&(($a['roleAccess']??false)||($a['itemComplete']??false))&&Yii::$app->canonicalAccess->checkAccess($this->actor(),'installation.open')?($a['openingIntent']??null):null;
-return$this->render('@app/app/YiiRuntime/Views/checklist',['identity'=>Yii::$app->user->identity,'id'=>$id,'access'=>$a,'projection'=>$owner->projection($id),'csrf'=>Yii::$app->request->csrfToken,'fromControl'=>$source==='control','progressCap'=>$completion['cap'],'opening'=>$opening]);
+return$this->render('@app/app/YiiRuntime/Views/checklist',['identity'=>Yii::$app->user->identity,'id'=>$id,'access'=>$a,'projection'=>$this->projection($owner,$id),'csrf'=>Yii::$app->request->csrfToken,'fromControl'=>$source==='control','progressCap'=>$completion['cap'],'opening'=>$opening]);
 } catch(\Throwable$error)
     {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->plain(503,true);
 }
@@ -63,6 +63,34 @@ return$this->json(200,['csrf'=>Yii::$app->request->csrfToken,'revision'=>$o->pro
 
     public function actionPhoto(string$id):Response{return$this->mutate($id,true);
 }
+
+    public function actionPhotoRead(string$id,string$photoId):Response
+    {
+        $id=$this->id($id);$photoId=$this->id($photoId);
+        if($id===null||$photoId===null)return$this->plain(404);
+        try{$owner=$this->owner();$access=$owner->access($this->actor(),$id);
+            if(!($access['exists']??false))return$this->plain(404);
+            if(!($access['read']??false))return$this->plain(403);
+            $photo=$owner->photo($id,$photoId);
+            if($photo===null)return$this->plain(404);
+            $storage=(string)$photo['storageName'];
+            if(preg_match('/^[a-f0-9]{64}\.bin$/D',$storage)!==1||!in_array($photo['mime'],['image/jpeg','image/png','image/webp'],true))return$this->plain(503,true);
+            $root=(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT'));
+            $directory=$root.'/checklist';$path=$directory.'/'.$storage;
+            if(is_link($path)||!is_file($path)||filesize($path)!==(int)$photo['size'])return$this->plain(503,true);
+            $bytes=file_get_contents($path);
+            if(!is_string($bytes)||strlen($bytes)!==(int)$photo['size'])return$this->plain(503,true);
+            $response=Yii::$app->response;$response->statusCode=200;$response->format=Response::FORMAT_RAW;
+            $response->headers->set('Content-Type',(string)$photo['mime']);
+            $response->headers->set('Content-Length',(string)$photo['size']);
+            $response->headers->set('Content-Disposition','inline; filename="checklist-photo.'.(['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][(string)$photo['mime']]??'bin').'"');
+            $response->headers->set('X-Content-Type-Options','nosniff');
+            $response->headers->set('Cache-Control','private, no-store');
+            $response->content=$bytes;
+            return$response;
+        } catch(\Throwable$error)
+        {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->plain(503,true);}
+    }
 
     private function mutate(string$id,bool$photo):Response
     {
@@ -103,7 +131,7 @@ if($result['status']==='not_found')return$this->json(404,['status'=>'rejected'])
 if($result['status']==='forbidden')return$this->json(403,['status'=>'rejected']);
 $access=$owner->access($actor,$id);
 if(!($access['read']??false))return$this->json(403,['status'=>'rejected']);
-$result['projection']=$owner->projection($id);
+$result['projection']=$this->projection($owner,$id);
 $status=in_array($result['status'],['accepted','duplicate'],true)?200:($result['status']==='conflict'?409:422);
 return$this->json($status,$result);
 } catch(\JsonException)
@@ -128,6 +156,11 @@ return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'
 }
 
     private function actor():int{return(int)Yii::$app->user->id;
+}
+
+    private function projection(MariaDbYiiChecklist $owner,int $objectId):array{$projection=$owner->projection($objectId);
+foreach($projection['photos']as&$photo)$photo['viewUrl']='/pilot/objects/'.$objectId.'/checklist/photos/'.(int)$photo['id'];
+unset($photo);return$projection;
 }
 
     private function id(string$v):?int{return preg_match('/^[1-9][0-9]*$/D',$v)===1&&strlen($v)<19?(int)$v:null;

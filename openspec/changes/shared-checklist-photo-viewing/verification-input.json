@@ -1,0 +1,43 @@
+{
+  "change": "shared-checklist-photo-viewing",
+  "planned_paths": [
+    "config/yii/web.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "app/YiiRuntime/Assets/checklist.js",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Views/checklist.php",
+    "tests/Yii2/yii2_checklist_photo_viewing_001_test.php",
+    "tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php",
+    "tests/Support/checklist_photo_viewing_browser.cjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Deployment/pilot_jobs_compose_001_test.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-CHECKLIST-PHOTO-VIEWING-001",
+      "acceptance_id": "authorized-private-photo-read",
+      "spec_path": "specs/YII2-CHECKLIST-PHOTO-VIEWING-001.md",
+      "seam": "GET|HEAD /pilot/objects/{objectId}/checklist/photos/{photoId} as owner, another allowed reader, denied reader, guest/inactive, cross-object and revoked cases",
+      "tests": ["tests/Yii2/yii2_checklist_photo_viewing_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_checklist_photo_viewing_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-CHECKLIST-PHOTO-VIEWING-001",
+      "acceptance_id": "clean-browser-gallery-full-size-retry",
+      "spec_path": "specs/YII2-CHECKLIST-PHOTO-VIEWING-001.md",
+      "seam": "checklist browser DOM initialized from accepted projection without local uploader data",
+      "tests": ["tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-CHECKLIST-PHOTO-VIEWING-001",
+      "acceptance_id": "pending-local-preview-and-sync-preservation",
+      "spec_path": "specs/YII2-CHECKLIST-PHOTO-VIEWING-001.md",
+      "seam": "offline photo selection, existing IndexedDB operation/blob queue and later accepted projection",
+      "tests": ["tests/Yii2/yii2_inspection_journey_001_test.php", "tests/Yii2/yii2_inspection_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_inspection_journey_001_test.php": "GREEN", "tests/Yii2/yii2_inspection_browser_001_test.php": "GREEN"}
+    }
+  ]
+}
