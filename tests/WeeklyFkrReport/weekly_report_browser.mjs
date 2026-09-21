@@ -19,8 +19,9 @@ try {
     if (result.scrollWidth>result.clientWidth) throw new Error(`${name}: horizontal overflow ${result.scrollWidth}>${result.clientWidth}`);
     if (result.images!==0) throw new Error(`${name}: image markup present`);
     if (result.fontSize<14 || result.lineHeight<1.4) throw new Error(`${name}: typography below contract`);
+    const reportFontSizes=await page.locator('[data-report-summary] span,[data-report-section] td').evaluateAll(nodes=>nodes.map(node=>parseFloat(getComputedStyle(node).fontSize))); if(reportFontSizes.some(size=>size<13)) throw new Error(`${name}: report cell typography below 13px`);
     const cellCount=await page.locator('td').count(); if (result.paddedCells!==cellCount || result.explicitCells!==cellCount || result.inlineCritical!==cellCount) throw new Error(`${name}: every Outlook cell must carry padding, width/align/valign and inline style`);
-    if (name==='desktop' && result.maxObjectHeight>20) throw new Error(`${name}: object row wraps or remains too tall at ${result.maxObjectHeight}px: ${result.tallestObject}`);
+    if (name==='desktop' && result.maxObjectHeight>22) throw new Error(`${name}: object row wraps or remains too tall at ${result.maxObjectHeight}px: ${result.tallestObject}`);
     if (name==='desktop' && (result.firstCells.length!==4 || result.firstCells[0]/result.firstCells[1]>.3)) throw new Error(`${name}: object column is not materially narrower than address: ${result.firstCells}`);
     if (!result.summaryBeforeSections || JSON.stringify(result.summaryCounts)!==JSON.stringify([['plannedOpenings',2],['plannedClosings',5],['progress',3],['overdue',2]])) throw new Error(`${name}: compact summary missing, late or inaccurate`);
     if (result.scrollHeight>(name==='desktop'?1150:2100)) throw new Error(`${name}: report remains too tall at ${result.scrollHeight}px`);

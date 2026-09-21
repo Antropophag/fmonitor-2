@@ -84,7 +84,7 @@ final class WeeklyFkrReportRenderer
             $cells.='<td width="20%" align="center" valign="top" data-summary-key="'.$key.'" data-summary-count="'.$count.'" '
                 .'style="width:20%;padding:4px 1px;background-color:#eef0f4;color:#0b1623;">'
                 .'<strong style="display:block;font-size:17px;line-height:1.1;">'.$count.'</strong>'
-                .'<span style="font-size:11px;line-height:1.15;">'.$label.'</span></td>';
+                .'<span style="font-size:13px;line-height:1.15;">'.$label.'</span></td>';
         }
         return '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" data-report-summary="counts" '
             .'style="width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 6px;"><tr>'.$cells.'</tr></table>';
@@ -137,11 +137,11 @@ final class WeeklyFkrReportRenderer
     }
     private function headerCell(string$content,string$width,int$outlookWidth):string
     {
-        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;background-color:#eef0f4;color:#46515e;font-size:11px;line-height:1.2;font-weight:700;">'.$content.'</td>';
+        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;background-color:#eef0f4;color:#46515e;font-size:13px;line-height:1.2;font-weight:700;">'.$content.'</td>';
     }
     private function dataCell(string$content,string$width,int$outlookWidth):string
     {
-        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;font-size:12px;line-height:1.25;border-bottom:1px solid #e5e7eb;">'.$content.'</td>';
+        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;font-size:13px;line-height:1.25;border-bottom:1px solid #e5e7eb;">'.$content.'</td>';
     }
     private function esc(string$value):string{return htmlspecialchars($value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 }
