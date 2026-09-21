@@ -148,6 +148,6 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <div class="fm2-toast" data-toast hidden>
 </div>
 </div>
-<script src="/pilot/assets/checklist.js?v=20260920-2" defer>
+<script src="/pilot/assets/checklist.js?v=20260921-1" defer>
 </script>
 <?php ViewSupport::end($this);
