@@ -14,6 +14,7 @@
         "app/YiiRuntime/Assets/preloader.js",
         "app/YiiRuntime/Assets/preopening.css",
         "app/YiiRuntime/Assets/preopening.js",
+        "app/YiiRuntime/Assets/sidebar-bootstrap.js",
         "app/YiiRuntime/Assets/shlz.css",
         "app/YiiRuntime/Assets/template-offer.js",
         "app/YiiRuntime/Assets/users.js",

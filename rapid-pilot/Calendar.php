@@ -35,7 +35,7 @@ final class RapidPilotCalendar
     public static function decorateNavigation(string $html, bool $active): string
     {
         $current = $active ? ' aria-current="page"' : '';
-        $link = '<a class="fm2-nav-item" href="/pilot/calendar"' . $current . '><svg class="fm2-nav-icon fm2-nav-icon--shlz" viewBox="0 0 24 24" aria-hidden="true"><use href="/pilot/assets/shlz-icons.svg#shlz-icon-circle-grid-interface-sidebar"/></svg><span class="fm2-nav-text">Календарь</span></a>';
+        $link = '<a class="fm2-nav-item" href="/pilot/calendar"' . $current . '><img class="fm2-nav-icon fm2-nav-icon--shlz" src="/pilot/assets/shlz-icons/calendar-sidebar.svg" data-shlz-icon="calendar-sidebar" alt=""><span class="fm2-nav-text">Календарь</span></a>';
         return preg_replace('#(<a class="fm2-nav-item" href="/pilot/objects"[^>]*>.*?</a>)#s', '$1' . $link, $html, 1) ?? $html;
     }
 

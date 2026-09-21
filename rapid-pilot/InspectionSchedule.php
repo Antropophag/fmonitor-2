@@ -68,7 +68,7 @@ final class RapidPilotInspectionSchedule
     public static function queueButton(int $objectId, string $label, string $csrf): string
     {
         $e=static fn(string $v):string=>htmlspecialchars($v,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');
-        return '<button class="shlz-button shlz-button--sm fm2-schedule-button" type="button" data-inspection-schedule data-object-id="'.$objectId.'" data-object-label="'.$e($label).'" aria-label="Запланировать инспекцию" title="Запланировать инспекцию"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 3v6M16 3v6M4 10h16"/></svg></button>';
+        return '<button class="shlz-button shlz-button--sm fm2-schedule-button" type="button" data-inspection-schedule data-object-id="'.$objectId.'" data-object-label="'.$e($label).'" aria-label="Запланировать инспекцию" title="Запланировать инспекцию"><img src="/pilot/assets/shlz-icons/calendar-interface.svg" data-shlz-icon="calendar-interface" alt=""></button>';
     }
 
     public static function dialog(string $csrf): string
@@ -83,7 +83,7 @@ final class RapidPilotInspectionSchedule
         if($planned===[])return$html;
         if(preg_match('#<tbody>(.*?)</tbody>#s',$html,$body)!==1)return$html;
         preg_match_all('#<tr class="fm2-control-row"[^>]*data-object-id="([1-9][0-9]*)".*?</tr>#s',$body[1],$matches,PREG_SET_ORDER);$first='';$rest=$body[1];
-        foreach($matches as$m){$id=(int)$m[1];if(!isset($planned[$id]))continue;$row=str_replace('class="fm2-control-row"','class="fm2-control-row fm2-control-row--planned"',$m[0]);$badge='<span class="fm2-planned-inspection"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 3v6M16 3v6M4 10h16"/></svg>Запланировано на сегодня</span>';$row=str_replace('<span class="fm2-activity-line">',$badge.'<span class="fm2-activity-line">',$row);$first.=$row;$rest=str_replace($m[0],'',$rest);}
+        foreach($matches as$m){$id=(int)$m[1];if(!isset($planned[$id]))continue;$row=str_replace('class="fm2-control-row"','class="fm2-control-row fm2-control-row--planned"',$m[0]);$badge='<span class="fm2-planned-inspection"><img src="/pilot/assets/shlz-icons/calendar-interface.svg" data-shlz-icon="calendar-interface" alt="">Запланировано на сегодня</span>';$row=str_replace('<span class="fm2-activity-line">',$badge.'<span class="fm2-activity-line">',$row);$first.=$row;$rest=str_replace($m[0],'',$rest);}
         return str_replace($body[0],'<tbody>'.$first.$rest.'</tbody>',$html);
     }
 

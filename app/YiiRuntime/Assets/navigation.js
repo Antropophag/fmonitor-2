@@ -1,8 +1,7 @@
-import { enhanceCalendarGrids } from '/pilot/assets/shlz-behaviors.js';
-import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
-
-enhanceSelects(document);
-enhanceCalendarGrids(document);
+import('/pilot/assets/shlz-behaviors.js').then(({ enhanceCalendarGrids, enhanceSelects }) => {
+  enhanceSelects(document);
+  enhanceCalendarGrids(document);
+}).catch(() => {});
 const choiceAtom = 'sel' + 'ect';
 const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
 const fallbackQuery = `.shlz-${choiceAtom}-fallback ${choiceAtom}`;
@@ -41,9 +40,10 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
   let saved = null;
   try { saved = localStorage.getItem(key); } catch {}
   state.open = saved !== 'false';
+  delete document.documentElement.dataset.fm2Sidebar;
+  document.documentElement.dataset.fm2SidebarReady = 'true';
 
-  const refresh = () => {
-    const expanded = state.open;
+  const refresh = (expanded = state.open) => {
     const text = expanded ? 'Свернуть меню' : 'Развернуть меню';
     const icon = expanded ? 'chevron-left-duo' : 'chevron-right-duo';
     label.textContent = text;
@@ -51,6 +51,12 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
     trigger.setAttribute('data-shlz-icon', icon);
   };
   refresh();
+
+  trigger.addEventListener('click', () => {
+    const expanded = !state.open;
+    refresh(expanded);
+    try { localStorage.setItem(key, String(expanded)); } catch {}
+  });
 
   state.addEventListener('toggle', () => {
     refresh();

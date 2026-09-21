@@ -1,13 +1,9 @@
-# Текущая цель — №21, минимальный операционный дашборд
+# Текущая цель — стабильный сайдбар и аудит иконок shlz-ui
 
-Поручение владельца 2026-09-20: реализовать GitHub issue №21 в отдельном worktree от актуального `origin/main`. Поставить один небольшой read-only Yii дашборд на реальных данных объектов монтажа, строго на публичных компонентах `shlz-ui`, и довести candidate до PR-ready.
+Поручение владельца 2026-09-21: автономно одним быстрым срезом устранить раскрытие-сворачивание сайдбара при переходах, провести аудит рабочих иконок, максимально заменить точные соответствия публичными exports `shlz-ui` и довести отдельный PR до merge-ready. Владелец заранее подтвердил спецификацию и автономную делегацию spec/tests/implementation/review в рамках этого задания.
 
-Scope: `GET|HEAD /pilot/dashboard`, разрешение `objects.read`, четыре показателя на московскую дату среза, два bounded top-5 списка, переходы в существующий реестр/карточки, честные empty/error states, narrow viewport и короткий сценарий демонстрации. Агрегаты считаются на сервере без materialization полного реестра.
+Контракт: [YII2-SIDEBAR-STATE-ICONS-001](../../specs/YII2-SIDEBAR-STATE-ICONS-001.md). Lifecycle: [fix-sidebar-state-and-adopt-shlz-icons](../../openspec/changes/fix-sidebar-state-and-adopt-shlz-icons/). Baseline — чистый `origin/main` `e67b566d8958faa0df8f8ebb8c09db3f1e0983ce`; исходный dirty checkout №157 сохранён без изменений.
 
-Не входят графики и сторонние chart/UI зависимости, финансовые показатели ОТиЗ, произвольные периоды, персонализация, новый DDL/cache/domain facts/RBAC, изменение landing redirect и `rapid-pilot/`.
+Root — фактический автор scope/spec/tests и delivery orchestration. Отдельный `gpt-5.6-sol / low` executor реализует production code; независимый `gpt-5.6-sol / low` reviewer решает planner-required review. Локально разрешены только bounded focused checks; полный `make test`/`make verify` запрещён. После review выполняется один exact-source GitHub CI run.
 
-Lifecycle: [add-minimal-operational-dashboard](../../openspec/changes/add-minimal-operational-dashboard/). Contract: [MINIMAL-OPERATIONAL-DASHBOARD-001](../../specs/MINIMAL-OPERATIONAL-DASHBOARD-001.md).
-
-Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; полный `make test`/`make verify` запрещён. Один exact-source CI consumer обязателен. Merge/deploy/settings не выполнять.
-
-Авторизация: сообщения владельца «В новом ворктри от мейн гита делай» и «Реализуй» разрешают эту поставку в `/Users/antropophag/code/fmonitor-2-issue21`, ветка `codex/issue-21-minimal-dashboards`, base `f145e3e00f25644f5c4e32f7c2f3e8bba4f624a3`. Авторы: root — OpenSpec, normative spec, verification input и RED tests; executor/reviewers записываются после фактического назначения.
+Не входят SPA-router, серверный профиль настройки, изменения доменных фактов/прав/маршрутов, редизайн бренда, создание новых компонентов или иконок в `shlz-ui`, использование грязного sibling checkout и приблизительные замены без публичного semantic match. Merge не выполняется: результат — merge-ready PR.

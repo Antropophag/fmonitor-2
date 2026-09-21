@@ -1,0 +1,223 @@
+{
+  "baseline": "e67b566d8958faa0df8f8ebb8c09db3f1e0983ce",
+  "scan": "rg -n '<svg|<use|data-shlz-icon' app/YiiRuntime rapid-pilot --glob '*.{php,html,js}' --glob '!Views/object-card-prototype.html' --glob '!object-card-static-reference.html'",
+  "entries": [
+    {
+      "key": "rapid-pilot/Shell.php#1",
+      "file": "rapid-pilot/Shell.php",
+      "baseline_line": 20,
+      "baseline_sha256": "2bd1f21ca7f07dd34e959f360bcc2aacc5a17c8d0f729cb08de81e300cee791b",
+      "decision": "SHLZ"
+    },
+    {
+      "key": "rapid-pilot/Shell.php#2",
+      "file": "rapid-pilot/Shell.php",
+      "baseline_line": 23,
+      "baseline_sha256": "8d5a6a8478aade3cee1d84e303c20560e6a5faefe818b010e9b991037c0b1169",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "rapid-pilot/Shell.php#3",
+      "file": "rapid-pilot/Shell.php",
+      "baseline_line": 34,
+      "baseline_sha256": "197ae5599baec34c02c4f4f74cc6418544994ccce0d43c746946bb8f5d21b95b",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/Assets/navigation.js#1",
+      "file": "app/YiiRuntime/Assets/navigation.js",
+      "baseline_line": 51,
+      "baseline_sha256": "ef2a71e1f4d72e831c41b5082d4bda6f96a4cd7c5620fae59f7070019635e71a",
+      "decision": "SHLZ"
+    },
+    {
+      "key": "rapid-pilot/Calendar.php#1",
+      "file": "rapid-pilot/Calendar.php",
+      "baseline_line": 38,
+      "baseline_sha256": "196725a8dab898551c6331dbc14a2bbb4545eb3624bb55baf60642b77b40f9e4",
+      "decision": "REPLACE",
+      "assigned_export": "calendar-sidebar"
+    },
+    {
+      "key": "rapid-pilot/Otiz.php#1",
+      "file": "rapid-pilot/Otiz.php",
+      "baseline_line": 239,
+      "baseline_sha256": "a1b0b4ae50329aefca81684e3cfaa1df3c6e7ae148c590f0aa2f3e53a0461f3b",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "rapid-pilot/Otiz.php#2",
+      "file": "rapid-pilot/Otiz.php",
+      "baseline_line": 265,
+      "baseline_sha256": "a83dc39d38e3719a2921419508ad6359965adffc46677033026eeb95fe718813",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "rapid-pilot/ObjectQueue.php#1",
+      "file": "rapid-pilot/ObjectQueue.php",
+      "baseline_line": 34,
+      "baseline_sha256": "e193057503705cce51f757caf0afd886366c1fcfb1f9ddcb0ea19eb61048eb35",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "rapid-pilot/InspectionSchedule.php#1",
+      "file": "rapid-pilot/InspectionSchedule.php",
+      "baseline_line": 71,
+      "baseline_sha256": "f776f4d8b402e255b0326a557cdcbd1ef4d18b65fdbedd585571d99c1f14986d",
+      "decision": "REPLACE",
+      "assigned_export": "calendar-interface"
+    },
+    {
+      "key": "rapid-pilot/InspectionSchedule.php#2",
+      "file": "rapid-pilot/InspectionSchedule.php",
+      "baseline_line": 86,
+      "baseline_sha256": "7135dcd9c72e92643f96496d33f498f3bb21b0d1592287963aa876c587de7033",
+      "decision": "REPLACE",
+      "assigned_export": "calendar-interface"
+    },
+    {
+      "key": "app/YiiRuntime/MainNavigation.php#1",
+      "file": "app/YiiRuntime/MainNavigation.php",
+      "baseline_line": 46,
+      "baseline_sha256": "dac3a0d77f93e6ebf5cef78a0339b62021e6e0bded6d30dc6e442b45e115e1b6",
+      "decision": "SHLZ"
+    },
+    {
+      "key": "app/YiiRuntime/MainNavigation.php#2",
+      "file": "app/YiiRuntime/MainNavigation.php",
+      "baseline_line": 62,
+      "baseline_sha256": "86e905ab4f3ca7c08fc28c1b9fffd7ea173345103a5cabedbd8c87edc13b2998",
+      "decision": "SHLZ"
+    },
+    {
+      "key": "app/YiiRuntime/MainNavigation.php#3",
+      "file": "app/YiiRuntime/MainNavigation.php",
+      "baseline_line": 68,
+      "baseline_sha256": "c73048cf60bfb0c406675615f7045b4d70794e885f1c952636c620d7dfee2951",
+      "decision": "SHLZ"
+    },
+    {
+      "key": "app/YiiRuntime/ViewSupport.php#1",
+      "file": "app/YiiRuntime/ViewSupport.php",
+      "baseline_line": 39,
+      "baseline_sha256": "0c1c09ffa1f137528e06552dc9330bb35622f0d8fa0d9675492712e44d1489d7",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/ViewSupport.php#2",
+      "file": "app/YiiRuntime/ViewSupport.php",
+      "baseline_line": 47,
+      "baseline_sha256": "6960b24f01afaf16504fb33380fdba8ed577ef7aff252d8a10ffbe885567ae08",
+      "decision": "REPLACE",
+      "assigned_export": "logout"
+    },
+    {
+      "key": "app/YiiRuntime/ViewSupport.php#3",
+      "file": "app/YiiRuntime/ViewSupport.php",
+      "baseline_line": 98,
+      "baseline_sha256": "449cec24c294e0149a29b4b7f00e17f0c60b74ac31e7ec82e88e67d9990ad57e",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/Views/selection.php#1",
+      "file": "app/YiiRuntime/Views/selection.php",
+      "baseline_line": 47,
+      "baseline_sha256": "fb096458f55e71b2d06a5e5ed234556cca9da01b1576b5c2191312f7261680be",
+      "decision": "REPLACE",
+      "assigned_export": "plus-alt-2"
+    },
+    {
+      "key": "app/YiiRuntime/Views/calendar.php#1",
+      "file": "app/YiiRuntime/Views/calendar.php",
+      "baseline_line": 21,
+      "baseline_sha256": "62d7e3251a999270d6387d132a12f40c27be88e3e9f7d09190baf00f096ce0c8",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/Views/calendar.php#2",
+      "file": "app/YiiRuntime/Views/calendar.php",
+      "baseline_line": 22,
+      "baseline_sha256": "45b7de26ce4544541ba6438f021cb6613eaa5ec5de34d9e58e7f36479fe17268",
+      "decision": "REPLACE",
+      "assigned_export": "logout"
+    },
+    {
+      "key": "app/YiiRuntime/Views/construction-control.php#1",
+      "file": "app/YiiRuntime/Views/construction-control.php",
+      "baseline_line": 9,
+      "baseline_sha256": "c85713a9d4d92511c5f0332ddf0c326c310ed32660f5b2348ae573e2dbaff3ce",
+      "decision": "REPLACE",
+      "assigned_export": "search"
+    },
+    {
+      "key": "app/YiiRuntime/Views/construction-control.php#2",
+      "file": "app/YiiRuntime/Views/construction-control.php",
+      "baseline_line": 34,
+      "baseline_sha256": "77ee0e6357689da89d08e3a4c3ee0fcf9586dfa9a0e73dfd04f6663b1ae1661c",
+      "decision": "REPLACE",
+      "assigned_export": "chevron-right-duo"
+    },
+    {
+      "key": "app/YiiRuntime/Views/roles.php#1",
+      "file": "app/YiiRuntime/Views/roles.php",
+      "baseline_line": 12,
+      "baseline_sha256": "b196c296f60f3c30b193ec62302d9b3a3cb622c13505c7cc5a531130a4265848",
+      "decision": "REPLACE",
+      "assigned_export": "logout"
+    },
+    {
+      "key": "app/YiiRuntime/Views/objects.php#1",
+      "file": "app/YiiRuntime/Views/objects.php",
+      "baseline_line": 16,
+      "baseline_sha256": "223ca250ce0ef99fd31a7fc3e124a0863f3b5b2e89e1316cbfa5ce6239dbb2e2",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/Views/objects.php#2",
+      "file": "app/YiiRuntime/Views/objects.php",
+      "baseline_line": 17,
+      "baseline_sha256": "45b7de26ce4544541ba6438f021cb6613eaa5ec5de34d9e58e7f36479fe17268",
+      "decision": "REPLACE",
+      "assigned_export": "logout"
+    },
+    {
+      "key": "app/YiiRuntime/Views/objects.php#3",
+      "file": "app/YiiRuntime/Views/objects.php",
+      "baseline_line": 26,
+      "baseline_sha256": "b841aa608b2e167bd3dd41dbfab08a8f941cbb1f82669c1c56d6ec569321e991",
+      "decision": "REPLACE",
+      "assigned_export": "calendar-interface"
+    },
+    {
+      "key": "app/YiiRuntime/Views/users.php#1",
+      "file": "app/YiiRuntime/Views/users.php",
+      "baseline_line": 13,
+      "baseline_sha256": "b223b5883b19ed01edd7365ac4776a53652ae5dca735cb6c2e98245367fda4b9",
+      "decision": "REPLACE",
+      "assigned_export": "logout"
+    },
+    {
+      "key": "app/YiiRuntime/Views/users.php#2",
+      "file": "app/YiiRuntime/Views/users.php",
+      "baseline_line": 21,
+      "baseline_sha256": "66003431140e002732cc66fcfd98ca0b9373872218fcf8cffc7eeeb2da8cc868",
+      "decision": "RETAIN"
+    },
+    {
+      "key": "app/YiiRuntime/Views/original.php#1",
+      "file": "app/YiiRuntime/Views/original.php",
+      "baseline_line": 25,
+      "baseline_sha256": "4565ee1c321115a4e0590e7a615544778d8fded777b88ad83173350aca2c5dac",
+      "decision": "REPLACE",
+      "assigned_export": "cloud-upload"
+    },
+    {
+      "key": "app/YiiRuntime/Views/original.php#2",
+      "file": "app/YiiRuntime/Views/original.php",
+      "baseline_line": 30,
+      "baseline_sha256": "07fe61afae94d1daec37a84807b7c8f6e4476628fc58ec7827cb2f807ee6a222",
+      "decision": "REPLACE",
+      "assigned_export": "plus-alt-2"
+    }
+  ]
+}

@@ -81,9 +81,9 @@ try {
         return $signature;
     };
     $sourceSignature = static function (string $name) use ($svgSignature): array {
-        $root=getenv('FMONITOR_SHLZ_UI_ROOT')?:dirname(__DIR__,3).'/shlz-ui';
-        $bytes=file_get_contents($root.'/packages/icons/dist/icons/'.$name.'.svg');
-        assertSameValue(true,is_string($bytes),'pinned shlz icon exists '.$name);
+        $digests=['book'=>'02474fdd62404567cbe9b93cbb5f90e46157b9e47d3058e3c2abb8f14ed2c224','chat'=>'e9f9b5909e20b379d3fb3bd394a23bd227cc549c8991b83b6b7b6072b1959441','chevron-left-duo'=>'c07cf377ff53529a6e1dd12deb7142cc3e0df15c10ec9d0cd4ba9eb5020716aa','chevron-right-duo'=>'95af60d983a376e4b61ccf073ff449881d0e8c3ccc38ec78fa4a3d904e85e496','circle-grid-interface-sidebar'=>'3af6f30c34dc5401cb2a2e875d91fd83fd0bcb64157f3c14ee4b6b243a21daff','pie-chart'=>'3bd0df2b308d820e1fda0bec8caaefe47f13bc540d89158f930975ee36969186','setting-tool-circle'=>'68850778eaf784874ca689e1787a4ab01a49676dea1ff79cc1b73c560197d08c','user-1'=>'9ed6d6338c6b5a965d9f94c3a6aa9a8b20221af384e1960f5dc528b8c5d11b39','user-sidebar'=>'da954ca48eba978e5c2c0004b9dbd542e391daabe5293f0d3fc2fa98ff3ce260','calendar-sidebar'=>'e48dfea86a132c25b44344ee52b4244853280ddbbf7794d1552ca26e0194f54c'];
+        $path=dirname(__DIR__,2).'/app/YiiRuntime/Assets/shlz-icons/'.$name.'.svg';$bytes=is_file($path)?file_get_contents($path):false;
+        assertSameValue(true,is_string($bytes),'pinned shlz icon exists '.$name);assertSameValue($digests[$name]??null,hash('sha256',$bytes),'immutable pinned shlz digest '.$name);
         $document=new DOMDocument();assertSameValue(true,$document->loadXML($bytes),'pinned shlz icon parses '.$name);
         return $svgSignature($document->documentElement);
     };
@@ -140,7 +140,7 @@ try {
             }
             assertSameValue($expectedTokens,$tokens,'INTENDED_RED exact group-to-child hierarchy on '.$route);
             assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon--shlz ") and @aria-hidden="true"]', $main)->length, 'INTENDED_RED every MAIN link uses one shlz icon on ' . $route);
-            $iconByHref=['/pilot/dashboard'=>'pie-chart','/pilot/objects'=>'circle-grid-interface-sidebar','/pilot/calendar'=>'circle-grid-interface-sidebar','/pilot/construction-control'=>'setting-tool-circle','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'pie-chart','/pilot/admin/users'=>'user-1','/pilot/admin/roles'=>'book'];
+            $iconByHref=['/pilot/dashboard'=>'pie-chart','/pilot/objects'=>'circle-grid-interface-sidebar','/pilot/calendar'=>'calendar-sidebar','/pilot/construction-control'=>'setting-tool-circle','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'pie-chart','/pilot/admin/users'=>'user-1','/pilot/admin/roles'=>'book'];
             foreach($links as$link){$name=$iconByHref[$link['href']]??null;assertSameValue(true,is_string($name),'known nav icon '.$link['href']);$svg=$xpath->query('./*[name()="svg" and @data-shlz-icon="'.$name.'"]',$main->getElementsByTagName('a')->item(array_search($link,$links,true)))->item(0);assertSameValue(true,$svg instanceof DOMElement,'exact nav icon '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'nav geometry equals pinned shlz '.$name);}
             foreach(['chevron-left-duo','chevron-right-duo']as$name){$svg=$xpath->query('//summary[contains(concat(" ",normalize-space(@class)," ")," fm2-nav-trigger ")]/*[name()="svg" and @data-shlz-icon="'.$name.'"]')->item(0);assertSameValue(true,$svg instanceof DOMElement,'collapse contains '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'collapse geometry equals pinned shlz '.$name);}
             $active = array_values(array_column(array_filter($links, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
