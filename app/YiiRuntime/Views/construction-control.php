@@ -6,7 +6,7 @@
 <?=$pagination['total']?> объектов</span>
 </header>
 <div class="fm2-control-tools">
-<label class="shlz-field fm2-control-search"><span class="shlz-field__label">Поиск объектов</span><span class="shlz-field__control"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input class="shlz-input" type="search" data-control-search placeholder="Адрес или регистрационный номер"></span></label>
+<label class="shlz-field fm2-control-search"><span class="shlz-field__label">Поиск объектов</span><span class="shlz-field__control"><img src="/pilot/assets/shlz-icons/search.svg" data-shlz-icon="search" alt=""><input class="shlz-input" type="search" data-control-search placeholder="Адрес или регистрационный номер"></span></label>
 <div class="fm2-control-filters"><fieldset class="shlz-segment shlz-segment--sm" aria-label="Принадлежность объектов">
 <label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="mine" checked><span class="shlz-segment__label">Мои</span></label>
 <label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="all"><span class="shlz-segment__label">Все</span></label>
@@ -31,7 +31,7 @@
 <td>
 <?=Html::encode((string)($engineer['fullName']??'Инженер не назначен'))?>
 </td>
-<td class="fm2-row-action"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span></td>
+<td class="fm2-row-action"><span aria-hidden="true"><img src="/pilot/assets/shlz-icons/chevron-right-duo.svg" data-shlz-icon="chevron-right-duo" alt=""></span></td>
 </tr>
 <?php endforeach?>
 </tbody>

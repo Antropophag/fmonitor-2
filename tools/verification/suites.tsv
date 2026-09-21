@@ -295,6 +295,7 @@ e2e	php	tests/Yii2/yii2_preopening_browser_001_test.php	e2e
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py	e2e
 e2e	php	tests/Yii2/yii2_required_engineer_select_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_shlz_select_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_sidebar_state_icons_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_console_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_ownership_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_restore_console_001_test.php	e2e

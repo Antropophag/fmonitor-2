@@ -43,9 +43,10 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
   let saved = null;
   try { saved = localStorage.getItem(key); } catch {}
   state.open = saved !== 'false';
+  delete document.documentElement.dataset.fm2Sidebar;
+  document.documentElement.dataset.fm2SidebarReady = 'true';
 
-  const refresh = () => {
-    const expanded = state.open;
+  const refresh = (expanded = state.open) => {
     const text = expanded ? 'Свернуть меню' : 'Развернуть меню';
     const icon = expanded ? 'chevron-left-duo' : 'chevron-right-duo';
     label.textContent = text;
@@ -53,6 +54,12 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
     trigger.setAttribute('data-shlz-icon', icon);
   };
   refresh();
+
+  trigger.addEventListener('click', () => {
+    const expanded = !state.open;
+    refresh(expanded);
+    try { localStorage.setItem(key, String(expanded)); } catch {}
+  });
 
   state.addEventListener('toggle', () => {
     refresh();

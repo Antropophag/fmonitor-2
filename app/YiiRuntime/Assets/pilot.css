@@ -221,6 +221,10 @@
 }
 
 .fm2-shell:has(.fm2-nav-state[open]) { grid-template-columns: 260px minmax(0, 1fr); }
+html[data-fm2-sidebar="collapsed"] .fm2-shell { grid-template-columns: 72px minmax(0, 1fr) !important; transition: none; }
+html:not([data-fm2-sidebar-ready]) .fm2-shell { transition: none; }
+html[data-fm2-sidebar="collapsed"] :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name, .fm2-nav-trigger-text, .fm2-sidebar-user-copy) { display: none !important; }
+html[data-fm2-sidebar="collapsed"] .fm2-logo { inline-size: 48px !important; }
 
 .fm2-sidebar {
   position: sticky;
@@ -928,7 +932,7 @@
 .fm2-file-drop:hover { color: var(--fm2-primary); background: var(--fm2-primary-soft); border-color: var(--fm2-primary); }
 .fm2-file-drop:focus-within { border-color: var(--fm2-focus-ring); box-shadow: 0 0 0 3px var(--fm2-focus-halo); }
 .fm2-file-drop input { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; cursor: pointer; }
-.fm2-file-drop svg { inline-size: 30px; block-size: 30px; flex: 0 0 auto; fill: none; stroke: currentcolor; stroke-width: 1.5; }
+.fm2-file-drop :is(svg, img) { inline-size: 30px; block-size: 30px; flex: 0 0 auto; }
 .fm2-file-drop span { display: grid; gap: 5px; text-align: start; }
 .fm2-file-drop strong { color: var(--fm2-ink); font-size: 13px; font-weight: 500; }
 .fm2-file-drop small { color: var(--fm2-muted); font-size: 11px; overflow-wrap: anywhere; }
@@ -947,7 +951,7 @@
 @starting-style { .fm2-order-helper:not([hidden]) { opacity: 0; transform: translateY(12px); } }
 @keyframes fm2-template-offer-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .fm2-order-helper-icon { display: grid; inline-size: 38px; block-size: 38px; place-items: center; color: var(--fm2-primary); background: var(--fm2-primary-soft); border-radius: 50%; }
-.fm2-order-helper-icon svg { inline-size: 21px; block-size: 21px; fill: none; stroke: currentcolor; stroke-width: 1.5; }
+.fm2-order-helper-icon :is(svg, img) { inline-size: 21px; block-size: 21px; }
 .fm2-order-helper h2 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
 .fm2-order-helper p { margin: 0; color: var(--fm2-muted); font-size: 12px; line-height: 1.45; }
 .fm2-order-helper .shlz-button { justify-self: start; }
@@ -1606,7 +1610,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 /* Rapid-pilot inspection scheduling */
 .fm2-inspection-action { inline-size: 52px; padding-inline: 4px !important; text-align: center; }
 .fm2-schedule-button { display: inline-grid; inline-size: 40px; min-inline-size: 40px; block-size: 40px; padding: 0; place-items: center; }
-.fm2-schedule-button svg { inline-size: 19px; block-size: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fm2-schedule-button :is(svg, img) { inline-size: 19px; block-size: 19px; }
 .fm2-inspection-notice { margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: #e8f3ea; color: #285f38; font-size: 14px; font-weight: 600; }
 .fm2-inspection-dialog { inline-size: min(480px,calc(100vw - 32px)); padding: 0; border: 0; border-radius: 16px; background: transparent; color: #0b1623; }
 .fm2-inspection-dialog::backdrop { background: rgba(12,24,41,.52); }
@@ -1619,7 +1623,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-inspection-dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 20px; border-block-start: 1px solid #edf0f4; }
 .fm2-control-row--planned { background: #f5f8ff; }
 .fm2-planned-inspection { display: inline-flex; align-items: center; gap: 7px; margin-block-end: 7px; color: #253d98; font-size: 12px; font-weight: 600; }
-.fm2-planned-inspection svg { inline-size: 16px; block-size: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.fm2-planned-inspection :is(svg, img) { inline-size: 16px; block-size: 16px; }
 @media (max-width: 900px) { .fm2-inspection-action { min-inline-size: 0; } }
 @media (max-width: 680px) { .fm2-inspection-dialog { position: fixed; inset: auto 8px 8px; inline-size: auto; max-inline-size: none; margin: 0; border-radius: 18px; } .fm2-inspection-dialog footer { display: grid; grid-template-columns: 1fr; padding-block-end: max(16px,env(safe-area-inset-bottom)); } .fm2-inspection-dialog footer .shlz-button { inline-size: 100%; min-block-size: 48px; } .fm2-queue-table .fm2-inspection-action { display: block; margin-block-start: 12px; } }
 
@@ -1630,7 +1634,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-control-header p { max-inline-size: 62ch; margin: 0; color: #657181; font-size: 14px; }
 .fm2-control-tools { display: grid; grid-template-columns: minmax(280px,520px) auto; gap: 20px; align-items: end; padding: 18px 20px; border-radius: 14px; background: #fff; }
 .fm2-control-search .shlz-field__control { position: relative; }
-.fm2-control-search svg { position: absolute; z-index: 1; inset: 50% auto auto 12px; inline-size: 18px; block-size: 18px; transform: translateY(-50%); fill: none; stroke: #657181; stroke-width: 1.8; pointer-events: none; }
+.fm2-control-search :is(svg, img) { position: absolute; z-index: 1; inset: 50% auto auto 12px; inline-size: 18px; block-size: 18px; transform: translateY(-50%); pointer-events: none; }
 .fm2-control-search .shlz-input { padding-inline-start: 40px; }
 .fm2-control-search .shlz-input:focus-visible { outline: 0; }
 .fm2-control-search input[type=search]::-webkit-search-cancel-button { cursor: pointer; }
@@ -1752,7 +1756,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-local-sync[data-state="blocked"] { background: #b82c35; box-shadow: 0 0 0 3px rgb(184 44 53 / 18%); }
 .fm2-control-table .fm2-row-action { inline-size: 48px; padding-inline-start: 4px; }
 .fm2-control-table .fm2-row-action span { display: grid; place-items: center; inline-size: 36px; block-size: 36px; border-radius: 9px; color: #253d98; }
-.fm2-control-table .fm2-row-action svg { inline-size: 20px; block-size: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.fm2-control-table .fm2-row-action :is(svg, img) { inline-size: 20px; block-size: 20px; }
 .fm2-control-empty { border: 0; border-radius: 0; }
 .fm2-control-footer { display: flex; justify-content: space-between; gap: 16px; padding: 14px 20px; border-block-start: 1px solid #eef0f4; color: #657181; font-size: 12px; }
 .fm2-control-row[hidden], .fm2-control-empty[hidden] { display: none !important; }
