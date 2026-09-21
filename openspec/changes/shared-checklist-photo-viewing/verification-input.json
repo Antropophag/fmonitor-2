@@ -10,6 +10,7 @@
     "tests/Yii2/yii2_checklist_photo_viewing_001_test.php",
     "tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php",
     "tests/Support/checklist_photo_viewing_browser.cjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "tools/verification/suites.tsv"
   ],
   "acceptances": [

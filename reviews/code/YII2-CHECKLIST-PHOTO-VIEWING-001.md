@@ -33,3 +33,33 @@ None.
 `APPROVED`
 
 Gate 5 is approved for the exact source and snapshot above. This verdict does not claim exact-source GitHub CI, PR readiness, merge, deployment, or settings changes; those remain subject to the repository's subsequent delivery gates.
+
+---
+
+# Independent review: bounded CI correction after run 35648540291
+
+- Reviewer: independent Codex reviewer `/root/photo_ci_review`; authored none of the reviewed correction
+- PR / failed run: `#227` / `35648540291`
+- Reviewed HEAD: `1cb420fa523ccb28f841947f0e22515d5e113664`
+- Reviewed correction snapshot: `git diff --binary 1cb420fa -- . ':(exclude)reviews/code/YII2-CHECKLIST-PHOTO-VIEWING-001.md'`, SHA-256 `e429d48bd67db7c143a7d5997e5f33547df40e52bc52d471b1c2f78b108eefc9`
+- Full supplied failure inventory: e2e browser race (`Target page closed` while a pending `waitForResponse` remained); Integration stale `pilot.css` and `checklist.js` asset hashes; `inspection_item_complete_001_mariadb` transient with same-HEAD rerun GREEN
+- Reviewed paths: `tests/Support/checklist_photo_viewing_browser.cjs`, `tests/Support/yii2_production_web_cutover_contract.php`, and the corresponding `verification-input.json` planned-path addition
+- Verdict: `APPROVED`
+
+## Findings
+
+None.
+
+## Review
+
+1. The browser correction removes only the racy network-response waiter. It still holds the upload request until the operation is observably persisted as `sending`, releases exactly that request, and now waits for the same operation id to become persistently `accepted` before teardown. The existing assertions for one upload request, unchanged operation count, removal of the local blob state, reload, and durable server URL remain intact. This does not weaken the acceptance oracle; a transport failure, non-accepted server outcome, or missing persistence cannot satisfy the replacement wait.
+2. The contract hashes exactly match the current bytes: `app/YiiRuntime/Assets/pilot.css` is `6f99873688bee78088079397e303daf0ea729c30560120a6024dcb0bd495f3fb`, and `app/YiiRuntime/Assets/checklist.js` is `6b9ab656c60f4581f84f73be8ca20e04bd7b6c20dfa3719a2317282f5f8abb4b`. No production asset was changed by this correction.
+3. The changed-path boundary is complete and narrow: the working-tree delta against `1cb420fa` contains only the browser helper, the asset contract, and addition of that contract to the existing OpenSpec `planned_paths`. No specification, production, persistence, authorization, or assertion surface changed.
+4. Independent bounded checks were GREEN for `node --check tests/Support/checklist_photo_viewing_browser.cjs`, `php -l tests/Support/yii2_production_web_cutover_contract.php`, JSON parsing, `git diff --check`, and `openspec validate shared-checklist-photo-viewing --strict`. The supplied corrected focused browser run is GREEN. A local repeat in this review worktree was unavailable because `vendor/autoload.php` is absent; this review does not misreport that environment failure as a product regression or as a fresh GREEN.
+5. The supplied same-HEAD GREEN rerun of `inspection_item_complete_001_mariadb` is consistent with the reported transient and this correction does not touch its code or data boundary. Exact-source CI after committing the correction remains required; this review does not convert the failed prior run into overall GREEN.
+
+## Verdict
+
+`APPROVED`
+
+The bounded CI correction is suitable for commit and exact-source CI. Approval is limited to the correction snapshot above and does not assert PR readiness, merge, or deployment.
