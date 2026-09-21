@@ -101,3 +101,39 @@ The first exact-commit CI attempt failed before tests on an external HTTP 504 wh
 `APPROVED`
 
 The focused tooling delta is approved as committed in `001db257`. No correction is required. This approval does not alter the existing rule that publication/merge admission still requires its independently tracked exact-source CI disposition.
+
+---
+
+## Post-main-merge Gate 5 delta review — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T152857Z-d0e0e55e0a/package.json`
+- Updated base: `557166d918b16933538510c489ce5c99c2abaee0` (`origin/main`)
+- Merge candidate: `d49b0436d66516ac950db045c4b246e38bac8416`
+- Exact harness source: `89371fa47f1b80079e371c1fae96e3fb4d6f385727798b3d4ed1a936448587c7`
+- Exact executable source: `27a59c6a0d7cee33acba02922f2808bbbfb03a6aeb724ad8a2540a016d4825dd`
+- Verification plan SHA-256: `1f33704c17fda170129ec039782eeff3f182d3611fb6accb337ff3f578cc5845`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (clean committed candidate; empty reconstruction patch)
+
+### Merge assessment
+
+No finding.
+
+The merge has the expected two parents and no conflict-resolution hunk. Direct comparison with the updated main base preserves the complete shipment slice: read-only equipment-fact join, first/full projection fields, full-before-first view semantics, exact SHLZ assets, native disclosure, responsive CSS, navigation guard, focused-profile support, tests, specifications, and review history.
+
+The only overlapping product stylesheet, `pilot.css`, is correctly composed. Against new main, the shipment delta remains the same bounded eight-rule block at the construction-control styles. Against the pre-merge feature parent, the merge retains the intervening mainline dashboard/navigation/asset-version stylesheet work. No shipment selector was dropped or overwritten, and no new-main selector was reverted.
+
+No unexpected product paths appear in the feature delta against `557166d9`; the additional mainline dashboard files visible in the merge history belong to the second parent rather than issue-16 scope.
+
+### Post-merge evidence
+
+The source-bound acceptance record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790004509015756000-66d62e5676554a498580df5462989219.json` is drift-free GREEN on merge commit `d49b0436` and executable source `27a59c6a…`. The full browser journey is also reported GREEN on that executable source. Strict OpenSpec validation and diff-check are clean.
+
+These results cover the only plausible merge-loss boundaries: server projection/rendering, exact assets, CSS/source interaction contract, unavailable projection, and live browser composition after the automatic stylesheet merge.
+
+CI and deployment retain their separately tracked dispositions; this review does not authorize deployment or infer any unreported external GREEN.
+
+### Post-merge verdict
+
+`APPROVED`
+
+Gate 5 remains approved for merged exact source `89371fa47f1b80079e371c1fae96e3fb4d6f385727798b3d4ed1a936448587c7` / executable source `27a59c6a0d7cee33acba02922f2808bbbfb03a6aeb724ad8a2540a016d4825dd`. No behavior was lost and no conflict or scope finding remains.
