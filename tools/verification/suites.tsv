@@ -94,6 +94,7 @@ db	php	tests/InstallationProcess/erp_equipment_facts_isolation_001_test.php	inte
 db	php	tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php	integration
 db	php	tests/InstallationProcess/erp_equipment_facts_read_001_test.php	integration
 db	php	tests/InstallationProcess/erp_equipment_facts_schema_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_schema_compatibility_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_schema_001_test.php	integration
 db	php	tests/InstallationProcess/inspection_evidence_schema_001_test.php	integration

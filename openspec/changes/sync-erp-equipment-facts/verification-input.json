@@ -94,7 +94,7 @@
       "acceptance_id": "schema-migration-recovery-catalogue-backup",
       "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
       "seam": "forward migration, compatible recovery and production catalogue/backup inventory",
-      "tests": ["tests/InstallationProcess/erp_equipment_facts_schema_001_test.php"]
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_schema_001_test.php", "tests/InstallationProcess/erp_equipment_facts_schema_compatibility_001_test.php"]
     },
     {
       "spec_id": "ERP-EQUIPMENT-FACTS-001",
