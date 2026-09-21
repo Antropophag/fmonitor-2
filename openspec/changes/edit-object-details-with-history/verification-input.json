@@ -1,13 +1,17 @@
 {
   "change": "edit-object-details-with-history",
   "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "tools/verification/suites.tsv",
     "specs/OBJECT-DETAILS-EDITING-001.md",
     "app/InstallationProcess/ObjectDetailsEditApplication.php",
     "app/InstallationProcess/ObjectDetailsEditCommand.php",
+    "app/InstallationProcess/ObjectDetailsEditingSchemaMigration.php",
     "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
     "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
     "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
     "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/InstallationProcess/ProductionObjectDetailsEditFactory.php",
     "app/Otiz/MariaDbNativePremiumInputs.php",
     "app/YiiRuntime/Controllers/ObjectDetailsController.php",
     "app/YiiRuntime/Controllers/ObjectCardController.php",
@@ -20,150 +24,77 @@
     "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
     "tests/InstallationProcess/object_details_effective_consumers_001_test.php",
     "tests/Yii2/yii2_object_details_editing_001_test.php",
+    "tests/Yii2/yii2_object_details_editing_browser_001_test.php",
+    "tests/Yii2/yii2_object_card_001_test.php",
     "tests/Support/object_details_editing_browser.cjs",
     "tests/Runtime/object_details_editing_recovery_001_test.php"
   ],
   "acceptances": [
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A1-editable-field-matrix",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "ObjectDetailsEditApplication command",
-      "tests": [
-        "tests/InstallationProcess/object_details_editing_001_test.php",
-        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A2-plan-fixation",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "ObjectDetailsEditApplication command",
-      "tests": [
-        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A3-fail-closed-payload",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "owner and canonical Yii POST",
-      "tests": [
-        "tests/InstallationProcess/object_details_editing_001_test.php",
-        "tests/Yii2/yii2_object_details_editing_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A4-typed-normalization",
+      "acceptance_id": "A1-A4-field-map-plan-and-normalization",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
       "seam": "ObjectDetailsEditApplication command",
       "tests": [
         "tests/InstallationProcess/object_details_editing_001_test.php"
-      ]
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_editing_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_editing_001_test.php":{"boundary":"object-details-unit-fixture","probe_kind":"fixture_read_only"}}
     },
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A5-authorization",
+      "acceptance_id": "A5-A7-authorization-replay-and-atomic-history",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "owner and canonical Yii POST",
-      "tests": [
-        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
-        "tests/Yii2/yii2_object_details_editing_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A6-replay-concurrency",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "ObjectDetailsEditApplication command",
+      "seam": "ObjectDetailsEditApplication with MariaDB",
       "tests": [
         "tests/InstallationProcess/object_details_editing_mariadb_001_test.php"
-      ]
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_editing_mariadb_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_editing_mariadb_001_test.php":{"boundary":"object-details-mariadb-fixture","probe_kind":"fixture_read_only"}}
     },
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A7-atomic-event",
+      "acceptance_id": "A9-A12-effective-consumers",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "ObjectDetailsEditApplication command",
-      "tests": [
-        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A8-history-pagination",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "card history projection",
-      "tests": [
-        "tests/Yii2/yii2_object_details_editing_001_test.php",
-        "tests/Support/object_details_editing_browser.cjs"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A9-import-repeatability",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "import then effective read",
+      "seam": "import and current public readers",
       "tests": [
         "tests/InstallationProcess/object_details_effective_consumers_001_test.php"
-      ]
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":{"boundary":"object-details-consumer-fixture","probe_kind":"fixture_read_only"}}
     },
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A10-card-queue-doc-consumers",
+      "acceptance_id": "A8-A13-yii-history-and-http",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "current public readers",
+      "seam": "canonical Yii POST and card history projection",
       "tests": [
-        "tests/InstallationProcess/object_details_effective_consumers_001_test.php",
         "tests/Yii2/yii2_object_details_editing_001_test.php"
-      ]
+      ],
+      "gate3_expected":{"tests/Yii2/yii2_object_details_editing_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/Yii2/yii2_object_details_editing_001_test.php":{"boundary":"object-details-yii-fixture","probe_kind":"fixture_read_only"}}
     },
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A11-factory-matching",
+      "acceptance_id": "A13-A14-browser-modal-and-close",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "Bitrix and ERP readers",
+      "seam": "Playwright canonical card flow",
       "tests": [
-        "tests/InstallationProcess/object_details_effective_consumers_001_test.php"
-      ]
+        "tests/Yii2/yii2_object_details_editing_browser_001_test.php"
+      ],
+      "gate3_expected":{"tests/Yii2/yii2_object_details_editing_browser_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/Yii2/yii2_object_details_editing_browser_001_test.php":{"boundary":"object-details-browser-fixture","probe_kind":"fixture_read_only"}}
     },
     {
       "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A12-otiz-material-derived-kshah",
+      "acceptance_id": "A15-migration-and-recovery",
       "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "MariaDbNativePremiumInputs read",
-      "tests": [
-        "tests/InstallationProcess/object_details_effective_consumers_001_test.php"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A13-yii-browser-flow",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "canonical Yii POST and browser",
-      "tests": [
-        "tests/Yii2/yii2_object_details_editing_001_test.php",
-        "tests/Support/object_details_editing_browser.cjs"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A14-modal-close",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "rendered shlz-modal controls",
-      "tests": [
-        "tests/Support/object_details_editing_browser.cjs"
-      ]
-    },
-    {
-      "spec_id": "OBJECT-DETAILS-EDITING-001",
-      "acceptance_id": "A15-migration-recovery",
-      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
-      "seam": "canonical migration and recovery",
+      "seam": "canonical migration and backup restore",
       "tests": [
         "tests/Runtime/object_details_editing_recovery_001_test.php"
-      ]
+      ],
+      "gate3_expected":{"tests/Runtime/object_details_editing_recovery_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/Runtime/object_details_editing_recovery_001_test.php":{"boundary":"object-details-recovery-fixture","probe_kind":"fixture_read_only"}}
     }
   ]
 }

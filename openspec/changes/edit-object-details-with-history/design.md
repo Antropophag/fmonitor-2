@@ -68,6 +68,8 @@ Canonical migration version increments additively and updates current-image back
 
 Verification uses table-driven owner/DB tests for every allowed field and rejection class, canonical Yii HTTP/browser tests, importer repeatability, consumers/matching/OTIZ evidence, migration/recovery and focused architecture checks. The planner selects lane/reviews; this stateful persistence/financial-input change is expected to require Gate 3 and final independent review, not inferred FAST.
 
+Quality Graph получает минимальный exact capability ownership entry `object-details-editing`: только новые owner/registry/persistence/schema files, существующий canonical object-card verifier и зарегистрированные consumer chains для legacy import, Yii reads, ERP facts и OTIZ norms. Это не меняет lane/classifier/admission rules; entry нужен, чтобы protected domain owner не оставался без проверяемого владельца.
+
 ## Risks / Trade-offs
 
 - [Risk] Consumer missed and shows/filter old source value → Mitigation: explicit frontier inventory, addressable tests per real consumer and reviewer checklist.

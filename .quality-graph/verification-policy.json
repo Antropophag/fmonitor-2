@@ -324,6 +324,7 @@
     {
       "name": "otiz-premium-norms",
       "patterns": [
+        "app/Otiz/MariaDbNativePremiumInputs.php",
         "app/Otiz/MariaDbObjectRegisterQuery.php",
         "app/Otiz/NativePremiumNorms.php"
         ,"app/Otiz/ObjectEconomy.php"
@@ -544,6 +545,29 @@
         "tests/Yii2/yii2_control_engineer_assignment_001_test.php"
       ],
       "consumers": []
+    },
+    {
+      "name": "object-details-editing",
+      "patterns": [
+        "app/InstallationProcess/ObjectDetailsEditApplication.php",
+        "app/InstallationProcess/ObjectDetailsEditCommand.php",
+        "app/InstallationProcess/ObjectDetailsEditingSchemaMigration.php",
+        "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
+        "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
+        "app/InstallationProcess/ProductionObjectDetailsEditFactory.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
+        "tests/Yii2/yii2_object_card_001_test.php",
+        "tests/Yii2/yii2_object_details_editing_001_test.php"
+      ],
+      "consumers": [
+        "erp-equipment-facts",
+        "legacy-object-import",
+        "otiz-premium-norms",
+        "yii-object-read-presentation"
+      ]
     },
     {
       "name": "weekly-fkr-attention-email",
