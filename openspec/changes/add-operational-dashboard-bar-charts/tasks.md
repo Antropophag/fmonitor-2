@@ -27,7 +27,7 @@
 
 ## 5. Gate 4–5 и публикация
 
-- [ ] 5.1 Root сверяет полный candidate с prepared obligations, запускает только planner-selected bounded focused checks и OpenSpec strict validation; сохранить команды, elapsed time и полную failure inventory без локального `make test`/`make verify`
-- [ ] 5.2 Зафиксировать reconstructible exact-source snapshot/commit и получить независимый `gpt-5.6-sol / low` Gate 5 APPROVED review в `reviews/code/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md`, включая spec/tests/code/visual evidence и каждый изменённый boundary
+- [x] 5.1 Root сверяет полный candidate с prepared obligations, запускает только planner-selected bounded focused checks и OpenSpec strict validation; сохранить команды, elapsed time и полную failure inventory без локального `make test`/`make verify`
+- [x] 5.2 Зафиксировать reconstructible exact-source snapshot/commit и получить независимый `gpt-5.6-sol / low` Gate 5 APPROVED review в `reviews/code/YII2-OPERATIONAL-DASHBOARD-BAR-CHARTS-001.md`, включая spec/tests/code/visual evidence и каждый изменённый boundary
 - [ ] 5.3 После corrections при необходимости переподготовить plan/reviews по правилам процесса, затем опубликовать PR-ready candidate и выполнить один selected exact-source GitHub CI consumer; собрать полный failed-job/`REGRESSION_FAILURE` inventory при любом сбое
 - [ ] 5.4 Обновить delivery record и OpenSpec task state точными source/review/CI ссылками, авторами root/executor/reviewers, повторами и оставшимися `UNKNOWN`; Done означает GREEN focused checks, required independent reviews и GREEN exact-source CI, но не merge/deploy

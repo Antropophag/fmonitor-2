@@ -60,3 +60,39 @@ The desktop/mobile screenshots confirm the intended full-width stage widget, pai
 ## Final decision
 
 The candidate is read-only, permission-preserving, bounded in query/DTO/DOM cardinality, and substantially conforms to A–L. The late root test delta is acceptable. Gate 5 is nevertheless **CHANGES_REQUESTED** because the shipped chart-widget composition clips part of the weekly data and produces severe empty-space hierarchy on both target viewports, and because atomic DTO validation does not cover the full fixed-shape/activity-sum contract. Correct both findings, refresh exact-source GREEN/browser evidence, and request a bounded Gate 5 re-review of the delta.
+
+---
+
+# Gate 5 correction re-review — 2026-09-21
+
+- Reviewer: same independent Gate 5 reviewer; still not an author of the specification, tests, implementation, or correction
+- Re-reviewed exact source: `98bcfffe4b898dfba4346b14f2fb8c90a495b8408b3ee7ce7a9c254c1e788b85`
+- Candidate commit: `2ca58d8c558c719c86ec06cc4c94e95083d56681`
+- Prior reviewed source: `3bd14ae8b16b75d3ac5e909ee9844c66a6caa5ae30a119fa6199eda9481a333b`
+- Prepared correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T090901Z-7537191296/package.json`
+- Exact-source focused GREEN: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1789981660117241000-2cbdb1a088e84eaea03c67ca59fa64be.json`, exit `0`, 69.92 seconds, clean end source
+- Refreshed UI evidence: `/var/folders/yc/548th18156s39y3kx0xc05tc0000gn/T/yii-user-access-76ff5d4a8f0b/dashboard-bar-charts-populated-1440.png` and `/var/folders/yc/548th18156s39y3kx0xc05tc0000gn/T/yii-user-access-76ff5d4a8f0b/dashboard-bar-charts-populated-390.png`
+- Re-run Impeccable detector: `[]`
+- Current verdict: **APPROVED**
+
+## Prior finding dispositions
+
+1. **Resolved — public plot slot, chart hierarchy, and internal clipping.** `app/YiiRuntime/Views/dashboard.php` now places every application-owned bar composition inside the public `.shlz-chart-widget__plot` slot. `app/YiiRuntime/Assets/pilot.css` replaces the inherited three-row widget geometry with the actual two-row header/plot composition and removes the phantom minimum 240px row. The weekly view now groups each calendar week as one responsive unit with two `minmax(0,1fr)` series columns: six week groups on desktop and two per row at 390px. The refreshed 1440 capture shows all six dates and all twelve values/series labels within the left paired widget, without clipping or overlap; the 390 capture shows the intended document-flow stack and readable two-column weekly groups. Overall capture height fell from 2373px to 1849px on desktop and from 4386px to 3737px on mobile while preserving the predecessor metric surfaces. The browser oracle now rejects an owning widget whose `scrollWidth > clientWidth` and rejects any bar whose rectangle escapes its widget, in addition to the existing page-overflow, paired/stacked layout, focus, activation, state, and screenshot checks. This closes the false-GREEN mechanism identified in the first review.
+
+2. **Resolved — exact atomic DTO validation.** `YiiOperationalDashboard` now depends on the narrow injectable `YiiOperationalDashboardStore` interface, while `MariaDbYiiOperationalDashboard` remains the production implementation. Before returning, the public data seam checks the complete top-level key order, cutoff, non-negative integer metrics, predecessor list-row shape/dates, exact chart family order, canonical stage/activity key order, non-empty labels, non-negative integer values, exact six server-derived Monday–Sunday week records and continuity, `stage sum === total`, active-stage sum `=== active`, and activity-bucket sum `===` that active population. A malformed result fails with the single existing `Malformed dashboard chart aggregate.` exception, which the HTTP boundary maps to the atomic safe error. The correction tests inject four independent malformed stores for missing shape, activity-sum mismatch, broken week continuity, and a negative value; each exercises `YiiOperationalDashboard::read()` and requires the same rejection. The existing real-HTTP stage-sum and missing-source `503` witnesses remain intact. This closes the second finding without changing SQL, persistence, RBAC, or history ownership.
+
+## Late test-delta disposition
+
+**APPROVED.** Relative to the previous reviewed source, the acceptance-test delta adds one bounded malformed-DTO matrix at the public dashboard-owner seam. The anonymous store implements the new production interface and changes only the returned DTO; it does not bypass `YiiOperationalDashboard::read()` validation. The four mutations are individually sensitive: missing `activityAge[0].label`, incremented activity count, a non-contiguous week start, and negative total. A false acceptance deliberately throws `TestFailure`; the expected exception message check prevents that failure from being mistaken for the production rejection. Existing stage/week/activity values, 30k query/memory/DOM assertions, cleanup-before-fingerprint delta, real HTTP authorization/rejection/read-only assertions, browser state matrix, and screenshot integrity checks are unchanged and remain GREEN. The browser-helper delta strengthens geometry by adding owning-widget scroll and containment checks; it does not relax the page-level or responsive assertions.
+
+## Correction security and regression assessment
+
+- The injectable interface exposes only the two methods already required by the owner and adds no runtime selection, HTTP seam, mutation path, or authorization bypass. The owner still calls `authorized(actorId)` before reading.
+- No SQL expression, query parameter, chart allowlist, stage owner, append-only source, DDL, or state-changing seam changed in this correction.
+- Exact validation is intentionally fail-closed and does not fabricate defaults. Empty valid datasets remain valid because zero is a non-negative integer and the stage/activity sums remain coherent.
+- The public `shlz-ui` boundary is now used more faithfully: the application supplies marks inside the exported plot slot and does not add a chart runtime or private import.
+- No new production or test regression, security disclosure, internal overflow, accessibility defect, or policy-ownership conflict was found in the bounded correction delta.
+
+## Final correction decision
+
+Both prior MAJOR findings are fully resolved on exact source `98bcfffe4b898dfba4346b14f2fb8c90a495b8408b3ee7ce7a9c254c1e788b85`. The refreshed captures and strengthened browser oracle close the UI finish/clipping gap; the injectable store, exact validator, and malformed public-seam matrix close the atomic DTO gap. All late test deltas are approved. Gate 5 current verdict is **APPROVED**. Exact-source GitHub CI, publication, merge, and deployment remain separate lifecycle states and are not inferred from this review.
