@@ -174,3 +174,75 @@ No failed primary signature from run `35619370671` remains unresolved in this bo
 `APPROVED`
 
 Gate 5 remains approved for corrected exact source `8d5b5874780c0466ea647c127bfc1aeefda0239bd72d457ac33db8578f0d9085` / executable source `b5f30363f826e6ab528164f99e65bcda5e52ea353fe819afa571359e26b29a16`. The correction is complete, source-bound, and limited to the observed CI failures.
+
+---
+
+## Owner-approved icon-only Gate 5 review — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T174026Z-c1354c9a30/package.json`
+- Exact committed candidate: `9ac782f64d6f0ec98f07a9bac2fdd15e0674deab`
+- Harness source: `55c29ac2007bb02c28f27f6df74827572650cf7ec73d8294d5cd8f4b9f0971f0`
+- Executable source: `62a0642626a01df430fe1578fec079f205563de4a201243eba2bcb75ab2e129b`
+- Verification plan SHA-256: `4dc1ec7a61da018d73ea06dc2841515aa91e0e6bcc8beeccb596b843574fca06`
+- Snapshot patch SHA-256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (clean committed candidate)
+
+### Implementation assessment
+
+No implementation defect was found against the latest owner direction.
+
+- The queue retains its read-only current-projection join and full-over-first state priority.
+- The desktop table adds a 48px icon-only column with a visually hidden header. Partial and full each render the exact decorative public `delivery-box`; unknown retains accessible `aria-label`/native `title` while remaining visually empty. No `delivery-4`, info, checkmark, visible shipment copy, background pill, or vertical shipment padding remains.
+- At the mobile breakpoint the shipment cell becomes a 24px absolute target beside the existing chevron and the row reserves horizontal space, avoiding a new vertical section or row-height increase.
+- Status/date semantics are carried by the cell's encoded `aria-label` and `title`; full dates retain priority. Ready-to-open remains correctly relocated to the activity cell.
+- The asset route/controller exposes only the remaining delivery box, and the obsolete replacement assets are absent from the candidate surface. The production cutover contract hash is refreshed accordingly.
+
+The exact-source acceptance record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790012390636984000-5a86549bff514cafad9104d90b1de507.json` is drift-free GREEN. Production web cutover is reported GREEN, the impeccable detector is empty, and strict OpenSpec validation plus diff-check are clean.
+
+### Blocking process finding
+
+1. **HIGH — the icon-only normative expectations and executable test have no fresh independent Gate 3 approval or intended-RED evidence.** The last Gate 3 approval in `reviews/tests/YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001.md` is explicitly bound to source `3a4fae1757…` and requires visible three-state labels, an info icon for unknown, a box-plus-corner-checkmark full state, and a labeled mobile row. The current contract/test reverses each of those approved expectations: icon-only output, visually empty unknown, identical box icons for partial/full, no marker, and an absolute unlabeled mobile icon. The prior approval itself states that any normative or executable-test change requires fresh Gate 2 evidence and independent Gate 3 review. Owner approval authorizes the new product decision but does not by itself waive the repository's independent review/evidence gate. The current package contains only GREEN on the already implemented result, so it cannot establish pre-implementation sensitivity for the replacement expectations. Reconstruct the icon-only test/spec delta against the pre-icon-only source, retain aggregate exact-source intended RED, obtain independent Gate 3 approval for that exact delta, then rebuild the final package for a narrow Gate 5 rereview. No production-code correction is requested.
+
+The spec examples still describe semantic outcomes using status text, but the numbered requirements and OpenSpec body clearly assign those strings to accessible labels/tooltips; this is not treated as a separate implementation finding.
+
+### Icon-only Gate 5 verdict
+
+`CHANGES_REQUESTED`
+
+The implementation is approved in substance, but Gate 5 cannot approve a materially changed contract/test matrix that bypassed fresh Gate 3. Complete the missing independent Gate 3 lifecycle without changing the owner-approved behavior, then resubmit the unchanged implementation and GREEN evidence.
+
+---
+
+## Final icon-only Gate 5 rereview — 2026-09-21
+
+- Current committed HEAD: `5a6efc3d25ee5ff62ff4b975b5133329ccdddbf1` (`test: prove compact icon-only shipment status`)
+- Production implementation commit: `2d95600b` (`fix: make shipment status icon-only`)
+- Final asset-hash commit: `9ac782f64d6f0ec98f07a9bac2fdd15e0674deab`
+- Current executable source: `d5c66d9bd2d2689bd9f57534c503713ee816565ab2d37e5a7feb4f61077ede4b`
+- Current worktree difference is limited to this review record; no production or executable test source is uncommitted
+
+### Prior finding disposition
+
+The sole lifecycle finding is resolved. The final icon-only specification/tests were reconstructed on the pre-icon implementation, received independent Gate 3 approval at source `f78c95c6f0eaa501b139921cda4998c61196f8ec2a6f2f4dfaeb8fd7e89fb950`, and preserve exact aggregate intended-RED evidence. The two subsequent sensitivity corrections—actual empty visible cell text and explicit mobile adjacency/non-overlap geometry—are committed in `5a6efc3d` and were included in that approval.
+
+### Final implementation and evidence assessment
+
+No finding.
+
+Production code is unchanged after `2d95600b`; `9ac782f6` updates only the production cutover asset hash, and `5a6efc3d` updates only tests/review. Direct inspection confirms the implementation satisfies the strengthened assertions:
+
+- shipment cells contain only decorative icon markup for partial/full and no text node; unknown contains no icon or visible content;
+- `aria-label` and `title` independently carry the exact state/date text;
+- mobile row padding reserves 76px, the 24px shipment cell occupies right inset 44–68px, and the 36px chevron occupies right inset 8–44px, producing adjacent non-overlapping same-row targets without flow height;
+- desktop width, common delivery-box/no-marker behavior, full priority, unknown matrix, ready-activity relocation, read-only projection, and public asset routing remain as previously reviewed.
+
+The earlier exact GREEN acceptance record `1790012390636984000-5a86549bff514cafad9104d90b1de507` covers the icon-only implementation before the final sensitivity additions. During this rereview, the complete strengthened acceptance was run once through the bounded integration profile and is GREEN on committed HEAD `5a6efc3d` and executable source `d5c66d9b…`:
+
+`PASS: YII2-CONSTRUCTION-CONTROL-SHIPMENT-INDICATOR-001 Yii HTTP`
+
+Production web cutover remains GREEN at `9ac782f6`; its current `pilot.css` contract digest is `14ab23e2d5b9838f6e102be4dc4eefbe5c620cd4d311b2df38d630b39df29666`. Strict OpenSpec validation and diff-check remain clean. No full local suite was run.
+
+### Final verdict
+
+`APPROVED`
+
+Gate 5 passes for icon-only committed HEAD `5a6efc3d25ee5ff62ff4b975b5133329ccdddbf1` and executable source `d5c66d9bd2d2689bd9f57534c503713ee816565ab2d37e5a7feb4f61077ede4b`. No implementation, test, lifecycle, or evidence finding remains in the reviewed scope. External CI/merge disposition remains separately governed.

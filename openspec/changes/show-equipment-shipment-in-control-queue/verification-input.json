@@ -6,7 +6,6 @@
     "app/YiiRuntime/Views/construction-control.php",
     "app/YiiRuntime/Assets/pilot.css",
     "app/YiiRuntime/Assets/shlz-icons/delivery-box.svg",
-    "app/YiiRuntime/Assets/shlz-icons/delivery-4.svg",
     "app/YiiRuntime/Controllers/PilotAssetController.php",
     "config/yii/assets.php",
     "tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php",

@@ -74,7 +74,7 @@ return [
     ],
     'assets' => [
         'shlz.css'=>['bb5e00fba0a3b6804571fdc0a90caaa5ae62a03000d01501a63cd77d234fe99e','text/css; charset=UTF-8','public, max-age=3600'],
-        'pilot.css'=>['a769ad3a5133d521883c144cc5e9183b7233578d0f10a757072ba98a661cb071','text/css; charset=UTF-8','public, max-age=3600'],
+        'pilot.css'=>['14ab23e2d5b9838f6e102be4dc4eefbe5c620cd4d311b2df38d630b39df29666','text/css; charset=UTF-8','public, max-age=3600'],
         'preopening.css'=>['7c69ca7f249c12ee9c4f8526a4ddf9f3de35dd0ca8a81e781b82dc2b6c5197aa','text/css; charset=UTF-8','public, max-age=3600'],
         'favicon.svg'=>['24b621ad3437c7ebec28fa5f2fe11c345b182a7ceb61e60acd99de163a3ea5b2','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'navigation.js'=>['94e0f756c7309f61a678dd4bed2d23c1c316b8524e03ec3c9141fc72006b6475','text/javascript; charset=UTF-8','public, max-age=3600'],
@@ -90,7 +90,6 @@ return [
         'checklist-sw.js'=>['e0555252c5194438254f6b8b4f4b766a09efd942dfa8573cb9fb179e8bd6a622','text/javascript; charset=UTF-8','public, max-age=0'],
         'control-queue.js'=>['0e80355fa58e3483609cb2486d33796c1dc3c01545fe30a930894bbe5be79f6e','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/delivery-box.svg'=>['b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
-        'shlz-icons/delivery-4.svg'=>['e79f74ceb6b1b7c596a22c1be3d9072005203f3681181fa193d2f56a8ab81583','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'otiz.js'=>['3a6895e62cf0630b39f6d0ddaf9eee7822ad45fcd869e12f389659890dfcdaff','text/javascript; charset=UTF-8','public, max-age=3600'],
         'fonts/golos-text-cyrillic-400-normal.woff2'=>['15a5cbadfc1aa7a541651600b757bf7b67bce4e145b3239de072db5427889605','font/woff2','public, max-age=31536000, immutable'],
         'fonts/golos-text-cyrillic-500-normal.woff2'=>['22337b726df83521c7f6b2709e4717116eb53106c6140b45d751f36910191ecc','font/woff2','public, max-age=31536000, immutable'],
