@@ -154,6 +154,31 @@ try {
     assertSameValue(['ready', 'ERP_EQUIPMENT_FACTS_SYNC_FAILED', 1, 'failed', 'SOURCE_UNAVAILABLE'],
         [$row['status'] ?? null, $row['failure_code'] ?? null, (int) ($row['attempt'] ?? 0), $run['status'] ?? null, $run['reason'] ?? null],
         'SOURCE_UNAVAILABLE persists safe failed run and schedules retry');
+
+    $versionQueue = new MariaDbJobQueue($fixture->db, $fixture->p, null, null, ['erp.equipment-facts.sync' => [1, 2]]);
+    $unsupported = $versionQueue->enqueue([
+        'jobType' => 'erp.equipment-facts.sync', 'payloadVersion' => 2,
+        'payload' => ['scheduleSlot' => '2026-09-21T14'], 'availableAtUtc' => $now,
+        'idempotencyKey' => '44444444-4444-4444-8444-444444444444',
+        'actor' => ['type' => 'system', 'id' => 'erp-equipment-facts-hourly-v1'],
+    ]);
+    $environment['FMONITOR_TEST_ERP_HANDLER_MODE'] = 'completed';
+    $pipes = [];
+    $worker = proc_open([PHP_BINARY, dirname(__DIR__) . '/Support/erp_equipment_facts_worker_process.php'],
+        [0 => ['file', '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $root, $environment);
+    if (!is_resource($worker)) throw new TestFailure('SETUP_FAILURE unsupported-version worker process');
+    $deadline = microtime(true) + 10;
+    do {
+        $unsupportedRow = $fixture->db->query("SELECT status,failure_code,attempt FROM {$fixture->p}fm2_jobs WHERE job_id=" . (int) $unsupported['jobId'])->fetch_assoc();
+        if (($unsupportedRow['status'] ?? null) === 'dead') break;
+        usleep(50_000);
+    } while (microtime(true) < $deadline);
+    proc_terminate($worker, SIGTERM);
+    foreach ([1, 2] as $fd) { stream_get_contents($pipes[$fd]); fclose($pipes[$fd]); }
+    proc_close($worker);
+    assertSameValue(['dead', 'CONFIGURATION_INVALID', 1],
+        [$unsupportedRow['status'] ?? null, $unsupportedRow['failure_code'] ?? null, (int) ($unsupportedRow['attempt'] ?? 0)],
+        'unsupported ERP version settles once as permanent CONFIGURATION_INVALID before source access');
 } finally { $fixture->close(); }
 
 echo "PASS: ERP-EQUIPMENT-FACTS-001 exact worker/handler claim\n";

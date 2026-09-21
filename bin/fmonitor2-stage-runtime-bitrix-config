@@ -14,7 +14,9 @@ php -r 'require "app/autoload.php"; FMonitor2\Workforce\WorkerConfiguration::fro
 
 umask 077
 temporary=$(mktemp /run/fmonitor-secrets/.bitrix-config.XXXXXX) || fail
-cleanup() { rm -f -- "$temporary"; }
+cleanup() {
+    [ -z "$temporary" ] || rm -f -- "$temporary"
+}
 trap cleanup EXIT
 cp -- "$source_path" "$temporary" || fail
 sync -f "$temporary" || fail

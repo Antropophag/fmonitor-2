@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory() as raw:
         destination = checkout / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / rel, destination)
-    runtime = """COMPOSE_PROJECT_NAME=fm2-local-issue149
+    runtime = f"""COMPOSE_PROJECT_NAME=fm2-local-issue149
 FMONITOR_RUNTIME_IMAGE=fmonitor2-runtime:test
 FMONITOR_HTTP_PORT=18093
 FMONITOR_DB_NAME=fmonitor2

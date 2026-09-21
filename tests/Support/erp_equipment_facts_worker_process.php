@@ -13,7 +13,7 @@ $password = getenv('FMONITOR_DB_PASSWORD');
 $prefix = getenv('FMONITOR_PROCESS_TABLE_PREFIX');
 $db = new mysqli($host, $user, $password, $name, $port);
 try {
-    $queue = new MariaDbJobQueue($db, $prefix, null, null, ['erp.equipment-facts.sync' => [1]]);
+    $queue = new MariaDbJobQueue($db, $prefix, null, null, ['erp.equipment-facts.sync' => [1, 2]]);
     $command = static fn(array $job): array => [PHP_BINARY, __DIR__ . '/erp_equipment_facts_handler.php'];
     $worker = new JobWorkerProcess($queue, new MariaDbWorkerHeartbeat($db, $prefix),
         ['erp.equipment-facts.sync' => [1 => $command]],

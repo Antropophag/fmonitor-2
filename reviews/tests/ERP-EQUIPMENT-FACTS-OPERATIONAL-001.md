@@ -288,3 +288,32 @@ Current terminal consumer-delta findings: None. Both corrections register the al
 Current owner-comment Gate 3 correction findings: None. The delta closes a canonical configuration gap, centralizes validation, expands rejected cases and secret-canary coverage, and does not relax ERP/jobs/startup/readiness behavior.
 
 `APPROVED` for the SMTP/runtime test and configuration-contract delta at exact commit `68a1a692d9ae901f289b84b67a5a484bccb2f821`. This is not Gate 5 and does not approve overall implementation, CI state, live qualification, publication, deployment or merge.
+
+---
+
+## Gate 5 correction test/spec delta review — commit `006f33229bf2e65037532b25c29d92cb9abebc12`
+
+- Reviewer: `/root/erp_gate3` (`gpt-5.6-sol/low`), independent of correction implementation and final Gate 5 reviewer
+- Scope: normative/test sensitivity for corrections requested by Gate 5; production-code quality and final acceptance remain Gate 5
+- Evidence supplied: core ERP, runtime, local-env and architecture focused checks GREEN
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+1. **Unsupported ERP version settlement — approved and sensitive.** The existing direct handler assertion still requires exact exit `64` and safe `CONFIGURATION_INVALID` before source access. The new disposable-DB regression additionally enqueues an ERP version-2 job through a queue that admits the durable envelope, runs the real worker process with no registered v2 handler, and independently requires terminal `dead`, failure code `CONFIGURATION_INVALID`, and exactly one attempt. This closes the retry-loop gap without weakening supported-version success or retryable source-failure behavior.
+
+2. **Jobs-only ERP authority — approved and narrowed.** Canonical/generated Compose split ERP variables into `x-jobs-erp-environment`, merged only into worker and scheduler. `tests/Deployment/erp_equipment_facts_runtime_001_test.py` proves no `FMONITOR_ERP_*` key remains in the shared runtime environment, every canonical ERP key exists in the jobs anchor, and prepare/local-integration/migrate/php/web neither merge that anchor nor receive individual ERP keys. Direct `.env` validation is retained while runtime authority is reduced.
+
+3. **Readable bounded chunk loop — approved, no oracle weakening.** The refactor names candidate chunks, order rows, shipment rows and chunk results but preserves sorted unique candidates, configured chunk size, two bounded parameterized queries per chunk, whole-chunk validation before accumulation, cross-chunk duplicate rejection and whole-source failure normalization. Existing source-scope, later-chunk atomicity, max-row/streaming, privacy and exact SQL tests remain GREEN.
+
+4. **Manual operational contract — approved.** The delivery record now documents the sole supported manual command inside the configured jobs-worker and explicitly binds it to the same delivery/application seam as hourly execution. It specifies safe success/failure receipt fields, new run identity on retry and the prohibition on DSN, SQL, credentials, rows and raw order numbers. It does not introduce a second writer or host-side secret path.
+
+5. **Owner-approved TLS exception — approved only within the recorded boundary.** The normative spec and OpenSpec scenario record the explicit 2026-09-21 owner decision: isolated pilot may use `Encrypt=yes;TrustServerCertificate=yes` because a required external certificate is unavailable. Tests require both exact settings, reject `Encrypt=no`, retain configured database vs fully-qualified `[1c-erp]` separation, and keep ERP credentials jobs-only. The record explicitly requires reconsideration before wider production rollout. No broader certificate or plaintext waiver is inferred.
+
+6. **Prior SMTP/runtime correction — retained.** The canonical SMTP validator/allowlist, fail-closed invalid matrix, optional test-recipient policy and secret-canary checks remain present; this delta does not bypass them.
+
+### Findings and conclusion
+
+Current Gate 5 correction test/spec findings: None. The delta increases sensitivity to durable permanent rejection and least-privilege runtime wiring. The only security relaxation is the exact owner-authorized isolated-pilot peer-authentication exception; transport encryption, jobs isolation and non-disclosure remain mandatory.
+
+`APPROVED` for the Gate 5 correction test/spec delta at exact commit `006f33229bf2e65037532b25c29d92cb9abebc12`. This is not a Gate 5 implementation verdict and does not approve overall code quality, current CI, live qualification, publication, deployment or merge.

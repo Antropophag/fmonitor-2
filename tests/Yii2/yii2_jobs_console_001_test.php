@@ -9,7 +9,7 @@ function yjcRemove(string $path):void{if(!is_dir($path))return;foreach(scandir($
 
 if(!mkdir($tmp.'/state/pilot-demo/one',0700,true)||!mkdir($tmp.'/temp',0700,true))throw new TestFailure('SETUP_FAILURE fixture');
 try{
-    $erp=['FMONITOR_ERP_HOST'=>'erp.example.invalid','FMONITOR_ERP_DATABASE'=>'legacy-stage','FMONITOR_ERP_USER'=>'reader','FMONITOR_ERP_PASSWORD'=>'synthetic-password','FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY'=>str_repeat('h',40),'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS'=>'500','FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS'=>'5','FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE'=>'100'];
+    $erp=['FMONITOR_ERP_HOST'=>'erp.example.invalid','FMONITOR_ERP_SERVER_CERTIFICATE_FILE_HOST'=>dirname(__DIR__).'/fixtures/erp-server-certificate.pem','FMONITOR_ERP_SERVER_CERTIFICATE_FILE'=>dirname(__DIR__).'/fixtures/erp-server-certificate.pem','FMONITOR_ERP_DATABASE'=>'legacy-stage','FMONITOR_ERP_USER'=>'reader','FMONITOR_ERP_PASSWORD'=>'synthetic-password','FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY'=>str_repeat('h',40),'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS'=>'500','FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS'=>'5','FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE'=>'100'];
     $composeEnv=array_replace(getenv(),$erp,['FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'fixture']);
     [$code,$json,$error]=yjcRun(['docker','compose','-f','compose.yaml','config','--format','json'],$composeEnv,$root);
     assertSameValue([0,''],[$code,$error],'Compose resolves');$model=json_decode($json,true,512,JSON_THROW_ON_ERROR);

@@ -10,11 +10,13 @@ assertSameValue(true, str_contains($stageSql, 'датаотгрузки is not n
     'production aggregate excludes null/sentinel before MIN');
 $production = file_get_contents(dirname(__DIR__, 2) . '/app/YiiRuntime/Commands/ErpEquipmentFactsSyncController.php');
 $transportSource = file_get_contents(dirname(__DIR__, 2) . '/app/InstallationProcess/MariaDbSqlServerEquipmentFactsTransport.php');
-assertSameValue(true, str_contains($transportSource, 'Encrypt=yes') && str_contains($transportSource, 'TrustServerCertificate=yes'),
-    'legacy SQL Server transport remains encrypted with explicitly accepted corporate certificate');
+assertSameValue(true, str_contains($transportSource, 'Encrypt=yes')
+    && str_contains($transportSource, 'TrustServerCertificate=yes'),
+    'owner-approved pilot SQL Server transport remains encrypted with compatibility trust exception');
 assertSameValue(true, str_contains($transportSource, '\';Database=\'.$config->database'),
     'transport opens the validated real legacy database from configuration');
-assertSameValue(false, str_contains($transportSource, 'Encrypt=no') || str_contains($transportSource, 'Database=1c-erp'),
+assertSameValue(false, str_contains($transportSource, 'Encrypt=no')
+    || str_contains($transportSource, 'Database=1c-erp'),
     'transport never disables encryption or hard-codes 1c-erp as default database');
 foreach (['PDO::SQLSRV_ATTR_QUERY_TIMEOUT', 'TOP (', 'fetch(PDO::FETCH_ASSOC)'] as $boundary) {
     assertSameValue(true, str_contains($production, $boundary), 'production transport enforces ' . $boundary);

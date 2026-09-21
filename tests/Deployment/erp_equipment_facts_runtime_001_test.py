@@ -38,6 +38,16 @@ for service in ["jobs-worker:", "jobs-scheduler:"]:
 assert 'profiles: ["jobs"]' not in template and 'profiles: ["jobs"]' not in generated, \
     "INTENDED_RED: ordinary Compose contour includes jobs without an opt-in profile"
 for artifact in (template, generated):
+    common = artifact.split("x-runtime-environment:", 1)[1].split("x-jobs-erp-environment:", 1)[0]
+    jobs_erp = artifact.split("x-jobs-erp-environment:", 1)[1].split("services:", 1)[0]
+    assert "FMONITOR_ERP_" not in common, "ERP authority is absent from shared HTTP/migration environment"
+    jobs_keys = [name for name in required if name.startswith("FMONITOR_ERP_")]
+    for key in jobs_keys:
+        assert key in jobs_erp, f"jobs-only ERP environment owns {key}"
+    for service in ("prepare", "local-integration", "migrate", "php", "web"):
+        block = artifact.split(f"  {service}:", 1)[1].split("\n  ", 1)[0]
+        assert "jobs-erp-environment" not in block and "FMONITOR_ERP_" not in block, f"{service} receives no ERP authority"
+for artifact in (template, generated):
     assert "stage-runtime-secrets:" in artifact and 'user: "0:0"' in artifact
     assert 'entrypoint: ["bin/fmonitor2-stage-runtime-bitrix-config"]' in artifact
     assert artifact.count("FMONITOR_BITRIX_CONFIG_HOST_FILE") == 1, \

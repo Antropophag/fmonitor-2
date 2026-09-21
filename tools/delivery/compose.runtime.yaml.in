@@ -16,6 +16,8 @@ x-runtime-environment: &runtime-environment
   FMONITOR_ORIGINAL_SAFE_LOG_FILE: /home/fmonitor/.local/state/fmonitor2/log/original-safe.jsonl
   FMONITOR_TRUSTED_REQUEST_HOST: "${FMONITOR_TRUSTED_REQUEST_HOST:?Set FMONITOR_TRUSTED_REQUEST_HOST}"
   FMONITOR_TRUSTED_REQUEST_SCHEME: "${FMONITOR_TRUSTED_REQUEST_SCHEME:?Set FMONITOR_TRUSTED_REQUEST_SCHEME}"
+
+x-jobs-erp-environment: &jobs-erp-environment
   FMONITOR_ERP_HOST: "${FMONITOR_ERP_HOST:?Set FMONITOR_ERP_HOST}"
   FMONITOR_ERP_DATABASE: "${FMONITOR_ERP_DATABASE:?Set FMONITOR_ERP_DATABASE}"
   FMONITOR_ERP_USER: "${FMONITOR_ERP_USER:?Set FMONITOR_ERP_USER}"
@@ -139,7 +141,7 @@ services:
     <<: *app
     command: ["php", "bin/yii", "jobs/worker", "--interactive=0"]
     environment:
-      <<: *runtime-environment
+      <<: [*runtime-environment, *jobs-erp-environment]
       FMONITOR_BITRIX_ORIGIN: "${FMONITOR_BITRIX_ORIGIN:-}"
       FMONITOR_BITRIX_WEBHOOK_USER_ID: "${FMONITOR_BITRIX_WEBHOOK_USER_ID:-}"
       FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID: "${FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID:-}"
@@ -187,6 +189,8 @@ services:
   jobs-scheduler:
     <<: *app
     command: ["php", "bin/yii", "jobs/scheduler", "--interactive=0"]
+    environment:
+      <<: [*runtime-environment, *jobs-erp-environment]
     depends_on:
       db:
         condition: service_healthy

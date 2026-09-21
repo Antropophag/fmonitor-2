@@ -10,8 +10,21 @@ final class NativeErpEquipmentFactsDelivery
     {
         $orders=[];
         foreach($candidates as$candidate){if(!is_string($candidate))return['status'=>'failed','reason'=>'SOURCE_INVALID'];$candidate=trim($candidate);if($candidate===''||$candidate==='0')continue;if(strlen($candidate)>120)return['status'=>'failed','reason'=>'SOURCE_INVALID'];$orders[$candidate]=true;}
-        $orders=array_keys($orders);sort($orders,SORT_STRING);$records=[];$options=['maxRows'=>$this->config->maxRows,'timeoutSeconds'=>$this->config->timeoutSeconds,'readOnly'=>true];
-        try{foreach(array_chunk($orders,$this->config->chunkSize)as$chunk){$a=($this->transport)(MariaDbErpEquipmentFactsSource::ordersQuery(count($chunk)),$chunk,$options);$b=($this->transport)(MariaDbErpEquipmentFactsSource::shipmentsQuery(count($chunk)),$chunk,$options);$normalized=$this->normalize($a,$b);if(($normalized['status']??null)!=='complete')return$normalized;foreach($normalized['records']as$record){$number=$record['sourceOrderNumber'];if(isset($records[$number]))return['status'=>'failed','reason'=>'SOURCE_INVALID'];$records[$number]=$record;}}}catch(\Throwable){return['status'=>'failed','reason'=>'SOURCE_UNAVAILABLE'];}
+        $orders=array_keys($orders);sort($orders,SORT_STRING);$records=[];
+        $options=['maxRows'=>$this->config->maxRows,'timeoutSeconds'=>$this->config->timeoutSeconds,'readOnly'=>true];
+        try{
+            foreach(array_chunk($orders,$this->config->chunkSize)as$candidateChunk){
+                $orderRows=($this->transport)(MariaDbErpEquipmentFactsSource::ordersQuery(count($candidateChunk)),$candidateChunk,$options);
+                $shipmentRows=($this->transport)(MariaDbErpEquipmentFactsSource::shipmentsQuery(count($candidateChunk)),$candidateChunk,$options);
+                $chunkResult=$this->normalize($orderRows,$shipmentRows);
+                if(($chunkResult['status']??null)!=='complete')return$chunkResult;
+                foreach($chunkResult['records']as$record){
+                    $orderNumber=$record['sourceOrderNumber'];
+                    if(isset($records[$orderNumber]))return['status'=>'failed','reason'=>'SOURCE_INVALID'];
+                    $records[$orderNumber]=$record;
+                }
+            }
+        }catch(\Throwable){return['status'=>'failed','reason'=>'SOURCE_UNAVAILABLE'];}
         return['status'=>'complete','records'=>array_values($records)];
     }
     private function normalize(mixed$orders,mixed$shipments):array

@@ -64,6 +64,10 @@ Read-only source SHALL обращаться к таблицам legacy ERP то�
 - **WHEN** read-only login успешно соединяется с сервером, но его default database не `1c-erp`
 - **THEN** bounded query работает через fully-qualified identifiers без попытки открыть `1c-erp` как default database
 
+#### Scenario: Owner-approved pilot TLS compatibility
+- **WHEN** текущий изолированный pilot подключается к legacy SQL Server без предоставленного корпоративного CA/server certificate
+- **THEN** transport использует encrypted `Encrypt=yes;TrustServerCertificate=yes` как явное owner-approved pilot exception, никогда не отключает encryption и не распространяет ERP credentials за jobs contour
+
 #### Scenario: Sentinel и реальная shipment date
 - **WHEN** для одного заказа существуют sentinel `0001-01-01`, `NULL` и одна или несколько реальных дат отгрузки
 - **THEN** первой отгрузкой является минимальная реальная дата, а sentinel и `NULL` не влияют на результат
