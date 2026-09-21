@@ -16,7 +16,7 @@
 | 10 | `rapid-pilot/InspectionSchedule.php#2` | `rapid-pilot/InspectionSchedule.php:86` | REPLACE | точное календарное действие → calendar-interface |
 | 11 | `app/YiiRuntime/ViewSupport.php#1` | `app/YiiRuntime/ViewSupport.php:39` | RETAIN | брендовая, структурная или data-графика; точного action-match не требуется |
 | 12 | `app/YiiRuntime/ViewSupport.php#2` | `app/YiiRuntime/ViewSupport.php:47` | REPLACE | точное действие выхода → logout |
-| 13 | `app/YiiRuntime/ViewSupport.php#3` | `app/YiiRuntime/ViewSupport.php:98` | RETAIN | брендовая, структурная или data-графика; точного action-match не требуется |
+| 13 | `app/YiiRuntime/ViewSupport.php#3` | `app/YiiRuntime/ViewSupport.php:105` | RETAIN | брендовая, структурная или data-графика; точного action-match не требуется |
 | 14 | `app/YiiRuntime/MainNavigation.php#1` | `app/YiiRuntime/MainNavigation.php:46` | SHLZ | уже использует публичный shlz-ui export |
 | 15 | `app/YiiRuntime/MainNavigation.php#2` | `app/YiiRuntime/MainNavigation.php:62` | SHLZ | уже использует публичный shlz-ui export |
 | 16 | `app/YiiRuntime/MainNavigation.php#3` | `app/YiiRuntime/MainNavigation.php:68` | SHLZ | уже использует публичный shlz-ui export |
