@@ -48,6 +48,8 @@ assertSameValue(true,in_array('A-7',array_column($report['sections']['overdue'],
 assertSameValue(false,in_array('A-11',array_column($report['sections']['overdue'],'objectId'),true),'A6 completed opening and closing are excluded despite old dates/history');
 assertSameValue(null,$report['sections']['progress'][1]['delta'],'A5 UNKNOWN boundary never produces numeric delta');
 $renderer=new WeeklyFkrReportRenderer();$message=$renderer->render($report);
+assertSameValue(true,str_contains($message['html'],'Плановый период: 21.09.2026–27.09.2026')&&str_contains($message['text'],'Плановый период: 21.09.2026–27.09.2026'),'A3 exact plan-period label in both bodies');
+assertSameValue(false,str_contains($message['html'],'Период планов')||str_contains($message['text'],'Период планов'),'A3 obsolete plan-period label absent');
 foreach(['Плановые открытия','Плановые закрытия','Прогресс за прошедшую неделю','Просрочка']as$label)assertSameValue(true,str_contains($message['html'],$label)&&str_contains($message['text'],$label),"A3 both bodies contain {$label}");
 assertSameValue(false,str_contains($message['html'],'Обратить внимание')||str_contains($message['text'],'Обратить внимание'),'A3 attention is absent from both bodies');
 $emptyReport=$report;foreach(array_keys($emptyReport['sections'])as$section)$emptyReport['sections'][$section]=[];$emptyMessage=$renderer->render($emptyReport);assertSameValue(true,str_contains($emptyMessage['html'],'Данных за период нет')&&str_contains($emptyMessage['text'],'Данных за период нет'),'A3 empty sections retain their local empty state');

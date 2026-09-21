@@ -22,7 +22,7 @@ final class WeeklyFkrReportRenderer
         $generated=(new \DateTimeImmutable($report['generatedAtUtc']))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('d.m.Y H:i').' Europe/Moscow';
         $start=(new \DateTimeImmutable($report['periods']['planStart']))->format('d.m.Y');$end=(new \DateTimeImmutable($report['periods']['planEnd']))->format('d.m.Y');
         $subject='FMonitor — недельный отчёт ФКР, '.$start.'–'.$end;
-        $period='Период планов: '.$start.'–'.$end;
+        $period='Плановый период: '.$start.'–'.$end;
         $summaryCounts=[];
         foreach(self::SUMMARY_LABELS as$key=>$label)$summaryCounts[$key]=count($report['sections'][$key]??[]);
         $summaryText=[];
