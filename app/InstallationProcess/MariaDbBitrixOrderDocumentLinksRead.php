@@ -14,6 +14,6 @@ final readonly class MariaDbBitrixOrderDocumentLinksRead
     }
     public function forObject(int$objectId):array
     {
-        if($objectId<1)throw new \InvalidArgumentException();$effective=(new MariaDbEffectiveObjectDetails($this->db,$this->prefix,$this->prefix))->read($objectId);$number=$effective['zavnumber']['value']??null;return$this->forOrder(is_string($number)?$number:null);
+        if($objectId<1)throw new \InvalidArgumentException();$effective=MariaDbEffectiveObjectDetails::create($this->db,$this->prefix,$this->prefix)->read($objectId);$number=$effective['zavnumber']['value']??null;return$this->forOrder(is_string($number)?$number:null);
     }
 }

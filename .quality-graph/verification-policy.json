@@ -476,7 +476,8 @@
       "patterns": [
         "app/RuntimeRestore/RuntimeRecovery.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV30.php"
+        "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
@@ -562,6 +563,8 @@
         "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
         "app/InstallationProcess/ObjectDetailsReferenceCatalogue.php",
         "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEditPermissionProvisioning.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEditStore.php",
         "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
         "app/InstallationProcess/ProductionObjectDetailsEditFactory.php"
       ],

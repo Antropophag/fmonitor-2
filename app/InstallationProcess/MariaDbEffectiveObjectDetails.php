@@ -4,6 +4,7 @@ namespace FMonitor2\InstallationProcess;
 
 final readonly class MariaDbEffectiveObjectDetails
 {
+    public static function create(\mysqli $db,string $prefix,string $legacyPrefix):self{return new self($db,$prefix,$legacyPrefix);}
     public function __construct(private \mysqli $db,private string $prefix,private string $legacyPrefix){foreach([$prefix,$legacyPrefix]as$p)if(strlen($p)>28||preg_match('/^[A-Za-z0-9_]*$/D',$p)!==1)throw new \InvalidArgumentException();}
     public function read(int$objectId):array
     {
