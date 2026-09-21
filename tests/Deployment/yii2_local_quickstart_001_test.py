@@ -24,10 +24,10 @@ with tempfile.TemporaryDirectory() as raw:
 import hashlib,json,os,sys
 trace=os.environ['FMONITOR_TEST_TRACE'];state_path=os.environ['FMONITOR_TEST_STATE'];argv=sys.argv[1:];project=os.environ.get('COMPOSE_PROJECT_NAME','')
 open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project,'dbPasswordDigest':hashlib.sha256(os.environ.get('FMONITOR_DB_PASSWORD','').encode()).hexdigest()})+'\\n');joined=' '.join(argv);fail=os.environ.get('FMONITOR_TEST_FAIL_STAGE','')
-stages={'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web jobs-worker jobs-scheduler','jobs-health':'jobs/process-health'}
+stages={'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','runtime-secrets':'stage-runtime-secrets','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web jobs-worker jobs-scheduler','jobs-health':'jobs/process-health'}
 if fail in stages and stages[fail] in joined:sys.exit(42)
 if '--volumes' in argv and not ('compose' in argv and '-f' in argv and 'deploy/runtime/compose.yaml' in argv and project.startswith('fm2-local-') and 'down' in argv and '--remove-orphans' in argv):sys.exit(43)
-allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health',' down',' logs',' ps')
+allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','stage-runtime-secrets','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health',' down',' logs',' ps')
 if not any(token in ' '+joined for token in allowed):sys.exit(44)
 data=json.load(open(state_path));resources=data.get(project)
 if 'up --detach --wait db' in joined and resources is None:resources={'database':'domain-sentinel-001','owner':'owner-001','session':'session-sentinel-001','artifact':'artifact-sentinel-001','volumes':True,'running':False};data[project]=resources
@@ -50,7 +50,7 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
 
     first=make('up');assert first.returncode==0,(first.stdout,first.stderr,'LEGACY_MAKE_UP_TRACE')
     observed=events();joined=[' '.join(e['argv']) for e in observed];assert all(e['project']=='fm2-local-contract' for e in observed),('ENV_PROJECT_NOT_BOUND',observed)
-    required=['build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health','/health/live','/health/ready'];positions=[]
+    required=['build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','stage-runtime-secrets','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health','/health/live','/health/ready'];positions=[]
     for needle in required:positions.append(next(i for i,value in enumerate(joined) if needle in value))
     assert positions==sorted(positions),('LIFECYCLE_ORDER_WRONG',joined)
     assert len(joined)==len(required)+1 and joined[0]=='info',('UNEXPECTED_OR_MISSING_OPERATION',joined)

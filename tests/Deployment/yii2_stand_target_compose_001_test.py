@@ -119,7 +119,7 @@ class StandTargetComposeContract(unittest.TestCase):
         result = subprocess.run(["docker", "compose", "-f", str(COMPOSE), "--profile", "jobs", "--profile", "deployment", "config", "--format", "json"], env=environment, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(0, result.returncode, result.stderr)
         services = json.loads(result.stdout)["services"]
-        self.assertEqual({"db", "prepare", "local-integration", "migrate", "php", "web", "jobs-worker", "jobs-scheduler"}, set(services))
+        self.assertEqual({"db", "prepare", "stage-runtime-secrets", "local-integration", "migrate", "php", "web", "jobs-worker", "jobs-scheduler"}, set(services))
         self.assertEqual(["bin/fmonitor2-run-with-local-integration-config"], services["local-integration"]["entrypoint"])
         self.assertEqual("SIGTERM", services["local-integration"]["stop_signal"])
         self.assertIn("/run/fmonitor-local-integration", services["local-integration"]["tmpfs"][0])
