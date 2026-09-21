@@ -156,14 +156,16 @@ secrets:
         quoted_prefix = prefix.replace("`", "``")
         persistence_deadline = time.monotonic() + 45
         while True:
-            before = sql(base, env, f"SELECT COUNT(*) FROM `{quoted_prefix}fm2_workforce_catalog`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_workforce_sync_runs` WHERE status='completed'; SELECT COUNT(*) FROM `{quoted_prefix}fm2_jobs`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_job_events`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots`;")
-            if len(before) == 5 and before[0:3] == ["51", "1", "4"] and int(before[3]) >= 12 and before[4] == "4":
+            before = sql(base, env, f"SELECT COUNT(*) FROM `{quoted_prefix}fm2_workforce_catalog`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_workforce_sync_runs` WHERE status='completed'; SELECT COUNT(*) FROM `{quoted_prefix}fm2_jobs`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_job_events`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots`; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots` WHERE schedule_key LIKE 'weekly-fkr-report/v1/%'; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots` WHERE schedule_key LIKE 'workforce-hourly-v1/%'; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots` WHERE schedule_key LIKE 'bitrix-order-document-links-hourly-v1/%'; SELECT COUNT(*) FROM `{quoted_prefix}fm2_scheduler_slots` WHERE schedule_key LIKE 'erp-equipment-facts-hourly-v1/%';")
+            weekly = int(before[5]) if len(before) == 9 else -1
+            expected_jobs = 3 + weekly
+            if len(before) == 9 and before[0:2] == ["51", "1"] and weekly in [0, 1] and before[6:9] == ["1", "1", "1"] and int(before[2]) == expected_jobs and int(before[3]) >= expected_jobs * 3 and int(before[4]) == expected_jobs:
                 break
             if time.monotonic() >= persistence_deadline:
                 raise AssertionError(f"native delivery did not persist its complete Jobs lifecycle: {before}")
             time.sleep(0.5)
-        assert before[0:3] == ["51", "1", "4"], f"native delivery and all hourly scheduled jobs must persist: {before}"
-        assert int(before[3]) >= 12 and before[4] == "4", f"Jobs lifecycle facts must persist: {before}"
+        assert before[0:2] == ["51", "1"] and before[6:9] == ["1", "1", "1"] and int(before[2]) == expected_jobs, f"native delivery and all hourly scheduled jobs must persist: {before}"
+        assert int(before[3]) >= expected_jobs * 3 and int(before[4]) == expected_jobs, f"Jobs lifecycle facts must persist: {before}"
 
         compose(base, ["restart", "workforce-sync", "workforce-scheduler"], env, 90)
         deadline = time.monotonic() + 45

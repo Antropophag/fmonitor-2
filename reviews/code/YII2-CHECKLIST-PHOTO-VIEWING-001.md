@@ -93,3 +93,60 @@ None.
 `APPROVED`
 
 The test-only synchronization correction preserves the approved acceptance coverage and is suitable for commit and exact-source CI. This verdict is limited to the delta identified above and does not assert CI GREEN, PR readiness, merge, or deployment.
+
+---
+
+# Independent review: calendar-aware pilot Jobs CI correction
+
+- Reviewer: independent Codex reviewer `/root/photo_ci_review`; authored none of the reviewed correction
+- Correction base: `41a5f8d8e4db8adaa859e8d78b3fd2827b119b65`
+- Reviewed delta: `git diff --binary 41a5f8d8 -- . ':(exclude)reviews/code/YII2-CHECKLIST-PHOTO-VIEWING-001.md'`, SHA-256 `b0129c9ae9cdc5050387e502bdfa0407ccb66adec1ebaca9a690793688035898`
+- Reviewed paths: `tests/Deployment/pilot_jobs_compose_001_test.py` and its addition to the OpenSpec verification input
+- Reported evidence: two CI attempts and local exact reproduction yielded `['51','1','3','9','3']` on Tuesday night in `Europe/Moscow`; focused corrected direct test GREEN
+- Verdict: `CHANGES_REQUESTED`
+
+## Findings
+
+1. **Calendar-boundary race remains in the test expectation.** `moscow` and `weekly_due` are sampled after `workforce-scheduler` has already started, then held constant throughout the 45-second persistence loop. If the sample occurs shortly before Monday 09:00 Moscow, the test fixes `expected_jobs=3`, but the live scheduler can cross 09:00 and correctly persist the fourth weekly job while the loop is running. Conversely, if the scheduler creates Monday's weekly job before midnight and the sample occurs just after the Monday-to-Tuesday transition, the test fixes `expected_jobs=3` although the correct durable state already contains four jobs. Both cases time out despite correct production behavior. The expectation must be tied to an observed scheduler interval or otherwise handle the boundary explicitly rather than using one wall-clock sample after startup. Location: `tests/Deployment/pilot_jobs_compose_001_test.py:159-168`.
+
+## Review
+
+1. Outside the finding, the diagnosis is correct: `MariaDbWeeklyFkrScheduler` is due only on Monday at or after 09:00 in `Europe/Moscow`, so an ordinary Tuesday startup correctly has three scheduled jobs, nine or more lifecycle events, and three scheduler slots.
+2. The pre-existing workforce assertions remain exact (`51` catalog rows and one completed sync run). The correction continues to require three non-weekly scheduled jobs when weekly is not due, so the hourly scheduler count—including equipment facts—is not simply dropped; lifecycle events remain bounded at three per expected job and scheduler-slot count must equal job count.
+3. Scope is otherwise properly bounded to the deployment test and its planned-path registration. No production, scheduler, persistence, authorization, or product-specification file changed.
+4. Independent bounded checks were GREEN for Python compilation, `git diff --check 41a5f8d8 --`, and `openspec validate shared-checklist-photo-viewing --strict`. The reported focused direct test GREEN demonstrates the ordinary Tuesday case but does not exercise or close the boundary race above.
+
+## Verdict
+
+`CHANGES_REQUESTED`
+
+Make the weekly expectation deterministic across the Monday 09:00 and Monday-to-Tuesday transitions while retaining exact assertions for the three hourly jobs, the conditional weekly job, scheduler slots, and at least three lifecycle events per expected job. Production must remain unchanged.
+
+---
+
+# Independent rereview: slot-derived pilot Jobs expectation
+
+- Reviewer: independent Codex reviewer `/root/photo_ci_review`; authored none of the reviewed correction
+- Correction base: `41a5f8d8e4db8adaa859e8d78b3fd2827b119b65`
+- Reviewed corrected delta: `git diff --binary 41a5f8d8 -- . ':(exclude)reviews/code/YII2-CHECKLIST-PHOTO-VIEWING-001.md'`, SHA-256 `a6880ec36bbdeeaa49f39418c491521950938d86c9c2eeb776698007fd5a505f`
+- Prior finding: fixed
+- Reported focused evidence: corrected Compose test GREEN
+- Verdict: `APPROVED`
+
+## Findings
+
+None.
+
+## Rereview
+
+1. The prior calendar-boundary finding is fixed. The test no longer samples wall-clock time or predicts whether the live scheduler has crossed Monday 09:00/Moscow or midnight. It derives the optional weekly contribution from the durable weekly slot count observed in the same SQL snapshot as all totals.
+2. Hourly coverage is not weakened. The test requires exactly one slot for each canonical owner: `workforce-hourly-v1/%`, `bitrix-order-document-links-hourly-v1/%`, and `erp-equipment-facts-hourly-v1/%`. A missing equipment, document-link, or workforce job cannot be replaced by the optional weekly job and still satisfy the assertion.
+3. The weekly slot is constrained to exactly zero or one. Total jobs and total scheduler slots must each equal `3 + weekly`, excluding missing, duplicate, or unrelated queued jobs in this isolated stack. Lifecycle events must be at least three per expected job. Weekly cadence itself remains owned by the dedicated weekly scheduler tests, avoiding a second time-derived cadence oracle in this deployment smoke.
+4. The existing exact workforce delivery assertions remain (`51` catalog rows and one completed sync), and restart preservation/deduplication assertions remain unchanged.
+5. Scope remains bounded to the deployment test plus its verification-input planned-path registration. No production code changed. Independent Python compilation, diff check, and strict OpenSpec validation are GREEN.
+
+## Verdict
+
+`APPROVED`
+
+This rereview supersedes the immediately preceding `CHANGES_REQUESTED` verdict for the calendar-aware Jobs correction. The corrected test is suitable for commit and exact-source CI; this verdict does not itself assert overall CI GREEN, PR readiness, merge, or deployment.
