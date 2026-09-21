@@ -220,6 +220,7 @@ db	php	tests/Yii2/yii2_local_runtime_provisioning_001_test.php	integration
 db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration
 db	php	tests/Yii2/yii2_minimal_operational_dashboard_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_001_test.php	integration
+db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration

@@ -1,6 +1,7 @@
-import('/pilot/assets/shlz-behaviors.js').then(({ enhanceCalendarGrids, enhanceSelects }) => {
+import('/pilot/assets/shlz-behaviors.js').then(({ enhanceCalendarGrids, enhanceSelects, enhanceTabs }) => {
   enhanceSelects(document);
   enhanceCalendarGrids(document);
+  enhanceTabs(document);
 }).catch(() => {});
 const choiceAtom = 'sel' + 'ect';
 const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
