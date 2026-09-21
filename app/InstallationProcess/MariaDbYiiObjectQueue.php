@@ -104,11 +104,18 @@ final readonly class MariaDbYiiObjectQueue
             elseif (in_array($chart, ['planned-start','planned-finish'], true) && preg_match('/^[0-5]$/D',$bucket)===1) {
                 $monday=(new \DateTimeImmutable($cutoff,new \DateTimeZone('Europe/Moscow')))->modify('monday this week')->modify('+'.(int)$bucket.' weeks');
                 $params[':chartFrom']=$monday->format('Y-m-d');$params[':chartTo']=$monday->modify('+6 days')->format('Y-m-d');
-                $expr=$chart==='planned-start'?"LEFT(l.workdatestart,10)":"COALESCE(dc.new_deadline,NULLIF(LEFT(l.workdateendadjusted,10),''),LEFT(l.plan_finish_date,10))";
+                $expr=$chart==='planned-start'?self::plannedStartDateExpression('l.workdatestart'):"COALESCE(dc.new_deadline,NULLIF(LEFT(l.workdateendadjusted,10),''),LEFT(l.plan_finish_date,10))";
                 $filter="{$expr} BETWEEN :chartFrom AND :chartTo";
-            } elseif ($chart === 'activity-age' && in_array($bucket,['age_0_7','age_8_14','age_15_30','age_31_plus','never'],true)) {
-                $last="GREATEST(COALESCE((SELECT MAX(co.server_received_at) FROM `{$p}fm2_checklist_operations` co WHERE co.installation_case_id=c.id AND co.server_received_at<DATE_ADD(:chartCutoff,INTERVAL 1 DAY)),'1000-01-01'),COALESCE((SELECT MAX(ph.server_received_at) FROM `{$p}fm2_checklist_photos` ph WHERE ph.installation_case_id=c.id AND ph.revoked_at IS NULL AND ph.server_received_at<DATE_ADD(:chartCutoff,INTERVAL 1 DAY)),'1000-01-01'),COALESCE((SELECT MAX(x.recorded_at) FROM (SELECT cf.installation_case_id,cf.recorded_at FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.fact_type IN('pto_act','declaration') UNION ALL SELECT cf.installation_case_id,cc.recorded_at FROM `{$p}fm2_pilot_completion_fact_corrections` cc JOIN `{$p}fm2_pilot_completion_facts` cf ON cf.id=cc.root_fact_id WHERE cf.fact_type IN('pto_act','declaration')) x WHERE x.installation_case_id=c.id AND x.recorded_at<DATE_ADD(:chartCutoff,INTERVAL 1 DAY)),'1000-01-01'))";
-                $scope='('.$stages['installation'].' OR '.$stages['document_closeout'].' OR '.$stages['needs_assignment_change'].')';$age="DATEDIFF(:chartCutoff,DATE({$last}))";$known="{$last}<>'1000-01-01'";$ranges=['age_0_7'=>"{$known} AND {$age} BETWEEN 0 AND 7",'age_8_14'=>"{$known} AND {$age} BETWEEN 8 AND 14",'age_15_30'=>"{$known} AND {$age} BETWEEN 15 AND 30",'age_31_plus'=>"{$known} AND {$age}>=31",'never'=>"{$last}='1000-01-01'"];$params[':chartCutoff']=$cutoff;$filter="{$scope} AND ".$ranges[$bucket];
+            } elseif ($chart === 'start-risk') {
+                $start = self::plannedStartDateExpression('l.workdatestart');
+                $risks = self::startRiskPredicates($stages, $start);
+                if (!isset($risks[$bucket])) throw new \RuntimeException('Invalid chart filter.');
+                $filter = $risks[$bucket];
+                $params = array_filter(
+                    self::startRiskParams($cutoff),
+                    static fn(string $value, string $name): bool => str_contains($filter, $name),
+                    ARRAY_FILTER_USE_BOTH,
+                );
             } else throw new \RuntimeException('Invalid chart filter.');
         }
         $source = "(m.category='native_candidate' OR (m.output_id IS NULL AND d.object_id=c.legacy_installation_object_id AND d.content_sha256=SHA2(d.payload_json,256)))";
@@ -143,6 +150,39 @@ final readonly class MariaDbYiiObjectQueue
     {
         $count="(SELECT COUNT(DISTINCT co.item_id) FROM `{$p}fm2_checklist_operations` co WHERE co.installation_case_id=c.id AND co.operation_type='item_completed' AND co.item_id<>42)";$pto="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='pto_act')";$dec="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='declaration')";$applied="(a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";$ready="(v.revision_id IS NOT NULL OR (s.assignment_order_id IS NULL AND (a.application_id IS NOT NULL OR COALESCE(o.status='registered',0))))";
         return ['needs_assignment_order'=>"c.process_state IN('needs_assignment_order','assignment_order_prepared') AND NOT {$ready} AND (s.assignment_order_id IS NOT NULL OR (c.process_state='needs_assignment_order' AND o.id IS NULL AND a.application_id IS NULL) OR (c.process_state='assignment_order_prepared' AND o.status='prepared' AND a.application_id IS NULL))",'ready_to_open'=>"c.process_state IN('needs_assignment_order','assignment_order_prepared') AND {$ready}",'installation'=>"c.process_state='working' AND {$applied} AND {$count}<41 AND NOT({$pto} AND {$dec})",'document_closeout'=>"c.process_state='working' AND {$applied} AND {$count}=41 AND NOT({$pto} AND {$dec})",'completed'=>"c.process_state='working' AND {$applied} AND {$pto} AND {$dec}",'needs_assignment_change'=>"c.process_state='needs_assignment_change' AND (a.application_id IS NOT NULL OR o.status='registered')"];
+    }
+    /** @param array<string,string> $stages @return array<string,string> */
+    public static function startRiskPredicates(array $stages, string $start): array
+    {
+        $needsOrder = $stages['needs_assignment_order'];
+        $ready = $stages['ready_to_open'];
+        $opened = '(' . $stages['installation'] . ' OR ' . $stages['document_closeout'] . ')';
+        return [
+            'overdue_start' => "({$needsOrder} OR {$ready}) AND {$start}<:riskCutoff",
+            'order_0_7' => "{$needsOrder} AND {$start} BETWEEN :riskCutoff AND :riskDay6",
+            'order_8_14' => "{$needsOrder} AND {$start} BETWEEN :riskDay7 AND :riskDay13",
+            'ready_0_14' => "{$ready} AND {$start} BETWEEN :riskCutoff AND :riskDay13",
+            'opened_0_14' => "{$opened} AND {$start} BETWEEN :riskCutoff AND :riskDay13",
+        ];
+    }
+    public static function plannedStartDateExpression(string $column): string
+    {
+        $date = "LEFT({$column},10)";
+        $month = "SUBSTRING({$date},6,2)";
+        $day = "CAST(SUBSTRING({$date},9,2) AS UNSIGNED)";
+        $lastDay = "DAY(LAST_DAY(CONCAT(LEFT({$date},7),'-01')))";
+        return "CASE WHEN {$date} REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'"
+            . " AND LEFT({$date},4)<>'0000'"
+            . " AND {$month} BETWEEN '01' AND '12'"
+            . " AND {$day} BETWEEN 1 AND {$lastDay}"
+            . " THEN {$date} ELSE NULL END";
+    }
+    /** @return array<string,string> */
+    public static function startRiskParams(string $cutoff): array
+    {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $cutoff, new \DateTimeZone('Europe/Moscow'));
+        if ($date === false || $date->format('Y-m-d') !== $cutoff) throw new \RuntimeException('Invalid chart cutoff.');
+        return [':riskCutoff'=>$cutoff, ':riskDay6'=>$date->modify('+6 days')->format('Y-m-d'), ':riskDay7'=>$date->modify('+7 days')->format('Y-m-d'), ':riskDay13'=>$date->modify('+13 days')->format('Y-m-d')];
     }
     private function map(array$r, int$page, int$pages, int$total): array
     {
