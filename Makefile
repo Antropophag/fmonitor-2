@@ -83,7 +83,8 @@ logs:
 ps:
 	$(RUNTIME_COMPOSE) ps
 
-reset: ; $(RUNTIME_COMPOSE) down --volumes --remove-orphans
+reset:
+	$(RUNTIME_COMPOSE) down --volumes --remove-orphans
 
 test-env-up:
 	docker compose -f compose.test.yaml up --detach --wait test-db

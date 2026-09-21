@@ -159,3 +159,31 @@ Current test-delta findings: None. The corrections repair setup/API alignment re
 Current Gate 3 test/spec delta findings: None. The six corrections are traceable to live evidence, keep expected values independent, strengthen observable transport/date/readiness boundaries, preserve authoritative no-clear/privacy semantics and do not relax rejected cases.
 
 `APPROVED` for the final root-owned test/spec delta at commit `614237cfe68d7b1343549519c22e06e05eac73e6`, candidate source `cc2d2cf9053391e5981907eb3738530b97b4ae10ccd5048cc38e455c81d80061`. This verdict is not Gate 5, does not approve implementation quality, live deployment/qualification, CI, publication or merge.
+
+---
+
+## CI failure-inventory test correction review — commit `8671f1648b4b4c400f6d63c450c2610a5ef703d0`
+
+- Reviewer: `/root/erp_gate3` (`gpt-5.6-sol/low`), independent of the correction author and production implementation
+- Triggering CI: run `35590570374`; complete supplied inventory comprised 11 failed tests across unit, e2e and integration
+- Scope: test/fixture expectations and the syntax-only multiline restoration of the explicit `reset` target; no production behavior review
+- Local correction evidence: all 11 exact failed commands pass at the reviewed commit
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+1. **Required synthetic ERP fixture configuration — approved.** The affected local integration, bootstrap, stand, browser, runtime and trusted-scheme fixtures now supply the same complete direct-env ERP keys and bounded controls required by the approved runtime contract. Values are visibly synthetic, no live ERP is contacted merely by Compose/config validation, `.env` fixture mode remains `0600`, and password/HMAC values remain covered by non-disclosure assertions where outputs are inspected.
+
+2. **Complete ordinary jobs contour and process-health expectations — approved.** Quickstart, Jobs runtime and pilot startup tests now require worker and scheduler in the ordinary topology, remove the obsolete opt-in-profile expectation, and require service healthchecks/startup qualification through `jobs/process-health`. Existing command ownership, no-ports, migration dependency, graceful stop, no bootstrap/DDL proxy, heartbeat and worker-private Bitrix mount checks remain intact. Operator `jobs/health` coverage is not removed.
+
+3. **Bitrix fixture and leakage handling — approved.** The quickstart fixture reuses the canonical local-integration configuration helper and a mode-restricted synthetic Bitrix config. Worker-only secret requirements remain tested; scheduler and health paths remain independent of worker-only Bitrix config. `local_integration_env_001_test.py` stops treating the literal structural department list `[72,71]` as a secret, but continues to reject the actual legacy host/port/name/user/password, timestamp and Bitrix token URL canaries from rendered output. This is not a credential/privacy weakening.
+
+4. **Lifecycle/failure ordering — approved and strengthened.** The stateful quickstart oracle adds jobs services and `jobs/process-health` to the exact ordered lifecycle and failure-injection map. It still rejects unexpected operations, effects after failure and unauthorized volume removal, and continues checking state preservation and secret absence.
+
+5. **Explicit reset target formatting — approved, no behavioral expansion.** Converting `reset: ; command` to the canonical multiline recipe restores target parsing expected by the architecture/Make consumers. The command remains the same explicit destructive `reset` operation; ordinary `up`, `down` and recovery paths do not gain `--volumes`.
+
+### Findings and conclusion
+
+Current CI correction test-delta findings: None. Each change maps directly to one or more failures in the supplied complete inventory; no assertion was deleted to hide the new jobs/config contract, and the security/privacy boundary continues to reject actual secret canaries and isolate worker-only Bitrix material.
+
+`APPROVED` for the CI-derived test correction delta at exact commit `8671f1648b4b4c400f6d63c450c2610a5ef703d0`. This verdict is not Gate 5, does not review production implementation, and does not convert the failed CI run into GREEN or authorize another CI run, publication, deployment or merge.

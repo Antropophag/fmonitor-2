@@ -113,7 +113,8 @@ class StandTargetComposeContract(unittest.TestCase):
         self.assertEqual(TEMPLATE.read_bytes(), COMPOSE.read_bytes())
         self.assertIn("${FMONITOR_RUNTIME_IMAGE:?", TEMPLATE.read_text())
         self.assertNotIn("${FMONITOR_RUNTIME_IMAGE:-", TEMPLATE.read_text())
-        environment = {key: "x" for key in ("FMONITOR_DB_PASSWORD", "FMONITOR_MIGRATION_DB_PASSWORD", "FMONITOR_YII_COOKIE_VALIDATION_KEY", "FMONITOR_YII_IDENTITY_KEY")}
+        environment = {key: "x" for key in ("FMONITOR_DB_PASSWORD", "FMONITOR_MIGRATION_DB_PASSWORD", "FMONITOR_YII_COOKIE_VALIDATION_KEY", "FMONITOR_YII_IDENTITY_KEY", "FMONITOR_ERP_HOST", "FMONITOR_ERP_DATABASE", "FMONITOR_ERP_USER", "FMONITOR_ERP_PASSWORD", "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY")}
+        environment.update({"FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS":"500", "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS":"5", "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE":"100"})
         environment.update({"PATH": os.environ["PATH"], "FMONITOR_RUNTIME_IMAGE": "runtime@sha256:" + "a" * 64, "FMONITOR_DB_NAME": "fmonitor2", "FMONITOR_DB_USER": "runtime", "FMONITOR_MIGRATION_DB_USER": "migration", "FMONITOR_HTTP_PORT": "18092", "FMONITOR_PROCESS_TABLE_PREFIX": "fm2_", "FMONITOR_LEGACY_TABLE_PREFIX": "fm2_", "FMONITOR_SESSION_INSTANCE": "stand", "FMONITOR_TRUSTED_REQUEST_HOST": "127.0.0.1:18092", "FMONITOR_TRUSTED_REQUEST_SCHEME": "http", "FMONITOR_BITRIX_ORIGIN": "https://example.invalid", "FMONITOR_BITRIX_WEBHOOK_USER_ID": "1", "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON": "[]", "FMONITOR_BITRIX_TOKEN_HOST_FILE": "/run/secrets/token", "FMONITOR_BITRIX_CA_HOST_FILE": "/run/secrets/ca"})
         result = subprocess.run(["docker", "compose", "-f", str(COMPOSE), "--profile", "jobs", "--profile", "deployment", "config", "--format", "json"], env=environment, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(0, result.returncode, result.stderr)

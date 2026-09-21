@@ -12,7 +12,11 @@ with tempfile.TemporaryDirectory() as raw:
     helper=root/'tools/delivery/local-runtime-env'
     if helper.is_file():
         target=checkout/'tools/delivery/local-runtime-env';target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(helper,target)
-    values={'COMPOSE_PROJECT_NAME':'fm2-local-contract','FMONITOR_RUNTIME_IMAGE':'fmonitor2-runtime:contract','FMONITOR_HTTP_PORT':'18093','FMONITOR_DB_NAME':'fmonitor2','FMONITOR_DB_USER':'fmonitor_runtime','FMONITOR_DB_PASSWORD':'db-secret-contract','FMONITOR_MIGRATION_DB_USER':'root','FMONITOR_MIGRATION_DB_PASSWORD':'migration-secret-contract','FMONITOR_PROCESS_TABLE_PREFIX':'fm2_','FMONITOR_LEGACY_TABLE_PREFIX':'fm2_','FMONITOR_SESSION_INSTANCE':'local-contract','FMONITOR_YII_COOKIE_VALIDATION_KEY':'c'*32,'FMONITOR_YII_IDENTITY_KEY':'i'*32,'FMONITOR_TRUSTED_REQUEST_HOST':'127.0.0.1:18093','FMONITOR_TRUSTED_REQUEST_SCHEME':'http','FMONITOR_INITIAL_OWNER_EMAIL':'owner@example.test','FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD':'owner-secret-contract'}
+    integration_helper=root/'tools/delivery/local-integration-config'
+    target=checkout/'tools/delivery/local-integration-config';target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(integration_helper,target)
+    private=checkout/'.local';private.mkdir(mode=0o700)
+    bitrix=private/'bitrix-workforce.json';bitrix.write_text('{"baseUrl":"https://example.invalid/rest/7/SYNTHETIC","departments":[71]}');bitrix.chmod(0o600)
+    values={'COMPOSE_PROJECT_NAME':'fm2-local-contract','FMONITOR_RUNTIME_IMAGE':'fmonitor2-runtime:contract','FMONITOR_HTTP_PORT':'18093','FMONITOR_DB_NAME':'fmonitor2','FMONITOR_DB_USER':'fmonitor_runtime','FMONITOR_DB_PASSWORD':'db-secret-contract','FMONITOR_MIGRATION_DB_USER':'root','FMONITOR_MIGRATION_DB_PASSWORD':'migration-secret-contract','FMONITOR_PROCESS_TABLE_PREFIX':'fm2_','FMONITOR_LEGACY_TABLE_PREFIX':'fm2_','FMONITOR_SESSION_INSTANCE':'local-contract','FMONITOR_YII_COOKIE_VALIDATION_KEY':'c'*32,'FMONITOR_YII_IDENTITY_KEY':'i'*32,'FMONITOR_TRUSTED_REQUEST_HOST':'127.0.0.1:18093','FMONITOR_TRUSTED_REQUEST_SCHEME':'http','FMONITOR_INITIAL_OWNER_EMAIL':'owner@example.test','FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD':'owner-secret-contract','FMONITOR_ERP_HOST':'erp.example.invalid','FMONITOR_ERP_DATABASE':'legacy-stage','FMONITOR_ERP_USER':'reader','FMONITOR_ERP_PASSWORD':'erp-secret-contract','FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY':'h'*40,'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS':'500','FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS':'5','FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE':'100'}
     def write_env(changes=None):
         current={**values,**(changes or {})};(checkout/'.env').write_text(''.join(f'{k}={v}\n' for k,v in current.items()))
     write_env();fake_bin=sandbox/'bin';fake_bin.mkdir();trace=sandbox/'trace.jsonl';state=sandbox/'state.json';state.write_text('{}')
@@ -20,15 +24,15 @@ with tempfile.TemporaryDirectory() as raw:
 import hashlib,json,os,sys
 trace=os.environ['FMONITOR_TEST_TRACE'];state_path=os.environ['FMONITOR_TEST_STATE'];argv=sys.argv[1:];project=os.environ.get('COMPOSE_PROJECT_NAME','')
 open(trace,'a').write(json.dumps({'tool':'docker','argv':argv,'project':project,'dbPasswordDigest':hashlib.sha256(os.environ.get('FMONITOR_DB_PASSWORD','').encode()).hexdigest()})+'\\n');joined=' '.join(argv);fail=os.environ.get('FMONITOR_TEST_FAIL_STAGE','')
-stages={'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}
+stages={'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web jobs-worker jobs-scheduler','jobs-health':'jobs/process-health'}
 if fail in stages and stages[fail] in joined:sys.exit(42)
 if '--volumes' in argv and not ('compose' in argv and '-f' in argv and 'deploy/runtime/compose.yaml' in argv and project.startswith('fm2-local-') and 'down' in argv and '--remove-orphans' in argv):sys.exit(43)
-allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web',' down',' logs',' ps')
+allowed=('info','build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health',' down',' logs',' ps')
 if not any(token in ' '+joined for token in allowed):sys.exit(44)
 data=json.load(open(state_path));resources=data.get(project)
 if 'up --detach --wait db' in joined and resources is None:resources={'database':'domain-sentinel-001','owner':'owner-001','session':'session-sentinel-001','artifact':'artifact-sentinel-001','volumes':True,'running':False};data[project]=resources
 if resources is None and not ('info'==joined or joined.startswith('build ') or 'config --quiet' in joined):sys.exit(45)
-if 'up --detach --wait php web' in joined:resources['running']=True
+if 'up --detach --wait php web jobs-worker jobs-scheduler' in joined:resources['running']=True
 if ' down' in ' '+joined:
  resources['running']=False
  if '--volumes' in argv:data.pop(project,None)
@@ -46,7 +50,7 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
 
     first=make('up');assert first.returncode==0,(first.stdout,first.stderr,'LEGACY_MAKE_UP_TRACE')
     observed=events();joined=[' '.join(e['argv']) for e in observed];assert all(e['project']=='fm2-local-contract' for e in observed),('ENV_PROJECT_NOT_BOUND',observed)
-    required=['build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web','/health/live','/health/ready'];positions=[]
+    required=['build ','config --quiet','up --detach --wait db','local-runtime/provision-database','run --rm prepare','run --rm migrate','fmonitor2-runtime-check.php','provision-initial-admin.php','up --detach --wait php web jobs-worker jobs-scheduler','jobs/process-health','/health/live','/health/ready'];positions=[]
     for needle in required:positions.append(next(i for i,value in enumerate(joined) if needle in value))
     assert positions==sorted(positions),('LIFECYCLE_ORDER_WRONG',joined)
     assert len(joined)==len(required)+1 and joined[0]=='info',('UNEXPECTED_OR_MISSING_OPERATION',joined)
@@ -71,7 +75,7 @@ kind='ready' if '/ready' in ' '.join(sys.argv) else 'live';sys.exit(42 if os.env
         for secret in ('db-secret-contract','migration-secret-contract','owner-secret-contract'):assert secret not in text
         assert all(e['project']=='fm2-local-contract' for e in stage_events)
         if stage=='docker-info':assert 'LOCAL_DOCKER_UNAVAILABLE' in failed.stdout+failed.stderr,'DOCKER_REASON_MASKED'
-        failed_needle=({'live':'/health/live','ready':'/health/ready'}[stage] if stage in ('live','ready') else {'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web'}[stage])
+        failed_needle=({'live':'/health/live','ready':'/health/ready'}[stage] if stage in ('live','ready') else {'docker-info':'info','build':'build ','db':'up --detach --wait db','provision-db':'local-runtime/provision-database','prepare':'run --rm prepare','migrate':'run --rm migrate','runtime-check':'fmonitor2-runtime-check.php','owner':'provision-initial-admin.php','services':'up --detach --wait php web jobs-worker jobs-scheduler'}[stage])
         failed_index=next(i for i,e in enumerate(stage_events) if failed_needle in ' '.join(e['argv']))
         assert failed_index==len(stage_events)-1,('EFFECT_AFTER_FAILURE',stage,stage_events)
 print('PASS: YII2-LOCAL-QUICKSTART-001 stateful Make lifecycle')

@@ -164,6 +164,14 @@ FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:18093
 FMONITOR_TRUSTED_REQUEST_SCHEME=http
 FMONITOR_INITIAL_OWNER_EMAIL=owner@example.test
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=OWNER_CANARY_149
+FMONITOR_ERP_HOST=erp.example.invalid
+FMONITOR_ERP_DATABASE=legacy-stage
+FMONITOR_ERP_USER=reader
+FMONITOR_ERP_PASSWORD=ERP_CANARY_149
+FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY=hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS=500
+FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS=5
+FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE=100
 """
     (checkout / ".env").write_text(runtime + base)
     (checkout / ".env").chmod(0o600)
@@ -250,7 +258,6 @@ sys.exit(0)
     private_values = (
         "legacy-db.example", "43149", "SOURCE_DATABASE_CANARY_149", "SOURCE_USER_CANARY_149",
         legacy_secret, "2026-09-17 00:00:00", f"https://portal.example/rest/7/{bitrix_secret}/",
-        "[72,71]",
     )
     for value in private_values:
         assert value not in rendered_text, value

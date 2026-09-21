@@ -23,6 +23,11 @@ with tempfile.TemporaryDirectory() as raw:
         "FMONITOR_YII_COOKIE_VALIDATION_KEY":"c"*32, "FMONITOR_YII_IDENTITY_KEY":"i"*32,
         "FMONITOR_TRUSTED_REQUEST_HOST":"127.0.0.1:18093", "FMONITOR_TRUSTED_REQUEST_SCHEME":"http",
         "FMONITOR_INITIAL_OWNER_EMAIL":"owner@example.test", "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD":"OWNER_SECRET_CANARY",
+        "FMONITOR_ERP_HOST":"erp.example.invalid", "FMONITOR_ERP_DATABASE":"legacy-stage",
+        "FMONITOR_ERP_USER":"reader", "FMONITOR_ERP_PASSWORD":"ERP_SECRET_CANARY",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY":"h"*40,
+        "FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS":"500", "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS":"5",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE":"100",
     }
     (checkout / ".env").write_text("".join(f"{k}={v}\n" for k,v in values.items())); (checkout / ".env").chmod(0o600)
     private = checkout / ".local"; private.mkdir(mode=0o700)

@@ -7,7 +7,7 @@ use FMonitor2\Tests\Support\SelectionHttpFixture;
 use FMonitor\IdentityAccess as S;
 // PILOT-LOCAL-TRUSTED-SCHEME-001. FMONITOR_TEST_DB: task-owned real-router fixture.
 $root=dirname(__DIR__,2);$errors=[];$pipes=[];
-$environment=array_replace(getenv(),['FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS'=>'config-only@shlz.ru','FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'synthetic-config-only-password','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'https']);
+$environment=array_replace(getenv(),['FMONITOR_BOOTSTRAP_SUPERADMIN_EMAILS'=>'config-only@shlz.ru','FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'synthetic-config-only-password','FMONITOR_TRUSTED_REQUEST_SCHEME'=>'https','FMONITOR_ERP_HOST'=>'erp.example.invalid','FMONITOR_ERP_DATABASE'=>'legacy-stage','FMONITOR_ERP_USER'=>'reader','FMONITOR_ERP_PASSWORD'=>'synthetic-password','FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY'=>str_repeat('h',40),'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS'=>'500','FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS'=>'5','FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE'=>'100']);
 $process=proc_open(['docker','compose','--env-file','/dev/null','-f',$root.'/compose.yaml','config','--format','json'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,$root,$environment);
 if(!is_resource($process))throw new TestFailure('Compose config setup');$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($process);assertSameValue(0,$exit,'healthy effective Compose config');assertSameValue('',$err,'no Compose config diagnostics');
 $config=json_decode($out,true,512,JSON_THROW_ON_ERROR);$pilot=$config['services']['pilot'];$scheme=$pilot['environment']['FMONITOR_TRUSTED_REQUEST_SCHEME']??null;
