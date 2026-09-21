@@ -181,10 +181,12 @@ docker run --rm --init \
     ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
     --read-only \
     --tmpfs /tmp:rw,nosuid,nodev \
+    --tmpfs /workspace/.test-artifacts:rw,nosuid,nodev \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
     --env "FMONITOR_EXECUTED_GIT_SHA=$git_sha" \
     --env "FMONITOR_SHLZ_CSS_PATH=/shlz-ui/packages/styles/dist/shlz.css" \
+    --env "FMONITOR_TEST_PLAYWRIGHT_MODULE=/shlz-ui/node_modules/playwright" \
     --workdir /workspace \
     "$image_digest" sh -c \
         'test -r /workspace/vendor/autoload.php \
