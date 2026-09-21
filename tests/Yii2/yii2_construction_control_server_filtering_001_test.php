@@ -1,40 +1,20 @@
 <?php
 declare(strict_types=1);
-require dirname(__DIR__).'/bootstrap.php';
-require __DIR__.'/InspectionFixture.php';
-
-// YII2-CONSTRUCTION-CONTROL-SERVER-FILTERING-001: real Yii HTTP + isolated DB.
-$fixture=null;
-try{
-    $fixture=new InspectionFixture(dirname(__DIR__,2));$fixture->open();$fixture->queueFixtures();$http=$fixture->http;
-    $object=$http->db->query("SELECT * FROM {$http->p}fm_maintable WHERE id=4513")->fetch_assoc();
-    $case=$http->rows('fm2_installation_cases')[0];
-    for($i=0;$i<51;$i++){
-        $copy=$object;$copy['id']=5000+$i;$copy['ordadr_address']='Тестовый адрес '.$i;$copy['regnumber']=$i===50?'OWN-TAIL':'BULK-'.$i;
-        $http->insert($http->p.'fm_maintable',$copy);
-        $copyCase=$case;$copyCase['id']=7000+$i;$copyCase['legacy_installation_object_id']=5000+$i;
-        $http->insert($http->p.'fm2_installation_cases',$copyCase);
-    }
-    $before=$http->facts();
-    $search=$fixture->page('/pilot/construction-control?ownership=all&query=OWN-TAIL');
-    assertSameValue(200,$search['status'],'search request accepted');
-    assertSameValue(1,preg_match_all('/data-control-row\b/',$search['body']),'INTENDED_RED search filters before pagination');
-    assertSameValue(true,str_contains($search['body'],'data-object-id="5050"'),'tail object found on result page 1');
-    assertSameValue(true,str_contains($search['body'],PHP_EOL.'1 объект</span>'),'filtered total matches rows');
-    assertSameValue(true,str_contains($search['body'],'name="query"')&&str_contains($search['body'],'value="OWN-TAIL"'),'URL query reflected in form');
-    $empty=$fixture->page('/pilot/construction-control?ownership=all&query=NO-SUCH-OBJECT');
-    assertSameValue([200,0],[ $empty['status'],preg_match_all('/data-control-row\b/',$empty['body'])],'empty filtered set');
-    assertSameValue(true,str_contains($empty['body'],'0 объектов'),'empty total is truthful');
-    $completed=$fixture->page('/pilot/construction-control?ownership=all&query=QUEUE-4514&completed=1');
-    assertSameValue(true,str_contains($completed['body'],'data-object-id="4514"'),'canonical completed row included by server filter');
-    $defaultCompleted=$fixture->page('/pilot/construction-control?ownership=all&query=QUEUE-4514');
-    assertSameValue(false,str_contains($defaultCompleted['body'],'data-object-id="4514"'),'canonical completed row excluded by default');
-    foreach(['/pilot/construction-control?ownership=bogus','/pilot/construction-control?completed=maybe','/pilot/construction-control?query%5B%5D=x']as$path)
-        assertSameValue(404,$fixture->page($path)['status'],'invalid filter controlled '.$path);
-    assertSameValue($before,$http->facts(),'all filtered reads preserve facts');
-    $source=(string)file_get_contents(dirname(__DIR__,2).'/app/YiiRuntime/Assets/control-queue.js');
-    assertSameValue(false,str_contains($source,'row.hidden='),'INTENDED_RED browser no longer filters current DOM page');
-    assertSameValue(false,str_contains($source,'count.textContent='),'INTENDED_RED browser preserves server total');
-    assertSameValue(true,str_contains($source,'readOperations')&&str_contains($source,'syncLocalChanges')&&str_contains($source,'prefetchChecklists'),'local sync and prefetch retained');
-    echo "PASS: YII2-CONSTRUCTION-CONTROL-SERVER-FILTERING-001\n";
-}finally{if($fixture instanceof InspectionFixture)$fixture->close();}
+require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/InspectionFixture.php';
+// YII2-CONSTRUCTION-CONTROL-SERVER-FILTERING-001: real Yii HTTP + disposable DB.
+$fixture=null;$htmlFile=null;
+try{$fixture=new InspectionFixture(dirname(__DIR__,2));$fixture->open();$fixture->queueFixtures();$http=$fixture->http;$object=$http->db->query("SELECT * FROM {$http->p}fm_maintable WHERE id=4513")->fetch_assoc();$case=$http->rows('fm2_installation_cases')[0];
+$assign=static function(int$c,int$o,int$u)use($http):void{$http->insert($http->p.'fm2_control_engineer_assignments',['installation_case_id'=>$c,'object_id'=>$o,'assignment_sequence'=>1,'engineer_user_id'=>$u,'engineer_fio_snapshot'=>'Инженер '.$u,'engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>18,'assigned_at_utc'=>'2026-09-20 06:00:00','request_id'=>sprintf('17117117-0000-4171-8171-%012d',$o),'request_fingerprint'=>hash('sha256','issue171-'.$o)]);};
+for($i=0;$i<55;$i++){$id=5000+$i;$cid=7000+$i;$row=$object;$row['id']=$id;$row['ordadr_address']=$i===52?'ул. Процент % Подчерк _ Слэш \\':'Групповой адрес '.$i;$row['regnumber']=$i===54?'LEGACY-TAIL':'BULK-'.sprintf('%02d',$i);$http->insert($http->p.'fm_maintable',$row);$row=$case;$row['id']=$cid;$row['legacy_installation_object_id']=$id;$http->insert($http->p.'fm2_installation_cases',$row);$assign($cid,$id,$i===54?73:94);}
+$effective=json_encode(['address'=>'Исправленный дальний адрес','regnumber'=>'OWN-TAIL'],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$s=$http->db->prepare("INSERT INTO {$http->p}fm2_object_detail_edits(object_id,revision,values_json,updated_at_utc,updated_by_user_id)VALUES(5054,1,?,'2026-09-21 10:00:00',18)");$s->execute([$effective]);
+$pto=$object;$pto['id']=5099;$pto['regnumber']='PTO-ONLY-171';$http->insert($http->p.'fm_maintable',$pto);$pc=$case;$pc['id']=7099;$pc['legacy_installation_object_id']=5099;$http->insert($http->p.'fm2_installation_cases',$pc);$assign(7099,5099,73);$http->insert($http->p.'fm2_pilot_completion_facts',['installation_case_id'=>7099,'fact_type'=>'pto_act','fact_date'=>'2026-09-20','details'=>'','recorded_at'=>'2026-09-20T09:00:00+03:00','recorded_by_user_id'=>18]);
+$before=['facts'=>$http->facts(),'assignments'=>$http->rows('fm2_control_engineer_assignments'),'edits'=>$http->rows('fm2_object_detail_edits')];
+$mine=$fixture->page('/pilot/construction-control');assertSameValue(1,preg_match_all('/data-control-row\b/',$mine['body']),'INTENDED_RED default mine filters before pagination');assertSameValue(true,str_contains($mine['body'],'data-object-id="5054"'),'own tail reaches mine page 1');assertSameValue(false,str_contains($mine['body'],'data-object-id="5000"'),'foreign native assignment excluded');
+$combined=$fixture->page('/pilot/construction-control?ownership=mine&query=%20own-tail%20');assertSameValue([200,1,true],[$combined['status'],preg_match_all('/data-control-row\b/',$combined['body']),str_contains($combined['body'],'data-object-id="5054"')],'mine and trimmed case-insensitive effective regnumber combine');$address=$fixture->page('/pilot/construction-control?ownership=all&query='.rawurlencode('исправленный дальний'));assertSameValue(true,str_contains($address['body'],'data-object-id="5054"'),'effective corrected address searched');assertSameValue(false,str_contains($address['body'],'LEGACY-TAIL'),'no post-filter legacy label substitution');$literal=$fixture->page('/pilot/construction-control?ownership=all&query='.rawurlencode('% Подчерк _ Слэш \\'));assertSameValue(1,preg_match_all('/data-control-row\b/',$literal['body']),'LIKE metacharacters literal');
+$first=$fixture->page('/pilot/construction-control?ownership=all&query=BULK&completed=1');$second=$fixture->page('/pilot/construction-control?ownership=all&query=BULK&completed=1&page=2');preg_match_all('/data-object-id="(\d+)"/',$first['body'],$a);preg_match_all('/data-object-id="(\d+)"/',$second['body'],$b);assertSameValue([50,5,55],[count($a[1]),count($b[1]),count(array_unique(array_merge($a[1],$b[1])))],'same filtered set drives count pages and stable rows');assertSameValue(true,str_contains($first['body'],'55 объектов')&&str_contains($first['body'],'ownership=all')&&str_contains($first['body'],'query=BULK')&&str_contains($first['body'],'completed=1')&&str_contains($first['body'],'page=2'),'pagination preserves filters');$repeat=$fixture->page('/pilot/construction-control?ownership=all&query=BULK&completed=1');preg_match_all('/data-object-id="(\d+)"/',$repeat['body'],$r);assertSameValue($a[1],$r[1],'refresh stable');
+assertSameValue(false,str_contains($fixture->page('/pilot/construction-control?ownership=all&query=QUEUE-4514')['body'],'data-object-id="4514"'),'completed excluded default');assertSameValue(true,str_contains($fixture->page('/pilot/construction-control?ownership=all&query=QUEUE-4514&completed=1')['body'],'data-object-id="4514"'),'completed included on request');assertSameValue(false,str_contains($fixture->page('/pilot/construction-control?ownership=all&query=PTO-ONLY-171&completed=1')['body'],'data-object-id="5099"'),'PTO-only excluded');
+$empty=$fixture->page('/pilot/construction-control?ownership=mine&query=NO-SUCH');assertSameValue([200,0,true,true],[$empty['status'],preg_match_all('/data-control-row\b/',$empty['body']),str_contains($empty['body'],'0 объектов'),str_contains($empty['body'],'data-control-empty')&&!str_contains($empty['body'],'data-control-empty hidden')],'truthful empty state');
+foreach(['ownership=bogus','completed=maybe','page=0','query%5B%5D=x','ownership%5B%5D=mine','completed%5B%5D=1','page%5B%5D=1','query='.rawurlencode(str_repeat('я',161))]as$q){$get=$fixture->page('/pilot/construction-control?'.$q);$head=$http->request('HEAD','/pilot/construction-control?'.$q,[],$fixture->cookies);assertSameValue([404,404,''],[$get['status'],$head['status'],$head['body']],'invalid input controlled '.$q);}
+$head=$http->request('HEAD','/pilot/construction-control?ownership=mine&query=OWN-TAIL',[],$fixture->cookies);assertSameValue([200,''],[$head['status'],$head['body']],'valid HEAD');$reader=[];assertSameValue(303,$http->login($reader,95)['status'],'reader login');assertSameValue(403,$http->request('GET','/pilot/construction-control?ownership=all',[],$reader)['status'],'all does not widen permission');
+$htmlFile=sys_get_temp_dir().'/fm2-issue171-'.bin2hex(random_bytes(6)).'.html';file_put_contents($htmlFile,$first['body'],LOCK_EX);$pipes=[];$process=proc_open(['node',dirname(__DIR__).'/Support/construction_control_server_filtering_browser.cjs',$htmlFile,dirname(__DIR__,2).'/app/YiiRuntime/Assets/control-queue.js'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,dirname(__DIR__,2));$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);assertSameValue([0,''],[proc_close($process),$err],'browser filter controls');assertSameValue(['rows'=>50,'total'=>'55 объектов','pageReset'=>true,'clearReset'=>true,'syncFunctions'=>true],json_decode($out,true,flags:JSON_THROW_ON_ERROR),'server rows/total stable and controls reset page while sync retained');assertSameValue($before,['facts'=>$http->facts(),'assignments'=>$http->rows('fm2_control_engineer_assignments'),'edits'=>$http->rows('fm2_object_detail_edits')],'reads preserve facts assignments details');echo"PASS: YII2-CONSTRUCTION-CONTROL-SERVER-FILTERING-001\n";
+}finally{if(is_string($htmlFile)&&is_file($htmlFile))unlink($htmlFile);if($fixture instanceof InspectionFixture)$fixture->close();}
