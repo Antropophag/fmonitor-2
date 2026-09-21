@@ -96,3 +96,19 @@ The candidate is read-only, permission-preserving, bounded in query/DTO/DOM card
 ## Final correction decision
 
 Both prior MAJOR findings are fully resolved on exact source `98bcfffe4b898dfba4346b14f2fb8c90a495b8408b3ee7ce7a9c254c1e788b85`. The refreshed captures and strengthened browser oracle close the UI finish/clipping gap; the injectable store, exact validator, and malformed public-seam matrix close the atomic DTO gap. All late test deltas are approved. Gate 5 current verdict is **APPROVED**. Exact-source GitHub CI, publication, merge, and deployment remain separate lifecycle states and are not inferred from this review.
+
+---
+
+## Post-CI bounded test-delta review — 2026-09-21
+
+- Reviewed commit: `0aa51aae8de70032173e909de1030b67d0346a82` over `fc190f02`
+- CI source: run `35583200236`; recorded primary failures were the stale production-cutover `pilot.css` digest and the predecessor dashboard query ceiling, with `verify` derivative
+- Delta: exactly two expectation updates; no production, specification, fixture, or application behavior change
+- Focused evidence reported GREEN: `php tests/Runtime/yii2_production_web_cutover_001_test.php`; `php tests/Yii2/yii2_minimal_operational_dashboard_001_test.php`; `php tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php`
+- Verdict: **APPROVED**
+
+The production-cutover contract now pins `pilot.css` to `f9fa9ce84a92fb4a51244d78268543bf50a46ee40364417222de808ec768ffb0`, which is the independently recomputed SHA-256 of the exact reviewed asset at this commit. The change preserves exact byte-integrity checking; it does not replace the digest with a pattern, wildcard, or weaker presentation assertion.
+
+The dashboard ceiling changes from `<=5` to `<=7` with an accurate reason. The public owner performs one fixed authorization query. Its store then performs the three predecessor queries for metrics, upcoming rows, and overdue rows plus exactly three new fixed aggregates for stages, six-week start/finish counts, and activity age. This is seven queries regardless of whether the fixture has 14 or 30,014 objects. The same 30k witness still requires exact aggregate values, bounded materialized rows, memory below 16 MiB, successful bounded HTTP output, and absence of the scale sentinel from HTML; the chart acceptance independently retains its fixed DTO/DOM and `<=12` envelope. A per-object query or any eighth query therefore still fails the tightened predecessor test. The update aligns the regression oracle with the reviewed production diff and does not mask N+1, unbounded materialization, or a semantic regression.
+
+No new finding arises from this two-line post-CI delta. Current post-CI test-delta verdict is **APPROVED**; the final CI rerun/result remains a separate delivery state.
