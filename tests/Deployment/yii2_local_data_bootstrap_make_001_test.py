@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory() as raw:
     box = Path(raw); checkout = box / "checkout"; checkout.mkdir()
-    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env"):
+    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env", "app/autoload.php", "app/Jobs/SmtpConfiguration.php"):
         src = root / rel
         assert src.exists(), f"MISSING:{rel}"
         dst = checkout / rel; dst.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, dst)
@@ -23,6 +23,16 @@ with tempfile.TemporaryDirectory() as raw:
         "FMONITOR_YII_COOKIE_VALIDATION_KEY":"c"*32, "FMONITOR_YII_IDENTITY_KEY":"i"*32,
         "FMONITOR_TRUSTED_REQUEST_HOST":"127.0.0.1:18093", "FMONITOR_TRUSTED_REQUEST_SCHEME":"http",
         "FMONITOR_INITIAL_OWNER_EMAIL":"owner@example.test", "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD":"OWNER_SECRET_CANARY",
+        "FMONITOR_RUNTIME_ENV":"development", "FMONITOR_PUBLIC_BASE_URL":"https://fmonitor.example.invalid",
+        "FMONITOR_SMTP_HOST":"smtp.example.invalid", "FMONITOR_SMTP_PORT":"587", "FMONITOR_SMTP_ENCRYPTION":"tls",
+        "FMONITOR_SMTP_USERNAME":"fmonitor@example.invalid", "FMONITOR_SMTP_PASSWORD":"SMTP_SECRET_CANARY",
+        "FMONITOR_SMTP_FROM_ADDRESS":"fmonitor@example.invalid", "FMONITOR_SMTP_FROM_NAME":"FMonitor",
+        "FMONITOR_SMTP_TIMEOUT_SECONDS":"10", "FMONITOR_SMTP_VERIFY_PEER":"true",
+        "FMONITOR_ERP_HOST":"erp.example.invalid", "FMONITOR_ERP_DATABASE":"legacy-stage",
+        "FMONITOR_ERP_USER":"reader", "FMONITOR_ERP_PASSWORD":"ERP_SECRET_CANARY",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY":"h"*40,
+        "FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS":"500", "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS":"5",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE":"100",
     }
     (checkout / ".env").write_text("".join(f"{k}={v}\n" for k,v in values.items())); (checkout / ".env").chmod(0o600)
     private = checkout / ".local"; private.mkdir(mode=0o700)
@@ -62,6 +72,6 @@ sys.exit(0)
         retry = run("up-with-data"); assert retry.returncode == 0
         retried = stages(); assert retried.count("legacy") == 1 and retried.count("workforce") == 1
     output = plain.stdout + plain.stderr + legacy.stdout + legacy.stderr + workforce.stdout + workforce.stderr
-    for secret in ("DB_SECRET_CANARY","ROOT_SECRET_CANARY","OWNER_SECRET_CANARY","LEGACY_SECRET_CANARY","BITRIX_SECRET_CANARY"):
+    for secret in ("DB_SECRET_CANARY","ROOT_SECRET_CANARY","OWNER_SECRET_CANARY","SMTP_SECRET_CANARY","LEGACY_SECRET_CANARY","BITRIX_SECRET_CANARY"):
         assert secret not in output
 print("PASS: YII2-LOCAL-DATA-BOOTSTRAP-001 public Make orchestration")

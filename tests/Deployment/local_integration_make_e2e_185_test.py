@@ -37,6 +37,25 @@ FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:{http_port}
 FMONITOR_TRUSTED_REQUEST_SCHEME=http
 FMONITOR_INITIAL_OWNER_EMAIL=issue185@shlz.ru
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=Owner-Issue-185-Synthetic!
+FMONITOR_RUNTIME_ENV=development
+FMONITOR_PUBLIC_BASE_URL=https://fmonitor.example.invalid
+FMONITOR_SMTP_HOST=smtp.example.invalid
+FMONITOR_SMTP_PORT=587
+FMONITOR_SMTP_ENCRYPTION=tls
+FMONITOR_SMTP_USERNAME=fmonitor@example.invalid
+FMONITOR_SMTP_PASSWORD=SMTP_E2E_SECRET
+FMONITOR_SMTP_FROM_ADDRESS=fmonitor@example.invalid
+FMONITOR_SMTP_FROM_NAME=FMonitor
+FMONITOR_SMTP_TIMEOUT_SECONDS=10
+FMONITOR_SMTP_VERIFY_PEER=true
+FMONITOR_ERP_HOST=erp.example.invalid
+FMONITOR_ERP_DATABASE=legacy-stage
+FMONITOR_ERP_USER=reader
+FMONITOR_ERP_PASSWORD=ERP_E2E_SECRET
+FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY=hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS=500
+FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS=5
+FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE=100
 FMONITOR_SOURCE_HOST=db
 FMONITOR_SOURCE_PORT=3306
 FMONITOR_SOURCE_NAME=legacy_fixture
@@ -62,6 +81,16 @@ def run(argv, *, input_text=None, ok=True):
             verify=subprocess.run(['openssl','verify','-CAfile',str(fixture/'ca.crt'),str(fixture/'server.crt')],text=True,capture_output=True)
             curl_probe=subprocess.run(['docker','run','--rm','--network',project+'_default','-v',str(fixture)+':/fixture:ro','--entrypoint','curl',image,'--silent','--show-error','--cacert','/fixture/ca.crt','https://bitrix-fixture:8443/fixture-health'],text=True,capture_output=True)
             diagnostic=f' endpoint_logs={endpoint_logs.stdout+endpoint_logs.stderr!r} connections={connections} requests={requests} cert_verify={verify.returncode} curl_probe={curl_probe.returncode}:{curl_probe.stderr!r}'
+        elif argv[-1:] == ['up']:
+            compose=['docker','compose','--env-file','.env','-f','deploy/runtime/compose.yaml']
+            status=subprocess.run([*compose,'ps','--format','json'],cwd=ROOT,text=True,capture_output=True)
+            health=[]
+            for service in ('jobs-worker','jobs-scheduler'):
+                container=subprocess.run([*compose,'ps','-q',service],cwd=ROOT,text=True,capture_output=True).stdout.strip()
+                if container:
+                    observed=subprocess.run(['docker','inspect',container,'--format','{{json .State.Health}}'],cwd=ROOT,text=True,capture_output=True)
+                    health.append(service+'='+observed.stdout.strip())
+            diagnostic=' process_status='+status.stdout[-2000:]+' health='+' '.join(health)
         raise AssertionError((argv,r.returncode,combined[-4000:]+diagnostic))
     return r
 
@@ -106,7 +135,7 @@ CREATE TABLE fm_install_checklists_values_log(value_id BIGINT,ctime DATETIME);\n
     rendered=run(['bash','tools/delivery/local-runtime-env','--','docker','compose','--env-file','@env-file','-f','deploy/runtime/compose.yaml','config'])
     for secret in (legacy_secret,bitrix_old,bitrix_new):assert secret not in rendered.stdout+rendered.stderr
     app_logs=run(['bash','tools/delivery/local-runtime-env','--','docker','compose','--env-file','@env-file','-f','deploy/runtime/compose.yaml','logs','--no-color'])
-    for secret in (legacy_secret,bitrix_old,bitrix_new):assert secret not in app_logs.stdout+app_logs.stderr
+    for secret in (legacy_secret,bitrix_old,bitrix_new,'SMTP_E2E_SECRET'):assert secret not in app_logs.stdout+app_logs.stderr
 finally:
     subprocess.run(['docker','rm','-f',endpoint],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     if env_path.exists():

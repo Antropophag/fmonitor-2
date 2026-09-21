@@ -32,6 +32,16 @@ final class MariaDbJobsHealth
                 'oldestReadyAtUtc'=>$oldest,'workerHeartbeatAtUtc'=>$worker,'schedulerHeartbeatAtUtc'=>$scheduler];
         });
     }
+    public function readProcess(): array
+    {
+        $s=$this->sql;
+        return $s->readOnly(function()use($s):array{
+            $now=$s->now();$worker=$this->heartbeat($this->config['workerHeartbeatId']);$scheduler=$this->heartbeat($this->config['schedulerHeartbeatId']);$reasons=[];
+            if(!$this->fresh($scheduler,$now,$this->config['schedulerFreshSeconds']))$reasons[]='stale_scheduler';
+            if(!$this->fresh($worker,$now,$this->config['workerFreshSeconds']))$reasons[]='stale_worker';
+            return['ok'=>$reasons===[],'reasons'=>$reasons,'workerHeartbeatAtUtc'=>$worker,'schedulerHeartbeatAtUtc'=>$scheduler];
+        });
+    }
     private function heartbeat(string $identity): ?string
     {
         $s=$this->sql;return $s->rows('SELECT observed_at_utc FROM '.$s->table('fm2_worker_heartbeats').' WHERE worker_id=?',[$identity])[0]['observed_at_utc']??null;

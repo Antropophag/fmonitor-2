@@ -94,11 +94,35 @@ Unmatched/ambiguous diagnostics and job/CLI results SHALL contain only stable co
 
 ## ERP adapter contract
 
-The bounded read-only adapter SHALL issue only the confirmed order aggregate and stage-shipment queries. It SHALL preserve independent values, compute first shipment only from valid stage dates, and produce one record per order aggregate. A stage row for an absent order aggregate MUST make the batch `SOURCE_INVALID`; order rows without stages remain valid with `firstShipmentDate=null`.
+The bounded read-only adapter SHALL issue only the confirmed order aggregate and stage-shipment queries. It SHALL preserve independent values, compute first shipment only from valid stage dates, and produce one record per order aggregate. The order aggregate defines authoritative record presence: a stage row for a locally requested number absent from the successful order aggregate SHALL be ignored without creating a record, clear, diagnostic or failure; order rows without stages remain valid with `firstShipmentDate=null`.
 
 ## Hourly native invocation
 
 The existing scheduler process SHALL enqueue one version-1 `erp.equipment-facts.sync` job per Europe/Moscow hourly slot with actor `erp-equipment-facts-hourly-v1`. Repeat ticks in a slot return the existing job; after downtime only the current slot is enqueued and skipped slots are counted. Existing worker dispatches the canonical sync composition. Adapter/owner failure is retryable. No cron or new scheduler/worker framework is introduced.
+
+The public claim contract SHALL recognize exactly the registered type/version before any ERP access. A completed application receipt completes the job. `SOURCE_UNAVAILABLE` or `SOURCE_INVALID` SHALL first create the corresponding safe failed run through `EquipmentFactsApplication` and then return a retryable worker outcome. Unknown type/version is a non-retryable `CONFIGURATION_INVALID` rejection before source access. The first scheduler tick after process startup SHALL enqueue and execute the current slot when worker readiness is healthy. A documented manual command SHALL invoke the same canonical composition and return only the safe receipt.
+
+## Operational bounded source contract
+
+Before ERP access the canonical composition SHALL read the trim-normalized unique non-empty, non-`0` local `fm_maintable.zavnumber` candidate set. It SHALL send only those values to the ERP source in safely parameterized bounded chunks. Global ERP catalogue size, including more than 10 000 orders, MUST NOT determine completeness and the implementation MUST NOT materialize the global catalogue. Failure or invalid output from any chunk invalidates the whole batch before projection changes.
+
+Every ERP object SHALL be fully qualified with `[1c-erp].[...]`; the configured default database SHALL be the actual legacy database and MUST NOT be assumed to be `1c-erp`. The order aggregate contract is `prod.Номер = sale.Номер`, `sroki.ЗаказКлиента = sale.Ссылка`, grouped by `sale.Номер`, with `MAX(sroki.ДатаКомплектности)` and `MAX(sroki.ДатаПолнойОтгрузки)` projected as canonical dates; an aggregate sentinel `0001-01-01` SHALL normalize to `NULL`. The shipment-stage contract is `prod.Ссылка = etap.Распоряжение`, `sale.Ссылка = prod.ДокументОснование`, `type.Ссылка = sale.shlz_ТипЗаказа`, with `etap.ПометкаУдаления = 0` and `type.Наименование = N'ЛифтовоеОборудование'`. `NULL` and `0001-01-01` SHALL be excluded before `MIN(etap.ДатаОтгрузки)`.
+
+Owner decision 2026-09-21: для текущего изолированного pilot-контура legacy SQL Server transport SHALL использовать `Encrypt=yes;TrustServerCertificate=yes`. Владелец явно принимает отсутствие peer authentication как ограниченный pilot security exception после того, как обязательный pinned-certificate вариант сделал рабочую ERP-интеграцию недоступной без отсутствующего внешнего сертификата. Это решение не разрешает `Encrypt=no`, не расширяет доступ за пределы jobs services и MUST быть пересмотрено до более широкого production rollout при появлении корпоративного CA/server certificate.
+
+Local ambiguity continues to produce zero arbitrary writes and a safe diagnostic. A present source record with `NULL` remains an explicit clear; a locally requested order absent from successful source output remains unchanged. Raw `zavnumber`, parameter values, SQL, DSN, credentials and source rows MUST NOT enter history, diagnostics, receipts, readiness, logs or review records.
+
+## Pilot runtime configuration and readiness
+
+Pilot ERP configuration SHALL come directly from ignored, restrictive-permission `.env` values `FMONITOR_ERP_HOST`, `FMONITOR_ERP_DATABASE`, `FMONITOR_ERP_USER`, `FMONITOR_ERP_PASSWORD` and `FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY`, plus explicitly allowlisted bounded timeout/row/chunk controls. `FMONITOR_ERP_PASSWORD_FILE` and `FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_FILE` are no longer mandatory inputs. Missing/empty required values or out-of-range controls SHALL fail startup with `CONFIGURATION_INVALID` before a background restart-loop or ERP query. Structurally valid but rejected access is a safe failed run and retryable job.
+
+Canonical templates and generated Dockerfile/Compose SHALL carry the same allowlisted values to every required jobs consumer. `.env.example` contains only safe placeholders; real values remain ignored and untracked.
+
+One documented ordinary pilot startup SHALL state-preserving start db/php/web plus jobs-worker and jobs-scheduler. Process readiness SHALL be GREEN only while both jobs processes are present, correctly configured and fresh according to their observable heartbeat contract. Missing, crashed or stale worker/scheduler makes process readiness non-GREEN even if UI is healthy. Append-only dead-job and overdue-queue diagnostics remain visible through the separate operator health seam but MUST NOT make a repaired process permanently unable to become ready solely because historical dead rows are preserved. Ordinary update/recovery MUST preserve database volumes, sessions and artifacts; no reset or volume deletion belongs to the deployment path.
+
+## Local pilot qualification
+
+The authorized qualification target is `http://127.0.0.1:8093`. It SHALL prove healthy scheduler/worker, a safe completed ERP run receipt, populated projections and protected cards for objects 1226, 1427, 2238 and 2239, no ERP mapping for object 1318 with `zavnumber=0`, and no second job or duplicate fact history from a repeated current-hour slot or identical state. Existing stand data, sessions, artifacts and volumes SHALL remain present. Any missing live observation is `UNKNOWN` and blocks production/pilot readiness.
 
 ## Card/read behavior
 

@@ -271,6 +271,32 @@
   ],
   "capability_ownership": [
     {
+      "name": "durable-background-jobs-runtime",
+      "patterns": [
+        "app/Jobs/JobHandlerClaim.php",
+        "app/Jobs/JobHandlerRuntime.php",
+        "app/Jobs/JobWorkerProcess.php",
+        "app/Jobs/JobsRuntimeCommand.php",
+        "app/Jobs/JobsRuntimeConfiguration.php",
+        "app/Jobs/JobsRuntimeRequest.php",
+        "app/Jobs/JobsSchedulerProcess.php",
+        "app/Jobs/MariaDbJobsHealth.php",
+        "app/YiiRuntime/Commands/JobsController.php"
+      ],
+      "verifiers": [
+        "tests/Jobs/jobs_runtime_cli_001_test.php",
+        "tests/Jobs/operator_health_001_test.php",
+        "tests/Jobs/worker_protocol_001_test.php",
+        "tests/Jobs/erp_equipment_facts_worker_001_test.php",
+        "tests/Jobs/weekly_fkr_report_delivery_001_test.php",
+        "tests/Jobs/weekly_fkr_unknown_delivery_001_test.php",
+        "tests/Runtime/erp_equipment_facts_readiness_001_test.php",
+        "tests/WeeklyFkrReport/weekly_schedule_001_test.php",
+        "tests/Yii2/yii2_jobs_console_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "erp-equipment-facts",
       "patterns": [
         "app/InstallationProcess/EquipmentFactsApplication.php",
@@ -280,6 +306,7 @@
         "app/InstallationProcess/ErpEquipmentFactsDeliveryConfig.php",
         "app/InstallationProcess/MariaDbEquipmentFacts.php",
         "app/InstallationProcess/MariaDbEquipmentFactsRead.php",
+        "app/InstallationProcess/MariaDbErpEquipmentFactsCandidates.php",
         "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
         "app/InstallationProcess/MariaDbSqlServerEquipmentFactsTransport.php",
         "app/InstallationProcess/NativeErpEquipmentFactsDelivery.php",
@@ -534,11 +561,6 @@
         "app/IdentityAccess/MariaDbWeeklyFkrRecipientDirectory.php",
         "app/InstallationProcess/MariaDbWeeklyFkrReportSource.php",
         "app/Jobs/MariaDbWeeklyFkrOpeningEligibility.php",
-        "app/Jobs/JobHandlerClaim.php",
-        "app/Jobs/JobHandlerRuntime.php",
-        "app/Jobs/JobsRuntimeCommand.php",
-        "app/Jobs/JobsRuntimeConfiguration.php",
-        "app/Jobs/JobsSchedulerProcess.php",
         "app/Jobs/MariaDbOutbox.php"
         ,"app/Jobs/OutboxDeliveryOutcome.php"
         ,"app/InspectionEvidence/MariaDbChecklistProgress.php"

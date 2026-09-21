@@ -9,7 +9,8 @@ function yjcRemove(string $path):void{if(!is_dir($path))return;foreach(scandir($
 
 if(!mkdir($tmp.'/state/pilot-demo/one',0700,true)||!mkdir($tmp.'/temp',0700,true))throw new TestFailure('SETUP_FAILURE fixture');
 try{
-    $composeEnv=array_replace(getenv(),['FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'fixture']);
+    $erp=['FMONITOR_ERP_HOST'=>'erp.example.invalid','FMONITOR_ERP_SERVER_CERTIFICATE_FILE_HOST'=>dirname(__DIR__).'/fixtures/erp-server-certificate.pem','FMONITOR_ERP_SERVER_CERTIFICATE_FILE'=>dirname(__DIR__).'/fixtures/erp-server-certificate.pem','FMONITOR_ERP_DATABASE'=>'legacy-stage','FMONITOR_ERP_USER'=>'reader','FMONITOR_ERP_PASSWORD'=>'synthetic-password','FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY'=>str_repeat('h',40),'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS'=>'500','FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS'=>'5','FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE'=>'100'];
+    $composeEnv=array_replace(getenv(),$erp,['FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD'=>'fixture']);
     [$code,$json,$error]=yjcRun(['docker','compose','-f','compose.yaml','config','--format','json'],$composeEnv,$root);
     assertSameValue([0,''],[$code,$error],'Compose resolves');$model=json_decode($json,true,512,JSON_THROW_ON_ERROR);
     $commands=[];
@@ -17,7 +18,7 @@ try{
         $service=$model['services'][$serviceName]??null;assertSameValue(true,is_array($service),'service exists '.$serviceName);
         $expected=['php','bin/yii',$route,'--interactive=0'];
         assertSameValue($expected,$service['entrypoint']??null,'INTENTIONAL_RED: production process enters through Yii2 console '.$route);
-        assertSameValue(['CMD','php','bin/yii','jobs/health','--interactive=0'],$service['healthcheck']['test']??null,'health enters through Yii2 console');
+        assertSameValue(['CMD','php','bin/yii','jobs/process-health','--interactive=0'],$service['healthcheck']['test']??null,'process health enters through Yii2 console');
         assertSameValue(['SIGTERM',true],[$service['stop_signal']??null,in_array($service['stop_grace_period']??null,['60s','1m0s'],true)],'graceful shutdown is preserved');
         assertSameValue(false,str_contains(json_encode([$service['entrypoint'],$service['healthcheck']],JSON_THROW_ON_ERROR),'rapid-pilot'),'production Jobs boundary has no rapid-pilot entrypoint');
         $commands[$route]=$expected;
@@ -25,7 +26,7 @@ try{
 
     $secret='YII_JOBS_SECRET_'.bin2hex(random_bytes(8));$config=$tmp.'/config.json';file_put_contents($config,json_encode(['baseUrl'=>'https://example.invalid/rest/7/'.$secret.'/','departments'=>[72,71]],JSON_THROW_ON_ERROR));
     file_put_contents($tmp.'/state/pilot-demo/one/active.json',json_encode(['state'=>'ready','processPrefix'=>'pilot_'],JSON_THROW_ON_ERROR));
-    $env=array_replace(getenv(),['TMPDIR'=>$tmp.'/temp','FMONITOR_SESSION_STATE_ROOT'=>$tmp.'/state','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_','FMONITOR_BITRIX_CONFIG'=>$config,'FMONITOR_DB_HOST'=>'127.0.0.1','FMONITOR_DB_PORT'=>'1','FMONITOR_DB_NAME'=>'none','FMONITOR_DB_USER'=>'none','FMONITOR_DB_PASSWORD'=>'none','FMONITOR_SESSION_INSTANCE'=>'pilot']);
+    $env=array_replace(getenv(),$erp,['TMPDIR'=>$tmp.'/temp','FMONITOR_SESSION_STATE_ROOT'=>$tmp.'/state','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_','FMONITOR_BITRIX_CONFIG'=>$config,'FMONITOR_DB_HOST'=>'127.0.0.1','FMONITOR_DB_PORT'=>'1','FMONITOR_DB_NAME'=>'none','FMONITOR_DB_USER'=>'none','FMONITOR_DB_PASSWORD'=>'none','FMONITOR_SESSION_INSTANCE'=>'pilot']);
     foreach($commands as$route=>$command){[$exit,$out,$err]=yjcRun($command,$env,$root);assertSameValue([70,"{\"ok\":false,\"error\":\"JOBS_UNAVAILABLE\"}\n",''],[$exit,$out,$err],$route.' reaches existing Jobs owner with closed failure');assertSameValue(false,str_contains($out.$err,$secret),$route.' does not leak secret');}
     [$exit,$out,$err]=yjcRun(['php','bin/yii','jobs/health','--interactive=0'],$env,$root);assertSameValue([70,"{\"ok\":false,\"error\":\"JOBS_UNAVAILABLE\"}\n",''],[$exit,$out,$err],'health reaches Jobs owner');
     assertSameValue([],array_values(array_diff(scandir($tmp.'/temp')?:[],['.','..'])),'worker staged secret is removed after failure');

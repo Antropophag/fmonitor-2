@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Commands;
 
 require_once dirname(__DIR__,3).'/vendor/autoload.php';
-use FMonitor2\InstallationProcess\{EquipmentFactsApplication,ErpEquipmentFactsDelivery,ErpEquipmentFactsDeliveryConfig,MariaDbSqlServerEquipmentFactsTransport,NativeErpEquipmentFactsDelivery};
+use FMonitor2\InstallationProcess\{EquipmentFactsApplication,ErpEquipmentFactsDelivery,ErpEquipmentFactsDeliveryConfig,MariaDbErpEquipmentFactsCandidates,MariaDbSqlServerEquipmentFactsTransport,NativeErpEquipmentFactsDelivery};
 use FMonitor2\Jobs\JobsRuntimeConfiguration;
 use yii\console\Controller;
 
@@ -15,7 +15,10 @@ final class ErpEquipmentFactsSyncController extends Controller
     public static function runJob(JobsRuntimeConfiguration$config):array{return self::production($config);}
     private static function production(JobsRuntimeConfiguration$c):array
     {
-        $run=self::uuid();try{$db=new \mysqli($c->value('FMONITOR_DB_HOST'),$c->value('FMONITOR_DB_USER'),$c->value('FMONITOR_DB_PASSWORD'),$c->value('FMONITOR_DB_NAME'),$c->port());$db->set_charset('utf8mb4');$owner=new EquipmentFactsApplication($db,$c->prefix(),$c->secretFileValue('FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_FILE'));$at=(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z');$fetch=static function()use($c):array{$source=new ErpEquipmentFactsDeliveryConfig($c->value('FMONITOR_ERP_HOST'),$c->value('FMONITOR_ERP_DATABASE'),$c->value('FMONITOR_ERP_USER'),$c->secretFileValue('FMONITOR_ERP_PASSWORD_FILE'));return(new NativeErpEquipmentFactsDelivery($source,new MariaDbSqlServerEquipmentFactsTransport($source)))->fetch();};return self::runWith($fetch,$owner->execute(...),$run,$at);}catch(\Throwable){return['status'=>'failed','runId'=>$run,'reason'=>'SOURCE_UNAVAILABLE'];}finally{if(isset($db)&&$db instanceof \mysqli)$db->close();}
+        $source=$c->erpEquipmentFacts();$key=$c->erpEquipmentFactsHmacKey();$run=self::uuid();
+        try{$db=new \mysqli($c->value('FMONITOR_DB_HOST'),$c->value('FMONITOR_DB_USER'),$c->value('FMONITOR_DB_PASSWORD'),$c->value('FMONITOR_DB_NAME'),$c->port());$db->set_charset('utf8mb4');$owner=new EquipmentFactsApplication($db,$c->prefix(),$key);$at=(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z');}
+        catch(\Throwable){if(isset($db)&&$db instanceof \mysqli)$db->close();return['status'=>'failed','runId'=>$run,'reason'=>'SOURCE_UNAVAILABLE'];}
+        try{$fetch=static function()use($c,$db,$source):array{$candidates=(new MariaDbErpEquipmentFactsCandidates($db,$c->value('FMONITOR_LEGACY_TABLE_PREFIX')))->read();return(new NativeErpEquipmentFactsDelivery($source,new MariaDbSqlServerEquipmentFactsTransport($source)))->fetch($candidates);};return self::runWith($fetch,$owner->execute(...),$run,$at);}finally{$db->close();}
     }
     private static function uuid():string{$h=bin2hex(random_bytes(16));$h[12]='4';$h[16]=dechex((hexdec($h[16])&3)|8);return substr($h,0,8).'-'.substr($h,8,4).'-'.substr($h,12,4).'-'.substr($h,16,4).'-'.substr($h,20);}
 }

@@ -139,7 +139,7 @@ with tempfile.TemporaryDirectory() as raw:
     # Execute the public Make seams in an isolated checkout with downstream witnesses.
     checkout = box / "checkout"
     checkout.mkdir()
-    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env", "tools/delivery/local-integration-config"):
+    for rel in ("Makefile", ".env.example", "tools/delivery/local-runtime-env", "tools/delivery/local-integration-config", "app/autoload.php", "app/Jobs/SmtpConfiguration.php"):
         destination = checkout / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / rel, destination)
@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory() as raw:
         destination = checkout / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / rel, destination)
-    runtime = """COMPOSE_PROJECT_NAME=fm2-local-issue149
+    runtime = f"""COMPOSE_PROJECT_NAME=fm2-local-issue149
 FMONITOR_RUNTIME_IMAGE=fmonitor2-runtime:test
 FMONITOR_HTTP_PORT=18093
 FMONITOR_DB_NAME=fmonitor2
@@ -164,6 +164,25 @@ FMONITOR_TRUSTED_REQUEST_HOST=127.0.0.1:18093
 FMONITOR_TRUSTED_REQUEST_SCHEME=http
 FMONITOR_INITIAL_OWNER_EMAIL=owner@example.test
 FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD=OWNER_CANARY_149
+FMONITOR_RUNTIME_ENV=development
+FMONITOR_PUBLIC_BASE_URL=https://fmonitor.example.invalid
+FMONITOR_SMTP_HOST=smtp.example.invalid
+FMONITOR_SMTP_PORT=587
+FMONITOR_SMTP_ENCRYPTION=tls
+FMONITOR_SMTP_USERNAME=fmonitor@example.invalid
+FMONITOR_SMTP_PASSWORD=SMTP_CANARY_149
+FMONITOR_SMTP_FROM_ADDRESS=fmonitor@example.invalid
+FMONITOR_SMTP_FROM_NAME=FMonitor
+FMONITOR_SMTP_TIMEOUT_SECONDS=10
+FMONITOR_SMTP_VERIFY_PEER=true
+FMONITOR_ERP_HOST=erp.example.invalid
+FMONITOR_ERP_DATABASE=legacy-stage
+FMONITOR_ERP_USER=reader
+FMONITOR_ERP_PASSWORD=ERP_CANARY_149
+FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY=hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS=500
+FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS=5
+FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE=100
 """
     (checkout / ".env").write_text(runtime + base)
     (checkout / ".env").chmod(0o600)
@@ -250,7 +269,6 @@ sys.exit(0)
     private_values = (
         "legacy-db.example", "43149", "SOURCE_DATABASE_CANARY_149", "SOURCE_USER_CANARY_149",
         legacy_secret, "2026-09-17 00:00:00", f"https://portal.example/rest/7/{bitrix_secret}/",
-        "[72,71]",
     )
     for value in private_values:
         assert value not in rendered_text, value

@@ -50,6 +50,11 @@ $environment = array_replace($processEnvironment, [
     'FMONITOR_YII_IDENTITY_KEY' => str_repeat('production-browser-identity-', 2),
     'FMONITOR_TRUSTED_REQUEST_HOST' => '127.0.0.1:' . $httpPort,
     'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'http',
+    'FMONITOR_ERP_HOST' => 'erp.example.invalid', 'FMONITOR_ERP_DATABASE' => 'legacy-stage',
+    'FMONITOR_ERP_USER' => 'reader', 'FMONITOR_ERP_PASSWORD' => 'synthetic-password',
+    'FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY' => str_repeat('h', 40),
+    'FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS' => '500', 'FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS' => '5',
+    'FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE' => '100',
 ]);
 
 /** @return array{exit:int,stdout:string,stderr:string} */

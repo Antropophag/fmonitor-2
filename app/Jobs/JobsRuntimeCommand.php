@@ -10,7 +10,8 @@ final class JobsRuntimeCommand
     {
         if(PHP_SAPI!=='cli')throw new \InvalidArgumentException('Jobs deployment commands require CLI.');
         $request=JobsRuntimeRequest::parse($arguments);$config=JobsRuntimeConfiguration::fromEnvironment();
-        $instance=in_array($request->mode,['worker','scheduler','health'],true)?$config->instance():null;
+        $instance=in_array($request->mode,['worker','scheduler','health','process-health'],true)?$config->instance():null;
+        if($instance!==null){$config->erpEquipmentFacts();$config->erpEquipmentFactsHmacKey();}
         $db=MariaDbJobsConnection::open($config);
         try{
             $prefix=$config->prefix();if(!JobsSchemaMigration::isReady($db,$prefix))throw new \RuntimeException('JOBS_UNAVAILABLE');
@@ -30,6 +31,11 @@ final class JobsRuntimeCommand
                         'workerHeartbeatId'=>'worker:'.$instance,'schedulerHeartbeatId'=>'scheduler:'.$instance,
                         'workerFreshSeconds'=>120,'schedulerFreshSeconds'=>120,'readyMaxAgeSeconds'=>300,
                     ]))->read();return [$result['ok']?0:70,$result];
+                case 'process-health':
+                    $result=(new MariaDbJobsHealth($db,$prefix,$clock,[
+                        'workerHeartbeatId'=>'worker:'.$instance,'schedulerHeartbeatId'=>'scheduler:'.$instance,
+                        'workerFreshSeconds'=>120,'schedulerFreshSeconds'=>120,'readyMaxAgeSeconds'=>300,
+                    ]))->readProcess();return [$result['ok']?0:70,$result];
                 case 'scheduler':
                     $result=(new JobsSchedulerProcess(new MariaDbWorkforceScheduler($db,$prefix),
                         new OutboxDispatchScheduler(new MariaDbOutbox($db,$prefix),$queue),

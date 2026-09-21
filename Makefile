@@ -34,16 +34,23 @@ register-test:
 
 up:
 	@$(LOCAL_ENV_VALIDATE)
+	@if grep -q '^FMONITOR_BITRIX_WEBHOOK_URL=' .env || grep -q '^FMONITOR_BITRIX_DEPARTMENT_IDS_JSON=' .env; then \
+		tools/delivery/local-integration-config stage bitrix .env .local/bitrix-workforce.json; \
+	else \
+		tools/delivery/local-integration-config bitrix .local/bitrix-workforce.json; \
+	fi
 	@$(LOCAL_ENV_RUN) docker info >/dev/null 2>&1 || { echo "LOCAL_DOCKER_UNAVAILABLE" >&2; exit 69; }
 	$(LOCAL_ENV_RUN) docker build --file deploy/runtime/Dockerfile --tag '@env:FMONITOR_RUNTIME_IMAGE' .
 	$(RUNTIME_COMPOSE) config --quiet
 	$(RUNTIME_COMPOSE) up --detach --wait db
 	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_MIGRATION_DB_USER -e FMONITOR_MIGRATION_DB_PASSWORD --entrypoint php prepare bin/yii local-runtime/provision-database --interactive=0
 	$(RUNTIME_COMPOSE) --profile deployment run --rm prepare
+	$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps stage-runtime-secrets
 	$(RUNTIME_COMPOSE) --profile deployment run --rm migrate
 	$(RUNTIME_COMPOSE) --profile deployment run --rm --entrypoint php prepare bin/fmonitor2-runtime-check.php
 	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --resume-existing-local --email '@env:FMONITOR_INITIAL_OWNER_EMAIL'
-	$(RUNTIME_COMPOSE) up --detach --wait php web
+	$(RUNTIME_COMPOSE) up --detach --wait php web jobs-worker jobs-scheduler
+	@$(RUNTIME_COMPOSE) exec -T jobs-worker php bin/yii jobs/process-health --interactive=0 >/dev/null
 	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/live' >/dev/null
 	@$(LOCAL_ENV_RUN) curl --fail --silent --show-error --header '@trusted-host-header' '@local-url/health/ready' >/dev/null
 	@$(LOCAL_ENV_RUN) printf 'FMonitor Yii2: %s/\n' '@local-url'
@@ -83,8 +90,7 @@ reset:
 test-env-up:
 	docker compose -f compose.test.yaml up --detach --wait test-db
 
-test-env-down:
-	docker compose -f compose.test.yaml down --volumes --remove-orphans
+test-env-down: ; docker compose -f compose.test.yaml down --volumes --remove-orphans
 
 test-db-reset: test-env-up
 	@FMONITOR_TEST_DB_PORT="$${FMONITOR_TEST_DB_PORT:-23306}" php tools/verification/reset-test-db.php
