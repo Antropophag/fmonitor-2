@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace FMonitor2\YiiRuntime\Controllers;
 
 use FMonitor2\YiiRuntime\InstallationProcessFactory;
+use FMonitor2\Workforce\MariaDbYiiInstallerDirectory;
 use FMonitor2\YiiRuntime\PreopeningResources;
 use FMonitor2\InstallationProcess\MariaDbYiiCompletionQuery;
 use FMonitor2\InstallationProcess\ControlEngineerAssignmentCommand;
@@ -35,6 +36,7 @@ final class ObjectCardController extends PreopeningController
                 (string) getenv('FMONITOR_LEGACY_TABLE_PREFIX'),
             )->read($this->actor(), $id);
             if ($card === null) return $this->status(404);
+            $card = $this->withCurrentInstallerStatuses($card);
             $documentAccess = $this->documentAccess($id);
             if ($documentAccess['status'] === 'unavailable') return $this->status(503, true);
             $completionQuery = new MariaDbYiiCompletionQuery(Yii::$app->db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'));
@@ -105,6 +107,46 @@ final class ObjectCardController extends PreopeningController
             (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),
         );
     }
+
+    private function withCurrentInstallerStatuses(array $card): array
+    {
+        if (($card['order']['installers'] ?? []) === []) return $card;
+        $installers = $card['order']['installers'];
+        $tabIds = array_values(array_unique(array_map(
+            static fn (array $installer): int => (int) ($installer['tabId'] ?? 0),
+            $installers,
+        )));
+        $directory = new MariaDbYiiInstallerDirectory(
+            Yii::$app->db,
+            (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX'),
+            (string) getenv('FMONITOR_LEGACY_TABLE_PREFIX'),
+        );
+        $statuses = [];
+        $today = (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format('Y-m-d');
+        foreach ($tabIds as $tabId) {
+            $result = $directory->read($today, [
+                'q' => (string) $tabId,
+                'tab' => (string) $tabId,
+                'status' => '',
+                'availability' => '',
+                'page' => 1,
+            ]);
+            $matches = array_values(array_filter(
+                $result['rows'],
+                static fn (array $row): bool => (int) ($row['installer_tab_id'] ?? 0) === $tabId,
+            ));
+            if (count($matches) !== 1 || !in_array($matches[0]['employment_status'] ?? null, ['employed', 'dismissed'], true)) {
+                throw new \RuntimeException('Object card workforce status unavailable.');
+            }
+            $statuses[$tabId] = $matches[0]['employment_status'];
+        }
+        $card['order']['installers'] = array_map(static function (array $installer) use ($statuses): array {
+            $installer['employmentStatus'] = $statuses[(int) $installer['tabId']];
+            return $installer;
+        }, $installers);
+        return $card;
+    }
+
     public function actionMethod(string $id): Response
     {
         return $this->canonicalId($id) === null ? $this->status(404) : $this->methodNotAllowed('GET, HEAD');

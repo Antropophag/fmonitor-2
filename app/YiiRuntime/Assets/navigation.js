@@ -1,8 +1,10 @@
 import { enhanceCalendarGrids } from '/pilot/assets/shlz-behaviors.js';
 import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
+import { enhanceTabs } from '/pilot/assets/shlz-behaviors.js';
 
 enhanceSelects(document);
 enhanceCalendarGrids(document);
+enhanceTabs(document);
 const choiceAtom = 'sel' + 'ect';
 const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
 const fallbackQuery = `.shlz-${choiceAtom}-fallback ${choiceAtom}`;

@@ -1,0 +1,39 @@
+{
+  "change": "refine-yii-object-card-layout",
+  "planned_paths": [
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Views/selection.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "app/YiiRuntime/Views/original.php",
+    "app/YiiRuntime/Views/execution.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/navigation.js",
+    "app/YiiRuntime/Assets/PreopeningAssetBundle.php",
+    "config/yii/assets.php",
+    "specs/YII2-OBJECT-CARD-PRESENTATION-001.md",
+    "tests/Yii2/yii2_object_card_presentation_001_test.php",
+    "tests/Yii2/object_card_presentation_browser.mjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Runtime/yii2_production_web_cutover_001_test.php",
+    "tools/verification/suites.tsv",
+    "openspec/changes/refine-yii-object-card-layout/proposal.md",
+    "openspec/changes/refine-yii-object-card-layout/design.md",
+    "openspec/changes/refine-yii-object-card-layout/tasks.md",
+    "openspec/changes/refine-yii-object-card-layout/specs/runtime/yii-object-card-presentation/spec.md",
+    "openspec/changes/refine-yii-object-card-layout/verification-input.json",
+    "reviews/tests/YII2-OBJECT-CARD-PRESENTATION-001.md",
+    "reviews/code/YII2-OBJECT-CARD-PRESENTATION-001.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OBJECT-CARD-PRESENTATION-001",
+      "acceptance_id": "A1-A8-object-card-and-adjacent-ui",
+      "spec_path": "specs/YII2-OBJECT-CARD-PRESENTATION-001.md",
+      "seam": "authenticated Yii2 object-card and adjacent user-facing HTTP DOM plus Chromium desktop/mobile rendering",
+      "tests": ["tests/Yii2/yii2_object_card_presentation_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_object_card_presentation_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}
