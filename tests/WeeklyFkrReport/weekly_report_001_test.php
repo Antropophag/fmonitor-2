@@ -55,6 +55,7 @@ assertSameValue(true,str_contains($message['html'],'data-report-summary="counts"
 foreach(['plannedOpenings'=>2,'plannedClosings'=>5,'progress'=>3,'overdue'=>2]as$key=>$count)assertSameValue(true,str_contains($message['html'],'data-summary-key="'.$key.'" data-summary-count="'.$count.'"'),"A3 summary exposes exact {$key} count");
 assertSameValue(true,str_contains($message['text'],"Сводка: Открытия — 2 · Закрытия — 5 · Прогресс — 3 · Просрочка — 2"),'A3 text fallback starts with the same compact summary');
 assertSameValue(4,substr_count($message['html'],'data-column-header='),'A3 each report section has an explicit table header row');
+assertSameValue(true,substr_count($message['html'],'width="13%"')>=8&&substr_count($message['html'],'width="37%"')>=8,'A3 object column is narrower than address in headers and rows');
 assertSameValue(true,str_contains($message['html'],'Письмо сформировано автоматически. Отвечать на него не нужно.')&&str_contains($message['text'],'Письмо сформировано автоматически. Отвечать на него не нужно.'),'A3 automatic-message footer appears in both bodies');
 assertSameValue(false,str_contains($message['html'],'раздел остаётся в письме')||str_contains($message['text'],'раздел остаётся в письме'),'A3 obsolete empty-section footer removed');
 assertSameValue([['2026-09-14','2026-09-20','2026-09-21T06:00:00.000000Z']],$source->calls,'A2/A5 one typed native-source call receives exact as-of boundaries');

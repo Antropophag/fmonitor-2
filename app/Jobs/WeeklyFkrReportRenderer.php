@@ -121,8 +121,8 @@ final class WeeklyFkrReportRenderer
             $date=$r['date'];$detail=$r['label'];
         }
         return '<tr data-object-id="'.$this->esc($r['objectId']).'">'
-            .$this->dataCell('<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'.$this->esc($r['registrationNumber']).'</a>','18%')
-            .$this->dataCell($this->esc($r['address']),'32%')
+            .$this->dataCell('<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'.$this->esc($r['registrationNumber']).'</a>','13%')
+            .$this->dataCell($this->esc($r['address']),'37%')
             .$this->dataCell($this->esc((string)$date),'16%')
             .$this->dataCell($this->esc((string)$detail),'34%').'</tr>';
     }
@@ -131,7 +131,7 @@ final class WeeklyFkrReportRenderer
         $third=$key==='progress'?'Изменение':'Срок';
         $fourth=match($key){'plannedOpenings'=>'Статус','plannedClosings'=>'Раб. / док. / итого','progress'=>'Работы / документы',default=>'Тип'};
         return '<tr data-column-header="'.$key.'">'
-            .$this->headerCell('Объект','18%').$this->headerCell('Адрес','32%')
+            .$this->headerCell('Объект','13%').$this->headerCell('Адрес','37%')
             .$this->headerCell($third,'16%').$this->headerCell($fourth,'34%').'</tr>';
     }
     private function headerCell(string$content,string$width):string
