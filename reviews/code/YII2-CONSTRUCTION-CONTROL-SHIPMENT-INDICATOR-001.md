@@ -137,3 +137,40 @@ CI and deployment retain their separately tracked dispositions; this review does
 `APPROVED`
 
 Gate 5 remains approved for merged exact source `89371fa47f1b80079e371c1fae96e3fb4d6f385727798b3d4ed1a936448587c7` / executable source `27a59c6a0d7cee33acba02922f2808bbbfb03a6aeb724ad8a2540a016d4825dd`. No behavior was lost and no conflict or scope finding remains.
+
+---
+
+## CI-correction Gate 5 delta review — 2026-09-21
+
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T155643Z-d22dea402c/package.json`
+- Base: `557166d918b16933538510c489ce5c99c2abaee0`
+- Working HEAD: `55981e4a6b7cbdd4fd5bef4fe026365cb9c52237` plus reconstructible correction snapshot
+- Exact harness source: `8d5b5874780c0466ea647c127bfc1aeefda0239bd72d457ac33db8578f0d9085`
+- Exact executable source: `b5f30363f826e6ab528164f99e65bcda5e52ea353fe819afa571359e26b29a16`
+- Snapshot patch SHA-256: `87e9c405ce73dc031a547d438f192b361f216625d7654414062ff650fa239c6c`
+- Verification plan SHA-256: `0cb0d395e3f553c48cdb9bd33fbc8135e02617bdf9dfa5a2b10120a2aa120bc9`
+
+### Failure inventory and correction assessment
+
+No finding.
+
+The complete failed-job inventory from CI run `35619370671` is accounted for, with derivative Quality Graph reporting correctly separated from its primary failures.
+
+- **Integration (1/2), production web cutover:** the two delivery icons were present in source but absent from the public asset route/controller contract, and the pinned CSS/client hashes were stale. `PilotAssetController` and `config/yii/assets.php` now admit exactly `delivery-box.svg` and `delivery-4.svg`; the production cutover contract adds their exact public hashes and refreshes only the changed `pilot.css` and `control-queue.js` digests. MIME and immutable-cache semantics match the existing SHLZ icon family.
+- **e2e unclassified dynamic SVG marker:** the view removes `data-shlz-icon` from the dynamically selected delivery image while retaining the exact static asset URL, decorative empty `alt`, state-specific summary accessible name, and distinct visible disclosure. This avoids falsely presenting runtime PHP selection as a statically classifiable catalog marker without weakening user-visible or assistive behavior.
+- **Governance exact focused-profile mapping:** the registered-bootstrap expectation now includes the already registered shipment acceptance as `integration`, preserving its exact-map guard rather than relaxing it to subset membership.
+- **Quality Graph/verify:** these failures were derivative of the primary contract/governance failures. The OpenSpec verification input now enumerates the asset controller/route and the exact cutover, bootstrap, and sidebar consumers, so future planning and source binding include the corrected boundaries.
+
+The delta contains no schema, writer, ERP sync, authorization, queue filtering, or deployment change. Asset exposure is an allowlisted read-only extension for the two already reviewed byte-identical SHLZ files.
+
+### Evidence
+
+The source-bound primary acceptance record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790006177832734000-0447abaae8284f989c87bb6599138e32.json` is drift-free GREEN. The production web cutover check is GREEN under the browser profile, sidebar-state icon qualification is GREEN, and registered focused bootstrap is `8/8` GREEN at the same correction source. Current exact digests match the updated contract: `pilot.css` `a769ad3a…`, `control-queue.js` `0e80355f…`, `delivery-box.svg` `b4517454…`, and `delivery-4.svg` `e79f74ce…`. Strict OpenSpec validation and diff-check are clean.
+
+No failed primary signature from run `35619370671` remains unresolved in this bounded correction review. A new complete exact-source CI run remains the external admission authority; this review does not infer CI GREEN from local focused evidence.
+
+### CI-correction verdict
+
+`APPROVED`
+
+Gate 5 remains approved for corrected exact source `8d5b5874780c0466ea647c127bfc1aeefda0239bd72d457ac33db8578f0d9085` / executable source `b5f30363f826e6ab528164f99e65bcda5e52ea353fe819afa571359e26b29a16`. The correction is complete, source-bound, and limited to the observed CI failures.

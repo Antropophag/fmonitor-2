@@ -200,7 +200,11 @@ raise SystemExit(75)
             self.assertNotEqual("tools/delivery/run-in-profile", item["argv"][0],
                                 "generic integration command was promoted to heavy profile")
         policy = json.loads((ROOT / ".quality-graph/verification-policy.json").read_text())
-        self.assertEqual({RUNTIME_TARGET: "integration", TARGET: "browser"},
+        self.assertEqual({
+                             RUNTIME_TARGET: "integration",
+                             "tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php": "integration",
+                             TARGET: "browser",
+                         },
                          policy.get("focused_command_profiles"),
                          "unregistered commands can enter heavy focused profile")
 

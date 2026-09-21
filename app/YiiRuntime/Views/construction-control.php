@@ -22,7 +22,7 @@
 <span class="fm2-control-address"><?=Html::encode($o['address'])?></span><span class="fm2-control-reg">Рег. № <?=Html::encode($o['registrationNumber'])?><?php if(trim((string)$o['entrance'])!==''):?><span class="fm2-control-entrance">Подъезд <?=Html::encode((string)$o['entrance'])?></span><?php endif?></span>
 </a>
 <?php if($shipmentState!==null):?><details class="fm2-shipment-indicator fm2-shipment-indicator--<?=$shipmentState?>" data-shipment-disclosure data-shipment-state="<?=$shipmentState?>">
-<summary aria-label="<?=Html::encode($shipmentTitle)?>"><img src="/pilot/assets/shlz-icons/<?=$shipmentIcon?>" data-shlz-icon="<?=pathinfo($shipmentIcon,PATHINFO_FILENAME)?>" alt=""><span class="fm2-visually-hidden"><?=Html::encode($shipmentTitle)?></span></summary>
+<summary aria-label="<?=Html::encode($shipmentTitle)?>"><img src="/pilot/assets/shlz-icons/<?=$shipmentIcon?>" alt=""><span class="fm2-visually-hidden"><?=Html::encode($shipmentTitle)?></span></summary>
 <span class="fm2-shipment-detail"><strong><?=Html::encode($shipmentTitle)?></strong><time datetime="<?=Html::encode((string)$shipmentDate)?>"><?=(new DateTimeImmutable((string)$shipmentDate))->format('d.m.Y')?></time></span>
 </details><?php endif?>
 <?php if($o['ready']??false):?><strong>Готов к открытию</strong><?php endif?>
