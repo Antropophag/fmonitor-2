@@ -45,6 +45,7 @@ up:
 	$(RUNTIME_COMPOSE) up --detach --wait db
 	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_MIGRATION_DB_USER -e FMONITOR_MIGRATION_DB_PASSWORD --entrypoint php prepare bin/yii local-runtime/provision-database --interactive=0
 	$(RUNTIME_COMPOSE) --profile deployment run --rm prepare
+	$(RUNTIME_COMPOSE) --profile deployment run --rm --no-deps stage-runtime-secrets
 	$(RUNTIME_COMPOSE) --profile deployment run --rm migrate
 	$(RUNTIME_COMPOSE) --profile deployment run --rm --entrypoint php prepare bin/fmonitor2-runtime-check.php
 	$(RUNTIME_COMPOSE) --profile deployment run --rm -e FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD --entrypoint php prepare bin/fmonitor2-provision-initial-admin.php --resume-existing-local --email '@env:FMONITOR_INITIAL_OWNER_EMAIL'

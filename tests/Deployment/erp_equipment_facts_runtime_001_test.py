@@ -37,11 +37,24 @@ for service in ["jobs-worker:", "jobs-scheduler:"]:
     assert service in template and service in generated
 assert 'profiles: ["jobs"]' not in template and 'profiles: ["jobs"]' not in generated, \
     "INTENDED_RED: ordinary Compose contour includes jobs without an opt-in profile"
+for artifact in (template, generated):
+    assert "stage-runtime-secrets:" in artifact and 'user: "0:0"' in artifact
+    assert 'entrypoint: ["bin/fmonitor2-stage-runtime-bitrix-config"]' in artifact
+    assert artifact.count("FMONITOR_BITRIX_CONFIG_HOST_FILE") == 1, \
+        "host Bitrix config is mounted only into the one-shot staging service"
+    worker = artifact.split("  jobs-worker:", 1)[1].split("  jobs-scheduler:", 1)[0]
+    assert "FMONITOR_BITRIX_CONFIG_HOST_FILE" not in worker
+    assert "secrets:/run/fmonitor-secrets" in worker
 
 makefile = read("Makefile")
 assert "up --detach --wait php web jobs-worker jobs-scheduler" in makefile, \
     "INTENDED_RED: make up starts the complete pilot operational contour"
 assert "jobs/process-health" in makefile, "make up qualifies worker/scheduler process health before success"
+assert makefile.index("stage-runtime-secrets") < makefile.index("up --detach --wait php web jobs-worker jobs-scheduler"), \
+    "validated Bitrix config reaches the named secret volume before jobs start"
+stager = read("bin/fmonitor2-stage-runtime-bitrix-config")
+for boundary in ("WorkerConfiguration::fromFile", "mktemp /run/fmonitor-secrets/", "sync -f", "chown 10001:10001", "chmod 0600", "mv -f"):
+    assert boundary in stager, f"runtime Bitrix staging preserves {boundary}"
 targets = {}
 current = None
 for line in makefile.splitlines():

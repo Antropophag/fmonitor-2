@@ -187,3 +187,55 @@ Current Gate 3 test/spec delta findings: None. The six corrections are traceable
 Current CI correction test-delta findings: None. Each change maps directly to one or more failures in the supplied complete inventory; no assertion was deleted to hide the new jobs/config contract, and the security/privacy boundary continues to reject actual secret canaries and isolate worker-only Bitrix material.
 
 `APPROVED` for the CI-derived test correction delta at exact commit `8671f1648b4b4c400f6d63c450c2610a5ef703d0`. This verdict is not Gate 5, does not review production implementation, and does not convert the failed CI run into GREEN or authorize another CI run, publication, deployment or merge.
+
+---
+
+## Final replacement-CI test correction review — commit `6d71ed15eaac8f46d56bb594ebe1425bef4e0e20`
+
+- Reviewer: `/root/erp_gate3` (`gpt-5.6-sol/low`), independent of correction authorship and production implementation
+- Replacement CI: run `35593260092`; supplied complete inventory contains the unit Make-parser false positive and Integration shard worker-health failure, with all other replacement shards GREEN
+- Scope: two test-only corrections; no production source or behavior change
+- Local evidence: both affected exact tests pass at the reviewed commit
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+1. **Target-scoped volume-deletion oracle — approved and more precise.** `tests/Deployment/erp_equipment_facts_runtime_001_test.py` now parses Make target recipe bodies and independently asserts that ordinary `down` excludes `--volumes` while explicit `reset` includes it. This removes the previous false positive caused by joining every tab-indented recipe, without weakening state-preserving deployment: the safe path and destructive escape hatch are both asserted by name and opposite expectation.
+
+2. **Failed-up process-health diagnostic — approved, no admission weakening.** `tests/Deployment/local_integration_make_e2e_185_test.py` gathers diagnostics only after `make up` has already returned nonzero. The original assertion still fails; no timeout, expected status, lifecycle step or health criterion is relaxed. The diagnostic reads bounded `docker compose ps --format json` output and each jobs container's `.State.Health` object only. It does not inspect Compose config, container environment, source payloads, application logs, SQL, DSN or credentials.
+
+3. **Leakage boundary — approved.** Diagnostic output is bounded to the last 2000 status characters and health state. Existing process-health output is an allowlisted operational JSON boundary, and the delta does not print `.env` or the synthetic secret values. The earlier test canaries and production non-disclosure requirements remain unchanged.
+
+### Findings and conclusion
+
+Current replacement-CI correction findings: None. The delta corrects a test parser bug and adds safe failure-only observability for the CI-only unhealthy worker condition without changing production code or making the test pass by accepting an unhealthy contour.
+
+`APPROVED` for the final test-only correction delta at exact commit `6d71ed15eaac8f46d56bb594ebe1425bef4e0e20`. This is not Gate 5 and does not independently declare replacement run `35593260092` GREEN, approve implementation, publication, deployment or merge.
+
+---
+
+## Linux secret-staging root-cause Gate 3 review — commit `d0fad166086d3ea7f63d298c7ebd81004f3da061`
+
+- Reviewer: `/root/erp_gate3` (`gpt-5.6-sol/low`), independent of root-cause implementation and test authorship
+- Triggering evidence: replacement run `35593260092`; Linux worker health failed because the runtime uid `10001` could not read a mode-`0600` host Bitrix config bind mount
+- Scope: security contract and test sensitivity of the root-owned correction delta; production implementation quality remains outside this review and requires Gate 5
+- Focused evidence supplied: affected unit, security/runtime and real Make E2E commands are GREEN locally
+- Verdict: `APPROVED`
+
+### Security and no-weakening assessment
+
+1. **Secret ownership boundary — approved.** Canonical and generated Compose add one root-only, one-shot `stage-runtime-secrets` service. The host Bitrix config bind exists only on that stager; the long-running worker receives only the named `secrets` volume at `/run/fmonitor-secrets` and no longer binds the host config. Scheduler ownership remains unchanged and receives no Bitrix material.
+
+2. **Validation before publication — approved.** `bin/fmonitor2-stage-runtime-bitrix-config` rejects a missing/symlink source, validates the exact source through the existing `WorkerConfiguration::fromFile` parser, suppresses parser detail, and emits only allowlisted `RUNTIME_SECRET_STAGING_FAILED` on failure. Invalid input cannot replace the worker-visible file.
+
+3. **Atomic restricted publication — approved.** The stager uses `umask 077`, creates a temporary file inside the destination volume, copies and file-syncs it, applies exact `10001:10001` ownership and `0600` mode, then atomically renames it to the stable path. The EXIT trap removes an incomplete temporary file; it is disabled only after successful rename. This fixes Linux uid readability without broadening permissions or exposing the host path.
+
+4. **Startup ordering and fail-closed behavior — approved.** `make up` runs the one-shot stager after validated runtime preparation and before migration/runtime checks and before worker/scheduler startup. A staging failure remains a nonzero Make step, so the complete jobs contour cannot be reported ready with stale or absent staged configuration. No reset, volume deletion or fallback-to-world-readable path is added.
+
+5. **Test sensitivity — approved.** `tests/Deployment/erp_equipment_facts_runtime_001_test.py` requires the stager service, root identity, exact entrypoint, a single host-config occurrence, absence of the host variable from the worker section, named-volume delivery, ordering before jobs startup, existing parser reuse, same-volume temporary creation, fsync, exact chown/mode and atomic rename. Canonical/generated parity remains covered. The real Make E2E and security/runtime checks exercise the Linux-facing path; safe failed-up health diagnostics from the prior delta remain failure-only and secret-free.
+
+### Findings and conclusion
+
+Current Gate 3 security/test-delta findings: None. The correction resolves the observed uid/mode incompatibility by narrowing host-secret exposure and preserving `0600`, rather than weakening permissions or bypassing validation. Existing direct ERP env, process-health, Bitrix worker ownership, cleanup and non-disclosure contracts remain in force.
+
+`APPROVED` for the security-sensitive test/spec contract delta at exact commit `d0fad166086d3ea7f63d298c7ebd81004f3da061`. This is not Gate 5 and does not approve overall implementation quality, CI status, live qualification, publication, deployment or merge.

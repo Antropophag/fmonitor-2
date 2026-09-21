@@ -72,6 +72,19 @@ services:
     profiles: ["deployment"]
     restart: "no"
 
+  stage-runtime-secrets:
+    <<: *image
+    user: "0:0"
+    entrypoint: ["bin/fmonitor2-stage-runtime-bitrix-config"]
+    volumes:
+      - secrets:/run/fmonitor-secrets
+      - type: bind
+        source: "${FMONITOR_BITRIX_CONFIG_HOST_FILE:-../../.local/bitrix-workforce.json}"
+        target: /run/fmonitor-input/bitrix-config.json
+        read_only: true
+    profiles: ["deployment"]
+    restart: "no"
+
   migrate:
     <<: *app
     environment:
@@ -155,10 +168,6 @@ services:
       - type: bind
         source: "${FMONITOR_BITRIX_CA_HOST_FILE:-/dev/null}"
         target: /run/fmonitor-secrets/bitrix-ca.pem
-        read_only: true
-      - type: bind
-        source: "${FMONITOR_BITRIX_CONFIG_HOST_FILE:-../../.local/bitrix-workforce.json}"
-        target: /run/fmonitor-secrets/bitrix-config.json
         read_only: true
     depends_on:
       db:
