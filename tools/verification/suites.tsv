@@ -122,6 +122,8 @@ db	php	tests/InstallationProcess/object_detail_snapshot_schema_ddl_denial_001_te
 db	php	tests/InstallationProcess/object_detail_snapshot_schema_lock_001_test.php	integration
 db	php	tests/InstallationProcess/object_detail_snapshot_schema_native_false_001_test.php	integration
 db	php	tests/InstallationProcess/object_detail_snapshot_schema_observer_001_test.php	integration
+db	php	tests/InstallationProcess/object_details_editing_mariadb_001_test.php	integration
+db	php	tests/InstallationProcess/object_details_effective_consumers_001_test.php	integration
 db	php	tests/InstallationProcess/otiz_current_progress_001_test.php	integration
 db	php	tests/InstallationProcess/otiz_settlement_schema_001_test.php	integration
 db	php	tests/InstallationProcess/persistence_open_001_test.php	integration
@@ -185,6 +187,8 @@ db	php	tests/Runtime/erp_equipment_facts_readiness_001_test.php	integration
 db	php	tests/Runtime/initial_owner_provisioning_001_test.php	integration
 db	php	tests/Runtime/migration_concurrency_lock_001_test.php	integration
 db	php	tests/Runtime/migration_parallel_runners_001_test.php	integration
+db	php	tests/Runtime/object_details_editing_recovery_001_test.php	integration
+db	php	tests/Runtime/object_details_editing_restore_roundtrip_001_test.php	integration
 db	php	tests/Runtime/production_process_readiness_001_test.php	integration
 db	php	tests/Runtime/production_readiness_schema_001_test.php	integration
 db	php	tests/Runtime/production_schema_frontier_001_test.php	integration
@@ -238,6 +242,7 @@ db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration
 db	php	tests/Yii2/yii2_minimal_operational_dashboard_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
+db	php	tests/Yii2/yii2_object_details_editing_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
 db	php	tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php	integration
@@ -306,6 +311,7 @@ e2e	php	tests/Yii2/yii2_documentary_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_installer_directory_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_object_details_editing_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_object_queue_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
@@ -395,6 +401,7 @@ unit	php	tests/InstallationProcess/local_rbac_auth_contract_001_test.php	unit
 unit	php	tests/InstallationProcess/manual_original_execution_smoke_test.php	integration
 unit	php	tests/InstallationProcess/object_card_registration_identity_test.php	unit
 unit	php	tests/InstallationProcess/object_card_working_change_policy_test.php	unit
+unit	php	tests/InstallationProcess/object_details_editing_001_test.php	unit
 unit	php	tests/InstallationProcess/open_installation_001_integrity_test.php	unit
 unit	php	tests/InstallationProcess/open_installation_001_test.php	unit
 unit	php	tests/InstallationProcess/order_change_pdf_001_test.php	unit

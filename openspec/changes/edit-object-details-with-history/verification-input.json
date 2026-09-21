@@ -1,0 +1,107 @@
+{
+  "change": "edit-object-details-with-history",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "tools/verification/suites.tsv",
+    "specs/OBJECT-DETAILS-EDITING-001.md",
+    "app/InstallationProcess/ObjectDetailsEditApplication.php",
+    "app/InstallationProcess/ObjectDetailsEditCommand.php",
+    "app/InstallationProcess/ObjectDetailsEditingSchemaMigration.php",
+    "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
+    "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
+    "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/InstallationProcess/ProductionObjectDetailsEditFactory.php",
+    "app/Otiz/MariaDbNativePremiumInputs.php",
+    "app/YiiRuntime/Controllers/ObjectDetailsController.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/preopening.js",
+    "config/yii/web.php",
+    "config/yii/assets.php",
+    "tests/InstallationProcess/object_details_editing_001_test.php",
+    "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
+    "tests/InstallationProcess/object_details_effective_consumers_001_test.php",
+    "tests/Yii2/yii2_object_details_editing_001_test.php",
+    "tests/Yii2/yii2_object_details_editing_browser_001_test.php",
+    "tests/Yii2/yii2_object_card_001_test.php",
+    "tests/Support/object_details_editing_browser.cjs",
+    "tests/Runtime/object_details_editing_recovery_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A1-A4-field-map-plan-and-normalization",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "ObjectDetailsEditApplication command",
+      "tests": [
+        "tests/InstallationProcess/object_details_editing_001_test.php"
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_editing_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_editing_001_test.php":{"boundary":"object-details-unit-fixture","probe_kind":"fixture_read_only"}}
+    },
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A5-A7-authorization-replay-and-atomic-history",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "ObjectDetailsEditApplication with MariaDB",
+      "tests": [
+        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php"
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_editing_mariadb_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_editing_mariadb_001_test.php":{"boundary":"object-details-mariadb-fixture","probe_kind":"fixture_read_only"}}
+    },
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A9-A12-effective-consumers",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "import and current public readers",
+      "tests": [
+        "tests/InstallationProcess/object_details_effective_consumers_001_test.php",
+        "tests/InstallationProcess/pilot_case_import_001_test.php",
+        "tests/Yii2/yii2_object_card_001_test.php",
+        "tests/Yii2/yii2_object_queue_001_test.php",
+        "tests/InstallationProcess/erp_equipment_facts_read_001_test.php",
+        "tests/Otiz/excel_inputs_001_test.php"
+      ],
+      "gate3_expected":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":"INTENDED_RED","tests/InstallationProcess/pilot_case_import_001_test.php":"GREEN","tests/Yii2/yii2_object_card_001_test.php":"GREEN","tests/Yii2/yii2_object_queue_001_test.php":"GREEN","tests/InstallationProcess/erp_equipment_facts_read_001_test.php":"GREEN","tests/Otiz/excel_inputs_001_test.php":"GREEN"},
+      "fixture_reachability":{"tests/InstallationProcess/object_details_effective_consumers_001_test.php":{"boundary":"object-details-consumer-fixture","probe_kind":"fixture_read_only"}}
+    },
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A8-A13-yii-history-and-http",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "canonical Yii POST and card history projection",
+      "tests": [
+        "tests/Yii2/yii2_object_details_editing_001_test.php"
+      ],
+      "gate3_expected":{"tests/Yii2/yii2_object_details_editing_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/Yii2/yii2_object_details_editing_001_test.php":{"boundary":"object-details-yii-fixture","probe_kind":"fixture_read_only"}}
+    },
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A13-A14-browser-modal-and-close",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "Playwright canonical card flow",
+      "tests": [
+        "tests/Yii2/yii2_object_details_editing_browser_001_test.php"
+      ],
+      "gate3_expected":{"tests/Yii2/yii2_object_details_editing_browser_001_test.php":"INTENDED_RED"},
+      "fixture_reachability":{"tests/Yii2/yii2_object_details_editing_browser_001_test.php":{"boundary":"object-details-browser-fixture","probe_kind":"fixture_read_only"}}
+    },
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A15-migration-and-recovery",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "canonical migration and backup restore",
+      "tests": [
+    "tests/Runtime/object_details_editing_recovery_001_test.php",
+    "tests/Runtime/object_details_editing_restore_roundtrip_001_test.php",
+        "tests/Runtime/production_schema_frontier_001_test.php"
+      ],
+      "gate3_expected":{"tests/Runtime/object_details_editing_recovery_001_test.php":"INTENDED_RED","tests/Runtime/production_schema_frontier_001_test.php":"GREEN","tests/Runtime/object_details_editing_restore_roundtrip_001_test.php":"GREEN"},
+      "fixture_reachability":{"tests/Runtime/object_details_editing_recovery_001_test.php":{"boundary":"object-details-recovery-fixture","probe_kind":"fixture_read_only"}}
+    }
+  ]
+}

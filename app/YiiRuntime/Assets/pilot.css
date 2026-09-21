@@ -1979,3 +1979,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media (max-width: 1200px) { .fm2-dashboard-charts { grid-template-columns: minmax(0,1fr); } .fm2-dashboard-chart--stages { grid-column: auto; } }
 @media (max-width: 1050px) { .fm2-dashboard-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 680px) { .fm2-dashboard-page { gap: 20px; padding: 20px 14px; } .fm2-dashboard-header { align-items: flex-start; flex-direction: column; } .fm2-dashboard-metrics,.fm2-dashboard-lists,.fm2-dashboard-charts { grid-template-columns: minmax(0,1fr); } .fm2-dashboard-chart--stages { grid-column: auto; } .fm2-dashboard-chart:not(.fm2-dashboard-chart--stages) { --fm2-chart-header-size: 96px; } .fm2-dashboard-chart { padding: 18px 12px; } .fm2-chart-bars { min-block-size: 190px; gap: 6px; } .fm2-chart-weeks { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 12px; } .fm2-chart-week__bars .fm2-chart-bar { grid-template-rows: 88px auto auto; } .fm2-chart-week__bars .fm2-chart-bar__mark-frame { block-size: 84px; } .fm2-chart-bar__label { font-size: 11px; } .fm2-dashboard-metric { min-block-size: 0; } .fm2-dashboard-register { inline-size: 100%; } }
+.shlz-modal__close{min-inline-size:40px!important;inline-size:40px!important;min-block-size:40px!important;block-size:40px!important}
+.fm2-object-edit{flex:0 0 40px;inline-size:40px;block-size:40px;padding:0;font-size:1.25rem}
+.fm2-object-details-modal fieldset{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 24px;padding:0;border:0}
+.fm2-object-details-modal legend{grid-column:1/-1;margin-block-end:12px;font-weight:600}
+.fm2-details-field{display:grid;gap:6px;min-width:0}.fm2-event-change{display:block;margin-block-start:6px;overflow-wrap:anywhere}
+@media (width < 640px){.fm2-object-details-modal fieldset{grid-template-columns:1fr}}

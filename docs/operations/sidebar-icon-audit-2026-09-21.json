@@ -114,8 +114,8 @@
     {
       "key": "app/YiiRuntime/ViewSupport.php#3",
       "file": "app/YiiRuntime/ViewSupport.php",
-      "baseline_line": 98,
-      "baseline_sha256": "449cec24c294e0149a29b4b7f00e17f0c60b74ac31e7ec82e88e67d9990ad57e",
+      "baseline_line": 105,
+      "baseline_sha256": "5a22895f5dc7f717116063062cbfba8dfdf41adcdb20234ae031ae5100e27193",
       "decision": "RETAIN"
     },
     {

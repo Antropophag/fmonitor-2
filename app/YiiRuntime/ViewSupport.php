@@ -82,10 +82,16 @@ final class ViewSupport
         $selectedLabel = array_key_exists($value, $options) ? (string) $options[$value] : (string) reset($options);
         $rootData = $required ? ' data-shlz-' . $choice . '-required' : '';
         $inputData = '';
+        $validationData = '';
+        $nativeAttributes = ['class' => 'shlz-' . $choice, 'required' => $required];
         foreach ($attributes as $key => $attribute) {
             if ($key === 'required') continue;
             $encoded = ' ' . $encode((string) $key) . '="' . $encode((string) $attribute) . '"';
             if ($key === 'data-role-filter') $rootData .= $encoded;
+            elseif (in_array($key, ['aria-invalid', 'aria-describedby'], true)) {
+                $validationData .= $encoded;
+                $nativeAttributes[$key] = $attribute;
+            }
             else $inputData .= $encoded;
         }
         $items = '';
@@ -93,10 +99,10 @@ final class ViewSupport
             $selected = (string) $optionValue === $value;
             $items .= '<button class="shlz-' . $choice . '__option" type="button" role="option" aria-selected="' . ($selected ? 'true' : 'false') . '" data-value="' . $encode((string) $optionValue) . '">' . $encode((string) $optionLabel) . '</button>';
         }
-        $native = Html::dropDownList($name, $value, $options, ['class' => 'shlz-' . $choice,'required' => $required]);
+        $native = Html::dropDownList($name, $value, $options, $nativeAttributes);
         return '<div class="shlz-field shlz-field--' . $choice . ' shlz-' . $choice . '-root" data-shlz-' . $choice . $rootData . '>'
             . '<span class="shlz-field__label" id="' . $id . '-label">' . $encode($label) . '</span>'
-            . '<button class="shlz-field__control shlz-' . $choice . '__trigger' . ($value !== '' ? ' shlz-' . $choice . '__trigger--selected' : '') . '" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="' . $id . '-options" aria-labelledby="' . $id . '-label ' . $id . '-value"><span id="' . $id . '-value" data-shlz-' . $choice . '-value>' . $encode($selectedLabel) . '</span><svg class="shlz-' . $choice . '__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button>'
+            . '<button class="shlz-field__control shlz-' . $choice . '__trigger' . ($value !== '' ? ' shlz-' . $choice . '__trigger--selected' : '') . '" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="' . $id . '-options" aria-labelledby="' . $id . '-label ' . $id . '-value"' . $validationData . '><span id="' . $id . '-value" data-shlz-' . $choice . '-value>' . $encode($selectedLabel) . '</span><svg class="shlz-' . $choice . '__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 12 15.5 19 8.5"/></svg></button>'
             . '<div class="shlz-' . $choice . '__listbox" id="' . $id . '-options" role="listbox" aria-labelledby="' . $id . '-label" hidden>' . $items . '</div>'
             . '<input type="hidden" name="' . $encode($name) . '" value="' . $encode($value) . '" disabled' . $inputData . '><span class="shlz-' . $choice . '-fallback">' . $native . '</span></div>';
     }

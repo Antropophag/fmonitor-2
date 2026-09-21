@@ -2,7 +2,6 @@
 declare(strict_types=1);
 namespace FMonitor2\RuntimeRestore;
 
-/** Exact current-image recovery inventory for migration frontier v31. */
 final class RuntimeRecoverySchemaV31
 {
     public const VERSION = 31;

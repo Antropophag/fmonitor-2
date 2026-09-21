@@ -324,6 +324,8 @@
     {
       "name": "otiz-premium-norms",
       "patterns": [
+        "app/Otiz/MariaDbNativePremiumInputs.php",
+        "app/Otiz/MariaDbNativePremiumInputsValues.php",
         "app/Otiz/MariaDbObjectRegisterQuery.php",
         "app/Otiz/NativePremiumNorms.php"
         ,"app/Otiz/ObjectEconomy.php"
@@ -474,7 +476,8 @@
       "patterns": [
         "app/RuntimeRestore/RuntimeRecovery.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV30.php"
+        "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
@@ -499,6 +502,7 @@
         "app/InstallationProcess/MariaDbYiiObjectCard.php",
         "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
         "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+        "app/InstallationProcess/YiiObjectCard.php",
         "app/InstallationProcess/YiiObjectQueue.php",
         "app/InstallationProcess/YiiOperationalDashboardStore.php",
         "app/InstallationProcess/YiiOperationalDashboard.php"
@@ -544,6 +548,37 @@
         "tests/Yii2/yii2_control_engineer_assignment_001_test.php"
       ],
       "consumers": []
+    },
+    {
+      "name": "object-details-editing",
+      "patterns": [
+        "app/IdentityAccess/AuthorizeLocalActor.php",
+        "app/IdentityAccess/LocalRoleCatalog.php",
+        "app/InstallationProcess/MariaDbBitrixOrderDocumentLinksRead.php",
+        "app/InstallationProcess/ObjectDetailsEditApplication.php",
+        "app/InstallationProcess/ObjectDetailsEditCommand.php",
+        "app/InstallationProcess/ObjectDetailsEditPermissionProvisioning.php",
+        "app/InstallationProcess/ObjectDetailsEditingMigration.php",
+        "app/InstallationProcess/ObjectDetailsEditingSchemaMigration.php",
+        "app/InstallationProcess/ObjectDetailsFieldRegistry.php",
+        "app/InstallationProcess/ObjectDetailsReferenceCatalogue.php",
+        "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEditPermissionProvisioning.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEditStore.php",
+        "app/InstallationProcess/MariaDbObjectDetailsEdits.php",
+        "app/InstallationProcess/ProductionObjectDetailsEditFactory.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/object_details_editing_mariadb_001_test.php",
+        "tests/Yii2/yii2_object_card_001_test.php",
+        "tests/Yii2/yii2_object_details_editing_001_test.php"
+      ],
+      "consumers": [
+        "erp-equipment-facts",
+        "legacy-object-import",
+        "otiz-premium-norms",
+        "yii-object-read-presentation"
+      ]
     },
     {
       "name": "weekly-fkr-attention-email",

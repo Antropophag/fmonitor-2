@@ -10,7 +10,7 @@ final readonly class YiiObjectCard
     {
     }
 
-    public function read(int $actorId, int $installationObjectId): ?array
+    public function read(int $actorId, int $installationObjectId, ?string $historyCursor=null): ?array
     {
         if ($actorId < 1 || !$this->reader->authorized($actorId)) {
             throw new \DomainException('ACCESS_DENIED');
@@ -18,6 +18,6 @@ final readonly class YiiObjectCard
         if ($installationObjectId < 1) {
             return null;
         }
-        return $this->reader->read($actorId, $installationObjectId);
+        return $this->reader->read($actorId, $installationObjectId,$historyCursor);
     }
 }
