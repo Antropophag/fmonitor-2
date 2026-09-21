@@ -1,0 +1,55 @@
+{
+  "change": "refine-operational-dashboard-visuals",
+  "planned_paths": [
+    ".github/actions/setup-runtime/action.yml",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/YiiOperationalDashboard.php",
+    "app/InstallationProcess/YiiObjectQueue.php",
+    "app/YiiRuntime/Assets/AuthAssetBundle.php",
+    "app/YiiRuntime/Assets/InstallerDirectoryAssetBundle.php",
+    "app/YiiRuntime/Assets/ObjectQueueAssetBundle.php",
+    "app/YiiRuntime/Assets/PreopeningAssetBundle.php",
+    "app/YiiRuntime/Assets/ShellAssetBundle.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/shlz-icons/bar-chart-square-plus.svg",
+    "app/YiiRuntime/Assets/shlz-icons/docs.svg",
+    "app/YiiRuntime/Assets/shlz-icons/eye.svg",
+    "app/YiiRuntime/Assets/shlz-icons/graph.svg",
+    "app/YiiRuntime/Assets/shlz-icons/settings.svg",
+    "app/YiiRuntime/Assets/shlz-icons/user.svg",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/operational-dashboard-refinement-delivery.md",
+    "openspec/changes/refine-operational-dashboard-visuals/.openspec.yaml",
+    "openspec/changes/refine-operational-dashboard-visuals/design.md",
+    "openspec/changes/refine-operational-dashboard-visuals/proposal.md",
+    "openspec/changes/refine-operational-dashboard-visuals/tasks.md",
+    "openspec/changes/refine-operational-dashboard-visuals/verification-input.json",
+    "openspec/changes/refine-operational-dashboard-visuals/specs/ui/operational-dashboard-refinement/spec.md",
+    "specs/YII2-OPERATIONAL-DASHBOARD-REFINEMENT-001.md",
+    "tests/Support/operational_dashboard_bar_charts_browser.cjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php",
+    "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OPERATIONAL-DASHBOARD-REFINEMENT-001",
+      "acceptance_id": "R1-R8-dashboard-refinement",
+      "spec_path": "specs/YII2-OPERATIONAL-DASHBOARD-REFINEMENT-001.md",
+      "seam": "YiiOperationalDashboard read, real Yii GET|HEAD dashboard and start-risk queue filter, and rendered navigation/dashboard at declared viewports",
+      "tests": [
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php",
+        "tests/Yii2/yii2_main_navigation_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_main_navigation_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}

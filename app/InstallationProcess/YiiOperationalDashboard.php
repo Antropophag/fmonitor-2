@@ -7,7 +7,7 @@ namespace FMonitor2\InstallationProcess;
 final readonly class YiiOperationalDashboard
 {
     private const STAGES = ['needs_assignment_order','ready_to_open','installation','document_closeout','completed','needs_assignment_change'];
-    private const ACTIVITIES = ['age_0_7','age_8_14','age_15_30','age_31_plus','never'];
+    private const START_RISKS = ['overdue_start','order_0_7','order_8_14','ready_0_14','opened_0_14'];
 
     public function __construct(private YiiOperationalDashboardStore $store)
     {
@@ -44,18 +44,17 @@ final readonly class YiiOperationalDashboard
             || !is_array($result['upcoming']) || !is_array($result['overdue'])
             || !$this->rows($result['upcoming']) || !$this->rows($result['overdue'])
             || !is_array($result['charts'])
-            || array_keys($result['charts']) !== ['stages','weeks','activityAge']) return false;
+            || array_keys($result['charts']) !== ['stages','weeks','startRisk']) return false;
 
-        $stages=$result['charts']['stages'];$weekRows=$result['charts']['weeks'];$activities=$result['charts']['activityAge'];
-        if (!is_array($stages)||!is_array($weekRows)||!is_array($activities)
-            || count($stages)!==6||count($weekRows)!==6||count($activities)!==5) return false;
+        $stages=$result['charts']['stages'];$weekRows=$result['charts']['weeks'];$risks=$result['charts']['startRisk'];
+        if (!is_array($stages)||!is_array($weekRows)||!is_array($risks)
+            || count($stages)!==6||count($weekRows)!==6||count($risks)!==5) return false;
         $stageValues=[];
         foreach($stages as$i=>$item){if(!is_array($item)||array_keys($item)!==['key','label','value']||$item['key']!==self::STAGES[$i]||!is_string($item['label'])||$item['label']===''||!$this->nonnegative($item['value']))return false;$stageValues[$item['key']]=$item['value'];}
         foreach($weekRows as$i=>$item){if(!is_array($item)||array_keys($item)!==['start','end','starts','finishes']||$item['start']!==$weeks[$i][0]||$item['end']!==$weeks[$i][1]||!$this->nonnegative($item['starts'])||!$this->nonnegative($item['finishes']))return false;$start=\DateTimeImmutable::createFromFormat('!Y-m-d',$item['start'],new \DateTimeZone('Europe/Moscow'));$end=\DateTimeImmutable::createFromFormat('!Y-m-d',$item['end'],new \DateTimeZone('Europe/Moscow'));if($start===false||$end===false||$start->format('N')!=='1'||$end->format('N')!=='7'||$start->modify('+6 days')->format('Y-m-d')!==$item['end']||($i>0&&$weekRows[$i-1]['end']!==$start->modify('-1 day')->format('Y-m-d')))return false;}
-        $activityValues=[];
-        foreach($activities as$i=>$item){if(!is_array($item)||array_keys($item)!==['key','label','value']||$item['key']!==self::ACTIVITIES[$i]||!is_string($item['label'])||$item['label']===''||!$this->nonnegative($item['value']))return false;$activityValues[$item['key']]=$item['value'];}
+        foreach($risks as$i=>$item){if(!is_array($item)||array_keys($item)!==['key','label','value']||$item['key']!==self::START_RISKS[$i]||!is_string($item['label'])||$item['label']===''||!$this->nonnegative($item['value']))return false;}
         $activeStages=$stageValues['installation']+$stageValues['document_closeout']+$stageValues['needs_assignment_change'];
-        return array_sum($stageValues)===$result['total'] && $activeStages===$result['active'] && array_sum($activityValues)===$activeStages;
+        return array_sum($stageValues)===$result['total'] && $activeStages===$result['active'];
     }
 
     private function rows(array $rows): bool
