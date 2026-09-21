@@ -186,27 +186,9 @@ final readonly class MariaDbYiiObjectQueue
     }
     private function map(array$r, int$page, int$pages, int$total): array
     {
-        $tuple = [$r['actual_start_date'],$r['opened_at'],$r['opened_by_user_id']];
-        $present = count(array_filter($tuple, fn ($v) => $v !== null));
-        $opened = $present === 3;
-        $empty = $present === 0;
-        $selected = $r['selection_order_id'] !== null;
-        $applied = $r['application_id'] !== null;
-        $order = $r['order_status'];
-        $ready = $r['original_revision_id'] !== null || (!$selected && ($applied || $order === 'registered'));
-        $label = match ($r['process_state']) {
-            'needs_assignment_order' => $empty && $ready ? 'Готов к открытию'
-                : ($empty && ($selected || ($order === null && !$applied)) ? 'Требуется распоряжение' : null),
-            'assignment_order_prepared' => $empty && $ready ? 'Готов к открытию'
-                : ($empty && ($selected || ($order === 'prepared' && !$applied)) ? 'Требуется распоряжение' : null),
-            'working' => $opened && ($applied || in_array($order, ['prepared','registered'], true)) ? 'В работе' : null,
-            'needs_assignment_change' => $opened && ($applied || in_array($order, ['prepared','registered'], true))
-                ? 'Требуется изменение' : null,
-            default => null,
-        };
+        $status=InstallationCaseCurrentStatus::project($r);$opened=$status['opened'];$label=$status['label'];
         $id = (int)$r['legacy_installation_object_id'];
-        if (!in_array($present, [0,3], true) || $id < 1 || $label === null
-            || trim((string)$r['ordadr_address']) === ''
+        if ($id < 1 || trim((string)$r['ordadr_address']) === ''
             || trim((string)$r['entrance']) === '') {
             throw new \RuntimeException('Malformed queue row.');
         }

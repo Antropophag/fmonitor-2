@@ -559,6 +559,7 @@
         "app/Jobs/MariaDbWeeklyFkrScheduler.php",
         "app/Jobs/WeeklyFkrReportJobHandler.php",
         "app/IdentityAccess/MariaDbWeeklyFkrRecipientDirectory.php",
+        "app/InstallationProcess/InstallationCaseCurrentStatus.php",
         "app/InstallationProcess/MariaDbWeeklyFkrReportSource.php",
         "app/Jobs/MariaDbWeeklyFkrOpeningEligibility.php",
         "app/Jobs/MariaDbOutbox.php"
@@ -570,7 +571,8 @@
         "tests/Jobs/weekly_fkr_unknown_delivery_001_test.php",
         "tests/Runtime/weekly_fkr_smtp_configuration_001_test.php",
         "tests/WeeklyFkrReport/weekly_report_001_test.php",
-        "tests/WeeklyFkrReport/weekly_schedule_001_test.php"
+        "tests/WeeklyFkrReport/weekly_schedule_001_test.php",
+        "tests/Yii2/yii2_object_queue_001_test.php"
       ],
       "consumers": []
     }

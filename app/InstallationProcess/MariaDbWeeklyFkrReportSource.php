@@ -35,10 +35,19 @@ final readonly class MariaDbWeeklyFkrReportSource implements WeeklyFkrReportSour
     private function objects(): array
     {
         $p=$this->prefix;$l=$this->legacyPrefix;
-        $sql="SELECT c.id case_id,c.legacy_installation_object_id id,c.actual_start_date,"
-            ."l.regnumber,l.ordadr_address,l.workdatestart,l.workdateendadjusted,l.plan_finish_date "
+        $sql="SELECT c.id case_id,c.legacy_installation_object_id id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,"
+            ."l.regnumber,l.ordadr_address,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,"
+            ."o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id "
             ."FROM `{$p}fm2_installation_cases` c "
             ."JOIN `{$l}fm_maintable` l ON l.id=c.legacy_installation_object_id "
+            ."LEFT JOIN `{$p}fm2_assignment_orders` o ON o.installation_case_id=c.id "
+            ."AND o.version_no=(SELECT MAX(x.version_no) FROM `{$p}fm2_assignment_orders` x WHERE x.installation_case_id=c.id) "
+            ."LEFT JOIN `{$p}fm2_assignment_order_applications` a ON a.application_id=(SELECT x.application_id FROM `{$p}fm2_assignment_order_applications` x WHERE x.installation_case_id=c.id ORDER BY x.application_sequence DESC LIMIT 1) "
+            ."LEFT JOIN `{$p}fm2_assignment_order_selections` s ON s.installation_case_id=c.id "
+            ."AND s.selection_revision=(SELECT MAX(x.selection_revision) FROM `{$p}fm2_assignment_order_selections` x WHERE x.installation_case_id=c.id) "
+            ."LEFT JOIN `{$p}fm2_assignment_order_original_roots` r ON r.installation_case_id=c.id AND r.assignment_order_id=s.assignment_order_id "
+            ."AND r.composition_identity=s.composition_identity AND r.composition_sha256=s.composition_sha256 "
+            ."LEFT JOIN `{$p}fm2_assignment_order_original_revisions` v ON v.root_original_id=r.root_original_id AND v.revision_id=r.current_revision_id "
             ."ORDER BY c.legacy_installation_object_id";
         return $this->db->query($sql)->fetch_all(MYSQLI_ASSOC);
     }
@@ -60,13 +69,14 @@ final readonly class MariaDbWeeklyFkrReportSource implements WeeklyFkrReportSour
     private function project(array$row,array$workStart,array$workEnd,array$workCurrent,array$documentsStart,array$documentsEnd,array$documentsCurrent):array
     {
         $case=(int)$row['case_id'];$work=$workCurrent[$case]??null;$documents=$documentsCurrent[$case]??null;
+        $status=InstallationCaseCurrentStatus::project($row);$opened=$status['opened'];$openingStatus=$status['label'];
         return [
             'id'=>(string)$row['id'],
             'registrationNumber'=>(string)$row['regnumber'],
             'address'=>(string)$row['ordadr_address'],
             'openingPlanDate'=>$this->date($row['workdatestart']),
-            'openingCompleted'=>$row['actual_start_date']!==null,
-            'openingStatus'=>$row['actual_start_date']!==null?'Открыт':'Не открыт',
+            'openingCompleted'=>$opened,
+            'openingStatus'=>$openingStatus,
             'openingReasons'=>[],
             'closingPlanDate'=>$this->date($row['workdateendadjusted'])??$this->date($row['plan_finish_date']),
             'closingCompleted'=>$work===85&&$documents===15,

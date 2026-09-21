@@ -7,8 +7,8 @@
 
 - [x] 2.1 Root добавляет public-seam test недельного календаря и scheduler idempotency для московского понедельника/границ недели; проверить intended RED на отсутствии job type
 - [x] 2.2 Root добавляет integration test recipient eligibility и server-side scope для двух руководителей, invalid/disabled recipient и отсутствия cross-scope counts/ids; проверить intended RED
-- [x] 2.3 Root добавляет report projection/render test пяти секций, empty/sorting/escaping/links, запрета изображений/внешних ресурсов и Outlook-safe markup; добавить 680px/320px browser captures и проверить intended RED
-- [x] 2.4 Root добавляет as-of progress test 85/15, corrections и UNKNOWN boundary, а также overdue/«Обратить внимание» matrix; проверить independently fixed literals и intended RED
+- [x] 2.3 Root добавляет report projection/render test четырёх табличных секций, empty/sorting/escaping/links, запрета изображений/внешних ресурсов и Outlook-safe markup; добавить 680px/320px browser captures и проверить intended RED
+- [x] 2.4 Root добавляет as-of progress test 85/15, corrections и UNKNOWN boundary, current native opening status, а также явную overdue opening/closing matrix; проверить independently fixed literals и intended RED
 - [x] 2.5 Root добавляет jobs/outbox test success/repeat/transient/permanent/concurrent delivery и снимок отсутствия предметных мутаций; проверить intended RED
 - [x] 2.6 Root добавляет runtime/config test missing secret, TLS verification, sender compatibility, redaction и non-production test-recipient override; проверить intended RED без сетевой отправки
 - [x] 2.7 Обновить verification inventories/manifests для всех новых tests и выполнить полный набор planner-selected bounded RED commands
@@ -19,7 +19,7 @@
 
 ## 4. Gate 4 — минимальная реализация
 
-- [x] 4.1 Executor реализует immutable period/report values и чистую классификацию plans/progress/overdue/attention; соответствующие focused tests проходят
+- [x] 4.1 Executor реализует immutable period/report values и чистую классификацию plans/progress/overdue; соответствующие focused tests проходят
 - [x] 4.2 Executor реализует native recipient/scoped report read adapters с as-of/UNKNOWN семантикой; scope/history focused tests проходят
 - [x] 4.3 Executor реализует HTML/text renderer с одинаковой view model, image-free Outlook-safe table markup, inline CSS, FMonitor palette, escaping, empty states и trusted absolute links; lint и 680px/320px render tests проходят
 - [x] 4.4 Executor добавляет weekly scheduler, generation handler и per-recipient outbox intents в существующий Jobs runtime; scheduler/delivery focused tests проходят
@@ -35,3 +35,9 @@
 - [x] 5.2 Независимый reviewer проверяет spec/tests/Gate 3/code/config/security/evidence и записывает verdict в `reviews/code/WEEKLY-FKR-ATTENTION-EMAIL-001.md`; findings исправляются с повторной проверкой нужного delta
 - [ ] 5.3 Выполнить одну exact-source GitHub CI проверку выбранным существующим consumer, собрать полный failure inventory при ошибке и не считать UNKNOWN зелёным
 - [ ] 5.4 После APPROVED и GREEN подготовить PR-ready handoff с authorship, elapsed/rework, source/review/CI links и явным статусом live SMTP/test-send; архивирование выполняется отдельно после Done
+
+## 6. Owner-requested compact table revision
+
+- [x] 6.1 Root обновляет spec/tests: четыре раздела, табличные колонки, current native opening status и явная проверка overdue closing
+- [x] 6.2 Implementer убирает `attention`, подключает current native opening status и рендерит четыре Outlook-safe таблицы
+- [x] 6.3 Выполнить bounded render/source tests, Impeccable detector и independent final review; full local suite не запускать
