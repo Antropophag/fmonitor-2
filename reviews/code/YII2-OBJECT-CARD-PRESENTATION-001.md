@@ -601,3 +601,139 @@ exact-source CI remains separate and **UNKNOWN**; this review does not claim CI,
 publication, merge or deployment readiness.
 
 Overall post-rebase Gate 5 for the exact candidate above: **APPROVED**.
+
+## Dirty CI-correction final review — 2026-09-21
+
+- Aggregating reviewer: independent agent `/root/final_object_card_review`
+- Standards/CI reviewer: independent agent `/root/final_object_card_review/standards_axis`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T003851Z-4ac2b0750d/package.json`
+- Base: `e67b566d8958faa0df8f8ebb8c09db3f1e0983ce`
+- Exact dirty candidate source: `282eba0f0a2a77e840ee085aa20b0726cc4b5c2ebda66d07489bba615d2d529f`
+- Verdict: **CHANGES_REQUESTED**
+
+### Finding 1 — the no-JavaScript fallback is blocked by CSP and weakens Tabs markup
+
+`app/YiiRuntime/Views/object-card.php:112-117` adds an inline
+`<noscript><style>` fallback. Normal Yii HTML responses enforce `style-src
+'self'` without a nonce, hash, or `'unsafe-inline'` in
+`app/YiiRuntime/WebResponse.php:35`, so a conforming browser blocks that style.
+The fallback therefore cannot be relied upon under the production response
+policy.
+
+The same correction removes `hidden` from the Team, Documents, and History
+panels (`app/YiiRuntime/Views/object-card.php:210,227,249`). This stops the
+server-rendered markup from satisfying A2's public SHLZ Tabs initial-state
+contract and exposes every panel before module enhancement or when the module
+fails, causing a flash of all panels. Restore `hidden` on inactive panels and
+provide no-JavaScript disclosure through a CSP-permitted external stylesheet,
+an explicitly authorized response mechanism, or a server-rendered non-tab
+fallback. Exercise the chosen path under the actual CSP, including inactive
+panel behavior.
+
+### Finding 2 — mandatory exact-source verification is failed and untriaged
+
+The active reviewer package contains an empty `evidence` array. Harness state
+records exact-source CI attempt 1 on PR 214 as `FAILURE`, with the complete
+failed-job inventory containing `e2e`, `unit`, both Integration shards, `verify`,
+and `Quality Graph`. The `REGRESSION_FAILURE` inventory remains empty, triage is
+`UNKNOWN`, and no exact-source CI GREEN is available. Repository policy does not
+permit failed or missing mandatory checks to be treated as approval.
+
+The reviewer independently reproduced all seven planner-selected bounded local
+commands at the dirty candidate and they passed:
+
+- object-card HTTP/browser/no-write acceptance;
+- production web cutover;
+- control-engineer assignment;
+- installer-directory HTTP acceptance;
+- change verification (`18/18`);
+- runtime storage integration;
+- architecture guard (`59/59`).
+
+Those local results support the bounded corrections but do not replace the
+package-bound evidence or the required exact-source full CI. Complete the
+failed-job and `REGRESSION_FAILURE` inventory, correct every candidate-caused
+failure, attach fresh exact-source GREEN evidence for all selected obligations,
+and obtain the required full CI GREEN before another final review.
+
+### Accepted correction portions
+
+No other finding was identified in the current seven-file correction delta:
+
+- `required_engineer_select_browser.mjs` activates the Team tab before using the
+  enhanced engineer select and activates it again after redirect;
+- the coarse-pointer assertion uses `getClientRects().length > 0`, excluding
+  controls inside genuinely hidden panels rather than treating their own
+  computed `display` as page visibility;
+- installer-directory and engineer-assignment expectations now enforce the A5
+  source/provenance privacy contract;
+- `tools/verification/suites.tsv` registers the DB/browser-backed object-card
+  presentation test exactly once in `integration`, not `unit`;
+- the degraded technical-card copy matches the retained safe-degradation
+  contract.
+
+These edits are traceable to the reported CI regressions and are not unrelated
+product drift. They do not resolve the CSP/Tabs defect or failed verification
+state above.
+
+Standards/CI: **CHANGES_REQUESTED**, 2 blocking findings. Spec corrections other
+than the no-JavaScript Tabs behavior: no finding. Overall Gate 5:
+**CHANGES_REQUESTED**.
+
+## Refreshed CI-correction final rereview — 2026-09-21
+
+- Aggregating reviewer: independent agent `/root/final_object_card_review`
+- Standards/CI reviewer: independent agent `/root/final_object_card_review/standards_axis`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T004456Z-08dbf96f0e/package.json`
+- Base: `e67b566d8958faa0df8f8ebb8c09db3f1e0983ce`
+- Exact candidate source: `633b13700e721d9c66794c0de3d551b8bc741150968a3ce492fbcf26a09eaa5a`
+- Verdict: **CHANGES_REQUESTED**
+
+The prior CSP/Tabs implementation blocker is resolved:
+
+- the no-JavaScript rules now live in the external, CSP-permitted `pilot.css`
+  under `@media (scripting: none)`;
+- there is no inline style block;
+- Team, Documents, and History retain their initial `hidden` attributes, so the
+  server markup again satisfies the public SHLZ Tabs contract;
+- with scripting disabled, the external rule reveals the panels and native
+  select fallback while hiding the enhanced select trigger;
+- the engineer no-JavaScript test validates the visible required native select,
+  the enhanced test activates Team before interaction, and the touch-target test
+  considers only elements with rendered client rectangles;
+- the exact current `pilot.css` SHA-256
+  `b51464ede718381f967511d01aac7f69fbbb921699474786ca496d2434ea4ce1`
+  matches the production cutover inventory;
+- Gate 3 is current and formally `APPROVED` for this exact candidate.
+
+No new code, specification, accessibility, privacy, authorization, no-write, or
+unrelated-drift finding was identified in the full diff.
+
+### Remaining blocker — verification is not package-bound or exact-source CI GREEN
+
+The refreshed reviewer package still contains an empty `evidence` array. Seven
+external delivery-harness records do exist and are individually source-bound
+GREEN for candidate
+`633b13700e721d9c66794c0de3d551b8bc741150968a3ce492fbcf26a09eaa5a`:
+object-card acceptance, production web cutover, control-engineer assignment,
+installer-directory HTTP, change verification, runtime storage, and architecture
+guard. However, those records are not attached to the supplied reviewer package,
+so the stated package-bound evidence condition is false.
+
+Harness state also still reports exact-source CI `FAILURE`: `e2e`, `unit`, both
+Integration shards, `verify`, and `Quality Graph` failed. The failure inventory
+has no completed `REGRESSION_FAILURE` inventory and remains classified `UNKNOWN`.
+That run is bound to head `64060d779c6575df831b22478dde8af12ed794b5`, while
+this candidate includes subsequent dirty CSS/view/inventory corrections; harness
+reasons include `head_or_base_changed`, `preflight_binding_mismatch`, and
+`preflight_not_green`.
+
+Refresh the reviewer package so the seven GREEN records are attached, preserve
+complete triage of the failed attempt, publish the corrected candidate, and run
+the required exact-source CI to GREEN. Until then, the repository's mandatory
+verification rule prevents final approval even though the bounded implementation
+correction is sound.
+
+Code/spec axes: no findings. Verification/admission axis:
+**CHANGES_REQUESTED**, 1 remaining blocker. Overall Gate 5:
+**CHANGES_REQUESTED**.

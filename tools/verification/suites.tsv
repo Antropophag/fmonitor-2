@@ -220,6 +220,7 @@ db	php	tests/Yii2/yii2_local_runtime_provisioning_001_test.php	integration
 db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration
 db	php	tests/Yii2/yii2_minimal_operational_dashboard_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_001_test.php	integration
+db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration
 db	php	tests/Yii2/yii2_original_transport_001_test.php	integration
@@ -471,7 +472,6 @@ unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
-unit	php	tests/Yii2/yii2_object_card_presentation_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php	unit
 unit	python3	tools/delivery/ci_launch_transport_198_test.py	governance

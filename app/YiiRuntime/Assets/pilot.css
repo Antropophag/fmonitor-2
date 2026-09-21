@@ -144,6 +144,13 @@
   @keyframes fm2-preloader-reduced-in { from { opacity: .65; } to { opacity: 1; } }
 }
 
+@media (scripting: none) {
+  .fm2-object-tabs > .shlz-tabs__panel[hidden],
+  .fm2-object-tabs .shlz-select-fallback { display: block !important; }
+  .fm2-object-tabs .shlz-select__trigger { display: none !important; }
+  .fm2-object-tabs .shlz-select-fallback select { display: block !important; min-block-size: 40px; }
+}
+
 * { box-sizing: border-box; }
 
 .fm2-auth-page { min-block-size: 100vh; background: var(--fm2-canvas); }

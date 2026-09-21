@@ -140,7 +140,7 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             <?php if ($objectDetailsStatus === 'available'): ?>
                 <?php if ($objectDetails['fields'] === []): ?><div class="fm2-quiet-empty"><strong>Характеристики не указаны</strong><span>Дополнительные сведения об оборудовании отсутствуют.</span></div><?php endif ?>
             <?php else: ?>
-                <div class="fm2-problem" role="status"><strong>Сведения <?= $objectDetailsStatus === 'corrupt' ? 'повреждены' : 'недоступны' ?></strong><span>Работа с объектом остаётся доступна.</span></div>
+                <div class="fm2-problem" role="status"><strong>Карточка технических данных <?= $objectDetailsStatus === 'corrupt' ? 'повреждена' : 'недоступна' ?></strong><span>Работа с объектом остаётся доступна.</span></div>
             <?php endif ?>
         </section>
     </aside>
