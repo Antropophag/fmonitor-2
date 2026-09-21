@@ -16,6 +16,14 @@ x-runtime-environment: &runtime-environment
   FMONITOR_ORIGINAL_SAFE_LOG_FILE: /home/fmonitor/.local/state/fmonitor2/log/original-safe.jsonl
   FMONITOR_TRUSTED_REQUEST_HOST: "${FMONITOR_TRUSTED_REQUEST_HOST:?Set FMONITOR_TRUSTED_REQUEST_HOST}"
   FMONITOR_TRUSTED_REQUEST_SCHEME: "${FMONITOR_TRUSTED_REQUEST_SCHEME:?Set FMONITOR_TRUSTED_REQUEST_SCHEME}"
+  FMONITOR_ERP_HOST: "${FMONITOR_ERP_HOST:?Set FMONITOR_ERP_HOST}"
+  FMONITOR_ERP_DATABASE: "${FMONITOR_ERP_DATABASE:?Set FMONITOR_ERP_DATABASE}"
+  FMONITOR_ERP_USER: "${FMONITOR_ERP_USER:?Set FMONITOR_ERP_USER}"
+  FMONITOR_ERP_PASSWORD: "${FMONITOR_ERP_PASSWORD:?Set FMONITOR_ERP_PASSWORD}"
+  FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY: "${FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY:?Set FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY}"
+  FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS: "${FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS:?Set FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS}"
+  FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS: "${FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS:?Set FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS}"
+  FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE: "${FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE:?Set FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE}"
 
 x-image: &image
   image: "${FMONITOR_RUNTIME_IMAGE:?Set explicit runtime image reference}"
@@ -116,7 +124,6 @@ services:
 
   jobs-worker:
     <<: *app
-    profiles: ["jobs"]
     command: ["php", "bin/yii", "jobs/worker", "--interactive=0"]
     environment:
       <<: *runtime-environment
@@ -127,11 +134,6 @@ services:
       FMONITOR_BITRIX_CONFIG: /run/fmonitor-secrets/bitrix-config.json
       FMONITOR_BITRIX_TOKEN_FILE: /run/fmonitor-secrets/bitrix-token
       FMONITOR_BITRIX_CA_FILE: "${FMONITOR_BITRIX_CA_HOST_FILE:+/run/fmonitor-secrets/bitrix-ca.pem}"
-      FMONITOR_ERP_HOST: "${FMONITOR_ERP_HOST:-}"
-      FMONITOR_ERP_DATABASE: "${FMONITOR_ERP_DATABASE:-}"
-      FMONITOR_ERP_USER: "${FMONITOR_ERP_USER:-}"
-      FMONITOR_ERP_PASSWORD_FILE: /run/fmonitor-secrets/erp-password
-      FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_FILE: /run/fmonitor-secrets/erp-equipment-facts-hmac-key
       FMONITOR_RUNTIME_ENV: production
       FMONITOR_PUBLIC_BASE_URL: "${FMONITOR_PUBLIC_BASE_URL:-}"
       FMONITOR_SMTP_HOST: "${FMONITOR_SMTP_HOST:-}"
@@ -155,12 +157,8 @@ services:
         target: /run/fmonitor-secrets/bitrix-ca.pem
         read_only: true
       - type: bind
-        source: "${FMONITOR_ERP_PASSWORD_HOST_FILE:-/dev/null}"
-        target: /run/fmonitor-secrets/erp-password
-        read_only: true
-      - type: bind
-        source: "${FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY_HOST_FILE:-/dev/null}"
-        target: /run/fmonitor-secrets/erp-equipment-facts-hmac-key
+        source: "${FMONITOR_BITRIX_CONFIG_HOST_FILE:-../../.local/bitrix-workforce.json}"
+        target: /run/fmonitor-secrets/bitrix-config.json
         read_only: true
     depends_on:
       db:
@@ -168,7 +166,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "php", "bin/yii", "jobs/health", "--interactive=0"]
+      test: ["CMD", "php", "bin/yii", "jobs/process-health", "--interactive=0"]
       interval: 15s
       timeout: 10s
       retries: 8
@@ -179,7 +177,6 @@ services:
 
   jobs-scheduler:
     <<: *app
-    profiles: ["jobs"]
     command: ["php", "bin/yii", "jobs/scheduler", "--interactive=0"]
     depends_on:
       db:
@@ -187,7 +184,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "php", "bin/yii", "jobs/health", "--interactive=0"]
+      test: ["CMD", "php", "bin/yii", "jobs/process-health", "--interactive=0"]
       interval: 15s
       timeout: 10s
       retries: 8

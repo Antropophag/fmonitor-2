@@ -12,6 +12,7 @@ final class JobsController extends Controller
     public function actionWorker(): int { return $this->execute('worker'); }
     public function actionScheduler(): int { return $this->execute('scheduler'); }
     public function actionHealth(): int { return $this->execute('health'); }
+    public function actionProcessHealth(): int { return $this->execute('process-health'); }
 
     private function execute(string $mode): int
     {

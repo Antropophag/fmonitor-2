@@ -1,0 +1,116 @@
+{
+  "change": "operationalize-erp-equipment-sync",
+  "planned_paths": [
+    ".env.example",
+    "Makefile",
+    "Dockerfile",
+    "compose.yaml",
+    "deploy/runtime/Dockerfile",
+    "deploy/runtime/compose.yaml",
+    "tools/delivery/Dockerfile.pilot.in",
+    "tools/delivery/Dockerfile.runtime.in",
+    "tools/delivery/compose.yaml.in",
+    "tools/delivery/compose.runtime.yaml.in",
+    "tools/delivery/local-runtime-env",
+    "app/InstallationProcess/EquipmentFactsApplication.php",
+    "app/InstallationProcess/ErpEquipmentFactsDelivery.php",
+    "app/InstallationProcess/ErpEquipmentFactsDeliveryConfig.php",
+    "app/InstallationProcess/NativeErpEquipmentFactsDelivery.php",
+    "app/InstallationProcess/MariaDbErpEquipmentFactsCandidates.php",
+    "app/InstallationProcess/MariaDbErpEquipmentFactsSource.php",
+    "app/InstallationProcess/MariaDbSqlServerEquipmentFactsTransport.php",
+    "app/InstallationProcess/MariaDbEquipmentFactsRead.php",
+    "app/InstallationProcess/EquipmentFactsSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/Jobs/JobHandlerClaim.php",
+    "app/Jobs/JobHandlerRuntime.php",
+    "app/Jobs/JobsSchedulerProcess.php",
+    "app/Jobs/MariaDbEquipmentFactsScheduler.php",
+    "app/YiiRuntime/Commands/ErpEquipmentFactsSyncController.php",
+    "app/YiiRuntime/InstallationProcessFactory.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Controllers/HealthController.php",
+    "app/YiiRuntime/Commands/HealthController.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "config/yii/console.php",
+    "tests/Jobs/erp_equipment_facts_worker_001_test.php",
+    "tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php",
+    "tests/InstallationProcess/erp_equipment_facts_operational_001_test.php",
+    "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
+    "tests/Runtime/erp_equipment_facts_readiness_001_test.php",
+    "tests/Yii2/yii2_erp_equipment_facts_operational_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "versioned-claim-worker-success-retry-and-hourly-idempotency",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "public JobHandlerClaim/JobHandlerRuntime worker dispatch plus current-slot scheduler execution",
+      "tests": ["tests/Jobs/erp_equipment_facts_worker_001_test.php", "tests/Jobs/erp_equipment_facts_scheduler_001_test.php"],
+      "gate3_expected": {
+        "tests/Jobs/erp_equipment_facts_worker_001_test.php": "INTENDED_RED",
+        "tests/Jobs/erp_equipment_facts_scheduler_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "bounded-local-source-fully-qualified-legacy-sql-and-sentinel",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "canonical local candidate selection and parameterized MariaDbErpEquipmentFactsSource transport",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php", "tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php"],
+      "gate3_expected": {
+        "tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php": "INTENDED_RED",
+        "tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "atomic-authoritative-mapping-failure-idempotency-and-privacy",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "EquipmentFactsApplication complete/failed public command, diagnostics and readback",
+      "tests": ["tests/InstallationProcess/erp_equipment_facts_operational_001_test.php", "tests/InstallationProcess/erp_equipment_facts_changes_001_test.php", "tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php"],
+      "gate3_expected": {
+        "tests/InstallationProcess/erp_equipment_facts_operational_001_test.php": "GREEN",
+        "tests/InstallationProcess/erp_equipment_facts_changes_001_test.php": "GREEN",
+        "tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "direct-env-generated-parity-complete-startup-and-state-preserving-recovery",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "local-runtime-env, canonical/generated Docker Compose and ordinary pilot startup/update",
+      "tests": ["tests/Deployment/erp_equipment_facts_runtime_001_test.py", "tests/Deployment/pilot_jobs_compose_001_test.py", "tests/InstallationProcess/erp_equipment_facts_schema_001_test.php"],
+      "gate3_expected": {
+        "tests/Deployment/erp_equipment_facts_runtime_001_test.py": "INTENDED_RED",
+        "tests/Deployment/pilot_jobs_compose_001_test.py": "GREEN",
+        "tests/InstallationProcess/erp_equipment_facts_schema_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "jobs-aware-readiness-rejects-missing-crashed-or-stale-process",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "pilot HTTP/console readiness with scheduler and worker freshness",
+      "tests": ["tests/Runtime/erp_equipment_facts_readiness_001_test.php", "tests/Jobs/operator_health_001_test.php", "tests/Jobs/jobs_runtime_cli_001_test.php"],
+      "gate3_expected": {
+        "tests/Runtime/erp_equipment_facts_readiness_001_test.php": "INTENDED_RED",
+        "tests/Jobs/operator_health_001_test.php": "GREEN",
+        "tests/Jobs/jobs_runtime_cli_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "ERP-EQUIPMENT-FACTS-001",
+      "acceptance_id": "manual-and-live-card-run-last-success-known-objects-and-no-duplicate-history",
+      "spec_path": "specs/ERP-EQUIPMENT-FACTS-001.md",
+      "seam": "canonical manual command and authorized /pilot/objects/<id> equipmentFacts projection",
+      "tests": ["tests/Yii2/yii2_erp_equipment_facts_operational_001_test.php", "tests/Yii2/yii2_erp_equipment_facts_001_test.php", "tests/Yii2/yii2_erp_equipment_facts_console_001_test.php"],
+      "gate3_expected": {
+        "tests/Yii2/yii2_erp_equipment_facts_operational_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_erp_equipment_facts_001_test.php": "GREEN",
+        "tests/Yii2/yii2_erp_equipment_facts_console_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

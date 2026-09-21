@@ -95,6 +95,7 @@ db	php	tests/InstallationProcess/erp_equipment_facts_mapping_001_test.php	integr
 db	php	tests/InstallationProcess/erp_equipment_facts_read_001_test.php	integration
 db	php	tests/InstallationProcess/erp_equipment_facts_schema_001_test.php	integration
 db	php	tests/InstallationProcess/erp_equipment_facts_schema_compatibility_001_test.php	integration
+db	php	tests/InstallationProcess/erp_equipment_facts_source_scope_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/identity_access_schema_001_test.php	integration
 db	php	tests/InstallationProcess/inspection_evidence_schema_001_test.php	integration
@@ -148,6 +149,7 @@ db	php	tests/Jobs/durable_queue_001_test.php	integration
 db	php	tests/Jobs/durable_queue_concurrency_001_test.php	integration
 db	php	tests/Jobs/durable_queue_connection_loss_001_test.php	integration
 db	php	tests/Jobs/erp_equipment_facts_scheduler_001_test.php	integration
+db	php	tests/Jobs/erp_equipment_facts_worker_001_test.php	integration
 db	php	tests/Jobs/jobs_extensions_schema_001_test.php	integration
 db	php	tests/Jobs/jobs_runtime_cli_001_test.php	integration
 db	php	tests/Jobs/jobs_runtime_contract_001_test.php	integration
@@ -179,6 +181,7 @@ db	php	tests/Otiz/settlement_owner_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_http_001_test.php	integration
 db	php	tests/Runtime/deadline_transfer_certificate_recovery_001_test.php	integration
+db	php	tests/Runtime/erp_equipment_facts_readiness_001_test.php	integration
 db	php	tests/Runtime/initial_owner_provisioning_001_test.php	integration
 db	php	tests/Runtime/migration_concurrency_lock_001_test.php	integration
 db	php	tests/Runtime/migration_parallel_runners_001_test.php	integration
@@ -215,6 +218,7 @@ db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_http_001_test.php	integration
 db	php	tests/Yii2/yii2_erp_equipment_facts_001_test.php	integration
+db	php	tests/Yii2/yii2_erp_equipment_facts_operational_001_test.php	integration
 db	php	tests/Yii2/yii2_feedback_001_test.php	integration
 db	php	tests/Yii2/yii2_imports_workforce_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_boundaries_001_test.php	integration
@@ -323,6 +327,7 @@ unit	python3	tests/Delivery/canonical_live_admission_context_001_test.py	governa
 unit	python3	tests/Delivery/fast_maintenance_lifecycle_162_test.py	governance
 unit	python3	tests/Delivery/ordinary_change_process_001_test.py	governance
 unit	php	tests/Deployment/bitrix_startup_config_001_test.php	governance
+unit	python3	tests/Deployment/erp_equipment_facts_runtime_001_test.py	unit
 unit	python3	tests/Deployment/local_integration_env_001_test.py	unit
 unit	python3	tests/Deployment/local_integration_env_security_001_test.py	unit
 unit	python3	tests/Deployment/yii2_imports_workforce_package_001_test.py	unit
@@ -367,6 +372,7 @@ unit	php	tests/InstallationProcess/checklist_bulk_online_sequence_manual_test.ph
 unit	php	tests/InstallationProcess/control_queue_bulk_protocol_manual_test.php	integration
 unit	php	tests/InstallationProcess/document_render_html_001_test.php	unit
 unit	php	tests/InstallationProcess/erp_equipment_facts_delivery_001_test.php	unit
+unit	php	tests/InstallationProcess/erp_equipment_facts_operational_001_test.php	unit
 unit	php	tests/InstallationProcess/erp_equipment_facts_owner_boundary_001_test.php	unit
 unit	php	tests/InstallationProcess/harness_artifact_isolation_001_test.php	integration
 unit	php	tests/InstallationProcess/inspection_evidence_sql_owner_policy_test.php	governance

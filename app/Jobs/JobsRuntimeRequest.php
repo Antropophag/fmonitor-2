@@ -10,7 +10,7 @@ final readonly class JobsRuntimeRequest
     {
         $mode=array_shift($arguments);
         $flags=match($mode){
-            'schedule-once'=>['now-utc'], 'worker','scheduler','health'=>[],
+            'schedule-once'=>['now-utc'], 'worker','scheduler','health','process-health'=>[],
             'list-failed'=>['page','limit'], 'retry'=>['job-id','operation-id','now-utc'],
             default=>throw new \InvalidArgumentException(),
         };

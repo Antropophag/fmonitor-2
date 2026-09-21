@@ -75,7 +75,18 @@ def main() -> int:
     override = fixture_root / "compose.override.yaml"
     server: subprocess.Popen[str] | None = None
     env = dict(os.environ)
-    env.update({"FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD": "compose-fixture-password", "COMPOSE_PROJECT_NAME": project})
+    env.update({
+        "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD": "compose-fixture-password",
+        "COMPOSE_PROJECT_NAME": project,
+        "FMONITOR_ERP_HOST": "erp.example.invalid",
+        "FMONITOR_ERP_DATABASE": "1c-erp",
+        "FMONITOR_ERP_USER": "reader",
+        "FMONITOR_ERP_PASSWORD": "synthetic-compose-password",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY": "h" * 40,
+        "FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS": "500",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS": "5",
+        "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE": "100",
+    })
     base = ["docker", "compose", "--progress", "quiet", "--project-name", project, "--file", str(ROOT / "compose.yaml"), "--file", str(override)]
 
     try:
