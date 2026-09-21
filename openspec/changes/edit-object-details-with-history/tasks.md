@@ -1,7 +1,7 @@
 ## 1. Gate 1 — contract and field frontier
 
-- [ ] 1.1 Root creates `specs/OBJECT-DETAILS-EDITING-001.md` from the approved issue/OpenSpec contract, including the public command seam, full field matrix, plan-fixation rule, Kшах derivation, authorization, replay/concurrency, history and consumer outcomes; verify every OpenSpec scenario maps to a stable-spec acceptance item.
-- [ ] 1.2 Root inventories current native models, technical payload fields and real readers/filters/documents/ERP/Bitrix/OTIZ consumers; record every existing field as editable, integration-owned, process-owned or derived-system with a named owner and verify no ordinary existing field is silently omitted.
+- [x] 1.1 Root creates `specs/OBJECT-DETAILS-EDITING-001.md` from the approved issue/OpenSpec contract, including the public command seam, full field matrix, plan-fixation rule, Kшах derivation, authorization, replay/concurrency, history and consumer outcomes; verify every OpenSpec scenario maps to a stable-spec acceptance item.
+- [x] 1.2 Root inventories current native models, technical payload fields and real readers/filters/documents/ERP/Bitrix/OTIZ consumers; record every existing field as editable, integration-owned, process-owned or derived-system with a named owner and verify no ordinary existing field is silently omitted.
 - [ ] 1.3 Create `verification-input.json`, run harness `prepare`, read the mandatory Quality Graph obligations/commands and resolve every applicable/unapplicable coverage item before Gate 2.
 
 ## 2. Gate 2 — root-authored RED tests
