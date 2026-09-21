@@ -15,12 +15,16 @@
 </div>
 <div class="fm2-control-surface"><table class="fm2-control-table"><thead><tr><th>Объект</th><th>Последняя активность</th><th>Инженер</th><th><span class="fm2-visually-hidden">Открыть</span></th></tr></thead>
 <tbody>
-<?php foreach($objects as$o):$engineer=$o['controlEngineer'];?>
+<?php foreach($objects as$o):$engineer=$o['controlEngineer'];$shipmentDate=$o['fullShipmentDate']??$o['firstShipmentDate']??null;$shipmentState=($o['fullShipmentDate']??null)!==null?'full':(($o['firstShipmentDate']??null)!==null?'first':null);$shipmentTitle=$shipmentState==='full'?'Заказ отгружен полностью':'Первое грузоместо отгружено';$shipmentIcon=$shipmentState==='full'?'delivery-4.svg':'delivery-box.svg';?>
 <tr class="fm2-control-row" data-control-row data-object-id="<?=$o['id']?>" data-engineer-id="<?=(int)($engineer['userId']??0)?>" data-completed="<?=$o['completed']?'true':'false'?>" data-search="<?=Html::encode(mb_strtolower($o['address'].' '.$o['registrationNumber']))?>">
 <td>
 <a class="fm2-control-link" href="/pilot/construction-control/objects/<?=$o['id']?>/checklist">
 <span class="fm2-control-address"><?=Html::encode($o['address'])?></span><span class="fm2-control-reg">Рег. № <?=Html::encode($o['registrationNumber'])?><?php if(trim((string)$o['entrance'])!==''):?><span class="fm2-control-entrance">Подъезд <?=Html::encode((string)$o['entrance'])?></span><?php endif?></span>
 </a>
+<?php if($shipmentState!==null):?><details class="fm2-shipment-indicator fm2-shipment-indicator--<?=$shipmentState?>" data-shipment-disclosure data-shipment-state="<?=$shipmentState?>">
+<summary aria-label="<?=Html::encode($shipmentTitle)?>"><img src="/pilot/assets/shlz-icons/<?=$shipmentIcon?>" data-shlz-icon="<?=pathinfo($shipmentIcon,PATHINFO_FILENAME)?>" alt=""><span class="fm2-visually-hidden"><?=Html::encode($shipmentTitle)?></span></summary>
+<span class="fm2-shipment-detail"><strong><?=Html::encode($shipmentTitle)?></strong><time datetime="<?=Html::encode((string)$shipmentDate)?>"><?=(new DateTimeImmutable((string)$shipmentDate))->format('d.m.Y')?></time></span>
+</details><?php endif?>
 <?php if($o['ready']??false):?><strong>Готов к открытию</strong><?php endif?>
 </td>
 <td>

@@ -61,7 +61,7 @@ trait MariaDbYiiChecklistRead
     $hasDeclaration="EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='declaration')";
     $hasOriginalRoot="EXISTS(SELECT 1 FROM {$this->t('fm2_assignment_order_original_roots')} original_root JOIN {$this->t('fm2_assignment_order_selections')} selected ON selected.installation_case_id=c.id AND selected.assignment_order_id=original_root.assignment_order_id WHERE original_root.installation_case_id=c.id AND selected.selection_revision=(SELECT MAX(latest.selection_revision) FROM {$this->t('fm2_assignment_order_selections')} latest WHERE latest.installation_case_id=c.id) AND BINARY selected.composition_identity=BINARY original_root.composition_identity AND BINARY selected.composition_sha256=BINARY original_root.composition_sha256)";
     $active="(c.process_state='working' AND (NOT $hasPtoAct OR $hasDeclaration)) OR (c.process_state IN('needs_assignment_order','assignment_order_prepared') AND NOT $hasPtoAct AND $hasOriginalRoot)";
-    $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,$hasPtoAct has_pto_act,$hasDeclaration has_declaration,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE $active ORDER BY has_pto_act AND has_declaration,last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
+    $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.ordadr_address address,m.entrance,m.regnumber registration_number,e.first_shipment_date,e.full_shipment_date,$hasPtoAct has_pto_act,$hasDeclaration has_declaration,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id LEFT JOIN {$this->t('fm2_equipment_fact_current')} e ON e.object_id=c.legacy_installation_object_id WHERE $active ORDER BY has_pto_act AND has_declaration,last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
     $total=(int)($this->one("SELECT COUNT(*) n FROM {$this->t('fm2_installation_cases')} c WHERE $active")['n']??0);$offset=($page-1)*$size;
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
@@ -71,6 +71,8 @@ trait MariaDbYiiChecklistRead
     $r['registrationNumber']=$r['registration_number'];
     $r['completed']=$completed;
     $r['lastChecklistActivityAt']=$r['last_activity_at'];
+    $r['firstShipmentDate']=$r['first_shipment_date'];
+    $r['fullShipmentDate']=$r['full_shipment_date'];
     $r['_pagination']=['page'=>$page,'pages'=>$pages,'total'=>$total,'pageSize'=>$size];
     }return$rows;
         }

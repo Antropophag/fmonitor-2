@@ -214,6 +214,7 @@ db	php	tests/Yii2/yii2_canonical_migrations_db_001_test.php	integration
 db	php	tests/Yii2/yii2_case_import_db_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_active_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
+db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	integration
 db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_http_001_test.php	integration
