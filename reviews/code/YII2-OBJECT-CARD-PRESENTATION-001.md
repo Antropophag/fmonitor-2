@@ -555,3 +555,49 @@ Exact-source CI remains separate and is not claimed.
 
 Standards: **APPROVED**, 0 findings. Spec/visual: **APPROVED**, 0 findings.
 Overall Gate 5 for the exact candidate above: **APPROVED**.
+
+## Post-rebase moved-main integration review — 2026-09-21
+
+- Reviewer: independent agent `/root/post_rebase_object_card_review`; authored neither the implementation nor its tests
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260921T000625Z-6d1d24fe52/package.json`
+- Rebased base: `e67b566d8958faa0df8f8ebb8c09db3f1e0983ce`
+- Rebased head: `9997ca2146fc8aa3ee2090d1ff78e0da3bdc77a0`
+- Exact candidate source: `e9c1585a72539f15d7fa4fef585af87e5cd5f0685a109dfa63d93e24fa61af74`
+- Verdict: **APPROVED**
+
+No findings. The full base-to-head diff preserves the approved object-card
+contract, tests, implementation and prior review history. The rebase also
+preserves the intervening minimal-dashboard and weekly-email changes from moved
+`main`: dashboard CSS remains alongside the object-card rules, and their newly
+registered verification entries remain in `tools/verification/suites.tsv`.
+
+The conflict-sensitive production asset inventory is internally exact. Its
+`pilot.css` SHA-256 is
+`fc9324da1fc72cc353870060ebe278adf15e1a46fe1bed9ece7a6d77e9dba4ae`,
+matching the combined post-rebase stylesheet (including the moved-main dashboard
+rules). `navigation.js` matches
+`e6325fc6e0262ee98fff2e3c848b89e6c5691d60a2b3b59c9c3be7cce6c32cc3`.
+The canonical public PDF and download SVG exports match their registered hashes
+`97e564168a005b67340870d42bdb828c8469fdb547bd6a22b9d8a97b18352a87`
+and `0b290278a6a0cdfb4986cc98125833f1020cb3cfc0c511e878868d106622bfd5`.
+Their MIME, one-hour non-immutable cache policy and bounded route mapping remain
+unchanged. `git diff --check` is clean.
+
+The specification and delta remain aligned: technical facts stay in the narrow
+left passport, the primary action and tabs remain in the wider right workspace,
+readiness facts are not invented, current workforce status is used, document
+rows use public SHLZ assets, and GET/HEAD remain authorized and read-only. The
+focused DOM/browser assertions remain sensitive to desktop/mobile composition,
+keyboard tabs, no-JavaScript content, capability-gated controls, asset delivery,
+and no-write behavior.
+
+The package contains five drift-free exact-source GREEN records for the focused
+object-card acceptance, production web cutover, change verification, runtime
+storage integration and architecture guard. Each starts and ends at candidate
+`e9c1585a72539f15d7fa4fef585af87e5cd5f0685a109dfa63d93e24fa61af74`
+on head `9997ca2146fc8aa3ee2090d1ff78e0da3bdc77a0` with a clean source state.
+The harness could not refresh live GitHub state (`ValueError`), so mandatory
+exact-source CI remains separate and **UNKNOWN**; this review does not claim CI,
+publication, merge or deployment readiness.
+
+Overall post-rebase Gate 5 for the exact candidate above: **APPROVED**.
