@@ -45,13 +45,14 @@ final class WeeklyFkrReportRenderer
                 $body.=$this->rowHtml($key,$row);
             }
             $text[]='';
-            $heading='<tr><td colspan="4" width="100%" align="left" valign="top" style="width:100%;padding:3px 5px;background-color:#0b1623;color:#fff;">'
+            $heading='<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;"><tr>'
+                .'<td width="100%" align="left" valign="top" style="width:100%;padding:3px 5px;background-color:#0b1623;color:#fff;">'
                 .'<h2 data-status-label="'.$title.'" '
                 .'style="margin:0;color:#ffffff;background-color:#0b1623;font-size:14px;line-height:1.3;">'
-                .$title.'</h2></td></tr>';
-            $sections.='<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
+                .$title.'</h2></td></tr></table>';
+            $sections.=$heading.'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
                 .'data-report-section="'.$key.'" style="width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 6px;">'
-                .$heading.$this->columnHeader($key).$body.'</table>';
+                .$this->columnHeader($key).$body.'</table>';
         }
         $html=$this->document($subject,$period,$generated,$this->summary($summaryCounts),$sections);
         $text[]='Письмо сформировано автоматически. Отвечать на него не нужно.';
@@ -121,26 +122,26 @@ final class WeeklyFkrReportRenderer
             $date=$r['date'];$detail=$r['label'];
         }
         return '<tr data-object-id="'.$this->esc($r['objectId']).'">'
-            .$this->dataCell('<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'.$this->esc($r['registrationNumber']).'</a>','13%')
-            .$this->dataCell($this->esc($r['address']),'37%')
-            .$this->dataCell($this->esc((string)$date),'16%')
-            .$this->dataCell($this->esc((string)$detail),'34%').'</tr>';
+            .$this->dataCell('<a href="'.$this->esc($r['url']).'" style="display:inline;padding:0">'.$this->esc($r['registrationNumber']).'</a>','9%',58)
+            .$this->dataCell($this->esc($r['address']),'41%',262)
+            .$this->dataCell($this->esc((string)$date),'16%',102)
+            .$this->dataCell($this->esc((string)$detail),'34%',218).'</tr>';
     }
     private function columnHeader(string$key):string
     {
         $third=$key==='progress'?'Изменение':'Срок';
         $fourth=match($key){'plannedOpenings'=>'Статус','plannedClosings'=>'Раб. / док. / итого','progress'=>'Работы / документы',default=>'Тип'};
         return '<tr data-column-header="'.$key.'">'
-            .$this->headerCell('Объект','13%').$this->headerCell('Адрес','37%')
-            .$this->headerCell($third,'16%').$this->headerCell($fourth,'34%').'</tr>';
+            .$this->headerCell('Объект','9%',58).$this->headerCell('Адрес','41%',262)
+            .$this->headerCell($third,'16%',102).$this->headerCell($fourth,'34%',218).'</tr>';
     }
-    private function headerCell(string$content,string$width):string
+    private function headerCell(string$content,string$width,int$outlookWidth):string
     {
-        return '<td width="'.$width.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;background-color:#eef0f4;color:#46515e;font-size:11px;line-height:1.2;font-weight:700;">'.$content.'</td>';
+        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;background-color:#eef0f4;color:#46515e;font-size:11px;line-height:1.2;font-weight:700;">'.$content.'</td>';
     }
-    private function dataCell(string$content,string$width):string
+    private function dataCell(string$content,string$width,int$outlookWidth):string
     {
-        return '<td width="'.$width.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;font-size:12px;line-height:1.25;border-bottom:1px solid #e5e7eb;">'.$content.'</td>';
+        return '<td width="'.$outlookWidth.'" align="left" valign="top" style="width:'.$width.';padding:2px 3px;font-size:12px;line-height:1.25;border-bottom:1px solid #e5e7eb;">'.$content.'</td>';
     }
     private function esc(string$value):string{return htmlspecialchars($value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 }
