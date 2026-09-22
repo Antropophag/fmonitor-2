@@ -227,9 +227,9 @@ async function completeChecklist(browser) {
 
 async function completeDocuments(ownerPage) {
   await ownerPage.goto(`${base}/pilot/objects/4512`);
-  await ownerPage.getByRole('button', { name: 'Зафиксировать акт ПТО', exact: true }).click();
+  await Promise.all([ownerPage.waitForNavigation(), ownerPage.getByRole('button', { name: 'Зафиксировать акт ПТО', exact: true }).click()]);
   await ownerPage.locator('input[name="declarationDetails"]').fill('SYNTHETIC-DECLARATION');
-  await ownerPage.getByRole('button', { name: 'Завершить работы', exact: true }).click();
+  await Promise.all([ownerPage.waitForNavigation(), ownerPage.getByRole('button', { name: 'Завершить работы', exact: true }).click()]);
   await ownerPage.getByRole('progressbar', { name: 'Готовность работ' }).waitFor();
   output.finalProgress = await ownerPage.getByRole('progressbar', { name: 'Готовность работ' }).getAttribute('aria-valuenow');
   markAction(ownerPage, 'completion-reload');
