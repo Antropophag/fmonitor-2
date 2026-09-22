@@ -23,3 +23,20 @@ Source: `bced877aec8a8802e97037749ca4251d3098df1a` — одновременно 
 Runtime witness, screenshots и окончательный статус каждого finding будут
 добавлены после Gate 1 verification plan и до завершения задачи 1.2. Новые
 наблюдения не расширяют scope автоматически.
+
+## Gate 2 baseline blocker — 2026-09-22
+
+На exact `origin/main` `bced877a` существующие authenticated browser journeys
+не достигают новых UI assertions:
+
+- `yii2_installer_directory_browser_001_test.php`: `/pilot/installers` — 503;
+- `yii2_user_access_browser_001_test.php`: `/pilot/admin/users` — 503;
+- `yii2_preopening_browser_001_test.php`: ранний `INTENDED_RED Yii preopening browser card`;
+- `yii2_otiz_shlz_ui_001_test.php`: ранний `shared authenticated shlz shell`,
+  ожидаемый root отсутствует.
+
+Новый isolated login browser test достигает публичного seam и даёт корректный
+V09 RED на отсутствующем skip-link; structural test даёт корректный V02 RED.
+Gate 3 reviewer подтвердил эти два узких evidence, но вернул
+`CHANGES_REQUESTED`: они не покрывают A–G. До решения владельца baseline failures
+не выдаются за RED этого change и не исправляются как неявное расширение scope.
