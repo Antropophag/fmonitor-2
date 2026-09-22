@@ -7,6 +7,7 @@
     "app/YiiRuntime/Assets/preopening.js",
     "tests/Support/object_details_editing_browser.cjs",
     "tests/Support/object_details_editing_recovery_browser.cjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "tests/Yii2/yii2_object_details_editing_browser_001_test.php"
   ],
   "acceptances": [

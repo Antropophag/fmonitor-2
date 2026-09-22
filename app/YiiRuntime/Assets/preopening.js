@@ -130,7 +130,7 @@
 const detailsDialog=document.querySelector('[data-object-details-dialog]');
 const detailsTrigger=document.querySelector('[data-object-details-edit]');
 if(detailsDialog&&detailsTrigger){
-  const detailsForm=detailsDialog.querySelector('form');
+  const detailsForm=detailsDialog.getElementsByTagName('form')[0]||null;
   const persistedValues=new Map();
   if(detailsForm){
     const baseline=JSON.parse(detailsForm.dataset.objectDetailsBaseline||'{}');
@@ -145,14 +145,16 @@ if(detailsDialog&&detailsTrigger){
   const reset=()=>{
     if(!detailsForm)return;
     for(const[name,values]of persistedValues){
-      for(const control of detailsForm.querySelectorAll(`[name="${CSS.escape(name)}"]`))control.value=values[0];
-      const root=[...detailsForm.querySelectorAll('[data-shlz-select]')].find(node=>node.querySelector(`input[type="hidden"][name="${CSS.escape(name)}"]`));
+      for(const control of detailsForm.elements)if(control.name===name)control.value=values[0];
+      const submitted=[...detailsForm.getElementsByTagName('input')].find(input=>input.type==='hidden'&&input.name===name);
+      const root=submitted?.parentElement||null;
       if(!root)continue;
-      const options=[...root.querySelectorAll('[role="option"]')],selected=options.find(option=>option.dataset.value===values[0]);
+      const buttons=[...root.getElementsByTagName('button')];
+      const options=buttons.filter(button=>button.getAttribute('role')==='option'),selected=options.find(option=>option.dataset.value===values[0]);
       for(const option of options)option.setAttribute('aria-selected',String(option===selected));
-      const trigger=root.querySelector('[role="combobox"]');
+      const trigger=buttons.find(button=>button.getAttribute('role')==='combobox')||null;
       trigger?.classList.toggle('shlz-select__trigger--selected',Boolean(values[0]));
-      const valueNode=trigger?.querySelector('[data-shlz-select-value]');
+      const valueNode=trigger?.firstElementChild;
       if(valueNode&&selected)valueNode.textContent=selected.textContent.trim();
     }
   };
