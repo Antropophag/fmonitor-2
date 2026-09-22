@@ -54,7 +54,7 @@ try {
     $declarationInvalid=['declarationDate'=>'2026-09-04','declarationDetails'=>'  '];
     $assertRejectedForm($fixture->post('record_declaration',$declarationInvalid),'record_declaration',$declarationInvalid,'declarationDetails','Укажите реквизиты декларации.');
     DocumentaryFixture::accepted($fixture->post('record_declaration',['declarationDate'=>'2026-09-04','declarationDetails'=>'Д-RECOVERY-001']));
-    $roots=$http->rows('fm2_pilot_completion_facts');$byType=array_column($roots,null,'fact_type');
+    $roots=$http->rows('fm2_pilot_completion_facts');$immutableRoots=$roots;$byType=array_column($roots,null,'fact_type');
 
     $invalidCorrections=[
         ['correct_pto',['factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'  '],['ptoActDate'=>'2026-09-03','reason'=>'  ']],
@@ -68,6 +68,7 @@ try {
     DocumentaryFixture::accepted($fixture->post('correct_pto',['factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Дата сверена']));
     DocumentaryFixture::accepted($fixture->post('correct_declaration',['factId'=>(string)$byType['declaration']['id'],'declarationDate'=>'2026-09-02','declarationDetails'=>'Д-RECOVERY-002','reason'=>'Реквизиты сверены']));
     assertSameValue(2,count($http->rows('fm2_pilot_completion_fact_corrections')),'two successful retries append one history row each');
+    assertSameValue($immutableRoots,$http->rows('fm2_pilot_completion_facts'),'successful corrections preserve exact immutable roots');
 
     // Recognized domain conflicts stay in the submitted form and remain non-success.
     $before=$http->facts();$conflict=$fixture->post('record_declaration',['declarationDate'=>'2026-09-01','declarationDetails'=>'Д-CONFLICT']);
@@ -92,17 +93,14 @@ try {
     $http->db->query("DELETE FROM {$http->p}fm2_pilot_role_permissions WHERE role_id=1 AND permission='installation.completion.pto.correct'");
     $before=$http->facts();$denied=$fixture->post('correct_pto',['factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Сохранить нельзя']);assertSameValue(403,$denied['status'],'lost capability remains access denial');assertSameValue(false,str_contains($denied['body'],'Д-RECOVERY-001'),'access denial discloses no document data');assertSameValue($before,$http->facts(),'access denial no facts');$http->insert($http->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'installation.completion.pto.correct']);
     $guest=[];$session=$http->form('/pilot/objects/4512/completion',['action'=>'correct_pto','factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Session'],$guest);assertSameValue(true,in_array($session['status'],[303,400,401,403],true),'expired session is not a field error');assertSameValue(false,str_contains($session['body'],'Д-RECOVERY-001'),'session response discloses no document data');
-
-    // One connected real-browser journey: double submit, unknown result, server
-    // validation swap/focus, correction, and one real append-only retry.
-    $config=$http->artifacts.'/completion-recovery-browser.json';$result=$http->artifacts.'/completion-recovery-result.json';$log=$http->artifacts.'/completion-recovery-browser.log';
-    file_put_contents($config,json_encode(['origin'=>'http://127.0.0.1:'.$http->server['port'],'email'=>$http->emails[18],'password'=>$http->password,'result'=>$result,'playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($http->root).'/shlz-ui/node_modules/playwright'],JSON_THROW_ON_ERROR));chmod($config,0600);
-    $beforeCorrections=count($http->rows('fm2_pilot_completion_fact_corrections'));
-    $browser=proc_open([getenv('FMONITOR_TEST_NODE_BINARY')?:'node',__DIR__.'/completion_form_recovery_browser.mjs',$config],[0=>['file','/dev/null','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes,$http->root);if(!is_resource($browser))throw new TestFailure('SETUP_FAILURE completion recovery browser');
-    $deadline=microtime(true)+60;do{$state=proc_get_status($browser);if(!$state['running'])break;usleep(20000);}while(microtime(true)<$deadline);if($state['running']){proc_terminate($browser,9);throw new TestFailure('browser timeout '.$http->artifacts);}$exit=$state['exitcode'];proc_close($browser);assertSameValue(0,$exit,'INTENDED_RED completion recovery browser '.file_get_contents($log));assertSameValue(['passed'=>true,'posts'=>1],json_decode((string)file_get_contents($result),true,flags:JSON_THROW_ON_ERROR),'browser completed matrix');assertSameValue($beforeCorrections+1,count($http->rows('fm2_pilot_completion_fact_corrections')),'browser retry appends exactly one correction');
+    foreach([
+        $http->form('/pilot/objects/4512/completion',['_csrf'=>'wrong','action'=>'correct_pto','factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'CSRF'],$fixture->cookies),
+        $fixture->post('unknown',['ptoActDate'=>'2026-09-03']),
+        $http->request('POST','/pilot/objects/4512/completion',[],$fixture->cookies,['Content-Type: application/x-www-form-urlencoded'],'_csrf='.rawurlencode($fixture->csrf).'&action=record_pto&ptoActDate=%ZZ'),
+    ] as $boundary){assertSameValue(true,in_array($boundary['status'],[400,422],true),'transport boundary rejected');assertSameValue(false,str_contains($boundary['body'],'Д-RECOVERY-001'),'transport boundary renders no protected card');}
 
     $http->noLegacy();
-    echo "PASS: YII2-COMPLETION-FORM-RECOVERY-001 HTTP/browser contract\n";
+    echo "PASS: YII2-COMPLETION-FORM-RECOVERY-001 HTTP contract\n";
 } finally {
     if($incomplete instanceof DocumentaryFixture)$incomplete->close();
     if($fixture instanceof DocumentaryFixture)$fixture->close();

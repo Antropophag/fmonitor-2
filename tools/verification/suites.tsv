@@ -219,6 +219,7 @@ db	php	tests/Yii2/yii2_canonical_migrations_db_001_test.php	integration
 db	php	tests/Yii2/yii2_case_import_db_001_test.php	integration
 db	php	tests/Yii2/yii2_checklist_photo_viewing_001_test.php	integration
 db	php	tests/Yii2/yii2_completion_form_recovery_001_test.php	integration
+db	php	tests/Yii2/yii2_completion_form_recovery_browser_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_active_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	integration
