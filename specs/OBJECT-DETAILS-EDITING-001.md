@@ -75,6 +75,8 @@ Patch MUST быть JSON/form-map с exact уникальными string keys и
 
 Numbers проверяются без binary float; допустимая decimal запятая/точка нормализуется в canonical representation. Справочник проверяет code/value и выдаёт coherent raw/display. Пропущенный key означает «не менять». Пустой соседний input не сбрасывает существующий override и не подставляет `0`/`1`; явное очищение допустимо только для nullable field через однозначный wire representation. Любая ошибка даёт field-aware stable validation result и ноль writes.
 
+Browser editor MUST отправлять patch только для полей, значение которых пользователь действительно изменил. Неизменённое legacy/import-представление соседнего поля, включая неизвестный редактору код или расхождение `raw`/`display`, MUST NOT попадать в command и блокировать независимое исправление другого поля. Если пользователь изменяет само поле, обычная typed validation остаётся обязательной.
+
 Пример: `regnumber=00042`, `zavnumber=00123-А` после reload остаются точными строками. `zavnumber` >120 bytes отклоняется без truncation. `shaftBp`, `ptoactdate`, ERP dates, process state/progress или system ID отклоняют весь request.
 
 ## 4. Authorization, idempotency и concurrency
@@ -142,6 +144,7 @@ Rollback web image скрывает editor, но не удаляет additive sc
 | A13 | Canonical Yii POST проверяет auth/CSRF/method/outcomes; browser modal имеет две группы, unchanged card+icon, input retention/cancel/reload. |
 | A14 | Shared modal close control доступен и визуально пригоден во всех app modals. |
 | A15 | Migration/recovery lifecycle сохраняет data/history/replay и следующий write. |
+| A16 | Browser Save передаёт только действительно изменённые поля; различные неизменённые legacy-коды соседнего поля не блокируют независимое исправление. |
 
 ## 10. Evidence and non-goals
 
