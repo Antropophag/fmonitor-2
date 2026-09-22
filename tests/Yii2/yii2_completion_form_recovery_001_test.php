@@ -6,13 +6,16 @@ require __DIR__.'/DocumentaryFixture.php';
 
 // YII2-COMPLETION-FORM-RECOVERY-001 A1-A4.
 // Public seam: authenticated Yii completion POST and the rendered object card.
-$fixture=null;
+$fixture=null;$incomplete=null;
 try {
     $fixture=new DocumentaryFixture(dirname(__DIR__,2));
     $fixture->open();
     $fixture->progress();
     $http=$fixture->http;
     $future=(new DateTimeImmutable('tomorrow',new DateTimeZone('Europe/Moscow')))->format('Y-m-d');
+
+    $incomplete=new DocumentaryFixture(dirname(__DIR__,2));$incomplete->open();$incomplete->progress(false);$incompleteBefore=$incomplete->http->facts();
+    $incompleteResponse=$incomplete->post('record_pto',['ptoActDate'=>'2026-09-05']);assertSameValue(409,$incompleteResponse['status'],'CHECKLIST_INCOMPLETE status');assertSameValue(true,str_contains($incompleteResponse['body'],'Сначала завершите монтажные работы до 85%.'),'CHECKLIST_INCOMPLETE explanation');assertSameValue(true,str_contains(implode(' ',$incompleteResponse['headers']['content-type']??[]),'text/html'),'CHECKLIST_INCOMPLETE stays on card');assertSameValue($incompleteBefore,$incomplete->http->facts(),'CHECKLIST_INCOMPLETE creates no facts');$incomplete->close();$incomplete=null;
 
     $assertRejectedForm=static function(array $response,string $action,array $values,string $field,string $message,bool $open=false):void {
         assertSameValue(422,$response['status'],$action.' keeps validation HTTP status');
@@ -36,9 +39,13 @@ try {
         $other=$xpath->query('//form[@data-completion-form and @data-completion-form!="'.$action.'"]//*[@value="'.str_replace('"','&quot;',$values[array_key_first($values)]).'" or text()="'.$values[array_key_first($values)].'"]');
         assertSameValue(0,$other->length,$action.' values do not bleed into sibling forms');
         assertSameValue(true,str_contains($response['body'],'id="completion"'),$action.' remains in completion section');
+        $panel=$xpath->query('//*[@id="completion"]/ancestor::*[@role="tabpanel"][1]');
+        assertSameValue(1,$panel->length,$action.' completion panel exists');assertSameValue(false,$panel->item(0)->hasAttribute('hidden'),$action.' completion panel is visible');
     };
 
     $before=$http->facts();
+    $ptoRequired=$fixture->post('record_declaration',['declarationDate'=>'2026-09-04','declarationDetails'=>'Д-ПОРЯДОК']);
+    assertSameValue(409,$ptoRequired['status'],'PTO_REQUIRED status');assertSameValue(true,str_contains($ptoRequired['body'],'Сначала зафиксируйте дату акта ПТО.'),'PTO_REQUIRED explanation');assertSameValue($before,$http->facts(),'PTO_REQUIRED creates no facts');
     $ptoInvalid=['ptoActDate'=>$future];
     $assertRejectedForm($fixture->post('record_pto',$ptoInvalid),'record_pto',$ptoInvalid,'ptoActDate','Укажите дату акта ПТО не позже сегодняшней.');
     assertSameValue($before,$http->facts(),'invalid PTO creates no facts');
@@ -62,23 +69,41 @@ try {
     DocumentaryFixture::accepted($fixture->post('correct_declaration',['factId'=>(string)$byType['declaration']['id'],'declarationDate'=>'2026-09-02','declarationDetails'=>'Д-RECOVERY-002','reason'=>'Реквизиты сверены']));
     assertSameValue(2,count($http->rows('fm2_pilot_completion_fact_corrections')),'two successful retries append one history row each');
 
-    // A recognized domain conflict stays in the submitted form and remains non-success.
+    // Recognized domain conflicts stay in the submitted form and remain non-success.
     $before=$http->facts();$conflict=$fixture->post('record_declaration',['declarationDate'=>'2026-09-01','declarationDetails'=>'Д-CONFLICT']);
     assertSameValue(409,$conflict['status'],'domain conflict status preserved');
     assertSameValue(true,str_contains(implode(' ',$conflict['headers']['content-type']??[]),'text/html'),'domain conflict renders card');
     assertSameValue(true,str_contains($conflict['body'],'Документ уже зафиксирован.'),'domain reason visible');
     assertSameValue(true,str_contains($conflict['body'],'value="Д-CONFLICT"'),'conflict retains submitted details');
+    $conflictDom=new DOMDocument();@$conflictDom->loadHTML('<?xml encoding="UTF-8">'.$conflict['body']);$conflictXpath=new DOMXPath($conflictDom);
+    assertSameValue(1,$conflictXpath->query('//*[@data-completion-form="record_declaration"]//*[@data-completion-focus="true" and @role="alert"]')->length,'general conflict focus target');
     assertSameValue($before,$http->facts(),'confirmed conflict creates no facts');
 
-    // Completion enhancement is address-scoped; the browser matrix exercises its
-    // in-flight guard, unknown-result copy/value retention, and successful retry.
-    $asset=dirname(__DIR__,2).'/app/YiiRuntime/Assets/completion-form.js';
-    assertSameValue(true,is_file($asset),'INTENDED_RED completion browser asset exists');
-    $source=(string)file_get_contents($asset);
-    foreach(['data-completion-form','Результат сохранения не подтверждён','fetch'] as $needle)assertSameValue(true,str_contains($source,$needle),'completion asset contract '.$needle);
+    foreach([
+        [999999,'correct_declaration',['factId'=>(string)$byType['declaration']['id'],'declarationDate'=>'2026-09-01','declarationDetails'=>'Д-OTHER','reason'=>'Проверка'],404,'Объект не найден.'],
+        [4512,'correct_declaration',['factId'=>'999999','declarationDate'=>'2026-09-01','declarationDetails'=>'Д-NOT-FOUND','reason'=>'Проверка'],409,'Исправляемая запись не найдена.'],
+    ] as[$id,$action,$fields,$status,$message]){
+        $before=$http->facts();$response=$fixture->post($action,$fields,id:$id);assertSameValue($status,$response['status'],$message.' status');assertSameValue(true,str_contains($response['body'],$message),$message.' visible');assertSameValue($before,$http->facts(),$message.' no facts');
+        if($id!==4512)assertSameValue(false,str_contains($response['body'],'Д-OTHER'),'another object does not receive submitted values');
+    }
+    $http->db->query("UPDATE {$http->p}fm2_installation_cases SET process_state='needs_assignment_change' WHERE id=6101");
+    $before=$http->facts();$notWorking=$fixture->post('correct_pto',['factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Проверка']);assertSameValue(409,$notWorking['status'],'CASE_NOT_WORKING status');assertSameValue(true,str_contains($notWorking['body'],'Работы по объекту не открыты.'),'CASE_NOT_WORKING explanation');assertSameValue($before,$http->facts(),'CASE_NOT_WORKING no facts');$http->db->query("UPDATE {$http->p}fm2_installation_cases SET process_state='working' WHERE id=6101");
+
+    $http->db->query("DELETE FROM {$http->p}fm2_pilot_role_permissions WHERE role_id=1 AND permission='installation.completion.pto.correct'");
+    $before=$http->facts();$denied=$fixture->post('correct_pto',['factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Сохранить нельзя']);assertSameValue(403,$denied['status'],'lost capability remains access denial');assertSameValue(false,str_contains($denied['body'],'Д-RECOVERY-001'),'access denial discloses no document data');assertSameValue($before,$http->facts(),'access denial no facts');$http->insert($http->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'installation.completion.pto.correct']);
+    $guest=[];$session=$http->form('/pilot/objects/4512/completion',['action'=>'correct_pto','factId'=>(string)$byType['pto_act']['id'],'ptoActDate'=>'2026-09-03','reason'=>'Session'],$guest);assertSameValue(true,in_array($session['status'],[303,400,401,403],true),'expired session is not a field error');assertSameValue(false,str_contains($session['body'],'Д-RECOVERY-001'),'session response discloses no document data');
+
+    // One connected real-browser journey: double submit, unknown result, server
+    // validation swap/focus, correction, and one real append-only retry.
+    $config=$http->artifacts.'/completion-recovery-browser.json';$result=$http->artifacts.'/completion-recovery-result.json';$log=$http->artifacts.'/completion-recovery-browser.log';
+    file_put_contents($config,json_encode(['origin'=>'http://127.0.0.1:'.$http->server['port'],'email'=>$http->emails[18],'password'=>$http->password,'result'=>$result,'playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($http->root).'/shlz-ui/node_modules/playwright'],JSON_THROW_ON_ERROR));chmod($config,0600);
+    $beforeCorrections=count($http->rows('fm2_pilot_completion_fact_corrections'));
+    $browser=proc_open([getenv('FMONITOR_TEST_NODE_BINARY')?:'node',__DIR__.'/completion_form_recovery_browser.mjs',$config],[0=>['file','/dev/null','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes,$http->root);if(!is_resource($browser))throw new TestFailure('SETUP_FAILURE completion recovery browser');
+    $deadline=microtime(true)+60;do{$state=proc_get_status($browser);if(!$state['running'])break;usleep(20000);}while(microtime(true)<$deadline);if($state['running']){proc_terminate($browser,9);throw new TestFailure('browser timeout '.$http->artifacts);}$exit=$state['exitcode'];proc_close($browser);assertSameValue(0,$exit,'INTENDED_RED completion recovery browser '.file_get_contents($log));assertSameValue(['passed'=>true,'posts'=>1],json_decode((string)file_get_contents($result),true,flags:JSON_THROW_ON_ERROR),'browser completed matrix');assertSameValue($beforeCorrections+1,count($http->rows('fm2_pilot_completion_fact_corrections')),'browser retry appends exactly one correction');
 
     $http->noLegacy();
     echo "PASS: YII2-COMPLETION-FORM-RECOVERY-001 HTTP/browser contract\n";
 } finally {
+    if($incomplete instanceof DocumentaryFixture)$incomplete->close();
     if($fixture instanceof DocumentaryFixture)$fixture->close();
 }
