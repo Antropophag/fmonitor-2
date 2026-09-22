@@ -13,7 +13,7 @@
 - [x] 2.2 Добавить focused structural tests для V02 и V09: одна field-композиция/label и единственный `main`/рабочий skip-link; запустить их и сохранить RED по отсутствующему поведению.
 - [x] 2.3 Добавить browser tests для V03 и V04: фактический selector/геометрия selection modal и полный focus/Escape/cancel/return lifecycle payment confirmation; сохранить честный applicable outcome. V03 characterization GREEN на 320×568, source selector RED; V04 browser INTENDED_RED.
 - [ ] 2.4 Добавить browser regression tests для V06 и shared data-list invariants: local scroll, полный текст денег/actions, отсутствие document overflow на boundary widths; запустить и сохранить RED.
-- [ ] 2.5 Добавить characterization tests существующих routes, filters, roles, payloads, no-JS fallbacks, offline states, idempotency и histories на затрагиваемых flows; проверить GREEN до production edits.
+- [x] 2.5 Добавить characterization tests существующих routes, filters, roles, payloads, no-JS fallbacks, offline states, idempotency и histories на затрагиваемых flows; проверить GREEN до production edits.
 - [ ] 2.6 Передать полный spec/tests/RED candidate независимому reviewer и получить planner-required Gate 3 `APPROVED` в `reviews/tests/`; при изменении expectations пересчитать plan и повторить Gate 2.
 
 ## 3. Shared foundation

@@ -48,3 +48,46 @@ Add bounded characterization coverage before production edits, with independentl
 - Browser contract record `1790103697641622000-71ceaffa0d4f4f4caaf814e4760c21ee`: exact-source `INTENDED_RED`, exit 255, failure at browser-script line 47 on the login skip link.
 
 These are valid RED observations for those two narrow defects. They are not sufficient RED evidence for `A-G-complete-visual-contract`.
+
+---
+
+# Gate 3 correction review — 2026-09-22
+
+- Verdict: **CHANGES_REQUESTED**
+- Reviewed candidate source digest: `7a94e6460300941ce5a7d398dbf509ce2136a2d096f7680903138d7d75f29fb5`
+- Reviewed commit: `fcdf20ab5db24d312007ce480e616fa048872e6f`
+- Reviewer role package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T192901Z-bd6dac0de9/package.json`
+- Delta: correction of the first Gate 3 return; no production implementation was reviewed or changed.
+
+## Prior-finding disposition
+
+1. **Partially fixed.** Acceptances are now split and real authenticated seams are reached. V02 has an isolated rendered-field RED, V03 has a GREEN 320×568 modal characterization, V04 has an authenticated native-modal RED, and V09 retains its isolated skip-link RED. The autoload guard proves fixture classes come from the exact worktree.
+2. **Fixed.** The source test aggregates all ownership failures instead of stopping at the first one, and the remaining browser cases have separate acceptance IDs and records.
+3. **Fixed for the reviewed delta.** Private `field()`/`choiceControl()` and JS-token assertions were removed. Interaction behavior moved to rendered browser seams; remaining source checks are limited to explicit public primitive/ownership constraints.
+4. **Partially fixed.** Existing user-access history/authorization is GREEN and the OTIZ fixture independently guards several read, denial, and repeat facts. The newly added payment-cancel path asserts only visible ledger-row count and does not reach that assertion in the recorded RED.
+
+## Remaining findings
+
+### 1. Blocker — V07/V08 and the full A–G matrix still have no Gate 3 acceptance mapping
+
+The refreshed `verification-input.json` maps V01/V02/V03/V04/V05/V06/V09, autoload coherence, and one user-access preservation journey. It has no acceptance for audit finding V07 (secondary forms outside the shared field contract) or V08 (local overlays/notifications), despite both remaining `REPRODUCED` in `docs/operations/yii2-shlz-visual-audit-inventory-2026-09-22.md`. It likewise supplies no executable Gate 3 case for C3 field-error association/value retention, D2 Tab/Shift+Tab trapping and background inertness, E1 offline pending/conflict/sent distinctions, or the complete per-view composition/exception inventory required by the normative contract.
+
+Add scenario-level mapped tests or explicitly mapped existing characterization tests for V07/V08 and these remaining material A–G behaviors. The future inventory and final visual sweep may provide final evidence, but they do not replace pre-implementation Gate 3 expectations for known reproduced defects.
+
+### 2. Major — payment cancel/no-new-fact RED is still masked and is not independently observed
+
+The recorded `V04-V06-payment-modal-financial-layout` run stops at `otiz_shlz_ui_browser.mjs:44` when the native open dialog is absent. Therefore the subsequent Escape, focus-return, and `factsBeforeCancel` comparison are not observed as RED. More importantly, `factsBeforeCancel` is only a DOM row count, not the wrapper's independent persisted-fact fingerprint. A visual implementation could submit a command yet leave the current DOM unchanged and still satisfy that assertion after the earlier modal assertion becomes GREEN.
+
+Split or aggregate the V04 checks so open/focus/Escape/focus-return/no-submit expectations are all demonstrated. Add a wrapper/browser synchronization point that compares the independent OTIZ fact fingerprint before and after cancel/Escape. Keep the existing no-JS payload and repeat/idempotency checks mapped as preservation evidence.
+
+## Correction evidence accepted
+
+- Source ownership aggregate RED: record `1790105284708498000-e35ab20521d44869961c18fe579adc1a`.
+- V02 rendered installer-field RED: record `1790105284713620000-c0653316c5294c9a8d1fa00c524a58db`.
+- V04 native payment-modal RED: record `1790105284728928000-9037189b30834e54aee2747bcaa3a0a5`.
+- V09 skip-link RED: record `1790105284732323000-d71247047dda4b56afa98563306b1fa7`.
+- Exact-worktree autoload GREEN: record `1790105284734340000-28c065e4c7534048ac913b24f1f2a182`.
+- V03 authenticated mobile modal characterization GREEN: record `1790105284743143000-8bc6aec34f824e7999e23e0b2ce79fd6`.
+- User-access authorization/history preservation GREEN: record `1790105284757403000-4427ed9de1854e9db26a79429a4936ce`.
+
+The correction establishes deterministic fixture reachability and valid focused evidence for the listed cases, but Gate 3 remains blocked on complete known-finding traceability and independently observed payment cancellation safety.
