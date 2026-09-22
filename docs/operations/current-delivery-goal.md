@@ -1,12 +1,32 @@
-# Текущая цель — единый этап объекта после checklist retraction
+# Текущая цель — issue #172, контекст и build identity обратной связи
+
+Поручение владельца 2026-09-22: от актуального `main` `0504d258` исправить
+существующую обратную связь перед ОПЭ: сохранять точный безопасный исходный
+экран и server-owned identity реально работающей сборки. Это bounded follow-up
+к #140 с учётом merged #228/#234, без новой системы обращений, release framework,
+изменения ОТиЗ, readiness, статусов списка/дашборда, merge или deployment.
+
+Контракт: [`FEEDBACK-001`](../../specs/FEEDBACK-001.md), lifecycle:
+[`fix-feedback-context-build-identity`](../../openspec/changes/fix-feedback-context-build-identity/).
+Worktree `/Users/antropophag/code/fmonitor-2-issue172`, branch
+`codex/issue-172-feedback-context-build`. Root authored scope/spec/tests;
+отдельный `gpt-5.6-sol/low` executor реализует production, независимые reviewers
+принимают planner-selected Gate 3/final. Локальный full `make test`/`make verify`
+запрещён; требуется один exact-source CI. Рабочий стенд и реальные обращения не
+изменяются, внешних отправок нет.
+
+Предыдущие цели #236 и bounded regular runtime readiness завершены merge и
+сохранены ниже как история.
+
+---
+
+## Исторический указатель — единый этап объекта после checklist retraction
 
 Поручение владельца 2026-09-22: от актуального `main` исправить расхождение карточки, очереди, server-side stage filters/count/pagination и диаграммы этапов после `completion_retracted`, затем довести отдельный candidate до PR-ready с independent review и exact-source CI.
 
-Контракт: [CURRENT-CHECKLIST-STAGE-001](../../specs/CURRENT-CHECKLIST-STAGE-001.md). Lifecycle: [fix-current-checklist-stage](../../openspec/changes/fix-current-checklist-stage/). База аудита и актуальный `origin/main`: `0504d2589835f2583dc9afdbc47e4694e2573365`.
+Контракт: [CURRENT-CHECKLIST-STAGE-001](../../specs/CURRENT-CHECKLIST-STAGE-001.md). Lifecycle: [fix-current-checklist-stage](../../openspec/changes/fix-current-checklist-stage/). База аудита: `0504d2589835f2583dc9afdbc47e4694e2573365`; поставлено через merge PR #236.
 
-Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
-
-Не входят checklist writers/offline/history, #171, редактор, фото, ОТиЗ, readiness, документы, сроки/справки, редизайн и остальные находки аудита. Merge/deploy не выполнять.
+Не входили checklist writers/offline/history, #171, редактор, фото, ОТиЗ, readiness, документы, сроки/справки, редизайн и остальные находки аудита.
 
 ---
 

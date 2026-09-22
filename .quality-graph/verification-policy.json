@@ -271,6 +271,17 @@
   ],
   "capability_ownership": [
     {
+      "name": "feedback-application",
+      "patterns": [
+        "app/YiiRuntime/FeedbackApplication.php"
+      ],
+      "verifiers": [
+        "tests/Yii2/yii2_feedback_001_test.php",
+        "tests/Yii2/yii2_feedback_browser_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "durable-background-jobs-runtime",
       "patterns": [
         "app/Jobs/JobHandlerClaim.php",

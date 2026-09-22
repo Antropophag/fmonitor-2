@@ -1,0 +1,53 @@
+{
+  "change": "fix-feedback-context-build-identity",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-172-feedback-context-build-delivery.md",
+    "openspec/changes/fix-feedback-context-build-identity/proposal.md",
+    "openspec/changes/fix-feedback-context-build-identity/design.md",
+    "openspec/changes/fix-feedback-context-build-identity/specs/runtime/feedback-context-build-identity/spec.md",
+    "openspec/changes/fix-feedback-context-build-identity/tasks.md",
+    "openspec/changes/fix-feedback-context-build-identity/verification-input.json",
+    "specs/FEEDBACK-001.md",
+    "app/YiiRuntime/FeedbackApplication.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Views/feedback-admin.php",
+    "config/yii/common.php",
+    "tests/Yii2/yii2_feedback_001_test.php",
+    "tests/Yii2/feedback_http_matrix.php",
+    "tests/Yii2/yii2_feedback_browser_001_test.php",
+    "tests/Yii2/feedback_browser.mjs",
+    "tests/Runtime/runtime_readiness_load_001_test.php",
+    "reviews/tests/FEEDBACK-001.md",
+    "reviews/code/FEEDBACK-001.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "FEEDBACK-001",
+      "acceptance_id": "A2-A4-A5-A8-A9-context-build-replay",
+      "spec_path": "specs/FEEDBACK-001.md",
+      "seam": "FeedbackApplication submit/listing plus Yii feedback form/submit/confirmation/return/admin journey",
+      "tests": [
+        "tests/Yii2/yii2_feedback_001_test.php",
+        "tests/Runtime/runtime_readiness_load_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_feedback_001_test.php": "INTENDED_RED",
+        "tests/Runtime/runtime_readiness_load_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "FEEDBACK-001",
+      "acceptance_id": "A8-A9-connected-http-browser-journey",
+      "spec_path": "specs/FEEDBACK-001.md",
+      "seam": "current screen feedback link through form, persistence, confirmation, return and authorized operator view",
+      "tests": [
+        "tests/Yii2/yii2_feedback_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_feedback_browser_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}

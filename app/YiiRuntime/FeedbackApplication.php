@@ -9,7 +9,8 @@ final class FeedbackApplication extends Component
 {
     public Connection|string $db = "db";
     public string $tablePrefix = "";
-    public string $appVersion = "";
+    public string $buildIdentityFile = "";
+    public string $appVersion = "unknown";
     private MariaDbFeedback $store;
     public function init(): void
     {
@@ -17,9 +18,10 @@ final class FeedbackApplication extends Component
         if (is_string($this->db)) {
             $this->db = \Yii::$app->get($this->db);
         }
-        if (!($this->db instanceof Connection) || preg_match('/^[A-Za-z0-9._-]{1,80}$/D', $this->appVersion) !== 1) {
+        if (!($this->db instanceof Connection)) {
             throw new \RuntimeException("Invalid feedback configuration.");
         }
+        $this->appVersion = $this->readBuildIdentity($this->buildIdentityFile);
         $this->store = new MariaDbFeedback($this->db, $this->tablePrefix);
     }
     public function submit(int $actorId, string $requestId, string $description, string $pagePath): array
@@ -88,18 +90,26 @@ final class FeedbackApplication extends Component
             "/pilot/objects",
             "/pilot/installers",
             "/pilot/construction-control",
+            "/pilot/calendar",
+            "/pilot/dashboard",
             "/pilot/admin/users",
+            "/pilot/users",
             "/pilot/admin/roles",
             "/pilot/feedback",
             "/pilot/admin/feedback",
+            "/pilot/otiz",
+            "/pilot/otiz/objects",
+            "/pilot/otiz/payments",
+            "/pilot/otiz/history",
         ];
         if (in_array($path, $simple, true)) {
             return [$path, null];
         }
         $patterns = [
-            '#^/pilot/objects/([1-9]\d{0,18})(?:/(?:checklist|assignment-order/selection|execution))?$#',
+            '#^/pilot/objects/([1-9]\d{0,18})(?:/(?:checklist|assignment-order/(?:prepare|selection)|execution|deadline-certificates))?$#',
             '#^/pilot/construction-control/objects/([1-9]\d{0,18})/checklist$#',
             '#^/pilot/objects/([1-9]\d{0,18})/assignment-orders/([1-9]\d{0,18})/originals/(?:submit|history)$#',
+            '#^/pilot/otiz/snapshots/([1-9]\d{0,18})$#',
         ];
         foreach ($patterns as $p) {
             if (
@@ -107,9 +117,32 @@ final class FeedbackApplication extends Component
                 filter_var($m[1], FILTER_VALIDATE_INT) !== false &&
                 (!isset($m[2]) || filter_var($m[2], FILTER_VALIDATE_INT) !== false)
             ) {
-                return [$path, (int) $m[1]];
+                return [$path, str_starts_with($path, '/pilot/objects/') || str_starts_with($path, '/pilot/construction-control/objects/') ? (int) $m[1] : null];
             }
         }
         return $fallback;
+    }
+    private function readBuildIdentity(string $path): string
+    {
+        try {
+            if ($path === '' || str_contains($path, "\0") || !file_exists($path) || is_link($path)) {
+                return 'unknown';
+            }
+            $stat = lstat($path);
+            if (!is_array($stat) || (($stat['mode'] ?? 0) & 0170000) !== 0100000 || ($stat['nlink'] ?? 0) !== 1) {
+                return 'unknown';
+            }
+            $permissions = ($stat['mode'] ?? 0) & 0777;
+            if (($permissions & 0222) !== 0 || ($permissions & 0444) === 0 || ($stat['size'] ?? 0) < 64 || ($stat['size'] ?? 0) > 65) {
+                return 'unknown';
+            }
+            $value = file_get_contents($path);
+            if (!is_string($value) || preg_match('/^[0-9a-f]{64}\n?$/D', $value) !== 1) {
+                return 'unknown';
+            }
+            return rtrim($value, "\n");
+        } catch (\Throwable) {
+            return 'unknown';
+        }
     }
 }
