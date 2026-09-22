@@ -14,6 +14,7 @@
     "tests/Yii2/yii2_completion_form_recovery_browser_001_test.php",
     "tests/Yii2/DocumentaryFixture.php",
     "tests/Yii2/documentary_browser.mjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "tests/Yii2/completion_form_recovery_browser.mjs",
     "reviews/tests/YII2-COMPLETION-FORM-RECOVERY-001.md",
     "reviews/code/YII2-COMPLETION-FORM-RECOVERY-001.md",
