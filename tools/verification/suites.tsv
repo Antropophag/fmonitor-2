@@ -222,6 +222,7 @@ db	php	tests/Yii2/yii2_construction_control_active_queue_001_test.php	integratio
 db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	integration
 db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
+db	php	tests/Yii2/yii2_current_checklist_stage_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_documentary_http_001_test.php	integration
 db	php	tests/Yii2/yii2_erp_equipment_facts_001_test.php	integration

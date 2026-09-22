@@ -1,4 +1,16 @@
-# Текущая цель — bounded regular runtime readiness
+# Текущая цель — единый этап объекта после checklist retraction
+
+Поручение владельца 2026-09-22: от актуального `main` исправить расхождение карточки, очереди, server-side stage filters/count/pagination и диаграммы этапов после `completion_retracted`, затем довести отдельный candidate до PR-ready с independent review и exact-source CI.
+
+Контракт: [CURRENT-CHECKLIST-STAGE-001](../../specs/CURRENT-CHECKLIST-STAGE-001.md). Lifecycle: [fix-current-checklist-stage](../../openspec/changes/fix-current-checklist-stage/). База аудита и актуальный `origin/main`: `0504d2589835f2583dc9afdbc47e4694e2573365`.
+
+Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
+
+Не входят checklist writers/offline/history, #171, редактор, фото, ОТиЗ, readiness, документы, сроки/справки, редизайн и остальные находки аудита. Merge/deploy не выполнять.
+
+---
+
+## Исторический указатель — bounded regular runtime readiness
 
 Поручение владельца 2026-09-22: от актуального `main` с merged PR #226 доставить
 небольшой PR-ready фикс избыточной idle-нагрузки `/health/ready`. Контракт:
