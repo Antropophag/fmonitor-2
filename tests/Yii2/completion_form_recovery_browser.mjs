@@ -68,7 +68,9 @@ try {
   const conflictBox=await conflicted.locator('[data-completion-focus="true"]').boundingBox();assert.ok(conflictBox&&conflictBox.y>=0&&conflictBox.y<900,'409 focused error is scrolled into viewport');
 
   await conflicted.locator('textarea[name="reason"]').fill('Подтверждено в браузере');
-  await Promise.all([page.waitForURL(/\/pilot\/objects\/4512#completion$/),conflicted.locator('button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation(),conflicted.locator('button[type="submit"]').click()]);
+  assert.equal(new URL(page.url()).pathname,'/pilot/objects/4512','confirmed navigation returns to the same object');
+  assert.equal(new URL(page.url()).hash,'#completion','confirmed navigation returns to completion section');
   assert.match(await page.locator('#completion').textContent(),/Подтверждено в браузере/,'confirmed correction is present after navigation');
   fs.writeFileSync(config.result,JSON.stringify({passed:true,posts}),{mode:0o600});
 } finally {
