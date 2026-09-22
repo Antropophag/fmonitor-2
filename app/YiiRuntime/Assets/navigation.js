@@ -66,3 +66,11 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
     try { localStorage.setItem(key, String(state.open)); } catch {}
   });
 })();
+
+document.querySelectorAll('.fm2-file-input').forEach(input => {
+  const name = input.closest('.fm2-file-control')?.querySelector('[data-file-name]');
+  if (!name) return;
+  input.addEventListener('change', () => {
+    name.textContent = input.files?.[0]?.name || 'Файл не выбран';
+  });
+});
