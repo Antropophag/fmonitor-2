@@ -16,9 +16,9 @@ final class MariaDbPilotStartupState
     public static function readinessIdentity(\mysqli$db,string$p):array
     {
         MariaDbSchemaInspector::validateTablePrefix($p);$table=$db->real_escape_string($p.'fm2_installation_cases');
-        $row=$db->query("SELECT @@hostname server_identity,DATABASE() database_name,TABLE_NAME canonical_table,CREATE_TIME schema_created_at FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}' AND TABLE_TYPE='BASE TABLE'")->fetch_assoc();
-        if(!is_array($row)||$row['server_identity']===''||$row['database_name']===''||$row['canonical_table']!==$p.'fm2_installation_cases'||!is_string($row['schema_created_at'])||$row['schema_created_at']==='')throw new \RuntimeException('STARTUP_NOT_READY');
-        return['serverIdentity'=>(string)$row['server_identity'],'database'=>(string)$row['database_name'],'canonicalTable'=>(string)$row['canonical_table'],'schemaCreatedAt'=>$row['schema_created_at']];
+        $row=$db->query("SELECT @@hostname server_identity,DATABASE() database_name,TABLE_NAME canonical_table,ENGINE table_engine,TABLE_COLLATION table_collation FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}' AND TABLE_TYPE='BASE TABLE'")->fetch_assoc();
+        if(!is_array($row)||$row['server_identity']===''||$row['database_name']===''||$row['canonical_table']!==$p.'fm2_installation_cases'||!is_string($row['table_engine'])||$row['table_engine']===''||!is_string($row['table_collation'])||$row['table_collation']==='')throw new \RuntimeException('STARTUP_NOT_READY');
+        return['serverIdentity'=>(string)$row['server_identity'],'database'=>(string)$row['database_name'],'canonicalTable'=>(string)$row['canonical_table'],'tableEngine'=>$row['table_engine'],'tableCollation'=>$row['table_collation']];
     }
     public static function assertAvailable(\mysqli$db):void
     {

@@ -29,7 +29,7 @@ schema fingerprints и required local storage. Failure не публикует �
 Успешный attestation связывается как минимум с:
 
 - database identity из server/database/canonical-table metadata, отличающим другую
-  или пересозданную БД;
+  configured DB/server/schema frontier;
 - current catalogue schema version;
 - deterministic identity exact application build;
 - process table prefix и configured database name;
