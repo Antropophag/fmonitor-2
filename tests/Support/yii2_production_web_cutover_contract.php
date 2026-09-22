@@ -88,7 +88,7 @@ return [
         'template-offer.js'=>['cd6e13f6b5c23ba0e341d899a8876dae45ebeb2ad7f4475eb8c532511aa049e3','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist.js'=>['6b9ab656c60f4581f84f73be8ca20e04bd7b6c20dfa3719a2317282f5f8abb4b','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist-sw.js'=>['e0555252c5194438254f6b8b4f4b766a09efd942dfa8573cb9fb179e8bd6a622','text/javascript; charset=UTF-8','public, max-age=0'],
-        'control-queue.js'=>['0e80355fa58e3483609cb2486d33796c1dc3c01545fe30a930894bbe5be79f6e','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'control-queue.js'=>['589a7ec832c3d6d31f81ecdeedd6ca475fb904cdaaa084a94e8263b08b7a4b5f','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/delivery-box.svg'=>['b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'otiz.js'=>['3a6895e62cf0630b39f6d0ddaf9eee7822ad45fcd869e12f389659890dfcdaff','text/javascript; charset=UTF-8','public, max-age=3600'],
         'fonts/golos-text-cyrillic-400-normal.woff2'=>['15a5cbadfc1aa7a541651600b757bf7b67bce4e145b3239de072db5427889605','font/woff2','public, max-age=31536000, immutable'],
