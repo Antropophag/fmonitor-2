@@ -10,6 +10,7 @@ try {
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   await page.goto(`${config.origin}/pilot/login`);
   await page.locator('input[name="email"]').fill(config.email);
+  await page.locator('input[name="email"]').locator('xpath=ancestor::form').locator('button[type="submit"]').click();
   await page.locator('input[name="password"]').fill(config.password);
   await Promise.all([page.waitForURL(/\/pilot\/objects/),page.locator('button[type="submit"]').click()]);
   await page.goto(`${config.origin}/pilot/objects/4512#completion`);
