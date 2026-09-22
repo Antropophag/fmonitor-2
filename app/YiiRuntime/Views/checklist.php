@@ -35,7 +35,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span>Для действий требуются открытые работы и полномочия.</span>
 </div>
 <?php endif?>
-<main class="fm2-check-layout">
+<div class="fm2-check-layout">
 <div class="fm2-check-content">
 <?php foreach($sections as$sectionId=>[$title,$items]):$weight=array_sum(array_column($items,2));?>
 <section class="fm2-check-section<?=$sectionId===1?' is-open':''?>" data-check-section="<?=$sectionId?>" data-section-weight="<?=$weight?>">
@@ -104,7 +104,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 </div>
 </section>
 </div>
-</main>
+</div>
 <button class="fm2-all-photos" type="button" data-open-gallery>Все фото <span data-photo-total>0</span>
 </button>
 <section class="fm2-gallery-page" data-gallery hidden>
@@ -112,7 +112,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <div data-gallery-content>
 </div>
 </section>
-<dialog class="fm2-confirm-dialog" data-bulk-dialog>
+<dialog class="shlz-modal fm2-confirm-dialog" data-bulk-dialog>
 <div class="fm2-confirm-dialog__content">
 <h2>Отметить весь раздел?</h2>
 <p>Все работы в разделе <strong data-bulk-section-name>
@@ -121,7 +121,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <button class="shlz-button shlz-button--primary" type="button" data-bulk-confirm>Отметить все</button></div>
 </div>
 </dialog>
-<dialog class="fm2-confirm-dialog" data-reason-dialog>
+<dialog class="shlz-modal fm2-confirm-dialog" data-reason-dialog>
 <form class="fm2-confirm-dialog__content" method="dialog">
 <h2 data-reason-title>Подтвердите действие</h2>
 <p data-reason-copy></p>
@@ -130,7 +130,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <div class="fm2-confirm-dialog__actions"><button class="shlz-button shlz-button--secondary" type="button" data-reason-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-reason-confirm>Подтвердить</button></div>
 </form>
 </dialog>
-<dialog class="fm2-installer-dialog" data-installer-dialog>
+<dialog class="shlz-modal fm2-installer-dialog" data-installer-dialog>
 <div>
 <header>
 <h2>Исполнители работы</h2>
@@ -145,7 +145,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <button type="button" data-installer-save>Сохранить состав</button>
 </div>
 </dialog>
-<div class="fm2-toast" data-toast hidden>
+<div class="shlz-alert fm2-feedback-toast" role="status" data-toast hidden>
 </div>
 </div>
 <script src="/pilot/assets/checklist.js?v=20260921-1" defer>
