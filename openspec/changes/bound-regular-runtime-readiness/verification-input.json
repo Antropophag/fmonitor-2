@@ -1,0 +1,49 @@
+{
+  "change": "bound-regular-runtime-readiness",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "specs/RUNTIME-READINESS-LOAD-001.md",
+    "openspec/changes/bound-regular-runtime-readiness/proposal.md",
+    "openspec/changes/bound-regular-runtime-readiness/design.md",
+    "openspec/changes/bound-regular-runtime-readiness/specs/bounded-runtime-readiness/spec.md",
+    "openspec/changes/bound-regular-runtime-readiness/tasks.md",
+    "app/Runtime/RuntimeReadiness.php",
+    "app/Runtime/MariaDbRuntimeReadiness.php",
+    "app/Runtime/RuntimeStartupAttestation.php",
+    "app/InstallationProcess/RuntimeReadinessMarkerSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "bin/fmonitor2-runtime-check.php",
+    "deploy/runtime/Dockerfile",
+    "deploy/runtime/compose.yaml",
+    "tests/Runtime/runtime_readiness_load_001_test.php",
+    "tests/Runtime/production_runtime_contract_001_test.php",
+    "tests/Support/CurrentProductionSchemaContract.php",
+    "tools/verification/suites.tsv",
+    "reviews/tests/RUNTIME-READINESS-LOAD-001.md",
+    "reviews/code/RUNTIME-READINESS-LOAD-001.md"
+  ],
+  "acceptances": [{
+    "spec_id": "RUNTIME-READINESS-LOAD-001",
+    "acceptance_id": "A1-A8-bounded-startup-binding-failures-concurrency",
+    "spec_path": "specs/RUNTIME-READINESS-LOAD-001.md",
+    "seam": "deployment runtime-check/startup chain and public GET /health/live|ready",
+    "seam_kind": "infrastructure",
+    "tests": ["tests/Runtime/runtime_readiness_load_001_test.php", "tests/Runtime/production_runtime_contract_001_test.php"],
+    "gate3_expected": {
+      "tests/Runtime/runtime_readiness_load_001_test.php": "INTENDED_RED",
+      "tests/Runtime/production_runtime_contract_001_test.php": "INTENDED_RED"
+    },
+    "observable_dimensions": {
+      "stdout": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "stderr": {"status":"covered","tests":["tests/Runtime/production_runtime_contract_001_test.php"]},
+      "exit_status": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "retained_evidence": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "filesystem_effects": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "idempotence": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "failure_semantics": {"status":"covered","tests":["tests/Runtime/runtime_readiness_load_001_test.php"]},
+      "caller_interoperability": {"status":"covered","tests":["tests/Runtime/production_runtime_contract_001_test.php"]},
+      "worktree_concurrency_isolation": {"status":"not_applicable","reason":"Runtime execution is isolated by explicit Compose project, database, volumes and ports; the public seam does not manage Git worktrees."},
+      "verification_registry_synchronization": {"status":"covered","tests":["tests/Runtime/production_runtime_contract_001_test.php"]}
+    }
+  }]
+}

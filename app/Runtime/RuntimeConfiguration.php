@@ -31,6 +31,7 @@ final class RuntimeConfiguration
         if (isset($environment['FMONITOR_YII_SESSION_PATH']) && is_string($environment['FMONITOR_YII_SESSION_PATH'])) {
             $values['FMONITOR_YII_SESSION_PATH'] = $environment['FMONITOR_YII_SESSION_PATH'];
         }
+        $values['FMONITOR_RUNTIME_BUILD_ID'] = isset($environment['FMONITOR_RUNTIME_BUILD_ID']) && is_string($environment['FMONITOR_RUNTIME_BUILD_ID']) ? $environment['FMONITOR_RUNTIME_BUILD_ID'] : 'development';
         $patterns = [
             'FMONITOR_DB_HOST' => '/^[A-Za-z0-9.\x3a\x5b\x5d_-]{1,255}$/D',
             'FMONITOR_DB_NAME' => '/^[A-Za-z0-9_]{1,64}$/D',
@@ -40,6 +41,7 @@ final class RuntimeConfiguration
             'FMONITOR_PROCESS_TABLE_PREFIX' => '/^[A-Za-z0-9_]{0,25}$/D',
             'FMONITOR_SESSION_INSTANCE' => '/^[a-z0-9][a-z0-9_-]{0,31}$/D',
             'FMONITOR_TRUSTED_REQUEST_HOST' => '/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D',
+            'FMONITOR_RUNTIME_BUILD_ID' => '/^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,127}$/D',
         ];
         foreach ($patterns as $name => $pattern) {
             if (preg_match($pattern, $values[$name]) !== 1) self::fail();

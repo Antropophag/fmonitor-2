@@ -1,4 +1,26 @@
-# Текущая цель — #222, редактирование реквизитов объекта
+# Текущая цель — bounded regular runtime readiness
+
+Поручение владельца 2026-09-22: от актуального `main` с merged PR #226 доставить
+небольшой PR-ready фикс избыточной idle-нагрузки `/health/ready`. Контракт:
+[`RUNTIME-READINESS-LOAD-001`](../../specs/RUNTIME-READINESS-LOAD-001.md), lifecycle:
+[`bound-regular-runtime-readiness`](../../openspec/changes/bound-regular-runtime-readiness/).
+
+Scope: existing full schema runtime-check становится обязательным deployment
+startup gate; steady readiness ограничивается current DB connect/cheap query,
+local resources и exact DB/schema/build-bound startup result. Сохранить liveness,
+routes, response/status, canonical migrations and fingerprints. Не входят
+business/UI, #171, ОТиЗ, integrations, общий infrastructure tuning или stand.
+
+Работа идёт в отдельном worktree `fmonitor-2-readiness-load` от `3c242f34` (merge
+PR #226), с отдельными Compose resources. Root пишет scope/spec/tests; separate
+gpt-5.6-sol/low executor implements; independent reviewers решают Gates 3/5.
+Локальный full `make test`/`make verify` запрещён; exact-source CI обязателен.
+
+Предыдущая цель #222 завершена merge PR #226; её запись сохранена ниже как история.
+
+---
+
+## Исторический указатель — #222, редактирование реквизитов объекта
 
 Поручение владельца 2026-09-21: продолжить существующую ветку `codex/issue-222-object-details` до PR-ready по контракту [OBJECT-DETAILS-EDITING-001](../../specs/OBJECT-DETAILS-EDITING-001.md) и lifecycle [edit-object-details-with-history](../../openspec/changes/edit-object-details-with-history/). Детали scope, разовое разрешение раннего production implementation и authorship зафиксированы в [delivery record](issue-222-object-details-editing-delivery.md). Эта цель заменяет расположенный ниже исторический указатель dashboard; dashboard WIP не смешивать.
 

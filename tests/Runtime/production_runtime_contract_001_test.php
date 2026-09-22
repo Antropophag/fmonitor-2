@@ -111,5 +111,11 @@ assertSameValue(true, (bool) preg_match('/(?:volume|type:\s*volume)/i', $compose
 assertSameValue(true, str_contains($compose, 'FMONITOR_SESSION_STATE_ROOT'), 'runtime explicitly mounts and configures durable authenticated session state');
 assertSameValue(true, str_contains($dockerfile . $compose, '10001'), 'runtime fixes the application UID/GID compatibility identity');
 assertSameValue(true, str_contains($compose, 'FMONITOR_RUNTIME_IMAGE'), 'compose accepts an explicit immutable/task-owned runtime image reference');
+assertSameValue(true, (bool) preg_match('/startup-check:.*?fmonitor2-runtime-check\.php/s', $compose), 'compose has one-shot full startup readiness check');
+assertSameValue(true, (bool) preg_match('/startup-check:.*?migrate:.*?service_completed_successfully/s', $compose), 'startup check follows successful migration');
+assertSameValue(true, (bool) preg_match('/php:.*?startup-check:.*?service_completed_successfully/s', $compose), 'php admission waits for startup check without HTTP cycle');
+assertSameValue(true, str_contains($dockerfile, 'FMONITOR_RUNTIME_BUILD_ID'), 'image exposes deterministic exact build identity');
+$regularReadiness = runtimeContractFile('app/Runtime/RuntimeReadiness.php');
+assertSameValue(false, str_contains($regularReadiness, 'assertSchema'), 'regular readiness does not invoke full schema fingerprints');
 
 echo "PASS: PRODUCTION-HTTP-RUNTIME-001 packaging and explicit configuration contract\n";

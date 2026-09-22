@@ -17,6 +17,8 @@ RUN npm ci --no-audit --no-fund \
     && rm -rf .git node_modules
 
 FROM php:8.5-fpm-bookworm
+ARG FMONITOR_RUNTIME_BUILD_ID=development
+ENV FMONITOR_RUNTIME_BUILD_ID=${FMONITOR_RUNTIME_BUILD_ID}
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip util-linux ca-certificates gnupg unixodbc-dev \
     && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
