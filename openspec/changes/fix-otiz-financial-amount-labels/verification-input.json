@@ -1,0 +1,30 @@
+{
+  "change": "fix-otiz-financial-amount-labels",
+  "planned_paths": [
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "tests/Yii2/yii2_otiz_shlz_ui_001_test.php",
+    "tests/Yii2/otiz_shlz_ui_browser.mjs",
+    "specs/OTIZ-FINANCIAL-AMOUNT-PRESENTATION-001.md",
+    "openspec/changes/fix-otiz-financial-amount-labels/proposal.md",
+    "openspec/changes/fix-otiz-financial-amount-labels/design.md",
+    "openspec/changes/fix-otiz-financial-amount-labels/specs/otiz-financial-amount-presentation/spec.md",
+    "openspec/changes/fix-otiz-financial-amount-labels/tasks.md",
+    "openspec/changes/fix-otiz-financial-amount-labels/verification-input.json",
+    "reviews/tests/OTIZ-FINANCIAL-AMOUNT-PRESENTATION-001.md",
+    "reviews/code/OTIZ-FINANCIAL-AMOUNT-PRESENTATION-001.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-FINANCIAL-AMOUNT-PRESENTATION-001",
+      "acceptance_id": "labels-scope-signed-total-zero-history-responsive-numeric-preservation",
+      "spec_path": "specs/OTIZ-FINANCIAL-AMOUNT-PRESENTATION-001.md",
+      "seam": "authenticated Yii2 /pilot/otiz/snapshots/<id> rendered financial drawer and ledger at desktop and narrow widths",
+      "tests": [
+        "tests/Yii2/yii2_otiz_shlz_ui_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_otiz_shlz_ui_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}
