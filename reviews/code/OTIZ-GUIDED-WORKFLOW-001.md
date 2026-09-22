@@ -53,3 +53,31 @@ CI, PR, merge and deployment remain separate and `UNKNOWN`; this approval does n
 ### Required changes
 
 None.
+
+---
+
+## CI correction review — 2026-09-22
+
+- Reviewer: independent `/root/otiz_reviewer`; authored neither correction tests nor production.
+- Prior approved package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T004659Z-b9bd681f5e/package.json`.
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T015854Z-0f73f3c4c7/package.json`.
+- Exact source: `1636023072f1a1af9437813378ddd33ff4b9464a7039a31c0511af3c7d138653`; executable source `596003f3a01b1b7ddc6fe058083f1f123f0f0f228f421ac303d203e8bae998ea`.
+- Base commit: `faddb58393a22e4e61a8c7476d24898cece08753`; snapshot patch SHA-256 `6f2565518d4bbd51f1b1cb52154f85b40103e7c251d52fe357766287c39d5c00`.
+- Verdict: `APPROVED`.
+
+### Delta and prior approval disposition
+
+No findings. The full delta from the prior approved snapshot contains only two production corrections, adjacent tests/support hashes, and lifecycle/review state:
+
+1. `otiz.js` now clears `fm2.otiz.publication` whenever an OTIZ page is reached with `created=1`, before checking for the calculate form. This preserves the stored key during uncertain response/retry, clears it only after the canonical success redirect is observed, and prevents a later calculation from replaying the completed snapshot.
+2. `otiz-snapshot.php` restores a neutral status flash for `reversed=1`. It does not describe reversal as a new payment and leaves the append-only ledger as the fact owner.
+
+The browser regressions bind both outcomes through real public routes and persisted facts. Navigation, DatePicker, drawer/detail selectors and asset digest updates are compatibility corrections to the approved presentation, not new product behavior. No formula, schema, authorization, command, ledger or effective-values owner changed; no scope drift was found.
+
+The package contains nine matching exact-source GREEN records. Retained first-attempt failures for compose (external Docker registry manifest timeout) and governance (nested local harness exceeded its 20-second test timeout after the other 17 tests passed) have explicit same-source reasons and successful retries; neither failure points to the corrected product behavior.
+
+The earlier CI run `35673629867` remains failed and is not converted to GREEN by this review. A new exact-HEAD CI result is still required before merge readiness.
+
+### Required changes
+
+None.

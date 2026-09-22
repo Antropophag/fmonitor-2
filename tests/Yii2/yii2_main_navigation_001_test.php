@@ -179,7 +179,7 @@ try {
     assertSameValue(true, $mainNode->ownerDocument === $otizDocument, 'MAIN navigation belongs to parsed OTIZ document');
     assertSameValue([[
         ['href' => '/pilot/otiz/objects', 'label' => 'Экономика объектов'],
-        ['href' => '/pilot/otiz/payments', 'label' => 'Подготовка выплат'],
+        ['href' => '/pilot/otiz/payments', 'label' => 'Выполнение расчёта'],
         ['href' => '/pilot/otiz/history', 'label' => 'Архив расчётов'],
     ]], $internal, 'OTIZ internal navigation remains one distinct semantic nav');
     foreach (['/pilot/otiz/objects', '/pilot/otiz/payments', '/pilot/otiz/history'] as $internalRoute) {

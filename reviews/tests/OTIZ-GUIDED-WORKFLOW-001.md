@@ -127,6 +127,31 @@ None.
 
 ---
 
+## CI correction test-delta review — 2026-09-22
+
+- Reviewer: independent `/root/otiz_reviewer`; authored neither correction tests nor production.
+- Prior approved package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T004659Z-b9bd681f5e/package.json`.
+- Corrected package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T015854Z-0f73f3c4c7/package.json`.
+- Exact source: `1636023072f1a1af9437813378ddd33ff4b9464a7039a31c0511af3c7d138653`; executable source `596003f3a01b1b7ddc6fe058083f1f123f0f0f228f421ac303d203e8bae998ea`.
+- Base commit: `faddb58393a22e4e61a8c7476d24898cece08753`; snapshot patch SHA-256 `6f2565518d4bbd51f1b1cb52154f85b40103e7c251d52fe357766287c39d5c00`.
+- Verdict: `APPROVED`.
+
+### Test-delta assessment
+
+No findings. The adjacent CI corrections update stale expectations to the already approved UI rather than weakening behavior: main navigation requires «Выполнение расчёта»; DatePicker interaction uses the public localized visible field; settlement assertions enter the exact object drawer and retain trace/worker/KTU/issue/finance checks; asset hashes bind exact bytes.
+
+The new replay regression is sensitive to the production defect. It captures the first operation and snapshot, returns through a `?created=1` snapshot page, then requires a distinct operation id and distinct immutable snapshot on the next preparation. With cleanup scoped inside the absent calculate form, that sequence reuses the old key and fails; moving cleanup to every OTIZ page carrying `created=1` closes exactly that gap while retaining response-loss replay before success.
+
+The reversal path requires exact `?reversed=1`, the status text «Предыдущая отметка о выплате отменена.», the appended linked reversal row, preserved history and restored availability. Dropping the flash fails the test even when ledger mutation succeeds.
+
+All nine selected local evidence records are GREEN on the matching source and `missing_tests=[]`. The first compose attempt failed only while resolving the pinned Node manifest from Docker Hub (`context deadline exceeded`) and the same-source retry passed. The first governance attempt completed 17 of 18 tests and timed out in its nested harness command; the same-source retry passed all 18. These retained transient failures and reasoned retries do not conceal a behavior failure.
+
+### Required changes
+
+None.
+
+---
+
 ## Refreshed exact-source Gate 3 — archive link and no-JS delta — 2026-09-22
 
 - Reviewer: independent `/root/otiz_reviewer`; authored neither specification, tests nor production.
