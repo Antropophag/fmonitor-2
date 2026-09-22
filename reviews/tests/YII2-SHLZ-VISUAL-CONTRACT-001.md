@@ -91,3 +91,43 @@ Split or aggregate the V04 checks so open/focus/Escape/focus-return/no-submit ex
 - User-access authorization/history preservation GREEN: record `1790105284757403000-4427ed9de1854e9db26a79429a4936ce`.
 
 The correction establishes deterministic fixture reachability and valid focused evidence for the listed cases, but Gate 3 remains blocked on complete known-finding traceability and independently observed payment cancellation safety.
+
+---
+
+# Gate 3 correction review 2 — 2026-09-22
+
+- Verdict: **APPROVED**
+- Reviewed candidate source digest: `72e2e1601edc708e2139ccf403882d87c06cf71ba0991e42e8a4a48d6e82f300`
+- Reviewed commit: `495bbac9d25a0806823a982a1b9c4caba63e0468`
+- Reviewer role package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T193742Z-f0824516ca/package.json`
+- Scope: third independent Gate 3 review of the complete corrected spec/test/RED matrix. Tests, specifications, and production code were not changed by the reviewer.
+
+## Prior-blocker disposition
+
+1. **Fixed.** V07/V08 now have an explicit acceptance mapping. `yii2_shlz_forms_overlays_inventory_001_test.php` aggregates independent RED findings for secondary Fields and checklist/inspection overlay ownership; the existing SHLZ Select inventory and authenticated inspection journey supply GREEN characterization of the retained public control and checklist interaction seams.
+2. **Fixed.** The V04 browser case now aggregates native-modal, focus-entry, Escape-close, context, and focus-return observations instead of aborting at the first failure. It safely closes the legacy overlay after observation. The PHP fixture wrapper synchronizes with the browser and compares the full independent OTIZ persisted-fact fingerprint before and after Escape/cancel. The exact-source RED reports the three actual missing behaviors while focus return, context, synchronization, and no-new-fact checks complete successfully.
+
+## Gate 3 assessment
+
+- Traceability: V01–V09 and baseline/preservation controls are split into named acceptances with exact commands and expected RED/GREEN outcomes.
+- Public seam: rendered authenticated installers, preopening selection, OTIZ payment, inspection/checklist, user access, and login shell seams are reached; source inventories are limited to explicit ownership constraints.
+- Sensitivity and preservation: exact-worktree autoload, authorization/history, OTIZ denial/repeat behavior, and independently observed payment-cancel no-new-fact behavior are guarded.
+- Expected-value independence: browser expectations use roles, visible content, geometry, focus, persisted facts, and fixed fixture values; source assertions target the contract's declared public primitive/ownership boundaries.
+- Rejected cases: nested Fields, local common overlays/toast, ARIA-only payment modal, subject-owned shell geometry, irreversible financial ellipsis, and page-local table contracts have executable RED coverage.
+- Determinism: all reviewed records bind exact candidate source `72e2e1601edc708e2139ccf403882d87c06cf71ba0991e42e8a4a48d6e82f300` and executable source `1c8c5ad760764facf49d9808056b1937e1c8d97142ba576c3fd00a6677787497`.
+- A–G coverage: sufficient for Gate 3. The complete 25-view migration inventory, full responsive/zoom sweep, human screenshot comparison, focused GREEN matrix, final review, and exact-source CI remain later-gate obligations and are not claimed here.
+
+## Evidence reviewed
+
+- V01/V05/V06 aggregate source RED: `1790105791096560000-7c3648b424354902a16ff3b8b89079f2`.
+- V02 authenticated rendered-field RED: `1790105791094092000-e539ffccb0cd40f3aa5e52cab88cd392`.
+- V03 authenticated mobile selection characterization GREEN: `1790105791222513000-41daa0fcfbcc48548752d44a91dcb2d5`.
+- V04/V06 authenticated payment/financial RED with completed no-fact handshake: `1790105791062962000-41f93bee17da443f8cfc59bf1f6bd0c5`.
+- V07/V08 aggregate inventory RED: `1790105791115281000-a97bd7703eaf4d2699d73c760173fbbc`.
+- V07 shared Select characterization GREEN: `1790105791105982000-4dccc380c0b9492c897670e94e6d1fff`.
+- V08 authenticated inspection/checklist characterization GREEN: `1790105791062691000-9166ea7ee1504c53bf2ba194cf465db2`.
+- V09 shell/skip-link RED: `1790105791109548000-3684192beb394f9882e192650b6d391c`.
+- Exact-worktree autoload GREEN: `1790105791127707000-7cb80e9da3fe43888866af79621fc78e`.
+- Authorization/history preservation GREEN: `1790105791127166000-b05daf6329e4451d96d497523861041e`.
+
+No open Gate 3 findings remain for this exact source. Any change to specification, tests, expected outcomes, or bound scope requires refreshed exact-source review.
