@@ -1,0 +1,27 @@
+{
+  "change": "recover-yii-completion-form-errors",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/CompletionController.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Models/CompletionForm.php",
+    "app/YiiRuntime/Views/completion.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "specs/YII2-COMPLETION-FORM-RECOVERY-001.md",
+    "openspec/changes/recover-yii-completion-form-errors",
+    "tests/Yii2/yii2_completion_form_recovery_001_test.php",
+    "tests/Yii2/completion_form_recovery_browser.mjs",
+    "reviews/tests/YII2-COMPLETION-FORM-RECOVERY-001.md",
+    "reviews/code/YII2-COMPLETION-FORM-RECOVERY-001.md",
+    "docs/operations/completion-form-recovery-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "YII2-COMPLETION-FORM-RECOVERY-001",
+    "acceptance_id": "A1-A4-completion-form-recovery",
+    "spec_path": "specs/YII2-COMPLETION-FORM-RECOVERY-001.md",
+    "seam": "authenticated Yii object-card GET and completion POST plus the real completion browser asset",
+    "tests": ["tests/Yii2/yii2_completion_form_recovery_001_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_completion_form_recovery_001_test.php": "INTENDED_RED"}
+  }]
+}
