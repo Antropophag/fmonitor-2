@@ -130,10 +130,37 @@
 const detailsDialog=document.querySelector('[data-object-details-dialog]');
 const detailsTrigger=document.querySelector('[data-object-details-edit]');
 if(detailsDialog&&detailsTrigger){
-  const close=()=>detailsDialog.close();
+  const detailsForm=detailsDialog.querySelector('form');
+  const persistedValues=new Map();
+  if(detailsForm){
+    const baseline=JSON.parse(detailsForm.dataset.objectDetailsBaseline||'{}');
+    for(const[name,value]of Object.entries(baseline))persistedValues.set(name,[String(value??'')]);
+    detailsForm.addEventListener('formdata',event=>{
+      for(const[name,values]of persistedValues){
+        const current=event.formData.getAll(name);
+        if(current.length===values.length&&current.every((value,index)=>value===values[index]))event.formData.delete(name);
+      }
+    });
+  }
+  const reset=()=>{
+    if(!detailsForm)return;
+    for(const[name,values]of persistedValues){
+      for(const control of detailsForm.querySelectorAll(`[name="${CSS.escape(name)}"]`))control.value=values[0];
+      const root=[...detailsForm.querySelectorAll('[data-shlz-select]')].find(node=>node.querySelector(`input[type="hidden"][name="${CSS.escape(name)}"]`));
+      if(!root)continue;
+      const options=[...root.querySelectorAll('[role="option"]')],selected=options.find(option=>option.dataset.value===values[0]);
+      for(const option of options)option.setAttribute('aria-selected',String(option===selected));
+      const trigger=root.querySelector('[role="combobox"]');
+      trigger?.classList.toggle('shlz-select__trigger--selected',Boolean(values[0]));
+      const valueNode=trigger?.querySelector('[data-shlz-select-value]');
+      if(valueNode&&selected)valueNode.textContent=selected.textContent.trim();
+    }
+  };
+  const close=()=>{reset();detailsDialog.close();};
   detailsTrigger.addEventListener('click',()=>detailsDialog.showModal());
   detailsDialog.querySelector('[data-object-details-close]')?.addEventListener('click',close);
   detailsDialog.querySelector('[data-object-details-cancel]')?.addEventListener('click',close);
   detailsDialog.addEventListener('click',event=>{if(event.target===detailsDialog)close();});
+  detailsDialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   if(detailsDialog.hasAttribute('data-object-details-invalid')){detailsDialog.showModal();detailsDialog.querySelector('[aria-invalid="true"]')?.focus();}
 }
