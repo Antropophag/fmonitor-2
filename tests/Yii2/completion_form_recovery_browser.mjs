@@ -19,12 +19,13 @@ try {
   await form.locator('textarea[name="reason"]').fill('Черновик после неизвестного результата');
   await form.locator('input[name="declarationDetails"]').fill('Д-BROWSER-RECOVERY');
 
-  let posts=0;
+  let posts=0,resolveSecond;
+  const secondCompleted=new Promise(resolve=>{resolveSecond=resolve;});
   await page.route('**/pilot/objects/4512/completion',async route=>{
     if(route.request().method()!=='POST')return route.continue();
     posts+=1;
     if(posts===1){await new Promise(resolve=>setTimeout(resolve,200));return route.abort('failed');}
-    if(posts===2)return route.fulfill({status:503,contentType:'text/plain; charset=UTF-8',body:'Service unavailable.\n'});
+    if(posts===2){await route.fulfill({status:503,contentType:'text/plain; charset=UTF-8',body:'Service unavailable.\n'});resolveSecond();return;}
     return route.continue();
   });
   await form.evaluate(node=>{node.requestSubmit();node.requestSubmit();});
@@ -36,7 +37,8 @@ try {
   await page.waitForTimeout(500);assert.equal(posts,1,'unknown result has no delayed automatic retry');
 
   await form.evaluate(node=>node.requestSubmit());
-  await page.getByText('Результат сохранения не подтверждён. Проверьте актуальные документы перед повторной отправкой.').waitFor();
+  await secondCompleted;await form.locator('button[type="submit"]').waitFor({state:'visible'});
+  await page.waitForFunction(()=>!document.querySelector('[data-completion-form="correct_declaration"] button[type="submit"]')?.disabled);
   assert.equal(posts,2,'non-HTML failure is one unconfirmed request');assert.equal(await form.locator('input[name="declarationDetails"]').inputValue(),'Д-BROWSER-RECOVERY');
 
   await form.locator('textarea[name="reason"]').fill('   ');
@@ -57,6 +59,9 @@ try {
   assert.equal(await conflicted.locator('[data-completion-focus="true"]').evaluate(node=>document.activeElement===node),true,'409 general error focused');
   assert.equal(await conflicted.locator('input[name="declarationDetails"]').inputValue(),'Д-BROWSER-RECOVERY','409 retains submitted details');
   assert.equal(await conflicted.locator('textarea[name="reason"]').inputValue(),'Конфликт актуальности','409 retains submitted reason');
+  assert.equal(await conflicted.locator('xpath=ancestor::details').getAttribute('open'),'','409 correction remains open');
+  assert.equal(await page.locator('#object-tab-readiness').getAttribute('aria-selected'),'true','409 containing tab active');
+  const conflictBox=await conflicted.locator('[data-completion-focus="true"]').boundingBox();assert.ok(conflictBox&&conflictBox.y>=0&&conflictBox.y<900,'409 focused error is scrolled into viewport');
 
   await conflicted.locator('textarea[name="reason"]').fill('Подтверждено в браузере');
   await Promise.all([page.waitForURL(/\/pilot\/objects\/4512#completion$/),conflicted.locator('button[type="submit"]').click()]);
