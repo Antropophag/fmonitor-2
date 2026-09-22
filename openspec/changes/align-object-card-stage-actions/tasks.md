@@ -16,6 +16,6 @@
 
 - [x] 3.1 Выполнить все planner-selected bounded local checks на изолированной test DB, включая релевантные architecture/HTTP checks и неизменность construction-control readiness consumer; не запускать локально полный `make test`/`make verify`.
 - [x] 3.2 Создать reconstructible exact-source snapshot либо checkpoint commit и подготовить final reviewer package через harness; source digest и candidate должны включать все specs/tests/code/review corrections.
-- [ ] 3.3 Независимый `gpt-5.6-sol/low` reviewer выполняет planner-required Gate 5 по exact source и записывает полный verdict в `reviews/code/`; все findings исправлены и изменённый delta повторно reviewed.
+- [x] 3.3 Независимый `gpt-5.6-sol/low` reviewer выполняет planner-required Gate 5 по exact source и записывает полный verdict в `reviews/code/`; все findings исправлены и изменённый delta повторно reviewed.
 - [ ] 3.4 Запустить ровно один требуемый exact-source GitHub CI consumer, собрать полный failed-job/`REGRESSION_FAILURE` inventory при сбое и получить GREEN без локального full-suite rerun.
 - [ ] 3.5 Подготовить PR-ready branch/PR без merge и deployment; delivery record фиксирует baseline PR #226/main, авторов root/executor/reviewer, проверки, CI, elapsed/rework и отсутствие изменений ОТиЗ/#171/стройконтроля.
