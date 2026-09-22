@@ -131,3 +131,37 @@ The correction establishes deterministic fixture reachability and valid focused 
 - Authorization/history preservation GREEN: `1790105791127166000-b05daf6329e4451d96d497523861041e`.
 
 No open Gate 3 findings remain for this exact source. Any change to specification, tests, expected outcomes, or bound scope requires refreshed exact-source review.
+
+---
+
+# Supplemental Gate 3 test-delta review — owner stand rejection
+
+- Verdict: **CHANGES_REQUESTED**
+- Reviewed commit: `d8c95a5c140256116fa93f89983492e7a0b1f9d8`
+- Reviewed clean candidate source digest from the harness record: `460f038fbfd68d09e55f49f344e78c20a99b7f9c141eef425c1ed641991ba567`
+- Acceptance: `owner-screenshot-table-button-modal-consistency`
+- RED record: `1790108386400507000-d7a2941bc7fb42339fc27b0f8f26327c`
+- Scope: supplemental review of the root-authored test delta only; tests, specification, and production code were not changed by the reviewer.
+
+## Findings
+
+### 1. Blocker — the modal expectation does not test the reported crooked modal behavior
+
+`tests/Yii2/yii2_visual_polish_regression_001_test.php:32-41` proves only that four view sources contain public modal-part class strings and that one narrow family of local CSS selectors does not directly set three properties. A modal can satisfy every assertion while still being visibly crooked through dimensions, positioning, padding, alignment, overflow, descendant rules, inline styles, or a different selector. Conversely, a conforming modal can legitimately specialize size without redrawing the shared surface and fail the broad selector ban.
+
+Add a rendered open-modal browser case for the owner-rejected surfaces. Compare the actual dialog/surface geometry and computed shared visual properties at the relevant desktop screenshot viewport, plus a narrow/short viewport. Assert containment, centering/alignment, reachable header/body/footer/actions, local scrolling, and the intended shared surface treatment. Keep source ownership checks only as secondary architecture guards.
+
+### 2. Major — table and button expectations are implementation-coupled and over-broad
+
+Lines 15-29 require a particular selector, declaration order, token, and global `white-space: nowrap` implementation. They do not compare the computed table-header appearance of the objects and OTIZ screens shown in the owner's screenshots, nor do they observe whether the reported button labels actually wrap. The blanket claim “button labels never wrap” is also stronger than the contract and can trade the reported defect for clipping or horizontal overflow at 320px, 200% zoom, long Russian text, or localization.
+
+Use rendered expectations derived from the owner evidence: on the same desktop environment, representative objects and OTIZ header cells should have the same computed background/treatment; the named affected buttons should remain one line when space is available. At constrained widths/zoom, assert that controls remain fully readable and inside the viewport, allowing a responsive alternative where nowrap would overflow. A source-level prohibition on an OTIZ override may remain, but it cannot be the sole visual oracle.
+
+## Evidence assessment
+
+- Traceability: the acceptance is mapped and the aggregate RED correctly reports all current source mismatches, but modal geometry and actual label wrapping are not traced to observable assertions.
+- Sensitivity: presentation-only; no new state-changing seam is introduced. Existing interaction/persistence guards remain applicable.
+- Expected-value independence: insufficient. The expected outcomes are encoded as exact CSS/markup implementation patterns rather than computed/rendered behavior derived from the owner's screenshots and the responsive contract.
+- RED quality: deterministic for the selected source patterns, but not capable of proving that the owner-visible defects are fixed.
+
+The supplemental delta may proceed after the test observes the reported defects at the rendered browser seam and avoids imposing global nowrap where it can violate responsive/reflow acceptance.
