@@ -30,6 +30,10 @@
 - **WHEN** одно из присланных значений не проходит тип, диапазон, precision, byte-length или справочную проверку
 - **THEN** вся команда получает стабильный validation rejection, пользовательский ввод может быть повторно показан формой, а overrides/history не меняются
 
+#### Scenario: Unchanged legacy representation does not block an independent edit
+- **WHEN** browser form показывает соседнее source value с неизвестным редактору legacy-кодом или различающимися `raw`/`display`, а actor изменяет другое допустимое поле
+- **THEN** browser отправляет только действительно изменённое поле, независимая правка проходит обычную validation, а неизменённое соседнее значение и provenance сохраняются
+
 ### Requirement: Single authorized atomic command
 Ровно один public application seam SHALL владеть изменением реквизитов и append-only историей. Команда SHALL принимать object identity, actor, `requestId`, `expectedRevision` и ограниченный field patch; author и server time MUST поступать из доверенного runtime. Capability `objects.details.edit` SHALL выдаваться только `fkr_operator` и `manager`; вместе с exact `objects.read` она даёт глобальный scope всех пилотных объектов. Отдельная actor↔object assignment model не создаётся. Access administrator/superadministrator без бизнес-роли MUST NOT получать capability автоматически. Canonical Yii POST SHALL применять обычные auth, CSRF и method rules и SHALL вызывать owner, а не владеть domain mutation.
 
