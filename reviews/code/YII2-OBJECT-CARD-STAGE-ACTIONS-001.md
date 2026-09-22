@@ -172,3 +172,70 @@ preserves the normative stage-action behavior and all previously approved
 applied-versus-pending semantics. Final review is approved for exact source
 `7119b1682926e5300b9fa6798e691d6ba48acefaf5632ac83013dfe5f43d8dcd`.
 Exact-source CI remains pending and is not waived.
+
+---
+
+# Current-main merge re-review — exact source `9fa2063d`
+
+- Date: `2026-09-22`
+- Reviewer: separately tasked agent `/root/gate5_object_card`
+- Current-main parent: `a691c17b8639dec8e754933c889d0add6ce5538b` (merged PR #230 hotfix)
+- Feature parent lineage: corrected commit `bd5a0819b9a784d6ba9c11b687e07c1c025d3cea`
+- Merge commit: `36ad2f144f041568398c73e66ccabaa86b9c74fb`
+- Exact merge source: `9fa2063d5f206e14ea79dca4fd79c310e64caad9fc85257b572af87d96037629`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T020713Z-6b95efeb23/package.json`
+- Verdict: **APPROVED**
+
+The merge commit and both parent deltas were reviewed at the shared object-card
+boundary before push. No semantic conflict or merge-created behavior was found.
+
+## Preservation of the stage-action change
+
+The merge-source copies of the projection, corrected controller, stage-actions test,
+and stage-matrix test are byte-for-byte identical to corrected feature commit
+`bd5a0819`. In particular:
+
+- latest unaccepted selection remains a separate `pendingComposition`;
+- applied crew/original/checklist facts remain authoritative after opening;
+- the single-primary-action priority and capability-dependent controls are intact;
+- checklist presentation still uses the authoritative checklist-owner access result,
+  without reintroducing the accidental competing `checklist.read` gate;
+- the reviewed test-delta semantics remain unchanged.
+
+The only feature-owned shared file changed relative to `bd5a0819` is
+`app/YiiRuntime/Views/object-card.php`, and its additional eight-line delta is exactly
+PR #230's object-details hotfix region above the workspace. It does not overlap the
+stage-action branches, team roster, or document presentation.
+
+## Preservation of current main / PR #230
+
+The merge-source copies of `preopening.js`, both object-details browser helpers, the
+object-details browser test, and the production-web cutover contract are byte-for-byte
+identical to current main `a691c17b`. The merged object-card view retains PR #230's
+separate persisted baseline, validation redisplay values, legacy catalogue option
+handling, and `data-object-details-baseline` attribute while also retaining the
+stage-action markup below it. Thus changed-field filtering, validation retry,
+cancel/reset behavior, legacy-speed compatibility, and history behavior are not
+reverted or coupled to stage selection.
+
+## Exact merge-source evidence
+
+- Package-bound stage-actions and stage-matrix records are GREEN on exact source
+  `9fa2063d...`, executable source `30af09f9...`, and isolated environment
+  `824c2a50...`.
+- The merge verification reports the PR #230 object-details browser flow GREEN on
+  the same merged checkout.
+- Reviewer checks are GREEN for PHP syntax of the merged object-card view and
+  controller, JavaScript syntax of `preopening.js`, and `git diff --check` against
+  current main.
+- No canonical full local suite was run. This merge review does not infer a future
+  exact-source CI result or deployment authorization.
+
+## Merge verdict
+
+**APPROVED.** Exact merge source
+`9fa2063d5f206e14ea79dca4fd79c310e64caad9fc85257b572af87d96037629`
+preserves both the corrected object-card stage-action change and current main's PR
+#230 object-details hotfix without semantic conflict. The prior Gate 3 and final
+decisions remain valid for the merged source; push/CI/admission must still use this
+exact source.
