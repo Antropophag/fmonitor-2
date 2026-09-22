@@ -69,7 +69,7 @@ try {
 
   await conflicted.locator('textarea[name="reason"]').fill('Подтверждено в браузере');
   await Promise.all([page.waitForURL(/\/pilot\/objects\/4512#completion$/),conflicted.locator('button[type="submit"]').click()]);
-  assert.match(await page.locator('#completion').textContent(),'Подтверждено в браузере','confirmed correction is present after navigation');
+  assert.match(await page.locator('#completion').textContent(),/Подтверждено в браузере/,'confirmed correction is present after navigation');
   fs.writeFileSync(config.result,JSON.stringify({passed:true,posts}),{mode:0o600});
 } finally {
   await browser.close();
