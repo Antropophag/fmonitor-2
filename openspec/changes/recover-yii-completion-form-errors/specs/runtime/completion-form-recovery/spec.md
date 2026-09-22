@@ -4,9 +4,11 @@
 
 ### Requirement: rejected completion input remains correctable
 
-The Yii application SHALL render recognized validation and domain rejections in
-the submitted completion form on the same object card, preserve that form's
-values, expose accessible errors, and retain the original non-success status.
+The Yii application SHALL render recognized validation and domain rejections on
+the same object card, expose accessible errors, and retain the original
+non-success status. It SHALL preserve values in the submitted form while that
+command remains available in the refreshed state; it SHALL NOT recreate an
+unavailable command form solely to retain input after a state or access conflict.
 
 #### Scenario: invalid correction reason
 
