@@ -30,6 +30,13 @@ offline/storage/protocol, обновление или fork `shlz-ui`, SPA/grid f
 `rapid-pilot`, imports, merge и deployment. Непроверенные browser consequences
 остаются `UNKNOWN`, а не дефектом или GREEN.
 
+Owner checkpoint 2026-09-22: до публикации PR локальный стенд на
+`http://127.0.0.1:8093` MUST быть state-preservingly обновлён от актуального
+`origin/main`, затем на нём MUST быть развёрнут exact candidate этого change.
+Владелец вручную проверяет как минимум `/pilot/objects`; PR/CI/publication не
+начинаются до его явного подтверждения. Пользовательские записи стенда не
+используются для изменяющих проверок.
+
 ---
 
 ## Исторический указатель — единый этап объекта после checklist retraction

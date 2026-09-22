@@ -56,6 +56,7 @@
 ## 8. Exact-source verification и Done
 
 - [ ] 8.1 Запустить только planner-selected bounded local checks и relevant architecture check, включая обязательную PilotHttp qualification лишь если такие файлы неожиданно изменились; записать команды, source digest и все failures без локального full `make test`/`make verify`.
-- [ ] 8.2 Подготовить exact-source role package через delivery harness и получить независимый final Gate 5 review с проверкой V01–V09, всех 25 views, preservation invariants, before/after evidence и отсутствия чужого WIP.
-- [ ] 8.3 После `APPROVED` Gate 5 запустить один exact-source GitHub CI matrix, собрать полный failed-job/`REGRESSION_FAILURE` inventory при ошибке и не считать UNKNOWN/GitHub недоступность GREEN.
-- [ ] 8.4 Отметить Done только когда exact source имеет GREEN selected CI, APPROVED final review, просмотренные before/after, полностью заполненный inventory, удалённые заменённые layers и сохранённые behavior/history/security contracts; deployment и merge оставить владельцу.
+- [ ] 8.2 Перед публикацией PR обновить локальный стенд `127.0.0.1:8093` от актуального `origin/main`, развернуть поверх него exact candidate без изменения пользовательских данных, показать владельцу `/pilot/objects` и получить явный manual checkpoint.
+- [ ] 8.3 Подготовить exact-source role package через delivery harness и получить независимый final Gate 5 review с проверкой V01–V09, всех 25 views, preservation invariants, before/after evidence и отсутствия чужого WIP.
+- [ ] 8.4 После `APPROVED` Gate 5 и owner checkpoint запустить один exact-source GitHub CI matrix, собрать полный failed-job/`REGRESSION_FAILURE` inventory при ошибке и не считать UNKNOWN/GitHub недоступность GREEN.
+- [ ] 8.5 Отметить Done только когда exact source имеет GREEN selected CI, APPROVED final review, owner stand checkpoint, просмотренные before/after, полностью заполненный inventory, удалённые заменённые layers и сохранённые behavior/history/security contracts; production deployment и merge оставить владельцу.
