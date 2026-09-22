@@ -76,6 +76,7 @@ try {
     assertSameValue(409,$conflict['status'],'domain conflict status preserved');
     assertSameValue(true,str_contains(implode(' ',$conflict['headers']['content-type']??[]),'text/html'),'domain conflict renders card');
     assertSameValue(true,str_contains($conflict['body'],'Документ уже зафиксирован.'),'domain reason visible');
+    assertSameValue(false,str_contains($conflict['body'],'Д-CONFLICT'),'unavailable command does not leak submitted values');
     $conflictDom=new DOMDocument();@$conflictDom->loadHTML('<?xml encoding="UTF-8">'.$conflict['body']);$conflictXpath=new DOMXPath($conflictDom);
     assertSameValue(0,$conflictXpath->query('//*[@data-completion-form="record_declaration"]')->length,'recorded declaration command is no longer shown');
     assertSameValue(1,$conflictXpath->query('//*[@id="completion"]/*[@data-completion-focus="true" and @role="alert"]')->length,'unavailable-command section alert is focusable');
