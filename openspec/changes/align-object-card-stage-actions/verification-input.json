@@ -1,0 +1,42 @@
+{
+  "change": "align-object-card-stage-actions",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
+    "app/YiiRuntime/Controllers/ObjectCardController.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "openspec/changes/align-object-card-stage-actions/proposal.md",
+    "openspec/changes/align-object-card-stage-actions/design.md",
+    "openspec/changes/align-object-card-stage-actions/tasks.md",
+    "openspec/changes/align-object-card-stage-actions/specs/ui/object-card-stage-actions/spec.md",
+    "openspec/changes/align-object-card-stage-actions/verification-input.json",
+    "specs/YII2-OBJECT-CARD-STAGE-ACTIONS-001.md",
+    "tests/Yii2/yii2_object_card_stage_actions_001_test.php",
+    "tests/Yii2/yii2_object_card_stage_matrix_001_test.php",
+    "tests/Yii2/yii2_object_card_presentation_001_test.php",
+    "tests/Yii2/yii2_object_details_editing_001_test.php",
+    "tests/Yii2/yii2_documentary_http_001_test.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "tools/verification/suites.tsv",
+    "reviews/tests/YII2-OBJECT-CARD-STAGE-ACTIONS-001.md",
+    "reviews/code/YII2-OBJECT-CARD-STAGE-ACTIONS-001.md",
+    "docs/operations/object-card-stage-actions-delivery.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-OBJECT-CARD-STAGE-ACTIONS-001",
+      "acceptance_id": "A-H-pending-composition-and-stage-action-matrix",
+      "spec_path": "specs/YII2-OBJECT-CARD-STAGE-ACTIONS-001.md",
+      "seam": "authenticated Yii2 GET|HEAD /pilot/objects/{id} with persisted selection/original/application facts",
+      "tests": ["tests/Yii2/yii2_object_card_stage_actions_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_object_card_stage_actions_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-OBJECT-CARD-STAGE-ACTIONS-001",
+      "acceptance_id": "E-H-executable-stage-capability-matrix",
+      "spec_path": "specs/YII2-OBJECT-CARD-STAGE-ACTIONS-001.md",
+      "seam": "authenticated Yii2 GET|HEAD /pilot/objects/{id} across working, change-needed, documentary and completed persisted facts",
+      "tests": ["tests/Yii2/yii2_object_card_stage_matrix_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_object_card_stage_matrix_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}

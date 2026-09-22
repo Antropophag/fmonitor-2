@@ -20,6 +20,9 @@ final readonly class MariaDbYiiObjectCardProjection
         $application = $this->one("SELECT * FROM `{$this->prefix}fm2_assignment_order_applications` WHERE installation_case_id=:case ORDER BY application_sequence DESC LIMIT 1", [':case' => $caseId]);
         $selection = $this->one("SELECT s.*,r.current_revision_id,v.revision_number,v.document_date,v.uploaded_at_utc,v.actor_user_id,v.byte_size FROM `{$this->prefix}fm2_assignment_order_selections` s LEFT JOIN `{$this->prefix}fm2_assignment_order_original_roots` r ON r.installation_case_id=s.installation_case_id AND r.assignment_order_id=s.assignment_order_id AND r.composition_identity=s.composition_identity AND r.composition_sha256=s.composition_sha256 LEFT JOIN `{$this->prefix}fm2_assignment_order_original_revisions` v ON v.root_original_id=r.root_original_id AND v.revision_id=r.current_revision_id WHERE s.installation_case_id=:case AND s.selection_revision=(SELECT MAX(x.selection_revision) FROM `{$this->prefix}fm2_assignment_order_selections` x WHERE x.installation_case_id=:case2) LIMIT 2", [':case' => $caseId, ':case2' => $caseId]);
         [$card['events'],$card['historyNext']] = $this->events($caseId,(int)$card['id'],$historyCursor);
+        $card['pendingComposition'] = $selection !== null && $selection['current_revision_id'] === null
+            ? $this->pendingComposition($card, $selection)
+            : null;
         if ($card['opened'] && $application === null) {
             throw new \RuntimeException('Opened native card has no applied composition.');
         }
@@ -53,6 +56,39 @@ final readonly class MariaDbYiiObjectCardProjection
         $card['equipmentFacts'] = $this->equipmentFacts((int) $card['id']);
         unset($card['caseId'], $card['nextStep']);
         return $this->actorNames($card);
+    }
+
+    private function pendingComposition(array $card, array $row): array
+    {
+        $orderId = YiiObjectCardValues::positiveId($row['assignment_order_id']);
+        $members = $orderId === null ? [] : $this->db->createCommand(
+            "SELECT installer_tab_id,fio_snapshot,position_snapshot FROM `{$this->prefix}fm2_assignment_order_selection_members` WHERE assignment_order_id=:order ORDER BY installer_tab_id",
+            [':order' => $orderId],
+        )->queryAll();
+        $installers = array_map(static fn (array $person): array => [
+            'tabId' => (int) $person['installer_tab_id'],
+            'fullName' => (string) $person['fio_snapshot'],
+            'position' => (string) $person['position_snapshot'],
+            'status' => 'employed',
+        ], $members);
+        $engineer = [
+            'userId' => (int) $row['control_engineer_user_id'],
+            'fullName' => (string) $row['control_engineer_fio_snapshot'],
+            'position' => (string) $row['control_engineer_position_snapshot'],
+        ];
+        if ($orderId === null || $members === []) {
+            throw new \RuntimeException('Malformed pending composition.');
+        }
+        YiiObjectCardApplicationIntegrity::validateComposition(
+            $row + ['object_id' => $card['id']],
+            ['selectedInstallers' => $installers, 'selectedEngineer' => $engineer],
+        );
+        return [
+            'orderId' => $orderId,
+            'version' => (int) $row['order_version'],
+            'installers' => $installers,
+            'engineer' => $engineer,
+        ];
     }
 
     private function applied(array $card, array $row): array

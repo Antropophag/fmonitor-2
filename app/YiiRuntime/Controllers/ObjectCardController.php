@@ -56,9 +56,10 @@ final class ObjectCardController extends PreopeningController
                 'canSelect' => $this->processCap('assignment_order.composition.select'),
                 'currentEngineerAssignment'=>$assignment,'canAssignEngineer'=>$this->processCap('control_engineer.assign'),'eligibleEngineers'=>$engineers,
                 'canOpen' => $this->cap('installation.open'),
+                'canUpload' => $documentAccess['canUpload'],
                 'canCorrect' => $documentAccess['canCorrect'],
                 'canReadOriginal' => $documentAccess['canRead'],
-                'canReadChecklist' => (bool) ($checklistAccess['read'] ?? false),
+                'canReadChecklist' => $this->processCap('checklist.read') && (bool) ($checklistAccess['read'] ?? false),
                 'completion' => $completion,
                 // Completion capabilities are not yet in the canonical RBAC registry; grants() is the existing exact active-grant read seam.
                 'canRecordPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.record'),
@@ -132,8 +133,11 @@ final class ObjectCardController extends PreopeningController
 
     private function withCurrentInstallerStatuses(array $card): array
     {
-        if (($card['order']['installers'] ?? []) === []) return $card;
-        $installers = $card['order']['installers'];
+        $installers = array_merge(
+            $card['order']['installers'] ?? [],
+            $card['pendingComposition']['installers'] ?? [],
+        );
+        if ($installers === []) return $card;
         $tabIds = array_values(array_unique(array_map(
             static fn (array $installer): int => (int) ($installer['tabId'] ?? 0),
             $installers,
@@ -162,10 +166,16 @@ final class ObjectCardController extends PreopeningController
             }
             $statuses[$tabId] = $matches[0]['employment_status'];
         }
-        $card['order']['installers'] = array_map(static function (array $installer) use ($statuses): array {
+        $withStatuses = static function (array $installer) use ($statuses): array {
             $installer['employmentStatus'] = $statuses[(int) $installer['tabId']];
             return $installer;
-        }, $installers);
+        };
+        if (($card['order']['installers'] ?? []) !== []) {
+            $card['order']['installers'] = array_map($withStatuses, $card['order']['installers']);
+        }
+        if (($card['pendingComposition']['installers'] ?? []) !== []) {
+            $card['pendingComposition']['installers'] = array_map($withStatuses, $card['pendingComposition']['installers']);
+        }
         return $card;
     }
 
