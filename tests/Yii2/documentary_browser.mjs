@@ -11,7 +11,7 @@ try {
  const response=await page.goto(c.origin+'/pilot/objects/4512#completion');check(response.status()===200,'card ready');
  check(await page.locator('form [name=action][value=record_pto]').count()===1,'INTENDED_RED documentary PTO form');
  const form=action=>page.locator(`form:has(input[name=action][value="${action}"])`);
- async function submit(action){const f=form(action);await Promise.all([page.waitForResponse(r=>r.url().endsWith('/completion')&&r.request().method()==='POST'&&r.status()===303),f.locator('button').click()]);await page.waitForURL('**/pilot/objects/4512#completion');}
+ async function submit(action){const f=form(action);await Promise.all([page.waitForNavigation(),f.locator('button').click()]);check(new URL(page.url()).pathname==='/pilot/objects/4512'&&new URL(page.url()).hash==='#completion','confirmed completion navigation');}
  async function inspectForm(action,fields){
   const f=form(action),d=f.locator('xpath=ancestor::details[1]');if(await d.count()&&!(await d.evaluate(e=>e.open)))await d.locator('summary').click();
   for(const width of [1440,390]){await page.setViewportSize({width,height:1000});
@@ -27,7 +27,7 @@ try {
  await inspectForm('correct_pto',{ptoActDate:{type:'date',required:'',max:c.today},reason:{required:'',maxlength:'1000'}});
  const correction=form('correct_declaration');const details=correction.locator('xpath=ancestor::details[1]');if(await details.count()&&!(await details.evaluate(e=>e.open)))await details.locator('summary').click();
  await inspectForm('correct_declaration',{declarationDate:{type:'date',required:'',max:c.today},declarationDetails:{maxlength:'500'},reason:{required:'',maxlength:'1000'}});
- await correction.locator('[name=declarationDate]').fill('2026-09-04');await correction.locator('[name=declarationDetails]').fill('Д-UI-002');await correction.locator('[name=reason]').fill('Сверено с оригиналом');await submit('correct_declaration');await page.reload();
+ await correction.locator('[name=declarationDate]').fill('2026-09-04');await correction.locator('[name=declarationDetails]').fill('Д-UI-002');await correction.locator('[name=reason]').fill('Сверено с оригиналом');await submit('correct_declaration');
  for(const text of ['Д-UI-001','Д-UI-002','Сверено с оригиналом'])check((await page.textContent('body')).includes(text),'history '+text);
  // Inspect the actual form/label relationships and both target viewports together.
  for(const width of [1440,390]){

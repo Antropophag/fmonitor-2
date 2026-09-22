@@ -25,7 +25,7 @@ final class CompletionController extends PreopeningController
         ]]);
     }
 
-    public function actionIndex(string $id): Response
+    public function actionIndex(string $id): string|Response
     {
         $objectId = $this->canonicalId($id);
         if ($objectId === null) return $this->status(404);
@@ -35,7 +35,12 @@ final class CompletionController extends PreopeningController
         catch (\InvalidArgumentException) { return $this->status(400); }
         if (!Yii::$app->request->validateCsrfToken($form->fields['_csrf'] ?? '')) return $this->status(400);
         try { $command = $form->command((new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format('Y-m-d')); }
-        catch (CompletionFormError $error) { return $this->text(422, $error->getMessage()); }
+        catch (CompletionFormError $error) {
+            if ($error->action === null) return $this->text(422, $error->getMessage());
+            $capability = 'installation.completion.' . (str_contains($error->action, 'pto') ? 'pto.' : 'declaration.') . (str_starts_with($error->action, 'record_') ? 'record' : 'correct');
+            if (!$this->granted($capability)) return $this->text(403, 'Действие недоступно для вашей роли.');
+            return $this->cardError($objectId, $form, $error->action, 422, $error->getMessage(), $error->field);
+        }
         $identityStore = Yii::$app->localIdentity;
         if (!$identityStore instanceof MariaDbYiiLocalIdentityStore || !$identityStore->grants($this->actor(), $command['capability'])) {
             return $this->text(403, 'Действие недоступно для вашей роли.');
@@ -52,7 +57,7 @@ final class CompletionController extends PreopeningController
             }
             return $this->redirect303('/pilot/objects/' . $objectId . '#completion');
         } catch (\DomainException $error) {
-            return $this->domainError($error->getMessage(), $command['action']);
+            return $this->domainError($objectId, $form, $error->getMessage(), $command['action']);
         } catch (\Throwable) {
             return $this->text(503, 'Service unavailable.', true);
         } finally {
@@ -65,20 +70,38 @@ final class CompletionController extends PreopeningController
         return $this->canonicalId($id) === null ? $this->status(404) : $this->methodNotAllowed('POST');
     }
 
-    private function domainError(string $code, string $action): Response
+    private function domainError(int $objectId, CompletionForm $form, string $code, string $action): string|Response
     {
         return match ($code) {
             'CASE_NOT_FOUND' => $this->text(404, 'Объект не найден.'),
-            'CASE_NOT_WORKING' => $this->text(409, 'Работы по объекту не открыты.'),
-            'CHECKLIST_INCOMPLETE' => $this->text(409, 'Сначала завершите монтажные работы до 85%.'),
-            'PTO_REQUIRED' => $this->text(409, 'Сначала зафиксируйте дату акта ПТО.'),
-            'FACT_ALREADY_RECORDED' => $this->text(409, 'Документ уже зафиксирован.'),
+            'CASE_NOT_WORKING' => $this->cardError($objectId, $form, $action, 409, 'Работы по объекту не открыты.'),
+            'CHECKLIST_INCOMPLETE' => $this->cardError($objectId, $form, $action, 409, 'Сначала завершите монтажные работы до 85%.'),
+            'PTO_REQUIRED' => $this->cardError($objectId, $form, $action, 409, 'Сначала зафиксируйте дату акта ПТО.'),
+            'FACT_ALREADY_RECORDED' => $this->cardError($objectId, $form, $action, 409, 'Документ уже зафиксирован.'),
             'ACTOR_NOT_AUTHORIZED' => $this->text(403, 'Действие недоступно для вашей роли.'),
-            'FACT_NOT_FOUND' => $this->text(409, 'Исправляемая запись не найдена.'),
-            'REASON_REQUIRED' => $this->status(422),
+            'FACT_NOT_FOUND' => $this->cardError($objectId, $form, $action, 409, 'Исправляемая запись не найдена.'),
+            'REASON_REQUIRED' => $this->cardError($objectId, $form, $action, 422, 'Укажите причину исправления.', 'reason'),
             'INVALID_FACT' => $this->validationError($action),
             default => $this->text(503, 'Service unavailable.', true),
         };
+    }
+
+    private function granted(string $capability): bool
+    {
+        $identityStore = Yii::$app->localIdentity;
+        return $identityStore instanceof MariaDbYiiLocalIdentityStore && $identityStore->grants($this->actor(), $capability);
+    }
+
+    private function cardError(int $objectId, CompletionForm $form, string $action, int $status, string $message, ?string $field = null): string|Response
+    {
+        $values = array_intersect_key($form->fields, array_flip(['ptoActDate', 'declarationDate', 'declarationDetails', 'reason']));
+        $controller = new ObjectCardController('object-card', Yii::$app);
+        return $controller->renderCompletionFormState($objectId, [
+            'action' => $action,
+            'values' => $values,
+            'field' => $field,
+            'message' => $message,
+        ], $status);
     }
 
     private function validationError(string $action): Response

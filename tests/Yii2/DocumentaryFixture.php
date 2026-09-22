@@ -43,7 +43,9 @@ final class DocumentaryFixture
     }
     public static function rejected(array $r,int $status,string $message):void
     {
-        assertSameValue([$status,$message."\n"],[$r['status'],$r['body']],'exact completion rejection');
+        assertSameValue($status,$r['status'],'exact completion rejection status');
+        if($status===404||$message==='Неизвестное действие.')assertSameValue($message."\n",$r['body'],'exact non-card completion rejection');
+        else{assertSameValue(true,str_contains(implode(' ',$r['headers']['content-type']??[]),'text/html'),'recognized completion rejection renders card');assertSameValue(true,str_contains($r['body'],$message),'recognized completion reason remains visible');}
         assertSameValue(true,str_contains(implode(' ',$r['headers']['cache-control']??[]),'no-store'),'no-store rejection');
     }
     public function unchangedExcept(array $before,array $suffixes):void

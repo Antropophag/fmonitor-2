@@ -74,7 +74,7 @@ return [
     ],
     'assets' => [
         'shlz.css'=>['bb5e00fba0a3b6804571fdc0a90caaa5ae62a03000d01501a63cd77d234fe99e','text/css; charset=UTF-8','public, max-age=3600'],
-        'pilot.css'=>['3b1f37100b8fa0ab814b5604ca8c12f53a82f633b4f7a3f387e68db27ce30748','text/css; charset=UTF-8','public, max-age=3600'],
+        'pilot.css'=>['5481f6aab7f31c0a2ecee115e18708460196459a2b0d9212f1ebd71f431b787b','text/css; charset=UTF-8','public, max-age=3600'],
         'preopening.css'=>['7c69ca7f249c12ee9c4f8526a4ddf9f3de35dd0ca8a81e781b82dc2b6c5197aa','text/css; charset=UTF-8','public, max-age=3600'],
         'favicon.svg'=>['24b621ad3437c7ebec28fa5f2fe11c345b182a7ceb61e60acd99de163a3ea5b2','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'navigation.js'=>['94e0f756c7309f61a678dd4bed2d23c1c316b8524e03ec3c9141fc72006b6475','text/javascript; charset=UTF-8','public, max-age=3600'],
@@ -84,7 +84,7 @@ return [
         'users.js'=>['b66f167eff9c1e76e63aa9833c689e6c2655f435d1e7a693629ee98328373b55','text/javascript; charset=UTF-8','public, max-age=3600'],
         'object-queue.js'=>['6fec7a86338bde442d3aaedaa674d032aed17d2b801b9d02d4e5ded69ead35d5','text/javascript; charset=UTF-8','public, max-age=3600'],
         'inspection-schedule.js'=>['7fc67ff2732b01147ec0b6260dd210459e3ada2f06d6b77e89a39b269c8a6327','text/javascript; charset=UTF-8','public, max-age=3600'],
-        'preopening.js'=>['3a1a3d0bf2baf034713ed97157be2d6b5b0bef13b8a059e8f1db272747824ec0','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'preopening.js'=>['cde544f37d4c6e872d805ba22b6af364f2d3e81a30246043ab5580bb62a8d4fe','text/javascript; charset=UTF-8','public, max-age=3600'],
         'template-offer.js'=>['cd6e13f6b5c23ba0e341d899a8876dae45ebeb2ad7f4475eb8c532511aa049e3','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist.js'=>['6b9ab656c60f4581f84f73be8ca20e04bd7b6c20dfa3719a2317282f5f8abb4b','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist-sw.js'=>['e0555252c5194438254f6b8b4f4b766a09efd942dfa8573cb9fb179e8bd6a622','text/javascript; charset=UTF-8','public, max-age=0'],
