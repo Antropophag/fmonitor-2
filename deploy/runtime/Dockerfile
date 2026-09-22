@@ -17,8 +17,7 @@ RUN npm ci --no-audit --no-fund \
     && rm -rf .git node_modules
 
 FROM php:8.5-fpm-bookworm
-ARG FMONITOR_RUNTIME_BUILD_ID=development
-ENV FMONITOR_RUNTIME_BUILD_ID=${FMONITOR_RUNTIME_BUILD_ID}
+ENV FMONITOR_RUNTIME_BUILD_ID_FILE=/workspace/fmonitor-2/.runtime-build-id
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx libfcgi-bin curl mariadb-client unzip util-linux ca-certificates gnupg unixodbc-dev \
     && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
@@ -47,6 +46,13 @@ RUN test -x bin/fmonitor2-run-with-local-integration-config
 COPY config ./config
 COPY public ./public
 COPY deploy/runtime ./deploy/runtime
+RUN find /workspace/fmonitor-2 /workspace/shlz-ui -type f -print0 \
+    | sort -z \
+    | xargs -0 sha256sum \
+    | sha256sum \
+    | cut -d' ' -f1 > /workspace/fmonitor-2/.runtime-build-id \
+    && chown root:root /workspace/fmonitor-2/.runtime-build-id \
+    && chmod 0444 /workspace/fmonitor-2/.runtime-build-id
 
 USER 10001:10001
 EXPOSE 8080 9000

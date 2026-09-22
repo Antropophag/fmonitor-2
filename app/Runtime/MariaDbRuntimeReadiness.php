@@ -51,7 +51,7 @@ final class MariaDbRuntimeReadiness
 
     private static function marker(\mysqli $connection,RuntimeConfiguration $config):array
     {
-        try{$table=$config->value('FMONITOR_PROCESS_TABLE_PREFIX').'fm2_runtime_readiness_marker';$row=$connection->query("SELECT database_id,schema_version FROM `{$table}` WHERE singleton_id=1")->fetch_assoc();if($row===null||(int)$row['schema_version']!==33)throw new \RuntimeException();return['databaseId'=>(string)$row['database_id'],'schemaVersion'=>(int)$row['schema_version']];}catch(\Throwable){throw new \RuntimeException('STARTUP_NOT_READY');}
+        try{$table=$config->value('FMONITOR_PROCESS_TABLE_PREFIX').'fm2_runtime_readiness_marker';$row=$connection->query("SELECT database_id,schema_version FROM `{$table}` WHERE singleton_id=1")->fetch_assoc();if($row===null||(int)$row['schema_version']!==Schema\RuntimeReadinessMarkerSchemaMigration::VERSION)throw new \RuntimeException();return['databaseId'=>(string)$row['database_id'],'schemaVersion'=>(int)$row['schema_version']];}catch(\Throwable){throw new \RuntimeException('STARTUP_NOT_READY');}
     }
 
     private static function assertSchema(\mysqli $connection, RuntimeConfiguration $config): void

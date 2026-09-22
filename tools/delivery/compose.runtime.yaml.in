@@ -16,7 +16,7 @@ x-runtime-environment: &runtime-environment
   FMONITOR_ORIGINAL_SAFE_LOG_FILE: /home/fmonitor/.local/state/fmonitor2/log/original-safe.jsonl
   FMONITOR_TRUSTED_REQUEST_HOST: "${FMONITOR_TRUSTED_REQUEST_HOST:?Set FMONITOR_TRUSTED_REQUEST_HOST}"
   FMONITOR_TRUSTED_REQUEST_SCHEME: "${FMONITOR_TRUSTED_REQUEST_SCHEME:?Set FMONITOR_TRUSTED_REQUEST_SCHEME}"
-  FMONITOR_RUNTIME_BUILD_ID: "${FMONITOR_RUNTIME_BUILD_ID:?Set exact runtime build identity}"
+  FMONITOR_RUNTIME_BUILD_ID_FILE: /workspace/fmonitor-2/.runtime-build-id
 
 x-jobs-erp-environment: &jobs-erp-environment
   FMONITOR_ERP_HOST: "${FMONITOR_ERP_HOST:?Set FMONITOR_ERP_HOST}"
@@ -33,8 +33,6 @@ x-image: &image
   build:
     context: ../..
     dockerfile: deploy/runtime/Dockerfile
-    args:
-      FMONITOR_RUNTIME_BUILD_ID: "${FMONITOR_RUNTIME_BUILD_ID:?Set exact runtime build identity}"
 
 x-app: &app
   <<: *image

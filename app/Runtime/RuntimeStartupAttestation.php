@@ -17,6 +17,6 @@ final class RuntimeStartupAttestation
         $path=self::path($config);clearstatcache(true,$path);$stat=@lstat($path);if(!is_array($stat)||is_link($path)||!is_file($path)||($stat['mode']&0777)!==0600||$stat['uid']!==posix_geteuid()||$stat['gid']!==posix_getegid()||$stat['nlink']!==1)self::fail();
         $bytes=@file_get_contents($path);try{$actual=is_string($bytes)?json_decode($bytes,true,16,JSON_THROW_ON_ERROR):null;}catch(\Throwable){self::fail();}if(!is_array($actual)||$actual!==self::expected($config,$marker))self::fail();
     }
-    private static function expected(RuntimeConfiguration $config,array $marker):array{return['formatVersion'=>self::FORMAT,'databaseId'=>$marker['databaseId']??null,'schemaVersion'=>$marker['schemaVersion']??null,'buildId'=>$config->value('FMONITOR_RUNTIME_BUILD_ID'),'database'=>$config->value('FMONITOR_DB_NAME'),'tablePrefix'=>$config->value('FMONITOR_PROCESS_TABLE_PREFIX')];}
+    private static function expected(RuntimeConfiguration $config,array $marker):array{return['formatVersion'=>self::FORMAT,'databaseId'=>$marker['databaseId']??null,'schemaVersion'=>$marker['schemaVersion']??null,'buildId'=>RuntimeBuildIdentity::read($config),'database'=>$config->value('FMONITOR_DB_NAME'),'tablePrefix'=>$config->value('FMONITOR_PROCESS_TABLE_PREFIX')];}
     private static function fail():never{throw new \RuntimeException('STARTUP_NOT_READY');}
 }

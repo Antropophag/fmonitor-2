@@ -4,7 +4,7 @@ namespace FMonitor2\RuntimeRestore;
 
 final class RuntimeRecoverySchemaV33
 {
-    public const VERSION=33;
+    public const VERSION=\FMonitor2\InstallationProcess\RuntimeReadinessMarkerSchemaMigration::VERSION;
     public const DEFERRED=RuntimeRecoverySchemaV32::DEFERRED;
     public static function tables(string $prefix):array
     {
