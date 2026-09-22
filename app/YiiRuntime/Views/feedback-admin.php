@@ -27,9 +27,9 @@ foreach (
     Html::encode($item["description"]),
 ) ?></p><p><a class="shlz-link" href="<?= Html::encode(
     $item["pagePath"],
-) ?>"><?= Html::encode($item["pagePath"]) ?></a> · пользователь <?= intval(
+) ?>"><strong>Исходный экран:</strong> <?= Html::encode($item["pagePath"]) ?></a> · пользователь <?= intval(
     $item["actorId"],
-) ?> · <?= Html::encode($item["appVersion"]) ?> · <?= Html::encode(
+) ?> · <strong>Сборка:</strong> <?= Html::encode($item["appVersion"]) ?> · <?= Html::encode(
      $item["createdAt"],
  ) ?></p><?php foreach (
     $item["results"]

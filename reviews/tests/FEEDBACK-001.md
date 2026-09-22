@@ -88,3 +88,241 @@ None. The workforce inventory adds exactly the two canonical v25 feedback tables
 The activation-proxy change also preserves its privacy and operational contract. Baseline and current reproductions show that concurrent nginx workers can emit the same three completed access records in different orders. Comparing the exact sorted `(method, uri)` multiset removes only the unsupported ordering assumption; the test still requires exactly three records, the precise route multiplicities, status and upstream status, valid timing fields, three distinct request IDs, and absence of every prohibited request field. No behavior expectation is weakened.
 
 The six-file post-CI test delta is approved. The failed CI run remains historical failure evidence; a new exact-source CI result is still required before publication readiness can be claimed.
+
+## Issue #172 Gate 3 review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Test author: root agent; production executor has not authored this review
+- Reviewed source: base `0504d2589835f2583dc9afdbc47e4694e2573365` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T155510Z-1a59a4367f/snapshot/source.patch`, SHA-256 `89f3bc1dc32ff15985037d55309e9a15f79ad75457cef4a05245f875a93de917`; exact candidate source `5e8489838049210b2083eec90cbb33c6ac56f4713a527a77c5960c0f6f32cd28`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T155510Z-1a59a4367f/package.json`; package SHA-256 `e1f1fc687acf96ce8972662e69d1c19d4b5d8a567665715c8edef7d9d9b22455`; required-context SHA-256 `a9b337bf23169622b06b9614f7ec37cd265a640a3a5b2d945fdf66d0df7593fe`; verification-plan SHA-256 `e466a1d2f1591b9520315a69442754fa8e64ca78c01388c67f4a142af12619a2`
+- Scope: issue #172 FEEDBACK-001 A2/A4/A5/A8/A9 context/build/replay correction and its connected application/HTTP/browser tests; planner lane `CRITICAL`, required reviews `gate3` and `final`
+- Public seam: `FeedbackApplication::submit/listing`; Yii feedback form, submit, confirmation/return and protected operator list; existing strict runtime-readiness seam as non-regression witness
+- Evidence: owner RED record `1790092469846410000-190bbd1906e440ad9db7c95bfa2b578b` fails because `FeedbackApplication::buildIdentityFile` is absent; browser RED record `1790092477191199000-c279a12b8ab1490494826c2a585782bf` fails on preservation of `/pilot/calendar`; readiness GREEN record `1790092486276837000-4a812486b42c40c0951c604e70bb54db` reports `PASS: RUNTIME-READINESS-LOAD-001 startup-bound constant-work readiness`. All three records bind candidate source `5e8489838049210b2083eec90cbb33c6ac56f4713a527a77c5960c0f6f32cd28` and executable source `3a58e633fff1687194cef36170ecfb4fb3b0e40f38cea69bc016c814bb70d6fc`.
+- Verdict: `CHANGES_REQUESTED`
+
+### Findings
+
+1. **HIGH — the fail-soft build-identity oracle omits required distrust cases and does not establish the no-heavy-fallback boundary.** FEEDBACK-001 A2/A9 and the delta requirement say that an absent, unreadable, mutable, linked, or invalid immutable build file must yield `unknown`, and that feedback HTTP must not hash source or invoke Git, Docker/API, or external requests. `tests/Yii2/yii2_feedback_001_test.php:43-46` exercises only missing, mode-`0644`, and symlink files. It does not test malformed/oversized/non-ASCII content, an unreadable file, or a regular file with link count greater than one, so implementations accepting those explicitly distrusted inputs can pass. Its implementation-text checks prohibit only the literal strings `RuntimeBuildIdentity::read` and `RecursiveDirectoryIterator`; a direct hash walk, alternate runtime-identity invocation, shell/Git/Docker/API call, or external request still passes. Correct the application/HTTP test at the public owner seam with literal `unknown` expectations for every specified invalid file class (including hard-link and invalid-content cases, with a deterministic unreadable-file fixture appropriate to the test environment), and add a bounded behavioral dependency/hot-path oracle that fails if submit performs source traversal/hashing, process execution, Docker/API, or network access rather than relying on two source substrings. Preserve the existing independent strict-readiness GREEN witness.
+
+The route table has independent positive expectations for each newly allowed path and representative sensitive negatives; object identity is derived only for object routes. Replay across builds, historical listing, client-version rejection, actor authorization, append-only facts, HTTP CSRF/method/rejection behavior, connected desktop/mobile journeys, and deterministic concurrent replay retain adequate sensitivity. Both REDs fail at missing issue behavior rather than fixture setup, and the readiness check is GREEN, but the uncovered trust/load boundary above is material to the stated security and steady-request contract.
+
+### Required changes
+
+Resolve finding 1, regenerate the prepared exact-source package because tests change, capture refreshed owner/browser RED and unchanged readiness evidence, and submit the corrected delta for independent Gate 3 rereview. No production implementation is authorized by this verdict.
+
+## Issue #172 Gate 3 rereview — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Reviewed source: base `0504d2589835f2583dc9afdbc47e4694e2573365` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160114Z-dfc515d70b/snapshot/source.patch`, SHA-256 `41c436b1335f466cd8621b412fea80997d83fcd5addfcbcb6d3a85db0184c649`; exact candidate source `9b00a4238173c8b031259d9954d2a5bc2d3f901c9c75463867bb766fc4390381`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160114Z-dfc515d70b/package.json`, SHA-256 `54e8cdea23bb47d14f7b3b80c98a575655eb72f28c492767c6b440ae0a83fe21`; verification-plan SHA-256 `ca125b62649afbc7df80e480efe1bb49af94bbe3af7864dd4f94c8845963f0ad`
+- Corrected delta from candidate `5e8489838049210b2083eec90cbb33c6ac56f4713a527a77c5960c0f6f32cd28`: append-only prior review record plus the build-identity expectations at `tests/Yii2/yii2_feedback_001_test.php:46-50`; no production change is present
+- Evidence: owner intended RED `1790092831409524000-1be3813268c047a6be99d09c601a8742` (`buildIdentityFile` seam absent); browser intended RED `1790092840211897000-bccdd3266ac642a39a6551b5724607e4` (`/pilot/calendar` context not retained); readiness GREEN `1790092848059131000-ec491c86e68c41f9ace5026a631d128e` (`PASS: RUNTIME-READINESS-LOAD-001 startup-bound constant-work readiness`). All bind exact candidate `9b00a4238173c8b031259d9954d2a5bc2d3f901c9c75463867bb766fc4390381` and executable source `8e7d4337d910f72d4509175b4b9d897989ff5fb0dc446891e5cfde6f51c4b3a7`.
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior finding disposition
+
+1. **Partially fixed, still open.** The corrected matrix now independently expects `unknown` for a multiply linked regular file, malformed 64-character non-hex content, and a mode-`0000` unreadable file; missing, mutable and symlink cases remain covered. The expanded dependency exclusions reject the named Runtime reader/source fallback, directory iterator, common process/network functions, `.git`, and Docker socket literals. Fresh RED and strict-readiness GREEN records are exact-source bound.
+
+### Findings
+
+1. **HIGH — the required behavioral hot-path oracle still does not execute the public submit path and uses an environment-sensitive wall-clock threshold.** `tests/Yii2/yii2_feedback_001_test.php:50` times twenty calls to `feedbackOwner(...)`; each call constructs a Yii database connection and component but never invokes `submit()`. An implementation may therefore defer source traversal, hashing, process execution or network access until `submit()` and still pass this assertion. Conversely, the literal `<1.0` second limit includes twenty environment-dependent connection/component constructions and can fail on a slow CI/database host even when identity fallback is constant work. The expanded source-substring list is useful architecture protection but is not the behavioral oracle required by the previous finding and can be bypassed through an unlisted helper/adapter. Replace or complement this with a deterministic bounded probe that invokes `FeedbackApplication::submit` with a missing identity file while instrumenting or isolating forbidden filesystem/process/network dependencies; assert a saved `unknown` result and exact bounded dependency interactions rather than elapsed wall time. Keep the static dependency exclusions as defense in depth.
+
+No other new finding was introduced by the corrected delta. The file distrust cases, refreshed RED failures, and readiness non-regression are otherwise adequate.
+
+### Required changes
+
+Resolve the remaining behavioral/determinism gap in finding 1, regenerate the exact-source package, and capture refreshed owner RED plus unchanged browser RED/readiness GREEN evidence before another Gate 3 rereview. Production implementation remains blocked.
+
+## Issue #172 Gate 3 rereview #3 — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Reviewed source: base `0504d2589835f2583dc9afdbc47e4694e2573365` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160524Z-6e7a86d2d2/snapshot/source.patch`, SHA-256 `4e8483c5a60de70b0f75c3956b5e80626fe376dfaba104fcf5de01e6a11980fb`; exact candidate source `370e41327c2ec60563b6ef89d7ec55654c4889b563c92a6eb6106d7a016f31ae`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160524Z-6e7a86d2d2/package.json`, SHA-256 `eb2ebde32423789a9e76a15d6427f93a49df1c9066bf628697ed961238c81b1d`; verification-plan SHA-256 `09c6bb9f891e02d4782bbf52a4915cd993d8201e2211ff0af147fc86795ced04`
+- Corrected delta from candidate `9b00a4238173c8b031259d9954d2a5bc2d3f901c9c75463867bb766fc4390381`: removes the wall-clock assertion and adds the isolated `dependencyProbe` worker plus its public submit/listing assertion; no production code is changed
+- Evidence: owner intended RED `1790093076000209000-f52a97af52714791b33741e91e9ce6bc` (`buildIdentityFile` seam absent); browser intended RED `1790093082984329000-dd3a8ccebc8a4793a2ba4663d24ed125` (`/pilot/calendar` context not retained); readiness GREEN `1790093091508266000-61d323a1d4834c209b628975631cba86` (`PASS: RUNTIME-READINESS-LOAD-001 startup-bound constant-work readiness`). All bind exact candidate `370e41327c2ec60563b6ef89d7ec55654c4889b563c92a6eb6106d7a016f31ae` and executable source `e5d06a066475253dc727eb422534f597c832916e82108b6158bd2523787cdcb9`.
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior finding disposition
+
+1. **Partially fixed, still open.** The environment-sensitive timing assertion is removed. The worker now warms required classes and the DB, disables URL stream wrappers, restricts `open_basedir` to the fixture directory, promotes filesystem warnings to exceptions, invokes real `submit` and `listing`, and independently requires `saved`, persisted `unknown`, and the normalized calendar path. This closes deferred filesystem/source traversal through ordinary PHP file APIs and verifies the public persistence path.
+
+### Findings
+
+1. **HIGH — process and non-stream network execution remain unobserved, while the asserted interaction count is a constant.** `tests/Yii2/feedback_worker.php:10-16` makes stream-wrapper and out-of-root filesystem access fail, but `open_basedir` and wrapper removal do not constrain subprocesses or socket-extension calls. The static exclusions at `tests/Yii2/yii2_feedback_001_test.php:49` omit direct PHP process primitives `exec`, `system`, `passthru` and `pcntl_exec`, and non-stream socket primitives such as `socket_create`/`socket_connect`; an implementation that obtains Git/Docker/API/build identity through one of those paths can still return `saved` and pass the probe. Moreover, `forbiddenInteractions` is emitted as the literal `0` at `feedback_worker.php:16`; it is not an observed counter, so the final zero-interaction assertion adds no sensitivity. Extend the fail-closed dependency boundary to every available process-execution and network primitive (or make the production reader depend on an injected narrow file-reader seam whose fake records exact calls), and remove the fabricated counter or replace it with actual recorded interactions. The public probe must continue to prove `saved`/`unknown`/persisted path without wall-clock thresholds.
+
+No other new finding was introduced. File distrust coverage, route/replay expectations, deterministic RED causes and strict readiness non-regression remain adequate.
+
+### Required changes
+
+Resolve finding 1, regenerate the package, and refresh the exact-source evidence. Production implementation remains blocked by Gate 3.
+
+## Issue #172 Gate 3 rereview #4 — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Reviewed source: base `0504d2589835f2583dc9afdbc47e4694e2573365` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160921Z-84e1cfca8b/snapshot/source.patch`, SHA-256 `f3151dc8f560c20bdb1b69630bb1c591015fe91f8f2a073e201e46a2afdeb62a`; exact candidate source `a1e0c3f837b17bc6036222bf29f9dd18add5206d52a37ae4250f37d706da03b8`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160921Z-84e1cfca8b/package.json`, SHA-256 `8a809604a2fcd2b9d16b00afcaae103505a56d6ea34a79e236b67a74f4fe7c7a`; verification-plan SHA-256 `89927db90000350a1fae7449409761b8071dd7cd89c025eae741b5850442d9ea`
+- Corrected delta from candidate `370e41327c2ec60563b6ef89d7ec55654c4889b563c92a6eb6106d7a016f31ae`: removes the fabricated interaction counter and expands fail-closed source exclusions to direct process/fork, curl/stream/socket, Git/Docker and literal external-URI mechanisms; no production code is changed
+- Evidence: owner intended RED `1790093312932467000-ece84543e2eb4870904f90df2ecb8af0` (`buildIdentityFile` seam absent); browser intended RED `1790093320215102000-6acd2fc8d46b4a5989391f5f48518194` (`/pilot/calendar` context not retained); readiness GREEN `1790093328869822000-895948855e2e4ddd926f8f33efcfd5b7` (`PASS: RUNTIME-READINESS-LOAD-001 startup-bound constant-work readiness`). All bind exact candidate `a1e0c3f837b17bc6036222bf29f9dd18add5206d52a37ae4250f37d706da03b8` and executable source `578ab244989e2b1b6c85c5aaa7f8b7390bc516725d3a699508a90075de4de300`.
+- Verdict: `APPROVED`
+
+### Prior finding disposition
+
+1. **Resolved.** The worker's successful public `submit` plus persisted `listing` under warmed DB/classes, fixture-only `open_basedir`, removed network wrappers and warning-to-failure handling is the observable behavioral boundary; it must produce `saved`, `unknown` and `/pilot/calendar`. The source oracle now independently fails closed on the direct process execution/fork, curl/stream/socket, Git/Docker and literal external URI mechanisms relevant to this bounded private reader. The prior hardcoded interaction count has been removed rather than presented as observed evidence.
+
+### Findings
+
+None. The complete test candidate traces FEEDBACK-001 A2/A4/A5/A8/A9 through the public application and connected Yii/browser seams. Expected values are independently literal for the route/object-ID matrix, full build identities, distrust cases and replay across builds. Authorization, CSRF/method rejection, privacy, append-only replay/concurrency and administrative historical display remain covered. The owner and browser REDs are attributable to the missing behavior, not setup; the separate strict readiness contract remains GREEN for the same exact source. Tests are isolated from production systems and no wall-clock expectation remains.
+
+### Required changes
+
+None. Gate 3 may advance to implementation against exact candidate `a1e0c3f837b17bc6036222bf29f9dd18add5206d52a37ae4250f37d706da03b8`; later test or expectation changes require a new independently reviewed delta.
+
+## Post-implementation Gate 3 test-delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: test-mechanic delta only; this is **not** Gate 5 or a production-code verdict
+- Approved expectation baseline: package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T160921Z-84e1cfca8b/package.json`, candidate `a1e0c3f837b17bc6036222bf29f9dd18add5206d52a37ae4250f37d706da03b8`
+- Reviewed source: base `0504d2589835f2583dc9afdbc47e4694e2573365` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T162256Z-84ff4efc1a/snapshot/source.patch`, SHA-256 `f1042404cc74df04a79f0b5ac92ad08a763d63269a867e43abd8ebeb76dacf94`; exact candidate source `1294b04fd2854c01b12fcebffbde5e013002912454f088385d8642028d0e4a4b`
+- Current-GREEN package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T162256Z-84ff4efc1a/package.json`, SHA-256 `49304d014a16d5ce63fe3f26875230970b760eeec61aa198a18f3349d1f4d584`; verification-plan SHA-256 `2ae429d3e7c11cb1a2e77bbb799f8f559f9ca73f70dd26fb73e19fb0d578a1ce`
+- Test-mechanic delta: `FeedbackFixture::feedbackBuildFile` temporarily restores owner-write mode before rewriting its same worktree-local fixture and returns it to `0444`; dependency probe warms Yii schema/transaction dependencies before isolation, adds only the repository `vendor/` dependency root to `open_basedir`, and reports exception messages; browser persistence actor literals change from obsolete InspectionFixture IDs `97/94` to the actual UserAccessFixture identities `9401/9101`
+- GREEN evidence: owner/application/HTTP/concurrency/schema suite `1790094118834001000-22757f5162a24cdb90367d7b4755ded9`; connected browser suite `1790094129764861000-09c2daa569d8467796770965461dfe41`; strict readiness non-regression `1790094151884626000-843dc7f62af84b41b79dacfbb777f5e4`. All exit 0, have empty stderr, and bind exact candidate `1294b04fd2854c01b12fcebffbde5e013002912454f088385d8642028d0e4a4b` plus executable source `2ffdf9b2e379dac9f623d07eacecb3ee1e4108eef1c40fa8fcc94b0e3d3038fd`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. Temporarily making an existing test-owned file writable changes only fixture setup; the file is again `0444` before the application reads it, so the immutable-file expectation remains effective. Warming schema/transaction classes removes an autoload false failure after `open_basedir` is tightened; allowing only `vendor/` preserves the intended exclusion of application source, configuration, repository metadata and arbitrary filesystem roots, while disabled URL wrappers, promoted warnings and static process/network exclusions remain unchanged. Adding exception messages improves failure diagnosis without changing success conditions. The browser actor correction strengthens the real persistence attribution assertion by matching the fixture identities actually authenticated; row counts, roles, journeys and authorization expectations are unchanged.
+
+The three GREEN results therefore demonstrate the previously approved expectations rather than weaker substitutes: build distrust and dependency isolation still execute, the application/HTTP matrix remains complete, the browser performs two real submit/review journeys, and strict readiness remains independently GREEN.
+
+### Required changes
+
+None. The test-mechanic delta is approved for exact candidate `1294b04fd2854c01b12fcebffbde5e013002912454f088385d8642028d0e4a4b`. A separate independent Gate 5 review is still required for production code and overall final acceptance.
+
+## Gate 5 return — Gate 3 test-delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: Gate 2/3 expectation delta prompted by the prior Gate 5 HIGH; no production-code verdict
+- Reviewed source: base `be8e925153d5b5ec35579f93508fd75d00280e62` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T163828Z-326cb00d75/snapshot/source.patch`, SHA-256 `99de559d3bbe8275cbf577b40bb81070a34ca93e28bb35af8a0d571fff35abe8`; exact candidate source `a09c74b1cf9fb4009431ffcd26b25bf819a62aadfddf27d987bf1366b4393c1c`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T163828Z-326cb00d75/package.json`, SHA-256 `e00f67919f62663adf8afe0cb084975e268ad1b2fa05c8841a8c262d3f3d7dc2`; required-context SHA-256 `e434887991b52aa9ef824d101f338d804189c484616ba2276a384369645bebc5`; verification-plan SHA-256 `177a5a091b909be3260f76e31f90c819a3062673dffe190bb0684cdf84169b20`
+- Delta: one application-seam expectation for relative `buildIdentityFile` plus a production-source oracle requiring `fopen`, at least two `fstat` occurrences and `lstat`
+- Evidence: owner intended RED `1790095051869391000-48d4120719d742cdb9d3b723c1391325` fails at the new handle-binding source assertion; browser GREEN `1790095059520201000-01df25ea431d4800832cf60a4acbde2a`; strict-readiness GREEN `1790095075372743000-ce5583a6511343f79aac59b551cc662a`. All bind exact candidate `a09c74b1cf9fb4009431ffcd26b25bf819a62aadfddf27d987bf1366b4393c1c` and executable source `6e2670ea973e6cc253ef0e4cd18f5a7b2377985f9933106ac9121f8f247290df`.
+- Verdict: `CHANGES_REQUESTED`
+
+### Findings
+
+1. **HIGH — the relative-path case is vacuous because the configured relative file does not exist.** `tests/Yii2/yii2_feedback_001_test.php:44` passes `relative-build` but never creates a valid immutable file at that relative path. Both a correct absolute-only implementation and the currently defective implementation that accepts relative paths therefore return `unknown` for the same missing-file reason. Create a valid 64-hex, newline-terminated, read-only, single-link file at a controlled relative path resolved from the test process working directory, invoke the public owner with that relative name, require persisted `unknown`, and remove it safely in cleanup. The test must fail against the known implementation specifically because it accepts the existing relative file.
+
+2. **HIGH — counting source tokens does not prove same-handle before/after/path binding or catch the reported TOCTOU regression.** `tests/Yii2/yii2_feedback_001_test.php:50` passes whenever `FeedbackApplication.php` contains `fopen(`, two arbitrary `fstat(` tokens and one `lstat(` token, regardless of control flow, ordering, arguments, metadata comparisons, bounded handle reads, or whether the accepted bytes still come from `file_get_contents($path)`. Dead code or two pre-read `fstat` calls satisfy it while the Gate 5 vulnerability remains. Replace this structural token count with a deterministic behavioral oracle: either inject a narrow reader/filesystem seam that records open/read/stat order and simulates pathname replacement, or coordinate a controlled swap so a pathname change between validation and read deterministically yields persisted `unknown`. Independently assert the accepted path uses bytes from the opened handle, compares relevant device/inode/type/link/mode/size metadata before and after the read, and rejects final pathname rebinding. A small source guard may remain defense in depth but cannot be the RED owner.
+
+The captured RED is deterministic but currently demonstrates only missing source tokens, not the unsafe observable behavior. Browser and readiness GREEN evidence remains valid but cannot compensate for these two sensitivity gaps.
+
+### Required changes
+
+Resolve findings 1–2, regenerate the exact-source package, and capture a behavioral owner RED attributable to relative-path acceptance and/or pathname/handle rebinding while browser and readiness remain exact-source GREEN. Production correction remains blocked pending another independent Gate 3 approval.
+
+## Gate 5 return — Gate 3 rereview #2 — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Reviewed source: base `be8e925153d5b5ec35579f93508fd75d00280e62` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164320Z-e896300235/snapshot/source.patch`, SHA-256 `65760fd83b586caef3f282adb08ce560f16ac40c610a919a0c00015f514a2135`; exact candidate source `f25f5bc1180fa3f8accb7f6b011607876d1b827e6d40a7437b038dd8feb2b9e3`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164320Z-e896300235/package.json`, SHA-256 `e0e11db4f32246c6ffab7d471d773b57e8ac6a262ee0bb95679b7bb051ed5572`; verification-plan SHA-256 `6280611c7c036bbbfccc20a455611da19c96d913a1e521514c1039a3a0b7ca76`
+- Corrected delta: real valid relative-path fixture; narrow injected filesystem fake; stable-handle and final-path-rebind public submit/listing scenarios; design records the test-only injectable dependency without a new Runtime/release seam
+- Evidence: owner intended RED `1790095346614491000-aeecd25b51264740969f4e2ab0c0089b` fails because the known implementation accepts the existing valid relative file and persists its full identity; browser GREEN `1790095354450394000-d1adb76242ad46ecb112263e8c9452a8`; strict-readiness GREEN `1790095375789478000-ed17d314212c4cf2b1c494096e47036e`. All bind exact candidate `f25f5bc1180fa3f8accb7f6b011607876d1b827e6d40a7437b038dd8feb2b9e3` and executable source `c618d8a04e03610533cb747c92649a0b7a70478ce2312d95bdb8297e17504122`.
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Resolved.** The relative-path fixture now exists, is valid, single-link and `0444`; the RED proves the current implementation incorrectly accepts it rather than merely observing a missing file.
+2. **Partially fixed, still open.** The source-token count is replaced with a behavioral injected filesystem fake through public submit/listing. Stable and final-path-rebind cases assert the exact `open → fstat → read(66) → fstat → lstat → close` sequence, persisted full identity for the stable case, and persisted `unknown` when final pathname inode differs.
+
+### Findings
+
+1. **HIGH — the behavioral fake does not vary the second handle stat, so it cannot prove the required before/after handle-metadata comparison.** `FeedbackIdentityFilesystemProbe::stat()` at `tests/Yii2/FeedbackFixture.php:19` always returns identical metadata for both calls. The rebind scenario changes only the final pathname inode in `pathStat()`. An implementation that performs the two calls in the expected order but ignores the second `fstat`, or compares only final pathname inode while accepting a file whose handle size/mode/link count/inode changed during the read, passes both scenarios. Extend the fake with a post-read handle-mutation mode that changes at least one material second-`fstat` field (independently cover identity and integrity metadata as appropriate: device/inode and size/mode/link count), invoke it through public `submit`/`listing`, require `unknown`, and retain the exact close/sequence assertion. This is the missing behavioral witness for the Gate 5 requirement that handle metadata remain unchanged before and after the bounded read.
+
+No other new finding was introduced. The injected seam is narrow and consistent with the updated design; the stable and pathname-rebind expectations are otherwise independent and sensitive. The current RED is valid for relative-path rejection, while browser and readiness evidence remains exact-source GREEN.
+
+### Required changes
+
+Add the deterministic second-`fstat` mutation scenario, regenerate the package, and refresh exact-source owner RED/browser GREEN/readiness GREEN evidence before another Gate 3 rereview. Production correction remains blocked.
+
+## Gate 5 return — Gate 3 rereview #3 — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Reviewed source: base `be8e925153d5b5ec35579f93508fd75d00280e62` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164647Z-8056ed9c6d/snapshot/source.patch`, SHA-256 `dbe1578d24afeb835029494b4a2f6a29a814f40d97ccd63d7bcb9a4dfc5e5844`; exact candidate source `837fef810defe2661cac03beabde7c14efe90ee4f8624d99f8cb95322e60ed30`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164647Z-8056ed9c6d/package.json`, SHA-256 `5428fa38d06624138b8a06b253c3728e8f83af8fc4519b869546b40145c9ee13`; verification-plan SHA-256 `a880df747ad3f211b09ea00ba8021ed734d6797f908aa69926ac2bbf9179b139`
+- Corrected delta: `FeedbackIdentityFilesystemProbe` gains an independent post-read handle-mutation mode; its second `fstat` changes mode, link count, size, inode, mtime and ctime while the final pathname metadata remains the original stable identity; public submit/listing must persist `unknown` and retain exact sequence/close
+- Evidence: owner intended RED `1790095557992691000-be69e8d76aa142f5b252c1bdb93fca89`; browser GREEN `1790095566314648000-5934e0fa25db4bff93e8fe46480ad5e2`; strict-readiness GREEN `1790095583262608000-ee87050a170144aba4a72d32e922864e`. All bind exact candidate `837fef810defe2661cac03beabde7c14efe90ee4f8624d99f8cb95322e60ed30` and executable source `29250b0617f4add526af9dcecfef7702e94f5b25e2db24eca1d44a65ca9fde08`.
+- Verdict: `APPROVED`
+
+### Prior finding disposition
+
+1. **Resolved.** The new mutation scenario isolates post-read handle instability from pathname rebinding: first `fstat` and final `lstat` retain the original regular, read-only, single-link, 65-byte inode, while only the second `fstat` changes identity and integrity metadata. It exercises the public owner, independently requires persisted `unknown`, and asserts the same `open → fstat → read(66) → fstat → lstat → close` sequence, making ignored or inadequately compared second-handle metadata observable.
+
+### Findings
+
+None. Together, the real existing relative file, stable same-handle acceptance, final pathname-rebind rejection and post-read handle-mutation rejection form a sensitive and deterministic matrix for the Gate 5 concern. Expected values come from the approved immutable build-file contract rather than the planned implementation. The injected dependency remains narrow and test-directed; production still defaults to built-in filesystem operations and no new runtime/release module is specified. The owner RED remains attributable to known missing behavior, while the connected browser and strict readiness contracts remain GREEN for the same exact source.
+
+### Required changes
+
+None. Gate 3 approves this test/design delta for implementation against exact candidate `837fef810defe2661cac03beabde7c14efe90ee4f8624d99f8cb95322e60ed30`. Any later expectation or test-mechanic change requires another independent delta review; production still requires refreshed GREEN evidence and independent Gate 5 rereview.
+
+## Post-correction Gate 3 test-mechanic delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: test-mechanic delta only; this is **not** Gate 5 or a production-code verdict
+- Approved RED baseline: package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164647Z-8056ed9c6d/package.json`, candidate `837fef810defe2661cac03beabde7c14efe90ee4f8624d99f8cb95322e60ed30`
+- Reviewed source: base `be8e925153d5b5ec35579f93508fd75d00280e62` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T165146Z-a0b984f2a9/snapshot/source.patch`, SHA-256 `b13a3e7095ede349f8581b368a24390b46c4d5ff7f403f427f5552a07c15a57b`; exact candidate source `8f25724f721b01051f0604401c688eb7a1267be8ec506bc411b214bbcf785de5`
+- Current-GREEN package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T165146Z-a0b984f2a9/package.json`, SHA-256 `dc52db7a6b4f1ec632afb38dfa4278ede65d66d6d85b71258341293094a8f894`; verification-plan SHA-256 `9150b5c7b14a61548a49a9a446e17ee83840becd352b98d30c37fc993701f360`
+- Test-mechanic delta: the lookup of the original feedback root now follows `FeedbackApplication::listing(actor, beforeId)` cursors until the original ID is found, then applies the unchanged literal ordered-result and actor-attribution assertions
+- GREEN evidence: owner/application/HTTP/concurrency/schema suite `1790095851652968000-e7c83dd98e8d462eb9ff135ee065f39b`; connected browser suite `1790095863852546000-ba3a0455e669431d97794376038cd782`; strict-readiness suite `1790095881067937000-7a161dc0542e47b7b19a8f14f6f315bd`. All bind exact candidate `8f25724f721b01051f0604401c688eb7a1267be8ec506bc411b214bbcf785de5` and executable source `01ef0ef41be301cf47ee26ede3a9d5bfb1a6c56dc51f3a7ad426b9bb3b85ebd1`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The additional build-reader scenarios legitimately move the original root beyond the newest 50 items, so a single first-page lookup no longer addresses the public A5 pagination contract. The correction stays on the public application seam, uses the returned `nextBeforeId`, fails explicitly if the historical root is unreachable, and stops when the target is found or pagination is exhausted. It neither reads the database side channel nor changes the expected result values. The original immutable history assertions remain literal and unchanged: exactly `Проверено: исправлено`, then `Повторно проверено на стенде`, both attributed to actor `9101`.
+
+The exact-source owner GREEN therefore demonstrates the same history/replay behavior through a stronger public pagination path rather than a weakened oracle. Browser and readiness GREEN remain independently bound to the same source.
+
+### Required changes
+
+None. The test-mechanic delta is approved for exact candidate `8f25724f721b01051f0604401c688eb7a1267be8ec506bc411b214bbcf785de5`. Independent Gate 5 rereview remains required for the production correction and final verdict.
+
+## Resumed post-correction Gate 3 test-mechanic delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: test-mechanic delta only; this is **not** Gate 5 or a production-code verdict
+- Supersedes for current-source binding only: the immediately preceding test-delta approval for candidate `8f25724f721b01051f0604401c688eb7a1267be8ec506bc411b214bbcf785de5`; its reasoning remains historical
+- Approved RED baseline: package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T164647Z-8056ed9c6d/package.json`, candidate `837fef810defe2661cac03beabde7c14efe90ee4f8624d99f8cb95322e60ed30`
+- Reviewed source: base `be8e925153d5b5ec35579f93508fd75d00280e62` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T165740Z-7f6a4aeea0/snapshot/source.patch`, SHA-256 `e70a5344242a203e868970348088a65c289a8d0755989fa47b422e0f2bc11ebe`; exact candidate source `5fa304af4a4335bbe897a7f8fda84d95b5dc41f1910c965699b1767df1331ca4`
+- Current-GREEN package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T165740Z-7f6a4aeea0/package.json`, SHA-256 `9760310c6791d0c32b07902d7b1f5a93abff77c290f1a449ddb9524190e84dfd`; verification-plan SHA-256 `1d9de64dd7315808933962b31a34ef4454a6554a38368c2c913f67cd3ffdec9d`
+- Test-mechanic delta: the original feedback root is retrieved exclusively through successive public `listing(9101, nextBeforeId)` pages after new build-reader cases move it beyond the newest 50; the literal ordered-result and actor-attribution expectations are unchanged
+- GREEN evidence: owner suite `1790096207938612000-09cb03ce154e476fb8808536f510079a`; browser suite `1790096218390510000-37eb793215d749d8804a223e30d48880`; strict readiness `1790096235780442000-cd7f8f6b63a3496a9df17100170391b7`. Each exits 0 with the expected PASS marker and binds exact candidate `5fa304af4a4335bbe897a7f8fda84d95b5dc41f1910c965699b1767df1331ca4` plus executable source `01ef0ef41be301cf47ee26ede3a9d5bfb1a6c56dc51f3a7ad426b9bb3b85ebd1`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. Cursor traversal is required by the existing A5 public pagination contract once the older root leaves the first 50-item page. The test neither bypasses the public seam nor weakens the oracle: it fails if pagination exhausts without the exact root, and then still requires the same two ordered immutable notes and the same `[9101, 9101]` actor attribution. The owner GREEN therefore validates a stronger public-path lookup while browser and readiness remain independently GREEN for the exact source.
+
+### Required changes
+
+None. The test-mechanic delta is approved for exact candidate `5fa304af4a4335bbe897a7f8fda84d95b5dc41f1910c965699b1767df1331ca4`. Independent Gate 5 rereview remains required for production and final acceptance.
+
+## Post-CI Gate 3 test-delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: regression-fixture delta only; this is **not** Gate 5 and does not turn the failed CI run GREEN
+- Reviewed source: base `effc89cacdadd1459b9c663c3c0ad074f9ffb788` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173410Z-5afec9eb1e/snapshot/source.patch`, SHA-256 `205b21cf9ddb156c1879f6f2ad4ddec8dd7fcf9ce786045ba0f242e8f2b45335`; exact candidate source `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173410Z-5afec9eb1e/package.json`, SHA-256 `0361c6421204eb521b2498163a1de3f37d916c01ada55b5104c3822dfa9a428c`; verification-plan SHA-256 `33d343e1e44550921016a1e62108da0e17388314a71cf6376136ded921f8137c`
+- Failed CI evidence reviewed: run `35758901037`; complete primary inventory is governance failure with exactly two `REGRESSION_FAILURE` files, `tests/Verification/change_verification_placement_181_test.py` and `tests/Verification/change_verification_semantic_closure_153_test.py`, both caused by `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS`; aggregate verify failed only through governance and all other categories were GREEN. This failed run remains historical failure evidence.
+- Test delta: in `SemanticClosure.test_repository_evidenced_yii_application_contract_is_protected`, append the exact one-path synthetic feedback owner only when the copied shipped policy does not already contain an owner whose `patterns` explicitly includes `app/YiiRuntime/FeedbackApplication.php`
+- Corrected consumer evidence: `change_verification_placement_181_test.py` local GREEN, 22/22 plus `VERIFY_OK`; `change_verification_semantic_closure_153_test.py` local GREEN, 11/11. Mapped exact-source GREEN records: owner `1790098389354248000-750779a2165544659b8ead818bc896b7`, browser `1790098399769568000-341d7768e8e64adcb6550bd8ea69b432`, readiness `1790098420857223000-ec34386755574268bb1151b8b298d080`; all bind exact candidate `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7` and executable source `47b7901279e56c9827f28ac9459010a24a3e81aad5a08e286e113ffa23e83a07`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The fixture previously appended an unconditional exact owner after copying the shipped policy. Once this slice legitimately added the repository-owned `feedback-application` capability for the same exact path, the fixture itself manufactured two owners and failed before reaching its semantic-closure oracle. The conditional preserves the original negative/compatibility behavior: repositories without an exact shipped owner still receive the synthetic fixture owner and continue exercising the protected-feedback-path case; repositories with the shipped owner use that real ownership and no longer create artificial ambiguity. It does not relax planner ambiguity detection, change production policy, supply verifier results, or bypass the semantic escalation assertions.
+
+The placement consumer imports this fixture, so the same setup correction causally explains both inventory failures. Its focused 22/22 `VERIFY_OK` and the semantic-closure 11/11 result demonstrate that their existing ownership, placement and closure assertions still run. Mapped feedback/readiness checks remain exact-source GREEN.
+
+### Required changes
+
+None. The post-CI test delta is approved for exact candidate `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7`. Run `35758901037` remains failed; publication requires a new exact-source CI result and the required independent final review state.

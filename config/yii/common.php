@@ -18,7 +18,7 @@ return [
             'class' => FMonitor2\YiiRuntime\FeedbackApplication::class,
             'db' => 'db',
             'tablePrefix' => getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: '',
-            'appVersion' => '2.0',
+            'buildIdentityFile' => getenv('FMONITOR_RUNTIME_BUILD_ID_FILE') ?: '',
         ],
         'log' => [
             'traceLevel' => 0,

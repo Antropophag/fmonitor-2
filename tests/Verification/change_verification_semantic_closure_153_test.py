@@ -182,10 +182,12 @@ class SemanticClosure(unittest.TestCase):
         shutil.copy2(ROOT / ".quality-graph/verification-policy.json",
                      self.root / ".quality-graph/verification-policy.json")
         policy = json.loads((self.root / ".quality-graph/verification-policy.json").read_text())
-        policy["capability_ownership"].append({
-            "name": "feedback-application-fixture-owner",
-            "patterns": ["app/YiiRuntime/FeedbackApplication.php"],
-            "verifiers": [], "consumers": []})
+        if not any("app/YiiRuntime/FeedbackApplication.php" in item.get("patterns", [])
+                   for item in policy["capability_ownership"]):
+            policy["capability_ownership"].append({
+                "name": "feedback-application-fixture-owner",
+                "patterns": ["app/YiiRuntime/FeedbackApplication.php"],
+                "verifiers": [], "consumers": []})
         self.write_json(".quality-graph/verification-policy.json", policy)
         shutil.copy2(ROOT / "tools/verification/suites.tsv",
                      self.root / "tools/verification/suites.tsv")

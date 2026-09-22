@@ -69,3 +69,75 @@
 - Verdict: **APPROVED**. No findings. The workforce catalogue adds the two canonical v25 feedback tables; both readiness fixtures update only their expected current schema version; the asset contract pins the hash of the already-reviewed CSS; and the verification inventory adds the registered feedback browser suite. These are exact literal-consumer corrections and retain their behavioral assertions.
 - The activation proxy test now compares the three access records as an exact method/path multiset because independent nginx workers may flush completed requests in any order. It still requires exactly three records, exact route/method pairs without arguments, status/upstream outcome, valid timings, unique generated request IDs, suppression of every private request field and token, activation error suppression, and ordinary upstream diagnostics. The correction removes an invalid ordering assumption without weakening privacy or observability coverage.
 - The complete first-CI failure inventory was retained and inspected before correction. All six focused consumers are GREEN, including activation proxy record `1789413634604893000-ce2e5593f3b946b7b13ff5daf95c1ef5`; the package binds the owner and browser suites GREEN to the candidate. `git diff --check` is clean. A second exact-source CI run remains required; its result is `UNKNOWN` at this review point.
+
+## Issue #172 Gate 5 final review — 2026-09-22
+
+### Disposition
+
+- Reviewer: independent `gpt-5.6-sol / low` agent `/root/issue172_final_review`; authored no specification, test, Gate 3 artifact, or production artifact in this candidate.
+- Reviewed commit: `be8e925153d5b5ec35579f93508fd75d00280e62` against base `0504d2589835f2583dc9afdbc47e4694e2573365`; exact candidate source `d2c7f6019a208d8884157e351e60908260bfa10897193a160ece876eae7523e5`; executable source `98234a6535d69c91f0f95a98796d28035b43401eb4c9be9912996c08cbae216c`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T163135Z-c89defc15a/package.json`, SHA-256 `6d7df9950254675e85e6922f6b10f4bd5a2197e2c8b666c8912dbc6da29a3376`; required-context SHA-256 `e434887991b52aa9ef824d101f338d804189c484616ba2276a384369645bebc5`; verification-plan SHA-256 `c8c3c682b8fbc74ce7880c28912d6d6f33ef14ea7a3713a75e1c033530de7033`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Findings
+
+1. **HIGH — build identity is read through a pathname TOCTOU gap and the declared absolute-path trust boundary is not enforced.** `app/YiiRuntime/FeedbackApplication.php:125-143` validates pathname metadata with `file_exists()`/`is_link()`/`lstat()`, then separately calls `file_get_contents($path)`. A replacement or link swap after line 136 can therefore make the accepted bytes come from a different inode than the regular, single-link, read-only file that was checked. The reader also accepts a relative configured path, although `openspec/changes/fix-feedback-context-build-identity/design.md` requires the configured **absolute** immutable build file. This fails the design's explicit TOCTOU mitigation and can persist a value that was not proved to be the immutable server-owned identity. The approved tests cover stable missing/mutable/symlink/hardlink/invalid fixtures but do not force a pathname replacement during the read and do not reject relative paths, so all three exact-source suites can remain GREEN under this regression. **Correction:** reject non-absolute paths; open one bounded file handle, compare pre-open `lstat` with handle `fstat` (device/inode/type/link-count/mode/size), read at most the allowed 65 bytes from that handle, then `fstat` again and require unchanged identity/metadata before accepting the exact digest; any mismatch/error must return `unknown`. Add deterministic public-seam coverage for relative paths and a controlled swap/race (or an injected narrow reader that proves the same-file checks), then obtain the required independent test-delta approval and refreshed exact-source evidence.
+
+No other findings. The closed route allowlist and return links reject the reviewed sensitive/unknown paths; snapshot/order/feedback identifiers do not acquire object semantics; full 64-character values, `unknown`, client spoof rejection, persisted admin labels, actor-scoped replay/fingerprint/history, and append-only result behavior otherwise conform to FEEDBACK-001. The diff does not add source hashing, process, network, Git, Docker, migration, readiness, OTIZ/process ownership, external delivery, or other excluded scope. Maintainability is proportionate apart from the blocking reader correctness issue.
+
+### Evidence and limits
+
+- Exact-source GREEN records reviewed: owner/application/HTTP/concurrency `1790094637313385000-7c591125a6d14bc3bf75921aabe5b2b4`; connected browser `1790094648219846000-26d0902a78094eaa9f74359315866bd7`; unchanged strict readiness `1790094666041312000-528eb1a7dc564ca1a35e9a34b83266b1`. Each binds source `d2c7f6019a208d8884157e351e60908260bfa10897193a160ece876eae7523e5` and exits 0.
+- `git diff --check` and PHP syntax checks for the three changed production/config/view files are clean. The forbidden local full suite was not run.
+- GitHub exact-source CI, PR publication, merge, deployment and live enforcement remain `UNKNOWN`; they are not approval or GREEN. The HIGH finding blocks Gate 5 despite the focused GREEN evidence.
+
+## Issue #172 Gate 5 rereview — corrected current-main candidate 2026-09-22
+
+### Disposition
+
+- Reviewer: independent `gpt-5.6-sol / low` agent `/root/issue172_final_review`; same returning reviewer for its own prior finding, still author of no specification, test, Gate 3 artifact, or production implementation.
+- Reviewed current-main base `bced877aec8a8802e97037749ca4251d3098df1a`, commit `7b9cda428d8ef098ee1310bd31a22273b88bf75e`, exact candidate source `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`, executable source `625f24b7938638638992c1b5daf39d02acbed14d54414e0f0abc41a75f24864f`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T170439Z-7cf7d21850/package.json`, SHA-256 `badd9c646209059ac865996536adcbca01bef040bedc3b6245dab57dbe5abeaf`; required-context SHA-256 `07c79d5092b1a60987b12efc8a131b7e1c35de0e9b663806e0c56a269bafac58`; verification-plan SHA-256 `93d00817b34fac89bf764ff5ff8a1b353c236992880196197652412e27d7e78d`.
+- Verdict: **APPROVED**. Complete findings list: **none**.
+
+### Prior finding disposition
+
+1. **Resolved — pathname TOCTOU and absolute-path trust boundary.** `app/YiiRuntime/FeedbackApplication.php:125-176` rejects empty, NUL-containing and relative paths; opens one handle; performs `fstat → bounded read(66) → fstat → final lstat`; requires identical mode, link count, size, device, inode, mtime and ctime across the two handle observations and final pathname; then accepts only a single-link, read-only regular file of exactly 65 bytes containing 64 lowercase hexadecimal characters plus newline. All failures return `unknown`, and the handle is closed from `finally`. Accepted bytes no longer come from a second pathname read.
+2. The correction's narrow injected filesystem dependency is confined to deterministic same-handle/path-binding verification; the production default exposes only open/fstat/bounded-read/lstat/close and introduces no Runtime/release framework, source walk, process, network, Git, Docker or external-request fallback.
+3. Independent Gate 3 approved the real existing relative-file case, stable same-handle acceptance, pathname rebind rejection and independent post-read handle-metadata mutation rejection with the exact call/close sequence. Its later pagination-only mechanic keeps the original two literal immutable history entries and actor attribution while locating the older root solely through public `listing` cursors.
+
+### Full candidate review
+
+- FEEDBACK-001 A2/A8 route normalization remains a closed allowlist: query/fragment and sensitive/download/export/mutating/unknown paths cannot become return links; object ID is derived only from explicit object routes, while snapshot, order and feedback IDs retain distinct semantics.
+- A4/A5/A9 replay remains actor/command scoped and fingerprinted only by normalized user content. Build identity is written only on first insert, excluded from the fingerprint, never accepted from client POST, and persisted historical context/build/results are not rewritten. The administrator view explicitly escapes and labels the persisted source path and full build.
+- The full 64-character immutable identity, fail-soft `unknown`, authorization, CSRF/method handling, concurrency, append-only results, pagination and browser return paths retain sensitive public-seam coverage. Readiness remains the separate strict fail-closed owner and is unchanged.
+- Rebase merges #235–#237 do not add feedback production scope. Policy ownership maps the changed application owner to both feedback verifiers. No migration, OTIZ/checklist/process behavior, status/readiness semantics, external delivery, deployment or stand mutation enters this slice. The resulting reader and route table are bounded and maintainable.
+
+### Evidence and limits
+
+- Package exact-source GREEN records: owner/application/HTTP/concurrency `1790096624355553000-999951fd52e34dfd9de09e3c0659987d`; connected browser `1790096635355051000-51babeeb30f34ea3b279daeb004c6c2e`; unchanged strict readiness `1790096653292252000-2ed040cf9b674721a2baf86037a362b6`. Each exits 0 and binds exact source `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`.
+- The remaining planner-listed bounded obligations were independently reconfirmed GREEN during this rereview: `python3 tests/Deployment/pilot_jobs_compose_001_test.py`, `python3 tests/Verification/change_verification_001_test.py`, and `python3 tests/Verification/architecture_guard_001_test.py`. `git diff --check` and changed PHP syntax remain clean. The forbidden local full suite was not run.
+- This approval is Gate 5 for the reviewed exact candidate. GitHub exact-source CI, PR publication, merge, deployment and live enforcement remain `UNKNOWN` until their own evidence exists; this verdict does not make those states GREEN.
+
+## Issue #172 post-CI Gate 5 delta review — 2026-09-22
+
+### Disposition
+
+- Reviewer: independent `gpt-5.6-sol / low` agent `/root/issue172_final_review`; author of no production, test, specification, Gate 3 or correction artifact.
+- Reviewed source: committed HEAD `effc89cacdadd1459b9c663c3c0ad074f9ffb788` plus the prepared post-CI delta; exact candidate source `fffc8dac670078c5b9e89fdb3840906a03843ddba3e95cfb956df22f4dff21c0`; executable source `47b7901279e56c9827f28ac9459010a24a3e81aad5a08e286e113ffa23e83a07`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173826Z-2b8d7a2abd/package.json`, SHA-256 `6c78bb425db57984aa46932d30a77cb3220f01189a074c8674230485e3e0f6c0`; required-context SHA-256 `07c79d5092b1a60987b12efc8a131b7e1c35de0e9b663806e0c56a269bafac58`; verification-plan SHA-256 `ade191101b0857148ab57456420c4c01a044ca244473f3c56d0693129e3a3149`.
+- Verdict: **APPROVED**. Complete findings list: **none**.
+
+### Delta review
+
+- The only behavior-affecting delta after the preceding APPROVED Gate 5 is in `tests/Verification/change_verification_semantic_closure_153_test.py:182-191`. After copying the shipped policy into its disposable repository, the fixture now appends its synthetic exact `FeedbackApplication` owner only when no shipped capability owner already explicitly contains that path.
+- This is a setup correction, not an admission bypass. Without the condition, the newly shipped `feedback-application` owner and the unconditional fixture owner manufacture `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS` before the intended semantic-closure assertion executes. With the condition, current repositories exercise the real shipped owner; historical/fixture repositories lacking it still receive the same synthetic owner and execute the same protected-path scenario.
+- Planner ambiguity enforcement remains covered and unchanged: the fixture does not remove or coalesce actual owners, alter policy matching, inject verifier success, change semantic escalation, or weaken missing-owner/multiple-owner failures. `change_verification_placement_181_test.py` imports this fixture, so the same manufactured duplicate causally accounts for both CI consumers.
+- The full current diff confirms no production, route, security, replay/history, build-reader, readiness, schema or runtime policy behavior changed after the approved candidate. Adding the two failed consumers to the verification input makes the refreshed plan explicitly schedule the affected regression surface.
+
+### CI inventory and evidence
+
+- Failed exact-source CI run `35758901037` remains a historical failure. The complete primary inventory contains exactly two `REGRESSION_FAILURE` consumers: `tests/Verification/change_verification_placement_181_test.py` and `tests/Verification/change_verification_semantic_closure_153_test.py`, both with the same fixture-created `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS` cause. Aggregate `verify` failed consequentially; all other categories were GREEN. This review does not relabel that run.
+- Independent Gate 3 approved the fixture delta with no findings. During this review the corrected consumers are GREEN: semantic closure 11/11; placement 22/22 with `VERIFY_OK`.
+- Refreshed package evidence is exact-source GREEN for owner/application/HTTP/concurrency `1790098647849504000-febd0b42850c471aa7ce214cda8d67e1`, connected browser `1790098659872182000-d3f7295504c04cad92709aec7858335f`, and unchanged strict readiness `1790098680041924000-ab1d5902029d4a8eaed83848ae78043e`; all bind source `fffc8dac670078c5b9e89fdb3840906a03843ddba3e95cfb956df22f4dff21c0` and exit 0. `git diff --check` is clean.
+- This superseding Gate 5 approval covers the reviewed exact delta. Because source changed after failed run `35758901037`, a new matching exact-source CI run is still required; CI/merge/deployment/live enforcement remain non-GREEN until their own evidence exists. The forbidden local full suite was not run.
