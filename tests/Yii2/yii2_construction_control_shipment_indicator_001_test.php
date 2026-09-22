@@ -27,7 +27,7 @@ try {
     $http->db->query("UPDATE {$p}fm2_installation_cases SET process_state='working' WHERE legacy_installation_object_id=4515");
     $http->db->query("UPDATE {$p}fm2_installation_cases SET process_state='assignment_order_prepared' WHERE legacy_installation_object_id=4512");
     $before=$http->facts();
-    $page=$fixture->page('/pilot/construction-control');
+    $page=$fixture->page('/pilot/construction-control?ownership=all&completed=1');
     $check(200,$page['status'],'queue available');
     $row=static function(string$html,int$id):string{
         $start=strpos($html,'data-object-id="'.$id.'"');
@@ -66,27 +66,27 @@ try {
     $check(false,$browser['usesDelivery4']??true,'ambiguous delivery-4 icon is absent');
 
     $http->db->query("UPDATE {$p}fm2_equipment_fact_current SET first_shipment_date=NULL,full_shipment_date=NULL WHERE object_id=4512");
-    $readinessOnly=$row($fixture->page('/pilot/construction-control')['body'],4512);
+    $readinessOnly=$row($fixture->page('/pilot/construction-control?ownership=all&completed=1')['body'],4512);
     foreach(['data-shipment-state="unknown"','aria-label="Не известно"','title="Не известно"']as$needle)$check(true,str_contains($readinessOnly,$needle),'readiness unknown '.$needle);
     $check(false,str_contains($readinessOnly,'fm2-shipment-copy'),'unknown has no visible shipment copy');
     $check('',trim(strip_tags((string)preg_replace('#^.*?<td[^>]*class="fm2-shipment-cell"[^>]*>|</td>.*$#s','',$readinessOnly))),'unknown cell has no visible text');
     $check(false,str_contains($readinessOnly,'fm2-shipment-icon')||str_contains($readinessOnly,'info-circle.svg'),'unknown cell has no icon');
     $check(false,str_contains($readinessOnly,'не отгружено'),'unknown is not a negative fact');
     $http->db->query("UPDATE {$p}fm2_equipment_fact_current SET readiness_date=NULL WHERE object_id=4512");
-    $allNull=$row($fixture->page('/pilot/construction-control')['body'],4512);
+    $allNull=$row($fixture->page('/pilot/construction-control?ownership=all&completed=1')['body'],4512);
     $check(true,str_contains($allNull,'data-shipment-state="unknown"')&&str_contains($allNull,'Не известно'),'three NULL facts show unknown');
     $http->db->query("DELETE FROM {$p}fm2_equipment_fact_current WHERE object_id=4512");
-    $neverSynced=$row($fixture->page('/pilot/construction-control')['body'],4512);
+    $neverSynced=$row($fixture->page('/pilot/construction-control?ownership=all&completed=1')['body'],4512);
     $check(true,str_contains($neverSynced,'data-shipment-state="unknown"')&&str_contains($neverSynced,'Не известно'),'never-synced object shows unknown');
     $http->db->query("INSERT INTO {$p}fm2_equipment_fact_runs(run_id,command_hash,kind,status,reason,observed_at,receipt_json,created_at) VALUES('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',REPEAT('b',64),'failed','failed','SOURCE_UNAVAILABLE','2026-09-15 10:00:00','{\"status\":\"failed\"}','2026-09-15 10:00:00')");
-    $failedBeforeSuccess=$row($fixture->page('/pilot/construction-control')['body'],4512);
+    $failedBeforeSuccess=$row($fixture->page('/pilot/construction-control?ownership=all&completed=1')['body'],4512);
     $check(true,str_contains($failedBeforeSuccess,'data-shipment-state="unknown"')&&str_contains($failedBeforeSuccess,'Не известно'),'failed-before-success shows unknown');
     $readyRow=$row($page['body'],4512);$ordinaryRow=$row($page['body'],4513);
     $check(true,preg_match('/<td[^>]*data-activity-state="ready"[^>]*>[^<]*<span[^>]*>Готов к открытию<\/span>/',$readyRow)===1,'ready object uses activity cell status');
     $check(false,preg_match('/<td>\s*<a class="fm2-control-link"[\s\S]*?Готов к открытию[\s\S]*?<\/td>/',$readyRow)===1,'ready status is absent from identity cell');
     $check(true,str_contains($ordinaryRow,'data-activity-state="empty"')&&str_contains($ordinaryRow,'Инспекций ещё не было'),'ordinary no-inspection control remains');
     $factsAfterReadiness=$http->facts();
-    $repeat=$fixture->page('/pilot/construction-control');
+    $repeat=$fixture->page('/pilot/construction-control?ownership=all&completed=1');
     $check(200,$repeat['status'],'repeat GET');
     $check($factsAfterReadiness,$http->facts(),'queue GET is read only');
     $head=$http->request('HEAD','/pilot/construction-control',[],$fixture->cookies);
@@ -97,7 +97,7 @@ try {
     $check($factsAfterReadiness,$http->facts(),'denied read is read only');
     $check(false,$before===$factsAfterReadiness,'test fixture correction is observable before read-only checks');
     $http->db->query("DROP TABLE {$p}fm2_equipment_fact_current");
-    $unavailable=$fixture->page('/pilot/construction-control');
+    $unavailable=$fixture->page('/pilot/construction-control?ownership=all&completed=1');
     $check(503,$unavailable['status'],'unavailable shipment projection is an explicit runtime failure');
     $check(false,str_contains($unavailable['body'],'отгружен')||str_contains($unavailable['body'],'не отгружено'),'unavailable projection has no shipment claim');
     if($failures!==[]){foreach($failures as$failure)fwrite(STDERR,"INTENDED_RED: {$failure}\n");throw new TestFailure('aggregate shipment indicator acceptance failed: '.count($failures).' findings');}
