@@ -1,0 +1,47 @@
+Продолжи delivery «Пошаговая работа ОТиЗ в согласованном интерфейсе».
+
+Работай ТОЛЬКО в существующем worktree
+/Users/antropophag/code/fmonitor-2-otiz-workflow
+на ветке codex/otiz-guided-workflow. Не трогай checkout
+/Users/antropophag/code/fmonitor-2 и чужой WIP. Ничего не очищай и не теряй:
+текущий candidate dirty и ещё не закоммичен.
+
+Сначала полностью прочитай:
+- AGENTS.md;
+- docs/operations/current-delivery-goal.md;
+- docs/operations/otiz-guided-native-interface-handoff-2026-09-22.md;
+- docs/operations/otiz-guided-native-interface-delivery.md;
+- PRODUCT.md, CONTEXT.md, docs/development-process.md;
+- specs/OTIZ-GUIDED-WORKFLOW-001.md;
+- весь openspec/changes/otiz-guided-native-interface/;
+- reviews/tests/OTIZ-GUIDED-WORKFLOW-001.md.
+
+Затем выполни `python3 tools/delivery/harness.py state` и `git status`. Используй
+существующие Gates и prepared role packages: root владеет scope/spec/tests,
+production выполняет отдельный gpt-5.6-sol/low executor, reviews независимы.
+Локальные full `make test`/`make verify` запрещены.
+
+Не начинай новый выбор дизайна или новый prototype. Сохрани все визуальные решения
+из handoff: серый canvas, две осмысленные поверхности экономики, единый белый
+header с табами без прыжка на трёх вкладках, compact 44px pill controls,
+server-side table behavior, non-wrapping status pills, combined paid/withheld,
+icon-only double chevron без точек и без заголовка actions, mass snapshot table,
+exact object+snapshot drawer, icon XLSX, structured ledger, отсутствие abstract
+steps и «Замечаний нет». Не трогай Safari; browser work только Playwright.
+
+Прежний stale root-authored Playwright selector закрыт в текущем WIP:
+`php tests/Yii2/yii2_otiz_shlz_ui_001_test.php` GREEN на integrated base,
+но согласованный UI теперь использует настоящий icon-only link
+`Открыть расчёт #…`. Не откатывай это решение; дальше выполняй только
+bounded focused checks.
+
+Candidate уже интегрирован на `origin/main` `3c242f34` с merged #222/#226.
+Публичный `MariaDbEffectiveObjectDetails` присутствует; не создавай второй
+effective-values механизм и не меняй `MariaDbNativePremiumInputs*`.
+
+Локальный стенд 8093 уже state-preservingly обновлён; его DB/sessions/artifacts
+нельзя сбрасывать. Последние screenshots и все артефакты перечислены в handoff.
+Изменяющие browser checks — только на isolated fixtures; на стенде только read-only.
+Перед PR снова покажи владельцу стенд и дождись явного approval. Затем exact-source
+review, Gate 5 и один требуемый CI. Не выполнять merge, production deployment или
+реальные финансовые действия.

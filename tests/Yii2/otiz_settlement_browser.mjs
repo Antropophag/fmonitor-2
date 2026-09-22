@@ -25,9 +25,9 @@ try {
   await page.locator('input[name="password"]').fill(config.password);
   await Promise.all([page.waitForNavigation(), page.locator('button[type="submit"]').click()]);
   assert.equal(new URL(page.url()).pathname, '/pilot/otiz/snapshots/301', 'login returns to the requested snapshot');
-  assert.equal(await page.locator('h1').innerText(), 'Выплаты на 30.09.2026');
-  assert.equal(await page.locator('.fm2-otiz-object-row').count(), 1);
-  assert.match(await page.locator('.fm2-otiz-summary').innerText(), /1\s000,00/);
+  assert.equal(await page.locator('h1').innerText(), 'Выплаты на 30.09.2026 · расчёт #301');
+  assert.equal(await page.locator('[data-otiz-snapshot-table] [data-otiz-object]').count(), 1);
+  assert.match(await page.locator('.fm2-otiz-facts').innerText(), /1\s000,00/);
 
   result.stage = 'financial navigation and export';
   for (const destination of ['/pilot/otiz/objects','/pilot/otiz/payments','/pilot/otiz/history']) {
@@ -47,6 +47,9 @@ try {
   async function formFor(action) {
     const form = page.locator(`form[action="${action}"]`);
     assert.equal(await form.count(), 1, `one form for ${action}`);
+    if (!await form.isVisible() && action.endsWith('/closures')) {
+      await page.locator('[data-otiz-snapshot-table] [data-otiz-object]').first().getByRole('button', {name: /Подробнее/}).click();
+    }
     assert.equal((await form.getAttribute('method')).toLowerCase(), 'post');
     // Open real ancestor disclosures with native clicks; never invoke submit() or fabricate payloads.
     const disclosures = form.locator('xpath=ancestor::details');
@@ -68,16 +71,18 @@ try {
     assert.ok((await page.locator('[role="status"]').allTextContents()).includes(message));
   }
   result.stage = 'retained details and invalid native form';
+  await page.locator('[data-otiz-snapshot-table] [data-otiz-object]').first().getByRole('button', {name: /Подробнее/}).click();
+  const detail = page.locator('[data-otiz-drawer][open]');
   const invalid = await formFor('/pilot/otiz/snapshots/301/closures');
   // Opening the discipline form also exposes the existing object details.
-  await page.locator('.fm2-otiz-trace > summary').click();
-  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /Премиальный фонд/);
-  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /Начислено за прогресс/);
-  assert.match(await page.locator('.fm2-otiz-trace').innerText(), /1\s000,00/);
-  assert.match(await page.locator('.fm2-otiz-allocation').innerText(), /Browser Installer/);
-  assert.match(await page.locator('.fm2-otiz-allocation').innerText(), /КТУ 1,00/);
-  assert.match(await page.locator('.fm2-otiz-issues').innerText(), /Synthetic warning retained/);
-  assert.match(await page.locator('.fm2-otiz-issues').innerText(), /OTIZ owner/);
+  await detail.getByText('Как рассчитана сумма', {exact: true}).click();
+  const detailText = await detail.innerText();
+  assert.match(detailText, /Премиальный фонд/);
+  assert.match(detailText, /Начислено за прогресс/);
+  assert.match(detailText, /1\s000,00/);
+  assert.match(detailText, /Browser Installer/);
+  assert.match(detailText, /КТУ 1,00/);
+  assert.match(detailText, /Synthetic warning retained/);
   await invalid.locator('[name="discipline"]').fill('2000.00');
   await invalid.locator('[name="basis"]').fill('Over budget must reject');
   await Promise.all([page.waitForNavigation(), invalid.locator('button[type="submit"]').click()]);
@@ -98,7 +103,7 @@ try {
   await clickSubmit(discipline, '?closed=1', 'Удержание добавлено к выплате по объекту.');
   assert.equal(await page.locator('.fm2-otiz-ledger tbody tr').count(), 1);
   assert.match(await page.locator('.fm2-otiz-ledger').innerText(), /Browser discipline/);
-  assert.match(await page.locator('.fm2-otiz-summary').innerText(), /900,00/);
+  assert.match(await page.locator('.fm2-otiz-facts').innerText(), /900,00/);
   await page.screenshot({path: path.join(config.artifacts, 'discipline.png'), fullPage: true});
 
   result.stage = 'complete form';
@@ -117,7 +122,7 @@ try {
   assert.equal(await page.locator('.fm2-otiz-ledger tbody tr').count(), 3);
   assert.match(await page.locator('.fm2-otiz-ledger').innerText(), /Browser reversal/);
   assert.match(await page.locator('.fm2-otiz-ledger').innerText(), /Сторно записи №/);
-  assert.match(await page.locator('.fm2-otiz-summary').innerText(), /100,00/);
+  assert.match(await page.locator('.fm2-otiz-facts').innerText(), /100,00/);
   assert.equal(await page.locator('form[action="/pilot/otiz/snapshots/301/payments/complete"]').count(), 1);
   await page.screenshot({path: path.join(config.artifacts, 'reversed.png'), fullPage: true});
   assert.deepEqual(result.pageErrors, []);
