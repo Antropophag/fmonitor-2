@@ -27,6 +27,8 @@ Retained RED: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/recor
 
 Complete local regression-failure inventory: `yii2_object_queue_lineage_001_test.php` returned HTTP 503 and `yii2_operational_dashboard_bar_charts_001_test.php` returned HTTP 404. Both exact commands reproduce unchanged on clean base `0504d258`; they remain unresolved pre-existing/environment failures and are not claimed GREEN. Their candidate evidence records are `1790092790123277000-63153195841f4f76a8b9258fb147771e` and `1790092798923440000-7a7731c1c01846abb90490f5bfcc8a91`.
 
+First exact-source CI run `35752011089` on `957c3ba3ea5c80d38d456aeac59d97e0424a296c` had one complete `REGRESSION_FAILURE` inventory item: `tests/Yii2/yii2_object_queue_lineage_001_test.php` still asserted the deliberately superseded historical-filter bug (`[451205,451206]` after retraction). All other primary jobs were GREEN; aggregate `verify` failed only because that shard failed. Full failed-job log is retained outside the checkout at `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/ci-35752011089-integration-1.log`. The correction changes that existing expectation to the new current-state contract and adds the inverse installation-bucket assertion; it requires review and a new-source CI run.
+
 ## Remaining gates
 
 Independent Gate 5: `APPROVED`, no findings, recorded in `reviews/code/CURRENT-CHECKLIST-STAGE-001.md`. PR publication and one exact-source GitHub CI run are pending. Full local `make test` / `make verify` was not run.

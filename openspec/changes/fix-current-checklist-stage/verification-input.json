@@ -6,6 +6,7 @@
     "openspec/changes/fix-current-checklist-stage",
     "specs/CURRENT-CHECKLIST-STAGE-001.md",
     "tests/Yii2/yii2_current_checklist_stage_001_test.php",
+    "tests/Yii2/yii2_object_queue_lineage_001_test.php",
     "reviews/tests/CURRENT-CHECKLIST-STAGE-001.md",
     "reviews/code/CURRENT-CHECKLIST-STAGE-001.md",
     "docs/operations/current-delivery-goal.md",
