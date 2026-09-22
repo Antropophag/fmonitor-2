@@ -15,7 +15,10 @@ final class MariaDbOtizSettlementView
   return['snapshot'=>$snapshot,'objects'=>$objects,'closures'=>$closures];
  }
  public function snapshotForClosure(int$id):int|false{$v=$this->db->createCommand("SELECT snapshot_id FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE id=:id",[':id'=>$id])->queryScalar();return$v===false?false:(int)$v;}
- public function snapshots():array{return$this->db->createCommand("SELECT id,report_date,status,total_pool_cents FROM `{$this->prefix}fm2_pilot_otiz_snapshots` ORDER BY report_date DESC,id DESC")->queryAll();}
+ public function snapshots():array
+ {
+  return$this->db->createCommand("SELECT s.*,(SELECT u.full_name FROM `{$this->prefix}fm2_pilot_users` u WHERE u.user_id=s.calculated_by_user_id LIMIT 1) calculated_by_name,COUNT(DISTINCT o.object_id) object_count,COUNT(DISTINCT CASE WHEN i.severity='blocker' THEN i.id END) blocker_count,COUNT(DISTINCT CASE WHEN i.severity='warning' THEN i.id END) warning_count FROM `{$this->prefix}fm2_pilot_otiz_snapshots` s LEFT JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o ON o.snapshot_id=s.id LEFT JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_issues` i ON i.snapshot_id=s.id GROUP BY s.id ORDER BY s.report_date DESC,s.id DESC")->queryAll();
+ }
  public function workbook(int$id):array|false
  {
   $p=$this->snapshot($id);if($p===false||$p['snapshot']['status']!=='accepted')return false;$s=$p['snapshot'];$allocations=$this->db->createCommand("SELECT a.*,o.regnumber FROM `{$this->prefix}fm2_pilot_otiz_snapshot_allocations` a JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o ON o.snapshot_id=a.snapshot_id AND o.object_id=a.object_id WHERE a.snapshot_id=:id ORDER BY a.object_id,a.full_name",[':id'=>$id])->queryAll();$issues=$this->db->createCommand("SELECT i.*,o.regnumber FROM `{$this->prefix}fm2_pilot_otiz_snapshot_issues` i JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o ON o.snapshot_id=i.snapshot_id AND o.object_id=i.object_id WHERE i.snapshot_id=:id ORDER BY i.object_id,i.severity",[':id'=>$id])->queryAll();

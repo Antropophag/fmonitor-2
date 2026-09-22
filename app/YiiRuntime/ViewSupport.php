@@ -112,7 +112,7 @@ final class ViewSupport
         if($pages<=1||$current<1||$current>$pages||$pageSize<1)return '';
         $encode=static fn(string$value):string=>htmlspecialchars($value,ENT_QUOTES|ENT_SUBSTITUTE|ENT_HTML5,'UTF-8');
         $href=static function(int$page)use($path,$query,$encode):string{$values=$query;$values['page']=$page;return $encode($path.'?'.http_build_query($values,'','&',PHP_QUERY_RFC3986));};
-        $icon=static fn(string$name):string=>'<img class="shlz-pagination__icon" src="/pilot/assets/shlz-icons/'.($name==='arrow-left-md'?'chevron-left-duo':'chevron-right-duo').'.svg" alt="">';
+        $icon=static fn(string$name):string=>'<img class="shlz-pagination__icon" src="/pilot/assets/shlz-icons/'.$name.'.svg" alt="">';
         $items='<li>'.($current>1?'<a class="shlz-pagination__item" rel="prev" href="'.$href($current-1).'" aria-label="Предыдущая страница">'.$icon('arrow-left-md').'</a>':'<span class="shlz-pagination__item shlz-pagination__item--disabled" aria-disabled="true">'.$icon('arrow-left-md').'<span class="shlz-visually-hidden">Предыдущая страница недоступна</span></span>').'</li>';
         $window=[1];for($page=max(2,$current-1);$page<=min($pages-1,$current+1);$page++)$window[]=$page;if($pages>1)$window[]=$pages;$window=array_values(array_unique($window));$previous=0;
         foreach($window as$page){if($previous!==0&&$page>$previous+1)$items.='<li><span class="shlz-pagination__item shlz-pagination__item--ellipsis" aria-hidden="true">…</span></li>';$items.='<li><a class="shlz-pagination__item" href="'.$href($page).'"'.($page===$current?' aria-current="page"':'').'>'.$page.'</a></li>';$previous=$page;}

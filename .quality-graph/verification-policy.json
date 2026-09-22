@@ -337,6 +337,17 @@
       "consumers": []
     },
     {
+      "name": "otiz-settlement-read-projection",
+      "patterns": [
+        "app/Otiz/MariaDbOtizSettlementView.php"
+      ],
+      "verifiers": [
+        "tests/Otiz/snapshot_publication_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "assignment-order-current-eligibility",
       "patterns": [
         "app/AssignmentOrderComposition/MariaDbAssignmentOrderCurrentEligibility.php",
