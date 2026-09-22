@@ -324,6 +324,7 @@ e2e	php	tests/Yii2/yii2_preopening_browser_001_test.php	e2e
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py	e2e
 e2e	php	tests/Yii2/yii2_required_engineer_select_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_shlz_select_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_sidebar_state_icons_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_console_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_stand_backup_ownership_001_test.php	e2e
@@ -509,5 +510,6 @@ unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
+unit	php	tests/Yii2/yii2_shlz_visual_contract_001_test.php	unit
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php	unit
 unit	python3	tools/delivery/ci_launch_transport_198_test.py	governance

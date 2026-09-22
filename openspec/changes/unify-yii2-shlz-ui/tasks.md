@@ -1,14 +1,14 @@
 ## 1. Source и Gate 1
 
-- [ ] 1.1 Завершить или безопасно сохранить WIP №157, создать отдельный чистый worktree/branch от актуального `main` и подтвердить, что `git diff` нового candidate не содержит файлов №157.
+- [x] 1.1 Завершить или безопасно сохранить WIP №157, создать отдельный чистый worktree/branch от актуального `main` и подтвердить, что `git diff` нового candidate не содержит файлов №157.
 - [ ] 1.2 Сопоставить актуальный `main` с audit SHA `bced877a` и #197, записать для V01–V09 статус reproduced/resolved-by-predecessor/UNKNOWN и проверить каждый reproduced case в разрешённом runtime.
-- [ ] 1.3 Создать нормативную executable specification с идентификатором, разделом «Простыми словами», матрицей 25 views, публичными seams, preservation invariants и независимо вычисленными expected outcomes; проверить полную трассировку на delta spec.
-- [ ] 1.4 Создать `verification-input.json`, вычислить обязательный Quality Graph plan по `tools/delivery/change-verification.md` и проверить, что все unresolved obligations закрыты до Gate 2.
+- [x] 1.3 Создать нормативную executable specification с идентификатором, разделом «Простыми словами», матрицей 25 views, публичными seams, preservation invariants и независимо вычисленными expected outcomes; проверить полную трассировку на delta spec.
+- [x] 1.4 Создать `verification-input.json`, вычислить обязательный Quality Graph plan по `tools/delivery/change-verification.md` и проверить, что все unresolved obligations закрыты до Gate 2.
 
 ## 2. Baseline и Gate 2
 
 - [ ] 2.1 Поднять разрешённый Yii test runtime на фиксированных fixtures и сохранить вне checkout before screenshots для representative table/form/modal/shell surfaces при 320, 390, 768, 1024, 1280, 1440 и 1920 CSS px; вручную проверить изображения и записать source/environment.
-- [ ] 2.2 Добавить focused structural tests для V02 и V09: одна field-композиция/label и единственный `main`/рабочий skip-link; запустить их и сохранить RED по отсутствующему поведению.
+- [x] 2.2 Добавить focused structural tests для V02 и V09: одна field-композиция/label и единственный `main`/рабочий skip-link; запустить их и сохранить RED по отсутствующему поведению.
 - [ ] 2.3 Добавить browser regression tests для V03 и V04: фактический selector/геометрия selection modal и полный focus/Escape/cancel/return lifecycle payment confirmation; запустить и сохранить RED.
 - [ ] 2.4 Добавить browser regression tests для V06 и shared data-list invariants: local scroll, полный текст денег/actions, отсутствие document overflow на boundary widths; запустить и сохранить RED.
 - [ ] 2.5 Добавить characterization tests существующих routes, filters, roles, payloads, no-JS fallbacks, offline states, idempotency и histories на затрагиваемых flows; проверить GREEN до production edits.

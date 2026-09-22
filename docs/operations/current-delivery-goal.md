@@ -1,4 +1,38 @@
-# Текущая цель — единый этап объекта после checklist retraction
+# Текущая цель — единый визуальный договор активного Yii2-приложения
+
+Поручение владельца 2026-09-22: взять в работу бриф
+`frontend-audit-2026-09-22.md` и применить change `unify-yii2-shlz-ui` от
+актуального `origin/main` `bced877aec8a8802e97037749ca4251d3098df1a` как один
+согласованный delivery scope. Подтверждённые source findings V01–V09, общий
+shell, tables, fields, overlays и feedback states исправляются foundation-first;
+все 25 активных Yii2 views проходят общую responsive/accessibility приёмку.
+
+Это более новое owner-решение расширяет исходную #197 в части ОТиЗ и единого
+координируемого прохода. #197 остаётся parent/backlog reference; её прежнее
+исключение ОТиЗ и требование отдельных PR-slices не ограничивают этот change.
+Небольшие внутренние коммиты и проверки сохраняются.
+
+Контракт: [YII2-SHLZ-VISUAL-CONTRACT-001](../../specs/YII2-SHLZ-VISUAL-CONTRACT-001.md).
+Lifecycle: [unify-yii2-shlz-ui](../../openspec/changes/unify-yii2-shlz-ui/).
+Рабочая ветка `codex/unify-yii2-shlz-ui` и отдельный worktree
+`/Users/antropophag/code/fmonitor-2-yii2-shlz-unification` созданы от exact
+`origin/main`; незавершённый WIP №157 в исходном checkout не изменяется и не
+входит в candidate.
+
+Root пишет scope/spec/tests; отдельный `gpt-5.6-sol / low` executor реализует;
+независимые `gpt-5.6-sol / low` reviewers решают planner-required Gates 3/5.
+До стабилизации общего `pilot.css`/`ViewSupport.php` один executor владеет shared
+foundation. Локально только bounded focused checks и browser sweeps; full
+`make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
+
+Не входят новая доменная логика, маршруты, права, payloads, формулы, history,
+offline/storage/protocol, обновление или fork `shlz-ui`, SPA/grid framework,
+`rapid-pilot`, imports, merge и deployment. Непроверенные browser consequences
+остаются `UNKNOWN`, а не дефектом или GREEN.
+
+---
+
+## Исторический указатель — единый этап объекта после checklist retraction
 
 Поручение владельца 2026-09-22: от актуального `main` исправить расхождение карточки, очереди, server-side stage filters/count/pagination и диаграммы этапов после `completion_retracted`, затем довести отдельный candidate до PR-ready с independent review и exact-source CI.
 

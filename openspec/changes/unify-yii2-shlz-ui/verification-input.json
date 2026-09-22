@@ -1,0 +1,61 @@
+{
+  "change": "unify-yii2-shlz-ui",
+  "planned_paths": [
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Views/_otiz-nav.php",
+    "app/YiiRuntime/Views/_otiz-snapshot-list.php",
+    "app/YiiRuntime/Views/activate.php",
+    "app/YiiRuntime/Views/calendar.php",
+    "app/YiiRuntime/Views/checklist.php",
+    "app/YiiRuntime/Views/completion.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/Views/deadline-certificates.php",
+    "app/YiiRuntime/Views/execution.php",
+    "app/YiiRuntime/Views/feedback-admin.php",
+    "app/YiiRuntime/Views/feedback-confirmation.php",
+    "app/YiiRuntime/Views/feedback.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Views/login.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/original-history.php",
+    "app/YiiRuntime/Views/original.php",
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/Views/otiz.php",
+    "app/YiiRuntime/Views/preopening-error.php",
+    "app/YiiRuntime/Views/roles.php",
+    "app/YiiRuntime/Views/selection.php",
+    "app/YiiRuntime/Views/users.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/navigation.js",
+    "app/YiiRuntime/Assets/preopening.js",
+    "app/YiiRuntime/Assets/otiz.js",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/yii2-shlz-visual-audit-inventory-2026-09-22.md",
+    "openspec/changes/unify-yii2-shlz-ui",
+    "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
+    "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php",
+    "tests/Support/yii2_shlz_visual_contract_browser.cjs",
+    "reviews/tests/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "reviews/code/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "A-G-complete-visual-contract",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "rendered active Yii2 GET responses, shared ViewSupport composition and Chromium interactions over representative routes cover A-G and the complete 25-view inventory",
+      "tests": [
+        "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
+        "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_shlz_visual_contract_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}
