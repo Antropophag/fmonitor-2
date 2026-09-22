@@ -12,5 +12,5 @@
 ## 3. Isolated evidence and delivery
 
 - [x] 3.1 Measure before/after and failure/concurrency/startup cases in isolated Compose.
-- [ ] 3.2 Run focused login/card-editor/construction-control/OTIZ smoke.
+- [x] 3.2 Run focused login/card-editor/construction-control/OTIZ smoke.
 - [ ] 3.3 Obtain independent final review and exact-source CI; reconcile current main.
