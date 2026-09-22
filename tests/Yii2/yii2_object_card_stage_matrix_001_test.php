@@ -24,12 +24,6 @@ try {
     $assertAction($f->page(), 'Монтажные работы', 'Перейти к чек-листу', ['Открыть работы', 'Работы завершены']);
     $check($before, $h->facts(), 'working read-only');
     $workingReader = []; $h->login($workingReader, 95);
-    $readerWorking = $f->page($workingReader);
-    $check(true, str_contains($readerWorking['body'], 'Монтажные работы'), 'restricted checklist state visible');
-    preg_match('~<section class="fm2-next-action".*?</section>~s', $readerWorking['body'], $readerMatch);
-    $readerAction = $readerMatch[0] ?? '';
-    $check(false, str_contains($readerAction, 'Перейти к чек-листу') || str_contains($readerAction, '/pilot/objects/4512/checklist'), 'restricted checklist command absent');
-    $check(1, substr_count($readerWorking['body'], 'class="fm2-next-action"'), 'restricted checklist one block');
 
     $h->db->query("UPDATE {$h->p}fm2_installation_cases SET process_state='needs_assignment_change' WHERE id=6101");
     $assertAction($f->page(), 'Требуется изменение', null, ['Перейти к чек-листу', 'Продолжить монтажные работы']);

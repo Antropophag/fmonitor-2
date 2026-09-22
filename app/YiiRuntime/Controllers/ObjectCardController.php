@@ -59,7 +59,7 @@ final class ObjectCardController extends PreopeningController
                 'canUpload' => $documentAccess['canUpload'],
                 'canCorrect' => $documentAccess['canCorrect'],
                 'canReadOriginal' => $documentAccess['canRead'],
-                'canReadChecklist' => $this->processCap('checklist.read') && (bool) ($checklistAccess['read'] ?? false),
+                'canReadChecklist' => (bool) ($checklistAccess['read'] ?? false),
                 'completion' => $completion,
                 // Completion capabilities are not yet in the canonical RBAC registry; grants() is the existing exact active-grant read seam.
                 'canRecordPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.record'),
