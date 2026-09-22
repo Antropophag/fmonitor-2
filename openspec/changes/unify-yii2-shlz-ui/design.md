@@ -4,6 +4,8 @@
 
 Аудит выполнен для main `bced877aec8a8802e97037749ca4251d3098df1a`, но текущий checkout — грязная ветка №157 с конфликтом. Перед Gate 1/2 реализация обязана переснять diff от актуального `main`, поднять разрешённый Yii runtime и подтвердить, какие V01–V09 ещё воспроизводятся. Неподтверждённые визуальные последствия остаются рисками, а не фактами.
 
+Первый Gate 3 вернул `CHANGES_REQUESTED`: isolated login seam доказал V09, но существующие authenticated installers/users/preopening/ОТиЗ journeys на exact main не достигли новых assertions из-за ранних 503/RED. Владелец разрешил включить восстановление этого baseline в change.
+
 Владелец frontend-композиции — `app/YiiRuntime`: Views/ViewSupport формируют HTML, Assets владеют прикладной геометрией и поведением поверх публичных primitive contracts. `shlz-ui` остаётся read-only dependency через публичные exports. Persistence owner и все application/domain seams остаются прежними. `rapid-pilot` не является target и не получает новую логику.
 
 ## Goals / Non-Goals
@@ -60,6 +62,12 @@ Root сначала пишет executable spec и focused RED tests для V02/V
 
 После UI-изменений один раз запускается Impeccable detector по изменённым targets. Architecture impact ожидается только в существующих Yii boundary checks; любые изменения `app/PilotHttp/*.php` вне scope и потребовали бы отдельной квалификации.
 
+### 7. Baseline runtime восстанавливается до нового Gate 2
+
+До расширения browser matrix root строит минимальный deterministic HTTP loop для первого 503, затем ранжирует и проверяет причины. Отдельный executor исправляет только доказанную общую runtime/fixture boundary; route permissions, production failure semantics и доменные owners не меняются. Существующие journeys должны снова достигать предметных assertions, после чего root пишет независимые V03/V04/V06 RED tests. Baseline correction и visual implementation сохраняются отдельными логическими коммитами и авторством.
+
+Альтернатива — считать ранний 503 новым UI RED или обходить его mocked HTML — отклонена: это не публичный seam и создаёт ложное Gate 3 evidence.
+
 ## Risks / Trade-offs
 
 - [Широкий diff усложняет review и bisect] → foundation-first последовательность, малые внутренние коммиты, page inventory и единый final exact-source candidate.
@@ -69,13 +77,15 @@ Root сначала пишет executable spec и focused RED tests для V02/V
 - [Modal refactor изменит финансовое или offline действие] → JS controller отделён от существующей формы/command seam; cancel/no-JS/idempotency/history проверяются отдельно.
 - [Аудит устареет относительно main] → первым deliverable становится source reconciliation; исчезнувшие findings отмечаются resolved-by-predecessor, новые расхождения не расширяют scope без обновления artifacts.
 - [Текущий грязный checkout загрязнит candidate] → работа начинается в отдельном чистом worktree/branch от актуального main после завершения или сохранения №157; proposal files переносятся явно.
+- [Baseline fix незаметно ослабит authorization/error handling] → минимальный authenticated GET repro, permission-denied control case и отдельный regression test проверяются до и после correction.
 
 ## Migration Plan
 
 1. Сохранить текущий WIP №157 без reset/checkout, получить чистый worktree от актуального `main`, сверить audit SHA и #197.
-2. Зафиксировать executable spec, page inventory, baseline screenshots и Gate 2 RED evidence; пройти planner-selected Gate 3.
-3. Реализовать shell/shared compositions и точечные V02/V03/V04 regressions одним executor.
-4. Мигрировать реестры, затем overlays/forms, затем остальные поверхности; после каждой волны запускать bounded focused checks и удалять orphaned rules.
-5. Выполнить один bounded desktop/mobile visual sweep, один пакет исправлений, не более одного подтверждающего sweep, detector и architecture/focused checks.
-6. Подготовить exact source через delivery harness, получить независимый финальный review и один GitHub CI run полного выбранного matrix.
-7. Rollback выполняется откатом логических коммитов в обратном порядке; изменений данных или schema нет. При частичном rollback общий helper и его consumers откатываются вместе, чтобы не оставлять смешанный contract.
+2. Диагностировать и минимально восстановить baseline authenticated fixtures/routes; подтвердить существующими journeys и отдельным regression test.
+3. Зафиксировать executable spec, page inventory, baseline screenshots и полное scenario-level Gate 2 RED evidence; пройти повторный planner-selected Gate 3.
+4. Реализовать shell/shared compositions и точечные V02/V03/V04 regressions одним executor.
+5. Мигрировать реестры, затем overlays/forms, затем остальные поверхности; после каждой волны запускать bounded focused checks и удалять orphaned rules.
+6. Выполнить один bounded desktop/mobile visual sweep, один пакет исправлений, не более одного подтверждающего sweep, detector и architecture/focused checks.
+7. Подготовить exact source через delivery harness, получить независимый финальный review и один GitHub CI run полного выбранного matrix.
+8. Rollback выполняется откатом логических коммитов в обратном порядке; изменений данных или schema нет. При частичном rollback общий helper и его consumers откатываются вместе, чтобы не оставлять смешанный contract.

@@ -9,6 +9,7 @@
 - Перевести все 25 активных `app/YiiRuntime/Views` и связанные partials на общий договор одним координируемым проходом с небольшими проверяемыми волнами; после каждой миграции удалять заменённые локальные CSS-правила.
 - Сохранить маршруты, роли, payloads, idempotency, append-only histories, финансовый смысл, offline queue/storage/protocol, no-JS/server fallback и закреплённую компоновку object card.
 - Расширить существующий Yii browser-контур общими инвариантами компонентов и точечными regression cases для V02/V03/V04/V06/V09; выполнить просмотренные before/after на согласованной среде и exact-source CI.
+- Восстановить baseline authenticated Yii fixture/runtime routes, которые на exact `main` возвращают 503 или падают до UI assertions, ровно настолько, чтобы существующие installers/users/preopening/ОТиЗ journeys снова достигали своих публичных seams; закрепить причину отдельным regression test до визуальной реализации.
 - Не обновлять и не форкать `shlz-ui` без отдельного воспроизведения дефекта на закреплённой версии; не создавать второй design system, SPA/grid framework или новый browser framework.
 
 ## Capabilities
@@ -27,6 +28,6 @@
 - Source oracle: бриф `frontend-audit-2026-09-22.md` (аудит среза `bced877a`), `PRODUCT.md`, `CONTEXT.md`, действующие executable specs и публичные exports закреплённого `../shlz-ui` commit `9aaedf50eabf5f92e4af1cbc9c0f2a26a171b35b`.
 - Target public seam: существующие Yii2 HTTP-маршруты и пользовательские действия, наблюдаемые через серверную разметку и существующий browser runner; новых state-changing seams нет.
 - Release value: один предсказуемый интерфейс без скрытых действий, обрезанных финансовых значений, двойных полей и несогласованного modal/focus поведения на поддерживаемых ширинах.
-- Затрагиваются `app/YiiRuntime/Views`, `ViewSupport.php`, `Assets/pilot.css`, связанные JS assets и focused PHP/browser tests; product/domain writers, persistence, imports, deployment и `rapid-pilot` не затрагиваются.
+- Затрагиваются `app/YiiRuntime/Views`, `ViewSupport.php`, `Assets/pilot.css`, связанные JS assets, focused PHP/browser tests и минимальная общая runtime/fixture boundary, являющаяся доказанной причиной baseline 503; product/domain writers, persistence semantics, imports, deployment и `rapid-pilot` не затрагиваются.
 - Рабочий checkout сейчас содержит незавершённый candidate №157 и конфликт в `tools/verification/ci.py`; реализация этого change должна начаться только из чистого актуального `main`, после явного переключения активной очереди, и не должна включать текущий WIP.
-- NEEDS_GRILL нет: бриф явно задаёт полный список экранов, V01–V09, границы поведения и критерий завершения. Непроверенные browser consequences остаются гипотезами до baseline и не превращаются в требования о конкретной поломке.
+- Owner 2026-09-22 явно разрешил расширение scope на восстановление baseline routes/fixtures после Gate 3 `CHANGES_REQUESTED`. Непроверенные browser consequences остаются гипотезами до baseline и не превращаются в требования о конкретной поломке.

@@ -4,6 +4,8 @@
 - [ ] 1.2 Сопоставить актуальный `main` с audit SHA `bced877a` и #197, записать для V01–V09 статус reproduced/resolved-by-predecessor/UNKNOWN и проверить каждый reproduced case в разрешённом runtime.
 - [x] 1.3 Создать нормативную executable specification с идентификатором, разделом «Простыми словами», матрицей 25 views, публичными seams, preservation invariants и независимо вычисленными expected outcomes; проверить полную трассировку на delta spec.
 - [x] 1.4 Создать `verification-input.json`, вычислить обязательный Quality Graph plan по `tools/delivery/change-verification.md` и проверить, что все unresolved obligations закрыты до Gate 2.
+- [ ] 1.5 Построить минимальный deterministic authenticated GET loop для baseline 503, воспроизвести его повторно, проверить 3–5 ранжированных гипотез и записать доказанную причину без секретов.
+- [ ] 1.6 Добавить отдельный regression test причины baseline 503, передать минимальную коррекцию отдельному executor и проверить installers/users/preopening/ОТиЗ journeys до первого предметного assertion без ослабления permission-denied case.
 
 ## 2. Baseline и Gate 2
 

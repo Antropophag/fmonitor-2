@@ -4,6 +4,17 @@
 
 ## ADDED Requirements
 
+### Requirement: Исполнимый authenticated baseline
+До визуальной миграции система SHALL позволять изолированным canonical Yii fixtures успешно аутентифицироваться и достигать существующих installers, users, preopening и ОТиЗ HTTP routes без необъяснённого 503 или падения до UI assertions. Исправление MUST сохранять production authorization и MUST NOT подменять отсутствующую зависимость фиктивным GREEN.
+
+#### Scenario: Existing browser journey достигает предметного экрана
+- **WHEN** canonical isolated fixture запускает существующий authenticated browser journey на exact candidate
+- **THEN** journey проходит setup/login и достигает первого предметного UI assertion; любой дальнейший RED однозначно относится к проверяемому visual behavior
+
+#### Scenario: Baseline 503 имеет отдельную причину и regression guard
+- **WHEN** диагностический loop воспроизводит прежний 503 на минимальном authenticated GET
+- **THEN** regression test падает на установленной причине до исправления и проходит после минимальной коррекции без ослабления permission checks
+
 ### Requirement: Единая оболочка активного приложения
 Система SHALL показывать на каждом активном Yii2-экране одну общую оболочку, которая владеет навигацией, единственным `main` landmark, skip-link, доступной областью контента и нижними безопасными отступами. Предметная страница MUST NOT изменять геометрию `body`, sidebar или общей оболочки неявным селектором, зависящим от её содержимого.
 
