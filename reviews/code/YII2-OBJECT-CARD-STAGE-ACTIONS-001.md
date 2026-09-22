@@ -97,3 +97,78 @@ authorization semantics, and has adequate exact-source focused evidence for fina
 review. Gate 3 remains approved after the scoped assertion correction. Exact-source
 CI and the remaining PR/merge workflow are still pending and must be recorded
 separately; deployment is outside authorization.
+
+---
+
+# CI correction re-review — exact source `7119b168`
+
+- Date: `2026-09-22`
+- Reviewer: separately tasked agent `/root/gate5_object_card`
+- Independence: unchanged; the reviewer authored none of the correction, tests, or evidence
+- Previous reviewed commit: `0bc9bd3964e4d9bfcc8653da3968f598c481ceac`
+- Corrected commit: `bd5a0819b9a784d6ba9c11b687e07c1c025d3cea`
+- Exact corrected source: `7119b1682926e5300b9fa6798e691d6ba48acefaf5632ac83013dfe5f43d8dcd`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T011956Z-1917fbdde0/package.json`
+- Verdict: **APPROVED**
+
+The corrected package, exact `0bc9bd39..bd5a0819` delta, CI failure inventory,
+focused correction results, inherited contract, and the prior Gate 3/final review
+history were reviewed. This addendum supersedes the earlier final verdict only for
+the corrected exact source.
+
+## CI failure disposition
+
+First PR run `35673748261` had primary failures in `e2e` and `Integration (1/2)`;
+`verify` and `Quality Graph` were downstream aggregate failures. The complete
+documented `REGRESSION_FAILURE` inventory is:
+
+1. `tests/Yii2/yii2_preopening_browser_001_test.php`
+2. `tests/Yii2/yii2_inspection_journey_001_test.php`
+3. `tests/Yii2/yii2_object_card_stage_actions_001_test.php`
+
+All three failures have one product cause: commit `0bc9bd39` intersected the
+authoritative checklist-owner access result with a newly added
+`processCap('checklist.read')` presentation gate. That narrowed established access
+outside this slice and contradicted the contract's inheritance of existing
+checklist authorization. The correction restores `canReadChecklist` directly from
+`MariaDbYiiChecklist::access(...)[read]`; it does not grant access, bypass the owner,
+or change checklist mutation authorization.
+
+## Production and test delta
+
+The production delta is exactly the one-line removal of that competing gate in
+`ObjectCardController`. Projection, applied-versus-pending semantics, view priority,
+routes, writers, schemas, and all other authorization decisions are unchanged.
+
+The stage-matrix test removes the actor-95 negative checklist case. That actor is
+readable according to the existing checklist owner, so the removed assertion encoded
+a false authority assumption introduced with the defect. The positive working-stage
+case still proves that readable access exposes the checklist CTA, while the inherited
+preopening/inspection tests protect the authoritative access behavior. Contract
+section 4 requires the CTA “при checklist read”; it does not introduce a new exact
+process capability. Removing the invalid negative therefore restores, rather than
+weakens, the reviewed contract oracle. The prior Gate 3 approval remains valid for
+the corrected test delta.
+
+## Corrected-source evidence and status
+
+- Package-bound `yii2_object_card_stage_actions_001_test.php` and
+  `yii2_object_card_stage_matrix_001_test.php` records are GREEN on exact source
+  `7119b168...`, executable source `83be2ac7...`, isolated environment
+  `824c2a50...`.
+- The delivery record reports all three formerly failing tests plus the stage matrix
+  GREEN in the appropriate isolated browser/integration profiles after correction.
+- Reviewer PHP lint of the corrected controller is GREEN.
+- No local canonical full suite was run. Replacement exact-source CI run
+  `35675323416` for commit `bd5a0819` is currently pending/UNKNOWN. This review does
+  not represent it as GREEN; merge readiness remains false until that run and the
+  normal admission checks complete.
+
+## Correction verdict
+
+**APPROVED.** The correction is minimal, returns checklist presentation authority to
+its established owner, fully explains the first CI run's failure inventory, and
+preserves the normative stage-action behavior and all previously approved
+applied-versus-pending semantics. Final review is approved for exact source
+`7119b1682926e5300b9fa6798e691d6ba48acefaf5632ac83013dfe5f43d8dcd`.
+Exact-source CI remains pending and is not waived.
