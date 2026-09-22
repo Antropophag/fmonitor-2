@@ -477,7 +477,8 @@
         "app/RuntimeRestore/RuntimeRecovery.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
+        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php",
+        "app/RuntimeRestore/RuntimeRecoverySchemaV33.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
@@ -491,6 +492,7 @@
       "name": "runtime-schema-inventory",
       "patterns": [
         "app/Runtime/MariaDbRuntimeReadiness.php",
+        "app/Runtime/RuntimeConfiguration.php",
         "app/Runtime/RuntimeReadiness.php",
         "app/Runtime/RuntimeStartupAttestation.php",
         "app/InstallationProcess/RuntimeReadinessMarkerSchemaMigration.php"
