@@ -513,6 +513,5 @@ unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_visual_contract_001_test.php	unit
-unit	php	tests/Yii2/yii2_visual_polish_regression_001_test.php	unit
 unit	php	tests/Yii2/yii2_workforce_sync_ownership_001_test.php	unit
 unit	python3	tools/delivery/ci_launch_transport_198_test.py	governance

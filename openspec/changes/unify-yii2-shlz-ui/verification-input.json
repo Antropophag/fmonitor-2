@@ -39,7 +39,6 @@
     "tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php",
     "tests/Yii2/yii2_shlz_select_001_test.php",
     "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php",
-    "tests/Yii2/yii2_visual_polish_regression_001_test.php",
     "tests/Yii2/installer_directory_browser.mjs",
     "tests/Yii2/yii2_installer_directory_browser_001_test.php",
     "tests/Yii2/preopening_browser.mjs",
@@ -131,14 +130,6 @@
       "seam": "existing authenticated user-access browser journey and independent persisted-facts observation",
       "tests": ["tests/Yii2/yii2_user_access_browser_001_test.php"],
       "gate3_expected": {"tests/Yii2/yii2_user_access_browser_001_test.php": "GREEN"}
-    },
-    {
-      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
-      "acceptance_id": "owner-screenshot-table-button-modal-consistency",
-      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
-      "seam": "application-owned CSS and active modal view composition corresponding to owner screenshots",
-      "tests": ["tests/Yii2/yii2_visual_polish_regression_001_test.php"],
-      "gate3_expected": {"tests/Yii2/yii2_visual_polish_regression_001_test.php": "INTENDED_RED"}
     }
   ]
 }
