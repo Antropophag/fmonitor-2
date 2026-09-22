@@ -11,7 +11,7 @@ try {
  const response=await page.goto(c.origin+'/pilot/objects/4512#completion');check(response.status()===200,'card ready');
  check(await page.locator('form [name=action][value=record_pto]').count()===1,'INTENDED_RED documentary PTO form');
  const form=action=>page.locator(`form:has(input[name=action][value="${action}"])`);
- async function submit(action){const f=form(action);await Promise.all([page.waitForResponse(r=>r.url().endsWith('/completion')&&r.request().method()==='POST'&&r.status()===303),f.locator('button').click()]);await page.waitForURL('**/pilot/objects/4512#completion');}
+ async function submit(action){const f=form(action);await Promise.all([page.waitForNavigation(),f.locator('button').click()]);check(new URL(page.url()).pathname==='/pilot/objects/4512'&&new URL(page.url()).hash==='#completion','confirmed completion navigation');}
  async function inspectForm(action,fields){
   const f=form(action),d=f.locator('xpath=ancestor::details[1]');if(await d.count()&&!(await d.evaluate(e=>e.open)))await d.locator('summary').click();
   for(const width of [1440,390]){await page.setViewportSize({width,height:1000});
