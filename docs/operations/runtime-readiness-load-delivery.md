@@ -75,10 +75,11 @@ on this contour without treating readiness as user request capacity. The
 measurement container, network, volume, state directories and detached base
 worktree were removed afterward.
 
-## Remaining gates and limitations
+## Final gates and limitations
 
-- Final independent rereview remains pending. PR #234, current-main reconciliation
-  and exact-source Quality Graph run 35694634455 are GREEN.
+- Independent final Gate 5 is APPROVED. Production was merged by the owner through
+  PR #234 while measurement evidence was being completed; follow-up PR #235 exact
+  HEAD ab7d5083 and Quality Graph run 35700321393 are GREEN.
 - Arbitrary unsupported DDL drift after a successful startup is not continuously
   fingerprinted; identity change, update/restart startup check and existing
   operation guards fail closed at their owned seams.
