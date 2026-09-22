@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';
+require dirname(__DIR__,2).'/vendor/autoload.php';
+require dirname(__DIR__,2).'/vendor/yiisoft/yii2/Yii.php';
 
 use FMonitor2\Otiz\SnapshotPublication;
 use FMonitor2\Otiz\MariaDbSnapshotStore;
+use FMonitor2\Otiz\MariaDbOtizSettlementView;
 use FMonitor2\InstallationProcess\PilotOtizSchemaMigration;
 use FMonitor2\InstallationProcess\OtizPublicationSchemaMigration;
 
@@ -46,11 +49,11 @@ $inputs=static function(string $date):array{
 try{
     PilotOtizSchemaMigration::apply($db,$p);
     OtizPublicationSchemaMigration::apply($db,$p);
-    $db->query("CREATE TABLE {$p}fm2_pilot_users(user_id BIGINT PRIMARY KEY,status INT,activation_state VARCHAR(40))");
+    $db->query("CREATE TABLE {$p}fm2_pilot_users(user_id BIGINT PRIMARY KEY,status INT,activation_state VARCHAR(40),full_name VARCHAR(255))");
     $db->query("CREATE TABLE {$p}fm2_pilot_user_roles(user_id BIGINT,role_id BIGINT)");
     $db->query("CREATE TABLE {$p}fm2_pilot_roles(role_id BIGINT PRIMARY KEY,status INT)");
     $db->query("CREATE TABLE {$p}fm2_pilot_role_permissions(role_id BIGINT,permission VARCHAR(80))");
-    $db->query("INSERT INTO {$p}fm2_pilot_users VALUES(1,1,'active'),(2,1,'active')");
+    $db->query("INSERT INTO {$p}fm2_pilot_users VALUES(1,1,'active','Test OTIZ'),(2,1,'active','Denied OTIZ')");
     $db->query("INSERT INTO {$p}fm2_pilot_roles VALUES(1,1)");
     $db->query("INSERT INTO {$p}fm2_pilot_user_roles VALUES(1,1)");
     $db->query("INSERT INTO {$p}fm2_pilot_role_permissions VALUES(1,'otiz.manage')");
@@ -150,6 +153,16 @@ try{
     $db->query("INSERT INTO {$p}fm2_pilot_otiz_snapshots(report_date,status,rules_version,calculated_at,calculated_by_user_id,total_pool_cents,total_closed_cents,total_available_cents,content_hash) VALUES('2026-09-08','draft','legacy','2026-09-08',1,0,0,0,'pending')");
     $legacy=(int)$db->insert_id;$reject('SNAPSHOT_INCOMPLETE',fn()=>$service->accept(1,$legacy));
     $reject('NOT_FOUND',fn()=>$service->accept(1,999999));
+    $yiiDb=new yii\db\Connection(['dsn'=>"mysql:host={$host};port={$port};dbname={$name}",'username'=>$user,'password'=>$password,'charset'=>'utf8mb4']);
+    $yiiDb->open();
+    $questions=static fn()=>(int)$yiiDb->createCommand("SHOW SESSION STATUS LIKE 'Questions'")->queryOne()['Value'];
+    $beforeQuestions=$questions();
+    $history=(new MariaDbOtizSettlementView($yiiDb,$p))->snapshots();
+    $afterQuestions=$questions();
+    assertSameValue(true,count($history)>=6,'bounded archive fixture contains multiple snapshots');
+    assertSameValue(2,$afterQuestions-$beforeQuestions,'snapshot list uses one aggregate query independent of snapshot/object count');
+    assertSameValue(false,array_key_exists('objects',$history[0]),'snapshot list does not materialize unused object detail');
+    $yiiDb->close();
     echo "OTIZ_SNAPSHOT_PUBLICATION_OK\n";
 }finally{
     $other->close();$db->close();$admin->query("DROP DATABASE `$name`");$admin->close();

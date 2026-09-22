@@ -58,6 +58,8 @@ $eventLabels = [
 ];
 $canCorrect = $canCorrect ?? false;
 $canReadOriginal = $canReadOriginal ?? false;
+$canUpload = $canUpload ?? false;
+$pendingComposition = $pendingComposition ?? null;
 $orderId = $confirmedOriginal['orderId'] ?? null;
 $engineerOptions = [];
 foreach ($eligibleEngineers as $engineer) {
@@ -131,16 +133,16 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
         </div>
         <?php if (($detailEditor['allowed'] ?? false) === true): ?><button class="shlz-button shlz-button--icon fm2-object-edit" type="button" data-object-details-edit aria-label="Редактировать данные объекта" title="Редактировать данные объекта"><svg data-shlz-icon="plus-alt-2" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><?php endif ?>
     </header>
-    <?php if (($detailEditor['allowed'] ?? false) === true): $editorValues=array_replace([
+    <?php if (($detailEditor['allowed'] ?? false) === true): $persistedEditorValues=[
         'address'=>$address,'entrance'=>$entrance,'regnumber'=>$registrationNumber,'zavnumber'=>$factoryNumber,
         'floors'=>$objectDetails['fields']['floors']['raw']??'','weight'=>$objectDetails['fields']['weight']['raw']??'','speed'=>$objectDetails['fields']['speed']['raw']??'',
         'pittype'=>$objectDetails['fields']['pittype']['raw']??'','pitmaterial'=>$objectDetails['fields']['pitmaterial']['raw']??'','lift_type'=>$objectDetails['fields']['lift_type']['raw']??'','paired'=>$objectDetails['fields']['paired']['raw']??'',
-    ],$detailEditor['values']??[]);$editorErrors=$detailEditor['errors']??[]; ?>
-    <dialog class="shlz-modal fm2-object-details-modal" data-object-details-dialog <?= ($detailEditor['open']??false)?'data-object-details-invalid':'' ?> aria-labelledby="object-details-title"><form class="shlz-modal__surface" method="post" action="/pilot/objects/<?= (int)$id ?>/details"><header class="shlz-modal__header"><div><h2 class="shlz-modal__title" id="object-details-title">Редактировать данные объекта</h2></div><button class="shlz-modal__close" type="button" data-object-details-close aria-label="Закрыть"><span aria-hidden="true">×</span></button></header><div class="shlz-modal__body">
+    ];$persistedWireValues=array_map(static fn($value):string=>(string)($value??''),$persistedEditorValues);$editorValues=array_replace($persistedEditorValues,$detailEditor['values']??[]);$editorErrors=$detailEditor['errors']??[]; ?>
+    <dialog class="shlz-modal fm2-object-details-modal" data-object-details-dialog <?= ($detailEditor['open']??false)?'data-object-details-invalid':'' ?> aria-labelledby="object-details-title"><form class="shlz-modal__surface" method="post" action="/pilot/objects/<?= (int)$id ?>/details" data-object-details-baseline="<?= Html::encode(json_encode($persistedWireValues,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)) ?>"><header class="shlz-modal__header"><div><h2 class="shlz-modal__title" id="object-details-title">Редактировать данные объекта</h2></div><button class="shlz-modal__close" type="button" data-object-details-close aria-label="Закрыть"><span aria-hidden="true">×</span></button></header><div class="shlz-modal__body">
         <?= Html::hiddenInput('_csrf',$csrf) ?><?= Html::hiddenInput('requestId',ViewSupport::uuid()) ?><?= Html::hiddenInput('expectedRevision',(int)$detailEditor['revision']) ?>
         <?php if(isset($editorErrors['_form'])): ?><p class="fm2-problem" role="alert"><?= Html::encode($editorErrors['_form']) ?></p><?php endif ?>
         <fieldset><legend>Идентификация и размещение</legend><?php foreach(['address'=>'Адрес','entrance'=>'Подъезд','regnumber'=>'Регистрационный номер','zavnumber'=>'Заводской номер']as$name=>$label): $error=$editorErrors[$name]??null; ?><label class="fm2-details-field"><span><?= $label ?></span><input class="shlz-input" name="<?= $name ?>" value="<?= Html::encode((string)($editorValues[$name]??'')) ?>" <?= in_array($name,['address','entrance'],true)?'required':'' ?> <?= $name==='zavnumber'?'maxlength="120"':'' ?> <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?></fieldset>
-        <fieldset><legend>Классификация оборудования</legend><?php foreach(['floors'=>'Этажность','weight'=>'Грузоподъёмность','speed'=>'Скорость']as$name=>$label): $error=$editorErrors[$name]??null; ?><label class="fm2-details-field"><span><?= $label ?></span><input class="shlz-input" inputmode="decimal" name="<?= $name ?>" value="<?= Html::encode((string)($editorValues[$name]??'')) ?>" <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?><?php foreach(['pittype'=>'Тип шахты','pitmaterial'=>'Материал шахты','lift_type'=>'Тип лифта']as$name=>$label): $error=$editorErrors[$name]??null;$selected=(string)($editorValues[$name]??'');$options=[''=>'Не изменять']+ObjectDetailsReferenceCatalogue::options($name);if($selected!==''&&!array_key_exists($selected,$options))$options=[$selected=>'Недопустимое значение: '.$selected]+$options;$attributes=[];if($error!==null){$attributes['aria-invalid']='true';$attributes['aria-describedby']='details-error-'.$name;} ?><div class="fm2-details-field"><?= ViewSupport::choice($name,$selected,$options,$label,$attributes) ?><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></div><?php endforeach ?><div class="fm2-details-field"><?= ViewSupport::choice('paired',(string)($editorValues['paired']??''),[''=>'Не изменять','1'=>'Да','0'=>'Нет'],'Спаренность лифта') ?></div></fieldset>
+        <fieldset><legend>Классификация оборудования</legend><?php foreach(['floors'=>'Этажность','weight'=>'Грузоподъёмность','speed'=>'Скорость']as$name=>$label): $error=$editorErrors[$name]??null; ?><label class="fm2-details-field"><span><?= $label ?></span><input class="shlz-input" inputmode="decimal" name="<?= $name ?>" value="<?= Html::encode((string)($editorValues[$name]??'')) ?>" <?= $error!==null?'aria-invalid="true" aria-describedby="details-error-'.$name.'"':'' ?>><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></label><?php endforeach ?><?php foreach(['pittype'=>'Тип шахты','pitmaterial'=>'Материал шахты','lift_type'=>'Тип лифта']as$name=>$label): $error=$editorErrors[$name]??null;$selected=(string)($editorValues[$name]??'');$persistedSelected=(string)($persistedEditorValues[$name]??'');$options=[''=>'Не изменять']+ObjectDetailsReferenceCatalogue::options($name);foreach([$selected,$persistedSelected]as$available)if($available!==''&&!array_key_exists($available,$options))$options=[$available=>'Недопустимое значение: '.$available]+$options;$attributes=[];if($error!==null){$attributes['aria-invalid']='true';$attributes['aria-describedby']='details-error-'.$name;} ?><div class="fm2-details-field"><?= ViewSupport::choice($name,$selected,$options,$label,$attributes) ?><?php if($error!==null): ?><span id="details-error-<?= $name ?>" role="alert"><?= Html::encode($error) ?></span><?php endif ?></div><?php endforeach ?><div class="fm2-details-field"><?= ViewSupport::choice('paired',(string)($editorValues['paired']??''),[''=>'Не изменять','1'=>'Да','0'=>'Нет'],'Спаренность лифта') ?></div></fieldset>
     </div><footer class="shlz-modal__footer"><button class="shlz-button" type="button" data-object-details-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="submit">Сохранить</button></footer></form></dialog>
     <?php endif ?>
     <div class="fm2-object-layout">
@@ -160,15 +162,33 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
         </section>
     </aside>
     <main class="fm2-object-workspace" aria-label="Монтажное дело">
-        <?php if ($order === null): ?>
+        <?php if ($status === 'Требуется изменение'): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
-                <div><h2 id="next-action-heading">Требуется распоряжение</h2><p>Выберите монтажников. Текущее закрепление инженера будет добавлено в распоряжение автоматически.</p></div>
-                <?php if ($canSelect): ?><a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/assignment-order/prepare">Выбрать состав</a><?php endif ?>
+                <div><h2 id="next-action-heading">Требуется изменение</h2><p>Подготовьте новый состав распоряжения для дальнейшей работы.</p></div>
             </section>
-        <?php elseif (!$opened && $canOpen && !empty($confirmedOriginal)): ?>
+        <?php elseif ($status === 'Работы завершены'): ?>
+            <section class="fm2-next-action" aria-labelledby="next-action-heading">
+                <div><h2 id="next-action-heading">Работы завершены</h2><p>Акт ПТО и декларация зафиксированы.</p></div>
+            </section>
+        <?php elseif ($status === 'Документарное закрытие' && $completion['pto_act'] === null): ?>
+            <section class="fm2-next-action" aria-labelledby="next-action-heading">
+                <div><h2 id="next-action-heading">Требуется акт ПТО</h2><p>Зафиксируйте акт ПТО для продолжения документарного закрытия.</p></div>
+                <?php if ($canRecordPto): ?><a class="shlz-button shlz-button--primary" href="#completion">Перейти к акту ПТО</a><?php endif ?>
+            </section>
+        <?php elseif ($status === 'Документарное закрытие' && $completion['declaration'] === null): ?>
+            <section class="fm2-next-action" aria-labelledby="next-action-heading">
+                <div><h2 id="next-action-heading">Требуется декларация</h2><p>Зафиксируйте декларацию для завершения работ.</p></div>
+                <?php if ($canRecordDeclaration): ?><a class="shlz-button shlz-button--primary" href="#completion">Перейти к декларации</a><?php endif ?>
+            </section>
+        <?php elseif ($status === 'Монтажные работы'): ?>
+            <section class="fm2-next-action" aria-labelledby="next-action-heading">
+                <div><h2 id="next-action-heading">Монтажные работы</h2><p>Фиксируйте выполненные работы, исполнителей и фотографии в чек-листе.</p></div>
+                <?php if ($canReadChecklist): ?><a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/checklist">Перейти к чек-листу</a><?php endif ?>
+            </section>
+        <?php elseif (!$opened && !empty($confirmedOriginal)): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
                 <div><h2 id="next-action-heading">Открыть монтажные работы</h2><p>Укажите фактическую дату начала работ.</p></div>
-                <form class="fm2-inline-form" method="post" action="/pilot/objects/<?= (int) $id ?>/execution">
+                <?php if ($canOpen): ?><form class="fm2-inline-form" method="post" action="/pilot/objects/<?= (int) $id ?>/execution">
                     <?= Html::hiddenInput('_csrf', $csrf) ?>
                     <?= Html::hiddenInput('action', 'open_confirmed') ?>
                     <?= Html::hiddenInput('requestId', ViewSupport::uuid()) ?>
@@ -177,12 +197,17 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                     <?= Html::hiddenInput('sequence', $confirmedOriginal['sequence']) ?>
                     <label class="fm2-open-date" for="actualStartDate"><input class="shlz-input" id="actualStartDate" type="date" name="actualStartDate" aria-label="Фактическая дата начала работ" required></label>
                     <button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button>
-                </form>
+                </form><?php endif ?>
             </section>
-        <?php elseif ($opened && $canReadChecklist): ?>
+        <?php elseif ($pendingComposition !== null): ?>
             <section class="fm2-next-action" aria-labelledby="next-action-heading">
-                <div><h2 id="next-action-heading">Монтажные работы</h2><p>Фиксируйте выполненные работы, исполнителей и фотографии в чек-листе.</p></div>
-                <a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/checklist">Перейти к чек-листу</a>
+                <div><h2 id="next-action-heading">Загрузить подписанный оригинал</h2><p>Состав сохранён. Ожидается подписанный оригинал</p></div>
+                <?php if ($canUpload): ?><a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/assignment-orders/<?= (int) $pendingComposition['orderId'] ?>/originals/submit">Загрузить оригинал</a><?php endif ?>
+            </section>
+        <?php else: ?>
+            <section class="fm2-next-action" aria-labelledby="next-action-heading">
+                <div><h2 id="next-action-heading">Требуется распоряжение</h2><p>Выберите монтажников. Текущее закрепление инженера будет добавлено в распоряжение автоматически.</p></div>
+                <?php if ($canSelect): ?><a class="shlz-button shlz-button--primary" href="/pilot/objects/<?= (int) $id ?>/assignment-order/prepare">Выбрать состав</a><?php endif ?>
             </section>
         <?php endif ?>
         <div class="shlz-tabs fm2-object-tabs" data-shlz-tabs>
@@ -227,10 +252,12 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-team" role="tabpanel" aria-labelledby="object-tab-team" hidden>
                 <div class="fm2-tab-section">
                     <h2>Монтажники</h2>
-                    <?php if ($order === null): ?><div class="fm2-quiet-empty"><strong>Состав ещё не выбран</strong><span>Монтажники появятся здесь после подготовки распоряжения.</span></div>
+                    <?php if ($order === null && $pendingComposition === null): ?><div class="fm2-quiet-empty"><strong>Состав ещё не выбран</strong><span>Монтажники появятся здесь после подготовки распоряжения.</span></div>
+                    <?php elseif ($order === null): ?><div class="fm2-installer-roster"><strong>Ожидающий состав</strong><?php foreach ($pendingComposition['installers'] as $installer): [$employmentLabel, $employmentClass] = $employment($installer); ?><div class="fm2-object-installer"><div><span class="fm2-team-role">Монтажник · ожидающий состав</span><strong><?= Html::encode($installer['fullName']) ?></strong></div><span>Табельный № <?= Html::encode((string) $installer['tabId']) ?></span><span class="shlz-status <?= $employmentClass ?>"><?= $employmentLabel ?></span></div><?php endforeach ?></div>
                     <?php else: ?><div class="fm2-installer-roster"><?php foreach ($order['installers'] as $installer): [$employmentLabel, $employmentClass] = $employment($installer); ?><div class="fm2-object-installer"><div><span class="fm2-team-role">Монтажник</span><strong><?= Html::encode($installer['fullName']) ?></strong></div><span>Табельный № <?= Html::encode((string) ($installer['tabId'] ?? 'Не указан')) ?></span><span class="shlz-status <?= $employmentClass ?>"><?= $employmentLabel ?></span></div><?php endforeach ?></div>
                         <?php if ($canSelect): ?><div class="fm2-workspace-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/assignment-order/selection">Изменить состав бригады</a></div><?php endif ?>
                     <?php endif ?>
+                    <?php if ($order !== null && $pendingComposition !== null): ?><div class="fm2-installer-roster"><strong>Действующая бригада</strong><strong>Ожидающий состав</strong><?php foreach ($pendingComposition['installers'] as $installer): [$employmentLabel, $employmentClass] = $employment($installer); ?><div class="fm2-object-installer"><div><span class="fm2-team-role">Монтажник · ожидающий состав</span><strong><?= Html::encode($installer['fullName']) ?></strong></div><span>Табельный № <?= Html::encode((string) $installer['tabId']) ?></span><span class="shlz-status <?= $employmentClass ?>"><?= $employmentLabel ?></span></div><?php endforeach ?></div><?php endif ?>
                 </div>
                 <div class="fm2-tab-section">
                     <h2>Ответственные</h2>
@@ -244,7 +271,8 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
             <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-documents" role="tabpanel" aria-labelledby="object-tab-documents" hidden>
                 <div class="fm2-tab-section">
                     <h2>Распоряжения</h2>
-                    <?php if ($order === null): ?><div class="fm2-quiet-empty"><strong>Документов пока нет</strong><span>Подписанный оригинал можно загрузить после выбора состава.</span></div>
+                    <?php if ($order === null && $pendingComposition !== null): ?><div class="fm2-quiet-empty"><strong>Подписанный оригинал ожидается</strong><span>Загрузите принятый PDF для сохранённого состава.</span></div><?php if ($canUpload): ?><div class="fm2-document-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/assignment-orders/<?= (int) $pendingComposition['orderId'] ?>/originals/submit">Загрузить оригинал</a></div><?php endif ?>
+                    <?php elseif ($order === null): ?><div class="fm2-quiet-empty"><strong>Документов пока нет</strong><span>Подписанный оригинал можно загрузить после выбора состава.</span></div>
                     <?php else: ?><dl class="fm2-fact-grid"><div class="fm2-fact"><dt>Дата распоряжения</dt><dd><time datetime="<?= Html::encode($order['orderDate']) ?>"><?= $date($order['orderDate']) ?></time></dd></div></dl>
                         <?php if ($canReadOriginal): ?><div class="shlz-document-list"><?php foreach ($order['artifacts'] as $artifact): ?><?= $documentRow(['name' => $artifact['filename'], 'href' => $artifact['href'], 'meta' => 'Редакция ' . (int) $artifact['revisionNumber'] . ' · ' . $size((int) $artifact['size'])]) ?><?php endforeach ?></div><?php endif ?>
                         <?php if ($orderId && ($canReadOriginal || $canCorrect)): ?>
@@ -254,6 +282,7 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                             </div>
                         <?php endif ?>
                     <?php endif ?>
+                    <?php if ($order !== null && $pendingComposition !== null): ?><div class="fm2-quiet-empty"><strong>Подписанный оригинал ожидается</strong><span>Для ожидающего состава ещё нет принятого оригинала.</span></div><?php if ($canUpload): ?><div class="fm2-document-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/assignment-orders/<?= (int) $pendingComposition['orderId'] ?>/originals/submit">Загрузить оригинал</a></div><?php endif ?><?php endif ?>
                 </div>
                 <div class="fm2-tab-section">
                     <h2>Техническая документация</h2>

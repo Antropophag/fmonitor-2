@@ -34,7 +34,7 @@ try {
   result.paymentUrl=page.url();result.paymentText=(await page.locator('body').innerText()).slice(0,500);
   const operation=await page.locator('input[name="operationId"]').inputValue();
   result.operationIdPresent=/^[a-f0-9-]{36}$/.test(operation);
-  await page.locator('input[name="reportDate"]').fill(reportDate);
+  await page.locator('input[name="reportDate"][type="hidden"]').evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));},reportDate);
   let intercepted=false;
   await page.route('**/pilot/otiz/calculate',async route=>{
     if(intercepted)return route.continue();
@@ -52,7 +52,7 @@ try {
   await page.getByRole('button',{name:'Подготовить расчёт'}).click();
   await page.waitForURL(/\/pilot\/otiz\/snapshots\/\d+\?created=1/);
   result.snapshotUrl=page.url().replace(`http://127.0.0.1:${port}`,'');
-  result.objectRows=await page.locator('.fm2-otiz-object-row').count();
+  result.objectRows=await page.locator('[data-otiz-snapshot-table] [data-otiz-object]').count();
   await page.screenshot({path:path.join(artifacts,'draft.png'),fullPage:true});
   await page.getByRole('button',{name:'Подтвердить расчёт'}).click();
   await page.waitForURL(/accepted=1/);
@@ -62,7 +62,7 @@ try {
   const [download,exportResponse]=await Promise.all([downloadPromise,exportResponsePromise]);const xlsx=path.join(artifacts,'otiz.xlsx');await download.saveAs(xlsx);
   result.xlsxBytes=fs.statSync(xlsx).size;result.xlsxFilename=download.suggestedFilename();result.xlsxContentType=exportResponse.headers()['content-type'];result.xlsxDisposition=exportResponse.headers()['content-disposition'];
   await page.screenshot({path:path.join(artifacts,'accepted.png'),fullPage:true});
-  const discipline=page.locator('form[action$="/closures"]').first();await discipline.locator('input[name="discipline"]').fill('100.00');await discipline.locator('input[name="basis"]').fill('Generated journey discipline');await Promise.all([page.waitForURL(/closed=1/),discipline.locator('button[type="submit"]').click()]);
+  await page.locator('[data-otiz-snapshot-table] [data-shlz-drawer-trigger]').first().click();const discipline=page.locator('dialog.shlz-drawer[open] form[action$="/closures"]').first();await discipline.locator('input[name="discipline"]').fill('100.00');await discipline.locator('input[name="basis"]').fill('Generated journey discipline');await Promise.all([page.waitForURL(/closed=1/),discipline.locator('button[type="submit"]').click()]);
   const complete=page.locator('form[action$="/payments/complete"]');await Promise.all([page.waitForURL(/paid=1/),complete.locator('button[type="submit"]').click()]);
   const reverse=page.locator('form[action*="/closures/"][action$="/reverse"]').first();await reverse.locator('input[name="basis"]').fill('Generated journey reversal');await Promise.all([page.waitForURL(/reversed=1/),reverse.locator('button[type="submit"]').click()]);result.generatedSettlementCompleted=true;
   result.consoleErrors=result.consoleErrors.filter(message=>!message.includes('favicon'));

@@ -142,10 +142,12 @@ return$this->json($status,$result);
 }
     }
 
-    public function actionQueue():string|Response{try{$page=filter_var(Yii::$app->request->get('page','1'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
-if($page===false)return$this->plain(404);
-$objects=$this->owner()->queue($this->actor(),(int)$page);
-return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects]);
+    public function actionQueue():string|Response{try{$request=Yii::$app->request;$raw=[$request->get('ownership','mine'),$request->get('query',''),$request->get('completed','0'),$request->get('page','1')];
+if(array_filter($raw,static fn(mixed$value):bool=>!is_string($value))!==[])return$this->plain(404);
+[$ownership,$query,$completed,$page]=$raw;$query=trim($query);$page=filter_var($page,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+if(!in_array($ownership,['mine','all'],true)||!in_array($completed,['0','1'],true)||$page===false||mb_strlen($query)>160)return$this->plain(404);
+$filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$objects=$this->owner()->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
+return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters]);
 } catch(\DomainException)
     {return$this->plain(403);
 } catch(\Throwable$error)

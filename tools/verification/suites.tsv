@@ -243,6 +243,8 @@ db	php	tests/Yii2/yii2_main_navigation_001_test.php	integration
 db	php	tests/Yii2/yii2_minimal_operational_dashboard_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_001_test.php	integration
 db	php	tests/Yii2/yii2_object_card_presentation_001_test.php	integration
+db	php	tests/Yii2/yii2_object_card_stage_actions_001_test.php	integration
+db	php	tests/Yii2/yii2_object_card_stage_matrix_001_test.php	integration
 db	php	tests/Yii2/yii2_object_details_editing_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_001_test.php	integration
 db	php	tests/Yii2/yii2_object_queue_lineage_001_test.php	integration

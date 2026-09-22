@@ -21,7 +21,7 @@ final class PilotAssetController extends PilotController
         foreach (['file-pdf-default','file-doc','file-docx','file-xls','file-xlsx','file-img','file-generic'] as $file) {
             $map['shlz-file-types/'.$file.'.svg']=[$shlzRoot.'/packages/icons/dist/file-types/'.$file.'.svg','image/svg+xml; charset=UTF-8',3600];
         }
-        $map['shlz-icons/download.svg']=[$shlzRoot.'/packages/icons/dist/icons/download.svg','image/svg+xml; charset=UTF-8',3600];
+        foreach(['download','eye','close','arrow-left-md','arrow-right-md']as$icon)$map['shlz-icons/'.$icon.'.svg']=[$shlzRoot.'/packages/icons/dist/icons/'.$icon.'.svg','image/svg+xml; charset=UTF-8',3600];
         $map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
         }foreach (['calendar-sidebar.svg','calendar-interface.svg','logout.svg','search.svg','chevron-left-duo.svg','chevron-right-duo.svg','cloud-upload.svg','plus-alt-2.svg','delivery-box.svg'] as $file) {

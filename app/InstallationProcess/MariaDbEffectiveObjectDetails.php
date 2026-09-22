@@ -4,6 +4,11 @@ namespace FMonitor2\InstallationProcess;
 
 final readonly class MariaDbEffectiveObjectDetails
 {
+    public static function sqlValue(string$field,string$legacyColumn,string$editAlias='e'):string
+    {
+        if(!in_array($field,['address','entrance','regnumber','zavnumber'],true)||preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?$/D',$legacyColumn)!==1||preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D',$editAlias)!==1)throw new \InvalidArgumentException();
+        return "CASE WHEN JSON_CONTAINS_PATH({$editAlias}.values_json,'one','$.{$field}') THEN NULLIF(JSON_UNQUOTE(JSON_EXTRACT({$editAlias}.values_json,'$.{$field}')),'null') ELSE {$legacyColumn} END";
+    }
     public static function create(\mysqli $db,string $prefix,string $legacyPrefix):self{return new self($db,$prefix,$legacyPrefix);}
     public function __construct(private \mysqli $db,private string $prefix,private string $legacyPrefix){foreach([$prefix,$legacyPrefix]as$p)if(strlen($p)>28||preg_match('/^[A-Za-z0-9_]*$/D',$p)!==1)throw new \InvalidArgumentException();}
     public function read(int$objectId):array

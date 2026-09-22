@@ -36,3 +36,9 @@
 ## 6. Done definition
 
 - [ ] 6.1 Done requires the full editable-field matrix through the real owner and canonical Yii route, atomic append-only history and pagination, authorization/replay/concurrency, all named consumers on effective values, importer/schema/recovery preservation, approved required reviews and GREEN exact-source CI; the local stand prototype alone is not completion.
+
+## 7. Production feedback hotfix
+
+- [x] 7.1 Root adds a canonical browser RED regression proving that several distinct unchanged legacy speed representations do not enter a material-only patch or block its save.
+- [x] 7.2 A separate executor implements the minimal generic changed-field submission without accepting an invalid changed value or special-casing one legacy code.
+- [x] 7.3 Run bounded focused checks and obtain an independent final review of the exact hotfix source before publication/deployment.
