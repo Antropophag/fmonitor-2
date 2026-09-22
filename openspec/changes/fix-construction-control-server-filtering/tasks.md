@@ -3,7 +3,7 @@
 - [x] 1.1 Reconcile #171 with current main and record reduced scope
 - [x] 1.2 Write normative spec/OpenSpec and verification input
 - [x] 1.3 Add isolated >50-row HTTP/browser RED
-- [ ] 1.4 Obtain planner-required Gate 3 approval
+- [x] 1.4 Obtain planner-required Gate 3 approval
 
 ## 2. Implementation
 
