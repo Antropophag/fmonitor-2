@@ -169,6 +169,11 @@ if(detailsDialog&&detailsTrigger){
 
 const completionWarning = 'Результат сохранения не подтверждён. Проверьте актуальные документы перед повторной отправкой.';
 const activeCompletionForms = new WeakSet();
+const completionLocation = new URL(window.location.href);
+if (completionLocation.searchParams.get('completionRefresh') === '1') {
+  completionLocation.searchParams.delete('completionRefresh');
+  window.history.replaceState(null, '', completionLocation);
+}
 const unlockCompletionForm = form => {
   activeCompletionForms.delete(form);
   for (const button of form.querySelectorAll('button[type="submit"], input[type="submit"]')) button.disabled = false;
@@ -202,8 +207,11 @@ document.addEventListener('submit', async event => {
     if (response.redirected && response.ok) {
       const destination = new URL(response.url, window.location.href);
       destination.hash = 'completion';
-      if (destination.href === window.location.href) window.location.reload();
-      else window.location.assign(destination);
+      const sameDocument = destination.origin === window.location.origin
+        && destination.pathname === window.location.pathname
+        && destination.search === window.location.search;
+      if (sameDocument) destination.searchParams.set('completionRefresh', '1');
+      window.location.assign(destination.href);
       return;
     }
     const type = response.headers.get('content-type') || '';
