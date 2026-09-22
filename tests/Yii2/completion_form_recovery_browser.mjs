@@ -16,6 +16,8 @@ try {
   await page.goto(`${config.origin}/pilot/objects/4512#completion`);
   const form=page.locator('[data-completion-form="correct_declaration"]');
   assert.equal(await form.count(),1,'INTENDED_RED completion recovery form hook');
+  const initialDetails=form.locator('xpath=ancestor::details');
+  if(!(await initialDetails.evaluate(node=>node.open)))await initialDetails.locator('summary').click();
   await form.locator('textarea[name="reason"]').fill('Черновик после неизвестного результата');
   await form.locator('input[name="declarationDetails"]').fill('Д-BROWSER-RECOVERY');
 
