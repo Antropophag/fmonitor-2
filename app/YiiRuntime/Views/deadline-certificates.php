@@ -5,7 +5,7 @@ use yii\helpers\Html;
 ViewSupport::begin($this,'Справки о переносе срока',$identity);
 ?>
 <nav class="fm2-breadcrumb"><a href="/pilot/objects/<?=(int)$objectId?>">Объект монтажа № <?=(int)$objectId?></a></nav>
-<header class="fm2-page-header"><div><h1>Справки о переносе срока монтажа</h1><p>Текущий срок: <?=Html::encode($currentDeadline)?></p></div></header>
+<header class="fm2-page-header fm2-certificate-heading"><div><h1>Справки о переносе срока монтажа</h1><p>Текущий срок: <?=Html::encode($currentDeadline)?></p></div></header>
 <?php if($canWrite):?><section class="fm2-panel"><form method="post" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<?=Html::encode($csrf)?>"><input type="hidden" name="requestId" value="<?=Html::encode(ViewSupport::uuid())?>"><input type="hidden" name="expectedVersion" value="<?=count($history['history'])?>">
 <label class="shlz-field"><span class="shlz-field__label">Дата справки</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="certificateDate" required></span></label>
 <label class="shlz-field"><span class="shlz-field__label">Новый срок</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="newDeadline" required></span></label>

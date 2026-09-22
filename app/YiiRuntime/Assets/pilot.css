@@ -928,9 +928,9 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-order-team { display: grid; gap: 14px; padding: 22px 20px; }
 .fm2-order-section-head h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
 .fm2-order-section-head p { margin: 0; color: var(--fm2-muted); font-size: 12px; }
-.fm2-order-selection { padding: 16px; background: var(--fm2-filter); border-radius: var(--fm2-radius); }
+.fm2-order-selection { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; align-items: center; background: transparent; }
 .fm2-order-selection .fm2-picker { gap: 12px; }
-.fm2-order-selection .fm2-picker-selection { min-block-size: 28px; align-items: center; }
+.fm2-order-selection .fm2-picker-selection { display: flex; flex: 1 1 100%; flex-wrap: wrap; min-block-size: 28px; gap: 8px; align-items: center; }
 .fm2-file-drop { position: relative; display: flex; min-block-size: 112px; padding: 22px; align-items: center; justify-content: center; gap: 14px; color: var(--fm2-muted); background: #fafbfc; border: 1px dashed #b9c1cb; border-radius: var(--fm2-radius); text-align: center; cursor: pointer; transition: 120ms ease-out; }
 .fm2-file-drop:hover { color: var(--fm2-primary); background: var(--fm2-primary-soft); border-color: var(--fm2-primary); }
 .fm2-file-drop:focus-within { border-color: var(--fm2-focus-ring); box-shadow: 0 0 0 3px var(--fm2-focus-halo); }
@@ -946,7 +946,7 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-order-engineer > div:first-child small { color: var(--fm2-muted); font-size: 11px; }
 .fm2-order-engineer .fm2-reference-person { max-inline-size: none; padding: 0; background: transparent; }
 .fm2-order-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; align-items: center; background: #f8f9fb; }
-.fm2-order-helper { position: relative; display: grid; min-inline-size: 0; gap: 14px; padding: 18px; opacity: 1; background: #fff; border: 1px solid var(--fm2-border); border-radius: var(--fm2-radius); transform: translateY(0); transition: opacity 240ms ease-out, transform 240ms ease-out; }
+.fm2-order-helper { position: relative; display: grid; min-inline-size: 0; gap: 14px; padding: 18px; opacity: 1; background: var(--fm2-filter); border: 0; border-radius: var(--fm2-radius); transform: translateY(0); transition: opacity 240ms ease-out, transform 240ms ease-out; }
 .fm2-order-helper[hidden] { display: none; }
 .fm2-order-helper--entering { animation: fm2-template-offer-in 240ms ease-out both; }
 .fm2-order-helper--motion-start { opacity: .99; transform: translateY(.1px); transition: none; }
@@ -1341,8 +1341,8 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
   .fm2-installer-meta, .fm2-installer-card > section { padding-inline: 13px; }
 }
 
-.fm2-user-toolbar { display: flex; gap: 14px; padding: 12px 14px; align-items: end; border-block-end: 1px solid var(--fm2-border); }
-.fm2-user-toolbar .shlz-field { flex: 1 1 340px; max-inline-size: 460px; }
+.fm2-user-toolbar { display: grid; grid-template-columns: minmax(240px,1.3fr) repeat(2,minmax(190px,1fr)) minmax(120px,max-content); gap: 14px; padding: 12px 14px; align-items: end; border-block-end: 1px solid var(--fm2-border); }
+.fm2-user-toolbar .shlz-field { min-inline-size: 0; max-inline-size: none; }
 .fm2-user-toolbar .fm2-role-filter { position: relative; flex: 0 0 230px; max-inline-size: 230px; }
 .fm2-role-filter .shlz-select__listbox { z-index: 8; inline-size: 280px; max-block-size: 330px; overflow-y: auto; }
 .fm2-role-filter .shlz-select__option { display: flex; gap: 16px; justify-content: space-between; }
@@ -1512,9 +1512,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-gallery-photo figcaption { position: absolute; inset: auto 8px 8px; padding: 4px 7px; border-radius: 6px; background: rgba(19,34,56,.82); color: #fff; font-size: 10px; }
 .fm2-gallery-placeholder { display: grid; place-items: center; block-size: 100%; padding: 20px; color: #657181; font-size: 12px; text-align: center; }
 .fm2-gallery-empty { margin: 0; padding: 28px; border-radius: 12px; background: #fff; color: #657181; text-align: center; }
-.fm2-confirm-dialog { inline-size: min(440px,calc(100vw - 32px)); padding: 0; border: 0; border-radius: 16px; background: #fff; color: var(--check-ink); box-shadow: 0 24px 64px rgba(19,34,56,.24); }
+.fm2-confirm-dialog { inline-size: min(440px,calc(100vw - 32px)); padding: 0; border: 0; border-radius: 16px; background: transparent; color: var(--check-ink); }
 .fm2-confirm-dialog::backdrop { background: rgba(12,24,41,.52); }
-.fm2-confirm-dialog__content { padding: 24px; }
+.fm2-confirm-dialog > .shlz-modal__surface { inline-size: 100%; overflow: hidden; background: #fff; border-radius: inherit; box-shadow: 0 24px 64px rgba(19,34,56,.24); }
 .fm2-confirm-dialog h2 { margin: 0 0 10px; font-size: 22px; line-height: 1.2; letter-spacing: -.02em; }
 .fm2-confirm-dialog p { margin: 0; color: #5d6b7d; font-size: 14px; line-height: 1.5; }
 .fm2-confirm-dialog p strong { color: var(--check-ink); }
@@ -2089,4 +2089,22 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-otiz-register-surface{padding:0;overflow:visible}.fm2-otiz-register-surface .fm2-otiz-register-toolbar{padding:20px 24px;border:0;border-block-end:1px solid var(--shlz-semantic-color-border-default);border-radius:0}.fm2-otiz-register-surface .fm2-otiz-register-wrap{padding:0 24px;border:0;border-radius:0}.fm2-otiz-register-surface>.shlz-pagination{margin:8px 24px 16px}
 .fm2-otiz-register-table :is(th,td):nth-child(1){inline-size:17%}.fm2-otiz-register-table :is(th,td):nth-child(8){inline-size:14%}.fm2-otiz-register-table td:first-child{inline-size:17%}.fm2-otiz-register-table td[data-label="Состояние"] .shlz-status{min-block-size:30px;align-items:center;white-space:nowrap;line-height:18px}
 @media(max-width:760px){.fm2-otiz-overview-surface .fm2-otiz-tabs-surface{padding:12px 16px 0}.fm2-otiz-overview-surface .fm2-page-header{padding:20px 16px 16px}.fm2-otiz-register-surface .fm2-otiz-register-toolbar{padding:16px}.fm2-otiz-register-surface .fm2-otiz-register-wrap{padding:0 16px}.fm2-otiz-register-surface>.shlz-pagination{margin:8px 16px 14px}.fm2-otiz-register-table{min-inline-size:980px!important}}
+
+/* Unified Yii visual contracts: tables, filters, overlays and compact forms. */
+.shlz-scope .shlz-table__head .shlz-table__cell{block-size:48px;padding-block:0;background:var(--fm2-filter);color:var(--fm2-muted);font-size:12px;font-weight:600;line-height:18px;letter-spacing:.035em;text-transform:uppercase;vertical-align:middle}
+.shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-field__control,
+.shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-select__trigger{box-sizing:border-box;block-size:44px;min-block-size:44px;padding:0 14px;background:#fff;border:1px solid var(--fm2-border);border-radius:10px}
+.shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-input{block-size:42px;min-block-size:42px;padding-block:0;background:transparent}
+.shlz-scope .shlz-button{white-space:nowrap;overflow-wrap:normal}
+.fm2-user-toolbar>.shlz-button{min-inline-size:120px;padding-inline:18px}
+.fm2-otiz-register-table thead .shlz-table__cell{background:var(--fm2-filter);color:var(--fm2-muted)}
+.fm2-confirm-dialog .shlz-modal__surface,.fm2-installer-dialog .shlz-modal__surface,.fm2-inspection-dialog .shlz-modal__surface{background:#fff}
+.fm2-confirm-dialog :is(.shlz-modal__header,.shlz-modal__body,.shlz-modal__footer){padding-inline:24px}
+.fm2-confirm-dialog .shlz-modal__header{padding-block:22px 12px}.fm2-confirm-dialog .shlz-modal__body{padding-block:0 20px}.fm2-confirm-dialog .shlz-modal__footer{gap:10px;padding-block:14px 20px}
+.fm2-certificate-heading+.fm2-panel{max-inline-size:900px;padding:24px;background:#fff}
+.fm2-certificate-heading+.fm2-panel form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;align-items:end}
+.fm2-certificate-heading+.fm2-panel .shlz-field{min-inline-size:0}.fm2-certificate-heading+.fm2-panel .shlz-field__control{min-block-size:44px;background:#fff;border:1px solid var(--fm2-border);border-radius:10px}
+.fm2-certificate-heading+.fm2-panel .shlz-input{box-sizing:border-box;inline-size:100%;min-block-size:42px;background:transparent}.fm2-certificate-heading+.fm2-panel button{justify-self:start}
+@media(max-width:900px){.fm2-user-toolbar{grid-template-columns:1fr 1fr}.fm2-user-toolbar>.shlz-field:first-child{grid-column:1/-1}.fm2-user-toolbar>.shlz-button{justify-self:start}.fm2-order-form{grid-template-columns:minmax(0,1fr)}.fm2-order-helper{grid-template-columns:auto minmax(0,1fr);align-items:start}}
+@media(max-width:680px){.fm2-user-toolbar{grid-template-columns:1fr}.fm2-user-toolbar>.shlz-field:first-child{grid-column:auto}.fm2-user-toolbar>.shlz-button{inline-size:100%}.fm2-certificate-heading+.fm2-panel form{grid-template-columns:1fr}.fm2-certificate-heading+.fm2-panel{padding:18px}.shlz-scope .shlz-button{max-inline-size:100%}.fm2-otiz-workflow-actions{min-inline-size:0}.fm2-otiz-workflow-actions :is(form,.shlz-button){box-sizing:border-box;min-inline-size:0;max-inline-size:100%}.fm2-otiz-workflow-actions .shlz-button{padding-inline:6px;font-size:9px}.fm2-otiz-ledger .shlz-table-wrap{overflow-x:auto}.fm2-otiz-ledger table{display:table;inline-size:max-content;min-inline-size:760px;table-layout:auto}.fm2-otiz-ledger :is(thead,tbody){display:table-row-group}.fm2-otiz-ledger thead{display:table-header-group}.fm2-otiz-ledger tr{display:table-row}.fm2-otiz-ledger :is(th,td){display:table-cell}.fm2-otiz-ledger :is(input,.shlz-button){box-sizing:border-box;max-inline-size:100%;font-size:11px}}
 .fm2-otiz-payment-dialog:not([open]){display:none}

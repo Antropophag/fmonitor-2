@@ -113,36 +113,24 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 </div>
 </section>
 <dialog class="shlz-modal fm2-confirm-dialog" data-bulk-dialog>
-<div class="fm2-confirm-dialog__content">
-<h2>Отметить весь раздел?</h2>
-<p>Все работы в разделе <strong data-bulk-section-name>
-</strong> будут отмечены.</p>
-<div class="fm2-confirm-dialog__actions"><button class="shlz-button shlz-button--secondary" type="button" data-bulk-cancel>Отмена</button>
-<button class="shlz-button shlz-button--primary" type="button" data-bulk-confirm>Отметить все</button></div>
+<div class="shlz-modal__surface"><header class="shlz-modal__header"><h2 class="shlz-modal__title">Отметить весь раздел?</h2></header><div class="shlz-modal__body"><p>Все работы в разделе <strong data-bulk-section-name></strong> будут отмечены.</p></div><footer class="shlz-modal__footer"><button class="shlz-button shlz-button--secondary" type="button" data-bulk-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-bulk-confirm>Отметить все</button></footer>
 </div>
 </dialog>
 <dialog class="shlz-modal fm2-confirm-dialog" data-reason-dialog>
-<form class="fm2-confirm-dialog__content" method="dialog">
-<h2 data-reason-title>Подтвердите действие</h2>
-<p data-reason-copy></p>
-<label class="shlz-field"><span class="shlz-field__label">Причина</span><span class="shlz-field__control"><textarea class="shlz-input" data-reason-input required maxlength="1000"></textarea></span></label>
-<p class="fm2-installer-error" data-reason-error hidden>Укажите причину.</p>
-<div class="fm2-confirm-dialog__actions"><button class="shlz-button shlz-button--secondary" type="button" data-reason-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-reason-confirm>Подтвердить</button></div>
+<form class="shlz-modal__surface" method="dialog"><header class="shlz-modal__header"><h2 class="shlz-modal__title" data-reason-title>Подтвердите действие</h2></header><div class="shlz-modal__body"><p data-reason-copy></p><label class="shlz-field"><span class="shlz-field__label">Причина</span><span class="shlz-field__control"><textarea class="shlz-input" data-reason-input required maxlength="1000"></textarea></span></label><p class="fm2-installer-error" data-reason-error hidden>Укажите причину.</p></div><footer class="shlz-modal__footer"><button class="shlz-button shlz-button--secondary" type="button" data-reason-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-reason-confirm>Подтвердить</button></footer>
 </form>
 </dialog>
 <dialog class="shlz-modal fm2-installer-dialog" data-installer-dialog>
-<div>
-<header>
+<div class="shlz-modal__surface fm2-installer-dialog__surface">
+<header class="shlz-modal__header">
 <h2>Исполнители работы</h2>
 <p data-installer-item-name>
 </p>
 <button type="button" data-installer-cancel>×</button>
 </header>
-<div data-installer-options>
+<div class="shlz-modal__body fm2-installer-dialog__body" data-installer-options>
 </div>
-<p data-installer-error hidden>Выберите хотя бы одного монтажника.</p>
-<button type="button" data-installer-cancel>Отмена</button>
-<button type="button" data-installer-save>Сохранить состав</button>
+<footer class="shlz-modal__footer"><p data-installer-error hidden>Выберите хотя бы одного монтажника.</p><button class="shlz-button shlz-button--secondary" type="button" data-installer-cancel>Отмена</button><button class="shlz-button shlz-button--primary" type="button" data-installer-save>Сохранить состав</button></footer>
 </div>
 </dialog>
 <div class="shlz-alert fm2-feedback-toast" role="status" data-toast hidden>
