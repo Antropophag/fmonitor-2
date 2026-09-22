@@ -121,6 +121,13 @@ function runtimeHttp(int $port, string $path, ?string $host = null, string $meth
     return ['status' => (int) ($match[1] ?? 0), 'body' => is_string($body) ? $body : '', 'headers' => $responseHeaders];
 }
 
+function runtimeReadinessCounters(array $base,array $environment,string $root,string $password):array
+{
+    $result=runtimeComposeCommand([...$base,'exec','-T','db','mariadb','-N','-uroot','-p'.$password,'-e',"SHOW GLOBAL STATUS WHERE Variable_name IN ('Questions','Created_tmp_tables','Created_tmp_disk_tables')"],$environment,$root);
+    assertRuntimeCompose($result,'readiness measurement counters');$counters=[];foreach(array_filter(explode("\n",trim($result['stdout'])))as$line){[$name,$value]=explode("\t",$line,2);$counters[$name]=(int)$value;}ksort($counters);return$counters;
+}
+function runtimeCounterDelta(array$before,array$after):array{$delta=[];foreach($after as$name=>$value)$delta[$name]=$value-($before[$name]??0);return$delta;}
+
 try {
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'config', '--quiet'], $environment, $root), 'production Compose config');
     assertRuntimeCompose(runtimeComposeCommand([...$base, 'build'], $environment, $root, 300), 'production runtime exact-source image build');
@@ -151,6 +158,12 @@ try {
 
     assertSameValue(200, runtimeHttp($port, '/health/live')['status'], 'nginx reaches PHP-FPM liveness endpoint');
     assertSameValue(200, runtimeHttp($port, '/health/ready')['status'], 'readiness confirms DB, schema and writable storage');
+    $controlBefore=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);usleep(200000);$controlAfter=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);
+    $singleBefore=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);$singleStarted=microtime(true);assertSameValue(200,runtimeHttp($port,'/health/ready')['status'],'measured readiness success');$singleSeconds=microtime(true)-$singleStarted;$singleAfter=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);
+    $sequentialBefore=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);$sequentialStarted=microtime(true);for($probe=0;$probe<10;$probe++)assertSameValue(200,runtimeHttp($port,'/health/ready')['status'],'sequential measured readiness');$sequentialSeconds=microtime(true)-$sequentialStarted;$sequentialAfter=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);
+    $parallelBefore=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);$parallelStarted=microtime(true);$children=[];for($probe=0;$probe<4;$probe++){if(($pid=pcntl_fork())===0)exit(runtimeHttp($port,'/health/ready')['status']===200?0:1);$children[]=$pid;}foreach($children as$pid){pcntl_waitpid($pid,$status);assertSameValue(0,pcntl_wexitstatus($status),'parallel measured readiness');}$parallelSeconds=microtime(true)-$parallelStarted;$parallelAfter=runtimeReadinessCounters($base,$environment,$root,$migrationPassword);
+    $measurement=['method'=>'exact candidate nginx/FPM Compose; global counters include sampling and background healthchecks','controlDelta'=>runtimeCounterDelta($controlBefore,$controlAfter),'singleDelta'=>runtimeCounterDelta($singleBefore,$singleAfter),'singleSeconds'=>$singleSeconds,'sequential10Delta'=>runtimeCounterDelta($sequentialBefore,$sequentialAfter),'sequential10Seconds'=>$sequentialSeconds,'parallel4Delta'=>runtimeCounterDelta($parallelBefore,$parallelAfter),'parallel4Seconds'=>$parallelSeconds];
+    assertSameValue(true,($measurement['singleDelta']['Questions']??PHP_INT_MAX)<50,'steady HTTP readiness has bounded SQL commands');assertSameValue(true,($measurement['singleDelta']['Created_tmp_disk_tables']??PHP_INT_MAX)<5,'steady HTTP readiness avoids disk temporary-table growth');echo 'READINESS_HTTP_MEASUREMENT '.json_encode($measurement,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
     $login = runtimeHttp($port, '/pilot/login');
     assertSameValue(200, $login['status'], 'Yii runtime serves the login page through nginx and FPM');
     assertSameValue(true, str_contains($login['body'], 'csrf'), 'login HTML contains the real CSRF field');

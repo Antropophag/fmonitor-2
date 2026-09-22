@@ -13,4 +13,4 @@
 
 - [x] 3.1 Measure before/after and failure/concurrency/startup cases in isolated Compose.
 - [x] 3.2 Run focused login/card-editor/construction-control/OTIZ smoke.
-- [ ] 3.3 Obtain independent final review and exact-source CI; reconcile current main.
+- [x] 3.3 Obtain independent final review; exact-source CI and current-main reconciliation are complete.
