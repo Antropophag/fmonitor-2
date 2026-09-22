@@ -11,6 +11,6 @@
 
 ## 3. Независимое завершение и PR-ready
 
-- [ ] 3.1 Получить независимый final review exact candidate; проверить явный `APPROVED` и отсутствие scope creep.
+- [x] 3.1 Получить независимый final review exact candidate; проверить явный `APPROVED` и отсутствие scope creep.
 - [ ] 3.2 Создать отдельный PR и выполнить один exact-source GitHub CI через выбранный consumer; при сбое собрать полный failure inventory, GREEN не выводить из `UNKNOWN`.
 - [ ] 3.3 Подтвердить PR/HEAD, изменённые подписи, проверенные примеры и byte-equivalent числовые результаты; merge/deploy/реальные финансовые операции не выполнять.
