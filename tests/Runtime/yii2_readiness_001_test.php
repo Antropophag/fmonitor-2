@@ -183,13 +183,16 @@ try {
         'FMONITOR_ORIGINAL_SAFE_LOG_FILE' => $storage . '/state/log/original-safe.jsonl',
         'FMONITOR_TRUSTED_REQUEST_HOST' => 'fmonitor.example.test', 'FMONITOR_TRUSTED_REQUEST_SCHEME' => 'https',
     ];
-    RuntimeStorage::prepare(RuntimeConfiguration::fromEnvironment($environment));
+    $runtimeConfig = RuntimeConfiguration::fromEnvironment($environment);
+    RuntimeStorage::prepare($runtimeConfig);
+    FMonitor2\Runtime\RuntimeStartupAttestation::publish($runtimeConfig, FMonitor2\Runtime\MariaDbRuntimeReadiness::assertDeepReady($runtimeConfig));
     $beforeHealthySchema = yii2SchemaSnapshot($db);
     $beforeHealthyTree = yii2TreeSnapshot($storage);
     $server = yii2StartServer($root, $environment);
     try { $healthyHttp = yii2Http($server, '/health/ready'); } finally { yii2StopServer($server); }
     $healthyCli = yii2Cli($root, $environment);
-    assertSameValue([200, ['ok' => true]], [$healthyHttp['status'], json_decode($healthyHttp['body'], true, 8, JSON_THROW_ON_ERROR)], 'prepared HTTP readiness is healthy');
+    assertSameValue(200, $healthyHttp['status'], 'prepared HTTP readiness status');
+    assertSameValue(['ok' => true], json_decode($healthyHttp['body'], true, 8, JSON_THROW_ON_ERROR), 'prepared HTTP readiness body');
     assertSameValue(true, in_array('Cache-Control: no-store', $healthyHttp['headers'], true), 'prepared HTTP readiness is no-store');
     assertSameValue(false, (bool) preg_grep('/^Set-Cookie:/i', $healthyHttp['headers']), 'prepared HTTP readiness creates no cookie');
     assertSameValue([0, "{\"ok\":true}\n", ''], [$healthyCli['exit'], $healthyCli['stdout'], $healthyCli['stderr']], 'prepared console readiness is healthy');
@@ -200,8 +203,9 @@ try {
     $beforeDatabaseFailure = yii2SchemaSnapshot($db);
     $beforeDatabaseTree = yii2TreeSnapshot($storage);
     $server = yii2StartServer($root, $databaseFailureEnvironment);
-    try { $databaseHttp = yii2Http($server, '/health/ready'); } finally { yii2StopServer($server); }
+    try { $databaseHttp = yii2Http($server, '/health/ready'); $databaseLive = yii2Http($server, '/health/live'); } finally { yii2StopServer($server); }
     yii2AssertSafeUnavailable($databaseHttp, yii2Cli($root, $databaseFailureEnvironment), $password, 'database failure');
+    assertSameValue([200,['ok'=>true]],[$databaseLive['status'],json_decode($databaseLive['body'],true,8,JSON_THROW_ON_ERROR)],'liveness remains database-independent');
     assertSameValue($beforeDatabaseFailure, yii2SchemaSnapshot($db), 'database failure performs no DB write');
     assertSameValue($beforeDatabaseTree, yii2TreeSnapshot($storage), 'database failure performs no private-state write');
 
@@ -218,6 +222,7 @@ try {
     rename($heldState, $environment['FMONITOR_SESSION_STATE_ROOT']);
 
     $db->query('DROP TABLE `' . $prefix . 'fm2_pilot_object_details`');
+    FMonitor2\Runtime\RuntimeStartupAttestation::invalidate($runtimeConfig);
     $beforeSchemaFailure = yii2SchemaSnapshot($db);
     $beforeSchemaTree = yii2TreeSnapshot($storage);
     $server = yii2StartServer($root, $environment);

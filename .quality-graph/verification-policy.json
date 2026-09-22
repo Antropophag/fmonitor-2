@@ -500,7 +500,14 @@
     },
     {
       "name": "runtime-schema-inventory",
-      "patterns": [],
+      "patterns": [
+        "app/Runtime/MariaDbRuntimeReadiness.php",
+        "app/Runtime/RuntimeBuildIdentity.php",
+        "app/Runtime/RuntimeConfiguration.php",
+        "app/Runtime/RuntimeReadiness.php",
+        "app/Runtime/RuntimeStartupAttestation.php",
+        "app/InstallationProcess/MariaDbPilotStartupState.php"
+      ],
       "verifiers": [
         "tests/Verification/canonical_integration_runtime_001_test.py"
       ],

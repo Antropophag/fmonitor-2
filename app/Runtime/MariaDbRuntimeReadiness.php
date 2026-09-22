@@ -13,10 +13,16 @@ final class MariaDbRuntimeReadiness
     {
         $connection = self::connect($config);
         try {
-            self::assertSchema($connection, $config);
+            Schema\MariaDbPilotStartupState::assertAvailable($connection);
+            RuntimeStartupAttestation::assertApplicable($config,Schema\MariaDbPilotStartupState::readinessMarker($connection,$config->value('FMONITOR_PROCESS_TABLE_PREFIX')));
         } finally {
             $connection->close();
         }
+    }
+
+    public static function assertDeepReady(RuntimeConfiguration $config):array
+    {
+        $connection=self::connect($config);try{self::assertSchema($connection,$config);return Schema\MariaDbPilotStartupState::readinessMarker($connection,$config->value('FMONITOR_PROCESS_TABLE_PREFIX'));}finally{$connection->close();}
     }
 
     public static function assertAvailable(RuntimeConfiguration $config): void

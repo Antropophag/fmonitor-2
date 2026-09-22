@@ -1,4 +1,28 @@
-# Текущая цель — пошаговая работа ОТиЗ в согласованном интерфейсе
+# Текущая цель — bounded regular runtime readiness
+
+Поручение владельца 2026-09-22: от актуального `main` с merged PR #226 доставить
+небольшой PR-ready фикс избыточной idle-нагрузки `/health/ready`. Контракт:
+[`RUNTIME-READINESS-LOAD-001`](../../specs/RUNTIME-READINESS-LOAD-001.md), lifecycle:
+[`bound-regular-runtime-readiness`](../../openspec/changes/bound-regular-runtime-readiness/).
+
+Scope: existing full schema runtime-check становится обязательным deployment
+startup gate; steady readiness ограничивается current DB connect/cheap query,
+local resources и exact DB/schema/build-bound startup result. Сохранить liveness,
+routes, response/status, canonical migrations and fingerprints. Не входят
+business/UI, #171, ОТиЗ, integrations, общий infrastructure tuning или stand.
+
+Работа идёт в отдельном worktree `fmonitor-2-readiness-load` от `3c242f34` (merge
+PR #226), с отдельными Compose resources. Root пишет scope/spec/tests; separate
+gpt-5.6-sol/low executor implements; independent reviewers решают Gates 3/5.
+Локальный full `make test`/`make verify` запрещён; exact-source CI обязателен.
+
+Предыдущая цель #222 завершена merge PR #226; её запись сохранена ниже как история.
+
+---
+
+## Исторический указатель — завершённые #222 и ОТиЗ
+
+### Пошаговая работа ОТиЗ в согласованном интерфейсе
 
 Поручение владельца 2026-09-21: реализовать bounded product slice `otiz-guided-native-interface` от актуального `origin/main` и довести candidate до PR-ready. Актор — сотрудник ОТиЗ; цель — самостоятельно пройти существующий процесс от выбора расчётной даты до проверки, подтверждения, получения XLSX и регистрации уже выполненной выплаты. Обязательная коррекция — черновик, отсутствие blocker и нулевая доступная сумма не могут отображаться как «Выплата по объекту выполнена».
 

@@ -31,6 +31,8 @@ final class RuntimeConfiguration
         if (isset($environment['FMONITOR_YII_SESSION_PATH']) && is_string($environment['FMONITOR_YII_SESSION_PATH'])) {
             $values['FMONITOR_YII_SESSION_PATH'] = $environment['FMONITOR_YII_SESSION_PATH'];
         }
+        $values['FMONITOR_RUNTIME_BUILD_ID_FILE'] = isset($environment['FMONITOR_RUNTIME_BUILD_ID_FILE']) && is_string($environment['FMONITOR_RUNTIME_BUILD_ID_FILE'])
+            ? $environment['FMONITOR_RUNTIME_BUILD_ID_FILE'] : '';
         $patterns = [
             'FMONITOR_DB_HOST' => '/^[A-Za-z0-9.\x3a\x5b\x5d_-]{1,255}$/D',
             'FMONITOR_DB_NAME' => '/^[A-Za-z0-9_]{1,64}$/D',
@@ -44,6 +46,12 @@ final class RuntimeConfiguration
         foreach ($patterns as $name => $pattern) {
             if (preg_match($pattern, $values[$name]) !== 1) self::fail();
         }
+        $identityFile = $values['FMONITOR_RUNTIME_BUILD_ID_FILE'];
+        if ($identityFile !== '' && ($identityFile[0] !== '/' || $identityFile === '/'
+            || preg_match('/[\x00-\x1f\x7f]/', $identityFile) !== 0
+            || in_array('..', explode('/', $identityFile), true)
+            || in_array('.', explode('/', $identityFile), true)
+            || str_contains($identityFile, '//') || str_ends_with($identityFile, '/'))) self::fail();
         if ((int) $values['FMONITOR_DB_PORT'] > 65535
             || $values['FMONITOR_LEGACY_TABLE_PREFIX'] !== $values['FMONITOR_PROCESS_TABLE_PREFIX']
             || !in_array($values['FMONITOR_TRUSTED_REQUEST_SCHEME'], ['http', 'https'], true)) self::fail();
