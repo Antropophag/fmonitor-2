@@ -62,11 +62,13 @@ one-second control observation showed counters advancing without a probe.
 | candidate initial full startup check | — | 2.08 s |
 
 Final exact-candidate HTTP/Compose observation: control interval +2 Questions,
-+1 temporary table and +0 disk temporary tables; one measured readiness +10
-Questions, +3 temporary tables and +0 disk temporary tables in 5.4 ms; ten
-sequential probes in 37 ms; four concurrent probes in 14 ms. All returned HTTP
-200. Sampling queries and background healthchecks remain included upper-bound
-noise. The focused test removed its Compose containers, network and volumes.
++1 temporary table and +0 disk temporary tables; one measured readiness +8
+Questions, +2 temporary tables and +0 disk temporary tables in 5.8 ms; ten
+sequential probes +62 Questions, +11 temporary tables and +0 disk temporary
+tables in 38 ms; four concurrent probes +26 Questions, +5 temporary tables and
++0 disk temporary tables in 13 ms. All returned HTTP 200. Sampling queries and
+background healthchecks remain included upper-bound noise. The focused test
+removed its Compose containers, network and volumes.
 
 These short measurements confirm the owner's approximate 550-command observation
 on this contour without treating readiness as user request capacity. The
