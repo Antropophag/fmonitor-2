@@ -70,14 +70,15 @@ try {
     assertSameValue(2,count($http->rows('fm2_pilot_completion_fact_corrections')),'two successful retries append one history row each');
     assertSameValue($immutableRoots,$http->rows('fm2_pilot_completion_facts'),'successful corrections preserve exact immutable roots');
 
-    // Recognized domain conflicts stay in the submitted form and remain non-success.
+    // A refreshed state that no longer exposes the command keeps the user on the
+    // card, but does not recreate that unavailable form merely to retain input.
     $before=$http->facts();$conflict=$fixture->post('record_declaration',['declarationDate'=>'2026-09-01','declarationDetails'=>'Д-CONFLICT']);
     assertSameValue(409,$conflict['status'],'domain conflict status preserved');
     assertSameValue(true,str_contains(implode(' ',$conflict['headers']['content-type']??[]),'text/html'),'domain conflict renders card');
     assertSameValue(true,str_contains($conflict['body'],'Документ уже зафиксирован.'),'domain reason visible');
-    assertSameValue(true,str_contains($conflict['body'],'value="Д-CONFLICT"'),'conflict retains submitted details');
     $conflictDom=new DOMDocument();@$conflictDom->loadHTML('<?xml encoding="UTF-8">'.$conflict['body']);$conflictXpath=new DOMXPath($conflictDom);
-    assertSameValue(1,$conflictXpath->query('//*[@data-completion-form="record_declaration"]//*[@data-completion-focus="true" and @role="alert"]')->length,'general conflict focus target');
+    assertSameValue(0,$conflictXpath->query('//*[@data-completion-form="record_declaration"]')->length,'recorded declaration command is no longer shown');
+    assertSameValue(1,$conflictXpath->query('//*[@id="completion"]/*[@data-completion-focus="true" and @role="alert"]')->length,'unavailable-command section alert is focusable');
     assertSameValue($before,$http->facts(),'confirmed conflict creates no facts');
 
     foreach([
