@@ -78,7 +78,7 @@ final readonly class MariaDbYiiObjectQueue
     {
         $p = $this->prefix;
         $l = $this->legacyPrefix;
-        $count = "(SELECT COUNT(DISTINCT co.item_id) FROM `{$p}fm2_checklist_operations` co WHERE co.installation_case_id=c.id AND co.operation_type='item_completed' AND co.item_id<>42)";
+        $count = self::currentChecklistCompletionCount($p);
         $pto = "EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='pto_act')";
         $dec = "EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='declaration')";
         $active = "c.process_state IN('working','needs_assignment_change') AND (a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";
@@ -149,8 +149,18 @@ final readonly class MariaDbYiiObjectQueue
     }
     public static function stagePredicates(string $p): array
     {
-        $count="(SELECT COUNT(DISTINCT co.item_id) FROM `{$p}fm2_checklist_operations` co WHERE co.installation_case_id=c.id AND co.operation_type='item_completed' AND co.item_id<>42)";$pto="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='pto_act')";$dec="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='declaration')";$applied="(a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";$ready="(v.revision_id IS NOT NULL OR (s.assignment_order_id IS NULL AND (a.application_id IS NOT NULL OR COALESCE(o.status='registered',0))))";
+        $count=self::currentChecklistCompletionCount($p);$pto="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='pto_act')";$dec="EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` cf WHERE cf.installation_case_id=c.id AND cf.fact_type='declaration')";$applied="(a.application_id IS NOT NULL OR o.status IN('prepared','registered'))";$ready="(v.revision_id IS NOT NULL OR (s.assignment_order_id IS NULL AND (a.application_id IS NOT NULL OR COALESCE(o.status='registered',0))))";
         return ['needs_assignment_order'=>"c.process_state IN('needs_assignment_order','assignment_order_prepared') AND NOT {$ready} AND (s.assignment_order_id IS NOT NULL OR (c.process_state='needs_assignment_order' AND o.id IS NULL AND a.application_id IS NULL) OR (c.process_state='assignment_order_prepared' AND o.status='prepared' AND a.application_id IS NULL))",'ready_to_open'=>"c.process_state IN('needs_assignment_order','assignment_order_prepared') AND {$ready}",'installation'=>"c.process_state='working' AND {$applied} AND {$count}<41 AND NOT({$pto} AND {$dec})",'document_closeout'=>"c.process_state='working' AND {$applied} AND {$count}=41 AND NOT({$pto} AND {$dec})",'completed'=>"c.process_state='working' AND {$applied} AND {$pto} AND {$dec}",'needs_assignment_change'=>"c.process_state='needs_assignment_change' AND (a.application_id IS NOT NULL OR o.status='registered')"];
+    }
+    public static function currentChecklistCompletionCount(string $p): string
+    {
+        return "(SELECT COUNT(*) FROM `{$p}fm2_checklist_operations` co"
+            . " WHERE co.installation_case_id=c.id AND co.operation_type='item_completed' AND co.item_id<>42"
+            . " AND NOT EXISTS(SELECT 1 FROM `{$p}fm2_checklist_operations` later"
+            . " WHERE later.installation_case_id=co.installation_case_id AND later.item_id=co.item_id"
+            . " AND later.operation_type IN('item_completed','completion_retracted')"
+            . " AND (COALESCE(later.accepted_revision,-1)>COALESCE(co.accepted_revision,-1)"
+            . " OR (COALESCE(later.accepted_revision,-1)=COALESCE(co.accepted_revision,-1) AND later.id>co.id))))";
     }
     /** @param array<string,string> $stages @return array<string,string> */
     public static function startRiskPredicates(array $stages, string $start): array

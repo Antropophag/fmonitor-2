@@ -1,0 +1,23 @@
+{
+  "change": "fix-current-checklist-stage",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "openspec/changes/fix-current-checklist-stage",
+    "specs/CURRENT-CHECKLIST-STAGE-001.md",
+    "tests/Yii2/yii2_current_checklist_stage_001_test.php",
+    "reviews/tests/CURRENT-CHECKLIST-STAGE-001.md",
+    "reviews/code/CURRENT-CHECKLIST-STAGE-001.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/current-checklist-stage-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "CURRENT-CHECKLIST-STAGE-001",
+    "acceptance_id": "A-J-current-stage-consistency",
+    "spec_path": "specs/CURRENT-CHECKLIST-STAGE-001.md",
+    "seam": "YiiObjectQueue read and YiiOperationalDashboard read over real accepted checklist fixture operations",
+    "tests": ["tests/Yii2/yii2_current_checklist_stage_001_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_current_checklist_stage_001_test.php": "INTENDED_RED"}
+  }]
+}
