@@ -16,6 +16,6 @@
 ## 3. Review и PR-ready
 
 - [x] 3.1 Root фиксирует reconstructible exact-source snapshot/commit и проверяет, что diff не затрагивает ОТиЗ бизнес-правила, status/dashboard consistency, readiness semantics, migration, downloads/exports или чужой PR #235
-- [ ] 3.2 Независимый `gpt-5.6-sol/low` reviewer выполняет planner-required Gate 5 по exact source, spec, tests и evidence; все findings исправляются и изменённый delta повторно рассматривается
+- [x] 3.2 Независимый `gpt-5.6-sol/low` reviewer выполняет planner-required Gate 5 по exact source, spec, tests и evidence; все findings исправляются и изменённый delta повторно рассматривается
 - [ ] 3.3 Root создаёт отдельный commit/PR для issue #172 без merge/deploy/закрытия issue и запускает один обязательный exact-source GitHub CI consumer; при сбое сначала собирает полный failed-job и `REGRESSION_FAILURE` inventory
 - [ ] 3.4 Root записывает delivery/handoff с PR и HEAD, поддержанными контекстами, источником build identity, доказательствами A/B/replay/unknown, CI/review verdicts и оставшимися ограничениями; статус задач отражает только фактически завершённое

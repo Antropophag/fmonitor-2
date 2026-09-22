@@ -63,3 +63,13 @@ review, commit/PR and one GitHub CI run. Эти состояния остают�
 `CRITICAL`, reviews `gate3`/`final` и те же шесть bounded local obligations. Все
 шесть повторно GREEN на rebased source; merges #235–#237 не потребовали изменения
 feedback behavior и остались вне production diff.
+
+Независимый Gate 5 сначала вернул HIGH из-за pathname TOCTOU/relative path. Root
+добавил independently reviewed RED для реального relative file, stable handle,
+pathname rebind и post-read handle mutation; executor перевёл reader на один open
+handle с before/after `fstat`, final `lstat` binding и guaranteed close. После
+correction и rebase final reviewer дал `APPROVED`, findings none, для HEAD
+`7b9cda428d8ef098ee1310bd31a22273b88bf75e`, exact source
+`3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`.
+Append-only история verdicts: `reviews/tests/FEEDBACK-001.md` и
+`reviews/code/FEEDBACK-001.md`. PR/CI пока `UNKNOWN`.

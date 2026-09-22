@@ -90,3 +90,31 @@ No other findings. The closed route allowlist and return links reject the review
 - Exact-source GREEN records reviewed: owner/application/HTTP/concurrency `1790094637313385000-7c591125a6d14bc3bf75921aabe5b2b4`; connected browser `1790094648219846000-26d0902a78094eaa9f74359315866bd7`; unchanged strict readiness `1790094666041312000-528eb1a7dc564ca1a35e9a34b83266b1`. Each binds source `d2c7f6019a208d8884157e351e60908260bfa10897193a160ece876eae7523e5` and exits 0.
 - `git diff --check` and PHP syntax checks for the three changed production/config/view files are clean. The forbidden local full suite was not run.
 - GitHub exact-source CI, PR publication, merge, deployment and live enforcement remain `UNKNOWN`; they are not approval or GREEN. The HIGH finding blocks Gate 5 despite the focused GREEN evidence.
+
+## Issue #172 Gate 5 rereview — corrected current-main candidate 2026-09-22
+
+### Disposition
+
+- Reviewer: independent `gpt-5.6-sol / low` agent `/root/issue172_final_review`; same returning reviewer for its own prior finding, still author of no specification, test, Gate 3 artifact, or production implementation.
+- Reviewed current-main base `bced877aec8a8802e97037749ca4251d3098df1a`, commit `7b9cda428d8ef098ee1310bd31a22273b88bf75e`, exact candidate source `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`, executable source `625f24b7938638638992c1b5daf39d02acbed14d54414e0f0abc41a75f24864f`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T170439Z-7cf7d21850/package.json`, SHA-256 `badd9c646209059ac865996536adcbca01bef040bedc3b6245dab57dbe5abeaf`; required-context SHA-256 `07c79d5092b1a60987b12efc8a131b7e1c35de0e9b663806e0c56a269bafac58`; verification-plan SHA-256 `93d00817b34fac89bf764ff5ff8a1b353c236992880196197652412e27d7e78d`.
+- Verdict: **APPROVED**. Complete findings list: **none**.
+
+### Prior finding disposition
+
+1. **Resolved — pathname TOCTOU and absolute-path trust boundary.** `app/YiiRuntime/FeedbackApplication.php:125-176` rejects empty, NUL-containing and relative paths; opens one handle; performs `fstat → bounded read(66) → fstat → final lstat`; requires identical mode, link count, size, device, inode, mtime and ctime across the two handle observations and final pathname; then accepts only a single-link, read-only regular file of exactly 65 bytes containing 64 lowercase hexadecimal characters plus newline. All failures return `unknown`, and the handle is closed from `finally`. Accepted bytes no longer come from a second pathname read.
+2. The correction's narrow injected filesystem dependency is confined to deterministic same-handle/path-binding verification; the production default exposes only open/fstat/bounded-read/lstat/close and introduces no Runtime/release framework, source walk, process, network, Git, Docker or external-request fallback.
+3. Independent Gate 3 approved the real existing relative-file case, stable same-handle acceptance, pathname rebind rejection and independent post-read handle-metadata mutation rejection with the exact call/close sequence. Its later pagination-only mechanic keeps the original two literal immutable history entries and actor attribution while locating the older root solely through public `listing` cursors.
+
+### Full candidate review
+
+- FEEDBACK-001 A2/A8 route normalization remains a closed allowlist: query/fragment and sensitive/download/export/mutating/unknown paths cannot become return links; object ID is derived only from explicit object routes, while snapshot, order and feedback IDs retain distinct semantics.
+- A4/A5/A9 replay remains actor/command scoped and fingerprinted only by normalized user content. Build identity is written only on first insert, excluded from the fingerprint, never accepted from client POST, and persisted historical context/build/results are not rewritten. The administrator view explicitly escapes and labels the persisted source path and full build.
+- The full 64-character immutable identity, fail-soft `unknown`, authorization, CSRF/method handling, concurrency, append-only results, pagination and browser return paths retain sensitive public-seam coverage. Readiness remains the separate strict fail-closed owner and is unchanged.
+- Rebase merges #235–#237 do not add feedback production scope. Policy ownership maps the changed application owner to both feedback verifiers. No migration, OTIZ/checklist/process behavior, status/readiness semantics, external delivery, deployment or stand mutation enters this slice. The resulting reader and route table are bounded and maintainable.
+
+### Evidence and limits
+
+- Package exact-source GREEN records: owner/application/HTTP/concurrency `1790096624355553000-999951fd52e34dfd9de09e3c0659987d`; connected browser `1790096635355051000-51babeeb30f34ea3b279daeb004c6c2e`; unchanged strict readiness `1790096653292252000-2ed040cf9b674721a2baf86037a362b6`. Each exits 0 and binds exact source `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`.
+- The remaining planner-listed bounded obligations were independently reconfirmed GREEN during this rereview: `python3 tests/Deployment/pilot_jobs_compose_001_test.py`, `python3 tests/Verification/change_verification_001_test.py`, and `python3 tests/Verification/architecture_guard_001_test.py`. `git diff --check` and changed PHP syntax remain clean. The forbidden local full suite was not run.
+- This approval is Gate 5 for the reviewed exact candidate. GitHub exact-source CI, PR publication, merge, deployment and live enforcement remain `UNKNOWN` until their own evidence exists; this verdict does not make those states GREEN.
