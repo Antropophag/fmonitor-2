@@ -15,6 +15,8 @@
   `reviews/code/YII2-COMPLETION-FORM-RECOVERY-001.md`; the contract/test delta was
   independently approved through Gate 3 v13 and `b5a621ba` removed retained input
   and the unavailable record form from the completed-card conflict path.
+- Gate 5 final rereview: `APPROVED`, no remaining findings,
+  `reviews/code/YII2-COMPLETION-FORM-RECOVERY-001-v3.md`.
 - PR/CI/deployment: `UNKNOWN` until publication/exact-source CI; no merge or deploy.
 
 ## Exact-source focused evidence before final review
