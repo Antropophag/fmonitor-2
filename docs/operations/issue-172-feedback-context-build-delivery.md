@@ -2,7 +2,7 @@
 
 ## Scope и авторство
 
-- Base: `origin/main` `0504d2589835f2583dc9afdbc47e4694e2573365` с merged #140, #228 и #234.
+- Initial base: `0504d2589835f2583dc9afdbc47e4694e2573365`; candidate state-preservingly rebased to current `origin/main` `bced877aec8a8802e97037749ca4251d3098df1a` with merged #140, #228 and #234–#237.
 - Root authored OpenSpec artifacts, `specs/FEEDBACK-001.md`, verification input и tests.
 - Production executor: separate `gpt-5.6-sol / low` agent `/root/issue172_executor`.
 - Independent Gate 3 reviewer: `gpt-5.6-sol / low` agent `/root/issue172_gate3`.
@@ -58,3 +58,8 @@ Planner-selected bounded local run GREEN:
 Локальный full `make test`/`make verify` не запускался. Pending: exact-source final
 review, commit/PR and one GitHub CI run. Эти состояния остаются `UNKNOWN` до
 собственной evidence; UNKNOWN не является GREEN.
+
+После state-preserving rebase на `origin/main` `bced877a` planner сохранил lane
+`CRITICAL`, reviews `gate3`/`final` и те же шесть bounded local obligations. Все
+шесть повторно GREEN на rebased source; merges #235–#237 не потребовали изменения
+feedback behavior и остались вне production diff.
