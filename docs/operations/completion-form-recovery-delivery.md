@@ -10,7 +10,11 @@
 - Gate 3: `APPROVED`, latest record
   `reviews/tests/YII2-COMPLETION-FORM-RECOVERY-001-v10.md`; immutable earlier
   returns remain in the same directory.
-- Production commits: `18b13a1a`, `21db1bd0`, `38ecbd3c`.
+- Production commits: `18b13a1a`, `21db1bd0`, `38ecbd3c`, `b5a621ba`.
+- First Gate 5 returned one High in
+  `reviews/code/YII2-COMPLETION-FORM-RECOVERY-001.md`; the contract/test delta was
+  independently approved through Gate 3 v13 and `b5a621ba` removed retained input
+  and the unavailable record form from the completed-card conflict path.
 - PR/CI/deployment: `UNKNOWN` until publication/exact-source CI; no merge or deploy.
 
 ## Exact-source focused evidence before final review
