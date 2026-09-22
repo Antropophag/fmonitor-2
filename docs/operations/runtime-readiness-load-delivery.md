@@ -34,19 +34,17 @@ process readiness, architecture, verification planner/inventory, canonical
 integration runtime, generated dependency check, PHP syntax and diff whitespace.
 Exact commands remain in retained harness evidence.
 
-Recovery tests that start private Docker image builds were interrupted when that
-unexpected heavy work became visible; full exact-source execution is delegated to
-CI under the owner laptop-load rule. An isolated UI smoke attempt was not
-applicable locally because this worktree intentionally has no vendor dependencies;
-the resulting setup failures are not GREEN.
+Earlier recovery builds were interrupted when unexpected concurrent laptop load
+became visible; those attempts were not GREEN. The final exact-source CI matrix is
+GREEN, and the final focused exact Compose lifecycle/measurement below is GREEN.
 
 ## Isolated measurement
 
-Contour: Compose project fm2_readiness_measure, MariaDB 11.4.7, unique port
-24336/database prefix/volume, base and candidate source worktrees. The application
-image was not built because another live runtime and a high-CPU foreign process
-were present. The measured seam reproduced request bootstrap order:
-storage check → DB availability connection → runtime readiness. It is not a site
+Baseline contour: Compose project fm2_readiness_measure, MariaDB 11.4.7, unique
+port/database prefix/volume and base/candidate worktrees. Final candidate contour:
+the exact committed application image and isolated production Compose project from
+production_runtime_compose_001_test.php, with unique DB/state/secrets/port. It
+exercised real nginx → PHP-FPM → public readiness. Neither result is a site
 throughput or p95 claim.
 
 Global counters were sampled immediately before/after on the otherwise isolated
@@ -63,6 +61,13 @@ one-second control observation showed counters advancing without a probe.
 | 4 concurrent probes wall time | 3.167 s | 0.077 s |
 | candidate initial full startup check | — | 2.08 s |
 
+Final exact-candidate HTTP/Compose observation: control interval +2 Questions,
++1 temporary table and +0 disk temporary tables; one measured readiness +10
+Questions, +3 temporary tables and +0 disk temporary tables in 5.4 ms; ten
+sequential probes in 37 ms; four concurrent probes in 14 ms. All returned HTTP
+200. Sampling queries and background healthchecks remain included upper-bound
+noise. The focused test removed its Compose containers, network and volumes.
+
 These short measurements confirm the owner's approximate 550-command observation
 on this contour without treating readiness as user request capacity. The
 measurement container, network, volume, state directories and detached base
@@ -70,10 +75,10 @@ worktree were removed afterward.
 
 ## Remaining gates and limitations
 
-- Final independent review, exact-source GitHub CI, PR creation and reconciliation
-  with then-current main remain pending.
+- Final independent rereview remains pending. PR #234, current-main reconciliation
+  and exact-source Quality Graph run 35694634455 are GREEN.
 - Arbitrary unsupported DDL drift after a successful startup is not continuously
   fingerprinted; identity change, update/restart startup check and existing
   operation guards fail closed at their owned seams.
-- Live image startup and requested UI smokes await exact-source CI because local
-  dependencies are absent and concurrent laptop load made another build unsafe.
+- Exact image startup, login/card-editor/construction-control/OTIZ smoke and full
+  active verification matrix are GREEN in exact-source CI.
