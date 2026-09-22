@@ -492,6 +492,7 @@
       "name": "runtime-schema-inventory",
       "patterns": [
         "app/Runtime/MariaDbRuntimeReadiness.php",
+        "app/Runtime/RuntimeBuildIdentity.php",
         "app/Runtime/RuntimeConfiguration.php",
         "app/Runtime/RuntimeReadiness.php",
         "app/Runtime/RuntimeStartupAttestation.php",
