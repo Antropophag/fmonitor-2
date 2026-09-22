@@ -28,8 +28,20 @@
 3. Маршрут и роль актора уже поддерживаются приложением до этого change.
 4. Для comparisons before/after используются одинаковые source fixtures,
    viewport, browser и shell/sidebar state.
+5. Composer autoload и application classes MUST разрешаться из одного exact
+   worktree; dependency directory другого checkout не является допустимым
+   baseline и MUST fail before browser evidence is accepted.
 
 ## Нормативный контракт
+
+### 0. Authenticated baseline
+
+1. Canonical isolated fixtures MUST пройти login и достигнуть installers, users,
+   preopening и ОТиЗ routes до первого предметного assertion без раннего 503.
+2. Source-coherence guard MUST подтвердить, что `MainNavigation`, `ViewSupport`
+   и их Composer dependencies загружены из exact worktree.
+3. Permission-denied responses MUST сохранять действующий 403/303 contract;
+   baseline setup не вправе ослаблять authorization.
 
 ### A. Shell и landmarks
 

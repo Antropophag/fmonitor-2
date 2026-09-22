@@ -4,14 +4,14 @@
 - [ ] 1.2 Сопоставить актуальный `main` с audit SHA `bced877a` и #197, записать для V01–V09 статус reproduced/resolved-by-predecessor/UNKNOWN и проверить каждый reproduced case в разрешённом runtime.
 - [x] 1.3 Создать нормативную executable specification с идентификатором, разделом «Простыми словами», матрицей 25 views, публичными seams, preservation invariants и независимо вычисленными expected outcomes; проверить полную трассировку на delta spec.
 - [x] 1.4 Создать `verification-input.json`, вычислить обязательный Quality Graph plan по `tools/delivery/change-verification.md` и проверить, что все unresolved obligations закрыты до Gate 2.
-- [ ] 1.5 Построить минимальный deterministic authenticated GET loop для baseline 503, воспроизвести его повторно, проверить 3–5 ранжированных гипотез и записать доказанную причину без секретов.
-- [ ] 1.6 Добавить отдельный regression test причины baseline 503, передать минимальную коррекцию отдельному executor и проверить installers/users/preopening/ОТиЗ journeys до первого предметного assertion без ослабления permission-denied case.
+- [x] 1.5 Построить минимальный deterministic authenticated GET loop для baseline 503, воспроизвести его повторно, проверить 3–5 ранжированных гипотез и записать доказанную причину без секретов.
+- [x] 1.6 Добавить отдельный regression test причины baseline 503; если требуется source correction, передать её отдельному executor; проверить installers/users/preopening/ОТиЗ journeys до первого предметного assertion без ослабления permission-denied case. Диагноз оказался environment-only, production correction не потребовалась.
 
 ## 2. Baseline и Gate 2
 
 - [ ] 2.1 Поднять разрешённый Yii test runtime на фиксированных fixtures и сохранить вне checkout before screenshots для representative table/form/modal/shell surfaces при 320, 390, 768, 1024, 1280, 1440 и 1920 CSS px; вручную проверить изображения и записать source/environment.
 - [x] 2.2 Добавить focused structural tests для V02 и V09: одна field-композиция/label и единственный `main`/рабочий skip-link; запустить их и сохранить RED по отсутствующему поведению.
-- [ ] 2.3 Добавить browser regression tests для V03 и V04: фактический selector/геометрия selection modal и полный focus/Escape/cancel/return lifecycle payment confirmation; запустить и сохранить RED.
+- [x] 2.3 Добавить browser tests для V03 и V04: фактический selector/геометрия selection modal и полный focus/Escape/cancel/return lifecycle payment confirmation; сохранить честный applicable outcome. V03 characterization GREEN на 320×568, source selector RED; V04 browser INTENDED_RED.
 - [ ] 2.4 Добавить browser regression tests для V06 и shared data-list invariants: local scroll, полный текст денег/actions, отсутствие document overflow на boundary widths; запустить и сохранить RED.
 - [ ] 2.5 Добавить characterization tests существующих routes, filters, roles, payloads, no-JS fallbacks, offline states, idempotency и histories на затрагиваемых flows; проверить GREEN до production edits.
 - [ ] 2.6 Передать полный spec/tests/RED candidate независимому reviewer и получить planner-required Gate 3 `APPROVED` в `reviews/tests/`; при изменении expectations пересчитать plan и повторить Gate 2.

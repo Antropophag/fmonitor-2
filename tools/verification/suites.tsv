@@ -502,6 +502,7 @@ unit	python3	tests/Verification/review_source_001_test.py	unit
 unit	python3	tests/Verification/verification_delivery_deduplication_001_test.py	governance
 unit	python3	tests/Verification/yii2_dependency_setup_001_test.py	governance
 unit	python3	tests/Verification/yii2_local_quickstart_docs_001_test.py	unit
+unit	php	tests/Verification/yii2_worktree_autoload_001_test.php	governance
 unit	php	tests/WeeklyFkrReport/weekly_report_001_test.php	integration
 unit	php	tests/WeeklyFkrReport/weekly_schedule_001_test.php	integration
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit

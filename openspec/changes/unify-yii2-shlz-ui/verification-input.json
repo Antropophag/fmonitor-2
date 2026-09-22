@@ -37,7 +37,15 @@
     "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
     "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
     "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php",
+    "tests/Yii2/installer_directory_browser.mjs",
+    "tests/Yii2/yii2_installer_directory_browser_001_test.php",
+    "tests/Yii2/preopening_browser.mjs",
+    "tests/Yii2/yii2_preopening_browser_001_test.php",
+    "tests/Yii2/otiz_shlz_ui_browser.mjs",
+    "tests/Yii2/yii2_otiz_shlz_ui_001_test.php",
+    "tests/Yii2/yii2_user_access_browser_001_test.php",
     "tests/Support/yii2_shlz_visual_contract_browser.cjs",
+    "tests/Verification/yii2_worktree_autoload_001_test.php",
     "reviews/tests/YII2-SHLZ-VISUAL-CONTRACT-001.md",
     "reviews/code/YII2-SHLZ-VISUAL-CONTRACT-001.md",
     "tools/verification/suites.tsv"
@@ -45,17 +53,63 @@
   "acceptances": [
     {
       "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
-      "acceptance_id": "A-G-complete-visual-contract",
+      "acceptance_id": "authenticated-baseline-source-coherence",
       "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
-      "seam": "rendered active Yii2 GET responses, shared ViewSupport composition and Chromium interactions over representative routes cover A-G and the complete 25-view inventory",
+      "seam": "Composer bootstrap used by canonical isolated Yii HTTP fixtures",
       "tests": [
-        "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
-        "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php"
+        "tests/Verification/yii2_worktree_autoload_001_test.php"
       ],
       "gate3_expected": {
-        "tests/Yii2/yii2_shlz_visual_contract_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php": "INTENDED_RED"
+        "tests/Verification/yii2_worktree_autoload_001_test.php": "GREEN"
       }
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V01-V05-V06-source-ownership-inventory",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "complete active Yii view and application-owned CSS source inventory for explicit ownership constraints",
+      "tests": ["tests/Yii2/yii2_shlz_visual_contract_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_shlz_visual_contract_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V02-rendered-installer-field-composition",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated GET /pilot/installers rendered fields and browser interaction",
+      "tests": ["tests/Yii2/yii2_installer_directory_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_installer_directory_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V03-selection-modal-responsive-focus",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated assignment-order selection journey at 320x568",
+      "tests": ["tests/Yii2/yii2_preopening_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_preopening_browser_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V04-V06-payment-modal-financial-layout",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated OTIZ snapshot/payment journey with financial table viewport matrix",
+      "tests": ["tests/Yii2/yii2_otiz_shlz_ui_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_shlz_ui_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V09-public-shell-skip-link",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "real Yii login shell across required viewport widths",
+      "tests": ["tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "authorization-history-preservation",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "existing authenticated user-access browser journey and independent persisted-facts observation",
+      "tests": ["tests/Yii2/yii2_user_access_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_user_access_browser_001_test.php": "GREEN"}
     }
   ]
 }

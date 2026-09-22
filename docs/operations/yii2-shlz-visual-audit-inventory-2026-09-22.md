@@ -38,5 +38,13 @@ Runtime witness, screenshots и окончательный статус кажд
 Новый isolated login browser test достигает публичного seam и даёт корректный
 V09 RED на отсутствующем skip-link; structural test даёт корректный V02 RED.
 Gate 3 reviewer подтвердил эти два узких evidence, но вернул
-`CHANGES_REQUESTED`: они не покрывают A–G. До решения владельца baseline failures
-не выдаются за RED этого change и не исправляются как неявное расширение scope.
+`CHANGES_REQUESTED`: они не покрывают A–G. Владелец разрешил включить baseline
+restoration. Диагностика установила, что `vendor/` нового worktree был ошибочно
+создан как symlink на старый checkout: Composer classmap загружал старый
+`MainNavigation` без `icon()`, а текущий `ViewSupport` уже вызывал этот метод.
+Это смешивало два source trees и давало 503 при authenticated render.
+
+После удаления только этого symlink и локального `composer install` по текущему
+lockfile GREEN: exact-worktree autoload guard, users HTTP/browser, installers
+browser, preopening browser и OTIZ browser. Production code для baseline не
+менялся; permission/domain contracts не ослаблялись.
