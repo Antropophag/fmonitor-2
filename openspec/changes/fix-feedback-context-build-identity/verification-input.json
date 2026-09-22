@@ -46,7 +46,7 @@
         "tests/Yii2/yii2_feedback_browser_001_test.php"
       ],
       "gate3_expected": {
-        "tests/Yii2/yii2_feedback_browser_001_test.php": "INTENDED_RED"
+        "tests/Yii2/yii2_feedback_browser_001_test.php": "GREEN"
       }
     }
   ]

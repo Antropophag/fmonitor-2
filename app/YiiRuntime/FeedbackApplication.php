@@ -10,6 +10,7 @@ final class FeedbackApplication extends Component
     public Connection|string $db = "db";
     public string $tablePrefix = "";
     public string $buildIdentityFile = "";
+    public ?object $buildIdentityFilesystem = null;
     public string $appVersion = "unknown";
     private MariaDbFeedback $store;
     public function init(): void
@@ -124,25 +125,52 @@ final class FeedbackApplication extends Component
     }
     private function readBuildIdentity(string $path): string
     {
+        if ($path === '' || !str_starts_with($path, '/') || str_contains($path, "\0")) {
+            return 'unknown';
+        }
+        $filesystem = $this->buildIdentityFilesystem ?? new class {
+            public function open(string $path): mixed { return @fopen($path, 'rb'); }
+            public function stat(mixed $handle): array|false { return @fstat($handle); }
+            public function read(mixed $handle, int $length): string|false { return @fread($handle, $length); }
+            public function pathStat(string $path): array|false { return @lstat($path); }
+            public function close(mixed $handle): void { @fclose($handle); }
+        };
+        $handle = null;
         try {
-            if ($path === '' || str_contains($path, "\0") || !file_exists($path) || is_link($path)) {
+            $handle = $filesystem->open($path);
+            if (!is_resource($handle)) {
                 return 'unknown';
             }
-            $stat = lstat($path);
-            if (!is_array($stat) || (($stat['mode'] ?? 0) & 0170000) !== 0100000 || ($stat['nlink'] ?? 0) !== 1) {
+            $before = $filesystem->stat($handle);
+            $value = $filesystem->read($handle, 66);
+            $after = $filesystem->stat($handle);
+            $final = $filesystem->pathStat($path);
+            if (!is_array($before) || !is_array($after) || !is_array($final) || !is_string($value)) {
                 return 'unknown';
             }
-            $permissions = ($stat['mode'] ?? 0) & 0777;
-            if (($permissions & 0222) !== 0 || ($permissions & 0444) === 0 || ($stat['size'] ?? 0) < 64 || ($stat['size'] ?? 0) > 65) {
+            $keys = ['mode', 'nlink', 'size', 'dev', 'ino', 'mtime', 'ctime'];
+            foreach ($keys as $key) {
+                if (!array_key_exists($key, $before) || !array_key_exists($key, $after) || !array_key_exists($key, $final)
+                    || $before[$key] !== $after[$key] || $before[$key] !== $final[$key]) {
+                    return 'unknown';
+                }
+            }
+            $permissions = $before['mode'] & 0777;
+            if (($before['mode'] & 0170000) !== 0100000 || $before['nlink'] !== 1 || $before['size'] !== 65
+                || ($permissions & 0222) !== 0 || ($permissions & 0444) === 0
+                || preg_match('/^[0-9a-f]{64}\n$/D', $value) !== 1) {
                 return 'unknown';
             }
-            $value = file_get_contents($path);
-            if (!is_string($value) || preg_match('/^[0-9a-f]{64}\n?$/D', $value) !== 1) {
-                return 'unknown';
-            }
-            return rtrim($value, "\n");
+            return substr($value, 0, 64);
         } catch (\Throwable) {
             return 'unknown';
+        } finally {
+            if (is_resource($handle)) {
+                try {
+                    $filesystem->close($handle);
+                } catch (\Throwable) {
+                }
+            }
         }
     }
 }
