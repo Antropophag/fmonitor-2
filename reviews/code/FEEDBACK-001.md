@@ -118,3 +118,26 @@ No other findings. The closed route allowlist and return links reject the review
 - Package exact-source GREEN records: owner/application/HTTP/concurrency `1790096624355553000-999951fd52e34dfd9de09e3c0659987d`; connected browser `1790096635355051000-51babeeb30f34ea3b279daeb004c6c2e`; unchanged strict readiness `1790096653292252000-2ed040cf9b674721a2baf86037a362b6`. Each exits 0 and binds exact source `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`.
 - The remaining planner-listed bounded obligations were independently reconfirmed GREEN during this rereview: `python3 tests/Deployment/pilot_jobs_compose_001_test.py`, `python3 tests/Verification/change_verification_001_test.py`, and `python3 tests/Verification/architecture_guard_001_test.py`. `git diff --check` and changed PHP syntax remain clean. The forbidden local full suite was not run.
 - This approval is Gate 5 for the reviewed exact candidate. GitHub exact-source CI, PR publication, merge, deployment and live enforcement remain `UNKNOWN` until their own evidence exists; this verdict does not make those states GREEN.
+
+## Issue #172 post-CI Gate 5 delta review — 2026-09-22
+
+### Disposition
+
+- Reviewer: independent `gpt-5.6-sol / low` agent `/root/issue172_final_review`; author of no production, test, specification, Gate 3 or correction artifact.
+- Reviewed source: committed HEAD `effc89cacdadd1459b9c663c3c0ad074f9ffb788` plus the prepared post-CI delta; exact candidate source `fffc8dac670078c5b9e89fdb3840906a03843ddba3e95cfb956df22f4dff21c0`; executable source `47b7901279e56c9827f28ac9459010a24a3e81aad5a08e286e113ffa23e83a07`.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173826Z-2b8d7a2abd/package.json`, SHA-256 `6c78bb425db57984aa46932d30a77cb3220f01189a074c8674230485e3e0f6c0`; required-context SHA-256 `07c79d5092b1a60987b12efc8a131b7e1c35de0e9b663806e0c56a269bafac58`; verification-plan SHA-256 `ade191101b0857148ab57456420c4c01a044ca244473f3c56d0693129e3a3149`.
+- Verdict: **APPROVED**. Complete findings list: **none**.
+
+### Delta review
+
+- The only behavior-affecting delta after the preceding APPROVED Gate 5 is in `tests/Verification/change_verification_semantic_closure_153_test.py:182-191`. After copying the shipped policy into its disposable repository, the fixture now appends its synthetic exact `FeedbackApplication` owner only when no shipped capability owner already explicitly contains that path.
+- This is a setup correction, not an admission bypass. Without the condition, the newly shipped `feedback-application` owner and the unconditional fixture owner manufacture `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS` before the intended semantic-closure assertion executes. With the condition, current repositories exercise the real shipped owner; historical/fixture repositories lacking it still receive the same synthetic owner and execute the same protected-path scenario.
+- Planner ambiguity enforcement remains covered and unchanged: the fixture does not remove or coalesce actual owners, alter policy matching, inject verifier success, change semantic escalation, or weaken missing-owner/multiple-owner failures. `change_verification_placement_181_test.py` imports this fixture, so the same manufactured duplicate causally accounts for both CI consumers.
+- The full current diff confirms no production, route, security, replay/history, build-reader, readiness, schema or runtime policy behavior changed after the approved candidate. Adding the two failed consumers to the verification input makes the refreshed plan explicitly schedule the affected regression surface.
+
+### CI inventory and evidence
+
+- Failed exact-source CI run `35758901037` remains a historical failure. The complete primary inventory contains exactly two `REGRESSION_FAILURE` consumers: `tests/Verification/change_verification_placement_181_test.py` and `tests/Verification/change_verification_semantic_closure_153_test.py`, both with the same fixture-created `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS` cause. Aggregate `verify` failed consequentially; all other categories were GREEN. This review does not relabel that run.
+- Independent Gate 3 approved the fixture delta with no findings. During this review the corrected consumers are GREEN: semantic closure 11/11; placement 22/22 with `VERIFY_OK`.
+- Refreshed package evidence is exact-source GREEN for owner/application/HTTP/concurrency `1790098647849504000-febd0b42850c471aa7ce214cda8d67e1`, connected browser `1790098659872182000-d3f7295504c04cad92709aec7858335f`, and unchanged strict readiness `1790098680041924000-ab1d5902029d4a8eaed83848ae78043e`; all bind source `fffc8dac670078c5b9e89fdb3840906a03843ddba3e95cfb956df22f4dff21c0` and exit 0. `git diff --check` is clean.
+- This superseding Gate 5 approval covers the reviewed exact delta. Because source changed after failed run `35758901037`, a new matching exact-source CI run is still required; CI/merge/deployment/live enforcement remain non-GREEN until their own evidence exists. The forbidden local full suite was not run.

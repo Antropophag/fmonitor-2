@@ -19,6 +19,8 @@
     "tests/Yii2/yii2_feedback_browser_001_test.php",
     "tests/Yii2/feedback_browser.mjs",
     "tests/Runtime/runtime_readiness_load_001_test.php",
+    "tests/Verification/change_verification_placement_181_test.py",
+    "tests/Verification/change_verification_semantic_closure_153_test.py",
     "reviews/tests/FEEDBACK-001.md",
     "reviews/code/FEEDBACK-001.md"
   ],

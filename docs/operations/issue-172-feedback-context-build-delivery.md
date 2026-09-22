@@ -73,3 +73,22 @@ correction и rebase final reviewer дал `APPROVED`, findings none, для HEA
 `3179ff5d7098ebce56b23117f131367f0095cda8b700c669259a771dea16524f`.
 Append-only история verdicts: `reviews/tests/FEEDBACK-001.md` и
 `reviews/code/FEEDBACK-001.md`. PR/CI пока `UNKNOWN`.
+
+## Exact-source CI
+
+- PR: `#238`; первый run `35758901037` на HEAD `effc89ca` завершился FAIL.
+- Полный failed-job inventory: `governance` failed; aggregate `verify` failed только
+  из-за governance. `plan`, `fast`, `unit`, обе integration shards и `e2e` GREEN;
+  `harness` штатно skipped, `quality-results` GREEN.
+- Полный `REGRESSION_FAILURE` inventory содержит ровно два consumer-файла:
+  `tests/Verification/change_verification_placement_181_test.py` и
+  `tests/Verification/change_verification_semantic_closure_153_test.py`. Оба падали
+  на одном `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS` для
+  `app/YiiRuntime/FeedbackApplication.php`; aggregate verify новых failures не добавил.
+- Причина: shipped policy теперь содержит реального `feedback-application` owner,
+  а semantic-closure fixture безусловно добавлял второй synthetic owner. Fixture
+  теперь добавляет synthetic owner только при отсутствии shipped exact owner;
+  missing-owner и ambiguity fail-closed cases сохранены.
+- Оба affected consumer’а после correction GREEN (`22/22 VERIFY_OK`, `11/11`).
+  Independent Gate 3 test-delta и Gate 5 delta reviews `APPROVED`, findings none.
+  Failed run остаётся исторической evidence; требуется новый exact-source CI run.

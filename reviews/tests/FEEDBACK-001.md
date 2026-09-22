@@ -305,3 +305,24 @@ None. Cursor traversal is required by the existing A5 public pagination contract
 ### Required changes
 
 None. The test-mechanic delta is approved for exact candidate `5fa304af4a4335bbe897a7f8fda84d95b5dc41f1910c965699b1767df1331ca4`. Independent Gate 5 rereview remains required for production and final acceptance.
+
+## Post-CI Gate 3 test-delta review — 2026-09-22
+
+- Reviewer: independent `gpt-5.6-sol / low` Gate 3 agent `/root/issue172_gate3`
+- Review type: regression-fixture delta only; this is **not** Gate 5 and does not turn the failed CI run GREEN
+- Reviewed source: base `effc89cacdadd1459b9c663c3c0ad074f9ffb788` + retained snapshot `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173410Z-5afec9eb1e/snapshot/source.patch`, SHA-256 `205b21cf9ddb156c1879f6f2ad4ddec8dd7fcf9ce786045ba0f242e8f2b45335`; exact candidate source `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260922T173410Z-5afec9eb1e/package.json`, SHA-256 `0361c6421204eb521b2498163a1de3f37d916c01ada55b5104c3822dfa9a428c`; verification-plan SHA-256 `33d343e1e44550921016a1e62108da0e17388314a71cf6376136ded921f8137c`
+- Failed CI evidence reviewed: run `35758901037`; complete primary inventory is governance failure with exactly two `REGRESSION_FAILURE` files, `tests/Verification/change_verification_placement_181_test.py` and `tests/Verification/change_verification_semantic_closure_153_test.py`, both caused by `PROTECTED_CAPABILITY_OWNER_AMBIGUOUS`; aggregate verify failed only through governance and all other categories were GREEN. This failed run remains historical failure evidence.
+- Test delta: in `SemanticClosure.test_repository_evidenced_yii_application_contract_is_protected`, append the exact one-path synthetic feedback owner only when the copied shipped policy does not already contain an owner whose `patterns` explicitly includes `app/YiiRuntime/FeedbackApplication.php`
+- Corrected consumer evidence: `change_verification_placement_181_test.py` local GREEN, 22/22 plus `VERIFY_OK`; `change_verification_semantic_closure_153_test.py` local GREEN, 11/11. Mapped exact-source GREEN records: owner `1790098389354248000-750779a2165544659b8ead818bc896b7`, browser `1790098399769568000-341d7768e8e64adcb6550bd8ea69b432`, readiness `1790098420857223000-ec34386755574268bb1151b8b298d080`; all bind exact candidate `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7` and executable source `47b7901279e56c9827f28ac9459010a24a3e81aad5a08e286e113ffa23e83a07`.
+- Verdict: `APPROVED`
+
+### Findings
+
+None. The fixture previously appended an unconditional exact owner after copying the shipped policy. Once this slice legitimately added the repository-owned `feedback-application` capability for the same exact path, the fixture itself manufactured two owners and failed before reaching its semantic-closure oracle. The conditional preserves the original negative/compatibility behavior: repositories without an exact shipped owner still receive the synthetic fixture owner and continue exercising the protected-feedback-path case; repositories with the shipped owner use that real ownership and no longer create artificial ambiguity. It does not relax planner ambiguity detection, change production policy, supply verifier results, or bypass the semantic escalation assertions.
+
+The placement consumer imports this fixture, so the same setup correction causally explains both inventory failures. Its focused 22/22 `VERIFY_OK` and the semantic-closure 11/11 result demonstrate that their existing ownership, placement and closure assertions still run. Mapped feedback/readiness checks remain exact-source GREEN.
+
+### Required changes
+
+None. The post-CI test delta is approved for exact candidate `1e5513266d3f8dbfbf3a92c6f0a6672b26cf8ae201476eb5e0b7f7111e156df7`. Run `35758901037` remains failed; publication requires a new exact-source CI result and the required independent final review state.
