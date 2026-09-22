@@ -13,6 +13,6 @@
 
 ## 3. Delivery
 
-- [ ] 3.1 Obtain independent final review
+- [x] 3.1 Obtain independent final review
 - [ ] 3.2 Run one exact-source GitHub CI consumer
 - [ ] 3.3 Open PR without merge/deploy
