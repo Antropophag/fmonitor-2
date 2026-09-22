@@ -119,14 +119,17 @@ class StandTargetComposeContract(unittest.TestCase):
         result = subprocess.run(["docker", "compose", "-f", str(COMPOSE), "--profile", "jobs", "--profile", "deployment", "config", "--format", "json"], env=environment, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(0, result.returncode, result.stderr)
         services = json.loads(result.stdout)["services"]
-        self.assertEqual({"db", "prepare", "stage-runtime-secrets", "local-integration", "migrate", "php", "web", "jobs-worker", "jobs-scheduler"}, set(services))
+        self.assertEqual({"db", "prepare", "stage-runtime-secrets", "local-integration", "migrate", "startup-check", "php", "web", "jobs-worker", "jobs-scheduler"}, set(services))
         self.assertEqual(["bin/fmonitor2-run-with-local-integration-config"], services["local-integration"]["entrypoint"])
         self.assertEqual("SIGTERM", services["local-integration"]["stop_signal"])
         self.assertIn("/run/fmonitor-local-integration", services["local-integration"]["tmpfs"][0])
         self.assertEqual(["php", "bin/yii", "schema-migrate/run", "--interactive=0"], services["migrate"]["command"])
+        self.assertEqual(["php", "bin/fmonitor2-runtime-check.php"], services["startup-check"]["command"])
+        self.assertEqual("service_completed_successfully", services["startup-check"]["depends_on"]["migrate"]["condition"])
         self.assertEqual(["php", "bin/yii", "jobs/worker", "--interactive=0"], services["jobs-worker"]["command"])
         self.assertEqual(["php", "bin/yii", "jobs/scheduler", "--interactive=0"], services["jobs-scheduler"]["command"])
-        for name in ("php", "jobs-worker", "jobs-scheduler"):
+        self.assertEqual("service_completed_successfully", services["php"]["depends_on"]["startup-check"]["condition"])
+        for name in ("jobs-worker", "jobs-scheduler"):
             self.assertEqual("service_completed_successfully", services[name]["depends_on"]["migrate"]["condition"])
         self.assertFalse(any(volume.get("target") == "/run/fmonitor-secrets" for volume in services["local-integration"].get("volumes", [])))
         self.assertNotIn("rapid-pilot", COMPOSE.read_text())

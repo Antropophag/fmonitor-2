@@ -477,8 +477,7 @@
         "app/RuntimeRestore/RuntimeRecovery.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php",
-        "app/RuntimeRestore/RuntimeRecoverySchemaV33.php"
+        "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
@@ -496,7 +495,7 @@
         "app/Runtime/RuntimeConfiguration.php",
         "app/Runtime/RuntimeReadiness.php",
         "app/Runtime/RuntimeStartupAttestation.php",
-        "app/InstallationProcess/RuntimeReadinessMarkerSchemaMigration.php"
+        "app/InstallationProcess/MariaDbPilotStartupState.php"
       ],
       "verifiers": [
         "tests/Verification/canonical_integration_runtime_001_test.py"

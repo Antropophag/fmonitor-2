@@ -5,7 +5,7 @@
 
 ## 2. Minimal implementation
 
-- [x] 2.1 Add catalogue marker, exact build identity and atomic startup attestation.
+- [x] 2.1 Add existing-DB identity, exact build identity and atomic startup attestation.
 - [x] 2.2 Make regular readiness bounded and wire startup-check before php.
 - [x] 2.3 Pass focused schema/runtime/compose checks and architecture check.
 

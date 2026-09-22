@@ -20,11 +20,11 @@ Before: HTTP bootstrap checked storage/DB availability; controller called
 RuntimeReadiness, which performed the full schema-fingerprint walk. PHP and web
 healthchecks independently hit the endpoint every five seconds.
 
-After: canonical migration v33 owns one database-identity marker. A one-shot
+After: existing v32 catalogue and canonical table metadata provide database identity. A one-shot
 startup-check follows migration and precedes PHP; the existing runtime-check
 invalidates stale evidence, performs full schema compatibility and atomically
 publishes a private DB/schema/build/prefix-bound result. Each steady probe checks
-storage, a current connection, SELECT 1, the singleton marker and that result.
+storage, a current connection, SELECT 1, one identity lookup and that result.
 No ERP, Bitrix or SMTP call was added.
 
 ## Focused evidence
@@ -73,7 +73,7 @@ worktree were removed afterward.
 - Final independent review, exact-source GitHub CI, PR creation and reconciliation
   with then-current main remain pending.
 - Arbitrary unsupported DDL drift after a successful startup is not continuously
-  fingerprinted; marker loss/change, update/restart startup check and existing
+  fingerprinted; identity change, update/restart startup check and existing
   operation guards fail closed at their owned seams.
 - Live image startup and requested UI smokes await exact-source CI because local
   dependencies are absent and concurrent laptop load made another build unsafe.

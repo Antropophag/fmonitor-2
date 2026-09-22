@@ -13,8 +13,8 @@ final class MariaDbRuntimeReadiness
     {
         $connection = self::connect($config);
         try {
-            $connection->query('SELECT 1')->fetch_row();
-            RuntimeStartupAttestation::assertApplicable($config,self::marker($connection,$config));
+            Schema\MariaDbPilotStartupState::assertAvailable($connection);
+            RuntimeStartupAttestation::assertApplicable($config,Schema\MariaDbPilotStartupState::readinessMarker($connection,$config->value('FMONITOR_PROCESS_TABLE_PREFIX')));
         } finally {
             $connection->close();
         }
@@ -22,7 +22,7 @@ final class MariaDbRuntimeReadiness
 
     public static function assertDeepReady(RuntimeConfiguration $config):array
     {
-        $connection=self::connect($config);try{self::assertSchema($connection,$config);return self::marker($connection,$config);}finally{$connection->close();}
+        $connection=self::connect($config);try{self::assertSchema($connection,$config);return Schema\MariaDbPilotStartupState::readinessMarker($connection,$config->value('FMONITOR_PROCESS_TABLE_PREFIX'));}finally{$connection->close();}
     }
 
     public static function assertAvailable(RuntimeConfiguration $config): void
@@ -47,11 +47,6 @@ final class MariaDbRuntimeReadiness
             throw new \RuntimeException('DATABASE_UNAVAILABLE');
         }
         return $connection;
-    }
-
-    private static function marker(\mysqli $connection,RuntimeConfiguration $config):array
-    {
-        try{$table=$config->value('FMONITOR_PROCESS_TABLE_PREFIX').'fm2_runtime_readiness_marker';$row=$connection->query("SELECT database_id,schema_version FROM `{$table}` WHERE singleton_id=1")->fetch_assoc();if($row===null||(int)$row['schema_version']!==Schema\RuntimeReadinessMarkerSchemaMigration::VERSION)throw new \RuntimeException();return['databaseId'=>(string)$row['database_id'],'schemaVersion'=>(int)$row['schema_version']];}catch(\Throwable){throw new \RuntimeException('STARTUP_NOT_READY');}
     }
 
     private static function assertSchema(\mysqli $connection, RuntimeConfiguration $config): void
@@ -79,8 +74,7 @@ final class MariaDbRuntimeReadiness
                 || !Schema\MariaDbAssignmentOrderIdentityRegistrySourceShape::compatible($connection, $prefix)
                 || !Schema\AssignmentOrderSelectionSchemaMigration::isReady($connection, $prefix)
                 || !Schema\AssignmentOrderApplicationSchemaMigration::isReady($connection, $prefix)
-                || !Schema\AssignmentOrderSelectionUnknownEmploymentSchemaMigration::isReady($connection, $prefix)
-                || !Schema\RuntimeReadinessMarkerSchemaMigration::isCompleteCompatible($connection,$prefix)) throw new \RuntimeException();
+                || !Schema\AssignmentOrderSelectionUnknownEmploymentSchemaMigration::isReady($connection, $prefix)) throw new \RuntimeException();
             $collation = Schema\MariaDbAssignmentOrderIdentityRegistryCatalog::collation($connection);
             if ($collation === null) throw new \RuntimeException();
             foreach ([Schema\AssignmentOrderIdentityRegistryDefinitionSchemaMigration::REGISTRY,

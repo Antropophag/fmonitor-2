@@ -40,7 +40,6 @@ final class ProductionPilotMigrationCatalogue
             30=>LegacyControlEngineerImportSchemaMigration::class,
             31=>EquipmentFactsSchemaMigration::class,
             32=>ObjectDetailsEditingMigration::class,
-            33=>RuntimeReadinessMarkerSchemaMigration::class,
         ];
     }
 }

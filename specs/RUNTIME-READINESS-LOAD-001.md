@@ -14,9 +14,9 @@
 - `GET|HEAD /health/ready` сохраняет текущий JSON и HTTP 200/503 semantics.
 - `bin/fmonitor2-runtime-check.php` остаётся deployment CLI полной read-only
   проверки совместимости и при успехе атомарно публикует startup attestation.
-- Canonical migration catalogue остаётся единственным каталогом схемы. Его новый
-  bounded singleton marker идентифицирует database/schema frontier; отдельного
-  каталога или health framework нет.
+- Canonical migration catalogue остаётся единственным каталогом схемы. Bounded
+  identity существующей canonical DB/table metadata идентифицирует database/schema
+  instance; нового marker/table, каталога или health framework нет.
 
 ## 2. Startup attestation
 
@@ -28,7 +28,8 @@ schema fingerprints и required local storage. Failure не публикует �
 
 Успешный attestation связывается как минимум с:
 
-- database marker, созданным current migration catalogue и отличающим другую БД;
+- database identity из server/database/canonical-table metadata, отличающим другую
+  или пересозданную БД;
 - current catalogue schema version;
 - deterministic identity exact application build;
 - process table prefix и configured database name;
@@ -47,8 +48,8 @@ schema fingerprints и required local storage. Failure не публикует �
 1. проверить current required local storage;
 2. установить direct connection к configured MariaDB с текущими timeout;
 3. выполнить дешёвый `SELECT 1`;
-4. одним bounded lookup прочитать current database marker;
-5. проверить private startup attestation против marker, schema version, build,
+4. одним bounded lookup прочитать current database identity;
+5. проверить private startup attestation против identity, schema version, build,
    database и prefix.
 
 Steady probe не выполняет schema fingerprints, migrations, advisory locks, DDL,
@@ -61,9 +62,9 @@ HTTP 200.
 
 - Missing/incompatible schema, failed/incomplete migration или failed deep check
   не допускают `php` и не дают readiness success.
-- Drop/corruption marker после startup, смена database/prefix/build или rollback
-  state без соответствующего marker дают 503 до нового успешного startup-check.
-- Несколько одновременных HTTP probes только читают marker/attestation и никогда
+- Смена database/server/table identity, prefix/build или rollback state без
+  соответствующего identity дают 503 до нового успешного startup-check.
+- Несколько одновременных HTTP probes только читают identity/attestation и никогда
   не запускают несколько deep checks.
 - DB unavailable после startup немедленно даёт readiness 503, while liveness
   продолжает отвечать в прежнем формате.
