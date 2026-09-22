@@ -1,12 +1,6 @@
 const warning = 'Результат сохранения не подтверждён. Проверьте актуальные документы перед повторной отправкой.';
 const active = new WeakSet();
 
-try {
-  if (!window.location.hash && sessionStorage.getItem('fm2.completion.redirect') === '1') history.replaceState(null, '', '#completion');
-  sessionStorage.removeItem('fm2.completion.redirect');
-} catch {}
-for (const history of document.querySelectorAll('#completion .fm2-detail-group')) history.open = true;
-
 const unlock = form => {
   active.delete(form);
   for (const button of form.querySelectorAll('button[type="submit"], input[type="submit"]')) button.disabled = false;
@@ -45,8 +39,10 @@ document.addEventListener('submit', async event => {
       redirect: 'follow',
     });
     if (response.redirected && response.ok) {
-      try { sessionStorage.setItem('fm2.completion.redirect', '1'); } catch {}
-      window.location.assign(response.url);
+      const destination = new URL(response.url, window.location.href);
+      destination.hash = 'completion';
+      if (destination.href === window.location.href) window.location.reload();
+      else window.location.assign(destination);
       return;
     }
     const type = response.headers.get('content-type') || '';
