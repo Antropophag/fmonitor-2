@@ -11,6 +11,6 @@
 
 ## 3. Gate 5
 
-- [ ] 3.1 Получить независимый final review exact candidate.
+- [x] 3.1 Получить независимый final review exact candidate.
 - [ ] 3.2 Запустить один exact-source GitHub CI и зафиксировать полный результат.
 - [ ] 3.3 Подготовить PR-ready ветку/PR без merge/deploy.

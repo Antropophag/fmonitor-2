@@ -29,4 +29,4 @@ Complete local regression-failure inventory: `yii2_object_queue_lineage_001_test
 
 ## Remaining gates
 
-Independent Gate 5, PR publication and one exact-source GitHub CI run are pending. Full local `make test` / `make verify` was not run.
+Independent Gate 5: `APPROVED`, no findings, recorded in `reviews/code/CURRENT-CHECKLIST-STAGE-001.md`. PR publication and one exact-source GitHub CI run are pending. Full local `make test` / `make verify` was not run.
