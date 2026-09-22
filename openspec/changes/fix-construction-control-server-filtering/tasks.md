@@ -7,9 +7,9 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 Executor implements shared server predicate and URL controls
-- [ ] 2.2 Preserve local sync/photo/shipment behavior and pass focused checks
-- [ ] 2.3 Verify PR #226 effective details without duplicating its owner
+- [x] 2.1 Executor implements shared server predicate and URL controls
+- [x] 2.2 Preserve local sync/photo/shipment behavior and pass focused acceptance
+- [x] 2.3 Verify PR #226 effective details without duplicating its owner
 
 ## 3. Delivery
 
