@@ -17,7 +17,9 @@ try {
   const form=page.locator('[data-completion-form="correct_declaration"]');
   assert.equal(await form.count(),1,'INTENDED_RED completion recovery form hook');
   const initialDetails=form.locator('xpath=ancestor::details');
-  if(!(await initialDetails.evaluate(node=>node.open)))await initialDetails.locator('summary').click();
+  assert.equal(await initialDetails.evaluate(node=>node.open),false,'ordinary correction starts closed');
+  await initialDetails.locator('summary').click();
+  assert.equal(await initialDetails.evaluate(node=>node.open),true,'user opens correction form');
   await form.locator('textarea[name="reason"]').fill('Черновик после неизвестного результата');
   await form.locator('input[name="declarationDetails"]').fill('Д-BROWSER-RECOVERY');
 
