@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use FMonitor2\YiiRuntime\ViewSupport;
-use FMonitor2\YiiRuntime\Assets\AssetVersion;
 use FMonitor2\InstallationProcess\ObjectDetailsReferenceCatalogue;
 use yii\helpers\Html;
 
@@ -305,5 +304,4 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
     </main>
     </div>
 </article>
-<script type="module" src="/pilot/assets/<?= Html::encode(AssetVersion::file('completion.js')) ?>"></script>
 <?php ViewSupport::end($this);

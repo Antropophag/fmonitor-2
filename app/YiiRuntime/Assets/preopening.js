@@ -166,3 +166,68 @@ if(detailsDialog&&detailsTrigger){
   detailsDialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   if(detailsDialog.hasAttribute('data-object-details-invalid')){detailsDialog.showModal();detailsDialog.querySelector('[aria-invalid="true"]')?.focus();}
 }
+
+const completionWarning = 'Результат сохранения не подтверждён. Проверьте актуальные документы перед повторной отправкой.';
+const activeCompletionForms = new WeakSet();
+const unlockCompletionForm = form => {
+  activeCompletionForms.delete(form);
+  for (const button of form.querySelectorAll('button[type="submit"], input[type="submit"]')) button.disabled = false;
+};
+const showUnknownCompletionResult = form => {
+  let message = form.querySelector('[data-completion-unknown]');
+  if (!message) {
+    message = document.createElement('p');
+    message.className = 'fm2-completion-error';
+    message.dataset.completionUnknown = '';
+    message.setAttribute('role', 'alert');
+    form.prepend(message);
+  }
+  message.textContent = completionWarning;
+  unlockCompletionForm(form);
+};
+document.addEventListener('submit', async event => {
+  const form = event.target.closest?.('form[data-completion-form]');
+  if (!form) return;
+  event.preventDefault();
+  if (activeCompletionForms.has(form)) return;
+  activeCompletionForms.add(form);
+  for (const button of form.querySelectorAll('button[type="submit"], input[type="submit"]')) button.disabled = true;
+  try {
+    const body = new URLSearchParams();
+    for (const [name, value] of new FormData(form)) if (typeof value === 'string') body.append(name, value);
+    const response = await fetch(form.getAttribute('action'), {
+      method: 'POST', body, credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, redirect: 'follow',
+    });
+    if (response.redirected && response.ok) {
+      const destination = new URL(response.url, window.location.href);
+      destination.hash = 'completion';
+      if (destination.href === window.location.href) window.location.reload();
+      else window.location.assign(destination);
+      return;
+    }
+    const type = response.headers.get('content-type') || '';
+    if (![409, 422].includes(response.status) || !type.toLowerCase().includes('text/html')) {
+      showUnknownCompletionResult(form); return;
+    }
+    const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const replacement = parsed.querySelector('#completion');
+    const current = document.querySelector('#completion');
+    if (!replacement || !current) { showUnknownCompletionResult(form); return; }
+    current.replaceWith(replacement);
+    const panel = replacement.closest('[role="tabpanel"]');
+    const tab = panel?.id ? document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`) : null;
+    if (panel && tab) {
+      for (const sibling of panel.parentElement.querySelectorAll(':scope > [role="tabpanel"]')) sibling.hidden = sibling !== panel;
+      for (const candidate of tab.parentElement.querySelectorAll('[role="tab"]')) {
+        candidate.setAttribute('aria-selected', candidate === tab ? 'true' : 'false');
+        candidate.tabIndex = candidate === tab ? 0 : -1;
+      }
+    }
+    const target = replacement.querySelector('[data-completion-focus="true"]');
+    target?.scrollIntoView({block: 'center'});
+    target?.focus({preventScroll: true});
+  } catch {
+    showUnknownCompletionResult(form);
+  }
+});
