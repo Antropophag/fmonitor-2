@@ -9,7 +9,9 @@ final class FeedbackApplication extends Component
 {
     public Connection|string $db = "db";
     public string $tablePrefix = "";
-    public string $appVersion = "";
+    public string $buildIdentityFile = "";
+    public ?object $buildIdentityFilesystem = null;
+    public string $appVersion = "unknown";
     private MariaDbFeedback $store;
     public function init(): void
     {
@@ -17,9 +19,10 @@ final class FeedbackApplication extends Component
         if (is_string($this->db)) {
             $this->db = \Yii::$app->get($this->db);
         }
-        if (!($this->db instanceof Connection) || preg_match('/^[A-Za-z0-9._-]{1,80}$/D', $this->appVersion) !== 1) {
+        if (!($this->db instanceof Connection)) {
             throw new \RuntimeException("Invalid feedback configuration.");
         }
+        $this->appVersion = $this->readBuildIdentity($this->buildIdentityFile);
         $this->store = new MariaDbFeedback($this->db, $this->tablePrefix);
     }
     public function submit(int $actorId, string $requestId, string $description, string $pagePath): array
@@ -88,18 +91,26 @@ final class FeedbackApplication extends Component
             "/pilot/objects",
             "/pilot/installers",
             "/pilot/construction-control",
+            "/pilot/calendar",
+            "/pilot/dashboard",
             "/pilot/admin/users",
+            "/pilot/users",
             "/pilot/admin/roles",
             "/pilot/feedback",
             "/pilot/admin/feedback",
+            "/pilot/otiz",
+            "/pilot/otiz/objects",
+            "/pilot/otiz/payments",
+            "/pilot/otiz/history",
         ];
         if (in_array($path, $simple, true)) {
             return [$path, null];
         }
         $patterns = [
-            '#^/pilot/objects/([1-9]\d{0,18})(?:/(?:checklist|assignment-order/selection|execution))?$#',
+            '#^/pilot/objects/([1-9]\d{0,18})(?:/(?:checklist|assignment-order/(?:prepare|selection)|execution|deadline-certificates))?$#',
             '#^/pilot/construction-control/objects/([1-9]\d{0,18})/checklist$#',
             '#^/pilot/objects/([1-9]\d{0,18})/assignment-orders/([1-9]\d{0,18})/originals/(?:submit|history)$#',
+            '#^/pilot/otiz/snapshots/([1-9]\d{0,18})$#',
         ];
         foreach ($patterns as $p) {
             if (
@@ -107,9 +118,59 @@ final class FeedbackApplication extends Component
                 filter_var($m[1], FILTER_VALIDATE_INT) !== false &&
                 (!isset($m[2]) || filter_var($m[2], FILTER_VALIDATE_INT) !== false)
             ) {
-                return [$path, (int) $m[1]];
+                return [$path, str_starts_with($path, '/pilot/objects/') || str_starts_with($path, '/pilot/construction-control/objects/') ? (int) $m[1] : null];
             }
         }
         return $fallback;
+    }
+    private function readBuildIdentity(string $path): string
+    {
+        if ($path === '' || !str_starts_with($path, '/') || str_contains($path, "\0")) {
+            return 'unknown';
+        }
+        $filesystem = $this->buildIdentityFilesystem ?? new class {
+            public function open(string $path): mixed { return @fopen($path, 'rb'); }
+            public function stat(mixed $handle): array|false { return @fstat($handle); }
+            public function read(mixed $handle, int $length): string|false { return @fread($handle, $length); }
+            public function pathStat(string $path): array|false { return @lstat($path); }
+            public function close(mixed $handle): void { @fclose($handle); }
+        };
+        $handle = null;
+        try {
+            $handle = $filesystem->open($path);
+            if (!is_resource($handle)) {
+                return 'unknown';
+            }
+            $before = $filesystem->stat($handle);
+            $value = $filesystem->read($handle, 66);
+            $after = $filesystem->stat($handle);
+            $final = $filesystem->pathStat($path);
+            if (!is_array($before) || !is_array($after) || !is_array($final) || !is_string($value)) {
+                return 'unknown';
+            }
+            $keys = ['mode', 'nlink', 'size', 'dev', 'ino', 'mtime', 'ctime'];
+            foreach ($keys as $key) {
+                if (!array_key_exists($key, $before) || !array_key_exists($key, $after) || !array_key_exists($key, $final)
+                    || $before[$key] !== $after[$key] || $before[$key] !== $final[$key]) {
+                    return 'unknown';
+                }
+            }
+            $permissions = $before['mode'] & 0777;
+            if (($before['mode'] & 0170000) !== 0100000 || $before['nlink'] !== 1 || $before['size'] !== 65
+                || ($permissions & 0222) !== 0 || ($permissions & 0444) === 0
+                || preg_match('/^[0-9a-f]{64}\n$/D', $value) !== 1) {
+                return 'unknown';
+            }
+            return substr($value, 0, 64);
+        } catch (\Throwable) {
+            return 'unknown';
+        } finally {
+            if (is_resource($handle)) {
+                try {
+                    $filesystem->close($handle);
+                } catch (\Throwable) {
+                }
+            }
+        }
     }
 }

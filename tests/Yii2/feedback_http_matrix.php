@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 // Included by FEEDBACK-001; real Yii transport, no controller mocks.
-$f->start();$guest=[];$admin=[];$ordinary=[];
+$httpBuild='cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';$httpBuildFile=feedbackBuildFile($f,$httpBuild,'http');
+$f->start(extraEnvironment:['FMONITOR_RUNTIME_BUILD_ID_FILE'=>$httpBuildFile]);$guest=[];$admin=[];$ordinary=[];
 $r=$f->request('GET','/pilot/feedback?from=%2Fpilot%2Fobjects',[],$guest);assertSameValue(303,$r['status'],'guest feedback login');
 assertSameValue(303,$f->login($admin)['status'],'admin login');assertSameValue(303,$f->login($ordinary,'ordinary.person@shlz.ru')['status'],'ordinary login');
 $form=$f->request('GET','/pilot/feedback?from='.rawurlencode('/pilot/objects/1450?token=SECRET'),[],$ordinary);assertSameValue(200,$form['status'],'feedback form');
@@ -12,10 +13,11 @@ $r=$f->request('POST','/pilot/feedback',array_replace($fields,['description'=>['
 $r=$f->request('POST','/pilot/feedback',array_replace($fields,['description'=>' ']),$ordinary);assertSameValue(422,$r['status'],'empty description HTTP');assertSameValue($fields['requestId'],feedbackInput($r['body'],'requestId'),'validation keeps request');
 $r=$f->request('POST','/pilot/feedback',$fields,$ordinary);assertSameValue(200,$r['status'],'saved confirmation');assertSameValue(true,str_contains($r['body'],'Обращение сохранено'),'clear success');assertSameValue(true,str_contains($r['body'],'href="/pilot/objects/1450"'),'safe return');
 $before=feedbackFacts($f);$r=$f->request('POST','/pilot/feedback',$fields,$ordinary);assertSameValue(200,$r['status'],'HTTP repeat');assertSameValue($before,feedbackFacts($f),'HTTP repeat no duplicate');
-$latest=$owner->listing(9101)['items'][0];assertSameValue(['2.0',1450],[$latest['appVersion'],$latest['objectId']],'server version and derived object');$httpId=$latest['id'];
+$latest=$owner->listing(9101)['items'][0];assertSameValue([$httpBuild,1450],[$latest['appVersion'],$latest['objectId']],'server build and derived object');$httpId=$latest['id'];
 $r=$f->request('GET','/pilot/admin/feedback',[],$ordinary);assertSameValue(403,$r['status'],'ordinary list forbidden');assertSameValue(false,str_contains($r['body'],'HTTP описание'),'list privacy');
 $r=$f->request('POST',"/pilot/admin/feedback/$httpId/result",['_csrf'=>$fields['_csrf'],'requestId'=>feedbackUuid(800),'result'=>'Нет'],$ordinary);assertSameValue(403,$r['status'],'ordinary result forbidden');
 $listing=$f->request('GET','/pilot/admin/feedback',[],$admin);assertSameValue(200,$listing['status'],'admin list');assertSameValue(false,str_contains($listing['body'],'<script>alert('),'stored XSS escaped');assertSameValue(true,str_contains($listing['body'],'&lt;script&gt;'),'literal escaped text');
+assertSameValue(true,str_contains($listing['body'],'Исходный экран'),'operator context label');assertSameValue(true,str_contains($listing['body'],'Сборка'),'operator build label');assertSameValue(true,str_contains($listing['body'],$httpBuild),'operator sees persisted full build');
 $resultFields=['_csrf'=>$f->csrf($listing['body']),'requestId'=>feedbackUuid(801),'result'=>'HTTP проверено'];
 $r=$f->request('POST',"/pilot/admin/feedback/$httpId/result",$resultFields,$admin);assertSameValue(true,in_array($r['status'],[200,303],true),'HTTP result success');$before=feedbackFacts($f);
 $r=$f->request('POST',"/pilot/admin/feedback/$httpId/result",$resultFields,$admin);assertSameValue(true,in_array($r['status'],[200,303],true),'HTTP result replay');assertSameValue($before,feedbackFacts($f),'HTTP result replay no duplicate');

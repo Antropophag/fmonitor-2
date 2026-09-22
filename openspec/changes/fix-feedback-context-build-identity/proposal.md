@@ -1,0 +1,25 @@
+## Why
+
+Существующая обратная связь FEEDBACK-001 сохраняет маркетинговую строку `2.0` вместо идентификатора реально работающей сборки и сводит новые пользовательские экраны к `/pilot/objects`. Перед ОПЭ оператор должен видеть неизменяемые достоверные факты о сборке и исходном экране обращения, не расширяя сбор данных и не создавая новую систему обращений.
+
+## What Changes
+
+- Активный пользователь отправляет обращение через существующий `FeedbackApplication`; сохранённый контекст остаётся точным для разрешённых user-facing GET-экранов актуального router: календаря, дашборда, действующих экранов ОТиЗ и уже поддержанных объектных экранов.
+- Общая feedback-ссылка передаёт только path текущего экрана; query, fragment, токены и иные чувствительные параметры не сохраняются. Allowlist остаётся закрытым и не принимает произвольный `/pilot/*`, download/export, служебные или изменяющие endpoints.
+- `object_id` извлекается только из разрешённых объектных маршрутов. Идентификатор расчёта ОТиЗ, обращения или иной сущности не становится object ID.
+- При первом принятии обращения сохраняется полный server-owned build identifier из уже сформированного неизменяемого runtime build-файла. Недоступная или недостоверная identity сохраняется как `unknown`; HTTP не запускает source hashing, Git, Docker API или внешние запросы.
+- Replay с прежним `requestId` возвращает исходную запись после смены сборки и не меняет её build/context; изменённое пользовательское содержание остаётся конфликтом. Текущая build identity не входит в fingerprint команды.
+- Существующий административный список явно показывает сохранённые исходный экран и сборку. Схема и readiness-контракт не меняются.
+
+## Capabilities
+
+### New Capabilities
+
+- `runtime/feedback-context-build-identity`: ограниченная коррекция FEEDBACK-001 для безопасного исходного экрана, server-owned build identity, replay и операторского просмотра.
+
+### Modified Capabilities
+
+
+## Impact
+
+Изменяются нормативный контракт `specs/FEEDBACK-001.md`, существующие Yii feedback application/composition и адресные application/HTTP/browser тесты. Возможны изменения `app/YiiRuntime/FeedbackApplication.php`, `app/YiiRuntime/MainNavigation.php`, `config/yii/common.php` и узкого reader/composition helper для runtime build-файла. `MariaDbFeedback`, поле `app_version VARCHAR(80)`, формы подтверждения/возврата и административный список переиспользуются; новая миграция, новая release/telemetry система и изменения readiness не требуются. Источник — issue #172 и актуальный `origin/main` `bced877a`, содержащий #140, #228 и #234–#237. Merged readiness/status/ОТиЗ corrections остаются вне scope и не изменяются.
