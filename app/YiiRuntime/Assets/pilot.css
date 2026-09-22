@@ -1348,12 +1348,13 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-role-filter .shlz-select__option { display: flex; gap: 16px; justify-content: space-between; }
 .fm2-role-filter .shlz-select__option small { color: var(--fm2-muted); font-size: 11px; }
 .fm2-user-toolbar .fm2-installer-filters { padding: 0; border: 0; }
-.fm2-user-table th:nth-child(1) { inline-size: 17%; }
-.fm2-user-table th:nth-child(2) { inline-size: 18%; }
-.fm2-user-table th:nth-child(3) { inline-size: 13%; }
-.fm2-user-table th:nth-child(4) { inline-size: 24%; }
-.fm2-user-table th:nth-child(5) { inline-size: 12%; }
-.fm2-user-table th:nth-child(6) { inline-size: 16%; }
+.fm2-user-table { inline-size: max-content; min-inline-size: 1180px; table-layout: fixed; }
+.fm2-user-table th:nth-child(1) { inline-size: 190px; }
+.fm2-user-table th:nth-child(2) { inline-size: 220px; }
+.fm2-user-table th:nth-child(3) { inline-size: 150px; }
+.fm2-user-table th:nth-child(4) { inline-size: 330px; }
+.fm2-user-table th:nth-child(5) { inline-size: 140px; }
+.fm2-user-table th:nth-child(6) { inline-size: 150px; }
 .fm2-invitation-reissue { min-inline-size: 140px; white-space: normal; word-break: normal; }
 .fm2-user-table :is(th, td) { padding-inline: 16px; }
 .fm2-role-stack { display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center; padding-block: 4px; }
@@ -1569,7 +1570,8 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-calendar-event-link strong { font-size: 12px; font-weight: 600; }
 .fm2-calendar-event-link:hover strong { text-decoration: underline; text-underline-offset: 2px; }
 .fm2-calendar-cell-empty { color: var(--fm2-muted); opacity: .55; }
-.fm2-calendar-agenda { min-block-size: 240px; padding: 18px; border-radius: var(--fm2-radius); background: var(--fm2-surface); }
+.fm2-calendar-agenda { min-block-size: 240px; max-block-size: min(680px,calc(100dvh - 180px)); padding: 18px; overflow: hidden; border-radius: var(--fm2-radius); background: var(--fm2-surface); }
+.fm2-calendar-agenda [data-calendar-agenda] { max-block-size: min(590px,calc(100dvh - 280px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .fm2-calendar-agenda header { padding-block-end: 13px; border-block-end: 1px solid var(--fm2-border); }
 .fm2-calendar-agenda h2 { margin: 0; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .fm2-calendar-agenda header p { margin: 3px 0 0; color: var(--fm2-muted); font-size: 12px; }
@@ -1840,7 +1842,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media (max-width: 760px) { .fm2-object-workspace > .fm2-next-action { margin: 14px 14px 10px; padding: 16px; } .fm2-object-workspace > .fm2-completion { margin-inline: 14px; padding: 12px 14px; } .fm2-object-workspace > .fm2-completion-action { grid-template-columns: 1fr; } .fm2-completion > header { align-items: flex-start; flex-direction: column; gap: 6px; } .fm2-completion-steps, .fm2-completion-form { grid-template-columns: 1fr; } .fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: 1fr; } .fm2-next-action .fm2-inline-form:has(#actualStartDate) { align-items: stretch; flex-direction: column; } .fm2-open-date { align-items: stretch; flex-direction: column; } .fm2-open-date .shlz-input { inline-size: 100%; } .fm2-next-action .fm2-action-stack { justify-content: flex-start; } }
 @media (max-width: 620px) { .fm2-check-closeout { align-items: stretch; flex-direction: column; padding: 18px; } .fm2-check-closeout > .shlz-button { width: 100%; } }
 
-.fm2-feedback-surface { padding: 24px; }
+.fm2-feedback-surface { inline-size: min(100%, 780px); padding: 24px; }
 .fm2-feedback-form { display: grid; gap: 16px; max-inline-size: 75ch; }
 .fm2-feedback-form .shlz-field,
 .fm2-feedback-form .shlz-field__control,
@@ -1854,7 +1856,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
   border-radius: 12px;
 }
 .fm2-feedback-textarea { min-block-size: 120px; resize: vertical; border-radius: 12px; }
-@media (max-width: 680px) { .fm2-feedback-surface { padding: 18px 14px; } }
+@media (max-width: 680px) { .fm2-feedback-surface { inline-size: 100%; padding: 18px 14px; } }
 
 /* Register controls wrap as a group while preserving the shared field geometry. */
 .fm2-otiz-register-toolbar { flex-wrap: wrap; }
@@ -2111,3 +2113,7 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-otiz-payment-dialog:not([open]){display:none}
 .fm2-legacy-links{display:grid;gap:0}.fm2-legacy-link-row{display:grid;grid-template-columns:minmax(180px,.7fr) minmax(0,1fr);gap:16px;padding:12px 0;align-items:end;border-block-end:1px solid var(--fm2-border)}.fm2-legacy-link-row:last-child{border-block-end:0}.fm2-legacy-link-row form{display:grid;grid-template-columns:minmax(180px,280px) max-content;gap:10px;align-items:end}.fm2-legacy-link-row .shlz-field__control{min-block-size:40px;background:#fff;border:1px solid var(--fm2-border);border-radius:10px}.fm2-legacy-link-row .shlz-input{min-block-size:38px;background:transparent}.fm2-legacy-link-row .shlz-button{min-block-size:40px}
 @media(max-width:680px){.fm2-legacy-link-row,.fm2-legacy-link-row form{grid-template-columns:1fr}.fm2-legacy-link-row .shlz-button{inline-size:100%}}
+.fm2-role-table{inline-size:max-content;min-inline-size:900px;table-layout:fixed}.fm2-role-table .fm2-role-column{inline-size:190px}.fm2-role-table .fm2-permissions-column{inline-size:480px}.fm2-role-table .fm2-role-status-column{inline-size:120px}.fm2-role-table .fm2-role-count-column{inline-size:110px}
+.fm2-certificate-heading+.fm2-panel input[type=file]::file-selector-button{min-block-size:36px;margin-inline-end:10px;padding:0 14px;color:var(--fm2-ink);background:var(--fm2-filter);border:0;border-inline-end:1px solid var(--fm2-border);font:inherit;cursor:pointer}.fm2-certificate-heading+.fm2-panel input[type=date]{color:var(--fm2-ink);font:inherit}
+@media(max-width:680px){.fm2-calendar-layout{min-inline-size:0}.fm2-calendar-grid-wrap{max-inline-size:100%;overflow-x:auto;overscroll-behavior-inline:contain}.fm2-calendar-grid-wrap .shlz-calendar-grid{min-inline-size:760px}.fm2-calendar-agenda{max-block-size:520px}.fm2-calendar-agenda [data-calendar-agenda]{max-block-size:430px}.fm2-user-directory>.shlz-table-wrap,.fm2-role-surface{max-inline-size:100%;overflow-x:auto;overscroll-behavior-inline:contain}.fm2-user-table{display:table;min-inline-size:1180px}.fm2-user-table :is(thead,tbody){display:table-row-group}.fm2-user-table thead{display:table-header-group}.fm2-user-table tr{display:table-row}.fm2-user-table :is(th,td){display:table-cell}.fm2-control-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.fm2-control-header p{grid-column:1/-1}.fm2-control-filters{inline-size:100%}.fm2-control-filters>*{max-inline-size:100%}.fm2-control-filters>.shlz-button{inline-size:100%}}
+@media(max-width:680px){.fm2-calendar-grid{max-inline-size:100%;overflow-x:auto;overscroll-behavior-inline:contain}.fm2-calendar-grid table{min-inline-size:760px}}
