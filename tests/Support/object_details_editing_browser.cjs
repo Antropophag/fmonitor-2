@@ -1,4 +1,4 @@
-const [base,cookiesJson,moduleRoot]=process.argv.slice(2);
+const [base,cookiesJson,moduleRoot,materialCode,materialLabel]=process.argv.slice(2);
 const{chromium}=require(moduleRoot);
 (async()=>{
   const browser=await chromium.launch({headless:true});
@@ -17,7 +17,16 @@ const{chromium}=require(moduleRoot);
     await dialog.getByRole('button',{name:'Отмена'}).click();const cancelClosed=!(await dialog.isVisible());
     await trigger.click();await page.keyboard.press('Escape');const escapeClosed=!(await dialog.isVisible());
     await trigger.click();await dialog.click({position:{x:2,y:2}});const backdropClosed=!(await dialog.isVisible());
-    await trigger.click();await dialog.getByLabel('Заводской номер').fill('00123-А');await dialog.getByRole('button',{name:'Сохранить'}).click();await page.waitForLoadState('domcontentloaded');await page.getByRole('tab',{name:'История'}).click();const savedHistory=await page.getByText(/Заводской номер:.*00123-А/).count()>0;
-    process.stdout.write(JSON.stringify({groups,hasKshah,closeTarget:!!box&&box.width>=40&&box.height>=40,cancelClosed,escapeClosed,backdropClosed,initialFocus,savedHistory}));
+    await trigger.click();
+    let submitted=null;page.on('request',candidate=>{if(candidate.method()==='POST'&&candidate.url().endsWith('/pilot/objects/4512/details'))submitted=new URLSearchParams(candidate.postData()||'');});
+    await dialog.getByRole('combobox',{name:/Материал шахты/}).click();
+    await dialog.getByRole('option',{name:materialLabel,exact:true}).click();
+    await dialog.getByRole('button',{name:'Сохранить'}).click();
+    await page.waitForLoadState('domcontentloaded');
+    const validationOpen=await dialog.isVisible();let savedHistory=false;
+    if(!validationOpen){await page.getByRole('tab',{name:'История'}).click();savedHistory=await page.getByText(new RegExp(`Материал шахты:.*${materialLabel}`)).count()>0;}
+    if(submitted===null)throw new Error('details POST was not observed');
+    const patchKeys=[...submitted.keys()].filter(key=>!['_csrf','requestId','expectedRevision'].includes(key)).sort();
+    process.stdout.write(JSON.stringify({groups,hasKshah,closeTarget:!!box&&box.width>=40&&box.height>=40,cancelClosed,escapeClosed,backdropClosed,initialFocus,savedHistory,validationOpen,patchKeys}));
   }finally{await browser.close();}
 })().catch(error=>{process.stderr.write(error.stack||String(error));process.exit(1)});

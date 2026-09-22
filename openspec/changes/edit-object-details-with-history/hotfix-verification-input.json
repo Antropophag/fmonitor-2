@@ -1,0 +1,33 @@
+{
+  "change": "edit-object-details-with-history-hotfix",
+  "planned_paths": [
+    "specs/OBJECT-DETAILS-EDITING-001.md",
+    "openspec/changes/edit-object-details-with-history/specs/objects/object-details-editing/spec.md",
+    "openspec/changes/edit-object-details-with-history/tasks.md",
+    "app/YiiRuntime/Assets/preopening.js",
+    "tests/Support/object_details_editing_browser.cjs",
+    "tests/Support/object_details_editing_recovery_browser.cjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Yii2/yii2_object_details_editing_browser_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OBJECT-DETAILS-EDITING-001",
+      "acceptance_id": "A16-browser-changed-field-patch",
+      "spec_path": "specs/OBJECT-DETAILS-EDITING-001.md",
+      "seam": "Playwright canonical card material edit with varied unchanged legacy speed representations",
+      "tests": [
+        "tests/Yii2/yii2_object_details_editing_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_object_details_editing_browser_001_test.php": "INTENDED_RED"
+      },
+      "fixture_reachability": {
+        "tests/Yii2/yii2_object_details_editing_browser_001_test.php": {
+          "boundary": "object-details-browser-fixture",
+          "probe_kind": "fixture_read_only"
+        }
+      }
+    }
+  ]
+}

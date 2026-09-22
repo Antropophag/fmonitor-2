@@ -5,14 +5,14 @@
 <span data-result-count>
 <?=$pagination['total']?> объектов</span>
 </header>
-<div class="fm2-control-tools">
-<label class="shlz-field fm2-control-search"><span class="shlz-field__label">Поиск объектов</span><span class="shlz-field__control"><img src="/pilot/assets/shlz-icons/search.svg" data-shlz-icon="search" alt=""><input class="shlz-input" type="search" data-control-search placeholder="Адрес или регистрационный номер"></span></label>
+<form class="fm2-control-tools" method="get" action="/pilot/construction-control" data-control-filter-form>
+<label class="shlz-field fm2-control-search"><span class="shlz-field__label">Поиск объектов</span><span class="shlz-field__control"><img src="/pilot/assets/shlz-icons/search.svg" data-shlz-icon="search" alt=""><input class="shlz-input" type="search" name="query" value="<?=Html::encode($filters['query'])?>" data-control-search placeholder="Адрес или регистрационный номер"></span></label>
 <div class="fm2-control-filters"><fieldset class="shlz-segment shlz-segment--sm" aria-label="Принадлежность объектов">
-<label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="mine" checked><span class="shlz-segment__label">Мои</span></label>
-<label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="all"><span class="shlz-segment__label">Все</span></label>
+<label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="mine" <?=$filters['ownership']==='mine'?'checked':''?>><span class="shlz-segment__label">Мои</span></label>
+<label class="shlz-segment__option"><input class="shlz-segment__input" type="radio" name="ownership" value="all" <?=$filters['ownership']==='all'?'checked':''?>><span class="shlz-segment__label">Все</span></label>
 </fieldset>
-<label class="shlz-choice fm2-completed-switch"><input class="shlz-checkbox" type="checkbox" data-show-completed><span>Показывать завершённые</span></label></div>
-</div>
+<label class="shlz-choice fm2-completed-switch"><input class="shlz-checkbox" type="checkbox" name="completed" value="1" data-show-completed <?=$filters['completed']==='1'?'checked':''?>><span>Показывать завершённые</span></label><button class="shlz-button shlz-button--secondary" type="button" data-clear-filters>Сбросить фильтры</button></div>
+</form>
 <div class="fm2-control-surface"><table class="fm2-control-table"><thead><tr><th>Объект</th><th>Последняя активность</th><th><span class="fm2-visually-hidden">Отгрузка</span></th><th>Инженер</th><th><span class="fm2-visually-hidden">Открыть</span></th></tr></thead>
 <tbody>
 <?php foreach($objects as$o):$engineer=$o['controlEngineer'];$shipmentDate=$o['fullShipmentDate']??$o['firstShipmentDate']??null;$shipmentState=($o['fullShipmentDate']??null)!==null?'full':(($o['firstShipmentDate']??null)!==null?'partial':'unknown');$shipmentTitle=$shipmentState==='full'?'Полностью отгружен':($shipmentState==='partial'?'Частично отгружен':'Не известно');$shipmentLabel=$shipmentDate===null?$shipmentTitle:$shipmentTitle.', '.(new DateTimeImmutable((string)$shipmentDate))->format('d.m.Y');?>
@@ -40,11 +40,10 @@
 <?php endforeach?>
 </tbody>
 </table>
-<div class="fm2-empty fm2-control-empty" data-control-empty hidden>
+<div class="fm2-empty fm2-control-empty" data-control-empty <?=$pagination['total']===0?'':'hidden'?>>
 <strong>Объекты не найдены</strong>
-<button class="shlz-button shlz-button--secondary" type="button" data-clear-filters>Сбросить фильтры</button>
 </div>
-<footer class="fm2-control-footer"><span data-list-summary>Показано <?=count($objects)?> из <?=$pagination['total']?></span><?=ViewSupport::pagination('/pilot/construction-control',(int)$pagination['page'],(int)$pagination['pages'],(int)$pagination['total'],50,[],'Страницы стройконтроля')?></footer></div></section>
+<footer class="fm2-control-footer"><span data-list-summary>Показано <?=count($objects)?> из <?=$pagination['total']?></span><?=ViewSupport::pagination('/pilot/construction-control',(int)$pagination['page'],(int)$pagination['pages'],(int)$pagination['total'],50,$filters,'Страницы стройконтроля')?></footer></div></section>
 <script src="/pilot/assets/control-queue.js" defer>
 </script>
 <?php ViewSupport::end($this);

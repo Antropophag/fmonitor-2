@@ -16,7 +16,7 @@ try {
     assertSameValue(303,$f->selection($fkr)['status'],'selected assigned engineer');
     $assigned=[];assertSameValue(303,$f->login($assigned,73)['status'],'assigned engineer login');
     $substitute=[];assertSameValue(303,$f->login($substitute,95)['status'],'substitute engineer login');
-    $selectedOnly=$f->facts();$notReady=$f->request('GET','/pilot/construction-control',[],$assigned);
+    $selectedOnly=$f->facts();$notReady=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);
     assertSameValue(200,$notReady['status'],'selected-only queue');
     assertSameValue(false,str_contains($notReady['body'],'data-object-id="4512"'),'selection without original absent');
     assertSameValue($selectedOnly,$f->facts(),'selected-only read-only');
@@ -26,7 +26,7 @@ try {
     $replacement=$f->form('/pilot/objects/4512/control-engineer-assignment',['_csrf'=>$f->token($fkr),'requestId'=>'52525252-0040-4525-8525-000000000001','engineerUserId'=>'95','expectedRevision'=>'1'],$fkr);
     assertSameValue(303,$replacement['status'],'standalone current engineer replacement');
     assertSameValue($selectionBytes,json_encode($f->rows('fm2_assignment_order_selections')[0],JSON_THROW_ON_ERROR),'replacement preserves historical selected engineer snapshot');
-    $before=$f->facts();$queue=$f->request('GET','/pilot/construction-control',[],$assigned);
+    $before=$f->facts();$queue=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);
     assertSameValue(200,$queue['status'],'ready queue');
     assertSameValue(1,substr_count($queue['body'],'data-object-id="4512"'),'INTENDED_RED ready object appears once');
     assertSameValue(true,str_contains($queue['body'],'data-engineer-id="95"'),'standalone current engineer drives projection');
@@ -35,10 +35,10 @@ try {
     $queueHead=$f->request('HEAD','/pilot/construction-control',[],$assigned);
     assertSameValue([200,''],[$queueHead['status'],$queueHead['body']],'ready queue HEAD');
     assertSameValue($before,$f->facts(),'ready queue HEAD read-only');
-    $selected=$f->rows('fm2_assignment_order_selections')[0];$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".str_repeat('0',64)."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);$stale=$f->request('GET','/pilot/construction-control',[],$assigned);assertSameValue(false,str_contains($stale['body'],'data-object-id="4512"'),'stale original root does not satisfy current selection');$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".$f->db->real_escape_string($selected['composition_sha256'])."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);
-    $f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=95 WHERE assignment_sequence=2");$corruptQueue=$f->request('GET','/pilot/construction-control',[],$assigned);assertSameValue(503,$corruptQueue['status'],'#40 corrupt standalone fails closed without selection or legacy fallback');$f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=73 WHERE assignment_sequence=2");
+    $selected=$f->rows('fm2_assignment_order_selections')[0];$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".str_repeat('0',64)."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);$stale=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);assertSameValue(false,str_contains($stale['body'],'data-object-id="4512"'),'stale original root does not satisfy current selection');$f->db->query("UPDATE {$f->p}fm2_assignment_order_selections SET composition_sha256='".$f->db->real_escape_string($selected['composition_sha256'])."' WHERE assignment_order_id=".(int)$selected['assignment_order_id']);
+    $f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=95 WHERE assignment_sequence=2");$corruptQueue=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);assertSameValue(503,$corruptQueue['status'],'#40 corrupt standalone fails closed without selection or legacy fallback');$f->db->query("UPDATE {$f->p}fm2_control_engineer_assignments SET previous_engineer_user_id=73 WHERE assignment_sequence=2");
     $f->insert($f->p.'fm2_pilot_completion_facts',['installation_case_id'=>6101,'fact_type'=>'pto_act','fact_date'=>'2026-09-01','details'=>'','recorded_at'=>'2026-09-01T12:00:00+03:00','recorded_by_user_id'=>18]);
-    $pto=$f->facts();$ptoQueue=$f->request('GET','/pilot/construction-control',[],$assigned);
+    $pto=$f->facts();$ptoQueue=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);
     assertSameValue(false,str_contains($ptoQueue['body'],'data-object-id="4512"'),'ready case with PTO absent');assertSameValue($pto,$f->facts(),'PTO queue read-only');
     $f->db->query("DELETE FROM {$f->p}fm2_pilot_completion_facts WHERE installation_case_id=6101 AND fact_type='pto_act'");
     $before=$f->facts();
@@ -72,9 +72,9 @@ try {
     $after=$f->request('GET','/pilot/construction-control/objects/4512/checklist',[],$substitute);
     assertSameValue(true,str_contains($after['body'],'data-enabled="true"'),'checklist enabled');
     assertSameValue(false,str_contains($after['body'],'name="action" value="open_confirmed"'),'repeat opening absent');
-    assertSameValue(1,substr_count($f->request('GET','/pilot/construction-control',[],$assigned)['body'],'data-object-id="4512"'),'opened object remains in queue');
-    $f->db->query("DELETE FROM {$f->p}fm2_control_engineer_assignments WHERE assignment_sequence=2");$f->db->query("DELETE FROM {$f->p}fm2_control_engineer_assignments WHERE assignment_sequence=1");$bootstrapQueue=$f->request('GET','/pilot/construction-control',[],$assigned);assertSameValue(true,str_contains($bootstrapQueue['body'],'data-engineer-id="73"'),'#40 bootstrap uses coherent native application only');
-    $applicationId=(int)$f->rows('fm2_assignment_order_applications')[0]['application_id'];$f->db->query("UPDATE {$f->p}fm2_assignment_order_applications SET control_engineer_user_id=95 WHERE application_id={$applicationId}");assertSameValue(503,$f->request('GET','/pilot/construction-control',[],$assigned)['status'],'#40 malformed bootstrap does not fall back');$f->db->query("UPDATE {$f->p}fm2_assignment_order_applications SET control_engineer_user_id=73 WHERE application_id={$applicationId}");
+    assertSameValue(1,substr_count($f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned)['body'],'data-object-id="4512"'),'opened object remains in queue');
+    $f->db->query("DELETE FROM {$f->p}fm2_control_engineer_assignments WHERE assignment_sequence=2");$f->db->query("DELETE FROM {$f->p}fm2_control_engineer_assignments WHERE assignment_sequence=1");$bootstrapQueue=$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned);assertSameValue(true,str_contains($bootstrapQueue['body'],'data-engineer-id="73"'),'#40 bootstrap uses coherent native application only');
+    $applicationId=(int)$f->rows('fm2_assignment_order_applications')[0]['application_id'];$f->db->query("UPDATE {$f->p}fm2_assignment_order_applications SET control_engineer_user_id=95 WHERE application_id={$applicationId}");assertSameValue(503,$f->request('GET','/pilot/construction-control?ownership=all&completed=1',[],$assigned)['status'],'#40 malformed bootstrap does not fall back');$f->db->query("UPDATE {$f->p}fm2_assignment_order_applications SET control_engineer_user_id=73 WHERE application_id={$applicationId}");
     $f->noLegacy();
     echo "PASS: YII2-CONSTRUCTION-CONTROL-PREOPENING-001 Yii HTTP\n";
 } finally {if($f instanceof PreopeningFixture)$f->close();}

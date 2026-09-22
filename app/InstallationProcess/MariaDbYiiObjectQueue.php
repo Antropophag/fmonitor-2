@@ -62,7 +62,7 @@ final readonly class MariaDbYiiObjectQueue
             throw new \RuntimeException('Page unavailable.');
         }
         $offset = ($page - 1) * $size;
-        $effective=static fn(string$field,string$column):string=>"CASE WHEN JSON_CONTAINS_PATH(e.values_json,'one','$.{$field}') THEN NULLIF(JSON_UNQUOTE(JSON_EXTRACT(e.values_json,'$.{$field}')),'null') ELSE l.{$column} END";$columns = "c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,".$effective('address','ordadr_address')." ordadr_address,".$effective('entrance','entrance')." entrance,".$effective('regnumber','regnumber')." regnumber,".$effective('zavnumber','zavnumber')." zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id";
+        $effective=static fn(string$field,string$column):string=>MariaDbEffectiveObjectDetails::sqlValue($field,'l.'.$column);$columns = "c.id case_id,c.legacy_installation_object_id,c.process_state,c.actual_start_date,c.opened_at,c.opened_by_user_id,".$effective('address','ordadr_address')." ordadr_address,".$effective('entrance','entrance')." entrance,".$effective('regnumber','regnumber')." regnumber,".$effective('zavnumber','zavnumber')." zavnumber,l.workdatestart,l.workdateendadjusted,l.plan_finish_date,o.status order_status,a.application_id,s.assignment_order_id selection_order_id,v.revision_id original_revision_id";
         $rows = $this->db->createCommand("SELECT {$columns}{$from} ORDER BY l.workdatestart IS NULL,LEFT(l.workdatestart,10),c.legacy_installation_object_id LIMIT {$size} OFFSET {$offset}", $params)->queryAll();
         $objects = [];
         foreach ($rows as $row) {
@@ -121,7 +121,7 @@ final readonly class MariaDbYiiObjectQueue
         $source = "(m.category='native_candidate' OR (m.output_id IS NULL AND d.object_id=c.legacy_installation_object_id AND d.content_sha256=SHA2(d.payload_json,256)))";
         $where = "{$source} AND ({$filter})";
         if ($q !== '') {
-            $value=static fn(string$field,string$column):string=>"CASE WHEN JSON_CONTAINS_PATH(e.values_json,'one','$.{$field}') THEN NULLIF(JSON_UNQUOTE(JSON_EXTRACT(e.values_json,'$.{$field}')),'null') ELSE l.{$column} END";$where .= " AND (CAST(c.legacy_installation_object_id AS CHAR) LIKE :q ESCAPE '\\\\' OR ".$value('regnumber','regnumber')." LIKE :q ESCAPE '\\\\' OR ".$value('zavnumber','zavnumber')." LIKE :q ESCAPE '\\\\' OR ".$value('address','ordadr_address')." LIKE :q ESCAPE '\\\\' OR ".$value('entrance','entrance')." LIKE :q ESCAPE '\\\\')";
+            $value=static fn(string$field,string$column):string=>MariaDbEffectiveObjectDetails::sqlValue($field,'l.'.$column);$where .= " AND (CAST(c.legacy_installation_object_id AS CHAR) LIKE :q ESCAPE '\\\\' OR ".$value('regnumber','regnumber')." LIKE :q ESCAPE '\\\\' OR ".$value('zavnumber','zavnumber')." LIKE :q ESCAPE '\\\\' OR ".$value('address','ordadr_address')." LIKE :q ESCAPE '\\\\' OR ".$value('entrance','entrance')." LIKE :q ESCAPE '\\\\')";
             $params[':q'] = '%' . str_replace(['\\','%','_'], ['\\\\','\\%','\\_'], $q) . '%';
         }
         $from = " FROM `{$p}fm2_installation_cases` c"
