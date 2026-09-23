@@ -9,9 +9,13 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <a class="fm2-back-link" href="<?=$fromControl?'/pilot/construction-control':'/pilot/objects/'.$id?>">
 <?=$fromControl?'Стройконтроль':'Карточка объекта'?>
 </a>
+<div class="fm2-check-topline-actions">
 <div class="fm2-sync-banner" data-sync-banner role="status">
 <span data-sync-copy>Синхронизировано</span>
 <button type="button" data-sync-now hidden>Повторить отправку</button>
+</div>
+<?php $technicalDocuments=$access['technicalDocuments']??['status'=>'unavailable','links'=>[]];$technicalDocument=$technicalDocuments['status']==='available'?($technicalDocuments['links'][0]??null):null;?>
+<?php if(is_array($technicalDocument)):?><a class="fm2-control-document-button" href="<?=Html::encode($technicalDocument['url'])?>" target="_blank" rel="noopener noreferrer" aria-label="Открыть техническую документацию в Битрикс24" title="Открыть техническую документацию в Битрикс24"><img src="/pilot/assets/shlz-icons/folder-file-open.svg" alt=""></a><?php endif?>
 </div>
 </div>
 <div class="fm2-check-object">
@@ -28,15 +32,6 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span data-total-items>0</span> из 41 монтажной работы</span>
 </div>
 </header>
-<?php $technicalDocuments=$access['technicalDocuments']??['status'=>'unavailable','links'=>[]];?>
-<section class="fm2-control-documents" aria-labelledby="fm2-control-documents-title">
-<div class="fm2-control-documents__heading"><div><h2 id="fm2-control-documents-title">Техническая документация</h2><p>Чертежи и материалы по заводскому номеру объекта</p></div><?php if($technicalDocuments['status']==='available'):?><span><?=count($technicalDocuments['links'])?></span><?php endif?></div>
-<?php if($technicalDocuments['status']==='available'):?><div class="fm2-control-documents__list">
-<?php foreach($technicalDocuments['links']as$link):?><a class="fm2-control-document" href="<?=Html::encode($link['url'])?>" target="_blank" rel="noopener noreferrer"><span><?=Html::encode($link['name'])?></span><strong>Открыть в Битрикс24</strong></a><?php endforeach?>
-</div><?php elseif($technicalDocuments['status']==='order_number_missing'):?><p class="fm2-control-documents__state">Документация не привязана: у объекта не указан заводской номер.</p>
-<?php elseif($technicalDocuments['status']==='empty'):?><p class="fm2-control-documents__state">Для этого объекта документация пока не найдена.</p>
-<?php else:?><p class="fm2-control-documents__state">Техническая документация временно недоступна. Чек-лист можно продолжить.</p><?php endif?>
-</section>
 <?php if($access['ready']??false):?><section class="fm2-check-gate fm2-check-opening" role="status"><div><strong>Готов к открытию</strong><span>После открытия пункты чек-листа станут доступны для отметки.</span></div><?php if(is_array($opening)):?><form class="fm2-opening-form" method="post" action="/pilot/objects/<?=$id?>/execution?return=construction-control"><?=Html::hiddenInput('_csrf',$csrf)?><?=Html::hiddenInput('action','open_confirmed')?><?=Html::hiddenInput('requestId',ViewSupport::uuid())?><?=Html::hiddenInput('orderId',(string)$opening['orderId'])?><?=Html::hiddenInput('revisionId',(string)$opening['revisionId'])?><?=Html::hiddenInput('sequence',(string)$opening['sequence'])?><label class="shlz-field"><span class="shlz-field__label">Фактическая дата начала</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="actualStartDate" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button></form><?php else:?><span>Открыть работы может назначенный инженер с необходимыми полномочиями.</span><?php endif?></section>
 <?php elseif(!$enabled):?>
 <div class="fm2-check-gate" role="status">

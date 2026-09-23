@@ -81,7 +81,7 @@ trait MariaDbYiiChecklistRead
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
     $rows=$this->all($sql.' LIMIT '.(int)$size.' OFFSET '.(int)$offset,$params);
-    $documentCounts=$this->technicalDocumentCounts(array_column($rows,'order_number'));
+    $documents=$this->effectiveTechnicalDocuments(array_column($rows,'order_number'));
     foreach($rows as&$r)
         {$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=$r['process_state']!=='working';$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
     $r['registrationNumber']=$r['registration_number'];
@@ -90,9 +90,9 @@ trait MariaDbYiiChecklistRead
     $r['firstShipmentDate']=$r['first_shipment_date'];
     $r['fullShipmentDate']=$r['full_shipment_date'];
     $orderNumber=$r['order_number']??null;
-    if($orderNumber===null||$orderNumber===''){$r['technicalDocumentStatus']='order_number_missing';$r['technicalDocumentCount']=null;}
-    elseif($documentCounts===null){$r['technicalDocumentStatus']='unavailable';$r['technicalDocumentCount']=null;}
-    else{$r['technicalDocumentCount']=$documentCounts[(string)$orderNumber]??0;$r['technicalDocumentStatus']=$r['technicalDocumentCount']>0?'available':'empty';}
+    if($orderNumber===null||$orderNumber===''){$r['technicalDocumentStatus']='order_number_missing';$r['technicalDocument']=null;}
+    elseif($documents===null){$r['technicalDocumentStatus']='unavailable';$r['technicalDocument']=null;}
+    else{$document=$documents[(string)$orderNumber]??null;$r['technicalDocumentStatus']=$document===null?'empty':($document===false?'unavailable':'available');$r['technicalDocument']=is_array($document)?$document:null;}
     $r['_pagination']=['page'=>$page,'pages'=>$pages,'total'=>$total,'pageSize'=>$size];
     }return$rows;
         }
@@ -103,16 +103,17 @@ trait MariaDbYiiChecklistRead
             $orderNumber=(string)$orderNumber;
             try{$rows=$this->all("SELECT DISTINCT source_folder_name,url FROM {$this->t('fm2_bitrix_order_document_links')} WHERE BINARY order_number=BINARY ? ORDER BY source_folder_name,url",[$orderNumber]);}
             catch(\Throwable){return['status'=>'unavailable','links'=>[]];}
-            return['status'=>$rows===[]?'empty':'available','links'=>array_map(static fn(array$row):array=>['name'=>(string)$row['source_folder_name'],'url'=>(string)$row['url']],$rows)];
+            if(count($rows)!==1)return['status'=>$rows===[]?'empty':'unavailable','links'=>[]];
+            return['status'=>'available','links'=>[['name'=>(string)$rows[0]['source_folder_name'],'url'=>(string)$rows[0]['url']]]];
         }
 
-        private function technicalDocumentCounts(array$orderNumbers):?array
+        private function effectiveTechnicalDocuments(array$orderNumbers):?array
         {
             $orders=[];foreach($orderNumbers as$value)if($value!==null&&$value!=='')$orders[(string)$value]=true;$orders=array_keys($orders);
             if($orders===[])return[];
-            try{$rows=$this->all("SELECT order_number,COUNT(DISTINCT source_folder_id) document_count FROM {$this->t('fm2_bitrix_order_document_links')} WHERE BINARY order_number IN (".implode(',',array_fill(0,count($orders),'?')).") GROUP BY order_number",$orders);}
+            try{$rows=$this->all("SELECT DISTINCT order_number,source_folder_name,url FROM {$this->t('fm2_bitrix_order_document_links')} WHERE BINARY order_number IN (".implode(',',array_fill(0,count($orders),'?')).") ORDER BY order_number,source_folder_name,url",$orders);}
             catch(\Throwable){return null;}
-            $counts=[];foreach($rows as$row)$counts[(string)$row['order_number']]=(int)$row['document_count'];return$counts;
+            $documents=[];foreach($rows as$row){$order=(string)$row['order_number'];$document=['name'=>(string)$row['source_folder_name'],'url'=>(string)$row['url']];$documents[$order]=array_key_exists($order,$documents)?false:$document;}return$documents;
         }
 
         public function completion(int $objectId):array{$case=$this->case($objectId,false);

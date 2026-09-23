@@ -13,6 +13,7 @@
 - [x] 2.6 Поддержать реальный root из 19 299 папок: reuse текущих folder ID/name, batch по 50 только для новых/изменённых и fail-closed replacement.
 - [x] 2.7 Оформить техническую документацию в Documents tab как доступный список с количеством, понятным source label и полноценными empty/error states.
 - [x] 2.8 Дать стройконтролю mobile-first доступ: count в queue и touch-friendly ссылки непосредственно в checklist, сохранив authorization и fail-soft states.
+- [x] 2.9 Скомпактить стройконтроль: одна effective ссылка, чёрная `shlz-ui/folder-file-open` рядом с отгрузкой и icon-button в checklist без счётчиков и большой document-секции.
 
 ## 3. Verification and PR
 
