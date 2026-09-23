@@ -361,6 +361,8 @@
     {
       "name": "assignment-order-current-eligibility",
       "patterns": [
+        "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
+        "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
         "app/AssignmentOrderComposition/MariaDbAssignmentOrderCurrentEligibility.php",
         "app/AssignmentOrderComposition/MariaDbCurrentOpeningEligibility.php",
         "app/AssignmentOrderComposition/MariaDbOpeningTemplate.php"

@@ -1,8 +1,9 @@
 {
   "change": "unify-yii2-shlz-ui",
   "planned_paths": [
-    "app/AssignmentOrderComposition/AssignmentOrderSelectionPortalQuery.php",
-    "app/AssignmentOrderComposition/MariaDbSelectionPortalQuery.php",
+    ".quality-graph/verification-policy.json",
+    "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
+    "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
     "app/YiiRuntime/Controllers/SelectionController.php",
     "app/YiiRuntime/PreopeningResources.php",
     "app/YiiRuntime/ViewSupport.php",
