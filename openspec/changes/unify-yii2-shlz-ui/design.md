@@ -58,7 +58,9 @@
 
 ### 6. Проверки сочетают структурные контракты и один bounded visual sweep
 
-Root сначала пишет executable spec и focused RED tests для V02/V03/V04/V06/V09 и preservation invariants. Existing browser runner получает shared assertions; representative pages проверяются глубоко, полный inventory — на общие invariants. Baseline и финальная приёмка снимаются на одной среде/fixtures при 320, 390, 768, 1024, 1280, 1440 и 1920 CSS px, с boundary widths, short height, overlays, 200% zoom/reflow и touch. WebKit заявляется только если реально доступен.
+Root сначала пишет executable spec и focused RED tests для V02/V03/V04/V06/V09 и preservation invariants. Existing browser runner получает shared assertions; representative pages проверяются глубоко, полный inventory — на общие invariants. Основная baseline/final matrix повторяет реальные owner targets: laptop 1366×768 и 1536×864; Redmi Pad 2 Pro landscape 1280×800 и portrait 800×1280; mobile 360×800 и 390×844 CSS px. Для каждого профиля проверяются все 25 views, доступные overlay/open states, open/collapsed navigation, фактическая workspace/container width, long Russian content, touch и local-scroll ownership. 320, breakpoint boundaries, 1920 и 200% zoom/reflow остаются дополнительными stress cases, но не заменяют target matrix. WebKit заявляется только если реально доступен.
+
+Audit выполняется одним batched before-pass с машинным manifest: route, viewport, HTTP status, JS/page errors, document overflow, offscreen interactive controls, intersecting visible text/control rectangles, table-local overflow и screenshot path. Root вручную просматривает полный контактный лист и формирует один consolidated defect inventory. Separate executor исправляет inventory одним пакетом; после него выполняется не более одного batched confirmation pass на той же fixture/environment.
 
 После UI-изменений один раз запускается Impeccable detector по изменённым targets. Architecture impact ожидается только в существующих Yii boundary checks; любые изменения `app/PilotHttp/*.php` вне scope и потребовали бы отдельной квалификации.
 

@@ -104,6 +104,14 @@
 ### Requirement: Проверяемая адаптивность и доступность
 Система SHALL проходить общие browser-инварианты на репрезентативных потребителях и точечные regression cases V02, V03, V04, V06 и V09. Приёмка MUST проверять фактическую доступную ширину workspace, открытые overlays, короткую высоту, длинные данные, touch и 200% browser zoom/reflow; DPR simulation MUST NOT считаться доказательством zoom.
 
+#### Scenario: Owner device matrix для всех активных экранов
+- **WHEN** каждый из 25 активных Yii2 views и его доступные overlay/open states проверяются на 15″ laptop 1366×768 и 1536×864, Redmi Pad 2 Pro landscape 1280×800 и portrait 800×1280, mobile 360×800 и 390×844 CSS px
+- **THEN** документ не получает горизонтальный overflow, shell/navigation не перекрывают content, тексты и controls не пересекаются и не выходят за surface, touch targets остаются достижимы, а широкие data lists сохраняют полный смысл через явно локализованный scroll либо согласованный card variant
+
+#### Scenario: Широкий viewport и узкий workspace
+- **WHEN** sidebar открыт на laptop/tablet и фактическая ширина workspace меньше viewport
+- **THEN** responsive решение определяется доступной шириной owning container, а не только viewport breakpoint; таблица не сжимает заголовки и значения до пересечения и не расширяет весь документ
+
 #### Scenario: Промежуточная ширина и breakpoint
 - **WHEN** browser test проверяет ширину до, на и после фактически оставшегося breakpoint, включая 760–769px
 - **THEN** нет горизонтального overflow документа, скрытых действий, перекрытий или обрезания критичных данных

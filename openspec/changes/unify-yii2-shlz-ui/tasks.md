@@ -60,3 +60,11 @@
 - [ ] 8.3 Подготовить exact-source role package через delivery harness и получить независимый final Gate 5 review с проверкой V01–V09, всех 25 views, preservation invariants, before/after evidence и отсутствия чужого WIP.
 - [ ] 8.4 После `APPROVED` Gate 5 и owner checkpoint запустить один exact-source GitHub CI matrix, собрать полный failed-job/`REGRESSION_FAILURE` inventory при ошибке и не считать UNKNOWN/GitHub недоступность GREEN.
 - [ ] 8.5 Отметить Done только когда exact source имеет GREEN selected CI, APPROVED final review, owner stand checkpoint, просмотренные before/after, полностью заполненный inventory, удалённые заменённые layers и сохранённые behavior/history/security contracts; production deployment и merge оставить владельцу.
+
+## 9. Owner device matrix — 15″ laptop, Redmi Pad 2 Pro и mobile
+
+- [ ] 9.1 Root добавляет red-capable browser geometry assertions для широкого viewport с узким workspace, пересечений heading/cell/control rectangles, document overflow, offscreen actions и local-scroll ownership без привязки к конкретной CSS реализации.
+- [ ] 9.2 Выполнить один batched before-audit всех 25 active Yii2 views и доступных overlay/open states на 1366×768, 1536×864, 1280×800, 800×1280, 360×800 и 390×844 CSS px; сохранить screenshots и machine manifest вне checkout, вручную просмотреть контактный лист и записать полный defect inventory.
+- [ ] 9.3 Separate executor исправляет consolidated inventory одним production package, сохраняя routes, roles, payloads, histories, financial semantics, offline protocol и public shlz ownership; replaced rules удаляются, а не маскируются global clipping.
+- [ ] 9.4 Root запускает не более одного batched confirmation pass на той же matrix/fixtures и проверяет каждый исходный defect, touch targets, overlays, long values, local scroll и отсутствие новых collisions/overflow.
+- [ ] 9.5 После device-matrix delta подготовить свежие exact-source Gate 3 test-delta и Gate 5 packages; прежний owner checkpoint и review не переносятся автоматически.

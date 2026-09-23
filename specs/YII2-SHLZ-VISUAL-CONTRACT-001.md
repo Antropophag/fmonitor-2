@@ -108,14 +108,19 @@
 
 ### G. Responsive и accessibility acceptance
 
-1. Representative browser cases MUST покрывать 320, 390, 768, 1024, 1280, 1440
-   и 1920 CSS px, expanded/collapsed sidebar и границы фактических breakpoints,
-   включая 760–769 px.
-2. Acceptance MUST включать short height, открытые overlays, long Russian data,
-   touch и настоящий 200% browser zoom/reflow. DPR simulation не считается zoom.
-3. Close target object card сохраняет visual 40×40 px и MUST иметь touch target
+1. Каждый из 25 active Yii2 views MUST быть проверен на owner device matrix:
+   15″ laptop 1366×768 и 1536×864; Redmi Pad 2 Pro landscape 1280×800 и
+   portrait 800×1280; mobile 360×800 и 390×844 CSS px. Доступные overlay/open
+   states и expanded/collapsed navigation входят в ту же batched приёмку.
+2. Responsive behavior MUST зависеть от фактической доступной ширины owning
+   workspace/container, а не только от viewport. Широкий viewport с открытым
+   sidebar MUST NOT сжимать table headers, значения или actions до пересечения.
+3. Acceptance MUST включать short height, открытые overlays, long Russian data,
+   touch и настоящий 200% browser zoom/reflow. 320, 760–769, 1920 CSS px и
+   breakpoint boundaries остаются stress cases; DPR simulation не считается zoom.
+4. Close target object card сохраняет visual 40×40 px и MUST иметь touch target
    не менее 44×44 CSS px.
-4. Before/after screenshots MUST быть просмотрены человеком на одной среде и
+5. Before/after screenshots MUST быть просмотрены человеком на одной среде и
    данных; автоматическое принятие текущего дефекта запрещено.
 
 ## Матрица поверхностей
