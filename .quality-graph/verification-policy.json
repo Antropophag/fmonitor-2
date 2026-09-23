@@ -364,6 +364,7 @@
         "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
         "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
         "app/InstallationProcess/InstallerAssignmentLookupIndexSchemaMigration.php",
+        "app/InstallationProcess/MariaDbAssignmentOrderSelectionSchemaCatalog.php",
         "app/AssignmentOrderComposition/MariaDbAssignmentOrderCurrentEligibility.php",
         "app/AssignmentOrderComposition/MariaDbCurrentOpeningEligibility.php",
         "app/AssignmentOrderComposition/MariaDbOpeningTemplate.php"
