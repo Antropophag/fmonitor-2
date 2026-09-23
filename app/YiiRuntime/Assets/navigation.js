@@ -21,7 +21,7 @@ for (const nativeDate of document.querySelectorAll('input[type="date"][name]')) 
     calendarLabel: `Календарь: ${label}`,
     name: nativeDate.name,
     value: nativeDate.value,
-    visibleMonth: nativeDate.value?.slice(0, 7),
+    visibleMonth: nativeDate.value ? nativeDate.value.slice(0, 7) : undefined,
     min: nativeDate.min || undefined,
     max: nativeDate.max || undefined,
     required: nativeDate.required,
@@ -32,7 +32,7 @@ for (const nativeDate of document.querySelectorAll('input[type="date"][name]')) 
   nativeDate.dataset.nativeDateName = nativeDate.name;
   nativeDate.removeAttribute('name');
   nativeDate.disabled = true;
-  (field || nativeDate).hidden = true;
+  (field || nativeDate).classList.add('fm2-native-date-fallback--enhanced');
 }
 const choiceAtom = 'sel' + 'ect';
 const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
