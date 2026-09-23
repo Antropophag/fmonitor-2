@@ -15,4 +15,5 @@ foreach(['objects.php','installers.php','users.php','otiz.php','object-card.php'
 $navigation=(string)file_get_contents($root.'/app/YiiRuntime/Assets/navigation.js');
 assertSameValue(true,str_contains($navigation,"import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js'")&&str_contains($navigation,'enhanceSelects(document)'),'INTENDED_RED official SHLZ behavior imported and initialized');
 foreach(['ShellAssetBundle.php','ObjectQueueAssetBundle.php','PreopeningAssetBundle.php','InstallerDirectoryAssetBundle.php']as$file){$bundle=(string)file_get_contents($root.'/app/YiiRuntime/Assets/'.$file);assertSameValue(true,str_contains($bundle,"'type'=>'module'")||str_contains($bundle,"'type' => 'module'"),'INTENDED_RED navigation module loading '.$file);}
+$preopeningBundle=(string)file_get_contents($root.'/app/YiiRuntime/Assets/PreopeningAssetBundle.php');assertSameValue(true,str_contains($preopeningBundle,"AssetVersion::file('preopening.js')"),'preopening interaction asset is content-versioned with its JSON contract');
 echo "PASS: YII-OPERATIONAL-UI-CONSISTENCY-001 shared SHLZ Select inventory\n";
