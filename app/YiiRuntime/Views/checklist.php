@@ -126,7 +126,7 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <h2>Исполнители работы</h2>
 <p data-installer-item-name>
 </p>
-<button type="button" data-installer-cancel>×</button>
+<button class="shlz-modal__close" type="button" data-installer-cancel aria-label="Закрыть"><span aria-hidden="true">×</span></button>
 </header>
 <div class="shlz-modal__body fm2-installer-dialog__body" data-installer-options>
 </div>
