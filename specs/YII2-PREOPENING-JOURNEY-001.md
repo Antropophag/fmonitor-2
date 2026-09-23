@@ -11,6 +11,16 @@
 Gate1 preparation complete by root under current #76 authority; independent
 Gate3 approval of the complete tests remains required.
 
+## Picker current-assignment read seam
+
+Текущие закрепления монтажника в picker SHALL читаться через именованный
+application query seam модуля `AssignmentOrderComposition`. MariaDB adapter
+MUST ограничивать чтение запрошенными табельными номерами и MUST владеть
+интерпретацией application snapshot и признака документально закрытого объекта.
+Yii composition MUST только получить query и сериализовать результат; она MUST
+NOT читать process tables, декодировать snapshot или определять current/closed
+семантику самостоятельно.
+
 ## Authority и граница
 
 Controlling owner #76: автономная декомпозиция, сохранение текущих сценариев,

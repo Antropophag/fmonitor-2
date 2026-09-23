@@ -6,7 +6,7 @@
 
 Первый Gate 3 вернул `CHANGES_REQUESTED`: isolated login seam доказал V09, но существующие authenticated installers/users/preopening/ОТиЗ journeys на exact main не достигли новых assertions из-за ранних 503/RED. Владелец разрешил включить восстановление этого baseline в change.
 
-Владелец frontend-композиции — `app/YiiRuntime`: Views/ViewSupport формируют HTML, Assets владеют прикладной геометрией и поведением поверх публичных primitive contracts. `shlz-ui` остаётся read-only dependency через публичные exports. Persistence owner и все application/domain seams остаются прежними. `rapid-pilot` не является target и не получает новую логику.
+Владелец frontend-композиции — `app/YiiRuntime`: Views/ViewSupport формируют HTML, Assets владеют прикладной геометрией и поведением поверх публичных primitive contracts. `shlz-ui` остаётся read-only dependency через публичные exports. Persistence owner и state-changing application/domain seams остаются прежними. Добавленный owner-approved read-only picker projection оформляется именованным query seam в `AssignmentOrderComposition`: его MariaDB adapter ограничивает запрос запрошенными табельными номерами и владеет интерпретацией application snapshot/current-completion, а Yii только компонует результат. `rapid-pilot` не является target и не получает новую логику.
 
 ## Goals / Non-Goals
 

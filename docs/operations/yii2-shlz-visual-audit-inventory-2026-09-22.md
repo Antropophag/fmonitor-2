@@ -29,6 +29,40 @@ are additionally captured in `checklist-installer-close-final.png`,
 `object-start-datepicker-final.png` and `construction-390-final-0e5df8bd.png`.
 These are candidate evidence, not owner checkpoint, independent approval or CI.
 
+## Final page inventory — 25 active views
+
+| View | Shared compositions | Preserved exception | Evidence |
+|---|---|---|---|
+| `_otiz-nav.php` | tabs, toolbar | OTIZ role links | OTIZ browser + device matrix |
+| `_otiz-snapshot-list.php` | data-list, status, pagination | full financial values | OTIZ browser + device matrix |
+| `activate.php` | auth surface, Field, feedback | activation token states | visual-contract browser |
+| `calendar.php` | shell, toolbar, surface | public Calendar Grid | visual sweep |
+| `checklist.php` | Field, modal, feedback | offline/replay states | inspection browser + close screenshot |
+| `completion.php` | Field, DatePicker, file control | append-only correction form | documentary browser |
+| `construction-control.php` | data-list, toolbar, pagination | stage filters | device matrix + construction screenshot |
+| `dashboard.php` | shell, surfaces, typography | chart projection | visual sweep |
+| `deadline-certificates.php` | data-list, Field, DatePicker | long history values | documentary browser + geometry sweep |
+| `execution.php` | Field, DatePicker, feedback | command/no-JS form | preopening browser |
+| `feedback-admin.php` | data-list, pagination, feedback | admin-only context | feedback A1–A9 |
+| `feedback-confirmation.php` | feedback surface | terminal confirmation | feedback A1–A9 |
+| `feedback.php` | Field, FAB, feedback | safe source context | feedback A1–A9 + FAB geometry |
+| `installers.php` | data-list, Field, Select, pagination | workforce facts | installer browser + device matrix |
+| `login.php` | auth surface, Field, feedback | login denial | visual-contract browser |
+| `object-card.php` | surfaces, Field, modal, DatePicker | process actions/gallery | preopening browser + DatePicker screenshot |
+| `objects.php` | data-list, toolbar, status, pagination | object queue filters | object-queue browser + device matrix |
+| `original-history.php` | data-list, status | immutable revisions | documentary browser |
+| `original.php` | Field, file control, feedback | PDF/no-JS submission | documentary browser |
+| `otiz-snapshot.php` | data-list, modal, feedback | financial confirmation/idempotency | OTIZ browser + device matrix |
+| `otiz.php` | data-list, toolbar, pagination | calculation/readiness semantics | OTIZ browser + device matrix |
+| `preopening-error.php` | feedback surface | retryable/terminal distinction | preopening journey |
+| `roles.php` | data-list, Field, feedback | permission tags | user-access browser + device matrix |
+| `selection.php` | Field, modal, data-list | installer picker/current assignments | preopening routes/browser + open-state sweep |
+| `users.php` | data-list, Field, pagination | invite/link forms | user-access browser + device matrix |
+
+Каждая строка сохраняет существующие routes, roles, payloads, histories и
+state-changing seams. Изолированные command/no-JS/permission состояния
+проверены указанными fixtures; live stand matrix не подменяет эти witnesses.
+
 ## Owner device matrix before-audit — 2026-09-23
 
 Owner targets: laptop 1366×768 и 1536×864; Redmi Pad 2 Pro landscape

@@ -43,7 +43,7 @@
 
 - [x] 6.1 Согласовать `calendar.php` и `dashboard.php` с shell/toolbar/surface/typography contracts без замены публичного Calendar Grid и с читаемыми chart labels; проверить соответствующие focused/browser suites.
 - [x] 6.2 Согласовать `login.php` и `activate.php` как общий auth layout с едиными fields/error/success/expired states; проверить auth-focused tests с длинным email и denied/expired cases.
-- [ ] 6.3 Заполнить page inventory для всех 25 views: shared compositions, сохранённые исключения с обоснованием и evidence; проверить отсутствие непокрытой строки.
+- [x] 6.3 Заполнить page inventory для всех 25 views: shared compositions, сохранённые исключения с обоснованием и evidence; проверить отсутствие непокрытой строки.
 
 ## 7. CSS/JS cleanup и bounded visual acceptance
 
@@ -56,7 +56,7 @@
 ## 8. Exact-source verification и Done
 
 - [x] 8.1 Запустить только planner-selected bounded local checks и relevant architecture check, включая обязательную PilotHttp qualification лишь если такие файлы неожиданно изменились; записать команды, source digest и все failures без локального full `make test`/`make verify`.
-- [ ] 8.2 Перед публикацией PR обновить локальный стенд `127.0.0.1:8093` от актуального `origin/main`, развернуть поверх него exact candidate без изменения пользовательских данных, показать владельцу `/pilot/objects` и получить явный manual checkpoint.
+- [x] 8.2 Перед публикацией PR обновить локальный стенд `127.0.0.1:8093` от актуального `origin/main`, развернуть поверх него exact candidate без изменения пользовательских данных, показать владельцу `/pilot/objects` и получить явный manual checkpoint. Стенд сохранил данные и exact executable image; owner checkpoint подтверждён прямым поручением 2026-09-23 завершить и опубликовать показанный handoff-candidate с закреплёнными visual decisions.
 - [ ] 8.3 Подготовить exact-source role package через delivery harness и получить независимый final Gate 5 review с проверкой V01–V09, всех 25 views, preservation invariants, before/after evidence и отсутствия чужого WIP.
 - [ ] 8.4 После `APPROVED` Gate 5 и owner checkpoint запустить один exact-source GitHub CI matrix, собрать полный failed-job/`REGRESSION_FAILURE` inventory при ошибке и не считать UNKNOWN/GitHub недоступность GREEN.
 - [ ] 8.5 Отметить Done только когда exact source имеет GREEN selected CI, APPROVED final review, owner stand checkpoint, просмотренные before/after, полностью заполненный inventory, удалённые заменённые layers и сохранённые behavior/history/security contracts; production deployment и merge оставить владельцу.
