@@ -66,6 +66,13 @@ Order ID — immutable identity, не version number. Actor только Yii Use
 body/header/FMONITOR_AUTH_* не задают его. Гость/отозванная session →303 login с
 безопасным return URL. Распознанный route с неверным method →405 с Allow.
 
+Поиск монтажников возвращает для каждой строки только `tabId`, `fullName` и
+`assignments`. Picker показывает ФИО, табельный номер и, только при наличии,
+текущие закрепления с регистрационным номером и адресом объекта. Должность,
+источник интеграции и время синхронизации в picker не показываются. Объект с
+каноническим завершением `pto_act + declaration` не является текущим
+закреплением; append-only факты и история не изменяются.
+
 | Methods | Route suffix after /pilot/objects/{objectId} | Result |
 |---|---|---|
 | GET, HEAD | empty | card200 or non-disclosing404/503 |
