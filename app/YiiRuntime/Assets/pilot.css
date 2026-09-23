@@ -322,7 +322,7 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-nav-group { margin: 14px 13px 3px; color: rgb(255 255 255 / 38%); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .fm2-shell:has(.fm2-nav-state[open]) :is(.fm2-nav-text, .fm2-nav-group, .fm2-logo-name, .fm2-nav-trigger-text) { display: block; }
 .fm2-shell:has(.fm2-nav-state[open]) .fm2-logo { inline-size: 100%; }
-.fm2-feedback-fab { position: fixed; z-index: 60; inset-inline-end: max(20px, env(safe-area-inset-right)); inset-block-end: max(20px, env(safe-area-inset-bottom)); display: grid; inline-size: 48px; block-size: 48px; place-items: center; color: #fff; background: var(--fm2-primary); border-radius: 50%; box-shadow: 0 10px 28px rgb(11 22 35 / 24%); text-decoration: none; }
+.fm2-feedback-fab { position: fixed; z-index: 60; inset-inline-end: max(20px, env(safe-area-inset-right)); inset-block-end: max(20px, env(safe-area-inset-bottom)); display: grid; box-sizing: border-box; inline-size: 48px; block-size: 48px; place-items: center; color: #fff; background: var(--fm2-primary); border: 2px solid var(--fm2-surface); border-radius: 50%; box-shadow: 0 12px 32px rgb(11 22 35 / 30%), 0 3px 8px rgb(11 22 35 / 20%); text-decoration: none; }
 .fm2-feedback-fab:hover { background: var(--fm2-ink); }
 .fm2-feedback-fab:focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: 3px; }
 .fm2-feedback-fab-icon { inline-size: 24px; block-size: 24px; }
@@ -968,7 +968,7 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-selection-modal .shlz-modal__header > div { flex: 1 1 auto; min-inline-size: 0; }
 .fm2-selection-modal .shlz-modal__header p { margin: 4px 0 0; color: var(--fm2-muted); font-size: 12px; }
 .fm2-selection-modal .shlz-modal__close { flex: 0 0 auto; margin-inline-start: auto; }
-.fm2-selection-modal .shlz-modal__close svg, [data-selection-picker] .fm2-picker-chip button svg { inline-size: 18px; block-size: 18px; fill: none; stroke: currentcolor; stroke-width: 1.5; }
+.fm2-selection-modal .shlz-modal__close :is(svg,img), [data-selection-picker] .fm2-picker-chip button :is(svg,img) { inline-size: 18px; block-size: 18px; }
 .fm2-selection-modal .shlz-modal__body { display: grid; grid-auto-rows: max-content; gap: 14px; min-block-size: 360px; overflow: auto; }
 .fm2-selection-modal .fm2-search-field { display: grid; gap: 6px; }
 .fm2-selection-modal .fm2-search-field > span { font-size: 12px; font-weight: 600; }
@@ -977,11 +977,14 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-selection-modal .fm2-picker-result:hover { background: var(--fm2-filter); }
 .fm2-selection-modal .fm2-picker-result > span { display: grid; grid-auto-rows: max-content; gap: 2px; min-inline-size: 0; }
 .fm2-selection-modal .fm2-picker-result small { color: var(--fm2-muted); font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+.fm2-picker-result-assignments { display: grid; gap: 4px; margin-block-start: 5px; }
+.fm2-picker-result-assignments a { display: grid; gap: 1px; min-inline-size: 0; }
+.fm2-picker-result-assignments a :is(strong,span) { overflow-wrap: anywhere; }
 [data-selection-picker] .fm2-picker-selection { display: flex; flex-wrap: wrap; gap: 8px; }
 [data-selection-picker] .fm2-picker-chip { display: inline-flex; max-inline-size: 100%; gap: 7px; padding: 6px 8px 6px 10px; align-items: center; color: var(--fm2-ink); background: #fff; border: 1px solid var(--fm2-border); border-radius: 10px; font-size: 12px; }
 [data-selection-picker] .fm2-picker-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [data-selection-picker] .fm2-picker-chip small { color: var(--fm2-muted); white-space: nowrap; }
-[data-selection-picker] .fm2-picker-chip button { display: grid; inline-size: 24px; block-size: 24px; padding: 0; place-items: center; color: var(--fm2-muted); background: transparent; border: 0; border-radius: 6px; cursor: pointer; }
+[data-selection-picker] .fm2-picker-chip button { display: grid; inline-size: 32px; block-size: 32px; padding: 0; place-items: center; color: var(--fm2-muted); background: transparent; border: 0; border-radius: 6px; cursor: pointer; }
 [data-selection-picker] .fm2-picker-chip button:hover { color: var(--fm2-ink); background: var(--fm2-filter); }
 [data-selection-picker] .fm2-picker-chip button:focus-visible { outline: 2px solid var(--fm2-focus-ring); outline-offset: 1px; }
 [data-selection-picker] .fm2-picker-selection-empty, [data-selection-picker] .fm2-picker-result-meta { color: var(--fm2-muted); font-size: 12px; }

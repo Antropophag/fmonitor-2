@@ -76,6 +76,14 @@ final class SelectionController extends PreopeningController
             if (!is_string($term) || !is_string($page) || !preg_match('/^[1-9][0-9]*$/D', $page)) return $this->status(400);
             $result = $resources->portal()->searchEligibleInstallers($this->actor(), $term, (int) $page);
             if (($result['reasonCode'] ?? null) === 'invalid_query') return $this->status(400);
+            if ($result['status'] === 'found') {
+                $assignments = $resources->currentInstallerAssignments(array_column($result['items'], 'tabId'));
+                $result['items'] = array_map(static fn(array $item): array => [
+                    'tabId' => (int) $item['tabId'],
+                    'fullName' => (string) $item['fullName'],
+                    'assignments' => $assignments[(int) $item['tabId']] ?? [],
+                ], $result['items']);
+            }
             return $result['status'] === 'found'
                 ? $this->json(200, ['items' => $result['items'], 'page' => $result['page'], 'hasMore' => $result['hasMore']])
                 : $this->domain($result);

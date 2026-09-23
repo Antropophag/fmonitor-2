@@ -15,19 +15,18 @@
   const selected = new Map();
   let query = '', page = 1, generation = 0, timer = null, request = null, opener = null, retryAppend = false;
   form.querySelectorAll('[data-selected-installer]').forEach(node => selected.set(String(node.dataset.tabId), {
-    tabId: String(node.dataset.tabId), fullName: node.dataset.fullName || '', position: node.dataset.position || '',
-    source: node.dataset.source || '', updatedAt: node.dataset.updatedAt || '',
+    tabId: String(node.dataset.tabId), fullName: node.dataset.fullName || '', assignments: [],
   }));
 
   const chip = (item, withInput) => {
     const node = document.createElement('span');
     node.className = 'fm2-picker-chip';
-    Object.assign(node.dataset, {selectedInstaller: '', tabId: String(item.tabId), fullName: item.fullName,
-      position: item.position || '', source: item.source || '', updatedAt: item.updatedAt || ''});
+    Object.assign(node.dataset, {selectedInstaller: '', tabId: String(item.tabId), fullName: item.fullName});
     const name = document.createElement('span'); name.textContent = item.fullName;
     const tab = document.createElement('small'); tab.textContent = `№ ${String(item.tabId).padStart(6, '0')}`;
     const remove = document.createElement('button'); remove.type = 'button'; remove.dataset.removeInstaller = '';
-    remove.setAttribute('aria-label', `Убрать ${item.fullName}`); remove.textContent = '×';
+    remove.setAttribute('aria-label', `Убрать ${item.fullName}`);
+    const removeIcon = document.createElement('img'); removeIcon.src = '/pilot/assets/shlz-icons/close.svg'; removeIcon.alt = ''; remove.append(removeIcon);
     remove.addEventListener('click', () => { selected.delete(String(item.tabId)); renderSelections(); renderChecks(); });
     node.append(name, tab, remove);
     if (withInput) { const input = document.createElement('input'); input.type = 'hidden'; input.name = 'installerTabIds[]'; input.value = item.tabId; node.append(input); }
@@ -46,10 +45,20 @@
     const id = String(item.tabId), label = document.createElement('label'), input = document.createElement('input');
     label.className = 'fm2-picker-result'; label.dataset.resultId = id;
     input.type = 'checkbox'; input.className = 'shlz-checkbox'; input.checked = selected.has(id);
-    const copy = document.createElement('span'), name = document.createElement('strong'), detail = document.createElement('small'), provenance = document.createElement('small');
-    name.textContent = item.fullName; detail.textContent = `${item.position} · № ${id.padStart(6, '0')}`;
-    provenance.textContent = `Источник: ${item.source} · Актуально на: ${item.updatedAt}`;
-    copy.append(name, detail, provenance); label.append(input, copy);
+    const copy = document.createElement('span'), name = document.createElement('strong'), detail = document.createElement('small');
+    name.textContent = item.fullName; detail.textContent = `№ ${id.padStart(6, '0')}`;
+    copy.append(name, detail);
+    if (Array.isArray(item.assignments) && item.assignments.length) {
+      const assignments = document.createElement('span'); assignments.className = 'fm2-picker-result-assignments';
+      item.assignments.forEach(assignment => {
+        const link = document.createElement('a'); link.className = 'shlz-link'; link.href = `/pilot/objects/${assignment.objectId}`;
+        const registration = document.createElement('strong'); registration.textContent = assignment.registrationNumber;
+        const address = document.createElement('span'); address.textContent = assignment.address;
+        link.append(registration, address); assignments.append(link);
+      });
+      copy.append(assignments);
+    }
+    label.append(input, copy);
     input.addEventListener('change', () => { if (input.checked) selected.set(id, {...item, tabId: id}); else selected.delete(id); renderSelections(); renderChecks(); });
     return label;
   };
