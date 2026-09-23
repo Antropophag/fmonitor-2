@@ -54,7 +54,7 @@ try{
  assertSameValue('29a475f2d94b300a689d7c2e611280db49bcfa74224a3768d85c195b7cddb821',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV25.php'),'upstream feedback recovery profile unchanged');
  $prefixDb=$f->database();$longPrefix=str_repeat('p',25);
  // Physical canonical tables precede the logical aliases used by recovery profiles.
- $priorCatalogue=Catalogue::migrations();unset($priorCatalogue[26],$priorCatalogue[27],$priorCatalogue[28],$priorCatalogue[29],$priorCatalogue[30],$priorCatalogue[31],$priorCatalogue[32]);
+ $priorCatalogue=Catalogue::migrations();unset($priorCatalogue[26],$priorCatalogue[27],$priorCatalogue[28],$priorCatalogue[29],$priorCatalogue[30],$priorCatalogue[31],$priorCatalogue[32],$priorCatalogue[33]);
  assertSameValue(0,Migration::run($prefixDb,$longPrefix,$priorCatalogue)['exitCode'],'public v25 maximal-prefix baseline');
  $expectedPrefixTables=Fixture::tables($prefixDb);foreach(['roots','revisions','operations','pdf_chunks']as$suffix)$expectedPrefixTables[]=$longPrefix.'fm2_deadline_certificate_'.$suffix;foreach(['fm2_bitrix_order_document_links','fm2_control_engineer_assignments','fm2_legacy_identity_links','fm2_legacy_identity_link_events','fm2_engineer_migration_operations','fm2_equipment_fact_current','fm2_equipment_fact_diagnostics','fm2_equipment_fact_history','fm2_equipment_fact_runs','fm2_equipment_fact_sync_metadata','fm2_object_detail_edits','fm2_object_detail_edit_events','fm2_object_detail_edit_requests']as$suffix)$expectedPrefixTables[]=$longPrefix.$suffix;sort($expectedPrefixTables,SORT_STRING);
  $prefixed=Migration::run($prefixDb,$longPrefix,Catalogue::migrations());

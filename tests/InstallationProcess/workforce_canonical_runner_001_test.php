@@ -406,6 +406,13 @@ try {
             assertSameValue(1, substr_count($state['create'], $oldCheck), 'Exact single predecessor capability CHECK before canonical upgrade.');
             $state['create'] = str_replace($oldCheck, $newCheck, $state['create']);
         }
+        if ($table === $partialPrefix . 'fm2_order_installers') {
+            $state['create'] = str_replace(
+                "  PRIMARY KEY (`assignment_order_id`,`installer_tab_id`),\n  CONSTRAINT",
+                "  PRIMARY KEY (`assignment_order_id`,`installer_tab_id`),\n  KEY `ix_installer_assignment` (`installer_tab_id`,`assignment_order_id`),\n  CONSTRAINT",
+                $state['create'],
+            );
+        }
         assertSameValue($state, $partialAfter[$table], "Partial recovery preserves existing table {$table} and its rows except the exact approved v13 CHECK transition.");
     }
     $connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_fact_corrections`");$connection->query("DROP TABLE `{$partialPrefix}fm2_pilot_completion_facts`");
