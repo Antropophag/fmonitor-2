@@ -11,6 +11,8 @@ final class MariaDbAssignmentOrderSelectionSchemaCatalog
         if(str_ends_with($table,$suffix)){
             $prefix=substr($table,0,-strlen($suffix));$columns=MariaDbAssignmentOrderSelectionSchemaSql::rows($db,'SELECT COLUMN_NAME,IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
             foreach($columns as$row)if($row['COLUMN_NAME']==='employment_proof_kind'){$expected=AssignmentOrderSelectionUnknownEmploymentSchemaMigration::definition($prefix,$collation);break;}
+            $lookup=MariaDbAssignmentOrderSelectionSchemaSql::rows($db,"SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME='ix_installer_assignment' LIMIT 1",[$table]);
+            if($lookup!==[])$expected['indexes'][]=['name'=>'ix_installer_assignment','unique'=>false,'columns'=>['installer_tab_id','assignment_order_id']];
         }
         $properties = MariaDbAssignmentOrderSelectionSchemaSql::rows($db, 'SELECT ENGINE,TABLE_COLLATION,TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', [$table]);
         if ($properties === []) { return null; }
