@@ -220,3 +220,28 @@ Do not run down with volumes, database reset, import, user reset or offline queu
 - один exact-source GitHub CI GREEN;
 - точные HEAD/source/image identities;
 - перечисленные оставшиеся дефекты/UNKNOWN без выдачи их за GREEN.
+
+## Продолжение 2026-09-23 после handoff
+
+- Separate executor `/root/certificate_triage` (`gpt-5.6-sol / low`) установил,
+  что RED `deadline_transfer_certificate_http_001_test.php` был product markup
+  regression, а не fixture/environment failure: после `strip_tags()` ID автора
+  склеивался со временем следующей ячейки. Коммит `7769cb52` восстановил только
+  текстовый разделитель после actor ID; actor name/ID, persistence и тест не
+  изменялись.
+- Root сверил и записал candidate outcomes V01–V09 в
+  `yii2-shlz-visual-audit-inventory-2026-09-22.md`, просмотрел финальные
+  checklist/date-picker/construction screenshots и актуализировал только
+  подтверждённые OpenSpec tasks. Коммит root: `63f46371`.
+- На candidate source `93c8140a54e7ba1a75e7d41dbf2bff9bda9bea4e4f0169213ad0644858c82511`
+  и executable source `d85faea018b1ef81da2f90be6bf706bf7079c3587c1bd33d9900c1140a77224c`
+  выполнены все 15 planner-selected bounded local commands. Все GREEN; также
+  GREEN исправленный `deadline_transfer_certificate_http_001_test.php`.
+  `architecture_guard_001_test.py`: 59/59. Локальный full suite не запускался.
+- Refreshed Gate 3 package пока не создан: `harness.py prepare --role reviewer
+  --gate 3` fail-closed требует exact-source evidence по каждому mapped test.
+  Existing Gate 3 RED records привязаны к pre-implementation source, а текущие
+  исправленные tests закономерно GREEN. Старое approval нельзя переносить на
+  поздний root-authored browser test delta молча; нужен допустимый test-delta
+  package либо явное process решение. Это `BLOCKED`, не approval.
+- Owner manual checkpoint, Gate 5, PR и CI по-прежнему не выполнены.
