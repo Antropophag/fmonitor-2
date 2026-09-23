@@ -10,19 +10,24 @@ Source: `bced877aec8a8802e97037749ca4251d3098df1a` — одновременно 
 
 | Finding | Source status | Browser status | Evidence / next witness |
 |---|---|---|---|
-| V01 разные таблицы | REPRODUCED | UNKNOWN | `objects.php`, `construction-control.php`, `deadline-certificates.php` расходятся с полным table contract; representative runtime sweep |
-| V02 вложенное поле | REPRODUCED | UNKNOWN | `installers.php` оборачивает результат полного `ViewSupport::choice()`; structural + browser label test |
-| V03 selector selection modal | REPRODUCED | UNKNOWN | modal — sibling `[data-selection-picker]`, CSS требует descendant; mobile open-dialog test |
-| V04 payment confirmation | REPRODUCED | UNKNOWN | `div[role=dialog]`, JS переключает `aria-hidden`; focus/Escape/cancel browser test |
-| V05 ОТиЗ владеет shell | REPRODUCED | UNKNOWN | `.fm2-shell:has(.fm2-otiz)` меняет grid/sidebar/workspace; computed layout sweep |
-| V06 конфликтующие responsive rules | REPRODUCED | UNKNOWN | несколько table/card/display/min-width/ellipsis generations в `pilot.css`; boundary-width financial test |
-| V07 secondary forms вне общего contract | REPRODUCED | UNKNOWN | plain controls и неполные field compositions; inventory + form assertions |
-| V08 местные overlays/notifications | REPRODUCED | UNKNOWN | checklist/inspection/payment families расходятся; overlay/state inventory |
-| V09 shell/landmark drift | REPRODUCED | UNKNOWN | views самостоятельно закрывают/создают shell/main composition; landmark/skip-link sweep |
+| V01 разные таблицы | REPRODUCED | RESOLVED ON CANDIDATE | Общая data-list разметка и локальный scroll проверены focused visual-contract тестами и снимками objects/construction/certificates/ОТиЗ из `ui-sweep-final2-20260923.1j3EfA`; ширина документа равна viewport. |
+| V02 вложенное поле | REPRODUCED | RESOLVED ON CANDIDATE | Фильтры монтажников больше не оборачивают полную field-композицию `ViewSupport::choice()`; structural/forms inventory и installer browser journeys GREEN. |
+| V03 selector selection modal | REPRODUCED | RESOLVED ON CANDIDATE | Responsive-правила достигают фактического соседнего dialog; финальный sweep содержит `selection-modal-open.png`, browser assertion GREEN. |
+| V04 payment confirmation | REPRODUCED | RESOLVED ON CANDIDATE | Общий overlay controller владеет входом/удержанием/возвратом фокуса, Escape и cancel; focused/browser evidence ОТиЗ GREEN без изменения command form. |
+| V05 ОТиЗ владеет shell | REPRODUCED | RESOLVED ON CANDIDATE | Page-owned геометрия `:has(.fm2-otiz)` удалена; на снимках ОТиЗ 320/390/1440 из `geometry-final3-20260923.knuOhU` ширина документа равна viewport. |
+| V06 конфликтующие responsive rules | REPRODUCED | RESOLVED ON CANDIDATE | Заменённые responsive/table rules удалены; focused OTIZ/data-list browser checks и финальная геометрия 320/390/1440 сохраняют полные значения/действия и локальный scroll. |
+| V07 secondary forms вне общего contract | REPRODUCED | RESOLVED ON CANDIDATE | Secondary forms используют публичные Field/Control, DatePicker и file compositions; forms/overlays inventory и затронутые documentary/browser journeys GREEN. |
+| V08 местные overlays/notifications | REPRODUCED | RESOLVED ON CANDIDATE | Checklist, inspection, selection, object-edit и payment overlays используют общую modal surface/controller; финальные checklist/object-edit screenshots и focused journeys GREEN. |
+| V09 shell/landmark drift | REPRODUCED | RESOLVED ON CANDIDATE | Shell владеет единственными `main`, skip target и responsive navigation; visual-contract и protected runtime browser journeys GREEN. |
 
-Runtime witness, screenshots и окончательный статус каждого finding будут
-добавлены после Gate 1 verification plan и до завершения задачи 1.2. Новые
-наблюдения не расширяют scope автоматически.
+Candidate runtime witness: `ui-sweep-final2-20260923.1j3EfA` (30 captured
+states, HTTP 200, JS errors 0, document overflow 0) and
+`geometry-final3-20260923.knuOhU` (objects/OTIZ/certificate at 320/390/1440).
+Both directories and their `result.json` files are retained outside the checkout
+under `/Users/antropophag/.local/share/fmonitor-2/`. Latest reviewed corrections
+are additionally captured in `checklist-installer-close-final.png`,
+`object-start-datepicker-final.png` and `construction-390-final-0e5df8bd.png`.
+These are candidate evidence, not owner checkpoint, independent approval or CI.
 
 ## Gate 2 baseline blocker — 2026-09-22
 
