@@ -45,10 +45,10 @@ final readonly class CompletionForm
         $validDate = preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $match) === 1
             && checkdate((int) ($match[2] ?? 0), (int) ($match[3] ?? 0), (int) ($match[1] ?? 0)) && $date <= $today;
         $dateMessage = $pto ? 'Укажите дату акта ПТО не позже сегодняшней.' : 'Укажите дату и реквизиты декларации.';
-        if (!$validDate) throw new CompletionFormError($dateMessage);
+        if (!$validDate) throw new CompletionFormError($dateMessage, $action, $pto ? 'ptoActDate' : 'declarationDate');
         $details = $pto ? '' : trim($this->fields['declarationDetails'] ?? '');
         if (!$pto && (($action === 'record_declaration' && $details === '') || mb_strlen($details) > 500)) {
-            throw new CompletionFormError($dateMessage);
+            throw new CompletionFormError(mb_strlen($details) > 500 ? $dateMessage : 'Укажите реквизиты декларации. Укажите дату и реквизиты декларации.', $action, 'declarationDetails');
         }
         $factId = null;
         $reason = '';
@@ -57,9 +57,8 @@ final readonly class CompletionForm
             $factId = preg_match('/^[1-9][0-9]*$/D', $rawFactId) === 1
                 ? filter_var($rawFactId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
             $reason = trim($this->fields['reason'] ?? '');
-            if ($factId === false || $reason === '' || mb_strlen($reason) > 1000) {
-                throw new CompletionFormError('Действие отклонено. Проверьте актуальные данные и повторите.');
-            }
+            if ($factId === false) throw new CompletionFormError('Действие отклонено. Проверьте актуальные данные и повторите.', $action);
+            if ($reason === '' || mb_strlen($reason) > 1000) throw new CompletionFormError('Укажите причину исправления.', $action, 'reason');
         }
         return [
             'action' => $action,
@@ -73,4 +72,10 @@ final readonly class CompletionForm
     }
 }
 
-final class CompletionFormError extends \InvalidArgumentException {}
+final class CompletionFormError extends \InvalidArgumentException
+{
+    public function __construct(string $message, public readonly ?string $action = null, public readonly ?string $field = null)
+    {
+        parent::__construct($message);
+    }
+}

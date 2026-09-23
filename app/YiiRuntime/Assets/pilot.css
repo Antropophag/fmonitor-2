@@ -1801,6 +1801,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-completion-steps .is-current > span { border-color: #303640; color: #303640; }
 .fm2-completion-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-inline-size: 0; align-items: end; gap: 16px; margin-block-start: 24px; padding-block-start: 20px; border-block-start: 1px solid #e4e7eb; }
 .fm2-completion-form > .shlz-field { min-inline-size: 0; }
+.fm2-completion-error { grid-column: 1 / -1; margin: 0; color: #a1261f; }
+.fm2-completion-form .shlz-field--error .shlz-input { border-color: #c43d35; }
+.fm2-completion-field-error { display: block; margin-block-start: 4px; color: #a1261f; font-size: 12px; }
 .fm2-completion-form > .shlz-button { grid-column: 1 / -1; justify-self: start; max-inline-size: 100%; overflow-wrap: normal; }
 .fm2-completion-form:not(:has(.fm2-completion-details)) { grid-template-columns: minmax(0, 320px); justify-content: start; }
 @container (max-width: 520px) { .fm2-completion-form { grid-template-columns: minmax(0, 1fr); } }

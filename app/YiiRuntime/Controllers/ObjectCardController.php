@@ -17,6 +17,7 @@ use FMonitor2\InstallationProcess\{ObjectDetailsEditCommand,ObjectDetailsFieldRe
 final class ObjectCardController extends PreopeningController
 {
     private ?array $detailsValidation=null;
+    private ?array $completionFormState=null;
     public function beforeAction($action):bool { if(in_array($action->id,['assignment','details'],true))$this->enableCsrfValidation=false;return parent::beforeAction($action); }
     public function behaviors(): array
     {
@@ -68,12 +69,20 @@ final class ObjectCardController extends PreopeningController
                 'canCorrectDeclaration' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.declaration.correct'),
                 'today' => (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format('Y-m-d'),
                 'csrf' => Yii::$app->request->csrfToken,
+                'completionFormState' => $this->completionFormState,
             ]);
         } catch (\DomainException) {
             return $this->status(403);
         } catch (\Throwable) {
             return $this->status(503, true);
         }
+    }
+
+    public function renderCompletionFormState(int $id, array $state, int $status): string|Response
+    {
+        $this->completionFormState = $state;
+        Yii::$app->response->statusCode = $status;
+        return $this->actionView((string) $id);
     }
 
     public function actionPrepare(string $id): Response
