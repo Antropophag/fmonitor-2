@@ -1274,7 +1274,6 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 .fm2-installer-directory:has(#if-assigned:checked) .fm2-installer-row:not(.fm2-installer-row--assigned),
 .fm2-installer-directory:has(#if-free:checked) .fm2-installer-row:not(.fm2-installer-row--free) { display: none; }
 .fm2-installer-table { min-inline-size: 900px; table-layout: auto; }
-.fm2-installer-table .shlz-table__head .shlz-table__cell { position: sticky; z-index: 2; inset-block-start: 0; background: var(--shlz-semantic-color-surface-base, #fff); }
 .fm2-installer-table th:nth-child(1) { inline-size: 25%; }
 .fm2-installer-table th:nth-child(2) { inline-size: 12%; }
 .fm2-installer-table th:nth-child(3) { inline-size: 20%; }
@@ -1865,9 +1864,6 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 /* OTIZ settlement workspace: scoped compositions over public shlz-ui exports. */
 .fm2-otiz { --fm2-motion-duration: 160ms; display: grid; gap: 28px; min-inline-size: 0; color: var(--shlz-semantic-color-text-primary); font-variant-numeric: tabular-nums; }
 .fm2-otiz-page { background: var(--shlz-semantic-color-surface-base); }
-.fm2-shell--wide { grid-template-columns: 72px minmax(0,1fr); }
-.fm2-shell--wide :is(.fm2-nav-text,.fm2-nav-group,.fm2-logo-name,.fm2-nav-trigger-text,.fm2-sidebar-user-copy) { display: none; }
-.fm2-shell--wide .fm2-logo { inline-size: 48px; }
 .fm2-otiz ::selection { background: var(--shlz-source-color-blue-blue-200-15); color: var(--shlz-semantic-color-text-primary); }
 .fm2-otiz :focus-visible { outline: 3px solid var(--shlz-semantic-color-action-primary); outline-offset: 3px; }
 .fm2-otiz-tabs { display: flex; gap: 4px; max-inline-size: 100%; overflow-x: auto; border-block-end: 1px solid var(--shlz-semantic-color-border-default); }
@@ -1990,13 +1986,11 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-object-details-modal legend{grid-column:1/-1;margin-block-end:12px;font-weight:600}
 .fm2-details-field{display:grid;gap:6px;min-width:0}.fm2-event-change{display:block;margin-block-start:6px;overflow-wrap:anywhere}
 @media (width < 640px){.fm2-object-details-modal fieldset{grid-template-columns:1fr}}
-@media(max-width:680px){.fm2-shell--wide .fm2-sidebar{display:none}.fm2-shell--wide .fm2-workspace{padding-block-end:0}}
 .fm2-otiz-ledger .shlz-table-wrap{display:block;max-width:100%;overflow-x:auto}.fm2-otiz-ledger .shlz-table{min-width:760px}
 .fm2-otiz-page{min-width:0;max-width:100%;overflow-x:clip}.fm2-shell--wide{min-width:0}.fm2-shell--wide .fm2-workspace,.fm2-shell--wide .fm2-main{min-width:0;max-width:100%}
-@media(max-width:900px){.fm2-shell--wide .fm2-sidebar{display:none}.fm2-shell--wide{display:block}.fm2-otiz-discipline form{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.fm2-otiz-discipline label,.fm2-otiz-discipline input{display:block;width:100%;box-sizing:border-box}.fm2-otiz-workflow-actions{max-width:100%}}
-@media(max-width:900px){body.shlz-scope .fm2-shell--wide .fm2-workspace,body.shlz-scope .fm2-shell--wide .fm2-main{width:100vw;max-width:100vw;margin:0;box-sizing:border-box}.fm2-otiz-tabs,.fm2-otiz-workflow,.fm2-otiz-object-row,.fm2-otiz-ledger{width:100%;max-width:100%;box-sizing:border-box}}
+@media(max-width:900px){.fm2-otiz-discipline form{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}.fm2-otiz-discipline label,.fm2-otiz-discipline input{display:block;width:100%;box-sizing:border-box}.fm2-otiz-workflow-actions{max-width:100%}}
+@media(max-width:900px){.fm2-otiz-tabs,.fm2-otiz-workflow,.fm2-otiz-object-row,.fm2-otiz-ledger{width:100%;max-width:100%;box-sizing:border-box}}
 @media(max-width:900px){.fm2-otiz :is(a,button,input,select,summary){max-width:100%;box-sizing:border-box}.fm2-otiz-workflow-actions{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch}.fm2-otiz-workflow-actions form,.fm2-otiz-workflow-actions .shlz-button{width:100%;white-space:normal}}
-@media(max-width:1100px){.fm2-shell--wide .fm2-sidebar{display:none}.fm2-shell--wide{display:block}.fm2-shell--wide .fm2-workspace,.fm2-shell--wide .fm2-main{width:100vw;max-width:100vw;margin:0;box-sizing:border-box}}
 .fm2-otiz-register-table td:first-child .shlz-button{display:inline-flex;width:auto;min-width:0;min-inline-size:0;margin-top:4px;padding:4px 8px;font-size:11px}.fm2-otiz-register-table td:first-child{height:auto;min-height:72px}
 
 /* OTIZ variant B: one measured layout system over public shlz primitives. */
@@ -2017,7 +2011,6 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-otiz-register-wrap,.fm2-otiz-archive-wrap{max-width:100%;overflow:auto;border:1px solid #e4e8ec;border-radius:14px;background:#fff;scrollbar-color:#aeb7c0 #f4f6f8}
 .fm2-otiz-register-table{min-width:1370px;table-layout:auto}
 .fm2-otiz-register-table .shlz-table__cell{height:64px;padding:10px 12px;vertical-align:middle}
-.fm2-otiz-register-table thead .shlz-table__cell{position:sticky;top:0;z-index:1;height:48px;background:#f6f8fa;font-size:12px;line-height:18px}
 .fm2-otiz-register-table td:first-child{width:250px;min-width:250px;height:64px}
 .fm2-otiz-register-table td:first-child .shlz-button{display:none}
 .fm2-otiz-action-cell{width:56px;text-align:center}
@@ -2027,7 +2020,6 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-otiz-archive h2{margin:0;font-size:20px;line-height:28px}
 .fm2-otiz-archive table{min-width:1040px}
 .fm2-otiz-archive .shlz-table__cell{height:60px;padding:10px 14px;vertical-align:middle}
-.fm2-otiz-archive thead .shlz-table__cell{position:sticky;top:0;z-index:1;background:#f6f8fa;font-size:12px;line-height:18px}
 .fm2-otiz-archive-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;white-space:nowrap}
 .fm2-otiz-workflow{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:22px;margin:0;padding:28px 30px;border:1px solid #e2e7eb;border-radius:14px;background:#f7f8fa}
 .fm2-otiz-workflow>div:first-child{display:grid;gap:8px}
@@ -2055,7 +2047,6 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media(max-width:760px){.fm2-otiz-register-table{display:table}.fm2-otiz-register-table thead{position:static;width:auto;height:auto;overflow:visible;clip:auto}.fm2-otiz-register-table tbody{display:table-row-group}.fm2-otiz-register-table tr{display:table-row;padding:0}.fm2-otiz-register-table td{display:table-cell}.fm2-otiz-register-table td::before{content:none}}
 
 .fm2-otiz-page{width:100%;max-width:100%;padding:24px;box-sizing:border-box;overflow-x:clip;background:#f4f6f9}
-.fm2-shell--wide,.fm2-shell--wide .fm2-workspace,.fm2-shell--wide .fm2-main{max-width:100vw;min-width:0;overflow-x:hidden;box-sizing:border-box}
 .fm2-otiz-surface{width:100%;max-width:100%;min-width:0;padding:clamp(16px,2vw,28px);box-sizing:border-box;overflow:hidden;background:#fff;border:0;border-radius:14px;box-shadow:0 8px 24px rgb(20 34 48/5%)}
 .fm2-otiz-tabs-surface{padding:16px 20px 0}.fm2-otiz-tabs-surface .fm2-otiz-tabs{margin:0}
 .fm2-otiz-register-wrap.fm2-otiz-surface,.fm2-otiz-archive.fm2-otiz-surface{padding:20px}
@@ -2070,10 +2061,8 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media(max-width:680px){.fm2-otiz-page{padding:14px 14px 88px}.fm2-otiz-surface{padding:16px}.fm2-otiz-register-wrap.fm2-otiz-surface,.fm2-otiz-archive.fm2-otiz-surface,.fm2-otiz-snapshot-register,.fm2-otiz-ledger{padding:16px}}
 @media(max-width:680px){.fm2-otiz-page{width:auto!important;margin-inline:0}.fm2-shell--wide .fm2-main{width:auto!important}}
 @media(max-width:680px){.fm2-otiz-page{max-width:calc(100vw - 24px)!important}.fm2-otiz-page :is(a,button,input,select,summary){max-width:100%;box-sizing:border-box}}
-@media(max-width:680px){body.shlz-scope .fm2-shell--wide .fm2-main{width:100%!important;max-width:100%!important;padding-inline:0!important}.fm2-shell--wide .fm2-feedback-fab{display:none}}
 @media(max-width:680px){body.shlz-scope:has(.fm2-otiz){width:100vw;max-width:100vw;overflow-x:clip;contain:inline-size}}
-.fm2-otiz-snapshot-register .shlz-table-wrap,.fm2-otiz-ledger .shlz-table-wrap{display:block;width:100%;max-width:100%;min-width:0;overflow:auto;contain:inline-size layout paint;box-sizing:border-box}.fm2-otiz-snapshot-register table{display:table;min-width:820px}.fm2-otiz-ledger table{display:table;min-width:1120px}.fm2-otiz-snapshot-register :is(thead,tbody),.fm2-otiz-ledger :is(thead,tbody){display:table-row-group}.fm2-otiz-snapshot-register thead,.fm2-otiz-ledger thead{display:table-header-group}.fm2-otiz-snapshot-register tr,.fm2-otiz-ledger tr{display:table-row}.fm2-otiz-snapshot-register :is(th,td),.fm2-otiz-ledger :is(th,td){display:table-cell}.fm2-otiz-snapshot-register :is(th,td):last-child,.fm2-otiz-ledger :is(th,td):last-child{position:sticky;right:0;z-index:3;background:#fff}.fm2-otiz-snapshot-register thead th:last-child,.fm2-otiz-ledger thead th:last-child{background:#f6f8fa}
-.fm2-shell--wide{overflow:visible}.fm2-shell--wide>.fm2-sidebar{position:sticky;inset-block-start:0;align-self:start;block-size:100dvh}.fm2-shell--wide>.fm2-workspace,.fm2-shell--wide .fm2-main{overflow-x:hidden}
+.fm2-otiz-snapshot-register .shlz-table-wrap,.fm2-otiz-ledger .shlz-table-wrap{display:block;width:100%;max-width:100%;min-width:0;overflow:auto;contain:inline-size layout paint;box-sizing:border-box}.fm2-otiz-snapshot-register table{display:table;min-width:820px}.fm2-otiz-ledger table{display:table;min-width:1120px}.fm2-otiz-snapshot-register :is(thead,tbody),.fm2-otiz-ledger :is(thead,tbody){display:table-row-group}.fm2-otiz-snapshot-register thead,.fm2-otiz-ledger thead{display:table-header-group}.fm2-otiz-snapshot-register tr,.fm2-otiz-ledger tr{display:table-row}.fm2-otiz-snapshot-register :is(th,td),.fm2-otiz-ledger :is(th,td){display:table-cell}.fm2-otiz-snapshot-register :is(th,td):last-child,.fm2-otiz-ledger :is(th,td):last-child{position:sticky;right:0;z-index:3;background:#fff}
 
 /* Shared SHLZ pagination composition for all data lists. */
 .fm2-main .shlz-pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;margin-block-start:8px;padding-block:2px}.fm2-main .shlz-pagination__summary{order:0;white-space:nowrap}.fm2-main .shlz-pagination__list{order:1;margin-inline-start:auto}
@@ -2093,13 +2082,11 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media(max-width:760px){.fm2-otiz-overview-surface .fm2-otiz-tabs-surface{padding:12px 16px 0}.fm2-otiz-overview-surface .fm2-page-header{padding:20px 16px 16px}.fm2-otiz-register-surface .fm2-otiz-register-toolbar{padding:16px}.fm2-otiz-register-surface .fm2-otiz-register-wrap{padding:0 16px}.fm2-otiz-register-surface>.shlz-pagination{margin:8px 16px 14px}.fm2-otiz-register-table{min-inline-size:980px!important}}
 
 /* Unified Yii visual contracts: tables, filters, overlays and compact forms. */
-.shlz-scope .shlz-table__head .shlz-table__cell{block-size:48px;padding-block:0;background:var(--fm2-filter);color:var(--fm2-muted);font-size:12px;font-weight:600;line-height:18px;letter-spacing:.035em;text-transform:uppercase;vertical-align:middle}
 .shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-field__control,
 .shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-select__trigger{box-sizing:border-box;block-size:44px;min-block-size:44px;padding:0 14px;background:#fff;border:1px solid var(--fm2-border);border-radius:10px}
 .shlz-scope :is(.fm2-object-filters,.fm2-user-toolbar,.fm2-control-tools,.fm2-otiz-register-toolbar) .shlz-input{block-size:42px;min-block-size:42px;padding-block:0;background:transparent}
 .shlz-scope .shlz-button{white-space:nowrap;overflow-wrap:normal}
 .fm2-user-toolbar>.shlz-button{min-inline-size:120px;padding-inline:18px}
-.fm2-otiz-register-table thead .shlz-table__cell{background:var(--fm2-filter);color:var(--fm2-muted)}
 .fm2-confirm-dialog .shlz-modal__surface,.fm2-installer-dialog .shlz-modal__surface,.fm2-inspection-dialog .shlz-modal__surface{background:#fff}
 .fm2-confirm-dialog :is(.shlz-modal__header,.shlz-modal__body,.shlz-modal__footer){padding-inline:24px}
 .fm2-confirm-dialog .shlz-modal__header{padding-block:22px 12px}.fm2-confirm-dialog .shlz-modal__body{padding-block:0 20px}.fm2-confirm-dialog .shlz-modal__footer{gap:10px;padding-block:14px 20px}
