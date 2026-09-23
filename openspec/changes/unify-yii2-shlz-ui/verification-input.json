@@ -2,7 +2,6 @@
   "change": "unify-yii2-shlz-ui",
   "planned_paths": [
     "app/YiiRuntime/Controllers/SelectionController.php",
-    "app/YiiRuntime/InstallerPickerQuery.php",
     "app/YiiRuntime/ViewSupport.php",
     "app/YiiRuntime/Views/_otiz-nav.php",
     "app/YiiRuntime/Views/_otiz-snapshot-list.php",
