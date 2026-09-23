@@ -8,6 +8,15 @@ const base = `http://127.0.0.1:${port}`;
 const output = { errors: [], requestFailures: [], downloads: 0 };
 const pageActions = new WeakMap();
 
+async function fillDate(page, name, iso) {
+  const hidden = page.locator(`.shlz-date-picker input[type="hidden"][name="${name}"]`);
+  const visible = hidden.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," shlz-date-picker ")]').locator('.shlz-date-field__input');
+  const [year, month, day] = iso.split('-');
+  await visible.fill(`${day}.${month}.${year}`);
+  await visible.press('Tab');
+  if (await hidden.inputValue() !== iso) throw new Error(`${name} public picker did not retain exact ISO value`);
+}
+
 function markAction(page, action) {
   pageActions.set(page, action);
 }
@@ -116,7 +125,7 @@ async function verifyInlineTemplate(page, context) {
 async function uploadAndCorrect(page) {
   await page.getByRole('link', { name: 'Загрузить оригинал', exact: true }).click();
   await page.locator('input[name="original"]').setInputFiles(path.join(artifactRoot, 'original.pdf'));
-  await page.locator('input[name="documentDate"]').fill('2026-09-07');
+  await fillDate(page, 'documentDate', '2026-09-07');
   await page.locator('input[name="compositionConfirmed"]').check();
   await page.getByRole('button', { name: 'Загрузить оригинал', exact: true }).click();
   await page.waitForURL('**/pilot/objects/4512');
@@ -124,7 +133,7 @@ async function uploadAndCorrect(page) {
 
   await page.goto(`${base}/pilot/objects/4512/assignment-orders/81/originals/submit`);
   await page.locator('input[name="original"]').setInputFiles(path.join(artifactRoot, 'original.pdf'));
-  await page.locator('input[name="documentDate"]').fill('2026-09-06');
+  await fillDate(page, 'documentDate', '2026-09-06');
   await page.locator('input[name="correctionReason"]').fill('Синтетическое исправление даты');
   await page.locator('input[name="compositionConfirmed"]').check();
   await page.getByRole('button', { name: 'Исправить оригинал', exact: true }).click();
@@ -158,7 +167,7 @@ async function openAsDistinctActor(browser) {
   await page.goto(`${base}/pilot/objects/4512`);
   await login(page, 'protected19@shlz.ru');
   await page.waitForURL('**/pilot/objects/4512');
-  await page.locator('input[name="actualStartDate"]').fill('2026-09-07');
+  await fillDate(page, 'actualStartDate', '2026-09-07');
   const responsePromise = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/execution'));
   await page.getByRole('button', { name: 'Открыть работы', exact: true }).click();
   const openingResponse = await responsePromise;

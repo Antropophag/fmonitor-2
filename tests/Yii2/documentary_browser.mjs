@@ -11,23 +11,24 @@ try {
  const response=await page.goto(c.origin+'/pilot/objects/4512#completion');check(response.status()===200,'card ready');
  check(await page.locator('form [name=action][value=record_pto]').count()===1,'INTENDED_RED documentary PTO form');
  const form=action=>page.locator(`form:has(input[name=action][value="${action}"])`);
- async function submit(action){const f=form(action);await Promise.all([page.waitForResponse(r=>r.url().endsWith('/completion')&&r.request().method()==='POST'&&r.status()===303),f.locator('button').click()]);await page.waitForURL('**/pilot/objects/4512#completion');}
+ async function fillDate(scope,name,iso){const hidden=scope.locator(`.shlz-date-picker input[type="hidden"][name="${name}"]`),root=hidden.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," shlz-date-picker ")]'),visible=root.locator('.shlz-date-field__input'),[year,month,day]=iso.split('-');await visible.fill(`${day}.${month}.${year}`);await visible.press('Tab');check(await hidden.inputValue()===iso,`${name} public picker owns exact ISO value`);}
+ async function submit(action){const f=form(action);await Promise.all([page.waitForResponse(r=>r.url().endsWith('/completion')&&r.request().method()==='POST'&&r.status()===303),f.locator('button[type=submit]').click()]);await page.waitForURL('**/pilot/objects/4512#completion');}
  async function inspectForm(action,fields){
   const f=form(action),d=f.locator('xpath=ancestor::details[1]');if(await d.count()&&!(await d.evaluate(e=>e.open)))await d.locator('summary').click();
   for(const width of [1440,390]){await page.setViewportSize({width,height:1000});
-   for(const [name,constraints] of Object.entries(fields)){const input=f.locator(`[name="${name}"]`);for(const [key,value] of Object.entries(constraints))check(await input.getAttribute(key)===value,`${action} ${name} ${key}`);check(await input.evaluate(e=>e.labels.length>0),'input label');}
-   const button=f.locator('button');await button.scrollIntoViewIfNeeded();check(await button.isVisible()&&await button.isEnabled(),'usable submit '+width);check(await button.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width>0&&r.height>0;}),'submit within viewport');
+   for(const [name,constraints] of Object.entries(fields)){if(constraints.type==='date'){const hidden=f.locator(`.shlz-date-picker input[type="hidden"][name="${name}"]`),native=f.locator(`input[type="date"][data-native-date-name="${name}"]`),visible=hidden.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," shlz-date-picker ")]').locator('.shlz-date-field__input');check(await hidden.count()===1&&await native.count()===1&&await visible.count()===1,`${action} ${name} public picker and native fallback`);for(const [key,value] of Object.entries(constraints))if(key!=='type')check(await native.getAttribute(key)===value,`${action} ${name} fallback ${key}`);continue;}const input=f.locator(`[name="${name}"]`);for(const [key,value] of Object.entries(constraints))check(await input.getAttribute(key)===value,`${action} ${name} ${key}`);check(await input.evaluate(e=>e.labels.length>0),'input label');}
+   const button=f.locator('button[type=submit]');await button.scrollIntoViewIfNeeded();check(await button.isVisible()&&await button.isEnabled(),'usable submit '+width);check(await button.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width>0&&r.height>0;}),'submit within viewport');
   }
  }
  await inspectForm('record_pto',{ptoActDate:{type:'date',required:'',max:c.today}});
- await form('record_pto').locator('[name=ptoActDate]').fill('2026-09-05');await submit('record_pto');
+ await fillDate(form('record_pto'),'ptoActDate','2026-09-05');await submit('record_pto');
  await inspectForm('record_declaration',{declarationDate:{type:'date',required:'',max:c.today},declarationDetails:{required:'',maxlength:'500'}});
- await form('record_declaration').locator('[name=declarationDate]').fill('2026-09-06');await form('record_declaration').locator('[name=declarationDetails]').fill('Д-UI-001');await submit('record_declaration');
+ await fillDate(form('record_declaration'),'declarationDate','2026-09-06');await form('record_declaration').locator('[name=declarationDetails]').fill('Д-UI-001');await submit('record_declaration');
  check((await page.textContent('body')).includes('100%'),'completed100');
  await inspectForm('correct_pto',{ptoActDate:{type:'date',required:'',max:c.today},reason:{required:'',maxlength:'1000'}});
  const correction=form('correct_declaration');const details=correction.locator('xpath=ancestor::details[1]');if(await details.count()&&!(await details.evaluate(e=>e.open)))await details.locator('summary').click();
  await inspectForm('correct_declaration',{declarationDate:{type:'date',required:'',max:c.today},declarationDetails:{maxlength:'500'},reason:{required:'',maxlength:'1000'}});
- await correction.locator('[name=declarationDate]').fill('2026-09-04');await correction.locator('[name=declarationDetails]').fill('Д-UI-002');await correction.locator('[name=reason]').fill('Сверено с оригиналом');await submit('correct_declaration');await page.reload();
+ await fillDate(correction,'declarationDate','2026-09-04');await correction.locator('[name=declarationDetails]').fill('Д-UI-002');await correction.locator('[name=reason]').fill('Сверено с оригиналом');await submit('correct_declaration');await page.reload();
  for(const text of ['Д-UI-001','Д-UI-002','Сверено с оригиналом'])check((await page.textContent('body')).includes(text),'history '+text);
  // Inspect the actual form/label relationships and both target viewports together.
  for(const width of [1440,390]){
