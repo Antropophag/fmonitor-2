@@ -2,6 +2,7 @@
   "change": "unify-yii2-shlz-ui",
   "planned_paths": [
     "app/YiiRuntime/Controllers/SelectionController.php",
+    "app/YiiRuntime/PreopeningResources.php",
     "app/YiiRuntime/ViewSupport.php",
     "app/YiiRuntime/Views/_otiz-nav.php",
     "app/YiiRuntime/Views/_otiz-snapshot-list.php",
@@ -49,7 +50,7 @@
     "tests/Yii2/yii2_user_access_browser_001_test.php",
     "tests/Yii2/inspection_browser.mjs",
     "tests/Yii2/yii2_inspection_browser_001_test.php",
-    "tests/AssignmentOrderComposition/installer_search_http_manual_pilot_test.php",
+    "tests/Yii2/yii2_preopening_routes_001_test.php",
     "tests/Support/yii2_shlz_visual_contract_browser.cjs",
     "tests/Verification/yii2_worktree_autoload_001_test.php",
     "reviews/tests/YII2-SHLZ-VISUAL-CONTRACT-001.md",
@@ -131,10 +132,10 @@
       "spec_path": "specs/YII2-PREOPENING-JOURNEY-001.md",
       "seam": "authorized installer search JSON and shared current-assignment projection",
       "tests": [
-        "tests/AssignmentOrderComposition/installer_search_http_manual_pilot_test.php"
+        "tests/Yii2/yii2_preopening_routes_001_test.php"
       ],
       "gate3_expected": {
-        "tests/AssignmentOrderComposition/installer_search_http_manual_pilot_test.php": "INTENDED_RED"
+        "tests/Yii2/yii2_preopening_routes_001_test.php": "INTENDED_RED"
       }
     },
     {
