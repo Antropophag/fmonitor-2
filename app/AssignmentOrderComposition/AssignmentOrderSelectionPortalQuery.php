@@ -6,4 +6,5 @@ interface AssignmentOrderSelectionPortalQuery
     public function authorizeActor(int $actor):array;
     public function readSelectionPortal(int $objectId,int $actorId):array;
     public function searchEligibleInstallers(int $actorId,string $query,int $page):array;
+    public function currentInstallerAssignments(array $installerTabIds):array;
 }
