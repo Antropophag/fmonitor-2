@@ -49,7 +49,7 @@
 
 - [x] 7.1 Удалить заменённые CSS generations, orphaned selectors и местные common-primitive implementations; проверить поиском consumer references и запустить focused CSS/asset contract tests.
 - [x] 7.2 Проверить production assets на JS exceptions, missing assets и двойные event handlers; запустить bounded browser sweep на representative flows.
-- [ ] 7.3 Выполнить один batched visual sweep desktop+mobile с sidebar states, boundary widths, short height, touch, overlays, long Russian data и 200% browser zoom/reflow; вручную составить единый список дефектов.
+- [x] 7.3 Выполнить один batched visual sweep desktop+mobile с sidebar states, boundary widths, short height, touch, overlays, long Russian data и 200% browser zoom/reflow; вручную составить единый список дефектов.
 - [x] 7.4 Исправить весь список visual sweep одним пакетом и выполнить не более одного подтверждающего sweep; сохранить просмотренные after screenshots на той же среде/fixtures.
 - [x] 7.5 Один раз запустить Impeccable detector по изменённым UI targets, устранить applicable findings либо записать обоснованные исключения и проверить отсутствие material findings.
 
@@ -64,7 +64,7 @@
 ## 9. Owner device matrix — 15″ laptop, Redmi Pad 2 Pro и mobile
 
 - [x] 9.1 Root добавляет red-capable browser geometry assertions для широкого viewport с узким workspace, пересечений heading/cell/control rectangles, document overflow, offscreen actions и local-scroll ownership без привязки к конкретной CSS реализации.
-- [ ] 9.2 Выполнить один batched before-audit всех 25 active Yii2 views и доступных overlay/open states на 1366×768, 1536×864, 1280×800, 800×1280, 360×800 и 390×844 CSS px; сохранить screenshots и machine manifest вне checkout, вручную просмотреть контактный лист и записать полный defect inventory.
-- [ ] 9.3 Separate executor исправляет consolidated inventory одним production package, сохраняя routes, roles, payloads, histories, financial semantics, offline protocol и public shlz ownership; replaced rules удаляются, а не маскируются global clipping.
-- [ ] 9.4 Root запускает не более одного batched confirmation pass на той же matrix/fixtures и проверяет каждый исходный defect, touch targets, overlays, long values, local scroll и отсутствие новых collisions/overflow.
+- [x] 9.2 Выполнить один batched before-audit всех 25 active Yii2 views и доступных overlay/open states на 1366×768, 1536×864, 1280×800, 800×1280, 360×800 и 390×844 CSS px; сохранить screenshots и machine manifest вне checkout, вручную просмотреть контактный лист и записать полный defect inventory.
+- [x] 9.3 Separate executor исправляет consolidated inventory одним production package, сохраняя routes, roles, payloads, histories, financial semantics, offline protocol и public shlz ownership; replaced rules удаляются, а не маскируются global clipping.
+- [x] 9.4 Root запускает не более одного batched confirmation pass на той же matrix/fixtures и проверяет каждый исходный defect, touch targets, overlays, long values, local scroll и отсутствие новых collisions/overflow.
 - [ ] 9.5 После device-matrix delta подготовить свежие exact-source Gate 3 test-delta и Gate 5 packages; прежний owner checkpoint и review не переносятся автоматически.

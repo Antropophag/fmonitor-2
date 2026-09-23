@@ -44,7 +44,7 @@ try {
     $process = null;
     assertSameValue(0, $exit, 'INTENDED_RED shared Yii visual browser contract; ' . file_get_contents($log) . ' evidence ' . $http->artifacts);
     $observed = json_decode((string) file_get_contents($result), true, flags: JSON_THROW_ON_ERROR);
-    assertSameValue([320, 390, 768, 1024, 1280, 1440, 1920], array_keys($observed['viewports']), 'all required representative widths captured');
+    assertSameValue([320, 360, 390, 768, 800, 1024, 1280, 1366, 1440, 1536, 1920], array_keys($observed['viewports']), 'owner device matrix and stress widths captured');
     foreach ($observed['screenshots'] as $width => $shot) {
         assertSameValue(true, is_file($shot['path']) && hash_file('sha256', $shot['path']) === $shot['sha256'], 'reviewable screenshot ' . $width);
     }

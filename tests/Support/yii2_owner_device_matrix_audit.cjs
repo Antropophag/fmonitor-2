@@ -8,7 +8,7 @@ const password = process.env.FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD;
 const artifacts = process.argv[2];
 if (!origin || !email || !password || !artifacts) throw new Error('missing audit configuration');
 
-const profiles = [
+const allProfiles = [
   ['laptop-1366', 1366, 768, false],
   ['laptop-1536', 1536, 864, false],
   ['tablet-landscape', 1280, 800, true],
@@ -16,7 +16,7 @@ const profiles = [
   ['mobile-360', 360, 800, true],
   ['mobile-390', 390, 844, true],
 ];
-const routes = [
+const allRoutes = [
   ['objects', '/pilot/objects'],
   ['construction', '/pilot/construction-control'],
   ['calendar', '/pilot/calendar'],
@@ -33,6 +33,10 @@ const routes = [
   ['otiz-payments', '/pilot/otiz/payments'],
   ['otiz-history', '/pilot/otiz/history'],
 ];
+const selectedProfiles = new Set((process.env.FMONITOR_AUDIT_PROFILES || '').split(',').filter(Boolean));
+const selectedRoutes = new Set((process.env.FMONITOR_AUDIT_ROUTES || '').split(',').filter(Boolean));
+const profiles = selectedProfiles.size ? allProfiles.filter(([name]) => selectedProfiles.has(name)) : allProfiles;
+const routes = selectedRoutes.size ? allRoutes.filter(([name]) => selectedRoutes.has(name)) : allRoutes;
 
 async function login(page) {
   await page.goto(origin + '/pilot/login');

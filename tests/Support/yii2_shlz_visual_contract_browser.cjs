@@ -20,8 +20,8 @@ async function main() {
 
   const viewports = {};
   const screenshots = {};
-  for (const width of [320, 390, 768, 1024, 1280, 1440, 1920]) {
-    await page.setViewportSize({ width, height: width <= 390 ? 568 : 900 });
+  for (const [width, height] of [[320,568],[360,800],[390,844],[768,900],[800,1280],[1024,900],[1280,800],[1366,768],[1440,900],[1536,864],[1920,900]]) {
+    await page.setViewportSize({ width, height });
     await page.goto(config.origin + '/pilot/login');
     viewports[width] = await page.evaluate(() => ({
       viewport: innerWidth,

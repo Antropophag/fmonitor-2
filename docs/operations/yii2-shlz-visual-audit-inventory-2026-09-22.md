@@ -52,6 +52,23 @@ false positives caused by rowspan/colgroup geometry. Checklist, dashboard,
 feedback and deadline-certificate states were visually acceptable in the
 captured matrix. This is partial route coverage, not completion of task 9.2.
 
+### Device matrix correction outcome
+
+Separate executor `/root/otiz_header_fix` implemented DM01–DM05 in production
+commit `42355256`. A single full confirmation pass is retained in
+`/Users/antropophag/.local/share/fmonitor-2/device-matrix-after-20260923.WbzbIJ`.
+It cleared objects, OTIZ objects/payments/history, installers and roles, with one
+remaining users invite-form overflow at 800×1280. The executor corrected that
+single residual; the bounded users-only confirmation is retained in
+`device-matrix-users-confirm-20260923.Qd8HWk` and is GREEN with document width
+equal to viewport. Impeccable detector returned `[]`.
+
+State-dependent surfaces not safely reachable from the live stand were checked
+on isolated fixtures after expanding their existing browser journeys to the same
+owner matrix: shared shell/login, installers, object card + selection/preopening,
+original/completion/documentary forms. All four focused wrappers were GREEN.
+The stale live IDs remain recorded as 404 rather than being relabelled GREEN.
+
 ## Gate 2 baseline blocker — 2026-09-22
 
 На exact `origin/main` `bced877a` существующие authenticated browser journeys
