@@ -232,6 +232,7 @@ document.addEventListener('submit', async event => {
     const current = document.querySelector('#completion');
     if (!replacement || !current) { showUnknownCompletionResult(form); return; }
     current.replaceWith(replacement);
+    globalThis.fm2EnhanceDatePickers?.(replacement);
     const panel = replacement.closest('[role="tabpanel"]');
     const tab = panel?.id ? document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`) : null;
     if (panel && tab) {
