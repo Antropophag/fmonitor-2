@@ -1,0 +1,129 @@
+# Реестр сверки визуального аудита Yii2
+
+Source: `bced877aec8a8802e97037749ca4251d3098df1a` — одновременно audit SHA и
+актуальный `origin/main` на старте change. Parent issue: #197. Owner brief от
+2026-09-22 расширяет #197 единым проходом и включает ОТиЗ.
+
+Статусы ниже разделяют подтверждаемую структуру исходников и browser outcome.
+До воспроизведения в разрешённом runtime визуальные последствия имеют статус
+`UNKNOWN`.
+
+| Finding | Source status | Browser status | Evidence / next witness |
+|---|---|---|---|
+| V01 разные таблицы | REPRODUCED | RESOLVED ON CANDIDATE | Общая data-list разметка и локальный scroll проверены focused visual-contract тестами и снимками objects/construction/certificates/ОТиЗ из `ui-sweep-final2-20260923.1j3EfA`; ширина документа равна viewport. |
+| V02 вложенное поле | REPRODUCED | RESOLVED ON CANDIDATE | Фильтры монтажников больше не оборачивают полную field-композицию `ViewSupport::choice()`; structural/forms inventory и installer browser journeys GREEN. |
+| V03 selector selection modal | REPRODUCED | RESOLVED ON CANDIDATE | Responsive-правила достигают фактического соседнего dialog; финальный sweep содержит `selection-modal-open.png`, browser assertion GREEN. |
+| V04 payment confirmation | REPRODUCED | RESOLVED ON CANDIDATE | Общий overlay controller владеет входом/удержанием/возвратом фокуса, Escape и cancel; focused/browser evidence ОТиЗ GREEN без изменения command form. |
+| V05 ОТиЗ владеет shell | REPRODUCED | RESOLVED ON CANDIDATE | Page-owned геометрия `:has(.fm2-otiz)` удалена; на снимках ОТиЗ 320/390/1440 из `geometry-final3-20260923.knuOhU` ширина документа равна viewport. |
+| V06 конфликтующие responsive rules | REPRODUCED | RESOLVED ON CANDIDATE | Заменённые responsive/table rules удалены; focused OTIZ/data-list browser checks и финальная геометрия 320/390/1440 сохраняют полные значения/действия и локальный scroll. |
+| V07 secondary forms вне общего contract | REPRODUCED | RESOLVED ON CANDIDATE | Secondary forms используют публичные Field/Control, DatePicker и file compositions; forms/overlays inventory и затронутые documentary/browser journeys GREEN. |
+| V08 местные overlays/notifications | REPRODUCED | RESOLVED ON CANDIDATE | Checklist, inspection, selection, object-edit и payment overlays используют общую modal surface/controller; финальные checklist/object-edit screenshots и focused journeys GREEN. |
+| V09 shell/landmark drift | REPRODUCED | RESOLVED ON CANDIDATE | Shell владеет единственными `main`, skip target и responsive navigation; visual-contract и protected runtime browser journeys GREEN. |
+
+Candidate runtime witness: `ui-sweep-final2-20260923.1j3EfA` (30 captured
+states, HTTP 200, JS errors 0, document overflow 0) and
+`geometry-final3-20260923.knuOhU` (objects/OTIZ/certificate at 320/390/1440).
+Both directories and their `result.json` files are retained outside the checkout
+under `/Users/antropophag/.local/share/fmonitor-2/`. Latest reviewed corrections
+are additionally captured in `checklist-installer-close-final.png`,
+`object-start-datepicker-final.png` and `construction-390-final-0e5df8bd.png`.
+These are candidate evidence, not owner checkpoint, independent approval or CI.
+
+## Final page inventory — 25 active views
+
+| View | Shared compositions | Preserved exception | Evidence |
+|---|---|---|---|
+| `_otiz-nav.php` | tabs, toolbar | OTIZ role links | OTIZ browser + device matrix |
+| `_otiz-snapshot-list.php` | data-list, status, pagination | full financial values | OTIZ browser + device matrix |
+| `activate.php` | auth surface, Field, feedback | activation token states | visual-contract browser |
+| `calendar.php` | shell, toolbar, surface | public Calendar Grid | visual sweep |
+| `checklist.php` | Field, modal, feedback | offline/replay states | inspection browser + close screenshot |
+| `completion.php` | Field, DatePicker, file control | append-only correction form | documentary browser |
+| `construction-control.php` | data-list, toolbar, pagination | stage filters | device matrix + construction screenshot |
+| `dashboard.php` | shell, surfaces, typography | chart projection | visual sweep |
+| `deadline-certificates.php` | data-list, Field, DatePicker | long history values | documentary browser + geometry sweep |
+| `execution.php` | Field, DatePicker, feedback | command/no-JS form | preopening browser |
+| `feedback-admin.php` | data-list, pagination, feedback | admin-only context | feedback A1–A9 |
+| `feedback-confirmation.php` | feedback surface | terminal confirmation | feedback A1–A9 |
+| `feedback.php` | Field, FAB, feedback | safe source context | feedback A1–A9 + FAB geometry |
+| `installers.php` | data-list, Field, Select, pagination | workforce facts | installer browser + device matrix |
+| `login.php` | auth surface, Field, feedback | login denial | visual-contract browser |
+| `object-card.php` | surfaces, Field, modal, DatePicker | process actions/gallery | preopening browser + DatePicker screenshot |
+| `objects.php` | data-list, toolbar, status, pagination | object queue filters | object-queue browser + device matrix |
+| `original-history.php` | data-list, status | immutable revisions | documentary browser |
+| `original.php` | Field, file control, feedback | PDF/no-JS submission | documentary browser |
+| `otiz-snapshot.php` | data-list, modal, feedback | financial confirmation/idempotency | OTIZ browser + device matrix |
+| `otiz.php` | data-list, toolbar, pagination | calculation/readiness semantics | OTIZ browser + device matrix |
+| `preopening-error.php` | feedback surface | retryable/terminal distinction | preopening journey |
+| `roles.php` | data-list, Field, feedback | permission tags | user-access browser + device matrix |
+| `selection.php` | Field, modal, data-list | installer picker/current assignments | preopening routes/browser + open-state sweep |
+| `users.php` | data-list, Field, pagination | invite/link forms | user-access browser + device matrix |
+
+Каждая строка сохраняет существующие routes, roles, payloads, histories и
+state-changing seams. Изолированные command/no-JS/permission состояния
+проверены указанными fixtures; live stand matrix не подменяет эти witnesses.
+
+## Owner device matrix before-audit — 2026-09-23
+
+Owner targets: laptop 1366×768 и 1536×864; Redmi Pad 2 Pro landscape
+1280×800 и portrait 800×1280; mobile 360×800 и 390×844 CSS px. Read-only
+stand audit captured 90 states (15 reachable route-surfaces × 6 profiles) in
+`/Users/antropophag/.local/share/fmonitor-2/device-matrix-before-20260923.q8akGF`.
+`manifest.json` reports zero JS errors. Two state-dependent routes using stale
+object 39058 returned 404 and remain `UNKNOWN`; existing isolated object-card,
+selection, original/execution and activation journeys remain required witnesses.
+
+| ID | Targets | Confirmed defect | Required correction |
+|---|---|---|---|
+| DM01 | laptop 1366/1536, tablet landscape | users register loses right-side filter/table content without an obvious owning local scroll | Contain the data list and expose all columns/actions through local scroll or a complete adaptive row composition. |
+| DM02 | tablet portrait 800 | objects register expands document to 954 px; users expands it to 890 px while full sidebar consumes workspace | Use container-aware shell/table behavior; no document overflow and no hidden fields/actions. |
+| DM03 | tablet portrait 800, mobile 360/390 | OTIZ payments/history expand document (1209/440 px) and squeeze headers/cells into vertical letters | Preserve intrinsic financial table width inside a labelled local scroll owner; never compress semantic text character-by-character. |
+| DM04 | mobile 360/390 | installers long positions and roles permission tags are visibly clipped at the right edge | Give each wide data list explicit local scroll or a complete mobile row variant without dropping values/actions. |
+| DM05 | laptop/tablet workspace | OTIZ objects headers can collide when viewport remains wide but sidebar narrows the owning container | Base sizing on container/workspace, retain readable column width, and localize overflow. |
+
+Calendar/construction generic header-collision signals were visually rejected as
+false positives caused by rowspan/colgroup geometry. Checklist, dashboard,
+feedback and deadline-certificate states were visually acceptable in the
+captured matrix. This is partial route coverage, not completion of task 9.2.
+
+### Device matrix correction outcome
+
+Separate executor `/root/otiz_header_fix` implemented DM01–DM05 in production
+commit `42355256`. A single full confirmation pass is retained in
+`/Users/antropophag/.local/share/fmonitor-2/device-matrix-after-20260923.WbzbIJ`.
+It cleared objects, OTIZ objects/payments/history, installers and roles, with one
+remaining users invite-form overflow at 800×1280. The executor corrected that
+single residual; the bounded users-only confirmation is retained in
+`device-matrix-users-confirm-20260923.Qd8HWk` and is GREEN with document width
+equal to viewport. Impeccable detector returned `[]`.
+
+State-dependent surfaces not safely reachable from the live stand were checked
+on isolated fixtures after expanding their existing browser journeys to the same
+owner matrix: shared shell/login, installers, object card + selection/preopening,
+original/completion/documentary forms. All four focused wrappers were GREEN.
+The stale live IDs remain recorded as 404 rather than being relabelled GREEN.
+
+## Gate 2 baseline blocker — 2026-09-22
+
+На exact `origin/main` `bced877a` существующие authenticated browser journeys
+не достигают новых UI assertions:
+
+- `yii2_installer_directory_browser_001_test.php`: `/pilot/installers` — 503;
+- `yii2_user_access_browser_001_test.php`: `/pilot/admin/users` — 503;
+- `yii2_preopening_browser_001_test.php`: ранний `INTENDED_RED Yii preopening browser card`;
+- `yii2_otiz_shlz_ui_001_test.php`: ранний `shared authenticated shlz shell`,
+  ожидаемый root отсутствует.
+
+Новый isolated login browser test достигает публичного seam и даёт корректный
+V09 RED на отсутствующем skip-link; structural test даёт корректный V02 RED.
+Gate 3 reviewer подтвердил эти два узких evidence, но вернул
+`CHANGES_REQUESTED`: они не покрывают A–G. Владелец разрешил включить baseline
+restoration. Диагностика установила, что `vendor/` нового worktree был ошибочно
+создан как symlink на старый checkout: Composer classmap загружал старый
+`MainNavigation` без `icon()`, а текущий `ViewSupport` уже вызывал этот метод.
+Это смешивало два source trees и давало 503 при authenticated render.
+
+После удаления только этого symlink и локального `composer install` по текущему
+lockfile GREEN: exact-worktree autoload guard, users HTTP/browser, installers
+browser, preopening browser и OTIZ browser. Production code для baseline не
+менялся; permission/domain contracts не ослаблялись.

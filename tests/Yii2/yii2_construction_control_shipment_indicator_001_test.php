@@ -35,7 +35,7 @@ try {
         $end=strpos($html,'</tr>',$start);
         return$end===false?'':substr($html,$start,$end-$start);
     };
-    $check(true,str_contains($page['body'],'<th><span class="fm2-visually-hidden">Отгрузка</span></th>'),'icon-only shipment column heading');
+    $check(1,preg_match('#<th[^>]*scope="col"[^>]*>\s*<span class="fm2-visually-hidden">Отгрузка</span>\s*</th>#',$page['body']),'icon-only shipment column heading');
     $first=$row($page['body'],4512);
     foreach(['class="fm2-shipment-cell"','data-shipment-state="partial"','aria-label="Частично отгружен, 10.09.2026"','title="Частично отгружен, 10.09.2026"','delivery-box.svg']as$needle)$check(true,str_contains($first,$needle),'partial shipment '.$needle);
     $check(false,str_contains($first,'fm2-shipment-copy'),'partial has no visible shipment copy');

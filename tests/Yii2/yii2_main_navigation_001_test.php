@@ -4,7 +4,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/bootstrap.php';
 require __DIR__ . '/ObjectQueueFixture.php';
 
-$root=dirname(__DIR__,2);foreach(glob($root.'/app/YiiRuntime/Views/*.php')as$view)assertSameValue(false,str_contains((string)file_get_contents($view),'fm2-primary-nav'),'shared MainNavigation is sole primary-nav owner '.basename($view));$navigationJs=(string)file_get_contents($root.'/app/YiiRuntime/Assets/navigation.js');foreach(['insertAdjacentHTML','appendChild','before(','after(','replaceWith']as$mutation)assertSameValue(false,str_contains($navigationJs,$mutation),'navigation client does not insert/reorder links '.$mutation);
+$root=dirname(__DIR__,2);foreach(glob($root.'/app/YiiRuntime/Views/*.php')as$view)assertSameValue(false,str_contains((string)file_get_contents($view),'fm2-primary-nav'),'shared MainNavigation is sole primary-nav owner '.basename($view));$navigationJs=(string)file_get_contents($root.'/app/YiiRuntime/Assets/navigation.js');foreach(['insertAdjacentHTML','appendChild','insertBefore','replaceWith']as$mutation)assertSameValue(false,str_contains($navigationJs,$mutation),'navigation client does not insert/reorder links '.$mutation);assertSameValue(0,preg_match('/(?:nav|link|state|trigger)\s*\.\s*(?:before|after)\s*\(/',$navigationJs),'navigation client does not reorder navigation nodes');
 
 // YII2-MAIN-NAVIGATION-001: real Yii HTTP and semantic navigation DOM.
 $fixture = null;

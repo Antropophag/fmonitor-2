@@ -1,10 +1,43 @@
 import { enhanceCalendarGrids } from '/pilot/assets/shlz-behaviors.js';
 import { enhanceSelects } from '/pilot/assets/shlz-behaviors.js';
 import { enhanceTabs } from '/pilot/assets/shlz-behaviors.js';
+import { DatePickerController } from '/pilot/assets/shlz-behaviors.js';
 
 enhanceSelects(document);
 enhanceCalendarGrids(document);
 enhanceTabs(document);
+export const enhanceDatePickers = (root = document) => {
+  for (const nativeDate of root.querySelectorAll('input[type="date"][name]')) {
+    if (nativeDate.closest('[data-native-date-fallback]')) continue;
+    const field = nativeDate.closest('.shlz-field');
+    const label = field?.querySelector('.shlz-field__label')?.textContent?.trim()
+      || nativeDate.getAttribute('aria-label')
+      || 'Дата';
+    const host = document.createElement('div');
+    host.className = 'fm2-date-picker';
+    (field || nativeDate).before(host);
+    new DatePickerController(host, {
+      mode: 'single',
+      label,
+      calendarLabel: `Календарь: ${label}`,
+      name: nativeDate.name,
+      value: nativeDate.value,
+      visibleMonth: nativeDate.value ? nativeDate.value.slice(0, 7) : undefined,
+      min: nativeDate.min || undefined,
+      max: nativeDate.max || undefined,
+      required: nativeDate.required,
+      disabled: nativeDate.disabled,
+      readOnly: nativeDate.readOnly,
+      locale: 'ru-RU',
+    });
+    nativeDate.dataset.nativeDateName = nativeDate.name;
+    nativeDate.removeAttribute('name');
+    nativeDate.disabled = true;
+    (field || nativeDate).classList.add('fm2-native-date-fallback--enhanced');
+  }
+};
+globalThis.fm2EnhanceDatePickers = enhanceDatePickers;
+enhanceDatePickers(document);
 const choiceAtom = 'sel' + 'ect';
 const choiceRootQuery = `[data-shlz-${choiceAtom}]`;
 const fallbackQuery = `.shlz-${choiceAtom}-fallback ${choiceAtom}`;
@@ -66,3 +99,11 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
     try { localStorage.setItem(key, String(state.open)); } catch {}
   });
 })();
+
+document.querySelectorAll('.fm2-file-input').forEach(input => {
+  const name = input.closest('.fm2-file-control')?.querySelector('[data-file-name]');
+  if (!name) return;
+  input.addEventListener('change', () => {
+    name.textContent = input.files?.[0]?.name || 'Файл не выбран';
+  });
+});

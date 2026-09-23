@@ -15,12 +15,14 @@ try {
  const button=page.locator('[data-inspection-schedule]').first();await button.focus();await page.keyboard.press('Enter');
  const dialog=page.locator('dialog[open]');await dialog.waitFor();
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
- check(await dialog.locator('[name=inspectionDate]').inputValue()===today,'default date Moscow today');check(await dialog.locator('[name=inspectionDate]').getAttribute('min')===today,'minimum date Moscow today');
+ const inspectionHidden=dialog.locator('.shlz-date-picker input[type="hidden"][name=inspectionDate]'),inspectionRoot=inspectionHidden.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," shlz-date-picker ")]'),inspectionVisible=inspectionRoot.locator('.shlz-date-field__input'),inspectionNative=dialog.locator('input[type="date"][data-native-date-name=inspectionDate]');
+ check(await inspectionHidden.inputValue()===today,'default date Moscow today');check(await inspectionNative.getAttribute('min')===today,'minimum date Moscow today');
  check(await dialog.locator('[name=_csrf]').count()===1,'native CSRF in dialog');
- await dialog.locator('[name=inspectionDate]').fill('2099-09-12');
+ await inspectionVisible.fill('12.09.2099');await inspectionVisible.press('Tab');check(await inspectionHidden.inputValue()==='2099-09-12','public picker owns exact inspection ISO date');
  await Promise.all([page.waitForResponse(r=>r.url().endsWith('/inspection-schedule')&&r.status()===303),dialog.locator('button[type=submit]').click()]);
  await page.waitForURL(c.origin+'/pilot/objects?inspectionScheduled=2099-09-12');await page.getByText(/Инспекция запланирована на 12\.09\.2099/).waitFor();
  check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'desktop has no page overflow');
+ const feedbackOverlay=await page.locator('.fm2-feedback-fab').evaluate(element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return{width:box.width,height:box.height,right:innerWidth-box.right,bottom:innerHeight-box.bottom,border:parseFloat(style.borderTopWidth),shadow:style.boxShadow,background:style.backgroundColor};});check(feedbackOverlay.width>=48&&feedbackOverlay.height>=48&&feedbackOverlay.right>=16&&feedbackOverlay.bottom>=16,'feedback overlay stays fully inset');check(feedbackOverlay.border>=2&&feedbackOverlay.shadow!=='none','feedback overlay has distinct edge and elevation');
  await page.screenshot({path:c.artifacts+'/queue-desktop.png',fullPage:true});
  await page.goto(c.origin+'/pilot/objects?page=2');check((await page.locator('[name=q]').count())===1,'search on actual second page');
  await page.locator('[name=q]').fill('REG-451201');

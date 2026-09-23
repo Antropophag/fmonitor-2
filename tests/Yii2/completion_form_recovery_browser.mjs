@@ -22,6 +22,9 @@ try {
   assert.equal(await initialDetails.evaluate(node=>node.open),true,'user opens correction form');
   await form.locator('textarea[name="reason"]').fill('Черновик после неизвестного результата');
   await form.locator('input[name="declarationDetails"]').fill('Д-BROWSER-RECOVERY');
+  const dateRoot=form.locator('.shlz-date-picker');
+  await dateRoot.locator('.shlz-date-field__input').fill('04.09.2026');await dateRoot.locator('.shlz-date-field__input').press('Tab');
+  assert.equal(await dateRoot.locator('input[type="hidden"][name="declarationDate"]').inputValue(),'2026-09-04','initial public picker owns ISO value');
 
   let posts=0,resolveSecond;
   const secondCompleted=new Promise(resolve=>{resolveSecond=resolve;});
@@ -50,6 +53,8 @@ try {
   const corrected=page.locator('[data-completion-form="correct_declaration"]');
   await corrected.locator('[name="reason"][aria-invalid="true"]').waitFor();
   assert.equal(await corrected.locator('input[name="declarationDetails"]').inputValue(),'Д-BROWSER-RECOVERY');
+  assert.equal(await corrected.locator('.shlz-date-picker').count(),1,'422 recovery restores public DatePicker');
+  assert.equal(await corrected.locator('.shlz-date-picker input[type="hidden"][name="declarationDate"]').inputValue(),'2026-09-04','422 recovery retains ISO date');
   assert.equal(await corrected.locator('textarea[name="reason"]').inputValue(),'   ');
   assert.equal(await corrected.locator('textarea[name="reason"]').evaluate(node=>document.activeElement===node),true,'invalid field focused');
   assert.equal(await corrected.locator('xpath=ancestor::details').getAttribute('open'),'','correction remains open');
@@ -62,6 +67,8 @@ try {
   const conflicted=page.locator('[data-completion-form="correct_declaration"]');await conflicted.getByText('Исправляемая запись не найдена.').waitFor();
   assert.equal(await conflicted.locator('[data-completion-focus="true"]').evaluate(node=>document.activeElement===node),true,'409 general error focused');
   assert.equal(await conflicted.locator('input[name="declarationDetails"]').inputValue(),'Д-BROWSER-RECOVERY','409 retains submitted details');
+  assert.equal(await conflicted.locator('.shlz-date-picker').count(),1,'409 recovery restores public DatePicker');
+  assert.equal(await conflicted.locator('.shlz-date-picker input[type="hidden"][name="declarationDate"]').inputValue(),'2026-09-04','409 recovery retains ISO date');
   assert.equal(await conflicted.locator('textarea[name="reason"]').inputValue(),'Конфликт актуальности','409 retains submitted reason');
   assert.equal(await conflicted.locator('xpath=ancestor::details').getAttribute('open'),'','409 correction remains open');
   assert.equal(await page.locator('#object-tab-readiness').getAttribute('aria-selected'),'true','409 containing tab active');

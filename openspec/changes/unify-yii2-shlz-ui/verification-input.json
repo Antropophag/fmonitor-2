@@ -1,0 +1,165 @@
+{
+  "change": "unify-yii2-shlz-ui",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
+    "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
+    "app/InstallationProcess/InstallerAssignmentLookupIndexSchemaMigration.php",
+    "app/InstallationProcess/MariaDbAssignmentOrderSelectionSchemaCatalog.php",
+    "app/InstallationProcess/MariaDbProductionProcessSchemaReadiness.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/YiiRuntime/Controllers/SelectionController.php",
+    "app/YiiRuntime/PreopeningResources.php",
+    "app/YiiRuntime/ViewSupport.php",
+    "app/YiiRuntime/Views/_otiz-nav.php",
+    "app/YiiRuntime/Views/_otiz-snapshot-list.php",
+    "app/YiiRuntime/Views/activate.php",
+    "app/YiiRuntime/Views/calendar.php",
+    "app/YiiRuntime/Views/checklist.php",
+    "app/YiiRuntime/Views/completion.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/Views/deadline-certificates.php",
+    "app/YiiRuntime/Views/execution.php",
+    "app/YiiRuntime/Views/feedback-admin.php",
+    "app/YiiRuntime/Views/feedback-confirmation.php",
+    "app/YiiRuntime/Views/feedback.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Views/login.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Views/objects.php",
+    "app/YiiRuntime/Views/original-history.php",
+    "app/YiiRuntime/Views/original.php",
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/Views/otiz.php",
+    "app/YiiRuntime/Views/preopening-error.php",
+    "app/YiiRuntime/Views/roles.php",
+    "app/YiiRuntime/Views/selection.php",
+    "app/YiiRuntime/Views/users.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/navigation.js",
+    "app/YiiRuntime/Assets/preopening.js",
+    "app/YiiRuntime/Assets/otiz.js",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/yii2-shlz-visual-audit-inventory-2026-09-22.md",
+    "openspec/changes/unify-yii2-shlz-ui",
+    "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "specs/YII2-PREOPENING-JOURNEY-001.md",
+    "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
+    "tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php",
+    "tests/Yii2/yii2_shlz_select_001_test.php",
+    "tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php",
+    "tests/Yii2/installer_directory_browser.mjs",
+    "tests/Yii2/yii2_installer_directory_browser_001_test.php",
+    "tests/Yii2/preopening_browser.mjs",
+    "tests/Yii2/yii2_preopening_browser_001_test.php",
+    "tests/Yii2/otiz_shlz_ui_browser.mjs",
+    "tests/Yii2/yii2_otiz_shlz_ui_001_test.php",
+    "tests/Yii2/yii2_user_access_browser_001_test.php",
+    "tests/Yii2/inspection_browser.mjs",
+    "tests/Yii2/yii2_inspection_browser_001_test.php",
+    "tests/Yii2/yii2_preopening_routes_001_test.php",
+    "tests/Yii2/completion_form_recovery_browser.mjs",
+    "tests/Yii2/yii2_completion_form_recovery_browser_001_test.php",
+    "tests/Yii2/yii2_documentary_browser_001_test.php",
+    "tests/Yii2/feedback_schema_matrix.php",
+    "tests/Support/CurrentProductionSchemaContract.php",
+    "tests/Support/ProductionMigrationRunnerCatalogContract.php",
+    "tests/Runtime/runtime_recovery_forward_update_001_test.php",
+    "tests/Support/yii2_shlz_visual_contract_browser.cjs",
+    "tests/Verification/yii2_worktree_autoload_001_test.php",
+    "reviews/tests/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "reviews/code/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "authenticated-baseline-source-coherence",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "Composer bootstrap used by canonical isolated Yii HTTP fixtures",
+      "tests": [
+        "tests/Verification/yii2_worktree_autoload_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Verification/yii2_worktree_autoload_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V01-V05-V06-source-ownership-inventory",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "complete active Yii view and application-owned CSS source inventory for explicit ownership constraints",
+      "tests": ["tests/Yii2/yii2_shlz_visual_contract_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_shlz_visual_contract_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V02-rendered-installer-field-composition",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated GET /pilot/installers rendered fields and browser interaction",
+      "tests": ["tests/Yii2/yii2_installer_directory_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_installer_directory_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V03-selection-modal-responsive-focus",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated assignment-order selection journey at 320x568",
+      "tests": ["tests/Yii2/yii2_preopening_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_preopening_browser_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V04-V06-payment-modal-financial-layout",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "authenticated OTIZ snapshot/payment journey with financial table viewport matrix",
+      "tests": ["tests/Yii2/yii2_otiz_shlz_ui_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_shlz_ui_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V09-public-shell-skip-link",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "real Yii login shell across required viewport widths",
+      "tests": ["tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_shlz_visual_contract_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "V07-V08-secondary-forms-overlays-offline-states",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "active Yii source ownership inventory plus rendered field and authenticated checklist browser characterization",
+      "tests": [
+        "tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php",
+        "tests/Yii2/yii2_shlz_select_001_test.php",
+        "tests/Yii2/yii2_inspection_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_shlz_select_001_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_browser_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "YII2-PREOPENING-JOURNEY-001",
+      "acceptance_id": "selection-picker-current-assignments",
+      "spec_path": "specs/YII2-PREOPENING-JOURNEY-001.md",
+      "seam": "authorized installer search JSON and shared current-assignment projection",
+      "tests": [
+        "tests/Yii2/yii2_preopening_routes_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_preopening_routes_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "YII2-SHLZ-VISUAL-CONTRACT-001",
+      "acceptance_id": "authorization-history-preservation",
+      "spec_path": "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+      "seam": "existing authenticated user-access browser journey and independent persisted-facts observation",
+      "tests": ["tests/Yii2/yii2_user_access_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_user_access_browser_001_test.php": "GREEN"}
+    }
+  ]
+}

@@ -28,6 +28,10 @@ final class PreopeningResources
         if(!$db->set_charset('utf8mb4')){$db->close();throw new \RuntimeException();}return$db;
     }
     public function portal():C\AssignmentOrderSelectionPortalQuery{return C\ProductionAssignmentOrderSelectionPortalFactory::create($this->db,$this->prefix);}
+    public function currentInstallerAssignments(array $tabIds):array
+    {
+        return(new C\MariaDbCurrentInstallerAssignmentsQuery($this->db,$this->prefix))->find($tabIds);
+    }
     public function assignmentReader():I\MariaDbControlEngineerAssignmentReader{return new I\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix);}
     public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
     public function editObjectDetails(I\ObjectDetailsEditCommand$command):array{return I\ProductionObjectDetailsEditFactory::create($this->db,$this->prefix,static fn():string=>(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'))->edit($command);}

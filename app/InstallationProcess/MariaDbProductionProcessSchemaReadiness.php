@@ -40,7 +40,9 @@ final class MariaDbProductionProcessSchemaReadiness
         $columns = array_map(static fn (array $row): array => [
             $row['COLUMN_NAME'], strtolower((string) $row['COLUMN_TYPE']), $row['IS_NULLABLE'], $row['EXTRA'],
         ], $rows);
-        if ($columns !== $catalog[$table] || self::keyFingerprint($connection, $prefix, $table) !== self::keys()[$table]) return false;
+        $actualKeys=self::keyFingerprint($connection,$prefix,$table);$expectedKeys=self::keys()[$table];
+        if($table==='fm2_order_installers'){$successor=$expectedKeys;$successor['secondary'][]=['installer_tab_id:FULL:A:NO','assignment_order_id:FULL:A:NO'];$compatibleKeys=$actualKeys===$expectedKeys||$actualKeys===$successor;}else$compatibleKeys=$actualKeys===$expectedKeys;
+        if ($columns !== $catalog[$table] || !$compatibleKeys) return false;
         return MariaDbSchemaInspector::checks($connection, $name) === ($table === 'fm2_process_events' ? ['json_valid(payload_json)'] : []);
     }
 

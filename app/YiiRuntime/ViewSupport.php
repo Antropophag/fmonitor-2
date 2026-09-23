@@ -10,7 +10,7 @@ use yii\web\View;
 
 final class ViewSupport
 {
-    public static function begin(View $view, string $title, object $identity, ?string $currentSection = null): void
+    public static function begin(View $view, string $title, object $identity, ?string $currentSection = null, string $shellVariant = ''): void
     {
         PreopeningAssetBundle::register($view);
         $csrf = Html::hiddenInput(\Yii::$app->request->csrfParam, \Yii::$app->request->csrfToken);
@@ -33,7 +33,7 @@ final class ViewSupport
 <body class="shlz-scope">
 <?php $view->beginBody() ?>
 <a class="fm2-skip shlz-link" href="#main-content">Перейти к содержанию</a>
-<div class="fm2-shell">
+<div class="fm2-shell<?= $shellVariant !== '' ? ' fm2-shell--' . Html::encode($shellVariant) : '' ?>">
     <aside class="fm2-sidebar">
         <div class="fm2-nav-body">
             <a class="fm2-logo" href="/pilot/objects" aria-label="FMonitor 2.0">

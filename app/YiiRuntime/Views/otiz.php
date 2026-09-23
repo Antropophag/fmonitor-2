@@ -9,7 +9,7 @@ $percent=static fn(?int$bp):string=>$bp===null?'—':number_format($bp/100,2,','
 $coefficient=static fn(?int$bp):string=>$bp===null?'—':number_format($bp/10000,2,',',' ');
 $states=['missing_norm'=>'Норма не определена','planned'=>'Запланирован','blocked'=>'Заблокирован','ready'=>'Готов к расчёту','no_new_amount'=>'К выплате 0 ₽','completed'=>'Завершён'];
 $this->registerJsFile('/pilot/assets/'.AssetVersion::file('otiz.js'),['type'=>'module','position'=>\yii\web\View::POS_END]);
-ViewSupport::begin($this,$title,$identity,'otiz');
+ViewSupport::begin($this,$title,$identity,'otiz','wide');
 ?>
 <div class="fm2-otiz fm2-otiz-page">
 <section class="fm2-otiz-surface fm2-otiz-overview-surface"><div class="fm2-otiz-tabs-surface"><?= $this->render('_otiz-nav',['current'=>$mode]) ?></div>
