@@ -17,6 +17,10 @@ Gate3 approval of the complete tests remains required.
 application query seam модуля `AssignmentOrderComposition`. MariaDB adapter
 MUST ограничивать чтение запрошенными табельными номерами и MUST владеть
 интерпретацией application snapshot и признака документально закрытого объекта.
+Обе нормализованные membership relations MUST иметь installer-leading index
+`(installer_tab_id, assignment_order_id)`, поставляемый отдельной повторяемой
+canonical migration; фильтрация по второму столбцу composite PK не считается
+bounded lookup.
 Yii composition MUST только получить query и сериализовать результат; она MUST
 NOT читать process tables, декодировать snapshot или определять current/closed
 семантику самостоятельно.

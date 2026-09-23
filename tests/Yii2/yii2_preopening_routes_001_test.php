@@ -9,7 +9,10 @@ assertSameValue(true,str_contains($resourcesSource,'CurrentInstallerAssignmentsQ
 foreach(['fm2_assignment_order_applications','fm2_pilot_completion_facts','selected_snapshot_json','json_decode(','->query(']as$ownedToken)assertSameValue(false,str_contains($resourcesSource,$ownedToken),'Yii composition does not own picker persistence/domain semantics '.$ownedToken);
 $f=null;
 try {
-    $f=new PreopeningFixture(dirname(__DIR__,2));$f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command());$original=$f->nativeOriginal();$f->start();$cookies=[];$f->login($cookies);
+    $f=new PreopeningFixture(dirname(__DIR__,2));
+    assertSameValue(FMonitor2\InstallationProcess\InstallerAssignmentLookupIndexSchemaMigration::class,FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations()[33]??null,'installer-leading index migration is canonical v33');
+    foreach(['fm2_order_installers','fm2_assignment_order_selection_members']as$table){$index=$f->db->query("SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) columns_list FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$f->p}{$table}' AND INDEX_NAME='ix_installer_assignment' GROUP BY INDEX_NAME")->fetch_assoc();assertSameValue('installer_tab_id,assignment_order_id',$index['columns_list']??null,'picker has installer-leading index '.$table);}
+    $f->base->selection->app()->selectAssignmentOrderComposition(FMonitor2\Tests\Support\SelectionNativeFixture::command());$original=$f->nativeOriginal();$f->start();$cookies=[];$f->login($cookies);
     $base='/pilot/objects/4512';$order=$base.'/assignment-orders/81';
     assertSameValue(200,$f->request('GET',$base,[],$cookies)['status'],'INTENDED_RED full Yii route matrix');
     $reads=[$base,$base.'/assignment-order/selection',$base.'/assignment-order/installers?q=7001&page=1',$order.'/originals/submit',$order.'/originals/history',$order.'/originals/'.$original->currentRevisionId().'/download',$base.'/execution'];

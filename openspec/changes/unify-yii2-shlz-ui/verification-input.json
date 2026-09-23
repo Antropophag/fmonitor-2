@@ -4,6 +4,8 @@
     ".quality-graph/verification-policy.json",
     "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
     "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
+    "app/InstallationProcess/InstallerAssignmentLookupIndexSchemaMigration.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
     "app/YiiRuntime/Controllers/SelectionController.php",
     "app/YiiRuntime/PreopeningResources.php",
     "app/YiiRuntime/ViewSupport.php",
