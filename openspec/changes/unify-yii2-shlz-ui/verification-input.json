@@ -6,6 +6,7 @@
     "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
     "app/InstallationProcess/InstallerAssignmentLookupIndexSchemaMigration.php",
     "app/InstallationProcess/MariaDbAssignmentOrderSelectionSchemaCatalog.php",
+    "app/InstallationProcess/MariaDbProductionProcessSchemaReadiness.php",
     "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
     "app/YiiRuntime/Controllers/SelectionController.php",
     "app/YiiRuntime/PreopeningResources.php",
