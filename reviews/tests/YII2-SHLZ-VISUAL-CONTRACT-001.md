@@ -165,3 +165,36 @@ Use rendered expectations derived from the owner evidence: on the same desktop e
 - RED quality: deterministic for the selected source patterns, but not capable of proving that the owner-visible defects are fixed.
 
 The supplemental delta may proceed after the test observes the reported defects at the rendered browser seam and avoids imposing global nowrap where it can violate responsive/reflow acceptance.
+
+---
+
+# Supplemental Gate 3 exact-source test-delta review — 2026-09-23
+
+- Verdict: **APPROVED**
+- Reviewed HEAD: `c0cb422622c90262d47373744333a918e6929ff4`
+- Reviewed candidate source digest: `a6fe986918eda475588f1a37c8272cd0c03bcc5ad18b78ae20a42de36925f3cd`
+- Reviewed executable source digest: `440d66aedf1d39ac3fc3a55ed38186d1a5c32fd2636304fc9b256204366e9f88`
+- Reviewer role package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260923T090257Z-c341064d23/package.json`
+- Required context manifest: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260923T090257Z-c341064d23/task-context-manifest.json` (`226fb1c0b24214ba5d47fffdd23c56f848cffa8fb098a748386b6c03a779ebf3`)
+- Scope: independent supplemental review of root-authored specification/test deltas after approved commit `495bbac9`, including owner device matrix, pagination, picker current assignments, feedback FAB, public close controls and preopening asset cache-busting. Production code, tests and specifications were not changed by the reviewer.
+
+## Findings
+
+No open Gate 3 findings remain for this exact source.
+
+## Prior supplemental blocker disposition
+
+1. **Fixed.** The retired source-pattern regression no longer serves as the visual oracle. The affected selection modal is exercised open at 320×568 through the authenticated browser seam; assertions observe viewport containment, scroll ownership, footer reachability, focus entry, Escape close and focus return. Representative controls and table surfaces are checked through computed geometry at the owner viewports, including no document overflow and readable contained wide tables.
+2. **Fixed.** Button, header and pagination expectations observe rendered layout rather than selector/declaration order. The tests allow local scroll at constrained widths and assert readable controls without imposing a global nowrap policy. OTIZ header separation and contained overflow are independently measured; pagination asserts ordering, balanced insets and secondary summary typography.
+
+## Delta assessment
+
+- Traceability: the owner matrix is pinned in the normative visual contract and OpenSpec artifacts; picker payload/current-assignment semantics are pinned in `YII2-PREOPENING-JOURNEY-001`; each delta is mapped to an active Yii focused command in the refreshed verification input.
+- Expected-value independence: geometry is derived from element rectangles, viewport/container bounds, computed styles, focus state and visible fixture values. Picker expectations use a closed-object fact pair and exact public JSON keys; fact snapshots prove the read remains non-mutating. The cache-busting guard names the public `AssetVersion::file` ownership seam and is supported by the authenticated picker browser journey, rather than claiming browser freshness from a source string alone.
+- Sensitivity and preservation: current-assignment exclusion is exercised only after both canonical completion facts and verifies no fact mutation. Existing modal cancel/no-new-fact, authorization/history, no-JS and route/payload guards remain intact. No reviewed assertion weakens server authorization, history, finance or offline behavior.
+- Device evidence: before audit `/Users/antropophag/.local/share/fmonitor-2/device-matrix-before-20260923.q8akGF`; confirmation `/Users/antropophag/.local/share/fmonitor-2/device-matrix-after-20260923.WbzbIJ`; users residual confirmation `/Users/antropophag/.local/share/fmonitor-2/device-matrix-users-confirm-20260923.Qd8HWk`. The recorded stale live object/selection 404 states remain `UNKNOWN` and are covered separately by isolated authenticated fixtures; they were not relabelled GREEN.
+- Exact-source evidence: all 16 planner-selected bounded commands embedded in the reviewer package are GREEN and bind candidate source `a6fe986918eda475588f1a37c8272cd0c03bcc5ad18b78ae20a42de36925f3cd`. This review does not claim the forbidden local full suite, final review, PR, CI, merge or deployment.
+- Historical RED/after lineage: the original V01–V09 intended-RED records and approval at `495bbac9` remain append-only above. The later `CHANGES_REQUESTED` record is preserved; its implementation-coupled regression was retired, and the replacement rendered assertions plus the recorded before/after device evidence establish the correction without weakening the original acceptance matrix.
+- Known unrelated RED: `tests/Yii2/yii2_main_navigation_001_test.php` rejects a pre-existing `navigation.js` `insertBefore(` token. It predates the late picker/cache delta, is outside the planner-selected commands in this package, was not hidden or weakened, and remains an explicit unresolved focused RED for final failure inventory rather than approval/GREEN.
+
+Gate 3 is APPROVED only for the exact candidate source above. Any subsequent specification, test, expected-outcome, production or scope change requires a new exact-source review.
