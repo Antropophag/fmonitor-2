@@ -1,6 +1,8 @@
 {
   "change": "unify-yii2-shlz-ui",
   "planned_paths": [
+    "app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php",
+    "app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php",
     "app/YiiRuntime/Controllers/SelectionController.php",
     "app/YiiRuntime/PreopeningResources.php",
     "app/YiiRuntime/ViewSupport.php",
@@ -37,6 +39,7 @@
     "docs/operations/yii2-shlz-visual-audit-inventory-2026-09-22.md",
     "openspec/changes/unify-yii2-shlz-ui",
     "specs/YII2-SHLZ-VISUAL-CONTRACT-001.md",
+    "specs/YII2-PREOPENING-JOURNEY-001.md",
     "tests/Yii2/yii2_shlz_visual_contract_001_test.php",
     "tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php",
     "tests/Yii2/yii2_shlz_select_001_test.php",
