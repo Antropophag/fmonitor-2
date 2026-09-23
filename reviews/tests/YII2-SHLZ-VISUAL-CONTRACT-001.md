@@ -198,3 +198,28 @@ No open Gate 3 findings remain for this exact source.
 - Known unrelated RED: `tests/Yii2/yii2_main_navigation_001_test.php` rejects a pre-existing `navigation.js` `insertBefore(` token. It predates the late picker/cache delta, is outside the planner-selected commands in this package, was not hidden or weakened, and remains an explicit unresolved focused RED for final failure inventory rather than approval/GREEN.
 
 Gate 3 is APPROVED only for the exact candidate source above. Any subsequent specification, test, expected-outcome, production or scope change requires a new exact-source review.
+
+---
+
+# Supplemental Gate 3 query-seam delta review — 2026-09-23
+
+- Verdict: **APPROVED**
+- Reviewed HEAD: `fb972e1204b41160aa8c416576b3565a6ae50fce`
+- Candidate source: `11e473968585680c5bc3d0d2aeeeea7fd46f0db700d37c205258668be378e54c`
+- Executable source: `7f7715974856d266d4b2435a5ce07bbb57e6d16fbbdaf0e3197d86673ec894ac`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260923T093339Z-b4da2ea2ff/package.json`
+- Scope: root commits `456d1b96`, `8dd8e54f`, `9db8fa8e`, `9aecfd22` and the separate executor query-seam sequence ending at `fb972e12`. Production code, tests and specifications were not changed by the reviewer.
+
+## Findings
+
+No open Gate 3 findings remain for this exact source.
+
+## Assessment
+
+- Expected-value independence and RED lineage are sufficient: root first specified the named application read seam and the forbidden Yii persistence ownership; the separate executor subsequently moved the existing picker projection behind that seam. Source ownership assertions are paired with the authenticated `yii2_preopening_routes_001_test.php` fixture, which independently checks exact picker values, canonical `pto_act + declaration` exclusion and unchanged facts.
+- Capability/consumer ownership is registered in `.quality-graph/verification-policy.json` under the existing assignment-order current-eligibility boundary. The refreshed planner selected the canonical `tests/AssignmentOrderComposition/confirmed_original_opening_001_test.php` consumer, and its exact-source record is GREEN; architecture and governance records are also GREEN.
+- The final inventory names exactly 25 active Yii views. Every row records shared compositions, a preserved exception and concrete evidence; fixture-only states and live-stand evidence are distinguished rather than conflated.
+- The delta does not expand state-changing semantics: it extracts the already approved read-only picker current-assignment projection from Yii composition into `AssignmentOrderComposition`. Routes, capabilities, payloads, completion facts, histories and writers remain unchanged.
+- All 16 bounded records in the package are GREEN and bind candidate source `11e473968585680c5bc3d0d2aeeeea7fd46f0db700d37c205258668be378e54c`. No local full suite, CI, merge or deployment is claimed.
+
+This approval is exact-source only. Any later production, contract, test, policy, expected-outcome or scope change requires refreshed review.
