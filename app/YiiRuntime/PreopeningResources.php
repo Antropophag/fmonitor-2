@@ -30,7 +30,7 @@ final class PreopeningResources
     public function portal():C\AssignmentOrderSelectionPortalQuery{return C\ProductionAssignmentOrderSelectionPortalFactory::create($this->db,$this->prefix);}
     public function currentInstallerAssignments(array $tabIds):array
     {
-        return$this->portal()->currentInstallerAssignments($tabIds);
+        return(new C\MariaDbCurrentInstallerAssignmentsQuery($this->db,$this->prefix))->find($tabIds);
     }
     public function assignmentReader():I\MariaDbControlEngineerAssignmentReader{return new I\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix);}
     public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
