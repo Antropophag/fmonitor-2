@@ -1435,7 +1435,7 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 
 /* Checklist task surface. shlz-ui continues to own base button geometry and states. */
 html:has(.fm2-check-page) { scrollbar-gutter: stable; }
-.fm2-check-page { --check-ink: #132238; --check-blue: #2451c6; --check-soft: #edf2ff; --check-green: #16734a; --check-green-soft: #eaf7f0; --check-amber-soft: #fff5dc; position: relative; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,920px) minmax(0,1fr); padding-block-end: 24px; color: var(--check-ink); }
+.fm2-check-page { --check-ink: #132238; --check-blue: #2451c6; --check-soft: #edf2ff; --check-green: #16734a; --check-green-soft: #eaf7f0; position: relative; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,920px) minmax(0,1fr); padding-block-end: 24px; color: var(--check-ink); }
 .fm2-check-page > :not(.fm2-toast) { grid-column: 2; min-inline-size: 0; }
 .fm2-check-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; column-gap: 32px; row-gap: 14px; padding: 4px 0 24px; }
 .fm2-check-object { flex: 1 1 auto; min-inline-size: 0; }
@@ -1457,8 +1457,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-sync-banner[data-state="error"] .fm2-sync-dot { background: #a32d2d; }
 .fm2-sync-banner button { padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; text-underline-offset: 3px; font: inherit; cursor: pointer; }
 @keyframes fm2-sync-pulse { 50% { transform: scale(1.6); opacity: .45; } }
-.fm2-technical-document-link { inline-size: fit-content; min-block-size: 44px; margin-block-end: 18px; }
-.fm2-check-gate { display: grid; gap: 4px; padding: 15px 18px; margin-block-end: 18px; border-radius: var(--fm2-radius); background: var(--check-amber-soft); color: #694908; }
+.fm2-technical-document-surface { inline-size: fit-content; padding: 6px; margin-block-end: 18px; border: 0; border-radius: 16px; box-shadow: 0 1px 0 rgba(19,34,56,.08), 0 10px 28px rgba(19,34,56,.055); }
+.fm2-technical-document-link { inline-size: fit-content; min-block-size: 44px; }
+.fm2-check-gate { display: grid; gap: 4px; padding: 15px 18px; margin-block-end: 18px; border: 0; border-radius: 16px; background: var(--fm2-surface); color: var(--check-ink); box-shadow: 0 1px 0 rgba(19,34,56,.08), 0 10px 28px rgba(19,34,56,.055); }
 .fm2-check-gate span { font-size: 13px; }
 .fm2-check-opening { grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 18px; }
 .fm2-check-opening > div { display: grid; gap: 4px; }
@@ -1781,7 +1782,8 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media (max-width: 900px) { .fm2-control-tools { grid-template-columns: 1fr; } .fm2-control-filters { justify-content: space-between; } .fm2-control-table th:nth-child(4), .fm2-control-table td:nth-child(4) { display: none; } }
 @media (max-width: 680px) { .fm2-main:has(.fm2-control-queue) { padding: 18px 12px 92px; } .fm2-control-queue { gap: 14px; } .fm2-control-header { align-items: flex-start; } .fm2-control-header h1 { font-size: 25px; } .fm2-control-header p { font-size: 13px; } .fm2-result-count { flex: 0 0 auto; } .fm2-control-tools { gap: 14px; padding: 14px 12px; } .fm2-control-filters { align-items: flex-start; flex-direction: column; gap: 14px; } .fm2-completed-switch { min-block-size: 36px; } .fm2-control-surface { background: transparent; } .fm2-control-table, .fm2-control-table tbody { display: grid; gap: 8px; } .fm2-control-table thead { display: none; } .fm2-control-table tr { position: relative; display: grid; padding: 14px 100px 13px 14px; border-radius: 12px; background: #fff; } .fm2-control-table td { display: block; block-size: auto; padding: 0; border: 0; } .fm2-control-table td:nth-child(2) { margin-block-start: 10px; } .fm2-shipment-cell { position: absolute; inset: 50% 44px auto auto; display: grid !important; inline-size: 48px; block-size: 24px; padding: 0 !important; place-items: center; transform: translateY(-50%); } .fm2-control-address { font-size: 15px; } .fm2-control-reg { font-size: 12px; } .fm2-control-table .fm2-row-action { position: absolute; inset: 50% 8px auto auto; display: block; inline-size: 36px; padding: 0; transform: translateY(-50%); } .fm2-control-footer { padding: 12px 4px; border: 0; } .fm2-control-footer span:last-child { display: none; } }
 @media (max-width: 680px) {
-  .fm2-technical-document-link { inline-size: 100%; min-block-size: 48px; }
+  .fm2-technical-document-surface, .fm2-technical-document-link { inline-size: 100%; }
+  .fm2-technical-document-link { min-block-size: 48px; }
   .fm2-main:has(.fm2-control-queue) { padding-block-start: 10px; }
   .fm2-control-queue { gap: 8px; }
   .fm2-control-header { align-items: center; }
