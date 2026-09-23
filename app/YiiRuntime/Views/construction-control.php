@@ -30,7 +30,7 @@
 <td class="fm2-shipment-cell" data-shipment-state="<?=$shipmentState?>"><span class="fm2-control-status-actions"><span class="fm2-shipment-status" aria-label="<?=Html::encode($shipmentLabel)?>" title="<?=Html::encode($shipmentLabel)?>">
 <?php if($shipmentState!=='unknown'):?><span class="fm2-shipment-icon-stack" aria-hidden="true">
 <img class="fm2-shipment-icon" src="/pilot/assets/shlz-icons/delivery-box.svg" alt="">
-</span><?php endif?></span><?php if($o['technicalDocumentStatus']==='available'):?><a class="fm2-control-document-action" href="<?=Html::encode($o['technicalDocument']['url'])?>" target="_blank" rel="noopener noreferrer" aria-label="Открыть техническую документацию в Битрикс24" title="Открыть техническую документацию в Битрикс24"><img src="/pilot/assets/shlz-icons/folder-file-open.svg" alt=""></a><?php endif?></span>
+</span><?php endif?></span><?php if($o['technicalDocumentStatus']==='available'):?><span class="fm2-control-document-indicator" aria-label="Техническая документация доступна" title="Техническая документация доступна"><img src="/pilot/assets/shlz-icons/folder-file-open.svg" alt=""></span><?php endif?></span>
 </td>
 <td>
 <?=Html::encode((string)($engineer['fullName']??'Инженер не назначен'))?>

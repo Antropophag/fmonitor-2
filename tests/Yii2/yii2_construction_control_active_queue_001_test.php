@@ -10,7 +10,8 @@ try {
     $fixture=new InspectionFixture(dirname(__DIR__,2));
     $fixture->open();
     $checklist=$fixture->page();
-    foreach(['fm2-control-document-button','folder-file-open.svg','https://bitrix24public.com/control-4512','Открыть техническую документацию в Битрикс24']as$text)assertSameValue(true,str_contains($checklist['body'],$text),'INTENDED_RED compact checklist documentation '.$text);
+    foreach(['fm2-control-document-button','https://bitrix24public.com/control-4512','Техническая документация']as$text)assertSameValue(true,str_contains($checklist['body'],$text),'INTENDED_RED compact checklist documentation '.$text);
+    assertSameValue(false,str_contains($checklist['body'],'folder-file-open.svg'),'checklist button has no icon');
     foreach(['fm2-control-documents__heading','Чертежи и материалы по заводскому номеру объекта','data-document-count']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'large/count checklist presentation removed '.$text);
     foreach(['Соседний заказ','control-neighbor']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'byte-exact order excludes '.$text);
     InspectionFixture::result($fixture->send(InspectionFixture::operation(),InspectionFixture::csrf($checklist)),200,'accepted');
@@ -49,7 +50,8 @@ try {
     assertSameValue(false,in_array(4516,$ids,true),'INTENDED_RED PTO-only documentary case is absent');
     assertSameValue(52,count($ids),'50 plus 2 eligible rows including completed case');
     assertSameValue(true,in_array(4512,$ids,true),'working case with activity remains');
-    assertSameValue(true,str_contains($first['body'].$second['body'],'data-has-document="true"')&&str_contains($first['body'].$second['body'],'folder-file-open.svg')&&str_contains($first['body'].$second['body'],'https://bitrix24public.com/control-4512'),'INTENDED_RED queue exposes one direct icon action');
+    assertSameValue(true,str_contains($first['body'].$second['body'],'data-has-document="true"')&&str_contains($first['body'].$second['body'],'folder-file-open.svg'),'INTENDED_RED queue exposes document indicator');
+    assertSameValue(false,str_contains($first['body'].$second['body'],'https://bitrix24public.com/control-4512'),'queue indicator is noninteractive and exposes no URL');
     foreach(['data-document-count','Документация · 1']as$text)assertSameValue(false,str_contains($first['body'].$second['body'],$text),'queue count removed '.$text);
     $http->db->query("INSERT INTO {$http->p}fm2_bitrix_order_document_links(source_folder_id,source_folder_name,order_number,url) VALUES(94514,'Другой комплект','CONTROL-4512','https://bitrix24public.com/control-ambiguous')");
     try{$ambiguousQueue=$fixture->page('/pilot/construction-control?ownership=all&completed=1&page=2');$ambiguousChecklist=$fixture->page();assertSameValue(true,str_contains($ambiguousQueue['body'],'data-object-id="4512"'),'ambiguity queue contains target object');foreach([$ambiguousQueue['body'],$ambiguousChecklist['body']]as$body){assertSameValue(false,str_contains($body,'control-4512')||str_contains($body,'control-ambiguous'),'ambiguous order publishes no arbitrary action');}}

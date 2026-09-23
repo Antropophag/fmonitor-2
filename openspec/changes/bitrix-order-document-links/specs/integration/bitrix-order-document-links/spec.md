@@ -38,7 +38,7 @@
 - **THEN** ранее опубликованный набор остаётся доступен
 
 ### Requirement: Read owner и карточка
-Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать effective ссылку exact-matching order number; для заказа допускается не более одной distinct ссылки, а неоднозначность SHALL возвращать unavailable без произвольного выбора. Несколько объектов одного заказа SHALL получать одинаковую ссылку; иные заказы MUST NOT смешиваться. Construction-control queue SHALL показывать прямое действие штатной чёрной `shlz-ui/folder-file-open` рядом с отгрузкой, а checklist SHALL давать компактную прямую touch-friendly кнопку с той же иконкой без отдельной большой секции.
+Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать effective ссылку exact-matching order number; для заказа допускается не более одной distinct ссылки, а неоднозначность SHALL возвращать unavailable без произвольного выбора. Несколько объектов одного заказа SHALL получать одинаковую ссылку; иные заказы MUST NOT смешиваться. Construction-control queue SHALL показывать неинтерактивную штатную чёрную `shlz-ui/folder-file-open` рядом с отгрузкой, сохраняя одно действие строки — переход в checklist. Checklist SHALL давать текстовую secondary-кнопку «Техническая документация» без иконки, полноширинную на телефоне и ведущую прямо на effective ссылку.
 
 #### Scenario: Разрешённая карточка
 - **WHEN** пользователь с `objects.read` открывает объект с ссылками

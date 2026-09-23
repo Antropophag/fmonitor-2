@@ -9,13 +9,9 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <a class="fm2-back-link" href="<?=$fromControl?'/pilot/construction-control':'/pilot/objects/'.$id?>">
 <?=$fromControl?'Стройконтроль':'Карточка объекта'?>
 </a>
-<div class="fm2-check-topline-actions">
 <div class="fm2-sync-banner" data-sync-banner role="status">
 <span data-sync-copy>Синхронизировано</span>
 <button type="button" data-sync-now hidden>Повторить отправку</button>
-</div>
-<?php $technicalDocuments=$access['technicalDocuments']??['status'=>'unavailable','links'=>[]];$technicalDocument=$technicalDocuments['status']==='available'?($technicalDocuments['links'][0]??null):null;?>
-<?php if(is_array($technicalDocument)):?><a class="fm2-control-document-button" href="<?=Html::encode($technicalDocument['url'])?>" target="_blank" rel="noopener noreferrer" aria-label="Открыть техническую документацию в Битрикс24" title="Открыть техническую документацию в Битрикс24"><img src="/pilot/assets/shlz-icons/folder-file-open.svg" alt=""></a><?php endif?>
 </div>
 </div>
 <div class="fm2-check-object">
@@ -32,6 +28,8 @@ ViewSupport::begin($this,'Чек-лист объекта № '.$id,$identity);?>
 <span data-total-items>0</span> из 41 монтажной работы</span>
 </div>
 </header>
+<?php $technicalDocuments=$access['technicalDocuments']??['status'=>'unavailable','links'=>[]];$technicalDocument=$technicalDocuments['status']==='available'?($technicalDocuments['links'][0]??null):null;?>
+<?php if(is_array($technicalDocument)):?><a class="shlz-button shlz-button--secondary fm2-control-document-button fm2-technical-document-link" href="<?=Html::encode($technicalDocument['url'])?>" target="_blank" rel="noopener noreferrer">Техническая документация</a><?php endif?>
 <?php if($access['ready']??false):?><section class="fm2-check-gate fm2-check-opening" role="status"><div><strong>Готов к открытию</strong><span>После открытия пункты чек-листа станут доступны для отметки.</span></div><?php if(is_array($opening)):?><form class="fm2-opening-form" method="post" action="/pilot/objects/<?=$id?>/execution?return=construction-control"><?=Html::hiddenInput('_csrf',$csrf)?><?=Html::hiddenInput('action','open_confirmed')?><?=Html::hiddenInput('requestId',ViewSupport::uuid())?><?=Html::hiddenInput('orderId',(string)$opening['orderId'])?><?=Html::hiddenInput('revisionId',(string)$opening['revisionId'])?><?=Html::hiddenInput('sequence',(string)$opening['sequence'])?><label class="shlz-field"><span class="shlz-field__label">Фактическая дата начала</span><span class="shlz-field__control"><input class="shlz-input" type="date" name="actualStartDate" required></span></label><button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button></form><?php else:?><span>Открыть работы может назначенный инженер с необходимыми полномочиями.</span><?php endif?></section>
 <?php elseif(!$enabled):?>
 <div class="fm2-check-gate" role="status">

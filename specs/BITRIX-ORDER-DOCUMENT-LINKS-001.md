@@ -29,7 +29,7 @@ Bounded adapter SHALL читать direct child folders настроенного
 
 Forward migration SHALL добавить nullable binary-exact `zavnumber` в managed mirror и одну links table с необходимыми unique/index constraints. Existing legacy snapshot/import SHALL переносить `zavnumber` byte-exact. Read owner SHALL выбирать distinct links exact по order number. Несколько объектов одного заказа получают одинаковые ссылки; соседние номера не смешиваются.
 
-Секция SHALL отображаться в существующей object card после `objects.read`. Для одного номера заказа SHALL существовать не более одной effective ссылки; неоднозначность SHALL fail soft без выбора произвольной ссылки. В construction-control queue наличие ссылки SHALL показываться чёрной `shlz-ui/folder-file-open` рядом с `delivery-box`, а в checklist — компактной прямой кнопкой с той же иконкой без отдельного document layout. Отсутствие или недоступность ссылки MUST NOT ломать queue, checklist или карточку.
+Секция SHALL отображаться в существующей object card после `objects.read`. Для одного номера заказа SHALL существовать не более одной effective ссылки; неоднозначность SHALL fail soft без выбора произвольной ссылки. В construction-control queue наличие ссылки SHALL показываться неинтерактивной чёрной `shlz-ui/folder-file-open` рядом с `delivery-box`, а единственным действием строки SHALL оставаться переход в checklist. В checklist SHALL находиться компактная полноширинная на телефоне текстовая secondary-кнопка «Техническая документация» без иконки и отдельного document layout; она ведёт прямо на effective ссылку. Отсутствие или недоступность ссылки MUST NOT ломать queue, checklist или карточку.
 
 ## A5 — Console
 
