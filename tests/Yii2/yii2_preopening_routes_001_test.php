@@ -2,10 +2,10 @@
 declare(strict_types=1);
 require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/PreopeningFixture.php';
 // YII2-PREOPENING-JOURNEY-001: every route family, HEAD and retained compatibility owners.
-$root=dirname(__DIR__,2);$resourcesSource=(string)file_get_contents($root.'/app/YiiRuntime/PreopeningResources.php');
-assertSameValue(true,is_file($root.'/app/AssignmentOrderComposition/CurrentInstallerAssignmentsQuery.php'),'picker current assignments has a named application query seam');
-assertSameValue(true,is_file($root.'/app/AssignmentOrderComposition/MariaDbCurrentInstallerAssignmentsQuery.php'),'picker current assignments has an application-owned MariaDB adapter');
-assertSameValue(true,str_contains($resourcesSource,'CurrentInstallerAssignmentsQuery'),'Yii composition depends on the named query seam');
+$root=dirname(__DIR__,2);$resourcesSource=(string)file_get_contents($root.'/app/YiiRuntime/PreopeningResources.php');$portalContract=(string)file_get_contents($root.'/app/AssignmentOrderComposition/AssignmentOrderSelectionPortalQuery.php');$portalAdapter=(string)file_get_contents($root.'/app/AssignmentOrderComposition/MariaDbSelectionPortalQuery.php');
+assertSameValue(true,str_contains($portalContract,'currentInstallerAssignments'),'picker current assignments is a named method on the existing application query seam');
+assertSameValue(true,str_contains($portalAdapter,'currentInstallerAssignments'),'application-owned MariaDB query implements current assignments');
+assertSameValue(true,str_contains($resourcesSource,'portal()->currentInstallerAssignments'),'Yii composition delegates to the existing application query seam');
 foreach(['fm2_assignment_order_applications','fm2_pilot_completion_facts','selected_snapshot_json','json_decode(','->query(']as$ownedToken)assertSameValue(false,str_contains($resourcesSource,$ownedToken),'Yii composition does not own picker persistence/domain semantics '.$ownedToken);
 $f=null;
 try {
