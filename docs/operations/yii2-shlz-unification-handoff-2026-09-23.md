@@ -245,3 +245,120 @@ Do not run down with volumes, database reset, import, user reset or offline queu
   поздний root-authored browser test delta молча; нужен допустимый test-delta
   package либо явное process решение. Это `BLOCKED`, не approval.
 - Owner manual checkpoint, Gate 5, PR и CI по-прежнему не выполнены.
+
+## Финальный continuation handoff — 2026-09-23 11:50 Europe/Moscow
+
+### Точная точка продолжения
+
+- Worktree: `/Users/antropophag/code/fmonitor-2-yii2-shlz-unification`.
+- Branch: `codex/unify-yii2-shlz-ui`.
+- Production/test HEAD до этого handoff: `fda366801e77d20b70f0457bec042288c8804b60`.
+- Candidate source: `5d180059a584372a638a43659c4bc40ecd3c5d67585accb7f8e46c44d90c06c4`.
+- Executable source: `9ecfdb320e95d59ecab2544fdbfa9dea05079bdc045fe199beb2fb85e30dd47e`.
+- Runtime image на стенде: `sha256:fae5cc54363c9123d2f868d1f04a3b3af5af031822fb7bc408d94e07c06a1f46`.
+- `fm2-local-timofey` db/php/web/jobs-worker/jobs-scheduler healthy; данные и
+  volumes не сбрасывались.
+- Worktree был clean до записи этого handoff. После handoff commit единственное
+  отличие HEAD — этот lifecycle document; production image остаётся exact по
+  executable source.
+
+Active harness binding `20260923T081029Z-ae144c2a35` устарел относительно
+текущего HEAD и всё ещё содержит промежуточный acceptance mapping на retired
+`installer_search_http_manual_pilot_test.php`. Текущий
+`verification-input.json` уже исправлен на active Yii
+`yii2_preopening_routes_001_test.php`. Следующая сессия MUST первым delivery
+действием выполнить fresh `harness.py prepare --role root` и использовать только
+новый package/source; старый binding не годится для review/admission.
+
+### Последние owner-approved визуальные решения
+
+- Target matrix: laptop 1366×768/1536×864, Redmi Pad 2 Pro
+  1280×800/800×1280, mobile 360×800/390×844.
+- Wide lists objects/users/installers/roles и OTIZ владеют локальным scroll;
+  viewport/sidebar больше не сжимают headings/values до пересечения.
+- Shared pagination: page controls слева, summary справа; balanced 16px inset
+  (12px mobile), summary 14px/400 (13px mobile).
+- Selection picker показывает только ФИО, табельный номер и непустые текущие
+  закрепления. Position/source/updatedAt скрыты. Объект с `pto_act + declaration`
+  исключается из текущих закреплений без изменения истории.
+- Для таб. 015199 отсутствие закрепления корректно: единственный application —
+  object 1318, закрытый обоими completion facts 2026-09-20. Действующие examples:
+  таб. 016238 → object 180; таб. 015130 → object 2232.
+- Modal close и chip remove используют public `close.svg`; chip remove target 32px.
+- Feedback FAB получил 2px surface edge и offset soft elevation, сохранив
+  desktop/mobile inset и bottom-navigation clearance.
+- `preopening.js` теперь обязательно content-versioned через
+  `AssetVersion::file('preopening.js')`; это исправляет наблюдавшуюся смесь
+  нового JSON со старым Safari module (`undefined`, старые Источник/Актуально).
+
+Ключевые новые commits после исходного handoff:
+
+- `42355256` — data-list containment на owner device matrix;
+- `cf399c29`, `f0cee41d`, `00ee13e3` — device matrix tests/spec/evidence;
+- `c335d295`, `081a0b64` — shared pagination alignment + browser geometry;
+- `79f69f00` — installer picker context, public close controls, feedback FAB;
+- `c54c7d2d`, `084bb02a`, `1d909796`, `a20141be` — active Yii picker spec/tests/plan lineage;
+- `ac20c835`, `fda36680` — versioned preopening interaction asset + regression.
+
+### Проверенное evidence
+
+GREEN на последней волне:
+
+- `yii2_preopening_routes_001_test.php` — exact picker JSON, current applied
+  assignment, closed assignment exclusion, read-only preservation;
+- `yii2_preopening_browser_001_test.php` — picker/modal/focus/public icons and
+  full owner viewport matrix;
+- `yii2_object_queue_browser_001_test.php` — feedback FAB inset/edge/elevation;
+- `yii2_shlz_select_001_test.php` — content-versioned preopening asset;
+- `yii2_otiz_shlz_ui_001_test.php` — headers, contained scroll, pagination geometry;
+- device-matrix confirmation evidence:
+  `/Users/antropophag/.local/share/fmonitor-2/device-matrix-after-20260923.WbzbIJ`;
+- users residual confirmation:
+  `/Users/antropophag/.local/share/fmonitor-2/device-matrix-users-confirm-20260923.Qd8HWk`;
+- Impeccable detector `[]` before the final picker/cache wave; rerun once on all
+  final changed UI targets before final review.
+
+Known unrelated focused RED: `yii2_main_navigation_001_test.php` rejects an
+existing `navigation.js` `insertBefore(` token. It was observed while checking
+the one-line asset-version fix, predates that diff and was not changed or hidden.
+Triage it in the complete local failure inventory before publication; do not
+weaken the assertion casually.
+
+Full local `make test`/`make verify` remains forbidden. PR does not exist; CI,
+merge and deployment remain `UNKNOWN`.
+
+### Explicitly excluded next PR
+
+Owner wants to remove the separate «Документальное закрытие» block and put PTO
+act/declaration date controls directly in the object-card header/primary layout.
+That product-flow change was explicitly deferred to another PR. This candidate
+MUST NOT absorb it. Preserve existing completion writers, permissions, append-only
+corrections and progress semantics here.
+
+### Route to PR merge-ready
+
+1. Read AGENTS/current goal/PRODUCT/CONTEXT/development process, this handoff,
+   current OpenSpec artifacts and both normative specs.
+2. Run `harness.py state`, confirm clean status, then fresh root `prepare` from
+   current `verification-input.json`; read every obligation and exact package.
+3. Re-run only planner-selected bounded local commands. Include the known
+   navigation RED in the complete inventory and classify it before any correction.
+4. Run Impeccable detector once on final changed UI targets.
+5. Prepare a supplemental exact-source Gate 3 test-delta handoff: prior Gate 3
+   approval plus later CHANGES_REQUESTED, current device-matrix/pagination/picker/
+   FAB/cache-busting test deltas and retained RED/after evidence. An independent
+   `gpt-5.6-sol / low` reviewer records APPROVED or CHANGES_REQUESTED in
+   `reviews/tests/YII2-SHLZ-VISUAL-CONTRACT-001.md` and harness review state.
+6. After Gate 3 APPROVED, prepare current Gate 5 reviewer package with complete
+   focused evidence and before/after directories. A different independent
+   `gpt-5.6-sol / low` reviewer decides final verdict.
+7. Only after both approvals and clean exact source: push branch, create PR to
+   `main`, then use `tools/delivery/ci-launch.py` reuse/discover route and launch
+   exactly one exact-source GitHub CI matrix. On failure first collect full
+   failed-job and `REGRESSION_FAILURE` inventory.
+8. Fix/re-review/re-run CI only when evidence requires it. Stop at PR merge-ready;
+   merge and production deployment remain owner actions.
+
+Owner has explicitly requested that the current visual candidate be finished and
+published as a PR. This authorizes PR creation and the one required exact-source
+CI after Gates 3/5; it does not authorize merge or deployment.
