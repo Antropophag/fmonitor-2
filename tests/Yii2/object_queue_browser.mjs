@@ -22,6 +22,7 @@ try {
  await Promise.all([page.waitForResponse(r=>r.url().endsWith('/inspection-schedule')&&r.status()===303),dialog.locator('button[type=submit]').click()]);
  await page.waitForURL(c.origin+'/pilot/objects?inspectionScheduled=2099-09-12');await page.getByText(/Инспекция запланирована на 12\.09\.2099/).waitFor();
  check(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'desktop has no page overflow');
+ const feedbackOverlay=await page.locator('.fm2-feedback-fab').evaluate(element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return{width:box.width,height:box.height,right:innerWidth-box.right,bottom:innerHeight-box.bottom,border:parseFloat(style.borderTopWidth),shadow:style.boxShadow,background:style.backgroundColor};});check(feedbackOverlay.width>=48&&feedbackOverlay.height>=48&&feedbackOverlay.right>=16&&feedbackOverlay.bottom>=16,'feedback overlay stays fully inset');check(feedbackOverlay.border>=2&&feedbackOverlay.shadow!=='none','feedback overlay has distinct edge and elevation');
  await page.screenshot({path:c.artifacts+'/queue-desktop.png',fullPage:true});
  await page.goto(c.origin+'/pilot/objects?page=2');check((await page.locator('[name=q]').count())===1,'search on actual second page');
  await page.locator('[name=q]').fill('REG-451201');
