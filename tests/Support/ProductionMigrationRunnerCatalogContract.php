@@ -193,6 +193,7 @@ final class ProductionMigrationRunnerCatalogContract
             'fm2_pilot_users|UNIQUE|email',
             'fm2_pilot_users|INDEX|status,full_name',
             'fm2_order_artifacts|PRIMARY|assignment_order_id,artifact_type',
+            'fm2_order_installers|INDEX|installer_tab_id,assignment_order_id',
             'fm2_order_installers|PRIMARY|assignment_order_id,installer_tab_id',
             'fm2_process_events|PRIMARY|id',
             'fm2_process_events|INDEX|installation_case_id,occurred_at',
