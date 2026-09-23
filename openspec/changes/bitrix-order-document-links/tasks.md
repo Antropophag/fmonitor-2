@@ -10,6 +10,8 @@
 - [x] 2.3 Перенести nullable `zavnumber` через existing mirror/import и реализовать exact read owner.
 - [x] 2.4 Подключить console trigger и секцию object card под `objects.read`.
 - [x] 2.5 Зарегистрировать hourly sync в existing native Jobs scheduler/worker без нового framework; проверить один job на московский час, repeat и no-backlog behavior.
+- [x] 2.6 Поддержать реальный root из 19 299 папок: reuse текущих folder ID/name, batch по 50 только для новых/изменённых и fail-closed replacement.
+- [x] 2.7 Оформить техническую документацию в Documents tab как доступный список с количеством, понятным source label и полноценными empty/error states.
 
 ## 3. Verification and PR
 

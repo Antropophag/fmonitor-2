@@ -5,7 +5,7 @@
 ## ADDED Requirements
 
 ### Requirement: Read-only Bitrix delivery
-Система SHALL постранично читать direct child folders настроенного root через `disk.folder.getchildren` и получать URL через `disk.folder.getExternalLink`. Delivery SHALL быть bounded и fail closed при configuration, transport, API, pagination, schema или limit error; partial rows MUST NOT публиковаться. URL SHALL быть HTTPS, без credentials и принадлежать настроенному Bitrix origin. FMonitor MUST NOT загружать, проксировать или хранить содержимое документов.
+Система SHALL постранично читать direct child folders настроенного root через `disk.folder.getchildren`, переиспользовать проверенные текущие URL для неизменившихся exact folder ID/name и получать остальные URL через `disk.folder.getExternalLink` пакетами не более 50 команд. Delivery SHALL принимать не менее 25 000 direct children и fail closed при configuration, transport, API, pagination, schema или limit error; partial rows MUST NOT публиковаться. URL SHALL быть HTTPS, без credentials и принадлежать настроенному Bitrix origin либо exact official external-link host `bitrix24public.com`. FMonitor MUST NOT загружать, проксировать или хранить содержимое документов.
 
 #### Scenario: Полная выдача
 - **WHEN** все страницы и ссылки успешно проверены

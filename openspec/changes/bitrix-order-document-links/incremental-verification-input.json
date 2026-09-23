@@ -1,0 +1,28 @@
+{
+  "change": "bitrix-order-document-links-incremental",
+  "planned_paths": [
+    "app/InstallationProcess/NativeBitrixOrderDocumentDelivery.php",
+    "app/InstallationProcess/BitrixOrderDocumentDelivery.php",
+    "app/InstallationProcess/MariaDbBitrixOrderDocumentLinks.php",
+    "app/YiiRuntime/Views/object-card.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php",
+    "tests/Yii2/yii2_bitrix_order_document_links_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A1-large-incremental-delivery",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "Bitrix delivery reuses current exact folders and batches new external-link calls",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A4-document-card-presentation",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "authorized object card Documents tab",
+      "tests": ["tests/Yii2/yii2_bitrix_order_document_links_001_test.php"]
+    }
+  ]
+}

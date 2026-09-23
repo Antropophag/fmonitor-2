@@ -1,0 +1,18 @@
+{
+  "change": "bitrix-order-document-links-operational-config",
+  "planned_paths": [
+    ".env.example",
+    "tools/delivery/local-runtime-env",
+    "tests/Deployment/bitrix_order_document_links_runtime_001_test.py",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A5-local-runtime-configuration",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "canonical local .env supplies the Bitrix Disk root to the jobs worker",
+      "tests": ["tests/Deployment/bitrix_order_document_links_runtime_001_test.py"]
+    }
+  ]
+}

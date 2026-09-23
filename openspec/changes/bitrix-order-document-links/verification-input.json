@@ -27,7 +27,9 @@
     "app/YiiRuntime/InstallationProcessFactory.php",
     "app/YiiRuntime/Views/object-card.php",
     "config/yii/console.php",
+    ".env.example",
     "deploy/runtime/compose.yaml",
+    "tools/delivery/local-runtime-env",
     "tools/delivery/compose.runtime.yaml.in",
     "tools/verification/categories.json",
     "tools/verification/suites.tsv"
@@ -84,6 +86,13 @@
       "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
       "seam": "bitrix-order-document-links-sync console delegates to application owner",
       "tests": ["tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php"]
+    },
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A5-local-runtime-configuration",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "canonical local .env supplies the Bitrix Disk root to the jobs worker",
+      "tests": ["tests/Deployment/bitrix_order_document_links_runtime_001_test.py"]
     },
     {
       "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
