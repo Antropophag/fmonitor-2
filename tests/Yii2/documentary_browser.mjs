@@ -12,7 +12,7 @@ try {
  check(await page.locator('form [name=action][value=record_pto]').count()===1,'INTENDED_RED documentary PTO form');
  const form=action=>page.locator(`form:has(input[name=action][value="${action}"])`);
  async function fillDate(scope,name,iso){const hidden=scope.locator(`.shlz-date-picker input[type="hidden"][name="${name}"]`),root=hidden.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," shlz-date-picker ")]'),visible=root.locator('.shlz-date-field__input'),[year,month,day]=iso.split('-');await visible.fill(`${day}.${month}.${year}`);await visible.press('Tab');check(await hidden.inputValue()===iso,`${name} public picker owns exact ISO value`);}
- async function submit(action){const f=form(action);await Promise.all([page.waitForNavigation(),f.locator('button').click()]);check(new URL(page.url()).pathname==='/pilot/objects/4512'&&new URL(page.url()).hash==='#completion','confirmed completion navigation');}
+ async function submit(action){const f=form(action);await Promise.all([page.waitForNavigation(),f.locator('button[type="submit"]').click()]);check(new URL(page.url()).pathname==='/pilot/objects/4512'&&new URL(page.url()).hash==='#completion','confirmed completion navigation');}
  async function inspectForm(action,fields){
   const f=form(action),d=f.locator('xpath=ancestor::details[1]');if(await d.count()&&!(await d.evaluate(e=>e.open)))await d.locator('summary').click();
   for(const [width,height] of [[1536,864],[1366,768],[1280,800],[800,1280],[390,844],[360,800]]){await page.setViewportSize({width,height});
