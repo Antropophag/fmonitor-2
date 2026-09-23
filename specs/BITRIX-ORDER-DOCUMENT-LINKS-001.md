@@ -29,7 +29,7 @@ Bounded adapter SHALL читать direct child folders настроенного
 
 Forward migration SHALL добавить nullable binary-exact `zavnumber` в managed mirror и одну links table с необходимыми unique/index constraints. Existing legacy snapshot/import SHALL переносить `zavnumber` byte-exact. Read owner SHALL выбирать distinct links exact по order number. Несколько объектов одного заказа получают одинаковые ссылки; соседние номера не смешиваются.
 
-Секция SHALL отображаться только в существующей object card после `objects.read`, экранировать source folder name и различать «Номер заказа не указан», «Техническая документация не найдена» и «Техническая документация временно недоступна». Отказ секции не ломает карточку.
+Секция SHALL отображаться в существующей object card после `objects.read`. Для пользователя стройконтроля queue SHALL показывать наличие и количество папок документации без раскрытия URL, а авторизованный checklist SHALL показывать compact touch-friendly ссылки без перехода обратно в карточку. Все поверхности SHALL экранировать source folder name и различать отсутствие номера, отсутствие документов и временную недоступность; отказ документации не ломает queue, checklist или карточку.
 
 ## A5 — Console
 

@@ -38,7 +38,7 @@
 - **THEN** ранее опубликованный набор остаётся доступен
 
 ### Requirement: Read owner и карточка
-Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать все distinct ссылки exact-matching order number. Несколько объектов одного заказа SHALL получать одинаковый список; иные заказы MUST NOT смешиваться. Секция SHALL находиться только в существующей карточке под `objects.read`, экранировать source name и различать «Номер заказа не указан», «Техническая документация не найдена» и временную недоступность.
+Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать все distinct ссылки exact-matching order number. Несколько объектов одного заказа SHALL получать одинаковый список; иные заказы MUST NOT смешиваться. Секция SHALL находиться в существующей карточке под `objects.read`; construction-control queue SHALL показывать count без URL, а авторизованный checklist SHALL давать touch-friendly ссылки в рабочем контексте инженера. Все поверхности SHALL экранировать source name и различать missing order, empty и unavailable без отказа основного экрана.
 
 #### Scenario: Разрешённая карточка
 - **WHEN** пользователь с `objects.read` открывает объект с ссылками

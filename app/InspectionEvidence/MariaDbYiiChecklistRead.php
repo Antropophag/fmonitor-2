@@ -8,7 +8,7 @@ trait MariaDbYiiChecklistRead
         {
             $case=$this->case($objectId,false);
     if($case===null)return['exists'=>false];
-            $profile=$this->one("SELECT u.status,u.activation_state,m.ordadr_address address,m.entrance,m.regnumber registration_number FROM {$this->t('fm2_pilot_users')} u JOIN {$this->t('fm2_installation_cases')} c ON c.legacy_installation_object_id=? JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE u.user_id=?",[$objectId,$actorId]);
+            $profile=$this->one("SELECT u.status,u.activation_state,m.ordadr_address address,m.entrance,m.regnumber registration_number,m.zavnumber order_number FROM {$this->t('fm2_pilot_users')} u JOIN {$this->t('fm2_installation_cases')} c ON c.legacy_installation_object_id=? JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id WHERE u.user_id=?",[$objectId,$actorId]);
             if($profile===null||!in_array($profile['status'],[1,'1'],true)||$profile['activation_state']!=='active')return['exists'=>true,'read'=>false,'active'=>false];
     $permissions=$this->permissions($actorId);
     $role=$this->roleAccess($actorId);
@@ -16,7 +16,7 @@ trait MariaDbYiiChecklistRead
     $assignment=$this->currentEngineerAssignment($objectId);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;
     $card=$case['process_state']==='working'?null:$this->authoritativeCard($actorId,$objectId);
     $ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);
-            return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'engineer'=>$engineer];
+            return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'engineer'=>$engineer,'technicalDocuments'=>$this->technicalDocuments($profile['order_number']??null)];
         }
 
         public function projection(int $objectId):array
@@ -76,11 +76,12 @@ trait MariaDbYiiChecklistRead
     if($ownership==='mine'){$where[]="EXISTS(SELECT 1 FROM {$this->t('fm2_control_engineer_assignments')} own WHERE own.installation_case_id=c.id AND own.assignment_sequence=(SELECT MAX(latest.assignment_sequence) FROM {$this->t('fm2_control_engineer_assignments')} latest WHERE latest.installation_case_id=c.id) AND own.engineer_user_id=?)";$params[]=$actorId;}
     if($query!==''){$escaped=str_replace(['\\','%','_'],['\\\\','\\%','\\_'],mb_strtolower($query));$where[]="(LOWER(COALESCE($address,'')) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE($registration,'')) LIKE ? ESCAPE '\\\\')";$params[]='%'.$escaped.'%';$params[]='%'.$escaped.'%';}
     $from=" FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id LEFT JOIN {$this->t('fm2_object_detail_edits')} details ON details.object_id=c.legacy_installation_object_id";$predicate=implode(' AND ',$where);
-    $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,$address address,$entrance entrance,$registration registration_number,e.first_shipment_date,e.full_shipment_date,$hasPtoAct has_pto_act,$hasDeclaration has_declaration,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at".$from." LEFT JOIN {$this->t('fm2_equipment_fact_current')} e ON e.object_id=c.legacy_installation_object_id WHERE $predicate ORDER BY has_pto_act AND has_declaration,last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
+    $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.zavnumber order_number,$address address,$entrance entrance,$registration registration_number,e.first_shipment_date,e.full_shipment_date,$hasPtoAct has_pto_act,$hasDeclaration has_declaration,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at".$from." LEFT JOIN {$this->t('fm2_equipment_fact_current')} e ON e.object_id=c.legacy_installation_object_id WHERE $predicate ORDER BY has_pto_act AND has_declaration,last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
     $total=(int)($this->one("SELECT COUNT(*) n".$from." WHERE $predicate",$params)['n']??0);$offset=($page-1)*$size;
     $pages=max(1,(int)ceil($total/$size));
     if($page>$pages)throw new \OutOfBoundsException();
     $rows=$this->all($sql.' LIMIT '.(int)$size.' OFFSET '.(int)$offset,$params);
+    $documentCounts=$this->technicalDocumentCounts(array_column($rows,'order_number'));
     foreach($rows as&$r)
         {$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=$r['process_state']!=='working';$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
     $r['registrationNumber']=$r['registration_number'];
@@ -88,8 +89,30 @@ trait MariaDbYiiChecklistRead
     $r['lastChecklistActivityAt']=$r['last_activity_at'];
     $r['firstShipmentDate']=$r['first_shipment_date'];
     $r['fullShipmentDate']=$r['full_shipment_date'];
+    $orderNumber=$r['order_number']??null;
+    if($orderNumber===null||$orderNumber===''){$r['technicalDocumentStatus']='order_number_missing';$r['technicalDocumentCount']=null;}
+    elseif($documentCounts===null){$r['technicalDocumentStatus']='unavailable';$r['technicalDocumentCount']=null;}
+    else{$r['technicalDocumentCount']=$documentCounts[(string)$orderNumber]??0;$r['technicalDocumentStatus']=$r['technicalDocumentCount']>0?'available':'empty';}
     $r['_pagination']=['page'=>$page,'pages'=>$pages,'total'=>$total,'pageSize'=>$size];
     }return$rows;
+        }
+
+        private function technicalDocuments(mixed$orderNumber):array
+        {
+            if($orderNumber===null||$orderNumber==='')return['status'=>'order_number_missing','links'=>[]];
+            $orderNumber=(string)$orderNumber;
+            try{$rows=$this->all("SELECT DISTINCT source_folder_name,url FROM {$this->t('fm2_bitrix_order_document_links')} WHERE BINARY order_number=BINARY ? ORDER BY source_folder_name,url",[$orderNumber]);}
+            catch(\Throwable){return['status'=>'unavailable','links'=>[]];}
+            return['status'=>$rows===[]?'empty':'available','links'=>array_map(static fn(array$row):array=>['name'=>(string)$row['source_folder_name'],'url'=>(string)$row['url']],$rows)];
+        }
+
+        private function technicalDocumentCounts(array$orderNumbers):?array
+        {
+            $orders=[];foreach($orderNumbers as$value)if($value!==null&&$value!=='')$orders[(string)$value]=true;$orders=array_keys($orders);
+            if($orders===[])return[];
+            try{$rows=$this->all("SELECT order_number,COUNT(DISTINCT source_folder_id) document_count FROM {$this->t('fm2_bitrix_order_document_links')} WHERE BINARY order_number IN (".implode(',',array_fill(0,count($orders),'?')).") GROUP BY order_number",$orders);}
+            catch(\Throwable){return null;}
+            $counts=[];foreach($rows as$row)$counts[(string)$row['order_number']]=(int)$row['document_count'];return$counts;
         }
 
         public function completion(int $objectId):array{$case=$this->case($objectId,false);

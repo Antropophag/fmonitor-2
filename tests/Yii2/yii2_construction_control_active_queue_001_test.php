@@ -10,6 +10,8 @@ try {
     $fixture=new InspectionFixture(dirname(__DIR__,2));
     $fixture->open();
     $checklist=$fixture->page();
+    foreach(['fm2-control-documents','Техническая документация','Рабочие чертежи','https://bitrix24public.com/control-4512','Открыть в Битрикс24']as$text)assertSameValue(true,str_contains($checklist['body'],$text),'INTENDED_RED checklist documentation '.$text);
+    foreach(['Соседний заказ','control-neighbor']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'byte-exact order excludes '.$text);
     InspectionFixture::result($fixture->send(InspectionFixture::operation(),InspectionFixture::csrf($checklist)),200,'accepted');
     $fixture->queueFixtures();
     $http=$fixture->http;
@@ -46,6 +48,8 @@ try {
     assertSameValue(false,in_array(4516,$ids,true),'INTENDED_RED PTO-only documentary case is absent');
     assertSameValue(52,count($ids),'50 plus 2 eligible rows including completed case');
     assertSameValue(true,in_array(4512,$ids,true),'working case with activity remains');
+    assertSameValue(true,str_contains($first['body'].$second['body'],'data-document-count="1"')&&str_contains($first['body'].$second['body'],'Документация · 1'),'INTENDED_RED queue exposes document availability without URL');
+    assertSameValue(false,str_contains($first['body'].$second['body'],'bitrix24public.com/control-4512'),'queue does not disclose external URL');
     assertSameValue(true,in_array(4513,$ids,true),'working case without activity remains');
     assertSameValue(true,in_array(4514,$ids,true),'completed documentary case remains available to client filter');
     assertSameValue(false,in_array(4515,$ids,true),'non-working case is absent');
@@ -55,6 +59,9 @@ try {
     assertSameValue(false,str_contains($second['body'],'data-object-id="4514" data-engineer-id="73" data-completed="true" hidden'),'server-included completed row is rendered, not hidden by the current page');
     assertSameValue(true,str_contains($second['body'],'name="completed" value="1" data-show-completed checked'),'server completed filter is reflected in checked control');
     assertSameValue(true,str_contains($first['body'],'class="shlz-pagination"')&&str_contains($first['body'],'aria-label="Страницы стройконтроля"')&&str_contains($first['body'],'<ul class="shlz-pagination__list">'),'INTENDED_RED shared construction-control pagination');
+    $http->db->query("RENAME TABLE {$http->p}fm2_bitrix_order_document_links TO {$http->p}fm2_bitrix_order_document_links_unavailable");
+    try{$unavailableQueue=$fixture->page('/pilot/construction-control?ownership=all&completed=1');$unavailableChecklist=$fixture->page();assertSameValue([200,200,true,true],[$unavailableQueue['status'],$unavailableChecklist['status'],str_contains($unavailableQueue['body'],'Документация · недоступна'),str_contains($unavailableChecklist['body'],'Техническая документация временно недоступна')],'document outage is typed and fail-soft');}
+    finally{$http->db->query("RENAME TABLE {$http->p}fm2_bitrix_order_document_links_unavailable TO {$http->p}fm2_bitrix_order_document_links");}
     $repeat=$fixture->page('/pilot/construction-control?ownership=all&completed=1');
     preg_match_all('/data-object-id="(\d+)"/',$repeat['body'],$repeatMatches);
     assertSameValue($firstMatches[1],$repeatMatches[1],'identical GET repeats row composition');
@@ -86,8 +93,10 @@ try {
 
     $reader=[];
     assertSameValue(303,$http->login($reader,95)['status'],'reader login');
+    $http->db->query("DELETE FROM {$http->p}fm2_pilot_role_permissions WHERE role_id=5 AND permission='checklist.read'");
     $deniedBefore=$http->facts();
     assertSameValue(403,$http->request('GET','/pilot/construction-control',[],$reader)['status'],'exact queue permission remains required');
+    $deniedChecklist=$http->request('GET','/pilot/construction-control/objects/4512/checklist',[],$reader);assertSameValue(403,$deniedChecklist['status'],'checklist permission remains required');assertSameValue(false,str_contains($deniedChecklist['body'],'control-4512'),'denied checklist discloses no link');
     assertSameValue($deniedBefore,$http->facts(),'denied read writes no facts');
     $fixture->http->noLegacy();
     echo "PASS: YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001 Yii HTTP\n";
