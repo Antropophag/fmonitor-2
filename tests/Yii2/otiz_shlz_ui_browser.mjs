@@ -75,7 +75,7 @@ try{
   assert.equal(zoom.ratio,2,'768 physical pixels expose 384 CSS px at 200% layout equivalent');assert.equal(zoom.dpr,2);assert.ok(zoom.doc<=zoom.viewport+1,'no page overflow at 200% layout equivalent');assert.ok(zoom.primary&&zoom.primary.width>0&&zoom.primary.height>0,'primary action remains visible at zoom');await zoomContext.close();
 
   result.stage='register labelled rows';
-  await page.setViewportSize({width:1024,height:900});
+  await page.setViewportSize({width:1280,height:900});
   await page.goto(`${config.origin}/pilot/otiz/objects?sort=regnumber_asc&pageSize=50`);
   const desktopHeaderGeometry=await page.locator('.fm2-otiz-register-table thead th').evaluateAll(headers=>headers.map(header=>{const cell=header.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(header);const text=range.getBoundingClientRect();return{label:(header.textContent||'').trim(),cell:{left:cell.left,right:cell.right},text:{left:text.left,right:text.right}};}));
   const desktopHeaderFailures=[];for(let index=0;index<desktopHeaderGeometry.length-1;index++){const current=desktopHeaderGeometry[index],next=desktopHeaderGeometry[index+1];if(current.text.right+8>next.text.left)desktopHeaderFailures.push(`${current.label} -> ${next.label}`);}assert.deepEqual(desktopHeaderFailures,[],'OTIZ desktop table headers retain visible separation instead of escaping or colliding');

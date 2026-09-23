@@ -29,6 +29,29 @@ are additionally captured in `checklist-installer-close-final.png`,
 `object-start-datepicker-final.png` and `construction-390-final-0e5df8bd.png`.
 These are candidate evidence, not owner checkpoint, independent approval or CI.
 
+## Owner device matrix before-audit — 2026-09-23
+
+Owner targets: laptop 1366×768 и 1536×864; Redmi Pad 2 Pro landscape
+1280×800 и portrait 800×1280; mobile 360×800 и 390×844 CSS px. Read-only
+stand audit captured 90 states (15 reachable route-surfaces × 6 profiles) in
+`/Users/antropophag/.local/share/fmonitor-2/device-matrix-before-20260923.q8akGF`.
+`manifest.json` reports zero JS errors. Two state-dependent routes using stale
+object 39058 returned 404 and remain `UNKNOWN`; existing isolated object-card,
+selection, original/execution and activation journeys remain required witnesses.
+
+| ID | Targets | Confirmed defect | Required correction |
+|---|---|---|---|
+| DM01 | laptop 1366/1536, tablet landscape | users register loses right-side filter/table content without an obvious owning local scroll | Contain the data list and expose all columns/actions through local scroll or a complete adaptive row composition. |
+| DM02 | tablet portrait 800 | objects register expands document to 954 px; users expands it to 890 px while full sidebar consumes workspace | Use container-aware shell/table behavior; no document overflow and no hidden fields/actions. |
+| DM03 | tablet portrait 800, mobile 360/390 | OTIZ payments/history expand document (1209/440 px) and squeeze headers/cells into vertical letters | Preserve intrinsic financial table width inside a labelled local scroll owner; never compress semantic text character-by-character. |
+| DM04 | mobile 360/390 | installers long positions and roles permission tags are visibly clipped at the right edge | Give each wide data list explicit local scroll or a complete mobile row variant without dropping values/actions. |
+| DM05 | laptop/tablet workspace | OTIZ objects headers can collide when viewport remains wide but sidebar narrows the owning container | Base sizing on container/workspace, retain readable column width, and localize overflow. |
+
+Calendar/construction generic header-collision signals were visually rejected as
+false positives caused by rowspan/colgroup geometry. Checklist, dashboard,
+feedback and deadline-certificate states were visually acceptable in the
+captured matrix. This is partial route coverage, not completion of task 9.2.
+
 ## Gate 2 baseline blocker — 2026-09-22
 
 На exact `origin/main` `bced877a` существующие authenticated browser journeys
