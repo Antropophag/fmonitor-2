@@ -109,3 +109,36 @@ The 3→2→1→0 PTO sequence, replacement history boundaries, adjacent same-in
 - Exercise scoped directory rows/counts/compact totals and bind the allowed/forbidden object scope explicitly.
 - Compare duplicate overlapping GET results for deterministic equality while retaining the before/after business-fact check.
 - Capture fresh exact-source intended RED evidence and regenerate the prepared reviewer package.
+
+## Rereview 3 — contradiction/scope/concurrency correction cycle
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Reviewed source: commit `ac6213ae9c4e786626b929e50ee4a3273fd09750`, candidate source `6b0bbb0d1f16f9dd9849250b9a3cdb91bde19e3d9a03b784c044d264c749b63d`, executable source `23b5cd2923168e79174645f52b8dba2a734cf7afb4ffad9a0548ca21c2faab95`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T190242Z-ba7c7bb048/package.json`; plan SHA-256 `13e2696c4a8ef05b9686ad75273e6b952fbf7f27de7ffe98e3936b6e62d11598`
+- Bound stage-one test SHA-256: `d304635efc7348a23689ba95b6252515b476474cd0fd9998fcf173bfb33448f7`; the unchanged surfaces/browser tests retain their prior bound hashes
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no missing mapped tests are reported
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Persistent-current contradiction — OPEN.** A PTO for lift 4999 was added, but it is inserted after every zero/absent-current assertion, so it cannot affect them.
+2. **Scoped directory — RESOLVED at the observable seam.** The scoped actor now exercises directory, card and picker; the directory asserts filtered count one, effective object 4512, and absence of forbidden lift 4999.
+3. **Concurrent deterministic replay — RESOLVED for the card seam.** Two overlapping identical card GETs must be byte-identical, the directory and picker overlap them, and complete business facts are unchanged.
+
+### Blocking finding
+
+**BLOCKER — PTO closure still occurs after the contradictory assertions.** The exact execution order remains:
+
+1. lift 4999 is created as factually started/current for installer 7001;
+2. lift 4512 is restored to pre-opening/upcoming;
+3. the test requires the card to omit `Текущая работа`, picker current count `0`, directory `current=absent&upcoming=present`, and compact current count `0`;
+4. concurrent requests then still require `current=present&upcoming=present` and `CURRENT-4999`;
+5. only after all of those observations does the test insert the PTO for case 6199.
+
+The PTO therefore closes 4999 only for later history/replacement assertions, not for the zero-current assertions it was intended to repair. A correct projection must report current count one in steps 2–4 and cannot pass the reviewed test. Move the PTO insertion to immediately after the simultaneous/concurrency coverage and before the first zero/absent-current observation; alternatively retain current count one and both-present filters until the existing insertion point. Then independently assert the 1→0 transition caused by that PTO so the state boundary is explicit.
+
+### Required changes for rereview 4
+
+- Reorder the PTO before all zero/absent-current expectations, or change those expectations to the still-current state.
+- Add a direct before/after assertion that the 4999 PTO changes current count from one to zero while 4512 remains upcoming.
+- Refresh exact-source RED evidence and the reviewer package.
