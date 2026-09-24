@@ -13,6 +13,7 @@
     "reviews/tests/BACKLOG-ISSUE-LABELS-001.md",
     "specs/BACKLOG-ISSUE-LABELS-001.md",
     "tests/Verification/backlog_issue_labels_256_test.py",
+    "tests/InstallationProcess/assignment_order_original_database_setup_001_test.php",
     "tools/verification/suites.tsv"
   ],
   "acceptances": [

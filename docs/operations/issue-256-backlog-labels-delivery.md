@@ -58,3 +58,14 @@ label removals, закрытые issue, pull requests и новые issue отс
 GitHub mutations уже действуют и не откатываются автоматически исходом repository PR.
 PR, exact-source CI, merge и deployment остаются `UNKNOWN` до
 последующих Gates 3–5.
+
+## CI correction
+
+Первый exact-source run `36030367045` имел один primary failure вне label scope:
+`assignment_order_original_database_setup_001_test.php` не увидел производный
+join lock-wait pair, хотя проверял управляемый requesting transaction. По
+поручению владельца довести PR до merge-ready test-only correction наблюдает
+requesting `INNODB_TRX` напрямую (`LOCK WAIT`, `SERIALIZABLE`, exact worker и
+exact `fm2_process_tasks ... FOR UPDATE`); blocking-pair identity остаётся
+обязательной, когда MariaDB публикует производную строку. Product runtime не
+изменён. Первый run и его полный failure inventory сохранены как evidence.
