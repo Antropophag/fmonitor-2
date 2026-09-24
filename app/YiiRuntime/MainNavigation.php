@@ -25,6 +25,7 @@ final class MainNavigation
             'Администрирование' => [
                 ['access.administer', 'admin-users', '/pilot/admin/users', 'Пользователи', 'user'],
                 ['access.administer', 'admin-roles', '/pilot/admin/roles', 'Роли', 'settings'],
+                ['access.administer', 'admin-integrations', '/pilot/admin/integrations', 'Интеграции', 'graph'],
             ],
         ];
 

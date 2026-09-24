@@ -239,6 +239,7 @@ db	php	tests/Yii2/yii2_inspection_planning_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_http_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integration
+db	php	tests/Yii2/yii2_integration_status_001_test.php	integration
 db	php	tests/Yii2/yii2_jobs_console_db_001_test.php	integration
 db	php	tests/Yii2/yii2_legacy_identity_link_001_test.php	integration
 db	php	tests/Yii2/yii2_legacy_import_db_001_test.php	integration
