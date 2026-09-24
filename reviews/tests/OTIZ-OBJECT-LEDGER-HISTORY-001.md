@@ -2,13 +2,13 @@
 
 - Reviewer: independent Gate 3 reviewer `/root/gate3_review` (gpt-5.6-sol/low); did not author the specification or tests
 - Test author: root Codex session, owner-authorized scope/spec/test authorship
-- Reviewed source: third corrected candidate `d8a564c2596902ac21b028430e056f5ad5de98173cb70e58f3b8ef67c1248a28`, executable source `1d9429ce704502b47e8de70ac669c03e6cb892671d6efaed5a2396125f5374c0`, base `b1542f92009b8dc4216a36962ff38a51e0b6c388`
-- Reviewed package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T021537Z-60ee194393/package.json`
-- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T021537Z-60ee194393/snapshot`, patch SHA-256 `4438065f5cc92453d36f2a026456e93737aaad53fb5dbe4827c6ae546ddb7dc9`
-- Agreed review scope / prior findings disposition: third Gate 3 rereview, limited to the two findings left open on corrected candidate `176df2728a0b6bc599ca9d37cab57d31ad523328c9f71d1e2479d269ef39e550`; broaden only for explicit new risk
+- Reviewed source: targeted scope-corrected candidate `3875e2e70402fedfa24579e2281350f7abd6db87a24aea678339356665cde0c3`, executable source `82c37a62180c20be55e3339022f52760b00116917c3e175c62d5fda87cdeb8e5`, base `bbf9489db16cba388f4430321a865459902e17ba`
+- Reviewed package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022727Z-5d49532d75/package.json`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022727Z-5d49532d75/snapshot`, patch SHA-256 `83a25baab52a005f0c486f9c2336c89332979b7b8e39fcefa5542eccf2c25adf`
+- Agreed review scope / prior findings disposition: targeted Gate 3 scope-correction rereview of the root-owned specification/test delta only: GET-only route boundary, corrected retained-current-snapshot A09 oracle, Yii bootstrap and precise foreign-reversal assertion; production implementation was not reviewed at this gate
 - Specification: `specs/OTIZ-OBJECT-LEDGER-HISTORY-001.md`; OpenSpec `object-ledger-history`
-- Public seam: `GET|HEAD /pilot/otiz/snapshots/{snapshotId}?object={objectId}&ledgerPage={page}` plus browser transition from the existing object drawer
-- RED evidence: `php tests/Yii2/yii2_otiz_object_ledger_history_001_test.php` failed at the intended missing drawer transition (`expected true`, `actual false`) in fresh retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790216127339117000-a64595e3c63b493592027df942937fca.json`; source and end source both match the third corrected candidate.
+- Public seam: `GET /pilot/otiz/snapshots/{snapshotId}?object={objectId}&ledgerPage={page}` plus browser transition from the existing object drawer; the existing route remains GET-only and HEAD is explicitly out of scope
+- RED evidence: `php tests/Yii2/yii2_otiz_object_ledger_history_001_test.php` reached the browser flow and failed at the intended missing server-rendered drawer transition (`expected 1`, `actual 0`) in fresh retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790216834410954000-5614aaa233f34d079168854267ea24ca.json`; source and end source both match the scope-corrected candidate.
 - Verdict: `APPROVED`
 
 ## Findings
@@ -23,9 +23,16 @@ No current findings.
 - Prior finding 4 (empty/retained behavior): **fixed**. Existing sums, current-snapshot ledger, drawer actions/forms, lazy exclusion, empty count and all four zero totals are asserted.
 - Prior finding 5 (browser/side effects): **fixed**. Chromium synchronizes an authenticated permission change, observes 403 with no ledger leakage, restores access, and at 390px verifies bounding boxes for type, date, all three amount cells, basis, source cell/link and reversal link after contained scrolling. Escaping, empty state, outbound trap and full no-write inventory remain covered.
 
+### Scope-correction dispositions
+
+- GET-only route: **approved**. The normative specification, delta requirement and HTTP test consistently remove HEAD. A08 continues to prove authorized GET, pagination and source transitions are read-only, with no state or external writes. This removes an unauthorized route expansion without narrowing the product's requested read capability.
+- Retained A09 oracle: **approved**. The ordinary snapshot now positively asserts its existing same-snapshot ledger rows for the selected, neighbor and paged fixtures (`B deductions`, `NEIGHBOR SECRET`, `Paged 12`) plus existing sums/actions/forms. It excludes only cross-snapshot A/C rows. The lazy object history independently excludes the neighbor object while including A/B/C across snapshots, so retained behavior and new filtering cannot mask each other.
+- Test setup: **approved**. Composer autoload and `vendor/yiisoft/yii2/Yii.php` are loaded before the Yii command subclass, removing the setup contradiction while the fresh run reaches the intended product RED.
+- Foreign reversal oracle: **approved**. The assertion now rejects the exact foreign closure anchor and exact source-label disclosure, alongside neighbor basis/identity, without falsely rejecting an unrelated occurrence of the numeric identifier.
+
 ## Review summary
 
-The third corrected exact source resolves the two remaining findings with no newly introduced review risk. Traceability, sensitivity, independent expected values, rejection/auth coverage, deterministic isolation, consistent-read concurrency, desktop/narrow browser coverage, no-write/external-call evidence and full A01-A10 coverage are suitable for Gate 3. The fresh RED is bound to the reviewed candidate and fails for the intended missing transition.
+The targeted scope correction removes both executor-reported contradictions without weakening the accepted A01-A10 behavior. The GET-only public seam matches the owner boundary; A09 now protects all existing current-snapshot rows while the new view remains object-filtered and cross-snapshot; bootstrap and foreign-reversal checks are deterministic and precise. All earlier Gate 3 findings remain fixed, no regression or new risk was found in the reviewed spec/test delta, and the exact-source RED fails for the intended missing drawer transition.
 
 ## Required changes
 

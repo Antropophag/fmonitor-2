@@ -10,7 +10,7 @@ Slice не реконструирует ledger на прошлую дату, н�
 
 Actor — текущий Yii2-пользователь с действующим permission `otiz.manage`.
 
-Public seam — `GET|HEAD /pilot/otiz/snapshots/{snapshotId}?object={objectId}&ledgerPage={page}` через существующий action и существующую страницу snapshot. Обычный запрос без `object` сохраняет прежнюю детализацию и не читает сквозную историю для всех drawers.
+Public seam — `GET /pilot/otiz/snapshots/{snapshotId}?object={objectId}&ledgerPage={page}` через существующий GET-only route и существующую страницу snapshot. Обычный запрос без `object` сохраняет прежнюю детализацию и не читает сквозную историю для всех drawers.
 
 `snapshotId`, `objectId` и `page` — положительные decimal integers. История разрешена только когда `(snapshotId, objectId)` существует в сохранённых объектах указанного snapshot. `ledgerPage` по умолчанию равен 1; размер страницы равен 10 строкам. Невалидный object/page или object, не принадлежащий snapshot, возвращает безопасный 404 без ledger projection. Страница за последней непустой страницей показывает пустую страницу с корректными границами и теми же full-set totals; данные другого объекта не подставляются.
 
@@ -83,9 +83,9 @@ Unknown snapshot, unknown object, object другого snapshot и invalid deci
 
 Basis `<script>alert("ledger")</script>&` отображается как текст через HTML escaping. В DOM отсутствует созданный из basis `script`, событие не выполняется, а исходный текст читаем пользователем.
 
-### A08 — read-only GET/HEAD/transitions
+### A08 — read-only GET/transitions
 
-Before/after inventory таблиц snapshots, snapshot objects, closures, OTIZ events, settlement operations, jobs и outbox идентичен после authorized GET, HEAD, pagination и перехода к source snapshot. Не создаются внешние вызовы. Новая история не содержит POST forms/buttons выплаты, удержания или сторно.
+Before/after inventory таблиц snapshots, snapshot objects, closures, OTIZ events, settlement operations, jobs и outbox идентичен после authorized GET, pagination и перехода к source snapshot. Не создаются внешние вызовы. Новая история не содержит POST forms/buttons выплаты, удержания или сторно. HEAD не добавляется: существующий route остаётся GET-only согласно явной границе владельца не менять routes.
 
 ### A09 — retained snapshot behavior
 

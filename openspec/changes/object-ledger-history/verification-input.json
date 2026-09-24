@@ -23,7 +23,7 @@
       "spec_id": "OTIZ-OBJECT-LEDGER-HISTORY-001",
       "acceptance_id": "A01-A10-complete-cross-snapshot-object-ledger-history",
       "spec_path": "specs/OTIZ-OBJECT-LEDGER-HISTORY-001.md",
-      "seam": "guest denied and authorized GET|HEAD existing Yii2 snapshot route with lazy object context, server pagination, database fact inventory, and Chromium desktop/narrow transitions",
+      "seam": "guest denied and authorized GET existing Yii2 snapshot route with lazy object context, server pagination, database fact inventory, and Chromium desktop/narrow transitions",
       "tests": ["tests/Yii2/yii2_otiz_object_ledger_history_001_test.php"],
       "gate3_expected": {"tests/Yii2/yii2_otiz_object_ledger_history_001_test.php": "INTENDED_RED"}
     }
