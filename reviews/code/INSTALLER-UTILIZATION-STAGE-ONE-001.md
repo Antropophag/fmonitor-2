@@ -115,3 +115,25 @@ The full candidate diff against `b81b08d9` retains the same bounded stage-one su
 No finding was introduced by the rebase. Gate 5 remains approved for exact rebased candidate source `3820ab692241b787e5cd84f7bfd5a7f6506e4df1010c706dd89c3de1929a8d8c` at HEAD `d2b0c8a2784b0d636592f8ad35f54284d4bf554c`.
 
 Exact-source GitHub CI, PR publication, merge and deployment remain separate states and are not implied by this local final-review verdict.
+
+## Rereview 4 — CI architecture ownership correction
+
+- Reviewed correction commit: `92e4be2dae5eb2a5ef770c84cf84fcf7eb9ba0ad`
+- Parent approval: post-rebase candidate at `d2b0c8a2784b0d636592f8ad35f54284d4bf554c`, source `3820ab692241b787e5cd84f7bfd5a7f6506e4df1010c706dd89c3de1929a8d8c`
+- CI run: `36061738190`; reported complete failure inventory contains only the fast architecture job's `sql_ownership` rejection of 23 SQL-bearing lines in the new Workforce MariaDB adapters
+- Focused correction evidence: `make architecture-check` GREEN across 7 rules; `architecture_guard_001_test.py` GREEN `59/59`
+- Verdict: `APPROVED`
+
+### Policy-delta assessment
+
+`tools/architecture/check.py::sql_owner()` now recognizes a file below `app/Workforce/` as an SQL owner only when its filename starts with `MariaDb`. This is the same narrow convention already applied to `app/Jobs/`, `app/Otiz/`, `app/AssignmentOrderComposition/`, `app/IdentityAccess/` and other persistence-owning domains. It admits the reviewed `MariaDbInstallerUtilization.php` and existing `MariaDbYiiInstallerDirectory.php` as named adapters while continuing to reject SQL placed in generic Workforce services, configuration, controllers or views.
+
+The correction does not add or change an architecture baseline entry, suppress a fingerprint, weaken DDL/workforce-migration ownership, or introduce a path-wide SQL exemption. The verification input now explicitly declares `tools/architecture/check.py` in the planned change boundary, making the policy edit visible to delivery planning.
+
+The CI failure is therefore classified as a checker ownership-map omission exposed by the new correctly named persistence adapter, not a production architecture violation. The narrow rule correction addresses the complete reported failure inventory without altering stage-one behavior, authorization, persistence semantics or tests.
+
+### Final verdict
+
+No Gate 5 finding is introduced by commit `92e4be2d`. The previously approved product verdict remains valid with this architecture-policy correction.
+
+The CI run's corrected/re-run terminal status, PR publication, merge and deployment remain separate recorded states; this review does not infer them from the focused GREEN checks.
