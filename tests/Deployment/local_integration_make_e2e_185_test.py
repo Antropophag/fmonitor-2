@@ -19,7 +19,7 @@ env_path=ROOT/'.env'; local=ROOT/'.local'
 assert not env_path.exists(),'SETUP_FAILURE: task checkout already has .env'
 fixture=Path(tempfile.mkdtemp(prefix='fm2-i185-e2e-'))
 http_port=str(28000+(int(token[:4],16)%20000))
-legacy_secret='LEGACY_E2E_SECRET'; bitrix_old='BITRIX_E2E_OLD'; bitrix_new='BITRIX_E2E_NEW'
+legacy_secret='LEGACY_E2E_SECRET'; bitrix_old='BITRIX_E2E_OLD'; bitrix_new='BITRIX_E2E_NEW'; bitrix_document='BITRIX_E2E_DOCUMENT'
 base=f"""COMPOSE_PROJECT_NAME={project}
 FMONITOR_RUNTIME_IMAGE={image}
 FMONITOR_HTTP_PORT={http_port}
@@ -64,6 +64,7 @@ FMONITOR_SOURCE_USER=legacy_reader
 FMONITOR_SOURCE_PASSWORD={legacy_secret}
 FMONITOR_MIGRATION_CUTOFF=2026-09-18 23:59:59
 FMONITOR_BITRIX_WEBHOOK_URL='https://bitrix-fixture:8443/rest/7/{bitrix_old}/'
+FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL='https://bitrix-fixture:8443/rest/8/{bitrix_document}/'
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[71]'
 FMONITOR_BITRIX_CA_FILE_HOST={fixture}/ca.crt
 """
@@ -71,7 +72,7 @@ FMONITOR_BITRIX_CA_FILE_HOST={fixture}/ca.crt
 def run(argv, *, input_text=None, ok=True):
     r=subprocess.run(argv,cwd=ROOT,input=input_text,text=True,capture_output=True,timeout=600)
     combined=r.stdout+r.stderr
-    for secret in (legacy_secret,bitrix_old,bitrix_new):
+    for secret in (legacy_secret,bitrix_old,bitrix_new,bitrix_document):
         assert secret not in combined,(argv,secret,combined[-2000:])
     if ok and r.returncode!=0:
         diagnostic=''

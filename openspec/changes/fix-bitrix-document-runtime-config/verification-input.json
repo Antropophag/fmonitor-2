@@ -16,6 +16,7 @@
     "specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md",
     "tests/Deployment/bitrix_startup_config_001_test.php",
     "tests/Deployment/bitrix_document_runtime_config_001_test.py",
+    "tests/Deployment/bitrix_order_document_links_runtime_001_test.py",
     "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
     "tests/Deployment/local_integration_env_001_test.py",
     "tests/Yii2/yii2_jobs_clean_runtime_configuration_001_test.php",

@@ -31,6 +31,7 @@ values.update({
     "FMONITOR_BOOTSTRAP_SUPERADMIN_PASSWORD": "synthetic-admin-password",
     "FMONITOR_SOURCE_PASSWORD": "synthetic-source-password",
     "FMONITOR_BITRIX_WEBHOOK_URL": "https://example.invalid/rest/1/synthetic-token/",
+    "FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL": "https://example.invalid/rest/2/synthetic-document-token/",
     "FMONITOR_ERP_PASSWORD": "synthetic-erp-password",
     "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY": "h" * 40,
     "FMONITOR_SMTP_PASSWORD": "synthetic-smtp-password",

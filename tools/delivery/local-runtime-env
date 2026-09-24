@@ -49,6 +49,17 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       case " ${integration[*]} " in
         *" $name "*)
           [[ "$integration_seen" != *"|$name|"* ]] || fail
+          if [[ "$name" == FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL ]]; then
+            integration_value=$value
+            if [[ "$integration_value" == \'* || "$integration_value" == \"* ]]; then
+              quote=${integration_value:0:1}
+              [[ ${#integration_value} -ge 2 && "${integration_value: -1}" == "$quote" ]] || fail
+              integration_value=${integration_value:1:${#integration_value}-2}
+            else
+              [[ "$integration_value" != *\'* && "$integration_value" != *\"* ]] || fail
+            fi
+            [[ -n "$integration_value" && "$integration_value" != *replace_me* && "$integration_value" != replace_with_* ]] || fail
+          fi
           integration_seen+="$name|"
           continue
           ;;
