@@ -15,6 +15,7 @@
 - [x] 2.8 Дать стройконтролю mobile-first доступ: count в queue и touch-friendly ссылки непосредственно в checklist, сохранив authorization и fail-soft states.
 - [x] 2.9 Скомпактить стройконтроль: одна effective ссылка, чёрная `shlz-ui/folder-file-open` рядом с отгрузкой и icon-button в checklist без счётчиков и большой document-секции.
 - [x] 2.10 Убрать вложенную интерактивность: folder-file-open оставить индикатором queue, а в checklist дать полноширинную mobile secondary-кнопку без иконки.
+- [x] 2.11 Вернуть legacy-affordance в checklist: заводской номер над процентом является ссылкой, отдельную document-кнопку убрать; видимую подпись даты открытия скрыть.
 
 ## 3. Verification and PR
 

@@ -10,9 +10,8 @@ try {
     $fixture=new InspectionFixture(dirname(__DIR__,2));
     $fixture->open();
     $checklist=$fixture->page();
-    foreach(['fm2-control-document-button','https://bitrix24public.com/control-4512','Техническая документация']as$text)assertSameValue(true,str_contains($checklist['body'],$text),'INTENDED_RED compact checklist documentation '.$text);
-    assertSameValue(false,str_contains($checklist['body'],'folder-file-open.svg'),'checklist button has no icon');
-    foreach(['fm2-control-documents__heading','Чертежи и материалы по заводскому номеру объекта','data-document-count']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'large/count checklist presentation removed '.$text);
+    foreach(['fm2-check-order-link','>CONTROL-4512</a>','href="https://bitrix24public.com/control-4512"','data-total-progress']as$text)assertSameValue(true,str_contains($checklist['body'],$text),'INTENDED_RED linked factory number '.$text);
+    foreach(['fm2-control-document-button','Техническая документация</a>','fm2-technical-document-surface','folder-file-open.svg','data-document-count']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'separate checklist document action removed '.$text);
     foreach(['Соседний заказ','control-neighbor']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'byte-exact order excludes '.$text);
     InspectionFixture::result($fixture->send(InspectionFixture::operation(),InspectionFixture::csrf($checklist)),200,'accepted');
     $fixture->queueFixtures();

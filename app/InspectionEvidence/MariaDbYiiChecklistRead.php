@@ -16,7 +16,7 @@ trait MariaDbYiiChecklistRead
     $assignment=$this->currentEngineerAssignment($objectId);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;
     $card=$case['process_state']==='working'?null:$this->authoritativeCard($actorId,$objectId);
     $ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);
-            return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'engineer'=>$engineer,'technicalDocuments'=>$this->technicalDocuments($profile['order_number']??null)];
+            return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'orderNumber'=>$profile['order_number'],'engineer'=>$engineer,'technicalDocuments'=>$this->technicalDocuments($profile['order_number']??null)];
         }
 
         public function projection(int $objectId):array

@@ -45,6 +45,8 @@ try {
     $checklist=$f->request('GET','/pilot/construction-control/objects/4512/checklist',[],$substitute);
     assertSameValue(200,$checklist['status'],'authorized substitute reads ready checklist');
     foreach(['Готов к открытию','name="action" value="open_confirmed"','name="actualStartDate"','>Открыть работы</button>','data-enabled="false"']as$marker)assertSameValue(true,str_contains($checklist['body'],$marker),'ready checklist '.$marker);
+    assertSameValue(true,str_contains($checklist['body'],'<span class="fm2-visually-hidden">Фактическая дата начала</span>'),'opening date retains accessible label');
+    assertSameValue(false,str_contains($checklist['body'],'class="shlz-field__label">Фактическая дата начала'),'opening date has no visible asymmetric caption');
     assertSameValue(false,str_contains($checklist['body'],'Чек-лист недоступен'),'ready opening uses one truthful information panel');
     assertSameValue(0,preg_match('/data-check-section="1"[^>]*\binert\b/',$checklist['body']),'preopening section heading remains collapsible');
     foreach(['shlz-button shlz-button--primary','data-reason-dialog','data-reason-input','data-reason-confirm','data-reason-cancel']as$marker)assertSameValue(true,str_contains($checklist['body'],$marker),'styled checklist interaction '.$marker);
