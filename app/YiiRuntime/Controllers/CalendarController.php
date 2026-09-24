@@ -79,7 +79,7 @@ final class CalendarController extends PilotController
                 Yii::$app->db,
                 $this->prefix(),
                 $this->legacyPrefix(),
-            )->readCalendar($first->format('Y-m-d'), $last->format('Y-m-d'));
+            )->readCalendar($actorId,$today->format('Y-m-d'),$first->format('Y-m-d'), $last->format('Y-m-d'));
         } catch (Throwable $error) {
             Yii::error('calendar_read_failed ' . $error::class, __METHOD__);
             throw new ServiceUnavailableHttpException('Календарь временно недоступен. Обновите страницу или вернитесь к объектам монтажа.');

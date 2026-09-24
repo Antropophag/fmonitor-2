@@ -164,8 +164,8 @@ return$this->json($status,$result);
 if(array_filter($raw,static fn(mixed$value):bool=>!is_string($value))!==[])return$this->plain(404);
 [$ownership,$query,$completed,$page]=$raw;$query=trim($query);$page=filter_var($page,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
 if(!in_array($ownership,['mine','all'],true)||!in_array($completed,['0','1'],true)||$page===false||mb_strlen($query)>160)return$this->plain(404);
-$filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$objects=$this->owner()->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
-Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters,'failedInspection'=>$failed,'inspectionMessage'=>$message]);
+$filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$now=(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);$objects=$this->owner(null,$now)->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
+Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters,'failedInspection'=>$failed,'inspectionMessage'=>$message,'today'=>(new \DateTimeImmutable($now))->format('Y-m-d')]);
 } catch(\DomainException)
     {return$this->plain(403);
 } catch(\Throwable$error)
@@ -176,7 +176,7 @@ Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime
 
     private function redirect303(string$url):Response{$response=Yii::$app->response;$response->statusCode=303;$response->headers->set('Location',$url);return$response;}
 
-    private function owner(?InspectionRecording$recording=null):MariaDbYiiChecklist{return new MariaDbYiiChecklist(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'),(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX'),(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT')),(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),$recording);
+    private function owner(?InspectionRecording$recording=null,?string$now=null):MariaDbYiiChecklist{return new MariaDbYiiChecklist(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'),(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX'),(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT')),$now??(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),$recording);
 }
 
     private function actor():int{return(int)Yii::$app->user->id;
