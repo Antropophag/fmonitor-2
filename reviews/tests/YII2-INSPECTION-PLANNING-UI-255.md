@@ -186,3 +186,18 @@ All behavioral matrix gaps and the three previously impossible oracles are other
 No Gate 3 findings remain. The executable matrix now covers the canonical public command/read seam; exact engineer/FKR authority and object scope; CSRF and read-only methods; replay, request conflict and stale version; classified rejection versus server-originated unknown outcome with retained context and no hidden retry; queue/calendar agreement after every action; past-plan exclusion; projection outage and multiple-current fail closure; filtered COUNT and Moscow today priority before pagination; stable ordering, midnight recomputation and no DML; and one accessible dialog across desktop/narrow, keyboard focus/return and the real browser journey. The tests preserve the #258 and shared-asset exclusions.
 
 Gate 4 may proceed against the approved test candidate. Test, specification, verification-input, registration, or fixture changes require applicable independent delta review. Final review and exact-source CI remain mandatory and outside this Gate 3 verdict.
+
+---
+
+## Gate 3 overflow-fixture delta review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `6a03b71d5dee2c315085cce94cb1b03ecdc4eb17` over approved test HEAD `503f791adfaaa3136fb16aef2e87e2314ea21275`.
+- Scope: the sole committed change to `tests/Yii2/yii2_inspection_planning_today_priority_255_test.php`; dirty executor production files were excluded and untouched.
+- Verdict: **APPROVED**.
+
+The correction preserves the approved ambiguity oracle while removing an unrelated storage-uniqueness collision. The second immutable root now stores distinct `inspection_date=2026-09-12`, then receives its own version-one `inspection_scheduled` event whose canonical effective payload date is `2026-09-10`. Consequently the projection still observes two current roots for object `452000` on the tested Moscow day, but fixture setup no longer fails before the read seam because two root rows share the same storage date.
+
+The event is internally bound to the inserted root and case, has a distinct opaque request identity, version one, deterministic payload and actor/time. The before/after fact snapshot remains after complete fault setup, so the assertion continues to prove that the failing ambiguity read performs no repair or DML. Earlier filtered COUNT, two-page order, midnight and no-DML expectations are unchanged.
+
+PHP syntax and `git diff --check` pass. No Gate 3 finding is introduced; the test approval extends through commit `6a03b71d5dee2c315085cce94cb1b03ecdc4eb17`. Final production review and exact-source CI remain outside this delta verdict.
