@@ -214,3 +214,16 @@ PHP syntax and `git diff --check` pass. No Gate 3 finding is introduced; the tes
 The new `waitForFunction` waits until the already resolved date input is exactly `document.activeElement`, accommodating Chromium's asynchronous native-dialog focus settlement. It neither substitutes another focus target nor turns the requirement into a timeout/sleep; failure to focus the date input still times out and fails. The immediate equality assertion remains after the wait, and all Escape/trigger focus-return, reschedule-focus and narrow-viewport checks are unchanged.
 
 Node syntax and `git diff --check` pass. No acceptance expectation is weakened, so Gate 3 approval extends through `e7803353a44976ce7b98804a945643bb04f1d289`. Production changes remain outside this verdict.
+
+---
+
+## Gate 3 calendar-cardinality delta review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `0a93fca343dbb70bd194bdb8e5607b10940e7b00`.
+- Scope: two browser cardinality assertions only.
+- Verdict: **APPROVED**.
+
+The calendar intentionally presents the same canonical current-plan event in both the month grid and selected-day agenda. Requiring exactly one matching object-card link incorrectly constrained presentation multiplicity rather than domain-plan multiplicity. Requiring `count() > 0` after create and reschedule still proves that calendar publishes the current plan and its canonical object link, while the unchanged zero-count assertion after cancel proves that neither presentation retains the cancelled plan. Canonical single-current semantics remain independently covered at the read/application seams.
+
+Node syntax and `git diff --check` pass. Gate 3 approval extends through `0a93fca343dbb70bd194bdb8e5607b10940e7b00`; production remains outside this delta verdict.
