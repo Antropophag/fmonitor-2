@@ -67,3 +67,4 @@
 - Architecture policy/baseline: `docs/architecture/`
 - OpenSpec lifecycle: `openspec/config.yaml`, `openspec/changes/`, `openspec/specs/`
 - Reviews: `reviews/tests/`, `reviews/code/`
+- Backlog label taxonomy and manual filters: `docs/issue-labels.md`
