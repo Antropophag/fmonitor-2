@@ -132,3 +132,31 @@ Three material parts of the prior return are now closed, but controller command 
 - Browser: `1790284558495133000-2852b3006ad74472b227372914cf9fe2`.
 
 The retained records are valid RED evidence for their first reached barriers, but they cannot reveal the two later impossible history assertions because execution stops earlier. Correct the test-only baselines/history oracle and replace the synthetic browser unknown response, retain fresh exact-source RED, regenerate the package, and request rereview. Gate 4 remains unauthorized.
+
+---
+
+## Gate 3 fourth correction rereview — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Corrected HEAD: `adaa85b04a4774aecd2d2a3735850e742637e788`.
+- Exact candidate source: `fb52d7621edadfd23098db6327ef897f29810487510a4d16050384b04c758510` (clean worktree).
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T212127Z-7f3d323714/package.json`; lane `CRITICAL`, required reviews `gate3` and `final`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Prior blockers disposition
+
+1. **Resolved — fact baseline.** The test refreshes `$before` after the engineer/FKR create/cancel matrix, so subsequent GET/HEAD, CSRF and triggered-rollback no-write assertions compare against the correct state.
+
+2. **Resolved — main history oracle.** The final assertion filters by the three main-journey request identities before requiring scheduled/rescheduled/cancelled order, excluding the deliberately separate role and ambiguity events.
+
+3. **Resolved — real browser unknown response.** The wrapper installs the database failure trigger before launching the browser. The browser observes the actual Yii `503` classified HTML and retained dialog context, writes a private release marker only after those assertions, and the parent drops the trigger before explicit retry. No request interception or synthetic response remains. The narrow viewport is exercised separately after the stateful desktop journey.
+
+### Remaining blocking findings
+
+1. **BLOCKING — successful route authorization still does not prove the controller forwards the authenticated actor.** The new role matrix asserts statuses and reads the resulting plan, but never inspects the four role-command events. A controller that authorizes the correct session yet invokes the canonical command as actor `9101` would still produce the expected plan/status and pass. The normative contract requires the current actor to reach the command, and the prior review explicitly required exact recorded actors. Filter events by the four `eeee…002/003` and `ffff…001/002` request identities and assert actor IDs `[9403, 9403, 9401, 9401]` together with their event types. This is a small but security-material route-boundary oracle.
+
+2. **BLOCKING — retained RED is not exact for the corrected test candidate.** The four records cited in the preceding review bind source `8a430999…` / HEAD `c940fbea`. The current package binds source `fb52d762…` / HEAD `adaa85b0`, and harness state still reports executable RED `PENDING`. The changed files are tests and browser harness, including the real-503 mechanism; predecessor RED cannot demonstrate that this corrected candidate parses, boots and reaches its intended first barriers. Run and retain the four prepared focused commands against the current exact source after adding the actor assertion. Expected first RED barriers may remain the same, but their records must bind the reviewed bytes.
+
+### Decision
+
+All behavioral matrix gaps and the three previously impossible oracles are otherwise resolved. Approval now requires only the exact-actor event assertion and fresh exact-source retained RED for the resulting candidate. Gate 4 remains unauthorized until those two items are complete.
