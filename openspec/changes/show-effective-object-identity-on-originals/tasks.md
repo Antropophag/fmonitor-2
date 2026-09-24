@@ -6,7 +6,7 @@
 ## 2. Gate 2/3 — complete RED candidate (root + independent reviewer)
 
 - [x] 2.1 Написать focused real HTTP/browser tests на disposable fixtures для initial upload, correction после manual edits, history, missing numbers, long/hostile address, denied access, narrow viewport и отсутствие side effects; показать intended RED на выводе internal ID/effective mismatch без изменения product code.
-- [ ] 2.2 Если planner требует Gate 3, подготовить exact-source package и получить независимый sol/low `APPROVED` review спецификации, acceptance mapping и RED evidence; иначе записать planner-selected отсутствие Gate 3.
+- [x] 2.2 Если planner требует Gate 3, подготовить exact-source package и получить независимый sol/low `APPROVED` review спецификации, acceptance mapping и RED evidence; иначе записать planner-selected отсутствие Gate 3.
 
 ## 3. Gate 4 — minimal implementation (separate executor)
 

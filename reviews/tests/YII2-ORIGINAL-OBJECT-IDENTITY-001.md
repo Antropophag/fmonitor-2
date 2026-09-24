@@ -60,3 +60,28 @@ A1–A8 mapping, expected-value independence, disposable resources, replay/appen
 ### Required change
 
 - Restore the `PreopeningFixture::noLegacy()` include-trace contract while retaining the effective-read probe; recapture exact-source intended RED and transport GREEN, rebuild the package, and return for rereview.
+
+## Gate 3 rereview 2 — corrected candidate f2a7b6aa
+
+- Reviewer: `issue243_gate3` (independent; authored neither specification nor test corrections)
+- Exact candidate: `f2a7b6aa59e2997eaa268719885ec2128d75306257fb132d1dbfcc453a4faa5e`; Git HEAD `f18388dfc50c3b79a1efc721ecefdca2f05c592e`; delta reviewed from prior corrected HEAD `a0053a0205a5f82fd2e3faad1ff386a15596e64b`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T021515Z-3b1770eb9d/package.json`; SHA-256 `7241822bd4fbb146e4ecc873f7d2c2b770a2506b61745449897fb51d5cfd1748`
+- Verification plan SHA-256: `6695344bf585f463e07ff73d0e302ea86591fdf01a4d23a06c673f275d8f4b59`; lane `CRITICAL`; required reviews `gate3`, `final`; required categories `e2e`, `governance`, `integration`, `unit`
+- Context manifest SHA-256: `4d282a1b7e8406ab5c5f21c59fe28850c538d1e7bb86657f0490187fe8abaccd`; required-context SHA-256 `386682b1a6b81b33d0a611537a1d1b5286dbdcc6463082887f17c6a7bf588133`
+- Exact RED evidence: `1790216074284827000-305a77577f014cd2973807ec80223a44`, source `f2a7b6aa…`, `php tests/Yii2/yii2_original_object_identity_001_test.php`, exit 255 at the intended missing `TEST-4512` assertion
+- Exact regression evidence: `1790216082812934000-5770dd58a683414f9df1beba42790a8e`, source `f2a7b6aa…`, `php tests/Yii2/yii2_original_transport_001_test.php`, exit 0 / GREEN
+- Verdict: `APPROVED`
+
+### Findings disposition
+
+1. **Previous rereview blocker fixed.** The custom router now writes `includes.jsonl` on every request with the fixture's exact private `traceNonce`, request method/URI and `get_included_files()`, while retaining the separate effective-read probe. This restores the complete contract consumed by `PreopeningFixture::noLegacy()`: the trace is non-empty, belongs to this disposable fixture, and detects any `rapid-pilot` or `app/PilotHttp` runtime load.
+2. **Original findings 1–4 remain fixed.** The delta changes only combined router tracing. Scoped breadcrumb/primary identity assertions, full fact/file/historical-byte immutability, deny-before-read controls for guest/no-read/unavailable object and order across form/history, and desktop/320px form/history browser coverage remain intact.
+3. **Evidence remains sensitive and exact.** The refreshed RED is bound to `f2a7b6aa…` and fails at the expected missing effective identity, not setup. The adjacent original transport test is exact-source GREEN. Expected values remain independently defined from examples A/B/C; fixture database, storage, session, runtime and browser artifacts remain disposable and isolated.
+
+### Matrix conclusion
+
+A1–A8 are traceable through the public HTTP/POST/download/browser seams. Authorization ordering, escaped hostile values, explicit missing labels, responsive form/history rendering, technical ID preservation, append-only correction/replay, exact historical downloads and GET immutability all have deterministic assertions. No product implementation is present in the Gate 3 candidate, authorship remains root specification/tests with a separate executor authorized for Gate 4, and there are no open Gate 3 findings.
+
+### Required changes
+
+None.
