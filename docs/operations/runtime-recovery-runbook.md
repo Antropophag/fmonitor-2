@@ -316,8 +316,10 @@ test -f "$FMONITOR_BITRIX_CONFIG_HOST_FILE" \
   && test ! -L "$FMONITOR_BITRIX_CONFIG_HOST_FILE" \
   && test -r "$FMONITOR_BITRIX_CONFIG_HOST_FILE"
 test -n "$FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID"
-# Canonical staging atomically publishes only private bitrix-config.json.
-# Worker derives and cleans up its temporary token. Never print the webhook or
+# Canonical staging publishes one private bitrix-config.json only after
+# validating both webhook values. Workforce keeps
+# its existing temporary-token cleanup; document delivery reads its private JSON.
+# Never print either webhook or
 # inspect the config contents.
 docker compose --project-name "$FMONITOR_TARGET_PROJECT" \
   --file deploy/runtime/compose.yaml --file "$FMONITOR_TARGET_ROOT/compose.override.yaml" \

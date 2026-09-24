@@ -66,9 +66,13 @@ def bitrix(path: str) -> None:
         value = json.load(open(path, encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
         reject()
-    if not isinstance(value, dict) or set(value) != {"baseUrl", "departments"}:
+    if not isinstance(value, dict) or set(value) not in ({"baseUrl", "departments"}, {"baseUrl", "departments", "documentBaseUrl"}):
         reject()
     if not isinstance(value["baseUrl"], str) or not re.fullmatch(r"https://[^/]+/rest/[1-9][0-9]*/[^/]+", value["baseUrl"]):
+        reject()
+    if "documentBaseUrl" in value and (not isinstance(value["documentBaseUrl"], str)
+            or not re.fullmatch(r"https://[^/]+/rest/[1-9][0-9]*/[^/]+", value["documentBaseUrl"])
+            or value["documentBaseUrl"] == value["baseUrl"]):
         reject()
     departments = value["departments"]
     if not isinstance(departments, list) or not departments or any(type(item) is not int or item <= 0 for item in departments) or len(set(departments)) != len(departments):
@@ -80,9 +84,11 @@ LEGACY_NAMES = [
     "FMONITOR_SOURCE_USER", "FMONITOR_SOURCE_PASSWORD", "FMONITOR_MIGRATION_CUTOFF",
 ]
 BITRIX_NAMES = ["FMONITOR_BITRIX_WEBHOOK_URL", "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON"]
+BITRIX_OPTIONAL_NAMES = ["FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL", "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID"]
 
 
-def parse_environment(path: str, expected: list[str]) -> dict[str, str]:
+def parse_environment(path: str, expected: list[str], optional=None) -> dict[str, str]:
+    optional = optional or []
     values: dict[str, str] = {}
     try:
         source = os.lstat(path)
@@ -98,7 +104,7 @@ def parse_environment(path: str, expected: list[str]) -> dict[str, str]:
                 name, raw_value = line.split("=", 1)
                 if not re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
                     reject()
-                if name not in expected:
+                if name not in expected and name not in optional:
                     continue
                 if name in values:
                     reject()
@@ -116,7 +122,7 @@ def parse_environment(path: str, expected: list[str]) -> dict[str, str]:
                 values[name] = value
     except (OSError, UnicodeError):
         reject()
-    if set(values) != set(expected):
+    if not set(expected).issubset(values):
         reject()
     return values
 
@@ -145,8 +151,8 @@ def legacy_document(values: dict[str, str]) -> bytes:
     return ("\n".join(lines) + "\n").encode()
 
 
-def bitrix_document(values: dict[str, str]) -> bytes:
-    url = values["FMONITOR_BITRIX_WEBHOOK_URL"]
+def webhook_url(value: str) -> str:
+    url = value
     try:
         parts = urlsplit(url)
         parts.port
@@ -158,6 +164,17 @@ def bitrix_document(values: dict[str, str]) -> bytes:
             or parts.query or parts.fragment
             or re.fullmatch(r"/rest/[1-9][0-9]*/[A-Za-z0-9_-]{1,256}/?", parts.path) is None):
         reject()
+    return url.rstrip("/")
+
+
+def bitrix_document(values: dict[str, str]) -> bytes:
+    url = webhook_url(values["FMONITOR_BITRIX_WEBHOOK_URL"])
+    document_url = values.get("FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL")
+    root = values.get("FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID")
+    if (document_url is None) != (root is None):
+        reject()
+    if root is not None and (not re.fullmatch(r"[1-9][0-9]*", root)):
+        reject()
     try:
         departments = json.loads(values["FMONITOR_BITRIX_DEPARTMENT_IDS_JSON"])
     except json.JSONDecodeError:
@@ -166,13 +183,17 @@ def bitrix_document(values: dict[str, str]) -> bytes:
             or any(type(item) is not int or item <= 0 for item in departments)
             or len(set(departments)) != len(departments)):
         reject()
-    document = {"baseUrl": url.rstrip("/"), "departments": departments}
+    document = {"baseUrl": url, "departments": departments}
+    if document_url is not None:
+        document["documentBaseUrl"] = webhook_url(document_url)
+        if document["documentBaseUrl"] == url:
+            reject()
     return (json.dumps(document, separators=(",", ":")) + "\n").encode()
 
 
 def stage(kind: str, input_path: str, destination_path: str) -> None:
     expected = LEGACY_NAMES if kind == "legacy" else BITRIX_NAMES
-    values = parse_environment(input_path, expected)
+    values = parse_environment(input_path, expected, [] if kind == "legacy" else BITRIX_OPTIONAL_NAMES)
     document = legacy_document(values) if kind == "legacy" else bitrix_document(values)
     destination = Path(destination_path)
     directory = destination.parent

@@ -34,11 +34,12 @@ with tempfile.TemporaryDirectory() as raw:
         "FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS":"500", "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS":"5",
         "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE":"100",
         "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID":"1809812",
+        "FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL":"https://example.invalid/rest/8/DOCUMENT_SECRET_CANARY/",
     }
     (checkout / ".env").write_text("".join(f"{k}={v}\n" for k,v in values.items())); (checkout / ".env").chmod(0o600)
     private = checkout / ".local"; private.mkdir(mode=0o700)
     (private / "legacy-source.env").write_text("FMONITOR_SOURCE_HOST=source.example\nFMONITOR_SOURCE_PORT=3306\nFMONITOR_SOURCE_NAME=legacy\nFMONITOR_SOURCE_USER=reader\nFMONITOR_SOURCE_PASSWORD='LEGACY_SECRET_CANARY'\nFMONITOR_MIGRATION_CUTOFF=\n")
-    (private / "bitrix-workforce.json").write_text('{"baseUrl":"https://example.invalid/rest/7/BITRIX_SECRET_CANARY","departments":[71]}')
+    (private / "bitrix-workforce.json").write_text('{"baseUrl":"https://example.invalid/rest/7/BITRIX_SECRET_CANARY","departments":[71],"documentBaseUrl":"https://example.invalid/rest/8/DOCUMENT_SECRET_CANARY"}')
     for path in private.iterdir(): path.chmod(0o600)
     fake = box / "bin"; fake.mkdir(); trace = box / "trace.jsonl"
     docker = fake / "docker"
@@ -73,6 +74,6 @@ sys.exit(0)
         retry = run("up-with-data"); assert retry.returncode == 0
         retried = stages(); assert retried.count("legacy") == 1 and retried.count("workforce") == 1
     output = plain.stdout + plain.stderr + legacy.stdout + legacy.stderr + workforce.stdout + workforce.stderr
-    for secret in ("DB_SECRET_CANARY","ROOT_SECRET_CANARY","OWNER_SECRET_CANARY","SMTP_SECRET_CANARY","LEGACY_SECRET_CANARY","BITRIX_SECRET_CANARY"):
+    for secret in ("DB_SECRET_CANARY","ROOT_SECRET_CANARY","OWNER_SECRET_CANARY","SMTP_SECRET_CANARY","LEGACY_SECRET_CANARY","BITRIX_SECRET_CANARY","DOCUMENT_SECRET_CANARY"):
         assert secret not in output
 print("PASS: YII2-LOCAL-DATA-BOOTSTRAP-001 public Make orchestration")
