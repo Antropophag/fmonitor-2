@@ -177,3 +177,35 @@ Expected values are fixed from the specification or explicit fixtures rather tha
 ### Required changes
 
 None. Gate 4 implementation may proceed against exact candidate source `7b7c657ecf362b3829c8c543fbbc2bc91ffac80034a5b5d6a897d650ab2d1f07` without changing the approved expectations.
+
+## Rereview 5 — effective-requisites oracle correction with paused executor WIP
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: test/spec review only; the dirty executor production WIP is source-bound for evidence but is neither reviewed nor approved here
+- Root-authored test commit: `a626bd1ccb90dd8e8d1e6c7e342e41757d78ea8d`
+- Reviewed candidate source: `e4003ecd2516a695d511d85ebcced29f10384d137837cefc342eff26685e9c4f`; executable source `4357cefe6ac24aba14cba58392394fdb85707931e07e6693851f93194328d1f1`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T194525Z-8d441ddc91/package.json`; plan SHA-256 `f1c3d2ab111d33fcc81ae6be9efb5c2dbada524f3c99f6b70aef28b4c0bc82b5`
+- Corrected stage-one test SHA-256: `d39e7584bc4446c0fd9d500ac147961a23d2c0ea00fd36816f9dc4587ebe29c4`
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no mapped tests are missing
+- Verdict: `CHANGES_REQUESTED`
+
+### Correction assessment
+
+The two positive oracle changes are correct. Upcoming and active-history card assertions now require `EFFECTIVE-4512` and explicitly reject `STALE-4512`, matching contract clause 4 and the existing fixture where effective object-detail edits override stale base requisites. They agree with the already-approved directory and picker expectations and do not weaken the coexistence/history matrix.
+
+### Finding
+
+**HIGH — two no-leak assertions still use the superseded `TEST-4512` literal.** After this correction, the normative observable registration number is `EFFECTIVE-4512`, while `STALE-4512` is the deliberately forbidden base value. However:
+
+- the denied card/picker assertion checks only that neither body contains `TEST-4512`;
+- the malformed-current fail-closed assertion checks only `TEST-4512` and the table prefix.
+
+Neither assertion would fail if a denied or sanitized `503` response leaked the now-canonical `EFFECTIVE-4512`; the malformed response could also leak `STALE-4512` without detection. This leaves contract clause 11's no-leak outcome and the fail-closed body oracle insensitive precisely where the positive oracle was corrected.
+
+Update both negative assertions to reject all fixture-sensitive object literals that could reveal data: at minimum `EFFECTIVE-4512`, `STALE-4512`, `CURRENT-4999`, `Эффективный адрес`, and `Устаревший адрес`, while retaining the internal table-prefix rejection for the infrastructure failure. A small shared forbidden-literals helper would reduce future oracle drift.
+
+### Required changes
+
+- Correct the denied and malformed/fail-closed negative oracles to reject effective, stale and other sensitive fixture literals rather than only `TEST-4512`.
+- Capture fresh exact-source intended-RED evidence and regenerate the reviewer package.
+- Return only the test correction for Gate 3 rereview; production WIP remains subject to later independent Gate 5 review.
