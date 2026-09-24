@@ -81,7 +81,7 @@ return [
         'shlz-file-types/file-pdf-default.svg'=>['97e564168a005b67340870d42bdb828c8469fdb547bd6a22b9d8a97b18352a87','image/svg+xml; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/download.svg'=>['0b290278a6a0cdfb4986cc98125833f1020cb3cfc0c511e878868d106622bfd5','image/svg+xml; charset=UTF-8','public, max-age=3600'],
         'preloader.js'=>['0dd6e0d3c833218d4aa08538f94e905b5b7dc0f5265f6aebb3fa3602c88bc047','text/javascript; charset=UTF-8','public, max-age=3600'],
-        'users.js'=>['b66f167eff9c1e76e63aa9833c689e6c2655f435d1e7a693629ee98328373b55','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'users.js'=>['13684f3f52349b8b9aca995af7c903f1ec2ae408db78e49377fcc117790f953b','text/javascript; charset=UTF-8','public, max-age=3600'],
         'object-queue.js'=>['6fec7a86338bde442d3aaedaa674d032aed17d2b801b9d02d4e5ded69ead35d5','text/javascript; charset=UTF-8','public, max-age=3600'],
         'inspection-schedule.js'=>['7fc67ff2732b01147ec0b6260dd210459e3ada2f06d6b77e89a39b269c8a6327','text/javascript; charset=UTF-8','public, max-age=3600'],
         'preopening.js'=>['b4075c27563ba248fd0f275c1cfc378e712bac21f7bb7a35cf71733e3a9f3a13','text/javascript; charset=UTF-8','public, max-age=3600'],

@@ -463,3 +463,101 @@ above: **APPROVED** for the two root-authored test corrections bound to exact
 source `d98dbf27c288edb4e4e1a59c7aed10758af9d59e8ca8a31efd29da0ae57eae7b`.
 The v3 section immediately preceding this pointer is retained as historical
 approval of the earlier snapshot and does not supersede v4.
+
+---
+
+# Gate 3 restart — CI correction delta v5
+
+- Reviewer: `/root/issue250_gate3` (independent; authored none of this correction)
+- Scope: CI-triggered correction delta only; not a replacement final code review
+- Exact source: `19fc577fd3578cdcc0ed328769ad66388a0648d02d3279d618f97b180e0aa0d1`
+- Executable source: `68cc8c8aa58db3e1790387a58bcf6bcc3c58123ce35c5f56201599b2278eea84`
+- Review package:
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T193138Z-fef06b10fa/package.json`
+  (`sha256:14b76cacf5b752eae52264f3ba466f996a6f6110ad27c02f8e825796378734eb`)
+- Delta: package `delta.patch`
+  (`sha256:e51a1a3dcb1866ee26c2a87c3c72ae284f175d3955112261c672cf8c9e0db90c`)
+- Reconstructible snapshot: package `snapshot/source.patch`
+  (`sha256:e9483fcda6301eee99056d2bb59f9b4c9f2f532727bdc858ba79baf4023ba022`)
+- Verification plan: package `verification-plan.json`
+  (`sha256:9c23d5ecb0c9983cd0363ce8b2314bcb67bdd148fc1288628af1ccc6505d3e6a`),
+  lane `CRITICAL`, required reviews `gate3`, `final`
+- Verdict: **APPROVED**
+
+## Harness limitation and bounded scope
+
+As in v4, this package is formally Gate-5-shaped because the v1 plan/harness
+cannot represent this historical Gate 3 restart with stable command identity and
+test-delta lineage. The shape is recorded but does not broaden this verdict. The
+review covers only:
+
+1. the behavior-equivalent manual-selection correction in `users.js`;
+2. the corresponding exact `users.js` digest correction in the existing
+   production cutover contract; and
+3. addition of that existing test and its support contract to verification input
+   and acceptance mapping.
+
+Existing final-review text, lifecycle task state and unrelated production bytes
+visible in the package are outside this Gate 3 restart decision. Any code delta
+after the prior final review still requires an independent refreshed final review.
+
+## Findings
+
+No blocking findings.
+
+### Architecture correction preserves the acceptance oracle
+
+Replacing DOM `HTMLInputElement.select()` with
+`setSelectionRange(0, invitation.value.length)` avoids the architecture check's
+syntactic `.select()` false positive while retaining the required behavior: the
+readonly invitation field is focused and the whole current value is selected.
+The existing Chromium rejection assertion independently checks focus plus
+`selectionStart === 0` and `selectionEnd === value.length`; its exact-source
+GREEN therefore proves that the replacement did not weaken manual fallback.
+There is no delay, clipboard success claim or alternate selection boundary added.
+
+### Published-asset contract and mapping are coherent
+
+The cutover support contract now pins `users.js` to
+`13684f3f52349b8b9aca995af7c903f1ec2ae408db78e49377fcc117790f953b`,
+which exactly equals the current asset SHA-256. MIME and cache expectations remain
+unchanged. The existing runtime cutover test consumes that contract and is GREEN.
+
+`verification-input.json` now lists both
+`tests/Runtime/yii2_production_web_cutover_001_test.php` and
+`tests/Support/yii2_production_web_cutover_contract.php`, and maps the
+`published-users-asset-contract` acceptance to the production Yii asset HTTP
+seam. The regenerated plan includes both paths, selects the runtime test as a
+focused command and binds the corrected contract digest. This closes the stale
+asset fixture without replacing browser behavior coverage.
+
+## Exact-source evidence
+
+- `make architecture-check` — GREEN record
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790278217215997000-98e2a93b40fe408688000cdaad5230a6.json`;
+  exit `0`, global-call qualification passed and all seven architecture rules
+  passed. Reported file-size advisories are pre-existing/unrelated and non-failing.
+- `php tests/Runtime/yii2_production_web_cutover_001_test.php` — GREEN record
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790278217216006000-67bd30827ec24ad693a89f5137c91392.json`;
+  exit `0`, expected cutover PASS marker.
+- `php tests/Yii2/yii2_user_access_001_test.php` — GREEN record
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790278217220211000-91773ac0031844329de2c9e15c9c877f.json`;
+  exit `0`, expected HTTP PASS marker.
+- `php tests/Yii2/yii2_user_access_browser_001_test.php` — GREEN record
+  `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790278217228637000-76c0335d486f41e2b6b78af2156c72c3.json`;
+  exit `0`, expected browser PASS marker including the exact selection oracle.
+
+All four records bind the exact source and executable source above and environment
+`c097b71807c953141825964edba292c021e615fbf4a878904de9e6cf9b56ab33`.
+Reviewer bounded static checks also passed: runtime test/support PHP syntax,
+`users.js` Node syntax and `git diff --check`. No full local suite was run.
+
+## Decision
+
+The CI correction and its acceptance mapping are **APPROVED** for Gate 3 restart.
+The delta removes a false-positive syntax only, preserves the independently
+observable manual-copy behavior, refreshes the exact published-asset oracle and
+registers its consumer in the verification plan. This verdict is limited to
+exact source `19fc577fd3578cdcc0ed328769ad66388a0648d02d3279d618f97b180e0aa0d1`.
+Refreshed final review and exact-source CI status remain separate requirements;
+merge and deployment remain `UNKNOWN`.
