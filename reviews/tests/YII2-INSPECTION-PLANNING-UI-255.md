@@ -251,3 +251,20 @@ After adding the two exact status assertions, request a narrow rereview. The exi
 - Verdict: **APPROVED**.
 
 The added exact `[200, 200]` assertion closes the sole delta finding: both engineer and FKR calendar reads must succeed, while the existing assertions independently require exclusion of object `451202` for the engineer and inclusion for FKR. Although the status assertion is physically evaluated later in the same test, the complete test can no longer pass on a denied, unavailable or empty failed engineer response. PHP syntax and `git diff --check` pass. Production files were not reviewed or modified.
+
+---
+
+## Gate 5 shared-scope test-delta review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `5a3d12bf232c528e1a3a1932537adb32133f4c18`.
+- Scope: root-authored HTTP tests and additive verification registration only; dirty executor production excluded and untouched.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Finding
+
+1. **BLOCKING — the existing journey now assigns the purported out-of-scope object to the engineer whose exclusion it tests.** In `yii2_inspection_planning_ui_255_test.php`, the delta inserts the current assignment for object `451202` with `engineer_user_id=9403`. Later the same test logs in `other.person@shlz.ru` as user `9403` and still requires that engineer calendar omit `/pilot/objects/451202` while FKR includes it. Under the approved assignment-scope rule, `451202` is now in that engineer's scope, so the expectation is contradictory and a correct implementation cannot pass. Seed a structurally valid assignment to a different engineer identity (the existing neutral fixture engineer `7301` is sufficient for manual snapshot reads), leaving `9403` assigned only to `451201`.
+
+The new standalone `yii2_inspection_scope_policy_255_test.php` is otherwise coherent: actor `9101` carries manager plus control-engineer roles, the second object is assigned to someone else (`9403`), and real queue, command and calendar must retain manager-global scope. The separate user without `objects.read` must receive exact `403` from queue and calendar with a full fact snapshot proving no DML. Verification input and suite registration are additive, and PHP syntax/`git diff --check` pass.
+
+Correct the single conflicting assignment and request narrow rereview. Broader approved tests remain unchanged outside this delta.
