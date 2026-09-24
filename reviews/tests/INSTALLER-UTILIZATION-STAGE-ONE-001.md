@@ -209,3 +209,34 @@ Update both negative assertions to reject all fixture-sensitive object literals 
 - Correct the denied and malformed/fail-closed negative oracles to reject effective, stale and other sensitive fixture literals rather than only `TEST-4512`.
 - Capture fresh exact-source intended-RED evidence and regenerate the reviewer package.
 - Return only the test correction for Gate 3 rereview; production WIP remains subject to later independent Gate 5 review.
+
+## Rereview 6 — hardened no-leak oracle follow-up
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: tests only; paused dirty executor WIP remains outside Gate 3 and is not production approval
+- Root-authored test commit: `7ea3636590992a94fdcd7648f84d7d992428be08`
+- Reviewed candidate source: `6ef498dd39a1cf415caea620e199c8fc6657b303cdb837eefc3e6c4428da65a4`; executable source `04076da876a4ea6aa00dbb09ac6f71964c6410283e449062556dd1ea6ad1ea03`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T194840Z-f32fc04aef/package.json`; plan SHA-256 `cd59d73a20deaaf55699a9d7b3e3081d8721dfe1bc79573e634ade9b5dadb864`
+- Corrected stage-one test SHA-256: `0a0ce451891ef53ed13cee247ad4553089d4937d3febc11f90445f1e681f51ea`
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no mapped tests are missing
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior finding disposition
+
+**Partially resolved.** The denied card/picker loop now rejects `EFFECTIVE-4512`, `STALE-4512`, `CURRENT-4999`, `Эффективный адрес`, and `Устаревший адрес`. The malformed-current `503` loop now rejects the three registration identifiers and internal table prefix.
+
+### Remaining finding
+
+**MEDIUM — malformed-response sanitization still omits both address literals.** The exact malformed-response loop is:
+
+```php
+['EFFECTIVE-4512', 'STALE-4512', 'CURRENT-4999', $f->p]
+```
+
+It does not include `Эффективный адрес` or `Устаревший адрес`, despite both being sensitive fixture data already included in the denied-response oracle and explicitly requested in the previous finding. A fail-closed response leaking either address would pass. Add both address literals to the malformed-response forbidden set; then the effective/stale/current object data and internal prefix are consistently protected at both negative seams.
+
+### Required changes
+
+- Add `Эффективный адрес` and `Устаревший адрес` to the malformed-current `503` forbidden-literal loop.
+- Refresh the exact-source intended-RED record and reviewer package for the corrected stage-one test.
+- Keep production WIP paused for separate Gate 5 review.
