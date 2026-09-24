@@ -77,3 +77,39 @@ The old compatibility overload `readCalendar(string $first, string $last)` inten
 ### Decision
 
 Gate 5 remains closed. Centralize the effective actor/object scope policy alongside the canonical projection, make command, queue, and calendar apply identical mixed-role and `objects.read` rules, add the two missing authorization regressions, obtain the required test-delta approval, and request another exact-source final review.
+
+---
+
+## Gate 5 shared-scope final rereview — 2026-09-25
+
+- Reviewed commit: `d5a1320686fe870c9ce79cf6e79655f87259e81f` over prior review commit `72e82ca9`.
+- Harness source: `c841ae8186c1cd3a1a0a47bba0e33bbbd6a338a07e1aa639d4a44b490286c88d`; executable source `dd21da790aec54e6915fe5721e9f704d1420018f8b4fa6bec7cd39fabe6af937`.
+- Root test commits reviewed: `5a3d12bf`, `b17d3f07`, `eddaf470`, `a2e31a56`, `eaa3d831`, together with their independent recorded corrections/approvals.
+- Production correction reviewed: `d5a13206`.
+- Verdict: **APPROVED**.
+
+### Findings disposition
+
+1. **Resolved — one shared actor/object scope policy.** `MariaDbYiiInspectionPlanning` now owns `actorGlobalScopeSql`, `actorAssignedScopeSql`, `actorScopeSql`, and `actorAnyScopeSql`. The command seam, construction-control queue, current inspection calendar rows, and planned calendar rows compose those same fragments rather than maintaining separate role logic.
+
+2. **Resolved — mixed-role precedence.** An active `manager` or `fkr_operator` role plus `objects.read` grants global scope even when the actor also has an engineer role; otherwise visibility falls back to the latest current engineer assignment. The real HTTP regression proves a mixed manager/engineer can read the unassigned object in queue, create its plan, and see it in calendar.
+
+3. **Resolved — exact global authorization.** Global scope requires an active user, an active manager/FKR role, and `objects.read` carried by an active role. `construction_control.read` alone no longer opens the queue: `actorAnyScopeSql` fails closed before publication, and the real HTTP test requires exact `403` from both queue and calendar with no DML.
+
+4. **Resolved — calendar composition.** Current inspection rows use `actorScopeSql` against the canonical case identity. Planned legacy rows use the identical global predicate or latest-assignment predicate through a matching native case. The global branch remains independent of case existence, preserving manager/FKR legacy planned rows that have no native case.
+
+5. **No new scope or standards finding.** The correction remains within the canonical planning/read boundary; no persistence, migration, shared asset, #258 surface, assignment writer, outcome, violation, notification, checklist/progress, ОТиЗ, or invitation change was introduced.
+
+### Independent bounded evidence
+
+- `git diff --check`: PASS.
+- PHP syntax for `MariaDbYiiInspectionPlanning.php`, `MariaDbYiiObjectQueue.php`, `MariaDbYiiChecklistRead.php`, and the new scope-policy test: PASS.
+- `php tests/Yii2/yii2_inspection_scope_policy_255_test.php`: PASS.
+- `php tests/Yii2/yii2_inspection_planning_ui_255_test.php`: PASS.
+- `php tests/Yii2/yii2_calendar_003_test.php`: PASS.
+- `php tests/Yii2/yii2_construction_control_active_queue_001_test.php`: PASS.
+- Full local `make test` / `make verify` was not run, per owner decision.
+
+### Decision
+
+No Gate 5 finding remains for exact source `d5a13206`. The issue #255 candidate is independently **APPROVED** for final exact-source CI. This review does not assert CI GREEN or PR-ready by itself: harness CI remains `UNKNOWN`, publication readiness is false, and the mandatory exact-source GitHub run must still pass before PR-ready can be reported.
