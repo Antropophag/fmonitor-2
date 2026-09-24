@@ -316,3 +316,12 @@ The correction is coherent with the shared scope policy and the reported full-CI
 - The production cutover digest `89f0968f61169acc5527a229c2affcac4dccc303694095c0cf6c58d1ccdab8c4` exactly matches the current local `inspection-schedule.js` bytes.
 
 JSON parsing, PHP syntax for all changed PHP files, digest comparison and `git diff --check` pass. Production files were not edited by this review.
+
+### Follow-up fixture correction review — 2026-09-25
+
+- Reviewed commit: `893c0390538e72843cd6fc778dc154740960da3d`.
+- Verdict: **APPROVED**.
+
+The journey revocation now removes `inspection.item.complete` from both active roles `2` and `7` held by actor `73`. The replay denial and full no-fact snapshot therefore continue to test genuine capability loss rather than being bypassed by the newly explicit manager role. No later scenario depends on restoring that capability.
+
+The navigation fixture explicitly names role `9201` as `manager`, making its initial construction-control route consistent with the global-scope policy. The later removal of `objects.read` still produces the exact route `403`, navigation exclusion and no-DML snapshot, so the negative phase is preserved. PHP syntax and `git diff --check` pass; production was untouched.
