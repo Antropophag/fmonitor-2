@@ -1,0 +1,31 @@
+{
+  "change": "add-integration-status-admin",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/IntegrationStatusController.php",
+    "app/YiiRuntime/Views/integration-status.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "config/yii/web.php",
+    "specs/ADMIN-INTEGRATION-STATUS-001.md",
+    "openspec/changes/add-integration-status-admin/proposal.md",
+    "openspec/changes/add-integration-status-admin/design.md",
+    "openspec/changes/add-integration-status-admin/specs/admin/integration-status/spec.md",
+    "openspec/changes/add-integration-status-admin/tasks.md",
+    "openspec/changes/add-integration-status-admin/verification-input.json",
+    "tests/Yii2/yii2_integration_status_001_test.php",
+    "tests/Yii2/integration_status_browser.mjs",
+    "reviews/tests/ADMIN-INTEGRATION-STATUS-001.md",
+    "reviews/code/ADMIN-INTEGRATION-STATUS-001.md",
+    "docs/operations/issue-30-integration-status-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "ADMIN-INTEGRATION-STATUS-001",
+      "acceptance_id": "A1-A7-admin-read-only-integration-status",
+      "spec_path": "specs/ADMIN-INTEGRATION-STATUS-001.md",
+      "seam": "authenticated Yii2 GET|HEAD /pilot/admin/integrations HTTP and rendered browser DOM over disposable durable fixtures",
+      "tests": ["tests/Yii2/yii2_integration_status_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_integration_status_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}

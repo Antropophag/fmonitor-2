@@ -125,6 +125,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'pilot/objects/<id:[1-9]\\d*>/execution' => 'execution/method',
                 'GET,HEAD,POST pilot/objects/<id:[1-9]\\d*>/inspection-schedule' => 'object-queue/schedule',
                 'GET pilot/admin/roles' => 'roles/index',
+                'GET,HEAD pilot/admin/integrations' => 'integration-status/index',
+                'pilot/admin/integrations' => 'site/not-found',
                 'GET,HEAD pilot/admin/users' => 'user-access/index',
                 'GET,HEAD pilot/users' => 'user-access/index',
                 'GET,HEAD,POST pilot/admin/users/invite' => 'user-access/invite',
