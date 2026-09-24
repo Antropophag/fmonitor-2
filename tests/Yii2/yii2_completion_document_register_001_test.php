@@ -23,7 +23,12 @@ assertSameValue(false,str_contains($view,'штраф'),'no invented fine claim')
 
 $f=null;
 try{
-    $f=new PreopeningFixture($root);$f->start();
+    $f=new PreopeningFixture($root);
+    $f->insert($f->p.'fm2_pilot_completion_facts',[
+        'installation_case_id'=>6101,'fact_type'=>'pto_act','fact_date'=>'2026-09-01','details'=>'',
+        'recorded_at'=>'2026-09-10 09:00:00','recorded_by_user_id'=>18,
+    ]);
+    $f->start();
     $guest=[];
     assertSameValue(303,$f->request('GET','/pilot/completion-register',[],$guest)['status'],'guest redirected');
     $cookies=[];assertSameValue(303,$f->login($cookies,95)['status'],'reader login');$before=$f->facts();

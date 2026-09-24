@@ -685,6 +685,16 @@
       ]
     },
     {
+      "name": "completion-document-register",
+      "patterns": [
+        "app/InstallationProcess/MariaDbYiiCompletionRegister.php"
+      ],
+      "verifiers": [
+        "tests/Yii2/yii2_completion_document_register_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "weekly-fkr-attention-email",
       "patterns": [
         "app/Jobs/WeeklyFkrRecipientDirectory.php",
