@@ -268,3 +268,12 @@ The added exact `[200, 200]` assertion closes the sole delta finding: both engin
 The new standalone `yii2_inspection_scope_policy_255_test.php` is otherwise coherent: actor `9101` carries manager plus control-engineer roles, the second object is assigned to someone else (`9403`), and real queue, command and calendar must retain manager-global scope. The separate user without `objects.read` must receive exact `403` from queue and calendar with a full fact snapshot proving no DML. Verification input and suite registration are additive, and PHP syntax/`git diff --check` pass.
 
 Correct the single conflicting assignment and request narrow rereview. Broader approved tests remain unchanged outside this delta.
+
+### Shared-scope fixture correction — 2026-09-25
+
+- Reviewed commit: `b17d3f073532b28b3e0afe87e357e5a075957f1a`.
+- Verdict: **APPROVED**.
+
+Object `451202` is now assigned to neutral engineer `7301`, so engineer actor `9403` has only `451201` in scope and the existing calendar exclusion/inclusion matrix is coherent. The mixed actor `9101` still carries manager plus control-engineer roles and must retain global queue access, independently of the neutral assignment.
+
+The legacy active-queue regression now logs in its existing FKR actor `18`, grants only the additive construction-control/checklist read capabilities to role `1`, and continues to exercise its intended global pagination surface. This aligns fixture authority with the approved shared scope policy without weakening its queue expectations. PHP syntax and `git diff --check` pass; dirty production files were untouched. Gate 3 approval extends through `b17d3f073532b28b3e0afe87e357e5a075957f1a`.
