@@ -1,4 +1,32 @@
-# Текущая цель — единый визуальный договор активного Yii2-приложения
+# Параллельная срочная цель — issue #252, Bitrix document runtime config
+
+Поручение владельца 2026-09-24: реализовать issue #252 от актуального
+`origin/main` как bounded correction установленного document-links behavior.
+Production jobs worker должен получать coherent origin, webhook user ID, root ID
+и private token file из существующего канонического
+`FMONITOR_BITRIX_WEBHOOK_URL`; active integration больше не использует silent
+`/dev/null` token fallback. Реальные credentials не попадают в tracked files,
+environment, argv, Compose output или логи.
+
+Контракт: [BITRIX-DOCUMENT-RUNTIME-CONFIG-001](../../specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md).
+Lifecycle: [fix-bitrix-document-runtime-config](../../openspec/changes/fix-bitrix-document-runtime-config/).
+Ветка `codex/issue-252-bitrix-runtime-config`, отдельный worktree
+`/private/tmp/fmonitor-252-runtime-config` создан от `origin/main` `10dcc95f`;
+WIP №157 и параллельный Yii2 visual change не изменяются и не входят в candidate.
+
+Root authored scope/spec/tests; отдельный `gpt-5.6-sol/low` executor реализует
+production/config/docs, независимые `gpt-5.6-sol/low` reviewers принимают
+planner-required Gate 3 и final exact source. Exact-source GitHub CI обязателен.
+Локальный full `make test`/`make verify` запрещён.
+
+Не входят workforce semantics, scheduler/retry policy, Bitrix traversal,
+document-link persistence/schema, UI/card changes, production deployment и
+merge. Production API fetch, job publication и отображение ссылок остаются
+`UNKNOWN` до безопасной внешней проверки.
+
+---
+
+# Параллельная цель — единый визуальный договор активного Yii2-приложения
 
 Поручение владельца 2026-09-22: взять в работу бриф
 `frontend-audit-2026-09-22.md` и применить change `unify-yii2-shlz-ui` от

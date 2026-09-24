@@ -14,6 +14,7 @@ owner кадровой синхронизации. Ready объявляется 
 ```dotenv
 FMONITOR_BITRIX_WEBHOOK_URL='https://example.invalid/rest/1/replace_me/'
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[101,102]'
+FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 ```
 
 Это вымышленные значения: замените URL на выданный вам HTTPS-вебхук с доступом
@@ -25,6 +26,9 @@ FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[101,102]'
 подстановки переменных и escape-последовательности не поддерживаются.
 Пишите комментарии отдельными строками. Список отделов — JSON-массив
 положительных уникальных целых ID, например `[101,102]`.
+`FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID` — положительный ID корневой папки
+технической документации. Не указывайте его, если доставка ссылок на документы
+не настроена.
 
 Для отдельных повторных операций доступны `make import-legacy` и
 `make sync-workforce`; каждая команда проверяет только свой набор настроек.
@@ -46,6 +50,18 @@ FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[101,102]'
 Для смены legacy или Bitrix параметров отредактируйте существующий `.env` и
 повторите соответствующую команду либо `make up-with-data`: consumer получит
 новый полный snapshot.
+При `make up` canonical webhook атомарно публикуется только внутри приватного
+`/run/fmonitor-secrets/bitrix-config.json`. Worker сам извлекает origin, user ID
+и временный private token, удаляемый после execution seam. Не создавайте token-файл вручную
+и не передавайте token отдельной environment-переменной. Для безопасной проверки
+используйте `docker compose ... config --quiet`: не выводите `.env`, webhook или
+содержимое secret-файла.
+
+Для ротации замените только `FMONITOR_BITRIX_WEBHOOK_URL` в приватном `.env` и
+повторите `make up`. Staging полностью проверяет новый config до замены runtime
+config. При `RUNTIME_SECRET_STAGING_FAILED` worker не запускается, а предыдущий
+валидный `bitrix-config.json` сохраняется; исправьте `.env` и повторите команду. В диагностике
+не должны появляться webhook URL, путь к secret или его содержимое.
 Не перезаписывайте `.env` шаблоном при обновлении: make reset не нужен,
 данные и история сохраняются. `make down` останавливает стенд
 с сохранением volumes; следующий `make up` использует текущие настройки.

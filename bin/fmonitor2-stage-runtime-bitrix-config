@@ -6,22 +6,34 @@ fail() {
     exit 74
 }
 
-source_path=/run/fmonitor-input/bitrix-config.json
-target_path=/run/fmonitor-secrets/bitrix-config.json
-[ -f "$source_path" ] && [ ! -L "$source_path" ] || fail
+source_path=${FMONITOR_BITRIX_CONFIG_INPUT:-/run/fmonitor-input/bitrix-config.json}
+target_directory=${FMONITOR_RUNTIME_SECRETS_DIR:-/run/fmonitor-secrets}
+runtime_uid=${FMONITOR_RUNTIME_SECRET_UID:-10001}
+runtime_gid=${FMONITOR_RUNTIME_SECRET_GID:-10001}
 
-php -r 'require "app/autoload.php"; FMonitor2\Workforce\WorkerConfiguration::fromFile($argv[1]);' "$source_path" >/dev/null 2>&1 || fail
+case "$runtime_uid:$runtime_gid" in *[!0-9:]*|:*|*:|*:*:*) fail ;; esac
+[ -d "$target_directory" ] && [ ! -L "$target_directory" ] || fail
+[ -f "$source_path" ] && [ ! -L "$source_path" ] && [ -r "$source_path" ] || fail
+php -r '
+    require "app/autoload.php";
+    $stat = lstat($argv[1]);
+    if ($stat === false || ($stat["mode"] & 0170000) !== 0100000 || ($stat["mode"] & 0077) !== 0) throw new RuntimeException();
+    FMonitor2\Workforce\WorkerConfiguration::fromFile($argv[1]);
+' "$source_path" >/dev/null 2>&1 || fail
 
 umask 077
-temporary=$(mktemp /run/fmonitor-secrets/.bitrix-config.XXXXXX) || fail
+config_temporary=
 cleanup() {
-    [ -z "$temporary" ] || rm -f -- "$temporary"
+    [ -z "$config_temporary" ] || rm -f -- "$config_temporary"
 }
-trap cleanup EXIT
-cp -- "$source_path" "$temporary" || fail
-sync -f "$temporary" || fail
-chown 10001:10001 "$temporary" || fail
-chmod 0600 "$temporary" || fail
-mv -f -- "$temporary" "$target_path" || fail
-temporary=
-trap - EXIT
+trap cleanup EXIT HUP INT TERM
+
+config_temporary=$(mktemp "$target_directory/.bitrix-config.tmp-XXXXXX") || fail
+cp -- "$source_path" "$config_temporary" || fail
+[ -f "$config_temporary" ] && [ ! -L "$config_temporary" ] || fail
+chmod 0600 "$config_temporary" || fail
+chown "$runtime_uid:$runtime_gid" "$config_temporary" || fail
+sync -f "$config_temporary" || fail
+mv -f -- "$config_temporary" "$target_directory/bitrix-config.json" || fail
+config_temporary=
+trap - EXIT HUP INT TERM
