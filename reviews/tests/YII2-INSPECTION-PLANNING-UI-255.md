@@ -227,3 +227,20 @@ Node syntax and `git diff --check` pass. No acceptance expectation is weakened, 
 The calendar intentionally presents the same canonical current-plan event in both the month grid and selected-day agenda. Requiring exactly one matching object-card link incorrectly constrained presentation multiplicity rather than domain-plan multiplicity. Requiring `count() > 0` after create and reschedule still proves that calendar publishes the current plan and its canonical object link, while the unchanged zero-count assertion after cancel proves that neither presentation retains the cancelled plan. Canonical single-current semantics remain independently covered at the read/application seams.
 
 Node syntax and `git diff --check` pass. Gate 3 approval extends through `0a93fca343dbb70bd194bdb8e5607b10940e7b00`; production remains outside this delta verdict.
+
+---
+
+## Gate 5 finding test-delta review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `1b8c3687b37a6813728cf8f77ee88f29ee6ec197`.
+- Scope: root-authored calendar scope/clock assertions only; dirty executor production was excluded and untouched.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Finding
+
+1. **BLOCKING — the negative engineer calendar oracle does not require a successful scoped read.** The fixture creates an object outside engineer `9403`'s assignment scope through the FKR route, then asserts only that the engineer response body lacks `/pilot/objects/451202`. A `403`, `404`, `500`, `503`, empty response, or globally broken engineer calendar would all satisfy that negative assertion. Require `engineerCalendar.status === 200` before asserting absence, and likewise require `fkrCalendar.status === 200` before asserting inclusion. This distinguishes correct row-level filtering from denying or failing the calendar surface.
+
+The positive/negative object setup and FKR cleanup are otherwise well isolated and exercise the real Yii routes. The contract additions preserve actor ID plus a single `$today` value at the `readCalendar` call and bound direct wall-clock acquisition to at most one occurrence; existing Moscow-date requirements supply the timezone expectation. PHP syntax passes.
+
+After adding the two exact status assertions, request a narrow rereview. The existing broader Gate 3 approval remains unchanged outside this delta.
