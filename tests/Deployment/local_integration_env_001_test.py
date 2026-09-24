@@ -183,6 +183,7 @@ FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY=hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS=500
 FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS=5
 FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE=100
+FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 """
     (checkout / ".env").write_text(runtime + base)
     (checkout / ".env").chmod(0o600)
@@ -253,7 +254,9 @@ sys.exit(0)
     all_events = legacy_events + workforce_events
     flat = json.dumps(all_events) + legacy_make.stdout + legacy_make.stderr + workforce_make.stdout + workforce_make.stderr
     assert legacy_secret not in flat and bitrix_secret not in flat
-    assert all(event["integration_env"] == {} for event in all_events)
+    assert all(event["integration_env"] == {
+        "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID": "1809812",
+    } for event in all_events)
     assert any(".local/legacy-source.env:/run/fmonitor-input/config:ro" in " ".join(event["argv"]) for event in legacy_events)
     assert any(".local/bitrix-workforce.json:/run/fmonitor-input/config:ro" in " ".join(event["argv"]) for event in workforce_events)
     assert all(" local-integration " in " " + " ".join(event["argv"]) + " " for event in all_events)

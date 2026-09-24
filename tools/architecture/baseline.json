@@ -122,6 +122,7 @@
     "rapid-mutation|rapid-pilot/issue-invitation.php|55ba22d1dd893632"
   ],
   "sql_ownership": [
+    "sql|app/YiiRuntime/Assets/control-queue.js|bac14ef0f9f327e2",
     "sql|app/InstallationProcess/LegacyControlEngineerMigration.php|355b4b52657a8cbe",
     "sql|app/InstallationProcess/LegacyControlEngineerMigration.php|7dad735aefa54950",
     "sql|app/InstallationProcess/LegacyControlEngineerMigrationSchema.php|10960e3489176827",

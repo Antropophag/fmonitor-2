@@ -33,6 +33,7 @@ with tempfile.TemporaryDirectory() as raw:
         "FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY":"h"*40,
         "FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS":"500", "FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS":"5",
         "FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE":"100",
+        "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID":"1809812",
     }
     (checkout / ".env").write_text("".join(f"{k}={v}\n" for k,v in values.items())); (checkout / ".env").chmod(0o600)
     private = checkout / ".local"; private.mkdir(mode=0o700)
