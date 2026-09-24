@@ -68,9 +68,10 @@ final class CalendarController extends PilotController
                 throw new BadRequestHttpException('Укажите одну дату в формате ГГГГ-ММ-ДД.');
             }
             $selected = DateTimeImmutable::createFromFormat('!Y-m-d', $query['date'], new DateTimeZone(self::ZONE));
-            if ($selected === false || $selected->format('Y-m-d') !== $query['date'] || $selected < $first || $selected > $last) {
+            if ($selected === false || $selected->format('Y-m-d') !== $query['date'] || $selected < $first) {
                 throw new BadRequestHttpException('Выбранный день не входит в доступный период календаря.');
             }
+            if ($selected > $last) {$first=$selected;$last=$selected;}
         }
 
         try {
