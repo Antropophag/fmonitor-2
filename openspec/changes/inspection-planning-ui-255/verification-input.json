@@ -27,6 +27,7 @@
     "tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php",
     "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
     "tests/Yii2/yii2_inspection_planning_today_priority_255_test.php",
+    "tests/Yii2/yii2_inspection_scope_policy_255_test.php",
     "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
     "tests/Yii2/inspection_planning_ui_255_browser.mjs",
     "tools/verification/suites.tsv"
@@ -37,7 +38,7 @@
       "acceptance_id": "A-D-command-security-current-plan",
       "spec_path": "specs/YII2-INSPECTION-PLANNING-UI-255.md",
       "seam": "real Yii POST routes through canonical YiiInspectionPlanning commands and actor-scoped current-plan read",
-      "tests": ["tests/Yii2/yii2_inspection_planning_ui_255_test.php", "tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php", "tests/Yii2/yii2_inspection_planning_002_test.php", "tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php"]
+      "tests": ["tests/Yii2/yii2_inspection_planning_ui_255_test.php", "tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php", "tests/Yii2/yii2_inspection_scope_policy_255_test.php", "tests/Yii2/yii2_inspection_planning_002_test.php", "tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php"]
     },
     {
       "spec_id": "YII2-INSPECTION-PLANNING-UI-255",
