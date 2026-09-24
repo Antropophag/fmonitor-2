@@ -12,7 +12,7 @@ try{
  $db->query("INSERT INTO {$p}fm2_otiz_settlement_locks(object_id)VALUES(4512)");$db->query("ALTER TABLE {$p}fm2_process_events AUTO_INCREMENT=90001");
  $before=Fixture::rows($db,V25::tables($p));$auto=Fixture::counters($db);
  assertSameValue(true,class_exists(CertificateMigration::class),'RED_ASSERTION certificate v26 migration absent');
- $upgrade=Migration::run($db,$p,Catalogue::migrations());assertSameValue([0,33],[$upgrade['exitCode'],$upgrade['result']['schemaVersion']??null],'v25 forward through28');
+ $upgrade=Migration::run($db,$p,Catalogue::migrations());assertSameValue([0,34],[$upgrade['exitCode'],$upgrade['result']['schemaVersion']??null],'v25 forward through28');
  foreach([101=>['deadline_certificate.read','deadline_certificate.write','objects.details.edit'],102=>['deadline_certificate.read','deadline_certificate.write','objects.details.edit'],103=>['deadline_certificate.read']] as $id=>$permissions)foreach($permissions as $permission)$before[$p.'fm2_pilot_role_permissions'][]=['role_id'=>(string)$id,'permission'=>$permission];
  usort($before[$p.'fm2_pilot_role_permissions'],static fn($a,$b)=>strcmp(serialize($a),serialize($b)));
  assertSameValue($before,Fixture::rows($db,V25::tables($p)),'all v25 rows preserved except specified additive capabilities');
@@ -44,7 +44,7 @@ try{
   if($defect==='default')$bad->query("ALTER TABLE $root ALTER current_version SET DEFAULT 0");
   assertSameValue(false,CertificateMigration::isCompleteCompatible($bad,$p),'readiness rejects same-column '.$defect);
   $bad->query("DROP TABLE {$p}fm2_deadline_certificate_pdf_chunks");$names=Fixture::tables($bad);$ddls=[];foreach($names as$name)$ddls[$name]=$bad->query("SHOW CREATE TABLE `$name`")->fetch_row()[1];$result=CertificateMigration::apply($bad,$p);assertSameValue('SCHEMA_MIGRATION_CONFLICT',$result['reason']??null,'fingerprint rejects '.$defect);$after=[];foreach(Fixture::tables($bad)as$name)$after[$name]=$bad->query("SHOW CREATE TABLE `$name`")->fetch_row()[1];assertSameValue($ddls,$after,'no DDL before refusal '.$defect);$bad->close();}
- $fresh=$f->database();assertSameValue([0,33],(static function($r){return[$r['exitCode'],$r['result']['schemaVersion']??null];})(Migration::run($fresh,$p,Catalogue::migrations())),'clean canonical29');
+ $fresh=$f->database();assertSameValue([0,34],(static function($r){return[$r['exitCode'],$r['result']['schemaVersion']??null];})(Migration::run($fresh,$p,Catalogue::migrations())),'clean canonical29');
  $provision=FMonitor2\IdentityAccess\MariaDbInitialOwnerProvisioning::provision($fresh,$p,'certificate.owner@shlz.ru','Certificate bootstrap fixture 2026');assertSameValue('created',$provision->status,'real public role provisioning');
  $grants=$fresh->query("SELECT r.code,p.permission FROM {$p}fm2_pilot_roles r JOIN {$p}fm2_pilot_role_permissions p ON p.role_id=r.role_id WHERE p.permission LIKE 'deadline_certificate.%' ORDER BY BINARY r.code,BINARY p.permission")->fetch_all(MYSQLI_NUM);
  assertSameValue([['fkr_operator','deadline_certificate.read'],['fkr_operator','deadline_certificate.write'],['manager','deadline_certificate.read'],['manager','deadline_certificate.write'],['otiz_specialist','deadline_certificate.read']],$grants,'fresh public provisioning exact certificate defaults');
@@ -54,11 +54,11 @@ try{
  assertSameValue('29a475f2d94b300a689d7c2e611280db49bcfa74224a3768d85c195b7cddb821',hash_file('sha256',dirname(__DIR__,2).'/app/RuntimeRestore/RuntimeRecoverySchemaV25.php'),'upstream feedback recovery profile unchanged');
  $prefixDb=$f->database();$longPrefix=str_repeat('p',25);
  // Physical canonical tables precede the logical aliases used by recovery profiles.
- $priorCatalogue=Catalogue::migrations();unset($priorCatalogue[26],$priorCatalogue[27],$priorCatalogue[28],$priorCatalogue[29],$priorCatalogue[30],$priorCatalogue[31],$priorCatalogue[32],$priorCatalogue[33]);
+ $priorCatalogue=Catalogue::migrations();unset($priorCatalogue[26],$priorCatalogue[27],$priorCatalogue[28],$priorCatalogue[29],$priorCatalogue[30],$priorCatalogue[31],$priorCatalogue[32],$priorCatalogue[33],$priorCatalogue[34]);
  assertSameValue(0,Migration::run($prefixDb,$longPrefix,$priorCatalogue)['exitCode'],'public v25 maximal-prefix baseline');
  $expectedPrefixTables=Fixture::tables($prefixDb);foreach(['roots','revisions','operations','pdf_chunks']as$suffix)$expectedPrefixTables[]=$longPrefix.'fm2_deadline_certificate_'.$suffix;foreach(['fm2_bitrix_order_document_links','fm2_control_engineer_assignments','fm2_legacy_identity_links','fm2_legacy_identity_link_events','fm2_engineer_migration_operations','fm2_equipment_fact_current','fm2_equipment_fact_diagnostics','fm2_equipment_fact_history','fm2_equipment_fact_runs','fm2_equipment_fact_sync_metadata','fm2_object_detail_edits','fm2_object_detail_edit_events','fm2_object_detail_edit_requests']as$suffix)$expectedPrefixTables[]=$longPrefix.$suffix;sort($expectedPrefixTables,SORT_STRING);
  $prefixed=Migration::run($prefixDb,$longPrefix,Catalogue::migrations());
- assertSameValue([0,33],[$prefixed['exitCode'],$prefixed['result']['schemaVersion']??null],'RED_ASSERTION certificate supports canonical 25-byte prefix through v29');
+ assertSameValue([0,34],[$prefixed['exitCode'],$prefixed['result']['schemaVersion']??null],'RED_ASSERTION certificate supports canonical 25-byte prefix through v29');
  assertSameValue($expectedPrefixTables,Fixture::tables($prefixDb),'complete physical prefixed current inventory');
  $prefixedRows=Fixture::rows($prefixDb,Fixture::tables($prefixDb));
  assertSameValue(0,Migration::run($prefixDb,$longPrefix,Catalogue::migrations())['exitCode'],'prefixed replay');

@@ -103,6 +103,7 @@ db	php	tests/InstallationProcess/inspection_item_complete_001_endpoint_admission
 db	php	tests/InstallationProcess/inspection_item_complete_001_mariadb_test.php	integration
 db	php	tests/InstallationProcess/inspection_item_complete_001_schema_drift_test.php	integration
 db	php	tests/InstallationProcess/inspection_photo_content_index_schema_001_test.php	integration
+db	php	tests/InstallationProcess/inspection_planning_object_schema_001_test.php	integration
 db	php	tests/InstallationProcess/inspection_planning_runtime_ddl_001_test.php	integration
 db	php	tests/InstallationProcess/inspection_planning_schema_001_test.php	integration
 db	php	tests/InstallationProcess/installation_completion_manual_pilot_test.php	integration
@@ -409,7 +410,6 @@ unit	php	tests/InstallationProcess/inspection_item_complete_001_replay_authoriza
 unit	php	tests/InstallationProcess/inspection_item_complete_001_replay_test.php	unit
 unit	php	tests/InstallationProcess/inspection_item_complete_001_test.php	unit
 unit	php	tests/InstallationProcess/inspection_item_complete_001_ui_client_test.php	integration
-unit	php	tests/InstallationProcess/inspection_planning_object_schema_001_test.php	unit
 unit	php	tests/InstallationProcess/installation_status_labels_manual_test.php	unit
 unit	php	tests/InstallationProcess/local_rbac_auth_contract_001_test.php	unit
 unit	php	tests/InstallationProcess/manual_original_execution_smoke_test.php	integration

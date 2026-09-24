@@ -7,7 +7,7 @@ require dirname(__DIR__).'/Support/ProductionOriginalAuditCatalogV13.php';
 // Specification: PRODUCTION-MIGRATION-RUNNER-001 v0.5, examples A-C and failures.
 // Composed successor: owner-approved OBJECT-DETAIL-SNAPSHOT-SCHEMA-001 v0.4, v12.
 
-function pmrDb(?string $db=null):mysqli{$c=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local',$db,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$c->set_charset('utf8mb4');return $c;}
+function pmrDb(?string $db=null):mysqli{$c=new mysqli(getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root',getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local',$db,(int)(getenv('FMONITOR_TEST_DB_PORT')?:23306));$c->set_charset('utf8mb4');return $c;}
 function pmrRows(mysqli $c,string $sql):array{return $c->query($sql)->fetch_all(MYSQLI_ASSOC);}
 function pmrRun(array $env,array $argv=[],string $stdin='',array $phpOptions=[]):array
 {
@@ -156,6 +156,13 @@ function pmrCatalog(mysqli $connection, string $prefix): void
         if ($table === 'fm2_pilot_completion_fact_corrections') {
             array_splice($expected, 6, 0, [["details", "varchar(500)", "YES", ""]]);
         }
+        if ($table === 'fm2_pilot_inspection_schedule_events') {
+            array_splice($expected, 4, 0, [
+                ['event_version','int unsigned','YES',''],
+                ['request_identity','char(36)','YES',''],
+                ['request_fingerprint','char(64)','YES',''],
+            ]);
+        }
         assertSameValue($expected, $actual, $table . ' exact types, nullability, order and extras.');
     }
 
@@ -168,8 +175,13 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     }, $legacyRows($indexes));
     sort($indexes);
     // Current v19 changes only the photo content lookup; the historical v13 oracle stays literal.
-    $expectedIndexes = array_map(static fn(string $index):string => $index === 'fm2_checklist_photos|UNIQUE|installation_case_id,section_id,sha256'
-        ? 'fm2_checklist_photos|INDEX|installation_case_id,section_id,sha256' : $index, ProductionOriginalAuditCatalogV13::indexes());
+    $expectedIndexes = array_map(static function(string $index):string {
+        if($index==='fm2_checklist_photos|UNIQUE|installation_case_id,section_id,sha256')return'fm2_checklist_photos|INDEX|installation_case_id,section_id,sha256';
+        if($index==='fm2_pilot_inspection_schedules|UNIQUE|installation_case_id,control_engineer_user_id,inspection_date')return'fm2_pilot_inspection_schedules|UNIQUE|installation_case_id,inspection_date';
+        return$index;
+    },ProductionOriginalAuditCatalogV13::indexes());
+    $expectedIndexes[]='fm2_pilot_inspection_schedule_events|UNIQUE|request_identity';
+    $expectedIndexes[]='fm2_pilot_inspection_schedule_events|UNIQUE|schedule_id,event_version';
     sort($expectedIndexes);
     assertSameValue($expectedIndexes, $indexes, 'All primary, unique, secondary and FK-support indexes must match the approved contract.');
 
@@ -222,7 +234,7 @@ function pmrCompletedV5Environment(string $database, string $prefix): array
         'FMONITOR_DB_PORT' => getenv('FMONITOR_TEST_DB_PORT') ?: '23306',
         'FMONITOR_DB_NAME' => $database,
         'FMONITOR_DB_USER' => getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root',
-        'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_demo_local',
+        'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local',
         'FMONITOR_PROCESS_TABLE_PREFIX' => $prefix,
     ];
 }
@@ -349,7 +361,7 @@ try{
          'FMONITOR_DB_PORT' => $proxy['port'],
          'FMONITOR_DB_NAME' => $charsetDatabase,
          'FMONITOR_DB_USER' => getenv('FMONITOR_TEST_DB_ADMIN_USER') ?: 'root',
-         'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_demo_local',
+         'FMONITOR_DB_PASSWORD' => getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD') ?: 'fmonitor2_test_root_local',
          'FMONITOR_PROCESS_TABLE_PREFIX' => 'charset_' . $tok . '_',
      ];
      pmrResult(
@@ -372,7 +384,7 @@ try{
      }
  }
 
- $db='t_pmr_a_'.$tok;$dbs[]=$db;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$env=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_demo_local','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_'];
+ $db='t_pmr_a_'.$tok;$dbs[]=$db;$admin->query("CREATE DATABASE `{$db}` DEFAULT CHARSET=utf8mb4");$env=['FMONITOR_DB_HOST'=>getenv('FMONITOR_TEST_DB_HOST')?:'127.0.0.1','FMONITOR_DB_PORT'=>getenv('FMONITOR_TEST_DB_PORT')?:'23306','FMONITOR_DB_NAME'=>$db,'FMONITOR_DB_USER'=>getenv('FMONITOR_TEST_DB_ADMIN_USER')?:'root','FMONITOR_DB_PASSWORD'=>getenv('FMONITOR_TEST_DB_ADMIN_PASSWORD')?:'fmonitor2_test_root_local','FMONITOR_PROCESS_TABLE_PREFIX'=>'pilot_'];
  pmrResult(CurrentProductionSchemaContract::cleanCliResult(),pmrRun($env),'example A');$c=pmrDb($db);pmrCatalog($c,'pilot_');
  $c->query("INSERT INTO pilot_fm2_workforce_catalog (installer_tab_id,fio,position,employment_status,employed_from,employed_to,workforce_source,workforce_source_updated_at) VALUES (1042,'Иванов Иван Иванович','Электромеханик по лифтам','employed','2024-02-01',NULL,'one_c_zup_via_bitrix','2026-08-26T18:00:00+03:00')");$c->query("INSERT INTO pilot_fm2_process_user_capabilities VALUES (18,'assignment_order.prepare',NULL)");$c->query("INSERT INTO pilot_fm2_installation_cases (legacy_installation_object_id,process_state,created_at,updated_at,lock_version) VALUES (4512,'needs_assignment_order','2026-08-28T00:00:00+03:00','2026-08-28T00:00:00+03:00',1)");$fp=pmrFingerprint($c,'pilot_');$rows=[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')];pmrResult(CurrentProductionSchemaContract::replayCliResult(),pmrRun($env),'example B');assertSameValue($fp,pmrFingerprint($c,'pilot_'),'full catalog unchanged');assertSameValue($rows,[pmrRows($c,'SELECT * FROM pilot_fm2_workforce_catalog'),pmrRows($c,'SELECT * FROM pilot_fm2_process_user_capabilities'),pmrRows($c,'SELECT * FROM pilot_fm2_installation_cases')],'sentinels unchanged');$c->close();
 

@@ -4,7 +4,7 @@ require dirname(__DIR__).'/bootstrap.php';require __DIR__.'/ObjectQueueFixture.p
 // YII2-OBJECT-QUEUE-001: real login/filter/dialog submission; independent DB audit.
 $f=null;$process=null;$config=null;
 try {
- $f=new ObjectQueueFixture(dirname(__DIR__,2));for($i=1;$i<=50;$i++)$f->object(451201+$i,6101+$i);$h=$f->http;$h->start();$config=$h->artifacts.'/browser.json';
+ $f=new ObjectQueueFixture(dirname(__DIR__,2));$f->db->query("UPDATE {$f->p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");for($i=1;$i<=50;$i++)$f->object(451201+$i,6101+$i);$h=$f->http;$h->start();$config=$h->artifacts.'/browser.json';
  file_put_contents($config,json_encode(['origin'=>'http://127.0.0.1:'.$h->server['port'],'email'=>$h->auth->email,'password'=>$h->auth->password,'artifacts'=>$h->artifacts,'result'=>$h->artifacts.'/result.json','playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($f->root).'/shlz-ui/node_modules/playwright'],JSON_THROW_ON_ERROR));chmod($config,0600);
  $process=proc_open([getenv('FMONITOR_TEST_NODE_BINARY')?:'node',__DIR__.'/object_queue_browser.mjs',$config],[0=>['file','/dev/null','r'],1=>['file',$h->artifacts.'/browser.log','a'],2=>['file',$h->artifacts.'/browser.log','a']],$pipes,$f->root);if(!is_resource($process))throw new TestFailure('SETUP_FAILURE browser');
  $deadline=microtime(true)+75;do{$state=proc_get_status($process);if(!$state['running'])break;usleep(20000);}while(microtime(true)<$deadline);if($state['running'])throw new TestFailure('browser timeout '.$h->artifacts);
