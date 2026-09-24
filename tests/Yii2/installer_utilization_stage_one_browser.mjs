@@ -20,7 +20,7 @@ try {
 
   for (const [width, height] of [[1440, 900], [390, 844]]) {
     await page.setViewportSize({width, height});
-    let response = await page.goto(config.origin + '/pilot/installers?load=working');
+    let response = await page.goto(config.origin + '/pilot/installers?q=Монтажник&current=present&upcoming=absent&page=1');
     check(response.status() === 200, 'INTENDED_RED directory utilization filter');
     check(await page.getByRole('link', {name: /Монтажник 001/}).count() === 1, 'installer card link');
     await page.getByRole('link', {name: /Монтажник 001/}).click();
@@ -29,8 +29,17 @@ try {
     check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'card overflow ' + width);
     await page.screenshot({path: config.artifacts + `/installer-card-${width}.png`, fullPage: true});
     await page.getByRole('link', {name: /К списку монтажников/}).click();
-    check(new URL(page.url()).pathname === '/pilot/installers', 'directory return');
+    const returned = new URL(page.url());
+    check(returned.pathname === '/pilot/installers', 'directory return');
+    check(returned.searchParams.get('q') === 'Монтажник' && returned.searchParams.get('current') === 'present' && returned.searchParams.get('upcoming') === 'absent' && returned.searchParams.get('page') === '1', 'exact allowlisted return state');
   }
+
+  const picker = await page.goto(config.origin + '/pilot/objects/5001/assignment-order/selection');
+  check(picker.status() === 200, 'picker page');
+  await page.locator('[data-dialog-open]').click();
+  await page.locator('[data-installer-search]').fill('Монтажник 001');
+  await page.waitForResponse(response => response.url().includes('/assignment-order/installers?'));
+  check((await page.locator('[data-installer-results]').textContent()).includes('текущ'), 'picker utilization context');
 
   fs.writeFileSync(config.result, JSON.stringify({passed: true}));
 } finally {
