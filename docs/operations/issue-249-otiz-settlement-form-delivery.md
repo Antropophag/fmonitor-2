@@ -3,7 +3,7 @@
 ## Scope and authorship
 
 - Owner assignment: issue #249 under roadmap #169, preserving merged #248 history.
-- Base: `origin/main` `d9dddb31f9c6e07092bcf6d4c04df761a1a13ccd`.
+- Initial base: `origin/main` `d9dddb31f9c6e07092bcf6d4c04df761a1a13ccd`; before final publication the candidate was cleanly rebased onto `1678f1c7e49d5ed80f44ebda70baf44b8c3c8032` (merged #250), with no #249 production-path overlap.
 - Worktree/branch: `/private/tmp/fmonitor-249-otiz-form-errors`, `codex/issue-249-otiz-form-errors`.
 - Root session authored OpenSpec artifacts, canonical spec and tests.
 - Separate `gpt-5.6-sol/low` executor authored production implementation.
@@ -29,4 +29,5 @@ After: supported ordinary ruble strings are converted exactly to integer cents w
 - Full local `make test`/`make verify`: intentionally not run by owner policy.
 - Final review: `reviews/code/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md` — first return found three UNKNOWN-outcome blockers; corrected exact source `c398117e8071a64ec3d21335a41b7df892b97155ee3aa403ef6f97cf4c16d27a` APPROVED with no remaining findings.
 - Post-review delta before commit is documentation/task bookkeeping only; production and tests remain byte-identical to the approved source.
+- First PR run `36049900753` on pre-rebase head failed three exact regressions: stale settlement-browser redirect/message oracle, stale `otiz.js` asset digest, and an unrelated one-off inspection JSON setup failure. Complete inventory was inspected; the first two were corrected, while the inspection test passed focused on the rebased source.
 - PR and exact-source CI: PENDING.

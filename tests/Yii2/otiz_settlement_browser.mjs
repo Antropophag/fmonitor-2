@@ -86,8 +86,8 @@ try {
   await invalid.locator('[name="discipline"]').fill('2000.00');
   await invalid.locator('[name="basis"]').fill('Over budget must reject');
   await Promise.all([page.waitForNavigation(), invalid.locator('button[type="submit"]').click()]);
-  assert.equal(new URL(page.url()).search, '?error=closure');
-  assert.match(await page.locator('[role="alert"]').innerText(), /Действие не выполнено/);
+  assert.equal(new URL(page.url()).search, '?error=closure&object=7301');
+  assert.match(await page.locator('[role="alert"]').innerText(), /Указанная сумма превышает доступную по объекту/);
   assert.equal(await page.locator('.fm2-otiz-ledger tbody tr').count(), 0);
   fs.writeFileSync(path.join(config.artifacts, 'invalid-complete'), 'ready', {mode: 0o600});
   const checkpointDeadline = Date.now() + 3000;

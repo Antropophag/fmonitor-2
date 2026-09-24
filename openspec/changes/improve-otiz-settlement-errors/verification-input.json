@@ -15,6 +15,8 @@
     "tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php",
     "tests/Yii2/otiz_settlement_form_recovery_browser.mjs",
     "tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php",
+    "tests/Yii2/otiz_settlement_browser.mjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "reviews/tests/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
     "reviews/code/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
     "docs/operations/issue-249-otiz-settlement-form-delivery.md",

@@ -91,7 +91,7 @@ return [
         'control-queue.js'=>['bac14ef0f9f327e2f1c3246d90124c96d2a045de8d1433f9505463599ff0e219','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/delivery-box.svg'=>['b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'shlz-icons/folder-file-open.svg'=>['c6bbeccbe6b8351fe7d4401ebef95fcca76adec022c891e8126905c8bc1ffb66','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
-        'otiz.js'=>['17bd34eed72f9c2619215f271efb1aa8d7d3c3b779fc5cb62c82e6f5f2cbb384','text/javascript; charset=UTF-8','public, max-age=3600'],
+        'otiz.js'=>['b2a4683f714899888f134127bd6deb51abb6cdea00434fb4cf8b405c4ff42eba','text/javascript; charset=UTF-8','public, max-age=3600'],
         'fonts/golos-text-cyrillic-400-normal.woff2'=>['15a5cbadfc1aa7a541651600b757bf7b67bce4e145b3239de072db5427889605','font/woff2','public, max-age=31536000, immutable'],
         'fonts/golos-text-cyrillic-500-normal.woff2'=>['22337b726df83521c7f6b2709e4717116eb53106c6140b45d751f36910191ecc','font/woff2','public, max-age=31536000, immutable'],
         'fonts/golos-text-cyrillic-600-normal.woff2'=>['1df9c46f33069094b4769bd2f5f04c5c37e4ce74c77bf062f3bb476d93cc3c2b','font/woff2','public, max-age=31536000, immutable'],

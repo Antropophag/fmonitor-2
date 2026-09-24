@@ -61,3 +61,32 @@ No new blocking finding was found. The correction does not introduce a financial
 - `python3 tests/Verification/architecture_guard_001_test.py` — GREEN record `1790278744565135000-3408852642f34284b185407f9d700080`.
 
 Gate 5 is **APPROVED** for exact source `c398117e8071a64ec3d21335a41b7df892b97155ee3aa403ef6f97cf4c16d27a`. The mandatory exact-source GitHub `make test`, PR/publication, merge, and deployment remain separate and `UNKNOWN`; this review does not represent them as complete.
+
+## Final integration/rebase review — exact source `35b67c4c6181e35371f8f465b155ed81efcc5a3ed3255fb1e29fe63085170b4d`
+
+**Verdict: APPROVED — no blocking findings remain.**
+
+I reviewed exact-source package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T200816Z-55d074668d/package.json`, its delta from the previously approved package, the full rebased candidate against new base `1678f1c7e49d5ed80f44ebda70baf44b8c3c8032` (merged #250), the two direct CI-oracle corrections, and all eight packaged focused GREEN records. I authored neither the specification/tests nor implementation.
+
+The rebase is compatible with #250. The #249 production paths and focused recovery tests remain byte-equivalent to the previously approved behavior; #250 changes the adjacent user-invitation flow and shared production asset inventory but does not overlap the OTIZ owner, controller, form, views, or asset logic. The complete diff retains strict parsing/max, one-time confidential server recovery, membership/auth/CSRF ordering, safe domain errors, stale no-write 409, operation replay/conflict, browser in-flight/UNKNOWN behavior, accessibility/no-JS, #248 history, and unchanged financial ownership/formulas/schema/rights.
+
+### CI regression dispositions
+
+1. **FIXED — stale settlement-browser redirect/message oracle.** `tests/Yii2/otiz_settlement_browser.mjs` now expects the specified stable object marker `?error=closure&object=7301` and the safe confirmed `AMOUNT_UNAVAILABLE` presentation instead of the removed generic redirect/message. It still asserts no ledger row, independently coordinates the parent-side rejection-count observation, and subsequently exercises the accepted discipline flow. This is an expectation correction to established #249 behavior, not a weakening: the assertion is more specific about both context and reason. A bounded reviewer run of `php tests/Yii2/yii2_otiz_settlement_browser_001_test.php` passed on the reviewed checkout.
+
+2. **FIXED — stale published `otiz.js` digest.** `tests/Support/yii2_production_web_cutover_contract.php` changes only the `otiz.js` SHA-256 from the base value to `b2a4683f714899888f134127bd6deb51abb6cdea00434fb4cf8b405c4ff42eba`; that exactly matches `sha256sum app/YiiRuntime/Assets/otiz.js`. MIME type and cache contract are unchanged, and the rest of the inventory—including #250's merged `users.js` contract—remains intact. A bounded reviewer run of `php tests/Runtime/yii2_production_web_cutover_001_test.php` passed on the reviewed checkout.
+
+3. **RESOLVED AS NON-#249 SETUP FAILURE — inspection JSON.** The failed-run inventory identifies the inspection failure as a one-off unrelated setup failure after main advanced; the rebased candidate contains no #249 change to inspection production or test paths. The supplied delivery record reports its focused rerun GREEN. It does not justify a #249 code change and presents no review blocker, while a new exact-source CI run remains required to establish the integrated matrix.
+
+### Exact-source packaged evidence
+
+- `php tests/Yii2/yii2_otiz_object_ledger_history_001_test.php` — GREEN record `1790280268612095000-c35dfc45765e493293d82e851d61bda7`;
+- `php tests/Yii2/yii2_otiz_settlement_001_test.php` — GREEN record `1790280287868770000-ce6657d5fa77437abbb44808d022bbcf`;
+- `php tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php` — GREEN record `1790280305502068000-12fb1bf259434ee5afb315696b1cea7d`;
+- `php tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php` — GREEN record `1790280321902508000-8dfb3c76723f4f92935620ecfa8ad4f3`;
+- `python3 tests/Deployment/pilot_jobs_compose_001_test.py` — GREEN record `1790280344149182000-f84ea5047da64c6e903f5589717094a1`;
+- `python3 tests/Verification/change_verification_001_test.py` — GREEN record `1790280423213454000-1f54a509cd82495eba9085ef5eb3a27e`;
+- `php tests/Runtime/runtime_storage_001_test.php` — GREEN record `1790280455348235000-c02d8a4376ae47578f4b992a96429aec`;
+- `python3 tests/Verification/architecture_guard_001_test.py` — GREEN record `1790280461066658000-a69554a6e1e54eb9beb9c9a270c5e32d`.
+
+Gate 5 remains **APPROVED** for rebased exact source `35b67c4c6181e35371f8f465b155ed81efcc5a3ed3255fb1e29fe63085170b4d`. Run `36049900753` belongs to the pre-rebase/pre-correction head and remains retained as failed evidence; a new exact-source GitHub CI run is still required. PR merge and deployment remain `UNKNOWN` and are not approved by this review.
