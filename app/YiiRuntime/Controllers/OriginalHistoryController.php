@@ -42,7 +42,7 @@ final class OriginalHistoryController extends PreopeningController
             if ($revision !== null) return $this->download($reader, $id, $orderId, $revision);
             $result = $reader->readHistory($id, $orderId, 0, 100);
             if ($result->status !== O\AssignmentOrderOriginalHistoryStatus::FOUND || $result->page === null) return $this->status($result->status === O\AssignmentOrderOriginalHistoryStatus::NOT_FOUND ? 404 : 503, true);
-            return $this->render('@app/app/YiiRuntime/Views/original-history', ['identity' => Yii::$app->user->identity, 'history' => $result->page->metadata()]);
+            return $this->render('@app/app/YiiRuntime/Views/original-history', ['objectIdentity' => $resources->originalObjectIdentity($id), 'identity' => Yii::$app->user->identity, 'history' => $result->page->metadata()]);
         } catch (\Throwable) {
             return $this->status(503, true);
         } finally {

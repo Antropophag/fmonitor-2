@@ -10,8 +10,8 @@
 
 ## 3. Gate 4 — minimal implementation (separate executor)
 
-- [ ] 3.1 Отдельным sol/low executor реализовать минимальный авторизованный read adapter через существующий effective-details owner и передать закрытую identity projection в original form/history controllers; focused tests подтверждают отсутствие второго resolver и deny-before-read.
-- [ ] 3.2 Обновить только original form/history views: primary regnumber, address/entrance context, secondary factory number, explicit missing labels и escaping при сохранении технических IDs и document identifiers; focused HTTP/browser tests становятся GREEN.
+- [x] 3.1 Отдельным sol/low executor реализовать минимальный авторизованный read adapter через существующий effective-details owner и передать закрытую identity projection в original form/history controllers; focused tests подтверждают отсутствие второго resolver и deny-before-read.
+- [x] 3.2 Обновить только original form/history views: primary regnumber, address/entrance context, secondary factory number, explicit missing labels и escaping при сохранении технических IDs и document identifiers; focused HTTP/browser tests становятся GREEN.
 - [ ] 3.3 Выполнить planner-selected bounded local checks, architecture/related regressions и реальные desktop/narrow browser сценарии на собственных disposable resources; подтвердить upload/correction/replay и неизменность PDF/hash/history bytes, не запуская локальный полный `make test`/`make verify`.
 
 ## 4. Gate 5 and publication (independent reviewer + root)

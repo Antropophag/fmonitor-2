@@ -33,6 +33,16 @@ final class PreopeningResources
         return(new C\MariaDbCurrentInstallerAssignmentsQuery($this->db,$this->prefix))->find($tabIds);
     }
     public function assignmentReader():I\MariaDbControlEngineerAssignmentReader{return new I\MariaDbControlEngineerAssignmentReader($this->db,$this->prefix);}
+    public function originalObjectIdentity(int $objectId): array
+    {
+        $details = I\MariaDbEffectiveObjectDetails::create($this->db, $this->prefix, $this->prefix)->read($objectId);
+        return [
+            'registrationNumber' => $details['regnumber']['display'] ?? null,
+            'address' => $details['address']['display'] ?? null,
+            'entrance' => $details['entrance']['display'] ?? null,
+            'factoryNumber' => $details['zavnumber']['display'] ?? null,
+        ];
+    }
     public function assignEngineer(I\ControlEngineerAssignmentCommand $command):array{return I\ProductionControlEngineerAssignmentFactory::create($this->db,$this->prefix)->assign($command);}
     public function editObjectDetails(I\ObjectDetailsEditCommand$command):array{return I\ProductionObjectDetailsEditFactory::create($this->db,$this->prefix,static fn():string=>(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'))->edit($command);}
     public function selectAssignmentOrderComposition(C\SelectAssignmentOrderCompositionCommand $command): array
