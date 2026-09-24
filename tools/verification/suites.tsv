@@ -263,6 +263,7 @@ db	php	tests/Yii2/yii2_otiz_evidence_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_guest_return_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_object_ledger_history_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_settlement_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_workflow_001_test.php	integration
 db	php	tests/Yii2/yii2_preopening_authorization_001_test.php	integration
 db	php	tests/Yii2/yii2_preopening_concurrency_001_test.php	integration
@@ -326,6 +327,7 @@ e2e	php	tests/Yii2/yii2_object_queue_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_original_object_identity_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_shlz_ui_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_preopening_browser_001_test.php	e2e
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py	e2e
