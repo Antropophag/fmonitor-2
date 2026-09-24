@@ -1,0 +1,41 @@
+{
+  "change": "add-installer-utilization-stage-one-issue-258",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/Workforce/MariaDbInstallerUtilization.php",
+    "app/Workforce/MariaDbYiiInstallerDirectory.php",
+    "app/AssignmentOrderComposition/AssignmentOrderSelectionPortalQuery.php",
+    "app/AssignmentOrderComposition/MariaDbSelectionPortalQuery.php",
+    "app/YiiRuntime/Controllers/InstallerDirectoryController.php",
+    "app/YiiRuntime/Controllers/InstallerUtilizationController.php",
+    "app/YiiRuntime/Controllers/SelectionController.php",
+    "app/YiiRuntime/Views/installers.php",
+    "app/YiiRuntime/Views/installer-card.php",
+    "app/YiiRuntime/Views/selection.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/preopening.js",
+    "config/yii/web.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-258-installer-utilization-stage-one-delivery.md",
+    "openspec/changes/add-installer-utilization-stage-one/proposal.md",
+    "openspec/changes/add-installer-utilization-stage-one/design.md",
+    "openspec/changes/add-installer-utilization-stage-one/tasks.md",
+    "openspec/changes/add-installer-utilization-stage-one/specs/workforce/installer-utilization-stage-one/spec.md",
+    "openspec/changes/add-installer-utilization-stage-one/verification-input.json",
+    "reviews/tests/INSTALLER-UTILIZATION-STAGE-ONE-001.md",
+    "reviews/code/INSTALLER-UTILIZATION-STAGE-ONE-001.md",
+    "specs/INSTALLER-UTILIZATION-STAGE-ONE-001.md",
+    "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
+    "tests/Yii2/yii2_installer_utilization_surfaces_001_test.php",
+    "tests/Yii2/yii2_installer_utilization_browser_001_test.php",
+    "tests/Yii2/yii2_preopening_routes_001_test.php",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Yii2/installer_utilization_stage_one_browser.mjs",
+    "tools/verification/suites.tsv"
+    ,"tools/architecture/check.py"
+  ],
+  "acceptances": [
+    {"spec_id":"INSTALLER-UTILIZATION-STAGE-ONE-001","acceptance_id":"A-H-current-upcoming-periods","spec_path":"specs/INSTALLER-UTILIZATION-STAGE-ONE-001.md","seam":"authoritative applied composition/opening/PTO/original facts followed by Workforce projection reads","tests":["tests/Yii2/yii2_installer_utilization_stage_one_001_test.php"]},
+    {"spec_id":"INSTALLER-UTILIZATION-STAGE-ONE-001","acceptance_id":"I-M-directory-card-picker-route","spec_path":"specs/INSTALLER-UTILIZATION-STAGE-ONE-001.md","seam":"authenticated GET directory/card and existing assignment-order picker through Yii runtime","tests":["tests/Yii2/yii2_installer_utilization_surfaces_001_test.php","tests/Yii2/yii2_installer_utilization_browser_001_test.php"]}
+  ]
+}

@@ -8,6 +8,6 @@
 
 Lifecycle: `openspec/changes/inspection-planning-ui-255/`. Контракт: `specs/YII2-INSPECTION-PLANNING-UI-255.md`. Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers выполняют planner-required Gates 3/5. Только focused local checks; full local `make test`/`make verify` запрещён; обязателен один exact-source GitHub CI run.
 
-Параллельная #258 выполняется в `codex/issue-258-installer-utilization-stage1`. Её workforce/directory/person-card/selection context и собственные artifacts/tests не входят в #255; общие registrations меняются только additively с сохранением чужих записей.
+Первый этап параллельной #258 влит PR #264 и входит в актуальный `origin/main` `99bd0974`. Его workforce/directory/person-card/selection behavior и registrations сохраняются при интеграции; они не являются частью реализации #255.
 
 Исторические завершённые задачи из прежнего указателя не возобновляются.

@@ -58,6 +58,14 @@
       });
       copy.append(assignments);
     }
+    if (item.utilization && Number.isInteger(item.utilization.currentWorkCount)) {
+      const utilization = document.createElement('small'); utilization.className = 'fm2-picker-result-utilization';
+      const current = item.utilization.currentWorkCount;
+      const upcoming = Array.isArray(item.utilization.upcomingAssignments) && item.utilization.upcomingAssignments.length
+        ? ` · следующее: ${item.utilization.upcomingAssignments[0].registrationNumber}` : '';
+      utilization.textContent = `${current} текущ${current === 1 ? 'ая работа' : 'ие работы'}${upcoming}`;
+      copy.append(utilization);
+    }
     label.append(input, copy);
     input.addEventListener('change', () => { if (input.checked) selected.set(id, {...item, tabId: id}); else selected.delete(id); renderSelections(); renderChecks(); });
     return label;

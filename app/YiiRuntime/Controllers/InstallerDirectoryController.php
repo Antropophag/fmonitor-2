@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\YiiRuntime\Controllers;
 
-use FMonitor2\Workforce\MariaDbYiiInstallerDirectory;
+use FMonitor2\Workforce\MariaDbInstallerUtilization;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -35,11 +35,11 @@ final class InstallerDirectoryController extends PilotController
             throw new ForbiddenHttpException();
         }
         try {
-            $model = (new MariaDbYiiInstallerDirectory(
+            $model = (new MariaDbInstallerUtilization(
                 Yii::$app->db,
                 (string) (getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: ''),
                 (string) (getenv('FMONITOR_LEGACY_TABLE_PREFIX') ?: ''),
-            ))->read((new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format('Y-m-d'), $filters);
+            ))->directory($filters, (int) Yii::$app->user->id);
             return $this->render('@app/app/YiiRuntime/Views/installers', $model + [
                 'identity' => Yii::$app->user->identity,
                 'canAdmin' => Yii::$app->canonicalAccess->checkAccess((int) Yii::$app->user->id, 'access.administer'),
@@ -60,7 +60,7 @@ final class InstallerDirectoryController extends PilotController
     private function filters(): array
     {
         $raw = (string) ($_SERVER['QUERY_STRING'] ?? '');
-        $values = ['q' => '', 'status' => '', 'availability' => '', 'page' => '1'];
+        $values = ['q' => '', 'status' => '', 'availability' => '', 'current' => '', 'upcoming' => '', 'page' => '1'];
         $seen = [];
         if ($raw !== '') {
             foreach (explode('&', $raw) as $part) {
@@ -77,10 +77,12 @@ final class InstallerDirectoryController extends PilotController
         if (mb_strlen($values['q']) > 120
             || !in_array($values['status'], ['', 'employed', 'dismissed'], true)
             || !in_array($values['availability'], ['', 'assigned', 'free'], true)
+            || !in_array($values['current'], ['', 'present', 'absent'], true)
+            || !in_array($values['upcoming'], ['', 'present', 'absent'], true)
             || preg_match('/^[1-9][0-9]*$/D', $values['page']) !== 1 || strlen($values['page']) > 18
         ) throw new BadRequestHttpException();
         $digits = preg_replace('/[^0-9]+/', '', $values['q']) ?? '';
         $digits = ltrim($digits, '0');
-        return ['q' => $values['q'], 'tab' => $digits, 'status' => $values['status'], 'availability' => $values['availability'], 'page' => (int) $values['page']];
+        return ['q' => $values['q'], 'tab' => $digits, 'status' => $values['status'], 'availability' => $values['availability'], 'current' => $values['current'], 'upcoming' => $values['upcoming'], 'page' => (int) $values['page']];
     }
 }

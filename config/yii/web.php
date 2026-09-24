@@ -73,6 +73,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'GET,HEAD pilot/dashboard' => 'dashboard/index',
                 'GET,HEAD pilot/calendar<slash:\/?>' => 'calendar/index',
                 ...(require __DIR__ . '/feedback-routes.php'),
+                'GET,HEAD pilot/installers/<tabId:[1-9][0-9]*>' => 'installer-utilization/view',
+                'pilot/installers/<tabId:[1-9][0-9]*>' => 'installer-utilization/view',
                 'GET,HEAD pilot/installers' => 'installer-directory/index',
                 'pilot/installers' => 'installer-directory/index',
                 'GET,HEAD pilot/construction-control' => 'checklist/queue',

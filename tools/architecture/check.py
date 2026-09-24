@@ -199,6 +199,8 @@ def sql_owner(path: Path) -> bool:
         return path.name.startswith("MariaDb")
     if rel.startswith("app/Otiz/"):
         return path.name.startswith("MariaDb")
+    if rel.startswith("app/Workforce/"):
+        return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderComposition/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderOriginal/"):
