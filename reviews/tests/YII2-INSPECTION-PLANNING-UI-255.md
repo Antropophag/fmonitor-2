@@ -93,3 +93,42 @@ Gate 4 remains unauthorized. Rebuild these remaining cases together, regenerate 
 ### Decision
 
 Three material parts of the prior return are now closed, but controller command authorization, server-originated unknown handling, calendar ambiguity closure and executable RED evidence remain open. Gate 4 remains unauthorized. The next handoff should correct these as one complete matrix and regenerate the source-bound package before rereview.
+
+---
+
+## Gate 3 third correction rereview — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Corrected HEAD: `c940fbeaa15a80b925eafcbb322a023c03480d79`.
+- Exact candidate source: `8a4309995f82e2bb57e61a6652b17cfd6e0b65005fc32134d3ea8f50f72d362c` (clean worktree).
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T211844Z-b7109174ac/package.json`; lane `CRITICAL`, required reviews `gate3` and `final`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Closed findings
+
+1. **Real-route actor coverage — substantively present.** The HTTP test now performs successful create/cancel pairs through the real Yii route as assigned engineer `9403` and FKR actor `9401`, in addition to the out-of-scope engineer denial. The retained HTTP RED reaches the allowed engineer POST and receives current-production `404`, proving the barrier is live rather than static.
+
+2. **Server-originated uncertain outcome — present at HTTP seam.** A database trigger makes the real command fail during event append; the route must return classified `503`, retain date/object/action copy and leave all facts unchanged. This is an appropriate deterministic unknown-commit witness at the public seam.
+
+3. **Queue/calendar ambiguity — present.** Two current roots/events are injected and both real publication routes must return `503`, publish no row/event HTML and perform no repair or DML.
+
+4. **Dependency-complete RED — present.** Four exact-source harness records are retained for contract, HTTP, today and browser commands. They share candidate source `8a4309995f82e2bb57e61a6652b17cfd6e0b65005fc32134d3ea8f50f72d362c` and executable source `5ddb9f7b3ff764138f1b06ed78e80b521b5d4f8a2354d3aabe9aa98dfaf71046`. HTTP fails at the missing allowed engineer route (`303` expected, `404` actual); today reaches the missing today marker (`51` expected, `0` actual); browser reaches the missing create trigger after successful setup/login; contract reaches the missing canonical route call. These are intended missing-behavior failures, not dependency/setup failures.
+
+5. **Today fixture connection — corrected.** `MariaDbYiiChecklist` now receives `$f->db`, so queue and `currentEngineerAssignment` use the same isolated fixture database rather than an unrelated process-global connection. The base object also has a valid sequence-one assignment.
+
+### Blocking test defects
+
+1. **BLOCKING — the HTTP test cannot become GREEN because its fact baseline predates the newly added successful role commands.** `$before` is captured on `yii2_inspection_planning_ui_255_test.php:7`; engineer and FKR create/cancel pairs then append four legitimate events on `:9`. The following GET/HEAD assertion on `:11` still compares current facts with the pre-command `$before`, and the CSRF assertions do the same. Once the new routes return the expected `303`, those assertions necessarily fail even if GET/HEAD and rejected CSRF requests write nothing. Refresh a baseline after the role matrix (or snapshot immediately around each no-write action) while retaining explicit assertions for the role events and actors.
+
+2. **BLOCKING — the final append-only oracle excludes facts deliberately created by this same test.** The last assertion expects exactly three event types, `[scheduled, rescheduled, cancelled]`. Before it runs, the test has legitimately created four engineer/FKR schedule/cancel events and manually inserted two ambiguity events, in addition to the main three-event journey. Therefore it can never equal the three-element array. Scope the main-journey assertion by request identities/schedule root, or assert the complete independently expected history including role and fault-control facts. Also assert exact actor IDs for the successful role commands, as promised by the authorization scenario.
+
+3. **BLOCKING — browser `route.fulfill(503, text/plain)` still does not test the real server-retained unknown response.** The HTTP trigger case now correctly proves server classification and retention, but the browser test still replaces that response with raw `Service unavailable.` and then expects application copy and the existing dialog to remain. That response bypasses Yii entirely and a native form navigation cannot derive `Результат сохранения не подтверждён` or preserved form state from it. Either drive the browser through the same deterministic real-server fault mechanism, or make the browser assertion observe the real classified HTML `503`; do not synthesize an unrelated plaintext response and expect application-rendered state. The added invalid-date path is useful confirmed-rejection coverage, but does not repair this unknown branch.
+
+### RED evidence checked
+
+- Contract: `1790284497485326000-74f542be47d24cc59d6de318e96da184`.
+- HTTP: `1790284508032680000-73823630aed34822a93bdc1fa23c4acc`.
+- Today: `1790284533649860000-d0aa32b9f0034786aa37d5ca24b58b41`.
+- Browser: `1790284558495133000-2852b3006ad74472b227372914cf9fe2`.
+
+The retained records are valid RED evidence for their first reached barriers, but they cannot reveal the two later impossible history assertions because execution stops earlier. Correct the test-only baselines/history oracle and replace the synthetic browser unknown response, retain fresh exact-source RED, regenerate the package, and request rereview. Gate 4 remains unauthorized.
