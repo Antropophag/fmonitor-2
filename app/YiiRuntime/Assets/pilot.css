@@ -1437,7 +1437,7 @@ svg.fm2-nav-icon.fm2-nav-icon--shlz { fill: none; stroke: initial; stroke-width:
 html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-check-page { --check-ink: #132238; --check-blue: #2451c6; --check-soft: #edf2ff; --check-green: #16734a; --check-green-soft: #eaf7f0; position: relative; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,920px) minmax(0,1fr); padding-block-end: 24px; color: var(--check-ink); }
 .fm2-check-page > :not(.fm2-toast) { grid-column: 2; min-inline-size: 0; }
-.fm2-check-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; column-gap: 32px; row-gap: 14px; padding: 4px 0 24px; }
+.fm2-check-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; column-gap: 32px; row-gap: 14px; padding: 4px 0 24px; }
 .fm2-check-object { flex: 1 1 auto; min-inline-size: 0; }
 .fm2-check-topline { display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; gap: 16px; inline-size: 100%; }
 .fm2-check-object h1 { max-inline-size: 24ch; margin: 14px 0 7px; font-size: clamp(24px, 3vw, 38px); line-height: 1.12; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: anywhere; }
@@ -1446,9 +1446,9 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 .fm2-back-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .fm2-back-link svg { inline-size: 18px; block-size: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
 .fm2-progress-summary { display: grid; justify-items: end; flex: 0 0 auto; }
-.fm2-check-order-link, .fm2-check-order-number { display: block; max-inline-size: 14ch; margin-block-end: 12px; overflow-wrap: anywhere; color: var(--check-ink); font-size: clamp(24px, 3vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.03em; text-align: end; }
-.fm2-check-order-link { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-.fm2-check-order-link:hover { color: var(--check-blue); }
+.fm2-check-order-link, .fm2-check-order-number { display: block; max-inline-size: 14ch; margin: 14px 0 12px; overflow-wrap: anywhere; color: var(--fm2-ink); font-size: 22px; font-weight: 600; line-height: 1.12; letter-spacing: -.02em; text-align: end; }
+.fm2-check-order-link { color: var(--fm2-primary); text-decoration: none; }
+.fm2-check-order-link:hover { color: var(--fm2-primary); }
 .fm2-check-order-link:focus-visible { border-radius: 3px; outline: 2px solid var(--fm2-focus-ring); outline-offset: 3px; }
 .fm2-progress-summary strong { color: var(--check-blue); font-size: 52px; line-height: .9; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .fm2-progress-summary > span { margin-block-start: 8px; color: #5d6b7d; font-size: 13px; }
@@ -1610,11 +1610,11 @@ html:has(.fm2-check-page) { scrollbar-gutter: stable; }
 @media (max-width: 1000px) { .fm2-calendar-layout { grid-template-columns: 1fr; } .fm2-calendar-agenda { min-block-size: 0; } }
 @media (max-width: 680px) { .fm2-main:has(.fm2-calendar-page) { padding: 14px 10px 92px; } .fm2-main:has(.fm2-calendar-page) > .fm2-breadcrumb { display: none; } .fm2-calendar-header h1 { font-size: 22px; } .fm2-calendar-header p { display: none; } .fm2-calendar-toolbar { align-items: stretch; flex-direction: column; } .fm2-calendar-period { inline-size: 100%; } .fm2-calendar-period h2 { min-inline-size: 0; } .fm2-calendar-grid { --shlz-calendar-grid-max-block-size: 58vh; } }
 @media (max-width: 680px) {
-  .fm2-check-hero { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; padding-block-end: 12px; }
+  .fm2-check-hero { grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 12px; padding-block-end: 12px; }
   .fm2-check-object { min-inline-size: 0; }
   .fm2-check-object h1 { margin-block-start: 8px; font-size: 20px; line-height: 1.16; }
-  .fm2-progress-summary { justify-items: end; align-self: end; padding-block-end: 1px; }
-  .fm2-check-order-link, .fm2-check-order-number { max-inline-size: 10ch; margin-block-end: 8px; font-size: 20px; line-height: 1.16; }
+  .fm2-progress-summary { justify-items: end; align-self: start; padding-block-end: 1px; }
+  .fm2-check-order-link, .fm2-check-order-number { max-inline-size: 10ch; margin: 8px 0; font-size: 18px; line-height: 1.16; }
   .fm2-progress-summary strong { font-size: 34px; }
   .fm2-progress-summary > span { margin-block-start: 5px; font-size: 10px; }
   .fm2-confirm-dialog, .fm2-installer-dialog { position: fixed; inset: auto 8px 8px; box-sizing: border-box; inline-size: auto; max-inline-size: none; margin: 0; overflow-x: hidden; border-radius: 18px; }
