@@ -27,9 +27,9 @@ final class CompletionRegisterController extends PilotController
     public function actionIndex():string|Response
     {
         if(!Yii::$app->canonicalAccess->checkAccess((int)Yii::$app->user->id,'objects.read'))throw new ForbiddenHttpException();
-        try{$model=(new MariaDbYiiCompletionRegister(Yii::$app->db,(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''),(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:'')))->read($this->filters());
+        try{$model=(new MariaDbYiiCompletionRegister(Yii::$app->db,(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''),(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:'')))->read((int)Yii::$app->user->id,$this->filters());
             return$this->render('@app/app/YiiRuntime/Views/completion-register',$model+['identity'=>Yii::$app->user->identity]);
-        }catch(\OutOfRangeException){throw new BadRequestHttpException();}
+        }catch(\OutOfRangeException){throw new BadRequestHttpException();}catch(\DomainException){throw new ForbiddenHttpException();}
         catch(\Throwable){$response=Yii::$app->response;$response->statusCode=503;$response->format=Response::FORMAT_RAW;$response->headers->set('Retry-After','60');$response->content="Service unavailable.\n";return$response;}
     }
 

@@ -18,8 +18,9 @@ final readonly class MariaDbYiiCompletionRegister
     }
 
     /** @return array{rows:list<array>,filters:array,counters:array<string,int>} */
-    public function read(array $filters): array
+    public function read(int $actorId,array $filters): array
     {
+        if(!$this->authorized($actorId))throw new \DomainException('ACCESS_DENIED');
         $mode=(string)($filters['mode']??'pto_without_declaration');$query=trim((string)($filters['q']??''));$date=(string)($filters['date']??'');
         $from=(string)($filters['from']??'');$to=(string)($filters['to']??'');$sort=(string)($filters['sort']??'');$page=(int)($filters['page']??1);
         if(!in_array($mode,['pto_without_declaration','without_pto','complete','all'],true)||mb_strlen($query)>120||!in_array($date,['','pto','declaration'],true)
@@ -38,7 +39,7 @@ final readonly class MariaDbYiiCompletionRegister
         foreach($rows as$row){$ptoDate=$row['pto_date']===null?null:(string)$row['pto_date'];$mapped[]=[
             'objectId'=>(int)$row['object_id'],'registrationNumber'=>trim((string)$row['registration_number']),'address'=>trim((string)$row['address']),'entrance'=>trim((string)$row['entrance']),
             'ptoDate'=>$ptoDate,'declarationDate'=>$row['declaration_date']===null?null:(string)$row['declaration_date'],'declarationDetails'=>$row['declaration_date']===null?null:(string)$row['declaration_details'],
-            'daysSincePto'=>$ptoDate===null?null:(int)(new \DateTimeImmutable($ptoDate,new \DateTimeZone('Europe/Moscow')))->diff($today)->format('%r%a')];}
+            'daysSincePto'=>$ptoDate===null?null:(int)(new \DateTimeImmutable($ptoDate,new \DateTimeZone('Europe/Moscow')))->diff($today)->format('%r%a'),'inconsistent'=>$ptoDate===null&&$row['declaration_date']!==null];}
         return['rows'=>$mapped,'counters'=>$counters,'filters'=>['mode'=>$mode,'q'=>$query,'date'=>$date,'from'=>$from,'to'=>$to,'sort'=>$sort,'page'=>$page,'pages'=>$pages,'total'=>$total]];
     }
 
@@ -47,6 +48,7 @@ final readonly class MariaDbYiiCompletionRegister
         $p=$this->prefix;$sql="SELECT COUNT(*) FROM `{$p}fm2_pilot_completion_fact_corrections` x LEFT JOIN `{$p}fm2_pilot_completion_fact_corrections` previous ON previous.id=x.previous_correction_id AND previous.root_fact_id=x.root_fact_id AND previous.version_no=x.previous_version_no WHERE (x.version_no=1 AND (x.previous_correction_id IS NOT NULL OR x.previous_version_no IS NOT NULL)) OR (x.version_no>1 AND (x.previous_correction_id IS NULL OR x.previous_version_no<>x.version_no-1 OR previous.id IS NULL)) OR x.version_no<1 OR EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_fact_corrections` gap WHERE gap.root_fact_id=x.root_fact_id AND gap.version_no<x.version_no GROUP BY gap.root_fact_id HAVING COUNT(*)<>x.version_no-1)";
         if((int)$this->db->createCommand($sql)->queryScalar()!==0)throw new \RuntimeException('Malformed completion history.');
     }
+    private function authorized(int$actor):bool{$p=$this->prefix;if($actor<1)return false;$sql="SELECT 1 FROM `{$p}fm2_pilot_users`u JOIN `{$p}fm2_pilot_user_roles`ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles`r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions`rp ON rp.role_id=r.role_id WHERE u.user_id=:actor AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='objects.read' LIMIT 1";return(bool)$this->db->createCommand($sql,[':actor'=>$actor])->queryScalar();}
 
     /** @return array{string,array<string,string>} */
     private function source(string$query,string$date,string$from,string$to):array
