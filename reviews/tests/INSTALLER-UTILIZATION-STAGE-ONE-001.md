@@ -305,3 +305,34 @@ Fresh evidence is bound to the exact corrected hash and fails at the absent util
 ### Required changes
 
 None. Tests-only Gate 3 is approved for exact candidate source `e0f2d3bf3aa7024cbd24ae859791b37a1d56a42bccb0fc45fb947c79bb910765`.
+
+## Rereview 10 — canonical planned-start fixture mutation
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: narrow root-authored test delta only; production is not reviewed or approved
+- Review source: clean review-only worktree `/tmp/fm258-gate3-count`; verdict recorded in the primary delivery worktree
+- Root-authored test commit: `8b381cfc7c08be48fb976ce1ec100396ba2b7b7a`
+- Corrected stage-one test SHA-256: `9f7da5f8b4c34cf9ddc29428ae9da6b27d33692d7c840c2c987ce39626561e4f`
+- Historical RED: record `1790283810934397000-f7d95e746785458aa9a9d70a14f7af83`, previous test blob `6bf6d42b4dde63b1e579e412983ec940c79d1f80ff83b6edc8d7aacbea4c940a`, exit `255` at the absent installer-card seam
+- Corrected GREEN: record `1790283846611463000-ff6abb29b0074743a6a02c01a1bb5a1b`, corrected test blob `9f7da5f8b4c34cf9ddc29428ae9da6b27d33692d7c840c2c987ce39626561e4f`, exit `0` with `PASS: INSTALLER-UTILIZATION-STAGE-ONE-001 native participation history`
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+The two old fixture updates targeted `fm2_assignment_orders.id=81`, but that row does not exist at those execution points, so the statements changed no source fact and could not drive either the elapsed-plan or unknown-plan oracle. The replacement updates object 4512's canonical legacy planned-start field, `fm_maintable.workdatestart`, first to `2020-01-01` and then to `NULL`.
+
+This matches the unchanged public read contract and existing implementation boundary: `MariaDbYiiObjectQueue::plannedStartDateExpression('l.workdatestart')` validates and returns the first ten characters of the canonical field, and the fixture itself originally seeds object 4512 through that field. No production constant, output, or implementation-derived value is copied into the expectation.
+
+Behavioral expectations are unchanged and remain independently meaningful:
+
+- an elapsed canonical planned date does not add a second current work because factual opening still owns current classification;
+- a missing canonical planned date renders the explicit unknown upcoming date;
+- subsequent cross-surface, concurrency, authorization, history and no-leak assertions are unchanged.
+
+### Evidence lineage assessment
+
+The historical record proves the approved pre-implementation test reached a behaviorally relevant missing-card RED rather than setup failure. The corrected record proves the same full stage-one command now traverses the formerly ineffective date mutations and completes GREEN against the already-present implementation. The differing command blobs are exactly explained by the two-line fixture correction. Because the harness cannot classify an unchanged mapped test becoming GREEN during reviewer composition, this independent comparison records the lineage explicitly rather than treating GREEN alone as Gate 3 evidence.
+
+### Required changes
+
+None. The narrow canonical planned-start fixture correction at commit `8b381cfc7c08be48fb976ce1ec100396ba2b7b7a` is approved for Gate 3. This verdict does not constitute production or Gate 5 approval.
