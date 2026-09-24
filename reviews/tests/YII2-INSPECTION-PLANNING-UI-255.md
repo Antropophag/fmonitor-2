@@ -277,3 +277,10 @@ Correct the single conflicting assignment and request narrow rereview. Broader a
 Object `451202` is now assigned to neutral engineer `7301`, so engineer actor `9403` has only `451201` in scope and the existing calendar exclusion/inclusion matrix is coherent. The mixed actor `9101` still carries manager plus control-engineer roles and must retain global queue access, independently of the neutral assignment.
 
 The legacy active-queue regression now logs in its existing FKR actor `18`, grants only the additive construction-control/checklist read capabilities to role `1`, and continues to exercise its intended global pagination surface. This aligns fixture authority with the approved shared scope policy without weakening its queue expectations. PHP syntax and `git diff --check` pass; dirty production files were untouched. Gate 3 approval extends through `b17d3f073532b28b3e0afe87e357e5a075957f1a`.
+
+### Calendar global-fixture delta — 2026-09-25
+
+- Reviewed commit: `eddaf4704a67cb68015ac003452290966d61b83d`.
+- Verdict: **APPROVED**.
+
+Actor `18` now explicitly receives active role `7`, whose fixture code is `manager` and whose established permissions include `objects.read`. This supplies the approved manager-global scope required by the existing calendar and overflow expectations without changing their assertions or granting a test-only production bypass. The pre-existing removal of ordinary role `5`'s `objects.read` remains intact. PHP syntax and `git diff --check` pass; dirty production files were untouched.
