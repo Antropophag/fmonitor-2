@@ -12,7 +12,7 @@ Legacy oracle: `Integration.php` читает direct child folders и `disk.fold
 
 ### 1. Bounded adapter
 
-Adapter вызывает только `disk.folder.getchildren` и `disk.folder.getExternalLink` для настроенного HTTPS Bitrix origin/root. Он проверяет configuration, pagination, JSON/schema, лимиты и URL origin. Любая ошибка возвращает safe failure без partial result.
+Adapter вызывает `disk.folder.getchildren` для настроенного HTTPS Bitrix origin/root, переиспользует текущие ссылки неизменившихся exact folder ID/name и запрашивает остальные `disk.folder.getExternalLink` через официальный `batch` (до 50 команд). Реальный root содержит 19 299 direct children, поэтому bounded ceiling равен 25 000. Он проверяет configuration, pagination, JSON/schema, лимиты и URL origin. Любая ошибка возвращает safe failure без partial result.
 
 ### 2. Простая current projection
 

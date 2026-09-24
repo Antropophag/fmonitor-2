@@ -333,6 +333,34 @@
       "consumers": []
     },
     {
+      "name": "bitrix-order-document-links",
+      "patterns": [
+        "app/InstallationProcess/BitrixOrderDocumentDelivery.php",
+        "app/InstallationProcess/BitrixOrderDocumentDeliveryConfig.php",
+        "app/InstallationProcess/BitrixOrderDocumentDeliveryResult.php",
+        "app/InstallationProcess/BitrixOrderDocumentFolderMapper.php",
+        "app/InstallationProcess/BitrixOrderDocumentLinksSchemaMigration.php",
+        "app/InstallationProcess/MariaDbBitrixOrderDocumentLinks.php",
+        "app/InstallationProcess/MariaDbBitrixOrderDocumentLinksRead.php",
+        "app/InstallationProcess/MariaDbPilotLegacyObjectSchemaReadiness.php",
+        "app/InstallationProcess/NativeBitrixOrderDocumentDelivery.php",
+        "app/InstallationProcess/OrderDocumentLinksApplication.php",
+        "app/InstallationProcess/PilotLegacyObjectSchemaMigration.php",
+        "app/Jobs/MariaDbOrderDocumentLinksScheduler.php",
+        "app/YiiRuntime/Commands/BitrixOrderDocumentLinksSyncController.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/bitrix_order_document_links_application_001_test.php",
+        "tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php",
+        "tests/InstallationProcess/bitrix_order_document_links_mapping_001_test.php",
+        "tests/InstallationProcess/bitrix_order_document_links_read_001_test.php",
+        "tests/InstallationProcess/bitrix_order_document_links_schema_001_test.php",
+        "tests/Jobs/bitrix_order_document_links_scheduler_001_test.php",
+        "tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "otiz-premium-norms",
       "patterns": [
         "app/Otiz/MariaDbNativePremiumInputs.php",
@@ -588,7 +616,6 @@
       "patterns": [
         "app/IdentityAccess/AuthorizeLocalActor.php",
         "app/IdentityAccess/LocalRoleCatalog.php",
-        "app/InstallationProcess/MariaDbBitrixOrderDocumentLinksRead.php",
         "app/InstallationProcess/ObjectDetailsEditApplication.php",
         "app/InstallationProcess/ObjectDetailsEditCommand.php",
         "app/InstallationProcess/ObjectDetailsEditPermissionProvisioning.php",

@@ -10,6 +10,12 @@
 - [x] 2.3 Перенести nullable `zavnumber` через existing mirror/import и реализовать exact read owner.
 - [x] 2.4 Подключить console trigger и секцию object card под `objects.read`.
 - [x] 2.5 Зарегистрировать hourly sync в existing native Jobs scheduler/worker без нового framework; проверить один job на московский час, repeat и no-backlog behavior.
+- [x] 2.6 Поддержать реальный root из 19 299 папок: reuse текущих folder ID/name, batch по 50 только для новых/изменённых и fail-closed replacement.
+- [x] 2.7 Оформить техническую документацию в Documents tab как доступный список с количеством, понятным source label и полноценными empty/error states.
+- [x] 2.8 Дать стройконтролю mobile-first доступ: count в queue и touch-friendly ссылки непосредственно в checklist, сохранив authorization и fail-soft states.
+- [x] 2.9 Скомпактить стройконтроль: одна effective ссылка, чёрная `shlz-ui/folder-file-open` рядом с отгрузкой и icon-button в checklist без счётчиков и большой document-секции.
+- [x] 2.10 Убрать вложенную интерактивность: folder-file-open оставить индикатором queue, а в checklist дать полноширинную mobile secondary-кнопку без иконки.
+- [x] 2.11 Вернуть legacy-affordance в checklist: заводской номер над процентом является ссылкой, отдельную document-кнопку убрать; видимую подпись даты открытия скрыть.
 
 ## 3. Verification and PR
 

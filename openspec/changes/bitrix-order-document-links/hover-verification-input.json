@@ -1,0 +1,20 @@
+{
+  "change": "bitrix-order-document-links-hover",
+  "planned_paths": [
+    "app/YiiRuntime/Assets/pilot.css",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+    "openspec/changes/bitrix-order-document-links/specs/integration/bitrix-order-document-links/spec.md",
+    "openspec/changes/bitrix-order-document-links/hover-verification-input.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BITRIX-ORDER-DOCUMENT-LINKS-001",
+      "acceptance_id": "A4-checklist-order-link-hover",
+      "spec_path": "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+      "seam": "construction-control checklist linked factory number presentation",
+      "tests": ["tests/Yii2/yii2_construction_control_active_queue_001_test.php"]
+    }
+  ]
+}

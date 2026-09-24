@@ -5,7 +5,7 @@
 ## ADDED Requirements
 
 ### Requirement: Read-only Bitrix delivery
-Система SHALL постранично читать direct child folders настроенного root через `disk.folder.getchildren` и получать URL через `disk.folder.getExternalLink`. Delivery SHALL быть bounded и fail closed при configuration, transport, API, pagination, schema или limit error; partial rows MUST NOT публиковаться. URL SHALL быть HTTPS, без credentials и принадлежать настроенному Bitrix origin. FMonitor MUST NOT загружать, проксировать или хранить содержимое документов.
+Система SHALL постранично читать direct child folders настроенного root через `disk.folder.getchildren`, переиспользовать проверенные текущие URL для неизменившихся exact folder ID/name и получать остальные URL через `disk.folder.getExternalLink` пакетами не более 50 команд. Delivery SHALL принимать не менее 25 000 direct children и fail closed при configuration, transport, API, pagination, schema или limit error; partial rows MUST NOT публиковаться. URL SHALL быть HTTPS, без credentials и принадлежать настроенному Bitrix origin либо exact official external-link host `bitrix24public.com`. FMonitor MUST NOT загружать, проксировать или хранить содержимое документов.
 
 #### Scenario: Полная выдача
 - **WHEN** все страницы и ссылки успешно проверены
@@ -38,7 +38,7 @@
 - **THEN** ранее опубликованный набор остаётся доступен
 
 ### Requirement: Read owner и карточка
-Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать все distinct ссылки exact-matching order number. Несколько объектов одного заказа SHALL получать одинаковый список; иные заказы MUST NOT смешиваться. Секция SHALL находиться только в существующей карточке под `objects.read`, экранировать source name и различать «Номер заказа не указан», «Техническая документация не найдена» и временную недоступность.
+Managed mirror/import SHALL переносить nullable string `zavnumber`. Авторизованный read owner SHALL выбирать effective ссылку exact-matching order number; для заказа допускается не более одной distinct ссылки, а неоднозначность SHALL возвращать unavailable без произвольного выбора. Несколько объектов одного заказа SHALL получать одинаковую ссылку; иные заказы MUST NOT смешиваться. Construction-control queue SHALL показывать неинтерактивную штатную чёрную `shlz-ui/folder-file-open` рядом с отгрузкой, сохраняя одно действие строки — переход в checklist. Checklist SHALL показывать заводской номер крупно в правой hero-колонке над процентом и превращать сам номер в прямую ссылку при available effective document. Ссылочный номер SHALL быть brand-blue без подчёркивания по умолчанию, подчёркиваться при pointer hover и сохранять заметный keyboard focus; нессылочный номер SHALL оставаться чёрным. Отдельная document-кнопка отсутствует.
 
 #### Scenario: Разрешённая карточка
 - **WHEN** пользователь с `objects.read` открывает объект с ссылками

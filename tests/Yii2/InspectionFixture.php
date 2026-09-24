@@ -17,6 +17,9 @@ final class InspectionFixture
         $sections=[];foreach($ids as$i=>$items){$rows=[];foreach($items as$j=>$id)$rows[]=['id'=>$id,'name'=>'Fixture '.$id,'weight'=>$weights[$i][$j]];$sections[]=['id'=>$i+1,'name'=>'Раздел '.($i+1),'items'=>$rows];}
         $json=json_encode(['sections'=>$sections],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
         $f->db->prepare("UPDATE {$f->p}fm2_checklist_template_snapshots SET payload_json=?,content_sha256=?")->execute([$json,hash('sha256',$json)]);
+        $f->db->query("UPDATE {$f->p}fm_maintable SET zavnumber='CONTROL-4512' WHERE id=4512");
+        $f->db->query("INSERT INTO {$f->p}fm2_bitrix_order_document_links(source_folder_id,source_folder_name,order_number,url) VALUES(94512,'Рабочие чертежи','CONTROL-4512','https://bitrix24public.com/control-4512')");
+        $f->db->query("INSERT INTO {$f->p}fm2_bitrix_order_document_links(source_folder_id,source_folder_name,order_number,url) VALUES(94513,'Соседний заказ',' CONTROL-4512 ','https://bitrix24public.com/control-neighbor')");
     }
     public function open():void
     {

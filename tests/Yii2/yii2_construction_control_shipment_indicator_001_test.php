@@ -35,7 +35,7 @@ try {
         $end=strpos($html,'</tr>',$start);
         return$end===false?'':substr($html,$start,$end-$start);
     };
-    $check(1,preg_match('#<th[^>]*scope="col"[^>]*>\s*<span class="fm2-visually-hidden">Отгрузка</span>\s*</th>#',$page['body']),'icon-only shipment column heading');
+    $check(1,preg_match('#<th[^>]*scope="col"[^>]*>\s*<span class="fm2-visually-hidden">Отгрузка и техническая документация</span>\s*</th>#',$page['body']),'combined icon-only status column heading');
     $first=$row($page['body'],4512);
     foreach(['class="fm2-shipment-cell"','data-shipment-state="partial"','aria-label="Частично отгружен, 10.09.2026"','title="Частично отгружен, 10.09.2026"','delivery-box.svg']as$needle)$check(true,str_contains($first,$needle),'partial shipment '.$needle);
     $check(false,str_contains($first,'fm2-shipment-copy'),'partial has no visible shipment copy');
@@ -53,6 +53,7 @@ try {
     foreach(['data-shipment-state="full"','aria-label="Полностью отгружен, 13.09.2026"']as$needle)$check(true,str_contains($fullWithoutFirst,$needle),'full without first '.$needle);
     foreach([
         'delivery-box.svg'=>'b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04',
+        'folder-file-open.svg'=>'c6bbeccbe6b8351fe7d4401ebef95fcca76adec022c891e8126905c8bc1ffb66',
     ]as$asset=>$sha){$path=dirname(__DIR__,2).'/app/YiiRuntime/Assets/shlz-icons/'.$asset;$check($sha,is_file($path)?hash_file('sha256',$path):null,'exact public shlz-ui asset '.$asset);}
     $htmlFile=sys_get_temp_dir().'/fm2-shipment-indicator-'.bin2hex(random_bytes(6)).'.html';
     file_put_contents($htmlFile,$page['body'],LOCK_EX);

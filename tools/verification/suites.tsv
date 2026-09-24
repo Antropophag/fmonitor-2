@@ -342,6 +342,7 @@ unit	php	tests/AssignmentOrderComposition/selection_command_tracer_001_test.php	
 unit	python3	tests/Delivery/canonical_live_admission_context_001_test.py	governance
 unit	python3	tests/Delivery/fast_maintenance_lifecycle_162_test.py	governance
 unit	python3	tests/Delivery/ordinary_change_process_001_test.py	governance
+unit	python3	tests/Deployment/bitrix_order_document_links_runtime_001_test.py	unit
 unit	php	tests/Deployment/bitrix_startup_config_001_test.php	governance
 unit	python3	tests/Deployment/erp_equipment_facts_runtime_001_test.py	unit
 unit	python3	tests/Deployment/local_integration_env_001_test.py	unit

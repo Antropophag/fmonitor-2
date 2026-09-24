@@ -15,7 +15,7 @@ Legacy — только evidence; runtime dependency отсутствует.
 
 ## A1 — Delivery
 
-Bounded adapter SHALL читать direct child folders настроенного root только через `disk.folder.getchildren` и `disk.folder.getExternalLink`. Configuration, transport, API, JSON/schema, pagination и limits SHALL fail closed без partial list. URL SHALL быть HTTPS, без credentials и exact configured Bitrix origin. Secrets/raw upstream body MUST NOT возвращаться или сохраняться. Содержимое документов MUST NOT загружаться или проксироваться.
+Bounded adapter SHALL читать direct child folders настроенного root через `disk.folder.getchildren` и получать новые URL через `disk.folder.getExternalLink`, объединённые официальным `batch` не более чем по 50 подзапросов. Проверенная текущая ссылка SHALL переиспользоваться для неизменившегося exact `sourceFolderId` и имени; новая либо переименованная папка SHALL запросить актуальную ссылку. Delivery SHALL поддерживать не менее 25 000 direct children. Configuration, transport, API, JSON/schema, pagination и limits SHALL fail closed без partial list. URL SHALL быть HTTPS, без credentials и принадлежать exact configured Bitrix origin либо exact официальному host `bitrix24public.com`, фактически возвращаемому portal для external links. Secrets/raw upstream body MUST NOT возвращаться или сохраняться. Содержимое документов MUST NOT загружаться или проксироваться.
 
 ## A2 — Mapping
 
@@ -29,7 +29,7 @@ Bounded adapter SHALL читать direct child folders настроенного
 
 Forward migration SHALL добавить nullable binary-exact `zavnumber` в managed mirror и одну links table с необходимыми unique/index constraints. Existing legacy snapshot/import SHALL переносить `zavnumber` byte-exact. Read owner SHALL выбирать distinct links exact по order number. Несколько объектов одного заказа получают одинаковые ссылки; соседние номера не смешиваются.
 
-Секция SHALL отображаться только в существующей object card после `objects.read`, экранировать source folder name и различать «Номер заказа не указан», «Техническая документация не найдена» и «Техническая документация временно недоступна». Отказ секции не ломает карточку.
+Секция SHALL отображаться в существующей object card после `objects.read`. Для одного номера заказа SHALL существовать не более одной effective ссылки; неоднозначность SHALL fail soft без выбора произвольной ссылки. В construction-control queue наличие ссылки SHALL показываться неинтерактивной чёрной `shlz-ui/folder-file-open` рядом с `delivery-box`, а единственным действием строки SHALL оставаться переход в checklist. В checklist заводской номер SHALL находиться в правой колонке hero над процентом монтажа и быть прямой ссылкой на effective документацию; при отсутствии ссылки номер остаётся обычным текстом. Ссылочный номер SHALL сохранять brand-blue без подчёркивания в default state, получать подчёркивание при pointer hover и сохранять заметный keyboard focus; нессылочный номер SHALL оставаться чёрным. Отдельная кнопка или document layout MUST NOT отображаться. Отсутствие или недоступность ссылки MUST NOT ломать queue, checklist или карточку.
 
 ## A5 — Console
 

@@ -24,7 +24,7 @@ final class PilotAssetController extends PilotController
         foreach(['download','eye','close','arrow-left-md','arrow-right-md']as$icon)$map['shlz-icons/'.$icon.'.svg']=[$shlzRoot.'/packages/icons/dist/icons/'.$icon.'.svg','image/svg+xml; charset=UTF-8',3600];
         $map['checklist-sw.js']=[$root.'/checklist-sw.js','text/javascript; charset=UTF-8',0];foreach (['shlz.css','pilot.css','preopening.css'] as $file) {
             $map[$file] = [$root . '/' . $file,'text/css; charset=UTF-8',3600];
-        }foreach (['calendar-sidebar.svg','calendar-interface.svg','logout.svg','search.svg','chevron-left-duo.svg','chevron-right-duo.svg','cloud-upload.svg','plus-alt-2.svg','delivery-box.svg'] as $file) {
+        }foreach (['calendar-sidebar.svg','calendar-interface.svg','logout.svg','search.svg','chevron-left-duo.svg','chevron-right-duo.svg','cloud-upload.svg','plus-alt-2.svg','delivery-box.svg','folder-file-open.svg'] as $file) {
             $map['shlz-icons/'.$file]=[$root.'/shlz-icons/'.$file,'image/svg+xml; charset=UTF-8',31536000];
         }$map['favicon.svg'] = [$root . '/favicon.svg','image/svg+xml; charset=UTF-8',31536000];
         if (preg_match('/^fonts\/(golos-text-(?:cyrillic|latin)-(?:400|500|600)-normal\.woff2)$/D', $path, $m) === 1) {

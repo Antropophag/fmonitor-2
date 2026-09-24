@@ -105,6 +105,14 @@ $documentRow = static function (array $document) use ($icon): string {
     <?php
     return (string) ob_get_clean();
 };
+$folderCount = static function (int $count): string {
+    $lastTwo = $count % 100;
+    $last = $count % 10;
+    $noun = $lastTwo >= 11 && $lastTwo <= 14
+        ? 'папок'
+        : ($last === 1 ? 'папка' : ($last >= 2 && $last <= 4 ? 'папки' : 'папок'));
+    return $count . ' ' . $noun . ' в Битрикс24';
+};
 $registrationIdentity = trim((string) $registrationNumber) !== ''
     ? 'Регистрационный номер ' . $registrationNumber
     : 'Регистрационный номер не указан';
@@ -284,12 +292,31 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                     <?php endif ?>
                     <?php if ($order !== null && $pendingComposition !== null): ?><div class="fm2-quiet-empty"><strong>Подписанный оригинал ожидается</strong><span>Для ожидающего состава ещё нет принятого оригинала.</span></div><?php if ($canUpload): ?><div class="fm2-document-actions shlz-cluster"><a class="shlz-button shlz-button--secondary" href="/pilot/objects/<?= (int) $id ?>/assignment-orders/<?= (int) $pendingComposition['orderId'] ?>/originals/submit">Загрузить оригинал</a></div><?php endif ?><?php endif ?>
                 </div>
-                <div class="fm2-tab-section">
-                    <h2>Техническая документация</h2>
-                    <?php if ($technicalDocuments['status'] === 'available'): ?><div class="shlz-document-list"><?php foreach ($technicalDocuments['links'] as $link): ?><?= $documentRow(['name' => $link['name'], 'href' => $link['url'], 'meta' => 'Технический документ', 'external' => true]) ?><?php endforeach ?></div>
-                    <?php elseif ($technicalDocuments['status'] === 'order_number_missing'): ?><p role="status">Номер заказа не указан</p>
-                    <?php elseif ($technicalDocuments['status'] === 'empty'): ?><p role="status">Техническая документация не найдена</p>
-                    <?php else: ?><p role="status">Техническая документация временно недоступна</p><?php endif ?>
+                <div class="fm2-tab-section fm2-technical-documents">
+                    <div class="fm2-technical-documents__header">
+                        <h2>Техническая документация</h2>
+                        <?php if ($technicalDocuments['status'] === 'available'): ?><span><?= Html::encode($folderCount(count($technicalDocuments['links']))) ?></span><?php endif ?>
+                    </div>
+                    <?php if ($technicalDocuments['status'] === 'available'): ?>
+                        <div class="fm2-technical-documents__list">
+                            <?php foreach ($technicalDocuments['links'] as $link): ?>
+                                <article class="fm2-technical-document">
+                                    <div class="fm2-technical-document__visual" aria-hidden="true"><img src="/pilot/assets/shlz-file-types/file-generic.svg" alt=""></div>
+                                    <div class="fm2-technical-document__content">
+                                        <a href="<?= Html::encode($link['url']) ?>" rel="noopener noreferrer"><?= Html::encode($link['name']) ?></a>
+                                        <span>Открывается в Битрикс24</span>
+                                    </div>
+                                    <a class="fm2-technical-document__action" href="<?= Html::encode($link['url']) ?>" rel="noopener noreferrer" aria-label="Открыть <?= Html::encode($link['name']) ?> в Битрикс24">Открыть <span aria-hidden="true">↗</span></a>
+                                </article>
+                            <?php endforeach ?>
+                        </div>
+                    <?php elseif ($technicalDocuments['status'] === 'order_number_missing'): ?>
+                        <div class="fm2-technical-documents__state" role="status"><strong>Номер заказа не указан</strong><span>Документацию нельзя сопоставить с объектом.</span></div>
+                    <?php elseif ($technicalDocuments['status'] === 'empty'): ?>
+                        <div class="fm2-technical-documents__state" role="status"><strong>Техническая документация не найдена</strong><span>Проверьте номер заказа или повторите позже.</span></div>
+                    <?php else: ?>
+                        <div class="fm2-technical-documents__state" role="status"><strong>Техническая документация временно недоступна</strong><span>Данные объекта остаются доступны. Попробуйте открыть документы позже.</span></div>
+                    <?php endif ?>
                 </div>
             </section>
             <section class="shlz-tabs__panel fm2-object-tab-panel" id="object-panel-history" role="tabpanel" aria-labelledby="object-tab-history" hidden>
