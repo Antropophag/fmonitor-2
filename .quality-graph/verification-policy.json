@@ -470,7 +470,6 @@
     {
       "name": "construction-control-checklist-ui",
       "patterns": [
-        "app/InspectionEvidence/MariaDbYiiChecklist.php",
         "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
         "app/YiiRuntime/Assets/checklist.js",
         "app/YiiRuntime/Assets/pilot.css",

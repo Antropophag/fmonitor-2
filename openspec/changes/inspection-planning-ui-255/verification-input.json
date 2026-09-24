@@ -4,7 +4,6 @@
     ".quality-graph/verification-policy.json",
     "app/InstallationProcess/YiiInspectionPlanning.php",
     "app/InstallationProcess/MariaDbYiiInspectionPlanning.php",
-    "app/InspectionEvidence/MariaDbYiiChecklist.php",
     "app/YiiRuntime/Controllers/ChecklistController.php",
     "app/YiiRuntime/Controllers/CalendarController.php",
     "app/YiiRuntime/Views/construction-control.php",

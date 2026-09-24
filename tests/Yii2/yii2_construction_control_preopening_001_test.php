@@ -9,6 +9,7 @@ try {
     $f=new PreopeningFixture(dirname(__DIR__,2));
     $f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'control_engineer.assign']);
     foreach(['construction_control.read','checklist.read','installation.open']as$permission)$f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>2,'permission'=>$permission]);
+    $f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>7,'permission'=>'construction_control.read']);$f->insert($f->p.'fm2_pilot_user_roles',['user_id'=>73,'role_id'=>7,'origin'=>'fixture','assigned_at'=>'2026-09-10T09:00:00+03:00']);
     $f->db->query("DELETE FROM {$f->p}fm2_pilot_user_roles WHERE user_id=95");
     $f->insert($f->p.'fm2_pilot_user_roles',['user_id'=>95,'role_id'=>2,'origin'=>'fixture','assigned_at'=>'2026-09-10T09:00:00+03:00']);
     $f->start();

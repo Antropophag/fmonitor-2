@@ -11,6 +11,7 @@ final class InspectionFixture
     {
         $this->http=new PreopeningFixture($root);$f=$this->http;
         foreach([2=>['inspection.item.complete','inspection.photo.revoke','checklist.read','construction_control.read'],5=>['checklist.read'],7=>['inspection.item.complete','checklist.read','construction_control.read']]as$role=>$caps)foreach($caps as$cap)$f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>$role,'permission'=>$cap]);
+        $f->insert($f->p.'fm2_pilot_user_roles',['user_id'=>73,'role_id'=>7,'origin'=>'fixture','assigned_at'=>'2026-09-10T09:00:00+03:00']);
         // Fixed independent 41-item template, matching the accepted pilot weights.
         $ids=[[28,29,30,31,32,33,34,35,36],[37,38,39,40,41],[1,2,3,4,5,6],[7,8,9,10],[11,12,13,14,15],[16,17,18,19,20,21],[22,23,24,25,26,27]];
         $weights=[[2,2,2,2,1,1,2,1,2],[3,3,3,3,2],[2,2,1,2,1,1],[2,5,1,1],[3,2,2,1,2],[4,4,3,3,3,2],[3,2,1,1,1,1]];
