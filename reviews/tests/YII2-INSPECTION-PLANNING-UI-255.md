@@ -284,3 +284,10 @@ The legacy active-queue regression now logs in its existing FKR actor `18`, gran
 - Verdict: **APPROVED**.
 
 Actor `18` now explicitly receives active role `7`, whose fixture code is `manager` and whose established permissions include `objects.read`. This supplies the approved manager-global scope required by the existing calendar and overflow expectations without changing their assertions or granting a test-only production bypass. The pre-existing removal of ordinary role `5`'s `objects.read` remains intact. PHP syntax and `git diff --check` pass; dirty production files were untouched.
+
+### Pure-engineer fixture delta — 2026-09-25
+
+- Reviewed commit: `a2e31a56f15a5afb5231c064e6963a66694a89ad`.
+- Verdict: **APPROVED**.
+
+The fixture removes user `9403`'s incidental role `9210` before that shared role is converted to `fkr_operator`. User `9403` therefore remains a pure control-engineer actor whose successful and denied behavior is determined by current assignment scope, while user `9401` retains the intended FKR-global path. Mixed-role manager precedence remains independently covered by `yii2_inspection_scope_policy_255_test.php`, so this isolation does not remove that acceptance case. PHP syntax and `git diff --check` pass; dirty production files were untouched.
