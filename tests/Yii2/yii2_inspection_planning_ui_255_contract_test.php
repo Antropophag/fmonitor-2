@@ -18,6 +18,8 @@ $must(str_contains($routes,'invalid_date')&&str_contains($routes,'stale_plan')&&
 $must(str_contains($routes,'unknown')||str_contains($routes,'не подтвержд'),'unknown outcome is distinct from rejection');
 $must(str_contains($routes,'inspectionDate')&&str_contains($routes,'planId')&&str_contains($routes,'action'),'failed form retains complete command context');
 $must(str_contains($calendar,'/pilot/objects/'),'calendar event links object');
+$must((bool)preg_match('/readCalendar\s*\(\s*\$actorId\s*,\s*\$today->format\(/',$calendar),'calendar passes actor and one request-scoped Moscow today snapshot');
+$must(!str_contains($calendar,"new DateTimeImmutable('now'" )||substr_count($calendar,"new DateTimeImmutable('now'")===1,'calendar has one wall-clock acquisition seam');
 $must(str_contains($queue,'Europe/Moscow')||str_contains($queue,':today'),'server Moscow date enters queue query');
 $must((bool)preg_match('/ORDER BY[\s\S]{0,500}(today|inspection_date)[\s\S]{0,500}(legacy_object_id|object_id|\.id)/i',$queue),'today rank and stable identity order happen in SQL before pagination');
 $must(strpos($queue,'ORDER BY')<strpos($queue,'LIMIT'),'today/stable order precedes LIMIT');
