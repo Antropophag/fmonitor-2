@@ -282,3 +282,26 @@ The refreshed stage-one evidence is behaviorally relevant: execution passes setu
 ### Required changes
 
 None. Tests-only Gate 3 is approved for exact candidate source `26d834e6bc5ff51d9d350150ad5fe888f96f7775d270da934f357db56a2b3897`. This is not a Gate 5 review or approval of the paused executor WIP.
+
+## Rereview 9 — scoped count oracle correction
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Review source: clean review-only worktree `/tmp/fm258-gate3-count`; verdict recorded in the primary delivery worktree
+- Root-authored test commit: `8eb9afb3cee41e0a80bc305dd088b93cb899e961`
+- Reviewed candidate source: `e0f2d3bf3aa7024cbd24ae859791b37a1d56a42bccb0fc45fb947c79bb910765`; executable source `df8108bd3fe3467ea4fb3c4fbbd9e916669bc43dfda00b6d92eecbabe7573684`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T201150Z-c4b1cdb48e/package.json`; plan SHA-256 `40235dd2ee2a3d5b73fa0ec38c17ac0de040d61d937170f7c880716c415fcbbe`
+- Corrected surfaces test SHA-256: `0f43f99bc949032354c883afb426aa0330b7a275ab68b537bdb2b02376a9e30d`
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records; surfaces exits `255` after reporting `INTENDED_RED current-load filter absent` and receiving `400` instead of the required `200`
+- Verdict: `APPROVED`
+
+### Assessment
+
+The fixture contains multiple installers who may satisfy `current=present&upcoming=absent`, so the prior unsearched assertion `data-filtered-count="1"` incorrectly narrowed the meaning of the current-present filter. The correction adds the explicit search `q=Монтажник 001`; one result is now independently implied by the fixture and the expected filtered count is coherent without redefining utilization semantics.
+
+The correction does not weaken server-side behavior coverage. The same request still combines search, current/upcoming filters and page before asserting the full searched/filtered count. The stage-one test separately adds sixty preceding workforce rows and requires installer 7001 to be returned with filtered count one for a conjunctive utilization query, preserving the full-set-before-pagination and later-page sensitivity.
+
+Fresh evidence is bound to the exact corrected hash and fails at the absent utilization filter admission/behavior seam, not because the fixture count is contradictory. The stage-one and browser commands retain fresh mapped intended RED evidence, and the planner reports no missing mapped tests.
+
+### Required changes
+
+None. Tests-only Gate 3 is approved for exact candidate source `e0f2d3bf3aa7024cbd24ae859791b37a1d56a42bccb0fc45fb947c79bb910765`.
