@@ -1,0 +1,49 @@
+{
+  "change": "improve-otiz-settlement-errors-issue-249",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Controllers/OtizSettlementForm.php",
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/Views/otiz-settlement-stale.php",
+    "app/YiiRuntime/Assets/otiz.js",
+    "specs/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+    "openspec/changes/improve-otiz-settlement-errors/proposal.md",
+    "openspec/changes/improve-otiz-settlement-errors/design.md",
+    "openspec/changes/improve-otiz-settlement-errors/tasks.md",
+    "openspec/changes/improve-otiz-settlement-errors/specs/otiz/settlement-form-recovery/spec.md",
+    "openspec/changes/improve-otiz-settlement-errors/verification-input.json",
+    "tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php",
+    "tests/Yii2/otiz_settlement_form_recovery_browser.mjs",
+    "tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php",
+    "reviews/tests/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+    "reviews/code/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+    "docs/operations/issue-249-otiz-settlement-form-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SETTLEMENT-FORM-RECOVERY-001",
+      "acceptance_id": "A01-A04-strict-cents-known-refusal-and-stale-http",
+      "spec_path": "specs/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+      "seam": "POST /pilot/otiz/snapshots/{snapshotId}/closures through Yii2 adapter to existing OtizSettlement owner",
+      "tests": ["tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-FORM-RECOVERY-001",
+      "acceptance_id": "A02-A05-browser-recovery-security-inflight-and-unknown",
+      "spec_path": "specs/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+      "seam": "Yii2 POST/redirect/GET snapshot form state with authorization and CSRF",
+      "tests": ["tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "OTIZ-SETTLEMENT-FORM-RECOVERY-001",
+      "acceptance_id": "A06-retained-financial-history-and-rights",
+      "spec_path": "specs/OTIZ-SETTLEMENT-FORM-RECOVERY-001.md",
+      "seam": "existing settlement HTTP/browser and object-wide ledger history public seams",
+      "tests": ["tests/Yii2/yii2_otiz_settlement_001_test.php", "tests/Yii2/yii2_otiz_object_ledger_history_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_settlement_001_test.php": "GREEN", "tests/Yii2/yii2_otiz_object_ledger_history_001_test.php": "GREEN"}
+    }
+  ]
+}
