@@ -4,6 +4,9 @@ require dirname(__DIR__).'/bootstrap.php';
 require __DIR__.'/InspectionFixture.php';
 
 // YII2-CONSTRUCTION-CONTROL-ACTIVE-QUEUE-001: real Yii HTTP is the public seam.
+$css=(string)file_get_contents(dirname(__DIR__,2).'/app/YiiRuntime/Assets/pilot.css');
+assertSameValue(true,str_contains($css,'.fm2-check-order-link { color: var(--fm2-primary); text-decoration: none; }'),'INTENDED_RED linked factory number has no default underline');
+assertSameValue(true,str_contains($css,'.fm2-check-order-link:hover { color: var(--fm2-primary); text-decoration: underline; }'),'INTENDED_RED linked factory number underlines on hover');
 $fixture=null;
 $htmlFile=null;
 try {
