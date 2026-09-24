@@ -93,3 +93,25 @@ The change remains a read-only projection: no schema, command, mutation, hidden 
 No blocking, high, medium or low finding remains. Gate 5 is approved for exact candidate source `58d392b44f81d9d9f18a7fc57da9e678144065ab2c4fa65ea109f51a020b24e8`.
 
 This verdict is limited to the reviewed source and bound local evidence. Publication, exact-source GitHub CI, merge and deployment remain outside this review and must retain their own recorded states.
+
+## Rereview 3 — post-rebase exact-source confirmation
+
+- Rebased base: `b81b08d91ae5639f08413628b411587ae28176df` (`origin/main`, including merged #249/#250)
+- Reviewed HEAD: `d2b0c8a2784b0d636592f8ad35f54284d4bf554c`
+- Candidate source: `3820ab692241b787e5cd84f7bfd5a7f6506e4df1010c706dd89c3de1929a8d8c`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T212740Z-79542a9394/package.json`
+- Exact-source mapped evidence: all three installer-utilization PHP commands GREEN; command blobs retain the approved final test hashes and no mapped test is missing
+- Additional reported post-rebase checks: Quality Graph `18/18` GREEN and architecture `59/59` GREEN
+- Verdict: `APPROVED`
+
+### Rebase assessment
+
+`git range-diff` maps every one of the 23 implementation/specification/test/review-history commits before the final review record to its rebased counterpart with `=`. The rebase therefore preserves the previously approved semantic patches without edit. The only additional commit in the rebased range records the final Gate 5 review itself.
+
+The full candidate diff against `b81b08d9` retains the same bounded stage-one surfaces and the previously approved corrections: exact confirmed-composition binding, canonical known/unknown planning dates, native and legacy PTO history boundaries, server-side directory filters/count/pagination, scoped card/picker projections, escaping/fail-closed behavior, and read-only GET semantics. The merged #249/#250 base changes produced no textual conflict and no observed behavioral regression in the refreshed exact-source checks.
+
+### Final verdict
+
+No finding was introduced by the rebase. Gate 5 remains approved for exact rebased candidate source `3820ab692241b787e5cd84f7bfd5a7f6506e4df1010c706dd89c3de1929a8d8c` at HEAD `d2b0c8a2784b0d636592f8ad35f54284d4bf554c`.
+
+Exact-source GitHub CI, PR publication, merge and deployment remain separate states and are not implied by this local final-review verdict.
