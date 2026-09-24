@@ -336,3 +336,40 @@ The historical record proves the approved pre-implementation test reached a beha
 ### Required changes
 
 None. The narrow canonical planned-start fixture correction at commit `8b381cfc7c08be48fb976ce1ec100396ba2b7b7a` is approved for Gate 3. This verdict does not constitute production or Gate 5 approval.
+
+## Rereview 11 — stale-composition and PTO-history regression oracles
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: root-authored test delta only; production and the untracked Gate 5 review record are not reviewed here
+- Reviewed commit: `b237b2d02ae00ba9cee87819d47979fb44058975`
+- Stage-one test SHA-256: `0ae0eb23baa61ca4ad65517141fdf1eacedf423be4f8eb7cda65680b194537ed`
+- Surfaces test SHA-256: `bf4efb33026d92b94776fa0db1c63ef6318fb2a1f6e67b3d7e7117202b6f1ad0`
+- Evidence supplied with the review request: PTO assertion was behavior RED before its production correction and is now GREEN; stale-composition assertion is GREEN on the corrected exact binding and is regression-sensitive to the prior two-key join
+- Verdict: `CHANGES_REQUESTED`
+
+### Behavioral assessment
+
+Both added regression oracles match the unchanged specification and are independently meaningful:
+
+- the isolated fixture accepts an original for composition 7001, then creates a revised but unconfirmed selection for installer 7002; card and picker must expose no upcoming assignment for 7002. This detects binding an accepted old original to a newer selection by object/order alone instead of the confirmed composition identity;
+- after the third PTO, the installer card must show the exact PTO fact date `21.09.2026` as the participation end and must not describe any period as `продолжается`. This distinguishes a properly closed historical period from merely decrementing the current count.
+
+Expected values come directly from fixture facts and the normative confirmed-original/PTO boundaries. The separate stale fixture has bounded cleanup in `finally`, and the existing main fixture continues to prove the wider matrix.
+
+### Finding
+
+**HIGH — the new semantic fixture runs before the fixture-reachability early exit.** The test now creates `$stale`, logs in, writes two selections, uploads an original, and invokes the new card/picker behavior before creating the main fixture and evaluating:
+
+```php
+if (is_string($boundary) && $boundary !== '') { ... exit(0); }
+```
+
+Under `FMONITOR_FIXTURE_REACHABILITY`, the command is required to prove only that the fixture can start and serve its baseline. With the current ordering, missing or incorrect stale-composition behavior can fail the reachability phase first, falsely classifying a semantic implementation failure as fixture unreachability and preventing the intended RED command from running. It also makes the reachability probe perform upload/selection mutations that are unnecessary for its boundary.
+
+Move the complete `$stale` scenario after the existing boundary branch, or add a dedicated reachability branch before either semantic fixture that opens the canonical fixture, performs only the baseline request, closes it, reports `FIXTURE_REACHABLE`, and exits. Preserve the stale fixture's independent cleanup and behavioral assertions unchanged.
+
+### Required changes
+
+- Restore fixture-reachability isolation by ensuring no stale-composition semantic actions execute before the reachability early exit.
+- Retain the two regression oracles and their exact expectations.
+- Refresh the focused evidence after reordering and return the test-only delta for Gate 3 rereview.
