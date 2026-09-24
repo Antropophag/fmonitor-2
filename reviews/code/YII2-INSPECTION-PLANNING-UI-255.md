@@ -149,3 +149,37 @@ No Gate 5 finding remains for exact source `d5a13206`. The issue #255 candidate 
 ### Decision
 
 No Gate 5 finding remains at exact HEAD `28199194`. The post-CI corrections are independently **APPROVED** and preserve the production verdict. This record confirms review only; final PR-ready status still requires the root delivery record to bind the exact pushed SHA to the authoritative GitHub CI result.
+
+---
+
+## Gate 5 post-main integration review — 2026-09-25
+
+- Reviewed exact merge HEAD: `bdd859bbe98bea964d34ea779e66c6d7e85e0259`.
+- Parents: approved #255 source/review `0c2f91256f91a9e4a62feba0f8abb4328c5866a4`; current `origin/main` `99bd0974150617a01e195cec28f7d886f1ede761` containing merged #258 PR #264.
+- Exact harness source: `35ae08998497d328a462ab3e4f92ed5f2c8e3db9b913f809f753c9840948db6b`.
+- Verdict: **APPROVED**.
+
+### Integration assessment
+
+1. The merge has only two semantic conflict resolutions. `current-delivery-goal.md` correctly retains #255 as the active delivery goal while recording #258 stage one as merged and preserved. The cutover contract retains both independently required asset digests: #255 `inspection-schedule.js` `89f0968f…` and #258 `preopening.js` `6fc7bb97…`; both match the exact local bytes.
+
+2. Shared additive files were preserved. `config/yii/web.php` contains both installer-utilization routes and the inspection-plan POST/fallback routes. Verification policy and suite registration contain both feature families and all #255 scope/HTTP/browser tests. No #258 workforce, directory, person-card, selection behavior, or artifact was removed or edited by the #255 side.
+
+3. The #255 production implementation and its approved security semantics are byte-preserved from the first parent. No new direct event interpretation, alternate persistence, scope bypass, shared-asset edit, or forbidden product expansion was introduced by the merge.
+
+4. Merge-parent inspection shows #258's main-side delta was incorporated rather than selectively reconstructed. The two combined-diff resolutions are consistent with both parents' intended changes; no conflict marker or malformed registration remains.
+
+### Independent bounded evidence
+
+- `git diff --check`: PASS.
+- Exact SHA-256 for both conflicted asset-contract entries: PASS.
+- `php tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php`: PASS.
+- `php tests/Yii2/yii2_inspection_scope_policy_255_test.php`: PASS.
+- `php tests/Yii2/yii2_main_navigation_001_test.php`: PASS.
+- Reported post-merge bounded checks: OpenSpec GREEN; change verification 18/18 GREEN; issue contract, shared-scope HTTP, and main navigation GREEN.
+- The local production-cutover run's shlz-ui external icon HTTP 404 is recorded only as an environment dependency diagnostic. Exact local asset files/digests exist and the same external-icon contract is present on `origin/main`; this review does **not** relabel that run GREEN.
+- Full local `make test` / `make verify` was not run.
+
+### Decision
+
+No integration finding remains at exact HEAD `bdd859bb`. The post-main candidate is independently **APPROVED** for exact-source GitHub CI. Harness CI remains `UNKNOWN` and publication readiness false at review time, so this verdict alone is not PR-ready evidence.
