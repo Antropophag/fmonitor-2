@@ -30,3 +30,33 @@ The remaining reviewed properties are sound: the specification identifies the ac
 - Add an observable deny-before-read probe for guest/no-read/unavailable submit and history paths, including unavailable order coverage.
 - Add desktop/narrow browser coverage for the correction form, including hostile DOM and overflow checks.
 - Re-capture intended RED and the related regression on the corrected exact source, rebuild the prepared reviewer package, and return for independent Gate 3 rereview.
+
+## Gate 3 rereview — corrected candidate 03b8576d
+
+- Reviewer: `issue243_gate3` (same independent reviewer; authored neither specification nor test correction)
+- Corrected exact candidate: `03b8576d6e9a8ee7ee8e2928c5a664d3d1527de7d1baffd3a8dedb62e82033ed`; Git HEAD `a0053a0205a5f82fd2e3faad1ff386a15596e64b`; correction delta from reviewed Git commit `b9099b0e3aa654f28570e7aa22e0502031156054`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T021209Z-4a0b6efbb5/package.json`; SHA-256 `224b7884dc2426511567d4df573af80e575790d47b25ac7e59e64d9164597505`
+- Verification plan: SHA-256 `54e1f192373cb09d6e78d94baa9a2e4c480971432787768b8b7f2adec0b5d2e8`; lane `CRITICAL`; required reviews `gate3`, `final`; required categories `e2e`, `governance`, `integration`, `unit`
+- Context manifest: SHA-256 `e1febd78f0abd5d7eab5d253eaa854590ff6f9bb2a15f8c421341f23b7ac0f98`; required context remains SHA-256 `386682b1a6b81b33d0a611537a1d1b5286dbdcc6463082887f17c6a7bf588133`
+- Corrected RED evidence: record `1790215884552780000-a82e6fdb7698464c8b49c794a39c0057`, exact source `03b8576d…`, command `php tests/Yii2/yii2_original_object_identity_001_test.php`, exit 255, intended failure `initial effective identity contains TEST-4512`
+- Regression evidence: record `1790215893488877000-c91b9e49deae4153849b4fa939068241`, exact source `03b8576d…`, command `php tests/Yii2/yii2_original_transport_001_test.php`, exit 0 / GREEN
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Fixed.** Initial and correction responses now extract the `.fm2-breadcrumb` and `.fm2-order-object` fragments independently and assert the required effective values in each. The implementation cannot satisfy A1 merely by placing the value elsewhere in the response.
+2. **Fixed.** After the deliberate manual edit, the test captures all database facts, original rows, private-file inventory and exact historical bytes; correction/history/download GETs are followed by byte equality and full facts/rows/files equality. The setup mutation is outside the protected comparison.
+3. **Fixed in behavior coverage.** The custom DB command records effective-owner query counts per request. Guest, no-read, missing-object and missing-order submit/history paths must show zero effective reads, while an authorized 200 control must show a positive read. This proves admission ordering rather than only response secrecy.
+4. **Fixed.** Browser execution now separates `mode` from `surface` and exercises both form and history at desktop and 320px for manual hostile values and missing values. The correction form therefore receives the same visibility, overflow and hostile-script checks.
+
+### New finding
+
+1. **High — the deny-before-read probe breaks the existing runtime-boundary assertion after the intended RED is fixed.** `tests/Yii2/yii2_original_object_identity_001_test.php:13-14` replaces `PreopeningFixture`'s default router with a custom router that writes only `effective-read-probe.jsonl`. The default router in `tests/Yii2/PreopeningFixture.php:117-123` is the sole producer of `artifacts/includes.jsonl` records containing the fixture nonce and `get_included_files()`. The corrected test still calls `$f->noLegacy()` at its end, and `PreopeningFixture::noLegacy()` unconditionally reads `includes.jsonl` and requires at least one matching request trace. Current RED stops at line 26 before this latent failure. Once product behavior makes the identity assertions GREEN, the test cannot complete successfully: it will encounter a missing include trace rather than validate the no-legacy boundary. Preserve the standard include/nonce trace in the custom router (alongside the effective-read counter), or provide an equivalently strict combined trace consumed by `noLegacy()`, then demonstrate that the complete test can reach only the intended product RED before implementation.
+
+### Matrix conclusion
+
+A1–A8 mapping, expected-value independence, disposable resources, replay/append-only behavior, exact downloads, escaping, responsive coverage and deny-before-read semantics are otherwise complete in the corrected candidate. The new router setup regression prevents Gate 2 from being a runnable complete specification after implementation and therefore blocks Gate 3 approval.
+
+### Required change
+
+- Restore the `PreopeningFixture::noLegacy()` include-trace contract while retaining the effective-read probe; recapture exact-source intended RED and transport GREEN, rebuild the package, and return for rereview.
