@@ -36,3 +36,23 @@ The corrected acceptance test exercises absent, null, empty and later non-empty 
 - Full local `make test` / `make verify` was not run, as required.
 
 This verdict approves the reviewed code snapshot for publication. The review record itself is the only post-snapshot addition and must be included in the final committed candidate. Exact committed-source GitHub CI is still required and is not implied by this approval; at review time PR/CI remain `UNKNOWN`.
+
+---
+
+## Gate 5 CI browser-harness delta rereview — 2026-09-24
+
+- Reviewer: `/root/final_review`; independence is unchanged and the reviewer did not author the correction.
+- Refreshed package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022834Z-c314aca496/package.json`.
+- Exact reviewed candidate source: `cb5b8fe4cc6be2deb1780480e280d0008bc8a4ef61c9f16e5c923c99bafb21db`.
+- Reconstructible snapshot patch SHA-256: `b32d7bed1bf57dfe6e893d99eeb8b8e82848bdefa21e4c7f49d5af2da6ca1120`.
+- Verification-plan SHA-256: `d679d8eabb1027a8d0956e61be7afe360bc13e9cc89a499cd3f3b6cc6a70c067`; planner decision remains `CRITICAL`, with `gate3` and `final` required.
+- Refreshed Gate 3 delta review: **APPROVED** in `reviews/tests/CALENDAR-EFFECTIVE-OBJECT-DETAILS-001.md` and recorded for this exact source by the active harness binding.
+- Rereview verdict: **APPROVED**.
+
+### Delta and evidence assessment
+
+The only executable delta since the preceding Gate 5 approval is the browser helper's Playwright loading mechanism. It replaces ESM directory import with the repository-established `createRequire(import.meta.url)` and CommonJS package-root resolution. The authenticated navigation, three event-type assertions, effective-value assertions, reload and six-copy assertion are unchanged. The fixture still owns the module path; the correction neither bypasses browser execution nor relaxes an expectation. Production code, the PHP acceptance matrix, specification and prior RED are unchanged.
+
+The source-bound record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790216890330766000-5363e88802204674a7377bd27fa0d380.json` reports `php tests/Yii2/yii2_calendar_effective_object_details_001_test.php` **GREEN**, exit 0, with both candidate and end source `cb5b8fe4...`; this execution includes the corrected real-browser path. Independent `node --check` and `git diff --check` are also GREEN. Browser helper SHA-256 is `46484f86c5a8bcdc488b28a27cb552b20f97a38a95e615068abc56a0919f1b5e`.
+
+No new finding is introduced, and all conclusions of the preceding Standards and Specification axes remain valid. Exact committed-source CI remains a subsequent delivery requirement and is not implied by this rereview.

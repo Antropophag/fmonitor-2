@@ -1,6 +1,6 @@
-import process from 'node:process';
+import process from 'node:process';import{createRequire}from'node:module';
 const chunks=[];for await(const chunk of process.stdin)chunks.push(chunk);const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
-const{chromium}=await import(input.playwright);const browser=await chromium.launch({headless:true});
+const require=createRequire(import.meta.url),{chromium}=require(input.playwright),browser=await chromium.launch({headless:true});
 try{const context=await browser.newContext();await context.addCookies(Object.entries(input.cookies).map(([name,value])=>({name,value,url:input.url})));const page=await context.newPage();await page.goto(input.url+'/pilot/calendar?date=2026-10-15');
 for(const type of['inspection','planned_start','planned_end']){const item=page.locator(`[data-object-id="4512"][data-event-type="${type}"]`).first();if(await item.count()!==1)throw new Error(`missing ${type}`);const text=await item.innerText();if(!text.includes('Next address')||!text.includes('CUR-4512'))throw new Error(`stale ${type}: ${text}`);}
 await page.reload();if(await page.locator('[data-object-id="4512"]').count()!==6)throw new Error('expected grid and agenda copies for three events after reload');console.log('BROWSER_GREEN effective details after reload');await context.close();}finally{await browser.close();}
