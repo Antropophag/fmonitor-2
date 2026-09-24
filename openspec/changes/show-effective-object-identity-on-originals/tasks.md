@@ -16,6 +16,6 @@
 
 ## 4. Gate 5 and publication (independent reviewer + root)
 
-- [ ] 4.1 Захватить exact candidate source и получить planner-required независимый sol/low final review с одним полным findings list и явным `APPROVED`; исправления к code/tests повторно проверить по процессу.
-- [ ] 4.2 Root проверяет полноту candidate, commits/authorship/evidence, rebase/conflicts с актуальным `origin/main` и отсутствие изменений параллельных boundaries; все OpenSpec tasks и delivery record соответствуют фактическому состоянию.
+- [x] 4.1 Захватить exact candidate source и получить planner-required независимый sol/low final review с одним полным findings list и явным `APPROVED`; исправления к code/tests повторно проверить по процессу.
+- [x] 4.2 Root проверяет полноту candidate, commits/authorship/evidence, rebase/conflicts с актуальным `origin/main` и отсутствие изменений параллельных boundaries; все OpenSpec tasks и delivery record соответствуют фактическому состоянию.
 - [ ] 4.3 Push exact committed candidate, открыть PR с `Closes #243`, запустить один штатный exact-source CI consumer, собрать полный failed-job/`REGRESSION_FAILURE` inventory при сбое и довести PR до green либо указать конкретный внешний blocker; merge/deploy не выполнять.
