@@ -1,0 +1,42 @@
+{
+  "change": "classify-backlog-issue-labels-issue-256",
+  "planned_paths": [
+    "AGENTS.md",
+    "docs/issue-labels.md",
+    "docs/operations/issue-256-backlog-labels-delivery.md",
+    "openspec/changes/classify-backlog-issue-labels/design.md",
+    "openspec/changes/classify-backlog-issue-labels/proposal.md",
+    "openspec/changes/classify-backlog-issue-labels/specs/operations/backlog-issue-classification/spec.md",
+    "openspec/changes/classify-backlog-issue-labels/tasks.md",
+    "openspec/changes/classify-backlog-issue-labels/verification-input.json",
+    "reviews/code/BACKLOG-ISSUE-LABELS-001-gate3.md",
+    "reviews/tests/BACKLOG-ISSUE-LABELS-001.md",
+    "specs/BACKLOG-ISSUE-LABELS-001.md",
+    "tests/Verification/backlog_issue_labels_256_test.py",
+    "tests/InstallationProcess/assignment_order_original_database_setup_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BACKLOG-ISSUE-LABELS-001",
+      "acceptance_id": "A1-A8-exact-schema-complete-backlog-safe-idempotent-migration",
+      "spec_path": "specs/BACKLOG-ISSUE-LABELS-001.md",
+      "seam": "authorized GitHub Issues/Labels API mutations plus repository maintenance rules and factual delivery report",
+      "seam_kind": "infrastructure",
+      "tests": ["tests/Verification/backlog_issue_labels_256_test.py"],
+      "gate3_expected": {"tests/Verification/backlog_issue_labels_256_test.py": "INTENDED_RED"},
+      "observable_dimensions": {
+        "stdout": {"status": "not_applicable", "reason": "The external seam is GitHub metadata; it has no normative stdout."},
+        "stderr": {"status": "not_applicable", "reason": "The external seam is GitHub metadata; failures are retained in the evidence envelope."},
+        "exit_status": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "retained_evidence": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "filesystem_effects": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "idempotence": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "failure_semantics": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "caller_interoperability": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]},
+        "worktree_concurrency_isolation": {"status": "not_applicable", "reason": "GitHub mutations use per-issue fresh reads; repository work occurs in an isolated worktree and no shared runtime is changed."},
+        "verification_registry_synchronization": {"status": "covered", "tests": ["tests/Verification/backlog_issue_labels_256_test.py"]}
+      }
+    }
+  ]
+}
