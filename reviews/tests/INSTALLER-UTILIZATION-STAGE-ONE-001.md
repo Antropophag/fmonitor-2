@@ -429,3 +429,30 @@ The installer-directory presentation correction restores the pre-existing positi
 ### Required changes
 
 None. The root-owned CI regression expectation deltas are approved. Production still requires its independent code/Gate 5 disposition.
+
+## Rereview 14 — internal workforce-source non-disclosure oracle
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: one-line root-owned test oracle correction only; production is not reviewed
+- Corrected surfaces test SHA-256: `22acd0d66e4c88af82e94f59ec59558072d46264aca51d34b7a41ac77224afa9`
+- Evidence reported with the review request: focused surfaces test GREEN
+- Verdict: `APPROVED`
+
+### Assessment
+
+The previous assertion required the hostile internal `workforce_source` value to appear HTML-escaped. That contradicted the established presentation boundary: the workforce source is internal provenance and is intentionally absent from the installer directory/card UI.
+
+The corrected assertion requires both representations to be absent:
+
+```text
+<script>source</script>
+&lt;script&gt;source&lt;/script&gt;
+```
+
+This is stricter than an escaping-only assertion. It detects raw injection and also detects disclosure that happens to be safely encoded. The fixture still searches and renders the intended installer row, so the assertion cannot pass merely because no result was returned; surrounding count/filter and hostile-input tests remain intact.
+
+The change does not weaken the contract requirement that displayed user/external strings are escaped. It clarifies that this particular internal field is not display data at all, consistent with the existing object-card/directory presentation contract.
+
+### Required changes
+
+None. The one-line privacy oracle correction is approved for Gate 3. This verdict does not review production.
