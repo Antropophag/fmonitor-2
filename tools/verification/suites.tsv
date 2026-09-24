@@ -319,6 +319,7 @@ e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_installer_directory_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_object_details_editing_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_object_queue_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_original_object_identity_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_shlz_ui_001_test.php	e2e

@@ -1,0 +1,36 @@
+{
+  "change": "show-effective-object-identity-on-originals",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbEffectiveObjectDetails.php",
+    "app/YiiRuntime/PreopeningResources.php",
+    "app/YiiRuntime/Controllers/OriginalController.php",
+    "app/YiiRuntime/Controllers/OriginalHistoryController.php",
+    "app/YiiRuntime/Views/original.php",
+    "app/YiiRuntime/Views/original-history.php",
+    "specs/YII2-ORIGINAL-OBJECT-IDENTITY-001.md",
+    "tests/Yii2/yii2_original_object_identity_001_test.php",
+    "tests/Yii2/original_object_identity_browser.mjs",
+    "tools/verification/suites.tsv",
+    "openspec/changes/show-effective-object-identity-on-originals/proposal.md",
+    "openspec/changes/show-effective-object-identity-on-originals/design.md",
+    "openspec/changes/show-effective-object-identity-on-originals/tasks.md",
+    "openspec/changes/show-effective-object-identity-on-originals/specs/pilot/original-object-identity/spec.md",
+    "openspec/changes/show-effective-object-identity-on-originals/verification-input.json",
+    "reviews/tests/YII2-ORIGINAL-OBJECT-IDENTITY-001.md",
+    "reviews/code/YII2-ORIGINAL-OBJECT-IDENTITY-001.md"
+  ],
+  "acceptances": [{
+    "spec_id": "YII2-ORIGINAL-OBJECT-IDENTITY-001",
+    "acceptance_id": "A1-A8-complete-original-object-identity-slice",
+    "spec_path": "specs/YII2-ORIGINAL-OBJECT-IDENTITY-001.md",
+    "seam": "authorized and denied real Yii GET original submit/history plus existing POST/replay/download boundaries and desktop/320px browser rendering cover A1-A8",
+    "tests": [
+      "tests/Yii2/yii2_original_object_identity_001_test.php",
+      "tests/Yii2/yii2_original_transport_001_test.php"
+    ],
+    "gate3_expected": {
+      "tests/Yii2/yii2_original_object_identity_001_test.php": "INTENDED_RED",
+      "tests/Yii2/yii2_original_transport_001_test.php": "GREEN"
+    }
+  }]
+}
