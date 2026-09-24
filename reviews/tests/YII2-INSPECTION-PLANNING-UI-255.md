@@ -61,3 +61,35 @@ Gate 4 is not authorized. Correct the complete test matrix as one root-authored 
 The correction is substantial: replay/conflict, queue/calendar state transitions, projection outage for queue, multi-page today ordering, Moscow midnight, overflow and a longer browser action flow are now represented. It does not yet close the complete six-finding matrix promised by the normative contract. In particular, the sensitive controller authorization boundary, filtered COUNT behavior, server-originated unknown result, calendar fail-closed behavior and keyboard/cross-surface browser path remain capable of regressing while the suite passes.
 
 Gate 4 remains unauthorized. Rebuild these remaining cases together, regenerate the source-bound package, retain dependency-complete RED evidence, and request another independent rereview.
+
+---
+
+## Gate 3 second correction rereview — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Corrected HEAD: `faf2608be1486bf140b16eb7260157211e41595c`.
+- Exact candidate source: `a637ecc57e4301f0d7de93347365573b501f6bc21e7593686ef1ef3fe25e6c73` (clean worktree).
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T210543Z-0560223e7e/package.json`; lane `CRITICAL`, required reviews `gate3` and `final`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Closed findings
+
+1. **Filtered count/page membership — resolved.** `yii2_inspection_planning_today_priority_255_test.php:8` now applies a nonempty search, independently asserts the filtered total before combining two pages, and retains the 51-row today boundary, stable numeric ordering and future-row position. Midnight and no-DML witnesses remain.
+
+2. **Calendar outage closure — resolved for schema outage.** `yii2_inspection_planning_ui_255_test.php:20` now requests both queue and calendar while the event projection table is unavailable, requires `503` from both, rejects partial row/event HTML and restores the fixture table in `finally`.
+
+3. **Keyboard/cross-surface browser journey — resolved.** The browser matrix now opens reschedule by keyboard, checks date focus, Escape and trigger focus restoration, and observes the canonical object link in calendar after create/reschedule and its absence after cancel in desktop and narrow viewports.
+
+### Remaining blocking findings
+
+1. **BLOCKING — the real Yii authorization matrix still does not execute an allowed command as either required actor.** The new HTTP prelude proves an assigned engineer can GET `ownership=mine`, an out-of-scope engineer POST returns `404` without facts, and an FKR actor can GET the global queue (`yii2_inspection_planning_ui_255_test.php:8`). All successful create/reschedule/cancel requests remain under the original fixture actor `9101`, whose role was renamed generic `manager`. Neither engineer `9403` nor FKR `9401` performs an allowed POST. A controller that denies all engineer writes, or maps FKR reads correctly but command identity incorrectly, still passes. Add at least one successful real-route command for each required actor, assert the recorded exact actor and scoped object, and retain the denial witness.
+
+2. **BLOCKING — the unknown-outcome browser case still bypasses the server application and cannot prove the specified retained return path.** Replacing `route.abort` with Playwright `route.fulfill({status:503, body:'Service unavailable.'})` does not exercise the Yii route or its uncertainty classification. It replaces the entire server response with plaintext, so a native form navigation should leave the application page; no production response supplies the expected `Результат … не подтверждён` copy or preserved dialog. The test's subsequent expectation therefore either fails for browser mechanics or requires an unrelated client interception layer, contrary to the declared native-form/no-fetch design. Introduce a deterministic failure at the command/server boundary and let the real Yii POST render the classified unknown response with full action/object/date/version/request identity; then assert no automatic second POST and one explicit retry. Add the confirmed-rejection browser return path as previously requested.
+
+3. **BLOCKING — multiple-current ambiguity is not exercised through both publication surfaces.** The priority test injects overflow and calls only `MariaDbYiiChecklist::queue`, expecting an exception. The HTTP closure covers only a missing-table outage. Calendar can still tolerate or publish one of multiple current plans while queue fails closed. With the overflow fixture active, request real queue and calendar routes and require both to fail before partial HTML and without DML.
+
+4. **BLOCKING — dependency-complete retained RED evidence is still absent.** Harness state for the exact clean source reports executable RED `PENDING`; direct fixture runs in the preceding review stopped at missing `vendor/autoload.php`. This correction adds no retained run showing that the sensitive route, projection and browser scenarios reach intended missing behavior. PHP/Node syntax checks and `git diff --check` pass, but those are not Gate 2 RED evidence. After correcting the three behavioral gaps above, retain one prepared dependency-complete run that reaches the whole scenario matrix and fails only for missing production behavior.
+
+### Decision
+
+Three material parts of the prior return are now closed, but controller command authorization, server-originated unknown handling, calendar ambiguity closure and executable RED evidence remain open. Gate 4 remains unauthorized. The next handoff should correct these as one complete matrix and regenerate the source-bound package before rereview.
