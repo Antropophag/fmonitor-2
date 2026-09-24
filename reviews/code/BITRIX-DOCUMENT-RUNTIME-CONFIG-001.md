@@ -98,3 +98,48 @@ All planner-selected bounded local checks are GREEN for source `d69c7bfe678fa85e
 `APPROVED`
 
 Gate 5 passes for exact candidate source `d69c7bfe678fa85e82cbec985126898bbf77d0f41ba6825406b82701ad4c7b52`. The prior `CHANGES_REQUESTED` remains historical for `e430d82ef0ed7041dd217383b0053364703ab07cf0fda3abc0899b2095036206`; all of its findings are closed in this reviewed source. Final harness recording requires the planned refreshed binding that includes this review-file update, followed by the repository's authoritative exact-source CI step.
+
+---
+
+## Post-CI characterization correction rereview — 2026-09-24
+
+- Reviewer: `issue252-final-review`
+- Implementation author: `issue252-executor`; characterization correction author: `root`
+- Verdict: **APPROVED**
+- Exact candidate source: `cc87dac2ec209ecbb7a34384917a398d1022393e60b65b5bfeb2c03c25134b7d`
+- Executable source: `47120c5bee52a9ac9f56d8973ab5f9e2b51d699de24b4b3fbce60116143a244a`
+- Base: `10dcc95f718fbc2e09191f331f0c057799f8675d`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T105505Z-916318a012/package.json`
+- Required context SHA-256: `a8dfacc25cd2d54436bd4d99f455879d77a6858b5f324be4266fc4b5b43989e1`
+- Context manifest SHA-256: `a6628f00a7e692c24156c63fc0e662e6db2b87896c7f880fd267b6111e614945`
+- Verification plan SHA-256: `f60c9e08deff07a86e9f0c5e49d94a59747f2d1b19a9cc8cddb0ba2a5505f9b3`
+- Supplemental independent test review: **APPROVED** in `reviews/tests/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md` for source `9cab04a0f6621a255fa9cc7bf29956ad895a64b8cc7e136f8e463b7722ed83ee`.
+
+### Delta review
+
+The only executable delta since the preceding Gate 5 approval is the one-line correction in `tests/Deployment/erp_equipment_facts_runtime_001_test.py`. It replaces the obsolete fixed-path/fixed-identity literals `mktemp /run/fmonitor-secrets/` and `chown 10001:10001` with assertions for the implemented and specified parameterized boundaries `mktemp "$target_directory/` and `chown "$runtime_uid:$runtime_gid"`. The characterization still requires `WorkerConfiguration::fromFile`, `sync -f`, `chmod 0600` and `mv -f`; it therefore continues to detect removal of validation, privacy, ownership, durability or atomic replacement. This is alignment with the approved overridable test seam, not relaxation of the security contract.
+
+`verification-input.json` now declares the changed registered characterization in the planned paths and maps it to A1–A6/A8. The supplemental Gate 3 review independently approved that exact test delta. Production code, Compose, operator documentation, canonical specification and all previously reviewed issue #252 acceptance behavior are unchanged. The six findings closed by the prior rereview remain closed.
+
+### Exact-source focused evidence
+
+All eight selected bounded checks are GREEN for source `cc87dac2ec209ecbb7a34384917a398d1022393e60b65b5bfeb2c03c25134b7d`:
+
+- `1790247206438354000-e127b82adc4647cbb09b5533dcad43ad` — document runtime config
+- `1790247213671851000-e2e1258b934048d5be6e4cfe94d1210d` — Bitrix startup config
+- `1790247218754299000-e4e8817857ab4cfbb40b8c18f8346aae` — ERP/runtime staging characterization
+- `1790247223396199000-c64e58e8eb1544f8a6cdc1610f06e840` — configured-root document delivery
+- `1790247227747922000-8facf31feed14ce3afeb7a188d8cb85d` — rendered jobs runtime contract
+- `1790247232326691000-8cae44c77658497eb2ccd79d03d68b8b` — verification governance
+- `1790247262908371000-53c5e29118f14655818da3077aa60f25` — runtime storage
+- `1790247268682896000-b158788a8c53455b8131427f9866cc69` — architecture guard
+
+### CI disposition
+
+GitHub CI run `35987546040` supplied a complete failure inventory. Its unit failure was exactly the stale characterization corrected here. Integration (2/2), e2e, governance and fast passed. Integration (1/2) retains the unrelated `inspection_item_complete` missing-revision `JsonException`/race failure; bounded local reproduction did not reach that case because database migration setup was unavailable. Aggregate verify failed accordingly. This review does not relabel that unresolved external failure as GREEN and does not claim CI admission, merge readiness, deployment, production Bitrix access, job publication or card display.
+
+### Final decision
+
+`APPROVED`
+
+Gate 5 remains approved for exact candidate source `cc87dac2ec209ecbb7a34384917a398d1022393e60b65b5bfeb2c03c25134b7d`. The characterization correction is scoped, independently test-reviewed and exact-source GREEN; no production or contract regression is introduced. Harness recording requires the planned refreshed binding containing this finalized review update. CI admission remains separate and non-green due to the retained unrelated Integration (1/2) failure.
