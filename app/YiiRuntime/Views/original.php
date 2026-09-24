@@ -7,9 +7,14 @@ use yii\helpers\Html;
 
 $title = $current ? 'Исправить оригинал' : 'Загрузить оригинал';
 $path = '/pilot/objects/' . (int) $objectId . '/assignment-orders/' . (int) $orderId . '/originals';
+$display = static fn(mixed $value): string => is_string($value) ? trim($value) : '';
+$registrationNumber = $display($objectIdentity['registrationNumber'] ?? null);
+$address = $display($objectIdentity['address'] ?? null);
+$entrance = $display($objectIdentity['entrance'] ?? null);
+$factoryNumber = $display($objectIdentity['factoryNumber'] ?? null);
 ViewSupport::begin($this, $title, $identity);
 ?>
-<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><a class="fm2-breadcrumb-link" href="/pilot/objects/<?= (int) $objectId ?>">Объект № <?= (int) $objectId ?></a><span aria-hidden="true">/</span><span aria-current="page"><?= $title ?></span></nav>
+<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><a class="fm2-breadcrumb-link" href="/pilot/objects/<?= (int) $objectId ?>"><?= Html::encode($registrationNumber !== '' ? $registrationNumber : 'Регистрационный номер не указан') ?> · <?= Html::encode($address) ?><?= $entrance !== '' ? ' · Подъезд ' . Html::encode($entrance) : '' ?> · <?= Html::encode($factoryNumber !== '' ? 'Заводской номер: ' . $factoryNumber : 'Заводской номер не указан') ?></a><span aria-hidden="true">/</span><span aria-current="page"><?= $title ?></span></nav>
 <div class="fm2-page-header fm2-order-heading"><div><h1><?= $title ?></h1><p>Проверьте выбранный состав и приложите оформленный документ.</p></div></div>
 <form class="fm2-order-form" action="<?= $path ?>" data-original-upload-form data-return-url="/pilot/objects/<?= (int) $objectId ?>">
     <?= Html::hiddenInput('csrfToken', $csrf) ?>
@@ -20,7 +25,7 @@ ViewSupport::begin($this, $title, $identity);
     <?= Html::hiddenInput('expectedCurrentRevisionId', $current['revisionId'] ?? '') ?>
     <?php if (!$current): ?><?= Html::hiddenInput('correctionReason', '') ?><?php endif ?>
     <fieldset class="fm2-order-surface" data-original-fields disabled>
-        <header><div class="fm2-order-object"><strong>Объект монтажа № <?= (int) $objectId ?></strong><span>Распоряжение · версия <?= (int) ($orderVersion ?? 0) ?></span><small>Выбранный состав сохранён отдельно от файла оригинала</small></div></header>
+        <header><div class="fm2-order-object"><strong><?= Html::encode($registrationNumber !== '' ? $registrationNumber : 'Регистрационный номер не указан') ?></strong><span><?= Html::encode($address) ?><?= $entrance !== '' ? ' · Подъезд ' . Html::encode($entrance) : '' ?></span><small><?= Html::encode($factoryNumber !== '' ? 'Заводской номер: ' . $factoryNumber : 'Заводской номер не указан') ?></small><small>Распоряжение · версия <?= (int) ($orderVersion ?? 0) ?></small></div></header>
         <?php if ($current): ?><div class="fm2-order-current"><div><strong>Принятый оригинал · редакция <?= (int) $current['revisionNumber'] ?></strong><span>Дата документа: <?= Html::encode($current['documentDate']) ?></span><small>Предыдущий файл и дата сохранятся в истории.</small></div><a class="shlz-link" href="<?= $path ?>/history">История и PDF</a></div><?php endif ?>
         <section class="fm2-order-upload" aria-labelledby="signed-original"><div class="fm2-order-section-head"><div><h2 id="signed-original">Подписанный оригинал</h2><p>Загрузите один PDF-файл и укажите дату, напечатанную в документе.</p></div><span class="shlz-status shlz-status--blue">До 20 МиБ</span></div><label class="fm2-file-drop" data-file-drop><input type="file" name="original" accept="application/pdf,.pdf" required><img src="/pilot/assets/shlz-icons/cloud-upload.svg" data-shlz-icon="cloud-upload" alt=""><span><strong><u>Выберите</u> или перетащите сюда файл</strong><small data-file-name>PDF, не более 20 МиБ</small></span></label></section>
         <section class="fm2-order-team"><div class="fm2-order-section-head"><div><h2>Выбранный состав</h2><p><?= Html::encode(implode(', ', array_column($composition['installers'], 'fullName'))) ?></p></div></div><?php foreach ($composition['installers'] as $installer): ?><div class="fm2-object-installer"><strong><?= Html::encode($installer['fullName']) ?></strong><span>Табельный № <?= Html::encode((string) ($installer['tabId'] ?? 'Не указан')) ?></span></div><?php endforeach ?><p class="fm2-order-engineer-line"><strong>Инженер строительного контроля</strong><span><?= Html::encode($composition['engineer']['fullName']) ?></span></p></section>

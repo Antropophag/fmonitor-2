@@ -37,7 +37,7 @@ final class OriginalController extends PreopeningController
             $result = $resources->originalAccess()->readSubmissionForm($this->actor(), $id, $orderId);
             if (($result['reasonCode'] ?? null) === 'SERVICE_UNAVAILABLE') $this->reportResult('dependency');
             return $result['status'] === 'found'
-                ? $this->render('@app/app/YiiRuntime/Views/original', $result + ['identity' => Yii::$app->user->identity, 'csrf' => Yii::$app->request->csrfToken])
+                ? $this->render('@app/app/YiiRuntime/Views/original', $result + ['objectIdentity' => $resources->originalObjectIdentity($id), 'identity' => Yii::$app->user->identity, 'csrf' => Yii::$app->request->csrfToken])
                 : $this->domain($result);
         } catch (\Throwable $error) {
             Yii::$app->response->headers->set('X-FMonitor-Error-ID', SafeRuntimeFailure::report($error, 'original_controller'));
