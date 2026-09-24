@@ -2,13 +2,13 @@
 
 - Reviewer: independent Gate 3 reviewer `/root/gate3_review` (gpt-5.6-sol/low); did not author the specification or tests
 - Test author: root Codex session, owner-authorized scope/spec/test authorship
-- Reviewed source: targeted scope-corrected candidate `3875e2e70402fedfa24579e2281350f7abd6db87a24aea678339356665cde0c3`, executable source `82c37a62180c20be55e3339022f52760b00116917c3e175c62d5fda87cdeb8e5`, base `bbf9489db16cba388f4430321a865459902e17ba`
-- Reviewed package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022727Z-5d49532d75/package.json`
-- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022727Z-5d49532d75/snapshot`, patch SHA-256 `83a25baab52a005f0c486f9c2336c89332979b7b8e39fcefa5542eccf2c25adf`
-- Agreed review scope / prior findings disposition: targeted Gate 3 scope-correction rereview of the root-owned specification/test delta only: GET-only route boundary, corrected retained-current-snapshot A09 oracle, Yii bootstrap and precise foreign-reversal assertion; production implementation was not reviewed at this gate
+- Reviewed source: Gate 5 blocking-correction candidate `aa8f2e7dea974552853aa86743bcdc097b5e868e869aab49e222583a4d0a2813`, executable source `18ae1824b9d096799759832b0b19b80b496dcf9f13d0b6e33eae4e89a1e2a284`, base `fac7ac8afa9a8eb2de0b4184cc22e457332bbac3`
+- Reviewed package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T024124Z-07d70c3d37/package.json`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T024124Z-07d70c3d37/snapshot`, patch SHA-256 `5ce006ee38c19fa46cb8528811d21dbfe6ed40ef641a1910c5ad3b84ae8f14a9`
+- Agreed review scope / prior findings disposition: Gate 3 review of the root-owned blocking-correction specification/test delta from Gate 5, limited to cross-page same-object reversal links and a syntactically valid `PHP_INT_MAX` out-of-range page; production implementation was not reviewed at this gate
 - Specification: `specs/OTIZ-OBJECT-LEDGER-HISTORY-001.md`; OpenSpec `object-ledger-history`
 - Public seam: `GET /pilot/otiz/snapshots/{snapshotId}?object={objectId}&ledgerPage={page}` plus browser transition from the existing object drawer; the existing route remains GET-only and HEAD is explicitly out of scope
-- RED evidence: `php tests/Yii2/yii2_otiz_object_ledger_history_001_test.php` reached the browser flow and failed at the intended missing server-rendered drawer transition (`expected 1`, `actual 0`) in fresh retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790216834410954000-5614aaa233f34d079168854267ea24ca.json`; source and end source both match the scope-corrected candidate.
+- RED evidence: `php tests/Yii2/yii2_otiz_object_ledger_history_001_test.php` failed at the intended extreme-page behavior (`ledgerPage=PHP_INT_MAX`: expected `200`, actual `503`) in exact retained record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217672486144000-cd312639786444b3b1279e89c2f0e34f.json`; source and end source both match the blocking-correction candidate.
 - Verdict: `APPROVED`
 
 ## Findings
@@ -30,9 +30,15 @@ No current findings.
 - Test setup: **approved**. Composer autoload and `vendor/yiisoft/yii2/Yii.php` are loaded before the Yii command subclass, removing the setup contradiction while the fresh run reaches the intended product RED.
 - Foreign reversal oracle: **approved**. The assertion now rejects the exact foreign closure anchor and exact source-label disclosure, alongside neighbor basis/identity, without falsely rejecting an unrelated occurrence of the numeric identifier.
 
+### Gate 5 blocking-correction dispositions
+
+- Same-object reversal split across pages: **approved**. The isolated object `7901` has exactly 11 ordered rows: a September reversal, nine August fillers, and its July original. With normative page size 10 this independently and deterministically places the reversal on page 1 and original on page 2. The test proves the membership split, requires the exact current-context URL `?object=7901&amp;ledgerPage=2#closure-{originalId}`, and proves that anchor exists on page 2. Existing hostile foreign-object reversal assertions remain in force, so the correction cannot authorize a cross-object target.
+- Extreme syntactically valid page: **approved**. `PHP_INT_MAX` is submitted as a positive decimal integer, distinct from invalid-parameter rejection. The test requires HTTP `200`, zero page rows, and the same full-set `12` count and `12,00 ₽` total as pages 1–3. It therefore detects arithmetic overflow, accidental 503/error handling, clamping to the last page, or leakage/substitution while preserving the specified empty out-of-range behavior.
+- Fixture and source-link sensitivity: **approved**. Snapshot objects `7901` exist in A/B/C, the original closure belongs to source A and the reversal to source C, while the reversal link deliberately stays in the requested B object-history context so it can resolve the original's actual paginated position. Source-snapshot links remain a separate established projection. No permissions, writers, formulas or foreign-object visibility are broadened.
+
 ## Review summary
 
-The targeted scope correction removes both executor-reported contradictions without weakening the accepted A01-A10 behavior. The GET-only public seam matches the owner boundary; A09 now protects all existing current-snapshot rows while the new view remains object-filtered and cross-snapshot; bootstrap and foreign-reversal checks are deterministic and precise. All earlier Gate 3 findings remain fixed, no regression or new risk was found in the reviewed spec/test delta, and the exact-source RED fails for the intended missing drawer transition.
+The Gate 5 blocking-correction delta adds two narrow, independently determined expectations without weakening prior A01-A10 coverage. Cross-page reversal navigation is tested at the actual page and anchor while foreign targets remain hidden; the maximum valid integer page is distinguished from malformed input and must return an empty, internally consistent `200` response. Fixtures, context links and sensitive object isolation are coherent. All earlier Gate 3 findings remain fixed, no new risk was found in the reviewed spec/test delta, and the exact-source RED fails for the intended 503 overflow/error behavior.
 
 ## Required changes
 
