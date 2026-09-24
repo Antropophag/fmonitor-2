@@ -113,3 +113,39 @@ Gate 5 remains closed. Centralize the effective actor/object scope policy alongs
 ### Decision
 
 No Gate 5 finding remains for exact source `d5a13206`. The issue #255 candidate is independently **APPROVED** for final exact-source CI. This review does not assert CI GREEN or PR-ready by itself: harness CI remains `UNKNOWN`, publication readiness is false, and the mandatory exact-source GitHub run must still pass before PR-ready can be reported.
+
+---
+
+## Gate 5 post-CI-correction rereview — 2026-09-25
+
+- Reviewed exact HEAD: `28199194bb502dd5ffe42c712724d31b84ac7fae`.
+- Production implementation remains the approved `d5a1320686fe870c9ce79cf6e79655f87259e81f`; no production file changed after that approval.
+- Reviewed correction commits: `7eac9fee`, `893c0390`, `3dcf5704`, `86c3b305`, plus independent review records through `28199194`.
+- Current harness admission candidate source: `4719100d067aad205c6577565495025cb5fdd36466017cf42244d97202a1658f`.
+- Verdict: **APPROVED**.
+
+### Assessment
+
+1. **Global fixture authority remains explicit.** The affected construction-control, calendar, preopening and inspection fixtures now assign an active `manager` role whose active role set carries `objects.read`; they do not bypass the shared production scope policy or grant an anonymous fixture exception.
+
+2. **Mixed-role revocation remains real.** Adding the manager role to inspection actor `73` would otherwise preserve `inspection.item.complete`; the journey now revokes that capability from both active roles before asserting safe denial and an unchanged fact snapshot. The negative oracle is stronger, not weakened.
+
+3. **Navigation and direct-route admission remain separate.** Navigation membership continues to follow `construction_control.read`, preserving its established permission contract. After `objects.read` revocation the link may remain visible, but the real construction-control route must return exact `403`, while the shared fact snapshot proves no DML. The matrix no longer incorrectly expects that denied route to return `200`.
+
+4. **Asset publication contract is exact.** The updated SHA-256 `89f0968f61169acc5527a229c2affcac4dccc303694095c0cf6c58d1ccdab8c4` matches the reviewed `inspection-schedule.js` bytes.
+
+5. **Verification ownership correction does not drop the changed implementation boundary.** `MariaDbYiiChecklist.php` is only the unchanged composition wrapper; the actually changed `MariaDbYiiChecklistRead.php` remains registered in the policy and verification input. Removing the wrapper's erroneous capability ownership avoids unrelated bootstrap ownership failures without excluding the modified reader.
+
+6. **No specification expectation was weakened.** Security, no-DML, mixed-role, direct-route, append-only, browser asset and current-plan requirements retain executable assertions. The reported affected focused inventory is GREEN, including the eight-test registered bootstrap run (342 seconds).
+
+### Independent bounded evidence
+
+- `git diff --check`: PASS.
+- PHP syntax for every changed PHP fixture/contract: PASS.
+- Exact inspection asset digest: PASS.
+- `php tests/Yii2/yii2_main_navigation_001_test.php`: PASS.
+- Full local `make test` / `make verify` was not run.
+
+### Decision
+
+No Gate 5 finding remains at exact HEAD `28199194`. The post-CI corrections are independently **APPROVED** and preserve the production verdict. This record confirms review only; final PR-ready status still requires the root delivery record to bind the exact pushed SHA to the authoritative GitHub CI result.
