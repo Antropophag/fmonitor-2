@@ -137,3 +137,23 @@ The CI failure is therefore classified as a checker ownership-map omission expos
 No Gate 5 finding is introduced by commit `92e4be2d`. The previously approved product verdict remains valid with this architecture-policy correction.
 
 The CI run's corrected/re-run terminal status, PR publication, merge and deployment remain separate recorded states; this review does not infer them from the focused GREEN checks.
+
+## Rereview 5 — CI shared-table token correction
+
+- Reviewed correction commit: `c282311c3ea5e25f322eb174be6391d7855ba26f`
+- Parent: approved architecture correction `92e4be2dae5eb2a5ef770c84cf84fcf7eb9ba0ad`
+- Complete superseded-run inventory: fast `sql_ownership` failure addressed in rereview 4; unit `REGRESSION_FAILURE` in `yii2_shlz_visual_contract_001_test.php` requiring the established public table tokens; remaining jobs cancelled with the superseded run
+- Focused evidence reported: shared visual-contract test GREEN and installer browser test GREEN
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+The correction adds only the existing shared classes `shlz-table__head`, `shlz-table__row`, and `shlz-table__cell` to the installer directory's existing semantic `<thead>`, `<tr>`, `<th>`, and `<td>` elements. It does not change the table hierarchy, rendered values, links, escaping, filters, pagination, row ordering, `data-current-work-count` hook, scroll wrapper or responsive browser path.
+
+These tokens are the public styling contract already required by the repository-wide visual test. Restoring them aligns the new utilization table with the established Yii2 table system rather than adding a local exception or special-case CSS. The focused visual-contract and installer-browser GREEN results directly cover both the reported failure and this screen's behavior.
+
+### Final verdict
+
+No functional, authorization, security, accessibility or maintainability finding is introduced by commit `c282311c`. Gate 5 remains approved with this presentation-only CI correction.
+
+The next exact-source CI terminal result, PR publication, merge and deployment remain separate recorded states.
