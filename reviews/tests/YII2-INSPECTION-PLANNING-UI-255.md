@@ -325,3 +325,10 @@ JSON parsing, PHP syntax for all changed PHP files, digest comparison and `git d
 The journey revocation now removes `inspection.item.complete` from both active roles `2` and `7` held by actor `73`. The replay denial and full no-fact snapshot therefore continue to test genuine capability loss rather than being bypassed by the newly explicit manager role. No later scenario depends on restoring that capability.
 
 The navigation fixture explicitly names role `9201` as `manager`, making its initial construction-control route consistent with the global-scope policy. The later removal of `objects.read` still produces the exact route `403`, navigation exclusion and no-DML snapshot, so the negative phase is preserved. PHP syntax and `git diff --check` pass; production was untouched.
+
+### Navigation membership delta — 2026-09-25
+
+- Reviewed commit: `3dcf570423fdb16547d93d8bb0b23d062488456b`.
+- Verdict: **APPROVED**.
+
+The navigation matrix again includes `/pilot/construction-control` while `construction_control.read` remains granted, preserving the established permission-based MAIN membership contract. The separate direct request still requires exact `403` after `objects.read` revocation, so the new server-side global-scope rule remains independently enforced without being conflated with link membership. The no-DML snapshot is unchanged. PHP syntax and `git diff --check` pass.
