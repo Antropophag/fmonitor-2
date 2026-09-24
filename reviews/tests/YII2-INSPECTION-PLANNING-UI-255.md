@@ -291,3 +291,10 @@ Actor `18` now explicitly receives active role `7`, whose fixture code is `manag
 - Verdict: **APPROVED**.
 
 The fixture removes user `9403`'s incidental role `9210` before that shared role is converted to `fkr_operator`. User `9403` therefore remains a pure control-engineer actor whose successful and denied behavior is determined by current assignment scope, while user `9401` retains the intended FKR-global path. Mixed-role manager precedence remains independently covered by `yii2_inspection_scope_policy_255_test.php`, so this isolation does not remove that acceptance case. PHP syntax and `git diff --check` pass; dirty production files were untouched.
+
+### Explicit calendar capability delta — 2026-09-25
+
+- Reviewed commit: `eaa3d8313c9cce0ca89dcb873ec2bc224c4c1690`.
+- Verdict: **APPROVED**.
+
+The calendar fixture now explicitly grants `objects.read` to active manager role `7` alongside actor `18`'s role assignment. `INSERT IGNORE` keeps setup additive and deterministic, no expectation changes, and the subsequent removal from ordinary role `5` preserves the denied-user branch. PHP syntax and `git diff --check` pass; dirty production files were untouched.
