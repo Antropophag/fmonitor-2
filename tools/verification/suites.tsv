@@ -212,6 +212,7 @@ db	php	tests/Yii2/legacy_control_engineer_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_authentication_001_test.php	integration
 db	php	tests/Yii2/yii2_bitrix_order_document_links_001_test.php	integration
 db	php	tests/Yii2/yii2_calendar_003_test.php	integration
+db	php	tests/Yii2/yii2_calendar_effective_object_details_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_alias_001_test.php	integration
 db	php	tests/Yii2/yii2_canonical_migrations_concurrency_001_test.php	integration

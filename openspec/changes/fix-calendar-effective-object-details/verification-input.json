@@ -1,0 +1,22 @@
+{
+  "change": "fix-calendar-effective-object-details",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "openspec/changes/fix-calendar-effective-object-details",
+    "specs/CALENDAR-EFFECTIVE-OBJECT-DETAILS-001.md",
+    "tests/Yii2/yii2_calendar_effective_object_details_001_test.php",
+    "tests/Yii2/calendar_effective_object_details_001_browser.mjs",
+    "reviews/tests/CALENDAR-EFFECTIVE-OBJECT-DETAILS-001.md",
+    "reviews/code/CALENDAR-EFFECTIVE-OBJECT-DETAILS-001.md",
+    "docs/operations/issue-241-calendar-effective-details-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "CALENDAR-EFFECTIVE-OBJECT-DETAILS-001",
+    "acceptance_id": "A1-A6-effective-calendar-read",
+    "spec_path": "specs/CALENDAR-EFFECTIVE-OBJECT-DETAILS-001.md",
+    "seam": "authenticated Yii GET /pilot/calendar with existing object card and registry regression reads",
+    "tests": ["tests/Yii2/yii2_calendar_effective_object_details_001_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_calendar_effective_object_details_001_test.php": "INTENDED_RED"}
+  }]
+}
