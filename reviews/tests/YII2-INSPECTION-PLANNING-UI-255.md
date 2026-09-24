@@ -298,3 +298,21 @@ The fixture removes user `9403`'s incidental role `9210` before that shared role
 - Verdict: **APPROVED**.
 
 The calendar fixture now explicitly grants `objects.read` to active manager role `7` alongside actor `18`'s role assignment. `INSERT IGNORE` keeps setup additive and deterministic, no expectation changes, and the subsequent removal from ordinary role `5` preserves the denied-user branch. PHP syntax and `git diff --check` pass; dirty production files were untouched.
+
+---
+
+## CI fixture/governance correction review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `7eac9fee4a69b15b4d89c262e519f4ea49a4d7b4`.
+- Scope: tests, verification ownership/input and exact asset contract only.
+- Verdict: **APPROVED**.
+
+The correction is coherent with the shared scope policy and the reported full-CI failures:
+
+- `MariaDbYiiChecklist.php` is removed from both the changed-path input and the `construction-control-checklist-ui` ownership pattern because this slice changes the read trait, not the composition owner; the remaining path mapping is unambiguous.
+- Inspection fixture actor `73` and the preopening actor `73` explicitly receive active manager role `7`, which already owns `objects.read`; their established `ownership=all`, E2E and pagination expectations therefore retain intentional global authority. Assignment-specific checklist behavior remains guarded by its separate application rules.
+- Main navigation no longer advertises construction control when `objects.read` is removed, and the real route must return exact `403`; the unchanged full fact snapshot proves the denied reads remain no-DML.
+- The production cutover digest `89f0968f61169acc5527a229c2affcac4dccc303694095c0cf6c58d1ccdab8c4` exactly matches the current local `inspection-schedule.js` bytes.
+
+JSON parsing, PHP syntax for all changed PHP files, digest comparison and `git diff --check` pass. Production files were not edited by this review.
