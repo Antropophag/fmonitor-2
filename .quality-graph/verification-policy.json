@@ -275,6 +275,8 @@
       "patterns": [
         "app/Workforce/MariaDbInstallerUtilization.php",
         "app/Workforce/MariaDbYiiInstallerDirectory.php",
+        "app/AssignmentOrderComposition/AssignmentOrderSelectionPortalQuery.php",
+        "app/AssignmentOrderComposition/MariaDbSelectionPortalQuery.php",
         "app/YiiRuntime/Controllers/InstallerDirectoryController.php",
         "app/YiiRuntime/Controllers/SelectionController.php",
         "app/YiiRuntime/Views/installers.php",
