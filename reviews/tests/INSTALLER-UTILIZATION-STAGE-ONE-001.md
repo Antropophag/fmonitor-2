@@ -41,3 +41,40 @@ The 3→2→1→0 PTO sequence, replacement history boundaries, adjacent same-in
 - Add same-address/different-effective-lift, explicit unknown-date, and mandatory-source-unavailable-not-zero cases.
 - Complete browser coverage for picker context and exact allowlisted return state.
 - Capture fresh exact-source intended RED evidence and regenerate the prepared reviewer package before Gate 3 rereview.
+
+## Rereview 1 — corrected exact-source cycle
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Reviewed source: commit `63f993827322b7784a108230a07e8f139d4babb5`, candidate source `c0ca4de772a9823e299a63e7ca56661f0b882d4fe77d390b81231f8080a1a074`, executable source `20dddc90ed12a0095cfc9b22603a867676008c9d7d3329924e29f08b5d2f69c0`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T185413Z-6d9d19f44d/package.json`; plan SHA-256 `144905f31133229c942b1973ea4c6423135703978f58785de456e2e55dce1dbf`
+- Bound test hashes: stage-one `40a8f99faf0de0deec8a3437f2feb5243bf76871353067c0f5b3e6b8ba8beb9b`; surfaces `4daf1279f84796ec31a7083919a66bc796fa170ee2f91bb63bfb7433f95eb41a`; browser PHP `f4baa53ba24760e2cfd1f570b0ad3655ab691a633d821873f376fc74994d28ab`; browser script `0e87cef005c0cbfe746424b8f0161ceb93d5e3f1498d5ae1817385fbd40e01c4`
+- RED evidence: all three selected PHP commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; command blobs match the reviewed PHP tests and the candidate source binds the changed browser script
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Server filters/count/pagination — RESOLVED.** Sixty preceding directory rows make installer 7001 a later-page match; `current=absent&upcoming=present` must yield it with filtered count one. The surfaces test independently exercises `current=present&upcoming=absent`, filtered count, stable three-lift projection, individual current filters, and closed query shapes.
+2. **Upcoming negative oracle — RESOLVED.** Selection-only and generated-template states are observed before upload and must not be upcoming; the uploaded confirmed original becomes upcoming before opening/application.
+3. **Cross-surface equality — RESOLVED for the exercised upcoming state.** Independent current-count and registration-number literals are asserted across directory, card and picker.
+4. **Authorization — PARTIALLY RESOLVED.** Guest card and wholly denied card/picker cases were added, with no-leak assertions. The required limited/object-scoped case remains absent.
+5. **Unknown/unavailable/identity — RESOLVED.** Three different lifts share one address and remain distinct; a null planned date renders explicit unknown; removal of the mandatory PTO source produces sanitized `503`/`Retry-After`, not zero.
+6. **Elapsed planned date and PTO independence — RESOLVED.** An elapsed 2020 planned date remains non-current without factual opening, and the final PTO reaches zero after all non-PTO completion facts are deleted.
+7. **Browser route — RESOLVED.** Both viewport passes preserve the exact allowlisted directory state, and the browser opens the assignment-order picker and observes utilization context.
+
+### Remaining findings
+
+1. **BLOCKER — limited/object-scoped authorization remains untested.** Contract clause 11 and acceptance L explicitly distinguish a denied actor from a limited actor who may see only utilization within an allowed object scope. The correction tests an unauthenticated request and actor 95 receiving blanket `403`, but never creates an actor authorized for one object and unauthorized for another while the same installer has facts in both. Consequently a card aggregation or picker enrichment that reads all objects once the actor has the general permission can pass and leak out-of-scope registration numbers, counts, or history. Add a two-object fixture with partial scope, then require directory/card/picker projections and counts to contain only the allowed object's facts and to omit the forbidden literals.
+
+2. **HIGH — simultaneous independent current and upcoming contexts are still absent.** Contract clause 3 and acceptance F require one installer to retain a current lift while a *different* confirmed-original lift is upcoming, including conjunctive filtering and the shared compact projection. The corrected test transitions the same lift from upcoming to current; it never constructs both sets simultaneously. An implementation using a mutually exclusive person-level status, dropping upcoming whenever current count is nonzero, or evaluating `current=present&upcoming=present` incorrectly can pass. Add distinct current and future lifts for one installer and assert both contexts across directory, card and picker plus the both-present filter/count.
+
+3. **HIGH — effective requisites are not exercised.** Clause 4 requires joins and presentation to use canonical effective object/lift requisites. The same-address probe correctly rejects address grouping, but all fixture identities and displayed registration numbers still come directly from base `fm_maintable`/order snapshots; no effective-detail override conflicts with a stale base value. An implementation that keys correctly by object ID yet ignores the canonical effective-requisites seam can pass. Seed a base/effective disagreement and assert that all three surfaces join the same lift and display the effective registration/address while the stale base literals remain absent.
+
+4. **MEDIUM — concurrent GET determinism is only claimed, not tested.** Clause 12 and acceptance M require concurrent as well as replayed GETs to be deterministic and create no business facts. The suite takes sequential snapshots/repeats and bounds query counts, but launches no overlapping directory/card/picker reads. Add a deterministic concurrent read probe against the same fixture, require identical semantic results/statuses, and compare complete business facts before/after.
+
+### Required changes for rereview 2
+
+- Add partial object-scope coverage across directory, card and picker with explicit forbidden-literal absence.
+- Add one installer with a current lift and a separate confirmed-original future lift, including `current=present&upcoming=present` full-set filtering and cross-surface equality.
+- Add an effective-requisites disagreement fixture and independently expected effective display/join values.
+- Exercise overlapping GETs and prove identical output semantics and no new business facts.
+- Refresh exact-source RED evidence and the reviewer package, then request another Gate 3 cycle.
