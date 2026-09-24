@@ -30,6 +30,7 @@
     "tests/Yii2/yii2_installer_utilization_browser_001_test.php",
     "tests/Yii2/installer_utilization_stage_one_browser.mjs",
     "tools/verification/suites.tsv"
+    ,"tools/architecture/check.py"
   ],
   "acceptances": [
     {"spec_id":"INSTALLER-UTILIZATION-STAGE-ONE-001","acceptance_id":"A-H-current-upcoming-periods","spec_path":"specs/INSTALLER-UTILIZATION-STAGE-ONE-001.md","seam":"authoritative applied composition/opening/PTO/original facts followed by Workforce projection reads","tests":["tests/Yii2/yii2_installer_utilization_stage_one_001_test.php"]},
