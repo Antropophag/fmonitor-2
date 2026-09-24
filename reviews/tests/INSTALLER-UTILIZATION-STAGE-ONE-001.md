@@ -261,3 +261,24 @@ The positive effective-requisites assertions remain unchanged and require `EFFEC
 ### Required changes
 
 None. Gate 3 is approved for exact candidate source `6185aa61a260783dd5622688bbec4c3c0a507288a756c6f4d1dc950e44f8af38`. This approval covers the test oracle only; executor production WIP still requires independent Gate 5 review and exact-source verification.
+
+## Rereview 8 — guest request reachability correction
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: tests only; paused dirty executor production WIP remains outside this verdict
+- Root-authored test commit: `8618917484c3a0b41852430b94db81e451f489fb`
+- Reviewed candidate source: `26d834e6bc5ff51d9d350150ad5fe888f96f7775d270da934f357db56a2b3897`; executable source `52108a587b364b506696d3da46587c68c0d066323683bdb78251a91e1506151e`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T195919Z-33bcef31bf/package.json`; plan SHA-256 `cf4ab59e3e56906961cdd149627fb58559f63b4827730d0cc5bc0e475600c033`
+- Corrected stage-one test SHA-256: `6bf6d42b4dde63b1e579e412983ec940c79d1f80ff83b6edc8d7aacbea4c940a`
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records; the stage-one command exits `255` at `active history EFFECTIVE-4512`, after the guest assertion is reached successfully
+- Verdict: `APPROVED`
+
+### Assessment
+
+The correction only introduces an empty `$guestCookies` variable and passes it to the existing request helper's by-reference cookie parameter. It does not alter the route, method, expected `303` guest outcome, denied actor expectations, fixture data, or any utilization oracle.
+
+The refreshed stage-one evidence is behaviorally relevant: execution passes setup, selection/template/original classification, effective requisites, scoped directory/card/picker, coexistence filters, concurrent reads, guest and denied request construction, and then fails at the still-unimplemented active-history effective registration assertion. The failure is not a PHP argument/reference error or fixture-reachability failure. The surfaces and browser commands retain fresh candidate-bound intended RED records, and the package reports no missing mapped tests.
+
+### Required changes
+
+None. Tests-only Gate 3 is approved for exact candidate source `26d834e6bc5ff51d9d350150ad5fe888f96f7775d270da934f357db56a2b3897`. This is not a Gate 5 review or approval of the paused executor WIP.
