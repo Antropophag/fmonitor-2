@@ -18,7 +18,7 @@
 ## 4. Browser и независимая приёмка
 
 - [x] 4.1 На disposable Compose project/ports/volumes пройти реальный browser flow из B через A/B/C, source links, pagination, empty/denied/XSS cases на desktop и narrow width; подтвердить отсутствие записей в DB/queue и сохранить evidence вне checkout.
-- [ ] 4.2 Подготовить exact-source review package и получить planner-required независимый final review с одним полным findings list; исправления к production/test source SHALL быть повторно проверены независимо.
+- [x] 4.2 Подготовить exact-source review package и получить planner-required независимый final review с одним полным findings list; исправления к production/test source SHALL быть повторно проверены независимо.
 
 ## 5. Exact-source CI и PR
 

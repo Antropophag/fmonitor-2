@@ -53,3 +53,48 @@ These checks support the conforming paths but do not cover either boundary findi
 1. Make reversal navigation usable when original and reversal rows are separated by pagination, without weakening same-object isolation, and add a sensitive regression.
 2. Handle extreme valid page numbers without arithmetic overflow or SQL failure, returning the specified empty beyond-last page with full-set totals, and add boundary coverage.
 3. Obtain independent review of the changed test expectations as required, rebuild the exact-source package, rerun all planner-selected focused checks, and return the corrected candidate to Gate 5.
+
+---
+
+## Correction rereview — latest controlling verdict
+
+- Reviewer: independent Gate 5 agent `/root/final_review` (`gpt-5.6-sol / low`); authored none of the correction specification, tests, fixtures, or implementation
+- Reviewed source: commit `5ceaf5fc8d2c4cc66548bd29085819366443309e`, candidate source `4c229e2bc9007bb441b794f3b7e099893539f4a9b59dfeb8db39408f5faea27f`, executable source `604bbc5c2af8ddf75050955c24ac69365e4275ea6ff245278191d04dd606e8e8`, original base `b1542f92009b8dc4216a36962ff38a51e0b6c388`
+- Correction package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T024540Z-04af4a8faa/package.json`, SHA-256 `16ae8f5a68d846f632ef2ebe52ccb9e3b3162f25f391d2b13a4a92647833d927`; plan SHA-256 `3208e62b0f93c2f8ad1fa220822b0f0be3437765114f28979fec6c4c3541e815`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T024540Z-04af4a8faa/snapshot/source.patch`, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (empty patch over the reviewed commit)
+- Corrected-test approval: `reviews/tests/OTIZ-OBJECT-LEDGER-HISTORY-001.md`, Gate 5 blocking-correction disposition `APPROVED`
+- Verdict: `APPROVED`
+
+### Prior blocking findings disposition
+
+1. **Cross-page reversal navigation: resolved.** The projection now derives `local_reversal_page` from the same object's canonical `closed_on DESC, id DESC` ordering inside the existing repeatable-read transaction. The view keeps the short same-page anchor and emits a current-context page-plus-anchor URL when the original is elsewhere. The join still requires `original.object_id=c.object_id`, so a malformed foreign-object reversal exposes neither an identifier nor a link. The corrected fixture deterministically separates reversal and original across pages and proves both the exact page-2 URL and the destination anchor.
+2. **Extreme page overflow: resolved.** Offset multiplication is guarded by `intdiv(PHP_INT_MAX, 10)` before it occurs. A larger valid page returns an empty `rows` set while preserving the aggregate and selected object from the same consistent read; it does not clamp to another page or interpolate a float into SQL. The corrected acceptance test sends `PHP_INT_MAX` through the public HTTP seam and requires status 200, zero rows, and unchanged full-set count and total.
+3. **Correction-review and exact-source evidence: resolved.** The root-owned test/spec delta received independent Gate 3 approval, the package is bound to the committed correction source, and every planner-selected local obligation is exact-source GREEN.
+
+### Current findings
+
+One non-blocking maintainability advisory remains: closure presentation classification still exists in both the new SQL projection and the retained current-snapshot PHP view. This is a possible duplicated-code/divergent-change smell, not a documented-standard or specification violation, and does not block this bounded slice. No current blocking findings.
+
+### Reconfirmed conforming areas
+
+The complete original diff plus correction continues to filter, aggregate, order, and paginate only the selected object in SQL; preserve all signed components and the established `global_closed_cents` formula; and bind object validation, totals, page rows, and reversal-page calculation to one repeatable-read transaction. Stable ordering remains `closed_on DESC, id DESC`. Foreign reversal targets remain isolated.
+
+Authorization and query behavior remain unchanged: guests retain the exact safe 303 return URL, authenticated actors require `otiz.manage`, malformed or mismatched context fails without ledger disclosure, and valid out-of-range pages are empty rather than substituted. Basis text is HTML-escaped; source and reversal URLs contain only validated integer context. Saved snapshot values and current all-snapshot totals remain explicitly distinct.
+
+The history remains GET-only and contains no payment, deduction, or reversal commands. Ordinary snapshot rendering, current-snapshot ledger rows, forms, actions, and lazy loading are retained. The correction adds no route, navigation, CSS, schema, migration, writer, XLSX, calculation, norm, rounding, external-call, or `rapid-pilot` change. Task/PR/CI/delivery steps remain truthfully outstanding rather than being inferred from this review.
+
+### Exact-source evidence
+
+All five sequential records are GREEN on candidate source `4c229e2b…` / executable source `604bbc5c…`, with identical start/end source and exit 0:
+
+- acceptance: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217880425829000-4e8c78fbbc19457f958471d0b07e9d81.json`
+- snapshot publication: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217885042627000-f2ee16cbcf714e0cb095d648f976d58a.json`
+- retained settlement: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217886761501000-8929afb6285845ac8150fcef38de293d.json`
+- verification governance: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217889147231000-fd5f9dabe7444defb6c1808a601cf64a.json`
+- architecture guard: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790217912240041000-12242e03827e4bf4adee5fb10083228c.json`
+
+`git diff --check b1542f92009b8dc4216a36962ff38a51e0b6c388...HEAD` is clean. No full local `make test` or `make verify` was run. Exact-source CI, PR, merge, deployment, and completion of the broader issue #29 remain `UNKNOWN` and are not implied by this verdict.
+
+### Required changes
+
+None. Gate 5 is approved for exact committed candidate `5ceaf5fc8d2c4cc66548bd29085819366443309e`. Any subsequent production, specification, test, fixture, browser-helper, verification-input, or source-binding change requires applicable independent delta review.
