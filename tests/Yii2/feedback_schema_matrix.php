@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__).'/Support/CurrentProductionSchemaContract.php';
 // A7 public canonical deployment and current backup inventory, no runtime DDL.
-$catalogue=FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();assertSameValue(range(1,33),array_keys($catalogue),'canonical migration frontier');
+$catalogue=FMonitor2\InstallationProcess\ProductionPilotMigrationCatalogue::migrations();assertSameValue(range(1,34),array_keys($catalogue),'canonical migration frontier');
 $before=feedbackFacts($f);$repeat=FMonitor2\InstallationProcess\CanonicalMigrationApplication::run($f->db,$f->p,$catalogue);$expected=CurrentProductionSchemaContract::replayApplicationResult();assertSameValue([$expected[0],$expected[2],$expected[3]],[$repeat['exitCode'],$repeat['result']['schemaVersion'],$repeat['result']['appliedVersions']],'populated schema replay');assertSameValue($before,feedbackFacts($f),'schema replay preserves feedback');
 $actual=array_column($f->db->query('SHOW TABLES')->fetch_all(MYSQLI_NUM),0);sort($actual);
 assertSameValue($actual,FMonitor2\RuntimeRestore\RuntimeRecoverySchemaV32::tables($f->p),'backup includes exact new inventory');

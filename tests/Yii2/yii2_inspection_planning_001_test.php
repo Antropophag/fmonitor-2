@@ -5,20 +5,20 @@ require __DIR__.'/ObjectQueueFixture.php';
 // YII2-OBJECT-QUEUE-001: public scheduling owner, exact independent facts, rejection and rollback.
 $f=null;
 try {
-    $f=new ObjectQueueFixture(dirname(__DIR__,2));$owner=$f->planning();$p=$f->p;
+    $f=new ObjectQueueFixture(dirname(__DIR__,2));$p=$f->p;$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");$owner=$f->planning();
     $before=$f->facts();$result=$owner->scheduleInspection(9101,451201,'2026-09-12');
     assertSameValue('scheduled',$result['status'],'accepted schedule');$id=$result['scheduleId'];
     assertSameValue(true,is_int($id)&&$id>0,'positive schedule identity');
     assertSameValue([['id'=>(string)$id,'installation_case_id'=>'6101','legacy_object_id'=>'451201','control_engineer_user_id'=>'7301','inspection_date'=>'2026-09-12','scheduled_by_user_id'=>'9101','scheduled_at'=>'2026-09-10T09:30:00+03:00']],$f->rows('fm2_pilot_inspection_schedules'),'exact schedule all columns');
     $events=$f->rows('fm2_pilot_inspection_schedule_events');assertSameValue(1,count($events),'one event');
-    $expected=['id'=>$events[0]['id'],'schedule_id'=>(string)$id,'installation_case_id'=>'6101','event_type'=>'inspection_scheduled','payload_json'=>'{"scheduleId":'.$id.',"inspectionDate":"2026-09-12","controlEngineerUserId":7301}','actor_user_id'=>'9101','occurred_at'=>'2026-09-10T09:30:00+03:00'];
-    assertSameValue($expected,$events[0],'exact event references payload actor time');
+    $expected=['id'=>$events[0]['id'],'schedule_id'=>(string)$id,'installation_case_id'=>'6101','event_type'=>'inspection_scheduled','event_version'=>'1','request_identity'=>$events[0]['request_identity'],'request_fingerprint'=>$events[0]['request_fingerprint'],'payload_json'=>'{"scheduleId":'.$id.',"inspectionDate":"2026-09-12"}','actor_user_id'=>'9101','occurred_at'=>'2026-09-10T09:30:00+03:00'];
+    assertSameValue($expected,$events[0],'exact object-bound event references payload actor time');assertSameValue(1,preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$events[0]['request_identity']),'deterministic request UUID shape');assertSameValue(64,strlen($events[0]['request_fingerprint']),'request fingerprint length');
     $after=$f->facts();foreach($before as$table=>$state)if(!in_array($table,[$p.'fm2_pilot_inspection_schedules',$p.'fm2_pilot_inspection_schedule_events'],true))assertSameValue($state,$after[$table],'unrelated history unchanged '.$table);
     $before=$f->facts();assertSameValue($result,$owner->scheduleInspection(9101,451201,'2026-09-12'),'exact duplicate response');assertSameValue($before,$f->facts(),'duplicate all history exact');
     foreach(['','2026-02-30','2026-9-12','2026-09-12junk','2026-09-09']as$date){$before=$f->facts();assertSameValue('invalid_date',$owner->scheduleInspection(9101,451201,$date)['status'],'invalid/past date '.$date);assertSameValue($before,$f->facts(),'date denial no writes');}
     assertSameValue('scheduled',$owner->scheduleInspection(9101,451201,'2026-09-10')['status'],'today allowed');
-    $f->order(6113,6101,3,7302);assertSameValue('scheduled',$owner->scheduleInspection(9101,451201,'2026-09-12')['status'],'new engineer has distinct tuple');
-    $rows=$f->rows('fm2_pilot_inspection_schedules');assertSameValue(3,count($rows),'new day and engineer preserved as facts');assertSameValue('7301',$rows[0]['control_engineer_user_id'],'old engineer retained');assertSameValue('7302',$rows[2]['control_engineer_user_id'],'new tuple engineer');
+    $f->order(6113,6101,3,7302);assertSameValue('scheduled',$owner->scheduleInspection(9101,451201,'2026-09-12')['status'],'engineer change does not change object plan identity');
+    $rows=$f->rows('fm2_pilot_inspection_schedules');assertSameValue(1,count($rows),'all dates and engineer change retain one object-bound root');assertSameValue('7301',$rows[0]['control_engineer_user_id'],'historical creation snapshot retained');assertSameValue(3,count($f->rows('fm2_pilot_inspection_schedule_events')),'initial, today reschedule and return-date reschedule audited');
     foreach([9401,0,999999]as$actor){$before=$f->facts();assertSameValue('access_denied',$owner->scheduleInspection($actor,451201,'invalid')['status'],'authority precedes input');assertSameValue($before,$f->facts(),'denial no writes');}
     foreach([['status','0'],['activation_state',"'invited'"]]as[$column,$value]){$f->db->query("UPDATE {$p}fm2_pilot_users SET $column=$value WHERE user_id=9101");$before=$f->facts();assertSameValue('access_denied',$owner->scheduleInspection(9101,451201,'invalid')['status'],'inactive identity denies before date');assertSameValue($before,$f->facts(),'inactive unchanged');$f->db->query("UPDATE {$p}fm2_pilot_users SET status=1,activation_state='active' WHERE user_id=9101");}
     $f->http->auth->setRoleStatus(0);$before=$f->facts();assertSameValue('access_denied',$owner->scheduleInspection(9101,451201,'invalid')['status'],'inactive role');assertSameValue($before,$f->facts(),'role denial exact');$f->http->auth->setRoleStatus(1);

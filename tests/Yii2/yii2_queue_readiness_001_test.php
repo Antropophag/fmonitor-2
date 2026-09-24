@@ -13,7 +13,7 @@ try {
   ["RENAME TABLE $table TO {$table}_missing","RENAME TABLE {$table}_missing TO $table",'missing'],
   ["ALTER TABLE $table ADD COLUMN unexpected INT NULL","ALTER TABLE $table DROP COLUMN unexpected",'extra column'],
   ["ALTER TABLE $table MODIFY inspection_date VARCHAR(20) NOT NULL","ALTER TABLE $table MODIFY inspection_date DATE NOT NULL",'column type'],
-  ["ALTER TABLE $table DROP INDEX unique_planned_inspection","ALTER TABLE $table ADD UNIQUE KEY unique_planned_inspection(installation_case_id,control_engineer_user_id,inspection_date)",'unique index'],
+  ["ALTER TABLE $table DROP INDEX unique_planned_inspection","ALTER TABLE $table ADD UNIQUE KEY unique_planned_inspection(installation_case_id,inspection_date)",'unique index'],
   ["ALTER TABLE $events DROP CONSTRAINT `$checkName`","ALTER TABLE $events ADD CONSTRAINT `$checkName` CHECK(JSON_VALID(payload_json))",'json check'],
   ["ALTER TABLE $table ADD CONSTRAINT {$p}extra_plan_fk FOREIGN KEY(installation_case_id) REFERENCES {$p}fm2_installation_cases(id)","ALTER TABLE $table DROP FOREIGN KEY {$p}extra_plan_fk",'extra foreign key'],
  ];

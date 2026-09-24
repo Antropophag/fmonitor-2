@@ -9,7 +9,8 @@ use FMonitor2\Runtime\RuntimeStorage;
 
 final class RuntimeRecovery
 {
-    private const CURRENT_SCHEMA_VERSION=33;
+    /** v34 changes planning columns/indexes without changing the v32 table inventory. */
+    private const CURRENT_SCHEMA_VERSION=34;
     /** Current v33 frontier retains the v32 table and auto-increment inventory. */
     public static function run(array $argv,array $environment):array
     {
