@@ -332,3 +332,10 @@ The navigation fixture explicitly names role `9201` as `manager`, making its ini
 - Verdict: **APPROVED**.
 
 The navigation matrix again includes `/pilot/construction-control` while `construction_control.read` remains granted, preserving the established permission-based MAIN membership contract. The separate direct request still requires exact `403` after `objects.read` revocation, so the new server-side global-scope rule remains independently enforced without being conflated with link membership. The no-DML snapshot is unchanged. PHP syntax and `git diff --check` pass.
+
+### Navigation phase separation delta — 2026-09-25
+
+- Reviewed commit: `86c3b3053337f6282f124118aaa952ea9e8df9b4`.
+- Verdict: **APPROVED**.
+
+The phase now passes the full permission-based membership list to the navigation assertion while excluding construction control only from the routes expected to return `200`. The following dedicated assertion requires its exact `403`, and the shared fact snapshot still proves all reads/denials are no-DML. This correctly separates link visibility from server-side object-scope admission. PHP syntax and `git diff --check` pass; the reported focused navigation run is GREEN.
