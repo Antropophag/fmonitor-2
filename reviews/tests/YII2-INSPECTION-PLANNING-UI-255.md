@@ -160,3 +160,29 @@ The retained records are valid RED evidence for their first reached barriers, bu
 ### Decision
 
 All behavioral matrix gaps and the three previously impossible oracles are otherwise resolved. Approval now requires only the exact-actor event assertion and fresh exact-source retained RED for the resulting candidate. Gate 4 remains unauthorized until those two items are complete.
+
+---
+
+## Final Gate 3 rereview — 2026-09-25
+
+- Reviewer independence: unchanged; the reviewer authored no specification, test, fixture, or production source.
+- Approved test HEAD: `503f791adfaaa3136fb16aef2e87e2314ea21275`.
+- Candidate source: `3b17ac7932fee404d5ccd263cd5f704ce9c241a07dbf81b11383c63f54983673`; executable source: `ef545ed9090a76cb20a014c3fb7c2f689f694a8f67e7878fe1d874f78673c286`.
+- Verdict: **APPROVED**.
+
+### Final blockers disposition
+
+1. **Resolved — exact authenticated actors.** The HTTP test filters the four engineer/FKR command events by their opaque request identities and independently requires event types create/cancel/create/cancel and actor IDs `9403, 9403, 9401, 9401`. Controller substitution of the privileged fixture actor can no longer pass.
+
+2. **Resolved — fresh exact-source RED.** All four retained records bind candidate source `3b17ac7932fee404d5ccd263cd5f704ce9c241a07dbf81b11383c63f54983673` and executable source `ef545ed9090a76cb20a014c3fb7c2f689f694a8f67e7878fe1d874f78673c286`. Container-backed records identify Git SHA `503f791adfaaa3136fb16aef2e87e2314ea21275` and terminate at the intended missing behavior:
+
+   - contract `1790285178734808000-b3f772cb33bf453dbff7a5d26ae7b1a9`: canonical Yii command route absent;
+   - HTTP `1790285178737781000-2df8376178b045649c62c885fa67de51`: assigned engineer real POST returns `404`, expected `303`;
+   - today `1790285178758032000-fb152b169a4a4131bf20e94cf069d0f5`: 51 seeded current-today objects yield zero today markers;
+   - browser `1790285178751474000-fcfbcfcf8daf4772b56c7af2a3bad8f4`: authenticated page lacks the create action, so the real trigger locator times out.
+
+### Final assessment
+
+No Gate 3 findings remain. The executable matrix now covers the canonical public command/read seam; exact engineer/FKR authority and object scope; CSRF and read-only methods; replay, request conflict and stale version; classified rejection versus server-originated unknown outcome with retained context and no hidden retry; queue/calendar agreement after every action; past-plan exclusion; projection outage and multiple-current fail closure; filtered COUNT and Moscow today priority before pagination; stable ordering, midnight recomputation and no DML; and one accessible dialog across desktop/narrow, keyboard focus/return and the real browser journey. The tests preserve the #258 and shared-asset exclusions.
+
+Gate 4 may proceed against the approved test candidate. Test, specification, verification-input, registration, or fixture changes require applicable independent delta review. Final review and exact-source CI remain mandatory and outside this Gate 3 verdict.
