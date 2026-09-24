@@ -8,17 +8,19 @@ try {
     $f->db->query("UPDATE {$f->p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");
     $f->db->query("INSERT IGNORE INTO {$f->p}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'construction_control.read'),(9201,'checklist.read')");
     $f->http->start();
-    $a=$f->http->artifacts;$config=$a.'/inspection-plan-browser.json';$result=$a.'/inspection-plan-result.json';$log=$a.'/inspection-plan-browser.log';
-    file_put_contents($config,json_encode(['origin'=>'http://127.0.0.1:'.$f->http->server['port'],'email'=>$f->http->emails[18],'password'=>$f->http->password,'result'=>$result,'playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($f->http->root).'/shlz-ui/node_modules/playwright'],JSON_THROW_ON_ERROR));chmod($config,0600);
+    $a=$f->http->artifacts;$config=$a.'/inspection-plan-browser.json';$result=$a.'/inspection-plan-result.json';$log=$a.'/inspection-plan-browser.log';$release=$a.'/inspection-plan-release-fault';
+    $f->db->query("CREATE TRIGGER {$f->p}issue255_browser_event_fault BEFORE INSERT ON {$f->p}fm2_pilot_inspection_schedule_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='browser private failure'");$faultActive=true;
+    file_put_contents($config,json_encode(['origin'=>'http://127.0.0.1:'.$f->http->server['port'],'email'=>$f->http->emails[18],'password'=>$f->http->password,'result'=>$result,'release'=>$release,'playwright'=>getenv('FMONITOR_TEST_PLAYWRIGHT_MODULE')?:dirname($f->http->root).'/shlz-ui/node_modules/playwright'],JSON_THROW_ON_ERROR));chmod($config,0600);
     $browser=proc_open([getenv('FMONITOR_TEST_NODE_BINARY')?:'node',__DIR__.'/inspection_planning_ui_255_browser.mjs',$config],[0=>['file','/dev/null','r'],1=>['file',$log,'a'],2=>['file',$log,'a']],$pipes,$f->http->root);
     if(!is_resource($browser))throw new TestFailure('SETUP_FAILURE browser');
-    $deadline=microtime(true)+60;do{$state=proc_get_status($browser);if(!$state['running'])break;usleep(20000);}while(microtime(true)<$deadline);
+    $deadline=microtime(true)+60;do{$state=proc_get_status($browser);if(!$state['running'])break;if(($faultActive??false)&&is_file($release)){$f->db->query("DROP TRIGGER {$f->p}issue255_browser_event_fault");$faultActive=false;}usleep(20000);}while(microtime(true)<$deadline);
     if($state['running']){proc_terminate($browser,9);throw new TestFailure('browser timeout');}
     $exit=$state['exitcode'];proc_close($browser);$browser=null;
     assertSameValue(0,$exit,'INTENDED_RED browser '.file_get_contents($log));
     assertSameValue(['passed'=>true],json_decode((string)file_get_contents($result),true,flags:JSON_THROW_ON_ERROR),'desktop/narrow keyboard matrix');
     echo "PASS: YII2-INSPECTION-PLANNING-UI-255 browser\n";
 } finally {
+    if($f instanceof ObjectQueueFixture&&($faultActive??false))$f->db->query("DROP TRIGGER IF EXISTS {$f->p}issue255_browser_event_fault");
     if(is_resource($browser)){proc_terminate($browser,9);proc_close($browser);}
     if($f instanceof ObjectQueueFixture)$f->close();
 }
