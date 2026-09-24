@@ -240,3 +240,24 @@ It does not include `Эффективный адрес` or `Устаревший
 - Add `Эффективный адрес` and `Устаревший адрес` to the malformed-current `503` forbidden-literal loop.
 - Refresh the exact-source intended-RED record and reviewer package for the corrected stage-one test.
 - Keep production WIP paused for separate Gate 5 review.
+
+## Rereview 7 — complete effective/stale no-leak oracle
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: tests only; paused dirty executor production WIP is explicitly not reviewed or approved
+- Root-authored test commit: `0e621a7b017d48708a7ea00c1d63dd9a11eba2e5`
+- Reviewed candidate source: `6185aa61a260783dd5622688bbec4c3c0a507288a756c6f4d1dc950e44f8af38`; executable source `47103bbc496386d78dea4ad199ab26ca923394710c00e3999d8acf0942c81ad8`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T195132Z-43b1c76252/package.json`; plan SHA-256 `fff859a81dfe4210619b08ef9924d08b57a70523991deeff771f79d90c68ea89`
+- Corrected stage-one test SHA-256: `161ce3270e915d61ec765c663d184502d9646e9506667bc991ffbdf4fb6471f1`
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no mapped tests are missing
+- Verdict: `APPROVED`
+
+### Finding disposition
+
+Resolved. The malformed-current `503` oracle now rejects `EFFECTIVE-4512`, `STALE-4512`, `CURRENT-4999`, `Эффективный адрес`, `Устаревший адрес`, and the fixture table prefix. Together with the denied card/picker loop, both negative seams now fail on leakage of effective values, stale base values, the separate current lift, or internal storage identity.
+
+The positive effective-requisites assertions remain unchanged and require `EFFECTIVE-4512` while rejecting `STALE-4512` in upcoming and active-history output. Thus the corrected suite consistently distinguishes canonical display, forbidden stale fallback, scoped/denied disclosure, and sanitized infrastructure failure without weakening the previously approved acceptance matrix.
+
+### Required changes
+
+None. Gate 3 is approved for exact candidate source `6185aa61a260783dd5622688bbec4c3c0a507288a756c6f4d1dc950e44f8af38`. This approval covers the test oracle only; executor production WIP still requires independent Gate 5 review and exact-source verification.
