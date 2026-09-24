@@ -18,7 +18,7 @@ try {
     foreach(['Соседний заказ','control-neighbor']as$text)assertSameValue(false,str_contains($checklist['body'],$text),'byte-exact order excludes '.$text);
     InspectionFixture::result($fixture->send(InspectionFixture::operation(),InspectionFixture::csrf($checklist)),200,'accepted');
     $fixture->queueFixtures();
-    $http=$fixture->http;
+    $http=$fixture->http;$http->db->query("INSERT IGNORE INTO {$http->p}fm2_pilot_role_permissions(role_id,permission) VALUES(1,'construction_control.read'),(1,'checklist.read')");$global=[];assertSameValue(303,$http->login($global,18)['status'],'FKR global queue fixture login');$fixture->cookies=$global;
 
     $object=$http->db->query("SELECT * FROM {$http->p}fm_maintable WHERE id=4513")->fetch_assoc();
     $case=$http->rows('fm2_installation_cases')[0];
