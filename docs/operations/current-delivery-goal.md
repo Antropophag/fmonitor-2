@@ -1,4 +1,18 @@
-# Текущая цель — issue #14, object-bound inspection planning owner
+# Текущая цель — первый этап §9 issue #258
+
+Поручение владельца 2026-09-24: от свежего `origin/main` реализовать первый этап [№258](https://github.com/Antropophag/fmonitor-2/issues/258) отдельным PR. Полная постановка issue сохраняется; этот PR не закрывает №258.
+
+Результат этапа: единая read-only модель текущей и предстоящей загрузки, рабочий серверный справочник, карточка монтажника с доступной историей участия и тот же компактный контекст в существующем picker состава распоряжения. Current = применённый состав + фактическое начало + отсутствие действующего ПТО по лифту. Upcoming = подтверждённый оригинал до открытия; draft/template не учитываются. Несколько лифтов независимы; обязательный пример ПТО 3→2→1→0. Используются effective requisites, адресные строки не являются ключом. Неизвестные даты не синтезируются.
+
+Не входят daily snapshots, два dashboard chart blocks, шестинедельный forecast, auto-allocation, financial forms, invitations, calendar reader, assignment writers и общий UI. Migration v34 принадлежит уже влитому PR #260 и не используется. Параллельные #249/#250 проверяются на пересечения, но их WIP не изменяется. Merge/deploy/settings и стенд 8093 не менять.
+
+Контракт: [INSTALLER-UTILIZATION-STAGE-ONE-001](../../specs/INSTALLER-UTILIZATION-STAGE-ONE-001.md). Lifecycle: [add-installer-utilization-stage-one](../../openspec/changes/add-installer-utilization-stage-one/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
+
+Отклонённая ветка `codex/installer-utilization-visibility` — только источник сравнения/адресного повторного использования. Её dirty source, старые approvals и UX не являются кандидатом этого этапа. Следующие этапы №258 — ежедневные наблюдения/исторический блок и шестинедельный прогноз/второй блок — остаются явно открытыми.
+
+---
+
+# Историческая цель — issue #14, object-bound inspection planning owner
 
 Поручение владельца 2026-09-24: реализовать первый срез issue #14 от актуального
 `origin/main` как canonical object-bound planning owner. План принадлежит объекту,
