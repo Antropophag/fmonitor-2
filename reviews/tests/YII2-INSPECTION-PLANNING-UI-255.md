@@ -244,3 +244,10 @@ Node syntax and `git diff --check` pass. Gate 3 approval extends through `0a93fc
 The positive/negative object setup and FKR cleanup are otherwise well isolated and exercise the real Yii routes. The contract additions preserve actor ID plus a single `$today` value at the `readCalendar` call and bound direct wall-clock acquisition to at most one occurrence; existing Moscow-date requirements supply the timezone expectation. PHP syntax passes.
 
 After adding the two exact status assertions, request a narrow rereview. The existing broader Gate 3 approval remains unchanged outside this delta.
+
+### Scoped-calendar status correction — 2026-09-25
+
+- Reviewed commit: `aa213f0025e8d5977a69d258648dc1025df803bc`.
+- Verdict: **APPROVED**.
+
+The added exact `[200, 200]` assertion closes the sole delta finding: both engineer and FKR calendar reads must succeed, while the existing assertions independently require exclusion of object `451202` for the engineer and inclusion for FKR. Although the status assertion is physically evaluated later in the same test, the complete test can no longer pass on a denied, unavailable or empty failed engineer response. PHP syntax and `git diff --check` pass. Production files were not reviewed or modified.
