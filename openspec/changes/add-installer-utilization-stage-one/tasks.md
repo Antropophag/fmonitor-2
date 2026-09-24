@@ -21,9 +21,9 @@
 
 ## 4. Focused verification and independent review
 
-- [ ] 4.1 Run only planner-selected focused local DB/HTTP/browser/architecture checks, including PilotHttp qualification if that boundary changes; record exact commands/results and do not run local full `make test`/`make verify`.
-- [ ] 4.2 Capture a reconstructible exact-source snapshot or commit, update task/delivery evidence, and have an independent `gpt-5.6-sol / low` reviewer record Gate 5 findings and verdict.
-- [ ] 4.3 Correct all findings against reviewed source, rerun only affected focused checks, and repeat any planner-required review invalidated by code/test/spec changes.
+- [x] 4.1 Run only planner-selected focused local DB/HTTP/browser/architecture checks, including PilotHttp qualification if that boundary changes; record exact commands/results and do not run local full `make test`/`make verify`.
+- [x] 4.2 Capture a reconstructible exact-source snapshot or commit, update task/delivery evidence, and have an independent `gpt-5.6-sol / low` reviewer record Gate 5 findings and verdict.
+- [x] 4.3 Correct all findings against reviewed source, rerun only affected focused checks, and repeat any planner-required review invalidated by code/test/spec changes.
 
 ## 5. Publication without closing #258
 
