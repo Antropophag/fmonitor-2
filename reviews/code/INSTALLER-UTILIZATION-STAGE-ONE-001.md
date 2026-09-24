@@ -157,3 +157,28 @@ These tokens are the public styling contract already required by the repository-
 No functional, authorization, security, accessibility or maintainability finding is introduced by commit `c282311c`. Gate 5 remains approved with this presentation-only CI correction.
 
 The next exact-source CI terminal result, PR publication, merge and deployment remain separate recorded states.
+
+## Rereview 6 — Integration 1/2 regression corrections
+
+- Reviewed correction commit: `661d6e97613de50cbee377e691e299f355690eb4`
+- Parent: approved shared-table correction `c282311c3ea5e25f322eb174be6391d7855ba26f`
+- Complete reported Integration 1/2 inventory: production-cutover asset digest for `preopening.js`; installer-directory position/source presentation; preopening picker payload keys
+- Gate 3: APPROVED for the support/test expectation deltas at test rereview 13
+- Focused evidence reported: all three formerly failing tests GREEN
+- Verdict: `APPROVED`
+
+### Production and integration assessment
+
+The installer-directory view restores `Должность` as a dedicated shared-table column and renders the position with `Html::encode`. The personnel number remains with the installer's linked identity; utilization count, upcoming context, object links, filters, pagination and all existing data hooks remain unchanged. Removing `workforce_source` from the rendered directory prevents internal provenance from being presented as a personnel attribute while retaining the contract-required available personnel position. The read model and failure semantics are unchanged.
+
+The production-cutover support contract updates only the expected SHA-256 for the already-reviewed changed `preopening.js` bytes. The digest matches the current asset, while MIME and cache-control assertions remain intact; this is exact asset binding rather than a weakened expectation.
+
+The preopening route compatibility assertion now requires the additive `utilization` key alongside the unchanged `tabId`, `fullName`, and `assignments` keys. That aligns the predecessor route contract with stage-one clause 10. Dedicated utilization tests continue to own the DTO's current-count/upcoming contents and cross-surface equality, so the compatibility test remains appropriately scoped.
+
+The verification input also records the newly affected regression consumers. No domain rule, authorization check, SQL projection, mutation boundary or schema is changed by this correction.
+
+### Final verdict
+
+No Gate 5 finding is introduced by commit `661d6e97`. The changes coherently address the full reported Integration 1/2 failure inventory, and Gate 5 remains approved.
+
+Any subsequent CI job result, PR publication, merge and deployment remain separate recorded states.
