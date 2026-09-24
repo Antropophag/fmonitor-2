@@ -38,3 +38,42 @@ No unrelated product scope creep was found.
 ## Decision
 
 Gate 5 is closed. Correct the actor-scoped calendar read, replace both direct event interpretations with one canonical current-plan projection, and propagate one request-scoped Moscow date. Add the missing calendar-scope and HTTP-midnight regressions, obtain any test-delta review required by the recomputed plan, and request a new independent final review of the corrected exact source before CI/publication.
+
+---
+
+## Gate 5 correction rereview — 2026-09-25
+
+- Reviewed commit: `c91f8c517d9cfd6a1130ebf9d7ed61aa049ec6e4` over prior verdict commit `34d41b6b`.
+- Harness source: `a5900a5f877fd1433b8fcd5e65cdb21070eccbbf7c1e0830655a828e9d2d0051`; executable source `efb9fbe398a32dce156bb88265c36ed4ab7415430e2729782828c95aad4027a3`.
+- Test corrections reviewed: `1b8c3687`, `aa213f00`; independent delta approval: `aa497fdc`.
+- Production correction reviewed: `c91f8c51`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Prior findings disposition
+
+1. **Calendar actor scope — partially resolved.** The real HTTP matrix now requires successful engineer and FKR calendar responses and proves exclusion/inclusion of an out-of-engineer-scope plan. `CalendarController` passes the authenticated actor and the reader scopes both inspection and planned-date events.
+
+2. **Canonical projection — resolved.** Both queue and calendar call the single `MariaDbYiiInspectionPlanning::currentProjectionSql()` definition. Neither consumer independently decodes event payloads now.
+
+3. **One request Moscow snapshot — resolved.** Calendar passes its controller snapshot through the read, and construction-control passes one instant through queue projection and rendering. The view no longer reacquires the clock in the normal controller path.
+
+### Remaining findings
+
+1. **BLOCKING — mixed-role scope precedence differs between commands and reads.** `MariaDbYiiInspectionPlanning::actorHasObjectScope()` grants global scope whenever an actor has role `manager` plus `objects.read`, even if the same actor also has active `control_engineer`. Both queue and calendar instead make any active `control_engineer` role take precedence and restrict the actor to current assignments (`MariaDbYiiChecklistRead.php:74-77`, `MariaDbYiiObjectQueue.php:39-42`). Therefore a `manager + control_engineer` actor can successfully create a plan on an unassigned object and then be unable to see it in either required publication. Use one shared scope policy for command, queue, and calendar, with the explicitly selected mixed-role precedence, and add a real HTTP create/read assertion for that combination.
+
+2. **BLOCKING — construction-control global read does not require `objects.read` or an approved global role.** `MariaDbYiiChecklist::queue()` requires only `construction_control.read`; its new `$globalScope` is simply the absence of an active `control_engineer` role. Consequently any non-engineer role carrying `construction_control.read`, even without `objects.read` and without `manager`/`fkr_operator`, receives every object's current plan. Calendar correctly gates at the controller on `objects.read`, and the command seam requires that permission for global FKR/manager scope, so the three surfaces are inconsistent. Bind global queue visibility to the same active-role plus `objects.read` policy and test revocation/missing permission at the real queue route.
+
+The old compatibility overload `readCalendar(string $first, string $last)` intentionally retains an unscoped actor `0` for existing internal consumers. No production HTTP caller uses it; this compatibility path must not become an alternate user entry point.
+
+### Focused evidence
+
+- `git diff --check`: PASS.
+- PHP syntax for the three corrected projection/read files: PASS.
+- `php tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php`: PASS.
+- `php tests/Yii2/yii2_inspection_planning_002_test.php`: PASS.
+- `php tests/Yii2/yii2_inspection_planning_ui_255_test.php`: PASS.
+- No full local suite was run. Exact-source CI remains `UNKNOWN`, and publication readiness is false.
+
+### Decision
+
+Gate 5 remains closed. Centralize the effective actor/object scope policy alongside the canonical projection, make command, queue, and calendar apply identical mixed-role and `objects.read` rules, add the two missing authorization regressions, obtain the required test-delta approval, and request another exact-source final review.
