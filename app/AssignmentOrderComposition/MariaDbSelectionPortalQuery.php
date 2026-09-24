@@ -53,6 +53,15 @@ final readonly class MariaDbSelectionPortalQuery implements AssignmentOrderSelec
     public function searchEligibleInstallers(int $actorId,string $query,int $page):array
     {
         $a=$this->authorizeActor($actorId);if($a['status']!=='allowed')return $a;
+        return $this->eligibleSearch($query,$page);
+    }
+    public function searchEligibleInstallersInObjectScope(int$actorId,int$objectId,string$query,int$page):array
+    {
+        if($actorId<1||$objectId<1)return['status'=>'rejected','reasonCode'=>'authorization_denied'];
+        try{$allowed=$this->sql->snapshot(function()use($actorId,$objectId):bool{$s=$this->sql;$rows=$s->rows('SELECT s.control_engineer_user_id FROM '.$s->table('fm2_assignment_order_selections').' s JOIN '.$s->table('fm2_installation_cases').' c ON c.id=s.installation_case_id WHERE c.legacy_installation_object_id=? ORDER BY s.selection_revision DESC LIMIT 1',[$objectId]);return count($rows)===1&&(int)$rows[0]['control_engineer_user_id']===$actorId;});if(!$allowed)return['status'=>'rejected','reasonCode'=>'authorization_denied'];return$this->eligibleSearch($query,$page);}catch(\Throwable){return['status'=>'failed','reasonCode'=>'dependency_unavailable'];}
+    }
+    private function eligibleSearch(string$query,int$page):array
+    {
         $query=trim($query);if(mb_strlen($query)<2||mb_strlen($query)>120||$page<1)return ['status'=>'rejected','reasonCode'=>'invalid_query'];
         try{$offset=($page-1)*20;if($offset>1000000)return ['status'=>'rejected','reasonCode'=>'invalid_query'];$numeric=ctype_digit($query)?ltrim($query,'0'):'';if($numeric==='')$numeric=$query;$today=(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format('Y-m-d');$catalog=$this->sql->table('fm2_workforce_catalog');$runs=$this->sql->table('fm2_workforce_sync_runs');$meta=$this->sql->table('fm2_workforce_sync_metadata');
             $rows=$this->sql->rows("SELECT w.* FROM $catalog w WHERE w.employment_status='employed' AND w.reconciliation_state='delivered' AND (LOCATE(LOWER(?),LOWER(w.fio))>0 OR LOCATE(?,CAST(w.installer_tab_id AS CHAR))>0) AND (w.employed_from IS NOT NULL AND w.employed_from<=? OR w.employed_from IS NULL AND w.authority_system='1c_zup' AND w.delivery_system='bitrix24' AND w.delivery_person_id>0 AND w.last_successful_sync_run_id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' AND EXISTS(SELECT 1 FROM $runs r JOIN $meta m ON m.singleton_id=1 AND m.last_successful_run_id=r.run_id AND m.last_successful_at=r.observed_at WHERE r.run_id=w.last_successful_sync_run_id AND r.status='completed' AND r.failure_code IS NULL AND r.observed_at=w.last_successful_sync_at AND r.page_count>0 AND r.delivered_count>0 AND r.normalized_checksum REGEXP '^[0-9a-f]{64}$')) AND (w.employed_to IS NULL OR w.employed_to>=?) ORDER BY w.fio,w.installer_tab_id LIMIT 21 OFFSET $offset",[$query,$numeric,$today,$today]);$items=[];

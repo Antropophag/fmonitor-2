@@ -5,6 +5,7 @@ namespace FMonitor2\YiiRuntime\Controllers;
 use FMonitor2\AssignmentOrderComposition as C;
 use FMonitor2\YiiRuntime\Models\SelectionForm;
 use FMonitor2\YiiRuntime\PreopeningResources;
+use FMonitor2\Workforce\MariaDbInstallerUtilization;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Response;
@@ -68,20 +69,24 @@ final class SelectionController extends PreopeningController
         $resources = null;
         try {
             $resources = new PreopeningResources();
-            if (!$this->processCap('assignment_order.composition.select')) return $this->status(403);
+            $scoped=!$this->processCap('assignment_order.composition.select');
+            if($scoped&&!Yii::$app->canonicalAccess->checkAccess($this->actor(),'installers.read'))return$this->status(403);
             parse_str((string) ($_SERVER['QUERY_STRING'] ?? ''), $query);
             if (array_diff(array_keys($query), ['q', 'page']) !== []) return $this->status(400);
             $term = $query['q'] ?? null;
             $page = $query['page'] ?? '1';
             if (!is_string($term) || !is_string($page) || !preg_match('/^[1-9][0-9]*$/D', $page)) return $this->status(400);
-            $result = $resources->portal()->searchEligibleInstallers($this->actor(), $term, (int) $page);
+            $result = $scoped?$resources->portal()->searchEligibleInstallersInObjectScope($this->actor(),(int)$id,$term,(int)$page):$resources->portal()->searchEligibleInstallers($this->actor(),$term,(int)$page);
             if (($result['reasonCode'] ?? null) === 'invalid_query') return $this->status(400);
             if ($result['status'] === 'found') {
                 $assignments = $resources->currentInstallerAssignments(array_column($result['items'], 'tabId'));
+                if($scoped)foreach($assignments as$tabId=>&$rows)$rows=array_values(array_filter($rows,static fn(array$row):bool=>(int)($row['objectId']??0)===(int)$id));unset($rows);
+                $utilization=(new MariaDbInstallerUtilization(Yii::$app->db,(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''),(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:'')))->compact(array_column($result['items'],'tabId'),$this->actor());
                 $result['items'] = array_map(static fn(array $item): array => [
                     'tabId' => (int) $item['tabId'],
                     'fullName' => (string) $item['fullName'],
                     'assignments' => $assignments[(int) $item['tabId']] ?? [],
+                    'utilization' => $utilization[(int)$item['tabId']] ?? ['currentWorkCount'=>0,'upcomingAssignments'=>[]],
                 ], $result['items']);
             }
             return $result['status'] === 'found'

@@ -271,6 +271,28 @@
   ],
   "capability_ownership": [
     {
+      "name": "installer-utilization-stage-one",
+      "patterns": [
+        "app/Workforce/MariaDbInstallerUtilization.php",
+        "app/Workforce/MariaDbYiiInstallerDirectory.php",
+        "app/AssignmentOrderComposition/AssignmentOrderSelectionPortalQuery.php",
+        "app/AssignmentOrderComposition/MariaDbSelectionPortalQuery.php",
+        "app/YiiRuntime/Controllers/InstallerDirectoryController.php",
+        "app/YiiRuntime/Controllers/SelectionController.php",
+        "app/YiiRuntime/Views/installers.php",
+        "app/YiiRuntime/Views/installer-card.php",
+        "app/YiiRuntime/Views/selection.php",
+        "app/YiiRuntime/Assets/pilot.css",
+        "config/yii/web.php"
+      ],
+      "verifiers": [
+        "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
+        "tests/Yii2/yii2_installer_utilization_surfaces_001_test.php",
+        "tests/Yii2/yii2_installer_utilization_browser_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "feedback-application",
       "patterns": [
         "app/YiiRuntime/FeedbackApplication.php"
