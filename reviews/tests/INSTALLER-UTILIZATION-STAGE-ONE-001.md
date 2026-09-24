@@ -394,3 +394,38 @@ The PTO-history regression assertions are unchanged: the completed card requires
 ### Required changes
 
 None. The test-only Gate 3 correction at commit `2bbdd62f5bde20e4becd2d0bcad88bfd9871bab5` is approved. This verdict does not review or approve production.
+
+## Rereview 13 — CI regression expectation alignment
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: root-owned test/support expectations only; the accompanying production installer-directory view correction is not reviewed or approved
+- Reviewed deltas: `tests/Support/yii2_production_web_cutover_contract.php` and `tests/Yii2/yii2_preopening_routes_001_test.php`
+- Exact changed asset: `app/YiiRuntime/Assets/preopening.js`, SHA-256 `6fc7bb97ca0183fb9800dd45fda1f99de9963026230e7d27969041c8f95daa85`
+- Evidence reported with the review request: all three previously failing focused regressions are GREEN after the expectation and presentation corrections
+- Verdict: `APPROVED`
+
+### Assessment
+
+The production-web-cutover support manifest changes only the expected digest for `preopening.js`, from the predecessor bytes to `6fc7bb97ca0183fb9800dd45fda1f99de9963026230e7d27969041c8f95daa85`. Independent hashing of the current asset produces that exact value. MIME type and cache-control expectations remain unchanged, so the test still detects any unreviewed asset-byte drift and does not weaken delivery behavior.
+
+The existing preopening-route regression changes the exact picker item key list from:
+
+```text
+tabId, fullName, assignments
+```
+
+to:
+
+```text
+tabId, fullName, assignments, utilization
+```
+
+This is the additive public payload required by `INSTALLER-UTILIZATION-STAGE-ONE-001` clause 10. The prior identity and current-assignment keys remain mandatory and in the same order; no field is removed or made optional. Dedicated stage-one tests independently assert the compact utilization contents and equality across picker, directory and card, so this compatibility test appropriately owns only the exact payload frontier.
+
+Adding these two regression sources to the change verification input makes the planner track the actual affected consumers. It does not change behavioral expectations by itself.
+
+The installer-directory presentation correction restores the pre-existing position column and hides `workforce_source`; it is production code and remains outside this Gate 3 verdict. Reported GREEN for the directory regression is supporting evidence only, not production approval.
+
+### Required changes
+
+None. The root-owned CI regression expectation deltas are approved. Production still requires its independent code/Gate 5 disposition.

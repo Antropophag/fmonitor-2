@@ -28,6 +28,8 @@
     "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
     "tests/Yii2/yii2_installer_utilization_surfaces_001_test.php",
     "tests/Yii2/yii2_installer_utilization_browser_001_test.php",
+    "tests/Yii2/yii2_preopening_routes_001_test.php",
+    "tests/Support/yii2_production_web_cutover_contract.php",
     "tests/Yii2/installer_utilization_stage_one_browser.mjs",
     "tools/verification/suites.tsv"
     ,"tools/architecture/check.py"
