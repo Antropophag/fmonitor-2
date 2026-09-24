@@ -38,6 +38,9 @@
     date.toggleAttribute("autofocus", command !== "cancel");
     dialog.showModal();
     (command === "cancel" ? submit : date).focus({ preventScroll: true });
+    requestAnimationFrame(() =>
+      (command === "cancel" ? submit : date).focus({ preventScroll: true }),
+    );
   };
   document
     .querySelectorAll("[data-inspection-action]")
