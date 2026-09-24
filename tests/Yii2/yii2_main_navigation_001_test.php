@@ -13,6 +13,7 @@ try {
     $http = $fixture->http;
     $db = $fixture->db;
     $prefix = $fixture->p;
+    $db->query("UPDATE {$prefix}fm2_pilot_roles SET code='manager' WHERE role_id=9201");
     $db->query("ALTER TABLE fm_maintable ADD responsstroicontrol VARCHAR(80) NULL");
     foreach (['construction_control.read', 'otiz.manage', 'installers.read'] as $permission) {
         $fixture->insert($prefix . 'fm2_pilot_role_permissions', ['role_id' => 9201, 'permission' => $permission]);
