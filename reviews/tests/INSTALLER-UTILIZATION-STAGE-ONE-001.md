@@ -78,3 +78,34 @@ The 3→2→1→0 PTO sequence, replacement history boundaries, adjacent same-in
 - Add an effective-requisites disagreement fixture and independently expected effective display/join values.
 - Exercise overlapping GETs and prove identical output semantics and no new business facts.
 - Refresh exact-source RED evidence and the reviewer package, then request another Gate 3 cycle.
+
+## Rereview 2 — full-matrix rebuild exact-source cycle
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Reviewed source: commit `a65c1a188ffb57191ab40ec885b4faba42c01c7f`, candidate source `335a8a02f2bb9bc8758a99b9d5e50f25a435931a98dec2803a2f1e73a6a4bdca`, executable source `9715cad0563d4ac718ff37526545d6c7cc18e07d71f0749fa0b5ecfdaea10872`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T185932Z-54cb11b223/package.json`; plan SHA-256 `1ff441499a222298d9be75805c9d0839e5d93a75876cffa313de999c0ddacc0b`
+- Bound test hashes: stage-one `b34e4323be2e65401c1ccf86fded2b48a4b23fc47538fd55b8c71702e7bfe775`; surfaces `4daf1279f84796ec31a7083919a66bc796fa170ee2f91bb63bfb7433f95eb41a`; browser PHP `f4baa53ba24760e2cfd1f570b0ad3655ab691a633d821873f376fc74994d28ab`; browser script `0e87cef005c0cbfe746424b8f0161ceb93d5e3f1498d5ae1817385fbd40e01c4`
+- RED evidence: all three selected PHP commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no missing mapped tests are reported
+- Verdict: `CHANGES_REQUESTED`
+
+### Prior findings disposition
+
+1. **Limited/object scope — PARTIALLY RESOLVED.** Actor 73 receives installer/picker permissions, the card/picker are exercised for object 4512, and the forbidden `CURRENT-4999` literal must be absent. The directory projection/count for that scoped actor is still not exercised.
+2. **Simultaneous current and upcoming — TEST STATE ADDED, but the complete test is internally inconsistent.** Current lift 4999 and confirmed-original upcoming lift 4512 coexist and the both-present filter is asserted. Later assertions incorrectly assume current lift 4999 disappeared.
+3. **Effective requisites — RESOLVED.** Object 4512 has conflicting stale base and effective edited values; the card must show the effective registration/address and omit both stale literals.
+4. **Concurrent GET — PARTIALLY RESOLVED.** Three public GET seams overlap and business facts are compared before/after. Deterministic equality of repeated concurrent requests is not yet observed.
+
+### Findings
+
+1. **BLOCKER — the rebuilt fixture contradicts its later expected current count and filters.** Lift 4999 is created as factually started and assigns installer 7001, with no PTO or replacement ending that participation. After applying lift 4512 and clearing only case 6101's opening, lift 4999 necessarily remains current. Nevertheless lines 18–20 require the card not to contain `Текущая работа`, require picker `currentWorkCount === 0`, query `current=absent&upcoming=present`, and define `expectedCompact.currentWorkCount` as zero. The concurrent request later correctly queries `current=present&upcoming=present` and expects `CURRENT-4999`, confirming the same state. A conforming implementation cannot satisfy both groups. Preserve current count one and use the both-present filter/projection throughout, or explicitly add a PTO/replacement boundary for 4999 before testing the absent-current state.
+
+2. **HIGH — scoped authorization still omits the directory seam and its aggregates.** The scoped actor test calls only `/pilot/installers/7001` and the object-4512 picker. Clause 11 applies to all public seams, and the primary leak risk includes directory rows, filtered counts, and compact totals computed before rendering the card. Add a scoped directory request in the two-object fixture and require count/current/upcoming data to reflect only allowed object 4512 while omitting `CURRENT-4999`. Also make the scope basis explicit in fixture data so it is independent of incidental role/global-read behavior.
+
+3. **MEDIUM — the concurrency probe proves overlap/no-write but not deterministic replay.** It launches one directory, one card and one picker request, then checks one distinguishing literal from each. Because the endpoints and expected representations differ, there is no pair of identical concurrent requests whose semantic outputs are compared. Duplicate each seam concurrently (or at minimum the aggregation-heavy directory/card seam), normalize only intentionally rotating values, and require pairwise equal status/body or complete parsed projections in addition to the no-facts assertion.
+
+### Required changes for rereview 3
+
+- Reconcile every post-4999 expectation with the persistent current lift, or explicitly end that lift before the absent-current subcase.
+- Exercise scoped directory rows/counts/compact totals and bind the allowed/forbidden object scope explicitly.
+- Compare duplicate overlapping GET results for deterministic equality while retaining the before/after business-fact check.
+- Capture fresh exact-source intended RED evidence and regenerate the prepared reviewer package.
