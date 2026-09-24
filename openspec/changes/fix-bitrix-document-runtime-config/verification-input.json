@@ -14,6 +14,7 @@
     "specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md",
     "tests/Deployment/bitrix_startup_config_001_test.php",
     "tests/Deployment/bitrix_document_runtime_config_001_test.py",
+    "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
     "tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php",
     "tests/Jobs/jobs_runtime_contract_001_test.php",
     "tools/verification/suites.tsv"
@@ -27,12 +28,14 @@
       "tests": [
         "tests/Deployment/bitrix_document_runtime_config_001_test.py",
         "tests/Deployment/bitrix_startup_config_001_test.php",
+        "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
         "tests/Jobs/jobs_runtime_contract_001_test.php"
       ],
       "gate3_expected": {
-        "tests/Deployment/bitrix_document_runtime_config_001_test.py": "INTENDED_RED",
+        "tests/Deployment/bitrix_document_runtime_config_001_test.py": "GREEN",
         "tests/Deployment/bitrix_startup_config_001_test.php": "GREEN",
-        "tests/Jobs/jobs_runtime_contract_001_test.php": "INTENDED_RED"
+        "tests/Deployment/erp_equipment_facts_runtime_001_test.py": "GREEN",
+        "tests/Jobs/jobs_runtime_contract_001_test.php": "GREEN"
       }
     },
     {

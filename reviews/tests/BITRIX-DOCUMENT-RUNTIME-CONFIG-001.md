@@ -46,3 +46,21 @@ No full local `make test`/`make verify` was run. PR, exact-source GitHub CI, pro
 `APPROVED`
 
 Gate 3 passes for exact source `ad017cca675d003aad69b00ab7b3e5240fd74d3fd14330bdfb4b3b7294f2a7a0`. Gate 4 may proceed using these independently reviewed tests. The approval must be recorded against a refreshed binding that includes this finalized review file.
+
+## Supplemental post-implementation characterization review — 2026-09-24
+
+- Reviewer: `issue252-gate3-reviewer`
+- Author: `root`
+- Exact reviewed source: `9cab04a0f6621a255fa9cc7bf29956ad895a64b8cc7e136f8e463b7722ed83ee`
+- Executable source: `47120c5bee52a9ac9f56d8973ab5f9e2b51d699de24b4b3fbce60116143a244a`
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T104954Z-52d35ba489/package.json`
+- Verification plan SHA-256: `05baa2b41fe7247b8a8d822b2ffcc8c4bf35ddcef89a71157a6a7efec2bea2b3`
+- Verdict: **APPROVED**
+
+CI exposed one stale characterization assertion in `tests/Deployment/erp_equipment_facts_runtime_001_test.py`. The one-line delta replaces implementation-specific fixed strings `mktemp /run/fmonitor-secrets/` and `chown 10001:10001` with the already approved stager boundaries `mktemp "$target_directory/` and `chown "$runtime_uid:$runtime_gid"`. This matches the normative overridable `FMONITOR_RUNTIME_SECRETS_DIR`, UID and GID contract, preserves the same privacy/atomicity checks (`WorkerConfiguration::fromFile`, `sync -f`, `chmod 0600`, `mv -f`), and does not weaken secret handling or expand behavior. Adding this registered test to the A1–A6/A8 verification mapping is traceable and in scope.
+
+No blocking finding remains for this characterization delta. Root reports all eight current focused obligations GREEN for this exact source; the prepared package itself contains no attached evidence records, so this review does not independently relabel package evidence as GREEN.
+
+### Enforcement gap
+
+The v1 Gate 3 package model expects pre-implementation `INTENDED_RED` evidence and cannot faithfully encode a post-implementation correction to an existing characterization test whose correct current outcome is GREEN. For this package the acceptance map therefore declares current GREEN expectations while `evidence` is empty. `record-review` nevertheless accepted an `APPROVED` Gate 3 record for source `9cab04a0f6621a255fa9cc7bf29956ad895a64b8cc7e136f8e463b7722ed83ee` at `2026-09-24T10:52:43Z`. That is an enforcement/reporting gap, not proof of RED or of the reported GREEN checks; retained command records and final exact-source review/CI remain required.

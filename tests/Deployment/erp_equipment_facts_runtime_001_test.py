@@ -63,7 +63,7 @@ assert "jobs/process-health" in makefile, "make up qualifies worker/scheduler pr
 assert makefile.index("stage-runtime-secrets") < makefile.index("up --detach --wait php web jobs-worker jobs-scheduler"), \
     "validated Bitrix config reaches the named secret volume before jobs start"
 stager = read("bin/fmonitor2-stage-runtime-bitrix-config")
-for boundary in ("WorkerConfiguration::fromFile", "mktemp /run/fmonitor-secrets/", "sync -f", "chown 10001:10001", "chmod 0600", "mv -f"):
+for boundary in ("WorkerConfiguration::fromFile", 'mktemp "$target_directory/', "sync -f", 'chown "$runtime_uid:$runtime_gid"', "chmod 0600", "mv -f"):
     assert boundary in stager, f"runtime Bitrix staging preserves {boundary}"
 targets = {}
 current = None
