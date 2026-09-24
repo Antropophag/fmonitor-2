@@ -1,0 +1,38 @@
+{
+  "change": "complete-object-bound-inspection-planning-issue-14",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-14-inspection-planning-delivery.md",
+    "docs/operations/issue-14-inspection-planning-red-evidence.md",
+    "openspec/changes/complete-object-bound-inspection-planning/proposal.md",
+    "openspec/changes/complete-object-bound-inspection-planning/design.md",
+    "openspec/changes/complete-object-bound-inspection-planning/tasks.md",
+    "openspec/changes/complete-object-bound-inspection-planning/specs/inspection-planning/object-bound-plans/spec.md",
+    "openspec/changes/complete-object-bound-inspection-planning/verification-input.json",
+    "app/InstallationProcess/InspectionPlanningDefinitionSchemaMigration.php",
+    "app/InstallationProcess/InspectionPlanningSchemaMigration.php",
+    "app/InstallationProcess/InspectionPlanningObjectBoundSchemaMigration.php",
+    "app/InstallationProcess/MariaDbInspectionPlanningSchemaFingerprint.php",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/InstallationProcess/MariaDbYiiSchemaFingerprint.php",
+    "app/InstallationProcess/YiiInspectionPlanning.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "tools/architecture/baseline.json",
+    "specs/INSPECTION-PLANNING-001.md",
+    "tests/Yii2/yii2_inspection_planning_002_test.php",
+    "tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php",
+    "tests/Yii2/inspection_planning_object_worker.php",
+    "tests/InstallationProcess/inspection_planning_object_schema_001_test.php",
+    "tests/InstallationProcess/inspection_planning_schema_001_test.php",
+    "tests/Support/CurrentProductionSchemaContract.php",
+    "tests/Runtime/production_schema_frontier_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {"spec_id":"INSPECTION-PLANNING-001","acceptance_id":"A1-A3-A4-object-owner-authority-history-read","spec_path":"specs/INSPECTION-PLANNING-001.md","seam":"YiiInspectionPlanning public create/reschedule/cancel/currentPlan application seam","tests":["tests/Yii2/yii2_inspection_planning_002_test.php"],"gate3_expected":{"tests/Yii2/yii2_inspection_planning_002_test.php":"GREEN"}},
+    {"spec_id":"INSPECTION-PLANNING-001","acceptance_id":"A2-object-owner-concurrency","spec_path":"specs/INSPECTION-PLANNING-001.md","seam":"concurrent public YiiInspectionPlanning commands on independent DB connections","tests":["tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php":"GREEN"}},
+    {"spec_id":"INSPECTION-PLANNING-001","acceptance_id":"A5-canonical-migration-preservation","spec_path":"specs/INSPECTION-PLANNING-001.md","seam":"canonical migration runner and runtime schema readiness","tests":["tests/InstallationProcess/inspection_planning_object_schema_001_test.php","tests/InstallationProcess/inspection_planning_schema_001_test.php","tests/InstallationProcess/inspection_planning_runtime_ddl_001_test.php"],"gate3_expected":{"tests/InstallationProcess/inspection_planning_object_schema_001_test.php":"INTENDED_RED","tests/InstallationProcess/inspection_planning_schema_001_test.php":"GREEN","tests/InstallationProcess/inspection_planning_runtime_ddl_001_test.php":"GREEN"}}
+  ]
+}

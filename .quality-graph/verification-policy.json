@@ -485,6 +485,27 @@
       "consumers": []
     },
     {
+      "name": "inspection-planning",
+      "patterns": [
+        "app/InstallationProcess/InspectionPlanningDefinitionSchemaMigration.php",
+        "app/InstallationProcess/InspectionPlanningObjectBoundSchemaMigration.php",
+        "app/InstallationProcess/InspectionPlanningSchemaMigration.php",
+        "app/InstallationProcess/MariaDbInspectionPlanningSchemaFingerprint.php",
+        "app/InstallationProcess/MariaDbYiiInspectionPlanning.php",
+        "app/InstallationProcess/MariaDbYiiSchemaFingerprint.php",
+        "app/InstallationProcess/YiiInspectionPlanning.php"
+      ],
+      "verifiers": [
+        "tests/InstallationProcess/inspection_planning_schema_001_test.php",
+        "tests/Yii2/yii2_inspection_planning_001_test.php",
+        "tests/Yii2/yii2_inspection_planning_concurrency_001_test.php",
+        "tests/Yii2/yii2_object_queue_001_test.php"
+      ],
+      "consumers": [
+        "canonical-migration-frontier"
+      ]
+    },
+    {
       "name": "canonical-migration-frontier",
       "patterns": [
         "app/InstallationProcess/CanonicalMigrationApplication.php",

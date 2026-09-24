@@ -41,6 +41,7 @@ final class ProductionPilotMigrationCatalogue
             31=>EquipmentFactsSchemaMigration::class,
             32=>ObjectDetailsEditingMigration::class,
             33=>InstallerAssignmentLookupIndexSchemaMigration::class,
+            34=>InspectionPlanningObjectBoundSchemaMigration::class,
         ];
     }
 }

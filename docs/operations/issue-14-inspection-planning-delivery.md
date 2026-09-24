@@ -1,0 +1,17 @@
+# Issue #14 — object-bound inspection planning delivery
+
+Owner authorization 2026-09-24: реализовать планирование инспекций как planning-only capability. План принадлежит объекту, не исполнителю; активный инженер стройконтроля и Руководитель ФКР планируют только доступные объекты. Перенос и отмена добровольны и не требуют причины. Результат, пропуск, checklist/progress/evidence и персональный календарь не входят.
+
+Рабочая ветка `codex/issue-14-inspection-planning`, base `origin/main` `cbd390f54ea34699523909c462f440f49833c27b`, отдельный worktree `/private/tmp/fmonitor-issue14-plan.wae4Ku`. Root authored OpenSpec artifacts, `specs/INSPECTION-PLANNING-001.md`, verification input/policy ownership delta и executable tests. Отдельный `gpt-5.6-sol/low` executor реализует production; независимые reviewers принимают Gate 3 и final exact source.
+
+Planner после адресной регистрации `inspection-planning` ownership выбрал `governance`, `integration`, `unit`, required reviews `gate3` + `final` и full exact-source CI. Локальный full `make test`/`make verify` запрещён.
+
+Owner split: Yii presentation перенесена в child issue #255 и не входит в этот candidate. Gate 2 owner-only evidence включает schema RED на engineer-bound unique identity, application RED на отсутствии public `createInspectionPlan`, concurrency RED на отсутствии того же object-bound seam, а также GREEN существующих canonical planning-schema и runtime-no-DDL witnesses. Exact retained records и reviewer package хранятся вне checkout через delivery harness.
+
+Implementation author: separate executor `/root/executor_issue14` (`gpt-5.6-sol/low`). Root alone corrected specifications and tests. Independent `/root/gate3_issue14` approved the narrowed owner-only Gate 3 and later semantic test corrections. Harness v1 historical-RED lineage for direct commands remains `UNKNOWN` because those plan commands have null `command_id`/`purpose`; this limitation was not treated as approval.
+
+Implemented canonical v34 while preserving the historical v9 definition: object/date identity excludes engineer, events carry version/request identity/fingerprint, create/reschedule/cancel/currentPlan enforce exact capability and pilot role scope, and legacy `scheduleInspection` deterministically replays or reschedules one object root. Runtime recovery advanced to schema 34 with unchanged table/auto-increment inventory. Yii presentation remains issue #255.
+
+Focused verification: new schema/application/concurrency tests GREEN; predecessor planning schema/runtime DDL, legacy application/concurrency/HTTP, migration-family, recovery and verification checks GREEN; `make architecture-check` 7 rules GREEN with only pre-existing file-size advisories; OpenSpec strict and `git diff --check` GREEN. The sole unresolved local obligation is `production_migration_runner_001_test.php`, which fails setup before assertions because DB-admin `root` authentication is rejected both on the existing local service and a fresh `run-in-profile integration` service. It remains unresolved/UNKNOWN pending exact-source CI; no local full suite was run.
+
+Independent Gate 5 reviewer `/root/final_review_issue14` resolved eight successive authorization, aggregate-history, compatibility and resumable-migration findings and approved exact candidate `23a9885ea3fbf850b9031f3279f2de802f677073e54fee0b7b09c72b2a4391c3` from package `20260924T170947Z-6d39c6bf6f`. Approval explicitly does not convert the local setup failure to GREEN and does not authorize merge/deploy.

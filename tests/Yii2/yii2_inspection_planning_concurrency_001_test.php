@@ -14,7 +14,7 @@ function queueRace(UserAccessFixture $f,array $operations):array
 
 $f=null;
 try {
-    $f=new ObjectQueueFixture(dirname(__DIR__,2));$f->planning();
+    $f=new ObjectQueueFixture(dirname(__DIR__,2));$f->db->query("UPDATE {$f->p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");$f->planning();
     $operations=array_fill(0,4,[9101,451201,'2026-09-12']);
     $results=queueRace($f->http,$operations);
     assertSameValue(['scheduled','scheduled','scheduled','scheduled'],array_column($results,'status'),'all exact duplicates succeed');
@@ -27,6 +27,6 @@ try {
     $before=$f->facts();$results=queueRace($f->http,$operations);assertSameValue($before,$f->facts(),'concurrent existing replay preserves every fact');
     $results=queueRace($f->http,[[9101,451201,'2026-09-13'],[9101,451201,'2026-09-14']]);
     assertSameValue(['scheduled','scheduled'],array_column($results,'status'),'distinct dates both succeed');
-    assertSameValue([3,3],[count($f->rows('fm2_pilot_inspection_schedules')),count($f->rows('fm2_pilot_inspection_schedule_events'))],'each unique intention audited once');
+    assertSameValue([1,3],[count($f->rows('fm2_pilot_inspection_schedules')),count($f->rows('fm2_pilot_inspection_schedule_events'))],'three date intentions audited on one object-bound root');
     echo "PASS: YII2-OBJECT-QUEUE-001 concurrent schedule and replay\n";
 }finally{if($f instanceof ObjectQueueFixture)$f->close();}

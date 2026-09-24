@@ -409,6 +409,7 @@ unit	php	tests/InstallationProcess/inspection_item_complete_001_replay_authoriza
 unit	php	tests/InstallationProcess/inspection_item_complete_001_replay_test.php	unit
 unit	php	tests/InstallationProcess/inspection_item_complete_001_test.php	unit
 unit	php	tests/InstallationProcess/inspection_item_complete_001_ui_client_test.php	integration
+unit	php	tests/InstallationProcess/inspection_planning_object_schema_001_test.php	unit
 unit	php	tests/InstallationProcess/installation_status_labels_manual_test.php	unit
 unit	php	tests/InstallationProcess/local_rbac_auth_contract_001_test.php	unit
 unit	php	tests/InstallationProcess/manual_original_execution_smoke_test.php	integration
@@ -518,6 +519,8 @@ unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
+unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration
+unit	php	tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php	integration
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit

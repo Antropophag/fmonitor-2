@@ -11,11 +11,11 @@ final class MariaDbInspectionPlanningSchemaFingerprint
     {
         $columns = array_map(static function(array $column) use ($collation): array {
             $type = strtolower($column['type']);
-            $character = str_starts_with($type, 'varchar') || $type === 'longtext';
+            $character = str_starts_with($type, 'varchar') || str_starts_with($type, 'char') || $type === 'longtext';
             return [
                 'name'=>$column['name'],
-                'type'=>$type === 'bigint unsigned' ? 'bigint(20) unsigned' : $type,
-                'nullable'=>'NO', 'default'=>null, 'extra'=>$column['extra'],
+                'type'=>$type === 'bigint unsigned' ? 'bigint(20) unsigned' : ($type === 'int unsigned' ? 'int(10) unsigned' : $type),
+                'nullable'=>($column['nullable']??false)?'YES':'NO', 'default'=>null, 'extra'=>$column['extra'],
                 'generated'=>'NEVER', 'generationExpression'=>null,
                 'charset'=>$character ? 'utf8mb4' : null,
                 'collation'=>$character ? ($column['columnCollation'] ?? $collation) : null,

@@ -1,4 +1,28 @@
-# Параллельная срочная цель — issue #252, Bitrix document runtime config
+# Текущая цель — issue #14, object-bound inspection planning owner
+
+Поручение владельца 2026-09-24: реализовать первый срез issue #14 от актуального
+`origin/main` как canonical object-bound planning owner. План принадлежит объекту,
+а не назначенному инженеру; инженер планирует в current native-assignment scope,
+Руководитель ФКР — по всем eligible объектам existing global pilot read scope.
+Create/reschedule/cancel не требуют причины, сохраняют append-only history,
+replay/concurrency и planning-only boundary.
+
+Контракт: [INSPECTION-PLANNING-001](../../specs/INSPECTION-PLANNING-001.md).
+Lifecycle: [complete-object-bound-inspection-planning](../../openspec/changes/complete-object-bound-inspection-planning/).
+Ветка `codex/issue-14-inspection-planning`, отдельный worktree
+`/private/tmp/fmonitor-issue14-plan.wae4Ku` от `origin/main` `cbd390f5`.
+Root authored scope/spec/tests; отдельный `gpt-5.6-sol/low` executor реализует;
+независимые reviewers принимают Gate 3 и final. Локальный full suite запрещён;
+требуется один exact-source CI.
+
+Yii routes/views/assets, кнопки/dialog, calendar/queue projection,
+`Инспекция сегодня`, ordering/pagination и visual acceptance вынесены в child
+issue #255 и не входят в этот candidate. Не входят результат/пропуск инспекции,
+checklist/progress/evidence writers, cadence, уведомления, merge и deployment.
+
+---
+
+# Параллельная историческая цель — issue #252, Bitrix document runtime config
 
 Поручение владельца 2026-09-24: реализовать issue #252 от актуального
 `origin/main` как bounded correction установленного document-links behavior.

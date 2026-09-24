@@ -5,7 +5,7 @@ require __DIR__.'/ObjectQueueFixture.php';
 // YII2-OBJECT-QUEUE-001: real HTTP queue/filter/CSRF/return path plus public read owner.
 $f=null;
 try {
-    $f=new ObjectQueueFixture(dirname(__DIR__,2));$h=$f->http;$p=$f->p;$h->start();$guest=[];
+    $f=new ObjectQueueFixture(dirname(__DIR__,2));$h=$f->http;$p=$f->p;$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");$h->start();$guest=[];
     $before=$f->facts();$r=$h->request('GET','/pilot/objects',[],$guest);
     assertSameValue([303,'/pilot/login'],[$r['status'],$r['headers']['location'][0]??null],'INTENDED_RED Yii object queue guest route');assertSameValue($before,$f->facts(),'guest no domain/schema writes');
     $before=$f->facts();$guestPost=$h->request('POST','/pilot/objects/451201/inspection-schedule',['_csrf'=>'forged','inspectionDate'=>'2099-09-12'],$guest,['X-FMonitor-Auth-User-Id: 9101']);assertSameValue([303,'/pilot/login'],[$guestPost['status'],$guestPost['headers']['location'][0]??null],'guest POST requires native login');assertSameValue($before,$f->facts(),'guest POST zero facts');

@@ -404,6 +404,12 @@
     "app/InstallationProcess/InstallationProcess.php::prepareAssignmentOrder",
     "app/InstallationProcess/MariaDbInstallationCompletion.php::record",
     "app/InstallationProcess/MariaDbControlEngineerAssignment.php::assign",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php::createRoot",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php::scheduleById",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php::updateDate",
+    "app/InstallationProcess/YiiInspectionPlanning.php::cancelInspectionPlan",
+    "app/InstallationProcess/YiiInspectionPlanning.php::createInspectionPlan",
+    "app/InstallationProcess/YiiInspectionPlanning.php::rescheduleInspectionPlan",
     "app/InstallationProcess/YiiInspectionPlanning.php::scheduleInspection"
   ]
 }

@@ -7,7 +7,7 @@ final class MariaDbYiiSchemaFingerprint
     public static function planningReady(Connection $db, string $prefix): bool
     {
         $collation = self::collation($db);
-        foreach (InspectionPlanningDefinitionSchemaMigration::definitions($prefix, $collation) as $name => $definition) {
+        foreach (InspectionPlanningObjectBoundSchemaMigration::definitions($prefix, $collation) as $name => $definition) {
             if (!self::matches($db, $prefix . $name, $definition['manifest'], $collation)) return false;
         }
         return true;

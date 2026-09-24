@@ -437,7 +437,7 @@ try{
      $completedBefore = pmrState($completedConnection);
      if ($fixture['accepted']) {
          pmrResult(
-             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":33,\"appliedVersions\":[]}\n",'stderr'=>''],
+             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":34,\"appliedVersions\":[]}\n",'stderr'=>''],
              pmrRun($completedEnvironment),
              $label . ' must remain a completed-v13 no-op after exact capability successor recognition',
          );
@@ -483,7 +483,7 @@ try{
  assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'seven v1/v2 tables plus conflicting v3 table remain and v4 stops');
  $c->query('DROP TABLE pilot_fm2_process_user_capabilities');
  $recoveryEnvironment=array_diff_key($ce,['PMR_V4_INVOCATION_MARKER'=>true]);
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":33,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":34,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
  pmrCatalog($c,'pilot_');
  $state=pmrState($c);
  foreach(['legacy_sentinel','unrelated_sentinel'] as $t)assertSameValue($before[$t],$state[$t],$t.' survives recovery');

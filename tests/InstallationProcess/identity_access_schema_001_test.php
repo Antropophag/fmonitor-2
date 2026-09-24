@@ -314,7 +314,7 @@ try {
     assertSameValue(true, array_diff($generatedFks, $canonicalFks) !== [], 'MariaDB generated at least one non-canonical FK symbol before runner.');
     }
     $populatedBefore = iaState($db, 'pop_');
-    assertSameValue(['ok' => true, 'schemaVersion' =>  33, 'appliedVersions' => [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]], iaJson(iaRun($database, 'pop_')), 'Populated identity family receives all current successors.');
+    assertSameValue(['ok' => true, 'schemaVersion' =>  34, 'appliedVersions' => [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]], iaJson(iaRun($database, 'pop_')), 'Populated identity family receives all current successors.');
     $populatedBefore=iaAfterV30($populatedBefore,'pop_');
     assertSameValue($populatedBefore, array_intersect_key(iaState($db, 'pop_'),$populatedBefore), 'Populated compatible identity family is preserved exactly while v7-v22 successors are added empty.');
     iaReleaseTerminalV10($db,'pop_');
@@ -348,7 +348,7 @@ try {
     iaPopulateLiteralFamily($db, 'partial_');
     $db->query('DROP TABLE `partial_fm2_pilot_user_status_events`');
     $partialBefore = iaAfterV30(iaState($db, 'partial_'),'partial_');
-    assertSameValue(['ok' => true, 'schemaVersion' =>  33, 'appliedVersions' => [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]], iaJson(iaRun($database, 'partial_')), 'Identity partial recovery composes with all current successors.');
+    assertSameValue(['ok' => true, 'schemaVersion' =>  34, 'appliedVersions' => [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]], iaJson(iaRun($database, 'partial_')), 'Identity partial recovery composes with all current successors.');
     assertSameValue($partialBefore, array_intersect_key(iaState($db, 'partial_'), $partialBefore), 'Existing partial members are unchanged.');
     assertSameValue(CurrentProductionSchemaContract::replayResult(), iaJson(iaRun($database, 'partial_')), 'Interrupted recovery repeat is a no-op.');
     iaReleaseTerminalV10($db,'partial_');
@@ -357,7 +357,7 @@ try {
     iaCreateLiteralFamily($db, 'deps_');
     foreach (['fm2_pilot_invitations','fm2_pilot_auth_credentials','fm2_pilot_user_roles','fm2_pilot_role_permissions','fm2_pilot_roles'] as $base) $db->query("DROP TABLE `deps_{$base}`");
     $depsBefore = iaAfterV30(iaState($db, 'deps_'),'deps_');
-    assertSameValue(['ok'=>true,'schemaVersion' =>  33,'appliedVersions'=>[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33]], iaJson(iaRun($database, 'deps_')), 'Identity dependency recovery within current catalogue.');
+    assertSameValue(['ok'=>true,'schemaVersion' =>  34,'appliedVersions'=>[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]], iaJson(iaRun($database, 'deps_')), 'Identity dependency recovery within current catalogue.');
     assertSameValue($depsBefore, array_intersect_key(iaState($db, 'deps_'), $depsBefore), 'Dependency recovery preserves existing members.');
     foreach (iaNames('deps_') as $table) assertSameValue(1, (int)$db->query("SELECT COUNT(*) n FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}'")->fetch_assoc()['n'], 'Dependency recovery creates every missing member in FK-safe order.');
     assertSameValue(CurrentProductionSchemaContract::replayResult(), iaJson(iaRun($database, 'deps_')), 'Dependency recovery is restartable within composed v27 catalogue.');

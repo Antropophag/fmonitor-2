@@ -17,6 +17,9 @@ final class InspectionPlanningSchemaMigration
     {
         [$definitions, $missing, $conflicting] = self::inspect($connection, $tablePrefix);
         if ($conflicting !== []) {
+            if ($missing === [] && self::isCompleteCompatible($connection, $tablePrefix)) {
+                return ['applied'=>false, 'schemaVersion'=>9, 'tablesCreated'=>[]];
+            }
             return ['applied'=>false, 'schemaVersion'=>9, 'reason'=>'SCHEMA_MIGRATION_CONFLICT',
                 'conflictingTables'=>$conflicting];
         }
@@ -35,7 +38,15 @@ final class InspectionPlanningSchemaMigration
     {
         try {
             [, $missing, $conflicting] = self::inspect($connection, $tablePrefix);
-            return $missing === [] && $conflicting === [];
+            if ($missing === [] && $conflicting === []) return true;
+            if ($missing !== []) return false;
+            $collation = IdentityAccessDefinitionSchemaMigration::databaseCollation($connection);
+            foreach (InspectionPlanningObjectBoundSchemaMigration::definitions($tablePrefix, $collation) as $name => $definition) {
+                if (!MariaDbInspectionPlanningSchemaFingerprint::matches(
+                    $connection, $tablePrefix . $name, $definition['manifest'], $collation,
+                )) return false;
+            }
+            return true;
         } catch (\Throwable) {
             return false;
         }

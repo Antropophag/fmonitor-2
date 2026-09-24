@@ -1,60 +1,22 @@
 <?php
-
 declare(strict_types=1);
-
 namespace FMonitor2\InstallationProcess;
-
 use yii\db\Connection;
 use yii\db\Transaction;
 
 final readonly class MariaDbYiiInspectionPlanning
 {
-    public function __construct(private Connection $db, private string $prefix)
-    {
-        if (strlen($prefix) > 28 || preg_match('/^[A-Za-z0-9_]*$/D', $prefix) !== 1) {
-            throw new \InvalidArgumentException();
-        }
-    }
-    public function begin(): Transaction
-    {
-        return $this->db->beginTransaction();
-    }
-    public function assertReady(): void
-    {
-        if (!MariaDbYiiSchemaFingerprint::planningReady($this->db, $this->prefix)) {
-            throw new \RuntimeException('Planning schema unavailable.');
-        }
-    }
-    public function actorCanSchedule(int $actor): bool
-    {
-        $p = $this->prefix;
-        $sql = "SELECT 1 FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='inspection.schedule' LIMIT 1";
-        return (bool)$this->db->createCommand($sql, [':id' => $actor])->queryScalar();
-    }
-    public function lockEligibleCase(int $object): ?array
-    {
-        $p = $this->prefix;
-        $sql = "SELECT c.id,o.control_engineer_user_id FROM `{$p}fm2_installation_cases` c JOIN `{$p}fm2_assignment_orders` o ON o.installation_case_id=c.id AND o.version_no=(SELECT MAX(x.version_no) FROM `{$p}fm2_assignment_orders` x WHERE x.installation_case_id=c.id) WHERE c.legacy_installation_object_id=:object AND c.process_state IN('working','needs_assignment_change') AND o.status='registered' AND o.control_engineer_user_id>0 LIMIT 1 FOR UPDATE";
-        $row = $this->db->createCommand($sql, [':object' => $object])->queryOne();
-        return $row ? ['caseId' => (int)$row['id'],'engineerId' => (int)$row['control_engineer_user_id']] : null;
-    }
-    public function findSchedule(int $case, int $engineer, string $date): ?int
-    {
-        $p = $this->prefix;
-        $sql = "SELECT id FROM `{$p}fm2_pilot_inspection_schedules` WHERE installation_case_id=:case AND control_engineer_user_id=:engineer AND inspection_date=:date";
-        $id = $this->db->createCommand($sql, [':case' => $case,':engineer' => $engineer,':date' => $date])->queryScalar();
-        return $id === false ? null : (int)$id;
-    }
-    public function appendSchedule(array $case, int $object, string $date, int $actor, string $stamp): int
-    {
-        $this->db->createCommand()->insert($this->prefix . 'fm2_pilot_inspection_schedules', ['installation_case_id' => $case['caseId'],'legacy_object_id' => $object,'control_engineer_user_id' => $case['engineerId'],'inspection_date' => $date,'scheduled_by_user_id' => $actor,'scheduled_at' => $stamp])->execute();
-        return(int)$this->db->getLastInsertID();
-    }
-    public function appendEvent(int $id, array $case, string $date, int $actor, string $stamp): void
-    {
-        $payload = json_encode(['scheduleId' => $id,'inspectionDate' => $date,'controlEngineerUserId' => $case['engineerId']], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        $table = $this->prefix . 'fm2_pilot_inspection_schedule_events';
-        $sql = "INSERT INTO `{$table}`(schedule_id,installation_case_id,event_type,payload_json,actor_user_id,occurred_at) VALUES(:schedule,:case,'inspection_scheduled',:payload,:actor,:occurred)";
-        $this->db->createCommand($sql, [':schedule' => $id,':case' => $case['caseId'],':payload' => $payload,':actor' => $actor,':occurred' => $stamp])->execute();
-    }
+    public function __construct(private Connection $db,private string $prefix){if(strlen($prefix)>28||preg_match('/^[A-Za-z0-9_]*$/D',$prefix)!==1)throw new \InvalidArgumentException();}
+    public function begin():Transaction{return$this->db->beginTransaction();}
+    public function assertReady():void{if(!MariaDbYiiSchemaFingerprint::planningReady($this->db,$this->prefix))throw new \RuntimeException('Planning schema unavailable.');}
+    public function actorCanSchedule(int$actor):bool{$p=$this->prefix;$sql="SELECT 1 FROM `{$p}fm2_pilot_users`u JOIN `{$p}fm2_pilot_user_roles`ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles`r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions`rp ON rp.role_id=r.role_id WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='inspection.schedule' LIMIT 1";return(bool)$this->db->createCommand($sql,[':id'=>$actor])->queryScalar();}
+    public function lockEligibleCase(int$object):?array{$p=$this->prefix;$sql="SELECT c.id,o.control_engineer_user_id FROM `{$p}fm2_installation_cases`c JOIN `{$p}fm2_assignment_orders`o ON o.installation_case_id=c.id AND o.version_no=(SELECT MAX(x.version_no)FROM `{$p}fm2_assignment_orders`x WHERE x.installation_case_id=c.id) WHERE c.legacy_installation_object_id=:object AND c.process_state IN('working','needs_assignment_change') AND o.status='registered' AND o.control_engineer_user_id>0 LIMIT 1 FOR UPDATE";$r=$this->db->createCommand($sql,[':object'=>$object])->queryOne();return$r?['caseId'=>(int)$r['id'],'engineerId'=>(int)$r['control_engineer_user_id']]:null;}
+    public function actorHasObjectScope(int$actor,array$case):bool{$p=$this->prefix;$sql="SELECT MAX(BINARY r.code IN('manager','fkr_operator') AND BINARY rp.permission='objects.read') manager FROM `{$p}fm2_pilot_users`u JOIN `{$p}fm2_pilot_user_roles`ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles`r ON r.role_id=ur.role_id AND r.status=1 JOIN `{$p}fm2_pilot_role_permissions`rp ON rp.role_id=r.role_id WHERE u.user_id=:actor AND u.status=1 AND u.activation_state='active'";$manager=(int)$this->db->createCommand($sql,[':actor'=>$actor])->queryScalar()===1;if($manager)return true;$sql="SELECT 1 FROM `{$p}fm2_control_engineer_assignments`a WHERE a.installation_case_id=:case AND a.engineer_user_id=:actor AND a.assignment_sequence=(SELECT MAX(x.assignment_sequence)FROM `{$p}fm2_control_engineer_assignments`x WHERE x.installation_case_id=a.installation_case_id) LIMIT 1";return(bool)$this->db->createCommand($sql,[':case'=>$case['caseId'],':actor'=>$actor])->queryScalar();}
+    public function receipt(string$request,bool$lock=false):?array{$p=$this->prefix;$suffix=$lock?' FOR UPDATE':'';$r=$this->db->createCommand("SELECT e.*,s.legacy_object_id FROM `{$p}fm2_pilot_inspection_schedule_events`e JOIN `{$p}fm2_pilot_inspection_schedules`s ON s.id=e.schedule_id WHERE e.request_identity=:request{$suffix}",[':request'=>$request])->queryOne();return$r?:null;}
+    public function currentForCase(int$case,string$today,bool$lock=false):?array{$p=$this->prefix;$suffix=$lock?' FOR UPDATE':'';$rows=$this->db->createCommand("SELECT s.id,s.legacy_object_id,s.inspection_date root_date,e.event_type,e.event_version,e.payload_json FROM `{$p}fm2_pilot_inspection_schedules`s JOIN `{$p}fm2_pilot_inspection_schedule_events`e ON e.schedule_id=s.id WHERE s.installation_case_id=:case ORDER BY s.id,e.event_version DESC{$suffix}",[':case'=>$case])->queryAll();$seen=[];$current=null;foreach($rows as$r){$id=(int)$r['id'];if(isset($seen[$id]))continue;$seen[$id]=true;$r['inspection_date']=$this->effectiveDate($r);if($r['event_type']!=='inspection_cancelled'&&$r['inspection_date']>=$today){if($current!==null)throw new \RuntimeException('Multiple current inspection plans.');$current=$r;}}return$current;}
+    public function scheduleById(int$id,bool$lock=false):?array{$p=$this->prefix;$suffix=$lock?' FOR UPDATE':'';$r=$this->db->createCommand("SELECT s.*,s.inspection_date root_date,e.event_type,e.event_version,e.payload_json FROM `{$p}fm2_pilot_inspection_schedules`s JOIN `{$p}fm2_pilot_inspection_schedule_events`e ON e.schedule_id=s.id WHERE s.id=:id ORDER BY e.event_version DESC LIMIT 1{$suffix}",[':id'=>$id])->queryOne();if(!$r)return null;$r['inspection_date']=$this->effectiveDate($r);return$r;}
+    public function createRoot(array$case,int$object,string$date,int$actor,string$stamp):int{$storageDate=$date;$p=$this->prefix;$exists=(bool)$this->db->createCommand("SELECT 1 FROM `{$p}fm2_pilot_inspection_schedules` WHERE installation_case_id=:case AND inspection_date=:date LIMIT 1",[':case'=>$case['caseId'],':date'=>$date])->queryScalar();if($exists){$offset=0;do{$storageDate=(new \DateTimeImmutable('1000-01-01'))->modify('+'.$offset.' days')->format('Y-m-d');$used=(bool)$this->db->createCommand("SELECT 1 FROM `{$p}fm2_pilot_inspection_schedules` WHERE installation_case_id=:case AND inspection_date=:date LIMIT 1",[':case'=>$case['caseId'],':date'=>$storageDate])->queryScalar();$offset++;}while($used);}$this->db->createCommand()->insert($p.'fm2_pilot_inspection_schedules',['installation_case_id'=>$case['caseId'],'legacy_object_id'=>$object,'control_engineer_user_id'=>$case['engineerId'],'inspection_date'=>$storageDate,'scheduled_by_user_id'=>$actor,'scheduled_at'=>$stamp])->execute();return(int)$this->db->getLastInsertID();}
+    public function updateDate(int$id,string$date):void{$this->db->createCommand()->update($this->prefix.'fm2_pilot_inspection_schedules',['inspection_date'=>$date],['id'=>$id])->execute();}
+    public function appendEvent(int$id,int$case,string$type,int$version,string$request,string$fingerprint,array$payload,int$actor,string$stamp):void{$this->db->createCommand()->insert($this->prefix.'fm2_pilot_inspection_schedule_events',['schedule_id'=>$id,'installation_case_id'=>$case,'event_type'=>$type,'event_version'=>$version,'request_identity'=>$request,'request_fingerprint'=>$fingerprint,'payload_json'=>new \yii\db\JsonExpression($payload),'actor_user_id'=>$actor,'occurred_at'=>$stamp])->execute();}
+    private function effectiveDate(array$row):string{$payload=json_decode((string)$row['payload_json'],true,flags:JSON_THROW_ON_ERROR);if(is_string($payload))$payload=json_decode($payload,true,flags:JSON_THROW_ON_ERROR);return(string)($payload['newDate']??$payload['inspectionDate']??$row['root_date']);}
 }
