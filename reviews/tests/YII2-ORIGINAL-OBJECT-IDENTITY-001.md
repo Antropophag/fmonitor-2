@@ -112,3 +112,30 @@ The revised dependency-failure probe closes the executor-discovered incompatibil
 ### Required changes
 
 None.
+
+## Gate 3 scoped-breadcrumb test-delta rereview — candidate ba4de3e2
+
+- Reviewer: `issue243_gate3` (independent; authored neither specification nor strengthened assertions)
+- Exact candidate: `ba4de3e2352ebef7ef5a732ab216754f0be1bbd66ebcf558e3921338964e1c36`; Git HEAD `bfa74a0b0b487e41113f146cb26c6ea89aceee9b`; scoped-test delta reviewed after the Gate 5 finding
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T023823Z-40e7ad2511/package.json`; SHA-256 `d8d95c6e7534eba0106673e5feb98a7822723b4efdc1804efaed5534d9e7ec1e`
+- Verification plan SHA-256: `062c4cd5e7412433bb6e08c399cc0aa201cfa1e454fdf08f5c4027695473f373`; lane `CRITICAL`; required reviews `gate3`, `final`; required categories `e2e`, `governance`, `integration`, `unit`
+- Context manifest SHA-256: `d79e2ad6d97ea4547eb0b2f3d39206a2bef5fb85c79405de3dc8808a68e85800`; required-context SHA-256 `386682b1a6b81b33d0a611537a1d1b5286dbdcc6463082887f17c6a7bf588133`
+- Exact intended RED: `1790217458825743000-b1bf49aae93b40f7ae924faa97f07e9a`, source `ba4de3e2…`, `php tests/Yii2/yii2_original_object_identity_001_test.php`, exit 255 at `INTENDED_RED initial breadcrumb scoped Подъезд 2`
+- Exact transport regression: `1790217469135237000-f7a813f754f847948c7fd7c1525ab482`, source `ba4de3e2…`, `php tests/Yii2/yii2_original_transport_001_test.php`, exit 0 / GREEN
+- Verdict: `APPROVED`
+
+### Delta assessment
+
+1. **Initial/imported breadcrumb is independently scoped.** The extracted initial `.fm2-breadcrumb` must contain registration number, address, entrance and factory number. The separately extracted `.fm2-order-object` must contain the same complete set, so one region cannot mask an incomplete other region.
+2. **Correction and history manual-hostile breadcrumbs are independently scoped.** Separate fragments are extracted from correction and history responses, and every escaped manual value (`РЕГ-&amp;-НОВЫЙ`, hostile escaped address, `Подъезд 12А`, escaped factory number) is asserted in each breadcrumb. The correction primary block is independently checked against that complete set as well.
+3. **Missing-value form and history breadcrumbs are independently scoped.** For each response, its own breadcrumb fragment must contain both explicit missing-number labels plus the available address and entrance. Response-wide presence cannot hide an incomplete breadcrumb.
+4. **Sensitivity is correct.** The current product already supplies enough general identity output to pass the earlier broad checks, but the refreshed exact test now fails at the first missing scoped field, `Подъезд 2`, rather than setup or transport. This directly catches the Gate 5 regression class. The original transport test remains exact-source GREEN.
+5. **Prior coverage is preserved.** The delta does not weaken admission ordering, noLegacy trace, GET immutability, replay/append-only history, exact downloads, escaping, missing labels, or desktop/320px form/history rendering. Expected values continue to come from independent examples A/B/C and disposable fixture setup.
+
+### Matrix conclusion
+
+The scoped assertions now distinguish initial form, correction form and history, across imported, manual-hostile and missing-value states. Together with the unchanged public-seam/browser/security/history checks, A1–A8 remain complete and deterministic. Product code in this candidate remains insufficient and the new test is appropriately RED. No Gate 3 findings remain open.
+
+### Required changes
+
+None.
