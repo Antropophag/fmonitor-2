@@ -14,7 +14,7 @@ $entrance = $display($objectIdentity['entrance'] ?? null);
 $factoryNumber = $display($objectIdentity['factoryNumber'] ?? null);
 ViewSupport::begin($this, $title, $identity);
 ?>
-<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><a class="fm2-breadcrumb-link" href="/pilot/objects/<?= (int) $objectId ?>"><?= Html::encode($registrationNumber !== '' ? $registrationNumber : 'Регистрационный номер не указан') ?> · <?= Html::encode($address) ?></a><span aria-hidden="true">/</span><span aria-current="page"><?= $title ?></span></nav>
+<nav class="fm2-breadcrumb" aria-label="Хлебные крошки"><a class="fm2-breadcrumb-link" href="/pilot/objects">Объекты монтажа</a><span aria-hidden="true">/</span><a class="fm2-breadcrumb-link" href="/pilot/objects/<?= (int) $objectId ?>"><?= Html::encode($registrationNumber !== '' ? $registrationNumber : 'Регистрационный номер не указан') ?> · <?= Html::encode($address) ?><?= $entrance !== '' ? ' · Подъезд ' . Html::encode($entrance) : '' ?> · <?= Html::encode($factoryNumber !== '' ? 'Заводской номер: ' . $factoryNumber : 'Заводской номер не указан') ?></a><span aria-hidden="true">/</span><span aria-current="page"><?= $title ?></span></nav>
 <div class="fm2-page-header fm2-order-heading"><div><h1><?= $title ?></h1><p>Проверьте выбранный состав и приложите оформленный документ.</p></div></div>
 <form class="fm2-order-form" action="<?= $path ?>" data-original-upload-form data-return-url="/pilot/objects/<?= (int) $objectId ?>">
     <?= Html::hiddenInput('csrfToken', $csrf) ?>
