@@ -85,3 +85,30 @@ A1–A8 are traceable through the public HTTP/POST/download/browser seams. Autho
 ### Required changes
 
 None.
+
+## Gate 3 test-delta rereview — candidate 8f2a5e4c
+
+- Reviewer: `issue243_gate3` (independent; authored neither specification nor corrected test delta)
+- Exact candidate: `8f2a5e4cbfd5a7d7e1cca933756186718be6a80ce5c33814ce85ad2f8c06ae51`; Git HEAD `5f907277bdd312b9cecbb3540b095c58d7af0e82`; delta reviewed from prior approved HEAD `f18388dfc50c3b79a1efc721ecefdca2f05c592e`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022140Z-220a8d46cd/package.json`; SHA-256 `7897c93ec2a0a3545931494e9b408d479123ac388ca38b8c642c80ad1371df2c`
+- Verification plan SHA-256: `77abf4997b54955466943fb83f5b409df8423e306b37ef028242e72a7810f4ff`; lane `CRITICAL`; required reviews `gate3`, `final`; required categories `e2e`, `governance`, `integration`, `unit`
+- Context manifest SHA-256: `d7c1fb51ce8212209fb2981cc2c1b59fdbbc221ad8f147ca8febb761946f2e91`; required-context SHA-256 `386682b1a6b81b33d0a611537a1d1b5286dbdcc6463082887f17c6a7bf588133`
+- Exact RED evidence: `1790216458676637000-23ea269fbc19419384f296b3d41b6d32`, source `8f2a5e4c…`, `php tests/Yii2/yii2_original_object_identity_001_test.php`, exit 255 at the intended missing `TEST-4512` assertion
+- Exact regression evidence: `1790216467825918000-17fde58cded948f7911e1927cfd351cc`, source `8f2a5e4c…`, `php tests/Yii2/yii2_original_transport_001_test.php`, exit 0 / GREEN
+- Verdict: `APPROVED`
+
+### Test-delta disposition
+
+1. **Yii probe correction approved.** The test no longer substitutes a `yii\db\Command` subclass into a mysqli-backed runtime. It uses the fixture's privileged mysqli setup connection to temporarily rename `fm2_object_detail_edits`, producing a deterministic dependency failure at the actual effective-details owner.
+2. **Admission order is observable at the public seam.** With that dependency absent, no-read form/history requests retain exact `403`; missing object and missing order form/history retain safe `403`/`404`; authorized form and history both return `503`. Thus denied/unavailable admission demonstrably completes before the effective owner is reached, while valid admitted requests demonstrably reach it. The `finally` block restores the table even when an assertion or request fails.
+3. **Standard runtime trace restored.** The test again calls plain `PreopeningFixture::start()`, so the canonical nonce-bound `includes.jsonl` producer and final `noLegacy()` consumer are paired without a custom-router approximation.
+4. **All earlier findings remain fixed.** Scoped breadcrumb/primary assertions, complete fact/file/byte immutability, form/history desktop and 320px hostile/missing browser checks, explicit missing labels, replay/append-only correction and exact historical downloads are unchanged by this delta.
+5. **Evidence is exact and sensitive.** Both records bind to candidate `8f2a5e4c…`; RED fails only on absent effective identity before implementation, and the adjacent original transport regression is GREEN. Expected values remain independent examples and all fixtures/resources remain disposable.
+
+### Matrix conclusion
+
+The revised dependency-failure probe closes the executor-discovered incompatibility without weakening A5 authorization ordering or the no-legacy runtime boundary. A1–A8 remain complete and deterministic. No Gate 3 findings remain open.
+
+### Required changes
+
+None.
