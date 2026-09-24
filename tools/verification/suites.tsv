@@ -260,6 +260,7 @@ db	php	tests/Yii2/yii2_otiz_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_decisions_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_evidence_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_guest_return_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_object_ledger_history_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_settlement_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_workflow_001_test.php	integration
 db	php	tests/Yii2/yii2_preopening_authorization_001_test.php	integration

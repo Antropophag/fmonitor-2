@@ -1,0 +1,31 @@
+{
+  "change": "object-ledger-history",
+  "planned_paths": [
+    "app/Otiz/MariaDbOtizSettlementView.php",
+    "app/YiiRuntime/Controllers/OtizSettlementController.php",
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/Views/_otiz-object-ledger-history.php",
+    "specs/OTIZ-OBJECT-LEDGER-HISTORY-001.md",
+    "openspec/changes/object-ledger-history/proposal.md",
+    "openspec/changes/object-ledger-history/design.md",
+    "openspec/changes/object-ledger-history/specs/otiz/object-ledger-history/spec.md",
+    "openspec/changes/object-ledger-history/tasks.md",
+    "openspec/changes/object-ledger-history/verification-input.json",
+    "tests/Yii2/yii2_otiz_object_ledger_history_001_test.php",
+    "tests/Yii2/otiz_object_ledger_history_browser.mjs",
+    "reviews/tests/OTIZ-OBJECT-LEDGER-HISTORY-001.md",
+    "reviews/code/OTIZ-OBJECT-LEDGER-HISTORY-001.md",
+    "docs/operations/issue-29-object-ledger-history-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-OBJECT-LEDGER-HISTORY-001",
+      "acceptance_id": "A01-A10-complete-cross-snapshot-object-ledger-history",
+      "spec_path": "specs/OTIZ-OBJECT-LEDGER-HISTORY-001.md",
+      "seam": "guest denied and authorized GET existing Yii2 snapshot route with lazy object context, server pagination, database fact inventory, and Chromium desktop/narrow transitions",
+      "tests": ["tests/Yii2/yii2_otiz_object_ledger_history_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_object_ledger_history_001_test.php": "INTENDED_RED"}
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace FMonitor2\Otiz;
 use yii\db\Connection;
+use yii\db\Transaction;
 /** Read-only settlement projection; all monetary writes remain in OtizSettlement. */
 final class MariaDbOtizSettlementView
 {
@@ -15,6 +16,20 @@ final class MariaDbOtizSettlementView
   return['snapshot'=>$snapshot,'objects'=>$objects,'closures'=>$closures];
  }
  public function snapshotForClosure(int$id):int|false{$v=$this->db->createCommand("SELECT snapshot_id FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE id=:id",[':id'=>$id])->queryScalar();return$v===false?false:(int)$v;}
+ public function objectLedgerHistory(int$snapshotId,int$objectId,int$page):array|false
+ {
+  if($snapshotId<1||$objectId<1||$page<1)return false;
+  $transaction=$this->db->beginTransaction(Transaction::REPEATABLE_READ);
+  try{
+   $object=$this->db->createCommand("SELECT o.*,s.report_date FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` s ON s.id=o.snapshot_id WHERE o.snapshot_id=:s AND o.object_id=:o",[':s'=>$snapshotId,':o'=>$objectId])->queryOne();
+   if($object===false){$transaction->rollBack();return false;}
+   $aggregate=$this->db->createCommand("SELECT COUNT(*) total,COALESCE(SUM(paid_cents),0) paid_cents,COALESCE(SUM(discipline_cents),0) discipline_cents,COALESCE(SUM(deadline_cents),0) deadline_cents,COALESCE(SUM(paid_cents+discipline_cents+deadline_cents),0) global_closed_cents FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` WHERE object_id=:o",[':o'=>$objectId])->queryOne();
+   $rows=[];
+   if($page-1<=intdiv(PHP_INT_MAX,10)){$offset=($page-1)*10;$rows=$this->db->createCommand("SELECT c.*,s.report_date source_report_date,CASE WHEN c.reverses_payment_closure_id IS NOT NULL THEN 'reversal' WHEN c.paid_cents>0 THEN 'payment' ELSE 'deduction' END presentation_kind,original.id local_reversal_id,CASE WHEN original.id IS NULL THEN NULL ELSE 1+((SELECT COUNT(*) FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` preceding WHERE preceding.object_id=c.object_id AND (preceding.closed_on>original.closed_on OR (preceding.closed_on=original.closed_on AND preceding.id>original.id))) DIV 10) END local_reversal_page FROM `{$this->prefix}fm2_pilot_otiz_payment_closures` c JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` s ON s.id=c.snapshot_id LEFT JOIN `{$this->prefix}fm2_pilot_otiz_payment_closures` original ON original.id=c.reverses_payment_closure_id AND original.object_id=c.object_id WHERE c.object_id=:o ORDER BY c.closed_on DESC,c.id DESC LIMIT 10 OFFSET {$offset}",[':o'=>$objectId])->queryAll();}
+   $transaction->commit();
+   return['object'=>$object,'rows'=>$rows,'total'=>(int)$aggregate['total'],'totals'=>['paid_cents'=>(int)$aggregate['paid_cents'],'discipline_cents'=>(int)$aggregate['discipline_cents'],'deadline_cents'=>(int)$aggregate['deadline_cents'],'global_closed_cents'=>(int)$aggregate['global_closed_cents']],'page'=>$page,'page_size'=>10];
+  }catch(\Throwable$e){if($transaction->isActive)$transaction->rollBack();throw$e;}
+ }
  public function snapshots():array
  {
   return$this->db->createCommand("SELECT s.*,(SELECT u.full_name FROM `{$this->prefix}fm2_pilot_users` u WHERE u.user_id=s.calculated_by_user_id LIMIT 1) calculated_by_name,COUNT(DISTINCT o.object_id) object_count,COUNT(DISTINCT CASE WHEN i.severity='blocker' THEN i.id END) blocker_count,COUNT(DISTINCT CASE WHEN i.severity='warning' THEN i.id END) warning_count FROM `{$this->prefix}fm2_pilot_otiz_snapshots` s LEFT JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_objects` o ON o.snapshot_id=s.id LEFT JOIN `{$this->prefix}fm2_pilot_otiz_snapshot_issues` i ON i.snapshot_id=s.id GROUP BY s.id ORDER BY s.report_date DESC,s.id DESC")->queryAll();
