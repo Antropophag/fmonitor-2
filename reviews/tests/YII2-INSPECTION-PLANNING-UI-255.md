@@ -201,3 +201,16 @@ The correction preserves the approved ambiguity oracle while removing an unrelat
 The event is internally bound to the inserted root and case, has a distinct opaque request identity, version one, deterministic payload and actor/time. The before/after fact snapshot remains after complete fault setup, so the assertion continues to prove that the failing ambiguity read performs no repair or DML. Earlier filtered COUNT, two-page order, midnight and no-DML expectations are unchanged.
 
 PHP syntax and `git diff --check` pass. No Gate 3 finding is introduced; the test approval extends through commit `6a03b71d5dee2c315085cce94cb1b03ecdc4eb17`. Final production review and exact-source CI remain outside this delta verdict.
+
+---
+
+## Gate 3 browser-focus delta review — 2026-09-25
+
+- Reviewer independence: unchanged.
+- Reviewed commit: `e7803353a44976ce7b98804a945643bb04f1d289` over the approved test candidate.
+- Scope: one-line browser-oracle change in `tests/Yii2/inspection_planning_ui_255_browser.mjs` only.
+- Verdict: **APPROVED**.
+
+The new `waitForFunction` waits until the already resolved date input is exactly `document.activeElement`, accommodating Chromium's asynchronous native-dialog focus settlement. It neither substitutes another focus target nor turns the requirement into a timeout/sleep; failure to focus the date input still times out and fails. The immediate equality assertion remains after the wait, and all Escape/trigger focus-return, reschedule-focus and narrow-viewport checks are unchanged.
+
+Node syntax and `git diff --check` pass. No acceptance expectation is weakened, so Gate 3 approval extends through `e7803353a44976ce7b98804a945643bb04f1d289`. Production changes remain outside this verdict.
