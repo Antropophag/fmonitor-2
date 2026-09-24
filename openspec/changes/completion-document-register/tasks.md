@@ -5,9 +5,9 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 Implement the bounded completion-register read adapter.
-- [ ] 2.2 Implement the read-only controller and view.
-- [ ] 2.3 Add exact route and navigation registrations without changing shared CSS/JS.
+- [x] 2.1 Implement the bounded completion-register read adapter.
+- [x] 2.2 Implement the read-only controller and view.
+- [x] 2.3 Add exact route and navigation registrations without changing shared CSS/JS.
 
 ## 3. Verification
 
