@@ -268,3 +268,37 @@ These additions preserve all previously approved A1–A7 expectations and add se
 `APPROVED`
 
 Gate 3 approves the Gate 5 correction test delta for exact source `7ea13c5fca2d627fea16722d27b9419d5b615ec243d65f75ba201e157f65a368`. The complete candidate may return to independent Gate 5 rereview after refreshed exact-source evidence. Any further test expectation change requires another Gate 2/3 delta decision; production is not approved by this record.
+
+---
+
+## Gate 3 delta review — CI architecture refactor — 2026-09-24
+
+- Exact reviewed current worktree source: candidate digest `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3` over base `b1542f92009b8dc4216a36962ff38a51e0b6c388`, as reported by `python3 tools/delivery/harness.py state`.
+- The active prepared package still refers to the preceding approved source `cfcd8ddb1a7551c1028da61e433cabc50fe7b2b13917376ac66108632fa374dd`; no refreshed package was supplied for this correction review. This verdict is therefore bound to the stated current-worktree digest and must be incorporated into a refreshed reconstructible package before final rereview/publication.
+- Review scope: test/inventory delta in `tests/Yii2/yii2_integration_status_001_test.php`, `tests/Yii2/yii2_main_navigation_001_test.php`, and `tools/verification/suites.tsv`, following the CI-driven production refactor from private native `mysqli` reads to the configured Yii database connection and `yii\db\Query`.
+- Reviewer independence remains unchanged; this reviewer authored none of the delta.
+
+### Assessment
+
+No findings.
+
+Moving `yii2_integration_status_001_test.php` from `unit` to `db` with category `integration` is correct and preserves discovery exactly once. The test creates a disposable MariaDB schema, starts the real Yii HTTP server, launches Playwright, and exercises durable reads; treating it as unit was an inaccurate CI prerequisite classification. The acceptance mapping and focused command are unchanged.
+
+The existing main-navigation regression has been updated comprehensively rather than weakened. `/pilot/admin/integrations` is now present in the canonical route/label/order list, the `Администрирование` hierarchy, exact pinned `graph` icon mapping, admin-capable combinations, and the no-admin direct-denial matrix. Existing exact membership, ordering, grouping, icon geometry, active-link, capability filtering, and read-only fact assertions remain intact. This closes the adjacent navigation consumer introduced by the slice.
+
+The integration-status architecture witness appropriately replaces the obsolete native-connection cleanup regex. It now requires both `Yii::$app->db` and `new Query()` and rejects `new mysqli`, `set_charset`, and raw `SELECT`/`INSERT`/`UPDATE`/`DELETE` ownership in the controller. This is sensitive to reintroducing the CI-rejected private connection lifecycle or direct SQL composition while allowing the application-owned configured connection to retain resource lifecycle. The behavioral HTTP/fixture matrix continues to establish exact data selection, counts, pagination, unavailable/empty outcomes, redaction, and no durable mutation, so replacing the internal lifecycle assertion does not weaken A1–A7 acceptance sensitivity.
+
+### Verification
+
+I ran at candidate digest `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3`:
+
+- `php tests/Yii2/yii2_integration_status_001_test.php` — GREEN.
+- `php tests/Yii2/yii2_main_navigation_001_test.php` — GREEN.
+- `python3 tests/Verification/change_verification_001_test.py` — 18/18 GREEN.
+- `python3 tests/Verification/architecture_guard_001_test.py` — exited 0.
+
+### Delta verdict
+
+`APPROVED`
+
+Gate 3 approves this CI architecture/inventory test delta for exact current-worktree source `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3`. Refresh the verification plan/package and exact-source evidence before the required final rereview. This record approves only the test/inventory delta; the refactored production must be assessed independently at Gate 5.

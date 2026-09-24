@@ -118,3 +118,47 @@ I independently reran the same three selected commands at this exact source. The
 `APPROVED`
 
 Gate 5 passes for exact source `cfcd8ddb1a7551c1028da61e433cabc50fe7b2b13917376ac66108632fa374dd`. The candidate may proceed to commit/PR and the one required exact-source CI run under the delivery process. Any subsequent code or test change requires refreshed exact-source review appropriate to that delta. Merge and deployment are not authorized by this verdict.
+
+---
+
+## Gate 5 CI architecture correction rereview — 2026-09-24
+
+- Exact reviewed current-worktree source: candidate digest `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3` over base `b1542f92009b8dc4216a36962ff38a51e0b6c388`, as reported by `python3 tools/delivery/harness.py state`.
+- The active prepared package remains the preceding package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T022606Z-a219e05f92/package.json` for source `cfcd8ddb1a7551c1028da61e433cabc50fe7b2b13917376ac66108632fa374dd`; a refreshed reconstructible package was not supplied with this rereview request. This verdict is bound to the stated current-worktree digest and requires refreshed packaging/evidence before publication.
+- Review scope: complete current candidate, with special attention to the production refactor in `IntegrationStatusController`, the independently Gate 3-approved test/inventory delta, and preservation of every earlier Gate 5 correction.
+- Reviewer independence remains unchanged.
+
+### Assessment
+
+No findings.
+
+The controller now uses the configured application `Yii::$app->db` connection and `yii\db\Query` rather than constructing a second native `mysqli` lifecycle. The translation preserves the reviewed read model exactly:
+
+- workforce latest attempt orders by `started_at, run_id` descending, latest success filters `completed` and orders by `completed_at, run_id`, and missing rows filter `reconciliation_state=missing_from_delivery`;
+- ERP latest attempt/success keep their `observed_at, run_id` ordering, completed filter, receipt count allowlist, and diagnostic reason allowlist;
+- jobs retain the dead-status filter, exact safe selected columns, ascending deterministic ID order, SQL-level count, fixed limit 25, and bounded offset;
+- the validated table prefix remains the sole dynamic table-name input, now quoted by Yii's query builder; no raw SQL or command/writer API is introduced.
+
+`safeRead` continues to isolate workforce, ERP, and jobs read failures independently. The request-scoped application connection is closed in the existing `finally`; Yii's connection component can reopen lazily if a later shared component needs it, and the rendered HTTP/browser matrix confirms the subsequent canonical navigation composition remains functional. The prior partial-native-initialization leak is eliminated because this controller no longer constructs or initializes a native connection.
+
+All earlier fixes remain present: no integration-specific session/CSRF mutation, distinct jobs unavailable and successful-empty outcomes, source-specific shlz-ui empty states, canonical active/blocked access, bounded independent pagination, safe receipt/count extraction, encoded persisted values, and no integration/job/transport writer composition.
+
+The root-authored CI corrections are also complete and were independently approved at Gate 3 for this digest. The integration acceptance is classified once as DB/integration; the shared navigation oracle includes the new route in exact membership, order, group, pinned icon, capability combinations, and direct denial; and the architecture witness rejects reintroduction of private `mysqli`, charset lifecycle, or raw SELECT/DML ownership while requiring the Yii connection and query builder.
+
+### Verification
+
+I independently ran at candidate digest `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3`:
+
+- `php -l app/YiiRuntime/Controllers/IntegrationStatusController.php` — GREEN.
+- `php tests/Yii2/yii2_integration_status_001_test.php` — GREEN.
+- `php tests/Yii2/yii2_main_navigation_001_test.php` — GREEN.
+- `python3 tests/Verification/change_verification_001_test.py` — 18/18 GREEN.
+- `python3 tests/Verification/architecture_guard_001_test.py` — exited 0.
+
+The user-reported CI evidence is GREEN, but the active harness binding does not yet contain refreshed exact-source CI metadata for this digest. CI admission, merge, and deployment therefore remain `UNKNOWN` in this review.
+
+### Final correction verdict
+
+`APPROVED`
+
+Gate 5 passes for current candidate digest `d1647e78f119e8773ab4ba10c3b568563ba59dbad3259ea739cc18b1194503f3`. Refresh the reconstructible package and exact-source evidence before publication/admission. Any subsequent production or test change requires review of that delta. This verdict does not authorize merge or deployment.
