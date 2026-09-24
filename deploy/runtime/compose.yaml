@@ -151,12 +151,9 @@ services:
     command: ["php", "bin/yii", "jobs/worker", "--interactive=0"]
     environment:
       <<: [*runtime-environment, *jobs-erp-environment]
-      FMONITOR_BITRIX_ORIGIN: "${FMONITOR_BITRIX_ORIGIN:-}"
-      FMONITOR_BITRIX_WEBHOOK_USER_ID: "${FMONITOR_BITRIX_WEBHOOK_USER_ID:-}"
       FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID: "${FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID:-}"
       FMONITOR_BITRIX_DEPARTMENT_IDS_JSON: "${FMONITOR_BITRIX_DEPARTMENT_IDS_JSON:-}"
       FMONITOR_BITRIX_CONFIG: /run/fmonitor-secrets/bitrix-config.json
-      FMONITOR_BITRIX_TOKEN_FILE: /run/fmonitor-secrets/bitrix-token
       FMONITOR_BITRIX_CA_FILE: "${FMONITOR_BITRIX_CA_HOST_FILE:+/run/fmonitor-secrets/bitrix-ca.pem}"
       FMONITOR_RUNTIME_ENV: production
       FMONITOR_PUBLIC_BASE_URL: "${FMONITOR_PUBLIC_BASE_URL:-}"
@@ -172,10 +169,6 @@ services:
     volumes:
       - state:/home/fmonitor/.local/state/fmonitor2
       - secrets:/run/fmonitor-secrets
-      - type: bind
-        source: "${FMONITOR_BITRIX_TOKEN_HOST_FILE:-/dev/null}"
-        target: /run/fmonitor-secrets/bitrix-token
-        read_only: true
       - type: bind
         source: "${FMONITOR_BITRIX_CA_HOST_FILE:-/dev/null}"
         target: /run/fmonitor-secrets/bitrix-ca.pem

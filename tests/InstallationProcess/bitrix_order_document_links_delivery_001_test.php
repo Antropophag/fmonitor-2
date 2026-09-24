@@ -24,13 +24,15 @@ $transport=static function(string $method,string $url,array $options)use(&$calls
 $result=(new NativeBitrixOrderDocumentDelivery($config,$transport))->fetch([
     ['sourceFolderId'=>'501','sourceFolderName'=>'0012.03','orderNumber'=>'0012.03','url'=>'https://tenant.bitrix24.test/docs/501'],
 ]);
+$childrenCalls=array_values(array_filter($calls,fn($call)=>str_contains($call[1],'getchildren')));
+foreach($childrenCalls as $call){parse_str((string)parse_url($call[1],PHP_URL_QUERY),$query);assertSameValue('1809812',(string)($query['id']??''),'configured root id reaches every children request');}
 assertSameValue(['complete',null],[$result->kind,$result->reason],'complete delivery');
 assertSameValue(
     [['501','0012.03','0012.03'],['502','1.3-2.3','1.3'],['502','1.3-2.3','2.3']],
     array_map(fn($link)=>[$link['sourceFolderId'],$link['sourceFolderName'],$link['orderNumber']],$result->links),
     'direct folders, pagination and legacy range'
 );
-assertSameValue([0,1],array_map(static function(array $call):int{parse_str((string)parse_url($call[1],PHP_URL_QUERY),$query);return(int)($query['start']??0);},array_values(array_filter($calls,fn($call)=>str_contains($call[1],'getchildren')))),'monotonic pages');
+assertSameValue([0,1],array_map(static function(array $call):int{parse_str((string)parse_url($call[1],PHP_URL_QUERY),$query);return(int)($query['start']??0);},$childrenCalls),'monotonic pages');
 assertSameValue(1,count(array_filter($calls,fn($call)=>str_contains($call[1],'batch'))),'only the new folder uses one batch');
 assertSameValue(0,count(array_filter($calls,fn($call)=>str_contains($call[1],'getExternalLink'))),'external links are batch-only');
 assertSameValue(false,str_contains(json_encode($result,JSON_THROW_ON_ERROR),'synthetic-token'),'public result hides secrets');

@@ -1,0 +1,52 @@
+{
+  "change": "fix-bitrix-document-runtime-config-issue-252",
+  "planned_paths": [
+    ".env.example",
+    "Makefile",
+    "bin/fmonitor2-stage-runtime-bitrix-config",
+    "deploy/runtime/compose.yaml",
+    "tools/delivery/compose.runtime.yaml.in",
+    "tools/delivery/local-integration-config",
+    "tools/delivery/local-runtime-env",
+    "docs/bitrix-startup.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/runtime-recovery-runbook.md",
+    "specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md",
+    "tests/Deployment/bitrix_startup_config_001_test.php",
+    "tests/Deployment/bitrix_document_runtime_config_001_test.py",
+    "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
+    "tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php",
+    "tests/Jobs/jobs_runtime_contract_001_test.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "BITRIX-DOCUMENT-RUNTIME-CONFIG-001",
+      "acceptance_id": "A1-A6-A8-secure-upgrade-compose-and-operations",
+      "spec_path": "specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md",
+      "seam": "canonical staging and Compose convert private Bitrix config into a coherent runtime contract with safe operator procedures",
+      "tests": [
+        "tests/Deployment/bitrix_document_runtime_config_001_test.py",
+        "tests/Deployment/bitrix_startup_config_001_test.php",
+        "tests/Deployment/erp_equipment_facts_runtime_001_test.py",
+        "tests/Jobs/jobs_runtime_contract_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Deployment/bitrix_document_runtime_config_001_test.py": "GREEN",
+        "tests/Deployment/bitrix_startup_config_001_test.php": "GREEN",
+        "tests/Deployment/erp_equipment_facts_runtime_001_test.py": "GREEN",
+        "tests/Jobs/jobs_runtime_contract_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "BITRIX-DOCUMENT-RUNTIME-CONFIG-001",
+      "acceptance_id": "A7-existing-configured-root-delivery",
+      "spec_path": "specs/BITRIX-DOCUMENT-RUNTIME-CONFIG-001.md",
+      "seam": "BitrixOrderDocumentDelivery synthetic fetch uses configured root and preserves complete/failure semantics",
+      "tests": ["tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php"],
+      "gate3_expected": {
+        "tests/InstallationProcess/bitrix_order_document_links_delivery_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

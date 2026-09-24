@@ -131,10 +131,6 @@ services:
       - state:/home/fmonitor/.local/state
       - secrets:/run/fmonitor-secrets
       - type: bind
-        source: "${FMONITOR_BITRIX_TOKEN_HOST_FILE:-/dev/null}"
-        target: /run/fmonitor-secrets/bitrix-token
-        read_only: true
-      - type: bind
         source: "${FMONITOR_BITRIX_CA_HOST_FILE:-/dev/null}"
         target: /run/fmonitor-secrets/bitrix-ca.pem
         read_only: true
@@ -296,7 +292,7 @@ ambient Bitrix environment и не разрешает live call.
 
 ```sh
 unset FMONITOR_BITRIX_ORIGIN FMONITOR_BITRIX_WEBHOOK_USER_ID \
-  FMONITOR_BITRIX_DEPARTMENT_IDS_JSON FMONITOR_BITRIX_TOKEN_HOST_FILE \
+  FMONITOR_BITRIX_DEPARTMENT_IDS_JSON FMONITOR_BITRIX_CONFIG_HOST_FILE \
   FMONITOR_BITRIX_CA_HOST_FILE
 docker compose --project-name "$FMONITOR_TARGET_PROJECT" \
   --file deploy/runtime/compose.yaml --file "$FMONITOR_TARGET_ROOT/compose.override.yaml" \
@@ -304,20 +300,28 @@ docker compose --project-name "$FMONITOR_TARGET_PROJECT" \
 ```
 
 Production jobs resume — отдельная ветка после operator authorization и подготовки
-token/CA по jobs-разделу основного runbook. Начать с очищенного environment, затем
-загрузить только target и approved jobs files:
+private canonical Bitrix config/CA по jobs-разделу основного runbook. Approved
+`jobs.env` содержит только путь `FMONITOR_BITRIX_CONFIG_HOST_FILE`, document root
+и optional CA path, но не origin, user ID или token. Начать с очищенного
+environment, затем загрузить только target и approved jobs files:
 
 ```sh
 unset FMONITOR_BITRIX_ORIGIN FMONITOR_BITRIX_WEBHOOK_USER_ID \
-  FMONITOR_BITRIX_DEPARTMENT_IDS_JSON FMONITOR_BITRIX_TOKEN_HOST_FILE \
+  FMONITOR_BITRIX_DEPARTMENT_IDS_JSON FMONITOR_BITRIX_CONFIG_HOST_FILE \
   FMONITOR_BITRIX_CA_HOST_FILE
 test "$FMONITOR_JOBS_ENV" = "$FMONITOR_PRIVATE_ROOT/jobs.env"
 test -f "$FMONITOR_JOBS_ENV" && test ! -L "$FMONITOR_JOBS_ENV"
 set -a; . "$FMONITOR_TARGET_ROOT/target.env"; . "$FMONITOR_JOBS_ENV"; set +a
-case "$FMONITOR_BITRIX_ORIGIN" in https://*) ;; *) exit 64 ;; esac
-test -n "$FMONITOR_BITRIX_WEBHOOK_USER_ID"
-test -n "$FMONITOR_BITRIX_DEPARTMENT_IDS_JSON"
-test -f "$FMONITOR_BITRIX_TOKEN_HOST_FILE" && test ! -L "$FMONITOR_BITRIX_TOKEN_HOST_FILE"
+test -f "$FMONITOR_BITRIX_CONFIG_HOST_FILE" \
+  && test ! -L "$FMONITOR_BITRIX_CONFIG_HOST_FILE" \
+  && test -r "$FMONITOR_BITRIX_CONFIG_HOST_FILE"
+test -n "$FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID"
+# Canonical staging atomically publishes only private bitrix-config.json.
+# Worker derives and cleans up its temporary token. Never print the webhook or
+# inspect the config contents.
+docker compose --project-name "$FMONITOR_TARGET_PROJECT" \
+  --file deploy/runtime/compose.yaml --file "$FMONITOR_TARGET_ROOT/compose.override.yaml" \
+  --profile deployment run --rm --no-deps stage-runtime-secrets
 if test -n "${FMONITOR_BITRIX_CA_HOST_FILE:-}"; then
   test -f "$FMONITOR_BITRIX_CA_HOST_FILE" && test ! -L "$FMONITOR_BITRIX_CA_HOST_FILE"
 fi
