@@ -5,7 +5,6 @@
     "app/InstallationProcess/BitrixOrderDocumentDeliveryConfig.php",
     "app/InstallationProcess/BitrixOrderDocumentDeliveryResult.php",
     "app/InstallationProcess/BitrixOrderDocumentFolderMapper.php",
-    "app/InstallationProcess/BitrixOrderDocumentFailureReason.php",
     "app/InstallationProcess/NativeBitrixOrderDocumentDelivery.php",
     "app/InstallationProcess/BitrixOrderDocumentLinksSchemaMigration.php",
     "app/InstallationProcess/MariaDbBitrixOrderDocumentLinks.php",
