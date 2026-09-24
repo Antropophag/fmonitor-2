@@ -32,3 +32,30 @@
 ## Required correction
 
 Resolve finding 1 and strengthen the acceptance test so the corrected behavior is independently observable on every required breadcrumb surface. Then prepare a fresh exact-source package and repeat Gate 5. Finding 2 is advisory unless the correction adds further drift.
+
+## Gate 5 rereview — corrected candidate 178a512d
+
+- Reviewer: `issue243_final_review` (same independent final reviewer; authored neither product, specification nor tests)
+- Authorship remains: `root` specification/tests; `issue243_executor` product implementation
+- Reviewed Git HEAD: `1a84980c039dad06b85ae4fcd5718568fc8abcd6`
+- Exact candidate source: `178a512d2627fca11e8aacd2e7656facc83b6eb4858ec6317cf4cbc5f0cc3d67`
+- Exact executable source: `ea80d72ab147bcda6159aa32cfadf7014bbd9214aab984a600e7c05ccfca0100`
+- Verification plan SHA-256: `8072fa40d5d85b67bbb4fe347f51ac1afb8bfac9deccf03ce9b6b806c86fe7f1`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T024234Z-a49dd83585/package.json`
+- Planner classification remains `CRITICAL`; required reviews `gate3`, `final`; required categories `e2e`, `governance`, `integration`, `unit`
+- Exact GREEN evidence: `1790217707076999000-baa1f534eb624536999ef3602bc9618a` (`php tests/Yii2/yii2_original_object_identity_001_test.php`) and `1790217722449315000-835af71a83c24dc2973b4a75e215b006` (`php tests/Yii2/yii2_original_transport_001_test.php`), both clean and bound to the candidate/executable sources above
+- Verdict: `APPROVED`
+
+### Prior findings disposition
+
+1. **High breadcrumb completeness — fixed.** `app/YiiRuntime/Views/original.php:17` and `app/YiiRuntime/Views/original-history.php:22` now render registration number, address, entrance and factory number (or the explicit missing factory label) in the breadcrumb. Every effective value remains HTML-escaped. The correction changes no URL, command, hidden ID, document label, writer or persistence boundary.
+2. **Test sensitivity — fixed and independently approved at Gate 3.** `tests/Yii2/yii2_original_object_identity_001_test.php:25,46,52` extracts separate breadcrumb fragments and requires the complete imported identity on initial, the complete escaped manual/hostile identity on correction and history, and all available/missing labels on both missing-state surfaces. The test-delta RED failed specifically at missing scoped `Подъезд 2`; the corrected exact candidate completes GREEN, including desktop/320px browser coverage.
+3. **Low duplicated presentation code — accepted as nonblocking advisory.** The two views still repeat the small normalization/fallback/presentation shape. A shared partial could reduce future drift, but introducing a common `ViewSupport`/presentation abstraction is outside this bounded change and is unnecessary for current correctness. No extraction is required for this Gate 5 verdict.
+
+### Full current findings list
+
+No blocking findings. One nonblocking Low maintainability advisory remains: the identity presentation is duplicated between the two original views. It does not violate a documented repository rule, create a second resolver, or weaken current A1-A8 behavior.
+
+### Final assessment
+
+The complete `origin/main...HEAD` candidate now conforms to A1-A8. It reuses `MariaDbEffectiveObjectDetails`, preserves authorization-before-effective-read, escapes hostile values, supplies explicit missing labels, retains technical IDs and document identity, and leaves append-only originals, replay, downloads and integration boundaries unchanged. The corrected scoped assertions close the prior test blind spot, and the exact focused records are GREEN. No additional changes are required for Gate 5.
