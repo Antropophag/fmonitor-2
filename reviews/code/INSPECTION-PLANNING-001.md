@@ -1,8 +1,8 @@
 # Code review: INSPECTION-PLANNING-001
 
 - Reviewer: independent `gpt-5.6-sol/low` Gate 5 agent `/root/final_review_issue14`; reviewer authored no reviewed artifact.
-- Reviewed source: final publication candidate `19a6a73060b9c613092cae2f38b1e15655ca01c700460cbb9ca85a2712ebfab6`, package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T171301Z-8081bdbbd6/package.json`.
-- Publication delta from approved candidate `23a9885ea3fbf850b9031f3279f2de802f677073e54fee0b7b09c72b2a4391c3`: only `openspec/changes/complete-object-bound-inspection-planning/tasks.md`, `docs/operations/issue-14-inspection-planning-delivery.md`, and this review record changed. Production, specifications, executable tests, verification policy, and architecture bytes are identical to the approved source.
+- Reviewed source: rebased candidate `2fadc057b0b804503e8bfdb3e9835f1759c2628b8a866560f0e02aa0947258f5`, commit `f573d3d6`, package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T171803Z-fb50eca40a/package.json`, based on current `origin/main` `199e1b38`.
+- Rebase verification: the retained approved publication patch was reconstructed on its original base `cbd390f5`; every non-review path touched by rebased commit `f573d3d6` is byte-identical to that approved candidate. The rebase introduces no production, specification, executable-test, policy, architecture, OpenSpec, or delivery-record semantic delta. This review record alone is updated to bind the new exact source.
 - Scope: narrowed issue #14 owner/schema/current-plan seam and retained Yii calendar compatibility. New presentation in issue #255 remains excluded.
 - Gate 3: final migration-preflight test delta `APPROVED` in `reviews/tests/INSPECTION-PLANNING-001.md`.
 - Verdict: **APPROVED**.
@@ -26,9 +26,9 @@ The legacy v9 definition remains preserved, v34 is the canonical production/runt
 
 ## Verification
 
-- Five mapped focused commands: rerun GREEN on the final publication source.
+- Five mapped focused commands: rerun GREEN on the rebased exact source.
 - Architecture check, strict OpenSpec validation, PHP syntax checks, and `git diff --check`: GREEN.
 - Independent standards and specification rereviews found no remaining or new findings.
 - `production_migration_runner_001_test.php` remains local `SETUP_FAILURE` because DB-root authentication failed. This obligation remains **UNKNOWN**, not GREEN, and this review does not waive the required exact-source CI.
 
-Gate 5 is approved for the identified final publication candidate. PR readiness still requires the authoritative exact-source CI result; CI, merge, deployment, and live behavior are not approved by this record.
+Gate 5 is approved for the identified rebased exact candidate. PR readiness still requires the authoritative exact-source CI result; CI, merge, deployment, and live behavior are not approved by this record.
