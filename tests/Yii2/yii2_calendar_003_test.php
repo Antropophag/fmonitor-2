@@ -8,7 +8,7 @@ $f = null;
 try {
     $f = new PreopeningFixture(dirname(__DIR__, 2));
     $p = $f->p;
-    $f->db->query("INSERT IGNORE INTO {$p}fm2_pilot_user_roles(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,7,'fixture','2026-09-19T12:00:00+03:00',18)");
+    $f->db->query("INSERT IGNORE INTO {$p}fm2_pilot_user_roles(user_id,role_id,origin,assigned_at,assigned_by_user_id) VALUES(18,7,'fixture','2026-09-19T12:00:00+03:00',18)");$f->db->query("INSERT IGNORE INTO {$p}fm2_pilot_role_permissions(role_id,permission) VALUES(7,'objects.read')");
     $f->db->query("DELETE FROM {$p}fm2_pilot_role_permissions WHERE role_id=5 AND permission='objects.read'");
     foreach ([
         [7103, 6101, 42, '2026-11-03'],
