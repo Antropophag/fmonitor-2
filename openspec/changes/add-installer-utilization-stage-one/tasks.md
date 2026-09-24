@@ -4,7 +4,7 @@
 - [x] 1.2 Root creates deterministic DB/HTTP tests for current/upcoming semantics, effective lift identity, 3→2→1→0, replacement/history, unavailable/unknown values and read-only behavior; verify each new behavior fails for the intended missing implementation.
 - [x] 1.3 Root creates directory/card/picker HTTP and representative browser tests proving server filters/count/pagination and the user route on desktop/narrow viewports; capture bounded RED evidence outside the checkout.
 - [x] 1.4 Root completes `verification-input.json`, runs `harness.py prepare`, reads all Quality Graph obligations, resolves coverage gaps and records the selected lane/reviews before Gate 2.
-- [ ] 1.5 A separate `gpt-5.6-sol / low` reviewer records the planner-required Gate 3 verdict for the complete spec/tests/RED snapshot; implementation starts only after APPROVED when Gate 3 is required.
+- [x] 1.5 A separate `gpt-5.6-sol / low` reviewer records the planner-required Gate 3 verdict for the complete spec/tests/RED snapshot; implementation starts only after APPROVED when Gate 3 is required.
 
 ## 2. Unified read model
 

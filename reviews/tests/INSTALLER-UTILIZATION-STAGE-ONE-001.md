@@ -142,3 +142,38 @@ The PTO therefore closes 4999 only for later history/replacement assertions, not
 - Reorder the PTO before all zero/absent-current expectations, or change those expectations to the still-current state.
 - Add a direct before/after assertion that the 4999 PTO changes current count from one to zero while 4512 remains upcoming.
 - Refresh exact-source RED evidence and the reviewer package.
+
+## Rereview 4 — consistent coexistence phase
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Reviewed source: commit `91a88aad89630621cf701e045df345ee2353d4d5`, candidate source `7b7c657ecf362b3829c8c543fbbc2bc91ffac80034a5b5d6a897d650ab2d1f07`, executable source `d26ffd48f42509d206dacd33d95e629849494faa6fbe8f05a5c11496723b4e49`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T190556Z-7d6477e15f/package.json`; plan SHA-256 `7d92323daf6f81e73357dae761426add0c817629336464cb2463007db17d7c93`
+- Bound stage-one test SHA-256: `9f928f9d961f0d4da2eea4690d8d19eea03009db5845a0c9e583106c2e702dd4`; unchanged surfaces/browser tests retain their prior bound hashes
+- RED evidence: all three mapped commands have fresh candidate-bound `INTENDED_RED` records with exit `255`; no mapped tests are missing
+- Verdict: `APPROVED`
+
+### Prior finding disposition
+
+The remaining contradiction is resolved. While lift 4999 is current and lift 4512 is confirmed but unopened, the card, picker and directory consistently require current count one, effective upcoming registration `EFFECTIVE-4512`, and the conjunctive `current=present&upcoming=present` result. The duplicate concurrent card reads observe that same phase. Only afterward does the fixture add PTO for 4999; lift 4512 is then factually reopened before the active-history phase. No later assertion incorrectly treats 4999 as current or requires the coexistence phase to have zero current work.
+
+The dedicated surfaces test independently proves the required PTO sequence 3→2→1→0 without declaration/payment/certificate prerequisites, so another immediate 4999-only zero assertion is not required for acceptance sensitivity.
+
+### Complete assessment
+
+The reviewed suite now covers the normative stage-one matrix through public HTTP/browser seams:
+
+- applied composition plus factual opening and same-lift PTO release, including same-address independent lifts and 3→2→1→0;
+- confirmed-original upcoming behavior versus selection/template negatives, elapsed planned date, explicit unknown date, and simultaneous current plus separate upcoming work;
+- effective requisites overriding stale base values;
+- server-side present/absent conjunctive filters, full-set later-page matching, count, stable history ordering and pagination;
+- shared compact current/upcoming expectations across directory, card and picker;
+- replacement history boundaries, adjacent retained-assignment coalescing, mixed native/legacy pagination and fail-closed malformed/current-source behavior;
+- guest, denied and limited object-scoped directory/card/picker outcomes with forbidden-literal absence;
+- escaping, mandatory-source unavailable-not-zero, replay/read-only facts, overlapping duplicate GET determinism and bounded query count;
+- desktop/mobile directory-to-card return state and working assignment-order picker context.
+
+Expected values are fixed from the specification or explicit fixtures rather than copied from production output. The tests remain read-only except for isolated fixture setup and deliberate source-fact transitions, and compare business facts around read phases. Root authorship, separate executor authorization, independent review, exact candidate binding and fresh intended-RED evidence are preserved.
+
+### Required changes
+
+None. Gate 4 implementation may proceed against exact candidate source `7b7c657ecf362b3829c8c543fbbc2bc91ffac80034a5b5d6a897d650ab2d1f07` without changing the approved expectations.
