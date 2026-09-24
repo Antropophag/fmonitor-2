@@ -24,7 +24,6 @@ required=(
   FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS
   FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE
   FMONITOR_RUNTIME_ENV FMONITOR_PUBLIC_BASE_URL
-  FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID
   FMONITOR_SMTP_HOST FMONITOR_SMTP_PORT FMONITOR_SMTP_ENCRYPTION
   FMONITOR_SMTP_USERNAME FMONITOR_SMTP_PASSWORD FMONITOR_SMTP_FROM_ADDRESS
   FMONITOR_SMTP_FROM_NAME FMONITOR_SMTP_TIMEOUT_SECONDS FMONITOR_SMTP_VERIFY_PEER
@@ -32,11 +31,12 @@ required=(
 integration=(
   FMONITOR_SOURCE_HOST FMONITOR_SOURCE_PORT FMONITOR_SOURCE_NAME
   FMONITOR_SOURCE_USER FMONITOR_SOURCE_PASSWORD FMONITOR_MIGRATION_CUTOFF
-  FMONITOR_BITRIX_WEBHOOK_URL FMONITOR_BITRIX_DEPARTMENT_IDS_JSON
+  FMONITOR_BITRIX_WEBHOOK_URL FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL FMONITOR_BITRIX_DEPARTMENT_IDS_JSON
 )
-optional=(FMONITOR_BITRIX_CA_FILE_HOST FMONITOR_SMTP_TEST_RECIPIENT)
+optional=(FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID FMONITOR_BITRIX_CA_FILE_HOST FMONITOR_SMTP_TEST_RECIPIENT)
 for name in "${required[@]}" "${integration[@]}" "${optional[@]}"; do unset "$name"; done
 seen='|'
+integration_seen='|'
 while IFS= read -r line || [[ -n "$line" ]]; do
   [[ -z "$line" || "$line" == \#* ]] && continue
   [[ "$line" == *=* ]] || fail
@@ -47,7 +47,11 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     *" $name "*) ;;
     *)
       case " ${integration[*]} " in
-        *" $name "*) continue ;;
+        *" $name "*)
+          [[ "$integration_seen" != *"|$name|"* ]] || fail
+          integration_seen+="$name|"
+          continue
+          ;;
         *)
           case " ${optional[*]} " in
             *" $name "*) ;;
@@ -81,7 +85,13 @@ port=$FMONITOR_HTTP_PORT
 [[ "$FMONITOR_TRUSTED_REQUEST_SCHEME" == http || "$FMONITOR_TRUSTED_REQUEST_SCHEME" == https ]] || fail
 [[ "$FMONITOR_TRUSTED_REQUEST_HOST" == *:* ]] || fail
 [[ "$FMONITOR_INITIAL_OWNER_EMAIL" == *@*.* ]] || fail
-[[ "$FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID" =~ ^[1-9][0-9]*$ ]] || fail
+document_url_present=false; document_root_present=false
+[[ "$integration_seen" == *"|FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL|"* ]] && document_url_present=true
+[[ "$seen" == *"|FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID|"* ]] && document_root_present=true
+[[ "$document_url_present" == "$document_root_present" ]] || fail
+if [[ "$document_root_present" == true ]]; then
+  [[ "$FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID" =~ ^[1-9][0-9]*$ ]] || fail
+fi
 (( ${#FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY} >= 32 )) || fail
 [[ "$FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] && (( FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS >= 1 && FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS <= 60 )) || fail
 [[ "$FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS" =~ ^[0-9]+$ ]] && (( FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS >= 1 && FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS <= 10000 )) || fail

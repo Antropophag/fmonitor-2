@@ -13,7 +13,8 @@ template = (root / ".env.example").read_text()
 required = (
     "FMONITOR_SOURCE_HOST", "FMONITOR_SOURCE_PORT", "FMONITOR_SOURCE_NAME",
     "FMONITOR_SOURCE_USER", "FMONITOR_SOURCE_PASSWORD", "FMONITOR_MIGRATION_CUTOFF",
-    "FMONITOR_BITRIX_WEBHOOK_URL", "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON",
+    "FMONITOR_BITRIX_WEBHOOK_URL", "FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL",
+    "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON",
 )
 for name in required:
     assert template.count(name + "=") == 1, f"INTENDED_RED: .env.example missing exact {name}"
@@ -29,6 +30,8 @@ FMONITOR_SOURCE_USER=SOURCE_USER_CANARY_149
 FMONITOR_SOURCE_PASSWORD='{legacy}'
 FMONITOR_MIGRATION_CUTOFF=2026-09-17 00:00:00
 FMONITOR_BITRIX_WEBHOOK_URL='https://portal.example/rest/7/{bitrix}/'
+FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL='https://portal.example/rest/8/DOCUMENT_CANARY_149/'
+FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[72,71]'
 """.format(legacy=legacy_secret, bitrix=bitrix_secret)
 
@@ -65,7 +68,7 @@ with tempfile.TemporaryDirectory() as raw:
     bitrix, bitrix_path = stage("bitrix")
     assert bitrix.returncode == 0, (bitrix.stdout, bitrix.stderr)
     document = json.loads(bitrix_path.read_text())
-    assert document == {"baseUrl": f"https://portal.example/rest/7/{bitrix_secret}", "departments": [72, 71]}
+    assert document == {"baseUrl": f"https://portal.example/rest/7/{bitrix_secret}", "departments": [72, 71], "documentBaseUrl": "https://portal.example/rest/8/DOCUMENT_CANARY_149"}
 
     # Existing legacy consumer grammar preserves values containing either quote kind.
     single_quote_password = base.replace(f"FMONITOR_SOURCE_PASSWORD='{legacy_secret}'", 'FMONITOR_SOURCE_PASSWORD="a\'b"')
@@ -183,7 +186,6 @@ FMONITOR_ERP_EQUIPMENT_FACTS_HMAC_KEY=hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 FMONITOR_ERP_EQUIPMENT_FACTS_MAX_ROWS=500
 FMONITOR_ERP_EQUIPMENT_FACTS_TIMEOUT_SECONDS=5
 FMONITOR_ERP_EQUIPMENT_FACTS_CHUNK_SIZE=100
-FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 """
     (checkout / ".env").write_text(runtime + base)
     (checkout / ".env").chmod(0o600)

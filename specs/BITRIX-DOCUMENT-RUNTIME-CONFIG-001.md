@@ -4,9 +4,11 @@
 
 ## Простыми словами
 
-Оператор продолжает хранить один существующий Bitrix webhook URL в приватном
-`.env`. Перед запуском jobs worker FMonitor безопасно раскладывает его на
-несекретные origin/user ID и отдельный приватный token-файл. Если document-links
+Оператор хранит два независимых Bitrix webhook URL в приватном `.env`: кадровый
+и document webhook. Перед запуском jobs worker FMonitor безопасно раскладывает
+их в один атомарный internal private config с отдельными `baseUrl` и
+`documentBaseUrl`. Workforce bootstrap сохраняет свой временный token-файл, а
+document delivery выбирает только `documentBaseUrl`. Если document-links
 интеграция включена, но secret нельзя подготовить, запуск прекращается до worker,
 а не продолжается с `/dev/null`. Этот срез не меняет workforce sync, обход Bitrix,
 расписание, таблицу ссылок или карточку объекта.
@@ -18,6 +20,7 @@
 
 ```dotenv
 FMONITOR_BITRIX_WEBHOOK_URL='https://tenant.example.invalid/rest/7/marker-token/'
+FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL='https://tenant.example.invalid/rest/8/document-token/'
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[71]'
 FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 ```
@@ -29,9 +32,9 @@ focused проверки stager SHALL принимать переопредел�
 defaults SHALL оставаться `/run/fmonitor-input/bitrix-config.json` и
 `/run/fmonitor-secrets`.
 
-Stager SHALL принимать только private regular non-symlink Bitrix config,
-прошедший существующую `WorkerConfiguration` validation, и атомарно публиковать
-его как единственный runtime secret source. Worker bootstrap SHALL из `baseUrl`
+Stager SHALL принимать один private regular non-symlink Bitrix config, полностью
+проверить workforce `baseUrl` и optional `documentBaseUrl` до публикации и
+атомарно публиковать `bitrix-config.json`. Совпадающие credentials SHALL отклоняться. Worker bootstrap SHALL из `baseUrl`
 вида `https://HOST/rest/USER_ID/TOKEN` получить exact origin, положительный
 decimal webhook user ID и непустой token. Root ID остаётся несекретным
 deployment input.
@@ -42,11 +45,11 @@ deployment input.
 `bitrix-config.json` для workforce sync и document delivery. Отдельные staged
 `bitrix-token`, `bitrix-runtime.env` и token mounts SHALL отсутствовать.
 
-Worker bootstrap SHALL прочитать этот config, внутри worker process установить
+Workforce bootstrap SHALL прочитать workforce config, внутри worker process установить
 exact `FMONITOR_BITRIX_ORIGIN` и `FMONITOR_BITRIX_WEBHOOK_USER_ID`, создать
 короткоживущий `0600` token file и передать его путь через
 `FMONITOR_BITRIX_TOKEN_FILE`. Token SHALL не попадать в Compose environment,
-argv, stdout/stderr, rendered Compose или tracked files; temporary token SHALL
+argv, stdout/stderr, rendered Compose или tracked files; workforce temporary token SHALL
 быть удалён после завершения execution seam. Отдельный
 `FMONITOR_BITRIX_TOKEN_HOST_FILE`, token volume mount и fallback `/dev/null`
 запрещены.
@@ -92,8 +95,9 @@ bootstrap SHALL продолжить обслуживать workforce-only sync.
 
 ## 4. Delivery и совместимость
 
-После успешного staging existing `BitrixOrderDocumentDelivery` SHALL получить
-coherent origin, user ID, root ID и token file. Synthetic read-only transport
+После успешного staging existing `BitrixOrderDocumentDelivery` SHALL прочитать
+coherent origin, user ID и token только из `documentBaseUrl` private config, а root ID —
+из deployment input. Synthetic read-only transport
 SHALL подтвердить, что fetch обращается к configured root и возвращает complete
 validated result без credential output. Ошибка fetch SHALL сохранять прежнюю
 projection согласно `BITRIX-ORDER-DOCUMENT-LINKS-001`.
@@ -116,7 +120,7 @@ rows и отображение карточки SHALL сообщаться ка�
   workforce departments.
 - **A2:** plain/single/double quoted `.env` upgrade эквивалентен.
 - **A3:** replay и successful rotation одной atomic rename публикуют private
-  coherent config; real worker bootstrap создаёт и удаляет temporary token без
+  coherent configs; workforce bootstrap создаёт и удаляет свой temporary token без
   secret disclosure.
 - **A4:** missing/empty/unreadable/symlink/non-regular/invalid input fail closed,
   сохраняют прежние bytes и очищают temporary files.

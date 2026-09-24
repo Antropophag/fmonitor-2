@@ -77,11 +77,39 @@ echo json_encode($seen, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), "\n";
     return json.loads(result.stdout)
 
 
+def document_probe(config: Path) -> dict:
+    php = r'''
+require "app/autoload.php";
+$value=FMonitor2\Workforce\WorkerConfiguration::fromDocumentFile($argv[1]);
+echo json_encode($value,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES),"\n";
+'''
+    result = run(["php", "-r", php, str(config)])
+    assert result.returncode == 0, result.stdout + result.stderr
+    return json.loads(result.stdout)
+
+
+def delivery_composition_probe(config: Path, root: str = "1809812") -> dict:
+    php = r'''
+require "app/autoload.php";
+$entered=false;
+$result=FMonitor2\InstallationProcess\BitrixOrderDocumentDelivery::runFromEnvironment(
+    static function(object $config)use(&$entered):array{$entered=true;return["status"=>"witness","user"=>$config->webhookUserId,"root"=>$config->rootFolderId,"token"=>$config->token];}
+);
+echo json_encode(["entered"=>$entered,"result"=>$result],JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES),"\n";
+'''
+    environment = dict(os.environ)
+    environment.update({"FMONITOR_BITRIX_CONFIG": str(config), "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID": root})
+    result = run(["php", "-r", php], environment)
+    assert result.returncode == 0, result.stdout + result.stderr
+    return json.loads(result.stdout)
+
+
 with tempfile.TemporaryDirectory() as temporary:
     work = Path(temporary)
     expected_document = {
         "baseUrl": f"https://tenant.example.invalid/rest/7/{MARKER}",
         "departments": [71],
+        "documentBaseUrl": "https://tenant.example.invalid/rest/8/document-token-252",
     }
     results = []
     for index, webhook in enumerate((
@@ -92,6 +120,8 @@ with tempfile.TemporaryDirectory() as temporary:
         env_file = work / f"input-{index}.env"
         env_file.write_text(
             f"FMONITOR_BITRIX_WEBHOOK_URL={webhook}\n"
+            "FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL='https://tenant.example.invalid/rest/8/document-token-252/'\n"
+            "FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812\n"
             "FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[71]'\n",
             encoding="utf-8",
         )
@@ -111,6 +141,8 @@ with tempfile.TemporaryDirectory() as temporary:
         published = target / "bitrix-config.json"
         private_regular(published)
         assert json.loads(published.read_text()) == expected_document
+        assert document_probe(published) == {"origin": "https://tenant.example.invalid", "webhookUserId": 8, "token": "document-token-252"}
+        assert delivery_composition_probe(published) == {"entered": True, "result": {"status": "witness", "user": 8, "root": 1809812, "token": "document-token-252"}}
         observed = worker_probe(published, work)
         assert observed == {
             "origin": "https://tenant.example.invalid",
@@ -122,6 +154,20 @@ with tempfile.TemporaryDirectory() as temporary:
         }, "real worker bootstrap owns exact config translation and token cleanup"
         results.append((published.read_bytes(), observed))
     assert results[0] == results[1] == results[2], "plain and quoted .env inputs are equivalent"
+
+    disabled_env = work / "disabled.env"
+    disabled_env.write_text(f"FMONITOR_BITRIX_WEBHOOK_URL=https://tenant.example.invalid/rest/7/{MARKER}/\nFMONITOR_BITRIX_DEPARTMENT_IDS_JSON=[71]\n")
+    disabled_env.chmod(0o600)
+    disabled_config = work / "disabled.json"
+    disabled = run([str(HOST_STAGER), "stage", "bitrix", str(disabled_env), str(disabled_config)])
+    assert disabled.returncode == 0 and "documentBaseUrl" not in json.loads(disabled_config.read_text())
+    for suffix in ("FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812\n", "FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL=https://tenant.example.invalid/rest/8/document-token-252/\n"):
+        partial = work / "partial.env"
+        partial.write_text(disabled_env.read_text() + suffix); partial.chmod(0o600)
+        assert run([str(HOST_STAGER), "stage", "bitrix", str(partial), str(work / "partial.json")]).returncode != 0
+    equal = work / "equal.env"
+    equal.write_text(disabled_env.read_text() + f"FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL=https://tenant.example.invalid/rest/7/{MARKER}/\nFMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812\n"); equal.chmod(0o600)
+    assert run([str(HOST_STAGER), "stage", "bitrix", str(equal), str(work / "equal.json")]).returncode != 0
 
     source = work / "rotation.json"
     source.write_text(json.dumps(expected_document) + "\n", encoding="utf-8")
@@ -135,7 +181,7 @@ with tempfile.TemporaryDirectory() as temporary:
     assert (replay.returncode, replay.stdout, replay.stderr) == (0, "", "")
     assert published.read_bytes() == before, "valid replay is byte-equivalent"
 
-    rotated_document = {"baseUrl": "https://rotated.example.invalid/rest/8/rotated-token-252", "departments": [72]}
+    rotated_document = {"baseUrl": "https://rotated.example.invalid/rest/8/rotated-token-252", "departments": [72], "documentBaseUrl": "https://rotated.example.invalid/rest/9/document-token-252"}
     source.write_text(json.dumps(rotated_document) + "\n", encoding="utf-8")
     rotated = stage_runtime(source, target)
     assert (rotated.returncode, rotated.stdout, rotated.stderr) == (0, "", "")
@@ -148,7 +194,7 @@ with tempfile.TemporaryDirectory() as temporary:
     fake_mv = fake_bin / "mv"
     fake_mv.write_text("#!/bin/sh\nexit 73\n", encoding="utf-8")
     fake_mv.chmod(0o700)
-    pending_document = {"baseUrl": "https://pending.example.invalid/rest/9/pending-token-252", "departments": [73]}
+    pending_document = {"baseUrl": "https://pending.example.invalid/rest/9/pending-token-252", "departments": [73], "documentBaseUrl": "https://pending.example.invalid/rest/10/document-token-252"}
     source.write_text(json.dumps(pending_document) + "\n", encoding="utf-8")
     failed_publish = stage_runtime(source, target, {"PATH": str(fake_bin) + os.pathsep + os.environ["PATH"]})
     assert (failed_publish.returncode, failed_publish.stdout, failed_publish.stderr) == (74, "", "RUNTIME_SECRET_STAGING_FAILED\n")
@@ -183,6 +229,12 @@ with tempfile.TemporaryDirectory() as temporary:
     unreadable.write_bytes(source.read_bytes())
     unreadable.chmod(0o000)
     invalid_cases.append(unreadable)
+    malformed_document = work / "malformed-document.json"
+    malformed_document.write_text(json.dumps({**expected_document,"documentBaseUrl":"http://bad.invalid/rest/8/token"})+"\n");malformed_document.chmod(0o600)
+    invalid_cases.append(malformed_document)
+    identical_document = work / "identical-document.json"
+    identical_document.write_text(json.dumps({**expected_document,"documentBaseUrl":expected_document["baseUrl"]})+"\n");identical_document.chmod(0o600)
+    invalid_cases.append(identical_document)
     for invalid in invalid_cases:
         failed = stage_runtime(invalid, target)
         assert (failed.returncode, failed.stdout, failed.stderr) == (
@@ -192,6 +244,11 @@ with tempfile.TemporaryDirectory() as temporary:
         assert published.read_bytes() == before
         assert sorted(path.name for path in target.iterdir()) == ["bitrix-config.json"]
         assert not list(target.glob(".*.tmp-*")), "temporary files are removed"
+
+    missing_document = work / "missing-document.json"
+    missing_document.write_text(json.dumps({"baseUrl":expected_document["baseUrl"],"departments":[71]})+"\n");missing_document.chmod(0o600)
+    assert delivery_composition_probe(missing_document) == {"entered": False, "result": {"status": "failed", "reason": "CONFIGURATION_UNAVAILABLE"}}
+    assert delivery_composition_probe(malformed_document) == {"entered": False, "result": {"status": "failed", "reason": "CONFIGURATION_UNAVAILABLE"}}
 
 for compose_path in ("deploy/runtime/compose.yaml", "tools/delivery/compose.runtime.yaml.in"):
     compose = (ROOT / compose_path).read_text(encoding="utf-8")
@@ -212,6 +269,10 @@ assert makefile.index("stage-runtime-secrets") < makefile.index("up --detach --w
 documentation = "\n".join((ROOT / path).read_text(encoding="utf-8") for path in (
     "docs/bitrix-startup.md", "docs/operations/runtime-recovery-runbook.md",
 ))
+env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
+runtime_sources = env_example + (ROOT / "Makefile").read_text(encoding="utf-8") + RUNTIME_STAGER.read_text(encoding="utf-8") + HOST_STAGER.read_text(encoding="utf-8")
+for required in ("FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL", "documentBaseUrl"):
+    assert required in runtime_sources, f"INTENDED_RED: separate document webhook staging omits {required}"
 for phrase in ("FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID", "bitrix-config.json", "ротац"):
     assert phrase.lower() in documentation.lower(), f"INTENDED_RED: operator docs omit {phrase}"
 assert "не создавайте token-файл вручную" in documentation.lower()

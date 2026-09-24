@@ -13,12 +13,14 @@ owner кадровой синхронизации. Ready объявляется 
 
 ```dotenv
 FMONITOR_BITRIX_WEBHOOK_URL='https://example.invalid/rest/1/replace_me/'
+FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL='https://example.invalid/rest/2/replace_me/'
 FMONITOR_BITRIX_DEPARTMENT_IDS_JSON='[101,102]'
 FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 ```
 
-Это вымышленные значения: замените URL на выданный вам HTTPS-вебхук с доступом
-к чтению каталога сотрудников, а числа — на нужные ID отделов. Не копируйте
+Это вымышленные значения: замените первый URL на HTTPS-вебхук кадрового каталога,
+а второй — на отдельный HTTPS-вебхук с доступом к Bitrix Disk. Числа задают ID
+отделов и корневой папки документов. Не копируйте
 вебхук в команды терминала, Git или сообщения об ошибках.
 
 Каждый параметр указывается ровно один раз, на одной строке. Поддерживаются
@@ -50,17 +52,21 @@ FMONITOR_BITRIX_ORDER_DOCUMENT_ROOT_ID=1809812
 Для смены legacy или Bitrix параметров отредактируйте существующий `.env` и
 повторите соответствующую команду либо `make up-with-data`: consumer получит
 новый полный snapshot.
-При `make up` canonical webhook атомарно публикуется только внутри приватного
-`/run/fmonitor-secrets/bitrix-config.json`. Worker сам извлекает origin, user ID
-и временный private token, удаляемый после execution seam. Не создавайте token-файл вручную
+При `make up` оба webhook объединяются и атомарно публикуются только внутри
+приватного `/run/fmonitor-secrets/bitrix-config.json`: workforce хранится в
+`baseUrl`, document webhook — в `documentBaseUrl`. Workforce bootstrap сохраняет
+свой временный private token-файл и удаляет его после execution seam; document
+delivery выбирает только `documentBaseUrl`. Не создавайте token-файл вручную
 и не передавайте token отдельной environment-переменной. Для безопасной проверки
 используйте `docker compose ... config --quiet`: не выводите `.env`, webhook или
 содержимое secret-файла.
 
-Для ротации замените только `FMONITOR_BITRIX_WEBHOOK_URL` в приватном `.env` и
+Для ротации замените соответствующий `FMONITOR_BITRIX_WEBHOOK_URL` или
+`FMONITOR_BITRIX_ORDER_DOCUMENT_WEBHOOK_URL` в приватном `.env` и
 повторите `make up`. Staging полностью проверяет новый config до замены runtime
 config. При `RUNTIME_SECRET_STAGING_FAILED` worker не запускается, а предыдущий
-валидный `bitrix-config.json` сохраняется; исправьте `.env` и повторите команду. В диагностике
+валидный `bitrix-config.json` сохраняется побайтно;
+исправьте `.env` и повторите команду. В диагностике
 не должны появляться webhook URL, путь к secret или его содержимое.
 Не перезаписывайте `.env` шаблоном при обновлении: make reset не нужен,
 данные и история сохраняются. `make down` останавливает стенд
