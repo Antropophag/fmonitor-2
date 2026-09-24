@@ -8,16 +8,16 @@
 
 ## 2. Unified read model
 
-- [ ] 2.1 Executor implements one read-only Workforce projection for applied composition + factual opening − active PTO and confirmed-original-before-opening; focused DB tests prove A–H and no writes.
-- [ ] 2.2 Executor implements separate lift periods and effective requisites without address grouping; focused tests prove three lifts and sequential PTO 3→2→1→0.
-- [ ] 2.3 Executor implements SQL-first search/load predicates, paired count/list queries, stable pagination and explicit unavailable/unknown states; a dataset larger than one page proves case I.
+- [x] 2.1 Executor implements one read-only Workforce projection for applied composition + factual opening − active PTO and confirmed-original-before-opening; focused DB tests prove A–H and no writes.
+- [x] 2.2 Executor implements separate lift periods and effective requisites without address grouping; focused tests prove three lifts and sequential PTO 3→2→1→0.
+- [x] 2.3 Executor implements SQL-first search/load predicates, paired count/list queries, stable pagination and explicit unavailable/unknown states; a dataset larger than one page proves case I.
 
 ## 3. Working user surfaces
 
-- [ ] 3.1 Executor integrates the projection into the existing installer directory with minimal local registration; focused HTTP/browser tests prove filters, counts, paging, escaping, authorization and links.
-- [ ] 3.2 Executor adds the installer card with current/upcoming/completed available periods, known/unknown dates, effective object links and allowlisted return state; focused tests prove H, K and L.
-- [ ] 3.3 Executor supplies the same compact read-only context to the existing assignment-order composition picker without changing eligibility or writers; focused tests prove J and M.
-- [ ] 3.4 Executor verifies the visible directory→card→object and picker routes in a disposable runtime at desktop and narrow widths, without changing stand 8093.
+- [x] 3.1 Executor integrates the projection into the existing installer directory with minimal local registration; focused HTTP/browser tests prove filters, counts, paging, escaping, authorization and links.
+- [x] 3.2 Executor adds the installer card with current/upcoming/completed available periods, known/unknown dates, effective object links and allowlisted return state; focused tests prove H, K and L.
+- [x] 3.3 Executor supplies the same compact read-only context to the existing assignment-order composition picker without changing eligibility or writers; focused tests prove J and M.
+- [x] 3.4 Executor verifies the visible directory→card→object and picker routes in a disposable runtime at desktop and narrow widths, without changing stand 8093.
 
 ## 4. Focused verification and independent review
 
