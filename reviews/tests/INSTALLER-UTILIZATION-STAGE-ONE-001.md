@@ -373,3 +373,24 @@ Move the complete `$stale` scenario after the existing boundary branch, or add a
 - Restore fixture-reachability isolation by ensuring no stale-composition semantic actions execute before the reachability early exit.
 - Retain the two regression oracles and their exact expectations.
 - Refresh the focused evidence after reordering and return the test-only delta for Gate 3 rereview.
+
+## Rereview 12 — fixture-reachability ordering correction
+
+- Reviewer: independent `gpt-5.6-sol/low` agent `/root/issue258_gate3`
+- Gate boundary: test-only correction; production and Gate 5 remain outside scope
+- Reviewed commit: `2bbdd62f5bde20e4becd2d0bcad88bfd9871bab5`
+- Corrected stage-one test SHA-256: `b41d1103d14a49c326c0dc69ccede4c52696d356c3cc49e84acd3eb595f8b500`
+- Evidence reported with the review request: full stage-one test GREEN after the move
+- Verdict: `APPROVED`
+
+### Finding disposition
+
+Resolved. The canonical main fixture is now constructed and started first. When `FMONITOR_FIXTURE_REACHABILITY` is set, the test performs only the existing authenticated baseline GET `/pilot/installers`, emits `FIXTURE_REACHABLE`, and exits. No selection, upload, revised-composition, card or picker behavior executes in that mode.
+
+During normal execution, the isolated stale-composition block runs immediately after the reachability branch with all previously reviewed assertions unchanged: the accepted original belongs to installer 7001's old composition, revised installer 7002 has no upcoming assignment on card or picker, and the dedicated fixture is closed explicitly or by the shared `finally` path on failure.
+
+The PTO-history regression assertions are unchanged: the completed card requires `21.09.2026` and rejects `продолжается`. The reported full-command GREEN confirms the reordered test still exercises both new regressions and the complete prior matrix.
+
+### Required changes
+
+None. The test-only Gate 3 correction at commit `2bbdd62f5bde20e4becd2d0bcad88bfd9871bab5` is approved. This verdict does not review or approve production.
