@@ -21,6 +21,8 @@
 <a class="fm2-control-link" href="/pilot/construction-control/objects/<?=$o['id']?>/checklist">
 <span class="fm2-control-address"><?=Html::encode($o['address'])?></span><span class="fm2-control-reg">Рег. № <?=Html::encode($o['registrationNumber'])?><?php if(trim((string)$o['entrance'])!==''):?><span class="fm2-control-entrance">Подъезд <?=Html::encode((string)$o['entrance'])?></span><?php endif?></span>
 </a>
+<?php $plan=$o['inspectionPlan']??null;if(($o['inspectionToday']??false)===true):?><strong>Инспекция сегодня</strong><?php endif?>
+<?php if(is_array($plan)):?><span>Инспекция запланирована на <?=Html::encode((new DateTimeImmutable($plan['inspectionDate']))->format('d.m.Y'))?></span><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="reschedule" data-inspection-object-id="<?=$o['id']?>" data-plan-id="<?=$plan['scheduleId']?>" data-plan-version="<?=$plan['version']?>" data-inspection-date="<?=Html::encode($plan['inspectionDate'])?>">Перенести</button><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="cancel" data-inspection-object-id="<?=$o['id']?>" data-plan-id="<?=$plan['scheduleId']?>" data-plan-version="<?=$plan['version']?>" data-inspection-date="<?=Html::encode($plan['inspectionDate'])?>">Отменить</button><?php else:?><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="create" data-inspection-object-id="<?=$o['id']?>" data-plan-id="" data-plan-version="0" data-inspection-date="<?=$today?>">Запланировать инспекцию</button><?php endif?>
 </td>
 <?php $lastActivity=$activity($o['lastChecklistActivityAt']);$activityState=$lastActivity!==null?'recorded':(($o['ready']??false)?'ready':'empty');?><td data-activity-state="<?=$activityState?>">
 <?php if($activityState==='ready'):?><span class="fm2-activity fm2-activity--ready">Готов к открытию</span><?php else:?><span class="fm2-activity-line"><span class="fm2-local-sync" data-local-sync>
@@ -34,8 +36,6 @@
 </td>
 <td>
 <?=Html::encode((string)($engineer['fullName']??'Инженер не назначен'))?>
-<?php $plan=$o['inspectionPlan']??null;if(($o['inspectionToday']??false)===true):?><strong>Инспекция сегодня</strong><?php endif?>
-<?php if(is_array($plan)):?><span>Инспекция запланирована на <?=Html::encode((new DateTimeImmutable($plan['inspectionDate']))->format('d.m.Y'))?></span><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="reschedule" data-inspection-object-id="<?=$o['id']?>" data-plan-id="<?=$plan['scheduleId']?>" data-plan-version="<?=$plan['version']?>" data-inspection-date="<?=Html::encode($plan['inspectionDate'])?>">Перенести</button><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="cancel" data-inspection-object-id="<?=$o['id']?>" data-plan-id="<?=$plan['scheduleId']?>" data-plan-version="<?=$plan['version']?>" data-inspection-date="<?=Html::encode($plan['inspectionDate'])?>">Отменить</button><?php else:?><button class="shlz-button shlz-button--sm" type="button" data-inspection-action="create" data-inspection-object-id="<?=$o['id']?>" data-plan-id="" data-plan-version="0" data-inspection-date="<?=$today?>">Запланировать инспекцию</button><?php endif?>
 </td>
 <td class="fm2-row-action"><span aria-hidden="true"><img src="/pilot/assets/shlz-icons/chevron-right-duo.svg" data-shlz-icon="chevron-right-duo" alt=""></span></td>
 </tr>
