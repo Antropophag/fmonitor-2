@@ -1,0 +1,56 @@
+{
+  "change": "inspection-planning-ui-255",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/InstallationProcess/YiiInspectionPlanning.php",
+    "app/InstallationProcess/MariaDbYiiInspectionPlanning.php",
+    "app/InspectionEvidence/MariaDbYiiChecklist.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/YiiRuntime/Controllers/CalendarController.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "app/YiiRuntime/Views/calendar.php",
+    "app/YiiRuntime/Assets/inspection-schedule.js",
+    "app/YiiRuntime/Assets/ObjectQueueAssetBundle.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "config/yii/assets.php",
+    "config/yii/web.php",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/issue-255-inspection-planning-ui-delivery.md",
+    "openspec/changes/inspection-planning-ui-255/proposal.md",
+    "openspec/changes/inspection-planning-ui-255/design.md",
+    "openspec/changes/inspection-planning-ui-255/tasks.md",
+    "openspec/changes/inspection-planning-ui-255/specs/runtime/inspection-planning-ui/spec.md",
+    "openspec/changes/inspection-planning-ui-255/verification-input.json",
+    "reviews/tests/YII2-INSPECTION-PLANNING-UI-255.md",
+    "reviews/code/YII2-INSPECTION-PLANNING-UI-255.md",
+    "specs/YII2-INSPECTION-PLANNING-UI-255.md",
+    "tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php",
+    "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
+    "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
+    "tests/Yii2/inspection_planning_ui_255_browser.mjs",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-INSPECTION-PLANNING-UI-255",
+      "acceptance_id": "A-D-command-security-current-plan",
+      "spec_path": "specs/YII2-INSPECTION-PLANNING-UI-255.md",
+      "seam": "real Yii POST routes through canonical YiiInspectionPlanning commands and actor-scoped current-plan read",
+      "tests": ["tests/Yii2/yii2_inspection_planning_ui_255_test.php", "tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php"]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-PLANNING-UI-255",
+      "acceptance_id": "E-H-moscow-priority-dialog-browser",
+      "spec_path": "specs/YII2-INSPECTION-PLANNING-UI-255.md",
+      "seam": "construction-control and calendar Yii reads plus one shlz-ui dialog",
+      "tests": ["tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php"]
+    },
+    {
+      "spec_id": "YII2-INSPECTION-PLANNING-UI-255",
+      "acceptance_id": "I-existing-checklist-owner-regression",
+      "spec_path": "specs/YII2-INSPECTION-PLANNING-UI-255.md",
+      "seam": "MariaDbYiiChecklist existing queue and checklist projection contracts",
+      "tests": ["tests/Yii2/yii2_construction_control_active_queue_001_test.php", "tests/Yii2/yii2_inspection_boundaries_001_test.php"]
+    }
+  ]
+}
