@@ -24,7 +24,7 @@ Yii::$app->response->headers->set('Location','/pilot/login');
  public function actionIndex():string{try{$actor=(int)Yii::$app->user->id;$d=$this->owner()->directory($actor);$db=$this->legacyDb();$process=(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX');$legacy=(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX');if($legacy==='')$legacy=$process;try{$links=ProductionLegacyIdentityLinkFactory::create($db,$process,$legacy)->directory($actor);}finally{$db->close();}
 }catch(DomainException){throw new ForbiddenHttpException();
 }catch(\Throwable$e){throw new \RuntimeException('User directory unavailable.',0,$e);
-}return$this->render('@app/app/YiiRuntime/Views/users',['identity'=>Yii::$app->user->identity,'directory'=>$d,'legacyLinks'=>$links,'notice'=>Yii::$app->session->getFlash('notice'),'error'=>Yii::$app->session->getFlash('error'),'invitation'=>Yii::$app->session->getFlash('invitation')]);
+}return$this->render('@app/app/YiiRuntime/Views/users',['identity'=>Yii::$app->user->identity,'directory'=>$d,'legacyLinks'=>$links,'notice'=>Yii::$app->session->getFlash('notice'),'error'=>Yii::$app->session->getFlash('error'),'invitation'=>Yii::$app->session->getFlash('invitation'),'inviteForm'=>Yii::$app->session->getFlash('inviteForm')]);
 }
  public function actionLegacyLink(int$id):Response{
   if(strlen(http_build_query(Yii::$app->request->post()))>8192){Yii::$app->response->statusCode=413;return Yii::$app->response;}if(!Yii::$app->request->validateCsrfToken())throw new BadRequestHttpException();
@@ -34,19 +34,23 @@ Yii::$app->response->headers->set('Location','/pilot/login');
   $db=$this->legacyDb();$process=(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX');$legacy=(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX');if($legacy==='')$legacy=$process;try{$r=ProductionLegacyIdentityLinkFactory::create($db,$process,$legacy)->link($command);}finally{$db->close();}
   if($r['status']==='failed'){Yii::$app->response->statusCode=503;return Yii::$app->response;}if($r['status']==='conflict'){Yii::$app->response->statusCode=409;return Yii::$app->response;}if($r['status']==='rejected'){Yii::$app->response->statusCode=$r['reasonCode']==='authorization_denied'?403:422;return Yii::$app->response;}return$this->redirectUsers(true);
  }
- public function actionInvite():Response{$email=$this->scalar('email');
+ public function actionInvite():Response{$origin=$this->invitationOrigin();
+if($origin===null)return$this->unavailable();
+$email=$this->scalar('email');
 $name=$this->scalar('fullName');
 try{$r=$this->owner()->invite((int)Yii::$app->user->id,$email,$name);
 }catch(\Throwable$e){throw new \RuntimeException('Invitation unavailable.',0,$e);
 }if($r['status']==='access_denied')throw new ForbiddenHttpException();
-if($r['status']==='issued'){$this->success('Пользователь приглашён.',$r);
-}else Yii::$app->session->setFlash('error','Проверьте рабочий email, имя и отсутствие дубликата.');
+if($r['status']==='issued'){$this->success('Пользователь приглашён.',$r,$origin);
+}else{$invalid=$this->invalidInviteField($email,$name);Yii::$app->session->setFlash('inviteForm',['email'=>$email,'fullName'=>$name,'invalid'=>$invalid]);Yii::$app->session->setFlash('error','Проверьте рабочий email, имя и отсутствие дубликата.');}
 return$this->redirectUsers(true);
 }
- public function actionReissue(int$id):Response{try{$r=$this->owner()->reissue((int)Yii::$app->user->id,$id);
+ public function actionReissue(int$id):Response{$origin=$this->invitationOrigin();
+if($origin===null)return$this->unavailable();
+try{$r=$this->owner()->reissue((int)Yii::$app->user->id,$id);
 }catch(\Throwable$e){throw new \RuntimeException('Invitation unavailable.',0,$e);
 }if($r['status']==='access_denied')throw new ForbiddenHttpException();
-if($r['status']==='issued')$this->success('Новая ссылка приглашения создана.',$r);
+if($r['status']==='issued')$this->success('Новая ссылка приглашения создана.',$r,$origin);
 else Yii::$app->session->setFlash('error','Новую ссылку можно выдать только приглашённому пользователю.');
 return$this->redirectUsers(true);
 }
@@ -96,8 +100,16 @@ $error='Ссылка активации недействительна или и
 if(!is_string($v))throw new BadRequestHttpException();
 return$v;
 }
- private function success(string$message,array$r):void{Yii::$app->session->setFlash('notice',$message);
-Yii::$app->session->setFlash('invitation','/pilot/activate?token='.$r['token']);
+ private function success(string$message,array$r,string$origin):void{Yii::$app->session->setFlash('notice',$message);
+Yii::$app->session->setFlash('invitation',$origin.'/pilot/activate?token='.$r['token']);
+}
+ private function invitationOrigin():?string{$scheme=getenv('FMONITOR_TRUSTED_REQUEST_SCHEME');$host=getenv('FMONITOR_TRUSTED_REQUEST_HOST');
+if(!is_string($scheme)||!in_array($scheme,['http','https'],true)||!is_string($host)||strlen($host)>253||preg_match('/^[A-Za-z0-9.-]+(?::[1-9][0-9]{0,4})?$/D',$host)!==1)return null;
+$parts=explode(':',$host);if(isset($parts[1])&&(int)$parts[1]>65535)return null;$name=$parts[0];$valid=preg_match('/^[0-9.]+$/D',$name)===1?filter_var($name,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4):filter_var($name,FILTER_VALIDATE_DOMAIN,FILTER_FLAG_HOSTNAME);return$valid===false?null:$scheme.'://'.$host;
+}
+ private function unavailable():Response{$response=Yii::$app->response;$response->statusCode=503;$response->format=Response::FORMAT_JSON;$response->data=['ok'=>false,'reason'=>'SERVICE_UNAVAILABLE'];return$response;
+}
+ private function invalidInviteField(string$email,string$name):string{if(trim($name)===''||mb_strlen(trim($name))>300)return'fullName';return'email';
 }
  private function redirectUsers(bool$rotate):Response{if($rotate)Yii::$app->request->getCsrfToken(true);
 $response=Yii::$app->response;

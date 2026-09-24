@@ -1,0 +1,21 @@
+{
+  "change": "complete-user-invitation-flow-issue-250",
+  "planned_paths": [
+    "specs/YII2-USER-INVITATION-UX-001.md",
+    "openspec/changes/complete-user-invitation-flow/proposal.md",
+    "openspec/changes/complete-user-invitation-flow/design.md",
+    "openspec/changes/complete-user-invitation-flow/tasks.md",
+    "openspec/changes/complete-user-invitation-flow/specs/user-access/complete-invitation-flow/spec.md",
+    "openspec/changes/complete-user-invitation-flow/verification-input.json",
+    "app/YiiRuntime/Controllers/UserAccessController.php",
+    "app/YiiRuntime/Views/users.php",
+    "app/YiiRuntime/Assets/users.js",
+    "tests/Yii2/yii2_user_access_001_test.php",
+    "tests/Yii2/yii2_user_access_browser_001_test.php",
+    "tests/Yii2/user_access_browser.mjs"
+  ],
+  "acceptances": [
+    {"spec_id":"YII2-USER-INVITATION-UX-001","acceptance_id":"full-link-unavailable-origin-rejection-preservation-security","spec_path":"specs/YII2-USER-INVITATION-UX-001.md","seam":"real Yii HTTP invite/reissue/admin users and activation routes","tests":["tests/Yii2/yii2_user_access_001_test.php"]},
+    {"spec_id":"YII2-USER-INVITATION-UX-001","acceptance_id":"clipboard-manual-fallback-pending-recipient","spec_path":"specs/YII2-USER-INVITATION-UX-001.md","seam":"real Chromium user invitation and recipient contexts","tests":["tests/Yii2/yii2_user_access_browser_001_test.php"]}
+  ]
+}
