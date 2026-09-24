@@ -2,25 +2,27 @@
 
 - Reviewer: independent `gpt-5.6-sol/low` Gate 3 agent `/root/gate3_issue14`
 - Test author: root agent
-- Reviewed source: exact package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T170301Z-50219f4b6e/package.json`, candidate `aa366d560932276cd4f9cf8afabb139ac305f1d4d564ec0f389957aace98fde0`, executable source `5449021146e39bc39c9f76c4d08030d1f029c66bd6766f545133993e73bb7376`; snapshot base `cbd390f54ea34699523909c462f440f49833c27b`, patch SHA-256 `f0b39006be82b1a07a81500297844e3385326c7add6e2b02ae30dc40b394e0e0`.
-- Agreed review scope / prior findings disposition: last migration-preflight RED delta. Earlier authority/calendar regression is unchanged and mapped GREEN; prior findings remain resolved.
+- Reviewed source: exact package `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260924T180622Z-6abac5577c/package.json`, candidate `d2393efd3263d20c64c6aca7f38aeb86ac356188842a1d61a616b15f752d13da`, executable source `b589bdea09c67924d8c9d7c493b787211048e47a591dcf5a64f1319ff740770c`, Git HEAD/snapshot base `b2fe19b6db30806d441f7bdb823b3b2dcb34e4ef`, empty patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Agreed review scope / prior findings disposition: independent review of the CI-correction test delta covering the complete 13-failure inventory: v34 literals/manifests/indexes/recovery, integration inventory registration and exact manager fixtures. Production compatibility delta is limited to eventless-root calendar fallback.
 - Specification: `specs/INSPECTION-PLANNING-001.md`
-- Public seam: canonical object-bound migration preflight and retained planning owner/current-read seams.
-- Evidence: schema command is exact-source `INTENDED_RED`; runtime-DDL, predecessor schema, authority/calendar application and concurrency commands are exact-source GREEN. Plan SHA-256 `b841db5590d44fa37e3a301a66eded8dd0537b5b1c85a2dee32bbf28977b9a87`, no missing mapped tests.
+- Public seam: canonical v34 migration/frontier/recovery, planning authority fixtures and effective-current calendar compatibility read.
+- Evidence: prepared package contains the five mapped core GREEN records; refreshed planner selects 34 local obligations and reports no missing mapped tests. Plan SHA-256 `2d927584890853a7b0362a5fb1a55e0ed4eb118bdce55044f278df1775f1cc8f`.
 - Verdict: `APPROVED`
 
 ## Findings
 
 None.
 
-The new semantic receipt fixture is structurally plausible and unique but deliberately invalid: its only event starts at version 7 rather than the canonical contiguous version sequence. It therefore distinguishes semantic preflight from simple null/duplicate/index validation and requires a classified conflict.
+The v34 corrections consistently advance exact production-frontier versions, migration result literals, table/index manifests, recovery and readiness expectations while preserving the independently defined historical v9 predecessor contract. They do not relax schema shape or conflict assertions.
 
-The index fixture uses the canonical index names and columns but deliberately creates non-unique keys. It catches implementations that compare only names/columns while ignoring uniqueness semantics.
+Registering `inspection_planning_object_schema_001_test.php` in the DB integration inventory closes the CI execution gap for the migration/data fixture. Registering the application and concurrency tests retains their integration classification while making the new owner behavior visible to the selected suites.
 
-Both cases snapshot all database tables through the fixture's normalized DDL-and-row inventory before migration and require exact whole-database equivalence after refusal. This is sensitive to premature index changes, column changes, backfill/adoption DML and unclassified exceptions before the first permitted DDL.
+Compatibility fixtures now explicitly assign actor `9101` the exact manager role required by the approved authority contract. This removes accidental reliance on legacy fixture labels without granting manager scope to ordinary users. The browser fixture correction changes setup semantics only; it does not weaken login, CSRF, queue or audit assertions.
 
-Harness v1 historical lineage remains `UNKNOWN` where direct records lack `command_id`/`purpose`; it is not used as approval evidence.
+The eventless-root calendar fallback is consistent with the approved migration compatibility boundary: it serves an adopted/historical root only when no versioned events exist, while event-backed objects continue to use effective current projection. Existing assertions remain sensitive to stale/cancelled dates after reschedule/cancel/recreate.
+
+The five package records and reported 34/34 refreshed local planner run are GREEN, but approval is based on independent comparison with the approved specification and failure inventory, not on GREEN alone. Historical-red lineage limitations remain `UNKNOWN` and are not treated as approval.
 
 ## Required changes
 
-None. The final migration-preflight RED delta is approved for exact candidate `aa366d560932276cd4f9cf8afabb139ac305f1d4d564ec0f389957aace98fde0`.
+None. The CI-correction test delta is approved for exact candidate `d2393efd3263d20c64c6aca7f38aeb86ac356188842a1d61a616b15f752d13da`.
