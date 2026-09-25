@@ -13,6 +13,7 @@
 - Выдать exact permission `inspection.schedule` ролям `manager` («Руководитель ФКР») и `construction_control_engineer` («Инженер строительного контроля»): закрепить его в каноническом role catalog, а существующие production grants применить точечной идемпотентной операцией владельца без изменения schema frontier.
 - Согласовать кнопку «Запланировать инспекцию» и command seam: controls показываются только actor с `inspection.schedule`, а команда сохраняет ту же exact capability-проверку и canonical object scope.
 - Сохранить object scope, eligibility, дату, optimistic version, replay/conflict, append-only event audit и guest/inactive запреты планирования.
+- Заменить одиночный снимок загрузки монтажников шестинедельным историческим окном с серверной навигацией на предыдущий/следующий период и shlz-ui controls; полный список людей остаётся только в drill-down выбранной даты.
 - Не менять права мутаций, административных экранов, selection picker и других самостоятельных разделов.
 
 ## Capabilities
@@ -31,6 +32,6 @@
 - Actor: любой активный аутентифицированный пользователь FMonitor независимо от роли.
 - Source oracle: решение владельца от 2026-09-25 и воспроизведённый production-ответ `GET /pilot/dashboard → 403`.
 - Target public seam: Yii2 dashboard, `/pilot/installers`, `/pilot/installers/{tabId}`, их общий `MariaDbInstallerUtilization`, `MainNavigation` и `POST /pilot/construction-control/objects/{id}/inspection-plan`.
-- Release value: раздел перестаёт быть недоступным всем production-аккаунтам и становится общей операционной сводкой.
+- Release value: раздел перестаёт быть недоступным всем production-аккаунтам и становится общей операционной сводкой; динамика загрузки читается на сопоставимом шестинедельном горизонте, а не по одной точке.
 - Затрагиваются focused Yii2 HTTP/navigation/dashboard tests и связанные прежние assertions о `403`.
 - Не входят изменение role assignments на production, расширение иных mutation capabilities, схема БД, deployment и текущий delivery candidate №157.
