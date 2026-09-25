@@ -1,0 +1,37 @@
+{
+  "change": "completion-document-register-issue-268",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbYiiCompletionRegister.php",
+    "app/YiiRuntime/Assets/CompletionRegisterAssetBundle.php",
+    "app/YiiRuntime/Assets/completion-register.css",
+    "app/YiiRuntime/Controllers/CompletionRegisterController.php",
+    "app/YiiRuntime/Controllers/PilotAssetController.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Views/completion-register.php",
+    ".quality-graph/verification-policy.json",
+    "config/yii/web.php",
+    "config/yii/assets.php",
+    "openspec/changes/completion-document-register/design.md",
+    "openspec/changes/completion-document-register/proposal.md",
+    "openspec/changes/completion-document-register/specs/completion-document-register/spec.md",
+    "openspec/changes/completion-document-register/tasks.md",
+    "openspec/changes/completion-document-register/verification-input.json",
+    "reviews/code/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
+    "reviews/tests/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
+    "specs/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
+    "tests/Yii2/yii2_completion_document_register_001_test.php",
+    "tests/Yii2/yii2_completion_document_register_browser_001_test.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "tests/Yii2/completion_document_register_browser.mjs",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "YII2-COMPLETION-DOCUMENT-REGISTER-001",
+    "acceptance_id": "R1-R5",
+    "spec_path": "specs/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
+    "seam": "read-only Yii completion register route backed by existing completion facts and existing object-card mutation route",
+    "seam_kind": "domain",
+    "tests": ["tests/Yii2/yii2_completion_document_register_001_test.php", "tests/Yii2/yii2_completion_document_register_browser_001_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_completion_document_register_001_test.php": "INTENDED_RED", "tests/Yii2/yii2_completion_document_register_browser_001_test.php": "INTENDED_RED"}
+  }]
+}

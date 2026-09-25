@@ -6,6 +6,7 @@
       ],
       "name": "bounded-ui",
       "patterns": [
+        "app/YiiRuntime/Assets/completion-register.css",
         "app/YiiRuntime/Assets/inspection-schedule.js",
         "app/YiiRuntime/Assets/navigation.js",
         "app/YiiRuntime/Assets/object-queue.js",
@@ -684,6 +685,16 @@
         "otiz-premium-norms",
         "yii-object-read-presentation"
       ]
+    },
+    {
+      "name": "completion-document-register",
+      "patterns": [
+        "app/InstallationProcess/MariaDbYiiCompletionRegister.php"
+      ],
+      "verifiers": [
+        "tests/Yii2/yii2_completion_document_register_001_test.php"
+      ],
+      "consumers": []
     },
     {
       "name": "weekly-fkr-attention-email",

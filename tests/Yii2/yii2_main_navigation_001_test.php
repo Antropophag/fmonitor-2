@@ -25,6 +25,7 @@ try {
     $routes = [
         '/pilot/dashboard' => '/pilot/dashboard',
         '/pilot/objects' => '/pilot/objects',
+        '/pilot/completion-register' => '/pilot/completion-register',
         '/pilot/calendar' => '/pilot/calendar',
         '/pilot/installers' => '/pilot/installers',
         '/pilot/construction-control' => '/pilot/construction-control',
@@ -37,6 +38,7 @@ try {
     $labels = [
         '/pilot/dashboard' => 'Дашборд',
         '/pilot/objects' => 'Объекты монтажа',
+        '/pilot/completion-register' => 'ПТО и декларации',
         '/pilot/calendar' => 'Календарь',
         '/pilot/installers' => 'Монтажники',
         '/pilot/construction-control' => 'Стройконтроль',
@@ -84,7 +86,7 @@ try {
         return $signature;
     };
     $sourceSignature = static function (string $name) use ($svgSignature): array {
-        $digests=['bar-chart-square-plus'=>'825f88af3e7a314f9a21e1650a0729561edc080ef2ef4ff9a6cb6273cf08adfa','docs'=>'df3fdf628b01a4d6a2931d78f315cccce3a07d95604e7bd34b8b86062417245e','eye'=>'a57c6b98acd1138f22941cc3ffa44dc5826e62b0e3cdebddc0e89dee7d3e177e','graph'=>'3bd0df2b308d820e1fda0bec8caaefe47f13bc540d89158f930975ee36969186','settings'=>'e42ddd91b345915469df6de7fc7f92e9b1162dd2562fa230447e2ed5a1162c6d','user'=>'760ce6aeb5dcb044fe34a4f768b3e61b0e8f99f6c2c747250f5ae5460e77c23f','calendar-interface'=>'f916a796bdc803cbf0ef8496c7a297a8fb5fa53f278ccc8e18c00f0c9d001d7a','chat'=>'e9f9b5909e20b379d3fb3bd394a23bd227cc549c8991b83b6b7b6072b1959441','chevron-left-duo'=>'c07cf377ff53529a6e1dd12deb7142cc3e0df15c10ec9d0cd4ba9eb5020716aa','chevron-right-duo'=>'95af60d983a376e4b61ccf073ff449881d0e8c3ccc38ec78fa4a3d904e85e496','user-sidebar'=>'da954ca48eba978e5c2c0004b9dbd542e391daabe5293f0d3fc2fa98ff3ce260'];
+        $digests=['bar-chart-square-plus'=>'825f88af3e7a314f9a21e1650a0729561edc080ef2ef4ff9a6cb6273cf08adfa','docs'=>'df3fdf628b01a4d6a2931d78f315cccce3a07d95604e7bd34b8b86062417245e','folder-file-open'=>'c6bbeccbe6b8351fe7d4401ebef95fcca76adec022c891e8126905c8bc1ffb66','eye'=>'a57c6b98acd1138f22941cc3ffa44dc5826e62b0e3cdebddc0e89dee7d3e177e','graph'=>'3bd0df2b308d820e1fda0bec8caaefe47f13bc540d89158f930975ee36969186','settings'=>'e42ddd91b345915469df6de7fc7f92e9b1162dd2562fa230447e2ed5a1162c6d','user'=>'760ce6aeb5dcb044fe34a4f768b3e61b0e8f99f6c2c747250f5ae5460e77c23f','calendar-interface'=>'f916a796bdc803cbf0ef8496c7a297a8fb5fa53f278ccc8e18c00f0c9d001d7a','chat'=>'e9f9b5909e20b379d3fb3bd394a23bd227cc549c8991b83b6b7b6072b1959441','chevron-left-duo'=>'c07cf377ff53529a6e1dd12deb7142cc3e0df15c10ec9d0cd4ba9eb5020716aa','chevron-right-duo'=>'95af60d983a376e4b61ccf073ff449881d0e8c3ccc38ec78fa4a3d904e85e496','user-sidebar'=>'da954ca48eba978e5c2c0004b9dbd542e391daabe5293f0d3fc2fa98ff3ce260'];
         $path=dirname(__DIR__,2).'/app/YiiRuntime/Assets/shlz-icons/'.$name.'.svg';$bytes=is_file($path)?file_get_contents($path):false;
         assertSameValue(true,is_string($bytes),'pinned shlz icon exists '.$name);assertSameValue($digests[$name]??null,hash('sha256',$bytes),'immutable pinned shlz digest '.$name);
         $document=new DOMDocument();assertSameValue(true,$document->loadXML($bytes),'pinned shlz icon parses '.$name);
@@ -108,7 +110,7 @@ try {
             usort($membership, static fn(array $a, array $b): int => strcmp($a['href'], $b['href']));
             assertSameValue($expected, $membership, 'INTENDED_RED exact permitted MAIN membership and labels on ' . $route);
             $order = array_map(static fn(array $link): string => str_starts_with($link['href'], '/pilot/feedback?') ? '/pilot/feedback' : $link['href'], $links);
-            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers','/pilot/dashboard','/pilot/admin/users','/pilot/admin/roles','/pilot/admin/integrations'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
+            $expectedOrder = array_values(array_filter(['/pilot/objects','/pilot/completion-register','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers','/pilot/dashboard','/pilot/admin/users','/pilot/admin/roles','/pilot/admin/integrations'], static fn(string $href): bool => in_array($href, $expectedSections, true)));
             assertSameValue($expectedOrder, $order, 'INTENDED_RED exact MAIN order on ' . $route);
             assertSameValue(0, $xpath->query('.//a[starts-with(@href,"/pilot/feedback")]', $main)->length, 'INTENDED_RED feedback is not a MAIN navigation item on ' . $route);
             $floatingFeedback = $xpath->query('//a[contains(concat(" ",normalize-space(@class)," ")," fm2-feedback-fab ") and starts-with(@href,"/pilot/feedback")]');
@@ -137,7 +139,7 @@ try {
             }
             $expectedTokens=[];
             foreach ([
-                'Монтаж'=>['/pilot/objects','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers','/pilot/dashboard'],
+                'Монтаж'=>['/pilot/objects','/pilot/completion-register','/pilot/construction-control','/pilot/calendar','/pilot/otiz','/pilot/installers','/pilot/dashboard'],
                 'Администрирование'=>['/pilot/admin/users','/pilot/admin/roles','/pilot/admin/integrations'],
             ] as $group=>$children) {
                 $present=array_values(array_filter($children,static fn(string $href):bool=>in_array($href,$expectedSections,true)));
@@ -146,7 +148,7 @@ try {
             }
             assertSameValue($expectedTokens,$tokens,'INTENDED_RED exact group-to-child hierarchy on '.$route);
             assertSameValue(count($links), $xpath->query('./a/*[name()="svg" and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon ") and contains(concat(" ",normalize-space(@class)," ")," fm2-nav-icon--shlz ") and @aria-hidden="true"]', $main)->length, 'INTENDED_RED every MAIN link uses one shlz icon on ' . $route);
-            $iconByHref=['/pilot/dashboard'=>'bar-chart-square-plus','/pilot/objects'=>'docs','/pilot/calendar'=>'calendar-interface','/pilot/construction-control'=>'eye','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'graph','/pilot/admin/users'=>'user','/pilot/admin/roles'=>'settings','/pilot/admin/integrations'=>'graph'];
+            $iconByHref=['/pilot/dashboard'=>'bar-chart-square-plus','/pilot/objects'=>'docs','/pilot/completion-register'=>'folder-file-open','/pilot/calendar'=>'calendar-interface','/pilot/construction-control'=>'eye','/pilot/installers'=>'user-sidebar','/pilot/otiz'=>'graph','/pilot/admin/users'=>'user','/pilot/admin/roles'=>'settings','/pilot/admin/integrations'=>'graph'];
             foreach($links as$link){$name=$iconByHref[$link['href']]??null;assertSameValue(true,is_string($name),'known nav icon '.$link['href']);$svg=$xpath->query('./*[name()="svg" and @data-shlz-icon="'.$name.'"]',$main->getElementsByTagName('a')->item(array_search($link,$links,true)))->item(0);assertSameValue(true,$svg instanceof DOMElement,'exact nav icon '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'nav geometry equals pinned shlz '.$name);}
             foreach(['chevron-left-duo','chevron-right-duo']as$name){$svg=$xpath->query('//summary[contains(concat(" ",normalize-space(@class)," ")," fm2-nav-trigger ")]/*[name()="svg" and @data-shlz-icon="'.$name.'"]')->item(0);assertSameValue(true,$svg instanceof DOMElement,'collapse contains '.$name);assertSameValue($sourceSignature($name),$svgSignature($svg),'collapse geometry equals pinned shlz '.$name);}
             $active = array_values(array_column(array_filter($links, static fn(array $link): bool => $link['current'] === 'page'), 'href'));
@@ -154,7 +156,7 @@ try {
         }
     };
 
-    $canonical = ['/pilot/dashboard', '/pilot/objects', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
+    $canonical = ['/pilot/dashboard', '/pilot/objects', '/pilot/completion-register', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
     $before = $fixture->facts();
     $assertMatrix($canonical, $routes);
     $assertMatrix($canonical, $routes); // repeated reads independently render and remain read-only
@@ -220,7 +222,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'objects.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('access.administer','inspection.schedule')");
     $phaseBefore = $fixture->facts();
-    $withoutAdmin = ['/pilot/dashboard', '/pilot/objects', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz'];
+    $withoutAdmin = ['/pilot/dashboard', '/pilot/objects', '/pilot/completion-register', '/pilot/calendar', '/pilot/construction-control', '/pilot/installers', '/pilot/otiz'];
     $assertMatrix($withoutAdmin, array_intersect_key($routes, array_fill_keys([...$withoutAdmin, '/pilot/feedback'], true)));
     foreach (['/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'] as $adminRoute) {
         assertSameValue(403, $http->request('GET', $adminRoute, [], $cookies)['status'], 'both direct admin routes retain access.administer guard ' . $adminRoute);
@@ -230,7 +232,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'access.administer')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission IN ('otiz.manage','construction_control.read')");
     $phaseBefore = $fixture->facts();
-    $restricted = ['/pilot/dashboard', '/pilot/objects', '/pilot/calendar', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
+    $restricted = ['/pilot/dashboard', '/pilot/objects', '/pilot/completion-register', '/pilot/calendar', '/pilot/installers', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
     $assertMatrix($restricted, array_intersect_key($routes, array_fill_keys([...$restricted, '/pilot/feedback'], true)));
     assertSameValue($phaseBefore, $fixture->facts(), 'restricted admin combination reads create no facts');
 
