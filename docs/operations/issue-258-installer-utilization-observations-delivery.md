@@ -4,4 +4,6 @@ Owner authorization 2026-09-25: autonomous delivery through PR merge of daily ob
 
 Root authors scope/spec/tests. A separate gpt-5.6-sol/low executor implements after required Gate 3; independent gpt-5.6-sol/low reviewers decide required Gates 3/5. Production SSH investigation is read-only. Deploy, production writes, synthetic production history and closing #258 are forbidden; merge is explicitly authorized after exact-source CI and required independent approval.
 
+Implementation author: `gpt-5.6-sol/low /root/executor`. Root-authored Gate 3 fixtures received only owner-authorized factual corrections discovered during Gate 4: the empty official-assignment baseline, managed non-future document dates, canonical workforce state/key ordering, and a browser fixture with a real accepted-original reason.
+
 Contract: `specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md`. Lifecycle: `openspec/changes/add-installer-utilization-observations/`. Local full `make test`/`make verify` is forbidden; use focused checks and one exact-source GitHub CI run.

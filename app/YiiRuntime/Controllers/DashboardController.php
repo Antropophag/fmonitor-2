@@ -12,6 +12,8 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
+use FMonitor2\Workforce\{MariaDbInstallerUtilization,MariaDbInstallerUtilizationObservations};
 
 final class DashboardController extends PilotController
 {
@@ -30,7 +32,7 @@ final class DashboardController extends PilotController
                     Yii::$app->response->headers->set('Location', '/pilot/login');
                 },
             ],
-            'verbs' => ['class' => VerbFilter::class, 'actions' => ['index' => ['GET', 'HEAD']]],
+            'verbs' => ['class' => VerbFilter::class, 'actions' => ['index' => ['GET', 'HEAD'],'observation'=>['GET','HEAD']]],
         ];
     }
 
@@ -41,13 +43,14 @@ final class DashboardController extends PilotController
         if (!Yii::$app->canonicalAccess->checkAccess($actorId, 'objects.read')) {
             throw new ForbiddenHttpException();
         }
+        if(!Yii::$app->canonicalAccess->checkAccess($actorId,'installers.read'))throw new ForbiddenHttpException();
         $cutoff = $this->now()->format('Y-m-d');
         try {
             $result = InstallationProcessFactory::dashboard(
                 Yii::$app->db,
                 (string) (getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: ''),
                 (string) (getenv('FMONITOR_LEGACY_TABLE_PREFIX') ?: ''),
-            )->read($actorId, $cutoff);
+            )->read($actorId, $cutoff);$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary($actorId);$result['installerUtilizationHistory']=$observations->history();
         } catch (\DomainException) {
             throw new ForbiddenHttpException();
         } catch (Throwable $error) {
@@ -62,6 +65,18 @@ final class DashboardController extends PilotController
             'identity' => Yii::$app->user->identity,
             'unavailable' => false,
         ]);
+    }
+
+    public function actionObservation(string$date,string$series):string
+    {
+        $actor=(int)Yii::$app->user->id;if(!Yii::$app->canonicalAccess->checkAccess($actor,'objects.read')||!Yii::$app->canonicalAccess->checkAccess($actor,'installers.read'))throw new ForbiddenHttpException();
+        try{$detail=$this->observations()->detail($date,$series);}catch(\OutOfBoundsException|\InvalidArgumentException){throw new NotFoundHttpException();}catch(Throwable){Yii::$app->response->statusCode=503;Yii::$app->response->headers->set('Retry-After','60');return'';}
+        return$this->render('@app/app/YiiRuntime/Views/installer-utilization-observation',$detail+['identity'=>Yii::$app->user->identity]);
+    }
+
+    private function observations():MariaDbInstallerUtilizationObservations
+    {
+        mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);$db=new \mysqli(getenv('FMONITOR_DB_HOST')?:'127.0.0.1',getenv('FMONITOR_DB_USER')?:'',getenv('FMONITOR_DB_PASSWORD')?:'',getenv('FMONITOR_DB_NAME')?:'',(int)(getenv('FMONITOR_DB_PORT')?:3306));$db->set_charset('utf8mb4');$p=(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:'');return new MariaDbInstallerUtilizationObservations($db,$p,new MariaDbInstallerUtilization(Yii::$app->db,$p,(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:'')));
     }
 
     private function now(): DateTimeImmutable

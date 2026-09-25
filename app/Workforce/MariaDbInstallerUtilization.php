@@ -48,6 +48,29 @@ final class MariaDbInstallerUtilization
         return$result;
     }
 
+    /** Canonical stage-one projection used by both live UI and immutable observations. */
+    public function observationProjection(int $actorId=0):array
+    {
+        $p=$this->processPrefix;
+        $gap=(int)$this->db->createCommand("SELECT COUNT(*) FROM `{$p}fm2_installation_cases` c WHERE c.actual_start_date IS NOT NULL AND NOT EXISTS(SELECT 1 FROM `{$p}fm2_pilot_completion_facts` pf WHERE pf.installation_case_id=c.id AND pf.fact_type='pto_act') AND NOT EXISTS(SELECT 1 FROM `{$p}fm2_assignment_order_applications` a WHERE a.installation_case_id=c.id)")->queryScalar();
+        if($gap>0)throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');
+        foreach($this->db->createCommand("SELECT selected_snapshot_json FROM `{$p}fm2_assignment_order_applications`")->queryColumn()as$json){try{$snapshot=json_decode((string)$json,true,32,JSON_THROW_ON_ERROR);$ids=array_map(static fn(array$i):int=>(int)($i['tabId']??0),$snapshot['selectedInstallers']??[]);}catch(\Throwable){throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');}if($ids===[]||in_array(0,$ids,true)||count($ids)!==count(array_unique($ids)))throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');}
+        try{$projection=$this->projection($actorId);}catch(\Throwable){throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');}
+        $members=[];$working=$awaiting=$unassigned=0;
+        foreach($projection['installers']as$row){
+            if(($row['reconciliation_state']??null)!=='delivered')throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');
+            $current=(int)$row['currentWorkCount']>0;$next=($row['upcomingAssignments']??[])!==[];
+            if($current)$working++;elseif($next)$awaiting++;else$unassigned++;
+            $reasons=[];
+            foreach($row['currentWorks']as$a)$reasons[]=['objectId'=>(int)$a['object_id'],'registrationNumber'=>(string)$a['registration_number'],'address'=>(string)$a['address'],'documentIdentity'=>null,'type'=>'current','startDate'=>$a['history_start']??null,'finishDate'=>$a['planned_finish']??null];
+            foreach($row['upcomingAssignments']as$a)$reasons[]=['objectId'=>(int)$a['object_id'],'registrationNumber'=>(string)$a['registration_number'],'address'=>(string)$a['address'],'documentIdentity'=>$a['document_identity']??null,'type'=>'upcoming','startDate'=>$a['planned_start']??null,'finishDate'=>null];
+            usort($reasons,static fn(array$a,array$b):int=>[$a['type'],$a['objectId'],(string)($a['documentIdentity']??'')]<=>[$b['type'],$b['objectId'],(string)($b['documentIdentity']??'')]);
+            $members[]=['installerTabId'=>(int)$row['installer_tab_id'],'fio'=>(string)$row['fio'],'employmentStatus'=>(string)$row['employment_status'],'state'=>$current?'working':($next?'awaiting_start':'unassigned'),'without_current'=>!$current,'without_next'=>!$current&&!$next,'reasons'=>$reasons];
+        }
+        usort($members,static fn(array$a,array$b):int=>[$a['fio'],$a['installerTabId']]<=>[$b['fio'],$b['installerTabId']]);
+        return['working'=>$working,'awaiting_start'=>$awaiting,'unassigned'=>$unassigned,'without_current'=>$awaiting+$unassigned,'without_next'=>$unassigned,'denominator'=>count($members),'members'=>$members];
+    }
+
     private function directoryPage(array$filters,int$actorId):array
     {
         $p=$this->processPrefix;$catalog="`{$p}fm2_workforce_catalog`";$cases="`{$p}fm2_installation_cases`";$apps="`{$p}fm2_assignment_order_applications`";$orders="`{$p}fm2_assignment_orders`";$members="`{$p}fm2_order_installers`";$selections="`{$p}fm2_assignment_order_selections`";$selectionMembers="`{$p}fm2_assignment_order_selection_members`";$roots="`{$p}fm2_assignment_order_original_roots`";$pto="`{$p}fm2_pilot_completion_facts`";$today=$this->db->quoteValue((new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format('Y-m-d'));$actor=(int)$actorId;
@@ -96,8 +119,8 @@ final class MariaDbInstallerUtilization
         $applied=[];foreach($nativeApplied as$row){$snapshot=$this->nativeSnapshot($row);foreach($snapshot['selectedInstallers']as$installer)$applied[(int)$installer['tabId']][]=$this->assignment($row)+['source'=>'native','history_start'=>(string)$row['document_date']];}
         foreach($legacyApplied as$row){$this->validateAssignment($row);$applied[(int)$row['installer_tab_id']][]=['object_id'=>(int)$row['object_id'],'registration_number'=>(string)$row['registration_number'],'address'=>(string)$row['address'],'planned_finish'=>$this->dateOrNull($row['planned_finish']??null),'source'=>'legacy','history_start'=>(string)$row['start']];}
         foreach($applied as&$items)usort($items,static fn(array$a,array$b):int=>[$a['object_id'],$a['history_start']]<=>[$b['object_id'],$b['history_start']]);unset($items);
-        $upcoming=[];$appliedCases=[];$addUpcoming=function(int$tabId,array$row)use(&$upcoming):void{$upcoming[$tabId][]=['object_id'=>(int)$row['object_id'],'registration_number'=>(string)$row['registration_number'],'registrationNumber'=>(string)$row['registration_number'],'address'=>(string)$row['address'],'planned_start'=>$this->dateOrNull($row['planned_start']??null),'plannedStartDate'=>$this->dateOrNull($row['planned_start']??null),'is_applied'=>(bool)$row['is_applied']];};
-        foreach($upcomingRows as$row){if($row['selected_snapshot_json']!==null){$object=(int)$row['object_id'];if(isset($appliedCases[$object]))continue;$appliedCases[$object]=true;$snapshot=json_decode((string)$row['selected_snapshot_json'],true,512,JSON_THROW_ON_ERROR);if(!is_array($snapshot)||array_keys($snapshot)!==['selectedInstallers','selectedEngineer']||!is_array($snapshot['selectedInstallers']))throw new \RuntimeException('Utilization projection unavailable.');foreach($snapshot['selectedInstallers']as$installer)$addUpcoming((int)($installer['tabId']??0),$row);}else $addUpcoming((int)$row['installer_tab_id'],$row);}
+        $upcoming=[];$appliedCases=[];$addUpcoming=function(int$tabId,array$row)use(&$upcoming,$roots,$cases):void{if($tabId<1)throw new \RuntimeException('Utilization projection unavailable.');$document=$this->db->createCommand("SELECT r.current_revision_id FROM `$roots` r JOIN `$cases` c ON c.id=r.installation_case_id WHERE c.legacy_installation_object_id=:object ORDER BY r.created_at_utc DESC LIMIT 1",[':object'=>(int)$row['object_id']])->queryScalar();$upcoming[$tabId][]=['object_id'=>(int)$row['object_id'],'registration_number'=>(string)$row['registration_number'],'registrationNumber'=>(string)$row['registration_number'],'address'=>(string)$row['address'],'planned_start'=>$this->dateOrNull($row['planned_start']??null),'plannedStartDate'=>$this->dateOrNull($row['planned_start']??null),'is_applied'=>(bool)$row['is_applied'],'document_identity'=>$document===false?null:$document];};
+        foreach($upcomingRows as$row){if($row['selected_snapshot_json']!==null){$object=(int)$row['object_id'];if(isset($appliedCases[$object]))continue;$appliedCases[$object]=true;$snapshot=json_decode((string)$row['selected_snapshot_json'],true,512,JSON_THROW_ON_ERROR);if(!is_array($snapshot)||array_keys($snapshot)!==['selectedInstallers','selectedEngineer']||!is_array($snapshot['selectedInstallers']))throw new \RuntimeException('Utilization projection unavailable.');$seen=[];foreach($snapshot['selectedInstallers']as$installer){$tab=(int)($installer['tabId']??0);if(isset($seen[$tab]))throw new \RuntimeException('Utilization projection unavailable.');$seen[$tab]=true;$addUpcoming($tab,$row);}}else $addUpcoming((int)$row['installer_tab_id'],$row);}
 
         $summary = ['total'=>0,'free'=>0,'assigned'=>0,'overloaded'=>0,'unknown'=>0];
         $installers = [];$directory=[];$directorySummary=['total'=>0,'working'=>0,'dismissed'=>0,'assigned'=>0,'updatedAt'=>null];

@@ -71,6 +71,7 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'GET pilot/logout' => 'auth/logout',
                 'GET,HEAD pilot/objects' => 'object-queue/index',
                 'GET,HEAD pilot/dashboard' => 'dashboard/index',
+                'GET,HEAD pilot/dashboard/installers/observations/<date:\\d{4}-\\d{2}-\\d{2}>/<series:[a-z_]+>' => 'dashboard/observation',
                 'GET,HEAD pilot/calendar<slash:\/?>' => 'calendar/index',
                 ...(require __DIR__ . '/feedback-routes.php'),
                 'GET,HEAD pilot/installers/<tabId:[1-9][0-9]*>' => 'installer-utilization/view',
