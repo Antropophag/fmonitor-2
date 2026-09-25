@@ -129,3 +129,61 @@ code verdict and does not claim CI, merge, deployment, or live Bitrix success.
 
 No blocking or non-blocking code findings remain. **APPROVED** for publication
 to the required exact-source CI/PR stage.
+
+---
+
+## CI ownership correction final rereview — 2026-09-25
+
+- Reviewer: `/root/issue267_gate5` (same independent reviewer; no specification,
+  test, production, or policy authorship)
+- Exact source: `c3edbe4af21e47cafb6ebad5478026df255eb96fa935762a1581517ebbb63dda`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T005409Z-d1f491b4da/package.json`
+- Previous approved source: `8fc3cc223fa8cef8445ca198d959f876eec9b0c2dac421ee76a317bdbdb47b7c`
+- Verdict: **APPROVED**
+
+### Findings and ownership review
+
+No blocking or non-blocking findings.
+
+The correction moves the unchanged reader to
+`app/Jobs/MariaDbBitrixDocumentationStatusRead.php`, the existing persistence
+owner for `fm2_jobs` and `fm2_job_events`, and renames it consistently. The Yii
+controller only imports and composes that reader through the existing Yii-owned
+connection; authorization, safe-read failure handling, paging and connection
+lifecycle remain unchanged. The old controller-local reader is deleted, so
+there is no second ownership path.
+
+The verification policy adds exactly this reader to the existing
+`bitrix-order-document-links` capability. It does not create a duplicate
+capability or broaden production behavior, and it selects the established
+application, delivery, mapping, read, schema, scheduler and console consumer
+frontier. Verification input, the structural bounded-reader oracle and the
+OpenSpec design all point to the same canonical path. The stable behavioral
+contract correctly remains unchanged.
+
+The prior exact-source CI failure is fully recorded as the nine
+`sql_ownership` findings in `fast/architecture-check` plus the dependent
+aggregate `verify` failure, with no `REGRESSION_FAILURE`; all other CI jobs were
+GREEN. The correction directly addresses that inventory without changing query,
+queue/event correlation, receipt validation, allowlisting, pagination, UI or
+security semantics.
+
+### Verification
+
+Prepared exact-source records
+`1790297617928473000-43446b5546d04aadadb9ceeb7d1c7084` and
+`1790297629078315000-956c930969d1437a8fd49af81add1129` are GREEN for the
+primary A1–A8 and adjacent integration-status browser consumers.
+
+The reviewer also ran the bounded correction frontier on the prepared source:
+
+- architecture guard: 59/59 GREEN;
+- change-verification policy suite: 18/18 GREEN;
+- moved reader and controller PHP syntax: GREEN;
+- all seven registered `bitrix-order-document-links` consumer verifiers:
+  GREEN;
+- `git diff --check`: GREEN.
+
+No full local suite was run. A fresh exact-source GitHub CI run remains required;
+the previous failed run is not converted into GREEN by this review. **APPROVED**
+for commit/publication and the required exact-source CI stage.

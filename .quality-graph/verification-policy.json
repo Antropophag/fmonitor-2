@@ -368,6 +368,7 @@
         "app/InstallationProcess/NativeBitrixOrderDocumentDelivery.php",
         "app/InstallationProcess/OrderDocumentLinksApplication.php",
         "app/InstallationProcess/PilotLegacyObjectSchemaMigration.php",
+        "app/Jobs/MariaDbBitrixDocumentationStatusRead.php",
         "app/Jobs/MariaDbOrderDocumentLinksScheduler.php",
         "app/YiiRuntime/Commands/BitrixOrderDocumentLinksSyncController.php"
       ],

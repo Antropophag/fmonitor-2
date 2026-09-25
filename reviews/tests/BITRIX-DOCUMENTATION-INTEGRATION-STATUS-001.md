@@ -340,3 +340,76 @@ demonstrates sensitivity and full fixture reachability. Adjacent record
 Gate 3 approves this exact test delta and authorizes correction of the three Gate
 5 findings. This is not production approval: corrected GREEN evidence, refreshed
 independent final review, exact-source CI, merge and deployment remain required.
+
+---
+
+## CI ownership correction review — 2026-09-25
+
+- Reviewer: `/root/issue267_gate3` (same independent reviewer; no authorship of
+  the specification, tests, production adapter, or policy correction)
+- Root-prepared exact source: `32ec0976985a3744b20b15c1ec7515c8871d45359dfc5b6f7afc1e8761c88d47`
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T004643Z-a0f93a8283/package.json`
+- Retained snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T004643Z-a0f93a8283/snapshot/source.patch` (SHA-256 `e3857e393b8015c176b70a3c345404811c21f65da2b3050264141c2fabc37ef4`)
+- Base commit: `050ac3d3cf1922973cd7323dab8eb3df6544e665`
+- Verdict: **APPROVED**
+
+### Findings
+
+No blocking findings.
+
+The ownership correction is architecturally coherent and preserves the reviewed
+public behavior:
+
+- `MariaDbBitrixDocumentationStatusRead` now resides in `app/Jobs`, the existing
+  owner of `fm2_jobs`/`fm2_job_events`, and its name satisfies the canonical
+  persistence-owner ratchet. It accepts the Yii-owned `Connection`; it does not
+  create a connection lifecycle, invoke a transport, enqueue work, or depend on
+  handlers/registry/scheduler.
+- `IntegrationStatusController` imports and composes the Jobs reader while
+  retaining the canonical authorization, safe-read boundary, page parsing and
+  connection close. It no longer owns the new SQL projection.
+- `.quality-graph/verification-policy.json` registers the reader under the
+  existing `bitrix-order-document-links` capability rather than inventing a
+  second capability. That mapping selects the established application, delivery,
+  mapping, read, schema, scheduler and console verifier frontier in addition to
+  the changed focused acceptance test.
+- The OpenSpec design now records the Jobs persistence decision and rejected Yii
+  controller placement; verification input and the structural test point to the
+  same moved path. The normative stable contract is unchanged, appropriately,
+  because this is an ownership/CI correction rather than a public-seam change.
+
+The test-path update remains sensitive: it fails when the canonical Jobs reader
+is absent and continues to apply the bounded-event materialization and secret-
+column guards to the actual owner. It cannot be satisfied by leaving the former
+controller-local reader behind.
+
+### Evidence lineage
+
+The reviewer package is root-prepared because the current moved adapter is already
+GREEN and a newly prepared reviewer package cannot manufacture historical RED.
+The supplied lineage is nevertheless reconstructible and behavior-specific:
+
+- historical exact record
+  `1790296973106357000-9ed8ac2e930349c8a6e9d39d843376ae` reaches the complete
+  focused matrix and fails only with `bounded-reader missing` after the test path
+  moved to `app/Jobs/MariaDbBitrixDocumentationStatusRead.php`;
+- exact root-package source record
+  `1790297210434308000-014795908e0d4ae6a2f9a7292a06e3f1` is GREEN for the
+  complete primary A1–A8 suite;
+- browser/adjacent record
+  `1790297258336398000-0a4496721515407880998d42dd056486` is GREEN after the move.
+  Its later repository source digest reflects review/delivery metadata movement;
+  the executable browser/HTTP acceptance artifacts remain the reviewed ones.
+
+### Independent bounded checks
+
+- PHP syntax: moved reader and controller pass.
+- Verification policy JSON parses.
+- `python3 tests/Verification/change_verification_001_test.py`: 18/18 pass.
+- `python3 tests/Verification/architecture_guard_001_test.py`: pass.
+- `git diff --check`: pass.
+
+No full local suite was run. Gate 3 approves the ownership, policy and test-path
+correction. The moved adapter remains production code requiring refreshed
+independent final review; exact-source CI, publication, merge and deployment are
+not approved by this Gate 3 amendment.

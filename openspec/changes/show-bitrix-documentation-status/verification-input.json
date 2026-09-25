@@ -1,8 +1,9 @@
 {
   "change": "show-bitrix-documentation-status",
   "planned_paths": [
+    ".quality-graph/verification-policy.json",
     "app/YiiRuntime/Controllers/IntegrationStatusController.php",
-    "app/YiiRuntime/Controllers/BitrixDocumentationStatusRead.php",
+    "app/Jobs/MariaDbBitrixDocumentationStatusRead.php",
     "app/YiiRuntime/Views/integration-status.php",
     "app/YiiRuntime/Views/integration-status-bitrix-documents.php",
     "specs/BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001.md",

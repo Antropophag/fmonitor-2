@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace FMonitor2\YiiRuntime\Controllers;
+namespace FMonitor2\Jobs;
 
 use yii\db\Connection;
 use yii\db\Expression;
 use yii\db\Query;
 
-final class BitrixDocumentationStatusRead
+final class MariaDbBitrixDocumentationStatusRead
 {
     public const PAGE_SIZE = 25;
     private const JOB_TYPE = 'bitrix.order-document-links.sync';

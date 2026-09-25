@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FMonitor2\YiiRuntime\Controllers;
 
+use FMonitor2\Jobs\MariaDbBitrixDocumentationStatusRead;
 use Throwable;
 use Yii;
 use yii\db\Connection;
@@ -44,7 +45,7 @@ final class IntegrationStatusController extends PilotController
         ];
         $db = Yii::$app->db;
         try {
-            $documents = $this->safeRead(fn(): array => (new BitrixDocumentationStatusRead($db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX')))->read($pages['documents']));
+            $documents = $this->safeRead(fn(): array => (new MariaDbBitrixDocumentationStatusRead($db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX')))->read($pages['documents']));
             $workforce = $this->safeRead(fn(): array => $this->workforce($db, $pages['workforce']));
             $equipment = $this->safeRead(fn(): array => $this->equipment($db, $pages['equipment']));
             $jobs = $this->safeRead(fn(): array => $this->jobs($db, $pages['jobs']));
