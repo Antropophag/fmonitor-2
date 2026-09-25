@@ -87,3 +87,25 @@ The correction materially improves the candidate and fully closes access ownersh
 ### Decision
 
 All prior blockers except corrupted-lineage sensitivity are closed. Because issue #268 explicitly requires damaged history to differ from empty/source-success and the implementation owns nontrivial lineage SQL, that missing public-seam barrier remains Gate 3-blocking. Once the single malformed-lineage fixture is added and GREEN (with fresh bound package/source), no other Gate 3 finding from this review remains.
+
+---
+
+## Final Gate 3 rereview — `ff4276c2`
+
+- Date: 2026-09-25
+- Reviewer independence: unchanged
+- Exact reviewed implementation/test head: `ff4276c2`
+- Exact reviewed source: `a1086a9f`
+- Later checkout delta inspected: `28da8845` adds only the independent Gate 5 review record and does not alter reviewed specification, test, or production bytes
+- Focused rerun: `php tests/Yii2/yii2_completion_document_register_001_test.php` — GREEN
+- Verdict: **APPROVED**
+
+### Sole blocker closure
+
+The corrected acceptance disables MariaDB CHECK enforcement only for the disposable fixture session, appends a version-4 correction whose predecessor identity is invalid and whose earlier sequence has a gap, and immediately restores CHECK enforcement in `finally`. It then reaches the real authenticated `GET /pilot/completion-register` seam and requires `503`, so removal or weakening of the adapter's `previous_correction_id` / `previous_version_no` and gap validation would turn the response into success and fail the test.
+
+The before/after fixture snapshot remains byte-equivalent across the failed GET and includes the relevant facts/corrections and jobs state. Thus malformed history is now observably distinct from successful empty results and the separately covered missing-source condition, without creating a new writer or mutating history during read.
+
+### Final decision
+
+The sole remaining finding is resolved. Together with the earlier dispositions, the acceptance now covers effective identity and document values, sparse corrections, invalid states and malformed lineage, server-side filtering/count/pagination/order, constant query budget, global exact `objects.read` admission, GET/HEAD no-write behavior, the existing-form round trip, and desktop/narrow usability. Gate 3 is **APPROVED** for exact head `ff4276c2` / source `a1086a9f`. Exact-source CI and publication remain separate later gates and are not implied by this approval.
