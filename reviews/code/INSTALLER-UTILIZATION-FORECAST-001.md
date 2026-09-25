@@ -115,3 +115,60 @@ Run against source `ca7499911179c7dbe3d656b6125c381ca698386d1c6675cdaab6d717dadf
 - PHP lint for the changed projection, controller, and detail view — PASS
 
 No remaining Gate 5 correctness, authorization, read-only, interval, UNKNOWN, query-shape, UI/accessibility, or test-sensitivity finding was identified. Exact-source CI remains the next separate gate; merge/deploy remain unauthorized.
+
+---
+
+## Post-main-merge Gate 5 rereview — 2026-09-25
+
+Verdict: **APPROVED**
+
+### Exact reviewed commit and authority
+
+Reviewed the clean committed tree `f5262de0e85ca87f4cf4af72ffc3133ec0a61549` in `/private/tmp/fmonitor-258-forecast`, a merge of feature parent `d88f0bd2bd44804296a6d6ccaaa7fca9f663e823` with `origin/main` parent `9c28aa790f7bc0441c13ca83e012acc7f5d762b7`. The conflicting paths were `DashboardController.php`, `dashboard.php`, and the current delivery goal. This appended record is the reviewer's only post-commit working-tree change; no production, specification, OpenSpec, or test file was edited.
+
+The current goal now explicitly authorizes PR creation and merge after GREEN CI and required approvals. It still does not authorize deploy. The feature contract, independent Gate 3 approval, separate executor authorship, and earlier Gate 5 approval remain preserved in the merged history.
+
+### Merge-resolution review
+
+- **Main dashboard contract preserved.** `DashboardController::actionIndex()` remains available to every authenticated role through the main dashboard read owner. Restricted roles are not globally rejected by the forecast feature.
+- **Forecast confidentiality preserved.** Forecast computation requires both `objects.read` and `installers.read` and rejects the object-scoped construction-control role. On the shared dashboard, denied/scoped actors receive only the sanitized “forecast unavailable” widget with no counts, identities, or object data. Direct `GET|HEAD /pilot/dashboard/installers/forecast/...` remains `403` for those actors. Guests retain the canonical authentication redirect.
+- **Latest main history behavior preserved.** The merged controller calls `currentSummary(0)` and bounded `historyBetween($utilizationFrom, $utilizationTo)`; the view retains the six-calendar-week history chart and its observation links. Forecast remains a separate live projection and does not replace or mutate observations.
+- **Five-widget layout reconciled.** Main's primary pairing of stages + utilization and secondary weeks + start-risk grid is unchanged; forecast is added as the fifth independent widget. The operational dashboard browser expectation was updated from four to five widgets while retaining full-width forecast and paired chart geometry on desktop/mobile.
+- **Feature semantics preserved.** The merge does not alter authoritative interval construction, effective dates, UNKNOWN/unavailable behavior, read-only operation, bounded query shape, detail routing, or responsive/accessibility behavior approved in the prior Gate 5 review.
+- **Scope preserved.** No forecast writer, schema migration, backfill, auto-allocation, capture-job correction, or deploy action was introduced by the resolution.
+
+### Findings
+
+No blocking or non-blocking merge-resolution finding was identified. The controller intentionally treats unavailable/unauthorized forecast data as a sanitized optional widget on the universal dashboard while retaining hard authorization at the PII-bearing detail seam; this is consistent with the merged all-role dashboard contract and the amended forecast contract.
+
+### Fresh evidence on exact commit `f5262de0`
+
+No full local suite was run. The reviewer ran:
+
+- `php tests/Workforce/installer_utilization_forecast_001_test.php` — PASS (`A-G/I/K/M projection`)
+- `php tests/Yii2/yii2_installer_utilization_forecast_001_test.php` — PASS (`HTTP/auth/query-scale`, including sanitized restricted dashboards and detail 403)
+- `php tests/Yii2/yii2_installer_utilization_forecast_browser_001_test.php` — PASS
+- `php tests/Yii2/yii2_installer_utilization_observations_001_test.php` — PASS
+- `php tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php` — PASS (`complete A-L matrix`, including five-widget geometry)
+- `git diff --check 9c28aa79..f5262de0` — PASS
+
+Commit `f5262de0e85ca87f4cf4af72ffc3133ec0a61549` is approved for the next authorized delivery step. Deployment remains unauthorized.
+
+---
+
+## Test-only delta Gate 5 rereview — commit `00fa3e85` — 2026-09-25
+
+Verdict: **APPROVED**
+
+Reviewed exact `HEAD` `00fa3e85b6f03a520b48f6b40aa34431eb0631bb`, parent `f5262de0e85ca87f4cf4af72ffc3133ec0a61549`. The committed delta contains no production or normative-spec change: it changes only `tests/Yii2/yii2_installer_utilization_forecast_001_test.php` and appends the originating Gate 3 delta finding to `reviews/tests/INSTALLER-UTILIZATION-FORECAST-001.md`. The pre-existing local modification to this Gate 5 record is reviewer history and is not part of commit `00fa3e85`.
+
+The new HTTP assertion directly closes the identified sanitized-dashboard sensitivity gap. For denied and scoped authenticated actors it now requires the universal dashboard's unavailable forecast state while rejecting all forecast value classes, forecast detail URLs, member markers, and reason markers. This prevents a regression from rendering a live count/link grid alongside the unavailable message, while leaving unrelated universal dashboard widgets intentionally visible. Existing status, HEAD-body, explicit secret, direct-detail `403`, and read-only assertions remain intact.
+
+Evidence:
+
+- `git diff f5262de0..00fa3e85` — exactly the test assertion plus append-only Gate 3 review record; no production/spec delta.
+- `git diff --check f5262de0..00fa3e85` — PASS.
+- `php tests/Yii2/yii2_installer_utilization_forecast_001_test.php` — PASS (`INSTALLER-UTILIZATION-FORECAST-001 HTTP/auth/query-scale`).
+- Working-tree `git diff --check` — PASS.
+
+No Gate 5 finding remains for this bounded test-only delta. This approval does not itself replace the independent Gate 3 review status recorded in `reviews/tests/INSTALLER-UTILIZATION-FORECAST-001.md`; that gate's exact-test-source verdict must be updated independently before admission. Production behavior remains approved from the `f5262de0` rereview, and deployment remains unauthorized.

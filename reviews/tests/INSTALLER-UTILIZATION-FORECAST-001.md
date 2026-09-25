@@ -135,3 +135,21 @@ The specification and OpenSpec authorization prose agree on the superseding univ
 `CHANGES_REQUESTED`
 
 The previously approved forecast matrix remains valid except for this changed authorization outcome. Correct the single sanitized-dashboard absence oracle and submit the exact test delta for independent rereview. Production conformance, the reported focused runs not independently executed here, CI, deployment, and admission enforcement remain separate or `UNKNOWN`.
+
+---
+
+## Final post-main authorization delta rereview — commit `00fa3e85` — 2026-09-25
+
+- Exact reviewed source: `00fa3e85b6f03a520b48f6b40aa34431eb0631bb`; corrected forecast HTTP test blob `52831fc9`.
+- Reviewer independence remains unchanged.
+- Fresh reviewer verification: `php tests/Yii2/yii2_installer_utilization_forecast_001_test.php` exited `0` with `PASS: INSTALLER-UTILIZATION-FORECAST-001 HTTP/auth/query-scale`.
+
+### Prior finding disposition
+
+**Fixed.** For both authenticated denied and scoped dashboard GET, the test still requires the sanitized unavailable message and now rejects every material forecast disclosure surface: forecast value markup, every forecast detail-link prefix, member markup, and reason markup. Together with the existing explicit FIO/denominator exclusions, direct-detail `403`, guest redirect, empty HEAD bodies, status matrix, and fact snapshot, this makes the changed authorization outcome sensitive to leaked counts, navigable forecast coordinates, people, and reasons while leaving the unrelated universal dashboard widgets available.
+
+### Final delta verdict
+
+`APPROVED`
+
+Gate 3 approves the authorization spec/test delta at exact commit `00fa3e85b6f03a520b48f6b40aa34431eb0631bb`. The earlier full forecast Gate 3 approval remains in force with this superseding authorization outcome. Any later spec or test-byte change requires planner-selected review again. Production conformance, CI, deployment, and admission enforcement remain for their separate gates or `UNKNOWN`.
