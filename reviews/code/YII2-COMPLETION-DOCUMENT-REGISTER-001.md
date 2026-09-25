@@ -71,3 +71,21 @@ Add focused public-seam acceptance for effective edited address/regnumber, compl
 ### Remaining limitation
 
 The implementation/specification/test candidate is approved for Gate 5 code review. This is **not yet publication or merge approval**: exact-source GitHub CI for source `a1086a9f67e7e1db64c6fcc30bc09a379b4ace264cbc3b0609c91c7724c3fa92` remains `UNKNOWN` in the bound state. The selected CI run must complete GREEN on this exact source, or every failure must be inventoried and resolved before PR-ready may be claimed. No merge or deployment is authorized by this review.
+
+---
+
+## CI-regression correction rereview
+
+- Date: 2026-09-25
+- Reviewed head: `148ad755284505bf617b0edac19c7df27f070423`
+- Reviewed candidate source: `db7df7688cb681f74f63159306ce2c73342fb1d9dff8bf9f196860941e17a293`
+- Correction under review: `tests/Yii2/yii2_main_navigation_001_test.php` plus its verification-input registration; production implementation is unchanged from the approved candidate
+- Verdict: **APPROVE**
+
+The correction preserves the navigation test's exact membership, order, group hierarchy, active state, permission filtering, pinned icon geometry, repeated-read and no-write assertions. It adds `/pilot/completion-register` only where the production navigation already exposes it under `objects.read`, and pins the existing `folder-file-open` asset digest. It does not weaken or remove any previous route, label, permission, icon, or mutation assertion.
+
+The exact selected profile command
+`tools/delivery/run-in-profile browser --with-services php tests/Yii2/yii2_main_navigation_001_test.php`
+completed GREEN on head `148ad755`; its structured result reports exit `0` and exact git SHA. Direct host execution returned the expected environment-only `503` because it does not own the isolated MariaDB profile; that is not a product/test regression and is why the planner selects the profile wrapper. `git diff --check` and PHP syntax validation are GREEN. The reported registered-focused-bootstrap rerun is also GREEN after the navigation inventory correction.
+
+This test-only correction is approved and the prior Gate 5 code approval remains valid. A new exact-source CI result for `db7df7688cb681f74f63159306ce2c73342fb1d9dff8bf9f196860941e17a293` is still required before publication/merge readiness; the earlier failed run cannot be relabelled GREEN.
