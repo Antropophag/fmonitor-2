@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use FMonitor2\YiiRuntime\ViewSupport;
+use FMonitor2\YiiRuntime\ViewSupport;use FMonitor2\YiiRuntime\Assets\CompletionRegisterAssetBundle;
 use yii\helpers\Html;
 
-$dateLabel=static fn(?string$value):string=>$value===null?'':(new DateTimeImmutable($value))->format('d.m.Y');
+CompletionRegisterAssetBundle::register($this);$dateLabel=static fn(?string$value):string=>$value===null?'':(new DateTimeImmutable($value))->format('d.m.Y');
 $modeLabels=['pto_without_declaration'=>'ПТО внесён, декларация не внесена','without_pto'=>'ПТО не внесён','complete'=>'ПТО и декларация внесены','all'=>'Все'];
 $query=['mode'=>$filters['mode'],'q'=>$filters['q'],'date'=>$filters['date'],'from'=>$filters['from'],'to'=>$filters['to'],'sort'=>$filters['sort']];
 $mode=ViewSupport::choice('mode',$filters['mode'],$modeLabels,'Режим');

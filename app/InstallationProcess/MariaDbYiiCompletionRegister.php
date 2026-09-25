@@ -33,7 +33,7 @@ final readonly class MariaDbYiiCompletionRegister
         $offset=($page-1)*self::PAGE_SIZE;$order=match($sort!==''?$sort:($mode==='pto_without_declaration'?'pto_asc':'object_asc')){
             'pto_asc'=>'pto_date IS NULL,pto_date,c.legacy_installation_object_id','pto_desc'=>'pto_date IS NULL,pto_date DESC,c.legacy_installation_object_id',default=>'c.legacy_installation_object_id'};
         $columns="c.legacy_installation_object_id object_id,{$this->effective('regnumber','m.regnumber')} registration_number,{$this->effective('address','m.ordadr_address')} address,{$this->effective('entrance','m.entrance')} entrance,".
-            'COALESCE(pc.fact_date,p.fact_date) pto_date,COALESCE(dc.fact_date,d.fact_date) declaration_date,COALESCE(dd.details,d.details) declaration_details';
+            $this->effectiveDate('p')." pto_date,".$this->effectiveDate('d').' declaration_date,COALESCE(dd.details,d.details) declaration_details';
         $rows=$this->db->createCommand("SELECT {$columns}{$fromSql} AND {$predicates[$mode]} ORDER BY {$order} LIMIT ".self::PAGE_SIZE." OFFSET {$offset}",$params)->queryAll();
         $today=new \DateTimeImmutable((string)(getenv('FMONITOR_NOW')?:'now'),new \DateTimeZone('Europe/Moscow'));$mapped=[];
         foreach($rows as$row){$ptoDate=$row['pto_date']===null?null:(string)$row['pto_date'];$mapped[]=[
@@ -60,12 +60,13 @@ final readonly class MariaDbYiiCompletionRegister
         $details="LEFT JOIN `{$p}fm2_pilot_completion_fact_corrections` dd ON dd.root_fact_id=d.id AND dd.details IS NOT NULL AND dd.version_no=(SELECT MAX(z.version_no) FROM `{$p}fm2_pilot_completion_fact_corrections` z WHERE z.root_fact_id=d.id AND z.details IS NOT NULL)";
         $fromSql=" FROM `{$p}fm2_installation_cases` c JOIN `{$l}fm_maintable` m ON m.id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_object_detail_edits` e ON e.object_id=c.legacy_installation_object_id LEFT JOIN `{$p}fm2_pilot_completion_facts` p ON p.installation_case_id=c.id AND p.fact_type='pto_act' ".$leaf('p')." LEFT JOIN `{$p}fm2_pilot_completion_facts` d ON d.installation_case_id=c.id AND d.fact_type='declaration' ".$leaf('d')." {$details} WHERE (c.opened_at IS NOT NULL OR c.actual_start_date IS NOT NULL OR p.id IS NOT NULL OR d.id IS NOT NULL)";$params=[];
         if($query!==''){$fromSql.=' AND ('.$this->effective('address','m.ordadr_address')." LIKE :q ESCAPE '\\\\' OR ".$this->effective('regnumber','m.regnumber')." LIKE :q ESCAPE '\\\\' OR COALESCE(dd.details,d.details,'') LIKE :q ESCAPE '\\\\')";$params[':q']='%'.str_replace(['\\','%','_'],['\\\\','\\%','\\_'],$query).'%';}
-        if($date!==''){$expression=$date==='pto'?'COALESCE(pc.fact_date,p.fact_date)':'COALESCE(dc.fact_date,d.fact_date)';if($from!==''){$fromSql.=" AND {$expression}>=:from";$params[':from']=$from;}if($to!==''){$fromSql.=" AND {$expression}<=:to";$params[':to']=$to;}}
+        if($date!==''){$expression=$this->effectiveDate($date==='pto'?'p':'d');if($from!==''){$fromSql.=" AND {$expression}>=:from";$params[':from']=$from;}if($to!==''){$fromSql.=" AND {$expression}<=:to";$params[':to']=$to;}}
         return[$fromSql,$params];
     }
 
     /** @return array<string,string> */
     private function modePredicates():array{return['pto_without_declaration'=>'p.id IS NOT NULL AND d.id IS NULL','without_pto'=>'p.id IS NULL','complete'=>'p.id IS NOT NULL AND d.id IS NOT NULL','all'=>'1=1'];}
     private function effective(string$field,string$legacy):string{return MariaDbEffectiveObjectDetails::sqlValue($field,$legacy);}
+    private function effectiveDate(string$root):string{$p=$this->prefix;return"COALESCE((SELECT z.fact_date FROM `{$p}fm2_pilot_completion_fact_corrections` z WHERE z.root_fact_id={$root}.id ORDER BY z.version_no DESC LIMIT 1),{$root}.fact_date)";}
     private function optionalDate(string$value):bool{if($value==='')return true;$parsed=\DateTimeImmutable::createFromFormat('!Y-m-d',$value,new \DateTimeZone('Europe/Moscow'));return$parsed!==false&&$parsed->format('Y-m-d')===$value;}
 }
