@@ -1,5 +1,29 @@
 # Independent Gate 5 review — installer utilization observations
 
+## Rereview — final three CI corrections
+
+- Verdict: **APPROVED**
+- Reviewer: `gpt-5.6-sol/low /root/gate5_review`; independent from implementation and test authorship.
+- Reviewed HEAD: `b093aa87`.
+- Exact candidate source: `f1ac28ed561ee78d154af315912a2e8e8b5a6f3fae7065b4fed09d196586cabe`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T043516Z-07a9a1c425/package.json`.
+- Plan SHA-256: `9dbf1eccd44b74be761840d6a0c4a32ad309d55da3b4e9e0d0b3326c8b888842`.
+- Failed CI log inspected: `/tmp/fm258-ci-36092782353-failed.log` (4,773 lines).
+
+### Failure disposition
+
+The second run contained exactly three `REGRESSION_FAILURE` entries, all independently reproduced and corrected:
+
+1. `yii2_sidebar_state_icons_001_test.php` duplicated the `installers.read` permission now seeded by `ObjectQueueFixture`. The capture test no longer inserts the duplicate, and the shared fixture uses an idempotent permission seed. This changes fixture setup only and retains the authenticated shell/browser assertions.
+2. `assignment_order_original_database_setup_001_test.php` relied on MariaDB's transient `INNODB_TRX.trx_state` label being exactly `LOCK WAIT`; the run observed `RUNNING` while the authoritative lock-wait relation already existed. The oracle now joins `INNODB_LOCK_WAITS` to requesting/blocking transactions and asserts the exact blocker connection, non-null wait start, serializable isolation, target table and `FOR UPDATE`. This is a stronger causal lock oracle, not a relaxed concurrency test.
+3. `yii2_object_card_presentation_001_test.php` requires the installer-directory source to contain the literal position header. The view now spells the five stock shlz table headers explicitly; row data, escaping and layout are unchanged.
+
+Exact-source harness records are `GREEN` for those three regression tests and for the stage-2 domain, HTTP and browser acceptance tests. `git diff --check` is clean. No production domain, persistence, authorization, scheduler, migration or observation behavior changed in this correction.
+
+No blocking specification, security, standards or test-maintenance finding remains for candidate `f1ac28ed561ee78d154af315912a2e8e8b5a6f3fae7065b4fed09d196586cabe`. A subsequent full exact-source CI result remains the publication authority; this review does not perform or infer merge.
+
+---
+
 ## Rereview — exact-source CI correction
 
 - Verdict: **APPROVED**
