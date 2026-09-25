@@ -6,6 +6,7 @@
       ],
       "name": "bounded-ui",
       "patterns": [
+        "app/YiiRuntime/Assets/completion-register.css",
         "app/YiiRuntime/Assets/inspection-schedule.js",
         "app/YiiRuntime/Assets/navigation.js",
         "app/YiiRuntime/Assets/object-queue.js",
