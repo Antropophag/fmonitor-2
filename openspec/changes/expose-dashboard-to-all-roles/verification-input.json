@@ -52,7 +52,7 @@
       "spec_id": "UI-UNIVERSAL-DASHBOARD-ACCESS-001",
       "acceptance_id": "A2-common-installer-snapshot-and-observations",
       "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
-      "seam": "dashboard exposes a roster-free shlz-ui bar chart over an allowlisted 42-day installer-utilization observation window with bounded previous/next navigation to every active role",
+      "seam": "dashboard exposes a roster-free fixed previous-2/current/next-3 calendar-week installer-utilization chart using the exact shared six-week chart layout beside process stages",
       "tests": [
         "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
         "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
