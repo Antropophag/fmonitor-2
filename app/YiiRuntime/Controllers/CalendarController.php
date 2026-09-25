@@ -68,9 +68,10 @@ final class CalendarController extends PilotController
                 throw new BadRequestHttpException('Укажите одну дату в формате ГГГГ-ММ-ДД.');
             }
             $selected = DateTimeImmutable::createFromFormat('!Y-m-d', $query['date'], new DateTimeZone(self::ZONE));
-            if ($selected === false || $selected->format('Y-m-d') !== $query['date'] || $selected < $first || $selected > $last) {
+            if ($selected === false || $selected->format('Y-m-d') !== $query['date'] || $selected < $first) {
                 throw new BadRequestHttpException('Выбранный день не входит в доступный период календаря.');
             }
+            if ($selected > $last) {$first=$selected;$last=$selected;}
         }
 
         try {
@@ -78,7 +79,7 @@ final class CalendarController extends PilotController
                 Yii::$app->db,
                 $this->prefix(),
                 $this->legacyPrefix(),
-            )->readCalendar($first->format('Y-m-d'), $last->format('Y-m-d'));
+            )->readCalendar($actorId,$today->format('Y-m-d'),$first->format('Y-m-d'), $last->format('Y-m-d'));
         } catch (Throwable $error) {
             Yii::error('calendar_read_failed ' . $error::class, __METHOD__);
             throw new ServiceUnavailableHttpException('Календарь временно недоступен. Обновите страницу или вернитесь к объектам монтажа.');

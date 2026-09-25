@@ -13,6 +13,7 @@ try {
     $http = $fixture->http;
     $db = $fixture->db;
     $prefix = $fixture->p;
+    $db->query("UPDATE {$prefix}fm2_pilot_roles SET code='manager' WHERE role_id=9201");
     $db->query("ALTER TABLE fm_maintable ADD responsstroicontrol VARCHAR(80) NULL");
     foreach (['construction_control.read', 'otiz.manage', 'installers.read'] as $permission) {
         $fixture->insert($prefix . 'fm2_pilot_role_permissions', ['role_id' => 9201, 'permission' => $permission]);
@@ -211,8 +212,9 @@ try {
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='objects.read'");
     $phaseBefore = $fixture->facts();
     $withoutObjects = ['/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
-    $assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys([...$withoutObjects, '/pilot/feedback'], true)));
+    $withoutObjectsAvailable=array_values(array_diff($withoutObjects,['/pilot/construction-control']));$assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys([...$withoutObjectsAvailable, '/pilot/feedback'], true)));
     assertSameValue(403, $http->request('GET', '/pilot/objects', [], $cookies)['status'], 'direct objects authorization unchanged');
+    assertSameValue(403, $http->request('GET', '/pilot/construction-control', [], $cookies)['status'], 'global construction-control scope still requires objects.read');
     assertSameValue($phaseBefore, $fixture->facts(), 'no-objects reads and denial create no facts');
 
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'objects.read')");

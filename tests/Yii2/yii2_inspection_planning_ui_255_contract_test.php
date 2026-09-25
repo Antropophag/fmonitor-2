@@ -1,0 +1,28 @@
+<?php
+declare(strict_types=1);
+$root=dirname(__DIR__,2);
+$read=static function(string$p)use($root):string{$path=$root.'/'.$p;return is_file($path)?(file_get_contents($path)?:''):'';};
+$must=static function(bool$v,string$m):void{if(!$v)throw new RuntimeException('INTENDED_RED: '.$m);};
+$routes=$read('config/yii/web.php').$read('app/YiiRuntime/Controllers/ObjectQueueController.php').$read('app/YiiRuntime/Controllers/ChecklistController.php');
+$view=$read('app/YiiRuntime/Views/construction-control.php');
+$calendar=$read('app/YiiRuntime/Controllers/CalendarController.php').$read('app/YiiRuntime/Views/calendar.php');
+$asset=$read('app/YiiRuntime/Assets/inspection-schedule.js');
+$queue=$read('app/PilotHttp/MariaDbConstructionControlQueue.php').$read('app/InstallationProcess/MariaDbYiiObjectQueue.php');
+foreach(['createInspectionPlan','rescheduleInspectionPlan','cancelInspectionPlan']as$name)$must(str_contains($routes,$name),"real Yii route calls $name");
+foreach(['Запланировать инспекцию','Перенести','Отменить','Инспекция сегодня']as$text)$must(str_contains($view,$text),"construction-control exposes $text");
+$must(str_contains($view,'data-inspection-dialog')&&str_contains($view,'Инспекция появится в календаре и списке стройконтроля'),'one dialog contract');
+$must(str_contains($asset,'requestSubmit')&&!preg_match('/\bfetch\s*\(/',$asset),'local asset posts once without hidden fetch retry');
+$must(str_contains($asset,'focus')&&str_contains($asset,'Escape'),'keyboard focus contract');
+$must(str_contains($routes,'requestId')&&str_contains($routes,'expectedVersion'),'request identity and expected version');
+$must(str_contains($routes,'invalid_date')&&str_contains($routes,'stale_plan')&&str_contains($routes,'request_conflict'),'classified rejection states');
+$must(str_contains($routes,'unknown')||str_contains($routes,'не подтвержд'),'unknown outcome is distinct from rejection');
+$must(str_contains($routes,'inspectionDate')&&str_contains($routes,'planId')&&str_contains($routes,'action'),'failed form retains complete command context');
+$must(str_contains($calendar,'/pilot/objects/'),'calendar event links object');
+$must((bool)preg_match('/readCalendar\s*\(\s*\$actorId\s*,\s*\$today->format\(/',$calendar),'calendar passes actor and one request-scoped Moscow today snapshot');
+$must(!str_contains($calendar,"new DateTimeImmutable('now'" )||substr_count($calendar,"new DateTimeImmutable('now'")===1,'calendar has one wall-clock acquisition seam');
+$must(str_contains($queue,'Europe/Moscow')||str_contains($queue,':today'),'server Moscow date enters queue query');
+$must((bool)preg_match('/ORDER BY[\s\S]{0,500}(today|inspection_date)[\s\S]{0,500}(legacy_object_id|object_id|\.id)/i',$queue),'today rank and stable identity order happen in SQL before pagination');
+$must(strpos($queue,'ORDER BY')<strpos($queue,'LIMIT'),'today/stable order precedes LIMIT');
+$must(str_contains($queue,'COUNT(')&&str_contains($queue,':today'),'COUNT and page query share server today input');
+foreach(['object-ui.js','navigation.js','pilot.css']as$file)$must(!str_contains($asset,$file),'inspection JS remains local');
+echo "YII2_INSPECTION_PLANNING_UI_255_CONTRACT_OK\n";

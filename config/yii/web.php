@@ -78,6 +78,8 @@ return ArrayHelper::merge(require __DIR__ . '/common.php', [
                 'GET,HEAD pilot/installers' => 'installer-directory/index',
                 'pilot/installers' => 'installer-directory/index',
                 'GET,HEAD pilot/construction-control' => 'checklist/queue',
+                'POST pilot/construction-control/objects/<id:[1-9]\\d*>/inspection-plan' => 'checklist/inspection-plan',
+                'pilot/construction-control/objects/<id:[1-9]\\d*>/inspection-plan' => 'checklist/inspection-plan',
                 'GET,HEAD pilot/objects/<id:[1-9]\\d*>/checklist' => 'checklist/view',
                 'GET,HEAD pilot/construction-control/objects/<id:[1-9]\\d*>/checklist' => 'checklist/control',
                 'GET,HEAD pilot/construction-control/objects/<id:[1-9]\\d*>/sync-context' => 'checklist/context',

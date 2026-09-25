@@ -21,7 +21,7 @@ final class ChecklistController extends PilotController
     public function behaviors():array{return['access'=>['class'=>AccessControl::class,'rules'=>[['allow'=>true,'roles'=>['@']]],'denyCallback'=>function():void{Yii::$app->user->setReturnUrl(Yii::$app->request->url);
 Yii::$app->response->statusCode=303;
 Yii::$app->response->headers->set('Location','/pilot/login');
-}],'verbs'=>['class'=>VerbFilter::class,'actions'=>['view'=>['GET','HEAD'],'control'=>['GET','HEAD'],'operation'=>['POST'],'photo'=>['POST'],'photo-read'=>['GET','HEAD'],'context'=>['GET','HEAD'],'queue'=>['GET','HEAD']]]];
+}],'verbs'=>['class'=>VerbFilter::class,'actions'=>['view'=>['GET','HEAD'],'control'=>['GET','HEAD'],'operation'=>['POST'],'photo'=>['POST'],'photo-read'=>['GET','HEAD'],'context'=>['GET','HEAD'],'queue'=>['GET','HEAD'],'inspection-plan'=>['POST']]]];
 }
 
     public function beforeAction($action):bool{if(in_array($action->id,['operation','photo'],true))$this->enableCsrfValidation=false;
@@ -142,19 +142,41 @@ return$this->json($status,$result);
 }
     }
 
-    public function actionQueue():string|Response{try{$request=Yii::$app->request;$raw=[$request->get('ownership','mine'),$request->get('query',''),$request->get('completed','0'),$request->get('page','1')];
+    public function actionQueue():string|Response{return$this->renderQueue();}
+
+    public function actionInspectionPlan(string$id):string|Response
+    {
+        $objectId=$this->id($id);if($objectId===null)return$this->plain(404);$request=Yii::$app->request;
+        $raw=['action'=>$request->post('action'),'inspectionDate'=>$request->post('inspectionDate',''),'planId'=>$request->post('planId',''),'expectedVersion'=>$request->post('expectedVersion'),'requestId'=>$request->post('requestId')];
+        if(!is_string($raw['action'])||!is_string($raw['inspectionDate'])||!is_string($raw['planId'])||!is_string($raw['expectedVersion'])||!is_string($raw['requestId'])||!in_array($raw['action'],['create','reschedule','cancel'],true)||preg_match('/^[0-9]+$/D',$raw['expectedVersion'])!==1||preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iD',$raw['requestId'])!==1||($raw['action']!=='create'&&preg_match('/^[1-9][0-9]*$/D',$raw['planId'])!==1))return$this->renderQueue($raw+$this->returnFilters(),400,'Некорректные данные планирования инспекции.');
+        try{$planning=\FMonitor2\YiiRuntime\InstallationProcessFactory::planning(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'));$result=match($raw['action']){
+            'create'=>$planning->createInspectionPlan($this->actor(),$objectId,(int)$raw['expectedVersion'],$raw['inspectionDate'],$raw['requestId']),
+            'reschedule'=>$planning->rescheduleInspectionPlan($this->actor(),$objectId,(int)$raw['planId'],(int)$raw['expectedVersion'],$raw['inspectionDate'],$raw['requestId']),
+            'cancel'=>$planning->cancelInspectionPlan($this->actor(),$objectId,(int)$raw['planId'],(int)$raw['expectedVersion'],$raw['requestId']),
+        };}catch(\Throwable$error){Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'inspection_planning_controller'));return$this->renderQueue($raw+$this->returnFilters(),503,'Результат сохранения не подтверждён. Проверьте текущий план перед повторной отправкой.');}
+        if(in_array($result['status'],['scheduled','cancelled'],true))return$this->redirect303('/pilot/construction-control?'.http_build_query($this->returnFilters(),'','&',PHP_QUERY_RFC3986));
+        if($result['status']==='access_denied')return$this->plain(403);if($result['status']==='not_found')return$this->plain(404);
+        $status=in_array($result['status'],['stale_plan','request_conflict','conflict'],true)?409:422;$message=match($result['status']){'invalid_date'=>'Некорректная дата: дата инспекции не может быть в прошлом.','stale_plan'=>'План уже изменён. Проверьте текущую дату перед повторным действием.','request_conflict'=>'Этот запрос уже использован для другого действия.','conflict'=>'У объекта уже есть текущий план инспекции.',default=>'Действие отклонено.'};
+        return$this->renderQueue($raw+$this->returnFilters(),$status,$message);
+    }
+
+    private function renderQueue(array$failed=[],int$status=200,string$message=''):string|Response{try{$request=Yii::$app->request;$raw=[$failed['ownership']??$request->get('ownership','mine'),$failed['query']??$request->get('query',''),$failed['completed']??$request->get('completed','0'),$failed['page']??$request->get('page','1')];
 if(array_filter($raw,static fn(mixed$value):bool=>!is_string($value))!==[])return$this->plain(404);
 [$ownership,$query,$completed,$page]=$raw;$query=trim($query);$page=filter_var($page,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
 if(!in_array($ownership,['mine','all'],true)||!in_array($completed,['0','1'],true)||$page===false||mb_strlen($query)>160)return$this->plain(404);
-$filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$objects=$this->owner()->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
-return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters]);
+$filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$now=(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);$objects=$this->owner(null,$now)->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
+Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters,'failedInspection'=>$failed,'inspectionMessage'=>$message,'today'=>(new \DateTimeImmutable($now))->format('Y-m-d')]);
 } catch(\DomainException)
     {return$this->plain(403);
 } catch(\Throwable$error)
     {Yii::$app->response->headers->set('X-FMonitor-Error-ID',SafeRuntimeFailure::report($error,'checklist_controller'));return$this->plain(503,true);
 }}
 
-    private function owner(?InspectionRecording$recording=null):MariaDbYiiChecklist{return new MariaDbYiiChecklist(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'),(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX'),(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT')),(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),$recording);
+    private function returnFilters():array{$request=Yii::$app->request;return['ownership'=>is_string($request->post('ownership'))?(string)$request->post('ownership'):'all','query'=>is_string($request->post('query'))?(string)$request->post('query'):'','completed'=>is_string($request->post('completed'))?(string)$request->post('completed'):'0','page'=>'1'];}
+
+    private function redirect303(string$url):Response{$response=Yii::$app->response;$response->statusCode=303;$response->headers->set('Location',$url);return$response;}
+
+    private function owner(?InspectionRecording$recording=null,?string$now=null):MariaDbYiiChecklist{return new MariaDbYiiChecklist(Yii::$app->db,(string)getenv('FMONITOR_PROCESS_TABLE_PREFIX'),(string)getenv('FMONITOR_LEGACY_TABLE_PREFIX'),(string)(getenv('FMONITOR_ARTIFACT_STORAGE_ROOT')?:getenv('FMONITOR_DEMO_PRIVATE_ROOT')),$now??(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM),$recording);
 }
 
     private function actor():int{return(int)Yii::$app->user->id;
