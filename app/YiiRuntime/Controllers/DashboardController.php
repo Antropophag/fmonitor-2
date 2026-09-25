@@ -51,7 +51,7 @@ final class DashboardController extends PilotController
                 Yii::$app->db,
                 (string) (getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: ''),
                 (string) (getenv('FMONITOR_LEGACY_TABLE_PREFIX') ?: ''),
-            )->read($actorId, $cutoff);$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary($actorId);$result['installerUtilizationHistory']=$observations->history();
+            )->read($actorId, $cutoff);
         } catch (\DomainException) {
             throw new ForbiddenHttpException();
         } catch (Throwable $error) {
@@ -62,6 +62,7 @@ final class DashboardController extends PilotController
                 'unavailable' => true,
             ]);
         }
+        try{$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary($actorId);$result['installerUtilizationHistory']=$observations->history();$result['installerUtilizationUnavailable']=false;}catch(Throwable$error){Yii::warning('installer_utilization_read_unavailable '.$error::class,__METHOD__);$result['installerUtilization']=null;$result['installerUtilizationHistory']=[];$result['installerUtilizationUnavailable']=true;}
         return $this->render('@app/app/YiiRuntime/Views/dashboard', $result + [
             'identity' => Yii::$app->user->identity,
             'unavailable' => false,

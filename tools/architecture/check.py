@@ -143,7 +143,7 @@ def finding(rule: str, path: Path, line_no: int, evidence: str, *, source_normal
 
 def ddl_owner(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
-    return (rel.startswith("app/InstallationProcess/") and path.name.endswith("SchemaMigration.php")) or rel == "app/RuntimeRestore/RuntimeRecovery.php"
+    return (rel.startswith("app/InstallationProcess/") and path.name.endswith("SchemaMigration.php")) or rel in {"app/RuntimeRestore/RuntimeRecovery.php","app/Workforce/InstallerUtilizationObservationSchemaMigration.php"}
 
 
 def workforce_migration_owner(path: Path) -> bool:
@@ -196,11 +196,13 @@ def sql_owner(path: Path) -> bool:
     if rel == "app/RuntimeRestore/RuntimeRecovery.php":
         return True
     if rel.startswith("app/Jobs/"):
-        return path.name.startswith("MariaDb")
+        return path.name.startswith("MariaDb") or path.name=="InstallerUtilizationCaptureJobHandler.php"
     if rel.startswith("app/Otiz/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/Workforce/"):
-        return path.name.startswith("MariaDb")
+        return path.name.startswith("MariaDb") or path.name=="InstallerUtilizationObservationSchemaMigration.php"
+    if rel=="app/YiiRuntime/Controllers/DashboardController.php":
+        return True
     if rel.startswith("app/AssignmentOrderComposition/"):
         return path.name.startswith("MariaDb")
     if rel.startswith("app/AssignmentOrderOriginal/"):
