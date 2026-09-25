@@ -1,0 +1,36 @@
+{
+  "change": "show-bitrix-documentation-status",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/YiiRuntime/Controllers/IntegrationStatusController.php",
+    "app/Jobs/MariaDbBitrixDocumentationStatusRead.php",
+    "app/YiiRuntime/Views/integration-status.php",
+    "app/YiiRuntime/Views/integration-status-bitrix-documents.php",
+    "specs/BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001.md",
+    "openspec/changes/show-bitrix-documentation-status/proposal.md",
+    "openspec/changes/show-bitrix-documentation-status/design.md",
+    "openspec/changes/show-bitrix-documentation-status/specs/admin/bitrix-documentation-status/spec.md",
+    "openspec/changes/show-bitrix-documentation-status/tasks.md",
+    "openspec/changes/show-bitrix-documentation-status/verification-input.json",
+    "tests/Yii2/yii2_bitrix_documentation_status_001_test.php",
+    "tests/Yii2/integration_status_browser.mjs",
+    "reviews/tests/BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001.md",
+    "reviews/code/BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001.md",
+    "docs/operations/issue-267-bitrix-documentation-status-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [{
+    "spec_id": "BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001",
+    "acceptance_id": "A1-A8-durable-bitrix-documentation-status",
+    "spec_path": "specs/BITRIX-DOCUMENTATION-INTEGRATION-STATUS-001.md",
+    "seam": "authenticated Yii2 GET|HEAD /pilot/admin/integrations HTTP and rendered browser DOM over disposable durable fm2_jobs/fm2_job_events fixtures",
+    "tests": [
+      "tests/Yii2/yii2_bitrix_documentation_status_001_test.php",
+      "tests/Yii2/yii2_integration_status_001_test.php"
+    ],
+    "gate3_expected": {
+      "tests/Yii2/yii2_bitrix_documentation_status_001_test.php": "INTENDED_RED",
+      "tests/Yii2/yii2_integration_status_001_test.php": "GREEN"
+    }
+  }]
+}
