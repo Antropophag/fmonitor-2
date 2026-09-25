@@ -41,7 +41,7 @@ final readonly class MariaDbYiiObjectCardProjection
         } else {
             $card += ['status' => 'Требуется распоряжение', 'applicationId' => null, 'order' => null, 'controlEngineer' => null];
         }
-        if ($card['opened'] && !in_array($state, ['working', 'needs_assignment_change'], true)) {
+        if ($card['opened'] && !in_array($state, ['working', 'completed', 'needs_assignment_change'], true)) {
             throw new \RuntimeException('Malformed process state.');
         }
         if (!$card['opened'] && !in_array($state, ['needs_assignment_order', 'assignment_order_prepared'], true)) {

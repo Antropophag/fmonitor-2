@@ -8,7 +8,7 @@ trait MariaDbSnapshotBuilderPersistence
     private function previousProgress(int $objectId, string $date): int
     {
         $q = $this->db->prepare(
-            "SELECT so.current_progress_bp FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` so JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` s ON s.id=so.snapshot_id AND s.status='accepted' WHERE so.object_id=? AND s.report_date<? ORDER BY s.report_date DESC,s.id DESC LIMIT 1",
+            "SELECT so.current_progress_bp FROM `{$this->prefix}fm2_pilot_otiz_snapshot_objects` so JOIN `{$this->prefix}fm2_pilot_otiz_snapshots` s ON s.id=so.snapshot_id AND s.status='accepted' WHERE so.object_id=? AND s.report_date<=? ORDER BY s.report_date DESC,s.id DESC LIMIT 1",
         );
         $q->execute([$objectId, $date]);
         return (int) ($q->get_result()->fetch_column() ?: 0);

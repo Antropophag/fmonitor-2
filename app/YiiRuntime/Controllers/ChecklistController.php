@@ -129,6 +129,7 @@ if(($operation['type']??null)==='item_completed'){
 $result=$owner->accept($id,$actor,$operation,$photo?$body:null);
 if($result['status']==='not_found')return$this->json(404,['status'=>'rejected']);
 if($result['status']==='forbidden')return$this->json(403,['status'=>'rejected']);
+if(($result['reason']??null)==='case_not_working')return$this->json(409,['status'=>'rejected']);
 $access=$owner->access($actor,$id);
 if(!($access['read']??false))return$this->json(403,['status'=>'rejected']);
 $result['projection']=$this->projection($owner,$id);

@@ -535,6 +535,14 @@ unit	php	tests/WeeklyFkrReport/weekly_schedule_001_test.php	integration
 unit	node	tests/Yii2/checklist_service_worker_navigation_001_test.mjs	unit
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
+unit	php	tests/Yii2/yii2_completed_checklist_admission_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_checklist_attribution_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_checklist_retraction_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_declaration_correction_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_document_corrections_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_installation_state_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_state_transition_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_transition_rollback_001_test.php	integration
 unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration
