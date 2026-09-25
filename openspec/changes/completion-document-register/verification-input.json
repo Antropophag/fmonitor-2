@@ -16,6 +16,8 @@
     "reviews/tests/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
     "specs/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
     "tests/Yii2/yii2_completion_document_register_001_test.php",
+    "tests/Yii2/yii2_completion_document_register_browser_001_test.php",
+    "tests/Yii2/completion_document_register_browser.mjs",
     "tools/verification/suites.tsv"
   ],
   "acceptances": [{
@@ -24,7 +26,7 @@
     "spec_path": "specs/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
     "seam": "read-only Yii completion register route backed by existing completion facts and existing object-card mutation route",
     "seam_kind": "domain",
-    "tests": ["tests/Yii2/yii2_completion_document_register_001_test.php"],
-    "gate3_expected": {"tests/Yii2/yii2_completion_document_register_001_test.php": "INTENDED_RED"}
+    "tests": ["tests/Yii2/yii2_completion_document_register_001_test.php", "tests/Yii2/yii2_completion_document_register_browser_001_test.php"],
+    "gate3_expected": {"tests/Yii2/yii2_completion_document_register_001_test.php": "INTENDED_RED", "tests/Yii2/yii2_completion_document_register_browser_001_test.php": "INTENDED_RED"}
   }]
 }
