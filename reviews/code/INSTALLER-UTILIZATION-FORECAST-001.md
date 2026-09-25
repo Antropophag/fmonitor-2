@@ -172,3 +172,36 @@ Evidence:
 - Working-tree `git diff --check` — PASS.
 
 No Gate 5 finding remains for this bounded test-only delta. This approval does not itself replace the independent Gate 3 review status recorded in `reviews/tests/INSTALLER-UTILIZATION-FORECAST-001.md`; that gate's exact-test-source verdict must be updated independently before admission. Production behavior remains approved from the `f5262de0` rereview, and deployment remains unauthorized.
+
+---
+
+## CI-correction Gate 5 rereview — commit `fdc31e64` — 2026-09-25
+
+Verdict: **APPROVED**
+
+Reviewed exact `HEAD` `fdc31e64dfd9ed5489d473afccf7048c782170a6`, parent `c67eb1afe0fe7434c24322d3110c539a12f68c61`. The committed correction changes exactly two test-support literals; it does not change production code, specification semantics, authorization, persistence, or runtime behavior.
+
+The complete reported failure inventory for GitHub run `36178445438` contains exactly:
+
+1. `Runtime/yii2_production_web_cutover` — immutable `pilot.css` digest mismatch.
+2. `Yii2/yii2_minimal_operational_dashboard` — the generic mobile clipping detector treated forecast links inside the intentional local horizontal scroller as page clipping.
+
+Forecast-specific tests were GREEN in that run. No other failure is hidden or reclassified by this correction.
+
+### Correctness and masking review
+
+- `tests/Support/yii2_production_web_cutover_contract.php` changes only the expected `pilot.css` SHA-256. The new value `36af48af303c55809892d3e8e8eedddd7173ba12b71adb90f3285c8b8f9fe2b8` exactly matches the committed asset bytes; MIME and cache contracts remain unchanged. The immutable-byte check is updated, not weakened.
+- `tests/Support/minimal_operational_dashboard_browser.cjs` excludes only `.fm2-forecast-value` anchors from its generic viewport-bound element scan. It still rejects document-level horizontal overflow and clipping of every other main link, metric, object, and empty state. The excluded links live in `.fm2-forecast-scroll`, whose intentional local overflow and page containment are independently asserted at 390 px by the forecast browser test, together with visible focus, keyboard/touch activation, exact navigation, and detail content. The delta removes a false positive without masking page overflow or an untested interaction surface.
+- Widget counts, dashboard semantics, screenshots/evidence, desktop checks, and populated/empty/error modes remain unchanged.
+
+### Fresh exact-source evidence
+
+No full local suite was run:
+
+- `shasum -a 256 app/YiiRuntime/Assets/pilot.css` — exact contract digest match.
+- `php tests/Runtime/yii2_production_web_cutover_001_test.php` — PASS (`single runtime`).
+- `php tests/Yii2/yii2_minimal_operational_dashboard_001_test.php` — PASS (`complete A-N matrix`).
+- `git diff --check 00fa3e85..fdc31e64` — PASS for the delivery delta.
+- Working-tree `git diff --check` — PASS.
+
+No finding remains for this CI correction. Commit `fdc31e64dfd9ed5489d473afccf7048c782170a6` is approved for rerunning the required CI consumer. This does not convert the prior CI run to GREEN; deploy remains unauthorized.
