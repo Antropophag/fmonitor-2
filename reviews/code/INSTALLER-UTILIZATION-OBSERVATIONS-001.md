@@ -1,5 +1,36 @@
 # Independent Gate 5 review — installer utilization observations
 
+## Rereview — exact-source CI correction
+
+- Verdict: **APPROVED**
+- Reviewer: `gpt-5.6-sol/low /root/gate5_review`; independent from implementation and test authorship.
+- Reviewed HEAD: `b48f7001`.
+- Exact candidate source: `6853b8862c496924cf822eb1f5dae7904e7696b5e321a83fe1043b382ced5200`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T040015Z-96572822ec/package.json`.
+- Plan SHA-256: `d27f008bef1018b796b1400260fd8f9283c88443596fdf075c167076715de12f`.
+- Failed CI log inspected: `/tmp/fm258-ci-36086608427-failed.log` (12,023 lines); complete `REGRESSION_FAILURE`, architecture, unit, e2e, integration and governance inventory reviewed before disposition.
+
+### CI failure disposition
+
+The failed run exposed four correction families rather than a new contradiction in the A–M behavior:
+
+1. The v35 migration used a members table name that exceeded MariaDB's identifier limit with the supported 25-byte prefix. The canonical schema, owner and recovery profile now consistently use `fm2_installer_utilization_members`; the prefix-bound migration and runtime recovery expectations cover the corrected literal inventory.
+2. Existing schema/recovery tests still treated v34 or earlier profiles as the terminal frontier. Their historical-profile assertions remain intact while current catalogue, replay, backup/restore and auto-increment expectations advance explicitly to v35. The changes are mechanical frontier maintenance, not reduced assertions.
+3. Existing dashboard/directory/browser fixtures omitted the newly required permissions or complete workforce/assignment facts, and the installer table had dropped required shlz table tokens and reset/filter state. Fixtures now establish real complete inputs; incomplete utilization renders an explicit unavailable block rather than zero counts, while unrelated dashboard content remains readable. The directory restores stock shlz tokens, stable filters/reset and honest empty-source behavior.
+4. The governance bootstrap failure was a cascade from the registered focused Yii test failing inside its outer clean-worktree fixture. The corrected runtime-jobs/recovery and Yii fixtures were rerun individually GREEN; no governance policy was weakened. Architecture ownership additions are narrow to the new migration, capture handler and dashboard's read-only scope query, with the global architecture check retained.
+
+No failed-job or `REGRESSION_FAILURE` entry from the supplied log was left without a corresponding correction or explicit rerun disposition. The reported classification/inspection-item parallel timeout noise was checked as environment contention; the affected tests passed when rerun individually. The runtime-jobs outer-worktree binding fixture is also reported GREEN after correction.
+
+### Final assessment
+
+The correction preserves the previously approved immutable capture, successful-workforce gate, source coverage/freshness, actual capture time, scope denial, saved-detail reproduction, null-share handling, one-query history, scheduler authority and UI requirements. It adds no forbidden assignment/PTO writer, financial, calendar, checklist, inspection-schedule or construction-control-list mutation.
+
+All three acceptance records in the prepared package are exact-source `GREEN` for the domain, HTTP and browser seams. The wider prior failed-run inventory has been corrected and independently rerun as described above. `git diff --check` is clean. A new exact-source full CI run remains required for publication admission; this review does not claim that the post-correction full matrix has already completed.
+
+No blocking specification, security, migration/recovery or standards finding remains for this candidate.
+
+---
+
 ## Rereview — corrected final candidate
 
 - Verdict: **APPROVED**
