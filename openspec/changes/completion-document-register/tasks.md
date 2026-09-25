@@ -11,6 +11,6 @@
 
 ## 3. Verification
 
-- [ ] 3.1 Pass focused local checks including PilotHttp qualification when applicable.
-- [ ] 3.2 Capture desktop/narrow browser evidence and existing-form round trip.
+- [x] 3.1 Pass focused local checks including PilotHttp qualification when applicable.
+- [x] 3.2 Capture desktop/narrow browser evidence and existing-form round trip.
 - [ ] 3.3 Complete planner-required independent reviews and exact-source CI.
