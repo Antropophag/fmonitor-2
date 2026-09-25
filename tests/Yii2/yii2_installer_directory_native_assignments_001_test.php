@@ -10,7 +10,7 @@ try {
     $f->insert($f->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'installers.read']);
     $f->start();
     $denied=[];assertSameValue(303,$f->login($denied,95)['status'],'plausible user login');
-    assertSameValue(403,$f->request('GET','/pilot/installers',[],$denied)['status'],'exact installers.read required');
+    assertSameValue(200,$f->request('GET','/pilot/installers',[],$denied)['status'],'every active role reads installer directory');
     $cookies=[];
     assertSameValue(303,$f->login($cookies,18)['status'],'FKR login');
 

@@ -18,6 +18,9 @@
     "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
     "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
     "tests/Yii2/yii2_installer_directory_http_001_test.php",
+    "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
     "tests/Yii2/yii2_main_navigation_001_test.php",
     "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
     "tests/Yii2/yii2_inspection_planning_001_test.php",
@@ -51,12 +54,14 @@
       "tests": [
         "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
         "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
-        "tests/Yii2/yii2_installer_directory_http_001_test.php"
+        "tests/Yii2/yii2_installer_directory_http_001_test.php",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php"
       ],
       "gate3_expected": {
         "tests/Yii2/yii2_installer_utilization_observations_001_test.php": "INTENDED_RED",
         "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_installer_directory_http_001_test.php": "INTENDED_RED"
+        "tests/Yii2/yii2_installer_directory_http_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php": "INTENDED_RED"
       }
     },
     {
@@ -90,13 +95,17 @@
       "seam": "construction-control create/reschedule/cancel controls and POST /pilot/construction-control/objects/{id}/inspection-plan share active actor and canonical object-scope authorization",
       "tests": [
         "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
+        "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
         "tests/Yii2/yii2_inspection_planning_001_test.php",
-        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php"
+        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php",
+        "tests/Runtime/initial_owner_provisioning_001_test.php"
       ],
       "gate3_expected": {
         "tests/Yii2/yii2_inspection_planning_ui_255_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php": "GREEN",
         "tests/Yii2/yii2_inspection_planning_001_test.php": "GREEN",
-        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php": "INTENDED_RED"
+        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php": "INTENDED_RED",
+        "tests/Runtime/initial_owner_provisioning_001_test.php": "INTENDED_RED"
       }
     }
   ]
