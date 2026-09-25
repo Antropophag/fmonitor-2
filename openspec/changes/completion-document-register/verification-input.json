@@ -21,6 +21,7 @@
     "specs/YII2-COMPLETION-DOCUMENT-REGISTER-001.md",
     "tests/Yii2/yii2_completion_document_register_001_test.php",
     "tests/Yii2/yii2_completion_document_register_browser_001_test.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
     "tests/Yii2/completion_document_register_browser.mjs",
     "tools/verification/suites.tsv"
   ],
