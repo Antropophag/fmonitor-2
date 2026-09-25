@@ -32,7 +32,7 @@ final class DashboardController extends PilotController
                     Yii::$app->response->headers->set('Location', '/pilot/login');
                 },
             ],
-            'verbs' => ['class' => VerbFilter::class, 'actions' => ['index' => ['GET', 'HEAD'],'observation'=>['GET','HEAD']]],
+            'verbs' => ['class' => VerbFilter::class, 'actions' => ['index' => ['GET', 'HEAD'],'observation'=>['GET','HEAD'],'forecast'=>['GET','HEAD']]],
         ];
     }
 
@@ -63,11 +63,22 @@ final class DashboardController extends PilotController
             ]);
         }
         try{$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary($actorId);$result['installerUtilizationHistory']=$observations->history();$result['installerUtilizationUnavailable']=false;}catch(Throwable$error){Yii::warning('installer_utilization_read_unavailable '.$error::class,__METHOD__);$result['installerUtilization']=null;$result['installerUtilizationHistory']=[];$result['installerUtilizationUnavailable']=true;}
+        try{$result['installerForecast']=$this->utilization()->forecast($cutoff,$actorId);$result['installerForecastUnavailable']=false;}catch(Throwable$error){Yii::warning('installer_forecast_unavailable '.$error::class,__METHOD__);$result['installerForecast']=null;$result['installerForecastUnavailable']=true;}
         return $this->render('@app/app/YiiRuntime/Views/dashboard', $result + [
             'identity' => Yii::$app->user->identity,
             'unavailable' => false,
         ]);
     }
+
+    public function actionForecast(string$weekStart,string$bucket):string
+    {
+        $actor=(int)Yii::$app->user->id;if(!Yii::$app->canonicalAccess->checkAccess($actor,'objects.read')||!Yii::$app->canonicalAccess->checkAccess($actor,'installers.read'))throw new ForbiddenHttpException();$this->assertFullObjectScope($actor);
+        $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$weekStart,new \DateTimeZone(self::ZONE));if($date===false||$date->format('Y-m-d')!==$weekStart||$date->format('N')!=='1')throw new NotFoundHttpException();
+        try{$detail=$this->utilization()->forecastDetail($weekStart,$bucket,$actor);}catch(\OutOfBoundsException|\InvalidArgumentException){throw new NotFoundHttpException();}catch(Throwable){Yii::$app->response->statusCode=503;return'';}
+        return$this->render('@app/app/YiiRuntime/Views/installer-utilization-forecast',$detail+['identity'=>Yii::$app->user->identity]);
+    }
+
+    private function utilization():MariaDbInstallerUtilization{return new MariaDbInstallerUtilization(Yii::$app->db,(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''),(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:''));}
 
     public function actionObservation(string$date,string$series):string
     {
