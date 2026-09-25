@@ -64,11 +64,12 @@ final class MariaDbInstallerUtilization
             $reasons=[];
             foreach($row['currentWorks']as$a)$reasons[]=['objectId'=>(int)$a['object_id'],'registrationNumber'=>(string)$a['registration_number'],'address'=>(string)$a['address'],'documentIdentity'=>null,'type'=>'current','startDate'=>$a['history_start']??null,'finishDate'=>$a['planned_finish']??null];
             foreach($row['upcomingAssignments']as$a)$reasons[]=['objectId'=>(int)$a['object_id'],'registrationNumber'=>(string)$a['registration_number'],'address'=>(string)$a['address'],'documentIdentity'=>$a['document_identity']??null,'type'=>'upcoming','startDate'=>$a['planned_start']??null,'finishDate'=>null];
-            usort($reasons,static fn(array$a,array$b):int=>[$a['type'],$a['objectId'],(string)($a['documentIdentity']??'')]<=>[$b['type'],$b['objectId'],(string)($b['documentIdentity']??'')]);
+            usort($reasons,static fn(array$a,array$b):int=>[$a['objectId'],(string)($a['documentIdentity']??'')]<=>[$b['objectId'],(string)($b['documentIdentity']??'')]);
             $members[]=['installerTabId'=>(int)$row['installer_tab_id'],'fio'=>(string)$row['fio'],'employmentStatus'=>(string)$row['employment_status'],'state'=>$current?'working':($next?'awaiting_start':'unassigned'),'without_current'=>!$current,'without_next'=>!$current&&!$next,'reasons'=>$reasons];
         }
         usort($members,static fn(array$a,array$b):int=>[$a['fio'],$a['installerTabId']]<=>[$b['fio'],$b['installerTabId']]);
-        return['working'=>$working,'awaiting_start'=>$awaiting,'unassigned'=>$unassigned,'without_current'=>$awaiting+$unassigned,'without_next'=>$unassigned,'denominator'=>count($members),'members'=>$members];
+        if($members===[]||trim((string)$projection['updatedAt'])==='')throw new \RuntimeException('UTILIZATION_SOURCE_UNAVAILABLE');
+        return['sourceUpdatedAt'=>(string)$projection['updatedAt'],'sourceCoverage'=>'complete','working'=>$working,'awaiting_start'=>$awaiting,'unassigned'=>$unassigned,'without_current'=>$awaiting+$unassigned,'without_next'=>$unassigned,'denominator'=>count($members),'members'=>$members];
     }
 
     private function directoryPage(array$filters,int$actorId):array
