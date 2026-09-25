@@ -18,6 +18,9 @@
 
 ## 3. Gates 3–5 — bounded verification и независимое решение
 
+- [x] 2.6 Root добавляет RED HTTP/browser matrix для fixed окна previous-2/current/next-3, отсутствия period controls, exact shared chart DOM, roster/summary и desktop/mobile geometry.
+- [x] 2.7 Executor реализует bounded calendar-week read, exact reuse шестинедельной chart вёрстки и равную двухколоночную композицию без новых writers или chart dependency.
+
 - [ ] 3.1 Запустить только planner-selected bounded local checks, включая focused Yii2 dashboard/navigation/auth suites и architecture check, но не canonical full `make test`/`make verify`; проверка — каждый выбранный check записан с exact source и результатом.
 - [ ] 3.2 Независимый reviewer выполняет planner-required Gate 3 (если выбран) на exact candidate и проверяет полное соответствие spec/tests без расширения иных прав; проверка — review record содержит явный GREEN или blocking findings.
 - [ ] 3.3 После исправления findings запустить один exact-source GitHub CI consumer для полной матрицы и собрать полный failed-job/`REGRESSION_FAILURE` inventory при любом сбое; проверка — CI source совпадает с candidate либо статус честно остаётся UNKNOWN.

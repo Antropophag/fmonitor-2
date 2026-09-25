@@ -176,7 +176,7 @@ const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8")),
         throw new Error(
           mode + " responsive/widget geometry " + JSON.stringify(geometry),
         );
-      if (mode !== "error" && geometry.widgets !== 3)
+      if (mode !== "error" && geometry.widgets !== 4)
         throw new Error("widget count " + geometry.widgets);
       if (mode === "populated") {
         const nonzero = geometry.marks.filter((mark) => mark.value > 0);
@@ -218,19 +218,35 @@ const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8")),
         mode !== "error" &&
         width > 1200 &&
         !(
-          geometry.boxes[0].width > geometry.boxes[1].width * 1.5 &&
-          Math.abs(geometry.boxes[1].y - geometry.boxes[2].y) < 2
+          Math.abs(geometry.boxes[0].width-geometry.boxes[1].width)<2 &&
+          Math.abs(geometry.boxes[0].y-geometry.boxes[1].y)<2 &&
+          Math.abs(geometry.boxes[2].width-geometry.boxes[3].width)<2 &&
+          Math.abs(geometry.boxes[2].y-geometry.boxes[3].y)<2 &&
+          geometry.boxes[0].y<geometry.boxes[2].y
         )
       )
         throw new Error(
           "desktop full/paired geometry " + JSON.stringify(geometry.boxes),
         );
       if (
+        mode !== "error" && width <= 1200 && width > 900 &&
+        !(
+          Math.abs(geometry.boxes[0].width-geometry.boxes[1].width)<2 &&
+          Math.abs(geometry.boxes[0].y-geometry.boxes[1].y)<2 &&
+          geometry.boxes[0].y<geometry.boxes[2].y &&
+          geometry.boxes[2].y<geometry.boxes[3].y
+        )
+      )
+        throw new Error(
+          "intermediate primary pair geometry " + JSON.stringify(geometry.boxes),
+        );
+      if (
         mode !== "error" &&
-        width <= 1200 &&
+        width <= 900 &&
         !(
           geometry.boxes[0].y < geometry.boxes[1].y &&
-          geometry.boxes[1].y < geometry.boxes[2].y
+          geometry.boxes[1].y < geometry.boxes[2].y &&
+          geometry.boxes[2].y < geometry.boxes[3].y
         )
       )
         throw new Error(

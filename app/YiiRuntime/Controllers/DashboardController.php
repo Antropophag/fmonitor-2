@@ -40,6 +40,9 @@ final class DashboardController extends PilotController
         Yii::$app->response->headers->set('Cache-Control', 'no-store');
         $actorId = (int) Yii::$app->user->id;
         $cutoff = $this->now()->format('Y-m-d');
+        $currentWeek=(new DateTimeImmutable($cutoff,new DateTimeZone(self::ZONE)))->modify('monday this week');
+        $utilizationFrom=$currentWeek->modify('-14 days')->format('Y-m-d');
+        $utilizationTo=$currentWeek->modify('+27 days')->format('Y-m-d');
         try {
             $result = InstallationProcessFactory::dashboard(
                 Yii::$app->db,
@@ -57,10 +60,12 @@ final class DashboardController extends PilotController
                 'unavailable' => true,
             ]);
         }
-        try{$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary(0);$result['installerUtilizationHistory']=$observations->history();$result['installerUtilizationUnavailable']=false;}catch(Throwable$error){Yii::warning('installer_utilization_read_unavailable '.$error::class,__METHOD__);$result['installerUtilization']=null;$result['installerUtilizationHistory']=[];$result['installerUtilizationUnavailable']=true;}
+        try{$observations=$this->observations();$result['installerUtilization']=$observations->currentSummary(0);$result['installerUtilizationHistory']=$observations->historyBetween($utilizationFrom,$utilizationTo);$result['installerUtilizationUnavailable']=false;}catch(Throwable$error){Yii::warning('installer_utilization_read_unavailable '.$error::class,__METHOD__);$result['installerUtilization']=null;$result['installerUtilizationHistory']=[];$result['installerUtilizationUnavailable']=true;}
         return $this->render('@app/app/YiiRuntime/Views/dashboard', $result + [
             'identity' => Yii::$app->user->identity,
             'unavailable' => false,
+            'utilizationFrom'=>$utilizationFrom,
+            'utilizationTo'=>$utilizationTo,
         ]);
     }
 
