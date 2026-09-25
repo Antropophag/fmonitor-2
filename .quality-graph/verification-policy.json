@@ -278,6 +278,7 @@
         "app/Workforce/MariaDbInstallerUtilizationObservations.php",
         "app/Jobs/MariaDbWorkforceScheduler.php",
         "app/Jobs/MariaDbInstallerUtilizationScheduler.php",
+        "app/Jobs/InstallerUtilizationCaptureJobHandler.php",
         "app/YiiRuntime/Controllers/DashboardController.php",
         "app/YiiRuntime/Views/dashboard.php",
         "app/YiiRuntime/Views/installer-utilization-observation.php"

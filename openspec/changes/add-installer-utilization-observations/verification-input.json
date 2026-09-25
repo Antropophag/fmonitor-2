@@ -8,6 +8,7 @@
     "app/Workforce/MariaDbInstallerUtilization.php",
     "app/Jobs/MariaDbWorkforceScheduler.php",
     "app/Jobs/MariaDbInstallerUtilizationScheduler.php",
+    "app/Jobs/InstallerUtilizationCaptureJobHandler.php",
     "app/Jobs/JobHandlerRuntime.php",
     "app/Jobs/JobHandlerClaim.php",
     "app/Jobs/JobsRuntimeCommand.php",
