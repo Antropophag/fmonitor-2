@@ -258,3 +258,82 @@ Restarted Gate 3 is **APPROVED** for exact source
 `a8a39c5b7ef5ca46829a25e72444ee6d790ac24f5d5764e5b56e519f87c9510c`.
 Gate 4 may proceed against these expectations. Any later specification or test
 change requires plan recomputation and the planner-selected review cycle.
+
+---
+
+## Supplemental Gate 3 review — runtime asset digest correction — 2026-09-25
+
+- Trigger: exact-source CI reported one primary `REGRESSION_FAILURE` in
+  `tests/Runtime/yii2_production_web_cutover_001_test.php`: the contract expected
+  the pre-change worker digest `e0555252…`, while the served candidate asset was
+  `be191f76…`.
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T111858Z-1be1ae1a9e/package.json`
+- Base commit: `34224304705b1b051d799bf5c8ac10b27c53d12e`
+- Exact candidate source: `9706e7eb23451b25f179b3d647e5506f6c1f078c4064afb90a312cc3f40be8e6`
+- Executable source: `7fd68a2d014c3499e46dcb15f0b8a68730129c5285ba6f17d68968332448d357`
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T111858Z-1be1ae1a9e/snapshot/source.patch`, SHA-256 `c29f8f51eb6cc1d2119c03f948d296e6d5fd5780d761b08790e0bf82425417ec`
+- Reviewer independence: unchanged; this reviewer authored neither the worker,
+  digest correction, cutover test/contract, verification input nor CI result.
+- Verdict: **APPROVED**
+
+### Review
+
+The correction changes only the pinned `checklist-sw.js` SHA-256 from the old
+asset value to `be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f`
+and adds the contract helper and executable cutover consumer to the verification
+input. Independent hashing of the exact production asset bytes yields that same
+new value. At the package base, the asset already hashes to `be191…` while the
+contract still contains `e055…`; this exactly reconstructs the reported CI
+mismatch and shows the correction is confined to stale expected data.
+
+The oracle is not tautological. The unchanged runtime test fetches
+`/pilot/assets/checklist-sw.js` through the public Yii runtime, hashes the served
+response body, and compares it with the separately pinned literal. It also
+requires status 200, JavaScript content type, `public, max-age=0`, `nosniff`,
+same-origin resource policy, `Service-Worker-Allowed: /pilot/`, attributable
+runtime ownership, absence of rapid-pilot loading, and unchanged database/private
+facts. A missing, stale, differently served, or incorrectly configured worker
+still fails even though the intended candidate bytes now pass.
+
+The verification input now maps the runtime cutover consumer alongside the
+worker lifecycle/route test and real browser flow. This closes the previously
+omitted deployment-boundary consumer without weakening any behavioral oracle.
+No additional finding remains.
+
+### Independent focused verification
+
+```text
+$ sha256sum app/YiiRuntime/Assets/checklist-sw.js
+be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f  app/YiiRuntime/Assets/checklist-sw.js
+
+$ php tests/Runtime/yii2_production_web_cutover_001_test.php
+PASS: YII2-PRODUCTION-WEB-CUTOVER-001 single runtime
+exit=0
+
+$ node tests/Yii2/checklist_service_worker_navigation_001_test.mjs
+PASS: YII2-INSPECTION-JOURNEY-001 checklist-only worker navigation
+exit=0
+
+$ php tests/Yii2/yii2_inspection_browser_001_test.php
+PASS: YII2-INSPECTION-JOURNEY-001 browser /var/folders/yc/548th18156s39y3kx0xc05tc0000gn/T/yii-preopening-4fd07b09e186
+exit=0
+
+$ git diff --check
+exit=0
+```
+
+### Supplemental reviewed hashes
+
+```text
+2aad237f629440373d931a98594e257f4e7def2f641062720954e8a265b73887  tests/Support/yii2_production_web_cutover_contract.php
+8d996a8b1ca0d4e0bf7a701ef8b051846e66fbcde9d00d38fb529a79c0b5a727  openspec/changes/limit-checklist-worker-navigation/verification-input.json
+be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f  app/YiiRuntime/Assets/checklist-sw.js
+e211eca16d1d5cd143c795abdcf6702a8449f6eb1704064a3a53cded5ddf280e  tests/Runtime/yii2_production_web_cutover_001_test.php
+6637ca4200b3f4d4838b123cd64096871d1c92add72365ad8b4ba6ebaf2891af  tests/Yii2/checklist_service_worker_navigation_001_test.mjs
+5575a7a890b0434af297a7f44fea11620feb74547c279d7a329c29a9ab362210  tests/Yii2/inspection_browser.mjs
+```
+
+Supplemental Gate 3 is **APPROVED** for exact source
+`9706e7eb23451b25f179b3d647e5506f6c1f078c4064afb90a312cc3f40be8e6`.
+The historical failed CI remains failed evidence; a fresh exact-source CI run is
+still required before merge, and this verdict does not constitute CI GREEN.

@@ -171,3 +171,93 @@ No full local suite was run. Gate 5 is **APPROVED** for exact source
 `24b937120b0e3ef6a37309df27ce313dfde950f18b6cb0e77bfc4fadb188251b`.
 Mandatory exact-source CI remains `UNKNOWN`; this approval does not represent CI
 GREEN, publication readiness, deployment, or merge authorization.
+
+---
+
+## Supplemental Gate 5 — CI runtime digest correction — 2026-09-25
+
+- Prepared package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T112059Z-6847b3def5/package.json`
+- Base commit: `34224304705b1b051d799bf5c8ac10b27c53d12e`
+- Exact candidate source: `bc71c63a80ef2e2bd8fa3c76b390444c4aacee33077a08e5847c907a4078ba19`
+- Executable source: `7fd68a2d014c3499e46dcb15f0b8a68730129c5285ba6f17d68968332448d357`
+- Snapshot patch: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T112059Z-6847b3def5/snapshot/source.patch`, SHA-256 `ad12e02e8ba1d263a2ba2d2c8909ff8b67a35c9de907256b153e80651bc08822`
+- Supplemental Gate 3: `APPROVED` for exact source `9706e7eb23451b25f179b3d647e5506f6c1f078c4064afb90a312cc3f40be8e6`
+- Reviewer independence: unchanged; this reviewer authored neither the worker,
+  digest correction, verification mapping, runtime oracle, Gate 3 approval nor
+  CI result.
+- Verdict: **APPROVED**
+
+### Complete failed-CI inventory
+
+GitHub Quality Graph run `36126802220` on exact commit
+`34224304705b1b051d799bf5c8ac10b27c53d12e` completed `failure`.
+The complete job inventory is:
+
+- `plan`, `fast`, `unit`, `e2e`, `governance`, `Integration (2/2)` and
+  `quality-results`: `success`;
+- `harness`: expected `skipped`;
+- `Integration (1/2)`: `failure`, with exactly one `REGRESSION_FAILURE` in
+  `tests/Runtime/yii2_production_web_cutover_001_test.php`;
+- `verify`: dependent aggregate failure because integration was not successful;
+- terminal `Quality Graph`: dependent failure status.
+
+The sole regression expected worker SHA-256 `e0555252…` and observed
+`be191f76…`; status, cache policy, media type, `nosniff`, same-origin policy and
+the remaining runtime matrix matched. The integration category reported 168
+tests and exactly one failure. Inspection of the complete failed-job logs found
+no second `REGRESSION_FAILURE` or concealed product failure.
+
+### Correction review
+
+Independent hashing of `app/YiiRuntime/Assets/checklist-sw.js` yields exactly
+`be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f`,
+the corrected literal in
+`tests/Support/yii2_production_web_cutover_contract.php`. The production worker,
+runtime test and serving code are unchanged from the previously approved
+candidate. The correction changes only stale expected data and maps its helper
+plus the existing public runtime consumer in the verification input.
+
+The oracle remains independent and substantive: it fetches the asset through
+the Yii runtime, hashes the served bytes, and continues to verify status, media
+type, `public, max-age=0`, `nosniff`, same-origin resource policy,
+`Service-Worker-Allowed: /pilot/`, runtime ownership, absence of rapid-pilot
+loading, and unchanged protected facts. No assertion was removed or relaxed.
+The new mapping ensures this deployment-boundary consumer is selected alongside
+the lifecycle/route and browser regressions. No behavior, permission, history,
+offline, route or cache semantic changed in this CI correction.
+
+### Independent focused verification
+
+```text
+$ sha256sum app/YiiRuntime/Assets/checklist-sw.js
+be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f
+
+$ php tests/Runtime/yii2_production_web_cutover_001_test.php
+PASS: YII2-PRODUCTION-WEB-CUTOVER-001 single runtime
+
+$ node tests/Yii2/checklist_service_worker_navigation_001_test.mjs
+PASS: YII2-INSPECTION-JOURNEY-001 checklist-only worker navigation
+
+$ php tests/Yii2/yii2_inspection_browser_001_test.php
+PASS: YII2-INSPECTION-JOURNEY-001 browser ...
+
+$ python3 tests/Deployment/pilot_jobs_compose_001_test.py
+PASS: PILOT-JOBS-STARTUP-001 isolated root Compose delivery and restart
+
+$ python3 tests/Verification/change_verification_001_test.py
+Ran 59 tests ... OK
+
+$ php tests/Runtime/runtime_storage_001_test.php
+PASS: PRODUCTION-HTTP-RUNTIME-001 storage prepare/replay/readiness contract
+
+$ python3 tests/Verification/architecture_guard_001_test.py
+Ran 18 tests ... OK
+
+$ git diff --check
+exit=0
+```
+
+No full local suite was run. Supplemental Gate 5 is **APPROVED** for exact source
+`bc71c63a80ef2e2bd8fa3c76b390444c4aacee33077a08e5847c907a4078ba19`.
+The historical failed run remains failed evidence. A fresh exact-source CI run
+is required; this verdict is not CI GREEN, merge authorization or deployment.
