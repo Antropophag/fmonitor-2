@@ -32,3 +32,33 @@ The OpenSpec requirements state the main intended behaviors coherently at a high
 ## Required return
 
 Root must expand the specification where object-scope and invalid fact combinations remain ambiguous, replace source-token assertions with complete public-seam acceptance, retain fresh intended RED evidence, refresh the verification plan/package, and request a new independent Gate 3 review before implementation corrections proceed. Full local `make test`/`make verify` remains prohibited.
+
+---
+
+## Gate 3 rereview — `b2fcf0a44902a93d861f6c8002d3ca024dfb5a84`
+
+- Date: 2026-09-25
+- Reviewer independence: unchanged
+- Reviewed correction range: `61168843420f32a0c55259125260054dc9013071..b2fcf0a44902a93d861f6c8002d3ca024dfb5a84`
+- Reported candidate source: `6a817b9a...`
+- Bounded reruns: `php tests/Yii2/yii2_completion_document_register_001_test.php` — GREEN; `php tests/Yii2/yii2_completion_document_register_browser_001_test.php` — exit 0
+- Browser artifacts inspected: `/Users/antropophag/.local/share/fmonitor-2/issue-268/browser-evidence/completion-register-desktop.png` and `completion-register-narrow.png`
+- Verdict: **REJECT**
+
+### Prior findings disposition
+
+1. **PARTIALLY RESOLVED.** The corrected HTTP fixture now distinguishes unopened/no-fact, PTO-only, both-documents, declaration-without-PTO and a multi-page set; it exercises a two-version sparse declaration correction and confirms inherited current details/date. The implementation now explicitly labels declaration-without-PTO as inconsistent. However, the promised fixture matrix still has no completed case or two lifts at one address, and the correction assertions do not prove prior correction/history rows remain byte-for-byte intact. These omissions overlap the still-open search/identity and corruption findings below.
+
+2. **PARTIALLY RESOLVED — BLOCKING.** The test now proves a 57-row global total, 50/7 pagination split, retained page link, one PTO-date period, effective declaration details/date search and queue removal. It still does not test effective corrected address or registration-number search against stale imported text, default old-PTO-first ordering or stable identity ties, declaration-period exclusion of missing dates, filtered per-mode counter values, escaped `%`/`_` search, or form-submit page reset. These are explicit issue #268 acceptance points and are especially important because a syntactically valid SQL implementation can pass all current assertions while ordering or counting against the wrong effective source. Add discriminating public-seam assertions rather than source tokens.
+
+3. **RESOLVED.** The contract now records the current platform fact that ordinary card scope is globally granted by exact `objects.read` and that no narrower per-object seam exists. The adapter repeats active-user/active-role/exact-capability admission internally, while the controller retains its own check. The HTTP test proves denied access. A future narrower scope is correctly treated as a separate security change rather than invented in this slice.
+
+4. **PARTIALLY RESOLVED — BLOCKING.** Empty results, missing correction table, and declaration-without-PTO are now distinct; missing source returns `503`. Production also adds duplicate-root detection. But no executable test constructs malformed correction linkage/gaps and proves `503` rather than a successful effective document. The missing-table case cannot catch a regression that stops validating `previous_correction_id` / `previous_version_no`, and the duplicate-root branch is unexecuted. Add a fixture that deliberately disables the relevant constraint only within the disposable database, creates malformed lineage (and, if the production branch remains, duplicate roots), asserts unavailable response, and proves no writes.
+
+5. **RESOLVED.** The browser test now follows the direct `#completion` link, verifies the target and existing declaration form are visible, submits through the existing writer, navigates Back to the exact filtered URL, observes the object leave the queue, and verifies exactly one declaration root was appended. No register writer was introduced.
+
+6. **PARTIALLY RESOLVED — BLOCKING.** A 55-row fixture exercises page bounding without per-row card reads, and the browser test covers desktop/narrow routes plus local table overflow. The submitted narrow screenshot is not acceptable evidence of a working narrow UI: the fixed bottom navigation visibly overlays the lower form controls (the primary blue action is reduced to a strip behind it), while table row text is densely overprinted/clipped. The test only checks document-wide overflow and `overflow-x`; it never verifies that the submit/reset controls and row action can be scrolled into an unobscured clickable region, keyboard focus visibility, or that columns do not overlap. The desktop screenshot is an empty post-return state, so it also does not visually evidence a populated desktop table. Add assertions based on bounding boxes/hit targets and focus, capture populated desktop and usable narrow states, and correct the local view/layout consequence without rewriting shared CSS.
+
+### Rereview decision
+
+The correction materially improves the candidate and fully closes access ownership and the core existing-form round trip. Findings 2, 4, and 6 remain blocking, with concrete untested SQL semantics and a visible narrow-layout failure. Gate 3 remains **REJECTED**; exact-source CI and publication cannot substitute for the missing acceptance barriers.
