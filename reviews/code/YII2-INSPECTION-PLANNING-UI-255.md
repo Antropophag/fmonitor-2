@@ -183,3 +183,30 @@ No Gate 5 finding remains at exact HEAD `28199194`. The post-CI corrections are 
 ### Decision
 
 No integration finding remains at exact HEAD `bdd859bb`. The post-main candidate is independently **APPROVED** for exact-source GitHub CI. Harness CI remains `UNKNOWN` and publication readiness false at review time, so this verdict alone is not PR-ready evidence.
+
+---
+
+## Gate 5 post-CI fixture correction review — 2026-09-25
+
+- Reviewer: independent agent `/root/pr265_final_review`; authored none of the reviewed specification, tests, production implementation, or correction.
+- Reviewed exact HEAD: `1145fbe9d1e10a021e39913ddff326d3b0684e4d` over prior PR source `5dbe6f47703928572b14ce8396d98bc0db777e14`.
+- Prior CI inventory: failed jobs `Integration (2/2)`, aggregate `verify`, and aggregate `Quality Graph`; the sole primary `REGRESSION_FAILURE` was `tests/Yii2/yii2_documentary_http_001_test.php` (`actor73`, expected `403`, actual `303`).
+- Verdict: **APPROVED**. Findings: none.
+
+### Assessment
+
+The one-line correction removes the unintended `(user_id=73, role_id=7)` manager assignment from `DocumentaryFixture` immediately after its shared `InspectionFixture` setup. This restores the documentary scenario's intended engineer-only authorization without changing production code or weakening the dedicated mixed-role inspection coverage.
+
+### Independent bounded evidence
+
+- PHP syntax for `tests/Yii2/DocumentaryFixture.php`: PASS.
+- `php tests/Yii2/yii2_documentary_http_001_test.php`: PASS.
+- Completion-form recovery and documentary held-lock concurrency checks: PASS.
+- `php tests/Yii2/yii2_inspection_scope_policy_255_test.php`: PASS.
+- `php tests/Yii2/yii2_inspection_journey_001_test.php`: PASS.
+- `git diff --check`: PASS.
+- Full local `make test` / `make verify` was not run, per owner decision.
+
+### Decision
+
+The correction is independently **APPROVED**. Fresh reviewer-package preparation returned `SETUP_FAILURE` because retained evidence did not cover every mapped acceptance test; that result is not treated as approval or GREEN. The failed CI result belongs to prior source `5dbe6f47`; exact-source GitHub CI for the corrected candidate remains mandatory before merge.
