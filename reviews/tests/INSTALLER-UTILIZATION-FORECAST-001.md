@@ -111,3 +111,27 @@ Gate 3 is blocked only on the remaining public dashboard value/link-coordinate s
 `APPROVED`
 
 Gate 3 passes for the exact reviewed blobs named above, with the retained v3 feature-absent snapshot and RED records. Gate 4/5 may rely on these expectations without changing them. Any subsequent normative spec or test-byte change requires planner-selected review again. This verdict approves test adequacy only; production conformance, CI, deployment, live adapters, and admission enforcement remain for their own gates or `UNKNOWN`.
+
+---
+
+## Post-main-merge Gate 3 delta review — commit `f5262de0` — 2026-09-25
+
+- Exact reviewed source: clean commit `f5262de0e85ca87f4cf4af72ffc3133ec0a61549`.
+- Delta scope: the revised authorization clauses in `specs/INSTALLER-UTILIZATION-FORECAST-001.md` and the forecast OpenSpec delta; the corresponding forecast HTTP matrix; and the inherited operational-dashboard browser oracle changed from three to five widgets with updated responsive geometry.
+- Reviewer independence remains unchanged.
+- Reviewer verification: `php tests/Yii2/yii2_installer_utilization_forecast_001_test.php` exited `0` with `PASS: INSTALLER-UTILIZATION-FORECAST-001 HTTP/auth/query-scale` at the exact commit. The other focused PASS results reported in the handoff were not promoted to independent evidence by this review.
+- Verdict: `CHANGES_REQUESTED`
+
+### Finding
+
+1. **HIGH — the sanitized denied/scoped dashboard test is not sensitive to the new “no forecast counts” contract.** The amended contract is internally coherent: guest redirects; authenticated denied/scoped dashboard remains `200` with sanitized unavailable forecast; direct forecast detail remains `403`; HEAD is bodyless. The HTTP matrix exercises all those statuses and methods and requires the unavailable message. But `tests/Yii2/yii2_installer_utilization_forecast_001_test.php:8` treats only `Монтажник 7001` and the exact phrase `2 монтажников` as secrets. A regression that renders the live forecast grid or links with bucket counts—for example `Свободны 0`, `Заняты 1`, or the 30 forecast detail hrefs—while also rendering `Прогноз временно недоступен` passes every denied/scoped assertion. That directly violates normative item 7 and OpenSpec's “sanitized unavailable forecast without counts/PII.” Parse each denied/scoped dashboard GET and assert the unavailable state contains no forecast chart/value/member/reason/detail-link markers (at minimum no `[data-dashboard-chart="installer-forecast"]`, `.fm2-forecast-value`, `/pilot/dashboard/installers/forecast/`, denominator, tabId/FIO/object/reason data), while preserving the unrelated universal dashboard widgets now intentionally available. Keep the direct-detail no-body/PII checks.
+
+### Sound delta
+
+The specification and OpenSpec authorization prose agree on the superseding universal-dashboard policy. Guest redirect, denied/scoped dashboard `200`, direct-detail `403`, GET/HEAD status behavior, unavailable copy, read-only facts, and the fully authorized path remain covered. The operational-dashboard browser update explicitly expects five widgets and checks wide/intermediate/narrow geometry for all five; it does not weaken the forecast-specific authorization boundary.
+
+### Delta verdict
+
+`CHANGES_REQUESTED`
+
+The previously approved forecast matrix remains valid except for this changed authorization outcome. Correct the single sanitized-dashboard absence oracle and submit the exact test delta for independent rereview. Production conformance, the reported focused runs not independently executed here, CI, deployment, and admission enforcement remain separate or `UNKNOWN`.
