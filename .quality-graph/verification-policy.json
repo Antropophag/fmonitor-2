@@ -407,6 +407,7 @@
       "name": "otiz-premium-norms",
       "patterns": [
         "app/Otiz/MariaDbNativePremiumInputs.php",
+        "app/Otiz/MariaDbSnapshotBuilderPersistence.php",
         "app/Otiz/MariaDbNativePremiumInputsValues.php",
         "app/Otiz/MariaDbObjectRegisterQuery.php",
         "app/Otiz/NativePremiumNorms.php"
@@ -514,6 +515,8 @@
       "name": "construction-control-checklist-ui",
       "patterns": [
         "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+        "app/InspectionEvidence/MariaDbYiiChecklistMutation.php",
+        "app/YiiRuntime/Controllers/ChecklistController.php",
         "app/YiiRuntime/Assets/checklist.js",
         "app/YiiRuntime/Assets/pilot.css",
         "app/YiiRuntime/Views/checklist.php",
@@ -709,6 +712,7 @@
     {
       "name": "completion-document-register",
       "patterns": [
+        "app/InstallationProcess/MariaDbInstallationCompletion.php",
         "app/InstallationProcess/MariaDbYiiCompletionRegister.php"
       ],
       "verifiers": [

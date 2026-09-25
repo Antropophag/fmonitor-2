@@ -1,0 +1,66 @@
+{
+  "change": "persist-completed-installation-state",
+  "planned_paths": [
+    "app/InstallationProcess/MariaDbInstallationCompletion.php",
+    "app/InspectionEvidence/MariaDbYiiChecklistMutation.php",
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "app/InstallationProcess/InstallationCaseCurrentStatus.php",
+    "app/InstallationProcess/MariaDbYiiObjectCardProjection.php",
+    "app/InstallationProcess/MariaDbYiiObjectQueue.php",
+    "app/Otiz/MariaDbNativePremiumInputs.php",
+    "app/Otiz/MariaDbSnapshotBuilderPersistence.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    ".quality-graph/verification-policy.json",
+    "tests/Yii2/yii2_completed_installation_state_001_test.php",
+    "tests/Yii2/yii2_completed_state_transition_001_test.php",
+    "tests/Yii2/yii2_completed_transition_rollback_001_test.php",
+    "tests/Yii2/yii2_completed_document_corrections_001_test.php",
+    "tests/Yii2/yii2_completed_declaration_correction_001_test.php",
+    "tests/Yii2/yii2_completed_checklist_admission_001_test.php",
+    "tests/Yii2/yii2_completed_checklist_attribution_001_test.php",
+    "tests/Yii2/yii2_completed_checklist_retraction_001_test.php",
+    "tests/Yii2/yii2_documentary_concurrency_001_test.php",
+    "tests/Otiz/excel_inputs_001_test.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "PERSIST-COMPLETED-INSTALLATION-STATE-001",
+      "acceptance_id": "A1-A4",
+      "spec_path": "specs/PERSIST-COMPLETED-INSTALLATION-STATE-001.md",
+      "seam": "POST /pilot/objects/{id}/completion record_declaration and application concurrency",
+      "tests": [
+        "tests/Yii2/yii2_completed_installation_state_001_test.php",
+        "tests/Yii2/yii2_completed_state_transition_001_test.php",
+        "tests/Yii2/yii2_completed_transition_rollback_001_test.php",
+        "tests/Yii2/yii2_completed_document_corrections_001_test.php",
+        "tests/Yii2/yii2_completed_declaration_correction_001_test.php",
+        "tests/Yii2/yii2_completed_checklist_admission_001_test.php",
+        "tests/Yii2/yii2_completed_checklist_attribution_001_test.php",
+        "tests/Yii2/yii2_completed_checklist_retraction_001_test.php",
+        "tests/Yii2/yii2_documentary_concurrency_001_test.php",
+        "tests/Yii2/yii2_documentary_http_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_completed_installation_state_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_state_transition_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_transition_rollback_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_document_corrections_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_declaration_correction_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_checklist_admission_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_checklist_attribution_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_completed_checklist_retraction_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_documentary_concurrency_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_documentary_http_001_test.php": "GREEN"
+      }
+    },
+    {
+      "spec_id": "PERSIST-COMPLETED-INSTALLATION-STATE-001",
+      "acceptance_id": "A5-A6",
+      "spec_path": "specs/PERSIST-COMPLETED-INSTALLATION-STATE-001.md",
+      "seam": "native OTIZ inputs and snapshot publication",
+      "tests": [
+        "tests/Otiz/excel_inputs_001_test.php"
+      ]
+    }
+  ]
+}

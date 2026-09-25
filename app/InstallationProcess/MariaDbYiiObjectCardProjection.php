@@ -41,7 +41,7 @@ final readonly class MariaDbYiiObjectCardProjection
         } else {
             $card += ['status' => 'Требуется распоряжение', 'applicationId' => null, 'order' => null, 'controlEngineer' => null];
         }
-        if ($card['opened'] && !in_array($state, ['working', 'needs_assignment_change'], true)) {
+        if ($card['opened'] && !in_array($state, ['working', 'completed', 'needs_assignment_change'], true)) {
             throw new \RuntimeException('Malformed process state.');
         }
         if (!$card['opened'] && !in_array($state, ['needs_assignment_order', 'assignment_order_prepared'], true)) {
@@ -53,6 +53,7 @@ final readonly class MariaDbYiiObjectCardProjection
             if ($state === 'needs_assignment_change') { $card['status'] = 'Требуется изменение'; }
         }
         $card['completionWritable'] = $state === 'working';
+        $card['completionCorrectable'] = in_array($state, ['working', 'completed'], true);
         $card['equipmentFacts'] = $this->equipmentFacts((int) $card['id']);
         unset($card['caseId'], $card['nextStep']);
         return $this->actorNames($card);

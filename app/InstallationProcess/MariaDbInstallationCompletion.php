@@ -14,14 +14,23 @@ final class MariaDbInstallationCompletion
     {
         $capability=$type==='pto_act'?'installation.completion.pto.record':'installation.completion.declaration.record';
         $this->transaction(function()use($objectId,$actor,$type,$date,$details,$now,$capability):void{
-            $this->authorize($actor,$capability);$case=$this->workingCase($objectId);
+            $this->authorize($actor,$capability);$locked=$this->caseInStates($objectId,['working','completed']);$case=$locked['id'];
             if(ProductionChecklistProgressFactory::create($this->db,$this->prefix)->forCase($case)<85)throw new \DomainException('CHECKLIST_INCOMPLETE');
             $facts=$this->facts($case,true);
             if(isset($facts[$type]))throw new \DomainException('FACT_ALREADY_RECORDED');
+            if($locked['state']!=='working')throw new \DomainException('CASE_NOT_WORKING');
             if($type==='declaration'&&!isset($facts['pto_act']))throw new \DomainException('PTO_REQUIRED');
             $this->validate($type,$date,$details,$now);
             $s=$this->db->prepare('INSERT INTO '.$this->table('fm2_pilot_completion_facts').'(installation_case_id,fact_type,fact_date,details,recorded_at,recorded_by_user_id)VALUES(?,?,?,?,?,?)');
             $s->bind_param('issssi',$case,$type,$date,$details,$now,$actor);$s->execute();
+            if($type==='declaration'){
+                $factId=(int)$this->db->insert_id;
+                $u=$this->db->prepare('UPDATE '.$this->table('fm2_installation_cases')." SET process_state='completed',updated_at=?,lock_version=lock_version+1 WHERE id=? AND process_state='working'");
+                $u->bind_param('si',$now,$case);$u->execute();if($u->affected_rows!==1)throw new \DomainException('CASE_NOT_WORKING');
+                $payload=json_encode(['declarationFactId'=>$factId],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+                $e=$this->db->prepare('INSERT INTO '.$this->table('fm2_process_events')."(installation_case_id,event_type,occurred_at,actor_user_id,payload_json)VALUES(?,'installation_completed',?,?,?)");
+                $e->bind_param('isis',$case,$now,$actor,$payload);$e->execute();
+            }
         });
     }
 
@@ -29,7 +38,7 @@ final class MariaDbInstallationCompletion
     {
         $capability=$type==='pto_act'?'installation.completion.pto.correct':'installation.completion.declaration.correct';
         $this->transaction(function()use($objectId,$actor,$factId,$type,$date,$details,$reason,$now,$capability):void{
-            $this->authorize($actor,$capability);$case=$this->workingCase($objectId);
+            $this->authorize($actor,$capability);$case=$this->caseInStates($objectId,['working','completed'])['id'];
             $reason=trim($reason);if($reason===''||mb_strlen($reason)>1000)throw new \DomainException('REASON_REQUIRED');
             $this->validate('pto_act',$date,'',$now);if($type==='declaration'&&$details!==''&&mb_strlen(trim($details))>500)throw new \DomainException('INVALID_FACT');
             $s=$this->db->prepare('SELECT id FROM '.$this->table('fm2_pilot_completion_facts').' WHERE id=? AND installation_case_id=? AND fact_type=? FOR UPDATE');
@@ -59,9 +68,10 @@ final class MariaDbInstallationCompletion
         $s=$this->db->prepare('SELECT 1 FROM '.$this->table('fm2_pilot_users').' u JOIN '.$this->table('fm2_pilot_user_roles').' ur ON ur.user_id=u.user_id JOIN '.$this->table('fm2_pilot_roles').' r ON r.role_id=ur.role_id JOIN '.$this->table('fm2_pilot_role_permissions').' rp ON rp.role_id=r.role_id WHERE u.user_id=? AND u.status=1 AND u.activation_state=\'active\' AND r.status=1 AND rp.permission=? LIMIT 1');
         $s->bind_param('is',$user,$permission);$s->execute();if($s->get_result()->fetch_row()===null)throw new \DomainException('ACTOR_NOT_AUTHORIZED');
     }
-    private function workingCase(int$object):int
+    /** @param list<string> $states @return array{id:int,state:string} */
+    private function caseInStates(int$object,array$states):array
     {
-        $s=$this->db->prepare('SELECT id,process_state FROM '.$this->table('fm2_installation_cases').' WHERE legacy_installation_object_id=? LIMIT 2 FOR UPDATE');$s->bind_param('i',$object);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);if(count($rows)!==1)throw new \DomainException('CASE_NOT_FOUND');if($rows[0]['process_state']!=='working')throw new \DomainException('CASE_NOT_WORKING');return(int)$rows[0]['id'];
+        $s=$this->db->prepare('SELECT id,process_state FROM '.$this->table('fm2_installation_cases').' WHERE legacy_installation_object_id=? LIMIT 2 FOR UPDATE');$s->bind_param('i',$object);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);if(count($rows)!==1)throw new \DomainException('CASE_NOT_FOUND');$state=(string)$rows[0]['process_state'];if(!in_array($state,$states,true))throw new \DomainException('CASE_NOT_WORKING');return['id'=>(int)$rows[0]['id'],'state'=>$state];
     }
     private function transaction(callable$work):void{try{$this->db->begin_transaction();$work();$this->db->commit();}catch(\Throwable$e){$this->db->rollback();throw$e;}}
     private function table(string$name):string{return'`'.$this->prefix.$name.'`';}
