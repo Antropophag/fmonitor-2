@@ -164,10 +164,10 @@ try {
 
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='installers.read'");
     $phaseBefore = $fixture->facts();
-    $withoutInstallers = array_values(array_diff($canonical, ['/pilot/installers']));
-    $assertMatrix($withoutInstallers, array_diff_key($routes, ['/pilot/installers' => true,'/pilot/dashboard'=>true]));
-    assertSameValue(403, $http->request('GET', '/pilot/installers', [], $cookies)['status'], 'direct installer directory authorization unchanged');
-    assertSameValue(403, $http->request('GET', '/pilot/dashboard', [], $cookies)['status'], 'dashboard requires full installers.read capability');
+    $withoutInstallers = $canonical;
+    $assertMatrix($withoutInstallers, $routes);
+    assertSameValue(503, $http->request('GET', '/pilot/installers', [], $cookies)['status'], 'universal directory reaches incomplete-source unavailable state');
+    assertSameValue(200, $http->request('GET', '/pilot/dashboard', [], $cookies)['status'], 'INTENDED_RED dashboard ignores installers.read capability');
     assertSameValue($phaseBefore, $fixture->facts(), 'no-installers reads and denial create no facts');
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'installers.read')");
 
@@ -214,7 +214,7 @@ try {
     $db->query("INSERT INTO {$prefix}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'construction_control.read')");
     $db->query("DELETE FROM {$prefix}fm2_pilot_role_permissions WHERE role_id=9201 AND permission='objects.read'");
     $phaseBefore = $fixture->facts();
-    $withoutObjects = ['/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
+    $withoutObjects = ['/pilot/dashboard', '/pilot/installers', '/pilot/construction-control', '/pilot/otiz', '/pilot/admin/users', '/pilot/admin/roles', '/pilot/admin/integrations'];
     $withoutObjectsAvailable=array_values(array_diff($withoutObjects,['/pilot/construction-control']));$assertMatrix($withoutObjects, array_intersect_key($routes, array_fill_keys([...$withoutObjectsAvailable, '/pilot/feedback'], true)));
     assertSameValue(403, $http->request('GET', '/pilot/objects', [], $cookies)['status'], 'direct objects authorization unchanged');
     assertSameValue(503, $http->request('GET', '/pilot/installers', [], $cookies)['status'], 'incomplete object-scoped utilization is unavailable, not a partial directory');

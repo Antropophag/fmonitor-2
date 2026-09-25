@@ -23,7 +23,7 @@ final class LocalRoleCatalog
             'construction_control_engineer' => [
                 'name' => 'Инженер строительного контроля',
                 'description' => 'Инспекции и чек-листы назначенных объектов.',
-                'permissions' => ['objects.read','construction_control.read','checklist.read','checklist.edit','inspection.item.complete','inspection.photo.revoke','assignment_order.original.read','assignment_order_artifact.read','construction_control_engineer'],
+                'permissions' => ['objects.read','construction_control.read','checklist.read','checklist.edit','inspection.schedule','inspection.item.complete','inspection.photo.revoke','assignment_order.original.read','assignment_order_artifact.read','construction_control_engineer'],
             ],
             'construction_control_coordinator' => [
                 'name' => 'Координатор строительного контроля',
@@ -38,7 +38,7 @@ final class LocalRoleCatalog
             'manager' => [
                 'name' => 'Руководитель ФКР',
                 'description' => 'Распоряжения, открытие, документальное завершение и контроль работ.',
-                'permissions' => ['objects.read','objects.details.edit','installers.read','management.read','construction_control.read','checklist.read','deadline_certificate.read','deadline_certificate.write','assignment_order.prepare','assignment_order.composition.select','assignment_order.composition.apply','assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct','installation.open','installation.completion.pto.record','installation.completion.declaration.record','installation.completion.pto.correct','installation.completion.declaration.correct'],
+                'permissions' => ['objects.read','objects.details.edit','installers.read','management.read','construction_control.read','checklist.read','inspection.schedule','deadline_certificate.read','deadline_certificate.write','assignment_order.prepare','assignment_order.composition.select','assignment_order.composition.apply','assignment_order.original.read','assignment_order.original.upload','assignment_order.original.correct','installation.open','installation.completion.pto.record','installation.completion.declaration.record','installation.completion.pto.correct','installation.completion.declaration.correct'],
             ],
             'access_administrator' => [
                 'name' => 'Администратор доступа',

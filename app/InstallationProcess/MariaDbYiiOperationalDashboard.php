@@ -20,7 +20,7 @@ final readonly class MariaDbYiiOperationalDashboard implements YiiOperationalDas
     public function authorized(int $actorId): bool
     {
         $p = $this->prefix;
-        $sql = "SELECT 1 FROM `{$p}fm2_pilot_users` u JOIN `{$p}fm2_pilot_user_roles` ur ON ur.user_id=u.user_id JOIN `{$p}fm2_pilot_roles` r ON r.role_id=ur.role_id JOIN `{$p}fm2_pilot_role_permissions` rp ON rp.role_id=r.role_id WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' AND r.status=1 AND BINARY rp.permission='objects.read' LIMIT 1";
+        $sql = "SELECT 1 FROM `{$p}fm2_pilot_users` u WHERE u.user_id=:id AND u.status=1 AND u.activation_state='active' LIMIT 1";
         return (bool) $this->db->createCommand($sql, [':id' => $actorId])->queryScalar();
     }
 
