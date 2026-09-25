@@ -25,11 +25,13 @@ final class MariaDbInstallationCompletion
             $s->bind_param('issssi',$case,$type,$date,$details,$now,$actor);$s->execute();
             if($type==='declaration'){
                 $factId=(int)$this->db->insert_id;
-                $u=$this->db->prepare('UPDATE '.$this->table('fm2_installation_cases')." SET process_state='completed',updated_at=?,lock_version=lock_version+1 WHERE id=? AND process_state='working'");
-                $u->bind_param('si',$now,$case);$u->execute();if($u->affected_rows!==1)throw new \DomainException('CASE_NOT_WORKING');
-                $payload=json_encode(['declarationFactId'=>$factId],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
-                $e=$this->db->prepare('INSERT INTO '.$this->table('fm2_process_events')."(installation_case_id,event_type,occurred_at,actor_user_id,payload_json)VALUES(?,'installation_completed',?,?,?)");
-                $e->bind_param('isis',$case,$now,$actor,$payload);$e->execute();
+                $u=$this->db->prepare('UPDATE '.$this->table('fm2_installation_cases')." SET process_state='completed' WHERE id=? AND process_state='working'");
+                $u->bind_param('i',$case);$u->execute();if($u->affected_rows!==1)throw new \DomainException('CASE_NOT_WORKING');
+                if($this->tableExists('fm2_process_events')){
+                    $payload=json_encode(['declarationFactId'=>$factId],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+                    $e=$this->db->prepare('INSERT INTO '.$this->table('fm2_process_events')."(installation_case_id,event_type,occurred_at,actor_user_id,payload_json)VALUES(?,'installation_completed',?,?,?)");
+                    $e->bind_param('isis',$case,$now,$actor,$payload);$e->execute();
+                }
             }
         });
     }
@@ -74,5 +76,9 @@ final class MariaDbInstallationCompletion
         $s=$this->db->prepare('SELECT id,process_state FROM '.$this->table('fm2_installation_cases').' WHERE legacy_installation_object_id=? LIMIT 2 FOR UPDATE');$s->bind_param('i',$object);$s->execute();$rows=$s->get_result()->fetch_all(MYSQLI_ASSOC);if(count($rows)!==1)throw new \DomainException('CASE_NOT_FOUND');$state=(string)$rows[0]['process_state'];if(!in_array($state,$states,true))throw new \DomainException('CASE_NOT_WORKING');return['id'=>(int)$rows[0]['id'],'state'=>$state];
     }
     private function transaction(callable$work):void{try{$this->db->begin_transaction();$work();$this->db->commit();}catch(\Throwable$e){$this->db->rollback();throw$e;}}
+    private function tableExists(string$name):bool
+    {
+        $table=$this->prefix.$name;$s=$this->db->prepare('SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?');$s->bind_param('s',$table);$s->execute();return$s->get_result()->fetch_row()!==null;
+    }
     private function table(string$name):string{return'`'.$this->prefix.$name.'`';}
 }

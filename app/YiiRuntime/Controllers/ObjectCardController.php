@@ -65,8 +65,8 @@ final class ObjectCardController extends PreopeningController
                 // Completion capabilities are not yet in the canonical RBAC registry; grants() is the existing exact active-grant read seam.
                 'canRecordPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.record'),
                 'canRecordDeclaration' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.declaration.record'),
-                'canCorrectPto' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.correct'),
-                'canCorrectDeclaration' => $card['completionWritable'] && $identityStore->grants($this->actor(), 'installation.completion.declaration.correct'),
+                'canCorrectPto' => $card['completionCorrectable'] && $identityStore->grants($this->actor(), 'installation.completion.pto.correct'),
+                'canCorrectDeclaration' => $card['completionCorrectable'] && $identityStore->grants($this->actor(), 'installation.completion.declaration.correct'),
                 'today' => (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Moscow')))->format('Y-m-d'),
                 'csrf' => Yii::$app->request->csrfToken,
                 'completionFormState' => $this->completionFormState,

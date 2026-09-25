@@ -53,6 +53,7 @@ final readonly class MariaDbYiiObjectCardProjection
             if ($state === 'needs_assignment_change') { $card['status'] = 'Требуется изменение'; }
         }
         $card['completionWritable'] = $state === 'working';
+        $card['completionCorrectable'] = in_array($state, ['working', 'completed'], true);
         $card['equipmentFacts'] = $this->equipmentFacts((int) $card['id']);
         unset($card['caseId'], $card['nextStep']);
         return $this->actorNames($card);
