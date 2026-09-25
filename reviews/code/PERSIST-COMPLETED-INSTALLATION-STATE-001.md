@@ -1,5 +1,32 @@
 # Independent Gate 5 review — PERSIST-COMPLETED-INSTALLATION-STATE-001
 
+## Final rereview — exact completed and unaccepted-draft canaries
+
+- Verdict: **APPROVED**
+- Reviewer: `gpt-5.6-sol/low /root/final_review_completed`; independent from specification, test and implementation authorship.
+- Base: `5e5c6ec3b36f3c21c7fc984edfe64d8680c1e789`.
+- Reviewed HEAD: `1324e246e915e1e9986db2284cb4ca9c486609f1`.
+- Exact candidate source: `fdbbd5bd4b835b4ba67698c8a6c79e7b70cdaa17f4bdf541339d4b1c2fcdda49`.
+- Executable source: `cf62496a3af73cf37eac606c4c6dfaed4650b005f5e1fa46e4712baeabace4f6`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T140203Z-8f9f447974/package.json`.
+- Verification plan SHA-256: `0efaa6a3be6a4341583a4358165e2398070bfaa567ea4e0bbc668847a8194e97`.
+
+### Prior findings disposition
+
+1. **Accepted financial baseline — RESOLVED.** `MariaDbSnapshotBuilderPersistence::previousProgress()` selects only `status='accepted'` snapshots while permitting an accepted same-day predecessor. The focused OTIZ scenario accepts the real 85% snapshot, creates a newer same-day published-but-unaccepted draft, corrupts its progress to the distinguishable value `1234`, then proves the completed 100% snapshot still uses `8500`. The oracle therefore fails if draft publication is again confused with acceptance.
+2. **Construction-control completed projection — RESOLVED.** The public HTTP fixture now sets case 6103 to exact `process_state='completed'`, proves object 4514 is absent from the default queue, and proves it is present with `completed=1` and the completed marker. This directly exercises the new server predicate rather than relying only on documentary facts in a `working` case.
+3. **Completion-owner cleanup — RESOLVED.** The locked case helper returns id and state together; the unused wrapper and redundant read are gone.
+
+### Final assessment
+
+The first valid declaration retains the existing capability and validation seam and atomically persists the declaration root, conditional `working → completed` transition and one append-only `installation_completed` event. Failure and concurrent-loss paths leave no partial transition. PTO/declaration corrections remain append-only in `completed`, while item completion, retraction and installer-attribution changes fail closed. Object/card/queue compatibility and the completed-only construction-control filter are consistent. Native OTIZ selection includes eligible `working|completed` cases without widening migration eligibility, and the accepted-baseline canary proves the final 85→100 delta without admitting an unaccepted draft.
+
+All 13 focused records in the package are `GREEN` and bound to exact candidate source `fdbbd5bd4b835b4ba67698c8a6c79e7b70cdaa17f4bdf541339d4b1c2fcdda49`. They cover documentary HTTP/concurrency, transition/rollback, both corrections, all three prohibited checklist mutations, exact completed construction-control projection, OTIZ inputs and snapshot publication. The rebase diff against `origin/main@5e5c6ec3` contains only this scoped delivery, and `git diff --check` is clean.
+
+No blocking specification, authorization, history, atomicity, financial, test-sensitivity or maintainability finding remains. Exact-source GitHub CI is still a separate publication prerequisite; this review does not infer CI, merge or deployment.
+
+---
+
 ## Rereview — accepted baseline and construction-control correction
 
 - Verdict: **CHANGES_REQUESTED**
