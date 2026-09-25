@@ -1,5 +1,35 @@
 # Independent Gate 5 review — installer utilization observations
 
+## Rereview — corrected final candidate
+
+- Verdict: **APPROVED**
+- Reviewer: `gpt-5.6-sol/low /root/gate5_review`; independent from implementation and test authorship.
+- Reviewed HEAD: `55fbe272`.
+- Exact candidate source: `8bb6327787fbdfa943f45717fae8b77c81c511fbb7acd72b9a9065acb449be67`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T022043Z-8596560efe/package.json`.
+- Plan SHA-256: `bfe9017ce7db6ec370ecf337bfc4081b570d0f2b952cb2af4ad3115b2d32d402`.
+
+### Prior findings disposition
+
+1. **Freshness/coverage — RESOLVED.** The canonical v35 header persists `source_updated_at` and `source_coverage`; capture validates and saves the complete projection metadata, history/detail return it, and the dashboard renders the current complete-source timestamp. Empty or metadata-less workforce input now fails closed.
+2. **Successful workforce synchronization — RESOLVED.** Both scheduler admission and the dedicated worker handler require a completed same-day `workforce.sync` job. Without that success no capture job is created, and handler-side revalidation makes bypass/stale queued work retryable.
+3. **Restricted object scope — RESOLVED.** Dashboard and direct saved-detail actions now reject the active construction-control scoped role before reading counts or members. The HTTP fixture grants that role `installers.read`, proving denial despite both nominal read permissions.
+4. **Exact capture time — RESOLVED.** The worker reads database `UTC_TIMESTAMP(6)` at execution and persists its Moscow representation rather than synthesizing the 03:17 due time. The owner fixture binds a distinct execution timestamp.
+5. **Zero denominator — RESOLVED.** An empty workforce projection is unavailable; the generic share calculation also returns `null` for zero and suppresses deltas/trend.
+6. **Reason ordering — RESOLVED.** Saved reasons are sorted by `(objectId, documentIdentity)` as required.
+7. **Generic handler responsibility — RESOLVED.** `JobHandlerRuntime` delegates installer capture to the dedicated `InstallerUtilizationCaptureJobHandler`; the new seam is included in verification ownership.
+8. **History N+1 — RESOLVED.** `history()` reads the bounded row set once and passes it to receipt projection instead of re-querying per point.
+
+### Final assessment
+
+The corrected implementation retains atomic header/member publication, date uniqueness, race/replay identity, immutable saved drill-down, source fail-closed behavior, 366-real-point history, exact comparison arithmetic, explicit user/background authority, v35 production/recovery registration, local shlz-ui grouped bars and the bounded installer-card presentation changes. No forbidden financial, assignment/PTO-writer, calendar, checklist, inspection-schedule or construction-control-list change was introduced.
+
+All 23 evidence records in the prepared package were inspected and are `GREEN` on exact source `8bb6327787fbdfa943f45717fae8b77c81c511fbb7acd72b9a9065acb449be67`. They cover the focused domain, HTTP/browser, migration/recovery, jobs, architecture and change-verification obligations. `git diff --check` is clean. Exact-source GitHub CI remains a separate publication prerequisite and is not inferred by this review.
+
+No blocking standards or specification findings remain for this candidate.
+
+---
+
 - Verdict: **CHANGES_REQUESTED**
 - Reviewer: `gpt-5.6-sol/low /root/gate5_review`; independent from implementation and test authorship.
 - Implementation author: `gpt-5.6-sol/low /root/executor` (root-authorized test corrections are recorded in the delivery history).
