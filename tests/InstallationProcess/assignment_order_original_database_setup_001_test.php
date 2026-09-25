@@ -293,19 +293,17 @@ try {
             $observer=$connect($databases[4]);$deadline=hrtime(true)+5_000_000_000;$waitRow=null;
             if($mode==='cleanup'){
                 do{
-                    $wait=$observer->prepare("SELECT trx_state,trx_isolation_level,trx_query FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=?");
+                    $wait=$observer->prepare("SELECT requesting.trx_state,requesting.trx_isolation_level,requesting.trx_query,requesting.trx_wait_started,blocking.trx_mysql_thread_id blocking_thread_id FROM information_schema.INNODB_LOCK_WAITS waits JOIN information_schema.INNODB_TRX requesting ON requesting.trx_id=waits.requesting_trx_id JOIN information_schema.INNODB_TRX blocking ON blocking.trx_id=waits.blocking_trx_id WHERE requesting.trx_mysql_thread_id=?");
                     $wait->bind_param('i',$workerConnectionId);$wait->execute();$waitRow=$wait->get_result()->fetch_assoc();$wait->close();
-                    if(is_array($waitRow)&&($waitRow['trx_state']??null)==='LOCK WAIT')break;
+                    if(is_array($waitRow)&&(int)($waitRow['blocking_thread_id']??0)===$blockingConnectionId&&($waitRow['trx_wait_started']??null)!==null)break;
                     usleep(10_000);
                 }while(hrtime(true)<$deadline);
-                assertSameValue(true,is_array($waitRow),'Cleanup exact worker transaction is independently observed.');
-                assertSameValue('LOCK WAIT',$waitRow['trx_state'],'Cleanup transaction actually waits.');
+                assertSameValue(true,is_array($waitRow),'Cleanup exact worker lock-wait relation is independently observed.');
+                assertSameValue($blockingConnectionId,(int)$waitRow['blocking_thread_id'],'Cleanup wait identifies the exact parent blocker.');
+                assertSameValue(true,$waitRow['trx_wait_started']!==null,'Cleanup transaction has a recorded lock-wait start.');
                 assertSameValue('SERIALIZABLE',$waitRow['trx_isolation_level'],'Cleanup transaction is SERIALIZABLE.');
                 assertSameValue(true,str_contains((string)$waitRow['trx_query'],$prefix.'fm2_process_tasks'),'Cleanup wait targets exact task identity table.');
                 assertSameValue(true,str_contains((string)$waitRow['trx_query'],'FOR UPDATE'),'Cleanup wait is the exact fixture lock seam.');
-                $waitPair=$observer->prepare("SELECT blocking.trx_mysql_thread_id blocking_thread_id FROM information_schema.INNODB_LOCK_WAITS waits JOIN information_schema.INNODB_TRX blocking ON blocking.trx_id=waits.blocking_trx_id JOIN information_schema.INNODB_TRX requesting ON requesting.trx_id=waits.requesting_trx_id WHERE requesting.trx_mysql_thread_id=?");
-                $waitPair->bind_param('i',$workerConnectionId);$waitPair->execute();$blockingRow=$waitPair->get_result()->fetch_assoc();$waitPair->close();
-                if(is_array($blockingRow))assertSameValue($blockingConnectionId,(int)$blockingRow['blocking_thread_id'],'Visible lock-wait pair identifies the exact parent blocker.');
             }
             else{$matchesSeed=static fn(array$row):bool=>(int)($row['ID']??0)===$workerConnectionId&&($row['DB']??null)===$databases[4]&&($row['STATE']??null)==='Update'&&str_contains((string)($row['INFO']??''),$prefix.'fm2_pilot_users')&&str_contains((string)($row['INFO']??''),'user_id');$stable=0;do{$processQuery=$observer->prepare('SELECT ID,DB,STATE,INFO FROM information_schema.PROCESSLIST WHERE ID=?');$processQuery->bind_param('i',$workerConnectionId);$processQuery->execute();$candidate=$processQuery->get_result()->fetch_assoc();$processQuery->close();if(is_array($candidate)&&$matchesSeed($candidate)){$stable++;$waitRow=$candidate;if($stable===2)break;}else{$stable=0;}usleep(10_000);}while(hrtime(true)<$deadline);assertSameValue(2,$stable,'Seed exact PROCESSLIST state is stable across two bounded observations.');foreach(['ID'=>$workerConnectionId+1,'DB'=>'wrong_database','STATE'=>'Wrong','INFO'=>'UPDATE wrong_table SET wrong=1']as$field=>$wrong){$mutated=$waitRow;$mutated[$field]=$wrong;assertSameValue(false,$matchesSeed($mutated),"Seed observer rejects wrong {$field}.");}}
             stream_set_blocking($pipes[1],false);$read=[$pipes[1]];$write=$except=[];assertSameValue(0,stream_select($read,$write,$except,0,200000),"{$mode} worker has no early terminal result while blocked.");
