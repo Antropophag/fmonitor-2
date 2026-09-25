@@ -1,0 +1,30 @@
+{
+  "change": "add-installer-utilization-observations-issue-258-stage-2",
+  "planned_paths": [
+    ".quality-graph/verification-policy.json",
+    "app/Workforce/InstallerUtilizationObservationSchemaMigration.php",
+    "app/Workforce/MariaDbInstallerUtilizationObservations.php",
+    "app/Jobs/MariaDbWorkforceScheduler.php",
+    "app/Jobs/MariaDbInstallerUtilizationScheduler.php",
+    "app/Jobs/JobHandlerRuntime.php",
+    "app/YiiRuntime/Controllers/DashboardController.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/Views/installer-utilization-observation.php",
+    "app/YiiRuntime/Views/installer-card.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "config/yii/web.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/RuntimeRestore/RuntimeRecovery.php",
+    "specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md",
+    "tests/Workforce/installer_utilization_observations_001_test.php",
+    "tests/Support/installer_utilization_observation_race_worker.php",
+    "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
+    "tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php",
+    "tests/Yii2/installer_utilization_observations_browser.mjs",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {"spec_id":"INSTALLER-UTILIZATION-OBSERVATIONS-001","acceptance_id":"A-I-capture-history","spec_path":"specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md","seam":"shared utilization projection -> atomic daily capture -> immutable saved reads","tests":["tests/Workforce/installer_utilization_observations_001_test.php"],"gate3_expected":{"tests/Workforce/installer_utilization_observations_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"INSTALLER-UTILIZATION-OBSERVATIONS-001","acceptance_id":"G-M-dashboard-access-browser","spec_path":"specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md","seam":"authenticated dashboard and saved observation drill-down","tests":["tests/Yii2/yii2_installer_utilization_observations_001_test.php","tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_installer_utilization_observations_001_test.php":"INTENDED_RED","tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php":"INTENDED_RED"}}
+  ]
+}
