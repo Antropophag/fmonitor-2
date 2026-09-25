@@ -5,7 +5,8 @@ require __DIR__.'/ObjectQueueFixture.php';
 // YII2-OBJECT-QUEUE-001: public scheduling owner, exact independent facts, rejection and rollback.
 $f=null;
 try {
-    $f=new ObjectQueueFixture(dirname(__DIR__,2));$p=$f->p;$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");$owner=$f->planning();
+    $f=new ObjectQueueFixture(dirname(__DIR__,2));$p=$f->p;$f->db->query("UPDATE {$p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");
+    $f->insert($p.'fm2_control_engineer_assignments',['installation_case_id'=>6101,'object_id'=>451201,'assignment_sequence'=>1,'engineer_user_id'=>7301,'engineer_fio_snapshot'=>'Инженер 7301','engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>9101,'assigned_at_utc'=>'2026-09-10 06:00:00','request_id'=>'15151515-0000-4151-8151-000000000001','request_fingerprint'=>hash('sha256','planning-001-current-engineer')]);$owner=$f->planning();
     $before=$f->facts();$result=$owner->scheduleInspection(9101,451201,'2026-09-12');
     assertSameValue('scheduled',$result['status'],'accepted schedule');$id=$result['scheduleId'];
     assertSameValue(true,is_int($id)&&$id>0,'positive schedule identity');
@@ -28,7 +29,7 @@ try {
     $f->object(451204,6104,'working');$f->order(6141,6104,1,0);
     $f->object(451205,6105,'working');
     foreach([999999,451202,451203,451204,451205]as$object){$before=$f->facts();assertSameValue('ineligible',$owner->scheduleInspection(9101,$object,'2026-09-12')['status'],'missing/latest/state/engineer ineligible');assertSameValue($before,$f->facts(),'ineligible exact facts');}
-    $f->object(451206,6106,'needs_assignment_change');$f->order(6161,6106,1,7301);assertSameValue('scheduled',$owner->scheduleInspection(9101,451206,'2026-09-12')['status'],'change state remains eligible');
+    $f->object(451206,6106,'needs_assignment_change');$f->order(6161,6106,1,7301);$f->insert($p.'fm2_control_engineer_assignments',['installation_case_id'=>6106,'object_id'=>451206,'assignment_sequence'=>1,'engineer_user_id'=>7301,'engineer_fio_snapshot'=>'Инженер 7301','engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>9101,'assigned_at_utc'=>'2026-09-10 06:00:00','request_id'=>'15151515-0000-4151-8151-000000000006','request_fingerprint'=>hash('sha256','planning-001-change-engineer')]);assertSameValue('scheduled',$owner->scheduleInspection(9101,451206,'2026-09-12')['status'],'change state remains eligible');
     $f->db->query("CREATE TRIGGER {$p}deny_schedule_event BEFORE INSERT ON {$p}fm2_pilot_inspection_schedule_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='isolated schedule event failure'");
     $before=$f->facts();$failed=false;try{$owner->scheduleInspection(9101,451201,'2026-09-15');}catch(Throwable){$failed=true;}assertSameValue(true,$failed,'event infrastructure failure reported');assertSameValue($before,$f->facts(),'event failure rolls schedule back');$f->db->query("DROP TRIGGER {$p}deny_schedule_event");
     // Exact uniqueness and check drift must fail closed without repair; fresh owners prevent cache masking.
