@@ -36,3 +36,38 @@ As maintainability concerns, `MariaDbYiiCompletionRegister.php:21-70` combines f
 ## Required return
 
 Add focused public-seam acceptance for effective edited address/regnumber, completed and same-address multi-lift cases, below-threshold target-form enforcement, PTO correction effects, and immutable history. Retain a deterministic query-budget/shape measurement on representative page/history depth. Then refresh the exact-source plan/package, run the selected exact-source CI once, inventory every failure if any, and request a new independent Gate 5 review. Full local `make test` / `make verify` remains prohibited.
+
+---
+
+## Remediation rereview — final code decision
+
+- Date: 2026-09-25
+- Reviewed head: `ff4276c2e919ac848fe36bdd39d8214363a8f8c1`
+- Reviewed candidate source: `a1086a9f67e7e1db64c6fcc30bc09a379b4ace264cbc3b0609c91c7724c3fa92`
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T002730Z-4c151f2e44/package.json`
+- Superseding verdict: **APPROVE (CODE); EXACT-SOURCE CI PENDING**
+
+### Prior findings disposition
+
+1. **RESOLVED.** Public HTTP acceptance now distinguishes effective edited address and registration number from stale imported values, checks declaration details, corrected PTO date/period/age, effective-PTO ordering with stable object-identity tie-breaking, literal wildcard escaping, retained pagination filters, and filter-submit page reset.
+
+2. **RESOLVED.** The representative fixture covers unopened/no-facts, PTO-only, both facts, inconsistent declaration-without-PTO, completed work, and separate lifts at one address. Existing documentary and form-recovery suites remain the authoritative executable coverage for the 85% gate, existing commands, append-only history and recovery. The register consumes those facts without adding a writer.
+
+3. **RESOLVED.** The 55-row, multi-page acceptance now asserts a constant eight-command adapter budget: authorization, duplicate-root and lineage integrity checks, four global mode counts, and one limited page query. SQL inspection confirms server-side predicates/counts before `LIMIT` and no per-row card/history reader.
+
+4. **RESOLVED FOR CODE REVIEW.** A disposable constraint-disabled fixture now injects malformed correction lineage and proves the public GET returns `503` without facts/history mutation. Honest empty state and inconsistent fact state remain separately covered. The source-unavailable case was covered by the earlier test revision; replacing it with the more discriminating lineage case does not alter the controller's inspected catch-to-`503` behavior.
+
+5. **RESOLVED.** Updated desktop/narrow browser evidence proves the direct `#completion` journey through the existing declaration form, Back-preserved URL, refreshed search/counters, local table scrolling, reachable row action above fixed navigation, and a keyboard-focus target. The page uses a local asset and does not modify shared CSS.
+
+### Rerun evidence
+
+- `php tests/Yii2/yii2_completion_document_register_001_test.php` — GREEN at exact `ff4276c2`.
+- `php tests/Yii2/yii2_completion_document_register_browser_001_test.php` — GREEN during this rereview sequence after the browser/CSS remediation.
+- `php tests/Yii2/yii2_documentary_http_001_test.php` — GREEN.
+- `php tests/Yii2/yii2_completion_form_recovery_001_test.php` — GREEN.
+- `git diff --check` and changed PHP syntax checks — GREEN.
+- Updated desktop and narrow screenshots inspected; the narrow action and focus ring are visible without fixed-navigation overlap.
+
+### Remaining limitation
+
+The implementation/specification/test candidate is approved for Gate 5 code review. This is **not yet publication or merge approval**: exact-source GitHub CI for source `a1086a9f67e7e1db64c6fcc30bc09a379b4ace264cbc3b0609c91c7724c3fa92` remains `UNKNOWN` in the bound state. The selected CI run must complete GREEN on this exact source, or every failure must be inventoried and resolved before PR-ready may be claimed. No merge or deployment is authorized by this review.
