@@ -62,3 +62,28 @@ Root must expand the specification where object-scope and invalid fact combinati
 ### Rereview decision
 
 The correction materially improves the candidate and fully closes access ownership and the core existing-form round trip. Findings 2, 4, and 6 remain blocking, with concrete untested SQL semantics and a visible narrow-layout failure. Gate 3 remains **REJECTED**; exact-source CI and publication cannot substitute for the missing acceptance barriers.
+
+---
+
+## Gate 3 second remediation rereview — `f44f4193f29aea35e7610ad4f9b63074dc2c8af5`
+
+- Date: 2026-09-25
+- Reviewer independence: unchanged
+- Reviewed correction range: `74fc45fcfcd5dfd132e264d2889543e9636502ca..f44f4193f29aea35e7610ad4f9b63074dc2c8af5`
+- Focused rerun: `php tests/Yii2/yii2_completion_document_register_001_test.php` — GREEN
+- Updated browser artifacts inspected at `/Users/antropophag/.local/share/fmonitor-2/issue-268/browser-evidence/`
+- Verdict: **REJECT**
+
+### Remaining-findings disposition
+
+1. **RESOLVED.** The fixture now includes a completed case and two distinct lift identities at one address. Sparse declaration details and corrected effective dates are exercised. The existing documentary acceptance remains the writer/history owner and proves the 85% gate plus append-only correction lineage; the register test correctly remains a consumer rather than duplicating those commands.
+
+2. **RESOLVED.** Current HTTP acceptance discriminates effective edited address and registration number from stale imported text, checks corrected PTO date/age/period, default effective-PTO plus object-identity ordering, literal wildcard escaping, multi-page totals, retained pagination filters and filter-submit page reset. Together with effective declaration details/date search and empty/date filtering from the prior correction, this is now sensitive to the required server-side SQL semantics.
+
+4. **PARTIALLY RESOLVED — SOLE BLOCKER.** Missing source, honest empty state, inconsistent declaration-without-PTO and duplicate-root production detection are present. The required damaged correction-history outcome is still not executable. No test creates a gap or wrong `previous_correction_id` / `previous_version_no` and requires the register HTTP seam to return `503`. Dropping the whole corrections table only tests schema/source unavailability; it would remain GREEN if `assertHistoryIsConsistent()` stopped checking lineage entirely. Add one disposable-fixture corruption case by temporarily removing/disabling the relevant constraint, insert malformed lineage, restore cleanup in `finally`, assert exact unavailable response and zero mutations. If duplicate-root detection remains production behavior, either exercise it similarly or remove the unreachable branch; the normative lineage case is mandatory.
+
+6. **RESOLVED.** The adapter is held to a constant eight-command budget over the representative 55-row dataset. The local asset gives the narrow page bottom clearance and a bounded horizontally scrollable table. Updated browser acceptance scrolls the table to the row action, checks its bounding box remains above fixed navigation, focuses the search control, and the inspected narrow screenshot shows an unobscured action and visible focus ring. The view remains usable without shared CSS changes.
+
+### Decision
+
+All prior blockers except corrupted-lineage sensitivity are closed. Because issue #268 explicitly requires damaged history to differ from empty/source-success and the implementation owns nontrivial lineage SQL, that missing public-seam barrier remains Gate 3-blocking. Once the single malformed-lineage fixture is added and GREEN (with fresh bound package/source), no other Gate 3 finding from this review remains.
