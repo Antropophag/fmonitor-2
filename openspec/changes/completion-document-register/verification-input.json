@@ -27,6 +27,6 @@
     "seam": "read-only Yii completion register route backed by existing completion facts and existing object-card mutation route",
     "seam_kind": "domain",
     "tests": ["tests/Yii2/yii2_completion_document_register_001_test.php", "tests/Yii2/yii2_completion_document_register_browser_001_test.php"],
-    "gate3_expected": {"tests/Yii2/yii2_completion_document_register_001_test.php": "INTENDED_RED", "tests/Yii2/yii2_completion_document_register_browser_001_test.php": "INTENDED_RED"}
+    "gate3_expected": {"tests/Yii2/yii2_completion_document_register_001_test.php": "GREEN", "tests/Yii2/yii2_completion_document_register_browser_001_test.php": "GREEN"}
   }]
 }
