@@ -1,0 +1,43 @@
+{
+  "change": "explain-saved-installer-allocation",
+  "planned_paths": [
+    "app/YiiRuntime/Views/otiz-snapshot.php",
+    "app/YiiRuntime/Views/_otiz-installer-allocation-details.php",
+    "specs/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md",
+    "openspec/changes/explain-saved-installer-allocation/proposal.md",
+    "openspec/changes/explain-saved-installer-allocation/design.md",
+    "openspec/changes/explain-saved-installer-allocation/specs/otiz/saved-installer-allocation-explanation/spec.md",
+    "openspec/changes/explain-saved-installer-allocation/tasks.md",
+    "openspec/changes/explain-saved-installer-allocation/verification-input.json",
+    "tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php",
+    "tests/Yii2/otiz_saved_installer_allocation_browser.mjs",
+    "reviews/tests/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md",
+    "reviews/code/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md",
+    "docs/operations/issue-29-saved-installer-allocation-delivery.md",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001",
+      "acceptance_id": "A01-A10-snapshot-only-installer-allocation-explanation",
+      "spec_path": "specs/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md",
+      "seam": "guest denied and authorized GET existing Yii2 snapshot detail, existing object drawer worker details, database no-write inventory, and Chromium desktop/narrow interaction",
+      "tests": ["tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php": "INTENDED_RED"}
+    },
+    {
+      "spec_id": "OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001",
+      "acceptance_id": "A10-retained-settlement-form-recovery",
+      "spec_path": "specs/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md",
+      "seam": "existing Yii settlement validation error return and browser form recovery from OTIZ-SETTLEMENT-FORM-RECOVERY-001",
+      "tests": [
+        "tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php": "GREEN"
+      }
+    }
+  ]
+}
