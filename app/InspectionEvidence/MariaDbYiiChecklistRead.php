@@ -14,7 +14,7 @@ trait MariaDbYiiChecklistRead
     $role=$this->roleAccess($actorId);
     $read=$role||in_array('checklist.read',$permissions,true)||in_array('inspection.item.complete',$permissions,true);
     $assignment=$this->currentEngineerAssignment($objectId);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;
-    $card=$case['process_state']==='working'?null:$this->authoritativeCard($actorId,$objectId);
+    $card=in_array($case['process_state'],['working','completed'],true)?null:$this->authoritativeCard($actorId,$objectId);
     $ready=($card['status']??null)==='Готов к открытию'&&!($card['hasPtoAct']??false);
             return['exists'=>true,'read'=>$read,'active'=>true,'opened'=>$case['process_state']==='working','ready'=>$ready,'openingIntent'=>$ready?($card['confirmedOriginal']??null):null,'roleAccess'=>$role,'itemComplete'=>in_array('inspection.item.complete',$permissions,true),'assigned'=>(int)($engineer['userId']??0)===$actorId,'photoRevoke'=>in_array('inspection.photo.revoke',$permissions,true),'address'=>$profile['address'],'entrance'=>$profile['entrance'],'registrationNumber'=>$profile['registration_number'],'orderNumber'=>$profile['order_number'],'engineer'=>$engineer,'technicalDocuments'=>$this->technicalDocuments($profile['order_number']??null)];
         }
@@ -72,7 +72,7 @@ trait MariaDbYiiChecklistRead
     $hasPtoAct="EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
     $hasDeclaration="EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='declaration')";
     $hasOriginalRoot="EXISTS(SELECT 1 FROM {$this->t('fm2_assignment_order_original_roots')} original_root JOIN {$this->t('fm2_assignment_order_selections')} selected ON selected.installation_case_id=c.id AND selected.assignment_order_id=original_root.assignment_order_id WHERE original_root.installation_case_id=c.id AND selected.selection_revision=(SELECT MAX(latest.selection_revision) FROM {$this->t('fm2_assignment_order_selections')} latest WHERE latest.installation_case_id=c.id) AND BINARY selected.composition_identity=BINARY original_root.composition_identity AND BINARY selected.composition_sha256=BINARY original_root.composition_sha256)";
-    $completed="($hasPtoAct AND $hasDeclaration)";$active="((c.process_state='working' AND (NOT $hasPtoAct OR $hasDeclaration)) OR (c.process_state IN('needs_assignment_order','assignment_order_prepared') AND NOT $hasPtoAct AND $hasOriginalRoot))";
+    $completed="($hasPtoAct AND $hasDeclaration)";$active="((c.process_state='working' AND (NOT $hasPtoAct OR $hasDeclaration)) OR ".($includeCompleted?"(c.process_state='completed' AND $completed) OR ":'')."(c.process_state IN('needs_assignment_order','assignment_order_prepared') AND NOT $hasPtoAct AND $hasOriginalRoot))";
     $address=\FMonitor2\InstallationProcess\MariaDbEffectiveObjectDetails::sqlValue('address','m.ordadr_address','details');$entrance=\FMonitor2\InstallationProcess\MariaDbEffectiveObjectDetails::sqlValue('entrance','m.entrance','details');$registration=\FMonitor2\InstallationProcess\MariaDbEffectiveObjectDetails::sqlValue('regnumber','m.regnumber','details');
     $where=[$active];$params=[];$where[]=\FMonitor2\InstallationProcess\MariaDbYiiInspectionPlanning::actorScopeSql($this->prefix,'?','c.id');$params[]=$actorId;$params[]=$actorId;$params[]=$actorId;
     if(!$includeCompleted)$where[]="NOT $completed";
