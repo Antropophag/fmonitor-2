@@ -37,7 +37,7 @@ try {
     $row7001=$xp->query('//tr[contains(.,"Монтажник 7001")]')->item(0);$row7002=$xp->query('//tr[contains(.,"Монтажник 7002")]')->item(0);
     assertSameValue(true,$row7001!==null&&str_contains($row7001->textContent,'TEST-4512'),'INTENDED_RED native application object in selected installer row');
     assertSameValue(true,$row7001!==null&&$xp->query('.//a[@href="/pilot/objects/4512"]',$row7001)->length===1,'native application object link');
-    assertSameValue(true,$row7002!==null&&str_contains($row7002->textContent,'Нет действующих закреплений'),'free installer scoped empty state');
+    assertSameValue(true,$row7002!==null&&str_contains($row7002->textContent,'Нет текущих работ'),'free installer scoped empty state');
     assertSameValue(1,$xp->query('//*[@data-directory-summary="assigned" and normalize-space(.)="1"]')->length,'authoritative assigned summary');
     assertSameValue($factsBeforeRead,$f->facts(),'directory GET changes no facts');
     $head=$f->request('HEAD','/pilot/installers',[],$cookies);assertSameValue([200,''],[$head['status'],$head['body']],'HEAD same success with empty body');
@@ -59,7 +59,7 @@ try {
     $f->insert($f->p.'fm2_assignment_order_applications',$second);
     $firstAfter=$f->rows('fm2_assignment_order_applications')[0];assertSameValue($applicationBytes,json_encode($firstAfter,JSON_THROW_ON_ERROR),'first application byte-equivalent after replacement setup');
     $replacementFacts=$f->facts();$replacement=$f->request('GET','/pilot/installers',[],$cookies);$dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$replacement['body']);$xp=new DOMXPath($dom);$old=$xp->query('//tr[contains(.,"Монтажник 7001")]')->item(0);$current=$xp->query('//tr[contains(.,"Монтажник 7002")]')->item(0);
-    assertSameValue(true,$old!==null&&str_contains($old->textContent,'Нет действующих закреплений')&&!str_contains($old->textContent,'TEST-4512'),'replaced installer becomes free without stale legacy mix');
+    assertSameValue(true,$old!==null&&str_contains($old->textContent,'Нет текущих работ')&&!str_contains($old->textContent,'TEST-4512'),'replaced installer becomes free without stale legacy mix');
     assertSameValue(true,$current!==null&&str_contains($current->textContent,'TEST-4512'),'latest application installer owns current object');
     assertSameValue($replacementFacts,$f->facts(),'replacement read preserves both application rows');
     $assignedAfter=$f->request('GET','/pilot/installers?availability=assigned',[],$cookies);assertSameValue(true,str_contains($assignedAfter['body'],'Монтажник 7002')&&!str_contains($assignedAfter['body'],'Монтажник 7001'),'replacement assigned filter');

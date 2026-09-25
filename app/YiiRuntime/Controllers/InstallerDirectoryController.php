@@ -40,6 +40,7 @@ final class InstallerDirectoryController extends PilotController
                 (string) (getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: ''),
                 (string) (getenv('FMONITOR_LEGACY_TABLE_PREFIX') ?: ''),
             ))->directory($filters, (int) Yii::$app->user->id);
+            if((int)$model['summary']['total']===0)$model['rows']=[];
             return $this->render('@app/app/YiiRuntime/Views/installers', $model + [
                 'identity' => Yii::$app->user->identity,
                 'canAdmin' => Yii::$app->canonicalAccess->checkAccess((int) Yii::$app->user->id, 'access.administer'),

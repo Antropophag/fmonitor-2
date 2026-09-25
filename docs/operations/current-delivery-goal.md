@@ -1,13 +1,13 @@
-# Текущая цель — №255, Yii-планирование инспекций
+# Текущая цель — #258, этап 2: наблюдения загрузки монтажников
 
-Поручение владельца 2026-09-24: реализовать issue #255 от verified `main` `b81b08d91ae5639f08413628b411587ae28176df` и довести до проверенного PR-ready без merge/deploy/изменения рабочего стенда. Зависимость #14 поставлена merged PR #260 с exact-source CI GREEN.
+Поручение владельца 2026-09-25: автономно от свежего `origin/main@99bd0974150617a01e195cec28f7d886f1ede761` реализовать и довести до merge второй последовательный этап #258: ежедневные неизменяемые наблюдения, текущую трёхгрупповую сводку, исторический grouped bar chart, first/last comparison и saved drill-down. PR #264 уже влит; справочник, карточку и picker заново не строить. Шестинедельный прогноз и второй installer-блок оставить следующему этапу; #258 не закрывать.
 
-Результат: строка стройконтроля создаёт, переносит и отменяет один object-bound current plan через canonical `YiiInspectionPlanning`; calendar и queue согласованы; server-side `Europe/Moscow` today marker и стабильный priority применяются внутри scope/filters до COUNT/LIMIT; один доступный shlz-ui dialog сохраняет контекст при отказе и не выполняет hidden retry.
+В том же PR read-only диагностировать production symptom: объекты в работе существуют, но официальный read-owner не показывает current/upcoming installers; результат превратить в regression evidence без изменения production facts. Кадровый статус показать штатным label, убрать из пользовательской карточки/справочника источник и время интеграции, исправить только локальные gap/padding карточки, не общий shell/CSS.
 
-Не входят persistence/migrations, собственная модель назначения, #45, результаты/нарушения/уведомления, checklist/progress writers, assignment changes, ОТиЗ и invitations. Не менять shared `object-ui.js`, picker, `navigation.js`, `pilot.css`.
+Не менять финансовые расчёты, assignment/PTO writers, calendar, ChecklistController, inspection-schedule.js или construction-control list. PR #265 по инспекциям и read-only #29 идут параллельно и не входят в candidate. Deploy/stand mutation/production writes/backfill запрещены. Merge разрешён только после exact-source green CI и planner-required независимых approvals.
 
-Lifecycle: `openspec/changes/inspection-planning-ui-255/`. Контракт: `specs/YII2-INSPECTION-PLANNING-UI-255.md`. Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers выполняют planner-required Gates 3/5. Только focused local checks; full local `make test`/`make verify` запрещён; обязателен один exact-source GitHub CI run.
+Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Контракт: [INSTALLER-UTILIZATION-OBSERVATIONS-001](../../specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md). Lifecycle: [add-installer-utilization-observations](../../openspec/changes/add-installer-utilization-observations/). Delivery record: [issue-258-installer-utilization-observations-delivery](issue-258-installer-utilization-observations-delivery.md).
 
-Первый этап параллельной #258 влит PR #264 и входит в актуальный `origin/main` `99bd0974`. Его workforce/directory/person-card/selection behavior и registrations сохраняются при интеграции; они не являются частью реализации #255.
+Локально только bounded focused checks; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI run после независимого review.
 
-Исторические завершённые задачи из прежнего указателя не возобновляются.
+Интеграция перед merge выполнена с актуальным `origin/main@2372ac2b`; поставленные там #255/#267/#268 и их чужие записи сохранены без расширения scope #258.

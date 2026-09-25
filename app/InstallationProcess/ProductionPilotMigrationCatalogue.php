@@ -42,6 +42,7 @@ final class ProductionPilotMigrationCatalogue
             32=>ObjectDetailsEditingMigration::class,
             33=>InstallerAssignmentLookupIndexSchemaMigration::class,
             34=>InspectionPlanningObjectBoundSchemaMigration::class,
+            35=>\FMonitor2\Workforce\InstallerUtilizationObservationSchemaMigration::class,
         ];
     }
 }

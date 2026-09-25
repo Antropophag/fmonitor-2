@@ -124,7 +124,7 @@ function pmrCatalog(mysqli $connection, string $prefix): void
     $tables = pmrRows($connection, "SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE '{$like}' ORDER BY BINARY TABLE_NAME");
 
     $newTables = ['fm2_bitrix_order_document_links','fm2_control_engineer_assignments','fm2_equipment_fact_current','fm2_equipment_fact_diagnostics','fm2_equipment_fact_history','fm2_equipment_fact_runs','fm2_equipment_fact_sync_metadata','fm2_object_detail_edits','fm2_object_detail_edit_events','fm2_object_detail_edit_requests','fm2_engineer_migration_operations','fm2_legacy_identity_link_events','fm2_legacy_identity_links','fm2_deadline_certificate_roots','fm2_deadline_certificate_revisions','fm2_deadline_certificate_operations','fm2_deadline_certificate_pdf_chunks','fm2_feedback','fm2_feedback_results','fm2_jobs','fm2_job_events','fm2_outbox_intents','fm2_outbox_attempt_events','fm2_scheduler_slots','fm2_worker_heartbeats','fm2_pilot_otiz_snapshots','fm2_pilot_otiz_snapshot_objects','fm2_pilot_otiz_snapshot_allocations','fm2_pilot_otiz_snapshot_issues','fm2_pilot_otiz_snapshot_evidence','fm2_pilot_otiz_payment_closures','fm2_pilot_otiz_events','fm2_otiz_publications', 'fm2_otiz_settlement_locks', 'fm2_otiz_settlement_operations','fm2_migrated_evidence_decisions','fm2_migrated_evidence_projection','fm2_migrated_evidence_conflicts','fm2_migrated_evidence_decision_state','fm2_migration_quarantine_decisions','fm2_assignment_order_identities','fm2_assignment_order_id_receipts','fm2_assignment_order_selections','fm2_assignment_order_selection_members','fm2_assignment_order_selection_requests','fm2_assignment_order_selection_events','fm2_assignment_order_selection_audits','fm2_assignment_order_applications','fm2_assignment_application_attempts'];
-    $expectedTables = array_map(static fn (string $table): string => $prefix . $table, [...array_keys($contract),...$newTables]);
+    $expectedTables = array_map(static fn (string $table): string => $prefix . $table, [...array_keys($contract),...$newTables,'fm2_installer_utilization_observations','fm2_installer_utilization_members']);
     sort($expectedTables, SORT_STRING);
     assertSameValue(
         $expectedTables,
@@ -449,7 +449,7 @@ try{
      $completedBefore = pmrState($completedConnection);
      if ($fixture['accepted']) {
          pmrResult(
-             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":34,\"appliedVersions\":[]}\n",'stderr'=>''],
+             ['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":35,\"appliedVersions\":[]}\n",'stderr'=>''],
              pmrRun($completedEnvironment),
              $label . ' must remain a completed-v13 no-op after exact capability successor recognition',
          );
@@ -495,7 +495,7 @@ try{
  assertSameValue(8,count(pmrRows($c,"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'pilot_fm2\\_%'")),'seven v1/v2 tables plus conflicting v3 table remain and v4 stops');
  $c->query('DROP TABLE pilot_fm2_process_user_capabilities');
  $recoveryEnvironment=array_diff_key($ce,['PMR_V4_INVOCATION_MARKER'=>true]);
- pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":34,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
+ pmrResult(['exitCode'=>0,'stdout'=>"{\"ok\":true,\"schemaVersion\":35,\"appliedVersions\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]}\n",'stderr'=>''],pmrRun($recoveryEnvironment),'recovery');
  pmrCatalog($c,'pilot_');
  $state=pmrState($c);
  foreach(['legacy_sentinel','unrelated_sentinel'] as $t)assertSameValue($before[$t],$state[$t],$t.' survives recovery');

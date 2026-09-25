@@ -272,6 +272,25 @@
   ],
   "capability_ownership": [
     {
+      "name": "installer-utilization-observations",
+      "patterns": [
+        "app/Workforce/InstallerUtilizationObservationSchemaMigration.php",
+        "app/Workforce/InstallerUtilizationObservationCaptureFault.php",
+        "app/Workforce/MariaDbInstallerUtilizationObservations.php",
+        "app/Jobs/MariaDbWorkforceScheduler.php",
+        "app/Jobs/MariaDbInstallerUtilizationScheduler.php",
+        "app/Jobs/InstallerUtilizationCaptureJobHandler.php",
+        "app/YiiRuntime/Controllers/DashboardController.php",
+        "app/YiiRuntime/Views/dashboard.php",
+        "app/YiiRuntime/Views/installer-utilization-observation.php"
+      ],
+      "verifiers": [
+        "tests/Workforce/installer_utilization_observations_001_test.php",
+        "tests/Yii2/yii2_installer_utilization_observations_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "installer-utilization-stage-one",
       "patterns": [
         "app/Workforce/MariaDbInstallerUtilization.php",
@@ -578,6 +597,7 @@
         "app/RuntimeRestore/RuntimeRecoverySchemaV29.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
+        ,"app/RuntimeRestore/RuntimeRecoverySchemaV35.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",

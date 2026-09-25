@@ -8,8 +8,9 @@ use FMonitor2\YiiRuntime\Commands\BitrixOrderDocumentLinksSyncController;
 
 final class JobHandlerRuntime
 {
-    public static function handle(array $job, JobsRuntimeConfiguration $config, ?callable $documentSync=null): array
+    public static function handle(array $job, ?JobsRuntimeConfiguration $config, ?callable $documentSync=null): array
     {
+        if($job['jobType']==='installer-utilization.capture')return InstallerUtilizationCaptureJobHandler::handle($job,$config,$documentSync);
         if ($job['jobType'] === 'erp.equipment-facts.sync') {
             try { $result=$documentSync===null?\FMonitor2\YiiRuntime\Commands\ErpEquipmentFactsSyncController::runJob($config):$documentSync(); }
             catch (\Throwable) { return ['status'=>'retryable','failureCode'=>'ERP_EQUIPMENT_FACTS_SYNC_FAILED']; }
