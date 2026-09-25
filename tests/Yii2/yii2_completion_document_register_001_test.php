@@ -102,8 +102,9 @@ try{
     $f->db->query("DELETE FROM {$f->p}fm2_pilot_role_permissions WHERE role_id=5 AND permission='objects.read'");
     assertSameValue(403,$f->request('GET','/pilot/completion-register',[],$cookies)['status'],'objects.read required');
     $f->db->query("INSERT INTO {$f->p}fm2_pilot_role_permissions(role_id,permission)VALUES(5,'objects.read')");
-    $f->db->query("DROP TABLE {$f->p}fm2_pilot_completion_fact_corrections");
-    assertSameValue(503,$f->request('GET','/pilot/completion-register',[],$cookies)['status'],'source schema failure is unavailable, not empty');
+    $f->db->query('SET SESSION check_constraint_checks=OFF');
+    try{$f->insert($f->p.'fm2_pilot_completion_fact_corrections',['root_fact_id'=>$declarationId,'version_no'=>4,'previous_correction_id'=>null,'previous_version_no'=>1,'fact_date'=>'2026-09-01','details'=>null,'reason'=>'Повреждение fixture','recorded_at'=>'2026-09-10 13:00:00','recorded_by_user_id'=>18]);}finally{$f->db->query('SET SESSION check_constraint_checks=ON');}
+    $beforeCorruptRead=$f->facts();assertSameValue(503,$f->request('GET','/pilot/completion-register',[],$cookies)['status'],'malformed correction lineage is unavailable');assertSameValue($beforeCorruptRead,$f->facts(),'malformed lineage GET creates no facts/jobs');
     $f->noLegacy();
     echo "PASS: YII2-COMPLETION-DOCUMENT-REGISTER-001\n";
 }finally{if($f instanceof PreopeningFixture)$f->close();}
