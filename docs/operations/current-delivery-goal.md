@@ -9,3 +9,5 @@
 Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Контракт: [INSTALLER-UTILIZATION-OBSERVATIONS-001](../../specs/INSTALLER-UTILIZATION-OBSERVATIONS-001.md). Lifecycle: [add-installer-utilization-observations](../../openspec/changes/add-installer-utilization-observations/). Delivery record: [issue-258-installer-utilization-observations-delivery](issue-258-installer-utilization-observations-delivery.md).
 
 Локально только bounded focused checks; полный `make test`/`make verify` запрещён. Один exact-source GitHub CI run после независимого review.
+
+Интеграция перед merge выполнена с актуальным `origin/main@2372ac2b`; поставленные там #255/#267/#268 и их чужие записи сохранены без расширения scope #258.

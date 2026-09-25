@@ -12,6 +12,7 @@ final class DocumentaryFixture
     public function __construct(string $root)
     {
         $this->inspection=new InspectionFixture($root);$this->http=$this->inspection->http;
+        $this->http->db->query("DELETE FROM {$this->http->p}fm2_pilot_user_roles WHERE user_id=73 AND role_id=7");
         $this->http->db->query("UPDATE {$this->http->p}fm2_pilot_users SET full_name=CASE user_id WHEN 18 THEN 'ФКР Анна' WHEN 97 THEN 'Руководитель Ирина' ELSE full_name END");
         $this->http->insert($this->http->p.'fm2_pilot_role_permissions',['role_id'=>1,'permission'=>'checklist.read']);
         foreach([1,7] as $role)foreach(['pto.record','declaration.record','pto.correct','declaration.correct'] as $cap)$this->http->insert($this->http->p.'fm2_pilot_role_permissions',['role_id'=>$role,'permission'=>'installation.completion.'.$cap]);

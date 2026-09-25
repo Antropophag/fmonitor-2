@@ -212,6 +212,7 @@ db	php	tests/Workforce/installer_utilization_observations_001_test.php	integrati
 db	php	tests/Yii2/deadline_transfer_certificate_http_001_test.php	integration
 db	php	tests/Yii2/legacy_control_engineer_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_authentication_001_test.php	integration
+db	php	tests/Yii2/yii2_bitrix_documentation_status_001_test.php	integration
 db	php	tests/Yii2/yii2_bitrix_order_document_links_001_test.php	integration
 db	php	tests/Yii2/yii2_calendar_003_test.php	integration
 db	php	tests/Yii2/yii2_calendar_effective_object_details_001_test.php	integration
@@ -239,6 +240,9 @@ db	php	tests/Yii2/yii2_inspection_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_journey_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php	integration
+db	php	tests/Yii2/yii2_inspection_planning_today_priority_255_test.php	integration
+db	php	tests/Yii2/yii2_inspection_planning_ui_255_test.php	integration
+db	php	tests/Yii2/yii2_inspection_scope_policy_255_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_http_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_utilization_observations_001_test.php	integration
@@ -322,9 +326,12 @@ e2e	php	tests/Support/ObjectRegisterPagingBrowserFixture.php	e2e
 e2e	php	tests/Yii2/excel_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_calendar_003_browser_test.php	e2e
 e2e	php	tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_completion_document_register_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_completion_document_register_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_documentary_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php	e2e
 e2e	php	tests/Yii2/yii2_installer_directory_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_installer_utilization_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php	e2e
@@ -529,6 +536,7 @@ unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration
 unit	php	tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php	integration
+unit	php	tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit

@@ -122,7 +122,7 @@ try {
  // Process restart preserves identity and sync-context supplies a usable Yii CSRF token.
  $before=$h->facts();proc_terminate($h->server['process']);proc_close($h->server['process']);$h->server=null;$h->start();
  $context=$f->page('/pilot/construction-control/objects/4512/sync-context');assertSameValue(200,$context['status'],'checklist session survives process restart');$context=json_decode($context['body'],true,flags:JSON_THROW_ON_ERROR);assertSameValue($fresh['revision'],$context['revision'],'restart retains revision');$csrf=$context['csrf'];InspectionFixture::result($f->send($op,$csrf),200,'duplicate');assertSameValue($before,$h->facts(),'restart sync token replay no facts');
- $h->db->query("DELETE FROM {$h->p}fm2_pilot_role_permissions WHERE role_id=2 AND permission='inspection.item.complete'");$before=$h->facts();$denied=$f->send($op,$csrf);checklistSafeDenial($denied);assertSameValue($before,$h->facts(),'revoked replay no facts');
+ $h->db->query("DELETE FROM {$h->p}fm2_pilot_role_permissions WHERE role_id IN(2,7) AND permission='inspection.item.complete'");$before=$h->facts();$denied=$f->send($op,$csrf);checklistSafeDenial($denied);assertSameValue($before,$h->facts(),'revoked replay no facts');
  // Required storage absence fails closed with the current facts retained and no repair.
  $table=$h->p.'fm2_checklist_photos';$saved=$table.'_saved';$h->db->query("RENAME TABLE `$table` TO `$saved`");
  try{$before=$h->facts();assertSameValue(503,$f->page()['status'],'required schema unavailable');assertSameValue($before,$h->facts(),'read never repairs schema');}finally{$h->db->query("RENAME TABLE `$saved` TO `$table`");}
