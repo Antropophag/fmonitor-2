@@ -1,5 +1,64 @@
 # Independent Gate 5 review — PERSIST-COMPLETED-INSTALLATION-STATE-001
 
+## Final post-CI audit rereview
+
+- Verdict: **APPROVED**
+- Reviewer: `gpt-5.6-sol/low /root/final_review_completed`; independent from specification, test and implementation authorship.
+- Base: `5e5c6ec3b36f3c21c7fc984edfe64d8680c1e789`.
+- Reviewed checkout: committed HEAD `938b56404719308f17ce92ea48bdc55e677e8716` plus the package-bound canonical audit correction.
+- Exact candidate source: `3720d0054a238d92bcadc2366f63f119da682b4d2c48b03fad0a935e7b534cca`.
+- Executable source: `d1deaf12c96a20b77f8ff246b875020c394cafeb65eab8df1040b6c6f0bc28f6`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T143918Z-2997038292/package.json`.
+- Verification plan SHA-256: `6914cc5c822e8c4df1435e2a27ac89c21cc89c93de7ca6b0a53bf7719ee2d4ca`.
+
+### Blocking finding disposition
+
+- **Mandatory completion audit — RESOLVED.** The declaration path again performs an unconditional `installation_completed` insert after the conditional state transition and inside the same transaction. Missing or incompatible event storage therefore throws and rolls back root, state and event together instead of returning an unaudited success.
+- **Case revision semantics — RESOLVED.** The conditional transition again writes the command timestamp to `updated_at` and increments `lock_version` exactly once.
+- **Canonical compatibility fixture — RESOLVED.** `installation_completion_manual_pilot_test.php` now provisions the canonical case revision columns and process-event table instead of requiring production to tolerate an incomplete schema.
+
+### Final assessment
+
+All prior CI corrections remain valid: only exact `completed` receives the checklist-specific conflict mapping; completed document corrections are exposed separately from first-document recording and still require exact capabilities; the browser fact allowlist includes only the expected case/event roots. The atomic declaration transition, failure rollback, concurrent one-winner behavior, append-only corrections, completed checklist denial, completed read projections and accepted-only OTIZ 85→100 baseline remain intact.
+
+All 11 mapped records are `GREEN` and bound to exact candidate source `3720d0054a238d92bcadc2366f63f119da682b4d2c48b03fad0a935e7b534cca`. They cover documentary HTTP/concurrency, state transition, injected rollback, both corrections, all three checklist mutation classes and the OTIZ input/publication path. `git diff --check` is clean.
+
+No blocking specification, authorization, history, atomicity, compatibility, financial, test-sensitivity or maintainability finding remains. A new exact-source CI result is still required after publication; this review does not infer merge or deployment.
+
+---
+
+## Post-CI correction review
+
+- Verdict: **CHANGES_REQUESTED**
+- Reviewer: `gpt-5.6-sol/low /root/final_review_completed`; independent from specification, test and implementation authorship.
+- Base: `5e5c6ec3b36f3c21c7fc984edfe64d8680c1e789`.
+- Reviewed HEAD: `938b56404719308f17ce92ea48bdc55e677e8716`.
+- Exact candidate source: `17613310a3af0412e122655cf9f94642c8a19b1cce5a0aef6c1a11d867e45ead`.
+- Executable source: `fe992c7a1c60b1616131602bf44e9c7081d82e6e13aa7daf932403dc76142ba0`.
+- Reviewer package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T143333Z-9a6c51cb7a/package.json`.
+- Verification plan SHA-256: `49eddef94d198eb38ae55aacde42e07fe51116a8dc5ad0e14ac5c0c8f790ad38`.
+
+### Blocking finding
+
+1. **HIGH — missing process-event storage is converted from an atomic failure into a successful unaudited completion.** `app/InstallationProcess/MariaDbInstallationCompletion.php:30-34,79-82` now inserts `installation_completed` only when `fm2_process_events` happens to exist. Contract A1 requires exactly one append-only completion event in the same transaction, and A3 requires root/state/event to roll back together on persistence failure. The production schema readiness contract also declares `fm2_process_events` mandatory. With this branch, an incomplete or damaged deployment commits the declaration root and `process_state='completed'` without its required audit fact, then returns success. Remove the optional `tableExists()` path and keep the event insert unconditional so missing/incompatible schema fails and rolls the whole command back. Compatibility fixtures that omit this canonical table must be corrected at the fixture/schema boundary, not accommodated by weakening the state owner.
+
+The same owner correction also stopped updating `updated_at` and `lock_version`. Those fields are present in the canonical installation-case owner and the previous implementation advanced them with the state transition. This should be restored unless a governing contract explicitly removes them; otherwise stale readers can retain the pre-transition revision. This concern is part of the same required owner correction.
+
+### Other CI correction dispositions
+
+- **Checklist response compatibility — acceptable.** The explicit `case_not_working` reason is now exposed only for exact `completed`; unrelated non-working states retain their previous response mapping while all writes remain rejected.
+- **Completed document corrections in the card — acceptable.** `completionCorrectable` is distinct from `completionWritable`, so corrections remain available for `working|completed` without re-enabling first-document recording after completion. Exact capability checks remain in place.
+- **Browser root allowlist — acceptable.** `yii2_documentary_browser_001_test.php` adds only the expected case and process-event roots to `unchangedExcept`; it does not loosen unrelated fact protection.
+- **Existing final-15%, queue and concurrency fixes — retained.** No regression was found in the accepted-only same-day baseline, exact completed construction-control filter, conditional transition or correction history.
+
+### Evidence assessment
+
+All 11 mapped records are `GREEN` and bound to candidate source `17613310a3af0412e122655cf9f94642c8a19b1cce5a0aef6c1a11d867e45ead`. They cover the corrected documentary HTTP/concurrency seams, transition and rollback, both corrections, all checklist mutations and OTIZ input. `git diff --check` is clean. However, none asserts fail-closed behavior when the mandatory process-event table is unavailable; the new optional branch therefore turns an uncovered schema failure into success. GREEN evidence cannot approve that contract contradiction.
+
+Required before approval: restore unconditional atomic event persistence and case revision/update semantics, correct the affected compatibility fixture(s), add or retain a focused missing-event-storage rollback assertion, prepare a fresh exact-source package and repeat independent Gate 5 review.
+
+---
+
 ## Final rereview — exact completed and unaccepted-draft canaries
 
 - Verdict: **APPROVED**
