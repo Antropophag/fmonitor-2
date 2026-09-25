@@ -17,7 +17,10 @@ try{
  const narrow=await context(390),mobile=narrow.page;await mobile.goto(input.url+'/pilot/completion-register?mode=complete&q=BROWSER-DECL-268&page=1');
  check(await mobile.locator('[data-object-id="4512"]').isVisible(),'saved declaration searchable on narrow');
  check(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'narrow shell no viewport overflow');
- check(await mobile.locator('.shlz-table-wrap').evaluate(e=>getComputedStyle(e).overflowX==='auto'||e.scrollWidth<=e.clientWidth),'narrow table has local scrolling');
- await mobile.screenshot({path:input.artifacts+'/completion-register-narrow.png',fullPage:true});await narrow.context.close();
+ const wrap=mobile.locator('.shlz-table-wrap');check(await wrap.evaluate(e=>getComputedStyle(e).overflowX==='auto'&&e.scrollWidth>e.clientWidth),'narrow table has local scrolling');await wrap.evaluate(e=>{e.scrollLeft=e.scrollWidth});
+ const action=mobile.locator('[data-object-id="4512"] td:last-child a');await action.scrollIntoViewIfNeeded();check(await action.isVisible(),'narrow action reachable after local scroll');
+ const nav=mobile.locator('.fm2-sidebar'),actionBox=await action.boundingBox(),navBox=await nav.boundingBox();check(actionBox&&navBox&&actionBox.y+actionBox.height<=navBox.y,'fixed navigation does not obscure row action');
+ const search=mobile.locator('input[name="q"]');await search.focus();check(await search.evaluate(e=>document.activeElement===e),'visible keyboard focus target');
+ await mobile.screenshot({path:input.artifacts+'/completion-register-narrow.png',fullPage:false});await narrow.context.close();
  console.log('PASS completion register desktop/narrow journey');
 }finally{await browser.close();}
