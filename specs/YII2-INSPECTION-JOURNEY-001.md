@@ -110,6 +110,19 @@ queue → reconnect без потери identity/дублирования фак
 CSP допускает необходимые same-origin assets, worker и local photo previews;
 не вводит unsafe-inline. Desktop/mobile не имеют недоступных основных controls.
 
+Service Worker сохраняет scope `/pilot/` только для регистрации из очереди и
+охвата обоих checklist aliases, но отвечает на navigation fetch исключительно
+для `/pilot/objects/{id}/checklist` и
+`/pilot/construction-control/objects/{id}/checklist`. Любая другая GET navigation
+в `/pilot/`, включая очередь, карточки, справочники, dashboard и login, не получает
+`respondWith` от Worker и выполняется обычным browser network stack. Очередь
+продолжает регистрировать Worker и отправлять `CACHE_CHECKLIST` для доступных
+ссылок. Offline fallback, user-bound document cache и очистка при logout/account
+switch сохраняются только для checklist documents.
+Обновление уже установленного Worker активируется без закрытия существующих
+вкладок через `skipWaiting` и `clients.claim`; user-bound checklist document cache
+текущего поколения при этом сохраняется, а cache прежних поколений удаляется.
+
 ### A8 — очередь стройконтроля
 
 Сохраняет только working cases, latest application engineer, последнюю checklist

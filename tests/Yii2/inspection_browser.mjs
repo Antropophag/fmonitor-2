@@ -48,6 +48,10 @@ try {
  // The existing sync-context endpoint returns a usable fresh native CSRF token.
  const sync=await page.evaluate(async()=>{const r=await fetch('/pilot/construction-control/objects/4512/sync-context',{credentials:'include'});return {status:r.status,body:await r.json()};});check(sync.status===200&&typeof sync.body.csrf==='string'&&sync.body.revision===11,'sync context revision/token after mixed queue');
  await page.locator('.fm2-back-link[href="/pilot/objects/4512"]').click();await page.waitForURL(c.origin+'/pilot/objects/4512');
+ await page.evaluate(async()=>{for(const name of await caches.keys())if(name.startsWith('fmonitor2-checklist-doc-'))await caches.delete(name);});
+ await page.goto(c.origin+'/pilot/construction-control');
+ await page.waitForFunction(async()=>{const registration=await navigator.serviceWorker.getRegistration('/pilot/');if(!registration||registration.scope!==location.origin+'/pilot/')return false;const cache=await caches.open('fmonitor2-checklist-doc-v7-73');return Boolean(await cache.match('/pilot/construction-control/objects/4512/checklist'));});
+ check(true,'construction queue registers /pilot/ worker and prefetches eligible checklist');
  await page.goto(c.origin+'/pilot/construction-control/objects/4512/checklist');await page.locator('.fm2-back-link[href="/pilot/construction-control"]').click();await page.waitForURL(c.origin+'/pilot/construction-control');
  check(await page.getByRole('navigation',{name:'Основная навигация'}).getByRole('link',{name:'Стройконтроль',exact:true}).count()===1,'capability-gated shell entry to construction queue');
  const queueRows=page.locator('[data-control-row]');check(JSON.stringify(await queueRows.evaluateAll(rows=>rows.map(r=>Number(r.dataset.objectId))))===JSON.stringify([4512]),'default server mine excludes foreign and completed rows');check(await page.locator('[data-control-row][data-object-id="4512"]').getAttribute('data-engineer-id')==='73','standalone current engineer is authoritative');
