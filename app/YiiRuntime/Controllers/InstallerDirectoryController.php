@@ -9,7 +9,6 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 final class InstallerDirectoryController extends PilotController
@@ -31,15 +30,12 @@ final class InstallerDirectoryController extends PilotController
     public function actionIndex(): string|Response
     {
         $filters = $this->filters();
-        if (!Yii::$app->canonicalAccess->checkAccess((int) Yii::$app->user->id, 'installers.read')) {
-            throw new ForbiddenHttpException();
-        }
         try {
             $model = (new MariaDbInstallerUtilization(
                 Yii::$app->db,
                 (string) (getenv('FMONITOR_PROCESS_TABLE_PREFIX') ?: ''),
                 (string) (getenv('FMONITOR_LEGACY_TABLE_PREFIX') ?: ''),
-            ))->directory($filters, (int) Yii::$app->user->id);
+            ))->directory($filters);
             if((int)$model['summary']['total']===0)$model['rows']=[];
             return $this->render('@app/app/YiiRuntime/Views/installers', $model + [
                 'identity' => Yii::$app->user->identity,

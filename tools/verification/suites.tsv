@@ -242,6 +242,7 @@ db	php	tests/Yii2/yii2_inspection_planning_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_today_priority_255_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_ui_255_test.php	integration
+db	php	tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_scope_policy_255_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_http_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integration

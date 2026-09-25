@@ -165,7 +165,7 @@ if(array_filter($raw,static fn(mixed$value):bool=>!is_string($value))!==[])retur
 [$ownership,$query,$completed,$page]=$raw;$query=trim($query);$page=filter_var($page,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
 if(!in_array($ownership,['mine','all'],true)||!in_array($completed,['0','1'],true)||$page===false||mb_strlen($query)>160)return$this->plain(404);
 $filters=['ownership'=>$ownership,'query'=>$query,'completed'=>$completed];$now=(new \DateTimeImmutable('now',new \DateTimeZone('Europe/Moscow')))->format(DATE_ATOM);$objects=$this->owner(null,$now)->queue($this->actor(),(int)$page,50,$ownership,$query,$completed==='1');
-Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters,'failedInspection'=>$failed,'inspectionMessage'=>$message,'today'=>(new \DateTimeImmutable($now))->format('Y-m-d')]);
+Yii::$app->response->statusCode=$status;return$this->render('@app/app/YiiRuntime/Views/construction-control',['identity'=>Yii::$app->user->identity,'objects'=>$objects,'filters'=>$filters,'failedInspection'=>$failed,'inspectionMessage'=>$message,'today'=>(new \DateTimeImmutable($now))->format('Y-m-d'),'canSchedule'=>Yii::$app->canonicalAccess->checkAccess($this->actor(),'inspection.schedule')]);
 } catch(\DomainException)
     {return$this->plain(403);
 } catch(\Throwable$error)
