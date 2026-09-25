@@ -37,6 +37,16 @@ Planner lane: `CRITICAL`; required reviews: `gate3`, `final`; local full `make t
 
 Independent Gate 5: APPROVED, findings none, review record `reviews/code/OTIZ-SAVED-INSTALLER-ALLOCATION-EXPLANATION-001.md`; reviewed source `0d55b084db458e740203f6588f7ac2abf08904b7c2aabeffae5e15f9811872f7`, snapshot patch SHA-256 `a1fb1d6580019ac998092653886364c817f31f654b3be4d8dffde5436f1449ce`. PR и exact-source CI дополняются внешней GitHub evidence без переписывания candidate.
 
+### CI attempt 1 — полный inventory
+
+GitHub run `36076186569` для PR head `2e83d5e82d860edb7f59a2777788c67c99cde94f`: plan/governance/unit/Integration 2/2/fast GREEN; Integration 1/2 и e2e FAILED; verify FAILED только как агрегатор; harness ожидаемо skipped. Полный `REGRESSION_FAILURE` inventory до correction:
+
+- `tests/Yii2/yii2_otiz_settlement_001_test.php` — исчез retained historical token `КТУ 1,00`;
+- `tests/Yii2/yii2_otiz_settlement_browser_001_test.php` — тот же retained token отсутствовал в drawer;
+- `tests/Yii2/yii2_otiz_shlz_ui_001_test.php` — drawer потерял компактный видимый KTU context.
+
+Correction сохраняет компактный summary из собственного `effective_ktu_bp`; legacy row с нулевым числовым КТУ и точным сохранённым basis `коэффициент 1,00` показывает совместимость как «из сохранённого основания; числовой КТУ не сохранён», тогда как canonical details остаётся буквальным `0,00`. Три failed checks и основной acceptance после correction локально GREEN; требуется refreshed final review и новый exact-source CI для corrected head. Предыдущая неуспешная попытка не считается GREEN и не скрывается.
+
 ## Остаток полной #29
 
 - объяснение конкретных учтённых работ и прогресса;

@@ -41,3 +41,46 @@ All listed records are bound to exact source `0d55b084db458e740203f6588f7ac2abf0
 ## Required changes
 
 None. The reviewed exact-source implementation is approved for Gate 5. Any subsequent code, test, specification or verification-mapping change requires refreshed exact-source review as applicable.
+
+---
+
+## Final rereview after CI regression correction
+
+- Rereviewer: independent `gpt-5.6-sol / low` agent `/root/issue29_final_review`; authored neither the correction nor tests/specification
+- Prior approved source preserved above: `0d55b084db458e740203f6588f7ac2abf08904b7c2aabeffae5e15f9811872f7`
+- Corrected exact source: `f7135c271121a92fe69420320d86b4c16e25e22f0eb9391aa6c092d9c350d4a6`; committed parent/head `2e83d5e82d860edb7f59a2777788c67c99cde94f`
+- Prepared rereview package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T002907Z-ab0e861afe/package.json`
+- Corrected snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T002907Z-ab0e861afe/snapshot/source.patch`, SHA-256 `61c60c6d9ff46ba61015bad73c0f44cfb28a5edd58e7463920d81a49c3a0ddb7`
+- Delta from prior approved snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260925T002907Z-ab0e861afe/delta.patch`, SHA-256 `e48336bfa935fd2b79021c7613b8956bc28bef17daf50224bca1464ef83385fc`
+- Refreshed verification plan SHA-256: `ca97e5e159b78666a437dcab701d890c1fe5063042a61dd9d30c3ccf6348a10f`; lane `CRITICAL`; required reviews `gate3`, `final`
+- Rereview verdict: `APPROVED`
+
+### Complete current findings list
+
+None.
+
+### Delta assessment
+
+- The production delta is confined to `_otiz-installer-allocation-details.php`. It restores compact summary KTU context from that allocation's own `effective_ktu_bp`; it does not read current composition, another allocation, raw payload or another numeric field.
+- For the retained legacy shape only—stored numeric KTU `0` plus exact saved basis text containing `коэффициент 1,00`—the summary says `1,00 (из сохранённого основания; числовой КТУ не сохранён)`. This is explicitly attributed compatibility context, not a claim that `effective_ktu_bp` stores 1.00. The canonical labelled detail continues to render the actual saved numeric KTU as `0,00`; saved zero is therefore not rewritten or hidden.
+- The correction adds no distribution formula, normalization, rounding owner or amount derivation. Contribution, share, amount and canonical KTU details retain the previously approved independent saved-field formatting. The summary compatibility branch cannot affect `amount_cents` or any persisted fact.
+- Summary content remains safe: identity and basis display remain escaped; the compatibility sentence is a fixed server-owned literal selected by `str_contains` and interpolates no saved markup. Authorization, denial, no-write/history, snapshot isolation, issue separation and #263 form boundaries are unchanged.
+- No tests, canonical specification, verification mapping, route, controller, writer, schema, JS/CSS, form, ledger or XLSX behavior changed in the correction. The delivery-record delta preserves the failed first CI inventory and accurately records why a new exact-source CI run is still required.
+
+### CI failure inventory and correction evidence
+
+GitHub run `36076186569` on PR #269 head `2e83d5e82d860edb7f59a2777788c67c99cde94f` remains a failed historical attempt: `Integration (1/2)` and `e2e` failed, while `verify`/`Quality Graph` reflected the failure. The complete recorded regression inventory contained exactly the three retained presentation checks below. Each is now locally GREEN and exact-source-bound to `f7135c271121a92fe69420320d86b4c16e25e22f0eb9391aa6c092d9c350d4a6`:
+
+- `php tests/Yii2/yii2_otiz_settlement_001_test.php` — GREEN, 17.779 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108241563000-3e3e2f9383df4b03b7db1486317dc3eb.json`
+- `php tests/Yii2/yii2_otiz_settlement_browser_001_test.php` — GREEN, 22.329 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108224840000-a4a4c867de2e46988106636c9fbfe7ed.json`
+- `php tests/Yii2/yii2_otiz_shlz_ui_001_test.php` — GREEN, 25.099 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108239036000-1237f6d3cef84502a2637c222c416ee8.json`
+
+Mapped acceptance evidence is also fresh and GREEN on the corrected exact source:
+
+- `php tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php` — GREEN, 19.549 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108204447000-3cecc442cabf44e5a3c3e7ab6f062020.json`
+- `php tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php` — GREEN, 20.601 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108222915000-972846dc67894a46addd4c6708aa4243.json`
+- `php tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php` — GREEN, 25.015 s; record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790296108217785000-74bc5f3597cf4caeab8e21642483b792.json`
+
+### Required changes
+
+None. The corrected exact source is `APPROVED` for Gate 5. The failed first CI attempt is not GREEN; a new exact-source GitHub CI run for the corrected committed head remains required before Done/merge, and this rereview does not approve deployment or merge.

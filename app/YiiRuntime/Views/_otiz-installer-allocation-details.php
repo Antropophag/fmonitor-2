@@ -12,15 +12,19 @@ $snapshotDate = static function (?string $value): string {
     return 'Не сохранено в этом расчёте';
 };
 $basis = trim((string)($a['participation_basis'] ?? ''));
+$storedKtu = (int)$a['effective_ktu_bp'];
+$summaryKtu = $storedKtu === 0 && str_contains($basis, 'коэффициент 1,00')
+    ? '1,00 (из сохранённого основания; числовой КТУ не сохранён)'
+    : $coefficient($storedKtu);
 ?>
 <details data-installer-allocation-details data-installer-tab="<?=Html::encode((string)$a['tab_id'])?>">
-<summary><?=Html::encode((string)$a['full_name'])?> · <?=$money((int)$a['amount_cents'])?></summary>
+<summary><?=Html::encode((string)$a['full_name'])?> · КТУ <?=$summaryKtu?> · <?=$money((int)$a['amount_cents'])?></summary>
 <dl>
 <div><dt>Табельный номер</dt><dd><?=Html::encode((string)$a['tab_id'])?></dd></div>
 <div><dt>Расчётная дата</dt><dd><?=$snapshotDate(isset($s['report_date']) ? (string)$s['report_date'] : null)?></dd></div>
 <div><dt>Сумма к распределению</dt><dd><?=$money((int)$o['distributed_cents'])?></dd></div>
 <div><dt>Вклад</dt><dd><?=$percent((int)$a['contribution_bp'])?></dd></div>
-<div><dt>КТУ</dt><dd><?=$coefficient((int)$a['effective_ktu_bp'])?></dd></div>
+<div><dt>КТУ</dt><dd><?=$coefficient($storedKtu)?></dd></div>
 <div><dt>Доля</dt><dd><?=$percent((int)$a['share_bp'])?></dd></div>
 <div><dt>Основание участия</dt><dd><?=Html::encode($basis !== '' ? $basis : 'Не сохранено в этом расчёте')?></dd></div>
 <div><dt>Итог работника в расчёте</dt><dd><?=$money((int)$a['amount_cents'])?></dd></div>
