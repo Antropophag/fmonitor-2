@@ -22,8 +22,8 @@ try {
     assertSameValue($before,$f->facts(),'K no business write');assertSameValue($saved,$owner->history(),'K no capture/sync');
 
     $dashboard=$f->request('GET','/pilot/dashboard',[],$full);
-    foreach(['Загрузка монтажников и динамика','Без текущих работ','Из них без следующего назначения','Полный кадровый срез','01.09.2026']as$text)assertSameValue(true,str_contains($dashboard['body'],$text),'dashboard '.$text);
-    foreach(['fm2-utilization-summary','>В работе<','>Ожидают начала<','data-installer-utilization-members','data-installer-tab-id="7001"','data-installer-tab-id="7002"','Монтажник 7001','Монтажник 7002','Предыдущие 6 недель','Следующие 6 недель','utilizationTo=','style="height:']as$removed)assertSameValue(false,str_contains($dashboard['body'],$removed),'dashboard excludes controls/tiles/roster/unsafe marks '.$removed);
+    foreach(['Загрузка монтажников и динамика','Без текущих работ','Из них без следующего назначения']as$text)assertSameValue(true,str_contains($dashboard['body'],$text),'dashboard '.$text);
+    foreach(['Полный кадровый срез','data-utilization-source','fm2-utilization-summary','>В работе<','>Ожидают начала<','data-installer-utilization-members','data-installer-tab-id="7001"','data-installer-tab-id="7002"','Монтажник 7001','Монтажник 7002','Предыдущие 6 недель','Следующие 6 недель','utilizationTo=','style="height:']as$removed)assertSameValue(false,str_contains($dashboard['body'],$removed),'dashboard excludes source/controls/tiles/roster/unsafe marks '.$removed);
     assertSameValue(12,substr_count($dashboard['body'],'class="fm2-chart-week"'),'two six-week charts use identical week group class');
     assertSameValue(12,substr_count($dashboard['body'],'class="fm2-chart-week__label"'),'two six-week charts use identical label class');
     assertSameValue(12,substr_count($dashboard['body'],'class="fm2-chart-week__bars"'),'two six-week charts use identical bars class');
