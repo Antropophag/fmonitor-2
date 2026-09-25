@@ -91,7 +91,7 @@ return [
         'preopening.js'=>['6fc7bb97ca0183fb9800dd45fda1f99de9963026230e7d27969041c8f95daa85','text/javascript; charset=UTF-8','public, max-age=3600'],
         'template-offer.js'=>['cd6e13f6b5c23ba0e341d899a8876dae45ebeb2ad7f4475eb8c532511aa049e3','text/javascript; charset=UTF-8','public, max-age=3600'],
         'checklist.js'=>['6b9ab656c60f4581f84f73be8ca20e04bd7b6c20dfa3719a2317282f5f8abb4b','text/javascript; charset=UTF-8','public, max-age=3600'],
-        'checklist-sw.js'=>['e0555252c5194438254f6b8b4f4b766a09efd942dfa8573cb9fb179e8bd6a622','text/javascript; charset=UTF-8','public, max-age=0'],
+        'checklist-sw.js'=>['be191f7623fe90b10572a09be39bc9e52f0058ba14780119ec1fba3401bc784f','text/javascript; charset=UTF-8','public, max-age=0'],
         'control-queue.js'=>['bac14ef0f9f327e2f1c3246d90124c96d2a045de8d1433f9505463599ff0e219','text/javascript; charset=UTF-8','public, max-age=3600'],
         'shlz-icons/delivery-box.svg'=>['b4517454d78cb79f5063022a65c7d685de5035b1baa204bc442fc181eb5afa04','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
         'shlz-icons/folder-file-open.svg'=>['c6bbeccbe6b8351fe7d4401ebef95fcca76adec022c891e8126905c8bc1ffb66','image/svg+xml; charset=UTF-8','public, max-age=31536000, immutable'],
