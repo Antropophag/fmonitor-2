@@ -65,7 +65,9 @@ trait MariaDbYiiChecklistRead
 
         public function queue(int $actorId,int $page=1,int $size=50,string$ownership='mine',string$query='',bool$includeCompleted=false):array
         {
-            if(!in_array('construction_control.read',$this->permissions($actorId),true))throw new \DomainException();
+            $permissions=$this->permissions($actorId);
+            if(!in_array('construction_control.read',$permissions,true))throw new \DomainException();
+            $canSchedule=in_array('inspection.schedule',$permissions,true);
             $anyScope=\FMonitor2\InstallationProcess\MariaDbYiiInspectionPlanning::actorAnyScopeSql($this->prefix,'?');if($this->one("SELECT 1 allowed WHERE $anyScope",[$actorId,$actorId,$actorId])===null)throw new \DomainException();
     $hasPtoAct="EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='pto_act')";
     $hasDeclaration="EXISTS(SELECT 1 FROM {$this->t('fm2_pilot_completion_facts')} f WHERE f.installation_case_id=c.id AND f.fact_type='declaration')";
@@ -75,7 +77,7 @@ trait MariaDbYiiChecklistRead
     $where=[$active];$params=[];$where[]=\FMonitor2\InstallationProcess\MariaDbYiiInspectionPlanning::actorScopeSql($this->prefix,'?','c.id');$params[]=$actorId;$params[]=$actorId;$params[]=$actorId;
     if(!$includeCompleted)$where[]="NOT $completed";
     if($ownership==='mine'){$where[]="EXISTS(SELECT 1 FROM {$this->t('fm2_control_engineer_assignments')} own WHERE own.installation_case_id=c.id AND own.assignment_sequence=(SELECT MAX(latest.assignment_sequence) FROM {$this->t('fm2_control_engineer_assignments')} latest WHERE latest.installation_case_id=c.id) AND own.engineer_user_id=?)";$params[]=$actorId;}
-    if($query!==''){$escaped=str_replace(['\\','%','_'],['\\\\','\\%','\\_'],mb_strtolower($query));$where[]="(LOWER(COALESCE($address,'')) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE($registration,'')) LIKE ? ESCAPE '\\\\')";$params[]='%'.$escaped.'%';$params[]='%'.$escaped.'%';}
+    if($query!==''){$escaped=str_replace(['\\','%','_'],['\\\\','\\%','\\_'],mb_strtolower($query));$where[]="(LOWER(COALESCE($address,'')) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE($registration,'')) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE(m.zavnumber,'')) LIKE ? ESCAPE '\\\\')";$params[]='%'.$escaped.'%';$params[]='%'.$escaped.'%';$params[]='%'.$escaped.'%';}
     $currentPlans=\FMonitor2\InstallationProcess\MariaDbYiiInspectionPlanning::currentProjectionSql($this->prefix,'?');
     $from=" FROM {$this->t('fm2_installation_cases')} c JOIN {$this->tLegacy('fm_maintable')} m ON m.id=c.legacy_installation_object_id LEFT JOIN {$this->t('fm2_object_detail_edits')} details ON details.object_id=c.legacy_installation_object_id LEFT JOIN ($currentPlans) inspection_plan ON inspection_plan.installation_case_id=c.id";$predicate=implode(' AND ',$where);$today=(new \DateTimeImmutable($this->now))->setTimezone(new \DateTimeZone('Europe/Moscow'))->format('Y-m-d');array_unshift($params,$today);
     $sql="SELECT c.id case_id,c.process_state,c.legacy_installation_object_id object_id,m.zavnumber order_number,$address address,$entrance entrance,$registration registration_number,e.first_shipment_date,e.full_shipment_date,$hasPtoAct has_pto_act,$hasDeclaration has_declaration,(SELECT MAX(device_time) FROM {$this->t('fm2_checklist_operations')} o WHERE o.installation_case_id=c.id) last_activity_at,inspection_plan.schedule_id inspection_schedule_id,inspection_plan.inspection_date,inspection_plan.inspection_version,inspection_plan.inspection_count,(inspection_plan.inspection_date=?) inspection_today".$from." LEFT JOIN {$this->t('fm2_equipment_fact_current')} e ON e.object_id=c.legacy_installation_object_id WHERE $predicate ORDER BY inspection_today DESC,has_pto_act AND has_declaration,last_activity_at IS NOT NULL,last_activity_at,c.legacy_installation_object_id";
@@ -86,8 +88,10 @@ trait MariaDbYiiChecklistRead
     $rows=$this->all($sql.' LIMIT '.(int)$size.' OFFSET '.(int)$offset,array_merge([$today],$params));
     $documents=$this->effectiveTechnicalDocuments(array_column($rows,'order_number'));
     foreach($rows as&$r)
-        {if((int)$r['inspection_count']>1)throw new \RuntimeException('Multiple current inspection plans.');$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=$r['process_state']!=='working';$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
+        {if((int)$r['inspection_count']>1)throw new \RuntimeException('Multiple current inspection plans.');$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=in_array($r['process_state'],['needs_assignment_order','assignment_order_prepared'],true);$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
     $r['registrationNumber']=$r['registration_number'];
+    $r['factoryNumber']=$r['order_number'];
+    $r['canSchedule']=$canSchedule&&in_array($r['process_state'],['working','needs_assignment_change','needs_assignment_order','assignment_order_prepared'],true)&&$engineer!==null;
     $r['completed']=$completed;
     $r['lastChecklistActivityAt']=$r['last_activity_at'];
     $r['inspectionToday']=(bool)$r['inspection_today'];$r['inspectionPlan']=$r['inspection_schedule_id']===null?null:['scheduleId'=>(int)$r['inspection_schedule_id'],'version'=>(int)$r['inspection_version'],'inspectionDate'=>(string)$r['inspection_date']];

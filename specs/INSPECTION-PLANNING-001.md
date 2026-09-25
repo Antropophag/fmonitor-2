@@ -8,7 +8,7 @@
 
 ## 1. Актор и публичный seam
 
-Актор — активный пользователь с exact capability `inspection.schedule`. Инженер стройконтроля ограничен объектами своего текущего native-закрепления. В текущем пилоте только exact активные роли `manager` и canonical `fkr_operator`, одновременно имеющие exact `objects.read`, получают planning scope всех eligible объектов. Публичный seam — единый application owner команд create/reschedule/cancel и object-keyed current-plan read. Capability, read permission и актуальный object scope повторно проверяются непосредственно перед записью.
+Актор — активный пользователь с exact capability `inspection.schedule`. Инженер стройконтроля ограничен объектами своего текущего native-закрепления. В текущем пилоте только exact активные роли `manager` и canonical `fkr_operator`, одновременно имеющие exact `objects.read`, получают planning scope всех eligible объектов. Eligible объект находится в active state `working`, `needs_assignment_change`, `needs_assignment_order` или `assignment_order_prepared` и имеет однозначное current native control-engineer assignment; выезд для открытия ещё не открытого объекта является инспекцией и планируется тем же seam. Наличие строки assignment order не является prerequisite для импортированного активного объекта. Публичный seam — единый application owner команд create/reschedule/cancel и object-keyed current-plan read. Capability, read permission и актуальный object scope повторно проверяются непосредственно перед записью.
 
 Команда принимает object identity, opaque request identity, expected version и для create/reschedule strict дату `YYYY-MM-DD`, не раньше server today `Europe/Moscow`. План не имеет исполнителя: автор и текущий назначенный инженер не входят в identity.
 

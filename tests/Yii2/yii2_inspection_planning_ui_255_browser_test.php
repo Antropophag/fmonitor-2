@@ -7,6 +7,7 @@ try {
     $f=new ObjectQueueFixture(dirname(__DIR__,2));
     $f->db->query("UPDATE {$f->p}fm2_pilot_roles SET code='manager' WHERE role_id=9201");
     $f->db->query("INSERT IGNORE INTO {$f->p}fm2_pilot_role_permissions(role_id,permission) VALUES(9201,'construction_control.read'),(9201,'checklist.read')");
+    $f->insert($f->p.'fm2_control_engineer_assignments',['installation_case_id'=>6101,'object_id'=>451201,'assignment_sequence'=>1,'engineer_user_id'=>7301,'engineer_fio_snapshot'=>'Инженер 7301','engineer_position_snapshot'=>'Инженер строительного контроля','previous_assignment_id'=>null,'previous_engineer_user_id'=>null,'bootstrap_application_id'=>null,'assigned_by_user_id'=>9101,'assigned_at_utc'=>'2026-09-10 06:00:00','request_id'=>'25525525-0000-4255-8255-000000000001','request_fingerprint'=>hash('sha256','issue255-browser-native-scope')]);
     $f->http->start();
     $a=$f->http->artifacts;$config=$a.'/inspection-plan-browser.json';$result=$a.'/inspection-plan-result.json';$log=$a.'/inspection-plan-browser.log';$release=$a.'/inspection-plan-release-fault';
     $f->db->query("CREATE TRIGGER {$f->p}issue255_browser_event_fault BEFORE INSERT ON {$f->p}fm2_pilot_inspection_schedule_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='browser private failure'");$faultActive=true;

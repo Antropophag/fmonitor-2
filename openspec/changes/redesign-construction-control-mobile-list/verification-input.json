@@ -1,0 +1,25 @@
+{
+  "change": "redesign-construction-control-mobile-list",
+  "planned_paths": [
+    "app/InspectionEvidence/MariaDbYiiChecklistRead.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/inspection-schedule.js",
+    "app/YiiRuntime/Assets/navigation.js",
+    "specs/YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001.md",
+    "specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md",
+    "tests/Yii2/yii2_construction_control_mobile_list_001_test.php",
+    "tests/Yii2/yii2_construction_control_mobile_list_browser_001_test.php",
+    "tests/Yii2/construction_control_mobile_list_browser.mjs",
+    "tests/Yii2/sidebar_state_icons_browser.mjs",
+    "tests/Yii2/yii2_sidebar_state_icons_001_test.php",
+    "tests/Yii2/yii2_construction_control_active_queue_001_test.php",
+    "tests/Support/construction_control_server_filtering_browser.cjs"
+  ],
+  "acceptances": [
+    {"spec_id":"YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001","acceptance_id":"A-B-identity-search-filters","spec_path":"specs/YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001.md","seam":"GET /pilot/construction-control projection and server filters","tests":["tests/Yii2/yii2_construction_control_mobile_list_001_test.php","tests/Yii2/yii2_construction_control_server_filtering_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_construction_control_mobile_list_001_test.php":"INTENDED_RED","tests/Yii2/yii2_construction_control_server_filtering_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001","acceptance_id":"C-D-independent-actions-inspection","spec_path":"specs/YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001.md","seam":"queue inspection action and existing inspection-plan dialog POST","tests":["tests/Yii2/yii2_inspection_planning_ui_255_test.php","tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php"],"gate3_expected":{"tests/Yii2/yii2_inspection_planning_ui_255_test.php":"GREEN","tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php":"INTENDED_RED"}},
+    {"spec_id":"YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001","acceptance_id":"E-F-operational-responsive-accessible","spec_path":"specs/YII2-CONSTRUCTION-CONTROL-MOBILE-LIST-001.md","seam":"real Yii HTML, responsive primary navigation and control-queue local state at 320/390/tablet/desktop","tests":["tests/Yii2/yii2_construction_control_mobile_list_browser_001_test.php","tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php","tests/Yii2/yii2_sidebar_state_icons_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_construction_control_mobile_list_browser_001_test.php":"INTENDED_RED","tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php":"GREEN","tests/Yii2/yii2_sidebar_state_icons_001_test.php":"INTENDED_RED"}},
+    {"spec_id":"BITRIX-ORDER-DOCUMENT-LINKS-001","acceptance_id":"A4-queue-document-action-superseded","spec_path":"specs/BITRIX-ORDER-DOCUMENT-LINKS-001.md","seam":"available effective Bitrix link rendered as queue action; unavailable fails soft","tests":["tests/Yii2/yii2_construction_control_active_queue_001_test.php"],"gate3_expected":{"tests/Yii2/yii2_construction_control_active_queue_001_test.php":"INTENDED_RED"}}
+  ]
+}
