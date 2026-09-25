@@ -88,7 +88,7 @@ trait MariaDbYiiChecklistRead
     $rows=$this->all($sql.' LIMIT '.(int)$size.' OFFSET '.(int)$offset,array_merge([$today],$params));
     $documents=$this->effectiveTechnicalDocuments(array_column($rows,'order_number'));
     foreach($rows as&$r)
-        {if((int)$r['inspection_count']>1)throw new \RuntimeException('Multiple current inspection plans.');$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=$r['process_state']!=='working';$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
+        {if((int)$r['inspection_count']>1)throw new \RuntimeException('Multiple current inspection plans.');$completed=(bool)$r['has_pto_act']&&(bool)$r['has_declaration'];$assignment=$this->currentEngineerAssignment((int)$r['object_id']);if($assignment['status']==='unavailable')throw new \RuntimeException();$engineer=$assignment['status']==='found'?$assignment['engineer']:null;if($completed&&$engineer===null)$engineer=$this->engineer((int)$r['case_id']);$r['ready']=in_array($r['process_state'],['needs_assignment_order','assignment_order_prepared'],true);$r['controlEngineer']=$engineer;$r['id']=(int)$r['object_id'];
     $r['registrationNumber']=$r['registration_number'];
     $r['factoryNumber']=$r['order_number'];
     $r['canSchedule']=$canSchedule&&in_array($r['process_state'],['working','needs_assignment_change','needs_assignment_order','assignment_order_prepared'],true)&&$engineer!==null;

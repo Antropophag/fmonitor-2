@@ -64,6 +64,7 @@ try {
     assertSameValue(false,in_array(4515,$ids,true),'non-working case is absent');
     assertSameValue([4512,4514],array_map('intval',$secondMatches[1]),'activity ordering leaves exact tail rows including completed case');
     assertSameValue(true,str_contains($second['body'],'data-object-id="4514" data-engineer-id="73" data-completed="true"'),'completed row carries native filter marker');
+    $completedStart=strpos($second['body'],'data-object-id="4514"');$completedEnd=$completedStart===false?false:strpos($second['body'],'</tr>',$completedStart);$completedRow=$completedStart===false||$completedEnd===false?'':substr($second['body'],$completedStart,$completedEnd-$completedStart);assertSameValue(false,str_contains($completedRow,'Готов к открытию'),'completed row is never presented as preopening ready');
     foreach([$first,$second]as$page)assertSameValue(true,str_contains($page['body'],PHP_EOL.'52 объектов</span>'),'queue total includes completed rows');
     assertSameValue(false,str_contains($second['body'],'data-object-id="4514" data-engineer-id="73" data-completed="true" hidden'),'server-included completed row is rendered, not hidden by the current page');
     assertSameValue(true,str_contains($second['body'],'name="completed" value="1" data-show-completed checked'),'server completed filter is reflected in checked control');
