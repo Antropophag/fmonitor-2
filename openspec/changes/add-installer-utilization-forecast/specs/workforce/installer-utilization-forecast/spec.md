@@ -69,7 +69,7 @@ Dashboard SHALL явно отделять блок «Прогноз загруз
 - **THEN** последующее чтение прогноза и detail отражает новый факт, не переписывая historical observations
 
 ### Requirement: Авторизация и безопасность чтения
-Forecast и каждый direct detail URL SHALL требовать тот же полный доступ `objects.read` + `installers.read`, что installer-utilization dashboard. Guest SHALL получать canonical authentication response; denied или object-scoped actor SHALL получать `403` без counts или PII. `HEAD` SHALL повторять status и безопасные headers GET с пустым body. Повторное чтение MUST NOT создавать jobs, observations, assignments, audit или другие domain facts.
+Forecast counts и каждый direct detail URL SHALL требовать полный доступ `objects.read` + `installers.read`. Guest SHALL получать canonical authentication response. Общий dashboard SHALL сохранять доступ всех аутентифицированных ролей, но denied или object-scoped actor SHALL видеть только sanitized unavailable forecast без counts/PII; direct detail SHALL возвращать `403`. `HEAD` SHALL повторять status и безопасные headers GET с пустым body. Повторное чтение MUST NOT создавать jobs, observations, assignments, audit или другие domain facts.
 
 #### Scenario: Прямой запрещённый URL
 - **WHEN** actor без полного `installers.read` открывает forecast detail напрямую

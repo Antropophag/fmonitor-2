@@ -226,6 +226,7 @@ db	php	tests/Yii2/yii2_checklist_photo_viewing_001_test.php	integration
 db	php	tests/Yii2/yii2_completion_form_recovery_001_test.php	integration
 db	php	tests/Yii2/yii2_completion_form_recovery_browser_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_active_queue_001_test.php	integration
+db	php	tests/Yii2/yii2_construction_control_mobile_list_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_preopening_001_test.php	integration
 db	php	tests/Yii2/yii2_construction_control_shipment_indicator_001_test.php	integration
 db	php	tests/Yii2/yii2_control_engineer_assignment_001_test.php	integration
@@ -243,6 +244,7 @@ db	php	tests/Yii2/yii2_inspection_planning_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_concurrency_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_today_priority_255_test.php	integration
 db	php	tests/Yii2/yii2_inspection_planning_ui_255_test.php	integration
+db	php	tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php	integration
 db	php	tests/Yii2/yii2_inspection_scope_policy_255_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_http_001_test.php	integration
 db	php	tests/Yii2/yii2_installer_directory_native_assignments_001_test.php	integration
@@ -272,6 +274,7 @@ db	php	tests/Yii2/yii2_otiz_decisions_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_evidence_reads_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_guest_return_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_object_ledger_history_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_settlement_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_workflow_001_test.php	integration
@@ -330,6 +333,7 @@ e2e	php	tests/Yii2/yii2_calendar_003_browser_test.php	e2e
 e2e	php	tests/Yii2/yii2_checklist_photo_viewing_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_completion_document_register_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_completion_document_register_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_construction_control_mobile_list_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_documentary_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_feedback_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_inspection_browser_001_test.php	e2e
@@ -533,8 +537,17 @@ unit	python3	tests/Verification/yii2_local_quickstart_docs_001_test.py	unit
 unit	php	tests/Verification/yii2_worktree_autoload_001_test.php	governance
 unit	php	tests/WeeklyFkrReport/weekly_report_001_test.php	integration
 unit	php	tests/WeeklyFkrReport/weekly_schedule_001_test.php	integration
+unit	node	tests/Yii2/checklist_service_worker_navigation_001_test.mjs	unit
 unit	php	tests/Yii2/yii2_bitrix_order_document_links_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_canonical_migrations_ownership_001_test.php	unit
+unit	php	tests/Yii2/yii2_completed_checklist_admission_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_checklist_attribution_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_checklist_retraction_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_declaration_correction_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_document_corrections_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_installation_state_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_state_transition_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_transition_rollback_001_test.php	integration
 unit	php	tests/Yii2/yii2_erp_equipment_facts_console_001_test.php	unit
 unit	php	tests/Yii2/yii2_imports_workforce_ownership_001_test.php	unit
 unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration

@@ -40,7 +40,7 @@ final class MariaDbNativePremiumInputs
         $p = $this->prefix;
         $l = $this->legacyPrefix;
         $q = $this->db->prepare(
-            "SELECT c.id case_id,c.legacy_installation_object_id object_id,l.regnumber,l.ordadr_address address,l.plan_finish_date FROM `{$p}fm2_installation_cases`c LEFT JOIN `{$p}fm2_migration_classification_provenance`m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id JOIN `{$l}fm_maintable`l ON l.id=c.legacy_installation_object_id WHERE c.process_state='working' AND c.actual_start_date<=? AND (m.category='native_candidate' OR m.category IS NULL) ORDER BY c.legacy_installation_object_id",
+            "SELECT c.id case_id,c.legacy_installation_object_id object_id,l.regnumber,l.ordadr_address address,l.plan_finish_date FROM `{$p}fm2_installation_cases`c LEFT JOIN `{$p}fm2_migration_classification_provenance`m ON m.output_kind='operational_case' AND m.output_id=c.id AND m.legacy_object_id=c.legacy_installation_object_id JOIN `{$l}fm_maintable`l ON l.id=c.legacy_installation_object_id WHERE c.process_state IN('working','completed') AND c.actual_start_date<=? AND (m.category='native_candidate' OR m.category IS NULL) ORDER BY c.legacy_installation_object_id",
         );
         $q->execute([$date]);
         return array_map(fn($r) => $this->row($r, $date, $at), $q->get_result()->fetch_all(MYSQLI_ASSOC));

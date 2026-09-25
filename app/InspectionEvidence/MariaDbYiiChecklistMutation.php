@@ -29,7 +29,7 @@ trait MariaDbYiiChecklistMutation
     return['status'=>'not_found'];
     }if($case['process_state']!=='working')
         { $this->rollback();
-    return['status'=>'rejected'];
+    return['status'=>'rejected','reason'=>'case_not_working'];
     }$caseId=(int)$case['id'];
     $this->execute("INSERT IGNORE INTO {$this->t('fm2_checklist_revisions')}(installation_case_id,revision_no,updated_at)VALUES(?,0,?)",[$caseId,$this->now]);
     $template=$this->template($caseId,$time);
@@ -106,7 +106,7 @@ trait MariaDbYiiChecklistMutation
             $r=$owner->completeItem(new CompleteInspectionItem($actor,$caseId,(string)($o['clientOperationId']??''),(string)($o['deviceInstallationId']??''),(string)($o['deviceTime']??''),(int)($o['baseRevision']??-1),(int)($o['sectionId']??0),(int)($o['itemId']??0),array_map('intval',(array)($o['installerTabIds']??[]))));
             if($r->status==='INSPECTION_SCHEMA_UNAVAILABLE')throw new \RuntimeException();
     return['status'=>match($r->status)
-        {'ACCEPTED'=>'accepted','DUPLICATE'=>'duplicate','STALE_REVISION','OPERATION_PAYLOAD_CONFLICT'=>'conflict','ACTOR_NOT_AUTHORIZED'=>'forbidden',default=>'rejected'},'revision'=>$r->revision];
+        {'ACCEPTED'=>'accepted','DUPLICATE'=>'duplicate','STALE_REVISION','OPERATION_PAYLOAD_CONFLICT'=>'conflict','ACTOR_NOT_AUTHORIZED'=>'forbidden',default=>'rejected'},'revision'=>$r->revision]+($r->status==='CASE_NOT_WORKING'&&$case['process_state']==='completed'?['reason'=>'case_not_working']:[]);
         }
         private function template(int$case,string$time):?array{$r=$this->one("SELECT a.template_snapshot_id snapshot_id,a.template_snapshot_version snapshot_version,a.template_content_sha256 content_sha256,t.valid_from,a.effective_at,t.snapshot_version current_version,t.content_sha256 current_hash FROM {$this->t('fm2_checklist_template_associations')} a JOIN {$this->t('fm2_checklist_template_snapshots')} t ON t.id=a.template_snapshot_id WHERE a.subject_kind='operational_case' AND a.subject_id=?",[(string)$case]);
     if(!$r||$r['snapshot_version']!==$r['current_version']||!hash_equals($r['content_sha256'],$r['current_hash']))return null;

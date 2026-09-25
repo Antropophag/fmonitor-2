@@ -9,7 +9,6 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -35,13 +34,12 @@ final class InstallerUtilizationController extends PilotController
     {
         if (preg_match('/^[1-9][0-9]*$/D',$tabId)!==1 || strlen($tabId)>18) throw new NotFoundHttpException();
         $query=$this->query(['historyPage'=>'1','return'=>'']);$page=$this->positive($query['historyPage']);$returnUrl=$this->returnUrl($query['return']);
-        try {$actor=(int)Yii::$app->user->id;return $this->respond(static fn(MariaDbInstallerUtilization $read): array => $read->card((int)$tabId,$page,$actor)+['returnUrl'=>$returnUrl], '@app/app/YiiRuntime/Views/installer-card');}
+        try {return $this->respond(static fn(MariaDbInstallerUtilization $read): array => $read->card((int)$tabId,$page)+['returnUrl'=>$returnUrl], '@app/app/YiiRuntime/Views/installer-card');}
         catch (\DomainException) {throw new NotFoundHttpException();}
     }
 
     private function respond(callable $load, string $view): string|Response
     {
-        if (!Yii::$app->canonicalAccess->checkAccess((int)Yii::$app->user->id,'installers.read')) throw new ForbiddenHttpException();
         try {
             $read=new MariaDbInstallerUtilization(Yii::$app->db,(string)(getenv('FMONITOR_PROCESS_TABLE_PREFIX')?:''),(string)(getenv('FMONITOR_LEGACY_TABLE_PREFIX')?:''));
             $model=$load($read);return $this->stableCsrf($this->render($view,$model+['identity'=>Yii::$app->user->identity]));

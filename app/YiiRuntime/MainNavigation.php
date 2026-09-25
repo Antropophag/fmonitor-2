@@ -20,8 +20,8 @@ final class MainNavigation
                 ['construction_control.read', 'construction-control', '/pilot/construction-control', 'Стройконтроль', 'eye'],
                 ['objects.read', 'calendar', '/pilot/calendar', 'Календарь', 'calendar-interface'],
                 ['otiz.manage', 'otiz', '/pilot/otiz', 'ОТиЗ', 'graph'],
-                ['installers.read', 'installers', '/pilot/installers', 'Монтажники', 'user-sidebar'],
-                ['objects.read', 'dashboard', '/pilot/dashboard', 'Дашборд', 'bar-chart-square-plus'],
+                [null, 'installers', '/pilot/installers', 'Монтажники', 'user-sidebar'],
+                [null, 'dashboard', '/pilot/dashboard', 'Дашборд', 'bar-chart-square-plus'],
             ],
             'Администрирование' => [
                 ['access.administer', 'admin-users', '/pilot/admin/users', 'Пользователи', 'user'],
@@ -32,7 +32,7 @@ final class MainNavigation
 
         $html = '<nav class="fm2-primary-nav" aria-label="Основная навигация">';
         foreach ($groups as $label => $links) {
-            $permitted = array_values(array_filter($links, static fn(array $link): bool => $access->checkAccess($actorId, $link[0])));
+            $permitted = array_values(array_filter($links, static fn(array $link): bool => $link[0] === null || $access->checkAccess($actorId, $link[0])));
             if ($permitted === []) {
                 continue;
             }

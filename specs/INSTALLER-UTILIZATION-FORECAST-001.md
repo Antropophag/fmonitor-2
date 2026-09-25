@@ -6,7 +6,7 @@
 
 ## Actor и public seams
 
-- Actor: активный пользователь с полными `objects.read` и `installers.read`; object-scoped actor не получает частичную аналитику.
+- Actor: прогнозные counts/details доступны активному пользователю с полными `objects.read` и `installers.read`; object-scoped actor не получает частичную аналитику. Сам общий dashboard сохраняет более новый контракт доступа всех аутентифицированных ролей, но без разрешения прогноз показывает только sanitized unavailable state.
 - Reads: `GET|HEAD /pilot/dashboard` и `/pilot/dashboard/installers/forecast/{weekStart}/{bucket}`.
 - Timezone: `Europe/Moscow`; `weekStart` — понедельник `Y-m-d`; buckets: `busy|free|releasing|conflict|unknown`.
 
@@ -18,7 +18,7 @@
 4. Для открытого дела start=`actual_start_date`; для применённого, но не открытого — effective planned start. Draft selection/original без application не занимает человека. Latest native application владеет составом; registered fallback допустим только без native application.
 5. End — более ранний подтверждённый ПТО или effective planned finish с current deadline certificate. Неизвестный end начатой работы продолжается через горизонт. Системная неполнота source даёт unavailable, не нули.
 6. Dashboard разделяет «Прогноз загрузки на 6 недель» и историю. Каждая week/group value ведёт на live detail с bounds, denominator, людьми и основаниями, сортировка `fio,tabId`; новый authoritative fact меняет прогноз, но не observations.
-7. Guest получает canonical redirect; denied/scoped — `403` без counts/PII. HEAD повторяет status/headers GET и имеет пустое body. Чтение не создаёт jobs, observations, audits или domain facts.
+7. Guest получает canonical redirect. Denied/scoped actor получает общий dashboard `200` с sanitized unavailable forecast без counts/PII, а direct detail — `403`. HEAD повторяет status/headers GET и имеет пустое body. Чтение не создаёт jobs, observations, audits или domain facts.
 8. UI использует штатную `shlz-ui` composition, текстовую легенду, видимый focus и различители кроме цвета; на 390 px нет page overflow, допускается локальная прокрутка.
 9. Bulk query count bounded и не зависит линейно от identities; runtime не загружает `rapid-pilot` или `app/PilotHttp`.
 10. No schema migration, backfill, auto-allocation или writer changes. Capture-job correction — отдельный change.
@@ -36,7 +36,7 @@
 | G | malformed identity or systemic gap | UNKNOWN or unavailable, never false zero/free |
 | H | bucket activation | authorized live detail matches count and reasons |
 | I | facts change | forecast changes; observations byte-equivalent |
-| J | guest/denied/scoped GET|HEAD | auth/403, empty HEAD, no leak |
+| J | guest/denied/scoped GET|HEAD | guest redirect; denied/scoped dashboard unavailable and detail 403; empty HEAD, no leak |
 | K | repeated reads | deterministic and no writes |
 | L | 1440/390 keyboard/touch | readable, contained, focus, activation |
 | M | 0/50/125/1000 rows | bounded queries/runtime closure |

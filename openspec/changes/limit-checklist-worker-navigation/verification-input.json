@@ -1,0 +1,36 @@
+{
+  "change": "limit-checklist-worker-navigation",
+  "planned_paths": [
+    "specs/YII2-INSPECTION-JOURNEY-001.md",
+    "openspec/changes/limit-checklist-worker-navigation/proposal.md",
+    "openspec/changes/limit-checklist-worker-navigation/design.md",
+    "openspec/changes/limit-checklist-worker-navigation/tasks.md",
+    "openspec/changes/limit-checklist-worker-navigation/specs/ui/checklist-offline-navigation/spec.md",
+    "openspec/changes/limit-checklist-worker-navigation/verification-input.json",
+    "app/YiiRuntime/Assets/checklist-sw.js",
+    "tests/Yii2/checklist_service_worker_navigation_001_test.mjs",
+    "tests/Yii2/inspection_browser.mjs",
+    "tests/Support/yii2_production_web_cutover_contract.php",
+    "tools/verification/suites.tsv",
+    "reviews/tests/YII2-INSPECTION-JOURNEY-001-worker-navigation.md",
+    "reviews/code/YII2-INSPECTION-JOURNEY-001-worker-navigation.md"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "YII2-INSPECTION-JOURNEY-001",
+      "acceptance_id": "A7-worker-controls-only-checklist-navigation",
+      "spec_path": "specs/YII2-INSPECTION-JOURNEY-001.md",
+      "seam": "active checklist Service Worker fetch event",
+      "tests": [
+        "tests/Yii2/checklist_service_worker_navigation_001_test.mjs",
+        "tests/Yii2/yii2_inspection_browser_001_test.php",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/checklist_service_worker_navigation_001_test.mjs": "INTENDED_RED",
+        "tests/Yii2/yii2_inspection_browser_001_test.php": "GREEN",
+        "tests/Runtime/yii2_production_web_cutover_001_test.php": "GREEN"
+      }
+    }
+  ]
+}

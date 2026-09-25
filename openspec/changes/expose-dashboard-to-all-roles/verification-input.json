@@ -1,0 +1,114 @@
+{
+  "change": "expose-dashboard-to-all-roles",
+  "planned_paths": [
+    "app/YiiRuntime/Controllers/DashboardController.php",
+    "app/YiiRuntime/Controllers/ChecklistController.php",
+    "app/YiiRuntime/Controllers/InstallerDirectoryController.php",
+    "app/YiiRuntime/Controllers/InstallerUtilizationController.php",
+    "app/YiiRuntime/MainNavigation.php",
+    "app/YiiRuntime/Views/dashboard.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/InstallationProcess/YiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/Workforce/MariaDbInstallerUtilization.php",
+    "app/Workforce/MariaDbInstallerUtilizationObservations.php",
+    "app/IdentityAccess/LocalRoleCatalog.php",
+    "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
+    "app/YiiRuntime/Views/construction-control.php",
+    "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php",
+    "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php",
+    "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
+    "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
+    "tests/Yii2/yii2_installer_directory_http_001_test.php",
+    "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php",
+    "tests/Runtime/initial_owner_provisioning_001_test.php",
+    "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
+    "tests/Yii2/yii2_main_navigation_001_test.php",
+    "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
+    "tests/Yii2/yii2_inspection_planning_001_test.php",
+    "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php",
+    "tools/verification/suites.tsv",
+    "openspec/changes/expose-dashboard-to-all-roles/proposal.md",
+    "openspec/changes/expose-dashboard-to-all-roles/design.md",
+    "openspec/changes/expose-dashboard-to-all-roles/tasks.md",
+    "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
+    "openspec/changes/expose-dashboard-to-all-roles/specs/inspection/visible-scheduling-action/spec.md",
+    "openspec/changes/expose-dashboard-to-all-roles/verification-input.json"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "UI-UNIVERSAL-DASHBOARD-ACCESS-001",
+      "acceptance_id": "A1-universal-active-role-http-and-read-only",
+      "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
+      "seam": "GET|HEAD /pilot/dashboard and dashboard observation reads for guest, active minimal, construction-control, multi-role and privileged actors",
+      "tests": [
+        "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_minimal_operational_dashboard_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "UI-UNIVERSAL-DASHBOARD-ACCESS-001",
+      "acceptance_id": "A2-common-installer-snapshot-and-observations",
+      "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
+      "seam": "dashboard exposes a roster-free fixed previous-2/current/next-3 calendar-week installer-utilization chart using the exact shared six-week chart layout beside process stages",
+      "tests": [
+        "tests/Yii2/yii2_installer_utilization_observations_001_test.php",
+        "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php",
+        "tests/Yii2/yii2_installer_directory_http_001_test.php",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_installer_utilization_observations_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_installer_utilization_stage_one_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_installer_directory_http_001_test.php": "INTENDED_RED",
+        "tests/Yii2/yii2_installer_directory_native_assignments_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "UI-UNIVERSAL-DASHBOARD-ACCESS-001",
+      "acceptance_id": "A3-universal-dashboard-navigation",
+      "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
+      "seam": "shared Yii MainNavigation renders one canonical dashboard item for every active authenticated identity",
+      "tests": [
+        "tests/Yii2/yii2_main_navigation_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_main_navigation_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "UI-UNIVERSAL-DASHBOARD-ACCESS-001",
+      "acceptance_id": "A4-common-object-snapshot-and-adjacent-authorization",
+      "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/ui/universal-dashboard-access/spec.md",
+      "seam": "repeated dashboard reads preserve all facts while standalone object, installer, administration and mutation authorization remains unchanged",
+      "tests": [
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php": "INTENDED_RED"
+      }
+    },
+    {
+      "spec_id": "INSPECTION-VISIBLE-SCHEDULING-ACTION-001",
+      "acceptance_id": "A1-A3-exact-role-grants-visible-scoped-command-and-invariants",
+      "spec_path": "openspec/changes/expose-dashboard-to-all-roles/specs/inspection/visible-scheduling-action/spec.md",
+      "seam": "construction-control create/reschedule/cancel controls and POST /pilot/construction-control/objects/{id}/inspection-plan share active actor and canonical object-scope authorization",
+      "tests": [
+        "tests/Yii2/yii2_inspection_planning_ui_255_test.php",
+        "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php",
+        "tests/Yii2/yii2_inspection_planning_001_test.php",
+        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php",
+        "tests/Runtime/initial_owner_provisioning_001_test.php"
+      ],
+      "gate3_expected": {
+        "tests/Yii2/yii2_inspection_planning_ui_255_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_planning_ui_255_browser_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_planning_001_test.php": "GREEN",
+        "tests/Yii2/yii2_inspection_schedule_role_permission_001_test.php": "INTENDED_RED",
+        "tests/Runtime/initial_owner_provisioning_001_test.php": "INTENDED_RED"
+      }
+    }
+  ]
+}

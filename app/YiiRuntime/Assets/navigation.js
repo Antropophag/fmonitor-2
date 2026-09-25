@@ -73,9 +73,10 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
   if (!state || !label || !trigger) return;
 
   const key = 'fmonitor.sidebar.expanded';
+  const tablet = matchMedia('(min-width: 681px) and (max-width: 1180px)');
   let saved = null;
   try { saved = localStorage.getItem(key); } catch {}
-  state.open = saved !== 'false';
+  state.open = tablet.matches ? false : saved !== 'false';
   delete document.documentElement.dataset.fm2Sidebar;
   document.documentElement.dataset.fm2SidebarReady = 'true';
 
@@ -85,18 +86,54 @@ for (const root of document.querySelectorAll(choiceRootQuery)) {
     label.textContent = text;
     trigger.setAttribute('aria-label', text);
     trigger.setAttribute('data-shlz-icon', icon);
+    if (tablet.matches && expanded) document.documentElement.dataset.fm2TabletDrawer = 'open';
+    else delete document.documentElement.dataset.fm2TabletDrawer;
   };
   refresh();
 
-  trigger.addEventListener('click', () => {
-    const expanded = !state.open;
-    refresh(expanded);
+  const persist = expanded => {
+    if (tablet.matches) return;
     try { localStorage.setItem(key, String(expanded)); } catch {}
+  };
+  const closeTablet = (restoreFocus = false) => {
+    if (!tablet.matches || !state.open) return;
+    state.open = false;
+    refresh(false);
+    if (restoreFocus) queueMicrotask(() => trigger.focus());
+  };
+  trigger.addEventListener('click', event => {
+    event.preventDefault();
+    const expanded = !state.open;
+    state.open = expanded;
+    refresh(expanded);
+    persist(expanded);
   });
 
   state.addEventListener('toggle', () => {
     refresh();
-    try { localStorage.setItem(key, String(state.open)); } catch {}
+    persist(state.open);
+  });
+  document.addEventListener('click', event => {
+    if (!tablet.matches || !state.open) return;
+    if (event.target.closest('.fm2-sidebar')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeTablet(true);
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    closeTablet(true);
+  });
+  state.closest('.fm2-sidebar')?.querySelectorAll('.fm2-primary-nav a').forEach(link =>
+    link.addEventListener('click', () => closeTablet(false)),
+  );
+  tablet.addEventListener('change', () => {
+    if (tablet.matches) state.open = false;
+    else {
+      try { saved = localStorage.getItem(key); } catch { saved = null; }
+      state.open = saved !== 'false';
+    }
+    refresh();
   });
 })();
 
