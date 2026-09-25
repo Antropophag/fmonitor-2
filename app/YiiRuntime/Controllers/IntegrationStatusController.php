@@ -37,12 +37,14 @@ final class IntegrationStatusController extends PilotController
     public function actionIndex(): string
     {
         $pages = [
+            'documents' => $this->page('documentsPage'),
             'workforce' => $this->page('workforcePage'),
             'equipment' => $this->page('equipmentPage'),
             'jobs' => $this->page('jobsPage'),
         ];
         $db = Yii::$app->db;
         try {
+            $documents = $this->safeRead(fn(): array => (new BitrixDocumentationStatusRead($db, (string) getenv('FMONITOR_PROCESS_TABLE_PREFIX')))->read($pages['documents']));
             $workforce = $this->safeRead(fn(): array => $this->workforce($db, $pages['workforce']));
             $equipment = $this->safeRead(fn(): array => $this->equipment($db, $pages['equipment']));
             $jobs = $this->safeRead(fn(): array => $this->jobs($db, $pages['jobs']));
@@ -51,6 +53,7 @@ final class IntegrationStatusController extends PilotController
         }
         return $this->render('@app/app/YiiRuntime/Views/integration-status', [
             'identity' => Yii::$app->user->identity,
+            'documents' => $documents,
             'workforce' => $workforce,
             'equipment' => $equipment,
             'jobs' => $jobs,
