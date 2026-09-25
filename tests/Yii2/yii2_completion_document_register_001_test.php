@@ -66,6 +66,11 @@ try{
     assertSameValue(7,substr_count($second['body'],'data-object-id='),'second page remainder');
     assertSameValue(true,str_contains($all['body'],'Один дом')&&substr_count($all['body'],'Один дом')>=2,'same-address lifts remain separate rows');
     assertSameValue(true,str_contains($all['body'],'PAGE-001'),'completed case remains searchable');
+    $ordered=$f->request('GET','/pilot/completion-register?mode=pto_without_declaration&q=PAGE&page=1',[],$cookies);preg_match_all('/data-object-id="([0-9]+)"/',$ordered['body'],$orderedMatches);$actualOrder=array_map('intval',$orderedMatches[1]);
+    $expectedOrder=range(5001,5055);usort($expectedOrder,static fn(int$a,int$b):int=>[(($a-5000)%28)+1,$a]<=>[(($b-5000)%28)+1,$b]);
+    assertSameValue(array_slice($expectedOrder,0,50),$actualOrder,'default queue order uses effective PTO date then stable object identity');
+    $wildcard=$f->request('GET','/pilot/completion-register?mode=all&q=%25&page=1',[],$cookies);assertSameValue(0,substr_count($wildcard['body'],'data-object-id='),'search wildcard is escaped as literal');
+    preg_match('~<form method="get" action="/pilot/completion-register".*?</form>~s',$second['body'],$filterForm);assertSameValue(false,str_contains($filterForm[0]??'','name="page"'),'filter submit resets page while pagination URL retains filters');
     assertSameValue(false,str_contains($all['body'],'UNOPENED-NO-FACTS')||str_contains($second['body'],'UNOPENED-NO-FACTS'),'unopened case without facts excluded');
     $inconsistent=$f->request('GET','/pilot/completion-register?mode=without_pto&q=BAD-DECL&page=1',[],$cookies);
     assertSameValue(true,str_contains($inconsistent['body'],'Ошибка сведений: декларация зарегистрирована без ПТО'),'invalid fact combination is explicit');
