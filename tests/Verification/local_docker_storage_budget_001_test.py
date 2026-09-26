@@ -68,7 +68,7 @@ elif argv[:2]==['buildx','inspect']:
     elif inspect_mode=='conflicting_driver': print('Name: fmonitor2-focused'); print('Driver: docker-container'); print('Driver: docker')
 elif argv[:2]==['buildx','create']:
     print('fmonitor2-focused')
-elif argv[:2]==['buildx','build']:
+elif argv[:1]==['build'] or argv[:2]==['buildx','build']:
     tag=argv[argv.index('--tag')+1]
     known=set(images.read_text().splitlines()) if images.exists() else set(); known.add(tag); images.write_text('\\n'.join(sorted(known))+'\\n')
 elif argv[:2]==['buildx','prune']:
@@ -112,6 +112,7 @@ sys.exit(0)
 
 def base_environment(binary: pathlib.Path, trace: pathlib.Path, free: pathlib.Path) -> dict[str, str]:
     env = os.environ.copy()
+    env.pop("GITHUB_ACTIONS", None)
     env.update({
         "PATH": f"{binary}:{env['PATH']}",
             "FAKE_DOCKER_TRACE": str(trace),
@@ -180,7 +181,7 @@ for job_name in ("integration","governance"):
     steps=runtime_steps(jobs[job_name]);require(len(steps)==1 and steps[0].get("with",{}).get("buildx")=="true",f"{job_name} must opt into Buildx exactly once")
 e2e=jobs["e2e"];steps=runtime_steps(e2e)
 require(len(steps)==1 and "buildx" not in steps[0].get("with",{}),"E2E must not pay unrelated Buildx setup cost")
-require(e2e.get("timeout-minutes")==30 and e2e.get("if")=="needs.plan.outputs.full == 'true'","E2E timeout/full-mode admission changed")
+require(e2e.get("timeout-minutes")==20 and e2e.get("if")=="needs.plan.outputs.full == 'true'","E2E timeout/full-mode admission changed")
 require("continue-on-error" not in e2e,"E2E job must remain blocking")
 run_steps=[step for step in e2e["steps"] if step.get("name")=="Run e2e category once"]
 require(len(run_steps)==1 and run_steps[0].get("run")=="make test CATEGORY=e2e" and "continue-on-error" not in run_steps[0],"E2E command or failure semantics changed")
@@ -336,6 +337,13 @@ with tempfile.TemporaryDirectory() as temporary:
         require(build.count("--target")==1 and build[build.index("--target")+1]==profile,f"profile target mismatch: {profile} {build}")
         require(build[build.index("--tag")+1].startswith(f"fmonitor2-focused-{profile}:"),f"profile tag mismatch: {profile} {build}")
         require(f"org.fmonitor.profile={profile}" in build and result["profile"]==profile,f"profile label/result mismatch: {profile} {build} {result}")
+
+with tempfile.TemporaryDirectory() as temporary:
+    repo,env,trace=runner_fixture(pathlib.Path(temporary)); env["GITHUB_ACTIONS"]="true"
+    result,calls=public_run(repo,env,profile="browser")
+    classic=[call for call in calls if call[:1]==["build"]]
+    require(len(classic)==1 and not any(call[:2]==["buildx","build"] for call in calls),f"ephemeral CI must avoid local dedicated-builder policy: {calls}")
+    require("org.fmonitor.owner=focused-checks" in classic[0] and "org.fmonitor.profile=browser" in classic[0] and result["profile"]=="browser",f"CI classic build lost deterministic labels: {calls} {result}")
 
 dockerfile_text=(ROOT/"tools/delivery/Dockerfile.focused-checks").read_text()
 logical=[]
