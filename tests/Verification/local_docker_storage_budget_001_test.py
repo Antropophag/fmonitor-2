@@ -12,6 +12,7 @@ import signal
 import subprocess
 import tempfile
 import time
+import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 GUARD = ROOT / "tools/delivery/docker-storage-guard"
@@ -159,13 +160,23 @@ require(GUARD.is_file(), "INTENDED_RED: owning Docker storage guard is absent")
 require(DISPOSABLE.is_file(), "INTENDED_RED: disposable Compose lifecycle owner is absent")
 require(os.access(GUARD, os.X_OK) and os.access(DISPOSABLE, os.X_OK), "delivery owners must be executable")
 require(BUILDKIT.is_file(), "dedicated focused BuildKit configuration is absent")
-ci_lines=CI_RUNTIME.read_text().splitlines()
 pin="docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f"
-steps=[index for index,line in enumerate(ci_lines) if re.fullmatch(r"\s*-\s+uses:\s+"+re.escape(pin)+r"\s*",line)]
-require(len(steps)==1,"INTENDED_RED: CI runtime does not install pinned Buildx as one active step")
-step=steps[0];indent=len(ci_lines[step])-len(ci_lines[step].lstrip())
-end=next((index for index in range(step+1,len(ci_lines)) if len(ci_lines[index])-len(ci_lines[index].lstrip())==indent and re.match(r"\s*-",ci_lines[index])),len(ci_lines))
-require(not any(re.match(r"\s*if\s*:",line) for line in ci_lines[step+1:end]),"pinned Buildx setup must be unconditional")
+runtime=yaml.safe_load(CI_RUNTIME.read_text())
+require(runtime.get("inputs",{}).get("buildx",{}).get("default")=="false","CI runtime Buildx input must default false")
+buildx_steps=[step for step in runtime["runs"]["steps"] if step.get("uses")==pin]
+require(len(buildx_steps)==1,"INTENDED_RED: CI runtime does not install pinned Buildx as one active step")
+require(buildx_steps[0].get("if")=="inputs.buildx == 'true'","pinned Buildx setup must be opt-in")
+workflow=yaml.safe_load((ROOT/".github/workflows/quality-graph.yml").read_text())
+jobs=workflow["jobs"]
+def runtime_steps(job): return [step for step in job["steps"] if step.get("uses")=="./.github/actions/setup-runtime"]
+for job_name in ("integration","governance"):
+    steps=runtime_steps(jobs[job_name]);require(len(steps)==1 and steps[0].get("with",{}).get("buildx")=="true",f"{job_name} must opt into Buildx exactly once")
+e2e=jobs["e2e"];steps=runtime_steps(e2e)
+require(len(steps)==1 and "buildx" not in steps[0].get("with",{}),"E2E must not pay unrelated Buildx setup cost")
+require(e2e.get("timeout-minutes")==20 and e2e.get("if")=="needs.plan.outputs.full == 'true'","E2E timeout/full-mode admission changed")
+require("continue-on-error" not in e2e,"E2E job must remain blocking")
+run_steps=[step for step in e2e["steps"] if step.get("name")=="Run e2e category once"]
+require(len(run_steps)==1 and run_steps[0].get("run")=="make test CATEGORY=e2e" and "continue-on-error" not in run_steps[0],"E2E command or failure semantics changed")
 for expected in ('gc = true', 'reservedSpace = "10GB"', 'maxUsedSpace = "30GB"', 'minFreeSpace = "80GB"'):
     require(expected in BUILDKIT.read_text(), f"BuildKit GC config misses {expected}")
 

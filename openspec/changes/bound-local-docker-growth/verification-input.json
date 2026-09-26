@@ -2,6 +2,8 @@
   "change": "bound-local-docker-growth",
   "planned_paths": [
     ".github/actions/setup-runtime/action.yml",
+    ".github/workflows/quality-graph.yml",
+    ".quality-graph/current-ci-manifest.json",
     "specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md",
     "tools/delivery/docker-storage-guard",
     "tools/delivery/run-disposable-compose",

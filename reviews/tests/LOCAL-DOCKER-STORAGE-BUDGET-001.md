@@ -588,3 +588,118 @@ All earlier dependency identity, immutable/read-only mounts, frozen source, Buil
 **APPROVED**
 
 Gate 3 passes for exact source `eae899508179c55012826cd2d8f5c0959ea26ec24df75a5386b9a206e50f3ea1`. The executor may add exactly one `--target "$profile"` to the guarded Buildx invocation without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## E2E timeout-policy Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI diagnosis, timeout test, workflow implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T144918Z-a7cad9eb54/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `a52262d3e46a443b0bdaadb0ec0064e7f67bf2b7`.
+- Exact candidate source: `cc800e737299f14cdc6a84fa8dbb5de3f7e5f49fc4a0a7810eaa7f3532892416`; executable source: `aac3bff5e9dcd9d492c012a6a9fe7d542c3c5cda8d157a29eb0afd7bf56306be`.
+- Snapshot patch SHA-256: `8b9a051c0f964aa70ef982dadd0f2572ba5cf4d461b904f74391f9dd71fac358`.
+- Verification-plan SHA-256: `36e18e43c6d5f77119adfc8592cc87fdc439988eb99c7122ae5885743e091ee0`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `6b56a9ffcc9a51a3b154b025f8cddb64b263faeeaaaa0ccad8c95f00287681f6`.
+- Verdict: **APPROVED**.
+
+### Assessment
+
+The test isolates the YAML block beginning at the exact `e2e` job and ending before `governance`, then requires the job-level line `timeout-minutes: 30` at exact indentation. It cannot be satisfied by changing unit, integration, governance, a step timeout, or unrelated text. The requested 30 minutes is bounded and directly supported by two same-source attempts that both reached the existing 20-minute workflow limit without any `REGRESSION_FAILURE`, while all other categories were GREEN.
+
+The correction changes execution allowance only. It does not skip E2E, mark it optional, add `continue-on-error`, change commands, retries, result collection, admission or category ownership. Existing Quality Graph workflow/report tests prohibit allow-failure behavior. Both generated `.github/workflows/quality-graph.yml` and `.quality-graph/current-ci-manifest.json` are explicit planned boundaries, and the repository's renderer/checker retains their digest synchronization.
+
+All previous Docker-storage, profile, mount, identity and CI-runtime findings remain fixed. The fresh source-bound RED exits at `INTENDED_RED: E2E CI timeout does not cover the measured full category duration`, with the current E2E block still at 20 minutes. No new blocker remains.
+
+### E2E timeout Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `cc800e737299f14cdc6a84fa8dbb5de3f7e5f49fc4a0a7810eaa7f3532892416`. The executor may update the generated E2E job timeout and synchronized manifest from 20 to exactly 30 minutes without changing admission or test behavior. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## Scoped Buildx CI setup Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the timing diagnosis, scoped CI test, workflow implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T145456Z-bfe3877b94/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `a52262d3e46a443b0bdaadb0ec0064e7f67bf2b7`.
+- Exact candidate source: `fab6fc2cf08da957d0eaa3f4c7a6159c5a2bdb754d28ba25f76710651eecaf8d`; executable source: `950bc6ef1ef7558bac20dcfa679bc7056b423a13f86ec693396009633c97c946`.
+- Snapshot patch SHA-256: `69d3c01656d55f3b1f3eb0ed809a741eae4470614c6d7af92f264717e8ffea35`.
+- Verification-plan SHA-256: `c373a8a7cfb219b57efab924c8e1e720c4b334608a9549f872ef2fdb3b4b3c2d`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `04955b8670ed4071d8f13f779ac4b03c9411c0eb5a8f992d689fbfd79815655f`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Scope assessment
+
+The proposed ownership is sound: the shared runtime input defaults false; only jobs that actually invoke focused Buildx should opt in; E2E should avoid unrelated setup overhead. The immutable action pin remains required, and the correction need not change commands, timeout, retries, skips or admission. Evidence that both same-source E2E attempts exhausted 20 minutes without regression, while the isolated sidebar flow takes about 65 seconds and other categories are GREEN, supports removing unrelated setup rather than weakening E2E.
+
+### Complete findings
+
+1. **HIGH — conditional provisioning and job opt-ins are still substring assertions, so comments/unrelated values can produce a false GREEN.** The action check uses `any("if: inputs.buildx == 'true'" in line ...)`; a comment or display value inside the step block satisfies it while the pinned action remains unconditional. Integration/governance use raw `.count("buildx: 'true'")`, so a comment or unrelated step/env value satisfies the count without passing the input to their `./.github/actions/setup-runtime` step. Conversely, the E2E assertion only excludes that substring and does not establish the actual setup-runtime input value/default application.
+
+   Parse YAML or use indentation-bounded anchored property checks. Require the pinned action step to contain exactly one active `if: inputs.buildx == 'true'`. In each job, locate exactly one `uses: ./.github/actions/setup-runtime` step and require integration/governance to have an exact nested `with: buildx: 'true'`; require E2E to have no buildx override and therefore inherit the action's exact false default. Comments, names, env and unrelated steps must not count.
+
+2. **MEDIUM — the stated no-policy-change boundary is not executable.** The new test does not assert that E2E retains the existing 20-minute timeout and has no `continue-on-error`/skip modification. An implementation can combine the scoped setup change with the previously proposed timeout increase or allow-failure and still pass this Gate 3 artifact. Within the isolated E2E block, retain exact `timeout-minutes: 20`, the existing full-mode `if`, exact E2E command and absence of `continue-on-error`; analogous existing Quality Graph tests may be reused only if they are explicitly mapped and exercise this corrected source.
+
+### RED assessment and verdict
+
+The fresh source-bound RED fails because the currently unconditional pinned action has no opt-in condition. That is a credible intended policy RED, not setup failure. It does not close the comment/unrelated-property or timeout/admission gaps above.
+
+**CHANGES_REQUESTED**
+
+Scoped Buildx CI implementation remains blocked until active YAML properties and the no-timeout/no-allow-failure boundary are executable. Preserve all prior matrices and refresh the package/RED for rereview. No workflow implementation is approved here.
+
+---
+
+## Parsed scoped Buildx CI setup Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected parsed oracle, workflow implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T145712Z-5e44395ddb/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `a52262d3e46a443b0bdaadb0ec0064e7f67bf2b7`.
+- Exact candidate source: `e1e158dd58ec902b653ea3821bcef39105d4a1127ac4e99aea0cdcc8256f080b`; executable source: `028690e7f1d4abaa9aac3515a549b36b040f37e37c29d38372c848fcb9fb24f9`.
+- Snapshot patch SHA-256: `371177b92aaa6d6814f0cc17130bc75ee52f803934a2d7f0247ddf909c61e12b`.
+- Verification-plan SHA-256: `e29e9a09e1b09bc3b25a7aabaaf9bb3118ebddcfaa9ed21c5881915dce2a47af`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Corrected storage test SHA-256: `34ced399ceb5a5ee2504f25db9050dab6a1166f77d9053d4aa7bf0e8723cd86c`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Prior findings disposition
+
+The substring/property finding is fixed. `yaml.safe_load` now verifies the exact string-false input default, exactly one exact-SHA pinned action with exact input condition, exactly one shared-runtime step per relevant job, exact nested Buildx opt-in for integration/governance, and no E2E override. Comments, names, env and unrelated steps cannot satisfy these checks. The E2E boundary also retains timeout 20, exact full-mode `if`, and exact category command; step-level `continue-on-error` is rejected.
+
+### Complete rereview findings
+
+1. **MEDIUM — job-level allow-failure remains untested.** GitHub Actions supports `continue-on-error` on the job as well as on steps. The oracle excludes it only from `run_steps[0]`; `jobs.e2e.continue-on-error: true` would preserve every asserted field, pass this test, and make E2E non-blocking contrary to the explicit no-allow-failure scope. Require `"continue-on-error" not in e2e` (or exact false, if the repository deliberately wants an explicit value) in addition to the existing step-level assertion. Retain current timeout, admission and command checks.
+
+### RED assessment and verdict
+
+The fresh source-bound RED correctly fails first because the shared action lacks the new false-default input. It proves the initial missing scoped setup behavior, while the job-level allow-failure alternative remains unobservable.
+
+**CHANGES_REQUESTED**
+
+Implementation remains blocked only on the narrow job-level E2E fail-closed assertion. All other scoped setup and prior Docker-storage findings remain fixed. No workflow implementation is approved by this verdict.
+
+---
+
+## Final scoped Buildx CI oracle Gate 3 rereview — 2026-09-26
+
+- Package resolution: the requested `20260926T145900Z-*` glob was absent; the newest correction package was `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T145857Z-40e194e2d3/package.json` and is the reviewed source.
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the oracle, workflow implementation, or evidence.
+- Exact candidate source: `5193af482c55554fa95feebc44f88b1ba0e643a29ddc504340b3324624ce629e`; executable source: `64c0936b879f0b22f0e99e36584ff869a0520974fbc0688e2cc72d1806fa817f`.
+- Snapshot: base `a52262d3e46a443b0bdaadb0ec0064e7f67bf2b7` plus snapshot patch SHA-256 `6db528ac857dea4b626938df1cc023c7f7b0358c1bfab91d4ccf7607fa171261`.
+- Verification-plan SHA-256: `d64a535494fb8c2272002b94d5b9a9dd49a732d36c416c14e3f550183617cc1d`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Final storage test SHA-256: `67795e093ec2ac2ea3dec180522b05f1a86d0e077925396da6e7691a6b56e8a2`.
+- Verdict: **APPROVED**.
+
+### Complete disposition and assessment
+
+The last finding is fixed: parsed `jobs.e2e` must not contain job-level `continue-on-error`, while the exact run step must also remain blocking. Together with the retained parsed assertions, the complete correction now requires an exact string-false action input default; one exact-SHA pinned action with exact opt-in condition; exact nested Buildx opt-ins on the sole integration/governance shared-runtime steps; no E2E override; E2E timeout 20; exact full-mode condition; exact E2E command; and no job- or command-step allow-failure.
+
+Comments, display names, env values and unrelated steps cannot satisfy the parsed properties. The scoped change therefore removes unrelated Buildx setup cost from E2E without weakening its admission, duration limit, command or failure semantics. All prior Docker-storage and CI-runtime matrices remain unchanged.
+
+The fresh exact-source RED exits because the current shared action has no false-default Buildx input, which is the intended missing behavior. No setup or sensitivity blocker remains.
+
+### Final scoped Buildx Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `5193af482c55554fa95feebc44f88b1ba0e643a29ddc504340b3324624ce629e`. The executor may implement the parsed scoped opt-in contract without changing timeout, commands or fail-closed admission. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

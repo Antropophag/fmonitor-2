@@ -299,3 +299,29 @@ All prior immutable/read-only dependency mount, relative image subpath, empty ne
 **APPROVED**
 
 Gate 5 passes for exact source `dc00d9c1a77f951f0415c0bf824cf81cf54cb396a30b588bbe89d70bb78c2eb4`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Scoped Buildx CI setup final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the scoped-CI oracle, workflow/action implementation, manifest update, Gate 3 approval, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T150241Z-c521c4fcd9/package.json`, SHA-256 `14839f5fa0c81dc7930f91aa3d4e97f8e3e8311f4d80d5cfee22c3ebd004a8a0`.
+- Exact reviewed candidate source: `5765634346d8986cd733867bac3d0955b7efc7aed8707375a0d88f3359b59608`; executable source `ec5eebadb55d3c1e5e275ba5120c01edae2cb4f0f3b1559f11a5185936f573a4`.
+- Snapshot patch SHA-256: `d87e4d7351c0275843097ce2ac7ce9309788d17436f6d4edc05cf073cd6657fa`; manifest SHA-256 `a687bb86c0bc864ce59d9d2b08ae7bd62be6bcf251190fd7177f475db510398d`.
+- Verification plan SHA-256: `536f30be3afe9861418ca7401e39d6bd592aea55bed36347eda32c9a183ce06e`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `67795e093ec2ac2ea3dec180522b05f1a86d0e077925396da6e7691a6b56e8a2`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790434905415456000-5a887e5526924600ba767878dae96d54.json`.
+
+### Findings and disposition
+
+No blocking findings remain. Parsed YAML confirms the shared composite input `buildx` is optional with exact string default `'false'`; the single immutable-pinned official Buildx action has exact condition `inputs.buildx == 'true'`. Integration and governance each have exactly one shared-runtime step with exact nested `buildx: 'true'`; E2E has exactly one shared-runtime step with no override and therefore inherits false. Comments, names, env values and unrelated steps cannot satisfy the oracle.
+
+The E2E job is otherwise byte-semantically unchanged for the reviewed policy: job timeout remains exactly 20 minutes, admission remains `needs.plan.outputs.full == 'true'`, the sole named execution step remains `make test CATEGORY=e2e`, and neither job nor command step has `continue-on-error`. No skip, retry, command, blocking or admission weakening was introduced.
+
+`.github/workflows/quality-graph.yml` and `.quality-graph/current-ci-manifest.json` are updated together under the existing renderer/checker ownership; the manifest records the corrected generated workflow digest. The scoped change removes unrelated Buildx setup only from consumers that do not invoke focused Docker builds. All prior profile-target, image mount/subpath, frozen-source, parser identity, cleanup and destructive-boundary findings remain fixed.
+
+## Scoped CI setup verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `5765634346d8986cd733867bac3d0955b7efc7aed8707375a0d88f3359b59608`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
