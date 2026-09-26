@@ -202,11 +202,11 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
         self.assertEqual(expected_source, payload["source_digest"])
         self.assertEqual(expected_source, record.get("source_digest"), "executed source evidence")
         label = run(
-            ["docker", "image", "inspect", str(record["image_digest"]), "--format", '{{index .Config.Labels "org.fmonitor.executable-source"}}'],
+            ["docker", "image", "inspect", str(record["image_digest"]), "--format", '{{index .Config.Labels "org.fmonitor.owner"}}'],
             root,
             30,
         )
-        self.assertEqual([0, expected_source], [label.returncode, label.stdout.strip()], "image/source identity")
+        self.assertEqual([0, "focused-checks"], [label.returncode, label.stdout.strip()], "dependency image owner")
         return record
 
     def test_a_b_c_i_o_clean_worktrees_origins_warm_and_isolation(self) -> None:
@@ -309,7 +309,7 @@ class ContainerComposerVisibilityTest(unittest.TestCase):
             recipe = root / "tools/delivery/Dockerfile.focused-checks"
             text = recipe.read_text()
             changed = re.sub(
-                r"RUN composer install --working-dir=(/opt/fmonitor|/workspace) --no-interaction --no-scripts",
+                r"RUN composer install --working-dir=(/opt/fmonitor(?:/composer)?|/workspace) --no-interaction --no-scripts",
                 lambda match: f"RUN mkdir -p {match.group(1)}/vendor",
                 text,
                 count=1,

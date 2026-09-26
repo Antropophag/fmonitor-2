@@ -821,12 +821,24 @@ print("FIXTURE_REACHABLE: "+boundary)
         return marker, result, summary, record
 
     def profile_environment(self, mode='run'):
+        for relative, content in (
+            ('composer.json', '{}\n'), ('composer.lock', '{}\n'),
+            ('pyproject.toml', '[project]\nname="fixture"\nversion="0"\n'),
+            ('uv.lock', 'version = 1\n'),
+        ):
+            target = self.repo / relative
+            if not target.exists():
+                target.write_text(content)
         binary = self.outer / 'bin'; binary.mkdir(exist_ok=True)
         docker = binary / 'docker'
         docker.write_text('''#!/usr/bin/env python3
 import json, os, subprocess, sys
 args=sys.argv[1:]
-if args[:1] == ['build']:
+if args[:2] == ['buildx','version']:
+    print('github.com/docker/buildx v0.32.2'); raise SystemExit(0)
+if args[:2] == ['buildx','inspect']:
+    print('Name:          fmonitor2-focused'); print('Driver:        docker-container'); raise SystemExit(0)
+if args[:1] == ['build'] or args[:2] == ['buildx','build']:
     values={}
     for i,value in enumerate(args[:-1]):
         if value == '--build-arg' and '=' in args[i+1]:
@@ -887,7 +899,7 @@ raise SystemExit(2)
         _, result, summary, record = self.profile_result(command)
         self.assertEqual('REGRESSION_FAILURE', summary['outcome'],
                          'INTENDED_RED: real wrapper argv/diagnostic admitted as behavior')
-        self.assertEqual(255, result.returncode)
+        self.assertEqual(255, result.returncode, Path(record['stderr_path']).read_text())
         diagnostic = Path(record['stderr_path']).read_text()
         self.assertIn('RUN_IN_PROFILE_RESULT', diagnostic); self.assertIn(marker, diagnostic)
         structured = json.loads(diagnostic.split('RUN_IN_PROFILE_RESULT ', 1)[1].splitlines()[0])
@@ -910,7 +922,7 @@ raise SystemExit(2)
                          str(sentinel), marker]
         _, result, summary, record = self.profile_result(setup_command, 'setup-failure')
         self.assertNotEqual(0, result.returncode); self.assertNotEqual('INTENDED_RED', summary['outcome'])
-        self.assertEqual('REGRESSION_FAILURE', summary['outcome'])
+        self.assertEqual('SETUP_FAILURE', summary['outcome'])
         self.assertEqual('REGRESSION_FAILURE', record['command_verdict']); self.assertFalse(sentinel.exists())
 
         # E/J: existing direct healthy intended RED remains admitted from an independent oracle file.

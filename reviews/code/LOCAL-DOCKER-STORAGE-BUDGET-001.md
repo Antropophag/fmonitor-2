@@ -85,3 +85,78 @@ No blocking findings remain in the correction delta or the previously reviewed u
 **APPROVED**
 
 Gate 5 passes for exact source `3f225a111bc4a9ec578bd3c036c8d8ecffb7fcfee0d4b3bc77e5061a7bea4382`. This approval does not assert CI GREEN or PR-ready status: the single planner-selected exact-source CI run remains mandatory and pending.
+
+---
+
+## Post-rebase CI-correction final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the rebase resolution, corrected regression expectations, Gate 3 approval, parser implementation, or CI evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110139Z-d97396f5a0/package.json`, SHA-256 `6d84ce9698bd07ba2320a17a9db063c82feae6fbad0e371ed53e6a23395d9c5a`.
+- Rebased base: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head at preparation `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact reviewed candidate source: `d2ef96a009b2295938b0c7a6f57ba062b72edba24acb173ddc4efbb717ad330b`; executable source `3b187b6a9d06d1b4bcd7b874203c072c83405c7755286c6373a9738c5588999b`.
+- Reconstructible snapshot: `snapshot/source.patch`, SHA-256 `14d10bffc3b247be3178268e9ac3cf3a919e9a319c88b4b64723a111b0b42bca`; manifest SHA-256 `5bcbcba028e5b12bbca957ae941ffa72ec30abb440061d88c73596b74300c283`.
+- Delta from previous final snapshot: `delta.patch`, SHA-256 `54100a9540b2e61823dcd420ba7a1e191a351e8134c58d8eebe9ebe318389a95`.
+- Verification plan SHA-256: `10e08088e798dd538c10ca8eed53b8f49f439a7eabacd521eaa0e9e978501be4`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Current storage regression SHA-256: `c3a9a2455afef0fa70cbc7f641880c2ea858d9c8aace88646180f6ca06e119ef`.
+- Supplied exact-source focused evidence: `python3 tests/Verification/local_docker_storage_budget_001_test.py` GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790420444229205000-007ab0fb42b94ae6beac89e81f32eba1.json`.
+
+### Scope and prior findings disposition
+
+- The rebase itself preserves the Docker-storage candidate over new base `fd75b584...`; unrelated #258 application bytes visible in the cross-snapshot delta are inherited base history rather than authored scope in this candidate.
+- Previous final F1 remains fixed: dependency-only image identity, exact isolated read-only frozen-source mount, honest execution provenance, and the broad source-embedding oracle are unchanged.
+- Previous final F2 remains correctly dispositioned: the appended independent Gate 3 approval covers the root-authored changed regression expectations before the executor parser correction. Exact-source CI remains a later mandatory obligation and the recorded failed run is not GREEN.
+- The root regression changes correctly replace obsolete source-image labels with dependency-image ownership/frozen-source evidence, add missing Buildx capability behavior to old fixtures, preserve setup-versus-regression classification, and make dependency manifests reachable. The aligned `Name:`/`Driver:` fixture is sensitive to the real CI failure. No cleanup selector, threshold, lock, concurrency, diagnostics, disposable teardown, or provenance safety expectation was weakened.
+
+### Complete findings
+
+1. **HIGH — the purported top-level Buildx parser accepts indented/nested identity fields and ambiguous duplicates.** Location: `tools/delivery/docker-storage-guard:66-74`; missing negative cases in `tests/Verification/local_docker_storage_budget_001_test.py:48-52,152-173`.
+
+   The correction must tolerate alignment whitespace after `Name:` and `Driver:`, but its regex also permits arbitrary leading spaces/tabs. It then uses `setdefault`, so the first matching pair wins and later contradictory top-level values are ignored. Thus output containing only indented/nested `Name: fmonitor2-focused` and `Driver: docker-container`, or an exact first pair followed by conflicting duplicates, is accepted as the dedicated builder identity. This contradicts the delivery record's claim that top-level fields are normalized and weakens LDB001-F/J's fail-closed dedicated-builder boundary. In particular, accepting an unproven driver can authorize cache maintenance against a builder that was not established as the dedicated `docker-container` builder.
+
+   Correction: parse only unindented top-level `Name:` and `Driver:` keys while allowing horizontal alignment whitespace after the colon; require exactly one non-empty occurrence of each and exact values `fmonitor2-focused` / `docker-container`. Reject missing, indented-only, duplicate, conflicting, or extra-value identity records before cleanup/build. Add deterministic negative public-guard cases for those shapes while retaining the real aligned-output GREEN witness. Because these are new safety expectations, refresh the planner/Gate 3 binding before another implementation correction review.
+
+### CI state
+
+The complete recorded failed-job and `REGRESSION_FAILURE` inventories for run `36235533985` were inspected. They support the aligned-output/legacy-fixture diagnosis but remain FAILURE evidence, not admission. A corrected exact-source CI continuation is still required after review approval; no retry is authorized or treated as GREEN by this verdict.
+
+## Post-rebase correction verdict
+
+**CHANGES_REQUESTED**
+
+Gate 5 does not pass for exact source `d2ef96a009b2295938b0c7a6f57ba062b72edba24acb173ddc4efbb717ad330b`. No implementation was changed by this reviewer.
+
+---
+
+## Final Buildx parser security-correction rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the approved identity matrix, parser correction, prior CI-fixture corrections, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T111155Z-18fe3560fe/package.json`, SHA-256 `a0b60bce84327a1992d9951bb3bb48a5c23b9cc9ecc9e495bc0efc087ab1c2ef` at final inspection.
+- Rebased base: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact reviewed candidate source: `fdb3470275bbf8f78c2598bdd03afe746c35b1f132fa13c55618cd412955643d`; executable source `e6e357db4f5da4c674f9ae5a294592a576852566dc37c482351bc69b3526ca63`.
+- Reconstructible snapshot patch SHA-256: `e4d8694b8b93ea21bafe122c4eedae65c1c1fc31cf3747b8edb9f80de0a3216a`; manifest SHA-256 `5f1a7ad65271a04dc32517042300d357cd2168af7cfacd6eaf3f4fd0f5cea676`.
+- Verification plan SHA-256: `12bc98321348245103155c58782ffb2f843c3c6743502e98b00ffdea0200c527`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `a03970ae66ba220426c53f4666c836a8a5be6ed28db40d47433fedb47e4d6c8d`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790421063337992000-ca07cc979519493697f7370e0297dcc7.json`.
+- Review-only checks: Python syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Complete prior-findings disposition
+
+- Original final-review provenance F1 remains fixed: dependency-only image identity, no source-derived build metadata, exact isolated frozen source mounted once read-only, and independently derived execution provenance remain unchanged.
+- Original procedural F2 remains correctly dispositioned: Gate 3 owns pre-implementation expectations, Gate 5 owns exact implementation, and exact-source CI remains a separate post-review admission obligation.
+- Rebased CI fixture corrections remain approved and unchanged: real aligned Buildx output is modeled, legacy wrappers provide required Buildx capability, dependency fixtures reach the guarded seam, and obsolete source-in-image expectations stay replaced by dependency-image/frozen-source evidence.
+- The post-rebase parser HIGH is **fixed**. `ensure_builder()` now matches only unindented `Name:` and `Driver:` lines, tolerates alignment whitespace only after the colon, collects every occurrence, and proceeds only when the complete dictionary is exactly `{"Name": ["fmonitor2-focused"], "Driver": ["docker-container"]}`. Missing, empty, foreign, indented-only, duplicate-same and conflicting values therefore fail closed before cleanup/build.
+- The independently approved matrix is complete on both axes: it retains the real aligned valid pair and separately rejects missing-all, missing Name, missing Driver, wrong Name, wrong Driver, empty Name, empty Driver, indented identity, duplicate/conflicting Name and duplicate/conflicting Driver. Every negative requires exactly Buildx version/inspect calls and structured `unsupported_buildx`, with no maintenance or build effect.
+
+### Complete findings
+
+No blocking findings remain. The correction is bounded to the approved exact-identity parser and does not weaken selectors, thresholds, locking, concurrency, diagnostics, disposable teardown, provenance, or architecture ownership.
+
+### CI state
+
+The prior run `36235533985` remains FAILURE evidence for the superseded source and is not treated as GREEN. A planner-authorized exact-source CI continuation for this corrected candidate remains mandatory before overall GREEN/PR-ready status.
+
+## Final security-correction verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `fdb3470275bbf8f78c2598bdd03afe746c35b1f132fa13c55618cd412955643d`. This approval does not assert CI GREEN, merge readiness, or deployment authorization.

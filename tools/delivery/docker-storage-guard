@@ -7,6 +7,7 @@ import fcntl
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -62,7 +63,14 @@ def ensure_builder() -> None:
         ["docker", "buildx", "inspect", BUILDER], text=True, capture_output=True
     )
     if inspected.returncode == 0:
-        if f"Name: {BUILDER}" not in inspected.stdout or "Driver: docker-container" not in inspected.stdout:
+        fields: dict[str, list[str]] = {"Name": [], "Driver": []}
+        for match in re.finditer(
+            r"^(Name|Driver):[ \t]*(.*?)[ \t]*$",
+            inspected.stdout,
+            re.MULTILINE,
+        ):
+            fields[match.group(1)].append(match.group(2))
+        if fields != {"Name": [BUILDER], "Driver": ["docker-container"]}:
             raise RuntimeError("unexpected builder identity")
         return
     config = pathlib.Path(__file__).with_name("buildkitd.focused.toml")

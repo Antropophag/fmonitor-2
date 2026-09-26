@@ -238,3 +238,125 @@ The retained intended RED is bound to exact candidate `30e04c90d321decf95b14e6ef
 **APPROVED**
 
 Gate 3 passes for exact source `30e04c90d321decf95b14e6ef6faab87eab07800532dbb29b44d7da8842b3ba2`. The executor may correct implementation against this package without changing the approved specification/test expectations. Focused GREEN, renewed independent final review, exact-source CI and publication remain pending and are not implied by this approval.
+
+---
+
+## Post-rebase CI-correction Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the rebased implementation, corrected tests, CI inventory, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T105232Z-93404c8ab5/package.json`.
+- Rebased baseline: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head at preparation: `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact test-correction candidate source: `2327b21d9bd37d4adde2310aa639ad549bc96dfa5ec972b0585bcd7305d6eea9`; executable source: `a38dee50ad6e0bb51033bc8af856e3f59911dd509ff059e389eeabebb78439d6`.
+- Reconstructible snapshot: base `728d15f2912ce063b2f8ad15b108c0b3490bd1d5` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T105232Z-93404c8ab5/snapshot/source.patch`, SHA-256 `4e290b1dec13272c511d8631a5f2f4a26cb18918a63e9ce956c4a9ce435ae589`.
+- Verification-plan SHA-256: `2f2d0915ae0c7e47476eab1cdcc508c055774c965324905dbea8e1df358f623c`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Reviewed test bindings: storage contract `c3a9a2455afef0fa70cbc7f641880c2ea858d9c8aace88646180f6ca06e119ef`; container composition `7a2a06555b3e45c9703240bb30eccd9262f768bc042664f786ad27484b3ed350`; delivery harness `474b099bd7993747ae6294d0248959f5a4caf647f38b3bfd9828784ef17bb2aa`; focused cache `0f684a5d61ea7b7c83d0cea076a845e5c5e7016143291fbadf16340d5405d39a`; registered bootstrap `0d029529e58119e3c9a599528d1278298778ea53d4166894ea6b4679237c7edf`.
+- Verdict: **APPROVED**.
+
+### Complete findings disposition
+
+- All earlier A–N, dependency identity, frozen-source mount, provenance, cleanup, diagnostic, concurrency and disposable-lifecycle findings remain fixed; none of those expectations is weakened by this correction.
+- The CI-exposed Buildx finding is correctly covered. `local_docker_storage_budget_001_test.py` now emits the aligned field format used by real `docker buildx inspect`; the unchanged production guard's strict single-space parser rejects it with structured reason `unsupported_buildx`. This is a behavior RED at the public guard seam, not fixture failure, and is sensitive to a parser that tolerates ordinary field whitespace while still requiring exact builder name and `docker-container` driver.
+- `registered_yii2_focused_bootstrap_001_test.py` and `delivery_harness_001_test.py` now provide the Buildx version/inspect capability that the real wrapper legitimately requires. Their failure modes remain explicit; richer retained stderr improves diagnosis without changing acceptance semantics.
+- `focused_check_cache_180_test.py` and `container_composer_visibility_123_a_test.py` remove obsolete source-in-image label expectations and instead require the approved dependency-only image owner plus frozen source mount/execution provenance. These are traceable corrections to the approved A/B model, not expectation weakening.
+- The four minimal dependency manifests added only when absent make harness fixtures reach the dependency-hash seam. Copying `.gitignore` into the isolated storage fixture stabilizes tracked source capture and does not hide contract inputs. The planner now maps every changed regression test as a focused obligation.
+- The harness classification correction from `REGRESSION_FAILURE` to `SETUP_FAILURE` for an intentionally failed dependency build preserves the established rule that failure before child behavior is not intended RED; the retained command verdict stays `REGRESSION_FAILURE`.
+
+### RED assessment
+
+The retained record is bound to exact candidate `2327b21d9bd37d4adde2310aa639ad549bc96dfa5ec972b0585bcd7305d6eea9`, exits `1`, and fails at the sufficient-space path with `DOCKER_STORAGE_GUARD ... outcome=rejected, reason=unsupported_buildx`. The fake reached Buildx version and real-spacing inspect output, so the failure isolates the production parser defect. No production correction is included in this review source, as required.
+
+### Post-rebase Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `2327b21d9bd37d4adde2310aa639ad549bc96dfa5ec972b0585bcd7305d6eea9`. The executor may make the bounded Buildx whitespace correction against this reviewed package without changing approved expectations. Focused GREEN, refreshed final review and any authorized exact-source CI continuation remain separate mandatory evidence and are not implied here.
+
+---
+
+## Buildx identity security-correction Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the security finding, refreshed test, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110523Z-29522e7773/package.json`.
+- Rebased baseline: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head: `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact test candidate source: `606c249a25cce33750a9d9b506df6b5421b922ced72fa1be948d9f1defbb5148`; executable source: `96be9fd11fbc883fcb0c4631d415b2dc707d130c1a5b796d6da10c5110b954df`.
+- Snapshot: base `728d15f2912ce063b2f8ad15b108c0b3490bd1d5` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110523Z-29522e7773/snapshot/source.patch`, SHA-256 `2baaeab39194258eb1ba2687c6c5c5765394c02451a0756c77543829539516c6`.
+- Verification-plan SHA-256: `7b54d68f6c76a3d6ab174a6355acc43de0091f9c5f501de0aff8862045256424`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `d7f95efeebdbd9589c2781fb306df65b735b1dbd70076edd4002093f10e877aa`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Prior findings disposition
+
+All previously approved A–N matrices and the post-rebase CI-fixture corrections remain fixed. The new valid aligned top-level case preserves sensitivity to the real Buildx output. Missing-all, indented-only, duplicate-same `Name`, and conflicting duplicate `Name` correctly require rejection after exactly version/inspect and before cleanup/build.
+
+### Complete findings
+
+1. **HIGH — the security matrix proves uniqueness/exactness only for `Name`, so an implementation that does not validate `Driver` can pass.** `tests/Verification/local_docker_storage_budget_001_test.py:51-56,182-185` supplies both valid fields together, removes both together in `missing`, indents both together, and expresses both duplicate cases only by duplicating `Name`. The Gate 5 correction explicitly requires exactly one non-empty top-level occurrence of **each** key with exact values. A parser that strictly validates `Name` but ignores `Driver` or defaults it to `docker-container` rejects every current negative fixture and accepts the positive fixture. It can therefore authorize maintenance for an unproven driver while the test remains GREEN.
+
+   Add independently distinguishable cases for valid Name with missing Driver, valid Driver with missing Name, a single wrong Driver, duplicate-same Driver, and conflicting duplicate Driver. Each must assert the exact `[buildx version, buildx inspect]` trace, non-zero result, no cleanup/build, and the stable safe rejection reason. Retain the current top-level/indentation/Name-duplicate cases.
+
+### RED assessment and verdict
+
+The retained RED is exact-source bound and correctly reaches the new public guard matrix. It fails on `indented` because the current executor parser admits the nested fields and starts build, which is a valid intended security RED rather than setup failure. It cannot establish the uncovered Driver axis.
+
+**CHANGES_REQUESTED**
+
+The executor security correction remains blocked until the test independently proves presence, exactness and uniqueness for both identity fields. Preserve all previous coverage, retain fresh source-bound RED, regenerate the package, and request bounded Gate 3 rereview. No production change is approved by this verdict.
+
+---
+
+## Buildx Driver-axis Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected matrix, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110724Z-9758b27d23/package.json`.
+- Exact candidate source: `42ba53b54c6a27067687ce7682118f7b95d8ed19b965caa865e976d37939efaa`; executable source: `a108f96bb552dcf5a173e0a9c10edbb4f83c8106f1e5d4c29a954193db499b00`.
+- Snapshot: base `728d15f2912ce063b2f8ad15b108c0b3490bd1d5` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110724Z-9758b27d23/snapshot/source.patch`, SHA-256 `42f389ded9207aa98927eb6e82e4755b045881d391bc3b370a61e7fe739523e8`.
+- Verification-plan SHA-256: `5866406a88351274ac29635ed947f6f1b6359b09c391a1964e2a52a68772aea2`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Corrected storage test SHA-256: `0ce3bc59dec06521fc889fcf40e03764b83d4260fc3c4d91b1c35f5e3439f107`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Prior finding disposition
+
+The prior Driver-axis finding is fixed: missing Name, missing Driver, wrong Driver, duplicate-same Driver and conflicting Driver are now independently rejected, alongside the retained missing-all, indented and Name-duplicate cases. Every negative requires only Buildx version/inspect calls and structured `outcome=rejected`, `reason=unsupported_buildx`.
+
+### Complete rereview findings
+
+1. **HIGH — exact and non-empty `Name` remains independently untested.** There is no single top-level wrong-Name fixture. The `conflicting` case has two Name occurrences, so a parser that rejects duplicates but accepts any single Name value passes it. Such a parser can accept `Name: foreign` with exact `Driver: docker-container` and authorize maintenance against the wrong builder. Likewise, the Gate 5 requirement says each occurrence must be non-empty, but empty `Name:` and empty `Driver:` are not distinguished from absent fields; a parser that defaults an empty present value can pass all current cases.
+
+   Add single wrong-Name, empty-Name and empty-Driver fixtures. Require for each the same exact version/inspect-only trace and stable structured `unsupported_buildx` rejection. Retain the now-complete Driver and duplicate axes.
+
+### RED assessment and verdict
+
+The fresh exact-source RED remains credible and fails on the intentionally admitted indented identity before build. It does not make a lone foreign/empty identity observable.
+
+**CHANGES_REQUESTED**
+
+The executor correction remains blocked on the three narrow Name/non-empty cases. All other prior findings remain fixed. No production implementation is approved by this verdict.
+
+---
+
+## Final Buildx identity-matrix Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected matrix, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110900Z-a8aacdbb9c/package.json`.
+- Exact candidate source: `e451965c220b3e35069767550d725acad237b99b8b68f486d5610e5490629999`; executable source: `d9198a37e70266cebf610a6e71d679316fa15f2a5c5a953a1f01278d926c6368`.
+- Snapshot: base `728d15f2912ce063b2f8ad15b108c0b3490bd1d5` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110900Z-a8aacdbb9c/snapshot/source.patch`, SHA-256 `90be664289c59d083c78c114a2906076f25e43e87623bd915b449060a4b81279`.
+- Verification-plan SHA-256: `c722b35b93b37cf677545f9cba12bb4ff6d67fc20b48ac46b408437bd2358e41`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Final storage test SHA-256: `a03970ae66ba220426c53f4666c836a8a5be6ed28db40d47433fedb47e4d6c8d`.
+- Verdict: **APPROVED**.
+
+### Complete findings disposition
+
+- All previously approved A–N, dependency/provenance, frozen-source, cleanup, concurrency, diagnostics, disposable lifecycle and post-rebase fixture expectations remain fixed.
+- The original Buildx identity finding is fully covered. The matrix has a real aligned valid top-level pair and independently rejects missing-all, missing Name, missing Driver, single wrong Name, single wrong Driver, empty Name, empty Driver, indented-only identity, duplicate-same Name, conflicting Name, duplicate-same Driver, and conflicting Driver.
+- Every negative case requires a non-zero result after exactly `buildx version` and `buildx inspect`, with no cleanup/build effect, plus stable structured `outcome=rejected` and `reason=unsupported_buildx`. An implementation must therefore prove exactly one non-empty unindented occurrence of each field with exact values `fmonitor2-focused` and `docker-container`.
+- The prior Driver-axis and wrong/empty-Name findings are fixed. No new sensitivity or setup-isolation gap was found.
+
+### RED assessment
+
+The fresh record is bound to exact candidate `e451965c220b3e35069767550d725acad237b99b8b68f486d5610e5490629999`, exits `1`, and fails because the current executor admits the indented identity and proceeds to build. This is the intended missing fail-closed behavior, not a fixture failure. Earlier negative cases are reached first and rejected correctly; the failing case demonstrates the remaining implementation defect.
+
+### Final identity-matrix verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `e451965c220b3e35069767550d725acad237b99b8b68f486d5610e5490629999`. The executor may implement the bounded top-level exact-identity parser without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

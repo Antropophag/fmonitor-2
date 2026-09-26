@@ -70,4 +70,13 @@
 - F1 fixed: dependency-only image, no source-derived build metadata, exact isolated frozen source mounted once read-only at `/workspace`; the A/B oracle independently witnesses mounted marker/digest and rejects broad source COPY/ADD.
 - F2 disposition: refreshed Gate 3 approves the unchanged current test expectations; code correctness is covered by exact Gate 5. Exact-source CI remains pending and is still required before overall GREEN/PR-ready.
 
+## Rebase and CI correction — 2026-09-26
+
+- PR #283 initially conflicted after `main` advanced through PR #282. Candidate was rebased from `708e0a6d` to `fd75b584`; the sole textual conflict was `current-delivery-goal.md`, resolved in favor of this explicit current assignment while preserving completed #258 in Git history.
+- Obsolete manual run `36234250710` on the old base was cancelled after complete inventory: governance/unit failed, integration/e2e were cancelled; it is not admission evidence.
+- Exact PR run `36235533985` on rebased head `728d15f2` completed failure inventory: `unit`, `Integration (1/2)`, and `governance` failed; `Integration (2/2)` and fast passed; e2e was cancelled by aggregate failure.
+- `REGRESSION_FAILURE` inventory: `delivery_harness_001_test.py`, `canonical_integration_runtime_001_test.py`, `quality_graph_ci_setup_001_test.php`, `container_composer_visibility_123_a_test.py`, `focused_check_cache_180_test.py`, `local_docker_storage_budget_001_test.py`, `registered_yii2_focused_bootstrap_001_test.py`.
+- Root cause: exact Buildx builder output aligns `Name:`/`Driver:` values with spaces; the guard used a literal one-space substring and rejected a valid builder as `unsupported_buildx`. Legacy focused fixtures also modeled pre-guard Docker argv and source-specific image labels.
+- Gate 3 approved the corrected regression fixtures. Executor `/root/docker_growth_executor` changed only the guard parser to normalize top-level fields while retaining exact builder/driver equality and fail-closed behavior.
+
 Full logs and destructive-operation evidence remain outside the checkout under the delivery harness evidence root. UNKNOWN is not GREEN.

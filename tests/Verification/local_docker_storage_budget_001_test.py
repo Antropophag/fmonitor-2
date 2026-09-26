@@ -48,7 +48,20 @@ for prefix in os.environ.get('FAKE_DOCKER_FAIL_PREFIXES','').split('|'):
 if argv[:2]==['buildx','version']:
     print('github.com/docker/buildx v0.32.2')
 elif argv[:2]==['buildx','inspect']:
-    print('Name: fmonitor2-focused'); print('Driver: docker-container')
+    inspect_mode=os.environ.get('FAKE_BUILDX_INSPECT_MODE','valid')
+    if inspect_mode=='valid': print('Name:          fmonitor2-focused'); print('Driver:        docker-container')
+    elif inspect_mode=='missing': print('Nodes:')
+    elif inspect_mode=='missing_name': print('Driver: docker-container')
+    elif inspect_mode=='missing_driver': print('Name: fmonitor2-focused')
+    elif inspect_mode=='wrong_name': print('Name: foreign'); print('Driver: docker-container')
+    elif inspect_mode=='wrong_driver': print('Name: fmonitor2-focused'); print('Driver: docker')
+    elif inspect_mode=='empty_name': print('Name:   '); print('Driver: docker-container')
+    elif inspect_mode=='empty_driver': print('Name: fmonitor2-focused'); print('Driver:   ')
+    elif inspect_mode=='indented': print('  Name: fmonitor2-focused'); print('  Driver: docker-container')
+    elif inspect_mode=='duplicate': print('Name: fmonitor2-focused'); print('Name: fmonitor2-focused'); print('Driver: docker-container')
+    elif inspect_mode=='conflicting': print('Name: fmonitor2-focused'); print('Name: foreign'); print('Driver: docker-container')
+    elif inspect_mode=='duplicate_driver': print('Name: fmonitor2-focused'); print('Driver: docker-container'); print('Driver: docker-container')
+    elif inspect_mode=='conflicting_driver': print('Name: fmonitor2-focused'); print('Driver: docker-container'); print('Driver: docker')
 elif argv[:2]==['buildx','create']:
     print('fmonitor2-focused')
 elif argv[:2]==['buildx','prune']:
@@ -174,6 +187,12 @@ for measurement in ("", "-1", "not-a-number"):
 with tempfile.TemporaryDirectory() as temporary:
     result, calls = run_guard(pathlib.Path(temporary), 60 * GIB, FAKE_DOCKER_FAIL_PREFIXES="buildx version")
     require(result.returncode != 0 and calls == [VERSION], "unsupported Buildx must fail before inspect/build")
+for inspect_mode in ("missing","missing_name","missing_driver","wrong_name","wrong_driver","empty_name","empty_driver","indented","duplicate","conflicting","duplicate_driver","conflicting_driver"):
+    with tempfile.TemporaryDirectory() as temporary:
+        result,calls=run_guard(pathlib.Path(temporary),60*GIB,FAKE_BUILDX_INSPECT_MODE=inspect_mode)
+        require(result.returncode!=0 and calls==[VERSION,INSPECT],f"ambiguous/non-top-level builder identity admitted: {inspect_mode} {calls}")
+        rejection=tagged("DOCKER_STORAGE_GUARD ",result.stderr)[-1]
+        require(rejection["reason"]=="unsupported_buildx" and rejection["outcome"]=="rejected",f"unstable builder rejection: {inspect_mode} {rejection}")
 with tempfile.TemporaryDirectory() as temporary:
     root = pathlib.Path(temporary); blocker = root / "not-directory"; blocker.write_text("x")
     binary, trace, free = fake_tools(root); free.write_text(str(40 * GIB)); env = base_environment(binary, trace, free)
@@ -241,6 +260,7 @@ def runner_fixture(root: pathlib.Path) -> tuple[pathlib.Path, dict[str,str], pat
     shutil.copytree(ROOT/"tools/delivery",repo/"tools/delivery")
     for name in ("composer.json","composer.lock","pyproject.toml","uv.lock"):
         shutil.copy2(ROOT/name, repo/name)
+    shutil.copy2(ROOT/".gitignore",repo/".gitignore")
     (repo/"marker.txt").write_text("source-a\n")
     subprocess.run(["git","init","-q"],cwd=repo,check=True); subprocess.run(["git","config","user.email","fixture@example.test"],cwd=repo,check=True); subprocess.run(["git","config","user.name","Fixture"],cwd=repo,check=True)
     subprocess.run(["git","add","."],cwd=repo,check=True); subprocess.run(["git","commit","-qm","A"],cwd=repo,check=True)

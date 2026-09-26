@@ -59,7 +59,11 @@ if args[:1] in (["version"],["info"]):
     if mode == "docker-unavailable":
         print("daemon unavailable",file=sys.stderr);raise SystemExit(70)
     print("fake docker");raise SystemExit(0)
-if args[:1] == ["build"]:
+if args[:2] == ["buildx","version"]:
+    print("github.com/docker/buildx v0.32.2");raise SystemExit(0)
+if args[:2] == ["buildx","inspect"]:
+    print("Name:          fmonitor2-focused");print("Driver:        docker-container");raise SystemExit(0)
+if args[:1] == ["build"] or args[:2] == ["buildx","build"]:
     if mode in ("docker-unavailable","dependency-failure"):
         print("dependency build failed",file=sys.stderr);raise SystemExit(71)
     values={}
@@ -368,8 +372,8 @@ raise SystemExit(75)
                 )
 
             first = execute()
-            self.assertEqual(0, first.returncode, first.stderr)
             first_record = json.loads(Path(json.loads(first.stdout)["record_path"]).read_text())
+            self.assertEqual(0, first.returncode, Path(first_record["stderr_path"]).read_text())
             second = execute()
             self.assertEqual(0, second.returncode, second.stderr)
             second_record = json.loads(Path(json.loads(second.stdout)["record_path"]).read_text())
