@@ -120,25 +120,6 @@ build_command=(docker buildx build --builder fmonitor2-focused --load --target "
         --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
         --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
         --file "$recipe" "$materialized")
-if [[ "${GITHUB_ACTIONS:-}" == true ]]; then
-    build_command=(docker build --target "$profile" --tag "$image" \
-        --label "org.fmonitor.owner=focused-checks" \
-        --label "org.fmonitor.profile=$profile" \
-        --label "org.fmonitor.dependency-digest=$recipe_hash" \
-        --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
-        --build-arg "PHP_IMAGE=$PHP_IMAGE" \
-        --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
-        --build-arg "NODE_VERSION=$NODE_VERSION" \
-        --build-arg "NODE_BOOKWORM_IMAGE_DIGEST=$NODE_BOOKWORM_IMAGE_DIGEST" \
-        --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
-        --build-arg "PYTHON_IMAGE_DIGEST=$PYTHON_IMAGE_DIGEST" \
-        --build-arg "COMPOSER_VERSION=$COMPOSER_VERSION" \
-        --build-arg "COMPOSER_IMAGE_DIGEST=$COMPOSER_IMAGE_DIGEST" \
-        --build-arg "UV_VERSION=$UV_VERSION" \
-        --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
-        --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
-        --file "$recipe" "$materialized")
-fi
 inspect_image() {
     docker image inspect --format '{{.Id}}|{{index .Config.Labels "org.fmonitor.owner"}}|{{index .Config.Labels "org.fmonitor.profile"}}|{{index .Config.Labels "org.fmonitor.dependency-digest"}}' "$image"
 }
@@ -148,14 +129,10 @@ $image_metadata
 EOF
 fi
 if [[ -z "${image_digest:-}" || "${image_owner:-}" != focused-checks || "${image_profile:-}" != "$profile" || "${image_dependency:-}" != "$recipe_hash" ]]; then
-    if [[ "${GITHUB_ACTIONS:-}" == true ]]; then
-        "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
-    else
-        "$materialized/tools/delivery/docker-storage-guard" build \
-            --profile "$profile" --image "$image" --dependency-digest "$recipe_hash" \
-            --lock-path "${FMONITOR_DOCKER_STORAGE_LOCK_PATH:-${TMPDIR:-/tmp}/fmonitor2-focused-storage.lock}" \
-            -- "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
-    fi
+    "$materialized/tools/delivery/docker-storage-guard" build \
+        --profile "$profile" --image "$image" --dependency-digest "$recipe_hash" \
+        --lock-path "${FMONITOR_DOCKER_STORAGE_LOCK_PATH:-${TMPDIR:-/tmp}/fmonitor2-focused-storage.lock}" \
+        -- "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
     image_digest=$(docker image inspect --format '{{.Id}}' "$image") || exit 2
 fi
 
