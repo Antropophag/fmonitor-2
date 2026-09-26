@@ -50,7 +50,7 @@ try{
     $f->insert($f->p.'fm2_pilot_completion_facts',['installation_case_id'=>8001,'fact_type'=>'declaration','fact_date'=>'2026-09-01','details'=>'DECL-WITHOUT-PTO','recorded_at'=>'2026-09-10 09:00:00','recorded_by_user_id'=>18]);
     $clone($f,$f->p.'fm_maintable',['id'=>6002,'regnumber'=>'UNOPENED-NO-FACTS','ordadr_address'=>'Ещё не открыт','entrance'=>'2'],'id=4512');
     $clone($f,$f->p.'fm2_installation_cases',['id'=>8002,'legacy_installation_object_id'=>6002,'opened_at'=>null,'actual_start_date'=>null],'id=6101');
-    $f->start();
+    $f->start(['FMONITOR_NOW'=>'2026-09-25T12:00:00+03:00']);
     $guest=[];
     assertSameValue(303,$f->request('GET','/pilot/completion-register',[],$guest)['status'],'guest redirected');
     $cookies=[];assertSameValue(303,$f->login($cookies,95)['status'],'reader login');

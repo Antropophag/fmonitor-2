@@ -246,3 +246,34 @@ No full local suite was run:
 - `git diff --check` — PASS
 
 Reported executor deployment/verification/architecture checks are consistent with this review; the one transient Docker diagnostic was rerun GREEN and is not promoted here beyond the independent focused evidence above. Exact-source CI remains required before merge. Deploy remains unauthorized.
+
+---
+
+## Hotfix CI-correction Gate 5 rereview — 2026-09-26
+
+Verdict: **APPROVED**
+
+Reviewed the exact two-file dirty correction on committed PR head `8a51cd614cedb41f6b5943c9bb041ba77d3df986` in `/private/tmp/fmonitor-forecast-hotfix`. Before this review-only append, the only working-tree changes were `tests/Yii2/installer_utilization_observations_browser.mjs` and `tests/Yii2/yii2_completion_document_register_001_test.php`; there is no production, normative-spec, persistence, or migration delta.
+
+The complete failed inventory for exact-source CI run `36228988444` contains three failed jobs (`e2e`, downstream `verify`, downstream `Quality Graph`) and exactly two primary `REGRESSION_FAILURE` paths in `e2e`:
+
+1. `tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php` still expected the intentionally removed historical dashboard chart.
+2. `tests/Yii2/yii2_completion_document_register_001_test.php` used the moving current clock and crossed from 2026-09-25 to 2026-09-26, changing the expected age from 55 days.
+
+No additional primary failure is omitted. Downstream failures are consequences of the e2e gate and are not independently reclassified as GREEN.
+
+### No-masking assessment
+
+- The observations browser no longer searches for dashboard controls that the approved hotfix deliberately removed. It now requires exactly one `data-dashboard-chart="utilization"` forecast widget, six forecast weeks, 30 forecast values, and absence of the historical dashboard DOM markers. It then directly opens both saved observation detail routes and verifies immutable saved members/reasons. Thus it preserves browser-level observation-storage/detail coverage while aligning the dashboard oracle with the replacement contract.
+- Removed focus, keyboard, touch, adjacent-bar, and empty-week assertions applied only to observation bars that no longer exist on the dashboard. Forecast keyboard/touch/focus/local-overflow behavior remains independently covered by `yii2_installer_utilization_forecast_browser_001_test.php`; saved observation routes and payloads remain covered here and by the observations HTTP test. This is not a silent reduction of a still-supported surface.
+- The completion-register test pins `FMONITOR_NOW` to `2026-09-25T12:00:00+03:00`, the date assumed by its existing independently expected 55-day assertions. It changes no expected value, fixture fact, application code, or deadline calculation. The correction removes midnight/date drift rather than weakening chronology coverage.
+
+### Fresh focused evidence
+
+No full local suite was run:
+
+- `php tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php` — PASS
+- `php tests/Yii2/yii2_completion_document_register_001_test.php` — PASS
+- `git diff --check` — PASS
+
+No Gate 5 finding remains for this bounded CI correction. The corrected exact source requires a fresh CI run; run `36228988444` remains FAILURE and must not be promoted to GREEN. Deploy remains unauthorized.
