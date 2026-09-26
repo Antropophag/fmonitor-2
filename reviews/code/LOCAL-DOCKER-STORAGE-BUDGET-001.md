@@ -245,3 +245,31 @@ No blocking findings remain.
 **APPROVED**
 
 Gate 5 passes for exact source `37c80ce129c89475064d6302a8da9abc4178ca36cfb8c23d9358721457464e54`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; this review does not authorize merge or deployment.
+
+---
+
+## Relative image-subpath final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the one-token expectation/implementation correction, Gate 3 approval, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T132254Z-259247a75a/package.json`, SHA-256 `eacc4e4281679f5f354e230808be30ef4735f92ac72f4031b97cd4cb7e278a0d` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `b8aed372f307f751607ba4f3e6a0792e32d032d7478b10b486c334782b58e8d0`; executable source `d19d09cac927b6efd6d62d2d98d05493def510ed8c8ebac98e98c5f82d203836`.
+- Snapshot patch SHA-256: `6f43fae1059515c37ffc9e64a1564ed1a6a95c91b63f4be0d6897290da8cb2cd`; manifest SHA-256 `471e6f39bf75754deca7b82d69e6eb53e9e33706a0a6d44b7d973a8e242ddae8`.
+- Verification plan SHA-256: `6c77176d20208f9543f747fb6025d479e8a685a1b13a4ec969b00a42b0087952`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `58893d7757d96da8f8a631ce5113e2c287672216d4e0f07005a49c88685145c8`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790428921544172000-56480a1e058d4448ba24e9ba46a147b3.json`.
+- Review-only checks: Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and disposition
+
+No blocking findings remain. The only behavioral token changed is the Docker-required conversion from absolute `image-subpath=/opt/fmonitor/composer/vendor` to relative `image-subpath=opt/fmonitor/composer/vendor`.
+
+Every approved mount invariant remains exact: one `/workspace/vendor` mount; `type=image`; source equal to the reported immutable image digest; fixed destination; `readonly`; and the same narrow Composer vendor subtree. The source bind, three empty precreated mountpoints, source-digest witness, absence of vendor tmpfs/runtime copy, dependency identity and container read-only expectations are unchanged.
+
+The CI failure disposition is precise: the prior source reached Docker with the absolute subpath and was rejected because image subpaths must be relative. It is superseded failure evidence, not a safety finding or GREEN admission. All earlier findings remain fixed.
+
+## Relative-subpath verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `b8aed372f307f751607ba4f3e6a0792e32d032d7478b10b486c334782b58e8d0`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.

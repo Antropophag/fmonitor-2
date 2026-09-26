@@ -507,3 +507,28 @@ The fresh exact-source RED reaches the real public runner and fails on the new e
 **APPROVED**
 
 Gate 3 passes for exact source `44aed0117a1ed986dcea4a571cdeb2d22db030ad694986322129c3f1f1bdd716`. The executor may replace the writable vendor tmpfs/copy with the exact immutable read-only image-subpath mount without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## Relative image-subpath Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI diagnosis, refreshed test, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T132011Z-3e08b91ca0/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `76e54251c4f94d709dd0c7a8c593a0351bc46168`.
+- Exact candidate source: `9586d3662a90f14ed54d33c408d1c87fe2cc866d45886f4136988d6fac558846`; executable source: `e9156f56cd6056edb51c78d23dadf342a93e7d457400aeaa7e8b835ce27b4eeb`.
+- Snapshot patch SHA-256: `b04469e040f51943b65a08990a93535951ca74783ed4183b85c9792e72c7db5f`.
+- Verification-plan SHA-256: `70a654288718c74eb17dd2e331e90219af9f4474cb79e52930f1093e0658410e`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `58893d7757d96da8f8a631ce5113e2c287672216d4e0f07005a49c88685145c8`.
+- Verdict: **APPROVED**.
+
+### Assessment
+
+The sole expectation change converts `image-subpath=/opt/fmonitor/composer/vendor` to Docker's required relative `image-subpath=opt/fmonitor/composer/vendor`. Every security and ownership property remains exact: one vendor mount, `type=image`, immutable reported `image_digest` source, fixed `/workspace/vendor` destination, read-only mode, and the same narrow Composer vendor subtree. Frozen-source, empty mountpoint, digest/provenance and container read-only witnesses are unchanged.
+
+The fresh exact-source RED reaches the public runner and records the current absolute-subpath argv verbatim; it fails only because that argv differs from the required relative form. This is the intended Docker compatibility defect, not setup failure. No new finding remains.
+
+### Relative-subpath Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `9586d3662a90f14ed54d33c408d1c87fe2cc866d45886f4136988d6fac558846`. The executor may make the one-token absolute-to-relative image-subpath correction without changing other approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

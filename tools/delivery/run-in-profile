@@ -185,7 +185,7 @@ child_stdout=$execution_tmp/child.stdout
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
     --mount "type=bind,src=$materialized,dst=/workspace,readonly" \
-    --mount "type=image,src=$image_digest,dst=/workspace/vendor,readonly,image-subpath=/opt/fmonitor/composer/vendor" \
+    --mount "type=image,src=$image_digest,dst=/workspace/vendor,readonly,image-subpath=opt/fmonitor/composer/vendor" \
     ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
     --read-only \
     --tmpfs /tmp:rw,nosuid,nodev \

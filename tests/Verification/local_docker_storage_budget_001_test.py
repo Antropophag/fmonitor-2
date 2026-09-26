@@ -298,7 +298,7 @@ with tempfile.TemporaryDirectory() as temporary:
         workspace_mounts=[value for value in mounts if ",dst=/workspace," in value]
         require(len(workspace_mounts)==1 and workspace_mounts[0].endswith(",dst=/workspace,readonly") and "type=bind,src=" in workspace_mounts[0],f"runner must bind exactly one frozen source read-only: {run[0]}")
         vendor_mounts=[value for value in mounts if ",dst=/workspace/vendor," in value]
-        require(vendor_mounts==[f"type=image,src={result['image_digest']},dst=/workspace/vendor,readonly,image-subpath=/opt/fmonitor/composer/vendor"],f"runner must mount image-owned dependencies read-only: {run[0]}")
+        require(vendor_mounts==[f"type=image,src={result['image_digest']},dst=/workspace/vendor,readonly,image-subpath=opt/fmonitor/composer/vendor"],f"runner must mount image-owned dependencies read-only with a relative image subpath: {run[0]}")
         witnesses=[json.loads(line) for line in pathlib.Path(env["FAKE_RUN_WITNESS"]).read_text().splitlines()]
         expected_marker="source-a" if result is a else "source-b"
         witness=next(item for item in witnesses if item["marker"]==expected_marker)
