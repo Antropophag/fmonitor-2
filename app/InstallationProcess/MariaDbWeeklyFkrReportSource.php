@@ -69,6 +69,7 @@ final readonly class MariaDbWeeklyFkrReportSource implements WeeklyFkrReportSour
     private function project(array$row,array$workStart,array$workEnd,array$workCurrent,array$documentsStart,array$documentsEnd,array$documentsCurrent):array
     {
         $case=(int)$row['case_id'];$work=$workCurrent[$case]??null;$documents=$documentsCurrent[$case]??null;
+        if(($row['process_state']??null)==='completed'){$work=85;$documents=15;}
         $status=InstallationCaseCurrentStatus::project($row);$opened=$status['opened'];$openingStatus=$status['label'];
         return [
             'id'=>(string)$row['id'],
