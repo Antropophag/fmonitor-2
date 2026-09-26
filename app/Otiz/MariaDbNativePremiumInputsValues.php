@@ -27,6 +27,9 @@ trait MariaDbNativePremiumInputsValues
                 "contribution" => $n,
                 "weight" => $n,
                 "basis" => "Фактический вклад checklist × базовый управленческий коэффициент 1,00",
+                "employment" => (string) ($i["employmentStatus"] ?? "unknown"),
+                "employmentSource" => (string) ($i["workforceSource"] ?? "assignment_application_snapshot"),
+                "employmentAsOf" => $i["workforceObservedAt"] ?? null,
             ];
         }
         if ($missing !== []) {

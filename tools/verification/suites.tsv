@@ -181,6 +181,11 @@ db	php	tests/Otiz/object_register_paging_http_001_test.php	integration
 db	php	tests/Otiz/runtime_schema_001_test.php	integration
 db	php	tests/Otiz/settlement_concurrency_001_test.php	integration
 db	php	tests/Otiz/settlement_owner_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_builder_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_concurrency_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_db_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_portfolio_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_upgrade_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_http_001_test.php	integration
 db	php	tests/Runtime/deadline_transfer_certificate_recovery_001_test.php	integration
@@ -348,6 +353,7 @@ e2e	php	tests/Yii2/yii2_original_object_identity_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_publication_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_settlement_form_recovery_browser_001_test.php	e2e
+e2e	php	tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_otiz_shlz_ui_001_test.php	e2e
 e2e	php	tests/Yii2/yii2_preopening_browser_001_test.php	e2e
 e2e	python3	tests/Yii2/yii2_preopening_package_001_test.py	e2e
@@ -502,6 +508,8 @@ unit	php	tests/Jobs/weekly_fkr_report_delivery_001_test.php	integration
 unit	php	tests/Jobs/weekly_fkr_unknown_delivery_001_test.php	integration
 unit	php	tests/Otiz/excel_calculation_001_test.php	unit
 unit	php	tests/Otiz/legacy_premium_calculation_001_test.php	unit
+unit	php	tests/Otiz/settlement_v2_001_test.php	unit
+unit	php	tests/Otiz/settlement_v2_workbook_001_test.php	unit
 unit	php	tests/Runtime/production_runtime_contract_001_test.php	unit
 unit	php	tests/Runtime/weekly_fkr_smtp_configuration_001_test.php	unit
 unit	php	tests/Runtime/yii2_production_web_cutover_architecture_001_test.php	unit
@@ -555,6 +563,7 @@ unit	php	tests/Yii2/yii2_inspection_planning_002_test.php	integration
 unit	php	tests/Yii2/yii2_inspection_planning_object_concurrency_001_test.php	integration
 unit	php	tests/Yii2/yii2_inspection_planning_ui_255_contract_test.php	unit
 unit	php	tests/Yii2/yii2_jobs_console_001_test.php	unit
+unit	php	tests/Yii2/yii2_otiz_settlement_v2_001_test.php	integration
 unit	php	tests/Yii2/yii2_shlz_forms_overlays_inventory_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_select_001_test.php	unit
 unit	php	tests/Yii2/yii2_shlz_visual_contract_001_test.php	unit
