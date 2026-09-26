@@ -7,6 +7,7 @@ runs:
       shell: bash
       run: |
         python3 tools/delivery/render-dependencies.py --env >> "$GITHUB_ENV"
+    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
     - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
         php-version: ${{ env.PHP_VERSION }}

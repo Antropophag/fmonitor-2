@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import re
 import shutil
 import signal
 import subprocess
@@ -17,6 +18,7 @@ GUARD = ROOT / "tools/delivery/docker-storage-guard"
 DISPOSABLE = ROOT / "tools/delivery/run-disposable-compose"
 RUNNER = ROOT / "tools/delivery/run-in-profile"
 BUILDKIT = ROOT / "tools/delivery/buildkitd.focused.toml"
+CI_RUNTIME = ROOT / ".github/actions/setup-runtime/action.yml"
 GIB = 1024**3
 GB = 1000**3
 
@@ -156,6 +158,13 @@ require(GUARD.is_file(), "INTENDED_RED: owning Docker storage guard is absent")
 require(DISPOSABLE.is_file(), "INTENDED_RED: disposable Compose lifecycle owner is absent")
 require(os.access(GUARD, os.X_OK) and os.access(DISPOSABLE, os.X_OK), "delivery owners must be executable")
 require(BUILDKIT.is_file(), "dedicated focused BuildKit configuration is absent")
+ci_lines=CI_RUNTIME.read_text().splitlines()
+pin="docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f"
+steps=[index for index,line in enumerate(ci_lines) if re.fullmatch(r"\s*-\s+uses:\s+"+re.escape(pin)+r"\s*",line)]
+require(len(steps)==1,"INTENDED_RED: CI runtime does not install pinned Buildx as one active step")
+step=steps[0];indent=len(ci_lines[step])-len(ci_lines[step].lstrip())
+end=next((index for index in range(step+1,len(ci_lines)) if len(ci_lines[index])-len(ci_lines[index].lstrip())==indent and re.match(r"\s*-",ci_lines[index])),len(ci_lines))
+require(not any(re.match(r"\s*if\s*:",line) for line in ci_lines[step+1:end]),"pinned Buildx setup must be unconditional")
 for expected in ('gc = true', 'reservedSpace = "10GB"', 'maxUsedSpace = "30GB"', 'minFreeSpace = "80GB"'):
     require(expected in BUILDKIT.read_text(), f"BuildKit GC config misses {expected}")
 

@@ -360,3 +360,57 @@ The fresh record is bound to exact candidate `e451965c220b3e35069767550d725acad2
 **APPROVED**
 
 Gate 3 passes for exact source `e451965c220b3e35069767550d725acad237b99b8b68f486d5610e5490629999`. The executor may implement the bounded top-level exact-identity parser without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## CI Buildx provisioning Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI finding, refreshed test, workflow action, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T113622Z-22c74f1fa7/package.json`.
+- Exact candidate source: `6626e24bb468c8029f3d517b7b365ab077b1cb031dd84839aa74b2d193fe9888`; executable source: `9cbce5a1a5cfc058bf63afdfbdf3bff23586d13ee0fa5869588029c91a4cf4cb`.
+- Snapshot: base `587504542f72dbd880a799007488cea426f67a25` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T113622Z-22c74f1fa7/snapshot/source.patch`, SHA-256 `c8ca2f3fd4c569773a748892bfe04c3063c181cf6ab10484f093c610912ee09c`.
+- Verification-plan SHA-256: `8b008f7f1fa87a823af9d82f4ec5036065b7b4ce61bc3cd24fbc54bd004a64c3`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `e007a08d0ed8e6bc4c348582fc8f60fe2bb5bf9dfac5f7dda91c2053e76884c8`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Scope and prior findings disposition
+
+All previously approved A–N and Buildx identity-security cases remain unchanged. `.github/actions/setup-runtime/action.yml` is the correct shared owner: all five Quality Graph category jobs consume it. Requiring the official `docker/setup-buildx-action` at immutable commit `8d2750c68a42422c14e847fe6c8ac0403b4cbd6f` is bounded to provisioning the missing CLI plugin and does not change CI admission, cleanup policy, Docker daemon ownership, or product behavior.
+
+### Complete findings
+
+1. **HIGH — the test does not prove that the pinned action is an executable workflow step.** `tests/Verification/local_docker_storage_budget_001_test.py:160` uses an unrestricted substring search over `action.yml`. The exact text can occur only in a YAML comment, block scalar, display name, or other non-`uses` value and the test will pass while no Buildx plugin is installed; the four observed category jobs would still fail before behavior. This is a direct plausible false GREEN for the sole new acceptance.
+
+   Parse the composite action or use an anchored logical-line oracle that requires exactly one active step whose `uses` value equals `docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f`. Reject comment/string-only occurrence and mutable refs; keep the assertion scoped to the owning shared action. If conditional steps are allowed, require that this provisioning step is unconditional for the category consumers.
+
+### RED assessment and verdict
+
+The retained record is exact-source bound, exits `1`, and fails at `INTENDED_RED: CI runtime does not install pinned Buildx` before the guard matrix. It credibly demonstrates the missing action in the current owner file, but it does not close the comment/non-step false-positive above.
+
+**CHANGES_REQUESTED**
+
+CI provisioning implementation remains blocked until the test proves an active immutable `uses` step rather than text presence. Preserve all prior matrices and refresh the source-bound RED/package for rereview. No workflow implementation is approved here.
+
+---
+
+## CI Buildx active-step Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected oracle, workflow implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T113825Z-63cd9a82fe/package.json`.
+- Exact candidate source: `359e3afe021944c254a1ead29b7cce541dabee9bf0574ac5a633ed5239f116b7`; executable source: `9093190f1fd8350351e11e1bdd772a6c842b53be5841e8b66add2faedc8ab83b`.
+- Snapshot: base `587504542f72dbd880a799007488cea426f67a25` plus `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T113825Z-63cd9a82fe/snapshot/source.patch`, SHA-256 `07b1ba18aa0dc971cacdec88f36ee40befdebfbb08629a375e67d05c79444f11`.
+- Verification-plan SHA-256: `ee8c574fd1144e9e7467f5ed65c7a9556e9f136aefe89407bf20be7632941d14`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Corrected storage test SHA-256: `c8de3ef53ca74a6a32e5128452b2ffd9a8bad5e63faed1f9dba96964a1fc8d56`.
+- Verdict: **APPROVED**.
+
+### Finding disposition and assessment
+
+The prior CI-provisioning finding is fixed. The oracle uses a full-line anchored expression for `- uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f`, requires exactly one occurrence, determines that step's indentation-bounded block, and rejects any `if:` property in it. Comments, display names, block strings, mutable refs, duplicates and conditional provisioning cannot satisfy the acceptance. The assertion remains scoped to `.github/actions/setup-runtime/action.yml`, the shared owner consumed by all category jobs; no per-job duplication or admission change is requested.
+
+All previously approved A–N and Buildx identity-security matrices remain unchanged. The fresh exact-source RED exits `1` at `INTENDED_RED: CI runtime does not install pinned Buildx as one active step`, directly demonstrating the absent workflow prerequisite rather than a Docker/fixture setup accident. No new blockers were found.
+
+### CI provisioning Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `359e3afe021944c254a1ead29b7cce541dabee9bf0574ac5a633ed5239f116b7`. The executor may add the one unconditional exact-pinned setup action to the shared runtime owner without changing approved expectations. Focused GREEN, final review and exact-source CI remain separate mandatory evidence.

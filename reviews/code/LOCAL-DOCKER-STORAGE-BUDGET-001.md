@@ -160,3 +160,29 @@ The prior run `36235533985` remains FAILURE evidence for the superseded source a
 **APPROVED**
 
 Gate 5 passes for exact source `fdb3470275bbf8f78c2598bdd03afe746c35b1f132fa13c55618cd412955643d`. This approval does not assert CI GREEN, merge readiness, or deployment authorization.
+
+---
+
+## Final CI Buildx provisioning rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the provisioning oracle, workflow change, parser implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T114142Z-6945936fdd/package.json`, SHA-256 `17f7f03838259dc37fa0b7014d59409829a39adc360502ca56ae16ef0b4e647c`.
+- Exact reviewed candidate source: `c9a5315bdb5c53e1d2114615d2218cd4d1c119f53477af2e89973bba86abf3eb`; executable source `587e17c3f7c26c812c91e5e88620a6756f8969e4c3360592ef8e734099f7abdc`.
+- Snapshot patch SHA-256: `fd2789739f68ccd9cb1608a6e15f0376d894ff8e5a7465c5b314f6904ac3c9f5`; manifest SHA-256 `e608b7a7a83c89aada7086d2ad0f7641ba3fb58933bb9c2309749ee0951b5f8a`.
+- Verification plan SHA-256: `f0b17eb7f3d9cd4c727de1fd22fc49170c7a93e40e743ed0ca5f0d4ca2973d04`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved oracle/current storage test SHA-256: `c8de3ef53ca74a6a32e5128452b2ffd9a8bad5e63faed1f9dba96964a1fc8d56`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790422849542500000-65f6018a3ddb4557a4d8cd5a963e66c6.json`.
+
+### Findings and prior dispositions
+
+No blocking findings remain. `.github/actions/setup-runtime/action.yml` contains exactly one active unconditional step using official `docker/setup-buildx-action` pinned to immutable commit `8d2750c68a42422c14e847fe6c8ac0403b4cbd6f`. The shared runtime is consumed by all five Quality Graph category jobs, so provisioning is centralized rather than duplicated or conditionally skipped.
+
+The approved oracle uses a full-line anchored active-step match, requires exactly one occurrence, bounds the step block by indentation and rejects `if:`. A comment, display name, block scalar, mutable ref, duplicate or conditional step cannot produce GREEN. The change only provisions the missing Buildx CLI/plugin; it does not alter CI admission, Docker daemon/settings ownership, cleanup selection, retention budgets, or destructive boundaries.
+
+All earlier provenance, dependency identity, frozen-source mount, exact builder identity, cleanup, concurrency, diagnostics, disposable lifecycle, architecture ownership and rebased fixture findings remain fixed. No scope regression was found.
+
+## Final CI provisioning verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `c9a5315bdb5c53e1d2114615d2218cd4d1c119f53477af2e89973bba86abf3eb`. Exact-source CI must still become GREEN before overall GREEN/PR-ready status; this review does not authorize merge or deployment.
