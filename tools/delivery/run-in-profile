@@ -120,11 +120,31 @@ build_command=(docker buildx build --builder fmonitor2-focused --load --target "
         --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
         --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
         --file "$recipe" "$materialized")
-"$materialized/tools/delivery/docker-storage-guard" build \
-    --profile "$profile" --image "$image" --dependency-digest "$recipe_hash" \
-    --lock-path "${FMONITOR_DOCKER_STORAGE_LOCK_PATH:-${TMPDIR:-/tmp}/fmonitor2-focused-storage.lock}" \
-    -- "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
-image_digest=$(docker image inspect --format '{{.Id}}' "$image") || exit 2
+inspect_image() {
+    docker image inspect --format '{{.Id}}|{{index .Config.Labels "org.fmonitor.owner"}}|{{index .Config.Labels "org.fmonitor.profile"}}|{{index .Config.Labels "org.fmonitor.dependency-digest"}}' "$image"
+}
+if image_metadata=$(inspect_image 2>/dev/null); then
+    IFS='|' read -r image_digest image_owner image_profile image_dependency <<EOF
+$image_metadata
+EOF
+    if [[ -z "$image_digest" || "$image_owner" != focused-checks || "$image_profile" != "$profile" || "$image_dependency" != "$recipe_hash" ]]; then
+        echo 'container dependency image metadata does not match deterministic identity' >&2
+        exit 2
+    fi
+else
+    "$materialized/tools/delivery/docker-storage-guard" build \
+        --profile "$profile" --image "$image" --dependency-digest "$recipe_hash" \
+        --lock-path "${FMONITOR_DOCKER_STORAGE_LOCK_PATH:-${TMPDIR:-/tmp}/fmonitor2-focused-storage.lock}" \
+        -- "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
+    image_metadata=$(inspect_image) || exit 2
+    IFS='|' read -r image_digest image_owner image_profile image_dependency <<EOF
+$image_metadata
+EOF
+    if [[ -z "$image_digest" || "$image_owner" != focused-checks || "$image_profile" != "$profile" || "$image_dependency" != "$recipe_hash" ]]; then
+        echo 'built dependency image metadata does not match deterministic identity' >&2
+        exit 2
+    fi
+fi
 
 profile_run_args=()
 if [[ "$with_services" == true ]]; then

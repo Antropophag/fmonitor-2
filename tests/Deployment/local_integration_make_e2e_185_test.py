@@ -99,6 +99,7 @@ def run(argv, *, input_text=None, ok=True):
 try:
     env_path.write_text(base);env_path.chmod(0o600)
     run(['make','--no-print-directory','up'])
+    run(['bash','tools/delivery/local-runtime-env','--','docker','compose','--env-file','@env-file','-f','deploy/runtime/compose.yaml','stop','jobs-worker','jobs-scheduler'])
     seed="""CREATE DATABASE legacy_fixture CHARACTER SET utf8mb4;\nCREATE USER 'legacy_reader'@'%' IDENTIFIED BY 'LEGACY_E2E_SECRET';\nGRANT SELECT ON legacy_fixture.* TO 'legacy_reader'@'%';\nUSE legacy_fixture;\nCREATE TABLE fm_maintable(id BIGINT PRIMARY KEY,ordadr_address VARCHAR(100),entrance VARCHAR(20),regnumber VARCHAR(40),workdatestart DATETIME NULL,workdatestartadjusted DATETIME NULL,workdateendadjusted DATETIME NULL,plan_finish_date DATETIME NULL,workdatefinish DATETIME NULL,ptoactdate DATETIME NULL,responsstroicontrol BIGINT NULL,factworkstartdate DATETIME NULL,object_status VARCHAR(40),fact_percent INT,workstarted INT,floors VARCHAR(40),weight VARCHAR(40),speed VARCHAR(40),pittype VARCHAR(40),pitmaterial VARCHAR(40),paired VARCHAR(40),zavnumber VARCHAR(120) NULL);\nCREATE TABLE users_roles(id BIGINT PRIMARY KEY,name VARCHAR(120),status TINYINT NOT NULL);
 CREATE TABLE users(id BIGINT PRIMARY KEY,name VARCHAR(200),email VARCHAR(200),status TINYINT NOT NULL,role_id BIGINT NOT NULL);
 INSERT INTO users_roles VALUES(16,'Строительный контроль',1);

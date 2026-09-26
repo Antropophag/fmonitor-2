@@ -37,9 +37,15 @@ runs:
           uv python install "$PYTHON_VERSION"
           dirname "$(uv python find --no-project "$PYTHON_VERSION")" >> "$GITHUB_PATH"
         fi
+    - name: Install locked Python test dependencies
+      shell: bash
+      run: |
+        uv sync --frozen --dev
+        echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
     - name: Verify pinned Python
       shell: bash
-      run: python3 -c 'import os, platform; assert platform.python_version() == os.environ["PYTHON_VERSION"]'
+      run: python3 -c 'import os, platform, sys, yaml; assert platform.python_version() == os.environ["PYTHON_VERSION"]; assert sys.prefix == os.environ["VIRTUAL_ENV"]'
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
         node-version: ${{ env.NODE_VERSION }}

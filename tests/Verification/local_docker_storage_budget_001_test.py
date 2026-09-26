@@ -45,6 +45,7 @@ def fake_tools(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, pathlib.
 import hashlib,importlib.util,json,os,pathlib,sys,time
 argv=sys.argv[1:]
 trace=pathlib.Path(os.environ['FAKE_DOCKER_TRACE'])
+images=trace.with_suffix('.images')
 with trace.open('a') as stream: stream.write(json.dumps(argv,separators=(',',':'))+'\\n')
 for prefix in os.environ.get('FAKE_DOCKER_FAIL_PREFIXES','').split('|'):
     if prefix and ' '.join(argv).startswith(prefix): sys.exit(int(os.environ.get('FAKE_DOCKER_FAIL_STATUS','73')))
@@ -67,11 +68,17 @@ elif argv[:2]==['buildx','inspect']:
     elif inspect_mode=='conflicting_driver': print('Name: fmonitor2-focused'); print('Driver: docker-container'); print('Driver: docker')
 elif argv[:2]==['buildx','create']:
     print('fmonitor2-focused')
+elif argv[:2]==['buildx','build']:
+    tag=argv[argv.index('--tag')+1]
+    known=set(images.read_text().splitlines()) if images.exists() else set(); known.add(tag); images.write_text('\\n'.join(sorted(known))+'\\n')
 elif argv[:2]==['buildx','prune']:
     update=os.environ.get('FAKE_DOCKER_PRUNE_FREE_BYTES')
     if update: pathlib.Path(os.environ['FMONITOR_DOCKER_STORAGE_FREE_BYTES_FILE']).write_text(update)
 elif argv[:2]==['image','inspect']:
-    value=hashlib.sha256(argv[-1].encode()).hexdigest(); print('sha256:'+value)
+    tag=argv[-1]; known=set(images.read_text().splitlines()) if images.exists() else set()
+    if tag not in known: sys.exit(1)
+    value='sha256:'+hashlib.sha256(tag.encode()).hexdigest(); profile=tag.removeprefix('fmonitor2-focused-').split(':',1)[0]; digest=tag.rsplit(':',1)[-1]
+    print(f'{value}|focused-checks|{profile}|{digest}')
 elif argv[:2]==['system','df']:
     for item in (
       {'Type':'Images','TotalCount':'4','Active':'3','Size':'3.4GB','Reclaimable':'10MB'},
@@ -294,18 +301,18 @@ with tempfile.TemporaryDirectory() as temporary:
     (repo/"marker.txt").write_text("source-b\n"); subprocess.run(["git","add","marker.txt"],cwd=repo,check=True); subprocess.run(["git","commit","-qm","B"],cwd=repo,check=True)
     b,calls_b=public_run(repo,env); sha_b=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
     builds=[[token for token in calls if token[:2]==["buildx","build"]] for calls in (calls_a,calls_b)]
-    tags=[next(call[call.index("--tag")+1] for call in group[0:1]) for group in builds]
-    require(tags[0]==tags[1], f"source-only revision changed dependency identity: {tags}")
+    require(len(builds[0])==1 and builds[1]==[],f"source-only revision rebuilt stable dependency image: {builds}")
     require(a["image_digest"]==b["image_digest"],f"source-only revision changed immutable dependency image: {a} {b}")
     require(a["source_digest"]!=b["source_digest"],f"source-only revision did not change executed source provenance: {a} {b}")
     for result,sha,calls in ((a,sha_a,calls_a),(b,sha_b,calls_b)):
         require(result["git_sha"]==sha and result["profile"]=="governance" and result["exit_code"]==0 and isinstance(result["duration_seconds"],(int,float)), f"dishonest provenance: {result}")
         require(str(result["image_digest"]).startswith("sha256:"), "runner omitted immutable image id")
         build=[call for call in calls if call[:2]==["buildx","build"]]; run=[call for call in calls if call[:1]==["run"]]
-        require(len(build)==len(run)==1, "runner must build/run exactly once")
-        require(build[0].count("--target")==1 and build[0][build[0].index("--target")+1]==result["profile"],f"runner did not build exactly the requested profile target: {build[0]} {result}")
-        joined="\n".join(build[0]); require("org.fmonitor.owner=focused-checks" in joined and "org.fmonitor.profile=governance" in joined and "org.fmonitor.dependency-digest=" in joined, f"missing labels: {build[0]}")
-        require(result["git_sha"] not in joined and result["source_digest"] not in joined,f"source-derived values change dependency image: {build[0]}")
+        require(len(run)==1 and len(build)==(1 if result is a else 0), "runner must build once then reuse, while running every source")
+        if build:
+            require(build[0].count("--target")==1 and build[0][build[0].index("--target")+1]==result["profile"],f"runner did not build exactly the requested profile target: {build[0]} {result}")
+            joined="\n".join(build[0]); require("org.fmonitor.owner=focused-checks" in joined and "org.fmonitor.profile=governance" in joined and "org.fmonitor.dependency-digest=" in joined, f"missing labels: {build[0]}")
+            require(result["git_sha"] not in joined and result["source_digest"] not in joined,f"source-derived values change dependency image: {build[0]}")
         mounts=[run[0][index+1] for index,token in enumerate(run[0][:-1]) if token=="--mount"]
         workspace_mounts=[value for value in mounts if ",dst=/workspace," in value]
         require(len(workspace_mounts)==1 and workspace_mounts[0].endswith(",dst=/workspace,readonly") and "type=bind,src=" in workspace_mounts[0],f"runner must bind exactly one frozen source read-only: {run[0]}")
@@ -319,7 +326,7 @@ with tempfile.TemporaryDirectory() as temporary:
     failed_env=env.copy(); failed_env["FAKE_RUN_STATUS"]="37"; failed,calls_failed=public_run(repo,failed_env,37)
     failed_sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
     require(failed["git_sha"]==failed_sha and failed["exit_code"]==37 and failed["profile"]=="governance" and isinstance(failed["duration_seconds"],(int,float)) and str(failed["image_digest"]).startswith("sha256:"),f"failed child provenance is dishonest: {failed}")
-    require(sum(call[:2]==["buildx","build"] for call in calls_failed)==1 and sum(call[:1]==["run"] for call in calls_failed)==1,"failed public run must still build/run exactly once")
+    require(sum(call[:2]==["buildx","build"] for call in calls_failed)==0 and sum(call[:1]==["run"] for call in calls_failed)==1,"failed public run must reuse dependencies and still run once")
 
 with tempfile.TemporaryDirectory() as temporary:
     repo,env,trace=runner_fixture(pathlib.Path(temporary))
