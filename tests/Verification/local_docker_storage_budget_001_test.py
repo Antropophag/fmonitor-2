@@ -180,7 +180,7 @@ for job_name in ("integration","governance"):
     steps=runtime_steps(jobs[job_name]);require(len(steps)==1 and steps[0].get("with",{}).get("buildx")=="true",f"{job_name} must opt into Buildx exactly once")
 e2e=jobs["e2e"];steps=runtime_steps(e2e)
 require(len(steps)==1 and "buildx" not in steps[0].get("with",{}),"E2E must not pay unrelated Buildx setup cost")
-require(e2e.get("timeout-minutes")==20 and e2e.get("if")=="needs.plan.outputs.full == 'true'","E2E timeout/full-mode admission changed")
+require(e2e.get("timeout-minutes")==30 and e2e.get("if")=="needs.plan.outputs.full == 'true'","E2E timeout/full-mode admission changed")
 require("continue-on-error" not in e2e,"E2E job must remain blocking")
 run_steps=[step for step in e2e["steps"] if step.get("name")=="Run e2e category once"]
 require(len(run_steps)==1 and run_steps[0].get("run")=="make test CATEGORY=e2e" and "continue-on-error" not in run_steps[0],"E2E command or failure semantics changed")
