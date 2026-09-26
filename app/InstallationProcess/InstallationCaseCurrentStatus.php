@@ -20,7 +20,7 @@ final class InstallationCaseCurrentStatus
             'assignment_order_prepared'=>$empty&&$ready?'Готов к открытию'
                 :($empty&&($selected||($order==='prepared'&&!$applied))?'Требуется распоряжение':null),
             'working'=>$opened&&($applied||in_array($order,['prepared','registered'],true))?'В работе':null,
-            'completed'=>$opened&&($applied||in_array($order,['prepared','registered'],true))?'В работе':null,
+            'completed'=>$opened&&($applied||in_array($order,['prepared','registered'],true))?'Работы завершены':null,
             'needs_assignment_change'=>$opened&&($applied||in_array($order,['prepared','registered'],true))?'Требуется изменение':null,
             default=>null,
         };

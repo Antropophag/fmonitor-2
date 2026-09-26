@@ -71,7 +71,7 @@ final class MariaDbNativePremiumInputs
         [$composition, $selected] = $this->composition($case, $object, $issues);
         [$progress, $progressProof, $contrib] = $this->progress($case, $date, $issues);
         $finance = $this->finance($object, $issues);
-        $team = $this->team($selected, $contrib, $issues);
+        $team = $this->team($case, $progress, $selected, $contrib, $issues);
         $deadline = $certificate["newDeadline"] ?? ($original["value"] ?? null);
         $pto = $completion["date"];
         $operands = null;

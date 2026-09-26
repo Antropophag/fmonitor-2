@@ -1,0 +1,44 @@
+{
+  "change": "issue-276-completed-runtime-corrections",
+  "planned_paths": [
+    "app/InstallationProcess/InstallationCaseCurrentStatus.php",
+    "app/InstallationProcess/MariaDbYiiOperationalDashboard.php",
+    "app/InstallationProcess/MariaDbWeeklyFkrReportSource.php",
+    "app/Otiz/MariaDbNativePremiumInputsValues.php",
+    "docs/operations/current-delivery-goal.md",
+    "openspec/changes/reconcile-completed-installation-state/design.md",
+    "openspec/changes/reconcile-completed-installation-state/proposal.md",
+    "openspec/changes/reconcile-completed-installation-state/specs/installation/completed-state-reconciliation/spec.md",
+    "openspec/changes/reconcile-completed-installation-state/specs/otiz/snapshot-publication/spec.md",
+    "openspec/changes/reconcile-completed-installation-state/tasks.md",
+    "openspec/changes/reconcile-completed-installation-state/verification-input.json",
+    "reviews/tests/RECONCILE-COMPLETED-INSTALLATION-STATE-001.md",
+    "reviews/code/RECONCILE-COMPLETED-INSTALLATION-STATE-001.md",
+    "specs/OTIZ-EXCEL-INPUTS-001.md",
+    "specs/RECONCILE-COMPLETED-INSTALLATION-STATE-001.md",
+    "tests/Yii2/yii2_completed_installation_read_parity_001_test.php",
+    "tests/Yii2/yii2_completed_checklist_admission_001_test.php",
+    "tests/Yii2/yii2_completed_document_corrections_001_test.php",
+    "tests/Otiz/excel_inputs_001_test.php",
+    "tests/Support/ExcelInputsAdversarial.php",
+    "tools/verification/suites.tsv"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "RECONCILE-COMPLETED-INSTALLATION-STATE-001",
+      "acceptance_id": "R1-R2-runtime-projections",
+      "spec_path": "specs/RECONCILE-COMPLETED-INSTALLATION-STATE-001.md",
+      "seam": "shared completed status, operational dashboard and weekly FKR read projections",
+      "tests": ["tests/Yii2/yii2_completed_installation_read_parity_001_test.php", "tests/Yii2/yii2_completed_checklist_admission_001_test.php", "tests/Yii2/yii2_completed_document_corrections_001_test.php"],
+      "gate3_expected": {"tests/Yii2/yii2_completed_installation_read_parity_001_test.php": "GREEN", "tests/Yii2/yii2_completed_checklist_admission_001_test.php": "GREEN", "tests/Yii2/yii2_completed_document_corrections_001_test.php": "GREEN"}
+    },
+    {
+      "spec_id": "OTIZ-EXCEL-INPUTS-001",
+      "acceptance_id": "R3-zero-positive-attribution",
+      "spec_path": "specs/OTIZ-EXCEL-INPUTS-001.md",
+      "seam": "MariaDbNativePremiumInputs::forDate zero and positive progress attribution outcomes",
+      "tests": ["tests/Otiz/excel_inputs_001_test.php"],
+      "gate3_expected": {"tests/Otiz/excel_inputs_001_test.php": "GREEN"}
+    }
+  ]
+}

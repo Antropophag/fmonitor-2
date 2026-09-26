@@ -7,14 +7,17 @@ use DateTimeImmutable;
 
 trait MariaDbNativePremiumInputsValues
 {
-    private function team(array $s, array $c, array &$issues): array
+    private function team(int $case, int $progress, array $s, array $c, array &$issues): array
     {
         $out = [];
+        $missing = [];
         foreach ($s as $i) {
             $tab = (string) ($i["tabId"] ?? "");
             $n = (int) ($c[$tab] ?? 0);
             if (!$n) {
-                $this->issue($issues, "INSTALLER_ATTRIBUTION_ABSENT");
+                if ($progress > 0) {
+                    $missing[] = ["tab" => $tab, "name" => (string) ($i["fullName"] ?? "")];
+                }
                 continue;
             }
             $out[] = [
@@ -24,6 +27,21 @@ trait MariaDbNativePremiumInputsValues
                 "contribution" => $n,
                 "weight" => $n,
                 "basis" => "Фактический вклад checklist × базовый управленческий коэффициент 1,00",
+            ];
+        }
+        if ($missing !== []) {
+            usort($missing, static fn(array $left, array $right): int => strcmp($left["tab"], $right["tab"]));
+            $affected = implode(
+                ", ",
+                array_map(
+                    static fn(array $installer): string => $installer["tab"] . " (" . $installer["name"] . ")",
+                    $missing,
+                ),
+            );
+            $issues[] = [
+                "code" => "INSTALLER_ATTRIBUTION_ABSENT",
+                "message" => "Дело {$case}: отсутствует подтверждённый вклад монтажников: {$affected}",
+                "owner" => "Администратор",
             ];
         }
         return $out;

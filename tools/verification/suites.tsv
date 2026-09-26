@@ -545,6 +545,7 @@ unit	php	tests/Yii2/yii2_completed_checklist_attribution_001_test.php	integratio
 unit	php	tests/Yii2/yii2_completed_checklist_retraction_001_test.php	integration
 unit	php	tests/Yii2/yii2_completed_declaration_correction_001_test.php	integration
 unit	php	tests/Yii2/yii2_completed_document_corrections_001_test.php	integration
+unit	php	tests/Yii2/yii2_completed_installation_read_parity_001_test.php	integration
 unit	php	tests/Yii2/yii2_completed_installation_state_001_test.php	integration
 unit	php	tests/Yii2/yii2_completed_state_transition_001_test.php	integration
 unit	php	tests/Yii2/yii2_completed_transition_rollback_001_test.php	integration
