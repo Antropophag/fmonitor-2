@@ -1,11 +1,9 @@
-# Текущая цель — #258, этап 3: прогноз загрузки монтажников
+# Текущая цель — #258 hotfix: один доступный forecast dashboard
 
-Поручение владельца 2026-09-25: применить `add-installer-utilization-forecast` от clean predecessor `f9b05a298550f5b33e26fd6ab7328f25865150e6` и довести candidate до PR-ready. Шесть календарных недель показывают live-прогноз из authoritative assignments и effective dates независимо от daily observations; история остаётся отдельным блоком.
+Поручение владельца 2026-09-26: исправить production regression после PR #280. Не создавать второй dashboard-блок: существующий «Загрузка монтажников и динамика» SHALL стать шестинедельным live-прогнозом. На production прогноз не должен быть недоступен из-за capability/scope пользователя, если общий dashboard ему доступен.
 
-Scope: weekly `busy/free/unknown` partition, overlays `releasing/conflict`, effective factual/planned/PTO boundaries, dashboard chart, authorized GET|HEAD drill-down, fail-safe unavailable/UNKNOWN, bounded bulk reads и responsive/accessibility. Draft selection не занимает человека. No writes/backfill/schema migration/auto-allocation.
+Scope: заменить historical visualization внутри existing utilization widget прогнозом `busy/free/releasing/conflict/unknown`; удалить отдельный `installer-forecast` widget; унаследовать authenticated dashboard access для forecast и detail; сохранить forecast read-owner, immutable observations/storage и fail-safe source validation. Не менять данные production вручную.
 
-Не входят capture-job correction этапа 2, financials, assignment/PTO writers, calendar, checklist, inspection, общий shell, merge/deploy и закрытие #258. WIP №157 и другие worktrees не менять.
+Root пишет spec/tests; отдельный `gpt-5.6-sol/low` executor реализует; независимые reviewers решают Gates 3/5. Base: merged main `708e0a6d`. Контракт и lifecycle остаются `INSTALLER-UTILIZATION-FORECAST-001` / `add-installer-utilization-forecast`, дополненные correction requirements.
 
-Root (`/root`) пишет scope/spec/tests. Owner authorization распространяется на автономную доставку текущего assignment в указанном scope; отдельный `gpt-5.6-sol/low` executor реализует, независимые `gpt-5.6-sol/low` reviewers решают planner-required Gates 3/5. Контракт: `specs/INSTALLER-UTILIZATION-FORECAST-001.md`; lifecycle: `openspec/changes/add-installer-utilization-forecast/`.
-
-Локально только bounded focused checks; полный `make test`/`make verify` запрещён. Один exact-source CI после required reviews. Поручением владельца 2026-09-25 разрешены создание PR и merge после GREEN CI и обязательных approvals; deploy не разрешён.
+Локально только bounded focused checks; полный `make test`/`make verify` запрещён. PR/merge после approvals и exact-source GREEN CI разрешены. Deploy отдельно не разрешён без явного поручения.

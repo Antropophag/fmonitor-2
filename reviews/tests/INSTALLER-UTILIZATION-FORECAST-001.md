@@ -153,3 +153,58 @@ The previously approved forecast matrix remains valid except for this changed au
 `APPROVED`
 
 Gate 3 approves the authorization spec/test delta at exact commit `00fa3e85b6f03a520b48f6b40aa34431eb0631bb`. The earlier full forecast Gate 3 approval remains in force with this superseding authorization outcome. Any later spec or test-byte change requires planner-selected review again. Production conformance, CI, deployment, and admission enforcement remain for their separate gates or `UNKNOWN`.
+
+---
+
+## Production-regression hotfix Gate 3 review — 2026-09-26
+
+- Base: clean `origin/main` commit `708e0a6db6cf7075e392ddc3814e6234672123da` plus the uncommitted root-authored spec/test delta.
+- Reviewer: independently tasked agent `/root/gate3_review`; authored none of the correction specifications, tests, implementation, or RED runs.
+- Reviewed artifact identities: normative spec `75f9ef80`; OpenSpec delta `ed9746cb`; verification input `6d690b50`; forecast HTTP `3b301cba`; forecast browser `59ddaa27`; observations HTTP `19e41db`; operational-dashboard browser `4d4de879`.
+- Reported REDs are consistent with the reviewed first failing assertions: forecast HTTP reaches the dashboard and fails N on the duplicate/historical composition; forecast browser reaches existing utilization and fails the six-by-five grid; observations HTTP fails the duplicate forecast-widget oracle; operational dashboard browser reaches populated layout and fails five widgets versus required four. No retained command record or reconstructible test snapshot was supplied in this review package, so exact-source RED retention remains to be recorded before approval.
+- Verdict: `CHANGES_REQUESTED`
+
+### Findings
+
+1. **CRITICAL — the OpenSpec authorization scenario contradicts both the owner correction and its own requirement.** `openspec/changes/add-installer-utilization-forecast/specs/workforce/installer-utilization-forecast/spec.md:71-72` correctly says every authenticated active user inherits dashboard access and capability/object scope must not cause forecast unavailable/403. But lines 74-76 still specify that an actor without full `installers.read` receives direct-detail `403`. The normative spec (`specs/INSTALLER-UTILIZATION-FORECAST-001.md:9,21,39`) and executable HTTP test (`tests/Yii2/yii2_installer_utilization_forecast_001_test.php:8`) require `200` for that same permissionless/scoped detail. Gate 1 is therefore ambiguous at the exact sensitive authorization seam. Replace the stale scenario with an explicit permissionless/scoped dashboard-and-direct-detail `200` scenario, retaining guest redirect separately.
+
+2. **HIGH — the verification manifest does not trace the new N/history-removal regression surface to executable tests.** `verification-input.json:3` lists the observations and operational-dashboard consumers as planned paths, but its only acceptance mappings remain `A-G-M-projection` and `B-H-L-dashboard-detail`; neither includes new acceptance N, `tests/Yii2/yii2_installer_utilization_observations_001_test.php`, nor `tests/Support/operational_dashboard_bar_charts_browser.cjs` (or its PHP caller). Thus the generated obligations can consider the hotfix covered without running the two tests that detect duplicate/history composition and the four-widget integration layout. Add an explicit N/dashboard-composition acceptance mapping covering forecast HTTP/browser, observations HTTP, and the operational dashboard browser caller; set the appropriate Gate 3 RED expectations and regenerate/read the plan before resubmission.
+
+3. **HIGH — the described RED output is plausible but not yet retained with exact-source identity.** The four failures are intended behavior failures rather than setup errors, and their assertions are sensitive: one utilization marker/no second marker/no history, a six-by-five live grid inside that marker, persisted history detail despite dashboard removal, and exactly four responsive dashboard widgets. However, this handoff provides only prose excerpts, not command records with exit codes/output paths and a reconstructible source or reviewed-file digest. Retain the four bounded commands, exits and relevant first-failure output against a reconstructible test-only source after findings 1-2 are corrected. The earlier forecast RED cannot identify this new replacement/access hotfix because N and universal detail access are new expectations.
+
+### What is sound
+
+The normative correction is otherwise clear: it replaces rather than adds the visualization, keeps the existing utilization identity/title, removes both the second forecast widget and historical chart, preserves immutable observation storage/detail, and grants live forecast dashboard/detail to permissionless and scoped authenticated actors. The HTTP tests independently assert one utilization widget, no second marker, no historical markers, six weeks/30 values, exact counts/links, permissionless/scoped GET|HEAD `200`, real detail content, unchanged facts and source-only unavailable behavior. The forecast browser preserves desktop/mobile keyboard/touch sensitivity against the reused widget. The observations test proves history remains stored and its detail reachable while absent from the dashboard. The operational browser checks four-widget geometry across all existing viewports.
+
+### Hotfix Gate 3 verdict
+
+`CHANGES_REQUESTED`
+
+Return to Gate 1 for the contradictory OpenSpec scenario and Gate 2 for the N/consumer manifest mapping, then retain exact-source RED evidence and resubmit the complete bounded correction. No hotfix implementation, GREEN result, CI, deploy, or production recovery is approved by this record.
+
+---
+
+## Production-regression hotfix Gate 3 correction rereview — 2026-09-26
+
+- Reviewer independence remains unchanged.
+- Reconstructible reviewed source: base `708e0a6db6cf7075e392ddc3814e6234672123da` plus `/tmp/fmonitor-forecast-hotfix-gate3.patch`, verified SHA-256 `cd41a0b7969f0d5453c33bcc0264a8e6a42803769b465237333bb7d44cf8f584`.
+- Current reviewed blobs match the patch: normative spec `75f9ef80`; OpenSpec delta `cad92b3d`; verification input `5ff3eda9`; forecast HTTP `3b301cba`; forecast browser `59ddaa27`; observations HTTP `93749c47`; operational-dashboard browser `4d4de879`.
+- All four retained RED records share exact candidate source `477b955932720849517e0550ecf44251e454f1c6f275eae4a0b8ba4ae397975d` and reach valid fixtures before intended behavioral failures:
+  - forecast HTTP `1790409454251648000-f0691750213944eab34c415a6126c2e6`: exit `255`, `N no second forecast widget`, expected false/actual true;
+  - forecast browser `1790409454258555000-ddf4c5c8dd8e49d5adc9e35c8e37664e`: exit `255`, existing utilization widget fails `six by five grid`;
+  - observations HTTP `1790409454262438000-bf6d8f2ea4524940abd608e9785e5bf0`: exit `255`, expected zero/actual one duplicate forecast widget;
+  - operational composition `1790409491103888000-ecece9e7ab9c487599aa81a4d779f106`: exit `255`, populated browser reports widget count five where four is required.
+
+### Prior findings disposition
+
+1. **OpenSpec authorization contradiction — fixed.** The scenario now explicitly covers an authenticated active actor without `installers.read` or with scoped object access and requires the same full direct forecast detail `200`. It agrees with the OpenSpec requirement, normative items 7/J, and the permissionless/scoped GET|HEAD test matrix.
+
+2. **N/consumer traceability — fixed.** `verification-input.json` now adds `N-single-utilization-widget` at the existing-widget composition seam and maps both the observations HTTP regression and the operational-dashboard PHP/browser consumer with `INTENDED_RED`. The planned paths contain these tests and the browser script. The forecast HTTP/browser mapping continues to cover the live six-by-five contents and interaction inside the reused utilization widget.
+
+3. **Exact-source RED retention — fixed.** The snapshot digest is verified, reviewed artifact blobs match it, and each record retains argv, common exact candidate identity, exit code, duration, stdout/stderr paths, and the intended first failure. Together the four failures independently detect duplicate composition, stale historical content in the reused widget, and the integrated five-versus-four layout regression.
+
+### Corrected hotfix Gate 3 verdict
+
+`APPROVED`
+
+Gate 3 approves the exact corrected hotfix specification/tests and retained RED source named above. Gate 4 may replace the existing utilization visualization and broaden authenticated forecast/detail access without changing these expectations. Any subsequent spec or test-byte change requires planner-selected review again. Production conformance, GREEN checks, exact-source CI, deploy, and production recovery remain for their separate gates or `UNKNOWN`.
