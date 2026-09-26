@@ -13,6 +13,11 @@ import {DatePickerController} from '/pilot/assets/shlz-behaviors.js';
   document.querySelectorAll('[data-otiz-question]').forEach(question=>{question.hidden=false;});
   document.querySelectorAll('.shlz-drawer__close').forEach(button=>button.setAttribute('aria-label','Скрыть панель'));
   document.querySelectorAll('.fm2-otiz-drawer-section dt').forEach(label=>{if(label.textContent.trim()==='Дата факта прогресса')label.textContent='Дата подтверждающего факта / факта прогресса';});
+  const groupings=[...document.querySelectorAll('[data-grouping]')];
+  document.querySelectorAll('.fm2-otiz-v2-tabs [role="tab"]').forEach((tab,index)=>tab.addEventListener('click',()=>{document.querySelectorAll('.fm2-otiz-v2-tabs [role="tab"]').forEach((item,itemIndex)=>{item.classList.toggle('is-active',itemIndex===index);item.setAttribute('aria-selected',String(itemIndex===index));});groupings.forEach((group,groupIndex)=>{group.hidden=index!==groupIndex;});}));
+  document.querySelectorAll('[data-otiz-group-toggle],[data-otiz-employee-toggle]').forEach(button=>button.addEventListener('click',()=>button.setAttribute('aria-expanded',button.getAttribute('aria-expanded')==='true'?'false':'true')));
+  document.querySelectorAll('details > summary > button').forEach(button=>button.addEventListener('click',()=>{button.closest('details').open=true;button.setAttribute('aria-expanded','true');}));
+  const v2PaymentDialog=document.querySelector('[data-v2-payment-dialog]'),nativePaymentDate=v2PaymentDialog?.querySelector('input[name="paymentDate"]');if(nativePaymentDate){const host=document.createElement('div');nativePaymentDate.closest('label')?.replaceWith(host);new DatePickerController(host,{mode:'single',label:'Дата',calendarLabel:'Календарь даты фактической выплаты',name:'paymentDate',value:'',locale:'ru-RU'});}document.querySelector('[data-v2-payment-open]')?.addEventListener('click',()=>{v2PaymentDialog?.showModal();v2PaymentDialog?.querySelector('input:not([type="hidden"])')?.focus();});document.querySelector('[data-v2-payment-cancel]')?.addEventListener('click',()=>v2PaymentDialog?.close());
 
   const openers=new Map();
   const close=dialog=>{if(!dialog.open)return;dialog.close();openers.get(dialog)?.focus();};

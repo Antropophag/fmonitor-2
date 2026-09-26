@@ -122,6 +122,7 @@
         "app/Runtime/**",
         "app/RuntimeRestore/**",
         "app/Workforce/**",
+        "app/autoload.php",
         "app/YiiRuntime/CanonicalMigrationConsole.php",
         "app/YiiRuntime/CaseImportConsole.php",
         "app/YiiRuntime/FeedbackApplication.php",
@@ -145,6 +146,7 @@
         "app/demo/**",
         "config/**",
         "commands/**",
+        "public/yii.php",
       "rapid-pilot/*.php",
       "rapid-pilot/*.sh",
       "rapid-pilot/*.mjs",
@@ -422,7 +424,14 @@
     {
       "name": "otiz-settlement-read-projection",
       "patterns": [
-        "app/Otiz/MariaDbOtizSettlementView.php"
+        "app/Otiz/MariaDbOtizSettlement.php",
+        "app/Otiz/MariaDbOtizSettlementView.php",
+        "app/YiiRuntime/Controllers/OtizSettlementController.php",
+        "app/YiiRuntime/Controllers/OtizAdmissionController.php",
+        "app/YiiRuntime/Views/otiz.php",
+        "app/YiiRuntime/Views/otiz-economy-v2.php",
+        "app/YiiRuntime/Views/otiz-snapshot.php",
+        "app/YiiRuntime/Assets/otiz.js"
       ],
       "verifiers": [
         "tests/Otiz/snapshot_publication_001_test.php",
@@ -567,6 +576,38 @@
       ]
     },
     {
+      "name": "otiz-settlement-v2-schema",
+      "patterns": [
+        "app/InstallationProcess/OtizSettlementV2SchemaMigration.php"
+      ],
+      "verifiers": [
+        "tests/Otiz/settlement_v2_db_001_test.php"
+      ],
+      "consumers": [
+        "canonical-migration-frontier"
+      ]
+    },
+    {
+      "name": "otiz-settlement-v2-application",
+      "patterns": [
+        "app/Otiz/OtizSettlementV2.php",
+        "app/Otiz/OtizSettlementV2Math.php",
+        "app/Otiz/OtizSettlementV2DraftBuilder.php",
+        "app/Otiz/OtizSettlementV2Admission.php",
+        "app/Otiz/OtizPortfolioEconomy.php",
+        "app/Otiz/OtizSettlementV2Workbook.php"
+        ,"app/autoload.php"
+        ,"public/yii.php"
+      ],
+      "verifiers": [
+        "tests/Otiz/settlement_v2_001_test.php",
+        "tests/Otiz/settlement_v2_db_001_test.php",
+        "tests/Otiz/settlement_v2_workbook_001_test.php",
+        "tests/Yii2/yii2_otiz_settlement_v2_001_test.php"
+      ],
+      "consumers": []
+    },
+    {
       "name": "legacy-control-engineer-migration",
       "patterns": [
         "app/InstallationProcess/LegacyControlEngineerMigration.php",
@@ -601,6 +642,7 @@
         "app/RuntimeRestore/RuntimeRecoverySchemaV30.php",
         "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV35.php"
+        ,"app/RuntimeRestore/RuntimeRecoverySchemaV36.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",
