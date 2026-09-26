@@ -78,7 +78,7 @@ elif argv[:2]==['image','inspect']:
     tag=argv[-1]; known=set(images.read_text().splitlines()) if images.exists() else set()
     if tag not in known: sys.exit(1)
     value='sha256:'+hashlib.sha256(tag.encode()).hexdigest(); profile=tag.removeprefix('fmonitor2-focused-').split(':',1)[0]; digest=tag.rsplit(':',1)[-1]
-    print(f'{value}|focused-checks|{profile}|{digest}')
+    print(value if '{{.Id}}' in argv and 'org.fmonitor.owner' not in argv else f'{value}|focused-checks|{profile}|{digest}')
 elif argv[:2]==['system','df']:
     for item in (
       {'Type':'Images','TotalCount':'4','Active':'3','Size':'3.4GB','Reclaimable':'10MB'},
