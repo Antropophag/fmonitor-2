@@ -476,3 +476,34 @@ The retained record is exact-source bound and exits `1` at the still-missing hea
 **APPROVED**
 
 Gate 3 passes for exact source `c7348853456f2b243a701e6bada2a0aa2eeddcdcec937e117d03b45864ae0739`. The executor may implement the bounded header-before-Nodes parser and create the three empty materialized mountpoint directories before `docker run`, without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## Read-only dependency-image mount Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI diagnosis, refreshed test, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T125840Z-998ffe5ffd/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `d252510e8e4f1125e49a366b53360673ca131e88`.
+- Exact candidate source: `44aed0117a1ed986dcea4a571cdeb2d22db030ad694986322129c3f1f1bdd716`; executable source: `2c10536fb59abefda2b0f2973f004f7b428d3ed560a01d0f89547103d670559b`.
+- Snapshot patch SHA-256: `6613dd9a4f49c1eb6f5e94ff34b18eaeb1a805c92012cf155ff768eb08d66524`.
+- Verification-plan SHA-256: `d7f4bc87a22f7628aa3a7b6dc2879a4ba13e0cf86e31d9431a4ce60455823ce2`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `5dfa40eaa73a539be6717d42a082e229584f9299a7f3033e7790a342a992c412`.
+- Verdict: **APPROVED**.
+
+### Assessment and findings disposition
+
+The new public-run assertion requires exactly one `/workspace/vendor` mount and exact argv `type=image,src=<reported immutable image_digest>,dst=/workspace/vendor,readonly,image-subpath=/opt/fmonitor/composer/vendor`. It therefore rejects the CI-observed writable tmpfs plus runtime `cp`, a tag/mutable image source, a host bind, a writable dependency view, a wrong destination, and a broader/wrong image subpath. The dependency path matches the Dockerfile's Composer installation at `/opt/fmonitor/composer/vendor`.
+
+This is compatible with the established boundaries: the exact frozen source remains one read-only `/workspace` bind; its empty `vendor` mountpoint witness remains required before run; the dependency image ID is already bound to the stable seven-input identity and reported provenance; application source and dependency bytes are not copied into a writable runtime layer. Existing container-composition expectations already require `vendor_writable=false`, so the correction reconciles rather than weakens adjacent behavior.
+
+All prior Buildx header/Nodes, identity-security, mountpoint, CI provisioning, cleanup, concurrency, diagnostics and disposable lifecycle findings remain fixed. No new security or sensitivity finding was found.
+
+### RED assessment
+
+The fresh exact-source RED reaches the real public runner and fails on the new exact vendor mount assertion. Its trace shows the current writable `/workspace/vendor` tmpfs and `cp -a` command, so the failure is the intended dependency-ownership defect rather than setup failure.
+
+### Dependency mount Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `44aed0117a1ed986dcea4a571cdeb2d22db030ad694986322129c3f1f1bdd716`. The executor may replace the writable vendor tmpfs/copy with the exact immutable read-only image-subpath mount without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

@@ -215,3 +215,33 @@ No blocking findings remain.
 **APPROVED**
 
 Gate 5 passes for exact source `936a81d7a03db8c3c2268e93d5003c90a5c39846c9095e0f12d6907c3c3673cc`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Read-only dependency-image vendor mount rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the vendor-mount oracle, implementation, Gate 3 approval, or CI diagnosis.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T130203Z-9fb2849c75/package.json`, SHA-256 `90805e8fae23af13b70be9d98321f040acab99a0b6c87f0e9de141c0a0c419c5` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `37c80ce129c89475064d6302a8da9abc4178ca36cfb8c23d9358721457464e54`; executable source `0ad24c1727b9ffe36144070a14157a584c162a31a0a3cadb7646c3a89f610a0c`.
+- Snapshot patch SHA-256: `3f56639a57bb578ec5737eb7695442de04a0478f19fb46047fdf18a3ea07cdd2`; manifest SHA-256 `0c72fd82b9cedeb4fd5b96e040cd5a17b90f475cad0dab14f5ec21f9eefe7c65`.
+- Verification plan SHA-256: `ac6bcd1d08f0a90f8738070f1080409d1ad935fbc5473ffbf8aaa85a2bfb6dc6`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `5dfa40eaa73a539be6717d42a082e229584f9299a7f3033e7790a342a992c412`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790427669220120000-ed209712d67d490d837f50be4ada2dfc.json`.
+- Review-only checks: Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and complete disposition
+
+No blocking findings remain.
+
+- `run-in-profile` mounts `/workspace/vendor` exactly once with `type=image`, `src=$image_digest`, `readonly`, and exact `image-subpath=/opt/fmonitor/composer/vendor`. The source is the immutable ID returned by `docker image inspect`, not the mutable dependency tag; the subpath exactly matches the Dockerfile Composer installation.
+- The previous writable `/workspace/vendor` tmpfs and runtime `cp -a` are removed. The child now only verifies the mounted autoloader/Yii files before executing the requested command, so dependency bytes are neither copied into nor exposed through a writable runtime layer.
+- The approved public-run oracle requires the exact image-mount argv using the reported immutable image ID. It rejects a tag, host bind, writable mount, wrong destination/subpath, broader image view, duplicate vendor mount, old tmpfs and old copy command.
+- Frozen-source guarantees remain intact: the sole `/workspace` bind stays read-only; source digest validation precedes preparation; `.local`, `vendor`, and `.test-artifacts` remain the exact three precreated empty mountpoint directories; the runtime witness observes them empty at `docker run` and recomputes the mounted-source digest.
+- All prior Buildx header/identity, pinned CI provisioning, dependency identity, provenance, cleanup, concurrency, diagnostics, disposable teardown and architecture findings remain fixed. The recorded CI rationale correctly identifies the superseded writable tmpfs/copy path; that failure inventory is diagnostic evidence, not GREEN admission.
+
+## Read-only vendor mount verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `37c80ce129c89475064d6302a8da9abc4178ca36cfb8c23d9358721457464e54`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; this review does not authorize merge or deployment.

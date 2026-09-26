@@ -185,10 +185,10 @@ child_stdout=$execution_tmp/child.stdout
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
     --mount "type=bind,src=$materialized,dst=/workspace,readonly" \
+    --mount "type=image,src=$image_digest,dst=/workspace/vendor,readonly,image-subpath=/opt/fmonitor/composer/vendor" \
     ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
     --read-only \
     --tmpfs /tmp:rw,nosuid,nodev \
-    --tmpfs /workspace/vendor:rw,nosuid,nodev \
     --tmpfs /workspace/.test-artifacts:rw,nosuid,nodev \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
@@ -197,8 +197,7 @@ docker run --rm --init \
     --env "FMONITOR_TEST_PLAYWRIGHT_MODULE=/shlz-ui/node_modules/playwright" \
     --workdir /workspace \
     "$image_digest" sh -c \
-        'cp -a /opt/fmonitor/composer/vendor/. /workspace/vendor/ \
-            && test -r /workspace/vendor/autoload.php \
+        'test -r /workspace/vendor/autoload.php \
             && test -r /workspace/vendor/yiisoft/yii2/Yii.php \
             && exec "$@"' \
         run-in-profile "$@" >"$child_stdout"
