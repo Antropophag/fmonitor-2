@@ -1,0 +1,327 @@
+# Gate 5 review — LOCAL-DOCKER-STORAGE-BUDGET-001
+
+- Reviewer: `/root/docker_growth_final_review` (independent; authored none of the specification, tests, OpenSpec artifacts, implementation, or supplied evidence).
+- Review date: 2026-09-26.
+- Base: `708e0a6db6cf7075e392ddc3814e6234672123da`.
+- Exact reviewed candidate source: `a5f8d18c90e4dd0cb574f0e705fd9a33fbae7c018cf09283eaf27e50ada82129`.
+- Review package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T090225Z-14c0191c45/package.json`, SHA-256 `fafd7f4a368693e5fd81ccd22f1db946ad5f9c23ede74823fbfd7ad6a5f8bfcf`.
+- Reconstructible snapshot: base above plus `snapshot/source.patch`, SHA-256 `69c35986cbdad7338d95d20bdc5883931a515b43df4b1afde4a126252da7caf2`; snapshot manifest SHA-256 `bfae37bd39ec8977aa5cdb580aba525b300a2effc0a04c3a8e182a3757396257`.
+- Verification plan SHA-256: `dc42f03767e2c91753e0eabe6eb8d385d8ca79c8e1cf1d54c6a902fa119e8708`; planner lane `CRITICAL`, required reviews `gate3`, `final`.
+- Reviewed contract: `specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md`, SHA-256 `45bc388d124695d83f7c1e507b6c2e73834698a250d111837ee3cbac98074814`.
+
+## Evidence inspected
+
+The complete prepared package, required context, context manifest, verification plan, snapshot manifest/patch, normative A–N contract, OpenSpec proposal/design/delta/tasks, Gate 3 history, production diff, architecture/documentation changes, executable test, and both supplied GREEN records were reviewed. The GREEN records are exact-source bound to the reviewed candidate:
+
+- `python3 tests/Verification/local_docker_storage_budget_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790413261408816000-0c42a76a26814c0391593d7d4f437348.json`.
+- `python3 tests/Verification/change_verification_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790413302777556000-8d6036a8db234d888cb16a41ea094f74.json`.
+- Bounded static checks during review: Python/Bash syntax and `git diff --check` passed. No full local suite and no real destructive Docker operation was run.
+
+The focused matrix is otherwise strong: it observes exact cleanup argv/order, selector bounds, fail-closed outcomes, lock/recheck concurrency, safe diagnostics, dependency-tag invalidation, immutable image reporting, and disposable Compose success/failure/signal teardown. OpenSpec scope and A–N traceability are coherent apart from the blocker below.
+
+## Findings
+
+### 1. HIGH — execution provenance violates LDB001-B and the test cannot detect it
+
+Locations: `specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md:19-21`; `tools/delivery/run-in-profile:105-128,184-202`; `tools/delivery/Dockerfile.focused-checks:50-62`; `tests/Verification/local_docker_storage_budget_001_test.py:225-275`.
+
+LDB001-B permits source provenance as a per-build label only if that does not create a source-derived tag **and** the executed result remains bound to current source through the existing bind-mounted workspace. The implementation passes `EXECUTABLE_SOURCE` into the build, labels the built image, copies the entire source tree into `/workspace`, and runs that copied tree. `docker run` has no source bind mount. Consequently the implemented provenance mechanism does not satisfy the contract's stated condition. The stable dependency tag is overwritten by a source-specific immutable image build on every invocation; this is not the contract's described dependency image plus current bind-mounted source model.
+
+The executable test only checks stable/different tag strings, one build/run, labels, Git SHA and an image-ID-shaped value from fake Docker. It does not inspect the run mounts or prove that the command executes the current source independently of image contents, so the plausible regression/alternative implementation above remains GREEN.
+
+Correction: choose and encode one coherent normative model. Under the current approved contract, build the dependency-addressed image without embedding current repository source, bind-mount the exact frozen/materialized source read-only at `/workspace` (with any explicitly owned writable artifact mounts), and add a fake-Docker assertion for the exact mount plus a witness that the executed source changes while dependency tag/image identity is reused. If source-copying/rebuilding is intentionally required instead, return to Gate 1 and revise A/B and the test matrix, then recompute the plan and obtain the required independent Gate 3 approval before implementation rereview.
+
+### 2. HIGH — mandatory review/CI admission is not current for this candidate
+
+Locations: prepared `package.json` (`review_results`, `ci_obligations`); harness state at review time (`admission_context.reviews`, `ci`).
+
+The planner requires `gate3` and `final`, but the only recorded Gate 3 approval is bound to candidate `8a95bf1911c2ff9750f56d12ddc6cf6f334781653d5296731b6c0f3ee6337b2d` and plan `ae6444...`, while the reviewed candidate is `a5f8d18...` with plan `dc42f...`. Harness therefore reports Gate 3 `STALE`, final `MISSING`, and exact-source CI `UNKNOWN`. The package also carries lifecycle fields saying both CI and final review are not required despite the authoritative CRITICAL plan selecting them. Those contradictions cannot support overall GREEN or PR-ready status.
+
+Correction: after resolving finding 1, regenerate the exact-source plan/package, obtain/record every planner-required current review (including fresh Gate 3 whenever the spec/test changes), run the single selected exact-source CI consumer, and require harness admission to show current approvals and GREEN CI. Correct the generated lifecycle metadata or its producer so it does not contradict the authoritative plan.
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+The production implementation must not be corrected by this reviewer. Gate 5 does not pass for source `a5f8d18c90e4dd0cb574f0e705fd9a33fbae7c018cf09283eaf27e50ada82129`; exact-source CI remains pending/UNKNOWN and is not treated as GREEN.
+
+---
+
+## Gate 5 correction rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the corrected specification, test, implementation, Gate 3 record, or GREEN evidence.
+- Fresh package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T092250Z-a724207718/package.json`, SHA-256 `26343e879cc7b9e3f6a24df14fad549115141513d82ca389edb966fb78b2ab8e`.
+- Exact reviewed candidate source: `3f225a111bc4a9ec578bd3c036c8d8ecffb7fcfee0d4b3bc77e5061a7bea4382`; executable source `c9c37e2088818c45d6e09eb4ccce3a87eca8b4eb78ed813ea72205646f946b08`.
+- Reconstructible snapshot: base `708e0a6db6cf7075e392ddc3814e6234672123da` plus `snapshot/source.patch`, SHA-256 `4de65f945e7b208028867f5b458c82ad7c8c1c1dc92e2e57ad9444db5099f87d`; manifest SHA-256 `85edce613bbf3c3f3703ed489abb8fd6a968aff70c2b311f7c750c02b002c1d8`.
+- Correction delta: `delta.patch`, SHA-256 `85abfa3f91b3e1499de40f2fdf6536b177747815279cfe0c9614b93ce5eb11d8`.
+- Verification plan SHA-256: `18f69416f22b165994603b74b03f83fd9ea3cf2399419c6da91f01daa152fc44`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Current contract SHA-256 remains `45bc388d124695d83f7c1e507b6c2e73834698a250d111837ee3cbac98074814`.
+- Current approved test SHA-256: `82b6ec0be7f589a8598a5b57154238050199fec0eee8e503f5299e89125582c8`.
+
+### Evidence and delta reviewed
+
+The complete fresh package, previous snapshot and finding delta, refreshed Gate 3 history, current A–N contract/OpenSpec artifacts, full production candidate, architecture/docs, and exact-source GREEN records were reviewed. Supplied exact-source evidence is:
+
+- `python3 tests/Verification/local_docker_storage_budget_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790414488465464000-fbbaefe8d0ca4e829475b1f74eb9a947.json`.
+- `python3 tests/Verification/change_verification_001_test.py` — GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790414529885178000-f5c4f90a9f10447d8b674f5ac4e8466b.json`.
+- Review-only bounded checks: Bash/Python syntax and `git diff --check` passed. No full local suite or real destructive Docker action was run.
+
+### Prior findings disposition
+
+1. **F1 fixed.** `Dockerfile.focused-checks` now contains only the enumerated dependency manifests and installs dependencies outside `/workspace`; it no longer copies the source tree or accepts/emits executable-source build metadata. `run-in-profile` no longer supplies Git/source-derived build values. It binds the restored materialized source exactly once to `/workspace` read-only, keeps writable artifacts in separately declared mounts, and reports the digest of that restored source. Source-only revisions therefore retain both dependency tag and immutable image ID while their executed-source digest changes.
+
+   The independently approved A/B oracle is materially sensitive to the prior defect: it derives the mounted-tree digest with the mounted harness, checks the A/B marker from that exact absolute non-ambient source, requires exactly one read-only `/workspace` bind, rejects an overriding duplicate mount, rejects current Git/source digest values anywhere in build argv, and parses logical Dockerfile `COPY`/`ADD` instructions so an equivalent broad source embedding cannot pass. Seven dependency inputs still independently invalidate image identity and failed-child status/provenance coverage remains intact.
+
+2. **F2 not an open Gate 5 blocker; prior characterization corrected.** Gate 3 is a pre-implementation review of specification/test expectations. The refreshed independent Gate 3 approval covers the unchanged current test blob `82b6ec0b...`; the later production-only correction does not require Gate 3 to approve implementation bytes. Harness reports the whole-candidate Gate 3 binding as `STALE`, but that mechanical status does not invalidate the independently recorded pre-implementation approval under `docs/development-process.md`. Gate 5 is the exact-code review and this rereview supplies that decision.
+
+   Exact-source CI remains `UNKNOWN`, but the documented sequence runs the single selected CI consumer only after an APPROVED final review. It is therefore a pending post-review delivery obligation, not a reason to withhold the Gate 5 verdict. It remains a strict blocker to overall GREEN/PR-ready/publication until the selected exact-source CI is GREEN. The generated lifecycle fields that say CI/final are not required remain non-authoritative and inconsistent with the authoritative CRITICAL plan, but the plan/package exposes the correct obligations and no candidate behavior or review independence depends on those fields.
+
+### Complete correction findings
+
+No blocking findings remain in the correction delta or the previously reviewed unchanged A–N implementation.
+
+## Correction verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `3f225a111bc4a9ec578bd3c036c8d8ecffb7fcfee0d4b3bc77e5061a7bea4382`. This approval does not assert CI GREEN or PR-ready status: the single planner-selected exact-source CI run remains mandatory and pending.
+
+---
+
+## Post-rebase CI-correction final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the rebase resolution, corrected regression expectations, Gate 3 approval, parser implementation, or CI evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T110139Z-d97396f5a0/package.json`, SHA-256 `6d84ce9698bd07ba2320a17a9db063c82feae6fbad0e371ed53e6a23395d9c5a`.
+- Rebased base: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head at preparation `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact reviewed candidate source: `d2ef96a009b2295938b0c7a6f57ba062b72edba24acb173ddc4efbb717ad330b`; executable source `3b187b6a9d06d1b4bcd7b874203c072c83405c7755286c6373a9738c5588999b`.
+- Reconstructible snapshot: `snapshot/source.patch`, SHA-256 `14d10bffc3b247be3178268e9ac3cf3a919e9a319c88b4b64723a111b0b42bca`; manifest SHA-256 `5bcbcba028e5b12bbca957ae941ffa72ec30abb440061d88c73596b74300c283`.
+- Delta from previous final snapshot: `delta.patch`, SHA-256 `54100a9540b2e61823dcd420ba7a1e191a351e8134c58d8eebe9ebe318389a95`.
+- Verification plan SHA-256: `10e08088e798dd538c10ca8eed53b8f49f439a7eabacd521eaa0e9e978501be4`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Current storage regression SHA-256: `c3a9a2455afef0fa70cbc7f641880c2ea858d9c8aace88646180f6ca06e119ef`.
+- Supplied exact-source focused evidence: `python3 tests/Verification/local_docker_storage_budget_001_test.py` GREEN, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790420444229205000-007ab0fb42b94ae6beac89e81f32eba1.json`.
+
+### Scope and prior findings disposition
+
+- The rebase itself preserves the Docker-storage candidate over new base `fd75b584...`; unrelated #258 application bytes visible in the cross-snapshot delta are inherited base history rather than authored scope in this candidate.
+- Previous final F1 remains fixed: dependency-only image identity, exact isolated read-only frozen-source mount, honest execution provenance, and the broad source-embedding oracle are unchanged.
+- Previous final F2 remains correctly dispositioned: the appended independent Gate 3 approval covers the root-authored changed regression expectations before the executor parser correction. Exact-source CI remains a later mandatory obligation and the recorded failed run is not GREEN.
+- The root regression changes correctly replace obsolete source-image labels with dependency-image ownership/frozen-source evidence, add missing Buildx capability behavior to old fixtures, preserve setup-versus-regression classification, and make dependency manifests reachable. The aligned `Name:`/`Driver:` fixture is sensitive to the real CI failure. No cleanup selector, threshold, lock, concurrency, diagnostics, disposable teardown, or provenance safety expectation was weakened.
+
+### Complete findings
+
+1. **HIGH — the purported top-level Buildx parser accepts indented/nested identity fields and ambiguous duplicates.** Location: `tools/delivery/docker-storage-guard:66-74`; missing negative cases in `tests/Verification/local_docker_storage_budget_001_test.py:48-52,152-173`.
+
+   The correction must tolerate alignment whitespace after `Name:` and `Driver:`, but its regex also permits arbitrary leading spaces/tabs. It then uses `setdefault`, so the first matching pair wins and later contradictory top-level values are ignored. Thus output containing only indented/nested `Name: fmonitor2-focused` and `Driver: docker-container`, or an exact first pair followed by conflicting duplicates, is accepted as the dedicated builder identity. This contradicts the delivery record's claim that top-level fields are normalized and weakens LDB001-F/J's fail-closed dedicated-builder boundary. In particular, accepting an unproven driver can authorize cache maintenance against a builder that was not established as the dedicated `docker-container` builder.
+
+   Correction: parse only unindented top-level `Name:` and `Driver:` keys while allowing horizontal alignment whitespace after the colon; require exactly one non-empty occurrence of each and exact values `fmonitor2-focused` / `docker-container`. Reject missing, indented-only, duplicate, conflicting, or extra-value identity records before cleanup/build. Add deterministic negative public-guard cases for those shapes while retaining the real aligned-output GREEN witness. Because these are new safety expectations, refresh the planner/Gate 3 binding before another implementation correction review.
+
+### CI state
+
+The complete recorded failed-job and `REGRESSION_FAILURE` inventories for run `36235533985` were inspected. They support the aligned-output/legacy-fixture diagnosis but remain FAILURE evidence, not admission. A corrected exact-source CI continuation is still required after review approval; no retry is authorized or treated as GREEN by this verdict.
+
+## Post-rebase correction verdict
+
+**CHANGES_REQUESTED**
+
+Gate 5 does not pass for exact source `d2ef96a009b2295938b0c7a6f57ba062b72edba24acb173ddc4efbb717ad330b`. No implementation was changed by this reviewer.
+
+---
+
+## Final Buildx parser security-correction rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the approved identity matrix, parser correction, prior CI-fixture corrections, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T111155Z-18fe3560fe/package.json`, SHA-256 `a0b60bce84327a1992d9951bb3bb48a5c23b9cc9ecc9e495bc0efc087ab1c2ef` at final inspection.
+- Rebased base: `fd75b5848b4344013411f4191ee330e147e377c4`; committed feature head `728d15f2912ce063b2f8ad15b108c0b3490bd1d5`.
+- Exact reviewed candidate source: `fdb3470275bbf8f78c2598bdd03afe746c35b1f132fa13c55618cd412955643d`; executable source `e6e357db4f5da4c674f9ae5a294592a576852566dc37c482351bc69b3526ca63`.
+- Reconstructible snapshot patch SHA-256: `e4d8694b8b93ea21bafe122c4eedae65c1c1fc31cf3747b8edb9f80de0a3216a`; manifest SHA-256 `5f1a7ad65271a04dc32517042300d357cd2168af7cfacd6eaf3f4fd0f5cea676`.
+- Verification plan SHA-256: `12bc98321348245103155c58782ffb2f843c3c6743502e98b00ffdea0200c527`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `a03970ae66ba220426c53f4666c836a8a5be6ed28db40d47433fedb47e4d6c8d`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790421063337992000-ca07cc979519493697f7370e0297dcc7.json`.
+- Review-only checks: Python syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Complete prior-findings disposition
+
+- Original final-review provenance F1 remains fixed: dependency-only image identity, no source-derived build metadata, exact isolated frozen source mounted once read-only, and independently derived execution provenance remain unchanged.
+- Original procedural F2 remains correctly dispositioned: Gate 3 owns pre-implementation expectations, Gate 5 owns exact implementation, and exact-source CI remains a separate post-review admission obligation.
+- Rebased CI fixture corrections remain approved and unchanged: real aligned Buildx output is modeled, legacy wrappers provide required Buildx capability, dependency fixtures reach the guarded seam, and obsolete source-in-image expectations stay replaced by dependency-image/frozen-source evidence.
+- The post-rebase parser HIGH is **fixed**. `ensure_builder()` now matches only unindented `Name:` and `Driver:` lines, tolerates alignment whitespace only after the colon, collects every occurrence, and proceeds only when the complete dictionary is exactly `{"Name": ["fmonitor2-focused"], "Driver": ["docker-container"]}`. Missing, empty, foreign, indented-only, duplicate-same and conflicting values therefore fail closed before cleanup/build.
+- The independently approved matrix is complete on both axes: it retains the real aligned valid pair and separately rejects missing-all, missing Name, missing Driver, wrong Name, wrong Driver, empty Name, empty Driver, indented identity, duplicate/conflicting Name and duplicate/conflicting Driver. Every negative requires exactly Buildx version/inspect calls and structured `unsupported_buildx`, with no maintenance or build effect.
+
+### Complete findings
+
+No blocking findings remain. The correction is bounded to the approved exact-identity parser and does not weaken selectors, thresholds, locking, concurrency, diagnostics, disposable teardown, provenance, or architecture ownership.
+
+### CI state
+
+The prior run `36235533985` remains FAILURE evidence for the superseded source and is not treated as GREEN. A planner-authorized exact-source CI continuation for this corrected candidate remains mandatory before overall GREEN/PR-ready status.
+
+## Final security-correction verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `fdb3470275bbf8f78c2598bdd03afe746c35b1f132fa13c55618cd412955643d`. This approval does not assert CI GREEN, merge readiness, or deployment authorization.
+
+---
+
+## Final CI Buildx provisioning rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the provisioning oracle, workflow change, parser implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T114142Z-6945936fdd/package.json`, SHA-256 `17f7f03838259dc37fa0b7014d59409829a39adc360502ca56ae16ef0b4e647c`.
+- Exact reviewed candidate source: `c9a5315bdb5c53e1d2114615d2218cd4d1c119f53477af2e89973bba86abf3eb`; executable source `587e17c3f7c26c812c91e5e88620a6756f8969e4c3360592ef8e734099f7abdc`.
+- Snapshot patch SHA-256: `fd2789739f68ccd9cb1608a6e15f0376d894ff8e5a7465c5b314f6904ac3c9f5`; manifest SHA-256 `e608b7a7a83c89aada7086d2ad0f7641ba3fb58933bb9c2309749ee0951b5f8a`.
+- Verification plan SHA-256: `f0b17eb7f3d9cd4c727de1fd22fc49170c7a93e40e743ed0ca5f0d4ca2973d04`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved oracle/current storage test SHA-256: `c8de3ef53ca74a6a32e5128452b2ffd9a8bad5e63faed1f9dba96964a1fc8d56`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790422849542500000-65f6018a3ddb4557a4d8cd5a963e66c6.json`.
+
+### Findings and prior dispositions
+
+No blocking findings remain. `.github/actions/setup-runtime/action.yml` contains exactly one active unconditional step using official `docker/setup-buildx-action` pinned to immutable commit `8d2750c68a42422c14e847fe6c8ac0403b4cbd6f`. The shared runtime is consumed by all five Quality Graph category jobs, so provisioning is centralized rather than duplicated or conditionally skipped.
+
+The approved oracle uses a full-line anchored active-step match, requires exactly one occurrence, bounds the step block by indentation and rejects `if:`. A comment, display name, block scalar, mutable ref, duplicate or conditional step cannot produce GREEN. The change only provisions the missing Buildx CLI/plugin; it does not alter CI admission, Docker daemon/settings ownership, cleanup selection, retention budgets, or destructive boundaries.
+
+All earlier provenance, dependency identity, frozen-source mount, exact builder identity, cleanup, concurrency, diagnostics, disposable lifecycle, architecture ownership and rebased fixture findings remain fixed. No scope regression was found.
+
+## Final CI provisioning verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `c9a5315bdb5c53e1d2114615d2218cd4d1c119f53477af2e89973bba86abf3eb`. Exact-source CI must still become GREEN before overall GREEN/PR-ready status; this review does not authorize merge or deployment.
+
+---
+
+## Current-main parser and mountpoint correction rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the refreshed oracle, parser/mountpoint implementation, Gate 3 record, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T123423Z-fe43341aec/package.json`, SHA-256 `0728d3140c5a262dbc075802a125652871ef8b437acf18af823e1a206e4c8208` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `936a81d7a03db8c3c2268e93d5003c90a5c39846c9095e0f12d6907c3c3673cc`; executable source `000c6126b768a335b052404ca509d3eab82a5b6f61f098e741b5f4efa29fd770`.
+- Snapshot patch SHA-256: `d42eae892786e85769633cb91897a4d263049f4a2ee82ec79a196901cbdabd30`; manifest SHA-256 `52893abd4897efaf1b902e50b74a25a19f880dafd7a5f8cc9215a14b1f770574`.
+- Verification plan SHA-256: `7f6f6dec5e10a19c2ce607d15aaf170d2d1ed9d27e3ac4213ff96edfe9a920f5`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `b949cfef96130ca8b4f2477fbf7a72ece69a1092a8ee03ad9887ea9688875e46`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790426007268563000-53995315286f4369bfe7b087381043ce.json`.
+- Review-only checks: Python/Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and complete prior disposition
+
+No blocking findings remain.
+
+- The Buildx header correction is exact and bounded. `ensure_builder()` takes only content before an exact unindented `Nodes:` marker and collects unindented `Name:`/`Driver:` occurrences there. It still proceeds only for the exact unique lists `Name=[fmonitor2-focused]` and `Driver=[docker-container]`. A realistic later unindented node `Name` is excluded, while all missing/wrong/empty/indented/duplicate/conflicting header cases remain fail-closed before cleanup/build.
+- `run-in-profile` restores the frozen source and validates its executable digest first, then creates exactly the three required empty nested mountpoint directories: `.local`, `vendor`, `.test-artifacts`. This occurs before dependency/build/run execution. The fake runtime witness resolves the sole `/workspace` source at the actual `docker run` call and requires those exact directories to exist with empty contents; dead code, comments, post-run creation, extra contents or the old absent-target failure cannot pass.
+- The same runtime witness recomputes the mounted-source digest, so the empty mountpoint preparation does not weaken frozen-source provenance. It creates no domain/source fact and does not broaden writable mounts.
+- All earlier dependency identity, execution provenance, exact builder identity, pinned shared CI provisioning, cleanup selection, thresholds, locking, concurrency, diagnostics, disposable teardown and architecture-boundary findings remain fixed. No scope or destructive-boundary regression was found.
+
+## Current-main correction verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `936a81d7a03db8c3c2268e93d5003c90a5c39846c9095e0f12d6907c3c3673cc`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Read-only dependency-image vendor mount rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the vendor-mount oracle, implementation, Gate 3 approval, or CI diagnosis.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T130203Z-9fb2849c75/package.json`, SHA-256 `90805e8fae23af13b70be9d98321f040acab99a0b6c87f0e9de141c0a0c419c5` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `37c80ce129c89475064d6302a8da9abc4178ca36cfb8c23d9358721457464e54`; executable source `0ad24c1727b9ffe36144070a14157a584c162a31a0a3cadb7646c3a89f610a0c`.
+- Snapshot patch SHA-256: `3f56639a57bb578ec5737eb7695442de04a0478f19fb46047fdf18a3ea07cdd2`; manifest SHA-256 `0c72fd82b9cedeb4fd5b96e040cd5a17b90f475cad0dab14f5ec21f9eefe7c65`.
+- Verification plan SHA-256: `ac6bcd1d08f0a90f8738070f1080409d1ad935fbc5473ffbf8aaa85a2bfb6dc6`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `5dfa40eaa73a539be6717d42a082e229584f9299a7f3033e7790a342a992c412`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790427669220120000-ed209712d67d490d837f50be4ada2dfc.json`.
+- Review-only checks: Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and complete disposition
+
+No blocking findings remain.
+
+- `run-in-profile` mounts `/workspace/vendor` exactly once with `type=image`, `src=$image_digest`, `readonly`, and exact `image-subpath=/opt/fmonitor/composer/vendor`. The source is the immutable ID returned by `docker image inspect`, not the mutable dependency tag; the subpath exactly matches the Dockerfile Composer installation.
+- The previous writable `/workspace/vendor` tmpfs and runtime `cp -a` are removed. The child now only verifies the mounted autoloader/Yii files before executing the requested command, so dependency bytes are neither copied into nor exposed through a writable runtime layer.
+- The approved public-run oracle requires the exact image-mount argv using the reported immutable image ID. It rejects a tag, host bind, writable mount, wrong destination/subpath, broader image view, duplicate vendor mount, old tmpfs and old copy command.
+- Frozen-source guarantees remain intact: the sole `/workspace` bind stays read-only; source digest validation precedes preparation; `.local`, `vendor`, and `.test-artifacts` remain the exact three precreated empty mountpoint directories; the runtime witness observes them empty at `docker run` and recomputes the mounted-source digest.
+- All prior Buildx header/identity, pinned CI provisioning, dependency identity, provenance, cleanup, concurrency, diagnostics, disposable teardown and architecture findings remain fixed. The recorded CI rationale correctly identifies the superseded writable tmpfs/copy path; that failure inventory is diagnostic evidence, not GREEN admission.
+
+## Read-only vendor mount verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `37c80ce129c89475064d6302a8da9abc4178ca36cfb8c23d9358721457464e54`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; this review does not authorize merge or deployment.
+
+---
+
+## Relative image-subpath final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the one-token expectation/implementation correction, Gate 3 approval, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T132254Z-259247a75a/package.json`, SHA-256 `eacc4e4281679f5f354e230808be30ef4735f92ac72f4031b97cd4cb7e278a0d` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `b8aed372f307f751607ba4f3e6a0792e32d032d7478b10b486c334782b58e8d0`; executable source `d19d09cac927b6efd6d62d2d98d05493def510ed8c8ebac98e98c5f82d203836`.
+- Snapshot patch SHA-256: `6f43fae1059515c37ffc9e64a1564ed1a6a95c91b63f4be0d6897290da8cb2cd`; manifest SHA-256 `471e6f39bf75754deca7b82d69e6eb53e9e33706a0a6d44b7d973a8e242ddae8`.
+- Verification plan SHA-256: `6c77176d20208f9543f747fb6025d479e8a685a1b13a4ec969b00a42b0087952`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `58893d7757d96da8f8a631ce5113e2c287672216d4e0f07005a49c88685145c8`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790428921544172000-56480a1e058d4448ba24e9ba46a147b3.json`.
+- Review-only checks: Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and disposition
+
+No blocking findings remain. The only behavioral token changed is the Docker-required conversion from absolute `image-subpath=/opt/fmonitor/composer/vendor` to relative `image-subpath=opt/fmonitor/composer/vendor`.
+
+Every approved mount invariant remains exact: one `/workspace/vendor` mount; `type=image`; source equal to the reported immutable image digest; fixed destination; `readonly`; and the same narrow Composer vendor subtree. The source bind, three empty precreated mountpoints, source-digest witness, absence of vendor tmpfs/runtime copy, dependency identity and container read-only expectations are unchanged.
+
+The CI failure disposition is precise: the prior source reached Docker with the absolute subpath and was rejected because image subpaths must be relative. It is superseded failure evidence, not a safety finding or GREEN admission. All earlier findings remain fixed.
+
+## Relative-subpath verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `b8aed372f307f751607ba4f3e6a0792e32d032d7478b10b486c334782b58e8d0`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Exactly-one profile target final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the profile-target oracle, implementation, Gate 3 approval, or Quality Graph diagnostics.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T140231Z-f7bacea467/package.json`, SHA-256 `193a018680941966c013836581e9bc79a2110621ff12afe87cd2cfbc6ca00fcf`.
+- Exact reviewed candidate source: `dc00d9c1a77f951f0415c0bf824cf81cf54cb396a30b588bbe89d70bb78c2eb4`; executable source `f328d1b4fa1b93a7e5c193541fec134b4c2730b750c69e7852fa2e990ba3babd`.
+- Snapshot patch SHA-256: `ad799c9f547e73b17096c6abef73152d7f4c964e0c16d9c9de5f7120e10047ca`; manifest SHA-256 `fc356ebafe7b60bae6e4d3343c5a427d3e5993262c95b5eb92552719d3a67b7b`.
+- Verification plan SHA-256: `d29cd2bb9542ac77c1a56c4368d5445c31e358457686bdfe0c3e30f3432cd411`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `b090d7a5e30360b0b1ae3ce4caaced3fdff1fa47a67508c3a0ada5e8bd879bd6`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790431290466295000-690888cf682e45f7a2611521f6e6cbcd.json`.
+
+### Findings and disposition
+
+No blocking findings remain. The executor added exactly one token pair, `--target "$profile"`, to the single guarded `docker buildx build` command. It appears once, precedes the tag, and does not add another build or bypass the storage guard.
+
+The approved deterministic oracle requires exactly one `--target` and equality with the requested/reported profile on every reviewed build. Separate isolated governance and browser runs bind target value to the profile-derived image tag, exact `org.fmonitor.profile=<profile>` label and `RUN_IN_PROFILE_RESULT.profile`. Missing, duplicated/overriding, hard-coded or mismatched targets cannot pass. The retained Quality Graph integration covers governance, integration and browser; its richer diagnostics are consistent with the observed prior default-final-stage collision and do not change acceptance.
+
+All prior immutable/read-only dependency mount, relative image subpath, empty nested mountpoints, frozen-source provenance, exact Buildx identity, pinned CI runtime, cleanup, concurrency, diagnostics, disposable teardown and architecture invariants remain unchanged.
+
+## Profile-target verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `dc00d9c1a77f951f0415c0bf824cf81cf54cb396a30b588bbe89d70bb78c2eb4`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Scoped Buildx CI setup final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the scoped-CI oracle, workflow/action implementation, manifest update, Gate 3 approval, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T150241Z-c521c4fcd9/package.json`, SHA-256 `14839f5fa0c81dc7930f91aa3d4e97f8e3e8311f4d80d5cfee22c3ebd004a8a0`.
+- Exact reviewed candidate source: `5765634346d8986cd733867bac3d0955b7efc7aed8707375a0d88f3359b59608`; executable source `ec5eebadb55d3c1e5e275ba5120c01edae2cb4f0f3b1559f11a5185936f573a4`.
+- Snapshot patch SHA-256: `d87e4d7351c0275843097ce2ac7ce9309788d17436f6d4edc05cf073cd6657fa`; manifest SHA-256 `a687bb86c0bc864ce59d9d2b08ae7bd62be6bcf251190fd7177f475db510398d`.
+- Verification plan SHA-256: `536f30be3afe9861418ca7401e39d6bd592aea55bed36347eda32c9a183ce06e`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `67795e093ec2ac2ea3dec180522b05f1a86d0e077925396da6e7691a6b56e8a2`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790434905415456000-5a887e5526924600ba767878dae96d54.json`.
+
+### Findings and disposition
+
+No blocking findings remain. Parsed YAML confirms the shared composite input `buildx` is optional with exact string default `'false'`; the single immutable-pinned official Buildx action has exact condition `inputs.buildx == 'true'`. Integration and governance each have exactly one shared-runtime step with exact nested `buildx: 'true'`; E2E has exactly one shared-runtime step with no override and therefore inherits false. Comments, names, env values and unrelated steps cannot satisfy the oracle.
+
+The E2E job is otherwise byte-semantically unchanged for the reviewed policy: job timeout remains exactly 20 minutes, admission remains `needs.plan.outputs.full == 'true'`, the sole named execution step remains `make test CATEGORY=e2e`, and neither job nor command step has `continue-on-error`. No skip, retry, command, blocking or admission weakening was introduced.
+
+`.github/workflows/quality-graph.yml` and `.quality-graph/current-ci-manifest.json` are updated together under the existing renderer/checker ownership; the manifest records the corrected generated workflow digest. The scoped change removes unrelated Buildx setup only from consumers that do not invoke focused Docker builds. All prior profile-target, image mount/subpath, frozen-source, parser identity, cleanup and destructive-boundary findings remain fixed.
+
+## Scoped CI setup verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `5765634346d8986cd733867bac3d0955b7efc7aed8707375a0d88f3359b59608`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.

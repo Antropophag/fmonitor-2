@@ -100,6 +100,8 @@ jobs:
         persist-credentials: 'false'
         fetch-depth: '0'
     - uses: ./.github/actions/setup-runtime
+      with:
+        buildx: 'true'
     - name: Prepare pinned integration dependencies
       run: make ci-setup
     - name: Prepare isolated test database
@@ -142,6 +144,8 @@ jobs:
         persist-credentials: 'false'
         fetch-depth: '0'
     - uses: ./.github/actions/setup-runtime
+      with:
+        buildx: 'true'
     - name: Run governance category once
       run: make test CATEGORY=governance
   verify:

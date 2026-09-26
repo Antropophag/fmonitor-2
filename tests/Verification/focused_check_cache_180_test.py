@@ -22,7 +22,7 @@ for command in dependency_runs:
     assert command in common, f"FCC180 setup: missing dependency command {command}"
 
 label_pos = common.index("LABEL org.fmonitor.composer-lock-sha256")
-for argument in ("COMPOSER_LOCK_SHA256", "EXECUTABLE_SOURCE"):
+for argument in ("COMPOSER_LOCK_SHA256",):
     declarations = list(re.finditer(rf"(?m)^ARG {argument}$", common))
     assert len(declarations) == 1, f"FCC180: common must declare {argument} exactly once"
     assert declarations[0].start() < label_pos, f"FCC180: {argument} must precede LABEL"
@@ -38,17 +38,16 @@ assert common.index("COPY pyproject.toml uv.lock") < common.index("uv sync"), (
     "FCC180-02: uv inputs must remain before uv installation"
 )
 assert 'org.fmonitor.composer-lock-sha256="$COMPOSER_LOCK_SHA256"' in common
-assert 'org.fmonitor.executable-source="$EXECUTABLE_SOURCE"' in common
+assert "EXECUTABLE_SOURCE" not in common
+assert "org.fmonitor.executable-source" not in common
 
 for build_argument in (
     '--build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha"',
-    '--build-arg "EXECUTABLE_SOURCE=$executable_source"',
 ):
     assert build_argument in launcher, f"FCC180 identity input lost: {build_argument}"
 for inspection in (
-    'org.fmonitor.composer-lock-sha256',
-    'org.fmonitor.executable-source',
-    "container dependency/source identity does not match frozen candidate",
+    'type=bind,src=$materialized,dst=/workspace,readonly',
+    'FMONITOR_EXECUTED_SOURCE=$executable_source',
 ):
     assert inspection in launcher, f"FCC180 stale identity guard lost: {inspection}"
 

@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+"""Bounded storage policy for repository-owned focused Docker builds."""
+
+from __future__ import annotations
+
+import fcntl
+import json
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+
+GIB = 1024**3
+GB = 1000**3
+BUILDER = "fmonitor2-focused"
+OWNER = "org.fmonitor.owner=focused-checks"
+
+
+def emit(prefix: str, value: dict[str, object], *, stderr: bool = False) -> None:
+    print(prefix + json.dumps(value, separators=(",", ":"), sort_keys=True),
+          file=sys.stderr if stderr else sys.stdout)
+
+
+def decimal(name: str, default: int, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name, str(default))
+    if not raw.isdecimal():
+        raise ValueError(name)
+    value = int(raw)
+    if not minimum <= value <= maximum:
+        raise ValueError(name)
+    return value
+
+
+def limits() -> dict[str, int]:
+    value = {
+        "hard_floor_bytes": decimal("FMONITOR_DOCKER_STORAGE_HARD_FLOOR_BYTES", 50 * GIB, 10 * GIB, 200 * GIB),
+        "target_free_bytes": decimal("FMONITOR_DOCKER_STORAGE_TARGET_FREE_BYTES", 80 * GIB, 10 * GIB, 300 * GIB),
+        "max_cache_bytes": decimal("FMONITOR_DOCKER_STORAGE_MAX_CACHE_BYTES", 30 * GB, 1 * GB, 100 * GB),
+        "retention_hours": decimal("FMONITOR_DOCKER_STORAGE_RETENTION_HOURS", 48, 1, 720),
+    }
+    if value["target_free_bytes"] < value["hard_floor_bytes"]:
+        raise ValueError("FMONITOR_DOCKER_STORAGE_TARGET_FREE_BYTES")
+    return value
+
+
+def free_bytes() -> int:
+    fixture = os.environ.get("FMONITOR_DOCKER_STORAGE_FREE_BYTES_FILE")
+    raw = pathlib.Path(fixture).read_text().strip() if fixture else str(shutil.disk_usage("/").free)
+    if not raw.isdecimal():
+        raise ValueError("free_bytes")
+    return int(raw)
+
+
+def docker(argv: list[str]) -> None:
+    subprocess.run(["docker", *argv], check=True)
+
+
+def ensure_builder() -> None:
+    subprocess.run(["docker", "buildx", "version"], check=True)
+    inspected = subprocess.run(
+        ["docker", "buildx", "inspect", BUILDER], text=True, capture_output=True
+    )
+    if inspected.returncode == 0:
+        nodes_marker = re.search(r"^Nodes:$", inspected.stdout, re.MULTILINE)
+        header = inspected.stdout[:nodes_marker.start()] if nodes_marker else inspected.stdout
+        fields: dict[str, list[str]] = {"Name": [], "Driver": []}
+        for match in re.finditer(
+            r"^(Name|Driver):[ \t]*(.*?)[ \t]*$",
+            header,
+            re.MULTILINE,
+        ):
+            fields[match.group(1)].append(match.group(2))
+        if fields != {"Name": [BUILDER], "Driver": ["docker-container"]}:
+            raise RuntimeError("unexpected builder identity")
+        return
+    config = pathlib.Path(__file__).with_name("buildkitd.focused.toml")
+    subprocess.run([
+        "docker", "buildx", "create", "--name", BUILDER,
+        "--driver", "docker-container", "--buildkitd-config", str(config), "--use",
+    ], check=True)
+    subprocess.run(["docker", "buildx", "inspect", BUILDER, "--bootstrap"], check=True)
+
+
+def outcome(cleanup: str, free: int | None, result: str, reason: str) -> None:
+    value: dict[str, object] = {
+        "action": "build", "cleanup": cleanup, "free_bytes": free,
+        "hard_floor_bytes": CURRENT_LIMITS["hard_floor_bytes"],
+        "outcome": result, "reason": reason,
+    }
+    emit("DOCKER_STORAGE_GUARD ", value, stderr=True)
+
+
+def build(argv: list[str]) -> int:
+    if "--" not in argv:
+        return 2
+    separator = argv.index("--")
+    command = argv[separator + 1:]
+    if not command or command[0] != "docker":
+        return 2
+    try:
+        before = free_bytes()
+    except (OSError, ValueError):
+        outcome("not_started", None, "rejected", "invalid_free_space_measurement")
+        return 2
+    try:
+        ensure_builder()
+    except (OSError, RuntimeError, subprocess.CalledProcessError):
+        outcome("not_started", before, "rejected", "unsupported_buildx")
+        return 2
+    cleanup = "skipped"
+    measured = before
+    if measured < CURRENT_LIMITS["hard_floor_bytes"]:
+        lock_arg = argv[argv.index("--lock-path") + 1] if "--lock-path" in argv else ""
+        try:
+            lock_path = pathlib.Path(lock_arg)
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            with lock_path.open("a") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                measured = free_bytes()
+                if measured < CURRENT_LIMITS["hard_floor_bytes"]:
+                    cleanup = "performed"
+                    age = f"until={CURRENT_LIMITS['retention_hours']}h"
+                    docker(["image", "prune", "--force", "--filter", f"label={OWNER}", "--filter", age])
+                    docker(["buildx", "prune", "--builder", BUILDER, "--force", "--filter", age,
+                            "--max-used-space", str(CURRENT_LIMITS["max_cache_bytes"]),
+                            "--min-free-space", str(CURRENT_LIMITS["target_free_bytes"])])
+                    measured = free_bytes()
+        except (OSError, ValueError, subprocess.CalledProcessError):
+            outcome(cleanup, measured, "rejected", "maintenance_failed")
+            return 2
+    if measured < CURRENT_LIMITS["hard_floor_bytes"]:
+        outcome(cleanup, measured, "rejected", "insufficient_free_space")
+        return 2
+    reason = "sufficient_free_space" if cleanup == "skipped" else "free_space_recovered"
+    outcome(cleanup, measured, "allowed", reason)
+    try:
+        subprocess.run(command, check=True)
+    except (OSError, subprocess.CalledProcessError) as error:
+        return error.returncode if isinstance(error, subprocess.CalledProcessError) else 2
+    return 0
+
+
+def doctor() -> int:
+    try:
+        free = free_bytes()
+        result = subprocess.run(["docker", "system", "df", "--format", "{{json .}}"],
+                                check=True, text=True, capture_output=True)
+        totals = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError):
+        return 2
+    emit("DOCKER_STORAGE_DIAGNOSTIC ", {
+        "automatic_scope": "project_owned_images_and_builder_cache",
+        "docker": totals,
+        "free_bytes": free,
+        "guidance": "Docker Desktop storage limit and GC settings are manual host actions; review them in Docker Desktop Settings.",
+        "host_configuration": "manual",
+        "limits": CURRENT_LIMITS,
+    })
+    return 0
+
+
+try:
+    CURRENT_LIMITS = limits()
+except ValueError:
+    emit("DOCKER_STORAGE_GUARD ", {"action": "validation", "outcome": "rejected", "reason": "invalid_limits"}, stderr=True)
+    raise SystemExit(2)
+
+if len(sys.argv) >= 2 and sys.argv[1] == "build":
+    raise SystemExit(build(sys.argv[2:]))
+if sys.argv[1:] == ["doctor"]:
+    raise SystemExit(doctor())
+raise SystemExit(2)

@@ -231,12 +231,12 @@
   },
   "fileSha256": {
     ".github/workflows/quality-graph-publish.yml": "b97ec4c135f3a62184eba237507d00bab2a3a7b59c21cbce28000ea048ace263",
-    ".github/workflows/quality-graph.yml": "a127136dfe0a316e1bc58572f2c549162575a57243346bdbea86ab7a1f5a53dc",
+    ".github/workflows/quality-graph.yml": "5ce74e7ffa89f6f6305f02e24fdbbbde99c8e0892d2fbc20d07918917fe2068d",
     "quality-graph.yml": "cfd9eaa38878f0446c7261d47ac686026a65ee77bd54610af1d310c7a42ac2f2",
     "tools/delivery/quality-graph-preflight.py": "a33b227522d91db9a0f5f6a6bea0744df688f3e11ba614a45a7b7ee1b87ab23a",
     "tools/delivery/quality-graph-report.py": "8cee33501b7a3a82c205c07afce5c818630e2002d0fe4c9797ff3af0c281754b"
   },
   "graphDigest": "7892de817964eda101b2c48586146e83d1baa9d4d36c3c7323734c2acbf5a49b",
   "schemaVersion": 1,
-  "selfDigest": "77e6db3b24760b2ba5fa12023cdaa51d01a144d025cca36cd408da37c70ff78c"
+  "selfDigest": "91813bc0568f7d9e2ab8076db9aa1628af2587d1302ad42e3a78521f6c05adc3"
 }

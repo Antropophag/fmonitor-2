@@ -104,7 +104,7 @@ $tag='fmonitor2-php-test:qcs-'.bin2hex(random_bytes(8));$absent=qcsRun(['docker'
 
     foreach (['governance', 'integration', 'browser'] as $profile) {
         $command = ['sh', '-c', <<<'SH'
-set -eu
+set -eux
 test -f /.dockerenv
 test "$FMONITOR_PROFILE" = "$1"
 test "$FMONITOR_IMAGE_DIGEST" != ""
@@ -130,7 +130,7 @@ printf 'argv=%s image=%s\n' "$2" "$FMONITOR_IMAGE_DIGEST"
 SH, 'profile-probe', $profile, 'value with spaces'];
         $probe = qcsRun([$launcher, $profile, ...$command], $root);
         assertSameValue(0, $probe['exit'],
-            "INTENDED_RED DP110A-03 {$profile} locked runtime/dependency contract");
+            "INTENDED_RED DP110A-03 {$profile} locked runtime/dependency contract\nstdout=".$probe['out']."\nstderr=".$probe['err']);
         assertSameValue(1, preg_match('/RUN_IN_PROFILE_RESULT (\{[^\n]+\})\n/D', $probe['err'], $record),
             "DP110A-04 {$profile} compact result");
         $evidence = json_decode($record[1], true, flags: JSON_THROW_ON_ERROR);

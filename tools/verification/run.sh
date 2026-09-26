@@ -41,16 +41,17 @@ require_db() {
 
 # Explicit inventory: validate everything before printing a list or executing tests.
 load_inventory() {
-  local directory runtime file inventory_output status
+  local directory runtime file inventory_output status python_runtime
+  python_runtime="${FMONITOR_HARNESS_PYTHON:-python3}"
   for directory in tests/InstallationProcess tests/AssignmentOrderComposition tests/Verification tests/Otiz tests/Runtime tests/Jobs; do
     test -d "$directory" || fail SETUP_FAILURE "missing verification directory: $directory"
   done
   case "$suite" in
     unit|db|characterization|e2e)
-      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py list --suite "$suite" 2>&1)"
+      inventory_output="$("$python_runtime" tools/verification/inventory.py list --suite "$suite" 2>&1)"
       ;;
     *)
-      inventory_output="$(/usr/bin/python3 tools/verification/inventory.py validate 2>&1)"
+      inventory_output="$("$python_runtime" tools/verification/inventory.py validate 2>&1)"
       ;;
   esac
   status=$?

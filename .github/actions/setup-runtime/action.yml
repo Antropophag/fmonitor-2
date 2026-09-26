@@ -1,5 +1,10 @@
 name: Pinned verification runtimes
 description: Install the runtime prerequisites from the shared development manifest.
+inputs:
+  buildx:
+    description: Set up the pinned Docker Buildx plugin.
+    required: false
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -7,6 +12,8 @@ runs:
       shell: bash
       run: |
         python3 tools/delivery/render-dependencies.py --env >> "$GITHUB_ENV"
+    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      if: inputs.buildx == 'true'
     - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
         php-version: ${{ env.PHP_VERSION }}
@@ -30,9 +37,15 @@ runs:
           uv python install "$PYTHON_VERSION"
           dirname "$(uv python find --no-project "$PYTHON_VERSION")" >> "$GITHUB_PATH"
         fi
+    - name: Install locked Python test dependencies
+      shell: bash
+      run: |
+        uv sync --frozen --dev
+        echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
     - name: Verify pinned Python
       shell: bash
-      run: python3 -c 'import os, platform; assert platform.python_version() == os.environ["PYTHON_VERSION"]'
+      run: python3 -c 'import os, platform, sys, yaml; assert platform.python_version() == os.environ["PYTHON_VERSION"]; assert sys.prefix == os.environ["VIRTUAL_ENV"]'
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
         node-version: ${{ env.NODE_VERSION }}

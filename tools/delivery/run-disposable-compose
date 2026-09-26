@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -u
+
+usage() { echo 'usage: run-disposable-compose --project fm2-disposable-<name> --file <file> -- <compose args>' >&2; exit 2; }
+[[ $# -ge 6 && "$1" == --project && "$3" == --file && "$5" == -- ]] || usage
+project=$2
+compose_file=$4
+shift 5
+[[ "$project" =~ ^fm2-disposable-[a-z0-9][a-z0-9-]*$ ]] || usage
+[[ -f "$compose_file" ]] || usage
+
+operation_status=0
+cleanup_status=0
+child=
+interrupted=0
+finish() {
+    local trap_status=$?
+    trap - EXIT INT TERM
+    if [[ -n "$child" ]] && kill -0 "$child" 2>/dev/null; then
+        kill -TERM "$child" 2>/dev/null || true
+        wait "$child" 2>/dev/null || true
+    fi
+    docker compose --project-name "$project" --file "$compose_file" down --volumes --remove-orphans
+    cleanup_status=$?
+    if [[ "$interrupted" -ne 0 ]]; then operation_status=$interrupted; fi
+    local final=$operation_status
+    if [[ "$final" -eq 0 && "$cleanup_status" -ne 0 ]]; then final=$cleanup_status; fi
+    python3 - "$operation_status" "$cleanup_status" <<'PY' >&2
+import json,sys
+print("DISPOSABLE_COMPOSE_RESULT " + json.dumps({"cleanup_status":int(sys.argv[2]),"operation_status":int(sys.argv[1])},separators=(",",":"),sort_keys=True))
+PY
+    exit "$final"
+}
+on_int() { interrupted=130; finish; }
+on_term() { interrupted=143; finish; }
+trap finish EXIT
+trap on_int INT
+trap on_term TERM
+docker compose --project-name "$project" --file "$compose_file" "$@" &
+child=$!
+wait "$child"
+operation_status=$?
+child=
+exit "$operation_status"
