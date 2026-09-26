@@ -58,7 +58,7 @@
 - **THEN** выбор не уменьшает прогнозную доступность
 
 ### Requirement: Прогнозный график и детализация
-Dashboard SHALL явно отделять блок «Прогноз загрузки на 6 недель» от исторической динамики. Для каждой недели SHALL показываться denominator и counts `busy`, `free`, `releasing`, `conflict`, `unknown`; нулевое значение SHALL отображаться как настоящий ноль только при полном источнике. Каждый показатель SHALL вести на `GET|HEAD /pilot/dashboard/installers/forecast/{weekStart}/{bucket}`, где перечислены сохранённые на момент чтения люди и основания расчёта в устойчивом порядке ФИО/tabId с объектом и границами интервала.
+Существующий единственный dashboard widget «Загрузка монтажников и динамика» SHALL показывать forecast вместо historical chart. Отдельный второй forecast widget MUST NOT рендериться. Для каждой недели SHALL показываться denominator и counts `busy`, `free`, `releasing`, `conflict`, `unknown`; нулевое значение SHALL отображаться как настоящий ноль только при полном источнике. Каждый показатель SHALL вести на `GET|HEAD /pilot/dashboard/installers/forecast/{weekStart}/{bucket}`, где перечислены люди и основания расчёта в устойчивом порядке ФИО/tabId с объектом и границами интервала.
 
 #### Scenario: Детализация свободных
 - **WHEN** пользователь активирует `free` для недели 05.10.2026
@@ -69,11 +69,11 @@ Dashboard SHALL явно отделять блок «Прогноз загруз
 - **THEN** последующее чтение прогноза и detail отражает новый факт, не переписывая historical observations
 
 ### Requirement: Авторизация и безопасность чтения
-Forecast counts и каждый direct detail URL SHALL требовать полный доступ `objects.read` + `installers.read`. Guest SHALL получать canonical authentication response. Общий dashboard SHALL сохранять доступ всех аутентифицированных ролей, но denied или object-scoped actor SHALL видеть только sanitized unavailable forecast без counts/PII; direct detail SHALL возвращать `403`. `HEAD` SHALL повторять status и безопасные headers GET с пустым body. Повторное чтение MUST NOT создавать jobs, observations, assignments, audit или другие domain facts.
+Forecast counts и каждый direct detail URL SHALL наследовать доступ общего dashboard для любого аутентифицированного активного пользователя. Guest SHALL получать canonical authentication response. Capability или object scope MUST NOT превращать валидный forecast в unavailable/403. `HEAD` SHALL повторять status и безопасные headers GET с пустым body. Повторное чтение MUST NOT создавать jobs, observations, assignments, audit или другие domain facts.
 
-#### Scenario: Прямой запрещённый URL
-- **WHEN** actor без полного `installers.read` открывает forecast detail напрямую
-- **THEN** система возвращает `403` и не раскрывает имена, counts или объекты
+#### Scenario: Прямой URL без installer capability
+- **WHEN** аутентифицированный активный actor без `installers.read` или со scoped object access открывает forecast detail напрямую
+- **THEN** система возвращает тот же полный forecast detail `200`, что и для другого dashboard actor
 
 #### Scenario: Read-only повтор
 - **WHEN** разрешённый actor повторяет dashboard и detail при неизменных source facts

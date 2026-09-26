@@ -205,3 +205,75 @@ No full local suite was run:
 - Working-tree `git diff --check` — PASS.
 
 No finding remains for this CI correction. Commit `fdc31e64dfd9ed5489d473afccf7048c782170a6` is approved for rerunning the required CI consumer. This does not convert the prior CI run to GREEN; deploy remains unauthorized.
+
+---
+
+## Production-regression hotfix Gate 5 review — 2026-09-26
+
+Verdict: **APPROVED**
+
+### Exact source, scope, and authorship
+
+Reviewed the exact dirty candidate in `/private/tmp/fmonitor-forecast-hotfix` immediately before this review-only append: clean base/`HEAD` `708e0a6db6cf7075e392ddc3814e6234672123da`, harness admission candidate/source `7134b511dc1d45e1e2e4aaeb39f1e531cb30eac590efb9b6d87cb357392d1f95`. Production changes are limited to `app/YiiRuntime/Controllers/DashboardController.php` and `app/YiiRuntime/Views/dashboard.php`. Root-authored contract/tests and the separate executor implementation follow the current-goal authorization; the independent hotfix Gate 3 correction rereview is **APPROVED** for the exact listed spec/test blobs and retained RED source. This reviewer authored none of those artifacts and changed only this review record.
+
+The owner authorizes PR/merge after approvals and exact-source GREEN CI. Deploy and manual production-data edits remain unauthorized.
+
+### Conformance review
+
+- **One widget, no duplication.** The prior separate `installer-forecast` section is removed. The existing primary-pair `data-dashboard-chart="utilization"` widget and title «Загрузка монтажников и динамика» now render the six-week, five-bucket live forecast. There is exactly one utilization widget, no second forecast widget, and the surrounding four-widget dashboard geometry remains coherent.
+- **No dashboard history query/visualization.** `actionIndex()` no longer constructs history bounds, opens the observation adapter, calls `currentSummary()`/`historyBetween()`, or passes historical DTOs. The replaced widget contains no observation-date/history markup. This removes the stale dashboard visualization without deleting historical facts.
+- **Observation preservation.** The observation read owner, storage/capture implementation, `actionObservation()`, routes, and saved observation detail view remain unchanged. Focused tests prove stored history stays byte-equivalent and direct saved-detail GET|HEAD remains available.
+- **Authenticated dashboard inheritance.** Once the existing dashboard read owner admits an authenticated active user, forecast/dashboard and direct detail no longer impose unrelated installer capability or construction-control scope checks. They call the actor-neutral read projection (`actorId=0`), matching the corrected contract. Permissionless and scoped actors receive the same six weeks, denominator, links, and detail data; guests retain the canonical redirect. This directly corrects the production diagnosis where the owner returned six weeks/denominator 937 but the old controller produced `forecast_allowed=0` for active-user roles.
+- **No false unavailable.** Authorization/scope is no longer converted into the forecast catch path. The unavailable widget is now source/error fail-safe only. Empty or incomplete authoritative source still produces explicit unavailable text and never fabricated zero/free values.
+- **No behavior masking.** Tests independently assert the single reused widget, absence of historical dashboard markers, six weeks/30 values, exact live values and coordinates, permissionless/scoped GET|HEAD `200`, real detail content, guest redirect, repeated-read/no-write behavior, source-empty fail-safe, retained observation storage/detail, and desktop/mobile keyboard/touch behavior. The operational dashboard oracle now expects four widgets because the historical utilization widget is replaced in place rather than accompanied by a fifth forecast widget.
+- **No scope creep.** No workforce projection, database/schema, writer, capture, observation-storage, assignment/PTO, or deployment code changed.
+
+### Findings
+
+No correctness, authorization, source-safety, composition, regression-masking, performance, accessibility, or authorship finding remains. The production diagnosis is consistent with the removed controller gate and does not require a production-data mutation.
+
+### Fresh bounded evidence
+
+No full local suite was run:
+
+- `php tests/Workforce/installer_utilization_forecast_001_test.php` — PASS (`A-G/I/K/M projection`)
+- `php tests/Yii2/yii2_installer_utilization_forecast_001_test.php` — PASS (`HTTP/auth/query-scale`)
+- `php tests/Yii2/yii2_installer_utilization_forecast_browser_001_test.php` — PASS
+- `php tests/Yii2/yii2_installer_utilization_observations_001_test.php` — PASS (`observation storage/detail preserved; dashboard history removed`)
+- `php tests/Yii2/yii2_operational_dashboard_bar_charts_001_test.php` — PASS (`complete A-L matrix`)
+- `php -l app/YiiRuntime/Controllers/DashboardController.php` — PASS
+- `php -l app/YiiRuntime/Views/dashboard.php` — PASS
+- `git diff --check` — PASS
+
+Reported executor deployment/verification/architecture checks are consistent with this review; the one transient Docker diagnostic was rerun GREEN and is not promoted here beyond the independent focused evidence above. Exact-source CI remains required before merge. Deploy remains unauthorized.
+
+---
+
+## Hotfix CI-correction Gate 5 rereview — 2026-09-26
+
+Verdict: **APPROVED**
+
+Reviewed the exact two-file dirty correction on committed PR head `8a51cd614cedb41f6b5943c9bb041ba77d3df986` in `/private/tmp/fmonitor-forecast-hotfix`. Before this review-only append, the only working-tree changes were `tests/Yii2/installer_utilization_observations_browser.mjs` and `tests/Yii2/yii2_completion_document_register_001_test.php`; there is no production, normative-spec, persistence, or migration delta.
+
+The complete failed inventory for exact-source CI run `36228988444` contains three failed jobs (`e2e`, downstream `verify`, downstream `Quality Graph`) and exactly two primary `REGRESSION_FAILURE` paths in `e2e`:
+
+1. `tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php` still expected the intentionally removed historical dashboard chart.
+2. `tests/Yii2/yii2_completion_document_register_001_test.php` used the moving current clock and crossed from 2026-09-25 to 2026-09-26, changing the expected age from 55 days.
+
+No additional primary failure is omitted. Downstream failures are consequences of the e2e gate and are not independently reclassified as GREEN.
+
+### No-masking assessment
+
+- The observations browser no longer searches for dashboard controls that the approved hotfix deliberately removed. It now requires exactly one `data-dashboard-chart="utilization"` forecast widget, six forecast weeks, 30 forecast values, and absence of the historical dashboard DOM markers. It then directly opens both saved observation detail routes and verifies immutable saved members/reasons. Thus it preserves browser-level observation-storage/detail coverage while aligning the dashboard oracle with the replacement contract.
+- Removed focus, keyboard, touch, adjacent-bar, and empty-week assertions applied only to observation bars that no longer exist on the dashboard. Forecast keyboard/touch/focus/local-overflow behavior remains independently covered by `yii2_installer_utilization_forecast_browser_001_test.php`; saved observation routes and payloads remain covered here and by the observations HTTP test. This is not a silent reduction of a still-supported surface.
+- The completion-register test pins `FMONITOR_NOW` to `2026-09-25T12:00:00+03:00`, the date assumed by its existing independently expected 55-day assertions. It changes no expected value, fixture fact, application code, or deadline calculation. The correction removes midnight/date drift rather than weakening chronology coverage.
+
+### Fresh focused evidence
+
+No full local suite was run:
+
+- `php tests/Yii2/yii2_installer_utilization_observations_browser_001_test.php` — PASS
+- `php tests/Yii2/yii2_completion_document_register_001_test.php` — PASS
+- `git diff --check` — PASS
+
+No Gate 5 finding remains for this bounded CI correction. The corrected exact source requires a fresh CI run; run `36228988444` remains FAILURE and must not be promoted to GREEN. Deploy remains unauthorized.
