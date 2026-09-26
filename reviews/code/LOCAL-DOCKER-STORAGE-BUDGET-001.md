@@ -186,3 +186,32 @@ All earlier provenance, dependency identity, frozen-source mount, exact builder 
 **APPROVED**
 
 Gate 5 passes for exact source `c9a5315bdb5c53e1d2114615d2218cd4d1c119f53477af2e89973bba86abf3eb`. Exact-source CI must still become GREEN before overall GREEN/PR-ready status; this review does not authorize merge or deployment.
+
+---
+
+## Current-main parser and mountpoint correction rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the refreshed oracle, parser/mountpoint implementation, Gate 3 record, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T123423Z-fe43341aec/package.json`, SHA-256 `0728d3140c5a262dbc075802a125652871ef8b437acf18af823e1a206e4c8208` at final inspection.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`.
+- Exact reviewed candidate source: `936a81d7a03db8c3c2268e93d5003c90a5c39846c9095e0f12d6907c3c3673cc`; executable source `000c6126b768a335b052404ca509d3eab82a5b6f61f098e741b5f4efa29fd770`.
+- Snapshot patch SHA-256: `d42eae892786e85769633cb91897a4d263049f4a2ee82ec79a196901cbdabd30`; manifest SHA-256 `52893abd4897efaf1b902e50b74a25a19f880dafd7a5f8cc9215a14b1f770574`.
+- Verification plan SHA-256: `7f6f6dec5e10a19c2ce607d15aaf170d2d1ed9d27e3ac4213ff96edfe9a920f5`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `b949cfef96130ca8b4f2477fbf7a72ece69a1092a8ee03ad9887ea9688875e46`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790426007268563000-53995315286f4369bfe7b087381043ce.json`.
+- Review-only checks: Python/Bash syntax and `git diff --check` passed. No full local suite or real Docker action was run.
+
+### Findings and complete prior disposition
+
+No blocking findings remain.
+
+- The Buildx header correction is exact and bounded. `ensure_builder()` takes only content before an exact unindented `Nodes:` marker and collects unindented `Name:`/`Driver:` occurrences there. It still proceeds only for the exact unique lists `Name=[fmonitor2-focused]` and `Driver=[docker-container]`. A realistic later unindented node `Name` is excluded, while all missing/wrong/empty/indented/duplicate/conflicting header cases remain fail-closed before cleanup/build.
+- `run-in-profile` restores the frozen source and validates its executable digest first, then creates exactly the three required empty nested mountpoint directories: `.local`, `vendor`, `.test-artifacts`. This occurs before dependency/build/run execution. The fake runtime witness resolves the sole `/workspace` source at the actual `docker run` call and requires those exact directories to exist with empty contents; dead code, comments, post-run creation, extra contents or the old absent-target failure cannot pass.
+- The same runtime witness recomputes the mounted-source digest, so the empty mountpoint preparation does not weaken frozen-source provenance. It creates no domain/source fact and does not broaden writable mounts.
+- All earlier dependency identity, execution provenance, exact builder identity, pinned shared CI provisioning, cleanup selection, thresholds, locking, concurrency, diagnostics, disposable teardown and architecture-boundary findings remain fixed. No scope or destructive-boundary regression was found.
+
+## Current-main correction verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `936a81d7a03db8c3c2268e93d5003c90a5c39846c9095e0f12d6907c3c3673cc`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.

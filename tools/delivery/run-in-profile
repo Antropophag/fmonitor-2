@@ -74,6 +74,7 @@ if [[ -n "$expected_source" && "$executable_source" != "$expected_source" ]]; th
     echo 'materialized executable source does not match frozen candidate' >&2
     exit 2
 fi
+mkdir -p "$materialized/.local" "$materialized/vendor" "$materialized/.test-artifacts" || exit 2
 
 set -a
 # shellcheck source=dependencies.env

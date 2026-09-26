@@ -63,10 +63,12 @@ def ensure_builder() -> None:
         ["docker", "buildx", "inspect", BUILDER], text=True, capture_output=True
     )
     if inspected.returncode == 0:
+        nodes_marker = re.search(r"^Nodes:$", inspected.stdout, re.MULTILINE)
+        header = inspected.stdout[:nodes_marker.start()] if nodes_marker else inspected.stdout
         fields: dict[str, list[str]] = {"Name": [], "Driver": []}
         for match in re.finditer(
             r"^(Name|Driver):[ \t]*(.*?)[ \t]*$",
-            inspected.stdout,
+            header,
             re.MULTILINE,
         ):
             fields[match.group(1)].append(match.group(2))

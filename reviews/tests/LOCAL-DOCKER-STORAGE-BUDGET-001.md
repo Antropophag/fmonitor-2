@@ -414,3 +414,65 @@ All previously approved A–N and Buildx identity-security matrices remain uncha
 **APPROVED**
 
 Gate 3 passes for exact source `359e3afe021944c254a1ead29b7cce541dabee9bf0574ac5a633ed5239f116b7`. The executor may add the one unconditional exact-pinned setup action to the shared runtime owner without changing approved expectations. Focused GREEN, final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## Current-main runtime-correction Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI diagnosis, refreshed tests, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T122838Z-9f0e493c4f/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; committed candidate base for snapshot: `f209eb427395b38cb64601b6ab9008ff0ef50abb`.
+- Exact test candidate source: `7b375d2f08b8a93db79782e2900f4ab9e0560da0f6eaf7106037a68a813f4dbe`; executable source: `3c7819e997dbc9f69154faf124aa194a2bba15133abbbe20aae3818be38edd86`.
+- Snapshot: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T122838Z-9f0e493c4f/snapshot/source.patch`, SHA-256 `879c5dd5c449c6be6d5101ed23266022f3aa833f8adf0ac80b32eb30d3df5fd4`.
+- Verification-plan SHA-256: `42666e56b288dc184e7ed80ddd13201f59d8385193fbe40be0411efd5dd8ebf2`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed storage test SHA-256: `982824a56dc4a0e8e4360b4d50ab756ff0ebcad394d87bb0120f61724707fc49`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Findings disposition and scope
+
+- All prior A–N, identity-security and pinned active CI-step findings remain fixed.
+- The Buildx header correction is adequately sensitive. The valid fixture contains exact aligned header `Name`/`Driver`, then `Nodes:` and an unindented node-level `Name`. A compliant parser must validate the unique exact pair only before `Nodes:`; treating the later node name as a duplicate will fail the positive path. Existing missing/wrong/empty/indented/duplicate/conflicting header negatives remain intact.
+- Creating `.local`, `vendor`, and `.test-artifacts` inside the materialized source is bounded and compatible with provenance: they are empty mountpoint directories, not new source facts, and the existing mounted-harness digest witness continues to bind executed files.
+
+### Complete findings
+
+1. **HIGH — the mountpoint test is source-text presence, not a pre-run behavior witness.** `tests/Verification/local_docker_storage_budget_001_test.py:159` accepts one exact `mkdir -p` substring anywhere in `run-in-profile`. The text can be in a comment, unreachable branch, cleanup function, or after `docker run`; the test then turns GREEN while Docker still sees absent nested destinations under the read-only `/workspace` bind and exits 125 before child behavior. It also does not prove the directories are empty or confined to the materialized source.
+
+   Extend the existing fake `docker run` witness: resolve the single `/workspace` source and require `.local`, `vendor`, and `.test-artifacts` to exist as empty directories at the moment `docker run` is invoked. Require no additional repository paths to be created by this preparation (an explicit before/after inventory or equivalent bounded witness), and retain digest equality. The runtime observation establishes ordering and effect; an exact command-string assertion may remain supplemental but cannot be the sole oracle.
+
+### RED assessment and verdict
+
+The retained exact-source RED exits `1` at `runner does not materialize nested writable mountpoints before read-only source mount`. It identifies the absent intended command, but because the current assertion is static it does not prove the correction prevents the observed Docker exit 125.
+
+**CHANGES_REQUESTED**
+
+The executor runtime correction remains blocked on a pre-`docker run` mountpoint behavior witness. The Buildx header correction may remain in the same refreshed matrix. No production implementation is approved by this verdict.
+
+---
+
+## Runtime mountpoint-witness Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected runtime oracle, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T123101Z-7a070a3dd7/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `f209eb427395b38cb64601b6ab9008ff0ef50abb`.
+- Exact candidate source: `c7348853456f2b243a701e6bada2a0aa2eeddcdcec937e117d03b45864ae0739`; executable source: `45723c23d64018ba19996d5fa482e3cf93e30f555e93e7157989c3416a0597dd`.
+- Snapshot patch SHA-256: `325e84c06bcc4135baa19e9cbd3dc7d08fca9ecde550f52961e79759ce9e92bb`.
+- Verification-plan SHA-256: `c301da453c150a0312cb911225ab077bc0d511726d36fa3c4d80ad84577cfe76`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Corrected storage test SHA-256: `b949cfef96130ca8b4f2477fbf7a72ece69a1092a8ee03ad9887ea9688875e46`.
+- Verdict: **APPROVED**.
+
+### Finding disposition and assessment
+
+The prior mountpoint finding is fixed. During the actual fake `docker run` call, the oracle resolves the sole exact `/workspace` bind source and records `.local`, `vendor`, and `.test-artifacts`. The public assertions require the exact three expected entries to be directories with empty contents. This proves the destinations exist before Docker processes the nested mounts and prevents the observed exit 125; a comment, dead branch, cleanup-time mkdir or post-run command cannot satisfy it. The existing mounted-harness digest equality simultaneously proves these empty directories do not change executable source identity.
+
+The realistic positive Buildx fixture retains aligned header Name/Driver followed by `Nodes:` and an unindented node Name, while all approved header ambiguity negatives remain. Thus the header-only parsing correction and mountpoint preparation can be implemented together without weakening the dedicated-builder boundary. All earlier A–N, identity-security, CI provisioning and provenance matrices remain unchanged.
+
+### RED assessment
+
+The retained record is exact-source bound and exits `1` at the still-missing header parser behavior (`unsupported_buildx`). That is the first intended defect in the combined matrix. The later mountpoint witness is structurally reachable after the same approved header correction and independently observes runtime filesystem state rather than source text. No setup or sensitivity blocker remains.
+
+### Runtime correction Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `c7348853456f2b243a701e6bada2a0aa2eeddcdcec937e117d03b45864ae0739`. The executor may implement the bounded header-before-Nodes parser and create the three empty materialized mountpoint directories before `docker run`, without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

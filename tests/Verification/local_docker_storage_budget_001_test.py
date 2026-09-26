@@ -51,7 +51,7 @@ if argv[:2]==['buildx','version']:
     print('github.com/docker/buildx v0.32.2')
 elif argv[:2]==['buildx','inspect']:
     inspect_mode=os.environ.get('FAKE_BUILDX_INSPECT_MODE','valid')
-    if inspect_mode=='valid': print('Name:          fmonitor2-focused'); print('Driver:        docker-container')
+    if inspect_mode=='valid': print('Name:          fmonitor2-focused'); print('Driver:        docker-container'); print('Nodes:'); print('Name: fmonitor2-focused0')
     elif inspect_mode=='missing': print('Nodes:')
     elif inspect_mode=='missing_name': print('Driver: docker-container')
     elif inspect_mode=='missing_driver': print('Name: fmonitor2-focused')
@@ -92,7 +92,8 @@ elif argv[:1]==['run']:
         spec=importlib.util.spec_from_file_location('mounted_harness',source/'tools/delivery/harness.py')
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         expected=next((item.split('=',1)[1] for index,item in enumerate(argv) if index and argv[index-1]=='--env' and item.startswith('FMONITOR_EXECUTED_SOURCE=')),None)
-        witness={'src':str(source),'src_absolute':source.is_absolute(),'src_exists':source.is_dir(),'ambient_repo':str(pathlib.Path.cwd().resolve()),'workspace_mount_count':len(workspaces),'readonly':'readonly' in workspace.split(','),'marker':(source/'marker.txt').read_text().strip(),'actual_digest':module.source_details()['executable_digest'],'expected_digest':expected}
+        mountpoints={name:{'is_dir':(source/name).is_dir(),'entries':sorted(item.name for item in (source/name).iterdir()) if (source/name).is_dir() else None} for name in ('.local','vendor','.test-artifacts')}
+        witness={'src':str(source),'src_absolute':source.is_absolute(),'src_exists':source.is_dir(),'ambient_repo':str(pathlib.Path.cwd().resolve()),'workspace_mount_count':len(workspaces),'readonly':'readonly' in workspace.split(','),'marker':(source/'marker.txt').read_text().strip(),'actual_digest':module.source_details()['executable_digest'],'expected_digest':expected,'mountpoints':mountpoints}
         with pathlib.Path(os.environ['FAKE_RUN_WITNESS']).open('a') as stream: stream.write(json.dumps(witness,separators=(',',':'))+'\\n')
     sys.exit(int(os.environ.get('FAKE_RUN_STATUS','0')))
 sys.exit(0)
@@ -299,7 +300,8 @@ with tempfile.TemporaryDirectory() as temporary:
         witnesses=[json.loads(line) for line in pathlib.Path(env["FAKE_RUN_WITNESS"]).read_text().splitlines()]
         expected_marker="source-a" if result is a else "source-b"
         witness=next(item for item in witnesses if item["marker"]==expected_marker)
-        require(witness["workspace_mount_count"]==1 and witness["readonly"] is True and witness["src_absolute"] is True and witness["src_exists"] is True and pathlib.Path(witness["src"]).resolve()!=pathlib.Path(witness["ambient_repo"]).resolve() and witness["actual_digest"]==witness["expected_digest"]==result["source_digest"],f"mounted source is not exact isolated frozen candidate: {witness} {result}")
+        expected_mountpoints={name:{"is_dir":True,"entries":[]} for name in (".local","vendor",".test-artifacts")}
+        require(witness["workspace_mount_count"]==1 and witness["readonly"] is True and witness["src_absolute"] is True and witness["src_exists"] is True and pathlib.Path(witness["src"]).resolve()!=pathlib.Path(witness["ambient_repo"]).resolve() and witness["actual_digest"]==witness["expected_digest"]==result["source_digest"] and witness["mountpoints"]==expected_mountpoints,f"mounted source is not exact isolated frozen candidate with empty nested mountpoints: {witness} {result}")
     failed_env=env.copy(); failed_env["FAKE_RUN_STATUS"]="37"; failed,calls_failed=public_run(repo,failed_env,37)
     failed_sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
     require(failed["git_sha"]==failed_sha and failed["exit_code"]==37 and failed["profile"]=="governance" and isinstance(failed["duration_seconds"],(int,float)) and str(failed["image_digest"]).startswith("sha256:"),f"failed child provenance is dishonest: {failed}")
