@@ -1,8 +1,5 @@
 .DEFAULT_GOAL := help
 
-PYTHON_ENV ?= $(CURDIR)/.venv
-export PATH := $(PYTHON_ENV)/bin:$(PATH)
-
 COMPOSE := docker compose
 LOCAL_ENV_RUN := bash tools/delivery/local-runtime-env --
 LOCAL_ENV_VALIDATE := bash tools/delivery/local-runtime-env --validate
