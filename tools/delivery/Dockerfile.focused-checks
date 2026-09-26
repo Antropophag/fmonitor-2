@@ -10,7 +10,6 @@ ARG UV_VERSION
 ARG UV_IMAGE_DIGEST
 ARG SHLZ_UI_REVISION
 ARG COMPOSER_LOCK_SHA256
-ARG EXECUTABLE_SOURCE
 
 FROM node:${NODE_VERSION}-bookworm-slim@${NODE_BOOKWORM_IMAGE_DIGEST} AS node
 
@@ -47,23 +46,19 @@ COPY --from=node /usr/local/ /usr/local/
 COPY --from=python /usr/local/ /usr/local/
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 COPY --from=uv /uv /uvx /usr/local/bin/
-COPY composer.json composer.lock /workspace/
-RUN composer validate --working-dir=/workspace --no-check-publish
-RUN composer install --working-dir=/workspace --no-interaction --no-scripts
+COPY composer.json composer.lock /opt/fmonitor/composer/
+RUN composer validate --working-dir=/opt/fmonitor/composer --no-check-publish
+RUN composer install --working-dir=/opt/fmonitor/composer --no-interaction --no-scripts
 COPY pyproject.toml uv.lock /opt/fmonitor/
 RUN UV_PROJECT_ENVIRONMENT=/opt/fmonitor/.venv \
         uv sync --directory=/opt/fmonitor --frozen --no-install-project
-COPY . /workspace/
-RUN mkdir -p /workspace/.local
 
 ARG COMPOSER_LOCK_SHA256
-ARG EXECUTABLE_SOURCE
-LABEL org.fmonitor.composer-lock-sha256="$COMPOSER_LOCK_SHA256" \
-    org.fmonitor.executable-source="$EXECUTABLE_SOURCE"
+LABEL org.fmonitor.composer-lock-sha256="$COMPOSER_LOCK_SHA256"
 
 ENV NODE_PATH=/shlz-ui/node_modules \
     FMONITOR_SHLZ_UI_ROOT=/shlz-ui \
-    FMONITOR_COMPOSER_VENDOR=/workspace/vendor \
+    FMONITOR_COMPOSER_VENDOR=/opt/fmonitor/composer/vendor \
     FMONITOR_PYTHON_ENV=/opt/fmonitor/.venv \
     UV_CACHE_DIR=/tmp/uv-cache
 WORKDIR /workspace

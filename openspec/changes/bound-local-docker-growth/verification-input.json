@@ -1,0 +1,26 @@
+{
+  "change": "bound-local-docker-growth",
+  "planned_paths": [
+    "specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md",
+    "tools/delivery/docker-storage-guard",
+    "tools/delivery/run-disposable-compose",
+    "tools/delivery/buildkitd.focused.toml",
+    "tools/delivery/run-in-profile",
+    "tools/architecture/check.py",
+    "tests/Verification/local_docker_storage_budget_001_test.py",
+    "tools/verification/suites.tsv",
+    "docs/development-setup.md",
+    "docs/operations/current-delivery-goal.md",
+    "docs/operations/local-docker-storage-budget-delivery.md",
+    "openspec/changes/bound-local-docker-growth"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "LOCAL-DOCKER-STORAGE-BUDGET-001",
+      "acceptance_id": "LDB001-A-N",
+      "spec_path": "specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md",
+      "seam": "tools/delivery/run-in-profile and its owning docker-storage guard",
+      "tests": ["tests/Verification/local_docker_storage_budget_001_test.py"]
+    }
+  ]
+}

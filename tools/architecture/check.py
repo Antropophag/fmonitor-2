@@ -86,6 +86,9 @@ SESSION_INTERNAL_FACTORY = re.compile(
     r"\b(?P<class>PilotSessionOperationResult|PilotSessionFilesystemEvent|PilotSessionInspectionResult)"
     r"::(?P<method>owner[A-Za-z0-9_]+|inspector[A-Za-z0-9_]+)\s*\("
 )
+DESTRUCTIVE_DOCKER_PRUNE = re.compile(
+    r"\bdocker\s+(?:system|image|buildx|volume|container|network)\s+prune\b"
+)
 
 
 def files() -> list[Path]:
@@ -244,6 +247,22 @@ def collect() -> dict[str, list[str] | dict[str, int]]:
     violations: dict[str, list[str]] = collections.defaultdict(list)
     hotspot: dict[str, int] = {}
     public_seams: list[str] = []
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        if rel == "tools/delivery/docker-storage-guard" or any(
+            part in {".git", "tests", "specs", "openspec", "reviews", "docs", "vendor", "node_modules"}
+            for part in path.relative_to(ROOT).parts
+        ):
+            continue
+        if path.suffix not in {"", ".py", ".sh", ".php"} and path.name != "Makefile":
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if DESTRUCTIVE_DOCKER_PRUNE.search(line):
+                violations["docker_cleanup_ownership"].append(
+                    finding("docker-prune-owner", path, number, line)
+                )
     # These legacy adapters are invoked by ordinary OTIZ requests. Their directory
     # exclusion cannot exempt reachable ledger/projection methods from DDL ownership.
     for relative in (
@@ -345,6 +364,8 @@ def classify(current: dict, baseline: dict) -> tuple[list[str], list[str]]:
         errors.append(f"workforce_migration_ownership: forbidden production owner: {item}")
     for item in current.get("session_storage_ownership", []):
         errors.append(f"session_storage_ownership: forbidden production owner: {item}")
+    for item in current.get("docker_cleanup_ownership", []):
+        errors.append(f"docker_cleanup_ownership: forbidden cleanup owner: {item}")
     for rule in ("ddl_ownership", "sql_ownership", "dependency_direction", "rapid_pilot_boundary"):
         old = collections.Counter(baseline.get(rule, []))
         new = collections.Counter(current.get(rule, []))
@@ -396,7 +417,7 @@ def main() -> int:
         print("WROTE tools/architecture/baseline.json")
         return 0
     errors, advisories = classify(current, baseline)
-    result = {"ok": not errors, "errors": errors, "advisories": advisories, "rules": 7}
+    result = {"ok": not errors, "errors": errors, "advisories": advisories, "rules": 8}
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     else:
@@ -405,7 +426,7 @@ def main() -> int:
             for error in errors:
                 print(f"- {error}")
         else:
-            print("ARCHITECTURE CHECK PASSED (7 rules)")
+            print("ARCHITECTURE CHECK PASSED (8 rules)")
         if advisories:
             print("ARCHITECTURE ADVISORIES")
             for advisory in advisories:

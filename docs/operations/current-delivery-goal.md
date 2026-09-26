@@ -1,11 +1,9 @@
-# Текущая цель — #276 runtime-коррекции completed и диагностики ОТиЗ
+# Текущая цель — bounded local Docker growth
 
-Параллельное поручение владельца 2026-09-26: в отдельном worktree/PR реализовать follow-up GitHub #276 после `persist-completed-installation-state`. Активная Docker-доставка в основном worktree не входит в этот candidate и не изменяется.
+Поручение владельца 2026-09-26: после фактического заполнения диска Docker-артефактами реализовать change `bound-local-docker-growth` и довести candidate до PR-ready. Scope: только локальные focused/disposable delivery workflow, storage guard, project-owned image/cache retention, teardown доказанно ephemeral Compose resources, диагностика и проверки безопасности.
 
-Решение владельца 2026-09-26: production будет пересоздан с нуля без historical data. Scope сужен до runtime-коррекций новых дел: единый label/metrics persisted `completed` в shared status, operational dashboard и weekly FKR; исправление `INSTALLER_ATTRIBUTION_ABSENT` для zero/positive progress. Связь паспорта с `fm_maintable` сохраняется.
+Контракт: [LOCAL-DOCKER-STORAGE-BUDGET-001](../../specs/LOCAL-DOCKER-STORAGE-BUDGET-001.md). Lifecycle: [bound-local-docker-growth](../../openspec/changes/bound-local-docker-growth/). Root пишет scope/spec/tests; отдельный gpt-5.6-sol/low executor реализует; независимые gpt-5.6-sol/low reviewers решают planner-required Gates 3/5. Локально только bounded focused checks; full `make test`/`make verify` запрещён. Exact-source GitHub CI выполняется один раз.
 
-Lifecycle: `openspec/changes/reconcile-completed-installation-state/`. Root пишет normative specs и RED tests; отдельный `gpt-5.6-sol/low` executor реализует; независимые `gpt-5.6-sol/low` reviewers решают planner-required Gate 3/final. Base — `fd75b584` (`origin/main` при создании worktree). Полный локальный `make test`/`make verify` запрещён; только bounded focused checks и один exact-source CI.
+Не входят №157 `compact-task-context-manifest`, завершённый hotfix №258/PR №282, параллельный отдельный worktree/PR №276 `reconcile-completed-installation-state`, application/product behavior, production deployment, изменение CI admission, автоматическая правка Docker Desktop settings, глобальный prune, удаление persistent stand/foreign resources и угадывание владельца исторических anonymous volumes. Предыдущие и параллельные цели сохранены в Git history и не включаются в этот candidate.
 
-Не входят historical reconciliation/backfill, deployment CLI, migration, backup/restore ceremony, production data mutation, изменение premium formula/settlement, state writers, runtime DDL, новая логика в `rapid-pilot` и отвязка паспорта от `fm_maintable`. Предыдущее Gate 3 `CHANGES_REQUESTED` сохранено как история отменённого широкого scope и не является approval нового candidate.
-
-Текущее состояние, PR и CI читаются через `python3 tools/delivery/harness.py state`. Merge/deploy/data mutation без отдельного поручения не выполнять.
+Текущее состояние, PR и CI читаются только через `python3 tools/delivery/harness.py state`. Merge/deploy/settings не выполнять.

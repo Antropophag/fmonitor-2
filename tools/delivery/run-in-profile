@@ -81,22 +81,32 @@ set -a
 set +a
 
 recipe=$materialized/tools/delivery/Dockerfile.focused-checks
-recipe_hash=$({
-    sha256sum "$recipe" "$materialized/tools/delivery/dependencies.env" \
-        "$materialized/composer.json" "$materialized/composer.lock" \
-        "$materialized/tools/delivery/Dockerfile.focused-checks.dockerignore" \
-        | cut -d' ' -f1
-    printf '%s\n' "$executable_source"
-} | sha256sum | cut -c1-16)
+recipe_hash=$(python3 - "$materialized" <<'PY'
+import hashlib, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+digest = hashlib.sha256()
+for relative in (
+    "tools/delivery/Dockerfile.focused-checks",
+    "tools/delivery/Dockerfile.focused-checks.dockerignore",
+    "tools/delivery/dependencies.env",
+    "composer.json", "composer.lock", "pyproject.toml", "uv.lock",
+):
+    digest.update(relative.encode())
+    digest.update(b"\0")
+    digest.update((root / relative).read_bytes())
+    digest.update(b"\0")
+print(digest.hexdigest()[:16])
+PY
+) || exit 2
 image="fmonitor2-focused-${profile}:${recipe_hash}"
 git_sha=$(git -C "$materialized" rev-parse HEAD) || exit 2
 composer_lock_sha=$(sha256sum "$materialized/composer.lock" | cut -d' ' -f1) || exit 2
 
-if ! docker image inspect "$image" >/dev/null 2>&1; then
-    docker build --quiet --target "$profile" --tag "$image" \
-        --label "org.opencontainers.image.revision=$git_sha" \
+build_command=(docker buildx build --builder fmonitor2-focused --load --tag "$image" \
+        --label "org.fmonitor.owner=focused-checks" \
+        --label "org.fmonitor.profile=$profile" \
+        --label "org.fmonitor.dependency-digest=$recipe_hash" \
         --build-arg "COMPOSER_LOCK_SHA256=$composer_lock_sha" \
-        --build-arg "EXECUTABLE_SOURCE=$executable_source" \
         --build-arg "PHP_IMAGE=$PHP_IMAGE" \
         --build-arg "PHP_IMAGE_DIGEST=$PHP_IMAGE_DIGEST" \
         --build-arg "NODE_VERSION=$NODE_VERSION" \
@@ -108,17 +118,12 @@ if ! docker image inspect "$image" >/dev/null 2>&1; then
         --build-arg "UV_VERSION=$UV_VERSION" \
         --build-arg "UV_IMAGE_DIGEST=$UV_IMAGE_DIGEST" \
         --build-arg "SHLZ_UI_REVISION=$SHLZ_UI_REVISION" \
-        --file "$recipe" "$materialized" >/dev/null || setup_failure dependencies "$?"
-fi
-image_digest=$(docker image inspect "$image" --format '{{.Id}}') || exit 2
-image_lock_sha=$(docker image inspect "$image_digest" \
-    --format '{{index .Config.Labels "org.fmonitor.composer-lock-sha256"}}') || exit 2
-image_source=$(docker image inspect "$image_digest" \
-    --format '{{index .Config.Labels "org.fmonitor.executable-source"}}') || exit 2
-if [[ "$image_lock_sha" != "$composer_lock_sha" || "$image_source" != "$executable_source" ]]; then
-    echo 'container dependency/source identity does not match frozen candidate' >&2
-    exit 2
-fi
+        --file "$recipe" "$materialized")
+"$materialized/tools/delivery/docker-storage-guard" build \
+    --profile "$profile" --image "$image" --dependency-digest "$recipe_hash" \
+    --lock-path "${FMONITOR_DOCKER_STORAGE_LOCK_PATH:-${TMPDIR:-/tmp}/fmonitor2-focused-storage.lock}" \
+    -- "${build_command[@]}" >/dev/null || setup_failure dependencies "$?"
+image_digest=$(docker image inspect --format '{{.Id}}' "$image") || exit 2
 
 profile_run_args=()
 if [[ "$with_services" == true ]]; then
@@ -178,9 +183,11 @@ started=$(python3 -c 'import time; print(time.time_ns())')
 child_stdout=$execution_tmp/child.stdout
 docker run --rm --init \
     ${profile_run_args[@]+"${profile_run_args[@]}"} \
+    --mount "type=bind,src=$materialized,dst=/workspace,readonly" \
     ${artifact_run_args[@]+"${artifact_run_args[@]}"} \
     --read-only \
     --tmpfs /tmp:rw,nosuid,nodev \
+    --tmpfs /workspace/vendor:rw,nosuid,nodev \
     --tmpfs /workspace/.test-artifacts:rw,nosuid,nodev \
     --env "FMONITOR_IMAGE_DIGEST=$image_digest" \
     --env "FMONITOR_EXECUTED_SOURCE=$executable_source" \
@@ -189,7 +196,8 @@ docker run --rm --init \
     --env "FMONITOR_TEST_PLAYWRIGHT_MODULE=/shlz-ui/node_modules/playwright" \
     --workdir /workspace \
     "$image_digest" sh -c \
-        'test -r /workspace/vendor/autoload.php \
+        'cp -a /opt/fmonitor/composer/vendor/. /workspace/vendor/ \
+            && test -r /workspace/vendor/autoload.php \
             && test -r /workspace/vendor/yiisoft/yii2/Yii.php \
             && exec "$@"' \
         run-in-profile "$@" >"$child_stdout"

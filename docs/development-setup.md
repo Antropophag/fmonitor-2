@@ -145,6 +145,23 @@ Exact-source GitHub CI выполняет проверки, выбранные p
 другим disposable test-контуром, остановите его либо задайте отдельный
 `FMONITOR_TEST_DB_PORT` и обеспечьте отдельный Compose project.
 
+Перед focused-сборкой `tools/delivery/run-in-profile` проверяет свободное место
+через `tools/delivery/docker-storage-guard`. По умолчанию сборка требует 50 GiB,
+а bounded cleanup выбирает только образы с label
+`org.fmonitor.owner=focused-checks` старше 48 часов и cache builder
+`fmonitor2-focused` (не более 30 GB, цель — 80 GiB свободного места). Guard не
+удаляет containers, networks или volumes и не выполняет global prune.
+
+Безопасная диагностика без изменения host settings:
+
+```bash
+tools/delivery/docker-storage-guard doctor
+```
+
+Она печатает machine-readable свободное место, Docker totals и действующие
+лимиты. Размер Docker disk image и GC в Docker Desktop проверяются и меняются
+вручную в Docker Desktop Settings; repository tooling эти настройки не правит.
+
 `make fresh-test` дополнительно останавливает test Compose и удаляет его
 одноразовый volume после прогона. Детали категорий и focused-команд находятся в
 [`tools/verification/README.md`](../tools/verification/README.md).
