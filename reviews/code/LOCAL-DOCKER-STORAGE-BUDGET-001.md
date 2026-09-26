@@ -273,3 +273,29 @@ The CI failure disposition is precise: the prior source reached Docker with the 
 **APPROVED**
 
 Gate 5 passes for exact source `b8aed372f307f751607ba4f3e6a0792e32d032d7478b10b486c334782b58e8d0`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.
+
+---
+
+## Exactly-one profile target final rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_final_review` authored none of the profile-target oracle, implementation, Gate 3 approval, or Quality Graph diagnostics.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T140231Z-f7bacea467/package.json`, SHA-256 `193a018680941966c013836581e9bc79a2110621ff12afe87cd2cfbc6ca00fcf`.
+- Exact reviewed candidate source: `dc00d9c1a77f951f0415c0bf824cf81cf54cb396a30b588bbe89d70bb78c2eb4`; executable source `f328d1b4fa1b93a7e5c193541fec134b4c2730b750c69e7852fa2e990ba3babd`.
+- Snapshot patch SHA-256: `ad799c9f547e73b17096c6abef73152d7f4c964e0c16d9c9de5f7120e10047ca`; manifest SHA-256 `fc356ebafe7b60bae6e4d3343c5a427d3e5993262c95b5eb92552719d3a67b7b`.
+- Verification plan SHA-256: `d29cd2bb9542ac77c1a56c4368d5445c31e358457686bdfe0c3e30f3432cd411`; lane `CRITICAL`, required reviews `gate3`, `final`.
+- Approved current storage test SHA-256: `b090d7a5e30360b0b1ae3ce4caaced3fdff1fa47a67508c3a0ada5e8bd879bd6`.
+- Exact-source focused GREEN: `python3 tests/Verification/local_docker_storage_budget_001_test.py`, record `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/records/1790431290466295000-690888cf682e45f7a2611521f6e6cbcd.json`.
+
+### Findings and disposition
+
+No blocking findings remain. The executor added exactly one token pair, `--target "$profile"`, to the single guarded `docker buildx build` command. It appears once, precedes the tag, and does not add another build or bypass the storage guard.
+
+The approved deterministic oracle requires exactly one `--target` and equality with the requested/reported profile on every reviewed build. Separate isolated governance and browser runs bind target value to the profile-derived image tag, exact `org.fmonitor.profile=<profile>` label and `RUN_IN_PROFILE_RESULT.profile`. Missing, duplicated/overriding, hard-coded or mismatched targets cannot pass. The retained Quality Graph integration covers governance, integration and browser; its richer diagnostics are consistent with the observed prior default-final-stage collision and do not change acceptance.
+
+All prior immutable/read-only dependency mount, relative image subpath, empty nested mountpoints, frozen-source provenance, exact Buildx identity, pinned CI runtime, cleanup, concurrency, diagnostics, disposable teardown and architecture invariants remain unchanged.
+
+## Profile-target verdict
+
+**APPROVED**
+
+Gate 5 passes for exact source `dc00d9c1a77f951f0415c0bf824cf81cf54cb396a30b588bbe89d70bb78c2eb4`. Exact-source CI remains mandatory before overall GREEN/PR-ready status; merge and deployment are not authorized by this review.

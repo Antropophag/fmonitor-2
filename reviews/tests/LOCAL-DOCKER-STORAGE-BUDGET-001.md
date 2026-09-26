@@ -532,3 +532,59 @@ The fresh exact-source RED reaches the public runner and records the current abs
 **APPROVED**
 
 Gate 3 passes for exact source `9586d3662a90f14ed54d33c408d1c87fe2cc866d45886f4136988d6fac558846`. The executor may make the one-token absolute-to-relative image-subpath correction without changing other approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.
+
+---
+
+## Focused profile-target Gate 3 review — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the CI diagnosis, refreshed tests, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T135655Z-9aa1b983db/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `7dbd1fc14f91f4628a2355123aa0cec3c8a9305f`.
+- Exact candidate source: `ddb47f6d0c74279ccd6ef5daac4b3c35d1b73dc60c04667fde30e70a830a61f1`; executable source: `f4ac4db9b728658b0718968492d677b4deae368695e4666d76b87867cd04a3bb`.
+- Snapshot patch SHA-256: `ece38b8f97743b33b990b9a876dfd089645cf383c010916bb8230fe9297491ad`.
+- Verification-plan SHA-256: `2cc30d7c4a9ca02810a75c1f2a2f021d1d7a908ac2e9481e5468aea2dc2434a9`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed tests: storage `6e9b3bfc6482d7c429ff83e6ba7a1edd455944a143a7696f40857f0c33e729c3`; Quality Graph diagnostics `224cbde785349d19980702ce60836727496c93ddef6d6720409fc73c243777d7`.
+- Verdict: **CHANGES_REQUESTED**.
+
+### Scope and prior findings disposition
+
+All previously approved storage, identity, mount and CI-runtime expectations remain unchanged. Adding `--target <profile>` is the correct bounded correction for the observed DP110 mismatch: the dependency tag already includes profile, the Dockerfile exposes the three named stages, and the runner reports the requested profile. The Quality Graph changes only retain command trace/stdout/stderr and do not change its three-profile behavioral assertion.
+
+### Complete findings
+
+1. **HIGH — the fake public oracle does not prove exactly one target or distinguish profile mapping.** `tests/Verification/local_docker_storage_budget_001_test.py:295` accepts any build containing `--target` whose **first** following value equals `result["profile"]`. A command with `--target governance --target browser` passes even though Buildx applies the later target and loads browser. The isolated public fixture invokes only `governance`, so an implementation hardcoding `--target governance` also passes this root-authored fake oracle. The real-Docker Quality Graph test would likely catch the latter, but it does not make the deterministic A/B/C matrix independently sensitive and cannot prevent the duplicate-target bypass.
+
+   Require `build[0].count("--target") == 1` and its sole value equal the requested profile. Exercise at least two distinct allowed profiles—preferably governance and browser, the exact observed collision—in isolated fake public runs, and require each build's target, tag/profile label and reported profile to agree. Retain the three-profile Quality Graph regression as integration coverage.
+
+### RED assessment and verdict
+
+The fresh source-bound RED is credible: the recorded Buildx argv has no `--target`, and the result reports governance, so it fails exactly at the new target assertion after successful guard/build preparation. Diagnostic-only Quality Graph changes do not affect this classification. The missing/duplicate mapping cases above remain unobservable.
+
+**CHANGES_REQUESTED**
+
+The executor target correction remains blocked until the deterministic public matrix proves exactly-one and non-hardcoded profile selection. Preserve all prior coverage and refresh the RED/package for rereview. No production implementation is approved here.
+
+---
+
+## Hardened focused profile-target Gate 3 rereview — 2026-09-26
+
+- Reviewer independence: unchanged; `/root/docker_growth_gate3` authored none of the corrected target matrix, implementation, or evidence.
+- Package: `/Users/antropophag/.local/share/fmonitor-2/delivery-harness/packages/20260926T135914Z-840d0049ab/package.json`.
+- Current-main base: `2be52c959ec8c7a9722d4efbefaaea9a38113869`; snapshot base: `7dbd1fc14f91f4628a2355123aa0cec3c8a9305f`.
+- Exact candidate source: `eae899508179c55012826cd2d8f5c0959ea26ec24df75a5386b9a206e50f3ea1`; executable source: `9ce32a398a399888281dbd03e7dc0d0895500b8b97cffd2204895f23fcb55f27`.
+- Snapshot patch SHA-256: `8ad4361465ad21e08be221eb2ce523810048fe4db4390fde0632ca9815dc4702`.
+- Verification-plan SHA-256: `14cdb1def07d9788a821a9567c9983d57db7e33bbe03bbbe726114bbd92b3819`; lane remains `CRITICAL`, required reviews `gate3` and `final`.
+- Refreshed tests: storage `b090d7a5e30360b0b1ae3ce4caaced3fdff1fa47a67508c3a0ada5e8bd879bd6`; Quality Graph diagnostics `224cbde785349d19980702ce60836727496c93ddef6d6720409fc73c243777d7`.
+- Verdict: **APPROVED**.
+
+### Finding disposition and assessment
+
+The prior target finding is fixed. Every reviewed public build now must contain exactly one `--target`, and its sole value must equal the result's requested profile. Separate isolated governance and browser runs require agreement across target value, profile-derived tag prefix, exact `org.fmonitor.profile=<profile>` build label and `RUN_IN_PROFILE_RESULT.profile`. A hardcoded governance target, missing target, duplicate/overriding target, mismatched tag or mismatched label cannot pass. The existing Quality Graph integration retains all three governance/integration/browser runtime checks with richer diagnostics only.
+
+All earlier dependency identity, immutable/read-only mounts, frozen source, Buildx identity, CI provisioning, cleanup and diagnostics expectations remain unchanged. The fresh exact-source RED records a successful guarded governance build invocation with no `--target` and fails at the exactly-one assertion, isolating the intended defect. No new blocker remains.
+
+### Profile-target Gate 3 verdict
+
+**APPROVED**
+
+Gate 3 passes for exact source `eae899508179c55012826cd2d8f5c0959ea26ec24df75a5386b9a206e50f3ea1`. The executor may add exactly one `--target "$profile"` to the guarded Buildx invocation without changing approved expectations. Focused GREEN, refreshed final review and exact-source CI remain separate mandatory evidence.

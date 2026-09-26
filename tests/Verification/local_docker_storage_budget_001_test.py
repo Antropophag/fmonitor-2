@@ -275,8 +275,8 @@ def runner_fixture(root: pathlib.Path) -> tuple[pathlib.Path, dict[str,str], pat
     subprocess.run(["git","init","-q"],cwd=repo,check=True); subprocess.run(["git","config","user.email","fixture@example.test"],cwd=repo,check=True); subprocess.run(["git","config","user.name","Fixture"],cwd=repo,check=True)
     subprocess.run(["git","add","."],cwd=repo,check=True); subprocess.run(["git","commit","-qm","A"],cwd=repo,check=True)
     binary,trace,free=fake_tools(root); free.write_text(str(90*GIB)); env=base_environment(binary,trace,free); return repo,env,trace
-def public_run(repo:pathlib.Path, env:dict[str,str], expected_status:int=0) -> tuple[dict[str,object],list[list[str]]]:
-    trace=pathlib.Path(env["FAKE_DOCKER_TRACE"]); before=len(read_trace(trace)); result=subprocess.run([str(repo/"tools/delivery/run-in-profile"),"governance","true"],cwd=repo,env=env,text=True,capture_output=True); require(result.returncode==expected_status,result.stderr)
+def public_run(repo:pathlib.Path, env:dict[str,str], expected_status:int=0, profile:str="governance") -> tuple[dict[str,object],list[list[str]]]:
+    trace=pathlib.Path(env["FAKE_DOCKER_TRACE"]); before=len(read_trace(trace)); result=subprocess.run([str(repo/"tools/delivery/run-in-profile"),profile,"true"],cwd=repo,env=env,text=True,capture_output=True); require(result.returncode==expected_status,result.stderr)
     return tagged("RUN_IN_PROFILE_RESULT ",result.stderr)[-1],read_trace(trace)[before:]
 with tempfile.TemporaryDirectory() as temporary:
     repo,env,trace=runner_fixture(pathlib.Path(temporary)); a,calls_a=public_run(repo,env); sha_a=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
@@ -292,6 +292,7 @@ with tempfile.TemporaryDirectory() as temporary:
         require(str(result["image_digest"]).startswith("sha256:"), "runner omitted immutable image id")
         build=[call for call in calls if call[:2]==["buildx","build"]]; run=[call for call in calls if call[:1]==["run"]]
         require(len(build)==len(run)==1, "runner must build/run exactly once")
+        require(build[0].count("--target")==1 and build[0][build[0].index("--target")+1]==result["profile"],f"runner did not build exactly the requested profile target: {build[0]} {result}")
         joined="\n".join(build[0]); require("org.fmonitor.owner=focused-checks" in joined and "org.fmonitor.profile=governance" in joined and "org.fmonitor.dependency-digest=" in joined, f"missing labels: {build[0]}")
         require(result["git_sha"] not in joined and result["source_digest"] not in joined,f"source-derived values change dependency image: {build[0]}")
         mounts=[run[0][index+1] for index,token in enumerate(run[0][:-1]) if token=="--mount"]
@@ -308,6 +309,15 @@ with tempfile.TemporaryDirectory() as temporary:
     failed_sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
     require(failed["git_sha"]==failed_sha and failed["exit_code"]==37 and failed["profile"]=="governance" and isinstance(failed["duration_seconds"],(int,float)) and str(failed["image_digest"]).startswith("sha256:"),f"failed child provenance is dishonest: {failed}")
     require(sum(call[:2]==["buildx","build"] for call in calls_failed)==1 and sum(call[:1]==["run"] for call in calls_failed)==1,"failed public run must still build/run exactly once")
+
+with tempfile.TemporaryDirectory() as temporary:
+    repo,env,trace=runner_fixture(pathlib.Path(temporary))
+    for profile in ("governance","browser"):
+        result,calls=public_run(repo,env,profile=profile)
+        build=next(call for call in calls if call[:2]==["buildx","build"])
+        require(build.count("--target")==1 and build[build.index("--target")+1]==profile,f"profile target mismatch: {profile} {build}")
+        require(build[build.index("--tag")+1].startswith(f"fmonitor2-focused-{profile}:"),f"profile tag mismatch: {profile} {build}")
+        require(f"org.fmonitor.profile={profile}" in build and result["profile"]==profile,f"profile label/result mismatch: {profile} {build} {result}")
 
 dockerfile_text=(ROOT/"tools/delivery/Dockerfile.focused-checks").read_text()
 logical=[]

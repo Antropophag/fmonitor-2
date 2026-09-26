@@ -103,7 +103,7 @@ image="fmonitor2-focused-${profile}:${recipe_hash}"
 git_sha=$(git -C "$materialized" rev-parse HEAD) || exit 2
 composer_lock_sha=$(sha256sum "$materialized/composer.lock" | cut -d' ' -f1) || exit 2
 
-build_command=(docker buildx build --builder fmonitor2-focused --load --tag "$image" \
+build_command=(docker buildx build --builder fmonitor2-focused --load --target "$profile" --tag "$image" \
         --label "org.fmonitor.owner=focused-checks" \
         --label "org.fmonitor.profile=$profile" \
         --label "org.fmonitor.dependency-digest=$recipe_hash" \
