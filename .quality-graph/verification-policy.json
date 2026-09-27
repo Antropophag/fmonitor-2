@@ -584,7 +584,8 @@
     {
       "name": "otiz-settlement-v2-schema",
       "patterns": [
-        "app/InstallationProcess/OtizSettlementV2SchemaMigration.php"
+        "app/InstallationProcess/OtizSettlementV2SchemaMigration.php",
+        "app/InstallationProcess/OtizSettlementV2CorrectionsSchemaMigration.php"
       ],
       "verifiers": [
         "tests/Otiz/settlement_v2_db_001_test.php"
@@ -660,6 +661,7 @@
         "app/RuntimeRestore/RuntimeRecoverySchemaV32.php"
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV35.php"
         ,"app/RuntimeRestore/RuntimeRecoverySchemaV36.php"
+        ,"app/RuntimeRestore/RuntimeRecoverySchemaV37.php"
       ],
       "verifiers": [
         "tests/Runtime/runtime_recovery_001_test.php",

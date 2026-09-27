@@ -1,0 +1,13 @@
+{
+  "gate": "final",
+  "verdict": "APPROVED",
+  "candidate_source": "a2714f687f828f717c335e7844040bf7f6fa13625e1d497f1b647e6b964da46f",
+  "plan_sha256": "4f9f6a9591fa1236675501b3c9b315335a8e5340ecc83dd687e5fd17f629b5c1",
+  "reviewer": "/root/otiz_correction_gate3",
+  "author": "root-tests+otiz-executor",
+  "recorded_at": "2026-09-27T09:25:52Z",
+  "findings": [],
+  "green_record_count": 11,
+  "scope": "F01-F06 final implementation review",
+  "merge_or_deploy_authorized": false
+}

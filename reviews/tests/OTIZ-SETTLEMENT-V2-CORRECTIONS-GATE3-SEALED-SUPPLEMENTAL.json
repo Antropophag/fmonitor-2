@@ -1,0 +1,16 @@
+{
+  "gate": "gate3-supplemental",
+  "verdict": "APPROVED",
+  "candidate_source": "a2714f687f828f717c335e7844040bf7f6fa13625e1d497f1b647e6b964da46f",
+  "plan_sha256": "4f9f6a9591fa1236675501b3c9b315335a8e5340ecc83dd687e5fd17f629b5c1",
+  "reviewer": "/root/otiz_correction_gate3",
+  "scope": "final root-authored test delta only",
+  "expectations_weakened": false,
+  "findings": [],
+  "reviewed_blobs": {
+    "tests/Otiz/settlement_v2_upgrade_001_test.php": "9db734be105ec422cb65c5796a584350606e26f43024c1666541985be4d3a7af",
+    "tests/Otiz/settlement_v2_corrections_001_test.php": "cb5bf6f01d473ba0a62acd999e32a3873102d2b536d48434265127f4b023c4aa",
+    "tests/Otiz/settlement_v2_corrections_integration_001_test.php": "53a1769dcfaa981c3ecf9239ce2cc116cc0e9ede8b613655c680b0abe2f9bf42",
+    "tests/Otiz/settlement_v2_workbook_001_test.php": "261daec13f73084974d4c0d7984862cf02e414aaf479c41085b96a311121e838"
+  }
+}

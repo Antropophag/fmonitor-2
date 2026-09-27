@@ -183,6 +183,8 @@ db	php	tests/Otiz/settlement_concurrency_001_test.php	integration
 db	php	tests/Otiz/settlement_owner_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_builder_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_concurrency_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_corrections_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_corrections_integration_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_db_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_portfolio_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_upgrade_001_test.php	integration

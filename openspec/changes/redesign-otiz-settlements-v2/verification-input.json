@@ -29,12 +29,16 @@
     "reviews/tests/OTIZ-SETTLEMENT-V2-GATE3-DISPOSITION.json",
     "app/InstallationProcess/ProductionPilotMigrationCatalogue.php",
     "app/InstallationProcess/OtizSettlementV2SchemaMigration.php",
+    "app/InstallationProcess/OtizSettlementV2CorrectionsSchemaMigration.php",
     "app/RuntimeRestore/RuntimeRecovery.php",
     "app/RuntimeRestore/RuntimeRecoverySchemaV36.php",
+    "app/RuntimeRestore/RuntimeRecoverySchemaV37.php",
     "tests/Otiz/settlement_v2_001_test.php",
     "tests/Otiz/settlement_v2_db_001_test.php",
     "tests/Otiz/settlement_v2_concurrency_001_test.php",
     "tests/Otiz/settlement_v2_builder_001_test.php",
+    "tests/Otiz/settlement_v2_corrections_001_test.php",
+    "tests/Otiz/settlement_v2_corrections_integration_001_test.php",
     "tests/Support/otiz_settlement_v2_concurrency_worker.php",
     "tests/Support/CurrentProductionSchemaContract.php",
     "tests/InstallationProcess/production_migration_runner_001_test.php",
@@ -58,6 +62,8 @@
         "tests/Otiz/settlement_v2_db_001_test.php",
         "tests/Otiz/settlement_v2_concurrency_001_test.php",
         "tests/Otiz/settlement_v2_builder_001_test.php",
+        "tests/Otiz/settlement_v2_corrections_001_test.php",
+        "tests/Otiz/settlement_v2_corrections_integration_001_test.php",
         "tests/Otiz/settlement_v2_portfolio_001_test.php",
         "tests/Otiz/settlement_v2_upgrade_001_test.php",
         "tests/Otiz/settlement_v2_workbook_001_test.php",
@@ -65,15 +71,17 @@
         "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php"
       ],
       "gate3_expected": {
-        "tests/Otiz/settlement_v2_001_test.php": "INTENDED_RED",
-        "tests/Otiz/settlement_v2_db_001_test.php": "INTENDED_RED",
-        "tests/Otiz/settlement_v2_concurrency_001_test.php": "INTENDED_RED",
-        "tests/Otiz/settlement_v2_builder_001_test.php": "INTENDED_RED",
-        "tests/Otiz/settlement_v2_portfolio_001_test.php": "INTENDED_RED",
-        "tests/Otiz/settlement_v2_upgrade_001_test.php": "INTENDED_RED",
+        "tests/Otiz/settlement_v2_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_db_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_concurrency_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_builder_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_corrections_001_test.php": "INTENDED_RED",
+        "tests/Otiz/settlement_v2_corrections_integration_001_test.php": "INTENDED_RED",
+        "tests/Otiz/settlement_v2_portfolio_001_test.php": "GREEN",
+        "tests/Otiz/settlement_v2_upgrade_001_test.php": "GREEN",
         "tests/Otiz/settlement_v2_workbook_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_settlement_v2_001_test.php": "INTENDED_RED",
-        "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php": "INTENDED_RED"
+        "tests/Yii2/yii2_otiz_settlement_v2_001_test.php": "GREEN",
+        "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php": "GREEN"
       }
     }
   ]

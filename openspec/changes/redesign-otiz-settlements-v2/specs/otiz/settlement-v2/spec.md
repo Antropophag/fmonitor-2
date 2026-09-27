@@ -10,7 +10,7 @@ Creating, refreshing, viewing, exporting or deleting a draft MUST NOT create cla
 - **THEN** a new draft contains 30% new volume and the abandoned draft changes no recognized aggregate
 
 ### Requirement: Acceptance SHALL claim exact entitlements atomically
-Acceptance MUST lock the revision, re-authorize, validate admission and money invariants, create unique entitlement claims and recipient obligations, and publish audit in one transaction.
+Acceptance MUST lock the revision and affected object baseline, re-authorize, validate admission and money invariants, recompute the saved draft against active claims, create unique entitlement claims and recipient obligations, and publish audit in one transaction. Entitlement identity MUST represent the underlying right and MUST NOT change merely because report date or a cumulative source revision changes.
 
 #### Scenario: Competing drafts claim the same work
 - **WHEN** two revisions with different operation ids concurrently accept the same 10,000-ruble entitlement
@@ -24,7 +24,7 @@ The payable queue MUST select active accepted obligations with positive remainin
 - **THEN** the queue and object economy expose exactly 15,000 rubles linked to the second calculation and its recipients, and paying it creates no new claim
 
 ### Requirement: Reversals and replacement SHALL preserve append-only history
-Only drafts MAY be deleted. An unpaid acceptance MAY be cancelled with reason or atomically replaced; a payment mark MAY be reversed with reason. Paid or dependent accepted history MUST NOT be rewritten by ordinary cancellation.
+Only drafts MAY be deleted. Replacement MUST first create a separate inspectable draft linked to the unpaid acceptance; preview, editing, deletion or abandonment of that draft MUST NOT change the original claims or obligations. Explicit acceptance of a complete replacement MUST atomically cancel the old basis and accept the new one. A payment mark MAY be reversed with reason. Paid or dependent accepted history MUST NOT be rewritten by ordinary cancellation or replacement.
 
 #### Scenario: Payment reversal restores only the obligation
 - **WHEN** an erroneous payment mark for 15,000 rubles is reversed
@@ -52,7 +52,7 @@ Money MUST use integer cents and fixed-point coefficients. Largest-remainder all
 - **THEN** stored totals and residual cents are identical and never exceed the object pool
 
 ### Requirement: Composition mismatch admission SHALL fail closed
-Every acceptance, current payment export and payment command MUST ask the shared #257 admission contract for every object. Open, stale or UNKNOWN mismatch state MUST block the whole object/package. Historical read remains available, and resolving a mismatch MUST require a new replacement rather than revive an old unpaid snapshot.
+Every acceptance, current payment export and payment command MUST use the same owner-level validation of the saved snapshot against the shared #257 admission contract for every object. Open, stale or UNKNOWN mismatch state MUST block the whole object/package. A draft prepared before an incident or admission-source change MUST NOT become acceptable from current `allow` alone. Historical read remains available, and resolving a mismatch MUST require a newly accepted replacement rather than revive an old unpaid snapshot or payment export.
 
 #### Scenario: Direct payment cannot bypass mismatch
 - **WHEN** an old accepted unpaid calculation includes an object with an open composition mismatch and a user submits the payment URL directly

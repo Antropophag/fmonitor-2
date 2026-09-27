@@ -44,6 +44,7 @@ final class ProductionPilotMigrationCatalogue
             34=>InspectionPlanningObjectBoundSchemaMigration::class,
             35=>\FMonitor2\Workforce\InstallerUtilizationObservationSchemaMigration::class,
             36=>OtizSettlementV2SchemaMigration::class,
+            37=>OtizSettlementV2CorrectionsSchemaMigration::class,
         ];
     }
 }

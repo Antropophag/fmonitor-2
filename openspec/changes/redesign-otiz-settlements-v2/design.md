@@ -14,12 +14,13 @@
 
 1. `MariaDbOtizSettlement` остаётся единственным public application owner. Новые команды принимают operation id, expected revision и actor; replay receipt и business uniqueness проверяются внутри одной DB transaction.
 2. Draft хранит immutable revisions и редактируемые decision/deduction facts. Только acceptance создаёт claims и recipient obligations. Payment закрывает обязательства snapshot целиком отдельным fact; reversal деактивирует payment fact, но не claims.
-3. Claim identity строится из source fact/version, object/case identity, entitlement kind и recognition date. Unique constraint не даёт двум snapshots принять одно право.
+3. Claim identity строится из устойчивой identity исходного права, object/case identity и entitlement kind; report date и новая версия накопительного snapshot сами по себе не создают новое право. Acceptance блокирует object baseline и повторно сверяет draft с активными claims, поэтому заранее созданный пересекающийся draft обязан обновиться, а доказанный прирост остаётся доступным.
 4. Суммы — integer cents/basis points. Распределение использует largest remainder со stable employee identity. Исключение уволенного меняет payout allocation, но не исходный contribution.
 5. Object economy начинается с canonical object catalog/overlay, затем batched joins агрегатов. Unlinked legacy totals показываются диагностикой и не входят в payable amount.
-6. Admission — интерфейс с `decision(objectId, phase, snapshotRevision)`. UNKNOWN/blocked запрещает acceptance, payment export и payment; historical read остаётся доступен. Resolution требует replacement, а не reactivation старого snapshot.
+6. Admission — один owner-level интерфейс с `decision(objectId, phase, snapshotRevision)`, общий для acceptance, payment export и payment. UNKNOWN/blocked, смена incident/source относительно сохранённого основания и draft, подготовленный до такой смены, запрещают действующую операцию; historical read остаётся доступен. Resolution требует принятого replacement, а не reactivation старого snapshot.
 7. Workbook читает только сохранённую revision. Draft, current-payment и historical modes различимы. Пользовательские строки принудительно записываются как text; external links/macros запрещены.
 8. Старые URLs делегируют единому list/read owner. UI filters/grouping/search/page никогда не определяют mutation scope.
+9. Replacement создаётся отдельным draft с `replacesCalculationId`. Он может включать claims исходника только в изолированном preview; исходник остаётся активным до явного acceptance. Acceptance replacement в одной транзакции проверяет полноту, admission, отсутствие payment/dependencies, освобождает старые claims и принимает новые; любое отклонение оставляет исходник без изменений.
 
 ## Data Model
 

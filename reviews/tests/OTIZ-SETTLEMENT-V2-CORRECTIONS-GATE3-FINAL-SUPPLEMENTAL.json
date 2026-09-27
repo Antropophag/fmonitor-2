@@ -1,0 +1,18 @@
+{
+  "gate": "gate3-final-supplemental",
+  "verdict": "APPROVED",
+  "candidate_source": "29f1d60b94621e75b05d14d48eee3289e139c11af9827853374b72b7b324187f",
+  "plan_sha256": "ceba28ef76af7dacd8ef7ec388133dad1bc678d0400c192a38df88151a894921",
+  "prior_supplemental_source": "4e1841864fcc4b08ba9833fb98186402b1c404e205d0ae8da771e5be24bfe511",
+  "reviewer": "/root/otiz_correction_gate3",
+  "scope": "root-authored tests and verification-policy ownership only",
+  "production_reviewed": false,
+  "expectations_weakened": false,
+  "findings": [],
+  "reviewed_blobs": {
+    "tests/Otiz/settlement_v2_corrections_001_test.php": "a6781ca44f9a2d8623c06091e15841056036d247ebdaeea704213f822b022c71",
+    "tests/Otiz/settlement_v2_corrections_integration_001_test.php": "0650969aef7ede31eb1c0a6ff3a2f17680bceb566085a1eabd478b15799222f0",
+    ".quality-graph/verification-policy.json": "fbbf488fe4432647ad8c094762b8a2861a1c11b0ac5dd250f3ab3972fc075d46",
+    "tests/Support/CurrentProductionSchemaContract.php": "fa09a438039c2b606a10b6c9e6f155fc4c9004c36da5f694726e569f50af4d80"
+  }
+}

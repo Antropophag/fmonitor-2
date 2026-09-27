@@ -1,0 +1,17 @@
+{
+  "gate": "gate3",
+  "verdict": "APPROVED",
+  "candidate_source": "49f3671d965f4e6430c84928fe96325c594d49d84277bb527f21731bd3899b8e",
+  "plan_sha256": "afdc760795a10865416029cf5c901fb96e3f012e8bbee27b1488872111bd501e",
+  "reviewer": "/root/otiz_correction_gate3",
+  "author": "/root",
+  "recorded_at": "2026-09-27T07:49:39Z",
+  "findings": [],
+  "scope": "complete RED candidate for corrections F01-F05",
+  "remaining_lifecycle": [
+    "implementation",
+    "GREEN evidence",
+    "exact-source CI",
+    "independent final review"
+  ]
+}
