@@ -407,3 +407,33 @@ The cutover contract changes only the two literal asset hashes, and both indepen
 The historical OTIZ compatibility test removes only the obsolete third visible `/history` tab requirement. It strengthens the replacement contract by requiring exactly two OTIZ navigation links and a real GET `/pilot/otiz/history` → HTTP 303 `/pilot/otiz/payments?filter=history`. Historical snapshot content, XLSX readability, retired legacy-writer rejection, guest authorization, and no-facts assertions remain intact. Both corrected tests are GREEN in the retained focused records.
 
 This is not expectation weakening and does not reuse the withdrawn T08 hypothesis. Approval covers the complete known CI failure inventory: the two test-contract synchronizations plus the already approved recovery production-hook restoration. After implementation, run the focused recovery/main-browser/HTTP checks, rebind the exact full source, and complete final review/CI handling without treating this approval as merge or deployment authorization.
+
+---
+
+## Owner-bounded U01/U02 Gate 3 review — 2026-09-27
+
+- Verdict: `APPROVED`
+- Candidate source: `9504464353001ebc0c1d94280fa2d2f45ee156459d0cbb223d28c0a9c70bf9e3`
+- Snapshot: base `0b4c0aaf5d82129e16a7d487c20a8d5dcb537bd3`, patch SHA-256 `b8a421451a61ecda325fc3b5150f19c0cd6bd81cf1ac384419255ed60bc29a2c`
+- Reviewer: `/root/acceptance_review`
+- Gate: `gate3`
+
+No blocking findings remain in the complete bounded U01/U02 candidate. The 17 mapped checks (`14 GREEN`, `3 INTENDED_RED`) are accepted at the exact source above.
+
+### U01 — preview versus saved approval
+
+- Real HTTP deduction preview proves the separate preview changes `2000000→1900000` while the main basis, acceptance confirmation, and saved A/B recipients remain `2000000` and `1200000/800000`; preview writes no facts.
+- Real HTTP `do_not_pay` preview proves redistribution is confined to the preview block and does not replace the saved recipient table or confirmation even when total money is unchanged.
+- Unsaved previews can be followed by acceptance, and the resulting owner read/DB obligations match only the saved `2000000` revision.
+- Explicit deduction save advances revision exactly once and persists `1900000` with A/B `1140000/760000`; old revision acceptance returns 409 with a full facts fingerprint unchanged, while the fresh revision accepts.
+- The real browser repeats both unsaved and saved paths, inspects the actual confirmation dialog and recipient table, submits stale and fresh approval requests, and the PHP wrapper independently checks persisted obligations, deduction count, absence of preview decision facts, and screenshots.
+
+### U02 — documentary allocation freshness
+
+- The fixture exercises the real selection/original/opening/checklist HTTP path for all 41 items and independently observes canonical 85% contributions `5100/3400` before accepting that neighboring checklist calculation.
+- A real PTO HTTP fact creates a documentary-only `6500000`-cent draft allocated `3900000/2600000`. Ten real attribution corrections move 34 percentage points and the fresh builder independently yields contribution `1700/6800` and money `1300000/5200000`, while the document rows remain byte-equivalent.
+- Acceptance of the stale documentary draft must return `STALE_CALCULATION` without financial facts; refresh then accepts the fresh split and DB/history XLSX reproduce it.
+- A foreign-object change and an attribution event outside the selected report cutoff do not invalidate the accepted basis. A later in-cut correction of used work blocks both owner and real HTTP payment export/payment with `SNAPSHOT_REPLACEMENT_REQUIRED`, while historical XLSX remains the saved 20/80 result and failures are fact-neutral.
+- Explicit replacement captures the restored current 60/40 basis, preserves the neighboring accepted checklist snapshot, restores payment eligibility, and remains independently subject to #257 `COMPOSITION_MISMATCH` admission.
+
+The expectations implement only the owner's current U01/U02 scope and existing freshness/revision/admission contracts. They do not reopen previously approved money, UI, workbook, recovery, CI, or architecture work. Approval is for the executable tests/specification only; production implementation, exact-source GREEN rebinding, final review, and the new full CI remain required.

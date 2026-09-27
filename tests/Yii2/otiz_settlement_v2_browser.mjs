@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { verifyDraftWorkflow } from "./otiz_v2_acceptance_assertions.mjs";
+import { verifyDraftWorkflow, verifyUnsavedApproval } from "./otiz_v2_acceptance_assertions.mjs";
 const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const { chromium } = createRequire(import.meta.url)(c.playwright);
 const result = { pageErrors: [], failedResponses: [] };
@@ -256,6 +256,7 @@ try {
   assert.ok(
     await page.getByRole("link", { name: "Скачать Excel" }).isVisible(),
   );
+  await verifyUnsavedApproval(page, c);
   fs.writeFileSync(
     path.join(c.artifacts, "result.json"),
     JSON.stringify(result),

@@ -1,5 +1,31 @@
 import assert from 'node:assert/strict';
 
+// U01: the browser must confirm exactly the saved revision that the owner accepts.
+export async function verifyUnsavedApproval(page, config) {
+  await page.setViewportSize({width:1440,height:1000});
+  const [unsaved,saving]=config.previewDrafts;
+  const url=d=>config.origin+'/pilot/otiz/calculations/'+d.calculationId;
+  const form=()=>page.locator('form[data-recovery-deduction]');
+  const decision=()=>page.locator('form[data-recovery-decision]');
+  const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
+  const money=s=>s.replace(/\u00a0/g,' ').trim();
+  const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-detail-row] tbody tr').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.querySelector('th a').getAttribute('href').slice(10),row.querySelector('td:last-child').textContent.replace(/\u00a0/g,' ').trim()])));
+  const confirm=async amount=>{await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
+  const previewDeduction=async()=>{await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
+  await page.goto(url(unsaved));await previewDeduction();
+  await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
+  assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 main recipient table is saved while deduction preview is unsaved');
+  await page.goto(url(unsaved));await page.getByRole('button',{name:/Решение по выплате/}).click();await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
+  assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'2000000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 decision preview never replaces saved approval recipients even at unchanged total');
+  await confirm('20 000,00');await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'saved20000 accepted');
+  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  assert.deepEqual(await mainAmounts(),{A:'11 400,00 ₽',B:'7 600,00 ₽'},'explicit save changes the persisted recipient projection');await confirm('19 000,00');await page.screenshot({path:config.artifacts+'/u01-saved-approval.png',fullPage:true});
+  const fields=await dialog().locator('form').evaluate(form=>Object.fromEntries(new FormData(form)));
+  assert.equal(Number(fields.expectedRevision),Number(saving.revision)+1,'explicit save advances revision');
+  const stale=await page.request.post(url(saving)+'/accept',{form:{...fields,expectedRevision:String(saving.revision),operationId:'dddddddd-bbbb-4ddd-8ddd-000000000001'},maxRedirects:0});assert.equal(stale.status(),409,'stale expectedRevision cannot accept after save');
+  await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'fresh saved19000 accepted');
+}
+
 // OTIZ-SETTLEMENT-V2-001: agreed user actions on the real Yii runtime.
 export async function verifyDraftWorkflow(page, config) {
   const url = config.origin + `/pilot/otiz/calculations/${config.draft.calculationId}`;

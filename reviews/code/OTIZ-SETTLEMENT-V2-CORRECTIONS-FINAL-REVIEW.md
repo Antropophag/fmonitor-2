@@ -156,3 +156,27 @@ All 17 mapped checks plus four additional checks are GREEN at this exact source 
 All earlier final-review and Gate 3 dispositions remain satisfied. The external #257 producer and live enforcement #107 remain explicitly `UNKNOWN`, with missing evidence fail-closed. A new exact-source CI run is still required; this approval alone does not authorize merge, deployment, backfill, or working-data mutation.
 
 No production or test bytes were altered by this review. Only the existing final-review Markdown and JSON records were updated.
+
+---
+
+## Owner-bounded U01/U02 final review — 2026-09-27
+
+- Verdict: `APPROVED`
+- Exact source: `1c0ce11224ae08530fca0485a295904eb83e6e5b34e578ea7d89782000a9a38f`
+- Snapshot: base `0b4c0aaf5d82129e16a7d487c20a8d5dcb537bd3`, patch SHA-256 `5b620a0a2a36d32b53545c8114a052a415adf1d8268a27e73b31eccac202c605`
+- Reviewer: `/root/acceptance_review`
+- Gate: `final`
+
+### Findings
+
+No blocking findings remain in the agreed U01/U02 scope.
+
+U01 is correctly implemented at the existing HTTP/read-model boundary. `OtizSettlementV2Controller::preview()` now renders the main calculation, recipient groups, and acceptance dialog from the persisted `$before` revision while supplying only the separate preview rows/total from `$after`. Preview remains neutral; explicit save remains the sole revision/money mutation. Real HTTP, browser and DB evidence confirms unsaved `2000000→1900000` preview cannot replace the saved `2000000` confirmation or `1200000/800000` recipients, while explicit save yields revision+1, `1900000`, `1140000/760000`, stale 409/no facts, and fresh exact obligations.
+
+U02 is correctly implemented in the canonical builder. Each documentary entitlement persists `attributionBasis` containing the sorted stable per-work source identity, source revision, share and canonical per-work recipient weights actually used; the documentary `sourceRevision` hashes the document together with that basis. Real 41-item/PTO evidence proves saved 60/40 becomes stale after the in-cut used attribution changes to 20/80, requires refresh before acceptance and replacement after acceptance, and drives the existing payment/export freshness guards. Foreign-object changes and future-relative-to-report operations do not change the fingerprint; historical XLSX remains saved, the neighboring checklist calculation is immutable, and #257 admission stays an independent fail-closed gate.
+
+Only the two declared production paths changed from base. The approved U01/U02 tests are unchanged. All 17 mapped checks plus four boundary checks are GREEN (`21/21`) at this source, including both browser journeys, recovery, cutover, native inputs, navigation, runtime boundary and architecture/HTTP qualification.
+
+The superseded CI run `36337107994` failed only during governance temporary-directory cleanup; all application jobs succeeded, the unchanged governance test passed boundedly, and no retry of that superseded source is represented as this candidate's CI. A new exact-source CI run remains required. This review does not reopen previously approved scope or authorize merge/deployment.
+
+No production or test bytes were altered by this review; only the existing final-review Markdown and JSON records were updated.
