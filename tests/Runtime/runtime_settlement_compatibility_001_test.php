@@ -102,30 +102,16 @@ try {
     $page=rscRequest($port,'POST','/pilot/otiz/login',['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email],$cookies);
     $login=rscRequest($port,'POST','/pilot/otiz/login',['_csrf'=>rscField($page['body'],'_csrf'),'email'=>$fixture->email,'password'=>$fixture->password],$cookies);assertSameValue(303,$login['status'],'real Yii authentication');
     $page=rscRequest($port,'GET','/pilot/otiz/snapshots/302',[],$cookies);assertSameValue(200,$page['status'],'retained accepted snapshot through the single Yii session');
-    $completeForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/payments/complete');
-    $disciplineForm=rscForm($page['body'],'/pilot/otiz/snapshots/302/closures');
-    $oldPage=rscRequest($port,'GET','/pilot/otiz/snapshots/301',[],$cookies);
-    $reverseForm=rscForm($oldPage['body'],'/pilot/otiz/closures/401/reverse');
-    assertSameValue(3,count(array_unique([$completeForm['operationId'],$disciplineForm['operationId'],$reverseForm['operationId']])),'three distinct retained form operations');
-    $csrfName=$completeForm['csrfName'];$csrf=$completeForm['csrfToken'];$operation=$completeForm['operationId'];
+    assertSameValue(false,str_contains($page['body'],'action="/pilot/otiz/snapshots/302/payments/complete"'),'legacy accepted snapshot is read-only');
+    assertSameValue(false,str_contains($page['body'],'action="/pilot/otiz/snapshots/302/closures"'),'legacy closure writer is absent');
+    $oldPage=rscRequest($port,'GET','/pilot/otiz/snapshots/301',[],$cookies);assertSameValue(200,$oldPage['status'],'paid historical snapshot remains readable');
+    assertSameValue(false,str_contains($oldPage['body'],'action="/pilot/otiz/closures/401/reverse"'),'legacy reversal writer is absent');
+    $export=rscRequest($port,'GET','/pilot/otiz/snapshots/302/export.xlsx',[],$cookies);assertSameValue(200,$export['status'],'legacy historical export remains readable');assertSameValue(true,strlen($export['body'])>1000,'legacy export has XLSX bytes');
+    $csrfName='_csrf';$csrf=rscField($page['body'],$csrfName);$operation='90000000-0000-4000-8000-000000009999';
     $counts=static fn():array=>[(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_pilot_otiz_payment_closures")->fetch_column(),(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_pilot_otiz_events")->fetch_column(),(int)$db->query("SELECT COUNT(*) FROM {$p}fm2_otiz_settlement_operations")->fetch_column()];
     $before=$counts();$denied=rscRequest($port,'POST','/pilot/otiz/snapshots/302/payments/complete',[$csrfName=>'invalid','operationId'=>$operation],$cookies);assertSameValue(400,$denied['status'],'Yii CSRF refusal');assertSameValue($before,$counts(),'CSRF adds no facts');
-    foreach ([[],['operationId'=>'malformed']] as $invalidOperation) {
-        foreach ([['/pilot/otiz/snapshots/302/payments/complete',[$completeForm['csrfName']=>$completeForm['csrfToken']]],['/pilot/otiz/snapshots/302/closures',[$disciplineForm['csrfName']=>$disciplineForm['csrfToken'],'objectId'=>'7301','discipline'=>'1.00','basis'=>'Invalid operation']],['/pilot/otiz/closures/401/reverse',[$reverseForm['csrfName']=>$reverseForm['csrfToken'],'basis'=>'Invalid operation']]] as [$path,$fields]) {
-            $rejected=rscRequest($port,'POST',$path,$fields+$invalidOperation,$cookies);
-            assertSameValue(303,$rejected['status'],'invalid operation retains error redirect');
-            assertSameValue(true,str_contains((string)$rejected['location'],'error='),'invalid operation is not replaced by a fresh UUID');
-            assertSameValue($before,$counts(),'missing/malformed operation appends no money/event/receipt');
-        }
-    }
-    $paid=rscRequest($port,'POST','/pilot/otiz/snapshots/302/payments/complete',[$csrfName=>$csrf,'operationId'=>$operation],$cookies);
-    assertSameValue([303,'/pilot/otiz/snapshots/302?paid=1'],[$paid['status'],$paid['location']],'retained route reaches canonical owner in built runtime');
-    assertSameValue([2,2,1],$counts(),'one new closure, two events and one receipt');
-    assertSameValue(50000,(int)$db->query("SELECT paid_cents FROM {$p}fm2_pilot_otiz_payment_closures WHERE snapshot_id=302")->fetch_column(),'A02 appends only the cross-snapshot remainder');
+    foreach ([['/pilot/otiz/snapshots/302/payments/complete',[]],['/pilot/otiz/snapshots/302/closures',['objectId'=>'7301','discipline'=>'1.00','basis'=>'Retired']],['/pilot/otiz/closures/401/reverse',['basis'=>'Retired']]] as [$path,$fields]) {$rejected=rscRequest($port,'POST',$path,[$csrfName=>$csrf,'operationId'=>$operation]+$fields,$cookies);assertSameValue(409,$rejected['status'],'legacy mutation route explicitly retired '.$path);assertSameValue($before,$counts(),'retired route appends no money/event/receipt');}
     assertSameValue($original,$db->query("SELECT * FROM {$p}fm2_pilot_otiz_payment_closures WHERE id=401")->fetch_assoc(),'prior payout immutable');
-    assertSameValue($operation,$db->query("SELECT operation_id FROM {$p}fm2_otiz_settlement_operations")->fetch_column(),'retained request persisted canonical receipt');
-    $replay=rscRequest($port,'POST','/pilot/otiz/snapshots/302/payments/complete',[$csrfName=>$csrf,'operationId'=>$operation],$cookies);assertSameValue([$paid['status'],$paid['location']],[$replay['status'],$replay['location']],'exact compatibility replay stable');assertSameValue([2,2,1],$counts(),'replay appends nothing');
-    $page=rscRequest($port,'GET',$paid['location'],[],$cookies);assertSameValue(200,$page['status'],'retained return screen');assertSameValue(true,str_contains($page['body'],'Выплаты выполнены'),'retained view uses global budget');assertSameValue(false,str_contains($page['body'],'action="/pilot/otiz/snapshots/302/payments/complete"'),'no misleading remaining-payment form');
     echo "RUNTIME_SETTLEMENT_COMPATIBILITY_OK\n";
 } finally {
     if(is_resource($server)){proc_terminate($server);proc_close($server);}
