@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyOtizLayout } from './otiz_v2_layout_assertions.mjs';
 
 // U01: the browser must confirm exactly the saved revision that the owner accepts.
 export async function verifyUnsavedApproval(page, config) {
@@ -10,7 +11,7 @@ export async function verifyUnsavedApproval(page, config) {
   const dialog=()=>page.locator('[data-v2-lifecycle-dialog="accept"]');
   const money=s=>s.replace(/\u00a0/g,' ').trim();
   const mainAmounts=async()=>page.locator('[data-grouping="objects"] [data-otiz-detail-row] tbody tr').evaluateAll(rows=>Object.fromEntries(rows.map(row=>[row.querySelector('th a').getAttribute('href').slice(10),row.querySelector('td:last-child').textContent.replace(/\u00a0/g,' ').trim()])));
-  const confirm=async amount=>{await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
+  const confirm=async amount=>{if(await page.locator('dialog[open]').count())await page.keyboard.press('Escape');await page.getByRole('button',{name:'Утвердить расчёт',exact:true}).click();await dialog().waitFor({state:'visible'});assert.ok(money(await dialog().locator('[data-confirm-summary]').innerText()).includes(amount),'U01 browser confirmation uses saved amount, never unsaved preview');};
   const previewDeduction=async()=>{await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByLabel(/Сумма удержания/).fill('1 000,00');await form().getByLabel(/Причина/).fill('U01 явное сохранение отдельно');await form().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="deduction"]').waitFor();assert.equal(await page.locator('[data-preview-kind="deduction"]').getAttribute('data-preview-total-cents'),'1900000');};
   await page.goto(url(unsaved));await previewDeduction();
   await confirm('20 000,00');await page.screenshot({path:config.artifacts+'/u01-unsaved-approval.png',fullPage:true});await page.keyboard.press('Escape');
@@ -18,7 +19,7 @@ export async function verifyUnsavedApproval(page, config) {
   await page.goto(url(unsaved));await page.getByRole('button',{name:/Решение по выплате/}).click();await decision().getByRole('radio',{name:'Не платить',exact:true}).check();await decision().getByLabel(/Основание решения/).fill('U01 не сохранять решение');await decision().getByRole('button',{name:'Предпросмотр',exact:true}).click();await page.locator('[data-preview-kind="decision"]').waitFor();
   assert.equal(await page.locator('[data-preview-kind="decision"] [data-employee-id="A"]').getAttribute('data-after-cents'),'2000000');assert.deepEqual(await mainAmounts(),{A:'12 000,00 ₽',B:'8 000,00 ₽'},'U01 decision preview never replaces saved approval recipients even at unchanged total');
   await confirm('20 000,00');await Promise.all([page.waitForNavigation(),dialog().getByRole('button',{name:'Подтвердить утверждение',exact:true}).click()]);assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'saved20000 accepted');
-  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
+  await page.goto(url(saving));await previewDeduction();await confirm('20 000,00');await page.keyboard.press('Escape');if(!await form().isVisible())await page.getByRole('button',{name:/Удержание/}).first().click();await form().getByRole('button',{name:'Добавить удержание',exact:true}).click();
   assert.deepEqual(await mainAmounts(),{A:'11 400,00 ₽',B:'7 600,00 ₽'},'explicit save changes the persisted recipient projection');await confirm('19 000,00');await page.screenshot({path:config.artifacts+'/u01-saved-approval.png',fullPage:true});
   const fields=await dialog().locator('form').evaluate(form=>Object.fromEntries(new FormData(form)));
   assert.equal(Number(fields.expectedRevision),Number(saving.revision)+1,'explicit save advances revision');
@@ -64,8 +65,10 @@ export async function verifyDraftWorkflow(page, config) {
     assert.deepEqual([await row.getAttribute('data-before-cents'),await row.getAttribute('data-after-cents')],[String(before),String(after)],'decision preview exact independent allocation');
   }
   assert.equal(await decision().locator('[name="expectedRevision"]').inputValue(), revision, 'preview changes no revision');
+  await verifyOtizLayout(page,'decision preview modal');
   await page.screenshot({path:config.artifacts+'/decision-preview.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
+  await verifyOtizLayout(page,'decision preview modal at390px');
   await page.screenshot({path:config.artifacts+'/decision-preview-narrow.png',fullPage:true});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)<=1,'preview and controls stay inside narrow body');
   await page.setViewportSize({width:1440,height:1000});

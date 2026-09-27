@@ -3,6 +3,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { verifyDraftWorkflow, verifyUnsavedApproval } from "./otiz_v2_acceptance_assertions.mjs";
+import { verifyOtizLayout, verifyOtizRegisterLayouts } from "./otiz_v2_layout_assertions.mjs";
 const c = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const { chromium } = createRequire(import.meta.url)(c.playwright);
 const result = { pageErrors: [], failedResponses: [] };
@@ -33,6 +34,7 @@ try {
     page.locator("button[type=submit]").click(),
   ]);
   assert.equal(new URL(page.url()).pathname, "/pilot/otiz/payments");
+  await verifyOtizRegisterLayouts(page, c);
   await page.getByRole("link", { name: "Ожидают выплаты" }).waitFor();
   assert.equal(await page.getByRole("link", { name: "История" }).count(), 1);
   assert.equal(
@@ -44,6 +46,11 @@ try {
   const draftId = c.draft?.calculationId;
   assert.ok(draftId, "root fixture created a real draft");
   await page.goto(c.origin + `/pilot/otiz/calculations/${draftId}`);
+  await verifyOtizLayout(page, "saved calculation detail");
+  const totals = page.getByRole("region", { name: "Итоги всего расчёта" });
+  await totals.waitFor();
+  assert.match(await totals.innerText(), /Предварительно к выплате/);
+  assert.match((await totals.innerText()).replace(/[\s\u00a0\u202f]/g, ""), /15000,00/);
   for (const action of ["Обновить черновик", "Удалить черновик"])
     assert.equal(
       await page.getByRole("button", { name: action, exact: true }).count(),
@@ -72,7 +79,13 @@ try {
   const objectDetails = await page
     .locator('[data-grouping="objects"]')
     .innerText();
-  for(const label of ['Учтено ранее','Подтверждено','Объём этого расчёта','До уменьшений','За сроки','Общее удержание','Личные удержания'])assert.ok(objectDetails.includes(label),'object explains saved monetary basis '+label);
+  const proof = page.locator('details[data-object-basis-summary]');
+  await proof.locator('summary').click();
+  const basisText = await proof.innerText();
+  for(const label of ['Учтено ранее','Подтверждено','Объём этого расчёта','До уменьшений','За сроки','Общее удержание','Личные удержания'])assert.ok(basisText.includes(label),'expanded proof explains actual saved monetary basis '+label);
+  assert.match(basisText, /9[\s\u00a0]000,00/);
+  assert.match(basisText, /6[\s\u00a0]000,00/);
+  await proof.locator('summary').click();
   for (const label of [
     "Исходный вклад",
     "До удержаний",
@@ -236,6 +249,7 @@ try {
   await Promise.all([page.waitForNavigation(),reversal.getByRole('button',{name:'Подтвердить отмену отметки',exact:true}).click()]);
   assert.equal(await page.getByRole('button',{name:'Отметить выплату',exact:true}).count(),1,'same obligation awaits payment again');
   const audit=page.locator('[data-calculation-history]');
+  await audit.locator('summary').click();
   assert.match(await audit.innerText(),/Выплата отмечена/);
   assert.match(await audit.innerText(),/Browser: перечисления не было/,'original payment and reasoned cancellation stay in history');
   await page.goto(c.origin+'/pilot/otiz/payments?filter=waiting&year=all');

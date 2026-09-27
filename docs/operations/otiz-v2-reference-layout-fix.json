@@ -1,0 +1,47 @@
+{
+  "change": "fix-otiz-v2-reference-layout",
+  "planned_paths": [
+    "app/YiiRuntime/Views/otiz-economy-v2.php",
+    "app/YiiRuntime/Views/otiz-v2-register.php",
+    "app/YiiRuntime/Views/otiz-calculation-v2.php",
+    "app/YiiRuntime/Assets/pilot.css",
+    "app/YiiRuntime/Assets/otiz.js",
+    "tests/Yii2/otiz_settlement_v2_browser.mjs",
+    "tests/Yii2/otiz_v2_layout_assertions.mjs",
+    "docs/operations/otiz-v2-reference-layout-fix.md",
+    "docs/operations/otiz-v2-reference-layout-fix.json",
+    "reviews/code/otiz-v2-reference-layout-fix.md",
+    "tests/Yii2/otiz_v2_acceptance_assertions.mjs"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-SETTLEMENT-V2-001",
+      "acceptance_id": "restore-approved-layout",
+      "spec_path": "docs/operations/otiz-v2-reference-layout-fix.md",
+      "seam": "real Yii OTIZ economy/register/detail presentation and public shlz-ui component contracts",
+      "tests": [
+        "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php"
+      ]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "PR285 owner production layout regression",
+    "change_kind": "BOUNDED_FIX",
+    "requirement_status": "CURRENT",
+    "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+    "sensitivity": {
+      "classification": "ORDINARY",
+      "boundaries": [
+        "PRESENTATION"
+      ],
+      "rationale": "Restore intended presentation only; preserve all monetary commands, rights and persistence."
+    },
+    "executable_regression": "tests/Yii2/yii2_otiz_settlement_v2_browser_001_test.php",
+    "canonical_requirements": [
+      {
+        "path": "docs/operations/otiz-v2-reference-layout-fix.md"
+      }
+    ]
+  }
+}
