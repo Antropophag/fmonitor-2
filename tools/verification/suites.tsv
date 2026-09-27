@@ -186,7 +186,9 @@ db	php	tests/Otiz/settlement_v2_concurrency_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_corrections_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_corrections_integration_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_db_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_editing_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_portfolio_001_test.php	integration
+db	php	tests/Otiz/settlement_v2_rights_flow_001_test.php	integration
 db	php	tests/Otiz/settlement_v2_upgrade_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_001_test.php	integration
 db	php	tests/Otiz/snapshot_publication_http_001_test.php	integration
@@ -284,6 +286,7 @@ db	php	tests/Yii2/yii2_otiz_object_ledger_history_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_saved_installer_allocation_001_test.php	e2e
 db	php	tests/Yii2/yii2_otiz_settlement_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_settlement_form_recovery_001_test.php	integration
+db	php	tests/Yii2/yii2_otiz_v2_acceptance_001_test.php	integration
 db	php	tests/Yii2/yii2_otiz_workflow_001_test.php	integration
 db	php	tests/Yii2/yii2_preopening_authorization_001_test.php	integration
 db	php	tests/Yii2/yii2_preopening_concurrency_001_test.php	integration

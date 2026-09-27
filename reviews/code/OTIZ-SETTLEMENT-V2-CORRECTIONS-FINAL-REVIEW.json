@@ -1,13 +1,22 @@
 {
   "gate": "final",
   "verdict": "APPROVED",
-  "candidate_source": "a2714f687f828f717c335e7844040bf7f6fa13625e1d497f1b647e6b964da46f",
-  "plan_sha256": "4f9f6a9591fa1236675501b3c9b315335a8e5340ecc83dd687e5fd17f629b5c1",
-  "reviewer": "/root/otiz_correction_gate3",
-  "author": "root-tests+otiz-executor",
-  "recorded_at": "2026-09-27T09:25:52Z",
+  "candidate_source": "0f2c91038ea83778bb6ca5073eade48bc621bac3ef238b0d712a53027b6647f4",
+  "snapshot": {
+    "base_commit": "5dd42b8d03faa9b8d3d01906c2234b69220ec5e2",
+    "patch_sha256": "96063c4326a01715cef5fbbdb13b09cb8136f6a856b3875ecfee5bf1ba347785"
+  },
+  "reviewer": "/root/acceptance_review",
+  "recorded_at": "2026-09-27",
   "findings": [],
-  "green_record_count": 11,
-  "scope": "F01-F06 final implementation review",
+  "green_record_count": 18,
+  "scope": "full PR final review against owner requirements, review3 excluding withdrawn T08, normative spec, and frozen staged source",
+  "prior_review": {
+    "verdict": "CHANGES_REQUESTED",
+    "candidate_source": "08872c2cb1c73c09b39cabeb2744c110e17574e365d3bec73c86b70f0709bd04",
+    "reviewer": "/root/acceptance_review",
+    "findings_count": 1,
+    "recorded_at": "2026-09-27"
+  },
   "merge_or_deploy_authorized": false
 }

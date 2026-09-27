@@ -1,0 +1,71 @@
+<?php
+declare(strict_types=1);
+require dirname(__DIR__).'/bootstrap.php';
+require __DIR__.'/PreopeningFixture.php';
+use FMonitor2\Otiz\OtizSettlementV2;
+
+$f=null;$yii=null;$failures=[];
+$check=static function(string $label,callable $test)use(&$failures):void{try{$test();echo "PASS $label\n";}catch(TestFailure|DomainException $e){$failures[]=$label.': '.$e->getMessage();}};
+try {
+    $f=new PreopeningFixture(dirname(__DIR__,2));$f->start();$cookies=[];$f->login($cookies,96);
+    $e=$f->environment();$p=$f->p;$db=$f->db;
+    $yii=new yii\db\Connection(['dsn'=>'mysql:host='.$e['FMONITOR_DB_HOST'].';port='.$e['FMONITOR_DB_PORT'].';dbname='.$f->database,'username'=>$e['FMONITOR_DB_USER'],'password'=>$e['FMONITOR_DB_PASSWORD'],'charset'=>'utf8mb4']);$yii->open();
+    $owner=new OtizSettlementV2($yii,$p,static fn()=>'2026-09-27T12:00:00+03:00',static fn()=>'allow');
+    $serial=1;$op=static function()use(&$serial):string{return sprintf('bbbbbbbb-aaaa-4bbb-8bbb-%012d',$serial++);};
+    $basis=static function(string $key,int $gross=1200000):array{return ['reportDate'=>'2025-12-31','objects'=>[['objectId'=>4512,'regnumber'=>'TEST-4512','fundCents'=>10000000,'kssBp'=>10000,'entitlements'=>[['sourceKind'=>'fixture','sourceId'=>$key,'sourceRevision'=>'1','kind'=>'progress','recognitionDate'=>'2025-12-20','grossCents'=>$gross]],'recipients'=>[['employeeId'=>'A','tabNumber'=>'001','name'=>'Получатель А','weight'=>60,'employment'=>'employed'],['employeeId'=>'B','tabNumber'=>'002','name'=>'Получатель Б','weight'=>40,'employment'=>'dismissed']]]]];};
+    $draft=$owner->createDraft(96,$basis('preview'),$op());$id=$draft['calculationId'];$base='/pilot/otiz/calculations/'.$id;
+    $facts=static function()use($db,$p):string{$result=[];foreach(['calculation_revisions','deductions','payment_decisions','v2_events','v2_operations','entitlement_claims','recipient_obligations','payment_facts','payment_reversals']as$table)$result[$table]=$db->query("SELECT * FROM {$p}fm2_otiz_{$table}")->fetch_all(MYSQLI_ASSOC);return hash('sha256',json_encode($result,JSON_THROW_ON_ERROR));};
+    $ssrDialog=static function(string $html,string $action,string $kind):void{
+        $dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$html);$xp=new DOMXPath($dom);
+        $forms=$xp->query('//form[@action="'.$action.'"]');assertSameValue(1,$forms->length,'SSR retains one canonical mutation form');$form=$forms->item(0);
+        assertSameValue(1,$xp->query('ancestor::dialog[@data-v2-lifecycle-dialog="'.$kind.'"]',$form)->length,'destructive form is server-rendered inside inert confirmation dialog, not repaired by JS');
+        assertSameValue(0,$xp->query('.//input[@name="reason" and @type="hidden"]',$form)->length,'SSR never fabricates a reason');assertSameValue(1,$xp->query('.//*[@name="reason" and @required and not(@type="hidden")]',$form)->length,'SSR reason is visible and required');
+    };
+    $check('SSR draft removal requires real confirmation',static function()use($f,&$cookies,$base,$ssrDialog):void{$page=$f->request('GET',$base,[],$cookies);assertSameValue(200,$page['status'],'draft raw HTTP page');$ssrDialog($page['body'],$base.'/delete','delete');});
+    $check('HTTP previews are authorized and financially neutral',static function()use($f,&$cookies,$base,$draft,$facts,$op):void{
+        $before=$facts();$form=['_csrf'=>$f->token($cookies),'expectedRevision'=>$draft['revision'],'operationId'=>$op(),'employeeId'=>'B','decision'=>'do_not_pay','reason'=>'Проверка preview'];
+        $r=$f->form($base.'/decisions/preview',$form,$cookies);assertSameValue(200,$r['status'],'decision preview is a real HTTP action');assertSameValue(true,str_contains($r['body'],'data-preview-total-cents="1200000"'),'preview whole total');
+        assertSameValue($before,$facts(),'HTTP decision preview writes no facts');
+        $form=['_csrf'=>$f->token($cookies),'expectedRevision'=>$draft['revision'],'operationId'=>$op(),'objectId'=>4512,'employeeId'=>'A','amount'=>'1 000,00','reason'=>'Личное preview','document'=>'SRC-1'];
+        $r=$f->form($base.'/deductions/preview',$form,$cookies);assertSameValue(200,$r['status'],'deduction preview');assertSameValue(true,str_contains($r['body'],'data-after-cents="620000"')&&str_contains($r['body'],'data-after-cents="480000"'),'personal deduction preview preserves other recipient');assertSameValue($before,$facts(),'HTTP deduction preview writes no facts');
+        $form['amount']='99 000,00';$r=$f->form($base.'/deductions/preview',$form,$cookies);assertSameValue(422,$r['status'],'over-limit preview rejected');foreach(['99 000,00','Личное preview','SRC-1','role="alert"']as$text)assertSameValue(true,str_contains($r['body'],$text),'invalid preview preserves input/error '.$text);assertSameValue($before,$facts(),'invalid preview writes no facts');
+        $form['expectedRevision']=0;$r=$f->form($base.'/deductions/preview',$form,$cookies);assertSameValue(409,$r['status'],'stale preview refused');$form['_csrf']='invalid';$r=$f->form($base.'/deductions/preview',$form,$cookies);assertSameValue(400,$r['status'],'preview CSRF protection');assertSameValue($before,$facts(),'stale and CSRF rejection do not mutate');
+    });
+    $accepted=static function(string $key,int $gross=1200000)use($owner,$basis,$op):array{$d=$owner->createDraft(96,$basis($key,$gross),$op());return $owner->accept(96,$d['calculationId'],$d['revision'],$op());};
+    $cancelled=$accepted('cancelled');$cancelled=$owner->cancel(96,$cancelled['calculationId'],$cancelled['revision'],'Неоплаченный отменён',$op());
+    $zeroInput=$basis('zero');$zeroInput['objects'][0]['kssBp']=0;$zero=$owner->createDraft(96,$zeroInput,$op());$zero=$owner->accept(96,$zero['calculationId'],$zero['revision'],$op());
+    $paid=$accepted('paid');$owner->markPaid(96,$paid['calculationId'],$paid['revision'],'2026-09-26',$op());
+    $reversed=$accepted('reversed');$payment=$owner->markPaid(96,$reversed['calculationId'],$reversed['revision'],'2026-09-26',$op());$owner->reversePayment(96,$payment['paymentId'],'Перечисления не было',$op(),'erroneous_mark');
+    $waiting=$accepted('waiting');
+    $db->query("INSERT INTO {$p}fm2_otiz_admission_inputs(object_id,source_revision,decision,reason_code,observed_at) VALUES(4512,'legacy','allow',NULL,'2026-09-27T12:00:00+03:00')");
+    $check('payment workbook requires a positive unpaid obligation',static function()use($f,&$cookies,$paid,$zero,$waiting,$facts):void{
+        $before=$facts();$current=$f->request('GET','/pilot/otiz/calculations/'.$waiting['calculationId'].'/export.xlsx?mode=payment',[],$cookies);assertSameValue(200,$current['status'],'real unpaid calculation can export payment basis');
+        foreach([$paid,$zero]as$calculation){$path='/pilot/otiz/calculations/'.$calculation['calculationId'];$book=$f->request('GET',$path.'/export.xlsx?mode=payment',[],$cookies);assertSameValue(409,$book['status'],'paid or zero obligation cannot issue a current payment book');$history=$f->request('GET',$path.'/export.xlsx?mode=history',[],$cookies);assertSameValue([200,'PK'],[$history['status'],substr($history['body'],0,2)],'saved historical book remains available');}
+        $page=$f->request('GET','/pilot/otiz/calculations/'.$zero['calculationId'],[],$cookies);assertSameValue(true,str_contains($page['body'],'Суммы к выплате нет'),'zero acceptance is explicit, not marked paid');$dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$page['body']);$xp=new DOMXPath($dom);assertSameValue(0,$xp->query('//button[normalize-space(.)="Отметить выплату"]|//a[contains(@href,"mode=payment")]')->length,'zero acceptance has no impossible payment action');
+        foreach(['cancel','replace']as$action){assertSameValue(1,$xp->query('//button[@data-v2-lifecycle-open="'.$action.'"]')->length,'zero accepted retains valid unpaid lifecycle '.$action);assertSameValue(1,$xp->query('//dialog[@data-v2-lifecycle-dialog="'.$action.'" and not(@open)]//form[@method="post" and @action="/pilot/otiz/calculations/'.$zero['calculationId'].'/'.$action.'"]')->length,'zero lifecycle uses the real closed confirmation form '.$action);}
+        assertSameValue($before,$facts(),'all export reads preserve financial facts');
+    });
+    $check('SSR accepted cancel and replacement require real reasons',static function()use($f,&$cookies,$waiting,$ssrDialog):void{$path='/pilot/otiz/calculations/'.$waiting['calculationId'];$page=$f->request('GET',$path,[],$cookies);foreach(['cancel','replace']as$action)$ssrDialog($page['body'],$path.'/'.$action,$action);});
+    $check('malformed direct HTTP payment dates are neutral domain rejections',static function()use($f,&$cookies,$waiting,$facts,$op):void{
+        foreach(['','2026-02-30','2026-9-1']as$date){$before=$facts();$response=$f->form('/pilot/otiz/calculations/'.$waiting['calculationId'].'/payments',['_csrf'=>$f->token($cookies),'expectedRevision'=>$waiting['revision'],'operationId'=>$op(),'paymentDate'=>$date],$cookies);assertSameValue(422,$response['status'],'malformed date rejected before database insertion/admission');assertSameValue($before,$facts(),'bad HTTP date writes no financial facts');}
+    });
+    $db->query("INSERT INTO {$p}fm2_otiz_admission_inputs(object_id,source_revision,decision,reason_code,observed_at) VALUES(4512,'test-block','blocked','COMPOSITION_MISMATCH','2026-09-27T13:00:00+03:00')");
+    $contains=static fn(array $response,int $id):bool=>str_contains($response['body'],'href="/pilot/otiz/calculations/'.$id.'"');
+    $check('history and old-year waiting use business state',static function()use($f,&$cookies,$contains,$cancelled,$zero,$paid,$reversed,$waiting):void{
+        $history=$f->request('GET','/pilot/otiz/payments?filter=history&year=all',[],$cookies);assertSameValue(200,$history['status'],'history read');foreach([$cancelled,$zero,$paid]as$c)assertSameValue(true,$contains($history,$c['calculationId']),'terminal result visible in history '.$c['calculationId']);assertSameValue(false,$contains($history,$reversed['calculationId']),'erroneous mark restores waiting rather than terminal history');
+        $queue=$f->request('GET','/pilot/otiz/payments',[],$cookies);foreach([$waiting,$reversed]as$c)assertSameValue(true,$contains($queue,$c['calculationId']),'2025 unpaid visible by default in 2026');foreach(['Автор','2025-12-31','Несоответствие состава']as$text)assertSameValue(true,str_contains($queue['body'],$text),'queue explains saved basis/stop '.$text);
+    });
+    $check('register distinguishes preliminary and accepted money in Russian',static function()use($f,&$cookies,$draft,$waiting,$cancelled):void{
+        $page=$f->request('GET','/pilot/otiz/payments?filter=all&year=all',[],$cookies);$dom=new DOMDocument();@$dom->loadHTML('<?xml encoding="UTF-8">'.$page['body']);$xp=new DOMXPath($dom);
+        foreach([[$draft,'Черновик','Предварительно к выплате'],[$waiting,'Утверждён','Утверждено к выплате'],[$cancelled,'Отменён',null]]as[$calculation,$state,$amountLabel]){$rows=$xp->query('//tr[.//a[@href="/pilot/otiz/calculations/'.$calculation['calculationId'].'"]]');assertSameValue(1,$rows->length,'one register row for stable calculation');$text=$rows->item(0)->textContent;assertSameValue(true,str_contains($text,$state),'localized register lifecycle');if($amountLabel!==null)assertSameValue(true,str_contains($text,$amountLabel),'state-aware amount label');assertSameValue(0,preg_match('/\b(draft|accepted|cancelled)\b/',$text),'raw state codes are not user copy');}
+    });
+    $check('blocked package retains whole-scope explanation and history export',static function()use($f,&$cookies,$waiting):void{
+        $path='/pilot/otiz/calculations/'.$waiting['calculationId'];$page=$f->request('GET',$path,[],$cookies);assertSameValue(true,str_contains($page['body'],'Несоответствие состава'),'calculation explains blocked current export/payment');
+        $history=$f->request('GET',$path.'/export.xlsx?mode=history',[],$cookies);assertSameValue([200,'PK'],[$history['status'],substr($history['body'],0,2)],'history survives block');$payment=$f->request('GET',$path.'/export.xlsx?mode=payment',[],$cookies);assertSameValue(409,$payment['status'],'payment workbook is server-blocked');
+        $economy=$f->request('GET','/pilot/otiz/objects?q=TEST-4512&year=all&sort=regnumber_desc',[],$cookies);assertSameValue(true,str_contains($economy['body'],$path.'#object-4512'),'economy links exact saved package object');
+    });
+    $check('financial reversal cannot invent a money return',static function()use($owner,$paid,$op,$facts,$yii,$p):void{
+        $pid=(int)$yii->createCommand("SELECT id FROM {$p}fm2_otiz_payment_facts WHERE calculation_id=:id",[':id'=>$paid['calculationId']])->queryScalar();$before=$facts();try{$owner->reversePayment(96,$pid,'Реальные деньги перечислены',$op(),'financial');throw new TestFailure('unsupported financial return accepted');}catch(DomainException $e){assertSameValue('FINANCIAL_REVERSAL_UNSUPPORTED',$e->getMessage(),'explicit limitation rather than invented refund');}assertSameValue($before,$facts(),'real paid money remains paid');
+    });
+} finally {if($yii!==null)$yii->close();if($f!==null)$f->close();}
+if($failures){fwrite(STDERR,"REGRESSION_FAILURE\n".implode("\n",$failures)."\n");exit(1);}echo "yii2_otiz_v2_acceptance_001_test: OK\n";

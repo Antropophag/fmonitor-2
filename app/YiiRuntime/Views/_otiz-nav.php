@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 use yii\helpers\Html;
-$tabs=['objects'=>['/pilot/otiz/objects','Экономика объектов'],'payments'=>['/pilot/otiz/payments','Выполнение расчёта'],'history'=>['/pilot/otiz/history','Архив расчётов']];
+$tabs=['objects'=>['/pilot/otiz/objects','Экономика объектов'],'payments'=>['/pilot/otiz/payments','Расчёты']];
 $active=$current==='snapshot'?'payments':$current;
 ?>
 <nav class="fm2-otiz-tabs" data-otiz-tabs aria-label="Разделы ОТиЗ">
