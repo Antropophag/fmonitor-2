@@ -203,7 +203,7 @@ ViewSupport::begin($this, $registrationIdentity, $identity);
                     <?= Html::hiddenInput('orderId', $confirmedOriginal['orderId']) ?>
                     <?= Html::hiddenInput('revisionId', $confirmedOriginal['revisionId']) ?>
                     <?= Html::hiddenInput('sequence', $confirmedOriginal['sequence']) ?>
-                    <label class="fm2-open-date" for="actualStartDate"><input class="shlz-input" id="actualStartDate" type="date" name="actualStartDate" aria-label="Фактическая дата начала работ" required></label>
+                    <label class="shlz-field" for="actualStartDate"><span class="shlz-field__label">Фактическая дата начала работ</span><span class="shlz-field__control"><input class="shlz-input" id="actualStartDate" type="date" name="actualStartDate" aria-label="Фактическая дата начала работ" required></span></label>
                     <button class="shlz-button shlz-button--primary" type="submit">Открыть работы</button>
                 </form><?php endif ?>
             </section>
