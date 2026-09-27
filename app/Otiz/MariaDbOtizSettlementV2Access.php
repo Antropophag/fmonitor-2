@@ -1,0 +1,7 @@
+<?php declare(strict_types=1);namespace FMonitor2\Otiz;use yii\db\Connection;
+final class MariaDbOtizSettlementV2Access
+{
+ public function __construct(private Connection$db,private string$p){}
+ public function calculationForPayment(int$id):?int{$v=$this->db->createCommand("SELECT calculation_id FROM `{$this->p}fm2_otiz_payment_facts` WHERE id=:id",[':id'=>$id])->queryScalar();return$v===false?null:(int)$v;}
+ public function admission(int$object):array{$v=$this->db->createCommand("SELECT decision,source_revision,incident_id FROM `{$this->p}fm2_otiz_admission_inputs` WHERE object_id=:o ORDER BY observed_at DESC,source_revision DESC LIMIT 1",[':o'=>$object])->queryOne();return$v===false?['decision'=>'unknown','sourceRevision'=>'missing','incidentId'=>null]:['decision'=>(string)$v['decision'],'sourceRevision'=>(string)$v['source_revision'],'incidentId'=>$v['incident_id']];}
+}
