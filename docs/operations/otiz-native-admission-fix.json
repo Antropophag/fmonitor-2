@@ -1,0 +1,45 @@
+{
+  "change": "fix-otiz-native-admission",
+  "planned_paths": [
+    "app/Otiz/MariaDbOtizSettlementV2Access.php",
+    "app/Otiz/MariaDbNativeOtizAdmission.php",
+    "app/Otiz/MariaDbOtizSettlementV2.php",
+    "tests/Otiz/native_admission_001_test.php",
+    "tools/verification/suites.tsv",
+    "docs/operations/otiz-native-admission-fix.md",
+    "docs/operations/otiz-native-admission-fix.json",
+    ".quality-graph/verification-policy.json",
+    "app/IdentityAccess/AuthorizeLocalActor.php"
+  ],
+  "acceptances": [
+    {
+      "spec_id": "OTIZ-NATIVE-ADMISSION",
+      "acceptance_id": "native-proven-composition-without-external-producer",
+      "spec_path": "docs/operations/otiz-native-admission-fix.md",
+      "seam": "real native original/checklist to production OTIZ admission and money owner",
+      "tests": [
+        "tests/Otiz/native_admission_001_test.php"
+      ]
+    }
+  ],
+  "lifecycle": {
+    "intent": "COMPACT_MAINTENANCE",
+    "issue": "Owner emergency: empty production calculation",
+    "change_kind": "BOUNDED_FIX",
+    "requirement_status": "CURRENT",
+    "semantic_change": "ESTABLISHED_BEHAVIOR_FIX",
+    "canonical_requirements": [
+      {
+        "path": "docs/operations/otiz-native-admission-fix.md"
+      }
+    ],
+    "sensitivity": {
+      "classification": "SENSITIVE",
+      "boundaries": [
+        "otiz-money"
+      ],
+      "rationale": "Real admission implementation; owner explicitly waived gates for emergency repair, not evidence or safe admission."
+    },
+    "executable_regression": "tests/Otiz/native_admission_001_test.php"
+  }
+}

@@ -176,6 +176,7 @@ db	php	tests/Jobs/workforce_scheduler_001_test.php	integration
 db	php	tests/Jobs/workforce_scheduler_concurrency_001_test.php	integration
 db	php	tests/Otiz/excel_inputs_001_test.php	integration
 db	php	tests/Otiz/excel_publication_001_test.php	integration
+db	php	tests/Otiz/native_admission_001_test.php	integration
 db	php	tests/Otiz/object_register_paging_001_test.php	integration
 db	php	tests/Otiz/object_register_paging_http_001_test.php	integration
 db	php	tests/Otiz/runtime_schema_001_test.php	integration

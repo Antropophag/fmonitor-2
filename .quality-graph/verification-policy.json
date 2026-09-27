@@ -609,6 +609,7 @@
         ,"app/Otiz/MariaDbOtizSettlementV2Admission.php"
         ,"app/Otiz/MariaDbOtizSettlementV2DraftBuilder.php"
         ,"app/Otiz/MariaDbOtizSettlementV2Access.php"
+        ,"app/Otiz/MariaDbNativeOtizAdmission.php"
         ,"app/Otiz/MariaDbOtizCalculationRegister.php"
         ,"app/Otiz/MariaDbOtizPortfolioEconomy.php"
         ,"app/YiiRuntime/Controllers/OtizSettlementV2Controller.php"
@@ -620,6 +621,7 @@
         ,"public/yii.php"
       ],
       "verifiers": [
+        "tests/Otiz/native_admission_001_test.php",
         "tests/Otiz/settlement_v2_001_test.php",
         "tests/Otiz/settlement_v2_db_001_test.php",
         "tests/Otiz/settlement_v2_workbook_001_test.php",
